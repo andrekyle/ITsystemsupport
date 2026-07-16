@@ -668,6 +668,7 @@ export function UnitPage({
   const { notes: userNotes, sharedNotes, addNote, addSharedNote, removeNote, removeSharedNote, renameNote, renameSharedNote, order, setNoteOrder, titleOverrides, setTitleOverride } = useNotes(profile.id);
   const planFileRef = useRef<HTMLInputElement>(null);
   const [planError, setPlanError] = useState<string | null>(null);
+  const [planUploadPct, setPlanUploadPct] = useState<number | null>(null);
   const { slides: planSlides, addSlide: addPlanSlide, removeSlide: removePlanSlide } = usePlanSlides(unitId);
   const [deckId, setDeckId] = useState<string | null>(null);
   const found = findUnit(unitId);
@@ -723,14 +724,16 @@ export function UnitPage({
       setPlanError(`"${file.name}" is too large — files must be ${MAX_SLIDE_MB} MB or smaller.`);
       return;
     }
+    setPlanUploadPct(0);
     try {
-      const doc: PoeDoc = await uploadFile(`shared/planslides/${u.us}`, file);
+      const doc: PoeDoc = await uploadFile(`shared/planslides/${u.us}`, file, setPlanUploadPct);
       if (!addPlanSlide(doc)) {
         setPlanError("Storage is full — remove some uploaded files and try again.");
       }
     } catch {
       setPlanError("The file could not be uploaded — check your connection and try again.");
     }
+    setPlanUploadPct(null);
   }
 
   const tabs: { id: UnitTab; label: string; icon: string; show: boolean }[] = [
@@ -1612,6 +1615,14 @@ export function UnitPage({
             style={{ display: "none" }}
             onChange={onPickPlanFile}
           />
+          {planUploadPct !== null && (
+            <div className="upload-progress plan-upload-progress" role="progressbar" aria-valuenow={planUploadPct}>
+              <div className="track">
+                <div className="fill" style={{ width: `${planUploadPct}%` }} />
+              </div>
+              <span className="pct">Uploading… {planUploadPct}%</span>
+            </div>
+          )}
           {planError && (
             <div className="callout poe-error">
               <span className="ico">

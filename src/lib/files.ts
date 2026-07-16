@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { SUPABASE_ANON_KEY, SUPABASE_URL, supabase } from "./supabase";
 import type { PoeDoc } from "../types";
 
 /**
@@ -30,7 +30,11 @@ export async function userPrefix(): Promise<string> {
 }
 
 /** Upload a file and return its document record (path in cloud mode, data-URL locally). */
-export async function uploadFile(prefix: string, file: File): Promise<PoeDoc> {
+export async function uploadFile(
+  prefix: string,
+  file: File,
+  onProgress?: (pct: number) => void
+): Promise<PoeDoc> {
   const meta = {
     name: file.name,
     type: file.type || "application/octet-stream",
@@ -39,13 +43,35 @@ export async function uploadFile(prefix: string, file: File): Promise<PoeDoc> {
   };
   if (supabase) {
     const path = `${prefix}/${Date.now().toString(36)}-${sanitize(file.name)}`;
-    const { error } = await supabase.storage
-      .from(FILES_BUCKET)
-      .upload(path, file, { upsert: true, contentType: meta.type });
-    if (error) throw new Error(error.message);
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess.session?.access_token;
+    if (!token) throw new Error("Not signed in");
+    // XMLHttpRequest is used instead of the supabase client so that real
+    // upload progress events can be reported to the UI.
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `${SUPABASE_URL}/storage/v1/object/${FILES_BUCKET}/${path}`);
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      xhr.setRequestHeader("apikey", SUPABASE_ANON_KEY);
+      xhr.setRequestHeader("x-upsert", "true");
+      xhr.setRequestHeader("Content-Type", meta.type);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress?.(Math.round((e.loaded / e.total) * 100));
+      };
+      xhr.onload = () =>
+        xhr.status >= 200 && xhr.status < 300
+          ? resolve()
+          : reject(new Error(`Upload failed (${xhr.status})`));
+      xhr.onerror = () => reject(new Error("Network error during upload"));
+      xhr.send(file);
+    });
+    onProgress?.(100);
     return { ...meta, path };
   }
-  return { ...meta, data: await readAsDataURL(file) };
+  onProgress?.(50);
+  const data = await readAsDataURL(file);
+  onProgress?.(100);
+  return { ...meta, data };
 }
 
 /** Resolve a viewable URL for a document (data-URL or a 1-hour signed URL). */

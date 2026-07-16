@@ -31,6 +31,7 @@ export function PoePage({ profile }: { profile: Profile }) {
   const { docs, saveDoc, removeDoc } = usePoe(viewId);
   const fileRef = useRef<HTMLInputElement>(null);
   const [pendingItem, setPendingItem] = useState<string | null>(null);
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const done = Object.keys(docs).length;
@@ -68,17 +69,24 @@ export function PoePage({ profile }: { profile: Profile }) {
     setError(null);
     if (file.size > MAX_FILE_MB * 1024 * 1024) {
       setError(`"${file.name}" is too large — files must be ${MAX_FILE_MB} MB or smaller.`);
+      setPendingItem(null);
       return;
     }
+    setUploadPct(0);
     try {
       const prefix = await userPrefix();
-      const doc: PoeDoc = await uploadFile(`${prefix}/poe/${viewId}/${pendingItem}`, file);
+      const doc: PoeDoc = await uploadFile(
+        `${prefix}/poe/${viewId}/${pendingItem}`,
+        file,
+        setUploadPct
+      );
       if (!saveDoc(pendingItem, doc)) {
         setError("Storage is full — remove some documents and try again.");
       }
     } catch {
       setError("The file could not be uploaded — check your connection and try again.");
     }
+    setUploadPct(null);
     setPendingItem(null);
   }
 
@@ -192,10 +200,19 @@ export function PoePage({ profile }: { profile: Profile }) {
                       )}
                     </>
                   ) : canEdit && !readOnly ? (
-                    <button className="btn ghost poe-upload" onClick={() => pickFor(item.id)}>
-                      <Icon name="folder" size={15} />
-                      Upload document
-                    </button>
+                    pendingItem === item.id && uploadPct !== null ? (
+                      <div className="upload-progress" role="progressbar" aria-valuenow={uploadPct}>
+                        <div className="track">
+                          <div className="fill" style={{ width: `${uploadPct}%` }} />
+                        </div>
+                        <span className="pct">{uploadPct}%</span>
+                      </div>
+                    ) : (
+                      <button className="btn ghost poe-upload" onClick={() => pickFor(item.id)}>
+                        <Icon name="folder" size={15} />
+                        Upload document
+                      </button>
+                    )
                   ) : (
                     <span className="muted">No document uploaded</span>
                   )}

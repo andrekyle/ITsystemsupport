@@ -2687,6 +2687,41 @@ table.data.kv tr:last-child td {
   cursor: pointer;
 }
 
+/* upload progress bar */
+.upload-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 180px;
+}
+
+.upload-progress .track {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.upload-progress .fill {
+  height: 100%;
+  background: var(--azure);
+  border-radius: 3px;
+  transition: width 0.15s ease;
+}
+
+.upload-progress .pct {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.plan-upload-progress {
+  max-width: 420px;
+  margin-top: 12px;
+}
+
 .poe-dl:hover {
   color: var(--azure);
 }
