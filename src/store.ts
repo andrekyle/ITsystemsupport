@@ -291,6 +291,44 @@ export function useChecklist(profileId: string) {
   return { ticks, setTick };
 }
 
+/* ---------- Section D: required evidence & declaration (per profile) ---------- */
+
+const sectionDKey = (profileId: string) => `itss.sectiond.${profileId}`;
+
+export function useSectionD(profileId: string) {
+  const [fields, setFields] = useState<Record<string, string>>(() =>
+    read<Record<string, string>>(sectionDKey(profileId), {})
+  );
+
+  useEffect(() => {
+    setFields(read<Record<string, string>>(sectionDKey(profileId), {}));
+  }, [profileId]);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === sectionDKey(profileId)) {
+        setFields(read<Record<string, string>>(sectionDKey(profileId), {}));
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [profileId]);
+
+  const setField = useCallback(
+    (id: string, value: string | null) => {
+      const fresh = read<Record<string, string>>(sectionDKey(profileId), {});
+      const next = { ...fresh };
+      if (value === null || value === "") delete next[id];
+      else next[id] = value;
+      write(sectionDKey(profileId), next);
+      setFields(next);
+    },
+    [profileId]
+  );
+
+  return { fields, setField };
+}
+
 /* ---------- POE documents (stored separately per profile) ---------- */
 
 const poeKey = (profileId: string) => `itss.poe.${profileId}`;

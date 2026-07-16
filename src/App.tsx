@@ -12,6 +12,7 @@ import { AssessmentsPage, CalendarPage, DeliverablesPage, ResourcesPage } from "
 import { PoePage } from "./pages/Poe";
 import { ProfilePage, StudentsPage } from "./pages/People";
 import { ChecklistPage } from "./pages/Checklist";
+import { SectionDPage } from "./pages/Checklist";
 import { cloudEnabled, supabase } from "./lib/supabase";
 import { installSync, startSync, stopSync, wipeLocalData } from "./lib/sync";
 
@@ -33,6 +34,7 @@ const VALID_PAGES = new Set([
   "profile",
   "students",
   "checklist",
+  "sectiond",
 ]);
 
 function loadRoute(): Route {
@@ -127,6 +129,7 @@ function Shell({
             {route.page === "progress" && <ProgressPage progress={state} navigate={navigate} />}
             {route.page === "poe" && <PoePage profile={profile} />}
             {route.page === "checklist" && <ChecklistPage profile={profile} />}
+            {route.page === "sectiond" && <SectionDPage profile={profile} />}
             {route.page === "profile" && (
               <ProfilePage profile={profile} onUpdateProfile={onUpdateProfile} />
             )}

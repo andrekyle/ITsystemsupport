@@ -333,7 +333,8 @@ export type PageId =
   | "resources"
   | "profile"
   | "students"
-  | "checklist";
+  | "checklist"
+  | "sectiond";
 
 export interface Route {
   page: PageId;

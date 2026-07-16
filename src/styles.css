@@ -3112,6 +3112,94 @@ a.plan-ppt:hover {
   cursor: pointer;
 }
 
+/* Section D declaration */
+.sd-list {
+  margin: 4px 0 8px;
+  padding-left: 26px;
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.declaration {
+  margin-top: 22px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.decl-head {
+  background: var(--surface-3);
+  border-bottom: 1px solid var(--border-2);
+  padding: 12px 18px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 13.5px;
+  letter-spacing: 0.03em;
+}
+
+.decl-text {
+  padding: 18px 20px 6px;
+  line-height: 2;
+  font-weight: 350;
+}
+
+.decl-name {
+  border: none;
+  border-bottom: 1px solid var(--ink-3);
+  background: transparent;
+  min-width: 260px;
+  padding: 2px 8px;
+  font-family: inherit;
+  font-size: 14px;
+  outline-color: var(--azure);
+}
+
+.decl-signs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--border-2);
+  margin-top: 14px;
+}
+
+.decl-sign {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.decl-sign + .decl-sign {
+  border-left: 1px solid var(--border-2);
+}
+
+.decl-sign input {
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  padding: 7px 9px;
+  font-family: inherit;
+  font-size: 13.5px;
+  background: var(--surface);
+  outline-color: var(--azure);
+}
+
+.decl-sign .lbl {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+@media (max-width: 720px) {
+  .decl-signs {
+    grid-template-columns: 1fr;
+  }
+  .decl-sign + .decl-sign {
+    border-left: none;
+    border-top: 1px solid var(--border-2);
+  }
+}
+
 /* ============ Model answers ============ */
 
 .ma-body {
