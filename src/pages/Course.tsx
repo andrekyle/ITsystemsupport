@@ -271,12 +271,18 @@ export function CoursePage({
         network architecture, LAN design, server administration and database access.
       </p>
       <div className="meta-row">
-        <span className="pill">
+        <a
+          className="pill"
+          href={`https://allqs.saqa.org.za/showQualification.php?id=${COURSE_META.saqaId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="View the registered qualification on SAQA"
+        >
           <span className="ico">
             <Icon name="certificate" size={15} />
           </span>
           SAQA ID {COURSE_META.saqaId}
-        </span>
+        </a>
         <span className="pill">
           <span className="ico">
             <Icon name="trend" size={15} />
