@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Icon } from "../icons";
 import { supabase } from "../lib/supabase";
 import { COURSE_META } from "../data/course";
+import { PasswordInput } from "./PasswordInput";
 
 /** Email/password gate shown before the app when cloud sync is configured. */
 export function CloudAuth() {
@@ -64,11 +65,10 @@ export function CloudAuth() {
           </div>
           <div className="field">
             <label htmlFor="ca-pw">Password</label>
-            <input
+            <PasswordInput
               id="ca-pw"
-              type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={setPassword}
               autoComplete={mode === "signin" ? "current-password" : "new-password"}
               minLength={6}
               required

@@ -5,6 +5,7 @@ import { createProfile, hashPassword, loadProfiles } from "../store";
 import { COURSE_META } from "../data/course";
 import { Avatar } from "./Avatar";
 import { EMPTY_ENROLMENT, EnrolmentForm } from "./EnrolmentForm";
+import { PasswordInput } from "./PasswordInput";
 import { cloudEnabled, supabase } from "../lib/supabase";
 
 export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
@@ -98,14 +99,14 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
           <form onSubmit={submitAuth}>
             <div className="field">
               <label htmlFor="pw">Password</label>
-              <input
+              <PasswordInput
                 id="pw"
-                type="password"
                 value={authPw}
-                onChange={(e) => {
-                  setAuthPw(e.target.value);
+                onChange={(v) => {
+                  setAuthPw(v);
                   setAuthError(false);
                 }}
+                autoComplete="current-password"
                 autoFocus
                 required
               />
@@ -180,11 +181,11 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
             </div>
             <div className="field">
               <label htmlFor="npw">Password (optional)</label>
-              <input
+              <PasswordInput
                 id="npw"
-                type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={setPassword}
+                autoComplete="new-password"
                 placeholder="Protects your profile on this device"
               />
             </div>

@@ -1041,6 +1041,35 @@ td .with-ico .ico {
   margin: -6px 0 12px;
 }
 
+/* password input with show/hide toggle */
+.pw-wrap {
+  position: relative;
+}
+
+.pw-wrap input {
+  padding-right: 38px;
+}
+
+.pw-toggle {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: none;
+  border: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  border-radius: var(--radius);
+}
+
+.pw-toggle:hover {
+  color: var(--azure);
+}
+
 .btn.danger {
   background: transparent;
   border-color: var(--red, #c50f1f);
