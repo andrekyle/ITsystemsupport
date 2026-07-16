@@ -1272,6 +1272,41 @@ td .with-ico .ico {
   flex-shrink: 0;
 }
 
+/* dark mode: buttons in shades of dark grey with white text */
+[data-theme="dark"] .btn {
+  background: #3d3d3d;
+  border-color: #4a4a4a;
+  color: #fff;
+}
+
+[data-theme="dark"] .btn:hover {
+  background: #4a4a4a;
+  border-color: #585858;
+}
+
+[data-theme="dark"] .btn.ghost {
+  background: #2b2b2b;
+  border-color: #3d3d3d;
+  color: #fff;
+}
+
+[data-theme="dark"] .btn.ghost:hover {
+  background: #383838;
+  border-color: #4a4a4a;
+}
+
+[data-theme="dark"] .btn.danger {
+  background: #2b2b2b;
+  border-color: #4a4a4a;
+  color: #fff;
+}
+
+[data-theme="dark"] .btn.danger:hover {
+  background: var(--red-bg);
+  border-color: var(--red);
+  color: var(--red);
+}
+
 .pw-row .btn {
   margin-bottom: 1px;
 }
