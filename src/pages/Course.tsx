@@ -308,16 +308,6 @@ export function CoursePage({
         </span>
       </div>
 
-      <a
-        className="btn ghost dl-sample plan-ppt"
-        href="/downloads/IT-Systems-Support-NQF5-Course-Overview.pptx"
-        download
-        style={{ marginTop: 14 }}
-      >
-        <Icon name="download" size={15} />
-        Download course overview (.pptx)
-      </a>
-
       <h2 className="section-title">
         <span className="ico">
           <Icon name="dashboard" size={20} />
