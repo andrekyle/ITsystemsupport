@@ -533,7 +533,10 @@ h2.section-title .ico {
 }
 
 a.pill {
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-color: var(--azure);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 a.pill:hover {
