@@ -635,11 +635,14 @@ function fmtSize(bytes: number) {
 type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "assignments" | "quiz" | "plan";
 
 const UNIT_TAB_KEY = "itss.unittab";
+const UNIT_TAB_US_KEY = "itss.unittab.us";
 const UNIT_TABS: UnitTab[] = ["overview", "lesson", "material", "notes", "exercises", "assignments", "quiz", "plan"];
 
-function loadUnitTab(): UnitTab {
+/** Restore the saved tab only for the same unit standard — opening another US always starts on Overview. */
+function loadUnitTab(unitId: string): UnitTab {
+  const savedFor = localStorage.getItem(UNIT_TAB_US_KEY);
   const saved = localStorage.getItem(UNIT_TAB_KEY) as UnitTab | null;
-  return saved && UNIT_TABS.includes(saved) ? saved : "overview";
+  return savedFor === unitId && saved && UNIT_TABS.includes(saved) ? saved : "overview";
 }
 
 export function UnitPage({
@@ -659,12 +662,18 @@ export function UnitPage({
   setLogbookField: (us: string, key: string, value: string | boolean) => void;
   navigate: (r: Route) => void;
 }) {
-  const [tab, setTab] = useState<UnitTab>(loadUnitTab);
+  const [tab, setTab] = useState<UnitTab>(() => loadUnitTab(unitId));
   const [noteId, setNoteId] = useState<string | null>(null);
+
+  // switching to a different unit standard always lands on its Overview tab
+  useEffect(() => {
+    setTab(loadUnitTab(unitId));
+  }, [unitId]);
 
   useEffect(() => {
     localStorage.setItem(UNIT_TAB_KEY, tab);
-  }, [tab]);
+    localStorage.setItem(UNIT_TAB_US_KEY, unitId);
+  }, [tab, unitId]);
   const [noteError, setNoteError] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const dragIdRef = useRef<string | null>(null);
