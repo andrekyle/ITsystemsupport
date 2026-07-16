@@ -1,7 +1,59 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile } from "../types";
+import { getContent } from "../data/content";
 import { Avatar, fileToAvatar } from "./Avatar";
+
+/** Session schedule derived from the US 8252 lesson plan (starts 09:00). */
+const SCHEDULE = (() => {
+  const plan = getContent("8252")?.lessonPlan;
+  if (!plan) return [] as { start: number; end: number; title: string }[];
+  const [sh, sm] = (plan.startTime ?? "09:00").split(":").map(Number);
+  let clock = sh * 60 + sm;
+  const out: { start: number; end: number; title: string }[] = [];
+  for (const sec of plan.sections) {
+    for (const r of sec.rows) {
+      const mins = parseInt(r.time ?? "", 10) || 0;
+      if (!mins) continue;
+      out.push({ start: clock, end: clock + mins, title: r.title.split(" — ")[0] });
+      clock += mins;
+    }
+  }
+  return out;
+})();
+
+/** Live clock that starts at 09:00 and describes the current lesson-plan session. */
+function SessionClock() {
+  const [elapsed, setElapsed] = useState(0); // seconds since the clock started
+  useEffect(() => {
+    const t = setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const sim = 9 * 3600 + elapsed; // seconds since midnight, starting at 09:00
+  const hh = String(Math.floor(sim / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((sim % 3600) / 60)).padStart(2, "0");
+  const ss = String(sim % 60).padStart(2, "0");
+  const simMin = sim / 60;
+
+  let label = "";
+  if (SCHEDULE.length) {
+    const current = SCHEDULE.find((s) => simMin >= s.start && simMin < s.end);
+    if (current) label = current.title;
+    else if (simMin < SCHEDULE[0].start) label = "Session starts soon";
+    else label = "Session complete — well done";
+  }
+
+  return (
+    <div className="header-clock" title="Session clock — follows the lesson plan from 09:00">
+      <Icon name="clock" size={16} />
+      <span className="time">
+        {hh}:{mm}:{ss}
+      </span>
+      {label && <span className="session">{label}</span>}
+    </div>
+  );
+}
 
 interface Props {
   profile: Profile;
@@ -57,10 +109,7 @@ export function Header({
         <span className="brand-name">ITSS Learn</span>
         <span className="brand-sub">System Support · NQF 5</span>
       </div>
-      <div className="header-search">
-        <Icon name="search" size={16} />
-        <input placeholder="Search unit standards, modules…" aria-label="Search" />
-      </div>
+      <SessionClock />
       <div className="header-right">
         <button className="icon-btn" title="Notifications">
           <Icon name="bell" size={19} />
