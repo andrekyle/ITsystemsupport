@@ -1287,6 +1287,14 @@ input:-webkit-autofill:focus {
   transition: background-color 999999s ease-in-out 0s;
 }
 
+/* replace the default (white) focus ring with a subtle azure border */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--azure) !important;
+}
+
 .divider {
   display: flex;
   align-items: center;
