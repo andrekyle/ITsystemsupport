@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Profile, Route } from "./types";
 import type { Theme } from "./store";
 import { getSession, getTheme, loadProfiles, setSession, setTheme, updateProfile, useProgress } from "./store";
 import { SignIn } from "./components/SignIn";
+import { CloudAuth } from "./components/CloudAuth";
 import { Header } from "./components/Header";
 import { Sidebar } from "./components/Sidebar";
 import { Dashboard, ProgressPage } from "./pages/Dashboard";
@@ -10,6 +11,11 @@ import { CoursePage, ModulePage, UnitPage } from "./pages/Course";
 import { AssessmentsPage, CalendarPage, DeliverablesPage, ResourcesPage } from "./pages/InfoPages";
 import { PoePage } from "./pages/Poe";
 import { ProfilePage, StudentsPage } from "./pages/People";
+import { cloudEnabled, supabase } from "./lib/supabase";
+import { installSync, startSync, stopSync, wipeLocalData } from "./lib/sync";
+
+// mirror every itss.* localStorage write to the cloud (no-op until signed in)
+installSync();
 
 const ROUTE_KEY = "itss.route";
 const VALID_PAGES = new Set([
@@ -136,6 +142,46 @@ function Shell({
 }
 
 export default function App() {
+  const [cloudState, setCloudState] = useState<"loading" | "signedout" | "ready">(
+    cloudEnabled ? "loading" : "ready"
+  );
+  const syncedUser = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!supabase) return;
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        if (syncedUser.current !== session.user.id) {
+          syncedUser.current = session.user.id;
+          void startSync(session.user.id).then(() => setCloudState("ready"));
+        }
+      } else {
+        if (event === "SIGNED_OUT") {
+          // prevent one account's local data leaking into the next sign-in
+          stopSync();
+          wipeLocalData();
+        }
+        syncedUser.current = null;
+        setCloudState("signedout");
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  if (cloudState === "loading") {
+    return (
+      <div className="gate">
+        <div className="gate-card" style={{ textAlign: "center" }}>
+          Loading your data…
+        </div>
+      </div>
+    );
+  }
+  if (cloudState === "signedout") return <CloudAuth />;
+  return <LocalApp key={syncedUser.current ?? "local"} />;
+}
+
+function LocalApp() {
   const [profile, setProfile] = useState<Profile | null>(() => {
     const id = getSession();
     return id ? loadProfiles().find((p) => p.id === id) ?? null : null;

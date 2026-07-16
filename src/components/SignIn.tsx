@@ -5,6 +5,7 @@ import { createProfile, hashPassword, loadProfiles } from "../store";
 import { COURSE_META } from "../data/course";
 import { Avatar } from "./Avatar";
 import { EMPTY_ENROLMENT, EnrolmentForm } from "./EnrolmentForm";
+import { cloudEnabled, supabase } from "../lib/supabase";
 
 export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
   const [profiles, setProfiles] = useState<Profile[]>(loadProfiles());
@@ -143,6 +144,16 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
               <Icon name="person" size={17} />
               Create a new profile
             </button>
+            {cloudEnabled && (
+              <button
+                className="btn ghost block"
+                style={{ marginTop: 8 }}
+                onClick={() => void supabase?.auth.signOut()}
+              >
+                <Icon name="signout" size={17} />
+                Sign out of this account on this device
+              </button>
+            )}
           </>
         )}
 
