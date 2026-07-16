@@ -513,6 +513,7 @@ function StudentDetail({
         {isSuper && !editingEnrol && (
           <button
             className="btn ghost profile-edit"
+            style={{ marginRight: 23 }} /* align with the Delete user button inside the card above */
             onClick={() => {
               setDraft({ ...EMPTY_ENROLMENT, ...student.enrolment });
               setEditingEnrol(true);
