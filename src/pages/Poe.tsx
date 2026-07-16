@@ -4,6 +4,7 @@ import { Icon } from "../icons";
 import type { PoeDoc, Profile } from "../types";
 import { POE_SECTIONS, POE_TOTAL } from "../data/course";
 import { loadProfiles, usePoe } from "../store";
+import { downloadDoc, getFileBlob, uploadFile, userPrefix } from "../lib/files";
 import { Avatar } from "../components/Avatar";
 import { Ring } from "../components/Ring";
 
@@ -13,15 +14,6 @@ function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function readAsDataURL(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result as string);
-    r.onerror = () => reject(r.error);
-    r.readAsDataURL(file);
-  });
 }
 
 export function PoePage({ profile }: { profile: Profile }) {
@@ -50,11 +42,10 @@ export function PoePage({ profile }: { profile: Profile }) {
       for (const item of sec.items) {
         const doc = docs[item.id];
         if (!doc) continue;
+        const blob = await getFileBlob(doc);
+        if (!blob) continue;
         const folder = clean(sec.heading);
-        const base64 = doc.data.split(",")[1] ?? "";
-        zip.file(`${folder}/${clean(item.label).slice(0, 80)} — ${clean(doc.name)}`, base64, {
-          base64: true,
-        });
+        zip.file(`${folder}/${clean(item.label).slice(0, 80)} — ${clean(doc.name)}`, blob);
       }
     }
     const blob = await zip.generateAsync({ type: "blob" });
@@ -80,19 +71,13 @@ export function PoePage({ profile }: { profile: Profile }) {
       return;
     }
     try {
-      const data = await readAsDataURL(file);
-      const doc: PoeDoc = {
-        name: file.name,
-        type: file.type || "application/octet-stream",
-        size: file.size,
-        data,
-        uploadedAt: new Date().toISOString(),
-      };
+      const prefix = await userPrefix();
+      const doc: PoeDoc = await uploadFile(`${prefix}/poe/${viewId}/${pendingItem}`, file);
       if (!saveDoc(pendingItem, doc)) {
         setError("Storage is full — remove some documents and try again.");
       }
     } catch {
-      setError("The file could not be read.");
+      setError("The file could not be uploaded — check your connection and try again.");
     }
     setPendingItem(null);
   }
@@ -188,9 +173,13 @@ export function PoePage({ profile }: { profile: Profile }) {
                         </span>
                       </span>
                       {canDownload && (
-                        <a className="poe-dl" href={doc.data} download={doc.name} title="Download">
+                        <button
+                          className="poe-dl"
+                          onClick={() => void downloadDoc(doc)}
+                          title="Download"
+                        >
                           <Icon name="download" size={17} />
-                        </a>
+                        </button>
                       )}
                       {canEdit && (
                         <button

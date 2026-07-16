@@ -137,8 +137,10 @@ export interface PoeDoc {
   name: string;
   type: string;
   size: number;
-  /** data-URL of the file */
-  data: string;
+  /** data-URL of the file (local-only mode / legacy uploads) */
+  data?: string;
+  /** Supabase Storage path (cloud mode) */
+  path?: string;
   uploadedAt: string;
 }
 

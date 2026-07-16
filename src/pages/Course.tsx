@@ -11,6 +11,7 @@ import { Quiz } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
 import { SlideViewer } from "../components/SlideViewer";
 import { fileToImageDataUrl } from "../components/Avatar";
+import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
 
@@ -619,15 +620,6 @@ export function ModulePage({
 
 const MAX_SLIDE_MB = 10;
 
-function readAsDataURL(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result as string);
-    r.onerror = () => reject(r.error);
-    r.readAsDataURL(file);
-  });
-}
-
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -698,11 +690,25 @@ export function UnitPage({
     .map((s) => ({
       id: `upload-${s.uploadedAt}-${s.name}`,
       name: s.name.replace(/\.pdf$/i, ""),
-      href: s.data,
-      downloadName: s.name,
-      src: s.data,
+      doc: s,
     }));
   const activeDeck = decks.find((d) => d.id === deckId) ?? decks[0];
+  const [deckUrl, setDeckUrl] = useState<string | null>(null);
+  const activeDeckId = activeDeck?.id;
+  useEffect(() => {
+    let cancelled = false;
+    setDeckUrl(null);
+    const doc = activeDeck?.doc;
+    if (doc) {
+      void getFileUrl(doc).then((url) => {
+        if (!cancelled) setDeckUrl(url);
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeDeckId]);
 
   async function onPickPlanFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -718,19 +724,12 @@ export function UnitPage({
       return;
     }
     try {
-      const data = await readAsDataURL(file);
-      const doc: PoeDoc = {
-        name: file.name,
-        type: file.type || "application/pdf",
-        size: file.size,
-        data,
-        uploadedAt: new Date().toISOString(),
-      };
+      const doc: PoeDoc = await uploadFile(`shared/planslides/${u.us}`, file);
       if (!addPlanSlide(doc)) {
         setPlanError("Storage is full — remove some uploaded files and try again.");
       }
     } catch {
-      setPlanError("The file could not be read.");
+      setPlanError("The file could not be uploaded — check your connection and try again.");
     }
   }
 
@@ -1548,16 +1547,19 @@ export function UnitPage({
           {activeDeck && (
             <>
               {canDownloadShared && (
-                <a
+                <button
                   className="btn ghost dl-sample plan-ppt"
-                  href={activeDeck.href}
-                  download={activeDeck.downloadName}
+                  onClick={() => void downloadDoc(activeDeck.doc)}
                 >
                   <Icon name="download" size={15} />
                   Download this file
-                </a>
+                </button>
               )}
-              <SlideViewer src={activeDeck.src} allowDownload={canDownloadShared} />
+              {deckUrl ? (
+                <SlideViewer src={deckUrl} allowDownload={canDownloadShared} />
+              ) : (
+                <p className="muted">Loading course material…</p>
+              )}
             </>
           )}
         </>
@@ -1637,9 +1639,9 @@ export function UnitPage({
                     </span>
                   </span>
                   {canDownloadShared && (
-                    <a className="poe-dl" href={s.data} download={s.name} title="Download">
+                    <button className="poe-dl" onClick={() => void downloadDoc(s)} title="Download">
                       <Icon name="download" size={17} />
-                    </a>
+                    </button>
                   )}
                   <button
                     className="poe-remove"

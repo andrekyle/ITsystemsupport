@@ -45,5 +45,48 @@ create policy "write shared state"
   using (true)
   with check (true);
 
+-- File storage: uploaded documents (POE evidence, lesson-plan/course PDFs).
+-- Private files live under <auth-uid>/... ; shared uploads under shared/... .
+insert into storage.buckets (id, name, public)
+values ('files', 'files', false)
+on conflict (id) do nothing;
+
+drop policy if exists "read app files" on storage.objects;
+create policy "read app files"
+  on storage.objects
+  for select
+  to authenticated
+  using (bucket_id = 'files');
+
+drop policy if exists "insert app files" on storage.objects;
+create policy "insert app files"
+  on storage.objects
+  for insert
+  to authenticated
+  with check (
+    bucket_id = 'files'
+    and (storage.foldername(name))[1] in (auth.uid()::text, 'shared')
+  );
+
+drop policy if exists "update app files" on storage.objects;
+create policy "update app files"
+  on storage.objects
+  for update
+  to authenticated
+  using (
+    bucket_id = 'files'
+    and (storage.foldername(name))[1] in (auth.uid()::text, 'shared')
+  );
+
+drop policy if exists "delete app files" on storage.objects;
+create policy "delete app files"
+  on storage.objects
+  for delete
+  to authenticated
+  using (
+    bucket_id = 'files'
+    and (storage.foldername(name))[1] in (auth.uid()::text, 'shared')
+  );
+
 
 

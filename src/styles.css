@@ -2681,6 +2681,10 @@ table.data.kv tr:last-child td {
 .poe-dl {
   display: inline-flex;
   color: var(--ink-3);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .poe-dl:hover {

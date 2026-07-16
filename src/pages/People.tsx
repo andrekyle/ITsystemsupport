@@ -14,6 +14,7 @@ import {
 } from "../store";
 import { Avatar } from "../components/Avatar";
 import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/EnrolmentForm";
+import { downloadDoc } from "../lib/files";
 
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -571,9 +572,9 @@ function StudentDetail({
               </span>
             </span>
             {isSuper && (
-              <a className="poe-dl" href={doc.data} download={doc.name} title="Download">
+              <button className="poe-dl" onClick={() => void downloadDoc(doc)} title="Download">
                 <Icon name="download" size={17} />
-              </a>
+              </button>
             )}
           </div>
         ))

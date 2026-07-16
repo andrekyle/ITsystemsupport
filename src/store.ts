@@ -292,10 +292,12 @@ export function usePoe(profileId: string) {
   const removeDoc = useCallback(
     (itemId: string) => {
       const fresh = read<Record<string, PoeDoc>>(poeKey(profileId), {});
+      const doomed = fresh[itemId];
       const next = { ...fresh };
       delete next[itemId];
       write(poeKey(profileId), next);
       setDocs(next);
+      if (doomed?.path) void import("./lib/files").then((m) => m.deleteFile(doomed.path));
     },
     [profileId]
   );
@@ -330,9 +332,12 @@ export function usePlanSlides(us: string) {
 
   const removeSlide = useCallback(
     (index: number) => {
-      const next = read<PoeDoc[]>(planSlidesKey(us), []).filter((_, i) => i !== index);
+      const fresh = read<PoeDoc[]>(planSlidesKey(us), []);
+      const doomed = fresh[index];
+      const next = fresh.filter((_, i) => i !== index);
       write(planSlidesKey(us), next);
       setSlides(next);
+      if (doomed?.path) void import("./lib/files").then((m) => m.deleteFile(doomed.path));
     },
     [us]
   );
