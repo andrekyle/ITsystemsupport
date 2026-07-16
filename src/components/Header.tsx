@@ -26,44 +26,31 @@ const SCHEDULE = (() => {
   return out;
 })();
 
-/** TEST MODE: cycle to the next lesson-plan session every 5 seconds (set to false for the real 09:00 clock). */
-const CLOCK_TEST = true;
-
-/** Live clock that starts at 09:00 and describes the current lesson-plan session. */
+/** Live clock (real time) describing the current lesson-plan session — the session starts at 09:00. */
 function SessionClock() {
-  const [elapsed, setElapsed] = useState(0); // seconds since the clock started
+  const [now, setNow] = useState(() => new Date());
   useEffect(() => {
-    const t = setInterval(() => setElapsed((s) => s + 1), 1000);
+    const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  let sim: number; // seconds since midnight
+  const sim = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  const simMin = sim / 60;
   let label = "";
   let ends: number | null = null; // end of the current session, minutes since midnight
 
-  if (CLOCK_TEST && SCHEDULE.length) {
-    // jump to the start of the next session every 5 seconds
-    const idx = Math.floor(elapsed / 5) % SCHEDULE.length;
-    const current = SCHEDULE[idx];
-    sim = current.start * 60 + (elapsed % 5);
-    label = current.title;
-    ends = current.end;
-  } else {
-    sim = 9 * 3600 + elapsed; // starting at 09:00
-    const simMin = sim / 60;
-    if (SCHEDULE.length) {
-      const current = SCHEDULE.find((s) => simMin >= s.start && simMin < s.end);
-      if (current) {
-        label = current.title;
-        ends = current.end;
-      } else if (simMin < SCHEDULE[0].start) label = "Session starts soon";
-      else label = "Session complete — well done";
-    }
+  if (SCHEDULE.length) {
+    const current = SCHEDULE.find((s) => simMin >= s.start && simMin < s.end);
+    if (current) {
+      label = current.title;
+      ends = current.end;
+    } else if (simMin < SCHEDULE[0].start) label = "Session starts at 09:00";
+    else label = "Session complete — well done";
   }
 
-  const hh = String(Math.floor(sim / 3600)).padStart(2, "0");
-  const mm = String(Math.floor((sim % 3600) / 60)).padStart(2, "0");
-  const ss = String(sim % 60).padStart(2, "0");
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  const ss = String(now.getSeconds()).padStart(2, "0");
   const endLabel =
     ends !== null
       ? `ends ${String(Math.floor(ends / 60)).padStart(2, "0")}:${String(ends % 60).padStart(2, "0")}`
