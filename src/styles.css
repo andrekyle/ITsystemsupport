@@ -993,6 +993,32 @@ td .with-ico .ico {
   grid-column: 1 / -1;
 }
 
+/* section headings inside the enrolment form and details view */
+.enrol-head {
+  grid-column: 1 / -1;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--azure);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+  margin: 14px 0 12px;
+}
+
+.enrol-grid .enrol-head:first-child {
+  margin-top: 0;
+}
+
+.enrol-group-head {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--azure);
+  margin: 20px 0 8px;
+}
+
 @media (max-width: 560px) {
   .enrol-grid .field,
   .enrol-grid .field.c1,

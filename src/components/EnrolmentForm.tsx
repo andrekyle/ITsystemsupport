@@ -148,8 +148,11 @@ export function EnrolmentForm({
     </div>
   );
 
+  const heading = (text: string) => <div className="enrol-head">{text}</div>;
+
   return (
     <div className="enrol-grid">
+      {heading("Personal details")}
       {select("title", "Title", ENROL_TITLES, true, "c1")}
       {input("firstNames", "First names", { required: true, span: "c2" })}
       {input("surname", "Surname", { required: true, span: "c2" })}
@@ -161,22 +164,27 @@ export function EnrolmentForm({
         maxLength: 13,
       })}
       {input("age", "Age", { required: true, span: "c1", maxLength: 3 })}
+      {heading("Demographics")}
       {select("gender", "Gender", ENROL_GENDERS, true, "c1")}
       {select("equityGroup", "Equity group", ENROL_EQUITY_GROUPS, true, "c1")}
       {select("homeLanguage", "Primary home language", ENROL_LANGUAGES, true, "c1")}
       {select("disability", "Disability", ENROL_DISABILITIES, true, "c1")}
+      {heading("Education & socioeconomic status")}
       {select("highestQualification", "Highest qualification", ENROL_QUALIFICATIONS, true, "c2")}
       {select("socioeconomicStatus", "Socioeconomic status", ENROL_SOCIOECONOMIC, true, "c2")}
+      {heading("Addresses")}
       {input("physicalAddress", "Physical address", { required: true, span: "full" })}
       {select("physicalProvince", "Province (physical)", ENROL_PROVINCES, true, "c2")}
       {input("physicalPostalCode", "Postal code (physical)", { required: true, span: "c1", maxLength: 4 })}
       {input("postalAddress", "Postal address (if different)", { span: "full" })}
       {select("postalProvince", "Province (postal)", ENROL_PROVINCES, false, "c2")}
       {input("postalPostalCode", "Postal code (postal)", { span: "c1", maxLength: 4 })}
+      {heading("Contact details")}
       {input("telephone", "Telephone number", { span: "c1", type: "tel" })}
       {input("cellphone", "Cell phone number", { required: true, span: "c1", type: "tel" })}
       {input("fax", "Fax number", { span: "c1", type: "tel" })}
       {input("email", "Email address", { required: true, span: "full", type: "email" })}
+      {heading("Employment")}
       {input("employer", "Employer", { span: "c2" })}
       {input(
         "employerSdlNo",
@@ -186,17 +194,19 @@ export function EnrolmentForm({
         />,
         { span: "c1" }
       )}
-      {input("nextOfKinName", "Next of kin — full name", { required: true, span: "c2" })}
-      {input("nextOfKinRelationship", "Next of kin — relationship", {
+      {heading("Next of kin")}
+      {input("nextOfKinName", "Full name", { required: true, span: "c2" })}
+      {input("nextOfKinRelationship", "Relationship", {
         required: true,
         span: "c1",
         placeholder: "e.g. Mother, Spouse",
       })}
-      {input("nextOfKinPhone", "Next of kin — contact number", {
+      {input("nextOfKinPhone", "Contact number", {
         required: true,
         span: "c1",
         type: "tel",
       })}
+      {heading("Declaration")}
       {input("signature", "Signature (type your full name)", { required: true, span: "c2" })}
     </div>
   );
@@ -205,60 +215,106 @@ export function EnrolmentForm({
 export function EnrolmentDetails({ enrolment }: { enrolment: EnrolmentInfo }) {
   const addr = (street: string, province: string, code: string) =>
     [street, province, code].filter(Boolean).join(", ");
-  const rows: [string, string][] = [
-    ["Title", enrolment.title],
-    ["First names", enrolment.firstNames],
-    ["Surname", enrolment.surname],
-    ["Maiden name", enrolment.maidenName],
-    ["ID number", enrolment.idNumber],
-    ["Age", enrolment.age],
-    ["Gender", enrolment.gender],
-    ["Equity group", enrolment.equityGroup],
-    ["Primary home language", enrolment.homeLanguage],
-    ["Disability", enrolment.disability],
-    ["Highest qualification", enrolment.highestQualification],
-    ["Socioeconomic status", enrolment.socioeconomicStatus],
-    ["Physical address", addr(enrolment.physicalAddress, enrolment.physicalProvince, enrolment.physicalPostalCode)],
-    ["Postal address", addr(enrolment.postalAddress, enrolment.postalProvince, enrolment.postalPostalCode)],
-    ["Telephone number", enrolment.telephone],
-    ["Cell phone number", enrolment.cellphone],
-    ["Fax number", enrolment.fax],
-    ["Email address", enrolment.email],
-    ["Employer", enrolment.employer],
-    ["Employer SDL no", enrolment.employerSdlNo],
-    [
-      "Next of kin",
-      [enrolment.nextOfKinName, enrolment.nextOfKinRelationship, enrolment.nextOfKinPhone]
-        .filter(Boolean)
-        .join(" · "),
-    ],
-    [
-      "Signed",
-      enrolment.signature
-        ? `${enrolment.signature}${
-            enrolment.signedDate
-              ? ` · ${new Date(enrolment.signedDate).toLocaleDateString(undefined, {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}`
-              : ""
-          }`
-        : "",
-    ],
+  const groups: { heading: string; rows: [string, string][] }[] = [
+    {
+      heading: "Personal details",
+      rows: [
+        ["Title", enrolment.title],
+        ["First names", enrolment.firstNames],
+        ["Surname", enrolment.surname],
+        ["Maiden name", enrolment.maidenName],
+        ["ID number", enrolment.idNumber],
+        ["Age", enrolment.age],
+      ],
+    },
+    {
+      heading: "Demographics",
+      rows: [
+        ["Gender", enrolment.gender],
+        ["Equity group", enrolment.equityGroup],
+        ["Primary home language", enrolment.homeLanguage],
+        ["Disability", enrolment.disability],
+      ],
+    },
+    {
+      heading: "Education & socioeconomic status",
+      rows: [
+        ["Highest qualification", enrolment.highestQualification],
+        ["Socioeconomic status", enrolment.socioeconomicStatus],
+      ],
+    },
+    {
+      heading: "Addresses",
+      rows: [
+        ["Physical address", addr(enrolment.physicalAddress, enrolment.physicalProvince, enrolment.physicalPostalCode)],
+        ["Postal address", addr(enrolment.postalAddress, enrolment.postalProvince, enrolment.postalPostalCode)],
+      ],
+    },
+    {
+      heading: "Contact details",
+      rows: [
+        ["Telephone number", enrolment.telephone],
+        ["Cell phone number", enrolment.cellphone],
+        ["Fax number", enrolment.fax],
+        ["Email address", enrolment.email],
+      ],
+    },
+    {
+      heading: "Employment",
+      rows: [
+        ["Employer", enrolment.employer],
+        ["Employer SDL no", enrolment.employerSdlNo],
+      ],
+    },
+    {
+      heading: "Next of kin",
+      rows: [
+        ["Full name", enrolment.nextOfKinName],
+        ["Relationship", enrolment.nextOfKinRelationship],
+        ["Contact number", enrolment.nextOfKinPhone],
+      ],
+    },
+    {
+      heading: "Declaration",
+      rows: [
+        [
+          "Signed",
+          enrolment.signature
+            ? `${enrolment.signature}${
+                enrolment.signedDate
+                  ? ` · ${new Date(enrolment.signedDate).toLocaleDateString(undefined, {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}`
+                  : ""
+              }`
+            : "",
+        ],
+      ],
+    },
   ];
+
   return (
-    <table className="data kv">
-      <tbody>
-        {rows
-          .filter(([, v]) => v)
-          .map(([k, v]) => (
-            <tr key={k}>
-              <td className="k">{k}</td>
-              <td style={{ whiteSpace: "pre-line" }}>{v}</td>
-            </tr>
-          ))}
-      </tbody>
-    </table>
+    <>
+      {groups
+        .map((g) => ({ ...g, rows: g.rows.filter(([, v]) => v) }))
+        .filter((g) => g.rows.length > 0)
+        .map((g) => (
+          <div key={g.heading}>
+            <div className="enrol-group-head">{g.heading}</div>
+            <table className="data kv">
+              <tbody>
+                {g.rows.map(([k, v]) => (
+                  <tr key={k}>
+                    <td className="k">{k}</td>
+                    <td style={{ whiteSpace: "pre-line" }}>{v}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
+    </>
   );
 }
