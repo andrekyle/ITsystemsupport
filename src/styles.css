@@ -1139,13 +1139,15 @@ td .with-ico .ico {
 
 .btn.danger {
   background: transparent;
-  border-color: var(--red, #c50f1f);
-  color: var(--red, #c50f1f);
+  border-color: var(--border-2);
+  color: var(--ink);
+  font-weight: 400;
 }
 
 .btn.danger:hover {
-  background: var(--red, #c50f1f);
-  color: #fff;
+  background: var(--surface-2);
+  border-color: var(--border-2);
+  color: var(--ink);
 }
 
 .gate-card .logo {
@@ -1299,12 +1301,12 @@ td .with-ico .ico {
   background: #2b2b2b;
   border-color: #4a4a4a;
   color: #fff;
+  font-weight: 400;
 }
 
 [data-theme="dark"] .btn.danger:hover {
-  background: var(--red-bg);
-  border-color: var(--red);
-  color: var(--red);
+  background: #383838;
+  border-color: #585858;
 }
 
 .pw-row .btn {
