@@ -1,3 +1,4 @@
+import React from "react";
 import type { EnrolmentInfo } from "../types";
 import {
   ENROL_DISABILITIES,
@@ -296,25 +297,25 @@ export function EnrolmentDetails({ enrolment }: { enrolment: EnrolmentInfo }) {
   ];
 
   return (
-    <>
-      {groups
-        .map((g) => ({ ...g, rows: g.rows.filter(([, v]) => v) }))
-        .filter((g) => g.rows.length > 0)
-        .map((g) => (
-          <div key={g.heading}>
-            <div className="enrol-group-head">{g.heading}</div>
-            <table className="data kv">
-              <tbody>
-                {g.rows.map(([k, v]) => (
-                  <tr key={k}>
-                    <td className="k">{k}</td>
-                    <td style={{ whiteSpace: "pre-line" }}>{v}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ))}
-    </>
+    <table className="data kv enrol-details">
+      <tbody>
+        {groups
+          .map((g) => ({ ...g, rows: g.rows.filter(([, v]) => v) }))
+          .filter((g) => g.rows.length > 0)
+          .map((g) => (
+            <React.Fragment key={g.heading}>
+              <tr className="group">
+                <td colSpan={2}>{g.heading}</td>
+              </tr>
+              {g.rows.map(([k, v]) => (
+                <tr key={k}>
+                  <td className="k">{k}</td>
+                  <td style={{ whiteSpace: "pre-line" }}>{v}</td>
+                </tr>
+              ))}
+            </React.Fragment>
+          ))}
+      </tbody>
+    </table>
   );
 }

@@ -1010,13 +1010,23 @@ td .with-ico .ico {
   margin-top: 0;
 }
 
-.enrol-group-head {
-  font-size: 12.5px;
+/* enrolment details: one aligned table with section header rows */
+.enrol-details {
+  margin-top: 4px;
+}
+
+.enrol-details td.k {
+  width: 260px;
+}
+
+.enrol-details tr.group td {
+  background: var(--surface-3);
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--azure);
-  margin: 20px 0 8px;
+  padding: 9px 14px;
 }
 
 @media (max-width: 560px) {
