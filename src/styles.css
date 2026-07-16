@@ -1265,8 +1265,15 @@ td .with-ico .ico {
 }
 
 .btn.sm {
-  padding: 7px 14px;
+  height: 37px;
+  padding: 0 16px;
   font-size: 13px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pw-row .btn {
+  margin-bottom: 1px;
 }
 
 /* keep browser autofill from painting inputs blue */
