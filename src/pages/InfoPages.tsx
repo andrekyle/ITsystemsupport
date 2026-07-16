@@ -208,7 +208,17 @@ export function CalendarPage() {
             <tbody>
               {m.units.map((u) => (
                 <tr key={u.us}>
-                  <td>{u.us}</td>
+                  <td>
+                    <a
+                      className="us-link"
+                      href={`https://allqs.saqa.org.za/showUnitStandard.php?id=${u.us}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`View US ${u.us} on SAQA`}
+                    >
+                      {u.us}
+                    </a>
+                  </td>
                   <td>{u.title}</td>
                   <td>{u.dates}</td>
                   <td>{u.time}</td>
