@@ -7,7 +7,7 @@ import { loadProfiles, usePoe } from "../store";
 import { Avatar } from "../components/Avatar";
 import { Ring } from "../components/Ring";
 
-const MAX_FILE_MB = 4;
+const MAX_FILE_MB = 10;
 
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;

@@ -617,7 +617,7 @@ export function ModulePage({
   );
 }
 
-const MAX_SLIDE_MB = 4;
+const MAX_SLIDE_MB = 10;
 
 function readAsDataURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
