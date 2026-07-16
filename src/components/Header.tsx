@@ -34,12 +34,21 @@ function SessionClock() {
     return () => clearInterval(t);
   }, []);
 
-  const sim = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-  const simMin = sim / 60;
+  const sessionDay = new Date(`${SESSION_DATE} 00:00`);
+  const isSessionDay =
+    now.getFullYear() === sessionDay.getFullYear() &&
+    now.getMonth() === sessionDay.getMonth() &&
+    now.getDate() === sessionDay.getDate();
+
+  const simMin = (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 60;
   let label = "";
   let ends: number | null = null; // end of the current session, minutes since midnight
 
-  if (SCHEDULE.length) {
+  if (!SCHEDULE.length) {
+    label = "";
+  } else if (!isSessionDay) {
+    label = now < sessionDay ? `Session starts ${SESSION_DATE}, 09:00` : "Session concluded";
+  } else {
     const current = SCHEDULE.find((s) => simMin >= s.start && simMin < s.end);
     if (current) {
       label = current.title;
@@ -48,6 +57,11 @@ function SessionClock() {
     else label = "Session complete — well done";
   }
 
+  const today = now.toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
   const hh = String(now.getHours()).padStart(2, "0");
   const mm = String(now.getMinutes()).padStart(2, "0");
   const ss = String(now.getSeconds()).padStart(2, "0");
@@ -62,7 +76,7 @@ function SessionClock() {
       title={`Session clock — the session starts at 09:00 on ${SESSION_DATE}`}
     >
       <Icon name="clock" size={16} />
-      <span className="date">{SESSION_DATE}</span>
+      <span className="date">{today}</span>
       <span className="time">
         {hh}:{mm}:{ss}
       </span>
