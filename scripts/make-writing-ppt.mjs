@@ -70,10 +70,10 @@ function slide() {
 
 function eyebrowTitle(s, eyebrow, title) {
   s.addText(eyebrow.toUpperCase(), {
-    x: MX, y: 0.3, w: CW, h: 0.36, fontFace: BODY_FONT, fontSize: 13, bold: true, color: BLUE, charSpacing: 2,
+    x: MX, y: 0.28, w: CW, h: 0.38, fontFace: BODY_FONT, fontSize: 14, bold: true, color: BLUE, charSpacing: 2,
   });
   s.addText(title, {
-    x: MX, y: 0.66, w: CW, h: 0.82, fontFace: TITLE_FONT, fontSize: 31, bold: true, color: NAVY,
+    x: MX, y: 0.64, w: CW, h: 0.86, fontFace: TITLE_FONT, fontSize: 34, bold: true, color: NAVY,
   });
 }
 
@@ -84,7 +84,7 @@ function card(s, x, y, w, h, { fill = WHITE, line = BORDER } = {}) {
 }
 
 /** Large-type paragraphs. paras = string[] */
-function bigParas(s, paras, { y = 1.7, h = H - 2.35, fontSize = 16 } = {}) {
+function bigParas(s, paras, { y = 1.7, h = H - 2.35, fontSize = 18 } = {}) {
   s.addText(
     paras.map((p, i) => ({
       text: p + (i < paras.length - 1 ? "\n" : ""),
@@ -95,7 +95,7 @@ function bigParas(s, paras, { y = 1.7, h = H - 2.35, fontSize = 16 } = {}) {
 }
 
 /** Large-type bullet list */
-function bigBullets(s, items, { y = 1.75, h = H - 2.4, fontSize = 17, intro } = {}) {
+function bigBullets(s, items, { y = 1.75, h = H - 2.4, fontSize = 19, intro } = {}) {
   const runs = [];
   if (intro) runs.push({ text: intro + "\n", options: { fontSize, color: NAVY, paraSpaceAfter: 12 } });
   items.forEach((t) =>
@@ -108,7 +108,7 @@ function bigBullets(s, items, { y = 1.75, h = H - 2.4, fontSize = 17, intro } = 
 }
 
 /** Stacked labelled cards: items = [{t, d}] */
-function stackCards(s, items, { y = 1.75, h = H - 2.45, fontSize = 14.5 } = {}) {
+function stackCards(s, items, { y = 1.75, h = H - 2.45, fontSize = 16 } = {}) {
   const gap = 0.22;
   const ch = (h - gap * (items.length - 1)) / items.length;
   items.forEach((it, i) => {
@@ -122,7 +122,7 @@ function stackCards(s, items, { y = 1.75, h = H - 2.45, fontSize = 14.5 } = {}) 
   });
 }
 
-function dataTable(s, header, rows, { y = 1.75, colW, fontSize = 14, rowH = 0.5 } = {}) {
+function dataTable(s, header, rows, { y = 1.75, colW, fontSize = 15.5, rowH = 0.5 } = {}) {
   const tableRows = [
     header.map((t) => ({ text: t, options: { bold: true, color: WHITE, fill: { color: BLUE }, fontFace: TITLE_FONT, fontSize } })),
     ...rows.map((r, i) =>
@@ -166,7 +166,7 @@ function dataTable(s, header, rows, { y = 1.75, colW, fontSize = 14, rowH = 0.5 
     ["Verifying reported information", "How report information is checked against requirements and approved for distribution", "9"],
     ["Question Session 1", "Your knowledge of this section is assessed with the questions", "10"],
     ["Self-assessment", "Check the progress you have made and arrange support to become competent", "12"],
-  ], { y: 1.85, colW: [3.6, 7.6, 1.03], fontSize: 15, rowH: 0.72 });
+  ], { y: 1.85, colW: [3.6, 7.6, 1.03], fontSize: 16.5, rowH: 0.78 });
 }
 
 /* ============================================================ 3 · ALIGNMENT INDEX */
@@ -175,17 +175,17 @@ function dataTable(s, header, rows, { y = 1.75, colW, fontSize = 14, rowH = 0.5 
   eyebrowTitle(s, "Specific outcomes and related assessment criteria", "Alignment Index — Specific Outcomes");
   card(s, MX, 1.8, CW, 0.72, { fill: LIGHT });
   s.addText([
-    { text: "SO 1   ", options: { bold: true, color: BLUE, fontSize: 16, fontFace: TITLE_FONT } },
-    { text: "The demonstrated ability to make decisions and consider options when:", options: { color: NAVY, fontSize: 16 } },
+    { text: "SO 1   ", options: { bold: true, color: BLUE, fontSize: 18, fontFace: TITLE_FONT } },
+    { text: "The demonstrated ability to make decisions and consider options when:", options: { color: NAVY, fontSize: 18 } },
   ], { x: MX + 0.25, y: 1.8, w: CW - 0.5, h: 0.72, fontFace: BODY_FONT, valign: "middle" });
   bigBullets(s, [
     "Relating the purpose and content of a range of reports to the information needs of business",
     "Recognising appropriate information resources and organisational procedures for obtaining and distributing confidential information",
     "Applying a range of techniques for compiling reports, ensuring content and format are appropriate to information requirements and that reporting deadlines are met",
     "Liaising with relevant parties and verifying reported information is in accordance with requirements, compiling and distributing additional commentary/information where required",
-  ], { y: 2.75, h: 3.35, fontSize: 15.5 });
-  s.addShape(pptx.ShapeType.roundRect, { x: MX, y: 6.25, w: 2.2, h: 0.52, rectRadius: 0.26, fill: { color: NAVY } });
-  s.addText("AC 1 — as for SO 1", { x: MX, y: 6.25, w: 2.2, h: 0.52, fontFace: BODY_FONT, fontSize: 12.5, bold: true, color: WHITE, align: "center", valign: "middle" });
+  ], { y: 2.75, h: 3.35, fontSize: 17 });
+  s.addShape(pptx.ShapeType.roundRect, { x: MX, y: 6.35, w: 2.5, h: 0.56, rectRadius: 0.28, fill: { color: NAVY } });
+  s.addText("AC 1 — as for SO 1", { x: MX, y: 6.35, w: 2.5, h: 0.56, fontFace: BODY_FONT, fontSize: 14, bold: true, color: WHITE, align: "center", valign: "middle" });
 }
 
 /* ============================================================ 4 · CCFO */
@@ -206,8 +206,8 @@ function dataTable(s, header, rows, { y = 1.75, colW, fontSize = 14, rowH = 0.5 
     card(s, cx, cy, cw, chh, { fill: i % 3 ? WHITE : LIGHT });
     s.addShape(pptx.ShapeType.rect, { x: cx, y: cy, w: 0.09, h: chh, fill: { color: BLUE } });
     s.addText([
-      { text: t + "\n", options: { bold: true, color: NAVY, fontSize: 18, fontFace: TITLE_FONT } },
-      { text: d, options: { color: NAVY, fontSize: 14.5, fontFace: BODY_FONT } },
+      { text: t + "\n", options: { bold: true, color: NAVY, fontSize: 20, fontFace: TITLE_FONT } },
+      { text: d, options: { color: NAVY, fontSize: 16, fontFace: BODY_FONT } },
     ], { x: cx + 0.3, y: cy + 0.15, w: cw - 0.55, h: chh - 0.3, valign: "top", lineSpacingMultiple: 1.1 });
   });
 }
@@ -220,7 +220,7 @@ function dataTable(s, header, rows, { y = 1.75, colW, fontSize = 14, rowH = 0.5 
     "Because we are dealing with business communication, this section is based on business communication, but the remainder of the types of reports do not differ much from this type of report. By practising how to write an internal report on a business related matter, we will prepare you to learn the basics of report writing so that you may develop to writing more advanced and specific reports as you move up in your career.",
     "There are a few general rules about report writing. A report should be a formal document and should be in the past tense as far as possible, as well as avoiding the use of first or second person pronouns. There should be a simple numbering system with clear headings.",
     "Before we start writing reports in business, we need to understand what the purpose of the report is — i.e. the outcome, or required outcome thereof — as well as the manner (style) in which the report must be written. Writing a report in a style which is not suited to its audience or readers will not be professional. Therefore we must understand what we need to put into the report and phrase it appropriately so that the readers understand the information being given to them.",
-  ], { y: 1.8, fontSize: 15.5 });
+  ], { y: 1.8, fontSize: 17 });
 }
 
 /* ============================================================ 6 · STYLE */
@@ -235,14 +235,14 @@ function dataTable(s, header, rows, { y = 1.75, colW, fontSize = 14, rowH = 0.5 
   ], {
     y: 1.8,
     h: 3.3,
-    fontSize: 17,
+    fontSize: 19,
     intro: "To be completely successful, a report which makes recommendations must ensure that the persons for whom the report is intended:",
   });
   card(s, MX, 5.15, CW, 1.5, { fill: LIGHT });
   addIcon(s, "pen", MX + 0.25, 5.4, 0.36);
   s.addText(
     "Achieving this demands more of you than merely presenting relevant facts accurately. It also demands that you communicate in a way that is both acceptable and intelligible to the readers.",
-    { x: MX + 0.75, y: 5.3, w: CW - 1.05, h: 1.2, fontFace: BODY_FONT, fontSize: 15.5, color: NAVY, valign: "middle", lineSpacingMultiple: 1.1 }
+    { x: MX + 0.75, y: 5.3, w: CW - 1.05, h: 1.2, fontFace: BODY_FONT, fontSize: 17, color: NAVY, valign: "middle", lineSpacingMultiple: 1.1 }
   );
 }
 
@@ -254,7 +254,7 @@ function dataTable(s, header, rows, { y = 1.75, colW, fontSize = 14, rowH = 0.5 
     { t: "Selectivity", d: "Careful choice of words can enable you to convey many subtleties of meaning." },
     { t: "Accuracy", d: "Check that everything you write is factually accurate and capable of being verified. Arguments should be soundly based and your reasoning logical. Do not write anything that will misinform, mislead or unfairly persuade your readers — accurate information is essential for effective communication and decision making." },
     { t: "Objectivity", d: "A report should not be an essay reflecting personal emotions and opinions. Look at all sides of a problem with an open mind before stating conclusions. Showing an open mind makes your conclusions and recommendations more acceptable — the emphasis is on the factual material and conclusions drawn, not on personal beliefs, biases or prejudices." },
-  ], { y: 1.8, h: 4.95, fontSize: 14 });
+  ], { y: 1.8, h: 4.95, fontSize: 15 });
 }
 
 /* ============================================================ 8 · QUALITIES 2 */
@@ -265,7 +265,7 @@ function dataTable(s, header, rows, { y = 1.75, colW, fontSize = 14, rowH = 0.5 
     { t: "Conciseness", d: "'Veni, Vidi, Vici' (I came, I saw, I conquered) — that is how Julius Caesar reported his visit. While your reports won't be this short, aim to keep them concise. Do not mistake brevity for conciseness: a brief report may omit important information; a concise report is short but keeps all essential details." },
     { t: "Clarity & Consistency", d: "The best way to achieve clarity is to allow time between the first draft and its revision — over a weekend, or at least overnight. If under pressure, at least leave it over a lunch or coffee break. A period of time thinking of other things lets you return with objectivity." },
     { t: "Simplicity", d: "If your writing is selective, accurate, objective, concise, clear and consistent, it will also be as simple as it can be. Guard against over-simplifying to the point of leaving out information the reader needs. Keep the reader in mind and ask whether they can follow the logic of your presentation." },
-  ], { y: 1.8, h: 4.95, fontSize: 14 });
+  ], { y: 1.8, h: 4.95, fontSize: 15 });
 }
 
 /* ============================================================ 9 · POINTLESS WORDS */
@@ -275,12 +275,12 @@ function dataTable(s, header, rows, { y = 1.75, colW, fontSize = 14, rowH = 0.5 
   bigParas(s, [
     "Some words and phrases — like 'basically', 'actually', 'undoubtedly', 'each and every one' and 'during the course of our investigation' — keep cropping up in reports. Yet they add nothing to the message and often can be removed without changing the meaning or the tone.",
     "Try leaving them out of your writing. You will find your sentences survive, succeed and may even flourish without them.",
-  ], { y: 1.9, fontSize: 17 });
+  ], { y: 1.9, fontSize: 19 });
   card(s, MX, 4.4, CW, 1.7, { fill: LIGHT });
   addIcon(s, "check", MX + 0.25, 4.65, 0.36);
   s.addText([
-    { text: "TRY THIS   ", options: { bold: true, color: BLUE, fontSize: 12.5, charSpacing: 1.5 } },
-    { text: "Take a paragraph you wrote this week and strike out every filler word. Read it again — the meaning stays, the message gets stronger.", options: { color: NAVY, fontSize: 15.5 } },
+    { text: "TRY THIS   ", options: { bold: true, color: BLUE, fontSize: 13.5, charSpacing: 1.5 } },
+    { text: "Take a paragraph you wrote this week and strike out every filler word. Read it again — the meaning stays, the message gets stronger.", options: { color: NAVY, fontSize: 17 } },
   ], { x: MX + 0.75, y: 4.55, w: CW - 1.05, h: 1.4, fontFace: BODY_FONT, valign: "middle", lineSpacingMultiple: 1.1 });
 }
 
@@ -291,7 +291,7 @@ function dataTable(s, header, rows, { y = 1.75, colW, fontSize = 14, rowH = 0.5 
   bigParas(s, [
     "Types of reports can vary greatly; they can range from an experimental report to an environmental impact statement. There is, however, a basic structure common to most reports, irrespective of their type.",
     "The major components of a general report are shown on the next slide — from the title page through to the appendices.",
-  ], { y: 2.0, fontSize: 17.5 });
+  ], { y: 2.0, fontSize: 20 });
   addIcon(s, "book", W / 2 - 0.5, 4.6, 1.0, "#" + BORDER);
 }
 
@@ -309,7 +309,7 @@ function dataTable(s, header, rows, { y = 1.75, colW, fontSize = 14, rowH = 0.5 
     ["Recommendations", "What do you recommend as a course of action following your conclusion?"],
     ["References", "A list of all the sources you used"],
     ["Appendices", "Any information (graphs, charts, tables or other data) used but not included in the body"],
-  ], { y: 1.7, colW: [2.9, 9.33], fontSize: 12.5, rowH: 0.52 });
+  ], { y: 1.62, colW: [2.9, 9.33], fontSize: 13.5, rowH: 0.56 });
 }
 
 /* ============================================================ 12 · TYPES OF REPORTS */
@@ -326,7 +326,7 @@ function dataTable(s, header, rows, { y = 1.75, colW, fontSize = 14, rowH = 0.5 
     "A company report or a Company Accident Report",
     "An Annual Report by a Chairman or a Treasurer",
     "An internal report on a business related matter following an investigation or collection of data",
-  ], { y: 1.85, fontSize: 16.5 });
+  ], { y: 1.85, fontSize: 18.5 });
 }
 
 /* ============================================================ 13 · SAMPLE OVERVIEW */
@@ -334,7 +334,7 @@ function dataTable(s, header, rows, { y = 1.75, colW, fontSize = 14, rowH = 0.5 
   const s = slide();
   eyebrowTitle(s, "Worked examples", "Investec Sample Reports — 7 Worked Models");
   s.addText("Use these models to practise matching report type, purpose, audience and recommended action.", {
-    x: MX, y: 1.55, w: CW, h: 0.4, fontFace: BODY_FONT, fontSize: 14.5, color: GREY,
+    x: MX, y: 1.55, w: CW, h: 0.4, fontFace: BODY_FONT, fontSize: 16, color: GREY,
   });
   dataTable(s, ["No.", "Report type", "Investec systems support example"], [
     ["1", "Incident", "Online Banking login outage — immediate facts, impact, action taken and escalation"],
@@ -344,22 +344,22 @@ function dataTable(s, header, rows, { y = 1.75, colW, fontSize = 14, rowH = 0.5 
     ["5", "Project status", "Windows 11 pilot rollout — progress, risks, issues and next steps"],
     ["6", "Project status", "Branch Wi-Fi upgrade — milestone status and blockers"],
     ["7", "Recommendation", "Service desk knowledge base — proposed solution, cost and decision needed"],
-  ], { y: 2.05, colW: [0.85, 2.5, 8.88], fontSize: 13.5, rowH: 0.56 });
+  ], { y: 2.05, colW: [0.85, 2.5, 8.88], fontSize: 15, rowH: 0.62 });
 }
 
 /* ============================================================ 14–16 · SAMPLE PAIRS */
 function samplePair(eyebrow, title, intro, a, b) {
   const s = slide();
   eyebrowTitle(s, eyebrow, title);
-  s.addText(intro, { x: MX, y: 1.55, w: CW, h: 0.45, fontFace: BODY_FONT, fontSize: 15, color: GREY });
+  s.addText(intro, { x: MX, y: 1.55, w: CW, h: 0.45, fontFace: BODY_FONT, fontSize: 16.5, color: GREY });
   const items = [a, b];
   items.forEach((it, i) => {
     const cy = 2.15 + i * 2.4;
     card(s, MX, cy, CW, 2.2, { fill: i % 2 ? LIGHT : WHITE });
     s.addShape(pptx.ShapeType.rect, { x: MX, y: cy, w: 0.09, h: 2.2, fill: { color: BLUE } });
     s.addText([
-      { text: it.t + "\n", options: { bold: true, color: NAVY, fontSize: 17, fontFace: TITLE_FONT } },
-      { text: it.d, options: { color: NAVY, fontSize: 14, fontFace: BODY_FONT } },
+      { text: it.t + "\n", options: { bold: true, color: NAVY, fontSize: 19, fontFace: TITLE_FONT } },
+      { text: it.d, options: { color: NAVY, fontSize: 15.5, fontFace: BODY_FONT } },
     ], { x: MX + 0.3, y: cy + 0.14, w: CW - 0.58, h: 1.95, valign: "top", lineSpacingMultiple: 1.1 });
   });
   return s;
@@ -394,19 +394,19 @@ samplePair(
   const s = slide();
   eyebrowTitle(s, "Worked examples · recommendation", "Sample Recommendation Report");
   s.addText("Recommendation reports answer: Which option should management approve, why, by when, and at what cost or risk?", {
-    x: MX, y: 1.55, w: CW, h: 0.45, fontFace: BODY_FONT, fontSize: 15, color: GREY,
+    x: MX, y: 1.55, w: CW, h: 0.45, fontFace: BODY_FONT, fontSize: 16.5, color: GREY,
   });
   card(s, MX, 2.15, CW, 1.0, { fill: LIGHT });
   s.addShape(pptx.ShapeType.rect, { x: MX, y: 2.15, w: 0.09, h: 1.0, fill: { color: BLUE } });
   s.addText([
-    { text: "Service desk knowledge base:  ", options: { bold: true, color: NAVY, fontSize: 16.5, fontFace: TITLE_FONT } },
-    { text: "Implement a searchable knowledge base for recurring support issues by 30 November 2026.", options: { color: NAVY, fontSize: 15.5 } },
+    { text: "Service desk knowledge base:  ", options: { bold: true, color: NAVY, fontSize: 18, fontFace: TITLE_FONT } },
+    { text: "Implement a searchable knowledge base for recurring support issues by 30 November 2026.", options: { color: NAVY, fontSize: 17 } },
   ], { x: MX + 0.3, y: 2.15, w: CW - 0.58, h: 1.0, fontFace: BODY_FONT, valign: "middle", lineSpacingMultiple: 1.08 });
   stackCards(s, [
     { t: "Evidence", d: "Password resets, VPN setup, printer mapping and Teams audio issues account for 41% of first-line requests." },
     { t: "Recommended option", d: "Use the existing ITSM knowledge module because it avoids new licensing costs, supports approval workflows and links articles directly to tickets." },
     { t: "Approval requested", d: "Assign two analysts for article creation and require monthly review by team leads." },
-  ], { y: 3.4, h: 3.3, fontSize: 14 });
+  ], { y: 3.4, h: 3.3, fontSize: 15.5 });
 }
 
 /* ============================================================ 18 · RESOURCES */
@@ -416,7 +416,7 @@ samplePair(
   bigParas(s, [
     "Firstly, all information which is available in the organisation must always be seen as confidential information. When information is made available to competitors, they may gain the upper hand and copy concepts and ideas from the organisation — which could lead to serious financial implications.",
     "Information centres in the organisation — such as operations, finance, research and development, and human resources — will have information about the organisation and will be able to give an authorised individual all the information they may need.",
-  ], { y: 2.0, fontSize: 17 });
+  ], { y: 2.0, fontSize: 19 });
   addIcon(s, "database", W / 2 - 0.5, 5.1, 1.0, "#" + BORDER);
 }
 
@@ -431,7 +431,7 @@ samplePair(
     "Human resource needs / expectations",
     "Company vision regarding the long-term expectations and future of the organisation",
     "Project-specific information of certain aspects of projects undertaken by the organisation",
-  ], { y: 1.9, fontSize: 17.5, intro: "Information can include, but is not limited to:" });
+  ], { y: 1.9, fontSize: 19.5, intro: "Information can include, but is not limited to:" });
 }
 
 /* ============================================================ 20 · DISTRIBUTING */
@@ -442,7 +442,7 @@ samplePair(
     "Distributing information about the organisation must be handled in a very delicate manner and the recipients of such information must be selected carefully. Depending on the severity of the information and the level of security and/or risk attached to it, recipients should be graded on whether or not they are liable to obtain such information.",
     "Most information will be distributed to individuals in the organisation depending on their need for it. The information should be relevant to their needs and their use.",
     "For example: if the marketing department is included in the distribution of a new marketing campaign, the information given to them should purely be on the new product/service and how it will influence and/or attract customers, including the expected target market. They need not know the amount spent on the research and development costs of the new product.",
-  ], { y: 1.8, fontSize: 15.5 });
+  ], { y: 1.8, fontSize: 17 });
 }
 
 /* ============================================================ 21 · VERIFYING */
@@ -454,7 +454,7 @@ samplePair(
     "The person who wrote the report will get another person to read through it — with the required outlines and requirements at hand — and critique it. This gives a second opinion, ensures all required information is present, and checks the report for bias toward the readers.",
     "In many cases, once critiqued and sent for proofing, the report is handed to the head of the department for approval at least a week in advance of the expected delivery date, allowing time to give feedback on add-ons and irrelevant information.",
     "Throughout, organisational procedures must be strictly followed and adhered to, so that set protocols are followed for gathering and distributing the information — ensuring the report is true to its requirements and contains sufficient, but not too much, information.",
-  ], { y: 1.75, fontSize: 14.5 });
+  ], { y: 1.75, fontSize: 16 });
 }
 
 /* ============================================================ 22 · ACTIVITY */
@@ -472,8 +472,8 @@ samplePair(
   items.forEach((t, i) => {
     const cy = 1.8 + i * 0.82;
     s.addShape(pptx.ShapeType.ellipse, { x: MX, y: cy, w: 0.5, h: 0.5, fill: { color: BLUE } });
-    s.addText(String(i + 1), { x: MX, y: cy, w: 0.5, h: 0.5, fontFace: TITLE_FONT, fontSize: 17, bold: true, color: WHITE, align: "center", valign: "middle" });
-    s.addText(t, { x: MX + 0.72, y: cy - 0.05, w: CW - 0.9, h: 0.62, fontFace: BODY_FONT, fontSize: 15.5, color: NAVY, valign: "middle" });
+    s.addText(String(i + 1), { x: MX, y: cy, w: 0.5, h: 0.5, fontFace: TITLE_FONT, fontSize: 18, bold: true, color: WHITE, align: "center", valign: "middle" });
+    s.addText(t, { x: MX + 0.72, y: cy - 0.05, w: CW - 0.9, h: 0.62, fontFace: BODY_FONT, fontSize: 17.5, color: NAVY, valign: "middle" });
   });
 }
 
@@ -482,7 +482,7 @@ samplePair(
   const s = slide();
   eyebrowTitle(s, "Self-assessment", "Self-Assessment — Be Honest With Yourself");
   s.addText("Tick the box with a ✓ or an ✗ to indicate your response.", {
-    x: MX, y: 1.55, w: CW, h: 0.4, fontFace: BODY_FONT, fontSize: 14.5, color: GREY,
+    x: MX, y: 1.55, w: CW, h: 0.4, fontFace: BODY_FONT, fontSize: 16, color: GREY,
   });
   const items = [
     "I am able to identify and explain different types of reports used in organisations",
@@ -494,13 +494,13 @@ samplePair(
   items.forEach((t, i) => {
     const cy = 2.1 + i * 0.72;
     s.addShape(pptx.ShapeType.roundRect, { x: MX, y: cy + 0.06, w: 0.42, h: 0.42, rectRadius: 0.07, fill: { color: WHITE }, line: { color: BLUE, width: 1.5 } });
-    s.addText(t, { x: MX + 0.66, y: cy - 0.03, w: CW - 0.9, h: 0.62, fontFace: BODY_FONT, fontSize: 15, color: NAVY, valign: "middle" });
+    s.addText(t, { x: MX + 0.66, y: cy - 0.03, w: CW - 0.9, h: 0.62, fontFace: BODY_FONT, fontSize: 16.5, color: NAVY, valign: "middle" });
   });
   card(s, MX, 5.9, CW, 1.0, { fill: LIGHT });
   addIcon(s, "target", MX + 0.25, 6.15, 0.36);
   s.addText(
     "Think about any point you could not tick. Write it down as a goal, decide on a plan of action to achieve it, and review your goals regularly.",
-    { x: MX + 0.75, y: 6.0, w: CW - 1.05, h: 0.8, fontFace: BODY_FONT, fontSize: 14.5, color: NAVY, valign: "middle", lineSpacingMultiple: 1.1 }
+    { x: MX + 0.75, y: 6.0, w: CW - 1.05, h: 0.8, fontFace: BODY_FONT, fontSize: 16, color: NAVY, valign: "middle", lineSpacingMultiple: 1.1 }
   );
 }
 
