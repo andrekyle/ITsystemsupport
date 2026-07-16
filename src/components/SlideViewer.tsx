@@ -32,6 +32,28 @@ function Presenter({ src, onClose }: { src: string; onClose: () => void }) {
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(0);
   const pagesRef = useRef(0);
+  const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const zoomRef = useRef(1);
+  zoomRef.current = zoom;
+  const dragRef = useRef<{ x: number; y: number; ox: number; oy: number; moved: boolean } | null>(
+    null
+  );
+
+  const applyZoom = (nz: number, cx?: number, cy?: number) => {
+    const prev = zoomRef.current;
+    const z = Math.min(4, Math.max(1, nz));
+    setZoom(z);
+    setOffset((o) => {
+      if (z === 1) return { x: 0, y: 0 };
+      if (cx === undefined || cy === undefined) return o;
+      // keep the point under the cursor stationary while zooming
+      const px = cx - window.innerWidth / 2;
+      const py = cy - window.innerHeight / 2;
+      const k = z / prev;
+      return { x: px - k * (px - o.x), y: py - k * (py - o.y) };
+    });
+  };
 
   // Load the PDF.
   useEffect(() => {
@@ -69,14 +91,25 @@ function Presenter({ src, onClose }: { src: string; onClose: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Clicker / keyboard navigation.
+  // Clicker / keyboard navigation (+ zoom keys).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (NEXT_KEYS.includes(e.key)) {
+      if (e.key === "+" || e.key === "=") {
         e.preventDefault();
+        applyZoom(zoomRef.current * 1.25);
+      } else if (e.key === "-" || e.key === "_") {
+        e.preventDefault();
+        applyZoom(zoomRef.current / 1.25);
+      } else if (e.key === "0") {
+        e.preventDefault();
+        applyZoom(1);
+      } else if (NEXT_KEYS.includes(e.key)) {
+        e.preventDefault();
+        applyZoom(1);
         setPage((p) => Math.min(p + 1, pagesRef.current || p));
       } else if (PREV_KEYS.includes(e.key)) {
         e.preventDefault();
+        applyZoom(1);
         setPage((p) => Math.max(1, p - 1));
       } else if (e.key === "Home") {
         e.preventDefault();
@@ -93,7 +126,22 @@ function Presenter({ src, onClose }: { src: string; onClose: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Render the current slide, scaled to fill the screen.
+  // Mouse-wheel / trackpad zoom, anchored at the cursor.
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      applyZoom(zoomRef.current * factor, e.clientX, e.clientY);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Render the current slide, scaled to fill the screen (re-rendered sharper when zoomed).
+  const renderZoom = Math.min(zoom, 2.5);
   useEffect(() => {
     let cancelled = false;
     async function render() {
@@ -106,7 +154,7 @@ function Presenter({ src, onClose }: { src: string; onClose: () => void }) {
         const base = p.getViewport({ scale: 1 });
         const fit = Math.min(window.innerWidth / base.width, window.innerHeight / base.height);
         const dpr = window.devicePixelRatio || 1;
-        const viewport = p.getViewport({ scale: fit * dpr });
+        const viewport = p.getViewport({ scale: fit * dpr * renderZoom });
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         canvas.style.width = `${viewport.width / dpr}px`;
@@ -123,21 +171,55 @@ function Presenter({ src, onClose }: { src: string; onClose: () => void }) {
       cancelled = true;
       window.removeEventListener("resize", onResize);
     };
-  }, [page, pages]);
+  }, [page, pages, renderZoom]);
 
   return (
     <div
       className="presenter"
       ref={wrapRef}
+      onPointerDown={(e) => {
+        if (zoomRef.current > 1) {
+          dragRef.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y, moved: false };
+          (e.target as Element).setPointerCapture?.(e.pointerId);
+        }
+      }}
+      onPointerMove={(e) => {
+        const d = dragRef.current;
+        if (!d) return;
+        const dx = e.clientX - d.x;
+        const dy = e.clientY - d.y;
+        if (Math.abs(dx) + Math.abs(dy) > 3) d.moved = true;
+        setOffset({ x: d.ox + dx, y: d.oy + dy });
+      }}
+      onPointerUp={() => {
+        // keep the moved flag until the click event fires, then clear it
+        setTimeout(() => {
+          if (dragRef.current) dragRef.current = null;
+        }, 0);
+      }}
+      onDoubleClick={(e) => {
+        applyZoom(zoomRef.current > 1 ? 1 : 2.5, e.clientX, e.clientY);
+      }}
       onClick={(e) => {
+        if (dragRef.current?.moved) {
+          dragRef.current = null;
+          return;
+        }
+        if (zoomRef.current > 1) return; // when zoomed, clicks are for panning
         if (e.clientX < window.innerWidth / 3) setPage((p) => Math.max(1, p - 1));
         else setPage((p) => Math.min(p + 1, pagesRef.current || p));
       }}
     >
       {pages === 0 && <div className="loading">Loading presentation…</div>}
-      <canvas ref={canvasRef} />
+      <canvas
+        ref={canvasRef}
+        style={{
+          transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom / renderZoom})`,
+        }}
+      />
       {pages > 0 && (
         <div className="count">
+          {zoom > 1 ? `${Math.round(zoom * 100)}% · ` : ""}
           {page} / {pages}
         </div>
       )}

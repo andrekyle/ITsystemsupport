@@ -3059,12 +3059,13 @@ a.plan-ppt:hover {
   align-items: center;
   justify-content: center;
   cursor: none;
+  overflow: hidden;
+  touch-action: none;
 }
 
 .presenter canvas {
   display: block;
-  max-width: 100vw;
-  max-height: 100vh;
+  flex-shrink: 0;
 }
 
 .presenter .count {
