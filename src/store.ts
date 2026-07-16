@@ -251,6 +251,46 @@ export function useSharedSettings(): [SharedSettings, (patch: Partial<SharedSett
   return [settings, update];
 }
 
+/* ---------- Appendix C checklist (per profile) ---------- */
+
+export type ChecklistTick = "yes" | "no";
+
+const checklistKey = (profileId: string) => `itss.checklist.${profileId}`;
+
+export function useChecklist(profileId: string) {
+  const [ticks, setTicks] = useState<Record<string, ChecklistTick>>(() =>
+    read<Record<string, ChecklistTick>>(checklistKey(profileId), {})
+  );
+
+  useEffect(() => {
+    setTicks(read<Record<string, ChecklistTick>>(checklistKey(profileId), {}));
+  }, [profileId]);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === checklistKey(profileId)) {
+        setTicks(read<Record<string, ChecklistTick>>(checklistKey(profileId), {}));
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [profileId]);
+
+  const setTick = useCallback(
+    (itemId: string, value: ChecklistTick | null) => {
+      const fresh = read<Record<string, ChecklistTick>>(checklistKey(profileId), {});
+      const next = { ...fresh };
+      if (value === null) delete next[itemId];
+      else next[itemId] = value;
+      write(checklistKey(profileId), next);
+      setTicks(next);
+    },
+    [profileId]
+  );
+
+  return { ticks, setTick };
+}
+
 /* ---------- POE documents (stored separately per profile) ---------- */
 
 const poeKey = (profileId: string) => `itss.poe.${profileId}`;

@@ -3083,6 +3083,35 @@ a.plan-ppt:hover {
   font-size: 14.5px;
 }
 
+/* ============ Appendix C checklist ============ */
+
+.checklist-table {
+  margin-top: 8px;
+}
+
+.checklist-table th.no,
+.checklist-table td.no {
+  width: 44px;
+  text-align: center;
+}
+
+.checklist-table th.tick,
+.checklist-table td.tick {
+  width: 120px;
+  text-align: center;
+}
+
+.checklist-table td.sub {
+  padding-left: 42px;
+}
+
+.checklist-table input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--azure);
+  cursor: pointer;
+}
+
 /* ============ Model answers ============ */
 
 .ma-body {

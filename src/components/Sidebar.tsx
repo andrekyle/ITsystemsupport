@@ -21,6 +21,7 @@ export function Sidebar({ collapsed, route, progress, profile, navigate }: Props
     { page: "course" as const, icon: "book", label: "My Course" },
     { page: "progress" as const, icon: "trend", label: "Progress" },
     { page: "poe" as const, icon: "folder", label: "Portfolio of Evidence" },
+    { page: "checklist" as const, icon: "checklist", label: "Appendix C Checklist" },
     ...(isPrivileged
       ? [
           {

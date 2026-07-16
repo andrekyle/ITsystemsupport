@@ -332,7 +332,8 @@ export type PageId =
   | "poe"
   | "resources"
   | "profile"
-  | "students";
+  | "students"
+  | "checklist";
 
 export interface Route {
   page: PageId;
