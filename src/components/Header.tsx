@@ -5,8 +5,12 @@ import { getContent } from "../data/content";
 import { Avatar, fileToAvatar } from "./Avatar";
 
 /** Session schedule derived from the US 8252 lesson plan (starts 09:00). */
+const PLAN = getContent("8252")?.lessonPlan;
+/** The date the session takes place, from the lesson plan details. */
+const SESSION_DATE =
+  PLAN?.details?.find((d) => d.label === "Date")?.value.replace(/^\w+,\s*/, "") ?? "17 July 2026";
 const SCHEDULE = (() => {
-  const plan = getContent("8252")?.lessonPlan;
+  const plan = PLAN;
   if (!plan) return [] as { start: number; end: number; title: string }[];
   const [sh, sm] = (plan.startTime ?? "09:00").split(":").map(Number);
   let clock = sh * 60 + sm;
@@ -66,8 +70,12 @@ function SessionClock() {
       : "";
 
   return (
-    <div className="header-clock" title="Session clock — follows the lesson plan from 09:00">
+    <div
+      className="header-clock"
+      title={`Session clock — the session starts at 09:00 on ${SESSION_DATE}`}
+    >
       <Icon name="clock" size={16} />
+      <span className="date">{SESSION_DATE}</span>
       <span className="time">
         {hh}:{mm}:{ss}
       </span>
