@@ -5,7 +5,7 @@ import type { PoeDoc, ProgressState, Profile, Route, UnitActivity } from "../typ
 import { UNIT_ACTIVITIES, isStaff } from "../types";
 import { COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit } from "../data/course";
 import { GLOSSARY, getContent } from "../data/content";
-import { moduleCompletion, unitCompletion, unitStatus, useNotes, usePlanSlides } from "../store";
+import { moduleCompletion, unitCompletion, unitStatus, useNotes, usePlanSlides, useSharedSettings } from "../store";
 import { Bar } from "../components/Ring";
 import { Quiz } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
@@ -688,6 +688,10 @@ export function UnitPage({
   const quizResult = progress.units[u.us]?.quiz;
   const isPrivileged = isStaff(profile.role);
   const isSuperUser = profile.role === "Super User";
+  const [sharedSettings, updateSharedSettings] = useSharedSettings();
+  // shared/staff-uploaded content may only be downloaded by the super user,
+  // unless the super user has explicitly allowed it for everyone
+  const canDownloadShared = isSuperUser || sharedSettings.allowSharedDownloads;
 
   const decks = planSlides
     .filter((s) => /\.pdf$/i.test(s.name) || s.type.includes("pdf"))
@@ -1543,15 +1547,17 @@ export function UnitPage({
           </div>
           {activeDeck && (
             <>
-              <a
-                className="btn ghost dl-sample plan-ppt"
-                href={activeDeck.href}
-                download={activeDeck.downloadName}
-              >
-                <Icon name="download" size={15} />
-                Download this file
-              </a>
-              <SlideViewer src={activeDeck.src} />
+              {canDownloadShared && (
+                <a
+                  className="btn ghost dl-sample plan-ppt"
+                  href={activeDeck.href}
+                  download={activeDeck.downloadName}
+                >
+                  <Icon name="download" size={15} />
+                  Download this file
+                </a>
+              )}
+              <SlideViewer src={activeDeck.src} allowDownload={canDownloadShared} />
             </>
           )}
         </>
@@ -1569,22 +1575,34 @@ export function UnitPage({
             Visible to facilitators, assessors, moderators and the super user only — session-by-session facilitation guide
             for this unit standard.
           </p>
-          <a
-            className="btn ghost dl-sample plan-ppt"
-            href="/downloads/US-8252-Compile-and-Produce-Reports-Training.pptx"
-            download
-          >
-            <Icon name="download" size={15} />
-            Download training slides (.pptx)
-          </a>
+          {canDownloadShared && (
+            <a
+              className="btn ghost dl-sample plan-ppt"
+              href="/downloads/US-8252-Compile-and-Produce-Reports-Training.pptx"
+              download
+            >
+              <Icon name="download" size={15} />
+              Download training slides (.pptx)
+            </a>
+          )}
           <button
             className="btn ghost dl-sample plan-ppt"
-            style={{ marginLeft: 10 }}
+            style={{ marginLeft: canDownloadShared ? 10 : 0 }}
             onClick={() => planFileRef.current?.click()}
           >
             <Icon name="presenter" size={15} />
             Upload course material (.pdf)
           </button>
+          {isSuperUser && (
+            <label className="share-dl-toggle">
+              <input
+                type="checkbox"
+                checked={sharedSettings.allowSharedDownloads}
+                onChange={(e) => updateSharedSettings({ allowSharedDownloads: e.target.checked })}
+              />
+              Allow everyone to download shared content
+            </label>
+          )}
           <input
             ref={planFileRef}
             type="file"
@@ -1618,7 +1636,7 @@ export function UnitPage({
                       })}
                     </span>
                   </span>
-                  {isSuperUser && (
+                  {canDownloadShared && (
                     <a className="poe-dl" href={s.data} download={s.name} title="Download">
                       <Icon name="download" size={17} />
                     </a>

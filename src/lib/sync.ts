@@ -15,7 +15,11 @@ const LOCAL_ONLY = new Set(["itss.session", "itss.route", "itss.theme"]);
 
 /** keys whose content is shared with every account (facilitator uploads) */
 function isShared(key: string) {
-  return key === "itss.notes.shared" || key.startsWith("itss.planslides.");
+  return (
+    key === "itss.notes.shared" ||
+    key === "itss.settings.shared" ||
+    key.startsWith("itss.planslides.")
+  );
 }
 
 let userId: string | null = null;

@@ -146,8 +146,10 @@ function Presenter({ src, onClose }: { src: string; onClose: () => void }) {
 }
 
 /** Displays a PDF deck natively in the browser — exactly as exported from PowerPoint. */
-export function SlideViewer({ src }: { src: string }) {
+export function SlideViewer({ src, allowDownload = true }: { src: string; allowDownload?: boolean }) {
   const [presenting, setPresenting] = useState(false);
+  // hide the native PDF toolbar (download/print) when downloads are not allowed
+  const frameSrc = allowDownload ? src : `${src}#toolbar=0&navpanes=0`;
 
   return (
     <div className="slide-viewer-wrap">
@@ -157,7 +159,7 @@ export function SlideViewer({ src }: { src: string }) {
           Present — full screen
         </button>
       </div>
-      <iframe className="slide-frame" src={src} title="Course material" />
+      <iframe className="slide-frame" src={frameSrc} title="Course material" />
       {presenting && <Presenter src={src} onClose={() => setPresenting(false)} />}
     </div>
   );

@@ -216,6 +216,41 @@ export function useProgress(profileId: string) {
   return { state, toggleActivity, saveQuizResult, setLogbookField };
 }
 
+/* ---------- shared app settings (controlled by the super user) ---------- */
+
+const SHARED_SETTINGS_KEY = "itss.settings.shared";
+
+export interface SharedSettings {
+  /** allow non-super users to download shared/staff-uploaded content */
+  allowSharedDownloads: boolean;
+}
+
+const DEFAULT_SHARED_SETTINGS: SharedSettings = { allowSharedDownloads: false };
+
+function readSharedSettings(): SharedSettings {
+  return { ...DEFAULT_SHARED_SETTINGS, ...read<Partial<SharedSettings>>(SHARED_SETTINGS_KEY, {}) };
+}
+
+export function useSharedSettings(): [SharedSettings, (patch: Partial<SharedSettings>) => void] {
+  const [settings, setSettings] = useState<SharedSettings>(readSharedSettings);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === SHARED_SETTINGS_KEY) setSettings(readSharedSettings());
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  const update = useCallback((patch: Partial<SharedSettings>) => {
+    const next = { ...readSharedSettings(), ...patch };
+    write(SHARED_SETTINGS_KEY, next);
+    setSettings(next);
+  }, []);
+
+  return [settings, update];
+}
+
 /* ---------- POE documents (stored separately per profile) ---------- */
 
 const poeKey = (profileId: string) => `itss.poe.${profileId}`;
