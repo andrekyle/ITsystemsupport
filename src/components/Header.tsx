@@ -22,6 +22,9 @@ const SCHEDULE = (() => {
   return out;
 })();
 
+/** TEST MODE: cycle to the next lesson-plan session every 5 seconds (set to false for the real 09:00 clock). */
+const CLOCK_TEST = true;
+
 /** Live clock that starts at 09:00 and describes the current lesson-plan session. */
 function SessionClock() {
   const [elapsed, setElapsed] = useState(0); // seconds since the clock started
@@ -30,19 +33,29 @@ function SessionClock() {
     return () => clearInterval(t);
   }, []);
 
-  const sim = 9 * 3600 + elapsed; // seconds since midnight, starting at 09:00
+  let sim: number; // seconds since midnight
+  let label = "";
+
+  if (CLOCK_TEST && SCHEDULE.length) {
+    // jump to the start of the next session every 5 seconds
+    const idx = Math.floor(elapsed / 5) % SCHEDULE.length;
+    const current = SCHEDULE[idx];
+    sim = current.start * 60 + (elapsed % 5);
+    label = current.title;
+  } else {
+    sim = 9 * 3600 + elapsed; // starting at 09:00
+    const simMin = sim / 60;
+    if (SCHEDULE.length) {
+      const current = SCHEDULE.find((s) => simMin >= s.start && simMin < s.end);
+      if (current) label = current.title;
+      else if (simMin < SCHEDULE[0].start) label = "Session starts soon";
+      else label = "Session complete — well done";
+    }
+  }
+
   const hh = String(Math.floor(sim / 3600)).padStart(2, "0");
   const mm = String(Math.floor((sim % 3600) / 60)).padStart(2, "0");
   const ss = String(sim % 60).padStart(2, "0");
-  const simMin = sim / 60;
-
-  let label = "";
-  if (SCHEDULE.length) {
-    const current = SCHEDULE.find((s) => simMin >= s.start && simMin < s.end);
-    if (current) label = current.title;
-    else if (simMin < SCHEDULE[0].start) label = "Session starts soon";
-    else label = "Session complete — well done";
-  }
 
   return (
     <div className="header-clock" title="Session clock — follows the lesson plan from 09:00">
