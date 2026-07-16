@@ -3085,6 +3085,18 @@ a.plan-ppt:hover {
 
 /* ============ Appendix C checklist ============ */
 
+/* US ID link to the SAQA registered unit standard */
+.us-link {
+  color: var(--azure);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.us-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .checklist-table {
   margin-top: 8px;
 }

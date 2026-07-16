@@ -302,7 +302,18 @@ export function ProgressPage({
                     style={{ cursor: "pointer" }}
                     onClick={() => navigate({ page: "unit", moduleId: m.id, unitId: u.us })}
                   >
-                    <td>{u.us}</td>
+                    <td>
+                      <a
+                        className="us-link"
+                        href={`https://allqs.saqa.org.za/showUnitStandard.php?id=${u.us}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`View US ${u.us} on SAQA`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {u.us}
+                      </a>
+                    </td>
                     <td>{u.title}</td>
                     <td>{u.nqf}</td>
                     <td>{u.credits}</td>
