@@ -35,6 +35,7 @@ function SessionClock() {
 
   let sim: number; // seconds since midnight
   let label = "";
+  let ends: number | null = null; // end of the current session, minutes since midnight
 
   if (CLOCK_TEST && SCHEDULE.length) {
     // jump to the start of the next session every 5 seconds
@@ -42,13 +43,16 @@ function SessionClock() {
     const current = SCHEDULE[idx];
     sim = current.start * 60 + (elapsed % 5);
     label = current.title;
+    ends = current.end;
   } else {
     sim = 9 * 3600 + elapsed; // starting at 09:00
     const simMin = sim / 60;
     if (SCHEDULE.length) {
       const current = SCHEDULE.find((s) => simMin >= s.start && simMin < s.end);
-      if (current) label = current.title;
-      else if (simMin < SCHEDULE[0].start) label = "Session starts soon";
+      if (current) {
+        label = current.title;
+        ends = current.end;
+      } else if (simMin < SCHEDULE[0].start) label = "Session starts soon";
       else label = "Session complete — well done";
     }
   }
@@ -56,6 +60,10 @@ function SessionClock() {
   const hh = String(Math.floor(sim / 3600)).padStart(2, "0");
   const mm = String(Math.floor((sim % 3600) / 60)).padStart(2, "0");
   const ss = String(sim % 60).padStart(2, "0");
+  const endLabel =
+    ends !== null
+      ? `ends ${String(Math.floor(ends / 60)).padStart(2, "0")}:${String(ends % 60).padStart(2, "0")}`
+      : "";
 
   return (
     <div className="header-clock" title="Session clock — follows the lesson plan from 09:00">
@@ -64,6 +72,7 @@ function SessionClock() {
         {hh}:{mm}:{ss}
       </span>
       {label && <span className="session">{label}</span>}
+      {endLabel && <span className="ends">{endLabel}</span>}
     </div>
   );
 }
