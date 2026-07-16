@@ -173,12 +173,12 @@ function PasswordEditor({
             placeholder="New password"
           />
         </div>
-        <button className="btn" type="submit" disabled={!pw}>
+        <button className="btn sm" type="submit" disabled={!pw}>
           <Icon name="checkCircle" size={15} />
           Save
         </button>
         {hasPassword && (
-          <button className="btn ghost" type="button" onClick={onClear}>
+          <button className="btn ghost sm" type="button" onClick={onClear}>
             Remove password
           </button>
         )}
@@ -407,7 +407,7 @@ function AdminPanel({
               <option value="Moderator">Moderator</option>
             </select>
           </div>
-          <button className="btn" type="submit">
+          <button className="btn sm" type="submit">
             <Icon name="checkCircle" size={15} />
             Save
           </button>
@@ -424,17 +424,18 @@ function AdminPanel({
               value={pw}
               onChange={(e) => setPw(e.target.value)}
               placeholder="New password"
+              autoComplete="new-password"
             />
           </div>
-          <button className="btn" type="button" disabled={!pw} onClick={setPassword}>
+          <button className="btn ghost sm" type="button" disabled={!pw} onClick={setPassword}>
             Set password
           </button>
           {student.passwordHash && (
-            <button className="btn ghost" type="button" onClick={resetPassword}>
+            <button className="btn ghost sm" type="button" onClick={resetPassword}>
               Reset (remove) password
             </button>
           )}
-          <button className="btn danger" type="button" onClick={onDelete}>
+          <button className="btn danger sm" type="button" onClick={onDelete}>
             Delete user
           </button>
         </div>

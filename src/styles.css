@@ -1228,6 +1228,22 @@ td .with-ico .ico {
   width: 100%;
 }
 
+.btn.sm {
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
+/* keep browser autofill from painting inputs blue */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset;
+  box-shadow: 0 0 0 1000px var(--surface) inset;
+  -webkit-text-fill-color: var(--ink);
+  caret-color: var(--ink);
+  transition: background-color 999999s ease-in-out 0s;
+}
+
 .divider {
   display: flex;
   align-items: center;
