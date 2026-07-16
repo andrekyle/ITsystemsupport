@@ -13,6 +13,11 @@ const PREFIX = "itss.";
 /** device-local keys that should not follow the account across devices */
 const LOCAL_ONLY = new Set(["itss.session", "itss.route", "itss.theme"]);
 
+/** keys whose content is shared with every account (facilitator uploads) */
+function isShared(key: string) {
+  return key === "itss.notes.shared" || key.startsWith("itss.planslides.");
+}
+
 let userId: string | null = null;
 let hydrating = false;
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -24,7 +29,15 @@ function syncable(key: string) {
 async function pushKey(key: string, value: string | null) {
   if (!supabase || !userId) return;
   try {
-    if (value === null) {
+    if (isShared(key)) {
+      if (value === null) {
+        await supabase.from("shared_state").delete().eq("key", key);
+      } else {
+        await supabase
+          .from("shared_state")
+          .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: "key" });
+      }
+    } else if (value === null) {
       await supabase.from("app_state").delete().eq("user_id", userId).eq("key", key);
     } else {
       await supabase
@@ -80,12 +93,19 @@ export async function startSync(authUserId: string): Promise<void> {
   userId = authUserId;
   if (!supabase) return;
 
-  const { data, error } = await supabase.from("app_state").select("key,value");
-  if (error) return; // stay on local data rather than blocking the app
+  const [own, shared] = await Promise.all([
+    supabase.from("app_state").select("key,value"),
+    supabase.from("shared_state").select("key,value"),
+  ]);
+  if (own.error) return; // stay on local data rather than blocking the app
 
   hydrating = true;
   const cloudKeys = new Set<string>();
-  for (const row of data ?? []) {
+  for (const row of own.data ?? []) {
+    cloudKeys.add(row.key);
+    localStorage.setItem(row.key, row.value);
+  }
+  for (const row of shared.error ? [] : shared.data ?? []) {
     cloudKeys.add(row.key);
     localStorage.setItem(row.key, row.value);
   }

@@ -19,3 +19,31 @@ create policy "own app state"
   for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+-- Shared content (facilitator notes, lesson-plan slides): one row per key,
+-- visible to every signed-in user. The app's UI limits who can edit it.
+create table if not exists public.shared_state (
+  key        text        primary key,
+  value      text        not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.shared_state enable row level security;
+
+drop policy if exists "read shared state" on public.shared_state;
+create policy "read shared state"
+  on public.shared_state
+  for select
+  to authenticated
+  using (true);
+
+drop policy if exists "write shared state" on public.shared_state;
+create policy "write shared state"
+  on public.shared_state
+  for all
+  to authenticated
+  using (true)
+  with check (true);
+
+
+
