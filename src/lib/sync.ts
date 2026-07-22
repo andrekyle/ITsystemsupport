@@ -98,7 +98,9 @@ export async function startSync(authUserId: string): Promise<void> {
   if (!supabase) return;
 
   const [own, shared] = await Promise.all([
-    supabase.from("app_state").select("key,value"),
+    // app_state is readable across accounts (staff directory) — hydrate
+    // strictly from THIS user's own rows
+    supabase.from("app_state").select("key,value").eq("user_id", authUserId),
     supabase.from("shared_state").select("key,value"),
   ]);
   if (own.error) return; // stay on local data rather than blocking the app
