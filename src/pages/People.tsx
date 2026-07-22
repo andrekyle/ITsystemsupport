@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "../icons";
-import type { EnrolmentInfo, Profile, Role, Route } from "../types";
+import type { EnrolmentInfo, PoeDoc, Profile, Role, Route } from "../types";
 import { isStaff } from "../types";
 import { POE_SECTIONS, POE_TOTAL } from "../data/course";
 import {
@@ -15,6 +15,7 @@ import {
 import { Avatar } from "../components/Avatar";
 import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/EnrolmentForm";
 import { downloadDoc } from "../lib/files";
+import { fetchCloudDirectory, type CloudDirectory } from "../lib/directory";
 
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -203,6 +204,16 @@ export function StudentsPage({
   const isPrivileged = isStaff(profile.role);
   const [, setRev] = useState(0);
   const refresh = () => setRev((r) => r + 1);
+  const [cloud, setCloud] = useState<CloudDirectory | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void fetchCloudDirectory().then((d) => {
+      if (alive && d) setCloud(d);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
   if (!isPrivileged) {
     return (
       <div className="callout">
@@ -214,7 +225,11 @@ export function StudentsPage({
     );
   }
 
-  const all = loadProfiles();
+  const local = loadProfiles();
+  const localIds = new Set(local.map((p) => p.id));
+  const remote = (cloud?.profiles ?? []).filter((p) => !localIds.has(p.id));
+  const remoteIds = new Set(remote.map((p) => p.id));
+  const all = [...local, ...remote];
   // Super Users manage every account; facilitators see their learners only
   const people = isSuper
     ? all.filter((p) => p.id !== profile.id)
@@ -223,7 +238,14 @@ export function StudentsPage({
 
   if (student)
     return (
-      <StudentDetail student={student} viewer={profile} navigate={navigate} onChanged={refresh} />
+      <StudentDetail
+        student={student}
+        viewer={profile}
+        navigate={navigate}
+        onChanged={refresh}
+        remote={remoteIds.has(student.id)}
+        cloudDocs={cloud?.poe[student.id]}
+      />
     );
 
   return (
@@ -235,8 +257,8 @@ export function StudentsPage({
       <h1 className="page-title">{isSuper ? "Users" : "Students"}</h1>
       <p className="page-sub">
         {isSuper
-          ? "All accounts on this device — select a user to view their profile, update their details, reset their password or remove the account."
-          : "All learner profiles on this device — select a student to view their enrolment information and uploaded documents."}
+          ? "All accounts on this device and in the cloud — select a user to view their profile and documents. Accounts that sign in with their own email are shown read-only."
+          : "All learner profiles on this device and in the cloud — select a student to view their enrolment information and uploaded documents."}
       </p>
 
       {isSuper && <AddUser onAdded={refresh} />}
@@ -251,7 +273,10 @@ export function StudentsPage({
       )}
 
       {people.map((s) => {
-        const docs = Object.keys(loadPoeDocs(s.id)).length;
+        const isRemote = remoteIds.has(s.id);
+        const docs = isRemote
+          ? Object.keys(cloud?.poe[s.id] ?? {}).length
+          : Object.keys(loadPoeDocs(s.id)).length;
         return (
           <button
             key={s.id}
@@ -265,6 +290,7 @@ export function StudentsPage({
               <span className="rl">
                 {s.role} · {s.enrolment?.idNumber ? `ID ${s.enrolment.idNumber} · ` : ""}
                 joined {fmtDate(s.createdAt)}
+                {isRemote ? " · own sign-in account" : ""}
                 {s.role === "Learner" && !s.enrolment ? " · enrolment form outstanding" : ""}
                 {s.passwordHash ? " · password set" : ""}
               </span>
@@ -454,14 +480,21 @@ function StudentDetail({
   viewer,
   navigate,
   onChanged,
+  remote,
+  cloudDocs,
 }: {
   student: Profile;
   viewer: Profile;
   navigate: (r: Route) => void;
   onChanged: () => void;
+  /** profile belongs to another sign-in account — shown read-only */
+  remote?: boolean;
+  cloudDocs?: Record<string, PoeDoc>;
 }) {
   const isSuper = viewer.role === "Super User";
-  const { docs } = usePoe(student.id);
+  const { docs: localDocs } = usePoe(student.id);
+  const docs = remote ? (cloudDocs ?? {}) : localDocs;
+  const canManage = isSuper && !remote;
   const [editingEnrol, setEditingEnrol] = useState(false);
   const [draft, setDraft] = useState<EnrolmentInfo>({ ...EMPTY_ENROLMENT, ...student.enrolment });
   const uploaded = POE_SECTIONS.flatMap((sec) =>
@@ -503,14 +536,26 @@ function StudentDetail({
 
       <ProfileHead profile={student} />
 
-      {isSuper && <AdminPanel student={student} onChanged={onChanged} onDelete={removeUser} />}
+      {remote && (
+        <div className="callout">
+          <span className="ico">
+            <Icon name="info" size={19} />
+          </span>
+          <span>
+            This user signs in with their own account, so their profile is shown read-only here —
+            they manage their own details, password and enrolment form.
+          </span>
+        </div>
+      )}
+
+      {canManage && <AdminPanel student={student} onChanged={onChanged} onDelete={removeUser} />}
 
       <h2 className="section-title">
         <span className="ico">
           <Icon name="clipboard" size={20} />
         </span>
         Biographical enrolment information
-        {isSuper && !editingEnrol && (
+        {canManage && !editingEnrol && (
           <button
             className="btn ghost profile-edit"
             style={{ marginRight: 23 }} /* align with the Delete user button inside the card above */

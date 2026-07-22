@@ -10,15 +10,41 @@ create table if not exists public.app_state (
   primary key (user_id, key)
 );
 
--- Users can only read and write their own rows.
+-- Signed-in users can read every account's rows (needed so facilitators and the
+-- super user can see learners who sign in with their own email accounts).
+-- Writes remain restricted to each user's own rows.
 alter table public.app_state enable row level security;
 
 drop policy if exists "own app state" on public.app_state;
-create policy "own app state"
+
+drop policy if exists "read app state" on public.app_state;
+create policy "read app state"
   on public.app_state
-  for all
+  for select
+  to authenticated
+  using (true);
+
+drop policy if exists "insert own app state" on public.app_state;
+create policy "insert own app state"
+  on public.app_state
+  for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
+drop policy if exists "update own app state" on public.app_state;
+create policy "update own app state"
+  on public.app_state
+  for update
+  to authenticated
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+drop policy if exists "delete own app state" on public.app_state;
+create policy "delete own app state"
+  on public.app_state
+  for delete
+  to authenticated
+  using (auth.uid() = user_id);
 
 -- Shared content (facilitator notes, lesson-plan slides): one row per key,
 -- visible to every signed-in user. The app's UI limits who can edit it.
