@@ -13,6 +13,27 @@ export function CloudAuth() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  /** Translate Supabase auth errors into clear, actionable messages. */
+  function friendlyError(message: string, current: "signin" | "signup"): string {
+    const m = message.toLowerCase();
+    if (m.includes("invalid login credentials"))
+      return "Incorrect email or password. Check your details and try again — or, if you don't have an account yet, use “Create a new account” below.";
+    if (m.includes("email not confirmed"))
+      return "This email address hasn't been confirmed yet. Ask your facilitator to confirm the account, then sign in again.";
+    if (m.includes("already registered") || m.includes("already been registered"))
+      return "An account with this email already exists — go back to sign in instead.";
+    if (m.includes("at least 6 characters") || m.includes("password should be"))
+      return "Your password must be at least 6 characters long.";
+    if (m.includes("valid email")) return "Please enter a valid email address.";
+    if (m.includes("rate limit") || m.includes("too many requests"))
+      return "Too many attempts — please wait a minute and try again.";
+    if (m.includes("network") || m.includes("fetch"))
+      return "Could not reach the server. Check your internet connection and try again.";
+    return current === "signin"
+      ? `Sign-in failed: ${message}`
+      : `Could not create the account: ${message}`;
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!supabase) return;
@@ -22,14 +43,14 @@ export function CloudAuth() {
     try {
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) setError(error.message);
+        if (error) setError(friendlyError(error.message, "signup"));
         else if (!data.session)
           setNotice("Account created — check your email inbox to confirm your address, then sign in.");
         // when email confirmation is disabled a session is returned and the
         // auth listener in App takes over automatically
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) setError(error.message);
+        if (error) setError(friendlyError(error.message, "signin"));
       }
     } finally {
       setBusy(false);
