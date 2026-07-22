@@ -223,6 +223,12 @@ const REDACTED_FIELDS = new Set([
   "Cell phone number",
   "Fax number",
   "Email address",
+  // addresses
+  "Physical address",
+  "Postal address",
+  // the whole next-of-kin section
+  "Full name",
+  "Relationship",
   "Contact number",
 ]);
 
