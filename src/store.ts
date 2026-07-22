@@ -129,10 +129,13 @@ export function getSession(): string | null {
 export function setSession(profileId: string | null) {
   if (profileId) {
     localStorage.setItem(SESSION_KEY, profileId);
-    // stamp the profile's last sign-in time
+    // stamp the profile's last sign-in time — except when the super user opens
+    // another profile to inspect it: that is a view, not that person signing in
     const profiles = read<Profile[]>(PROFILES_KEY, []);
     const p = profiles.find((x) => x.id === profileId);
-    if (p) {
+    const superViewing =
+      cloudEnabled && accountEmail === SUPER_USER_EMAIL && p?.role !== "Super User";
+    if (p && !superViewing) {
       p.lastLogin = new Date().toISOString();
       write(PROFILES_KEY, profiles);
     }
