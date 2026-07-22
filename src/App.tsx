@@ -113,7 +113,7 @@ function Shell({
             )}
             {route.page === "course" && <CoursePage progress={state} navigate={navigate} />}
             {route.page === "module" && route.moduleId && (
-              <ModulePage moduleId={route.moduleId} progress={state} navigate={navigate} />
+              <ModulePage moduleId={route.moduleId} profile={profile} progress={state} navigate={navigate} />
             )}
             {route.page === "unit" && route.unitId && (
               <UnitPage

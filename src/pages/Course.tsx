@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import React from "react";
 import { Icon } from "../icons";
-import type { ExerciseCheck, PoeDoc, ProgressState, Profile, Route, UnitActivity } from "../types";
+import type { ExerciseCheck, PoeDoc, ProgressState, Profile, Role, Route, UnitActivity, UnitStandard } from "../types";
 import { UNIT_ACTIVITIES, isStaff } from "../types";
 import { COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit } from "../data/course";
 import { GLOSSARY, getContent } from "../data/content";
@@ -604,6 +604,33 @@ function ExerciseQuestion({
   );
 }
 
+/* ---------- unit availability: learners see a unit only from its start day, 08:30 ---------- */
+
+const MONTHS: Record<string, number> = {
+  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+};
+
+/** First session date from a unit's dates string (e.g. "24, 31 Jul 2026"), at 08:30. */
+export function unitUnlockTime(u: UnitStandard): Date | null {
+  const day = u.dates.match(/\b(\d{1,2})\b/);
+  const mon = u.dates.match(/jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec/i);
+  const yr = u.dates.match(/\b(20\d{2})\b/);
+  if (!day || !mon || !yr) return null;
+  return new Date(Number(yr[1]), MONTHS[mon[0].toLowerCase()], Number(day[1]), 8, 30, 0, 0);
+}
+
+/** Learners may only open a unit from its first session day at 08:30; staff always can. */
+function unitLocked(u: UnitStandard, role: Role): boolean {
+  if (isStaff(role)) return false;
+  const t = unitUnlockTime(u);
+  return !!t && Date.now() < t.getTime();
+}
+
+function fmtUnlock(t: Date): string {
+  return `${t.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}, 08:30`;
+}
+
 const ACTIVITY_INFO: Record<UnitActivity, { icon: string; desc: string }> = {
   "Lesson & Training Aids": {
     icon: "presenter",
@@ -889,10 +916,12 @@ export function CoursePage({
 
 export function ModulePage({
   moduleId,
+  profile,
   progress,
   navigate,
 }: {
   moduleId: string;
+  profile: Profile;
   progress: ProgressState;
   navigate: (r: Route) => void;
 }) {
@@ -947,17 +976,20 @@ export function ModulePage({
       {mod.units.map((u) => {
         const st = unitStatus(progress, u.us);
         const uc = unitCompletion(progress, u.us);
+        const locked = unitLocked(u, profile.role);
+        const unlockAt = unitUnlockTime(u);
         return (
           <button
             key={u.us}
-            className="unit-row"
-            onClick={() => navigate({ page: "unit", moduleId: mod.id, unitId: u.us })}
+            className={`unit-row${locked ? " locked" : ""}`}
+            disabled={locked}
+            onClick={() => !locked && navigate({ page: "unit", moduleId: mod.id, unitId: u.us })}
           >
             <span
               className={`status ${st === "completed" ? "done" : st === "in-progress" ? "progress" : "none"}`}
             >
               <Icon
-                name={st === "completed" ? "checkCircle" : st === "in-progress" ? "halfCircle" : "circle"}
+                name={locked ? "lock" : st === "completed" ? "checkCircle" : st === "in-progress" ? "halfCircle" : "circle"}
                 size={22}
               />
             </span>
@@ -978,6 +1010,11 @@ export function ModulePage({
                 <span>
                   <Icon name="clock" size={13} /> {u.time}
                 </span>
+                {locked && unlockAt && (
+                  <span className="unlock-note">
+                    <Icon name="lock" size={13} /> Available {fmtUnlock(unlockAt)}
+                  </span>
+                )}
                 {uc > 0 && uc < 1 && (
                   <span>
                     <Icon name="target" size={13} /> {Math.round(uc * 100)}%
@@ -986,7 +1023,7 @@ export function ModulePage({
               </span>
             </span>
             <span className="chev">
-              <Icon name="chevronRight" size={17} />
+              <Icon name={locked ? "lock" : "chevronRight"} size={17} />
             </span>
           </button>
         );
@@ -1100,6 +1137,37 @@ export function UnitPage({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeDeckId]);
+
+  // learners may only open a unit from its start day at 08:30
+  if (unitLocked(u, profile.role)) {
+    const unlockAt = unitUnlockTime(u);
+    return (
+      <>
+        <div className="crumbs">
+          <button onClick={() => navigate({ page: "course" })}>My Course</button>
+          <Icon name="chevronRight" size={13} />
+          <button onClick={() => navigate({ page: "module", moduleId: mod.id })}>
+            Module {idx + 1}: {mod.name}
+          </button>
+          <Icon name="chevronRight" size={13} />
+          <span>US {u.us}</span>
+        </div>
+        <h1 className="page-title" style={{ marginTop: 14 }}>
+          {u.title}
+        </h1>
+        <div className="unit-locked-card">
+          <span className="ico">
+            <Icon name="lock" size={28} />
+          </span>
+          <span>
+            This unit standard opens on <strong>{unlockAt ? fmtUnlock(unlockAt) : "its session day at 08:30"}</strong>.
+            Its lesson, exercises and materials become available then — see the Training Calendar
+            for your full schedule.
+          </span>
+        </div>
+      </>
+    );
+  }
 
   async function onPickPlanFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];

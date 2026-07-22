@@ -3853,6 +3853,39 @@ a.plan-ppt:hover {
   color: var(--ink-3);
 }
 
+/* units locked until their start day 08:30 (learners) */
+.unit-row.locked {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.unit-row.locked:hover {
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.unit-row .unlock-note {
+  color: var(--amber);
+  font-weight: 600;
+}
+
+.unit-locked-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 640px;
+  margin-top: 18px;
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.unit-locked-card .ico {
+  color: var(--amber);
+  display: inline-flex;
+}
+
 .mt-0 { margin-top: 0; }
 
 @media (max-width: 900px) {
