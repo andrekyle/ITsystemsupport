@@ -213,7 +213,35 @@ export function useProgress(profileId: string) {
     [update]
   );
 
-  return { state, toggleActivity, saveQuizResult, setLogbookField };
+  const saveExerciseResult = useCallback(
+    (us: string, exId: string, score: number, total: number) => {
+      update((prev) => {
+        const unit: UnitProgress = prev.units[us] ?? { activities: {} };
+        const cur = unit.exercises?.[exId];
+        return {
+          ...prev,
+          units: {
+            ...prev.units,
+            [us]: {
+              ...unit,
+              exercises: {
+                ...unit.exercises,
+                [exId]: {
+                  best: Math.max(cur?.best ?? 0, score),
+                  last: score,
+                  total,
+                  attempts: (cur?.attempts ?? 0) + 1,
+                },
+              },
+            },
+          },
+        };
+      });
+    },
+    [update]
+  );
+
+  return { state, toggleActivity, saveQuizResult, setLogbookField, saveExerciseResult };
 }
 
 /* ---------- shared app settings (controlled by the super user) ---------- */

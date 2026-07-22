@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import React from "react";
 import { Icon } from "../icons";
-import type { PoeDoc, ProgressState, Profile, Route, UnitActivity } from "../types";
+import type { ExerciseCheck, PoeDoc, ProgressState, Profile, Route, UnitActivity } from "../types";
 import { UNIT_ACTIVITIES, isStaff } from "../types";
 import { COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit } from "../data/course";
 import { GLOSSARY, getContent } from "../data/content";
@@ -230,6 +230,377 @@ function StepText({ text }: { text: string }) {
         </span>
       )}
     </span>
+  );
+}
+
+/* ---------- typed exercise answers with semantic checking ---------- */
+
+/** Tokenize free text into lowercase word stems so different word forms still match. */
+function answerTokens(s: string): string[] {
+  return s
+    .toLowerCase()
+    .replace(/[’‘`]/g, "'")
+    .replace(/[^a-z']+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => {
+      let x = w.replace(/'.*$/, "");
+      x = x.replace(/ies$/, "y");
+      if (x.length > 4) x = x.replace(/(ations|ation|ings|ing|ed|es|s|ly)$/, "");
+      return x;
+    });
+}
+
+/** Optimal-string-alignment edit distance, capped early — tolerates small typos. */
+function editDistance(a: string, b: string, max: number): number {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  const d: number[][] = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) d[i][0] = i;
+  for (let j = 0; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1); // transposition ("commuincate")
+      }
+    }
+  }
+  return d[a.length][b.length];
+}
+
+/** Two stems match when equal, one is a prefix of the other (≥4 chars),
+ *  or they differ only by a small typo (≥6 chars: 1 edit; ≥9 chars: 2 edits). */
+function tokenMatches(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (a.length >= 4 && b.length >= 4 && (a.startsWith(b) || b.startsWith(a))) return true;
+  const min = Math.min(a.length, b.length);
+  if (min >= 6) {
+    const maxD = min >= 9 ? 2 : 1;
+    if (editDistance(a, b, maxD) <= maxD) return true;
+  }
+  return false;
+}
+
+/** A concept phrase matches when every word of the phrase appears in the answer. */
+function phraseMatches(phrase: string, tokens: string[]): boolean {
+  return answerTokens(phrase).every((pw) => tokens.some((t) => tokenMatches(t, pw)));
+}
+
+/** Score a learner's answer against the concept groups of the answer key.
+ *  Each key idea (concept group) is worth 2 marks. */
+function scoreAnswer(text: string, check: ExerciseCheck) {
+  const tokens = answerTokens(text);
+  const matched = check.concepts.filter((g) => g.some((p) => phraseMatches(p, tokens))).length;
+  const need = check.min ?? Math.ceil(check.concepts.length / 2);
+  const short = tokens.length < 8;
+  return {
+    ok: !short && matched >= need,
+    matched,
+    need,
+    short,
+    marks: matched * 2,
+    maxMarks: check.concepts.length * 2,
+  };
+}
+
+/* ---- marker feedback: explains WHY a key idea's marks were not awarded ---- */
+
+const STOP_WORDS = new Set(
+  "the a an and or but of to in on for with is are was were be been being it its this that these those you your yours we our ours they their them theirs he she his her him i me my mine as at by from not no nor do does did done don doesn didn have has had having will would shall should can could may might must when while if then than so too also there here where what which who whom whose why how all each every both few many more most other others some such any only own same very just like unto up down out off about into onto over under again further once".split(
+    " "
+  )
+);
+
+/** Salient (non-stopword) stems of a piece of text. */
+function contentStems(s: string): Set<string> {
+  return new Set(answerTokens(s).filter((t) => t.length > 2 && !STOP_WORDS.has(t)));
+}
+
+interface IdeaFeedback {
+  /** short name of the key idea */
+  label: string;
+  awarded: boolean;
+  /** the lesson line that carries this idea */
+  lessonLine?: string;
+  /** the learner's sentence that came closest to the idea (only when not awarded) */
+  closest?: string;
+  /** example phrases that would have earned the idea */
+  examples: string[];
+}
+
+/** Explain, per key idea, whether its 2 marks were awarded — and if not, why:
+ *  quotes the lesson's point, finds the learner's semantically closest sentence
+ *  (stem-overlap similarity) and shows what was missing. Runs fully in the
+ *  browser — no API or key needed. */
+function explainCheck(text: string, check: ExerciseCheck): IdeaFeedback[] {
+  const tokens = answerTokens(text);
+  const sentences = (text.match(/[^.!?;\n]+[.!?;\n]*/g) ?? [text])
+    .map((s) => s.trim())
+    .filter(Boolean);
+  // sentences that already earned ticks for other ideas are never quoted as "wrong"
+  const creditedGroups = check.concepts.filter((g) => g.some((p) => phraseMatches(p, tokens)));
+  const ticksPer = attributeTicks(sentences, creditedGroups);
+  const candidates = sentences.filter((_, si) => ticksPer[si] === 0);
+  return check.concepts.map((g, gi) => {
+    const awarded = g.some((p) => phraseMatches(p, tokens));
+    const label = check.labels?.[gi] ?? g[0];
+    const lessonLine = check.answer.find((a) => {
+      const at = answerTokens(a);
+      return g.some((p) => phraseMatches(p, at));
+    });
+    let closest: string | undefined;
+    if (!awarded && candidates.length) {
+      const target = contentStems(`${lessonLine ?? ""} ${g.join(" ")}`);
+      let best = 0;
+      for (const s of candidates) {
+        const st = contentStems(s);
+        if (!st.size || !target.size) continue;
+        let overlap = 0;
+        st.forEach((t) => {
+          for (const tt of target) {
+            if (tokenMatches(t, tt)) {
+              overlap++;
+              break;
+            }
+          }
+        });
+        const sim = overlap / Math.min(st.size, target.size);
+        if (sim > best) {
+          best = sim;
+          closest = s;
+        }
+      }
+      if (best < 0.2) closest = undefined;
+    }
+    return { label, awarded, lessonLine, closest, examples: g.slice(0, 2) };
+  });
+}
+
+/** Two green ticks — shown after a correct answer (each point is worth 2 marks). */
+function DoubleTick() {
+  return (
+    <span className="exq-ticks" title="2 marks">
+      <Icon name="check" size={15} />
+      <Icon name="check" size={15} />
+    </span>
+  );
+}
+
+/** Attribute each credited concept group to the first segment that expresses it;
+ *  returns, per segment, the indices of the groups it earned. */
+function attributeGroups(segments: string[], credited: string[][]): number[][] {
+  const used = new Set<number>();
+  return segments.map((seg) => {
+    const segTokens = answerTokens(seg);
+    const earned: number[] = [];
+    credited.forEach((g, gi) => {
+      if (used.has(gi)) return;
+      if (g.some((p) => phraseMatches(p, segTokens))) {
+        used.add(gi);
+        earned.push(gi);
+      }
+    });
+    return earned;
+  });
+}
+
+/** Number of 2-mark ticks earned by each sentence. */
+function attributeTicks(sentences: string[], credited: string[][]): number[] {
+  return attributeGroups(sentences, credited).map((g) => g.length);
+}
+
+/** The learner's own answer rendered with two green ticks inserted after each
+ *  part of the text that earned a key idea's 2 marks. */
+function MarkedAnswer({ text, check, ok }: { text: string; check: ExerciseCheck; ok: boolean }) {
+  const fullTokens = answerTokens(text);
+  // only concept groups the whole answer earned can be credited to a segment
+  const credited = check.concepts.filter((g) => g.some((p) => phraseMatches(p, fullTokens)));
+  const segments = (text.match(/[^.!?;\n]+[.!?;\n]*\s*/g) ?? [text]).filter((s) => s.trim());
+  const perSeg = attributeGroups(segments, credited);
+  const leftover = credited.length - perSeg.reduce((t, g) => t + g.length, 0);
+  return (
+    <div className={`exq-marked${ok ? " ok" : ""}`}>
+      {segments.map((seg, i) => {
+        const gis = perSeg[i];
+        if (gis.length > 1) {
+          // the sentence earned several ideas — place each pair after the clause that expressed it
+          const clauses = (seg.match(/[^,]+,?\s*/g) ?? [seg]).filter((c) => c.trim());
+          const groupsHere = gis.map((gi) => credited[gi]);
+          const perClause = attributeGroups(clauses, groupsHere);
+          const rest = groupsHere.length - perClause.reduce((t, g) => t + g.length, 0);
+          return (
+            <span key={i}>
+              {clauses.map((c, ci) => (
+                <span key={ci}>
+                  {c}
+                  {perClause[ci].map((_, t) => (
+                    <DoubleTick key={t} />
+                  ))}
+                </span>
+              ))}
+              {Array.from({ length: rest }).map((_, t) => (
+                <DoubleTick key={`r${t}`} />
+              ))}
+            </span>
+          );
+        }
+        return (
+          <span key={i}>
+            {seg}
+            {gis.map((_, t) => (
+              <DoubleTick key={t} />
+            ))}
+            {gis.length === 0 && contentStems(seg).size > 0 && (
+              <span className="exq-x" title="No marks for this sentence">
+                ✗
+              </span>
+            )}
+          </span>
+        );
+      })}
+      {Array.from({ length: leftover }).map((_, t) => (
+        <DoubleTick key={`l${t}`} />
+      ))}
+    </div>
+  );
+}
+
+/** Typed answer block under an exercise question: the learner's answer is checked
+ *  semantically against key ideas from the lesson; the correct answer is revealed
+ *  only once the learner's own answer covers enough of those ideas. */
+function ExerciseQuestion({
+  check,
+  saved,
+  savedOk,
+  onSave,
+  canReveal,
+}: {
+  check: ExerciseCheck;
+  saved: string;
+  savedOk: boolean;
+  onSave: (text: string, ok: boolean) => void;
+  /** super user only — allows revealing the answer without a correct attempt */
+  canReveal?: boolean;
+}) {
+  const [val, setVal] = useState(saved);
+  const [result, setResult] = useState<ReturnType<typeof scoreAnswer> | null>(null);
+  const [revealed, setRevealed] = useState(false);
+  const ok = savedOk || (result?.ok ?? false);
+  const feedback = ok || result ? explainCheck(val, check) : null;
+  const missed = feedback?.filter((f) => !f.awarded) ?? [];
+
+  return (
+    <div className="exq">
+      {ok || result ? (
+        <MarkedAnswer text={val} check={check} ok={ok} />
+      ) : (
+        <textarea
+          className="exq-input"
+          rows={3}
+          placeholder="Type your answer here, then check it…"
+          value={val}
+          onChange={(e) => {
+            setVal(e.target.value);
+            if (result) setResult(null);
+          }}
+          onBlur={() => {
+            if (!ok) onSave(val, false);
+          }}
+        />
+      )}
+      {!ok && (
+        <div className="exq-check">
+          {result ? (
+            <button className="btn ghost" onClick={() => setResult(null)}>
+              <Icon name="design" size={15} />
+              Edit my answer
+            </button>
+          ) : (
+            <button
+              className="btn"
+              onClick={() => {
+                const r = scoreAnswer(val, check);
+                setResult(r);
+                onSave(val, r.ok);
+              }}
+            >
+              <Icon name="checkCircle" size={15} />
+              Check my answer
+            </button>
+          )}
+          {canReveal && (
+            <button className="btn ghost" onClick={() => setRevealed((r) => !r)}>
+              <Icon name={revealed ? "eyeOff" : "eye"} size={15} />
+              {revealed ? "Hide answer" : "Show answer — super user"}
+            </button>
+          )}
+          {result && !result.ok && (
+            <span className="exq-status wrong">
+              {result.short
+                ? "Answer more fully, then check again."
+                : `Not quite yet — your answer covers ${result.matched} of ${check.concepts.length} key ideas (${result.marks}/${result.maxMarks} marks, 2 marks per point). Revisit the lesson and try again.`}
+            </span>
+          )}
+        </div>
+      )}
+      {ok && (
+        <div className="exq-status ok">
+          <Icon name="checkCircle" size={15} />
+          Correct — {scoreAnswer(val, check).marks} of {scoreAnswer(val, check).maxMarks} marks (2
+          marks per point).
+          <DoubleTick />
+        </div>
+      )}
+      {feedback && missed.length > 0 && (
+        <div className="exq-feedback">
+          <div className="exq-answer-title">
+            <Icon name="info" size={14} />
+            Marker's feedback — why marks were not awarded
+          </div>
+          {missed.map((f) => (
+            <div className="exq-miss" key={f.label}>
+              <div className="exq-miss-head">
+                <span className="exq-cross">✗</span>
+                {f.label} — 2 marks not awarded
+              </div>
+              <p className="exq-miss-p">
+                {f.closest ? (
+                  <>
+                    Your sentence “{f.closest}” was not awarded these marks — it says something
+                    different and does not express “{f.label.toLowerCase()}”.
+                  </>
+                ) : (
+                  <>Nothing in your answer speaks to this point, so its 2 marks could not be awarded.</>
+                )}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+      {(ok || revealed) && (
+        <div className="exq-answer">
+          <div className="exq-answer-title">
+            <Icon name="book" size={14} />
+            Correct answer — from the lesson
+          </div>
+          <ul className="duty-list">
+            {check.answer.map((a) => (
+              <li key={a}>
+                <span className="ico">
+                  <Icon name="checkCircle" size={16} />
+                </span>
+                <span>
+                  <AnswerBullet text={a} />
+                  {ok && <DoubleTick />}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -652,6 +1023,7 @@ export function UnitPage({
   toggleActivity,
   saveQuizResult,
   setLogbookField,
+  saveExerciseResult,
   navigate,
 }: {
   unitId: string;
@@ -660,10 +1032,13 @@ export function UnitPage({
   toggleActivity: (us: string, a: UnitActivity) => void;
   saveQuizResult: (us: string, score: number, total: number) => void;
   setLogbookField: (us: string, key: string, value: string | boolean) => void;
+  saveExerciseResult: (us: string, exId: string, score: number, total: number) => void;
   navigate: (r: Route) => void;
 }) {
   const [tab, setTab] = useState<UnitTab>(() => loadUnitTab(unitId));
   const [noteId, setNoteId] = useState<string | null>(null);
+  /** bumped per exercise on "Try again" so the answer blocks remount empty */
+  const [exReset, setExReset] = useState<Record<string, number>>({});
 
   // switching to a different unit standard always lands on its Overview tab
   useEffect(() => {
@@ -753,12 +1128,12 @@ export function UnitPage({
 
   const tabs: { id: UnitTab; label: string; icon: string; show: boolean }[] = [
     { id: "overview", label: "Overview", icon: "dashboard", show: true },
-    { id: "lesson", label: "Lesson", icon: "book", show: !!content },
+    { id: "lesson", label: "Lesson", icon: "book", show: !!content?.lesson.length },
     { id: "material", label: "Course material", icon: "play", show: decks.length > 0 },
-    { id: "notes", label: "Notes", icon: "document", show: !!content?.notes?.length || Object.values(userNotes).some((n) => n.us === unitId) || !!content },
-    { id: "exercises", label: "Exercises", icon: "exercise", show: !!content },
-    { id: "assignments", label: "Assignments", icon: "folder", show: !!content },
-    { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content },
+    { id: "notes", label: "Notes", icon: "document", show: !!content?.notes?.length || Object.values(userNotes).some((n) => n.us === unitId) || !!content?.lesson.length },
+    { id: "exercises", label: "Exercises", icon: "exercise", show: !!content?.exercises.length },
+    { id: "assignments", label: "Assignments", icon: "folder", show: !!content?.assignments.length },
+    { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content?.quiz.length },
     { id: "plan", label: "Lesson plan", icon: "presenter", show: !!content?.lessonPlan && isPrivileged },
   ];
 
@@ -1012,6 +1387,31 @@ export function UnitPage({
                       </li>
                     ))}
                   </ul>
+                )}
+                {sec.table && (
+                  <table className="data lesson-table" style={{ marginTop: 10 }}>
+                    <thead>
+                      <tr>
+                        {sec.table.headers.map((h) => (
+                          <th key={h}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sec.table.rows.map((row, ri) => {
+                        const so = /^SO\b/.test(row[0]);
+                        return (
+                          <tr key={ri} className={so ? "so-row" : sec.table!.rows.some((r) => /^SO\b/.test(r[0])) ? "ac-row" : undefined}>
+                            {row.map((cell, ci) => (
+                              <td key={ci}>
+                                {ci === 0 || so ? <strong>{cell}</strong> : <Gloss text={cell} />}
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 )}
                 {sec.cards && (
                   <div className="card-grid lesson-cards">
@@ -1379,12 +1779,85 @@ export function UnitPage({
                   <Gloss text={ex.task} />
                 </p>
                 <ol className="step-list">
-                  {ex.steps.map((s, i) => (
-                    <li key={i}>
-                      <StepText text={s} />
-                    </li>
-                  ))}
+                  {ex.steps.map((s, i) => {
+                    const check = ex.checks?.[i];
+                    const lb = progress.units[u.us]?.logbook ?? {};
+                    return (
+                      <li key={i}>
+                        <StepText text={s} />
+                        {check && (
+                          <ExerciseQuestion
+                            key={`${u.us}.${ex.id}.${i}.${exReset[ex.id] ?? 0}`}
+                            check={check}
+                            saved={String(lb[`exq.${ex.id}.${i}`] ?? "")}
+                            savedOk={lb[`exq.${ex.id}.${i}.ok`] === true}
+                            canReveal={isSuperUser}
+                            onSave={(text, okNow) => {
+                              setLogbookField(u.us, `exq.${ex.id}.${i}`, text);
+                              setLogbookField(u.us, `exq.${ex.id}.${i}.ok`, okNow);
+                            }}
+                          />
+                        )}
+                      </li>
+                    );
+                  })}
                 </ol>
+                {ex.checks && ex.checks.length > 0 && (() => {
+                  const checks = ex.checks;
+                  const res = progress.units[u.us]?.exercises?.[ex.id];
+                  const attempts = res?.attempts ?? 0;
+                  const total = checks.reduce((t, c) => t + c.concepts.length * 2, 0);
+                  const lb = progress.units[u.us]?.logbook ?? {};
+                  return (
+                    <div className="exq-submit">
+                      {attempts < 2 && (
+                        <button
+                          className="btn"
+                          onClick={() => {
+                            const score = checks.reduce(
+                              (t, c, i) =>
+                                t + scoreAnswer(String(lb[`exq.${ex.id}.${i}`] ?? ""), c).marks,
+                              0
+                            );
+                            saveExerciseResult(u.us, ex.id, score, total);
+                          }}
+                        >
+                          <Icon name="clipboard" size={15} />
+                          Submit answers for marking
+                        </button>
+                      )}
+                      {res && attempts < 2 && (
+                        <button
+                          className="btn ghost"
+                          onClick={() => {
+                            checks.forEach((_, i) => {
+                              setLogbookField(u.us, `exq.${ex.id}.${i}`, "");
+                              setLogbookField(u.us, `exq.${ex.id}.${i}.ok`, false);
+                            });
+                            setExReset((m) => ({ ...m, [ex.id]: (m[ex.id] ?? 0) + 1 }));
+                          }}
+                        >
+                          <Icon name="play" size={15} />
+                          Try again
+                        </button>
+                      )}
+                      {res && (
+                        <span className="exq-score">
+                          <Icon name="award" size={15} />
+                          Last attempt: {res.last}/{res.total} · Best out of 2: {res.best}/
+                          {res.total} · Attempt {res.attempts} of 2
+                          {attempts >= 2 && " — no attempts remaining"}
+                        </span>
+                      )}
+                      {!res && (
+                        <span className="exq-score muted-score">
+                          Each key idea is worth 2 marks — {total} marks available. Best of 2
+                          attempts is recorded on your profile.
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
                 {ex.download && (
                   <button
                     className="btn ghost dl-sample"
@@ -1595,7 +2068,7 @@ export function UnitPage({
             Visible to facilitators, assessors, moderators and the super user only — session-by-session facilitation guide
             for this unit standard.
           </p>
-          {canDownloadShared && (
+          {canDownloadShared && u.us === "8252" && (
             <a
               className="btn ghost dl-sample plan-ppt"
               href="/downloads/US-8252-Compile-and-Produce-Reports-Training.pptx"
@@ -1607,7 +2080,7 @@ export function UnitPage({
           )}
           <button
             className="btn ghost dl-sample plan-ppt"
-            style={{ marginLeft: canDownloadShared ? 10 : 0 }}
+            style={{ marginLeft: canDownloadShared && u.us === "8252" ? 10 : 0 }}
             onClick={() => planFileRef.current?.click()}
           >
             <Icon name="presenter" size={15} />
@@ -1719,7 +2192,12 @@ export function UnitPage({
                   let clock = sh * 60 + sm;
                   const fmt = (t: number) =>
                     `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
-                  return lp.sections.map((sec, si) => (
+                  return lp.sections.map((sec, si) => {
+                    if (sec.startTime) {
+                      const [h, m] = sec.startTime.split(":").map(Number);
+                      clock = h * 60 + m;
+                    }
+                    return (
                     <React.Fragment key={si}>
                       {sec.heading && (
                         <tr className="plan-sec">
@@ -1772,12 +2250,14 @@ export function UnitPage({
                         );
                       })}
                     </React.Fragment>
-                  ));
+                    );
+                  });
                 })()}
               </tbody>
               <tfoot>
                 {(() => {
                   const rows = content.lessonPlan!.sections.flatMap((s) => s.rows);
+                  const days = content.lessonPlan!.sections.filter((s) => s.startTime).length || 1;
                   const mins = rows.reduce((sum, r) => sum + (parseInt(r.time ?? "", 10) || 0), 0);
                   const brk = rows
                     .filter((r) => r.break)
@@ -1788,7 +2268,7 @@ export function UnitPage({
                     <tr className="plan-total">
                       <td className="plan-time">{mins} minutes</td>
                       <td colSpan={2}>
-                        Total session time — {h} h{m ? ` ${m} min` : ""}
+                        Total {days > 1 ? `facilitation time over ${days} days` : "session time"} — {h} h{m ? ` ${m} min` : ""}
                         {brk ? ` (incl. ${brk} min break)` : ""}
                       </td>
                     </tr>

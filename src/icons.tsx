@@ -138,6 +138,7 @@ export const PATHS: Record<string, React.ReactNode> = {
       <path d="M8.2 12.2l2.6 2.6 5-5.6" />
     </>
   ),
+  check: <path d="M5.5 12.5l4.2 4.2 8.8-9.4" />,
   circle: <circle cx="12" cy="12" r="8.5" />,
   halfCircle: (
     <>

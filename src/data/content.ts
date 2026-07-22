@@ -1215,6 +1215,1089 @@ export const CONTENT: Record<string, UnitContent> = {
       },
     ],
   },
+
+  /* ================================================================
+     US 10135 — Work as a project team member
+     NQF 4 · 8 credits
+     ================================================================ */
+  "10135": {
+    lesson: [
+      {
+        heading: "Unit Standard 10135 alignment index — what you must be proved competent in",
+        icon: "target",
+        paragraphs: [
+          "Unit Standard 10135 — Work as a project team member — is about working effectively as part of a project team: understanding what is expected of a team member, contributing to the team's coherence and spirit, and building sound relations with fellow team members and stakeholders. In an IT systems support environment, almost everything is delivered by teams — a service desk shift, a workstation rollout, a system upgrade project — so competence in this unit standard underpins your daily work.",
+          "The alignment index below maps each section of the learner manual to the outcomes you must be proved competent in. Use it to navigate the manual and to check, section by section, that you can produce the evidence required to complete the unit standard.",
+        ],
+        table: {
+          headers: ["Competence requirements", "What this section covers", "Page"],
+          rows: [
+            [
+              "Unit Standard 10135 alignment index",
+              "Here you will find the different outcomes explained which you need to be proved competent in, in order to complete Unit Standard 10135.",
+              "3",
+            ],
+            [
+              "Demonstrate an understanding of criteria for working as a member of a team and working autonomously in a team",
+              "This section covers the required understanding that team members must harbour to work effectively and autonomously as part of the team.",
+              "4",
+            ],
+            [
+              "Question Session 1",
+              "Your knowledge of this section is assessed with the questions.",
+              "11",
+            ],
+            [
+              "Contribution to team coherence, image and spirit and respect differences to enhance interaction between team members",
+              "This section covers the different contributions members of a team have to make to ensure that all the members are happy and compliant with the team's efforts and endeavours in reaching their goals.",
+              "13",
+            ],
+            [
+              "Question Session 2",
+              "Your knowledge of this section is assessed with the questions.",
+              "20",
+            ],
+            [
+              "Contribute to building relations between team members and stakeholders",
+              "This section explains the importance of relations between different members of the team and the stakeholders of an organisation / entity to ensure that the required outcome is reached.",
+              "22",
+            ],
+            [
+              "Question Session 3",
+              "Your knowledge of this section is assessed with the questions.",
+              "25",
+            ],
+            [
+              "Self assessment",
+              "Once you have completed all the questions after being facilitated, you need to check the progress you have made. If you feel that you are competent in the areas mentioned, you may tick the blocks; if however you feel that you require additional knowledge, you need to indicate so in the block below. Show this to your facilitator and make the necessary arrangements to assist you to become competent.",
+              "27",
+            ],
+          ],
+        },
+      },
+      {
+        heading: "Alignment index — specific outcomes and assessment criteria (SO 1–3)",
+        icon: "clipboard",
+        paragraphs: [
+          "Each specific outcome (SO) states what you must be able to do; its assessment criteria (AC) state the evidence an assessor looks for to prove competence. Read them before each manual section so you know exactly what you are working towards.",
+        ],
+        table: {
+          headers: ["Ref", "Specific outcomes and related assessment criteria"],
+          rows: [
+            ["SO 1", "Demonstrate an understanding of criteria for working as a member of a team"],
+            ["AC 1", "Criteria for working as a member of a team are identified and explained"],
+            ["AC 2", "Behaviours conducive to working as a member of a team are identified and explained"],
+            ["AC 3", "Team dynamics are identified and explained"],
+            ["SO 2", "Work autonomously and collaborate with other team members"],
+            ["AC 1", "Team members are given sufficient support for them to achieve their work / project objectives"],
+            ["AC 2", "Team members are consulted with"],
+            ["AC 3", "Authority levels of all team members are identified and applied"],
+            ["AC 4", "Collaboration reflects the needs of all team members"],
+            ["SO 3", "Contribute to building relations between team members and stakeholders"],
+            ["AC 1", "The importance of building relations between team members and stakeholders is explained"],
+            ["AC 2", "Stakeholders are identified and their needs explained"],
+            ["AC 3", "Communications with stakeholders encourages open and frank discussions"],
+            ["AC 4", "Commitments to stakeholders are honoured and met"],
+          ],
+        },
+      },
+      {
+        heading: "Alignment index — specific outcomes and assessment criteria (SO 4–5)",
+        icon: "clipboard",
+        paragraphs: [
+          "The remaining two specific outcomes focus on the interpersonal side of teamwork — the contribution you make to the team's coherence, image and spirit, and the respect you show for personal, ethical, religious and cultural differences.",
+        ],
+        table: {
+          headers: ["Ref", "Specific outcomes and related assessment criteria"],
+          rows: [
+            ["SO 4", "Make a positive contribution to team coherence, image and spirit"],
+            ["AC 1", "The needs and objectives of team members are identified and explained"],
+            ["AC 2", "Methods and techniques for building team coherence and spirit are identified and explained"],
+            ["AC 3", "Team member actions are conducive to team coherence, spirit and image"],
+            ["AC 4", "Trust and support of colleagues is gained through applicable behaviours"],
+            ["AC 5", "Feedback is provided which leads to constructive working relationships"],
+            ["SO 5", "Respect personal, ethical, religious and cultural differences to enhance interaction between team members"],
+            ["AC 1", "Differences between team members are identified and acknowledged"],
+            ["AC 2", "The importance of showing respect is explained"],
+            ["AC 3", "Team members are treated in ways which demonstrate respect for individuals"],
+            ["AC 4", "Behaviours, which are of concern to individuals, are discussed promptly and openly with those concerned"],
+          ],
+        },
+      },
+      {
+        heading: "Demonstrate an understanding of criteria for working as a member of a team & Working Autonomously",
+        icon: "target",
+        paragraphs: ["Time: 90 minutes · Activity: Self & Group"],
+      },
+      {
+        heading: "How to be an effective team member",
+        icon: "people",
+        paragraphs: [
+          "Working on teams can be rewarding, but at times it can be difficult and downright frustrating. If there are poor communicators on your team, you may often feel left in the dark, confused or misunderstood. To create a successful team, effective communication methods are necessary for both team members and leaders. Even though some people understand their communication skills need improving, many aren't certain how to improve them. So, in the following article, we've outlined how to avoid some common team blunders as well as some helpful advice on how to be a better team-mate or leader overall. Go… team!",
+        ],
+      },
+      {
+        heading: "If You are a Team Member",
+        icon: "checklist",
+        paragraphs: [],
+        bullets: [
+          "Communicate, Communicate, Communicate — If you have a problem with someone in your group, talk to him about it. Letting bad feelings brew will only make you sour and want to isolate yourself from the group. Not only does it feel good to get it out, but it will be better for the team in the long run.",
+          "Don't Blame Others — People in your group lose respect for you if you're constantly blaming others for not meeting deadlines. You're not fooling anyone; people know who isn't pulling his weight in a group. Pointing the finger will only make you look cowardly. Group members understand if you have a heavy workload and weren't able to meet a deadline. Saying something like, \"I'm really sorry, but I'll get it to you by the end of today.\" will earn you a lot more respect than trying to make it seem like it's everyone else's fault that you missed your deadline.",
+          "Support Group Member's Ideas — If a team mate suggests something, always consider it – even if it's the silliest idea you've ever heard! Considering the group's ideas shows you're interested in other people's ideas, not just your own. And this makes you a good team member. After all, nobody likes a know-it-all.",
+          "No Bragging — It's one thing to rejoice in your successes with the group, but don't act like a superstar. Doing this will make others regret your personal successes and may create tension within the group. You don't have to brag to let people know you've done a good job, people will already know. Have faith that people will recognize when good work is being done and that they'll let you know how well you're doing. Your response? Something like \"Thanks, that means a lot.\" is enough.",
+          "Listen Actively — Look at the person who's speaking to you, nod, ask probing questions and acknowledge what's said by paraphrasing points that have been made. If you're unclear about something that's been said, ask for more information to clear up any confusion before moving on. Effective communication is a vital part of any team, so the value of good listening skills shouldn't be underestimated.",
+          "Get Involved — Share suggestions, ideas, solutions and proposals with your team members. Take the time to help your fellow team mates, no matter the request. You can guarantee there will be a time in the future when you'll need some help or advice. And if you've helped them in past, they'll be more than happy to lend a helping hand.",
+        ],
+      },
+      {
+        heading: "The Modern Workplace",
+        icon: "briefcase",
+        paragraphs: [
+          "No matter what profession you choose, more than likely, you will be asked to contribute to a team. Teams are found in many modern workplace environments in fields ranging from engineering and health care to journalism and foreign policy.",
+          "More than ever employers are looking for ways to combine individual talents and harness the synergy of a high performance team. Some of the specific benefits include:",
+        ],
+        bullets: [
+          "Complete large-scale projects — Many projects in the workplace are too large or too complex for one individual to complete alone. Imagine trying to build an enormous all by yourself!",
+          "Develop More Solutions — Different people looking at the same problem will find different solutions. A team can review ideas and put together a final solution which incorporates the best individual ideas.",
+          "Detect Flaws — A team looking at different proposed solutions may also find pitfalls that an individual might miss. The final solution is that much stronger.",
+          "Build Social Connections — Working on a team allows you to interact with your colleagues much more than sitting in neighbouring cubicles - or lecture seats - would.",
+        ],
+      },
+      {
+        heading: "Roles in General",
+        icon: "clipboard",
+        paragraphs: [
+          "What roles are available will depend much on the project and the wishes of your instructor. For instance, if the project is to create a Web site, your instructor may ask your team to have a leader/editor, a writer, a graphic artist and a Webmaster/HTML specialist.",
+          "If your instructor does not give any guidance, the team is free to organise itself as it chooses, but it is important that:",
+        ],
+        bullets: [
+          "Everyone agrees on appropriate roles — This may take some negotiation to decide.",
+          "Everyone is satisfied in their roles — Individuals must feel a sense of satisfaction in order for the team to function. Fortunately, teams will typically have people with different temperaments and skills who will want different roles. In addition, your team may want to rotate roles throughout the semester.",
+        ],
+      },
+      {
+        heading: "Flexibility",
+        icon: "layers",
+        paragraphs: [
+          "Whatever role you may have, it is still important that the entire team provide input on every facet of the project. For instance, if you were a \"writer\", it is perfectly acceptable for a \"graphic artist\" to evaluate and comment on your work. He or she may provide a unique perspective that will enhance your work. The same would be true for the \"graphic artist\" or any other member of the team.",
+        ],
+      },
+      {
+        heading: "The Leader",
+        icon: "person",
+        paragraphs: [
+          "Most teams will have a leader, and this is a very important position because he or she is responsible for the management of the entire project. However, it is important not to have too \"heavy\" a hand, or team morale may be lowered. A leader is typically responsible for setting a base agenda, facilitating meetings, and monitoring progress with communicating with members as needed. But all actions must be agreed to by the team. Although you may suggest a course of action, you must be sure the team agrees to it. If the team wants to go in another direction, you should be willing to compromise.",
+        ],
+      },
+      {
+        heading: "Other Roles",
+        icon: "people",
+        paragraphs: [
+          "If your team is looking for a way to organize, these are some other roles that can be used, especially when formulating and testing ideas. Again, it suggested that you be flexible with these roles. Teams can rotate them or combine them in one person, for instance, a recorder/summarizer.",
+        ],
+        bullets: [
+          "Initiator — Someone who suggests new ideas. One or more people can have this role at a time.",
+          "Recorder — This person records whatever ideas a team member may have. It is important that this person quote a team member accurately and not \"edit\" or evaluate them.",
+          "Devil's Advocate/Skeptic — This is someone whose responsibility is to look for potential flaws in an idea.",
+          "Optimist — This is someone who tries to maintain a positive frame of mind and facilitates the search for solutions.",
+          "Timekeeper — Someone who tracks time spent on each portion of the meeting.",
+          "Gate Keeper — This person works to ensure that each member gives input on an issue. One strategy to do this is to ask everyone to voice their opinion one at a time. Another is to cast votes.",
+          "Summarizer — Someone who summarizes a list of options.",
+        ],
+      },
+      {
+        heading: "Listening and Critiquing",
+        icon: "chat",
+        paragraphs: [],
+        bullets: [
+          "Active Listening — Communication is a two-way street, so it is important that you listen carefully to your team mates when they are speaking. Don't tune speakers out or get caught in the trap of planning ahead to what you want to say next. You may miss an important detail, and in the worst case, you repeat the detail you missed because you were not listening.",
+          "Ask Questions — If you hear something that confuses you, you should ask about it. Maybe you missed a detail or maybe you remembered something others forgot. In any case, it's important that everyone understand exactly what's going on. Chances are that if you're confused, then others are too. Conversely, if a team member asks you a question, you should answer it courteously. The team member may be bringing up a crucial detail that could make or break the team's plans.",
+          "Constructive Feedback — Although it is important to evaluate proposed ideas and suggestions, critiques need to be presented with tact. Some tips that may help:",
+          "Don't express an opinion as a fact — You may hate orange text on green, but that is an opinion unless you can cite a legitimate reason for your concern (such as that this colour combination may be harder to read).",
+          "Explain your reasons — If you do have a strong opinion, explain why you feel that way. This will allow others to evaluate your comments more effectively.",
+          "Restate the original idea — To be sure you have correctly understood someone else's idea before you respond to it.",
+          "Compliment another's idea — Even if you do not think it would work, some part of it may be valid and could be usable in another form.",
+          "Respond, don't react — If you feel like you're ready to explode, give yourself a few seconds before speaking.",
+          "Don't interrupt",
+          "Critique the idea, not the person",
+          "Be courteous",
+          "Avoid jargon",
+          "Chat a Little — A meeting does not have to be 100% business. It is perfectly fine to ask team members how they are doing or what they are planning next weekend. This can really help ease tension when disagreements occur later. Of course, you should not socialize for the entire meeting.",
+        ],
+      },
+      {
+        heading: "Presenting Ideas",
+        icon: "presenter",
+        paragraphs: ["These tips also work if you are presenting an idea."],
+        bullets: [
+          "Body Language Awareness — If you are having a bad day or are feeling unhappy with the team project, you could be giving off negative signals with body language or a harsh tone. Even if you are saying the right thing, team members may still react negatively if you send the wrong body language signals. If you are feeling tense before going into a meeting, try taking a deep breath to relax.",
+          "Humour — While you would not want to make fun of your team mates or tell jokes that may offend others, there are plenty of topics that your team mates may find humorous - some of them may even be project related.",
+          "Patience — You may have the best idea, but not everyone may understand it the first time. The same question may be asked more than once. A member may forget a deadline unless reminded. Disagreements may occur over small details. Or conversely, team members may decide an issue too hastily, and may have to backtrack later. But, in most cases, it will all work out.",
+        ],
+      },
+      {
+        heading: "Conflict in the Team — I. Conflict Happens",
+        icon: "info",
+        paragraphs: ["Most members of a team have to learn two fundamentals:"],
+        bullets: [
+          "Having different opinions is one of the essential benefits of teamwork.",
+          "Team members have strong feelings and emotions. A team cannot achieve its full potential if all that is allowed is logic or information.",
+        ],
+      },
+      {
+        heading: "II. Clarify Expectations",
+        icon: "checklist",
+        paragraphs: [
+          "Fortunately, it is possible to take steps to minimize disagreement and conflict and to resolve those disagreements that may be dangerously escalating.",
+          "Stating expectations clearly will give the team a common ground to begin any discussion. Some ways to clarifying expectations include:",
+        ],
+        bullets: [
+          "Developing a clear statement of team mission or purpose",
+          "Ground rules governing participation, sharing of responsibilities",
+          "Agreement to depersonalize conflicts",
+          "Team recognition that team process, including discussion and brainstorming, is important to results and needs regular attention",
+          "Use of structured processes for problem solving and conflict resolution",
+          "Awareness of stages of project development and maintenance priorities of each stage",
+          "Clearly and appropriately defined individual responsibilities for real work for each other; clear linkage between individual responsibilities and the team mission",
+          "Clearly defined project standards and time lines",
+        ],
+      },
+      {
+        heading: "III. Identify the Type of Team Conflict",
+        icon: "search",
+        paragraphs: [
+          "If conflict escalates, the following tips may help the team resolve disagreements in a step-by-step manner.",
+        ],
+        bullets: [
+          "Internal conflict — An individual or team member is experiencing a personal conflict that may or may not be related to the team, but which is interfering with the person's ability to perform.",
+          "Individual conflict with one other team member — One team member is in conflict with another",
+          "Individual conflict with the entire team — One team member is experiencing conflict with the entire team",
+          "Conflict between several team members — The entire team is experiencing conflict with several other team members",
+          "Team conflict with one person outside of the team (such as a faculty member responsible for content)",
+        ],
+      },
+      {
+        heading: "IV. Identify Team Needs",
+        icon: "target",
+        paragraphs: ["Define the team's problem as a shared need. As a group:"],
+        bullets: [
+          "Identify the causes.",
+          "Determine the criteria for a solution.",
+          "Generate options.",
+          "Determine possible solutions.",
+          "Develop implementation plans.",
+          "Review results later on a regular basis.",
+        ],
+      },
+      {
+        heading: "V. Depersonalize Team-Internal Conflict",
+        icon: "chat",
+        paragraphs: [
+          "At this step, it is especially critical that every member of the team provide his or her view.",
+          "During the problem-solving phase focus on issues not personalities. These guidelines help depersonalize conflicts.",
+        ],
+        bullets: [
+          "Encourage each side to objectively explain his or her bottom line requirements. When the team is determining a solution, each person's criteria should be evaluated.",
+          "Remind the team of ground rules while generating options such as \"no criticizing statements by other people until all ideas are posted.\"",
+          "Encourage everyone to listen to other points of view.",
+          "During the process keep encouraging points of agreement.",
+          "Don't stifle new anger, but also don't dwell on it.",
+        ],
+      },
+      {
+        heading: "Another set of steps to consider as a team",
+        icon: "checklist",
+        paragraphs: [],
+        bullets: [
+          "Acknowledge that the conflict exists.",
+          "Gain common ground.",
+          "Seek to understand all angles.",
+          "Attack the issue not each other.",
+          "Develop an action plan.",
+        ],
+      },
+      {
+        heading: "VI. Structuring Discussion",
+        icon: "clipboard",
+        paragraphs: ["Here is a structured way to handle conflicts:"],
+        bullets: [
+          "Let each person state his or her view briefly.",
+          "Have neutral team members reflect on areas of agreement or disagreement.",
+          "Explore areas of disagreement for specific issues.",
+          "Have opponents suggest modifications to their own points of view as well as others.",
+          "If consensus is blocked, ask opponents if they can accept the team's decision.",
+        ],
+      },
+      {
+        heading: "VII. Key Questions that can help teams work through conflict",
+        icon: "search",
+        paragraphs: [],
+        bullets: [
+          "What are we supposed to accomplish as a team?",
+          "What are each of our roles and responsibilities in accomplishing that goal?",
+          "Who and when do each of us need to get information from?",
+          "If we get into trouble, whom can we ask for help?",
+          "What strengths do each of us bring in accomplishing our goals?",
+          "How are we going to make ourselves more accessible to one another?",
+          "How can we express differences without blaming others?",
+          "Which behaviours are unproductive? How can we help individuals take ownership of their unproductive behaviour? Don't excuse a team member when he or she behaves badly.",
+        ],
+      },
+      {
+        heading: "Contribution to team coherence, image and spirit and Respect differences to enhance interaction between team members",
+        icon: "award",
+        paragraphs: ["Time: 90 minutes · Activity: Self & Group"],
+      },
+      {
+        heading: "What is \"Unproductive Behavior\"? — Clearly Unproductive",
+        icon: "bell",
+        paragraphs: [
+          "Some behaviors are clearly detrimental to the functioning of the team. These include:",
+        ],
+        bullets: [
+          "Consistently missing meetings",
+          "Consistently missing deadlines",
+          "Never coming prepared to meetings",
+          "Not answering e-mail or messages in a reasonable time",
+          "Discourteous or disrespectful language",
+        ],
+      },
+      {
+        heading: "When Excessive \"Team Behavior\" is Unproductive",
+        icon: "trend",
+        paragraphs: [
+          "Other behaviors may be acceptable and even beneficial in moderation, but in an extreme form, can be disruptive to the team. For example:",
+        ],
+        table: {
+          headers: ["Normal/Productive", "Extreme/Unproductive"],
+          rows: [
+            ["Raising a Concern", "Nitpicking - Questioning or objecting to every possible detail on the project"],
+            ["Asking Questions", "Missing Details - Constantly asking questions because you were not paying attention the first time"],
+            ["Ownership/Responsibility", "Possessiveness - Refusal to allow anyone to alter or critique the work you have done for the project"],
+            ["Principled", "Uncompromising - Never accepting any proposed compromises"],
+            ["Listening & Reflecting", "Lurking - Never contributing in team meetings or other communications"],
+            ["Staying in Touch", "Nudging - Always sending reminders and not allowing members a reasonable interval before responding before sending out more notes"],
+            ["Follows Procedure", "Inflexible - Not allowing for changes in a plan or agenda"],
+            ["On top of things", "Doing Everything - Not allowing other members to make contributions"],
+          ],
+        },
+      },
+      {
+        heading: "What to do?",
+        icon: "wrench",
+        paragraphs: [
+          "Generally, it is best to make a significant effort to resolve problems within the team before contacting the instructor.",
+          "If one or more people are showing unproductive behavior, try these steps:",
+        ],
+        bullets: [
+          "First, the team should decide if the behavior in question is really unproductive or just a part of the team process. Does the behavior?",
+          "Interfere with the team's ability to complete project work?",
+          "Interfere with the team's ability to reach true consensus?",
+          "Significantly interfere with team morale? Morale may not be perfect all the time, but people should be able to work together.",
+          "Make sure a specific behavior has been identified as unproductive. The problem is with the behavior not with the person.",
+          "When discussing the behavior with a person, try to frame the issue as: \"I/We feel (frustrated/concerned) when you (fill in behavior) because it (explain how it affects the team).\"",
+          "When appropriate, acknowledge that the person may be acting with the best of intentions.",
+          "Allow the person to express his or her side of the issue, but make sure he or she understands why the team is concerned.",
+          "If necessary, attempt to reach a compromise so that both the individual and the person are satisfied.",
+          "In some cases, a team member may be \"missing in action.\" If that person has not responded to the team's repeated attempts to get in touch or never appears to meet with the team, it may be best to inform the instructor. The team and the instructor can work on a solution agreeable to the team",
+        ],
+      },
+      {
+        heading: "Definition",
+        icon: "book",
+        paragraphs: [
+          "Actively participating as a member of a team to move the team/work unit toward the completion of goals.",
+        ],
+        table: {
+          headers: ["Ways to Demonstrate this Skill", "Development Activities"],
+          rows: [
+            [
+              "Actively help the team or work unit accomplish its goals. · Ask what are the team's specific goals and objectives. If there are none, work with other team members to create some. Do all you can to ensure they are measurable. · Find out what are the team's milestones, dates and check-in times to make sure the team can track progress toward goals. If there are none, work with other team members to create them. · Find out what are the roles and responsibilities of the team members. If there are none, work with other team members to define these. · Suggest procedures or processes for achieving team goals. Help the team obtain resources as necessary. · Where possible, help clear away obstacles to the team's accomplishments.",
+              "Find a respected colleague or friend that you see as a good team player and ask them to mentor and advise you as you develop these skills in yourself. · Treat your work unit as a team and try out some of the team behaviours described here with them. Discuss your experiences with the mentor you identified, above. · If your team or work unit runs into organizational or other obstacles, look for ways to help the team get around the obstacles yourselves. Help your team-mates brainstorm sources, contacts, and approaches. · Ask managers or senior staff to help you and other team members build a \"business case\" for requesting any resources that the team needs but is finding it hard to get.",
+            ],
+            [
+              "Involve others and keep them informed. · In team decisions and actions, actively seek the input of quiet team members, and ask what would make it easier for them to participate. · Listen to others respectfully and fully. Recognize and use the differences and talents of others. · Share information with everyone on the team.",
+              "Together with your team, make a list of decisions and actions the team must make in the next couple of months. Pick three or four of the most important ones. · For each, list the stakeholders – people who will in some way be affected by the decision (their support will be needed, their work will be impacted, etc.). Work with the team to identify ways to involve these stakeholders. · Use the behaviours described in the next column to keep everyone interested and involved.",
+            ],
+            [
+              "Model commitment. · Energetically and publicly pursue the team's goals, and adhere to the team's defined roles, responsibilities, and processes. · Demonstrate enthusiasm and commitment for the team's projects and initiatives as a way of motivating yourself and others. Choose to have a can-do attitude; approach challenges with optimism and energy.",
+              "If you disagree with something the team is doing, raise your objection with the team. When you are in public, speak out in support of the team's initiatives and decisions. · When your team or work unit encounters problems or setbacks, work at responding with energy, interest, and enthusiasm for finding a way to solve the problem. · Avoid revisiting past history of problems, except to look for data that will help the team solve the current one.",
+            ],
+          ],
+        },
+      },
+      {
+        heading: "Individual Needs Vs Team Needs",
+        icon: "people",
+        paragraphs: [
+          "Besides differing in degrees of teaming instinct, people on teams differ in terms of personal agendas.",
+          "We make a big deal out of team objectives. Team objectives are supposed to be these powerful visions that unite teams and drive them on irresistibly to success. But guess what, in teaming physics, the team objective is decidedly the weak force. The strong force remains the collection of personal wishes and wants that team members bring to the team.",
+          "Just because we are attracted to teaming up, as described in the previous chapter, doesn't mean we set our other desires on the shelf. We don't know about you, but we'll be unintelligent if we'll forsake our personal dreams for the sake of some lousy workgroup. So a conflict exists between individual team members' goals and the overarching goal of the team itself.",
+          "And it can play out very painfully. Imagine a team of four, with the acknowledged goal of creating an e-commerce site for a conventional business. The goal is simple; reengineer a local business to cyberspace.",
+          "The four team members are Doug, a freelance programmer; Edie, an in-house graphic designer; Miller, an outsider brought in to help develop a catalogue; and Avram, an old-guard sales engineer. Sounds workable... But the four people aren't stick figures. They each have an agenda that is subtly pulling the team apart.",
+          "Doug is upset because he has a program from a previous job that he feels would be fine for this job, with a few minor alterations. His agenda is to finish his part of the project and get on to the next one. Frankly, he needs the money. But his team-mates won't give him the go-ahead to do this. Edie is usually a good sport on teams, redoing work at their request. But Edie has a secret. She's going to have a baby in seven months. Too early to tell everyone, doesn't want to count her chicken until it's hatched. But her mind is on that baby, and the project just doesn't do much for her. Her best design so far has been a garden page featuring characters from Peter Rabbit.",
+          "Miller thinks he's God's gift to catalogue consulting. His taste in teamwork is to come in every day with a new plan, a major overhaul, a fresh vision. He's driving everyone crazy. People don't know this, but Miller is a recovering alcoholic going through a manic period. He's having the time of his life, getting interested in his career just as others are easing out of their. Avram is the extrovert of the team. He helped start the company years ago, and he has reservations about the whole Internet thing. He read something in the paper, a year ago, that no one is making money there. It was his last fresh insight. Secretly, he resents the talented, but uncommitted youngsters around him, and lapses into frequent lectures on the virtue of selling garden supplies off the back of a truck. He feels unappreciated, and his lectures are a misguided effort to show people what is inside him.",
+          "We've just described four decent, talented people who are not in any way opposed to working on teams, and have nothing major against one another. But there are numerous conflicts between their individual goals and the team goal, and these conflicts will only build in significance. They probably won't ever blow up, or go ballistic or meltdown into a headline dysfunctional team. But they'll never gel as a team, and they won't meet their goal in a timely fashion, and the website will be a joke, because their team goals were deep-sixed by a raft of unfulfilled personal goals.",
+          "Doug, Edie, Miller and Avram are not going to click. Not for lack of good intentions. But their good intentions, taken together, are a feeble force compared to their individual, unaddressed needs.",
+        ],
+      },
+      {
+        heading: "Rebalancing the load",
+        icon: "layers",
+        paragraphs: [
+          "Effective teamwork means a continual balancing act between meeting team needs and individual needs. We're not just talking here about the basic human need for survival through affiliation with others that we discussed in the last chapter. We are speaking of all the things that each of us wants, things that have nothing to do with teams or jobs. While it's nice to be around other folks and work with them, we are all of us, still, looking out for number one. Forget all the movie scenes of the scrappy doughboy jumping on a live grenade to save his buddies in uniform. In real life, we take actions with others primarily to satisfy our personal agendas. People will only agree to team if it meets their own needs first.",
+          "Of course, there are some of us who live for deferred gratification as a masochistic kick; like agreeing to work towards a team outcome now in exchange for some personal outcomes later on. These people happily forestall today's druthers in order to incur team payback tomorrow. But, in general, it's a \"me first,\" or at least a \"please consider my needs while we meet the team's,\" kind of world.",
+        ],
+      },
+      {
+        heading: "Find the agenda",
+        icon: "search",
+        paragraphs: [
+          "\"Good soldiers\" are sometimes not soldiers at all. Teams must be leery of members who have no honest intention to be working members of the team. In their hearts, they are saying:",
+          "\"I'm not here to work with the team, but to take credit for its successes.\"",
+          "\"I'm not here to work with the team, but to associate with some of its members.\"",
+          "\"I'm not here to work with the team, but to use it as a steppingstone to better things.\"",
+          "The term \"hidden agenda\" was coined to describe this kind of covert careerism. It is not honest and it is very destructive to team coherence. Good teams recognise the fact that in order to build trust, they must uncover their own hidden agendas and expose them to the light of day.",
+          "In our hypothetical team, everyone has to put their agendas on the table for the others to examine. Edie, Miller, Avram need to be apprised of Doug's frustration. Chances are they will empathize with his need to finish up and move on, and move more quickly. Perhaps, with their empathy under his belt, Doug will relax a bit and let the project find its own rhythm. Even if Edie does not tell Doug, Miller, and Avram about her pregnancy, she needs to communicate to them that something is cooking that is pulling her from the work. It's possible that she isn't the best person for the team, and may have to be replaced. Hey, it happens. Miller needs to be told that he's making people crazy. It doesn't have to be cruel. Telling Miller why others are ambivalent about the project should engage him, and modulate his excesses. It wouldn't hurt for them to learn why he's so excited, either; it's much bigger than a love of catalogue sales.",
+          "And Avram, poor Avram needs to open up and respect his team-mates more. He's so connected to the company of ten years ago that it prevents him from being her now in a useful way. He should tell his story, but then he should shut up. One lesson of teaming is that one is never too old to grow up. Only by processing through each team member's wishes and wants, and at the very minimum acknowledging their validity, can the group redirect its focus; which has suddenly grown more intense, and deep with knowledge, at the team goal. And make the best gardening supplies website the world ever saw.",
+          "Who is to say that the team mission is the only mission that a team can acknowledge and pursue? Deep down, most of us are not especially good soldiers, and we do not long to subordinate our own desires to the common good. To the contrary: sacrifice, loyalty, and the willingness to go through a little effort for one another occur only when cards are on the table, and people are allowed (and required) to be honest about their needs. Personal goals that prevent us from achieving team goals are often very honourable:",
+          "Having a baby",
+          "Spending more time with family",
+          "Seeking a better job after this one",
+          "Going back to school and getting that degree",
+          "Or they can be a shade less edifying:",
+          "Making a name for oneself",
+          "Joining a team that is clearly funded",
+          "Wanting to belong to a team of \"winners\" for a change",
+          "Wanting a group that one can dominate",
+          "Glomming onto a team that has already achieved successes",
+          "Hiding behind a powerful executive's support and championship",
+          "Whatever the personal goals, we need to know what they are, and to deal with them, or at least acknowledge them, as a team, perhaps even to make them corollary team goals. When we know our fellow team members want us to achieve what we ourselves want that is a terrific bond between members.",
+          "The sooner we know one another's personal needs and hopes, the better for the team. This doesn't mean these personal needs have to be completely met first before true teaming can get underway. It does mean that acknowledging and addressing these needs as a group, early on, can help prevent our \"selfish\" desires from sinking the team effort.",
+        ],
+      },
+      {
+        heading: "Ethics",
+        icon: "shield",
+        paragraphs: [
+          "Everyone deals with stuff differently. Some detach themselves from the asset so they don't care about it or they attach themselves too much so they feel like the rightful owners. In the first situation, learning to care about company stuff is accomplished through thoughtful consideration. Who paid for this and how would I feel about writing the check that pays for it? What are the boundaries for appropriate use? This is an attitude that doesn't necessarily change from work to home. An ethical person doesn't put a dollar amount on respecting the property of others. He or she always makes a moral connection between property, ownership, and responsibility.",
+          "In the second case, becoming too attached or familiar with company property creates a problem as well. If you use something every day, you may become desensitized to its appropriate professional use. Do you balance company financial accounts like your own? Do you find yourself hitting the computer or kicking the copier (even if it deserves it)? Do you treat records and private information in a casual manner? It might be time to take a more serious approach to company property.",
+          "Beware of \"messing with the money or the stuff\" because ethical situations involving company assets, no matter how small are rarely smoothed over with an apology. There's always a smoking gun that does not leave grey areas for rationalization or explanation. Most industries deal with asset abuse or misuse with disciplinary action or termination on the first offence. Again, business ethics boils down to the day-to-day choices you make no matter who you are or what responsibilities you have. From the minute you step from the parking lot into your workplace, see the things around you in proper context.",
+        ],
+      },
+    ],
+    exercises: [
+      {
+        id: "ex1",
+        title: "Questioning — Demonstrate an understanding of criteria for working as a member of a team & Working Autonomously",
+        task: "Time: 45 minutes · Activity: Self & Group",
+        steps: [
+          "Identify and explain the criteria for working effectively as a member of a team",
+          "Identify and explain behaviours conducive to working as a member of a team",
+          "Identify and explain what the team dynamics are",
+          "Explain how you will ensure that team members are given sufficient support for them to achieve their work / project objectives",
+          "Explain how you will ensure that all the team members are consulted with",
+          "Identify and explain the authority levels of all team members",
+          "Explain how you will ensure tat these authority levels are applied",
+          "Explain how you will ensure that collaboration reflects the needs of all team members",
+        ],
+        checks: [
+          {
+            answer: [
+              "Communicate, Communicate, Communicate — If you have a problem with someone in your group, talk to him about it. Letting bad feelings brew will only make you sour and want to isolate yourself from the group.",
+              "Don't Blame Others — People in your group lose respect for you if you're constantly blaming others for not meeting deadlines.",
+              "Support Group Member's Ideas — If a team mate suggests something, always consider it. Considering the group's ideas shows you're interested in other people's ideas, not just your own.",
+              "No Bragging — It's one thing to rejoice in your successes with the group, but don't act like a superstar.",
+              "Listen Actively — Look at the person who's speaking to you, nod, ask probing questions and acknowledge what's said by paraphrasing points that have been made.",
+              "Get Involved — Share suggestions, ideas, solutions and proposals with your team members. Take the time to help your fellow team mates, no matter the request.",
+            ],
+            concepts: [
+              ["communicate", "communication", "talk", "speak"],
+              ["blame", "blaming", "finger"],
+              ["support ideas", "consider ideas", "support", "ideas"],
+              ["brag", "bragging", "superstar", "boast"],
+              ["listen", "listening"],
+              ["involved", "involve", "help", "share"],
+            ],
+            labels: [
+              "Communicate about problems",
+              "Don't blame others",
+              "Support group members' ideas",
+              "No bragging",
+              "Listen actively",
+              "Get involved and help",
+            ],
+            min: 3,
+          },
+          {
+            answer: [
+              "Active Listening — listen carefully to your team mates when they are speaking; don't tune speakers out.",
+              "Ask Questions — if you hear something that confuses you, ask about it; if a team member asks you a question, answer it courteously.",
+              "Constructive Feedback — critique the idea, not the person; be courteous; don't interrupt; explain your reasons; respond, don't react; avoid jargon.",
+              "Chat a Little — a meeting does not have to be 100% business; this can really help ease tension when disagreements occur later.",
+              "Body Language Awareness — even if you are saying the right thing, team members may react negatively if you send the wrong body language signals.",
+              "Humour and Patience — not everyone may understand your idea the first time; the same question may be asked more than once.",
+            ],
+            concepts: [
+              ["listen", "listening"],
+              ["question", "questions", "ask"],
+              ["feedback", "critique", "criticize", "criticise"],
+              ["courteous", "polite", "respect"],
+              ["patience", "patient"],
+              ["body language", "humour", "humor", "chat"],
+            ],
+            labels: [
+              "Active listening",
+              "Asking and answering questions",
+              "Constructive feedback",
+              "Courtesy and respect",
+              "Patience",
+              "Body language, humour and friendly chat",
+            ],
+            min: 3,
+          },
+          {
+            answer: [
+              "Having different opinions is one of the essential benefits of teamwork.",
+              "Team members have strong feelings and emotions — a team cannot achieve its full potential if all that is allowed is logic or information.",
+              "Teams organise around roles — a leader who sets a base agenda, facilitates meetings and monitors progress, and other roles such as the initiator, recorder, devil's advocate/skeptic, optimist, timekeeper, gate keeper and summarizer.",
+              "Conflict happens — it is possible to take steps to minimize disagreement and conflict and to resolve those disagreements that may be dangerously escalating.",
+            ],
+            concepts: [
+              ["opinions", "different opinions", "disagree"],
+              ["feelings", "emotions", "emotion"],
+              ["roles", "leader", "role"],
+              ["conflict", "disagreement"],
+            ],
+            labels: [
+              "Different opinions benefit the team",
+              "Strong feelings and emotions",
+              "Team roles (leader and others)",
+              "Conflict happens and can be managed",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "Actively help the team or work unit accomplish its goals.",
+              "Ask what are the team's specific goals and objectives; find out the team's milestones, dates and check-in times so the team can track progress toward goals.",
+              "Suggest procedures or processes for achieving team goals. Help the team obtain resources as necessary.",
+              "Where possible, help clear away obstacles to the team's accomplishments.",
+              "Take the time to help your fellow team mates, no matter the request.",
+            ],
+            concepts: [
+              ["help", "assist", "support"],
+              ["goals", "objectives", "goal"],
+              ["resources", "obstacles"],
+              ["milestones", "progress", "track"],
+              ["suggest", "procedures", "share"],
+            ],
+            labels: [
+              "Actively help the team",
+              "Know the team's goals and objectives",
+              "Resources and clearing obstacles",
+              "Milestones and tracking progress",
+              "Suggest procedures and share",
+            ],
+            min: 3,
+          },
+          {
+            answer: [
+              "Involve others and keep them informed.",
+              "In team decisions and actions, actively seek the input of quiet team members, and ask what would make it easier for them to participate.",
+              "Listen to others respectfully and fully. Recognize and use the differences and talents of others.",
+              "Share information with everyone on the team.",
+              "Ensure that each member gives input on an issue — ask everyone to voice their opinion one at a time, or cast votes.",
+            ],
+            concepts: [
+              ["involve", "informed", "inform"],
+              ["input", "opinion", "voice"],
+              ["listen"],
+              ["share information", "share"],
+              ["everyone", "each member", "all members", "all the members"],
+            ],
+            labels: [
+              "Involve others and keep them informed",
+              "Seek every member's input",
+              "Listen respectfully",
+              "Share information",
+              "Include everyone, one at a time",
+            ],
+            min: 3,
+          },
+          {
+            answer: [
+              "Most teams will have a leader — a very important position because he or she is responsible for the management of the entire project: setting a base agenda, facilitating meetings, and monitoring progress with communicating with members as needed.",
+              "It is important not to have too \"heavy\" a hand, or team morale may be lowered — all actions must be agreed to by the team.",
+              "Other roles carry their own responsibilities: leader/editor, writer, graphic artist and Webmaster/HTML specialist — or initiator, recorder, devil's advocate/skeptic, optimist, timekeeper, gate keeper and summarizer.",
+              "Everyone must agree on appropriate roles, and everyone must be satisfied in their roles.",
+            ],
+            concepts: [
+              ["leader"],
+              ["agree", "agreed", "agreement"],
+              ["roles", "role"],
+              ["responsible", "responsibility", "manage", "management"],
+            ],
+            labels: [
+              "The leader's position",
+              "Actions agreed by the team",
+              "Defined roles",
+              "Responsibility for managing the project",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "All actions must be agreed to by the team — although you may suggest a course of action, you must be sure the team agrees to it; if the team wants to go in another direction, you should be willing to compromise.",
+              "Everyone agrees on appropriate roles — this may take some negotiation to decide — and everyone is satisfied in their roles.",
+              "Whatever role you may have, it is still important that the entire team provide input on every facet of the project; teams can rotate roles or combine them in one person.",
+            ],
+            concepts: [
+              ["agree", "agreed", "agreement"],
+              ["compromise", "negotiation", "negotiate"],
+              ["roles", "role"],
+              ["input", "rotate"],
+            ],
+            labels: [
+              "Team agreement on actions",
+              "Negotiation and compromise",
+              "Agreed and satisfying roles",
+              "Whole-team input and rotating roles",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "Effective teamwork means a continual balancing act between meeting team needs and individual needs — people will only agree to team if it meets their own needs first.",
+              "Everyone has to put their agendas on the table for the others to examine; good teams uncover their own hidden agendas and expose them to the light of day.",
+              "Whatever the personal goals, we need to know what they are, and to deal with them, or at least acknowledge them, as a team — the sooner we know one another's personal needs and hopes, the better for the team.",
+            ],
+            concepts: [
+              ["balance", "balancing"],
+              ["individual needs", "personal needs", "own needs", "personal goals"],
+              ["team needs"],
+              ["agenda", "agendas"],
+              ["acknowledge", "honest", "on the table"],
+            ],
+            labels: [
+              "A continual balancing act",
+              "Individual and personal needs",
+              "Team needs",
+              "Agendas on the table",
+              "Acknowledging needs as a team",
+            ],
+            min: 3,
+          },
+        ],
+      },
+      {
+        id: "ex2",
+        title: "Questioning — contribution to team coherence, image and spirit and Respect differences to enhance interaction between team members",
+        task: "Time: 45 minutes · Activity: Self & Group",
+        steps: [
+          "Explain how you will identify the needs and objectives of team members",
+          "Explain the methods and techniques for building team coherence and spirit",
+          "Explain how you will ensure that team member actions are conducive to team coherence, spirit and image",
+          "Explain how trust and support of colleagues is gained through applicable behaviours",
+          "Explain how feedback can be provided which leads to constructive working relationships",
+          "Explain how differences between team members can be identified and acknowledged",
+          "Explain the importance of showing respect in teams",
+          "Explain how team members can be treated in ways which that demonstrate respect for individuals",
+          "Explain why behaviours, which are of concern to individuals, must be discussed promptly and openly with those concerned",
+        ],
+        checks: [
+          {
+            answer: [
+              "Everyone has to put their agendas on the table for the others to examine — good teams uncover their own hidden agendas and expose them to the light of day.",
+              "The sooner we know one another's personal needs and hopes, the better for the team — acknowledging and addressing these needs as a group, early on, can help prevent \"selfish\" desires from sinking the team effort.",
+              "In team decisions and actions, actively seek the input of quiet team members, and ask what would make it easier for them to participate.",
+              "Ask what are the team's specific goals and objectives — if there are none, work with other team members to create some.",
+            ],
+            concepts: [
+              ["agenda", "agendas"],
+              ["needs", "hopes", "objectives"],
+              ["ask", "input", "talk", "discuss"],
+              ["acknowledge", "honest", "open", "table"],
+            ],
+            labels: [
+              "Uncover hidden agendas",
+              "Know personal needs and hopes",
+              "Ask for and seek input",
+              "Acknowledge needs openly",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "Develop a clear statement of team mission or purpose, with ground rules governing participation and sharing of responsibilities.",
+              "Agree to depersonalize conflicts, use structured processes for problem solving and conflict resolution, and clearly define individual responsibilities, project standards and time lines.",
+              "Model commitment — energetically and publicly pursue the team's goals, demonstrate enthusiasm and commitment for the team's projects and initiatives, and choose to have a can-do attitude.",
+              "Chat a Little — a meeting does not have to be 100% business; this can really help ease tension when disagreements occur later.",
+            ],
+            concepts: [
+              ["mission", "purpose"],
+              ["ground rules", "rules"],
+              ["responsibilities", "responsibility"],
+              ["commitment", "enthusiasm", "attitude"],
+              ["depersonalize", "conflict"],
+            ],
+            labels: [
+              "Clear team mission or purpose",
+              "Ground rules",
+              "Defined responsibilities",
+              "Model commitment and enthusiasm",
+              "Depersonalize conflict",
+            ],
+            min: 3,
+          },
+          {
+            answer: [
+              "Avoid behaviours that are clearly detrimental to the team: consistently missing meetings or deadlines, never coming prepared to meetings, not answering e-mail or messages in a reasonable time, and discourteous or disrespectful language.",
+              "If you disagree with something the team is doing, raise your objection with the team — when you are in public, speak out in support of the team's initiatives and decisions.",
+              "When your team encounters problems or setbacks, work at responding with energy, interest, and enthusiasm for finding a way to solve the problem.",
+            ],
+            concepts: [
+              ["meetings", "deadlines"],
+              ["prepared", "prepare"],
+              ["courteous", "respectful", "respect", "language"],
+              ["support", "public"],
+              ["enthusiasm", "energy", "commitment"],
+            ],
+            labels: [
+              "Meetings and deadlines kept",
+              "Come prepared",
+              "Courteous, respectful language",
+              "Public support for the team",
+              "Energy and enthusiasm",
+            ],
+            min: 3,
+          },
+          {
+            answer: [
+              "Don't Blame Others — people in your group lose respect for you if you're constantly blaming others for not meeting deadlines.",
+              "No Bragging — have faith that people will recognize when good work is being done and that they'll let you know how well you're doing.",
+              "Support group members' ideas and take the time to help your fellow team mates, no matter the request — if you've helped them in past, they'll be more than happy to lend a helping hand.",
+              "Uncover hidden agendas and expose them to the light of day — good teams recognise that this is how trust is built.",
+            ],
+            concepts: [
+              ["blame", "blaming"],
+              ["brag", "bragging", "boast"],
+              ["help", "support"],
+              ["honest", "hidden agenda", "agendas", "trust"],
+            ],
+            labels: [
+              "Don't blame others",
+              "Don't brag",
+              "Help and support team mates",
+              "Honesty builds trust",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "Don't express an opinion as a fact, and explain your reasons — this will allow others to evaluate your comments more effectively.",
+              "Restate the original idea to be sure you have correctly understood it, and compliment another's idea — some part of it may be valid and could be usable in another form.",
+              "Respond, don't react; don't interrupt; critique the idea, not the person; be courteous; avoid jargon.",
+            ],
+            concepts: [
+              ["opinion", "fact"],
+              ["reasons", "explain"],
+              ["restate", "compliment"],
+              ["idea not the person", "not the person"],
+              ["courteous", "interrupt", "jargon", "react"],
+            ],
+            labels: [
+              "Opinion vs fact",
+              "Explain your reasons",
+              "Restate and compliment ideas",
+              "Critique the idea, not the person",
+              "Courteous, calm responses",
+            ],
+            min: 3,
+          },
+          {
+            answer: [
+              "Having different opinions is one of the essential benefits of teamwork — team members have strong feelings and emotions.",
+              "Let each person state his or her view briefly, and have neutral team members reflect on areas of agreement or disagreement.",
+              "Acknowledge that the conflict exists, gain common ground, and seek to understand all angles.",
+            ],
+            concepts: [
+              ["opinions", "different"],
+              ["state", "view", "listen"],
+              ["acknowledge"],
+              ["understand", "common ground"],
+            ],
+            labels: [
+              "Different opinions exist",
+              "Let each person state their view",
+              "Acknowledge the difference",
+              "Seek to understand all angles",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "Discourteous or disrespectful language is clearly detrimental to the functioning of the team.",
+              "Listen to others respectfully and fully — recognize and use the differences and talents of others.",
+              "Critique the idea, not the person, and be courteous — morale may not be perfect all the time, but people should be able to work together.",
+            ],
+            concepts: [
+              ["respect", "respectful", "disrespect"],
+              ["listen"],
+              ["courteous", "courtesy"],
+              ["morale", "work together", "trust"],
+            ],
+            labels: [
+              "Respectful treatment",
+              "Respectful listening",
+              "Courtesy",
+              "Morale and working together",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "Look at the person who's speaking to you, nod, ask probing questions and acknowledge what's said by paraphrasing points that have been made.",
+              "If a team member asks you a question, answer it courteously; listen to others respectfully and fully.",
+              "Actively seek the input of quiet team members; recognize and use the differences and talents of others; critique the idea, not the person.",
+            ],
+            concepts: [
+              ["listen", "listening"],
+              ["courteous", "courteously", "polite"],
+              ["input", "quiet"],
+              ["talents", "differences"],
+              ["idea not the person", "not the person"],
+            ],
+            labels: [
+              "Active listening",
+              "Courteous answers",
+              "Seek quiet members' input",
+              "Recognise differences and talents",
+              "Critique ideas, not people",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "If you have a problem with someone in your group, talk to him about it — letting bad feelings brew will only make you sour and want to isolate yourself from the group; not only does it feel good to get it out, but it will be better for the team in the long run.",
+              "Make sure a specific behavior has been identified as unproductive — the problem is with the behavior not with the person.",
+              "When discussing the behavior with a person, try to frame the issue as: \"I/We feel (frustrated/concerned) when you (fill in behavior) because it (explain how it affects the team)\" — and allow the person to express his or her side of the issue.",
+            ],
+            concepts: [
+              ["talk", "discuss", "raise"],
+              ["feelings brew", "brew", "sour", "isolate", "resentment"],
+              ["behavior", "behaviour"],
+              ["not the person", "not with the person"],
+              ["express", "side"],
+            ],
+            labels: [
+              "Talk about it directly and promptly",
+              "Bad feelings brew when left unspoken",
+              "Focus on the specific behaviour",
+              "The behaviour, not the person",
+              "Let them express their side",
+            ],
+            min: 2,
+          },
+        ],
+      },
+    ],
+    assignments: [],
+    quiz: [],
+
+    lessonPlan: {
+      title: "Facilitator Preparation",
+      startTime: "09:00",
+      details: [
+        { icon: "calendar", label: "Date", value: "Friday, 24 & 31 July 2026" },
+        { icon: "clock", label: "Time", value: "09:00 \u2013 14:00" },
+        { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
+        { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
+      ],
+      prep: [
+        "Study the notes in this lesson plan carefully to ensure preparation is done before the start of classes.",
+        "Study the learner materials so that you are familiar with the topics that will be covered in this part of the course.",
+      ],
+      sections: [
+        {
+          heading: "Day 1 — Friday, 24 July 2026 · Unit Standard 10135",
+          startTime: "09:00",
+          rows: [
+            {
+              time: "30 minutes",
+              title: "Index & Unit Standard Alignment — Facilitator",
+              text: [
+                "Read through the index with the learners, highlighting the areas that will be covered in this manual. Make reference to the Unit Standard Alignment Index to outline the specific outcomes that will be covered.",
+              ],
+              resources: ["LM p2"],
+            },
+            {
+              time: "90 minutes",
+              title: "Criteria for working as a team member — Facilitator & Class",
+              bullets: [
+                "Read through pages 4-10 of the learner manual, identifying criteria for working as a team member.",
+              ],
+              resources: ["LM p4-10"],
+            },
+            {
+              time: "45 minutes",
+              title: "Questionnaire 1 — Class in pairs",
+              bullets: [
+                "Facilitator to read through the questions with the learners, ensuring they understand what is expected of them.",
+                "Allow the learners to complete the questions; take feedback from two groups/pairs.",
+              ],
+              resources: ["LM p11-12"],
+            },
+            {
+              time: "90 minutes",
+              title: "Contribution to team coherence, respect and interaction between team members — Facilitator & Class",
+              text: ["Read through pages 13-19 of the learner manual, identifying the following:"],
+              bullets: [
+                "Productive and non-productive behaviour",
+                "Individual needs versus team needs.",
+              ],
+              resources: ["LM p13-19"],
+            },
+          ],
+        },
+        {
+          heading: "Day 2 — Friday, 31 July 2026 · Unit Standard 10135",
+          startTime: "09:00",
+          rows: [
+            {
+              time: "90 minutes",
+              title: "Building relations between team members and stakeholders — Facilitator & Class",
+              text: [
+                "Read through pages 21-24 of the learner manual for the article on Cape Town tourism and staff.",
+              ],
+              resources: ["LM p21-24"],
+            },
+            {
+              time: "45 minutes",
+              title: "Questionnaire 2 — Class in pairs",
+              bullets: [
+                "Facilitator to read through the questions with the learners, ensuring they understand what is expected of them.",
+                "Allow the learners to complete the questions; take feedback from two groups/pairs.",
+              ],
+              resources: ["LM p25-26"],
+            },
+            {
+              time: "10 minutes",
+              title: "Self-Assessment — Learners individually",
+              bullets: [
+                "Explain to the learners that they have to judge their own knowledge gained in the unit by ticking the blocks they feel competent with.",
+                "Allow the learners to tick the blocks and take feedback from each learner.",
+                "Identify those learners who have shortcomings and assist them with fulfilling the requirements.",
+              ],
+              resources: ["LM p27"],
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  /* ================================================================
+     US 114055 — Ethics and professionalism for the computer industry
+     NQF 5 · 3 credits
+     ================================================================ */
+  "114055": {
+    lesson: [],
+    exercises: [],
+    assignments: [],
+    quiz: [],
+
+    lessonPlan: {
+      title: "Facilitator Preparation",
+      startTime: "09:00",
+      details: [
+        { icon: "calendar", label: "Date", value: "Friday, 21 August 2026" },
+        { icon: "clock", label: "Time", value: "09:00 \u2013 14:00" },
+        { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
+        { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
+      ],
+      prep: [
+        "Study the notes in this lesson plan carefully to ensure preparation is done before the start of classes.",
+        "Study the learner materials so that you are familiar with the topics that will be covered in this part of the course.",
+      ],
+      sections: [
+        {
+          heading: "Unit Standard 114055",
+          rows: [
+            {
+              time: "30 minutes",
+              title: "Index & Unit Standard Alignment — Facilitator",
+              text: [
+                "Read through the index with the learners, highlighting the areas that will be covered in this manual. Make reference to the Unit Standard Alignment Index to outline the specific outcomes that will be covered.",
+              ],
+              resources: ["LM p3"],
+            },
+            {
+              time: "90 minutes",
+              title: "Codes of practice for the IT industry in SA — Facilitator & Class",
+              bullets: [
+                "Read through pages 4-16 of the learner manual, identifying the codes of practice of the IT industry in South Africa.",
+              ],
+              resources: ["LM p4-16"],
+            },
+            {
+              time: "45 minutes",
+              title: "Questionnaire 1 — Class in pairs",
+              bullets: [
+                "Facilitator to read through the questions with the learners, ensuring they understand what is expected of them.",
+                "Allow the learners to complete the questions; take feedback from two groups/pairs.",
+              ],
+              resources: ["LM p17-19"],
+            },
+            {
+              time: "90 minutes",
+              title: "Codes of ethics in the computer industry — Facilitator & Class",
+              bullets: [
+                "Read through pages 20-25 of the learner manual, identifying the codes of ethics in the computer industry.",
+              ],
+              resources: ["LM p20-25"],
+            },
+            {
+              time: "45 minutes",
+              title: "Questionnaire 2 — Class in pairs",
+              bullets: [
+                "Facilitator to read through the questions with the learners, ensuring they understand what is expected of them.",
+                "Allow the learners to complete the questions; take feedback from two groups/pairs.",
+              ],
+              resources: ["LM p26"],
+            },
+            {
+              time: "10 minutes",
+              title: "Self-Assessment — Learners individually",
+              bullets: [
+                "Explain to the learners that they have to judge their own knowledge gained in the unit by ticking the blocks they feel competent with.",
+                "Allow the learners to tick the blocks and take feedback from each learner.",
+                "Identify those learners who have shortcomings and assist them with fulfilling the requirements.",
+              ],
+              resources: ["LM p27"],
+            },
+            {
+              time: "10 minutes",
+              title: "Parking Bay — Facilitator",
+              bullets: [
+                "Take all the questions from the learners and answer them individually.",
+                "Ensure the entire class understands the questions posed by other learners.",
+              ],
+              resources: ["White Board"],
+            },
+            {
+              time: "10 minutes",
+              title: "Closing — Facilitator",
+              bullets: [
+                "Thank the learners for their participation.",
+                "Agree with them when the next facilitation session is scheduled for.",
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  },
 };
 
 export function getContent(us: string): UnitContent | undefined {

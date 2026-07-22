@@ -62,7 +62,7 @@ function Shell({
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [route, setRoute] = useState<Route>(loadRoute);
-  const { state, toggleActivity, saveQuizResult, setLogbookField } = useProgress(profile.id);
+  const { state, toggleActivity, saveQuizResult, setLogbookField, saveExerciseResult } = useProgress(profile.id);
 
   // in-app navigation pushes a browser history entry so back/forward work
   const navigate = useCallback((r: Route) => {
@@ -123,6 +123,7 @@ function Shell({
                 toggleActivity={toggleActivity}
                 saveQuizResult={saveQuizResult}
                 setLogbookField={setLogbookField}
+                saveExerciseResult={saveExerciseResult}
                 navigate={navigate}
               />
             )}

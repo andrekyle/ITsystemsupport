@@ -152,10 +152,20 @@ export interface QuizResult {
   history?: QuizAttempt[];
 }
 
+/** Marked exercise summary — each key idea (point) is worth 2 marks; best of 2 attempts kept. */
+export interface ExerciseResult {
+  best: number;
+  last: number;
+  total: number;
+  attempts: number;
+}
+
 export interface UnitProgress {
   /** activity name -> done */
   activities: Partial<Record<UnitActivity, boolean>>;
   quiz?: QuizResult;
+  /** marked exercise scores (exercise id -> best-of-two result) */
+  exercises?: Record<string, ExerciseResult>;
   /** editable logbook field values (field key -> value) */
   logbook?: Record<string, string | boolean>;
 }
@@ -167,6 +177,8 @@ export interface LessonSection {
   icon: string;
   paragraphs: string[];
   bullets?: string[];
+  /** data table rendered after the bullets (first column bolded) */
+  table?: { headers: string[]; rows: string[][] };
   /** icon card grid rendered after the bullets */
   cards?: {
     icon: string;
@@ -189,11 +201,25 @@ export interface ModelAnswerBlock {
   table?: { headers: string[]; rows: string[][]; caption?: string };
 }
 
+/** Semantic answer key for a typed exercise question. */
+export interface ExerciseCheck {
+  /** the correct answer, drawn from the lesson text, revealed once the learner's answer is judged correct */
+  answer: string[];
+  /** concept groups — a group is matched when any one of its phrases appears in the learner's answer */
+  concepts: string[][];
+  /** short human names for each key idea (index-aligned with concepts) — used in marker feedback */
+  labels?: string[];
+  /** how many concept groups must match for the answer to count as correct (default: half, rounded up) */
+  min?: number;
+}
+
 export interface Exercise {
   id: string;
   title: string;
   task: string;
   steps: string[];
+  /** per-question typed-answer blocks with semantic checking (index-aligned with steps) */
+  checks?: ExerciseCheck[];
   download?: { filename: string; label: string; content: string; mime?: string };
   /** facilitator/super-user only model answer */
   modelAnswer?: ModelAnswerBlock[];
@@ -271,6 +297,8 @@ export interface LessonPlanRow {
 
 export interface LessonPlanSection {
   heading?: string;
+  /** restarts the schedule clock at this time, e.g. "09:00" — use for day 2 of a multi-day plan */
+  startTime?: string;
   rows: LessonPlanRow[];
 }
 
