@@ -1161,7 +1161,10 @@ export function UnitPage({
           </span>
           <span>
             This unit standard opens on <strong>{unlockAt ? fmtUnlock(unlockAt) : "its session day at 08:30"}</strong>.
-            Its lesson, exercises and materials become available then — see the Training Calendar
+            Its lesson, exercises and materials become available then — see the{" "}
+            <button className="text-link" onClick={() => navigate({ page: "calendar" })}>
+              Training Calendar
+            </button>{" "}
             for your full schedule.
           </span>
         </div>
