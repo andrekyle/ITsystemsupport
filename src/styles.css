@@ -1254,6 +1254,16 @@ td .with-ico .ico {
   color: var(--ink-3);
 }
 
+/* the document count takes the flexible space so every row right-aligns evenly */
+.profile-row .docs {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.profile-row .docs ~ .chev {
+  margin-left: 0;
+}
+
 .field {
   margin-bottom: 14px;
 }

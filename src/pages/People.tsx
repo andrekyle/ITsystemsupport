@@ -301,7 +301,7 @@ export function StudentsPage({
                 {s.passwordHash ? " · password set" : ""}
               </span>
             </span>
-            <span className="rl" style={{ marginLeft: "auto" }}>
+            <span className="rl docs">
               {s.role === "Learner" ? `${docs} / ${POE_TOTAL} documents` : ""}
             </span>
             <span className="chev">
