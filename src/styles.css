@@ -3909,6 +3909,13 @@ a.plan-ppt:hover {
   color: var(--green);
 }
 
+/* the entire calendar row goes green once the unit standard is completed */
+table.data tr.done-row td,
+table.data tr.done-row .us-link,
+table.data tr.done-row .text-link {
+  color: var(--green);
+}
+
 .unit-locked-card {
   display: flex;
   align-items: center;

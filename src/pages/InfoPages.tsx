@@ -216,7 +216,7 @@ export function CalendarPage({
               {m.units.map((u) => {
                 const done = progress ? unitStatus(progress, u.us) === "completed" : false;
                 return (
-                  <tr key={u.us}>
+                  <tr key={u.us} className={done ? "done-row" : undefined}>
                     <td>
                       <a
                         className="us-link"
