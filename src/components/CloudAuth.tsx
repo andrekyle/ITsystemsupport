@@ -57,6 +57,29 @@ export function CloudAuth() {
     }
   }
 
+  async function forgotPassword() {
+    if (!supabase) return;
+    setError(null);
+    setNotice(null);
+    if (!email) {
+      setError("Type your email address above first, then tap “Forgot password?” again.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+      });
+      if (error) setError(friendlyError(error.message, "signin"));
+      else
+        setNotice(
+          `Password reset email sent to ${email} — open the link in it, and you'll be asked to choose a new password.`
+        );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="gate">
       <div className="gate-card">
@@ -121,6 +144,63 @@ export function CloudAuth() {
         >
           {mode === "signin" ? "Create a new account" : "Back to sign in"}
         </button>
+        {mode === "signin" && (
+          <button className="btn ghost block" onClick={() => void forgotPassword()} disabled={busy}>
+            Forgot password? Email me a reset link
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Shown when the user lands back in the app from a password-recovery email. */
+export function ResetPassword({ onDone }: { onDone: () => void }) {
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!supabase) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) setError(error.message);
+      else onDone();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="gate">
+      <div className="gate-card">
+        <div className="logo">
+          <Icon name="certificate" size={26} />
+          ITSS Learn
+        </div>
+        <h1>Choose a new password</h1>
+        <p className="sub">Enter a new password for your account — you'll be signed in right away.</p>
+        <form onSubmit={submit}>
+          <div className="field">
+            <label htmlFor="rp-pw">New password</label>
+            <PasswordInput
+              id="rp-pw"
+              value={password}
+              onChange={setPassword}
+              autoComplete="new-password"
+              minLength={6}
+              required
+            />
+          </div>
+          {error && <p className="auth-error">{error}</p>}
+          <button className="btn block" type="submit" disabled={busy}>
+            <Icon name="checkCircle" size={17} />
+            {busy ? "Please wait…" : "Save new password"}
+          </button>
+        </form>
       </div>
     </div>
   );

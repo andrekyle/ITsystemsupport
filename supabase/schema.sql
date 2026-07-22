@@ -5,6 +5,10 @@
 -- → turn OFF "Confirm email". Sign-ups must work without a confirmation step.
 -- To unlock accounts created while confirmation was on:
 --   update auth.users set email_confirmed_at = now() where email_confirmed_at is null;
+--
+-- PASSWORD RESET EMAILS: Dashboard → Authentication → URL Configuration
+-- → set Site URL to the deployed app URL (and add it to Redirect URLs) so the
+-- "Forgot password?" links land back in the app.
 
 -- One row per synced app-state key, per authenticated user.
 create table if not exists public.app_state (

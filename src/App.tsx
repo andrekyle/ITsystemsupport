@@ -3,7 +3,7 @@ import type { Profile, Route } from "./types";
 import type { Theme } from "./store";
 import { getSession, getTheme, loadProfiles, setAccountAdmin, setAccountEmail, setSession, setTheme, updateProfile, useProgress } from "./store";
 import { SignIn } from "./components/SignIn";
-import { CloudAuth } from "./components/CloudAuth";
+import { CloudAuth, ResetPassword } from "./components/CloudAuth";
 import { Header } from "./components/Header";
 import { Sidebar } from "./components/Sidebar";
 import { Dashboard, ProgressPage } from "./pages/Dashboard";
@@ -149,15 +149,24 @@ function Shell({
 }
 
 export default function App() {
-  const [cloudState, setCloudState] = useState<"loading" | "signedout" | "ready">(
+  const [cloudState, setCloudState] = useState<"loading" | "signedout" | "recovery" | "ready">(
     cloudEnabled ? "loading" : "ready"
   );
   const syncedUser = useRef<string | null>(null);
+  const recovering = useRef(false);
+  const syncReady = useRef(false);
 
   useEffect(() => {
     if (!supabase) return;
     const sb = supabase;
     const { data: sub } = sb.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        // arrived from a password-reset email — let the user set a new password first
+        recovering.current = true;
+        setAccountEmail(session?.user?.email);
+        setCloudState("recovery");
+        return;
+      }
       if (session?.user) {
         setAccountEmail(session.user.email);
         if (syncedUser.current !== session.user.id) {
@@ -171,9 +180,10 @@ export default function App() {
               ({ data }) => setAccountAdmin(!!data),
               () => setAccountAdmin(false)
             );
-          void Promise.all([startSync(session.user.id), adminCheck]).then(() =>
-            setCloudState("ready")
-          );
+          void Promise.all([startSync(session.user.id), adminCheck]).then(() => {
+            syncReady.current = true;
+            if (!recovering.current) setCloudState("ready");
+          });
         }
       } else {
         setAccountEmail(null);
@@ -184,6 +194,8 @@ export default function App() {
           wipeLocalData();
         }
         syncedUser.current = null;
+        syncReady.current = false;
+        recovering.current = false;
         setCloudState("signedout");
       }
     });
@@ -200,6 +212,15 @@ export default function App() {
     );
   }
   if (cloudState === "signedout") return <CloudAuth />;
+  if (cloudState === "recovery")
+    return (
+      <ResetPassword
+        onDone={() => {
+          recovering.current = false;
+          setCloudState(syncReady.current ? "ready" : "loading");
+        }}
+      />
+    );
   return <LocalApp key={syncedUser.current ?? "local"} />;
 }
 
