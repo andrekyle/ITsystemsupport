@@ -219,29 +219,19 @@ export function StudentsPage({
       alive = false;
     };
   }, [rev]);
-  if (!isPrivileged) {
-    return (
-      <div className="callout">
-        <span className="ico">
-          <Icon name="shield" size={19} />
-        </span>
-        <span>This page is only available to facilitators, assessors, moderators and the super user.</span>
-      </div>
-    );
-  }
-
   const local = loadProfiles();
   const localIds = new Set(local.map((p) => p.id));
   const remote = (cloud?.profiles ?? []).filter((p) => !localIds.has(p.id));
   const remoteIds = new Set(remote.map((p) => p.id));
   const all = [...local, ...remote];
-  // Super Users manage every account; facilitators see their learners only
+  // Super Users manage every account; facilitators see their learners;
+  // learners see the enrolled learner list (read-only)
   const people = isSuper
     ? all.filter((p) => p.id !== profile.id)
     : all.filter((p) => p.role === "Learner");
   const student = route.studentId ? all.find((p) => p.id === route.studentId) : undefined;
 
-  if (student)
+  if (student && (isPrivileged || student.role === "Learner"))
     return (
       <StudentDetail
         student={student}
@@ -258,13 +248,17 @@ export function StudentsPage({
     <>
       <div className="eyebrow">
         <Icon name="people" size={15} />
-        {isSuper ? "User management" : "Students"}
+        {isSuper ? "User management" : isPrivileged ? "Students" : "Enrolled learners"}
       </div>
-      <h1 className="page-title">{isSuper ? "Users" : "Students"}</h1>
+      <h1 className="page-title">
+        {isSuper ? "Users" : isPrivileged ? "Students" : "Enrolled Learners"}
+      </h1>
       <p className="page-sub">
         {isSuper
           ? "All accounts on this device and in the cloud — select a user to view their profile, update their details, reset their password or remove the account."
-          : "All learner profiles on this device and in the cloud — select a student to view their enrolment information and uploaded documents."}
+          : isPrivileged
+            ? "All learner profiles on this device and in the cloud — select a student to view their enrolment information and uploaded documents."
+            : "Everyone enrolled on this learnership. Personal contact details are kept private."}
       </p>
 
       {isSuper && <AddUser onAdded={refresh} />}
@@ -294,15 +288,17 @@ export function StudentsPage({
               <span className="nm">{s.name}</span>
               <br />
               <span className="rl">
-                {s.role} · {s.enrolment?.idNumber ? `ID ${s.enrolment.idNumber} · ` : ""}
-                joined {fmtDate(s.createdAt)}
-                {isRemote ? " · own sign-in account" : ""}
-                {s.role === "Learner" && !s.enrolment ? " · enrolment form outstanding" : ""}
-                {s.passwordHash ? " · password set" : ""}
+                {s.role}
+                {isPrivileged && s.enrolment?.idNumber ? ` · ID ${s.enrolment.idNumber}` : ""}
+                {" · joined "}
+                {fmtDate(s.createdAt)}
+                {isPrivileged && isRemote ? " · own sign-in account" : ""}
+                {isPrivileged && s.role === "Learner" && !s.enrolment ? " · enrolment form outstanding" : ""}
+                {isPrivileged && s.passwordHash ? " · password set" : ""}
               </span>
             </span>
             <span className="rl docs">
-              {s.role === "Learner" ? `${docs} / ${POE_TOTAL} documents` : ""}
+              {isPrivileged && s.role === "Learner" ? `${docs} / ${POE_TOTAL} documents` : ""}
             </span>
             <span className="chev">
               <Icon name="chevronRight" size={16} />
@@ -498,6 +494,7 @@ function StudentDetail({
   cloudDocs?: Record<string, PoeDoc>;
 }) {
   const isSuper = viewer.role === "Super User";
+  const staffViewer = isStaff(viewer.role);
   const { docs: localDocs } = usePoe(student.id);
   const docs = remote ? (cloudDocs ?? {}) : localDocs;
   const canManage = isSuper;
@@ -568,7 +565,7 @@ function StudentDetail({
 
       <ProfileHead profile={student} />
 
-      {remote && (
+      {remote && staffViewer && (
         <div className="callout">
           <span className="ico">
             <Icon name="info" size={19} />
@@ -617,7 +614,7 @@ function StudentDetail({
           </div>
         </form>
       ) : student.enrolment ? (
-        <EnrolmentDetails enrolment={student.enrolment} />
+        <EnrolmentDetails enrolment={student.enrolment} redact={!staffViewer} />
       ) : (
         <div className="callout">
           <span className="ico">
@@ -627,38 +624,42 @@ function StudentDetail({
         </div>
       )}
 
-      <h2 className="section-title">
-        <span className="ico">
-          <Icon name="folder" size={20} />
-        </span>
-        Uploaded documents — {uploaded.length} / {POE_TOTAL}
-      </h2>
-      {uploaded.length === 0 ? (
-        <div className="callout">
-          <span className="ico">
-            <Icon name="info" size={19} />
-          </span>
-          <span>No documents uploaded yet.</span>
-        </div>
-      ) : (
-        uploaded.map(({ sec, item, doc }) => (
-          <div className="plan-upload-row" key={item.id}>
-            <Icon name="document" size={17} />
-            <span className="fileinfo">
-              <span className="poe-file" title={doc.name}>
-                {doc.name}
-              </span>
-              <span className="meta">
-                {sec.heading} · {item.label} · {fmtSize(doc.size)} · {fmtDate(doc.uploadedAt)}
-              </span>
+      {staffViewer && (
+        <>
+          <h2 className="section-title">
+            <span className="ico">
+              <Icon name="folder" size={20} />
             </span>
-            {isSuper && (
-              <button className="poe-dl" onClick={() => void downloadDoc(doc)} title="Download">
-                <Icon name="download" size={17} />
-              </button>
-            )}
-          </div>
-        ))
+            Uploaded documents — {uploaded.length} / {POE_TOTAL}
+          </h2>
+          {uploaded.length === 0 ? (
+            <div className="callout">
+              <span className="ico">
+                <Icon name="info" size={19} />
+              </span>
+              <span>No documents uploaded yet.</span>
+            </div>
+          ) : (
+            uploaded.map(({ sec, item, doc }) => (
+              <div className="plan-upload-row" key={item.id}>
+                <Icon name="document" size={17} />
+                <span className="fileinfo">
+                  <span className="poe-file" title={doc.name}>
+                    {doc.name}
+                  </span>
+                  <span className="meta">
+                    {sec.heading} · {item.label} · {fmtSize(doc.size)} · {fmtDate(doc.uploadedAt)}
+                  </span>
+                </span>
+                {isSuper && (
+                  <button className="poe-dl" onClick={() => void downloadDoc(doc)} title="Download">
+                    <Icon name="download" size={17} />
+                  </button>
+                )}
+              </div>
+            ))
+          )}
+        </>
       )}
     </>
   );

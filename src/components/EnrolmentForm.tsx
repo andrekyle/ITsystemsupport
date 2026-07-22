@@ -213,7 +213,27 @@ export function EnrolmentForm({
   );
 }
 
-export function EnrolmentDetails({ enrolment }: { enrolment: EnrolmentInfo }) {
+/** Fields hidden from learners viewing a classmate's enrolment. */
+const REDACTED_FIELDS = new Set([
+  "ID number",
+  "Age",
+  "Disability",
+  "Highest qualification",
+  "Telephone number",
+  "Cell phone number",
+  "Fax number",
+  "Email address",
+  "Contact number",
+]);
+
+export function EnrolmentDetails({
+  enrolment,
+  redact,
+}: {
+  enrolment: EnrolmentInfo;
+  /** hide personal contact and sensitive fields (learner viewers) */
+  redact?: boolean;
+}) {
   const addr = (street: string, province: string, code: string) =>
     [street, province, code].filter(Boolean).join(", ");
   const groups: { heading: string; rows: [string, string][] }[] = [
@@ -300,7 +320,10 @@ export function EnrolmentDetails({ enrolment }: { enrolment: EnrolmentInfo }) {
     <table className="data kv enrol-details">
       <tbody>
         {groups
-          .map((g) => ({ ...g, rows: g.rows.filter(([, v]) => v) }))
+          .map((g) => ({
+            ...g,
+            rows: g.rows.filter(([k, v]) => v && !(redact && REDACTED_FIELDS.has(k))),
+          }))
           .filter((g) => g.rows.length > 0)
           .map((g) => (
             <React.Fragment key={g.heading}>

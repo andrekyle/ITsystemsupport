@@ -31,7 +31,13 @@ export function Sidebar({ collapsed, route, progress, profile, navigate }: Props
             label: profile.role === "Super User" ? "Users" : "Students",
           },
         ]
-      : []),
+      : [
+          {
+            page: "students" as const,
+            icon: "people",
+            label: "Enrolled Learners",
+          },
+        ]),
     { page: "calendar" as const, icon: "calendar", label: "Training Calendar" },
     { page: "assessments" as const, icon: "clipboard", label: "Assessments" },
     { page: "deliverables" as const, icon: "checklist", label: "Deliverables" },
