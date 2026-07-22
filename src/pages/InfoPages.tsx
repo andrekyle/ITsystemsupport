@@ -1,5 +1,5 @@
 import { Icon } from "../icons";
-import type { Profile } from "../types";
+import type { Profile, Route } from "../types";
 import { isStaff } from "../types";
 import { Gloss } from "./Course";
 import {
@@ -176,7 +176,7 @@ export function ResourcesPage() {
   );
 }
 
-export function CalendarPage() {
+export function CalendarPage({ navigate }: { navigate?: (r: Route) => void }) {
   return (
     <>
       <div className="eyebrow">
@@ -219,7 +219,16 @@ export function CalendarPage() {
                       {u.us}
                     </a>
                   </td>
-                  <td>{u.title}</td>
+                  <td>
+                    <button
+                      className="text-link"
+                      style={{ textAlign: "left", fontWeight: 400 }}
+                      onClick={() => navigate?.({ page: "unit", moduleId: m.id, unitId: u.us })}
+                      title={`Open US ${u.us} — ${u.title}`}
+                    >
+                      {u.title}
+                    </button>
+                  </td>
                   <td>{u.dates}</td>
                   <td>{u.time}</td>
                 </tr>
