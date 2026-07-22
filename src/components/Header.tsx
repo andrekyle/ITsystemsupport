@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile } from "../types";
 import { getContent } from "../data/content";
+import { MODULES } from "../data/course";
 import { Avatar, fileToAvatar } from "./Avatar";
 
 /** Session schedule derived from the US 8252 lesson plan (starts 09:00). */
@@ -26,6 +27,41 @@ const SCHEDULE = (() => {
   return out;
 })();
 
+/** Every scheduled session across the course (from the unit standard dates), sorted. */
+const ALL_SESSIONS = (() => {
+  const MON: Record<string, number> = {
+    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+  };
+  const out: { start: Date; end: Date; us: string }[] = [];
+  for (const m of MODULES) {
+    for (const u of m.units) {
+      const year = u.dates.match(/\b20\d{2}\b/);
+      if (!year) continue;
+      const tm = u.time.match(/(\d{1,2})h(\d{2})\s*-\s*(\d{1,2})h(\d{2})/);
+      const [sh, sm, eh, em] = tm ? [+tm[1], +tm[2], +tm[3], +tm[4]] : [9, 0, 14, 0];
+      for (const seg of u.dates.matchAll(
+        /(\d{1,2}(?:\s*,\s*\d{1,2})*)\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/gi
+      )) {
+        const mon = MON[seg[2].toLowerCase()];
+        for (const d of seg[1].split(/\s*,\s*/)) {
+          out.push({
+            start: new Date(+year[0], mon, +d, sh, sm),
+            end: new Date(+year[0], mon, +d, eh, em),
+            us: u.us,
+          });
+        }
+      }
+    }
+  }
+  return out.sort((a, b) => a.start.getTime() - b.start.getTime());
+})();
+
+function fmtSession(d: Date): string {
+  const day = d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+  return `${day}, ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
 /** Live clock (real time) describing the current lesson-plan session — the session starts at 09:00. */
 function SessionClock() {
   const [now, setNow] = useState(() => new Date());
@@ -44,17 +80,27 @@ function SessionClock() {
   let label = "";
   let ends: number | null = null; // end of the current session, minutes since midnight
 
-  if (!SCHEDULE.length) {
-    label = "";
-  } else if (!isSessionDay) {
-    label = now < sessionDay ? `Session starts ${SESSION_DATE}, 09:00` : "Session concluded";
-  } else {
+  const currentSession = ALL_SESSIONS.find((s) => now >= s.start && now <= s.end);
+  const nextSession = ALL_SESSIONS.find((s) => s.start.getTime() > now.getTime());
+
+  if (isSessionDay && SCHEDULE.length) {
+    // US 8252 session day: show the live lesson-plan activity
     const current = SCHEDULE.find((s) => simMin >= s.start && simMin < s.end);
     if (current) {
       label = current.title;
       ends = current.end;
     } else if (simMin < SCHEDULE[0].start) label = "Session starts at 09:00";
-    else label = "Session complete — well done";
+    else
+      label = nextSession
+        ? `Session complete — next session ${fmtSession(nextSession.start)}`
+        : "Session complete — well done";
+  } else if (currentSession) {
+    label = `Session in progress — US ${currentSession.us}`;
+    ends = currentSession.end.getHours() * 60 + currentSession.end.getMinutes();
+  } else if (nextSession) {
+    label = `Next session: ${fmtSession(nextSession.start)} · US ${nextSession.us}`;
+  } else {
+    label = "All sessions concluded";
   }
 
   const today = now.toLocaleDateString(undefined, {
