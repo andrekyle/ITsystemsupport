@@ -39,7 +39,7 @@ function write(key: string, value: unknown) {
 
 /** The designated super user of this installation — promoted automatically. */
 const SUPER_USER_NAME = "Andre Snell";
-/** In cloud mode, ONLY profiles on this sign-in account may hold the Super User role. */
+/** In cloud mode, profiles on this sign-in account may also hold the Super User role. */
 const SUPER_USER_EMAIL = "andresnell29@gmail.com";
 
 let accountEmail: string | null = null;
@@ -48,16 +48,30 @@ export function setAccountEmail(email: string | null | undefined) {
   accountEmail = email ? email.trim().toLowerCase() : null;
 }
 
+let accountIsAdmin = false;
+/** Set by App from the admins table — admin accounts hold the Super User role. */
+export function setAccountAdmin(isAdmin: boolean) {
+  accountIsAdmin = isAdmin;
+}
+
+/** True when the current cloud account is entitled to the Super User role. */
+function onSuperAccount(): boolean {
+  return cloudEnabled ? accountIsAdmin || accountEmail === SUPER_USER_EMAIL : true;
+}
+
 export function loadProfiles(): Profile[] {
   const profiles = read<Profile[]>(PROFILES_KEY, []);
-  // In cloud mode the designated account alone holds Super User; in local-only
-  // mode the designated name identifies the super user.
-  const onSuperAccount = cloudEnabled ? accountEmail === SUPER_USER_EMAIL : true;
+  // In cloud mode only admin accounts (or the designated email) hold Super User;
+  // in local-only mode the designated name identifies the super user.
+  const superAccount = onSuperAccount();
   let changed = false;
   for (const p of profiles) {
+    const nm = p.name.trim().toLowerCase();
     const entitled =
-      onSuperAccount &&
-      (p.name === SUPER_USER_NAME || p.name.trim().toLowerCase() === SUPER_USER_EMAIL);
+      superAccount &&
+      (p.name === SUPER_USER_NAME ||
+        nm === SUPER_USER_EMAIL ||
+        (!!accountEmail && nm === accountEmail));
     if (entitled && p.role !== "Super User") {
       p.role = "Super User";
       changed = true;
@@ -69,7 +83,7 @@ export function loadProfiles(): Profile[] {
     }
     // on the super user's cloud account, other profiles are only ever opened
     // for inspection — any last-login stamp on them is an artifact, clear it
-    if (cloudEnabled && onSuperAccount && p.role !== "Super User" && p.lastLogin) {
+    if (cloudEnabled && superAccount && p.role !== "Super User" && p.lastLogin) {
       delete p.lastLogin;
       changed = true;
     }
@@ -139,8 +153,7 @@ export function setSession(profileId: string | null) {
     // another profile to inspect it: that is a view, not that person signing in
     const profiles = read<Profile[]>(PROFILES_KEY, []);
     const p = profiles.find((x) => x.id === profileId);
-    const superViewing =
-      cloudEnabled && accountEmail === SUPER_USER_EMAIL && p?.role !== "Super User";
+    const superViewing = cloudEnabled && onSuperAccount() && p?.role !== "Super User";
     if (p && !superViewing) {
       p.lastLogin = new Date().toISOString();
       write(PROFILES_KEY, profiles);
