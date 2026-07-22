@@ -97,6 +97,7 @@ function Shell({
         onSignOut={onSignOut}
         onUpdateProfile={onUpdateProfile}
         onOpenProfile={() => navigate({ page: "profile" })}
+        onOpenUnit={(us) => navigate({ page: "unit", unitId: us })}
       />
       <div className="body">
         <Sidebar

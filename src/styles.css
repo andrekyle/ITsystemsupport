@@ -3869,6 +3869,22 @@ a.plan-ppt:hover {
   font-weight: 600;
 }
 
+/* clickable unit-standard reference in the header session clock */
+.header-clock .session-us {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: #ff7a00;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.header-clock .session-us:hover {
+  text-decoration: underline;
+}
+
 .unit-locked-card {
   display: flex;
   align-items: center;

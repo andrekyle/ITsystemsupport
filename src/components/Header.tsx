@@ -63,7 +63,7 @@ function fmtSession(d: Date): string {
 }
 
 /** Live clock (real time) describing the current lesson-plan session — the session starts at 09:00. */
-function SessionClock() {
+function SessionClock({ onOpenUnit }: { onOpenUnit?: (us: string) => void }) {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
@@ -78,6 +78,7 @@ function SessionClock() {
 
   const simMin = (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 60;
   let label = "";
+  let usRef: string | null = null; // clickable unit-standard reference shown after the label
   let ends: number | null = null; // end of the current session, minutes since midnight
 
   const currentSession = ALL_SESSIONS.find((s) => now >= s.start && now <= s.end);
@@ -90,15 +91,19 @@ function SessionClock() {
       label = current.title;
       ends = current.end;
     } else if (simMin < SCHEDULE[0].start) label = "Session starts at 09:00";
-    else
-      label = nextSession
-        ? `Session complete — next session ${fmtSession(nextSession.start)}`
-        : "Session complete — well done";
+    else if (nextSession) {
+      label = `Session complete — next session ${fmtSession(nextSession.start)} ·`;
+      usRef = nextSession.us;
+    } else {
+      label = "Session complete — well done";
+    }
   } else if (currentSession) {
-    label = `Session in progress — US ${currentSession.us}`;
+    label = "Session in progress —";
+    usRef = currentSession.us;
     ends = currentSession.end.getHours() * 60 + currentSession.end.getMinutes();
   } else if (nextSession) {
-    label = `Next session: ${fmtSession(nextSession.start)} · US ${nextSession.us}`;
+    label = `Next session: ${fmtSession(nextSession.start)} ·`;
+    usRef = nextSession.us;
   } else {
     label = "All sessions concluded";
   }
@@ -127,6 +132,15 @@ function SessionClock() {
         {hh}:{mm}:{ss}
       </span>
       {label && <span className="session">{label}</span>}
+      {usRef && (
+        <button
+          className="session-us"
+          onClick={() => onOpenUnit?.(usRef!)}
+          title={`Open unit standard ${usRef}`}
+        >
+          US {usRef}
+        </button>
+      )}
       {endLabel && <span className="ends">{endLabel}</span>}
     </div>
   );
@@ -140,6 +154,7 @@ interface Props {
   onSignOut: () => void;
   onUpdateProfile: (patch: Partial<Profile>) => void;
   onOpenProfile: () => void;
+  onOpenUnit?: (us: string) => void;
 }
 
 export function Header({
@@ -150,6 +165,7 @@ export function Header({
   onSignOut,
   onUpdateProfile,
   onOpenProfile,
+  onOpenUnit,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -186,7 +202,7 @@ export function Header({
         <span className="brand-name">ITSS Learn</span>
         <span className="brand-sub">System Support · NQF 5</span>
       </div>
-      <SessionClock />
+      <SessionClock onOpenUnit={onOpenUnit} />
       <div className="header-right">
         <button className="icon-btn" title="Notifications">
           <Icon name="bell" size={19} />
