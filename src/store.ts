@@ -67,6 +67,12 @@ export function loadProfiles(): Profile[] {
       p.role = "Facilitator";
       changed = true;
     }
+    // on the super user's cloud account, other profiles are only ever opened
+    // for inspection — any last-login stamp on them is an artifact, clear it
+    if (cloudEnabled && onSuperAccount && p.role !== "Super User" && p.lastLogin) {
+      delete p.lastLogin;
+      changed = true;
+    }
   }
   if (changed) write(PROFILES_KEY, profiles);
   return profiles;
