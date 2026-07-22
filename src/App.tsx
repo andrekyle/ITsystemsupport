@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Profile, Route } from "./types";
 import type { Theme } from "./store";
-import { getSession, getTheme, loadProfiles, setSession, setTheme, updateProfile, useProgress } from "./store";
+import { getSession, getTheme, loadProfiles, setAccountEmail, setSession, setTheme, updateProfile, useProgress } from "./store";
 import { SignIn } from "./components/SignIn";
 import { CloudAuth } from "./components/CloudAuth";
 import { Header } from "./components/Header";
@@ -158,11 +158,13 @@ export default function App() {
     if (!supabase) return;
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
+        setAccountEmail(session.user.email);
         if (syncedUser.current !== session.user.id) {
           syncedUser.current = session.user.id;
           void startSync(session.user.id).then(() => setCloudState("ready"));
         }
       } else {
+        setAccountEmail(null);
         if (event === "SIGNED_OUT") {
           // prevent one account's local data leaking into the next sign-in
           stopSync();

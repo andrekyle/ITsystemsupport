@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { EnrolmentInfo, PoeDoc, Profile, ProgressState, Role, UnitActivity, UnitProgress } from "./types";
 import { UNIT_ACTIVITIES } from "./types";
 import { MODULES } from "./data/course";
+import { cloudEnabled } from "./lib/supabase";
 
 const PROFILES_KEY = "itss.profiles";
 const SESSION_KEY = "itss.session";
@@ -38,17 +39,31 @@ function write(key: string, value: unknown) {
 
 /** The designated super user of this installation — promoted automatically. */
 const SUPER_USER_NAME = "Andre Snell";
+/** In cloud mode, ONLY profiles on this sign-in account may hold the Super User role. */
+const SUPER_USER_EMAIL = "andresnell29@gmail.com";
+
+let accountEmail: string | null = null;
+/** Set by App whenever the cloud session changes — gates super-user promotion. */
+export function setAccountEmail(email: string | null | undefined) {
+  accountEmail = email ? email.trim().toLowerCase() : null;
+}
 
 export function loadProfiles(): Profile[] {
   const profiles = read<Profile[]>(PROFILES_KEY, []);
+  // In cloud mode the designated account alone holds Super User; in local-only
+  // mode the designated name identifies the super user.
+  const onSuperAccount = cloudEnabled ? accountEmail === SUPER_USER_EMAIL : true;
   let changed = false;
   for (const p of profiles) {
-    if (p.name === SUPER_USER_NAME && p.role !== "Super User") {
+    const entitled =
+      onSuperAccount &&
+      (p.name === SUPER_USER_NAME || p.name.trim().toLowerCase() === SUPER_USER_EMAIL);
+    if (entitled && p.role !== "Super User") {
       p.role = "Super User";
       changed = true;
     }
-    // no one else may hold the Super User role
-    if (p.name !== SUPER_USER_NAME && p.role === "Super User") {
+    // no one else may ever hold the Super User role
+    if (!entitled && p.role === "Super User") {
       p.role = "Facilitator";
       changed = true;
     }

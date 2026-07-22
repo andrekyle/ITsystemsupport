@@ -36,7 +36,8 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
       for (const p of JSON.parse(row.value) as Profile[]) {
         if (p?.id && !seen.has(p.id)) {
           seen.add(p.id);
-          profiles.push(p);
+          // only the designated account may hold the Super User role
+          profiles.push(p.role === "Super User" ? { ...p, role: "Facilitator" } : p);
           owners[p.id] = row.user_id;
         }
       }
