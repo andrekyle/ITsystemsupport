@@ -1,5 +1,10 @@
 -- ITSS Learn — Supabase schema
 -- Run this once in your Supabase project: Dashboard → SQL Editor → New query → paste → Run.
+--
+-- REQUIRED AUTH SETTING: Dashboard → Authentication → Sign In / Providers → Email
+-- → turn OFF "Confirm email". Sign-ups must work without a confirmation step.
+-- To unlock accounts created while confirmation was on:
+--   update auth.users set email_confirmed_at = now() where email_confirmed_at is null;
 
 -- One row per synced app-state key, per authenticated user.
 create table if not exists public.app_state (
