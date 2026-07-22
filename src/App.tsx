@@ -140,7 +140,7 @@ function Shell({
             )}
             {route.page === "assessments" && <AssessmentsPage profile={profile} />}
             {route.page === "deliverables" && <DeliverablesPage />}
-            {route.page === "calendar" && <CalendarPage navigate={navigate} />}
+            {route.page === "calendar" && <CalendarPage navigate={navigate} progress={state} />}
             {route.page === "resources" && <ResourcesPage />}
           </div>
         </main>

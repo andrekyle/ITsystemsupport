@@ -1,7 +1,8 @@
 import { Icon } from "../icons";
-import type { Profile, Route } from "../types";
+import type { Profile, ProgressState, Route } from "../types";
 import { isStaff } from "../types";
 import { Gloss } from "./Course";
+import { unitStatus } from "../store";
 import {
   ASSESSMENT_FRAMEWORK,
   DELIVERABLES,
@@ -176,7 +177,13 @@ export function ResourcesPage() {
   );
 }
 
-export function CalendarPage({ navigate }: { navigate?: (r: Route) => void }) {
+export function CalendarPage({
+  navigate,
+  progress,
+}: {
+  navigate?: (r: Route) => void;
+  progress?: ProgressState;
+}) {
   return (
     <>
       <div className="eyebrow">
@@ -206,33 +213,36 @@ export function CalendarPage({ navigate }: { navigate?: (r: Route) => void }) {
               </tr>
             </thead>
             <tbody>
-              {m.units.map((u) => (
-                <tr key={u.us}>
-                  <td>
-                    <a
-                      className="us-link"
-                      href={`https://allqs.saqa.org.za/showUnitStandard.php?id=${u.us}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={`View US ${u.us} on SAQA`}
-                    >
-                      {u.us}
-                    </a>
-                  </td>
-                  <td>
-                    <button
-                      className="text-link"
-                      style={{ textAlign: "left", fontWeight: 400 }}
-                      onClick={() => navigate?.({ page: "unit", moduleId: m.id, unitId: u.us })}
-                      title={`Open US ${u.us} — ${u.title}`}
-                    >
-                      {u.title}
-                    </button>
-                  </td>
-                  <td>{u.dates}</td>
-                  <td>{u.time}</td>
-                </tr>
-              ))}
+              {m.units.map((u) => {
+                const done = progress ? unitStatus(progress, u.us) === "completed" : false;
+                return (
+                  <tr key={u.us}>
+                    <td>
+                      <a
+                        className="us-link"
+                        href={`https://allqs.saqa.org.za/showUnitStandard.php?id=${u.us}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`View US ${u.us} on SAQA`}
+                      >
+                        {u.us}
+                      </a>
+                    </td>
+                    <td>
+                      <button
+                        className={`text-link${done ? " done-link" : ""}`}
+                        style={{ textAlign: "left", fontWeight: 400 }}
+                        onClick={() => navigate?.({ page: "unit", moduleId: m.id, unitId: u.us })}
+                        title={`Open US ${u.us} — ${u.title}${done ? " (completed)" : ""}`}
+                      >
+                        {u.title}
+                      </button>
+                    </td>
+                    <td>{u.dates}</td>
+                    <td>{u.time}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

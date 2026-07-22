@@ -3900,6 +3900,15 @@ a.plan-ppt:hover {
   color: var(--azure-dark);
 }
 
+/* completed unit standard — shown green on the training calendar */
+.text-link.done-link {
+  color: var(--green);
+}
+
+.text-link.done-link:hover {
+  color: var(--green);
+}
+
 .unit-locked-card {
   display: flex;
   align-items: center;
