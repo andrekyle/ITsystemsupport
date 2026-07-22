@@ -9,6 +9,7 @@ import {
   hashPassword,
   loadPoeDocs,
   loadProfiles,
+  poeItemCount,
   updateProfile,
   usePoe,
 } from "../store";
@@ -287,8 +288,8 @@ export function StudentsPage({
       {people.map((s) => {
         const isRemote = remoteIds.has(s.id);
         const docs = isRemote
-          ? Object.keys(cloud?.poe[s.id] ?? {}).length
-          : Object.keys(loadPoeDocs(s.id)).length;
+          ? poeItemCount(cloud?.poe[s.id] ?? {})
+          : poeItemCount(loadPoeDocs(s.id));
         return (
           <button
             key={s.id}
@@ -515,7 +516,12 @@ function StudentDetail({
   const [editingEnrol, setEditingEnrol] = useState(false);
   const [draft, setDraft] = useState<EnrolmentInfo>({ ...EMPTY_ENROLMENT, ...student.enrolment });
   const uploaded = POE_SECTIONS.flatMap((sec) =>
-    sec.items.filter((item) => docs[item.id]).map((item) => ({ sec, item, doc: docs[item.id]! }))
+    sec.items.flatMap((item) =>
+      Object.entries(docs)
+        .filter(([k]) => k === item.id || k.startsWith(`${item.id}__`))
+        .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
+        .map(([key, doc]) => ({ sec, item, key, doc }))
+    )
   );
 
   /** Routes profile changes to the local store, or to the owning account's cloud rows. */
@@ -644,7 +650,8 @@ function StudentDetail({
             <span className="ico">
               <Icon name="folder" size={20} />
             </span>
-            Uploaded documents — {uploaded.length} / {POE_TOTAL}
+            Uploaded documents — {poeItemCount(docs)} / {POE_TOTAL} items · {uploaded.length}{" "}
+            {uploaded.length === 1 ? "file" : "files"}
           </h2>
           {uploaded.length === 0 ? (
             <div className="callout">
@@ -654,8 +661,8 @@ function StudentDetail({
               <span>No documents uploaded yet.</span>
             </div>
           ) : (
-            uploaded.map(({ sec, item, doc }) => (
-              <div className="plan-upload-row" key={item.id}>
+            uploaded.map(({ sec, item, key, doc }) => (
+              <div className="plan-upload-row" key={key}>
                 <Icon name="document" size={17} />
                 <span className="fileinfo">
                   <span className="poe-file" title={doc.name}>

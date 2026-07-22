@@ -123,6 +123,11 @@ export function loadPoeDocs(profileId: string): Record<string, PoeDoc> {
   return read<Record<string, PoeDoc>>(`itss.poe.${profileId}`, {});
 }
 
+/** Number of POE items with at least one uploaded file (multi-file keys use "id__n"). */
+export function poeItemCount(docs: Record<string, PoeDoc>): number {
+  return new Set(Object.keys(docs).map((k) => k.split("__")[0])).size;
+}
+
 export function deleteProfile(id: string) {
   write(PROFILES_KEY, loadProfiles().filter((p) => p.id !== id));
   localStorage.removeItem(progressKey(id));

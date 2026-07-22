@@ -2664,6 +2664,26 @@ table.data.kv tr:last-child td {
   flex-shrink: 0;
 }
 
+/* multi-file POE items stack their uploads */
+.poe-doc.multi {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.poe-doc-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.poe-doc-line > svg {
+  color: var(--azure);
+  flex-shrink: 0;
+}
+
 /* ============ Lesson plan ============ */
 
 .plan-card {

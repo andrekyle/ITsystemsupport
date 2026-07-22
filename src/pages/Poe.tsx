@@ -2,8 +2,8 @@ import { useRef, useState } from "react";
 import JSZip from "jszip";
 import { Icon } from "../icons";
 import type { PoeDoc, Profile } from "../types";
-import { POE_SECTIONS, POE_TOTAL } from "../data/course";
-import { loadProfiles, usePoe } from "../store";
+import { MAX_POE_FILES, POE_SECTIONS, POE_TOTAL } from "../data/course";
+import { loadProfiles, poeItemCount, usePoe } from "../store";
 import { downloadDoc, getFileBlob, uploadFile, userPrefix } from "../lib/files";
 import { Avatar } from "../components/Avatar";
 import { Ring } from "../components/Ring";
@@ -34,19 +34,30 @@ export function PoePage({ profile }: { profile: Profile }) {
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const done = Object.keys(docs).length;
+  const done = poeItemCount(docs);
+
+  /** All files uploaded for an item, oldest key first (multi-file keys use "id__n"). */
+  const filesFor = (itemId: string) =>
+    Object.entries(docs)
+      .filter(([k]) => k === itemId || k.startsWith(`${itemId}__`))
+      .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
+      .map(([key, doc]) => ({ key, doc }));
 
   async function downloadAll() {
     const zip = new JSZip();
     const clean = (s: string) => s.replace(/[\\/:*?"<>|]/g, "-").trim();
     for (const sec of POE_SECTIONS) {
       for (const item of sec.items) {
-        const doc = docs[item.id];
-        if (!doc) continue;
-        const blob = await getFileBlob(doc);
-        if (!blob) continue;
-        const folder = clean(sec.heading);
-        zip.file(`${folder}/${clean(item.label).slice(0, 80)} — ${clean(doc.name)}`, blob);
+        const files = filesFor(item.id);
+        let i = 0;
+        for (const { doc } of files) {
+          i++;
+          const blob = await getFileBlob(doc);
+          if (!blob) continue;
+          const folder = clean(sec.heading);
+          const suffix = files.length > 1 ? ` (${i})` : "";
+          zip.file(`${folder}/${clean(item.label).slice(0, 80)}${suffix} — ${clean(doc.name)}`, blob);
+        }
       }
     }
     const blob = await zip.generateAsync({ type: "blob" });
@@ -154,18 +165,26 @@ export function PoePage({ profile }: { profile: Profile }) {
             {sec.heading}
           </h2>
           {sec.items.map((item) => {
-            const doc = docs[item.id];
+            const files = filesFor(item.id);
+            const max = sec.multi ? MAX_POE_FILES : 1;
+            const uploadingThis =
+              uploadPct !== null &&
+              pendingItem !== null &&
+              (pendingItem === item.id || pendingItem.startsWith(`${item.id}__`));
+            const used = new Set(files.map((f) => f.key));
+            let nextKey = item.id;
+            for (let n = 2; used.has(nextKey); n++) nextKey = `${item.id}__${n}`;
             return (
               <div className="poe-row" key={item.id}>
                 <div className="poe-item">
-                  <span className={`status ${doc ? "done" : "none"}`}>
-                    <Icon name={doc ? "checkCircle" : "circle"} size={20} />
+                  <span className={`status ${files.length ? "done" : "none"}`}>
+                    <Icon name={files.length ? "checkCircle" : "circle"} size={20} />
                   </span>
                   <span className="t">{item.label}</span>
                 </div>
-                <div className="poe-doc">
-                  {doc ? (
-                    <>
+                <div className={`poe-doc${max > 1 ? " multi" : ""}`}>
+                  {files.map(({ key, doc }) => (
+                    <div className="poe-doc-line" key={key}>
                       <Icon name="document" size={17} />
                       <span className="fileinfo">
                         <span className="poe-file" title={doc.name}>
@@ -192,15 +211,16 @@ export function PoePage({ profile }: { profile: Profile }) {
                       {canEdit && (
                         <button
                           className="poe-remove"
-                          onClick={() => removeDoc(item.id)}
+                          onClick={() => removeDoc(key)}
                           title="Remove document"
                         >
                           ✕
                         </button>
                       )}
-                    </>
-                  ) : canEdit && !readOnly ? (
-                    pendingItem === item.id && uploadPct !== null ? (
+                    </div>
+                  ))}
+                  {canEdit && !readOnly && files.length < max && (
+                    uploadingThis ? (
                       <div className="upload-progress" role="progressbar" aria-valuenow={uploadPct}>
                         <div className="track">
                           <div className="fill" style={{ width: `${uploadPct}%` }} />
@@ -208,12 +228,15 @@ export function PoePage({ profile }: { profile: Profile }) {
                         <span className="pct">{uploadPct}%</span>
                       </div>
                     ) : (
-                      <button className="btn ghost poe-upload" onClick={() => pickFor(item.id)}>
+                      <button className="btn ghost poe-upload" onClick={() => pickFor(nextKey)}>
                         <Icon name="folder" size={15} />
-                        Upload document
+                        {files.length === 0
+                          ? "Upload document"
+                          : `Add another (${files.length}/${max})`}
                       </button>
                     )
-                  ) : (
+                  )}
+                  {files.length === 0 && !(canEdit && !readOnly) && (
                     <span className="muted">No document uploaded</span>
                   )}
                 </div>

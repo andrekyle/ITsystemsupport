@@ -203,7 +203,10 @@ export const RESOURCES = [
   },
 ];
 
-export const POE_SECTIONS: { heading: string; icon: string; items: { id: string; label: string }[] }[] = [
+/** Up to this many files may be uploaded per multi-file POE item. */
+export const MAX_POE_FILES = 10;
+
+export const POE_SECTIONS: { heading: string; icon: string; multi?: boolean; items: { id: string; label: string }[] }[] = [
   {
     heading: "1. Identity & contracting",
     icon: "person",
@@ -217,6 +220,7 @@ export const POE_SECTIONS: { heading: string; icon: string; items: { id: string;
   {
     heading: "2. Formative assignments (with signed declarations & rubrics)",
     icon: "exercise",
+    multi: true,
     items: [
       { id: "fa01", label: "SS-M1-FA01 — Personal Development (submitted & assessed)" },
       { id: "fa02", label: "SS-M2-FA02 — Client Server Networking (submitted & assessed)" },
@@ -241,6 +245,7 @@ export const POE_SECTIONS: { heading: string; icon: string; items: { id: string;
   {
     heading: "4. Practical observation checklists (assessor-witnessed)",
     icon: "monitor",
+    multi: true,
     items: [
       { id: "ob-workstation", label: "Workstation installation observed (US 114060)" },
       { id: "ob-lan", label: "LAN installation & commissioning observed (US 114072)" },
@@ -253,6 +258,7 @@ export const POE_SECTIONS: { heading: string; icon: string; items: { id: string;
   {
     heading: "5. Workplace evidence",
     icon: "briefcase",
+    multi: true,
     items: [
       { id: "we-reports", label: "Business reports written at work (US 8252)" },
       { id: "we-minutes", label: "Meeting agendas and minutes (US 114051)" },
@@ -264,6 +270,7 @@ export const POE_SECTIONS: { heading: string; icon: string; items: { id: string;
   {
     heading: "6. Testimonies & logbook",
     icon: "book",
+    multi: true,
     items: [
       { id: "tw-mentor", label: "Witness testimony — workplace mentor" },
       { id: "tw-manager", label: "Witness testimony — line manager/supervisor" },
@@ -275,6 +282,7 @@ export const POE_SECTIONS: { heading: string; icon: string; items: { id: string;
   {
     heading: "7. Summative & remediation",
     icon: "certificate",
+    multi: true,
     items: [
       { id: "sr-remedial", label: "Remediation records filed (if applicable)" },
       { id: "sr-fisa", label: "FISA completed (28 May – 4 Jun 2027)" },
