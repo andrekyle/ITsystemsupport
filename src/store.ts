@@ -127,8 +127,18 @@ export function getSession(): string | null {
 }
 
 export function setSession(profileId: string | null) {
-  if (profileId) localStorage.setItem(SESSION_KEY, profileId);
-  else localStorage.removeItem(SESSION_KEY);
+  if (profileId) {
+    localStorage.setItem(SESSION_KEY, profileId);
+    // stamp the profile's last sign-in time
+    const profiles = read<Profile[]>(PROFILES_KEY, []);
+    const p = profiles.find((x) => x.id === profileId);
+    if (p) {
+      p.lastLogin = new Date().toISOString();
+      write(PROFILES_KEY, profiles);
+    }
+  } else {
+    localStorage.removeItem(SESSION_KEY);
+  }
 }
 
 /* ---------- progress ---------- */

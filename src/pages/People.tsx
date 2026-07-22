@@ -36,6 +36,16 @@ function fmtDate(iso: string) {
   });
 }
 
+function fmtDateTime(iso: string) {
+  return new Date(iso).toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function ProfileHead({ profile }: { profile: Profile }) {
   return (
     <div className="card profile-head">
@@ -226,9 +236,11 @@ export function StudentsPage({
   const all = [...local, ...remote];
   // Super Users manage every account; facilitators see their learners;
   // learners see the enrolled learner list (read-only)
-  const people = isSuper
-    ? all.filter((p) => p.id !== profile.id)
-    : all.filter((p) => p.role === "Learner");
+  const people = (
+    isSuper
+      ? all.filter((p) => p.id !== profile.id)
+      : all.filter((p) => p.role === "Learner")
+  ).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
   const student = route.studentId ? all.find((p) => p.id === route.studentId) : undefined;
 
   if (student && (isPrivileged || student.role === "Learner"))
@@ -289,7 +301,9 @@ export function StudentsPage({
               <br />
               <span className="rl">
                 {s.role}
-                {isPrivileged && s.enrolment?.idNumber ? ` · ID ${s.enrolment.idNumber}` : ""}
+                {isPrivileged
+                  ? ` · last login ${s.lastLogin ? fmtDateTime(s.lastLogin) : "never"}`
+                  : ""}
                 {" · joined "}
                 {fmtDate(s.createdAt)}
                 {isPrivileged && isRemote ? " · own sign-in account" : ""}

@@ -108,6 +108,8 @@ export interface Profile {
   name: string;
   role: Role;
   createdAt: string;
+  /** ISO timestamp of the most recent sign-in to this profile */
+  lastLogin?: string;
   /** data-URL of the profile picture */
   avatar?: string;
   /** biographical enrolment information captured at registration */
