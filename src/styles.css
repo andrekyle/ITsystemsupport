@@ -2664,10 +2664,14 @@ table.data.kv tr:last-child td {
   flex-shrink: 0;
 }
 
-/* multi-file POE items stack their uploads */
+/* multi-file POE items stack their uploads as tidy file cards */
+.poe-row:has(.poe-doc.multi) {
+  grid-template-columns: 1fr;
+}
+
 .poe-doc.multi {
   flex-direction: column;
-  align-items: flex-end;
+  align-items: stretch;
   gap: 6px;
 }
 
@@ -2679,9 +2683,30 @@ table.data.kv tr:last-child td {
   max-width: 100%;
 }
 
+.poe-doc.multi .poe-doc-line {
+  padding: 7px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.poe-doc.multi .poe-doc-line .fileinfo {
+  flex: 1;
+  min-width: 0;
+}
+
 .poe-doc-line > svg {
   color: var(--azure);
   flex-shrink: 0;
+}
+
+.poe-doc.multi .poe-upload {
+  align-self: flex-end;
+  margin-top: 2px;
+}
+
+.poe-doc.multi .upload-progress {
+  align-self: flex-end;
 }
 
 /* ============ Lesson plan ============ */
