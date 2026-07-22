@@ -3876,13 +3876,13 @@ a.plan-ppt:hover {
   padding: 0;
   font: inherit;
   font-weight: 700;
-  color: #ff7a00;
+  color: var(--azure);
   cursor: pointer;
   white-space: nowrap;
 }
 
 .header-clock .session-us:hover {
-  text-decoration: underline;
+  color: var(--azure-dark);
 }
 
 .unit-locked-card {
