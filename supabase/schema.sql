@@ -10,9 +10,35 @@ create table if not exists public.app_state (
   primary key (user_id, key)
 );
 
+-- Admins (the super user) may edit and delete ANY account's rows.
+-- Add yourself once:  insert into public.admins (user_id)
+--                     select id from auth.users where email = 'YOUR-EMAIL-HERE';
+create table if not exists public.admins (
+  user_id uuid primary key references auth.users (id) on delete cascade
+);
+
+alter table public.admins enable row level security;
+
+drop policy if exists "read admins" on public.admins;
+create policy "read admins"
+  on public.admins
+  for select
+  to authenticated
+  using (true);
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (select 1 from public.admins a where a.user_id = auth.uid());
+$$;
+
 -- Signed-in users can read every account's rows (needed so facilitators and the
 -- super user can see learners who sign in with their own email accounts).
--- Writes remain restricted to each user's own rows.
+-- Writes: each user's own rows, or any row for admins.
 alter table public.app_state enable row level security;
 
 drop policy if exists "own app state" on public.app_state;
@@ -29,22 +55,22 @@ create policy "insert own app state"
   on public.app_state
   for insert
   to authenticated
-  with check (auth.uid() = user_id);
+  with check (auth.uid() = user_id or public.is_admin());
 
 drop policy if exists "update own app state" on public.app_state;
 create policy "update own app state"
   on public.app_state
   for update
   to authenticated
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using (auth.uid() = user_id or public.is_admin())
+  with check (auth.uid() = user_id or public.is_admin());
 
 drop policy if exists "delete own app state" on public.app_state;
 create policy "delete own app state"
   on public.app_state
   for delete
   to authenticated
-  using (auth.uid() = user_id);
+  using (auth.uid() = user_id or public.is_admin());
 
 -- Shared content (facilitator notes, lesson-plan slides): one row per key,
 -- visible to every signed-in user. The app's UI limits who can edit it.

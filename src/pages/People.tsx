@@ -15,7 +15,12 @@ import {
 import { Avatar } from "../components/Avatar";
 import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/EnrolmentForm";
 import { downloadDoc } from "../lib/files";
-import { fetchCloudDirectory, type CloudDirectory } from "../lib/directory";
+import {
+  deleteCloudProfile,
+  fetchCloudDirectory,
+  updateCloudProfile,
+  type CloudDirectory,
+} from "../lib/directory";
 
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -202,7 +207,7 @@ export function StudentsPage({
 }) {
   const isSuper = profile.role === "Super User";
   const isPrivileged = isStaff(profile.role);
-  const [, setRev] = useState(0);
+  const [rev, setRev] = useState(0);
   const refresh = () => setRev((r) => r + 1);
   const [cloud, setCloud] = useState<CloudDirectory | null>(null);
   useEffect(() => {
@@ -213,7 +218,7 @@ export function StudentsPage({
     return () => {
       alive = false;
     };
-  }, []);
+  }, [rev]);
   if (!isPrivileged) {
     return (
       <div className="callout">
@@ -244,6 +249,7 @@ export function StudentsPage({
         navigate={navigate}
         onChanged={refresh}
         remote={remoteIds.has(student.id)}
+        owner={cloud?.owners[student.id]}
         cloudDocs={cloud?.poe[student.id]}
       />
     );
@@ -257,7 +263,7 @@ export function StudentsPage({
       <h1 className="page-title">{isSuper ? "Users" : "Students"}</h1>
       <p className="page-sub">
         {isSuper
-          ? "All accounts on this device and in the cloud — select a user to view their profile and documents. Accounts that sign in with their own email are shown read-only."
+          ? "All accounts on this device and in the cloud — select a user to view their profile, update their details, reset their password or remove the account."
           : "All learner profiles on this device and in the cloud — select a student to view their enrolment information and uploaded documents."}
       </p>
 
@@ -371,11 +377,11 @@ function AddUser({ onAdded }: { onAdded: () => void }) {
 
 function AdminPanel({
   student,
-  onChanged,
+  onPatch,
   onDelete,
 }: {
   student: Profile;
-  onChanged: () => void;
+  onPatch: (patch: Partial<Profile>) => Promise<boolean>;
   onDelete: () => void;
 }) {
   const [name, setName] = useState(student.name);
@@ -388,26 +394,24 @@ function AdminPanel({
     setTimeout(() => setMsg(null), 2500);
   };
 
-  function saveDetails(e: React.FormEvent) {
+  async function saveDetails(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
-    updateProfile(student.id, { name: name.trim(), role });
-    onChanged();
-    flash("Profile updated.");
+    if (await onPatch({ name: name.trim(), role })) flash("Profile updated.");
   }
 
   async function setPassword() {
     if (!pw) return;
-    updateProfile(student.id, { passwordHash: await hashPassword(pw) });
-    setPw("");
-    onChanged();
-    flash("Password set.");
+    if (await onPatch({ passwordHash: await hashPassword(pw) })) {
+      setPw("");
+      flash("Password set.");
+    }
   }
 
-  function resetPassword() {
-    updateProfile(student.id, { passwordHash: undefined });
-    onChanged();
-    flash("Password removed — they can sign in without one and set a new password from My profile.");
+  async function resetPassword() {
+    if (await onPatch({ passwordHash: undefined })) {
+      flash("Password removed — they can sign in without one and set a new password from My profile.");
+    }
   }
 
   return (
@@ -481,41 +485,69 @@ function StudentDetail({
   navigate,
   onChanged,
   remote,
+  owner,
   cloudDocs,
 }: {
   student: Profile;
   viewer: Profile;
   navigate: (r: Route) => void;
   onChanged: () => void;
-  /** profile belongs to another sign-in account — shown read-only */
+  /** profile belongs to another sign-in account — edits are written to their cloud rows */
   remote?: boolean;
+  owner?: string;
   cloudDocs?: Record<string, PoeDoc>;
 }) {
   const isSuper = viewer.role === "Super User";
   const { docs: localDocs } = usePoe(student.id);
   const docs = remote ? (cloudDocs ?? {}) : localDocs;
-  const canManage = isSuper && !remote;
+  const canManage = isSuper;
   const [editingEnrol, setEditingEnrol] = useState(false);
   const [draft, setDraft] = useState<EnrolmentInfo>({ ...EMPTY_ENROLMENT, ...student.enrolment });
   const uploaded = POE_SECTIONS.flatMap((sec) =>
     sec.items.filter((item) => docs[item.id]).map((item) => ({ sec, item, doc: docs[item.id]! }))
   );
 
-  function saveEnrol(e: React.FormEvent) {
-    e.preventDefault();
-    updateProfile(student.id, { enrolment: { ...draft, signedDate: new Date().toISOString() } });
-    setEditingEnrol(false);
+  /** Routes profile changes to the local store, or to the owning account's cloud rows. */
+  async function patchStudent(patch: Partial<Profile>): Promise<boolean> {
+    if (remote) {
+      if (!owner) return false;
+      const err = await updateCloudProfile(owner, student.id, patch);
+      if (err) {
+        window.alert(err);
+        return false;
+      }
+    } else {
+      updateProfile(student.id, patch);
+    }
     onChanged();
+    return true;
   }
 
-  function removeUser() {
+  async function saveEnrol(e: React.FormEvent) {
+    e.preventDefault();
+    const okSave = await patchStudent({
+      enrolment: { ...draft, signedDate: new Date().toISOString() },
+    });
+    if (okSave) setEditingEnrol(false);
+  }
+
+  async function removeUser() {
     if (
       !window.confirm(
         `Delete ${student.name}'s account and all their saved progress, documents and notes? This cannot be undone.`
       )
     )
       return;
-    deleteProfile(student.id);
+    if (remote) {
+      if (!owner) return;
+      const err = await deleteCloudProfile(owner, student.id);
+      if (err) {
+        window.alert(err);
+        return;
+      }
+    } else {
+      deleteProfile(student.id);
+    }
     navigate({ page: "students" });
     onChanged();
   }
@@ -542,13 +574,15 @@ function StudentDetail({
             <Icon name="info" size={19} />
           </span>
           <span>
-            This user signs in with their own account, so their profile is shown read-only here —
-            they manage their own details, password and enrolment form.
+            This user signs in with their own account — changes you save here are written to their
+            cloud storage and reach them the next time the app loads on their device.
           </span>
         </div>
       )}
 
-      {canManage && <AdminPanel student={student} onChanged={onChanged} onDelete={removeUser} />}
+      {canManage && (
+        <AdminPanel student={student} onPatch={patchStudent} onDelete={removeUser} />
+      )}
 
       <h2 className="section-title">
         <span className="ico">

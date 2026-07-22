@@ -6,6 +6,8 @@ export interface CloudDirectory {
   profiles: Profile[];
   /** profile id -> uploaded POE documents */
   poe: Record<string, Record<string, PoeDoc>>;
+  /** profile id -> owning auth user id (for cross-account management) */
+  owners: Record<string, string>;
 }
 
 /**
@@ -26,6 +28,7 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
   if (profRes.error || poeRes.error) return null;
 
   const profiles: Profile[] = [];
+  const owners: CloudDirectory["owners"] = {};
   const seen = new Set<string>();
   for (const row of profRes.data ?? []) {
     if (row.user_id === me) continue; // this account's profiles are already local
@@ -34,6 +37,7 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
         if (p?.id && !seen.has(p.id)) {
           seen.add(p.id);
           profiles.push(p);
+          owners[p.id] = row.user_id;
         }
       }
     } catch {
@@ -51,5 +55,76 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
     }
   }
 
-  return { profiles, poe };
+  return { profiles, poe, owners };
+}
+
+const RLS_HINT =
+  "Could not save to the cloud — make sure the latest supabase/schema.sql has been run and your account has been added to the admins table.";
+
+async function readOwnerProfiles(owner: string): Promise<Profile[] | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("app_state")
+    .select("value")
+    .eq("user_id", owner)
+    .eq("key", "itss.profiles")
+    .maybeSingle();
+  if (error || !data) return null;
+  try {
+    return JSON.parse(data.value) as Profile[];
+  } catch {
+    return null;
+  }
+}
+
+async function writeOwnerProfiles(owner: string, profiles: Profile[]): Promise<string | null> {
+  if (!supabase) return "Cloud sync is not configured.";
+  const { error } = await supabase.from("app_state").upsert(
+    {
+      user_id: owner,
+      key: "itss.profiles",
+      value: JSON.stringify(profiles),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,key" }
+  );
+  return error ? RLS_HINT : null;
+}
+
+/** Update a profile that lives in another account's cloud storage.
+ *  Returns an error message, or null on success. The change reaches the
+ *  account owner the next time their app loads. */
+export async function updateCloudProfile(
+  owner: string,
+  profileId: string,
+  patch: Partial<Profile>
+): Promise<string | null> {
+  const profiles = await readOwnerProfiles(owner);
+  if (!profiles) return RLS_HINT;
+  const next = profiles.map((p) => (p.id === profileId ? { ...p, ...patch } : p));
+  return writeOwnerProfiles(owner, next);
+}
+
+/** Delete a profile (and its saved data) from another account's cloud storage.
+ *  Returns an error message, or null on success. */
+export async function deleteCloudProfile(owner: string, profileId: string): Promise<string | null> {
+  if (!supabase) return "Cloud sync is not configured.";
+  const profiles = await readOwnerProfiles(owner);
+  if (!profiles) return RLS_HINT;
+  const err = await writeOwnerProfiles(
+    owner,
+    profiles.filter((p) => p.id !== profileId)
+  );
+  if (err) return err;
+  const dataKeys = [
+    `itss.progress.${profileId}`,
+    `itss.poe.${profileId}`,
+    `itss.notes.${profileId}`,
+    `itss.noteorder.${profileId}`,
+    `itss.notetitles.${profileId}`,
+    `itss.checklist.${profileId}`,
+    `itss.sectiond.${profileId}`,
+  ];
+  await supabase.from("app_state").delete().eq("user_id", owner).in("key", dataKeys);
+  return null;
 }
