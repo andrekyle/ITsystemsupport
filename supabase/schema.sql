@@ -11,8 +11,17 @@ create table if not exists public.app_state (
 );
 
 -- Admins (the super user) may edit and delete ANY account's rows.
--- Add yourself once:  insert into public.admins (user_id)
---                     select id from auth.users where email = 'YOUR-EMAIL-HERE';
+-- Add yourself once, either by email:
+--   insert into public.admins (user_id)
+--   select id from auth.users where email = 'YOUR-EMAIL-HERE'
+--   on conflict (user_id) do nothing;
+-- or automatically via the synced Super User profile:
+--   insert into public.admins (user_id)
+--   select user_id from public.app_state
+--   where key = 'itss.profiles'
+--     and value like '%"Andre Snell"%'
+--     and value like '%"Super User"%'
+--   on conflict (user_id) do nothing;
 create table if not exists public.admins (
   user_id uuid primary key references auth.users (id) on delete cascade
 );
