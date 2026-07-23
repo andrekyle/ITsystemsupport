@@ -226,6 +226,8 @@ export interface Exercise {
   steps: string[];
   /** per-question typed-answer blocks with semantic checking (index-aligned with steps) */
   checks?: ExerciseCheck[];
+  /** ideal answers for the scenario task — revealed by a super-user-only button */
+  idealAnswer?: ModelAnswerBlock[];
   download?: { filename: string; label: string; content: string; mime?: string };
   /** facilitator/super-user only model answer */
   modelAnswer?: ModelAnswerBlock[];

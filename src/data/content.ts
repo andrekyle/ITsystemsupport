@@ -1702,6 +1702,54 @@ export const CONTENT: Record<string, UnitContent> = {
           "Step 6 — If the team disagrees, handle it the way the lesson teaches: let each person state their view briefly, focus on the issues and not personalities, seek common ground, and develop an action plan.",
           "Step 7 — The recorder documents the final plan and the summarizer presents it to the class. Afterwards, answer the questions below using what you experienced in the exercise.",
         ],
+        idealAnswer: [
+          {
+            heading: "Ideal team set-up (Steps 1–2)",
+            bullets: [
+              "Member 1 — Leader + gate keeper: sets the base agenda, facilitates the discussion, monitors progress and makes sure every member gives input (asking quiet members to voice their opinion one at a time).",
+              "Member 2 — Initiator + optimist: suggests new ideas and keeps a positive frame of mind, facilitating the search for solutions.",
+              "Member 3 — Recorder + summarizer: records ideas accurately without editing or evaluating them, and summarises the list of options for decisions.",
+              "Member 4 — Devil's advocate/skeptic + timekeeper: looks for potential flaws in each idea and tracks the time spent on each part of the 45 minutes.",
+              "Mission statement: \"Deliver a working, supported IT environment for Investec's 40 new graduate analysts from day one — without disrupting the business.\"",
+              "Ground rules: everyone speaks on every decision; no criticising statements until all ideas are posted; the team's decisions are agreed by all; the task is time-boxed to 45 minutes.",
+            ],
+          },
+          {
+            heading: "Ideal delivery plan (Step 3)",
+            bullets: [
+              "Workstations — build and image all 40 workstations during the week before start date (10 per day plus 4 spares), test a sample of each batch, and deliver to desks over the weekend.",
+              "Accounts and access — submit a bulk user-account and access request up front with line-manager approvals, applying least-privilege; verify every sign-in works before day one.",
+              "First-week support — a floor-walker roster with two members on the analysts' floor every morning of week one, and a mini service desk queue dedicated to graduate questions with a one-page FAQ handout.",
+              "Communication — the plan, timeline and support contacts are shared with the business unit heads, building security and the analysts themselves before day one.",
+              "Control — a daily 15-minute team stand-up during week one to report progress, surface problems early and rebalance the workload.",
+            ],
+          },
+          {
+            heading: "Working autonomously (Step 5)",
+            bullets: [
+              "Each member owns one workstream — imaging, accounts and access, floor-walking and the mini desk, or communication and scheduling.",
+              "Own authority: executing the agreed tasks inside your workstream (building machines, logging the access requests, walking the floor).",
+              "Consult first: anything that touches another member's workstream, changes the agreed plan, or affects production systems.",
+              "Report without being chased: progress is reported at the daily stand-up so the team's picture stays accurate and members can support each other.",
+            ],
+          },
+          {
+            heading: "Handling disagreement (Step 6)",
+            paragraphs: [
+              "Example: two members disagree on imaging 10 machines a day versus all 40 in one day. Each states their view briefly; the team focuses on the issue (risk of a bad image spreading to all 40) and not personalities; common ground is found (both want day-one readiness); the action plan is a staged schedule with batch testing — recorded by the recorder with the reasons.",
+            ],
+          },
+          {
+            heading: "Why this is competent",
+            bullets: [
+              "Roles were agreed by everyone and every member is satisfied in their role — with combinations negotiated openly because four members carry eight roles.",
+              "Expectations were clarified: mission, ground rules, responsibilities and time line.",
+              "All members were consulted — the gate keeper drew in quiet members, and ideas were critiqued, not people.",
+              "Authority levels were identified and applied: each member knows what they decide alone, what needs consultation and what must be escalated.",
+              "The collaboration reflects the needs of all members: workload balanced across workstreams, progress shared daily, and support given so every part of the plan succeeds.",
+            ],
+          },
+        ],
         steps: [
           "Identify and explain the criteria for working effectively as a member of a team",
           "Identify and explain behaviours conducive to working as a member of a team",

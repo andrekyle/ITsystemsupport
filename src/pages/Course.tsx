@@ -1076,6 +1076,8 @@ export function UnitPage({
   const [noteId, setNoteId] = useState<string | null>(null);
   /** selected titled quiz on the Quiz tab (null = quiz chooser) */
   const [quizId, setQuizId] = useState<string | null>(null);
+  /** super-user-only ideal answers open per exercise */
+  const [idealOpen, setIdealOpen] = useState<Record<string, boolean>>({});
   /** bumped per exercise on "Try again" so the answer blocks remount empty */
   const [exReset, setExReset] = useState<Record<string, number>>({});
 
@@ -1892,6 +1894,50 @@ export function UnitPage({
                     );
                   })}
                 </ol>
+                {isSuperUser && ex.idealAnswer && (
+                  <div style={{ margin: "14px 0 4px" }}>
+                    <button
+                      className="btn ghost"
+                      onClick={() => setIdealOpen((m) => ({ ...m, [ex.id]: !m[ex.id] }))}
+                    >
+                      <Icon name={idealOpen[ex.id] ? "eyeOff" : "eye"} size={15} />
+                      {idealOpen[ex.id] ? "Hide ideal answers" : "Show ideal answers — super user"}
+                    </button>
+                    {idealOpen[ex.id] && (
+                      <div className="exq-answer" style={{ marginTop: 10 }}>
+                        <div className="exq-answer-title">
+                          <Icon name="shield" size={14} />
+                          Ideal answers — super user only
+                        </div>
+                        {ex.idealAnswer.map((blk, bi) => (
+                          <div className="ma-block" key={bi}>
+                            {blk.heading && <div className="ma-heading">{blk.heading}</div>}
+                            {blk.paragraphs?.map((p, pi) => (
+                              <p key={pi} className="lesson-p">
+                                {p}
+                              </p>
+                            ))}
+                            {blk.table && <ModelAnswerTable table={blk.table} />}
+                            {blk.bullets && (
+                              <ul className="duty-list">
+                                {blk.bullets.map((b) => (
+                                  <li key={b}>
+                                    <span className="ico">
+                                      <Icon name="checkCircle" size={16} />
+                                    </span>
+                                    <span>
+                                      <AnswerBullet text={b} />
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
                 {ex.checks && ex.checks.length > 0 && (() => {
                   const checks = ex.checks;
                   const res = progress.units[u.us]?.exercises?.[ex.id];
