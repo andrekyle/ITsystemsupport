@@ -1691,6 +1691,16 @@ export const CONTENT: Record<string, UnitContent> = {
         id: "ex1",
         title: "Questioning — Demonstrate an understanding of criteria for working as a member of a team & Working Autonomously",
         task: "Time: 45 minutes · Activity: Self & Group",
+        scenario: [
+          "Your brief — You all work for the same IT consulting company. A training provider has contracted your team to help its students pass the National Certificate: Information Technology – System Support (SAQA ID 48573). Working as one project team, you must design a support strategy that will carry the students through the course — and in doing so, practise everything this session teaches about working as a member of a team and working autonomously.",
+          "Step 1 — Form the team and agree the roles. Everyone must agree on appropriate roles and everyone must be satisfied in their role: a leader who sets the base agenda, facilitates the discussion and monitors progress, plus supporting roles from the lesson — initiator, recorder, devil's advocate/skeptic, optimist, timekeeper, gate keeper and summarizer. Rotate or combine roles if your team is small.",
+          "Step 2 — Clarify expectations before you start: agree a clear statement of your team's mission, ground rules for participation, each member's responsibilities, and the time line for the task.",
+          "Step 3 — Brainstorm the support strategy for the students — for example study groups, revision timetables before each Friday session, peer tutoring on difficult unit standards, quiz practice and POE check-ins. Every member gives input, the gate keeper makes sure quiet members are heard, and everyone listens actively and asks questions.",
+          "Step 4 — Critique each other's ideas the right way: don't express an opinion as a fact, explain your reasons, restate the original idea before responding, compliment what is usable, respond — don't react, don't interrupt, critique the idea and not the person, be courteous, and avoid jargon.",
+          "Step 5 — Divide the strategy so each member delivers one part autonomously: state what you will do on your own authority, when you will consult the team, and how you will report progress and support the others so the whole plan succeeds.",
+          "Step 6 — If the team disagrees, handle it the way the lesson teaches: let each person state their view briefly, focus on the issues and not personalities, seek common ground, and develop an action plan.",
+          "Step 7 — The recorder documents the final strategy and the summarizer presents it to the class. Afterwards, answer the questions below using what you experienced in the exercise.",
+        ],
         steps: [
           "Identify and explain the criteria for working effectively as a member of a team",
           "Identify and explain behaviours conducive to working as a member of a team",

@@ -221,6 +221,8 @@ export interface Exercise {
   id: string;
   title: string;
   task: string;
+  /** scenario / instruction paragraphs shown above the questions */
+  scenario?: string[];
   steps: string[];
   /** per-question typed-answer blocks with semantic checking (index-aligned with steps) */
   checks?: ExerciseCheck[];

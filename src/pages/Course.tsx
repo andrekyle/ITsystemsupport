@@ -1863,6 +1863,11 @@ export function UnitPage({
                 <p className="lesson-p" style={{ marginTop: 10 }}>
                   <Gloss text={ex.task} />
                 </p>
+                {ex.scenario?.map((s, si) => (
+                  <p key={si} className="lesson-p">
+                    <LessonBullet text={s} />
+                  </p>
+                ))}
                 <ol className="step-list">
                   {ex.steps.map((s, i) => {
                     const check = ex.checks?.[i];
