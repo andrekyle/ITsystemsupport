@@ -276,6 +276,13 @@ export function AttendancePage({
     save({ ...reg, rows, order: reg.order.filter((id) => id !== pid) });
   };
 
+  /** Super user only: wipe the whole register for the selected date. */
+  const clearRegister = () => {
+    if (!window.confirm("Clear this register? All signatures and edits for this date are removed."))
+      return;
+    save(EMPTY);
+  };
+
   const canEditRow = (pid: string) => staff || pid === profile.id;
 
   const cell = (pid: string, field: keyof AttRow, cls?: string) => {
@@ -321,6 +328,11 @@ export function AttendancePage({
         <button className="btn" onClick={() => window.print()}>
           <Icon name="download" /> Download as PDF
         </button>
+        {profile.role === "Super User" && (
+          <button className="btn danger" onClick={clearRegister}>
+            Clear register
+          </button>
+        )}
         {signed && <span className="att-note">You have signed — you can still edit your row.</span>}
         {!signed && !canSign && (
           <span className="att-note">Signing opens on the day of the session.</span>
