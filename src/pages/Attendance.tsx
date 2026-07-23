@@ -102,12 +102,12 @@ function headerDefaults(dateIso: string): Record<string, string> {
   const d = new Date(`${dateIso}T12:00:00`);
   return {
     course: COURSE_META.title,
-    venue: "",
+    venue: "100 Grayston Drive, Sandown, Sandton, 2196, South Africa",
     nqf: String(COURSE_META.nqfLevel),
     credits: String(COURSE_META.credits),
     unitStandards: unitForDate(dateIso),
     type: "Training",
-    client: "",
+    client: "Investec",
     qualification: `SAQA ${COURSE_META.saqaId}`,
     facilitator: "Andre Snell",
     date: d.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }),
