@@ -1067,19 +1067,22 @@ export function UnitPage({
   profile: Profile;
   progress: ProgressState;
   toggleActivity: (us: string, a: UnitActivity) => void;
-  saveQuizResult: (us: string, score: number, total: number) => void;
+  saveQuizResult: (us: string, score: number, total: number, quizId?: string) => void;
   setLogbookField: (us: string, key: string, value: string | boolean) => void;
   saveExerciseResult: (us: string, exId: string, score: number, total: number) => void;
   navigate: (r: Route) => void;
 }) {
   const [tab, setTab] = useState<UnitTab>(() => loadUnitTab(unitId));
   const [noteId, setNoteId] = useState<string | null>(null);
+  /** selected titled quiz on the Quiz tab (null = quiz chooser) */
+  const [quizId, setQuizId] = useState<string | null>(null);
   /** bumped per exercise on "Try again" so the answer blocks remount empty */
   const [exReset, setExReset] = useState<Record<string, number>>({});
 
   // switching to a different unit standard always lands on its Overview tab
   useEffect(() => {
     setTab(loadUnitTab(unitId));
+    setQuizId(null);
   }, [unitId]);
 
   useEffect(() => {
@@ -1204,7 +1207,7 @@ export function UnitPage({
     { id: "notes", label: "Notes", icon: "document", show: !!content?.notes?.length || Object.values(userNotes).some((n) => n.us === unitId) || !!content?.lesson.length },
     { id: "exercises", label: "Exercises", icon: "exercise", show: !!content?.exercises.length },
     { id: "assignments", label: "Assignments", icon: "folder", show: !!content?.assignments.length },
-    { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content?.quiz.length },
+    { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content?.quiz.length || !!content?.quizzes?.length },
     { id: "plan", label: "Lesson plan", icon: "presenter", show: !!content?.lessonPlan && isPrivileged },
   ];
 
@@ -1317,19 +1320,30 @@ export function UnitPage({
             );
           })}
 
-          {content && (
-            <div className="callout">
-              <span className="ico">
-                <Icon name="book" size={19} />
-              </span>
-              <span>
-                This unit standard has full learning material: a {content.lesson.length}-section
-                lesson, {content.exercises.length} exercises, {content.assignments.length}{" "}
-                assignments and a {content.quiz.length}-question knowledge check. Use the tabs above
-                to work through it.
-              </span>
-            </div>
-          )}
+          {content && (() => {
+            const parts = [
+              `a ${content.lesson.length}-section lesson`,
+              content.exercises.length ? `${content.exercises.length} exercises` : null,
+              content.assignments.length ? `${content.assignments.length} assignments` : null,
+              content.quiz.length ? `a ${content.quiz.length}-question knowledge check` : null,
+              content.quizzes?.length ? `${content.quizzes.length} knowledge quizzes` : null,
+            ].filter((p): p is string => !!p);
+            const text =
+              parts.length > 1
+                ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`
+                : parts[0];
+            return (
+              <div className="callout">
+                <span className="ico">
+                  <Icon name="book" size={19} />
+                </span>
+                <span>
+                  This unit standard has full learning material: {text}. Use the tabs above to work
+                  through it.
+                </span>
+              </div>
+            );
+          })()}
 
           {content?.saqa && (
             <>
@@ -2062,7 +2076,78 @@ export function UnitPage({
         </>
       )}
 
-      {tab === "quiz" && content && (
+      {tab === "quiz" && content && content.quizzes && content.quizzes.length > 0 && (() => {
+        const active = content.quizzes.find((qz) => qz.id === quizId) ?? null;
+        const results = progress.units[u.us]?.quizzes ?? {};
+        if (!active)
+          return (
+            <>
+              <h2 className="section-title">
+                <span className="ico">
+                  <Icon name="clipboard" size={20} />
+                </span>
+                Knowledge quizzes — choose one to start
+              </h2>
+              <p className="muted" style={{ marginTop: -6, marginBottom: 16 }}>
+                Your best score for each quiz is saved to your profile. 80%+ is considered
+                competent.
+              </p>
+              {content.quizzes.map((qz) => {
+                const res = results[qz.id];
+                const pct = res ? Math.round((res.best / res.total) * 100) : null;
+                return (
+                  <button key={qz.id} className="profile-row" onClick={() => setQuizId(qz.id)}>
+                    <span
+                      className={`status ${pct !== null && pct >= 80 ? "done" : pct !== null ? "progress" : "none"}`}
+                      style={{ display: "inline-flex", color: pct !== null && pct >= 80 ? "var(--green)" : undefined }}
+                    >
+                      <Icon name={pct !== null && pct >= 80 ? "checkCircle" : "clipboard"} size={22} />
+                    </span>
+                    <span>
+                      <span className="nm">{qz.title}</span>
+                      <br />
+                      <span className="rl">
+                        {qz.questions.length} questions
+                        {res
+                          ? ` · best ${res.best}/${res.total} (${pct}%) · ${res.attempts} attempt${res.attempts === 1 ? "" : "s"}`
+                          : " · not attempted yet"}
+                      </span>
+                    </span>
+                    <span className="chev" style={{ marginLeft: "auto" }}>
+                      <Icon name="chevronRight" size={16} />
+                    </span>
+                  </button>
+                );
+              })}
+            </>
+          );
+        return (
+          <>
+            <button className="btn ghost" style={{ marginTop: 14 }} onClick={() => setQuizId(null)}>
+              <Icon name="arrowLeft" size={15} />
+              All quizzes
+            </button>
+            <h2 className="section-title">
+              <span className="ico">
+                <Icon name="clipboard" size={20} />
+              </span>
+              {active.title} — {active.questions.length} questions
+            </h2>
+            <p className="muted" style={{ marginTop: -6, marginBottom: 16 }}>
+              Answer all questions, then submit. Your best score is saved to your profile. 80%+ is
+              considered competent.
+            </p>
+            <Quiz
+              key={active.id}
+              questions={active.questions}
+              previous={results[active.id]}
+              onSubmit={(score, total) => saveQuizResult(u.us, score, total, active.id)}
+            />
+          </>
+        );
+      })()}
+
+      {tab === "quiz" && content && !content.quizzes?.length && (
         <>
           <h2 className="section-title">
             <span className="ico">

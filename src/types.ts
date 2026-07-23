@@ -166,6 +166,8 @@ export interface UnitProgress {
   /** activity name -> done */
   activities: Partial<Record<UnitActivity, boolean>>;
   quiz?: QuizResult;
+  /** results for titled quizzes (quiz id -> result) */
+  quizzes?: Record<string, QuizResult>;
   /** marked exercise scores (exercise id -> best-of-two result) */
   exercises?: Record<string, ExerciseResult>;
   /** editable logbook field values (field key -> value) */
@@ -240,6 +242,13 @@ export interface QuizQuestion {
   options: string[];
   answer: number;
   explain: string;
+}
+
+/** A titled quiz — units may carry several (rendered as a chooser on the Quiz tab). */
+export interface NamedQuiz {
+  id: string;
+  title: string;
+  questions: QuizQuestion[];
 }
 
 export interface SaqaSection {
@@ -320,6 +329,8 @@ export interface UnitContent {
   exercises: Exercise[];
   assignments: Assignment[];
   quiz: QuizQuestion[];
+  /** multiple titled quizzes — shown as a chooser on the Quiz tab */
+  quizzes?: NamedQuiz[];
   saqa?: SaqaDetails;
   logbook?: LogbookSpec;
   notes?: UnitNote[];

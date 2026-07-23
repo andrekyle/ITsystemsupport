@@ -221,27 +221,27 @@ export function useProgress(profileId: string) {
   );
 
   const saveQuizResult = useCallback(
-    (us: string, score: number, total: number) => {
+    (us: string, score: number, total: number, quizId?: string) => {
       update((prev) => {
         const unit: UnitProgress = prev.units[us] ?? { activities: {} };
-        const q = unit.quiz;
+        const q = quizId ? unit.quizzes?.[quizId] : unit.quiz;
         const history = [
           { score, total, date: new Date().toISOString() },
           ...(q?.history ?? []),
         ].slice(0, 3);
+        const result = {
+          best: Math.max(q?.best ?? 0, score),
+          total,
+          attempts: (q?.attempts ?? 0) + 1,
+          history,
+        };
         return {
           ...prev,
           units: {
             ...prev.units,
-            [us]: {
-              ...unit,
-              quiz: {
-                best: Math.max(q?.best ?? 0, score),
-                total,
-                attempts: (q?.attempts ?? 0) + 1,
-                history,
-              },
-            },
+            [us]: quizId
+              ? { ...unit, quizzes: { ...unit.quizzes, [quizId]: result } }
+              : { ...unit, quiz: result },
           },
         };
       });
