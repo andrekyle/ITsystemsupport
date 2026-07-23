@@ -317,7 +317,8 @@ export function AttendancePage({
     setConfirming(null);
   };
 
-  const canEditRow = (pid: string) => staff || pid === profile.id;
+  // students only sign; the register itself is edited by staff
+  const canEditRow = (_pid: string) => staff;
 
   const cell = (pid: string, field: keyof AttRow, cls?: string) => {
     const row = reg.rows[pid];
@@ -345,7 +346,7 @@ export function AttendancePage({
       <h1 className="page-title no-print">Attendance Register</h1>
       <p className="page-sub no-print">
         Sign the register every Friday during class — your details fill in from your enrolment
-        form. {staff ? "Staff can edit any field and view past registers." : ""}
+        form. {staff ? "Staff can edit any field, view past registers and download the PDF." : ""}
       </p>
 
       <div className="att-controls no-print">
@@ -359,15 +360,21 @@ export function AttendancePage({
         <button className="btn primary" disabled={!canSign} onClick={onSignClick}>
           <Icon name="check" /> {signed ? "Signed" : "Sign the register — I'm here"}
         </button>
-        <button className="btn" onClick={() => window.print()}>
-          <Icon name="download" /> Download as PDF
-        </button>
+        {staff && (
+          <button className="btn" onClick={() => window.print()}>
+            <Icon name="download" /> Download as PDF
+          </button>
+        )}
         {profile.role === "Super User" && (
           <button className="btn danger" onClick={() => setConfirming({ kind: "register" })}>
             Clear register
           </button>
         )}
-        {signed && <span className="att-note">You have signed — you can still edit your row.</span>}
+        {signed && (
+          <span className="att-note">
+            {staff ? "You have signed — you can still edit your row." : "You have signed the register."}
+          </span>
+        )}
         {!signed && !canSign && (
           <span className="att-note">
             {isToday
