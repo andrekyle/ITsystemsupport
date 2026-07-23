@@ -222,10 +222,20 @@ export function AttendancePage({
   const setHdr = (field: string, value: string) =>
     save({ ...reg, header: { ...reg.header, [field]: value } });
 
-  const today = isoDate(new Date());
+  // live clock so the sign button opens by itself at 08:30 without a reload
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(t);
+  }, []);
+
+  const today = isoDate(now);
   const isToday = dateIso === today;
+  // students may only sign on the session day itself, from 08:30 in the morning
+  const opensAt = new Date(`${dateIso}T08:30:00`);
+  const openNow = isToday && now >= opensAt;
   const signed = !!reg.rows[profile.id];
-  const canSign = !signed && (isToday || staff);
+  const canSign = !signed && (staff || openNow);
 
   /** Sign the register: my details from my enrolment form + arrival time now. */
   const signNow = async (signatureImage?: string) => {
@@ -359,7 +369,11 @@ export function AttendancePage({
         )}
         {signed && <span className="att-note">You have signed — you can still edit your row.</span>}
         {!signed && !canSign && (
-          <span className="att-note">Signing opens on the day of the session.</span>
+          <span className="att-note">
+            {isToday
+              ? "Signing opens at 08:30 this morning."
+              : "Signing opens at 08:30 on the day of the session."}
+          </span>
         )}
       </div>
 
