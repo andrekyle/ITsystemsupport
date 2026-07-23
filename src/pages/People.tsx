@@ -15,6 +15,7 @@ import {
 } from "../store";
 import { Avatar } from "../components/Avatar";
 import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/EnrolmentForm";
+import { AlertModal, ConfirmModal } from "../components/Modal";
 import { downloadDoc } from "../lib/files";
 import {
   deleteCloudProfile,
@@ -514,6 +515,8 @@ function StudentDetail({
   const docs = remote ? (cloudDocs ?? {}) : localDocs;
   const canManage = isSuper;
   const [editingEnrol, setEditingEnrol] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [alertMsg, setAlertMsg] = useState("");
   const [draft, setDraft] = useState<EnrolmentInfo>({ ...EMPTY_ENROLMENT, ...student.enrolment });
   const uploaded = POE_SECTIONS.flatMap((sec) =>
     sec.items.flatMap((item) =>
@@ -530,7 +533,7 @@ function StudentDetail({
       if (!owner) return false;
       const err = await updateCloudProfile(owner, student.id, patch);
       if (err) {
-        window.alert(err);
+        setAlertMsg(err);
         return false;
       }
     } else {
@@ -549,17 +552,12 @@ function StudentDetail({
   }
 
   async function removeUser() {
-    if (
-      !window.confirm(
-        `Delete ${student.name}'s account and all their saved progress, documents and notes? This cannot be undone.`
-      )
-    )
-      return;
+    setConfirmDelete(false);
     if (remote) {
       if (!owner) return;
       const err = await deleteCloudProfile(owner, student.id);
       if (err) {
-        window.alert(err);
+        setAlertMsg(err);
         return;
       }
     } else {
@@ -598,7 +596,7 @@ function StudentDetail({
       )}
 
       {canManage && (
-        <AdminPanel student={student} onPatch={patchStudent} onDelete={removeUser} />
+        <AdminPanel student={student} onPatch={patchStudent} onDelete={() => setConfirmDelete(true)} />
       )}
 
       <h2 className="section-title">
@@ -682,6 +680,23 @@ function StudentDetail({
           )}
         </>
       )}
+
+      {confirmDelete && (
+        <ConfirmModal
+          title="Delete this user?"
+          message={
+            <>
+              Delete <strong>{student.name}</strong>'s account and all their saved progress,
+              documents and notes? This cannot be undone.
+            </>
+          }
+          confirmLabel="Delete user"
+          danger
+          onConfirm={() => void removeUser()}
+          onCancel={() => setConfirmDelete(false)}
+        />
+      )}
+      {alertMsg && <AlertModal message={alertMsg} onClose={() => setAlertMsg("")} />}
     </>
   );
 }

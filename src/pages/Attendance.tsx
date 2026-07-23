@@ -4,6 +4,7 @@ import { isStaff } from "../types";
 import { COURSE_META, MODULES } from "../data/course";
 import { supabase } from "../lib/supabase";
 import { Icon } from "../icons";
+import { ConfirmModal } from "../components/Modal";
 
 /**
  * Attendance Register — exact replica of the Eruditio paper form.
@@ -163,11 +164,13 @@ export function AttendancePage({
   onUpdateProfile: (patch: Partial<Profile>) => void;
 }) {
   const staff = isStaff(profile.role);
+  const isSuper = profile.role === "Super User";
   const [dateIso, setDateIso] = useState(defaultFriday);
   const [reg, setReg] = useState<AttData>(() => readReg(attKey(dateIso)));
   const [askSig, setAskSig] = useState(false);
   const [sigPreview, setSigPreview] = useState<string | null>(null);
   const [sigError, setSigError] = useState("");
+  const [confirming, setConfirming] = useState<{ kind: "register" } | { kind: "row"; pid: string } | null>(null);
   const storageKey = attKey(dateIso);
 
   const refresh = useCallback(async () => {
@@ -277,10 +280,13 @@ export function AttendancePage({
   };
 
   /** Super user only: wipe the whole register for the selected date. */
-  const clearRegister = () => {
-    if (!window.confirm("Clear this register? All signatures and edits for this date are removed."))
-      return;
-    save(EMPTY);
+  const clearRegister = () => save(EMPTY);
+
+  const onConfirm = () => {
+    if (!confirming) return;
+    if (confirming.kind === "register") clearRegister();
+    else clearRow(confirming.pid);
+    setConfirming(null);
   };
 
   const canEditRow = (pid: string) => staff || pid === profile.id;
@@ -329,7 +335,7 @@ export function AttendancePage({
           <Icon name="download" /> Download as PDF
         </button>
         {profile.role === "Super User" && (
-          <button className="btn danger" onClick={clearRegister}>
+          <button className="btn danger" onClick={() => setConfirming({ kind: "register" })}>
             Clear register
           </button>
         )}
@@ -462,11 +468,11 @@ export function AttendancePage({
                       ) : pid ? (
                         cell(pid, "signature", "att-sig")
                       ) : null}
-                      {pid && staff && (
+                      {pid && isSuper && (
                         <button
                           className="att-clear no-print"
-                          title="Clear this row"
-                          onClick={() => clearRow(pid)}
+                          title="Remove this learner from the register"
+                          onClick={() => setConfirming({ kind: "row", pid })}
                         >
                           ×
                         </button>
@@ -506,6 +512,29 @@ export function AttendancePage({
           <div>+27 11 973 0205</div>
         </div>
       </div>
+
+      {confirming && (
+        <ConfirmModal
+          title={confirming.kind === "register" ? "Clear this register?" : "Remove this learner?"}
+          message={
+            confirming.kind === "register" ? (
+              <>All signatures and edits for this date will be removed. This cannot be undone.</>
+            ) : (
+              <>
+                Remove{" "}
+                <strong>
+                  {reg.rows[confirming.pid]?.name} {reg.rows[confirming.pid]?.surname}
+                </strong>{" "}
+                from this register? Use this when someone signed by accident.
+              </>
+            )
+          }
+          confirmLabel={confirming.kind === "register" ? "Clear register" : "Remove learner"}
+          danger
+          onConfirm={onConfirm}
+          onCancel={() => setConfirming(null)}
+        />
+      )}
     </div>
   );
 }
