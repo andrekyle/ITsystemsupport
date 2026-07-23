@@ -1040,11 +1040,11 @@ function fmtSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "assignments" | "quiz" | "plan";
+type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "assignments" | "quiz" | "evaluation" | "plan";
 
 const UNIT_TAB_KEY = "itss.unittab";
 const UNIT_TAB_US_KEY = "itss.unittab.us";
-const UNIT_TABS: UnitTab[] = ["overview", "lesson", "material", "notes", "exercises", "assignments", "quiz", "plan"];
+const UNIT_TABS: UnitTab[] = ["overview", "lesson", "material", "notes", "exercises", "assignments", "quiz", "evaluation", "plan"];
 
 /** Restore the saved tab only for the same unit standard — opening another US always starts on Overview. */
 function loadUnitTab(unitId: string): UnitTab {
@@ -1114,6 +1114,8 @@ export function UnitPage({
   const isPrivileged = isStaff(profile.role);
   const isSuperUser = profile.role === "Super User";
   const [sharedSettings, updateSharedSettings] = useSharedSettings();
+  /** super user's draft of the evaluation form link */
+  const [evalDraft, setEvalDraft] = useState<string | null>(null);
   // shared/staff-uploaded content may only be downloaded by the super user,
   // unless the super user has explicitly allowed it for everyone
   const canDownloadShared = isSuperUser || sharedSettings.allowSharedDownloads;
@@ -1210,6 +1212,7 @@ export function UnitPage({
     { id: "exercises", label: "Exercises", icon: "exercise", show: !!content?.exercises.length },
     { id: "assignments", label: "Assignments", icon: "folder", show: !!content?.assignments.length },
     { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content?.quiz.length || !!content?.quizzes?.length },
+    { id: "evaluation", label: "Evaluation", icon: "chat", show: true },
     { id: "plan", label: "Lesson plan", icon: "presenter", show: !!content?.lessonPlan && isPrivileged },
   ];
 
@@ -2215,6 +2218,72 @@ export function UnitPage({
             previous={quizResult}
             onSubmit={(score, total) => saveQuizResult(u.us, score, total)}
           />
+        </>
+      )}
+
+      {tab === "evaluation" && (
+        <>
+          <h2 className="section-title">
+            <span className="ico">
+              <Icon name="chat" size={20} />
+            </span>
+            Lesson evaluation
+          </h2>
+          <p className="page-sub" style={{ maxWidth: 640 }}>
+            As a student you have the opportunity to evaluate this lesson — and you can do so
+            honestly. Your feedback goes directly to improving the training, so say what worked
+            and what didn't.
+          </p>
+          {sharedSettings.evaluationUrl ? (
+            <a
+              className="btn"
+              href={sharedSettings.evaluationUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: "inline-flex", marginTop: 6 }}
+            >
+              <Icon name="globe" size={16} />
+              Open the evaluation form
+            </a>
+          ) : (
+            <div className="callout" style={{ maxWidth: 640 }}>
+              <span className="ico">
+                <Icon name="info" size={19} />
+              </span>
+              <span>
+                The evaluation link has not been set yet
+                {isSuperUser ? " — add it below." : " — please check back after the session."}
+              </span>
+            </div>
+          )}
+          {isSuperUser && (
+            <div className="card profile-enrol-card" style={{ marginTop: 20, maxWidth: 640 }}>
+              <div className="field" style={{ marginBottom: 10 }}>
+                <label htmlFor="eval-url">Evaluation form link — super user</label>
+                <input
+                  id="eval-url"
+                  type="url"
+                  placeholder="https://…"
+                  value={evalDraft ?? sharedSettings.evaluationUrl}
+                  onChange={(e) => setEvalDraft(e.target.value)}
+                />
+              </div>
+              <button
+                className="btn sm"
+                onClick={() => {
+                  updateSharedSettings({ evaluationUrl: (evalDraft ?? sharedSettings.evaluationUrl).trim() });
+                  setEvalDraft(null);
+                }}
+              >
+                <Icon name="checkCircle" size={15} />
+                Save link
+              </button>
+              <p className="muted" style={{ margin: "10px 0 0" }}>
+                The link is shared with every account — paste the form URL (e.g. a Google Form) and
+                save. Students open it from this tab on any unit standard.
+              </p>
+            </div>
+          )}
         </>
       )}
 

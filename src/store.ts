@@ -303,9 +303,11 @@ const SHARED_SETTINGS_KEY = "itss.settings.shared";
 export interface SharedSettings {
   /** allow non-super users to download shared/staff-uploaded content */
   allowSharedDownloads: boolean;
+  /** link to the lesson evaluation form (set by the super user) */
+  evaluationUrl: string;
 }
 
-const DEFAULT_SHARED_SETTINGS: SharedSettings = { allowSharedDownloads: false };
+const DEFAULT_SHARED_SETTINGS: SharedSettings = { allowSharedDownloads: false, evaluationUrl: "" };
 
 function readSharedSettings(): SharedSettings {
   return { ...DEFAULT_SHARED_SETTINGS, ...read<Partial<SharedSettings>>(SHARED_SETTINGS_KEY, {}) };
