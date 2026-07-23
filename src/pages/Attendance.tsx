@@ -117,8 +117,9 @@ function headerDefaults(dateIso: string): Record<string, string> {
 }
 
 /**
- * Reads a photo/scan of a signature on white paper: downscales it and turns
- * the white paper transparent so only the ink remains on the register.
+ * Reads a photo/scan of a signature on white paper and enhances it: adapts to
+ * the photo's lighting, removes the paper plus any yellow/grey shadows, and
+ * redraws the ink in a clean dark colour so only a crisp signature remains.
  */
 function fileToSignature(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -139,10 +140,27 @@ function fileToSignature(file: File): Promise<string> {
       ctx.drawImage(img, 0, 0, w, h);
       const data = ctx.getImageData(0, 0, w, h);
       const px = data.data;
-      for (let i = 0; i < px.length; i += 4) {
-        const lum = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
-        // white paper → transparent; ink stays with soft edges
-        px[i + 3] = Math.max(0, Math.min(255, Math.round((190 - lum) * 3)));
+
+      // estimate the paper brightness (75th percentile of luminance) so the
+      // cut-off adapts to dim photos, yellow paper tints and soft shadows
+      const lums = new Float32Array(px.length / 4);
+      for (let i = 0, j = 0; i < px.length; i += 4, j++) {
+        lums[j] = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+      }
+      const sorted = Float32Array.from(lums).sort();
+      const paper = Math.max(120, sorted[Math.floor(sorted.length * 0.75)]);
+
+      // pixels close to paper brightness (incl. yellowish shadows) → transparent;
+      // clearly darker pixels = ink, redrawn in a uniform dark colour
+      const start = paper * 0.85; // must be >15% darker than the paper to count
+      const full = paper * 0.55; // 45% darker = fully opaque ink
+      for (let i = 0, j = 0; i < px.length; i += 4, j++) {
+        const a = ((start - lums[j]) / (start - full)) * 255;
+        px[i + 3] = Math.max(0, Math.min(255, Math.round(a)));
+        // clean dark ink — removes any yellow/brown colour cast from the photo
+        px[i] = 16;
+        px[i + 1] = 16;
+        px[i + 2] = 32;
       }
       ctx.putImageData(data, 0, 0);
       URL.revokeObjectURL(url);
