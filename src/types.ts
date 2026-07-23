@@ -381,7 +381,8 @@ export type PageId =
   | "profile"
   | "students"
   | "checklist"
-  | "sectiond";
+  | "sectiond"
+  | "attendance";
 
 export interface Route {
   page: PageId;

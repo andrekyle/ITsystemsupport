@@ -18,7 +18,8 @@ function isShared(key: string) {
   return (
     key === "itss.notes.shared" ||
     key === "itss.settings.shared" ||
-    key.startsWith("itss.planslides.")
+    key.startsWith("itss.planslides.") ||
+    key.startsWith("itss.attendance.")
   );
 }
 

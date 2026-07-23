@@ -3991,6 +3991,320 @@ table.data tr.done-row .text-link {
 
 .mt-0 { margin-top: 0; }
 
+/* ---------- Attendance Register (Eruditio form replica) ---------- */
+
+.att-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 14px 0 18px;
+}
+
+.att-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.att-date input {
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text-1);
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.att-note {
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+
+/* the paper sheet — always white, black ink, like the printed form */
+.att-sheet {
+  background: #fff;
+  color: #111;
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  padding: 26px 34px 20px;
+  max-width: 1060px;
+  font-family: Calibri, "Segoe UI", Arial, sans-serif;
+  font-size: 13.5px;
+}
+
+.att-logo {
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.att-logo img {
+  height: 62px;
+}
+
+.att-banner {
+  background: #f08120;
+  color: #fff;
+  text-align: center;
+  font-weight: 700;
+  font-size: 14.5px;
+  letter-spacing: 0.4px;
+  padding: 6px 4px;
+  margin-bottom: 10px;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.att-sheet table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.att-sheet td,
+.att-sheet th {
+  border: 1px solid #1a1a1a;
+  padding: 3px 8px;
+  font-size: 13.5px;
+  text-align: left;
+  vertical-align: middle;
+  height: 26px;
+}
+
+.att-sheet td.lbl {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.att-head td.lbl:first-child {
+  width: 130px;
+}
+
+.att-head td:nth-child(3) {
+  width: 90px;
+}
+
+.att-head td:nth-child(2) {
+  width: 38%;
+}
+
+.att-types {
+  padding: 2px 6px;
+}
+
+.att-type {
+  border: none;
+  background: none;
+  color: #111;
+  font: inherit;
+  font-weight: 700;
+  padding: 0 6px 0 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.att-type:disabled {
+  cursor: default;
+  color: #111;
+  opacity: 1;
+}
+
+.att-radio {
+  display: inline-block;
+  width: 13px;
+  height: 12px;
+  border: 1.4px solid #111;
+  border-radius: 50%;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.att-radio.on {
+  background: #111;
+}
+
+.att-main-wrap {
+  position: relative;
+  margin: 16px 0 22px;
+}
+
+.att-watermark {
+  position: absolute;
+  opacity: 0.14;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.att-watermark.icon {
+  left: 4%;
+  top: -40px;
+  width: 230px;
+  opacity: 0.22;
+}
+
+.att-watermark.full {
+  left: 50%;
+  top: 50%;
+  transform: translate(-42%, -50%);
+  width: 74%;
+}
+
+.att-main {
+  position: relative;
+  z-index: 1;
+}
+
+.att-main th {
+  font-weight: 700;
+}
+
+.att-main th:nth-child(3) { width: 15%; }
+.att-main th:nth-child(4) { width: 14%; }
+.att-main th:nth-child(5) { width: 7%; }
+.att-main th:nth-child(6) { width: 8%; }
+.att-main th:nth-child(7) { width: 10%; }
+.att-main th:nth-child(8) { width: 22%; }
+
+.att-num {
+  width: 30px;
+  border-right: none !important;
+  padding-right: 0;
+}
+
+.att-name {
+  border-left: none !important;
+}
+
+.att-cell {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #111;
+  font: inherit;
+  padding: 0;
+  outline: none;
+}
+
+.att-cell:focus {
+  background: #fdf3e7;
+}
+
+.att-sig,
+input.att-sig {
+  font-family: "Segoe Script", "Brush Script MT", cursive;
+  font-size: 15px;
+}
+
+.att-sig-cell {
+  position: relative;
+}
+
+.att-clear {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  color: #b34040;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.att-foot td.lbl:first-child {
+  width: 130px;
+}
+
+.att-foot td:nth-child(3) {
+  width: 120px;
+}
+
+.att-foot td:nth-child(2) {
+  width: 38%;
+}
+
+.att-company {
+  text-align: center;
+  color: #17375e;
+  font-size: 11.5px;
+  line-height: 1.5;
+  margin-top: 16px;
+}
+
+.att-company .att-link {
+  color: #0563c1;
+  text-decoration: underline;
+}
+
+/* print: only the sheet, A4 landscape — "Download as PDF" uses the print dialog */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+  html,
+  body {
+    overflow: hidden;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .att-sheet,
+  .att-sheet * {
+    visibility: visible;
+  }
+  .att-sheet {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: none;
+    border: none;
+    border-radius: 0;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+  .att-sheet td,
+  .att-sheet th {
+    height: 22px;
+    padding: 2px 6px;
+    font-size: 12px;
+  }
+  .att-logo {
+    margin-bottom: 8px;
+  }
+  .att-logo img {
+    height: 46px;
+  }
+  .att-banner {
+    padding: 4px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .att-main-wrap {
+    margin: 10px 0 12px;
+  }
+  .att-sig,
+  input.att-sig {
+    font-size: 13px;
+  }
+  .att-company {
+    font-size: 10px;
+    margin-top: 8px;
+    line-height: 1.4;
+  }
+  .no-print,
+  .att-sheet .no-print {
+    display: none !important;
+  }
+}
+
 @media (max-width: 900px) {
   .content-inner {
     padding: 20px 20px 48px;

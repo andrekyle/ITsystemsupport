@@ -13,6 +13,7 @@ import { PoePage } from "./pages/Poe";
 import { ProfilePage, StudentsPage } from "./pages/People";
 import { ChecklistPage } from "./pages/Checklist";
 import { SectionDPage } from "./pages/Checklist";
+import { AttendancePage } from "./pages/Attendance";
 import { cloudEnabled, supabase } from "./lib/supabase";
 import { installSync, startSync, stopSync, wipeLocalData } from "./lib/sync";
 
@@ -35,6 +36,7 @@ const VALID_PAGES = new Set([
   "students",
   "checklist",
   "sectiond",
+  "attendance",
 ]);
 
 function loadRoute(): Route {
@@ -141,6 +143,7 @@ function Shell({
             {route.page === "assessments" && <AssessmentsPage profile={profile} />}
             {route.page === "deliverables" && <DeliverablesPage />}
             {route.page === "calendar" && <CalendarPage navigate={navigate} progress={state} />}
+            {route.page === "attendance" && <AttendancePage profile={profile} />}
             {route.page === "resources" && <ResourcesPage />}
           </div>
         </main>
