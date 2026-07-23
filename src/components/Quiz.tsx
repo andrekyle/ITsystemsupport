@@ -11,11 +11,17 @@ export function Quiz({
   previous?: QuizResult;
   onSubmit: (score: number, total: number) => void;
 }) {
-  const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [answers, setAnswers] = useState<Record<number, number[]>>({});
   const [submitted, setSubmitted] = useState(false);
 
-  const answered = Object.keys(answers).length;
-  const score = questions.reduce((n, q, i) => n + (answers[i] === q.answer ? 1 : 0), 0);
+  const correctSet = (q: QuizQuestion) => q.answers ?? [q.answer];
+  const isCorrect = (q: QuizQuestion, sel: number[] | undefined) => {
+    const want = correctSet(q);
+    return !!sel && sel.length === want.length && want.every((x) => sel.includes(x));
+  };
+
+  const answered = questions.reduce((n, _q, i) => n + ((answers[i]?.length ?? 0) > 0 ? 1 : 0), 0);
+  const score = questions.reduce((n, q, i) => n + (isCorrect(q, answers[i]) ? 1 : 0), 0);
   const pct = Math.round((score / questions.length) * 100);
 
   function submit() {
@@ -101,32 +107,41 @@ export function Quiz({
       )}
 
       {questions.map((q, qi) => {
-        const chosen = answers[qi];
+        const multi = !!q.answers;
+        const chosen = answers[qi] ?? [];
+        const want = correctSet(q);
+        const pick = (oi: number) =>
+          setAnswers((a) => {
+            const cur = a[qi] ?? [];
+            if (!multi) return { ...a, [qi]: [oi] };
+            return {
+              ...a,
+              [qi]: cur.includes(oi) ? cur.filter((x) => x !== oi) : [...cur, oi],
+            };
+          });
         return (
           <div className="quiz-q" key={qi}>
             <div className="qt">
               <span className="qn">{qi + 1}</span>
               {q.q}
+              {multi && <span className="multi-hint">Select all that apply</span>}
             </div>
             {q.options.map((opt, oi) => {
               let cls = "opt";
-              if (!submitted && chosen === oi) cls += " selected";
+              if (!submitted && chosen.includes(oi)) cls += " selected";
               if (submitted) {
-                if (oi === q.answer) cls += " correct";
-                else if (chosen === oi) cls += " wrong";
+                if (want.includes(oi)) cls += " correct";
+                else if (chosen.includes(oi)) cls += " wrong";
               }
               return (
-                <button
-                  key={oi}
-                  className={cls}
-                  disabled={submitted}
-                  onClick={() => setAnswers((a) => ({ ...a, [qi]: oi }))}
-                >
+                <button key={oi} className={cls} disabled={submitted} onClick={() => pick(oi)}>
                   <span className="mark">
-                    {submitted && oi === q.answer && <Icon name="checkCircle" size={17} />}
-                    {submitted && oi !== q.answer && chosen === oi && <Icon name="info" size={17} />}
+                    {submitted && want.includes(oi) && <Icon name="checkCircle" size={17} />}
+                    {submitted && !want.includes(oi) && chosen.includes(oi) && (
+                      <Icon name="info" size={17} />
+                    )}
                     {!submitted && (
-                      <Icon name={chosen === oi ? "checkCircle" : "circle"} size={17} />
+                      <Icon name={chosen.includes(oi) ? "checkCircle" : "circle"} size={17} />
                     )}
                   </span>
                   {opt}
@@ -134,7 +149,7 @@ export function Quiz({
               );
             })}
             {submitted && (
-              <div className={`explain ${chosen === q.answer ? "ok" : "no"}`}>
+              <div className={`explain ${isCorrect(q, answers[qi]) ? "ok" : "no"}`}>
                 <Icon name="info" size={15} />
                 {q.explain}
               </div>

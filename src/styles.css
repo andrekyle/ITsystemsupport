@@ -3954,6 +3954,17 @@ a.plan-ppt:hover {
   color: var(--green);
 }
 
+/* "select all that apply" hint on multi-answer quiz questions */
+.quiz-q .multi-hint {
+  margin-left: 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--azure);
+  white-space: nowrap;
+}
+
 /* the entire calendar row goes green once the unit standard is completed */
 table.data tr.done-row td,
 table.data tr.done-row .us-link,

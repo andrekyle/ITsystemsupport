@@ -241,6 +241,8 @@ export interface QuizQuestion {
   q: string;
   options: string[];
   answer: number;
+  /** when present, the question is select-all-that-apply and these indices are the correct set */
+  answers?: number[];
   explain: string;
 }
 
