@@ -1327,6 +1327,7 @@ export const CONTENT: Record<string, UnitContent> = {
       {
         heading: "Demonstrate an understanding of criteria for working as a member of a team & Working Autonomously",
         icon: "target",
+        flat: true,
         paragraphs: ["Time: 90 minutes · Activity: Self & Group"],
       },
       {
@@ -1546,6 +1547,7 @@ export const CONTENT: Record<string, UnitContent> = {
       {
         heading: "Contribution to team coherence, image and spirit and Respect differences to enhance interaction between team members",
         icon: "award",
+        flat: true,
         paragraphs: ["Time: 90 minutes · Activity: Self & Group"],
       },
       {
