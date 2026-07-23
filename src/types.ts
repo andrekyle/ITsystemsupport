@@ -114,6 +114,10 @@ export interface Profile {
   avatar?: string;
   /** biographical enrolment information captured at registration */
   enrolment?: EnrolmentInfo;
+  /** data-URL of the learner's handwritten signature (signed on white paper) */
+  signatureImage?: string;
+  /** the one-time signature upload request has been shown */
+  signatureAsked?: boolean;
   /** SHA-256 hex hash of the sign-in password (absent = no password set) */
   passwordHash?: string;
 }

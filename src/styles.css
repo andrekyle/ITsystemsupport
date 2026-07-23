@@ -4199,6 +4199,57 @@ input.att-sig {
   font-size: 15px;
 }
 
+/* uploaded handwritten signature (white paper made transparent) */
+.att-sig-img {
+  display: block;
+  height: 24px;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.att-sigask {
+  max-width: 560px;
+  margin-bottom: 18px;
+  padding: 18px 20px;
+}
+
+.att-sigask h3 {
+  margin: 0 0 8px;
+}
+
+.att-sigask p {
+  margin: 0 0 12px;
+  color: var(--text-2);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.att-sigask label.btn {
+  cursor: pointer;
+}
+
+.att-sigpreview {
+  background: #fff;
+  border: 1px dashed var(--border-2);
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin: 12px 0;
+}
+
+.att-sigpreview img {
+  display: block;
+  max-height: 64px;
+  max-width: 100%;
+}
+
+.att-sigask-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
 .att-sig-cell {
   position: relative;
 }

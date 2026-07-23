@@ -25,6 +25,8 @@ interface AttRow {
   gender: string;
   arrival: string;
   signature: string;
+  /** data-URL of the learner's handwritten signature */
+  signatureImage?: string;
 }
 
 interface AttData {
@@ -101,8 +103,7 @@ function unitForDate(dateIso: string): string {
 function headerDefaults(dateIso: string): Record<string, string> {
   const d = new Date(`${dateIso}T12:00:00`);
   return {
-    course: COURSE_META.title,
-    venue: "100 Grayston Drive, Sandown, Sandton, 2196, South Africa",
+    course: COURSE_META.title,    venue: "100 Grayston Drive, Sandown, Sandton, 2196, South Africa",
     nqf: String(COURSE_META.nqfLevel),
     credits: String(COURSE_META.credits),
     unitStandards: unitForDate(dateIso),
@@ -114,10 +115,59 @@ function headerDefaults(dateIso: string): Record<string, string> {
   };
 }
 
-export function AttendancePage({ profile }: { profile: Profile }) {
+/**
+ * Reads a photo/scan of a signature on white paper: downscales it and turns
+ * the white paper transparent so only the ink remains on the register.
+ */
+function fileToSignature(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const w = Math.min(480, img.width);
+      const h = Math.round((img.height / img.width) * w);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        URL.revokeObjectURL(url);
+        reject(new Error("Canvas not supported"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, w, h);
+      const data = ctx.getImageData(0, 0, w, h);
+      const px = data.data;
+      for (let i = 0; i < px.length; i += 4) {
+        const lum = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+        // white paper → transparent; ink stays with soft edges
+        px[i + 3] = Math.max(0, Math.min(255, Math.round((190 - lum) * 3)));
+      }
+      ctx.putImageData(data, 0, 0);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not read image"));
+    };
+    img.src = url;
+  });
+}
+
+export function AttendancePage({
+  profile,
+  onUpdateProfile,
+}: {
+  profile: Profile;
+  onUpdateProfile: (patch: Partial<Profile>) => void;
+}) {
   const staff = isStaff(profile.role);
   const [dateIso, setDateIso] = useState(defaultFriday);
   const [reg, setReg] = useState<AttData>(() => readReg(attKey(dateIso)));
+  const [askSig, setAskSig] = useState(false);
+  const [sigPreview, setSigPreview] = useState<string | null>(null);
+  const [sigError, setSigError] = useState("");
   const storageKey = attKey(dateIso);
 
   const refresh = useCallback(async () => {
@@ -157,7 +207,7 @@ export function AttendancePage({ profile }: { profile: Profile }) {
   const canSign = !signed && (isToday || staff);
 
   /** Sign the register: my details from my enrolment form + arrival time now. */
-  const signNow = async () => {
+  const signNow = async (signatureImage?: string) => {
     // merge with the latest shared copy so classmates' rows are not lost
     const base = (await pullLatest(storageKey)) ?? readReg(storageKey);
     if (base.rows[profile.id]) {
@@ -167,6 +217,7 @@ export function AttendancePage({ profile }: { profile: Profile }) {
     const e = profile.enrolment;
     const parts = profile.name.trim().split(/\s+/);
     const now = new Date();
+    const sig = signatureImage ?? profile.signatureImage;
     const row: AttRow = {
       name: e?.firstNames || parts.slice(0, -1).join(" ") || profile.name,
       surname: e?.surname || (parts.length > 1 ? parts[parts.length - 1] : ""),
@@ -175,12 +226,45 @@ export function AttendancePage({ profile }: { profile: Profile }) {
       gender: e?.gender || "",
       arrival: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
       signature: e?.signature || profile.name,
+      ...(sig ? { signatureImage: sig } : {}),
     };
     save({
       header: { ...base.header, ...reg.header },
       rows: { ...base.rows, [profile.id]: row },
       order: base.order.includes(profile.id) ? base.order : [...base.order, profile.id],
     });
+  };
+
+  /** First click: ask (only once, ever) for a photo of the handwritten signature. */
+  const onSignClick = () => {
+    if (!profile.signatureImage && !profile.signatureAsked) {
+      setAskSig(true);
+      return;
+    }
+    void signNow();
+  };
+
+  const onSigFile = async (file: File | undefined) => {
+    if (!file) return;
+    setSigError("");
+    try {
+      setSigPreview(await fileToSignature(file));
+    } catch {
+      setSigError("Could not read that image — try a clear photo of your signature.");
+    }
+  };
+
+  const saveSigAndSign = () => {
+    if (!sigPreview) return;
+    onUpdateProfile({ signatureImage: sigPreview, signatureAsked: true });
+    setAskSig(false);
+    void signNow(sigPreview);
+  };
+
+  const skipSig = () => {
+    onUpdateProfile({ signatureAsked: true });
+    setAskSig(false);
+    void signNow();
   };
 
   const setCell = (pid: string, field: keyof AttRow, value: string) =>
@@ -231,7 +315,7 @@ export function AttendancePage({ profile }: { profile: Profile }) {
         <button className="btn" onClick={() => void refresh()}>
           <Icon name="trend" /> Refresh
         </button>
-        <button className="btn primary" disabled={!canSign} onClick={() => void signNow()}>
+        <button className="btn primary" disabled={!canSign} onClick={onSignClick}>
           <Icon name="check" /> {signed ? "Signed" : "Sign the register — I'm here"}
         </button>
         <button className="btn" onClick={() => window.print()}>
@@ -242,6 +326,40 @@ export function AttendancePage({ profile }: { profile: Profile }) {
           <span className="att-note">Signing opens on the day of the session.</span>
         )}
       </div>
+
+      {askSig && (
+        <div className="card att-sigask no-print">
+          <h3>Upload your signature</h3>
+          <p>
+            Sign your usual signature on a <strong>white piece of paper</strong>, take a clear
+            photo (or scan) and upload it here. It is saved to your profile and used on the
+            attendance register every Friday — you will only be asked this once.
+          </p>
+          <label className="btn">
+            <Icon name="folder" /> Choose photo of my signature
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => void onSigFile(e.target.files?.[0])}
+            />
+          </label>
+          {sigError && <div className="auth-error">{sigError}</div>}
+          {sigPreview && (
+            <div className="att-sigpreview">
+              <img src={sigPreview} alt="Your signature" />
+            </div>
+          )}
+          <div className="att-sigask-actions">
+            <button className="btn primary" disabled={!sigPreview} onClick={saveSigAndSign}>
+              <Icon name="check" /> Save signature &amp; sign the register
+            </button>
+            <button className="btn ghost" onClick={skipSig}>
+              Continue without a signature image
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="att-sheet">
         <div className="att-logo">
@@ -323,7 +441,15 @@ export function AttendancePage({ profile }: { profile: Profile }) {
                     <td>{pid ? cell(pid, "gender") : null}</td>
                     <td>{pid ? cell(pid, "arrival") : null}</td>
                     <td className="att-sig-cell">
-                      {pid ? cell(pid, "signature", "att-sig") : null}
+                      {pid && reg.rows[pid]?.signatureImage ? (
+                        <img
+                          className="att-sig-img"
+                          src={reg.rows[pid].signatureImage}
+                          alt={`${reg.rows[pid].name} signature`}
+                        />
+                      ) : pid ? (
+                        cell(pid, "signature", "att-sig")
+                      ) : null}
                       {pid && staff && (
                         <button
                           className="att-clear no-print"
