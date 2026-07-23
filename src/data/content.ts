@@ -1357,7 +1357,7 @@ export const CONTENT: Record<string, UnitContent> = {
           "More than ever employers are looking for ways to combine individual talents and harness the synergy of a high performance team. Some of the specific benefits include:",
         ],
         bullets: [
-          "Complete large-scale projects — Many projects in the workplace are too large or too complex for one individual to complete alone. Imagine trying to build an enormous all by yourself!",
+          "Complete large-scale projects — Many projects in the workplace are too large or too complex for one individual to complete alone. Imagine trying to build an enormous project all by yourself!",
           "Develop More Solutions — Different people looking at the same problem will find different solutions. A team can review ideas and put together a final solution which incorporates the best individual ideas.",
           "Detect Flaws — A team looking at different proposed solutions may also find pitfalls that an individual might miss. The final solution is that much stronger.",
           "Build Social Connections — Working on a team allows you to interact with your colleagues much more than sitting in neighbouring cubicles - or lecture seats - would.",
