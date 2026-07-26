@@ -43,8 +43,11 @@ export function Quiz({
             <Icon name="award" size={19} />
           </span>
           <span>
-            Best score so far: <strong>{previous.best} / {previous.total}</strong> (
-            {Math.round((previous.best / previous.total) * 100)}%) after {previous.attempts}{" "}
+            Best score so far for this quiz:{" "}
+            <strong>
+              {previous.best} / {previous.total} questions
+            </strong>{" "}
+            ({Math.round((previous.best / previous.total) * 100)}%) after {previous.attempts}{" "}
             attempt{previous.attempts === 1 ? "" : "s"}. A score of 80% or more is considered
             competent for this knowledge check.
           </span>
@@ -74,7 +77,7 @@ export function Quiz({
                     color={pct >= 80 ? "var(--green)" : "var(--ink-3)"}
                   />
                   <span className="sc">
-                    {a.score} / {a.total}
+                    {a.score} / {a.total} questions
                   </span>
                   <span className={`chip ${pct >= 80 ? "done" : "none"}`}>{pct}%</span>
                   {i === 0 && <span className="chip progress">Latest</span>}
@@ -91,7 +94,7 @@ export function Quiz({
           <Icon name={pct >= 80 ? "checkCircle" : "info"} size={26} />
           <div>
             <div className="score">
-              {score} / {questions.length} ({pct}%)
+              {score} / {questions.length} questions ({pct}%)
             </div>
             <div className="verdict">
               {pct >= 80

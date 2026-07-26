@@ -1111,6 +1111,12 @@ export function UnitPage({
   const acts = progress.units[u.us]?.activities ?? {};
   const content = getContent(u.us);
   const quizResult = progress.units[u.us]?.quiz;
+  const namedQuizzes = content?.quizzes ?? [];
+  const namedQuizResults = progress.units[u.us]?.quizzes ?? {};
+  const quizzesCompetent = namedQuizzes.filter((qz) => {
+    const r = namedQuizResults[qz.id];
+    return r && r.best / r.total >= 0.8;
+  }).length;
   const isPrivileged = isStaff(profile.role);
   const isSuperUser = profile.role === "Super User";
   const [sharedSettings, updateSharedSettings] = useSharedSettings();
@@ -1280,9 +1286,14 @@ export function UnitPage({
             >
               <Icon name={t.icon} size={16} />
               {t.label}
-              {t.id === "quiz" && quizResult && (
+              {t.id === "quiz" && !namedQuizzes.length && quizResult && (
                 <span className="tab-badge">
                   {Math.round((quizResult.best / quizResult.total) * 100)}%
+                </span>
+              )}
+              {t.id === "quiz" && namedQuizzes.length > 0 && Object.keys(namedQuizResults).length > 0 && (
+                <span className="tab-badge">
+                  {quizzesCompetent}/{namedQuizzes.length}
                 </span>
               )}
             </button>
@@ -2133,6 +2144,11 @@ export function UnitPage({
       {tab === "quiz" && content && content.quizzes && content.quizzes.length > 0 && (() => {
         const active = content.quizzes.find((qz) => qz.id === quizId) ?? null;
         const results = progress.units[u.us]?.quizzes ?? {};
+        const attempted = content.quizzes.filter((qz) => results[qz.id]);
+        const competent = content.quizzes.filter((qz) => {
+          const r = results[qz.id];
+          return r && r.best / r.total >= 0.8;
+        });
         if (!active)
           return (
             <>
@@ -2173,6 +2189,40 @@ export function UnitPage({
                   </button>
                 );
               })}
+              {attempted.length > 0 && (() => {
+                const totalQuestions = content.quizzes.reduce((n, qz) => n + qz.questions.length, 0);
+                const bestSum = content.quizzes.reduce((n, qz) => n + (results[qz.id]?.best ?? 0), 0);
+                const overallPct = Math.round((bestSum / totalQuestions) * 100);
+                const allCompetent = competent.length === content.quizzes.length;
+                return (
+                  <div className="card attempts-card" style={{ marginTop: 18 }}>
+                    <div className="task-label" style={{ marginTop: 0 }}>
+                      Overall — across all {content.quizzes.length} quizzes
+                    </div>
+                    <div className="attempt-row">
+                      <span className="col-left">
+                        <Icon
+                          name={allCompetent ? "checkCircle" : "clipboard"}
+                          size={17}
+                          color={allCompetent ? "var(--green)" : "var(--ink-3)"}
+                        />
+                        <span className="sc">
+                          {bestSum} / {totalQuestions} questions
+                        </span>
+                        <span className={`chip ${overallPct >= 80 ? "done" : "none"}`}>
+                          {overallPct}%
+                        </span>
+                        <span className={`chip ${allCompetent ? "done" : "progress"}`}>
+                          {competent.length} of {content.quizzes.length} quizzes competent
+                        </span>
+                      </span>
+                      <span className="dt">
+                        {attempted.length} of {content.quizzes.length} attempted
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
             </>
           );
         return (
