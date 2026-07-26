@@ -45,10 +45,24 @@ const EMPTY: AttData = { header: {}, rows: {}, order: [] };
 
 const attKey = (dateIso: string) => `itss.attendance.${dateIso}`;
 
+/** Names on the register always start with a capital letter (per word). */
+function capWords(s: string): string {
+  return s.replace(/(^|[\s'’-])(\p{Ll})/gu, (_m, p: string, c: string) => p + c.toUpperCase());
+}
+
+/** Apply register-wide fixes to loaded data (capitalised names/surnames). */
+function normalizeReg(data: AttData): AttData {
+  const rows: AttData["rows"] = {};
+  for (const [pid, row] of Object.entries(data.rows)) {
+    rows[pid] = { ...row, name: capWords(row.name ?? ""), surname: capWords(row.surname ?? "") };
+  }
+  return { ...data, rows };
+}
+
 function readReg(key: string): AttData {
   try {
     const raw = localStorage.getItem(key);
-    if (raw) return { ...EMPTY, ...(JSON.parse(raw) as Partial<AttData>) };
+    if (raw) return normalizeReg({ ...EMPTY, ...(JSON.parse(raw) as Partial<AttData>) });
   } catch {
     /* fall through */
   }
@@ -63,7 +77,7 @@ async function pullLatest(key: string): Promise<AttData | null> {
       .select("value")
       .eq("key", key)
       .maybeSingle();
-    if (data?.value) return { ...EMPTY, ...(JSON.parse(data.value) as Partial<AttData>) };
+    if (data?.value) return normalizeReg({ ...EMPTY, ...(JSON.parse(data.value) as Partial<AttData>) });
   } catch {
     /* offline — use local copy */
   }
@@ -195,8 +209,8 @@ export function AttendancePage({
     const now = new Date();
     const sig = signatureImage ?? profile.signatureImage;
     const row: AttRow = {
-      name: e?.firstNames || parts.slice(0, -1).join(" ") || profile.name,
-      surname: e?.surname || (parts.length > 1 ? parts[parts.length - 1] : ""),
+      name: capWords(e?.firstNames || parts.slice(0, -1).join(" ") || profile.name),
+      surname: capWords(e?.surname || (parts.length > 1 ? parts[parts.length - 1] : "")),
       idNumber: e?.idNumber || "",
       race: e?.equityGroup || "",
       gender: e?.gender || "",
@@ -308,8 +322,10 @@ export function AttendancePage({
     }
   };
 
-  const setCell = (pid: string, field: keyof AttRow, value: string) =>
-    save({ ...reg, rows: { ...reg.rows, [pid]: { ...reg.rows[pid], [field]: value } } });
+  const setCell = (pid: string, field: keyof AttRow, value: string) => {
+    const v = field === "name" || field === "surname" ? capWords(value) : value;
+    save({ ...reg, rows: { ...reg.rows, [pid]: { ...reg.rows[pid], [field]: v } } });
+  };
 
   const clearRow = (pid: string) => {
     const rows = { ...reg.rows };
