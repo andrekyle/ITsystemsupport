@@ -1719,7 +1719,18 @@ textarea:focus {
 .attempt-row .col-left {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  min-width: 0;
+}
+
+.attempt-row .col-left > svg {
+  flex-shrink: 0;
+}
+
+.attempt-row .col-left .chip {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .attempt-row:last-child {
@@ -1728,7 +1739,8 @@ textarea:focus {
 
 .attempt-row .sc {
   font-weight: 600;
-  width: 56px;
+  min-width: 56px;
+  flex: 1 1 200px;
 }
 
 .attempt-row .dt {
