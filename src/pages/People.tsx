@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { EnrolmentInfo, PoeDoc, Profile, ProgressState, Role, Route } from "../types";
 import { isStaff } from "../types";
@@ -19,6 +19,7 @@ import { Avatar } from "../components/Avatar";
 import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/EnrolmentForm";
 import { AlertModal, ConfirmModal } from "../components/Modal";
 import { downloadDoc } from "../lib/files";
+import { fileToSignature } from "../lib/signature";
 import {
   deleteCloudProfile,
   fetchCloudDirectory,
@@ -147,6 +148,14 @@ export function ProfilePage({
 
       <h2 className="section-title">
         <span className="ico">
+          <Icon name="design" size={20} />
+        </span>
+        My signature
+      </h2>
+      <SignatureEditor profile={profile} onUpdateProfile={onUpdateProfile} />
+
+      <h2 className="section-title">
+        <span className="ico">
           <Icon name="shield" size={20} />
         </span>
         Security
@@ -157,6 +166,104 @@ export function ProfilePage({
         onClear={() => onUpdateProfile({ passwordHash: undefined })}
       />
     </>
+  );
+}
+
+/** Upload / replace the handwritten signature — can be redone any number of times. */
+function SignatureEditor({
+  profile,
+  onUpdateProfile,
+}: {
+  profile: Profile;
+  onUpdateProfile: (patch: Partial<Profile>) => void;
+}) {
+  const [preview, setPreview] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function onFile(file: File | undefined) {
+    if (!file) return;
+    setError("");
+    setSaved(false);
+    setBusy(true);
+    try {
+      setPreview(await fileToSignature(file));
+    } catch {
+      setError("Could not read that image — try a clear photo of your signature.");
+    } finally {
+      setBusy(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  function save() {
+    if (!preview) return;
+    onUpdateProfile({ signatureImage: preview, signatureAsked: true });
+    setPreview(null);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  }
+
+  return (
+    <div className="card profile-enrol-card">
+      {profile.signatureImage && !preview ? (
+        <div className="sig-current">
+          <img src={profile.signatureImage} alt="Your signature" />
+        </div>
+      ) : !preview ? (
+        <p className="muted" style={{ margin: "0 0 10px" }}>
+          No signature on record yet. Sign your usual signature on a{" "}
+          <strong>white piece of paper</strong>, take a clear photo of it and upload it here — it
+          is used to sign the attendance register.
+        </p>
+      ) : null}
+
+      {preview && (
+        <div className="sig-current preview">
+          <div className="task-label" style={{ marginTop: 0 }}>
+            New signature — preview
+          </div>
+          <img src={preview} alt="New signature preview" />
+        </div>
+      )}
+
+      <div className="pw-row" style={{ alignItems: "center" }}>
+        <label className="btn ghost sm" style={{ cursor: "pointer" }}>
+          <Icon name="folder" size={15} />
+          {profile.signatureImage || preview ? "Choose a new photo" : "Choose photo of my signature"}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={(e) => void onFile(e.target.files?.[0])}
+          />
+        </label>
+        {preview && (
+          <>
+            <button className="btn sm" type="button" onClick={save}>
+              <Icon name="checkCircle" size={15} />
+              {profile.signatureImage ? "Replace signature" : "Save signature"}
+            </button>
+            <button className="btn ghost sm" type="button" onClick={() => setPreview(null)}>
+              Cancel
+            </button>
+          </>
+        )}
+      </div>
+
+      {busy && <p className="muted" style={{ margin: "8px 0 0" }}>Cleaning up the photo…</p>}
+      {error && <p className="muted" style={{ margin: "8px 0 0", color: "var(--red, #c42b1c)" }}>{error}</p>}
+      {saved && <p className="muted" style={{ margin: "8px 0 0" }}>Signature saved.</p>}
+      {profile.signatureImage && !preview && (
+        <p className="muted" style={{ margin: "8px 0 0" }}>
+          You can replace your signature as many times as you like — the new one is used from your
+          next attendance sign-in.
+        </p>
+      )}
+    </div>
   );
 }
 

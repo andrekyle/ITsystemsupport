@@ -1707,6 +1707,21 @@ textarea:focus {
   container-type: inline-size;
 }
 
+/* ---------- profile signature ---------- */
+.sig-current {
+  margin-bottom: 10px;
+}
+
+.sig-current img {
+  display: block;
+  max-width: 320px;
+  max-height: 110px;
+  padding: 8px 14px;
+  background: #fff;
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+}
+
 /* ---------- people summary table ---------- */
 .summary-card {
   max-width: 1200px;
