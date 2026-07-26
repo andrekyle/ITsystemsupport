@@ -562,6 +562,8 @@ interface SummaryCol {
   id: string;
   label: string;
   cell: (ctx: SummaryRowCtx) => React.ReactNode;
+  /** value used when sorting by this column — null sorts last */
+  sort: (ctx: SummaryRowCtx) => string | number | null;
 }
 
 interface SummaryRowCtx {
@@ -571,28 +573,61 @@ interface SummaryRowCtx {
 }
 
 const SUMMARY_COLS: SummaryCol[] = [
-  { id: "name", label: "Name", cell: ({ p }) => <strong>{p.name}</strong> },
-  { id: "role", label: "Role", cell: ({ p }) => p.role },
-  { id: "idNumber", label: "ID number", cell: ({ p }) => p.enrolment?.idNumber || "—" },
+  { id: "name", label: "Name", cell: ({ p }) => <strong>{p.name}</strong>, sort: ({ p }) => p.name },
+  { id: "role", label: "Role", cell: ({ p }) => p.role, sort: ({ p }) => p.role },
+  {
+    id: "idNumber",
+    label: "ID number",
+    cell: ({ p }) => p.enrolment?.idNumber || "—",
+    sort: ({ p }) => p.enrolment?.idNumber || null,
+  },
   {
     id: "qualification",
     label: "Highest qualification",
     cell: ({ p }) => p.enrolment?.highestQualification || "—",
+    sort: ({ p }) => p.enrolment?.highestQualification || null,
   },
-  { id: "email", label: "Email", cell: ({ p }) => p.enrolment?.email || "—" },
-  { id: "cellphone", label: "Cellphone", cell: ({ p }) => p.enrolment?.cellphone || "—" },
-  { id: "gender", label: "Gender", cell: ({ p }) => p.enrolment?.gender || "—" },
-  { id: "age", label: "Age", cell: ({ p }) => p.enrolment?.age || "—" },
+  {
+    id: "email",
+    label: "Email",
+    cell: ({ p }) => p.enrolment?.email || "—",
+    sort: ({ p }) => p.enrolment?.email || null,
+  },
+  {
+    id: "cellphone",
+    label: "Cellphone",
+    cell: ({ p }) => p.enrolment?.cellphone || "—",
+    sort: ({ p }) => p.enrolment?.cellphone || null,
+  },
+  {
+    id: "gender",
+    label: "Gender",
+    cell: ({ p }) => p.enrolment?.gender || "—",
+    sort: ({ p }) => p.enrolment?.gender || null,
+  },
+  {
+    id: "age",
+    label: "Age",
+    cell: ({ p }) => p.enrolment?.age || "—",
+    sort: ({ p }) => (p.enrolment?.age ? Number(p.enrolment.age) : null),
+  },
   {
     id: "language",
     label: "Home language",
     cell: ({ p }) => p.enrolment?.homeLanguage || "—",
+    sort: ({ p }) => p.enrolment?.homeLanguage || null,
   },
-  { id: "employer", label: "Employer", cell: ({ p }) => p.enrolment?.employer || "—" },
+  {
+    id: "employer",
+    label: "Employer",
+    cell: ({ p }) => p.enrolment?.employer || "—",
+    sort: ({ p }) => p.enrolment?.employer || null,
+  },
   {
     id: "docs",
     label: "POE documents",
     cell: ({ p, docs }) => (p.role === "Learner" ? `${docs} / ${POE_TOTAL}` : "—"),
+    sort: ({ p, docs }) => (p.role === "Learner" ? docs : null),
   },
   {
     id: "quizScore",
@@ -603,6 +638,7 @@ const SUMMARY_COLS: SummaryCol[] = [
         : !stats
           ? "…"
           : `${stats.questionsBest} / ${stats.questionsTotal} (${stats.overallPct}%)`,
+    sort: ({ p, stats }) => (p.role !== "Learner" || !stats ? null : stats.overallPct),
   },
   {
     id: "quizzes",
@@ -613,13 +649,20 @@ const SUMMARY_COLS: SummaryCol[] = [
         : !stats
           ? "…"
           : `${stats.quizCompetent} of ${stats.quizCount} (${stats.quizAttempted} attempted)`,
+    sort: ({ p, stats }) => (p.role !== "Learner" || !stats ? null : stats.quizCompetent),
   },
   {
     id: "lastLogin",
     label: "Last login",
     cell: ({ p }) => (p.lastLogin ? fmtDateTime(p.lastLogin) : "never"),
+    sort: ({ p }) => (p.lastLogin ? Date.parse(p.lastLogin) : null),
   },
-  { id: "joined", label: "Joined", cell: ({ p }) => fmtDate(p.createdAt) },
+  {
+    id: "joined",
+    label: "Joined",
+    cell: ({ p }) => fmtDate(p.createdAt),
+    sort: ({ p }) => Date.parse(p.createdAt),
+  },
 ];
 
 const SUMMARY_COLS_KEY = "itss.summaryCols";
@@ -655,6 +698,7 @@ function PeopleSummary({
   const [cols, setCols] = useState<string[]>(loadSummaryCols);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [cloudStats, setCloudStats] = useState<Record<string, QuizStats>>({});
+  const [sortBy, setSortBy] = useState<{ col: string; dir: 1 | -1 } | null>(null);
 
   const needScores = cols.includes("quizScore") || cols.includes("quizzes");
 
@@ -697,6 +741,43 @@ function PeopleSummary({
 
   const active = SUMMARY_COLS.filter((c) => cols.includes(c.id));
 
+  // build row contexts once so we can sort by any column's value
+  const rows: SummaryRowCtx[] = people.map((p) => {
+    const isRemote = remoteIds.has(p.id);
+    const docs = isRemote
+      ? poeItemCount(cloud?.poe[p.id] ?? {})
+      : poeItemCount(loadPoeDocs(p.id));
+    const stats =
+      p.role !== "Learner" || !needScores
+        ? null
+        : isRemote
+          ? (cloudStats[p.id] ?? null)
+          : quizStats(loadProgress(p.id));
+    return { p, docs, stats };
+  });
+
+  const sortCol = sortBy ? active.find((c) => c.id === sortBy.col) : undefined;
+  if (sortBy && sortCol) {
+    rows.sort((a, b) => {
+      const va = sortCol.sort(a);
+      const vb = sortCol.sort(b);
+      if (va === null && vb === null) return 0;
+      if (va === null) return 1; // missing values always last
+      if (vb === null) return -1;
+      const cmp =
+        typeof va === "number" && typeof vb === "number"
+          ? va - vb
+          : String(va).localeCompare(String(vb), undefined, { sensitivity: "base", numeric: true });
+      return cmp * sortBy.dir;
+    });
+  }
+
+  function clickHeader(id: string) {
+    setSortBy((prev) =>
+      prev?.col === id ? { col: id, dir: prev.dir === 1 ? -1 : 1 } : { col: id, dir: 1 }
+    );
+  }
+
   return (
     <div className="card summary-card" style={{ marginBottom: 14 }}>
       <div className="summary-toolbar">
@@ -738,35 +819,39 @@ function PeopleSummary({
             <thead>
               <tr>
                 {active.map((c) => (
-                  <th key={c.id}>{c.label}</th>
+                  <th
+                    key={c.id}
+                    className="sortable"
+                    title={`Sort by ${c.label.toLowerCase()}`}
+                    aria-sort={
+                      sortBy?.col === c.id
+                        ? sortBy.dir === 1
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
+                    onClick={() => clickHeader(c.id)}
+                  >
+                    {c.label}
+                    {sortBy?.col === c.id && (
+                      <span className="sort-arrow">{sortBy.dir === 1 ? "▲" : "▼"}</span>
+                    )}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {people.map((p) => {
-                const isRemote = remoteIds.has(p.id);
-                const docs = isRemote
-                  ? poeItemCount(cloud?.poe[p.id] ?? {})
-                  : poeItemCount(loadPoeDocs(p.id));
-                const stats =
-                  p.role !== "Learner" || !needScores
-                    ? null
-                    : isRemote
-                      ? (cloudStats[p.id] ?? null)
-                      : quizStats(loadProgress(p.id));
-                const ctx: SummaryRowCtx = { p, docs, stats };
-                return (
-                  <tr
-                    key={p.id}
-                    className="summary-row"
-                    onClick={() => navigate({ page: "students", studentId: p.id })}
-                  >
-                    {active.map((c) => (
-                      <td key={c.id}>{c.cell(ctx)}</td>
-                    ))}
-                  </tr>
-                );
-              })}
+              {rows.map((ctx) => (
+                <tr
+                  key={ctx.p.id}
+                  className="summary-row"
+                  onClick={() => navigate({ page: "students", studentId: ctx.p.id })}
+                >
+                  {active.map((c) => (
+                    <td key={c.id}>{c.cell(ctx)}</td>
+                  ))}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

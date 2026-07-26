@@ -1754,6 +1754,20 @@ textarea:focus {
   white-space: nowrap;
 }
 
+.summary-scroll th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.summary-scroll th.sortable:hover {
+  color: var(--ink-2);
+}
+
+.sort-arrow {
+  margin-left: 5px;
+  font-size: 9px;
+}
+
 .summary-row {
   cursor: pointer;
 }
