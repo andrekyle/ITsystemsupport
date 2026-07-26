@@ -1704,6 +1704,7 @@ textarea:focus {
   max-width: 1200px;
   margin-bottom: 18px;
   padding: 14px 18px;
+  container-type: inline-size;
 }
 
 .attempt-row {
@@ -1748,6 +1749,56 @@ textarea:focus {
   font-size: 12.5px;
   text-align: right;
   white-space: nowrap;
+}
+
+/* academic record rows — stacked by default; on wide cards a table-like grid:
+   icon | title | score | attempts | date */
+.attempt-row.acad {
+  grid-template-columns: 20px minmax(0, 1fr);
+  row-gap: 4px;
+}
+
+.attempt-row.acad .sc {
+  min-width: 0;
+  max-width: 56ch;
+}
+
+.attempt-row.acad .cell {
+  display: inline-flex;
+  justify-content: flex-start;
+}
+
+.attempt-row.acad .cell,
+.attempt-row.acad .dt {
+  grid-column: 2;
+  text-align: left;
+}
+
+.attempt-row.acad .cell:empty {
+  display: none;
+}
+
+.attempt-row.acad .chip {
+  white-space: nowrap;
+}
+
+@container (min-width: 640px) {
+  .attempt-row.acad {
+    grid-template-columns: 20px minmax(0, 1fr) 122px 100px 152px;
+  }
+
+  .attempt-row.acad .cell,
+  .attempt-row.acad .dt {
+    grid-column: auto;
+  }
+
+  .attempt-row.acad .cell:empty {
+    display: inline-flex;
+  }
+
+  .attempt-row.acad .dt {
+    text-align: right;
+  }
 }
 
 .btn:disabled {

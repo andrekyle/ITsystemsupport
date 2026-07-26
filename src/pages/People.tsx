@@ -647,26 +647,28 @@ function AcademicRecord({
               const pct = r ? Math.round((r.best / r.total) * 100) : null;
               const latest = r?.history?.[0]?.date;
               return (
-                <div className="attempt-row" key={row.key}>
-                  <span className="col-left">
-                    <Icon
-                      name={pct !== null && pct >= 80 ? "checkCircle" : "clipboard"}
-                      size={17}
-                      color={pct !== null && pct >= 80 ? "var(--green)" : "var(--ink-3)"}
-                    />
-                    <span className="sc">{row.label}</span>
+                <div className="attempt-row acad" key={row.key}>
+                  <Icon
+                    name={pct !== null && pct >= 80 ? "checkCircle" : "clipboard"}
+                    size={17}
+                    color={pct !== null && pct >= 80 ? "var(--green)" : "var(--ink-3)"}
+                  />
+                  <span className="sc">{row.label}</span>
+                  <span className="cell">
                     {r ? (
-                      <>
-                        <span className={`chip ${pct !== null && pct >= 80 ? "done" : "none"}`}>
-                          {r.best}/{r.total} · {pct}%
-                        </span>
-                        <span className="chip progress">
-                          {r.attempts} attempt{r.attempts === 1 ? "" : "s"}
-                        </span>
-                      </>
+                      <span className={`chip ${pct !== null && pct >= 80 ? "done" : "none"}`}>
+                        {r.best}/{r.total} · {pct}%
+                      </span>
                     ) : (
                       <span className="chip none">not attempted</span>
                     )}
+                  </span>
+                  <span className="cell">
+                    {r ? (
+                      <span className="chip progress">
+                        {r.attempts} attempt{r.attempts === 1 ? "" : "s"}
+                      </span>
+                    ) : null}
                   </span>
                   <span className="dt">{latest ? fmtDateTime(latest) : `${row.totalQuestions} questions`}</span>
                 </div>
@@ -676,26 +678,28 @@ function AcademicRecord({
               const r = prog?.exercises?.[ex.id];
               const pct = r ? Math.round((r.best / r.total) * 100) : null;
               return (
-                <div className="attempt-row" key={ex.id}>
-                  <span className="col-left">
-                    <Icon
-                      name={pct !== null && pct >= 80 ? "checkCircle" : "design"}
-                      size={17}
-                      color={pct !== null && pct >= 80 ? "var(--green)" : "var(--ink-3)"}
-                    />
-                    <span className="sc">Exercise — {ex.title}</span>
+                <div className="attempt-row acad" key={ex.id}>
+                  <Icon
+                    name={pct !== null && pct >= 80 ? "checkCircle" : "design"}
+                    size={17}
+                    color={pct !== null && pct >= 80 ? "var(--green)" : "var(--ink-3)"}
+                  />
+                  <span className="sc">Exercise — {ex.title}</span>
+                  <span className="cell">
                     {r ? (
-                      <>
-                        <span className={`chip ${pct !== null && pct >= 80 ? "done" : "none"}`}>
-                          {r.best}/{r.total} marks · {pct}%
-                        </span>
-                        <span className="chip progress">
-                          {r.attempts} attempt{r.attempts === 1 ? "" : "s"}
-                        </span>
-                      </>
+                      <span className={`chip ${pct !== null && pct >= 80 ? "done" : "none"}`}>
+                        {r.best}/{r.total} marks · {pct}%
+                      </span>
                     ) : (
                       <span className="chip none">not attempted</span>
                     )}
+                  </span>
+                  <span className="cell">
+                    {r ? (
+                      <span className="chip progress">
+                        {r.attempts} attempt{r.attempts === 1 ? "" : "s"}
+                      </span>
+                    ) : null}
                   </span>
                   <span className="dt">{r ? `last score ${r.last}/${r.total}` : ""}</span>
                 </div>
