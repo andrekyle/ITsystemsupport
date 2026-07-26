@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../icons";
-import type { EnrolmentInfo, PoeDoc, Profile, Role, Route } from "../types";
+import type { EnrolmentInfo, PoeDoc, Profile, ProgressState, Role, Route } from "../types";
 import { isStaff } from "../types";
-import { POE_SECTIONS, POE_TOTAL } from "../data/course";
+import { MODULES, POE_SECTIONS, POE_TOTAL } from "../data/course";
+import { getContent } from "../data/content";
 import {
   createProfile,
   deleteProfile,
   hashPassword,
   loadPoeDocs,
   loadProfiles,
+  loadProgress,
   poeItemCount,
   updateProfile,
   usePoe,
@@ -20,6 +22,7 @@ import { downloadDoc } from "../lib/files";
 import {
   deleteCloudProfile,
   fetchCloudDirectory,
+  fetchCloudProgress,
   updateCloudProfile,
   type CloudDirectory,
 } from "../lib/directory";
@@ -491,6 +494,225 @@ function AdminPanel({
   );
 }
 
+/** Full academic record — every quiz and marked exercise with the student's scores. */
+function AcademicRecord({
+  student,
+  remote,
+  owner,
+}: {
+  student: Profile;
+  remote?: boolean;
+  owner?: string;
+}) {
+  const [progress, setProgress] = useState<ProgressState | null>(
+    remote ? null : loadProgress(student.id)
+  );
+  useEffect(() => {
+    if (!remote) {
+      setProgress(loadProgress(student.id));
+      return;
+    }
+    let alive = true;
+    setProgress(null);
+    if (!owner) {
+      setProgress({ units: {} });
+      return;
+    }
+    void fetchCloudProgress(owner, student.id).then((p) => {
+      if (alive) setProgress(p ?? { units: {} });
+    });
+    return () => {
+      alive = false;
+    };
+  }, [student.id, remote, owner]);
+
+  const units = MODULES.flatMap((m) =>
+    m.units.map((u) => ({ unit: u, content: getContent(u.us) }))
+  ).filter(
+    (x) =>
+      x.content &&
+      (x.content.quiz.length ||
+        x.content.quizzes?.length ||
+        x.content.exercises.some((e) => e.checks))
+  );
+
+  const heading = (
+    <h2 className="section-title">
+      <span className="ico">
+        <Icon name="chart" size={20} />
+      </span>
+      Academic record — quizzes, exercises &amp; scores
+    </h2>
+  );
+
+  if (!progress)
+    return (
+      <>
+        {heading}
+        <p className="muted">Loading saved scores from the cloud…</p>
+      </>
+    );
+
+  // overall quiz totals across the whole programme
+  let quizCount = 0;
+  let quizAttempted = 0;
+  let quizCompetent = 0;
+  let questionsBest = 0;
+  let questionsTotal = 0;
+  for (const { unit, content } of units) {
+    const prog = progress.units[unit.us];
+    const named = content?.quizzes ?? [];
+    if (named.length) {
+      for (const qz of named) {
+        quizCount++;
+        questionsTotal += qz.questions.length;
+        const r = prog?.quizzes?.[qz.id];
+        if (r) {
+          quizAttempted++;
+          questionsBest += r.best;
+          if (r.best / r.total >= 0.8) quizCompetent++;
+        }
+      }
+    } else if (content?.quiz.length) {
+      quizCount++;
+      questionsTotal += content.quiz.length;
+      const r = prog?.quiz;
+      if (r) {
+        quizAttempted++;
+        questionsBest += r.best;
+        if (r.best / r.total >= 0.8) quizCompetent++;
+      }
+    }
+  }
+  const overallPct = questionsTotal ? Math.round((questionsBest / questionsTotal) * 100) : 0;
+
+  return (
+    <>
+      {heading}
+      <div className="card attempts-card">
+        <div className="task-label" style={{ marginTop: 0 }}>
+          Overall — across all {quizCount} quizzes
+        </div>
+        <div className="attempt-row">
+          <span className="col-left">
+            <Icon
+              name={quizCompetent === quizCount && quizCount > 0 ? "checkCircle" : "clipboard"}
+              size={17}
+              color={
+                quizCompetent === quizCount && quizCount > 0 ? "var(--green)" : "var(--ink-3)"
+              }
+            />
+            <span className="sc">
+              {questionsBest} / {questionsTotal} questions
+            </span>
+            <span className={`chip ${overallPct >= 80 ? "done" : "none"}`}>{overallPct}%</span>
+            <span className={`chip ${quizCompetent === quizCount && quizCount > 0 ? "done" : "progress"}`}>
+              {quizCompetent} of {quizCount} quizzes competent
+            </span>
+          </span>
+          <span className="dt">
+            {quizAttempted} of {quizCount} attempted
+          </span>
+        </div>
+      </div>
+
+      {units.map(({ unit, content }) => {
+        const prog = progress.units[unit.us];
+        const named = content?.quizzes ?? [];
+        const quizRows = named.length
+          ? named.map((qz) => ({
+              key: qz.id,
+              label: qz.title,
+              totalQuestions: qz.questions.length,
+              result: prog?.quizzes?.[qz.id],
+            }))
+          : content?.quiz.length
+            ? [
+                {
+                  key: "quiz",
+                  label: "Knowledge check",
+                  totalQuestions: content.quiz.length,
+                  result: prog?.quiz,
+                },
+              ]
+            : [];
+        const exercises = (content?.exercises ?? []).filter((e) => e.checks);
+        return (
+          <div className="card attempts-card" key={unit.us}>
+            <div className="task-label" style={{ marginTop: 0 }}>
+              US {unit.us} — {unit.title}
+            </div>
+            {quizRows.map((row) => {
+              const r = row.result;
+              const pct = r ? Math.round((r.best / r.total) * 100) : null;
+              const latest = r?.history?.[0]?.date;
+              return (
+                <div className="attempt-row" key={row.key}>
+                  <span className="col-left">
+                    <Icon
+                      name={pct !== null && pct >= 80 ? "checkCircle" : "clipboard"}
+                      size={17}
+                      color={pct !== null && pct >= 80 ? "var(--green)" : "var(--ink-3)"}
+                    />
+                    <span className="sc">{row.label}</span>
+                    {r ? (
+                      <>
+                        <span className={`chip ${pct !== null && pct >= 80 ? "done" : "none"}`}>
+                          {r.best}/{r.total} · {pct}%
+                        </span>
+                        <span className="chip progress">
+                          {r.attempts} attempt{r.attempts === 1 ? "" : "s"}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="chip none">not attempted</span>
+                    )}
+                  </span>
+                  <span className="dt">{latest ? fmtDateTime(latest) : `${row.totalQuestions} questions`}</span>
+                </div>
+              );
+            })}
+            {exercises.map((ex) => {
+              const r = prog?.exercises?.[ex.id];
+              const pct = r ? Math.round((r.best / r.total) * 100) : null;
+              return (
+                <div className="attempt-row" key={ex.id}>
+                  <span className="col-left">
+                    <Icon
+                      name={pct !== null && pct >= 80 ? "checkCircle" : "design"}
+                      size={17}
+                      color={pct !== null && pct >= 80 ? "var(--green)" : "var(--ink-3)"}
+                    />
+                    <span className="sc">Exercise — {ex.title}</span>
+                    {r ? (
+                      <>
+                        <span className={`chip ${pct !== null && pct >= 80 ? "done" : "none"}`}>
+                          {r.best}/{r.total} marks · {pct}%
+                        </span>
+                        <span className="chip progress">
+                          {r.attempts} attempt{r.attempts === 1 ? "" : "s"}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="chip none">not attempted</span>
+                    )}
+                  </span>
+                  <span className="dt">{r ? `last score ${r.last}/${r.total}` : ""}</span>
+                </div>
+              );
+            })}
+            {quizRows.length === 0 && exercises.length === 0 && (
+              <p className="muted" style={{ margin: 0 }}>
+                No marked work in this unit.
+              </p>
+            )}
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 function StudentDetail({
   student,
   viewer,
@@ -644,6 +866,7 @@ function StudentDetail({
 
       {staffViewer && (
         <>
+          <AcademicRecord student={student} remote={remote} owner={owner} />
           <h2 className="section-title">
             <span className="ico">
               <Icon name="folder" size={20} />

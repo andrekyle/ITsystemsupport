@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { PoeDoc, Profile } from "../types";
+import type { PoeDoc, Profile, ProgressState } from "../types";
 
 export interface CloudDirectory {
   /** profiles synced by other signed-in accounts (this account's own rows excluded) */
@@ -57,6 +57,27 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
   }
 
   return { profiles, poe, owners };
+}
+
+/** Read a profile's saved progress (quiz/exercise scores) from its owning
+ *  account's cloud storage — used when staff view users from other accounts. */
+export async function fetchCloudProgress(
+  owner: string,
+  profileId: string
+): Promise<ProgressState | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("app_state")
+    .select("value")
+    .eq("user_id", owner)
+    .eq("key", `itss.progress.${profileId}`)
+    .maybeSingle();
+  if (error || !data) return null;
+  try {
+    return JSON.parse(data.value) as ProgressState;
+  } catch {
+    return null;
+  }
 }
 
 const RLS_HINT =

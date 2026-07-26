@@ -172,6 +172,11 @@ export function setSession(profileId: string | null) {
 
 const EMPTY: ProgressState = { units: {} };
 
+/** Read a profile's saved progress without subscribing (staff/super-user views). */
+export function loadProgress(profileId: string): ProgressState {
+  return read<ProgressState>(progressKey(profileId), EMPTY);
+}
+
 export function useProgress(profileId: string) {
   const [state, setState] = useState<ProgressState>(() =>
     read<ProgressState>(progressKey(profileId), EMPTY)
