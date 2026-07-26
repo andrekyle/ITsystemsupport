@@ -12,8 +12,27 @@
  * image is cropped to just the signature.
  */
 export function fileToSignature(file: File): Promise<string> {
+  const url = URL.createObjectURL(file);
+  return loadAndExtract(url).finally(() => URL.revokeObjectURL(url));
+}
+
+/**
+ * Re-runs the ink extraction on an already-saved signature image (data-URL).
+ * Used to clean up signatures that were processed by an older, weaker filter
+ * and still contain shadows or dark blobs. Returns null when nothing usable
+ * can be extracted — callers should keep the existing image in that case.
+ */
+export async function reprocessSignature(dataUrl: string): Promise<string | null> {
+  try {
+    const next = await loadAndExtract(dataUrl);
+    return next === dataUrl ? null : next;
+  } catch {
+    return null;
+  }
+}
+
+function loadAndExtract(src: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
       try {
@@ -24,6 +43,10 @@ export function fileToSignature(file: File): Promise<string> {
         canvas.height = h;
         const ctx = canvas.getContext("2d");
         if (!ctx) throw new Error("Canvas not supported");
+        // white underlay so transparent PNGs (already-processed signatures)
+        // read as ink-on-paper
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h);
         const px = ctx.getImageData(0, 0, w, h).data;
 
@@ -93,18 +116,15 @@ export function fileToSignature(file: File): Promise<string> {
           }
         }
         octx.putImageData(odata, 0, 0);
-        URL.revokeObjectURL(url);
         resolve(out.toDataURL("image/png"));
       } catch (err) {
-        URL.revokeObjectURL(url);
         reject(err instanceof Error ? err : new Error("Could not read image"));
       }
     };
     img.onerror = () => {
-      URL.revokeObjectURL(url);
       reject(new Error("Could not read image"));
     };
-    img.src = url;
+    img.src = src;
   });
 }
 

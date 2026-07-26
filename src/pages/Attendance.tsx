@@ -3,7 +3,9 @@ import type { Profile } from "../types";
 import { isStaff } from "../types";
 import { COURSE_META, MODULES } from "../data/course";
 import { supabase } from "../lib/supabase";
-import { fileToSignature } from "../lib/signature";
+import { fileToSignature, reprocessSignature } from "../lib/signature";
+import { fetchCloudDirectory, updateCloudProfile } from "../lib/directory";
+import { loadProfiles, updateProfile } from "../store";
 import { Icon } from "../icons";
 import { ConfirmModal } from "../components/Modal";
 
@@ -241,6 +243,71 @@ export function AttendancePage({
     void signNow();
   };
 
+  const [fixingSig, setFixingSig] = useState(false);
+  const [fixNote, setFixNote] = useState("");
+
+  /** Staff: re-run the signature cleanup on every saved signature — all
+   *  attendance registers plus every profile (this account and others). */
+  const fixSignatures = async () => {
+    setFixingSig(true);
+    setFixNote("Cleaning signatures…");
+    let fixed = 0;
+    try {
+      // 1) every attendance register (shared, hydrated to this device)
+      const regKeys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("itss.attendance.")) regKeys.push(k);
+      }
+      for (const key of regKeys) {
+        const data = (await pullLatest(key)) ?? readReg(key);
+        let changed = false;
+        for (const pid of Object.keys(data.rows)) {
+          const img = data.rows[pid].signatureImage;
+          if (!img) continue;
+          const next = await reprocessSignature(img);
+          if (next) {
+            data.rows[pid] = { ...data.rows[pid], signatureImage: next };
+            changed = true;
+            fixed++;
+          }
+        }
+        if (changed) {
+          localStorage.setItem(key, JSON.stringify(data)); // also syncs to the cloud
+          if (key === storageKey) setReg(data);
+        }
+      }
+
+      // 2) profiles on this account (used the next time each learner signs)
+      for (const p of loadProfiles()) {
+        if (!p.signatureImage) continue;
+        const next = await reprocessSignature(p.signatureImage);
+        if (!next) continue;
+        if (p.id === profile.id) onUpdateProfile({ signatureImage: next });
+        else updateProfile(p.id, { signatureImage: next });
+        fixed++;
+      }
+
+      // 3) profiles owned by other signed-in accounts (cloud)
+      const dir = await fetchCloudDirectory();
+      for (const p of dir?.profiles ?? []) {
+        if (!p.signatureImage || !dir?.owners[p.id]) continue;
+        const next = await reprocessSignature(p.signatureImage);
+        if (!next) continue;
+        const err = await updateCloudProfile(dir.owners[p.id], p.id, { signatureImage: next });
+        if (!err) fixed++;
+      }
+
+      setFixNote(
+        fixed ? `Cleaned ${fixed} signature${fixed === 1 ? "" : "s"}.` : "No saved signatures found."
+      );
+    } catch {
+      setFixNote("Could not clean every signature — please try again.");
+    } finally {
+      setFixingSig(false);
+    }
+  };
+
   const setCell = (pid: string, field: keyof AttRow, value: string) =>
     save({ ...reg, rows: { ...reg.rows, [pid]: { ...reg.rows[pid], [field]: value } } });
 
@@ -308,6 +375,12 @@ export function AttendancePage({
             <Icon name="download" /> Download as PDF
           </button>
         )}
+        {staff && (
+          <button className="btn" disabled={fixingSig} onClick={() => void fixSignatures()}>
+            <Icon name="check" /> {fixingSig ? "Cleaning…" : "Fix signatures"}
+          </button>
+        )}
+        {fixNote && <span className="att-note">{fixNote}</span>}
         {profile.role === "Super User" && (
           <button className="btn danger" onClick={() => setConfirming({ kind: "register" })}>
             Clear register
