@@ -20,6 +20,7 @@ import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/
 import { AlertModal, ConfirmModal } from "../components/Modal";
 import { downloadDoc } from "../lib/files";
 import { fileToSignature } from "../lib/signature";
+import { updateRegisterSignatures } from "./Attendance";
 import {
   deleteCloudProfile,
   fetchCloudDirectory,
@@ -201,6 +202,8 @@ function SignatureEditor({
   function save() {
     if (!preview) return;
     onUpdateProfile({ signatureImage: preview, signatureAsked: true });
+    // pull the new signature through to every register this learner signed
+    void updateRegisterSignatures(profile.id, preview);
     setPreview(null);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -256,11 +259,11 @@ function SignatureEditor({
 
       {busy && <p className="muted" style={{ margin: "8px 0 0" }}>Cleaning up the photo…</p>}
       {error && <p className="muted" style={{ margin: "8px 0 0", color: "var(--red, #c42b1c)" }}>{error}</p>}
-      {saved && <p className="muted" style={{ margin: "8px 0 0" }}>Signature saved.</p>}
+      {saved && <p className="muted" style={{ margin: "8px 0 0" }}>Signature saved — updated on every register you have signed.</p>}
       {profile.signatureImage && !preview && (
         <p className="muted" style={{ margin: "8px 0 0" }}>
-          You can replace your signature as many times as you like — the new one is used from your
-          next attendance sign-in.
+          You can replace your signature as many times as you like — the new one pulls through to
+          every attendance register you have signed, past sessions included.
         </p>
       )}
     </div>

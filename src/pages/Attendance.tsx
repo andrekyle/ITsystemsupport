@@ -84,6 +84,42 @@ async function pullLatest(key: string): Promise<AttData | null> {
   return null;
 }
 
+/** Every register key: those on this device plus any others in the cloud. */
+async function allRegisterKeys(): Promise<string[]> {
+  const keys = new Set<string>();
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith("itss.attendance.")) keys.add(k);
+  }
+  if (supabase) {
+    try {
+      const { data } = await supabase
+        .from("shared_state")
+        .select("key")
+        .like("key", "itss.attendance.%");
+      for (const r of data ?? []) keys.add(r.key);
+    } catch {
+      /* offline — local keys only */
+    }
+  }
+  return [...keys];
+}
+
+/** Write a learner's (new) signature into every register row they signed —
+ *  past sessions included — so a replaced signature pulls through everywhere. */
+export async function updateRegisterSignatures(
+  profileId: string,
+  signatureImage: string
+): Promise<void> {
+  for (const key of await allRegisterKeys()) {
+    const data = (await pullLatest(key)) ?? readReg(key);
+    const row = data.rows[profileId];
+    if (!row || row.signatureImage === signatureImage) continue;
+    const next = { ...data, rows: { ...data.rows, [profileId]: { ...row, signatureImage } } };
+    localStorage.setItem(key, JSON.stringify(next)); // also syncs to the shared cloud copy
+  }
+}
+
 function isoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
     d.getDate()
@@ -248,7 +284,11 @@ export function AttendancePage({
     if (!sigPreview) return;
     onUpdateProfile({ signatureImage: sigPreview, signatureAsked: true });
     setAskSig(false);
-    void signNow(sigPreview);
+    void (async () => {
+      await signNow(sigPreview);
+      // pull the new signature through to any previously signed registers
+      await updateRegisterSignatures(profile.id, sigPreview);
+    })();
   };
 
   const skipSig = () => {
@@ -268,12 +308,7 @@ export function AttendancePage({
     let fixed = 0;
     try {
       // 1) every attendance register (shared, hydrated to this device)
-      const regKeys: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith("itss.attendance.")) regKeys.push(k);
-      }
-      for (const key of regKeys) {
+      for (const key of await allRegisterKeys()) {
         const data = (await pullLatest(key)) ?? readReg(key);
         let changed = false;
         for (const pid of Object.keys(data.rows)) {
