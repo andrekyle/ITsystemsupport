@@ -1707,6 +1707,61 @@ textarea:focus {
   container-type: inline-size;
 }
 
+/* ---------- people summary table ---------- */
+.summary-card {
+  max-width: 1200px;
+  padding: 14px 18px;
+}
+
+.summary-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.summary-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+}
+
+.summary-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ink-2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.summary-scroll {
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+.summary-scroll table.data {
+  min-width: max-content;
+}
+
+.summary-scroll td,
+.summary-scroll th {
+  white-space: nowrap;
+}
+
+.summary-row {
+  cursor: pointer;
+}
+
+.summary-row:hover td {
+  background: var(--bg-2, rgba(128, 128, 128, 0.08));
+}
+
 .attempt-row {
   display: grid;
   grid-template-columns: 1fr auto;

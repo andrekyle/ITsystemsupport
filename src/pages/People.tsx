@@ -280,6 +280,10 @@ export function StudentsPage({
 
       {isSuper && <AddUser onAdded={refresh} />}
 
+      {isPrivileged && people.length > 0 && (
+        <PeopleSummary people={people} cloud={cloud} remoteIds={remoteIds} navigate={navigate} />
+      )}
+
       {people.length === 0 && (
         <div className="callout">
           <span className="ico">
@@ -494,6 +498,283 @@ function AdminPanel({
   );
 }
 
+/* ---------- summary table (staff) ---------- */
+
+/** All units that carry quizzes or marked exercises. */
+function assessedUnits() {
+  return MODULES.flatMap((m) =>
+    m.units.map((u) => ({ unit: u, content: getContent(u.us) }))
+  ).filter(
+    (x) =>
+      x.content &&
+      (x.content.quiz.length ||
+        x.content.quizzes?.length ||
+        x.content.exercises.some((e) => e.checks))
+  );
+}
+
+interface QuizStats {
+  quizCount: number;
+  quizAttempted: number;
+  quizCompetent: number;
+  questionsBest: number;
+  questionsTotal: number;
+  overallPct: number;
+}
+
+/** Overall quiz totals for a student across the whole programme. */
+function quizStats(progress: ProgressState): QuizStats {
+  let quizCount = 0;
+  let quizAttempted = 0;
+  let quizCompetent = 0;
+  let questionsBest = 0;
+  let questionsTotal = 0;
+  for (const { unit, content } of assessedUnits()) {
+    const prog = progress.units[unit.us];
+    const named = content?.quizzes ?? [];
+    if (named.length) {
+      for (const qz of named) {
+        quizCount++;
+        questionsTotal += qz.questions.length;
+        const r = prog?.quizzes?.[qz.id];
+        if (r) {
+          quizAttempted++;
+          questionsBest += r.best;
+          if (r.best / r.total >= 0.8) quizCompetent++;
+        }
+      }
+    } else if (content?.quiz.length) {
+      quizCount++;
+      questionsTotal += content.quiz.length;
+      const r = prog?.quiz;
+      if (r) {
+        quizAttempted++;
+        questionsBest += r.best;
+        if (r.best / r.total >= 0.8) quizCompetent++;
+      }
+    }
+  }
+  const overallPct = questionsTotal ? Math.round((questionsBest / questionsTotal) * 100) : 0;
+  return { quizCount, quizAttempted, quizCompetent, questionsBest, questionsTotal, overallPct };
+}
+
+interface SummaryCol {
+  id: string;
+  label: string;
+  cell: (ctx: SummaryRowCtx) => React.ReactNode;
+}
+
+interface SummaryRowCtx {
+  p: Profile;
+  docs: number;
+  stats: QuizStats | null; // null while cloud scores are loading
+}
+
+const SUMMARY_COLS: SummaryCol[] = [
+  { id: "name", label: "Name", cell: ({ p }) => <strong>{p.name}</strong> },
+  { id: "role", label: "Role", cell: ({ p }) => p.role },
+  { id: "idNumber", label: "ID number", cell: ({ p }) => p.enrolment?.idNumber || "—" },
+  {
+    id: "qualification",
+    label: "Highest qualification",
+    cell: ({ p }) => p.enrolment?.highestQualification || "—",
+  },
+  { id: "email", label: "Email", cell: ({ p }) => p.enrolment?.email || "—" },
+  { id: "cellphone", label: "Cellphone", cell: ({ p }) => p.enrolment?.cellphone || "—" },
+  { id: "gender", label: "Gender", cell: ({ p }) => p.enrolment?.gender || "—" },
+  { id: "age", label: "Age", cell: ({ p }) => p.enrolment?.age || "—" },
+  {
+    id: "language",
+    label: "Home language",
+    cell: ({ p }) => p.enrolment?.homeLanguage || "—",
+  },
+  { id: "employer", label: "Employer", cell: ({ p }) => p.enrolment?.employer || "—" },
+  {
+    id: "docs",
+    label: "POE documents",
+    cell: ({ p, docs }) => (p.role === "Learner" ? `${docs} / ${POE_TOTAL}` : "—"),
+  },
+  {
+    id: "quizScore",
+    label: "Quiz score",
+    cell: ({ p, stats }) =>
+      p.role !== "Learner"
+        ? "—"
+        : !stats
+          ? "…"
+          : `${stats.questionsBest} / ${stats.questionsTotal} (${stats.overallPct}%)`,
+  },
+  {
+    id: "quizzes",
+    label: "Quizzes competent",
+    cell: ({ p, stats }) =>
+      p.role !== "Learner"
+        ? "—"
+        : !stats
+          ? "…"
+          : `${stats.quizCompetent} of ${stats.quizCount} (${stats.quizAttempted} attempted)`,
+  },
+  {
+    id: "lastLogin",
+    label: "Last login",
+    cell: ({ p }) => (p.lastLogin ? fmtDateTime(p.lastLogin) : "never"),
+  },
+  { id: "joined", label: "Joined", cell: ({ p }) => fmtDate(p.createdAt) },
+];
+
+const SUMMARY_COLS_KEY = "itss.summaryCols";
+const DEFAULT_SUMMARY_COLS = ["name", "role", "qualification", "quizScore", "quizzes"];
+
+function loadSummaryCols(): string[] {
+  try {
+    const raw = localStorage.getItem(SUMMARY_COLS_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw) as string[];
+      const valid = arr.filter((id) => SUMMARY_COLS.some((c) => c.id === id));
+      if (valid.length) return valid;
+    }
+  } catch {
+    /* corrupted — fall back to defaults */
+  }
+  return DEFAULT_SUMMARY_COLS;
+}
+
+/** Staff-only summary table of everyone, with a pick-your-columns control. */
+function PeopleSummary({
+  people,
+  cloud,
+  remoteIds,
+  navigate,
+}: {
+  people: Profile[];
+  cloud: CloudDirectory | null;
+  remoteIds: Set<string>;
+  navigate: (r: Route) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [cols, setCols] = useState<string[]>(loadSummaryCols);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [cloudStats, setCloudStats] = useState<Record<string, QuizStats>>({});
+
+  const needScores = cols.includes("quizScore") || cols.includes("quizzes");
+
+  useEffect(() => {
+    if (!open || !needScores) return;
+    let alive = true;
+    for (const p of people) {
+      if (p.role !== "Learner" || !remoteIds.has(p.id) || cloudStats[p.id]) continue;
+      const owner = cloud?.owners[p.id];
+      if (!owner) {
+        setCloudStats((s) => ({ ...s, [p.id]: quizStats({ units: {} }) }));
+        continue;
+      }
+      void fetchCloudProgress(owner, p.id).then((prog) => {
+        if (alive)
+          setCloudStats((s) => ({ ...s, [p.id]: quizStats(prog ?? { units: {} }) }));
+      });
+    }
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, needScores, people, cloud, remoteIds]);
+
+  function toggleCol(id: string) {
+    setCols((prev) => {
+      const next = prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id];
+      localStorage.setItem(SUMMARY_COLS_KEY, JSON.stringify(next));
+      return next;
+    });
+  }
+
+  if (!open)
+    return (
+      <button className="btn ghost" style={{ marginBottom: 14 }} onClick={() => setOpen(true)}>
+        <Icon name="chart" size={15} />
+        Summary table
+      </button>
+    );
+
+  const active = SUMMARY_COLS.filter((c) => cols.includes(c.id));
+
+  return (
+    <div className="card summary-card" style={{ marginBottom: 14 }}>
+      <div className="summary-toolbar">
+        <div className="task-label" style={{ margin: 0 }}>
+          Summary — {people.length} {people.length === 1 ? "person" : "people"}
+        </div>
+        <span style={{ flex: 1 }} />
+        <button className="btn ghost" onClick={() => setPickerOpen((v) => !v)}>
+          <Icon name="settings" size={15} />
+          Choose fields ({active.length})
+        </button>
+        <button className="btn ghost" onClick={() => setOpen(false)}>
+          Close
+        </button>
+      </div>
+
+      {pickerOpen && (
+        <div className="summary-fields">
+          {SUMMARY_COLS.map((c) => (
+            <label key={c.id} className="summary-field">
+              <input
+                type="checkbox"
+                checked={cols.includes(c.id)}
+                onChange={() => toggleCol(c.id)}
+              />
+              {c.label}
+            </label>
+          ))}
+        </div>
+      )}
+
+      {active.length === 0 ? (
+        <p className="muted" style={{ margin: "10px 0 0" }}>
+          No fields selected — choose at least one field above.
+        </p>
+      ) : (
+        <div className="summary-scroll">
+          <table className="data">
+            <thead>
+              <tr>
+                {active.map((c) => (
+                  <th key={c.id}>{c.label}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {people.map((p) => {
+                const isRemote = remoteIds.has(p.id);
+                const docs = isRemote
+                  ? poeItemCount(cloud?.poe[p.id] ?? {})
+                  : poeItemCount(loadPoeDocs(p.id));
+                const stats =
+                  p.role !== "Learner" || !needScores
+                    ? null
+                    : isRemote
+                      ? (cloudStats[p.id] ?? null)
+                      : quizStats(loadProgress(p.id));
+                const ctx: SummaryRowCtx = { p, docs, stats };
+                return (
+                  <tr
+                    key={p.id}
+                    className="summary-row"
+                    onClick={() => navigate({ page: "students", studentId: p.id })}
+                  >
+                    {active.map((c) => (
+                      <td key={c.id}>{c.cell(ctx)}</td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Full academic record — every quiz and marked exercise with the student's scores. */
 function AcademicRecord({
   student,
@@ -526,15 +807,7 @@ function AcademicRecord({
     };
   }, [student.id, remote, owner]);
 
-  const units = MODULES.flatMap((m) =>
-    m.units.map((u) => ({ unit: u, content: getContent(u.us) }))
-  ).filter(
-    (x) =>
-      x.content &&
-      (x.content.quiz.length ||
-        x.content.quizzes?.length ||
-        x.content.exercises.some((e) => e.checks))
-  );
+  const units = assessedUnits();
 
   const heading = (
     <h2 className="section-title">
@@ -554,37 +827,8 @@ function AcademicRecord({
     );
 
   // overall quiz totals across the whole programme
-  let quizCount = 0;
-  let quizAttempted = 0;
-  let quizCompetent = 0;
-  let questionsBest = 0;
-  let questionsTotal = 0;
-  for (const { unit, content } of units) {
-    const prog = progress.units[unit.us];
-    const named = content?.quizzes ?? [];
-    if (named.length) {
-      for (const qz of named) {
-        quizCount++;
-        questionsTotal += qz.questions.length;
-        const r = prog?.quizzes?.[qz.id];
-        if (r) {
-          quizAttempted++;
-          questionsBest += r.best;
-          if (r.best / r.total >= 0.8) quizCompetent++;
-        }
-      }
-    } else if (content?.quiz.length) {
-      quizCount++;
-      questionsTotal += content.quiz.length;
-      const r = prog?.quiz;
-      if (r) {
-        quizAttempted++;
-        questionsBest += r.best;
-        if (r.best / r.total >= 0.8) quizCompetent++;
-      }
-    }
-  }
-  const overallPct = questionsTotal ? Math.round((questionsBest / questionsTotal) * 100) : 0;
+  const { quizCount, quizAttempted, quizCompetent, questionsBest, questionsTotal, overallPct } =
+    quizStats(progress);
 
   return (
     <>
