@@ -1,64 +1,104 @@
 /**
- * Reads a photo/scan of a signature on white paper and enhances it: adapts to
- * the photo's lighting, removes the paper plus any yellow/grey shadows, and
- * redraws the ink in a clean dark colour so only a crisp signature remains.
- * Small dark specks (paper texture, dust, camera noise) are removed so the
- * result has no black spots.
+ * Reads a photo/scan of a signature and extracts only the pen strokes.
+ *
+ * Ink is detected by LOCAL contrast: a pixel counts as ink only when it is
+ * clearly darker than the brightest paper in its own neighbourhood. Because
+ * pen strokes are thin, the paper right next to them is always visible — but
+ * the inside of a shadow, a dark table edge or a phone-camera vignette is not
+ * darker than its surroundings, so those large dark areas disappear entirely.
+ *
+ * Afterwards small specks (dust, paper grain, noise) and blobs hugging the
+ * photo border are dropped, the ink is redrawn in a clean dark colour and the
+ * image is cropped to just the signature.
  */
 export function fileToSignature(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
-      const w = Math.min(480, img.width);
-      const h = Math.round((img.height / img.width) * w);
-      const canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
+      try {
+        const w = Math.min(480, img.width);
+        const h = Math.max(1, Math.round((img.height / img.width) * w));
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Canvas not supported");
+        ctx.drawImage(img, 0, 0, w, h);
+        const px = ctx.getImageData(0, 0, w, h).data;
+
+        const lum = new Float32Array(w * h);
+        for (let i = 0, j = 0; i < px.length; i += 4, j++) {
+          lum[j] = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+        }
+
+        // local paper brightness = max luminance within ~1/20th of the image;
+        // strokes are thinner than this window, shadows are much wider
+        const radius = Math.max(8, Math.round(w / 40));
+        const bg = maxFilter(lum, w, h, radius);
+
+        // ink = clearly darker than the local paper (relative + absolute floor)
+        const alpha = new Uint8Array(w * h);
+        for (let j = 0; j < lum.length; j++) {
+          const paper = bg[j];
+          if (paper < 60) continue; // inside a big dark area — not paper at all
+          const start = Math.max(14, paper * 0.18); // ignore soft shading
+          const full = Math.max(40, paper * 0.42); // fully opaque ink
+          const a = ((paper - lum[j] - start) / (full - start)) * 255;
+          alpha[j] = Math.max(0, Math.min(255, Math.round(a)));
+        }
+
+        // drop specks, anything hugging the photo border, and the paper-edge
+        // band next to dark surroundings (table, background)
+        const minArea = Math.max(24, Math.round((w * h) / 4000));
+        const keep = cleanComponents(alpha, lum, w, h, minArea);
+
+        // crop to the signature with a little padding
+        let minX = w, minY = h, maxX = -1, maxY = -1;
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            if (keep[y * w + x] && alpha[y * w + x] > 0) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+          }
+        }
+        if (maxX < 0) throw new Error("No signature found");
+        const pad = 10;
+        minX = Math.max(0, minX - pad);
+        minY = Math.max(0, minY - pad);
+        maxX = Math.min(w - 1, maxX + pad);
+        maxY = Math.min(h - 1, maxY + pad);
+        const cw = maxX - minX + 1;
+        const ch = maxY - minY + 1;
+
+        const out = document.createElement("canvas");
+        out.width = cw;
+        out.height = ch;
+        const octx = out.getContext("2d");
+        if (!octx) throw new Error("Canvas not supported");
+        const odata = octx.createImageData(cw, ch);
+        const opx = odata.data;
+        for (let y = 0; y < ch; y++) {
+          for (let x = 0; x < cw; x++) {
+            const src = (y + minY) * w + (x + minX);
+            const o = (y * cw + x) * 4;
+            // clean dark ink — removes any colour cast from the photo
+            opx[o] = 16;
+            opx[o + 1] = 16;
+            opx[o + 2] = 32;
+            opx[o + 3] = keep[src] ? alpha[src] : 0;
+          }
+        }
+        octx.putImageData(odata, 0, 0);
         URL.revokeObjectURL(url);
-        reject(new Error("Canvas not supported"));
-        return;
+        resolve(out.toDataURL("image/png"));
+      } catch (err) {
+        URL.revokeObjectURL(url);
+        reject(err instanceof Error ? err : new Error("Could not read image"));
       }
-      ctx.drawImage(img, 0, 0, w, h);
-      const data = ctx.getImageData(0, 0, w, h);
-      const px = data.data;
-
-      // estimate the paper brightness (75th percentile of luminance) so the
-      // cut-off adapts to dim photos, yellow paper tints and soft shadows
-      const lums = new Float32Array(px.length / 4);
-      for (let i = 0, j = 0; i < px.length; i += 4, j++) {
-        lums[j] = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
-      }
-      const sorted = Float32Array.from(lums).sort();
-      const paper = Math.max(120, sorted[Math.floor(sorted.length * 0.75)]);
-
-      // pixels close to paper brightness (incl. yellowish shadows) → transparent;
-      // clearly darker pixels = ink, redrawn in a uniform dark colour
-      const start = paper * 0.85; // must be >15% darker than the paper to count
-      const full = paper * 0.55; // 45% darker = fully opaque ink
-      const alpha = new Uint8Array(w * h);
-      for (let j = 0; j < lums.length; j++) {
-        const a = ((start - lums[j]) / (start - full)) * 255;
-        alpha[j] = Math.max(0, Math.min(255, Math.round(a)));
-      }
-
-      // despeckle: keep only connected ink blobs of a meaningful size so
-      // dust, paper grain and sensor noise don't leave black spots behind
-      const minArea = Math.max(24, Math.round((w * h) / 4000));
-      const keep = despeckle(alpha, w, h, minArea);
-
-      for (let i = 0, j = 0; i < px.length; i += 4, j++) {
-        px[i + 3] = keep[j] ? alpha[j] : 0;
-        // clean dark ink — removes any yellow/brown colour cast from the photo
-        px[i] = 16;
-        px[i + 1] = 16;
-        px[i + 2] = 32;
-      }
-      ctx.putImageData(data, 0, 0);
-      URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/png"));
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
@@ -68,13 +108,49 @@ export function fileToSignature(file: File): Promise<string> {
   });
 }
 
+/** Separable grayscale dilation — the max value within a square window. */
+function maxFilter(src: Float32Array, w: number, h: number, r: number): Float32Array {
+  const tmp = new Float32Array(w * h);
+  const out = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    const row = y * w;
+    for (let x = 0; x < w; x++) {
+      let m = 0;
+      const x0 = Math.max(0, x - r);
+      const x1 = Math.min(w - 1, x + r);
+      for (let k = x0; k <= x1; k++) if (src[row + k] > m) m = src[row + k];
+      tmp[row + x] = m;
+    }
+  }
+  for (let x = 0; x < w; x++) {
+    for (let y = 0; y < h; y++) {
+      let m = 0;
+      const y0 = Math.max(0, y - r);
+      const y1 = Math.min(h - 1, y + r);
+      for (let k = y0; k <= y1; k++) if (tmp[k * w + x] > m) m = tmp[k * w + x];
+      out[y * w + x] = m;
+    }
+  }
+  return out;
+}
+
 /**
- * Marks which pixels belong to ink blobs at least `minArea` pixels big.
- * Isolated specks smaller than that are dropped; kept blobs are grown by one
- * pixel so soft anti-aliased stroke edges survive.
+ * Marks which pixels belong to ink blobs worth keeping: at least `minArea`
+ * pixels big, not hugging the photo border, and not running along the edge of
+ * a large dark region (paper edges against a dark table always do). Kept
+ * blobs are grown by one pixel so soft anti-aliased stroke edges survive.
  */
-function despeckle(alpha: Uint8Array, w: number, h: number, minArea: number): Uint8Array {
+function cleanComponents(
+  alpha: Uint8Array,
+  lum: Float32Array,
+  w: number,
+  h: number,
+  minArea: number
+): Uint8Array {
   const solid = 48; // alpha below this is haze, not ink
+  const dark = 60; // luminance below this = dark surroundings, not paper
+  // a neighbouring pixel that is dark but NOT ink = a big dark region next door
+  const darkNb = (n: number) => alpha[n] < solid && lum[n] < dark;
   const label = new Int32Array(w * h); // 0 = unvisited, -1 = dropped, 1 = kept
   const stack: number[] = [];
   const component: number[] = [];
@@ -85,10 +161,21 @@ function despeckle(alpha: Uint8Array, w: number, h: number, minArea: number): Ui
     component.length = 0;
     stack.push(s);
     label[s] = -1;
+    let borderCount = 0;
+    let darkEdgeCount = 0;
     while (stack.length) {
       const c = stack.pop() as number;
       component.push(c);
       const x = c % w;
+      const y = (c - x) / w;
+      if (x < 2 || x > w - 3 || y < 2 || y > h - 3) borderCount++;
+      if (
+        (x > 0 && darkNb(c - 1)) ||
+        (x < w - 1 && darkNb(c + 1)) ||
+        (c >= w && darkNb(c - w)) ||
+        (c < w * (h - 1) && darkNb(c + w))
+      )
+        darkEdgeCount++;
       if (x > 0 && label[c - 1] === 0 && alpha[c - 1] >= solid) {
         label[c - 1] = -1;
         stack.push(c - 1);
@@ -106,7 +193,10 @@ function despeckle(alpha: Uint8Array, w: number, h: number, minArea: number): Ui
         stack.push(c + w);
       }
     }
-    if (component.length >= minArea) for (const c of component) label[c] = 1;
+    const isSpeck = component.length < minArea;
+    const hugsBorder = borderCount > Math.max(40, component.length * 0.2);
+    const hugsDarkEdge = darkEdgeCount > Math.max(15, component.length * 0.05);
+    if (!isSpeck && !hugsBorder && !hugsDarkEdge) for (const c of component) label[c] = 1;
   }
 
   // grow kept blobs by one pixel to preserve anti-aliased edges
