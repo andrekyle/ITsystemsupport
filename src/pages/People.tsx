@@ -809,6 +809,10 @@ function PeopleSummary({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [cloudStats, setCloudStats] = useState<Record<string, QuizStats>>({});
   const [sortBy, setSortBy] = useState<{ col: string; dir: 1 | -1 } | null>(null);
+  const [roleFilter, setRoleFilter] = useState<Role | "all">("all");
+  const [genderFilter, setGenderFilter] = useState<"all" | "male" | "female" | "other" | "notSet">(
+    "all"
+  );
 
   const needScores = cols.includes("quizScore") || cols.includes("quizzes");
 
@@ -850,9 +854,24 @@ function PeopleSummary({
     );
 
   const active = SUMMARY_COLS.filter((c) => cols.includes(c.id));
+  const hasActiveFilters = roleFilter !== "all" || genderFilter !== "all";
+
+  function genderBucket(p: Profile): "male" | "female" | "other" | "notSet" {
+    const raw = p.enrolment?.gender?.trim().toLowerCase();
+    if (!raw) return "notSet";
+    if (raw === "male") return "male";
+    if (raw === "female") return "female";
+    return "other";
+  }
+
+  const filteredPeople = people.filter((p) => {
+    if (roleFilter !== "all" && p.role !== roleFilter) return false;
+    if (genderFilter !== "all" && genderBucket(p) !== genderFilter) return false;
+    return true;
+  });
 
   // build row contexts once so we can sort by any column's value
-  const rows: SummaryRowCtx[] = people.map((p) => {
+  const rows: SummaryRowCtx[] = filteredPeople.map((p) => {
     const isRemote = remoteIds.has(p.id);
     const docs = isRemote
       ? poeItemCount(cloud?.poe[p.id] ?? {})
@@ -888,11 +907,17 @@ function PeopleSummary({
     );
   }
 
+  const maleCount = filteredPeople.filter((p) => genderBucket(p) === "male").length;
+  const femaleCount = filteredPeople.filter((p) => genderBucket(p) === "female").length;
+  const otherGenderCount = filteredPeople.filter((p) => genderBucket(p) === "other").length;
+  const noGenderCount = filteredPeople.filter((p) => genderBucket(p) === "notSet").length;
+  const learnerCount = filteredPeople.filter((p) => p.role === "Learner").length;
+
   return (
     <div className="card summary-card" style={{ marginBottom: 14 }}>
       <div className="summary-toolbar">
         <div className="task-label" style={{ margin: 0 }}>
-          Summary — {people.length} {people.length === 1 ? "person" : "people"}
+          Summary — {rows.length} of {people.length} {people.length === 1 ? "person" : "people"}
         </div>
         <span style={{ flex: 1 }} />
         <button className="btn ghost" onClick={() => setPickerOpen((v) => !v)}>
@@ -902,6 +927,87 @@ function PeopleSummary({
         <button className="btn ghost" onClick={() => setOpen(false)}>
           Close
         </button>
+      </div>
+
+      <div className="summary-filters">
+        <label className="summary-filter">
+          Role
+          <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as Role | "all")}>
+            <option value="all">All roles</option>
+            <option value="Learner">Learner</option>
+            <option value="Facilitator">Facilitator</option>
+            <option value="Assessor">Assessor</option>
+            <option value="Moderator">Moderator</option>
+            <option value="Super User">Super User</option>
+          </select>
+        </label>
+        <label className="summary-filter">
+          Gender
+          <select
+            value={genderFilter}
+            onChange={(e) =>
+              setGenderFilter(e.target.value as "all" | "male" | "female" | "other" | "notSet")
+            }
+          >
+            <option value="all">All genders</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+            <option value="notSet">Not set</option>
+          </select>
+        </label>
+        {hasActiveFilters && (
+          <button
+            className="btn ghost sm"
+            type="button"
+            onClick={() => {
+              setRoleFilter("all");
+              setGenderFilter("all");
+            }}
+          >
+            <Icon name="filter" size={15} />
+            Clear filters
+          </button>
+        )}
+      </div>
+
+      <div className="summary-widgets">
+        <div className="card stat-card summary-widget">
+          <span className="ico">
+            <Icon name="people" size={20} />
+          </span>
+          <div>
+            <div className="num">{rows.length}</div>
+            <div className="lbl">Visible users ({learnerCount} learners)</div>
+          </div>
+        </div>
+        <div className="card stat-card summary-widget">
+          <span className="ico">
+            <Icon name="person" size={20} />
+          </span>
+          <div>
+            <div className="num">{maleCount}</div>
+            <div className="lbl">Male</div>
+          </div>
+        </div>
+        <div className="card stat-card summary-widget">
+          <span className="ico">
+            <Icon name="person" size={20} />
+          </span>
+          <div>
+            <div className="num">{femaleCount}</div>
+            <div className="lbl">Female</div>
+          </div>
+        </div>
+        <div className="card stat-card summary-widget">
+          <span className="ico">
+            <Icon name="person" size={20} />
+          </span>
+          <div>
+            <div className="num">{otherGenderCount + noGenderCount}</div>
+            <div className="lbl">Other / not set</div>
+          </div>
+        </div>
       </div>
 
       {pickerOpen && (
@@ -922,6 +1028,10 @@ function PeopleSummary({
       {active.length === 0 ? (
         <p className="muted" style={{ margin: "10px 0 0" }}>
           No fields selected — choose at least one field above.
+        </p>
+      ) : rows.length === 0 ? (
+        <p className="muted" style={{ margin: "10px 0 0" }}>
+          No users match the selected filters.
         </p>
       ) : (
         <div className="summary-scroll">

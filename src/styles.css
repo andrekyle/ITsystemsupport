@@ -1735,6 +1735,44 @@ textarea:focus {
   flex-wrap: wrap;
 }
 
+.summary-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.summary-filter {
+  display: grid;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.summary-filter select {
+  min-width: 160px;
+}
+
+.summary-widgets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.summary-widget {
+  padding: 12px 14px;
+}
+
+.summary-widget .num {
+  font-size: 22px;
+}
+
+.summary-widget .lbl {
+  font-size: 12.5px;
+}
+
 .summary-fields {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
