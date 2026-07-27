@@ -53,6 +53,19 @@ function fmtDateTime(iso: string) {
   });
 }
 
+type LastOnlineKey = "onlineNow" | "today" | "thisWeek" | "inactive" | "never";
+
+function lastOnlineState(lastLogin?: string): { key: LastOnlineKey; label: string; tone: "done" | "progress" | "none" } {
+  if (!lastLogin) return { key: "never", label: "Never", tone: "none" };
+  const t = Date.parse(lastLogin);
+  if (!Number.isFinite(t)) return { key: "never", label: "Never", tone: "none" };
+  const ageMs = Date.now() - t;
+  if (ageMs <= 10 * 60 * 1000) return { key: "onlineNow", label: "Online now", tone: "done" };
+  if (ageMs <= 24 * 60 * 60 * 1000) return { key: "today", label: "Active today", tone: "progress" };
+  if (ageMs <= 7 * 24 * 60 * 60 * 1000) return { key: "thisWeek", label: "Active this week", tone: "progress" };
+  return { key: "inactive", label: "Inactive", tone: "none" };
+}
+
 function ProfileHead({ profile }: { profile: Profile }) {
   return (
     <div className="card profile-head">
@@ -408,6 +421,7 @@ export function StudentsPage({
         const docs = isRemote
           ? poeItemCount(cloud?.poe[s.id] ?? {})
           : poeItemCount(loadPoeDocs(s.id));
+        const online = lastOnlineState(s.lastLogin);
         return (
           <button
             key={s.id}
@@ -420,14 +434,18 @@ export function StudentsPage({
               <br />
               <span className="rl">
                 {s.role}
-                {isPrivileged
-                  ? ` · last login ${s.lastLogin ? fmtDateTime(s.lastLogin) : "never"}`
-                  : ""}
-                {" · joined "}
-                {fmtDate(s.createdAt)}
-                {isPrivileged && isRemote ? " · own sign-in account" : ""}
-                {isPrivileged && s.role === "Learner" && !s.enrolment ? " · enrolment form outstanding" : ""}
-                {isPrivileged && s.passwordHash ? " · password set" : ""}
+                {isPrivileged && (
+                  <>
+                    {" · last online "}
+                    <span className={`chip ${online.tone}`}>{online.label}</span>
+                    {s.lastLogin ? ` (${fmtDateTime(s.lastLogin)})` : ""}
+                  </>
+                )}
+              {" · joined "}
+              {fmtDate(s.createdAt)}
+              {isPrivileged && isRemote ? " · own sign-in account" : ""}
+              {isPrivileged && s.role === "Learner" && !s.enrolment ? " · enrolment form outstanding" : ""}
+              {isPrivileged && s.passwordHash ? " · password set" : ""}
               </span>
             </span>
             <span className="rl docs">
@@ -764,7 +782,15 @@ const SUMMARY_COLS: SummaryCol[] = [
   {
     id: "lastLogin",
     label: "Last login",
-    cell: ({ p }) => (p.lastLogin ? fmtDateTime(p.lastLogin) : "never"),
+    cell: ({ p }) => {
+      const state = lastOnlineState(p.lastLogin);
+      return (
+        <span className="summary-login-cell">
+          <span className={`chip ${state.tone}`}>{state.label}</span>
+          <span className="summary-login-time">{p.lastLogin ? fmtDateTime(p.lastLogin) : "No sign-in yet"}</span>
+        </span>
+      );
+    },
     sort: ({ p }) => (p.lastLogin ? Date.parse(p.lastLogin) : null),
   },
   {
@@ -924,7 +950,14 @@ function PeopleSummary({
       return Math.round((ctx.stats.quizCompetent / ctx.stats.quizCount) * 100);
     })
     .filter((v): v is number => typeof v === "number");
-  const loginCount = rows.filter((ctx) => !!ctx.p.lastLogin).length;
+  const onlineStateCounts = rows.reduce(
+    (acc, ctx) => {
+      const state = lastOnlineState(ctx.p.lastLogin).key;
+      acc[state] += 1;
+      return acc;
+    },
+    { onlineNow: 0, today: 0, thisWeek: 0, inactive: 0, never: 0 } as Record<LastOnlineKey, number>
+  );
   const joinedTimes = rows.map((ctx) => Date.parse(ctx.p.createdAt)).filter((t) => Number.isFinite(t));
 
   const textFieldWidgets: Array<{ id: string; label: string; getter: (ctx: SummaryRowCtx) => string }> = [
@@ -1008,12 +1041,13 @@ function PeopleSummary({
       icon: "award",
     });
   }
-  if (selectedIds.has("lastLogin")) {
-    widgets.push(
-      { key: "login-count", value: loginCount, label: "Logged in at least once", icon: "clock" },
-      { key: "never-login", value: rows.length - loginCount, label: "Never logged in", icon: "clock" }
-    );
-  }
+  widgets.push(
+    { key: "online-now", value: onlineStateCounts.onlineNow, label: "Online now", icon: "clock" },
+    { key: "active-today", value: onlineStateCounts.today, label: "Active today", icon: "clock" },
+    { key: "active-week", value: onlineStateCounts.thisWeek, label: "Active this week", icon: "clock" },
+    { key: "inactive", value: onlineStateCounts.inactive, label: "Inactive", icon: "clock" },
+    { key: "never-login", value: onlineStateCounts.never, label: "Never logged in", icon: "clock" }
+  );
   if (selectedIds.has("joined")) {
     const newest = joinedTimes.length ? fmtDate(new Date(Math.max(...joinedTimes)).toISOString()) : "—";
     const oldest = joinedTimes.length ? fmtDate(new Date(Math.min(...joinedTimes)).toISOString()) : "—";

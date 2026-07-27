@@ -1836,6 +1836,16 @@ textarea:focus {
   font-size: 12.5px;
 }
 
+.summary-login-cell {
+  display: grid;
+  gap: 2px;
+}
+
+.summary-login-time {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
 .summary-fields {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
