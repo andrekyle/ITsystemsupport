@@ -434,13 +434,9 @@ export function StudentsPage({
               <br />
               <span className="rl">
                 {s.role}
-                {isPrivileged && (
-                  <>
-                    {" · last online "}
-                    <span className={`chip ${online.tone}`}>{online.label}</span>
-                    {s.lastLogin ? ` (${fmtDateTime(s.lastLogin)})` : ""}
-                  </>
-                )}
+                {" · last online "}
+                <span className={`chip ${online.tone} online-chip`}>{online.label}</span>
+                {s.lastLogin ? ` (${fmtDateTime(s.lastLogin)})` : ""}
               {" · joined "}
               {fmtDate(s.createdAt)}
               {isPrivileged && isRemote ? " · own sign-in account" : ""}
@@ -786,7 +782,7 @@ const SUMMARY_COLS: SummaryCol[] = [
       const state = lastOnlineState(p.lastLogin);
       return (
         <span className="summary-login-cell">
-          <span className={`chip ${state.tone}`}>{state.label}</span>
+          <span className={`chip ${state.tone} online-chip`}>{state.label}</span>
           <span className="summary-login-time">{p.lastLogin ? fmtDateTime(p.lastLogin) : "No sign-in yet"}</span>
         </span>
       );
@@ -835,7 +831,7 @@ function PeopleSummary({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [cloudStats, setCloudStats] = useState<Record<string, QuizStats>>({});
   const [sortBy, setSortBy] = useState<{ col: string; dir: 1 | -1 } | null>(null);
-  const [roleFilter, setRoleFilter] = useState<Role | "all">("all");
+  const [roleFilter, setRoleFilter] = useState<Role | "all">("Learner");
 
   const needScores = cols.includes("quizScore") || cols.includes("quizzes");
 
@@ -877,7 +873,7 @@ function PeopleSummary({
     );
 
   const active = SUMMARY_COLS.filter((c) => cols.includes(c.id));
-  const hasActiveFilters = roleFilter !== "all";
+  const hasActiveFilters = roleFilter !== "Learner";
 
   function genderBucket(p: Profile): "male" | "female" | "other" | "notSet" {
     const raw = p.enrolment?.gender?.trim().toLowerCase();
@@ -1074,11 +1070,11 @@ function PeopleSummary({
           Summary — {rows.length} of {people.length} {people.length === 1 ? "person" : "people"}
         </div>
         <span style={{ flex: 1 }} />
-        <button className="btn ghost" onClick={() => setPickerOpen((v) => !v)}>
+        <button className="btn ghost summary-btn" onClick={() => setPickerOpen((v) => !v)}>
           <Icon name="settings" size={15} />
           Choose fields ({active.length})
         </button>
-        <button className="btn ghost" onClick={() => setOpen(false)}>
+        <button className="btn ghost summary-btn" onClick={() => setOpen(false)}>
           Close
         </button>
       </div>
@@ -1099,10 +1095,10 @@ function PeopleSummary({
         </label>
         {hasActiveFilters && (
           <button
-            className="btn ghost sm summary-clear"
+            className="btn ghost sm summary-btn summary-clear"
             type="button"
             onClick={() => {
-              setRoleFilter("all");
+              setRoleFilter("Learner");
             }}
           >
             <Icon name="filter" size={15} />

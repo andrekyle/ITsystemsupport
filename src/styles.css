@@ -939,6 +939,21 @@ td .with-ico .ico {
   color: var(--ink-3);
 }
 
+.online-chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.online-chip.done {
+  background: var(--green-bg);
+}
+
+.online-chip.progress {
+  background: var(--azure-light);
+}
+
 /* ============ Info blocks ============ */
 
 .duty-list {
@@ -1801,9 +1816,21 @@ textarea:focus {
   box-shadow: 0 0 0 3px var(--azure-light);
 }
 
+.summary-btn {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+  gap: 6px;
+  border-radius: 6px;
+}
+
+.summary-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
 .summary-clear {
-  min-height: 40px;
-  border-radius: 8px;
+  min-height: 30px;
 }
 
 .summary-widgets {
