@@ -241,6 +241,12 @@ function LocalApp() {
     setTheme(theme);
   }, [theme]);
 
+  useEffect(() => {
+    if (!profile) return;
+    // Refresh the "last online" stamp when restoring an existing signed-in session.
+    setSession(profile.id);
+  }, [profile?.id]);
+
   if (!profile) {
     return (
       <SignIn
