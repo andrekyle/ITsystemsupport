@@ -1741,17 +1741,69 @@ textarea:focus {
   gap: 10px;
   flex-wrap: wrap;
   margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
 }
 
 .summary-filter {
   display: grid;
   gap: 5px;
-  font-size: 12px;
+  min-width: 220px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   color: var(--ink-3);
 }
 
+.summary-select-wrap {
+  position: relative;
+}
+
+.summary-select-wrap::after {
+  content: "";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--ink-3);
+  border-bottom: 2px solid var(--ink-3);
+  transform: translateY(-65%) rotate(45deg);
+  pointer-events: none;
+}
+
 .summary-filter select {
+  width: 100%;
   min-width: 160px;
+  min-height: 40px;
+  padding: 9px 36px 9px 12px;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--surface);
+  outline: none;
+  appearance: none;
+  transition: border-color 0.12s, box-shadow 0.12s, background 0.12s;
+}
+
+.summary-filter select:hover {
+  border-color: var(--azure);
+}
+
+.summary-filter select:focus-visible {
+  border-color: var(--azure);
+  box-shadow: 0 0 0 3px var(--azure-light);
+}
+
+.summary-clear {
+  min-height: 40px;
+  border-radius: 8px;
 }
 
 .summary-widgets {
@@ -1763,6 +1815,17 @@ textarea:focus {
 
 .summary-widget {
   padding: 12px 14px;
+  border-radius: 8px;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.summary-widget:hover {
+  border-color: var(--border-2);
+  background: var(--surface-2);
+}
+
+.summary-widget .ico {
+  margin-top: 1px;
 }
 
 .summary-widget .num {

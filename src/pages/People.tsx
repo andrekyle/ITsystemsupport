@@ -810,9 +810,6 @@ function PeopleSummary({
   const [cloudStats, setCloudStats] = useState<Record<string, QuizStats>>({});
   const [sortBy, setSortBy] = useState<{ col: string; dir: 1 | -1 } | null>(null);
   const [roleFilter, setRoleFilter] = useState<Role | "all">("all");
-  const [genderFilter, setGenderFilter] = useState<"all" | "male" | "female" | "other" | "notSet">(
-    "all"
-  );
 
   const needScores = cols.includes("quizScore") || cols.includes("quizzes");
 
@@ -854,7 +851,7 @@ function PeopleSummary({
     );
 
   const active = SUMMARY_COLS.filter((c) => cols.includes(c.id));
-  const hasActiveFilters = roleFilter !== "all" || genderFilter !== "all";
+  const hasActiveFilters = roleFilter !== "all";
 
   function genderBucket(p: Profile): "male" | "female" | "other" | "notSet" {
     const raw = p.enrolment?.gender?.trim().toLowerCase();
@@ -866,7 +863,6 @@ function PeopleSummary({
 
   const filteredPeople = people.filter((p) => {
     if (roleFilter !== "all" && p.role !== roleFilter) return false;
-    if (genderFilter !== "all" && genderBucket(p) !== genderFilter) return false;
     return true;
   });
 
@@ -907,11 +903,135 @@ function PeopleSummary({
     );
   }
 
-  const maleCount = filteredPeople.filter((p) => genderBucket(p) === "male").length;
-  const femaleCount = filteredPeople.filter((p) => genderBucket(p) === "female").length;
-  const otherGenderCount = filteredPeople.filter((p) => genderBucket(p) === "other").length;
-  const noGenderCount = filteredPeople.filter((p) => genderBucket(p) === "notSet").length;
-  const learnerCount = filteredPeople.filter((p) => p.role === "Learner").length;
+  const selectedIds = new Set(active.map((c) => c.id));
+  const learnerRows = rows.filter((ctx) => ctx.p.role === "Learner");
+  const learnerCount = learnerRows.length;
+  const staffCount = rows.length - learnerCount;
+  const maleCount = rows.filter((ctx) => genderBucket(ctx.p) === "male").length;
+  const femaleCount = rows.filter((ctx) => genderBucket(ctx.p) === "female").length;
+  const otherGenderCount = rows.filter((ctx) => genderBucket(ctx.p) === "other").length;
+  const noGenderCount = rows.filter((ctx) => genderBucket(ctx.p) === "notSet").length;
+  const ageValues = rows
+    .map((ctx) => Number(ctx.p.enrolment?.age))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  const docsValues = learnerRows.map((ctx) => ctx.docs);
+  const scoreValues = learnerRows
+    .map((ctx) => ctx.stats?.overallPct)
+    .filter((v): v is number => typeof v === "number");
+  const quizCompetenceRates = learnerRows
+    .map((ctx) => {
+      if (!ctx.stats || !ctx.stats.quizCount) return null;
+      return Math.round((ctx.stats.quizCompetent / ctx.stats.quizCount) * 100);
+    })
+    .filter((v): v is number => typeof v === "number");
+  const loginCount = rows.filter((ctx) => !!ctx.p.lastLogin).length;
+  const joinedTimes = rows.map((ctx) => Date.parse(ctx.p.createdAt)).filter((t) => Number.isFinite(t));
+
+  const textFieldWidgets: Array<{ id: string; label: string; getter: (ctx: SummaryRowCtx) => string }> = [
+    { id: "idNumber", label: "ID numbers on record", getter: (ctx) => ctx.p.enrolment?.idNumber ?? "" },
+    {
+      id: "qualification",
+      label: "Qualifications on record",
+      getter: (ctx) => ctx.p.enrolment?.highestQualification ?? "",
+    },
+    { id: "email", label: "Emails on record", getter: (ctx) => ctx.p.enrolment?.email ?? "" },
+    { id: "cellphone", label: "Cellphones on record", getter: (ctx) => ctx.p.enrolment?.cellphone ?? "" },
+    { id: "language", label: "Home languages on record", getter: (ctx) => ctx.p.enrolment?.homeLanguage ?? "" },
+    { id: "employer", label: "Employers on record", getter: (ctx) => ctx.p.enrolment?.employer ?? "" },
+  ];
+
+  const widgets: Array<{ key: string; value: string | number; label: string; icon: string }> = [
+    {
+      key: "visible-users",
+      value: rows.length,
+      label: `Visible users (${learnerCount} learners)`,
+      icon: "people",
+    },
+  ];
+
+  if (selectedIds.has("role")) {
+    widgets.push(
+      { key: "learners", value: learnerCount, label: "Learners", icon: "person" },
+      { key: "staff", value: staffCount, label: "Staff roles", icon: "shield" }
+    );
+  }
+  if (selectedIds.has("gender")) {
+    widgets.push(
+      { key: "male", value: maleCount, label: "Male", icon: "person" },
+      { key: "female", value: femaleCount, label: "Female", icon: "person" },
+      {
+        key: "other-gender",
+        value: otherGenderCount + noGenderCount,
+        label: "Other / not set",
+        icon: "person",
+      }
+    );
+  }
+  if (selectedIds.has("age")) {
+    widgets.push(
+      {
+        key: "youngest-age",
+        value: ageValues.length ? `${Math.min(...ageValues)}` : "—",
+        label: "Youngest age",
+        icon: "calendar",
+      },
+      {
+        key: "oldest-age",
+        value: ageValues.length ? `${Math.max(...ageValues)}` : "—",
+        label: "Oldest age",
+        icon: "calendar",
+      }
+    );
+  }
+  if (selectedIds.has("docs")) {
+    const avgDocs = docsValues.length ? (docsValues.reduce((a, b) => a + b, 0) / docsValues.length).toFixed(1) : "0";
+    const fullDocs = docsValues.filter((d) => d >= POE_TOTAL).length;
+    widgets.push(
+      { key: "avg-docs", value: avgDocs, label: "Avg POE docs per learner", icon: "folder" },
+      { key: "full-docs", value: fullDocs, label: `Learners with all ${POE_TOTAL} docs`, icon: "checkCircle" }
+    );
+  }
+  if (selectedIds.has("quizScore")) {
+    const avgScore = scoreValues.length
+      ? `${Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length)}%`
+      : "—";
+    widgets.push({ key: "avg-quiz-score", value: avgScore, label: "Average quiz score", icon: "chart" });
+  }
+  if (selectedIds.has("quizzes")) {
+    const avgCompetence = quizCompetenceRates.length
+      ? `${Math.round(quizCompetenceRates.reduce((a, b) => a + b, 0) / quizCompetenceRates.length)}%`
+      : "—";
+    widgets.push({
+      key: "avg-quiz-competence",
+      value: avgCompetence,
+      label: "Average quiz competence",
+      icon: "award",
+    });
+  }
+  if (selectedIds.has("lastLogin")) {
+    widgets.push(
+      { key: "login-count", value: loginCount, label: "Logged in at least once", icon: "clock" },
+      { key: "never-login", value: rows.length - loginCount, label: "Never logged in", icon: "clock" }
+    );
+  }
+  if (selectedIds.has("joined")) {
+    const newest = joinedTimes.length ? fmtDate(new Date(Math.max(...joinedTimes)).toISOString()) : "—";
+    const oldest = joinedTimes.length ? fmtDate(new Date(Math.min(...joinedTimes)).toISOString()) : "—";
+    widgets.push(
+      { key: "newest-join", value: newest, label: "Newest join date", icon: "calendar" },
+      { key: "oldest-join", value: oldest, label: "Oldest join date", icon: "calendar" }
+    );
+  }
+  for (const field of textFieldWidgets) {
+    if (!selectedIds.has(field.id)) continue;
+    const filled = rows.filter((ctx) => field.getter(ctx).trim()).length;
+    widgets.push({
+      key: `filled-${field.id}`,
+      value: `${filled} / ${rows.length}`,
+      label: field.label,
+      icon: "checkCircle",
+    });
+  }
 
   return (
     <div className="card summary-card" style={{ marginBottom: 14 }}>
@@ -931,38 +1051,24 @@ function PeopleSummary({
 
       <div className="summary-filters">
         <label className="summary-filter">
-          Role
-          <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as Role | "all")}>
-            <option value="all">All roles</option>
-            <option value="Learner">Learner</option>
-            <option value="Facilitator">Facilitator</option>
-            <option value="Assessor">Assessor</option>
-            <option value="Moderator">Moderator</option>
-            <option value="Super User">Super User</option>
-          </select>
-        </label>
-        <label className="summary-filter">
-          Gender
-          <select
-            value={genderFilter}
-            onChange={(e) =>
-              setGenderFilter(e.target.value as "all" | "male" | "female" | "other" | "notSet")
-            }
-          >
-            <option value="all">All genders</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-            <option value="notSet">Not set</option>
-          </select>
+          <span>Role</span>
+          <span className="summary-select-wrap">
+            <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as Role | "all")}>
+              <option value="all">All roles</option>
+              <option value="Learner">Learner</option>
+              <option value="Facilitator">Facilitator</option>
+              <option value="Assessor">Assessor</option>
+              <option value="Moderator">Moderator</option>
+              <option value="Super User">Super User</option>
+            </select>
+          </span>
         </label>
         {hasActiveFilters && (
           <button
-            className="btn ghost sm"
+            className="btn ghost sm summary-clear"
             type="button"
             onClick={() => {
               setRoleFilter("all");
-              setGenderFilter("all");
             }}
           >
             <Icon name="filter" size={15} />
@@ -972,42 +1078,17 @@ function PeopleSummary({
       </div>
 
       <div className="summary-widgets">
-        <div className="card stat-card summary-widget">
-          <span className="ico">
-            <Icon name="people" size={20} />
-          </span>
-          <div>
-            <div className="num">{rows.length}</div>
-            <div className="lbl">Visible users ({learnerCount} learners)</div>
+        {widgets.map((w) => (
+          <div key={w.key} className="card stat-card summary-widget">
+            <span className="ico">
+              <Icon name={w.icon} size={20} />
+            </span>
+            <div>
+              <div className="num">{w.value}</div>
+              <div className="lbl">{w.label}</div>
+            </div>
           </div>
-        </div>
-        <div className="card stat-card summary-widget">
-          <span className="ico">
-            <Icon name="person" size={20} />
-          </span>
-          <div>
-            <div className="num">{maleCount}</div>
-            <div className="lbl">Male</div>
-          </div>
-        </div>
-        <div className="card stat-card summary-widget">
-          <span className="ico">
-            <Icon name="person" size={20} />
-          </span>
-          <div>
-            <div className="num">{femaleCount}</div>
-            <div className="lbl">Female</div>
-          </div>
-        </div>
-        <div className="card stat-card summary-widget">
-          <span className="ico">
-            <Icon name="person" size={20} />
-          </span>
-          <div>
-            <div className="num">{otherGenderCount + noGenderCount}</div>
-            <div className="lbl">Other / not set</div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {pickerOpen && (
