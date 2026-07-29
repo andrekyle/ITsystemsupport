@@ -1171,6 +1171,28 @@ td .with-ico .ico {
   margin: -6px 0 12px;
 }
 
+/* subtle text link (e.g. "Forgot your password?") */
+.linklike {
+  background: none;
+  border: 0;
+  padding: 8px 0 2px;
+  margin: 4px 0 0;
+  color: var(--accent, #4f8cff);
+  font: inherit;
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.linklike.block {
+  display: block;
+  width: 100%;
+}
+
+.linklike:hover {
+  text-decoration: underline;
+}
+
 /* password input with show/hide toggle */
 .pw-wrap {
   position: relative;

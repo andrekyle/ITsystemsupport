@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Icon } from "../icons";
 import type { EnrolmentInfo, Profile, Role } from "../types";
-import { createProfile, hashPassword, loadProfiles } from "../store";
+import { createProfile, hashPassword, loadProfiles, updateProfile } from "../store";
 import { COURSE_META } from "../data/course";
 import { Avatar } from "./Avatar";
 import { EMPTY_ENROLMENT, EnrolmentForm } from "./EnrolmentForm";
@@ -19,12 +19,20 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
   const [authFor, setAuthFor] = useState<Profile | null>(null);
   const [authPw, setAuthPw] = useState("");
   const [authError, setAuthError] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [resetError, setResetError] = useState("");
 
   function pickProfile(p: Profile) {
     if (p.passwordHash) {
       setAuthFor(p);
       setAuthPw("");
       setAuthError(false);
+      setResetting(false);
+      setNewPw("");
+      setConfirmPw("");
+      setResetError("");
     } else {
       onSignIn(p);
     }
@@ -38,6 +46,22 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
     } else {
       setAuthError(true);
     }
+  }
+
+  async function submitReset(e: React.FormEvent) {
+    e.preventDefault();
+    if (!authFor) return;
+    if (newPw.length < 4) {
+      setResetError("Use at least 4 characters.");
+      return;
+    }
+    if (newPw !== confirmPw) {
+      setResetError("Passwords do not match.");
+      return;
+    }
+    const updated = updateProfile(authFor.id, { passwordHash: await hashPassword(newPw) });
+    setProfiles(loadProfiles());
+    onSignIn(updated ?? authFor);
   }
 
   async function submit(e: React.FormEvent) {
@@ -80,7 +104,9 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
         </div>
         <h1>
           {authFor
-            ? "Enter your password"
+            ? resetting
+              ? "Reset your password"
+              : "Enter your password"
             : enrolling
               ? "Biographical Enrolment Information"
               : creating
@@ -89,13 +115,15 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
         </h1>
         <p className="sub">
           {authFor
-            ? `Signing in as ${authFor.name} (${authFor.role}).`
+            ? resetting
+              ? `Set a new password for ${authFor.name} (${authFor.role}). No email confirmation needed.`
+              : `Signing in as ${authFor.name} (${authFor.role}).`
             : enrolling
               ? "Required for first-time enrolment on the learnership. This information is saved to your profile and is visible to you, your facilitator and super users."
               : `${COURSE_META.title} · SAQA ID ${COURSE_META.saqaId} · NQF Level ${COURSE_META.nqfLevel}. Your progress is saved to your profile on this device.`}
         </p>
 
-        {authFor && (
+        {authFor && !resetting && (
           <form onSubmit={submitAuth}>
             <div className="field">
               <label htmlFor="pw">Password</label>
@@ -112,15 +140,68 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
               />
             </div>
             {authError && (
-              <p className="auth-error">Incorrect password. Ask a super user to reset it if you have forgotten it.</p>
+              <p className="auth-error">Incorrect password. Forgot it? Reset it below — no email needed.</p>
             )}
             <button className="btn block" type="submit">
               <Icon name="signout" size={17} style={{ transform: "rotate(180deg)" }} />
               Sign in
             </button>
+            <button
+              type="button"
+              className="linklike block"
+              onClick={() => {
+                setResetting(true);
+                setNewPw("");
+                setConfirmPw("");
+                setResetError("");
+              }}
+            >
+              Forgot your password?
+            </button>
             <div className="divider">or</div>
             <button type="button" className="btn ghost block" onClick={() => setAuthFor(null)}>
               Back to profiles
+            </button>
+          </form>
+        )}
+
+        {authFor && resetting && (
+          <form onSubmit={submitReset}>
+            <div className="field">
+              <label htmlFor="rpw">New password</label>
+              <PasswordInput
+                id="rpw"
+                value={newPw}
+                onChange={(v) => {
+                  setNewPw(v);
+                  setResetError("");
+                }}
+                autoComplete="new-password"
+                autoFocus
+                required
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="rpw2">Confirm new password</label>
+              <PasswordInput
+                id="rpw2"
+                value={confirmPw}
+                onChange={(v) => {
+                  setConfirmPw(v);
+                  setResetError("");
+                }}
+                autoComplete="new-password"
+                required
+              />
+            </div>
+            {resetError && <p className="auth-error">{resetError}</p>}
+            <button className="btn block" type="submit">
+              <Icon name="checkCircle" size={17} />
+              Set new password &amp; sign in
+            </button>
+            <div className="divider">or</div>
+            <button type="button" className="btn ghost block" onClick={() => setResetting(false)}>
+              Back
             </button>
           </form>
         )}
