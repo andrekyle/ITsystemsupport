@@ -449,7 +449,7 @@ export function StudentsPage({
       {people.length > 0 && <OnlineNow people={people} viewer={profile} />}
 
       {isPrivileged && people.length > 0 && (
-        <PeopleSummary people={people} cloud={cloud} remoteIds={remoteIds} navigate={navigate} />
+        <PeopleSummary people={people} viewer={profile} cloud={cloud} remoteIds={remoteIds} navigate={navigate} />
       )}
 
       {people.length === 0 && (
@@ -862,11 +862,13 @@ function loadSummaryCols(): string[] {
 /** Staff-only summary table of everyone, with a pick-your-columns control. */
 function PeopleSummary({
   people,
+  viewer,
   cloud,
   remoteIds,
   navigate,
 }: {
   people: Profile[];
+  viewer: Profile;
   cloud: CloudDirectory | null;
   remoteIds: Set<string>;
   navigate: (r: Route) => void;
@@ -991,9 +993,13 @@ function PeopleSummary({
       return Math.round((ctx.stats.quizCompetent / ctx.stats.quizCount) * 100);
     })
     .filter((v): v is number => typeof v === "number");
-  const onlineStateCounts = rows.reduce(
-    (acc, ctx) => {
-      const state = lastOnlineState(ctx.p.lastLogin).key;
+  // Online states count everyone (viewer included, always online) regardless
+  // of the role filter — "who is online" is a live stat of the whole system,
+  // not a property of the filtered set.
+  const everyone = people.some((p) => p.id === viewer.id) ? people : [viewer, ...people];
+  const onlineStateCounts = everyone.reduce(
+    (acc, p) => {
+      const state = p.id === viewer.id ? "onlineNow" : lastOnlineState(p.lastLogin).key;
       acc[state] += 1;
       return acc;
     },

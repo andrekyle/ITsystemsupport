@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Profile, Route } from "./types";
 import type { Theme } from "./store";
-import { getSession, getTheme, loadProfiles, setAccountAdmin, setAccountEmail, setSession, setTheme, updateProfile, useProgress } from "./store";
+import { getSession, getTheme, loadProfiles, setAccountAdmin, setAccountEmail, setSession, setTheme, touchLastOnline, updateProfile, useProgress } from "./store";
 import { SignIn } from "./components/SignIn";
 import { CloudAuth, ResetPassword } from "./components/CloudAuth";
 import { Header } from "./components/Header";
@@ -243,8 +243,17 @@ function LocalApp() {
 
   useEffect(() => {
     if (!profile) return;
-    // Refresh the "last online" stamp when restoring an existing signed-in session.
+    // Refresh the "last online" stamp when restoring an existing signed-in
+    // session, then keep it fresh while the app stays open so an active user
+    // never decays out of the "Online now" window.
     setSession(profile.id);
+    const tick = () => touchLastOnline(profile.id);
+    const timer = window.setInterval(tick, 4 * 60 * 1000);
+    window.addEventListener("focus", tick);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", tick);
+    };
   }, [profile?.id]);
 
   if (!profile) {
