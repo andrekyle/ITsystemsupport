@@ -939,21 +939,6 @@ td .with-ico .ico {
   color: var(--ink-3);
 }
 
-.online-chip {
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-}
-
-.online-chip.done {
-  background: var(--green-bg);
-}
-
-.online-chip.progress {
-  background: var(--azure-light);
-}
-
 /* "Who's online" panel (visible to all roles, incl. learners) */
 .online-now {
   padding: 14px 16px;

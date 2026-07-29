@@ -53,16 +53,18 @@ function fmtDateTime(iso: string) {
   });
 }
 
-type LastOnlineKey = "onlineNow" | "today" | "thisWeek" | "inactive" | "never";
+type LastOnlineKey = "onlineNow" | "today" | "yesterday" | "thisWeek" | "inactive" | "never";
 
 function lastOnlineState(lastLogin?: string): { key: LastOnlineKey; label: string; tone: "done" | "progress" | "none" } {
   if (!lastLogin) return { key: "never", label: "Never", tone: "none" };
   const t = Date.parse(lastLogin);
   if (!Number.isFinite(t)) return { key: "never", label: "Never", tone: "none" };
-  const ageMs = Date.now() - t;
-  if (ageMs <= 10 * 60 * 1000) return { key: "onlineNow", label: "Online now", tone: "done" };
-  if (ageMs <= 24 * 60 * 60 * 1000) return { key: "today", label: "Active today", tone: "progress" };
-  if (ageMs <= 7 * 24 * 60 * 60 * 1000) return { key: "thisWeek", label: "Active this week", tone: "progress" };
+  const now = new Date();
+  if (now.getTime() - t <= 10 * 60 * 1000) return { key: "onlineNow", label: "Online now", tone: "done" };
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  if (t >= startOfToday) return { key: "today", label: "Active today", tone: "progress" };
+  if (t >= startOfToday - 24 * 60 * 60 * 1000) return { key: "yesterday", label: "Active yesterday", tone: "progress" };
+  if (now.getTime() - t <= 7 * 24 * 60 * 60 * 1000) return { key: "thisWeek", label: "Active this week", tone: "progress" };
   return { key: "inactive", label: "Inactive", tone: "none" };
 }
 
@@ -79,8 +81,13 @@ function OnlineNow({ people, viewer }: { people: Profile[]; viewer: Profile }) {
         : lastOnlineState(p.lastLogin),
   }));
   const online = states.filter((s) => s.state.key === "onlineNow");
-  const today = states.filter((s) => s.state.key === "today").length;
-  const thisWeek = states.filter((s) => s.state.key === "thisWeek").length;
+  const footParts = [
+    { count: states.filter((s) => s.state.key === "today").length, text: "active earlier today" },
+    { count: states.filter((s) => s.state.key === "yesterday").length, text: "active yesterday" },
+    { count: states.filter((s) => s.state.key === "thisWeek").length, text: "active this week" },
+  ]
+    .filter((p) => p.count > 0)
+    .map((p) => `${p.count} ${p.text}`);
   return (
     <div className="card online-now">
       <div className="online-now-head">
@@ -97,13 +104,7 @@ function OnlineNow({ people, viewer }: { people: Profile[]; viewer: Profile }) {
           </span>
         ))}
       </div>
-      {(today > 0 || thisWeek > 0) && (
-        <div className="online-now-foot">
-          {today > 0 ? `${today} active earlier today` : ""}
-          {today > 0 && thisWeek > 0 ? " · " : ""}
-          {thisWeek > 0 ? `${thisWeek} active this week` : ""}
-        </div>
-      )}
+      {footParts.length > 0 && <div className="online-now-foot">{footParts.join(" · ")}</div>}
     </div>
   );
 }
@@ -479,7 +480,7 @@ export function StudentsPage({
               <span className="rl">
                 {s.role}
                 {" · last online "}
-                <span className={`chip ${online.tone} online-chip`}>{online.label}</span>
+                <span className={`chip ${online.tone}`}>{online.label}</span>
                 {s.lastLogin ? ` (${fmtDateTime(s.lastLogin)})` : ""}
               {" · joined "}
               {fmtDate(s.createdAt)}
@@ -826,7 +827,7 @@ const SUMMARY_COLS: SummaryCol[] = [
       const state = lastOnlineState(p.lastLogin);
       return (
         <span className="summary-login-cell">
-          <span className={`chip ${state.tone} online-chip`}>{state.label}</span>
+          <span className={`chip ${state.tone}`}>{state.label}</span>
           <span className="summary-login-time">{p.lastLogin ? fmtDateTime(p.lastLogin) : "No sign-in yet"}</span>
         </span>
       );
@@ -996,7 +997,7 @@ function PeopleSummary({
       acc[state] += 1;
       return acc;
     },
-    { onlineNow: 0, today: 0, thisWeek: 0, inactive: 0, never: 0 } as Record<LastOnlineKey, number>
+    { onlineNow: 0, today: 0, yesterday: 0, thisWeek: 0, inactive: 0, never: 0 } as Record<LastOnlineKey, number>
   );
   const joinedTimes = rows.map((ctx) => Date.parse(ctx.p.createdAt)).filter((t) => Number.isFinite(t));
 
@@ -1084,6 +1085,7 @@ function PeopleSummary({
   widgets.push(
     { key: "online-now", value: onlineStateCounts.onlineNow, label: "Online now", icon: "clock" },
     { key: "active-today", value: onlineStateCounts.today, label: "Active today", icon: "clock" },
+    { key: "active-yesterday", value: onlineStateCounts.yesterday, label: "Active yesterday", icon: "clock" },
     { key: "active-week", value: onlineStateCounts.thisWeek, label: "Active this week", icon: "clock" },
     { key: "inactive", value: onlineStateCounts.inactive, label: "Inactive", icon: "clock" },
     { key: "never-login", value: onlineStateCounts.never, label: "Never logged in", icon: "clock" }
