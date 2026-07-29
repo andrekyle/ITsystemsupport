@@ -66,6 +66,48 @@ function lastOnlineState(lastLogin?: string): { key: LastOnlineKey; label: strin
   return { key: "inactive", label: "Inactive", tone: "none" };
 }
 
+/** Everyone (learners included) can see who is currently online. */
+function OnlineNow({ people, viewer }: { people: Profile[]; viewer: Profile }) {
+  // the signed-in viewer is online by definition, even if their stored
+  // lastLogin timestamp has aged past the online-now window
+  const everyone = people.some((p) => p.id === viewer.id) ? people : [viewer, ...people];
+  const states = everyone.map((p) => ({
+    p,
+    state:
+      p.id === viewer.id
+        ? ({ key: "onlineNow", label: "Online now", tone: "done" } as const)
+        : lastOnlineState(p.lastLogin),
+  }));
+  const online = states.filter((s) => s.state.key === "onlineNow");
+  const today = states.filter((s) => s.state.key === "today").length;
+  const thisWeek = states.filter((s) => s.state.key === "thisWeek").length;
+  return (
+    <div className="card online-now">
+      <div className="online-now-head">
+        <span className="online-dot" aria-hidden="true" />
+        Who's online
+        <span className="online-count">{online.length} online now</span>
+      </div>
+      <div className="online-people">
+        {online.map(({ p }) => (
+          <span key={p.id} className="online-person">
+            <Avatar profile={p} size={24} />
+            {p.name}
+            {p.id === viewer.id ? " (you)" : ""}
+          </span>
+        ))}
+      </div>
+      {(today > 0 || thisWeek > 0) && (
+        <div className="online-now-foot">
+          {today > 0 ? `${today} active earlier today` : ""}
+          {today > 0 && thisWeek > 0 ? " · " : ""}
+          {thisWeek > 0 ? `${thisWeek} active this week` : ""}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProfileHead({ profile }: { profile: Profile }) {
   return (
     <div className="card profile-head">
@@ -402,6 +444,8 @@ export function StudentsPage({
       </p>
 
       {isSuper && <AddUser onAdded={refresh} />}
+
+      {people.length > 0 && <OnlineNow people={people} viewer={profile} />}
 
       {isPrivileged && people.length > 0 && (
         <PeopleSummary people={people} cloud={cloud} remoteIds={remoteIds} navigate={navigate} />
