@@ -1,0 +1,667 @@
+==============================================================================
+HARDWARE AND SOFTWARE LESSON - IMAGE PROMPTS FOR ALL 103 FIGURE PLACEHOLDERS
+==============================================================================
+
+HOW TO USE THIS FILE
+- Each entry below matches one upload slot in the lesson (same order as the lesson).
+- "SEARCH:" = a real historical/product photo is better than AI. Search that term
+  on Wikimedia Commons (commons.wikimedia.org) - these are public domain or freely
+  licensed. Download, then upload into the placeholder.
+- "SCREENSHOT:" = take a real screenshot yourself - it will always beat AI.
+- "PROMPT:" = paste into Bing Image Creator / Copilot Designer / DALL-E etc.
+- Every PROMPT below assumes this base style. Prepend it (or keep it in mind):
+
+[STYLE] = "Premium educational infographic illustration in Microsoft Fluent Design
+and Microsoft Learn style. Blue and white palette with subtle accent colours,
+rounded cards, soft shadows, clean sans-serif labels, minimal text, 16:9
+widescreen, ultra-high resolution, realistic detailed hardware rendering."
+
+------------------------------------------------------------------------------
+SECTION 1 - WHAT IS HARDWARE? WHAT IS SOFTWARE?
+------------------------------------------------------------------------------
+
+1. hardware-collage - "The hardware landscape - from a RAM module to a data centre"
+PROMPT: [STYLE] A poster collage showing computer hardware at every scale, arranged
+small to large with connecting arrows: a RAM module and CPU chip, a desktop PC and
+laptop, a 42U server rack, and a vast data centre hall, each in its own rounded card
+with a one-word label (Component, Device, Rack, Data Centre).
+
+2. software-stack - "The software stack - firmware, OS, applications"
+PROMPT: [STYLE] A clean layered stack diagram: bottom layer 'Hardware' (motherboard
+illustration), then 'Firmware / UEFI' (chip icon), then 'Operating System' (Windows-
+style desktop icon), top layer 'Applications' (browser, office, game icons). Arrows
+up the side labelled 'each layer runs on the one below'.
+
+------------------------------------------------------------------------------
+SECTION 2 - BEFORE ELECTRICITY: BABBAGE, LOVELACE AND THE HUMAN COMPUTERS
+------------------------------------------------------------------------------
+
+3. babbage-portrait - "Charles Babbage (1791-1871)"
+SEARCH: "Charles Babbage portrait" on Wikimedia Commons (1860 photograph is public domain).
+FALLBACK PROMPT: [STYLE] A respectful stylised engraved-style portrait card of a
+Victorian gentleman scientist labelled 'Charles Babbage, 1791-1871, father of the
+computer', with faint Difference Engine gears in the background.
+
+4. difference-engine - "The Difference Engine at the Science Museum, London"
+SEARCH: "Difference Engine No. 2 Science Museum" on Wikimedia Commons.
+FALLBACK PROMPT: [STYLE] A detailed illustration of a Victorian brass and steel
+mechanical calculating engine, thousands of numbered gear wheels in columns, crank
+handle at the side, museum setting.
+
+5. ada-lovelace - "Ada Lovelace (1815-1852), the first computer programmer"
+SEARCH: "Ada Lovelace watercolour portrait 1840" on Wikimedia Commons (public domain).
+FALLBACK PROMPT: [STYLE] A respectful stylised portrait card of Ada Lovelace in
+1840s dress, labelled 'Ada Lovelace - wrote the first algorithm, 1843', with faint
+punched cards and mathematical notation in the background.
+
+6. jacquard-loom - "A Jacquard loom with its chain of punched cards"
+SEARCH: "Jacquard loom punched cards" on Wikimedia Commons.
+FALLBACK PROMPT: [STYLE] A wooden Jacquard weaving loom with a long chain of
+rectangular punched cards feeding into the mechanism at the top, callout box
+zooming into the holes labelled 'holes = instructions'.
+
+7. hollerith-machine - "Hollerith tabulating machine - the 1890 census"
+SEARCH: "Hollerith tabulating machine 1890" on Wikimedia Commons.
+FALLBACK PROMPT: [STYLE] A late-Victorian electric tabulating machine with rows of
+dial counters, an operator's press for reading punched cards, and a callout of an
+80-column punched card.
+
+8. human-computers - "A room of human 'computers' at work"
+SEARCH: "human computers NACA women" or "Harvard computers" on Wikimedia Commons.
+FALLBACK PROMPT: [STYLE] A stylised illustration of a 1940s office with rows of
+women at desks operating mechanical calculating machines, ledgers open, labelled
+'Before machines, computer was a job title'.
+
+9. katherine-johnson - "Katherine Johnson - calculations that carried astronauts"
+SEARCH: "Katherine Johnson NASA 1966" on Wikimedia Commons (NASA photos are public domain).
+FALLBACK PROMPT: [STYLE] A respectful stylised portrait card labelled 'Katherine
+Johnson, NASA mathematician - John Glenn asked for her by name', with orbital
+trajectory curves in the background.
+
+------------------------------------------------------------------------------
+SECTION 3 - WAR, VALVES AND THE FIRST ELECTRONIC COMPUTERS
+------------------------------------------------------------------------------
+
+10. bletchley-bombe - "A rebuilt bombe at Bletchley Park"
+SEARCH: "Bombe rebuild Bletchley Park" on Wikimedia Commons.
+FALLBACK PROMPT: [STYLE] A tall bronze-coloured electromechanical cabinet covered
+in rows of rotating drums with red indicator letters, a WRNS operator adjusting the
+plugboard at the back, 1940s setting.
+
+11. colossus - "Colossus (1943) - first programmable electronic digital computer"
+SEARCH: "Colossus computer 1943" on Wikimedia Commons (the famous WRNS operators photo).
+FALLBACK PROMPT: [STYLE] A room-sized 1940s electronic machine of open racks,
+glowing valves and spinning paper-tape loops on pulleys, two operators in wartime
+uniform threading the tape.
+
+12. eniac - "ENIAC (1945) - 30 tons, 18,000 valves, 150 kW"
+SEARCH: "ENIAC Philadelphia" on Wikimedia Commons (US Army photos, public domain).
+FALLBACK PROMPT: [STYLE] A wide view of a 1940s computer filling an entire room:
+black panels floor to ceiling covered in dials, plug cables and thousands of tiny
+glowing valves, stat cards reading '30 tons - 18,000 valves - 150 kW'.
+
+13. eniac-programmers - "Two of the ENIAC Six re-plugging the machine"
+SEARCH: "ENIAC programmers women" on Wikimedia Commons (US Army photo, public domain).
+FALLBACK PROMPT: [STYLE] A stylised illustration of two women in 1940s dress
+standing at a wall-sized computer panel, moving thick patch cables between sockets,
+labelled 'Programming, 1946: rewiring the machine by hand'.
+
+14. grace-hopper - "Grace Hopper - the first compiler and COBOL"
+SEARCH: "Grace Hopper" on Wikimedia Commons (US Navy portrait, public domain).
+FALLBACK PROMPT: [STYLE] A respectful stylised portrait card of a naval officer in
+uniform labelled 'Rear Admiral Grace Hopper - invented the compiler, mother of
+COBOL', with punch cards and the word COBOL in the background.
+
+15. first-bug - "The moth in the Mark II logbook, 1947"
+SEARCH: "first computer bug moth logbook" on Wikimedia Commons (Naval History photo).
+FALLBACK PROMPT: [STYLE] An open engineering logbook page dated 1947 with a real
+moth taped to it and handwritten text 'First actual case of bug being found',
+magnifying glass callout on the moth.
+
+16. vacuum-tubes - "Vacuum tubes (valves) - switches of the first generation"
+SEARCH: "vacuum tube glowing" on Wikimedia Commons.
+PROMPT: [STYLE] A macro close-up of several glass vacuum tubes glowing warm orange,
+one shown in cutaway with filament, grid and plate labelled, caption card 'One valve
+= one switch. ENIAC needed 18,000.'
+
+------------------------------------------------------------------------------
+SECTION 4 - THE TRANSISTOR, THE CHIP AND THE PC REVOLUTION
+------------------------------------------------------------------------------
+
+17. first-transistor - "Replica of the first transistor, Bell Labs 1947"
+SEARCH: "first transistor replica Bell Labs" on Wikimedia Commons.
+FALLBACK PROMPT: [STYLE] A museum-style illustration of the 1947 point-contact
+transistor: a crude triangle of plastic pressing gold contacts onto a germanium
+slab, size-comparison card showing it next to a vacuum tube it replaced.
+
+18. integrated-circuit - "An integrated circuit die"
+SEARCH: "integrated circuit die macro" on Wikimedia Commons.
+PROMPT: [STYLE] An extreme macro of a silicon chip die showing iridescent
+rainbow-coloured circuit patterns like a city seen from the air, callout card:
+'Thousands, then millions, then billions of transistors on one chip'.
+
+19. intel-4004 - "Intel 4004 (1971) - the first microprocessor"
+SEARCH: "Intel 4004" on Wikimedia Commons.
+FALLBACK PROMPT: [STYLE] A white ceramic DIP chip with gold pins labelled 'Intel
+4004, 1971 - 2,300 transistors, a computer's brain on one chip', shown resting on
+a fingertip for scale.
+
+20. altair-8800 - "MITS Altair 8800 (1975)"
+SEARCH: "Altair 8800" on Wikimedia Commons.
+FALLBACK PROMPT: [STYLE] A blue 1970s metal box computer with a front panel of red
+LEDs and rows of toggle switches, no screen and no keyboard, caption 'Input:
+switches. Output: lights. Cost: $439 as a kit.'
+
+21. apple-ii-ibm-pc - "Apple II (1977) and IBM PC 5150 (1981)"
+SEARCH: "Apple II" and "IBM PC 5150" on Wikimedia Commons (combine side by side).
+FALLBACK PROMPT: [STYLE] Two beige vintage computers side by side in rounded cards:
+left a 1977 home computer with built-in keyboard and colour monitor labelled 'Apple
+II - computing comes home', right a 1981 office machine with separate keyboard and
+green-screen monitor labelled 'IBM PC 5150 - computing goes corporate'.
+
+22. iphone-2007 - "The iPhone (2007)"
+SEARCH: "original iPhone 2007" on Wikimedia Commons.
+FALLBACK PROMPT: [STYLE] A first-generation smartphone with aluminium back and
+3.5-inch screen held in a hand, surrounded by fading icons of the devices it
+absorbed: camera, iPod, GPS, phone, PDA. Caption 'A supercomputer in every pocket'.
+
+23. moores-law-chart - "Moore's Law - transistor counts 1971-today"
+PROMPT: [STYLE] A clean log-scale line chart titled 'Moore's Law', X axis 1971 to
+2026, Y axis transistor count from 2,300 to 100 billion, dots for famous chips
+(4004, 8086, Pentium, Core 2, M1, H100) each with a tiny chip icon, straight
+diagonal trend line, annotation 'doubling roughly every two years'.
+
+------------------------------------------------------------------------------
+SECTION 5 - THE HISTORY OF SOFTWARE: FROM PLUGBOARDS TO AI
+------------------------------------------------------------------------------
+
+24. punched-tape-code - "Programs on punched cards and paper tape"
+SEARCH: "punched card deck" / "paper tape computing" on Wikimedia Commons.
+FALLBACK PROMPT: [STYLE] A stack of cream 80-column punched cards next to an
+unspooling reel of punched paper tape, callout magnifier showing 'one card = one
+line of code', caption 'Drop the deck and your program is scrambled'.
+
+25. unix-pdp11 - "Thompson and Ritchie at the PDP-11"
+SEARCH: "Ken Thompson Dennis Ritchie PDP-11" (Bell Labs photo, widely reproduced).
+FALLBACK PROMPT: [STYLE] A stylised 1970s computer-lab scene: two engineers at a
+wardrobe-sized minicomputer with teletype terminals, caption 'Bell Labs, 1969-73:
+UNIX and the C language - ancestors of Linux, macOS, Android and iOS'.
+
+26. msdos-screen - "MS-DOS - the C:\> prompt"
+SCREENSHOT: Best made yourself - open a DOSBox window or Windows cmd.exe, run DIR,
+screenshot it. 
+FALLBACK PROMPT: [STYLE] A retro CRT monitor showing a black screen with white
+monospace text: 'C:\>DIR' followed by a file listing with .EXE and .SYS files,
+slight screen curvature and scanlines.
+
+27. mac-1984 - "The Macintosh (1984) brings the GUI to the masses"
+SEARCH: "Macintosh 128K" on Wikimedia Commons.
+FALLBACK PROMPT: [STYLE] A beige all-in-one 1984 computer with small black-and-white
+screen showing early desktop windows, icons and a mouse pointer, one-button mouse
+beside it, caption 'Windows, icons, mouse - no memorised commands'.
+
+28. windows95-launch - "Windows 95 - software becomes a cultural event"
+SEARCH: "Windows 95 desktop" / "Windows 95 launch" on Wikimedia Commons.
+FALLBACK PROMPT: [STYLE] A mid-90s CRT monitor showing a teal desktop with a
+taskbar and open Start menu in early-Windows style, launch-night crowd silhouettes
+reflected in the glass, caption 'Midnight queues for an operating system'.
+
+29. linux-tux - "Linux - open source runs most of the world's servers"
+SEARCH: "Tux penguin" on Wikimedia Commons (the official logo is free to use).
+FALLBACK PROMPT: [STYLE] A friendly cartoon penguin mascot in a rounded card,
+surrounded by icons of the things Linux powers: server racks, Android phone,
+Raspberry Pi, supercomputer, car dashboard. Caption 'Free, open source, everywhere'.
+
+30. www-berners-lee - "Tim Berners-Lee and the first web server (NeXT, 1991)"
+SEARCH: "NeXT computer first web server CERN" on Wikimedia Commons.
+FALLBACK PROMPT: [STYLE] A black cube-shaped 1990s workstation with a hand-written
+sticker reading 'This machine is a server. DO NOT POWER IT DOWN!!', caption 'CERN,
+1991 - the entire World Wide Web fit on this one computer'.
+
+31. ai-chat-llm - "Large language models - software that writes"
+SCREENSHOT: Best made yourself - screenshot an AI assistant answering an IT support
+question (e.g. 'My PC won't boot after a power cut - what should I check?').
+FALLBACK PROMPT: [STYLE] A chat interface mock-up in a rounded card: user asks 'My
+PC won't boot after load-shedding - what should I check?' and an AI assistant
+replies with a numbered checklist (PSU switch, RAM reseat, CMOS battery), neural
+network glow behind the card.
+
+------------------------------------------------------------------------------
+SECTION 6 - INSIDE THE BOX: MOTHERBOARD, CPU AND RAM
+------------------------------------------------------------------------------
+
+32. motherboard-labelled - "An ATX motherboard with every major part labelled"
+PROMPT: [STYLE] A top-down photorealistic ATX motherboard with thin labelled callout
+lines to: CPU socket, VRM heatsinks, 4 RAM slots, PCIe x16 slot, PCIe x1 slot, M.2
+slots, SATA ports, chipset heatsink, 24-pin power, 8-pin EPS power, front-panel
+headers, CMOS battery, rear I/O shield.
+
+33. cpu-top-bottom - "A desktop CPU - top and underside"
+PROMPT: [STYLE] Two rounded cards side by side: left a modern desktop CPU seen from
+above showing the engraved metal heat spreader; right the same CPU flipped showing
+a dense golden grid of LGA contact pads. Labels 'Heat spreader (top)' and 'Contact
+pads (bottom) - never touch these'.
+
+34. cpu-in-socket - "Seating a CPU in its socket"
+PROMPT: [STYLE] Close-up of fingers lowering a desktop CPU into an open LGA
+motherboard socket with the retention arm raised, a highlighted golden triangle on
+the CPU corner aligned to a matching triangle on the socket, caption 'Zero force -
+align the triangle and let it sit'.
+
+35. cpu-cooler-paste - "Heatsink, fan and thermal paste"
+PROMPT: [STYLE] Two-step panel: step 1 shows a pea-sized dot of grey thermal paste
+in the centre of a CPU heat spreader; step 2 shows a tower heatsink with fan being
+lowered onto it, arrows showing heat flow from CPU through paste into fins and out
+with the airflow.
+
+36. cmos-battery - "The CR2032 CMOS battery"
+PROMPT: [STYLE] Macro close-up of a silver CR2032 coin cell in its holder on a
+motherboard, fingertip about to release the retaining clip, callout card 'Keeps the
+clock and firmware settings alive - a flat one causes wrong-date and boot errors'.
+
+37. ddr-dimm - "A DDR4 DIMM - chips, edge connector, keying notch"
+PROMPT: [STYLE] A single desktop RAM module at a slight angle with callout labels:
+memory chips, gold edge connector, off-centre keying notch, retention clip cutouts,
+heat spreader. Caption 'The notch position stops you inserting the wrong generation'.
+
+38. dimm-vs-sodimm - "Desktop DIMM vs laptop SO-DIMM"
+PROMPT: [STYLE] A full-size desktop DIMM above a half-length laptop SO-DIMM, ruler
+graphic between them showing the size difference, labels 'DIMM - desktops and
+servers' and 'SO-DIMM - laptops, mini PCs and some printers'.
+
+39. ram-install - "Seating RAM"
+PROMPT: [STYLE] Hands pressing a RAM module vertically into a motherboard slot,
+both white retention clips shown snapping inward, three mini-step icons underneath:
+'1 Open clips - 2 Align notch - 3 Press until click'.
+
+40. ecc-server-ram - "ECC registered DIMMs in a server board"
+PROMPT: [STYLE] A server motherboard with 16 RAM slots fully populated with green
+ECC registered DIMMs in neat banks, callout on one module's extra ECC chip,
+caption 'ECC memory detects and corrects bit errors - servers refuse to gamble'.
+
+------------------------------------------------------------------------------
+SECTION 7 - STORAGE HARDWARE
+------------------------------------------------------------------------------
+
+41. hdd-open - "Inside a hard drive"
+PROMPT: [STYLE] An opened 3.5-inch hard drive showing mirror-finish platters and
+the swing-arm actuator with read/write head hovering above, labels: platter,
+spindle motor, actuator arm, read/write head. Caption 'The head flies closer to
+the platter than a fingerprint is tall - never drop a running drive'.
+
+42. ssd-vs-hdd - "2.5-inch SATA SSD next to a 3.5-inch HDD"
+PROMPT: [STYLE] A slim 2.5-inch SSD beside a chunky 3.5-inch HDD, comparison chips
+underneath: speed (SSD wins), capacity per rand (HDD wins), shock resistance (SSD
+wins), noise (SSD silent), moving parts (SSD none / HDD platters and motor).
+
+43. m2-nvme - "An M.2 NVMe SSD"
+PROMPT: [STYLE] Fingers angling a gum-stick-sized M.2 NVMe SSD into its motherboard
+slot at 30 degrees with the tiny mounting screw beside it, size-comparison card
+showing it next to a stick of chewing gum, caption 'A whole drive, no cables'.
+
+44. sata-cables - "SATA data and power connectors"
+PROMPT: [STYLE] Two labelled cards: left the thin flat 7-pin SATA data cable with
+L-shaped connector; right the wider 15-pin SATA power connector from the PSU,
+both plugged into the rear edge of a 2.5-inch drive.
+
+45. raid-diagram - "RAID 0, 1, 5 and 10 visualised"
+PROMPT: [STYLE] Four rounded cards each showing drives as cylinders with coloured
+data blocks: RAID 0 (blocks striped across 2 drives, 'fast, no safety'), RAID 1
+(identical blocks mirrored, 'survives 1 failure'), RAID 5 (blocks + parity across
+3 drives, 'capacity + safety'), RAID 10 (mirrored pairs striped, 'fast + safe').
+
+46. lto-tape - "LTO tape cartridge and drive"
+PROMPT: [STYLE] An LTO tape cartridge half-inserted into a rack tape drive, second
+panel showing a robotic tape library arm picking a cartridge from shelves of
+hundreds, caption 'Slow to read, cheap to keep - the archive workhorse'.
+
+------------------------------------------------------------------------------
+SECTION 8 - PORTS, CONNECTORS AND EXPANSION
+------------------------------------------------------------------------------
+
+47. rear-io-panel - "A rear I/O panel with every port labelled"
+PROMPT: [STYLE] A desktop PC rear I/O panel straight-on with labelled callouts:
+PS/2, USB-A 2.0 (black), USB-A 3.x (blue), USB-C, HDMI, DisplayPort, RJ45 Ethernet
+with link lights, 3.5mm audio jacks (colour coded), Wi-Fi antenna posts.
+
+48. usb-connector-types - "USB connector family"
+PROMPT: [STYLE] A reference chart of USB connectors in a row, each in its own card
+with plug face illustration: USB-A, USB-B, Mini-B, Micro-B, USB-C. Under each: what
+uses it (PCs / printers / old cameras / old phones / everything modern) and a
+'reversible?' tick only under USB-C.
+
+49. video-connectors - "VGA, DVI, HDMI and DisplayPort compared"
+PROMPT: [STYLE] Four cable heads side by side in cards: blue 15-pin VGA (label
+'analogue, legacy'), white DVI ('digital, legacy'), HDMI ('digital + audio, TVs
+and monitors'), DisplayPort ('digital + audio, PCs, daisy-chain, highest refresh').
+
+50. rj45-rj11 - "RJ45 vs RJ11"
+PROMPT: [STYLE] Macro of two clear plastic plugs side by side: wider 8-pin RJ45
+labelled 'Network - 8 wires' and narrower 4/6-pin RJ11 labelled 'Telephone /
+DSL - it clicks into an RJ45 port but will never work'.
+
+51. usbc-dock - "One USB-C dock cable running a whole desk"
+PROMPT: [STYLE] A laptop connected by a single USB-C cable to a dock, with lines
+fanning out from the dock to two monitors, wired network, keyboard, mouse,
+external drive and power, caption 'One cable: power in, everything else out'.
+
+52. psu-connectors - "A modular PSU and its connector family"
+PROMPT: [STYLE] A modular power supply with its cables laid out and labelled:
+24-pin ATX (motherboard), 8-pin EPS (CPU), 6+2-pin PCIe (graphics card), SATA
+power (drives), Molex (legacy fans), wattage label visible on the PSU side.
+
+53. gpu-card - "A discrete graphics card"
+PROMPT: [STYLE] A modern graphics card in exploded view: fan shroud lifted to
+reveal the heatsink, then the bare PCB showing the large GPU die surrounded by
+VRAM chips, labels on the PCIe edge connector, 8-pin power sockets and display
+outputs.
+
+54. pcie-slots - "PCIe x16 and x1 slots"
+PROMPT: [STYLE] Close-up of a motherboard's expansion area showing a long
+reinforced PCIe x16 slot labelled 'graphics' and short PCIe x1 slots labelled
+'sound, network, capture cards', a card edge hovering above the x16 slot.
+
+55. aio-cooler - "An all-in-one liquid cooler"
+PROMPT: [STYLE] Inside a PC case: a liquid cooler pump block on the CPU with two
+tubes running to a fan-covered radiator mounted at the top of the case, arrows
+tracing the coolant loop, labels: pump block, tubes, radiator, fans.
+
+56. dusty-pc - "Why preventative maintenance exists"
+PROMPT: [STYLE] Before/after split card: left a CPU heatsink and fan completely
+choked with grey dust felt, right the same heatsink clean with airflow arrows
+passing freely, caption 'Dust is a blanket. Heat is the killer.'
+
+57. desktop-ups - "A desktop line-interactive UPS"
+PROMPT: [STYLE] A small tower UPS under a desk with a PC and monitor plugged into
+it, lightning-strike icon on the wall socket crossed out, battery icon showing
+'10-15 minutes - enough to save and shut down', caption 'Load-shedding survival kit'.
+
+58. monitor-panels - "Monitor panel types and resolutions compared"
+PROMPT: [STYLE] Two-part infographic: top row three monitor cards labelled IPS
+('best colour and angles'), VA ('best contrast'), TN ('fastest, cheapest, weak
+angles'); bottom a nested rectangle chart comparing resolutions HD 720p, FHD
+1080p, QHD 1440p, 4K UHD to scale.
+
+------------------------------------------------------------------------------
+SECTION 9 - PRINTERS AND OUTPUT DEVICES
+------------------------------------------------------------------------------
+
+59. laser-printer-cutaway - "Inside a laser printer"
+PROMPT: [STYLE] A cutaway side-view diagram of a laser printer with the paper path
+drawn as an arrow through: pickup rollers, charged imaging drum being written by a
+laser and mirror, toner hopper developing the image, transfer to paper, heated
+fuser rollers, output tray. Numbered steps 1-6.
+
+60. toner-drum - "Toner cartridge and imaging drum"
+PROMPT: [STYLE] A black toner cartridge and a separate green-cylinder imaging drum
+unit side by side in cards, labels 'Toner = the powder (consumable)' and 'Drum =
+the canvas (lasts several toners)', warning icon 'never touch or expose the drum
+to bright light'.
+
+61. inkjet-printhead - "Inkjet cartridges and print head"
+PROMPT: [STYLE] Macro of inkjet cartridges (black + tri-colour or CMYK set)
+clicked into a moving print-head carriage above a sheet of paper, zoom callout
+showing microscopic nozzles firing ink droplets, caption 'Thousands of droplets
+per second - and nozzles that clog when idle'.
+
+62. thermal-receipt - "Thermal receipt printer"
+PROMPT: [STYLE] A point-of-sale thermal printer with the lid open showing the
+paper roll and print bar, a till slip emerging, callouts 'no ink, no toner - heat
+darkens the coated paper' and 'fades in sunlight, so photograph important slips'.
+
+63. dot-matrix - "Dot-matrix printer with fan-fold paper"
+PROMPT: [STYLE] A classic dot-matrix printer with sprocket-fed fan-fold paper
+stacking in accordion folds behind it, zoom callout of the 9-pin head striking
+through a ribbon making letters from dots, label 'still used for carbon-copy
+invoices and delivery notes'.
+
+64. printer-3d - "A 3D printer building a part layer by layer"
+PROMPT: [STYLE] An FDM 3D printer mid-print, nozzle extruding a filament layer
+onto a half-finished bracket, spool of filament feeding from the side, layer
+lines visible on the part, progress card '4h 32m remaining - layer 214 of 380'.
+
+65. office-mfp - "A network multifunction printer"
+PROMPT: [STYLE] A floor-standing office multifunction printer with touch control
+panel, icons radiating from it for its four jobs: print, scan-to-email, copy, fax,
+plus an RJ45 network icon and a queue of documents from many users' laptops.
+
+------------------------------------------------------------------------------
+SECTION 10 - NETWORK HARDWARE
+------------------------------------------------------------------------------
+
+66. nic-card - "A PCIe network interface card"
+PROMPT: [STYLE] A PCIe network card with RJ45 port and link LEDs beside a
+motherboard's built-in Ethernet port, caption 'Every device on a network needs a
+NIC - most are built in, add a card for speed or a second port'.
+
+67. managed-switch - "A 48-port managed PoE switch in a rack"
+PROMPT: [STYLE] A rack-mounted 48-port network switch with neat colour-coded patch
+cables and green link lights, callout badges: 'managed - VLANs, monitoring' and
+'PoE - power over the same cable for APs, phones and cameras'.
+
+68. router-firewall - "Business router and firewall appliance"
+PROMPT: [STYLE] A 1U router/firewall appliance in a cabinet with two labelled
+arrows: 'LAN - your network' on one side and 'WAN - the internet' on the other,
+shield icon on the box, caption 'The router chooses paths; the firewall chooses
+what gets through'.
+
+69. wifi-ap - "Ceiling wireless access point, powered by PoE"
+PROMPT: [STYLE] A round white access point on an office ceiling with a single
+Ethernet cable entering it labelled 'data + power (PoE)', Wi-Fi signal arcs
+covering desks below, small card 'one AP per zone - walls eat signal'.
+
+70. patch-panel - "Patch panel and cable management"
+PROMPT: [STYLE] A tidy rack close-up: a labelled 24-port patch panel with numbered
+ports, short colour-coded patch leads dropping to the switch below through cable
+management fingers, caption 'Every wall socket in the building ends here'.
+
+71. cat6-rj45 - "Cat6 UTP cable and RJ45 termination"
+PROMPT: [STYLE] A stripped Cat6 cable showing its four colour-coded twisted pairs
+(orange, green, blue, brown) fanned out, beside a crimped clear RJ45 plug with
+the wires visible in T568B order, crimping tool in the background.
+
+72. fibre-sfp - "Fibre patch leads and SFP transceivers"
+PROMPT: [STYLE] Yellow and aqua fibre patch cables with LC connectors beside two
+SFP transceiver modules, one being inserted into a switch port, caption 'Light,
+not electricity - kilometres without loss, immune to interference'.
+
+73. onts-fibre - "Fibre ONT - where the internet enters the building"
+PROMPT: [STYLE] A small white wall-mounted fibre ONT with a thin fibre entering
+from a wall duct and an Ethernet cable leaving to a router, status LEDs labelled
+PON (steady green = good) and LOS (red = fibre broken), caption 'The first thing
+to photograph when the internet is down'.
+
+------------------------------------------------------------------------------
+SECTION 11 - DATA CENTRE HARDWARE
+------------------------------------------------------------------------------
+
+74. datacentre-aisle - "A data centre aisle"
+PROMPT: [STYLE] A long view down a data-centre cold aisle: rows of black racks
+with blinking LEDs behind perforated doors, structured cabling overhead in
+trays, polished floor with vent tiles, cool blue lighting.
+
+75. rack-42u - "A 42U rack labelled"
+PROMPT: [STYLE] A front view of one populated 42U server rack with labelled
+callouts top to bottom: top-of-rack switch, patch panel, 1U servers, 2U storage
+server, blanking panels, vertical PDU strips (A and B), cable management,
+UPS at the bottom. Ruler graphic showing '1U = 44.45mm'.
+
+76. rack-server-1u - "A 1U rack server on rails"
+PROMPT: [STYLE] A 1U server slid halfway out of a rack on its rails, front panel
+showing a row of hot-swap drive caddies with activity LEDs, one caddy pulled out
+with the drive visible, callouts: hot-swap drives, dual PSUs at rear, rail kit.
+
+77. blade-chassis - "A blade chassis"
+PROMPT: [STYLE] A blade enclosure in a rack with several server blades inserted
+vertically and one blade partially removed showing its edge connector, callout
+'shared power, cooling and networking in the chassis - the blades are just
+compute', density comparison chip '16 servers in 10U'.
+
+78. san-array - "A SAN storage array"
+PROMPT: [STYLE] An enterprise storage array: a controller shelf plus expansion
+shelves, each packed with rows of hot-swap drive caddies with green/amber LEDs,
+one amber-flagged drive half-ejected, caption 'Storage as a building, not a box -
+any server can use it, any drive can fail without drama'.
+
+79. ups-room - "The UPS battery room"
+PROMPT: [STYLE] A data-centre power room with large UPS cabinets and long strings
+of batteries on racks, orange thick cabling in trays, timeline strip underneath:
+'grid fails -> batteries carry (seconds-minutes) -> generator takes over'.
+
+80. diesel-generator - "Standby diesel generators"
+PROMPT: [STYLE] Two container-sized industrial standby generators outside a data
+centre behind security fencing, fuel tanks beside them, stat cards 'starts in
+under 15 seconds' and 'runs for days if refuelled'.
+
+81. hot-cold-aisle - "Hot/cold aisle containment"
+PROMPT: [STYLE] A cross-section diagram of two rack rows: blue arrows showing cold
+air rising from floor vents into contained cold aisles and through server fronts,
+red arrows showing hot exhaust into the hot aisle and up to CRAC return, labels
+'cold aisle 18-27 C' and 'hot aisle 35-45 C'.
+
+82. rack-pdu - "Rack PDUs on A and B power paths"
+PROMPT: [STYLE] The rear of a rack showing two vertical PDU strips labelled 'Feed
+A' and 'Feed B' in different colours, servers with dual power supplies each
+plugged once into A and once into B, caption 'One feed can die - nothing notices'.
+
+83. hyperscale-aerial - "A hyperscale data centre campus from the air"
+PROMPT: [STYLE] An aerial view of a huge data-centre campus: multiple warehouse
+buildings, rows of rooftop cooling plant, an electrical substation, cooling ponds
+and construction of the next hall, scale card 'hundreds of thousands of servers,
+power measured in hundreds of megawatts'.
+
+------------------------------------------------------------------------------
+SECTION 12 - CLOUD HARDWARE
+------------------------------------------------------------------------------
+
+84. cloud-regions-map - "Cloud regions in South Africa"
+PROMPT: [STYLE] A clean map of Africa focused on South Africa with two glowing
+region markers on Johannesburg and Cape Town, each expanding into a callout of
+three linked data-centre icons labelled 'availability zones', small legend 'a
+region = multiple data centres, minutes apart, sharing nothing'.
+
+85. hypervisor-diagram - "One physical host, many virtual machines"
+PROMPT: [STYLE] A layered diagram: bottom a physical server card labelled
+'hardware - CPU, RAM, storage, network'; above it a thin layer labelled
+'hypervisor'; above that four separate VM cards each with its own mini OS logo
+and app icon, caption 'Each VM believes it owns the machine'.
+
+86. gpu-cluster - "An AI GPU cluster"
+PROMPT: [STYLE] An AI server rack with GPU trays slid open showing rows of
+accelerator modules under massive heatsinks, thick bundles of InfiniBand cables
+in purple/black linking racks, stat cards '8 GPUs per node' and 'thousands of
+nodes per training cluster'.
+
+87. liquid-cooled-rack - "Liquid cooling reaches the rack"
+PROMPT: [STYLE] A server rack with liquid cooling manifolds: coolant pipes with
+quick-disconnect fittings running to cold plates on every GPU, coolant
+distribution unit at the bottom, caption 'AI chips exceed what air can carry -
+the plumbing moved into the rack'.
+
+88. undersea-cable-map - "The undersea cables connecting South Africa"
+PROMPT: [STYLE] A map of Africa surrounded by ocean with glowing submarine cable
+routes hugging the coasts and crossing to Europe, South America and Asia, cables
+labelled WACS, EASSy, Equiano and 2Africa, landing points marked at Cape Town,
+Yzerfontein, Melkbosstrand and Mtunzini.
+
+89. cable-landing - "Submarine fibre cable"
+PROMPT: [STYLE] Split card: left a cross-section of a submarine cable showing
+layers (polyethylene, steel armour wires, copper, and hair-thin optical fibres at
+the core) with a coin for scale; right a cable-laying ship paying cable into the
+ocean, caption 'The internet is mostly under the sea'.
+
+------------------------------------------------------------------------------
+SECTION 13 - SOFTWARE TODAY: OPERATING SYSTEMS AND APPLICATIONS
+------------------------------------------------------------------------------
+
+90. os-family - "The operating systems a support tech meets in one week"
+PROMPT: [STYLE] Six rounded cards in a grid, each with a device outline and OS
+name: Windows 11 (office laptop), Windows Server (rack icon), macOS (design
+studio), Ubuntu Linux (terminal window), Android (phone), iOS (tablet), caption
+'Same job on every one: keep people working'.
+
+91. task-manager - "Task Manager - processes, memory, page file"
+SCREENSHOT: Best made yourself - press Ctrl+Shift+Esc, go to Performance tab,
+screenshot Memory view showing 'in use' and 'committed'.
+FALLBACK PROMPT: [STYLE] A stylised system-monitor window mock-up: left rail with
+CPU/Memory/Disk/Network, main pane a live memory graph with cards 'In use 11.2 GB',
+'Available 4.6 GB', 'Committed 14.8/23.9 GB'.
+
+92. device-manager - "Device Manager - yellow triangles"
+SCREENSHOT: Best made yourself - open Device Manager on a machine with a missing
+driver, or disable a device temporarily to capture the warning icon.
+FALLBACK PROMPT: [STYLE] A stylised device tree window mock-up: categories like
+Display adapters, Network adapters expanded, one entry 'Unknown device' flagged
+with a yellow warning triangle, right-click menu open on 'Update driver'.
+
+93. linux-server-terminal - "A Linux server - no desktop, just work"
+SCREENSHOT: Best made yourself - SSH to any Linux box and screenshot htop or
+'systemctl status nginx'.
+FALLBACK PROMPT: [STYLE] A dark terminal window mock-up showing an SSH session:
+a prompt 'admin@web01:~$', output of a service status command with green 'active
+(running)' text and a process list with CPU/MEM columns.
+
+94. licence-diagram - "Licence models compared"
+PROMPT: [STYLE] Five rounded cards in a row comparing software licensing: OEM
+('dies with the machine'), Retail ('yours, movable'), Volume ('one agreement,
+many seats'), Subscription ('rent monthly, always current'), Open source ('free
+to use, inspect, change'), each with a small icon and a one-line 'who uses it'.
+
+------------------------------------------------------------------------------
+SECTION 14 - FIRMWARE, BOOT AND WHEN IT ALL GOES WRONG
+------------------------------------------------------------------------------
+
+95. post-screen - "POST - firmware checking hardware"
+PROMPT: [STYLE] A monitor showing a firmware splash/POST screen: vendor logo, memory
+test count, detected drives listed, 'Press DEL to enter Setup' at the bottom, small
+side cards showing beep-code speaker and debug LED on the motherboard.
+
+96. uefi-setup - "UEFI setup - boot order, drives, temperatures"
+PROMPT: [STYLE] A modern UEFI setup interface mock-up: graphical dashboard showing
+CPU temperature dial, fan speeds, detected RAM and drives, and a boot-priority list
+with drag handles (NVMe SSD first, USB second, network last).
+
+97. boot-sequence-diagram - "The boot chain"
+PROMPT: [STYLE] A horizontal five-step flow with arrows and icons: 1 Firmware/UEFI
+(chip icon, 'POST checks hardware') -> 2 Bootloader (drive icon, 'found on the boot
+drive') -> 3 OS kernel (gear icon) -> 4 Drivers and services (stack icon) -> 5
+Login screen (user icon). A red fault flag under each step naming its classic
+failure (dead PSU / 'no boot device' / stop error / spinning forever / wrong
+password).
+
+98. bsod - "A stop error (BSOD)"
+PROMPT: [STYLE] A monitor showing a modern blue stop-error screen with a sad-face
+emoticon, 'Your PC ran into a problem', a QR code and stop code
+'MEMORY_MANAGEMENT', sticky-note overlay in the corner reading 'Write down the
+code - it is the clue, not the catastrophe'.
+
+------------------------------------------------------------------------------
+SECTION 15 - CLOSING
+------------------------------------------------------------------------------
+
+99. timeline-poster - "200 years in one line - Babbage to AI"
+PROMPT: [STYLE] A wide printable timeline poster from 1837 to 2026 with an era-
+coloured band and milestone icons above the line: Analytical Engine 1837, Ada's
+algorithm 1843, Hollerith 1890, human computers 1940s, Colossus 1943, ENIAC 1945,
+transistor 1947, first compiler 1952, IC 1958, Intel 4004 1971, Altair 1975,
+Apple II 1977, IBM PC 1981, Mac 1984, Windows 95, WWW 1991, iPhone 2007, cloud
+2010s, AI data centres 2020s. Each milestone a tiny illustration, minimal text.
+
+==============================================================================
+EXTRA - YOUR RAM EVOLUTION INFOGRAPHIC
+==============================================================================
+The RAM evolution prompt you already wrote fits best in the placeholder
+'ddr-dimm' (Section 6) or as a second classroom poster alongside
+'timeline-poster'. It is a good prompt as-is; consider adding the [STYLE] block
+above for consistency with the rest of the set.
+
+TIPS FOR GENERATING
+- Generate at 16:9 / widest available size; the lesson figures are landscape.
+- AI generators cannot spell reliably. If a prompt asks for labels and the text
+  comes out garbled, regenerate with 'no text, no labels' and treat the image as
+  illustration only (the caption under the placeholder already explains it).
+- For anything marked SEARCH, the real photograph will always look better and is
+  historically accurate - Wikimedia Commons images of NASA, US Army and pre-1930
+  works are public domain.
+- Downloads upload straight into the lesson placeholders; images are resized
+  automatically and shared to all learner accounts.
