@@ -4494,11 +4494,6 @@ a.plan-ppt:hover {
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--ink-2);
-  transition: transform 0.15s ease, border-color 0.15s ease;
-}
-.lesson-screen .lesson-section > .duty-list li:hover {
-  border-color: var(--azure);
-  transform: translateX(2px);
 }
 .lesson-screen .lesson-section > .duty-list li .ico {
   color: var(--azure);
