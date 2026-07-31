@@ -4434,6 +4434,99 @@ a.plan-ppt:hover {
   margin-bottom: 12px;
 }
 
+/* --- edX-style lesson wizard: one section per screen with Prev/Next --- */
+.lesson-screen {
+  max-width: 1200px;
+  animation: lesson-fade 0.25s ease;
+}
+@keyframes lesson-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.lesson-stepper {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--bg);
+  padding: 10px 0 14px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.lesson-stepper-top {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.lesson-step-count {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--azure);
+  white-space: nowrap;
+}
+.lesson-step-title {
+  color: var(--ink-3);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lesson-progress {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.lesson-progress > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--azure), var(--green));
+  transition: width 0.25s ease;
+}
+.lesson-nav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 24px 0 8px;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+}
+.lesson-nav .btn {
+  min-width: 130px;
+  justify-content: center;
+}
+.lesson-nav-dots {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 14px;
+}
+.lesson-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--border-2);
+  background: var(--surface);
+  cursor: pointer;
+  padding: 0;
+}
+.lesson-dot:hover {
+  border-color: var(--azure);
+}
+.lesson-dot.done {
+  background: var(--green);
+  border-color: var(--green);
+}
+.lesson-dot.active {
+  background: var(--azure);
+  border-color: var(--azure);
+  transform: scale(1.35);
+}
+
 /* --- Quiz: inline figure (e.g. water-supply analogy diagram) --- */
 .quiz-figure {
   margin: 0 0 14px;

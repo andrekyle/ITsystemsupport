@@ -1083,17 +1083,29 @@ export function UnitPage({
   const [idealOpen, setIdealOpen] = useState<Record<string, boolean>>({});
   /** bumped per exercise on "Try again" so the answer blocks remount empty */
   const [exReset, setExReset] = useState<Record<string, number>>({});
+  /** edX-style lesson wizard — index of the section currently on screen */
+  const [lessonStep, setLessonStep] = useState<number>(() => {
+    const raw = localStorage.getItem(`lessonStep:${unitId}`);
+    const n = raw ? Number(raw) : 0;
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  });
 
   // switching to a different unit standard always lands on its Overview tab
   useEffect(() => {
     setTab(loadUnitTab(unitId));
     setQuizId(null);
+    const raw = localStorage.getItem(`lessonStep:${unitId}`);
+    const n = raw ? Number(raw) : 0;
+    setLessonStep(Number.isFinite(n) && n >= 0 ? n : 0);
   }, [unitId]);
 
   useEffect(() => {
     localStorage.setItem(UNIT_TAB_KEY, tab);
     localStorage.setItem(UNIT_TAB_US_KEY, unitId);
   }, [tab, unitId]);
+  useEffect(() => {
+    localStorage.setItem(`lessonStep:${unitId}`, String(lessonStep));
+  }, [lessonStep, unitId]);
   const [noteError, setNoteError] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const dragIdRef = useRef<string | null>(null);
@@ -1504,6 +1516,15 @@ export function UnitPage({
           )}
           {figError && <p className="auth-error">{figError}</p>}
           {content.lesson.map((sec, si) => {
+            // edX-style wizard: only render the section that is currently on screen
+            if (si !== Math.min(lessonStep, content.lesson.length - 1)) return null;
+            const total = content.lesson.length;
+            const isFirst = si === 0;
+            const isLast = si === total - 1;
+            const go = (next: number) => {
+              setLessonStep(next);
+              document.querySelector(".content")?.scrollTo({ top: 0, behavior: "smooth" });
+            };
             const body = (
               <div className="saqa-body lesson-section">
                 {sec.paragraphs.map((p, i) => (
@@ -1716,9 +1737,63 @@ export function UnitPage({
                 )}
               </div>
             );
-            if (sec.flat)
-              return (
-                <div key={sec.heading} className="lesson-flat">
+            const stepper = (
+              <div className="lesson-stepper">
+                <div className="lesson-stepper-top">
+                  <span className="lesson-step-count">
+                    Section {si + 1} of {total}
+                  </span>
+                  <span className="lesson-step-title">{sec.heading}</span>
+                </div>
+                <div
+                  className="lesson-progress"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={total}
+                  aria-valuenow={si + 1}
+                >
+                  <span style={{ width: `${((si + 1) / total) * 100}%` }} />
+                </div>
+              </div>
+            );
+            const nav = (
+              <div className="lesson-nav">
+                <button
+                  className="btn ghost"
+                  disabled={isFirst}
+                  onClick={() => go(si - 1)}
+                >
+                  <Icon name="chevronLeft" size={16} />
+                  Previous
+                </button>
+                <span className="lesson-nav-dots">
+                  {content.lesson.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className={`lesson-dot${i === si ? " active" : ""}${i < si ? " done" : ""}`}
+                      aria-label={`Go to section ${i + 1}`}
+                      onClick={() => go(i)}
+                    />
+                  ))}
+                </span>
+                {!isLast ? (
+                  <button className="btn" onClick={() => go(si + 1)}>
+                    Next
+                    <Icon name="chevronRight" size={16} />
+                  </button>
+                ) : (
+                  <button className="btn" onClick={() => setTab("exercises")}>
+                    Finish lesson
+                    <Icon name="checkCircle" size={16} />
+                  </button>
+                )}
+              </div>
+            );
+            return (
+              <div key={sec.heading} className="lesson-screen">
+                {stepper}
+                <div className="lesson-flat">
                   <h2 className="section-title">
                     <span className="ico">
                       <Icon name={sec.icon} size={20} />
@@ -1727,29 +1802,21 @@ export function UnitPage({
                   </h2>
                   {body}
                 </div>
-              );
-            return (
-              <details key={sec.heading} className="saqa-details lesson-acc">
-                <summary>
-                  <Icon name={sec.icon} size={17} />
-                  {sec.heading}
-                  <span className="chev">
-                    <Icon name="chevronDown" size={15} />
-                  </span>
-                </summary>
-                {body}
-              </details>
+                {nav}
+                {isLast && (
+                  <div className="callout">
+                    <span className="ico">
+                      <Icon name="checkCircle" size={19} />
+                    </span>
+                    <span>
+                      Finished the lesson? Mark <strong>Lesson & Training Aids</strong> as complete
+                      on the Overview tab, then work through the Exercises.
+                    </span>
+                  </div>
+                )}
+              </div>
             );
           })}
-          <div className="callout">
-            <span className="ico">
-              <Icon name="checkCircle" size={19} />
-            </span>
-            <span>
-              Finished the lesson? Mark <strong>Lesson & Training Aids</strong> as complete on the
-              Overview tab, then work through the Exercises.
-            </span>
-          </div>
         </>
       )}
 
