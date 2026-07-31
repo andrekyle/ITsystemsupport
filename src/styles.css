@@ -4540,6 +4540,11 @@ a.plan-ppt:hover {
   line-height: 1.5;
   color: var(--ink);
   background: var(--surface);
+  min-height: calc(2 * 1.5em + 22px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 2px;
 }
 [data-theme="dark"] .lesson-screen .lesson-figure,
 [data-theme="dark"] .lesson-screen .lesson-figure img,
