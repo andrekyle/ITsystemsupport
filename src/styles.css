@@ -4446,34 +4446,16 @@ a.plan-ppt:hover {
 
 /* ---- Big edX-style section heading in the wizard ---- */
 .lesson-screen .lesson-flat > .section-title {
-  position: relative;
   font-size: 26px;
   line-height: 1.25;
-  padding: 8px 0 12px 18px;
+  padding: 8px 0 12px;
   margin-bottom: 20px;
   border-bottom: 1px solid var(--border);
   color: var(--ink);
 }
-.lesson-screen .lesson-flat > .section-title::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 6px;
-  bottom: 12px;
-  width: 4px;
-  border-radius: 3px;
-  background: linear-gradient(180deg, var(--azure), var(--green));
-}
 .lesson-screen .lesson-flat > .section-title .ico {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: var(--azure-light);
-  color: var(--azure-darker);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 8px;
+  color: var(--ink-2);
+  margin-right: 4px;
 }
 
 /* ---- Lead paragraph gets bigger and darker ---- */
