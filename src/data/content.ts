@@ -1,152 +1,90 @@
 import type { UnitContent } from "../types";
 
-/** Two-row diagram used inside the PSU quiz "matching" question: analogy on top, real
- * PC components on the bottom, connected by arrows. Kept as an inline SVG string so
- * questions can render it via `dangerouslySetInnerHTML`. */
+/** Illustrates the water-supply analogy used in the PSU "matching" quiz question.
+ * Deliberately shows ONLY the analogy side (river → treatment plant → pipes → city
+ * network → buildings) so the learner can still visualise the metaphor without
+ * being handed the pairing to the real PC components. */
 const WATER_ANALOGY_SVG = `
-<svg viewBox="0 0 960 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Water supply analogy vs PC power distribution">
+<svg viewBox="0 0 960 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The water supply analogy: river, treatment plant, pipes, city network, buildings">
   <defs>
     <marker id="wa-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0 0L10 5L0 10z" fill="#1f6feb"/>
     </marker>
     <style>
       .wa-lbl { font: 600 12px system-ui, -apple-system, Segoe UI, sans-serif; fill:#0b3a7a; text-anchor:middle; }
-      .wa-sub { font: 500 11px system-ui, -apple-system, Segoe UI, sans-serif; fill:#3b4d66; text-anchor:middle; }
-      .wa-hd  { font: 700 12px system-ui, -apple-system, Segoe UI, sans-serif; fill:#0b3a7a; text-anchor:start; letter-spacing:.06em; text-transform:uppercase; }
+      .wa-hd  { font: 700 12px system-ui, -apple-system, Segoe UI, sans-serif; fill:#0b3a7a; text-anchor:middle; letter-spacing:.06em; text-transform:uppercase; }
       .wa-box { fill:#eaf3ff; stroke:#8fb6ff; stroke-width:1.4; }
-      .wa-box-r { fill:#fff4e5; stroke:#f0a24e; stroke-width:1.4; }
-      .wa-arrow { stroke:#1f6feb; stroke-width:2; fill:none; marker-end:url(#wa-arr); }
+      .wa-arrow { stroke:#1f6feb; stroke-width:2.2; fill:none; marker-end:url(#wa-arr); }
       .wa-ico { fill:none; stroke:#0b3a7a; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-      .wa-ico-r { fill:none; stroke:#b8620a; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
       .wa-fill { fill:#8fb6ff; }
-      .wa-fill-r { fill:#f0a24e; }
     </style>
   </defs>
 
-  <text x="16" y="22" class="wa-hd">Analogy</text>
-  <text x="16" y="200" class="wa-hd">Real PC</text>
-
-  <!-- ============ TOP ROW: ANALOGY ============ -->
+  <text x="480" y="22" class="wa-hd">The water supply system</text>
 
   <!-- 1. River -->
-  <g transform="translate(40,40)">
-    <rect class="wa-box" x="0" y="0" width="150" height="110" rx="10"/>
+  <g transform="translate(20,40)">
+    <rect class="wa-box" x="0" y="0" width="150" height="130" rx="10"/>
     <path class="wa-ico" d="M18 55 Q35 40 55 55 T95 55 T135 55"/>
-    <path class="wa-ico" d="M18 70 Q35 55 55 70 T95 70 T135 70"/>
-    <path class="wa-ico" d="M18 85 Q35 70 55 85 T95 85 T135 85"/>
-    <text x="75" y="105" class="wa-lbl">River</text>
+    <path class="wa-ico" d="M18 75 Q35 60 55 75 T95 75 T135 75"/>
+    <path class="wa-ico" d="M18 95 Q35 80 55 95 T95 95 T135 95"/>
+    <text x="75" y="120" class="wa-lbl">River</text>
   </g>
+
+  <!-- arrow -->
+  <path class="wa-arrow" d="M175 105 h30"/>
 
   <!-- 2. Water treatment plant -->
-  <g transform="translate(215,40)">
-    <rect class="wa-box" x="0" y="0" width="150" height="110" rx="10"/>
-    <rect class="wa-ico" x="20" y="55" width="110" height="38"/>
-    <circle class="wa-ico" cx="45" cy="55" r="14"/>
-    <circle class="wa-ico" cx="105" cy="55" r="14"/>
-    <path class="wa-ico" d="M20 55h110"/>
-    <path class="wa-ico" d="M75 30v25"/>
-    <path class="wa-fill" d="M68 22h14l-7 -10z"/>
-    <text x="75" y="105" class="wa-lbl">Treatment plant</text>
+  <g transform="translate(210,40)">
+    <rect class="wa-box" x="0" y="0" width="150" height="130" rx="10"/>
+    <rect class="wa-ico" x="20" y="60" width="110" height="40"/>
+    <circle class="wa-ico" cx="45" cy="60" r="14"/>
+    <circle class="wa-ico" cx="105" cy="60" r="14"/>
+    <path class="wa-ico" d="M20 60h110"/>
+    <path class="wa-ico" d="M75 35v25"/>
+    <path class="wa-fill" d="M68 27h14l-7 -10z"/>
+    <text x="75" y="120" class="wa-lbl">Treatment plant</text>
   </g>
+
+  <!-- arrow -->
+  <path class="wa-arrow" d="M365 105 h30"/>
 
   <!-- 3. Pipes -->
-  <g transform="translate(390,40)">
-    <rect class="wa-box" x="0" y="0" width="150" height="110" rx="10"/>
-    <rect class="wa-ico" x="15" y="52" width="120" height="14" rx="4"/>
-    <rect class="wa-ico" x="15" y="72" width="120" height="14" rx="4"/>
-    <path class="wa-ico" d="M45 52v-14M105 52v-14M45 86v14M105 86v14"/>
-    <text x="75" y="105" class="wa-lbl">Pipes</text>
+  <g transform="translate(400,40)">
+    <rect class="wa-box" x="0" y="0" width="150" height="130" rx="10"/>
+    <rect class="wa-ico" x="15" y="55" width="120" height="14" rx="4"/>
+    <rect class="wa-ico" x="15" y="80" width="120" height="14" rx="4"/>
+    <path class="wa-ico" d="M45 55v-14M105 55v-14M45 94v14M105 94v14"/>
+    <text x="75" y="120" class="wa-lbl">Pipes</text>
   </g>
+
+  <!-- arrow -->
+  <path class="wa-arrow" d="M555 105 h30"/>
 
   <!-- 4. City water network -->
-  <g transform="translate(565,40)">
-    <rect class="wa-box" x="0" y="0" width="150" height="110" rx="10"/>
-    <path class="wa-ico" d="M20 80h110M75 40v40M40 55v25M110 55v25M55 65h40"/>
-    <circle class="wa-fill" cx="20" cy="80" r="4"/>
-    <circle class="wa-fill" cx="130" cy="80" r="4"/>
-    <circle class="wa-fill" cx="75" cy="40" r="4"/>
-    <circle class="wa-fill" cx="40" cy="55" r="4"/>
-    <circle class="wa-fill" cx="110" cy="55" r="4"/>
-    <text x="75" y="105" class="wa-lbl">City water network</text>
+  <g transform="translate(590,40)">
+    <rect class="wa-box" x="0" y="0" width="150" height="130" rx="10"/>
+    <path class="wa-ico" d="M20 90h110M75 50v40M40 65v25M110 65v25M55 75h40"/>
+    <circle class="wa-fill" cx="20" cy="90" r="4"/>
+    <circle class="wa-fill" cx="130" cy="90" r="4"/>
+    <circle class="wa-fill" cx="75" cy="50" r="4"/>
+    <circle class="wa-fill" cx="40" cy="65" r="4"/>
+    <circle class="wa-fill" cx="110" cy="65" r="4"/>
+    <text x="75" y="120" class="wa-lbl">City water network</text>
   </g>
+
+  <!-- arrow -->
+  <path class="wa-arrow" d="M745 105 h30"/>
 
   <!-- 5. Buildings -->
-  <g transform="translate(740,40)">
-    <rect class="wa-box" x="0" y="0" width="180" height="110" rx="10"/>
-    <path class="wa-ico" d="M20 90V55l20 -15 20 15V90z"/>
-    <path class="wa-ico" d="M70 90V45h30V90"/>
-    <path class="wa-ico" d="M115 90V60h20V90"/>
-    <path class="wa-ico" d="M145 90V70h20V90"/>
-    <path class="wa-ico" d="M78 55h4v6h-4zM88 55h4v6h-4zM78 68h4v6h-4zM88 68h4v6h-4z"/>
-    <text x="90" y="105" class="wa-lbl">Buildings</text>
-  </g>
-
-  <!-- ============ ARROWS ============ -->
-  <path class="wa-arrow" d="M115 170 v25"/>
-  <path class="wa-arrow" d="M290 170 v25"/>
-  <path class="wa-arrow" d="M465 170 v25"/>
-  <path class="wa-arrow" d="M640 170 v25"/>
-  <path class="wa-arrow" d="M830 170 v25"/>
-
-  <!-- ============ BOTTOM ROW: REAL COMPONENTS ============ -->
-
-  <!-- 1. Wall outlet -->
-  <g transform="translate(40,205)">
-    <rect class="wa-box-r" x="0" y="0" width="150" height="110" rx="10"/>
-    <rect class="wa-ico-r" x="40" y="20" width="70" height="70" rx="10"/>
-    <circle class="wa-ico-r" cx="65" cy="55" r="5"/>
-    <circle class="wa-ico-r" cx="85" cy="55" r="5"/>
-    <rect class="wa-fill-r" x="72" y="72" width="6" height="10" rx="1"/>
-    <text x="75" y="105" class="wa-lbl">Wall outlet · 230 V AC</text>
-  </g>
-
-  <!-- 2. PSU -->
-  <g transform="translate(215,205)">
-    <rect class="wa-box-r" x="0" y="0" width="150" height="110" rx="10"/>
-    <rect class="wa-ico-r" x="15" y="30" width="120" height="55" rx="6"/>
-    <circle class="wa-ico-r" cx="40" cy="57" r="14"/>
-    <path class="wa-ico-r" d="M85 42h35M85 52h35M85 62h35M85 72h35"/>
-    <text x="75" y="105" class="wa-lbl">Power Supply Unit</text>
-  </g>
-
-  <!-- 3. Cables -->
-  <g transform="translate(390,205)">
-    <rect class="wa-box-r" x="0" y="0" width="150" height="110" rx="10"/>
-    <path class="wa-ico-r" d="M20 45c25 0 25 25 55 25s30 -25 55 -25"/>
-    <path class="wa-ico-r" d="M20 70c25 0 25 25 55 25s30 -25 55 -25"/>
-    <rect class="wa-fill-r" x="14" y="38" width="10" height="16" rx="2"/>
-    <rect class="wa-fill-r" x="126" y="38" width="10" height="16" rx="2"/>
-    <rect class="wa-fill-r" x="14" y="63" width="10" height="16" rx="2"/>
-    <rect class="wa-fill-r" x="126" y="63" width="10" height="16" rx="2"/>
-    <text x="75" y="105" class="wa-lbl">PSU cables</text>
-  </g>
-
-  <!-- 4. Motherboard -->
-  <g transform="translate(565,205)">
-    <rect class="wa-box-r" x="0" y="0" width="150" height="110" rx="10"/>
-    <rect class="wa-ico-r" x="15" y="20" width="120" height="70" rx="4"/>
-    <rect class="wa-ico-r" x="30" y="32" width="26" height="26"/>
-    <rect class="wa-ico-r" x="70" y="30" width="55" height="8" rx="2"/>
-    <rect class="wa-ico-r" x="70" y="42" width="55" height="8" rx="2"/>
-    <rect class="wa-ico-r" x="30" y="68" width="90" height="6" rx="1"/>
-    <rect class="wa-ico-r" x="30" y="78" width="90" height="6" rx="1"/>
-    <text x="75" y="105" class="wa-lbl">Motherboard</text>
-  </g>
-
-  <!-- 5. Components (CPU / GPU / RAM / SSD) -->
-  <g transform="translate(740,205)">
-    <rect class="wa-box-r" x="0" y="0" width="180" height="110" rx="10"/>
-    <rect class="wa-ico-r" x="15" y="22" width="34" height="34"/>
-    <text x="32" y="44" class="wa-sub">CPU</text>
-    <rect class="wa-ico-r" x="60" y="22" width="52" height="34" rx="3"/>
-    <text x="86" y="44" class="wa-sub">GPU</text>
-    <rect class="wa-ico-r" x="122" y="22" width="46" height="34" rx="2"/>
-    <text x="145" y="44" class="wa-sub">RAM</text>
-    <rect class="wa-ico-r" x="15" y="66" width="60" height="24" rx="2"/>
-    <text x="45" y="82" class="wa-sub">SSD</text>
-    <rect class="wa-ico-r" x="85" y="66" width="80" height="24" rx="2"/>
-    <text x="125" y="82" class="wa-sub">Drives / Fans</text>
-    <text x="90" y="105" class="wa-lbl">PC components</text>
+  <g transform="translate(780,40)">
+    <rect class="wa-box" x="0" y="0" width="160" height="130" rx="10"/>
+    <path class="wa-ico" d="M20 100V60l20 -15 20 15V100z"/>
+    <path class="wa-ico" d="M70 100V50h30V100"/>
+    <path class="wa-ico" d="M115 100V70h20V100"/>
+    <path class="wa-ico" d="M145 100V80h10V100"/>
+    <path class="wa-ico" d="M78 60h4v6h-4zM88 60h4v6h-4zM78 73h4v6h-4zM88 73h4v6h-4z"/>
+    <text x="80" y="120" class="wa-lbl">Buildings</text>
   </g>
 </svg>
 `;
