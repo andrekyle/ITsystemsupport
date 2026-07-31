@@ -575,6 +575,132 @@ export function useLessonFigures(us: string) {
   return { figures, setFigure, removeFigure };
 }
 
+/* ---------- super-user lesson edits (per unit, saved locally) ---------- */
+
+export interface LessonEdits {
+  /** section index -> replacement heading */
+  headings?: Record<number, string>;
+  /** `${sectionIdx}:${paraIdx}` -> replacement paragraph text */
+  paragraphs?: Record<string, string>;
+  /** figure id -> replacement caption */
+  captions?: Record<string, string>;
+  /** section index -> ordered list of figure ids (unknown ids preserved after) */
+  figureOrder?: Record<number, string[]>;
+  /** figure id -> scale multiplier, 0.5..1.4 */
+  figureScale?: Record<string, number>;
+}
+
+const lessonEditsKey = (us: string) => `itss.lessonedits.${us}`;
+
+export function useLessonEdits(us: string) {
+  const [edits, setEditsState] = useState<LessonEdits>(() => read<LessonEdits>(lessonEditsKey(us), {}));
+
+  useEffect(() => {
+    setEditsState(read<LessonEdits>(lessonEditsKey(us), {}));
+  }, [us]);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === lessonEditsKey(us)) setEditsState(read<LessonEdits>(lessonEditsKey(us), {}));
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [us]);
+
+  const apply = useCallback(
+    (mutate: (draft: LessonEdits) => LessonEdits) => {
+      const fresh = read<LessonEdits>(lessonEditsKey(us), {});
+      const next = mutate({ ...fresh });
+      write(lessonEditsKey(us), next);
+      setEditsState(next);
+    },
+    [us]
+  );
+
+  const setHeading = useCallback(
+    (sIdx: number, text: string) =>
+      apply((d) => {
+        const headings = { ...(d.headings ?? {}) };
+        if (text.trim()) headings[sIdx] = text; else delete headings[sIdx];
+        return { ...d, headings };
+      }),
+    [apply]
+  );
+
+  const setParagraph = useCallback(
+    (sIdx: number, pIdx: number, text: string) =>
+      apply((d) => {
+        const paragraphs = { ...(d.paragraphs ?? {}) };
+        const key = `${sIdx}:${pIdx}`;
+        if (text.trim()) paragraphs[key] = text; else delete paragraphs[key];
+        return { ...d, paragraphs };
+      }),
+    [apply]
+  );
+
+  const setCaption = useCallback(
+    (figId: string, text: string) =>
+      apply((d) => {
+        const captions = { ...(d.captions ?? {}) };
+        if (text.trim()) captions[figId] = text; else delete captions[figId];
+        return { ...d, captions };
+      }),
+    [apply]
+  );
+
+  const moveFigure = useCallback(
+    (sIdx: number, allIds: string[], figId: string, dir: -1 | 1) =>
+      apply((d) => {
+        const orders = { ...(d.figureOrder ?? {}) };
+        const current = (orders[sIdx] && orders[sIdx].length ? orders[sIdx] : allIds).slice();
+        // ensure every known id is present
+        for (const id of allIds) if (!current.includes(id)) current.push(id);
+        const idx = current.indexOf(figId);
+        const swap = idx + dir;
+        if (idx >= 0 && swap >= 0 && swap < current.length) {
+          [current[idx], current[swap]] = [current[swap], current[idx]];
+          orders[sIdx] = current;
+        }
+        return { ...d, figureOrder: orders };
+      }),
+    [apply]
+  );
+
+  const setScale = useCallback(
+    (figId: string, scale: number) =>
+      apply((d) => {
+        const figureScale = { ...(d.figureScale ?? {}) };
+        const clamped = Math.max(0.5, Math.min(1.4, Math.round(scale * 10) / 10));
+        if (Math.abs(clamped - 1) < 0.001) delete figureScale[figId];
+        else figureScale[figId] = clamped;
+        return { ...d, figureScale };
+      }),
+    [apply]
+  );
+
+  const resetSection = useCallback(
+    (sIdx: number, figIds: string[]) =>
+      apply((d) => {
+        const headings = { ...(d.headings ?? {}) };
+        delete headings[sIdx];
+        const paragraphs = { ...(d.paragraphs ?? {}) };
+        for (const k of Object.keys(paragraphs)) if (k.startsWith(`${sIdx}:`)) delete paragraphs[k];
+        const figureOrder = { ...(d.figureOrder ?? {}) };
+        delete figureOrder[sIdx];
+        const captions = { ...(d.captions ?? {}) };
+        const figureScale = { ...(d.figureScale ?? {}) };
+        for (const id of figIds) {
+          delete captions[id];
+          delete figureScale[id];
+        }
+        return { ...d, headings, paragraphs, figureOrder, captions, figureScale };
+      }),
+    [apply]
+  );
+
+  return { edits, setHeading, setParagraph, setCaption, moveFigure, setScale, resetSection };
+}
+
 /* ---------- user-uploaded notes (stored separately per profile) ---------- */
 
 export interface UserNote {

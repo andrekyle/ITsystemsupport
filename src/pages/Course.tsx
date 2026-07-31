@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import React from "react";
 import { Icon } from "../icons";
-import type { ExerciseCheck, PoeDoc, ProgressState, Profile, Role, Route, UnitActivity, UnitStandard } from "../types";
+import type { ExerciseCheck, LessonFigure, PoeDoc, ProgressState, Profile, Role, Route, UnitActivity, UnitStandard } from "../types";
 import { UNIT_ACTIVITIES, isStaff } from "../types";
 import { COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
 import { GLOSSARY, getContent } from "../data/content";
 import { FIGURE_DEFAULTS } from "../data/figureDefaults";
-import { moduleCompletion, unitCompletion, unitStatus, useLessonFigures, useNotes, usePlanSlides, useSharedSettings } from "../store";
+import { moduleCompletion, unitCompletion, unitStatus, useLessonEdits, useLessonFigures, useNotes, usePlanSlides, useSharedSettings } from "../store";
 import { Bar } from "../components/Ring";
 import { Quiz } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
@@ -1128,6 +1128,8 @@ export function UnitPage({
   const [planUploadPct, setPlanUploadPct] = useState<number | null>(null);
   const { slides: planSlides, addSlide: addPlanSlide, removeSlide: removePlanSlide } = usePlanSlides(unitId);
   const { figures: figureImages, setFigure, removeFigure } = useLessonFigures(unitId);
+  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, moveFigure: editMoveFig, setScale: editSetScale, resetSection: editResetSection } = useLessonEdits(unitId);
+  const [editMode, setEditMode] = useState(false);
   const figFileRef = useRef<HTMLInputElement>(null);
   const pendingFigId = useRef<string | null>(null);
   const [figError, setFigError] = useState<string | null>(null);
@@ -1535,8 +1537,64 @@ export function UnitPage({
               setLessonStep(next);
               document.querySelector(".content")?.scrollTo({ top: 0, behavior: "smooth" });
             };
-            // First real (uploaded or default) figure becomes the hero at the top.
-            const heroFig = sec.figures?.find((f) => figureImages[f.id] || FIGURE_DEFAULTS[f.id]);
+            const secHeading = lessonEdits.headings?.[si] ?? sec.heading;
+            const paraText = (pi: number) => lessonEdits.paragraphs?.[`${si}:${pi}`] ?? sec.paragraphs[pi];
+            const capOf = (id: string, original: string) => lessonEdits.captions?.[id] ?? original;
+            const scaleOf = (id: string) => lessonEdits.figureScale?.[id] ?? 1;
+            const orderedFigures: LessonFigure[] = (() => {
+              if (!sec.figures) return [];
+              const order = lessonEdits.figureOrder?.[si];
+              if (!order || !order.length) return sec.figures;
+              const map = new Map(sec.figures.map((f) => [f.id, f] as const));
+              const seen = new Set<string>();
+              const result: LessonFigure[] = [];
+              for (const id of order) {
+                const f = map.get(id);
+                if (f) {
+                  result.push(f);
+                  seen.add(id);
+                }
+              }
+              for (const f of sec.figures) if (!seen.has(f.id)) result.push(f);
+              return result;
+            })();
+            const allFigIds = sec.figures?.map((f) => f.id) ?? [];
+            const editable = editMode && isSuperUser;
+            const figControls = (fig: LessonFigure) => (
+              <div className="fig-edit" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  title="Move up / earlier (first becomes the hero)"
+                  onClick={() => editMoveFig(si, allFigIds, fig.id, -1)}
+                >
+                  <Icon name="chevronLeft" size={13} />
+                </button>
+                <button
+                  type="button"
+                  title="Move down / later"
+                  onClick={() => editMoveFig(si, allFigIds, fig.id, 1)}
+                >
+                  <Icon name="chevronRight" size={13} />
+                </button>
+                <button
+                  type="button"
+                  title="Shrink"
+                  onClick={() => editSetScale(fig.id, scaleOf(fig.id) - 0.1)}
+                >
+                  −
+                </button>
+                <span className="fig-edit-scale">{Math.round(scaleOf(fig.id) * 100)}%</span>
+                <button
+                  type="button"
+                  title="Enlarge"
+                  onClick={() => editSetScale(fig.id, scaleOf(fig.id) + 0.1)}
+                >
+                  +
+                </button>
+              </div>
+            );
+            // First real (uploaded or default) figure in the effective order becomes the hero.
+            const heroFig = orderedFigures.find((f) => figureImages[f.id] || FIGURE_DEFAULTS[f.id]);
             const openLightboxFor = (f: { id: string; caption: string }) => {
               const up = figureImages[f.id];
               const def = FIGURE_DEFAULTS[f.id];
@@ -1556,36 +1614,73 @@ export function UnitPage({
                   const up = figureImages[heroFig.id];
                   const def = FIGURE_DEFAULTS[heroFig.id];
                   const src = up?.image ?? def?.src;
+                  const heroScale = scaleOf(heroFig.id);
+                  const heroCap = capOf(heroFig.id, heroFig.caption);
                   return (
-                    <button
-                      type="button"
-                      className="lesson-hero"
-                      onClick={() => openLightboxFor(heroFig)}
-                      title="Click to enlarge"
-                    >
-                      <img className="lesson-hero-bg" src={src} alt="" aria-hidden="true" />
-                      <img className="lesson-hero-img" src={src} alt={heroFig.caption} />
-                      <div className="lesson-hero-shade" />
-                      <div className="lesson-hero-body">
-                        <div className="lesson-hero-eyebrow">Section {si + 1}</div>
-                        <div className="lesson-hero-title">{sec.heading}</div>
-                        <div className="lesson-hero-cap">{heroFig.caption}</div>
-                      </div>
-                      <span className="lesson-hero-zoom" aria-hidden="true">
-                        <Icon name="image" size={16} />
-                        Click to enlarge
-                      </span>
-                    </button>
+                    <div className={`lesson-hero-wrap${editable ? " editable" : ""}`}>
+                      <button
+                        type="button"
+                        className="lesson-hero"
+                        onClick={() => !editable && openLightboxFor({ id: heroFig.id, caption: heroCap })}
+                        title={editable ? "Editing" : "Click to enlarge"}
+                        style={{ maxHeight: `${Math.round(420 * heroScale)}px`, minHeight: `${Math.round(240 * Math.min(1, heroScale))}px` }}
+                      >
+                        <img className="lesson-hero-bg" src={src} alt="" aria-hidden="true" />
+                        <img className="lesson-hero-img" src={src} alt={heroCap} />
+                        <div className="lesson-hero-shade" />
+                        <div className="lesson-hero-body">
+                          <div className="lesson-hero-eyebrow">Section {si + 1}</div>
+                          <div
+                            className="lesson-hero-title"
+                            contentEditable={editable}
+                            suppressContentEditableWarning
+                            onClick={(e) => editable && e.stopPropagation()}
+                            onBlur={(e) => editable && editHeading(si, e.currentTarget.textContent ?? "")}
+                          >
+                            {secHeading}
+                          </div>
+                          <div
+                            className="lesson-hero-cap"
+                            contentEditable={editable}
+                            suppressContentEditableWarning
+                            onClick={(e) => editable && e.stopPropagation()}
+                            onBlur={(e) => editCaption(heroFig.id, e.currentTarget.textContent ?? "")}
+                          >
+                            {heroCap}
+                          </div>
+                        </div>
+                        {!editable && (
+                          <span className="lesson-hero-zoom" aria-hidden="true">
+                            <Icon name="image" size={16} />
+                            Click to enlarge
+                          </span>
+                        )}
+                      </button>
+                      {editable && figControls(heroFig)}
+                    </div>
                   );
                 })()
               : null;
             const body = (
               <div className="saqa-body lesson-section">
-                {sec.paragraphs.map((p, i) => (
-                  <p key={i} className="lesson-p">
-                    <Gloss text={p} />
-                  </p>
-                ))}
+                {sec.paragraphs.map((_, i) => {
+                  const text = paraText(i);
+                  return editable ? (
+                    <p
+                      key={i}
+                      className="lesson-p editable"
+                      contentEditable
+                      suppressContentEditableWarning
+                      onBlur={(e) => editParagraph(si, i, e.currentTarget.textContent ?? "")}
+                    >
+                      {text}
+                    </p>
+                  ) : (
+                    <p key={i} className="lesson-p">
+                      <Gloss text={text} />
+                    </p>
+                  );
+                })}
                 {sec.bullets && (
                   <ul className="duty-list">
                     {sec.bullets.map((b) => (
@@ -1673,21 +1768,45 @@ export function UnitPage({
                 )}
                 {sec.figures && (
                   <div className="figure-grid">
-                    {sec.figures.filter((f) => f.id !== heroFig?.id).map((f) => {
+                    {orderedFigures.filter((f) => f.id !== heroFig?.id).map((f) => {
+                      const scale = scaleOf(f.id);
+                      const cap = capOf(f.id, f.caption);
+                      const figStyle: React.CSSProperties = scale !== 1 ? { maxWidth: `${Math.round(scale * 100)}%` } : {};
+                      const editableCap = (extra?: React.ReactNode) =>
+                        editable ? (
+                          <figcaption>
+                            <span
+                              contentEditable
+                              suppressContentEditableWarning
+                              className="editable-inline"
+                              onClick={(e) => e.stopPropagation()}
+                              onBlur={(e) => editCaption(f.id, e.currentTarget.textContent ?? "")}
+                            >
+                              {cap}
+                            </span>
+                            {extra}
+                          </figcaption>
+                        ) : (
+                          <figcaption>
+                            {cap}
+                            {extra}
+                          </figcaption>
+                        );
                       const up = figureImages[f.id];
                       if (up)
                         return (
-                          <figure key={f.id} className="lesson-figure">
+                          <figure key={f.id} className={`lesson-figure${editable ? " editable" : ""}`} style={figStyle}>
                             <button
                               type="button"
                               className="fig-open"
-                              onClick={() => openLightboxFor(f)}
-                              title="Click to enlarge"
+                              onClick={() => !editable && openLightboxFor({ id: f.id, caption: cap })}
+                              title={editable ? "Editing" : "Click to enlarge"}
                             >
-                              <img src={up.image} alt={f.caption} loading="lazy" />
+                              <img src={up.image} alt={cap} loading="lazy" />
                             </button>
-                            <figcaption>{f.caption}</figcaption>
-                            {isPrivileged && (
+                            {editableCap()}
+                            {editable && figControls(f)}
+                            {isPrivileged && !editable && (
                               <button
                                 type="button"
                                 className="fig-remove"
@@ -1702,17 +1821,16 @@ export function UnitPage({
                       const def = FIGURE_DEFAULTS[f.id];
                       if (def)
                         return (
-                          <figure key={f.id} className="lesson-figure">
+                          <figure key={f.id} className={`lesson-figure${editable ? " editable" : ""}`} style={figStyle}>
                             <button
                               type="button"
                               className="fig-open"
-                              onClick={() => openLightboxFor(f)}
-                              title="Click to enlarge"
+                              onClick={() => !editable && openLightboxFor({ id: f.id, caption: cap })}
+                              title={editable ? "Editing" : "Click to enlarge"}
                             >
-                              <img src={def.src} alt={f.caption} loading="lazy" />
+                              <img src={def.src} alt={cap} loading="lazy" />
                             </button>
-                            <figcaption>
-                              {f.caption}
+                            {editableCap(
                               <a
                                 className="fig-credit"
                                 href={def.sourceUrl}
@@ -1722,8 +1840,9 @@ export function UnitPage({
                               >
                                 {def.license}
                               </a>
-                            </figcaption>
-                            {isPrivileged && (
+                            )}
+                            {editable && figControls(f)}
+                            {isPrivileged && !editable && (
                               <button
                                 type="button"
                                 className="fig-remove"
@@ -1739,7 +1858,7 @@ export function UnitPage({
                           </figure>
                         );
                       return (
-                        <figure key={f.id} className="lesson-figure placeholder">
+                        <figure key={f.id} className={`lesson-figure placeholder${editable ? " editable" : ""}`} style={figStyle}>
                           <button
                             type="button"
                             className="fig-drop"
@@ -1750,13 +1869,14 @@ export function UnitPage({
                             }}
                           >
                             <Icon name="image" size={30} />
-                            <span className="fig-cap">{f.caption}</span>
+                            <span className="fig-cap">{cap}</span>
                             <span className="fig-hint">
                               {isPrivileged
                                 ? `Click to upload — ${f.hint ?? "add a suitable picture"}`
                                 : "Picture coming soon"}
                             </span>
                           </button>
+                          {editable && figControls(f)}
                         </figure>
                       );
                     })}
@@ -1811,7 +1931,30 @@ export function UnitPage({
                   <span className="lesson-step-count">
                     Section {si + 1} of {total}
                   </span>
-                  <span className="lesson-step-title">{sec.heading}</span>
+                  <span className="lesson-step-title">{secHeading}</span>
+                  {isSuperUser && (
+                    <span className="lesson-edit-toolbar">
+                      <button
+                        type="button"
+                        className={`btn ghost sm${editMode ? " active" : ""}`}
+                        onClick={() => setEditMode((v) => !v)}
+                        title="Toggle edit mode (super user)"
+                      >
+                        <Icon name="shield" size={13} />
+                        {editMode ? "Done editing" : "Edit content"}
+                      </button>
+                      {editMode && (
+                        <button
+                          type="button"
+                          className="btn ghost sm"
+                          onClick={() => editResetSection(si, allFigIds)}
+                          title="Discard my edits on this section"
+                        >
+                          Reset section
+                        </button>
+                      )}
+                    </span>
+                  )}
                 </div>
                 <div
                   className="lesson-progress"
@@ -1868,7 +2011,18 @@ export function UnitPage({
                       <span className="ico">
                         <Icon name={sec.icon} size={20} />
                       </span>
-                      {sec.heading}
+                      {editable ? (
+                        <span
+                          contentEditable
+                          suppressContentEditableWarning
+                          className="editable-inline"
+                          onBlur={(e) => editHeading(si, e.currentTarget.textContent ?? "")}
+                        >
+                          {secHeading}
+                        </span>
+                      ) : (
+                        secHeading
+                      )}
                     </h2>
                   )}
                   {body}

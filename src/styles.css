@@ -4727,6 +4727,110 @@ a.plan-ppt:hover {
   background: rgba(255, 255, 255, 0.22);
 }
 
+/* ---- Super-user edit mode for the lesson wizard ---- */
+.lesson-edit-toolbar {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.btn.ghost.sm {
+  padding: 4px 10px;
+  font-size: 12px;
+  gap: 4px;
+}
+.btn.ghost.sm.active {
+  background: var(--azure);
+  color: #fff;
+  border-color: var(--azure);
+}
+.lesson-p.editable,
+.editable-inline {
+  outline: 1px dashed transparent;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin-left: -4px;
+  transition: outline-color 0.15s ease, background 0.15s ease;
+  cursor: text;
+}
+.lesson-p.editable {
+  outline-color: rgba(80, 160, 240, 0.35);
+  background: rgba(80, 160, 240, 0.05);
+}
+.lesson-p.editable:focus,
+.editable-inline:focus {
+  outline: 1px solid var(--azure);
+  outline-style: solid;
+  background: rgba(80, 160, 240, 0.1);
+}
+.editable-inline {
+  display: inline-block;
+  min-width: 60px;
+}
+.lesson-hero-wrap {
+  position: relative;
+  margin: 0 0 18px;
+}
+.lesson-hero-wrap > .lesson-hero {
+  margin-bottom: 0;
+}
+.lesson-hero-wrap.editable .lesson-hero {
+  cursor: default;
+  outline: 2px solid var(--azure);
+  outline-offset: -2px;
+}
+.lesson-hero-wrap.editable .lesson-hero-title,
+.lesson-hero-wrap.editable .lesson-hero-cap {
+  cursor: text;
+  outline: 1px dashed rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.lesson-hero-wrap.editable .lesson-hero-title:focus,
+.lesson-hero-wrap.editable .lesson-hero-cap:focus {
+  outline: 1px solid #fff;
+}
+.lesson-figure.editable {
+  outline: 2px solid var(--azure);
+  outline-offset: -2px;
+}
+.fig-edit {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 4px 6px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+.fig-edit button {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 13px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.fig-edit button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+.fig-edit-scale {
+  font-size: 11px;
+  min-width: 34px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.85);
+}
+
 .lesson-stepper {
   position: sticky;
   top: -1px;
