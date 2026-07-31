@@ -4440,17 +4440,17 @@ a.plan-ppt:hover {
   animation: lesson-fade 0.25s ease;
 }
 @keyframes lesson-fade {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 .lesson-stepper {
   position: sticky;
-  top: 0;
-  z-index: 3;
-  background: var(--bg);
-  padding: 10px 0 14px;
-  margin-bottom: 6px;
-  border-bottom: 1px solid var(--border);
+  top: -1px;
+  z-index: 5;
+  background: var(--surface);
+  padding: 12px 0 14px;
+  margin: -12px 0 6px;
+  box-shadow: 0 6px 8px -8px rgba(0, 0, 0, 0.35);
 }
 .lesson-stepper-top {
   display: flex;
