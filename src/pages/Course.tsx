@@ -1090,11 +1090,17 @@ export function UnitPage({
     return Number.isFinite(n) && n >= 0 ? n : 0;
   });
   /** clicked lesson figure shown fullscreen in a lightbox (null = closed) */
-  const [lightbox, setLightbox] = useState<{ src: string; caption: string; credit?: string; creditUrl?: string } | null>(null);
+  type LightboxItem = { src: string; caption: string; credit?: string; creditUrl?: string };
+  const [lightbox, setLightbox] = useState<{ items: LightboxItem[]; index: number } | null>(null);
   useEffect(() => {
     if (!lightbox) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setLightbox(null);
+      else if (e.key === "ArrowLeft") {
+        setLightbox((lb) => (lb ? { ...lb, index: (lb.index - 1 + lb.items.length) % lb.items.length } : lb));
+      } else if (e.key === "ArrowRight") {
+        setLightbox((lb) => (lb ? { ...lb, index: (lb.index + 1) % lb.items.length } : lb));
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1614,18 +1620,27 @@ export function UnitPage({
             // First real (uploaded or default) figure in the effective order becomes the hero.
             const heroFig = orderedFigures.find((f) => figureImages[f.id] || FIGURE_DEFAULTS[f.id]);
             const openLightboxFor = (f: { id: string; caption: string }) => {
-              const up = figureImages[f.id];
-              const def = FIGURE_DEFAULTS[f.id];
-              if (up) {
-                setLightbox({ src: up.image, caption: f.caption });
-              } else if (def) {
-                setLightbox({
-                  src: def.src,
-                  caption: f.caption,
-                  credit: `${def.author} · ${def.license} · Wikimedia Commons`,
-                  creditUrl: def.sourceUrl,
-                });
+              const items: LightboxItem[] = [];
+              let hitIndex = 0;
+              for (const g of orderedFigures) {
+                const up = figureImages[g.id];
+                const def = FIGURE_DEFAULTS[g.id];
+                const cap = capOf(g.id, g.caption);
+                let item: LightboxItem | null = null;
+                if (up) item = { src: up.image, caption: cap };
+                else if (def)
+                  item = {
+                    src: def.src,
+                    caption: cap,
+                    credit: `${def.author} · ${def.license} · Wikimedia Commons`,
+                    creditUrl: def.sourceUrl,
+                  };
+                if (item) {
+                  if (g.id === f.id) hitIndex = items.length;
+                  items.push(item);
+                }
               }
+              if (items.length) setLightbox({ items, index: hitIndex });
             };
             const hero = heroFig
               ? (() => {
@@ -3032,43 +3047,74 @@ export function UnitPage({
         </>
       )}
 
-      {lightbox && (
-        <div
-          className="lightbox"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setLightbox(null)}
-        >
-          <button
-            type="button"
-            className="lightbox-close"
-            aria-label="Close"
-            onClick={(e) => {
-              e.stopPropagation();
-              setLightbox(null);
-            }}
+      {lightbox && (() => {
+        const cur = lightbox.items[lightbox.index];
+        const total = lightbox.items.length;
+        const prev = () => setLightbox((lb) => (lb ? { ...lb, index: (lb.index - 1 + lb.items.length) % lb.items.length } : lb));
+        const next = () => setLightbox((lb) => (lb ? { ...lb, index: (lb.index + 1) % lb.items.length } : lb));
+        return (
+          <div
+            className="lightbox"
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setLightbox(null)}
           >
-            <Icon name="close" size={20} />
-          </button>
-          <figure className="lightbox-figure" onClick={(e) => e.stopPropagation()}>
-            <img src={lightbox.src} alt={lightbox.caption} />
-            <figcaption>
-              <span>{lightbox.caption}</span>
-              {lightbox.credit && (
-                <a
-                  className="fig-credit"
-                  href={lightbox.creditUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {lightbox.credit}
-                </a>
-              )}
-            </figcaption>
-          </figure>
-        </div>
-      )}
+            <button
+              type="button"
+              className="lightbox-close"
+              aria-label="Close"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightbox(null);
+              }}
+            >
+              <Icon name="close" size={20} />
+            </button>
+            {total > 1 && (
+              <button
+                type="button"
+                className="lightbox-nav lightbox-prev"
+                aria-label="Previous picture"
+                onClick={(e) => { e.stopPropagation(); prev(); }}
+              >
+                <Icon name="chevronLeft" size={22} />
+              </button>
+            )}
+            <figure className="lightbox-figure" onClick={(e) => e.stopPropagation()}>
+              <img src={cur.src} alt={cur.caption} />
+              <figcaption>
+                <span>{cur.caption}</span>
+                {cur.credit && (
+                  <a
+                    className="fig-credit"
+                    href={cur.creditUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {cur.credit}
+                  </a>
+                )}
+                {total > 1 && (
+                  <span className="lightbox-count">
+                    {lightbox.index + 1} / {total}
+                  </span>
+                )}
+              </figcaption>
+            </figure>
+            {total > 1 && (
+              <button
+                type="button"
+                className="lightbox-nav lightbox-next"
+                aria-label="Next picture"
+                onClick={(e) => { e.stopPropagation(); next(); }}
+              >
+                <Icon name="chevronRight" size={22} />
+              </button>
+            )}
+          </div>
+        );
+      })()}
     </>
   );
 }
