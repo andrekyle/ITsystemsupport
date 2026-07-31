@@ -4443,6 +4443,123 @@ a.plan-ppt:hover {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+
+/* ---- Big edX-style section heading in the wizard ---- */
+.lesson-screen .lesson-flat > .section-title {
+  position: relative;
+  font-size: 26px;
+  line-height: 1.25;
+  padding: 8px 0 12px 18px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink);
+}
+.lesson-screen .lesson-flat > .section-title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 12px;
+  width: 4px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--azure), var(--green));
+}
+.lesson-screen .lesson-flat > .section-title .ico {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--azure-light);
+  color: var(--azure-darker);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+}
+
+/* ---- Lead paragraph gets bigger and darker ---- */
+.lesson-screen .lesson-section > .lesson-p:first-of-type {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--ink);
+  font-weight: 400;
+  border-left: 3px solid var(--azure-light);
+  padding-left: 14px;
+  margin-left: -2px;
+  margin-bottom: 18px;
+}
+
+/* ---- Follow-on paragraphs a bit larger too ---- */
+.lesson-screen .lesson-section > .lesson-p {
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+/* ---- Timeline-style bullets: "1804 — punched cards..." ---- */
+.lesson-screen .lesson-section > .duty-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 0;
+  margin: 10px 0 18px;
+}
+.lesson-screen .lesson-section > .duty-list li {
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px 10px 10px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--azure);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink-2);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.lesson-screen .lesson-section > .duty-list li:hover {
+  border-left-color: var(--green);
+  transform: translateX(2px);
+}
+.lesson-screen .lesson-section > .duty-list li .ico {
+  color: var(--azure);
+  margin-top: 2px;
+}
+.lesson-screen .lesson-section > .duty-list li strong {
+  color: var(--azure-darker);
+  font-weight: 700;
+  background: var(--azure-lighter);
+  padding: 1px 8px;
+  border-radius: 999px;
+  margin-right: 6px;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* ---- Figures: single = hero, two = side-by-side, many = grid ---- */
+.lesson-screen .figure-grid {
+  gap: 16px;
+  margin: 18px 0 8px;
+}
+.lesson-screen .figure-grid:has(> :only-child) {
+  grid-template-columns: 1fr;
+}
+.lesson-screen .figure-grid:has(> :only-child) .lesson-figure img {
+  max-height: 460px;
+}
+.lesson-screen .lesson-figure {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.lesson-screen .lesson-figure:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.35);
+}
+.lesson-screen .lesson-figure figcaption {
+  font-size: 13.5px;
+  padding: 10px 14px 12px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--surface);
+}
+
 .lesson-stepper {
   position: sticky;
   top: -1px;
