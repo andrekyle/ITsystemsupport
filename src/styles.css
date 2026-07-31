@@ -4541,6 +4541,184 @@ a.plan-ppt:hover {
   background: var(--surface);
 }
 
+/* ---- click-to-enlarge wrapper around figure images ---- */
+.lesson-figure .fig-open {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+  display: block;
+  width: 100%;
+}
+.lesson-figure .fig-open img {
+  transition: transform 0.3s ease;
+}
+.lesson-figure:hover .fig-open img {
+  transform: scale(1.02);
+}
+
+/* ---- Hero image at the top of a lesson section ---- */
+.lesson-hero {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  overflow: hidden;
+  margin: 0 0 18px;
+  cursor: zoom-in;
+  color: inherit;
+  text-align: left;
+  aspect-ratio: 16 / 7;
+  min-height: 240px;
+  max-height: 420px;
+}
+.lesson-hero img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+.lesson-hero:hover img {
+  transform: scale(1.03);
+}
+.lesson-hero-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.35) 45%, rgba(0, 0, 0, 0.85) 100%);
+  pointer-events: none;
+}
+.lesson-hero-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20px 26px 22px;
+  color: #fff;
+  pointer-events: none;
+}
+.lesson-hero-eyebrow {
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 6px;
+}
+.lesson-hero-title {
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 700;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+  margin-bottom: 6px;
+}
+.lesson-hero-cap {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 680px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+}
+.lesson-hero-zoom {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.lesson-hero:hover .lesson-hero-zoom {
+  opacity: 1;
+}
+@media (max-width: 720px) {
+  .lesson-hero-title { font-size: 20px; }
+  .lesson-hero-body { padding: 14px 16px 16px; }
+}
+
+/* ---- Lightbox overlay for enlarged lesson figures ---- */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  animation: lb-fade 0.15s ease;
+}
+@keyframes lb-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.lightbox-figure {
+  max-width: min(1200px, 100%);
+  max-height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: default;
+}
+.lightbox-figure img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100vh - 140px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.9);
+}
+.lightbox-figure figcaption {
+  color: #fff;
+  font-size: 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+.lightbox-figure figcaption .fig-credit {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 12px;
+  text-decoration: none;
+}
+.lightbox-figure figcaption .fig-credit:hover {
+  color: var(--azure);
+  text-decoration: underline;
+}
+.lightbox-close {
+  position: fixed;
+  top: 18px;
+  right: 22px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
 .lesson-stepper {
   position: sticky;
   top: -1px;

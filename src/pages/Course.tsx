@@ -1089,6 +1089,16 @@ export function UnitPage({
     const n = raw ? Number(raw) : 0;
     return Number.isFinite(n) && n >= 0 ? n : 0;
   });
+  /** clicked lesson figure shown fullscreen in a lightbox (null = closed) */
+  const [lightbox, setLightbox] = useState<{ src: string; caption: string; credit?: string; creditUrl?: string } | null>(null);
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightbox(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightbox]);
 
   // switching to a different unit standard always lands on its Overview tab
   useEffect(() => {
@@ -1525,6 +1535,49 @@ export function UnitPage({
               setLessonStep(next);
               document.querySelector(".content")?.scrollTo({ top: 0, behavior: "smooth" });
             };
+            // First real (uploaded or default) figure becomes the hero at the top.
+            const heroFig = sec.figures?.find((f) => figureImages[f.id] || FIGURE_DEFAULTS[f.id]);
+            const openLightboxFor = (f: { id: string; caption: string }) => {
+              const up = figureImages[f.id];
+              const def = FIGURE_DEFAULTS[f.id];
+              if (up) {
+                setLightbox({ src: up.image, caption: f.caption });
+              } else if (def) {
+                setLightbox({
+                  src: def.src,
+                  caption: f.caption,
+                  credit: `${def.author} · ${def.license} · Wikimedia Commons`,
+                  creditUrl: def.sourceUrl,
+                });
+              }
+            };
+            const hero = heroFig
+              ? (() => {
+                  const up = figureImages[heroFig.id];
+                  const def = FIGURE_DEFAULTS[heroFig.id];
+                  const src = up?.image ?? def?.src;
+                  return (
+                    <button
+                      type="button"
+                      className="lesson-hero"
+                      onClick={() => openLightboxFor(heroFig)}
+                      title="Click to enlarge"
+                    >
+                      <img src={src} alt={heroFig.caption} />
+                      <div className="lesson-hero-shade" />
+                      <div className="lesson-hero-body">
+                        <div className="lesson-hero-eyebrow">Section {si + 1}</div>
+                        <div className="lesson-hero-title">{sec.heading}</div>
+                        <div className="lesson-hero-cap">{heroFig.caption}</div>
+                      </div>
+                      <span className="lesson-hero-zoom" aria-hidden="true">
+                        <Icon name="image" size={16} />
+                        Click to enlarge
+                      </span>
+                    </button>
+                  );
+                })()
+              : null;
             const body = (
               <div className="saqa-body lesson-section">
                 {sec.paragraphs.map((p, i) => (
@@ -1619,12 +1672,19 @@ export function UnitPage({
                 )}
                 {sec.figures && (
                   <div className="figure-grid">
-                    {sec.figures.map((f) => {
+                    {sec.figures.filter((f) => f.id !== heroFig?.id).map((f) => {
                       const up = figureImages[f.id];
                       if (up)
                         return (
                           <figure key={f.id} className="lesson-figure">
-                            <img src={up.image} alt={f.caption} loading="lazy" />
+                            <button
+                              type="button"
+                              className="fig-open"
+                              onClick={() => openLightboxFor(f)}
+                              title="Click to enlarge"
+                            >
+                              <img src={up.image} alt={f.caption} loading="lazy" />
+                            </button>
                             <figcaption>{f.caption}</figcaption>
                             {isPrivileged && (
                               <button
@@ -1642,7 +1702,14 @@ export function UnitPage({
                       if (def)
                         return (
                           <figure key={f.id} className="lesson-figure">
-                            <img src={def.src} alt={f.caption} loading="lazy" />
+                            <button
+                              type="button"
+                              className="fig-open"
+                              onClick={() => openLightboxFor(f)}
+                              title="Click to enlarge"
+                            >
+                              <img src={def.src} alt={f.caption} loading="lazy" />
+                            </button>
                             <figcaption>
                               {f.caption}
                               <a
@@ -1793,13 +1860,16 @@ export function UnitPage({
             return (
               <div key={sec.heading} className="lesson-screen">
                 {stepper}
+                {hero}
                 <div className="lesson-flat">
-                  <h2 className="section-title">
-                    <span className="ico">
-                      <Icon name={sec.icon} size={20} />
-                    </span>
-                    {sec.heading}
-                  </h2>
+                  {!hero && (
+                    <h2 className="section-title">
+                      <span className="ico">
+                        <Icon name={sec.icon} size={20} />
+                      </span>
+                      {sec.heading}
+                    </h2>
+                  )}
                   {body}
                 </div>
                 {nav}
@@ -2786,6 +2856,44 @@ export function UnitPage({
             </table>
           </div>
         </>
+      )}
+
+      {lightbox && (
+        <div
+          className="lightbox"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            type="button"
+            className="lightbox-close"
+            aria-label="Close"
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightbox(null);
+            }}
+          >
+            <Icon name="close" size={20} />
+          </button>
+          <figure className="lightbox-figure" onClick={(e) => e.stopPropagation()}>
+            <img src={lightbox.src} alt={lightbox.caption} />
+            <figcaption>
+              <span>{lightbox.caption}</span>
+              {lightbox.credit && (
+                <a
+                  className="fig-credit"
+                  href={lightbox.creditUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {lightbox.credit}
+                </a>
+              )}
+            </figcaption>
+          </figure>
+        </div>
       )}
     </>
   );
