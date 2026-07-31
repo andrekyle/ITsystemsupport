@@ -17,7 +17,7 @@ export interface FigureDefault {
 
 export const FIGURE_DEFAULTS: Record<string, FigureDefault> = {
   "ada-lovelace": { src: "/figures/ada-lovelace.jpg", author: "Alfred Edward Chalon", license: "Public domain", sourceUrl: "https://commons.wikimedia.org/wiki/File:Ada_Lovelace_portrait.jpg" },
-  "ai-chat-llm": { src: "/figures/ai-chat-llm.png", author: "Osmo Lundell", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/wiki/File:ChatGPT-example-Finnish.png" },
+  "ai-chat-llm": { src: "/figures/ai-chat-llm.png", author: "StereoFolic", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/wiki/File:GPT-5_Reasoning_UI.png" },
   "aio-cooler": { src: "/figures/aio-cooler.jpg", author: "Chi Ho Chan from Hong Kong", license: "CC BY 2.0", sourceUrl: "https://commons.wikimedia.org/wiki/File:Corsair_H100i_240mm_CPU_cooler._On_MSI_Z590_Torpedo_motherboard._(51987363353).jpg" },
   "altair-8800": { src: "/figures/altair-8800.jpg", author: "Swtpc6800 en:User:Swtpc6800 Michael Holley", license: "Public domain", sourceUrl: "https://commons.wikimedia.org/wiki/File:Altair_8800_Computer.jpg" },
   "apple-ii-ibm-pc": { src: "/figures/apple-ii-ibm-pc.png", author: "FozzTexx", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/wiki/File:Apple_II_typical_configuration_1977.png" },

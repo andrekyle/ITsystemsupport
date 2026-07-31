@@ -51,7 +51,7 @@ const FIGURES = {
   "windows95-launch": ["Disquetes y CD-ROM de instalacion de Windows 95.jpg", "Windows 95 & Microsoft Plus CD Room de instalación.jpg"],
   "linux-tux": ["Tux.svg", "Tux.png"],
   "www-berners-lee": ["First Web Server.jpg", "NeXTcube first webserver.JPG", "Tim Berners-Lee 2012.jpg"],
-  "ai-chat-llm": ["ChatGPT-Beispiel.png", "search:ChatGPT screenshot conversation", "search:AI chatbot screenshot"],
+  "ai-chat-llm": ["GPT-5 Reasoning UI.png", "ChatGPT essay draft.png", "ChatGPT-Beispiel.png", "search:ChatGPT screenshot English conversation"],
   // ---- Motherboard & CPU ----
   "motherboard-labelled": ["Acer E360 Socket 939 motherboard by Foxconn.svg", "Motherboard diagram.svg", "ASRock K7VT4A Pro Mainboard Labeled English.svg"],
   "cpu-top-bottom": ["Intel CPU Core i7 6700K Skylake perspective.jpg", "AMD Ryzen 7 1800X (27052268977).jpg", "Intel core i7 970 top IMGP5961 wp.jpg"],
