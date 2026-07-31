@@ -4852,15 +4852,19 @@ a.plan-ppt:hover {
   position: absolute;
   top: 8px;
   left: 8px;
+  right: 8px;
   z-index: 3;
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 2px;
   background: rgba(0, 0, 0, 0.75);
   color: #fff;
   padding: 4px 6px;
-  border-radius: 999px;
+  border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  width: fit-content;
+  max-width: calc(100% - 16px);
 }
 .fig-edit button {
   border: 0;
