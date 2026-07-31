@@ -1563,7 +1563,8 @@ export function UnitPage({
                       onClick={() => openLightboxFor(heroFig)}
                       title="Click to enlarge"
                     >
-                      <img src={src} alt={heroFig.caption} />
+                      <img className="lesson-hero-bg" src={src} alt="" aria-hidden="true" />
+                      <img className="lesson-hero-img" src={src} alt={heroFig.caption} />
                       <div className="lesson-hero-shade" />
                       <div className="lesson-hero-body">
                         <div className="lesson-hero-eyebrow">Section {si + 1}</div>
