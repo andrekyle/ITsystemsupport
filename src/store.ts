@@ -588,6 +588,8 @@ export interface LessonEdits {
   figureOrder?: Record<number, string[]>;
   /** figure id -> scale multiplier, 0.5..1.4 */
   figureScale?: Record<string, number>;
+  /** figure id -> vertical crop position 0..100 (percent, 50 = centre) */
+  figureOffsetY?: Record<string, number>;
 }
 
 const lessonEditsKey = (us: string) => `itss.lessonedits.${us}`;
@@ -678,6 +680,18 @@ export function useLessonEdits(us: string) {
     [apply]
   );
 
+  const setOffsetY = useCallback(
+    (figId: string, pct: number) =>
+      apply((d) => {
+        const figureOffsetY = { ...(d.figureOffsetY ?? {}) };
+        const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+        if (clamped === 50) delete figureOffsetY[figId];
+        else figureOffsetY[figId] = clamped;
+        return { ...d, figureOffsetY };
+      }),
+    [apply]
+  );
+
   const resetSection = useCallback(
     (sIdx: number, figIds: string[]) =>
       apply((d) => {
@@ -693,12 +707,14 @@ export function useLessonEdits(us: string) {
           delete captions[id];
           delete figureScale[id];
         }
-        return { ...d, headings, paragraphs, figureOrder, captions, figureScale };
+        const figureOffsetY = { ...(d.figureOffsetY ?? {}) };
+        for (const id of figIds) delete figureOffsetY[id];
+        return { ...d, headings, paragraphs, figureOrder, captions, figureScale, figureOffsetY };
       }),
     [apply]
   );
 
-  return { edits, setHeading, setParagraph, setCaption, moveFigure, setScale, resetSection };
+  return { edits, setHeading, setParagraph, setCaption, moveFigure, setScale, setOffsetY, resetSection };
 }
 
 /* ---------- user-uploaded notes (stored separately per profile) ---------- */

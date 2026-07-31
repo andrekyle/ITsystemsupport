@@ -1128,7 +1128,7 @@ export function UnitPage({
   const [planUploadPct, setPlanUploadPct] = useState<number | null>(null);
   const { slides: planSlides, addSlide: addPlanSlide, removeSlide: removePlanSlide } = usePlanSlides(unitId);
   const { figures: figureImages, setFigure, removeFigure } = useLessonFigures(unitId);
-  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, moveFigure: editMoveFig, setScale: editSetScale, resetSection: editResetSection } = useLessonEdits(unitId);
+  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection } = useLessonEdits(unitId);
   const [editMode, setEditMode] = useState(false);
   const figFileRef = useRef<HTMLInputElement>(null);
   const pendingFigId = useRef<string | null>(null);
@@ -1541,6 +1541,7 @@ export function UnitPage({
             const paraText = (pi: number) => lessonEdits.paragraphs?.[`${si}:${pi}`] ?? sec.paragraphs[pi];
             const capOf = (id: string, original: string) => lessonEdits.captions?.[id] ?? original;
             const scaleOf = (id: string) => lessonEdits.figureScale?.[id] ?? 1;
+            const offsetYOf = (id: string) => lessonEdits.figureOffsetY?.[id] ?? 50;
             const orderedFigures: LessonFigure[] = (() => {
               if (!sec.figures) return [];
               const order = lessonEdits.figureOrder?.[si];
@@ -1564,18 +1565,35 @@ export function UnitPage({
               <div className="fig-edit" onClick={(e) => e.stopPropagation()}>
                 <button
                   type="button"
-                  title="Move up / earlier (first becomes the hero)"
+                  title="Move earlier in this section"
                   onClick={() => editMoveFig(si, allFigIds, fig.id, -1)}
                 >
                   <Icon name="chevronLeft" size={13} />
                 </button>
                 <button
                   type="button"
-                  title="Move down / later"
+                  title="Move later in this section"
                   onClick={() => editMoveFig(si, allFigIds, fig.id, 1)}
                 >
                   <Icon name="chevronRight" size={13} />
                 </button>
+                <span className="fig-edit-sep" aria-hidden="true" />
+                <button
+                  type="button"
+                  title="Show more of the top (move picture down)"
+                  onClick={() => editSetOffsetY(fig.id, offsetYOf(fig.id) - 10)}
+                >
+                  <Icon name="chevronUp" size={13} />
+                </button>
+                <span className="fig-edit-scale">{offsetYOf(fig.id)}%</span>
+                <button
+                  type="button"
+                  title="Show more of the bottom (move picture up)"
+                  onClick={() => editSetOffsetY(fig.id, offsetYOf(fig.id) + 10)}
+                >
+                  <Icon name="chevronDown" size={13} />
+                </button>
+                <span className="fig-edit-sep" aria-hidden="true" />
                 <button
                   type="button"
                   title="Shrink"
@@ -1625,8 +1643,8 @@ export function UnitPage({
                         title={editable ? "Editing" : "Click to enlarge"}
                         style={{ maxHeight: `${Math.round(420 * heroScale)}px`, minHeight: `${Math.round(240 * Math.min(1, heroScale))}px` }}
                       >
-                        <img className="lesson-hero-bg" src={src} alt="" aria-hidden="true" />
-                        <img className="lesson-hero-img" src={src} alt={heroCap} />
+                        <img className="lesson-hero-bg" src={src} alt="" aria-hidden="true" style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
+                        <img className="lesson-hero-img" src={src} alt={heroCap} style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
                         <div className="lesson-hero-shade" />
                         <div className="lesson-hero-body">
                           <div className="lesson-hero-eyebrow">Section {si + 1}</div>
@@ -1772,6 +1790,7 @@ export function UnitPage({
                       const scale = scaleOf(f.id);
                       const cap = capOf(f.id, f.caption);
                       const figStyle: React.CSSProperties = scale !== 1 ? { maxWidth: `${Math.round(scale * 100)}%` } : {};
+                      const imgStyle: React.CSSProperties = { objectPosition: `center ${offsetYOf(f.id)}%` };
                       const editableCap = (extra?: React.ReactNode) =>
                         editable ? (
                           <figcaption>
@@ -1802,7 +1821,7 @@ export function UnitPage({
                               onClick={() => !editable && openLightboxFor({ id: f.id, caption: cap })}
                               title={editable ? "Editing" : "Click to enlarge"}
                             >
-                              <img src={up.image} alt={cap} loading="lazy" />
+                              <img src={up.image} alt={cap} loading="lazy" style={imgStyle} />
                             </button>
                             {editableCap()}
                             {editable && figControls(f)}
@@ -1828,7 +1847,7 @@ export function UnitPage({
                               onClick={() => !editable && openLightboxFor({ id: f.id, caption: cap })}
                               title={editable ? "Editing" : "Click to enlarge"}
                             >
-                              <img src={def.src} alt={cap} loading="lazy" />
+                              <img src={def.src} alt={cap} loading="lazy" style={imgStyle} />
                             </button>
                             {editableCap(
                               <a

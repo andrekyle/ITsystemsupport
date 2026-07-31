@@ -126,6 +126,7 @@ export const PATHS: Record<string, React.ReactNode> = {
   chevronLeft: <path d="M14.5 6 9 12l5.5 6" />,
   chevronRight: <path d="M9.5 6 15 12l-5.5 6" />,
   chevronDown: <path d="M6 9.5l6 5.5 6-5.5" />,
+  chevronUp: <path d="M6 14.5l6-5.5 6 5.5" />,
   arrowLeft: <path d="M10 5.5 3.9 12l6.1 6.5M4 12h16" />,
   menu: <path d="M4 6.5h16M4 12h16M4 17.5h16" />,
   panel: (

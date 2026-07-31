@@ -4853,6 +4853,12 @@ a.plan-ppt:hover {
   text-align: center;
   color: rgba(255, 255, 255, 0.85);
 }
+.fig-edit-sep {
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.25);
+  margin: 0 3px;
+}
 
 .lesson-stepper {
   position: sticky;
