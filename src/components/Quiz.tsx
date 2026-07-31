@@ -247,60 +247,15 @@ export function Quiz({
             onClick={() => setShowKey((v) => !v)}
           >
             <Icon name={showKey ? "eyeOff" : "eye"} size={15} />
-            {showKey ? "Hide answer key (staff)" : "Reveal answer key (staff)"}
+            {showKey ? "Hide answers (staff)" : "Reveal answers (staff)"}
           </button>
-          {showKey && (
-            <div className="answer-key">
-              <div className="answer-key-hd">
-                <Icon name="award" size={16} />
-                Answer key — staff view only
-              </div>
-              <ol>
-                {questions.map((q, qi) => {
-                  const kind = q.kind ?? "choice";
-                  if (kind === "order" && q.items) {
-                    return (
-                      <li key={qi}>
-                        <strong>Correct order:</strong>
-                        <ol className="ak-sub">
-                          {q.items.map((it, i) => (
-                            <li key={i}>{it}</li>
-                          ))}
-                        </ol>
-                      </li>
-                    );
-                  }
-                  if (kind === "match" && q.pairs) {
-                    return (
-                      <li key={qi}>
-                        <strong>Correct pairs:</strong>
-                        <ul className="ak-sub">
-                          {q.pairs.map((p, i) => (
-                            <li key={i}>
-                              {p.left} <span className="ak-arr">→</span> {p.right}
-                            </li>
-                          ))}
-                        </ul>
-                      </li>
-                    );
-                  }
-                  const want = q.answers ?? [q.answer];
-                  return (
-                    <li key={qi}>
-                      <strong>Correct:</strong>{" "}
-                      {want.map((oi) => q.options[oi]).join("  •  ")}
-                    </li>
-                  );
-                })}
-              </ol>
-            </div>
-          )}
         </div>
       )}
 
       {questions.map((q, qi) => {
         const kind = q.kind ?? "choice";
         const ok = isCorrect(qi, q);
+        const reveal = submitted || (showAnswers && showKey);
         return (
           <div className="quiz-q" key={qi}>
             <div className="qt">
@@ -328,10 +283,10 @@ export function Quiz({
                 const chosen = (answers[qi] as ChoiceAns | undefined)?.picks ?? [];
                 const want = q.answers ?? [q.answer];
                 let cls = "opt";
-                if (!submitted && chosen.includes(oi)) cls += " selected";
-                if (submitted) {
+                if (!reveal && chosen.includes(oi)) cls += " selected";
+                if (reveal) {
                   if (want.includes(oi)) cls += " correct";
-                  else if (chosen.includes(oi)) cls += " wrong";
+                  else if (submitted && chosen.includes(oi)) cls += " wrong";
                 }
                 return (
                   <button
@@ -341,11 +296,11 @@ export function Quiz({
                     onClick={() => pickChoice(qi, q, oi)}
                   >
                     <span className="mark">
-                      {submitted && want.includes(oi) && <Icon name="checkCircle" size={17} />}
-                      {submitted && !want.includes(oi) && chosen.includes(oi) && (
+                      {reveal && want.includes(oi) && <Icon name="checkCircle" size={17} />}
+                      {reveal && !want.includes(oi) && submitted && chosen.includes(oi) && (
                         <Icon name="info" size={17} />
                       )}
-                      {!submitted && (
+                      {!reveal && (
                         <Icon name={chosen.includes(oi) ? "checkCircle" : "circle"} size={17} />
                       )}
                     </span>
@@ -356,16 +311,19 @@ export function Quiz({
 
             {kind === "order" && q.items && (
               <ol className="quiz-order-list">
-                {orderCurrent(qi, q).map((origIdx, pos) => {
+                {(reveal && !submitted
+                  ? q.items.map((_, i) => i)
+                  : orderCurrent(qi, q)
+                ).map((origIdx, pos) => {
                   const correctHere = origIdx === pos;
                   let cls = "quiz-order-item";
                   if (!submitted && dragFrom?.qi === qi && dragFrom.idx === pos) cls += " dragging";
-                  if (submitted) cls += correctHere ? " correct" : " wrong";
+                  if (reveal) cls += correctHere ? " correct" : " wrong";
                   return (
                     <li
                       key={origIdx}
                       className={cls}
-                      draggable={!submitted}
+                      draggable={!submitted && !(showAnswers && showKey)}
                       onDragStart={() => setDragFrom({ qi, idx: pos })}
                       onDragOver={(e) => {
                         if (!submitted && dragFrom?.qi === qi) e.preventDefault();
@@ -383,7 +341,7 @@ export function Quiz({
                         <Icon name="menu" size={16} />
                       </span>
                       <span className="txt">{q.items![origIdx]}</span>
-                      {!submitted && (
+                      {!submitted && !(showAnswers && showKey) && (
                         <span className="order-btns">
                           <button
                             type="button"
@@ -405,7 +363,7 @@ export function Quiz({
                           </button>
                         </span>
                       )}
-                      {submitted && (
+                      {reveal && (
                         <span className="mark">
                           <Icon name={correctHere ? "checkCircle" : "info"} size={17} />
                         </span>
@@ -423,9 +381,12 @@ export function Quiz({
                     const cur = (answers[qi] as MatchAns | undefined)?.picks[li];
                     const selected = matchSel?.qi === qi && matchSel.leftIdx === li;
                     let cls = "quiz-match-item left";
-                    if (!submitted && selected) cls += " selected";
-                    if (!submitted && cur !== undefined) cls += " paired";
-                    if (submitted) cls += cur === li ? " correct" : " wrong";
+                    if (!reveal && selected) cls += " selected";
+                    if (!reveal && cur !== undefined) cls += " paired";
+                    if (reveal) {
+                      const effective = submitted ? cur : li;
+                      cls += effective === li ? " correct" : " wrong";
+                    }
                     return (
                       <button
                         key={li}
@@ -436,10 +397,14 @@ export function Quiz({
                       >
                         <span className="badge">{String.fromCharCode(65 + li)}</span>
                         <span className="txt">{p.left}</span>
-                        {cur !== undefined && (
+                        {reveal ? (
                           <span className="chosen">
-                            → {String.fromCharCode(65 + cur)}
-                            {!submitted && (
+                            → {String.fromCharCode(65 + li)}
+                          </span>
+                        ) : (
+                          cur !== undefined && (
+                            <span className="chosen">
+                              → {String.fromCharCode(65 + cur)}
                               <span
                                 className="clear"
                                 role="button"
@@ -451,8 +416,8 @@ export function Quiz({
                               >
                                 ×
                               </span>
-                            )}
-                          </span>
+                            </span>
+                          )
                         )}
                       </button>
                     );
@@ -465,12 +430,15 @@ export function Quiz({
                       (answers[qi] as MatchAns | undefined)?.picks ?? {},
                     ).find(([, v]) => v === rOrig);
                     let cls = "quiz-match-item right";
-                    if (!submitted && usedBy) cls += " paired";
-                    if (submitted) {
-                      // right is correct if the left that maps to it also maps to it in the key
-                      const leftAssigned = usedBy ? Number(usedBy[0]) : -1;
-                      if (leftAssigned === rOrig) cls += " correct";
-                      else if (usedBy) cls += " wrong";
+                    if (!reveal && usedBy) cls += " paired";
+                    if (reveal) {
+                      if (submitted) {
+                        const leftAssigned = usedBy ? Number(usedBy[0]) : -1;
+                        if (leftAssigned === rOrig) cls += " correct";
+                        else if (usedBy) cls += " wrong";
+                      } else {
+                        cls += " correct";
+                      }
                     }
                     return (
                       <button
@@ -493,8 +461,8 @@ export function Quiz({
               </div>
             )}
 
-            {submitted && (
-              <div className={`explain ${ok ? "ok" : "no"}`}>
+            {reveal && (
+              <div className={`explain ${submitted ? (ok ? "ok" : "no") : "ok"}`}>
                 <Icon name="info" size={15} />
                 {q.explain}
               </div>
