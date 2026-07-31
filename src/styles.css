@@ -4931,6 +4931,30 @@ a.plan-ppt:hover {
   height: auto;
   margin: 0 auto;
 }
+/* Dark-theme readability for the inline water-supply diagram */
+[data-theme="dark"] .quiz-figure {
+  background: var(--surface-2);
+}
+[data-theme="dark"] .quiz-figure .wa-hd,
+[data-theme="dark"] .quiz-figure .wa-lbl {
+  fill: #e6efff;
+}
+[data-theme="dark"] .quiz-figure .wa-box {
+  fill: #1e2a3d;
+  stroke: #4a7cc9;
+}
+[data-theme="dark"] .quiz-figure .wa-ico {
+  stroke: #c9dcff;
+}
+[data-theme="dark"] .quiz-figure .wa-fill {
+  fill: #4a7cc9;
+}
+[data-theme="dark"] .quiz-figure .wa-arrow {
+  stroke: #7fa8ff;
+}
+[data-theme="dark"] .quiz-figure marker path {
+  fill: #7fa8ff;
+}
 
 /* --- Quiz: drag-to-order questions --- */
 .quiz-order-list {
