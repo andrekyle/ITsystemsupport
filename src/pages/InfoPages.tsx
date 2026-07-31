@@ -10,6 +10,8 @@ import {
   MODULES,
   PROGRAMME_MILESTONES,
   RESOURCES,
+  isSaqaUnit,
+  usLabel,
 } from "../data/course";
 
 export function AssessmentsPage({ profile }: { profile: Profile }) {
@@ -192,7 +194,7 @@ export function CalendarPage({
       </div>
       <h1 className="page-title">Training dates</h1>
       <p className="page-sub">
-        All sessions run 09h00 – 14h00 as per the QCTO-approved training schedule (Jul 2026 – Jun 2027).
+        All sessions run 09h00 – 14h00 as per the QCTO-approved training schedule (Jul 2026 – Jul 2027).
       </p>
 
       {MODULES.map((m, i) => (
@@ -218,22 +220,26 @@ export function CalendarPage({
                 return (
                   <tr key={u.us} className={done ? "done-row" : undefined}>
                     <td>
-                      <a
-                        className="us-link"
-                        href={`https://allqs.saqa.org.za/showUnitStandard.php?id=${u.us}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title={`View US ${u.us} on SAQA`}
-                      >
-                        {u.us}
-                      </a>
+                      {isSaqaUnit(u.us) ? (
+                        <a
+                          className="us-link"
+                          href={`https://allqs.saqa.org.za/showUnitStandard.php?id=${u.us}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`View US ${u.us} on SAQA`}
+                        >
+                          {u.us}
+                        </a>
+                      ) : (
+                        u.us
+                      )}
                     </td>
                     <td>
                       <button
                         className={`text-link${done ? " done-link" : ""}`}
                         style={{ textAlign: "left", fontWeight: 400 }}
                         onClick={() => navigate?.({ page: "unit", moduleId: m.id, unitId: u.us })}
-                        title={`Open US ${u.us} — ${u.title}${done ? " (completed)" : ""}`}
+                        title={`Open ${usLabel(u.us)} — ${u.title}${done ? " (completed)" : ""}`}
                       >
                         {u.title}
                       </button>

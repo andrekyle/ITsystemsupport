@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Profile } from "../types";
 import { isStaff } from "../types";
-import { COURSE_META, MODULES } from "../data/course";
+import { COURSE_META, MODULES, usLabel } from "../data/course";
 import { supabase } from "../lib/supabase";
 import { fileToSignature, reprocessSignature } from "../lib/signature";
 import { fetchCloudDirectory, updateCloudProfile } from "../lib/directory";
@@ -147,7 +147,7 @@ function unitForDate(dateIso: string): string {
         /(\d{1,2}(?:\s*,\s*\d{1,2})*)\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/gi
       )) {
         if (MONTHS.indexOf(seg[2].toLowerCase()) !== d.getMonth()) continue;
-        if (seg[1].split(/\s*,\s*/).some((x) => +x === d.getDate())) return `US ${u.us}`;
+        if (seg[1].split(/\s*,\s*/).some((x) => +x === d.getDate())) return usLabel(u.us);
       }
     }
   }

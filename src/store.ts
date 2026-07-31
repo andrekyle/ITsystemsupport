@@ -517,6 +517,64 @@ export function usePlanSlides(us: string) {
   return { slides, addSlide, removeSlide };
 }
 
+/* ---------- staff-uploaded lesson figures (shared per unit standard) ---------- */
+
+export interface LessonFigureImage {
+  /** data-URL of the uploaded picture */
+  image: string;
+  uploadedAt: string;
+}
+
+const lessonFigsKey = (us: string) => `itss.lessonfigs.${us}`;
+
+export function useLessonFigures(us: string) {
+  const [figures, setFigures] = useState<Record<string, LessonFigureImage>>(() =>
+    read<Record<string, LessonFigureImage>>(lessonFigsKey(us), {})
+  );
+
+  useEffect(() => {
+    setFigures(read<Record<string, LessonFigureImage>>(lessonFigsKey(us), {}));
+  }, [us]);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === lessonFigsKey(us)) {
+        setFigures(read<Record<string, LessonFigureImage>>(lessonFigsKey(us), {}));
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [us]);
+
+  const setFigure = useCallback(
+    (id: string, image: string): boolean => {
+      const fresh = read<Record<string, LessonFigureImage>>(lessonFigsKey(us), {});
+      const next = { ...fresh, [id]: { image, uploadedAt: new Date().toISOString() } };
+      try {
+        write(lessonFigsKey(us), next);
+      } catch {
+        return false; // storage quota exceeded
+      }
+      setFigures(next);
+      return true;
+    },
+    [us]
+  );
+
+  const removeFigure = useCallback(
+    (id: string) => {
+      const fresh = read<Record<string, LessonFigureImage>>(lessonFigsKey(us), {});
+      const next = { ...fresh };
+      delete next[id];
+      write(lessonFigsKey(us), next);
+      setFigures(next);
+    },
+    [us]
+  );
+
+  return { figures, setFigure, removeFigure };
+}
+
 /* ---------- user-uploaded notes (stored separately per profile) ---------- */
 
 export interface UserNote {

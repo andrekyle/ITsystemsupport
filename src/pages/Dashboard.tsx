@@ -7,6 +7,8 @@ import {
   POE_TOTAL,
   PROGRAMME_MILESTONES,
   TOTAL_UNITS,
+  isSaqaUnit,
+  usLabel,
 } from "../data/course";
 import { moduleCompletion, overallStats, unitStatus, usePoe } from "../store";
 import { Bar, Ring } from "../components/Ring";
@@ -129,10 +131,11 @@ export function Dashboard({
                 </span>
                 <div style={{ flex: 1 }}>
                   <h3>
-                    US {next.u.us} — {next.u.title}
+                    {usLabel(next.u.us)} — {next.u.title}
                   </h3>
                   <span className="sub">
-                    {next.m.name} · NQF {next.u.nqf} · {next.u.credits} credits · {next.u.dates}
+                    {next.m.name} · NQF {next.u.nqf}
+                    {next.u.credits > 0 ? ` · ${next.u.credits} credits` : ""} · {next.u.dates}
                   </span>
                 </div>
                 <Icon name="chevronRight" size={18} color="var(--ink-3)" />
@@ -303,16 +306,20 @@ export function ProgressPage({
                     onClick={() => navigate({ page: "unit", moduleId: m.id, unitId: u.us })}
                   >
                     <td>
-                      <a
-                        className="us-link"
-                        href={`https://allqs.saqa.org.za/showUnitStandard.php?id=${u.us}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title={`View US ${u.us} on SAQA`}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {u.us}
-                      </a>
+                      {isSaqaUnit(u.us) ? (
+                        <a
+                          className="us-link"
+                          href={`https://allqs.saqa.org.za/showUnitStandard.php?id=${u.us}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`View US ${u.us} on SAQA`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {u.us}
+                        </a>
+                      ) : (
+                        u.us
+                      )}
                     </td>
                     <td>{u.title}</td>
                     <td>{u.nqf}</td>

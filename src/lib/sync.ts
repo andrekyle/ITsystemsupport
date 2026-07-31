@@ -19,6 +19,7 @@ function isShared(key: string) {
     key === "itss.notes.shared" ||
     key === "itss.settings.shared" ||
     key.startsWith("itss.planslides.") ||
+    key.startsWith("itss.lessonfigs.") ||
     key.startsWith("itss.attendance.")
   );
 }

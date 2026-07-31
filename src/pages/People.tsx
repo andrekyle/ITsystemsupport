@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { EnrolmentInfo, PoeDoc, Profile, ProgressState, Role, Route } from "../types";
 import { isStaff } from "../types";
-import { MODULES, POE_SECTIONS, POE_TOTAL } from "../data/course";
+import { MODULES, POE_SECTIONS, POE_TOTAL, usLabel } from "../data/course";
 import { getContent } from "../data/content";
 import {
   createProfile,
@@ -1352,7 +1352,7 @@ function AcademicRecord({
         return (
           <div className="card attempts-card" key={unit.us}>
             <div className="task-label" style={{ marginTop: 0 }}>
-              US {unit.us} — {unit.title}
+              {usLabel(unit.us)} — {unit.title}
             </div>
             {quizRows.map((row) => {
               const r = row.result;

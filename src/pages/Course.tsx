@@ -3,9 +3,10 @@ import React from "react";
 import { Icon } from "../icons";
 import type { ExerciseCheck, PoeDoc, ProgressState, Profile, Role, Route, UnitActivity, UnitStandard } from "../types";
 import { UNIT_ACTIVITIES, isStaff } from "../types";
-import { COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit } from "../data/course";
+import { COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
 import { GLOSSARY, getContent } from "../data/content";
-import { moduleCompletion, unitCompletion, unitStatus, useNotes, usePlanSlides, useSharedSettings } from "../store";
+import { FIGURE_DEFAULTS } from "../data/figureDefaults";
+import { moduleCompletion, unitCompletion, unitStatus, useLessonFigures, useNotes, usePlanSlides, useSharedSettings } from "../store";
 import { Bar } from "../components/Ring";
 import { Quiz } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
@@ -995,15 +996,17 @@ export function ModulePage({
             </span>
             <span className="main">
               <span className="t">
-                US {u.us} — {u.title}
+                {usLabel(u.us)} — {u.title}
               </span>
               <span className="m">
                 <span>
                   <Icon name="trend" size={13} /> NQF {u.nqf}
                 </span>
-                <span>
-                  <Icon name="award" size={13} /> {u.credits} credits
-                </span>
+                {u.credits > 0 && (
+                  <span>
+                    <Icon name="award" size={13} /> {u.credits} credits
+                  </span>
+                )}
                 <span>
                   <Icon name="calendar" size={13} /> {u.dates}
                 </span>
@@ -1102,6 +1105,10 @@ export function UnitPage({
   const [planError, setPlanError] = useState<string | null>(null);
   const [planUploadPct, setPlanUploadPct] = useState<number | null>(null);
   const { slides: planSlides, addSlide: addPlanSlide, removeSlide: removePlanSlide } = usePlanSlides(unitId);
+  const { figures: figureImages, setFigure, removeFigure } = useLessonFigures(unitId);
+  const figFileRef = useRef<HTMLInputElement>(null);
+  const pendingFigId = useRef<string | null>(null);
+  const [figError, setFigError] = useState<string | null>(null);
   const [deckId, setDeckId] = useState<string | null>(null);
   const found = findUnit(unitId);
   if (!found) return <p>Unit standard not found.</p>;
@@ -1163,7 +1170,7 @@ export function UnitPage({
             Module {idx + 1}: {mod.name}
           </button>
           <Icon name="chevronRight" size={13} />
-          <span>US {u.us}</span>
+          <span>{usLabel(u.us)}</span>
         </div>
         <h1 className="page-title" style={{ marginTop: 14 }}>
           {u.title}
@@ -1210,6 +1217,23 @@ export function UnitPage({
     setPlanUploadPct(null);
   }
 
+  async function onPickFigureFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    const figId = pendingFigId.current;
+    pendingFigId.current = null;
+    if (!file || !figId) return;
+    setFigError(null);
+    try {
+      const dataUrl = await fileToImageDataUrl(file, 1400);
+      if (!setFigure(figId, dataUrl)) {
+        setFigError("Storage is full — remove some uploaded pictures and try again.");
+      }
+    } catch {
+      setFigError("Could not read that image — try a clear JPG or PNG file.");
+    }
+  }
+
   const tabs: { id: UnitTab; label: string; icon: string; show: boolean }[] = [
     { id: "overview", label: "Overview", icon: "dashboard", show: true },
     { id: "lesson", label: "Lesson", icon: "book", show: !!content?.lesson.length },
@@ -1231,12 +1255,12 @@ export function UnitPage({
           Module {idx + 1}: {mod.name}
         </button>
         <Icon name="chevronRight" size={13} />
-        <span>US {u.us}</span>
+        <span>{usLabel(u.us)}</span>
       </div>
 
       <div className="eyebrow eyebrow-lg">
         <Icon name="document" size={22} />
-        Unit standard {u.us}
+        {isSaqaUnit(u.us) ? `Unit standard ${u.us}` : "Internal lesson"}
       </div>
       <h1 className="page-title">{u.title}</h1>
       <div className="meta-row">
@@ -1246,12 +1270,14 @@ export function UnitPage({
           </span>
           NQF Level {u.nqf}
         </span>
-        <span className="pill">
-          <span className="ico">
-            <Icon name="award" size={15} />
+        {u.credits > 0 && (
+          <span className="pill">
+            <span className="ico">
+              <Icon name="award" size={15} />
+            </span>
+            {u.credits} credits
           </span>
-          {u.credits} credits
-        </span>
+        )}
         <span className="pill">
           <span className="ico">
             <Icon name="calendar" size={15} />
@@ -1467,6 +1493,16 @@ export function UnitPage({
       {tab === "lesson" && content && (
         <>
           <div style={{ marginTop: 18 }} />
+          {isPrivileged && (
+            <input
+              ref={figFileRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => void onPickFigureFile(e)}
+            />
+          )}
+          {figError && <p className="auth-error">{figError}</p>}
           {content.lesson.map((sec, si) => {
             const body = (
               <div className="saqa-body lesson-section">
@@ -1558,6 +1594,83 @@ export function UnitPage({
                     {sec.example.lines.map((l, i) => (
                       <ExampleLine key={i} text={l} />
                     ))}
+                  </div>
+                )}
+                {sec.figures && (
+                  <div className="figure-grid">
+                    {sec.figures.map((f) => {
+                      const up = figureImages[f.id];
+                      if (up)
+                        return (
+                          <figure key={f.id} className="lesson-figure">
+                            <img src={up.image} alt={f.caption} loading="lazy" />
+                            <figcaption>{f.caption}</figcaption>
+                            {isPrivileged && (
+                              <button
+                                type="button"
+                                className="fig-remove"
+                                title="Remove this picture"
+                                onClick={() => removeFigure(f.id)}
+                              >
+                                <Icon name="close" size={13} />
+                              </button>
+                            )}
+                          </figure>
+                        );
+                      const def = FIGURE_DEFAULTS[f.id];
+                      if (def)
+                        return (
+                          <figure key={f.id} className="lesson-figure">
+                            <img src={def.src} alt={f.caption} loading="lazy" />
+                            <figcaption>
+                              {f.caption}
+                              <a
+                                className="fig-credit"
+                                href={def.sourceUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                title={`${def.author} · ${def.license} · Wikimedia Commons`}
+                              >
+                                {def.license}
+                              </a>
+                            </figcaption>
+                            {isPrivileged && (
+                              <button
+                                type="button"
+                                className="fig-remove"
+                                title="Replace with your own picture"
+                                onClick={() => {
+                                  pendingFigId.current = f.id;
+                                  figFileRef.current?.click();
+                                }}
+                              >
+                                <Icon name="image" size={13} />
+                              </button>
+                            )}
+                          </figure>
+                        );
+                      return (
+                        <figure key={f.id} className="lesson-figure placeholder">
+                          <button
+                            type="button"
+                            className="fig-drop"
+                            disabled={!isPrivileged}
+                            onClick={() => {
+                              pendingFigId.current = f.id;
+                              figFileRef.current?.click();
+                            }}
+                          >
+                            <Icon name="image" size={30} />
+                            <span className="fig-cap">{f.caption}</span>
+                            <span className="fig-hint">
+                              {isPrivileged
+                                ? `Click to upload — ${f.hint ?? "add a suitable picture"}`
+                                : "Picture coming soon"}
+                            </span>
+                          </button>
+                        </figure>
+                      );
+                    })}
                   </div>
                 )}
                 {sec.modelAnswer && isPrivileged && (

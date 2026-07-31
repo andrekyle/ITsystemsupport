@@ -1,0 +1,797 @@
+{
+  "results": {
+    "hardware-collage": {
+      "title": "Personal computer, exploded 6.svg",
+      "author": "User:HereToHelp",
+      "license": "CC BY 2.5",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Personal_computer,_exploded_6.svg",
+      "file": "hardware-collage.png",
+      "bytes": 558315
+    },
+    "software-stack": {
+      "title": "Operating system placement.svg",
+      "author": "Golftheman",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Operating_system_placement.svg",
+      "file": "software-stack.png",
+      "bytes": 317437
+    },
+    "katherine-johnson": {
+      "title": "Katherine Johnson 1983.jpg",
+      "author": "NASA",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Katherine_Johnson_1983.jpg",
+      "file": "katherine-johnson.jpg",
+      "bytes": 889302
+    },
+    "bletchley-bombe": {
+      "title": "Bombe-rebuild.jpg",
+      "author": "Unknown",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bombe-rebuild.jpg",
+      "file": "bletchley-bombe.jpg",
+      "bytes": 379985
+    },
+    "usbc-dock": {
+      "title": "Delock 87772 (1).jpg",
+      "author": "Reise Reise",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Delock_87772_(1).jpg",
+      "file": "usbc-dock.jpg",
+      "bytes": 284774
+    },
+    "psu-connectors": {
+      "title": "PSU-Open1.jpg",
+      "author": "Unknown",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:PSU-Open1.jpg",
+      "file": "psu-connectors.jpg",
+      "bytes": 989704
+    },
+    "diesel-generator": {
+      "title": "Notstromaggregat.jpg",
+      "author": "Petra19783",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Notstromaggregat.jpg",
+      "file": "diesel-generator.jpg",
+      "bytes": 1047999
+    },
+    "babbage-portrait": {
+      "title": "Charles Babbage - 1860.jpg",
+      "author": "Unknown authorUnknown author",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Charles_Babbage_-_1860.jpg",
+      "file": "babbage-portrait.jpg",
+      "bytes": 948835
+    },
+    "difference-engine": {
+      "title": "Difference engine.JPG",
+      "author": "Allan J. Cronin",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Difference_engine.JPG",
+      "file": "difference-engine.jpg",
+      "bytes": 658297
+    },
+    "ada-lovelace": {
+      "title": "Ada Lovelace portrait.jpg",
+      "author": "Alfred Edward Chalon",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ada_Lovelace_portrait.jpg",
+      "file": "ada-lovelace.jpg",
+      "bytes": 2121380
+    },
+    "jacquard-loom": {
+      "title": "Jacquard.loom.full.view.jpg",
+      "author": "User Ghw on en.wikipedia",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Jacquard.loom.full.view.jpg",
+      "file": "jacquard-loom.jpg",
+      "bytes": 59779
+    },
+    "hollerith-machine": {
+      "title": "HollerithMachine.CHM.jpg",
+      "author": "Adam Schuster",
+      "license": "CC BY 2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:HollerithMachine.CHM.jpg",
+      "file": "hollerith-machine.jpg",
+      "bytes": 830533
+    },
+    "human-computers": {
+      "title": "Human computers - Dryden.jpg",
+      "author": "NACA (NASA)",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Human_computers_-_Dryden.jpg",
+      "file": "human-computers.jpg",
+      "bytes": 138591
+    },
+    "colossus": {
+      "title": "Colossus.jpg",
+      "author": "Unknown authorUnknown author",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Colossus.jpg",
+      "file": "colossus.jpg",
+      "bytes": 512274
+    },
+    "eniac": {
+      "title": "Eniac.jpg",
+      "author": "Unknown authorUnknown author",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Glen_Beck_and_Betty_Snyder_program_the_ENIAC_in_building_328_at_the_Ballistic_Research_Laboratory.jpg",
+      "file": "eniac.jpg",
+      "bytes": 623971
+    },
+    "eniac-programmers": {
+      "title": "Two women operating ENIAC (full resolution).jpg",
+      "author": "Unidentified U.S. Army photographer",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Two_women_operating_ENIAC_(full_resolution).jpg",
+      "file": "eniac-programmers.jpg",
+      "bytes": 606445
+    },
+    "grace-hopper": {
+      "title": "Commodore Grace M. Hopper, USN (covered).jpg",
+      "author": "James S. Davis",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Commodore_Grace_M._Hopper,_USN_(covered).jpg",
+      "file": "grace-hopper.jpg",
+      "bytes": 903830
+    },
+    "first-bug": {
+      "title": "First Computer Bug, 1945.jpg",
+      "author": "Courtesy of the Naval Surface Warfare Center, Dahlgren, VA., 1988.",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:First_Computer_Bug,_1947.jpg",
+      "file": "first-bug.jpg",
+      "bytes": 519257
+    },
+    "vacuum-tubes": {
+      "title": "Elektronenroehren-auswahl.jpg",
+      "author": "Stefan Riepl (Quark48)",
+      "license": "CC BY-SA 2.0 de",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Elektronenroehren-auswahl.jpg",
+      "file": "vacuum-tubes.jpg",
+      "bytes": 425606
+    },
+    "first-transistor": {
+      "title": "Replica-of-first-transistor.jpg",
+      "author": "Federal employee",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Replica-of-first-transistor.jpg",
+      "file": "first-transistor.jpg",
+      "bytes": 39892
+    },
+    "integrated-circuit": {
+      "title": "Silicon chip 3d.png",
+      "author": "David Carron at English Wikipedia",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Silicon_chip_3d.png",
+      "file": "integrated-circuit.png",
+      "bytes": 221304
+    },
+    "intel-4004": {
+      "title": "Intel C4004.jpg",
+      "author": "Thomas Nguyen",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Intel_C4004.jpg",
+      "file": "intel-4004.jpg",
+      "bytes": 255480
+    },
+    "altair-8800": {
+      "title": "Altair 8800 Computer.jpg",
+      "author": "Swtpc6800 en:User:Swtpc6800 Michael Holley",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Altair_8800_Computer.jpg",
+      "file": "altair-8800.jpg",
+      "bytes": 341010
+    },
+    "apple-ii-ibm-pc": {
+      "title": "Apple II typical configuration 1977.png",
+      "author": "FozzTexx",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Apple_II_typical_configuration_1977.png",
+      "file": "apple-ii-ibm-pc.png",
+      "bytes": 2392378
+    },
+    "iphone-2007": {
+      "title": "IPhone First Generation 8GB (3677961514).jpg",
+      "author": "Carl Berkeley from Riverside California",
+      "license": "CC BY-SA 2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:IPhone_First_Generation_8GB_(3677961514).jpg",
+      "file": "iphone-2007.jpg",
+      "bytes": 56764
+    },
+    "moores-law-chart": {
+      "title": "Moore's Law Transistor Count 1970-2020.png",
+      "author": "Max Roser, Hannah Ritchie",
+      "license": "CC BY 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Moore%27s_Law_Transistor_Count_1970-2020.png",
+      "file": "moores-law-chart.png",
+      "bytes": 972856
+    },
+    "punched-tape-code": {
+      "title": "FortranCardPROJ039.agr.jpg",
+      "author": "Arnold Reinhold",
+      "license": "CC BY-SA 2.5",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:FortranCardPROJ039.agr.jpg",
+      "file": "punched-tape-code.jpg",
+      "bytes": 385410
+    },
+    "unix-pdp11": {
+      "title": "Ken n dennis.jpg",
+      "author": "Unknown authorUnknown author",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ken_Thompson_and_Dennis_Ritchie--1973.jpg",
+      "file": "unix-pdp11.jpg",
+      "bytes": 19590
+    },
+    "msdos-screen": {
+      "title": "FreeDOS Beta 9 pre-release5 (command line interface) on Bochs sshot20040912.png",
+      "author": "(of program) Jim Hall and others, (of screenshot) Krzysztof Burghardt,",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:FreeDOS_Beta_9_pre-release5_(command_line_interface)_on_Bochs_sshot20040912.png",
+      "file": "msdos-screen.png",
+      "bytes": 9956
+    },
+    "mac-1984": {
+      "title": "Macintosh 128k transparency.png",
+      "author": "w:User:Grm wnr",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Macintosh_128k_transparency.png",
+      "file": "mac-1984.png",
+      "bytes": 496209
+    },
+    "windows95-launch": {
+      "title": "Disquetes y CD-ROM de instalacion de Windows 95.jpg",
+      "author": "яіску ѕнояє",
+      "license": "CC BY 2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Disquetes_y_CD-ROM_de_instalacion_de_Windows_95.jpg",
+      "file": "windows95-launch.jpg",
+      "bytes": 129907
+    },
+    "linux-tux": {
+      "title": "Tux.svg",
+      "author": "Larry Ewing, Simon Budig, Garrett LeSage",
+      "license": "CC0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tux.svg",
+      "file": "linux-tux.png",
+      "bytes": 636023
+    },
+    "www-berners-lee": {
+      "title": "First Web Server.jpg",
+      "author": "User:Coolcaesar at en.wikipedia",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:First_Web_Server.jpg",
+      "file": "www-berners-lee.jpg",
+      "bytes": 400285
+    },
+    "ai-chat-llm": {
+      "title": "ChatGPT-example-Finnish.png",
+      "author": "Osmo Lundell",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:ChatGPT-example-Finnish.png",
+      "file": "ai-chat-llm.png",
+      "bytes": 171179
+    },
+    "motherboard-labelled": {
+      "title": "Acer E360 Socket 939 motherboard by Foxconn.svg",
+      "author": "ǝɹʎℲxoɯ",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Acer_E360_Socket_939_motherboard_by_Foxconn.svg",
+      "file": "motherboard-labelled.png",
+      "bytes": 2050976
+    },
+    "cpu-top-bottom": {
+      "title": "Intel CPU Core i7 6700K Skylake perspective.jpg",
+      "author": "Eric Gaba (Sting - fr:Sting)",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Intel_CPU_Core_i7_6700K_Skylake_perspective.jpg",
+      "file": "cpu-top-bottom.jpg",
+      "bytes": 727127
+    },
+    "cpu-in-socket": {
+      "title": "LGA 775 CPU Socket.jpg",
+      "author": "Nayu Kim from Toronto, Canada",
+      "license": "CC BY 2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:LGA_775_CPU_Socket.jpg",
+      "file": "cpu-in-socket.jpg",
+      "bytes": 270465
+    },
+    "cpu-cooler-paste": {
+      "title": "AMD heatsink and fan.jpg",
+      "author": "fir0002 flagstaffotos [at] gmail.com Canon 20D + Canon 70-200mm f/2.8 L",
+      "license": "GFDL 1.2",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:AMD_heatsink_and_fan.jpg",
+      "file": "cpu-cooler-paste.jpg",
+      "bytes": 537199
+    },
+    "cmos-battery": {
+      "title": "CMOS Battery, Motherboard.jpg",
+      "author": "Kent Madsen",
+      "license": "CC BY-SA 2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:CMOS_Battery,_Motherboard.jpg",
+      "file": "cmos-battery.jpg",
+      "bytes": 758879
+    },
+    "ddr-dimm": {
+      "title": "Swissbit 2GB PC2-5300U-555.jpg",
+      "author": "An-d",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Swissbit_2GB_PC2-5300U-555.jpg",
+      "file": "ddr-dimm.jpg",
+      "bytes": 413059
+    },
+    "dimm-vs-sodimm": {
+      "title": "Desktop DDR Memory Comparison.svg",
+      "author": "Martini",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Desktop_DDR_Memory_Comparison.svg",
+      "file": "dimm-vs-sodimm.png",
+      "bytes": 119899
+    },
+    "ram-install": {
+      "title": "DDR and SDRAM at ESC P4VMM2 motherboard.JPG",
+      "author": "Mixabest",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DDR_and_SDRAM_at_ESC_P4VMM2_motherboard.JPG",
+      "file": "ram-install.jpg",
+      "bytes": 485237
+    },
+    "ecc-server-ram": {
+      "title": "MT36JSF1G72PZ-1G9K1HE.jpg",
+      "author": "Mister rf",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:MT36JSF1G72PZ-1G9K1HE.jpg",
+      "file": "ecc-server-ram.jpg",
+      "bytes": 633089
+    },
+    "hdd-open": {
+      "title": "Laptop-hard-drive-exposed.jpg",
+      "author": "Evan-Amos",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Laptop-hard-drive-exposed.jpg",
+      "file": "hdd-open.jpg",
+      "bytes": 241289
+    },
+    "ssd-vs-hdd": {
+      "title": "Disassembled HDD and SSD.JPG",
+      "author": "The original uploader was Rochellesinger at English Wikipedia.",
+      "license": "CC BY-SA 2.5",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Disassembled_HDD_and_SSD.JPG",
+      "file": "ssd-vs-hdd.jpg",
+      "bytes": 241652
+    },
+    "sata-cables": {
+      "title": "SATA Data Cable.jpg",
+      "author": "Unknown",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:SATA_Data_Cable.jpg",
+      "file": "sata-cables.jpg",
+      "bytes": 17038
+    },
+    "raid-diagram": {
+      "title": "RAID 10.svg",
+      "author": "Wheart, based on image File:RAID 0.svg by Cburnett",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RAID_10.svg",
+      "file": "raid-diagram.png",
+      "bytes": 220228
+    },
+    "lto-tape": {
+      "title": "LTO2-cart-purple.jpg",
+      "author": "Austinmurphy at English Wikipedia (Original text: Austin Murphy (talk))",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:LTO2-cart-purple.jpg",
+      "file": "lto-tape.jpg",
+      "bytes": 163839
+    },
+    "rear-io-panel": {
+      "title": "ASUS P5Q-EM back panel.jpg",
+      "author": "Hitachi-Train (talk)",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:ASUS_P5Q-EM_back_panel.jpg",
+      "file": "rear-io-panel.jpg",
+      "bytes": 132838
+    },
+    "usb-connector-types": {
+      "title": "Usb connectors.JPG",
+      "author": "Viljo Viitanen",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Usb_connectors.JPG",
+      "file": "usb-connector-types.jpg",
+      "bytes": 97815
+    },
+    "video-connectors": {
+      "title": "Lifesaver kit for presenters, mini displayport to vga, hdmi, and dvi adapters (9201274040).jpg",
+      "author": "Antonio Zugaldia from Washington, D.C., United States",
+      "license": "CC BY 2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Lifesaver_kit_for_presenters,_mini_displayport_to_vga,_hdmi,_and_dvi_adapters_(9201274040).jpg",
+      "file": "video-connectors.jpg",
+      "bytes": 508273
+    },
+    "rj45-rj11": {
+      "title": "NWS Presszange Crimpzange für RJ11, RJ14, RJ25 & RJ45 Westernstecker 02.jpg",
+      "author": "Kai Kemmann",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:NWS_Presszange_Crimpzange_f%C3%BCr_RJ11,_RJ14,_RJ25_%26_RJ45_Westernstecker_02.jpg",
+      "file": "rj45-rj11.jpg",
+      "bytes": 80494
+    },
+    "pcie-slots": {
+      "title": "PCIExpress.jpg",
+      "author": "w:user:snickerdo",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:PCI-E_%26_PCI_slots_on_DFI_LanParty_nF4_SLI-DR_20050531.jpg",
+      "file": "pcie-slots.jpg",
+      "bytes": 394299
+    },
+    "aio-cooler": {
+      "title": "Corsair H100i 240mm CPU cooler. On MSI Z590 Torpedo motherboard. (51987363353).jpg",
+      "author": "Chi Ho Chan from Hong Kong",
+      "license": "CC BY 2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Corsair_H100i_240mm_CPU_cooler._On_MSI_Z590_Torpedo_motherboard._(51987363353).jpg",
+      "file": "aio-cooler.jpg",
+      "bytes": 644487
+    },
+    "dusty-pc": {
+      "title": "Dusty fan and heatsink.jpg",
+      "author": "Atomicdragon136",
+      "license": "CC BY 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dusty_fan_and_heatsink.jpg",
+      "file": "dusty-pc.jpg",
+      "bytes": 1057718
+    },
+    "desktop-ups": {
+      "title": "Uninterruptible power supply.jpg",
+      "author": "Tahir mq",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Uninterruptible_power_supply.jpg",
+      "file": "desktop-ups.jpg",
+      "bytes": 253101
+    },
+    "monitor-panels": {
+      "title": "LCD monitor.jpg",
+      "author": "Mamun2a",
+      "license": "CC BY-SA 2.5",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Compaq_Presario_2700t.jpg",
+      "file": "monitor-panels.jpg",
+      "bytes": 209750
+    },
+    "laser-printer-cutaway": {
+      "title": "Laser printer-Writing.svg",
+      "author": "en:User:DMahalko, traced by User:Stannered",
+      "license": "CC BY 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Laser_printer-Writing.svg",
+      "file": "laser-printer-cutaway.png",
+      "bytes": 340327
+    },
+    "toner-drum": {
+      "title": "Tonerkartusche.jpg",
+      "author": "FairToner",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tonerkartusche.jpg",
+      "file": "toner-drum.jpg",
+      "bytes": 175620
+    },
+    "inkjet-printhead": {
+      "title": "Tintenpatronen.jpg",
+      "author": "User:Tullius",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tintenpatronen.jpg",
+      "file": "inkjet-printhead.jpg",
+      "bytes": 248106
+    },
+    "thermal-receipt": {
+      "title": "EPSON IMPACT DOT MATRIX RECEIPT PRINTER.jpg",
+      "author": "Dinkun Chen",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:EPSON_IMPACT_DOT_MATRIX_RECEIPT_PRINTER.jpg",
+      "file": "thermal-receipt.jpg",
+      "bytes": 448989
+    },
+    "dot-matrix": {
+      "title": "Dot matrix printer.jpg",
+      "author": "Joel21 at Hebrew Wikipedia",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Olivetti_Underwood_typewriter.jpg",
+      "file": "dot-matrix.jpg",
+      "bytes": 345372
+    },
+    "printer-3d": {
+      "title": "3D Printer In Action.jpg",
+      "author": "Fangusu",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:3D_Printer_In_Action.jpg",
+      "file": "printer-3d.jpg",
+      "bytes": 1094697
+    },
+    "office-mfp": {
+      "title": "Xerox AltaLink C8045 photocopier.jpg",
+      "author": "Baron Maddock",
+      "license": "CC BY 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Xerox_AltaLink_C8045_photocopier.jpg",
+      "file": "office-mfp.jpg",
+      "bytes": 548870
+    },
+    "nic-card": {
+      "title": "Network card.jpg",
+      "author": "Unknown",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Network_card.jpg",
+      "file": "nic-card.jpg",
+      "bytes": 79176
+    },
+    "managed-switch": {
+      "title": "19-inch rackmount Ethernet switches and patch panels.jpg",
+      "author": "Dsimic",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:19-inch_rackmount_Ethernet_switches_and_patch_panels.jpg",
+      "file": "managed-switch.jpg",
+      "bytes": 419601
+    },
+    "router-firewall": {
+      "title": "Cisco Pix 515E.jpg",
+      "author": "Hades2k",
+      "license": "CC BY-SA 2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cisco_Pix_515E.jpg",
+      "file": "router-firewall.jpg",
+      "bytes": 492398
+    },
+    "wifi-ap": {
+      "title": "Wireless access point.jpg",
+      "author": "Pjpearce",
+      "license": "CC0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wireless_access_point.jpg",
+      "file": "wifi-ap.jpg",
+      "bytes": 399982
+    },
+    "patch-panel": {
+      "title": "Ethernet Patch Panel 20171121 130458.jpg",
+      "author": "Kbh3rd",
+      "license": "CC BY 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ethernet_Patch_Panel_20171121_130458.jpg",
+      "file": "patch-panel.jpg",
+      "bytes": 1062169
+    },
+    "cat6-rj45": {
+      "title": "Ethernet RJ45 connector p1160054.jpg",
+      "author": "No machine-readable author provided. David.Monniaux assumed (based on copyright claims).",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ethernet_RJ45_connector_p1160054.jpg",
+      "file": "cat6-rj45.jpg",
+      "bytes": 180853
+    },
+    "fibre-sfp": {
+      "title": "Multi mode sfp transceiver IMGP7820 wp.jpg",
+      "author": "smial (talk)",
+      "license": "FAL",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Multi_mode_sfp_transceiver_IMGP7820_wp.jpg",
+      "file": "fibre-sfp.jpg",
+      "bytes": 267622
+    },
+    "onts-fibre": {
+      "title": "GPONxVND.jpg",
+      "author": "Oesjaar",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:GPONxVND.jpg",
+      "file": "onts-fibre.jpg",
+      "bytes": 31699
+    },
+    "datacentre-aisle": {
+      "title": "BalticServers data center.jpg",
+      "author": "BalticServers.com",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:BalticServers_data_center.jpg",
+      "file": "datacentre-aisle.jpg",
+      "bytes": 407475
+    },
+    "rack-42u": {
+      "title": "Rack001.jpg",
+      "author": "Jfreyre",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Rack001.jpg",
+      "file": "rack-42u.jpg",
+      "bytes": 410105
+    },
+    "rack-server-1u": {
+      "title": "Dell PowerEdge R610.jpg",
+      "author": "Toni Birrer",
+      "license": "CC BY-SA 2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dell_PowerEdge_R610.jpg",
+      "file": "rack-server-1u.jpg",
+      "bytes": 527062
+    },
+    "blade-chassis": {
+      "title": "Bladecenter-front.jpg",
+      "author": "User:Qji",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:IBM_Bladecenter_E_(front).jpg",
+      "file": "blade-chassis.jpg",
+      "bytes": 889455
+    },
+    "san-array": {
+      "title": "SANvsNAS.svg",
+      "author": "The original uploader was Mennis at English Wikipedia.",
+      "license": "CC BY-SA 2.5",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:SANvsNAS.svg",
+      "file": "san-array.png",
+      "bytes": 138275
+    },
+    "rack-pdu": {
+      "title": "Schleifenbauer PDU Power Distribution Unit in operation.jpg",
+      "author": "Schleifenbauer",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Schleifenbauer_PDU_Power_Distribution_Unit_in_operation.jpg",
+      "file": "rack-pdu.jpg",
+      "bytes": 312647
+    },
+    "hyperscale-aerial": {
+      "title": "Google Data Center, Council Bluffs Iowa (49062863796).jpg",
+      "author": "Chad Davis",
+      "license": "CC BY 2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Google_Data_Center,_Council_Bluffs_Iowa_(49062863796).jpg",
+      "file": "hyperscale-aerial.jpg",
+      "bytes": 562976
+    },
+    "cloud-regions-map": {
+      "title": "Cloud computing types-te.svg",
+      "author": "Translated into Telugu by User:KCVelaga",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cloud_computing_types-te.svg",
+      "file": "cloud-regions-map.png",
+      "bytes": 205647
+    },
+    "hypervisor-diagram": {
+      "title": "Hyperviseur.png",
+      "author": "Scsami",
+      "license": "CC0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hyperviseur.png",
+      "file": "hypervisor-diagram.png",
+      "bytes": 11240
+    },
+    "gpu-cluster": {
+      "title": "Tesla-NVIDIA GPU cluster (3706444821).jpg",
+      "author": "ChrisDag",
+      "license": "CC BY 2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tesla-NVIDIA_GPU_cluster_(3706444821).jpg",
+      "file": "gpu-cluster.jpg",
+      "bytes": 431593
+    },
+    "liquid-cooled-rack": {
+      "title": "Immersion cooling.jpg",
+      "author": "Stealth2021",
+      "license": "CC BY 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Immersion_cooling.jpg",
+      "file": "liquid-cooled-rack.jpg",
+      "bytes": 127011
+    },
+    "undersea-cable-map": {
+      "title": "Submarine cable map umap.png",
+      "author": "cable data by Greg Mahlknecht , map by Openstreetmap contributors",
+      "license": "CC BY-SA 2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Submarine_cable_map_umap.png",
+      "file": "undersea-cable-map.png",
+      "bytes": 325987
+    },
+    "cable-landing": {
+      "title": "Shima Submarine Cable landing Station.jpg",
+      "author": "伊勢志摩日和",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Shima_Submarine_Cable_landing_Station.jpg",
+      "file": "cable-landing.jpg",
+      "bytes": 34456
+    },
+    "linux-server-terminal": {
+      "title": "Linux command-line. Bash. GNOME Terminal. screenshot.png",
+      "author": "The GNOME Project",
+      "license": "GPL",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Linux_command-line._Bash._GNOME_Terminal._screenshot.png",
+      "file": "linux-server-terminal.png",
+      "bytes": 108354
+    },
+    "licence-diagram": {
+      "title": "Software Categories.svg",
+      "author": "Frysch",
+      "license": "CC0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Software_Categories.svg",
+      "file": "licence-diagram.png",
+      "bytes": 86204
+    },
+    "post-screen": {
+      "title": "Phoenix Technologies UEFI BIOS POST test - v.1.79, ThinkPad edition.JPG",
+      "author": "Paowee",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Phoenix_Technologies_UEFI_BIOS_POST_test_-_v.1.79,_ThinkPad_edition.JPG",
+      "file": "post-screen.jpg",
+      "bytes": 284577
+    },
+    "bsod": {
+      "title": "Bsodwindows10.png",
+      "author": "First version by MitrandirLK, newest version of the screenshot by Ngyikp)",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bsodwindows10.png",
+      "file": "bsod.png",
+      "bytes": 38675
+    },
+    "timeline-poster": {
+      "title": "Pc timeline.webp",
+      "author": "Dog-on-wiki",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pc_timeline.webp",
+      "file": "timeline-poster.webp",
+      "bytes": 166438
+    },
+    "m2-nvme": {
+      "title": "256GB 2230 NVME SSD + 256GB NGFF SSD.jpg",
+      "author": "User5515",
+      "license": "CC0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:256GB_2230_NVME_SSD_%2B_256GB_NGFF_SSD.jpg",
+      "file": "m2-nvme.jpg",
+      "bytes": 102709
+    },
+    "gpu-card": {
+      "title": "Gigabyte GTX 970 Windforce.jpg",
+      "author": "TheStriker",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Gigabyte_GTX_970_Windforce.jpg",
+      "file": "gpu-card.jpg",
+      "bytes": 441869
+    },
+    "ups-room": {
+      "title": "BATTERY ROOM IN SCHUCHULI ARIZONA - NARA - 17472106.jpg",
+      "author": "Unknown authorUnknown author or not provided",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:BATTERY_ROOM_IN_SCHUCHULI_ARIZONA_-_NARA_-_17472106.jpg",
+      "file": "ups-room.jpg",
+      "bytes": 623705
+    },
+    "hot-cold-aisle": {
+      "title": "Cold Aisle Containment.svg",
+      "author": "Please watch the [[:File:Cold Aisle Containment.svg#Licensing:|licensing informations]] of this image. I would also appreciate an email to ratatosk[at]ratatosk.de with details of use.",
+      "license": "CC BY-SA 3.0 de",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cold_Aisle_Containment.svg",
+      "file": "hot-cold-aisle.png",
+      "bytes": 162287
+    },
+    "os-family": {
+      "title": "Unix history-simple.svg",
+      "author": "Eraserhead1, Infinity0, Sav_vas",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Unix_history-simple.svg",
+      "file": "os-family.png",
+      "bytes": 249989
+    },
+    "task-manager": {
+      "title": "Htop 3.0.1 screenshot.png",
+      "author": "Software: htop development team Screenshot: VulcanSphere",
+      "license": "GPL",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Htop_3.0.1_screenshot.png",
+      "file": "task-manager.png",
+      "bytes": 194193
+    },
+    "device-manager": {
+      "title": "ReactOS 0.4.14 device manager screenshot.png",
+      "author": "Software: ReactOS Team Screenshot: VulcanSphere",
+      "license": "GPL",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:ReactOS_0.4.14_device_manager_screenshot.png",
+      "file": "device-manager.png",
+      "bytes": 50869
+    },
+    "uefi-setup": {
+      "title": "BIOS Setup First Time.jpg",
+      "author": "Paul Schultz from Kenmore, Washington, USA",
+      "license": "CC BY 2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:BIOS_Setup_First_Time.jpg",
+      "file": "uefi-setup.jpg",
+      "bytes": 652829
+    },
+    "boot-sequence-diagram": {
+      "title": "GNU GRUB components.svg",
+      "author": "ScotXW",
+      "license": "CC BY-SA 3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:GNU_GRUB_components.svg",
+      "file": "boot-sequence-diagram.png",
+      "bytes": 184075
+    }
+  },
+  "failures": []
+}

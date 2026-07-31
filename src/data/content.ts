@@ -1,5 +1,156 @@
 import type { UnitContent } from "../types";
 
+/** Two-row diagram used inside the PSU quiz "matching" question: analogy on top, real
+ * PC components on the bottom, connected by arrows. Kept as an inline SVG string so
+ * questions can render it via `dangerouslySetInnerHTML`. */
+const WATER_ANALOGY_SVG = `
+<svg viewBox="0 0 960 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Water supply analogy vs PC power distribution">
+  <defs>
+    <marker id="wa-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#1f6feb"/>
+    </marker>
+    <style>
+      .wa-lbl { font: 600 12px system-ui, -apple-system, Segoe UI, sans-serif; fill:#0b3a7a; text-anchor:middle; }
+      .wa-sub { font: 500 11px system-ui, -apple-system, Segoe UI, sans-serif; fill:#3b4d66; text-anchor:middle; }
+      .wa-hd  { font: 700 12px system-ui, -apple-system, Segoe UI, sans-serif; fill:#0b3a7a; text-anchor:start; letter-spacing:.06em; text-transform:uppercase; }
+      .wa-box { fill:#eaf3ff; stroke:#8fb6ff; stroke-width:1.4; }
+      .wa-box-r { fill:#fff4e5; stroke:#f0a24e; stroke-width:1.4; }
+      .wa-arrow { stroke:#1f6feb; stroke-width:2; fill:none; marker-end:url(#wa-arr); }
+      .wa-ico { fill:none; stroke:#0b3a7a; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+      .wa-ico-r { fill:none; stroke:#b8620a; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+      .wa-fill { fill:#8fb6ff; }
+      .wa-fill-r { fill:#f0a24e; }
+    </style>
+  </defs>
+
+  <text x="16" y="22" class="wa-hd">Analogy</text>
+  <text x="16" y="200" class="wa-hd">Real PC</text>
+
+  <!-- ============ TOP ROW: ANALOGY ============ -->
+
+  <!-- 1. River -->
+  <g transform="translate(40,40)">
+    <rect class="wa-box" x="0" y="0" width="150" height="110" rx="10"/>
+    <path class="wa-ico" d="M18 55 Q35 40 55 55 T95 55 T135 55"/>
+    <path class="wa-ico" d="M18 70 Q35 55 55 70 T95 70 T135 70"/>
+    <path class="wa-ico" d="M18 85 Q35 70 55 85 T95 85 T135 85"/>
+    <text x="75" y="105" class="wa-lbl">River</text>
+  </g>
+
+  <!-- 2. Water treatment plant -->
+  <g transform="translate(215,40)">
+    <rect class="wa-box" x="0" y="0" width="150" height="110" rx="10"/>
+    <rect class="wa-ico" x="20" y="55" width="110" height="38"/>
+    <circle class="wa-ico" cx="45" cy="55" r="14"/>
+    <circle class="wa-ico" cx="105" cy="55" r="14"/>
+    <path class="wa-ico" d="M20 55h110"/>
+    <path class="wa-ico" d="M75 30v25"/>
+    <path class="wa-fill" d="M68 22h14l-7 -10z"/>
+    <text x="75" y="105" class="wa-lbl">Treatment plant</text>
+  </g>
+
+  <!-- 3. Pipes -->
+  <g transform="translate(390,40)">
+    <rect class="wa-box" x="0" y="0" width="150" height="110" rx="10"/>
+    <rect class="wa-ico" x="15" y="52" width="120" height="14" rx="4"/>
+    <rect class="wa-ico" x="15" y="72" width="120" height="14" rx="4"/>
+    <path class="wa-ico" d="M45 52v-14M105 52v-14M45 86v14M105 86v14"/>
+    <text x="75" y="105" class="wa-lbl">Pipes</text>
+  </g>
+
+  <!-- 4. City water network -->
+  <g transform="translate(565,40)">
+    <rect class="wa-box" x="0" y="0" width="150" height="110" rx="10"/>
+    <path class="wa-ico" d="M20 80h110M75 40v40M40 55v25M110 55v25M55 65h40"/>
+    <circle class="wa-fill" cx="20" cy="80" r="4"/>
+    <circle class="wa-fill" cx="130" cy="80" r="4"/>
+    <circle class="wa-fill" cx="75" cy="40" r="4"/>
+    <circle class="wa-fill" cx="40" cy="55" r="4"/>
+    <circle class="wa-fill" cx="110" cy="55" r="4"/>
+    <text x="75" y="105" class="wa-lbl">City water network</text>
+  </g>
+
+  <!-- 5. Buildings -->
+  <g transform="translate(740,40)">
+    <rect class="wa-box" x="0" y="0" width="180" height="110" rx="10"/>
+    <path class="wa-ico" d="M20 90V55l20 -15 20 15V90z"/>
+    <path class="wa-ico" d="M70 90V45h30V90"/>
+    <path class="wa-ico" d="M115 90V60h20V90"/>
+    <path class="wa-ico" d="M145 90V70h20V90"/>
+    <path class="wa-ico" d="M78 55h4v6h-4zM88 55h4v6h-4zM78 68h4v6h-4zM88 68h4v6h-4z"/>
+    <text x="90" y="105" class="wa-lbl">Buildings</text>
+  </g>
+
+  <!-- ============ ARROWS ============ -->
+  <path class="wa-arrow" d="M115 170 v25"/>
+  <path class="wa-arrow" d="M290 170 v25"/>
+  <path class="wa-arrow" d="M465 170 v25"/>
+  <path class="wa-arrow" d="M640 170 v25"/>
+  <path class="wa-arrow" d="M830 170 v25"/>
+
+  <!-- ============ BOTTOM ROW: REAL COMPONENTS ============ -->
+
+  <!-- 1. Wall outlet -->
+  <g transform="translate(40,205)">
+    <rect class="wa-box-r" x="0" y="0" width="150" height="110" rx="10"/>
+    <rect class="wa-ico-r" x="40" y="20" width="70" height="70" rx="10"/>
+    <circle class="wa-ico-r" cx="65" cy="55" r="5"/>
+    <circle class="wa-ico-r" cx="85" cy="55" r="5"/>
+    <rect class="wa-fill-r" x="72" y="72" width="6" height="10" rx="1"/>
+    <text x="75" y="105" class="wa-lbl">Wall outlet · 230 V AC</text>
+  </g>
+
+  <!-- 2. PSU -->
+  <g transform="translate(215,205)">
+    <rect class="wa-box-r" x="0" y="0" width="150" height="110" rx="10"/>
+    <rect class="wa-ico-r" x="15" y="30" width="120" height="55" rx="6"/>
+    <circle class="wa-ico-r" cx="40" cy="57" r="14"/>
+    <path class="wa-ico-r" d="M85 42h35M85 52h35M85 62h35M85 72h35"/>
+    <text x="75" y="105" class="wa-lbl">Power Supply Unit</text>
+  </g>
+
+  <!-- 3. Cables -->
+  <g transform="translate(390,205)">
+    <rect class="wa-box-r" x="0" y="0" width="150" height="110" rx="10"/>
+    <path class="wa-ico-r" d="M20 45c25 0 25 25 55 25s30 -25 55 -25"/>
+    <path class="wa-ico-r" d="M20 70c25 0 25 25 55 25s30 -25 55 -25"/>
+    <rect class="wa-fill-r" x="14" y="38" width="10" height="16" rx="2"/>
+    <rect class="wa-fill-r" x="126" y="38" width="10" height="16" rx="2"/>
+    <rect class="wa-fill-r" x="14" y="63" width="10" height="16" rx="2"/>
+    <rect class="wa-fill-r" x="126" y="63" width="10" height="16" rx="2"/>
+    <text x="75" y="105" class="wa-lbl">PSU cables</text>
+  </g>
+
+  <!-- 4. Motherboard -->
+  <g transform="translate(565,205)">
+    <rect class="wa-box-r" x="0" y="0" width="150" height="110" rx="10"/>
+    <rect class="wa-ico-r" x="15" y="20" width="120" height="70" rx="4"/>
+    <rect class="wa-ico-r" x="30" y="32" width="26" height="26"/>
+    <rect class="wa-ico-r" x="70" y="30" width="55" height="8" rx="2"/>
+    <rect class="wa-ico-r" x="70" y="42" width="55" height="8" rx="2"/>
+    <rect class="wa-ico-r" x="30" y="68" width="90" height="6" rx="1"/>
+    <rect class="wa-ico-r" x="30" y="78" width="90" height="6" rx="1"/>
+    <text x="75" y="105" class="wa-lbl">Motherboard</text>
+  </g>
+
+  <!-- 5. Components (CPU / GPU / RAM / SSD) -->
+  <g transform="translate(740,205)">
+    <rect class="wa-box-r" x="0" y="0" width="180" height="110" rx="10"/>
+    <rect class="wa-ico-r" x="15" y="22" width="34" height="34"/>
+    <text x="32" y="44" class="wa-sub">CPU</text>
+    <rect class="wa-ico-r" x="60" y="22" width="52" height="34" rx="3"/>
+    <text x="86" y="44" class="wa-sub">GPU</text>
+    <rect class="wa-ico-r" x="122" y="22" width="46" height="34" rx="2"/>
+    <text x="145" y="44" class="wa-sub">RAM</text>
+    <rect class="wa-ico-r" x="15" y="66" width="60" height="24" rx="2"/>
+    <text x="45" y="82" class="wa-sub">SSD</text>
+    <rect class="wa-ico-r" x="85" y="66" width="80" height="24" rx="2"/>
+    <text x="125" y="82" class="wa-sub">Drives / Fans</text>
+    <text x="90" y="105" class="wa-lbl">PC components</text>
+  </g>
+</svg>
+`;
+
 export interface GlossaryEntry {
   def: string;
   link?: { label: string; url: string };
@@ -2640,6 +2791,1290 @@ export const CONTENT: Record<string, UnitContent> = {
                 "Identify those learners who have shortcomings and assist them with fulfilling the requirements.",
               ],
               resources: ["LM p27"],
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  /* ================================================================
+     HWSW — Hardware and Software (internal two-day lesson)
+     Wednesday 5 & Thursday 6 August 2026 · enrichment, no credits
+     ================================================================ */
+  HWSW: {
+    lesson: [
+      {
+        heading: "Welcome — why hardware and software matter",
+        icon: "chip",
+        flat: true,
+        paragraphs: [
+          "Everything you will ever fix, install, upgrade or support in your IT career is either hardware or software. Hardware is the physical part of a computer system — anything you can touch, from the smallest RAM chip to a data centre the size of a shopping centre. Software is the set of instructions that tells that hardware what to do — you cannot touch it, but without it the most expensive server in the world is just an expensive heater.",
+          "Over these two days we travel the whole landscape: where computers came from (and the remarkable people — many of them women — who invented computing), what every component inside a PC does, the printers and peripherals on the desks around you, the network and data centre hardware behind the scenes, the cloud hardware you will never see but use every day, and the software that brings it all to life.",
+          "By the end you should be able to pick up any component, name it, explain what it does, and reason about what happens when it fails — the core skill of a systems support technician.",
+        ],
+        cards: [
+          {
+            icon: "chip",
+            title: "Hardware",
+            text: "The physical machinery: CPU, RAM, storage, motherboard, ports, printers, switches, servers, racks. If you can touch it (or trip over its cable), it is hardware.",
+          },
+          {
+            icon: "layers",
+            title: "Software",
+            text: "The instructions: operating systems, applications, utilities. Stored as data, executed by the CPU. If you can only see it on a screen, it is software.",
+          },
+          {
+            icon: "settings",
+            title: "Firmware",
+            text: "Software permanently stored on a chip inside hardware — the BIOS/UEFI on a motherboard, the controller code in an SSD or printer. The bridge between the two worlds.",
+          },
+        ],
+        figures: [
+          { id: "hardware-collage", caption: "The hardware landscape — from a RAM module to a data centre", hint: "a collage/poster of hardware at every scale (component, PC, rack, data centre)" },
+          { id: "software-stack", caption: "The software stack — firmware, operating system, applications", hint: "a simple layered diagram: hardware at the bottom, firmware, OS, apps on top" },
+        ],
+      },
+      {
+        heading: "1. In the beginning — Babbage, Ada Lovelace and the first idea of a computer",
+        icon: "book",
+        paragraphs: [
+          "The story of your job starts two hundred years ago, before electricity was in homes. In 1822 the English mathematician Charles Babbage designed the Difference Engine — a hand-cranked machine of brass gears built to calculate mathematical tables without human error. He then went further: his Analytical Engine (designed from 1837) had a 'mill' that did the arithmetic and a 'store' that held numbers — exactly the CPU-and-memory split every computer still uses today. It read its instructions from punched cards, an idea borrowed from the Jacquard loom, which since 1804 had woven silk patterns controlled by holes punched in cards.",
+          "Ada Lovelace, a mathematician and the daughter of the poet Lord Byron, studied the Analytical Engine and in 1843 published a set of notes that included a step-by-step method for the machine to compute Bernoulli numbers — widely regarded as the first computer program ever written. More importantly, she saw what even Babbage did not: that a machine manipulating symbols could go beyond numbers and one day compose music or create art. She imagined general-purpose computing — and, in a sense, predicted today's AI — a century before the first computer was built.",
+          "The punched card outlived them both. In 1890 Herman Hollerith used punched cards and electric tabulating machines to process the US census in two years instead of eight. His Tabulating Machine Company merged into what was renamed, in 1924, International Business Machines — IBM. Data processing was an industry before a single electronic computer existed.",
+        ],
+        bullets: [
+          "1804 — Jacquard loom: punched cards control a machine (a pattern is a 'program').",
+          "1822 — Babbage's Difference Engine: automatic calculation by machine.",
+          "1837 — Babbage's Analytical Engine: mill (processor) + store (memory) + card input — the architecture of every computer since.",
+          "1843 — Ada Lovelace publishes the first algorithm intended for a machine, and foresees computers working with more than numbers.",
+          "1890 — Hollerith's punched-card tabulators process the US census; his company becomes IBM in 1924.",
+        ],
+        table: {
+          headers: ["Analytical Engine (1837)", "Modern equivalent"],
+          rows: [
+            ["The mill — performed the arithmetic", "CPU (processor)"],
+            ["The store — held 1,000 numbers of 40 digits", "RAM (memory)"],
+            ["Punched operation & variable cards", "Program and data input"],
+            ["Printer and curve-drawing apparatus", "Output devices"],
+          ],
+        },
+        figures: [
+          { id: "babbage-portrait", caption: "Charles Babbage (1791–1871), 'father of the computer'", hint: "portrait photograph or engraving of Charles Babbage" },
+          { id: "difference-engine", caption: "The Difference Engine — a working build stands in the Science Museum, London", hint: "photo of the Science Museum's completed Difference Engine No. 2" },
+          { id: "ada-lovelace", caption: "Ada Lovelace (1815–1852), the first computer programmer", hint: "the famous 1840 watercolour portrait of Ada Lovelace" },
+          { id: "jacquard-loom", caption: "A Jacquard loom with its chain of punched cards", hint: "photo of a Jacquard loom showing the punched-card chain" },
+          { id: "hollerith-machine", caption: "Hollerith tabulating machine and a punched card — the 1890 census", hint: "photo of the Hollerith tabulator and/or an 80-column punched card" },
+        ],
+      },
+      {
+        heading: "2. When 'computer' was a job title — the women who computed",
+        icon: "people",
+        paragraphs: [
+          "For most of history a 'computer' was a person — someone employed to do calculations by hand, and for a century that skilled, painstaking work was done overwhelmingly by women. At Harvard Observatory from the 1880s, a team of women 'computers' including Williamina Fleming, Annie Jump Cannon and Henrietta Swan Leavitt catalogued hundreds of thousands of stars; Leavitt's work became a foundation for measuring the universe.",
+          "At NACA — later NASA — teams of women computed flight and rocket trajectories with pencils, slide rules and mechanical calculators. In the segregated 'West Area Computing' unit, Black women mathematicians did this work while being kept in separate offices: Katherine Johnson calculated the trajectory for America's first human spaceflight, and John Glenn refused to fly his 1962 orbital mission until she personally re-checked the electronic computer's figures — 'If she says they're good, then I'm ready to go.' Dorothy Vaughan became NASA's first Black supervisor and, seeing electronic computers coming, taught herself and her whole team FORTRAN programming. Mary Jackson became NASA's first Black female engineer. Their story is told in the film Hidden Figures.",
+          "During the Second World War, hundreds of women computed artillery firing tables for the US Army — and at Bletchley Park in Britain, where Alan Turing's team broke the German Enigma cipher with electromechanical 'bombe' machines, roughly three quarters of the ten-thousand-strong workforce were women, many operating Colossus (1943), the world's first programmable electronic digital computer.",
+          "So when the first general-purpose electronic computer arrived, it was natural that women programmed it. ENIAC (1945) weighed 30 tons and used about 18,000 vacuum tubes; its six original programmers — Kay McNulty, Betty Jennings, Betty Snyder, Marlyn Wescoff, Fran Bilas and Ruth Lichterman — programmed it by physically re-plugging cables and setting switches, with no manuals and no training course, inventing programming as a discipline as they went. For decades their role was almost forgotten; today they are recognised as pioneers.",
+          "One of them, Betty Snyder (later Holberton), went on to help design UNIVAC. Alongside her worked Grace Hopper, a US Navy officer and mathematician who believed programs should be written in something closer to English: she created the first compiler (A-0, 1952) and drove the creation of COBOL (1959), a language still running banks today. Her team also popularised the word 'debugging' after taping an actual moth, found jamming a relay in the Harvard Mark II, into the logbook.",
+        ],
+        table: {
+          headers: ["Pioneer", "Contribution"],
+          rows: [
+            ["Ada Lovelace (1843)", "First published algorithm for a machine; foresaw general-purpose computing"],
+            ["Harvard Computers (1880s–1920s)", "Catalogued the stars; foundations of modern astronomy"],
+            ["Katherine Johnson (NASA)", "Trajectories for the first US human spaceflights; verified John Glenn's orbit"],
+            ["Dorothy Vaughan (NASA)", "First Black NASA supervisor; retrained her team from hand computing to FORTRAN"],
+            ["Mary Jackson (NASA)", "NASA's first Black female engineer"],
+            ["Bletchley Park women (WWII)", "Operated the bombes and Colossus that broke enemy ciphers"],
+            ["The ENIAC Six (1945)", "First programmers of a general-purpose electronic computer"],
+            ["Grace Hopper (1952–59)", "First compiler; mother of COBOL; 'debugging'"],
+          ],
+        },
+        figures: [
+          { id: "human-computers", caption: "A room of human 'computers' at work with calculating machines", hint: "photo of NACA/Harvard women computers working at desks with mechanical calculators" },
+          { id: "katherine-johnson", caption: "Katherine Johnson — her calculations carried astronauts to orbit and back", hint: "NASA portrait of Katherine Johnson at her desk" },
+          { id: "bletchley-bombe", caption: "A rebuilt bombe at Bletchley Park — electromechanical codebreaking", hint: "photo of the Bletchley Park bombe rebuild, ideally with an operator" },
+          { id: "colossus", caption: "Colossus (1943) — the first programmable electronic digital computer", hint: "wartime photo of Colossus with its operators" },
+          { id: "eniac", caption: "ENIAC (1945) — 30 tons, ~18,000 valves, 150 kW", hint: "classic wide photo of ENIAC filling the room" },
+          { id: "eniac-programmers", caption: "Two of the ENIAC Six re-plugging the machine — this was programming in 1946", hint: "the famous photo of ENIAC programmers at the plugboards" },
+          { id: "grace-hopper", caption: "Rear Admiral Grace Hopper — the first compiler and COBOL", hint: "portrait of Grace Hopper in naval uniform, or at UNIVAC" },
+          { id: "first-bug", caption: "The 'first actual case of bug being found' — the moth in the Mark II logbook, 1947", hint: "photo of the Harvard Mark II logbook page with the taped moth" },
+        ],
+      },
+      {
+        heading: "3. Five generations of hardware — valves to AI silicon",
+        icon: "trend",
+        paragraphs: [
+          "Computer hardware has been reinvented roughly every fifteen years, each time by a new switching technology that made machines smaller, faster, cheaper and more reliable. Engineers group this history into five generations.",
+          "The turning point was 23 December 1947, when John Bardeen, Walter Brattain and William Shockley demonstrated the transistor at Bell Labs — a solid-state switch with no glowing filament to burn out. In 1958–59 Jack Kilby and Robert Noyce independently worked out how to put many transistors on one chip: the integrated circuit. In 1971 Intel squeezed an entire processor onto a single chip — the 4004 microprocessor, with 2,300 transistors. A modern CPU carries tens of billions. Gordon Moore's 1965 observation that transistor counts double roughly every two years — Moore's Law — held for half a century and is the reason the phone in your pocket outcomputes ENIAC by a factor of billions.",
+          "Once processors were chips, computers could sit on desks. The MITS Altair 8800 (1975) launched the hobbyist era — and a tiny company called Microsoft, which wrote its BASIC. The Apple II (1977) put computers in homes and schools; the IBM PC 5150 (1981) put them on every office desk and, because IBM published its specifications, created the 'PC-compatible' industry your workstations still descend from. Laptops shrank the desktop; the iPhone (2007) put a networked computer in every pocket; and since the mid-2010s the frontier has been massive parallel hardware — GPUs and AI accelerators in hyperscale data centres — bringing the story full circle to rooms of machinery, just like ENIAC, but a trillion times faster.",
+        ],
+        table: {
+          headers: ["Generation", "Technology", "Era", "Example machines"],
+          rows: [
+            ["1st", "Vacuum tubes (valves)", "1940s–1950s", "ENIAC, UNIVAC I, Colossus"],
+            ["2nd", "Transistors", "late 1950s–1960s", "IBM 1401, CDC 1604"],
+            ["3rd", "Integrated circuits", "1960s–1970s", "IBM System/360, PDP-11"],
+            ["4th", "Microprocessors", "1971–today", "Altair 8800, Apple II, IBM PC, every desktop and phone"],
+            ["5th", "Massively parallel & AI silicon", "2010s–today", "GPU clusters, Google TPU pods, Apple M-series"],
+          ],
+        },
+        bullets: [
+          "1947 — the transistor (Bell Labs): the single most important invention in electronics.",
+          "1958–59 — the integrated circuit (Kilby & Noyce): many transistors on one chip.",
+          "1965 — Moore's Law: transistor counts double roughly every two years.",
+          "1971 — Intel 4004: the first microprocessor, 2,300 transistors at 740 kHz.",
+          "1975–81 — Altair 8800 → Apple II → IBM PC: computing reaches desks and homes.",
+          "2007 — iPhone: a computer, camera, GPS and modem in one pocket-sized slab.",
+          "2010s–today — GPUs and AI accelerators fill data centres; a laptop chip has ~20 billion transistors.",
+        ],
+        figures: [
+          { id: "vacuum-tubes", caption: "Vacuum tubes (valves) — the switches of the first generation", hint: "close-up photo of glowing vacuum tubes / a tube from ENIAC" },
+          { id: "first-transistor", caption: "Replica of the first point-contact transistor, Bell Labs 1947", hint: "photo of the first transistor replica" },
+          { id: "integrated-circuit", caption: "An integrated circuit die — thousands of transistors on one chip", hint: "macro photo of an IC die or Kilby's first IC" },
+          { id: "intel-4004", caption: "Intel 4004 (1971) — the first microprocessor", hint: "photo of the Intel 4004 chip in its ceramic package" },
+          { id: "altair-8800", caption: "MITS Altair 8800 (1975) — switches and lights, no screen, no keyboard", hint: "photo of the Altair 8800 front panel" },
+          { id: "apple-ii-ibm-pc", caption: "Apple II (1977) and IBM PC 5150 (1981) — computing reaches homes and offices", hint: "side-by-side photos of the Apple II and IBM PC 5150" },
+          { id: "iphone-2007", caption: "The iPhone (2007) — the computer becomes personal and permanent", hint: "photo of the original iPhone presentation or the device itself" },
+          { id: "moores-law-chart", caption: "Moore's Law — transistor counts, 1971–today (log scale)", hint: "the classic Moore's Law transistor-count chart" },
+        ],
+      },
+      {
+        heading: "4. The evolution of software — machine code to AI",
+        icon: "layers",
+        paragraphs: [
+          "Hardware is only half the story. The first programmers set switches and re-plugged cables (ENIAC), then wrote raw machine code — pure numbers — and assembly language, which gave the numbers names. Software as we know it began when languages let humans write something readable and a program translated it for the machine: Grace Hopper's compiler idea gave us FORTRAN (1957) for science and COBOL (1959) for business.",
+          "Operating systems emerged in the 1960s so expensive machines could run many jobs; UNIX (1969, Bell Labs) introduced ideas — files, folders, users, permissions, small tools joined together — that live on in Linux, macOS, Android and even Windows. The PC era brought MS-DOS (1981) and then the graphical user interface: invented at Xerox PARC, made famous by the Macintosh (1984) and Windows. In 1991 two things changed everything: Linus Torvalds released Linux, proving world-class software could be built in the open by volunteers, and Tim Berners-Lee released the World Wide Web, turning the internet into a place. Browsers, e-mail and the web made software something you visit, not only something you install.",
+          "The 2000s moved software off your machine: web applications, then 'software as a service' (Gmail, Microsoft 365), then app stores (2008) delivering programs to phones. Under it all, virtualisation let one physical server pretend to be many — the software trick that makes cloud computing possible. And the newest layer is AI: machine-learning models, and since 2022 large language models, which are trained on thousands of GPUs and are already part of the support technician's toolkit. Ada Lovelace's prediction — machines working with words, music and ideas, not just numbers — took 180 years to come true.",
+        ],
+        table: {
+          headers: ["Era", "When", "What changed"],
+          rows: [
+            ["Plugboards & machine code", "1940s", "Programs are wiring and raw numbers"],
+            ["Assembly & compilers", "1950s", "Humans write words; FORTRAN and COBOL translate them"],
+            ["Operating systems & UNIX", "1960s–70s", "The machine manages itself: jobs, files, users"],
+            ["PC software & the GUI", "1980s", "MS-DOS, Macintosh, Windows — computing for everyone"],
+            ["Open source & the web", "1990s", "Linux, the World Wide Web, browsers"],
+            ["Cloud, SaaS & apps", "2000s–10s", "Software lives in data centres; app stores on phones"],
+            ["AI & large language models", "2010s–today", "Software that learns from data and generates language, code and images"],
+          ],
+        },
+        figures: [
+          { id: "punched-tape-code", caption: "Programs on punched cards and paper tape", hint: "photo of a punched-card program deck or paper tape reel" },
+          { id: "unix-pdp11", caption: "Ken Thompson and Dennis Ritchie at the PDP-11 — birthplace of UNIX and C", hint: "the classic Bell Labs photo of Thompson & Ritchie at the PDP-11" },
+          { id: "msdos-screen", caption: "MS-DOS — the C:\\> prompt every 1980s office knew", hint: "screenshot of an MS-DOS command prompt with a DIR listing" },
+          { id: "mac-1984", caption: "The Macintosh (1984) brings the graphical user interface to the masses", hint: "photo of the original Macintosh 128K showing its desktop" },
+          { id: "windows95-launch", caption: "Windows 95 — software becomes a cultural event", hint: "photo of a Windows 95 launch queue or the desktop with Start menu" },
+          { id: "linux-tux", caption: "Linux — open source runs most of the world's servers (and Android phones)", hint: "Tux the penguin logo, or a Linux terminal screenshot" },
+          { id: "www-berners-lee", caption: "Tim Berners-Lee and the first web server (a NeXT computer, 1991)", hint: "photo of Berners-Lee with the NeXT cube 'do not power down' machine" },
+          { id: "ai-chat-llm", caption: "Large language models — software that writes language, code and images", hint: "screenshot of an AI chat assistant answering an IT support question" },
+        ],
+      },
+      {
+        heading: "5. Inside the case — motherboard, CPU and chipset",
+        icon: "chip",
+        paragraphs: [
+          "Open any desktop and everything connects to one large circuit board: the motherboard. It carries the CPU socket, the RAM slots, the expansion slots, the storage connectors and the rear ports, and its chipset directs the traffic between them. Boards come in standard sizes (form factors) — ATX, the smaller Micro-ATX and the compact Mini-ITX — which must match the case. A small coin-cell battery (CR2032) keeps the clock and firmware settings alive when the machine is unplugged: when a PC starts 'forgetting' its date, that battery is your first suspect.",
+          "The CPU (central processing unit) is the machine's brain — Babbage's 'mill' shrunk onto a fingernail of silicon. Its speed is set by how many cores it has (independent processing units — 4 to 16 in desktops), its clock speed in GHz (cycles per second), and its cache (tiny, very fast memory on the chip itself). Desktop CPUs come mainly from Intel (Core i3/i5/i7/i9, LGA sockets) and AMD (Ryzen 3/5/7/9, AM4/AM5 sockets) — the socket on the board must match the CPU exactly. Phones, tablets, Apple's M-series laptops and many new servers instead use ARM-based processors, which do more work per watt.",
+          "The CPU produces serious heat and will slow itself down (thermal throttling) or shut off if it overheats — so it always wears a heatsink and fan (or liquid cooler) with a thin layer of thermal paste in between. A machine that runs fine for ten minutes and then crawls is very often a cooling problem: dust, a failed fan, or dried-out paste.",
+        ],
+        table: {
+          headers: ["CPU spec", "What it means", "Rule of thumb"],
+          rows: [
+            ["Cores / threads", "Independent workers / tasks each core can juggle", "More cores = better multitasking, VMs, rendering"],
+            ["Clock speed (GHz)", "Cycles per second per core", "Higher = snappier single tasks (within one generation)"],
+            ["Cache (MB)", "On-chip memory, far faster than RAM", "More cache smooths repeated work"],
+            ["Socket (e.g. LGA1700, AM5)", "Physical + electrical fit to the board", "CPU and motherboard socket must match exactly"],
+            ["TDP (watts)", "Heat the cooler must remove", "Higher TDP needs a bigger cooler and PSU"],
+          ],
+        },
+        figures: [
+          { id: "motherboard-labelled", caption: "An ATX motherboard with every major part labelled", hint: "labelled diagram/photo of an ATX board: socket, RAM slots, PCIe, M.2, SATA, chipset, VRM, headers" },
+          { id: "cpu-top-bottom", caption: "A desktop CPU — heat-spreader top and contact pads underneath", hint: "photo showing a CPU's top and its underside (LGA pads or PGA pins)" },
+          { id: "cpu-in-socket", caption: "Seating a CPU in its socket — zero force, correct alignment triangle", hint: "photo of a CPU being placed into an open LGA/AM5 socket" },
+          { id: "cpu-cooler-paste", caption: "Heatsink, fan and a pea-sized dot of thermal paste", hint: "photo of thermal paste application and a tower cooler being mounted" },
+          { id: "cmos-battery", caption: "The CR2032 CMOS battery — keeps clock and settings alive", hint: "photo of the coin cell on a motherboard" },
+        ],
+      },
+      {
+        heading: "6. Memory — RAM, the machine's working desk",
+        icon: "database",
+        paragraphs: [
+          "RAM (random access memory) is the computer's working space. Think of a desk and a filing cabinet: storage (the drive) is the filing cabinet where everything is kept permanently; RAM is the desktop where you spread out what you are busy with right now. A bigger desk lets you work on more things at once — but the desk is cleared every time the power goes off. RAM is volatile: its contents vanish at shutdown, which is why unsaved work is lost when the power trips.",
+          "Desktop RAM comes as DIMM modules; laptops use the shorter SO-DIMM. Each generation — DDR3, DDR4, DDR5 — is faster and more efficient, and they are not interchangeable: the notch in the module physically prevents fitting the wrong generation. Fitting modules in matched pairs activates dual-channel mode, roughly doubling memory bandwidth. Servers use ECC (error-correcting code) RAM, which detects and fixes single-bit memory errors on the fly — essential when a machine must run for years without a wrong number.",
+          "When RAM runs out, the operating system parks the least-used data on the drive instead (the page file / virtual memory) — and because even an SSD is far slower than RAM, the whole machine suddenly feels like it is wading through mud. That is why 'my PC is slow when I have many tabs and apps open' is usually a RAM problem, and why adding RAM is the most cost-effective upgrade for an ageing office PC.",
+        ],
+        table: {
+          headers: ["Generation", "Typical speed", "Voltage", "Seen in"],
+          rows: [
+            ["DDR3", "1333–1866 MT/s", "1.5 V", "Machines from ~2008–2015"],
+            ["DDR4", "2133–3200 MT/s", "1.2 V", "Most current office fleets"],
+            ["DDR5", "4800–7200+ MT/s", "1.1 V", "New desktops & laptops from ~2022"],
+          ],
+        },
+        bullets: [
+          "How much is enough (2026): 8 GB = bare minimum office work · 16 GB = comfortable standard · 32 GB+ = power users, VMs, design work.",
+          "Symptoms of too little RAM: slow with many apps/tabs, constant disk activity, 'out of memory' warnings.",
+          "Symptoms of faulty RAM: random blue screens, corrupted files, failed boots with beep codes — test with Windows Memory Diagnostic or MemTest86.",
+          "RAM has no moving parts and rarely wears out — but it must be seated firmly; a half-seated module is a classic no-boot cause.",
+        ],
+        figures: [
+          { id: "ddr-dimm", caption: "A DDR4 DIMM — chips, gold edge connector and the keying notch", hint: "clear photo of a desktop RAM module" },
+          { id: "dimm-vs-sodimm", caption: "Desktop DIMM vs laptop SO-DIMM", hint: "side-by-side photo of a DIMM and SO-DIMM" },
+          { id: "ram-install", caption: "Seating RAM — open the clips, align the notch, press until they click", hint: "photo of RAM being pressed into motherboard slots" },
+          { id: "ecc-server-ram", caption: "ECC registered DIMMs in a server board", hint: "photo of server RAM banks (many DIMM slots populated)" },
+        ],
+      },
+      {
+        heading: "7. Storage — HDD, SSD, NVMe, RAID and backups",
+        icon: "folder",
+        paragraphs: [
+          "Storage is the filing cabinet: it keeps the operating system, applications and data permanently. For decades that meant the hard disk drive (HDD) — spinning magnetic platters at 5,400 or 7,200 rpm with read/write heads flying microns above them. HDDs are cheap per terabyte and still rule bulk storage, but they are mechanical: they are slow to find data (the heads must physically move), fragile when dropped, and they wear out. A clicking or grinding drive is a drive announcing its retirement — back it up immediately.",
+          "The solid-state drive (SSD) stores data in flash memory chips — no moving parts, silent, shock-proof and dramatically faster. Early SSDs used the same SATA interface as hard drives (~550 MB/s ceiling); modern NVMe SSDs plug straight into the motherboard's M.2 slot and use PCIe lanes, reaching 3,500–7,000+ MB/s. Swapping an old machine's HDD for an SSD is the single most transformative upgrade in desktop support — boot times fall from minutes to seconds.",
+          "Servers and storage arrays combine many drives with RAID (redundant array of independent disks) so that a drive can die without losing data or stopping work. And remember the golden rule that RAID is not a backup: it protects against a dead drive, not against deletion, ransomware, theft or fire. Real protection is the 3-2-1 rule — three copies of the data, on two different types of media, one of them off-site (or in the cloud). Tape (LTO) still guards the world's archives: slow to access, but cheap, long-lived and offline where ransomware cannot reach.",
+        ],
+        table: {
+          headers: ["RAID level", "How it works", "Survives", "Cost"],
+          rows: [
+            ["RAID 0", "Striping — data split across drives", "Nothing — one dead drive loses all", "Fast, all capacity usable; never for important data"],
+            ["RAID 1", "Mirroring — identical copies on two drives", "One drive failure", "Half the capacity"],
+            ["RAID 5", "Striping + parity across 3+ drives", "One drive failure", "One drive's worth of parity"],
+            ["RAID 6", "Striping + double parity across 4+ drives", "Two drive failures", "Two drives' worth of parity"],
+            ["RAID 10", "Mirrored pairs, striped", "One per mirror pair", "Half the capacity; fast rebuilds — common for databases"],
+          ],
+        },
+        bullets: [
+          "Speed ladder (typical): HDD ~150 MB/s → SATA SSD ~550 MB/s → NVMe Gen3 ~3,500 MB/s → NVMe Gen4/5 7,000+ MB/s.",
+          "Watch drive health with S.M.A.R.T. (CrystalDiskInfo or vendor tools) — reallocated sectors and pending sectors are early warnings.",
+          "USB flash drives and memory cards are flash storage too — handy, but never the only copy of anything.",
+          "Optical discs (CD/DVD/Blu-ray) are now mainly for archives and old software — many new PCs no longer ship with a drive.",
+        ],
+        figures: [
+          { id: "hdd-open", caption: "Inside a hard drive — platters, arm and read/write heads", hint: "photo of an opened HDD showing platters and actuator arm" },
+          { id: "ssd-vs-hdd", caption: "2.5-inch SATA SSD next to a 3.5-inch HDD", hint: "side-by-side photo of an SSD and HDD" },
+          { id: "m2-nvme", caption: "An M.2 NVMe SSD — a whole drive on a stick of gum", hint: "photo of an M.2 NVMe drive being fitted to a motherboard slot" },
+          { id: "sata-cables", caption: "SATA data and power connectors", hint: "photo of SATA data cable and SATA power connector" },
+          { id: "raid-diagram", caption: "RAID 0, 1, 5 and 10 visualised", hint: "diagram showing striping, mirroring and parity layouts" },
+          { id: "lto-tape", caption: "LTO tape cartridge and drive — the archive workhorse", hint: "photo of an LTO tape cartridge/drive or tape library robot" },
+        ],
+      },
+      {
+        heading: "8. Ports, connectors and cables",
+        icon: "design",
+        paragraphs: [
+          "The back (and front) panel of a computer is where the support technician lives. Knowing every port on sight — and which cable, speed and adapter belongs to it — turns 'my screen is blank' calls from mysteries into thirty-second fixes.",
+          "USB (universal serial bus) replaced a zoo of older connectors and now does everything: keyboards, printers, storage, phones, docks and even charging laptops. The trap is that the connector shape and the speed are separate things — a USB-C port may run at anything from USB 2.0 speed to USB4/Thunderbolt speeds, so read the spec, not the shape. Colour hints help: black = USB 2.0, blue = 3.0 (5 Gbps), teal/red often faster or always-powered.",
+          "For displays, modern machines use HDMI (TVs, projectors, most monitors) and DisplayPort (high resolutions and refresh rates, daisy-chaining, standard on business docks); older fleets still carry blue VGA (analogue, fuzzy at high resolution) and white DVI. USB-C with 'DP Alt Mode' can carry DisplayPort video, power and data down one cable — which is why one dock cable now runs a whole desk. Networking uses the RJ45 jack (Ethernet) — and its little cousin RJ11 is telephone/ADSL, a classic mix-up. Legacy round PS/2 keyboard/mouse ports, serial (COM) and parallel printer ports still appear on industrial gear, point-of-sale machines and old lab equipment.",
+        ],
+        table: {
+          headers: ["USB standard", "Marketing name", "Max speed", "Connector(s)"],
+          rows: [
+            ["USB 1.1", "Full Speed", "12 Mbps", "Type-A/B"],
+            ["USB 2.0", "Hi-Speed", "480 Mbps", "Type-A/B, Mini, Micro"],
+            ["USB 3.2 Gen 1", "SuperSpeed (was 3.0)", "5 Gbps", "Type-A (blue), Type-C"],
+            ["USB 3.2 Gen 2", "SuperSpeed+", "10 Gbps", "Type-A, Type-C"],
+            ["USB4 / Thunderbolt 3–4", "—", "20–40 Gbps", "Type-C only"],
+          ],
+        },
+        bullets: [
+          "Video ranking for sharp, fast displays: DisplayPort ≥ HDMI 2.x > DVI > VGA. For a 4K or high-refresh monitor, reach for DisplayPort or HDMI 2.1.",
+          "HDMI and DisplayPort carry audio too; VGA and DVI do not.",
+          "RJ45 = network, RJ11 = telephone — the RJ11 plug fits loosely into an RJ45 socket and will 'connect' nothing.",
+          "3.5 mm audio jacks: green = line out/headphones, pink = microphone, blue = line in.",
+          "USB-C docks/dongles are the modern toolkit: one port becomes power + display + network + USB — but a cheap cable that only carries USB 2.0 will silently break displays and speed.",
+        ],
+        figures: [
+          { id: "rear-io-panel", caption: "A rear I/O panel with every port labelled", hint: "labelled photo of a desktop rear panel: USB-A/C, HDMI, DP, RJ45, audio jacks, PS/2" },
+          { id: "usb-connector-types", caption: "USB connector family — A, B, Mini, Micro and C", hint: "chart/photo of USB connector types side by side" },
+          { id: "video-connectors", caption: "VGA, DVI, HDMI and DisplayPort compared", hint: "photo of the four video connectors/cables side by side" },
+          { id: "rj45-rj11", caption: "RJ45 (network) vs RJ11 (telephone) — same family, different jobs", hint: "close-up of RJ45 and RJ11 plugs together" },
+          { id: "usbc-dock", caption: "One USB-C/Thunderbolt dock cable running a whole desk", hint: "photo of a laptop on a dock with monitors, network and peripherals attached" },
+        ],
+      },
+      {
+        heading: "9. Power, cooling, graphics and expansion",
+        icon: "settings",
+        paragraphs: [
+          "The power supply unit (PSU) converts 230 V AC from the wall into the low-voltage DC the components need, delivered over standard connectors: the 24-pin motherboard cable, the 4/8-pin CPU (EPS) cable, 6/8-pin PCIe connectors for graphics cards and SATA power for drives. PSUs are rated in watts and by efficiency (80 Plus Bronze/Gold/Platinum). A failing PSU is a master of disguise — random restarts, crashes under load, machines that 'sometimes' refuse to start — so a PSU tester earns its place in every toolkit. In South Africa, load shedding makes clean power part of the job: at minimum a surge protector on every machine, and a desktop UPS for anything that matters, sized to allow a graceful shutdown.",
+          "The GPU (graphics processing unit) draws every pixel. Integrated graphics (built into the CPU) are fine for office work; a discrete graphics card with its own VRAM is needed for design, CAD, video editing, gaming — and, because a GPU is thousands of small cores working in parallel, for AI. The same architecture that draws triangles trains neural networks, which is why the AI boom is, at heart, a graphics-card boom. Cards plug into the motherboard's PCIe x16 slot; PCIe also hosts capture cards, 10 Gb network cards and NVMe adapters, with each generation doubling bandwidth.",
+          "All of it makes heat, and heat is the enemy of silicon. Case fans create front-to-back airflow; CPU coolers move heat from the chip; all-in-one liquid coolers pump it to a radiator. Dust is insulation and a fan-killer: a machine in a workshop or under a desk breathes dust all day, so periodic cleaning with compressed air (machine off, fans held still) is genuine preventative maintenance, not cosmetics.",
+        ],
+        bullets: [
+          "PSU connectors to recognise: 24-pin ATX (board), 8-pin EPS (CPU), 6/8-pin PCIe (GPU), SATA power (drives), Molex (legacy).",
+          "Never open a PSU — its capacitors hold lethal charge long after unplugging. Faulty unit = replace unit.",
+          "UPS types: standby (basic desktop), line-interactive (voltage smoothing — right for SA offices), online double-conversion (servers, zero-transfer time).",
+          "Symptoms ladder: random reboots under load → suspect PSU or overheating; artifacts/lines on screen → suspect GPU or its memory; sudden shutdowns after minutes → suspect cooling/dust.",
+          "Thermal paste dries out over years — repasting an old, hot-running laptop often drops temperatures 10–15 °C.",
+        ],
+        figures: [
+          { id: "psu-connectors", caption: "A modular PSU and its connector family", hint: "photo of a PSU with 24-pin, EPS, PCIe and SATA cables labelled" },
+          { id: "gpu-card", caption: "A discrete graphics card — GPU die, VRAM, fans and PCIe edge", hint: "photo of a graphics card, ideally with cooler removed showing the die" },
+          { id: "pcie-slots", caption: "PCIe x16 and x1 slots on a motherboard", hint: "photo showing different-length PCIe slots" },
+          { id: "aio-cooler", caption: "An all-in-one liquid cooler — pump block, tubes and radiator", hint: "photo of an AIO liquid cooler installed in a case" },
+          { id: "dusty-pc", caption: "Why preventative maintenance exists", hint: "photo of a dust-choked heatsink/fan before cleaning" },
+          { id: "desktop-ups", caption: "A desktop line-interactive UPS — load-shedding survival kit", hint: "photo of a small office UPS with a PC plugged in" },
+        ],
+      },
+      {
+        heading: "10. Peripherals and printers",
+        icon: "monitor",
+        paragraphs: [
+          "Peripherals are the hardware at the edge of the system — where humans meet the machine. Input devices: keyboards, mice, scanners, webcams, barcode readers, signature pads. Output devices: monitors, speakers, headsets and printers. Monitors are judged by panel type (IPS = accurate colours and angles, VA = contrast, TN = cheap and fast), resolution (Full HD 1920×1080 → QHD → 4K), refresh rate (60 Hz office standard; 120 Hz+ for smooth motion) and connector (HDMI/DisplayPort — see section 8).",
+          "Printers cause more support tickets per rand than any other device, so know them cold. The laser printer is the office standard: a laser draws the page as static charge on a rotating drum, powdered toner sticks to the charge, and the fuser melts it onto the paper — fast, sharp text and the lowest cost per page in volume. The inkjet sprays microscopic ink droplets — brilliant for photos and small-office colour, but the ink is expensive per page and clogs if unused. Thermal printers darken heat-sensitive paper — every till slip and shipping label; no ink or toner at all, but the print fades. The dot-matrix impact printer hammers pins through a ribbon — obsolete except where it is irreplaceable: multi-part carbon invoices and delivery notes. 3D printers extrude melted plastic layer by layer to 'print' objects — increasingly found printing jigs, brackets and replacement clips. Multifunction printers (MFPs) combine printer, scanner, copier and sometimes fax, and in businesses they are shared network devices with their own IP address, print queues and driver deployment.",
+          "Consumables and cost-per-page decide what an office should buy: a laser's toner cartridge and drum yield thousands of pages cheaply; inkjet cartridges yield hundreds expensively. And learn the classic fault signatures — a repeating smudge every few centimetres is a damaged drum; ghost images mean fuser or drum; streaks usually mean toner low or a dirty corona wire; paper jams trace to worn pickup rollers or the wrong paper weight.",
+        ],
+        table: {
+          headers: ["Printer type", "How it prints", "Best at", "Watch out for"],
+          rows: [
+            ["Laser", "Static charge on a drum + toner, fused by heat", "Office volume — fast, sharp, cheapest per page", "Drum damage, fuser wear, toner mess if cartridge cracked"],
+            ["Inkjet", "Sprays liquid ink droplets", "Photos, colour, low-volume home/small office", "Costly ink, clogged nozzles when idle"],
+            ["Thermal", "Heats special coated paper", "Receipts, labels, tickets — silent, no consumable ink", "Print fades; special paper only"],
+            ["Dot-matrix", "Pins strike an inked ribbon", "Multi-part carbon forms, dusty warehouses", "Slow, loud, low quality"],
+            ["3D (FDM)", "Extrudes melted filament in layers", "Prototypes, brackets, replacement parts", "Slow; bed-levelling and filament care"],
+          ],
+        },
+        bullets: [
+          "Connecting printers: USB (one desk), network cable or Wi-Fi (shared, own IP address), or via a print server. Business MFPs authenticate users and hold jobs until badge release (secure/'follow-me' print).",
+          "Driver rule: the operating system needs the right driver for the exact model — most 'printer prints gibberish' tickets are wrong-driver tickets.",
+          "Fault signatures: repeating marks = drum · ghosting = fuser/drum · streaks = toner/corona · jams = rollers/paper · 'offline' = queue stuck, IP changed or sleep mode.",
+          "Scanners on MFPs commonly scan-to-email or scan-to-folder (SMB) — when scanning breaks after a password change, that stored credential is the culprit.",
+          "KVM switches let one Keyboard, Video (monitor) and Mouse control several machines — server rooms and testing benches.",
+        ],
+        figures: [
+          { id: "monitor-panels", caption: "Monitor panel types and resolutions compared", hint: "comparison image of IPS/VA/TN panels or a resolution size chart" },
+          { id: "laser-printer-cutaway", caption: "Inside a laser printer — drum, toner, laser unit and fuser", hint: "cutaway diagram of the laser printing process" },
+          { id: "toner-drum", caption: "Toner cartridge and imaging drum", hint: "photo of a toner cartridge and separate drum unit" },
+          { id: "inkjet-printhead", caption: "Inkjet cartridges and print head", hint: "photo of inkjet cartridges/print head" },
+          { id: "thermal-receipt", caption: "Thermal receipt printer — no ink, just heat", hint: "photo of a POS thermal printer printing a till slip" },
+          { id: "dot-matrix", caption: "Dot-matrix printer with fan-fold multi-part paper", hint: "photo of a dot-matrix printer and carbon-copy forms" },
+          { id: "printer-3d", caption: "A 3D printer building a part layer by layer", hint: "photo of an FDM 3D printer mid-print" },
+          { id: "office-mfp", caption: "A network multifunction printer — print, scan, copy for a whole floor", hint: "photo of an office MFP with its control panel" },
+        ],
+      },
+      {
+        heading: "Day 2 · 11. Network hardware — connecting it all",
+        icon: "network",
+        paragraphs: [
+          "Day 2 zooms out: from one computer to all of them. Every networked device needs a NIC (network interface card) — today built into every motherboard (Gigabit or 2.5 Gb Ethernet) and every laptop (Wi-Fi). From there, the switch is the heart of the LAN: it connects the devices in a building and forwards traffic only to the port where the destination lives. Unmanaged switches are plug-and-play; managed switches add configuration — VLANs to separate departments, monitoring, and security. PoE (power over Ethernet) switches send electricity down the network cable itself, powering wireless access points, IP cameras and desk phones with no plug point needed.",
+          "The router connects networks to each other — in practice, your LAN to the internet. It is the gateway: it translates private office addresses to the public internet (NAT), usually hands out addresses (DHCP) and holds the first firewall rules. In businesses a dedicated firewall appliance (FortiGate, Palo Alto, pfSense) inspects traffic in depth. The link to the outside world arrives through a modem or, with fibre, an ONT (optical network terminal) — fibre-to-the-business is now the South African standard, with LTE/5G as backup.",
+          "Wireless access points (APs) give Wi-Fi coverage — ceiling-mounted in a grid, all fed and powered by cabled PoE runs back to the switch: wireless for the users is cables for the technician. And the cabling itself is hardware you will handle weekly: UTP copper in categories (Cat5e = 1 Gbps, Cat6/6a = up to 10 Gbps) terminated in RJ45 plugs, wall boxes and patch panels in the server cabinet; fibre optic for long runs and between buildings (multimode for short hops, single-mode for kilometres), plugged into switches via small SFP transceiver modules. Neat patch cabling is not vanity — it is the difference between a five-minute fault trace and an afternoon of despair.",
+        ],
+        table: {
+          headers: ["Device", "Job", "Where you meet it"],
+          rows: [
+            ["NIC", "Connects one device to the network", "Every PC, printer and server"],
+            ["Switch", "Connects devices in a LAN; forwards frames per port", "Network cabinet on every floor"],
+            ["Router", "Connects networks; gateway to the internet (NAT, routing)", "Server room / comms cabinet"],
+            ["Firewall", "Allows/blocks traffic by rules; inspects threats", "Between the LAN and the internet"],
+            ["Access point", "Wi-Fi radio bridged to the wired LAN", "Ceilings, fed by PoE"],
+            ["Modem / ONT", "Converts provider signal (fibre/DSL/LTE) to Ethernet", "Where the line enters the building"],
+            ["Patch panel", "Neat termination of all wall-point cables", "Top of the network cabinet"],
+          ],
+        },
+        bullets: [
+          "Cable categories: Cat5e → 1 Gbps · Cat6 → 10 Gbps to 55 m · Cat6a → 10 Gbps to 100 m. Max run 100 m including patch leads.",
+          "Wi-Fi generations: Wi-Fi 4 (n) → 5 (ac) → 6/6E (ax, adds 6 GHz) → 7 (be). Coverage and interference matter more than the number on the box.",
+          "Fibre: multimode (orange/aqua, short runs) vs single-mode (yellow, long runs); handled via SFP/SFP+ modules in switch ports.",
+          "A link light tells a story: solid/blinking = link and traffic; dead = cable, port or NIC. Cable testers and a tone generator are the network tech's stethoscope.",
+          "Home-vs-enterprise: the home 'router' is really router + switch + AP + modem in one plastic box; enterprises separate them so each can scale and fail independently.",
+        ],
+        figures: [
+          { id: "nic-card", caption: "A PCIe network interface card (and the onboard RJ45 it replaces)", hint: "photo of a NIC card / motherboard Ethernet port" },
+          { id: "managed-switch", caption: "A 48-port managed PoE switch in a rack", hint: "photo of an enterprise switch with patch cables" },
+          { id: "router-firewall", caption: "Business router and firewall appliance", hint: "photo of an enterprise router/firewall (e.g. FortiGate) in a cabinet" },
+          { id: "wifi-ap", caption: "Ceiling wireless access point, powered by PoE", hint: "photo of a ceiling-mounted AP" },
+          { id: "patch-panel", caption: "Patch panel and cable management — every wall point ends here", hint: "photo of a tidy patch panel with labelled ports" },
+          { id: "cat6-rj45", caption: "Cat6 UTP cable and RJ45 termination", hint: "photo of UTP cable pairs and a crimped RJ45 plug" },
+          { id: "fibre-sfp", caption: "Fibre patch leads and SFP transceivers", hint: "photo of fibre cables (LC connectors) and SFP modules" },
+          { id: "onts-fibre", caption: "Fibre ONT — where the internet enters the building", hint: "photo of a fibre ONT/CPE on a wall" },
+        ],
+      },
+      {
+        heading: "12. Data centre hardware — where the servers live",
+        icon: "server",
+        paragraphs: [
+          "A data centre is a building engineered to keep computers alive: continuous power, continuous cooling, continuous connectivity, and physical security. The computers themselves are servers — machines built for reliability rather than looks: ECC RAM, redundant hot-swappable power supplies and drives, and a management port (iDRAC/iLO) that lets a technician power, monitor and even reinstall the machine remotely. Servers come as towers (small offices), rack servers (the standard — flat 'pizza boxes' measured in rack units: 1U = 4.45 cm, in 42U cabinets), and blades (many thin servers sharing one chassis's power and networking).",
+          "Storage in the data centre outgrows single machines: DAS is storage directly attached to one server; a NAS is a storage appliance serving files over the network (shared folders); a SAN is a dedicated high-speed storage network (Fibre Channel or iSCSI) presenting raw disk volumes to many servers — the storage arrays behind databases and virtual machine farms, full of hot-swappable drives, dual controllers and battery-backed cache.",
+          "Then the life-support systems. Power: utility feed(s) → UPS rooms full of batteries that bridge the gap instantly → diesel generators that carry the load for hours — critical in South Africa, where load shedding makes the generator yard the most important 'hardware' on site. Rack-level PDUs (power distribution units) feed each cabinet, ideally from two independent paths (A+B) so one failure drops nothing. Cooling: CRAC units and chilled-water systems push cold air through raised floors or contained hot/cold aisles — servers face cold aisles, exhaust into hot aisles, and containment stops the two mixing. Redundancy is described as N+1 (one spare of everything) or 2N (a complete duplicate), and facilities are graded Tier I–IV on how much can fail without downtime. Add biometric access control, CCTV, fire suppression that won't destroy electronics (inert gas, not water), and environmental sensors watching temperature and humidity — every one of these is hardware someone must support.",
+        ],
+        table: {
+          headers: ["Storage model", "What it is", "Typical use"],
+          rows: [
+            ["DAS", "Disks attached directly to one server", "Small setups, backups, scratch space"],
+            ["NAS", "File-serving appliance on the LAN (SMB/NFS)", "Departmental shared folders, media"],
+            ["SAN", "Dedicated storage network presenting block volumes", "Databases, VM farms, enterprise storage arrays"],
+          ],
+        },
+        bullets: [
+          "Rack maths: cabinets are 42U high; a 1U server is 4.45 cm; blade chassis pack the most compute per U.",
+          "Hot-swap culture: PSUs, fans and drives are replaced with the machine running — never assume; check the light (amber = attention, blue = identify).",
+          "Power chain to memorise: utility → transfer switch → generator → UPS → PDU → server PSU A/B.",
+          "N+1 = one spare (four aircon units where three suffice); 2N = everything fully duplicated.",
+          "Out-of-band management (iDRAC/iLO) is the remote hands: BIOS, power and console over the network even when the OS is dead.",
+          "South African reality: a data centre's diesel contract and battery health matter as much as its bandwidth.",
+        ],
+        figures: [
+          { id: "datacentre-aisle", caption: "A data centre aisle — racks, structured cabling, contained airflow", hint: "photo down a data-centre cold aisle" },
+          { id: "rack-42u", caption: "A 42U rack — servers, switches, PDU and cable management labelled", hint: "labelled photo/diagram of a populated server rack" },
+          { id: "rack-server-1u", caption: "A 1U rack server slid out on rails — hot-swap drives in front", hint: "photo of a 1U/2U server showing drive bays" },
+          { id: "blade-chassis", caption: "A blade chassis — many servers, one enclosure", hint: "photo of a blade enclosure with blades partially removed" },
+          { id: "san-array", caption: "A SAN storage array — shelves of hot-swappable drives", hint: "photo of an enterprise storage array" },
+          { id: "ups-room", caption: "The UPS battery room — seconds of grace, bought in advance", hint: "photo of data-centre UPS units/battery strings" },
+          { id: "diesel-generator", caption: "Standby diesel generators — hours of runtime when the grid fails", hint: "photo of industrial standby generators" },
+          { id: "hot-cold-aisle", caption: "Hot/cold aisle containment — cooling as architecture", hint: "diagram of hot/cold aisle airflow" },
+          { id: "rack-pdu", caption: "Rack PDUs on A and B power paths", hint: "photo of vertical rack PDUs with dual feeds" },
+        ],
+      },
+      {
+        heading: "13. Cloud hardware — the computers behind 'the cloud'",
+        icon: "globe",
+        paragraphs: [
+          "'The cloud' is not weather — it is other people's data centres, rented over the internet. When Investec runs a workload in Microsoft Azure or AWS, that workload executes on physical servers in a hyperscale data centre: a warehouse-sized facility holding hundreds of thousands of servers, built in standardised halls, where hardware is replaced by the rack rather than the machine. Both Azure and AWS operate cloud regions physically located in Johannesburg (and AWS in Cape Town) — 'the cloud' can be twenty minutes up the M1.",
+          "Cloud providers organise hardware into regions (a metro area) containing availability zones (independent data centres with separate power, cooling and networks) so customers survive a whole-building failure. The magic ingredient is virtualisation: a hypervisor on each physical host slices it into many virtual machines, so one 128-core server safely runs workloads for dozens of customers. When you click 'create VM', no human moves; software finds spare capacity on a host and carves you a slice — hardware as an API.",
+          "The AI era has reshaped this hardware: training and running large models needs GPU clusters — racks of accelerator boards (NVIDIA H100-class GPUs, Google TPU pods) joined by ultra-fast InfiniBand networks and increasingly liquid-cooled, drawing so much power that new data centres are planned around electricity supply first. Meanwhile edge and CDN nodes place small clusters close to users so content loads fast, and South Africa reaches the world's clouds through undersea fibre cables — WACS, EASSy, Equiano and 2Africa — the least visible, most important hardware in the country. Someone still racks, cables and repairs all of this: 'data centre technician' is a genuine career path for systems support graduates.",
+        ],
+        table: {
+          headers: ["Layer", "You manage", "Provider's hardware does"],
+          rows: [
+            ["On-premises", "Everything — building to browser", "—"],
+            ["IaaS (e.g. Azure VMs)", "OS, apps, data", "Servers, storage, network, building"],
+            ["PaaS (e.g. managed database)", "Apps and data only", "Everything below the platform"],
+            ["SaaS (e.g. Microsoft 365)", "Your data and settings", "Absolutely everything else"],
+          ],
+        },
+        bullets: [
+          "Region = metro with data centres · Availability zone = independent building(s) · put two copies in two zones and a building can burn down without downtime.",
+          "Hypervisors you'll hear about: VMware ESXi, Microsoft Hyper-V, KVM/Proxmox — the same idea at every scale, from a test bench to Azure.",
+          "Why GPUs for AI: thousands of small cores doing the same sum on different data — matrix arithmetic is exactly what neural networks need.",
+          "Undersea cables land at Melkbosstrand, Yzerfontein, Duduza & Amanzimtoti — a ship's anchor dragging a cable can slow a whole country's internet (it has happened).",
+          "Shared responsibility: the provider secures the hardware; you still secure your data, identities and configuration — 'in the cloud' never means 'not my problem'.",
+        ],
+        figures: [
+          { id: "hyperscale-aerial", caption: "A hyperscale data centre campus from the air", hint: "aerial photo of a hyperscale data-centre campus" },
+          { id: "cloud-regions-map", caption: "Cloud regions in South Africa — Johannesburg and Cape Town", hint: "map of Azure/AWS regions in Africa" },
+          { id: "hypervisor-diagram", caption: "One physical host, many virtual machines — the hypervisor", hint: "diagram of VMs on a hypervisor on hardware" },
+          { id: "gpu-cluster", caption: "An AI GPU cluster — accelerator trays and InfiniBand cabling", hint: "photo of a GPU server/rack (e.g. DGX/H100 systems)" },
+          { id: "liquid-cooled-rack", caption: "Liquid cooling reaches the rack — AI density demands it", hint: "photo of liquid-cooled server infrastructure / TPU pod" },
+          { id: "undersea-cable-map", caption: "The undersea cables connecting South Africa to the world", hint: "map of WACS/EASSy/Equiano/2Africa cable routes" },
+          { id: "cable-landing", caption: "Submarine fibre cable — the internet is mostly under the sea", hint: "photo of a submarine cable cross-section or cable-laying ship" },
+        ],
+      },
+      {
+        heading: "14. Software today — types, operating systems and licensing",
+        icon: "layers",
+        paragraphs: [
+          "Software divides into layers a technician must tell apart, because each fails differently. Firmware lives inside devices (UEFI/BIOS, SSD controllers, printer firmware). Drivers teach the operating system to speak to specific hardware — half of all 'hardware' faults are really driver faults. The operating system manages everything: processes, memory, storage, devices, users and security. Utilities keep the system healthy (backup, antivirus/EDR, disk tools, remote support). Applications do the actual work people bought the computer for — from Office and browsers to core banking systems.",
+          "The operating systems you will support: Windows 11 on the desktop fleet and Windows Server (Active Directory, file/print, group policy) in the back office; macOS on design and executive machines; Linux (Ubuntu, Red Hat, Debian) running most servers, appliances and the entire cloud; Android and iOS on every phone — managed through MDM (mobile device management) rather than by visiting desks. Updates are not optional housekeeping: unpatched software is how ransomware gets in, so businesses stage and push patches centrally (Windows Update for Business, Intune, WSUS) — and firmware needs patching too.",
+          "Finally, licensing — because software is bought as a right to use, not a thing. OEM licences live and die with the machine they shipped on; retail licences move with the owner; volume licensing covers fleets; subscription (Microsoft 365, Adobe) rents always-current software per user per month; and open-source licences (GPL, MIT, Apache) grant free use with conditions. Using software outside its licence is piracy — a real legal and financial risk that software vendors audit for — and a professional-ethics matter for you under this qualification.",
+        ],
+        table: {
+          headers: ["Licence type", "How it works", "Example"],
+          rows: [
+            ["OEM", "Pre-installed; tied to that machine forever", "Windows 11 Home on a bought laptop"],
+            ["Retail (FPP)", "Bought separately; transferable to a new machine", "Boxed/downloaded Windows or Office"],
+            ["Volume", "One agreement covering many machines/users", "Enterprise Windows + Office fleet"],
+            ["Subscription (SaaS)", "Per user per month, always updated", "Microsoft 365, Adobe Creative Cloud"],
+            ["Open source", "Free to use/modify under licence conditions", "Linux (GPL), VS Code parts (MIT)"],
+            ["Freeware / trial", "Free to use, but not open; trials expire", "7-Zip (free), WinRAR (nagware)"],
+          ],
+        },
+        bullets: [
+          "Software stack in one line: firmware → drivers → operating system → utilities → applications.",
+          "The OS's six jobs: run programs (processes), share memory, manage files, drive devices, control users/permissions, present an interface.",
+          "Patch discipline: security updates promptly, feature updates staged; test, then deploy in rings.",
+          "Drivers from the vendor beat drivers from 'driver booster' utilities — never install driver-updater tools on fleet machines.",
+          "Antivirus has grown into EDR (endpoint detection & response) — agents that watch behaviour, not just known virus signatures.",
+        ],
+        figures: [
+          { id: "os-family", caption: "The operating systems a support tech meets in one week", hint: "collage of Windows 11, Windows Server, macOS, Ubuntu, Android and iOS screens/logos" },
+          { id: "task-manager", caption: "Task Manager — watching processes, memory and the page file live", hint: "screenshot of Windows Task Manager performance tab" },
+          { id: "device-manager", caption: "Device Manager — where driver problems show their yellow triangles", hint: "screenshot of Windows Device Manager with a flagged device" },
+          { id: "linux-server-terminal", caption: "A Linux server — no desktop, just work", hint: "screenshot of a Linux SSH terminal (htop or systemctl output)" },
+          { id: "licence-diagram", caption: "Licence models compared — own, rent, share", hint: "diagram comparing OEM/retail/volume/subscription/open-source licensing" },
+        ],
+      },
+      {
+        heading: "15. The boot process — hardware and software shake hands",
+        icon: "play",
+        paragraphs: [
+          "Everything in this lesson meets in the thirty seconds after the power button. Press it, and the PSU runs a self-check before signalling 'power good'. The CPU wakes and executes the UEFI/BIOS firmware from a chip on the motherboard. The firmware runs POST (power-on self-test) — checking CPU, RAM and essential devices — and if something fundamental is broken, it reports with beep codes or diagnostic LEDs, because the screen may not even work yet. POST passed, the firmware works down the boot order to find a bootable device, loads the bootloader (Windows Boot Manager or Linux's GRUB), which loads the operating system kernel, which loads drivers and services, and finally the login screen appears. Firmware → bootloader → kernel → drivers → services → user: hardware handing over to software, layer by layer.",
+          "This sequence is your diagnostic map, because where the boot stops tells you what is broken. Completely dead (no fans, no lights) = power: wall socket, cable, PSU switch, PSU. Fans spin but no display and no beep = motherboard/CPU/RAM seating — reseat RAM first. Beeps or LED pattern = the code names the culprit (usually RAM or GPU). 'No boot device found' = drive dead, cable loose, or boot order pointing somewhere silly (a leftover USB stick is the classic). Windows starts then blue-screens = usually a driver or failing disk — note the stop code, boot Safe Mode. Slow from cold but fine warm = old HDD gasping; check S.M.A.R.T. and get the data off.",
+        ],
+        table: {
+          headers: ["Where boot stops", "Prime suspects", "First moves"],
+          rows: [
+            ["Nothing at all", "Power: socket, cable, PSU", "Test wall point, cable, PSU tester"],
+            ["Fans spin, black screen, no beep", "RAM seating, CPU, board", "Reseat RAM/GPU, minimal boot"],
+            ["Beep code / debug LED", "Per code — often RAM or GPU", "Look up the code; reseat named part"],
+            ["'No boot device'", "Drive, cable, boot order", "Check UEFI boot order & drive detection"],
+            ["Blue screen during OS load", "Driver, disk, recent update", "Stop code, Safe Mode, disk health"],
+            ["Boots but crawls", "Full disk, dying HDD, low RAM, malware", "S.M.A.R.T., Task Manager, disk space"],
+          ],
+        },
+        figures: [
+          { id: "post-screen", caption: "POST — the firmware checking hardware before any OS exists", hint: "photo/screenshot of a POST/UEFI splash screen with device checks" },
+          { id: "uefi-setup", caption: "UEFI setup — boot order, drive detection, temperatures", hint: "photo of a UEFI/BIOS setup screen showing boot order" },
+          { id: "boot-sequence-diagram", caption: "The boot chain: firmware → bootloader → kernel → drivers → login", hint: "flow diagram of the boot sequence" },
+          { id: "bsod", caption: "A stop error (BSOD) — the code is the clue, not the catastrophe", hint: "photo of a Windows blue screen with a stop code" },
+        ],
+      },
+      {
+        heading: "Full circle — from human computers to AI",
+        icon: "gradcap",
+        flat: true,
+        paragraphs: [
+          "Two hundred years ago computing began as an idea in brass; then it was a room of women with slide rules; then a hall of glowing valves programmed by the ENIAC Six; then a beige box on every desk; now it is both the phone in your pocket and GPU cathedrals drawing city-scale power — and 'the computer' has learned to write, draw and code. The pattern never changed: hardware gets smaller, then bigger again in aggregate; software climbs another layer of abstraction; and every wave creates new work for the people who understand the machinery underneath.",
+          "That is you. AI will draft e-mails and suggest fixes, but it cannot crimp a cable, swap a fuser, reseat a DIMM, or calm a trading floor when the printers die at month-end. The technician who knows what every component does — and can reason from symptom to cause the way you practised today — stays valuable in every era of this story. Ada Lovelace imagined it; the ENIAC Six built the profession; you are its next chapter.",
+        ],
+        figures: [
+          { id: "timeline-poster", caption: "200 years in one line — Babbage to AI", hint: "a printable timeline poster from the Analytical Engine to AI data centres" },
+        ],
+      },
+    ],
+    exercises: [
+      {
+        id: "hwsw-identify",
+        title: "Exercise 1 — Know your hardware",
+        task: "Answer as a support technician would: name the component, then justify it from how the hardware works.",
+        scenario: [
+          "You are on the IT support desk. Each question below is a real ticket or purchasing decision. Answer in full sentences — name the hardware, and explain WHY, using what you learned about how it works.",
+        ],
+        steps: [
+          "A user's PC is painfully slow whenever they have many browser tabs and Excel open at once, and the disk light flickers constantly. Which single upgrade would help most, and why?",
+          "Explain the difference between an HDD and an SSD, and which one you would specify for a new laptop and why.",
+          "A designer gets a new 4K monitor that must run at a high refresh rate. Which cable/port should they use, and why not VGA?",
+          "The finance department prints about 5,000 pages of reports a month. Which printer type do you recommend, and why?",
+          "Name the device that connects all the office PCs to each other, and the device that connects the office network to the internet — and describe what each one does.",
+        ],
+        checks: [
+          {
+            answer: [
+              "Add more RAM (memory).",
+              "With too little RAM the operating system pages to the much slower drive (virtual memory), which is why the disk light flickers and everything crawls when many applications are open. More RAM gives the machine a bigger working desk, so it stops swapping to disk.",
+            ],
+            concepts: [
+              ["ram", "memory"],
+              ["page", "paging", "swap", "virtual memory", "page file", "disk instead", "slower drive", "slower disk"],
+              ["more apps", "many apps", "many tabs", "multitask", "working", "at once", "desk"],
+            ],
+            labels: ["names RAM as the upgrade", "links slowness to paging/virtual memory on the disk", "links RAM to holding many open apps"],
+            min: 2,
+          },
+          {
+            answer: [
+              "An HDD stores data on spinning magnetic platters read by moving heads — mechanical, cheaper per terabyte, but slower and fragile when dropped.",
+              "An SSD stores data in flash memory chips with no moving parts — much faster, silent and shock-resistant.",
+              "For a laptop: an SSD, because laptops get moved and knocked (no moving parts to damage) and the speed transforms boot and application load times.",
+            ],
+            concepts: [
+              ["platter", "spinning", "magnetic", "moving parts", "mechanical", "heads"],
+              ["flash", "no moving", "chips", "solid state", "nand"],
+              ["faster", "speed", "quicker", "boot"],
+              ["ssd"],
+              ["shock", "drop", "knock", "fragile", "durable", "robust"],
+            ],
+            labels: ["HDD = spinning platters/mechanical", "SSD = flash, no moving parts", "SSD is faster", "chooses SSD for the laptop", "durability/shock reason for laptops"],
+            min: 3,
+          },
+          {
+            answer: [
+              "Use DisplayPort (or HDMI 2.1) — these digital connections have the bandwidth for 4K at high refresh rates.",
+              "VGA is an old analogue standard: it cannot carry the bandwidth for 4K/high refresh, and the analogue signal goes soft and fuzzy at high resolutions.",
+            ],
+            concepts: [
+              ["displayport", "display port", "hdmi 2.1", "hdmi2.1"],
+              ["bandwidth", "refresh", "high resolution", "4k"],
+              ["analogue", "analog", "old", "fuzzy", "blurry", "quality", "cannot", "can't"],
+            ],
+            labels: ["names DisplayPort/HDMI 2.1", "bandwidth/refresh reasoning", "why VGA fails (analogue/low bandwidth)"],
+            min: 2,
+          },
+          {
+            answer: [
+              "A laser printer (a networked office laser / MFP).",
+              "Lasers are built for volume: fast pages per minute, sharp text, and toner gives by far the lowest cost per page — inkjet ink at that volume would cost a fortune and the printer would not keep up.",
+            ],
+            concepts: [
+              ["laser"],
+              ["cost per page", "toner", "cheaper", "cost-effective", "economical", "volume", "high volume"],
+              ["fast", "speed", "pages per minute", "duty"],
+            ],
+            labels: ["recommends laser", "cost-per-page/toner reasoning", "speed/volume reasoning"],
+            min: 2,
+          },
+          {
+            answer: [
+              "The switch connects all the office devices into the local network and forwards traffic to the correct port.",
+              "The router is the gateway that connects the office network to the internet (and other networks), routing traffic and translating private addresses (NAT).",
+            ],
+            concepts: [
+              ["switch"],
+              ["router"],
+              ["gateway", "internet", "nat", "between networks", "connects networks", "routes"],
+              ["forwards", "port", "connects devices", "local", "lan"],
+            ],
+            labels: ["names the switch", "names the router", "router's gateway/internet role", "switch's LAN role"],
+            min: 3,
+          },
+        ],
+      },
+      {
+        id: "hwsw-history-cloud",
+        title: "Exercise 2 — From Ada to the cloud",
+        task: "Connect the history of computing to the hardware behind today's cloud.",
+        scenario: [
+          "Answer in your own words. Marks come from the key ideas, not from perfect wording.",
+        ],
+        steps: [
+          "Who is regarded as the first computer programmer, and what exactly did she do a century before computers existed?",
+          "Before machines, what did the word 'computer' mean — and who did that work at NASA in the 1950s and 60s?",
+          "What was ENIAC, and what was remarkable about how it was programmed?",
+          "Your branch manager asks: 'Where IS the cloud, actually?' Give the honest hardware answer in plain language.",
+          "Name three pieces of hardware found in a data centre but not on an office desk, and say what each one does.",
+        ],
+        checks: [
+          {
+            answer: [
+              "Ada Lovelace. In 1843 she published notes on Babbage's Analytical Engine containing a step-by-step method for the machine to compute Bernoulli numbers — the first published algorithm intended for a machine — and she foresaw that computers could one day work with music, words and symbols, not just numbers.",
+            ],
+            concepts: [
+              ["ada", "lovelace"],
+              ["algorithm", "program", "bernoulli", "notes", "instructions"],
+              ["analytical engine", "babbage"],
+              ["beyond numbers", "music", "art", "symbols", "foresaw", "predicted", "vision"],
+            ],
+            labels: ["names Ada Lovelace", "the first algorithm/program", "for Babbage's Analytical Engine", "her vision beyond numbers"],
+            min: 3,
+          },
+          {
+            answer: [
+              "A 'computer' was a person employed to do calculations by hand — a job title.",
+              "At NASA (then NACA) that work was done largely by women, including the segregated West Area Computing unit of Black women mathematicians — Katherine Johnson, Dorothy Vaughan and Mary Jackson — who computed spaceflight trajectories.",
+            ],
+            concepts: [
+              ["person", "people", "job", "by hand", "human"],
+              ["women", "woman"],
+              ["katherine johnson", "dorothy vaughan", "mary jackson", "west area", "hidden figures"],
+              ["trajector", "calculations", "flight", "orbit", "spaceflight"],
+            ],
+            labels: ["computer = a person's job", "the work was done by women", "names the NASA computers", "what they calculated"],
+            min: 3,
+          },
+          {
+            answer: [
+              "ENIAC (1945) was the first general-purpose electronic computer — 30 tons and about 18,000 vacuum tubes.",
+              "It was programmed by six women — the ENIAC Six — who set switches and re-plugged cables by hand, without manuals or training, effectively inventing programming as a job.",
+            ],
+            concepts: [
+              ["first", "general-purpose", "electronic"],
+              ["vacuum tube", "valve", "18,000", "18000", "30 ton"],
+              ["women", "six"],
+              ["cables", "plugboard", "switches", "re-plug", "replug", "wiring", "no manual"],
+            ],
+            labels: ["what ENIAC was", "its scale/valves", "programmed by six women", "programming = cables and switches"],
+            min: 3,
+          },
+          {
+            answer: [
+              "The cloud is physical data centres owned by providers like Microsoft and Amazon — buildings full of servers, storage and network hardware that we rent over the internet.",
+              "Both Azure and AWS run data centre regions here in South Africa (Johannesburg, and Cape Town for AWS), so 'our cloud' may literally be servers up the road — virtualisation just slices those physical machines into the virtual ones we use.",
+            ],
+            concepts: [
+              ["data centre", "data center", "datacentre", "datacenter", "buildings", "warehouse"],
+              ["servers", "hardware", "physical", "machines"],
+              ["rent", "provider", "someone else", "microsoft", "amazon", "internet"],
+              ["johannesburg", "cape town", "south africa", "region"],
+            ],
+            labels: ["cloud = real data centres", "full of physical servers", "rented from a provider over the internet", "regions exist in South Africa"],
+            min: 3,
+          },
+          {
+            answer: [
+              "Examples: a rack server (compute in a 42U cabinet); a SAN storage array (shelves of drives serving many servers); a UPS battery system (instant bridge power); a diesel generator (long outages); a PDU (rack power distribution); a CRAC/cooling unit (removes heat); a blade chassis; a KVM console.",
+            ],
+            concepts: [
+              ["rack server", "blade", "1u", "42u", "server"],
+              ["san", "storage array", "nas", "tape", "library"],
+              ["ups", "generator", "pdu", "power"],
+              ["crac", "cooling", "aircon", "hot aisle", "chiller"],
+              ["kvm", "patch panel", "core switch", "firewall appliance"],
+            ],
+            labels: ["server hardware", "enterprise storage", "power hardware", "cooling hardware", "other DC hardware"],
+            min: 3,
+          },
+        ],
+      },
+    ],
+
+    assignments: [
+      {
+        id: "hwsw-a1",
+        title: "Assignment — Workplace hardware audit & evolution poster",
+        brief:
+          "Part A: Audit one workstation at your workplace (with permission): record CPU model, RAM size and type, storage type and capacity, every visible port, the connected peripherals and printer (type and how it connects), and how the machine reaches the network. Part B: Create a one-page 'Evolution of Computing' timeline poster — at least ten milestones from Babbage and Ada Lovelace to AI — suitable for the training-room wall.",
+        requirements: [
+          "Part A as a table: component · what you found · how you identified it (System Information, Task Manager, physical inspection).",
+          "Include at least: CPU, RAM, storage, three ports, one peripheral, the printer, and the network connection (cable/Wi-Fi, and to what device).",
+          "One paragraph: the single most cost-effective upgrade for this machine, justified.",
+          "Part B poster: minimum ten milestones with dates; at least three must be pre-1950 and at least two must feature the women pioneers.",
+          "Any format (Word, PowerPoint, Canva, hand-drawn and photographed) — legibility and accuracy count, not artistic talent.",
+        ],
+        evidence:
+          "Submit both parts within 5 working days of Day 2. The assessed audit and poster are filed in your POE as evidence for this lesson.",
+      },
+    ],
+
+    quiz: [],
+    quizzes: [
+      {
+        id: "hwsw-day1",
+        title: "Quiz 1 — History & inside the PC (Day 1)",
+        questions: [
+          {
+            q: "Who is regarded as the first computer programmer?",
+            options: ["Grace Hopper", "Ada Lovelace", "Katherine Johnson", "Charles Babbage"],
+            answer: 1,
+            explain: "Ada Lovelace published the first algorithm intended for a machine (Babbage's Analytical Engine) in 1843. Grace Hopper and Katherine Johnson are later pioneers; Babbage designed the machines.",
+          },
+          {
+            q: "Babbage's Analytical Engine had a 'mill' and a 'store'. What are their modern equivalents?",
+            options: ["Printer and scanner", "CPU and RAM", "Keyboard and monitor", "Router and switch"],
+            answer: 1,
+            explain: "The mill performed arithmetic (today's CPU) and the store held numbers (today's memory/RAM) — the same architecture every computer still uses.",
+          },
+          {
+            q: "Before electronic machines existed, what was a 'computer'?",
+            options: [
+              "A mechanical calculator",
+              "A person employed to do calculations — very often a woman",
+              "A punched card",
+              "A telegraph operator",
+            ],
+            answer: 1,
+            explain: "'Computer' was a job title for people who calculated by hand — from the Harvard Observatory women to NASA's West Area Computers.",
+          },
+          {
+            q: "Which statements about ENIAC (1945) are true?",
+            options: [
+              "It used about 18,000 vacuum tubes and weighed around 30 tons",
+              "It was programmed by six women by re-plugging cables and setting switches",
+              "It fitted on a desk",
+              "It ran Windows",
+            ],
+            answer: 0,
+            answers: [0, 1],
+            explain: "ENIAC filled a room with ~18,000 valves and was programmed by the ENIAC Six at plugboards. Desktop computers and Windows came decades later.",
+          },
+          {
+            q: "What did Grace Hopper contribute to computing?",
+            options: [
+              "The first compiler and the drive behind COBOL",
+              "The first microprocessor",
+              "The World Wide Web",
+              "The iPhone",
+            ],
+            answer: 0,
+            explain: "Hopper created the first compiler (A-0, 1952) and championed English-like programming, leading to COBOL (1959). Her team also popularised the term 'debugging'.",
+          },
+          {
+            q: "Put the hardware generations in the correct order:",
+            options: [
+              "Transistors → valves → microprocessors → integrated circuits",
+              "Vacuum tubes → transistors → integrated circuits → microprocessors",
+              "Integrated circuits → vacuum tubes → transistors → microprocessors",
+              "Microprocessors → integrated circuits → transistors → vacuum tubes",
+            ],
+            answer: 1,
+            explain: "1st gen valves (ENIAC) → 2nd gen transistors (1947) → 3rd gen integrated circuits (1958–59) → 4th gen microprocessors (Intel 4004, 1971).",
+          },
+          {
+            q: "A PC 'forgets' its date and time every time it is unplugged. What is the most likely cause?",
+            options: ["Faulty RAM", "A flat CMOS coin-cell battery", "A failing hard drive", "The wrong printer driver"],
+            answer: 1,
+            explain: "The CR2032 coin cell keeps the clock and firmware settings alive when the machine has no power — when it dies, the clock resets.",
+          },
+          {
+            q: "Which upgrades would most help a PC that slows down when many applications are open at once? (Select all that apply)",
+            options: [
+              "Add more RAM",
+              "Replace the HDD with an SSD",
+              "A bigger monitor",
+              "A faster printer",
+            ],
+            answer: 0,
+            answers: [0, 1],
+            explain: "Slowness with many open apps means paging to the drive: more RAM reduces the paging, and an SSD makes the unavoidable paging far faster. Monitors and printers change nothing.",
+          },
+          {
+            q: "What is the key difference between RAM and storage?",
+            options: [
+              "RAM is permanent; storage is temporary",
+              "RAM is fast, temporary working memory that empties at power-off; storage keeps data permanently",
+              "They are the same thing",
+              "Storage is faster than RAM",
+            ],
+            answer: 1,
+            explain: "RAM is the volatile working desk (cleared at shutdown); storage is the filing cabinet that holds everything permanently. RAM is orders of magnitude faster.",
+          },
+          {
+            q: "Which port would you choose to drive a 4K monitor at a high refresh rate?",
+            options: ["VGA", "PS/2", "DisplayPort", "RJ11"],
+            answer: 2,
+            explain: "DisplayPort (or HDMI 2.1) has the bandwidth for 4K at high refresh. VGA is analogue and low-bandwidth; PS/2 is a keyboard/mouse port; RJ11 is telephone.",
+          },
+          {
+            q: "Which RAID level mirrors two drives so one can fail without data loss?",
+            options: ["RAID 0", "RAID 1", "RAID 5", "JBOD"],
+            answer: 1,
+            explain: "RAID 1 keeps identical copies on two drives. RAID 0 stripes with NO redundancy; RAID 5 uses parity across 3+ drives.",
+          },
+          {
+            q: "A laser printer produces a smudge that repeats at regular intervals down every page. The classic culprit is…",
+            options: ["The USB cable", "A damaged imaging drum", "Too much RAM", "The Wi-Fi signal"],
+            answer: 1,
+            explain: "A mark on the rotating drum prints once per revolution — a repeating defect at fixed intervals is the drum's signature. Cables and Wi-Fi cause missing pages, not repeating marks.",
+          },
+        ],
+      },
+      {
+        id: "hwsw-day2",
+        title: "Quiz 2 — Network, data centre, cloud & software (Day 2)",
+        questions: [
+          {
+            q: "Which device connects the devices within an office LAN, forwarding traffic to the correct port?",
+            options: ["Router", "Switch", "Modem", "UPS"],
+            answer: 1,
+            explain: "The switch is the heart of the LAN. The router connects networks to each other (e.g. LAN to internet); the modem/ONT converts the provider's signal; a UPS is power protection.",
+          },
+          {
+            q: "What does PoE (Power over Ethernet) make possible?",
+            options: [
+              "Faster downloads",
+              "Powering devices like access points, IP cameras and phones through the network cable itself",
+              "Wireless charging",
+              "Longer Wi-Fi range",
+            ],
+            answer: 1,
+            explain: "PoE switches send power down the UTP cable, so ceiling APs, cameras and desk phones need no plug point.",
+          },
+          {
+            q: "Which cabling facts are correct? (Select all that apply)",
+            options: [
+              "Cat6a UTP supports 10 Gbps up to 100 m",
+              "Single-mode fibre is used for long distances",
+              "RJ11 is the standard network connector",
+              "The maximum UTP run is about 100 m",
+            ],
+            answer: 0,
+            answers: [0, 1, 3],
+            explain: "Cat6a carries 10 Gbps the full 100 m and 100 m is the UTP limit; single-mode fibre covers kilometres. RJ11 is the small telephone connector — RJ45 is network.",
+          },
+          {
+            q: "What is a SAN?",
+            options: [
+              "A file-sharing appliance for one department",
+              "A dedicated high-speed storage network presenting disk volumes to many servers",
+              "A type of printer",
+              "An antivirus product",
+            ],
+            answer: 1,
+            explain: "A SAN (storage area network) connects servers to shared storage arrays over Fibre Channel or iSCSI — the storage behind databases and VM farms. The file-sharing appliance is a NAS.",
+          },
+          {
+            q: "In a data centre power chain, which order is correct when the grid fails?",
+            options: [
+              "Generator takes the load instantly; UPS is for long outages",
+              "UPS batteries carry the load instantly, then generators take over for the long haul",
+              "Servers switch to laptop batteries",
+              "The PDU generates power",
+            ],
+            answer: 1,
+            explain: "UPS batteries bridge the seconds-long gap with zero interruption; generators start and carry the site for hours. PDUs only distribute power to racks.",
+          },
+          {
+            q: "What does 'hot aisle / cold aisle' describe?",
+            options: [
+              "Fire safety zones",
+              "Arranging racks so servers draw cold air from one aisle and exhaust heat into another, kept separate",
+              "The queue at the coffee machine",
+              "Zones with and without Wi-Fi",
+            ],
+            answer: 1,
+            explain: "Facing rack fronts at contained cold aisles and exhausts at hot aisles stops hot and cold air mixing — the foundation of data-centre cooling efficiency.",
+          },
+          {
+            q: "Where is 'the cloud', physically?",
+            options: [
+              "In the atmosphere, via satellites",
+              "In providers' physical data centres — including Azure and AWS regions right here in South Africa",
+              "Inside your Wi-Fi router",
+              "Nowhere — it is purely virtual",
+            ],
+            answer: 1,
+            explain: "Cloud services run on real servers in hyperscale data centres. Azure and AWS both operate South African regions (Johannesburg; AWS also Cape Town). Virtual machines still need physical hosts.",
+          },
+          {
+            q: "What does a hypervisor do?",
+            options: [
+              "Cools the servers",
+              "Slices one physical server into many isolated virtual machines",
+              "Prints faster",
+              "Replaces the firewall",
+            ],
+            answer: 1,
+            explain: "Virtualisation software (ESXi, Hyper-V, KVM) lets one physical host run many VMs — the technology that makes cloud computing possible.",
+          },
+          {
+            q: "Why are GPUs the hardware of the AI era?",
+            options: [
+              "They are cheaper than CPUs",
+              "Their thousands of parallel cores are ideal for the matrix arithmetic neural networks need",
+              "They use no electricity",
+              "They store more data than hard drives",
+            ],
+            answer: 1,
+            explain: "A GPU does the same small calculation across thousands of cores at once — exactly the shape of neural-network maths. That is why AI data centres are racks of GPUs (and TPUs).",
+          },
+          {
+            q: "Which licence type is tied permanently to the machine it shipped on?",
+            options: ["Retail", "Volume", "OEM", "Open source"],
+            answer: 2,
+            explain: "OEM licences live and die with the original machine. Retail licences transfer; volume covers fleets; open source grants use under its licence conditions.",
+          },
+          {
+            q: "Which are real software layers between hardware and the user? (Select all that apply)",
+            options: ["Firmware", "Drivers", "The operating system", "The desk the PC stands on"],
+            answer: 0,
+            answers: [0, 1, 2],
+            explain: "Firmware lives in the devices, drivers teach the OS to use them, and the OS manages everything for the applications. The desk is furniture — useful, but not software.",
+          },
+          {
+            q: "A PC shows 'No boot device found'. Which is NOT a likely cause?",
+            options: [
+              "The drive has failed",
+              "A data cable has come loose",
+              "The boot order points at an empty USB stick",
+              "The monitor is 60 Hz",
+            ],
+            answer: 3,
+            explain: "'No boot device' means the firmware cannot find a drive to boot: dead drive, loose cable or wrong boot order. The monitor's refresh rate has nothing to do with booting.",
+          },
+        ],
+      },
+      {
+        id: "hwsw-psu",
+        title: "Quiz 3 — How a PSU works",
+        questions: [
+          {
+            q: "What voltage and frequency does a South African wall socket deliver?",
+            options: [
+              "12 V DC at 60 Hz",
+              "120 V AC at 60 Hz",
+              "230 V AC at 50 Hz",
+              "320 V DC at 50 Hz",
+            ],
+            answer: 2,
+            explain: "SA mains is 230 V AC at 50 Hz. The 320 V DC figure only appears inside the PSU after the bridge rectifier; 120 V / 60 Hz is North America.",
+          },
+          {
+            q: "What is the job of the EMI filter at the PSU input?",
+            options: [
+              "It converts AC electricity into DC",
+              "It removes electrical noise, spikes and interference before the electricity is used",
+              "It steps 230 V down to 12 V directly",
+              "It regulates the CPU's core voltage",
+            ],
+            answer: 1,
+            explain: "The EMI filter is like a water filter for electricity — it cleans dirty AC before the rectifier sees it. Converting AC→DC is the rectifier's job, stepping down is the transformer's, and CPU regulation is done by the motherboard VRM.",
+          },
+          {
+            q: "What does the bridge rectifier inside the PSU do?",
+            options: [
+              "Chops the DC into millions of tiny pulses per second",
+              "Uses four diodes to turn ~230 V AC into approximately 320 V DC",
+              "Smooths the ripples on the +12 V rail",
+              "Turns the PC on when you press the power button",
+            ],
+            answer: 1,
+            explain: "A bridge rectifier is four diodes acting as one-way gates, forcing AC to flow one direction only. In a SA PSU the result is roughly 320 V DC. Chopping is done later by the MOSFETs; smoothing is done by capacitors.",
+          },
+          {
+            q: "MOSFETs in the PSU switch about 50,000–500,000 times per second. Why so fast?",
+            options: [
+              "So the PSU can run on DC without a rectifier",
+              "So the transformer can be much smaller, cooler and more efficient",
+              "To create the 50 Hz signal the CPU needs",
+              "To keep the fans spinning at maximum RPM",
+            ],
+            answer: 1,
+            explain: "High-frequency switching lets the PSU use a tiny high-frequency transformer instead of a huge 50 Hz one, making modern PSUs small, light and efficient. CPUs never see 50 Hz — they run on smooth DC.",
+          },
+          {
+            q: "After the transformer steps the voltage down, what removes the last tiny ripples so the DC is stable enough for the CPU?",
+            options: ["Diodes", "MOSFETs", "Capacitors", "The EMI filter"],
+            answer: 2,
+            explain: "Capacitors act like small reservoirs — they charge on the peaks and discharge in the dips, smoothing rough DC into stable DC. Even tiny fluctuations can crash a computer, so this stage is critical.",
+          },
+          {
+            q: "Which components draw power from the PSU's +12 V rail? (Select all that apply)",
+            options: [
+              "CPU (via the motherboard's EPS connector)",
+              "GPU (via the PCIe power connectors)",
+              "Case fans and HDD spindle motors",
+              "The BIOS chip on the motherboard",
+            ],
+            answer: 0,
+            answers: [0, 1, 2],
+            explain: "The +12 V rail powers everything that moves or draws serious current: CPU (through the VRM), GPU, fans and HDD motors. Small logic chips like BIOS run on +3.3 V.",
+          },
+          {
+            q: "The PSU delivers +12 V to the motherboard, but a modern CPU actually runs on about 1.0–1.2 V. What bridges the gap?",
+            options: [
+              "The bridge rectifier converts 12 V to 1.1 V",
+              "The PSU has a separate 1.1 V rail on the 24-pin connector",
+              "VRMs (Voltage Regulator Modules) on the motherboard step 12 V down to the exact voltage the CPU asks for",
+              "A special adapter cable inside the CPU cooler",
+            ],
+            answer: 2,
+            explain: "Modern motherboards contain VRMs — precision DC-DC converters that step 12 V down to ~1.1 V and adjust it in real time as the CPU changes load. There is no 1.1 V rail on the PSU.",
+          },
+          {
+            q: "Which internal component needs BOTH +12 V (for the motor) AND +5 V (for the electronics)?",
+            options: ["An SSD", "A hard disk drive (HDD)", "A USB flash drive", "A DDR4 RAM stick"],
+            answer: 1,
+            explain: "HDDs use 12 V to spin the platters and 5 V for the controller board. SSDs and USB devices need only 5 V — no motor. RAM runs off 1.2–1.5 V generated on the motherboard from 3.3 V logic.",
+          },
+          {
+            q: "Drag the eight stages into the correct order — from the wall socket to the components:",
+            kind: "order",
+            options: [],
+            answer: 0,
+            items: [
+              "Wall outlet — 230 V AC",
+              "EMI filter — removes noise and spikes",
+              "Bridge rectifier — AC becomes ~320 V DC",
+              "MOSFETs — chop DC into high-frequency pulses",
+              "Transformer — steps the high-frequency voltage down",
+              "Output rectifiers & capacitors — smooth into steady DC",
+              "Voltage regulators — hold +12 V, +5 V, +3.3 V rock-steady",
+              "Distribution to motherboard, CPU, GPU, drives, fans",
+            ],
+            explain: "The full journey: Wall → EMI filter → Rectifier → MOSFET switching → Transformer → Rectify + smooth → Regulate → Distribute. Every stage exists because computer components need clean, low-voltage, steady DC — the opposite of what comes out of the wall.",
+          },
+          {
+            q: "Match each part of the water-supply analogy to the real PC component it represents:",
+            kind: "match",
+            options: [],
+            answer: 0,
+            imageSvg: WATER_ANALOGY_SVG,
+            pairs: [
+              { left: "The river feeding the town", right: "Wall outlet (230 V AC mains)" },
+              { left: "The water treatment plant", right: "Power Supply Unit (PSU)" },
+              { left: "The pipes leaving the plant", right: "PSU output cables (24-pin, EPS, PCIe, SATA)" },
+              { left: "The city water network", right: "Motherboard power distribution" },
+              { left: "Individual buildings that need different pressures", right: "PC components (CPU, GPU, RAM, SSD)" },
+            ],
+            explain: "The wall outlet is a raw river of energy. The PSU is the treatment plant that cleans it, controls it and outputs the right pressures. The cables are pipes; the motherboard is the city grid; each component is a building that needs a specific 'pressure' (voltage). Too much and it breaks, too little and it stalls — the PSU keeps every component supplied with clean, stable power.",
+          },
+        ],
+      },
+    ],
+
+    lessonPlan: {
+      title: "Facilitator Preparation",
+      startTime: "09:00",
+      details: [
+        { icon: "calendar", label: "Dates", value: "Wednesday 5 & Thursday 6 August 2026" },
+        { icon: "clock", label: "Time", value: "09:00 – 14:00 (both days)" },
+        { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
+        { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
+      ],
+      prep: [
+        "Study the lesson content so you can tell the history as a story — the session lives or dies on the Babbage-to-AI narrative.",
+        "Upload pictures into the image placeholders on the Lesson tab BEFORE Day 1 — every placeholder shows a hint describing exactly which picture to find.",
+        "Pack the demo box: an old motherboard, a CPU, DDR3/DDR4 DIMMs, an opened hard drive, a 2.5\" SSD and M.2 stick, SATA/power cables, a PSU with its connectors, assorted cables (VGA, HDMI, DisplayPort, USB types, RJ45, RJ11), a patch lead and crimping tool, and if possible a small switch and access point to pass around.",
+        "Arrange access to a machine that can be opened live in class, and to the office MFP for the printer walk-around.",
+        "Load the two quizzes and both exercises; check the projector and a spare HDMI/USB-C adapter (practise what you preach).",
+      ],
+      sections: [
+        {
+          heading: "Day 1 — Wednesday, 5 August 2026 · The story of computing & inside the PC",
+          rows: [
+            {
+              title: "Room Set Up",
+              text: ["Venue, projector and demo-hardware box ready. Components laid out on a side table for the hands-on segments."],
+            },
+            {
+              time: "20 minutes",
+              title: "Meet, Greet & Seat",
+              text: [
+                "Learners settle and sign the class register. Explain the parking bay for questions that will be answered before close.",
+              ],
+              resources: ["Class Register", "White Board"],
+            },
+            {
+              time: "25 minutes",
+              title: "Hardware vs software — Facilitator & Class",
+              bullets: [
+                "Work through the Welcome section: hardware / software / firmware definitions.",
+                "Pass a RAM module and an SSD around the room — the goal: no component is scary by 14:00 tomorrow.",
+              ],
+              resources: ["Lesson: Welcome section", "Demo box"],
+            },
+            {
+              time: "60 minutes",
+              title: "The story of computing: Babbage, Ada Lovelace, the women who computed, ENIAC — Facilitator (storytelling)",
+              bullets: [
+                "Sections 1–2 with the uploaded pictures full-screen: Babbage's engines, Ada Lovelace's notes, Hollerith and IBM.",
+                "'Computer' as a job title: Harvard computers, NASA's West Area Computers (Hidden Figures), Bletchley Park, the ENIAC Six, Grace Hopper and the first bug.",
+                "Discussion: why were these pioneers forgotten for decades, and what does that mean for our industry?",
+              ],
+              resources: ["Lesson sections 1–2", "Uploaded figures"],
+            },
+            {
+              time: "30 minutes",
+              title: "Five generations & the evolution of software — Facilitator & Class",
+              bullets: [
+                "Sections 3–4: valves → transistors → ICs → microprocessors → AI silicon; machine code → COBOL → UNIX → Windows → open source → cloud → AI.",
+                "Anchor with the Moore's Law chart: the phone in your pocket vs ENIAC.",
+              ],
+              resources: ["Lesson sections 3–4"],
+            },
+            {
+              time: "25 minutes",
+              title: "Break",
+              break: true,
+            },
+            {
+              time: "55 minutes",
+              title: "Inside the case: motherboard, CPU, RAM — Facilitator & Class (hands-on)",
+              bullets: [
+                "Open the demo PC live: identify every part of section 5 on the real board.",
+                "Seat and re-seat a CPU and RAM module; show thermal paste and the CMOS battery.",
+                "Section 6: the desk-vs-filing-cabinet analogy; DDR generations on real DIMMs.",
+              ],
+              resources: ["Lesson sections 5–6", "Demo PC", "Demo box"],
+            },
+            {
+              time: "45 minutes",
+              title: "Storage, ports and cables — Class in pairs (hands-on)",
+              bullets: [
+                "Section 7 with the opened HDD vs SSD vs M.2 in hand; RAID on the whiteboard; the 3-2-1 backup rule.",
+                "Section 8 as a port-identification race: pairs name every connector in the cable pile, then check against the lesson tables.",
+              ],
+              resources: ["Lesson sections 7–8", "Cable pile"],
+            },
+            {
+              time: "20 minutes",
+              title: "Power, cooling & graphics — Facilitator & Class",
+              bullets: [
+                "Section 9: PSU connectors on the real unit; dust and thermal throttling; UPS types for load shedding.",
+              ],
+              resources: ["Lesson section 9", "Demo PSU"],
+            },
+            {
+              time: "10 minutes",
+              title: "Day 1 wrap — Quiz 1 assigned",
+              bullets: [
+                "Learners complete Quiz 1 (History & inside the PC) in the app — tonight if not finished in class.",
+              ],
+              resources: ["Quiz tab: Quiz 1"],
+            },
+            {
+              time: "10 minutes",
+              title: "Parking Bay & Closing — Facilitator",
+              bullets: [
+                "Answer parked questions; confirm tomorrow continues at 09:00 with printers, networks, data centres and the cloud.",
+              ],
+              resources: ["White Board"],
+            },
+          ],
+        },
+        {
+          heading: "Day 2 — Thursday, 6 August 2026 · Peripherals, networks, data centres, cloud & software",
+          startTime: "09:00",
+          rows: [
+            {
+              time: "15 minutes",
+              title: "Recap & Quiz 1 review — Facilitator & Class",
+              bullets: [
+                "Quick-fire recap of Day 1; walk through any Quiz 1 questions the class found hard.",
+              ],
+              resources: ["Quiz 1 results"],
+            },
+            {
+              time: "45 minutes",
+              title: "Peripherals & printers — Facilitator & Class (walk-around)",
+              bullets: [
+                "Section 10: monitor panel types and connectors; then the printer deep-dive — laser process step by step, inkjet, thermal, dot-matrix, 3D.",
+                "Walk to the office MFP: identify drum, toner, fuser, trays; discuss the fault-signature table (repeating marks, ghosting, streaks, jams).",
+              ],
+              resources: ["Lesson section 10", "Office MFP"],
+            },
+            {
+              time: "40 minutes",
+              title: "Network hardware — Facilitator & Class (hands-on)",
+              bullets: [
+                "Section 11: NIC → switch → router → firewall → AP → ONT, traced on the whiteboard from a desk PC to the internet.",
+                "Pass around the switch, AP, patch leads, fibre lead and SFP; demonstrate crimping an RJ45 if time allows.",
+              ],
+              resources: ["Lesson section 11", "Demo switch/AP", "Crimping tool"],
+            },
+            {
+              time: "25 minutes",
+              title: "Break",
+              break: true,
+            },
+            {
+              time: "60 minutes",
+              title: "Data centre & cloud hardware — Facilitator & Class",
+              bullets: [
+                "Section 12 with the uploaded rack/aisle/UPS/generator pictures: servers, SAN vs NAS, the power chain, hot/cold aisles, N+1 vs 2N — and the load-shedding angle.",
+                "Section 13: where the cloud physically is (Johannesburg & Cape Town regions), hypervisors, GPU/AI clusters, undersea cables.",
+              ],
+              resources: ["Lesson sections 12–13", "Uploaded figures"],
+            },
+            {
+              time: "30 minutes",
+              title: "Software, licensing & the boot process — Facilitator & Class",
+              bullets: [
+                "Section 14: the software stack, the OS family, patching discipline, licence types (and the ethics of piracy).",
+                "Section 15: boot a machine live and narrate POST → UEFI → bootloader → OS; map the where-it-stops troubleshooting table.",
+              ],
+              resources: ["Lesson sections 14–15", "Demo PC"],
+            },
+            {
+              time: "50 minutes",
+              title: "Exercises 1 & 2 — Class in pairs",
+              bullets: [
+                "Pairs complete both exercises in the app; facilitator circulates and takes feedback from two pairs per exercise.",
+              ],
+              resources: ["Exercises tab"],
+            },
+            {
+              time: "15 minutes",
+              title: "Quiz 2 & Self-Assessment — Learners individually",
+              bullets: [
+                "Learners complete Quiz 2 (Day 2 content) and judge their own competence; identify learners needing support.",
+              ],
+              resources: ["Quiz tab: Quiz 2"],
+            },
+            {
+              time: "10 minutes",
+              title: "Parking Bay — Facilitator",
+              bullets: [
+                "Answer all parked questions; ensure the whole class understands each answer.",
+              ],
+              resources: ["White Board"],
+            },
+            {
+              time: "10 minutes",
+              title: "Closing — Facilitator",
+              bullets: [
+                "Full-circle recap: from human computers to AI — and where the systems support career fits in that story.",
+                "Issue the assignment (hardware audit & evolution poster) — due within 5 working days.",
+                "Thank the learners and confirm the next session (US 114050, Friday 7 August).",
+              ],
             },
           ],
         },

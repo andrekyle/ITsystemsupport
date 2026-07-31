@@ -196,10 +196,22 @@ export interface LessonSection {
   }[];
   /** worked example shown in a highlighted card after the bullets */
   example?: { title: string; lines: string[] };
+  /** image figure slots rendered after the content — staff upload the pictures, learners see placeholders until then */
+  figures?: LessonFigure[];
   /** facilitator/super-user only model answers shown at the bottom of the section */
   modelAnswer?: ModelAnswerBlock[];
   /** render as a plain always-visible section instead of a collapsible accordion */
   flat?: boolean;
+}
+
+/** An image slot in a lesson section. The picture itself is uploaded by staff and shared to all devices. */
+export interface LessonFigure {
+  /** stable id the uploaded image is stored under, e.g. "ada-lovelace" */
+  id: string;
+  /** caption shown under the image (or inside the placeholder) */
+  caption: string;
+  /** staff-only note describing what picture to upload */
+  hint?: string;
 }
 
 export interface ModelAnswerBlock {
@@ -247,10 +259,20 @@ export interface Assignment {
 
 export interface QuizQuestion {
   q: string;
+  /** Question kind. Omitted / "choice" = single or multi-select (multi if `answers` present). */
+  kind?: "choice" | "order" | "match";
+  /** Choice options (choice questions only). */
   options: string[];
+  /** Correct single-choice answer index. */
   answer: number;
-  /** when present, the question is select-all-that-apply and these indices are the correct set */
+  /** When present, the question is select-all-that-apply and these indices are the correct set. */
   answers?: number[];
+  /** Order-question items in the CORRECT order (shuffled at render). */
+  items?: string[];
+  /** Match-question pairs: left↔right in the CORRECT pairing (rights shuffled at render). */
+  pairs?: { left: string; right: string }[];
+  /** Optional inline SVG markup shown above the question (used by e.g. analogy diagrams). */
+  imageSvg?: string;
   explain: string;
 }
 

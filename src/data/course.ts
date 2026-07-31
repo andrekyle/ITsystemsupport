@@ -17,12 +17,13 @@ export const MODULES: CourseModule[] = [
     activities: 6,
     units: [
       { us: "8252", title: "Writing business reports in Retail/Wholesale practices", nqf: 5, credits: 6, dates: "17 Jul 2026", time: "09h00 - 14h00" },
-      { us: "10135", title: "Work as a project team member", nqf: 4, credits: 8, dates: "24, 31 Jul 2026", time: "09h00 - 14h00" },
-      { us: "114050", title: "Explain the principles of business and the role of information technology", nqf: 5, credits: 4, dates: "7 Aug 2026", time: "09h00 - 14h00" },
-      { us: "114051", title: "Conduct a technical practitioners meeting", nqf: 5, credits: 4, dates: "14 Aug 2026", time: "09h00 - 14h00" },
-      { us: "114055", title: "Demonstrate an awareness of ethics and professionalism for the computer industry in South Africa", nqf: 5, credits: 3, dates: "21 Aug 2026", time: "09h00 - 14h00" },
-      { us: "114046", title: "Demonstrate an understanding of issues affecting the management of a local area computer network (LAN)", nqf: 5, credits: 4, dates: "28 Aug 2026", time: "09h00 - 14h00" },
-      { us: "114183", title: "Apply the principles of resolving problems for single-user and multi-user computer operating systems", nqf: 5, credits: 7, dates: "4, 11 Sep 2026", time: "09h00 - 14h00" },
+      { us: "10135", title: "Work as a project team member", nqf: 4, credits: 8, dates: "24 Jul, 7 Aug 2026", time: "09h00 - 14h00" },
+      { us: "HWSW", title: "Hardware and Software", nqf: 5, credits: 0, dates: "5, 6 Aug 2026", time: "09h00 - 14h00" },
+      { us: "114050", title: "Explain the principles of business and the role of information technology", nqf: 5, credits: 4, dates: "14 Aug 2026", time: "09h00 - 14h00" },
+      { us: "114051", title: "Conduct a technical practitioners meeting", nqf: 5, credits: 4, dates: "21 Aug 2026", time: "09h00 - 14h00" },
+      { us: "114055", title: "Demonstrate an awareness of ethics and professionalism for the computer industry in South Africa", nqf: 5, credits: 3, dates: "28 Aug 2026", time: "09h00 - 14h00" },
+      { us: "114046", title: "Demonstrate an understanding of issues affecting the management of a local area computer network (LAN)", nqf: 5, credits: 4, dates: "4 Sep 2026", time: "09h00 - 14h00" },
+      { us: "114183", title: "Apply the principles of resolving problems for single-user and multi-user computer operating systems", nqf: 5, credits: 7, dates: "11, 18 Sep 2026", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -31,9 +32,9 @@ export const MODULES: CourseModule[] = [
     icon: "network",
     activities: 4,
     units: [
-      { us: "114058", title: "Demonstrate an understanding of the concepts of Multi-User computer Operating systems", nqf: 5, credits: 7, dates: "18, 25 Sep 2026", time: "09h00 - 14h00" },
-      { us: "114059", title: "Demonstrate an understanding of estimating a unit of work and the implications of late delivery", nqf: 5, credits: 5, dates: "2 Oct 2026", time: "09h00 - 14h00" },
-      { us: "114076", title: "Use computer technology to research a computer topic", nqf: 4, credits: 3, dates: "9 Oct 2026", time: "09h00 - 14h00" },
+      { us: "114058", title: "Demonstrate an understanding of the concepts of Multi-User computer Operating systems", nqf: 5, credits: 7, dates: "25 Sep, 2 Oct 2026", time: "09h00 - 14h00" },
+      { us: "114059", title: "Demonstrate an understanding of estimating a unit of work and the implications of late delivery", nqf: 5, credits: 5, dates: "9 Oct 2026", time: "09h00 - 14h00" },
+      { us: "114076", title: "Use computer technology to research a computer topic", nqf: 4, credits: 3, dates: "16 Oct 2026", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -42,10 +43,10 @@ export const MODULES: CourseModule[] = [
     icon: "globe",
     activities: 5,
     units: [
-      { us: "114060", title: "Demonstrate an understanding of local area computer networks, by installing a networked workstation", nqf: 5, credits: 5, dates: "16 Oct 2026", time: "09h00 - 14h00" },
-      { us: "114061", title: "Demonstrate an understanding of Wide Area Computer Networks (WANs), comparing them with Local Area Networks (LANs)", nqf: 5, credits: 5, dates: "23 Oct 2026", time: "09h00 - 14h00" },
-      { us: "114072", title: "Install and commission a local area computer network", nqf: 5, credits: 9, dates: "30 Oct, 6 Nov 2026", time: "09h00 - 14h00" },
-      { us: "114074", title: "Demonstrate an understanding of different computer network architectures and standards", nqf: 5, credits: 5, dates: "13 Nov 2026", time: "09h00 - 14h00" },
+      { us: "114060", title: "Demonstrate an understanding of local area computer networks, by installing a networked workstation", nqf: 5, credits: 5, dates: "23 Oct 2026", time: "09h00 - 14h00" },
+      { us: "114061", title: "Demonstrate an understanding of Wide Area Computer Networks (WANs), comparing them with Local Area Networks (LANs)", nqf: 5, credits: 5, dates: "30 Oct 2026", time: "09h00 - 14h00" },
+      { us: "114072", title: "Install and commission a local area computer network", nqf: 5, credits: 9, dates: "6, 13 Nov 2026", time: "09h00 - 14h00" },
+      { us: "114074", title: "Demonstrate an understanding of different computer network architectures and standards", nqf: 5, credits: 5, dates: "20 Nov 2026", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -54,9 +55,9 @@ export const MODULES: CourseModule[] = [
     icon: "design",
     activities: 5,
     units: [
-      { us: "114052", title: "Demonstrate appropriate customer care in the context of IT support, according to a Service Level Agreement", nqf: 5, credits: 8, dates: "20, 27 Nov 2026", time: "09h00 - 14h00" },
-      { us: "114056", title: "Describe enterprise systems management and its role in IT systems support", nqf: 5, credits: 3, dates: "4 Dec 2026", time: "09h00 - 14h00" },
-      { us: "114075", title: "Design a local area computer network for a departmental office environment", nqf: 5, credits: 3, dates: "11 Dec 2026", time: "09h00 - 14h00" },
+      { us: "114052", title: "Demonstrate appropriate customer care in the context of IT support, according to a Service Level Agreement", nqf: 5, credits: 8, dates: "27 Nov, 4 Dec 2026", time: "09h00 - 14h00" },
+      { us: "114056", title: "Describe enterprise systems management and its role in IT systems support", nqf: 5, credits: 3, dates: "11 Dec 2026", time: "09h00 - 14h00" },
+      { us: "114075", title: "Design a local area computer network for a departmental office environment", nqf: 5, credits: 3, dates: "18 Dec 2026", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -65,10 +66,10 @@ export const MODULES: CourseModule[] = [
     icon: "server",
     activities: 5,
     units: [
-      { us: "114047", title: "Install and configure a multi-user networked operating system", nqf: 5, credits: 9, dates: "15, 22 Jan 2027", time: "09h00 - 14h00" },
-      { us: "114053", title: "Monitor and maintain a multi-user networked operating system", nqf: 5, credits: 6, dates: "29 Jan 2027", time: "09h00 - 14h00" },
-      { us: "114054", title: "Administer a local area computer network", nqf: 5, credits: 7, dates: "5, 12 Feb 2027", time: "09h00 - 14h00" },
-      { us: "114066", title: "Test Networked IT systems against given specifications", nqf: 5, credits: 4, dates: "19 Feb 2027", time: "09h00 - 14h00" },
+      { us: "114047", title: "Install and configure a multi-user networked operating system", nqf: 5, credits: 9, dates: "22, 29 Jan 2027", time: "09h00 - 14h00" },
+      { us: "114053", title: "Monitor and maintain a multi-user networked operating system", nqf: 5, credits: 6, dates: "5 Feb 2027", time: "09h00 - 14h00" },
+      { us: "114054", title: "Administer a local area computer network", nqf: 5, credits: 7, dates: "12, 19 Feb 2027", time: "09h00 - 14h00" },
+      { us: "114066", title: "Test Networked IT systems against given specifications", nqf: 5, credits: 4, dates: "26 Feb 2027", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -77,9 +78,9 @@ export const MODULES: CourseModule[] = [
     icon: "database",
     activities: 5,
     units: [
-      { us: "114048", title: "Create database access for a computer application using structured query language", nqf: 5, credits: 9, dates: "26 Feb, 5, 12 Mar 2027", time: "09h00 - 14h00" },
-      { us: "114049", title: "Demonstrate an understanding of Computer Database Management Systems", nqf: 5, credits: 7, dates: "19, 26 Mar 2027", time: "09h00 - 14h00" },
-      { us: "114069", title: "Administer security systems for a multi-user computer system", nqf: 6, credits: 15, dates: "2, 9, 16, 23, 30 Apr 2027", time: "09h00 - 14h00" },
+      { us: "114048", title: "Create database access for a computer application using structured query language", nqf: 5, credits: 9, dates: "5, 12, 19 Mar 2027", time: "09h00 - 14h00" },
+      { us: "114049", title: "Demonstrate an understanding of Computer Database Management Systems", nqf: 5, credits: 7, dates: "26 Mar, 2 Apr 2027", time: "09h00 - 14h00" },
+      { us: "114069", title: "Administer security systems for a multi-user computer system", nqf: 6, credits: 15, dates: "9, 16, 23, 30 Apr, 7 May 2027", time: "09h00 - 14h00" },
     ],
   },
 ];
@@ -171,7 +172,7 @@ export const WHAT_YOULL_LEARN = {
     { icon: "award", label: "Qualification level", value: "NQF Level 5", detail: "148 credits · SAQA ID 48573" },
     { icon: "document", label: "Minimum admission requirements", value: "Grade 12", detail: "National Senior Certificate or equivalent" },
     { icon: "briefcase", label: "Career opportunities", value: "", detail: "", pills: ["End-User Support Technician", "IT Technician", "Network Technician", "System Administrator"] },
-    { icon: "clock", label: "Duration", value: "1 Year", detail: "Full-time · 17 Jul 2026 – 25 Jun 2027" },
+    { icon: "clock", label: "Duration", value: "1 Year", detail: "Full-time · 17 Jul 2026 – 2 Jul 2027" },
   ] as { icon: string; label: string; value: string; detail: string; pills?: string[] }[],
 };
 
@@ -276,7 +277,7 @@ export const POE_SECTIONS: { heading: string; icon: string; multi?: boolean; ite
       { id: "tw-manager", label: "Witness testimony — line manager/supervisor" },
       { id: "lb-weekly", label: "Logbook complete with weekly entries" },
       { id: "lb-mentor", label: "Logbook signed by mentor per module" },
-      { id: "lb-final", label: "Final logbook sign-off (11, 18 or 25 Jun 2027)" },
+      { id: "lb-final", label: "Final logbook sign-off (18, 25 Jun or 2 Jul 2027)" },
     ],
   },
   {
@@ -285,7 +286,7 @@ export const POE_SECTIONS: { heading: string; icon: string; multi?: boolean; ite
     multi: true,
     items: [
       { id: "sr-remedial", label: "Remediation records filed (if applicable)" },
-      { id: "sr-fisa", label: "FISA completed (28 May – 4 Jun 2027)" },
+      { id: "sr-fisa", label: "FISA completed (4 – 11 Jun 2027)" },
       { id: "sr-moderation", label: "POE submitted for internal moderation" },
       { id: "sr-verified", label: "POE verified by MICT SETA" },
     ],
@@ -305,9 +306,9 @@ export const MODULE_FLOW = {
 };
 
 export const PROGRAMME_MILESTONES = [
-  { name: "Remedials", dates: "7, 14, 21 May 2027", time: "09h00 - 14h00", icon: "wrench" },
-  { name: "FISA (Final Integrated Summative Assessment)", dates: "28 May – 4 Jun 2027", time: "09h00 - 14h00", icon: "certificate" },
-  { name: "Logbook", dates: "11, 18, 25 Jun 2027", time: "09h00 - 14h00", icon: "book" },
+  { name: "Remedials", dates: "14, 21, 28 May 2027", time: "09h00 - 14h00", icon: "wrench" },
+  { name: "FISA (Final Integrated Summative Assessment)", dates: "4 – 11 Jun 2027", time: "09h00 - 14h00", icon: "certificate" },
+  { name: "Logbook", dates: "18, 25 Jun, 2 Jul 2027", time: "09h00 - 14h00", icon: "book" },
 ];
 
 export const DELIVERABLES = [
@@ -406,4 +407,14 @@ export function findUnit(us: string) {
     if (u) return { module: m, unit: u };
   }
   return undefined;
+}
+
+/** True for registered SAQA unit standards (numeric codes); false for internal lessons like HWSW. */
+export function isSaqaUnit(us: string) {
+  return /^\d+$/.test(us);
+}
+
+/** Display label for a unit code — "US 8252" for registered standards, the plain code for internal lessons. */
+export function usLabel(us: string) {
+  return isSaqaUnit(us) ? `US ${us}` : us;
 }

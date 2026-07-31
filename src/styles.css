@@ -3440,6 +3440,120 @@ a.plan-ppt:hover {
   font-size: 13.5px;
 }
 
+/* ============ Lesson figures (staff-uploaded pictures with placeholders) ============ */
+
+.figure-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin: 14px 0 8px;
+}
+
+.lesson-figure {
+  position: relative;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.lesson-figure img {
+  display: block;
+  width: 100%;
+  max-height: 340px;
+  object-fit: contain;
+  background: #fff;
+}
+
+.lesson-figure figcaption {
+  font-size: 12.5px;
+  color: var(--ink-2);
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
+}
+
+.lesson-figure .fig-credit {
+  display: block;
+  margin-top: 3px;
+  font-size: 10.5px;
+  color: var(--ink-3);
+  text-decoration: none;
+}
+
+.lesson-figure .fig-credit::before {
+  content: "Wikimedia Commons · ";
+}
+
+.lesson-figure .fig-credit:hover {
+  color: var(--azure);
+  text-decoration: underline;
+}
+
+.lesson-figure .fig-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.lesson-figure .fig-remove:hover {
+  color: var(--red, #c50f1f);
+}
+
+.lesson-figure.placeholder {
+  border-style: dashed;
+  background: transparent;
+}
+
+.fig-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 150px;
+  padding: 16px 14px;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.fig-drop:disabled {
+  cursor: default;
+}
+
+.fig-drop:not(:disabled):hover {
+  color: var(--azure);
+  background: var(--surface-2);
+}
+
+.fig-drop .fig-cap {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.fig-drop .fig-hint {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 /* Word-document look for model reports */
 .lesson-cards {
   margin: 10px 0 12px;
@@ -4312,6 +4426,210 @@ a.plan-ppt:hover {
   text-transform: uppercase;
   color: var(--azure);
   white-space: nowrap;
+}
+
+/* --- Quiz: inline figure (e.g. water-supply analogy diagram) --- */
+.quiz-figure {
+  margin: 0 0 14px;
+  padding: 12px;
+  background: var(--azure-lighter);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow-x: auto;
+}
+.quiz-figure svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+/* --- Quiz: drag-to-order questions --- */
+.quiz-order-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.quiz-order-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 14px;
+  cursor: grab;
+  user-select: none;
+}
+.quiz-order-item:hover {
+  border-color: var(--azure);
+  background: var(--azure-lighter);
+}
+.quiz-order-item.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+.quiz-order-item .pos {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--azure-light);
+  color: var(--azure-darker);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+.quiz-order-item .grip {
+  color: var(--ink-3);
+  display: inline-flex;
+}
+.quiz-order-item .txt {
+  flex: 1;
+  color: var(--ink);
+}
+.quiz-order-item .order-btns {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.quiz-order-item .order-btns .btn.xs {
+  padding: 2px 8px;
+  font-size: 12px;
+  min-width: 0;
+  line-height: 1;
+}
+.quiz-order-item.correct {
+  border-color: var(--green);
+  background: var(--green-bg);
+}
+.quiz-order-item.correct .pos {
+  background: var(--green);
+  color: #fff;
+}
+.quiz-order-item.wrong {
+  border-color: var(--red);
+  background: var(--red-bg);
+}
+.quiz-order-item.wrong .pos {
+  background: var(--red);
+  color: #fff;
+}
+.quiz-order-item .mark {
+  margin-left: 8px;
+  color: var(--ink-3);
+  display: inline-flex;
+}
+.quiz-order-item.correct .mark {
+  color: var(--green);
+}
+.quiz-order-item.wrong .mark {
+  color: var(--red);
+}
+
+/* --- Quiz: matching questions --- */
+.quiz-match {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.quiz-match-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.quiz-match-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.quiz-match-item:hover:not(:disabled) {
+  border-color: var(--azure);
+  background: var(--azure-lighter);
+}
+.quiz-match-item .badge {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--azure-light);
+  color: var(--azure-darker);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+.quiz-match-item .txt {
+  flex: 1;
+  color: var(--ink);
+}
+.quiz-match-item .chosen {
+  font-size: 12px;
+  color: var(--azure);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.quiz-match-item .chosen .clear {
+  cursor: pointer;
+  color: var(--ink-3);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1;
+}
+.quiz-match-item.selected {
+  border-color: var(--azure);
+  background: var(--azure-light);
+  color: var(--ink);
+}
+.quiz-match-item.paired {
+  border-style: dashed;
+  border-color: var(--azure);
+}
+.quiz-match-item.correct {
+  border-color: var(--green);
+  background: var(--green-bg);
+}
+.quiz-match-item.correct .badge {
+  background: var(--green);
+  color: #fff;
+}
+.quiz-match-item.wrong {
+  border-color: var(--red);
+  background: var(--red-bg);
+}
+.quiz-match-item.wrong .badge {
+  background: var(--red);
+  color: #fff;
+}
+@media (max-width: 640px) {
+  .quiz-match {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* the entire calendar row goes green once the unit standard is completed */
