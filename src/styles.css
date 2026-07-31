@@ -4522,7 +4522,6 @@ a.plan-ppt:hover {
   max-height: 460px;
 }
 .lesson-screen .lesson-figure {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 .lesson-screen .lesson-figure .fig-open,
@@ -4536,10 +4535,6 @@ a.plan-ppt:hover {
   height: 100%;
   object-fit: cover;
   max-height: none;
-}
-.lesson-screen .lesson-figure:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.35);
 }
 .lesson-screen .lesson-figure figcaption {
   font-size: 13.5px;
@@ -4569,10 +4564,7 @@ a.plan-ppt:hover {
   width: 100%;
 }
 .lesson-figure .fig-open img {
-  transition: transform 0.3s ease;
-}
-.lesson-figure:hover .fig-open img {
-  transform: scale(1.02);
+  transition: none;
 }
 
 /* ---- Hero image at the top of a lesson section ---- */
@@ -4598,7 +4590,6 @@ a.plan-ppt:hover {
   inset: 0;
   width: 100%;
   height: 100%;
-  transition: transform 0.4s ease;
 }
 .lesson-hero-bg {
   object-fit: cover;
@@ -4608,9 +4599,6 @@ a.plan-ppt:hover {
 .lesson-hero-img {
   object-fit: contain;
   object-position: center 35%;
-}
-.lesson-hero:hover .lesson-hero-img {
-  transform: scale(1.03);
 }
 .lesson-hero-shade {
   position: absolute;
