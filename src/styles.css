@@ -9,6 +9,7 @@
   --ink-3: #616161;
   --border: #e0e0e0;
   --border-2: #d1d1d1;
+  --table-border: rgba(0, 0, 0, 0.06);
   --surface: #ffffff;
   --surface-2: #f5f5f5;
   --surface-3: #fafafa;
@@ -37,6 +38,7 @@
   --ink-3: #9d9d9d;
   --border: #2d2d2d;
   --border-2: #383838;
+  --table-border: #2d2d2d;
   --surface: #1f1f1f;
   --surface-2: #2c2c2c;
   --surface-3: #262626;
@@ -854,12 +856,12 @@ table.data th {
   color: var(--ink-3);
   font-weight: 600;
   padding: 10px 12px;
-  border-bottom: 1px solid var(--border-2);
+  border-bottom: 1px solid var(--table-border);
 }
 
 table.data td {
   padding: 11px 12px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--table-border);
   vertical-align: top;
   font-weight: 350; /* Segoe UI Semilight */
 }
@@ -881,12 +883,12 @@ table.data tr:hover td {
 
 /* Lesson tables — full grid with vertical lines */
 table.data.lesson-table {
-  border: 1px solid var(--border-2);
+  border: 1px solid var(--table-border);
 }
 
 table.data.lesson-table th,
 table.data.lesson-table td {
-  border: 1px solid var(--border-2);
+  border: 1px solid var(--table-border);
 }
 
 /* SO header rows stand out; AC rows are indented under them */
@@ -4505,10 +4507,9 @@ a.plan-ppt:hover {
 .lesson-screen .lesson-section > .duty-list li strong {
   color: var(--azure-darker);
   font-weight: 700;
-  background: var(--azure-lighter);
-  padding: 1px 8px;
-  border-radius: 999px;
-  margin-right: 6px;
+  background: transparent;
+  padding: 0;
+  margin-right: 4px;
   font-size: 13px;
   letter-spacing: 0.02em;
   white-space: nowrap;
