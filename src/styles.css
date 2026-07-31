@@ -4541,6 +4541,11 @@ a.plan-ppt:hover {
   color: var(--ink);
   background: var(--surface);
 }
+[data-theme="dark"] .lesson-screen .lesson-figure,
+[data-theme="dark"] .lesson-screen .lesson-figure img,
+[data-theme="dark"] .lesson-screen .lesson-figure figcaption {
+  background: #000;
+}
 
 /* ---- click-to-enlarge wrapper around figure images ---- */
 .lesson-figure .fig-open {
