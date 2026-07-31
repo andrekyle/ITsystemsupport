@@ -3465,7 +3465,7 @@ a.plan-ppt:hover {
   width: 100%;
   max-height: 340px;
   object-fit: contain;
-  background: #fff;
+  background: var(--surface-2);
 }
 
 .lesson-figure figcaption {
