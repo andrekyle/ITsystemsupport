@@ -4505,16 +4505,15 @@ a.plan-ppt:hover {
 .lesson-screen .lesson-section > .duty-list li {
   align-items: flex-start;
   gap: 12px;
-  padding: 10px 12px 10px 10px;
+  padding: 10px 12px;
   border: 1px solid var(--border);
-  border-left: 3px solid var(--azure);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--ink-2);
   transition: transform 0.15s ease, border-color 0.15s ease;
 }
 .lesson-screen .lesson-section > .duty-list li:hover {
-  border-left-color: var(--green);
+  border-color: var(--azure);
   transform: translateX(2px);
 }
 .lesson-screen .lesson-section > .duty-list li .ico {
