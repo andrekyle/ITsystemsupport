@@ -4530,6 +4530,18 @@ a.plan-ppt:hover {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
+.lesson-screen .lesson-figure .fig-open,
+.lesson-screen .lesson-figure > img {
+  height: 210px;
+  width: 100%;
+  display: block;
+}
+.lesson-screen .lesson-figure .fig-open > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  max-height: none;
+}
 .lesson-screen .lesson-figure:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.35);
