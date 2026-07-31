@@ -24,15 +24,19 @@ export function Quiz({
   questions,
   previous,
   onSubmit,
+  showAnswers = false,
 }: {
   questions: QuizQuestion[];
   previous?: QuizResult;
   onSubmit: (score: number, total: number) => void;
+  /** Staff-only: renders a "Reveal answer key" toggle above the questions. */
+  showAnswers?: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<number, Ans>>({});
   const [submitted, setSubmitted] = useState(false);
   const [dragFrom, setDragFrom] = useState<{ qi: number; idx: number } | null>(null);
   const [matchSel, setMatchSel] = useState<{ qi: number; leftIdx: number } | null>(null);
+  const [showKey, setShowKey] = useState(false);
 
   // Precompute the shuffled display orders (stable across renders using question index seeds).
   const shuffled = useMemo(() => {
@@ -232,6 +236,65 @@ export function Quiz({
             <Icon name="wrench" size={15} />
             Retake quiz
           </button>
+        </div>
+      )}
+
+      {showAnswers && !submitted && (
+        <div className="answer-key-wrap">
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => setShowKey((v) => !v)}
+          >
+            <Icon name={showKey ? "eyeOff" : "eye"} size={15} />
+            {showKey ? "Hide answer key (staff)" : "Reveal answer key (staff)"}
+          </button>
+          {showKey && (
+            <div className="answer-key">
+              <div className="answer-key-hd">
+                <Icon name="award" size={16} />
+                Answer key — staff view only
+              </div>
+              <ol>
+                {questions.map((q, qi) => {
+                  const kind = q.kind ?? "choice";
+                  if (kind === "order" && q.items) {
+                    return (
+                      <li key={qi}>
+                        <strong>Correct order:</strong>
+                        <ol className="ak-sub">
+                          {q.items.map((it, i) => (
+                            <li key={i}>{it}</li>
+                          ))}
+                        </ol>
+                      </li>
+                    );
+                  }
+                  if (kind === "match" && q.pairs) {
+                    return (
+                      <li key={qi}>
+                        <strong>Correct pairs:</strong>
+                        <ul className="ak-sub">
+                          {q.pairs.map((p, i) => (
+                            <li key={i}>
+                              {p.left} <span className="ak-arr">→</span> {p.right}
+                            </li>
+                          ))}
+                        </ul>
+                      </li>
+                    );
+                  }
+                  const want = q.answers ?? [q.answer];
+                  return (
+                    <li key={qi}>
+                      <strong>Correct:</strong>{" "}
+                      {want.map((oi) => q.options[oi]).join("  •  ")}
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          )}
         </div>
       )}
 

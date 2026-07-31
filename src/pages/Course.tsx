@@ -2359,6 +2359,7 @@ export function UnitPage({
               questions={active.questions}
               previous={results[active.id]}
               onSubmit={(score, total) => saveQuizResult(u.us, score, total, active.id)}
+              showAnswers={isPrivileged}
             />
           </>
         );
@@ -2380,6 +2381,7 @@ export function UnitPage({
             questions={content.quiz}
             previous={quizResult}
             onSubmit={(score, total) => saveQuizResult(u.us, score, total)}
+            showAnswers={isPrivileged}
           />
         </>
       )}
