@@ -47,9 +47,11 @@ export const HWSW_SLIDE_FIGURES: Record<string, FigureDefault> = {
   "hwsw2-info-in-world": { src: src("How Much Information Do We Have in the World.png"), ...own },
 
   // Graphics & AI Hardware
-  "hwsw2-gpu": { src: src("Graphics Processing Unit (GPU).png"), ...own },
   "hwsw2-graphics-ai": { src: src("Graphics and AI Hardware.png"), ...own },
   "hwsw2-modern-ai-pc": { src: src("Modern AI PC Hardware.png"), ...own },
+
+  // Output Devices
+  "hwsw2-output-devices": { src: src("Output Devices.png"), ...own },
 
   // Power Supply
   "hwsw2-psu": { src: src("Power Supply Unit (PSU).png"), ...own },

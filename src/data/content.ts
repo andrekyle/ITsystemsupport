@@ -4248,15 +4248,6 @@ export const CONTENT: Record<string, UnitContent> = {
             ],
           },
           {
-            id: "hwsw2-gpu",
-            caption: "GPU (Graphics Processing Unit) — the parallel processor",
-            bullets: [
-              "Thousands of small cores optimised for parallel work.",
-              "Draws 3D graphics and accelerates AI/video/rendering.",
-              "Has its own dedicated VRAM.",
-            ],
-          },
-          {
             id: "hwsw2-different-cpus-gpus",
             caption: "Different CPUs and GPUs — how modern processors compare",
             bullets: [
@@ -4504,7 +4495,7 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
       },
       {
-        heading: "8. Input and peripheral devices — the human side",
+        heading: "8. Input devices — how the user talks to the machine",
         icon: "people",
         paragraphs: [
           "Input devices (keyboards, mice, touchpads, touchscreens, scanners, cameras, microphones, biometric readers, game controllers) are how the user gives instructions and data to the machine. Most day-to-day support tickets start here — a dead keyboard, a webcam that won't share, a fingerprint reader that refuses to enrol.",
@@ -4531,7 +4522,25 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
       },
       {
-        heading: "9. Networking hardware — connecting the PC to the world",
+        heading: "9. Output devices — how the machine talks back",
+        icon: "monitor",
+        paragraphs: [
+          "Output devices present the results of processing back to the user's senses: sight, hearing and touch. Monitors, speakers, printers, projectors, VR headsets and haptic devices are all output devices.",
+        ],
+        figures: [
+          {
+            id: "hwsw2-output-devices",
+            caption: "Output devices — monitors, speakers, headphones, projectors, VR, printers and more",
+            bullets: [
+              "Sight: monitors, projectors, VR headsets, smart glasses, LED displays.",
+              "Hearing: speakers and headphones.",
+              "Touch & other senses: printers, plotters, 3D printers, haptic gloves, braille displays.",
+            ],
+          },
+        ],
+      },
+      {
+        heading: "10. Networking hardware — connecting the PC to the world",
         icon: "network",
         paragraphs: [
           "A stand-alone PC is a rarity. Routers, switches, access points, network interface cards, cables and modems form the physical layer of every network. This is the last hardware section before we cross over to the software that runs on top of all of it.",
