@@ -5,7 +5,9 @@ import type { ExerciseCheck, LessonFigure, PoeDoc, ProgressState, Profile, Role,
 import { UNIT_ACTIVITIES, isStaff } from "../types";
 import { COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
 import { GLOSSARY, getContent } from "../data/content";
-import { FIGURE_DEFAULTS } from "../data/figureDefaults";
+import { FIGURE_DEFAULTS as BASE_FIGURE_DEFAULTS } from "../data/figureDefaults";
+import { HWSW_SLIDE_FIGURES } from "../data/hwswSlideFigures";
+const FIGURE_DEFAULTS = { ...BASE_FIGURE_DEFAULTS, ...HWSW_SLIDE_FIGURES };
 import { moduleCompletion, unitCompletion, unitStatus, useLessonEdits, useLessonFigures, useNotes, usePlanSlides, useSharedSettings } from "../store";
 import { Bar } from "../components/Ring";
 import { Quiz } from "../components/Quiz";

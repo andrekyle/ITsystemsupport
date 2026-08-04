@@ -4121,6 +4121,222 @@ export const CONTENT: Record<string, UnitContent> = {
       ],
     },
   },
+
+  /* ================================================================
+     HWSW2 — Hardware and Software: Illustrated Slide Deck
+     A companion visual lesson to HWSW. Each figure is a purpose-built
+     infographic slide (stored under /public/HWSW/) presented in an
+     order that walks the learner from "what is a computer" to "what
+     runs on it" — hardware first (motherboard → CPU → cooling → RAM →
+     storage → GPU/AI → power → case & ports → peripherals → network),
+     then software (OS → applications → cloud, virtualisation, security
+     and AI).
+     ================================================================ */
+  HWSW2: {
+    lesson: [
+      {
+        heading: "Welcome — how to use this slide deck",
+        icon: "presenter",
+        flat: true,
+        paragraphs: [
+          "This lesson is built entirely around illustrated slides. Each picture is a self-contained infographic that names the parts, shows what they look like in real hardware, and lists what they do. Read the short paragraph, then study the slide underneath it until you can describe the picture in your own words.",
+          "The order is deliberate. We start with the big picture (the four parts of any computer system), then walk from the middle of the machine outwards — motherboard, CPU, cooling, memory, storage, graphics, power, case and ports, peripherals, and finally networking. After that we switch from the physical to the logical world: operating systems, applications, and the modern layer of cloud, virtualisation, security and AI.",
+          "Every slide is also a study aid: point at a component, name it, explain what it does, and predict what happens when it fails. That is the daily reasoning of a systems support technician.",
+        ],
+        figures: [
+          { id: "hwsw2-4-components", caption: "The four components of a computer system — the map for the whole lesson" },
+          { id: "hwsw2-software-modules-overview", caption: "Software modules — the programs that power your PC" },
+        ],
+      },
+
+      /* ---------- HARDWARE ---------- */
+      {
+        heading: "1. The motherboard — the backbone that connects everything",
+        icon: "chip",
+        paragraphs: [
+          "The motherboard is the large printed circuit board every other component plugs into. It carries power to the CPU, memory and expansion cards, routes data between them, and hosts the firmware that starts the machine. If you can find and name the parts on this board, you can service almost any desktop PC.",
+          "Two support circuits deserve special attention: the VRM (Voltage Regulator Module), which steps 12 V from the PSU down to the ~1 V the CPU actually needs, and the BIOS/UEFI chip together with its CMOS battery, which stores the firmware settings that let the board boot in the first place.",
+        ],
+        figures: [
+          { id: "hwsw2-motherboard-components", caption: "Motherboard components — the labelled overview" },
+          { id: "hwsw2-motherboard-cpu-socket", caption: "The CPU socket — where the processor lives" },
+          { id: "hwsw2-vrm", caption: "VRM (Voltage Regulator Module) — the power behind your CPU" },
+          { id: "hwsw2-bios-uefi", caption: "BIOS / UEFI chip — the firmware that starts your PC" },
+          { id: "hwsw2-cmos-battery", caption: "CMOS battery — keeps BIOS settings and the clock alive" },
+        ],
+      },
+      {
+        heading: "2. The CPU — the brain of the computer",
+        icon: "chip",
+        paragraphs: [
+          "The Central Processing Unit executes the instructions that make up every program. Modern CPUs pack billions of transistors into a fingernail-sized die and use multiple cores to run several instruction streams at once.",
+          "To keep those cores fed with data, the CPU relies on a small, extremely fast memory hierarchy called cache (L1, L2, L3). Understanding cache helps explain why two CPUs with the same clock speed can perform very differently — and why some workloads (games, databases, AI) prefer a very specific CPU or GPU design.",
+        ],
+        figures: [
+          { id: "hwsw2-cpu", caption: "CPU (Central Processing Unit) — anatomy of the chip" },
+          { id: "hwsw2-cpu-cache", caption: "CPU cache — L1, L2 and L3" },
+          { id: "hwsw2-different-cpus-gpus", caption: "Different CPUs and GPUs — how modern processors compare" },
+        ],
+      },
+      {
+        heading: "3. Cooling — keeping the CPU alive",
+        icon: "settings",
+        paragraphs: [
+          "Every watt a CPU draws is turned into heat. Without a cooler, a modern processor hits its thermal limit and shuts down within seconds. Air coolers use a heatsink and fan; AIO (all-in-one) liquid coolers move heat to a radiator through a sealed pump loop. Case fans, heatsinks on the VRM and M.2 SSDs, and thermal paste all form one connected thermal system.",
+        ],
+        figures: [
+          { id: "hwsw2-cpu-cooler-air", caption: "CPU cooler — traditional air cooler" },
+          { id: "hwsw2-cpu-cooler-aio", caption: "Liquid CPU cooler — AIO (All-In-One)" },
+          { id: "hwsw2-cooling-components", caption: "Cooling and thermal components — the whole thermal system" },
+        ],
+      },
+      {
+        heading: "4. Memory (RAM) — the CPU's short-term workspace",
+        icon: "layers",
+        paragraphs: [
+          "RAM (Random Access Memory) holds the operating system, the running programs, and the data those programs are actively working on. It is volatile — its contents vanish the moment the power goes off. That is why we also need long-term storage.",
+          "RAM sticks plug into DIMM slots on the motherboard. Getting them into the right slots (colour-coded pairs for dual channel) roughly doubles memory bandwidth on most systems.",
+        ],
+        figures: [
+          { id: "hwsw2-memory-ram", caption: "Memory (RAM) — how the modules work" },
+          { id: "hwsw2-dimm-slots", caption: "DIMM slots — where RAM plugs in" },
+        ],
+      },
+      {
+        heading: "5. Storage — where data lives when the power is off",
+        icon: "database",
+        paragraphs: [
+          "Storage devices keep data permanently. NVMe SSDs plug directly into M.2 slots on the motherboard for the fastest speeds; SATA SSDs and traditional hard drives use SATA data and power cables. The choice of device — and interface — decides how quickly a computer boots, loads applications and opens files.",
+          "It is worth stepping back to see how far storage has come, and how much data the world now generates. The scale is measured in kilobytes, megabytes, gigabytes, terabytes, petabytes and beyond — a vocabulary every technician uses every day.",
+        ],
+        figures: [
+          { id: "hwsw2-storage-devices", caption: "Storage devices — HDD vs SSD vs NVMe at a glance" },
+          { id: "hwsw2-storage-hardware", caption: "Storage hardware — the full family" },
+          { id: "hwsw2-ssd-nvme", caption: "SSD (NVMe M.2) — the modern fast SSD" },
+          { id: "hwsw2-m2-slots", caption: "M.2 slots — where NVMe SSDs live" },
+          { id: "hwsw2-sata-ports", caption: "SATA ports — connecting SATA drives and optical drives" },
+          { id: "hwsw2-data-units", caption: "Data units explained — from 1 kilobyte to zettabytes" },
+          { id: "hwsw2-history-storage-1", caption: "The history of storage devices (part 1)" },
+          { id: "hwsw2-history-storage-2", caption: "The history of storage devices (part 2)" },
+          { id: "hwsw2-info-in-world", caption: "How much information do we have in the world?" },
+        ],
+      },
+      {
+        heading: "6. Graphics and AI hardware — the second brain of the PC",
+        icon: "monitor",
+        paragraphs: [
+          "The GPU (Graphics Processing Unit) was invented to draw pixels for games, but its massively parallel architecture turned out to be perfect for the maths behind modern AI. Today the same hardware family renders 3D scenes, trains neural networks, runs local large language models, and accelerates image and video work.",
+          "Modern PCs increasingly ship with a dedicated NPU (Neural Processing Unit) alongside the CPU and GPU — the 'AI PC' era. Knowing which chip should do which job is part of picking the right machine for a user.",
+        ],
+        figures: [
+          { id: "hwsw2-gpu", caption: "Graphics Processing Unit (GPU)" },
+          { id: "hwsw2-graphics-ai-1", caption: "Graphics and AI hardware (part 1)" },
+          { id: "hwsw2-graphics-ai-2", caption: "Graphics and AI hardware (part 2)" },
+          { id: "hwsw2-modern-ai-pc", caption: "Modern AI PC hardware — CPU + GPU + NPU" },
+        ],
+      },
+      {
+        heading: "7. Power supply — feeding the whole machine",
+        icon: "wrench",
+        paragraphs: [
+          "The PSU (Power Supply Unit) takes 230 V AC from the wall and delivers the clean, stable low-voltage DC rails (12 V, 5 V, 3.3 V) every component depends on. A weak, undersized or failing PSU is behind a surprising number of 'random reboots' and 'the PC won't turn on' calls.",
+        ],
+        figures: [
+          { id: "hwsw2-psu", caption: "Power Supply Unit (PSU) — anatomy and connectors" },
+          { id: "hwsw2-psu-convert", caption: "How a PSU converts and delivers power in a PC" },
+        ],
+      },
+      {
+        heading: "8. Case, ports and expansion",
+        icon: "briefcase",
+        paragraphs: [
+          "The case (chassis) holds everything together, provides airflow, and presents the ports the user actually touches. The rear I/O panel has changed dramatically in twenty years — from PS/2 and VGA to USB-C, HDMI, DisplayPort and 2.5G Ethernet. Expansion cards (Wi-Fi, capture, sound, RAID, extra USB, Thunderbolt) plug into PCIe slots on the motherboard to add capabilities the board did not ship with.",
+        ],
+        figures: [
+          { id: "hwsw2-case", caption: "Computer case (chassis)" },
+          { id: "hwsw2-rear-io", caption: "Rear I/O panel — old vs latest" },
+          { id: "hwsw2-new-ports", caption: "New ports and connections — modern connectivity" },
+          { id: "hwsw2-expansion-hw", caption: "Expansion hardware — add-in cards" },
+        ],
+      },
+      {
+        heading: "9. Input and peripherals — the human side",
+        icon: "people",
+        paragraphs: [
+          "Input devices (keyboards, mice, touchpads, scanners, cameras, microphones) are how the user gives instructions and data to the machine. Peripheral devices (printers, monitors, external drives, speakers) are how the machine gives results back. From a support perspective, this is where most day-to-day tickets come from.",
+        ],
+        figures: [
+          { id: "hwsw2-input-devices", caption: "Input devices" },
+          { id: "hwsw2-peripheral-devices", caption: "Peripheral devices" },
+        ],
+      },
+      {
+        heading: "10. Networking hardware — connecting the PC to the world",
+        icon: "network",
+        paragraphs: [
+          "A stand-alone PC is a rarity. Routers, switches, access points, network cards, cables and modems form the physical layer of every network. This is the last hardware section before we move to the software that runs on top of all of it.",
+        ],
+        figures: [
+          { id: "hwsw2-networking-hw", caption: "Networking hardware (2026)" },
+          { id: "hwsw2-networking-connectivity", caption: "Networking and connectivity — how devices reach each other" },
+        ],
+      },
+
+      /* ---------- SOFTWARE ---------- */
+      {
+        heading: "11. System software — the operating system",
+        icon: "settings",
+        paragraphs: [
+          "The Operating System (Windows, macOS, Linux) is the software that manages the hardware for every other program. Its main components are the kernel, device drivers, file system, user interface, and system services. On Windows the Registry is a central database of configuration for the OS, drivers and installed applications — powerful, but easy to break if you go in without a plan.",
+          "Below the OS sits firmware and low-level software: BIOS/UEFI on the motherboard, controllers inside SSDs, printers and network cards. Firmware is the bridge between the physical world we studied in Part 1 and the logical world we are studying now.",
+        ],
+        figures: [
+          { id: "hwsw2-os", caption: "Operating systems — the core system software" },
+          { id: "hwsw2-os-components-1", caption: "Operating system components (part 1)" },
+          { id: "hwsw2-os-components-2", caption: "Operating system components (part 2)" },
+          { id: "hwsw2-kernel-registry-1", caption: "Kernel vs Registry on Windows (part 1)" },
+          { id: "hwsw2-kernel-registry-2", caption: "Kernel vs Registry on Windows (part 2)" },
+          { id: "hwsw2-use-registry", caption: "When would you actually want to use the Registry?" },
+          { id: "hwsw2-firmware-low-level", caption: "Firmware and low-level software" },
+        ],
+      },
+      {
+        heading: "12. Application software — the tools users actually use",
+        icon: "layers",
+        paragraphs: [
+          "Applications are the programs that get work done: office suites, browsers, media tools, databases, developer tools, and small utilities that keep systems healthy. Categorising them helps a support technician know which team owns a ticket, where the data lives, and which licence is at stake.",
+        ],
+        figures: [
+          { id: "hwsw2-app-software", caption: "Application software — the big picture" },
+          { id: "hwsw2-enterprise-software", caption: "Enterprise and business software (ERP, CRM, HR)" },
+          { id: "hwsw2-web-software", caption: "Web and internet software" },
+          { id: "hwsw2-multimedia-software", caption: "Multimedia and creative software" },
+          { id: "hwsw2-database-software", caption: "Database software" },
+          { id: "hwsw2-programming-software", caption: "Programming and development software" },
+          { id: "hwsw2-utility-software", caption: "Utility software — the small tools that keep systems healthy" },
+        ],
+      },
+      {
+        heading: "13. Cloud, virtualisation, security and AI — the modern software stack",
+        icon: "globe",
+        paragraphs: [
+          "The last stop is the software you increasingly meet at work but rarely see on a physical machine. Cloud platforms host applications on someone else's hardware. Virtualisation and containers let one server run many isolated workloads. Networking software controls how data actually moves. Cybersecurity software protects it all. And AI software is now embedded in almost everything a user touches.",
+          "You will support each of these layers in your career. The point of this deck is to give you a mental picture of where each one lives, so that when a ticket comes in — 'my Teams meeting is dropping', 'the database is slow', 'I got a phishing email', 'Copilot is not working' — you already know which slide to look at first.",
+        ],
+        figures: [
+          { id: "hwsw2-cloud-1", caption: "Cloud computing software (part 1)" },
+          { id: "hwsw2-cloud-2", caption: "Cloud computing software (part 2)" },
+          { id: "hwsw2-virtualization", caption: "Virtualisation and containers" },
+          { id: "hwsw2-networking-software", caption: "Networking software" },
+          { id: "hwsw2-cybersecurity", caption: "Cybersecurity software" },
+          { id: "hwsw2-ai-software", caption: "AI software" },
+        ],
+      },
+    ],
+    exercises: [],
+    assignments: [],
+    quiz: [],
+  },
 };
 
 export function getContent(us: string): UnitContent | undefined {
