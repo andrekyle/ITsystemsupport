@@ -38,7 +38,6 @@ export const HWSW_SLIDE_FIGURES: Record<string, FigureDefault> = {
   "hwsw2-dimm-slots": { src: src("DIMM Slots (Dual In-Line Memory Module).png"), ...own },
 
   // Storage
-  "hwsw2-storage-devices": { src: src("Storage Devices.png"), ...own },
   "hwsw2-storage-hardware": { src: src("Storage Hardware.png"), ...own },
   "hwsw2-ssd-nvme": { src: src("SSD (NVMe M.2).png"), ...own },
   "hwsw2-m2-slots": { src: src("M.2 Slots - High-Performance Storage.png"), ...own },
@@ -49,8 +48,7 @@ export const HWSW_SLIDE_FIGURES: Record<string, FigureDefault> = {
 
   // Graphics & AI Hardware
   "hwsw2-gpu": { src: src("Graphics Processing Unit (GPU).png"), ...own },
-  "hwsw2-graphics-ai-1": { src: src("Graphics and AI Hardware (1).png"), ...own },
-  "hwsw2-graphics-ai-2": { src: src("Graphics and AI Hardware (2).png"), ...own },
+  "hwsw2-graphics-ai": { src: src("Graphics and AI Hardware.png"), ...own },
   "hwsw2-modern-ai-pc": { src: src("Modern AI PC Hardware.png"), ...own },
 
   // Power Supply
@@ -74,8 +72,7 @@ export const HWSW_SLIDE_FIGURES: Record<string, FigureDefault> = {
 
   // Operating Systems / System Software
   "hwsw2-os": { src: src("Operating Systems (System Software).png"), ...own },
-  "hwsw2-os-components-1": { src: src("Operating System Components (1).png"), ...own },
-  "hwsw2-os-components-2": { src: src("Operating System Components (2).png"), ...own },
+  "hwsw2-os-components": { src: src("Operating System Components.png"), ...own },
   "hwsw2-kernel-registry-1": { src: src("Kernel vs Registry (Windows) (1).png"), ...own },
   "hwsw2-kernel-registry-2": { src: src("Kernel vs Registry (Windows) (2).png"), ...own },
   "hwsw2-use-registry": { src: src("When Would You Want to Use the Registry.png"), ...own },

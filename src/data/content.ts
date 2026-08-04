@@ -4145,7 +4145,6 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-4-components", caption: "The four components of a computer system — the map for the whole lesson" },
-          { id: "hwsw2-software-modules-overview", caption: "Software modules — the programs that power your PC" },
         ],
       },
 
@@ -4210,8 +4209,7 @@ export const CONTENT: Record<string, UnitContent> = {
           "It is worth stepping back to see how far storage has come, and how much data the world now generates. The scale is measured in kilobytes, megabytes, gigabytes, terabytes, petabytes and beyond — a vocabulary every technician uses every day.",
         ],
         figures: [
-          { id: "hwsw2-storage-devices", caption: "Storage devices — HDD vs SSD vs NVMe at a glance" },
-          { id: "hwsw2-storage-hardware", caption: "Storage hardware — the full family" },
+          { id: "hwsw2-storage-hardware", caption: "Storage hardware — the full family (HDD, SSD, NVMe)" },
           { id: "hwsw2-ssd-nvme", caption: "SSD (NVMe M.2) — the modern fast SSD" },
           { id: "hwsw2-m2-slots", caption: "M.2 slots — where NVMe SSDs live" },
           { id: "hwsw2-sata-ports", caption: "SATA ports — connecting SATA drives and optical drives" },
@@ -4229,8 +4227,7 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-gpu", caption: "Graphics Processing Unit (GPU)" },
-          { id: "hwsw2-graphics-ai-1", caption: "Graphics and AI hardware (part 1)" },
-          { id: "hwsw2-graphics-ai-2", caption: "Graphics and AI hardware (part 2)" },
+          { id: "hwsw2-graphics-ai", caption: "Graphics and AI hardware — from rendering to neural networks" },
           { id: "hwsw2-modern-ai-pc", caption: "Modern AI PC hardware — CPU + GPU + NPU" },
         ],
       },
@@ -4255,6 +4252,7 @@ export const CONTENT: Record<string, UnitContent> = {
           { id: "hwsw2-case", caption: "Computer case (chassis)" },
           { id: "hwsw2-rear-io", caption: "Rear I/O panel — old vs latest" },
           { id: "hwsw2-new-ports", caption: "New ports and connections — modern connectivity" },
+          { id: "hwsw2-peripheral-devices", caption: "Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD" },
           { id: "hwsw2-expansion-hw", caption: "Expansion hardware — add-in cards" },
         ],
       },
@@ -4267,7 +4265,6 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-input-devices", caption: "Input devices — the essentials" },
           { id: "hwsw2-input-devices-extended", caption: "Input devices — the extended catalogue (24 devices)" },
-          { id: "hwsw2-peripheral-devices", caption: "Peripheral devices" },
         ],
       },
       {
@@ -4291,9 +4288,9 @@ export const CONTENT: Record<string, UnitContent> = {
           "Below the OS sits firmware and low-level software: BIOS/UEFI on the motherboard, controllers inside SSDs, printers and network cards. Firmware is the bridge between the physical world we studied in Part 1 and the logical world we are studying now.",
         ],
         figures: [
+          { id: "hwsw2-software-modules-overview", caption: "Software modules — the programs that power your PC" },
           { id: "hwsw2-os", caption: "Operating systems — the core system software" },
-          { id: "hwsw2-os-components-1", caption: "Operating system components (part 1)" },
-          { id: "hwsw2-os-components-2", caption: "Operating system components (part 2)" },
+          { id: "hwsw2-os-components", caption: "Operating system components — kernel, drivers, file system, services, UI" },
           { id: "hwsw2-kernel-registry-1", caption: "Kernel vs Registry on Windows (part 1)" },
           { id: "hwsw2-kernel-registry-2", caption: "Kernel vs Registry on Windows (part 2)" },
           { id: "hwsw2-use-registry", caption: "When would you actually want to use the Registry?" },
