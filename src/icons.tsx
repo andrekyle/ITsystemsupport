@@ -125,6 +125,16 @@ export const PATHS: Record<string, React.ReactNode> = {
   ),
   chevronLeft: <path d="M14.5 6 9 12l5.5 6" />,
   chevronRight: <path d="M9.5 6 15 12l-5.5 6" />,
+  expand: (
+    <>
+      <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+    </>
+  ),
+  collapse: (
+    <>
+      <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+    </>
+  ),
   chevronDown: <path d="M6 9.5l6 5.5 6-5.5" />,
   chevronUp: <path d="M6 14.5l6-5.5 6 5.5" />,
   arrowLeft: <path d="M10 5.5 3.9 12l6.1 6.5M4 12h16" />,

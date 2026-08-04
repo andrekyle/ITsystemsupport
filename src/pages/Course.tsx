@@ -1094,14 +1094,40 @@ export function UnitPage({
   /** clicked lesson figure shown fullscreen in a lightbox (null = closed) */
   type LightboxItem = { src: string; caption: string; credit?: string; creditUrl?: string };
   const [lightbox, setLightbox] = useState<{ items: LightboxItem[]; index: number } | null>(null);
+  const lightboxRef = useRef<HTMLDivElement | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const toggleFullscreen = () => {
+    const el = lightboxRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.().catch(() => {});
+    } else {
+      el.requestFullscreen?.().catch(() => {});
+    }
+  };
+  useEffect(() => {
+    const onFs = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
+  useEffect(() => {
+    if (!lightbox && document.fullscreenElement) {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  }, [lightbox]);
   useEffect(() => {
     if (!lightbox) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setLightbox(null);
-      else if (e.key === "ArrowLeft") {
+      if (e.key === "Escape") {
+        if (document.fullscreenElement) return; // browser will exit fullscreen; keep lightbox open
+        setLightbox(null);
+      } else if (e.key === "ArrowLeft") {
         setLightbox((lb) => (lb ? { ...lb, index: (lb.index - 1 + lb.items.length) % lb.items.length } : lb));
       } else if (e.key === "ArrowRight") {
         setLightbox((lb) => (lb ? { ...lb, index: (lb.index + 1) % lb.items.length } : lb));
+      } else if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        toggleFullscreen();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -3056,11 +3082,24 @@ export function UnitPage({
         const next = () => setLightbox((lb) => (lb ? { ...lb, index: (lb.index + 1) % lb.items.length } : lb));
         return (
           <div
-            className="lightbox"
+            ref={lightboxRef}
+            className={`lightbox${isFullscreen ? " fullscreen" : ""}`}
             role="dialog"
             aria-modal="true"
             onClick={() => setLightbox(null)}
           >
+            <button
+              type="button"
+              className="lightbox-fullscreen"
+              aria-label={isFullscreen ? "Exit full screen (F)" : "Full screen (F)"}
+              title={isFullscreen ? "Exit full screen (F)" : "Full screen (F)"}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFullscreen();
+              }}
+            >
+              <Icon name={isFullscreen ? "collapse" : "expand"} size={20} />
+            </button>
             <button
               type="button"
               className="lightbox-close"
