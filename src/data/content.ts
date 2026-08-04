@@ -4139,8 +4139,8 @@ export const CONTENT: Record<string, UnitContent> = {
         icon: "presenter",
         flat: true,
         paragraphs: [
-          "This lesson is built entirely around illustrated slides. Each picture is a self-contained infographic that names the parts, shows what they look like in real hardware, and lists what they do. Read the short paragraph, then study the slide underneath it until you can describe the picture in your own words.",
-          "The order is deliberate. We start with the big picture (the four parts of any computer system), then walk from the middle of the machine outwards — motherboard, CPU, cooling, memory, storage, graphics, power, case and ports, peripherals, and finally networking. After that we switch from the physical to the logical world: operating systems, applications, and the modern layer of cloud, virtualisation, security and AI.",
+          "This lesson is built entirely around illustrated slides. Each picture is a self-contained infographic that names the parts, shows what they look like, and lists what they do. Read the short paragraph, then study the slide underneath it until you can describe the picture in your own words.",
+          "The deck is split into two parts. Part 1 walks through the hardware — every physical component you can point at inside a PC, grouped by role: processors, memory, storage, power, ports, input devices, networking. Part 2 walks through the software — from firmware and the operating system up to applications, cloud, security and AI. Hardware first, software second, no jumping back and forth.",
           "Every slide is also a study aid: point at a component, name it, explain what it does, and predict what happens when it fails. That is the daily reasoning of a systems support technician.",
         ],
         figures: [
@@ -4148,7 +4148,16 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
       },
 
-      /* ---------- HARDWARE ---------- */
+      /* ===================== PART 1 — HARDWARE ===================== */
+      {
+        heading: "PART 1 — HARDWARE: the physical machine",
+        icon: "chip",
+        flat: true,
+        paragraphs: [
+          "Everything in Part 1 is something you can hold in your hand or point to inside a PC case. We work outwards from the motherboard: the board itself, then the processors that plug into it (CPU, GPU, AI chips), then the systems that keep them cool, fed with memory and storage, and powered. Then the case, ports and expansion cards. Then the devices the user actually touches. Finally the hardware that connects the PC to the network.",
+        ],
+        figures: [],
+      },
       {
         heading: "1. The motherboard — the backbone that connects everything",
         icon: "chip",
@@ -4165,23 +4174,26 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
       },
       {
-        heading: "2. The CPU — the brain of the computer",
+        heading: "2. Processors — CPU, GPU and AI chips",
         icon: "chip",
         paragraphs: [
-          "The Central Processing Unit executes the instructions that make up every program. Modern CPUs pack billions of transistors into a fingernail-sized die and use multiple cores to run several instruction streams at once.",
-          "To keep those cores fed with data, the CPU relies on a small, extremely fast memory hierarchy called cache (L1, L2, L3). Understanding cache helps explain why two CPUs with the same clock speed can perform very differently — and why some workloads (games, databases, AI) prefer a very specific CPU or GPU design.",
+          "Every PC has at least one processor, and modern PCs increasingly have three: the CPU that runs the operating system and general programs, the GPU that renders graphics and accelerates parallel maths, and the NPU that runs AI workloads efficiently. Grouping them together makes the trade-offs obvious.",
+          "To keep those cores fed with data, the CPU relies on a small, extremely fast memory hierarchy called cache (L1, L2, L3). The GPU is built from thousands of tiny cores optimised for parallel work — the same architecture that made games fast turned out to be perfect for training and running neural networks.",
         ],
         figures: [
           { id: "hwsw2-cpu", caption: "CPU (Central Processing Unit) — anatomy of the chip" },
           { id: "hwsw2-cpu-cache", caption: "CPU cache — L1, L2 and L3" },
+          { id: "hwsw2-gpu", caption: "GPU (Graphics Processing Unit) — the parallel processor" },
           { id: "hwsw2-different-cpus-gpus", caption: "Different CPUs and GPUs — how modern processors compare" },
+          { id: "hwsw2-graphics-ai", caption: "Graphics and AI hardware — from rendering to neural networks" },
+          { id: "hwsw2-modern-ai-pc", caption: "Modern AI PC hardware — CPU + GPU + NPU together" },
         ],
       },
       {
-        heading: "3. Cooling — keeping the CPU alive",
+        heading: "3. Cooling — keeping the processors alive",
         icon: "settings",
         paragraphs: [
-          "Every watt a CPU draws is turned into heat. Without a cooler, a modern processor hits its thermal limit and shuts down within seconds. Air coolers use a heatsink and fan; AIO (all-in-one) liquid coolers move heat to a radiator through a sealed pump loop. Case fans, heatsinks on the VRM and M.2 SSDs, and thermal paste all form one connected thermal system.",
+          "Every watt a processor draws is turned into heat. Without a cooler, a modern CPU hits its thermal limit and shuts down within seconds. Air coolers use a heatsink and fan; AIO (all-in-one) liquid coolers move heat to a radiator through a sealed pump loop. Case fans, heatsinks on the VRM and M.2 SSDs, and thermal paste all form one connected thermal system.",
         ],
         figures: [
           { id: "hwsw2-cpu-cooler-air", caption: "CPU cooler — traditional air cooler" },
@@ -4190,7 +4202,7 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
       },
       {
-        heading: "4. Memory (RAM) — the CPU's short-term workspace",
+        heading: "4. Memory (RAM) — the short-term workspace",
         icon: "layers",
         paragraphs: [
           "RAM (Random Access Memory) holds the operating system, the running programs, and the data those programs are actively working on. It is volatile — its contents vanish the moment the power goes off. That is why we also need long-term storage.",
@@ -4219,20 +4231,7 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
       },
       {
-        heading: "6. Graphics and AI hardware — the second brain of the PC",
-        icon: "monitor",
-        paragraphs: [
-          "The GPU (Graphics Processing Unit) was invented to draw pixels for games, but its massively parallel architecture turned out to be perfect for the maths behind modern AI. Today the same hardware family renders 3D scenes, trains neural networks, runs local large language models, and accelerates image and video work.",
-          "Modern PCs increasingly ship with a dedicated NPU (Neural Processing Unit) alongside the CPU and GPU — the 'AI PC' era. Knowing which chip should do which job is part of picking the right machine for a user.",
-        ],
-        figures: [
-          { id: "hwsw2-gpu", caption: "Graphics Processing Unit (GPU)" },
-          { id: "hwsw2-graphics-ai", caption: "Graphics and AI hardware — from rendering to neural networks" },
-          { id: "hwsw2-modern-ai-pc", caption: "Modern AI PC hardware — CPU + GPU + NPU" },
-        ],
-      },
-      {
-        heading: "7. Power supply — feeding the whole machine",
+        heading: "6. Power supply — feeding the whole machine",
         icon: "wrench",
         paragraphs: [
           "The PSU (Power Supply Unit) takes 230 V AC from the wall and delivers the clean, stable low-voltage DC rails (12 V, 5 V, 3.3 V) every component depends on. A weak, undersized or failing PSU is behind a surprising number of 'random reboots' and 'the PC won't turn on' calls.",
@@ -4243,7 +4242,7 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
       },
       {
-        heading: "8. Case, ports and expansion",
+        heading: "7. Case, ports and expansion",
         icon: "briefcase",
         paragraphs: [
           "The case (chassis) holds everything together, provides airflow, and presents the ports the user actually touches. The rear I/O panel has changed dramatically in twenty years — from PS/2 and VGA to USB-C, HDMI, DisplayPort and 2.5G Ethernet. Expansion cards (Wi-Fi, capture, sound, RAID, extra USB, Thunderbolt) plug into PCIe slots on the motherboard to add capabilities the board did not ship with.",
@@ -4257,21 +4256,21 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
       },
       {
-        heading: "9. Input and peripherals — the human side",
+        heading: "8. Input and peripheral devices — the human side",
         icon: "people",
         paragraphs: [
-          "Input devices (keyboards, mice, touchpads, scanners, cameras, microphones) are how the user gives instructions and data to the machine. Peripheral devices (printers, monitors, external drives, speakers) are how the machine gives results back. From a support perspective, this is where most day-to-day tickets come from.",
+          "Input devices (keyboards, mice, touchpads, touchscreens, scanners, cameras, microphones, biometric readers, game controllers) are how the user gives instructions and data to the machine. Most day-to-day support tickets start here — a dead keyboard, a webcam that won't share, a fingerprint reader that refuses to enrol.",
         ],
         figures: [
-          { id: "hwsw2-input-devices", caption: "Input devices — the essentials" },
-          { id: "hwsw2-input-devices-extended", caption: "Input devices — the extended catalogue (24 devices)" },
+          { id: "hwsw2-input-devices", caption: "Input devices — the essentials (keyboard, mouse, touchpad, touchscreen, webcam, mic, fingerprint)" },
+          { id: "hwsw2-input-devices-extended", caption: "Input devices — the extended catalogue (24 devices, from stylus to biometric iris scanner)" },
         ],
       },
       {
-        heading: "10. Networking hardware — connecting the PC to the world",
+        heading: "9. Networking hardware — connecting the PC to the world",
         icon: "network",
         paragraphs: [
-          "A stand-alone PC is a rarity. Routers, switches, access points, network cards, cables and modems form the physical layer of every network. This is the last hardware section before we move to the software that runs on top of all of it.",
+          "A stand-alone PC is a rarity. Routers, switches, access points, network interface cards, cables and modems form the physical layer of every network. This is the last hardware section before we cross over to the software that runs on top of all of it.",
         ],
         figures: [
           { id: "hwsw2-networking-hw", caption: "Networking hardware (2026)" },
@@ -4279,16 +4278,26 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
       },
 
-      /* ---------- SOFTWARE ---------- */
+      /* ===================== PART 2 — SOFTWARE ===================== */
       {
-        heading: "11. System software — the operating system",
-        icon: "settings",
+        heading: "PART 2 — SOFTWARE: the programs that bring the hardware to life",
+        icon: "layers",
+        flat: true,
         paragraphs: [
-          "The Operating System (Windows, macOS, Linux) is the software that manages the hardware for every other program. Its main components are the kernel, device drivers, file system, user interface, and system services. On Windows the Registry is a central database of configuration for the OS, drivers and installed applications — powerful, but easy to break if you go in without a plan.",
-          "Below the OS sits firmware and low-level software: BIOS/UEFI on the motherboard, controllers inside SSDs, printers and network cards. Firmware is the bridge between the physical world we studied in Part 1 and the logical world we are studying now.",
+          "Everything in Part 2 is code. We start with the overview of software modules, then the operating system and firmware that sit closest to the hardware. Then the application software users actually see and click. Finally the modern layer: cloud, virtualisation, networking software, cybersecurity and AI.",
         ],
         figures: [
           { id: "hwsw2-software-modules-overview", caption: "Software modules — the programs that power your PC" },
+        ],
+      },
+      {
+        heading: "10. Operating system and firmware — the layer closest to the hardware",
+        icon: "settings",
+        paragraphs: [
+          "The Operating System (Windows, macOS, Linux) is the software that manages the hardware for every other program. Its main components are the kernel, device drivers, file system, user interface, and system services. On Windows the Registry is a central database of configuration for the OS, drivers and installed applications — powerful, but easy to break if you go in without a plan.",
+          "Below the OS sits firmware and low-level software: BIOS/UEFI on the motherboard, controllers inside SSDs, printers and network cards. Firmware is the bridge between the physical world of Part 1 and the logical world of Part 2.",
+        ],
+        figures: [
           { id: "hwsw2-os", caption: "Operating systems — the core system software" },
           { id: "hwsw2-os-components", caption: "Operating system components — kernel, drivers, file system, services, UI" },
           { id: "hwsw2-kernel-registry-1", caption: "Kernel vs Registry on Windows (part 1)" },
@@ -4298,7 +4307,7 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
       },
       {
-        heading: "12. Application software — the tools users actually use",
+        heading: "11. Application software — the tools users actually use",
         icon: "layers",
         paragraphs: [
           "Applications are the programs that get work done: office suites, browsers, media tools, databases, developer tools, and small utilities that keep systems healthy. Categorising them helps a support technician know which team owns a ticket, where the data lives, and which licence is at stake.",
@@ -4314,7 +4323,7 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
       },
       {
-        heading: "13. Cloud, virtualisation, security and AI — the modern software stack",
+        heading: "12. Cloud, virtualisation, networking, security and AI software",
         icon: "globe",
         paragraphs: [
           "The last stop is the software you increasingly meet at work but rarely see on a physical machine. Cloud platforms host applications on someone else's hardware. Virtualisation and containers let one server run many isolated workloads. Networking software controls how data actually moves. Cybersecurity software protects it all. And AI software is now embedded in almost everything a user touches.",
