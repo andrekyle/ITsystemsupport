@@ -44,8 +44,7 @@ export const HWSW_SLIDE_FIGURES: Record<string, FigureDefault> = {
   "hwsw2-m2-slots": { src: src("M.2 Slots - High-Performance Storage.png"), ...own },
   "hwsw2-sata-ports": { src: src("SATA Ports - Connecting Storage Devices.png"), ...own },
   "hwsw2-data-units": { src: src("Data Units Explained - From 1 Kilobyte to Zettabytes.png"), ...own },
-  "hwsw2-history-storage-1": { src: src("The History of Storage Devices (1).png"), ...own },
-  "hwsw2-history-storage-2": { src: src("The History of Storage Devices (2).png"), ...own },
+  "hwsw2-history-storage": { src: src("The History of Storage Devices.png"), ...own },
   "hwsw2-info-in-world": { src: src("How Much Information Do We Have in the World.png"), ...own },
 
   // Graphics & AI Hardware
@@ -66,6 +65,7 @@ export const HWSW_SLIDE_FIGURES: Record<string, FigureDefault> = {
 
   // Input & Peripherals
   "hwsw2-input-devices": { src: src("Input Devices.png"), ...own },
+  "hwsw2-input-devices-extended": { src: src("Input Devices (Extended).png"), ...own },
   "hwsw2-peripheral-devices": { src: src("Peripheral Devices.png"), ...own },
 
   // Networking Hardware
