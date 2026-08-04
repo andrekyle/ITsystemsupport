@@ -4799,6 +4799,137 @@ a.plan-ppt:hover {
   .lightbox-next { right: 8px; }
 }
 
+/* ---- Full-screen lesson slide presenter (lecturer mode) ---- */
+.presenter-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: default;
+}
+.presenter-slide {
+  max-width: 100vw;
+  max-height: 100vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.presenter-caption {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px 20px 12px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+  text-align: center;
+}
+.presenter-section {
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+.presenter-figcap {
+  font-size: 16px;
+  font-weight: 600;
+}
+.presenter-controls {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  color: #fff;
+  z-index: 310;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.presenter-overlay:hover .presenter-controls,
+.presenter-controls:focus-within {
+  opacity: 1;
+}
+.presenter-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.presenter-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.28);
+}
+.presenter-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.presenter-count {
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.9);
+  min-width: 70px;
+  text-align: center;
+}
+.presenter-close {
+  position: fixed;
+  top: 18px;
+  right: 22px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 310;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.presenter-overlay:hover .presenter-close {
+  opacity: 1;
+}
+.presenter-close:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+.presenter-hit {
+  position: fixed;
+  top: 0;
+  bottom: 80px;
+  width: 30%;
+  cursor: pointer;
+  z-index: 305;
+}
+.presenter-hit-left { left: 0; }
+.presenter-hit-right { right: 0; }
+
+.lesson-present-btn {
+  margin-left: 8px;
+}
+
 /* ---- Super-user edit mode for the lesson wizard ---- */
 .lesson-edit-toolbar {
   margin-left: auto;

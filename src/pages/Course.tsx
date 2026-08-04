@@ -1134,6 +1134,51 @@ export function UnitPage({
     return () => window.removeEventListener("keydown", onKey);
   }, [lightbox]);
 
+  /** Presenter mode: walk through every figure in every section of the current lesson. */
+  type PresenterSlide = { src: string; caption: string; sectionTitle: string; sectionIndex: number };
+  const [presenter, setPresenter] = useState<{ slides: PresenterSlide[]; index: number } | null>(null);
+  const presenterRef = useRef<HTMLDivElement | null>(null);
+  const closePresenter = () => {
+    setPresenter(null);
+    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+  };
+  useEffect(() => {
+    if (!presenter) return;
+    const nextKeys = ["ArrowRight", "ArrowDown", "PageDown", " ", "Enter", "n", "N"];
+    const prevKeys = ["ArrowLeft", "ArrowUp", "PageUp", "Backspace", "p", "P"];
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (!document.fullscreenElement) closePresenter();
+        return;
+      }
+      if (nextKeys.includes(e.key)) {
+        e.preventDefault();
+        setPresenter((p) => (p ? { ...p, index: Math.min(p.index + 1, p.slides.length - 1) } : p));
+      } else if (prevKeys.includes(e.key)) {
+        e.preventDefault();
+        setPresenter((p) => (p ? { ...p, index: Math.max(0, p.index - 1) } : p));
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        setPresenter((p) => (p ? { ...p, index: 0 } : p));
+      } else if (e.key === "End") {
+        e.preventDefault();
+        setPresenter((p) => (p ? { ...p, index: p.slides.length - 1 } : p));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presenter]);
+  // Detect exit-fullscreen while presenter is open → close presenter.
+  useEffect(() => {
+    if (!presenter) return;
+    const onFs = () => {
+      if (!document.fullscreenElement) setPresenter(null);
+    };
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
+  }, [presenter]);
+
   // switching to a different unit standard always lands on its Overview tab
   useEffect(() => {
     setTab(loadUnitTab(unitId));
@@ -1184,6 +1229,33 @@ export function UnitPage({
   }).length;
   const isPrivileged = isStaff(profile.role);
   const isSuperUser = profile.role === "Super User";
+
+  /** Collect every figure across every lesson section that has a resolvable image. */
+  const buildPresenterSlides = (): PresenterSlide[] => {
+    if (!content) return [];
+    const out: PresenterSlide[] = [];
+    content.lesson.forEach((sec, si) => {
+      (sec.figures ?? []).forEach((fig) => {
+        const up = figureImages[fig.id];
+        const def = FIGURE_DEFAULTS[fig.id];
+        const src = up?.image ?? def?.src;
+        if (!src) return;
+        out.push({ src, caption: fig.caption, sectionTitle: sec.heading, sectionIndex: si });
+      });
+    });
+    return out;
+  };
+  const openPresenter = () => {
+    const slides = buildPresenterSlides();
+    if (!slides.length) return;
+    // start on the current section if possible
+    const startIdx = slides.findIndex((s) => s.sectionIndex >= (lessonStep ?? 0));
+    setPresenter({ slides, index: Math.max(0, startIdx) });
+    setTimeout(() => {
+      presenterRef.current?.requestFullscreen?.().catch(() => {});
+    }, 0);
+  };
+
   const [sharedSettings, updateSharedSettings] = useSharedSettings();
   /** super user's draft of the evaluation form link */
   const [evalDraft, setEvalDraft] = useState<string | null>(null);
@@ -1994,6 +2066,15 @@ export function UnitPage({
                     Section {si + 1} of {total}
                   </span>
                   <span className="lesson-step-title">{secHeading}</span>
+                  <button
+                    type="button"
+                    className="btn ghost sm lesson-present-btn"
+                    onClick={openPresenter}
+                    title="Present all slides (full screen)"
+                  >
+                    <Icon name="play" size={13} />
+                    Present
+                  </button>
                   {isSuperUser && (
                     <span className="lesson-edit-toolbar">
                       <button
@@ -3153,6 +3234,66 @@ export function UnitPage({
                 <Icon name="chevronRight" size={22} />
               </button>
             )}
+          </div>
+        );
+      })()}
+
+      {presenter && (() => {
+        const cur = presenter.slides[presenter.index];
+        const total = presenter.slides.length;
+        const prev = () => setPresenter((p) => (p ? { ...p, index: Math.max(0, p.index - 1) } : p));
+        const next = () => setPresenter((p) => (p ? { ...p, index: Math.min(p.slides.length - 1, p.index + 1) } : p));
+        return (
+          <div ref={presenterRef} className="presenter-overlay" role="dialog" aria-modal="true">
+            <img className="presenter-slide" src={cur.src} alt={cur.caption} />
+            <div className="presenter-caption">
+              <span className="presenter-section">{cur.sectionTitle}</span>
+              <span className="presenter-figcap">{cur.caption}</span>
+            </div>
+            <div className="presenter-controls">
+              <button
+                type="button"
+                className="presenter-btn"
+                onClick={prev}
+                disabled={presenter.index === 0}
+                aria-label="Previous slide"
+                title="Previous (←)"
+              >
+                <Icon name="chevronLeft" size={22} />
+              </button>
+              <span className="presenter-count">
+                {presenter.index + 1} / {total}
+              </span>
+              <button
+                type="button"
+                className="presenter-btn"
+                onClick={next}
+                disabled={presenter.index === total - 1}
+                aria-label="Next slide"
+                title="Next (→ or Space)"
+              >
+                <Icon name="chevronRight" size={22} />
+              </button>
+            </div>
+            <button
+              type="button"
+              className="presenter-close"
+              onClick={closePresenter}
+              aria-label="Exit presentation"
+              title="Exit (Esc)"
+            >
+              <Icon name="close" size={20} />
+            </button>
+            <div
+              className="presenter-hit presenter-hit-left"
+              onClick={prev}
+              aria-hidden="true"
+            />
+            <div
+              className="presenter-hit presenter-hit-right"
+              onClick={next}
+              aria-hidden="true"
+            />
           </div>
         );
       })()}
