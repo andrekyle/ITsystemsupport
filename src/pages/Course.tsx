@@ -1135,11 +1135,31 @@ export function UnitPage({
   }, [lightbox]);
 
   /** Presenter mode: walk through every figure in every section of the current lesson. */
-  type PresenterSlide = { src: string; caption: string; sectionTitle: string; sectionIndex: number };
+  type PresenterImageSlide = {
+    kind: "image";
+    src: string;
+    caption: string;
+    sectionTitle: string;
+    sectionIndex: number;
+    bullets?: string[];
+    note?: string;
+  };
+  type PresenterQuizSlide = {
+    kind: "quiz";
+    sectionTitle: string;
+    questions: { q: string; options: string[]; answer: number; explain?: string }[];
+  };
+  type PresenterSlide = PresenterImageSlide | PresenterQuizSlide;
   const [presenter, setPresenter] = useState<{ slides: PresenterSlide[]; index: number } | null>(null);
+  const [presenterAnswers, setPresenterAnswers] = useState<Record<number, number>>({});
+  const [presenterChecked, setPresenterChecked] = useState(false);
+  const [presenterPassed, setPresenterPassed] = useState(false);
   const presenterRef = useRef<HTMLDivElement | null>(null);
   const closePresenter = () => {
     setPresenter(null);
+    setPresenterAnswers({});
+    setPresenterChecked(false);
+    setPresenterPassed(false);
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
   };
   useEffect(() => {
@@ -1147,10 +1167,18 @@ export function UnitPage({
     const nextKeys = ["ArrowRight", "ArrowDown", "PageDown", " ", "Enter", "n", "N"];
     const prevKeys = ["ArrowLeft", "ArrowUp", "PageUp", "Backspace", "p", "P"];
     const onKey = (e: KeyboardEvent) => {
+      const cur = presenter.slides[presenter.index];
+      const onQuiz = cur && cur.kind === "quiz";
       if (e.key === "Escape") {
+        if (onQuiz && !presenterPassed) {
+          e.preventDefault();
+          return;
+        }
         if (!document.fullscreenElement) closePresenter();
         return;
       }
+      // While on quiz slide (before passing), block navigation keys
+      if (onQuiz && !presenterPassed) return;
       if (nextKeys.includes(e.key)) {
         e.preventDefault();
         setPresenter((p) => (p ? { ...p, index: Math.min(p.index + 1, p.slides.length - 1) } : p));
@@ -1168,16 +1196,22 @@ export function UnitPage({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [presenter]);
-  // Detect exit-fullscreen while presenter is open → close presenter.
+  }, [presenter, presenterPassed]);
+  // Detect exit-fullscreen while presenter is open → close presenter (unless quiz not passed).
   useEffect(() => {
     if (!presenter) return;
     const onFs = () => {
+      const cur = presenter.slides[presenter.index];
+      if (cur && cur.kind === "quiz" && !presenterPassed) {
+        // re-enter fullscreen to keep student on the quiz until they pass
+        presenterRef.current?.requestFullscreen?.().catch(() => {});
+        return;
+      }
       if (!document.fullscreenElement) setPresenter(null);
     };
     document.addEventListener("fullscreenchange", onFs);
     return () => document.removeEventListener("fullscreenchange", onFs);
-  }, [presenter]);
+  }, [presenter, presenterPassed]);
 
   // switching to a different unit standard always lands on its Overview tab
   useEffect(() => {
@@ -1240,16 +1274,35 @@ export function UnitPage({
         const def = FIGURE_DEFAULTS[fig.id];
         const src = up?.image ?? def?.src;
         if (!src) return;
-        out.push({ src, caption: fig.caption, sectionTitle: sec.heading, sectionIndex: si });
+        out.push({
+          kind: "image",
+          src,
+          caption: fig.caption,
+          sectionTitle: sec.heading,
+          sectionIndex: si,
+          bullets: fig.bullets,
+          note: fig.note,
+        });
       });
     });
+    // Append the quiz as a final terminal slide if the lesson has quiz questions.
+    if (content.quiz && content.quiz.length) {
+      out.push({
+        kind: "quiz",
+        sectionTitle: "Final quiz — answer all correctly to finish",
+        questions: content.quiz.map((qq) => ({ q: qq.q, options: qq.options, answer: qq.answer, explain: qq.explain })),
+      });
+    }
     return out;
   };
   const openPresenter = () => {
     const slides = buildPresenterSlides();
     if (!slides.length) return;
     // start on the current section if possible
-    const startIdx = slides.findIndex((s) => s.sectionIndex >= (lessonStep ?? 0));
+    const startIdx = slides.findIndex((s) => s.kind === "image" && s.sectionIndex >= (lessonStep ?? 0));
+    setPresenterAnswers({});
+    setPresenterChecked(false);
+    setPresenterPassed(false);
     setPresenter({ slides, index: Math.max(0, startIdx) });
     setTimeout(() => {
       presenterRef.current?.requestFullscreen?.().catch(() => {});
@@ -3241,21 +3294,124 @@ export function UnitPage({
       {presenter && (() => {
         const cur = presenter.slides[presenter.index];
         const total = presenter.slides.length;
-        const prev = () => setPresenter((p) => (p ? { ...p, index: Math.max(0, p.index - 1) } : p));
-        const next = () => setPresenter((p) => (p ? { ...p, index: Math.min(p.slides.length - 1, p.index + 1) } : p));
+        const onQuiz = cur.kind === "quiz";
+        const canAdvance = !onQuiz || presenterPassed;
+        const canGoBack = !onQuiz || presenterPassed;
+        const prev = () => {
+          if (!canGoBack) return;
+          setPresenter((p) => (p ? { ...p, index: Math.max(0, p.index - 1) } : p));
+        };
+        const next = () => {
+          if (!canAdvance) return;
+          setPresenter((p) => (p ? { ...p, index: Math.min(p.slides.length - 1, p.index + 1) } : p));
+        };
+        const checkQuiz = () => {
+          if (cur.kind !== "quiz") return;
+          setPresenterChecked(true);
+          const allCorrect = cur.questions.every((q, i) => presenterAnswers[i] === q.answer);
+          setPresenterPassed(allCorrect);
+        };
+        const resetQuiz = () => {
+          setPresenterAnswers({});
+          setPresenterChecked(false);
+          setPresenterPassed(false);
+        };
         return (
           <div ref={presenterRef} className="presenter-overlay" role="dialog" aria-modal="true">
-            <img className="presenter-slide" src={cur.src} alt={cur.caption} />
+            {cur.kind === "image" ? (
+              <div className="presenter-body">
+                <img className="presenter-slide" src={cur.src} alt={cur.caption} />
+                {(cur.bullets?.length || cur.note) && (
+                  <aside className="presenter-notes">
+                    <h3 className="presenter-notes-title">{cur.caption}</h3>
+                    {cur.bullets && cur.bullets.length > 0 ? (
+                      <ul className="presenter-bullets">
+                        {cur.bullets.map((b, i) => (
+                          <li key={i}>{b}</li>
+                        ))}
+                      </ul>
+                    ) : cur.note ? (
+                      <p className="presenter-note">{cur.note}</p>
+                    ) : null}
+                  </aside>
+                )}
+              </div>
+            ) : (
+              <div className="presenter-quiz">
+                <h2 className="presenter-quiz-title">Final quiz</h2>
+                <p className="presenter-quiz-sub">
+                  {presenterPassed
+                    ? "All correct — well done. You may now exit."
+                    : presenterChecked
+                    ? "Some answers were wrong. Review and try again — you must get all 5 correct to finish."
+                    : "Answer all 5 questions. You must get all 5 correct before you can leave the presentation."}
+                </p>
+                <ol className="presenter-quiz-list">
+                  {cur.questions.map((q, qi) => {
+                    const chosen = presenterAnswers[qi];
+                    const isCorrect = presenterChecked && chosen === q.answer;
+                    const isWrong = presenterChecked && chosen !== q.answer;
+                    return (
+                      <li key={qi} className={`presenter-quiz-q${isCorrect ? " ok" : ""}${isWrong ? " bad" : ""}`}>
+                        <div className="presenter-quiz-question">{q.q}</div>
+                        <div className="presenter-quiz-options">
+                          {q.options.map((opt, oi) => (
+                            <label key={oi} className={`presenter-quiz-opt${chosen === oi ? " chosen" : ""}`}>
+                              <input
+                                type="radio"
+                                name={`pquiz-${qi}`}
+                                value={oi}
+                                checked={chosen === oi}
+                                disabled={presenterPassed}
+                                onChange={() => {
+                                  setPresenterAnswers((a) => ({ ...a, [qi]: oi }));
+                                  if (presenterChecked) setPresenterChecked(false);
+                                }}
+                              />
+                              <span>{opt}</span>
+                            </label>
+                          ))}
+                        </div>
+                        {presenterChecked && isWrong && q.explain && (
+                          <div className="presenter-quiz-explain">{q.explain}</div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ol>
+                <div className="presenter-quiz-actions">
+                  {!presenterPassed ? (
+                    <>
+                      <button
+                        type="button"
+                        className="btn primary"
+                        onClick={checkQuiz}
+                        disabled={Object.keys(presenterAnswers).length !== cur.questions.length}
+                      >
+                        Check answers
+                      </button>
+                      <button type="button" className="btn ghost" onClick={resetQuiz}>
+                        Reset
+                      </button>
+                    </>
+                  ) : (
+                    <button type="button" className="btn primary" onClick={closePresenter}>
+                      Finish and exit
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
             <div className="presenter-caption">
               <span className="presenter-section">{cur.sectionTitle}</span>
-              <span className="presenter-figcap">{cur.caption}</span>
+              {cur.kind === "image" && <span className="presenter-figcap">{cur.caption}</span>}
             </div>
             <div className="presenter-controls">
               <button
                 type="button"
                 className="presenter-btn"
                 onClick={prev}
-                disabled={presenter.index === 0}
+                disabled={presenter.index === 0 || !canGoBack}
                 aria-label="Previous slide"
                 title="Previous (←)"
               >
@@ -3268,32 +3424,38 @@ export function UnitPage({
                 type="button"
                 className="presenter-btn"
                 onClick={next}
-                disabled={presenter.index === total - 1}
+                disabled={presenter.index === total - 1 || !canAdvance}
                 aria-label="Next slide"
                 title="Next (→ or Space)"
               >
                 <Icon name="chevronRight" size={22} />
               </button>
             </div>
-            <button
-              type="button"
-              className="presenter-close"
-              onClick={closePresenter}
-              aria-label="Exit presentation"
-              title="Exit (Esc)"
-            >
-              <Icon name="close" size={20} />
-            </button>
-            <div
-              className="presenter-hit presenter-hit-left"
-              onClick={prev}
-              aria-hidden="true"
-            />
-            <div
-              className="presenter-hit presenter-hit-right"
-              onClick={next}
-              aria-hidden="true"
-            />
+            {(!onQuiz || presenterPassed) && (
+              <button
+                type="button"
+                className="presenter-close"
+                onClick={closePresenter}
+                aria-label="Exit presentation"
+                title="Exit (Esc)"
+              >
+                <Icon name="close" size={20} />
+              </button>
+            )}
+            {canGoBack && (
+              <div
+                className="presenter-hit presenter-hit-left"
+                onClick={prev}
+                aria-hidden="true"
+              />
+            )}
+            {canAdvance && (
+              <div
+                className="presenter-hit presenter-hit-right"
+                onClick={next}
+                aria-hidden="true"
+              />
+            )}
           </div>
         );
       })()}

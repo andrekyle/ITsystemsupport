@@ -4144,7 +4144,15 @@ export const CONTENT: Record<string, UnitContent> = {
           "Every slide is also a study aid: point at a component, name it, explain what it does, and predict what happens when it fails. That is the daily reasoning of a systems support technician.",
         ],
         figures: [
-          { id: "hwsw2-4-components", caption: "The four components of a computer system — the map for the whole lesson" },
+          {
+            id: "hwsw2-4-components",
+            caption: "The four components of a computer system — the map for the whole lesson",
+            bullets: [
+              "Every computer = input + processing + storage + output.",
+              "Hardware is what you touch; software is what runs on it.",
+              "Use this map to place every other slide in the deck.",
+            ],
+          },
         ],
       },
 
@@ -4166,11 +4174,51 @@ export const CONTENT: Record<string, UnitContent> = {
           "Two support circuits deserve special attention: the VRM (Voltage Regulator Module), which steps 12 V from the PSU down to the ~1 V the CPU actually needs, and the BIOS/UEFI chip together with its CMOS battery, which stores the firmware settings that let the board boot in the first place.",
         ],
         figures: [
-          { id: "hwsw2-motherboard-components", caption: "Motherboard components — the labelled overview" },
-          { id: "hwsw2-motherboard-cpu-socket", caption: "The CPU socket — where the processor lives" },
-          { id: "hwsw2-vrm", caption: "VRM (Voltage Regulator Module) — the power behind your CPU" },
-          { id: "hwsw2-bios-uefi", caption: "BIOS / UEFI chip — the firmware that starts your PC" },
-          { id: "hwsw2-cmos-battery", caption: "CMOS battery — keeps BIOS settings and the clock alive" },
+          {
+            id: "hwsw2-motherboard-components",
+            caption: "Motherboard components — the labelled overview",
+            bullets: [
+              "Central hub that connects CPU, RAM, storage, GPU and PSU.",
+              "Learn the slot names: CPU socket, DIMM, PCIe, M.2, SATA.",
+              "Chipset routes traffic between all components.",
+            ],
+          },
+          {
+            id: "hwsw2-motherboard-cpu-socket",
+            caption: "The CPU socket — where the processor lives",
+            bullets: [
+              "Physical mount that connects the CPU to the board.",
+              "Socket type (LGA, PGA, BGA) must match the CPU.",
+              "Damaged pins here = dead motherboard.",
+            ],
+          },
+          {
+            id: "hwsw2-vrm",
+            caption: "VRM (Voltage Regulator Module) — the power behind your CPU",
+            bullets: [
+              "Steps 12 V from the PSU down to ~1 V for the CPU.",
+              "Weak VRM = instability under heavy load.",
+              "Runs hot — needs its own heatsink on gaming boards.",
+            ],
+          },
+          {
+            id: "hwsw2-bios-uefi",
+            caption: "BIOS / UEFI chip — the firmware that starts your PC",
+            bullets: [
+              "First code to run when you press power.",
+              "Initialises hardware, then hands over to the OS.",
+              "UEFI replaces the older BIOS with a modern interface.",
+            ],
+          },
+          {
+            id: "hwsw2-cmos-battery",
+            caption: "CMOS battery — keeps BIOS settings and the clock alive",
+            bullets: [
+              "Small coin cell (CR2032) on the motherboard.",
+              "Keeps date, time and BIOS settings when unplugged.",
+              "Dead battery = clock resets, boot errors.",
+            ],
+          },
         ],
       },
       {
@@ -4181,12 +4229,60 @@ export const CONTENT: Record<string, UnitContent> = {
           "To keep those cores fed with data, the CPU relies on a small, extremely fast memory hierarchy called cache (L1, L2, L3). The GPU is built from thousands of tiny cores optimised for parallel work — the same architecture that made games fast turned out to be perfect for training and running neural networks.",
         ],
         figures: [
-          { id: "hwsw2-cpu", caption: "CPU (Central Processing Unit) — anatomy of the chip" },
-          { id: "hwsw2-cpu-cache", caption: "CPU cache — L1, L2 and L3" },
-          { id: "hwsw2-gpu", caption: "GPU (Graphics Processing Unit) — the parallel processor" },
-          { id: "hwsw2-different-cpus-gpus", caption: "Different CPUs and GPUs — how modern processors compare" },
-          { id: "hwsw2-graphics-ai", caption: "Graphics and AI hardware — from rendering to neural networks" },
-          { id: "hwsw2-modern-ai-pc", caption: "Modern AI PC hardware — CPU + GPU + NPU together" },
+          {
+            id: "hwsw2-cpu",
+            caption: "CPU (Central Processing Unit) — anatomy of the chip",
+            bullets: [
+              "Executes the instructions of every program.",
+              "Billions of transistors; multiple cores and threads.",
+              "Clock speed × cores × cache = real-world performance.",
+            ],
+          },
+          {
+            id: "hwsw2-cpu-cache",
+            caption: "CPU cache — L1, L2 and L3",
+            bullets: [
+              "Tiny, extremely fast memory next to the CPU cores.",
+              "L1 fastest/smallest, L3 largest/shared.",
+              "Big cache helps games, databases and AI a lot.",
+            ],
+          },
+          {
+            id: "hwsw2-gpu",
+            caption: "GPU (Graphics Processing Unit) — the parallel processor",
+            bullets: [
+              "Thousands of small cores optimised for parallel work.",
+              "Draws 3D graphics and accelerates AI/video/rendering.",
+              "Has its own dedicated VRAM.",
+            ],
+          },
+          {
+            id: "hwsw2-different-cpus-gpus",
+            caption: "Different CPUs and GPUs — how modern processors compare",
+            bullets: [
+              "Intel vs AMD vs Apple: different sockets, same job.",
+              "NVIDIA vs AMD vs Intel Arc for GPUs.",
+              "Pick the chip that matches the user's workload.",
+            ],
+          },
+          {
+            id: "hwsw2-graphics-ai",
+            caption: "Graphics and AI hardware — from rendering to neural networks",
+            bullets: [
+              "The same GPU hardware runs games and neural networks.",
+              "Tensor / matrix cores accelerate AI operations.",
+              "Local AI models now run on consumer GPUs.",
+            ],
+          },
+          {
+            id: "hwsw2-modern-ai-pc",
+            caption: "Modern AI PC hardware — CPU + GPU + NPU together",
+            bullets: [
+              "NPU (Neural Processing Unit) is a dedicated AI chip.",
+              "Copilot+ PCs use CPU, GPU and NPU together.",
+              "NPU is power-efficient — great on laptops.",
+            ],
+          },
         ],
       },
       {
@@ -4196,9 +4292,33 @@ export const CONTENT: Record<string, UnitContent> = {
           "Every watt a processor draws is turned into heat. Without a cooler, a modern CPU hits its thermal limit and shuts down within seconds. Air coolers use a heatsink and fan; AIO (all-in-one) liquid coolers move heat to a radiator through a sealed pump loop. Case fans, heatsinks on the VRM and M.2 SSDs, and thermal paste all form one connected thermal system.",
         ],
         figures: [
-          { id: "hwsw2-cpu-cooler-air", caption: "CPU cooler — traditional air cooler" },
-          { id: "hwsw2-cpu-cooler-aio", caption: "Liquid CPU cooler — AIO (All-In-One)" },
-          { id: "hwsw2-cooling-components", caption: "Cooling and thermal components — the whole thermal system" },
+          {
+            id: "hwsw2-cpu-cooler-air",
+            caption: "CPU cooler — traditional air cooler",
+            bullets: [
+              "Heatsink + fan moves heat from CPU to case air.",
+              "Reliable, cheap, no leaks.",
+              "Thermal paste sits between CPU and heatsink.",
+            ],
+          },
+          {
+            id: "hwsw2-cpu-cooler-aio",
+            caption: "Liquid CPU cooler — AIO (All-In-One)",
+            bullets: [
+              "Sealed pump moves coolant to a radiator.",
+              "Better for very hot CPUs (i9/Ryzen 9).",
+              "Pump can fail — watch for temperature spikes.",
+            ],
+          },
+          {
+            id: "hwsw2-cooling-components",
+            caption: "Cooling and thermal components — the whole thermal system",
+            bullets: [
+              "Case fans, CPU cooler, VRM & M.2 heatsinks, paste.",
+              "Airflow direction: in at the front, out at the rear.",
+              "Dust is enemy #1 — clean filters regularly.",
+            ],
+          },
         ],
       },
       {
@@ -4209,8 +4329,24 @@ export const CONTENT: Record<string, UnitContent> = {
           "RAM sticks plug into DIMM slots on the motherboard. Getting them into the right slots (colour-coded pairs for dual channel) roughly doubles memory bandwidth on most systems.",
         ],
         figures: [
-          { id: "hwsw2-memory-ram", caption: "Memory (RAM) — how the modules work" },
-          { id: "hwsw2-dimm-slots", caption: "DIMM slots — where RAM plugs in" },
+          {
+            id: "hwsw2-memory-ram",
+            caption: "Memory (RAM) — how the modules work",
+            bullets: [
+              "Volatile — loses everything on power off.",
+              "More RAM = more apps open at once without slowing down.",
+              "DDR4 and DDR5 are the current standards.",
+            ],
+          },
+          {
+            id: "hwsw2-dimm-slots",
+            caption: "DIMM slots — where RAM plugs in",
+            bullets: [
+              "Colour-coded pairs enable dual-channel mode.",
+              "Populate matching slots for double the bandwidth.",
+              "Check maximum supported speed in the manual.",
+            ],
+          },
         ],
       },
       {
@@ -4221,13 +4357,69 @@ export const CONTENT: Record<string, UnitContent> = {
           "It is worth stepping back to see how far storage has come, and how much data the world now generates. The scale is measured in kilobytes, megabytes, gigabytes, terabytes, petabytes and beyond — a vocabulary every technician uses every day.",
         ],
         figures: [
-          { id: "hwsw2-storage-hardware", caption: "Storage hardware — the full family (HDD, SSD, NVMe)" },
-          { id: "hwsw2-ssd-nvme", caption: "SSD (NVMe M.2) — the modern fast SSD" },
-          { id: "hwsw2-m2-slots", caption: "M.2 slots — where NVMe SSDs live" },
-          { id: "hwsw2-sata-ports", caption: "SATA ports — connecting SATA drives and optical drives" },
-          { id: "hwsw2-data-units", caption: "Data units explained — from 1 kilobyte to zettabytes" },
-          { id: "hwsw2-history-storage", caption: "The history of storage devices — from magnetic drums to NVMe" },
-          { id: "hwsw2-info-in-world", caption: "How much information do we have in the world?" },
+          {
+            id: "hwsw2-storage-hardware",
+            caption: "Storage hardware — the full family (HDD, SSD, NVMe)",
+            bullets: [
+              "HDD: spinning platters, cheap and large, slow.",
+              "SATA SSD: no moving parts, fast enough for most users.",
+              "NVMe SSD: plugs into M.2, blazing fast.",
+            ],
+          },
+          {
+            id: "hwsw2-ssd-nvme",
+            caption: "SSD (NVMe M.2) — the modern fast SSD",
+            bullets: [
+              "Talks directly over PCIe — no SATA bottleneck.",
+              "Up to 10× faster than SATA SSDs.",
+              "Runs hot — usually needs a small heatsink.",
+            ],
+          },
+          {
+            id: "hwsw2-m2-slots",
+            caption: "M.2 slots — where NVMe SSDs live",
+            bullets: [
+              "Long, thin slot on the motherboard.",
+              "Uses PCIe lanes for high speed.",
+              "Watch for shared bandwidth with SATA on some boards.",
+            ],
+          },
+          {
+            id: "hwsw2-sata-ports",
+            caption: "SATA ports — connecting SATA drives and optical drives",
+            bullets: [
+              "One data cable + one power cable per drive.",
+              "Used for SATA SSDs, HDDs and DVD drives.",
+              "Slower than NVMe but very flexible.",
+            ],
+          },
+          {
+            id: "hwsw2-data-units",
+            caption: "Data units explained — from 1 kilobyte to zettabytes",
+            bullets: [
+              "KB → MB → GB → TB → PB → EB → ZB.",
+              "Each step is roughly ×1000.",
+              "Users think in files; support thinks in units.",
+            ],
+          },
+          {
+            id: "hwsw2-history-storage",
+            caption: "The history of storage devices — from magnetic drums to NVMe",
+            bullets: [
+              "Punched cards → tape → drums → HDD → SSD → NVMe.",
+              "Storage got smaller, faster and cheaper every decade.",
+              "History explains today's design choices.",
+            ],
+          },
+          {
+            id: "hwsw2-info-in-world",
+            caption: "How much information do we have in the world?",
+            bullets: [
+              "Global data doubles every couple of years.",
+              "Most new data is video, images and telemetry.",
+              "Storage capacity is a business problem, not just tech.",
+            ],
+          },
         ],
       },
       {
@@ -4237,8 +4429,24 @@ export const CONTENT: Record<string, UnitContent> = {
           "The PSU (Power Supply Unit) takes 230 V AC from the wall and delivers the clean, stable low-voltage DC rails (12 V, 5 V, 3.3 V) every component depends on. A weak, undersized or failing PSU is behind a surprising number of 'random reboots' and 'the PC won't turn on' calls.",
         ],
         figures: [
-          { id: "hwsw2-psu", caption: "Power Supply Unit (PSU) — anatomy and connectors" },
-          { id: "hwsw2-psu-convert", caption: "How a PSU converts and delivers power in a PC" },
+          {
+            id: "hwsw2-psu",
+            caption: "Power Supply Unit (PSU) — anatomy and connectors",
+            bullets: [
+              "Converts AC mains to DC rails for every component.",
+              "Rated in watts — must exceed system requirements.",
+              "80 PLUS rating = efficiency (Bronze < Gold < Titanium).",
+            ],
+          },
+          {
+            id: "hwsw2-psu-convert",
+            caption: "How a PSU converts and delivers power in a PC",
+            bullets: [
+              "AC → rectifier → transformer → DC rails.",
+              "Delivers 12 V, 5 V and 3.3 V to the board and drives.",
+              "Undersized PSU = crashes under GPU load.",
+            ],
+          },
         ],
       },
       {
@@ -4248,11 +4456,51 @@ export const CONTENT: Record<string, UnitContent> = {
           "The case (chassis) holds everything together, provides airflow, and presents the ports the user actually touches. The rear I/O panel has changed dramatically in twenty years — from PS/2 and VGA to USB-C, HDMI, DisplayPort and 2.5G Ethernet. Expansion cards (Wi-Fi, capture, sound, RAID, extra USB, Thunderbolt) plug into PCIe slots on the motherboard to add capabilities the board did not ship with.",
         ],
         figures: [
-          { id: "hwsw2-case", caption: "Computer case (chassis)" },
-          { id: "hwsw2-rear-io", caption: "Rear I/O panel — old vs latest" },
-          { id: "hwsw2-new-ports", caption: "New ports and connections — modern connectivity" },
-          { id: "hwsw2-peripheral-devices", caption: "Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD" },
-          { id: "hwsw2-expansion-hw", caption: "Expansion hardware — add-in cards" },
+          {
+            id: "hwsw2-case",
+            caption: "Computer case (chassis)",
+            bullets: [
+              "Provides airflow, mounting and physical protection.",
+              "Form factors: ATX, Micro-ATX, Mini-ITX.",
+              "Front panel connects power button, USB and audio.",
+            ],
+          },
+          {
+            id: "hwsw2-rear-io",
+            caption: "Rear I/O panel — old vs latest",
+            bullets: [
+              "Old boards: PS/2, VGA, parallel, serial.",
+              "New boards: USB-C, HDMI, DisplayPort, 2.5G Ethernet.",
+              "Rear I/O is soldered — you cannot swap it out.",
+            ],
+          },
+          {
+            id: "hwsw2-new-ports",
+            caption: "New ports and connections — modern connectivity",
+            bullets: [
+              "USB-C is reversible and delivers data + video + power.",
+              "Thunderbolt 4/5 is the fastest general port on a PC.",
+              "Learn what each port can and can't carry.",
+            ],
+          },
+          {
+            id: "hwsw2-peripheral-devices",
+            caption: "Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD",
+            bullets: [
+              "Each port has a specific role: data, video, network, audio.",
+              "Not all USB-C ports carry video or Thunderbolt.",
+              "Cable quality matters — cheap cables fail silently.",
+            ],
+          },
+          {
+            id: "hwsw2-expansion-hw",
+            caption: "Expansion hardware — add-in cards",
+            bullets: [
+              "PCIe cards add Wi-Fi, capture, sound, extra USB, RAID.",
+              "Slot size: x1, x4, x8, x16 — must fit the card.",
+              "Great way to modernise an older machine.",
+            ],
+          },
         ],
       },
       {
@@ -4262,8 +4510,24 @@ export const CONTENT: Record<string, UnitContent> = {
           "Input devices (keyboards, mice, touchpads, touchscreens, scanners, cameras, microphones, biometric readers, game controllers) are how the user gives instructions and data to the machine. Most day-to-day support tickets start here — a dead keyboard, a webcam that won't share, a fingerprint reader that refuses to enrol.",
         ],
         figures: [
-          { id: "hwsw2-input-devices", caption: "Input devices — the essentials (keyboard, mouse, touchpad, touchscreen, webcam, mic, fingerprint)" },
-          { id: "hwsw2-input-devices-extended", caption: "Input devices — the extended catalogue (24 devices, from stylus to biometric iris scanner)" },
+          {
+            id: "hwsw2-input-devices",
+            caption: "Input devices — the essentials",
+            bullets: [
+              "Keyboard, mouse, touchpad, touchscreen.",
+              "Webcam and microphone for calls and content.",
+              "Fingerprint reader for secure sign-in.",
+            ],
+          },
+          {
+            id: "hwsw2-input-devices-extended",
+            caption: "Input devices — the extended catalogue (24 devices)",
+            bullets: [
+              "Stylus, trackball, joystick, controller, light gun.",
+              "Scanner, barcode/QR reader, smart card reader.",
+              "MIDI, eye tracker, voice, iris, data glove, foot pedal.",
+            ],
+          },
         ],
       },
       {
@@ -4273,8 +4537,24 @@ export const CONTENT: Record<string, UnitContent> = {
           "A stand-alone PC is a rarity. Routers, switches, access points, network interface cards, cables and modems form the physical layer of every network. This is the last hardware section before we cross over to the software that runs on top of all of it.",
         ],
         figures: [
-          { id: "hwsw2-networking-hw", caption: "Networking hardware (2026)" },
-          { id: "hwsw2-networking-connectivity", caption: "Networking and connectivity — how devices reach each other" },
+          {
+            id: "hwsw2-networking-hw",
+            caption: "Networking hardware (2026)",
+            bullets: [
+              "Router: connects the LAN to the Internet.",
+              "Switch: connects wired devices inside the LAN.",
+              "Access point: provides Wi-Fi coverage.",
+            ],
+          },
+          {
+            id: "hwsw2-networking-connectivity",
+            caption: "Networking and connectivity — how devices reach each other",
+            bullets: [
+              "Wired vs wireless: speed vs convenience.",
+              "IP addresses identify devices on the network.",
+              "DNS turns names into IP addresses.",
+            ],
+          },
         ],
       },
 
@@ -4287,7 +4567,15 @@ export const CONTENT: Record<string, UnitContent> = {
           "Everything in Part 2 is code. We start with the overview of software modules, then the operating system and firmware that sit closest to the hardware. Then the application software users actually see and click. Finally the modern layer: cloud, virtualisation, networking software, cybersecurity and AI.",
         ],
         figures: [
-          { id: "hwsw2-software-modules-overview", caption: "Software modules — the programs that power your PC" },
+          {
+            id: "hwsw2-software-modules-overview",
+            caption: "Software modules — the programs that power your PC",
+            bullets: [
+              "OS, apps, utilities, drivers, firmware, middleware.",
+              "Databases, cloud, games — every type has a role.",
+              "Software tells hardware what to do.",
+            ],
+          },
         ],
       },
       {
@@ -4298,12 +4586,60 @@ export const CONTENT: Record<string, UnitContent> = {
           "Below the OS sits firmware and low-level software: BIOS/UEFI on the motherboard, controllers inside SSDs, printers and network cards. Firmware is the bridge between the physical world of Part 1 and the logical world of Part 2.",
         ],
         figures: [
-          { id: "hwsw2-os", caption: "Operating systems — the core system software" },
-          { id: "hwsw2-os-components", caption: "Operating system components — kernel, drivers, file system, services, UI" },
-          { id: "hwsw2-kernel-registry-1", caption: "Kernel vs Registry on Windows (part 1)" },
-          { id: "hwsw2-kernel-registry-2", caption: "Kernel vs Registry on Windows (part 2)" },
-          { id: "hwsw2-use-registry", caption: "When would you actually want to use the Registry?" },
-          { id: "hwsw2-firmware-low-level", caption: "Firmware and low-level software" },
+          {
+            id: "hwsw2-os",
+            caption: "Operating systems — the core system software",
+            bullets: [
+              "Windows, macOS, Linux, ChromeOS, Android, iOS.",
+              "Manages hardware, users, files, security.",
+              "Every app depends on the OS to run.",
+            ],
+          },
+          {
+            id: "hwsw2-os-components",
+            caption: "Operating system components — kernel, drivers, file system, services, UI",
+            bullets: [
+              "Kernel talks to hardware; UI talks to the user.",
+              "Drivers translate between the two.",
+              "File system organises everything on disk.",
+            ],
+          },
+          {
+            id: "hwsw2-kernel-registry-1",
+            caption: "Kernel vs Registry on Windows (part 1)",
+            bullets: [
+              "Kernel = the core code that runs the OS.",
+              "Registry = a database of settings for OS and apps.",
+              "Different jobs, often confused.",
+            ],
+          },
+          {
+            id: "hwsw2-kernel-registry-2",
+            caption: "Kernel vs Registry on Windows (part 2)",
+            bullets: [
+              "Kernel bugs can crash the whole machine (BSOD).",
+              "Registry edits can break login or app behaviour.",
+              "Back up before touching either.",
+            ],
+          },
+          {
+            id: "hwsw2-use-registry",
+            caption: "When would you actually want to use the Registry?",
+            bullets: [
+              "Applying a fix that has no GUI setting.",
+              "Removing stubborn leftover app entries.",
+              "Enterprise policy changes via Group Policy.",
+            ],
+          },
+          {
+            id: "hwsw2-firmware-low-level",
+            caption: "Firmware and low-level software",
+            bullets: [
+              "Firmware lives inside chips (BIOS/UEFI, SSD, NIC).",
+              "Updated with vendor tools — carefully.",
+              "Bad firmware update can brick a device.",
+            ],
+          },
         ],
       },
       {
@@ -4313,13 +4649,69 @@ export const CONTENT: Record<string, UnitContent> = {
           "Applications are the programs that get work done: office suites, browsers, media tools, databases, developer tools, and small utilities that keep systems healthy. Categorising them helps a support technician know which team owns a ticket, where the data lives, and which licence is at stake.",
         ],
         figures: [
-          { id: "hwsw2-app-software", caption: "Application software — the big picture" },
-          { id: "hwsw2-enterprise-software", caption: "Enterprise and business software (ERP, CRM, HR)" },
-          { id: "hwsw2-web-software", caption: "Web and internet software" },
-          { id: "hwsw2-multimedia-software", caption: "Multimedia and creative software" },
-          { id: "hwsw2-database-software", caption: "Database software" },
-          { id: "hwsw2-programming-software", caption: "Programming and development software" },
-          { id: "hwsw2-utility-software", caption: "Utility software — the small tools that keep systems healthy" },
+          {
+            id: "hwsw2-app-software",
+            caption: "Application software — the big picture",
+            bullets: [
+              "Programs users interact with directly.",
+              "Run on top of the OS.",
+              "Often licensed per user or per device.",
+            ],
+          },
+          {
+            id: "hwsw2-enterprise-software",
+            caption: "Enterprise and business software (ERP, CRM, HR)",
+            bullets: [
+              "ERP: finance, stock, procurement (SAP, Oracle).",
+              "CRM: customer records (Salesforce, Dynamics).",
+              "HR: people and payroll (Workday, Sage).",
+            ],
+          },
+          {
+            id: "hwsw2-web-software",
+            caption: "Web and internet software",
+            bullets: [
+              "Browsers, email clients, messaging apps.",
+              "Web servers, CMS platforms.",
+              "Most 'apps' today are really web apps.",
+            ],
+          },
+          {
+            id: "hwsw2-multimedia-software",
+            caption: "Multimedia and creative software",
+            bullets: [
+              "Photo, video, audio editors (Photoshop, Premiere).",
+              "3D and design tools (Blender, AutoCAD).",
+              "GPU-hungry — plan hardware accordingly.",
+            ],
+          },
+          {
+            id: "hwsw2-database-software",
+            caption: "Database software",
+            bullets: [
+              "Stores structured data (SQL Server, MySQL, Postgres).",
+              "Queried with SQL.",
+              "Backups are critical — data loss = job loss.",
+            ],
+          },
+          {
+            id: "hwsw2-programming-software",
+            caption: "Programming and development software",
+            bullets: [
+              "Editors and IDEs (VS Code, IntelliJ, Xcode).",
+              "Compilers, debuggers, version control (Git).",
+              "Where every other software category starts.",
+            ],
+          },
+          {
+            id: "hwsw2-utility-software",
+            caption: "Utility software — the small tools that keep systems healthy",
+            bullets: [
+              "Antivirus, backup, disk clean-up, compression.",
+              "Small tools, big impact on reliability.",
+              "Support technicians rely on utilities daily.",
+            ],
+          },
         ],
       },
       {
@@ -4330,18 +4722,97 @@ export const CONTENT: Record<string, UnitContent> = {
           "You will support each of these layers in your career. The point of this deck is to give you a mental picture of where each one lives, so that when a ticket comes in — 'my Teams meeting is dropping', 'the database is slow', 'I got a phishing email', 'Copilot is not working' — you already know which slide to look at first.",
         ],
         figures: [
-          { id: "hwsw2-cloud-1", caption: "Cloud computing software (part 1)" },
-          { id: "hwsw2-cloud-2", caption: "Cloud computing software (part 2)" },
-          { id: "hwsw2-virtualization", caption: "Virtualisation and containers" },
-          { id: "hwsw2-networking-software", caption: "Networking software" },
-          { id: "hwsw2-cybersecurity", caption: "Cybersecurity software" },
-          { id: "hwsw2-ai-software", caption: "AI software" },
+          {
+            id: "hwsw2-cloud-1",
+            caption: "Cloud computing software (part 1)",
+            bullets: [
+              "SaaS, PaaS, IaaS — three service models.",
+              "Public, private, hybrid — three deployment models.",
+              "Major clouds: AWS, Azure, Google Cloud.",
+            ],
+          },
+          {
+            id: "hwsw2-cloud-2",
+            caption: "Cloud computing software (part 2)",
+            bullets: [
+              "Microsoft 365, Google Workspace: everyday SaaS.",
+              "Cloud storage, cloud backup, cloud identity.",
+              "'The cloud' = someone else's servers.",
+            ],
+          },
+          {
+            id: "hwsw2-virtualization",
+            caption: "Virtualisation and containers",
+            bullets: [
+              "VMs run whole guest OSes on shared hardware.",
+              "Containers share the host OS, start in seconds.",
+              "Both save cost and enable rapid deployment.",
+            ],
+          },
+          {
+            id: "hwsw2-networking-software",
+            caption: "Networking software",
+            bullets: [
+              "DHCP, DNS, VPN, firewall, load balancer.",
+              "Runs on servers, routers and endpoints.",
+              "Configuration errors here cause most outages.",
+            ],
+          },
+          {
+            id: "hwsw2-cybersecurity",
+            caption: "Cybersecurity software",
+            bullets: [
+              "Antivirus, EDR, SIEM, MFA, encryption.",
+              "Defence in depth — no single product is enough.",
+              "Users are still the biggest attack surface.",
+            ],
+          },
+          {
+            id: "hwsw2-ai-software",
+            caption: "AI software",
+            bullets: [
+              "Copilots, chatbots, image and voice tools.",
+              "Runs in the cloud or locally on an NPU/GPU.",
+              "Support role: getting AI tools working for users.",
+            ],
+          },
         ],
       },
     ],
     exercises: [],
     assignments: [],
-    quiz: [],
+    quiz: [
+      {
+        q: "In the four-part model of a computer system, which of these is NOT one of the four components?",
+        options: ["Input", "Processing", "Cloud", "Storage"],
+        answer: 2,
+        explain: "The four components are input, processing, storage and output. Cloud is a delivery model, not one of the fundamental components.",
+      },
+      {
+        q: "Which motherboard circuit steps the 12 V rail from the PSU down to roughly 1 V for the CPU?",
+        options: ["CMOS battery", "VRM (Voltage Regulator Module)", "BIOS chip", "PCIe slot"],
+        answer: 1,
+        explain: "The VRM regulates and steps down voltage to the level the CPU actually needs. A weak VRM causes instability under heavy load.",
+      },
+      {
+        q: "You need the fastest possible internal storage for a workstation. Which interface do you pick?",
+        options: ["SATA HDD", "SATA SSD", "NVMe SSD in an M.2 slot", "USB external SSD"],
+        answer: 2,
+        explain: "NVMe SSDs plug directly into PCIe lanes via M.2 and are far faster than SATA-based drives or USB storage.",
+      },
+      {
+        q: "Which of the following is application software, NOT system software?",
+        options: ["Windows kernel", "Device driver", "Microsoft Excel", "BIOS/UEFI firmware"],
+        answer: 2,
+        explain: "Excel is an application — a program users run on top of the OS. The kernel, drivers and firmware are all system-level software.",
+      },
+      {
+        q: "A modern 'AI PC' typically contains a CPU, a GPU and a third dedicated processor for AI. What is that third chip called?",
+        options: ["APU", "TPU", "NPU (Neural Processing Unit)", "DPU"],
+        answer: 2,
+        explain: "The NPU is a dedicated Neural Processing Unit designed to run AI workloads efficiently, especially on laptops (Copilot+ PCs).",
+      },
+    ],
   },
 };
 

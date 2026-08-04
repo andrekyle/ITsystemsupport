@@ -212,6 +212,10 @@ export interface LessonFigure {
   caption: string;
   /** staff-only note describing what picture to upload */
   hint?: string;
+  /** presenter-mode narration: short bullet points shown alongside the slide image */
+  bullets?: string[];
+  /** presenter-mode narration: a single short paragraph shown alongside the slide image (used if bullets is empty) */
+  note?: string;
 }
 
 export interface ModelAnswerBlock {
