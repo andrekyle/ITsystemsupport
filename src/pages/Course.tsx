@@ -1147,6 +1147,7 @@ export function UnitPage({
     caption: string;
     sectionTitle: string;
     sectionIndex: number;
+    figureId?: string;
     bullets?: string[];
     note?: string;
   };
@@ -1225,6 +1226,102 @@ export function UnitPage({
     SaaS: "Software as a Service",
     PaaS: "Platform as a Service",
     IaaS: "Infrastructure as a Service",
+    POST: "Power-On Self-Test",
+    MBR: "Master Boot Record",
+    GPT: "GUID Partition Table",
+    GUID: "Globally Unique Identifier",
+    TPM: "Trusted Platform Module",
+    GUI: "Graphical User Interface",
+    CLI: "Command-Line Interface",
+    SPI: "Serial Peripheral Interface",
+    NOR: "NOR Flash (Not-OR non-volatile memory)",
+    NAND: "NAND Flash (Not-AND non-volatile memory)",
+    FAT: "File Allocation Table",
+    FAT32: "File Allocation Table (32-bit)",
+    NTFS: "New Technology File System",
+    exFAT: "Extended File Allocation Table",
+    SOIC: "Small Outline Integrated Circuit",
+    WSON: "Wettable-flank Small Outline No-lead",
+    DFN: "Dual Flat No-lead",
+    QFN: "Quad Flat No-lead",
+    DIP: "Dual In-line Package",
+    AMI: "American Megatrends Inc. (BIOS/UEFI vendor)",
+    EFI: "Extensible Firmware Interface",
+    ACPI: "Advanced Configuration and Power Interface",
+    SMBIOS: "System Management BIOS",
+    ECC: "Error-Correcting Code (memory)",
+    XMP: "Extreme Memory Profile",
+    EXPO: "AMD Extended Profiles for Overclocking",
+    TDP: "Thermal Design Power",
+    PWM: "Pulse-Width Modulation",
+    RGB: "Red Green Blue (lighting/colour)",
+    SMART: "Self-Monitoring, Analysis and Reporting Technology",
+    RAID: "Redundant Array of Independent Disks",
+    LBA: "Logical Block Addressing",
+    ATA: "Advanced Technology Attachment",
+    PATA: "Parallel Advanced Technology Attachment",
+    eSATA: "External Serial Advanced Technology Attachment",
+    mSATA: "mini-SATA",
+    AHCI: "Advanced Host Controller Interface",
+    TRIM: "TRIM command (SSD block clean-up)",
+    SLC: "Single-Level Cell (flash)",
+    MLC: "Multi-Level Cell (flash)",
+    TLC: "Triple-Level Cell (flash)",
+    QLC: "Quad-Level Cell (flash)",
+    MHz: "Megahertz",
+    GHz: "Gigahertz",
+    Gbps: "Gigabits per second",
+    Mbps: "Megabits per second",
+    MB: "Megabyte",
+    GB: "Gigabyte",
+    TB: "Terabyte",
+    Mbit: "Megabit",
+    Gbit: "Gigabit",
+    ATX: "Advanced Technology Extended (motherboard form factor)",
+    ITX: "Information Technology Extended (small form factor)",
+    mATX: "micro-ATX",
+    "Mini-ITX": "Mini Information Technology Extended",
+    OEM: "Original Equipment Manufacturer",
+    SoC: "System on a Chip",
+    ARM: "Advanced RISC Machine",
+    RISC: "Reduced Instruction Set Computer",
+    x86: "x86 instruction set architecture",
+    x64: "64-bit x86 architecture (also called AMD64/x86-64)",
+    ADT: "Advanced Digital Technology",
+    ESD: "Electrostatic Discharge",
+    PoE: "Power over Ethernet",
+    NAS: "Network Attached Storage",
+    SAN: "Storage Area Network",
+    iSCSI: "Internet Small Computer Systems Interface",
+    KVM: "Keyboard, Video and Mouse (switch)",
+    IPMI: "Intelligent Platform Management Interface",
+    iDRAC: "Integrated Dell Remote Access Controller",
+    iLO: "Integrated Lights-Out (HPE remote management)",
+    ISP: "Internet Service Provider",
+    SSID: "Service Set Identifier",
+    TCP: "Transmission Control Protocol",
+    UDP: "User Datagram Protocol",
+    ICMP: "Internet Control Message Protocol",
+    TLS: "Transport Layer Security",
+    SSL: "Secure Sockets Layer",
+    UPS: "Uninterruptible Power Supply",
+    ADC: "Analog-to-Digital Converter",
+    DAC: "Digital-to-Analog Converter",
+    EMI: "Electromagnetic Interference",
+    EDR: "Endpoint Detection and Response",
+    MDM: "Mobile Device Management",
+    WSUS: "Windows Server Update Services",
+  };
+  /**
+   * Per-figure supplement: acronyms that appear on the slide image itself but
+   * may not be present in the caption/bullets. Keys are figure ids from
+   * content.ts; values are acronyms to force-include in the glossary.
+   */
+  const SLIDE_EXTRA_ACRONYMS: Record<string, string[]> = {
+    "hwsw2-bios-uefi": [
+      "BIOS", "UEFI", "OS", "POST", "CMOS", "MBR", "GPT", "TPM", "GUI",
+      "PCIe", "SPI", "NOR", "FAT32", "SOIC", "WSON", "DFN", "AMI",
+    ],
   };
   /** Find every acronym from the glossary that appears in the given text (case-sensitive word match). */
   const findAcronyms = (text: string): { term: string; expansion: string }[] => {
@@ -1374,6 +1471,7 @@ export function UnitPage({
           caption: fig.caption,
           sectionTitle: sec.heading,
           sectionIndex: si,
+          figureId: fig.id,
           bullets: (fig.bullets && fig.bullets.length ? fig.bullets : fallbackBullets),
           note: fig.note,
         });
@@ -3561,13 +3659,23 @@ export function UnitPage({
                     ) : null}
                     {(() => {
                       const text = [cur.caption, ...(cur.bullets ?? []), cur.note ?? ""].join(" ");
-                      const acronyms = findAcronyms(text);
-                      if (!acronyms.length) return null;
+                      const auto = findAcronyms(text);
+                      const seen = new Set(auto.map((a) => a.term));
+                      const extras = (cur.figureId && SLIDE_EXTRA_ACRONYMS[cur.figureId]) || [];
+                      for (const term of extras) {
+                        if (seen.has(term)) continue;
+                        const expansion = ACRONYM_GLOSSARY[term];
+                        if (!expansion) continue;
+                        seen.add(term);
+                        auto.push({ term, expansion });
+                      }
+                      auto.sort((a, b) => a.term.localeCompare(b.term));
+                      if (!auto.length) return null;
                       return (
                         <div className="presenter-glossary">
                           <h4 className="presenter-glossary-title">Acronyms</h4>
                           <dl className="presenter-glossary-list">
-                            {acronyms.map((a) => (
+                            {auto.map((a) => (
                               <div key={a.term} className="presenter-glossary-row">
                                 <dt>{a.term}</dt>
                                 <dd>{a.expansion}</dd>
