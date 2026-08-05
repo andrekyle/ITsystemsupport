@@ -1892,7 +1892,7 @@ export function UnitPage({
                     const correct = picked === q.answer;
                     return (
                       <div key={qi} className={`lesson-quiz-card${qChecked ? (correct ? " ok" : " bad") : ""}`}>
-                        <div className="lesson-quiz-q"><strong>Q{qi + 1}.</strong> {q.q}</div>
+                        <div className="lesson-quiz-q"><strong>{qi + 1}</strong> <span>{q.q}</span></div>
                         <div className="lesson-quiz-options">
                           {q.options.map((opt, oi) => {
                             const isPicked = picked === oi;
