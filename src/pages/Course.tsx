@@ -1095,6 +1095,8 @@ export function UnitPage({
   const [lessonQuizAnswers, setLessonQuizAnswers] = useState<Record<number, number[]>>({});
   /** lesson-view per-slide quiz: has the learner clicked "Check answers" for this section */
   const [lessonQuizChecked, setLessonQuizChecked] = useState<Record<number, boolean>>({});
+  /** staff-only toggle: reveal correct answer on every slide quiz */
+  const [showAnswers, setShowAnswers] = useState(false);
   /** clicked lesson figure shown fullscreen in a lightbox (null = closed) */
   type LightboxItem = { src: string; caption: string; credit?: string; creditUrl?: string };
   const [lightbox, setLightbox] = useState<{ items: LightboxItem[]; index: number } | null>(null);
@@ -1885,6 +1887,17 @@ export function UnitPage({
                 <div className="lesson-slide-quiz-title">
                   <Icon name="checkCircle" size={16} />
                   Answer all 5 to unlock Next
+                  {isPrivileged && (
+                    <button
+                      type="button"
+                      className={`btn ghost lesson-quiz-reveal${showAnswers ? " on" : ""}`}
+                      onClick={() => setShowAnswers((v) => !v)}
+                      title="Staff only"
+                    >
+                      <Icon name={showAnswers ? "eyeOff" : "eye"} size={14} />
+                      {showAnswers ? "Hide answers" : "Show answers"}
+                    </button>
+                  )}
                 </div>
                 <div className="lesson-quiz-list">
                   {slideQuiz.map((q, qi) => {
@@ -1898,7 +1911,7 @@ export function UnitPage({
                             const isPicked = picked === oi;
                             const showCorrect = qChecked && oi === q.answer;
                             const showWrong = qChecked && isPicked && oi !== q.answer;
-                            const staffAnswer = isPrivileged && oi === q.answer && !qChecked;
+                            const staffAnswer = isPrivileged && showAnswers && oi === q.answer && !qChecked;
                             return (
                               <label
                                 key={oi}
