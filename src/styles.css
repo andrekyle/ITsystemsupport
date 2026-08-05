@@ -6116,3 +6116,25 @@ input.att-sig {
   font-size: 1rem;
   letter-spacing: 0.02em;
 }
+
+/* Staff-only "Answer" badge on the correct option */
+.lesson-quiz-opt.staff-answer {
+  border-color: rgba(46, 160, 67, 0.6);
+  background: rgba(46, 160, 67, 0.10);
+}
+.lesson-quiz-opt.staff-answer > span:first-of-type { color: #ddf7e3; }
+.lesson-quiz-answer-badge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #56d364;
+  padding: 3px 8px;
+  border: 1px solid rgba(46, 160, 67, 0.55);
+  border-radius: 999px;
+  background: rgba(46, 160, 67, 0.15);
+}

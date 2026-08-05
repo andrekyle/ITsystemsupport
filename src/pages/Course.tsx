@@ -1871,7 +1871,7 @@ export function UnitPage({
             const qAllAnswered = hasSlideQuiz && qAnswers.every((a) => a >= 0);
             const qAllCorrect =
               hasSlideQuiz && qAllAnswered && qAnswers.every((a, i) => a === slideQuiz[i].answer);
-            const quizPassed = !hasSlideQuiz || qAllCorrect;
+            const quizPassed = !hasSlideQuiz || qAllCorrect || isPrivileged;
             const setAnswer = (qi: number, oi: number) => {
               setLessonQuizAnswers((prev) => {
                 const cur = prev[si]?.slice() ?? slideQuiz.map(() => -1);
@@ -1898,10 +1898,11 @@ export function UnitPage({
                             const isPicked = picked === oi;
                             const showCorrect = qChecked && oi === q.answer;
                             const showWrong = qChecked && isPicked && oi !== q.answer;
+                            const staffAnswer = isPrivileged && oi === q.answer && !qChecked;
                             return (
                               <label
                                 key={oi}
-                                className={`lesson-quiz-opt${isPicked ? " picked" : ""}${showCorrect ? " correct" : ""}${showWrong ? " wrong" : ""}`}
+                                className={`lesson-quiz-opt${isPicked ? " picked" : ""}${showCorrect ? " correct" : ""}${showWrong ? " wrong" : ""}${staffAnswer ? " staff-answer" : ""}`}
                               >
                                 <input
                                   type="radio"
@@ -1910,6 +1911,12 @@ export function UnitPage({
                                   onChange={() => setAnswer(qi, oi)}
                                 />
                                 <span>{opt}</span>
+                                {staffAnswer && (
+                                  <span className="lesson-quiz-answer-badge" aria-hidden="true">
+                                    <Icon name="checkCircle" size={14} />
+                                    Answer
+                                  </span>
+                                )}
                               </label>
                             );
                           })}
