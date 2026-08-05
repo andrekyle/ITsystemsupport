@@ -183,8 +183,23 @@ function isoDate(d: Date): string {
   ).padStart(2, "0")}`;
 }
 
-/** Today if it is a Friday, otherwise the upcoming Friday. */
+/** Today if a unit is scheduled today; otherwise the next scheduled session date; otherwise the upcoming Friday. */
 function defaultFriday(): string {
+  const now = new Date();
+  const todayIso = isoDate(now);
+  // gather all future/today session dates from the training calendar
+  const upcoming: string[] = [];
+  for (const m of MODULES) {
+    for (const u of m.units) {
+      for (const iso of unitScheduledIsoDates(u)) {
+        if (iso >= todayIso) upcoming.push(iso);
+      }
+    }
+  }
+  if (upcoming.length) {
+    upcoming.sort();
+    return upcoming[0];
+  }
   const d = new Date();
   const shift = (5 - d.getDay() + 7) % 7;
   d.setDate(d.getDate() + shift);
