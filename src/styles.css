@@ -5956,11 +5956,11 @@ input.att-sig {
   padding: 12px 14px;
   border: 0;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
-  color: #e6edf3;
+  background: var(--surface-2);
+  color: var(--ink);
 }
-.lesson-quiz-card.ok { background: rgba(46, 160, 67, 0.10); }
-.lesson-quiz-card.bad { background: rgba(207, 34, 46, 0.10); }
+.lesson-quiz-card.ok { background: var(--green-bg); }
+.lesson-quiz-card.bad { background: var(--red-bg); }
 .lesson-quiz-q {
   display: flex;
   align-items: center;
@@ -5968,7 +5968,7 @@ input.att-sig {
   font-weight: 400;
   font-size: 0.95rem;
   margin-bottom: 8px;
-  color: #f0f6fc;
+  color: var(--ink);
 }
 .lesson-quiz-q > strong {
   flex: 0 0 auto;
@@ -5978,8 +5978,8 @@ input.att-sig {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: rgba(56, 139, 253, 0.18);
-  color: #79c0ff;
+  background: var(--azure-light);
+  color: var(--azure);
   font-size: 0.8rem;
   font-weight: 500;
 }
@@ -5992,22 +5992,23 @@ input.att-sig {
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: #e6edf3;
+  color: var(--ink);
   cursor: pointer;
   font-size: 0.92rem;
   font-weight: 300;
   line-height: 1.3;
   transition: background 0.12s ease;
 }
-.lesson-quiz-opt:hover { background: rgba(255, 255, 255, 0.06); }
-.lesson-quiz-opt input[type="radio"] { accent-color: #58a6ff; margin: 0; flex: 0 0 auto; }
-.lesson-quiz-opt.picked { background: rgba(56, 139, 253, 0.16); }
-.lesson-quiz-opt.correct { background: rgba(46, 160, 67, 0.22); color: #ddf7e3; }
-.lesson-quiz-opt.wrong { background: rgba(207, 34, 46, 0.22); color: #ffdce0; }
-.lesson-quiz-explain { margin-top: 6px; font-size: 0.85em; color: #a4b1c2; line-height: 1.4; }
+.lesson-quiz-opt:hover { background: rgba(0, 0, 0, 0.05); }
+[data-theme="dark"] .lesson-quiz-opt:hover { background: rgba(255, 255, 255, 0.06); }
+.lesson-quiz-opt input[type="radio"] { accent-color: var(--azure); margin: 0; flex: 0 0 auto; }
+.lesson-quiz-opt.picked { background: var(--azure-light); }
+.lesson-quiz-opt.correct { background: var(--green-bg); color: var(--green); }
+.lesson-quiz-opt.wrong { background: var(--red-bg); color: var(--red); }
+.lesson-quiz-explain { margin-top: 6px; font-size: 0.85em; color: var(--ink-3); line-height: 1.4; }
 .lesson-quiz-actions { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
-.lesson-quiz-status.ok { color: #56d364; font-weight: 400; font-size: 0.9rem; }
-.lesson-quiz-status.bad { color: #ff7b72; font-weight: 400; font-size: 0.9rem; }
+.lesson-quiz-status.ok { color: var(--green); font-weight: 400; font-size: 0.9rem; }
+.lesson-quiz-status.bad { color: var(--red); font-weight: 400; font-size: 0.9rem; }
 
 /* Single-figure "slide" layout used across the HWSW2 illustrated deck */
 .lesson-slide {
@@ -6122,9 +6123,9 @@ input.att-sig {
 
 /* Staff-only "Answer" badge on the correct option */
 .lesson-quiz-opt.staff-answer {
-  background: rgba(46, 160, 67, 0.14);
+  background: var(--green-bg);
 }
-.lesson-quiz-opt.staff-answer > span:first-of-type { color: #ddf7e3; }
+.lesson-quiz-opt.staff-answer > span:first-of-type { color: var(--green); }
 .lesson-quiz-answer-badge {
   margin-left: auto;
   display: inline-flex;
@@ -6134,10 +6135,10 @@ input.att-sig {
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #56d364;
+  color: var(--green);
   padding: 2px 6px;
   border-radius: 999px;
-  background: rgba(46, 160, 67, 0.18);
+  background: var(--green-bg);
 }
 
 .lesson-quiz-reveal {
@@ -6151,14 +6152,16 @@ input.att-sig {
   letter-spacing: 0.02em;
   border-radius: 999px;
   border: 0;
-  background: rgba(255, 255, 255, 0.06);
-  color: #c9d1d9;
+  background: var(--surface-2);
+  color: var(--ink-2);
   cursor: pointer;
 }
-.lesson-quiz-reveal:hover { background: rgba(255, 255, 255, 0.11); }
+.lesson-quiz-reveal:hover { background: var(--surface-3); }
+[data-theme="dark"] .lesson-quiz-reveal { background: rgba(255, 255, 255, 0.06); color: #c9d1d9; }
+[data-theme="dark"] .lesson-quiz-reveal:hover { background: rgba(255, 255, 255, 0.11); }
 .lesson-quiz-reveal.on {
-  color: #56d364;
-  background: rgba(46, 160, 67, 0.18);
+  color: var(--green);
+  background: var(--green-bg);
 }
 .lesson-slide-quiz-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
