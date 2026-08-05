@@ -6198,3 +6198,43 @@ input.att-sig {
   justify-content: center;
   font-size: 0.95rem;
 }
+
+/* Presenter acronym glossary — appears under the numbered notes list */
+.presenter-glossary {
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+}
+.presenter-glossary-title {
+  margin: 0 0 10px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #79c0ff;
+}
+.presenter-glossary-list {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.presenter-glossary-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 12px;
+  align-items: baseline;
+}
+.presenter-glossary-row dt {
+  color: #f0f6fc;
+  font-weight: 500;
+  font-size: 0.92rem;
+  letter-spacing: 0.02em;
+}
+.presenter-glossary-row dd {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.88rem;
+  font-weight: 300;
+  line-height: 1.4;
+}

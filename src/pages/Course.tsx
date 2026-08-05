@@ -1156,6 +1156,91 @@ export function UnitPage({
     questions: { q: string; options: string[]; answer: number; explain?: string }[];
   };
   type PresenterSlide = PresenterImageSlide | PresenterQuizSlide;
+  /** Acronyms that appear on HWSW2 slides — used to render a glossary below the presenter notes. */
+  const ACRONYM_GLOSSARY: Record<string, string> = {
+    CPU: "Central Processing Unit",
+    GPU: "Graphics Processing Unit",
+    APU: "Accelerated Processing Unit",
+    NPU: "Neural Processing Unit",
+    TPU: "Tensor Processing Unit",
+    DPU: "Data Processing Unit",
+    RAM: "Random Access Memory",
+    ROM: "Read-Only Memory",
+    DIMM: "Dual In-line Memory Module",
+    SODIMM: "Small Outline DIMM",
+    DDR: "Double Data Rate",
+    DDR4: "Double Data Rate 4",
+    DDR5: "Double Data Rate 5",
+    SSD: "Solid State Drive",
+    HDD: "Hard Disk Drive",
+    NVMe: "Non-Volatile Memory Express",
+    "M.2": "M.2 form factor (successor to mSATA)",
+    SATA: "Serial Advanced Technology Attachment",
+    PCIe: "Peripheral Component Interconnect Express",
+    PSU: "Power Supply Unit",
+    VRM: "Voltage Regulator Module",
+    BIOS: "Basic Input/Output System",
+    UEFI: "Unified Extensible Firmware Interface",
+    CMOS: "Complementary Metal-Oxide Semiconductor",
+    IO: "Input/Output",
+    USB: "Universal Serial Bus",
+    HDMI: "High-Definition Multimedia Interface",
+    DP: "DisplayPort",
+    VGA: "Video Graphics Array",
+    DVI: "Digital Visual Interface",
+    LAN: "Local Area Network",
+    WAN: "Wide Area Network",
+    WLAN: "Wireless Local Area Network",
+    "Wi-Fi": "Wireless Fidelity (IEEE 802.11 wireless networking)",
+    NIC: "Network Interface Card",
+    MAC: "Media Access Control (address)",
+    IP: "Internet Protocol",
+    DNS: "Domain Name System",
+    DHCP: "Dynamic Host Configuration Protocol",
+    LGA: "Land Grid Array (CPU socket)",
+    PGA: "Pin Grid Array (CPU socket)",
+    BGA: "Ball Grid Array (surface-mount chip)",
+    AIO: "All-In-One (liquid cooler)",
+    LED: "Light-Emitting Diode",
+    OLED: "Organic Light-Emitting Diode",
+    LCD: "Liquid Crystal Display",
+    VR: "Virtual Reality",
+    AR: "Augmented Reality",
+    AI: "Artificial Intelligence",
+    ML: "Machine Learning",
+    OS: "Operating System",
+    API: "Application Programming Interface",
+    SDK: "Software Development Kit",
+    IDE: "Integrated Development Environment",
+    SQL: "Structured Query Language",
+    HTML: "HyperText Markup Language",
+    CSS: "Cascading Style Sheets",
+    JS: "JavaScript",
+    HTTP: "HyperText Transfer Protocol",
+    HTTPS: "HyperText Transfer Protocol Secure",
+    URL: "Uniform Resource Locator",
+    VPN: "Virtual Private Network",
+    VM: "Virtual Machine",
+    IoT: "Internet of Things",
+    SaaS: "Software as a Service",
+    PaaS: "Platform as a Service",
+    IaaS: "Infrastructure as a Service",
+  };
+  /** Find every acronym from the glossary that appears in the given text (case-sensitive word match). */
+  const findAcronyms = (text: string): { term: string; expansion: string }[] => {
+    const seen = new Set<string>();
+    const found: { term: string; expansion: string }[] = [];
+    for (const term of Object.keys(ACRONYM_GLOSSARY)) {
+      // Escape regex metacharacters (e.g., "." in "M.2", "-" in "Wi-Fi")
+      const safe = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const re = new RegExp(`(?:^|[^A-Za-z0-9])(${safe})(?:$|[^A-Za-z0-9])`);
+      if (re.test(text) && !seen.has(term)) {
+        seen.add(term);
+        found.push({ term, expansion: ACRONYM_GLOSSARY[term] });
+      }
+    }
+    return found;
+  };
   const [presenter, setPresenter] = useState<{ slides: PresenterSlide[]; index: number } | null>(null);
   const [presenterAnswers, setPresenterAnswers] = useState<Record<number, number>>({});
   const [presenterChecked, setPresenterChecked] = useState(false);
@@ -3474,6 +3559,24 @@ export function UnitPage({
                     ) : cur.note ? (
                       <p className="presenter-note">{cur.note}</p>
                     ) : null}
+                    {(() => {
+                      const text = [cur.caption, ...(cur.bullets ?? []), cur.note ?? ""].join(" ");
+                      const acronyms = findAcronyms(text);
+                      if (!acronyms.length) return null;
+                      return (
+                        <div className="presenter-glossary">
+                          <h4 className="presenter-glossary-title">Acronyms</h4>
+                          <dl className="presenter-glossary-list">
+                            {acronyms.map((a) => (
+                              <div key={a.term} className="presenter-glossary-row">
+                                <dt>{a.term}</dt>
+                                <dd>{a.expansion}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        </div>
+                      );
+                    })()}
                   </aside>
                 )}
               </div>
