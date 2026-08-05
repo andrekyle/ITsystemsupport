@@ -1,0 +1,337 @@
+/*
+ * Replaces the HWSW2 lesson's quizzes: [...] block with four hand-
+ * written 15-question topic quizzes: Hardware, Software, Storage,
+ * Processing. Real conceptual questions instead of the earlier
+ * auto-generated "which statement is TRUE" style.
+ *
+ *   node .\scripts\rewriteHwsw2TopicQuizzesV2.cjs
+ */
+const fs = require("fs");
+const path = require("path");
+
+const quizzes = [
+  {
+    id: "hwsw2-hardware",
+    title: "Hardware — 15-question knowledge check",
+    questions: [
+      { q: "The four core components of a computer system are input, processing, output and…?",
+        options: ["Cables", "Storage", "Cooling", "Firmware"], answer: 1,
+        explain: "The four-part model is input → processing → storage → output." },
+      { q: "Which motherboard chip contains the firmware that runs first when you press the power button?",
+        options: ["CMOS battery", "BIOS/UEFI chip", "PCIe slot", "VRM"], answer: 1,
+        explain: "The BIOS/UEFI chip stores the boot firmware; the CPU executes it first." },
+      { q: "A PC forgets the date, time and BIOS settings every time it is unplugged. What is the most likely cause?",
+        options: ["Faulty RAM", "Failing SSD", "Flat CMOS coin-cell battery", "Wrong monitor cable"], answer: 2,
+        explain: "The CR2032 CMOS battery keeps the real-time clock and BIOS settings alive when the PSU is off." },
+      { q: "Which unit converts wall-socket AC into the low-voltage DC rails (+12 V, +5 V, +3.3 V) the motherboard needs?",
+        options: ["VRM", "PSU", "UEFI chip", "CMOS battery"], answer: 1,
+        explain: "The Power Supply Unit rectifies and regulates mains AC into DC rails." },
+      { q: "Which of these is NOT a motherboard form factor?",
+        options: ["ATX", "Micro-ATX", "Mini-ITX", "NVMe"], answer: 3,
+        explain: "NVMe is a storage protocol, not a motherboard form factor." },
+      { q: "Which port carries data, video and power in one cable at up to 40 Gbps?",
+        options: ["VGA", "RJ45", "Thunderbolt / USB4", "HDMI 1.4"], answer: 2,
+        explain: "Thunderbolt 3/4 and USB4 combine PCIe data, DisplayPort video and USB PD power." },
+      { q: "A discrete graphics card physically plugs into which motherboard slot?",
+        options: ["DIMM slot", "M.2 slot", "PCIe x16 slot", "SATA port"], answer: 2,
+        explain: "The GPU uses the long PCIe x16 slot for maximum bandwidth." },
+      { q: "Which of these is an INPUT-only device?",
+        options: ["Monitor", "Printer", "Barcode scanner", "Speaker"], answer: 2,
+        explain: "A scanner only sends data in; the others produce output." },
+      { q: "A desktop has no built-in Ethernet. Which expansion card adds a wired network port?",
+        options: ["Sound card", "GPU", "NIC", "TPM module"], answer: 2,
+        explain: "A Network Interface Card (NIC) provides an RJ45 Ethernet port." },
+      { q: "What is the primary job of the computer case (chassis)?",
+        options: ["Boot the operating system",
+                  "Mount and protect components and route airflow",
+                  "Convert AC to DC",
+                  "Store user files"], answer: 1,
+        explain: "The case is a structural and thermal enclosure." },
+      { q: "Which connector on the rear I/O panel is used for wired networking?",
+        options: ["HDMI", "RJ45 (Ethernet)", "DisplayPort", "USB-C"], answer: 1,
+        explain: "RJ45 is the standard Ethernet jack." },
+      { q: "You need the highest sustained SSD speed. Which motherboard connector do you use?",
+        options: ["SATA III", "PS/2", "M.2 (NVMe)", "USB 2.0"], answer: 2,
+        explain: "NVMe SSDs in an M.2 slot use PCIe lanes and are far faster than SATA." },
+      { q: "What does a Voltage Regulator Module (VRM) do on a motherboard?",
+        options: ["Stores boot firmware",
+                  "Steps 12 V down to the ~1 V the CPU needs, at high current",
+                  "Amplifies audio",
+                  "Keeps the real-time clock alive"], answer: 1,
+        explain: "The VRM converts PSU rails into a stable low voltage the CPU can use." },
+      { q: "UEFI is best described as…",
+        options: ["A file system",
+                  "A modern firmware interface that replaces the legacy BIOS",
+                  "A CPU socket standard",
+                  "A cooling method"], answer: 1,
+        explain: "UEFI supports GPT, Secure Boot, larger drives and a GUI." },
+      { q: "Which everyday item is an OUTPUT device?",
+        options: ["Keyboard", "Webcam", "Projector", "Microphone"], answer: 2,
+        explain: "Projectors output visual information to a screen or wall." },
+    ],
+  },
+  {
+    id: "hwsw2-software",
+    title: "Software — 15-question knowledge check",
+    questions: [
+      { q: "What is the primary job of an operating system?",
+        options: ["Play videos",
+                  "Manage hardware and provide services to applications",
+                  "Store user files in the cloud",
+                  "Draw the desktop wallpaper"], answer: 1,
+        explain: "The OS mediates between applications and hardware." },
+      { q: "Which of these is a Linux distribution widely used on servers?",
+        options: ["Windows 11", "macOS Sonoma", "Ubuntu Server", "iOS"], answer: 2,
+        explain: "Ubuntu, Red Hat and Debian are common server Linux distros." },
+      { q: "The Windows Registry stores…",
+        options: ["User photos",
+                  "System, hardware and application configuration settings",
+                  "Passwords in plain text",
+                  "The kernel itself"], answer: 1,
+        explain: "The Registry is a hierarchical settings database." },
+      { q: "Editing the wrong Registry key can result in…",
+        options: ["A faster boot",
+                  "An unbootable or unstable Windows system",
+                  "More RAM",
+                  "A brighter screen"], answer: 1,
+        explain: "Always back up before editing the Registry." },
+      { q: "Which OS component talks directly to hardware and manages memory, processes and devices?",
+        options: ["Task Manager", "Kernel", "File Explorer", "Web browser"], answer: 1,
+        explain: "The kernel is the innermost layer of the OS." },
+      { q: "Firmware is best described as…",
+        options: ["Any app you download",
+                  "Software permanently stored on a chip inside a device",
+                  "A hardware component",
+                  "A file format"], answer: 1,
+        explain: "BIOS/UEFI, SSD controllers and printer firmware all live on chips inside their devices." },
+      { q: "Which cloud service model does Microsoft 365 fall under?",
+        options: ["Firmware", "IaaS", "Software as a Service (SaaS)", "Kernel-mode driver"], answer: 2,
+        explain: "SaaS delivers ready-to-use applications over the internet." },
+      { q: "PostgreSQL is an example of which category of software?",
+        options: ["Utility software", "Database software (DBMS)", "Cybersecurity software", "Web browser"], answer: 1,
+        explain: "A DBMS manages structured data, typically via SQL." },
+      { q: "Which product is a well-known Enterprise Resource Planning (ERP) system?",
+        options: ["SAP", "Notepad", "VLC", "Chrome"], answer: 0,
+        explain: "SAP, Oracle and Dynamics 365 are ERPs used across finance, HR and supply chain." },
+      { q: "Which of these is a hypervisor used to run virtual machines?",
+        options: ["VMware ESXi", "Photoshop", "PowerPoint", "Chrome"], answer: 0,
+        explain: "ESXi, Hyper-V, KVM and Proxmox are hypervisors." },
+      { q: "Docker is best classified as a…",
+        options: ["Container platform", "Backup tool", "Cloud storage service", "Antivirus"], answer: 0,
+        explain: "Containers share the host OS kernel and start in seconds." },
+      { q: "EDR (Endpoint Detection and Response) is a type of…",
+        options: ["Word processor", "Cybersecurity software", "Database engine", "Rendering engine"], answer: 1,
+        explain: "EDR products detect, investigate and stop attacks on endpoints." },
+      { q: "Which is a common utility that keeps a system healthy?",
+        options: ["Backup software", "ERP", "DBMS", "IDE"], answer: 0,
+        explain: "Utilities include backup, antivirus, disk tools and remote support." },
+      { q: "An IDE such as Visual Studio Code is used to…",
+        options: ["Play music",
+                  "Write, debug and build application code",
+                  "Manage databases directly",
+                  "Route network traffic"], answer: 1,
+        explain: "IDEs bundle editor, compiler/linker and debugger." },
+      { q: "Which statement correctly describes cloud service models?",
+        options: ["SaaS is raw hardware you rent by the hour",
+                  "SaaS = finished app; PaaS = platform to build on; IaaS = raw servers and network",
+                  "IaaS runs entirely on-device with no network",
+                  "PaaS is a physical hard drive"], answer: 1,
+        explain: "SaaS delivers a ready app, PaaS provides a development platform, IaaS provides raw infrastructure." },
+    ],
+  },
+  {
+    id: "hwsw2-storage",
+    title: "Storage — 15-question knowledge check",
+    questions: [
+      { q: "Which memory is VOLATILE — its contents are lost when power is removed?",
+        options: ["RAM", "HDD", "SSD", "USB flash drive"], answer: 0,
+        explain: "RAM is volatile working memory; the others keep data without power." },
+      { q: "Storage manufacturers use the SI meaning of a kilobyte. How many bytes is that?",
+        options: ["8", "1,000", "1,024", "1,000,000"], answer: 1,
+        explain: "1 kB = 1,000 bytes in SI. Windows reports sizes using binary (1 KiB = 1,024)." },
+      { q: "Which is the FASTEST consumer storage interface listed?",
+        options: ["SATA III", "USB 2.0", "NVMe over PCIe", "IDE/PATA"], answer: 2,
+        explain: "NVMe uses PCIe lanes and is dramatically faster than SATA." },
+      { q: "An M.2 slot can host…",
+        options: ["Only HDDs",
+                  "Only DIMMs",
+                  "Both SATA and NVMe SSDs, depending on the drive",
+                  "Only optical drives"], answer: 2,
+        explain: "The physical M.2 slot supports both interfaces — check the drive's key and specs." },
+      { q: "Which storage device has spinning platters and a moving read/write head?",
+        options: ["SSD", "HDD", "NVMe drive", "DIMM"], answer: 1,
+        explain: "Hard Disk Drives are mechanical; SSDs are solid-state flash." },
+      { q: "A user asks whether to install the operating system on the SSD or the HDD for best performance.",
+        options: ["Install the OS on the SSD",
+                  "Install on the HDD to save the SSD's life",
+                  "Split it 50/50",
+                  "It makes no difference"], answer: 0,
+        explain: "SSDs give far faster boot times and application launches." },
+      { q: "How many DIMM slots does a typical mainstream desktop motherboard have?",
+        options: ["1", "2", "4", "16"], answer: 2,
+        explain: "Most consumer boards ship with 2 or 4 DIMM slots (dual-channel)." },
+      { q: "Which is the current mainstream generation of desktop RAM (2026)?",
+        options: ["DDR2", "DDR3", "DDR4", "DDR5"], answer: 3,
+        explain: "DDR5 has replaced DDR4 on new mainstream builds." },
+      { q: "A PC constantly hits the pagefile. What will users notice after adding more RAM?",
+        options: ["A faster CPU",
+                  "A larger screen",
+                  "More apps open smoothly at once",
+                  "More USB ports"], answer: 2,
+        explain: "More RAM means fewer disk swaps and much smoother multitasking." },
+      { q: "SATA III has a peak bandwidth of about…",
+        options: ["100 Mbps", "6 Gbps (~600 MB/s)", "40 Gbps", "480 Mbps"], answer: 1,
+        explain: "SATA III tops out around 6 Gbps." },
+      { q: "Which is the LARGEST unit in this list?",
+        options: ["Gigabyte", "Terabyte", "Megabyte", "Petabyte"], answer: 3,
+        explain: "KB < MB < GB < TB < PB < EB < ZB." },
+      { q: "Which storage technology largely replaced HDDs in laptops and modern desktops?",
+        options: ["NAND-flash SSDs", "DDR5 DIMMs", "TPM chips", "Optical drives"], answer: 0,
+        explain: "SSDs use NAND flash — no moving parts, much faster, more reliable." },
+      { q: "Which is the correct order from FASTEST to SLOWEST?",
+        options: ["HDD → RAM → SSD → cache",
+                  "CPU cache → RAM → NVMe SSD → HDD",
+                  "RAM → CPU cache → HDD → SSD",
+                  "All are the same speed"], answer: 1,
+        explain: "The memory hierarchy runs cache → RAM → SSD → HDD, fastest to slowest." },
+      { q: "A key advantage of NVMe over SATA SSDs is…",
+        options: ["Lower price per GB",
+                  "Lower latency and much higher bandwidth via PCIe",
+                  "Bigger physical size",
+                  "Compatibility with IDE cables"], answer: 1,
+        explain: "NVMe was designed for the parallel nature of flash and uses PCIe." },
+      { q: "Roughly how many bytes are in 1 GB (decimal SI)?",
+        options: ["1,000", "1,000,000", "1,000,000,000", "1,000,000,000,000"], answer: 2,
+        explain: "1 GB = 10^9 bytes in SI; Windows reports it using 2^30." },
+    ],
+  },
+  {
+    id: "hwsw2-processing",
+    title: "Processing — 15-question knowledge check",
+    questions: [
+      { q: "The Central Processing Unit (CPU) is best described as…",
+        options: ["A type of RAM",
+                  "The main brain that fetches, decodes and executes instructions",
+                  "The graphics chip",
+                  "The BIOS firmware"], answer: 1,
+        explain: "The CPU is the general-purpose processor at the heart of the machine." },
+      { q: "What is the correct order of CPU cache from FASTEST to SLOWEST?",
+        options: ["L3 → L2 → L1", "L1 → L2 → L3", "L2 → L1 → L3", "L1 → L3 → L2"], answer: 1,
+        explain: "L1 is closest and smallest/fastest; L3 is largest and slowest." },
+      { q: "Where does a desktop CPU physically install on the motherboard?",
+        options: ["In the DIMM slot", "In the CPU socket", "In the PCIe slot", "On the SATA port"], answer: 1,
+        explain: "Intel LGA or AMD PGA/LGA sockets house the CPU." },
+      { q: "Which processor is designed specifically to accelerate on-device AI/ML workloads?",
+        options: ["NPU", "PSU", "CMOS", "DIMM"], answer: 0,
+        explain: "Neural Processing Units run AI models efficiently on-device (Copilot+ PCs, phones)." },
+      { q: "A stock air cooler consists of…",
+        options: ["A heatsink with fins and a fan mounted on the CPU",
+                  "A liquid pump only",
+                  "A copper block with no fan",
+                  "A stick of RAM"], answer: 0,
+        explain: "Air coolers use a finned heatsink and a fan; AIO coolers use a pump and radiator." },
+      { q: "An AIO liquid cooler moves heat by circulating coolant between…",
+        options: ["The PSU and the case fan",
+                  "A pump/block on the CPU and a radiator",
+                  "The GPU and the SSD",
+                  "The DIMMs and the socket"], answer: 1,
+        explain: "AIO = All-In-One closed-loop liquid cooler." },
+      { q: "Thermal paste is applied between…",
+        options: ["The CPU heat-spreader and the cooler's base",
+                  "The DIMMs and the socket",
+                  "The motherboard tracks",
+                  "Inside the PSU"], answer: 0,
+        explain: "Thermal interface material fills microscopic gaps for better heat transfer." },
+      { q: "Modern GPUs are best at…",
+        options: ["Storing files",
+                  "Massively parallel compute — ideal for graphics and AI training",
+                  "Booting the OS",
+                  "Running the BIOS"], answer: 1,
+        explain: "GPUs have thousands of small cores for parallel work." },
+      { q: "Which is TRUE of an Intel LGA socket?",
+        options: ["The pins are on the motherboard; the CPU has flat pads",
+                  "The pins are on the CPU (like AMD PGA)",
+                  "It is soldered like a phone SoC",
+                  "It runs on 240 V AC"], answer: 0,
+        explain: "LGA = Land Grid Array. Pins live in the socket; the CPU has landing pads." },
+      { q: "A CPU is rated at 65 W TDP. That number is used mostly to…",
+        options: ["Choose the peak GPU power",
+                  "Size the cooler that can dissipate its heat at base spec",
+                  "Set the RAM speed",
+                  "Pick the socket type"], answer: 1,
+        explain: "TDP (Thermal Design Power) guides cooler selection." },
+      { q: "What is hyper-threading / SMT (simultaneous multithreading)?",
+        options: ["A cooling technology",
+                  "Presenting one physical core as two logical threads to the OS",
+                  "A GPU rendering mode",
+                  "A form of PSU rail"], answer: 1,
+        explain: "SMT/HT keeps a core busy when one thread stalls, improving utilisation." },
+      { q: "On a modern AI PC the CPU, GPU and NPU work together. The NPU specialises in…",
+        options: ["3-D game rendering",
+                  "Efficient real-time AI inference at low power",
+                  "File compression",
+                  "Booting the OS"], answer: 1,
+        explain: "NPUs run neural networks efficiently for features like Copilot+ and Windows Studio Effects." },
+      { q: "Which motherboard component steps 12 V down to the ~1 V the CPU actually needs?",
+        options: ["BIOS chip", "VRM (Voltage Regulator Module)", "CMOS battery", "Chipset"], answer: 1,
+        explain: "The VRM regulates voltage and delivers the high current the CPU draws." },
+      { q: "Which is TRUE about integrated (iGPU) vs discrete (dGPU) graphics?",
+        options: ["They are exactly the same",
+                  "An iGPU is built into the CPU package; a dGPU is a separate card",
+                  "A dGPU plugs into the CPU socket",
+                  "iGPUs always outperform dGPUs"], answer: 1,
+        explain: "iGPUs share system RAM; dGPUs have their own VRAM, power and cooling." },
+      { q: "A CPU keeps thermal-throttling under sustained load. What should you check FIRST?",
+        options: ["The internet connection",
+                  "Cooler mounting, fan spin and thermal-paste condition",
+                  "The monitor cable",
+                  "The keyboard driver"], answer: 1,
+        explain: "Throttling is a heat problem — always fix cooling first." },
+      ]},
+];
+
+// Emit block
+function emit() {
+  const lines = ["    quizzes: ["];
+  for (const quiz of quizzes) {
+    lines.push("      {");
+    lines.push(`        id: ${JSON.stringify(quiz.id)},`);
+    lines.push(`        title: ${JSON.stringify(quiz.title)},`);
+    lines.push("        questions: [");
+    for (const qq of quiz.questions) {
+      lines.push("          {");
+      lines.push(`            q: ${JSON.stringify(qq.q)},`);
+      lines.push("            options: [");
+      for (const o of qq.options) lines.push(`              ${JSON.stringify(o)},`);
+      lines.push("            ],");
+      lines.push(`            answer: ${qq.answer},`);
+      lines.push(`            explain: ${JSON.stringify(qq.explain)},`);
+      lines.push("          },");
+    }
+    lines.push("        ],");
+    lines.push("      },");
+  }
+  lines.push("    ],");
+  lines.push("    quiz: [],");
+  return lines.join("\r\n");
+}
+
+const contentPath = path.join(__dirname, "..", "src", "data", "content.ts");
+const raw = fs.readFileSync(contentPath, "utf8");
+const startMarker = "  HWSW2: {";
+const startIdx = raw.indexOf(startMarker);
+if (startIdx < 0) throw new Error("HWSW2 block not found");
+const hwsw2CloseIdx = raw.indexOf("  },\r\n};", startIdx);
+if (hwsw2CloseIdx < 0) throw new Error("HWSW2 close not found");
+const quizzesStart = raw.lastIndexOf("    quizzes: [", hwsw2CloseIdx);
+if (quizzesStart < 0) throw new Error("quizzes: [ not found");
+// End is the closing of the quiz: [] that follows.
+const quizAfter = raw.indexOf("\r\n    quiz: [],", quizzesStart);
+if (quizAfter < 0) throw new Error("quiz: [], not found after quizzes");
+const quizEnd = quizAfter + "\r\n    quiz: [],".length;
+
+const snippet = emit();
+const next = raw.slice(0, quizzesStart) + snippet + raw.slice(quizEnd);
+fs.writeFileSync(contentPath, next);
+const totalQs = quizzes.reduce((n, q) => n + q.questions.length, 0);
+console.log(`Wrote ${quizzes.length} quizzes, ${totalQs} questions total.`);
