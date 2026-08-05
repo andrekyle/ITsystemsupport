@@ -1280,13 +1280,16 @@ export function UnitPage({
         const def = FIGURE_DEFAULTS[fig.id];
         const src = up?.image ?? def?.src;
         if (!src) return;
+        const fallbackBullets = (sec.paragraphs ?? [])
+          .map((p) => p.replace(/^[•\-\u2022]\s*/, "").trim())
+          .filter(Boolean);
         out.push({
           kind: "image",
           src,
           caption: fig.caption,
           sectionTitle: sec.heading,
           sectionIndex: si,
-          bullets: fig.bullets,
+          bullets: (fig.bullets && fig.bullets.length ? fig.bullets : fallbackBullets),
           note: fig.note,
         });
       });
@@ -3473,11 +3476,11 @@ export function UnitPage({
                   <aside className="presenter-notes">
                     <h3 className="presenter-notes-title">{cur.caption}</h3>
                     {cur.bullets && cur.bullets.length > 0 ? (
-                      <ul className="presenter-bullets">
+                      <ol className="presenter-bullets presenter-numbered">
                         {cur.bullets.map((b, i) => (
                           <li key={i}>{b}</li>
                         ))}
-                      </ul>
+                      </ol>
                     ) : cur.note ? (
                       <p className="presenter-note">{cur.note}</p>
                     ) : null}
@@ -3551,8 +3554,11 @@ export function UnitPage({
               </div>
             )}
             <div className="presenter-caption">
-              <span className="presenter-section">{cur.sectionTitle}</span>
-              {cur.kind === "image" && <span className="presenter-figcap">{cur.caption}</span>}
+              {cur.kind === "image" ? (
+                <span className="presenter-figcap">{cur.caption}</span>
+              ) : (
+                <span className="presenter-section">{cur.sectionTitle}</span>
+              )}
             </div>
             <div className="presenter-controls">
               <button

@@ -6160,3 +6160,40 @@ input.att-sig {
   background: rgba(46, 160, 67, 0.18);
 }
 .lesson-slide-quiz-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* Presenter mode: numbered points on the right side (instead of bullet dots) */
+.presenter-bullets.presenter-numbered {
+  list-style: none;
+  counter-reset: pnum;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 14px;
+}
+.presenter-bullets.presenter-numbered > li {
+  counter-increment: pnum;
+  position: relative;
+  padding-left: 46px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  font-size: 1.05rem;
+  line-height: 1.45;
+  color: #f0f6fc;
+}
+.presenter-bullets.presenter-numbered > li::before {
+  content: counter(pnum);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(56, 139, 253, 0.22);
+  color: #79c0ff;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+}
