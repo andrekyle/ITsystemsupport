@@ -1799,7 +1799,16 @@ export function UnitPage({
               }
               if (items.length) setLightbox({ items, index: hitIndex });
             };
-            const hero = heroFig
+            const isSlide =
+              !!sec.flat &&
+              orderedFigures.length === 1 &&
+              !!heroFig &&
+              !sec.quizGate &&
+              !sec.table &&
+              !sec.cards &&
+              !sec.example &&
+              !sec.bullets;
+            const hero = heroFig && !isSlide
               ? (() => {
                   const up = figureImages[heroFig.id];
                   const def = FIGURE_DEFAULTS[heroFig.id];
@@ -2278,29 +2287,68 @@ export function UnitPage({
             return (
               <div key={sec.heading} className="lesson-screen">
                 {stepper}
-                {hero}
-                <div className="lesson-flat">
-                  {!hero && (
-                    <h2 className="section-title">
-                      <span className="ico">
-                        <Icon name={sec.icon} size={20} />
-                      </span>
-                      {editable ? (
-                        <span
-                          contentEditable
-                          suppressContentEditableWarning
-                          className="editable-inline"
-                          onBlur={(e) => editHeading(si, e.currentTarget.textContent ?? "")}
-                        >
-                          {secHeading}
+                {isSlide && heroFig ? (() => {
+                  const up = figureImages[heroFig.id];
+                  const def = FIGURE_DEFAULTS[heroFig.id];
+                  const src = up?.image ?? def?.src;
+                  const slideCap = capOf(heroFig.id, heroFig.caption);
+                  return (
+                    <div className="lesson-slide">
+                      <div className="lesson-slide-head">
+                        <div className="lesson-slide-eyebrow">Slide {si + 1} of {total}</div>
+                        <h2 className="lesson-slide-title">{secHeading}</h2>
+                      </div>
+                      <button
+                        type="button"
+                        className="lesson-slide-figure"
+                        onClick={() => openLightboxFor({ id: heroFig.id, caption: slideCap })}
+                        title="Click to enlarge"
+                      >
+                        <img src={src} alt={slideCap} />
+                        <span className="lesson-slide-zoom" aria-hidden="true">
+                          <Icon name="image" size={14} />
+                          Click to enlarge
                         </span>
-                      ) : (
-                        secHeading
+                      </button>
+                      {sec.paragraphs.length > 0 && (
+                        <ul className="lesson-slide-bullets">
+                          {sec.paragraphs.map((_, i) => {
+                            const text = paraText(i).replace(/^[•\-\u2022]\s*/, "");
+                            return (
+                              <li key={i}><Gloss text={text} /></li>
+                            );
+                          })}
+                        </ul>
                       )}
-                    </h2>
-                  )}
-                  {quizBody ?? body}
-                </div>
+                    </div>
+                  );
+                })() : (
+                  <>
+                    {hero}
+                    <div className="lesson-flat">
+                      {!hero && (
+                        <h2 className="section-title">
+                          <span className="ico">
+                            <Icon name={sec.icon} size={20} />
+                          </span>
+                          {editable ? (
+                            <span
+                              contentEditable
+                              suppressContentEditableWarning
+                              className="editable-inline"
+                              onBlur={(e) => editHeading(si, e.currentTarget.textContent ?? "")}
+                            >
+                              {secHeading}
+                            </span>
+                          ) : (
+                            secHeading
+                          )}
+                        </h2>
+                      )}
+                      {quizBody ?? body}
+                    </div>
+                  </>
+                )}
                 {nav}
                 {isLast && (
                   <div className="callout">
