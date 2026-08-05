@@ -607,23 +607,35 @@ function ExerciseQuestion({
   );
 }
 
-/* ---------- unit availability: learners see a unit only from its start day, 12:00 ---------- */
+/* ---------- unit availability: learners see a unit only from its start day ---------- */
 
 const MONTHS: Record<string, number> = {
   jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
   jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
 };
 
-/** First session date from a unit's dates string (e.g. "24, 31 Jul 2026"), at 12:00. */
+/** Parse the start time from a unit's `time` field (e.g. "12h00 - 16h00" or "09:00 - 14:00").
+ *  Returns [hour, minute]; defaults to 08:30 if the field is missing or unrecognised. */
+function parseUnitStartHM(time: string | undefined): [number, number] {
+  if (!time) return [8, 30];
+  const m = time.match(/(\d{1,2})\s*[h:]\s*(\d{2})/i);
+  if (!m) return [8, 30];
+  const h = Math.max(0, Math.min(23, Number(m[1])));
+  const min = Math.max(0, Math.min(59, Number(m[2])));
+  return [h, min];
+}
+
+/** First session date from a unit's dates string (e.g. "24, 31 Jul 2026"), at its start time. */
 export function unitUnlockTime(u: UnitStandard): Date | null {
   const day = u.dates.match(/\b(\d{1,2})\b/);
   const mon = u.dates.match(/jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec/i);
   const yr = u.dates.match(/\b(20\d{2})\b/);
   if (!day || !mon || !yr) return null;
-  return new Date(Number(yr[1]), MONTHS[mon[0].toLowerCase()], Number(day[1]), 12, 0, 0, 0);
+  const [h, min] = parseUnitStartHM(u.time);
+  return new Date(Number(yr[1]), MONTHS[mon[0].toLowerCase()], Number(day[1]), h, min, 0, 0);
 }
 
-/** Learners may only open a unit from its first session day at 12:00; staff always can. */
+/** Learners may only open a unit from its first session day at its start time; staff always can. */
 function unitLocked(u: UnitStandard, role: Role): boolean {
   if (isStaff(role)) return false;
   const t = unitUnlockTime(u);
@@ -631,7 +643,9 @@ function unitLocked(u: UnitStandard, role: Role): boolean {
 }
 
 function fmtUnlock(t: Date): string {
-  return `${t.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}, 12:00`;
+  const hh = String(t.getHours()).padStart(2, "0");
+  const mm = String(t.getMinutes()).padStart(2, "0");
+  return `${t.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}, ${hh}:${mm}`;
 }
 
 const ACTIVITY_INFO: Record<UnitActivity, { icon: string; desc: string }> = {
@@ -1547,7 +1561,7 @@ export function UnitPage({
             <Icon name="lock" size={28} />
           </span>
           <span>
-            This unit standard opens on <strong>{unlockAt ? fmtUnlock(unlockAt) : "its session day at 12:00"}</strong>.
+            This unit standard opens on <strong>{unlockAt ? fmtUnlock(unlockAt) : "its session day at the scheduled start time"}</strong>.
             Its lesson, exercises and materials become available then — see the{" "}
             <button className="text-link" onClick={() => navigate({ page: "calendar" })}>
               Training Calendar

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Profile } from "../types";
+import type { Profile, UnitStandard } from "../types";
 import { isStaff } from "../types";
 import { COURSE_META, MODULES, usLabel } from "../data/course";
 import { supabase } from "../lib/supabase";
@@ -20,6 +20,63 @@ import { ConfirmModal } from "../components/Modal";
 
 const ROW_COUNT = 15;
 const TYPE_OPTIONS = ["Induction", "Training", "Tutoring", "Assessment", "Interviews"] as const;
+
+const MONTHS_ATT: Record<string, number> = {
+  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+};
+
+/** Parse a unit's `time` field (e.g. "12h00 - 16h00") to [hour, minute]. */
+function parseUnitStartHM(time: string | undefined): [number, number] | null {
+  if (!time) return null;
+  const m = time.match(/(\d{1,2})\s*[h:]\s*(\d{2})/i);
+  if (!m) return null;
+  return [Number(m[1]), Number(m[2])];
+}
+
+/** All calendar dates a unit is scheduled on (from its "dates" string like "5, 6 Aug 2026"). */
+function unitScheduledIsoDates(u: UnitStandard): string[] {
+  const days = Array.from(u.dates.matchAll(/\b(\d{1,2})\b/g)).map((m) => Number(m[1]));
+  const monMatch = u.dates.match(/jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec/i);
+  const yrMatch = u.dates.match(/\b(20\d{2})\b/);
+  if (!days.length || !monMatch || !yrMatch) return [];
+  const mon = MONTHS_ATT[monMatch[0].toLowerCase()];
+  const yr = Number(yrMatch[1]);
+  return days.map((d) => {
+    const dt = new Date(yr, mon, d);
+    const y = dt.getFullYear();
+    const mm = String(dt.getMonth() + 1).padStart(2, "0");
+    const dd = String(dt.getDate()).padStart(2, "0");
+    return `${y}-${mm}-${dd}`;
+  });
+}
+
+/** Earliest scheduled start time for units running on `dateIso`, minus 30 min.
+ *  Falls back to 08:30 if no unit is scheduled that day. */
+function registerOpensAt(dateIso: string): Date {
+  let earliest: [number, number] | null = null;
+  for (const mod of MODULES) {
+    for (const u of mod.units) {
+      if (!unitScheduledIsoDates(u).includes(dateIso)) continue;
+      const hm = parseUnitStartHM(u.time);
+      if (!hm) continue;
+      if (!earliest || hm[0] * 60 + hm[1] < earliest[0] * 60 + earliest[1]) earliest = hm;
+    }
+  }
+  const [h, min] = earliest ?? [9, 0];
+  // open 30 min before the earliest scheduled unit
+  const total = h * 60 + min - 30;
+  const oh = Math.max(0, Math.floor(total / 60));
+  const om = Math.max(0, total % 60);
+  const hh = String(oh).padStart(2, "0");
+  const mm = String(om).padStart(2, "0");
+  return new Date(`${dateIso}T${hh}:${mm}:00`);
+}
+
+/** Human-readable "HH:MM" for the given Date (local). */
+function fmtHM(d: Date): string {
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
 
 interface AttRow {
   name: string;
@@ -217,7 +274,7 @@ export function AttendancePage({
   const setHdr = (field: string, value: string) =>
     save({ ...reg, header: { ...reg.header, [field]: value } });
 
-  // live clock so the sign button opens by itself at 11:30 without a reload
+  // live clock so the sign button opens by itself at the scheduled time without a reload
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 30_000);
@@ -226,8 +283,12 @@ export function AttendancePage({
 
   const today = isoDate(now);
   const isToday = dateIso === today;
-  // students may only sign on the session day itself, from 11:30 (30 min before the lesson)
-  const opensAt = new Date(`${dateIso}T11:30:00`);
+  // students may only sign on the session day itself, from 30 min before the earliest unit that day
+  const opensAt = registerOpensAt(dateIso);
+  const opensAtLabel = fmtHM(opensAt);
+  // scheduled lesson start (earliest unit that day), for the info banner
+  const lessonStart = new Date(opensAt.getTime() + 30 * 60 * 1000);
+  const lessonStartLabel = fmtHM(lessonStart);
   const openNow = isToday && now >= opensAt;
   const signed = !!reg.rows[profile.id];
   const canSign = !signed && (staff || openNow);
@@ -445,8 +506,8 @@ export function AttendancePage({
         {!signed && !canSign && (
           <span className="att-note">
             {isToday
-              ? "Signing opens at 11:30 today (the lesson starts at 12:00)."
-              : "Signing opens at 11:30 on the day of the session (the lesson starts at 12:00)."}
+              ? `Signing opens at ${opensAtLabel} today (the lesson starts at ${lessonStartLabel}).`
+              : `Signing opens at ${opensAtLabel} on the day of the session (the lesson starts at ${lessonStartLabel}).`}
           </span>
         )}
       </div>
