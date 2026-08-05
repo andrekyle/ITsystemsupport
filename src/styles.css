@@ -4363,7 +4363,7 @@ a.plan-ppt:hover {
   color: var(--ink-3);
 }
 
-/* units locked until their start day 08:30 (learners) */
+/* units locked until their start day 12:00 (learners) */
 .unit-row.locked {
   opacity: 0.6;
   cursor: default;

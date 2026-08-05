@@ -217,7 +217,7 @@ export function AttendancePage({
   const setHdr = (field: string, value: string) =>
     save({ ...reg, header: { ...reg.header, [field]: value } });
 
-  // live clock so the sign button opens by itself at 08:30 without a reload
+  // live clock so the sign button opens by itself at 11:30 without a reload
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 30_000);
@@ -226,8 +226,8 @@ export function AttendancePage({
 
   const today = isoDate(now);
   const isToday = dateIso === today;
-  // students may only sign on the session day itself, from 08:30 in the morning
-  const opensAt = new Date(`${dateIso}T08:30:00`);
+  // students may only sign on the session day itself, from 11:30 (30 min before the lesson)
+  const opensAt = new Date(`${dateIso}T11:30:00`);
   const openNow = isToday && now >= opensAt;
   const signed = !!reg.rows[profile.id];
   const canSign = !signed && (staff || openNow);
@@ -445,8 +445,8 @@ export function AttendancePage({
         {!signed && !canSign && (
           <span className="att-note">
             {isToday
-              ? "Signing opens at 08:30 this morning."
-              : "Signing opens at 08:30 on the day of the session."}
+              ? "Signing opens at 11:30 today (the lesson starts at 12:00)."
+              : "Signing opens at 11:30 on the day of the session (the lesson starts at 12:00)."}
           </span>
         )}
       </div>
