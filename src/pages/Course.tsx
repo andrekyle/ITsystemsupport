@@ -1091,10 +1091,10 @@ export function UnitPage({
     const n = raw ? Number(raw) : 0;
     return Number.isFinite(n) && n >= 0 ? n : 0;
   });
-  /** lesson-view final quiz: per-question answer index (or -1 if unanswered) */
-  const [lessonQuizAnswers, setLessonQuizAnswers] = useState<number[]>([]);
-  /** lesson-view final quiz: has the learner clicked "Check answers"? */
-  const [lessonQuizChecked, setLessonQuizChecked] = useState(false);
+  /** lesson-view per-slide quiz answers, keyed by section index */
+  const [lessonQuizAnswers, setLessonQuizAnswers] = useState<Record<number, number[]>>({});
+  /** lesson-view per-slide quiz: has the learner clicked "Check answers" for this section */
+  const [lessonQuizChecked, setLessonQuizChecked] = useState<Record<number, boolean>>({});
   /** clicked lesson figure shown fullscreen in a lightbox (null = closed) */
   type LightboxItem = { src: string; caption: string; credit?: string; creditUrl?: string };
   const [lightbox, setLightbox] = useState<{ items: LightboxItem[]; index: number } | null>(null);
@@ -1860,34 +1860,44 @@ export function UnitPage({
                   );
                 })()
               : null;
-            const quizList = content.quiz ?? [];
-            const isQuizGate = !!sec.quizGate && quizList.length > 0;
-            const quizAnswers = isQuizGate
-              ? (lessonQuizAnswers.length === quizList.length
-                  ? lessonQuizAnswers
-                  : quizList.map((_, i) => lessonQuizAnswers[i] ?? -1))
+            const slideQuiz = sec.slideQuiz ?? [];
+            const hasSlideQuiz = slideQuiz.length > 0;
+            const qAnswers = hasSlideQuiz
+              ? (lessonQuizAnswers[si]?.length === slideQuiz.length
+                  ? lessonQuizAnswers[si]
+                  : slideQuiz.map((_, i) => lessonQuizAnswers[si]?.[i] ?? -1))
               : [];
-            const quizAllAnswered = isQuizGate && quizAnswers.every((a) => a >= 0);
-            const quizAllCorrect =
-              isQuizGate && quizAllAnswered && quizAnswers.every((a, i) => a === quizList[i].answer);
-            const quizPassed = !isQuizGate || quizAllCorrect;
-            const quizBody = isQuizGate ? (
-              <div className="saqa-body lesson-section lesson-quiz-gate">
-                {sec.paragraphs.map((p, i) => (
-                  <p key={i} className="lesson-p"><Gloss text={paraText(i)} /></p>
-                ))}
+            const qChecked = !!lessonQuizChecked[si];
+            const qAllAnswered = hasSlideQuiz && qAnswers.every((a) => a >= 0);
+            const qAllCorrect =
+              hasSlideQuiz && qAllAnswered && qAnswers.every((a, i) => a === slideQuiz[i].answer);
+            const quizPassed = !hasSlideQuiz || qAllCorrect;
+            const setAnswer = (qi: number, oi: number) => {
+              setLessonQuizAnswers((prev) => {
+                const cur = prev[si]?.slice() ?? slideQuiz.map(() => -1);
+                cur[qi] = oi;
+                return { ...prev, [si]: cur };
+              });
+              setLessonQuizChecked((prev) => ({ ...prev, [si]: false }));
+            };
+            const quizBlock = hasSlideQuiz ? (
+              <div className="lesson-slide-quiz">
+                <div className="lesson-slide-quiz-title">
+                  <Icon name="checkCircle" size={16} />
+                  Answer all 5 to unlock Next
+                </div>
                 <div className="lesson-quiz-list">
-                  {quizList.map((q, qi) => {
-                    const picked = quizAnswers[qi];
+                  {slideQuiz.map((q, qi) => {
+                    const picked = qAnswers[qi];
                     const correct = picked === q.answer;
                     return (
-                      <div key={qi} className={`lesson-quiz-card${lessonQuizChecked ? (correct ? " ok" : " bad") : ""}`}>
+                      <div key={qi} className={`lesson-quiz-card${qChecked ? (correct ? " ok" : " bad") : ""}`}>
                         <div className="lesson-quiz-q"><strong>Q{qi + 1}.</strong> {q.q}</div>
                         <div className="lesson-quiz-options">
                           {q.options.map((opt, oi) => {
                             const isPicked = picked === oi;
-                            const showCorrect = lessonQuizChecked && oi === q.answer;
-                            const showWrong = lessonQuizChecked && isPicked && oi !== q.answer;
+                            const showCorrect = qChecked && oi === q.answer;
+                            const showWrong = qChecked && isPicked && oi !== q.answer;
                             return (
                               <label
                                 key={oi}
@@ -1895,21 +1905,16 @@ export function UnitPage({
                               >
                                 <input
                                   type="radio"
-                                  name={`lesson-quiz-${qi}`}
+                                  name={`lesson-quiz-${si}-${qi}`}
                                   checked={isPicked}
-                                  onChange={() => {
-                                    const next = quizAnswers.slice();
-                                    next[qi] = oi;
-                                    setLessonQuizAnswers(next);
-                                    setLessonQuizChecked(false);
-                                  }}
+                                  onChange={() => setAnswer(qi, oi)}
                                 />
                                 <span>{opt}</span>
                               </label>
                             );
                           })}
                         </div>
-                        {lessonQuizChecked && !correct && q.explain && (
+                        {qChecked && !correct && q.explain && (
                           <div className="lesson-quiz-explain"><Gloss text={q.explain} /></div>
                         )}
                       </div>
@@ -1919,16 +1924,16 @@ export function UnitPage({
                 <div className="lesson-quiz-actions">
                   <button
                     className="btn"
-                    disabled={!quizAllAnswered}
-                    onClick={() => setLessonQuizChecked(true)}
+                    disabled={!qAllAnswered}
+                    onClick={() => setLessonQuizChecked((prev) => ({ ...prev, [si]: true }))}
                   >
                     Check answers
                   </button>
-                  {lessonQuizChecked && (
-                    <span className={`lesson-quiz-status${quizAllCorrect ? " ok" : " bad"}`}>
-                      {quizAllCorrect
-                        ? "All five correct — you can finish the lesson."
-                        : `${quizAnswers.filter((a, i) => a === quizList[i].answer).length} / ${quizList.length} correct — fix the wrong answers and check again.`}
+                  {qChecked && (
+                    <span className={`lesson-quiz-status${qAllCorrect ? " ok" : " bad"}`}>
+                      {qAllCorrect
+                        ? "All five correct — Next unlocked."
+                        : `${qAnswers.filter((a, i) => a === slideQuiz[i].answer).length} / ${slideQuiz.length} correct — fix the wrong answers and check again.`}
                     </span>
                   )}
                 </div>
@@ -2294,10 +2299,6 @@ export function UnitPage({
                   const slideCap = capOf(heroFig.id, heroFig.caption);
                   return (
                     <div className="lesson-slide">
-                      <div className="lesson-slide-head">
-                        <div className="lesson-slide-eyebrow">Slide {si + 1} of {total}</div>
-                        <h2 className="lesson-slide-title">{secHeading}</h2>
-                      </div>
                       <button
                         type="button"
                         className="lesson-slide-figure"
@@ -2320,6 +2321,7 @@ export function UnitPage({
                           })}
                         </ul>
                       )}
+                      {quizBlock}
                     </div>
                   );
                 })() : (
@@ -2345,7 +2347,7 @@ export function UnitPage({
                           )}
                         </h2>
                       )}
-                      {quizBody ?? body}
+                      {quizBlock ?? body}
                     </div>
                   </>
                 )}

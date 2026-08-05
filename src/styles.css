@@ -6057,3 +6057,23 @@ input.att-sig {
   .lesson-slide { grid-template-columns: 1fr; }
   .lesson-slide-figure { aspect-ratio: 16 / 10; }
 }
+
+/* per-slide quiz below the slide bullets */
+.lesson-slide-quiz {
+  grid-column: 1 / -1;
+  margin-top: 6px;
+  padding: 16px 18px;
+  border: 1px solid var(--border, #d0d7de);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.02);
+}
+.lesson-slide-quiz-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #1a7f37;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}

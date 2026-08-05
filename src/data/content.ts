@@ -4157,10 +4157,67 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-4-components", caption: "The four components of a computer system — the map for the whole lesson" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Database software",
+              "Firmware and low-level software",
+              "Graphics and AI hardware — from rendering to neural networks",
+              "The four components of a computer system — the map for the whole lesson",
+            ],
+            answer: 3,
+            explain: "This slide covers: The four components of a computer system — the map for the whole lesson.",
+          },
+          {
+            q: "Which of the following is TRUE about The four components of a computer system — the map for the whole lesson?",
+            options: [
+              "Webcam and microphone for calls and content.",
+              "Different jobs, often confused.",
+              "Steps 12 V from the PSU down to ~1 V for the CPU.",
+              "Every computer = input + processing + storage + output.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Every computer = input + processing + storage + output.\"",
+          },
+          {
+            q: "Which of the following is TRUE about The four components of a computer system — the map for the whole lesson?",
+            options: [
+              "Hardware is what you touch; software is what runs on it.",
+              "Run on top of the OS.",
+              "Sight: monitors, projectors, VR headsets, smart glasses, LED displays.",
+              "Touch & other senses: printers, plotters, 3D printers, haptic gloves, braille displays.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Hardware is what you touch; software is what runs on it.\"",
+          },
+          {
+            q: "Which of the following is TRUE about The four components of a computer system — the map for the whole lesson?",
+            options: [
+              "Access point: provides Wi-Fi coverage.",
+              "Use this map to place every other slide in the deck.",
+              "NVIDIA vs AMD vs Intel Arc for GPUs.",
+              "Stores structured data (SQL Server, MySQL, Postgres).",
+            ],
+            answer: 1,
+            explain: "Correct: \"Use this map to place every other slide in the deck.\"",
+          },
+          {
+            q: "Which of the following is NOT true about The four components of a computer system — the map for the whole lesson?",
+            options: [
+              "Colour-coded pairs enable dual-channel mode.",
+              "Every computer = input + processing + storage + output.",
+              "Hardware is what you touch; software is what runs on it.",
+              "Use this map to place every other slide in the deck.",
+            ],
+            answer: 0,
+            explain: "\"Colour-coded pairs enable dual-channel mode.\" is about a different topic, not The four components of a computer system — the map for the whole lesson.",
+          },
+        ],
       },
       {
         heading: "PART 1 — HARDWARE: the physical machine",
-        icon: "chip",
+        icon: "presenter",
         flat: true,
         paragraphs: [
           "Every slide in Part 1 shows a physical component you can point at inside a PC case. Work outwards from the motherboard: processors, cooling, memory, storage, power, case & ports, input and output devices, and networking hardware.",
@@ -4179,6 +4236,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-motherboard-components", caption: "Motherboard components — the labelled overview" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Motherboard components — the labelled overview",
+              "Firmware and low-level software",
+              "Database software",
+              "Input devices — the essentials",
+            ],
+            answer: 0,
+            explain: "This slide covers: Motherboard components — the labelled overview.",
+          },
+          {
+            q: "Which of the following is TRUE about Motherboard components — the labelled overview?",
+            options: [
+              "Central hub that connects CPU, RAM, storage, GPU and PSU.",
+              "Used for SATA SSDs, HDDs and DVD drives.",
+              "VMs run whole guest OSes on shared hardware.",
+              "'The cloud' = someone else's servers.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Central hub that connects CPU, RAM, storage, GPU and PSU.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Motherboard components — the labelled overview?",
+            options: [
+              "Runs on servers, routers and endpoints.",
+              "Support role: getting AI tools working for users.",
+              "SaaS, PaaS, IaaS — three service models.",
+              "Learn the slot names: CPU socket, DIMM, PCIe, M.2, SATA.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Learn the slot names: CPU socket, DIMM, PCIe, M.2, SATA.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Motherboard components — the labelled overview?",
+            options: [
+              "Chipset routes traffic between all components.",
+              "Initialises hardware, then hands over to the OS.",
+              "Copilots, chatbots, image and voice tools.",
+              "Undersized PSU = crashes under GPU load.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Chipset routes traffic between all components.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Motherboard components — the labelled overview?",
+            options: [
+              "Chipset routes traffic between all components.",
+              "Often licensed per user or per device.",
+              "Central hub that connects CPU, RAM, storage, GPU and PSU.",
+              "Learn the slot names: CPU socket, DIMM, PCIe, M.2, SATA.",
+            ],
+            answer: 1,
+            explain: "\"Often licensed per user or per device.\" is about a different topic, not Motherboard components — the labelled overview.",
+          },
+        ],
       },
       {
         heading: "The CPU socket — where the processor lives",
@@ -4191,6 +4305,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-motherboard-cpu-socket", caption: "The CPU socket — where the processor lives" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "SATA ports — connecting SATA drives and optical drives",
+              "The CPU socket — where the processor lives",
+              "Expansion hardware — add-in cards",
+              "Operating systems — the core system software",
+            ],
+            answer: 1,
+            explain: "This slide covers: The CPU socket — where the processor lives.",
+          },
+          {
+            q: "Which of the following is TRUE about The CPU socket — where the processor lives?",
+            options: [
+              "Software tells hardware what to do.",
+              "Physical mount that connects the CPU to the board.",
+              "Talks directly over PCIe — no SATA bottleneck.",
+              "Tensor / matrix cores accelerate AI operations.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Physical mount that connects the CPU to the board.\"",
+          },
+          {
+            q: "Which of the following is TRUE about The CPU socket — where the processor lives?",
+            options: [
+              "Socket type (LGA, PGA, BGA) must match the CPU.",
+              "Reliable, cheap, no leaks.",
+              "Case fans, CPU cooler, VRM & M.2 heatsinks, paste.",
+              "Watch for shared bandwidth with SATA on some boards.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Socket type (LGA, PGA, BGA) must match the CPU.\"",
+          },
+          {
+            q: "Which of the following is TRUE about The CPU socket — where the processor lives?",
+            options: [
+              "Each step is roughly ×1000.",
+              "NVMe SSD: plugs into M.2, blazing fast.",
+              "Firmware lives inside chips (BIOS/UEFI, SSD, NIC).",
+              "Damaged pins here = dead motherboard.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Damaged pins here = dead motherboard.\"",
+          },
+          {
+            q: "Which of the following is NOT true about The CPU socket — where the processor lives?",
+            options: [
+              "Socket type (LGA, PGA, BGA) must match the CPU.",
+              "SATA SSD: no moving parts, fast enough for most users.",
+              "Damaged pins here = dead motherboard.",
+              "Physical mount that connects the CPU to the board.",
+            ],
+            answer: 1,
+            explain: "\"SATA SSD: no moving parts, fast enough for most users.\" is about a different topic, not The CPU socket — where the processor lives.",
+          },
         ],
       },
       {
@@ -4205,6 +4376,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-vrm", caption: "VRM (Voltage Regulator Module) — the power behind your CPU" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "VRM (Voltage Regulator Module) — the power behind your CPU",
+              "Input devices — the extended catalogue (24 devices)",
+              "Different CPUs and GPUs — how modern processors compare",
+              "Liquid CPU cooler — AIO (All-In-One)",
+            ],
+            answer: 0,
+            explain: "This slide covers: VRM (Voltage Regulator Module) — the power behind your CPU.",
+          },
+          {
+            q: "Which of the following is TRUE about VRM (Voltage Regulator Module) — the power behind your CPU?",
+            options: [
+              "History explains today's design choices.",
+              "Drivers translate between the two.",
+              "Steps 12 V from the PSU down to ~1 V for the CPU.",
+              "DHCP, DNS, VPN, firewall, load balancer.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Steps 12 V from the PSU down to ~1 V for the CPU.\"",
+          },
+          {
+            q: "Which of the following is TRUE about VRM (Voltage Regulator Module) — the power behind your CPU?",
+            options: [
+              "Learn what each port can and can't carry.",
+              "Weak VRM = instability under heavy load.",
+              "Kernel bugs can crash the whole machine (BSOD).",
+              "Form factors: ATX, Micro-ATX, Mini-ITX.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Weak VRM = instability under heavy load.\"",
+          },
+          {
+            q: "Which of the following is TRUE about VRM (Voltage Regulator Module) — the power behind your CPU?",
+            options: [
+              "Runs hot — needs its own heatsink on gaming boards.",
+              "Socket type (LGA, PGA, BGA) must match the CPU.",
+              "PCIe cards add Wi-Fi, capture, sound, extra USB, RAID.",
+              "Enterprise policy changes via Group Policy.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Runs hot — needs its own heatsink on gaming boards.\"",
+          },
+          {
+            q: "Which of the following is NOT true about VRM (Voltage Regulator Module) — the power behind your CPU?",
+            options: [
+              "Steps 12 V from the PSU down to ~1 V for the CPU.",
+              "Runs hot — needs its own heatsink on gaming boards.",
+              "Weak VRM = instability under heavy load.",
+              "Browsers, email clients, messaging apps.",
+            ],
+            answer: 3,
+            explain: "\"Browsers, email clients, messaging apps.\" is about a different topic, not VRM (Voltage Regulator Module) — the power behind your CPU.",
+          },
+        ],
       },
       {
         heading: "BIOS / UEFI chip — the firmware that starts your PC",
@@ -4217,6 +4445,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-bios-uefi", caption: "BIOS / UEFI chip — the firmware that starts your PC" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Rear I/O panel — old vs latest",
+              "Virtualisation and containers",
+              "Cloud computing software (part 1)",
+              "BIOS / UEFI chip — the firmware that starts your PC",
+            ],
+            answer: 3,
+            explain: "This slide covers: BIOS / UEFI chip — the firmware that starts your PC.",
+          },
+          {
+            q: "Which of the following is TRUE about BIOS / UEFI chip — the firmware that starts your PC?",
+            options: [
+              "Damaged pins here = dead motherboard.",
+              "More RAM = more apps open at once without slowing down.",
+              "Wired vs wireless: speed vs convenience.",
+              "First code to run when you press power.",
+            ],
+            answer: 3,
+            explain: "Correct: \"First code to run when you press power.\"",
+          },
+          {
+            q: "Which of the following is TRUE about BIOS / UEFI chip — the firmware that starts your PC?",
+            options: [
+              "File system organises everything on disk.",
+              "Keeps date, time and BIOS settings when unplugged.",
+              "Initialises hardware, then hands over to the OS.",
+              "Browsers, email clients, messaging apps.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Initialises hardware, then hands over to the OS.\"",
+          },
+          {
+            q: "Which of the following is TRUE about BIOS / UEFI chip — the firmware that starts your PC?",
+            options: [
+              "Slower than NVMe but very flexible.",
+              "UEFI replaces the older BIOS with a modern interface.",
+              "Tiny, extremely fast memory next to the CPU cores.",
+              "Updated with vendor tools — carefully.",
+            ],
+            answer: 1,
+            explain: "Correct: \"UEFI replaces the older BIOS with a modern interface.\"",
+          },
+          {
+            q: "Which of the following is NOT true about BIOS / UEFI chip — the firmware that starts your PC?",
+            options: [
+              "Initialises hardware, then hands over to the OS.",
+              "Runs hot — usually needs a small heatsink.",
+              "First code to run when you press power.",
+              "UEFI replaces the older BIOS with a modern interface.",
+            ],
+            answer: 1,
+            explain: "\"Runs hot — usually needs a small heatsink.\" is about a different topic, not BIOS / UEFI chip — the firmware that starts your PC.",
+          },
         ],
       },
       {
@@ -4231,6 +4516,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-cmos-battery", caption: "CMOS battery — keeps BIOS settings and the clock alive" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "CMOS battery — keeps BIOS settings and the clock alive",
+              "The history of storage devices — from magnetic drums to NVMe",
+              "Output devices — monitors, speakers, headphones, projectors, VR, printers and more",
+              "When would you actually want to use the Registry?",
+            ],
+            answer: 0,
+            explain: "This slide covers: CMOS battery — keeps BIOS settings and the clock alive.",
+          },
+          {
+            q: "Which of the following is TRUE about CMOS battery — keeps BIOS settings and the clock alive?",
+            options: [
+              "Small coin cell (CR2032) on the motherboard.",
+              "Queried with SQL.",
+              "Fingerprint reader for secure sign-in.",
+              "AC → rectifier → transformer → DC rails.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Small coin cell (CR2032) on the motherboard.\"",
+          },
+          {
+            q: "Which of the following is TRUE about CMOS battery — keeps BIOS settings and the clock alive?",
+            options: [
+              "Front panel connects power button, USB and audio.",
+              "Billions of transistors; multiple cores and threads.",
+              "Microsoft 365, Google Workspace: everyday SaaS.",
+              "Keeps date, time and BIOS settings when unplugged.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Keeps date, time and BIOS settings when unplugged.\"",
+          },
+          {
+            q: "Which of the following is TRUE about CMOS battery — keeps BIOS settings and the clock alive?",
+            options: [
+              "Users are still the biggest attack surface.",
+              "Thunderbolt 4/5 is the fastest general port on a PC.",
+              "Dead battery = clock resets, boot errors.",
+              "Windows, macOS, Linux, ChromeOS, Android, iOS.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Dead battery = clock resets, boot errors.\"",
+          },
+          {
+            q: "Which of the following is NOT true about CMOS battery — keeps BIOS settings and the clock alive?",
+            options: [
+              "Small coin cell (CR2032) on the motherboard.",
+              "3D and design tools (Blender, AutoCAD).",
+              "Dead battery = clock resets, boot errors.",
+              "Keeps date, time and BIOS settings when unplugged.",
+            ],
+            answer: 1,
+            explain: "\"3D and design tools (Blender, AutoCAD).\" is about a different topic, not CMOS battery — keeps BIOS settings and the clock alive.",
+          },
+        ],
       },
       {
         heading: "CPU (Central Processing Unit) — anatomy of the chip",
@@ -4243,6 +4585,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-cpu", caption: "CPU (Central Processing Unit) — anatomy of the chip" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Expansion hardware — add-in cards",
+              "CPU (Central Processing Unit) — anatomy of the chip",
+              "DIMM slots — where RAM plugs in",
+              "Storage hardware — the full family (HDD, SSD, NVMe)",
+            ],
+            answer: 1,
+            explain: "This slide covers: CPU (Central Processing Unit) — anatomy of the chip.",
+          },
+          {
+            q: "Which of the following is TRUE about CPU (Central Processing Unit) — anatomy of the chip?",
+            options: [
+              "Web servers, CMS platforms.",
+              "Editors and IDEs (VS Code, IntelliJ, Xcode).",
+              "Executes the instructions of every program.",
+              "Runs hot — needs its own heatsink on gaming boards.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Executes the instructions of every program.\"",
+          },
+          {
+            q: "Which of the following is TRUE about CPU (Central Processing Unit) — anatomy of the chip?",
+            options: [
+              "Billions of transistors; multiple cores and threads.",
+              "NVIDIA vs AMD vs Intel Arc for GPUs.",
+              "Storage capacity is a business problem, not just tech.",
+              "Stores structured data (SQL Server, MySQL, Postgres).",
+            ],
+            answer: 0,
+            explain: "Correct: \"Billions of transistors; multiple cores and threads.\"",
+          },
+          {
+            q: "Which of the following is TRUE about CPU (Central Processing Unit) — anatomy of the chip?",
+            options: [
+              "Where every other software category starts.",
+              "Runs on servers, routers and endpoints.",
+              "Sealed pump moves coolant to a radiator.",
+              "Clock speed × cores × cache = real-world performance.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Clock speed × cores × cache = real-world performance.\"",
+          },
+          {
+            q: "Which of the following is NOT true about CPU (Central Processing Unit) — anatomy of the chip?",
+            options: [
+              "Clock speed × cores × cache = real-world performance.",
+              "One data cable + one power cable per drive.",
+              "Billions of transistors; multiple cores and threads.",
+              "Executes the instructions of every program.",
+            ],
+            answer: 1,
+            explain: "\"One data cable + one power cable per drive.\" is about a different topic, not CPU (Central Processing Unit) — anatomy of the chip.",
+          },
         ],
       },
       {
@@ -4257,6 +4656,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-cpu-cache", caption: "CPU cache — L1, L2 and L3" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "CPU cache — L1, L2 and L3",
+              "CPU cooler — traditional air cooler",
+              "M.2 slots — where NVMe SSDs live",
+              "Networking software",
+            ],
+            answer: 0,
+            explain: "This slide covers: CPU cache — L1, L2 and L3.",
+          },
+          {
+            q: "Which of the following is TRUE about CPU cache — L1, L2 and L3?",
+            options: [
+              "Tiny, extremely fast memory next to the CPU cores.",
+              "NPU is power-efficient — great on laptops.",
+              "Talks directly over PCIe — no SATA bottleneck.",
+              "Tensor / matrix cores accelerate AI operations.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Tiny, extremely fast memory next to the CPU cores.\"",
+          },
+          {
+            q: "Which of the following is TRUE about CPU cache — L1, L2 and L3?",
+            options: [
+              "Better for very hot CPUs (i9/Ryzen 9).",
+              "Kernel bugs can crash the whole machine (BSOD).",
+              "L1 fastest/smallest, L3 largest/shared.",
+              "Users think in files; support thinks in units.",
+            ],
+            answer: 2,
+            explain: "Correct: \"L1 fastest/smallest, L3 largest/shared.\"",
+          },
+          {
+            q: "Which of the following is TRUE about CPU cache — L1, L2 and L3?",
+            options: [
+              "Big cache helps games, databases and AI a lot.",
+              "Delivers 12 V, 5 V and 3.3 V to the board and drives.",
+              "DDR4 and DDR5 are the current standards.",
+              "Volatile — loses everything on power off.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Big cache helps games, databases and AI a lot.\"",
+          },
+          {
+            q: "Which of the following is NOT true about CPU cache — L1, L2 and L3?",
+            options: [
+              "Big cache helps games, databases and AI a lot.",
+              "L1 fastest/smallest, L3 largest/shared.",
+              "Tiny, extremely fast memory next to the CPU cores.",
+              "Backups are critical — data loss = job loss.",
+            ],
+            answer: 3,
+            explain: "\"Backups are critical — data loss = job loss.\" is about a different topic, not CPU cache — L1, L2 and L3.",
+          },
+        ],
       },
       {
         heading: "Different CPUs and GPUs — how modern processors compare",
@@ -4269,6 +4725,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-different-cpus-gpus", caption: "Different CPUs and GPUs — how modern processors compare" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "CMOS battery — keeps BIOS settings and the clock alive",
+              "CPU (Central Processing Unit) — anatomy of the chip",
+              "Software modules — the programs that power your PC",
+              "Different CPUs and GPUs — how modern processors compare",
+            ],
+            answer: 3,
+            explain: "This slide covers: Different CPUs and GPUs — how modern processors compare.",
+          },
+          {
+            q: "Which of the following is TRUE about Different CPUs and GPUs — how modern processors compare?",
+            options: [
+              "Slot size: x1, x4, x8, x16 — must fit the card.",
+              "Front panel connects power button, USB and audio.",
+              "Stylus, trackball, joystick, controller, light gun.",
+              "Intel vs AMD vs Apple: different sockets, same job.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Intel vs AMD vs Apple: different sockets, same job.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Different CPUs and GPUs — how modern processors compare?",
+            options: [
+              "NVIDIA vs AMD vs Intel Arc for GPUs.",
+              "Touch & other senses: printers, plotters, 3D printers, haptic gloves, braille displays.",
+              "Router: connects the LAN to the Internet.",
+              "Hardware is what you touch; software is what runs on it.",
+            ],
+            answer: 0,
+            explain: "Correct: \"NVIDIA vs AMD vs Intel Arc for GPUs.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Different CPUs and GPUs — how modern processors compare?",
+            options: [
+              "IP addresses identify devices on the network.",
+              "Stylus, trackball, joystick, controller, light gun.",
+              "Pick the chip that matches the user's workload.",
+              "Every app depends on the OS to run.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Pick the chip that matches the user's workload.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Different CPUs and GPUs — how modern processors compare?",
+            options: [
+              "NVIDIA vs AMD vs Intel Arc for GPUs.",
+              "Intel vs AMD vs Apple: different sockets, same job.",
+              "Each step is roughly ×1000.",
+              "Pick the chip that matches the user's workload.",
+            ],
+            answer: 2,
+            explain: "\"Each step is roughly ×1000.\" is about a different topic, not Different CPUs and GPUs — how modern processors compare.",
+          },
         ],
       },
       {
@@ -4283,6 +4796,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-graphics-ai", caption: "Graphics and AI hardware — from rendering to neural networks" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Graphics and AI hardware — from rendering to neural networks",
+              "The four components of a computer system — the map for the whole lesson",
+              "M.2 slots — where NVMe SSDs live",
+              "Cloud computing software (part 2)",
+            ],
+            answer: 0,
+            explain: "This slide covers: Graphics and AI hardware — from rendering to neural networks.",
+          },
+          {
+            q: "Which of the following is TRUE about Graphics and AI hardware — from rendering to neural networks?",
+            options: [
+              "Bad firmware update can brick a device.",
+              "Programs users interact with directly.",
+              "The same GPU hardware runs games and neural networks.",
+              "Containers share the host OS, start in seconds.",
+            ],
+            answer: 2,
+            explain: "Correct: \"The same GPU hardware runs games and neural networks.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Graphics and AI hardware — from rendering to neural networks?",
+            options: [
+              "3D and design tools (Blender, AutoCAD).",
+              "Runs hot — usually needs a small heatsink.",
+              "Antivirus, EDR, SIEM, MFA, encryption.",
+              "Tensor / matrix cores accelerate AI operations.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Tensor / matrix cores accelerate AI operations.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Graphics and AI hardware — from rendering to neural networks?",
+            options: [
+              "Local AI models now run on consumer GPUs.",
+              "Support role: getting AI tools working for users.",
+              "SaaS, PaaS, IaaS — three service models.",
+              "Compilers, debuggers, version control (Git).",
+            ],
+            answer: 0,
+            explain: "Correct: \"Local AI models now run on consumer GPUs.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Graphics and AI hardware — from rendering to neural networks?",
+            options: [
+              "The same GPU hardware runs games and neural networks.",
+              "Local AI models now run on consumer GPUs.",
+              "Antivirus, backup, disk clean-up, compression.",
+              "Tensor / matrix cores accelerate AI operations.",
+            ],
+            answer: 2,
+            explain: "\"Antivirus, backup, disk clean-up, compression.\" is about a different topic, not Graphics and AI hardware — from rendering to neural networks.",
+          },
+        ],
       },
       {
         heading: "Modern AI PC hardware — CPU + GPU + NPU together",
@@ -4295,6 +4865,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-modern-ai-pc", caption: "Modern AI PC hardware — CPU + GPU + NPU together" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Kernel vs Registry on Windows (part 2)",
+              "Modern AI PC hardware — CPU + GPU + NPU together",
+              "The four components of a computer system — the map for the whole lesson",
+              "Cloud computing software (part 2)",
+            ],
+            answer: 1,
+            explain: "This slide covers: Modern AI PC hardware — CPU + GPU + NPU together.",
+          },
+          {
+            q: "Which of the following is TRUE about Modern AI PC hardware — CPU + GPU + NPU together?",
+            options: [
+              "Runs hot — usually needs a small heatsink.",
+              "NPU (Neural Processing Unit) is a dedicated AI chip.",
+              "Weak VRM = instability under heavy load.",
+              "Copilots, chatbots, image and voice tools.",
+            ],
+            answer: 1,
+            explain: "Correct: \"NPU (Neural Processing Unit) is a dedicated AI chip.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Modern AI PC hardware — CPU + GPU + NPU together?",
+            options: [
+              "Damaged pins here = dead motherboard.",
+              "Wired vs wireless: speed vs convenience.",
+              "Copilot+ PCs use CPU, GPU and NPU together.",
+              "Used for SATA SSDs, HDDs and DVD drives.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Copilot+ PCs use CPU, GPU and NPU together.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Modern AI PC hardware — CPU + GPU + NPU together?",
+            options: [
+              "Billions of transistors; multiple cores and threads.",
+              "Pick the chip that matches the user's workload.",
+              "Punched cards → tape → drums → HDD → SSD → NVMe.",
+              "NPU is power-efficient — great on laptops.",
+            ],
+            answer: 3,
+            explain: "Correct: \"NPU is power-efficient — great on laptops.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Modern AI PC hardware — CPU + GPU + NPU together?",
+            options: [
+              "Copilot+ PCs use CPU, GPU and NPU together.",
+              "NPU is power-efficient — great on laptops.",
+              "History explains today's design choices.",
+              "NPU (Neural Processing Unit) is a dedicated AI chip.",
+            ],
+            answer: 2,
+            explain: "\"History explains today's design choices.\" is about a different topic, not Modern AI PC hardware — CPU + GPU + NPU together.",
+          },
         ],
       },
       {
@@ -4309,6 +4936,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-cpu-cooler-air", caption: "CPU cooler — traditional air cooler" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "CPU cooler — traditional air cooler",
+              "Multimedia and creative software",
+              "Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD",
+              "Kernel vs Registry on Windows (part 1)",
+            ],
+            answer: 0,
+            explain: "This slide covers: CPU cooler — traditional air cooler.",
+          },
+          {
+            q: "Which of the following is TRUE about CPU cooler — traditional air cooler?",
+            options: [
+              "Heatsink + fan moves heat from CPU to case air.",
+              "Better for very hot CPUs (i9/Ryzen 9).",
+              "Kernel = the core code that runs the OS.",
+              "Users think in files; support thinks in units.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Heatsink + fan moves heat from CPU to case air.\"",
+          },
+          {
+            q: "Which of the following is TRUE about CPU cooler — traditional air cooler?",
+            options: [
+              "Back up before touching either.",
+              "Reliable, cheap, no leaks.",
+              "Cloud storage, cloud backup, cloud identity.",
+              "HDD: spinning platters, cheap and large, slow.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Reliable, cheap, no leaks.\"",
+          },
+          {
+            q: "Which of the following is TRUE about CPU cooler — traditional air cooler?",
+            options: [
+              "Slower than NVMe but very flexible.",
+              "Old boards: PS/2, VGA, parallel, serial.",
+              "Thermal paste sits between CPU and heatsink.",
+              "Updated with vendor tools — carefully.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Thermal paste sits between CPU and heatsink.\"",
+          },
+          {
+            q: "Which of the following is NOT true about CPU cooler — traditional air cooler?",
+            options: [
+              "Heatsink + fan moves heat from CPU to case air.",
+              "Reliable, cheap, no leaks.",
+              "Thermal paste sits between CPU and heatsink.",
+              "Public, private, hybrid — three deployment models.",
+            ],
+            answer: 3,
+            explain: "\"Public, private, hybrid — three deployment models.\" is about a different topic, not CPU cooler — traditional air cooler.",
+          },
+        ],
       },
       {
         heading: "Liquid CPU cooler — AIO (All-In-One)",
@@ -4321,6 +5005,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-cpu-cooler-aio", caption: "Liquid CPU cooler — AIO (All-In-One)" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "When would you actually want to use the Registry?",
+              "SSD (NVMe M.2) — the modern fast SSD",
+              "The history of storage devices — from magnetic drums to NVMe",
+              "Liquid CPU cooler — AIO (All-In-One)",
+            ],
+            answer: 3,
+            explain: "This slide covers: Liquid CPU cooler — AIO (All-In-One).",
+          },
+          {
+            q: "Which of the following is TRUE about Liquid CPU cooler — AIO (All-In-One)?",
+            options: [
+              "Weak VRM = instability under heavy load.",
+              "Undersized PSU = crashes under GPU load.",
+              "Kernel talks to hardware; UI talks to the user.",
+              "Sealed pump moves coolant to a radiator.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Sealed pump moves coolant to a radiator.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Liquid CPU cooler — AIO (All-In-One)?",
+            options: [
+              "Better for very hot CPUs (i9/Ryzen 9).",
+              "Not all USB-C ports carry video or Thunderbolt.",
+              "Small coin cell (CR2032) on the motherboard.",
+              "Thermal paste sits between CPU and heatsink.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Better for very hot CPUs (i9/Ryzen 9).\"",
+          },
+          {
+            q: "Which of the following is TRUE about Liquid CPU cooler — AIO (All-In-One)?",
+            options: [
+              "Clock speed × cores × cache = real-world performance.",
+              "Pump can fail — watch for temperature spikes.",
+              "Run on top of the OS.",
+              "Sight: monitors, projectors, VR headsets, smart glasses, LED displays.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Pump can fail — watch for temperature spikes.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Liquid CPU cooler — AIO (All-In-One)?",
+            options: [
+              "Converts AC mains to DC rails for every component.",
+              "Sealed pump moves coolant to a radiator.",
+              "Better for very hot CPUs (i9/Ryzen 9).",
+              "Pump can fail — watch for temperature spikes.",
+            ],
+            answer: 0,
+            explain: "\"Converts AC mains to DC rails for every component.\" is about a different topic, not Liquid CPU cooler — AIO (All-In-One).",
+          },
         ],
       },
       {
@@ -4335,6 +5076,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-cooling-components", caption: "Cooling and thermal components — the whole thermal system" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Cooling and thermal components — the whole thermal system",
+              "Software modules — the programs that power your PC",
+              "VRM (Voltage Regulator Module) — the power behind your CPU",
+              "CMOS battery — keeps BIOS settings and the clock alive",
+            ],
+            answer: 0,
+            explain: "This slide covers: Cooling and thermal components — the whole thermal system.",
+          },
+          {
+            q: "Which of the following is TRUE about Cooling and thermal components — the whole thermal system?",
+            options: [
+              "Case fans, CPU cooler, VRM & M.2 heatsinks, paste.",
+              "Defence in depth — no single product is enough.",
+              "Kernel talks to hardware; UI talks to the user.",
+              "Undersized PSU = crashes under GPU load.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Case fans, CPU cooler, VRM & M.2 heatsinks, paste.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Cooling and thermal components — the whole thermal system?",
+            options: [
+              "New boards: USB-C, HDMI, DisplayPort, 2.5G Ethernet.",
+              "Enterprise policy changes via Group Policy.",
+              "PCIe cards add Wi-Fi, capture, sound, extra USB, RAID.",
+              "Airflow direction: in at the front, out at the rear.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Airflow direction: in at the front, out at the rear.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Cooling and thermal components — the whole thermal system?",
+            options: [
+              "Dust is enemy #1 — clean filters regularly.",
+              "Web servers, CMS platforms.",
+              "Each port has a specific role: data, video, network, audio.",
+              "Runs hot — needs its own heatsink on gaming boards.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Dust is enemy #1 — clean filters regularly.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Cooling and thermal components — the whole thermal system?",
+            options: [
+              "Dust is enemy #1 — clean filters regularly.",
+              "'The cloud' = someone else's servers.",
+              "Case fans, CPU cooler, VRM & M.2 heatsinks, paste.",
+              "Airflow direction: in at the front, out at the rear.",
+            ],
+            answer: 1,
+            explain: "\"'The cloud' = someone else's servers.\" is about a different topic, not Cooling and thermal components — the whole thermal system.",
+          },
+        ],
       },
       {
         heading: "Memory (RAM) — how the modules work",
@@ -4347,6 +5145,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-memory-ram", caption: "Memory (RAM) — how the modules work" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Cloud computing software (part 1)",
+              "Memory (RAM) — how the modules work",
+              "Firmware and low-level software",
+              "Input devices — the essentials",
+            ],
+            answer: 1,
+            explain: "This slide covers: Memory (RAM) — how the modules work.",
+          },
+          {
+            q: "Which of the following is TRUE about Memory (RAM) — how the modules work?",
+            options: [
+              "Check maximum supported speed in the manual.",
+              "Volatile — loses everything on power off.",
+              "Photo, video, audio editors (Photoshop, Premiere).",
+              "Public, private, hybrid — three deployment models.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Volatile — loses everything on power off.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Memory (RAM) — how the modules work?",
+            options: [
+              "More RAM = more apps open at once without slowing down.",
+              "3D and design tools (Blender, AutoCAD).",
+              "Antivirus, EDR, SIEM, MFA, encryption.",
+              "Backups are critical — data loss = job loss.",
+            ],
+            answer: 0,
+            explain: "Correct: \"More RAM = more apps open at once without slowing down.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Memory (RAM) — how the modules work?",
+            options: [
+              "Small tools, big impact on reliability.",
+              "Chipset routes traffic between all components.",
+              "Punched cards → tape → drums → HDD → SSD → NVMe.",
+              "DDR4 and DDR5 are the current standards.",
+            ],
+            answer: 3,
+            explain: "Correct: \"DDR4 and DDR5 are the current standards.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Memory (RAM) — how the modules work?",
+            options: [
+              "More RAM = more apps open at once without slowing down.",
+              "Delivers 12 V, 5 V and 3.3 V to the board and drives.",
+              "DDR4 and DDR5 are the current standards.",
+              "Volatile — loses everything on power off.",
+            ],
+            answer: 1,
+            explain: "\"Delivers 12 V, 5 V and 3.3 V to the board and drives.\" is about a different topic, not Memory (RAM) — how the modules work.",
+          },
         ],
       },
       {
@@ -4361,6 +5216,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-dimm-slots", caption: "DIMM slots — where RAM plugs in" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "DIMM slots — where RAM plugs in",
+              "Computer case (chassis)",
+              "Kernel vs Registry on Windows (part 1)",
+              "How a PSU converts and delivers power in a PC",
+            ],
+            answer: 0,
+            explain: "This slide covers: DIMM slots — where RAM plugs in.",
+          },
+          {
+            q: "Which of the following is TRUE about DIMM slots — where RAM plugs in?",
+            options: [
+              "Clock speed × cores × cache = real-world performance.",
+              "Copilot+ PCs use CPU, GPU and NPU together.",
+              "Colour-coded pairs enable dual-channel mode.",
+              "Sight: monitors, projectors, VR headsets, smart glasses, LED displays.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Colour-coded pairs enable dual-channel mode.\"",
+          },
+          {
+            q: "Which of the following is TRUE about DIMM slots — where RAM plugs in?",
+            options: [
+              "Clock speed × cores × cache = real-world performance.",
+              "Populate matching slots for double the bandwidth.",
+              "Sealed pump moves coolant to a radiator.",
+              "Copilot+ PCs use CPU, GPU and NPU together.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Populate matching slots for double the bandwidth.\"",
+          },
+          {
+            q: "Which of the following is TRUE about DIMM slots — where RAM plugs in?",
+            options: [
+              "Check maximum supported speed in the manual.",
+              "Drivers translate between the two.",
+              "Volatile — loses everything on power off.",
+              "Dust is enemy #1 — clean filters regularly.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Check maximum supported speed in the manual.\"",
+          },
+          {
+            q: "Which of the following is NOT true about DIMM slots — where RAM plugs in?",
+            options: [
+              "Colour-coded pairs enable dual-channel mode.",
+              "Check maximum supported speed in the manual.",
+              "Populate matching slots for double the bandwidth.",
+              "DHCP, DNS, VPN, firewall, load balancer.",
+            ],
+            answer: 3,
+            explain: "\"DHCP, DNS, VPN, firewall, load balancer.\" is about a different topic, not DIMM slots — where RAM plugs in.",
+          },
+        ],
       },
       {
         heading: "Storage hardware — the full family (HDD, SSD, NVMe)",
@@ -4373,6 +5285,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-storage-hardware", caption: "Storage hardware — the full family (HDD, SSD, NVMe)" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Data units explained — from 1 kilobyte to zettabytes",
+              "New ports and connections — modern connectivity",
+              "CPU (Central Processing Unit) — anatomy of the chip",
+              "Storage hardware — the full family (HDD, SSD, NVMe)",
+            ],
+            answer: 3,
+            explain: "This slide covers: Storage hardware — the full family (HDD, SSD, NVMe).",
+          },
+          {
+            q: "Which of the following is TRUE about Storage hardware — the full family (HDD, SSD, NVMe)?",
+            options: [
+              "MIDI, eye tracker, voice, iris, data glove, foot pedal.",
+              "Small tools, big impact on reliability.",
+              "KB → MB → GB → TB → PB → EB → ZB.",
+              "HDD: spinning platters, cheap and large, slow.",
+            ],
+            answer: 3,
+            explain: "Correct: \"HDD: spinning platters, cheap and large, slow.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Storage hardware — the full family (HDD, SSD, NVMe)?",
+            options: [
+              "80 PLUS rating = efficiency (Bronze < Gold < Titanium).",
+              "Switch: connects wired devices inside the LAN.",
+              "SATA SSD: no moving parts, fast enough for most users.",
+              "AC → rectifier → transformer → DC rails.",
+            ],
+            answer: 2,
+            explain: "Correct: \"SATA SSD: no moving parts, fast enough for most users.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Storage hardware — the full family (HDD, SSD, NVMe)?",
+            options: [
+              "Users are still the biggest attack surface.",
+              "NVMe SSD: plugs into M.2, blazing fast.",
+              "OS, apps, utilities, drivers, firmware, middleware.",
+              "Thunderbolt 4/5 is the fastest general port on a PC.",
+            ],
+            answer: 1,
+            explain: "Correct: \"NVMe SSD: plugs into M.2, blazing fast.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Storage hardware — the full family (HDD, SSD, NVMe)?",
+            options: [
+              "SATA SSD: no moving parts, fast enough for most users.",
+              "Front panel connects power button, USB and audio.",
+              "HDD: spinning platters, cheap and large, slow.",
+              "NVMe SSD: plugs into M.2, blazing fast.",
+            ],
+            answer: 1,
+            explain: "\"Front panel connects power button, USB and audio.\" is about a different topic, not Storage hardware — the full family (HDD, SSD, NVMe).",
+          },
         ],
       },
       {
@@ -4387,6 +5356,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-ssd-nvme", caption: "SSD (NVMe M.2) — the modern fast SSD" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "SSD (NVMe M.2) — the modern fast SSD",
+              "Memory (RAM) — how the modules work",
+              "Web and internet software",
+              "DIMM slots — where RAM plugs in",
+            ],
+            answer: 0,
+            explain: "This slide covers: SSD (NVMe M.2) — the modern fast SSD.",
+          },
+          {
+            q: "Which of the following is TRUE about SSD (NVMe M.2) — the modern fast SSD?",
+            options: [
+              "Talks directly over PCIe — no SATA bottleneck.",
+              "Hearing: speakers and headphones.",
+              "Local AI models now run on consumer GPUs.",
+              "DHCP, DNS, VPN, firewall, load balancer.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Talks directly over PCIe — no SATA bottleneck.\"",
+          },
+          {
+            q: "Which of the following is TRUE about SSD (NVMe M.2) — the modern fast SSD?",
+            options: [
+              "Users are still the biggest attack surface.",
+              "Removing stubborn leftover app entries.",
+              "Windows, macOS, Linux, ChromeOS, Android, iOS.",
+              "Up to 10× faster than SATA SSDs.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Up to 10× faster than SATA SSDs.\"",
+          },
+          {
+            q: "Which of the following is TRUE about SSD (NVMe M.2) — the modern fast SSD?",
+            options: [
+              "Back up before touching either.",
+              "Hardware is what you touch; software is what runs on it.",
+              "Runs hot — usually needs a small heatsink.",
+              "Colour-coded pairs enable dual-channel mode.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Runs hot — usually needs a small heatsink.\"",
+          },
+          {
+            q: "Which of the following is NOT true about SSD (NVMe M.2) — the modern fast SSD?",
+            options: [
+              "Talks directly over PCIe — no SATA bottleneck.",
+              "Defence in depth — no single product is enough.",
+              "Runs hot — usually needs a small heatsink.",
+              "Up to 10× faster than SATA SSDs.",
+            ],
+            answer: 1,
+            explain: "\"Defence in depth — no single product is enough.\" is about a different topic, not SSD (NVMe M.2) — the modern fast SSD.",
+          },
+        ],
       },
       {
         heading: "M.2 slots — where NVMe SSDs live",
@@ -4399,6 +5425,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-m2-slots", caption: "M.2 slots — where NVMe SSDs live" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "BIOS / UEFI chip — the firmware that starts your PC",
+              "M.2 slots — where NVMe SSDs live",
+              "New ports and connections — modern connectivity",
+              "Graphics and AI hardware — from rendering to neural networks",
+            ],
+            answer: 1,
+            explain: "This slide covers: M.2 slots — where NVMe SSDs live.",
+          },
+          {
+            q: "Which of the following is TRUE about M.2 slots — where NVMe SSDs live?",
+            options: [
+              "Up to 10× faster than SATA SSDs.",
+              "USB-C is reversible and delivers data + video + power.",
+              "Long, thin slot on the motherboard.",
+              "Most 'apps' today are really web apps.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Long, thin slot on the motherboard.\"",
+          },
+          {
+            q: "Which of the following is TRUE about M.2 slots — where NVMe SSDs live?",
+            options: [
+              "Uses PCIe lanes for high speed.",
+              "Small tools, big impact on reliability.",
+              "Chipset routes traffic between all components.",
+              "KB → MB → GB → TB → PB → EB → ZB.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Uses PCIe lanes for high speed.\"",
+          },
+          {
+            q: "Which of the following is TRUE about M.2 slots — where NVMe SSDs live?",
+            options: [
+              "History explains today's design choices.",
+              "Hearing: speakers and headphones.",
+              "DHCP, DNS, VPN, firewall, load balancer.",
+              "Watch for shared bandwidth with SATA on some boards.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Watch for shared bandwidth with SATA on some boards.\"",
+          },
+          {
+            q: "Which of the following is NOT true about M.2 slots — where NVMe SSDs live?",
+            options: [
+              "Watch for shared bandwidth with SATA on some boards.",
+              "USB-C is reversible and delivers data + video + power.",
+              "Uses PCIe lanes for high speed.",
+              "Long, thin slot on the motherboard.",
+            ],
+            answer: 1,
+            explain: "\"USB-C is reversible and delivers data + video + power.\" is about a different topic, not M.2 slots — where NVMe SSDs live.",
+          },
         ],
       },
       {
@@ -4413,6 +5496,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-sata-ports", caption: "SATA ports — connecting SATA drives and optical drives" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "SATA ports — connecting SATA drives and optical drives",
+              "BIOS / UEFI chip — the firmware that starts your PC",
+              "Utility software — the small tools that keep systems healthy",
+              "Graphics and AI hardware — from rendering to neural networks",
+            ],
+            answer: 0,
+            explain: "This slide covers: SATA ports — connecting SATA drives and optical drives.",
+          },
+          {
+            q: "Which of the following is TRUE about SATA ports — connecting SATA drives and optical drives?",
+            options: [
+              "One data cable + one power cable per drive.",
+              "Different jobs, often confused.",
+              "Physical mount that connects the CPU to the board.",
+              "CRM: customer records (Salesforce, Dynamics).",
+            ],
+            answer: 0,
+            explain: "Correct: \"One data cable + one power cable per drive.\"",
+          },
+          {
+            q: "Which of the following is TRUE about SATA ports — connecting SATA drives and optical drives?",
+            options: [
+              "Removing stubborn leftover app entries.",
+              "Long, thin slot on the motherboard.",
+              "Used for SATA SSDs, HDDs and DVD drives.",
+              "Dead battery = clock resets, boot errors.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Used for SATA SSDs, HDDs and DVD drives.\"",
+          },
+          {
+            q: "Which of the following is TRUE about SATA ports — connecting SATA drives and optical drives?",
+            options: [
+              "Slower than NVMe but very flexible.",
+              "Tensor / matrix cores accelerate AI operations.",
+              "Support technicians rely on utilities daily.",
+              "Programs users interact with directly.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Slower than NVMe but very flexible.\"",
+          },
+          {
+            q: "Which of the following is NOT true about SATA ports — connecting SATA drives and optical drives?",
+            options: [
+              "Slower than NVMe but very flexible.",
+              "Used for SATA SSDs, HDDs and DVD drives.",
+              "One data cable + one power cable per drive.",
+              "Support role: getting AI tools working for users.",
+            ],
+            answer: 3,
+            explain: "\"Support role: getting AI tools working for users.\" is about a different topic, not SATA ports — connecting SATA drives and optical drives.",
+          },
+        ],
       },
       {
         heading: "Data units explained — from 1 kilobyte to zettabytes",
@@ -4425,6 +5565,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-data-units", caption: "Data units explained — from 1 kilobyte to zettabytes" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "AI software",
+              "Operating system components — kernel, drivers, file system, services, UI",
+              "Programming and development software",
+              "Data units explained — from 1 kilobyte to zettabytes",
+            ],
+            answer: 3,
+            explain: "This slide covers: Data units explained — from 1 kilobyte to zettabytes.",
+          },
+          {
+            q: "Which of the following is TRUE about Data units explained — from 1 kilobyte to zettabytes?",
+            options: [
+              "More RAM = more apps open at once without slowing down.",
+              "UEFI replaces the older BIOS with a modern interface.",
+              "First code to run when you press power.",
+              "KB → MB → GB → TB → PB → EB → ZB.",
+            ],
+            answer: 3,
+            explain: "Correct: \"KB → MB → GB → TB → PB → EB → ZB.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Data units explained — from 1 kilobyte to zettabytes?",
+            options: [
+              "Each step is roughly ×1000.",
+              "Dead battery = clock resets, boot errors.",
+              "Long, thin slot on the motherboard.",
+              "Databases, cloud, games — every type has a role.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Each step is roughly ×1000.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Data units explained — from 1 kilobyte to zettabytes?",
+            options: [
+              "L1 fastest/smallest, L3 largest/shared.",
+              "NPU (Neural Processing Unit) is a dedicated AI chip.",
+              "Users think in files; support thinks in units.",
+              "Storage capacity is a business problem, not just tech.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Users think in files; support thinks in units.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Data units explained — from 1 kilobyte to zettabytes?",
+            options: [
+              "Each step is roughly ×1000.",
+              "KB → MB → GB → TB → PB → EB → ZB.",
+              "Not all USB-C ports carry video or Thunderbolt.",
+              "Users think in files; support thinks in units.",
+            ],
+            answer: 2,
+            explain: "\"Not all USB-C ports carry video or Thunderbolt.\" is about a different topic, not Data units explained — from 1 kilobyte to zettabytes.",
+          },
         ],
       },
       {
@@ -4439,6 +5636,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-history-storage", caption: "The history of storage devices — from magnetic drums to NVMe" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "The history of storage devices — from magnetic drums to NVMe",
+              "Cloud computing software (part 1)",
+              "Input devices — the essentials",
+              "Rear I/O panel — old vs latest",
+            ],
+            answer: 0,
+            explain: "This slide covers: The history of storage devices — from magnetic drums to NVMe.",
+          },
+          {
+            q: "Which of the following is TRUE about The history of storage devices — from magnetic drums to NVMe?",
+            options: [
+              "Learn what each port can and can't carry.",
+              "Global data doubles every couple of years.",
+              "Punched cards → tape → drums → HDD → SSD → NVMe.",
+              "Form factors: ATX, Micro-ATX, Mini-ITX.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Punched cards → tape → drums → HDD → SSD → NVMe.\"",
+          },
+          {
+            q: "Which of the following is TRUE about The history of storage devices — from magnetic drums to NVMe?",
+            options: [
+              "Scanner, barcode/QR reader, smart card reader.",
+              "Both save cost and enable rapid deployment.",
+              "USB-C is reversible and delivers data + video + power.",
+              "Storage got smaller, faster and cheaper every decade.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Storage got smaller, faster and cheaper every decade.\"",
+          },
+          {
+            q: "Which of the following is TRUE about The history of storage devices — from magnetic drums to NVMe?",
+            options: [
+              "History explains today's design choices.",
+              "Cable quality matters — cheap cables fail silently.",
+              "OS, apps, utilities, drivers, firmware, middleware.",
+              "Thunderbolt 4/5 is the fastest general port on a PC.",
+            ],
+            answer: 0,
+            explain: "Correct: \"History explains today's design choices.\"",
+          },
+          {
+            q: "Which of the following is NOT true about The history of storage devices — from magnetic drums to NVMe?",
+            options: [
+              "Punched cards → tape → drums → HDD → SSD → NVMe.",
+              "History explains today's design choices.",
+              "Central hub that connects CPU, RAM, storage, GPU and PSU.",
+              "Storage got smaller, faster and cheaper every decade.",
+            ],
+            answer: 2,
+            explain: "\"Central hub that connects CPU, RAM, storage, GPU and PSU.\" is about a different topic, not The history of storage devices — from magnetic drums to NVMe.",
+          },
+        ],
       },
       {
         heading: "How much information do we have in the world?",
@@ -4451,6 +5705,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-info-in-world", caption: "How much information do we have in the world?" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Memory (RAM) — how the modules work",
+              "How much information do we have in the world?",
+              "Liquid CPU cooler — AIO (All-In-One)",
+              "Web and internet software",
+            ],
+            answer: 1,
+            explain: "This slide covers: How much information do we have in the world?.",
+          },
+          {
+            q: "Which of the following is TRUE about How much information do we have in the world??",
+            options: [
+              "GPU-hungry — plan hardware accordingly.",
+              "Global data doubles every couple of years.",
+              "Registry = a database of settings for OS and apps.",
+              "Applying a fix that has no GUI setting.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Global data doubles every couple of years.\"",
+          },
+          {
+            q: "Which of the following is TRUE about How much information do we have in the world??",
+            options: [
+              "HR: people and payroll (Workday, Sage).",
+              "Case fans, CPU cooler, VRM & M.2 heatsinks, paste.",
+              "Most new data is video, images and telemetry.",
+              "Compilers, debuggers, version control (Git).",
+            ],
+            answer: 2,
+            explain: "Correct: \"Most new data is video, images and telemetry.\"",
+          },
+          {
+            q: "Which of the following is TRUE about How much information do we have in the world??",
+            options: [
+              "Compilers, debuggers, version control (Git).",
+              "HR: people and payroll (Workday, Sage).",
+              "SaaS, PaaS, IaaS — three service models.",
+              "Storage capacity is a business problem, not just tech.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Storage capacity is a business problem, not just tech.\"",
+          },
+          {
+            q: "Which of the following is NOT true about How much information do we have in the world??",
+            options: [
+              "Most new data is video, images and telemetry.",
+              "Storage capacity is a business problem, not just tech.",
+              "Great way to modernise an older machine.",
+              "Global data doubles every couple of years.",
+            ],
+            answer: 2,
+            explain: "\"Great way to modernise an older machine.\" is about a different topic, not How much information do we have in the world?.",
+          },
         ],
       },
       {
@@ -4465,6 +5776,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-psu", caption: "Power Supply Unit (PSU) — anatomy and connectors" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Power Supply Unit (PSU) — anatomy and connectors",
+              "Kernel vs Registry on Windows (part 2)",
+              "VRM (Voltage Regulator Module) — the power behind your CPU",
+              "Cloud computing software (part 2)",
+            ],
+            answer: 0,
+            explain: "This slide covers: Power Supply Unit (PSU) — anatomy and connectors.",
+          },
+          {
+            q: "Which of the following is TRUE about Power Supply Unit (PSU) — anatomy and connectors?",
+            options: [
+              "Converts AC mains to DC rails for every component.",
+              "Runs on servers, routers and endpoints.",
+              "Heatsink + fan moves heat from CPU to case air.",
+              "Support role: getting AI tools working for users.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Converts AC mains to DC rails for every component.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Power Supply Unit (PSU) — anatomy and connectors?",
+            options: [
+              "Pump can fail — watch for temperature spikes.",
+              "Rated in watts — must exceed system requirements.",
+              "Webcam and microphone for calls and content.",
+              "Central hub that connects CPU, RAM, storage, GPU and PSU.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Rated in watts — must exceed system requirements.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Power Supply Unit (PSU) — anatomy and connectors?",
+            options: [
+              "UEFI replaces the older BIOS with a modern interface.",
+              "Small coin cell (CR2032) on the motherboard.",
+              "80 PLUS rating = efficiency (Bronze < Gold < Titanium).",
+              "More RAM = more apps open at once without slowing down.",
+            ],
+            answer: 2,
+            explain: "Correct: \"80 PLUS rating = efficiency (Bronze < Gold < Titanium).\"",
+          },
+          {
+            q: "Which of the following is NOT true about Power Supply Unit (PSU) — anatomy and connectors?",
+            options: [
+              "Converts AC mains to DC rails for every component.",
+              "Rated in watts — must exceed system requirements.",
+              "80 PLUS rating = efficiency (Bronze < Gold < Titanium).",
+              "Socket type (LGA, PGA, BGA) must match the CPU.",
+            ],
+            answer: 3,
+            explain: "\"Socket type (LGA, PGA, BGA) must match the CPU.\" is about a different topic, not Power Supply Unit (PSU) — anatomy and connectors.",
+          },
+        ],
       },
       {
         heading: "How a PSU converts and delivers power in a PC",
@@ -4477,6 +5845,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-psu-convert", caption: "How a PSU converts and delivers power in a PC" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Networking and connectivity — how devices reach each other",
+              "Programming and development software",
+              "Networking hardware (2026)",
+              "How a PSU converts and delivers power in a PC",
+            ],
+            answer: 3,
+            explain: "This slide covers: How a PSU converts and delivers power in a PC.",
+          },
+          {
+            q: "Which of the following is TRUE about How a PSU converts and delivers power in a PC?",
+            options: [
+              "Hearing: speakers and headphones.",
+              "Local AI models now run on consumer GPUs.",
+              "HDD: spinning platters, cheap and large, slow.",
+              "AC → rectifier → transformer → DC rails.",
+            ],
+            answer: 3,
+            explain: "Correct: \"AC → rectifier → transformer → DC rails.\"",
+          },
+          {
+            q: "Which of the following is TRUE about How a PSU converts and delivers power in a PC?",
+            options: [
+              "Delivers 12 V, 5 V and 3.3 V to the board and drives.",
+              "Airflow direction: in at the front, out at the rear.",
+              "Wired vs wireless: speed vs convenience.",
+              "Backups are critical — data loss = job loss.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Delivers 12 V, 5 V and 3.3 V to the board and drives.\"",
+          },
+          {
+            q: "Which of the following is TRUE about How a PSU converts and delivers power in a PC?",
+            options: [
+              "Software tells hardware what to do.",
+              "Undersized PSU = crashes under GPU load.",
+              "Storage got smaller, faster and cheaper every decade.",
+              "Talks directly over PCIe — no SATA bottleneck.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Undersized PSU = crashes under GPU load.\"",
+          },
+          {
+            q: "Which of the following is NOT true about How a PSU converts and delivers power in a PC?",
+            options: [
+              "Stylus, trackball, joystick, controller, light gun.",
+              "AC → rectifier → transformer → DC rails.",
+              "Delivers 12 V, 5 V and 3.3 V to the board and drives.",
+              "Undersized PSU = crashes under GPU load.",
+            ],
+            answer: 0,
+            explain: "\"Stylus, trackball, joystick, controller, light gun.\" is about a different topic, not How a PSU converts and delivers power in a PC.",
+          },
         ],
       },
       {
@@ -4491,6 +5916,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-case", caption: "Computer case (chassis)" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Computer case (chassis)",
+              "Expansion hardware — add-in cards",
+              "DIMM slots — where RAM plugs in",
+              "Operating systems — the core system software",
+            ],
+            answer: 0,
+            explain: "This slide covers: Computer case (chassis).",
+          },
+          {
+            q: "Which of the following is TRUE about Computer case (chassis)?",
+            options: [
+              "Provides airflow, mounting and physical protection.",
+              "Switch: connects wired devices inside the LAN.",
+              "Global data doubles every couple of years.",
+              "Configuration errors here cause most outages.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Provides airflow, mounting and physical protection.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Computer case (chassis)?",
+            options: [
+              "Runs in the cloud or locally on an NPU/GPU.",
+              "Rear I/O is soldered — you cannot swap it out.",
+              "Intel vs AMD vs Apple: different sockets, same job.",
+              "Form factors: ATX, Micro-ATX, Mini-ITX.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Form factors: ATX, Micro-ATX, Mini-ITX.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Computer case (chassis)?",
+            options: [
+              "Front panel connects power button, USB and audio.",
+              "Webcam and microphone for calls and content.",
+              "Central hub that connects CPU, RAM, storage, GPU and PSU.",
+              "Different jobs, often confused.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Front panel connects power button, USB and audio.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Computer case (chassis)?",
+            options: [
+              "Front panel connects power button, USB and audio.",
+              "Runs hot — needs its own heatsink on gaming boards.",
+              "Provides airflow, mounting and physical protection.",
+              "Form factors: ATX, Micro-ATX, Mini-ITX.",
+            ],
+            answer: 1,
+            explain: "\"Runs hot — needs its own heatsink on gaming boards.\" is about a different topic, not Computer case (chassis).",
+          },
+        ],
       },
       {
         heading: "Rear I/O panel — old vs latest",
@@ -4503,6 +5985,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-rear-io", caption: "Rear I/O panel — old vs latest" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "How a PSU converts and delivers power in a PC",
+              "Rear I/O panel — old vs latest",
+              "Cybersecurity software",
+              "Power Supply Unit (PSU) — anatomy and connectors",
+            ],
+            answer: 1,
+            explain: "This slide covers: Rear I/O panel — old vs latest.",
+          },
+          {
+            q: "Which of the following is TRUE about Rear I/O panel — old vs latest?",
+            options: [
+              "Major clouds: AWS, Azure, Google Cloud.",
+              "Old boards: PS/2, VGA, parallel, serial.",
+              "Long, thin slot on the motherboard.",
+              "Databases, cloud, games — every type has a role.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Old boards: PS/2, VGA, parallel, serial.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Rear I/O panel — old vs latest?",
+            options: [
+              "New boards: USB-C, HDMI, DisplayPort, 2.5G Ethernet.",
+              "Delivers 12 V, 5 V and 3.3 V to the board and drives.",
+              "Kernel bugs can crash the whole machine (BSOD).",
+              "Slower than NVMe but very flexible.",
+            ],
+            answer: 0,
+            explain: "Correct: \"New boards: USB-C, HDMI, DisplayPort, 2.5G Ethernet.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Rear I/O panel — old vs latest?",
+            options: [
+              "Storage got smaller, faster and cheaper every decade.",
+              "Often licensed per user or per device.",
+              "Every computer = input + processing + storage + output.",
+              "Rear I/O is soldered — you cannot swap it out.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Rear I/O is soldered — you cannot swap it out.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Rear I/O panel — old vs latest?",
+            options: [
+              "New boards: USB-C, HDMI, DisplayPort, 2.5G Ethernet.",
+              "Hearing: speakers and headphones.",
+              "Rear I/O is soldered — you cannot swap it out.",
+              "Old boards: PS/2, VGA, parallel, serial.",
+            ],
+            answer: 1,
+            explain: "\"Hearing: speakers and headphones.\" is about a different topic, not Rear I/O panel — old vs latest.",
+          },
         ],
       },
       {
@@ -4517,6 +6056,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-new-ports", caption: "New ports and connections — modern connectivity" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "New ports and connections — modern connectivity",
+              "M.2 slots — where NVMe SSDs live",
+              "Cooling and thermal components — the whole thermal system",
+              "Operating systems — the core system software",
+            ],
+            answer: 0,
+            explain: "This slide covers: New ports and connections — modern connectivity.",
+          },
+          {
+            q: "Which of the following is TRUE about New ports and connections — modern connectivity?",
+            options: [
+              "Where every other software category starts.",
+              "Registry edits can break login or app behaviour.",
+              "USB-C is reversible and delivers data + video + power.",
+              "Heatsink + fan moves heat from CPU to case air.",
+            ],
+            answer: 2,
+            explain: "Correct: \"USB-C is reversible and delivers data + video + power.\"",
+          },
+          {
+            q: "Which of the following is TRUE about New ports and connections — modern connectivity?",
+            options: [
+              "Bad firmware update can brick a device.",
+              "Thunderbolt 4/5 is the fastest general port on a PC.",
+              "Firmware lives inside chips (BIOS/UEFI, SSD, NIC).",
+              "Containers share the host OS, start in seconds.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Thunderbolt 4/5 is the fastest general port on a PC.\"",
+          },
+          {
+            q: "Which of the following is TRUE about New ports and connections — modern connectivity?",
+            options: [
+              "Learn what each port can and can't carry.",
+              "SATA SSD: no moving parts, fast enough for most users.",
+              "Every computer = input + processing + storage + output.",
+              "Often licensed per user or per device.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Learn what each port can and can't carry.\"",
+          },
+          {
+            q: "Which of the following is NOT true about New ports and connections — modern connectivity?",
+            options: [
+              "USB-C is reversible and delivers data + video + power.",
+              "Learn what each port can and can't carry.",
+              "Thunderbolt 4/5 is the fastest general port on a PC.",
+              "Small coin cell (CR2032) on the motherboard.",
+            ],
+            answer: 3,
+            explain: "\"Small coin cell (CR2032) on the motherboard.\" is about a different topic, not New ports and connections — modern connectivity.",
+          },
+        ],
       },
       {
         heading: "Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD",
@@ -4529,6 +6125,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-peripheral-devices", caption: "Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Cooling and thermal components — the whole thermal system",
+              "The CPU socket — where the processor lives",
+              "M.2 slots — where NVMe SSDs live",
+              "Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD",
+            ],
+            answer: 3,
+            explain: "This slide covers: Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD.",
+          },
+          {
+            q: "Which of the following is TRUE about Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD?",
+            options: [
+              "UEFI replaces the older BIOS with a modern interface.",
+              "Thunderbolt 4/5 is the fastest general port on a PC.",
+              "Small coin cell (CR2032) on the motherboard.",
+              "Each port has a specific role: data, video, network, audio.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Each port has a specific role: data, video, network, audio.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD?",
+            options: [
+              "Pick the chip that matches the user's workload.",
+              "Billions of transistors; multiple cores and threads.",
+              "Not all USB-C ports carry video or Thunderbolt.",
+              "Steps 12 V from the PSU down to ~1 V for the CPU.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Not all USB-C ports carry video or Thunderbolt.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD?",
+            options: [
+              "Access point: provides Wi-Fi coverage.",
+              "Cable quality matters — cheap cables fail silently.",
+              "Intel vs AMD vs Apple: different sockets, same job.",
+              "Better for very hot CPUs (i9/Ryzen 9).",
+            ],
+            answer: 1,
+            explain: "Correct: \"Cable quality matters — cheap cables fail silently.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD?",
+            options: [
+              "Not all USB-C ports carry video or Thunderbolt.",
+              "Access point: provides Wi-Fi coverage.",
+              "Each port has a specific role: data, video, network, audio.",
+              "Cable quality matters — cheap cables fail silently.",
+            ],
+            answer: 1,
+            explain: "\"Access point: provides Wi-Fi coverage.\" is about a different topic, not Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD.",
+          },
         ],
       },
       {
@@ -4543,6 +6196,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-expansion-hw", caption: "Expansion hardware — add-in cards" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Expansion hardware — add-in cards",
+              "Different CPUs and GPUs — how modern processors compare",
+              "Motherboard components — the labelled overview",
+              "Database software",
+            ],
+            answer: 0,
+            explain: "This slide covers: Expansion hardware — add-in cards.",
+          },
+          {
+            q: "Which of the following is TRUE about Expansion hardware — add-in cards?",
+            options: [
+              "PCIe cards add Wi-Fi, capture, sound, extra USB, RAID.",
+              "Up to 10× faster than SATA SSDs.",
+              "Most 'apps' today are really web apps.",
+              "Provides airflow, mounting and physical protection.",
+            ],
+            answer: 0,
+            explain: "Correct: \"PCIe cards add Wi-Fi, capture, sound, extra USB, RAID.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Expansion hardware — add-in cards?",
+            options: [
+              "Rear I/O is soldered — you cannot swap it out.",
+              "Used for SATA SSDs, HDDs and DVD drives.",
+              "Punched cards → tape → drums → HDD → SSD → NVMe.",
+              "Slot size: x1, x4, x8, x16 — must fit the card.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Slot size: x1, x4, x8, x16 — must fit the card.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Expansion hardware — add-in cards?",
+            options: [
+              "Undersized PSU = crashes under GPU load.",
+              "Not all USB-C ports carry video or Thunderbolt.",
+              "Great way to modernise an older machine.",
+              "Microsoft 365, Google Workspace: everyday SaaS.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Great way to modernise an older machine.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Expansion hardware — add-in cards?",
+            options: [
+              "PCIe cards add Wi-Fi, capture, sound, extra USB, RAID.",
+              "Billions of transistors; multiple cores and threads.",
+              "Great way to modernise an older machine.",
+              "Slot size: x1, x4, x8, x16 — must fit the card.",
+            ],
+            answer: 1,
+            explain: "\"Billions of transistors; multiple cores and threads.\" is about a different topic, not Expansion hardware — add-in cards.",
+          },
+        ],
       },
       {
         heading: "Input devices — the essentials",
@@ -4555,6 +6265,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-input-devices", caption: "Input devices — the essentials" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Software modules — the programs that power your PC",
+              "Input devices — the essentials",
+              "Kernel vs Registry on Windows (part 2)",
+              "VRM (Voltage Regulator Module) — the power behind your CPU",
+            ],
+            answer: 1,
+            explain: "This slide covers: Input devices — the essentials.",
+          },
+          {
+            q: "Which of the following is TRUE about Input devices — the essentials?",
+            options: [
+              "Queried with SQL.",
+              "Executes the instructions of every program.",
+              "Keyboard, mouse, touchpad, touchscreen.",
+              "Great way to modernise an older machine.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Keyboard, mouse, touchpad, touchscreen.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Input devices — the essentials?",
+            options: [
+              "Webcam and microphone for calls and content.",
+              "IP addresses identify devices on the network.",
+              "Every app depends on the OS to run.",
+              "Antivirus, backup, disk clean-up, compression.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Webcam and microphone for calls and content.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Input devices — the essentials?",
+            options: [
+              "Major clouds: AWS, Azure, Google Cloud.",
+              "Reliable, cheap, no leaks.",
+              "Kernel = the core code that runs the OS.",
+              "Fingerprint reader for secure sign-in.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Fingerprint reader for secure sign-in.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Input devices — the essentials?",
+            options: [
+              "Fingerprint reader for secure sign-in.",
+              "OS, apps, utilities, drivers, firmware, middleware.",
+              "Webcam and microphone for calls and content.",
+              "Keyboard, mouse, touchpad, touchscreen.",
+            ],
+            answer: 1,
+            explain: "\"OS, apps, utilities, drivers, firmware, middleware.\" is about a different topic, not Input devices — the essentials.",
+          },
         ],
       },
       {
@@ -4569,6 +6336,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-input-devices-extended", caption: "Input devices — the extended catalogue (24 devices)" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Input devices — the extended catalogue (24 devices)",
+              "Cybersecurity software",
+              "Power Supply Unit (PSU) — anatomy and connectors",
+              "The history of storage devices — from magnetic drums to NVMe",
+            ],
+            answer: 0,
+            explain: "This slide covers: Input devices — the extended catalogue (24 devices).",
+          },
+          {
+            q: "Which of the following is TRUE about Input devices — the extended catalogue (24 devices)?",
+            options: [
+              "Stylus, trackball, joystick, controller, light gun.",
+              "Thermal paste sits between CPU and heatsink.",
+              "ERP: finance, stock, procurement (SAP, Oracle).",
+              "Most new data is video, images and telemetry.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Stylus, trackball, joystick, controller, light gun.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Input devices — the extended catalogue (24 devices)?",
+            options: [
+              "Airflow direction: in at the front, out at the rear.",
+              "Antivirus, EDR, SIEM, MFA, encryption.",
+              "Scanner, barcode/QR reader, smart card reader.",
+              "Backups are critical — data loss = job loss.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Scanner, barcode/QR reader, smart card reader.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Input devices — the extended catalogue (24 devices)?",
+            options: [
+              "MIDI, eye tracker, voice, iris, data glove, foot pedal.",
+              "Cloud storage, cloud backup, cloud identity.",
+              "Learn what each port can and can't carry.",
+              "Colour-coded pairs enable dual-channel mode.",
+            ],
+            answer: 0,
+            explain: "Correct: \"MIDI, eye tracker, voice, iris, data glove, foot pedal.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Input devices — the extended catalogue (24 devices)?",
+            options: [
+              "MIDI, eye tracker, voice, iris, data glove, foot pedal.",
+              "Scanner, barcode/QR reader, smart card reader.",
+              "Stylus, trackball, joystick, controller, light gun.",
+              "Big cache helps games, databases and AI a lot.",
+            ],
+            answer: 3,
+            explain: "\"Big cache helps games, databases and AI a lot.\" is about a different topic, not Input devices — the extended catalogue (24 devices).",
+          },
+        ],
       },
       {
         heading: "Output devices — monitors, speakers, headphones, projectors, VR, printers and more",
@@ -4581,6 +6405,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-output-devices", caption: "Output devices — monitors, speakers, headphones, projectors, VR, printers and more" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Utility software — the small tools that keep systems healthy",
+              "Liquid CPU cooler — AIO (All-In-One)",
+              "BIOS / UEFI chip — the firmware that starts your PC",
+              "Output devices — monitors, speakers, headphones, projectors, VR, printers and more",
+            ],
+            answer: 3,
+            explain: "This slide covers: Output devices — monitors, speakers, headphones, projectors, VR, printers and more.",
+          },
+          {
+            q: "Which of the following is TRUE about Output devices — monitors, speakers, headphones, projectors, VR, printers and more?",
+            options: [
+              "Hardware is what you touch; software is what runs on it.",
+              "Back up before touching either.",
+              "Router: connects the LAN to the Internet.",
+              "Sight: monitors, projectors, VR headsets, smart glasses, LED displays.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Sight: monitors, projectors, VR headsets, smart glasses, LED displays.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Output devices — monitors, speakers, headphones, projectors, VR, printers and more?",
+            options: [
+              "Hearing: speakers and headphones.",
+              "DNS turns names into IP addresses.",
+              "First code to run when you press power.",
+              "More RAM = more apps open at once without slowing down.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Hearing: speakers and headphones.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Output devices — monitors, speakers, headphones, projectors, VR, printers and more?",
+            options: [
+              "Manages hardware, users, files, security.",
+              "Photo, video, audio editors (Photoshop, Premiere).",
+              "Touch & other senses: printers, plotters, 3D printers, haptic gloves, braille displays.",
+              "Big cache helps games, databases and AI a lot.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Touch & other senses: printers, plotters, 3D printers, haptic gloves, braille displays.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Output devices — monitors, speakers, headphones, projectors, VR, printers and more?",
+            options: [
+              "Hearing: speakers and headphones.",
+              "Sight: monitors, projectors, VR headsets, smart glasses, LED displays.",
+              "Manages hardware, users, files, security.",
+              "Touch & other senses: printers, plotters, 3D printers, haptic gloves, braille displays.",
+            ],
+            answer: 2,
+            explain: "\"Manages hardware, users, files, security.\" is about a different topic, not Output devices — monitors, speakers, headphones, projectors, VR, printers and more.",
+          },
         ],
       },
       {
@@ -4595,6 +6476,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-networking-hw", caption: "Networking hardware (2026)" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Networking hardware (2026)",
+              "Enterprise and business software (ERP, CRM, HR)",
+              "Application software — the big picture",
+              "Motherboard components — the labelled overview",
+            ],
+            answer: 0,
+            explain: "This slide covers: Networking hardware (2026).",
+          },
+          {
+            q: "Which of the following is TRUE about Networking hardware (2026)?",
+            options: [
+              "Pump can fail — watch for temperature spikes.",
+              "Central hub that connects CPU, RAM, storage, GPU and PSU.",
+              "Router: connects the LAN to the Internet.",
+              "Defence in depth — no single product is enough.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Router: connects the LAN to the Internet.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Networking hardware (2026)?",
+            options: [
+              "SATA SSD: no moving parts, fast enough for most users.",
+              "Fingerprint reader for secure sign-in.",
+              "Every computer = input + processing + storage + output.",
+              "Switch: connects wired devices inside the LAN.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Switch: connects wired devices inside the LAN.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Networking hardware (2026)?",
+            options: [
+              "Access point: provides Wi-Fi coverage.",
+              "Chipset routes traffic between all components.",
+              "KB → MB → GB → TB → PB → EB → ZB.",
+              "Billions of transistors; multiple cores and threads.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Access point: provides Wi-Fi coverage.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Networking hardware (2026)?",
+            options: [
+              "Router: connects the LAN to the Internet.",
+              "Access point: provides Wi-Fi coverage.",
+              "The same GPU hardware runs games and neural networks.",
+              "Switch: connects wired devices inside the LAN.",
+            ],
+            answer: 2,
+            explain: "\"The same GPU hardware runs games and neural networks.\" is about a different topic, not Networking hardware (2026).",
+          },
+        ],
       },
       {
         heading: "Networking and connectivity — how devices reach each other",
@@ -4608,10 +6546,67 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-networking-connectivity", caption: "Networking and connectivity — how devices reach each other" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Multimedia and creative software",
+              "Networking and connectivity — how devices reach each other",
+              "How a PSU converts and delivers power in a PC",
+              "Kernel vs Registry on Windows (part 1)",
+            ],
+            answer: 1,
+            explain: "This slide covers: Networking and connectivity — how devices reach each other.",
+          },
+          {
+            q: "Which of the following is TRUE about Networking and connectivity — how devices reach each other?",
+            options: [
+              "Watch for shared bandwidth with SATA on some boards.",
+              "Wired vs wireless: speed vs convenience.",
+              "Up to 10× faster than SATA SSDs.",
+              "Provides airflow, mounting and physical protection.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Wired vs wireless: speed vs convenience.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Networking and connectivity — how devices reach each other?",
+            options: [
+              "Cable quality matters — cheap cables fail silently.",
+              "Antivirus, backup, disk clean-up, compression.",
+              "IP addresses identify devices on the network.",
+              "Each step is roughly ×1000.",
+            ],
+            answer: 2,
+            explain: "Correct: \"IP addresses identify devices on the network.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Networking and connectivity — how devices reach each other?",
+            options: [
+              "Hearing: speakers and headphones.",
+              "Storage capacity is a business problem, not just tech.",
+              "Global data doubles every couple of years.",
+              "DNS turns names into IP addresses.",
+            ],
+            answer: 3,
+            explain: "Correct: \"DNS turns names into IP addresses.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Networking and connectivity — how devices reach each other?",
+            options: [
+              "IP addresses identify devices on the network.",
+              "DNS turns names into IP addresses.",
+              "File system organises everything on disk.",
+              "Wired vs wireless: speed vs convenience.",
+            ],
+            answer: 2,
+            explain: "\"File system organises everything on disk.\" is about a different topic, not Networking and connectivity — how devices reach each other.",
+          },
+        ],
       },
       {
         heading: "PART 2 — SOFTWARE: the programs that bring the hardware to life",
-        icon: "layers",
+        icon: "presenter",
         flat: true,
         paragraphs: [
           "Every slide in Part 2 is code — from firmware and the operating system, up through applications, and finally the modern layer of cloud, virtualisation, networking, security and AI software.",
@@ -4630,6 +6625,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-software-modules-overview", caption: "Software modules — the programs that power your PC" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Software modules — the programs that power your PC",
+              "Output devices — monitors, speakers, headphones, projectors, VR, printers and more",
+              "Networking hardware (2026)",
+              "CPU cache — L1, L2 and L3",
+            ],
+            answer: 0,
+            explain: "This slide covers: Software modules — the programs that power your PC.",
+          },
+          {
+            q: "Which of the following is TRUE about Software modules — the programs that power your PC?",
+            options: [
+              "OS, apps, utilities, drivers, firmware, middleware.",
+              "Registry = a database of settings for OS and apps.",
+              "Applying a fix that has no GUI setting.",
+              "Access point: provides Wi-Fi coverage.",
+            ],
+            answer: 0,
+            explain: "Correct: \"OS, apps, utilities, drivers, firmware, middleware.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Software modules — the programs that power your PC?",
+            options: [
+              "Bad firmware update can brick a device.",
+              "Databases, cloud, games — every type has a role.",
+              "Tensor / matrix cores accelerate AI operations.",
+              "Programs users interact with directly.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Databases, cloud, games — every type has a role.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Software modules — the programs that power your PC?",
+            options: [
+              "GPU-hungry — plan hardware accordingly.",
+              "Applying a fix that has no GUI setting.",
+              "Software tells hardware what to do.",
+              "CRM: customer records (Salesforce, Dynamics).",
+            ],
+            answer: 2,
+            explain: "Correct: \"Software tells hardware what to do.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Software modules — the programs that power your PC?",
+            options: [
+              "OS, apps, utilities, drivers, firmware, middleware.",
+              "Databases, cloud, games — every type has a role.",
+              "Software tells hardware what to do.",
+              "Copilot+ PCs use CPU, GPU and NPU together.",
+            ],
+            answer: 3,
+            explain: "\"Copilot+ PCs use CPU, GPU and NPU together.\" is about a different topic, not Software modules — the programs that power your PC.",
+          },
+        ],
       },
       {
         heading: "Operating systems — the core system software",
@@ -4642,6 +6694,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-os", caption: "Operating systems — the core system software" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "New ports and connections — modern connectivity",
+              "How much information do we have in the world?",
+              "Multimedia and creative software",
+              "Operating systems — the core system software",
+            ],
+            answer: 3,
+            explain: "This slide covers: Operating systems — the core system software.",
+          },
+          {
+            q: "Which of the following is TRUE about Operating systems — the core system software?",
+            options: [
+              "Keeps date, time and BIOS settings when unplugged.",
+              "'The cloud' = someone else's servers.",
+              "VMs run whole guest OSes on shared hardware.",
+              "Windows, macOS, Linux, ChromeOS, Android, iOS.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Windows, macOS, Linux, ChromeOS, Android, iOS.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Operating systems — the core system software?",
+            options: [
+              "Manages hardware, users, files, security.",
+              "Runs in the cloud or locally on an NPU/GPU.",
+              "Tiny, extremely fast memory next to the CPU cores.",
+              "Front panel connects power button, USB and audio.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Manages hardware, users, files, security.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Operating systems — the core system software?",
+            options: [
+              "Pick the chip that matches the user's workload.",
+              "Every app depends on the OS to run.",
+              "Learn the slot names: CPU socket, DIMM, PCIe, M.2, SATA.",
+              "Steps 12 V from the PSU down to ~1 V for the CPU.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Every app depends on the OS to run.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Operating systems — the core system software?",
+            options: [
+              "Kernel bugs can crash the whole machine (BSOD).",
+              "Windows, macOS, Linux, ChromeOS, Android, iOS.",
+              "Manages hardware, users, files, security.",
+              "Every app depends on the OS to run.",
+            ],
+            answer: 0,
+            explain: "\"Kernel bugs can crash the whole machine (BSOD).\" is about a different topic, not Operating systems — the core system software.",
+          },
         ],
       },
       {
@@ -4656,6 +6765,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-os-components", caption: "Operating system components — kernel, drivers, file system, services, UI" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Operating system components — kernel, drivers, file system, services, UI",
+              "How much information do we have in the world?",
+              "New ports and connections — modern connectivity",
+              "CPU cooler — traditional air cooler",
+            ],
+            answer: 0,
+            explain: "This slide covers: Operating system components — kernel, drivers, file system, services, UI.",
+          },
+          {
+            q: "Which of the following is TRUE about Operating system components — kernel, drivers, file system, services, UI?",
+            options: [
+              "Kernel talks to hardware; UI talks to the user.",
+              "Better for very hot CPUs (i9/Ryzen 9).",
+              "Intel vs AMD vs Apple: different sockets, same job.",
+              "Front panel connects power button, USB and audio.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Kernel talks to hardware; UI talks to the user.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Operating system components — kernel, drivers, file system, services, UI?",
+            options: [
+              "Thunderbolt 4/5 is the fastest general port on a PC.",
+              "Thermal paste sits between CPU and heatsink.",
+              "ERP: finance, stock, procurement (SAP, Oracle).",
+              "Drivers translate between the two.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Drivers translate between the two.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Operating system components — kernel, drivers, file system, services, UI?",
+            options: [
+              "File system organises everything on disk.",
+              "Populate matching slots for double the bandwidth.",
+              "PCIe cards add Wi-Fi, capture, sound, extra USB, RAID.",
+              "Runs hot — usually needs a small heatsink.",
+            ],
+            answer: 0,
+            explain: "Correct: \"File system organises everything on disk.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Operating system components — kernel, drivers, file system, services, UI?",
+            options: [
+              "File system organises everything on disk.",
+              "Thermal paste sits between CPU and heatsink.",
+              "Kernel talks to hardware; UI talks to the user.",
+              "Drivers translate between the two.",
+            ],
+            answer: 1,
+            explain: "\"Thermal paste sits between CPU and heatsink.\" is about a different topic, not Operating system components — kernel, drivers, file system, services, UI.",
+          },
+        ],
       },
       {
         heading: "Kernel vs Registry on Windows (part 1)",
@@ -4668,6 +6834,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-kernel-registry-1", caption: "Kernel vs Registry on Windows (part 1)" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "The four components of a computer system — the map for the whole lesson",
+              "Kernel vs Registry on Windows (part 1)",
+              "Modern AI PC hardware — CPU + GPU + NPU together",
+              "SSD (NVMe M.2) — the modern fast SSD",
+            ],
+            answer: 1,
+            explain: "This slide covers: Kernel vs Registry on Windows (part 1).",
+          },
+          {
+            q: "Which of the following is TRUE about Kernel vs Registry on Windows (part 1)?",
+            options: [
+              "Cable quality matters — cheap cables fail silently.",
+              "Kernel = the core code that runs the OS.",
+              "Editors and IDEs (VS Code, IntelliJ, Xcode).",
+              "Each step is roughly ×1000.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Kernel = the core code that runs the OS.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Kernel vs Registry on Windows (part 1)?",
+            options: [
+              "Registry = a database of settings for OS and apps.",
+              "Initialises hardware, then hands over to the OS.",
+              "AC → rectifier → transformer → DC rails.",
+              "Support technicians rely on utilities daily.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Registry = a database of settings for OS and apps.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Kernel vs Registry on Windows (part 1)?",
+            options: [
+              "Cloud storage, cloud backup, cloud identity.",
+              "Learn what each port can and can't carry.",
+              "Wired vs wireless: speed vs convenience.",
+              "Different jobs, often confused.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Different jobs, often confused.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Kernel vs Registry on Windows (part 1)?",
+            options: [
+              "Registry = a database of settings for OS and apps.",
+              "Removing stubborn leftover app entries.",
+              "Different jobs, often confused.",
+              "Kernel = the core code that runs the OS.",
+            ],
+            answer: 1,
+            explain: "\"Removing stubborn leftover app entries.\" is about a different topic, not Kernel vs Registry on Windows (part 1).",
+          },
         ],
       },
       {
@@ -4682,6 +6905,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-kernel-registry-2", caption: "Kernel vs Registry on Windows (part 2)" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Kernel vs Registry on Windows (part 2)",
+              "Liquid CPU cooler — AIO (All-In-One)",
+              "Web and internet software",
+              "Utility software — the small tools that keep systems healthy",
+            ],
+            answer: 0,
+            explain: "This slide covers: Kernel vs Registry on Windows (part 2).",
+          },
+          {
+            q: "Which of the following is TRUE about Kernel vs Registry on Windows (part 2)?",
+            options: [
+              "Touch & other senses: printers, plotters, 3D printers, haptic gloves, braille displays.",
+              "Better for very hot CPUs (i9/Ryzen 9).",
+              "Kernel bugs can crash the whole machine (BSOD).",
+              "Stores structured data (SQL Server, MySQL, Postgres).",
+            ],
+            answer: 2,
+            explain: "Correct: \"Kernel bugs can crash the whole machine (BSOD).\"",
+          },
+          {
+            q: "Which of the following is TRUE about Kernel vs Registry on Windows (part 2)?",
+            options: [
+              "Users think in files; support thinks in units.",
+              "Registry edits can break login or app behaviour.",
+              "Volatile — loses everything on power off.",
+              "Manages hardware, users, files, security.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Registry edits can break login or app behaviour.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Kernel vs Registry on Windows (part 2)?",
+            options: [
+              "Back up before touching either.",
+              "Containers share the host OS, start in seconds.",
+              "Firmware lives inside chips (BIOS/UEFI, SSD, NIC).",
+              "Check maximum supported speed in the manual.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Back up before touching either.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Kernel vs Registry on Windows (part 2)?",
+            options: [
+              "Kernel bugs can crash the whole machine (BSOD).",
+              "Back up before touching either.",
+              "Registry edits can break login or app behaviour.",
+              "Case fans, CPU cooler, VRM & M.2 heatsinks, paste.",
+            ],
+            answer: 3,
+            explain: "\"Case fans, CPU cooler, VRM & M.2 heatsinks, paste.\" is about a different topic, not Kernel vs Registry on Windows (part 2).",
+          },
+        ],
       },
       {
         heading: "When would you actually want to use the Registry?",
@@ -4694,6 +6974,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-use-registry", caption: "When would you actually want to use the Registry?" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "CPU cache — L1, L2 and L3",
+              "Output devices — monitors, speakers, headphones, projectors, VR, printers and more",
+              "Input devices — the essentials",
+              "When would you actually want to use the Registry?",
+            ],
+            answer: 3,
+            explain: "This slide covers: When would you actually want to use the Registry?.",
+          },
+          {
+            q: "Which of the following is TRUE about When would you actually want to use the Registry??",
+            options: [
+              "Touch & other senses: printers, plotters, 3D printers, haptic gloves, braille displays.",
+              "L1 fastest/smallest, L3 largest/shared.",
+              "Stores structured data (SQL Server, MySQL, Postgres).",
+              "Applying a fix that has no GUI setting.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Applying a fix that has no GUI setting.\"",
+          },
+          {
+            q: "Which of the following is TRUE about When would you actually want to use the Registry??",
+            options: [
+              "Major clouds: AWS, Azure, Google Cloud.",
+              "IP addresses identify devices on the network.",
+              "Removing stubborn leftover app entries.",
+              "Kernel talks to hardware; UI talks to the user.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Removing stubborn leftover app entries.\"",
+          },
+          {
+            q: "Which of the following is TRUE about When would you actually want to use the Registry??",
+            options: [
+              "Pump can fail — watch for temperature spikes.",
+              "Enterprise policy changes via Group Policy.",
+              "Windows, macOS, Linux, ChromeOS, Android, iOS.",
+              "Defence in depth — no single product is enough.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Enterprise policy changes via Group Policy.\"",
+          },
+          {
+            q: "Which of the following is NOT true about When would you actually want to use the Registry??",
+            options: [
+              "Removing stubborn leftover app entries.",
+              "Bad firmware update can brick a device.",
+              "Applying a fix that has no GUI setting.",
+              "Enterprise policy changes via Group Policy.",
+            ],
+            answer: 1,
+            explain: "\"Bad firmware update can brick a device.\" is about a different topic, not When would you actually want to use the Registry?.",
+          },
         ],
       },
       {
@@ -4708,6 +7045,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-firmware-low-level", caption: "Firmware and low-level software" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Firmware and low-level software",
+              "The CPU socket — where the processor lives",
+              "Cooling and thermal components — the whole thermal system",
+              "The history of storage devices — from magnetic drums to NVMe",
+            ],
+            answer: 0,
+            explain: "This slide covers: Firmware and low-level software.",
+          },
+          {
+            q: "Which of the following is TRUE about Firmware and low-level software?",
+            options: [
+              "Firmware lives inside chips (BIOS/UEFI, SSD, NIC).",
+              "Weak VRM = instability under heavy load.",
+              "80 PLUS rating = efficiency (Bronze < Gold < Titanium).",
+              "Copilots, chatbots, image and voice tools.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Firmware lives inside chips (BIOS/UEFI, SSD, NIC).\"",
+          },
+          {
+            q: "Which of the following is TRUE about Firmware and low-level software?",
+            options: [
+              "Use this map to place every other slide in the deck.",
+              "Runs in the cloud or locally on an NPU/GPU.",
+              "Tiny, extremely fast memory next to the CPU cores.",
+              "Updated with vendor tools — carefully.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Updated with vendor tools — carefully.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Firmware and low-level software?",
+            options: [
+              "NPU is power-efficient — great on laptops.",
+              "Socket type (LGA, PGA, BGA) must match the CPU.",
+              "Bad firmware update can brick a device.",
+              "PCIe cards add Wi-Fi, capture, sound, extra USB, RAID.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Bad firmware update can brick a device.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Firmware and low-level software?",
+            options: [
+              "Firmware lives inside chips (BIOS/UEFI, SSD, NIC).",
+              "More RAM = more apps open at once without slowing down.",
+              "Bad firmware update can brick a device.",
+              "Updated with vendor tools — carefully.",
+            ],
+            answer: 1,
+            explain: "\"More RAM = more apps open at once without slowing down.\" is about a different topic, not Firmware and low-level software.",
+          },
+        ],
       },
       {
         heading: "Application software — the big picture",
@@ -4720,6 +7114,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-app-software", caption: "Application software — the big picture" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Modern AI PC hardware — CPU + GPU + NPU together",
+              "Application software — the big picture",
+              "Virtualisation and containers",
+              "Networking software",
+            ],
+            answer: 1,
+            explain: "This slide covers: Application software — the big picture.",
+          },
+          {
+            q: "Which of the following is TRUE about Application software — the big picture?",
+            options: [
+              "Used for SATA SSDs, HDDs and DVD drives.",
+              "Applying a fix that has no GUI setting.",
+              "Programs users interact with directly.",
+              "Check maximum supported speed in the manual.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Programs users interact with directly.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Application software — the big picture?",
+            options: [
+              "Run on top of the OS.",
+              "Used for SATA SSDs, HDDs and DVD drives.",
+              "Check maximum supported speed in the manual.",
+              "Punched cards → tape → drums → HDD → SSD → NVMe.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Run on top of the OS.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Application software — the big picture?",
+            options: [
+              "Storage capacity is a business problem, not just tech.",
+              "Queried with SQL.",
+              "Converts AC mains to DC rails for every component.",
+              "Often licensed per user or per device.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Often licensed per user or per device.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Application software — the big picture?",
+            options: [
+              "Often licensed per user or per device.",
+              "ERP: finance, stock, procurement (SAP, Oracle).",
+              "Run on top of the OS.",
+              "Programs users interact with directly.",
+            ],
+            answer: 1,
+            explain: "\"ERP: finance, stock, procurement (SAP, Oracle).\" is about a different topic, not Application software — the big picture.",
+          },
         ],
       },
       {
@@ -4734,6 +7185,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-enterprise-software", caption: "Enterprise and business software (ERP, CRM, HR)" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Enterprise and business software (ERP, CRM, HR)",
+              "Programming and development software",
+              "AI software",
+              "Networking hardware (2026)",
+            ],
+            answer: 0,
+            explain: "This slide covers: Enterprise and business software (ERP, CRM, HR).",
+          },
+          {
+            q: "Which of the following is TRUE about Enterprise and business software (ERP, CRM, HR)?",
+            options: [
+              "ERP: finance, stock, procurement (SAP, Oracle).",
+              "Back up before touching either.",
+              "Each port has a specific role: data, video, network, audio.",
+              "Socket type (LGA, PGA, BGA) must match the CPU.",
+            ],
+            answer: 0,
+            explain: "Correct: \"ERP: finance, stock, procurement (SAP, Oracle).\"",
+          },
+          {
+            q: "Which of the following is TRUE about Enterprise and business software (ERP, CRM, HR)?",
+            options: [
+              "Updated with vendor tools — carefully.",
+              "Sight: monitors, projectors, VR headsets, smart glasses, LED displays.",
+              "CRM: customer records (Salesforce, Dynamics).",
+              "MIDI, eye tracker, voice, iris, data glove, foot pedal.",
+            ],
+            answer: 2,
+            explain: "Correct: \"CRM: customer records (Salesforce, Dynamics).\"",
+          },
+          {
+            q: "Which of the following is TRUE about Enterprise and business software (ERP, CRM, HR)?",
+            options: [
+              "HR: people and payroll (Workday, Sage).",
+              "Databases, cloud, games — every type has a role.",
+              "Big cache helps games, databases and AI a lot.",
+              "Browsers, email clients, messaging apps.",
+            ],
+            answer: 0,
+            explain: "Correct: \"HR: people and payroll (Workday, Sage).\"",
+          },
+          {
+            q: "Which of the following is NOT true about Enterprise and business software (ERP, CRM, HR)?",
+            options: [
+              "HR: people and payroll (Workday, Sage).",
+              "CRM: customer records (Salesforce, Dynamics).",
+              "ERP: finance, stock, procurement (SAP, Oracle).",
+              "Check maximum supported speed in the manual.",
+            ],
+            answer: 3,
+            explain: "\"Check maximum supported speed in the manual.\" is about a different topic, not Enterprise and business software (ERP, CRM, HR).",
+          },
+        ],
       },
       {
         heading: "Web and internet software",
@@ -4746,6 +7254,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-web-software", caption: "Web and internet software" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Firmware and low-level software",
+              "Application software — the big picture",
+              "Storage hardware — the full family (HDD, SSD, NVMe)",
+              "Web and internet software",
+            ],
+            answer: 3,
+            explain: "This slide covers: Web and internet software.",
+          },
+          {
+            q: "Which of the following is TRUE about Web and internet software?",
+            options: [
+              "Removing stubborn leftover app entries.",
+              "Watch for shared bandwidth with SATA on some boards.",
+              "Executes the instructions of every program.",
+              "Browsers, email clients, messaging apps.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Browsers, email clients, messaging apps.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Web and internet software?",
+            options: [
+              "Web servers, CMS platforms.",
+              "Big cache helps games, databases and AI a lot.",
+              "Photo, video, audio editors (Photoshop, Premiere).",
+              "Public, private, hybrid — three deployment models.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Web servers, CMS platforms.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Web and internet software?",
+            options: [
+              "Tensor / matrix cores accelerate AI operations.",
+              "AC → rectifier → transformer → DC rails.",
+              "Most 'apps' today are really web apps.",
+              "Support technicians rely on utilities daily.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Most 'apps' today are really web apps.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Web and internet software?",
+            options: [
+              "Web servers, CMS platforms.",
+              "Browsers, email clients, messaging apps.",
+              "CRM: customer records (Salesforce, Dynamics).",
+              "Most 'apps' today are really web apps.",
+            ],
+            answer: 2,
+            explain: "\"CRM: customer records (Salesforce, Dynamics).\" is about a different topic, not Web and internet software.",
+          },
         ],
       },
       {
@@ -4760,6 +7325,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-multimedia-software", caption: "Multimedia and creative software" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Multimedia and creative software",
+              "Operating systems — the core system software",
+              "AI software",
+              "Input devices — the extended catalogue (24 devices)",
+            ],
+            answer: 0,
+            explain: "This slide covers: Multimedia and creative software.",
+          },
+          {
+            q: "Which of the following is TRUE about Multimedia and creative software?",
+            options: [
+              "Users are still the biggest attack surface.",
+              "OS, apps, utilities, drivers, firmware, middleware.",
+              "Photo, video, audio editors (Photoshop, Premiere).",
+              "New boards: USB-C, HDMI, DisplayPort, 2.5G Ethernet.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Photo, video, audio editors (Photoshop, Premiere).\"",
+          },
+          {
+            q: "Which of the following is TRUE about Multimedia and creative software?",
+            options: [
+              "Socket type (LGA, PGA, BGA) must match the CPU.",
+              "NPU is power-efficient — great on laptops.",
+              "Each port has a specific role: data, video, network, audio.",
+              "3D and design tools (Blender, AutoCAD).",
+            ],
+            answer: 3,
+            explain: "Correct: \"3D and design tools (Blender, AutoCAD).\"",
+          },
+          {
+            q: "Which of the following is TRUE about Multimedia and creative software?",
+            options: [
+              "GPU-hungry — plan hardware accordingly.",
+              "Great way to modernise an older machine.",
+              "Executes the instructions of every program.",
+              "Removing stubborn leftover app entries.",
+            ],
+            answer: 0,
+            explain: "Correct: \"GPU-hungry — plan hardware accordingly.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Multimedia and creative software?",
+            options: [
+              "Photo, video, audio editors (Photoshop, Premiere).",
+              "GPU-hungry — plan hardware accordingly.",
+              "Talks directly over PCIe — no SATA bottleneck.",
+              "3D and design tools (Blender, AutoCAD).",
+            ],
+            answer: 2,
+            explain: "\"Talks directly over PCIe — no SATA bottleneck.\" is about a different topic, not Multimedia and creative software.",
+          },
+        ],
       },
       {
         heading: "Database software",
@@ -4772,6 +7394,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-database-software", caption: "Database software" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Data units explained — from 1 kilobyte to zettabytes",
+              "Database software",
+              "Operating systems — the core system software",
+              "Input devices — the extended catalogue (24 devices)",
+            ],
+            answer: 1,
+            explain: "This slide covers: Database software.",
+          },
+          {
+            q: "Which of the following is TRUE about Database software?",
+            options: [
+              "Where every other software category starts.",
+              "Stores structured data (SQL Server, MySQL, Postgres).",
+              "Runs on servers, routers and endpoints.",
+              "Heatsink + fan moves heat from CPU to case air.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Stores structured data (SQL Server, MySQL, Postgres).\"",
+          },
+          {
+            q: "Which of the following is TRUE about Database software?",
+            options: [
+              "DDR4 and DDR5 are the current standards.",
+              "USB-C is reversible and delivers data + video + power.",
+              "Queried with SQL.",
+              "Public, private, hybrid — three deployment models.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Queried with SQL.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Database software?",
+            options: [
+              "Uses PCIe lanes for high speed.",
+              "Damaged pins here = dead motherboard.",
+              "VMs run whole guest OSes on shared hardware.",
+              "Backups are critical — data loss = job loss.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Backups are critical — data loss = job loss.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Database software?",
+            options: [
+              "Queried with SQL.",
+              "Backups are critical — data loss = job loss.",
+              "Most 'apps' today are really web apps.",
+              "Stores structured data (SQL Server, MySQL, Postgres).",
+            ],
+            answer: 2,
+            explain: "\"Most 'apps' today are really web apps.\" is about a different topic, not Database software.",
+          },
         ],
       },
       {
@@ -4786,6 +7465,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-programming-software", caption: "Programming and development software" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Programming and development software",
+              "Rear I/O panel — old vs latest",
+              "Graphics and AI hardware — from rendering to neural networks",
+              "SATA ports — connecting SATA drives and optical drives",
+            ],
+            answer: 0,
+            explain: "This slide covers: Programming and development software.",
+          },
+          {
+            q: "Which of the following is TRUE about Programming and development software?",
+            options: [
+              "Editors and IDEs (VS Code, IntelliJ, Xcode).",
+              "Rated in watts — must exceed system requirements.",
+              "Case fans, CPU cooler, VRM & M.2 heatsinks, paste.",
+              "Dust is enemy #1 — clean filters regularly.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Editors and IDEs (VS Code, IntelliJ, Xcode).\"",
+          },
+          {
+            q: "Which of the following is TRUE about Programming and development software?",
+            options: [
+              "DDR4 and DDR5 are the current standards.",
+              "Compilers, debuggers, version control (Git).",
+              "CRM: customer records (Salesforce, Dynamics).",
+              "USB-C is reversible and delivers data + video + power.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Compilers, debuggers, version control (Git).\"",
+          },
+          {
+            q: "Which of the following is TRUE about Programming and development software?",
+            options: [
+              "Fingerprint reader for secure sign-in.",
+              "One data cable + one power cable per drive.",
+              "Where every other software category starts.",
+              "SATA SSD: no moving parts, fast enough for most users.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Where every other software category starts.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Programming and development software?",
+            options: [
+              "Editors and IDEs (VS Code, IntelliJ, Xcode).",
+              "Compilers, debuggers, version control (Git).",
+              "Where every other software category starts.",
+              "Uses PCIe lanes for high speed.",
+            ],
+            answer: 3,
+            explain: "\"Uses PCIe lanes for high speed.\" is about a different topic, not Programming and development software.",
+          },
+        ],
       },
       {
         heading: "Utility software — the small tools that keep systems healthy",
@@ -4798,6 +7534,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-utility-software", caption: "Utility software — the small tools that keep systems healthy" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "The history of storage devices — from magnetic drums to NVMe",
+              "Cybersecurity software",
+              "The CPU socket — where the processor lives",
+              "Utility software — the small tools that keep systems healthy",
+            ],
+            answer: 3,
+            explain: "This slide covers: Utility software — the small tools that keep systems healthy.",
+          },
+          {
+            q: "Which of the following is TRUE about Utility software — the small tools that keep systems healthy?",
+            options: [
+              "Switch: connects wired devices inside the LAN.",
+              "Software tells hardware what to do.",
+              "Keyboard, mouse, touchpad, touchscreen.",
+              "Antivirus, backup, disk clean-up, compression.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Antivirus, backup, disk clean-up, compression.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Utility software — the small tools that keep systems healthy?",
+            options: [
+              "Small tools, big impact on reliability.",
+              "Registry edits can break login or app behaviour.",
+              "OS, apps, utilities, drivers, firmware, middleware.",
+              "Dead battery = clock resets, boot errors.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Small tools, big impact on reliability.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Utility software — the small tools that keep systems healthy?",
+            options: [
+              "Every app depends on the OS to run.",
+              "Support technicians rely on utilities daily.",
+              "Databases, cloud, games — every type has a role.",
+              "ERP: finance, stock, procurement (SAP, Oracle).",
+            ],
+            answer: 1,
+            explain: "Correct: \"Support technicians rely on utilities daily.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Utility software — the small tools that keep systems healthy?",
+            options: [
+              "Stores structured data (SQL Server, MySQL, Postgres).",
+              "Antivirus, backup, disk clean-up, compression.",
+              "Small tools, big impact on reliability.",
+              "Support technicians rely on utilities daily.",
+            ],
+            answer: 0,
+            explain: "\"Stores structured data (SQL Server, MySQL, Postgres).\" is about a different topic, not Utility software — the small tools that keep systems healthy.",
+          },
         ],
       },
       {
@@ -4812,6 +7605,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-cloud-1", caption: "Cloud computing software (part 1)" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Cloud computing software (part 1)",
+              "Storage hardware — the full family (HDD, SSD, NVMe)",
+              "Kernel vs Registry on Windows (part 2)",
+              "Firmware and low-level software",
+            ],
+            answer: 0,
+            explain: "This slide covers: Cloud computing software (part 1).",
+          },
+          {
+            q: "Which of the following is TRUE about Cloud computing software (part 1)?",
+            options: [
+              "SaaS, PaaS, IaaS — three service models.",
+              "Queried with SQL.",
+              "Antivirus, backup, disk clean-up, compression.",
+              "Support role: getting AI tools working for users.",
+            ],
+            answer: 0,
+            explain: "Correct: \"SaaS, PaaS, IaaS — three service models.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Cloud computing software (part 1)?",
+            options: [
+              "Learn the slot names: CPU socket, DIMM, PCIe, M.2, SATA.",
+              "Configuration errors here cause most outages.",
+              "Global data doubles every couple of years.",
+              "Public, private, hybrid — three deployment models.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Public, private, hybrid — three deployment models.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Cloud computing software (part 1)?",
+            options: [
+              "Major clouds: AWS, Azure, Google Cloud.",
+              "Learn the slot names: CPU socket, DIMM, PCIe, M.2, SATA.",
+              "Steps 12 V from the PSU down to ~1 V for the CPU.",
+              "Configuration errors here cause most outages.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Major clouds: AWS, Azure, Google Cloud.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Cloud computing software (part 1)?",
+            options: [
+              "Major clouds: AWS, Azure, Google Cloud.",
+              "Slower than NVMe but very flexible.",
+              "SaaS, PaaS, IaaS — three service models.",
+              "Public, private, hybrid — three deployment models.",
+            ],
+            answer: 1,
+            explain: "\"Slower than NVMe but very flexible.\" is about a different topic, not Cloud computing software (part 1).",
+          },
+        ],
       },
       {
         heading: "Cloud computing software (part 2)",
@@ -4824,6 +7674,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-cloud-2", caption: "Cloud computing software (part 2)" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Input devices — the essentials",
+              "Cloud computing software (part 2)",
+              "How much information do we have in the world?",
+              "CPU cooler — traditional air cooler",
+            ],
+            answer: 1,
+            explain: "This slide covers: Cloud computing software (part 2).",
+          },
+          {
+            q: "Which of the following is TRUE about Cloud computing software (part 2)?",
+            options: [
+              "Pick the chip that matches the user's workload.",
+              "Microsoft 365, Google Workspace: everyday SaaS.",
+              "KB → MB → GB → TB → PB → EB → ZB.",
+              "Billions of transistors; multiple cores and threads.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Microsoft 365, Google Workspace: everyday SaaS.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Cloud computing software (part 2)?",
+            options: [
+              "Cloud storage, cloud backup, cloud identity.",
+              "Registry = a database of settings for OS and apps.",
+              "NPU (Neural Processing Unit) is a dedicated AI chip.",
+              "History explains today's design choices.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Cloud storage, cloud backup, cloud identity.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Cloud computing software (part 2)?",
+            options: [
+              "Rated in watts — must exceed system requirements.",
+              "Dust is enemy #1 — clean filters regularly.",
+              "Volatile — loses everything on power off.",
+              "'The cloud' = someone else's servers.",
+            ],
+            answer: 3,
+            explain: "Correct: \"'The cloud' = someone else's servers.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Cloud computing software (part 2)?",
+            options: [
+              "Cloud storage, cloud backup, cloud identity.",
+              "Compilers, debuggers, version control (Git).",
+              "'The cloud' = someone else's servers.",
+              "Microsoft 365, Google Workspace: everyday SaaS.",
+            ],
+            answer: 1,
+            explain: "\"Compilers, debuggers, version control (Git).\" is about a different topic, not Cloud computing software (part 2).",
+          },
         ],
       },
       {
@@ -4838,6 +7745,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-virtualization", caption: "Virtualisation and containers" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Virtualisation and containers",
+              "CPU (Central Processing Unit) — anatomy of the chip",
+              "SATA ports — connecting SATA drives and optical drives",
+              "CMOS battery — keeps BIOS settings and the clock alive",
+            ],
+            answer: 0,
+            explain: "This slide covers: Virtualisation and containers.",
+          },
+          {
+            q: "Which of the following is TRUE about Virtualisation and containers?",
+            options: [
+              "Watch for shared bandwidth with SATA on some boards.",
+              "Removing stubborn leftover app entries.",
+              "VMs run whole guest OSes on shared hardware.",
+              "Provides airflow, mounting and physical protection.",
+            ],
+            answer: 2,
+            explain: "Correct: \"VMs run whole guest OSes on shared hardware.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Virtualisation and containers?",
+            options: [
+              "Use this map to place every other slide in the deck.",
+              "Containers share the host OS, start in seconds.",
+              "Programs users interact with directly.",
+              "Most new data is video, images and telemetry.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Containers share the host OS, start in seconds.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Virtualisation and containers?",
+            options: [
+              "Both save cost and enable rapid deployment.",
+              "Webcam and microphone for calls and content.",
+              "Old boards: PS/2, VGA, parallel, serial.",
+              "HR: people and payroll (Workday, Sage).",
+            ],
+            answer: 0,
+            explain: "Correct: \"Both save cost and enable rapid deployment.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Virtualisation and containers?",
+            options: [
+              "VMs run whole guest OSes on shared hardware.",
+              "Both save cost and enable rapid deployment.",
+              "Containers share the host OS, start in seconds.",
+              "Punched cards → tape → drums → HDD → SSD → NVMe.",
+            ],
+            answer: 3,
+            explain: "\"Punched cards → tape → drums → HDD → SSD → NVMe.\" is about a different topic, not Virtualisation and containers.",
+          },
+        ],
       },
       {
         heading: "Networking software",
@@ -4850,6 +7814,63 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           { id: "hwsw2-networking-software", caption: "Networking software" },
+        ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Motherboard components — the labelled overview",
+              "Different CPUs and GPUs — how modern processors compare",
+              "Application software — the big picture",
+              "Networking software",
+            ],
+            answer: 3,
+            explain: "This slide covers: Networking software.",
+          },
+          {
+            q: "Which of the following is TRUE about Networking software?",
+            options: [
+              "Clock speed × cores × cache = real-world performance.",
+              "Updated with vendor tools — carefully.",
+              "Stylus, trackball, joystick, controller, light gun.",
+              "DHCP, DNS, VPN, firewall, load balancer.",
+            ],
+            answer: 3,
+            explain: "Correct: \"DHCP, DNS, VPN, firewall, load balancer.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Networking software?",
+            options: [
+              "DNS turns names into IP addresses.",
+              "NVIDIA vs AMD vs Intel Arc for GPUs.",
+              "Runs on servers, routers and endpoints.",
+              "Talks directly over PCIe — no SATA bottleneck.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Runs on servers, routers and endpoints.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Networking software?",
+            options: [
+              "Backups are critical — data loss = job loss.",
+              "Configuration errors here cause most outages.",
+              "NPU (Neural Processing Unit) is a dedicated AI chip.",
+              "Registry = a database of settings for OS and apps.",
+            ],
+            answer: 1,
+            explain: "Correct: \"Configuration errors here cause most outages.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Networking software?",
+            options: [
+              "Runs on servers, routers and endpoints.",
+              "Support technicians rely on utilities daily.",
+              "DHCP, DNS, VPN, firewall, load balancer.",
+              "Configuration errors here cause most outages.",
+            ],
+            answer: 1,
+            explain: "\"Support technicians rely on utilities daily.\" is about a different topic, not Networking software.",
+          },
         ],
       },
       {
@@ -4864,6 +7885,63 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-cybersecurity", caption: "Cybersecurity software" },
         ],
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "Cybersecurity software",
+              "Cloud computing software (part 2)",
+              "Computer case (chassis)",
+              "Virtualisation and containers",
+            ],
+            answer: 0,
+            explain: "This slide covers: Cybersecurity software.",
+          },
+          {
+            q: "Which of the following is TRUE about Cybersecurity software?",
+            options: [
+              "Antivirus, EDR, SIEM, MFA, encryption.",
+              "CRM: customer records (Salesforce, Dynamics).",
+              "Runs hot — needs its own heatsink on gaming boards.",
+              "USB-C is reversible and delivers data + video + power.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Antivirus, EDR, SIEM, MFA, encryption.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Cybersecurity software?",
+            options: [
+              "Cable quality matters — cheap cables fail silently.",
+              "Switch: connects wired devices inside the LAN.",
+              "Editors and IDEs (VS Code, IntelliJ, Xcode).",
+              "Defence in depth — no single product is enough.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Defence in depth — no single product is enough.\"",
+          },
+          {
+            q: "Which of the following is TRUE about Cybersecurity software?",
+            options: [
+              "'The cloud' = someone else's servers.",
+              "Webcam and microphone for calls and content.",
+              "Users are still the biggest attack surface.",
+              "The same GPU hardware runs games and neural networks.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Users are still the biggest attack surface.\"",
+          },
+          {
+            q: "Which of the following is NOT true about Cybersecurity software?",
+            options: [
+              "Antivirus, EDR, SIEM, MFA, encryption.",
+              "Most new data is video, images and telemetry.",
+              "Users are still the biggest attack surface.",
+              "Defence in depth — no single product is enough.",
+            ],
+            answer: 1,
+            explain: "\"Most new data is video, images and telemetry.\" is about a different topic, not Cybersecurity software.",
+          },
+        ],
       },
       {
         heading: "AI software",
@@ -4877,50 +7955,122 @@ export const CONTENT: Record<string, UnitContent> = {
         figures: [
           { id: "hwsw2-ai-software", caption: "AI software" },
         ],
-      },
-      {
-        heading: "Final quiz — answer all five correctly to finish",
-        icon: "checkCircle",
-        flat: true,
-        quizGate: true,
-        paragraphs: [
-          "Answer every question. You must get all five correct before the Finish button unlocks.",
+        slideQuiz: [
+          {
+            q: "Which topic does this slide cover?",
+            options: [
+              "When would you actually want to use the Registry?",
+              "AI software",
+              "Different CPUs and GPUs — how modern processors compare",
+              "Multimedia and creative software",
+            ],
+            answer: 1,
+            explain: "This slide covers: AI software.",
+          },
+          {
+            q: "Which of the following is TRUE about AI software?",
+            options: [
+              "Compilers, debuggers, version control (Git).",
+              "KB → MB → GB → TB → PB → EB → ZB.",
+              "Copilots, chatbots, image and voice tools.",
+              "Chipset routes traffic between all components.",
+            ],
+            answer: 2,
+            explain: "Correct: \"Copilots, chatbots, image and voice tools.\"",
+          },
+          {
+            q: "Which of the following is TRUE about AI software?",
+            options: [
+              "Runs in the cloud or locally on an NPU/GPU.",
+              "Keeps date, time and BIOS settings when unplugged.",
+              "Major clouds: AWS, Azure, Google Cloud.",
+              "SaaS, PaaS, IaaS — three service models.",
+            ],
+            answer: 0,
+            explain: "Correct: \"Runs in the cloud or locally on an NPU/GPU.\"",
+          },
+          {
+            q: "Which of the following is TRUE about AI software?",
+            options: [
+              "'The cloud' = someone else's servers.",
+              "Form factors: ATX, Micro-ATX, Mini-ITX.",
+              "The same GPU hardware runs games and neural networks.",
+              "Support role: getting AI tools working for users.",
+            ],
+            answer: 3,
+            explain: "Correct: \"Support role: getting AI tools working for users.\"",
+          },
+          {
+            q: "Which of the following is NOT true about AI software?",
+            options: [
+              "Support role: getting AI tools working for users.",
+              "Microsoft 365, Google Workspace: everyday SaaS.",
+              "Runs in the cloud or locally on an NPU/GPU.",
+              "Copilots, chatbots, image and voice tools.",
+            ],
+            answer: 1,
+            explain: "\"Microsoft 365, Google Workspace: everyday SaaS.\" is about a different topic, not AI software.",
+          },
         ],
-        figures: [],
       },
     ],
     exercises: [],
     assignments: [],
     quiz: [
       {
-        q: "In the four-part model of a computer system, which of these is NOT one of the four components?",
-        options: ["Input", "Processing", "Cloud", "Storage"],
-        answer: 2,
-        explain: "The four components are input, processing, storage and output. Cloud is a delivery model, not one of the fundamental components.",
+        q: "Which topic does this slide cover?",
+        options: [
+          "Database software",
+          "Firmware and low-level software",
+          "Graphics and AI hardware — from rendering to neural networks",
+          "The four components of a computer system — the map for the whole lesson",
+        ],
+        answer: 3,
+        explain: "This slide covers: The four components of a computer system — the map for the whole lesson.",
       },
       {
-        q: "Which motherboard circuit steps the 12 V rail from the PSU down to roughly 1 V for the CPU?",
-        options: ["CMOS battery", "VRM (Voltage Regulator Module)", "BIOS chip", "PCIe slot"],
+        q: "Which topic does this slide cover?",
+        options: [
+          "Motherboard components — the labelled overview",
+          "Firmware and low-level software",
+          "Database software",
+          "Input devices — the essentials",
+        ],
+        answer: 0,
+        explain: "This slide covers: Motherboard components — the labelled overview.",
+      },
+      {
+        q: "Which topic does this slide cover?",
+        options: [
+          "SATA ports — connecting SATA drives and optical drives",
+          "The CPU socket — where the processor lives",
+          "Expansion hardware — add-in cards",
+          "Operating systems — the core system software",
+        ],
         answer: 1,
-        explain: "The VRM regulates and steps down voltage to the level the CPU actually needs. A weak VRM causes instability under heavy load.",
+        explain: "This slide covers: The CPU socket — where the processor lives.",
       },
       {
-        q: "You need the fastest possible internal storage for a workstation. Which interface do you pick?",
-        options: ["SATA HDD", "SATA SSD", "NVMe SSD in an M.2 slot", "USB external SSD"],
-        answer: 2,
-        explain: "NVMe SSDs plug directly into PCIe lanes via M.2 and are far faster than SATA-based drives or USB storage.",
+        q: "Which topic does this slide cover?",
+        options: [
+          "VRM (Voltage Regulator Module) — the power behind your CPU",
+          "Input devices — the extended catalogue (24 devices)",
+          "Different CPUs and GPUs — how modern processors compare",
+          "Liquid CPU cooler — AIO (All-In-One)",
+        ],
+        answer: 0,
+        explain: "This slide covers: VRM (Voltage Regulator Module) — the power behind your CPU.",
       },
       {
-        q: "Which of the following is application software, NOT system software?",
-        options: ["Windows kernel", "Device driver", "Microsoft Excel", "BIOS/UEFI firmware"],
-        answer: 2,
-        explain: "Excel is an application — a program users run on top of the OS. The kernel, drivers and firmware are all system-level software.",
-      },
-      {
-        q: "A modern 'AI PC' typically contains a CPU, a GPU and a third dedicated processor for AI. What is that third chip called?",
-        options: ["APU", "TPU", "NPU (Neural Processing Unit)", "DPU"],
-        answer: 2,
-        explain: "The NPU is a dedicated Neural Processing Unit designed to run AI workloads efficiently, especially on laptops (Copilot+ PCs).",
+        q: "Which topic does this slide cover?",
+        options: [
+          "Rear I/O panel — old vs latest",
+          "Virtualisation and containers",
+          "Cloud computing software (part 1)",
+          "BIOS / UEFI chip — the firmware that starts your PC",
+        ],
+        answer: 3,
+        explain: "This slide covers: BIOS / UEFI chip — the firmware that starts your PC.",
       },
     ],
   },
