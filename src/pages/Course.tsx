@@ -1091,6 +1091,10 @@ export function UnitPage({
     const n = raw ? Number(raw) : 0;
     return Number.isFinite(n) && n >= 0 ? n : 0;
   });
+  /** lesson-view final quiz: per-question answer index (or -1 if unanswered) */
+  const [lessonQuizAnswers, setLessonQuizAnswers] = useState<number[]>([]);
+  /** lesson-view final quiz: has the learner clicked "Check answers"? */
+  const [lessonQuizChecked, setLessonQuizChecked] = useState(false);
   /** clicked lesson figure shown fullscreen in a lightbox (null = closed) */
   type LightboxItem = { src: string; caption: string; credit?: string; creditUrl?: string };
   const [lightbox, setLightbox] = useState<{ items: LightboxItem[]; index: number } | null>(null);
@@ -1847,6 +1851,80 @@ export function UnitPage({
                   );
                 })()
               : null;
+            const quizList = content.quiz ?? [];
+            const isQuizGate = !!sec.quizGate && quizList.length > 0;
+            const quizAnswers = isQuizGate
+              ? (lessonQuizAnswers.length === quizList.length
+                  ? lessonQuizAnswers
+                  : quizList.map((_, i) => lessonQuizAnswers[i] ?? -1))
+              : [];
+            const quizAllAnswered = isQuizGate && quizAnswers.every((a) => a >= 0);
+            const quizAllCorrect =
+              isQuizGate && quizAllAnswered && quizAnswers.every((a, i) => a === quizList[i].answer);
+            const quizPassed = !isQuizGate || quizAllCorrect;
+            const quizBody = isQuizGate ? (
+              <div className="saqa-body lesson-section lesson-quiz-gate">
+                {sec.paragraphs.map((p, i) => (
+                  <p key={i} className="lesson-p"><Gloss text={paraText(i)} /></p>
+                ))}
+                <div className="lesson-quiz-list">
+                  {quizList.map((q, qi) => {
+                    const picked = quizAnswers[qi];
+                    const correct = picked === q.answer;
+                    return (
+                      <div key={qi} className={`lesson-quiz-card${lessonQuizChecked ? (correct ? " ok" : " bad") : ""}`}>
+                        <div className="lesson-quiz-q"><strong>Q{qi + 1}.</strong> {q.q}</div>
+                        <div className="lesson-quiz-options">
+                          {q.options.map((opt, oi) => {
+                            const isPicked = picked === oi;
+                            const showCorrect = lessonQuizChecked && oi === q.answer;
+                            const showWrong = lessonQuizChecked && isPicked && oi !== q.answer;
+                            return (
+                              <label
+                                key={oi}
+                                className={`lesson-quiz-opt${isPicked ? " picked" : ""}${showCorrect ? " correct" : ""}${showWrong ? " wrong" : ""}`}
+                              >
+                                <input
+                                  type="radio"
+                                  name={`lesson-quiz-${qi}`}
+                                  checked={isPicked}
+                                  onChange={() => {
+                                    const next = quizAnswers.slice();
+                                    next[qi] = oi;
+                                    setLessonQuizAnswers(next);
+                                    setLessonQuizChecked(false);
+                                  }}
+                                />
+                                <span>{opt}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                        {lessonQuizChecked && !correct && q.explain && (
+                          <div className="lesson-quiz-explain"><Gloss text={q.explain} /></div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="lesson-quiz-actions">
+                  <button
+                    className="btn"
+                    disabled={!quizAllAnswered}
+                    onClick={() => setLessonQuizChecked(true)}
+                  >
+                    Check answers
+                  </button>
+                  {lessonQuizChecked && (
+                    <span className={`lesson-quiz-status${quizAllCorrect ? " ok" : " bad"}`}>
+                      {quizAllCorrect
+                        ? "All five correct — you can finish the lesson."
+                        : `${quizAnswers.filter((a, i) => a === quizList[i].answer).length} / ${quizList.length} correct — fix the wrong answers and check again.`}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : null;
             const body = (
               <div className="saqa-body lesson-section">
                 {sec.paragraphs.map((_, i) => {
@@ -2185,12 +2263,12 @@ export function UnitPage({
                   ))}
                 </span>
                 {!isLast ? (
-                  <button className="btn" onClick={() => go(si + 1)}>
+                  <button className="btn" onClick={() => go(si + 1)} disabled={!quizPassed}>
                     Next
                     <Icon name="chevronRight" size={16} />
                   </button>
                 ) : (
-                  <button className="btn" onClick={() => setTab("exercises")}>
+                  <button className="btn" onClick={() => setTab("exercises")} disabled={!quizPassed}>
                     Finish lesson
                     <Icon name="checkCircle" size={16} />
                   </button>
@@ -2221,7 +2299,7 @@ export function UnitPage({
                       )}
                     </h2>
                   )}
-                  {body}
+                  {quizBody ?? body}
                 </div>
                 {nav}
                 {isLast && (

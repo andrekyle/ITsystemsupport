@@ -202,6 +202,8 @@ export interface LessonSection {
   modelAnswer?: ModelAnswerBlock[];
   /** render as a plain always-visible section instead of a collapsible accordion */
   flat?: boolean;
+  /** when true, replace the section body with the lesson's final quiz and gate lesson completion on all-correct */
+  quizGate?: boolean;
 }
 
 /** An image slot in a lesson section. The picture itself is uploaded by staff and shared to all devices. */
