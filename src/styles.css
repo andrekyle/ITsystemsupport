@@ -5953,14 +5953,14 @@ input.att-sig {
 /* Lesson-view final quiz gate */
 .lesson-quiz-list { display: grid; gap: 10px; margin: 10px 0; }
 .lesson-quiz-card {
-  padding: 12px 14px;
+  padding: 4px 0;
   border: 0;
-  border-radius: 10px;
-  background: var(--surface-2);
+  border-radius: 0;
+  background: transparent;
   color: var(--ink);
 }
 .lesson-quiz-card.ok,
-.lesson-quiz-card.bad { background: var(--surface-2); }
+.lesson-quiz-card.bad { background: transparent; }
 .lesson-quiz-q {
   display: flex;
   align-items: center;
