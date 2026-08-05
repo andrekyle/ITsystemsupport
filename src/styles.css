@@ -5959,8 +5959,8 @@ input.att-sig {
   background: var(--surface-2);
   color: var(--ink);
 }
-.lesson-quiz-card.ok { background: var(--green-bg); }
-.lesson-quiz-card.bad { background: var(--red-bg); }
+.lesson-quiz-card.ok,
+.lesson-quiz-card.bad { background: var(--surface-2); }
 .lesson-quiz-q {
   display: flex;
   align-items: center;
