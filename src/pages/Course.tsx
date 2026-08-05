@@ -1477,14 +1477,6 @@ export function UnitPage({
         });
       });
     });
-    // Append the quiz as a final terminal slide if the lesson has quiz questions.
-    if (content.quiz && content.quiz.length) {
-      out.push({
-        kind: "quiz",
-        sectionTitle: "Final quiz — answer all correctly to finish",
-        questions: content.quiz.map((qq) => ({ q: qq.q, options: qq.options, answer: qq.answer, explain: qq.explain })),
-      });
-    }
     return out;
   };
   const openPresenter = () => {
