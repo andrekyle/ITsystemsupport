@@ -3785,17 +3785,6 @@ export function UnitPage({
                 <Icon name="chevronRight" size={22} />
               </button>
             </div>
-            {(!onQuiz || presenterPassed) && (
-              <button
-                type="button"
-                className="presenter-close"
-                onClick={closePresenter}
-                aria-label="Exit presentation"
-                title="Exit (Esc)"
-              >
-                <Icon name="close" size={20} />
-              </button>
-            )}
             {canGoBack && (
               <div
                 className="presenter-hit presenter-hit-left"
