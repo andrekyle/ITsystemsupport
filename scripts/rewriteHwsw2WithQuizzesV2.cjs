@@ -84,7 +84,7 @@ function buildQuiz(fig, figIdx) {
     const distractors = pick(otherBullets, 3, figIdx * 13 + bi * 17 + 3);
     const opts = shuffle([bullet, ...distractors], figIdx * 5 + bi * 7 + 19);
     questions.push({
-      q: `Which of the following is TRUE about ${fig.caption}?`,
+      q: `Which statement is TRUE?`,
       options: opts,
       answer: opts.indexOf(bullet),
       explain: `Correct: "${bullet}"`,
@@ -95,10 +95,10 @@ function buildQuiz(fig, figIdx) {
     const distractor = pick(otherBullets, 1, figIdx * 23 + 41)[0];
     const opts = shuffle([...fig.bullets, distractor], figIdx * 11 + 29);
     questions.push({
-      q: `Which of the following is NOT true about ${fig.caption}?`,
+      q: `Which statement is NOT true?`,
       options: opts,
       answer: opts.indexOf(distractor),
-      explain: `"${distractor}" is about a different topic, not ${fig.caption}.`,
+      explain: `"${distractor}" is about a different topic.`,
     });
   }
   while (questions.length < 5) {
@@ -106,7 +106,7 @@ function buildQuiz(fig, figIdx) {
     const distractors = pick(otherBullets, 3, figIdx * 31 + questions.length);
     const opts = shuffle([bullet, ...distractors], figIdx * 37 + questions.length);
     questions.push({
-      q: `Which of the following is TRUE about ${fig.caption}?`,
+      q: `Which statement is TRUE?`,
       options: opts,
       answer: opts.indexOf(bullet),
       explain: `Correct: "${bullet}"`,

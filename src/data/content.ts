@@ -4170,7 +4170,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: The four components of a computer system — the map for the whole lesson.",
           },
           {
-            q: "Which of the following is TRUE about The four components of a computer system — the map for the whole lesson?",
+            q: "Which statement is TRUE?",
             options: [
               "Webcam and microphone for calls and content.",
               "Different jobs, often confused.",
@@ -4181,7 +4181,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Every computer = input + processing + storage + output.\"",
           },
           {
-            q: "Which of the following is TRUE about The four components of a computer system — the map for the whole lesson?",
+            q: "Which statement is TRUE?",
             options: [
               "Hardware is what you touch; software is what runs on it.",
               "Run on top of the OS.",
@@ -4192,7 +4192,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Hardware is what you touch; software is what runs on it.\"",
           },
           {
-            q: "Which of the following is TRUE about The four components of a computer system — the map for the whole lesson?",
+            q: "Which statement is TRUE?",
             options: [
               "Access point: provides Wi-Fi coverage.",
               "Use this map to place every other slide in the deck.",
@@ -4203,7 +4203,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Use this map to place every other slide in the deck.\"",
           },
           {
-            q: "Which of the following is NOT true about The four components of a computer system — the map for the whole lesson?",
+            q: "Which statement is NOT true?",
             options: [
               "Colour-coded pairs enable dual-channel mode.",
               "Every computer = input + processing + storage + output.",
@@ -4211,7 +4211,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Use this map to place every other slide in the deck.",
             ],
             answer: 0,
-            explain: "\"Colour-coded pairs enable dual-channel mode.\" is about a different topic, not The four components of a computer system — the map for the whole lesson.",
+            explain: "\"Colour-coded pairs enable dual-channel mode.\" is about a different topic.",
           },
         ],
       },
@@ -4249,7 +4249,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Motherboard components — the labelled overview.",
           },
           {
-            q: "Which of the following is TRUE about Motherboard components — the labelled overview?",
+            q: "Which statement is TRUE?",
             options: [
               "Central hub that connects CPU, RAM, storage, GPU and PSU.",
               "Used for SATA SSDs, HDDs and DVD drives.",
@@ -4260,7 +4260,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Central hub that connects CPU, RAM, storage, GPU and PSU.\"",
           },
           {
-            q: "Which of the following is TRUE about Motherboard components — the labelled overview?",
+            q: "Which statement is TRUE?",
             options: [
               "Runs on servers, routers and endpoints.",
               "Support role: getting AI tools working for users.",
@@ -4271,7 +4271,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Learn the slot names: CPU socket, DIMM, PCIe, M.2, SATA.\"",
           },
           {
-            q: "Which of the following is TRUE about Motherboard components — the labelled overview?",
+            q: "Which statement is TRUE?",
             options: [
               "Chipset routes traffic between all components.",
               "Initialises hardware, then hands over to the OS.",
@@ -4282,7 +4282,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Chipset routes traffic between all components.\"",
           },
           {
-            q: "Which of the following is NOT true about Motherboard components — the labelled overview?",
+            q: "Which statement is NOT true?",
             options: [
               "Chipset routes traffic between all components.",
               "Often licensed per user or per device.",
@@ -4290,7 +4290,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Learn the slot names: CPU socket, DIMM, PCIe, M.2, SATA.",
             ],
             answer: 1,
-            explain: "\"Often licensed per user or per device.\" is about a different topic, not Motherboard components — the labelled overview.",
+            explain: "\"Often licensed per user or per device.\" is about a different topic.",
           },
         ],
       },
@@ -4319,7 +4319,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: The CPU socket — where the processor lives.",
           },
           {
-            q: "Which of the following is TRUE about The CPU socket — where the processor lives?",
+            q: "Which statement is TRUE?",
             options: [
               "Software tells hardware what to do.",
               "Physical mount that connects the CPU to the board.",
@@ -4330,7 +4330,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Physical mount that connects the CPU to the board.\"",
           },
           {
-            q: "Which of the following is TRUE about The CPU socket — where the processor lives?",
+            q: "Which statement is TRUE?",
             options: [
               "Socket type (LGA, PGA, BGA) must match the CPU.",
               "Reliable, cheap, no leaks.",
@@ -4341,7 +4341,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Socket type (LGA, PGA, BGA) must match the CPU.\"",
           },
           {
-            q: "Which of the following is TRUE about The CPU socket — where the processor lives?",
+            q: "Which statement is TRUE?",
             options: [
               "Each step is roughly ×1000.",
               "NVMe SSD: plugs into M.2, blazing fast.",
@@ -4352,7 +4352,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Damaged pins here = dead motherboard.\"",
           },
           {
-            q: "Which of the following is NOT true about The CPU socket — where the processor lives?",
+            q: "Which statement is NOT true?",
             options: [
               "Socket type (LGA, PGA, BGA) must match the CPU.",
               "SATA SSD: no moving parts, fast enough for most users.",
@@ -4360,7 +4360,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Physical mount that connects the CPU to the board.",
             ],
             answer: 1,
-            explain: "\"SATA SSD: no moving parts, fast enough for most users.\" is about a different topic, not The CPU socket — where the processor lives.",
+            explain: "\"SATA SSD: no moving parts, fast enough for most users.\" is about a different topic.",
           },
         ],
       },
@@ -4389,7 +4389,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: VRM (Voltage Regulator Module) — the power behind your CPU.",
           },
           {
-            q: "Which of the following is TRUE about VRM (Voltage Regulator Module) — the power behind your CPU?",
+            q: "Which statement is TRUE?",
             options: [
               "History explains today's design choices.",
               "Drivers translate between the two.",
@@ -4400,7 +4400,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Steps 12 V from the PSU down to ~1 V for the CPU.\"",
           },
           {
-            q: "Which of the following is TRUE about VRM (Voltage Regulator Module) — the power behind your CPU?",
+            q: "Which statement is TRUE?",
             options: [
               "Learn what each port can and can't carry.",
               "Weak VRM = instability under heavy load.",
@@ -4411,7 +4411,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Weak VRM = instability under heavy load.\"",
           },
           {
-            q: "Which of the following is TRUE about VRM (Voltage Regulator Module) — the power behind your CPU?",
+            q: "Which statement is TRUE?",
             options: [
               "Runs hot — needs its own heatsink on gaming boards.",
               "Socket type (LGA, PGA, BGA) must match the CPU.",
@@ -4422,7 +4422,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Runs hot — needs its own heatsink on gaming boards.\"",
           },
           {
-            q: "Which of the following is NOT true about VRM (Voltage Regulator Module) — the power behind your CPU?",
+            q: "Which statement is NOT true?",
             options: [
               "Steps 12 V from the PSU down to ~1 V for the CPU.",
               "Runs hot — needs its own heatsink on gaming boards.",
@@ -4430,7 +4430,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Browsers, email clients, messaging apps.",
             ],
             answer: 3,
-            explain: "\"Browsers, email clients, messaging apps.\" is about a different topic, not VRM (Voltage Regulator Module) — the power behind your CPU.",
+            explain: "\"Browsers, email clients, messaging apps.\" is about a different topic.",
           },
         ],
       },
@@ -4459,7 +4459,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: BIOS / UEFI chip — the firmware that starts your PC.",
           },
           {
-            q: "Which of the following is TRUE about BIOS / UEFI chip — the firmware that starts your PC?",
+            q: "Which statement is TRUE?",
             options: [
               "Damaged pins here = dead motherboard.",
               "More RAM = more apps open at once without slowing down.",
@@ -4470,7 +4470,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"First code to run when you press power.\"",
           },
           {
-            q: "Which of the following is TRUE about BIOS / UEFI chip — the firmware that starts your PC?",
+            q: "Which statement is TRUE?",
             options: [
               "File system organises everything on disk.",
               "Keeps date, time and BIOS settings when unplugged.",
@@ -4481,7 +4481,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Initialises hardware, then hands over to the OS.\"",
           },
           {
-            q: "Which of the following is TRUE about BIOS / UEFI chip — the firmware that starts your PC?",
+            q: "Which statement is TRUE?",
             options: [
               "Slower than NVMe but very flexible.",
               "UEFI replaces the older BIOS with a modern interface.",
@@ -4492,7 +4492,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"UEFI replaces the older BIOS with a modern interface.\"",
           },
           {
-            q: "Which of the following is NOT true about BIOS / UEFI chip — the firmware that starts your PC?",
+            q: "Which statement is NOT true?",
             options: [
               "Initialises hardware, then hands over to the OS.",
               "Runs hot — usually needs a small heatsink.",
@@ -4500,7 +4500,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "UEFI replaces the older BIOS with a modern interface.",
             ],
             answer: 1,
-            explain: "\"Runs hot — usually needs a small heatsink.\" is about a different topic, not BIOS / UEFI chip — the firmware that starts your PC.",
+            explain: "\"Runs hot — usually needs a small heatsink.\" is about a different topic.",
           },
         ],
       },
@@ -4529,7 +4529,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: CMOS battery — keeps BIOS settings and the clock alive.",
           },
           {
-            q: "Which of the following is TRUE about CMOS battery — keeps BIOS settings and the clock alive?",
+            q: "Which statement is TRUE?",
             options: [
               "Small coin cell (CR2032) on the motherboard.",
               "Queried with SQL.",
@@ -4540,7 +4540,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Small coin cell (CR2032) on the motherboard.\"",
           },
           {
-            q: "Which of the following is TRUE about CMOS battery — keeps BIOS settings and the clock alive?",
+            q: "Which statement is TRUE?",
             options: [
               "Front panel connects power button, USB and audio.",
               "Billions of transistors; multiple cores and threads.",
@@ -4551,7 +4551,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Keeps date, time and BIOS settings when unplugged.\"",
           },
           {
-            q: "Which of the following is TRUE about CMOS battery — keeps BIOS settings and the clock alive?",
+            q: "Which statement is TRUE?",
             options: [
               "Users are still the biggest attack surface.",
               "Thunderbolt 4/5 is the fastest general port on a PC.",
@@ -4562,7 +4562,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Dead battery = clock resets, boot errors.\"",
           },
           {
-            q: "Which of the following is NOT true about CMOS battery — keeps BIOS settings and the clock alive?",
+            q: "Which statement is NOT true?",
             options: [
               "Small coin cell (CR2032) on the motherboard.",
               "3D and design tools (Blender, AutoCAD).",
@@ -4570,7 +4570,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Keeps date, time and BIOS settings when unplugged.",
             ],
             answer: 1,
-            explain: "\"3D and design tools (Blender, AutoCAD).\" is about a different topic, not CMOS battery — keeps BIOS settings and the clock alive.",
+            explain: "\"3D and design tools (Blender, AutoCAD).\" is about a different topic.",
           },
         ],
       },
@@ -4599,7 +4599,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: CPU (Central Processing Unit) — anatomy of the chip.",
           },
           {
-            q: "Which of the following is TRUE about CPU (Central Processing Unit) — anatomy of the chip?",
+            q: "Which statement is TRUE?",
             options: [
               "Web servers, CMS platforms.",
               "Editors and IDEs (VS Code, IntelliJ, Xcode).",
@@ -4610,7 +4610,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Executes the instructions of every program.\"",
           },
           {
-            q: "Which of the following is TRUE about CPU (Central Processing Unit) — anatomy of the chip?",
+            q: "Which statement is TRUE?",
             options: [
               "Billions of transistors; multiple cores and threads.",
               "NVIDIA vs AMD vs Intel Arc for GPUs.",
@@ -4621,7 +4621,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Billions of transistors; multiple cores and threads.\"",
           },
           {
-            q: "Which of the following is TRUE about CPU (Central Processing Unit) — anatomy of the chip?",
+            q: "Which statement is TRUE?",
             options: [
               "Where every other software category starts.",
               "Runs on servers, routers and endpoints.",
@@ -4632,7 +4632,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Clock speed × cores × cache = real-world performance.\"",
           },
           {
-            q: "Which of the following is NOT true about CPU (Central Processing Unit) — anatomy of the chip?",
+            q: "Which statement is NOT true?",
             options: [
               "Clock speed × cores × cache = real-world performance.",
               "One data cable + one power cable per drive.",
@@ -4640,7 +4640,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Executes the instructions of every program.",
             ],
             answer: 1,
-            explain: "\"One data cable + one power cable per drive.\" is about a different topic, not CPU (Central Processing Unit) — anatomy of the chip.",
+            explain: "\"One data cable + one power cable per drive.\" is about a different topic.",
           },
         ],
       },
@@ -4669,7 +4669,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: CPU cache — L1, L2 and L3.",
           },
           {
-            q: "Which of the following is TRUE about CPU cache — L1, L2 and L3?",
+            q: "Which statement is TRUE?",
             options: [
               "Tiny, extremely fast memory next to the CPU cores.",
               "NPU is power-efficient — great on laptops.",
@@ -4680,7 +4680,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Tiny, extremely fast memory next to the CPU cores.\"",
           },
           {
-            q: "Which of the following is TRUE about CPU cache — L1, L2 and L3?",
+            q: "Which statement is TRUE?",
             options: [
               "Better for very hot CPUs (i9/Ryzen 9).",
               "Kernel bugs can crash the whole machine (BSOD).",
@@ -4691,7 +4691,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"L1 fastest/smallest, L3 largest/shared.\"",
           },
           {
-            q: "Which of the following is TRUE about CPU cache — L1, L2 and L3?",
+            q: "Which statement is TRUE?",
             options: [
               "Big cache helps games, databases and AI a lot.",
               "Delivers 12 V, 5 V and 3.3 V to the board and drives.",
@@ -4702,7 +4702,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Big cache helps games, databases and AI a lot.\"",
           },
           {
-            q: "Which of the following is NOT true about CPU cache — L1, L2 and L3?",
+            q: "Which statement is NOT true?",
             options: [
               "Big cache helps games, databases and AI a lot.",
               "L1 fastest/smallest, L3 largest/shared.",
@@ -4710,7 +4710,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Backups are critical — data loss = job loss.",
             ],
             answer: 3,
-            explain: "\"Backups are critical — data loss = job loss.\" is about a different topic, not CPU cache — L1, L2 and L3.",
+            explain: "\"Backups are critical — data loss = job loss.\" is about a different topic.",
           },
         ],
       },
@@ -4739,7 +4739,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Different CPUs and GPUs — how modern processors compare.",
           },
           {
-            q: "Which of the following is TRUE about Different CPUs and GPUs — how modern processors compare?",
+            q: "Which statement is TRUE?",
             options: [
               "Slot size: x1, x4, x8, x16 — must fit the card.",
               "Front panel connects power button, USB and audio.",
@@ -4750,7 +4750,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Intel vs AMD vs Apple: different sockets, same job.\"",
           },
           {
-            q: "Which of the following is TRUE about Different CPUs and GPUs — how modern processors compare?",
+            q: "Which statement is TRUE?",
             options: [
               "NVIDIA vs AMD vs Intel Arc for GPUs.",
               "Touch & other senses: printers, plotters, 3D printers, haptic gloves, braille displays.",
@@ -4761,7 +4761,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"NVIDIA vs AMD vs Intel Arc for GPUs.\"",
           },
           {
-            q: "Which of the following is TRUE about Different CPUs and GPUs — how modern processors compare?",
+            q: "Which statement is TRUE?",
             options: [
               "IP addresses identify devices on the network.",
               "Stylus, trackball, joystick, controller, light gun.",
@@ -4772,7 +4772,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Pick the chip that matches the user's workload.\"",
           },
           {
-            q: "Which of the following is NOT true about Different CPUs and GPUs — how modern processors compare?",
+            q: "Which statement is NOT true?",
             options: [
               "NVIDIA vs AMD vs Intel Arc for GPUs.",
               "Intel vs AMD vs Apple: different sockets, same job.",
@@ -4780,7 +4780,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Pick the chip that matches the user's workload.",
             ],
             answer: 2,
-            explain: "\"Each step is roughly ×1000.\" is about a different topic, not Different CPUs and GPUs — how modern processors compare.",
+            explain: "\"Each step is roughly ×1000.\" is about a different topic.",
           },
         ],
       },
@@ -4809,7 +4809,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Graphics and AI hardware — from rendering to neural networks.",
           },
           {
-            q: "Which of the following is TRUE about Graphics and AI hardware — from rendering to neural networks?",
+            q: "Which statement is TRUE?",
             options: [
               "Bad firmware update can brick a device.",
               "Programs users interact with directly.",
@@ -4820,7 +4820,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"The same GPU hardware runs games and neural networks.\"",
           },
           {
-            q: "Which of the following is TRUE about Graphics and AI hardware — from rendering to neural networks?",
+            q: "Which statement is TRUE?",
             options: [
               "3D and design tools (Blender, AutoCAD).",
               "Runs hot — usually needs a small heatsink.",
@@ -4831,7 +4831,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Tensor / matrix cores accelerate AI operations.\"",
           },
           {
-            q: "Which of the following is TRUE about Graphics and AI hardware — from rendering to neural networks?",
+            q: "Which statement is TRUE?",
             options: [
               "Local AI models now run on consumer GPUs.",
               "Support role: getting AI tools working for users.",
@@ -4842,7 +4842,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Local AI models now run on consumer GPUs.\"",
           },
           {
-            q: "Which of the following is NOT true about Graphics and AI hardware — from rendering to neural networks?",
+            q: "Which statement is NOT true?",
             options: [
               "The same GPU hardware runs games and neural networks.",
               "Local AI models now run on consumer GPUs.",
@@ -4850,7 +4850,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Tensor / matrix cores accelerate AI operations.",
             ],
             answer: 2,
-            explain: "\"Antivirus, backup, disk clean-up, compression.\" is about a different topic, not Graphics and AI hardware — from rendering to neural networks.",
+            explain: "\"Antivirus, backup, disk clean-up, compression.\" is about a different topic.",
           },
         ],
       },
@@ -4879,7 +4879,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Modern AI PC hardware — CPU + GPU + NPU together.",
           },
           {
-            q: "Which of the following is TRUE about Modern AI PC hardware — CPU + GPU + NPU together?",
+            q: "Which statement is TRUE?",
             options: [
               "Runs hot — usually needs a small heatsink.",
               "NPU (Neural Processing Unit) is a dedicated AI chip.",
@@ -4890,7 +4890,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"NPU (Neural Processing Unit) is a dedicated AI chip.\"",
           },
           {
-            q: "Which of the following is TRUE about Modern AI PC hardware — CPU + GPU + NPU together?",
+            q: "Which statement is TRUE?",
             options: [
               "Damaged pins here = dead motherboard.",
               "Wired vs wireless: speed vs convenience.",
@@ -4901,7 +4901,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Copilot+ PCs use CPU, GPU and NPU together.\"",
           },
           {
-            q: "Which of the following is TRUE about Modern AI PC hardware — CPU + GPU + NPU together?",
+            q: "Which statement is TRUE?",
             options: [
               "Billions of transistors; multiple cores and threads.",
               "Pick the chip that matches the user's workload.",
@@ -4912,7 +4912,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"NPU is power-efficient — great on laptops.\"",
           },
           {
-            q: "Which of the following is NOT true about Modern AI PC hardware — CPU + GPU + NPU together?",
+            q: "Which statement is NOT true?",
             options: [
               "Copilot+ PCs use CPU, GPU and NPU together.",
               "NPU is power-efficient — great on laptops.",
@@ -4920,7 +4920,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "NPU (Neural Processing Unit) is a dedicated AI chip.",
             ],
             answer: 2,
-            explain: "\"History explains today's design choices.\" is about a different topic, not Modern AI PC hardware — CPU + GPU + NPU together.",
+            explain: "\"History explains today's design choices.\" is about a different topic.",
           },
         ],
       },
@@ -4949,7 +4949,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: CPU cooler — traditional air cooler.",
           },
           {
-            q: "Which of the following is TRUE about CPU cooler — traditional air cooler?",
+            q: "Which statement is TRUE?",
             options: [
               "Heatsink + fan moves heat from CPU to case air.",
               "Better for very hot CPUs (i9/Ryzen 9).",
@@ -4960,7 +4960,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Heatsink + fan moves heat from CPU to case air.\"",
           },
           {
-            q: "Which of the following is TRUE about CPU cooler — traditional air cooler?",
+            q: "Which statement is TRUE?",
             options: [
               "Back up before touching either.",
               "Reliable, cheap, no leaks.",
@@ -4971,7 +4971,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Reliable, cheap, no leaks.\"",
           },
           {
-            q: "Which of the following is TRUE about CPU cooler — traditional air cooler?",
+            q: "Which statement is TRUE?",
             options: [
               "Slower than NVMe but very flexible.",
               "Old boards: PS/2, VGA, parallel, serial.",
@@ -4982,7 +4982,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Thermal paste sits between CPU and heatsink.\"",
           },
           {
-            q: "Which of the following is NOT true about CPU cooler — traditional air cooler?",
+            q: "Which statement is NOT true?",
             options: [
               "Heatsink + fan moves heat from CPU to case air.",
               "Reliable, cheap, no leaks.",
@@ -4990,7 +4990,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Public, private, hybrid — three deployment models.",
             ],
             answer: 3,
-            explain: "\"Public, private, hybrid — three deployment models.\" is about a different topic, not CPU cooler — traditional air cooler.",
+            explain: "\"Public, private, hybrid — three deployment models.\" is about a different topic.",
           },
         ],
       },
@@ -5019,7 +5019,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Liquid CPU cooler — AIO (All-In-One).",
           },
           {
-            q: "Which of the following is TRUE about Liquid CPU cooler — AIO (All-In-One)?",
+            q: "Which statement is TRUE?",
             options: [
               "Weak VRM = instability under heavy load.",
               "Undersized PSU = crashes under GPU load.",
@@ -5030,7 +5030,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Sealed pump moves coolant to a radiator.\"",
           },
           {
-            q: "Which of the following is TRUE about Liquid CPU cooler — AIO (All-In-One)?",
+            q: "Which statement is TRUE?",
             options: [
               "Better for very hot CPUs (i9/Ryzen 9).",
               "Not all USB-C ports carry video or Thunderbolt.",
@@ -5041,7 +5041,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Better for very hot CPUs (i9/Ryzen 9).\"",
           },
           {
-            q: "Which of the following is TRUE about Liquid CPU cooler — AIO (All-In-One)?",
+            q: "Which statement is TRUE?",
             options: [
               "Clock speed × cores × cache = real-world performance.",
               "Pump can fail — watch for temperature spikes.",
@@ -5052,7 +5052,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Pump can fail — watch for temperature spikes.\"",
           },
           {
-            q: "Which of the following is NOT true about Liquid CPU cooler — AIO (All-In-One)?",
+            q: "Which statement is NOT true?",
             options: [
               "Converts AC mains to DC rails for every component.",
               "Sealed pump moves coolant to a radiator.",
@@ -5060,7 +5060,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Pump can fail — watch for temperature spikes.",
             ],
             answer: 0,
-            explain: "\"Converts AC mains to DC rails for every component.\" is about a different topic, not Liquid CPU cooler — AIO (All-In-One).",
+            explain: "\"Converts AC mains to DC rails for every component.\" is about a different topic.",
           },
         ],
       },
@@ -5089,7 +5089,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Cooling and thermal components — the whole thermal system.",
           },
           {
-            q: "Which of the following is TRUE about Cooling and thermal components — the whole thermal system?",
+            q: "Which statement is TRUE?",
             options: [
               "Case fans, CPU cooler, VRM & M.2 heatsinks, paste.",
               "Defence in depth — no single product is enough.",
@@ -5100,7 +5100,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Case fans, CPU cooler, VRM & M.2 heatsinks, paste.\"",
           },
           {
-            q: "Which of the following is TRUE about Cooling and thermal components — the whole thermal system?",
+            q: "Which statement is TRUE?",
             options: [
               "New boards: USB-C, HDMI, DisplayPort, 2.5G Ethernet.",
               "Enterprise policy changes via Group Policy.",
@@ -5111,7 +5111,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Airflow direction: in at the front, out at the rear.\"",
           },
           {
-            q: "Which of the following is TRUE about Cooling and thermal components — the whole thermal system?",
+            q: "Which statement is TRUE?",
             options: [
               "Dust is enemy #1 — clean filters regularly.",
               "Web servers, CMS platforms.",
@@ -5122,7 +5122,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Dust is enemy #1 — clean filters regularly.\"",
           },
           {
-            q: "Which of the following is NOT true about Cooling and thermal components — the whole thermal system?",
+            q: "Which statement is NOT true?",
             options: [
               "Dust is enemy #1 — clean filters regularly.",
               "'The cloud' = someone else's servers.",
@@ -5130,7 +5130,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Airflow direction: in at the front, out at the rear.",
             ],
             answer: 1,
-            explain: "\"'The cloud' = someone else's servers.\" is about a different topic, not Cooling and thermal components — the whole thermal system.",
+            explain: "\"'The cloud' = someone else's servers.\" is about a different topic.",
           },
         ],
       },
@@ -5159,7 +5159,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Memory (RAM) — how the modules work.",
           },
           {
-            q: "Which of the following is TRUE about Memory (RAM) — how the modules work?",
+            q: "Which statement is TRUE?",
             options: [
               "Check maximum supported speed in the manual.",
               "Volatile — loses everything on power off.",
@@ -5170,7 +5170,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Volatile — loses everything on power off.\"",
           },
           {
-            q: "Which of the following is TRUE about Memory (RAM) — how the modules work?",
+            q: "Which statement is TRUE?",
             options: [
               "More RAM = more apps open at once without slowing down.",
               "3D and design tools (Blender, AutoCAD).",
@@ -5181,7 +5181,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"More RAM = more apps open at once without slowing down.\"",
           },
           {
-            q: "Which of the following is TRUE about Memory (RAM) — how the modules work?",
+            q: "Which statement is TRUE?",
             options: [
               "Small tools, big impact on reliability.",
               "Chipset routes traffic between all components.",
@@ -5192,7 +5192,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"DDR4 and DDR5 are the current standards.\"",
           },
           {
-            q: "Which of the following is NOT true about Memory (RAM) — how the modules work?",
+            q: "Which statement is NOT true?",
             options: [
               "More RAM = more apps open at once without slowing down.",
               "Delivers 12 V, 5 V and 3.3 V to the board and drives.",
@@ -5200,7 +5200,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Volatile — loses everything on power off.",
             ],
             answer: 1,
-            explain: "\"Delivers 12 V, 5 V and 3.3 V to the board and drives.\" is about a different topic, not Memory (RAM) — how the modules work.",
+            explain: "\"Delivers 12 V, 5 V and 3.3 V to the board and drives.\" is about a different topic.",
           },
         ],
       },
@@ -5229,7 +5229,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: DIMM slots — where RAM plugs in.",
           },
           {
-            q: "Which of the following is TRUE about DIMM slots — where RAM plugs in?",
+            q: "Which statement is TRUE?",
             options: [
               "Clock speed × cores × cache = real-world performance.",
               "Copilot+ PCs use CPU, GPU and NPU together.",
@@ -5240,7 +5240,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Colour-coded pairs enable dual-channel mode.\"",
           },
           {
-            q: "Which of the following is TRUE about DIMM slots — where RAM plugs in?",
+            q: "Which statement is TRUE?",
             options: [
               "Clock speed × cores × cache = real-world performance.",
               "Populate matching slots for double the bandwidth.",
@@ -5251,7 +5251,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Populate matching slots for double the bandwidth.\"",
           },
           {
-            q: "Which of the following is TRUE about DIMM slots — where RAM plugs in?",
+            q: "Which statement is TRUE?",
             options: [
               "Check maximum supported speed in the manual.",
               "Drivers translate between the two.",
@@ -5262,7 +5262,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Check maximum supported speed in the manual.\"",
           },
           {
-            q: "Which of the following is NOT true about DIMM slots — where RAM plugs in?",
+            q: "Which statement is NOT true?",
             options: [
               "Colour-coded pairs enable dual-channel mode.",
               "Check maximum supported speed in the manual.",
@@ -5270,7 +5270,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "DHCP, DNS, VPN, firewall, load balancer.",
             ],
             answer: 3,
-            explain: "\"DHCP, DNS, VPN, firewall, load balancer.\" is about a different topic, not DIMM slots — where RAM plugs in.",
+            explain: "\"DHCP, DNS, VPN, firewall, load balancer.\" is about a different topic.",
           },
         ],
       },
@@ -5299,7 +5299,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Storage hardware — the full family (HDD, SSD, NVMe).",
           },
           {
-            q: "Which of the following is TRUE about Storage hardware — the full family (HDD, SSD, NVMe)?",
+            q: "Which statement is TRUE?",
             options: [
               "MIDI, eye tracker, voice, iris, data glove, foot pedal.",
               "Small tools, big impact on reliability.",
@@ -5310,7 +5310,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"HDD: spinning platters, cheap and large, slow.\"",
           },
           {
-            q: "Which of the following is TRUE about Storage hardware — the full family (HDD, SSD, NVMe)?",
+            q: "Which statement is TRUE?",
             options: [
               "80 PLUS rating = efficiency (Bronze < Gold < Titanium).",
               "Switch: connects wired devices inside the LAN.",
@@ -5321,7 +5321,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"SATA SSD: no moving parts, fast enough for most users.\"",
           },
           {
-            q: "Which of the following is TRUE about Storage hardware — the full family (HDD, SSD, NVMe)?",
+            q: "Which statement is TRUE?",
             options: [
               "Users are still the biggest attack surface.",
               "NVMe SSD: plugs into M.2, blazing fast.",
@@ -5332,7 +5332,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"NVMe SSD: plugs into M.2, blazing fast.\"",
           },
           {
-            q: "Which of the following is NOT true about Storage hardware — the full family (HDD, SSD, NVMe)?",
+            q: "Which statement is NOT true?",
             options: [
               "SATA SSD: no moving parts, fast enough for most users.",
               "Front panel connects power button, USB and audio.",
@@ -5340,7 +5340,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "NVMe SSD: plugs into M.2, blazing fast.",
             ],
             answer: 1,
-            explain: "\"Front panel connects power button, USB and audio.\" is about a different topic, not Storage hardware — the full family (HDD, SSD, NVMe).",
+            explain: "\"Front panel connects power button, USB and audio.\" is about a different topic.",
           },
         ],
       },
@@ -5369,7 +5369,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: SSD (NVMe M.2) — the modern fast SSD.",
           },
           {
-            q: "Which of the following is TRUE about SSD (NVMe M.2) — the modern fast SSD?",
+            q: "Which statement is TRUE?",
             options: [
               "Talks directly over PCIe — no SATA bottleneck.",
               "Hearing: speakers and headphones.",
@@ -5380,7 +5380,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Talks directly over PCIe — no SATA bottleneck.\"",
           },
           {
-            q: "Which of the following is TRUE about SSD (NVMe M.2) — the modern fast SSD?",
+            q: "Which statement is TRUE?",
             options: [
               "Users are still the biggest attack surface.",
               "Removing stubborn leftover app entries.",
@@ -5391,7 +5391,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Up to 10× faster than SATA SSDs.\"",
           },
           {
-            q: "Which of the following is TRUE about SSD (NVMe M.2) — the modern fast SSD?",
+            q: "Which statement is TRUE?",
             options: [
               "Back up before touching either.",
               "Hardware is what you touch; software is what runs on it.",
@@ -5402,7 +5402,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Runs hot — usually needs a small heatsink.\"",
           },
           {
-            q: "Which of the following is NOT true about SSD (NVMe M.2) — the modern fast SSD?",
+            q: "Which statement is NOT true?",
             options: [
               "Talks directly over PCIe — no SATA bottleneck.",
               "Defence in depth — no single product is enough.",
@@ -5410,7 +5410,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Up to 10× faster than SATA SSDs.",
             ],
             answer: 1,
-            explain: "\"Defence in depth — no single product is enough.\" is about a different topic, not SSD (NVMe M.2) — the modern fast SSD.",
+            explain: "\"Defence in depth — no single product is enough.\" is about a different topic.",
           },
         ],
       },
@@ -5439,7 +5439,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: M.2 slots — where NVMe SSDs live.",
           },
           {
-            q: "Which of the following is TRUE about M.2 slots — where NVMe SSDs live?",
+            q: "Which statement is TRUE?",
             options: [
               "Up to 10× faster than SATA SSDs.",
               "USB-C is reversible and delivers data + video + power.",
@@ -5450,7 +5450,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Long, thin slot on the motherboard.\"",
           },
           {
-            q: "Which of the following is TRUE about M.2 slots — where NVMe SSDs live?",
+            q: "Which statement is TRUE?",
             options: [
               "Uses PCIe lanes for high speed.",
               "Small tools, big impact on reliability.",
@@ -5461,7 +5461,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Uses PCIe lanes for high speed.\"",
           },
           {
-            q: "Which of the following is TRUE about M.2 slots — where NVMe SSDs live?",
+            q: "Which statement is TRUE?",
             options: [
               "History explains today's design choices.",
               "Hearing: speakers and headphones.",
@@ -5472,7 +5472,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Watch for shared bandwidth with SATA on some boards.\"",
           },
           {
-            q: "Which of the following is NOT true about M.2 slots — where NVMe SSDs live?",
+            q: "Which statement is NOT true?",
             options: [
               "Watch for shared bandwidth with SATA on some boards.",
               "USB-C is reversible and delivers data + video + power.",
@@ -5480,7 +5480,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Long, thin slot on the motherboard.",
             ],
             answer: 1,
-            explain: "\"USB-C is reversible and delivers data + video + power.\" is about a different topic, not M.2 slots — where NVMe SSDs live.",
+            explain: "\"USB-C is reversible and delivers data + video + power.\" is about a different topic.",
           },
         ],
       },
@@ -5509,7 +5509,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: SATA ports — connecting SATA drives and optical drives.",
           },
           {
-            q: "Which of the following is TRUE about SATA ports — connecting SATA drives and optical drives?",
+            q: "Which statement is TRUE?",
             options: [
               "One data cable + one power cable per drive.",
               "Different jobs, often confused.",
@@ -5520,7 +5520,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"One data cable + one power cable per drive.\"",
           },
           {
-            q: "Which of the following is TRUE about SATA ports — connecting SATA drives and optical drives?",
+            q: "Which statement is TRUE?",
             options: [
               "Removing stubborn leftover app entries.",
               "Long, thin slot on the motherboard.",
@@ -5531,7 +5531,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Used for SATA SSDs, HDDs and DVD drives.\"",
           },
           {
-            q: "Which of the following is TRUE about SATA ports — connecting SATA drives and optical drives?",
+            q: "Which statement is TRUE?",
             options: [
               "Slower than NVMe but very flexible.",
               "Tensor / matrix cores accelerate AI operations.",
@@ -5542,7 +5542,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Slower than NVMe but very flexible.\"",
           },
           {
-            q: "Which of the following is NOT true about SATA ports — connecting SATA drives and optical drives?",
+            q: "Which statement is NOT true?",
             options: [
               "Slower than NVMe but very flexible.",
               "Used for SATA SSDs, HDDs and DVD drives.",
@@ -5550,7 +5550,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Support role: getting AI tools working for users.",
             ],
             answer: 3,
-            explain: "\"Support role: getting AI tools working for users.\" is about a different topic, not SATA ports — connecting SATA drives and optical drives.",
+            explain: "\"Support role: getting AI tools working for users.\" is about a different topic.",
           },
         ],
       },
@@ -5579,7 +5579,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Data units explained — from 1 kilobyte to zettabytes.",
           },
           {
-            q: "Which of the following is TRUE about Data units explained — from 1 kilobyte to zettabytes?",
+            q: "Which statement is TRUE?",
             options: [
               "More RAM = more apps open at once without slowing down.",
               "UEFI replaces the older BIOS with a modern interface.",
@@ -5590,7 +5590,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"KB → MB → GB → TB → PB → EB → ZB.\"",
           },
           {
-            q: "Which of the following is TRUE about Data units explained — from 1 kilobyte to zettabytes?",
+            q: "Which statement is TRUE?",
             options: [
               "Each step is roughly ×1000.",
               "Dead battery = clock resets, boot errors.",
@@ -5601,7 +5601,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Each step is roughly ×1000.\"",
           },
           {
-            q: "Which of the following is TRUE about Data units explained — from 1 kilobyte to zettabytes?",
+            q: "Which statement is TRUE?",
             options: [
               "L1 fastest/smallest, L3 largest/shared.",
               "NPU (Neural Processing Unit) is a dedicated AI chip.",
@@ -5612,7 +5612,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Users think in files; support thinks in units.\"",
           },
           {
-            q: "Which of the following is NOT true about Data units explained — from 1 kilobyte to zettabytes?",
+            q: "Which statement is NOT true?",
             options: [
               "Each step is roughly ×1000.",
               "KB → MB → GB → TB → PB → EB → ZB.",
@@ -5620,7 +5620,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Users think in files; support thinks in units.",
             ],
             answer: 2,
-            explain: "\"Not all USB-C ports carry video or Thunderbolt.\" is about a different topic, not Data units explained — from 1 kilobyte to zettabytes.",
+            explain: "\"Not all USB-C ports carry video or Thunderbolt.\" is about a different topic.",
           },
         ],
       },
@@ -5649,7 +5649,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: The history of storage devices — from magnetic drums to NVMe.",
           },
           {
-            q: "Which of the following is TRUE about The history of storage devices — from magnetic drums to NVMe?",
+            q: "Which statement is TRUE?",
             options: [
               "Learn what each port can and can't carry.",
               "Global data doubles every couple of years.",
@@ -5660,7 +5660,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Punched cards → tape → drums → HDD → SSD → NVMe.\"",
           },
           {
-            q: "Which of the following is TRUE about The history of storage devices — from magnetic drums to NVMe?",
+            q: "Which statement is TRUE?",
             options: [
               "Scanner, barcode/QR reader, smart card reader.",
               "Both save cost and enable rapid deployment.",
@@ -5671,7 +5671,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Storage got smaller, faster and cheaper every decade.\"",
           },
           {
-            q: "Which of the following is TRUE about The history of storage devices — from magnetic drums to NVMe?",
+            q: "Which statement is TRUE?",
             options: [
               "History explains today's design choices.",
               "Cable quality matters — cheap cables fail silently.",
@@ -5682,7 +5682,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"History explains today's design choices.\"",
           },
           {
-            q: "Which of the following is NOT true about The history of storage devices — from magnetic drums to NVMe?",
+            q: "Which statement is NOT true?",
             options: [
               "Punched cards → tape → drums → HDD → SSD → NVMe.",
               "History explains today's design choices.",
@@ -5690,7 +5690,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Storage got smaller, faster and cheaper every decade.",
             ],
             answer: 2,
-            explain: "\"Central hub that connects CPU, RAM, storage, GPU and PSU.\" is about a different topic, not The history of storage devices — from magnetic drums to NVMe.",
+            explain: "\"Central hub that connects CPU, RAM, storage, GPU and PSU.\" is about a different topic.",
           },
         ],
       },
@@ -5719,7 +5719,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: How much information do we have in the world?.",
           },
           {
-            q: "Which of the following is TRUE about How much information do we have in the world??",
+            q: "Which statement is TRUE?",
             options: [
               "GPU-hungry — plan hardware accordingly.",
               "Global data doubles every couple of years.",
@@ -5730,7 +5730,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Global data doubles every couple of years.\"",
           },
           {
-            q: "Which of the following is TRUE about How much information do we have in the world??",
+            q: "Which statement is TRUE?",
             options: [
               "HR: people and payroll (Workday, Sage).",
               "Case fans, CPU cooler, VRM & M.2 heatsinks, paste.",
@@ -5741,7 +5741,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Most new data is video, images and telemetry.\"",
           },
           {
-            q: "Which of the following is TRUE about How much information do we have in the world??",
+            q: "Which statement is TRUE?",
             options: [
               "Compilers, debuggers, version control (Git).",
               "HR: people and payroll (Workday, Sage).",
@@ -5752,7 +5752,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Storage capacity is a business problem, not just tech.\"",
           },
           {
-            q: "Which of the following is NOT true about How much information do we have in the world??",
+            q: "Which statement is NOT true?",
             options: [
               "Most new data is video, images and telemetry.",
               "Storage capacity is a business problem, not just tech.",
@@ -5760,7 +5760,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Global data doubles every couple of years.",
             ],
             answer: 2,
-            explain: "\"Great way to modernise an older machine.\" is about a different topic, not How much information do we have in the world?.",
+            explain: "\"Great way to modernise an older machine.\" is about a different topic.",
           },
         ],
       },
@@ -5789,7 +5789,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Power Supply Unit (PSU) — anatomy and connectors.",
           },
           {
-            q: "Which of the following is TRUE about Power Supply Unit (PSU) — anatomy and connectors?",
+            q: "Which statement is TRUE?",
             options: [
               "Converts AC mains to DC rails for every component.",
               "Runs on servers, routers and endpoints.",
@@ -5800,7 +5800,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Converts AC mains to DC rails for every component.\"",
           },
           {
-            q: "Which of the following is TRUE about Power Supply Unit (PSU) — anatomy and connectors?",
+            q: "Which statement is TRUE?",
             options: [
               "Pump can fail — watch for temperature spikes.",
               "Rated in watts — must exceed system requirements.",
@@ -5811,7 +5811,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Rated in watts — must exceed system requirements.\"",
           },
           {
-            q: "Which of the following is TRUE about Power Supply Unit (PSU) — anatomy and connectors?",
+            q: "Which statement is TRUE?",
             options: [
               "UEFI replaces the older BIOS with a modern interface.",
               "Small coin cell (CR2032) on the motherboard.",
@@ -5822,7 +5822,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"80 PLUS rating = efficiency (Bronze < Gold < Titanium).\"",
           },
           {
-            q: "Which of the following is NOT true about Power Supply Unit (PSU) — anatomy and connectors?",
+            q: "Which statement is NOT true?",
             options: [
               "Converts AC mains to DC rails for every component.",
               "Rated in watts — must exceed system requirements.",
@@ -5830,7 +5830,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Socket type (LGA, PGA, BGA) must match the CPU.",
             ],
             answer: 3,
-            explain: "\"Socket type (LGA, PGA, BGA) must match the CPU.\" is about a different topic, not Power Supply Unit (PSU) — anatomy and connectors.",
+            explain: "\"Socket type (LGA, PGA, BGA) must match the CPU.\" is about a different topic.",
           },
         ],
       },
@@ -5859,7 +5859,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: How a PSU converts and delivers power in a PC.",
           },
           {
-            q: "Which of the following is TRUE about How a PSU converts and delivers power in a PC?",
+            q: "Which statement is TRUE?",
             options: [
               "Hearing: speakers and headphones.",
               "Local AI models now run on consumer GPUs.",
@@ -5870,7 +5870,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"AC → rectifier → transformer → DC rails.\"",
           },
           {
-            q: "Which of the following is TRUE about How a PSU converts and delivers power in a PC?",
+            q: "Which statement is TRUE?",
             options: [
               "Delivers 12 V, 5 V and 3.3 V to the board and drives.",
               "Airflow direction: in at the front, out at the rear.",
@@ -5881,7 +5881,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Delivers 12 V, 5 V and 3.3 V to the board and drives.\"",
           },
           {
-            q: "Which of the following is TRUE about How a PSU converts and delivers power in a PC?",
+            q: "Which statement is TRUE?",
             options: [
               "Software tells hardware what to do.",
               "Undersized PSU = crashes under GPU load.",
@@ -5892,7 +5892,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Undersized PSU = crashes under GPU load.\"",
           },
           {
-            q: "Which of the following is NOT true about How a PSU converts and delivers power in a PC?",
+            q: "Which statement is NOT true?",
             options: [
               "Stylus, trackball, joystick, controller, light gun.",
               "AC → rectifier → transformer → DC rails.",
@@ -5900,7 +5900,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Undersized PSU = crashes under GPU load.",
             ],
             answer: 0,
-            explain: "\"Stylus, trackball, joystick, controller, light gun.\" is about a different topic, not How a PSU converts and delivers power in a PC.",
+            explain: "\"Stylus, trackball, joystick, controller, light gun.\" is about a different topic.",
           },
         ],
       },
@@ -5929,7 +5929,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Computer case (chassis).",
           },
           {
-            q: "Which of the following is TRUE about Computer case (chassis)?",
+            q: "Which statement is TRUE?",
             options: [
               "Provides airflow, mounting and physical protection.",
               "Switch: connects wired devices inside the LAN.",
@@ -5940,7 +5940,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Provides airflow, mounting and physical protection.\"",
           },
           {
-            q: "Which of the following is TRUE about Computer case (chassis)?",
+            q: "Which statement is TRUE?",
             options: [
               "Runs in the cloud or locally on an NPU/GPU.",
               "Rear I/O is soldered — you cannot swap it out.",
@@ -5951,7 +5951,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Form factors: ATX, Micro-ATX, Mini-ITX.\"",
           },
           {
-            q: "Which of the following is TRUE about Computer case (chassis)?",
+            q: "Which statement is TRUE?",
             options: [
               "Front panel connects power button, USB and audio.",
               "Webcam and microphone for calls and content.",
@@ -5962,7 +5962,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Front panel connects power button, USB and audio.\"",
           },
           {
-            q: "Which of the following is NOT true about Computer case (chassis)?",
+            q: "Which statement is NOT true?",
             options: [
               "Front panel connects power button, USB and audio.",
               "Runs hot — needs its own heatsink on gaming boards.",
@@ -5970,7 +5970,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Form factors: ATX, Micro-ATX, Mini-ITX.",
             ],
             answer: 1,
-            explain: "\"Runs hot — needs its own heatsink on gaming boards.\" is about a different topic, not Computer case (chassis).",
+            explain: "\"Runs hot — needs its own heatsink on gaming boards.\" is about a different topic.",
           },
         ],
       },
@@ -5999,7 +5999,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Rear I/O panel — old vs latest.",
           },
           {
-            q: "Which of the following is TRUE about Rear I/O panel — old vs latest?",
+            q: "Which statement is TRUE?",
             options: [
               "Major clouds: AWS, Azure, Google Cloud.",
               "Old boards: PS/2, VGA, parallel, serial.",
@@ -6010,7 +6010,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Old boards: PS/2, VGA, parallel, serial.\"",
           },
           {
-            q: "Which of the following is TRUE about Rear I/O panel — old vs latest?",
+            q: "Which statement is TRUE?",
             options: [
               "New boards: USB-C, HDMI, DisplayPort, 2.5G Ethernet.",
               "Delivers 12 V, 5 V and 3.3 V to the board and drives.",
@@ -6021,7 +6021,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"New boards: USB-C, HDMI, DisplayPort, 2.5G Ethernet.\"",
           },
           {
-            q: "Which of the following is TRUE about Rear I/O panel — old vs latest?",
+            q: "Which statement is TRUE?",
             options: [
               "Storage got smaller, faster and cheaper every decade.",
               "Often licensed per user or per device.",
@@ -6032,7 +6032,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Rear I/O is soldered — you cannot swap it out.\"",
           },
           {
-            q: "Which of the following is NOT true about Rear I/O panel — old vs latest?",
+            q: "Which statement is NOT true?",
             options: [
               "New boards: USB-C, HDMI, DisplayPort, 2.5G Ethernet.",
               "Hearing: speakers and headphones.",
@@ -6040,7 +6040,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Old boards: PS/2, VGA, parallel, serial.",
             ],
             answer: 1,
-            explain: "\"Hearing: speakers and headphones.\" is about a different topic, not Rear I/O panel — old vs latest.",
+            explain: "\"Hearing: speakers and headphones.\" is about a different topic.",
           },
         ],
       },
@@ -6069,7 +6069,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: New ports and connections — modern connectivity.",
           },
           {
-            q: "Which of the following is TRUE about New ports and connections — modern connectivity?",
+            q: "Which statement is TRUE?",
             options: [
               "Where every other software category starts.",
               "Registry edits can break login or app behaviour.",
@@ -6080,7 +6080,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"USB-C is reversible and delivers data + video + power.\"",
           },
           {
-            q: "Which of the following is TRUE about New ports and connections — modern connectivity?",
+            q: "Which statement is TRUE?",
             options: [
               "Bad firmware update can brick a device.",
               "Thunderbolt 4/5 is the fastest general port on a PC.",
@@ -6091,7 +6091,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Thunderbolt 4/5 is the fastest general port on a PC.\"",
           },
           {
-            q: "Which of the following is TRUE about New ports and connections — modern connectivity?",
+            q: "Which statement is TRUE?",
             options: [
               "Learn what each port can and can't carry.",
               "SATA SSD: no moving parts, fast enough for most users.",
@@ -6102,7 +6102,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Learn what each port can and can't carry.\"",
           },
           {
-            q: "Which of the following is NOT true about New ports and connections — modern connectivity?",
+            q: "Which statement is NOT true?",
             options: [
               "USB-C is reversible and delivers data + video + power.",
               "Learn what each port can and can't carry.",
@@ -6110,7 +6110,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Small coin cell (CR2032) on the motherboard.",
             ],
             answer: 3,
-            explain: "\"Small coin cell (CR2032) on the motherboard.\" is about a different topic, not New ports and connections — modern connectivity.",
+            explain: "\"Small coin cell (CR2032) on the motherboard.\" is about a different topic.",
           },
         ],
       },
@@ -6139,7 +6139,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD.",
           },
           {
-            q: "Which of the following is TRUE about Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD?",
+            q: "Which statement is TRUE?",
             options: [
               "UEFI replaces the older BIOS with a modern interface.",
               "Thunderbolt 4/5 is the fastest general port on a PC.",
@@ -6150,7 +6150,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Each port has a specific role: data, video, network, audio.\"",
           },
           {
-            q: "Which of the following is TRUE about Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD?",
+            q: "Which statement is TRUE?",
             options: [
               "Pick the chip that matches the user's workload.",
               "Billions of transistors; multiple cores and threads.",
@@ -6161,7 +6161,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Not all USB-C ports carry video or Thunderbolt.\"",
           },
           {
-            q: "Which of the following is TRUE about Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD?",
+            q: "Which statement is TRUE?",
             options: [
               "Access point: provides Wi-Fi coverage.",
               "Cable quality matters — cheap cables fail silently.",
@@ -6172,7 +6172,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Cable quality matters — cheap cables fail silently.\"",
           },
           {
-            q: "Which of the following is NOT true about Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD?",
+            q: "Which statement is NOT true?",
             options: [
               "Not all USB-C ports carry video or Thunderbolt.",
               "Access point: provides Wi-Fi coverage.",
@@ -6180,7 +6180,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Cable quality matters — cheap cables fail silently.",
             ],
             answer: 1,
-            explain: "\"Access point: provides Wi-Fi coverage.\" is about a different topic, not Ports and connectors — USB-A/C, Thunderbolt, HDMI, DisplayPort, Ethernet, audio, SD.",
+            explain: "\"Access point: provides Wi-Fi coverage.\" is about a different topic.",
           },
         ],
       },
@@ -6209,7 +6209,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Expansion hardware — add-in cards.",
           },
           {
-            q: "Which of the following is TRUE about Expansion hardware — add-in cards?",
+            q: "Which statement is TRUE?",
             options: [
               "PCIe cards add Wi-Fi, capture, sound, extra USB, RAID.",
               "Up to 10× faster than SATA SSDs.",
@@ -6220,7 +6220,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"PCIe cards add Wi-Fi, capture, sound, extra USB, RAID.\"",
           },
           {
-            q: "Which of the following is TRUE about Expansion hardware — add-in cards?",
+            q: "Which statement is TRUE?",
             options: [
               "Rear I/O is soldered — you cannot swap it out.",
               "Used for SATA SSDs, HDDs and DVD drives.",
@@ -6231,7 +6231,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Slot size: x1, x4, x8, x16 — must fit the card.\"",
           },
           {
-            q: "Which of the following is TRUE about Expansion hardware — add-in cards?",
+            q: "Which statement is TRUE?",
             options: [
               "Undersized PSU = crashes under GPU load.",
               "Not all USB-C ports carry video or Thunderbolt.",
@@ -6242,7 +6242,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Great way to modernise an older machine.\"",
           },
           {
-            q: "Which of the following is NOT true about Expansion hardware — add-in cards?",
+            q: "Which statement is NOT true?",
             options: [
               "PCIe cards add Wi-Fi, capture, sound, extra USB, RAID.",
               "Billions of transistors; multiple cores and threads.",
@@ -6250,7 +6250,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Slot size: x1, x4, x8, x16 — must fit the card.",
             ],
             answer: 1,
-            explain: "\"Billions of transistors; multiple cores and threads.\" is about a different topic, not Expansion hardware — add-in cards.",
+            explain: "\"Billions of transistors; multiple cores and threads.\" is about a different topic.",
           },
         ],
       },
@@ -6279,7 +6279,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Input devices — the essentials.",
           },
           {
-            q: "Which of the following is TRUE about Input devices — the essentials?",
+            q: "Which statement is TRUE?",
             options: [
               "Queried with SQL.",
               "Executes the instructions of every program.",
@@ -6290,7 +6290,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Keyboard, mouse, touchpad, touchscreen.\"",
           },
           {
-            q: "Which of the following is TRUE about Input devices — the essentials?",
+            q: "Which statement is TRUE?",
             options: [
               "Webcam and microphone for calls and content.",
               "IP addresses identify devices on the network.",
@@ -6301,7 +6301,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Webcam and microphone for calls and content.\"",
           },
           {
-            q: "Which of the following is TRUE about Input devices — the essentials?",
+            q: "Which statement is TRUE?",
             options: [
               "Major clouds: AWS, Azure, Google Cloud.",
               "Reliable, cheap, no leaks.",
@@ -6312,7 +6312,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Fingerprint reader for secure sign-in.\"",
           },
           {
-            q: "Which of the following is NOT true about Input devices — the essentials?",
+            q: "Which statement is NOT true?",
             options: [
               "Fingerprint reader for secure sign-in.",
               "OS, apps, utilities, drivers, firmware, middleware.",
@@ -6320,7 +6320,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Keyboard, mouse, touchpad, touchscreen.",
             ],
             answer: 1,
-            explain: "\"OS, apps, utilities, drivers, firmware, middleware.\" is about a different topic, not Input devices — the essentials.",
+            explain: "\"OS, apps, utilities, drivers, firmware, middleware.\" is about a different topic.",
           },
         ],
       },
@@ -6349,7 +6349,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Input devices — the extended catalogue (24 devices).",
           },
           {
-            q: "Which of the following is TRUE about Input devices — the extended catalogue (24 devices)?",
+            q: "Which statement is TRUE?",
             options: [
               "Stylus, trackball, joystick, controller, light gun.",
               "Thermal paste sits between CPU and heatsink.",
@@ -6360,7 +6360,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Stylus, trackball, joystick, controller, light gun.\"",
           },
           {
-            q: "Which of the following is TRUE about Input devices — the extended catalogue (24 devices)?",
+            q: "Which statement is TRUE?",
             options: [
               "Airflow direction: in at the front, out at the rear.",
               "Antivirus, EDR, SIEM, MFA, encryption.",
@@ -6371,7 +6371,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Scanner, barcode/QR reader, smart card reader.\"",
           },
           {
-            q: "Which of the following is TRUE about Input devices — the extended catalogue (24 devices)?",
+            q: "Which statement is TRUE?",
             options: [
               "MIDI, eye tracker, voice, iris, data glove, foot pedal.",
               "Cloud storage, cloud backup, cloud identity.",
@@ -6382,7 +6382,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"MIDI, eye tracker, voice, iris, data glove, foot pedal.\"",
           },
           {
-            q: "Which of the following is NOT true about Input devices — the extended catalogue (24 devices)?",
+            q: "Which statement is NOT true?",
             options: [
               "MIDI, eye tracker, voice, iris, data glove, foot pedal.",
               "Scanner, barcode/QR reader, smart card reader.",
@@ -6390,7 +6390,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Big cache helps games, databases and AI a lot.",
             ],
             answer: 3,
-            explain: "\"Big cache helps games, databases and AI a lot.\" is about a different topic, not Input devices — the extended catalogue (24 devices).",
+            explain: "\"Big cache helps games, databases and AI a lot.\" is about a different topic.",
           },
         ],
       },
@@ -6419,7 +6419,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Output devices — monitors, speakers, headphones, projectors, VR, printers and more.",
           },
           {
-            q: "Which of the following is TRUE about Output devices — monitors, speakers, headphones, projectors, VR, printers and more?",
+            q: "Which statement is TRUE?",
             options: [
               "Hardware is what you touch; software is what runs on it.",
               "Back up before touching either.",
@@ -6430,7 +6430,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Sight: monitors, projectors, VR headsets, smart glasses, LED displays.\"",
           },
           {
-            q: "Which of the following is TRUE about Output devices — monitors, speakers, headphones, projectors, VR, printers and more?",
+            q: "Which statement is TRUE?",
             options: [
               "Hearing: speakers and headphones.",
               "DNS turns names into IP addresses.",
@@ -6441,7 +6441,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Hearing: speakers and headphones.\"",
           },
           {
-            q: "Which of the following is TRUE about Output devices — monitors, speakers, headphones, projectors, VR, printers and more?",
+            q: "Which statement is TRUE?",
             options: [
               "Manages hardware, users, files, security.",
               "Photo, video, audio editors (Photoshop, Premiere).",
@@ -6452,7 +6452,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Touch & other senses: printers, plotters, 3D printers, haptic gloves, braille displays.\"",
           },
           {
-            q: "Which of the following is NOT true about Output devices — monitors, speakers, headphones, projectors, VR, printers and more?",
+            q: "Which statement is NOT true?",
             options: [
               "Hearing: speakers and headphones.",
               "Sight: monitors, projectors, VR headsets, smart glasses, LED displays.",
@@ -6460,7 +6460,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Touch & other senses: printers, plotters, 3D printers, haptic gloves, braille displays.",
             ],
             answer: 2,
-            explain: "\"Manages hardware, users, files, security.\" is about a different topic, not Output devices — monitors, speakers, headphones, projectors, VR, printers and more.",
+            explain: "\"Manages hardware, users, files, security.\" is about a different topic.",
           },
         ],
       },
@@ -6489,7 +6489,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Networking hardware (2026).",
           },
           {
-            q: "Which of the following is TRUE about Networking hardware (2026)?",
+            q: "Which statement is TRUE?",
             options: [
               "Pump can fail — watch for temperature spikes.",
               "Central hub that connects CPU, RAM, storage, GPU and PSU.",
@@ -6500,7 +6500,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Router: connects the LAN to the Internet.\"",
           },
           {
-            q: "Which of the following is TRUE about Networking hardware (2026)?",
+            q: "Which statement is TRUE?",
             options: [
               "SATA SSD: no moving parts, fast enough for most users.",
               "Fingerprint reader for secure sign-in.",
@@ -6511,7 +6511,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Switch: connects wired devices inside the LAN.\"",
           },
           {
-            q: "Which of the following is TRUE about Networking hardware (2026)?",
+            q: "Which statement is TRUE?",
             options: [
               "Access point: provides Wi-Fi coverage.",
               "Chipset routes traffic between all components.",
@@ -6522,7 +6522,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Access point: provides Wi-Fi coverage.\"",
           },
           {
-            q: "Which of the following is NOT true about Networking hardware (2026)?",
+            q: "Which statement is NOT true?",
             options: [
               "Router: connects the LAN to the Internet.",
               "Access point: provides Wi-Fi coverage.",
@@ -6530,7 +6530,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Switch: connects wired devices inside the LAN.",
             ],
             answer: 2,
-            explain: "\"The same GPU hardware runs games and neural networks.\" is about a different topic, not Networking hardware (2026).",
+            explain: "\"The same GPU hardware runs games and neural networks.\" is about a different topic.",
           },
         ],
       },
@@ -6559,7 +6559,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Networking and connectivity — how devices reach each other.",
           },
           {
-            q: "Which of the following is TRUE about Networking and connectivity — how devices reach each other?",
+            q: "Which statement is TRUE?",
             options: [
               "Watch for shared bandwidth with SATA on some boards.",
               "Wired vs wireless: speed vs convenience.",
@@ -6570,7 +6570,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Wired vs wireless: speed vs convenience.\"",
           },
           {
-            q: "Which of the following is TRUE about Networking and connectivity — how devices reach each other?",
+            q: "Which statement is TRUE?",
             options: [
               "Cable quality matters — cheap cables fail silently.",
               "Antivirus, backup, disk clean-up, compression.",
@@ -6581,7 +6581,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"IP addresses identify devices on the network.\"",
           },
           {
-            q: "Which of the following is TRUE about Networking and connectivity — how devices reach each other?",
+            q: "Which statement is TRUE?",
             options: [
               "Hearing: speakers and headphones.",
               "Storage capacity is a business problem, not just tech.",
@@ -6592,7 +6592,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"DNS turns names into IP addresses.\"",
           },
           {
-            q: "Which of the following is NOT true about Networking and connectivity — how devices reach each other?",
+            q: "Which statement is NOT true?",
             options: [
               "IP addresses identify devices on the network.",
               "DNS turns names into IP addresses.",
@@ -6600,7 +6600,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Wired vs wireless: speed vs convenience.",
             ],
             answer: 2,
-            explain: "\"File system organises everything on disk.\" is about a different topic, not Networking and connectivity — how devices reach each other.",
+            explain: "\"File system organises everything on disk.\" is about a different topic.",
           },
         ],
       },
@@ -6638,7 +6638,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Software modules — the programs that power your PC.",
           },
           {
-            q: "Which of the following is TRUE about Software modules — the programs that power your PC?",
+            q: "Which statement is TRUE?",
             options: [
               "OS, apps, utilities, drivers, firmware, middleware.",
               "Registry = a database of settings for OS and apps.",
@@ -6649,7 +6649,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"OS, apps, utilities, drivers, firmware, middleware.\"",
           },
           {
-            q: "Which of the following is TRUE about Software modules — the programs that power your PC?",
+            q: "Which statement is TRUE?",
             options: [
               "Bad firmware update can brick a device.",
               "Databases, cloud, games — every type has a role.",
@@ -6660,7 +6660,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Databases, cloud, games — every type has a role.\"",
           },
           {
-            q: "Which of the following is TRUE about Software modules — the programs that power your PC?",
+            q: "Which statement is TRUE?",
             options: [
               "GPU-hungry — plan hardware accordingly.",
               "Applying a fix that has no GUI setting.",
@@ -6671,7 +6671,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Software tells hardware what to do.\"",
           },
           {
-            q: "Which of the following is NOT true about Software modules — the programs that power your PC?",
+            q: "Which statement is NOT true?",
             options: [
               "OS, apps, utilities, drivers, firmware, middleware.",
               "Databases, cloud, games — every type has a role.",
@@ -6679,7 +6679,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Copilot+ PCs use CPU, GPU and NPU together.",
             ],
             answer: 3,
-            explain: "\"Copilot+ PCs use CPU, GPU and NPU together.\" is about a different topic, not Software modules — the programs that power your PC.",
+            explain: "\"Copilot+ PCs use CPU, GPU and NPU together.\" is about a different topic.",
           },
         ],
       },
@@ -6708,7 +6708,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Operating systems — the core system software.",
           },
           {
-            q: "Which of the following is TRUE about Operating systems — the core system software?",
+            q: "Which statement is TRUE?",
             options: [
               "Keeps date, time and BIOS settings when unplugged.",
               "'The cloud' = someone else's servers.",
@@ -6719,7 +6719,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Windows, macOS, Linux, ChromeOS, Android, iOS.\"",
           },
           {
-            q: "Which of the following is TRUE about Operating systems — the core system software?",
+            q: "Which statement is TRUE?",
             options: [
               "Manages hardware, users, files, security.",
               "Runs in the cloud or locally on an NPU/GPU.",
@@ -6730,7 +6730,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Manages hardware, users, files, security.\"",
           },
           {
-            q: "Which of the following is TRUE about Operating systems — the core system software?",
+            q: "Which statement is TRUE?",
             options: [
               "Pick the chip that matches the user's workload.",
               "Every app depends on the OS to run.",
@@ -6741,7 +6741,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Every app depends on the OS to run.\"",
           },
           {
-            q: "Which of the following is NOT true about Operating systems — the core system software?",
+            q: "Which statement is NOT true?",
             options: [
               "Kernel bugs can crash the whole machine (BSOD).",
               "Windows, macOS, Linux, ChromeOS, Android, iOS.",
@@ -6749,7 +6749,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Every app depends on the OS to run.",
             ],
             answer: 0,
-            explain: "\"Kernel bugs can crash the whole machine (BSOD).\" is about a different topic, not Operating systems — the core system software.",
+            explain: "\"Kernel bugs can crash the whole machine (BSOD).\" is about a different topic.",
           },
         ],
       },
@@ -6778,7 +6778,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Operating system components — kernel, drivers, file system, services, UI.",
           },
           {
-            q: "Which of the following is TRUE about Operating system components — kernel, drivers, file system, services, UI?",
+            q: "Which statement is TRUE?",
             options: [
               "Kernel talks to hardware; UI talks to the user.",
               "Better for very hot CPUs (i9/Ryzen 9).",
@@ -6789,7 +6789,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Kernel talks to hardware; UI talks to the user.\"",
           },
           {
-            q: "Which of the following is TRUE about Operating system components — kernel, drivers, file system, services, UI?",
+            q: "Which statement is TRUE?",
             options: [
               "Thunderbolt 4/5 is the fastest general port on a PC.",
               "Thermal paste sits between CPU and heatsink.",
@@ -6800,7 +6800,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Drivers translate between the two.\"",
           },
           {
-            q: "Which of the following is TRUE about Operating system components — kernel, drivers, file system, services, UI?",
+            q: "Which statement is TRUE?",
             options: [
               "File system organises everything on disk.",
               "Populate matching slots for double the bandwidth.",
@@ -6811,7 +6811,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"File system organises everything on disk.\"",
           },
           {
-            q: "Which of the following is NOT true about Operating system components — kernel, drivers, file system, services, UI?",
+            q: "Which statement is NOT true?",
             options: [
               "File system organises everything on disk.",
               "Thermal paste sits between CPU and heatsink.",
@@ -6819,7 +6819,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Drivers translate between the two.",
             ],
             answer: 1,
-            explain: "\"Thermal paste sits between CPU and heatsink.\" is about a different topic, not Operating system components — kernel, drivers, file system, services, UI.",
+            explain: "\"Thermal paste sits between CPU and heatsink.\" is about a different topic.",
           },
         ],
       },
@@ -6848,7 +6848,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Kernel vs Registry on Windows (part 1).",
           },
           {
-            q: "Which of the following is TRUE about Kernel vs Registry on Windows (part 1)?",
+            q: "Which statement is TRUE?",
             options: [
               "Cable quality matters — cheap cables fail silently.",
               "Kernel = the core code that runs the OS.",
@@ -6859,7 +6859,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Kernel = the core code that runs the OS.\"",
           },
           {
-            q: "Which of the following is TRUE about Kernel vs Registry on Windows (part 1)?",
+            q: "Which statement is TRUE?",
             options: [
               "Registry = a database of settings for OS and apps.",
               "Initialises hardware, then hands over to the OS.",
@@ -6870,7 +6870,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Registry = a database of settings for OS and apps.\"",
           },
           {
-            q: "Which of the following is TRUE about Kernel vs Registry on Windows (part 1)?",
+            q: "Which statement is TRUE?",
             options: [
               "Cloud storage, cloud backup, cloud identity.",
               "Learn what each port can and can't carry.",
@@ -6881,7 +6881,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Different jobs, often confused.\"",
           },
           {
-            q: "Which of the following is NOT true about Kernel vs Registry on Windows (part 1)?",
+            q: "Which statement is NOT true?",
             options: [
               "Registry = a database of settings for OS and apps.",
               "Removing stubborn leftover app entries.",
@@ -6889,7 +6889,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Kernel = the core code that runs the OS.",
             ],
             answer: 1,
-            explain: "\"Removing stubborn leftover app entries.\" is about a different topic, not Kernel vs Registry on Windows (part 1).",
+            explain: "\"Removing stubborn leftover app entries.\" is about a different topic.",
           },
         ],
       },
@@ -6918,7 +6918,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Kernel vs Registry on Windows (part 2).",
           },
           {
-            q: "Which of the following is TRUE about Kernel vs Registry on Windows (part 2)?",
+            q: "Which statement is TRUE?",
             options: [
               "Touch & other senses: printers, plotters, 3D printers, haptic gloves, braille displays.",
               "Better for very hot CPUs (i9/Ryzen 9).",
@@ -6929,7 +6929,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Kernel bugs can crash the whole machine (BSOD).\"",
           },
           {
-            q: "Which of the following is TRUE about Kernel vs Registry on Windows (part 2)?",
+            q: "Which statement is TRUE?",
             options: [
               "Users think in files; support thinks in units.",
               "Registry edits can break login or app behaviour.",
@@ -6940,7 +6940,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Registry edits can break login or app behaviour.\"",
           },
           {
-            q: "Which of the following is TRUE about Kernel vs Registry on Windows (part 2)?",
+            q: "Which statement is TRUE?",
             options: [
               "Back up before touching either.",
               "Containers share the host OS, start in seconds.",
@@ -6951,7 +6951,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Back up before touching either.\"",
           },
           {
-            q: "Which of the following is NOT true about Kernel vs Registry on Windows (part 2)?",
+            q: "Which statement is NOT true?",
             options: [
               "Kernel bugs can crash the whole machine (BSOD).",
               "Back up before touching either.",
@@ -6959,7 +6959,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Case fans, CPU cooler, VRM & M.2 heatsinks, paste.",
             ],
             answer: 3,
-            explain: "\"Case fans, CPU cooler, VRM & M.2 heatsinks, paste.\" is about a different topic, not Kernel vs Registry on Windows (part 2).",
+            explain: "\"Case fans, CPU cooler, VRM & M.2 heatsinks, paste.\" is about a different topic.",
           },
         ],
       },
@@ -6988,7 +6988,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: When would you actually want to use the Registry?.",
           },
           {
-            q: "Which of the following is TRUE about When would you actually want to use the Registry??",
+            q: "Which statement is TRUE?",
             options: [
               "Touch & other senses: printers, plotters, 3D printers, haptic gloves, braille displays.",
               "L1 fastest/smallest, L3 largest/shared.",
@@ -6999,7 +6999,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Applying a fix that has no GUI setting.\"",
           },
           {
-            q: "Which of the following is TRUE about When would you actually want to use the Registry??",
+            q: "Which statement is TRUE?",
             options: [
               "Major clouds: AWS, Azure, Google Cloud.",
               "IP addresses identify devices on the network.",
@@ -7010,7 +7010,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Removing stubborn leftover app entries.\"",
           },
           {
-            q: "Which of the following is TRUE about When would you actually want to use the Registry??",
+            q: "Which statement is TRUE?",
             options: [
               "Pump can fail — watch for temperature spikes.",
               "Enterprise policy changes via Group Policy.",
@@ -7021,7 +7021,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Enterprise policy changes via Group Policy.\"",
           },
           {
-            q: "Which of the following is NOT true about When would you actually want to use the Registry??",
+            q: "Which statement is NOT true?",
             options: [
               "Removing stubborn leftover app entries.",
               "Bad firmware update can brick a device.",
@@ -7029,7 +7029,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Enterprise policy changes via Group Policy.",
             ],
             answer: 1,
-            explain: "\"Bad firmware update can brick a device.\" is about a different topic, not When would you actually want to use the Registry?.",
+            explain: "\"Bad firmware update can brick a device.\" is about a different topic.",
           },
         ],
       },
@@ -7058,7 +7058,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Firmware and low-level software.",
           },
           {
-            q: "Which of the following is TRUE about Firmware and low-level software?",
+            q: "Which statement is TRUE?",
             options: [
               "Firmware lives inside chips (BIOS/UEFI, SSD, NIC).",
               "Weak VRM = instability under heavy load.",
@@ -7069,7 +7069,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Firmware lives inside chips (BIOS/UEFI, SSD, NIC).\"",
           },
           {
-            q: "Which of the following is TRUE about Firmware and low-level software?",
+            q: "Which statement is TRUE?",
             options: [
               "Use this map to place every other slide in the deck.",
               "Runs in the cloud or locally on an NPU/GPU.",
@@ -7080,7 +7080,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Updated with vendor tools — carefully.\"",
           },
           {
-            q: "Which of the following is TRUE about Firmware and low-level software?",
+            q: "Which statement is TRUE?",
             options: [
               "NPU is power-efficient — great on laptops.",
               "Socket type (LGA, PGA, BGA) must match the CPU.",
@@ -7091,7 +7091,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Bad firmware update can brick a device.\"",
           },
           {
-            q: "Which of the following is NOT true about Firmware and low-level software?",
+            q: "Which statement is NOT true?",
             options: [
               "Firmware lives inside chips (BIOS/UEFI, SSD, NIC).",
               "More RAM = more apps open at once without slowing down.",
@@ -7099,7 +7099,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Updated with vendor tools — carefully.",
             ],
             answer: 1,
-            explain: "\"More RAM = more apps open at once without slowing down.\" is about a different topic, not Firmware and low-level software.",
+            explain: "\"More RAM = more apps open at once without slowing down.\" is about a different topic.",
           },
         ],
       },
@@ -7128,7 +7128,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Application software — the big picture.",
           },
           {
-            q: "Which of the following is TRUE about Application software — the big picture?",
+            q: "Which statement is TRUE?",
             options: [
               "Used for SATA SSDs, HDDs and DVD drives.",
               "Applying a fix that has no GUI setting.",
@@ -7139,7 +7139,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Programs users interact with directly.\"",
           },
           {
-            q: "Which of the following is TRUE about Application software — the big picture?",
+            q: "Which statement is TRUE?",
             options: [
               "Run on top of the OS.",
               "Used for SATA SSDs, HDDs and DVD drives.",
@@ -7150,7 +7150,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Run on top of the OS.\"",
           },
           {
-            q: "Which of the following is TRUE about Application software — the big picture?",
+            q: "Which statement is TRUE?",
             options: [
               "Storage capacity is a business problem, not just tech.",
               "Queried with SQL.",
@@ -7161,7 +7161,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Often licensed per user or per device.\"",
           },
           {
-            q: "Which of the following is NOT true about Application software — the big picture?",
+            q: "Which statement is NOT true?",
             options: [
               "Often licensed per user or per device.",
               "ERP: finance, stock, procurement (SAP, Oracle).",
@@ -7169,7 +7169,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Programs users interact with directly.",
             ],
             answer: 1,
-            explain: "\"ERP: finance, stock, procurement (SAP, Oracle).\" is about a different topic, not Application software — the big picture.",
+            explain: "\"ERP: finance, stock, procurement (SAP, Oracle).\" is about a different topic.",
           },
         ],
       },
@@ -7198,7 +7198,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Enterprise and business software (ERP, CRM, HR).",
           },
           {
-            q: "Which of the following is TRUE about Enterprise and business software (ERP, CRM, HR)?",
+            q: "Which statement is TRUE?",
             options: [
               "ERP: finance, stock, procurement (SAP, Oracle).",
               "Back up before touching either.",
@@ -7209,7 +7209,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"ERP: finance, stock, procurement (SAP, Oracle).\"",
           },
           {
-            q: "Which of the following is TRUE about Enterprise and business software (ERP, CRM, HR)?",
+            q: "Which statement is TRUE?",
             options: [
               "Updated with vendor tools — carefully.",
               "Sight: monitors, projectors, VR headsets, smart glasses, LED displays.",
@@ -7220,7 +7220,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"CRM: customer records (Salesforce, Dynamics).\"",
           },
           {
-            q: "Which of the following is TRUE about Enterprise and business software (ERP, CRM, HR)?",
+            q: "Which statement is TRUE?",
             options: [
               "HR: people and payroll (Workday, Sage).",
               "Databases, cloud, games — every type has a role.",
@@ -7231,7 +7231,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"HR: people and payroll (Workday, Sage).\"",
           },
           {
-            q: "Which of the following is NOT true about Enterprise and business software (ERP, CRM, HR)?",
+            q: "Which statement is NOT true?",
             options: [
               "HR: people and payroll (Workday, Sage).",
               "CRM: customer records (Salesforce, Dynamics).",
@@ -7239,7 +7239,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Check maximum supported speed in the manual.",
             ],
             answer: 3,
-            explain: "\"Check maximum supported speed in the manual.\" is about a different topic, not Enterprise and business software (ERP, CRM, HR).",
+            explain: "\"Check maximum supported speed in the manual.\" is about a different topic.",
           },
         ],
       },
@@ -7268,7 +7268,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Web and internet software.",
           },
           {
-            q: "Which of the following is TRUE about Web and internet software?",
+            q: "Which statement is TRUE?",
             options: [
               "Removing stubborn leftover app entries.",
               "Watch for shared bandwidth with SATA on some boards.",
@@ -7279,7 +7279,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Browsers, email clients, messaging apps.\"",
           },
           {
-            q: "Which of the following is TRUE about Web and internet software?",
+            q: "Which statement is TRUE?",
             options: [
               "Web servers, CMS platforms.",
               "Big cache helps games, databases and AI a lot.",
@@ -7290,7 +7290,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Web servers, CMS platforms.\"",
           },
           {
-            q: "Which of the following is TRUE about Web and internet software?",
+            q: "Which statement is TRUE?",
             options: [
               "Tensor / matrix cores accelerate AI operations.",
               "AC → rectifier → transformer → DC rails.",
@@ -7301,7 +7301,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Most 'apps' today are really web apps.\"",
           },
           {
-            q: "Which of the following is NOT true about Web and internet software?",
+            q: "Which statement is NOT true?",
             options: [
               "Web servers, CMS platforms.",
               "Browsers, email clients, messaging apps.",
@@ -7309,7 +7309,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Most 'apps' today are really web apps.",
             ],
             answer: 2,
-            explain: "\"CRM: customer records (Salesforce, Dynamics).\" is about a different topic, not Web and internet software.",
+            explain: "\"CRM: customer records (Salesforce, Dynamics).\" is about a different topic.",
           },
         ],
       },
@@ -7338,7 +7338,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Multimedia and creative software.",
           },
           {
-            q: "Which of the following is TRUE about Multimedia and creative software?",
+            q: "Which statement is TRUE?",
             options: [
               "Users are still the biggest attack surface.",
               "OS, apps, utilities, drivers, firmware, middleware.",
@@ -7349,7 +7349,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Photo, video, audio editors (Photoshop, Premiere).\"",
           },
           {
-            q: "Which of the following is TRUE about Multimedia and creative software?",
+            q: "Which statement is TRUE?",
             options: [
               "Socket type (LGA, PGA, BGA) must match the CPU.",
               "NPU is power-efficient — great on laptops.",
@@ -7360,7 +7360,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"3D and design tools (Blender, AutoCAD).\"",
           },
           {
-            q: "Which of the following is TRUE about Multimedia and creative software?",
+            q: "Which statement is TRUE?",
             options: [
               "GPU-hungry — plan hardware accordingly.",
               "Great way to modernise an older machine.",
@@ -7371,7 +7371,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"GPU-hungry — plan hardware accordingly.\"",
           },
           {
-            q: "Which of the following is NOT true about Multimedia and creative software?",
+            q: "Which statement is NOT true?",
             options: [
               "Photo, video, audio editors (Photoshop, Premiere).",
               "GPU-hungry — plan hardware accordingly.",
@@ -7379,7 +7379,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "3D and design tools (Blender, AutoCAD).",
             ],
             answer: 2,
-            explain: "\"Talks directly over PCIe — no SATA bottleneck.\" is about a different topic, not Multimedia and creative software.",
+            explain: "\"Talks directly over PCIe — no SATA bottleneck.\" is about a different topic.",
           },
         ],
       },
@@ -7408,7 +7408,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Database software.",
           },
           {
-            q: "Which of the following is TRUE about Database software?",
+            q: "Which statement is TRUE?",
             options: [
               "Where every other software category starts.",
               "Stores structured data (SQL Server, MySQL, Postgres).",
@@ -7419,7 +7419,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Stores structured data (SQL Server, MySQL, Postgres).\"",
           },
           {
-            q: "Which of the following is TRUE about Database software?",
+            q: "Which statement is TRUE?",
             options: [
               "DDR4 and DDR5 are the current standards.",
               "USB-C is reversible and delivers data + video + power.",
@@ -7430,7 +7430,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Queried with SQL.\"",
           },
           {
-            q: "Which of the following is TRUE about Database software?",
+            q: "Which statement is TRUE?",
             options: [
               "Uses PCIe lanes for high speed.",
               "Damaged pins here = dead motherboard.",
@@ -7441,7 +7441,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Backups are critical — data loss = job loss.\"",
           },
           {
-            q: "Which of the following is NOT true about Database software?",
+            q: "Which statement is NOT true?",
             options: [
               "Queried with SQL.",
               "Backups are critical — data loss = job loss.",
@@ -7449,7 +7449,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Stores structured data (SQL Server, MySQL, Postgres).",
             ],
             answer: 2,
-            explain: "\"Most 'apps' today are really web apps.\" is about a different topic, not Database software.",
+            explain: "\"Most 'apps' today are really web apps.\" is about a different topic.",
           },
         ],
       },
@@ -7478,7 +7478,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Programming and development software.",
           },
           {
-            q: "Which of the following is TRUE about Programming and development software?",
+            q: "Which statement is TRUE?",
             options: [
               "Editors and IDEs (VS Code, IntelliJ, Xcode).",
               "Rated in watts — must exceed system requirements.",
@@ -7489,7 +7489,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Editors and IDEs (VS Code, IntelliJ, Xcode).\"",
           },
           {
-            q: "Which of the following is TRUE about Programming and development software?",
+            q: "Which statement is TRUE?",
             options: [
               "DDR4 and DDR5 are the current standards.",
               "Compilers, debuggers, version control (Git).",
@@ -7500,7 +7500,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Compilers, debuggers, version control (Git).\"",
           },
           {
-            q: "Which of the following is TRUE about Programming and development software?",
+            q: "Which statement is TRUE?",
             options: [
               "Fingerprint reader for secure sign-in.",
               "One data cable + one power cable per drive.",
@@ -7511,7 +7511,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Where every other software category starts.\"",
           },
           {
-            q: "Which of the following is NOT true about Programming and development software?",
+            q: "Which statement is NOT true?",
             options: [
               "Editors and IDEs (VS Code, IntelliJ, Xcode).",
               "Compilers, debuggers, version control (Git).",
@@ -7519,7 +7519,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Uses PCIe lanes for high speed.",
             ],
             answer: 3,
-            explain: "\"Uses PCIe lanes for high speed.\" is about a different topic, not Programming and development software.",
+            explain: "\"Uses PCIe lanes for high speed.\" is about a different topic.",
           },
         ],
       },
@@ -7548,7 +7548,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Utility software — the small tools that keep systems healthy.",
           },
           {
-            q: "Which of the following is TRUE about Utility software — the small tools that keep systems healthy?",
+            q: "Which statement is TRUE?",
             options: [
               "Switch: connects wired devices inside the LAN.",
               "Software tells hardware what to do.",
@@ -7559,7 +7559,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Antivirus, backup, disk clean-up, compression.\"",
           },
           {
-            q: "Which of the following is TRUE about Utility software — the small tools that keep systems healthy?",
+            q: "Which statement is TRUE?",
             options: [
               "Small tools, big impact on reliability.",
               "Registry edits can break login or app behaviour.",
@@ -7570,7 +7570,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Small tools, big impact on reliability.\"",
           },
           {
-            q: "Which of the following is TRUE about Utility software — the small tools that keep systems healthy?",
+            q: "Which statement is TRUE?",
             options: [
               "Every app depends on the OS to run.",
               "Support technicians rely on utilities daily.",
@@ -7581,7 +7581,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Support technicians rely on utilities daily.\"",
           },
           {
-            q: "Which of the following is NOT true about Utility software — the small tools that keep systems healthy?",
+            q: "Which statement is NOT true?",
             options: [
               "Stores structured data (SQL Server, MySQL, Postgres).",
               "Antivirus, backup, disk clean-up, compression.",
@@ -7589,7 +7589,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Support technicians rely on utilities daily.",
             ],
             answer: 0,
-            explain: "\"Stores structured data (SQL Server, MySQL, Postgres).\" is about a different topic, not Utility software — the small tools that keep systems healthy.",
+            explain: "\"Stores structured data (SQL Server, MySQL, Postgres).\" is about a different topic.",
           },
         ],
       },
@@ -7618,7 +7618,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Cloud computing software (part 1).",
           },
           {
-            q: "Which of the following is TRUE about Cloud computing software (part 1)?",
+            q: "Which statement is TRUE?",
             options: [
               "SaaS, PaaS, IaaS — three service models.",
               "Queried with SQL.",
@@ -7629,7 +7629,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"SaaS, PaaS, IaaS — three service models.\"",
           },
           {
-            q: "Which of the following is TRUE about Cloud computing software (part 1)?",
+            q: "Which statement is TRUE?",
             options: [
               "Learn the slot names: CPU socket, DIMM, PCIe, M.2, SATA.",
               "Configuration errors here cause most outages.",
@@ -7640,7 +7640,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Public, private, hybrid — three deployment models.\"",
           },
           {
-            q: "Which of the following is TRUE about Cloud computing software (part 1)?",
+            q: "Which statement is TRUE?",
             options: [
               "Major clouds: AWS, Azure, Google Cloud.",
               "Learn the slot names: CPU socket, DIMM, PCIe, M.2, SATA.",
@@ -7651,7 +7651,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Major clouds: AWS, Azure, Google Cloud.\"",
           },
           {
-            q: "Which of the following is NOT true about Cloud computing software (part 1)?",
+            q: "Which statement is NOT true?",
             options: [
               "Major clouds: AWS, Azure, Google Cloud.",
               "Slower than NVMe but very flexible.",
@@ -7659,7 +7659,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Public, private, hybrid — three deployment models.",
             ],
             answer: 1,
-            explain: "\"Slower than NVMe but very flexible.\" is about a different topic, not Cloud computing software (part 1).",
+            explain: "\"Slower than NVMe but very flexible.\" is about a different topic.",
           },
         ],
       },
@@ -7688,7 +7688,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Cloud computing software (part 2).",
           },
           {
-            q: "Which of the following is TRUE about Cloud computing software (part 2)?",
+            q: "Which statement is TRUE?",
             options: [
               "Pick the chip that matches the user's workload.",
               "Microsoft 365, Google Workspace: everyday SaaS.",
@@ -7699,7 +7699,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Microsoft 365, Google Workspace: everyday SaaS.\"",
           },
           {
-            q: "Which of the following is TRUE about Cloud computing software (part 2)?",
+            q: "Which statement is TRUE?",
             options: [
               "Cloud storage, cloud backup, cloud identity.",
               "Registry = a database of settings for OS and apps.",
@@ -7710,7 +7710,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Cloud storage, cloud backup, cloud identity.\"",
           },
           {
-            q: "Which of the following is TRUE about Cloud computing software (part 2)?",
+            q: "Which statement is TRUE?",
             options: [
               "Rated in watts — must exceed system requirements.",
               "Dust is enemy #1 — clean filters regularly.",
@@ -7721,7 +7721,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"'The cloud' = someone else's servers.\"",
           },
           {
-            q: "Which of the following is NOT true about Cloud computing software (part 2)?",
+            q: "Which statement is NOT true?",
             options: [
               "Cloud storage, cloud backup, cloud identity.",
               "Compilers, debuggers, version control (Git).",
@@ -7729,7 +7729,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Microsoft 365, Google Workspace: everyday SaaS.",
             ],
             answer: 1,
-            explain: "\"Compilers, debuggers, version control (Git).\" is about a different topic, not Cloud computing software (part 2).",
+            explain: "\"Compilers, debuggers, version control (Git).\" is about a different topic.",
           },
         ],
       },
@@ -7758,7 +7758,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Virtualisation and containers.",
           },
           {
-            q: "Which of the following is TRUE about Virtualisation and containers?",
+            q: "Which statement is TRUE?",
             options: [
               "Watch for shared bandwidth with SATA on some boards.",
               "Removing stubborn leftover app entries.",
@@ -7769,7 +7769,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"VMs run whole guest OSes on shared hardware.\"",
           },
           {
-            q: "Which of the following is TRUE about Virtualisation and containers?",
+            q: "Which statement is TRUE?",
             options: [
               "Use this map to place every other slide in the deck.",
               "Containers share the host OS, start in seconds.",
@@ -7780,7 +7780,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Containers share the host OS, start in seconds.\"",
           },
           {
-            q: "Which of the following is TRUE about Virtualisation and containers?",
+            q: "Which statement is TRUE?",
             options: [
               "Both save cost and enable rapid deployment.",
               "Webcam and microphone for calls and content.",
@@ -7791,7 +7791,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Both save cost and enable rapid deployment.\"",
           },
           {
-            q: "Which of the following is NOT true about Virtualisation and containers?",
+            q: "Which statement is NOT true?",
             options: [
               "VMs run whole guest OSes on shared hardware.",
               "Both save cost and enable rapid deployment.",
@@ -7799,7 +7799,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Punched cards → tape → drums → HDD → SSD → NVMe.",
             ],
             answer: 3,
-            explain: "\"Punched cards → tape → drums → HDD → SSD → NVMe.\" is about a different topic, not Virtualisation and containers.",
+            explain: "\"Punched cards → tape → drums → HDD → SSD → NVMe.\" is about a different topic.",
           },
         ],
       },
@@ -7828,7 +7828,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Networking software.",
           },
           {
-            q: "Which of the following is TRUE about Networking software?",
+            q: "Which statement is TRUE?",
             options: [
               "Clock speed × cores × cache = real-world performance.",
               "Updated with vendor tools — carefully.",
@@ -7839,7 +7839,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"DHCP, DNS, VPN, firewall, load balancer.\"",
           },
           {
-            q: "Which of the following is TRUE about Networking software?",
+            q: "Which statement is TRUE?",
             options: [
               "DNS turns names into IP addresses.",
               "NVIDIA vs AMD vs Intel Arc for GPUs.",
@@ -7850,7 +7850,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Runs on servers, routers and endpoints.\"",
           },
           {
-            q: "Which of the following is TRUE about Networking software?",
+            q: "Which statement is TRUE?",
             options: [
               "Backups are critical — data loss = job loss.",
               "Configuration errors here cause most outages.",
@@ -7861,7 +7861,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Configuration errors here cause most outages.\"",
           },
           {
-            q: "Which of the following is NOT true about Networking software?",
+            q: "Which statement is NOT true?",
             options: [
               "Runs on servers, routers and endpoints.",
               "Support technicians rely on utilities daily.",
@@ -7869,7 +7869,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Configuration errors here cause most outages.",
             ],
             answer: 1,
-            explain: "\"Support technicians rely on utilities daily.\" is about a different topic, not Networking software.",
+            explain: "\"Support technicians rely on utilities daily.\" is about a different topic.",
           },
         ],
       },
@@ -7898,7 +7898,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: Cybersecurity software.",
           },
           {
-            q: "Which of the following is TRUE about Cybersecurity software?",
+            q: "Which statement is TRUE?",
             options: [
               "Antivirus, EDR, SIEM, MFA, encryption.",
               "CRM: customer records (Salesforce, Dynamics).",
@@ -7909,7 +7909,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Antivirus, EDR, SIEM, MFA, encryption.\"",
           },
           {
-            q: "Which of the following is TRUE about Cybersecurity software?",
+            q: "Which statement is TRUE?",
             options: [
               "Cable quality matters — cheap cables fail silently.",
               "Switch: connects wired devices inside the LAN.",
@@ -7920,7 +7920,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Defence in depth — no single product is enough.\"",
           },
           {
-            q: "Which of the following is TRUE about Cybersecurity software?",
+            q: "Which statement is TRUE?",
             options: [
               "'The cloud' = someone else's servers.",
               "Webcam and microphone for calls and content.",
@@ -7931,7 +7931,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Users are still the biggest attack surface.\"",
           },
           {
-            q: "Which of the following is NOT true about Cybersecurity software?",
+            q: "Which statement is NOT true?",
             options: [
               "Antivirus, EDR, SIEM, MFA, encryption.",
               "Most new data is video, images and telemetry.",
@@ -7939,7 +7939,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Defence in depth — no single product is enough.",
             ],
             answer: 1,
-            explain: "\"Most new data is video, images and telemetry.\" is about a different topic, not Cybersecurity software.",
+            explain: "\"Most new data is video, images and telemetry.\" is about a different topic.",
           },
         ],
       },
@@ -7968,7 +7968,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "This slide covers: AI software.",
           },
           {
-            q: "Which of the following is TRUE about AI software?",
+            q: "Which statement is TRUE?",
             options: [
               "Compilers, debuggers, version control (Git).",
               "KB → MB → GB → TB → PB → EB → ZB.",
@@ -7979,7 +7979,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Copilots, chatbots, image and voice tools.\"",
           },
           {
-            q: "Which of the following is TRUE about AI software?",
+            q: "Which statement is TRUE?",
             options: [
               "Runs in the cloud or locally on an NPU/GPU.",
               "Keeps date, time and BIOS settings when unplugged.",
@@ -7990,7 +7990,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Runs in the cloud or locally on an NPU/GPU.\"",
           },
           {
-            q: "Which of the following is TRUE about AI software?",
+            q: "Which statement is TRUE?",
             options: [
               "'The cloud' = someone else's servers.",
               "Form factors: ATX, Micro-ATX, Mini-ITX.",
@@ -8001,7 +8001,7 @@ export const CONTENT: Record<string, UnitContent> = {
             explain: "Correct: \"Support role: getting AI tools working for users.\"",
           },
           {
-            q: "Which of the following is NOT true about AI software?",
+            q: "Which statement is NOT true?",
             options: [
               "Support role: getting AI tools working for users.",
               "Microsoft 365, Google Workspace: everyday SaaS.",
@@ -8009,7 +8009,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Copilots, chatbots, image and voice tools.",
             ],
             answer: 1,
-            explain: "\"Microsoft 365, Google Workspace: everyday SaaS.\" is about a different topic, not AI software.",
+            explain: "\"Microsoft 365, Google Workspace: everyday SaaS.\" is about a different topic.",
           },
         ],
       },
