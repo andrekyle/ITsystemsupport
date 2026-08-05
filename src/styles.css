@@ -5965,7 +5965,7 @@ input.att-sig {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-weight: 600;
+  font-weight: 400;
   font-size: 0.95rem;
   margin-bottom: 8px;
   color: #f0f6fc;
@@ -5981,7 +5981,7 @@ input.att-sig {
   background: rgba(56, 139, 253, 0.18);
   color: #79c0ff;
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: 500;
 }
 .lesson-quiz-options { display: grid; gap: 4px; }
 .lesson-quiz-opt {
@@ -5995,6 +5995,7 @@ input.att-sig {
   color: #e6edf3;
   cursor: pointer;
   font-size: 0.92rem;
+  font-weight: 300;
   line-height: 1.3;
   transition: background 0.12s ease;
 }
@@ -6005,8 +6006,8 @@ input.att-sig {
 .lesson-quiz-opt.wrong { background: rgba(207, 34, 46, 0.22); color: #ffdce0; }
 .lesson-quiz-explain { margin-top: 6px; font-size: 0.85em; color: #a4b1c2; line-height: 1.4; }
 .lesson-quiz-actions { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
-.lesson-quiz-status.ok { color: #56d364; font-weight: 600; font-size: 0.9rem; }
-.lesson-quiz-status.bad { color: #ff7b72; font-weight: 600; font-size: 0.9rem; }
+.lesson-quiz-status.ok { color: #56d364; font-weight: 400; font-size: 0.9rem; }
+.lesson-quiz-status.bad { color: #ff7b72; font-weight: 400; font-size: 0.9rem; }
 
 /* Single-figure "slide" layout used across the HWSW2 illustrated deck */
 .lesson-slide {
@@ -6112,7 +6113,7 @@ input.att-sig {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-weight: 700;
+  font-weight: 400;
   color: #56d364;
   margin-bottom: 10px;
   font-size: 0.9rem;
@@ -6130,7 +6131,7 @@ input.att-sig {
   align-items: center;
   gap: 3px;
   font-size: 0.65rem;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #56d364;
@@ -6146,7 +6147,7 @@ input.att-sig {
   gap: 6px;
   padding: 4px 10px;
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: 0.02em;
   border-radius: 999px;
   border: 0;
