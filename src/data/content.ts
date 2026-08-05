@@ -4135,13 +4135,15 @@ export const CONTENT: Record<string, UnitContent> = {
   HWSW2: {
     lesson: [
       {
-        heading: "Welcome — one image per slide",
+        heading: "Introduction — what is a computer system?",
         icon: "presenter",
         flat: true,
         paragraphs: [
-          "This lesson is a slideshow. Every screen shows one image and a short set of bullet points. Read the bullets, study the picture, then press Next.",
-          "The deck is split into two parts. Part 1 is hardware — the physical machine. Part 2 is software — the programs that run on it.",
-          "At the end there is a five-question quiz. You must get all five questions correct before you can finish the lesson.",
+          "A computer system is a partnership between two things: the hardware you can touch and the software that tells that hardware what to do. Neither is useful without the other — a laptop with no operating system is a paperweight, and an app with no processor to run on is just a file.",
+          "Every machine you will ever support, from a gaming PC to a warehouse scanner to a phone, follows the same four-part pattern: input, processing, storage, and output. Once you can spot those four parts, you can reason about any device.",
+          "In Part 1 we open the case and work through the physical components — motherboard, CPU, cooling, RAM, storage, power supply, ports, peripherals, and the networking hardware that puts a device online.",
+          "In Part 2 we move up the stack into software — firmware, the operating system, the applications people use every day, and the modern cloud, virtualisation, security and AI layers that sit on top.",
+          "By the end of the deck you should be able to point at any part of a computer, name it, explain what it does, and know whether it lives on the hardware side or the software side.",
         ],
         figures: [],
       },
