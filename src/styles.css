@@ -5992,7 +5992,7 @@ input.att-sig {
   padding: 9px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: transparent;
   color: var(--ink-2);
   cursor: pointer;
   font-size: 0.92rem;
