@@ -5060,12 +5060,11 @@ a.plan-ppt:hover {
   cursor: pointer;
   z-index: 310;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.15s ease;
 }
-.presenter-overlay:hover .presenter-close {
+.presenter-close:hover,
+.presenter-close:focus-visible {
   opacity: 1;
-}
-.presenter-close:hover {
   background: rgba(255, 255, 255, 0.22);
 }
 .presenter-hit {
