@@ -3256,18 +3256,6 @@ export const CONTENT: Record<string, UnitContent> = {
           { id: "bsod", caption: "A stop error (BSOD) — the code is the clue, not the catastrophe", hint: "photo of a Windows blue screen with a stop code" },
         ],
       },
-      {
-        heading: "Full circle — from human computers to AI",
-        icon: "gradcap",
-        flat: true,
-        paragraphs: [
-          "Two hundred years ago computing began as an idea in brass; then it was a room of women with slide rules; then a hall of glowing valves programmed by the ENIAC Six; then a beige box on every desk; now it is both the phone in your pocket and GPU cathedrals drawing city-scale power — and 'the computer' has learned to write, draw and code. The pattern never changed: hardware gets smaller, then bigger again in aggregate; software climbs another layer of abstraction; and every wave creates new work for the people who understand the machinery underneath.",
-          "That is you. AI will draft e-mails and suggest fixes, but it cannot crimp a cable, swap a fuser, reseat a DIMM, or calm a trading floor when the printers die at month-end. The technician who knows what every component does — and can reason from symptom to cause the way you practised today — stays valuable in every era of this story. Ada Lovelace imagined it; the ENIAC Six built the profession; you are its next chapter.",
-        ],
-        figures: [
-          { id: "timeline-poster", caption: "200 years in one line — Babbage to AI", hint: "a printable timeline poster from the Analytical Engine to AI data centres" },
-        ],
-      },
     ],
     exercises: [
       {
