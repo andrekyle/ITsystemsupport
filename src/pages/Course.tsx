@@ -2334,16 +2334,6 @@ export function UnitPage({
                           Click to enlarge
                         </span>
                       </button>
-                      {sec.paragraphs.length > 0 && (
-                        <ul className="lesson-slide-bullets">
-                          {sec.paragraphs.map((_, i) => {
-                            const text = paraText(i).replace(/^[•\-\u2022]\s*/, "");
-                            return (
-                              <li key={i}><Gloss text={text} /></li>
-                            );
-                          })}
-                        </ul>
-                      )}
                       {quizBlock}
                     </div>
                   );

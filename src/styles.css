@@ -6012,7 +6012,7 @@ input.att-sig {
 /* Single-figure "slide" layout used across the HWSW2 illustrated deck */
 .lesson-slide {
   display: grid;
-  grid-template-columns: 1.5fr 1fr;
+  grid-template-columns: 1fr;
   gap: 22px;
   align-items: start;
   margin: 12px 0 18px;
