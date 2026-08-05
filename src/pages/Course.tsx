@@ -2109,7 +2109,14 @@ export function UnitPage({
                                   checked={isPicked}
                                   onChange={() => setAnswer(qi, oi)}
                                 />
-                                <span>{opt}</span>
+                                <span className="lesson-quiz-mark" aria-hidden="true">
+                                  {showCorrect ? (
+                                    <Icon name="checkCircle" size={15} />
+                                  ) : showWrong ? (
+                                    <Icon name="info" size={15} />
+                                  ) : null}
+                                </span>
+                                <span className="lesson-quiz-opt-text">{opt}</span>
                                 {staffAnswer && (
                                   <span className="lesson-quiz-answer-badge" aria-hidden="true">
                                     <Icon name="checkCircle" size={14} />
