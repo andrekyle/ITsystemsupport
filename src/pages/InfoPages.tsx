@@ -161,6 +161,21 @@ export function ResourcesPage() {
       <h1 className="page-title">Resources</h1>
       <p className="page-sub">System Support NQF Level 5 Learnership · Investec Group</p>
 
+      <a
+        className="res-card"
+        href="/downloads/HWSW2-Illustrated-Slide-Deck.pdf"
+        target="_blank"
+        rel="noopener noreferrer"
+        download
+      >
+        <span className="t">Hardware and Software — Illustrated Slide Deck (PDF) ⬇</span>
+        <span className="d">
+          Companion visual lesson to HWSW: motherboard, CPU, cooling, RAM, storage, GPU/AI, power,
+          case &amp; ports, peripherals, networking, then OS, applications, cloud, virtualisation,
+          security and AI. One page per slide with the figure.
+        </span>
+      </a>
+
       {RESOURCES.map((r) => (
         <a
           className="res-card"

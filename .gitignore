@@ -2,4 +2,3 @@ node_modules
 dist
 *.local
 *.tsbuildinfo
-public/downloads/HWSW2-Illustrated-Slide-Deck.pdf

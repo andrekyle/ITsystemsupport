@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { existsSync, mkdirSync, createWriteStream } from "node:fs";
 import PDFDocument from "pdfkit";
+import sharp from "sharp";
 
 import { CONTENT } from "../src/data/content";
 import { HWSW_SLIDE_FIGURES } from "../src/data/hwswSlideFigures";
@@ -58,6 +59,27 @@ function figurePath(figId: string): string | null {
   return existsSync(full) ? full : null;
 }
 
+/** Pre-resize + re-encode a figure so the embedded copy stays small.
+ *  Returns a JPEG buffer bounded by 1400 px on the long edge. */
+const figureCache = new Map<string, Buffer>();
+async function loadFigureBuffer(file: string): Promise<Buffer | null> {
+  const cached = figureCache.get(file);
+  if (cached) return cached;
+  try {
+    const buf = await sharp(file)
+      .resize({ width: 1400, height: 1400, fit: "inside", withoutEnlargement: true })
+      .flatten({ background: "#ffffff" })
+      .jpeg({ quality: 78, mozjpeg: true })
+      .toBuffer();
+    figureCache.set(file, buf);
+    return buf;
+  } catch {
+    return null;
+  }
+}
+
+async function main() {
+
 // ---- Cover slide ------------------------------------------------------------
 doc.rect(0, 0, PAGE_W, PAGE_H).fill(NAVY);
 doc.fillColor("#FFFFFF");
@@ -89,7 +111,8 @@ type Slide = {
 };
 const slides = deck.lesson as unknown as Slide[];
 
-slides.forEach((slide, i) => {
+for (let i = 0; i < slides.length; i++) {
+  const slide = slides[i];
   doc.addPage();
   const pageNum = i + 1;
 
@@ -103,24 +126,25 @@ slides.forEach((slide, i) => {
   // Figure (if any)
   const fig = slide.figures?.[0];
   const figFile = fig ? figurePath(fig.id) : null;
+  const figBuf = figFile ? await loadFigureBuffer(figFile) : null;
 
   const contentTop = 90;
-  let textLeft = MARGIN;
+  const textLeft = MARGIN;
   let textWidth = CONTENT_W;
   const bodyBottom = PAGE_H - MARGIN - 20; // leave room for footer
 
-  if (figFile) {
+  if (figBuf) {
     // Two-column layout: image on the right, bullets on the left.
     const imgBoxW = Math.round(CONTENT_W * 0.5);
     const imgBoxH = bodyBottom - contentTop;
     const imgX = PAGE_W - MARGIN - imgBoxW;
     try {
-      doc.image(figFile, imgX, contentTop, {
+      doc.image(figBuf, imgX, contentTop, {
         fit: [imgBoxW, imgBoxH],
         align: "center",
         valign: "center",
       });
-    } catch (err) {
+    } catch {
       doc.fillColor(MUTED).font("Helvetica-Oblique").fontSize(10);
       doc.text(`[figure unavailable: ${fig!.id}]`, imgX, contentTop + imgBoxH / 2, { width: imgBoxW, align: "center" });
     }
@@ -159,9 +183,15 @@ slides.forEach((slide, i) => {
     width: CONTENT_W - 60,
   });
   doc.text(`${pageNum}`, PAGE_W - MARGIN - 40, PAGE_H - MARGIN - 6, { width: 40, align: "right" });
-});
+}
 
 doc.end();
 doc.on("finish", () => {
   console.log(`Wrote ${OUT_PATH}`);
+});
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
 });
