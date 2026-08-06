@@ -2659,7 +2659,7 @@ export const CONTENT: Record<string, UnitContent> = {
       ],
       sections: [
         {
-          heading: "Day 1 — Friday, 24 July 2026 · Unit Standard 10135",
+          heading: "Day 1 — Friday, 7 August 2026 · Unit Standard 10135",
           startTime: "09:00",
           rows: [
             {
