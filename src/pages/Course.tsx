@@ -103,6 +103,16 @@ function pickParagraphIcon(text: string): React.ComponentProps<typeof Icon>["nam
   if (/good soldiers/.test(low)) return "shield";
   // "leery" / distrust warning
   if (/leery|no honest intention/.test(low)) return "eye";
+  // ---- Ethics section paragraph cues ----
+  // "messing with the money or the stuff" / smoking gun / disciplinary
+  if (/smoking gun|disciplinary action|termination|asset abuse|messing with the money/.test(low))
+    return "lock";
+  // becoming too attached / desensitized / casual with records
+  if (/desensitized|too attached|casual manner|hitting the computer|kicking the copier/.test(low))
+    return "eyeOff";
+  // detach / learn to care / who paid / moral connection
+  if (/who paid for this|moral connection|thoughtful consideration|boundaries for appropriate|detach themselves/.test(low))
+    return "shield";
   // hidden agenda / covert careerism
   if (/hidden agenda|covert careerism/.test(low)) return "eyeOff";
   // trust / building trust / cards on the table
