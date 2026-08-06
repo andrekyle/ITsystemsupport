@@ -2648,7 +2648,7 @@ export const CONTENT: Record<string, UnitContent> = {
       title: "Facilitator Preparation",
       startTime: "09:00",
       details: [
-        { icon: "calendar", label: "Date", value: "Friday, 24 & 31 July 2026" },
+        { icon: "calendar", label: "Date", value: "Saturday, 8 August 2026" },
         { icon: "clock", label: "Time", value: "09:00 \u2013 14:00" },
         { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
         { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
@@ -2700,7 +2700,7 @@ export const CONTENT: Record<string, UnitContent> = {
           ],
         },
         {
-          heading: "Day 2 — Friday, 31 July 2026 · Unit Standard 10135",
+          heading: "Day 2 — Saturday, 8 August 2026 · Unit Standard 10135",
           startTime: "09:00",
           rows: [
             {
