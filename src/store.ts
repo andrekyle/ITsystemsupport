@@ -82,8 +82,18 @@ export function loadProfiles(): Profile[] {
       changed = true;
     }
     // on the super user's cloud account, other profiles are only ever opened
-    // for inspection — any last-login stamp on them is an artifact, clear it
-    if (cloudEnabled && superAccount && p.role !== "Super User" && p.lastLogin) {
+    // for inspection — any last-login stamp on them is an artifact, clear it.
+    // Never clear the currently-signed-in session's stamp: that person is
+    // actually online, even if their auth account also carries admin rights.
+    const currentSessionId =
+      typeof localStorage !== "undefined" ? localStorage.getItem(SESSION_KEY) : null;
+    if (
+      cloudEnabled &&
+      superAccount &&
+      p.role !== "Super User" &&
+      p.lastLogin &&
+      p.id !== currentSessionId
+    ) {
       delete p.lastLogin;
       changed = true;
     }
@@ -220,7 +230,15 @@ export function setSession(profileId: string | null) {
 export function touchLastOnline(profileId: string) {
   const profiles = read<Profile[]>(PROFILES_KEY, []);
   const p = profiles.find((x) => x.id === profileId);
-  const superViewing = cloudEnabled && onSuperAccount() && p?.role !== "Super User";
+  // A super/admin viewing someone else's profile shouldn't stamp them as
+  // online — but the actively-signed-in profile *is* the person, even when
+  // their auth account happens to be an admin. Never suppress the stamp for
+  // the current session.
+  const currentSessionId =
+    typeof localStorage !== "undefined" ? localStorage.getItem(SESSION_KEY) : null;
+  const isCurrentSession = currentSessionId === profileId;
+  const superViewing =
+    cloudEnabled && onSuperAccount() && p?.role !== "Super User" && !isCurrentSession;
   if (p && !superViewing) {
     p.lastLogin = new Date().toISOString();
     write(PROFILES_KEY, profiles);

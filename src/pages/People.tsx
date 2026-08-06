@@ -37,17 +37,26 @@ function fmtSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** Stable identity key used to reconcile a profile across cloud rows even
- *  when it has different local ids on different accounts. Prefers strong
- *  identifiers (South African ID number, email), then falls back to the
- *  normalised full name. */
-function identityKey(p: Profile): string | null {
+/** Every identity token that identifies a person — the same profile on a
+ *  different device may have a partially-filled enrolment, so we index by
+ *  every token and match if *any* one lines up. */
+function identityKeys(p: Profile): string[] {
+  const keys: string[] = [];
   const id = (p.enrolment?.idNumber ?? "").trim().toLowerCase();
-  if (id) return `id:${id}`;
+  if (id) keys.push(`id:${id}`);
   const email = (p.enrolment?.email ?? "").trim().toLowerCase();
-  if (email) return `em:${email}`;
+  if (email) keys.push(`em:${email}`);
   const name = (p.name ?? "").trim().toLowerCase();
-  return name ? `nm:${name}` : null;
+  if (name) keys.push(`nm:${name}`);
+  const enrolFull = [
+    (p.enrolment?.firstNames ?? "").trim(),
+    (p.enrolment?.surname ?? "").trim(),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  if (enrolFull && enrolFull !== name) keys.push(`nm:${enrolFull}`);
+  return keys;
 }
 
 /** True when `a` is a strictly newer ISO login timestamp than `b`. */
@@ -446,17 +455,28 @@ export function StudentsPage({
   // Build a cloud-side lookup for cross-account status. A learner's own
   // account stamps `lastLogin` in *its* cloud row; without merging, the
   // super-user's local copy of the same profile (which never gets stamped)
-  // would win and the learner would keep showing as "Never".
+  // would win and the learner would keep showing as "Never". Index by every
+  // identity token because the local and cloud copies may have different
+  // enrolment completeness (e.g. no ID number locally).
   const cloudById = new Map(cloudProfiles.map((p) => [p.id, p] as const));
   const cloudByKey = new Map<string, Profile>();
   for (const p of cloudProfiles) {
-    const key = identityKey(p);
-    if (!key) continue;
-    const cur = cloudByKey.get(key);
-    if (!cur || newerLogin(p.lastLogin, cur.lastLogin)) cloudByKey.set(key, p);
+    for (const key of identityKeys(p)) {
+      const cur = cloudByKey.get(key);
+      if (!cur || newerLogin(p.lastLogin, cur.lastLogin)) cloudByKey.set(key, p);
+    }
   }
+  const findCloudMatch = (p: Profile): Profile | undefined => {
+    const byId = cloudById.get(p.id);
+    if (byId) return byId;
+    for (const key of identityKeys(p)) {
+      const hit = cloudByKey.get(key);
+      if (hit) return hit;
+    }
+    return undefined;
+  };
   const mergeFromCloud = (p: Profile): Profile => {
-    const match = cloudById.get(p.id) ?? cloudByKey.get(identityKey(p) ?? "");
+    const match = findCloudMatch(p);
     if (!match) return p;
     const patch: Partial<Profile> = {};
     if (newerLogin(match.lastLogin, p.lastLogin)) patch.lastLogin = match.lastLogin;
@@ -465,11 +485,12 @@ export function StudentsPage({
   };
   const local = localRaw.map(mergeFromCloud);
   const localIds = new Set(local.map((p) => p.id));
-  // Filter out cloud copies that already appear locally (by id or identity)
-  // so the same person doesn't show as two rows.
-  const localKeys = new Set(local.map(identityKey).filter(Boolean) as string[]);
+  // Filter out cloud copies that already appear locally (by id or any
+  // identity token) so the same person doesn't show as two rows.
+  const localKeys = new Set<string>();
+  for (const p of local) for (const k of identityKeys(p)) localKeys.add(k);
   const remote = cloudProfiles.filter(
-    (p) => !localIds.has(p.id) && !(identityKey(p) && localKeys.has(identityKey(p)!))
+    (p) => !localIds.has(p.id) && !identityKeys(p).some((k) => localKeys.has(k))
   );
   const remoteIds = new Set(remote.map((p) => p.id));
   const all = [...local, ...remote];

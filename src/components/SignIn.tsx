@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Icon } from "../icons";
 import type { EnrolmentInfo, Profile, Role } from "../types";
 import {
-  assertNoDuplicateProfile,
   createProfile,
   DuplicateProfileError,
+  findDuplicateProfile,
   hashPassword,
   loadProfiles,
   updateProfile,
@@ -33,21 +33,38 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
   const [resetError, setResetError] = useState("");
   const [dupError, setDupError] = useState("");
 
-  /** Combine local + cloud profiles and abort with a friendly error message
-   *  if the person signing up already has an account somewhere. */
-  async function ensureNoDuplicate(attempt: { name: string; enrolment?: EnrolmentInfo }) {
+  /** Look for a duplicate across local + cloud profiles. If the person
+   *  already has a profile *anywhere*, we adopt it instead of creating a
+   *  second one — required so that a learner whose profile the facilitator
+   *  seeded via People > Add User can still sign in on their own device.
+   *  Returns `{ match, isLocal }` when found, or `undefined` when the name
+   *  is free to use. */
+  async function findExisting(attempt: { name: string; enrolment?: EnrolmentInfo }) {
     const local = loadProfiles();
-    let candidates: Profile[] = local;
+    const localDup = findDuplicateProfile(local, attempt);
+    if (localDup) return { match: localDup, isLocal: true as const };
     try {
       const dir = await fetchCloudDirectory();
       if (dir) {
-        const seen = new Set(local.map((p) => p.id));
-        candidates = [...local, ...dir.profiles.filter((p) => !seen.has(p.id))];
+        const cloudDup = findDuplicateProfile(dir.profiles, attempt);
+        if (cloudDup) return { match: cloudDup, isLocal: false as const };
       }
     } catch {
       /* offline or RLS-restricted: local check is still enforced */
     }
-    assertNoDuplicateProfile(candidates, attempt);
+    return undefined;
+  }
+
+  /** Write a cloud-only profile into local storage so subsequent sign-ins,
+   *  attendance registers and progress are attached to the same identity
+   *  across devices. */
+  function adoptCloudProfile(p: Profile) {
+    const existing = loadProfiles();
+    if (!existing.some((q) => q.id === p.id)) {
+      const merged = [...existing, p];
+      localStorage.setItem("itss.profiles", JSON.stringify(merged));
+    }
+    setProfiles(loadProfiles());
   }
 
   function pickProfile(p: Profile) {
@@ -94,17 +111,15 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
     e.preventDefault();
     if (!name.trim()) return;
     setDupError("");
+    const existing = await findExisting({ name });
+    if (existing) {
+      if (!existing.isLocal) adoptCloudProfile(existing.match);
+      // A profile already exists for this person — sign them in with it
+      // instead of forcing a duplicate. Password prompt handled by pickProfile.
+      pickProfile(existing.match);
+      return;
+    }
     if (role === "Learner") {
-      try {
-        await ensureNoDuplicate({ name });
-      } catch (err) {
-        if (err instanceof DuplicateProfileError) {
-          setDupError(err.message);
-          return;
-        }
-        throw err;
-      }
-      // pre-fill first names / surname from the full name
       const parts = name.trim().split(/\s+/);
       setEnrol((prev) => ({
         ...prev,
@@ -115,7 +130,6 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
       return;
     }
     try {
-      await ensureNoDuplicate({ name });
       const p = createProfile(name, role, undefined, password ? await hashPassword(password) : undefined);
       setProfiles(loadProfiles());
       onSignIn(p);
@@ -131,8 +145,13 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
   async function submitEnrolment(e: React.FormEvent) {
     e.preventDefault();
     setDupError("");
+    const existing = await findExisting({ name, enrolment: enrol });
+    if (existing) {
+      if (!existing.isLocal) adoptCloudProfile(existing.match);
+      pickProfile(existing.match);
+      return;
+    }
     try {
-      await ensureNoDuplicate({ name, enrolment: enrol });
       const p = createProfile(
         name,
         role,
