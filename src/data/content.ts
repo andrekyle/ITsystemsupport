@@ -1734,8 +1734,8 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             icon: "design",
-            title: "Edie — In-house graphic designer",
-            text: "Usually a good sport, cheerfully redoing work on request. But Edie has a secret: she's expecting a baby in seven months. Her mind is on that baby, and the project just doesn't do much for her. Her best design so far is a garden page featuring characters from Peter Rabbit.",
+            title: "Sarah — In-house graphic designer",
+            text: "Usually a good sport, cheerfully redoing work on request. But Sarah has a secret: she's expecting a baby in seven months. Her mind is on that baby, and the project just doesn't do much for her. Her best design so far is a garden page featuring characters from Peter Rabbit.",
           },
           {
             icon: "presenter",
@@ -1744,7 +1744,7 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             icon: "briefcase",
-            title: "Avram — Old-guard sales engineer",
+            title: "John — Old-guard sales engineer",
             text: "Extrovert, helped start the company years ago. Has reservations about the whole Internet thing — he read a year ago that no one makes money there and that was his last fresh insight. Secretly resents the talented, uncommitted youngsters around him, and lapses into frequent lectures on selling garden supplies off the back of a truck.",
           },
         ],
@@ -1776,8 +1776,8 @@ export const CONTENT: Record<string, UnitContent> = {
           "\"I'm not here to work with the team, but to associate with some of its members.\"",
           "\"I'm not here to work with the team, but to use it as a steppingstone to better things.\"",
           "The term \"hidden agenda\" was coined to describe this kind of covert careerism. It is not honest and it is very destructive to team coherence. Good teams recognise the fact that in order to build trust, they must uncover their own hidden agendas and expose them to the light of day.",
-          "In our hypothetical team, everyone has to put their agendas on the table for the others to examine. Edie, Miller, Avram need to be apprised of Doug's frustration. Chances are they will empathize with his need to finish up and move on, and move more quickly. Perhaps, with their empathy under his belt, Doug will relax a bit and let the project find its own rhythm. Even if Edie does not tell Doug, Miller, and Avram about her pregnancy, she needs to communicate to them that something is cooking that is pulling her from the work. It's possible that she isn't the best person for the team, and may have to be replaced. Hey, it happens. Miller needs to be told that he's making people crazy. It doesn't have to be cruel. Telling Miller why others are ambivalent about the project should engage him, and modulate his excesses. It wouldn't hurt for them to learn why he's so excited, either; it's much bigger than a love of catalogue sales.",
-          "And Avram, poor Avram needs to open up and respect his team-mates more. He's so connected to the company of ten years ago that it prevents him from being her now in a useful way. He should tell his story, but then he should shut up. One lesson of teaming is that one is never too old to grow up. Only by processing through each team member's wishes and wants, and at the very minimum acknowledging their validity, can the group redirect its focus; which has suddenly grown more intense, and deep with knowledge, at the team goal. And make the best gardening supplies website the world ever saw.",
+          "In our hypothetical team, everyone has to put their agendas on the table for the others to examine. Sarah, Miller, John need to be apprised of Doug's frustration. Chances are they will empathize with his need to finish up and move on, and move more quickly. Perhaps, with their empathy under his belt, Doug will relax a bit and let the project find its own rhythm. Even if Sarah does not tell Doug, Miller, and John about her pregnancy, she needs to communicate to them that something is cooking that is pulling her from the work. It's possible that she isn't the best person for the team, and may have to be replaced. Hey, it happens. Miller needs to be told that he's making people crazy. It doesn't have to be cruel. Telling Miller why others are ambivalent about the project should engage him, and modulate his excesses. It wouldn't hurt for them to learn why he's so excited, either; it's much bigger than a love of catalogue sales.",
+          "And John, poor John needs to open up and respect his team-mates more. He's so connected to the company of ten years ago that it prevents him from being her now in a useful way. He should tell his story, but then he should shut up. One lesson of teaming is that one is never too old to grow up. Only by processing through each team member's wishes and wants, and at the very minimum acknowledging their validity, can the group redirect its focus; which has suddenly grown more intense, and deep with knowledge, at the team goal. And make the best gardening supplies website the world ever saw.",
           "Who is to say that the team mission is the only mission that a team can acknowledge and pursue? Deep down, most of us are not especially good soldiers, and we do not long to subordinate our own desires to the common good. To the contrary: sacrifice, loyalty, and the willingness to go through a little effort for one another occur only when cards are on the table, and people are allowed (and required) to be honest about their needs. Personal goals that prevent us from achieving team goals are often very honourable:",
           "Having a baby",
           "Spending more time with family",
