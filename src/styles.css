@@ -3166,6 +3166,88 @@ table.data.kv tr:last-child td {
   color: var(--ink);
 }
 
+.plan-table th .th-ico,
+.plan-sec td .plan-sec-ico {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 6px;
+  color: var(--azure);
+  vertical-align: -2px;
+}
+
+/* Ways to Demonstrate / Development Activities — icon grid */
+.demo-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.demo-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  background: var(--surface-3);
+}
+.demo-col-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+.demo-col-title svg { color: var(--azure); }
+.demo-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.demo-cell {
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: var(--surface);
+}
+.demo-cell-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.demo-cell-title .demo-ico { flex: 0 0 auto; margin-top: 2px; }
+.demo-cell-title .demo-ico.ways { color: var(--green, #2fa46b); }
+.demo-cell-title .demo-ico.dev { color: var(--azure); }
+.demo-bullets {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.demo-bullets li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--ink-2);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.demo-bullets .demo-ico {
+  flex: 0 0 auto;
+  margin-top: 3px;
+  color: var(--azure);
+}
+@media (max-width: 720px) {
+  .demo-header, .demo-row { grid-template-columns: 1fr; }
+}
+
 .plan-total td {
   border: 1px solid var(--border-2);
   padding: 10px 14px;

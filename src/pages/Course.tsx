@@ -2207,31 +2207,98 @@ export function UnitPage({
                     ))}
                   </ul>
                 )}
-                {sec.table && (
-                  <table className="data lesson-table" style={{ marginTop: 10 }}>
-                    <thead>
-                      <tr>
-                        {sec.table.headers.map((h) => (
-                          <th key={h}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sec.table.rows.map((row, ri) => {
-                        const so = /^SO\b/.test(row[0]);
-                        return (
-                          <tr key={ri} className={so ? "so-row" : sec.table!.rows.some((r) => /^SO\b/.test(r[0])) ? "ac-row" : undefined}>
-                            {row.map((cell, ci) => (
-                              <td key={ci}>
-                                {ci === 0 || so ? <strong>{cell}</strong> : <Gloss text={cell} />}
-                              </td>
+                {sec.table && (() => {
+                  const isDemo =
+                    sec.table.headers.length === 2 &&
+                    /ways to demonstrate/i.test(sec.table.headers[0]);
+                  if (!isDemo) {
+                    return (
+                      <table className="data lesson-table" style={{ marginTop: 10 }}>
+                        <thead>
+                          <tr>
+                            {sec.table.headers.map((h) => (
+                              <th key={h}>{h}</th>
                             ))}
                           </tr>
+                        </thead>
+                        <tbody>
+                          {sec.table.rows.map((row, ri) => {
+                            const so = /^SO\b/.test(row[0]);
+                            return (
+                              <tr key={ri} className={so ? "so-row" : sec.table!.rows.some((r) => /^SO\b/.test(r[0])) ? "ac-row" : undefined}>
+                                {row.map((cell, ci) => (
+                                  <td key={ci}>
+                                    {ci === 0 || so ? <strong>{cell}</strong> : <Gloss text={cell} />}
+                                  </td>
+                                ))}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    );
+                  }
+                  // Demonstrate / Develop pattern → icon-badged bullet cards
+                  const splitCell = (cell: string): { title: string; bullets: string[] } => {
+                    const parts = cell.split(/\s*·\s*/).map((p) => p.trim()).filter(Boolean);
+                    const [first, ...rest] = parts;
+                    return { title: first ?? "", bullets: rest };
+                  };
+                  return (
+                    <div className="demo-grid" style={{ marginTop: 12 }}>
+                      <div className="demo-header">
+                        <div className="demo-col-title">
+                          <Icon name="checkCircle" size={16} />
+                          <span>{sec.table.headers[0]}</span>
+                        </div>
+                        <div className="demo-col-title">
+                          <Icon name="wrench" size={16} />
+                          <span>{sec.table.headers[1]}</span>
+                        </div>
+                      </div>
+                      {sec.table.rows.map((row, ri) => {
+                        const left = splitCell(row[0] ?? "");
+                        const right = splitCell(row[1] ?? "");
+                        return (
+                          <div className="demo-row" key={ri}>
+                            <div className="demo-cell demo-ways">
+                              <div className="demo-cell-title">
+                                <span className="demo-ico ways"><Icon name="target" size={14} /></span>
+                                <Gloss text={left.title} />
+                              </div>
+                              {left.bullets.length > 0 && (
+                                <ul className="demo-bullets">
+                                  {left.bullets.map((b, bi) => (
+                                    <li key={bi}>
+                                      <span className="demo-ico"><Icon name="checkCircle" size={13} /></span>
+                                      <span><Gloss text={b} /></span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                            <div className="demo-cell demo-dev">
+                              <div className="demo-cell-title">
+                                <span className="demo-ico dev"><Icon name="briefcase" size={14} /></span>
+                                <Gloss text={right.title} />
+                              </div>
+                              {right.bullets.length > 0 && (
+                                <ul className="demo-bullets">
+                                  {right.bullets.map((b, bi) => (
+                                    <li key={bi}>
+                                      <span className="demo-ico"><Icon name="chevronRight" size={13} /></span>
+                                      <span><Gloss text={b} /></span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          </div>
                         );
                       })}
-                    </tbody>
-                  </table>
-                )}
+                    </div>
+                  );
+                })()}
                 {sec.cards && (
                   <div className="card-grid lesson-cards">
                     {sec.cards.map((c) => (
@@ -3461,9 +3528,9 @@ export function UnitPage({
             <table className="data plan-table">
               <thead>
                 <tr>
-                  <th className="plan-time">Time</th>
-                  <th>Activity</th>
-                  <th className="plan-res">Resources</th>
+                  <th className="plan-time"><span className="th-ico"><Icon name="clock" size={14} /></span>Time</th>
+                  <th><span className="th-ico"><Icon name="clipboard" size={14} /></span>Activity</th>
+                  <th className="plan-res"><span className="th-ico"><Icon name="folder" size={14} /></span>Resources</th>
                 </tr>
               </thead>
               <tbody>
@@ -3482,7 +3549,10 @@ export function UnitPage({
                     <React.Fragment key={si}>
                       {sec.heading && (
                         <tr className="plan-sec">
-                          <td colSpan={3}>{sec.heading}</td>
+                          <td colSpan={3}>
+                            <span className="plan-sec-ico"><Icon name="calendar" size={14} /></span>
+                            {sec.heading}
+                          </td>
                         </tr>
                       )}
                       {sec.rows.map((r, ri) => {
