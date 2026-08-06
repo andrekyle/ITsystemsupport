@@ -213,9 +213,19 @@ export function getSession(): string | null {
   return localStorage.getItem(SESSION_KEY);
 }
 
+const LAST_PROFILE_KEY = "itss.lastprofile";
+
+/** The most recently active profile id on this device — used to pre-select
+ *  the right card on the SignIn picker so a super/facilitator who has many
+ *  seeded student profiles doesn't accidentally click a student's row. */
+export function getLastProfileId(): string | null {
+  return localStorage.getItem(LAST_PROFILE_KEY);
+}
+
 export function setSession(profileId: string | null) {
   if (profileId) {
     localStorage.setItem(SESSION_KEY, profileId);
+    localStorage.setItem(LAST_PROFILE_KEY, profileId);
     touchLastOnline(profileId);
   } else {
     localStorage.removeItem(SESSION_KEY);

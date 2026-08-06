@@ -5,6 +5,7 @@ import {
   createProfile,
   DuplicateProfileError,
   findDuplicateProfile,
+  getLastProfileId,
   hashPassword,
   loadProfiles,
   updateProfile,
@@ -121,6 +122,25 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
       onSignIn(p);
     }
   }
+
+  // The account owner (or the last person who used this device) should show
+  // at the top of the picker so a super/facilitator with a large list of
+  // seeded student profiles doesn't accidentally sign in as a student.
+  const rolePriority: Record<Role, number> = {
+    "Super User": 0,
+    Facilitator: 1,
+    Assessor: 2,
+    Moderator: 3,
+    Learner: 4,
+  };
+  const lastId = getLastProfileId();
+  const orderedProfiles = [...profiles].sort((a, b) => {
+    if (a.id === lastId) return -1;
+    if (b.id === lastId) return 1;
+    const dr = (rolePriority[a.role] ?? 9) - (rolePriority[b.role] ?? 9);
+    if (dr !== 0) return dr;
+    return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+  });
 
   async function submitAuth(e: React.FormEvent) {
     e.preventDefault();
@@ -323,7 +343,7 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
 
         {!creating && !enrolling && !authFor && (
           <>
-            {profiles.map((p) => (
+            {orderedProfiles.map((p) => (
               <button key={p.id} className="profile-row" onClick={() => pickProfile(p)}>
                 <Avatar profile={p} />
                 <span>
