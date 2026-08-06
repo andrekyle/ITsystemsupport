@@ -1724,38 +1724,37 @@ export const CONTENT: Record<string, UnitContent> = {
           "Besides differing in degrees of teaming instinct, people on teams differ in terms of personal agendas.",
           "We make a big deal out of team objectives. Team objectives are supposed to be these powerful visions that unite teams and drive them on irresistibly to success. But guess what, in teaming physics, the team objective is decidedly the weak force. The strong force remains the collection of personal wishes and wants that team members bring to the team.",
           "Just because we are attracted to teaming up, as described in the previous chapter, doesn't mean we set our other desires on the shelf. We don't know about you, but we'll be unintelligent if we'll forsake our personal dreams for the sake of some lousy workgroup. So a conflict exists between individual team members' goals and the overarching goal of the team itself.",
-          "And it can play out very painfully. Imagine a team of four, with the acknowledged goal of creating an e-commerce site for a conventional business. The goal is simple; reengineer a local business to cyberspace. Sounds workable... but the four people aren't stick figures — each has an agenda that is subtly pulling the team apart.",
+          "And it can play out very painfully. Imagine a team of four, with the acknowledged goal of creating an e-commerce site for a conventional business. The goal is simple; reengineer a local business to cyberspace.",
+          "The four team members are Doug, a freelance programmer; Sarah, an in-house graphic designer; Miller, an outsider brought in to help develop a catalogue; and John, an old-guard sales engineer. Sounds workable... But the four people aren't stick figures. They each have an agenda that is subtly pulling the team apart.",
         ],
         cards: [
           {
             icon: "chip",
             title: "Doug — Freelance programmer",
-            text: "Has a program from a previous job he thinks is perfect with a few tweaks. Wants to finish and move on to the next gig — frankly, he needs the money. His team-mates won't give him the go-ahead.",
+            text: "Doug is upset because he has a program from a previous job that he feels would be fine for this job, with a few minor alterations. His agenda is to finish his part of the project and get on to the next one. Frankly, he needs the money. But his team-mates won't give him the go-ahead to do this.",
           },
           {
             icon: "design",
             title: "Sarah — In-house graphic designer",
-            text: "Usually a good sport, cheerfully redoing work on request. But Sarah has a secret: she's expecting a baby in seven months. Her mind is on that baby, and the project just doesn't do much for her. Her best design so far is a garden page featuring characters from Peter Rabbit.",
+            text: "Sarah is usually a good sport on teams, redoing work at their request. But Sarah has a secret. She's going to have a baby in seven months. Too early to tell everyone, doesn't want to count her chicken until it's hatched. But her mind is on that baby, and the project just doesn't do much for her. Her best design so far has been a garden page featuring characters from Peter Rabbit.",
           },
           {
             icon: "presenter",
             title: "Miller — Catalogue consultant",
-            text: "Thinks he's God's gift to catalogue consulting and shows up daily with a new plan, a major overhaul, a fresh vision. He's driving everyone crazy. Unknown to the others, he is a recovering alcoholic going through a manic period — having the time of his life just as others are easing out of theirs.",
+            text: "Miller thinks he's God's gift to catalogue consulting. His taste in teamwork is to come in every day with a new plan, a major overhaul, a fresh vision. He's driving everyone crazy. People don't know this, but Miller is a recovering alcoholic going through a manic period. He's having the time of his life, getting interested in his career just as others are easing out of theirs.",
           },
           {
             icon: "briefcase",
             title: "John — Old-guard sales engineer",
-            text: "Extrovert, helped start the company years ago. Has reservations about the whole Internet thing — he read a year ago that no one makes money there and that was his last fresh insight. Secretly resents the talented, uncommitted youngsters around him, and lapses into frequent lectures on selling garden supplies off the back of a truck.",
+            text: "John is the extrovert of the team. He helped start the company years ago, and he has reservations about the whole Internet thing. He read something in the paper, a year ago, that no one is making money there. It was his last fresh insight. Secretly, he resents the talented, but uncommitted youngsters around him, and lapses into frequent lectures on the virtue of selling garden supplies off the back of a truck. He feels unappreciated, and his lectures are a misguided effort to show people what is inside him.",
           },
         ],
         example: {
           title: "The quiet cost of unaddressed agendas",
           lines: [
-            "Four decent, talented people. Nothing major against one another. No opposition to teamwork.",
-            "But numerous conflicts between individual goals and the team goal — and these conflicts will only build in significance.",
-            "They probably won't blow up, go ballistic or meltdown into a headline dysfunctional team.",
-            "But they'll never gel as a team, they won't meet their goal in a timely fashion, and the website will be a joke — because the team goals were deep-sixed by a raft of unfulfilled personal goals.",
-            "Not for lack of good intentions. But their good intentions, taken together, are a feeble force compared to their individual, unaddressed needs.",
+            "We've just described four decent, talented people who are not in any way opposed to working on teams, and have nothing major against one another. But there are numerous conflicts between their individual goals and the team goal, and these conflicts will only build in significance.",
+            "They probably won't ever blow up, or go ballistic or meltdown into a headline dysfunctional team. But they'll never gel as a team, and they won't meet their goal in a timely fashion, and the website will be a joke, because their team goals were deep-sixed by a raft of unfulfilled personal goals.",
+            "Doug, Sarah, Miller and John are not going to click. Not for lack of good intentions. But their good intentions, taken together, are a feeble force compared to their individual, unaddressed needs.",
           ],
         },
       },
@@ -1763,8 +1762,8 @@ export const CONTENT: Record<string, UnitContent> = {
         heading: "Rebalancing the load",
         icon: "layers",
         paragraphs: [
-          "Effective teamwork is a continual balancing act between meeting team needs and meeting individual needs. And we don't just mean the basic human need for survival through affiliation. We mean all the private wants each of us carry — things that have nothing to do with teams or jobs.",
-          "While it's nice to be around other folks and work with them, we are all of us, still, looking out for number one. Forget the movie scenes of the scrappy doughboy jumping on a live grenade to save his buddies. In real life we take action with others primarily to satisfy our personal agendas — people will only agree to team up if it meets their own needs first.",
+          "Effective teamwork means a continual balancing act between meeting team needs and individual needs. We're not just talking here about the basic human need for survival through affiliation with others that we discussed in the last chapter. We are speaking of all the things that each of us wants, things that have nothing to do with teams or jobs. While it's nice to be around other folks and work with them, we are all of us, still, looking out for number one. Forget all the movie scenes of the scrappy doughboy jumping on a live grenade to save his buddies in uniform. In real life, we take actions with others primarily to satisfy our personal agendas. People will only agree to team if it meets their own needs first.",
+          "Of course, there are some of us who live for deferred gratification as a masochistic kick; like agreeing to work towards a team outcome now in exchange for some personal outcomes later on. These people happily forestall today's druthers in order to incur team payback tomorrow. But, in general, it's a \"me first,\" or at least a \"please consider my needs while we meet the team's,\" kind of world.",
         ],
         cards: [
           {
