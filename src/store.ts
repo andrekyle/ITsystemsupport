@@ -98,6 +98,9 @@ export function createProfile(
   enrolment?: EnrolmentInfo,
   passwordHash?: string
 ): Profile {
+  const existing = loadProfiles();
+  const dup = findDuplicateProfile(existing, { name, enrolment });
+  if (dup) throw new DuplicateProfileError(dup);
   const profile: Profile = {
     id: `p_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
     name: name.trim(),
@@ -106,8 +109,57 @@ export function createProfile(
     ...(enrolment ? { enrolment } : {}),
     ...(passwordHash ? { passwordHash } : {}),
   };
-  write(PROFILES_KEY, [...loadProfiles(), profile]);
+  write(PROFILES_KEY, [...existing, profile]);
   return profile;
+}
+
+/** Thrown by createProfile / assertNoDuplicateProfile when a profile that
+ *  matches an existing one (by ID number, email, or full name) is submitted.
+ *  Callers surface the message to the user and abort the sign-up flow. */
+export class DuplicateProfileError extends Error {
+  readonly existing: Profile;
+  constructor(existing: Profile, message?: string) {
+    super(message ?? duplicateProfileMessage(existing));
+    this.name = "DuplicateProfileError";
+    this.existing = existing;
+  }
+}
+
+function duplicateProfileMessage(existing: Profile): string {
+  return `An account for ${existing.name} already exists. Users cannot have two accounts — sign in with the existing profile instead.`;
+}
+
+const norm = (s: string | undefined) => (s ?? "").trim().toLowerCase();
+
+/** Returns the first profile in `candidates` that identifies the same person
+ *  as `attempt`. Match rules (all case-insensitive):
+ *   - non-blank enrolment ID number matches, OR
+ *   - non-blank enrolment email matches, OR
+ *   - trimmed full name matches. */
+export function findDuplicateProfile(
+  candidates: Profile[],
+  attempt: { name: string; enrolment?: EnrolmentInfo }
+): Profile | undefined {
+  const name = norm(attempt.name);
+  const id = norm(attempt.enrolment?.idNumber);
+  const email = norm(attempt.enrolment?.email);
+  return candidates.find((p) => {
+    if (name && norm(p.name) === name) return true;
+    if (id && norm(p.enrolment?.idNumber) === id) return true;
+    if (email && norm(p.enrolment?.email) === email) return true;
+    return false;
+  });
+}
+
+/** Throws DuplicateProfileError if a matching profile already exists in
+ *  `candidates` (typically local + cloud profiles combined). Used by sign-up
+ *  flows *before* they call createProfile so cloud-only duplicates are caught. */
+export function assertNoDuplicateProfile(
+  candidates: Profile[],
+  attempt: { name: string; enrolment?: EnrolmentInfo }
+) {
+  const dup = findDuplicateProfile(candidates, attempt);
+  if (dup) throw new DuplicateProfileError(dup);
 }
 
 /** SHA-256 hex hash used for sign-in passwords. */

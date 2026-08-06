@@ -5,8 +5,10 @@ import { isStaff } from "../types";
 import { MODULES, POE_SECTIONS, POE_TOTAL, usLabel } from "../data/course";
 import { getContent } from "../data/content";
 import {
+  assertNoDuplicateProfile,
   createProfile,
   deleteProfile,
+  DuplicateProfileError,
   hashPassword,
   loadPoeDocs,
   loadProfiles,
@@ -526,11 +528,35 @@ function AddUser({ onAdded }: { onAdded: () => void }) {
   const [name, setName] = useState("");
   const [role, setRole] = useState<Role>("Learner");
   const [pw, setPw] = useState("");
+  const [error, setError] = useState("");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
-    createProfile(name, role, undefined, pw ? await hashPassword(pw) : undefined);
+    setError("");
+    // Check against local + cloud profiles so an admin can't create a second
+    // account for someone who already exists on another device.
+    const local = loadProfiles();
+    let candidates: Profile[] = local;
+    try {
+      const dir = await fetchCloudDirectory();
+      if (dir) {
+        const seen = new Set(local.map((p) => p.id));
+        candidates = [...local, ...dir.profiles.filter((p) => !seen.has(p.id))];
+      }
+    } catch {
+      /* offline or RLS-restricted: local check is still enforced */
+    }
+    try {
+      assertNoDuplicateProfile(candidates, { name });
+      createProfile(name, role, undefined, pw ? await hashPassword(pw) : undefined);
+    } catch (err) {
+      if (err instanceof DuplicateProfileError) {
+        setError(err.message);
+        return;
+      }
+      throw err;
+    }
     setName("");
     setRole("Learner");
     setPw("");
@@ -578,6 +604,7 @@ function AddUser({ onAdded }: { onAdded: () => void }) {
         Learners added here can complete their biographical enrolment form from “My profile” after
         their first sign-in.
       </p>
+      {error && <p className="auth-error" style={{ marginTop: 8 }}>{error}</p>}
     </form>
   );
 }

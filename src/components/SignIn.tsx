@@ -1,12 +1,20 @@
 import { useState } from "react";
 import { Icon } from "../icons";
 import type { EnrolmentInfo, Profile, Role } from "../types";
-import { createProfile, hashPassword, loadProfiles, updateProfile } from "../store";
+import {
+  assertNoDuplicateProfile,
+  createProfile,
+  DuplicateProfileError,
+  hashPassword,
+  loadProfiles,
+  updateProfile,
+} from "../store";
 import { COURSE_META } from "../data/course";
 import { Avatar } from "./Avatar";
 import { EMPTY_ENROLMENT, EnrolmentForm } from "./EnrolmentForm";
 import { PasswordInput } from "./PasswordInput";
 import { cloudEnabled, supabase } from "../lib/supabase";
+import { fetchCloudDirectory } from "../lib/directory";
 
 export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
   const [profiles, setProfiles] = useState<Profile[]>(loadProfiles());
@@ -23,6 +31,24 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [resetError, setResetError] = useState("");
+  const [dupError, setDupError] = useState("");
+
+  /** Combine local + cloud profiles and abort with a friendly error message
+   *  if the person signing up already has an account somewhere. */
+  async function ensureNoDuplicate(attempt: { name: string; enrolment?: EnrolmentInfo }) {
+    const local = loadProfiles();
+    let candidates: Profile[] = local;
+    try {
+      const dir = await fetchCloudDirectory();
+      if (dir) {
+        const seen = new Set(local.map((p) => p.id));
+        candidates = [...local, ...dir.profiles.filter((p) => !seen.has(p.id))];
+      }
+    } catch {
+      /* offline or RLS-restricted: local check is still enforced */
+    }
+    assertNoDuplicateProfile(candidates, attempt);
+  }
 
   function pickProfile(p: Profile) {
     if (p.passwordHash) {
@@ -67,7 +93,17 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
+    setDupError("");
     if (role === "Learner") {
+      try {
+        await ensureNoDuplicate({ name });
+      } catch (err) {
+        if (err instanceof DuplicateProfileError) {
+          setDupError(err.message);
+          return;
+        }
+        throw err;
+      }
       // pre-fill first names / surname from the full name
       const parts = name.trim().split(/\s+/);
       setEnrol((prev) => ({
@@ -78,21 +114,40 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
       setEnrolling(true);
       return;
     }
-    const p = createProfile(name, role, undefined, password ? await hashPassword(password) : undefined);
-    setProfiles(loadProfiles());
-    onSignIn(p);
+    try {
+      await ensureNoDuplicate({ name });
+      const p = createProfile(name, role, undefined, password ? await hashPassword(password) : undefined);
+      setProfiles(loadProfiles());
+      onSignIn(p);
+    } catch (err) {
+      if (err instanceof DuplicateProfileError) {
+        setDupError(err.message);
+        return;
+      }
+      throw err;
+    }
   }
 
   async function submitEnrolment(e: React.FormEvent) {
     e.preventDefault();
-    const p = createProfile(
-      name,
-      role,
-      { ...enrol, signedDate: new Date().toISOString() },
-      password ? await hashPassword(password) : undefined
-    );
-    setProfiles(loadProfiles());
-    onSignIn(p);
+    setDupError("");
+    try {
+      await ensureNoDuplicate({ name, enrolment: enrol });
+      const p = createProfile(
+        name,
+        role,
+        { ...enrol, signedDate: new Date().toISOString() },
+        password ? await hashPassword(password) : undefined
+      );
+      setProfiles(loadProfiles());
+      onSignIn(p);
+    } catch (err) {
+      if (err instanceof DuplicateProfileError) {
+        setDupError(err.message);
+        return;
+      }
+      throw err;
+    }
   }
 
   return (
@@ -274,6 +329,7 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
               <Icon name="signout" size={17} style={{ transform: "rotate(180deg)" }} />
               Continue
             </button>
+            {dupError && <p className="auth-error" style={{ marginTop: 8 }}>{dupError}</p>}
             {profiles.length > 0 && (
               <>
                 <div className="divider">or</div>
@@ -292,6 +348,7 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
               <Icon name="checkCircle" size={17} />
               Complete enrolment
             </button>
+            {dupError && <p className="auth-error" style={{ marginTop: 8 }}>{dupError}</p>}
             <div className="divider">or</div>
             <button type="button" className="btn ghost block" onClick={() => setEnrolling(false)}>
               Back
