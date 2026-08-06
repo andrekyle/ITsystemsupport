@@ -37,6 +37,26 @@ function fmtSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+/** Stable identity key used to reconcile a profile across cloud rows even
+ *  when it has different local ids on different accounts. Prefers strong
+ *  identifiers (South African ID number, email), then falls back to the
+ *  normalised full name. */
+function identityKey(p: Profile): string | null {
+  const id = (p.enrolment?.idNumber ?? "").trim().toLowerCase();
+  if (id) return `id:${id}`;
+  const email = (p.enrolment?.email ?? "").trim().toLowerCase();
+  if (email) return `em:${email}`;
+  const name = (p.name ?? "").trim().toLowerCase();
+  return name ? `nm:${name}` : null;
+}
+
+/** True when `a` is a strictly newer ISO login timestamp than `b`. */
+function newerLogin(a: string | undefined, b: string | undefined): boolean {
+  if (!a) return false;
+  if (!b) return true;
+  return Date.parse(a) > Date.parse(b);
+}
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, {
     day: "numeric",
@@ -421,9 +441,36 @@ export function StudentsPage({
       window.removeEventListener("focus", onFocus);
     };
   }, [rev]);
-  const local = loadProfiles();
+  const localRaw = loadProfiles();
+  const cloudProfiles = cloud?.profiles ?? [];
+  // Build a cloud-side lookup for cross-account status. A learner's own
+  // account stamps `lastLogin` in *its* cloud row; without merging, the
+  // super-user's local copy of the same profile (which never gets stamped)
+  // would win and the learner would keep showing as "Never".
+  const cloudById = new Map(cloudProfiles.map((p) => [p.id, p] as const));
+  const cloudByKey = new Map<string, Profile>();
+  for (const p of cloudProfiles) {
+    const key = identityKey(p);
+    if (!key) continue;
+    const cur = cloudByKey.get(key);
+    if (!cur || newerLogin(p.lastLogin, cur.lastLogin)) cloudByKey.set(key, p);
+  }
+  const mergeFromCloud = (p: Profile): Profile => {
+    const match = cloudById.get(p.id) ?? cloudByKey.get(identityKey(p) ?? "");
+    if (!match) return p;
+    const patch: Partial<Profile> = {};
+    if (newerLogin(match.lastLogin, p.lastLogin)) patch.lastLogin = match.lastLogin;
+    if (!p.avatar && match.avatar) patch.avatar = match.avatar;
+    return Object.keys(patch).length ? { ...p, ...patch } : p;
+  };
+  const local = localRaw.map(mergeFromCloud);
   const localIds = new Set(local.map((p) => p.id));
-  const remote = (cloud?.profiles ?? []).filter((p) => !localIds.has(p.id));
+  // Filter out cloud copies that already appear locally (by id or identity)
+  // so the same person doesn't show as two rows.
+  const localKeys = new Set(local.map(identityKey).filter(Boolean) as string[]);
+  const remote = cloudProfiles.filter(
+    (p) => !localIds.has(p.id) && !(identityKey(p) && localKeys.has(identityKey(p)!))
+  );
   const remoteIds = new Set(remote.map((p) => p.id));
   const all = [...local, ...remote];
   // Super Users manage every account; facilitators see their learners;
