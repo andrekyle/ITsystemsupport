@@ -29,21 +29,39 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
 
   const profiles: Profile[] = [];
   const owners: CloudDirectory["owners"] = {};
-  const seen = new Set<string>();
+  // Same profile id can appear in more than one account's row (e.g. the
+  // facilitator seeded a learner via People > Add User and that learner also
+  // signs in on their own device). We keep the *freshest* copy — the one
+  // with the most recent lastLogin — and prefer the profile's own account
+  // (owner === profile.ownerHint) when timestamps tie.
+  const chosen = new Map<string, { p: Profile; owner: string }>();
+  const loginTime = (p: Profile) => (p.lastLogin ? Date.parse(p.lastLogin) : 0);
   for (const row of profRes.data ?? []) {
     if (row.user_id === me) continue; // this account's profiles are already local
     try {
       for (const p of JSON.parse(row.value) as Profile[]) {
-        if (p?.id && !seen.has(p.id)) {
-          seen.add(p.id);
-          // only the designated account may hold the Super User role
-          profiles.push(p.role === "Super User" ? { ...p, role: "Facilitator" } : p);
-          owners[p.id] = row.user_id;
+        if (!p?.id) continue;
+        const cur = chosen.get(p.id);
+        // Own row wins on ties; newer lastLogin always wins.
+        const incomingOwn = row.user_id === p.id; /* rare */
+        const t = loginTime(p);
+        if (!cur) {
+          chosen.set(p.id, { p, owner: row.user_id });
+        } else {
+          const curT = loginTime(cur.p);
+          if (t > curT || (t === curT && incomingOwn && cur.owner !== p.id)) {
+            chosen.set(p.id, { p, owner: row.user_id });
+          }
         }
       }
     } catch {
       /* ignore malformed rows */
     }
+  }
+  for (const { p, owner } of chosen.values()) {
+    // only the designated account may hold the Super User role
+    profiles.push(p.role === "Super User" ? { ...p, role: "Facilitator" } : p);
+    owners[p.id] = owner;
   }
 
   const poe: CloudDirectory["poe"] = {};
