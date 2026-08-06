@@ -64,14 +64,23 @@ export function loadProfiles(): Profile[] {
   // In cloud mode only admin accounts (or the designated email) hold Super User;
   // in local-only mode the designated name identifies the super user.
   const superAccount = onSuperAccount();
+  const superName = SUPER_USER_NAME.trim().toLowerCase();
+  const currentSessionId =
+    typeof localStorage !== "undefined" ? localStorage.getItem(SESSION_KEY) : null;
   let changed = false;
   for (const p of profiles) {
     const nm = p.name.trim().toLowerCase();
+    // On a super-user cloud account (or in local-only mode) entitle:
+    //   - the designated super-user name (case-insensitive),
+    //   - the super-user email as a profile name,
+    //   - a profile whose name matches the signed-in email, or
+    //   - the profile the operator is actively signed in as.
     const entitled =
       superAccount &&
-      (p.name === SUPER_USER_NAME ||
+      (nm === superName ||
         nm === SUPER_USER_EMAIL ||
-        (!!accountEmail && nm === accountEmail));
+        (!!accountEmail && nm === accountEmail) ||
+        (!!currentSessionId && p.id === currentSessionId));
     if (entitled && p.role !== "Super User") {
       p.role = "Super User";
       changed = true;
@@ -85,8 +94,6 @@ export function loadProfiles(): Profile[] {
     // for inspection — any last-login stamp on them is an artifact, clear it.
     // Never clear the currently-signed-in session's stamp: that person is
     // actually online, even if their auth account also carries admin rights.
-    const currentSessionId =
-      typeof localStorage !== "undefined" ? localStorage.getItem(SESSION_KEY) : null;
     if (
       cloudEnabled &&
       superAccount &&
