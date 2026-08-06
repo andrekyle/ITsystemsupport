@@ -1762,8 +1762,16 @@ export const CONTENT: Record<string, UnitContent> = {
         heading: "Rebalancing the load",
         icon: "layers",
         paragraphs: [
-          "Effective teamwork means a continual balancing act between meeting team needs and individual needs. We're not just talking here about the basic human need for survival through affiliation with others that we discussed in the last chapter. We are speaking of all the things that each of us wants, things that have nothing to do with teams or jobs. While it's nice to be around other folks and work with them, we are all of us, still, looking out for number one. Forget all the movie scenes of the scrappy doughboy jumping on a live grenade to save his buddies in uniform. In real life, we take actions with others primarily to satisfy our personal agendas. People will only agree to team if it meets their own needs first.",
+          "Effective teamwork means a continual balancing act between meeting team needs and individual needs.",
+          "We're not just talking here about the basic human need for survival through affiliation with others that we discussed in the last chapter. We are speaking of all the things that each of us wants, things that have nothing to do with teams or jobs.",
+          "While it's nice to be around other folks and work with them, we are all of us, still, looking out for number one. Forget all the movie scenes of the scrappy doughboy jumping on a live grenade to save his buddies in uniform. In real life, we take actions with others primarily to satisfy our personal agendas. People will only agree to team if it meets their own needs first.",
           "Of course, there are some of us who live for deferred gratification as a masochistic kick; like agreeing to work towards a team outcome now in exchange for some personal outcomes later on. These people happily forestall today's druthers in order to incur team payback tomorrow. But, in general, it's a \"me first,\" or at least a \"please consider my needs while we meet the team's,\" kind of world.",
+        ],
+        bullets: [
+          "Team needs vs individual needs — both are always in play; ignore either and the team wobbles.",
+          "Not just \"belonging\" — it's everything each of us wants, on and off the job.",
+          "\"Me first\" is normal — plan for it, don't moralise about it.",
+          "Deferred gratification exists — but it's the exception, not the rule.",
         ],
         cards: [
           {
