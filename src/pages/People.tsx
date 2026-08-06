@@ -492,8 +492,29 @@ export function StudentsPage({
   const remote = cloudProfiles.filter(
     (p) => !localIds.has(p.id) && !identityKeys(p).some((k) => localKeys.has(k))
   );
-  const remoteIds = new Set(remote.map((p) => p.id));
-  const all = [...local, ...remote];
+  // Collapse duplicate cloud entries (same identity, different ids) — keep
+  // the one with the newest lastLogin so learners who accidentally signed
+  // up twice show as a single "Active today" row instead of two.
+  const dedupedRemote: Profile[] = [];
+  const remoteChosen = new Map<string, Profile>();
+  for (const p of remote) {
+    const keys = identityKeys(p);
+    const existingKey = keys.find((k) => remoteChosen.has(k));
+    if (!existingKey) {
+      for (const k of keys) remoteChosen.set(k, p);
+      dedupedRemote.push(p);
+    } else {
+      const cur = remoteChosen.get(existingKey)!;
+      if (newerLogin(p.lastLogin, cur.lastLogin)) {
+        const idx = dedupedRemote.indexOf(cur);
+        if (idx >= 0) dedupedRemote[idx] = p;
+        for (const k of identityKeys(cur)) if (remoteChosen.get(k) === cur) remoteChosen.delete(k);
+        for (const k of keys) remoteChosen.set(k, p);
+      }
+    }
+  }
+  const remoteIds = new Set(dedupedRemote.map((p) => p.id));
+  const all = [...local, ...dedupedRemote];
   // Super Users manage every account; facilitators see their learners;
   // learners see the enrolled learner list (read-only)
   const people = (
@@ -1605,15 +1626,53 @@ function StudentDetail({
 
   async function removeUser() {
     setConfirmDelete(false);
+    // Sweep out every duplicate copy of this person across all cloud rows —
+    // when a learner has signed up more than once (e.g. on two devices), a
+    // single-row delete just gets resurrected by the other device's next
+    // sync. Match by any identity token so different ids for the same person
+    // still get cleaned up.
+    const targetKeys = new Set(identityKeys(student));
+    try {
+      const dir = await fetchCloudDirectory();
+      if (dir) {
+        const seen = new Set<string>();
+        for (const p of dir.profiles) {
+          if (seen.has(p.id)) continue;
+          const matches =
+            p.id === student.id ||
+            identityKeys(p).some((k) => targetKeys.has(k));
+          if (!matches) continue;
+          const own = dir.owners[p.id];
+          if (!own) continue;
+          seen.add(p.id);
+          const err = await deleteCloudProfile(own, p.id);
+          if (err) {
+            setAlertMsg(err);
+            return;
+          }
+        }
+      }
+    } catch {
+      /* offline / RLS: fall through to id-based delete below */
+    }
+    // Also handle the primary row (may be this account's own local copy or a
+    // cloud row that fetchCloudDirectory skipped because it's ours).
     if (remote) {
-      if (!owner) return;
-      const err = await deleteCloudProfile(owner, student.id);
-      if (err) {
-        setAlertMsg(err);
-        return;
+      if (owner) {
+        const err = await deleteCloudProfile(owner, student.id);
+        if (err) {
+          setAlertMsg(err);
+          return;
+        }
       }
     } else {
       deleteProfile(student.id);
+    }
+    // And drop any local copies that share the identity (protects against
+    // this account having accidentally stored a duplicate itself).
+    for (const p of loadProfiles()) {
+      if (p.id === student.id) continue;
+      if (identityKeys(p).some((k) => targetKeys.has(k))) deleteProfile(p.id);
     }
     navigate({ page: "students" });
     onChanged();
