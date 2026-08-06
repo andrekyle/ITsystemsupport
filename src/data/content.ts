@@ -1638,6 +1638,63 @@ export const CONTENT: Record<string, UnitContent> = {
         icon: "award",
         flat: true,
         paragraphs: ["Time: 90 minutes · Activity: Self & Group"],
+        slideQuiz: [
+          {
+            q: "What is the main focus of this section of Unit Standard 10135?",
+            options: [
+              "The cost of workstation hardware",
+              "How each member contributes to team coherence, image, spirit and respectful interaction",
+              "Writing feasibility reports for the bank",
+              "Configuring Active Directory group policies",
+            ],
+            answer: 1,
+            explain: "This section is about the contribution every member makes to team coherence, image and spirit and to respectful interaction between team members.",
+          },
+          {
+            q: "\"Team spirit\" on an IT support team is best described as:",
+            options: [
+              "How loudly the team celebrates a resolved incident",
+              "The shared willingness to help, back each other up and move the team's work forward",
+              "The number of tickets closed per person",
+              "The team's dress code",
+            ],
+            answer: 1,
+            explain: "Spirit is the shared willingness to pull together toward the team's work — visible in helping, backing up and following through.",
+          },
+          {
+            q: "Which action MOST directly protects the team's image with its stakeholders?",
+            options: [
+              "Escalating every ticket to management",
+              "Delivering what was promised, on time and courteously, and speaking well of teammates in public",
+              "Working strictly to your own job description and no further",
+              "Blaming the previous shift when a call goes wrong",
+            ],
+            answer: 1,
+            explain: "Image is built by consistent delivery, courteous conduct and public respect for teammates — not by shifting blame or hiding.",
+          },
+          {
+            q: "\"Respecting differences\" between team members means:",
+            options: [
+              "Everyone must think the same way to avoid conflict",
+              "Ignoring differences so nobody feels awkward",
+              "Recognising and using the different backgrounds, temperaments and skills each member brings",
+              "Only the leader's view matters",
+            ],
+            answer: 2,
+            explain: "Respecting differences means recognising and using the strengths that come from different backgrounds, temperaments and skills.",
+          },
+          {
+            q: "Which time allocation applies to this section as taught?",
+            options: [
+              "15 minutes",
+              "30 minutes",
+              "60 minutes",
+              "90 minutes",
+            ],
+            answer: 3,
+            explain: "The activity for this section is timed at 90 minutes (self & group work).",
+          },
+        ],
       },
       {
         heading: "What is \"Unproductive Behavior\"? — Clearly Unproductive",
@@ -1651,6 +1708,63 @@ export const CONTENT: Record<string, UnitContent> = {
           "Never coming prepared to meetings",
           "Not answering e-mail or messages in a reasonable time",
           "Discourteous or disrespectful language",
+        ],
+        slideQuiz: [
+          {
+            q: "Which of the following is clearly unproductive team behaviour?",
+            options: [
+              "Asking a clarifying question in a stand-up",
+              "Consistently missing team meetings",
+              "Volunteering for an extra shift",
+              "Documenting a fix in the knowledge base",
+            ],
+            answer: 1,
+            explain: "Consistently missing meetings is listed on the slide as clearly detrimental to the functioning of the team.",
+          },
+          {
+            q: "A team-mate never replies to e-mail or Teams messages for days. What category does this fall under?",
+            options: [
+              "A quirky communication style",
+              "Clearly unproductive behaviour",
+              "A leadership problem",
+              "None of the team's business",
+            ],
+            answer: 1,
+            explain: "Not answering e-mail or messages in a reasonable time is listed as clearly unproductive.",
+          },
+          {
+            q: "Which behaviour signals a lack of preparation and is called out on the slide?",
+            options: [
+              "Coming to a meeting with a written status update",
+              "Never coming prepared to meetings",
+              "Circulating an agenda beforehand",
+              "Taking minutes",
+            ],
+            answer: 1,
+            explain: "\"Never coming prepared to meetings\" is one of the listed clearly-unproductive behaviours.",
+          },
+          {
+            q: "Which of these is a listed unproductive behaviour that damages team relations directly?",
+            options: [
+              "Discourteous or disrespectful language",
+              "Asking for help",
+              "Sharing credit publicly",
+              "Praising a teammate's fix",
+            ],
+            answer: 0,
+            explain: "Discourteous or disrespectful language is called out as clearly unproductive and destructive to team relations.",
+          },
+          {
+            q: "Consistently missing deadlines is a problem primarily because it:",
+            options: [
+              "Reduces your personal credit-card limit",
+              "Blocks other team members' work and undermines team commitments",
+              "Is against company dress code",
+              "Only affects the person who missed the deadline",
+            ],
+            answer: 1,
+            explain: "Missed deadlines create downstream blockers for the rest of the team and erode the team's commitments to stakeholders.",
+          },
         ],
       },
       {
@@ -1672,6 +1786,63 @@ export const CONTENT: Record<string, UnitContent> = {
             ["On top of things", "Doing Everything - Not allowing other members to make contributions"],
           ],
         },
+        slideQuiz: [
+          {
+            q: "Questioning EVERY detail of the project until progress stalls is best described as:",
+            options: [
+              "Raising a concern",
+              "Being principled",
+              "Nitpicking",
+              "Following procedure",
+            ],
+            answer: 2,
+            explain: "Nitpicking is the extreme form of \"raising a concern\" — objecting to every possible detail until the project can't move.",
+          },
+          {
+            q: "A member refuses to let anyone else alter or critique work she has done for the team. This is the extreme form of:",
+            options: [
+              "Ownership / responsibility (becoming possessiveness)",
+              "Listening & reflecting (becoming lurking)",
+              "Staying in touch (becoming nudging)",
+              "Being principled (becoming uncompromising)",
+            ],
+            answer: 0,
+            explain: "Healthy ownership becomes possessiveness when the person refuses to let anyone alter or critique the work.",
+          },
+          {
+            q: "\"Lurking\" — never contributing in team meetings or communications — is the unproductive extreme of which normal behaviour?",
+            options: [
+              "Asking questions",
+              "Listening and reflecting",
+              "Being principled",
+              "Following procedure",
+            ],
+            answer: 1,
+            explain: "Listening & reflecting is normal; taken too far it becomes lurking — never contributing.",
+          },
+          {
+            q: "A team-mate sends reminders every hour without giving people a reasonable interval to respond. This is:",
+            options: [
+              "Staying in touch",
+              "Following procedure",
+              "Nudging",
+              "Modelling commitment",
+            ],
+            answer: 2,
+            explain: "Nudging is the extreme form of \"staying in touch\" — reminders piled on before anyone has had time to answer.",
+          },
+          {
+            q: "\"Doing everything\" — refusing to let other members contribute — is unproductive because it:",
+            options: [
+              "Uses too much electricity",
+              "Prevents skill development, hides work, and undermines shared ownership of the outcome",
+              "Reduces the leader's salary",
+              "Speeds the project up beyond schedule",
+            ],
+            answer: 1,
+            explain: "\"Doing everything\" starves other members of contribution — it kills skill development and shared ownership of the outcome.",
+          },
+        ],
       },
       {
         heading: "What to do?",
@@ -1691,6 +1862,63 @@ export const CONTENT: Record<string, UnitContent> = {
           "Allow the person to express his or her side of the issue, but make sure he or she understands why the team is concerned.",
           "If necessary, attempt to reach a compromise so that both the individual and the person are satisfied.",
           "In some cases, a team member may be \"missing in action.\" If that person has not responded to the team's repeated attempts to get in touch or never appears to meet with the team, it may be best to inform the instructor. The team and the instructor can work on a solution agreeable to the team",
+        ],
+        slideQuiz: [
+          {
+            q: "Before contacting the instructor about unproductive behaviour, the team should first:",
+            options: [
+              "Make a formal complaint to HR",
+              "Try to resolve the problem within the team",
+              "Remove the person from the team",
+              "Ignore the behaviour and hope it passes",
+            ],
+            answer: 1,
+            explain: "The slide says it is best to make a significant effort to resolve problems within the team before contacting the instructor.",
+          },
+          {
+            q: "When deciding if behaviour is really unproductive, the team should ask whether it:",
+            options: [
+              "Is annoying to the leader personally",
+              "Interferes with the team's work, consensus or morale",
+              "Happens on Fridays",
+              "Involves someone senior",
+            ],
+            answer: 1,
+            explain: "The test is whether the behaviour interferes with completing work, reaching true consensus, or seriously harms morale.",
+          },
+          {
+            q: "The recommended framing when raising a behaviour issue is:",
+            options: [
+              "\"You always ruin our meetings.\"",
+              "\"I/We feel (frustrated/concerned) when you (behaviour) because it (effect on the team).\"",
+              "\"Everyone thinks you're the problem.\"",
+              "\"Fix it or I'll escalate.\"",
+            ],
+            answer: 1,
+            explain: "The slide gives a specific I-statement template that focuses on the behaviour and its effect on the team, not on attacking the person.",
+          },
+          {
+            q: "The team must make sure the issue is identified as a specific:",
+            options: [
+              "Personality flaw",
+              "Behaviour, not the person",
+              "Rule violation",
+              "Salary problem",
+            ],
+            answer: 1,
+            explain: "\"The problem is with the behaviour, not with the person.\" The team addresses behaviour, not identity.",
+          },
+          {
+            q: "When a team-mate is \"missing in action\" and does not respond to repeated attempts to reach them, the team should:",
+            options: [
+              "Pretend they are still contributing",
+              "Do all their work silently",
+              "Inform the instructor so a solution can be worked out",
+              "Fire them from the team without warning",
+            ],
+            answer: 2,
+            explain: "For a missing-in-action member, the slide says it may be best to inform the instructor and work out an agreeable solution.",
+          },
         ],
       },
       {
@@ -1716,6 +1944,63 @@ export const CONTENT: Record<string, UnitContent> = {
             ],
           ],
         },
+        slideQuiz: [
+          {
+            q: "According to the definition on this slide, contributing to team coherence means:",
+            options: [
+              "Only doing what the leader tells you",
+              "Actively participating as a member of a team to move the team/work unit toward the completion of goals",
+              "Completing your own tasks first, then leaving",
+              "Escalating every problem to management",
+            ],
+            answer: 1,
+            explain: "The slide's definition is: actively participating as a member of a team to move the team/work unit toward the completion of goals.",
+          },
+          {
+            q: "\"Help the team obtain resources and clear away obstacles\" is an example of which behaviour on the slide?",
+            options: [
+              "Involve others and keep them informed",
+              "Actively help the team or work unit accomplish its goals",
+              "Model commitment",
+              "Enforce compliance",
+            ],
+            answer: 1,
+            explain: "Helping the team obtain resources and clearing obstacles is listed under \"actively help the team or work unit accomplish its goals.\"",
+          },
+          {
+            q: "Which activity best demonstrates \"involve others and keep them informed\"?",
+            options: [
+              "Deciding on your own and telling the team afterwards",
+              "Actively seeking the input of quiet team members and sharing information with everyone on the team",
+              "Copying only the leader on decisions",
+              "Waiting for people to ask before you share",
+            ],
+            answer: 1,
+            explain: "The slide highlights seeking input from quiet members, listening respectfully, and sharing information with everyone.",
+          },
+          {
+            q: "\"Modelling commitment\" as described on the slide includes:",
+            options: [
+              "Publicly criticising the team's decisions when things get hard",
+              "Publicly pursuing the team's goals with enthusiasm and a can-do attitude",
+              "Working extra hours only if paid overtime",
+              "Rewriting the team's roles yourself",
+            ],
+            answer: 1,
+            explain: "Modelling commitment is publicly and energetically pursuing the team's goals with enthusiasm and a can-do attitude.",
+          },
+          {
+            q: "A good development activity on this slide is to:",
+            options: [
+              "Wait for someone to notice you",
+              "Find a respected colleague or friend that you see as a good team player and ask them to mentor you",
+              "Do the work of two people to look busy",
+              "Volunteer for tasks outside the team's goals",
+            ],
+            answer: 1,
+            explain: "The development-activities column recommends finding a respected colleague/friend seen as a good team player and asking them to mentor and advise you.",
+          },
+        ],
       },
       {
         heading: "Individual Needs Vs Team Needs",
@@ -1757,6 +2042,63 @@ export const CONTENT: Record<string, UnitContent> = {
             "Doug, Sarah, Miller and John are not going to click. Not for lack of good intentions. But their good intentions, taken together, are a feeble force compared to their individual, unaddressed needs.",
           ],
         },
+        slideQuiz: [
+          {
+            q: "In \"teaming physics\" on this slide, the STRONG force is:",
+            options: [
+              "The team's mission statement",
+              "The collection of personal wishes and wants each member brings to the team",
+              "The organisational chart",
+              "The project budget",
+            ],
+            answer: 1,
+            explain: "The slide argues the team objective is the weak force; the strong force is the collection of personal wishes and wants team members bring.",
+          },
+          {
+            q: "Which team member's private agenda is \"finish my part and move on because I need the money\"?",
+            options: [
+              "Sarah",
+              "Miller",
+              "John",
+              "Doug",
+            ],
+            answer: 3,
+            explain: "Doug wants to reuse an old program, finish his part and move on because he needs the money.",
+          },
+          {
+            q: "Sarah's hidden distraction from the project is that she:",
+            options: [
+              "Is going to have a baby in seven months",
+              "Wants Doug's job",
+              "Is applying for another job",
+              "Dislikes John",
+            ],
+            answer: 0,
+            explain: "Sarah's secret on the slide is that she is going to have a baby in seven months, and her mind is on that baby.",
+          },
+          {
+            q: "Miller's disruptive behaviour on the team is best described as:",
+            options: [
+              "Refusing to attend meetings",
+              "Coming in every day with a new plan / fresh vision and driving everyone crazy",
+              "Sabotaging Doug's code",
+              "Copying Sarah's designs",
+            ],
+            answer: 1,
+            explain: "Miller shows up daily with a new plan, major overhaul, or fresh vision — well-intentioned but driving the team crazy.",
+          },
+          {
+            q: "The main lesson of the Doug / Sarah / Miller / John story is that:",
+            options: [
+              "Unaddressed personal agendas quietly derail otherwise well-intentioned teams",
+              "You should never hire freelancers",
+              "Only the leader's goals matter",
+              "Team goals always override personal ones automatically",
+            ],
+            answer: 0,
+            explain: "The four are decent and talented, yet unaddressed personal agendas quietly prevent the team from gelling and delivering.",
+          },
+        ],
       },
       {
         heading: "Rebalancing the load",
@@ -1797,6 +2139,63 @@ export const CONTENT: Record<string, UnitContent> = {
             "So plan for the balancing act — team goals + private goals — instead of pretending it isn't happening.",
           ],
         },
+        slideQuiz: [
+          {
+            q: "Effective teamwork is described on this slide as:",
+            options: [
+              "The team overriding all personal needs",
+              "A continual balancing act between meeting team needs and individual needs",
+              "Every member sacrificing personal goals for the team",
+              "The leader deciding what needs matter",
+            ],
+            answer: 1,
+            explain: "The slide opens with: effective teamwork means a continual balancing act between meeting team needs and individual needs.",
+          },
+          {
+            q: "According to the slide, in real life we take actions with others primarily to:",
+            options: [
+              "Impress the leader",
+              "Satisfy our personal agendas",
+              "Avoid punishment",
+              "Prove we are selfless",
+            ],
+            answer: 1,
+            explain: "In real life, we take actions with others primarily to satisfy our personal agendas.",
+          },
+          {
+            q: "People will only agree to team if it:",
+            options: [
+              "Pays extra",
+              "Has a written contract",
+              "Meets their own needs first",
+              "Is approved by senior management",
+            ],
+            answer: 2,
+            explain: "The slide's blunt conclusion: people will only agree to team if it meets their own needs first.",
+          },
+          {
+            q: "The \"deferred gratification\" personality on this slide:",
+            options: [
+              "Ignores personal outcomes altogether",
+              "Agrees to a team outcome now in exchange for personal outcomes later",
+              "Refuses any team payback",
+              "Wants immediate personal reward only",
+            ],
+            answer: 1,
+            explain: "Deferred-gratification people agree to work toward a team outcome now in exchange for personal outcomes later on.",
+          },
+          {
+            q: "\"Looking out for number one\" on this slide means:",
+            options: [
+              "The team must come before the person, always",
+              "Even while working with others, each of us is still primarily attending to our own wants",
+              "Only the leader looks out for themselves",
+              "You should refuse all teamwork",
+            ],
+            answer: 1,
+            explain: "The point is that while it's nice to work with others, we are all still looking out for number one — plan for it.",
+          },
+        ],
       },
       {
         heading: "Find the agenda",
@@ -1824,6 +2223,63 @@ export const CONTENT: Record<string, UnitContent> = {
           "Whatever the personal goals, we need to know what they are, and to deal with them, or at least acknowledge them, as a team, perhaps even to make them corollary team goals. When we know our fellow team members want us to achieve what we ourselves want that is a terrific bond between members.",
           "The sooner we know one another's personal needs and hopes, the better for the team. This doesn't mean these personal needs have to be completely met first before true teaming can get underway. It does mean that acknowledging and addressing these needs as a group, early on, can help prevent our \"selfish\" desires from sinking the team effort.",
         ],
+        slideQuiz: [
+          {
+            q: "The term \"hidden agenda\" on this slide describes:",
+            options: [
+              "Meetings that were not on the calendar",
+              "Covert careerism — members using the team for private ends without honest intent",
+              "Team goals that were never written down",
+              "Confidential company strategy",
+            ],
+            answer: 1,
+            explain: "\"Hidden agenda\" was coined to describe covert careerism — dishonest and destructive to team coherence.",
+          },
+          {
+            q: "To build trust, good teams must:",
+            options: [
+              "Keep their hidden agendas secret to avoid conflict",
+              "Uncover their own hidden agendas and expose them to the light of day",
+              "Report each other to management",
+              "Rely only on the leader to spot problems",
+            ],
+            answer: 1,
+            explain: "Good teams recognise that trust requires uncovering their own hidden agendas and exposing them to the light of day.",
+          },
+          {
+            q: "Which of the following is one of the covert statements the slide warns about?",
+            options: [
+              "\"I'm here to learn from everyone.\"",
+              "\"I'm not here to work with the team, but to take credit for its successes.\"",
+              "\"I'm ready to help wherever needed.\"",
+              "\"I'll follow the team's process.\"",
+            ],
+            answer: 1,
+            explain: "The slide lists this exact quote — using the team to take credit for its successes — as a hidden-agenda statement.",
+          },
+          {
+            q: "Which is listed on the slide as an HONOURABLE personal goal that may still pull someone from the team?",
+            options: [
+              "Making a name for oneself",
+              "Wanting to belong to a team of \"winners\"",
+              "Going back to school and getting that degree",
+              "Wanting a group one can dominate",
+            ],
+            answer: 2,
+            explain: "\"Going back to school and getting that degree\" appears in the honourable-goals list on the slide.",
+          },
+          {
+            q: "The slide argues we should acknowledge personal goals as a team because:",
+            options: [
+              "It lets us fire the members who have them",
+              "Knowing team-mates want us to achieve what we ourselves want is a terrific bond, and prevents selfish desires from sinking the effort",
+              "It gives HR something to file",
+              "Only then can the leader take control",
+            ],
+            answer: 1,
+            explain: "Knowing team-mates want us to achieve what we ourselves want is a terrific bond — and acknowledging needs early prevents them from sinking the team.",
+          },
+        ],
       },
       {
         heading: "Ethics",
@@ -1832,6 +2288,63 @@ export const CONTENT: Record<string, UnitContent> = {
           "Everyone deals with stuff differently. Some detach themselves from the asset so they don't care about it or they attach themselves too much so they feel like the rightful owners. In the first situation, learning to care about company stuff is accomplished through thoughtful consideration. Who paid for this and how would I feel about writing the check that pays for it? What are the boundaries for appropriate use? This is an attitude that doesn't necessarily change from work to home. An ethical person doesn't put a dollar amount on respecting the property of others. He or she always makes a moral connection between property, ownership, and responsibility.",
           "In the second case, becoming too attached or familiar with company property creates a problem as well. If you use something every day, you may become desensitized to its appropriate professional use. Do you balance company financial accounts like your own? Do you find yourself hitting the computer or kicking the copier (even if it deserves it)? Do you treat records and private information in a casual manner? It might be time to take a more serious approach to company property.",
           "Beware of \"messing with the money or the stuff\" because ethical situations involving company assets, no matter how small are rarely smoothed over with an apology. There's always a smoking gun that does not leave grey areas for rationalization or explanation. Most industries deal with asset abuse or misuse with disciplinary action or termination on the first offence. Again, business ethics boils down to the day-to-day choices you make no matter who you are or what responsibilities you have. From the minute you step from the parking lot into your workplace, see the things around you in proper context.",
+        ],
+        slideQuiz: [
+          {
+            q: "According to the slide, an ethical person always makes a moral connection between:",
+            options: [
+              "Salary, seniority and title",
+              "Property, ownership and responsibility",
+              "Time, money and stress",
+              "Meetings, e-mail and reports",
+            ],
+            answer: 1,
+            explain: "An ethical person always makes a moral connection between property, ownership, and responsibility.",
+          },
+          {
+            q: "Learning to care about company \"stuff\" is described on the slide as being accomplished through:",
+            options: [
+              "Signing an asset register",
+              "Thoughtful consideration — asking who paid, how you'd feel writing the cheque, and what the appropriate-use boundaries are",
+              "Locking everything in a cupboard",
+              "Buying your own equipment",
+            ],
+            answer: 1,
+            explain: "The slide asks: who paid for this, how would I feel writing the cheque, and what are the boundaries for appropriate use — thoughtful consideration.",
+          },
+          {
+            q: "Becoming TOO attached or too familiar with company property is a problem because you may:",
+            options: [
+              "Wear out the equipment",
+              "Become desensitized to its appropriate professional use",
+              "Get promoted too quickly",
+              "Pay too much rent",
+            ],
+            answer: 1,
+            explain: "If you use something every day, you may become desensitized to its appropriate professional use.",
+          },
+          {
+            q: "The slide warns that ethical breaches involving company assets are:",
+            options: [
+              "Easily smoothed over with a sincere apology",
+              "Rarely smoothed over with an apology — there is usually a smoking gun with no grey area",
+              "Handled internally with a warning",
+              "Considered a personal matter",
+            ],
+            answer: 1,
+            explain: "Situations involving company assets are rarely smoothed over with an apology — the smoking gun leaves no grey area.",
+          },
+          {
+            q: "Most industries deal with asset abuse or misuse with:",
+            options: [
+              "A written warning after three offences",
+              "Additional training only",
+              "Disciplinary action or termination on the first offence",
+              "A pay cut for one month",
+            ],
+            answer: 2,
+            explain: "The slide states: most industries deal with asset abuse or misuse with disciplinary action or termination on the first offence.",
+          },
         ],
       },
     ],
