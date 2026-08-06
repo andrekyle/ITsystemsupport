@@ -2244,6 +2244,18 @@ export function UnitPage({
                     const [first, ...rest] = parts;
                     return { title: first ?? "", bullets: rest };
                   };
+                  const waysTitleIcons: Array<React.ComponentProps<typeof Icon>["name"]> = [
+                    "target", "people", "shield", "presenter", "award", "checklist",
+                  ];
+                  const devTitleIcons: Array<React.ComponentProps<typeof Icon>["name"]> = [
+                    "briefcase", "wrench", "gradcap", "chat", "network", "book",
+                  ];
+                  const waysBulletIcons: Array<React.ComponentProps<typeof Icon>["name"]> = [
+                    "checkCircle", "target", "checklist", "people", "chat", "shield", "award", "presenter",
+                  ];
+                  const devBulletIcons: Array<React.ComponentProps<typeof Icon>["name"]> = [
+                    "briefcase", "wrench", "chat", "chevronRight", "gradcap", "presenter", "book", "download",
+                  ];
                   return (
                     <div className="demo-grid" style={{ marginTop: 12 }}>
                       <div className="demo-header">
@@ -2259,18 +2271,20 @@ export function UnitPage({
                       {sec.table.rows.map((row, ri) => {
                         const left = splitCell(row[0] ?? "");
                         const right = splitCell(row[1] ?? "");
+                        const waysTitle = waysTitleIcons[ri % waysTitleIcons.length];
+                        const devTitle = devTitleIcons[ri % devTitleIcons.length];
                         return (
                           <div className="demo-row" key={ri}>
                             <div className="demo-cell demo-ways">
                               <div className="demo-cell-title">
-                                <span className="demo-ico ways"><Icon name="target" size={14} /></span>
+                                <span className="demo-ico ways"><Icon name={waysTitle} size={14} /></span>
                                 <Gloss text={left.title} />
                               </div>
                               {left.bullets.length > 0 && (
                                 <ul className="demo-bullets">
                                   {left.bullets.map((b, bi) => (
                                     <li key={bi}>
-                                      <span className="demo-ico"><Icon name="checkCircle" size={13} /></span>
+                                      <span className="demo-ico ways"><Icon name={waysBulletIcons[bi % waysBulletIcons.length]} size={13} /></span>
                                       <span><Gloss text={b} /></span>
                                     </li>
                                   ))}
@@ -2279,14 +2293,14 @@ export function UnitPage({
                             </div>
                             <div className="demo-cell demo-dev">
                               <div className="demo-cell-title">
-                                <span className="demo-ico dev"><Icon name="briefcase" size={14} /></span>
+                                <span className="demo-ico dev"><Icon name={devTitle} size={14} /></span>
                                 <Gloss text={right.title} />
                               </div>
                               {right.bullets.length > 0 && (
                                 <ul className="demo-bullets">
                                   {right.bullets.map((b, bi) => (
                                     <li key={bi}>
-                                      <span className="demo-ico"><Icon name="chevronRight" size={13} /></span>
+                                      <span className="demo-ico dev"><Icon name={devBulletIcons[bi % devBulletIcons.length]} size={13} /></span>
                                       <span><Gloss text={b} /></span>
                                     </li>
                                   ))}
@@ -3569,14 +3583,40 @@ export function UnitPage({
                           return (
                             <tr key={ri} className="plan-break">
                               {timeCell}
-                              <td colSpan={2}>{r.title}</td>
+                              <td colSpan={2}>
+                                <span className="plan-title-ico"><Icon name="halfCircle" size={13} /></span>
+                                {r.title}
+                              </td>
                             </tr>
                           );
+                        // pick a contextual icon based on the activity title
+                        const pickActivityIcon = (title: string): React.ComponentProps<typeof Icon>["name"] => {
+                          const t = title.toLowerCase();
+                          if (/quiz|assess|test|exam/.test(t)) return "checklist";
+                          if (/read|manual|book|chapter|index/.test(t)) return "book";
+                          if (/team|group|class|learners|facilitator/.test(t)) return "people";
+                          if (/discuss|feedback|debrief|conversation/.test(t)) return "chat";
+                          if (/present|slide|deck|demo/.test(t)) return "presenter";
+                          if (/write|report|note|record/.test(t)) return "document";
+                          if (/plan|schedule|agenda|prep/.test(t)) return "clipboard";
+                          if (/exercise|activity|practice|task/.test(t)) return "exercise";
+                          if (/network|internet|connect/.test(t)) return "network";
+                          if (/data|database|storage/.test(t)) return "database";
+                          if (/security|risk|safe/.test(t)) return "shield";
+                          if (/goal|objective|outcome|criteria/.test(t)) return "target";
+                          if (/summary|close|conclude|wrap/.test(t)) return "award";
+                          if (/build|fix|repair|configure/.test(t)) return "wrench";
+                          return "chevronRight";
+                        };
+                        const actIcon = pickActivityIcon(r.title);
                         return (
                           <tr key={ri}>
                             {timeCell}
                             <td>
-                              <div className="plan-title">{r.title}</div>
+                              <div className="plan-title">
+                                <span className="plan-title-ico"><Icon name={actIcon} size={14} /></span>
+                                {r.title}
+                              </div>
                               {r.text?.map((t, ti) => (
                                 <p key={ti} className="plan-p">
                                   <Gloss text={t} />
@@ -3586,7 +3626,8 @@ export function UnitPage({
                                 <ul className="plan-bullets">
                                   {r.bullets.map((b, bi) => (
                                     <li key={bi}>
-                                      <Gloss text={b} />
+                                      <span className="plan-bullet-ico"><Icon name="checkCircle" size={12} /></span>
+                                      <span><Gloss text={b} /></span>
                                     </li>
                                   ))}
                                 </ul>
@@ -3594,7 +3635,10 @@ export function UnitPage({
                             </td>
                             <td className="plan-res">
                               {r.resources?.map((x) => (
-                                <div key={x}>{x}</div>
+                                <div key={x}>
+                                  <span className="plan-res-ico"><Icon name="folder" size={12} /></span>
+                                  {x}
+                                </div>
                               ))}
                             </td>
                           </tr>

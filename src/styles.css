@@ -3167,12 +3167,32 @@ table.data.kv tr:last-child td {
 }
 
 .plan-table th .th-ico,
-.plan-sec td .plan-sec-ico {
+.plan-sec td .plan-sec-ico,
+.plan-title .plan-title-ico,
+.plan-break td .plan-title-ico {
   display: inline-flex;
   align-items: center;
   margin-right: 6px;
   color: var(--azure);
   vertical-align: -2px;
+}
+
+.plan-bullets li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.plan-bullets .plan-bullet-ico {
+  flex: 0 0 auto;
+  margin-top: 3px;
+  color: var(--green, #2fa46b);
+}
+.plan-res .plan-res-ico {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 5px;
+  color: var(--ink-3);
+  vertical-align: -1px;
 }
 
 /* Ways to Demonstrate / Development Activities — icon grid */
