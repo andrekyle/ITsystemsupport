@@ -1563,7 +1563,6 @@ textarea:focus {
   padding: 10px 12px 10px 12px;
   background: var(--surface);
   border: 1px solid var(--border-2);
-  border-left: 3px solid var(--azure);
   border-radius: 8px;
   margin: 0 0 10px;
 }
