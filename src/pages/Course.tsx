@@ -77,6 +77,12 @@ function LessonBullet({ text }: { text: string }) {
   );
 }
 
+/** True when a paragraph looks like a short "list item" written as its own paragraph. */
+function isShortItemParagraph(text: string): boolean {
+  const t = text.trim();
+  return t.length > 0 && t.length <= 70 && !/[.!?]$/.test(t) && !/:$/.test(t);
+}
+
 /** Pick an inline icon for a lesson paragraph, based on its content.
  *  Adds visual variety without moving text. Returns null when no
  *  strong signal is present so the paragraph renders plain. */
@@ -89,9 +95,7 @@ function pickParagraphIcon(text: string): React.ComponentProps<typeof Icon>["nam
   if (/hidden agenda|covert careerism/.test(low)) return "eyeOff";
   // trust / building trust / cards on the table
   if (/build trust|cards on the table|light of day/.test(low)) return "shield";
-  // short one-line item paragraphs (list rows written as separate paragraphs)
-  const isShortItem = t.length <= 70 && !/[.!?]$/.test(t);
-  if (isShortItem) {
+  if (isShortItemParagraph(t)) {
     if (/baby|pregnan/.test(low)) return "person";
     if (/family/.test(low)) return "people";
     if (/better job|new job|next job/.test(low)) return "briefcase";
@@ -2214,30 +2218,68 @@ export function UnitPage({
             ) : null;
             const body = (
               <div className="saqa-body lesson-section">
-                {sec.paragraphs.map((_, i) => {
-                  const text = paraText(i);
-                  const paraIcon = pickParagraphIcon(text);
-                  return editable ? (
-                    <p
-                      key={i}
-                      className="lesson-p editable"
-                      contentEditable
-                      suppressContentEditableWarning
-                      onBlur={(e) => editParagraph(si, i, e.currentTarget.textContent ?? "")}
-                    >
-                      {text}
-                    </p>
-                  ) : (
-                    <p key={i} className={paraIcon ? "lesson-p lesson-p-iconed" : "lesson-p"}>
-                      {paraIcon && (
-                        <span className="lesson-p-ico">
-                          <Icon name={paraIcon} size={15} />
-                        </span>
-                      )}
-                      <Gloss text={text} />
-                    </p>
-                  );
-                })}
+                {(() => {
+                  const els: React.ReactNode[] = [];
+                  let i = 0;
+                  while (i < sec.paragraphs.length) {
+                    const text = paraText(i);
+                    if (!editable && isShortItemParagraph(text)) {
+                      // group consecutive short-item paragraphs into a card grid
+                      const group: { idx: number; text: string }[] = [];
+                      let j = i;
+                      while (j < sec.paragraphs.length) {
+                        const tt = paraText(j);
+                        if (!isShortItemParagraph(tt)) break;
+                        group.push({ idx: j, text: tt });
+                        j++;
+                      }
+                      els.push(
+                        <div className="lesson-p-cards" key={`grp-${i}`}>
+                          {group.map((g) => {
+                            const gi = pickParagraphIcon(g.text) ?? "checkCircle";
+                            return (
+                              <div className="lesson-p-card" key={g.idx}>
+                                <span className="lesson-p-card-ico">
+                                  <Icon name={gi} size={18} />
+                                </span>
+                                <div className="lesson-p-card-t">
+                                  <Gloss text={g.text} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                      i = j;
+                      continue;
+                    }
+                    const paraIcon = pickParagraphIcon(text);
+                    els.push(
+                      editable ? (
+                        <p
+                          key={i}
+                          className="lesson-p editable"
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => editParagraph(si, i, e.currentTarget.textContent ?? "")}
+                        >
+                          {text}
+                        </p>
+                      ) : (
+                        <p key={i} className={paraIcon ? "lesson-p lesson-p-iconed" : "lesson-p"}>
+                          {paraIcon && (
+                            <span className="lesson-p-ico">
+                              <Icon name={paraIcon} size={15} />
+                            </span>
+                          )}
+                          <Gloss text={text} />
+                        </p>
+                      )
+                    );
+                    i++;
+                  }
+                  return els;
+                })()}
                 {sec.bullets && (
                   <ul className="duty-list">
                     {sec.bullets.map((b) => (
