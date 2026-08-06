@@ -1458,12 +1458,6 @@ export const CONTENT: Record<string, UnitContent> = {
         icon: "clipboard",
         paragraphs: [
           "What roles are available will depend much on the project and the wishes of your instructor. For instance, if the project is to create a Web site, your instructor may ask your team to have a leader/editor, a writer, a graphic artist and a Webmaster/HTML specialist.",
-        ],
-      },
-      {
-        heading: "Organising the Team Yourselves",
-        icon: "people",
-        paragraphs: [
           "If your instructor does not give any guidance, the team is free to organise itself as it chooses, but it is important that:",
         ],
         bullets: [
@@ -1640,16 +1634,10 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
       },
       {
-        heading: "Contribution to team coherence, image and spirit",
+        heading: "Contribution to team coherence, image and spirit and Respect differences to enhance interaction between team members",
         icon: "award",
         flat: true,
-        paragraphs: ["Time: 45 minutes · Activity: Self & Group"],
-      },
-      {
-        heading: "Respect differences to enhance interaction between team members",
-        icon: "people",
-        flat: true,
-        paragraphs: ["Time: 45 minutes · Activity: Self & Group"],
+        paragraphs: ["Time: 90 minutes · Activity: Self & Group"],
       },
       {
         heading: "What is \"Unproductive Behavior\"? — Clearly Unproductive",
