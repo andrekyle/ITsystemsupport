@@ -1763,9 +1763,33 @@ export const CONTENT: Record<string, UnitContent> = {
         heading: "Rebalancing the load",
         icon: "layers",
         paragraphs: [
-          "Effective teamwork means a continual balancing act between meeting team needs and individual needs. We're not just talking here about the basic human need for survival through affiliation with others that we discussed in the last chapter. We are speaking of all the things that each of us wants, things that have nothing to do with teams or jobs. While it's nice to be around other folks and work with them, we are all of us, still, looking out for number one. Forget all the movie scenes of the scrappy doughboy jumping on a live grenade to save his buddies in uniform. In real life, we take actions with others primarily to satisfy our personal agendas. People will only agree to team if it meets their own needs first.",
-          "Of course, there are some of us who live for deferred gratification as a masochistic kick; like agreeing to work towards a team outcome now in exchange for some personal outcomes later on. These people happily forestall today's druthers in order to incur team payback tomorrow. But, in general, it's a \"me first,\" or at least a \"please consider my needs while we meet the team's,\" kind of world.",
+          "Effective teamwork is a continual balancing act between meeting team needs and meeting individual needs. And we don't just mean the basic human need for survival through affiliation. We mean all the private wants each of us carry — things that have nothing to do with teams or jobs.",
+          "While it's nice to be around other folks and work with them, we are all of us, still, looking out for number one. Forget the movie scenes of the scrappy doughboy jumping on a live grenade to save his buddies. In real life we take action with others primarily to satisfy our personal agendas — people will only agree to team up if it meets their own needs first.",
         ],
+        cards: [
+          {
+            icon: "person",
+            title: "Me first",
+            text: "The default setting. I show up for the team when the team shows up for me. Ignore this and commitment quietly evaporates.",
+          },
+          {
+            icon: "people",
+            title: "Please consider my needs",
+            text: "A softer version, and probably the most common. \"I'll pull my weight — just don't pretend I don't have a life outside this project.\"",
+          },
+          {
+            icon: "clock",
+            title: "Deferred gratification",
+            text: "A rarer breed: happy to forestall today's druthers in exchange for team payback tomorrow. Useful people to have around — just don't assume everyone works this way.",
+          },
+        ],
+        example: {
+          title: "Bottom line",
+          lines: [
+            "People will only agree to team if it meets their own needs first.",
+            "So plan for the balancing act — team goals + private goals — instead of pretending it isn't happening.",
+          ],
+        },
       },
       {
         heading: "Find the agenda",
