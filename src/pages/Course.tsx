@@ -77,6 +77,45 @@ function LessonBullet({ text }: { text: string }) {
   );
 }
 
+/** Pick an inline icon for a lesson paragraph, based on its content.
+ *  Adds visual variety without moving text. Returns null when no
+ *  strong signal is present so the paragraph renders plain. */
+function pickParagraphIcon(text: string): React.ComponentProps<typeof Icon>["name"] | null {
+  const t = text.trim();
+  const low = t.toLowerCase();
+  // direct-quote paragraph (used a lot in "Find the agenda")
+  if (/^["'"]/u.test(t) && t.length < 220) return "chat";
+  // hidden agenda / covert careerism
+  if (/hidden agenda|covert careerism/.test(low)) return "eyeOff";
+  // trust / building trust / cards on the table
+  if (/build trust|cards on the table|light of day/.test(low)) return "shield";
+  // short one-line item paragraphs (list rows written as separate paragraphs)
+  const isShortItem = t.length <= 70 && !/[.!?]$/.test(t);
+  if (isShortItem) {
+    if (/baby|pregnan/.test(low)) return "person";
+    if (/family/.test(low)) return "people";
+    if (/better job|new job|next job/.test(low)) return "briefcase";
+    if (/school|degree|study|learn/.test(low)) return "gradcap";
+    if (/name for oneself|make a name/.test(low)) return "trend";
+    if (/funded|funding|money/.test(low)) return "database";
+    if (/winners|winning/.test(low)) return "award";
+    if (/dominate|control/.test(low)) return "target";
+    if (/glom|attach|coast/.test(low)) return "layers";
+    if (/executive|championship|patronage|behind a powerful/.test(low)) return "shield";
+    return "checkCircle";
+  }
+  // colon-ending intro line ("...often very honourable:")
+  if (/:$/.test(t) && t.length < 260) return "clipboard";
+  // hypothetical team / Doug / Sarah / Miller / John analysis
+  if (/hypothetical team|our team/.test(low)) return "people";
+  if (/\bdoug\b|\bsarah\b|\bmiller\b|\bjohn\b/.test(low) && t.length < 900) return "person";
+  // "who is to say..." rhetorical
+  if (/^who is to say|deep down, most of us/.test(low)) return "info";
+  // closing wisdom
+  if (/the sooner|early on|corollary team goals/.test(low)) return "clock";
+  return null;
+}
+
 /** Model-answer bullet: bolds a short "Label:" lead-in when present. */
 function AnswerBullet({ text }: { text: string }) {
   const m = text.match(/^([^:]{2,40}):\s(.*)$/s);
@@ -2177,6 +2216,7 @@ export function UnitPage({
               <div className="saqa-body lesson-section">
                 {sec.paragraphs.map((_, i) => {
                   const text = paraText(i);
+                  const paraIcon = pickParagraphIcon(text);
                   return editable ? (
                     <p
                       key={i}
@@ -2188,7 +2228,12 @@ export function UnitPage({
                       {text}
                     </p>
                   ) : (
-                    <p key={i} className="lesson-p">
+                    <p key={i} className={paraIcon ? "lesson-p lesson-p-iconed" : "lesson-p"}>
+                      {paraIcon && (
+                        <span className="lesson-p-ico">
+                          <Icon name={paraIcon} size={15} />
+                        </span>
+                      )}
                       <Gloss text={text} />
                     </p>
                   );

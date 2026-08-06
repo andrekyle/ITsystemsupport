@@ -1556,6 +1556,29 @@ textarea:focus {
   color: var(--ink);
 }
 
+.lesson-p.lesson-p-iconed {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-left: 3px solid var(--azure);
+  border-radius: 8px;
+  margin: 0 0 10px;
+}
+.lesson-p.lesson-p-iconed .lesson-p-ico {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--azure);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--azure-lighter, rgba(45, 125, 210, 0.12));
+}
 .task-card {
   margin-bottom: 14px;
   max-width: 1200px;
