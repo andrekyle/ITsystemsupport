@@ -2234,15 +2234,15 @@ export function UnitPage({
                         j++;
                       }
                       els.push(
-                        <div className="lesson-p-cards" key={`grp-${i}`}>
+                        <div className="card-grid lesson-cards lesson-p-cards" key={`grp-${i}`}>
                           {group.map((g) => {
                             const gi = pickParagraphIcon(g.text) ?? "checkCircle";
                             return (
-                              <div className="lesson-p-card" key={g.idx}>
-                                <span className="lesson-p-card-ico">
-                                  <Icon name={gi} size={18} />
+                              <div className="card lesson-card" key={g.idx}>
+                                <span className="ico">
+                                  <Icon name={gi} size={22} />
                                 </span>
-                                <div className="lesson-p-card-t">
+                                <div className="t">
                                   <Gloss text={g.text} />
                                 </div>
                               </div>
