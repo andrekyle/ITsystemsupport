@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "../icons";
 import type { EnrolmentInfo, Profile, Role } from "../types";
 import {
@@ -19,6 +19,38 @@ import { fetchCloudDirectory } from "../lib/directory";
 export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
   const [profiles, setProfiles] = useState<Profile[]>(loadProfiles());
   const [creating, setCreating] = useState(profiles.length === 0);
+
+  // On a fresh device the cloud sync hydrates `itss.profiles` from Supabase
+  // *after* this component has mounted. Without watching for that, the
+  // super/existing user is stuck in "create a new account" mode and the
+  // submit handler routes them to the enrolment form. Re-read on storage
+  // events (fired by sync.ts on hydration) and poll briefly as a safety net.
+  useEffect(() => {
+    const sync = () => {
+      const next = loadProfiles();
+      setProfiles((prev) =>
+        prev.length === next.length && prev.every((p, i) => p.id === next[i]?.id)
+          ? prev
+          : next
+      );
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === "itss.profiles") sync();
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", sync);
+    const timer = window.setInterval(sync, 1000);
+    // stop polling once we have profiles or after ~15s so cloud hydration
+    // has time to land on slow connections without running forever
+    const stopper = window.setTimeout(() => window.clearInterval(timer), 15000);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", sync);
+      window.clearInterval(timer);
+      window.clearTimeout(stopper);
+    };
+  }, []);
+
   const [name, setName] = useState("");
   const [role, setRole] = useState<Role>("Learner");
   const [password, setPassword] = useState("");
@@ -32,6 +64,15 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
   const [confirmPw, setConfirmPw] = useState("");
   const [resetError, setResetError] = useState("");
   const [dupError, setDupError] = useState("");
+
+  // If cloud hydration brought profiles in after the "create new" screen
+  // opened, drop back to the picker so the user can just click their name.
+  useEffect(() => {
+    if (profiles.length > 0 && creating && !name.trim() && !enrolling) {
+      setCreating(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profiles.length]);
 
   /** Look for a duplicate across local + cloud profiles. If the person
    *  already has a profile *anywhere*, we adopt it instead of creating a
