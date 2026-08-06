@@ -2735,6 +2735,7 @@ export function UnitPage({
                           Click to enlarge
                         </span>
                       </button>
+                      {body}
                       {quizBlock}
                     </div>
                   );
@@ -2761,7 +2762,8 @@ export function UnitPage({
                           )}
                         </h2>
                       )}
-                      {quizBlock ?? body}
+                      {body}
+                      {quizBlock}
                     </div>
                   </>
                 )}
