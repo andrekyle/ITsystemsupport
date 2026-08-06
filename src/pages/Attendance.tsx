@@ -26,14 +26,6 @@ const MONTHS_ATT: Record<string, number> = {
   jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
 };
 
-/** Parse a unit's `time` field (e.g. "12h00 - 16h00") to [hour, minute]. */
-function parseUnitStartHM(time: string | undefined): [number, number] | null {
-  if (!time) return null;
-  const m = time.match(/(\d{1,2})\s*[h:]\s*(\d{2})/i);
-  if (!m) return null;
-  return [Number(m[1]), Number(m[2])];
-}
-
 /** All calendar dates a unit is scheduled on (from its "dates" string like "5, 6 Aug 2026"). */
 function unitScheduledIsoDates(u: UnitStandard): string[] {
   const days = Array.from(u.dates.matchAll(/\b(\d{1,2})\b/g)).map((m) => Number(m[1]));
@@ -51,26 +43,10 @@ function unitScheduledIsoDates(u: UnitStandard): string[] {
   });
 }
 
-/** Earliest scheduled start time for units running on `dateIso`, minus 30 min.
- *  Falls back to 08:30 if no unit is scheduled that day. */
+/** The register always opens at 08:30 on the session date, giving learners
+ *  30 minutes to sign in before the 09:00 lesson start. */
 function registerOpensAt(dateIso: string): Date {
-  let earliest: [number, number] | null = null;
-  for (const mod of MODULES) {
-    for (const u of mod.units) {
-      if (!unitScheduledIsoDates(u).includes(dateIso)) continue;
-      const hm = parseUnitStartHM(u.time);
-      if (!hm) continue;
-      if (!earliest || hm[0] * 60 + hm[1] < earliest[0] * 60 + earliest[1]) earliest = hm;
-    }
-  }
-  const [h, min] = earliest ?? [9, 0];
-  // open 30 min before the earliest scheduled unit
-  const total = h * 60 + min - 30;
-  const oh = Math.max(0, Math.floor(total / 60));
-  const om = Math.max(0, total % 60);
-  const hh = String(oh).padStart(2, "0");
-  const mm = String(om).padStart(2, "0");
-  return new Date(`${dateIso}T${hh}:${mm}:00`);
+  return new Date(`${dateIso}T08:30:00`);
 }
 
 /** Human-readable "HH:MM" for the given Date (local). */
