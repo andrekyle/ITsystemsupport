@@ -1874,6 +1874,21 @@ export function UnitPage({
       {tab === "lesson" && content && (
         <>
           <div style={{ marginTop: 18 }} />
+          {unitId === "HWSW2" && (
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+              <a
+                className="btn"
+                href="/downloads/HWSW2-Illustrated-Slide-Deck.pdf"
+                download="HWSW2-Illustrated-Slide-Deck.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Download the full slide deck as a PDF (image only, one slide per page)"
+              >
+                <Icon name="download" size={16} />
+                Download slide deck (PDF)
+              </a>
+            </div>
+          )}
           {isPrivileged && (
             <input
               ref={figFileRef}
