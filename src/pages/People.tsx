@@ -70,6 +70,13 @@ function lastOnlineState(lastLogin?: string): { key: LastOnlineKey; label: strin
 
 /** Everyone (learners included) can see who is currently online. */
 function OnlineNow({ people, viewer }: { people: Profile[]; viewer: Profile }) {
+  // Re-render every 30s so the "online now" 10-minute window rolls forward
+  // even if the cloud directory hasn't refreshed yet.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const t = window.setInterval(() => setTick((n) => n + 1), 30 * 1000);
+    return () => window.clearInterval(t);
+  }, []);
   // the signed-in viewer is online by definition, even if their stored
   // lastLogin timestamp has aged past the online-now window
   const everyone = people.some((p) => p.id === viewer.id) ? people : [viewer, ...people];
@@ -393,11 +400,23 @@ export function StudentsPage({
   const [cloud, setCloud] = useState<CloudDirectory | null>(null);
   useEffect(() => {
     let alive = true;
-    void fetchCloudDirectory().then((d) => {
-      if (alive && d) setCloud(d);
-    });
+    let timer: number | undefined;
+    const load = () => {
+      void fetchCloudDirectory().then((d) => {
+        if (alive && d) setCloud(d);
+      });
+    };
+    load();
+    // Refresh periodically so that other learners' lastLogin timestamps stay
+    // fresh — otherwise a user who signs in *after* this page opened would
+    // still appear offline until the viewer navigated away and back.
+    timer = window.setInterval(load, 30 * 1000);
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
     return () => {
       alive = false;
+      if (timer !== undefined) window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
     };
   }, [rev]);
   const local = loadProfiles();
