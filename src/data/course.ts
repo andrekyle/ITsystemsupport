@@ -17,7 +17,7 @@ export const MODULES: CourseModule[] = [
     activities: 6,
     units: [
       { us: "8252", title: "Writing business reports in Retail/Wholesale practices", nqf: 5, credits: 6, dates: "17 Jul 2026", time: "09h00 - 14h00" },
-      { us: "10135", title: "Work as a project team member", nqf: 4, credits: 8, dates: "24 Jul, 8 Aug 2026", time: "09h00 - 14h00" },
+      { us: "10135", title: "Work as a project team member", nqf: 4, credits: 8, dates: "24 Jul, 7 Aug 2026", time: "09h00 - 14h00" },
       { us: "HWSW", title: "Hardware and Software", nqf: 5, credits: 0, dates: "5, 6 Aug 2026", time: "12h00 - 16h00" },
       { us: "HWSW2", title: "Hardware and Software — Illustrated Slide Deck", nqf: 5, credits: 0, dates: "5, 6 Aug 2026", time: "12h00 - 16h00" },
       { us: "114050", title: "Explain the principles of business and the role of information technology", nqf: 5, credits: 4, dates: "14 Aug 2026", time: "09h00 - 14h00" },
