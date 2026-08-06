@@ -90,7 +90,19 @@ function pickParagraphIcon(text: string): React.ComponentProps<typeof Icon>["nam
   const t = text.trim();
   const low = t.toLowerCase();
   // direct-quote paragraph (used a lot in "Find the agenda")
-  if (/^["'"]/u.test(t) && t.length < 220) return "chat";
+  if (/^["'"]/u.test(t) && t.length < 220) {
+    if (/take credit|credit for/.test(low)) return "award";
+    if (/associate with|some of its members/.test(low)) return "people";
+    if (/steppingstone|stepping stone|better things/.test(low)) return "trend";
+    if (/not here to work/.test(low)) return "eyeOff";
+    return "chat";
+  }
+  // "in their hearts, they are saying" intro
+  if (/in their hearts|they are saying/.test(low)) return "chat";
+  // "good soldiers" opening
+  if (/good soldiers/.test(low)) return "shield";
+  // "leery" / distrust warning
+  if (/leery|no honest intention/.test(low)) return "eye";
   // hidden agenda / covert careerism
   if (/hidden agenda|covert careerism/.test(low)) return "eyeOff";
   // trust / building trust / cards on the table
