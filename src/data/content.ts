@@ -1724,13 +1724,40 @@ export const CONTENT: Record<string, UnitContent> = {
           "Besides differing in degrees of teaming instinct, people on teams differ in terms of personal agendas.",
           "We make a big deal out of team objectives. Team objectives are supposed to be these powerful visions that unite teams and drive them on irresistibly to success. But guess what, in teaming physics, the team objective is decidedly the weak force. The strong force remains the collection of personal wishes and wants that team members bring to the team.",
           "Just because we are attracted to teaming up, as described in the previous chapter, doesn't mean we set our other desires on the shelf. We don't know about you, but we'll be unintelligent if we'll forsake our personal dreams for the sake of some lousy workgroup. So a conflict exists between individual team members' goals and the overarching goal of the team itself.",
-          "And it can play out very painfully. Imagine a team of four, with the acknowledged goal of creating an e-commerce site for a conventional business. The goal is simple; reengineer a local business to cyberspace.",
-          "The four team members are Doug, a freelance programmer; Edie, an in-house graphic designer; Miller, an outsider brought in to help develop a catalogue; and Avram, an old-guard sales engineer. Sounds workable... But the four people aren't stick figures. They each have an agenda that is subtly pulling the team apart.",
-          "Doug is upset because he has a program from a previous job that he feels would be fine for this job, with a few minor alterations. His agenda is to finish his part of the project and get on to the next one. Frankly, he needs the money. But his team-mates won't give him the go-ahead to do this. Edie is usually a good sport on teams, redoing work at their request. But Edie has a secret. She's going to have a baby in seven months. Too early to tell everyone, doesn't want to count her chicken until it's hatched. But her mind is on that baby, and the project just doesn't do much for her. Her best design so far has been a garden page featuring characters from Peter Rabbit.",
-          "Miller thinks he's God's gift to catalogue consulting. His taste in teamwork is to come in every day with a new plan, a major overhaul, a fresh vision. He's driving everyone crazy. People don't know this, but Miller is a recovering alcoholic going through a manic period. He's having the time of his life, getting interested in his career just as others are easing out of their. Avram is the extrovert of the team. He helped start the company years ago, and he has reservations about the whole Internet thing. He read something in the paper, a year ago, that no one is making money there. It was his last fresh insight. Secretly, he resents the talented, but uncommitted youngsters around him, and lapses into frequent lectures on the virtue of selling garden supplies off the back of a truck. He feels unappreciated, and his lectures are a misguided effort to show people what is inside him.",
-          "We've just described four decent, talented people who are not in any way opposed to working on teams, and have nothing major against one another. But there are numerous conflicts between their individual goals and the team goal, and these conflicts will only build in significance. They probably won't ever blow up, or go ballistic or meltdown into a headline dysfunctional team. But they'll never gel as a team, and they won't meet their goal in a timely fashion, and the website will be a joke, because their team goals were deep-sixed by a raft of unfulfilled personal goals.",
-          "Doug, Edie, Miller and Avram are not going to click. Not for lack of good intentions. But their good intentions, taken together, are a feeble force compared to their individual, unaddressed needs.",
+          "And it can play out very painfully. Imagine a team of four, with the acknowledged goal of creating an e-commerce site for a conventional business. The goal is simple; reengineer a local business to cyberspace. Sounds workable... but the four people aren't stick figures — each has an agenda that is subtly pulling the team apart.",
         ],
+        cards: [
+          {
+            icon: "chip",
+            title: "Doug — Freelance programmer",
+            text: "Has a program from a previous job he thinks is perfect with a few tweaks. Wants to finish and move on to the next gig — frankly, he needs the money. His team-mates won't give him the go-ahead.",
+          },
+          {
+            icon: "design",
+            title: "Edie — In-house graphic designer",
+            text: "Usually a good sport, cheerfully redoing work on request. But Edie has a secret: she's expecting a baby in seven months. Her mind is on that baby, and the project just doesn't do much for her. Her best design so far is a garden page featuring characters from Peter Rabbit.",
+          },
+          {
+            icon: "presenter",
+            title: "Miller — Catalogue consultant",
+            text: "Thinks he's God's gift to catalogue consulting and shows up daily with a new plan, a major overhaul, a fresh vision. He's driving everyone crazy. Unknown to the others, he is a recovering alcoholic going through a manic period — having the time of his life just as others are easing out of theirs.",
+          },
+          {
+            icon: "briefcase",
+            title: "Avram — Old-guard sales engineer",
+            text: "Extrovert, helped start the company years ago. Has reservations about the whole Internet thing — he read a year ago that no one makes money there and that was his last fresh insight. Secretly resents the talented, uncommitted youngsters around him, and lapses into frequent lectures on selling garden supplies off the back of a truck.",
+          },
+        ],
+        example: {
+          title: "The quiet cost of unaddressed agendas",
+          lines: [
+            "Four decent, talented people. Nothing major against one another. No opposition to teamwork.",
+            "But numerous conflicts between individual goals and the team goal — and these conflicts will only build in significance.",
+            "They probably won't blow up, go ballistic or meltdown into a headline dysfunctional team.",
+            "But they'll never gel as a team, they won't meet their goal in a timely fashion, and the website will be a joke — because the team goals were deep-sixed by a raft of unfulfilled personal goals.",
+            "Not for lack of good intentions. But their good intentions, taken together, are a feeble force compared to their individual, unaddressed needs.",
+          ],
+        },
       },
       {
         heading: "Rebalancing the load",
