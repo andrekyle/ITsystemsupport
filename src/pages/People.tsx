@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import JSZip from "jszip";
 import { Icon } from "../icons";
 import type { EnrolmentInfo, PoeDoc, Profile, ProgressState, Role, Route } from "../types";
 import { isStaff } from "../types";
@@ -20,7 +21,7 @@ import {
 import { Avatar } from "../components/Avatar";
 import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/EnrolmentForm";
 import { AlertModal, ConfirmModal } from "../components/Modal";
-import { downloadDoc } from "../lib/files";
+import { downloadDoc, getFileBlob } from "../lib/files";
 import { fileToSignature } from "../lib/signature";
 import { updateRegisterSignatures } from "./Attendance";
 import {
@@ -1590,6 +1591,7 @@ function StudentDetail({
   const [editingEnrol, setEditingEnrol] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [alertMsg, setAlertMsg] = useState("");
+  const [zipping, setZipping] = useState(false);
   const [draft, setDraft] = useState<EnrolmentInfo>({ ...EMPTY_ENROLMENT, ...student.enrolment });
   const uploaded = POE_SECTIONS.flatMap((sec) =>
     sec.items.flatMap((item) =>
@@ -1599,6 +1601,43 @@ function StudentDetail({
         .map(([key, doc]) => ({ sec, item, key, doc }))
     )
   );
+
+  /** Bundle every uploaded POE document into a single ZIP, foldered by section. */
+  async function downloadPortfolio() {
+    setZipping(true);
+    try {
+      const zip = new JSZip();
+      const clean = (s: string) => s.replace(/[\\/:*?"<>|]/g, "-").trim();
+      const perItem = new Map<string, number>();
+      let added = 0;
+      for (const { sec, item, doc } of uploaded) {
+        const blob = await getFileBlob(doc);
+        if (!blob) continue;
+        const n = (perItem.get(item.id) ?? 0) + 1;
+        perItem.set(item.id, n);
+        const suffix = n > 1 ? ` (${n})` : "";
+        zip.file(
+          `${clean(sec.heading)}/${clean(item.label).slice(0, 80)}${suffix} — ${clean(doc.name)}`,
+          blob
+        );
+        added++;
+      }
+      if (!added) {
+        setAlertMsg("None of the documents could be fetched — check your connection and try again.");
+        return;
+      }
+      const blob = await zip.generateAsync({ type: "blob" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `POE — ${student.name}.zip`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      setAlertMsg("The portfolio could not be downloaded — check your connection and try again.");
+    } finally {
+      setZipping(false);
+    }
+  }
 
   /** Routes profile changes to the local store, or to the owning account's cloud rows. */
   async function patchStudent(patch: Partial<Profile>): Promise<boolean> {
@@ -1762,6 +1801,17 @@ function StudentDetail({
             </span>
             Uploaded documents — {poeItemCount(docs)} / {POE_TOTAL} items · {uploaded.length}{" "}
             {uploaded.length === 1 ? "file" : "files"}
+            {isSuper && uploaded.length > 0 && (
+              <button
+                className="btn ghost profile-edit"
+                onClick={() => void downloadPortfolio()}
+                disabled={zipping}
+                title="Download every uploaded document as a single ZIP"
+              >
+                <Icon name="download" size={15} />
+                {zipping ? "Preparing ZIP…" : "Download portfolio (ZIP)"}
+              </button>
+            )}
           </h2>
           {uploaded.length === 0 ? (
             <div className="callout">
