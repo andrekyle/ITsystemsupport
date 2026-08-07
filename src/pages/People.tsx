@@ -1384,10 +1384,13 @@ function AcademicRecord({
   student,
   remote,
   owner,
+  canDownload,
 }: {
   student: Profile;
   remote?: boolean;
   owner?: string;
+  /** super user only — shows the completed-assignments download */
+  canDownload?: boolean;
 }) {
   const [progress, setProgress] = useState<ProgressState | null>(
     remote ? null : loadProgress(student.id)
@@ -1413,12 +1416,122 @@ function AcademicRecord({
 
   const units = assessedUnits();
 
+  /** Export every exercise/assignment the learner has worked on — their typed
+   *  answers with marks — as a single printable HTML file. */
+  function downloadAssignments(prog: ProgressState) {
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const unitBlocks: string[] = [];
+    for (const { unit, content } of units) {
+      if (!content?.exercises.length) continue;
+      const up = prog.units[unit.us];
+      const lb = up?.logbook ?? {};
+      const exBlocks: string[] = [];
+      for (const ex of content.exercises) {
+        if (!ex.checks?.length) continue;
+        const answers = ex.steps
+          .map((step, i) => ({
+            step,
+            text: String(lb[`exq.${ex.id}.${i}`] ?? "").trim(),
+            ok: lb[`exq.${ex.id}.${i}.ok`] === true,
+            check: ex.checks?.[i],
+          }))
+          .filter((a) => a.check);
+        const res = up?.exercises?.[ex.id];
+        if (!res && answers.every((a) => !a.text)) continue; // not started
+        const qHtml = answers
+          .map(
+            (a, i) => `
+        <div class="q">
+          <div class="q-head">Question ${i + 1} — ${a.ok ? "✓ correct" : "not yet correct"}</div>
+          <div class="q-text">${esc(a.step)}</div>
+          <div class="answer${a.ok ? " ok" : ""}">${a.text ? esc(a.text) : "<em>No answer typed</em>"}</div>
+        </div>`
+          )
+          .join("");
+        exBlocks.push(`
+      <div class="exercise">
+        <h3>${esc(ex.title)}</h3>
+        <p class="marks">${
+          res
+            ? `Best ${res.best}/${res.total} marks · last attempt ${res.last}/${res.total} · ${res.attempts} attempt${res.attempts === 1 ? "" : "s"} of 2`
+            : "Saved answers — not yet submitted for marking"
+        }</p>${qHtml}
+      </div>`);
+      }
+      if (exBlocks.length)
+        unitBlocks.push(`
+    <section>
+      <h2>${esc(usLabel(unit.us))} — ${esc(unit.title)}</h2>${exBlocks.join("")}
+    </section>`);
+    }
+    const generated = new Date().toLocaleString(undefined, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const html = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Completed assignments — ${esc(student.name)}</title>
+<style>
+  body{font-family:Segoe UI,Arial,sans-serif;max-width:820px;margin:32px auto;padding:0 20px;color:#1c2430}
+  h1{margin-bottom:2px} .sub{color:#5c6774;margin-top:0}
+  section{margin-top:30px;border-top:2px solid #d8dee6;padding-top:12px}
+  h2{font-size:17px} h3{margin:18px 0 2px;font-size:15px}
+  .marks{color:#5c6774;margin:2px 0 10px;font-size:13px}
+  .q{margin:0 0 12px}
+  .q-head{font-size:12px;color:#5c6774;text-transform:uppercase;letter-spacing:.4px}
+  .q-text{font-weight:600;margin:2px 0 4px}
+  .answer{white-space:pre-wrap;background:#f4f6f8;border-left:3px solid #9aa5b1;padding:8px 12px;border-radius:4px}
+  .answer.ok{border-left-color:#2e9e5b;background:#f0f8f2}
+  @media print{body{margin:10mm auto}}
+</style></head><body>
+<h1>Completed assignments — ${esc(student.name)}</h1>
+<p class="sub">System Support NQF Level 5 Learnership · exported ${esc(generated)} by the super user</p>
+${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise answers have been saved yet.</em></p>"}
+</body></html>`;
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `Assignments — ${student.name}.html`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  const hasWork =
+    !!progress &&
+    units.some(({ unit, content }) => {
+      const up = progress.units[unit.us];
+      if (!up) return false;
+      if (up.exercises && Object.keys(up.exercises).length) return true;
+      return !!content?.exercises.some((ex) =>
+        (ex.checks ?? []).some((_, i) => String(up.logbook?.[`exq.${ex.id}.${i}`] ?? "").trim())
+      );
+    });
+
   const heading = (
     <h2 className="section-title">
       <span className="ico">
         <Icon name="chart" size={20} />
       </span>
       Academic record — quizzes, exercises &amp; scores
+      {canDownload && progress && (
+        <button
+          className="btn ghost profile-edit"
+          onClick={() => downloadAssignments(progress)}
+          disabled={!hasWork}
+          title={
+            hasWork
+              ? "Download all completed assignment and exercise answers with marks"
+              : "No assignment answers saved yet"
+          }
+        >
+          <Icon name="download" size={15} />
+          Download completed assignments
+        </button>
+      )}
     </h2>
   );
 
@@ -1794,7 +1907,7 @@ function StudentDetail({
 
       {staffViewer && (
         <>
-          <AcademicRecord student={student} remote={remote} owner={owner} />
+          <AcademicRecord student={student} remote={remote} owner={owner} canDownload={isSuper} />
           <h2 className="section-title">
             <span className="ico">
               <Icon name="folder" size={20} />
