@@ -1124,11 +1124,11 @@ function fmtSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "assignments" | "quiz" | "evaluation" | "plan";
+type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "assignments" | "quiz" | "selfassessment" | "evaluation" | "plan";
 
 const UNIT_TAB_KEY = "itss.unittab";
 const UNIT_TAB_US_KEY = "itss.unittab.us";
-const UNIT_TABS: UnitTab[] = ["overview", "lesson", "material", "notes", "exercises", "assignments", "quiz", "evaluation", "plan"];
+const UNIT_TABS: UnitTab[] = ["overview", "lesson", "material", "notes", "exercises", "assignments", "quiz", "selfassessment", "evaluation", "plan"];
 
 /** Restore the saved tab only for the same unit standard — opening another US always starts on Overview. */
 function loadUnitTab(unitId: string): UnitTab {
@@ -1685,9 +1685,10 @@ export function UnitPage({
     { id: "lesson", label: "Lesson", icon: "book", show: !!content?.lesson.length },
     { id: "material", label: "Course material", icon: "play", show: decks.length > 0 },
     { id: "notes", label: "Notes", icon: "document", show: !!content?.notes?.length || Object.values(userNotes).some((n) => n.us === unitId) || !!content?.lesson.length },
-    { id: "exercises", label: "Exercises", icon: "exercise", show: !!content?.exercises.length },
+    { id: "exercises", label: unitId === "114055" ? "Assignments" : "Exercises", icon: "exercise", show: !!content?.exercises.length },
     { id: "assignments", label: "Assignments", icon: "folder", show: !!content?.assignments.length },
     { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content?.quiz.length || !!content?.quizzes?.length },
+    { id: "selfassessment", label: "Self assessment", icon: "checkCircle", show: !!content?.selfAssessment },
     { id: "evaluation", label: "Evaluation", icon: "chat", show: true },
     { id: "plan", label: "Lesson plan", icon: "presenter", show: !!content?.lessonPlan && isPrivileged },
   ];
@@ -2158,7 +2159,7 @@ export function UnitPage({
               <div className="lesson-slide-quiz">
                 <div className="lesson-slide-quiz-title">
                   <Icon name="checkCircle" size={16} />
-                  Answer all 5 to unlock Next
+                  {slideQuiz.length === 1 ? "Answer the question to unlock Next" : `Answer all ${slideQuiz.length} to unlock Next`}
                   {isPrivileged && (
                     <button
                       type="button"
@@ -3238,56 +3239,43 @@ export function UnitPage({
 
       {tab === "assignments" && content && (
         <>
-          <h2 className="section-title">
-            <span className="ico">
-              <Icon name="folder" size={20} />
-            </span>
-            Section C
-          </h2>
-          <div className="exam-instruction">
-            <p>Answer ANY ONE question in this section.</p>
-            <p style={{ marginTop: 8 }}>
-              <strong>NOTE:</strong>&nbsp; Clearly indicate the QUESTION NUMBER of the chosen
-              question. The answer to the question must start on a NEW page, e.g. QUESTION 5 on a
-              NEW page OR QUESTION 6 on a NEW page.
-            </p>
-          </div>
-          {content.assignments.map((as, ai) => (
-            <div key={as.id} className="exam-essay-q">
-              <h3 className="exam-q-heading">
-                QUESTION {5 + ai}: {as.title.replace(/^Assignment\s*\d*\s*—\s*/i, "").toUpperCase()}
-              </h3>
-              <div className="exam-scenario-box">
-                <Gloss text={as.brief} />
+          <p className="muted" style={{ marginTop: 14 }}>
+            Assessed assignments. Submissions are assessed against the ASD for SAQA ID 48573 and
+            filed in your Portfolio of Evidence.
+          </p>
+          {content.assignments.map((as) => (
+            <details key={as.id} className="saqa-details lesson-acc">
+              <summary>
+                <Icon name="folder" size={17} />
+                {as.title}
+                <span className="chev">
+                  <Icon name="chevronDown" size={15} />
+                </span>
+              </summary>
+              <div className="saqa-body">
+                <p className="lesson-p" style={{ marginTop: 10 }}>
+                  <Gloss text={as.brief} />
+                </p>
+                <div className="task-label">Requirements</div>
+                <ul className="duty-list">
+                  {as.requirements.map((r) => (
+                    <li key={r}>
+                      <span className="ico">
+                        <Icon name="checkCircle" size={16} />
+                      </span>
+                      <span>
+                        <Gloss text={r} />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="task-label">Evidence & submission</div>
+                <p className="lesson-p" style={{ marginBottom: 10 }}>
+                  <Gloss text={as.evidence} />
+                </p>
               </div>
-              <p className="lesson-p">
-                Write your answer in which you include the following aspects:
-              </p>
-              <ul className="exam-aspects">
-                {as.requirements.map((r) => (
-                  <li key={r}>
-                    <Gloss text={r} />
-                  </li>
-                ))}
-              </ul>
-              <div className="exam-marks">[40]</div>
-              <p className="lesson-p exam-evidence">
-                <Gloss text={as.evidence} />
-              </p>
-            </div>
+            </details>
           ))}
-          {content.assignments.length > 0 && (
-            <div className="exam-totals">
-              <div>
-                <span>TOTAL SECTION C:</span>
-                <span>40</span>
-              </div>
-              <div>
-                <span>GRAND TOTAL:</span>
-                <span>150</span>
-              </div>
-            </div>
-          )}
 
           {content.logbook && (
             <Logbook
@@ -3441,6 +3429,49 @@ export function UnitPage({
           />
         </>
       )}
+
+      {tab === "selfassessment" && content?.selfAssessment && (() => {
+        const sa = content.selfAssessment;
+        const values = progress.units[u.us]?.logbook ?? {};
+        return (
+          <>
+            <h2 className="section-title">
+              <span className="ico">
+                <Icon name="checkCircle" size={20} />
+              </span>
+              Self assessment
+            </h2>
+            {sa.intro.map((p) => (
+              <p key={p} className="lesson-p" style={{ maxWidth: 720 }}>
+                <Gloss text={p} />
+              </p>
+            ))}
+            <div className="self-assess-list">
+              {sa.items.map((item, i) => {
+                const key = `selfassess-${i}`;
+                const ticked = values[key] === true;
+                return (
+                  <label key={key} className={`self-assess-item${ticked ? " ticked" : ""}`}>
+                    <input
+                      type="checkbox"
+                      checked={ticked}
+                      onChange={(e) => setLogbookField(u.us, key, e.target.checked)}
+                    />
+                    <span>
+                      <Gloss text={item} />
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+            {sa.outro.map((p) => (
+              <p key={p} className="lesson-p muted" style={{ maxWidth: 720 }}>
+                <Gloss text={p} />
+              </p>
+            ))}
+          </>
+        );
+      })()}
 
       {tab === "evaluation" && (
         <>
@@ -3972,8 +4003,8 @@ export function UnitPage({
                   {presenterPassed
                     ? "All correct — well done. You may now exit."
                     : presenterChecked
-                    ? "Some answers were wrong. Review and try again — you must get all 5 correct to finish."
-                    : "Answer all 5 questions. You must get all 5 correct before you can leave the presentation."}
+                    ? `Some answers were wrong. Review and try again — you must get all ${cur.questions.length} correct to finish.`
+                    : `Answer all ${cur.questions.length} questions. You must get all ${cur.questions.length} correct before you can leave the presentation.`}
                 </p>
                 <ol className="presenter-quiz-list">
                   {cur.questions.map((q, qi) => {

@@ -4786,48 +4786,791 @@ export const CONTENT: Record<string, UnitContent> = {
      NQF 5 · 3 credits
      ================================================================ */
   "114055": {
-    lesson: [],
-    exercises: [],
-    assignments: [
+    lesson: [
       {
-        id: "as1",
-        title: "Question Session 1 — Professionalism and Codes of Practice for the computer industry in South Africa",
-        brief: "Answer the following questions on professionalism and the Codes of Practice for the computer industry in South Africa, as covered in the learner manual. Time: 45 minutes · Activity: Self & Group.",
-        requirements: [
-          "Identify and explain acceptable and unacceptable professional practices found in the computer industry.",
-          "Identify and explain the CSSA (Computer Society of South Africa) as a professional body in South Africa.",
-          "Identify and explain the BITF (Black Information Technology Forum) as a professional body in South Africa.",
-          "Identify and explain the ITUC (International Trade Union Confederation) as a professional body in South Africa.",
-          "Identify and explain the ITA (Information Technology Association) as a professional body in South Africa (give at least 2 points).",
-          "Identify and explain the codes of practice for the IT industry in South Africa.",
+        heading: "Introduction — ethics and professionalism for the computer industry in South Africa",
+        icon: "presenter",
+        flat: true,
+        paragraphs: [
+          "Unit Standard 114055 — Demonstrate an awareness of ethics and professionalism for the computer industry in South Africa — is about knowing how a computing professional is expected to behave: the professional practices that are acceptable and unacceptable, the professional bodies that represent the industry, the codes of practice they publish, and the code of ethics that governs issues such as equality of opportunity and software piracy.",
+          "The lesson works through two big sections. First, Professionalism and Codes of Practice: the CSSA Constitution and its Code of Practice — competence, organisation and management, contracting, privacy and security, development, implementation and live systems — and the professional bodies CSSA, BITF, ITUC and ITA. Second, the Code of Ethics: equality of opportunity, and how the industry fights software piracy in South Africa.",
+          "Each slide presents a piece of the learner manual as text. Read it carefully, then answer the slide quiz to unlock the next slide. After the lesson, two Question Sessions assess your knowledge with typed answers, and a self-assessment checklist closes the unit.",
         ],
-        evidence: "Completed written answers, checked by your facilitator, are filed in your Portfolio of Evidence (POE) as formative evidence for US 114055 (SO 1 and SO 2).",
       },
       {
-        id: "as2",
-        title: "Question Session 2 — Code of ethics in the computer industry in South Africa",
-        brief: "Answer the following questions on the Code of Ethics for the computer industry in South Africa, as covered in the learner manual. Time: 45 minutes · Activity: Self & Group.",
-        requirements: [
-          "Explain how the computer industry supports equality of opportunity.",
-          "Explain how the computer industry is against computer software piracy.",
-          "Identify ways in which piracy is addressed in South Africa.",
+        heading: "The CSSA Constitution — elevating ICT capability and professionalism",
+        icon: "shield",
+        flat: true,
+        paragraphs: [
+          "The Constitution is an important tool for the Information Society, guiding the way we operate. At the AGM on 22 July 2004 an amended version of the Constitution was adopted; the previous version had been registered in terms of the Companies Act in 1970, so it was updated to reflect today's environment.",
+          "The Society (the Computer Society of South Africa) is established to elevate Information and Communications Technology (ICT) capability and professionalism in South Africa, specifically:",
         ],
-        evidence: "Completed written answers, checked by your facilitator, are filed in your Portfolio of Evidence (POE) as formative evidence for US 114055 (SO 3).",
+        bullets: [
+          "To facilitate the exchange of opinions and views on ICT, and to inform and promote knowledge of ICT to members and the public for the development and use of ICT.",
+          "By representing industry practitioners, to inform and lobby Government on ICT policy.",
+          "To obtain from members and other sources information relating to ICT, and to disseminate such information amongst the public and the Society by means of journals, circulars, publications, lectures, seminars, conferences or otherwise.",
+          "To improve the technical and general knowledge and to elevate the professional status of persons engaged in ICT.",
+          "Education and training to elevate the level of ICT capability in South Africa.",
+          "Professional development and advancement.",
+          "Community development that enhances the standards and levels of ICT for the greater good of the South African people.",
+          "To do all such other lawful things as are incidental or conducive to the attainment of the above purposes.",
+        ],
+        slideQuiz: [
+          {
+            q: "What is the purpose of the Computer Society of South Africa as set out in its Constitution?",
+            options: [
+              "To sell computer hardware to government departments",
+              "To elevate ICT capability and professionalism in South Africa",
+              "To regulate internet service providers",
+              "To license software developers",
+            ],
+            answer: 1,
+            explain: "The Society is established to elevate Information and Communications Technology (ICT) capability and professionalism in South Africa.",
+          },
+          {
+            q: "Which of these is one of the CSSA's stated aims?",
+            options: [
+              "To restrict knowledge of ICT to paying members only",
+              "To represent industry practitioners and inform and lobby Government on ICT policy",
+              "To set the retail prices of computers in South Africa",
+              "To replace university computer science degrees",
+            ],
+            answer: 1,
+            explain: "By representing industry practitioners, the CSSA informs and lobbies Government on ICT policy.",
+          },
+        ],
       },
       {
-        id: "as3",
-        title: "Self assessment — Checklist",
-        brief: "You are now ready to go through a check list. Be honest with yourself. Tick the box with either a \u221A or an X to indicate your response.",
-        requirements: [
-          "I am able to describe professionalism for the computer industry in South Africa.",
-          "I am able to describe the codes of practice for professionalism in the IT industry in South Africa.",
-          "I am able to describe the code of ethics in the computer industry in South Africa.",
-          "You must think about any point you could not tick. Write this down as a goal.",
-          "Decide on a plan of action to achieve these goals. Regularly review these goals.",
+        heading: "The CSSA Code of Practice — what it is and who it binds",
+        icon: "checklist",
+        flat: true,
+        paragraphs: [
+          "The generally accepted Codes of Good Practice in the South African IT industry are set out by the Computer Society of South Africa — one of, if not the most respected associations concerned with South African Information Technology.",
+          "The Code of Practice is directed to all professional members of the CSSA. It consists, essentially, of a series of statements that prescribe minimum standards of practice to be observed by members.",
+          "The Code is concerned with professional responsibility. All members have responsibilities — to clients, to users, to the State and to society at large. Members who are employees also have responsibilities to their employers and employers' customers and, often, to a Trade Union. In the event of an apparent clash in responsibilities, obligations or prescribed practice, the Society should be consulted at the earliest opportunity.",
+          "The Code is to be viewed as a whole: individual parts are not intended to be used in isolation to justify errors of omission or commission. The Code is intended to be observed in the spirit and not merely to the word.",
+          "Because CSSA membership covers all occupations relevant to the use of computers, the Code is set out in two levels: Level One — a series of brief statements defining the elements of practice to be observed; Level Two — the rationale for the Level One statements. Many clauses may seem to state the obvious, but much that goes wrong in computer use does so because the obvious has been overlooked.",
         ],
-        evidence: "Show your completed self-assessment to your facilitator and make the necessary arrangements to assist you to become competent in any area you could not tick.",
+        slideQuiz: [
+          {
+            q: "The CSSA Code of Practice consists essentially of…",
+            options: [
+              "A price list for professional services",
+              "A series of statements that prescribe minimum standards of practice to be observed by members",
+              "A list of approved software products",
+              "Employment contracts for IT workers",
+            ],
+            answer: 1,
+            explain: "The Code is a series of statements prescribing minimum standards of practice for all professional CSSA members.",
+          },
+          {
+            q: "Why is the Code set out in two levels?",
+            options: [
+              "Level One is for managers and Level Two is for technicians",
+              "Because CSSA membership covers all computing occupations, so every member must be able to reach appropriate interpretations — Level One states the practice, Level Two gives the rationale",
+              "Level Two replaces Level One every year",
+              "To separate hardware rules from software rules",
+            ],
+            answer: 1,
+            explain: "Level One gives brief statements of practice; Level Two explains the rationale — enabling every member, whatever their occupation, to interpret the Code.",
+          },
+          {
+            q: "Which statement about the Code is TRUE?",
+            options: [
+              "Individual parts may be used in isolation to justify errors",
+              "The Code applies only to programmers",
+              "The Code is intended to be observed in the spirit and not merely to the word",
+              "Members owe responsibilities only to their employer",
+            ],
+            answer: 2,
+            explain: "The Code is viewed as a whole and observed in the spirit — and members have responsibilities to clients, users, the State and society at large.",
+          },
+        ],
+      },
+      {
+        heading: "Code of Practice 1 — Personal competence and keeping up to date",
+        icon: "person",
+        flat: true,
+        paragraphs: [
+          "In the practice of their profession, members will, to the extent that they are responsible:",
+        ],
+        bullets: [
+          "1.1 Keep themselves, and subordinates, informed of new technologies, practices, legal requirements and standards relevant to their duties — others expect you to provide special skills and advice, and computing is developing and changing rapidly. You cannot retain professional standing by relying on the knowledge you had when you qualified.",
+          "1.2 Ensure subordinates are trained on an equal opportunity basis, in order to be effective in their duties and to qualify for increased responsibilities — regularly review the training needs of your staff and pass on your hard-won knowledge and experience.",
+          "1.3 Accept only such work as they believe they are competent to perform, and not hesitate to obtain additional expertise from appropriately qualified individuals where advisable — always be aware of your own limitations and never knowingly imply competence you do not possess.",
+          "1.4 Actively seek opportunities for increasing efficiency and effectiveness to the benefit of the user and of the ultimate recipient — look beyond the defined task to other needs that emerge, procedures that need modification and benefits that might be achieved.",
+        ],
+        slideQuiz: [
+          {
+            q: "According to clause 1.3, a professional member should…",
+            options: [
+              "Accept any work offered and learn on the job",
+              "Accept only work they believe they are competent to perform, obtaining additional expertise where advisable",
+              "Refuse all work outside their comfort zone",
+              "Delegate difficult work to subordinates without review",
+            ],
+            answer: 1,
+            explain: "You should be aware of your own limitations, never imply competence you do not possess, and bring in additional expertise when needed.",
+          },
+          {
+            q: "Why must members keep themselves and subordinates informed of new technologies and standards (1.1)?",
+            options: [
+              "Because employers pay more for certifications",
+              "Because computing develops and changes rapidly — you cannot rely on the state of your knowledge at the time you achieved professional status",
+              "Because it is a legal requirement of the Companies Act",
+              "Because clients ask for certificates",
+            ],
+            answer: 1,
+            explain: "Others expect you to provide special skills and advice; in a rapidly changing field you must keep up to date and encourage staff to do the same.",
+          },
+        ],
+      },
+      {
+        heading: "Code of Practice 2 — Organisation and management",
+        icon: "people",
+        flat: true,
+        paragraphs: [
+          "This section of the Code is concerned with broad principles. Since computer management is still management, the normal principles applicable to any kind of management apply here also:",
+        ],
+        bullets: [
+          "2.1 Plan, establish and review objectives, tasks and organisational structures for themselves and subordinates, to help meet overall objectives — it is dangerously easy to become engrossed in the problem of the moment and lose sight of the overall objectives of the organisation.",
+          "2.2 Ensure that specific tasks are assigned to individuals according to their known ability and competence — delegate work that develops competence and increases motivation, without leaving users with a service below what they are entitled to.",
+          "2.3 Establish and maintain channels of communication from and to seniors, equals and subordinates — good communication is vital to business success and computer work requires constant interaction with users. Communication skills can be improved considerably by formal training.",
+          "2.4 Be accountable for the quality, timeliness and use of resources in the work for which they are responsible — provide a service of agreed quality, on time and within budget, plan for contingencies and make others aware of foreseeable difficulties and dangers. You cannot turn your back on a problem once encountered.",
+        ],
+        slideQuiz: [
+          {
+            q: "Clause 2.4 makes a professional accountable for…",
+            options: [
+              "Only the technical accuracy of their code",
+              "The quality, timeliness and use of resources in the work for which they are responsible",
+              "The profits of the whole company",
+              "Their colleagues' mistakes",
+            ],
+            answer: 1,
+            explain: "High on your professional duties is providing a service of agreed quality, on time and within budget — including contingency planning.",
+          },
+          {
+            q: "Which statement reflects clause 2.3 on communication?",
+            options: [
+              "Communication will look after itself",
+              "Formal channels of communication must exist upwards, downwards and sideways — and communication skills can be improved by formal training",
+              "Only managers need communication skills",
+              "Users should be kept at arm's length from the computer team",
+            ],
+            answer: 1,
+            explain: "It is often assumed communication looks after itself, but formal channels in all directions — especially with users — are vital.",
+          },
+        ],
+      },
+      {
+        heading: "Code of Practice 3 — Contracting",
+        icon: "checklist",
+        flat: true,
+        paragraphs: [
+          "Some formal agreement — even if not a specific contract — is needed before any project is started. Commitment and definition of responsibilities are essential, in advance of action:",
+        ],
+        bullets: [
+          "3.1 Seek expert advice in the preparation of any formal contract — just as you expect to be consulted in your field, be ready to consult other specialists for guidance on contracts, commerce, finance, tax, law or risk evaluation. A badly drawn-up contract or a wrong assessment of a legal situation carries real dangers; many professional bodies provide 'standard contract' forms to reduce problem areas.",
+          "3.2 Ensure that all requirements and the practical responsibilities of all parties are adequately covered in any contract or tendering procedures — review the totality of the detail, taking care that items such as provision of accommodation, typing, data preparation, responsibility for media security and standby arrangements are not forgotten, and that everyone party to the contract is fully aware of their obligations.",
+        ],
+        slideQuiz: [
+          {
+            q: "According to clause 3.1, when preparing a formal contract you should…",
+            options: [
+              "Write it yourself to save money",
+              "Seek expert advice — consulting specialists in areas such as commerce, finance, tax, law or risk evaluation",
+              "Copy a competitor's contract",
+              "Skip the contract if the client is trusted",
+            ],
+            answer: 1,
+            explain: "Consult other specialists just as you would expect to be consulted in your own field; standard contract forms from professional bodies also help.",
+          },
+          {
+            q: "Why must all requirements and responsibilities be covered in the contract (3.2)?",
+            options: [
+              "To make the contract longer",
+              "So that overlooked items (accommodation, data preparation, media security, standby arrangements) do not cause problems and hurt profitability — and every party knows their obligations",
+              "Because the law requires a minimum page count",
+              "So the client cannot cancel",
+            ],
+            answer: 1,
+            explain: "Review the totality of the detail as carefully as a system specification — forgotten items create problems and affect profitability.",
+          },
+        ],
+      },
+      {
+        heading: "Code of Practice 4 — Privacy, security and integrity",
+        icon: "shield",
+        flat: true,
+        paragraphs: [
+          "A system is at risk from the moment the project that develops it is first conceived, and the risk remains at least until after the system is finally discontinued. Threats to security range from incompetence, accident and carelessness to deliberate theft, fraud, espionage or malicious attack.",
+          "Members must ascertain and evaluate all potential risks with regard to the cost, effectiveness and practicality of proposed levels of security (4.1) — deciding how much should be spent on security in four areas: Protection (preventing threats from becoming reality), Detection (in time to take suppressive action), Suppression (to limit the effect) and Recovery (to rectify and get the system going).",
+        ],
+        bullets: [
+          "4.2 Recommend appropriate levels of security, commensurate with the anticipated risks and appropriate to the needs of the client — some areas of risk are mandatory, such as health and safety legislation.",
+          "4.3 Apply, monitor and report upon the effectiveness of the agreed levels of security — an ongoing security audit keeps people aware of requirements and identifies weaknesses and loopholes; review arrangements as technology and methods of breaching security develop.",
+          "4.4 Ensure that all staff are trained to take effective action to protect life, data and equipment (in that order) in the event of disaster — the safety of people comes first, backups must exist for data, and equipment should be replaceable and insured.",
+          "4.5 Take all reasonable measures to protect confidential information from inadvertent or deliberate improper access or use — your responsibility for confidentiality is at least as great as in other professions, made more complex by the speed and capacity of computers.",
+          "4.6 Ensure that competent people are assigned responsibility for the accuracy and integrity of the data in data files and each part of an organisation's database.",
+          "4.7 Ensure that, where stored data may be dangerous to an individual, the individual has adequate rights of review, correction and appeal — for example credit information that is incorrect or disputed.",
+        ],
+        slideQuiz: [
+          {
+            q: "In the event of disaster, staff must be trained to protect — in this order:",
+            options: [
+              "Equipment, data, life",
+              "Data, equipment, life",
+              "Life, data, equipment",
+              "Whatever is most expensive first",
+            ],
+            answer: 2,
+            explain: "Clause 4.4: protect life, data and equipment — in that order. People's safety always comes first.",
+          },
+          {
+            q: "What are the four areas of spending on system security (4.1)?",
+            options: [
+              "Hardware, software, network, people",
+              "Protection, Detection, Suppression, Recovery",
+              "Firewalls, antivirus, backups, passwords",
+              "Plan, Do, Check, Act",
+            ],
+            answer: 1,
+            explain: "Protection prevents threats becoming reality; Detection in time to act; Suppression limits the effect; Recovery gets the system going again.",
+          },
+          {
+            q: "Clause 4.7 says individuals whose stored data may be dangerous to them must have…",
+            options: [
+              "No access to the data",
+              "Adequate rights of review, correction and appeal",
+              "A copy of the whole database",
+              "Compensation payments",
+            ],
+            answer: 1,
+            explain: "Where data such as credit information is incorrect or disputed, procedures must let the affected person review it, have it rectified, or have their viewpoint incorporated.",
+          },
+        ],
+      },
+      {
+        heading: "Code of Practice 5 — Development",
+        icon: "design",
+        flat: true,
+        paragraphs: [
+          "'Development' means all the work involved to reach the stage where a viable computer system is ready to become operational, including installing the system in its eventual production environment. Key clauses:",
+        ],
+        bullets: [
+          "5.1 Exercise impartiality when evaluating each project with respect to its technical, moral and economic benefits — do not lose objectivity through enthusiasm for the latest technology.",
+          "5.2 Effectively plan, monitor, adjust and report on all development, acquisition or replacement projects.",
+          "5.3 Ensure that effective standard procedures and documentation are available and used — standards should not cause inhibiting rigidity but provide a framework.",
+          "5.4 Specify the system objectives, completion date, cost and security requirements for the client and the criteria for their achievement — and review objectives regularly on large projects.",
+          "5.5 Ensure that the client can participate in all stages of problem analysis, system development and implementation — the system ultimately belongs to the client.",
+          "5.6 Ensure that each task is completed to a defined level before the next dependent task is started — e.g. do not start writing a program before the specification is complete.",
+          "5.7 Specify and conduct program tests and system tests to prove the system functions as intended — not merely to detect errors — with the client involved.",
+          "5.8 Ensure that systems are designed and documented to facilitate subsequent audit, maintenance, enhancement and accurate comprehension by users.",
+          "5.9 Ensure that input and output are designed to obviate misunderstanding — avoid jargon, unfamiliar codes and abbreviations; use plain language.",
+          "5.10 Ensure adequate procedures exist to delete erroneous, redundant and out-of-date data from files.",
+          "5.11 Ensure adequate procedures exist to restore data and program files after loss, corruption or system failure — designed in at the start, not after a disaster.",
+          "5.12 Ensure that projects are completed with technical soundness, using the most appropriate technology, within time and cost constraints — the best technology for the client's problem, not necessarily the most sophisticated.",
+        ],
+        slideQuiz: [
+          {
+            q: "According to clause 5.5, why should the client participate in all stages of development?",
+            options: [
+              "To reduce the developer's workload",
+              "Because the system ultimately belongs to the client, who must maintain control — and involvement ensures you produce the system the client requires",
+              "Because clients enjoy writing code",
+              "To transfer legal liability to the client",
+            ],
+            answer: 1,
+            explain: "Seek the client's involvement in key activities such as specification, quality control and test data — that is how you produce what the client requires.",
+          },
+          {
+            q: "Clause 5.12 says the technology exploited should be…",
+            options: [
+              "The most sophisticated available",
+              "The cheapest on the market",
+              "The best for the client's problem — not necessarily the most sophisticated",
+              "Whatever the developer knows best",
+            ],
+            answer: 2,
+            explain: "Cost and service are the criteria of an effective system, rather than technical ingenuity.",
+          },
+          {
+            q: "What is the objective of system testing under clause 5.7?",
+            options: [
+              "Merely to detect errors",
+              "To prove the system functions as intended, with the client involved",
+              "To delay the launch date",
+              "To train new programmers",
+            ],
+            answer: 1,
+            explain: "Test each program separately, then together, then with the rest of the system — to prove the system functions as intended, not merely to find errors.",
+          },
+        ],
+      },
+      {
+        heading: "Code of Practice 6 & 7 — Implementation and live systems",
+        icon: "network",
+        flat: true,
+        paragraphs: [
+          "Implementation is the transition from development to full operation; Live Systems covers the ongoing operation of systems handed over by design and development staff:",
+        ],
+        bullets: [
+          "6.1 Ensure adequate provision is made for user and operations staff training in all functions of the system for which they are responsible — the task is not complete until the system can be used effectively by the client's staff, and training in advance of implementation counters resistance to change.",
+          "6.2 Effectively plan, monitor, adjust and report upon all activities concerned with the changeover from development to operational running — all who are affected must be advised of changes and given the opportunity to comment.",
+          "6.3 Ensure expeditious and economic completion of implementation consistent with adequate testing and security — a professional judgement between under- and over-testing; if corners are cut, evaluate the likely effect and make it known.",
+          "7.1 Plan and operate efficient and reliable processing within defined budgets — users depend on processing services just as they depend on the application software.",
+          "7.2 Monitor performance and quality and arrange regular reviews of the efficiency, effectiveness and security of live systems — check not only how well the system meets its original objectives, but how it has evolved with current business requirements.",
+          "7.3 Plan, from the start of a project, to provide adequate maintenance and enhancement support to live systems — much criticism of computer applications is traceable to their failure to respond to changing conditions.",
+          "7.4 Establish good liaison with users and provide proper facilities for dealing with enquiries and day-to-day problems — maintain continuous formal and informal liaison, including channels for emergencies.",
+        ],
+        slideQuiz: [
+          {
+            q: "Under clause 6.1, when is your task complete?",
+            options: [
+              "When the code compiles",
+              "When the system is handed to the operations team",
+              "Not until you have seen the new system through to implementation and the client's staff can use it effectively",
+              "When the invoice is paid",
+            ],
+            answer: 2,
+            explain: "Professional duty requires seeing the system through to implementation, with users trained in advance to counter resistance to change.",
+          },
+          {
+            q: "Clause 7.3 says maintenance and enhancement support should be planned…",
+            options: [
+              "Only after users complain",
+              "From the start of the project",
+              "Once the budget allows",
+              "Never — systems should not change",
+            ],
+            answer: 1,
+            explain: "Project plans should include a formal system to control enhancement and identify maintenance resources — avoiding the criticism that applications fail to respond to changing conditions.",
+          },
+        ],
+      },
+      {
+        heading: "Professional computer bodies in South Africa — CSSA, BITF, ITUC and ITA",
+        icon: "people",
+        flat: true,
+        paragraphs: [
+          "CSSA — The Computer Society of South Africa, from which the Constitution and Code of Practice above are directly derived: one of, if not the most respected associations concerned with South African Information Technology.",
+          "BITF — The Black Information Technology Forum was launched in Cape Town in 1995 to propel black individuals into the mainstream of the ICT industry. A Gauteng branch formed in 1997 and the forum became a national organisation in 1998, with branches serving 2 400 members. It is the largest organisation representing the interests of black people in South Africa's ICT industry and has considerable credibility with government bodies. It aims to empower members with technical and business skills, make members significant role players in the ICT sector, improve access to technology for historically disadvantaged communities, actively influence policy-making forums, and promote the status of historically disadvantaged individuals and communities in the ICT sector. Its two programmes develop skills, internships and experiential training, and promote governance and black economic empowerment (the ABC Programme).",
+          "ITUC — The International Trade Union Confederation is the world's largest trade union federation, formed on 1 November 2006 out of the merger of the International Confederation of Free Trade Unions (ICFTU) and the World Confederation of Labour (WCL). It assists the South African IT market in trading internationally, empowering the market — especially its emerging sector.",
+          "ITA — The Information Technology Association is the official trade and employer body of the ICTe industry, striving to promote consistent standards of professionalism and service. Its purpose, per its Constitution, is to 'represent and promote the interests of its members, which shall be employers active in the Information Technology Sector.' Founded in 1934 (as the Transvaal Typewriter and Office Appliance Traders Association), it was renamed the ITA after the amalgamation of the Business Equipment Association and the Computer Services Association. Its primary business is to promote and represent the ICTe industry nationally and internationally, assemble and disseminate information, provide a networking and marketing platform, and encourage interest groups that influence standards, strategies and legislation. It operates through an Executive Council and three divisions: the Information Technology Users Council (ITUC — guaranteeing the authenticity and credibility of examinations), the Recruitment Consultancy Services Group (ITARCS — recruitment and contracting issues under the Labour Relations Act) and the Payroll Authors Group (PAG — liaising with government so payroll software incorporates legislative changes).",
+        ],
+        slideQuiz: [
+          {
+            q: "Which body was launched in Cape Town in 1995 to propel black individuals into the mainstream of the ICT industry?",
+            options: ["CSSA", "BITF", "ITUC", "ITA"],
+            answer: 1,
+            explain: "The Black Information Technology Forum (BITF) — now the largest organisation representing the interests of black people in South Africa's ICT industry.",
+          },
+          {
+            q: "What is the ITUC?",
+            options: [
+              "A South African software licensing authority",
+              "The world's largest trade union federation, formed in 2006 from the merger of the ICFTU and WCL",
+              "A branch of the CSSA",
+              "A government department",
+            ],
+            answer: 1,
+            explain: "The International Trade Union Confederation assists the South African IT market in trading internationally, empowering especially the emerging sector.",
+          },
+          {
+            q: "Which of these is a division of the ITA?",
+            options: [
+              "The Payroll Authors Group (PAG)",
+              "The Business Software Alliance (BSA)",
+              "The South African Police Services (SAPS)",
+              "SAFACT",
+            ],
+            answer: 0,
+            explain: "The ITA operates through three divisions: ITUC, ITARCS and the Payroll Authors Group (PAG).",
+          },
+        ],
+      },
+      {
+        heading: "Code of ethics — the music piracy example",
+        icon: "chat",
+        flat: true,
+        paragraphs: [
+          "'Piracy' is generally considered to include: (a) pirate recordings, where just the music is copied, usually by ordinary people on a not-for-profit basis; (b) counterfeiting, which copies the music and the packaging and attempts to pass the copy off as the real thing; (c) online piracy — the same, done via the internet; and (d) bootlegging — recording and trading a performance (usually a live concert) that has not been officially released.",
+          "RIAA, the Recording Industry Association of America, claims the recording industry 'loses' around 4.2 billion US dollars to piracy each year — a figure reached by inferring that each pirate transaction represents a lost legitimate sale, which is overly simplistic. Even so, full-blown counterfeiting is both illegal and unethical, and we ought not to support it by buying cheap counterfeits at flea markets and from street traders.",
+          "Some 'home pirates' see themselves as modern-day Robin Hoods — but the argument does not hold. In a free market the way to drive an overpriced product's price down is not to buy it; and if protest is really your goal, copying a friend's CD is not an effective protest. The ethical answer: if you really like the CD, buy a legitimate copy and discard the pirated one.",
+        ],
+        slideQuiz: [
+          {
+            q: "Which of these is NOT one of the forms of piracy described?",
+            options: [
+              "Pirate recordings",
+              "Counterfeiting",
+              "Bootlegging",
+              "Buying a legitimate CD at a retail store",
+            ],
+            answer: 3,
+            explain: "The four forms are pirate recordings, counterfeiting, online piracy and bootlegging — buying a legitimate copy is the ethical alternative.",
+          },
+          {
+            q: "Why is RIAA's $4.2 billion 'loss' figure described as overly simplistic?",
+            options: [
+              "Because piracy does not exist",
+              "Because it infers that every pirate transaction represents a lost legitimate sale — but many pirate buyers would never have bought the real product",
+              "Because the figure is in dollars, not rands",
+              "Because it excludes online piracy",
+            ],
+            answer: 1,
+            explain: "People buy pirated music because it is cheaper — it is not at all obvious that all would buy the real thing if piracy were unavailable.",
+          },
+        ],
+      },
+      {
+        heading: "Software piracy in South Africa — the scale of the problem",
+        icon: "globe",
+        flat: true,
+        paragraphs: [
+          "Half of the software in use in South Africa has been illegal — not paid for, or pirated. In the US about 30% of software is pirated, in the UK 35%, and in the rest of Africa the rate runs into the 90% range. BSA figures showed South Africa's rate rising to 49% (from 48%) even as the worldwide rate fell to 38% — a retail revenue loss to the local software industry of R580-million. 'For almost every copy of software sold, another is pirated or stolen,' said Microsoft South Africa's director of legalisation.",
+          "The Business Software Alliance (BSA) — an anti-piracy umbrella body made up of large software companies — recovered R300 000 in out-of-court settlements and committed to prosecuting offenders to the full extent of the law. Illegal copying and distribution of software is the main obstacle to the growth of the software sector, with worldwide industry losses estimated at US$11-billion in 1998.",
+          "By 2006 about 36% of the software used by South African businesses was illegal, depriving more than 30 000 people of jobs in the multibillion-rand IT industry and representing at least R1,2bn in economic losses. 'Software piracy remains one of the major hurdles to realising the potential of the information economy in South Africa, on the continent and around the world,' said the BSA's local chairperson. Globally, piracy was most prevalent in Zimbabwe and Vietnam (90%); the African average topped 70%. BSA calculated that dropping the global piracy rate from 35% to 25% would create about 2,4 million new jobs and add $67bn in tax revenues worldwide.",
+          "South African law does allow enforcement of copyright violation: the Intellectual Property Laws Amendment Act (effective 1 October 1997) brought South Africa closer to compliance with its World Trade Organisation TRIPS obligations, especially in protection for computer programs, compilations of data and databases, and audio-visual works.",
+        ],
+        slideQuiz: [
+          {
+            q: "What is the Business Software Alliance (BSA)?",
+            options: [
+              "A software retailer",
+              "An anti-piracy umbrella body made up of large software companies",
+              "A government tax authority",
+              "A trade union for programmers",
+            ],
+            answer: 1,
+            explain: "The BSA is an industry body representing commercial software developers and their hardware partners, fighting piracy through awareness, settlements and prosecution.",
+          },
+          {
+            q: "According to the 2006 study, software piracy among South African businesses…",
+            options: [
+              "Was about 36%, depriving more than 30 000 people of jobs and costing at least R1,2bn",
+              "Had been completely eliminated",
+              "Was the lowest in the world",
+              "Only affected the music industry",
+            ],
+            answer: 0,
+            explain: "About 36% of business software was illegal — over 30 000 jobs lost and at least R1,2bn in economic losses.",
+          },
+          {
+            q: "Which law brought South Africa closer to compliance with its TRIPS obligations?",
+            options: [
+              "The Companies Act of 1926",
+              "The Intellectual Property Laws Amendment Act (effective 1 October 1997)",
+              "The Labour Relations Act",
+              "POPIA",
+            ],
+            answer: 1,
+            explain: "The 1997 amendment improved protection for computer programs, data compilations, databases and audio-visual works.",
+          },
+        ],
+      },
+      {
+        heading: "What is piracy? — the forms of software piracy",
+        icon: "shield",
+        flat: true,
+        paragraphs: [
+          "Software piracy is the failure to comply with software licence agreements. Piracy, in any form, is an unlawful action and offenders are liable to either civil or criminal prosecution. All software users and resellers must understand the different forms of software piracy in order to comply with the law and protect themselves and their business.",
+          "The various forms of software piracy are:",
+        ],
+        bullets: [
+          "End User Copying — a licensed software user passes their software on to friends, business colleagues and family to copy indiscriminately; or, with volume licences, users and businesses under-report the number of computers on which the software is installed.",
+          "Reseller Copying — resellers pass their software on to their clients.",
+          "Counterfeiting — criminals copy the software and collateral, such as manuals, and sell it as the original product.",
+        ],
+        slideQuiz: [
+          {
+            q: "What is software piracy?",
+            options: [
+              "Downloading free open-source software",
+              "The failure to comply with software licence agreements — an unlawful action liable to civil or criminal prosecution",
+              "Using software after office hours",
+              "Selling second-hand computers",
+            ],
+            answer: 1,
+            explain: "Software piracy is the failure to comply with software licence agreements, and offenders face civil or criminal prosecution.",
+          },
+          {
+            q: "Under-reporting the number of computers on which volume-licensed software is installed is an example of…",
+            options: ["End User Copying", "Reseller Copying", "Counterfeiting", "Bootlegging"],
+            answer: 0,
+            explain: "End User Copying includes both passing software to others and under-reporting installations under a volume licence.",
+          },
+          {
+            q: "Why does piracy harm even lawful software users?",
+            options: [
+              "It does not affect them",
+              "Lower vendor revenues limit re-investment in R&D, service and support — and pirate software may introduce viruses and carries no quality guarantees or technical support",
+              "It makes software cheaper for everyone",
+              "It only harms musicians",
+            ],
+            answer: 1,
+            explain: "Piracy limits R&D investment; pirate products can carry viruses, destroy mission-critical data, and give no access to support.",
+          },
+        ],
+      },
+      {
+        heading: "Fighting piracy in South Africa — enforcement and industry action",
+        icon: "checkCircle",
+        flat: true,
+        paragraphs: [
+          "bidorbuy, one of South Africa's largest online marketplaces, took a proactive stance against the selling of pirated goods online, declaring combating piracy a top priority. 'Piracy is nothing less than serious theft. It is a crime that impacts right across our society, from government to the retail sector and right down to the individual customer, who, in buying pirated goods, ends up with inferior products. The only winners are the criminals,' said its managing director.",
+          "bidorbuy works closely with industry bodies and authorities: the South African Police Services (SAPS), the Southern African Federation Against Copyright Theft (SAFACT), the Business Software Alliance (BSA) and the Independent Communications Authority of South Africa (ICASA). SAFACT — the trade association representing the entertainment industry, which loses approximately R200 million per annum to piracy — entered an agreement with bidorbuy to fight the sale of pirated DVD movies and games online.",
+          "Law enforcement has also cracked down on DVD piracy (which crippled sales of local films such as Mama Jack and the Oscar-winning Tsotsi), and music industry figures raided Johannesburg streets to wipe out pirated CDs. So piracy in South Africa is addressed through: copyright legislation and TRIPS compliance; BSA prosecution and out-of-court settlements; SAFACT and SAPS enforcement action; online marketplaces policing their platforms; and public awareness campaigns that software piracy is stealing — no more, no less.",
+        ],
+        slideQuiz: [
+          {
+            q: "Which of these bodies works against copyright theft in the entertainment industry in Southern Africa?",
+            options: ["SAFACT", "PAG", "ITARCS", "WCL"],
+            answer: 0,
+            explain: "The Southern African Federation Against Copyright Theft (SAFACT) represents the entertainment industry, which loses about R200 million a year to piracy.",
+          },
+          {
+            q: "Which is NOT one of the ways piracy is addressed in South Africa?",
+            options: [
+              "Copyright legislation and TRIPS compliance",
+              "BSA prosecutions and settlements",
+              "Enforcement raids by SAFACT, SAPS and industry bodies",
+              "Government subsidies for buyers of pirated software",
+            ],
+            answer: 3,
+            explain: "Piracy is fought through legislation, prosecution, enforcement raids, online marketplace policing and public awareness — never subsidised.",
+          },
+        ],
       },
     ],
+    exercises: [
+      {
+        id: "ex1",
+        title: "Question Session 1 — Professionalism and Codes of Practice for the computer industry in South Africa",
+        task: "Time: 45 minutes · Activity: Self & Group",
+        steps: [
+          "Identify and explain acceptable and unacceptable professional practices found in the computer industry",
+          "Identify and explain the CSSA as a professional body in South Africa",
+          "Identify and explain the BITF as a professional body in South Africa",
+          "Identify and explain the ITUC as a professional body in South Africa",
+          "Identify and explain the ITA as a professional body in South Africa (at least 2 points)",
+          "Identify and explain the codes of practice for the IT industry in South Africa",
+        ],
+        checks: [
+          {
+            answer: [
+              "Acceptable practices follow the CSSA Code of Practice: keep yourself and subordinates up to date with new technologies, practices, legal requirements and standards; accept only work you are competent to perform; train subordinates on an equal opportunity basis; communicate through proper channels; be accountable for quality, timeliness and resources.",
+              "Protect privacy, security and integrity: protect life, data and equipment (in that order); protect confidential information; give individuals rights of review, correction and appeal over data that may harm them.",
+              "Unacceptable practices include claiming competence you do not possess, neglecting security and confidentiality, ignoring legal requirements, software piracy in any form, and using parts of the code in isolation to justify errors of omission or commission.",
+            ],
+            concepts: [
+              ["up to date", "informed", "new technologies", "keep up", "competent", "competence"],
+              ["confidential", "security", "privacy", "protect"],
+              ["accountable", "quality", "responsib"],
+              ["piracy", "claiming competence", "unacceptable", "neglect"],
+            ],
+            labels: [
+              "Competence and keeping up to date",
+              "Security, privacy and confidentiality",
+              "Accountability and responsibility",
+              "Unacceptable practices (false competence, piracy, neglect)",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "The CSSA (Computer Society of South Africa) is one of, if not the most respected associations concerned with South African Information Technology.",
+              "It is established to elevate ICT capability and professionalism in South Africa: facilitating the exchange of opinions and views on ICT, representing industry practitioners to inform and lobby Government on ICT policy, disseminating ICT information via journals, lectures, seminars and conferences, improving technical knowledge and elevating the professional status of persons engaged in ICT.",
+              "It publishes the Code of Practice and Code of Conduct that prescribe minimum standards of practice and behaviour for all professional members.",
+            ],
+            concepts: [
+              ["computer society", "cssa"],
+              ["professionalism", "professional status", "elevate"],
+              ["code of practice", "code of conduct", "minimum standards"],
+              ["government", "lobby", "policy", "represent"],
+            ],
+            labels: [
+              "The Computer Society of South Africa",
+              "Elevating ICT capability and professionalism",
+              "Publishes the codes of practice and conduct",
+              "Represents practitioners and lobbies government",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "The BITF (Black Information Technology Forum) was launched in Cape Town in 1995 to propel black individuals into the mainstream of the ICT industry, becoming a national organisation in 1998 with 2 400 members.",
+              "It is the largest organisation representing the interests of black people in South Africa's ICT industry and has considerable credibility with government bodies.",
+              "It aims to empower members with technical and business skills, improve access to technology for historically disadvantaged communities, actively influence policy-making forums, and promote the status of historically disadvantaged individuals and communities in the ICT sector.",
+            ],
+            concepts: [
+              ["black information technology forum", "bitf", "black"],
+              ["1995", "cape town", "launched"],
+              ["empower", "skills", "disadvantaged"],
+              ["policy", "government", "represent"],
+            ],
+            labels: [
+              "The Black Information Technology Forum",
+              "Launched in Cape Town in 1995",
+              "Empowering historically disadvantaged people",
+              "Influencing policy and representing members",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "The ITUC (International Trade Union Confederation) is the world's largest trade union federation.",
+              "It was formed on 1 November 2006 out of the merger of the International Confederation of Free Trade Unions (ICFTU) and the World Confederation of Labour (WCL).",
+              "This union assists the South African IT market in trading internationally, thus empowering the market — but more so those in the emerging sector of the market.",
+            ],
+            concepts: [
+              ["trade union", "union"],
+              ["largest", "world"],
+              ["2006", "merger", "icftu", "wcl"],
+              ["international", "trading", "emerging"],
+            ],
+            labels: [
+              "A trade union federation",
+              "The world's largest",
+              "Formed in 2006 from the ICFTU/WCL merger",
+              "Helps SA's IT market trade internationally",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "The ITA (Information Technology Association) is the official trade and employer body of the ICTe industry, striving to promote consistent standards of professionalism and service.",
+              "Its purpose is to represent and promote the interests of its members — employers active in the Information Technology sector — nationally and internationally at governmental, NGO, parastatal and business level.",
+              "Founded in 1934, it was renamed the ITA after the amalgamation of the Business Equipment Association and the Computer Services Association.",
+              "It assembles and disseminates information, provides a networking and marketing platform, and operates through three divisions: the Information Technology Users Council (ITUC), the Recruitment Consultancy Services Group (ITARCS) and the Payroll Authors Group (PAG).",
+            ],
+            concepts: [
+              ["information technology association", "ita", "trade", "employer"],
+              ["represent", "promote", "interests", "members"],
+              ["professionalism", "standards", "service"],
+              ["1934", "founded", "divisions", "ituc", "itarcs", "pag", "networking"],
+            ],
+            labels: [
+              "Official trade and employer body of the ICTe industry",
+              "Represents and promotes employers' interests",
+              "Promotes consistent standards of professionalism",
+              "History and divisions (ITUC, ITARCS, PAG)",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "The codes of practice are set out by the Computer Society of South Africa in its Code of Practice — a series of statements prescribing minimum standards of practice for all professional members, observed in the spirit and not merely to the word.",
+              "Its main areas are: personal competence and keeping up to date (accept only work you are competent to perform); organisation and management (plan and review objectives, assign tasks by ability, maintain communication, be accountable for quality and timeliness); contracting (seek expert advice; cover all requirements and responsibilities).",
+              "Privacy, security and integrity (evaluate risks; protect life, data and equipment in that order; protect confidential information; rights of review and correction); development (impartiality, standards, client participation, testing, documentation, plain-language input/output, restore procedures); implementation (training, planned changeover, adequate testing); and live systems (reliable processing, performance reviews, maintenance support, user liaison).",
+            ],
+            concepts: [
+              ["cssa", "computer society", "code of practice"],
+              ["minimum standards", "spirit"],
+              ["competence", "management", "contracting", "organisation"],
+              ["security", "privacy", "development", "implementation", "live systems"],
+            ],
+            labels: [
+              "Set out by the CSSA Code of Practice",
+              "Minimum standards observed in the spirit",
+              "Competence, management and contracting",
+              "Security, development, implementation and live systems",
+            ],
+            min: 2,
+          },
+        ],
+      },
+      {
+        id: "ex2",
+        title: "Question Session 2 — Code of ethics in the computer industry in South Africa",
+        task: "Time: 45 minutes · Activity: Self & Group",
+        steps: [
+          "Explain how the computer industry supports equality of opportunity",
+          "Explain how the computer industry is against computer software piracy",
+          "Identify ways in which piracy is addressed in South Africa",
+        ],
+        checks: [
+          {
+            answer: [
+              "The CSSA Code of Practice requires that subordinates are trained on an equal opportunity basis, in order to be effective in their duties and to qualify for increased responsibilities.",
+              "Bodies such as the BITF work to propel black individuals into the mainstream of the ICT industry, improve access to technology for historically disadvantaged communities, and promote the status of historically disadvantaged individuals and communities in the ICT sector.",
+              "The CSSA's constitution commits it to education and training that elevates the level of ICT capability in South Africa, and to community development that enhances the standards and levels of ICT for the greater good of the South African people.",
+            ],
+            concepts: [
+              ["equal opportunity", "equality"],
+              ["training", "trained", "education"],
+              ["disadvantaged", "bitf", "access"],
+              ["community", "development"],
+            ],
+            labels: [
+              "Training on an equal opportunity basis",
+              "Education and training for all",
+              "Empowering historically disadvantaged people",
+              "Community development",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "Software piracy is the failure to comply with software licence agreements — an unlawful action in any form, with offenders liable to civil or criminal prosecution.",
+              "The Business Software Alliance (BSA) — an anti-piracy umbrella body made up of large software companies — raises public awareness, recovers losses through out-of-court settlements, and prosecutes offenders to the full extent of the law.",
+              "The industry emphasises the harm piracy does: lower vendor revenues limit re-investment in research and development and support infrastructures; pirate software may introduce viruses and gives users no quality guarantees or technical support; and piracy deprives the economy of jobs — 'software piracy is stealing, no more, no less.'",
+            ],
+            concepts: [
+              ["licence", "license", "agreement", "unlawful", "illegal"],
+              ["bsa", "business software alliance", "prosecut", "settlement"],
+              ["stealing", "theft", "crime"],
+              ["jobs", "revenue", "r&d", "research", "viruses", "harm"],
+            ],
+            labels: [
+              "Piracy breaks licence agreements and the law",
+              "BSA awareness, settlements and prosecution",
+              "Piracy is stealing",
+              "The harm piracy does to industry and jobs",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "Legislation: the Intellectual Property Laws Amendment Act (effective 1 October 1997) strengthened protection for computer programs, compilations of data and databases, moving South Africa closer to compliance with the World Trade Organisation's TRIPS agreement.",
+              "Enforcement and prosecution: the Business Software Alliance recovers losses through out-of-court settlements and prosecutes offenders; law enforcement (SAPS) and SAFACT conduct crackdowns and raids on pirated DVDs and CDs.",
+              "Industry and marketplace action: online marketplaces such as bidorbuy work with SAPS, SAFACT, the BSA and ICASA to combat pirated goods sold online; and public awareness campaigns remind South Africans that buying, selling or illegally copying software supports crime.",
+            ],
+            concepts: [
+              ["legislation", "intellectual property", "copyright", "trips", "law"],
+              ["bsa", "prosecut", "settlement", "enforcement"],
+              ["safact", "saps", "raid", "crackdown"],
+              ["bidorbuy", "online", "awareness", "icasa"],
+            ],
+            labels: [
+              "Copyright legislation and TRIPS compliance",
+              "BSA prosecution and settlements",
+              "SAFACT and SAPS enforcement raids",
+              "Online marketplace policing and public awareness",
+            ],
+            min: 2,
+          },
+        ],
+      },
+    ],
+    assignments: [],
+    selfAssessment: {
+      intro: [
+        "You are now ready to go through a check list. Be honest with yourself.",
+        "Tick the box with either a \u221A or an X to indicate your response.",
+      ],
+      items: [
+        "I am able to describe professionalism for the computer industry in South Africa.",
+        "I am able to describe the codes of practice for professionalism in the IT industry in South Africa.",
+        "I am able to describe the code of ethics in the computer industry in South Africa.",
+      ],
+      outro: [
+        "You must think about any point you could not tick. Write this down as a goal.",
+        "Decide on a plan of action to achieve these goals. Regularly review these goals.",
+        "Show your completed self-assessment to your facilitator and make the necessary arrangements to assist you to become competent in any area you could not tick.",
+      ],
+    },
     quiz: [],
 
     lessonPlan: {

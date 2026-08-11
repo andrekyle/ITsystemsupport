@@ -375,6 +375,18 @@ export interface UnitContent {
   logbook?: LogbookSpec;
   notes?: UnitNote[];
   lessonPlan?: LessonPlan;
+  /** end-of-unit self assessment checklist — rendered on its own tab with tickable boxes */
+  selfAssessment?: SelfAssessment;
+}
+
+/** End-of-unit self assessment: learner ticks each statement they feel competent in. */
+export interface SelfAssessment {
+  /** intro shown above the checklist */
+  intro: string[];
+  /** the tickable statements */
+  items: string[];
+  /** guidance shown below the checklist */
+  outro: string[];
 }
 
 export interface ProgressState {
