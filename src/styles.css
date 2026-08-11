@@ -6073,6 +6073,14 @@ input.att-sig {
   text-decoration: underline;
 }
 
+/* "Download all registers" print view — hidden on screen, one sheet per page in print */
+.att-all {
+  position: absolute;
+  left: -12000px;
+  top: 0;
+  width: 1200px;
+}
+
 /* print: only the sheet, A4 landscape — "Download as PDF" uses the print dialog */
 @media print {
   @page {
@@ -6101,9 +6109,26 @@ input.att-sig {
     padding: 0 8px;
     font-size: 12px;
   }
-  /* multi-register print: sheets flow normally, one per page */
+  /* multi-register print: the portal takes over the page; sheets flow, one per page */
+  body:has(.att-all) {
+    overflow: visible;
+  }
+  body:has(.att-all) .att-sheet:not(.att-sheet-static) {
+    display: none;
+  }
+  .att-all {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .att-all,
+  .att-all * {
+    visibility: visible;
+  }
   .att-all .att-sheet {
     position: static;
+    width: 100%;
     page-break-after: always;
     break-after: page;
   }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Profile, UnitStandard } from "../types";
 import { isStaff } from "../types";
 import { COURSE_META, MODULES, usLabel } from "../data/course";
@@ -530,11 +531,11 @@ export function AttendancePage({
       regs.sort((a, b) => a.date.localeCompare(b.date));
       if (!regs.length) return;
       setAllRegs(regs);
-      // let React render the sheets before opening the print dialog
+      // let React render the sheets (and images lay out) before opening the print dialog
       setTimeout(() => {
         window.print();
         setAllRegs(null);
-      }, 300);
+      }, 700);
     } finally {
       setLoadingAll(false);
     }
@@ -652,13 +653,15 @@ export function AttendancePage({
         </div>
       )}
 
-      {allRegs ? (
-        <div className="att-all">
-          {allRegs.map((r) => (
-            <StaticSheet key={r.date} dateIso={r.date} data={r.data} />
-          ))}
-        </div>
-      ) : (
+      {allRegs &&
+        createPortal(
+          <div className="att-all">
+            {allRegs.map((r) => (
+              <StaticSheet key={r.date} dateIso={r.date} data={r.data} />
+            ))}
+          </div>,
+          document.body
+        )}
       <div className="att-sheet">
         <div className="att-logo">
           <img src="/downloads/cropped-cropped-Final_Full-Logo2-768x255.png" alt="Eruditio — Empower · Develop · Transform" />
@@ -792,7 +795,6 @@ export function AttendancePage({
           <div>+27 11 973 0205</div>
         </div>
       </div>
-      )}
 
       {confirming && (
         <ConfirmModal
