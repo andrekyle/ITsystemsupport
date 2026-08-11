@@ -256,7 +256,7 @@ function StaticSheet({ dateIso, data }: { dateIso: string; data: AttData }) {
               <th>ID Number</th>
               <th>Race</th>
               <th>Gender</th>
-              <th>Arrival Time</th>
+              <th>Time</th>
               <th>Signature</th>
             </tr>
           </thead>
@@ -725,7 +725,7 @@ export function AttendancePage({
                 <th>ID Number</th>
                 <th>Race</th>
                 <th>Gender</th>
-                <th>Arrival Time</th>
+                <th>Time</th>
                 <th>Signature</th>
               </tr>
             </thead>
