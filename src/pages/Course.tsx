@@ -3238,43 +3238,56 @@ export function UnitPage({
 
       {tab === "assignments" && content && (
         <>
-          <p className="muted" style={{ marginTop: 14 }}>
-            Assessed assignments. Submissions are assessed against the ASD for SAQA ID 48573 and
-            filed in your Portfolio of Evidence.
-          </p>
-          {content.assignments.map((as) => (
-            <details key={as.id} className="saqa-details lesson-acc">
-              <summary>
-                <Icon name="folder" size={17} />
-                {as.title}
-                <span className="chev">
-                  <Icon name="chevronDown" size={15} />
-                </span>
-              </summary>
-              <div className="saqa-body">
-                <p className="lesson-p" style={{ marginTop: 10 }}>
-                  <Gloss text={as.brief} />
-                </p>
-                <div className="task-label">Requirements</div>
-                <ul className="duty-list">
-                  {as.requirements.map((r) => (
-                    <li key={r}>
-                      <span className="ico">
-                        <Icon name="checkCircle" size={16} />
-                      </span>
-                      <span>
-                        <Gloss text={r} />
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="task-label">Evidence & submission</div>
-                <p className="lesson-p" style={{ marginBottom: 10 }}>
-                  <Gloss text={as.evidence} />
-                </p>
+          <h2 className="section-title">
+            <span className="ico">
+              <Icon name="folder" size={20} />
+            </span>
+            Section C
+          </h2>
+          <div className="exam-instruction">
+            <p>Answer ANY ONE question in this section.</p>
+            <p style={{ marginTop: 8 }}>
+              <strong>NOTE:</strong>&nbsp; Clearly indicate the QUESTION NUMBER of the chosen
+              question. The answer to the question must start on a NEW page, e.g. QUESTION 5 on a
+              NEW page OR QUESTION 6 on a NEW page.
+            </p>
+          </div>
+          {content.assignments.map((as, ai) => (
+            <div key={as.id} className="exam-essay-q">
+              <h3 className="exam-q-heading">
+                QUESTION {5 + ai}: {as.title.replace(/^Assignment\s*\d*\s*—\s*/i, "").toUpperCase()}
+              </h3>
+              <div className="exam-scenario-box">
+                <Gloss text={as.brief} />
               </div>
-            </details>
+              <p className="lesson-p">
+                Write your answer in which you include the following aspects:
+              </p>
+              <ul className="exam-aspects">
+                {as.requirements.map((r) => (
+                  <li key={r}>
+                    <Gloss text={r} />
+                  </li>
+                ))}
+              </ul>
+              <div className="exam-marks">[40]</div>
+              <p className="lesson-p exam-evidence">
+                <Gloss text={as.evidence} />
+              </p>
+            </div>
           ))}
+          {content.assignments.length > 0 && (
+            <div className="exam-totals">
+              <div>
+                <span>TOTAL SECTION C:</span>
+                <span>40</span>
+              </div>
+              <div>
+                <span>GRAND TOTAL:</span>
+                <span>150</span>
+              </div>
+            </div>
+          )}
 
           {content.logbook && (
             <Logbook
@@ -3370,6 +3383,7 @@ export function UnitPage({
               })()}
             </>
           );
+        const qNo = content.quizzes.indexOf(active) + 1;
         return (
           <>
             <button className="btn ghost" style={{ marginTop: 14 }} onClick={() => setQuizId(null)}>
@@ -3380,18 +3394,23 @@ export function UnitPage({
               <span className="ico">
                 <Icon name="clipboard" size={20} />
               </span>
-              {active.title} — {active.questions.length} questions
+              Question {qNo} — {active.title}
             </h2>
-            <p className="muted" style={{ marginTop: -6, marginBottom: 16 }}>
-              Answer all questions, then submit. Your best score is saved to your profile. 80%+ is
-              considered competent.
-            </p>
+            <div className="exam-instruction">
+              <p>
+                <strong>{qNo}.1</strong> Various options are provided as possible answers to the
+                following questions. Choose the answer and select only the letter (A–D) next to
+                the question numbers ({qNo}.1.1 to {qNo}.1.{active.questions.length}). Only ONE
+                answer per question is allowed.
+              </p>
+            </div>
             <Quiz
               key={active.id}
               questions={active.questions}
               previous={results[active.id]}
               onSubmit={(score, total) => saveQuizResult(u.us, score, total, active.id)}
               showAnswers={isPrivileged}
+              numberPrefix={`${qNo}.1`}
             />
           </>
         );
@@ -3403,17 +3422,22 @@ export function UnitPage({
             <span className="ico">
               <Icon name="clipboard" size={20} />
             </span>
-            Knowledge check — {content.quiz.length} questions
+            Question 1 — Knowledge check
           </h2>
-          <p className="muted" style={{ marginTop: -6, marginBottom: 16 }}>
-            Answer all questions, then submit. Your best score is saved to your profile. 80%+ is
-            considered competent.
-          </p>
+          <div className="exam-instruction">
+            <p>
+              <strong>1.1</strong> Various options are provided as possible answers to the
+              following questions. Choose the answer and select only the letter (A–D) next to the
+              question numbers (1.1.1 to 1.1.{content.quiz.length}). Only ONE answer per question
+              is allowed.
+            </p>
+          </div>
           <Quiz
             questions={content.quiz}
             previous={quizResult}
             onSubmit={(score, total) => saveQuizResult(u.us, score, total)}
             showAnswers={isPrivileged}
+            numberPrefix="1.1"
           />
         </>
       )}

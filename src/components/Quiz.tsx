@@ -25,12 +25,15 @@ export function Quiz({
   previous,
   onSubmit,
   showAnswers = false,
+  numberPrefix,
 }: {
   questions: QuizQuestion[];
   previous?: QuizResult;
   onSubmit: (score: number, total: number) => void;
   /** Staff-only: renders a "Reveal answer key" toggle above the questions. */
   showAnswers?: boolean;
+  /** Exam-paper numbering, e.g. "1.1" renders question numbers 1.1.1, 1.1.2, … */
+  numberPrefix?: string;
 }) {
   const [answers, setAnswers] = useState<Record<number, Ans>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -259,7 +262,9 @@ export function Quiz({
         return (
           <div className="quiz-q" key={qi}>
             <div className="qt">
-              <span className="qn">{qi + 1}</span>
+              <span className={numberPrefix ? "qn exam" : "qn"}>
+                {numberPrefix ? `${numberPrefix}.${qi + 1}` : qi + 1}
+              </span>
               {q.q}
               {kind === "choice" && q.answers && (
                 <span className="multi-hint">Select all that apply</span>
@@ -304,6 +309,7 @@ export function Quiz({
                         <Icon name={chosen.includes(oi) ? "checkCircle" : "circle"} size={17} />
                       )}
                     </span>
+                    <span className="opt-letter">{String.fromCharCode(65 + oi)}</span>
                     {opt}
                   </button>
                 );

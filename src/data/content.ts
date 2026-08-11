@@ -4772,7 +4772,7 @@ export const CONTENT: Record<string, UnitContent> = {
               bullets: [
                 "Full-circle recap: from human computers to AI — and where the systems support career fits in that story.",
                 "Issue the assignment (hardware audit & evolution poster) — due within 5 working days.",
-                "Thank the learners and confirm the next session (US 114050, Friday 7 August).",
+                "Thank the learners and confirm the next session (US 114055, Friday 14 August).",
               ],
             },
           ],
@@ -4795,7 +4795,7 @@ export const CONTENT: Record<string, UnitContent> = {
       title: "Facilitator Preparation",
       startTime: "09:00",
       details: [
-        { icon: "calendar", label: "Date", value: "Friday, 21 August 2026" },
+        { icon: "calendar", label: "Date", value: "Friday, 14 August 2026" },
         { icon: "clock", label: "Time", value: "09:00 \u2013 14:00" },
         { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
         { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
