@@ -206,6 +206,114 @@ function headerDefaults(dateIso: string): Record<string, string> {
   };
 }
 
+/** Read-only register sheet used by the "Download all registers" print view. */
+function StaticSheet({ dateIso, data }: { dateIso: string; data: AttData }) {
+  const defaults = headerDefaults(dateIso);
+  const hdr = (field: string) => data.header[field] ?? defaults[field] ?? "";
+  return (
+    <div className="att-sheet att-sheet-static">
+      <div className="att-logo">
+        <img src="/downloads/cropped-cropped-Final_Full-Logo2-768x255.png" alt="Eruditio — Empower · Develop · Transform" />
+      </div>
+      <div className="att-banner">ATTENDANCE REGISTER</div>
+      <table className="att-head">
+        <tbody>
+          <tr>
+            <td className="lbl">Course</td>
+            <td><span>{hdr("course")}</span></td>
+            <td className="lbl">Venue</td>
+            <td><span>{hdr("venue")}</span></td>
+          </tr>
+          <tr>
+            <td className="lbl">NQF Level</td>
+            <td><span>{hdr("nqf")}</span></td>
+            <td className="lbl">Credits</td>
+            <td><span>{hdr("credits")}</span></td>
+          </tr>
+          <tr>
+            <td className="lbl">Unit Standards</td>
+            <td><span>{hdr("unitStandards")}</span></td>
+            <td className="lbl">Type</td>
+            <td className="att-types">
+              {TYPE_OPTIONS.map((t) => (
+                <button key={t} type="button" className="att-type" disabled>
+                  {t} <span className={`att-radio${hdr("type") === t ? " on" : ""}`} />
+                </button>
+              ))}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div className="att-main-wrap">
+        <img className="att-watermark icon" src="/downloads/Colour-ICon_1-scaled-1536x1339.png" alt="" aria-hidden="true" />
+        <img className="att-watermark full" src="/downloads/cropped-cropped-Final_Full-Logo2-768x255.png" alt="" aria-hidden="true" />
+        <table className="att-main">
+          <thead>
+            <tr>
+              <th colSpan={2}>Name</th>
+              <th>Surname</th>
+              <th>ID Number</th>
+              <th>Race</th>
+              <th>Gender</th>
+              <th>Arrival Time</th>
+              <th>Signature</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: ROW_COUNT }, (_, i) => {
+              const pid = data.order[i];
+              const row = pid ? data.rows[pid] : undefined;
+              return (
+                <tr key={i}>
+                  <td className="att-num">{i + 1}.</td>
+                  <td className="att-name">{row?.name}</td>
+                  <td>{row?.surname}</td>
+                  <td>{row?.idNumber}</td>
+                  <td>{row?.race}</td>
+                  <td>{row?.gender}</td>
+                  <td>{row?.arrival}</td>
+                  <td className="att-sig-cell">
+                    {row?.signatureImage ? (
+                      <img className="att-sig-img" src={row.signatureImage} alt={`${row.name} signature`} />
+                    ) : (
+                      <span className="att-sig">{row?.signature}</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <table className="att-foot">
+        <tbody>
+          <tr>
+            <td className="lbl">Client:</td>
+            <td><span>{hdr("client")}</span></td>
+            <td className="lbl">Qualification:</td>
+            <td><span>{hdr("qualification")}</span></td>
+          </tr>
+          <tr>
+            <td className="lbl">Facilitator:</td>
+            <td><span>{hdr("facilitator")}</span></td>
+            <td className="lbl">Date:</td>
+            <td><span>{hdr("date")}</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div className="att-company">
+        <div>Eruditio Skills Development Consultants (Pty) Ltd</div>
+        <div>Office 44/45 Villa Valencia Business Park, 244 Monument Road</div>
+        <div>Glen Marais, Kempton Park 1619</div>
+        <div>
+          www.eruditio.co.za&ensp;<span className="att-link">info@eruditio.co.za</span>
+        </div>
+        <div>+27 11 973 0205</div>
+      </div>
+    </div>
+  );
+}
+
 export function AttendancePage({
   profile,
   onUpdateProfile,
@@ -221,6 +329,9 @@ export function AttendancePage({
   const [sigPreview, setSigPreview] = useState<string | null>(null);
   const [sigError, setSigError] = useState("");
   const [confirming, setConfirming] = useState<{ kind: "register" } | { kind: "row"; pid: string } | null>(null);
+  /** all signed registers, loaded for the print-all view (null = normal single-register mode) */
+  const [allRegs, setAllRegs] = useState<{ date: string; data: AttData }[] | null>(null);
+  const [loadingAll, setLoadingAll] = useState(false);
   const storageKey = attKey(dateIso);
 
   const refresh = useCallback(async () => {
@@ -406,6 +517,29 @@ export function AttendancePage({
   /** Super user only: wipe the whole register for the selected date. */
   const clearRegister = () => save(EMPTY);
 
+  /** Gather every signed register (local + cloud) and open the print dialog with all of them. */
+  const downloadAll = async () => {
+    setLoadingAll(true);
+    try {
+      const regs: { date: string; data: AttData }[] = [];
+      for (const key of await allRegisterKeys()) {
+        const data = (await pullLatest(key)) ?? readReg(key);
+        if (!Object.keys(data.rows).length) continue; // skip unsigned/empty registers
+        regs.push({ date: key.slice("itss.attendance.".length), data });
+      }
+      regs.sort((a, b) => a.date.localeCompare(b.date));
+      if (!regs.length) return;
+      setAllRegs(regs);
+      // let React render the sheets before opening the print dialog
+      setTimeout(() => {
+        window.print();
+        setAllRegs(null);
+      }, 300);
+    } finally {
+      setLoadingAll(false);
+    }
+  };
+
   const onConfirm = () => {
     if (!confirming) return;
     if (confirming.kind === "register") clearRegister();
@@ -462,6 +596,11 @@ export function AttendancePage({
           </button>
         )}
         {staff && (
+          <button className="btn" disabled={loadingAll} onClick={() => void downloadAll()}>
+            <Icon name="download" /> {loadingAll ? "Gathering registers…" : "Download all registers"}
+          </button>
+        )}
+        {staff && (
           <button className="btn" disabled={fixingSig} onClick={() => void fixSignatures()}>
             <Icon name="check" /> {fixingSig ? "Cleaning…" : "Fix signatures"}
           </button>
@@ -513,6 +652,13 @@ export function AttendancePage({
         </div>
       )}
 
+      {allRegs ? (
+        <div className="att-all">
+          {allRegs.map((r) => (
+            <StaticSheet key={r.date} dateIso={r.date} data={r.data} />
+          ))}
+        </div>
+      ) : (
       <div className="att-sheet">
         <div className="att-logo">
           <img src="/downloads/cropped-cropped-Final_Full-Logo2-768x255.png" alt="Eruditio — Empower · Develop · Transform" />
@@ -646,6 +792,7 @@ export function AttendancePage({
           <div>+27 11 973 0205</div>
         </div>
       </div>
+      )}
 
       {confirming && (
         <ConfirmModal

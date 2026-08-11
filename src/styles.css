@@ -6101,6 +6101,16 @@ input.att-sig {
     padding: 0 8px;
     font-size: 12px;
   }
+  /* multi-register print: sheets flow normally, one per page */
+  .att-all .att-sheet {
+    position: static;
+    page-break-after: always;
+    break-after: page;
+  }
+  .att-all .att-sheet:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
   .att-sheet td,
   .att-sheet th {
     height: 22px;
