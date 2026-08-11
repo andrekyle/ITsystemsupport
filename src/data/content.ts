@@ -4788,7 +4788,46 @@ export const CONTENT: Record<string, UnitContent> = {
   "114055": {
     lesson: [],
     exercises: [],
-    assignments: [],
+    assignments: [
+      {
+        id: "as1",
+        title: "Question Session 1 — Professionalism and Codes of Practice for the computer industry in South Africa",
+        brief: "Answer the following questions on professionalism and the Codes of Practice for the computer industry in South Africa, as covered in the learner manual. Time: 45 minutes · Activity: Self & Group.",
+        requirements: [
+          "Identify and explain acceptable and unacceptable professional practices found in the computer industry.",
+          "Identify and explain the CSSA (Computer Society of South Africa) as a professional body in South Africa.",
+          "Identify and explain the BITF (Black Information Technology Forum) as a professional body in South Africa.",
+          "Identify and explain the ITUC (International Trade Union Confederation) as a professional body in South Africa.",
+          "Identify and explain the ITA (Information Technology Association) as a professional body in South Africa (give at least 2 points).",
+          "Identify and explain the codes of practice for the IT industry in South Africa.",
+        ],
+        evidence: "Completed written answers, checked by your facilitator, are filed in your Portfolio of Evidence (POE) as formative evidence for US 114055 (SO 1 and SO 2).",
+      },
+      {
+        id: "as2",
+        title: "Question Session 2 — Code of ethics in the computer industry in South Africa",
+        brief: "Answer the following questions on the Code of Ethics for the computer industry in South Africa, as covered in the learner manual. Time: 45 minutes · Activity: Self & Group.",
+        requirements: [
+          "Explain how the computer industry supports equality of opportunity.",
+          "Explain how the computer industry is against computer software piracy.",
+          "Identify ways in which piracy is addressed in South Africa.",
+        ],
+        evidence: "Completed written answers, checked by your facilitator, are filed in your Portfolio of Evidence (POE) as formative evidence for US 114055 (SO 3).",
+      },
+      {
+        id: "as3",
+        title: "Self assessment — Checklist",
+        brief: "You are now ready to go through a check list. Be honest with yourself. Tick the box with either a \u221A or an X to indicate your response.",
+        requirements: [
+          "I am able to describe professionalism for the computer industry in South Africa.",
+          "I am able to describe the codes of practice for professionalism in the IT industry in South Africa.",
+          "I am able to describe the code of ethics in the computer industry in South Africa.",
+          "You must think about any point you could not tick. Write this down as a goal.",
+          "Decide on a plan of action to achieve these goals. Regularly review these goals.",
+        ],
+        evidence: "Show your completed self-assessment to your facilitator and make the necessary arrangements to assist you to become competent in any area you could not tick.",
+      },
+    ],
     quiz: [],
 
     lessonPlan: {
