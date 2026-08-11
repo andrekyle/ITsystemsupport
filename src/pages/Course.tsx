@@ -66,17 +66,11 @@ export function Gloss({ text }: { text: string }) {
   );
 }
 
-/** Lesson bullet: bolds the lead-in term of "Term — description" bullets and
- *  leading clause numbers like "5.1". */
+/** Lesson bullet: bolds the lead-in term of "Term — description" bullets;
+ *  leading clause numbers like "5.1" are stripped from display. */
 function LessonBullet({ text }: { text: string }) {
   const num = text.match(/^(\d+\.\d+)\s+(.*)$/s);
-  if (num) {
-    return (
-      <>
-        <strong>{num[1]}</strong> <Gloss text={num[2]} />
-      </>
-    );
-  }
+  if (num) text = num[2];
   const m = text.match(/^(.{2,60}?) — (.*)$/s);
   if (!m) return <Gloss text={text} />;
   return (
