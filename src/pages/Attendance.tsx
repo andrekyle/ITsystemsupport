@@ -43,17 +43,6 @@ function unitScheduledIsoDates(u: UnitStandard): string[] {
   });
 }
 
-/** The register always opens at 08:30 on the session date, giving learners
- *  30 minutes to sign in before the 09:00 lesson start. */
-function registerOpensAt(dateIso: string): Date {
-  return new Date(`${dateIso}T08:30:00`);
-}
-
-/** Human-readable "HH:MM" for the given Date (local). */
-function fmtHM(d: Date): string {
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
-
 interface AttRow {
   name: string;
   surname: string;
@@ -274,15 +263,9 @@ export function AttendancePage({
 
   const today = isoDate(now);
   const isToday = dateIso === today;
-  // students may only sign on the session day itself, from 30 min before the earliest unit that day
-  const opensAt = registerOpensAt(dateIso);
-  const opensAtLabel = fmtHM(opensAt);
-  // scheduled lesson start (earliest unit that day), for the info banner
-  const lessonStart = new Date(opensAt.getTime() + 30 * 60 * 1000);
-  const lessonStartLabel = fmtHM(lessonStart);
-  const openNow = isToday && now >= opensAt;
+  // learners may sign any register on any day, at any time
   const signed = !!reg.rows[profile.id];
-  const canSign = !signed && (staff || openNow);
+  const canSign = !signed;
 
   /** Sign the register: my details from my enrolment form + arrival time now. */
   const signNow = async (signatureImage?: string) => {
@@ -492,13 +475,6 @@ export function AttendancePage({
         {signed && (
           <span className="att-note">
             {staff ? "You have signed — you can still edit your row." : "You have signed the register."}
-          </span>
-        )}
-        {!signed && !canSign && (
-          <span className="att-note">
-            {isToday
-              ? `Signing opens at ${opensAtLabel} today (the lesson starts at ${lessonStartLabel}).`
-              : `Signing opens at ${opensAtLabel} on the day of the session (the lesson starts at ${lessonStartLabel}).`}
           </span>
         )}
       </div>
