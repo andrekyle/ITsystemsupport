@@ -66,8 +66,17 @@ export function Gloss({ text }: { text: string }) {
   );
 }
 
-/** Lesson bullet: bolds the lead-in term of "Term — description" bullets. */
+/** Lesson bullet: bolds the lead-in term of "Term — description" bullets and
+ *  leading clause numbers like "5.1". */
 function LessonBullet({ text }: { text: string }) {
+  const num = text.match(/^(\d+\.\d+)\s+(.*)$/s);
+  if (num) {
+    return (
+      <>
+        <strong>{num[1]}</strong> <Gloss text={num[2]} />
+      </>
+    );
+  }
   const m = text.match(/^(.{2,60}?) — (.*)$/s);
   if (!m) return <Gloss text={text} />;
   return (
@@ -75,6 +84,29 @@ function LessonBullet({ text }: { text: string }) {
       <strong>{m[1]}</strong> — <Gloss text={m[2]} />
     </>
   );
+}
+
+/** Pick a content-aware icon for a lesson bullet — adds visual variety to long
+ *  bullet lists (e.g. the code-of-practice clauses) instead of a plain chevron. */
+function pickBulletIcon(text: string): React.ComponentProps<typeof Icon>["name"] {
+  const low = text.toLowerCase();
+  if (/impartial|moral|ethic|objectivity|fair/.test(low)) return "shield";
+  if (/plan, monitor|plan and|report on|review objectives|monitor/.test(low)) return "clipboard";
+  if (/document|documentation|standard procedures|records/.test(low)) return "document";
+  if (/client|customer|user|stakeholder/.test(low)) return "people";
+  if (/test|prove the system|detect errors/.test(low)) return "checkCircle";
+  if (/security|confidential|protect|privacy|risk|life, data/.test(low)) return "lock";
+  if (/train|training|equal opportunity|subordinate/.test(low)) return "gradcap";
+  if (/communicat|liaison|channels|enquiries/.test(low)) return "chat";
+  if (/data|files|restore|delete|database|backup/.test(low)) return "database";
+  if (/time|deadline|schedule|completion date|late/.test(low)) return "clock";
+  if (/cost|budget|economic|resources/.test(low)) return "trend";
+  if (/design|input and output|jargon|plain language/.test(low)) return "design";
+  if (/technology|technical|system|software|program/.test(low)) return "chip";
+  if (/contract|tender|legal|law/.test(low)) return "briefcase";
+  if (/competen|expertise|skill|limitations/.test(low)) return "award";
+  if (/task|objective|goal|specify/.test(low)) return "target";
+  return "chevronRight";
 }
 
 /** True when a paragraph looks like a short "list item" written as its own paragraph. */
@@ -2308,7 +2340,7 @@ export function UnitPage({
                     {sec.bullets.map((b) => (
                       <li key={b}>
                         <span className="ico">
-                          <Icon name="chevronRight" size={14} />
+                          <Icon name={pickBulletIcon(b)} size={14} />
                         </span>
                         <span>
                           <LessonBullet text={b} />
