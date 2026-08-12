@@ -175,7 +175,537 @@ export const CONTENT: Record<string, UnitContent> = {
      NQF 5 · 6 credits
      ================================================================ */
   "8252": {
-    lesson: [],
+    lesson: [
+      {
+        heading: "Purpose and content of a range of reports — introduction",
+        icon: "presenter",
+        flat: true,
+        paragraphs: [
+          "Time: 90 minutes · Activity: Self & Group.",
+          "Because we are dealing with business communication, this section will be based on business communication — but the remainder of the types of reports do not differ much from this type of report. By practicing how to write an internal report on a business related matter, we will prepare you to learn the basics of report writing so that you may develop to writing more advanced and specific reports, as you move up in your career.",
+          "There are a few general rules about report writing. A report should be a formal document and should be in the past tense as far as possible, as well as avoiding the use of first or second person pronouns. There should be a simple numbering system with clear headings.",
+          "Before we start writing reports in business, we need to understand what the purpose of the report is — the outcome, or required outcome thereof — as well as the manner (style) in which the report must be written. Writing a report in a style which is not suited to its audience or readers will not be professional. Therefore we must understand what we need to put into the report and phrase (word) it appropriately so that the readers understand the information being given to them.",
+        ],
+        slideQuiz: [
+          {
+            q: "In which tense should a report be written, as far as possible?",
+            options: ["Future tense", "Past tense", "Present tense", "Any tense — it does not matter"],
+            answer: 1,
+            explain: "A report should be a formal document and should be in the past tense as far as possible.",
+          },
+          {
+            q: "Which pronouns should be avoided in a report?",
+            options: [
+              "Third person pronouns",
+              "First or second person pronouns",
+              "All pronouns",
+              "Plural pronouns",
+            ],
+            answer: 1,
+            explain: "Avoid the use of first or second person pronouns — a report is a formal document.",
+          },
+          {
+            q: "What should a report's numbering and headings look like?",
+            options: [
+              "No numbering, decorative headings",
+              "A simple numbering system with clear headings",
+              "Roman numerals only",
+              "Numbering only on the appendices",
+            ],
+            answer: 1,
+            explain: "There should be a simple numbering system with clear headings.",
+          },
+          {
+            q: "What must you understand BEFORE you start writing a business report?",
+            options: [
+              "The printing budget",
+              "The purpose (required outcome) of the report and the style suited to its audience",
+              "The company's founding date",
+              "Only the deadline",
+            ],
+            answer: 1,
+            explain: "First understand the purpose (the required outcome) and the manner/style in which the report must be written for its readers.",
+          },
+          {
+            q: "Why does writing in a style unsuited to the audience matter?",
+            options: [
+              "It makes the report longer",
+              "It will not be professional and readers may not understand the information",
+              "It saves time",
+              "It only matters for external reports",
+            ],
+            answer: 1,
+            explain: "A report in a style not suited to its audience is not professional — the content must be phrased so the readers understand it.",
+          },
+        ],
+      },
+      {
+        heading: "How to write a report — style, selectivity and accuracy",
+        icon: "document",
+        flat: true,
+        paragraphs: [
+          "Style — To be completely successful, a report which makes recommendations must ensure that the persons for whom the report is intended: read it without unnecessary delay; understand everything in it without undue effort; accept the facts, findings, conclusions and recommendations; and decide to take the action recommended. Achieving this demands more of you than merely presenting relevant facts accurately — it also demands that you communicate in a way that is both acceptable and intelligible to the readers.",
+          "Selectivity — Careful choice of words can enable you to convey many subtleties of meaning.",
+          "Accuracy — Check that everything you write is factually accurate. The facts should be capable of being verified. Moreover, arguments should be soundly based and your reasoning should be logical. You should not write anything that will misinform, mislead or unfairly persuade your readers. If you do, you will be doing a disservice not only to yourself but also to your department and organisation. Accurate information is essential for effective communication and decision making.",
+        ],
+        slideQuiz: [
+          {
+            q: "A successful report that makes recommendations must ensure readers…",
+            options: [
+              "File it for later reference",
+              "Read it without delay, understand it without undue effort, accept the findings, and act on the recommendations",
+              "Forward it to as many people as possible",
+              "Admire the writer's vocabulary",
+            ],
+            answer: 1,
+            explain: "The four aims: read without unnecessary delay, understand without undue effort, accept the facts and findings, and decide to take the recommended action.",
+          },
+          {
+            q: "Beyond presenting facts accurately, good report style demands…",
+            options: [
+              "Long, impressive sentences",
+              "Communicating in a way that is both acceptable and intelligible to the readers",
+              "Using technical jargon",
+              "Writing in the first person",
+            ],
+            answer: 1,
+            explain: "Style means communicating in a way that is acceptable and intelligible to the readers — not merely accurate.",
+          },
+          {
+            q: "What does selectivity mean in report writing?",
+            options: [
+              "Choosing which readers may see the report",
+              "Careful choice of words to convey subtleties of meaning",
+              "Selecting only positive findings",
+              "Cutting the report to one page",
+            ],
+            answer: 1,
+            explain: "Selectivity is the careful choice of words, which can convey many subtleties of meaning.",
+          },
+          {
+            q: "What standard must facts in a report meet?",
+            options: [
+              "They must sound convincing",
+              "They must be capable of being verified",
+              "They must be approved by the marketing team",
+              "They must come from the internet",
+            ],
+            answer: 1,
+            explain: "Everything you write should be factually accurate, and the facts should be capable of being verified.",
+          },
+          {
+            q: "Writing something that misleads or unfairly persuades readers…",
+            options: [
+              "Is acceptable if it supports your recommendation",
+              "Does a disservice to yourself, your department and your organisation",
+              "Is fine in the executive summary only",
+              "Only matters in legal reports",
+            ],
+            answer: 1,
+            explain: "Misinforming, misleading or unfairly persuading readers harms you, your department and the organisation — accurate information is essential for decision making.",
+          },
+        ],
+      },
+      {
+        heading: "How to write a report — objectivity and conciseness",
+        icon: "shield",
+        flat: true,
+        paragraphs: [
+          "Objectivity — A report should not be an essay reflecting personal emotions and opinions. You must look at all sides of a problem with an open mind before stating your conclusions. Making it clear that you have an open mind when writing your report will, in most cases, make your conclusions and recommendations more acceptable to your readers. The emphasis, therefore, should be on the factual material presented and the conclusions drawn, rather than on any personal beliefs, biases or prejudices.",
+          "Conciseness — Veni, Vidi, Vici (I came, I saw, I conquered). That is how Julius Caesar reported his visit to our shores. While none of your reports will be as short as this, you should aim to keep them concise. In doing this, do not mistake brevity for conciseness. A report may be brief because it omits important information. A concise report, on the other hand, is short but still contains all the essential details.",
+          "To ensure you do not include material which can safely be left out, you should not ask: 'Can this information be included?' Rather, you should ask: 'Is it necessary for this information to be included?'",
+        ],
+        slideQuiz: [
+          {
+            q: "What does objectivity require of a report writer?",
+            options: [
+              "Expressing strong personal opinions",
+              "Looking at all sides of a problem with an open mind before stating conclusions",
+              "Only reporting management's view",
+              "Avoiding conclusions entirely",
+            ],
+            answer: 1,
+            explain: "A report is not an essay of personal emotions and opinions — look at all sides with an open mind before concluding.",
+          },
+          {
+            q: "Where should the emphasis of a report fall?",
+            options: [
+              "On personal beliefs and biases",
+              "On the factual material presented and the conclusions drawn",
+              "On the writer's writing style",
+              "On the company's reputation",
+            ],
+            answer: 1,
+            explain: "The emphasis should be on the factual material and the conclusions drawn — not personal beliefs, biases or prejudices.",
+          },
+          {
+            q: "What is the difference between brevity and conciseness?",
+            options: [
+              "There is no difference",
+              "A brief report may omit important information; a concise report is short but contains all essential details",
+              "Brevity is better than conciseness",
+              "Concise reports are always longer",
+            ],
+            answer: 1,
+            explain: "Do not mistake brevity for conciseness: brief may mean incomplete; concise means short yet complete.",
+          },
+          {
+            q: "Which question should you ask about including material in a report?",
+            options: [
+              "'Can this information be included?'",
+              "'Is it necessary for this information to be included?'",
+              "'Will this make the report look longer?'",
+              "'Does this paragraph sound clever?'",
+            ],
+            answer: 1,
+            explain: "Ask 'Is it necessary for this information to be included?' — not merely whether it can be included.",
+          },
+          {
+            q: "Why does an open-minded tone help your report?",
+            options: [
+              "It makes the report longer",
+              "It makes your conclusions and recommendations more acceptable to readers",
+              "It hides weak findings",
+              "It avoids the need for evidence",
+            ],
+            answer: 1,
+            explain: "Making it clear you have an open mind makes your conclusions and recommendations more acceptable to your readers.",
+          },
+        ],
+      },
+      {
+        heading: "How to write a report — clarity, simplicity and pointless words",
+        icon: "checkCircle",
+        flat: true,
+        paragraphs: [
+          "Clarity and consistency — The best way to achieve clarity in your writing is to allow some time to elapse between the first draft and its revision. Try to leave it over the weekend, or at least overnight. If you are really under pressure and this is simply not possible, at least leave it over a lunch or coffee break. It is essential to have a period of time, no matter how short, when you can think of other things. In this way, when you come back to the report, you can look at it with a degree of objectivity.",
+          "Simplicity — Usually, if your writing is selective, accurate, objective, concise, clear and consistent, it will also be as simple as it can be. You should guard against over-simplifying, for example to the point of missing out information which the reader needs to fully understand what you are trying to say. Keep your readers firmly in mind and keep asking yourself whether or not they will be able to follow the logic of your presentation.",
+          "Avoid pointless words — Some words and phrases — like basically, actually, undoubtedly, each and every one and during the course of our investigation — keep cropping up in reports. Yet they add nothing to the message and often can be removed without changing the meaning or the tone. Try leaving them out of your writing. You will find your sentences survive, succeed and may even flourish without them.",
+        ],
+        slideQuiz: [
+          {
+            q: "What is the best way to achieve clarity in your writing?",
+            options: [
+              "Write the report in one sitting and submit immediately",
+              "Allow time to elapse between the first draft and its revision",
+              "Use longer words",
+              "Have someone else write it",
+            ],
+            answer: 1,
+            explain: "Let time pass between draft and revision — over a weekend, overnight, or at least a coffee break — so you can revise objectively.",
+          },
+          {
+            q: "If you are under pressure, what is the minimum break you should take before revising?",
+            options: [
+              "No break is needed",
+              "A lunch or coffee break",
+              "A full week",
+              "A month",
+            ],
+            answer: 1,
+            explain: "Even under pressure, leave the draft over a lunch or coffee break so you can return to it thinking freshly.",
+          },
+          {
+            q: "What is the danger of over-simplifying?",
+            options: [
+              "The report becomes too long",
+              "Missing out information the reader needs to fully understand what you are saying",
+              "Readers will think it's too formal",
+              "It increases printing costs",
+            ],
+            answer: 1,
+            explain: "Guard against over-simplifying to the point of leaving out information the reader needs.",
+          },
+          {
+            q: "Which of these is an example of a pointless word or phrase?",
+            options: ["Recommendation", "Basically", "Conclusion", "Findings"],
+            answer: 1,
+            explain: "Words like basically, actually, undoubtedly, each and every one, and during the course of our investigation add nothing to the message.",
+          },
+          {
+            q: "What usually happens when you remove pointless words from your sentences?",
+            options: [
+              "The meaning changes completely",
+              "The sentences survive, succeed and may even flourish without them",
+              "The report becomes unreadable",
+              "The tone becomes too casual",
+            ],
+            answer: 1,
+            explain: "Pointless words can often be removed without changing the meaning or tone — your sentences flourish without them.",
+          },
+        ],
+      },
+      {
+        heading: "The basic structure of a report",
+        icon: "clipboard",
+        flat: true,
+        paragraphs: [
+          "Types of reports can vary greatly; they can range from an experimental report to an environmental impact statement. There is however a basic structure common to most reports, irrespective of their type. The major components of a general report are:",
+        ],
+        bullets: [
+          "Title page — identifies the report, its author and its date.",
+          "Abstract — in less than 200 words: what was the problem, how was it investigated, what did you find out and what do your findings mean?",
+          "Table of contents — a list of the major and minor sections of your report.",
+          "Introduction — set the scene; give some background information about the topic. State the aim/purpose of the investigation. Outline the body sections.",
+          "Main body — organise the sections in a logical sequence: what you investigated, what you found, what interpretations and what judgments you made. Use short informative headings and subheadings.",
+          "Conclusion — what has been achieved and what is the significance of your findings and your discussion? Have your aims been successful or not?",
+          "Recommendations — what do you recommend as a course of action following your conclusion?",
+          "References — a list of all the sources you used.",
+          "Appendices — any information (graphs, charts, tables or other data) you used in your report but did not include in the body.",
+        ],
+        slideQuiz: [
+          {
+            q: "What is the maximum length of an abstract?",
+            options: ["Less than 200 words", "One full page", "500 words", "There is no limit"],
+            answer: 0,
+            explain: "The abstract covers the problem, method, findings and their meaning in less than 200 words.",
+          },
+          {
+            q: "What belongs in the introduction?",
+            options: [
+              "The recommendations",
+              "Background information, the aim/purpose of the investigation and an outline of the body sections",
+              "The list of references",
+              "Graphs and charts",
+            ],
+            answer: 1,
+            explain: "The introduction sets the scene, gives background, states the aim/purpose and outlines the body sections.",
+          },
+          {
+            q: "How should the main body be organised?",
+            options: [
+              "In alphabetical order",
+              "In a logical sequence with short informative headings and subheadings",
+              "As one long paragraph",
+              "By order of importance to the writer",
+            ],
+            answer: 1,
+            explain: "Organise the main body logically — what you investigated, found, interpreted and judged — with short informative headings.",
+          },
+          {
+            q: "Where do graphs, charts and tables that were not included in the body belong?",
+            options: ["The abstract", "The appendices", "The references", "The title page"],
+            answer: 1,
+            explain: "Appendices hold any information (graphs, charts, tables or other data) used in the report but not included in the body.",
+          },
+          {
+            q: "Which component answers 'what do you recommend as a course of action following your conclusion?'",
+            options: ["Introduction", "Recommendations", "Table of contents", "Abstract"],
+            answer: 1,
+            explain: "The recommendations state the course of action that follows from the conclusion.",
+          },
+        ],
+      },
+      {
+        heading: "Types of reports",
+        icon: "layers",
+        flat: true,
+        paragraphs: [
+          "There are various types of reports. We may think of:",
+        ],
+        bullets: [
+          "A report of a sports match.",
+          "A report of an accident to the Police or an insurance company.",
+          "A report of a social function, such as a wedding.",
+          "A news report about an accident, meeting or noteworthy incident.",
+          "A report of a commission of enquiry.",
+          "A trade report.",
+          "A company report or a Company Accident Report.",
+          "An Annual Report by a Chairman or a Treasurer.",
+          "An internal report on a business related matter following an investigation or collection of data.",
+        ],
+        slideQuiz: [
+          {
+            q: "Which of these is a type of report mentioned in the lesson?",
+            options: [
+              "A report of a commission of enquiry",
+              "A shopping list",
+              "A poem about business",
+              "A text message",
+            ],
+            answer: 0,
+            explain: "The lesson lists reports such as a commission of enquiry, trade reports, annual reports and internal business reports.",
+          },
+          {
+            q: "Who might an accident report be written for?",
+            options: [
+              "The Police or an insurance company",
+              "The sports team",
+              "A wedding planner",
+              "The newspaper crossword",
+            ],
+            answer: 0,
+            explain: "An accident may be reported to the Police or an insurance company.",
+          },
+          {
+            q: "Who typically produces an Annual Report?",
+            options: [
+              "A Chairman or a Treasurer",
+              "A new employee",
+              "The receptionist",
+              "An external customer",
+            ],
+            answer: 0,
+            explain: "The lesson mentions an Annual Report by a Chairman or a Treasurer.",
+          },
+          {
+            q: "An internal business report usually follows…",
+            options: [
+              "An investigation or collection of data",
+              "A staff birthday",
+              "A public holiday",
+              "A marketing slogan",
+            ],
+            answer: 0,
+            explain: "An internal report on a business related matter follows an investigation or collection of data.",
+          },
+          {
+            q: "Which statement about report types is TRUE?",
+            options: [
+              "Report types vary greatly, but most share a common basic structure",
+              "All reports have completely different structures",
+              "Only company reports have structure",
+              "News reports are not really reports",
+            ],
+            answer: 0,
+            explain: "Types of reports vary greatly — from sports reports to commissions of enquiry — but most share the same basic structure.",
+          },
+        ],
+      },
+      {
+        heading: "Resources and procedures for obtaining and distributing confidential information",
+        icon: "lock",
+        flat: true,
+        paragraphs: [
+          "Time: 30 minutes · Activity: Self & Group.",
+          "Resources for getting information — Firstly, all information which is available in the organisation must always be seen as confidential information. When some information is made available to the competitors of the organisation, they may have the upper hand and be able to take concepts and ideas from the organisation, and copy them. This could lead to serious financial implications for the organisation. Information centres in the organisation, such as the operations department, financial department, research and development, as well as the human resources department, will have information about the organisation and will be able to give an authorised individual all the information they may need of the organisation.",
+          "Information sourced from the organisation can include, but is not limited to: financial statements / reports; research and development activities; marketing and advertising strategies; human resource needs / expectations; company vision with regards to the long term expectations and future of the organisation; and project specific information of certain aspects of projects undertaken by the organisation.",
+          "Procedures for distributing information — Distributing information about the organisation must be handled in a very delicate manner and the recipients of such information must be selected carefully. Depending on the severity of the information and the level of security and/or risk attached to the information, recipients should be graded whether or not they are liable to obtain such information. Most information will be distributed to the individuals in the organisation dependent on their need for such information — the information should be relevant to their needs as well as their use.",
+          "For instance: if the marketing department is going to be included in the distribution of a new marketing campaign for the organisation, the information given to them should purely be on the new product / service as well as how it will influence and/or attract customers, including the expected target market for the product. They need not know the amount spent on the research and development costs of the new product.",
+        ],
+        slideQuiz: [
+          {
+            q: "How should ALL information available in the organisation be treated?",
+            options: [
+              "As public information",
+              "As confidential information",
+              "As unimportant",
+              "As marketing material",
+            ],
+            answer: 1,
+            explain: "All information available in the organisation must always be seen as confidential information.",
+          },
+          {
+            q: "What can happen if organisational information reaches competitors?",
+            options: [
+              "Nothing significant",
+              "They may gain the upper hand, copy concepts and ideas, with serious financial implications",
+              "The organisation gets free publicity",
+              "The competitors must pay a fee",
+            ],
+            answer: 1,
+            explain: "Competitors may take and copy concepts and ideas, which could lead to serious financial implications for the organisation.",
+          },
+          {
+            q: "Which departments are examples of information centres in an organisation?",
+            options: [
+              "Operations, financial, research and development, and human resources",
+              "Only the canteen",
+              "Only the IT helpdesk",
+              "Reception and security only",
+            ],
+            answer: 0,
+            explain: "Information centres include operations, finance, R&D and HR — they can give an authorised individual the information they need.",
+          },
+          {
+            q: "How should recipients of sensitive information be selected?",
+            options: [
+              "Everyone receives everything",
+              "Carefully — graded by the severity of the information and their need for it",
+              "First come, first served",
+              "By seniority only",
+            ],
+            answer: 1,
+            explain: "Recipients must be selected carefully and graded according to the severity/risk of the information and their need for it.",
+          },
+          {
+            q: "In the marketing campaign example, what should the marketing department NOT be given?",
+            options: [
+              "The expected target market",
+              "The research and development costs of the new product",
+              "How the product will attract customers",
+              "Details of the new product/service",
+            ],
+            answer: 1,
+            explain: "Marketing receives what is relevant to their use — the product, its customer impact and target market — not the R&D spend.",
+          },
+        ],
+      },
+      {
+        heading: "Verifying reported information is in accordance with requirements",
+        icon: "checkCircle",
+        flat: true,
+        paragraphs: [
+          "Time: 30 minutes · Activity: Self & Group.",
+          "Before any report is sent to a person who will proof it and ensure it is correct, the originator of the report is required to double check that all the information given in the report is in line with the stipulated requirements of both the target audience as well as the required outcomes of the report.",
+          "Therefore the person who wrote the report will get another person to read through it, with the required outlines and requirements at hand, and critique the report. This is done to get a second opinion on the report and to ensure that all the information required in the report is present, as well as check the biasness of the report to the readers.",
+          "In many cases, once the report has been critiqued and sent for proofing, the report is handed to the head of the department for approval, at least a week in advance of the expected delivery date. They will have time to go through the report and then give their feedback with regards to add-ons and information which is not relevant to the report.",
+          "In this process, organisational procedures must be strictly followed and adhered to, to ensure that the set protocols are followed for the gathering and distribution of information contained in the report. This is done to ensure that the report is true to its requirements and that it contains sufficient, but not too much information — at the same time giving all its readers the full value of the intended outcome of the report.",
+        ],
+        slideQuiz: [
+          {
+            q: "Who must first double-check that a report meets the stipulated requirements?",
+            options: [
+              "The head of department",
+              "The originator (writer) of the report",
+              "The proofreader",
+              "The readers",
+            ],
+            answer: 1,
+            explain: "Before the report goes for proofing, the originator must double check the information against the requirements of the audience and the required outcomes.",
+          },
+          {
+            q: "Why does the writer ask another person to critique the report?",
+            options: [
+              "To share the blame",
+              "To get a second opinion, confirm all required information is present, and check for bias",
+              "To delay submission",
+              "Because the writer cannot read",
+            ],
+            answer: 1,
+            explain: "A second reader, with the required outlines at hand, checks completeness and the biasness of the report to the readers.",
+          },
+          {
+            q: "How far in advance should the report be handed to the head of department for approval?",
+            options: ["At least a week before the expected delivery date", "The same day", "One hour before", "A month after delivery"],
+            answer: 0,
+            explain: "The report goes to the department head at least a week in advance so they can review and give feedback.",
+          },
+          {
+            q: "What feedback does the department head give?",
+            options: [
+              "Only spelling corrections",
+              "Feedback on add-ons and information which is not relevant to the report",
+              "A new title",
+              "The final printing quote",
+            ],
+            answer: 1,
+            explain: "The head reviews the report and gives feedback on add-ons and irrelevant information.",
+          },
+          {
+            q: "Why must organisational procedures be strictly followed in this process?",
+            options: [
+              "To slow the process down",
+              "To ensure set protocols for gathering and distributing information are followed, so the report is true to its requirements",
+              "To create more paperwork",
+              "To keep the report secret from its readers",
+            ],
+            answer: 1,
+            explain: "Strict adherence ensures the report is true to its requirements, contains sufficient but not too much information, and gives readers the full value of its intended outcome.",
+          },
+        ],
+      },
+    ],
 
     exercises: [],
 
