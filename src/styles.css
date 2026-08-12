@@ -6169,6 +6169,30 @@ input.att-sig {
   }
 }
 
+/* Lesson numbered list — one flowing block, no per-item boxes */
+.lesson-numlist {
+  list-style: none;
+  margin: 10px 0;
+  padding: 4px 0;
+  max-width: 900px;
+}
+.lesson-numlist li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 7px 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.lesson-numlist .num {
+  flex: none;
+  min-width: 22px;
+  font-weight: 700;
+  color: var(--ink-3);
+  text-align: right;
+}
+
 /* Lesson-view final quiz gate */
 .lesson-quiz-list { display: grid; gap: 10px; margin: 10px 0; }
 .lesson-quiz-card {

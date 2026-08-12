@@ -2332,18 +2332,16 @@ export function UnitPage({
                   return els;
                 })()}
                 {sec.bullets && (
-                  <ul className="duty-list">
-                    {sec.bullets.map((b) => (
+                  <ol className="lesson-numlist">
+                    {sec.bullets.map((b, bi) => (
                       <li key={b}>
-                        <span className="ico">
-                          <Icon name={pickBulletIcon(b)} size={14} />
-                        </span>
+                        <span className="num">{bi + 1}</span>
                         <span>
                           <LessonBullet text={b} />
                         </span>
                       </li>
                     ))}
-                  </ul>
+                  </ol>
                 )}
                 {sec.table && (() => {
                   const isDemo =
