@@ -1712,7 +1712,7 @@ export function UnitPage({
     { id: "material", label: "Course material", icon: "play", show: decks.length > 0 },
     { id: "notes", label: "Notes", icon: "document", show: !!content?.notes?.length || Object.values(userNotes).some((n) => n.us === unitId) || !!content?.lesson.length },
     { id: "exercises", label: unitId === "114055" ? "Assignments" : "Exercises", icon: "exercise", show: !!content?.exercises.length },
-    { id: "questions", label: "Questions", icon: "chat", show: !!content?.questionSessions?.length },
+    { id: "questions", label: "Activity", icon: "chat", show: !!content?.questionSessions?.length },
     { id: "assignments", label: "Assignments", icon: "folder", show: !!content?.assignments.length },
     { id: "logbook", label: "Logbook", icon: "book", show: !!content?.logbook },
     { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content?.quiz.length || !!content?.quizzes?.length },
