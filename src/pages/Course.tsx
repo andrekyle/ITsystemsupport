@@ -3205,63 +3205,6 @@ export function UnitPage({
             </details>
           ))}
 
-          {isPrivileged && content.exercises.some((ex) => ex.modelAnswer) && (
-            <>
-              <h2 className="section-title">
-                <span className="ico">
-                  <Icon name="shield" size={20} />
-                </span>
-                Model answers
-              </h2>
-              <p className="muted" style={{ marginTop: -6, marginBottom: 14 }}>
-                Visible to facilitators, assessors, moderators and the super user only — do not distribute to learners before
-                the exercises are assessed.
-              </p>
-              {content.exercises
-                .filter((ex) => ex.modelAnswer)
-                .map((ex) => (
-                  <details key={`ma-${ex.id}`} className="saqa-details lesson-acc model-answer">
-                    <summary>
-                      <Icon name="shield" size={17} />
-                      Model answer — {ex.title}
-                      <span className="chev">
-                        <Icon name="chevronDown" size={15} />
-                      </span>
-                    </summary>
-                    <div className="saqa-body ma-body">
-                      {ex.modelAnswer!.map((blk, bi) => (
-                        <div className="ma-block" key={bi}>
-                          {blk.heading && <div className="ma-heading">{blk.heading}</div>}
-                          {blk.paragraphs?.map((p, pi) => (
-                            <p
-                              key={pi}
-                              className={`lesson-p${p.startsWith("\"") ? " ma-quote" : ""}`}
-                            >
-                              {p}
-                            </p>
-                          ))}
-                          {blk.table && <ModelAnswerTable table={blk.table} />}
-                          {blk.bullets && (
-                            <ul className="duty-list">
-                              {blk.bullets.map((b) => (
-                                <li key={b}>
-                                  <span className="ico">
-                                    <Icon name="checkCircle" size={16} />
-                                  </span>
-                                  <span>
-                                    <AnswerBullet text={b} />
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </details>
-                ))}
-            </>
-          )}
         </>
       )}
 
