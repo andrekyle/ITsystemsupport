@@ -2334,6 +2334,20 @@ table.data.kv tr:last-child td {
   max-width: 1200px;
 }
 
+/* project report upload */
+.lb-upload {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.lb-upload-error {
+  color: var(--red, #f0655a);
+  font-size: 13px;
+}
+
 .lb-fill {
   min-width: 40px;
   height: 34px;

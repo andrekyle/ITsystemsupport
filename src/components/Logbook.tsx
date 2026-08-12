@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { Icon } from "../icons";
-import type { LogbookChecklistRow, LogbookSpec } from "../types";
+import type { LogbookChecklistRow, LogbookSpec, PoeDoc } from "../types";
+import { downloadDoc, uploadFile, userPrefix } from "../lib/files";
 
 function ChecklistRows({
   rows,
@@ -86,6 +87,35 @@ interface LogbookProps {
 }
 
 export function Logbook({ spec, values, onChange }: LogbookProps) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const projectDoc: PoeDoc | null = (() => {
+    const raw = values["project.upload"];
+    if (typeof raw !== "string" || !raw) return null;
+    try { return JSON.parse(raw) as PoeDoc; } catch { return null; }
+  })();
+
+  async function onProjectFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploadError(null);
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError(`"${file.name}" is too large — files must be 10 MB or smaller.`);
+      return;
+    }
+    setUploadPct(0);
+    try {
+      const prefix = await userPrefix();
+      const doc = await uploadFile(`${prefix}/logbook`, file, setUploadPct);
+      onChange("project.upload", JSON.stringify(doc));
+    } catch {
+      setUploadError("The file could not be uploaded — check your connection and try again.");
+    }
+    setUploadPct(null);
+  }
+
   const field = (k: string, placeholder = "") => (
     <input
       className="lb-input"
@@ -209,6 +239,40 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
                 <strong>{spec.project.title}</strong>
                 <br />
                 {spec.project.text}
+                <div className="lb-upload">
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={uploadPct !== null}
+                    onClick={() => fileRef.current?.click()}
+                  >
+                    <Icon name="folder" size={15} />
+                    {uploadPct !== null
+                      ? `Uploading… ${uploadPct}%`
+                      : projectDoc
+                      ? "Replace uploaded report"
+                      : "Upload my report"}
+                  </button>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    hidden
+                    accept=".pdf,.doc,.docx,.odt,.rtf,.txt,image/*"
+                    onChange={(e) => void onProjectFile(e)}
+                  />
+                  {projectDoc && (
+                    <button
+                      type="button"
+                      className="btn ghost"
+                      onClick={() => void downloadDoc(projectDoc)}
+                      title="Download your uploaded report"
+                    >
+                      <Icon name="download" size={14} />
+                      {projectDoc.name}
+                    </button>
+                  )}
+                  {uploadError && <span className="lb-upload-error">{uploadError}</span>}
+                </div>
               </td>
               <td>{spec.project.resource}</td>
             </tr>
