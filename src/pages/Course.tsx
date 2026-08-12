@@ -1150,11 +1150,11 @@ function fmtSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "questions" | "assignments" | "quiz" | "selfassessment" | "evaluation" | "plan";
+type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "questions" | "assignments" | "logbook" | "quiz" | "selfassessment" | "evaluation" | "plan";
 
 const UNIT_TAB_KEY = "itss.unittab";
 const UNIT_TAB_US_KEY = "itss.unittab.us";
-const UNIT_TABS: UnitTab[] = ["overview", "lesson", "material", "notes", "exercises", "questions", "assignments", "quiz", "selfassessment", "evaluation", "plan"];
+const UNIT_TABS: UnitTab[] = ["overview", "lesson", "material", "notes", "exercises", "questions", "assignments", "logbook", "quiz", "selfassessment", "evaluation", "plan"];
 
 /** Restore the saved tab only for the same unit standard — opening another US always starts on Overview. */
 function loadUnitTab(unitId: string): UnitTab {
@@ -1714,6 +1714,7 @@ export function UnitPage({
     { id: "exercises", label: unitId === "114055" ? "Assignments" : "Exercises", icon: "exercise", show: !!content?.exercises.length },
     { id: "questions", label: "Questions", icon: "chat", show: !!content?.questionSessions?.length },
     { id: "assignments", label: "Assignments", icon: "folder", show: !!content?.assignments.length },
+    { id: "logbook", label: "Logbook", icon: "book", show: !!content?.logbook },
     { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content?.quiz.length || !!content?.quizzes?.length },
     { id: "selfassessment", label: "Self assessment", icon: "checkCircle", show: !!content?.selfAssessment },
     { id: "evaluation", label: "Evaluation", icon: "chat", show: true },
@@ -3303,15 +3304,15 @@ export function UnitPage({
               </div>
             </details>
           ))}
-
-          {content.logbook && (
-            <Logbook
-              spec={content.logbook}
-              values={progress.units[u.us]?.logbook ?? {}}
-              onChange={(key, value) => setLogbookField(u.us, key, value)}
-            />
-          )}
         </>
+      )}
+
+      {tab === "logbook" && content?.logbook && (
+        <Logbook
+          spec={content.logbook}
+          values={progress.units[u.us]?.logbook ?? {}}
+          onChange={(key, value) => setLogbookField(u.us, key, value)}
+        />
       )}
 
       {tab === "quiz" && content && content.quizzes && content.quizzes.length > 0 && (() => {
