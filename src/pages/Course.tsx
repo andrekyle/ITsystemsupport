@@ -3757,7 +3757,6 @@ export function UnitPage({
                                 <ul className="plan-bullets">
                                   {r.bullets.map((b, bi) => (
                                     <li key={bi}>
-                                      <span className="plan-bullet-ico"><Icon name="checkCircle" size={12} /></span>
                                       <span><Gloss text={b} /></span>
                                     </li>
                                   ))}
