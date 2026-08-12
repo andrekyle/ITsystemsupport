@@ -375,6 +375,8 @@ export interface UnitContent {
   logbook?: LogbookSpec;
   notes?: UnitNote[];
   lessonPlan?: LessonPlan;
+  /** question sessions shown on their own tab (rendered like exercises) */
+  questionSessions?: Exercise[];
   /** end-of-unit self assessment checklist — rendered on its own tab with tickable boxes */
   selfAssessment?: SelfAssessment;
 }

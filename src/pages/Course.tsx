@@ -1150,11 +1150,11 @@ function fmtSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "assignments" | "quiz" | "selfassessment" | "evaluation" | "plan";
+type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "questions" | "assignments" | "quiz" | "selfassessment" | "evaluation" | "plan";
 
 const UNIT_TAB_KEY = "itss.unittab";
 const UNIT_TAB_US_KEY = "itss.unittab.us";
-const UNIT_TABS: UnitTab[] = ["overview", "lesson", "material", "notes", "exercises", "assignments", "quiz", "selfassessment", "evaluation", "plan"];
+const UNIT_TABS: UnitTab[] = ["overview", "lesson", "material", "notes", "exercises", "questions", "assignments", "quiz", "selfassessment", "evaluation", "plan"];
 
 /** Restore the saved tab only for the same unit standard — opening another US always starts on Overview. */
 function loadUnitTab(unitId: string): UnitTab {
@@ -1712,6 +1712,7 @@ export function UnitPage({
     { id: "material", label: "Course material", icon: "play", show: decks.length > 0 },
     { id: "notes", label: "Notes", icon: "document", show: !!content?.notes?.length || Object.values(userNotes).some((n) => n.us === unitId) || !!content?.lesson.length },
     { id: "exercises", label: unitId === "114055" ? "Assignments" : "Exercises", icon: "exercise", show: !!content?.exercises.length },
+    { id: "questions", label: "Questions", icon: "chat", show: !!content?.questionSessions?.length },
     { id: "assignments", label: "Assignments", icon: "folder", show: !!content?.assignments.length },
     { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content?.quiz.length || !!content?.quizzes?.length },
     { id: "selfassessment", label: "Self assessment", icon: "checkCircle", show: !!content?.selfAssessment },
@@ -3032,13 +3033,13 @@ export function UnitPage({
         </>
       )}
 
-      {tab === "exercises" && content && (
+      {(tab === "exercises" || tab === "questions") && content && (
         <>
           <p className="muted" style={{ marginTop: 14 }}>
             Formative classroom/self-study exercises. Keep your written answers — they form part of
             your workplace evidence.
           </p>
-          {content.exercises.map((ex) => (
+          {(tab === "questions" ? content.questionSessions ?? [] : content.exercises).map((ex) => (
             <details key={ex.id} className="saqa-details lesson-acc">
               <summary>
                 <Icon name="exercise" size={17} />
