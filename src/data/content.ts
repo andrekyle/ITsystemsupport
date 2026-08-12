@@ -1049,34 +1049,7 @@ export const CONTENT: Record<string, UnitContent> = {
       },
     ],
 
-    assignments: [
-      {
-        id: "as1",
-        title: "Assignment 1 — Monthly IT service performance report",
-        brief: "Prepare a complete formal business report (1 500 – 2 000 words) analysing the bank's monthly IT service performance, using the simulated ServiceNow data pack provided by your facilitator (ticket volumes, SLA compliance, system availability, and client-impact incidents for the month).",
-        requirements: [
-          "Full formal structure: title page with classification (Internal), executive summary, contents, introduction, findings, conclusions, recommendations, appendices.",
-          "At least two tables and two charts, each numbered, titled, sourced (e.g. 'ServiceNow export, June 2026') and referenced in the text.",
-          "Comparisons: actual vs SLA target, current vs previous month, and at least one analysis by business unit (Private Banking, Wealth & Investment, Corporate & Institutional Banking).",
-          "At least three specific, actionable recommendations linked to your conclusions — at least one addressing SLA compliance and one addressing recurring incidents.",
-          "Plain business English, UK spelling, abbreviations defined on first use, numbered headings, version and date on the document. No client-identifying information anywhere in the report (POPIA).",
-        ],
-        evidence: "Submit the report to your facilitator for formative feedback, then file the assessed copy and your source data pack in your Portfolio of Evidence (POE).",
-      },
-      {
-        id: "as2",
-        title: "Assignment 2 — Incident report: data-centre power failure",
-        brief: "At 07h42 on a Monday, a UPS failure in the data centre took down two racks, interrupting the ITSM platform and telephony for 3 hours 20 minutes. Trading was unaffected, but 214 service desk calls could not be logged and Private Banking client onboarding was delayed. Write a short-form incident/investigation report (600 – 800 words) for the IT Operations Manager.",
-        requirements: [
-          "Short-form structure: heading block (to/from/date/ref/classification), purpose, factual findings, conclusions, recommendations.",
-          "Chronology of the incident and response: detection, escalation, failover attempts, vendor call-out, restoration, and post-incident checks.",
-          "Clear separation of fact from opinion; any assumption must be labelled as such.",
-          "One table summarising impact by system and business unit (duration, users affected, client impact).",
-          "Recommendations covering both immediate remediation (UPS maintenance, monitoring alerts) and prevention (redundancy testing schedule, communication protocol).",
-        ],
-        evidence: "Submit within 5 working days of the briefing session. The assessed report and assessor feedback form are filed in your POE as summative evidence.",
-      },
-    ],
+    assignments: [],
 
     notes: [
       {
