@@ -3412,10 +3412,9 @@ export function UnitPage({
             </h2>
             <div className="exam-instruction">
               <p>
-                <strong>{qNo}.1</strong> Various options are provided as possible answers to the
-                following questions. Choose the answer and select only the letter (A–D) next to
-                the question numbers ({qNo}.1.1 to {qNo}.1.{active.questions.length}). Only ONE
-                answer per question is allowed.
+                Various options are provided as possible answers to the following questions.
+                Choose the answer and select only the letter (A–D) next to the question numbers
+                (1 to {active.questions.length}). Only ONE answer per question is allowed.
               </p>
             </div>
             <Quiz
@@ -3424,7 +3423,6 @@ export function UnitPage({
               previous={results[active.id]}
               onSubmit={(score, total) => saveQuizResult(u.us, score, total, active.id)}
               showAnswers={isPrivileged}
-              numberPrefix={`${qNo}.1`}
             />
           </>
         );
@@ -3440,10 +3438,9 @@ export function UnitPage({
           </h2>
           <div className="exam-instruction">
             <p>
-              <strong>1.1</strong> Various options are provided as possible answers to the
-              following questions. Choose the answer and select only the letter (A–D) next to the
-              question numbers (1.1.1 to 1.1.{content.quiz.length}). Only ONE answer per question
-              is allowed.
+              Various options are provided as possible answers to the following questions.
+              Choose the answer and select only the letter (A–D) next to the question numbers
+              (1 to {content.quiz.length}). Only ONE answer per question is allowed.
             </p>
           </div>
           <Quiz
@@ -3451,7 +3448,6 @@ export function UnitPage({
             previous={quizResult}
             onSubmit={(score, total) => saveQuizResult(u.us, score, total)}
             showAnswers={isPrivileged}
-            numberPrefix="1.1"
           />
         </>
       )}
