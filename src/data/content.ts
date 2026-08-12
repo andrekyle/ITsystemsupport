@@ -2989,6 +2989,68 @@ export const CONTENT: Record<string, UnitContent> = {
       },
     ],
     assignments: [],
+
+    logbook: {
+      assignmentTitle: "Assignment Two",
+      programme: "Information Technology — Systems Support",
+      unitLabel: "10135 — Work as a project team member",
+      detailFields: [
+        "Learner Name",
+        "Qualification",
+        "Group / Class",
+        "Workplace Name",
+        "Supervisor / Mentor",
+        "Start & Completion Date",
+      ],
+      project: {
+        time: "30 minutes",
+        title: "Project — Report",
+        text: "Write a report on what contributions you and your fellow team members can make to build working relationships. Think about possible ideas and conventions which you could use. Attach your project here and mark it 10135 A.",
+        resource: "Logbook",
+      },
+      knowledgeQuestions: [
+        { text: "Criteria for working as a member of a team are identified and explained.", marks: [true, false, false, true, false, false] },
+        { text: "Behaviours conducive to working as a member of a team are identified and explained.", marks: [true, false, false, true, false, false] },
+        { text: "Team dynamics are identified and explained.", marks: [true, false, false, true, false, false] },
+        { text: "The importance of building relations between team members and stakeholders is explained.", marks: [true, false, false, true, false, false] },
+        { text: "Stakeholders are identified and their needs explained.", marks: [true, false, false, true, false, false] },
+        { text: "The needs and objectives of team members are identified and explained.", marks: [true, false, false, true, false, false] },
+        { text: "Methods and techniques for building team coherence and spirit are identified and explained.", marks: [true, false, false, true, false, false] },
+        { text: "The importance of showing respect is explained.", marks: [true, false, false, true, false, false] },
+      ],
+      practicalActivities: [
+        { text: "Team members are given sufficient support for them to achieve their work / project objectives.", marks: [false, true, false, false, true, false] },
+        { text: "Team members are consulted with.", marks: [false, true, false, false, true, false] },
+        { text: "Authority levels of all team members are identified and applied.", marks: [false, true, false, false, true, false] },
+        { text: "Collaboration reflects the needs of all team members.", marks: [false, true, false, false, true, false] },
+        { text: "Communications with stakeholders encourages open and frank discussions.", marks: [false, true, false, false, true, false] },
+        { text: "Commitments to stakeholders are honoured and met.", marks: [false, true, false, false, true, false] },
+        { text: "Team member actions are conducive to team coherence, spirit and image.", marks: [false, true, false, false, true, false] },
+        { text: "Trust and support of colleagues is gained through applicable behaviours.", marks: [false, true, true, false, true, true] },
+        { text: "Feedback is provided which leads to constructive working relationships.", marks: [false, true, false, false, true, false] },
+        { text: "Differences between team members are identified and acknowledged.", marks: [false, true, false, false, true, false] },
+        { text: "Team members are treated in ways which that demonstrate respect for individuals.", marks: [false, true, false, false, true, false] },
+        { text: "Behaviours, which are of concern to individuals, are discussed promptly and openly with those concerned.", marks: [false, true, false, false, true, false] },
+      ],
+      workplaceActivities: [
+        "Team members are given sufficient support for them to achieve their work / project objectives. Team members are consulted with.",
+        "Authority levels of all team members are identified and applied. Collaboration reflects the needs of all team members.",
+        "Communications with stakeholders encourages open and frank discussions. Commitments to stakeholders are honoured and met.",
+        "Team member actions are conducive to team coherence, spirit and image. Trust and support of colleagues is gained through applicable behaviours.",
+        "Feedback is provided which leads to constructive working relationships. Differences between team members are identified and acknowledged.",
+        "Team members are treated in ways which that demonstrate respect for individuals. Behaviours, which are of concern to individuals, are discussed promptly and openly with those concerned.",
+      ],
+      workplaceEvidenceNote: "The workplace completes this section after observing the learner having complied to and completed all the activities as mentioned below.",
+      otherActivities: [
+        {
+          activity: "Contribute to building relations between team members and stakeholders.",
+          evidence: "Project — Report: Write a report on what contributions you and your fellow team members can make to build working relationships. Think about possible ideas and conventions which you could use. Attach your project here and mark it 10135 A.",
+        },
+      ],
+      otherEvidenceNote: "Learner evidence and experience is recorded here. Make reference to equipment, chemicals and materials that were used in these processes.",
+      projectChecklist: [{ no: "4", name: "10135 A" }],
+    },
+
     quiz: [],
     quizzes: [
       {
