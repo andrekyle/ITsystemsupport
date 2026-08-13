@@ -891,7 +891,7 @@ export const CONTENT: Record<string, UnitContent> = {
       startTime: "09:00",
       details: [
         { icon: "calendar", label: "Date", value: "Friday, 17 July 2026" },
-        { icon: "clock", label: "Time", value: "09:00 \u2013 14:00" },
+        { icon: "clock", label: "Time", value: "09:00 \u2013 14:00 · lunch 12:00 \u2013 13:00" },
         { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
         { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
       ],
@@ -921,7 +921,7 @@ export const CONTENT: Record<string, UnitContent> = {
           heading: "Unit Standard 8252",
           rows: [
             {
-              time: "30 minutes",
+              time: "25 minutes",
               title: "Index & Unit Standard Alignment — Facilitator",
               text: [
                 "Read through the index with the learners, highlighting the areas that will be covered in this manual. Make reference to the Unit Standard Alignment Index to outline the specific outcomes that will be covered.",
@@ -929,7 +929,7 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["LM p3"],
             },
             {
-              time: "90 minutes",
+              time: "85 minutes",
               title: "Purpose and content of a range of reports — Facilitator & Class",
               bullets: [
                 "Read through pages 4-7 of the learner manual, identifying different reports and the styles in which they are written.",
@@ -937,12 +937,12 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["LM p4-7"],
             },
             {
-              time: "25 minutes",
+              time: "10 minutes",
               title: "Break",
               break: true,
             },
             {
-              time: "30 minutes",
+              time: "25 minutes",
               title: "Procedures and resources for obtaining and distributing confidential information — Facilitator & Class",
               bullets: [
                 "Read through page 8 and identify resources for getting information and procedures for distributing such information.",
@@ -950,7 +950,7 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["LM p8"],
             },
             {
-              time: "30 minutes",
+              time: "15 minutes",
               title: "Verifying reported information — Facilitator & Class",
               bullets: [
                 "Read through page 9 and identify methods to check that the reported information is in accordance with the requirements.",
@@ -958,7 +958,12 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["LM p9"],
             },
             {
-              time: "45 minutes",
+              time: "60 minutes",
+              title: "Lunch",
+              break: true,
+            },
+            {
+              time: "30 minutes",
               title: "Questionnaire 1 — Class in pairs",
               bullets: [
                 "Facilitator to read through the questions with the learners, ensuring they understand what is expected of them.",
@@ -3447,7 +3452,7 @@ export const CONTENT: Record<string, UnitContent> = {
       startTime: "09:00",
       details: [
         { icon: "calendar", label: "Date", value: "Friday, 7 August 2026" },
-        { icon: "clock", label: "Time", value: "09:00 \u2013 14:00" },
+        { icon: "clock", label: "Time", value: "09:00 \u2013 14:00 · lunch 12:00 \u2013 13:00" },
         { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
         { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
       ],
@@ -3486,7 +3491,17 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["LM p11-12"],
             },
             {
-              time: "90 minutes",
+              time: "15 minutes",
+              title: "Break",
+              break: true,
+            },
+            {
+              time: "60 minutes",
+              title: "Lunch",
+              break: true,
+            },
+            {
+              time: "60 minutes",
               title: "Contribution to team coherence, respect and interaction between team members — Facilitator & Class",
               text: ["Read through pages 13-19 of the learner manual, identifying the following:"],
               bullets: [
@@ -4609,7 +4624,7 @@ export const CONTENT: Record<string, UnitContent> = {
       startTime: "09:00",
       details: [
         { icon: "calendar", label: "Dates", value: "Wednesday 5 & Thursday 6 August 2026" },
-        { icon: "clock", label: "Time", value: "09:00 – 14:00 (both days)" },
+        { icon: "clock", label: "Time", value: "09:00 – 14:00 (both days) · lunch 12:00 – 13:00" },
         { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
         { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
       ],
@@ -4665,12 +4680,12 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["Lesson sections 3–4"],
             },
             {
-              time: "25 minutes",
+              time: "10 minutes",
               title: "Break",
               break: true,
             },
             {
-              time: "55 minutes",
+              time: "35 minutes",
               title: "Inside the case: motherboard, CPU, RAM — Facilitator & Class (hands-on)",
               bullets: [
                 "Open the demo PC live: identify every part of section 5 on the real board.",
@@ -4680,7 +4695,12 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["Lesson sections 5–6", "Demo PC", "Demo box"],
             },
             {
-              time: "45 minutes",
+              time: "60 minutes",
+              title: "Lunch",
+              break: true,
+            },
+            {
+              time: "30 minutes",
               title: "Storage, ports and cables — Class in pairs (hands-on)",
               bullets: [
                 "Section 7 with the opened HDD vs SSD vs M.2 in hand; RAID on the whiteboard; the 3-2-1 backup rule.",
@@ -4689,7 +4709,7 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["Lesson sections 7–8", "Cable pile"],
             },
             {
-              time: "20 minutes",
+              time: "10 minutes",
               title: "Power, cooling & graphics — Facilitator & Class",
               bullets: [
                 "Section 9: PSU connectors on the real unit; dust and thermal throttling; UPS types for load shedding.",
@@ -4745,7 +4765,7 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["Lesson section 11", "Demo switch/AP", "Crimping tool"],
             },
             {
-              time: "25 minutes",
+              time: "20 minutes",
               title: "Break",
               break: true,
             },
@@ -4759,7 +4779,12 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["Lesson sections 12–13", "Uploaded figures"],
             },
             {
-              time: "30 minutes",
+              time: "60 minutes",
+              title: "Lunch",
+              break: true,
+            },
+            {
+              time: "15 minutes",
               title: "Software, licensing & the boot process — Facilitator & Class",
               bullets: [
                 "Section 14: the software stack, the OS family, patching discipline, licence types (and the ethics of piracy).",
@@ -4768,7 +4793,7 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["Lesson sections 14–15", "Demo PC"],
             },
             {
-              time: "50 minutes",
+              time: "20 minutes",
               title: "Exercises 1 & 2 — Class in pairs",
               bullets: [
                 "Pairs complete both exercises in the app; facilitator circulates and takes feedback from two pairs per exercise.",
@@ -4776,7 +4801,7 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["Exercises tab"],
             },
             {
-              time: "15 minutes",
+              time: "10 minutes",
               title: "Quiz 2 & Self-Assessment — Learners individually",
               bullets: [
                 "Learners complete Quiz 2 (Day 2 content) and judge their own competence; identify learners needing support.",
@@ -4784,7 +4809,7 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["Quiz tab: Quiz 2"],
             },
             {
-              time: "10 minutes",
+              time: "5 minutes",
               title: "Parking Bay — Facilitator",
               bullets: [
                 "Answer all parked questions; ensure the whole class understands each answer.",
@@ -5596,7 +5621,58 @@ export const CONTENT: Record<string, UnitContent> = {
         "Show your completed self-assessment to your facilitator and make the necessary arrangements to assist you to become competent in any area you could not tick.",
       ],
     },
-    quiz: [],
+    quiz: [
+      {
+        q: "What is the CSSA Code of Practice?",
+        options: [
+          "A price list for professional IT services in South Africa",
+          "A series of statements that prescribe minimum standards of practice, observed in the spirit and not merely to the word",
+          "A licence agreement for commercial software",
+          "An employment contract for IT workers",
+        ],
+        answer: 1,
+        explain: "The Code of Practice is directed to all professional members of the CSSA and prescribes minimum standards of practice — viewed as a whole and observed in the spirit.",
+      },
+      {
+        q: "Which body was launched in Cape Town in 1995 to propel black individuals into the mainstream of the ICT industry?",
+        options: ["CSSA", "BITF", "ITUC", "ITA"],
+        answer: 1,
+        explain: "The Black Information Technology Forum (BITF) became a national organisation in 1998 and is the largest organisation representing the interests of black people in South Africa's ICT industry.",
+      },
+      {
+        q: "In the event of disaster, clause 4.4 of the Code of Practice says staff must be trained to protect — in this order:",
+        options: [
+          "Equipment, data, life",
+          "Data, equipment, life",
+          "Life, data, equipment",
+          "Whatever is most expensive first",
+        ],
+        answer: 2,
+        explain: "Protect life, data and equipment — in that order. The safety of people always comes first.",
+      },
+      {
+        q: "How does the CSSA Code of Practice support equality of opportunity?",
+        options: [
+          "By reserving membership for senior managers",
+          "By requiring that subordinates are trained on an equal opportunity basis, to be effective in their duties and to qualify for increased responsibilities",
+          "By setting equal salaries across the industry",
+          "By limiting training to those already qualified",
+        ],
+        answer: 1,
+        explain: "Clause 1.2 requires training on an equal opportunity basis, and the CSSA constitution commits to education, training and community development for all.",
+      },
+      {
+        q: "Which of these is NOT one of the ways piracy is addressed in South Africa?",
+        options: [
+          "Copyright legislation and TRIPS compliance",
+          "BSA prosecutions and out-of-court settlements",
+          "Enforcement raids by SAFACT and SAPS",
+          "Government subsidies for buyers of pirated software",
+        ],
+        answer: 3,
+        explain: "Piracy is fought through legislation, prosecution, enforcement raids, online marketplace policing and public awareness — it is never subsidised.",
+      },
+    ],
 
     logbook: {
       assignmentTitle: "Demonstrate an awareness of ethics and professionalism for the computer industry in South Africa",
@@ -5657,7 +5733,7 @@ export const CONTENT: Record<string, UnitContent> = {
       startTime: "09:00",
       details: [
         { icon: "calendar", label: "Date", value: "Friday, 14 August 2026" },
-        { icon: "clock", label: "Time", value: "09:00 \u2013 14:00" },
+        { icon: "clock", label: "Time", value: "09:00 \u2013 14:00 · lunch 12:00 \u2013 13:00" },
         { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
         { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
       ],
@@ -5670,7 +5746,7 @@ export const CONTENT: Record<string, UnitContent> = {
           heading: "Unit Standard 114055",
           rows: [
             {
-              time: "30 minutes",
+              time: "25 minutes",
               title: "Index & Unit Standard Alignment — Facilitator",
               text: [
                 "Read through the index with the learners, highlighting the areas that will be covered in this manual. Make reference to the Unit Standard Alignment Index to outline the specific outcomes that will be covered.",
@@ -5678,7 +5754,7 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["LM p3"],
             },
             {
-              time: "90 minutes",
+              time: "60 minutes",
               title: "Codes of practice for the IT industry in SA — Facilitator & Class",
               bullets: [
                 "Read through pages 4-16 of the learner manual, identifying the codes of practice of the IT industry in South Africa.",
@@ -5686,7 +5762,7 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["LM p4-16"],
             },
             {
-              time: "45 minutes",
+              time: "30 minutes",
               title: "Questionnaire 1 — Class in pairs",
               bullets: [
                 "Facilitator to read through the questions with the learners, ensuring they understand what is expected of them.",
@@ -5695,7 +5771,12 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["LM p17-19"],
             },
             {
-              time: "90 minutes",
+              time: "10 minutes",
+              title: "Break",
+              break: true,
+            },
+            {
+              time: "55 minutes",
               title: "Codes of ethics in the computer industry — Facilitator & Class",
               bullets: [
                 "Read through pages 20-25 of the learner manual, identifying the codes of ethics in the computer industry.",
@@ -5703,7 +5784,12 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["LM p20-25"],
             },
             {
-              time: "45 minutes",
+              time: "60 minutes",
+              title: "Lunch",
+              break: true,
+            },
+            {
+              time: "30 minutes",
               title: "Questionnaire 2 — Class in pairs",
               bullets: [
                 "Facilitator to read through the questions with the learners, ensuring they understand what is expected of them.",
