@@ -165,6 +165,10 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
   asd: {
     def: "Assessment Specifications Document — the QCTO-approved companion to the curriculum that prescribes how competence must be assessed: the assessment methods and instruments, evidence requirements, weighting and conditions for the external summative assessment. Every formative and summative assessment must align with it.",
   },
+  "pr.cio": {
+    def: "The Pr.CIO® (Professional CIO) designation is awarded to those ICT professionals who have met global standards for competence, ethical issues, social implications, and legal and professional practice at the level of a Chief Information Officer. It is one of IITPSA's registered professional designations — used after one's name, it identifies the holder as belonging to a professional body.",
+    link: { label: "IITPSA — careers in ICT", url: "https://www.iitpsa.org.za/careers-in-ict-info/" },
+  },
   "codes of practice": {
     def: "A set of rules adopted by CSSA members to benefit members and the wider community. It serves an educational role and deals with how members exercise their professional competence: a series of statements prescribing minimum standards of practice, concerned with professional responsibility, grouped into elements — personal development; organisation and management; contracting; privacy, security and integrity; development of a system; implementation; and live systems. The code is viewed as a whole and observed in the spirit, not merely to the word.",
     link: { label: "UCT ethics notes — Code of Practice", url: "https://www.cs.uct.ac.za/mit_notes/ethics/htmls/ch04s03.html" },
