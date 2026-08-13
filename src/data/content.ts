@@ -6100,6 +6100,111 @@ export const CONTENT: Record<string, UnitContent> = {
         answer: 3,
         explain: "Piracy is fought through legislation, prosecution, enforcement raids, online marketplace policing and public awareness — it is never subsidised.",
       },
+      {
+        q: "What is the Computer Society of South Africa (CSSA) known as today?",
+        options: [
+          "The Business Software Alliance (BSA)",
+          "The Institute of Information Technology Professionals South Africa (IITPSA)",
+          "The Information Technology Association (ITA)",
+          "The Southern African Federation Against Copyright Theft (SAFACT)",
+        ],
+        answer: 1,
+        explain: "The CSSA is now the IITPSA — and the legacy CSSA Code of Practice and professional conduct guidelines are found through the official IITPSA website.",
+      },
+      {
+        q: "Which set of steps starts an IITPSA membership application?",
+        options: [
+          "Write a letter to the Minister of Communications",
+          "Create a profile on the IITPSA Membership Portal, choose your membership tier, submit certified qualifications and a CV, and pay the relevant application and annual fees",
+          "Pass a practical exam at any university",
+          "Ask an existing member to nominate you at the AGM",
+        ],
+        answer: 1,
+        explain: "Membership begins on the IITPSA Membership Portal: create a profile, choose a tier, submit certified qualifications and a CV, and pay the application and annual fees.",
+      },
+      {
+        q: "What is the purpose of the Computer Society of South Africa as set out in its Constitution?",
+        options: [
+          "To sell computer hardware to government departments",
+          "To elevate ICT capability and professionalism in South Africa",
+          "To regulate internet service providers",
+          "To set retail prices for software",
+        ],
+        answer: 1,
+        explain: "The Society is established to elevate Information and Communications Technology capability and professionalism in South Africa.",
+      },
+      {
+        q: "According to clause 1.3 of the Code of Practice, a professional member should…",
+        options: [
+          "Accept any work offered and learn on the job",
+          "Accept only work they believe they are competent to perform, obtaining additional expertise where advisable",
+          "Refuse all unfamiliar work permanently",
+          "Delegate difficult work without review",
+        ],
+        answer: 1,
+        explain: "Be aware of your own limitations, never knowingly imply competence you do not possess, and bring in appropriately qualified expertise when advisable.",
+      },
+      {
+        q: "Clause 2.4 makes a professional accountable for…",
+        options: [
+          "Only the technical accuracy of their code",
+          "The quality, timeliness and use of resources in the work for which they are responsible",
+          "The profits of the whole company",
+          "Their colleagues' mistakes",
+        ],
+        answer: 1,
+        explain: "Provide a service of agreed quality, on time and within budget — planning for contingencies and making others aware of foreseeable difficulties.",
+      },
+      {
+        q: "What are the four areas of spending on system security under clause 4.1?",
+        options: [
+          "Hardware, software, network, people",
+          "Protection, Detection, Suppression, Recovery",
+          "Firewalls, antivirus, backups, passwords",
+          "Plan, Do, Check, Act",
+        ],
+        answer: 1,
+        explain: "Protection prevents threats becoming reality; Detection in time to act; Suppression limits the effect; Recovery rectifies and gets the system going again.",
+      },
+      {
+        q: "Under clause 5.5, why should the client participate in all stages of system development?",
+        options: [
+          "To reduce the developer's workload",
+          "Because the system ultimately belongs to the client — involvement ensures you produce the system the client requires",
+          "Because clients enjoy writing code",
+          "To transfer legal liability to the client",
+        ],
+        answer: 1,
+        explain: "Seek the client's involvement in key activities such as specification, quality control and test data — the system ultimately belongs to the client.",
+      },
+      {
+        q: "Under clause 6.1, when is your task complete?",
+        options: [
+          "When the code compiles",
+          "When the invoice is paid",
+          "Not until you have seen the system through to implementation and the client's staff can use it effectively",
+          "When the project manager signs off the design",
+        ],
+        answer: 2,
+        explain: "Professional duty requires seeing the system through to implementation, with users trained in advance to counter resistance to change.",
+      },
+      {
+        q: "What is software piracy?",
+        options: [
+          "Downloading free open-source software",
+          "The failure to comply with software licence agreements — an unlawful action liable to civil or criminal prosecution",
+          "Using software after office hours",
+          "Selling second-hand computers",
+        ],
+        answer: 1,
+        explain: "Software piracy is the failure to comply with software licence agreements; offenders face civil or criminal prosecution. Its forms are End User Copying, Reseller Copying and Counterfeiting.",
+      },
+      {
+        q: "Which trade association represents the entertainment industry against copyright theft in Southern Africa?",
+        options: ["SAFACT", "PAG", "ITARCS", "WCL"],
+        answer: 0,
+        explain: "The Southern African Federation Against Copyright Theft (SAFACT) — the entertainment industry loses approximately R200 million per annum to piracy.",
+      },
     ],
 
     logbook: {
