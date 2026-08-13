@@ -557,6 +557,14 @@ export function StudentsPage({
 
       {isSuper && <AddUser onAdded={refresh} />}
 
+      {isSuper && (
+        <DownloadAllAssignments
+          learners={people.filter((p) => p.role === "Learner")}
+          remoteIds={remoteIds}
+          owners={cloud?.owners ?? {}}
+        />
+      )}
+
       {people.length > 0 && <OnlineNow people={people} viewer={profile} />}
 
       {isPrivileged && people.length > 0 && (
@@ -815,6 +823,164 @@ function assessedUnits() {
       (x.content.quiz.length ||
         x.content.quizzes?.length ||
         x.content.exercises.some((e) => e.checks))
+  );
+}
+
+/* ---------- assignment export (single learner and whole cohort) ---------- */
+
+const escHtml = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+const ASSIGNMENT_DOC_CSS = `
+  body{font-family:Segoe UI,Arial,sans-serif;max-width:820px;margin:32px auto;padding:0 20px;color:#1c2430}
+  h1{margin-bottom:2px} .sub{color:#5c6774;margin-top:0}
+  section{margin-top:30px;border-top:2px solid #d8dee6;padding-top:12px}
+  h2{font-size:17px} h3{margin:18px 0 2px;font-size:15px}
+  .marks{color:#5c6774;margin:2px 0 10px;font-size:13px}
+  .q{margin:0 0 12px}
+  .q-head{font-size:12px;color:#5c6774;text-transform:uppercase;letter-spacing:.4px}
+  .q-text{font-weight:600;margin:2px 0 4px}
+  .answer{white-space:pre-wrap;background:#f4f6f8;padding:8px 12px;border-radius:4px}
+  .answer.ok{background:#f0f8f2}
+  .learner-head{margin-top:48px;padding-top:20px;border-top:3px solid #1c2430}
+  .learner-head h1{font-size:22px}
+  .learner-head:first-of-type{margin-top:20px;padding-top:0;border-top:none}
+  @media print{
+    body{margin:10mm auto}
+    .learner-head{break-before:page;border-top:none}
+    .learner-head:first-of-type{break-before:auto}
+  }
+`;
+
+/** Every exercise/assignment a learner has worked on — typed answers with
+ *  marks — as printable HTML section blocks (one per unit standard). */
+function assignmentUnitBlocks(prog: ProgressState): string[] {
+  const unitBlocks: string[] = [];
+  for (const { unit, content } of assessedUnits()) {
+    if (!content?.exercises.length) continue;
+    const up = prog.units[unit.us];
+    const lb = up?.logbook ?? {};
+    const exBlocks: string[] = [];
+    for (const ex of content.exercises) {
+      if (!ex.checks?.length) continue;
+      const answers = ex.steps
+        .map((step, i) => ({
+          step,
+          text: String(lb[`exq.${ex.id}.${i}`] ?? "").trim(),
+          ok: lb[`exq.${ex.id}.${i}.ok`] === true,
+          check: ex.checks?.[i],
+        }))
+        .filter((a) => a.check);
+      const res = up?.exercises?.[ex.id];
+      if (!res && answers.every((a) => !a.text)) continue; // not started
+      const qHtml = answers
+        .map(
+          (a, i) => `
+        <div class="q">
+          <div class="q-head">Question ${i + 1} — ${a.ok ? "✓ correct" : "not yet correct"}</div>
+          <div class="q-text">${escHtml(a.step)}</div>
+          <div class="answer${a.ok ? " ok" : ""}">${a.text ? escHtml(a.text) : "<em>No answer typed</em>"}</div>
+        </div>`
+        )
+        .join("");
+      exBlocks.push(`
+      <div class="exercise">
+        <h3>${escHtml(ex.title)}</h3>
+        <p class="marks">${
+          res
+            ? `Best ${res.best}/${res.total} marks · last attempt ${res.last}/${res.total} · ${res.attempts} attempt${res.attempts === 1 ? "" : "s"} of 2`
+            : "Saved answers — not yet submitted for marking"
+        }</p>${qHtml}
+      </div>`);
+    }
+    if (exBlocks.length)
+      unitBlocks.push(`
+    <section>
+      <h2>${escHtml(usLabel(unit.us))} — ${escHtml(unit.title)}</h2>${exBlocks.join("")}
+    </section>`);
+  }
+  return unitBlocks;
+}
+
+function exportTimestamp(): string {
+  return new Date().toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function downloadHtmlFile(filename: string, html: string) {
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/** Super-user bulk export: every learner's completed assignments in one file. */
+function DownloadAllAssignments({
+  learners,
+  remoteIds,
+  owners,
+}: {
+  learners: Profile[];
+  remoteIds: Set<string>;
+  owners: Record<string, string>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [progressMsg, setProgressMsg] = useState("");
+
+  async function downloadAll() {
+    setBusy(true);
+    try {
+      const sections: string[] = [];
+      let withWork = 0;
+      for (let i = 0; i < learners.length; i++) {
+        const s = learners[i];
+        setProgressMsg(`Preparing… ${i + 1}/${learners.length}`);
+        let prog: ProgressState | null;
+        if (remoteIds.has(s.id)) {
+          const owner = owners[s.id];
+          prog = owner ? await fetchCloudProgress(owner, s.id) : null;
+        } else {
+          prog = loadProgress(s.id);
+        }
+        const blocks = prog ? assignmentUnitBlocks(prog) : [];
+        if (blocks.length) withWork++;
+        sections.push(`
+  <div class="learner-head"><h1>${escHtml(s.name)}</h1></div>
+  ${blocks.length ? blocks.join("") : `<p><em>${prog ? "No assignment or exercise answers have been saved yet." : "Saved answers could not be fetched from the cloud."}</em></p>`}`);
+      }
+      const html = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Completed assignments — all learners</title>
+<style>${ASSIGNMENT_DOC_CSS}</style></head><body>
+<h1>Completed assignments — all learners</h1>
+<p class="sub">System Support NQF Level 5 Learnership · ${learners.length} learners (${withWork} with saved answers) · exported ${escHtml(exportTimestamp())} by the super user</p>
+${sections.join("")}
+</body></html>`;
+      downloadHtmlFile("Assignments — all learners.html", html);
+    } finally {
+      setBusy(false);
+      setProgressMsg("");
+    }
+  }
+
+  return (
+    <button
+      className="btn ghost"
+      style={{ margin: "0 0 14px" }}
+      onClick={() => void downloadAll()}
+      disabled={busy || learners.length === 0}
+      title="Download every learner's completed assignment and exercise answers as one printable file"
+    >
+      <Icon name="download" size={15} />
+      {busy ? progressMsg || "Preparing…" : "Download all assignments"}
+    </button>
   );
 }
 
@@ -1419,85 +1585,16 @@ function AcademicRecord({
   /** Export every exercise/assignment the learner has worked on — their typed
    *  answers with marks — as a single printable HTML file. */
   function downloadAssignments(prog: ProgressState) {
-    const esc = (s: string) =>
-      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const unitBlocks: string[] = [];
-    for (const { unit, content } of units) {
-      if (!content?.exercises.length) continue;
-      const up = prog.units[unit.us];
-      const lb = up?.logbook ?? {};
-      const exBlocks: string[] = [];
-      for (const ex of content.exercises) {
-        if (!ex.checks?.length) continue;
-        const answers = ex.steps
-          .map((step, i) => ({
-            step,
-            text: String(lb[`exq.${ex.id}.${i}`] ?? "").trim(),
-            ok: lb[`exq.${ex.id}.${i}.ok`] === true,
-            check: ex.checks?.[i],
-          }))
-          .filter((a) => a.check);
-        const res = up?.exercises?.[ex.id];
-        if (!res && answers.every((a) => !a.text)) continue; // not started
-        const qHtml = answers
-          .map(
-            (a, i) => `
-        <div class="q">
-          <div class="q-head">Question ${i + 1} — ${a.ok ? "✓ correct" : "not yet correct"}</div>
-          <div class="q-text">${esc(a.step)}</div>
-          <div class="answer${a.ok ? " ok" : ""}">${a.text ? esc(a.text) : "<em>No answer typed</em>"}</div>
-        </div>`
-          )
-          .join("");
-        exBlocks.push(`
-      <div class="exercise">
-        <h3>${esc(ex.title)}</h3>
-        <p class="marks">${
-          res
-            ? `Best ${res.best}/${res.total} marks · last attempt ${res.last}/${res.total} · ${res.attempts} attempt${res.attempts === 1 ? "" : "s"} of 2`
-            : "Saved answers — not yet submitted for marking"
-        }</p>${qHtml}
-      </div>`);
-      }
-      if (exBlocks.length)
-        unitBlocks.push(`
-    <section>
-      <h2>${esc(usLabel(unit.us))} — ${esc(unit.title)}</h2>${exBlocks.join("")}
-    </section>`);
-    }
-    const generated = new Date().toLocaleString(undefined, {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const unitBlocks = assignmentUnitBlocks(prog);
     const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
-<title>Completed assignments — ${esc(student.name)}</title>
-<style>
-  body{font-family:Segoe UI,Arial,sans-serif;max-width:820px;margin:32px auto;padding:0 20px;color:#1c2430}
-  h1{margin-bottom:2px} .sub{color:#5c6774;margin-top:0}
-  section{margin-top:30px;border-top:2px solid #d8dee6;padding-top:12px}
-  h2{font-size:17px} h3{margin:18px 0 2px;font-size:15px}
-  .marks{color:#5c6774;margin:2px 0 10px;font-size:13px}
-  .q{margin:0 0 12px}
-  .q-head{font-size:12px;color:#5c6774;text-transform:uppercase;letter-spacing:.4px}
-  .q-text{font-weight:600;margin:2px 0 4px}
-  .answer{white-space:pre-wrap;background:#f4f6f8;border-left:3px solid #9aa5b1;padding:8px 12px;border-radius:4px}
-  .answer.ok{border-left-color:#2e9e5b;background:#f0f8f2}
-  @media print{body{margin:10mm auto}}
-</style></head><body>
-<h1>Completed assignments — ${esc(student.name)}</h1>
-<p class="sub">System Support NQF Level 5 Learnership · exported ${esc(generated)} by the super user</p>
+<title>Completed assignments — ${escHtml(student.name)}</title>
+<style>${ASSIGNMENT_DOC_CSS}</style></head><body>
+<h1>Completed assignments — ${escHtml(student.name)}</h1>
+<p class="sub">System Support NQF Level 5 Learnership · exported ${escHtml(exportTimestamp())} by the super user</p>
 ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise answers have been saved yet.</em></p>"}
 </body></html>`;
-    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `Assignments — ${student.name}.html`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    downloadHtmlFile(`Assignments — ${student.name}.html`, html);
   }
 
   const hasWork =

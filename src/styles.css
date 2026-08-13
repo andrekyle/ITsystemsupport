@@ -4556,6 +4556,58 @@ a.plan-ppt:hover {
   color: var(--ink-3);
 }
 
+/* submission status chip on exercise / question-session accordion headers */
+.saqa-details summary .ex-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.ex-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.ex-status.done {
+  color: var(--green);
+  background: var(--green-bg);
+}
+
+.ex-status.todo {
+  color: var(--ink-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.saqa-details summary .ex-status ~ .chev {
+  margin-left: 0;
+}
+
+.saqa-details summary .ex-status.done svg {
+  color: var(--green);
+}
+
+.ex-status .ex-short {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .ex-status .ex-full {
+    display: none;
+  }
+
+  .ex-status .ex-short {
+    display: inline;
+  }
+}
+
 /* units locked until their start day 12:00 (learners) */
 .unit-row.locked {
   opacity: 0.6;

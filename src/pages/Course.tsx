@@ -3038,11 +3038,27 @@ export function UnitPage({
             Formative classroom/self-study exercises. Keep your written answers — they form part of
             your workplace evidence.
           </p>
-          {(tab === "questions" ? content.questionSessions ?? [] : content.exercises).map((ex) => (
+          {(tab === "questions" ? content.questionSessions ?? [] : content.exercises).map((ex) => {
+            const exRes = progress.units[u.us]?.exercises?.[ex.id];
+            const hasChecks = !!ex.checks && ex.checks.length > 0;
+            return (
             <details key={ex.id} className="saqa-details lesson-acc">
               <summary>
                 <Icon name="exercise" size={17} />
-                {ex.title}
+                <span className="ex-title">{ex.title}</span>
+                {exRes ? (
+                  <span className="ex-status done">
+                    <Icon name="checkCircle" size={13} />
+                    <span className="ex-full">
+                      Submitted — best {exRes.total ? Math.round((exRes.best / exRes.total) * 100) : 0}% · attempt {exRes.attempts} of 2
+                    </span>
+                    <span className="ex-short">
+                      {exRes.total ? Math.round((exRes.best / exRes.total) * 100) : 0}% · {exRes.attempts}/2
+                    </span>
+                  </span>
+                ) : (
+                  hasChecks && <span className="ex-status todo">Not submitted</span>
+                )}
                 <span className="chev">
                   <Icon name="chevronDown" size={15} />
                 </span>
@@ -3201,7 +3217,8 @@ export function UnitPage({
                 )}
               </div>
             </details>
-          ))}
+            );
+          })}
 
         </>
       )}
