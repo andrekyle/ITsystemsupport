@@ -266,13 +266,61 @@ function numberedActivity(s, items, { y = 1.8, rowH = 0.82, fontSize = 17 } = {}
 {
   const s = slide();
   eyebrowTitle(s, "Professionalism & codes of practice", "The CSSA Code of Practice — What It Is");
-  bigParas(s, [
-    "The generally accepted Codes of Good Practice in the South African IT industry are set out by the Computer Society of South Africa — one of, if not the most respected associations concerned with South African Information Technology.",
-    "The Code of Practice is directed to all professional members of the CSSA. It consists, essentially, of a series of statements that prescribe minimum standards of practice to be observed by members.",
-    "The Code is concerned with professional responsibility. All members have responsibilities — to clients, to users, to the State and to society at large. Members who are employees also have responsibilities to their employers and employers' customers and, often, to a Trade Union. In the event of an apparent clash in responsibilities, obligations or prescribed practice, the Society should be consulted at the earliest opportunity.",
-    "The Code is to be viewed as a whole: individual parts are not intended to be used in isolation to justify errors of omission or commission. The Code is intended to be observed in the spirit and not merely to the word.",
-    "Because CSSA membership covers all occupations relevant to the use of computers, the Code is set out in two levels: Level One — a series of brief statements defining the elements of practice to be observed; Level Two — the rationale for the Level One statements. Many clauses may seem to state the obvious, but much that goes wrong in computer use does so because the obvious has been overlooked.",
-  ], { y: 1.8, fontSize: 14.5 });
+  addIcon(s, "scale", W - MX - 1.0, 0.52, 0.95, "#" + BORDER);
+  s.addText("Set out by the Computer Society of South Africa — one of, if not the most respected associations concerned with South African Information Technology.", {
+    x: MX, y: 1.66, w: CW, h: 0.42, fontFace: BODY_FONT, fontSize: 15, color: GREY,
+  });
+  stackCards(s, [
+    { icon: "document", t: "A series of statements", d: "The Code is directed to all professional members of the CSSA. It consists, essentially, of a series of statements that prescribe minimum standards of practice to be observed by members." },
+    { icon: "people", t: "Professional responsibility", d: "All members have responsibilities — to clients, to users, to the State and to society at large. Members who are employees also have responsibilities to their employers and employers' customers and, often, to a Trade Union." },
+    { icon: "compass", t: "When responsibilities clash", d: "In the event of an apparent clash in responsibilities, obligations or prescribed practice, the Society should be consulted at the earliest opportunity." },
+  ], { y: 2.2, h: 4.45, fontSize: 14.5 });
+}
+
+/* ============================================================ 6b · CODE OF PRACTICE — HOW IT IS READ */
+{
+  const s = slide();
+  eyebrowTitle(s, "Professionalism & codes of practice", "Reading the Code — As a Whole, In the Spirit, Two Levels");
+  s.addText("Because CSSA membership covers all occupations relevant to the use of computers, the Code is set out in two levels:", {
+    x: MX, y: 1.62, w: CW, h: 0.4, fontFace: BODY_FONT, fontSize: 14.5, color: GREY,
+  });
+  // ---- two-level graphic ----
+  card(s, MX, 2.08, CW, 0.92, { fill: BLUE, line: BLUE });
+  s.addShape(pptx.ShapeType.ellipse, { x: MX + 0.22, y: 2.29, w: 0.5, h: 0.5, fill: { color: WHITE } });
+  s.addText("1", { x: MX + 0.22, y: 2.29, w: 0.5, h: 0.5, fontFace: TITLE_FONT, fontSize: 20, bold: true, color: BLUE, align: "center", valign: "middle" });
+  s.addText([
+    { text: "LEVEL ONE — the practice.  ", options: { bold: true, color: WHITE, fontSize: 15.5, fontFace: TITLE_FONT } },
+    { text: "A series of brief statements defining the elements of practice to be observed.", options: { color: LIGHT, fontSize: 14 } },
+  ], { x: MX + 0.9, y: 2.14, w: CW - 1.2, h: 0.8, fontFace: BODY_FONT, valign: "middle" });
+  s.addShape(pptx.ShapeType.triangle, { x: W / 2 - 0.24, y: 3.06, w: 0.48, h: 0.26, fill: { color: BLUE }, flipV: true });
+  card(s, MX, 3.38, CW, 0.92, { fill: LIGHT });
+  s.addShape(pptx.ShapeType.ellipse, { x: MX + 0.22, y: 3.59, w: 0.5, h: 0.5, fill: { color: BLUE } });
+  s.addText("2", { x: MX + 0.22, y: 3.59, w: 0.5, h: 0.5, fontFace: TITLE_FONT, fontSize: 20, bold: true, color: WHITE, align: "center", valign: "middle" });
+  s.addText([
+    { text: "LEVEL TWO — the rationale.  ", options: { bold: true, color: NAVY, fontSize: 15.5, fontFace: TITLE_FONT } },
+    { text: "The reasoning behind each Level One statement, so every member can reach appropriate interpretations.", options: { color: NAVY, fontSize: 14 } },
+  ], { x: MX + 0.9, y: 3.44, w: CW - 1.2, h: 0.8, fontFace: BODY_FONT, valign: "middle" });
+  // ---- how to read it: two side-by-side cards ----
+  const half = (CW - 0.3) / 2;
+  card(s, MX, 4.62, half, 1.3, { fill: WHITE });
+  addIcon(s, "eye", MX + 0.25, 4.85, 0.44);
+  s.addText([
+    { text: "Viewed as a whole\n", options: { bold: true, color: NAVY, fontSize: 15.5, fontFace: TITLE_FONT } },
+    { text: "Individual parts are not to be used in isolation to justify errors of omission or commission.", options: { color: NAVY, fontSize: 13 } },
+  ], { x: MX + 0.85, y: 4.74, w: half - 1.05, h: 1.06, fontFace: BODY_FONT, valign: "middle", lineSpacingMultiple: 1.06 });
+  card(s, MX + half + 0.3, 4.62, half, 1.3, { fill: WHITE });
+  addIcon(s, "shield", MX + half + 0.55, 4.85, 0.44);
+  s.addText([
+    { text: "Observed in the spirit\n", options: { bold: true, color: NAVY, fontSize: 15.5, fontFace: TITLE_FONT } },
+    { text: "The Code is intended to be observed in the spirit — and not merely to the word.", options: { color: NAVY, fontSize: 13 } },
+  ], { x: MX + half + 1.15, y: 4.74, w: half - 1.05, h: 1.06, fontFace: BODY_FONT, valign: "middle", lineSpacingMultiple: 1.06 });
+  // ---- the obvious, overlooked ----
+  card(s, MX, 6.12, CW, 0.78, { fill: LIGHT });
+  addIcon(s, "warning", MX + 0.25, 6.31, 0.4);
+  s.addText([
+    { text: "Many clauses may seem to state the obvious — ", options: { color: NAVY, fontSize: 13.5 } },
+    { text: "but much that goes wrong in computer use does so because the obvious has been overlooked.", options: { bold: true, color: NAVY, fontSize: 13.5 } },
+  ], { x: MX + 0.85, y: 6.2, w: CW - 1.15, h: 0.62, fontFace: BODY_FONT, valign: "middle" });
 }
 
 /* ============================================================ 7 · COP 1 — PERSONAL COMPETENCE */
