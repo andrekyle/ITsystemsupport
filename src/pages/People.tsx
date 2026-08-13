@@ -852,6 +852,19 @@ const ASSIGNMENT_DOC_CSS = `
   }
 `;
 
+/* side navigation for the all-learners export */
+const ASSIGNMENT_NAV_CSS = `
+  body{padding-left:210px}
+  .learner-nav{position:fixed;left:0;top:0;bottom:0;width:200px;background:#fafafa;border-right:1px solid #d8dee6;padding:16px 10px 16px 14px;overflow-y:auto}
+  .learner-nav .nav-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5c6774;margin:0 0 10px 6px}
+  .learner-nav a{display:block;font-size:12.5px;font-weight:600;color:#1c2430;text-decoration:none;border-radius:6px;padding:7px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .learner-nav a:hover{background:#eef1f4}
+  .learner-nav a.empty{color:#9aa5b1;font-weight:500}
+  .learner-head{scroll-margin-top:16px}
+  @media(max-width:900px){body{padding-left:0}.learner-nav{display:none}}
+  @media print{body{padding-left:0}.learner-nav{display:none}}
+`;
+
 /** Every exercise/assignment a learner has worked on — typed answers with
  *  marks — as printable HTML section blocks (one per unit standard). */
 function assignmentUnitBlocks(prog: ProgressState): string[] {
@@ -938,6 +951,7 @@ function DownloadAllAssignments({
     setBusy(true);
     try {
       const sections: string[] = [];
+      const navLinks: string[] = [];
       let withWork = 0;
       for (let i = 0; i < learners.length; i++) {
         const s = learners[i];
@@ -951,14 +965,20 @@ function DownloadAllAssignments({
         }
         const blocks = prog ? assignmentUnitBlocks(prog) : [];
         if (blocks.length) withWork++;
+        navLinks.push(
+          `<a href="#learner-${i}"${blocks.length ? "" : ' class="empty" title="No saved answers yet"'}>${escHtml(s.name)}</a>`
+        );
         sections.push(`
-  <div class="learner-head"><h1>${escHtml(s.name)}</h1></div>
+  <div class="learner-head" id="learner-${i}"><h1>${escHtml(s.name)}</h1></div>
   ${blocks.length ? blocks.join("") : `<p><em>${prog ? "No assignment or exercise answers have been saved yet." : "Saved answers could not be fetched from the cloud."}</em></p>`}`);
       }
       const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <title>Completed assignments — all learners</title>
-<style>${ASSIGNMENT_DOC_CSS}</style></head><body>
+<style>${ASSIGNMENT_DOC_CSS}${ASSIGNMENT_NAV_CSS}</style></head><body>
+<nav class="learner-nav" aria-label="Jump to learner"><div class="nav-title">Learners</div>
+${navLinks.join("\n")}
+</nav>
 <h1>Completed assignments — all learners</h1>
 <p class="sub">System Support NQF Level 5 Learnership · ${learners.length} learners (${withWork} with saved answers) · exported ${escHtml(exportTimestamp())} by the super user</p>
 ${sections.join("")}
