@@ -524,6 +524,8 @@ function MarkedAnswer({ text, check, ok }: { text: string; check: ExerciseCheck;
   const fullTokens = answerTokens(text);
   // only concept groups the whole answer earned can be credited to a segment
   const credited = check.concepts.filter((g) => g.some((p) => phraseMatches(p, fullTokens)));
+  // every key idea earned: nothing is missing, so per-sentence crosses would only mislead
+  const fullCoverage = credited.length >= check.concepts.length;
   const segments = (text.match(/[^.!?;\n]+[.!?;\n]*\s*/g) ?? [text]).filter((s) => s.trim());
   const perSeg = attributeGroups(segments, credited);
   const leftover = credited.length - perSeg.reduce((t, g) => t + g.length, 0);
@@ -559,7 +561,7 @@ function MarkedAnswer({ text, check, ok }: { text: string; check: ExerciseCheck;
             {gis.map((_, t) => (
               <DoubleTick key={t} />
             ))}
-            {gis.length === 0 && contentStems(seg).size > 0 && (
+            {gis.length === 0 && !fullCoverage && contentStems(seg).size > 0 && (
               <span className="exq-x" title="No marks for this sentence">
                 ✗
               </span>
