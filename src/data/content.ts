@@ -5598,6 +5598,60 @@ export const CONTENT: Record<string, UnitContent> = {
     },
     quiz: [],
 
+    logbook: {
+      assignmentTitle: "Demonstrate an awareness of ethics and professionalism for the computer industry in South Africa",
+      programme: "Information Technology — Systems Support",
+      unitLabel: "114055 — Demonstrate an awareness of ethics and professionalism for the computer industry in South Africa",
+      detailFields: [
+        "Learner Name",
+        "Qualification",
+        "Group / Class",
+        "Workplace Name",
+        "Supervisor / Mentor",
+        "Start & Completion Date",
+      ],
+      project: {
+        time: "45 minutes",
+        title: "Project — Code of Ethics",
+        text: "Compile an ideal example of an ideal code of ethics derived from the current code of ethics followed within the South African IT industry. Attach your project here and mark it 114055.",
+        resource: "Logbook",
+      },
+      knowledgeQuestions: [
+        { text: "The description identifies acceptable and unacceptable professional practices found in the computer industry.", marks: [true, false, false, true, false, false] },
+        { text: "The description identifies known professional bodies in South Africa.", marks: [true, false, false, true, false, false] },
+        { text: "A short description of each named professional body is provided.", marks: [true, false, false, true, false, false] },
+        { text: "The description identifies the codes of practice for the IT industry in South Africa.", marks: [true, true, true, true, true, true] },
+        { text: "The description provides a brief explanation of the codes of practice identified.", marks: [true, false, false, true, false, false] },
+        { text: "The description confirms that the computer industry supports equality of opportunity.", marks: [true, false, false, true, false, false] },
+        { text: "The description confirms the understanding that the computer industry is against computer software piracy.", marks: [true, false, false, true, false, false] },
+        { text: "The description identifies ways in which piracy is addressed in South Africa.", marks: [true, false, false, true, false, false] },
+      ],
+      practicalActivities: [
+        { text: "Describe acceptable and unacceptable professional behaviour expected in the South African computer industry.", marks: [true, true, true, true, true, true] },
+        { text: "Research and explain the purpose and role of professional bodies such as CSSA, BITF, ITUC and ITA.", marks: [true, false, false, true, false, false] },
+        { text: "Explain the South African codes of practice and how they guide professional conduct in IT work.", marks: [true, false, false, true, false, false] },
+      ],
+      workplaceActivities: [
+        "Identify acceptable and unacceptable professional practices in the computer industry.",
+        "Identify known professional bodies in South Africa.",
+        "Provide a short description of each named professional body.",
+        "Identify the codes of practice for the IT industry in South Africa.",
+        "Explain the codes of practice identified.",
+        "Confirm that the computer industry supports equality of opportunity.",
+        "Confirm that the computer industry is against software piracy.",
+        "Identify ways in which piracy is addressed in South Africa.",
+      ],
+      workplaceEvidenceNote: "The workplace completes this section after observing the learner having complied with and completed all the activities mentioned below.",
+      otherActivities: [
+        {
+          activity: "Describe the code of ethics in the computer industry in South Africa.",
+          evidence: "Project — Code of Ethics: Compile an ideal example of an ideal code of ethics derived from the current code of ethics followed within the South African IT industry. Attach your project here and mark it 114055.",
+        },
+      ],
+      otherEvidenceNote: "Learner evidence and experience is recorded here. Make reference to equipment, chemicals and materials that were used in these processes.",
+      projectChecklist: [{ no: "1", name: "114055" }],
+    },
+
     lessonPlan: {
       title: "Facilitator Preparation",
       startTime: "09:00",
