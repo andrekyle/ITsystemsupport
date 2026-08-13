@@ -182,7 +182,7 @@ function numberedActivity(s, items, { y = 1.8, rowH = 0.82, fontSize = 17 } = {}
   eyebrowTitle(s, "Learner guide contents", "Competence Requirements");
   dataTable(s, ["Section", "What it covers"], [
     ["Introduction", "What ethics and professionalism mean for a computing professional in South Africa"],
-    ["The CSSA Constitution", "How the Computer Society of South Africa elevates ICT capability and professionalism"],
+    ["The CSSA Constitution", "How the Computer Society of South Africa — today the IITPSA — elevates ICT capability and professionalism"],
     ["The CSSA Code of Practice", "Competence, organisation & management, contracting, privacy & security, development, implementation and live systems"],
     ["Professional bodies", "CSSA, BITF, ITUC and ITA — who they are and what they do"],
     ["The Code of Ethics", "Equality of opportunity, and how the industry fights software piracy in South Africa"],
@@ -232,6 +232,30 @@ function numberedActivity(s, items, { y = 1.8, rowH = 0.82, fontSize = 17 } = {}
     { icon: "globe", d: "Community development that enhances the standards and levels of ICT for the greater good of the South African people." },
     { icon: "check", d: "Do all such other lawful things as are incidental or conducive to the attainment of the above purposes." },
   ], { y: 1.8, rowH: 0.62, fontSize: 13, iconSize: 0.34 });
+}
+
+/* ============================================================ 5b · CSSA TODAY — THE IITPSA */
+{
+  const s = slide();
+  eyebrowTitle(s, "Professionalism & codes of practice", "CSSA Today — the IITPSA");
+  bigParas(s, [
+    "The Computer Society of South Africa (CSSA) is now known as the Institute of Information Technology Professionals South Africa (IITPSA). The legacy CSSA Code of Practice and professional conduct guidelines can now be found through the official IITPSA website (iitpsa.org.za).",
+  ], { y: 1.75, h: 0.95, fontSize: 15 });
+  s.addText("HOW TO JOIN", {
+    x: MX, y: 2.72, w: CW, h: 0.3, fontFace: BODY_FONT, fontSize: 12.5, bold: true, color: BLUE, charSpacing: 1.5,
+  });
+  numberedActivity(s, [
+    "Create a profile on the IITPSA Membership Portal.",
+    "Choose your membership tier.",
+    "Submit certified qualifications and a CV.",
+    "Pay the relevant application and annual fees.",
+  ], { y: 3.05, rowH: 0.56, fontSize: 14 });
+  card(s, MX, 5.4, CW, 1.55, { fill: LIGHT });
+  addIcon(s, "target", MX + 0.25, 5.62, 0.4);
+  s.addText([
+    { text: "WHY JOIN?\n", options: { bold: true, color: BLUE, fontSize: 12.5, charSpacing: 1.5 } },
+    { text: "Professional recognition — the letters MIITPSA (Member), PMIITPSA® (Professional Member) or Pr.CIO® (Professional CIO) after your name identify you as belonging to a professional body · International recognition — grading and admission criteria are maintained in line with international practices · Networking — seminars, workshops, events and Special Interest Groups · Career advancement — companies increasingly recognise IITPSA membership as a prerequisite for promotion.", options: { color: NAVY, fontSize: 12.5 } },
+  ], { x: MX + 0.85, y: 5.5, w: CW - 1.15, h: 1.38, fontFace: BODY_FONT, valign: "middle", lineSpacingMultiple: 1.08 });
 }
 
 /* ============================================================ 6 · CODE OF PRACTICE — WHAT IT IS */

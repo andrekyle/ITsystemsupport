@@ -4932,6 +4932,74 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
       },
       {
+        heading: "CSSA today — the IITPSA (Institute of Information Technology Professionals South Africa)",
+        icon: "people",
+        flat: true,
+        paragraphs: [
+          "The Computer Society of South Africa (CSSA) is now known as the Institute of Information Technology Professionals South Africa (IITPSA). The legacy CSSA Code of Practice and professional conduct guidelines can now be found through the official IITPSA website (iitpsa.org.za).",
+          "Joining is straightforward: create a profile on the IITPSA Membership Portal, choose your membership tier, submit certified qualifications and a CV, and pay the relevant application and annual fees.",
+          "Why join? IITPSA members participate in their ICT professional community — they network, engage, learn and share with other members, who are found in almost every province in South Africa, with the main concentrations in Gauteng, the Western Cape, the Eastern Cape and KwaZulu-Natal.",
+        ],
+        bullets: [
+          "Professional recognition — by using the respected letters 'MIITPSA' (Member), 'PMIITPSA®' (Professional Member) or 'Pr.CIO®' (Professional CIO) after one's name, members are identified as belonging to a professional body.",
+          "International recognition — IITPSA membership grading and admission criteria are continuously evaluated in accordance with international practices and are maintained in line with these requirements.",
+          "Networking — seminars, workshops and other events provide opportunities for networking; IITPSA Central Office will help you find a Special Interest Group or a one-off event.",
+          "Career advancement — increasingly, companies recognise IITPSA membership for their ICT staff as a prerequisite for promotion and career advancement.",
+        ],
+        slideQuiz: [
+          {
+            q: "What is the Computer Society of South Africa (CSSA) known as today?",
+            options: [
+              "The Business Software Alliance (BSA)",
+              "The Institute of Information Technology Professionals South Africa (IITPSA)",
+              "The Information Technology Association (ITA)",
+              "The Black Information Technology Forum (BITF)",
+            ],
+            answer: 1,
+            explain: "The CSSA is now known as the Institute of Information Technology Professionals South Africa (IITPSA).",
+          },
+          {
+            q: "Where can the legacy CSSA Code of Practice and professional conduct guidelines be found today?",
+            options: [
+              "They no longer exist",
+              "Through the official IITPSA website",
+              "Only in printed libraries",
+              "On the SAPS website",
+            ],
+            answer: 1,
+            explain: "The legacy CSSA code of practice and professional conduct guidelines are available through the official IITPSA website (iitpsa.org.za).",
+          },
+          {
+            q: "Which of these is the correct set of steps to become an IITPSA member?",
+            options: [
+              "Send an email and wait for an invitation",
+              "Create a profile on the IITPSA Membership Portal, choose your membership tier, submit certified qualifications and a CV, and pay the relevant application and annual fees",
+              "Buy a licence from a software reseller",
+              "Pass a government examination only",
+            ],
+            answer: 1,
+            explain: "Membership starts on the IITPSA Membership Portal: create a profile, choose a tier, submit certified qualifications and a CV, and pay the application and annual fees.",
+          },
+          {
+            q: "Which designatory letters identify an IITPSA Professional Member?",
+            options: ["MIITPSA", "PMIITPSA®", "Pr.CIO®", "BSc(IT)"],
+            answer: 1,
+            explain: "'MIITPSA' denotes a Member, 'PMIITPSA®' a Professional Member and 'Pr.CIO®' a Professional CIO — using them identifies you as belonging to a professional body.",
+          },
+          {
+            q: "Why do companies increasingly value IITPSA membership for their ICT staff?",
+            options: [
+              "It reduces their software licence costs",
+              "It is recognised as a prerequisite for promotion and career advancement",
+              "It exempts staff from the Code of Practice",
+              "It replaces formal qualifications",
+            ],
+            answer: 1,
+            explain: "Increasingly, companies recognise IITPSA membership for their ICT staff as a prerequisite for promotion and career advancement.",
+          },
+        ],
+      },
+      {
         heading: "The CSSA Code of Practice — what it is and who it binds",
         icon: "checklist",
         flat: true,
