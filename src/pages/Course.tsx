@@ -17,8 +17,9 @@ import { fileToImageDataUrl } from "../components/Avatar";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
+const URL_RE = /(https?:\/\/[^\s)]+)/g;
 
-/** Renders text with an explanatory bubble on any glossary term. */
+/** Renders text with an explanatory bubble on any glossary term; bare URLs become links. */
 export function Gloss({ text }: { text: string }) {
   const parts = text.split(GLOSS_RE);
   const place = (e: React.SyntheticEvent<HTMLSpanElement>) => {
@@ -35,7 +36,16 @@ export function Gloss({ text }: { text: string }) {
     <>
       {parts.map((part, i) => {
         const entry = GLOSSARY[part.toLowerCase()];
-        if (!entry) return part;
+        if (!entry)
+          return part.split(URL_RE).map((seg, j) =>
+            /^https?:\/\//.test(seg) ? (
+              <a key={`${i}.${j}`} className="lesson-link" href={seg} target="_blank" rel="noopener noreferrer">
+                {seg.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")} ↗
+              </a>
+            ) : (
+              seg
+            )
+          );
         return (
           <span
             className="term"

@@ -4936,7 +4936,7 @@ export const CONTENT: Record<string, UnitContent> = {
         icon: "people",
         flat: true,
         paragraphs: [
-          "The Computer Society of South Africa (CSSA) is now known as the Institute of Information Technology Professionals South Africa (IITPSA). The legacy CSSA Code of Practice and professional conduct guidelines can now be found through the official IITPSA website (iitpsa.org.za).",
+          "The Computer Society of South Africa (CSSA) is now known as the Institute of Information Technology Professionals South Africa (IITPSA). The legacy CSSA Code of Practice and professional conduct guidelines can now be found through the official IITPSA website (iitpsa.org.za), and the Institute's current Constitution is published at https://www.iitpsa.org.za/constitution/ — read it there to see how the aims on the previous slide live on today.",
           "Joining is straightforward: create a profile on the IITPSA Membership Portal, choose your membership tier, submit certified qualifications and a CV, and pay the relevant application and annual fees.",
           "Why join? IITPSA members participate in their ICT professional community — they network, engage, learn and share with other members, who are found in almost every province in South Africa, with the main concentrations in Gauteng, the Western Cape, the Eastern Cape and KwaZulu-Natal.",
         ],

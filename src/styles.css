@@ -2258,6 +2258,18 @@ textarea:focus {
   color: var(--azure);
 }
 
+/* bare URLs in lesson text rendered as external links */
+.lesson-link {
+  color: var(--azure);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+
+.lesson-link:hover {
+  opacity: 0.8;
+}
+
 /* ============ SAQA details ============ */
 
 .saqa-details {

@@ -241,15 +241,19 @@ function numberedActivity(s, items, { y = 1.8, rowH = 0.82, fontSize = 17 } = {}
   bigParas(s, [
     "The Computer Society of South Africa (CSSA) is now known as the Institute of Information Technology Professionals South Africa (IITPSA). The legacy CSSA Code of Practice and professional conduct guidelines can now be found through the official IITPSA website (iitpsa.org.za).",
   ], { y: 1.75, h: 0.95, fontSize: 15 });
+  s.addText([
+    { text: "Read the Institute's current Constitution: ", options: { color: NAVY, fontSize: 13.5 } },
+    { text: "www.iitpsa.org.za/constitution", options: { color: BLUE, fontSize: 13.5, bold: true, underline: true, hyperlink: { url: "https://www.iitpsa.org.za/constitution/", tooltip: "IITPSA Constitution" } } },
+  ], { x: MX, y: 2.62, w: CW, h: 0.32, fontFace: BODY_FONT });
   s.addText("HOW TO JOIN", {
-    x: MX, y: 2.72, w: CW, h: 0.3, fontFace: BODY_FONT, fontSize: 12.5, bold: true, color: BLUE, charSpacing: 1.5,
+    x: MX, y: 3.0, w: CW, h: 0.3, fontFace: BODY_FONT, fontSize: 12.5, bold: true, color: BLUE, charSpacing: 1.5,
   });
   numberedActivity(s, [
     "Create a profile on the IITPSA Membership Portal.",
     "Choose your membership tier.",
     "Submit certified qualifications and a CV.",
     "Pay the relevant application and annual fees.",
-  ], { y: 3.05, rowH: 0.56, fontSize: 14 });
+  ], { y: 3.32, rowH: 0.52, fontSize: 14 });
   card(s, MX, 5.4, CW, 1.55, { fill: LIGHT });
   addIcon(s, "target", MX + 0.25, 5.62, 0.4);
   s.addText([
