@@ -158,7 +158,7 @@ export interface QuizResult {
   history?: QuizAttempt[];
 }
 
-/** Marked exercise summary — each key idea (point) is worth 2 marks; best of 2 attempts kept. */
+/** Marked exercise summary — each key idea (point) is worth 2 marks; best of 3 attempts kept. */
 export interface ExerciseResult {
   best: number;
   last: number;
@@ -172,7 +172,7 @@ export interface UnitProgress {
   quiz?: QuizResult;
   /** results for titled quizzes (quiz id -> result) */
   quizzes?: Record<string, QuizResult>;
-  /** marked exercise scores (exercise id -> best-of-two result) */
+  /** marked exercise scores (exercise id -> best-of-attempts result) */
   exercises?: Record<string, ExerciseResult>;
   /** editable logbook field values (field key -> value) */
   logbook?: Record<string, string | boolean>;

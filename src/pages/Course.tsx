@@ -17,6 +17,9 @@ import { fileToImageDataUrl } from "../components/Avatar";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
+
+/** Maximum marked attempts per exercise / question session. */
+const EX_MAX_ATTEMPTS = 3;
 const URL_RE = /(https?:\/\/[^\s)]+)/g;
 
 /** Renders text with an explanatory bubble on any glossary term; bare URLs become links. */
@@ -3060,10 +3063,10 @@ export function UnitPage({
                   <span className="ex-status done">
                     <Icon name="checkCircle" size={13} />
                     <span className="ex-full">
-                      Submitted — best {exRes.total ? Math.round((exRes.best / exRes.total) * 100) : 0}% · attempt {exRes.attempts} of 2
+                      Submitted — best {exRes.total ? Math.round((exRes.best / exRes.total) * 100) : 0}% · attempt {exRes.attempts} of {EX_MAX_ATTEMPTS}
                     </span>
                     <span className="ex-short">
-                      {exRes.total ? Math.round((exRes.best / exRes.total) * 100) : 0}% · {exRes.attempts}/2
+                      {exRes.total ? Math.round((exRes.best / exRes.total) * 100) : 0}% · {exRes.attempts}/{EX_MAX_ATTEMPTS}
                     </span>
                   </span>
                 ) : (
@@ -3158,7 +3161,7 @@ export function UnitPage({
                   const lb = progress.units[u.us]?.logbook ?? {};
                   return (
                     <div className="exq-submit">
-                      {attempts < 2 && (
+                      {attempts < EX_MAX_ATTEMPTS && (
                         <button
                           className="btn"
                           onClick={() => {
@@ -3174,7 +3177,7 @@ export function UnitPage({
                           Submit answers for marking
                         </button>
                       )}
-                      {res && attempts < 2 && (
+                      {res && attempts < EX_MAX_ATTEMPTS && (
                         <button
                           className="btn ghost"
                           onClick={() => {
@@ -3192,14 +3195,14 @@ export function UnitPage({
                       {res && (
                         <span className="exq-score">
                           <Icon name="award" size={15} />
-                          Last attempt: {res.last}/{res.total} · Best out of 2: {res.best}/
-                          {res.total} · Attempt {res.attempts} of 2
-                          {attempts >= 2 && " — no attempts remaining"}
+                          Last attempt: {res.last}/{res.total} · Best out of {EX_MAX_ATTEMPTS}: {res.best}/
+                          {res.total} · Attempt {res.attempts} of {EX_MAX_ATTEMPTS}
+                          {attempts >= EX_MAX_ATTEMPTS && " — no attempts remaining"}
                         </span>
                       )}
                       {!res && (
                         <span className="exq-score muted-score">
-                          Each key idea is worth 2 marks — {total} marks available. Best of 2
+                          Each key idea is worth 2 marks — {total} marks available. Best of {EX_MAX_ATTEMPTS}{" "}
                           attempts is recorded on your profile.
                         </span>
                       )}

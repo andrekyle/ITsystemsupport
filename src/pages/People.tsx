@@ -901,7 +901,7 @@ function assignmentUnitBlocks(prog: ProgressState): string[] {
         <h3>${escHtml(ex.title)}</h3>
         <p class="marks">${
           res
-            ? `Best ${res.best}/${res.total} marks · last attempt ${res.last}/${res.total} · ${res.attempts} attempt${res.attempts === 1 ? "" : "s"} of 2`
+            ? `Best ${res.best}/${res.total} marks · last attempt ${res.last}/${res.total} · ${res.attempts} attempt${res.attempts === 1 ? "" : "s"} of 3`
             : "Saved answers — not yet submitted for marking"
         }</p>${qHtml}
       </div>`);
