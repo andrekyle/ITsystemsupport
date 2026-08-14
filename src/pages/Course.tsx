@@ -395,19 +395,27 @@ function phraseMatches(phrase: string, tokens: string[]): boolean {
   return answerTokens(phrase).every((pw) => tokens.some((t) => tokenMatches(t, pw)));
 }
 
+/** Minimum answer length (in words) required before any marks can be awarded.
+ *  Answers of 1–4 words (and up to 9) score 0 regardless of key‑idea coverage —
+ *  learners must give a real explanation to earn credit. */
+const MIN_ANSWER_WORDS = 10;
+
 /** Score a learner's answer against the concept groups of the answer key.
- *  Each key idea (concept group) is worth 2 marks. */
+ *  Each key idea (concept group) is worth 2 marks. Answers shorter than
+ *  {@link MIN_ANSWER_WORDS} words score 0 marks — an explanation is required. */
 function scoreAnswer(text: string, check: ExerciseCheck) {
   const tokens = answerTokens(text);
   const matched = check.concepts.filter((g) => g.some((p) => phraseMatches(p, tokens))).length;
   const need = check.min ?? Math.ceil(check.concepts.length / 2);
-  const short = tokens.length < 8;
+  const short = tokens.length < MIN_ANSWER_WORDS;
   return {
     ok: !short && matched >= need,
     matched,
     need,
     short,
-    marks: matched * 2,
+    words: tokens.length,
+    minWords: MIN_ANSWER_WORDS,
+    marks: short ? 0 : matched * 2,
     maxMarks: check.concepts.length * 2,
   };
 }
@@ -608,7 +616,7 @@ function ExerciseQuestion({
         <textarea
           className="exq-input"
           rows={3}
-          placeholder="Type your answer here, then check it…"
+          placeholder={`Type your answer here (at least ${MIN_ANSWER_WORDS} words — explain in your own words), then check it…`}
           value={val}
           onChange={(e) => {
             setVal(e.target.value);
@@ -648,7 +656,7 @@ function ExerciseQuestion({
           {result && !result.ok && (
             <span className="exq-status wrong">
               {result.short
-                ? "Answer more fully, then check again."
+                ? `Answer too short — you wrote ${result.words} word${result.words === 1 ? "" : "s"}. Answers of 1–4 words score 0 marks. Please explain your answer in your own words — a minimum of ${result.minWords} words is required before any marks can be awarded.`
                 : `Not quite yet — your answer covers ${result.matched} of ${check.concepts.length} key ideas (${result.marks}/${result.maxMarks} marks, 2 marks per point). Revisit the lesson and try again.`}
             </span>
           )}
@@ -1725,7 +1733,7 @@ export function UnitPage({
     { id: "overview", label: "Overview", icon: "dashboard", show: true },
     { id: "lesson", label: "Lesson", icon: "book", show: !!content?.lesson.length },
     { id: "material", label: "Course material", icon: "play", show: decks.length > 0 },
-    { id: "notes", label: "Notes", icon: "document", show: !!content?.notes?.length || Object.values(userNotes).some((n) => n.us === unitId) || !!content?.lesson.length },
+    { id: "notes", label: "Notes", icon: "document", show: !!content?.notes?.length || Object.values(userNotes).some((n) => n.us === unitId) || !!content?.lesson.length || unitId === "114055" },
     { id: "exercises", label: unitId === "114055" ? "Assignments" : "Exercises", icon: "exercise", show: !!content?.exercises.length },
     { id: "questions", label: "Activity", icon: "chat", show: !!content?.questionSessions?.length },
     { id: "assignments", label: "Assignments", icon: "folder", show: !!content?.assignments.length },
@@ -2830,6 +2838,21 @@ export function UnitPage({
       {tab === "notes" && (
         <>
           <div style={{ marginTop: 18 }} />
+          {unitId === "114055" && (
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+              <a
+                className="btn"
+                href="/downloads/Music-Piracy.pdf"
+                download="Music-Piracy.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Music Piracy — a learner reader on music, software and online piracy (PDF)"
+              >
+                <Icon name="download" size={16} />
+                Music Piracy (PDF)
+              </a>
+            </div>
+          )}
           {(() => {
             const builtIn = content?.notes ?? [];
             const shared = Object.entries(sharedNotes)
@@ -3053,6 +3076,16 @@ export function UnitPage({
             Formative classroom/self-study exercises. Keep your written answers — they form part of
             your workplace evidence.
           </p>
+          <div className="callout" style={{ marginTop: 10, marginBottom: 14 }}>
+            <span className="ico">
+              <Icon name="info" size={19} />
+            </span>
+            <span>
+              <strong>Answer in your own words.</strong> One‑, two‑, three‑ or four‑word answers
+              score <strong>0 marks</strong>. Every answer must include an explanation of at
+              least <strong>{MIN_ANSWER_WORDS} words</strong> before any marks can be awarded.
+            </span>
+          </div>
           {(tab === "questions" ? content.questionSessions ?? [] : content.exercises).map((ex) => {
             const exRes = progress.units[u.us]?.exercises?.[ex.id];
             const hasChecks = !!ex.checks && ex.checks.length > 0;
@@ -3244,6 +3277,16 @@ export function UnitPage({
             Assessed assignments. Submissions are assessed against the ASD for SAQA ID 48573 and
             filed in your Portfolio of Evidence.
           </p>
+          <div className="callout" style={{ marginTop: 10, marginBottom: 14 }}>
+            <span className="ico">
+              <Icon name="info" size={19} />
+            </span>
+            <span>
+              <strong>Answer in your own words.</strong> One‑, two‑, three‑ or four‑word answers
+              score <strong>0 marks</strong>. Each response must include an explanation of at
+              least <strong>{MIN_ANSWER_WORDS} words</strong> before any marks can be awarded.
+            </span>
+          </div>
           {content.assignments.map((as) => (
             <details key={as.id} className="saqa-details lesson-acc">
               <summary>
