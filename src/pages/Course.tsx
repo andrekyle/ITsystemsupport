@@ -610,6 +610,13 @@ function ExerciseQuestion({
 
   return (
     <div className="exq">
+      <div className="exq-marks-hint" aria-label="Marks available for this question">
+        <Icon name="clipboard" size={13} />
+        <span>
+          Marks available: <strong>{check.concepts.length * 2}</strong>
+          {" "}({check.concepts.length} key idea{check.concepts.length === 1 ? "" : "s"} × 2 marks each)
+        </span>
+      </div>
       {ok || result ? (
         <MarkedAnswer text={val} check={check} ok={ok} />
       ) : (
@@ -3089,11 +3096,19 @@ export function UnitPage({
           {(tab === "questions" ? content.questionSessions ?? [] : content.exercises).map((ex) => {
             const exRes = progress.units[u.us]?.exercises?.[ex.id];
             const hasChecks = !!ex.checks && ex.checks.length > 0;
+            const exTotalMarks = ex.checks?.reduce((t, c) => t + c.concepts.length * 2, 0) ?? 0;
             return (
             <details key={ex.id} className="saqa-details lesson-acc">
               <summary>
                 <Icon name="exercise" size={17} />
                 <span className="ex-title">{ex.title}</span>
+                {hasChecks && (
+                  <span className="ex-status marks" title={`${exTotalMarks} marks available in total`}>
+                    <Icon name="clipboard" size={13} />
+                    <span className="ex-full">Marks available: {exTotalMarks}</span>
+                    <span className="ex-short">/{exTotalMarks}</span>
+                  </span>
+                )}
                 {exRes ? (
                   <span className="ex-status done">
                     <Icon name="checkCircle" size={13} />
@@ -3115,6 +3130,16 @@ export function UnitPage({
                 <p className="lesson-p" style={{ marginTop: 10 }}>
                   <Gloss text={ex.task} />
                 </p>
+                {hasChecks && (
+                  <p className="ex-marks-total">
+                    <Icon name="clipboard" size={14} />
+                    <span>
+                      This {tab === "questions" ? "activity" : "exercise"} is out of{" "}
+                      <strong>{exTotalMarks} marks</strong> ({ex.checks!.length} question
+                      {ex.checks!.length === 1 ? "" : "s"} × 2 marks per key idea).
+                    </span>
+                  </p>
+                )}
                 {ex.scenario?.map((s, si) => (
                   <p key={si} className="lesson-p">
                     <LessonBullet text={s} />

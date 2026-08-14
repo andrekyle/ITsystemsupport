@@ -4385,6 +4385,47 @@ a.plan-ppt:hover {
   margin: 8px 0 16px;
 }
 
+.exq-marks-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.exq-marks-hint strong {
+  color: var(--azure);
+  font-weight: 700;
+}
+
+.ex-status.marks {
+  color: var(--azure);
+  background: color-mix(in srgb, var(--azure) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--azure) 35%, transparent);
+}
+
+.ex-marks-total {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 12px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--azure);
+  background: color-mix(in srgb, var(--azure) 6%, transparent);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.ex-marks-total strong {
+  color: var(--azure);
+}
+
 .exq-input {
   width: 100%;
   min-height: 72px;
