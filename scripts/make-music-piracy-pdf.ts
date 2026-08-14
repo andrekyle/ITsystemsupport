@@ -2,6 +2,14 @@
  * Build a text-only PDF titled "Music Piracy" for US 114055
  * (Ethics and professionalism for the computer industry in SA).
  *
+ * Styled to match Microsoft Azure design guidelines:
+ *   - Segoe UI typography (loaded from the Windows Fonts folder and
+ *     embedded into the PDF, so viewers do not need Segoe UI installed).
+ *   - Azure blue palette (Communication Blue #0078D4 and friends) and
+ *     Fluent neutrals for text and rules.
+ *   - Azure-style cover with a blue banner and dotted accent.
+ *   - Azure-style info callouts with a left accent bar.
+ *
  * Run:  npx tsx scripts/make-music-piracy-pdf.ts
  * Out:  public/downloads/Music-Piracy.pdf
  */
@@ -16,12 +24,36 @@ const OUT_DIR = join(ROOT, "public", "downloads");
 if (!existsSync(OUT_DIR)) mkdirSync(OUT_DIR, { recursive: true });
 const OUT_PATH = join(OUT_DIR, "Music-Piracy.pdf");
 
+// ---------------------------------------------------------------- Fonts
+// Segoe UI is Microsoft's default UI typeface (used across Azure, Microsoft
+// Learn and Fluent). Load it directly from the Windows Fonts folder so the
+// generated PDF matches Microsoft Azure documentation styling.
+const WIN_FONTS = "C:/Windows/Fonts";
+const FONT_FILES = {
+  regular: join(WIN_FONTS, "segoeui.ttf"),
+  bold: join(WIN_FONTS, "segoeuib.ttf"),
+  italic: join(WIN_FONTS, "segoeuii.ttf"),
+  light: join(WIN_FONTS, "segoeuil.ttf"),
+  semilight: join(WIN_FONTS, "segoeuisl.ttf"),
+  boldItalic: join(WIN_FONTS, "segoeuiz.ttf"),
+};
+const HAS_SEGOE = Object.values(FONT_FILES).every((f) => existsSync(f));
+
+// Font aliases we will refer to throughout the script. If Segoe UI is not
+// available, fall back to Helvetica (pdfkit's built-in Neue-Helvetica-like
+// sans, which is the closest match to Segoe UI's geometry).
+const F_REGULAR = HAS_SEGOE ? "SegoeUI" : "Helvetica";
+const F_BOLD = HAS_SEGOE ? "SegoeUI-Bold" : "Helvetica-Bold";
+const F_ITALIC = HAS_SEGOE ? "SegoeUI-Italic" : "Helvetica-Oblique";
+const F_LIGHT = HAS_SEGOE ? "SegoeUI-Light" : "Helvetica";
+const F_SEMILIGHT = HAS_SEGOE ? "SegoeUI-Semilight" : "Helvetica";
+
 // A4 portrait
 const PAGE_W = 595;
 const PAGE_H = 842;
 const MARGIN_X = 56;
-const MARGIN_TOP = 64;
-const MARGIN_BOTTOM = 64;
+const MARGIN_TOP = 72;
+const MARGIN_BOTTOM = 68;
 
 const doc = new PDFDocument({
   size: [PAGE_W, PAGE_H],
@@ -35,14 +67,32 @@ const doc = new PDFDocument({
     Keywords: "music piracy, software piracy, ethics, BSA, RIAA, SAFACT, bidorbuy",
   },
 });
+
+if (HAS_SEGOE) {
+  doc.registerFont("SegoeUI", FONT_FILES.regular);
+  doc.registerFont("SegoeUI-Bold", FONT_FILES.bold);
+  doc.registerFont("SegoeUI-Italic", FONT_FILES.italic);
+  doc.registerFont("SegoeUI-Light", FONT_FILES.light);
+  doc.registerFont("SegoeUI-Semilight", FONT_FILES.semilight);
+  doc.registerFont("SegoeUI-BoldItalic", FONT_FILES.boldItalic);
+}
+
 doc.pipe(createWriteStream(OUT_PATH));
 
 // ---------------------------------------------------------------- Colours
-const INK = "#0f172a";
-const MUTED = "#475569";
-const ACCENT = "#2563eb";
-const RULE = "#cbd5e1";
-const CARD_BG = "#f1f5f9";
+// Microsoft Azure / Fluent palette. Communication Blue is the primary
+// Azure brand colour used across azure.microsoft.com and Microsoft Learn.
+const AZURE_BLUE = "#0078D4"; // Communication Blue — primary
+const AZURE_BLUE_DARK = "#005A9E"; // hover / darker accent
+const AZURE_BLUE_DEEP = "#003C71"; // deep navy for cover
+const AZURE_BLUE_TINT = "#DEECF9"; // very pale blue for chips
+const AZURE_CYAN = "#50E6FF"; // accent used on marketing pages
+const INK = "#201F1E"; // Fluent neutral primary text
+const INK_SECONDARY = "#605E5C"; // Fluent neutral secondary text
+const INK_TERTIARY = "#8A8886"; // Fluent neutral tertiary
+const RULE = "#EDEBE9"; // Fluent neutral divider
+const CARD_BG = "#F3F9FD"; // pale-blue callout background (Azure info)
+const PAGE_TINT = "#FAF9F8"; // very subtle page tint used sparingly
 
 // ---------------------------------------------------------------- Helpers
 function ensureRoom(minHeight: number) {
@@ -50,62 +100,86 @@ function ensureRoom(minHeight: number) {
   if (doc.y + minHeight > bottom) doc.addPage();
 }
 
+/** Fluent/Azure heading: bold Segoe UI with a subtle blue accent bar to the left
+ *  for level-1 titles, and a hairline rule below level-1/2 titles. */
 function heading(text: string, opts: { level?: 1 | 2 | 3; space?: number } = {}) {
   const { level = 2, space = 10 } = opts;
-  const size = level === 1 ? 22 : level === 2 ? 16 : 12.5;
-  ensureRoom(size + 20);
+  const size = level === 1 ? 24 : level === 2 ? 15 : 11.5;
+  ensureRoom(size + 24);
   doc.moveDown(space / 12);
-  doc
-    .font("Helvetica-Bold")
-    .fontSize(size)
-    .fillColor(INK)
-    .text(text, { align: "left" });
+  const startY = doc.y;
+  if (level === 1) {
+    // Azure blue accent bar to the left of top-level section titles.
+    doc
+      .save()
+      .rect(MARGIN_X, startY + 3, 4, size + 4)
+      .fillColor(AZURE_BLUE)
+      .fill()
+      .restore();
+    doc
+      .font(F_BOLD)
+      .fontSize(size)
+      .fillColor(INK)
+      .text(text, MARGIN_X + 14, startY, {
+        width: PAGE_W - MARGIN_X - (MARGIN_X + 14),
+        align: "left",
+      });
+  } else {
+    doc
+      .font(F_BOLD)
+      .fontSize(size)
+      .fillColor(level === 2 ? AZURE_BLUE_DARK : INK)
+      .text(text, { align: "left" });
+  }
   if (level <= 2) {
     const y = doc.y + 4;
     doc
       .save()
       .moveTo(MARGIN_X, y)
       .lineTo(PAGE_W - MARGIN_X, y)
-      .lineWidth(0.75)
+      .lineWidth(0.6)
       .strokeColor(RULE)
       .stroke()
       .restore();
-    doc.moveDown(0.6);
+    doc.moveDown(0.7);
   } else {
-    doc.moveDown(0.3);
+    doc.moveDown(0.35);
   }
 }
 
+/** Body paragraph in Segoe UI. Justified for a documentation-like feel. */
 function paragraph(
   text: string,
   opts: { italic?: boolean; muted?: boolean; size?: number; indent?: number } = {},
 ) {
-  const { italic = false, muted = false, size = 10.75, indent = 0 } = opts;
+  const { italic = false, muted = false, size = 10.5, indent = 0 } = opts;
   ensureRoom(size + 8);
   doc
-    .font(italic ? "Times-Italic" : "Times-Roman")
+    .font(italic ? F_ITALIC : F_REGULAR)
     .fontSize(size)
-    .fillColor(muted ? MUTED : INK)
+    .fillColor(muted ? INK_SECONDARY : INK)
     .text(text, {
       align: "justify",
       indent,
-      lineGap: 2.2,
+      lineGap: 2.6,
       paragraphGap: 6,
     });
 }
 
+/** Azure-doc-style info callout: pale-blue background with a Communication
+ *  Blue accent bar on the left. Title in Segoe UI Bold, body in Segoe UI. */
 function callout(title: string, lines: string[]) {
   const size = 10.5;
-  const padX = 12;
-  const padY = 10;
+  const padX = 14;
+  const padY = 12;
   const width = PAGE_W - MARGIN_X * 2;
 
-  doc.font("Helvetica-Bold").fontSize(size);
+  doc.font(F_BOLD).fontSize(size);
   const titleH = doc.heightOfString(title, { width: width - padX * 2 });
-  doc.font("Times-Italic").fontSize(size);
+  doc.font(F_REGULAR).fontSize(size);
   const bodyH = lines.reduce(
     (acc, line) =>
-      acc + doc.heightOfString(line, { width: width - padX * 2, lineGap: 2.2 }) + 4,
+      acc + doc.heightOfString(line, { width: width - padX * 2, lineGap: 2.6 }) + 4,
     0,
   );
   const boxH = titleH + bodyH + padY * 2 + 4;
@@ -113,54 +187,110 @@ function callout(title: string, lines: string[]) {
   ensureRoom(boxH + 8);
   const x = MARGIN_X;
   const y = doc.y;
-  doc.save().roundedRect(x, y, width, boxH, 6).fillColor(CARD_BG).fill().restore();
-  doc.save().moveTo(x, y).lineTo(x, y + boxH).lineWidth(3).strokeColor(ACCENT).stroke().restore();
+  doc.save().roundedRect(x, y, width, boxH, 4).fillColor(CARD_BG).fill().restore();
+  doc
+    .save()
+    .rect(x, y, 4, boxH)
+    .fillColor(AZURE_BLUE)
+    .fill()
+    .restore();
 
   doc
-    .font("Helvetica-Bold")
+    .font(F_BOLD)
     .fontSize(size)
-    .fillColor(INK)
+    .fillColor(AZURE_BLUE_DARK)
     .text(title, x + padX, y + padY, { width: width - padX * 2 });
   doc.moveDown(0.2);
   for (const line of lines) {
     doc
-      .font("Times-Italic")
+      .font(F_REGULAR)
       .fontSize(size)
       .fillColor(INK)
-      .text(line, { width: width - padX * 2, lineGap: 2.2 });
+      .text(line, { width: width - padX * 2, lineGap: 2.6 });
     doc.moveDown(0.2);
   }
-  doc.y = y + boxH + 8;
+  doc.y = y + boxH + 10;
 }
 
 function bulletList(items: string[]) {
-  const size = 10.75;
+  const size = 10.5;
   const bulletX = MARGIN_X + 4;
   const textX = MARGIN_X + 18;
   const textWidth = PAGE_W - MARGIN_X - textX;
   for (const item of items) {
     ensureRoom(size + 8);
     const y = doc.y;
-    doc.font("Times-Roman").fontSize(size).fillColor(INK).text("\u2022", bulletX, y);
-    doc.text(item, textX, y, { width: textWidth, align: "justify", lineGap: 2.2 });
-    doc.moveDown(0.4);
+    doc
+      .font(F_BOLD)
+      .fontSize(size)
+      .fillColor(AZURE_BLUE)
+      .text("\u25A0", bulletX, y + 1, { lineBreak: false });
+    doc
+      .font(F_REGULAR)
+      .fontSize(size)
+      .fillColor(INK)
+      .text(item, textX, y, { width: textWidth, align: "justify", lineGap: 2.6 });
+    doc.moveDown(0.45);
   }
   doc.moveDown(0.2);
+}
+
+/** Small pill chip (used on the cover) matching Azure's tag styling. */
+function chip(x: number, y: number, label: string) {
+  const padX = 10;
+  const padY = 5;
+  const size = 9.5;
+  doc.font(F_BOLD).fontSize(size);
+  const w = doc.widthOfString(label) + padX * 2;
+  const h = size + padY * 2;
+  doc
+    .save()
+    .roundedRect(x, y, w, h, h / 2)
+    .fillColor("#FFFFFF")
+    .fillOpacity(0.14)
+    .fill()
+    .fillOpacity(1)
+    .restore();
+  doc
+    .font(F_BOLD)
+    .fontSize(size)
+    .fillColor("#FFFFFF")
+    .text(label, x + padX, y + padY - 1, { lineBreak: false });
+  return w;
 }
 
 function pageFooter(pageNum: number, total?: number) {
   const savedBottom = doc.page.margins.bottom;
   doc.page.margins.bottom = 0;
+  // Thin blue rule above the footer for a subtle Azure-doc feel.
+  doc
+    .save()
+    .moveTo(MARGIN_X, PAGE_H - MARGIN_BOTTOM + 18)
+    .lineTo(PAGE_W - MARGIN_X, PAGE_H - MARGIN_BOTTOM + 18)
+    .lineWidth(0.5)
+    .strokeColor(RULE)
+    .stroke()
+    .restore();
   doc.save();
   doc
-    .font("Helvetica")
-    .fontSize(9)
-    .fillColor(MUTED)
+    .font(F_REGULAR)
+    .fontSize(8.5)
+    .fillColor(INK_SECONDARY)
     .text(
-      total ? `Music Piracy  \u00b7  Page ${pageNum} of ${total}` : `Music Piracy  \u00b7  Page ${pageNum}`,
+      "Music Piracy  \u2022  US 114055 Ethics & Professionalism",
       MARGIN_X,
-      PAGE_H - MARGIN_BOTTOM + 28,
-      { width: PAGE_W - MARGIN_X * 2, align: "center", lineBreak: false },
+      PAGE_H - MARGIN_BOTTOM + 26,
+      { width: (PAGE_W - MARGIN_X * 2) / 2, align: "left", lineBreak: false },
+    );
+  doc
+    .font(F_REGULAR)
+    .fontSize(8.5)
+    .fillColor(INK_SECONDARY)
+    .text(
+      total ? `Page ${pageNum} of ${total}` : `Page ${pageNum}`,
+      PAGE_W / 2,
+      PAGE_H - MARGIN_BOTTOM + 26,
+      { width: (PAGE_W - MARGIN_X * 2) / 2, align: "right", lineBreak: false },
     );
   doc.restore();
   doc.page.margins.bottom = savedBottom;
@@ -175,37 +305,77 @@ doc.on("pageAdded", () => {
 // ---------------------------------------------------------------- Cover
 doc.addPage();
 
+// Deep-blue Azure banner covering the top ~40% of the page.
+const bannerH = 340;
 doc.save();
-doc.rect(0, 0, PAGE_W, 240).fillColor("#0b1220").fill();
+doc.rect(0, 0, PAGE_W, bannerH).fillColor(AZURE_BLUE_DEEP).fill();
+// A darker overlay strip at the very top for the classic Azure header stripe.
+doc.rect(0, 0, PAGE_W, 6).fillColor(AZURE_BLUE).fill();
+// A cyan accent ribbon along the bottom of the banner.
+doc.rect(0, bannerH - 5, PAGE_W * 0.55, 5).fillColor(AZURE_CYAN).fill();
+doc.rect(PAGE_W * 0.55, bannerH - 5, PAGE_W * 0.45, 5).fillColor(AZURE_BLUE).fill();
 doc.restore();
 
+// Decorative dotted grid (Fluent/Azure marketing pages use light dot patterns)
+doc.save();
+doc.fillColor("#FFFFFF").fillOpacity(0.08);
+for (let dx = PAGE_W - 180; dx < PAGE_W - 20; dx += 14) {
+  for (let dy = 34; dy < 190; dy += 14) {
+    doc.circle(dx, dy, 1.4).fill();
+  }
+}
+doc.fillOpacity(1);
+doc.restore();
+
+// Small "Microsoft-style" wordmark block in the top-left of the banner.
 doc
-  .font("Helvetica-Bold")
-  .fontSize(12)
-  .fillColor("#93c5fd")
-  .text("US 114055  \u00b7  NQF 5  \u00b7  Ethics & Professionalism", MARGIN_X, 84, {
-    characterSpacing: 1.4,
+  .font(F_SEMILIGHT)
+  .fontSize(11)
+  .fillColor("#FFFFFF")
+  .text("ITSS Learn  |  Microsoft Azure styling", MARGIN_X, 34, {
+    characterSpacing: 0.4,
+    lineBreak: false,
   });
 
+// Eyebrow
 doc
-  .font("Helvetica-Bold")
-  .fontSize(42)
-  .fillColor("#ffffff")
-  .text("Music Piracy", MARGIN_X, 118);
+  .font(F_BOLD)
+  .fontSize(11)
+  .fillColor(AZURE_CYAN)
+  .text("US 114055  \u00b7  NQF 5  \u00b7  Ethics & Professionalism", MARGIN_X, 108, {
+    characterSpacing: 1.6,
+    lineBreak: false,
+  });
 
+// Main title \u2014 Segoe UI Light at a large display size, matching Azure hero titles.
 doc
-  .font("Helvetica")
-  .fontSize(13)
-  .fillColor("#cbd5e1")
+  .font(F_LIGHT)
+  .fontSize(56)
+  .fillColor("#FFFFFF")
+  .text("Music Piracy", MARGIN_X, 132, { lineBreak: false });
+
+// Subhead
+doc
+  .font(F_SEMILIGHT)
+  .fontSize(14)
+  .fillColor("#DEECF9")
   .text(
     "A learner reader on music, software and online piracy \u2014 the ethics, the industry, and the South African picture.",
     MARGIN_X,
-    174,
-    { width: PAGE_W - MARGIN_X * 2 },
+    210,
+    { width: PAGE_W - MARGIN_X * 2 - 40, lineGap: 3 },
   );
 
-doc.y = 280;
-doc.moveDown(0.5);
+// Chips row
+let chipX = MARGIN_X;
+const chipY = bannerH - 46;
+for (const label of ["Ethics", "Piracy", "BSA", "SAFACT", "South Africa"]) {
+  chipX += chip(chipX, chipY, label) + 8;
+}
+
+// Content area below the banner.
+doc.x = MARGIN_X;
+doc.y = bannerH + 30;
 
 heading("In this reader", { level: 3, space: 4 });
 bulletList([
