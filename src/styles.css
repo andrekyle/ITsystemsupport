@@ -1737,6 +1737,35 @@ textarea:focus {
   color: var(--ink);
 }
 
+.self-assess-save {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 14px 0 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.self-assess-status {
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.self-assess-status .ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--green);
+  font-weight: 600;
+}
+
+.self-assess-status .muted {
+  color: var(--ink-2);
+}
+
 .opt {
   display: flex;
   align-items: flex-start;

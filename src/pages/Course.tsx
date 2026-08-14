@@ -1631,6 +1631,8 @@ export function UnitPage({
   const [sharedSettings, updateSharedSettings] = useSharedSettings();
   /** super user's draft of the evaluation form link */
   const [evalDraft, setEvalDraft] = useState<string | null>(null);
+  /** transient "Saved" flash on the Self assessment tab, keyed by unit id */
+  const [saJustSaved, setSaJustSaved] = useState<string | null>(null);
   // shared/staff-uploaded content may only be downloaded by the super user,
   // unless the super user has explicitly allowed it for everyone
   const canDownloadShared = isSuperUser || sharedSettings.allowSharedDownloads;
@@ -3498,6 +3500,11 @@ export function UnitPage({
       {tab === "selfassessment" && content?.selfAssessment && (() => {
         const sa = content.selfAssessment;
         const values = progress.units[u.us]?.logbook ?? {};
+        const total = sa.items.length;
+        const ticked = sa.items.reduce((n, _, i) => n + (values[`selfassess-${i}`] === true ? 1 : 0), 0);
+        const savedAtRaw = values["selfassess.savedAt"];
+        const savedAt = typeof savedAtRaw === "string" ? savedAtRaw : null;
+        const justSaved = saJustSaved === u.us;
         return (
           <>
             <h2 className="section-title">
@@ -3514,12 +3521,12 @@ export function UnitPage({
             <div className="self-assess-list">
               {sa.items.map((item, i) => {
                 const key = `selfassess-${i}`;
-                const ticked = values[key] === true;
+                const isTicked = values[key] === true;
                 return (
-                  <label key={key} className={`self-assess-item${ticked ? " ticked" : ""}`}>
+                  <label key={key} className={`self-assess-item${isTicked ? " ticked" : ""}`}>
                     <input
                       type="checkbox"
-                      checked={ticked}
+                      checked={isTicked}
                       onChange={(e) => setLogbookField(u.us, key, e.target.checked)}
                     />
                     <span>
@@ -3528,6 +3535,43 @@ export function UnitPage({
                   </label>
                 );
               })}
+            </div>
+            <div className="self-assess-save">
+              <button
+                className="btn"
+                onClick={() => {
+                  setLogbookField(u.us, "selfassess.savedAt", new Date().toISOString());
+                  setSaJustSaved(u.us);
+                  window.setTimeout(() => {
+                    setSaJustSaved((cur) => (cur === u.us ? null : cur));
+                  }, 2500);
+                }}
+              >
+                <Icon name="checkCircle" size={15} />
+                Save self assessment
+              </button>
+              <span className="self-assess-status">
+                {justSaved ? (
+                  <span className="ok">
+                    <Icon name="checkCircle" size={14} />
+                    Saved — {ticked} of {total} ticked
+                  </span>
+                ) : savedAt ? (
+                  <span className="muted">
+                    Last saved{" "}
+                    {new Date(savedAt).toLocaleString(undefined, {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                    {" · "}
+                    {ticked} of {total} ticked
+                  </span>
+                ) : (
+                  <span className="muted">
+                    Not saved yet — {ticked} of {total} ticked
+                  </span>
+                )}
+              </span>
             </div>
             {sa.outro.map((p) => (
               <p key={p} className="lesson-p muted" style={{ maxWidth: 720 }}>
