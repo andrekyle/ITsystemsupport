@@ -1737,6 +1737,24 @@ textarea:focus {
   color: var(--ink);
 }
 
+.self-assess-item.locked {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.self-assess-item.locked input[type="checkbox"] {
+  cursor: not-allowed;
+}
+
+.self-assess-list.locked {
+  opacity: 0.95;
+}
+
+.self-assess-locked {
+  margin: 6px 0 14px;
+  border-left: 3px solid var(--azure);
+}
+
 .self-assess-save {
   display: flex;
   align-items: center;

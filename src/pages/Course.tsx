@@ -3504,7 +3504,29 @@ export function UnitPage({
         const ticked = sa.items.reduce((n, _, i) => n + (values[`selfassess-${i}`] === true ? 1 : 0), 0);
         const savedAtRaw = values["selfassess.savedAt"];
         const savedAt = typeof savedAtRaw === "string" ? savedAtRaw : null;
+        const locked = !!savedAt;
         const justSaved = saJustSaved === u.us;
+        const confirmSave = () => {
+          if (locked) return;
+          const ok = window.confirm(
+            `Save this self assessment?\n\n${ticked} of ${total} items ticked.\n\nOnce saved you will not be able to change your answers.`
+          );
+          if (!ok) return;
+          setLogbookField(u.us, "selfassess.savedAt", new Date().toISOString());
+          setSaJustSaved(u.us);
+          window.setTimeout(() => {
+            setSaJustSaved((cur) => (cur === u.us ? null : cur));
+          }, 2500);
+        };
+        const superUserReset = () => {
+          if (
+            !window.confirm(
+              "Super user override: unlock this learner's self assessment so it can be edited again?"
+            )
+          )
+            return;
+          setLogbookField(u.us, "selfassess.savedAt", "");
+        };
         return (
           <>
             <h2 className="section-title">
@@ -3518,16 +3540,39 @@ export function UnitPage({
                 <Gloss text={p} />
               </p>
             ))}
-            <div className="self-assess-list">
+            {locked && (
+              <div className="callout self-assess-locked" style={{ maxWidth: 720 }}>
+                <span className="ico">
+                  <Icon name="lock" size={18} />
+                </span>
+                <span>
+                  <strong>This self assessment is locked.</strong> You saved it on{" "}
+                  {new Date(savedAt!).toLocaleString(undefined, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}{" "}
+                  — <strong>{ticked} of {total} items ticked</strong>. Your answers can no longer
+                  be changed.
+                </span>
+              </div>
+            )}
+            <div className={`self-assess-list${locked ? " locked" : ""}`}>
               {sa.items.map((item, i) => {
                 const key = `selfassess-${i}`;
                 const isTicked = values[key] === true;
                 return (
-                  <label key={key} className={`self-assess-item${isTicked ? " ticked" : ""}`}>
+                  <label
+                    key={key}
+                    className={`self-assess-item${isTicked ? " ticked" : ""}${locked ? " locked" : ""}`}
+                  >
                     <input
                       type="checkbox"
                       checked={isTicked}
-                      onChange={(e) => setLogbookField(u.us, key, e.target.checked)}
+                      disabled={locked}
+                      onChange={(e) => {
+                        if (locked) return;
+                        setLogbookField(u.us, key, e.target.checked);
+                      }}
                     />
                     <span>
                       <Gloss text={item} />
@@ -3537,19 +3582,17 @@ export function UnitPage({
               })}
             </div>
             <div className="self-assess-save">
-              <button
-                className="btn"
-                onClick={() => {
-                  setLogbookField(u.us, "selfassess.savedAt", new Date().toISOString());
-                  setSaJustSaved(u.us);
-                  window.setTimeout(() => {
-                    setSaJustSaved((cur) => (cur === u.us ? null : cur));
-                  }, 2500);
-                }}
-              >
-                <Icon name="checkCircle" size={15} />
-                Save self assessment
-              </button>
+              {locked ? (
+                <button className="btn" disabled title="This self assessment has been saved and is locked">
+                  <Icon name="lock" size={15} />
+                  Saved and locked
+                </button>
+              ) : (
+                <button className="btn" onClick={confirmSave}>
+                  <Icon name="checkCircle" size={15} />
+                  Save self assessment
+                </button>
+              )}
               <span className="self-assess-status">
                 {justSaved ? (
                   <span className="ok">
@@ -3558,20 +3601,31 @@ export function UnitPage({
                   </span>
                 ) : savedAt ? (
                   <span className="muted">
-                    Last saved{" "}
+                    Saved{" "}
                     {new Date(savedAt).toLocaleString(undefined, {
                       dateStyle: "medium",
                       timeStyle: "short",
                     })}
                     {" · "}
-                    {ticked} of {total} ticked
+                    {ticked} of {total} ticked · read only
                   </span>
                 ) : (
                   <span className="muted">
-                    Not saved yet — {ticked} of {total} ticked
+                    Not saved yet — {ticked} of {total} ticked. Once saved the form cannot be
+                    changed.
                   </span>
                 )}
               </span>
+              {locked && isSuperUser && (
+                <button
+                  className="btn ghost sm"
+                  onClick={superUserReset}
+                  title="Super user only — unlocks this learner's self assessment for editing"
+                >
+                  <Icon name="design" size={14} />
+                  Unlock — super user
+                </button>
+              )}
             </div>
             {sa.outro.map((p) => (
               <p key={p} className="lesson-p muted" style={{ maxWidth: 720 }}>
