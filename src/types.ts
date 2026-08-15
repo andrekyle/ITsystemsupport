@@ -118,8 +118,12 @@ export interface Profile {
   signatureImage?: string;
   /** the one-time signature upload request has been shown */
   signatureAsked?: boolean;
-  /** SHA-256 hex hash of the sign-in password (absent = no password set) */
+  /** salted PBKDF2 hash of the sign-in password (legacy profiles: SHA-256 hex; absent = no password set) */
   passwordHash?: string;
+  /** role held before an automatic Super User promotion — restored on demotion */
+  baseRole?: Role;
+  /** ISO timestamp the learner completed the first-login onboarding tour */
+  onboardedAt?: string;
 }
 
 /** Stages each unit standard moves through */
@@ -430,7 +434,10 @@ export type PageId =
   | "students"
   | "checklist"
   | "sectiond"
-  | "attendance";
+  | "attendance"
+  | "compliance"
+  | "analytics"
+  | "community";
 
 export interface Route {
   page: PageId;

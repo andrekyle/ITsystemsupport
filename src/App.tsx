@@ -14,8 +14,12 @@ import { ProfilePage, StudentsPage } from "./pages/People";
 import { ChecklistPage } from "./pages/Checklist";
 import { SectionDPage } from "./pages/Checklist";
 import { AttendancePage } from "./pages/Attendance";
+import { CompliancePage } from "./pages/Compliance";
+import { AnalyticsPage } from "./pages/Analytics";
+import { CommunityPage } from "./pages/Community";
 import { cloudEnabled, supabase } from "./lib/supabase";
 import { installSync, startSync, stopSync, wipeLocalData } from "./lib/sync";
+import { logAudit } from "./lib/audit";
 
 // mirror every itss.* localStorage write to the cloud (no-op until signed in)
 installSync();
@@ -37,6 +41,9 @@ const VALID_PAGES = new Set([
   "checklist",
   "sectiond",
   "attendance",
+  "compliance",
+  "analytics",
+  "community",
 ]);
 
 function loadRoute(): Route {
@@ -62,7 +69,8 @@ function Shell({
   onSignOut: () => void;
   onUpdateProfile: (patch: Partial<Profile>) => void;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
+  // on phones the sidebar starts collapsed so content gets the full width
+  const [collapsed, setCollapsed] = useState(() => window.innerWidth < 760);
   const [route, setRoute] = useState<Route>(loadRoute);
   const { state, toggleActivity, saveQuizResult, setLogbookField, saveExerciseResult } = useProgress(profile.id);
 
@@ -146,6 +154,11 @@ function Shell({
             {route.page === "attendance" && (
               <AttendancePage profile={profile} onUpdateProfile={onUpdateProfile} />
             )}
+            {route.page === "compliance" && (
+              <CompliancePage profile={profile} progress={state} navigate={navigate} />
+            )}
+            {route.page === "analytics" && <AnalyticsPage profile={profile} navigate={navigate} />}
+            {route.page === "community" && <CommunityPage profile={profile} navigate={navigate} />}
             {route.page === "resources" && <ResourcesPage />}
           </div>
         </main>
@@ -273,6 +286,7 @@ function LocalApp() {
       theme={theme}
       onToggleTheme={() => setThemeState((t) => (t === "dark" ? "light" : "dark"))}
       onSignOut={() => {
+        logAudit(profile, "auth.signout", "Signed out");
         setSession(null);
         setProfile(null);
       }}

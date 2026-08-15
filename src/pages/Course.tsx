@@ -2292,7 +2292,7 @@ export function UnitPage({
                   {qChecked && (
                     <span className={`lesson-quiz-status${qAllCorrect ? " ok" : " bad"}`}>
                       {qAllCorrect
-                        ? "All five correct — Next unlocked."
+                        ? `All ${slideQuiz.length} correct — Next unlocked.`
                         : `${qAnswers.filter((a, i) => a === slideQuiz[i].answer).length} / ${slideQuiz.length} correct — fix the wrong answers and check again.`}
                     </span>
                   )}

@@ -13,11 +13,11 @@ const PREFIX = "itss.";
 /** device-local keys that should not follow the account across devices */
 const LOCAL_ONLY = new Set(["itss.session", "itss.route", "itss.theme"]);
 
-/** keys whose content is shared with every account (facilitator uploads) */
+/** keys whose content is shared with every account (facilitator uploads,
+ *  attendance registers, announcements, Q&A, reviews, outcomes, audit trail) */
 function isShared(key: string) {
   return (
-    key === "itss.notes.shared" ||
-    key === "itss.settings.shared" ||
+    key.endsWith(".shared") ||
     key.startsWith("itss.planslides.") ||
     key.startsWith("itss.lessonfigs.") ||
     key.startsWith("itss.attendance.")

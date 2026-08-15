@@ -3,7 +3,7 @@ import JSZip from "jszip";
 import { Icon } from "../icons";
 import type { EnrolmentInfo, PoeDoc, Profile, ProgressState, Role, Route } from "../types";
 import { isStaff } from "../types";
-import { MODULES, POE_SECTIONS, POE_TOTAL, usLabel } from "../data/course";
+import { COURSE_META, MODULES, POE_SECTIONS, POE_TOTAL, usLabel } from "../data/course";
 import { getContent } from "../data/content";
 import {
   assertNoDuplicateProfile,
@@ -15,9 +15,15 @@ import {
   loadProfiles,
   loadProgress,
   poeItemCount,
+  unitCompletion,
   updateProfile,
+  useOutcomes,
   usePoe,
+  useSharedSettings,
 } from "../store";
+import { logAudit } from "../lib/audit";
+import { openOnboardingPack } from "../lib/onboarding";
+import { outlookComposeLink, teamsChatLink } from "../lib/integrations";
 import { Avatar } from "../components/Avatar";
 import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/EnrolmentForm";
 import { AlertModal, ConfirmModal } from "../components/Modal";
@@ -173,6 +179,7 @@ export function ProfilePage({
   onUpdateProfile: (patch: Partial<Profile>) => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [sharedSettings] = useSharedSettings();
   const [draft, setDraft] = useState<EnrolmentInfo>({
     ...EMPTY_ENROLMENT,
     ...profile.enrolment,
@@ -181,6 +188,7 @@ export function ProfilePage({
   function save(e: React.FormEvent) {
     e.preventDefault();
     onUpdateProfile({ enrolment: { ...draft, signedDate: new Date().toISOString() } });
+    logAudit(profile, "enrolment.saved", "Updated own biographical enrolment information");
     setEditing(false);
   }
 
@@ -194,6 +202,21 @@ export function ProfilePage({
       <p className="page-sub">System Support NQF Level 5 Learnership · Investec Group</p>
 
       <ProfileHead profile={profile} />
+
+      <div className="contact-row">
+        <button
+          className="btn ghost sm"
+          title="Your printable onboarding pack — welcome letter, calendar, document checklist, POE guide"
+          onClick={() =>
+            openOnboardingPack(profile, {
+              supportEmail: sharedSettings.supportEmail,
+              teamsUrl: sharedSettings.teamsUrl,
+            })
+          }
+        >
+          <Icon name="document" size={15} /> My onboarding pack
+        </button>
+      </div>
 
       <h2 className="section-title">
         <span className="ico">
@@ -555,7 +578,7 @@ export function StudentsPage({
             : "Everyone enrolled on this learnership. Personal contact details are kept private."}
       </p>
 
-      {isSuper && <AddUser onAdded={refresh} />}
+      {isSuper && <AddUser viewer={profile} onAdded={refresh} />}
 
       {isSuper && (
         <DownloadAllAssignments
@@ -621,7 +644,7 @@ export function StudentsPage({
   );
 }
 
-function AddUser({ onAdded }: { onAdded: () => void }) {
+function AddUser({ viewer, onAdded }: { viewer: Profile; onAdded: () => void }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [role, setRole] = useState<Role>("Learner");
@@ -647,7 +670,11 @@ function AddUser({ onAdded }: { onAdded: () => void }) {
     }
     try {
       assertNoDuplicateProfile(candidates, { name });
-      createProfile(name, role, undefined, pw ? await hashPassword(pw) : undefined);
+      const created = createProfile(name, role, undefined, pw ? await hashPassword(pw) : undefined);
+      logAudit(viewer, "account.create", `Added ${role} account via People → Add User`, {
+        id: created.id,
+        name: created.name,
+      });
     } catch (err) {
       if (err instanceof DuplicateProfileError) {
         setError(err.message);
@@ -1815,6 +1842,9 @@ function StudentDetail({
 }) {
   const isSuper = viewer.role === "Super User";
   const staffViewer = isStaff(viewer.role);
+  const canRecordOutcomes =
+    isSuper || viewer.role === "Assessor" || viewer.role === "Moderator";
+  const [sharedSettings] = useSharedSettings();
   const { docs: localDocs } = usePoe(student.id);
   const docs = remote ? (cloudDocs ?? {}) : localDocs;
   const canManage = isSuper;
@@ -1881,6 +1911,22 @@ function StudentDetail({
     } else {
       updateProfile(student.id, patch);
     }
+    // audit trail for account administration
+    const target = { id: student.id, name: student.name };
+    if (patch.role && patch.role !== student.role) {
+      logAudit(viewer, "account.role", `Changed role from ${student.role} to ${patch.role}`, target);
+    }
+    if ("passwordHash" in patch) {
+      logAudit(
+        viewer,
+        "account.password",
+        patch.passwordHash ? "Set a new password" : "Removed the password",
+        target
+      );
+    }
+    if (patch.enrolment) {
+      logAudit(viewer, "enrolment.saved", "Updated biographical enrolment information", target);
+    }
     onChanged();
     return true;
   }
@@ -1943,6 +1989,10 @@ function StudentDetail({
       if (p.id === student.id) continue;
       if (identityKeys(p).some((k) => targetKeys.has(k))) deleteProfile(p.id);
     }
+    logAudit(viewer, "account.delete", `Deleted the account and all its data`, {
+      id: student.id,
+      name: student.name,
+    });
     navigate({ page: "students" });
     onChanged();
   }
@@ -1962,6 +2012,48 @@ function StudentDetail({
       </p>
 
       <ProfileHead profile={student} />
+
+      {staffViewer && (
+        <div className="contact-row">
+          <button
+            className="btn ghost sm"
+            title="Printable onboarding pack — welcome letter, calendar, document checklist, POE guide"
+            onClick={() => {
+              openOnboardingPack(student, {
+                supportEmail: sharedSettings.supportEmail,
+                teamsUrl: sharedSettings.teamsUrl,
+              });
+            }}
+          >
+            <Icon name="document" size={15} /> Onboarding pack
+          </button>
+          {student.enrolment?.email && (
+            <>
+              <a
+                className="btn ghost sm"
+                href={outlookComposeLink(
+                  student.enrolment.email,
+                  `${COURSE_META.title} — message from ${viewer.name}`
+                )}
+                target="_blank"
+                rel="noreferrer"
+                title={`Email ${student.enrolment.email} via Outlook`}
+              >
+                <Icon name="globe" size={15} /> Email (Outlook)
+              </a>
+              <a
+                className="btn ghost sm"
+                href={teamsChatLink(student.enrolment.email)}
+                target="_blank"
+                rel="noreferrer"
+                title="Open a Microsoft Teams chat"
+              >
+                <Icon name="chat" size={15} /> Teams chat
+              </a>
+            </>
+          )}
+        </div>
+      )}
 
       {remote && staffViewer && (
         <div className="callout">
@@ -2025,6 +2117,9 @@ function StudentDetail({
       {staffViewer && (
         <>
           <AcademicRecord student={student} remote={remote} owner={owner} canDownload={isSuper} />
+          {student.role === "Learner" && canRecordOutcomes && (
+            <OutcomesPanel student={student} viewer={viewer} />
+          )}
           <h2 className="section-title">
             <span className="ico">
               <Icon name="folder" size={20} />
@@ -2089,6 +2184,114 @@ function StudentDetail({
         />
       )}
       {alertMsg && <AlertModal message={alertMsg} onClose={() => setAlertMsg("")} />}
+    </>
+  );
+}
+
+/* ---------- unit assessment outcomes (assessor / moderator / super user) ---------- */
+
+function OutcomesPanel({ student, viewer }: { student: Profile; viewer: Profile }) {
+  const { outcomes, setOutcome, clearOutcome } = useOutcomes();
+  const progress = loadProgress(student.id);
+  const forLearner = outcomes[student.id] ?? {};
+  const recorded = Object.keys(forLearner).length;
+  const competent = Object.values(forLearner).filter((o) => o.status === "C").length;
+
+  return (
+    <>
+      <h2 className="section-title">
+        <span className="ico">
+          <Icon name="award" size={20} />
+        </span>
+        Assessment outcomes — {recorded} recorded, {competent} competent
+      </h2>
+      <div className="card" style={{ overflowX: "auto" }}>
+        <p className="muted" style={{ margin: "0 0 10px" }}>
+          Record the formal assessor decision per unit standard. Learners see their outcome on the
+          Compliance page; outcomes feed the statement of results and certification checks.
+        </p>
+        <table className="data outcome-table">
+          <thead>
+            <tr>
+              <th>Unit standard</th>
+              <th>Progress</th>
+              <th>Outcome</th>
+              <th>Recorded by</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {MODULES.flatMap((m) => m.units).map((u) => {
+              const o = forLearner[u.us];
+              const pct = Math.round(unitCompletion(progress, u.us) * 100);
+              return (
+                <tr key={u.us}>
+                  <td>
+                    <strong>{usLabel(u.us)}</strong>
+                    <div className="mini-note">{u.title.slice(0, 70)}</div>
+                  </td>
+                  <td>{pct}%</td>
+                  <td>
+                    {o ? (
+                      <span className={`status-chip ${o.status === "C" ? "ok" : "bad"}`}>
+                        {o.status === "C" ? "Competent" : "Not yet competent"}
+                      </span>
+                    ) : (
+                      <span className="status-chip info">Pending</span>
+                    )}
+                    {o?.note && <div className="mini-note">“{o.note}”</div>}
+                  </td>
+                  <td>
+                    {o ? (
+                      <>
+                        {o.by}
+                        <div className="mini-note">{new Date(o.at).toLocaleDateString()}</div>
+                      </>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td>
+                    <span className="cell-actions">
+                      <button
+                        className={`btn ghost sm${o?.status === "C" ? " active" : ""}`}
+                        onClick={() => {
+                          setOutcome(viewer, student.id, u.us, "C");
+                          logAudit(viewer, "outcome.set", `Recorded US ${u.us} outcome: Competent`, {
+                            id: student.id,
+                            name: student.name,
+                          });
+                        }}
+                      >
+                        C
+                      </button>
+                      <button
+                        className={`btn ghost sm danger${o?.status === "NYC" ? " active" : ""}`}
+                        onClick={() => {
+                          const note =
+                            window.prompt("Feedback / remediation required (optional)?") ?? undefined;
+                          setOutcome(viewer, student.id, u.us, "NYC", note);
+                          logAudit(viewer, "outcome.set", `Recorded US ${u.us} outcome: Not Yet Competent`, {
+                            id: student.id,
+                            name: student.name,
+                          });
+                        }}
+                      >
+                        NYC
+                      </button>
+                      {o && (
+                        <button className="btn ghost sm" onClick={() => clearOutcome(student.id, u.us)}>
+                          Clear
+                        </button>
+                      )}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

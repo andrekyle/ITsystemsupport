@@ -3,6 +3,7 @@ import type { EnrolmentInfo, PoeDoc, Profile, ProgressState, Role, UnitActivity,
 import { UNIT_ACTIVITIES } from "./types";
 import { MODULES } from "./data/course";
 import { cloudEnabled } from "./lib/supabase";
+import { logAudit } from "./lib/audit";
 
 const PROFILES_KEY = "itss.profiles";
 const SESSION_KEY = "itss.session";
@@ -59,6 +60,13 @@ function onSuperAccount(): boolean {
   return cloudEnabled ? accountIsAdmin || accountEmail === SUPER_USER_EMAIL : true;
 }
 
+/** True when this name identifies the designated super user (exempt from the
+ *  staff access code — they are auto-promoted on sign-in anyway). */
+export function isDesignatedSuperUser(name: string): boolean {
+  const nm = name.trim().toLowerCase();
+  return nm === SUPER_USER_NAME.trim().toLowerCase() || nm === SUPER_USER_EMAIL;
+}
+
 export function loadProfiles(): Profile[] {
   const profiles = read<Profile[]>(PROFILES_KEY, []);
   // In cloud mode only admin accounts (or the designated email) hold Super User;
@@ -70,24 +78,28 @@ export function loadProfiles(): Profile[] {
   let changed = false;
   for (const p of profiles) {
     const nm = p.name.trim().toLowerCase();
-    // On a super-user cloud account (or in local-only mode) entitle:
+    // Entitled to the Super User role:
     //   - the designated super-user name (case-insensitive),
     //   - the super-user email as a profile name,
-    //   - a profile whose name matches the signed-in email, or
-    //   - the profile the operator is actively signed in as.
+    //   - in cloud mode on an admin account: a profile whose name matches the
+    //     signed-in email, or the profile the admin is actively signed in as.
+    // In local-only mode entitlement is strictly name-based so that learners
+    // sharing a local install are never promoted just by signing in.
     const entitled =
       superAccount &&
       (nm === superName ||
         nm === SUPER_USER_EMAIL ||
-        (!!accountEmail && nm === accountEmail) ||
-        (!!currentSessionId && p.id === currentSessionId));
+        (cloudEnabled && !!accountEmail && nm === accountEmail) ||
+        (cloudEnabled && !!currentSessionId && p.id === currentSessionId));
     if (entitled && p.role !== "Super User") {
+      p.baseRole = p.role; // remember the real role for when the promotion lapses
       p.role = "Super User";
       changed = true;
     }
-    // no one else may ever hold the Super User role
+    // no one else may ever hold the Super User role — restore their real role
     if (!entitled && p.role === "Super User") {
-      p.role = "Facilitator";
+      p.role = p.baseRole && p.baseRole !== "Super User" ? p.baseRole : "Facilitator";
+      delete p.baseRole;
       changed = true;
     }
     // on the super user's cloud account, other profiles are only ever opened
@@ -179,12 +191,57 @@ export function assertNoDuplicateProfile(
   if (dup) throw new DuplicateProfileError(dup);
 }
 
-/** SHA-256 hex hash used for sign-in passwords. */
-export async function hashPassword(password: string): Promise<string> {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
-  return Array.from(new Uint8Array(buf))
+/* ---------- password hashing (salted PBKDF2, legacy SHA-256 supported) ---------- */
+
+const PBKDF2_ITERATIONS = 150_000;
+
+const toHex = (buf: ArrayBuffer | Uint8Array) =>
+  Array.from(buf instanceof Uint8Array ? buf : new Uint8Array(buf))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+
+const fromHex = (hex: string) =>
+  new Uint8Array((hex.match(/.{2}/g) ?? []).map((h) => parseInt(h, 16)));
+
+async function pbkdf2Hex(password: string, salt: Uint8Array, iterations: number): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", hash: "SHA-256", salt: salt as BufferSource, iterations },
+    key,
+    256
+  );
+  return toHex(bits);
+}
+
+async function sha256Hex(text: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return toHex(buf);
+}
+
+/** Hash a sign-in password with salted PBKDF2 (format: pbkdf2$iterations$salt$hash). */
+export async function hashPassword(password: string): Promise<string> {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const hash = await pbkdf2Hex(password, salt, PBKDF2_ITERATIONS);
+  return `pbkdf2$${PBKDF2_ITERATIONS}$${toHex(salt)}$${hash}`;
+}
+
+/** Check a password against a stored hash. Accepts current PBKDF2 hashes and
+ *  legacy unsalted SHA-256 hex hashes created by earlier versions. */
+export async function verifyPassword(password: string, stored: string | undefined): Promise<boolean> {
+  if (!stored) return false;
+  if (stored.startsWith("pbkdf2$")) {
+    const [, iterStr, saltHex, hashHex] = stored.split("$");
+    const iterations = Number(iterStr);
+    if (!iterations || !saltHex || !hashHex) return false;
+    return (await pbkdf2Hex(password, fromHex(saltHex), iterations)) === hashHex;
+  }
+  return (await sha256Hex(password)) === stored;
 }
 
 /** Read a profile's POE documents without subscribing (for lists/counts). */
@@ -321,6 +378,10 @@ export function useProgress(profileId: string) {
 
   const saveQuizResult = useCallback(
     (us: string, score: number, total: number, quizId?: string) => {
+      const actor = read<Profile[]>(PROFILES_KEY, []).find((p) => p.id === profileId);
+      if (actor) {
+        logAudit(actor, "quiz.submit", `US ${us}${quizId ? ` (${quizId})` : ""}: scored ${score}/${total}`);
+      }
       update((prev) => {
         const unit: UnitProgress = prev.units[us] ?? { activities: {} };
         const q = quizId ? unit.quizzes?.[quizId] : unit.quiz;
@@ -366,6 +427,10 @@ export function useProgress(profileId: string) {
 
   const saveExerciseResult = useCallback(
     (us: string, exId: string, score: number, total: number) => {
+      const actor = read<Profile[]>(PROFILES_KEY, []).find((p) => p.id === profileId);
+      if (actor) {
+        logAudit(actor, "exercise.submit", `US ${us} exercise ${exId}: marked ${score}/${total}`);
+      }
       update((prev) => {
         const unit: UnitProgress = prev.units[us] ?? { activities: {} };
         const cur = unit.exercises?.[exId];
@@ -404,9 +469,24 @@ export interface SharedSettings {
   allowSharedDownloads: boolean;
   /** link to the lesson evaluation form (set by the super user) */
   evaluationUrl: string;
+  /** access code new sign-ups must enter to register a staff role (empty = staff self-signup disabled) */
+  staffCode: string;
+  /** link to the cohort's Wayground (Quizizz) space for live gamified quizzes */
+  waygroundUrl: string;
+  /** support mailbox learners can contact (mailto / Outlook links) */
+  supportEmail: string;
+  /** link to the cohort's Microsoft Teams team or channel */
+  teamsUrl: string;
 }
 
-const DEFAULT_SHARED_SETTINGS: SharedSettings = { allowSharedDownloads: false, evaluationUrl: "" };
+const DEFAULT_SHARED_SETTINGS: SharedSettings = {
+  allowSharedDownloads: false,
+  evaluationUrl: "",
+  staffCode: "",
+  waygroundUrl: "",
+  supportEmail: "",
+  teamsUrl: "",
+};
 
 function readSharedSettings(): SharedSettings {
   return { ...DEFAULT_SHARED_SETTINGS, ...read<Partial<SharedSettings>>(SHARED_SETTINGS_KEY, {}) };
@@ -430,6 +510,289 @@ export function useSharedSettings(): [SharedSettings, (patch: Partial<SharedSett
   }, []);
 
   return [settings, update];
+}
+
+/* ---------- generic shared-state hook (synced to every account) ---------- */
+
+/** Subscribe to a shared `itss.*.shared` JSON key. Mutations re-read fresh
+ *  storage before writing so concurrent tabs/devices don't clobber each other. */
+function useSharedState<T>(key: string, empty: T): [T, (updater: (fresh: T) => T) => T] {
+  const [value, setValue] = useState<T>(() => read<T>(key, empty));
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === key) setValue(read<T>(key, empty));
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+
+  const update = useCallback(
+    (updater: (fresh: T) => T) => {
+      const next = updater(read<T>(key, empty));
+      write(key, next);
+      setValue(next);
+      return next;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [key]
+  );
+
+  return [value, update];
+}
+
+const newId = () => `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+
+/* ---------- announcements (staff → everyone) ---------- */
+
+const ANNOUNCE_KEY = "itss.announce.shared";
+
+export interface Announcement {
+  id: string;
+  title: string;
+  body: string;
+  byId: string;
+  by: string;
+  role: Role;
+  at: string;
+  pinned?: boolean;
+}
+
+export function useAnnouncements() {
+  const [list, update] = useSharedState<Announcement[]>(ANNOUNCE_KEY, []);
+  const post = useCallback(
+    (author: Profile, title: string, body: string) =>
+      update((fresh) => [
+        {
+          id: newId(),
+          title: title.trim(),
+          body: body.trim(),
+          byId: author.id,
+          by: author.name,
+          role: author.role,
+          at: new Date().toISOString(),
+        },
+        ...fresh,
+      ]),
+    [update]
+  );
+  const remove = useCallback(
+    (id: string) => update((fresh) => fresh.filter((a) => a.id !== id)),
+    [update]
+  );
+  const togglePin = useCallback(
+    (id: string) =>
+      update((fresh) => fresh.map((a) => (a.id === id ? { ...a, pinned: !a.pinned } : a))),
+    [update]
+  );
+  const sorted = [...list].sort((a, b) =>
+    a.pinned === b.pinned ? b.at.localeCompare(a.at) : a.pinned ? -1 : 1
+  );
+  return { announcements: sorted, post, remove, togglePin };
+}
+
+/** Read announcements without subscribing (dashboard teaser). */
+export function loadAnnouncements(): Announcement[] {
+  return [...read<Announcement[]>(ANNOUNCE_KEY, [])].sort((a, b) =>
+    a.pinned === b.pinned ? b.at.localeCompare(a.at) : a.pinned ? -1 : 1
+  );
+}
+
+/* ---------- Q&A support threads (learners ask, staff answer) ---------- */
+
+const QA_KEY = "itss.qa.shared";
+
+export interface QaReply {
+  id: string;
+  body: string;
+  byId: string;
+  by: string;
+  role: Role;
+  at: string;
+}
+
+export interface QaThread {
+  id: string;
+  title: string;
+  body: string;
+  /** unit standard the question relates to (optional) */
+  unit?: string;
+  byId: string;
+  by: string;
+  role: Role;
+  at: string;
+  resolved?: boolean;
+  replies: QaReply[];
+}
+
+export function useQaThreads() {
+  const [threads, update] = useSharedState<QaThread[]>(QA_KEY, []);
+  const ask = useCallback(
+    (author: Profile, title: string, body: string, unit?: string) =>
+      update((fresh) => [
+        {
+          id: newId(),
+          title: title.trim(),
+          body: body.trim(),
+          ...(unit ? { unit } : {}),
+          byId: author.id,
+          by: author.name,
+          role: author.role,
+          at: new Date().toISOString(),
+          replies: [],
+        },
+        ...fresh,
+      ]),
+    [update]
+  );
+  const reply = useCallback(
+    (author: Profile, threadId: string, body: string) =>
+      update((fresh) =>
+        fresh.map((t) =>
+          t.id === threadId
+            ? {
+                ...t,
+                replies: [
+                  ...t.replies,
+                  {
+                    id: newId(),
+                    body: body.trim(),
+                    byId: author.id,
+                    by: author.name,
+                    role: author.role,
+                    at: new Date().toISOString(),
+                  },
+                ],
+              }
+            : t
+        )
+      ),
+    [update]
+  );
+  const toggleResolved = useCallback(
+    (threadId: string) =>
+      update((fresh) =>
+        fresh.map((t) => (t.id === threadId ? { ...t, resolved: !t.resolved } : t))
+      ),
+    [update]
+  );
+  const remove = useCallback(
+    (threadId: string) => update((fresh) => fresh.filter((t) => t.id !== threadId)),
+    [update]
+  );
+  return { threads, ask, reply, toggleResolved, remove };
+}
+
+/* ---------- POE reviews (assessor verdicts per evidence item) ---------- */
+
+const POE_REVIEW_KEY = "itss.poereview.shared";
+
+export type PoeReviewStatus = "competent" | "nyc";
+
+export interface PoeReview {
+  status: PoeReviewStatus;
+  note?: string;
+  byId: string;
+  by: string;
+  at: string;
+}
+
+/** learner profile id -> POE item id -> review */
+export type PoeReviewMap = Record<string, Record<string, PoeReview>>;
+
+export function usePoeReviews() {
+  const [reviews, update] = useSharedState<PoeReviewMap>(POE_REVIEW_KEY, {});
+  const setReview = useCallback(
+    (reviewer: Profile, learnerId: string, itemId: string, status: PoeReviewStatus, note?: string) =>
+      update((fresh) => ({
+        ...fresh,
+        [learnerId]: {
+          ...fresh[learnerId],
+          [itemId]: {
+            status,
+            ...(note?.trim() ? { note: note.trim() } : {}),
+            byId: reviewer.id,
+            by: reviewer.name,
+            at: new Date().toISOString(),
+          },
+        },
+      })),
+    [update]
+  );
+  const clearReview = useCallback(
+    (learnerId: string, itemId: string) =>
+      update((fresh) => {
+        const forLearner = { ...fresh[learnerId] };
+        delete forLearner[itemId];
+        return { ...fresh, [learnerId]: forLearner };
+      }),
+    [update]
+  );
+  return { reviews, setReview, clearReview };
+}
+
+/** Read POE reviews without subscribing (reports/exports). */
+export function loadPoeReviews(): PoeReviewMap {
+  return read<PoeReviewMap>(POE_REVIEW_KEY, {});
+}
+
+/* ---------- unit assessment outcomes (assessor records C / NYC) ---------- */
+
+const OUTCOMES_KEY = "itss.outcomes.shared";
+
+export type OutcomeStatus = "C" | "NYC";
+
+export interface UnitOutcome {
+  status: OutcomeStatus;
+  note?: string;
+  byId: string;
+  by: string;
+  at: string;
+}
+
+/** learner profile id -> unit standard -> outcome */
+export type OutcomeMap = Record<string, Record<string, UnitOutcome>>;
+
+export function useOutcomes() {
+  const [outcomes, update] = useSharedState<OutcomeMap>(OUTCOMES_KEY, {});
+  const setOutcome = useCallback(
+    (assessor: Profile, learnerId: string, us: string, status: OutcomeStatus, note?: string) =>
+      update((fresh) => ({
+        ...fresh,
+        [learnerId]: {
+          ...fresh[learnerId],
+          [us]: {
+            status,
+            ...(note?.trim() ? { note: note.trim() } : {}),
+            byId: assessor.id,
+            by: assessor.name,
+            at: new Date().toISOString(),
+          },
+        },
+      })),
+    [update]
+  );
+  const clearOutcome = useCallback(
+    (learnerId: string, us: string) =>
+      update((fresh) => {
+        const forLearner = { ...fresh[learnerId] };
+        delete forLearner[us];
+        return { ...fresh, [learnerId]: forLearner };
+      }),
+    [update]
+  );
+  return { outcomes, setOutcome, clearOutcome };
+}
+
+/** Read outcomes without subscribing (reports/certificates). */
+export function loadOutcomes(): OutcomeMap {
+  return read<OutcomeMap>(OUTCOMES_KEY, {});
+}
+
+/** Read a profile's Appendix C checklist without subscribing. */
+export function loadChecklistTicks(profileId: string): Record<string, ChecklistTick> {
+  return read<Record<string, ChecklistTick>>(`itss.checklist.${profileId}`, {});
 }
 
 /* ---------- Appendix C checklist (per profile) ---------- */

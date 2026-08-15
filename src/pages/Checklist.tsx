@@ -28,6 +28,9 @@ const ROWS: Row[] = [
   { id: "sum-log", label: "Logbook", sub: true },
 ];
 
+/** Appendix C attachment count — used by compliance reporting. */
+export const CHECKLIST_TOTAL = ROWS.length;
+
 export function ChecklistPage({ profile }: { profile: Profile }) {
   const { ticks, setTick } = useChecklist(profile.id);
   const done = ROWS.filter((r) => ticks[r.id] === "yes").length;

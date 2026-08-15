@@ -3,6 +3,8 @@ import type { Profile, ProgressState, Route } from "../types";
 import { isStaff } from "../types";
 import { Gloss } from "./Course";
 import { unitStatus } from "../store";
+import { downloadIcs, parseSessionDates } from "../lib/integrations";
+import type { IcsEvent } from "../lib/integrations";
 import {
   ASSESSMENT_FRAMEWORK,
   DELIVERABLES,
@@ -186,6 +188,23 @@ export function CalendarPage({
   navigate?: (r: Route) => void;
   progress?: ProgressState;
 }) {
+  function exportIcs() {
+    const events: IcsEvent[] = [];
+    for (const m of MODULES)
+      for (const u of m.units)
+        for (const s of parseSessionDates(u.dates, u.time))
+          events.push({
+            title: `${usLabel(u.us)} — ${u.title}`,
+            start: s.start,
+            end: s.end,
+            description: `${m.name} training session · ITSS Learn`,
+          });
+    for (const ms of PROGRAMME_MILESTONES)
+      for (const s of parseSessionDates(ms.dates, ms.time))
+        events.push({ title: ms.name, start: s.start, end: s.end, description: "ITSS Learn" });
+    downloadIcs("ITSS-training-calendar", events, "ITSS Learn training calendar");
+  }
+
   return (
     <>
       <div className="eyebrow">
@@ -195,6 +214,12 @@ export function CalendarPage({
       <h1 className="page-title">Training dates</h1>
       <p className="page-sub">
         All sessions run 09h00 – 14h00 as per the QCTO-approved training schedule (Jul 2026 – Jul 2027).
+      </p>
+
+      <p>
+        <button className="btn ghost sm" onClick={exportIcs} title="Import into Outlook, Teams or Google Calendar">
+          <Icon name="download" size={15} /> Add all sessions to my calendar (.ics)
+        </button>
       </p>
 
       {MODULES.map((m, i) => (

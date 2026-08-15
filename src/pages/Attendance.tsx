@@ -7,6 +7,7 @@ import { supabase } from "../lib/supabase";
 import { fileToSignature, reprocessSignature } from "../lib/signature";
 import { fetchCloudDirectory, updateCloudProfile } from "../lib/directory";
 import { loadProfiles, updateProfile } from "../store";
+import { logAudit } from "../lib/audit";
 import { Icon } from "../icons";
 import { ConfirmModal } from "../components/Modal";
 
@@ -406,6 +407,7 @@ export function AttendancePage({
       rows: { ...base.rows, [profile.id]: row },
       order: base.order.includes(profile.id) ? base.order : [...base.order, profile.id],
     });
+    logAudit(profile, "attendance.sign", `Signed the ${dateIso} attendance register at ${row.arrival}`);
   };
 
   /** First click: ask (only once, ever) for a photo of the handwritten signature. */

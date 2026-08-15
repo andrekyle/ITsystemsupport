@@ -10,7 +10,8 @@ import {
   isSaqaUnit,
   usLabel,
 } from "../data/course";
-import { moduleCompletion, overallStats, unitStatus, usePoe } from "../store";
+import { loadAnnouncements, moduleCompletion, overallStats, unitStatus, usePoe } from "../store";
+import { attendanceSignedCount, computeGamification } from "../lib/gamification";
 import { Bar, Ring } from "../components/Ring";
 
 export function Dashboard({
@@ -25,6 +26,8 @@ export function Dashboard({
   const s = overallStats(progress);
   const { docs: poeDocs } = usePoe(profile.id);
   const poeDone = Object.keys(poeDocs).length;
+  const game = computeGamification(progress, poeDone, attendanceSignedCount(profile.id));
+  const announcements = loadAnnouncements().slice(0, 2);
 
   // next unit not yet completed
   const next = (() => {
@@ -111,6 +114,79 @@ export function Dashboard({
           </div>
         </div>
       </div>
+
+      <div className="card xp-card">
+        <div className="xp-head">
+          <span className="xp-level">
+            <Icon name="award" size={22} />
+            Level {game.level} · {game.levelName}
+          </span>
+          <span className="xp-points">
+            {game.xp} XP
+            {game.nextLevelXp !== null && (
+              <span className="mini-note"> · {game.nextLevelXp - game.xp} XP to next level</span>
+            )}
+          </span>
+        </div>
+        <Bar
+          value={
+            game.nextLevelXp === null
+              ? 1
+              : (game.xp - game.levelFloor) / (game.nextLevelXp - game.levelFloor)
+          }
+          green={game.nextLevelXp === null}
+        />
+        <div className="badge-strip">
+          {game.badges.map((b) => (
+            <span
+              key={b.id}
+              className={`game-badge${b.earned ? " earned" : ""}`}
+              title={`${b.name} — ${b.desc}${b.earned ? "" : " (locked)"}`}
+            >
+              <Icon name={b.icon} size={16} />
+              <span className="game-badge-name">{b.name}</span>
+            </span>
+          ))}
+        </div>
+        <p className="mini-note" style={{ margin: "6px 0 0" }}>
+          Earn XP by finishing activities, scoring 80%+ on quizzes, passing exercises, uploading POE
+          evidence and signing the register. See the class leaderboard on the{" "}
+          <a
+            href="#community"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate({ page: "community" });
+            }}
+          >
+            Community page
+          </a>
+          .
+        </p>
+      </div>
+
+      {announcements.length > 0 && (
+        <>
+          <h2 className="section-title">
+            <span className="ico">
+              <Icon name="bell" size={20} />
+            </span>
+            Latest announcements
+          </h2>
+          {announcements.map((a) => (
+            <button
+              key={a.id}
+              className="card clickable announce-teaser"
+              onClick={() => navigate({ page: "community" })}
+            >
+              <strong>{a.title}</strong>
+              <span className="announce-teaser-body">{a.body}</span>
+              <span className="mini-note">
+                {a.by} ({a.role}) · {new Date(a.at).toLocaleDateString()}
+              </span>
+            </button>
+          ))}
+        </>
+      )}
 
       {next && (
         <>

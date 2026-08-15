@@ -3,12 +3,21 @@ import JSZip from "jszip";
 import { Icon } from "../icons";
 import type { PoeDoc, Profile } from "../types";
 import { MAX_POE_FILES, POE_SECTIONS, POE_TOTAL } from "../data/course";
-import { loadProfiles, poeItemCount, usePoe } from "../store";
+import { loadProfiles, poeItemCount, usePoe, usePoeReviews } from "../store";
 import { downloadDoc, getFileBlob, uploadFile, userPrefix } from "../lib/files";
+import { logAudit } from "../lib/audit";
 import { Avatar } from "../components/Avatar";
 import { Ring } from "../components/Ring";
 
 const MAX_FILE_MB = 10;
+
+/** Evidence uploads are limited to document / image / archive formats. */
+const ALLOWED_EXTENSIONS = [
+  "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+  "png", "jpg", "jpeg", "webp", "heic", "gif",
+  "txt", "csv", "zip",
+];
+const ACCEPT_ATTR = ALLOWED_EXTENSIONS.map((e) => `.${e}`).join(",");
 
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -29,6 +38,14 @@ export function PoePage({ profile }: { profile: Profile }) {
   const canDownload = viewId === profile.id || isSuper;
 
   const { docs, saveDoc, removeDoc } = usePoe(viewId);
+  const { reviews, setReview, clearReview } = usePoeReviews();
+  // assessors, moderators and the super user record review outcomes on learner POEs
+  const canReview =
+    (profile.role === "Assessor" || profile.role === "Moderator" || isSuper) &&
+    viewing.role === "Learner";
+  const viewReviews = reviews[viewId] ?? {};
+  const reviewedCount = Object.keys(viewReviews).length;
+  const competentCount = Object.values(viewReviews).filter((r) => r.status === "competent").length;
   const fileRef = useRef<HTMLInputElement>(null);
   const [pendingItem, setPendingItem] = useState<string | null>(null);
   const [uploadPct, setUploadPct] = useState<number | null>(null);
@@ -78,6 +95,14 @@ export function PoePage({ profile }: { profile: Profile }) {
     e.target.value = "";
     if (!file || !pendingItem) return;
     setError(null);
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      setError(
+        `"${file.name}" is not an accepted evidence format — upload PDF, Office, image, text or ZIP files.`
+      );
+      setPendingItem(null);
+      return;
+    }
     if (file.size > MAX_FILE_MB * 1024 * 1024) {
       setError(`"${file.name}" is too large — files must be ${MAX_FILE_MB} MB or smaller.`);
       setPendingItem(null);
@@ -93,6 +118,11 @@ export function PoePage({ profile }: { profile: Profile }) {
       );
       if (!saveDoc(pendingItem, doc)) {
         setError("Storage is full — remove some documents and try again.");
+      } else {
+        logAudit(profile, "poe.upload", `Uploaded "${file.name}" for POE item ${pendingItem}`, {
+          id: viewing.id,
+          name: viewing.name,
+        });
       }
     } catch {
       setError("The file could not be uploaded — check your connection and try again.");
@@ -133,6 +163,17 @@ export function PoePage({ profile }: { profile: Profile }) {
           <div className="lbl">
             POE items complete — your Portfolio of Evidence must be complete before certification
           </div>
+          {reviewedCount > 0 && (
+            <div className="poe-review-summary">
+              <span className="status-chip ok">{competentCount} competent</span>
+              {reviewedCount - competentCount > 0 && (
+                <span className="status-chip bad">{reviewedCount - competentCount} not yet competent</span>
+              )}
+              <span className="mini-note">
+                {reviewedCount} of {POE_TOTAL} items reviewed by an assessor
+              </span>
+            </div>
+          )}
         </div>
         {canDownload && (
           <button
@@ -180,7 +221,24 @@ export function PoePage({ profile }: { profile: Profile }) {
                   <span className={`status ${files.length ? "done" : "none"}`}>
                     <Icon name={files.length ? "checkCircle" : "circle"} size={20} />
                   </span>
-                  <span className="t">{item.label}</span>
+                  <span className="t">
+                    {item.label}
+                    {(() => {
+                      const rev = viewReviews[item.id];
+                      if (!rev) return null;
+                      return (
+                        <span className="poe-review-line">
+                          <span
+                            className={`status-chip ${rev.status === "competent" ? "ok" : "bad"}`}
+                            title={`Reviewed by ${rev.by} on ${new Date(rev.at).toLocaleDateString()}`}
+                          >
+                            {rev.status === "competent" ? "Competent" : "Not yet competent"}
+                          </span>
+                          {rev.note && <span className="mini-note">“{rev.note}”</span>}
+                        </span>
+                      );
+                    })()}
+                  </span>
                 </div>
                 <div className={`poe-doc${max > 1 ? " multi" : ""}`}>
                   {files.map(({ key, doc }) => (
@@ -211,7 +269,13 @@ export function PoePage({ profile }: { profile: Profile }) {
                       {canEdit && (
                         <button
                           className="poe-remove"
-                          onClick={() => removeDoc(key)}
+                          onClick={() => {
+                            removeDoc(key);
+                            logAudit(profile, "poe.remove", `Removed "${doc.name}" from POE item ${item.id}`, {
+                              id: viewing.id,
+                              name: viewing.name,
+                            });
+                          }}
                           title="Remove document"
                         >
                           ✕
@@ -239,6 +303,47 @@ export function PoePage({ profile }: { profile: Profile }) {
                   {files.length === 0 && !(canEdit && !readOnly) && (
                     <span className="muted">No document uploaded</span>
                   )}
+                  {canReview && files.length > 0 && (
+                    <div className="poe-review-actions">
+                      <button
+                        className={`btn ghost sm${viewReviews[item.id]?.status === "competent" ? " active" : ""}`}
+                        title="Mark this evidence competent"
+                        onClick={() => {
+                          setReview(profile, viewId, item.id, "competent");
+                          logAudit(profile, "poe.review", `Marked POE item ${item.id} competent`, {
+                            id: viewing.id,
+                            name: viewing.name,
+                          });
+                        }}
+                      >
+                        <Icon name="checkCircle" size={14} /> Competent
+                      </button>
+                      <button
+                        className={`btn ghost sm danger${viewReviews[item.id]?.status === "nyc" ? " active" : ""}`}
+                        title="Mark not yet competent — the learner sees your feedback"
+                        onClick={() => {
+                          const note =
+                            window.prompt("Feedback for the learner (what must be fixed)?") ?? undefined;
+                          setReview(profile, viewId, item.id, "nyc", note);
+                          logAudit(profile, "poe.review", `Marked POE item ${item.id} not yet competent`, {
+                            id: viewing.id,
+                            name: viewing.name,
+                          });
+                        }}
+                      >
+                        ✕ Not yet
+                      </button>
+                      {viewReviews[item.id] && (
+                        <button
+                          className="btn ghost sm"
+                          title="Clear the review"
+                          onClick={() => clearReview(viewId, item.id)}
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -246,7 +351,7 @@ export function PoePage({ profile }: { profile: Profile }) {
         </div>
       ))}
 
-      <input ref={fileRef} type="file" style={{ display: "none" }} onChange={onPickFile} />
+      <input ref={fileRef} type="file" accept={ACCEPT_ATTR} style={{ display: "none" }} onChange={onPickFile} />
 
       <div className="callout">
         <span className="ico">

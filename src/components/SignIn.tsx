@@ -7,9 +7,13 @@ import {
   findDuplicateProfile,
   getLastProfileId,
   hashPassword,
+  isDesignatedSuperUser,
   loadProfiles,
   updateProfile,
+  useSharedSettings,
+  verifyPassword,
 } from "../store";
+import { logAudit } from "../lib/audit";
 import { COURSE_META } from "../data/course";
 import { Avatar } from "./Avatar";
 import { EMPTY_ENROLMENT, EnrolmentForm } from "./EnrolmentForm";
@@ -55,6 +59,8 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
   const [name, setName] = useState("");
   const [role, setRole] = useState<Role>("Learner");
   const [password, setPassword] = useState("");
+  const [staffCode, setStaffCode] = useState("");
+  const [sharedSettings] = useSharedSettings();
   const [enrolling, setEnrolling] = useState(false);
   const [enrol, setEnrol] = useState<EnrolmentInfo>(EMPTY_ENROLMENT);
   const [authFor, setAuthFor] = useState<Profile | null>(null);
@@ -119,6 +125,7 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
       setConfirmPw("");
       setResetError("");
     } else {
+      logAudit(p, "auth.signin", "Signed in (no password set)");
       onSignIn(p);
     }
   }
@@ -145,7 +152,12 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
   async function submitAuth(e: React.FormEvent) {
     e.preventDefault();
     if (!authFor) return;
-    if ((await hashPassword(authPw)) === authFor.passwordHash) {
+    if (await verifyPassword(authPw, authFor.passwordHash)) {
+      // transparently upgrade legacy SHA-256 hashes to salted PBKDF2
+      if (!authFor.passwordHash?.startsWith("pbkdf2$")) {
+        updateProfile(authFor.id, { passwordHash: await hashPassword(authPw) });
+      }
+      logAudit(authFor, "auth.signin", "Signed in");
       onSignIn(authFor);
     } else {
       setAuthError(true);
@@ -165,6 +177,8 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
     }
     const updated = updateProfile(authFor.id, { passwordHash: await hashPassword(newPw) });
     setProfiles(loadProfiles());
+    logAudit(authFor, "account.password", "Password reset from sign-in screen");
+    logAudit(authFor, "auth.signin", "Signed in");
     onSignIn(updated ?? authFor);
   }
 
@@ -190,9 +204,26 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
       setEnrolling(true);
       return;
     }
+    // Staff roles require the staff access code set by the Super User —
+    // learners must never be able to self-elevate to a staff account.
+    if (!isDesignatedSuperUser(name)) {
+      const expected = sharedSettings.staffCode.trim();
+      if (!expected) {
+        setDupError(
+          "Staff sign-up is disabled. Ask your administrator to add you under People → Add User, or to set a staff access code."
+        );
+        return;
+      }
+      if (staffCode.trim() !== expected) {
+        setDupError("The staff access code is incorrect. Ask your administrator for the current code.");
+        return;
+      }
+    }
     try {
       const p = createProfile(name, role, undefined, password ? await hashPassword(password) : undefined);
       setProfiles(loadProfiles());
+      logAudit(p, "account.create", `Created ${role} account at sign-in`);
+      logAudit(p, "auth.signin", "Signed in");
       onSignIn(p);
     } catch (err) {
       if (err instanceof DuplicateProfileError) {
@@ -220,6 +251,9 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
         password ? await hashPassword(password) : undefined
       );
       setProfiles(loadProfiles());
+      logAudit(p, "account.create", "Learner enrolled (self-service)");
+      logAudit(p, "enrolment.saved", "Biographical enrolment form signed");
+      logAudit(p, "auth.signin", "Signed in");
       onSignIn(p);
     } catch (err) {
       if (err instanceof DuplicateProfileError) {
@@ -395,6 +429,18 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
                 <option value="Moderator">Moderator</option>
               </select>
             </div>
+            {role !== "Learner" && !isDesignatedSuperUser(name) && (
+              <div className="field">
+                <label htmlFor="scode">Staff access code</label>
+                <PasswordInput
+                  id="scode"
+                  value={staffCode}
+                  onChange={setStaffCode}
+                  autoComplete="off"
+                  placeholder="Provided by your administrator"
+                />
+              </div>
+            )}
             <div className="field">
               <label htmlFor="npw">Password (optional)</label>
               <PasswordInput
