@@ -207,14 +207,14 @@ export const PATHS: Record<string, React.ReactNode> = {
   /** Outlook calendar brand mark (nominative use — links that open Outlook). */
   outlook: (
     <>
-      <rect x="7.5" y="3.5" width="13.5" height="17" rx="1.6" fill="#cfe4fa" stroke="none" />
-      <rect x="7.5" y="3.5" width="13.5" height="4.2" rx="1.6" fill="#1067b8" stroke="none" />
-      <rect x="7.5" y="5.6" width="13.5" height="2.1" fill="#1067b8" stroke="none" />
+      <rect x="8" y="3.5" width="13.5" height="17" rx="1.6" fill="#cfe4fa" stroke="none" />
+      <rect x="8" y="3.5" width="13.5" height="4.2" rx="1.6" fill="#1067b8" stroke="none" />
+      <rect x="8" y="5.6" width="13.5" height="2.1" fill="#1067b8" stroke="none" />
       <g stroke="#7fb2e5" strokeWidth="1.2">
-        <path d="M11 11h2M15 11h2M11 14h2M15 14h2M11 17h2" />
+        <path d="M11.5 11h2M15.5 11h2M11.5 14h2M15.5 14h2M11.5 17h2" />
       </g>
-      <rect x="2" y="6.8" width="11.4" height="11.4" rx="2.1" fill="#0f6cbd" stroke="none" />
-      <ellipse cx="7.7" cy="12.5" rx="2.9" ry="3.3" fill="none" stroke="#ffffff" strokeWidth="1.7" />
+      <rect x="2.5" y="6.8" width="11.4" height="11.4" rx="2.1" fill="#0f6cbd" stroke="none" />
+      <ellipse cx="8.2" cy="12.5" rx="2.9" ry="3.3" fill="none" stroke="#ffffff" strokeWidth="1.7" />
     </>
   ),
   server: (
