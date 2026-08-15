@@ -132,9 +132,29 @@ function rowsCsv(rows: LearnerRow[], registers: number): string {
 
 type SortKey = "name" | "completion" | "quiz" | "attendance" | "seen" | "xp";
 
+const SORT_LABELS: Record<SortKey, string> = {
+  completion: "Completion",
+  quiz: "Quiz average",
+  attendance: "Attendance",
+  seen: "Last seen",
+  xp: "XP",
+  name: "Name",
+};
+
 export function AnalyticsPage({ profile }: { profile: Profile; navigate: (r: Route) => void }) {
   const registers = attendanceRegisterCount();
   const [sort, setSort] = useState<SortKey>("completion");
+  const [ascending, setAscending] = useState(false);
+
+  /** Click the active sort again to flip direction; a new column resets to its natural order. */
+  const applySort = (key: SortKey) => {
+    if (key === sort) {
+      setAscending((a) => !a);
+    } else {
+      setSort(key);
+      setAscending(key === "name" || key === "seen"); // A→Z and most-recent-first feel natural
+    }
+  };
 
   const rows = useMemo(() => {
     const learners = loadProfiles().filter((p) => p.role === "Learner");
@@ -146,7 +166,7 @@ export function AnalyticsPage({ profile }: { profile: Profile; navigate: (r: Rou
     const arr = [...rows];
     switch (sort) {
       case "name":
-        arr.sort((a, b) => a.profile.name.localeCompare(b.profile.name));
+        arr.sort((a, b) => b.profile.name.localeCompare(a.profile.name));
         break;
       case "quiz":
         arr.sort((a, b) => (b.quizAvg ?? -1) - (a.quizAvg ?? -1));
@@ -155,7 +175,7 @@ export function AnalyticsPage({ profile }: { profile: Profile; navigate: (r: Rou
         arr.sort((a, b) => (b.attendanceRate ?? -1) - (a.attendanceRate ?? -1));
         break;
       case "seen":
-        arr.sort((a, b) => (a.daysSinceSeen ?? 9999) - (b.daysSinceSeen ?? 9999));
+        arr.sort((a, b) => (b.daysSinceSeen ?? 9999) - (a.daysSinceSeen ?? 9999));
         break;
       case "xp":
         arr.sort((a, b) => b.xp - a.xp);
@@ -163,8 +183,9 @@ export function AnalyticsPage({ profile }: { profile: Profile; navigate: (r: Rou
       default:
         arr.sort((a, b) => b.completion - a.completion);
     }
+    if (ascending) arr.reverse();
     return arr;
-  }, [rows, sort]);
+  }, [rows, sort, ascending]);
 
   const cohort = useMemo(() => {
     const n = rows.length;
@@ -198,9 +219,16 @@ export function AnalyticsPage({ profile }: { profile: Profile; navigate: (r: Rou
     <button
       key={key}
       className={`btn ghost sm${sort === key ? " active" : ""}`}
-      onClick={() => setSort(key)}
+      title={
+        sort === key
+          ? `Sorted by ${SORT_LABELS[key].toLowerCase()} — click to reverse the order`
+          : `Sort the table by ${SORT_LABELS[key].toLowerCase()}`
+      }
+      aria-pressed={sort === key}
+      onClick={() => applySort(key)}
     >
       {label}
+      {sort === key && <span aria-hidden="true"> {ascending ? "↑" : "↓"}</span>}
     </button>
   );
 
@@ -320,6 +348,11 @@ export function AnalyticsPage({ profile }: { profile: Profile; navigate: (r: Rou
           {sortBtn("seen", "Last seen")}
           {sortBtn("xp", "XP")}
           {sortBtn("name", "Name")}
+          <span style={{ flex: 1 }} />
+          <span className="mini-note">
+            {sorted.length} {sorted.length === 1 ? "learner" : "learners"} · sorted by{" "}
+            {SORT_LABELS[sort].toLowerCase()} {ascending ? "(ascending)" : "(descending)"}
+          </span>
         </div>
         {sorted.length === 0 ? (
           <p className="mini-note">No learners enrolled yet.</p>
@@ -327,16 +360,28 @@ export function AnalyticsPage({ profile }: { profile: Profile; navigate: (r: Rou
           <table className="data analytics-table">
             <thead>
               <tr>
-                <th>Learner</th>
-                <th>Completion</th>
+                <th className={`sortable${sort === "name" ? " sorted" : ""}`} onClick={() => applySort("name")}>
+                  Learner{sort === "name" ? (ascending ? " ↑" : " ↓") : ""}
+                </th>
+                <th className={`sortable${sort === "completion" ? " sorted" : ""}`} onClick={() => applySort("completion")}>
+                  Completion{sort === "completion" ? (ascending ? " ↑" : " ↓") : ""}
+                </th>
                 <th>Units</th>
                 <th>Credits</th>
-                <th>Quiz avg</th>
+                <th className={`sortable${sort === "quiz" ? " sorted" : ""}`} onClick={() => applySort("quiz")}>
+                  Quiz avg{sort === "quiz" ? (ascending ? " ↑" : " ↓") : ""}
+                </th>
                 <th>Exercises</th>
                 <th>POE</th>
-                <th>Attendance</th>
-                <th>Last seen</th>
-                <th>XP</th>
+                <th className={`sortable${sort === "attendance" ? " sorted" : ""}`} onClick={() => applySort("attendance")}>
+                  Attendance{sort === "attendance" ? (ascending ? " ↑" : " ↓") : ""}
+                </th>
+                <th className={`sortable${sort === "seen" ? " sorted" : ""}`} onClick={() => applySort("seen")}>
+                  Last seen{sort === "seen" ? (ascending ? " ↑" : " ↓") : ""}
+                </th>
+                <th className={`sortable${sort === "xp" ? " sorted" : ""}`} onClick={() => applySort("xp")}>
+                  XP{sort === "xp" ? (ascending ? " ↑" : " ↓") : ""}
+                </th>
                 <th>Status</th>
               </tr>
             </thead>

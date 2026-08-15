@@ -6754,6 +6754,11 @@ table.data .mini-note { display: block; }
 
 .analytics-table tr.at-risk td { background: color-mix(in srgb, #e5484d 6%, transparent); }
 
+/* sortable column headers */
+table.data th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+table.data th.sortable:hover { color: var(--azure); }
+table.data th.sortable.sorted { color: var(--azure); }
+
 /* --- audit / filters --- */
 .audit-filters {
   display: flex;
