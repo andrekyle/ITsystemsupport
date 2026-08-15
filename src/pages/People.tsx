@@ -23,7 +23,7 @@ import {
 } from "../store";
 import { logAudit } from "../lib/audit";
 import { openOnboardingPack } from "../lib/onboarding";
-import { outlookComposeLink, teamsChatLink } from "../lib/integrations";
+import { mailtoLink, outlookComposeLink, teamsChatLink } from "../lib/integrations";
 import { Avatar } from "../components/Avatar";
 import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/EnrolmentForm";
 import { AlertModal, ConfirmModal } from "../components/Modal";
@@ -2031,15 +2031,25 @@ function StudentDetail({
             <>
               <a
                 className="btn ghost sm"
+                href={mailtoLink(
+                  student.enrolment.email,
+                  `${COURSE_META.title} — message from ${viewer.name}`
+                )}
+                title={`Email ${student.enrolment.email} with your default mail app`}
+              >
+                <Icon name="document" size={15} /> Email
+              </a>
+              <a
+                className="btn ghost sm"
                 href={outlookComposeLink(
                   student.enrolment.email,
                   `${COURSE_META.title} — message from ${viewer.name}`
                 )}
                 target="_blank"
                 rel="noreferrer"
-                title={`Email ${student.enrolment.email} via Outlook`}
+                title={`Email ${student.enrolment.email} via Outlook on the web (needs a signed-in Microsoft 365 account with a mailbox)`}
               >
-                <Icon name="globe" size={15} /> Email (Outlook)
+                <Icon name="globe" size={15} /> Email (Outlook web)
               </a>
               <a
                 className="btn ghost sm"
