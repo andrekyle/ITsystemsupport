@@ -5436,13 +5436,23 @@ a.plan-ppt:hover {
 }
 .btn.ghost.sm {
   padding: 4px 10px;
-  font-size: 12px;
-  gap: 4px;
+  font-size: 12.5px;
+  gap: 5px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink-2);
+  box-shadow: none;
+}
+.btn.ghost.sm:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: transparent;
+  color: var(--ink);
 }
 .btn.ghost.sm.active {
-  background: var(--azure);
-  color: #fff;
-  border-color: var(--azure);
+  background: var(--surface-2);
+  color: var(--ink);
+  border-color: transparent;
+  font-weight: 600;
 }
 .lesson-p.editable,
 .editable-inline {
@@ -7020,7 +7030,7 @@ table.data th.sortable.sorted { color: var(--ink); }
 
 /* flat danger text-button (delete/destructive) — no glow, just red ink */
 .btn.ghost.sm.danger { color: var(--red); }
-.btn.ghost.sm.danger:hover { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+.btn.ghost.sm.danger:hover:not(:disabled) { background: var(--red-bg); border-color: transparent; color: var(--red); }
 
 /* --- verdict segmented control (assessor decisions) --- */
 .verdict {
