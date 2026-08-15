@@ -122,43 +122,163 @@ export function openStatementOfResults(
   win.document.close();
 }
 
+/** Stable certificate serial: derived from the profile id so reprints match. */
+function certificateNo(profileId: string): string {
+  let h = 0;
+  for (let i = 0; i < profileId.length; i++) h = (h * 31 + profileId.charCodeAt(i)) >>> 0;
+  return `ITSS-${COURSE_META.saqaId}-${h.toString(36).toUpperCase().padStart(7, "0").slice(0, 7)}`;
+}
+
 /** Printable certificate of completion (all units competent/complete).
- *  Pass `preview: true` (staff view before the learner qualifies) to overlay
- *  a PREVIEW watermark so drafts can never pass as issued certificates. */
+ *  Formal SETA-style layout: guilloche-style frame, embossed seal, serial
+ *  number, learner ID and NLRD/quality-assurance wording. Pass `preview: true`
+ *  (staff view before the learner qualifies) to overlay a PREVIEW watermark
+ *  so drafts can never pass as issued certificates. */
 export function openCertificate(profile: Profile, creditsEarned: number, preview = false) {
+  const issued = new Date().toLocaleDateString("en-ZA", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const idNumber = profile.enrolment?.idNumber?.trim();
+  const certNo = certificateNo(profile.id);
+
   const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8" />
 <title>Certificate — ${esc(profile.name)}</title>
 <style>
-  body { margin: 0; font-family: Georgia, "Times New Roman", serif; color: #17233b; }
-  .page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 30px; }
-  .cert { position: relative; overflow: hidden; border: 10px double #0b3f8a; border-radius: 6px; padding: 60px 70px; text-align: center; max-width: 820px; }
-  .brand { letter-spacing: 5px; font-size: 13px; color: #0b3f8a; text-transform: uppercase; }
-  h1 { font-size: 40px; margin: 16px 0 4px; color: #0b3f8a; }
-  .name { font-size: 32px; margin: 26px 0 6px; border-bottom: 1.5px solid #17233b; display: inline-block; padding: 0 34px 6px; }
-  p { font-size: 15px; line-height: 1.6; }
-  .meta { color: #5a6b8c; font-size: 13px; margin-top: 26px; }
-  .sign { display: flex; gap: 80px; margin-top: 52px; }
-  .sign div { flex: 1; border-top: 1.5px solid #17233b; padding-top: 6px; font-size: 12.5px; }
-  .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-  .watermark span { font-size: 110px; font-weight: 700; letter-spacing: 18px; color: rgba(11, 63, 138, 0.08); transform: rotate(-24deg); white-space: nowrap; }
-  @media print { .page { min-height: auto; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Georgia, "Times New Roman", serif; color: #1c2437; background: #eceff4; }
+  .page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 26px; }
+  .sheet {
+    position: relative;
+    width: 1020px;
+    background: #fdfcf7;
+    padding: 14px;
+    box-shadow: 0 2px 18px rgba(15, 30, 70, 0.18);
+  }
+  /* layered formal frame */
+  .frame {
+    position: relative;
+    overflow: hidden;
+    border: 3px solid #123a75;
+    outline: 1px solid #123a75;
+    outline-offset: -9px;
+    padding: 46px 64px 40px;
+    background:
+      radial-gradient(circle at 0 0, rgba(18, 58, 117, 0.05), transparent 32%),
+      radial-gradient(circle at 100% 100%, rgba(18, 58, 117, 0.05), transparent 32%),
+      #fdfcf7;
+  }
+  .frame::before, .frame::after {
+    content: "";
+    position: absolute;
+    width: 74px; height: 74px;
+    border: 3px solid #b98a2e;
+    pointer-events: none;
+  }
+  .frame::before { top: 12px; left: 12px; border-right: none; border-bottom: none; }
+  .frame::after { bottom: 12px; right: 12px; border-left: none; border-top: none; }
+
+  .rep { text-align: center; font-size: 12px; letter-spacing: 4px; color: #4d5a75; text-transform: uppercase; }
+  .provider { text-align: center; font-size: 15px; letter-spacing: 2.5px; color: #123a75; text-transform: uppercase; margin-top: 8px; font-weight: 700; }
+  .accred { text-align: center; font-size: 11px; color: #6a7690; margin-top: 3px; }
+  .rule { width: 200px; height: 1px; background: #b98a2e; margin: 18px auto; }
+  h1 { text-align: center; font-size: 42px; font-weight: 400; letter-spacing: 1px; margin: 6px 0 0; color: #123a75; font-variant: small-caps; }
+  .subtitle { text-align: center; font-size: 13px; color: #4d5a75; margin-top: 4px; letter-spacing: 1px; }
+
+  .certify { text-align: center; font-size: 14.5px; color: #333c52; margin-top: 30px; }
+  .name { text-align: center; font-size: 34px; margin: 10px auto 2px; padding: 0 40px 8px; border-bottom: 1px solid #1c2437; display: table; }
+  .idline { text-align: center; font-size: 12.5px; color: #4d5a75; margin-top: 6px; }
+  .body { text-align: center; font-size: 15px; line-height: 1.7; margin: 26px auto 0; max-width: 720px; }
+  .body .qual { font-size: 19px; font-weight: 700; color: #123a75; }
+  .detail-table { width: 640px; margin: 26px auto 0; border-collapse: collapse; font-size: 12.5px; }
+  .detail-table td { border: 1px solid #cfd6e4; padding: 6px 12px; }
+  .detail-table td:first-child { background: #f2f4f9; color: #4d5a75; width: 220px; }
+
+  .footer { display: flex; align-items: flex-end; gap: 30px; margin-top: 46px; }
+  .sign { flex: 1; text-align: center; font-size: 12px; color: #333c52; }
+  .sign .line { border-top: 1px solid #1c2437; margin-bottom: 5px; padding-top: 5px; }
+  .sign .role { font-size: 11px; color: #6a7690; letter-spacing: 0.6px; text-transform: uppercase; }
+
+  /* embossed seal */
+  .seal {
+    flex: 0 0 128px;
+    width: 128px; height: 128px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    background: radial-gradient(circle at 34% 30%, #d9b45e, #b98a2e 62%, #93701f);
+    color: #fdfcf7;
+    box-shadow: inset 0 0 0 4px rgba(253, 252, 247, 0.55), inset 0 0 0 10px rgba(120, 90, 25, 0.45), 0 1px 6px rgba(0,0,0,0.25);
+    font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase; line-height: 1.7;
+    padding: 16px;
+  }
+  .seal b { display: block; font-size: 13px; letter-spacing: 2px; margin: 3px 0; }
+
+  .fineprint { margin-top: 30px; padding-top: 12px; border-top: 1px solid #d8dde8; font-size: 10.5px; color: #6a7690; line-height: 1.65; text-align: justify; }
+  .serials { display: flex; justify-content: space-between; font-size: 11px; color: #4d5a75; margin-top: 10px; letter-spacing: 0.5px; }
+
+  .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 5; }
+  .watermark span { font-size: 120px; font-weight: 700; letter-spacing: 20px; color: rgba(18, 58, 117, 0.07); transform: rotate(-24deg); white-space: nowrap; }
+
+  @media print {
+    body { background: #fff; }
+    .page { min-height: auto; padding: 0; }
+    .sheet { width: 100%; box-shadow: none; }
+  }
 </style></head>
 <body>
-  <div class="page"><div class="cert">
+  <div class="page"><div class="sheet"><div class="frame">
     ${preview ? '<div class="watermark"><span>PREVIEW</span></div>' : ""}
-    <div class="brand">ITSS Learn · Investec Group</div>
-    <h1>Certificate of Completion</h1>
-    <p>This certifies that</p>
+
+    <div class="rep">Republic of South Africa</div>
+    <div class="provider">ITSS Learn · Investec Group</div>
+    <div class="accred">Skills development provider delivering training quality assured by ${esc(COURSE_META.qualityAssurance)}</div>
+
+    <div class="rule"></div>
+    <h1>Certificate of Competence</h1>
+    <div class="subtitle">awarded in recognition of the achievement of a registered national qualification</div>
+
+    <p class="certify">This is to certify that</p>
     <div class="name">${esc(profile.name)}</div>
-    <p>has successfully completed all learning activities of the<br/>
-    <strong>${esc(COURSE_META.title)}</strong><br/>
-    SAQA ID ${esc(COURSE_META.saqaId)} · NQF Level ${COURSE_META.nqfLevel} · ${creditsEarned} credits achieved</p>
-    <p class="meta">Quality assured by ${esc(COURSE_META.qualityAssurance)} ·
-    Issued ${new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}<br/>
-    Formal certification is issued by the SETA on verification of the Portfolio of Evidence.</p>
-    <div class="sign"><div>Facilitator</div><div>Assessor</div><div>Moderator</div></div>
-  </div></div>
+    ${idNumber ? `<div class="idline">Identity number: ${esc(idNumber)}</div>` : ""}
+
+    <p class="body">
+      having been assessed and found <strong>competent</strong> against all required unit standards,
+      has satisfied the requirements of the<br/>
+      <span class="qual">${esc(COURSE_META.title)}</span>
+    </p>
+
+    <table class="detail-table">
+      <tr><td>SAQA qualification ID</td><td>${esc(COURSE_META.saqaId)}</td></tr>
+      <tr><td>NQF level</td><td>Level ${COURSE_META.nqfLevel}</td></tr>
+      <tr><td>Credits achieved</td><td>${creditsEarned} of ${COURSE_META.credits}</td></tr>
+      <tr><td>Quality assurance</td><td>${esc(COURSE_META.qualityAssurance)}</td></tr>
+      <tr><td>Date of issue</td><td>${esc(issued)}</td></tr>
+    </table>
+
+    <div class="footer">
+      <div class="sign"><div class="line">&nbsp;</div>Facilitator<div class="role">Training Provider</div></div>
+      <div class="sign"><div class="line">&nbsp;</div>Registered Assessor<div class="role">Assessment</div></div>
+      <div class="seal">Quality<br/>Assured<b>ITSS</b>Training · SAQA ${esc(COURSE_META.saqaId)}</div>
+      <div class="sign"><div class="line">&nbsp;</div>Registered Moderator<div class="role">Moderation</div></div>
+      <div class="sign"><div class="line">&nbsp;</div>Programme Manager<div class="role">Provider Authority</div></div>
+    </div>
+
+    <div class="fineprint">
+      This certificate records the achievement of the above learner on the training provider's learning
+      management system and is issued pending verification of the learner's Portfolio of Evidence.
+      The formal certificate for the qualification is issued by the relevant SETA following external
+      moderation and upload of results to the National Learners' Records Database (NLRD).
+      Authenticity of this document may be confirmed with the training provider by quoting the
+      certificate number below. This certificate is invalid if altered in any way.
+    </div>
+    <div class="serials">
+      <span>Certificate no: ${esc(certNo)}</span>
+      <span>Learner record: ${esc(profile.id)}</span>
+      <span>Issued: ${esc(issued)}</span>
+    </div>
+  </div></div></div>
   <script>window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 250); });</script>
 </body></html>`;
 
