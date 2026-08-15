@@ -6707,6 +6707,7 @@ input.att-sig {
   background: transparent;
   line-height: 0;
   vertical-align: middle;
+  color: var(--azure);
   cursor: pointer;
 }
 

@@ -311,7 +311,7 @@ export function CompliancePage({
                       title="Add to Outlook calendar"
                       aria-label={`Add “${d.name}” to Outlook calendar`}
                     >
-                      <Icon name="outlook" size={20} />
+                      <Icon name="calendar" size={18} />
                     </a>
                   )}
                 </td>
