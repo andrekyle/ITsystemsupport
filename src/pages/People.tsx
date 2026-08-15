@@ -24,6 +24,7 @@ import {
 import { logAudit } from "../lib/audit";
 import { openOnboardingPack } from "../lib/onboarding";
 import { mailtoLink, outlookComposeLink, teamsChatLink } from "../lib/integrations";
+import { VerdictSwitch, safePrompt } from "../components/VerdictSwitch";
 import { Avatar } from "../components/Avatar";
 import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/EnrolmentForm";
 import { AlertModal, ConfirmModal } from "../components/Modal";
@@ -2262,39 +2263,29 @@ function OutcomesPanel({ student, viewer }: { student: Profile; viewer: Profile 
                     )}
                   </td>
                   <td>
-                    <span className="cell-actions">
-                      <button
-                        className={`btn ghost sm${o?.status === "C" ? " active" : ""}`}
-                        onClick={() => {
-                          setOutcome(viewer, student.id, u.us, "C");
-                          logAudit(viewer, "outcome.set", `Recorded US ${u.us} outcome: Competent`, {
-                            id: student.id,
-                            name: student.name,
-                          });
-                        }}
-                      >
-                        C
-                      </button>
-                      <button
-                        className={`btn ghost sm danger${o?.status === "NYC" ? " active" : ""}`}
-                        onClick={() => {
-                          const note =
-                            window.prompt("Feedback / remediation required (optional)?") ?? undefined;
-                          setOutcome(viewer, student.id, u.us, "NYC", note);
-                          logAudit(viewer, "outcome.set", `Recorded US ${u.us} outcome: Not Yet Competent`, {
-                            id: student.id,
-                            name: student.name,
-                          });
-                        }}
-                      >
-                        NYC
-                      </button>
-                      {o && (
-                        <button className="btn ghost sm" onClick={() => clearOutcome(student.id, u.us)}>
-                          Clear
-                        </button>
-                      )}
-                    </span>
+                    <VerdictSwitch
+                      value={o ? (o.status === "C" ? "yes" : "no") : null}
+                      yesLabel="Competent"
+                      noLabel="Not yet"
+                      yesTitle="Record this unit as Competent"
+                      noTitle="Record as Not Yet Competent — you can add feedback for the learner"
+                      onYes={() => {
+                        setOutcome(viewer, student.id, u.us, "C");
+                        logAudit(viewer, "outcome.set", `Recorded US ${u.us} outcome: Competent`, {
+                          id: student.id,
+                          name: student.name,
+                        });
+                      }}
+                      onNo={() => {
+                        const note = safePrompt("Feedback / remediation required (optional)?");
+                        setOutcome(viewer, student.id, u.us, "NYC", note);
+                        logAudit(viewer, "outcome.set", `Recorded US ${u.us} outcome: Not Yet Competent`, {
+                          id: student.id,
+                          name: student.name,
+                        });
+                      }}
+                      onClear={() => clearOutcome(student.id, u.us)}
+                    />
                   </td>
                 </tr>
               );

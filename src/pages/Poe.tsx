@@ -8,6 +8,7 @@ import { downloadDoc, getFileBlob, uploadFile, userPrefix } from "../lib/files";
 import { logAudit } from "../lib/audit";
 import { Avatar } from "../components/Avatar";
 import { Ring } from "../components/Ring";
+import { VerdictSwitch, safePrompt } from "../components/VerdictSwitch";
 
 const MAX_FILE_MB = 10;
 
@@ -305,43 +306,35 @@ export function PoePage({ profile }: { profile: Profile }) {
                   )}
                   {canReview && files.length > 0 && (
                     <div className="poe-review-actions">
-                      <button
-                        className={`btn ghost sm${viewReviews[item.id]?.status === "competent" ? " active" : ""}`}
-                        title="Mark this evidence competent"
-                        onClick={() => {
+                      <VerdictSwitch
+                        value={
+                          viewReviews[item.id]
+                            ? viewReviews[item.id].status === "competent"
+                              ? "yes"
+                              : "no"
+                            : null
+                        }
+                        yesLabel="Competent"
+                        noLabel="Not yet"
+                        yesTitle="Mark this evidence competent"
+                        noTitle="Mark not yet competent — the learner sees your feedback"
+                        onYes={() => {
                           setReview(profile, viewId, item.id, "competent");
                           logAudit(profile, "poe.review", `Marked POE item ${item.id} competent`, {
                             id: viewing.id,
                             name: viewing.name,
                           });
                         }}
-                      >
-                        <Icon name="checkCircle" size={14} /> Competent
-                      </button>
-                      <button
-                        className={`btn ghost sm danger${viewReviews[item.id]?.status === "nyc" ? " active" : ""}`}
-                        title="Mark not yet competent — the learner sees your feedback"
-                        onClick={() => {
-                          const note =
-                            window.prompt("Feedback for the learner (what must be fixed)?") ?? undefined;
+                        onNo={() => {
+                          const note = safePrompt("Feedback for the learner (what must be fixed)?");
                           setReview(profile, viewId, item.id, "nyc", note);
                           logAudit(profile, "poe.review", `Marked POE item ${item.id} not yet competent`, {
                             id: viewing.id,
                             name: viewing.name,
                           });
                         }}
-                      >
-                        ✕ Not yet
-                      </button>
-                      {viewReviews[item.id] && (
-                        <button
-                          className="btn ghost sm"
-                          title="Clear the review"
-                          onClick={() => clearReview(viewId, item.id)}
-                        >
-                          Clear
-                        </button>
-                      )}
+                        onClear={() => clearReview(viewId, item.id)}
+                      />
                     </div>
                   )}
                 </div>
