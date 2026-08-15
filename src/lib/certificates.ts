@@ -147,12 +147,9 @@ function starPoints(
   return pts.join(" ");
 }
 
-/** Printable certificate of completion (all units competent/complete).
- *  Formal SETA-style layout: guilloche-style frame, embossed seal, serial
- *  number, learner ID and NLRD/quality-assurance wording. Pass `preview: true`
- *  (staff view before the learner qualifies) to overlay a PREVIEW watermark
- *  so drafts can never pass as issued certificates. */
-export function openCertificate(profile: Profile, creditsEarned: number, preview = false) {
+/** Printable certificate of competence (formal SETA-style layout with
+ *  rosette seal, serial number and NLRD/quality-assurance wording). */
+export function openCertificate(profile: Profile, creditsEarned: number) {
   const issued = new Date().toLocaleDateString("en-ZA", {
     day: "numeric",
     month: "long",
@@ -226,9 +223,6 @@ export function openCertificate(profile: Profile, creditsEarned: number, preview
   .fineprint { margin-top: 30px; padding-top: 12px; border-top: 1px solid #d8dde8; font-size: 10.5px; color: #6a7690; line-height: 1.65; text-align: justify; }
   .serials { display: flex; justify-content: space-between; font-size: 11px; color: #4d5a75; margin-top: 10px; letter-spacing: 0.5px; }
 
-  .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 5; }
-  .watermark span { font-size: 120px; font-weight: 700; letter-spacing: 20px; color: rgba(18, 58, 117, 0.07); transform: rotate(-24deg); white-space: nowrap; }
-
   @media print {
     body { background: #fff; }
     .page { min-height: auto; padding: 0; }
@@ -237,7 +231,6 @@ export function openCertificate(profile: Profile, creditsEarned: number, preview
 </style></head>
 <body>
   <div class="page"><div class="sheet"><div class="frame">
-    ${preview ? '<div class="watermark"><span>PREVIEW</span></div>' : ""}
 
     <div class="rep">Republic of South Africa</div>
     <div class="provider">ITSS Learn · Investec Group</div>

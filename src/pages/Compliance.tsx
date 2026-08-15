@@ -425,14 +425,14 @@ export function CompliancePage({
                           disabled={!certReady && !staff}
                           title={
                             certReady
-                              ? "Certificate of completion (print / PDF)"
+                              ? "Certificate of competence (print / PDF)"
                               : staff
-                                ? "Not yet earned — opens with a PREVIEW watermark until every unit is complete with no NYC outcomes"
+                                ? "Certificate of competence (print / PDF) — learner has not yet completed all units"
                                 : "Available once every unit is complete with no NYC outcomes"
                           }
-                          onClick={() => openCertificate(r.profile, r.creditsEarned, !certReady)}
+                          onClick={() => openCertificate(r.profile, r.creditsEarned)}
                         >
-                          <Icon name="certificate" size={14} /> {certReady ? "Certificate" : staff ? "Preview certificate" : "Certificate"}
+                          <Icon name="certificate" size={14} /> Certificate
                         </button>
                       </span>
                     </td>
