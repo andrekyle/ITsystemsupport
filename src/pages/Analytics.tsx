@@ -218,7 +218,7 @@ export function AnalyticsPage({ profile }: { profile: Profile; navigate: (r: Rou
   const sortBtn = (key: SortKey, label: string) => (
     <button
       key={key}
-      className={`btn ghost sm${sort === key ? " active" : ""}`}
+      className={`sort-chip${sort === key ? " active" : ""}`}
       title={
         sort === key
           ? `Sorted by ${SORT_LABELS[key].toLowerCase()} — click to reverse the order`
@@ -340,7 +340,7 @@ export function AnalyticsPage({ profile }: { profile: Profile; navigate: (r: Rou
         </button>
       </h2>
       <div className="card" style={{ overflowX: "auto" }}>
-        <div className="audit-filters">
+        <div className="sort-row">
           <span className="mini-note">Sort by:</span>
           {sortBtn("completion", "Completion")}
           {sortBtn("quiz", "Quiz avg")}
@@ -390,7 +390,7 @@ export function AnalyticsPage({ profile }: { profile: Profile; navigate: (r: Rou
                 <tr key={r.profile.id} className={r.atRisk ? "at-risk" : ""}>
                   <td>
                     <span className="cell-person">
-                      <Avatar profile={r.profile} size={26} />
+                      <Avatar profile={r.profile} size={22} />
                       {r.profile.name}
                     </span>
                   </td>
