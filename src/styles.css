@@ -6697,6 +6697,21 @@ input.att-sig {
 
 .nowrap { white-space: nowrap; }
 
+/* --- borderless inline icon link (e.g. Outlook calendar in tables) --- */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  line-height: 0;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+.icon-btn:hover { background: var(--surface-2); }
+
 /* --- status chips: flat neutral surface, coloured text (no dot, no glow) --- */
 .status-chip {
   display: inline-flex;

@@ -304,13 +304,14 @@ export function CompliancePage({
                 <td>
                   {d.date && d.end && (
                     <a
-                      className="btn ghost sm"
+                      className="icon-btn"
                       href={outlookEventLink({ title: d.name, start: d.date, end: d.end })}
                       target="_blank"
                       rel="noreferrer"
                       title="Add to Outlook calendar"
+                      aria-label={`Add “${d.name}” to Outlook calendar`}
                     >
-                      <Icon name="calendar" size={14} />
+                      <Icon name="outlook" size={20} />
                     </a>
                   )}
                 </td>
