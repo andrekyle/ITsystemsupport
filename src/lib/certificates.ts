@@ -202,18 +202,8 @@ export function openCertificate(profile: Profile, creditsEarned: number, preview
   .sign .role { font-size: 11px; color: #6a7690; letter-spacing: 0.6px; text-transform: uppercase; }
 
   /* embossed seal */
-  .seal {
-    flex: 0 0 128px;
-    width: 128px; height: 128px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center; text-align: center;
-    background: radial-gradient(circle at 34% 30%, #d9b45e, #b98a2e 62%, #93701f);
-    color: #fdfcf7;
-    box-shadow: inset 0 0 0 4px rgba(253, 252, 247, 0.55), inset 0 0 0 10px rgba(120, 90, 25, 0.45), 0 1px 6px rgba(0,0,0,0.25);
-    font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase; line-height: 1.7;
-    padding: 16px;
-  }
-  .seal b { display: block; font-size: 13px; letter-spacing: 2px; margin: 3px 0; }
+  .seal { flex: 0 0 150px; width: 150px; height: 150px; }
+  .seal svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 1px 4px rgba(0,0,0,0.28)); }
 
   .fineprint { margin-top: 30px; padding-top: 12px; border-top: 1px solid #d8dde8; font-size: 10.5px; color: #6a7690; line-height: 1.65; text-align: justify; }
   .serials { display: flex; justify-content: space-between; font-size: 11px; color: #4d5a75; margin-top: 10px; letter-spacing: 0.5px; }
@@ -260,7 +250,55 @@ export function openCertificate(profile: Profile, creditsEarned: number, preview
     <div class="footer">
       <div class="sign"><div class="line">&nbsp;</div>Facilitator<div class="role">Training Provider</div></div>
       <div class="sign"><div class="line">&nbsp;</div>Registered Assessor<div class="role">Assessment</div></div>
-      <div class="seal">Quality<br/>Assured<b>ITSS</b>Training · SAQA ${esc(COURSE_META.saqaId)}</div>
+      <div class="seal">
+        <svg viewBox="0 0 200 200" role="img" aria-label="ITSS Learn seal">
+          <defs>
+            <radialGradient id="sealGold" cx="36%" cy="30%" r="75%">
+              <stop offset="0%" stop-color="#e8c56d"/>
+              <stop offset="55%" stop-color="#c49a33"/>
+              <stop offset="100%" stop-color="#96721c"/>
+            </radialGradient>
+            <path id="sealTop" d="M 29.3,106.2 A 71,71 0 1 1 170.7,106.2" fill="none"/>
+            <path id="sealBottom" d="M 32.5,111.9 A 68.5,68.5 0 0 0 167.5,111.9" fill="none"/>
+          </defs>
+
+          <!-- milled (coin) edge + gold face -->
+          <circle cx="100" cy="100" r="98" fill="#8a6a19"/>
+          <circle cx="100" cy="100" r="96.5" fill="none" stroke="#e9d491" stroke-width="3" stroke-dasharray="2.4 2.6"/>
+          <circle cx="100" cy="100" r="93" fill="url(#sealGold)"/>
+
+          <!-- text band rings -->
+          <circle cx="100" cy="100" r="86" fill="none" stroke="#77590f" stroke-width="1.6"/>
+          <circle cx="100" cy="100" r="56" fill="none" stroke="#77590f" stroke-width="1.6"/>
+          <circle cx="100" cy="100" r="52.5" fill="none" stroke="#77590f" stroke-width="0.7"/>
+
+          <!-- circumferential text -->
+          <text font-family="Georgia, 'Times New Roman', serif" font-size="10.5" letter-spacing="1.2" fill="#553f08" font-weight="bold">
+            <textPath href="#sealTop" startOffset="50%" text-anchor="middle">ITSS LEARN · INVESTEC GROUP</textPath>
+          </text>
+          <text font-family="Georgia, 'Times New Roman', serif" font-size="9.5" letter-spacing="1" fill="#553f08" font-weight="bold">
+            <textPath href="#sealBottom" startOffset="50%" text-anchor="middle">QUALITY ASSURED TRAINING</textPath>
+          </text>
+          <!-- band separators -->
+          <circle cx="26" cy="100" r="2.1" fill="#553f08"/>
+          <circle cx="174" cy="100" r="2.1" fill="#553f08"/>
+
+          <!-- open book emblem -->
+          <g stroke="#5d4408" stroke-width="1.6" stroke-linejoin="round">
+            <path d="M 68,86 Q 84,79 99,86 L 99,112 Q 84,105 68,112 Z" fill="#fdf6df"/>
+            <path d="M 132,86 Q 116,79 101,86 L 101,112 Q 116,105 132,112 Z" fill="#fdf6df"/>
+            <path d="M 99,86 L 99,112 M 101,86 L 101,112" stroke-width="1.1"/>
+          </g>
+          <g stroke="#a98c3a" stroke-width="1">
+            <path d="M 74,91 Q 85,86 95,91 M 74,96 Q 85,91 95,96 M 74,101 Q 85,96 95,101" fill="none"/>
+            <path d="M 126,91 Q 115,86 105,91 M 126,96 Q 115,91 105,96 M 126,101 Q 115,96 105,101" fill="none"/>
+          </g>
+
+          <!-- monogram + roman year -->
+          <text x="100" y="132" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="15" letter-spacing="3.5" font-weight="bold" fill="#553f08">ITSS</text>
+          <text x="100" y="145" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="8.5" letter-spacing="2.4" fill="#6b520f">SAQA ${esc(COURSE_META.saqaId)}</text>
+        </svg>
+      </div>
       <div class="sign"><div class="line">&nbsp;</div>Registered Moderator<div class="role">Moderation</div></div>
       <div class="sign"><div class="line">&nbsp;</div>Programme Manager<div class="role">Provider Authority</div></div>
     </div>
