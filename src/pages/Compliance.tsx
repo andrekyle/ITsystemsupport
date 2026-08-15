@@ -304,7 +304,7 @@ export function CompliancePage({
                 <td>
                   {d.date && d.end && (
                     <a
-                      className="icon-btn"
+                      className="table-icon-link"
                       href={outlookEventLink({ title: d.name, start: d.date, end: d.end })}
                       target="_blank"
                       rel="noreferrer"
