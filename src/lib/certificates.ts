@@ -122,15 +122,17 @@ export function openStatementOfResults(
   win.document.close();
 }
 
-/** Printable certificate of completion (all units competent/complete). */
-export function openCertificate(profile: Profile, creditsEarned: number) {
+/** Printable certificate of completion (all units competent/complete).
+ *  Pass `preview: true` (staff view before the learner qualifies) to overlay
+ *  a PREVIEW watermark so drafts can never pass as issued certificates. */
+export function openCertificate(profile: Profile, creditsEarned: number, preview = false) {
   const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8" />
 <title>Certificate — ${esc(profile.name)}</title>
 <style>
   body { margin: 0; font-family: Georgia, "Times New Roman", serif; color: #17233b; }
   .page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 30px; }
-  .cert { border: 10px double #0b3f8a; border-radius: 6px; padding: 60px 70px; text-align: center; max-width: 820px; }
+  .cert { position: relative; overflow: hidden; border: 10px double #0b3f8a; border-radius: 6px; padding: 60px 70px; text-align: center; max-width: 820px; }
   .brand { letter-spacing: 5px; font-size: 13px; color: #0b3f8a; text-transform: uppercase; }
   h1 { font-size: 40px; margin: 16px 0 4px; color: #0b3f8a; }
   .name { font-size: 32px; margin: 26px 0 6px; border-bottom: 1.5px solid #17233b; display: inline-block; padding: 0 34px 6px; }
@@ -138,10 +140,13 @@ export function openCertificate(profile: Profile, creditsEarned: number) {
   .meta { color: #5a6b8c; font-size: 13px; margin-top: 26px; }
   .sign { display: flex; gap: 80px; margin-top: 52px; }
   .sign div { flex: 1; border-top: 1.5px solid #17233b; padding-top: 6px; font-size: 12.5px; }
+  .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .watermark span { font-size: 110px; font-weight: 700; letter-spacing: 18px; color: rgba(11, 63, 138, 0.08); transform: rotate(-24deg); white-space: nowrap; }
   @media print { .page { min-height: auto; } }
 </style></head>
 <body>
   <div class="page"><div class="cert">
+    ${preview ? '<div class="watermark"><span>PREVIEW</span></div>' : ""}
     <div class="brand">ITSS Learn · Investec Group</div>
     <h1>Certificate of Completion</h1>
     <p>This certifies that</p>

@@ -422,15 +422,17 @@ export function CompliancePage({
                         </button>
                         <button
                           className="btn ghost sm"
-                          disabled={!certReady}
+                          disabled={!certReady && !staff}
                           title={
                             certReady
                               ? "Certificate of completion (print / PDF)"
-                              : "Available once every unit is complete with no NYC outcomes"
+                              : staff
+                                ? "Not yet earned — opens with a PREVIEW watermark until every unit is complete with no NYC outcomes"
+                                : "Available once every unit is complete with no NYC outcomes"
                           }
-                          onClick={() => openCertificate(r.profile, r.creditsEarned)}
+                          onClick={() => openCertificate(r.profile, r.creditsEarned, !certReady)}
                         >
-                          <Icon name="certificate" size={14} /> Certificate
+                          <Icon name="certificate" size={14} /> {certReady ? "Certificate" : staff ? "Preview certificate" : "Certificate"}
                         </button>
                       </span>
                     </td>
