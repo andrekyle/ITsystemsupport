@@ -704,6 +704,129 @@ export function useQaThreads() {
   return { threads, ask, reply, toggleResolved, editQuestion, remove };
 }
 
+/* ---------- direct chat (1-to-1 conversations between learners / staff) ---------- */
+
+/** Deterministic key for a chat between two profiles — same key regardless of
+ *  which side reads/writes. Shared-state so every account sees it (super
+ *  users watch all conversations, both parties see the same thread). */
+const CHAT_PAIR_SEP = "~~"; // profile ids may contain "_" or "-", but never "~"
+const chatPairKey = (a: string, b: string): string => {
+  const [x, y] = a < b ? [a, b] : [b, a];
+  return `itss.chat.${x}${CHAT_PAIR_SEP}${y}.shared`;
+};
+
+export interface ChatMessage {
+  id: string;
+  byId: string;
+  by: string;
+  role: Role;
+  body: string;
+  at: string;
+  /** ids of profiles that have read this message (author is implicit) */
+  readBy?: string[];
+}
+
+export function useChat(myProfileId: string, otherProfileId: string) {
+  const key = chatPairKey(myProfileId, otherProfileId);
+  const [messages, update] = useSharedState<ChatMessage[]>(key, []);
+  const send = useCallback(
+    (author: Profile, body: string) => {
+      const text = body.trim();
+      if (!text) return;
+      update((fresh) => [
+        ...fresh,
+        {
+          id: newId(),
+          byId: author.id,
+          by: author.name,
+          role: author.role,
+          body: text,
+          at: new Date().toISOString(),
+          readBy: [author.id],
+        },
+      ]);
+    },
+    [update]
+  );
+  const markRead = useCallback(
+    (readerId: string) =>
+      update((fresh) =>
+        fresh.map((m) =>
+          m.byId === readerId || (m.readBy ?? []).includes(readerId)
+            ? m
+            : { ...m, readBy: [...(m.readBy ?? []), readerId] }
+        )
+      ),
+    [update]
+  );
+  return { key, messages, send, markRead };
+}
+
+/** Summary of a single chat thread — for listing conversations in a sidebar. */
+export interface ChatThreadInfo {
+  key: string;
+  aId: string;
+  bId: string;
+  messages: ChatMessage[];
+  latest?: ChatMessage;
+  unreadFor: (readerId: string) => number;
+}
+
+const CHAT_KEY_RE = /^itss\.chat\.(.+?)~~(.+?)\.shared$/;
+
+/** Enumerate every chat thread stored in local storage (which is fed by the
+ *  cloud hydration). Super users see every conversation; learners filter by
+ *  their own id via `filterFor`. */
+export function scanChatThreads(): ChatThreadInfo[] {
+  const out: ChatThreadInfo[] = [];
+  if (typeof localStorage === "undefined") return out;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key) continue;
+    const m = key.match(CHAT_KEY_RE);
+    if (!m) continue;
+    let messages: ChatMessage[] = [];
+    try {
+      messages = JSON.parse(localStorage.getItem(key) ?? "[]") as ChatMessage[];
+    } catch {
+      continue;
+    }
+    if (!Array.isArray(messages) || messages.length === 0) continue;
+    const latest = messages[messages.length - 1];
+    out.push({
+      key,
+      aId: m[1],
+      bId: m[2],
+      messages,
+      latest,
+      unreadFor: (readerId: string) =>
+        messages.filter(
+          (msg) => msg.byId !== readerId && !(msg.readBy ?? []).includes(readerId)
+        ).length,
+    });
+  }
+  return out.sort((a, b) => (b.latest?.at ?? "").localeCompare(a.latest?.at ?? ""));
+}
+
+/** Hook: subscribe to the list of chat threads. Re-scans on any storage event
+ *  matching an `itss.chat.*` key so newly-arrived messages appear live. */
+export function useChatThreads(): ChatThreadInfo[] {
+  const [threads, setThreads] = useState<ChatThreadInfo[]>(() => scanChatThreads());
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || CHAT_KEY_RE.test(e.key)) setThreads(scanChatThreads());
+    };
+    window.addEventListener("storage", onStorage);
+    // periodic refresh so the same tab sees its own writes propagate
+    const t = setInterval(() => setThreads(scanChatThreads()), 2000);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      clearInterval(t);
+    };
+  }, []);
+  return threads;
+}
+
 /* ---------- POE reviews (assessor verdicts per evidence item) ---------- */
 
 const POE_REVIEW_KEY = "itss.poereview.shared";

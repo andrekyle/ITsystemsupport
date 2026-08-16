@@ -17,6 +17,7 @@ import { AttendancePage } from "./pages/Attendance";
 import { CompliancePage } from "./pages/Compliance";
 import { AnalyticsPage } from "./pages/Analytics";
 import { CommunityPage } from "./pages/Community";
+import { ChatPage } from "./pages/Chat";
 import { cloudEnabled, supabase } from "./lib/supabase";
 import { installSync, startSync, stopSync, wipeLocalData } from "./lib/sync";
 import { logAudit } from "./lib/audit";
@@ -159,6 +160,9 @@ function Shell({
             )}
             {route.page === "analytics" && <AnalyticsPage profile={profile} navigate={navigate} />}
             {route.page === "community" && <CommunityPage profile={profile} navigate={navigate} />}
+            {route.page === "chat" && (
+              <ChatPage profile={profile} route={route} navigate={navigate} />
+            )}
             {route.page === "resources" && <ResourcesPage />}
           </div>
         </main>

@@ -437,6 +437,7 @@ export type PageId =
   | "attendance"
   | "compliance"
   | "analytics"
+  | "chat"
   | "community";
 
 export interface Route {

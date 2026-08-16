@@ -1,0 +1,380 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Icon } from "../icons";
+import type { Profile, Route } from "../types";
+import { isStaff } from "../types";
+import {
+  loadProfiles,
+  useChat,
+  useChatThreads,
+  type ChatMessage,
+  type ChatThreadInfo,
+} from "../store";
+import { fetchCloudDirectory } from "../lib/directory";
+import { mergeProfileWithCloud, remoteOnlyProfiles } from "../lib/directory";
+import type { CloudDirectory } from "../lib/directory";
+import { Avatar } from "../components/Avatar";
+import { logAudit } from "../lib/audit";
+
+/**
+ * Direct messages: 1-to-1 chat between any two people on the course.
+ * - Learners can chat with other learners and staff.
+ * - Super users can open a chat with anyone and see every conversation.
+ * - Each conversation is stored as one shared_state row (`itss.chat.<a>~~<b>.shared`)
+ *   so both sides — and moderators — always see the same thread.
+ */
+export function ChatPage({
+  profile,
+  route,
+  navigate,
+}: {
+  profile: Profile;
+  route: Route;
+  navigate: (r: Route) => void;
+}) {
+  const isSuper = profile.role === "Super User";
+  const staff = isStaff(profile.role);
+
+  // People I can chat with (local + cloud, deduped, self excluded)
+  const [cloud, setCloud] = useState<CloudDirectory | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void fetchCloudDirectory().then((d) => {
+      if (alive && d) setCloud(d);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const people = useMemo(() => {
+    const local = loadProfiles();
+    const remote = remoteOnlyProfiles(local, cloud?.profiles ?? []);
+    const all = [
+      ...local.map((p) => mergeProfileWithCloud(p, cloud ?? undefined)),
+      ...remote,
+    ]
+      .filter((p) => p.id !== profile.id)
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
+    // learners can only see other learners + staff; they don't need to see other people's private chats
+    return staff ? all : all.filter((p) => p.role === "Learner" || isStaff(p.role));
+  }, [cloud, profile.id, staff]);
+
+  const peopleById = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
+  // include the viewer so their own chats render their own name/avatar for super users
+  const nameFor = (id: string): string =>
+    id === profile.id ? profile.name : peopleById.get(id)?.name ?? "Unknown";
+
+  const threads = useChatThreads();
+
+  // Filter to conversations relevant to the viewer:
+  // - super user sees every conversation (moderation view)
+  // - everyone else only sees their own conversations
+  const visibleThreads = useMemo(
+    () => (isSuper ? threads : threads.filter((t) => t.aId === profile.id || t.bId === profile.id)),
+    [threads, isSuper, profile.id]
+  );
+
+  const [openWith, setOpenWith] = useState<string | null>(null);
+
+  // deep-linkable ?studentId (reused from the shared Route)
+  useEffect(() => {
+    if (route.studentId && route.studentId !== profile.id) setOpenWith(route.studentId);
+  }, [route.studentId, profile.id]);
+
+  return (
+    <>
+      <div className="eyebrow">
+        <Icon name="chat" size={15} />
+        Direct messages
+      </div>
+      <h1 className="page-title">Chat</h1>
+      <p className="page-sub">
+        Talk directly with anyone on the programme.{" "}
+        {isSuper
+          ? "As super user you can see every conversation for moderation and message anyone in the class."
+          : "Your facilitator can see every conversation for moderation."}
+      </p>
+
+      <div className="chat-layout">
+        <aside className="chat-side card">
+          <ChatSidebar
+            viewer={profile}
+            people={people}
+            threads={visibleThreads}
+            nameFor={nameFor}
+            openWith={openWith}
+            onSelect={(id) => {
+              setOpenWith(id);
+              navigate({ page: "chat", studentId: id });
+            }}
+          />
+        </aside>
+        <section className="chat-main card">
+          {openWith ? (
+            <ChatThread
+              me={profile}
+              otherId={openWith}
+              other={peopleById.get(openWith)}
+              nameFor={nameFor}
+            />
+          ) : (
+            <div className="chat-empty">
+              <Icon name="chat" size={28} />
+              <p className="muted" style={{ marginTop: 10 }}>
+                Choose someone from the left to start a conversation.
+              </p>
+            </div>
+          )}
+        </section>
+      </div>
+    </>
+  );
+}
+
+function ChatSidebar({
+  viewer,
+  people,
+  threads,
+  nameFor,
+  openWith,
+  onSelect,
+}: {
+  viewer: Profile;
+  people: Profile[];
+  threads: ChatThreadInfo[];
+  nameFor: (id: string) => string;
+  openWith: string | null;
+  onSelect: (otherId: string) => void;
+}) {
+  const isSuper = viewer.role === "Super User";
+  const [tab, setTab] = useState<"threads" | "people">("threads");
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+
+  const threadRows = threads
+    .map((t) => {
+      const otherId = t.aId === viewer.id ? t.bId : t.bId === viewer.id ? t.aId : t.aId; // for super user viewing 3rd-party chats, show first party
+      const secondaryId = t.aId === viewer.id ? t.aId : t.bId === viewer.id ? t.bId : t.bId;
+      return { thread: t, otherId, secondaryId };
+    })
+    .filter((r) => {
+      if (!q) return true;
+      const a = nameFor(r.thread.aId).toLowerCase();
+      const b = nameFor(r.thread.bId).toLowerCase();
+      const body = r.thread.latest?.body.toLowerCase() ?? "";
+      return a.includes(q) || b.includes(q) || body.includes(q);
+    });
+
+  const peopleRows = people.filter((p) => !q || p.name.toLowerCase().includes(q));
+
+  return (
+    <>
+      <div className="chat-side-head">
+        <div className="chat-tabs">
+          <button
+            className={`btn ghost sm${tab === "threads" ? " active" : ""}`}
+            onClick={() => setTab("threads")}
+          >
+            <Icon name="chat" size={14} /> {isSuper ? "All chats" : "Conversations"}
+          </button>
+          <button
+            className={`btn ghost sm${tab === "people" ? " active" : ""}`}
+            onClick={() => setTab("people")}
+          >
+            <Icon name="people" size={14} /> New chat
+          </button>
+        </div>
+        <div className="field" style={{ marginBottom: 0 }}>
+          <input
+            value={query}
+            placeholder={tab === "threads" ? "Search chats…" : "Search people…"}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+      </div>
+      <div className="chat-side-list">
+        {tab === "threads" ? (
+          threadRows.length === 0 ? (
+            <p className="mini-note" style={{ padding: 12 }}>
+              No conversations yet — open the New chat tab to start one.
+            </p>
+          ) : (
+            threadRows.map(({ thread }) => (
+              <ChatThreadRow
+                key={thread.key}
+                thread={thread}
+                viewer={viewer}
+                nameFor={nameFor}
+                openWith={openWith}
+                onSelect={onSelect}
+              />
+            ))
+          )
+        ) : peopleRows.length === 0 ? (
+          <p className="mini-note" style={{ padding: 12 }}>
+            No matching people.
+          </p>
+        ) : (
+          peopleRows.map((p) => (
+            <button
+              key={p.id}
+              className={`chat-row${openWith === p.id ? " active" : ""}`}
+              onClick={() => onSelect(p.id)}
+            >
+              <Avatar profile={p} size={28} />
+              <span className="chat-row-name">
+                <strong>{p.name}</strong>
+                <span className="mini-note">{p.role}</span>
+              </span>
+            </button>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
+function ChatThreadRow({
+  thread,
+  viewer,
+  nameFor,
+  openWith,
+  onSelect,
+}: {
+  thread: ChatThreadInfo;
+  viewer: Profile;
+  nameFor: (id: string) => string;
+  openWith: string | null;
+  onSelect: (otherId: string) => void;
+}) {
+  const isSuper = viewer.role === "Super User";
+  const involves = thread.aId === viewer.id || thread.bId === viewer.id;
+  // For your own chats, the "other party" is the one that isn't you.
+  // For super-user moderation view, show both parties' names.
+  const otherId = involves
+    ? thread.aId === viewer.id
+      ? thread.bId
+      : thread.aId
+    : thread.aId; // clicking a moderation-view row opens the a-side chat for read-only monitoring
+  const bothLabel = `${nameFor(thread.aId)} · ${nameFor(thread.bId)}`;
+  const unread = involves ? thread.unreadFor(viewer.id) : 0;
+  const preview = thread.latest?.body ?? "";
+  return (
+    <button
+      className={`chat-row${openWith === otherId ? " active" : ""}${unread ? " has-unread" : ""}`}
+      onClick={() => onSelect(otherId)}
+      title={isSuper && !involves ? "Read-only monitoring view" : undefined}
+    >
+      <span className="chat-row-name">
+        <strong>{involves ? nameFor(otherId) : bothLabel}</strong>
+        <span className="mini-note chat-preview">
+          {thread.latest ? `${thread.latest.by === viewer.name ? "You" : thread.latest.by}: ${preview}` : "No messages yet"}
+        </span>
+      </span>
+      <span className="chat-row-meta">
+        {unread > 0 && <span className="chat-unread">{unread}</span>}
+        <span className="mini-note">{thread.latest ? fmtWhen(thread.latest.at) : ""}</span>
+      </span>
+    </button>
+  );
+}
+
+function ChatThread({
+  me,
+  otherId,
+  other,
+  nameFor,
+}: {
+  me: Profile;
+  otherId: string;
+  other?: Profile;
+  nameFor: (id: string) => string;
+}) {
+  const { messages, send, markRead } = useChat(me.id, otherId);
+  const [text, setText] = useState("");
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-scroll to newest, and mark received messages read.
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    if (messages.some((m) => m.byId !== me.id && !(m.readBy ?? []).includes(me.id))) {
+      markRead(me.id);
+    }
+  }, [messages, me.id, markRead]);
+
+  function submit() {
+    const t = text.trim();
+    if (!t) return;
+    send(me, t);
+    logAudit(me, "qa.post", `Messaged ${nameFor(otherId)}`);
+    setText("");
+  }
+
+  return (
+    <>
+      <header className="chat-head">
+        {other && <Avatar profile={other} size={30} />}
+        <span>
+          <strong>{other?.name ?? nameFor(otherId)}</strong>
+          <div className="mini-note">{other?.role ?? "Unknown role"}</div>
+        </span>
+      </header>
+      <div className="chat-messages" ref={scrollRef}>
+        {messages.length === 0 ? (
+          <p className="mini-note" style={{ padding: 16, textAlign: "center" }}>
+            No messages yet — say hello.
+          </p>
+        ) : (
+          messages.map((m) => <ChatBubble key={m.id} msg={m} me={me} />)
+        )}
+      </div>
+      <div className="chat-compose">
+        <textarea
+          placeholder="Write a message…"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={2}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              submit();
+            }
+          }}
+        />
+        <button className="btn ghost sm" onClick={submit} disabled={!text.trim()}>
+          <Icon name="chevronRight" size={16} /> Send
+        </button>
+      </div>
+    </>
+  );
+}
+
+function ChatBubble({ msg, me }: { msg: ChatMessage; me: Profile }) {
+  const mine = msg.byId === me.id;
+  return (
+    <div className={`chat-bubble${mine ? " mine" : ""}`}>
+      {!mine && <div className="chat-bubble-by">{msg.by}</div>}
+      <div className="chat-bubble-body">{msg.body}</div>
+      <div className="chat-bubble-at mini-note">{fmtWhen(msg.at)}</div>
+    </div>
+  );
+}
+
+function fmtWhen(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  if (sameDay) return time;
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday =
+    d.getFullYear() === yesterday.getFullYear() &&
+    d.getMonth() === yesterday.getMonth() &&
+    d.getDate() === yesterday.getDate();
+  if (isYesterday) return `Yesterday · ${time}`;
+  return `${d.toLocaleDateString(undefined, { day: "numeric", month: "short" })} · ${time}`;
+}
