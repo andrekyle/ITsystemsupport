@@ -170,7 +170,15 @@ export function ProfilePage({
 
   function save(e: React.FormEvent) {
     e.preventDefault();
-    onUpdateProfile({ enrolment: { ...draft, signedDate: new Date().toISOString() } });
+    // If the learner filled in first names + surname, keep the top-level
+    // profile name in sync so avatars, sidebars, chats and lists match.
+    const nextEnrol = { ...draft, signedDate: new Date().toISOString() };
+    const derived = [nextEnrol.firstNames?.trim(), nextEnrol.surname?.trim()]
+      .filter(Boolean)
+      .join(" ");
+    const patch: Partial<Profile> = { enrolment: nextEnrol };
+    if (derived && derived !== profile.name) patch.name = derived;
+    onUpdateProfile(patch);
     logAudit(profile, "enrolment.saved", "Updated own biographical enrolment information");
     setEditing(false);
   }
@@ -1979,9 +1987,13 @@ function StudentDetail({
 
   async function saveEnrol(e: React.FormEvent) {
     e.preventDefault();
-    const okSave = await patchStudent({
-      enrolment: { ...draft, signedDate: new Date().toISOString() },
-    });
+    const nextEnrol = { ...draft, signedDate: new Date().toISOString() };
+    const derived = [nextEnrol.firstNames?.trim(), nextEnrol.surname?.trim()]
+      .filter(Boolean)
+      .join(" ");
+    const patch: Partial<Profile> = { enrolment: nextEnrol };
+    if (derived && derived !== student.name) patch.name = derived;
+    const okSave = await patchStudent(patch);
     if (okSave) setEditingEnrol(false);
   }
 
