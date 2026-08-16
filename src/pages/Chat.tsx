@@ -9,7 +9,7 @@ import {
   type ChatMessage,
   type ChatThreadInfo,
 } from "../store";
-import { fetchCloudDirectory } from "../lib/directory";
+import { fetchCloudDirectory, resolveCloudLink } from "../lib/directory";
 import { mergeProfileWithCloud, remoteOnlyProfiles } from "../lib/directory";
 import type { CloudDirectory } from "../lib/directory";
 import { Avatar } from "../components/Avatar";
@@ -116,6 +116,7 @@ export function ChatPage({
               otherId={openWith}
               other={peopleById.get(openWith)}
               nameFor={nameFor}
+              cloud={cloud}
             />
           ) : (
             <div className="chat-empty">
@@ -284,31 +285,46 @@ function ChatThread({
   otherId,
   other,
   nameFor,
+  cloud,
 }: {
   me: Profile;
   otherId: string;
   other?: Profile;
   nameFor: (id: string) => string;
+  cloud: CloudDirectory | null;
 }) {
-  const { messages, send, markRead } = useChat(me.id, otherId);
+  // Resolve the other party's Supabase auth user id (identity-aware). The
+  // chat table is keyed by real auth ids so RLS can enforce privacy.
+  const otherAuthUserId = useMemo(() => {
+    if (!cloud) return undefined;
+    if (!other) return cloud.owners[otherId];
+    return resolveCloudLink(other, cloud)?.owner ?? cloud.owners[other.id];
+  }, [cloud, other, otherId]);
+
+  const { messages, send, markRead } = useChat(me, {
+    profileId: otherId,
+    authUserId: otherAuthUserId,
+  });
   const [text, setText] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  // Auto-scroll to newest, and mark received messages read.
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-    if (messages.some((m) => m.byId !== me.id && !(m.readBy ?? []).includes(me.id))) {
-      markRead(me.id);
+    // mark unread incoming messages as read on the server
+    if (messages.some((m) => m.byId !== me.id && !m.read)) {
+      void markRead();
     }
   }, [messages, me.id, markRead]);
 
   function submit() {
     const t = text.trim();
     if (!t) return;
-    send(me, t);
+    void send(me, t);
     logAudit(me, "qa.post", `Messaged ${nameFor(otherId)}`);
     setText("");
   }
+
+  const canSend = !!otherAuthUserId;
 
   return (
     <>
@@ -320,7 +336,12 @@ function ChatThread({
         </span>
       </header>
       <div className="chat-messages" ref={scrollRef}>
-        {messages.length === 0 ? (
+        {!canSend && messages.length === 0 ? (
+          <p className="mini-note" style={{ padding: 16, textAlign: "center" }}>
+            This person hasn't signed in with their own cloud account yet — you can send them a
+            message once they do (or once their email is linked in Users → Add User).
+          </p>
+        ) : messages.length === 0 ? (
           <p className="mini-note" style={{ padding: 16, textAlign: "center" }}>
             No messages yet — say hello.
           </p>
@@ -330,10 +351,11 @@ function ChatThread({
       </div>
       <div className="chat-compose">
         <textarea
-          placeholder="Write a message…"
+          placeholder={canSend ? "Write a message…" : "Waiting for the recipient to activate their account…"}
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={2}
+          disabled={!canSend}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -341,7 +363,12 @@ function ChatThread({
             }
           }}
         />
-        <button className="btn ghost sm" onClick={submit} disabled={!text.trim()}>
+        <button
+          className="btn ghost sm"
+          onClick={submit}
+          disabled={!text.trim() || !canSend}
+          title={canSend ? undefined : "Waiting for the recipient's cloud account"}
+        >
           <Icon name="chevronRight" size={16} /> Send
         </button>
       </div>

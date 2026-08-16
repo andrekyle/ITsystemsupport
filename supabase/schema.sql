@@ -159,4 +159,80 @@ create policy "delete app files"
   );
 
 
+-- ============================================================================
+-- Direct-message chat (1-to-1, database-enforced privacy)
+-- ============================================================================
+-- Every message has a real sender/recipient auth user id, so RLS restricts
+-- reads to *those two people* plus admins (super users). Other learners
+-- cannot see the row at all, even by querying Supabase directly.
+create table if not exists public.chat_messages (
+  id                   uuid        primary key default gen_random_uuid(),
+  sender_user_id       uuid        not null references auth.users (id) on delete cascade,
+  recipient_user_id    uuid        not null references auth.users (id) on delete cascade,
+  -- App-side profile ids (may differ from auth ids on this device — the client
+  -- resolves them via the identity-aware directory) used purely for display
+  -- and pair-keying so both sides see the same thread.
+  sender_profile_id    text        not null,
+  recipient_profile_id text        not null,
+  sender_name          text        not null,
+  sender_role          text        not null,
+  body                 text        not null,
+  sent_at              timestamptz not null default now(),
+  read_at              timestamptz
+);
+
+create index if not exists chat_messages_participants_idx
+  on public.chat_messages (sender_user_id, recipient_user_id, sent_at);
+create index if not exists chat_messages_recipient_idx
+  on public.chat_messages (recipient_user_id, sent_at);
+create index if not exists chat_messages_sender_idx
+  on public.chat_messages (sender_user_id, sent_at);
+
+alter table public.chat_messages enable row level security;
+
+drop policy if exists "read chat messages" on public.chat_messages;
+create policy "read chat messages"
+  on public.chat_messages
+  for select
+  to authenticated
+  using (
+    auth.uid() in (sender_user_id, recipient_user_id)
+    or public.is_admin()
+  );
+
+drop policy if exists "send chat messages" on public.chat_messages;
+create policy "send chat messages"
+  on public.chat_messages
+  for insert
+  to authenticated
+  with check (
+    auth.uid() = sender_user_id
+    or public.is_admin()
+  );
+
+drop policy if exists "update chat messages" on public.chat_messages;
+create policy "update chat messages"
+  on public.chat_messages
+  for update
+  to authenticated
+  using (
+    auth.uid() in (sender_user_id, recipient_user_id)
+    or public.is_admin()
+  )
+  with check (
+    auth.uid() in (sender_user_id, recipient_user_id)
+    or public.is_admin()
+  );
+
+drop policy if exists "delete chat messages" on public.chat_messages;
+create policy "delete chat messages"
+  on public.chat_messages
+  for delete
+  to authenticated
+  using (
+    auth.uid() = sender_user_id
+    or public.is_admin()
+  );
+
+
 

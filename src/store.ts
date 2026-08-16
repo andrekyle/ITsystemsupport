@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { EnrolmentInfo, PoeDoc, Profile, ProgressState, Role, UnitActivity, UnitProgress } from "./types";
 import { UNIT_ACTIVITIES } from "./types";
 import { MODULES } from "./data/course";
-import { cloudEnabled } from "./lib/supabase";
+import { cloudEnabled, supabase } from "./lib/supabase";
 import { logAudit } from "./lib/audit";
 
 const PROFILES_KEY = "itss.profiles";
@@ -712,15 +712,14 @@ export function useQaThreads() {
   return { threads, ask, reply, toggleResolved, editQuestion, remove };
 }
 
-/* ---------- direct chat (1-to-1 conversations between learners / staff) ---------- */
+/* ---------- direct chat (1-to-1 conversations, database-enforced privacy) --------- */
 
-/** Deterministic key for a chat between two profiles — same key regardless of
- *  which side reads/writes. Shared-state so every account sees it (super
- *  users watch all conversations, both parties see the same thread). */
+/** Deterministic profile-pair key — same value regardless of which side asks.
+ *  Used for grouping messages into a conversation on the client. */
 const CHAT_PAIR_SEP = "~~"; // profile ids may contain "_" or "-", but never "~"
-const chatPairKey = (a: string, b: string): string => {
+export const chatPairKey = (a: string, b: string): string => {
   const [x, y] = a < b ? [a, b] : [b, a];
-  return `itss.chat.${x}${CHAT_PAIR_SEP}${y}.shared`;
+  return `${x}${CHAT_PAIR_SEP}${y}`;
 };
 
 export interface ChatMessage {
@@ -730,108 +729,207 @@ export interface ChatMessage {
   role: Role;
   body: string;
   at: string;
-  /** ids of profiles that have read this message (author is implicit) */
-  readBy?: string[];
+  /** whether the recipient has read the message */
+  read?: boolean;
 }
 
-export function useChat(myProfileId: string, otherProfileId: string) {
-  const key = chatPairKey(myProfileId, otherProfileId);
-  const [messages, update] = useSharedState<ChatMessage[]>(key, []);
+/** Wire representation of a message row in Supabase. */
+interface DbChatRow {
+  id: string;
+  sender_user_id: string;
+  recipient_user_id: string;
+  sender_profile_id: string;
+  recipient_profile_id: string;
+  sender_name: string;
+  sender_role: Role;
+  body: string;
+  sent_at: string;
+  read_at: string | null;
+}
+
+function rowToMessage(row: DbChatRow): ChatMessage {
+  return {
+    id: row.id,
+    byId: row.sender_profile_id,
+    by: row.sender_name,
+    role: row.sender_role,
+    body: row.body,
+    at: row.sent_at,
+    read: !!row.read_at,
+  };
+}
+
+/** Info the caller needs to load / send a specific 1-to-1 conversation. */
+export interface ChatPeer {
+  /** the other person's app profile id (may differ from their auth id) */
+  profileId: string;
+  /** the other person's Supabase auth.users id — required to send */
+  authUserId?: string;
+}
+
+/**
+ * Subscribe to a live thread between the current viewer and one other person.
+ * Polls Supabase every few seconds; sending inserts a row (RLS enforces
+ * that only the sender's auth user can create it). Read receipts update the
+ * recipient's own rows.
+ */
+export function useChat(myProfile: Profile, peer: ChatPeer) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [myAuthId, setMyAuthId] = useState<string | null>(null);
+  const otherAuthId = peer.authUserId ?? null;
+
+  useEffect(() => {
+    if (!supabase) return;
+    let alive = true;
+    void supabase.auth.getUser().then(({ data }) => {
+      if (alive) setMyAuthId(data.user?.id ?? null);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!supabase || !myAuthId || !otherAuthId) return;
+    let alive = true;
+    const load = async () => {
+      if (!supabase) return;
+      const { data, error } = await supabase
+        .from("chat_messages")
+        .select("*")
+        .or(
+          `and(sender_user_id.eq.${myAuthId},recipient_user_id.eq.${otherAuthId}),and(sender_user_id.eq.${otherAuthId},recipient_user_id.eq.${myAuthId})`
+        )
+        .order("sent_at", { ascending: true });
+      if (!alive || error || !data) return;
+      setMessages((data as DbChatRow[]).map(rowToMessage));
+    };
+    void load();
+    const t = setInterval(load, 4000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, [myAuthId, otherAuthId]);
+
   const send = useCallback(
-    (author: Profile, body: string) => {
+    async (author: Profile, body: string) => {
+      if (!supabase || !myAuthId || !otherAuthId) return;
       const text = body.trim();
       if (!text) return;
-      update((fresh) => [
-        ...fresh,
-        {
-          id: newId(),
-          byId: author.id,
-          by: author.name,
-          role: author.role,
-          body: text,
-          at: new Date().toISOString(),
-          readBy: [author.id],
-        },
-      ]);
+      const optimistic: ChatMessage = {
+        id: newId(),
+        byId: author.id,
+        by: author.name,
+        role: author.role,
+        body: text,
+        at: new Date().toISOString(),
+        read: false,
+      };
+      setMessages((prev) => [...prev, optimistic]);
+      const { error } = await supabase.from("chat_messages").insert({
+        sender_user_id: myAuthId,
+        recipient_user_id: otherAuthId,
+        sender_profile_id: author.id,
+        recipient_profile_id: peer.profileId,
+        sender_name: author.name,
+        sender_role: author.role,
+        body: text,
+      });
+      if (error) {
+        // rollback optimistic entry on failure so nothing lingers wrongly
+        setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+      }
     },
-    [update]
+    [myAuthId, otherAuthId, peer.profileId]
   );
-  const markRead = useCallback(
-    (readerId: string) =>
-      update((fresh) =>
-        fresh.map((m) =>
-          m.byId === readerId || (m.readBy ?? []).includes(readerId)
-            ? m
-            : { ...m, readBy: [...(m.readBy ?? []), readerId] }
-        )
-      ),
-    [update]
-  );
-  return { key, messages, send, markRead };
+
+  const markRead = useCallback(async () => {
+    if (!supabase || !myAuthId || !otherAuthId) return;
+    await supabase
+      .from("chat_messages")
+      .update({ read_at: new Date().toISOString() })
+      .eq("recipient_user_id", myAuthId)
+      .eq("sender_user_id", otherAuthId)
+      .is("read_at", null);
+  }, [myAuthId, otherAuthId]);
+
+  return { messages, send, markRead };
 }
 
 /** Summary of a single chat thread — for listing conversations in a sidebar. */
 export interface ChatThreadInfo {
+  /** grouping key: sorted "profileA~~profileB" so both sides use the same value */
   key: string;
   aId: string;
   bId: string;
   messages: ChatMessage[];
   latest?: ChatMessage;
-  unreadFor: (readerId: string) => number;
+  /** how many messages the given profile has *not* read yet */
+  unreadFor: (profileId: string) => number;
 }
 
-const CHAT_KEY_RE = /^itss\.chat\.(.+?)~~(.+?)\.shared$/;
-
-/** Enumerate every chat thread stored in local storage (which is fed by the
- *  cloud hydration). Super users see every conversation; learners filter by
- *  their own id via `filterFor`. */
-export function scanChatThreads(): ChatThreadInfo[] {
-  const out: ChatThreadInfo[] = [];
-  if (typeof localStorage === "undefined") return out;
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (!key) continue;
-    const m = key.match(CHAT_KEY_RE);
-    if (!m) continue;
-    let messages: ChatMessage[] = [];
-    try {
-      messages = JSON.parse(localStorage.getItem(key) ?? "[]") as ChatMessage[];
-    } catch {
-      continue;
-    }
-    if (!Array.isArray(messages) || messages.length === 0) continue;
-    const latest = messages[messages.length - 1];
-    out.push({
-      key,
-      aId: m[1],
-      bId: m[2],
-      messages,
-      latest,
-      unreadFor: (readerId: string) =>
-        messages.filter(
-          (msg) => msg.byId !== readerId && !(msg.readBy ?? []).includes(readerId)
-        ).length,
-    });
-  }
-  return out.sort((a, b) => (b.latest?.at ?? "").localeCompare(a.latest?.at ?? ""));
-}
-
-/** Hook: subscribe to the list of chat threads. Re-scans on any storage event
- *  matching an `itss.chat.*` key so newly-arrived messages appear live. */
+/**
+ * Subscribe to every chat thread the current viewer may see.
+ *  - a normal user sees threads they are a participant in (RLS filters rows).
+ *  - a super user sees every conversation (admin RLS policy).
+ * The hook groups the visible messages by profile-pair so the UI can list
+ * conversations.
+ */
 export function useChatThreads(): ChatThreadInfo[] {
-  const [threads, setThreads] = useState<ChatThreadInfo[]>(() => scanChatThreads());
+  const [threads, setThreads] = useState<ChatThreadInfo[]>([]);
+
   useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (!e.key || CHAT_KEY_RE.test(e.key)) setThreads(scanChatThreads());
+    if (!supabase) return;
+    let alive = true;
+    const load = async () => {
+      if (!supabase) return;
+      // RLS handles who can see which row.
+      const { data, error } = await supabase
+        .from("chat_messages")
+        .select("*")
+        .order("sent_at", { ascending: true });
+      if (!alive || error || !data) return;
+      const grouped = new Map<string, ChatMessage[]>();
+      const pair = new Map<string, { aId: string; bId: string }>();
+      for (const row of data as DbChatRow[]) {
+        const [aId, bId] =
+          row.sender_profile_id < row.recipient_profile_id
+            ? [row.sender_profile_id, row.recipient_profile_id]
+            : [row.recipient_profile_id, row.sender_profile_id];
+        const key = chatPairKey(row.sender_profile_id, row.recipient_profile_id);
+        if (!grouped.has(key)) {
+          grouped.set(key, []);
+          pair.set(key, { aId, bId });
+        }
+        grouped.get(key)!.push(rowToMessage(row));
+      }
+      const out: ChatThreadInfo[] = [];
+      for (const [key, msgs] of grouped) {
+        const { aId, bId } = pair.get(key)!;
+        out.push({
+          key,
+          aId,
+          bId,
+          messages: msgs,
+          latest: msgs[msgs.length - 1],
+          // A message is unread for a given viewer if they were the recipient
+          // (i.e. not the author) and it has not been marked read yet.
+          unreadFor: (viewerProfileId: string) =>
+            msgs.filter((m) => m.byId !== viewerProfileId && !m.read).length,
+        });
+      }
+      out.sort((a, b) => (b.latest?.at ?? "").localeCompare(a.latest?.at ?? ""));
+      setThreads(out);
     };
-    window.addEventListener("storage", onStorage);
-    // periodic refresh so the same tab sees its own writes propagate
-    const t = setInterval(() => setThreads(scanChatThreads()), 2000);
+    void load();
+    const t = setInterval(load, 5000);
     return () => {
-      window.removeEventListener("storage", onStorage);
+      alive = false;
       clearInterval(t);
     };
   }, []);
+
   return threads;
 }
 
