@@ -857,12 +857,12 @@ table.data th {
   letter-spacing: 0.05em;
   color: var(--ink-3);
   font-weight: 600;
-  padding: 10px 12px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--table-border);
 }
 
 table.data td {
-  padding: 11px 12px;
+  padding: 6px 12px;
   border-bottom: 1px solid var(--table-border);
   vertical-align: top;
   font-weight: 350; /* Segoe UI Semilight */
@@ -6700,12 +6700,6 @@ input.att-sig {
 table.data.compliance-table th {
   font-size: 11px;
   white-space: nowrap;
-}
-
-/* compact compliance rows */
-table.data.compliance-table td {
-  padding-top: 6px;
-  padding-bottom: 6px;
 }
 
 /* subtle row + column separator lines */
