@@ -30,6 +30,7 @@ import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/
 import { AlertModal, ConfirmModal, PromptModal } from "../components/Modal";
 import { downloadDoc, getFileBlob } from "../lib/files";
 import { fileToSignature } from "../lib/signature";
+import { cloudEnabled, makeHeadlessClient } from "../lib/supabase";
 import { updateRegisterSignatures } from "./Attendance";
 import {
   deleteCloudProfile,
@@ -650,46 +651,100 @@ export function StudentsPage({
 function AddUser({ viewer, onAdded }: { viewer: Profile; onAdded: () => void }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("Learner");
   const [pw, setPw] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
     setError("");
-    // Check against local + cloud profiles so an admin can't create a second
-    // account for someone who already exists on another device.
-    const local = loadProfiles();
-    let candidates: Profile[] = local;
+    setNotice("");
+    setBusy(true);
     try {
-      const dir = await fetchCloudDirectory();
-      if (dir) {
-        const seen = new Set(local.map((p) => p.id));
-        candidates = [...local, ...dir.profiles.filter((p) => !seen.has(p.id))];
+      // Duplicate check against local + cloud so a second copy of a real
+      // learner never gets created here.
+      const local = loadProfiles();
+      let candidates: Profile[] = local;
+      try {
+        const dir = await fetchCloudDirectory();
+        if (dir) {
+          const seen = new Set(local.map((p) => p.id));
+          candidates = [...local, ...dir.profiles.filter((p) => !seen.has(p.id))];
+        }
+      } catch {
+        /* offline / RLS: local check still enforced */
       }
-    } catch {
-      /* offline or RLS-restricted: local check is still enforced */
-    }
-    try {
-      assertNoDuplicateProfile(candidates, { name });
-      const created = createProfile(name, role, undefined, pw ? await hashPassword(pw) : undefined);
+      try {
+        assertNoDuplicateProfile(candidates, { name });
+      } catch (err) {
+        if (err instanceof DuplicateProfileError) {
+          setError(err.message);
+          return;
+        }
+        throw err;
+      }
+
+      // Provision a real Supabase auth account so the learner appears in the
+      // dashboard and can sign in with their own credentials from any device.
+      // A headless client keeps the admin's own session untouched.
+      let cloudNotice = "";
+      const trimmedEmail = email.trim().toLowerCase();
+      if (cloudEnabled && trimmedEmail) {
+        const password = pw.trim() || generateTempPassword();
+        const headless = makeHeadlessClient();
+        if (headless) {
+          const { data, error: signUpErr } = await headless.auth.signUp({
+            email: trimmedEmail,
+            password,
+          });
+          if (signUpErr) {
+            const msg = signUpErr.message.toLowerCase();
+            if (msg.includes("already registered") || msg.includes("already been registered")) {
+              cloudNotice =
+                " An account with this email already exists in Supabase — this local profile is linked to it.";
+            } else {
+              setError(`Could not create the Supabase account: ${signUpErr.message}`);
+              return;
+            }
+          } else if (!data.session) {
+            cloudNotice =
+              ` Sign-up email sent to ${trimmedEmail} — the learner must confirm it before signing in.`;
+          } else {
+            cloudNotice = ` Supabase account created for ${trimmedEmail}.`;
+          }
+        }
+      }
+
+      // Build the local profile with the email baked into enrolment so later
+      // sign-ups match by identity.
+      const enrolment = trimmedEmail
+        ? ({ ...EMPTY_ENROLMENT, email: trimmedEmail } as EnrolmentInfo)
+        : undefined;
+      const created = createProfile(
+        name,
+        role,
+        enrolment,
+        pw ? await hashPassword(pw) : undefined
+      );
       logAudit(viewer, "account.create", `Added ${role} account via People → Add User`, {
         id: created.id,
         name: created.name,
       });
-    } catch (err) {
-      if (err instanceof DuplicateProfileError) {
-        setError(err.message);
-        return;
-      }
-      throw err;
+
+      setName("");
+      setEmail("");
+      setRole("Learner");
+      setPw("");
+      if (cloudNotice) setNotice(cloudNotice.trim());
+      else setOpen(false);
+      onAdded();
+    } finally {
+      setBusy(false);
     }
-    setName("");
-    setRole("Learner");
-    setPw("");
-    setOpen(false);
-    onAdded();
   }
 
   if (!open)
@@ -707,6 +762,18 @@ function AddUser({ viewer, onAdded }: { viewer: Profile; onAdded: () => void }) 
           <label htmlFor="au-nm">Full name</label>
           <input id="au-nm" value={name} onChange={(e) => setName(e.target.value)} autoFocus required />
         </div>
+        <div className="field" style={{ flex: 2, marginBottom: 0 }}>
+          <label htmlFor="au-em">Email address</label>
+          <input
+            id="au-em"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={cloudEnabled ? "learner@example.co.za" : "(cloud not configured)"}
+            required={cloudEnabled}
+            disabled={!cloudEnabled}
+          />
+        </div>
         <div className="field" style={{ flex: 1, marginBottom: 0 }}>
           <label htmlFor="au-rl">Role</label>
           <select id="au-rl" value={role} onChange={(e) => setRole(e.target.value as Role)}>
@@ -720,21 +787,36 @@ function AddUser({ viewer, onAdded }: { viewer: Profile; onAdded: () => void }) 
           <label htmlFor="au-pw">Password (optional)</label>
           <input id="au-pw" type="password" value={pw} onChange={(e) => setPw(e.target.value)} />
         </div>
-        <button className="btn" type="submit">
+        <button className="btn" type="submit" disabled={busy}>
           <Icon name="checkCircle" size={15} />
-          Create
+          {busy ? "Creating…" : "Create"}
         </button>
-        <button className="btn ghost" type="button" onClick={() => setOpen(false)}>
+        <button className="btn ghost" type="button" onClick={() => setOpen(false)} disabled={busy}>
           Cancel
         </button>
       </div>
       <p className="muted" style={{ margin: "8px 0 0" }}>
-        Learners added here can complete their biographical enrolment form from “My profile” after
-        their first sign-in.
+        {cloudEnabled
+          ? "A Supabase account is created for the email address so the learner can sign in from any device. Leave the password blank to auto-generate a temporary one — email confirmation may still be required."
+          : "Learners added here can complete their biographical enrolment form from “My profile” after their first sign-in."}
       </p>
       {error && <p className="auth-error" style={{ marginTop: 8 }}>{error}</p>}
+      {notice && (
+        <div className="callout" style={{ marginTop: 8 }}>
+          <span className="ico">
+            <Icon name="info" size={19} />
+          </span>
+          <span>{notice}</span>
+        </div>
+      )}
     </form>
   );
+}
+
+/** Random URL-safe password used when the admin doesn't set one at Add User time. */
+function generateTempPassword(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  return Array.from(bytes, (b) => b.toString(36)).join("").slice(0, 14);
 }
 
 function AdminPanel({

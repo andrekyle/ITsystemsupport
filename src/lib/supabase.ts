@@ -14,3 +14,16 @@ export const supabase: SupabaseClient | null =
   url && anonKey ? createClient(url, anonKey) : null;
 
 export const cloudEnabled = supabase !== null;
+
+/** Headless Supabase client that never persists a session. Used to sign an
+ *  admin-provisioned user up without hijacking the current admin session. */
+export function makeHeadlessClient(): SupabaseClient | null {
+  if (!url || !anonKey) return null;
+  return createClient(url, anonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+}
