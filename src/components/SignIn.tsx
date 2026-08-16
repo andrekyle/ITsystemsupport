@@ -3,8 +3,10 @@ import { Icon } from "../icons";
 import type { EnrolmentInfo, Profile, Role } from "../types";
 import {
   createProfile,
+  deleteProfile,
   DuplicateProfileError,
   findDuplicateProfile,
+  forgetLastProfileId,
   getLastProfileId,
   hashPassword,
   isDesignatedSuperUser,
@@ -20,6 +22,7 @@ import { EMPTY_ENROLMENT, EnrolmentForm } from "./EnrolmentForm";
 import { PasswordInput } from "./PasswordInput";
 import { cloudEnabled, supabase } from "../lib/supabase";
 import { fetchCloudDirectory } from "../lib/directory";
+import { ConfirmModal } from "./Modal";
 
 export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
   const [profiles, setProfiles] = useState<Profile[]>(loadProfiles());
@@ -71,6 +74,7 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
   const [confirmPw, setConfirmPw] = useState("");
   const [resetError, setResetError] = useState("");
   const [dupError, setDupError] = useState("");
+  const [removing, setRemoving] = useState<Profile | null>(null);
 
   // If cloud hydration brought profiles in after the "create new" screen
   // opened, drop back to the picker so the user can just click their name.
@@ -378,17 +382,31 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
         {!creating && !enrolling && !authFor && (
           <>
             {orderedProfiles.map((p) => (
-              <button key={p.id} className="profile-row" onClick={() => pickProfile(p)}>
-                <Avatar profile={p} />
-                <span>
-                  <span className="nm">{p.name}</span>
-                  <br />
-                  <span className="rl">{p.role}</span>
-                </span>
-                <span className="chev">
-                  {p.passwordHash ? <Icon name="shield" size={15} /> : <Icon name="chevronRight" size={16} />}
-                </span>
-              </button>
+              <div key={p.id} className="profile-row-wrap">
+                <button className="profile-row" onClick={() => pickProfile(p)}>
+                  <Avatar profile={p} />
+                  <span>
+                    <span className="nm">{p.name}</span>
+                    <br />
+                    <span className="rl">{p.role}</span>
+                  </span>
+                  <span className="chev">
+                    {p.passwordHash ? <Icon name="shield" size={15} /> : <Icon name="chevronRight" size={16} />}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="profile-row-remove"
+                  title="Remove from this device"
+                  aria-label={`Remove ${p.name} from this device`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setRemoving(p);
+                  }}
+                >
+                  <Icon name="close" size={14} />
+                </button>
+              </div>
             ))}
             <div className="divider">or</div>
             <button className="btn ghost block" onClick={() => setCreating(true)}>
@@ -482,6 +500,33 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
           </form>
         )}
       </div>
+      {removing && (
+        <ConfirmModal
+          title="Remove from this device?"
+          message={
+            <>
+              <p>
+                <strong>{removing.name}</strong> will disappear from this sign-in screen on this
+                device.
+              </p>
+              <p style={{ marginTop: 8, fontSize: 13, color: "var(--ink-3)" }}>
+                Their cloud account and coursework are not deleted. They can sign in again on any
+                device to bring their profile back.
+              </p>
+            </>
+          }
+          confirmLabel="Remove"
+          cancelLabel="Cancel"
+          danger
+          onCancel={() => setRemoving(null)}
+          onConfirm={() => {
+            deleteProfile(removing.id);
+            if (getLastProfileId() === removing.id) forgetLastProfileId();
+            setProfiles(loadProfiles());
+            setRemoving(null);
+          }}
+        />
+      )}
     </div>
   );
 }

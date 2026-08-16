@@ -308,6 +308,12 @@ export function getLastProfileId(): string | null {
   return localStorage.getItem(LAST_PROFILE_KEY);
 }
 
+/** Forget the most-recently-used profile on this device — called when the user
+ *  removes that profile from the sign-in picker. */
+export function forgetLastProfileId() {
+  localStorage.removeItem(LAST_PROFILE_KEY);
+}
+
 export function setSession(profileId: string | null) {
   if (profileId) {
     localStorage.setItem(SESSION_KEY, profileId);

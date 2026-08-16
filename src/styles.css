@@ -1317,6 +1317,44 @@ td .with-ico .ico {
   margin-bottom: 8px;
 }
 
+.profile-row-wrap {
+  position: relative;
+}
+
+.profile-row-wrap .profile-row {
+  padding-right: 40px;
+}
+
+.profile-row-remove {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s, background 0.12s, color 0.12s;
+}
+
+.profile-row-wrap:hover .profile-row-remove,
+.profile-row-remove:focus-visible {
+  opacity: 1;
+}
+
+.profile-row-remove:hover {
+  background: var(--azure-lighter);
+  color: var(--ink-1);
+}
+
 .profile-row:hover {
   border-color: var(--azure);
   background: var(--azure-lighter);
