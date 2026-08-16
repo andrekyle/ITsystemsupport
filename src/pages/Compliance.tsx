@@ -401,7 +401,7 @@ export function CompliancePage({
                   <tr key={r.profile.id}>
                     <td>
                       <span className="cell-person">
-                        <Avatar profile={r.profile} size={26} />
+                        <Avatar profile={r.profile} size={22} />
                         {r.profile.name}
                       </span>
                     </td>

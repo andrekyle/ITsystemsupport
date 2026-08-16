@@ -862,9 +862,9 @@ table.data th {
 }
 
 table.data td {
-  padding: 6px 12px;
+  padding: 5px 12px;
   border-bottom: 1px solid var(--table-border);
-  vertical-align: top;
+  vertical-align: middle;
   font-weight: 350; /* Segoe UI Semilight */
 }
 
@@ -6772,7 +6772,8 @@ table.data.training-table td:last-child {
 .cell-actions {
   display: inline-flex;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 .cell-bar {
   display: inline-flex;
