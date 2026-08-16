@@ -22,6 +22,8 @@ import { downloadIcs, outlookEventLink, parseSessionDates } from "../lib/integra
 import type { IcsEvent } from "../lib/integrations";
 import { openCertificate, openStatementOfResults } from "../lib/certificates";
 import {
+  bestChecklist,
+  bestPoeDocs,
   bestProgress,
   fetchCloudLearnerData,
   remoteOnlyProfiles,
@@ -126,15 +128,13 @@ function complianceFor(
   /** data from the owning cloud account — used for learners who sign in on their own devices */
   cloud?: CloudLearnerData
 ): ComplianceRecord {
-  // Prefer whichever source actually has the learner's work: a profile seeded
-  // on this device has empty local data while their real progress lives in
-  // their own cloud account (and vice versa).
-  const pick = <T,>(local: Record<string, T>, remote: Record<string, T> | undefined) =>
-    Object.keys(local).length > 0 ? local : (remote ?? local);
-  const progress = { units: pick(loadProgress(p.id).units, cloud?.progress[p.id]?.units) };
+  // Pull the learner's work from wherever it actually lives — the local seed
+  // has empty data while their real progress may sit in their own cloud
+  // account under a different profile id.
+  const progress = bestProgress(p, cloud);
   const s = overallStats(progress);
-  const ticks = pick(loadChecklistTicks(p.id), cloud?.checklists[p.id]);
-  const docs = pick(loadPoeDocs(p.id), cloud?.poe[p.id]);
+  const ticks = bestChecklist(p, cloud);
+  const docs = bestPoeDocs(p, cloud);
   const myReviews = Object.values(reviews[p.id] ?? {});
   const myOutcomes = Object.values(outcomes[p.id] ?? {});
   return {
@@ -468,7 +468,7 @@ export function CompliancePage({
                           onClick={() =>
                             openStatementOfResults(
                               r.profile,
-                              bestProgress(r.profile.id, cloud),
+                              bestProgress(r.profile, cloud),
                               outcomes
                             )
                           }

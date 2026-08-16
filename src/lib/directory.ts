@@ -263,33 +263,63 @@ export async function fetchCloudProgress(
   }
 }
 
+/** Resolve the cloud link for a locally-held profile. Direct id match wins;
+ *  otherwise falls back to identity-token matching (email/ID/name) so a
+ *  locally-seeded profile can pick up its owner's cloud data even when the
+ *  local and cloud copies were created independently with different ids. */
+export function resolveCloudLink(
+  local: Profile,
+  cloud: CloudLearnerData | CloudDirectory | null | undefined
+): { owner: string; cloudId: string } | undefined {
+  if (!cloud) return undefined;
+  const direct = cloud.owners[local.id];
+  if (direct) return { owner: direct, cloudId: local.id };
+  const localKeys = new Set(identityKeys(local));
+  if (localKeys.size === 0) return undefined;
+  for (const cp of cloud.profiles) {
+    if (identityKeys(cp).some((k) => localKeys.has(k))) {
+      const owner = cloud.owners[cp.id];
+      if (owner) return { owner, cloudId: cp.id };
+    }
+  }
+  return undefined;
+}
+
 /** "Best" progress for a learner: prefer this device's local copy when it has
- *  work; otherwise fall back to the owning cloud account's snapshot. */
-export function bestProgress(profileId: string, cloud?: CloudLearnerData | null): ProgressState {
-  const local = loadProgress(profileId);
+ *  work; otherwise fall back to the owning cloud account's snapshot. The
+ *  cloud lookup is identity-aware so a locally-seeded profile still pulls in
+ *  its real cloud data even when the ids differ. */
+export function bestProgress(
+  profile: Profile,
+  cloud?: CloudLearnerData | null
+): ProgressState {
+  const local = loadProgress(profile.id);
   if (Object.keys(local.units).length > 0) return local;
-  const remote = cloud?.progress?.[profileId];
+  const link = resolveCloudLink(profile, cloud);
+  const remote = link ? cloud?.progress?.[link.cloudId] : undefined;
   return remote && Object.keys(remote.units).length > 0 ? remote : local;
 }
 
 /** "Best" POE docs for a learner (same fall-back rule as `bestProgress`). */
 export function bestPoeDocs(
-  profileId: string,
+  profile: Profile,
   cloud?: CloudLearnerData | null
 ): Record<string, PoeDoc> {
-  const local = loadPoeDocs(profileId);
+  const local = loadPoeDocs(profile.id);
   if (Object.keys(local).length > 0) return local;
-  return cloud?.poe?.[profileId] ?? local;
+  const link = resolveCloudLink(profile, cloud);
+  return (link ? cloud?.poe?.[link.cloudId] : undefined) ?? local;
 }
 
 /** "Best" Appendix C checklist (same fall-back rule). */
 export function bestChecklist(
-  profileId: string,
+  profile: Profile,
   cloud?: CloudLearnerData | null
 ): Record<string, "yes" | "no"> {
-  const local = loadChecklistTicks(profileId);
+  const local = loadChecklistTicks(profile.id);
   if (Object.keys(local).length > 0) return local;
-  return cloud?.checklists?.[profileId] ?? local;
+  const link = resolveCloudLink(profile, cloud);
+  return (link ? cloud?.checklists?.[link.cloudId] : undefined) ?? local;
 }
 
 

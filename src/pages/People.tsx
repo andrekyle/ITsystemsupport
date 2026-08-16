@@ -37,6 +37,7 @@ import {
   fetchCloudProgress,
   identityKeys,
   purgeOwnProfileCopy,
+  resolveCloudLink,
   updateCloudProfile,
   type CloudDirectory,
 } from "../lib/directory";
@@ -529,18 +530,25 @@ export function StudentsPage({
   ).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
   const student = route.studentId ? all.find((p) => p.id === route.studentId) : undefined;
 
-  if (student && (isPrivileged || student.role === "Learner"))
+  if (student && (isPrivileged || student.role === "Learner")) {
+    // Identity-aware link so a locally-seeded profile still finds its owner
+    // in the cloud even when the local seed id differs from the cloud id.
+    const link = resolveCloudLink(student, cloud);
+    const isRemote = remoteIds.has(student.id);
+    const cloudProfileId = link?.cloudId ?? student.id;
     return (
       <StudentDetail
         student={student}
         viewer={profile}
         navigate={navigate}
         onChanged={refresh}
-        remote={remoteIds.has(student.id)}
-        owner={cloud?.owners[student.id]}
-        cloudDocs={cloud?.poe[student.id]}
+        remote={isRemote}
+        owner={link?.owner ?? cloud?.owners[student.id]}
+        cloudProfileId={cloudProfileId}
+        cloudDocs={cloud?.poe[cloudProfileId]}
       />
     );
+  }
 
   return (
     <>
@@ -566,6 +574,7 @@ export function StudentsPage({
           learners={people.filter((p) => p.role === "Learner")}
           remoteIds={remoteIds}
           owners={cloud?.owners ?? {}}
+          cloudProfiles={cloud?.profiles ?? []}
         />
       )}
 
@@ -586,9 +595,11 @@ export function StudentsPage({
 
       {people.map((s) => {
         const isRemote = remoteIds.has(s.id);
-        const docs = isRemote
-          ? poeItemCount(cloud?.poe[s.id] ?? {})
-          : poeItemCount(loadPoeDocs(s.id));
+        const link = resolveCloudLink(s, cloud);
+        const cloudId = link?.cloudId ?? s.id;
+        const localCount = isRemote ? 0 : poeItemCount(loadPoeDocs(s.id));
+        const cloudCount = poeItemCount(cloud?.poe[cloudId] ?? {});
+        const docs = isRemote ? cloudCount : localCount || cloudCount;
         const online = lastOnlineState(s.lastLogin);
         return (
           <button
@@ -960,10 +971,12 @@ function DownloadAllAssignments({
   learners,
   remoteIds,
   owners,
+  cloudProfiles,
 }: {
   learners: Profile[];
   remoteIds: Set<string>;
   owners: Record<string, string>;
+  cloudProfiles: Profile[];
 }) {
   const [busy, setBusy] = useState(false);
   const [progressMsg, setProgressMsg] = useState("");
@@ -978,16 +991,17 @@ function DownloadAllAssignments({
         const s = learners[i];
         setProgressMsg(`Preparing… ${i + 1}/${learners.length}`);
         let prog: ProgressState | null;
+        // Resolve the learner's cloud identity so even a locally-seeded profile
+        // (different local/cloud ids) picks up their real progress.
+        const link = resolveCloudLink(s, { profiles: cloudProfiles, poe: {}, owners });
         if (remoteIds.has(s.id)) {
-          const owner = owners[s.id];
-          prog = owner ? await fetchCloudProgress(owner, s.id) : null;
+          const owner = link?.owner ?? owners[s.id];
+          const cloudId = link?.cloudId ?? s.id;
+          prog = owner ? await fetchCloudProgress(owner, cloudId) : null;
         } else {
           prog = loadProgress(s.id);
-          // seeded local copy with no work on this device — use the learner's
-          // own cloud account when it has their real progress
-          const owner = owners[s.id];
-          if (owner && Object.keys(prog.units).length === 0) {
-            prog = (await fetchCloudProgress(owner, s.id)) ?? prog;
+          if (Object.keys(prog.units).length === 0 && link) {
+            prog = (await fetchCloudProgress(link.owner, link.cloudId)) ?? prog;
           }
         }
         const blocks = prog ? assignmentUnitBlocks(prog) : [];
@@ -1237,14 +1251,15 @@ function PeopleSummary({
     for (const p of people) {
       if (p.role !== "Learner" || cloudStats[p.id]) continue;
       const isRemote = remoteIds.has(p.id);
-      // local profiles with work on this device don't need a cloud fetch
       if (!isRemote && Object.keys(loadProgress(p.id).units).length > 0) continue;
-      const owner = cloud?.owners[p.id];
+      const link = resolveCloudLink(p, cloud);
+      const owner = link?.owner ?? cloud?.owners[p.id];
+      const cloudId = link?.cloudId ?? p.id;
       if (!owner) {
         if (isRemote) setCloudStats((s) => ({ ...s, [p.id]: quizStats({ units: {} }) }));
         continue;
       }
-      void fetchCloudProgress(owner, p.id).then((prog) => {
+      void fetchCloudProgress(owner, cloudId).then((prog) => {
         if (alive)
           setCloudStats((s) => ({ ...s, [p.id]: quizStats(prog ?? { units: {} }) }));
       });
@@ -1290,11 +1305,13 @@ function PeopleSummary({
   // build row contexts once so we can sort by any column's value
   const rows: SummaryRowCtx[] = filteredPeople.map((p) => {
     const isRemote = remoteIds.has(p.id);
+    const link = resolveCloudLink(p, cloud);
+    const cloudId = link?.cloudId ?? p.id;
     const localDocs = isRemote ? {} : loadPoeDocs(p.id);
     const docs = isRemote
-      ? poeItemCount(cloud?.poe[p.id] ?? {})
+      ? poeItemCount(cloud?.poe[cloudId] ?? {})
       : poeItemCount(
-          Object.keys(localDocs).length > 0 ? localDocs : (cloud?.poe[p.id] ?? localDocs)
+          Object.keys(localDocs).length > 0 ? localDocs : (cloud?.poe[cloudId] ?? localDocs)
         );
     const localProg = isRemote ? null : loadProgress(p.id);
     const stats =
@@ -1606,11 +1623,14 @@ function AcademicRecord({
   student,
   remote,
   owner,
+  cloudProfileId,
   canDownload,
 }: {
   student: Profile;
   remote?: boolean;
   owner?: string;
+  /** identity-matched profile id in the owner's cloud account */
+  cloudProfileId?: string;
   /** super user only — shows the completed-assignments download */
   canDownload?: boolean;
 }) {
@@ -1621,7 +1641,7 @@ function AcademicRecord({
     const local = remote ? null : loadProgress(student.id);
     if (local && Object.keys(local.units).length > 0) {
       setProgress(local);
-      return; // work done on this device — local copy is authoritative
+      return;
     }
     if (!owner) {
       setProgress(local ?? { units: {} });
@@ -1629,15 +1649,14 @@ function AcademicRecord({
     }
     let alive = true;
     setProgress(remote ? null : local);
-    void fetchCloudProgress(owner, student.id).then((p) => {
+    void fetchCloudProgress(owner, cloudProfileId ?? student.id).then((p) => {
       if (!alive) return;
-      // prefer the cloud account's work; fall back to the (empty) local copy
       setProgress(p && Object.keys(p.units).length > 0 ? p : (local ?? { units: {} }));
     });
     return () => {
       alive = false;
     };
-  }, [student.id, remote, owner]);
+  }, [student.id, remote, owner, cloudProfileId]);
 
   const units = assessedUnits();
 
@@ -1841,6 +1860,7 @@ function StudentDetail({
   onChanged,
   remote,
   owner,
+  cloudProfileId,
   cloudDocs,
 }: {
   student: Profile;
@@ -1850,6 +1870,8 @@ function StudentDetail({
   /** profile belongs to another sign-in account — edits are written to their cloud rows */
   remote?: boolean;
   owner?: string;
+  /** identity-matched profile id in the owner's cloud account (may differ from student.id) */
+  cloudProfileId?: string;
   cloudDocs?: Record<string, PoeDoc>;
 }) {
   const isSuper = viewer.role === "Super User";
@@ -1858,7 +1880,15 @@ function StudentDetail({
     isSuper || viewer.role === "Assessor" || viewer.role === "Moderator";
   const [sharedSettings] = useSharedSettings();
   const { docs: localDocs } = usePoe(student.id);
-  const docs = remote ? (cloudDocs ?? {}) : localDocs;
+  // For remote profiles cloudDocs is authoritative; for locally-seeded copies
+  // that also have an owning cloud account we fall back to cloud when local
+  // is empty, so uploaded documents show up in the profile view.
+  const hasLocalDocs = Object.keys(localDocs).length > 0;
+  const docs = remote
+    ? (cloudDocs ?? {})
+    : hasLocalDocs
+      ? localDocs
+      : (cloudDocs ?? localDocs);
   const canManage = isSuper;
   const [editingEnrol, setEditingEnrol] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -2168,9 +2198,21 @@ function StudentDetail({
 
       {staffViewer && (
         <>
-          <AcademicRecord student={student} remote={remote} owner={owner} canDownload={isSuper} />
+          <AcademicRecord
+            student={student}
+            remote={remote}
+            owner={owner}
+            cloudProfileId={cloudProfileId}
+            canDownload={isSuper}
+          />
           {student.role === "Learner" && canRecordOutcomes && (
-            <OutcomesPanel student={student} viewer={viewer} remote={remote} owner={owner} />
+            <OutcomesPanel
+              student={student}
+              viewer={viewer}
+              remote={remote}
+              owner={owner}
+              cloudProfileId={cloudProfileId}
+            />
           )}
           <h2 className="section-title">
             <span className="ico">
@@ -2262,12 +2304,15 @@ function OutcomesPanel({
   viewer,
   remote,
   owner,
+  cloudProfileId,
 }: {
   student: Profile;
   viewer: Profile;
   /** profile belongs to another sign-in account — progress lives in their cloud rows */
   remote?: boolean;
   owner?: string;
+  /** identity-matched profile id in the owner's cloud account */
+  cloudProfileId?: string;
 }) {
   const { outcomes, setOutcome, clearOutcome } = useOutcomes();
   const [progress, setProgress] = useState<ProgressState>(() =>
@@ -2276,17 +2321,15 @@ function OutcomesPanel({
   useEffect(() => {
     const local = remote ? { units: {} } : loadProgress(student.id);
     setProgress(local);
-    // a seeded local copy has no work on this device — the learner's real
-    // progress lives in their own cloud account, so prefer it when local is empty
     if (!owner || Object.keys(local.units).length > 0) return;
     let alive = true;
-    void fetchCloudProgress(owner, student.id).then((p) => {
+    void fetchCloudProgress(owner, cloudProfileId ?? student.id).then((p) => {
       if (alive && p && Object.keys(p.units).length > 0) setProgress(p);
     });
     return () => {
       alive = false;
     };
-  }, [student.id, remote, owner]);
+  }, [student.id, remote, owner, cloudProfileId]);
   const forLearner = outcomes[student.id] ?? {};
   const recorded = Object.keys(forLearner).length;
   const competent = Object.values(forLearner).filter((o) => o.status === "C").length;

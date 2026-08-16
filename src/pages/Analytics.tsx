@@ -50,9 +50,9 @@ interface LearnerRow {
 }
 
 function analyse(p: Profile, registers: number, cloud: CloudLearnerData | null): LearnerRow {
-  const progress = bestProgress(p.id, cloud);
+  const progress = bestProgress(p, cloud);
   const s = overallStats(progress);
-  const docs = bestPoeDocs(p.id, cloud);
+  const docs = bestPoeDocs(p, cloud);
 
   let quizBestSum = 0;
   let quizCount = 0;
@@ -227,7 +227,7 @@ export function AnalyticsPage({ profile }: { profile: Profile; navigate: (r: Rou
   const moduleAvgs = useMemo(
     () =>
       MODULES.map((m) => {
-        const vals = rows.map((r) => moduleCompletion(bestProgress(r.profile.id, cloud), m.id));
+        const vals = rows.map((r) => moduleCompletion(bestProgress(r.profile, cloud), m.id));
         return {
           module: m,
           avg: vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0,
