@@ -78,20 +78,27 @@ export function loadProfiles(): Profile[] {
   let changed = false;
   for (const p of profiles) {
     const nm = p.name.trim().toLowerCase();
+    const enrolEmail = p.enrolment?.email?.trim().toLowerCase() ?? "";
     // Entitled to the Super User role:
     //   - the designated super-user name (case-insensitive),
     //   - the super-user email as a profile name,
-    //   - in cloud mode: a profile whose name matches the signed-in email
-    //     (that identifies the admin's own profile).
-    // We deliberately DO NOT promote just because a profile is the current
-    // session — otherwise any learner who signs in on the admin's device
-    // (or on their own new device before the admin check completes) would
-    // wrongly be marked Super User.
+    //   - in cloud mode: a profile whose *name or enrolment email* matches the
+    //     signed-in admin email — that identifies the admin's own profile
+    //     even after they've edited their display name.
+    //   - in cloud mode: the profile the admin is actively signed in as (their
+    //     own local id), so their session doesn't demote them if they picked a
+    //     display name that doesn't match their email.
+    // A learner signing in on a non-admin cloud account is never promoted
+    // because `superAccount` gates the entire branch.
     const entitled =
       superAccount &&
       (nm === superName ||
         nm === SUPER_USER_EMAIL ||
-        (cloudEnabled && !!accountEmail && nm === accountEmail));
+        (cloudEnabled &&
+          !!accountEmail &&
+          (nm === accountEmail ||
+            enrolEmail === accountEmail ||
+            (!!currentSessionId && p.id === currentSessionId))));
     if (entitled && p.role !== "Super User") {
       p.baseRole = p.role; // remember the real role for when the promotion lapses
       p.role = "Super User";
