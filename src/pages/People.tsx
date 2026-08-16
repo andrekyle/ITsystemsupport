@@ -30,13 +30,13 @@ import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/
 import { AlertModal, ConfirmModal, PromptModal } from "../components/Modal";
 import { downloadDoc, getFileBlob } from "../lib/files";
 import { fileToSignature } from "../lib/signature";
-import { flushKey } from "../lib/sync";
 import { updateRegisterSignatures } from "./Attendance";
 import {
   deleteCloudProfile,
   fetchCloudDirectory,
   fetchCloudProgress,
   identityKeys,
+  purgeOwnProfileCopy,
   updateCloudProfile,
   type CloudDirectory,
 } from "../lib/directory";
@@ -1957,19 +1957,17 @@ function StudentDetail({
    *  profile stays intact. */
   async function removeLocalCopy() {
     setConfirmLocal(false);
+    // 1. wipe local storage first
     deleteProfile(student.id);
-    // push the removal to this account's cloud snapshot immediately so the
-    // profile cannot be restored by the next hydration
-    await Promise.all(
-      [
-        "itss.profiles",
-        `itss.progress.${student.id}`,
-        `itss.poe.${student.id}`,
-        `itss.notes.${student.id}`,
-        `itss.noteorder.${student.id}`,
-        `itss.notetitles.${student.id}`,
-      ].map((k) => flushKey(k))
-    );
+    // 2. purge directly from *this* account's cloud snapshot — bypasses the
+    //    600ms debounce so the removal cannot lose a race against navigation.
+    const err = await purgeOwnProfileCopy(student.id);
+    if (err) {
+      setAlertMsg(
+        `Removed from this device, but the cloud sync failed: ${err} — the profile may reappear on the next sign-in.`
+      );
+      return;
+    }
     logAudit(viewer, "account.delete", "Removed the local copy of this profile from this device", {
       id: student.id,
       name: student.name,

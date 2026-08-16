@@ -135,6 +135,63 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
   return { profiles, poe, owners };
 }
 
+/** Purge a profile from the current account's cloud snapshot: overwrite this
+ *  account's own itss.profiles row (with the profile filtered out) and delete
+ *  its data keys. Runs *directly* against Supabase — bypasses the debounced
+ *  sync layer so nothing can race the removal. Returns an error message, or
+ *  null on success. */
+export async function purgeOwnProfileCopy(profileId: string): Promise<string | null> {
+  if (!supabase) return null; // local-only mode: nothing to purge
+  const { data: auth, error: authErr } = await supabase.auth.getUser();
+  if (authErr || !auth.user) return "Not signed in to the cloud — nothing to sync.";
+  const me = auth.user.id;
+
+  // Read *this* account's own profiles row and strip the target profile out.
+  const { data: profRow, error: readErr } = await supabase
+    .from("app_state")
+    .select("value")
+    .eq("user_id", me)
+    .eq("key", "itss.profiles")
+    .maybeSingle();
+  if (readErr) return `Could not read cloud profiles: ${readErr.message}`;
+
+  if (profRow) {
+    let list: Profile[] = [];
+    try {
+      list = (JSON.parse(profRow.value) as Profile[]).filter((p) => p?.id && p.id !== profileId);
+    } catch {
+      list = [];
+    }
+    const { error: writeErr } = await supabase.from("app_state").upsert(
+      {
+        user_id: me,
+        key: "itss.profiles",
+        value: JSON.stringify(list),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,key" }
+    );
+    if (writeErr) return `Could not update cloud profiles: ${writeErr.message}`;
+  }
+
+  const dataKeys = [
+    `itss.progress.${profileId}`,
+    `itss.poe.${profileId}`,
+    `itss.notes.${profileId}`,
+    `itss.noteorder.${profileId}`,
+    `itss.notetitles.${profileId}`,
+    `itss.checklist.${profileId}`,
+    `itss.sectiond.${profileId}`,
+  ];
+  const { error: delErr } = await supabase
+    .from("app_state")
+    .delete()
+    .eq("user_id", me)
+    .in("key", dataKeys);
+  if (delErr) return `Could not delete cloud data rows: ${delErr.message}`;
+  return null;
+}
+
 export interface CloudLearnerData extends CloudDirectory {
   /** profile id -> saved progress from the owning account */
   progress: Record<string, ProgressState>;
