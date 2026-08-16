@@ -30,6 +30,7 @@ import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/
 import { AlertModal, ConfirmModal, PromptModal } from "../components/Modal";
 import { downloadDoc, getFileBlob } from "../lib/files";
 import { fileToSignature } from "../lib/signature";
+import { flushKey } from "../lib/sync";
 import { updateRegisterSignatures } from "./Attendance";
 import {
   deleteCloudProfile,
@@ -1936,9 +1937,21 @@ function StudentDetail({
   /** Local-only removal: deletes this device's copy of the profile and its
    *  data. Never touches the person's own cloud account rows, so their real
    *  profile stays intact. */
-  function removeLocalCopy() {
+  async function removeLocalCopy() {
     setConfirmLocal(false);
     deleteProfile(student.id);
+    // push the removal to this account's cloud snapshot immediately so the
+    // profile cannot be restored by the next hydration
+    await Promise.all(
+      [
+        "itss.profiles",
+        `itss.progress.${student.id}`,
+        `itss.poe.${student.id}`,
+        `itss.notes.${student.id}`,
+        `itss.noteorder.${student.id}`,
+        `itss.notetitles.${student.id}`,
+      ].map((k) => flushKey(k))
+    );
     logAudit(viewer, "account.delete", "Removed the local copy of this profile from this device", {
       id: student.id,
       name: student.name,
@@ -2202,7 +2215,7 @@ function StudentDetail({
             </>
           }
           confirmLabel="Remove local copy"
-          onConfirm={removeLocalCopy}
+          onConfirm={() => void removeLocalCopy()}
           onCancel={() => setConfirmLocal(false)}
         />
       )}

@@ -72,6 +72,18 @@ function queue(key: string, value: string | null) {
   );
 }
 
+/** Immediately push a key's current localStorage state to the cloud,
+ *  bypassing the debounce — for destructive actions (e.g. removing a
+ *  profile) that must not lose the race against navigation/tab close. */
+export async function flushKey(key: string): Promise<void> {
+  const t = timers.get(key);
+  if (t) {
+    clearTimeout(t);
+    timers.delete(key);
+  }
+  await pushKey(key, localStorage.getItem(key));
+}
+
 /**
  * Patch localStorage so every write/removal of a syncable key is mirrored to
  * the cloud. Installed once at startup; harmless in local-only mode because
