@@ -136,6 +136,23 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
   return { profiles, poe, owners };
 }
 
+/** Auth uid of the sole designated super user, read straight from the
+ *  `admins` table. Every signed-in account can read that table (see the
+ *  "read admins" RLS policy in supabase/schema.sql), so this works as a
+ *  reliable fallback for direct-messaging the super user even before their
+ *  own profile row has stamped a cloudUserId. */
+export async function fetchSuperUserAuthId(): Promise<string | undefined> {
+  if (!supabase) return undefined;
+  try {
+    const { data, error } = await supabase.from("admins").select("user_id").limit(1);
+    if (error) return undefined;
+    const row = Array.isArray(data) ? data[0] : undefined;
+    return row?.user_id as string | undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Purge a profile from the current account's cloud snapshot: overwrite this
  *  account's own itss.profiles row (with the profile filtered out) and delete
  *  its data keys. Runs *directly* against Supabase — bypasses the debounced

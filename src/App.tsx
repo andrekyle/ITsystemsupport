@@ -265,6 +265,18 @@ function LocalApp() {
     // session, then keep it fresh while the app stays open so an active user
     // never decays out of the "Online now" window.
     setSession(profile.id);
+    // Stamp our Supabase auth uid onto our profile if we haven't yet — needed
+    // so other users can direct-message us. This covers the case where we were
+    // already signed in before the cloudUserId feature existed.
+    if (supabase && !profile.cloudUserId) {
+      void supabase.auth.getUser().then(({ data }) => {
+        const uid = data.user?.id;
+        if (uid) {
+          const patched = updateProfile(profile.id, { cloudUserId: uid });
+          if (patched) setProfile(patched);
+        }
+      });
+    }
     const tick = () => touchLastOnline(profile.id);
     const timer = window.setInterval(tick, 4 * 60 * 1000);
     window.addEventListener("focus", tick);
@@ -277,9 +289,25 @@ function LocalApp() {
   if (!profile) {
     return (
       <SignIn
-        onSignIn={(p) => {
+        onSignIn={async (p) => {
           setSession(p.id);
-          setProfile(p);
+          // Stamp our Supabase auth uid onto this profile so others can address
+          // us in chat as soon as we sign in — the id syncs to cloud storage
+          // and every viewer reads it directly from the profile row.
+          let signed = p;
+          if (supabase) {
+            try {
+              const { data } = await supabase.auth.getUser();
+              const uid = data.user?.id;
+              if (uid && p.cloudUserId !== uid) {
+                const patched = updateProfile(p.id, { cloudUserId: uid });
+                if (patched) signed = patched;
+              }
+            } catch {
+              /* offline — cloud stamp will happen on the next sign-in */
+            }
+          }
+          setProfile(signed);
         }}
       />
     );

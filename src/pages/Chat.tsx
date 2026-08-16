@@ -9,7 +9,7 @@ import {
   type ChatMessage,
   type ChatThreadInfo,
 } from "../store";
-import { fetchCloudDirectory, resolveCloudLink } from "../lib/directory";
+import { fetchCloudDirectory, fetchSuperUserAuthId, resolveCloudLink } from "../lib/directory";
 import { mergeProfileWithCloud, remoteOnlyProfiles } from "../lib/directory";
 import type { CloudDirectory } from "../lib/directory";
 import { Avatar } from "../components/Avatar";
@@ -36,10 +36,14 @@ export function ChatPage({
 
   // People I can chat with (local + cloud, deduped, self excluded)
   const [cloud, setCloud] = useState<CloudDirectory | null>(null);
+  const [superUid, setSuperUid] = useState<string | undefined>(undefined);
   useEffect(() => {
     let alive = true;
     void fetchCloudDirectory().then((d) => {
       if (alive && d) setCloud(d);
+    });
+    void fetchSuperUserAuthId().then((uid) => {
+      if (alive && uid) setSuperUid(uid);
     });
     return () => {
       alive = false;
@@ -117,6 +121,7 @@ export function ChatPage({
               other={peopleById.get(openWith)}
               nameFor={nameFor}
               cloud={cloud}
+              superUid={superUid}
             />
           ) : (
             <div className="chat-empty">
@@ -286,26 +291,42 @@ function ChatThread({
   other,
   nameFor,
   cloud,
+  superUid,
 }: {
   me: Profile;
   otherId: string;
   other?: Profile;
   nameFor: (id: string) => string;
   cloud: CloudDirectory | null;
+  superUid?: string;
 }) {
   // Resolve the other party's Supabase auth user id (identity-aware). The
   // chat table is keyed by real auth ids so RLS can enforce privacy.
   //
   // Priority:
-  //   1. profile.cloudUserId (stamped when the admin added them via Add User)
+  //   1. profile.cloudUserId (stamped when the admin added them via Add User,
+  //      or when they signed in on this device with cloud auth)
   //   2. identity-matched cloud directory (works once they've signed in)
   //   3. direct id lookup in cloud.owners
+  //   4. the sole super user's auth uid from the `admins` table — used when
+  //      the target is the designated super user but no identity path linked
+  //      them to a cloud row yet.
   const otherAuthUserId = useMemo(() => {
     if (other?.cloudUserId) return other.cloudUserId;
-    if (!cloud) return undefined;
-    if (other) return resolveCloudLink(other, cloud)?.owner ?? cloud.owners[other.id];
-    return cloud.owners[otherId];
-  }, [cloud, other, otherId]);
+    if (cloud) {
+      if (other) {
+        const link = resolveCloudLink(other, cloud)?.owner ?? cloud.owners[other.id];
+        if (link) return link;
+      } else {
+        const link = cloud.owners[otherId];
+        if (link) return link;
+      }
+    }
+    // Super-user fallback: only one account holds this role, and every
+    // signed-in user can read the `admins` table.
+    if (other?.role === "Super User" && superUid) return superUid;
+    return undefined;
+  }, [cloud, other, otherId, superUid]);
 
   const { messages, send, markRead } = useChat(me, {
     profileId: otherId,
