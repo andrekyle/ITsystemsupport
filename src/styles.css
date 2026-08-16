@@ -6769,6 +6769,19 @@ table.data.training-table td:last-child {
   gap: 8px;
   white-space: nowrap;
 }
+button.cell-person-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+button.cell-person-link:hover {
+  color: var(--azure);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .cell-actions {
   display: inline-flex;
   gap: 6px;

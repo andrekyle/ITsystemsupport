@@ -173,6 +173,7 @@ function recordCsv(records: ComplianceRecord[], registers: number): string {
 export function CompliancePage({
   profile,
   progress,
+  navigate,
 }: {
   profile: Profile;
   progress: ProgressState;
@@ -400,10 +401,21 @@ export function CompliancePage({
                 return (
                   <tr key={r.profile.id}>
                     <td>
-                      <span className="cell-person">
-                        <Avatar profile={r.profile} size={22} />
-                        {r.profile.name}
-                      </span>
+                      {staff ? (
+                        <button
+                          className="cell-person cell-person-link"
+                          title={`Open ${r.profile.name}'s profile`}
+                          onClick={() => navigate({ page: "students", studentId: r.profile.id })}
+                        >
+                          <Avatar profile={r.profile} size={22} />
+                          {r.profile.name}
+                        </button>
+                      ) : (
+                        <span className="cell-person">
+                          <Avatar profile={r.profile} size={22} />
+                          {r.profile.name}
+                        </span>
+                      )}
                     </td>
                     <td>
                       <span className={`status-chip ${r.enrolmentSigned ? "ok" : "warn"}`}>
