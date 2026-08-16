@@ -40,7 +40,12 @@ function write(key: string, value: unknown) {
 
 /** The designated super user of this installation — promoted automatically. */
 const SUPER_USER_NAME = "Andre Snell";
-/** In cloud mode, profiles on this sign-in account may also hold the Super User role. */
+/**
+ * The ONE and only cloud account that may hold the Super User role.
+ * The `admins` table is still consulted for server-side RLS (so this account
+ * can moderate chat, etc.), but no other account is ever promoted to Super
+ * User in the client — even if it appears in that table by mistake.
+ */
 const SUPER_USER_EMAIL = "andresnell29@gmail.com";
 
 let accountEmail: string | null = null;
@@ -50,14 +55,23 @@ export function setAccountEmail(email: string | null | undefined) {
 }
 
 let accountIsAdmin = false;
-/** Set by App from the admins table — admin accounts hold the Super User role. */
+/**
+ * Set by App from the `admins` table. Kept for potential server-driven UI
+ * hints; it deliberately does NOT influence Super User promotion — only the
+ * single hard-coded {@link SUPER_USER_EMAIL} account may hold that role.
+ */
 export function setAccountAdmin(isAdmin: boolean) {
   accountIsAdmin = isAdmin;
+}
+/** Whether the current cloud account is listed in the `admins` table.
+ *  Not used to grant the Super User role — see {@link onSuperAccount}. */
+export function isAccountAdmin(): boolean {
+  return accountIsAdmin;
 }
 
 /** True when the current cloud account is entitled to the Super User role. */
 function onSuperAccount(): boolean {
-  return cloudEnabled ? accountIsAdmin || accountEmail === SUPER_USER_EMAIL : true;
+  return cloudEnabled ? accountEmail === SUPER_USER_EMAIL : true;
 }
 
 /** True when this name identifies the designated super user (exempt from the
@@ -69,7 +83,7 @@ export function isDesignatedSuperUser(name: string): boolean {
 
 export function loadProfiles(): Profile[] {
   const profiles = read<Profile[]>(PROFILES_KEY, []);
-  // In cloud mode only admin accounts (or the designated email) hold Super User;
+  // In cloud mode only the one designated super-user email holds Super User;
   // in local-only mode the designated name identifies the super user.
   const superAccount = onSuperAccount();
   const superName = SUPER_USER_NAME.trim().toLowerCase();
