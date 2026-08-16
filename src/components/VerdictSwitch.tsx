@@ -6,15 +6,6 @@ import { Icon } from "../icons";
  * integrated clear affordance shown once a decision exists.
  */
 
-/** window.prompt guarded for embedded browsers where it is unavailable. */
-export function safePrompt(message: string): string | undefined {
-  try {
-    return window.prompt(message) ?? undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 export function VerdictSwitch({
   value,
   yesLabel = "Competent",

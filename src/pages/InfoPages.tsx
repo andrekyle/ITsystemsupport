@@ -230,7 +230,7 @@ export function CalendarPage({
             </span>
             Module {i + 1}: {m.name}
           </h2>
-          <table className="data">
+          <table className="data training-table">
             <thead>
               <tr>
                 <th style={{ width: 90 }}>US ID</th>

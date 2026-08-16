@@ -587,30 +587,30 @@ export function AttendancePage({
           Session date{" "}
           <input type="date" value={dateIso} onChange={(e) => e.target.value && setDateIso(e.target.value)} />
         </label>
-        <button className="btn" onClick={() => void refresh()}>
-          <Icon name="trend" /> Refresh
+        <button className="btn ghost sm" onClick={() => void refresh()}>
+          <Icon name="trend" size={15} /> Refresh
         </button>
-        <button className="btn primary" disabled={!canSign} onClick={onSignClick}>
-          <Icon name="check" /> {signed ? "Signed" : "Sign the register — I'm here"}
+        <button className="btn ghost sm" disabled={!canSign} onClick={onSignClick}>
+          <Icon name="check" size={15} /> {signed ? "Signed" : "Sign the register — I'm here"}
         </button>
         {staff && (
-          <button className="btn" onClick={() => window.print()}>
-            <Icon name="download" /> Download as PDF
+          <button className="btn ghost sm" onClick={() => window.print()}>
+            <Icon name="download" size={15} /> Download as PDF
           </button>
         )}
         {staff && (
-          <button className="btn" disabled={loadingAll} onClick={() => void downloadAll()}>
-            <Icon name="download" /> {loadingAll ? "Gathering registers…" : "Download all registers"}
+          <button className="btn ghost sm" disabled={loadingAll} onClick={() => void downloadAll()}>
+            <Icon name="download" size={15} /> {loadingAll ? "Gathering registers…" : "Download all registers"}
           </button>
         )}
         {staff && (
-          <button className="btn" disabled={fixingSig} onClick={() => void fixSignatures()}>
-            <Icon name="check" /> {fixingSig ? "Cleaning…" : "Fix signatures"}
+          <button className="btn ghost sm" disabled={fixingSig} onClick={() => void fixSignatures()}>
+            <Icon name="check" size={15} /> {fixingSig ? "Cleaning…" : "Fix signatures"}
           </button>
         )}
         {fixNote && <span className="att-note">{fixNote}</span>}
         {profile.role === "Super User" && (
-          <button className="btn danger" onClick={() => setConfirming({ kind: "register" })}>
+          <button className="btn ghost sm danger" onClick={() => setConfirming({ kind: "register" })}>
             Clear register
           </button>
         )}

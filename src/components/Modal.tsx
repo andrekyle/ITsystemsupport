@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 /** In-app modal dialog — replaces browser popups so all prompts share the app UI. */
 export function Modal({
@@ -72,6 +72,56 @@ export function ConfirmModal({
       }
     >
       {message}
+    </Modal>
+  );
+}
+
+/** Text-input dialog (replaces window.prompt). */
+export function PromptModal({
+  title,
+  message,
+  placeholder,
+  confirmLabel = "OK",
+  cancelLabel = "Cancel",
+  onSubmit,
+  onCancel,
+}: {
+  title: string;
+  message?: ReactNode;
+  placeholder?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  onSubmit: (value: string) => void;
+  onCancel: () => void;
+}) {
+  const [value, setValue] = useState("");
+  return (
+    <Modal
+      title={title}
+      onClose={onCancel}
+      actions={
+        <>
+          <button className="btn ghost" onClick={onCancel}>
+            {cancelLabel}
+          </button>
+          <button className="btn primary" onClick={() => onSubmit(value)}>
+            {confirmLabel}
+          </button>
+        </>
+      }
+    >
+      {message && <p style={{ margin: "0 0 10px" }}>{message}</p>}
+      <div className="field" style={{ marginBottom: 0 }}>
+        <input
+          autoFocus
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSubmit(value);
+          }}
+        />
+      </div>
     </Modal>
   );
 }

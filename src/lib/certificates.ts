@@ -17,14 +17,14 @@ const BASE_STYLE = `
   h1 { font-size: 25px; margin: 0 0 2px; color: #0b3f8a; }
   .sub { color: #5a6b8c; margin: 0 0 16px; }
   table { border-collapse: collapse; width: 100%; margin: 10px 0; }
-  th, td { border: 1px solid #ccd7ea; padding: 6px 9px; text-align: left; font-size: 12.5px; }
+  th, td { border: 1px solid #e9eef7; padding: 6px 9px; text-align: left; font-size: 12.5px; }
   th { background: #f2f6fd; }
   .module-row td { background: #f2f6fd; font-weight: 600; }
   .c { text-align: center; white-space: nowrap; }
-  .chip { display: inline-block; border-radius: 20px; padding: 1px 10px; font-size: 11.5px; font-weight: 600; }
-  .chip.ok { background: #e3f5e9; color: #157347; }
-  .chip.nyc { background: #fdeaea; color: #b02a37; }
-  .chip.pend { background: #eef1f6; color: #5a6b8c; }
+  .chip { display: inline-block; font-size: 11.5px; font-weight: 600; }
+  .chip.ok { color: #157347; }
+  .chip.nyc { color: #b02a37; }
+  .chip.pend { color: #5a6b8c; }
   .sign { display: flex; gap: 60px; margin-top: 42px; }
   .sign div { flex: 1; border-top: 1.5px solid #17233b; padding-top: 5px; font-size: 12.5px; color: #444; }
   .small { color: #5a6b8c; font-size: 12px; }

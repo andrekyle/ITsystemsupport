@@ -24,10 +24,10 @@ import {
 import { logAudit } from "../lib/audit";
 import { openOnboardingPack } from "../lib/onboarding";
 import { mailtoLink, outlookComposeLink, teamsChatLink } from "../lib/integrations";
-import { VerdictSwitch, safePrompt } from "../components/VerdictSwitch";
+import { VerdictSwitch } from "../components/VerdictSwitch";
 import { Avatar } from "../components/Avatar";
 import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/EnrolmentForm";
-import { AlertModal, ConfirmModal } from "../components/Modal";
+import { AlertModal, ConfirmModal, PromptModal } from "../components/Modal";
 import { downloadDoc, getFileBlob } from "../lib/files";
 import { fileToSignature } from "../lib/signature";
 import { updateRegisterSignatures } from "./Attendance";
@@ -739,10 +739,13 @@ function AdminPanel({
   student,
   onPatch,
   onDelete,
+  onRemoveLocal,
 }: {
   student: Profile;
   onPatch: (patch: Partial<Profile>) => Promise<boolean>;
   onDelete: () => void;
+  /** present when this device holds a local copy — removes only that copy */
+  onRemoveLocal?: () => void;
 }) {
   const [name, setName] = useState(student.name);
   const [role, setRole] = useState<Role>(student.role);
@@ -823,6 +826,16 @@ function AdminPanel({
           {student.passwordHash && (
             <button className="btn ghost sm" type="button" onClick={resetPassword}>
               Reset (remove) password
+            </button>
+          )}
+          {onRemoveLocal && (
+            <button
+              className="btn ghost sm"
+              type="button"
+              onClick={onRemoveLocal}
+              title="Remove the copy stored on this device only — their cloud account is not touched"
+            >
+              Remove from this device
             </button>
           )}
           <button className="btn danger sm" type="button" onClick={onDelete}>
@@ -1851,6 +1864,7 @@ function StudentDetail({
   const canManage = isSuper;
   const [editingEnrol, setEditingEnrol] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmLocal, setConfirmLocal] = useState(false);
   const [alertMsg, setAlertMsg] = useState("");
   const [zipping, setZipping] = useState(false);
   const [draft, setDraft] = useState<EnrolmentInfo>({ ...EMPTY_ENROLMENT, ...student.enrolment });
@@ -1938,6 +1952,20 @@ function StudentDetail({
       enrolment: { ...draft, signedDate: new Date().toISOString() },
     });
     if (okSave) setEditingEnrol(false);
+  }
+
+  /** Local-only removal: deletes this device's copy of the profile and its
+   *  data. Never touches the person's own cloud account rows, so their real
+   *  profile stays intact. */
+  function removeLocalCopy() {
+    setConfirmLocal(false);
+    deleteProfile(student.id);
+    logAudit(viewer, "account.delete", "Removed the local copy of this profile from this device", {
+      id: student.id,
+      name: student.name,
+    });
+    navigate({ page: "students" });
+    onChanged();
   }
 
   async function removeUser() {
@@ -2079,7 +2107,12 @@ function StudentDetail({
       )}
 
       {canManage && (
-        <AdminPanel student={student} onPatch={patchStudent} onDelete={() => setConfirmDelete(true)} />
+        <AdminPanel
+          student={student}
+          onPatch={patchStudent}
+          onDelete={() => setConfirmDelete(true)}
+          onRemoveLocal={!remote ? () => setConfirmLocal(true) : undefined}
+        />
       )}
 
       <h2 className="section-title">
@@ -2179,6 +2212,21 @@ function StudentDetail({
         </>
       )}
 
+      {confirmLocal && (
+        <ConfirmModal
+          title="Remove from this device?"
+          message={
+            <>
+              Remove the copy of <strong>{student.name}</strong> stored on this device (profile,
+              progress, documents and notes kept under your account)? Their own cloud account and
+              real profile are <strong>not</strong> affected.
+            </>
+          }
+          confirmLabel="Remove local copy"
+          onConfirm={removeLocalCopy}
+          onCancel={() => setConfirmLocal(false)}
+        />
+      )}
       {confirmDelete && (
         <ConfirmModal
           title="Delete this user?"
@@ -2207,6 +2255,7 @@ function OutcomesPanel({ student, viewer }: { student: Profile; viewer: Profile 
   const forLearner = outcomes[student.id] ?? {};
   const recorded = Object.keys(forLearner).length;
   const competent = Object.values(forLearner).filter((o) => o.status === "C").length;
+  const [nycUnit, setNycUnit] = useState<string | null>(null);
 
   return (
     <>
@@ -2276,14 +2325,7 @@ function OutcomesPanel({ student, viewer }: { student: Profile; viewer: Profile 
                           name: student.name,
                         });
                       }}
-                      onNo={() => {
-                        const note = safePrompt("Feedback / remediation required (optional)?");
-                        setOutcome(viewer, student.id, u.us, "NYC", note);
-                        logAudit(viewer, "outcome.set", `Recorded US ${u.us} outcome: Not Yet Competent`, {
-                          id: student.id,
-                          name: student.name,
-                        });
-                      }}
+                      onNo={() => setNycUnit(u.us)}
                       onClear={() => clearOutcome(student.id, u.us)}
                     />
                   </td>
@@ -2293,6 +2335,22 @@ function OutcomesPanel({ student, viewer }: { student: Profile; viewer: Profile 
           </tbody>
         </table>
       </div>
+      {nycUnit && (
+        <PromptModal
+          title="Not yet competent"
+          message="Feedback / remediation required (optional)?"
+          confirmLabel="Record outcome"
+          onSubmit={(note) => {
+            setOutcome(viewer, student.id, nycUnit, "NYC", note.trim() || undefined);
+            logAudit(viewer, "outcome.set", `Recorded US ${nycUnit} outcome: Not Yet Competent`, {
+              id: student.id,
+              name: student.name,
+            });
+            setNycUnit(null);
+          }}
+          onCancel={() => setNycUnit(null)}
+        />
+      )}
     </>
   );
 }

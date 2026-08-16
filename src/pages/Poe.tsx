@@ -8,7 +8,8 @@ import { downloadDoc, getFileBlob, uploadFile, userPrefix } from "../lib/files";
 import { logAudit } from "../lib/audit";
 import { Avatar } from "../components/Avatar";
 import { Ring } from "../components/Ring";
-import { VerdictSwitch, safePrompt } from "../components/VerdictSwitch";
+import { VerdictSwitch } from "../components/VerdictSwitch";
+import { PromptModal } from "../components/Modal";
 
 const MAX_FILE_MB = 10;
 
@@ -51,6 +52,7 @@ export function PoePage({ profile }: { profile: Profile }) {
   const [pendingItem, setPendingItem] = useState<string | null>(null);
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [nycItem, setNycItem] = useState<string | null>(null);
 
   const done = poeItemCount(docs);
 
@@ -206,7 +208,16 @@ export function PoePage({ profile }: { profile: Profile }) {
             </span>
             {sec.heading}
           </h2>
-          {sec.items.map((item) => {
+          <div className="card poe-table-card">
+            <table className="data poe-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Evidence</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sec.items.map((item) => {
             const files = filesFor(item.id);
             const max = sec.multi ? MAX_POE_FILES : 1;
             const uploadingThis =
@@ -217,7 +228,8 @@ export function PoePage({ profile }: { profile: Profile }) {
             let nextKey = item.id;
             for (let n = 2; used.has(nextKey); n++) nextKey = `${item.id}__${n}`;
             return (
-              <div className="poe-row" key={item.id}>
+              <tr key={item.id}>
+                <td className="poe-item-cell">
                 <div className="poe-item">
                   <span className={`status ${files.length ? "done" : "none"}`}>
                     <Icon name={files.length ? "checkCircle" : "circle"} size={20} />
@@ -241,6 +253,8 @@ export function PoePage({ profile }: { profile: Profile }) {
                     })()}
                   </span>
                 </div>
+                </td>
+                <td className="poe-doc-cell">
                 <div className={`poe-doc${max > 1 ? " multi" : ""}`}>
                   {files.map(({ key, doc }) => (
                     <div className="poe-doc-line" key={key}>
@@ -325,26 +339,40 @@ export function PoePage({ profile }: { profile: Profile }) {
                             name: viewing.name,
                           });
                         }}
-                        onNo={() => {
-                          const note = safePrompt("Feedback for the learner (what must be fixed)?");
-                          setReview(profile, viewId, item.id, "nyc", note);
-                          logAudit(profile, "poe.review", `Marked POE item ${item.id} not yet competent`, {
-                            id: viewing.id,
-                            name: viewing.name,
-                          });
-                        }}
+                        onNo={() => setNycItem(item.id)}
                         onClear={() => clearReview(viewId, item.id)}
                       />
                     </div>
                   )}
                 </div>
-              </div>
+                </td>
+              </tr>
             );
           })}
+              </tbody>
+            </table>
+          </div>
         </div>
       ))}
 
       <input ref={fileRef} type="file" accept={ACCEPT_ATTR} style={{ display: "none" }} onChange={onPickFile} />
+
+      {nycItem && (
+        <PromptModal
+          title="Not yet competent"
+          message="Feedback for the learner (what must be fixed)?"
+          confirmLabel="Record review"
+          onSubmit={(note) => {
+            setReview(profile, viewId, nycItem, "nyc", note.trim() || undefined);
+            logAudit(profile, "poe.review", `Marked POE item ${nycItem} not yet competent`, {
+              id: viewing.id,
+              name: viewing.name,
+            });
+            setNycItem(null);
+          }}
+          onCancel={() => setNycItem(null)}
+        />
+      )}
 
       <div className="callout">
         <span className="ico">

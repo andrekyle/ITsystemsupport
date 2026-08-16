@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, Route } from "../types";
 import { isStaff } from "../types";
@@ -218,10 +218,14 @@ function Announcements({
       {announcements.map((a) => (
         <div className={`card announce-card${a.pinned ? " pinned" : ""}`} key={a.id}>
           <div className="announce-head">
-            {a.pinned && <Icon name="bell" size={14} />}
-            <strong>{a.title}</strong>
-            <span className="mini-note">
-              {a.by} ({a.role}) · {fmtWhen(a.at)}
+            <span className="announce-title">
+              <span className="announce-title-row">
+                {a.pinned && <Icon name="bell" size={14} />}
+                <strong>{a.title}</strong>
+              </span>
+              <span className="announce-meta">
+                {a.by} ({a.role}) · {fmtWhen(a.at)}
+              </span>
             </span>
             <span style={{ flex: 1 }} />
             {staff && (
@@ -245,7 +249,7 @@ function Announcements({
 /* ---------- Q&A support board ---------- */
 
 function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
-  const { threads, ask, reply, toggleResolved, remove } = useQaThreads();
+  const { threads, ask, reply, toggleResolved, editQuestion, remove } = useQaThreads();
   const isSuper = profile.role === "Super User";
   const [asking, setAsking] = useState(false);
   const [title, setTitle] = useState("");
@@ -254,8 +258,36 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
   const [replyFor, setReplyFor] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [showResolved, setShowResolved] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editBody, setEditBody] = useState("");
+  const [editUnit, setEditUnit] = useState("");
+
+  /** Authors may edit their question for 24 hours after posting. */
+  const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
+  const canEditQuestion = (t: { byId: string; at: string }) =>
+    t.byId === profile.id && Date.now() - new Date(t.at).getTime() < EDIT_WINDOW_MS;
 
   const allUnits = MODULES.flatMap((m) => m.units);
+  const [unitOpen, setUnitOpen] = useState(false);
+  const unitDdRef = useRef<HTMLDivElement | null>(null);
+  const selectedUnit = allUnits.find((u) => u.us === unit);
+
+  useEffect(() => {
+    if (!unitOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (unitDdRef.current && !unitDdRef.current.contains(e.target as Node)) setUnitOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setUnitOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [unitOpen]);
   const visible = threads.filter((t) => showResolved || !t.resolved);
 
   function submitAsk() {
@@ -274,6 +306,13 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
     logAudit(profile, "qa.post", "Replied to a question");
     setReplyText("");
     setReplyFor(null);
+  }
+
+  function submitEdit(threadId: string) {
+    if (!editTitle.trim()) return;
+    editQuestion(threadId, editTitle, editBody, editUnit || undefined);
+    logAudit(profile, "qa.post", `Edited “${editTitle.trim()}”`);
+    setEditingId(null);
   }
 
   return (
@@ -309,14 +348,61 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
           </div>
           <div className="field">
             <label>Related unit standard (optional)</label>
-            <select value={unit} onChange={(e) => setUnit(e.target.value)}>
-              <option value="">— none —</option>
-              {allUnits.map((u) => (
-                <option key={u.us} value={u.us}>
-                  US {u.us} — {u.title.slice(0, 60)}
-                </option>
-              ))}
-            </select>
+            <div className="unit-dd" ref={unitDdRef}>
+              <button
+                type="button"
+                className="unit-dd-btn"
+                aria-haspopup="listbox"
+                aria-expanded={unitOpen}
+                onClick={() => setUnitOpen((o) => !o)}
+              >
+                {selectedUnit ? `US ${selectedUnit.us} — ${selectedUnit.title}` : "— none —"}
+              </button>
+              {unitOpen && (
+                <div className="unit-dd-panel" role="listbox">
+                  <table className="unit-dd-table">
+                    <thead>
+                      <tr>
+                        <th>Unit standard</th>
+                        <th>Title</th>
+                        <th>Credits</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        className={!unit ? "selected" : ""}
+                        role="option"
+                        aria-selected={!unit}
+                        onClick={() => {
+                          setUnit("");
+                          setUnitOpen(false);
+                        }}
+                      >
+                        <td>—</td>
+                        <td>None</td>
+                        <td />
+                      </tr>
+                      {allUnits.map((u) => (
+                        <tr
+                          key={u.us}
+                          className={unit === u.us ? "selected" : ""}
+                          role="option"
+                          aria-selected={unit === u.us}
+                          onClick={() => {
+                            setUnit(u.us);
+                            setUnitOpen(false);
+                          }}
+                        >
+                          <td className="nowrap">US {u.us}</td>
+                          <td>{u.title}</td>
+                          <td>{u.credits}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
           <button className="btn sm" onClick={submitAsk} disabled={!title.trim()}>
             <Icon name="chat" size={15} /> Post question
@@ -335,13 +421,32 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
       {visible.map((t) => (
         <div className={`card qa-card${t.resolved ? " resolved" : ""}`} key={t.id}>
           <div className="announce-head">
-            <strong>{t.title}</strong>
-            {t.unit && <span className="status-chip info">US {t.unit}</span>}
-            {t.resolved && <span className="status-chip ok">Resolved</span>}
-            <span className="mini-note">
-              {t.by} · {fmtWhen(t.at)}
+            <span className="announce-title">
+              <span className="announce-title-row">
+                <strong>{t.title}</strong>
+                {t.unit && <span className="status-chip info">US {t.unit}</span>}
+                {t.resolved && <span className="status-chip ok">Resolved</span>}
+              </span>
+              <span className="announce-meta">
+                {t.by} · {fmtWhen(t.at)}
+                {t.editedAt ? " · edited" : ""}
+              </span>
             </span>
             <span style={{ flex: 1 }} />
+            {canEditQuestion(t) && editingId !== t.id && (
+              <button
+                className="btn ghost sm"
+                title="You can edit your question for 24 hours after posting"
+                onClick={() => {
+                  setEditingId(t.id);
+                  setEditTitle(t.title);
+                  setEditBody(t.body);
+                  setEditUnit(t.unit ?? "");
+                }}
+              >
+                Edit
+              </button>
+            )}
             {(staff || t.byId === profile.id) && (
               <button className="btn ghost sm" onClick={() => toggleResolved(t.id)}>
                 {t.resolved ? "Reopen" : "Mark resolved"}
@@ -353,7 +458,45 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
               </button>
             )}
           </div>
-          {t.body && <p className="announce-body">{t.body}</p>}
+          {editingId === t.id ? (
+            <div className="qa-edit">
+              <div className="field">
+                <label>Question</label>
+                <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} autoFocus />
+              </div>
+              <div className="field">
+                <label>Details (optional)</label>
+                <textarea rows={3} value={editBody} onChange={(e) => setEditBody(e.target.value)} />
+              </div>
+              <div className="field">
+                <label>Related unit standard (optional)</label>
+                <span className="select-chevron-wrap" style={{ width: "100%" }}>
+                  <select
+                    style={{ width: "100%" }}
+                    value={editUnit}
+                    onChange={(e) => setEditUnit(e.target.value)}
+                  >
+                    <option value="">— none —</option>
+                    {allUnits.map((u) => (
+                      <option key={u.us} value={u.us}>
+                        US {u.us} — {u.title.slice(0, 60)}
+                      </option>
+                    ))}
+                  </select>
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="btn sm" onClick={() => submitEdit(t.id)} disabled={!editTitle.trim()}>
+                  <Icon name="checkCircle" size={15} /> Save changes
+                </button>
+                <button className="btn ghost sm" onClick={() => setEditingId(null)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            t.body && <p className="announce-body">{t.body}</p>
+          )}
           {t.replies.map((r) => (
             <div className={`qa-reply${isStaff(r.role) ? " staff" : ""}`} key={r.id}>
               <span className="qa-reply-by">

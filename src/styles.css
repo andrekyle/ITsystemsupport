@@ -10,6 +10,7 @@
   --border: #e0e0e0;
   --border-2: #d1d1d1;
   --table-border: rgba(0, 0, 0, 0.03);
+  --table-line: rgba(0, 0, 0, 0.06);
   --surface: #ffffff;
   --surface-2: #f5f5f5;
   --surface-3: #fafafa;
@@ -39,6 +40,7 @@
   --border: #2d2d2d;
   --border-2: #383838;
   --table-border: #2d2d2d;
+  --table-line: rgba(255, 255, 255, 0.07);
   --surface: #1f1f1f;
   --surface-2: #2c2c2c;
   --surface-3: #262626;
@@ -519,7 +521,7 @@ h1.page-title {
 
 h2.section-title {
   font-size: 19px;
-  font-weight: 600;
+  font-weight: 400;
   margin: 34px 0 14px;
   display: flex;
   align-items: center;
@@ -1268,14 +1270,14 @@ td .with-ico .ico {
 
 .btn.danger {
   background: transparent;
-  border-color: var(--border-2);
-  color: var(--ink);
+  border-color: transparent;
+  color: var(--ink-2);
   font-weight: 400;
 }
 
 .btn.danger:hover {
   background: var(--surface-2);
-  border-color: var(--border-2);
+  border-color: transparent;
   color: var(--ink);
 }
 
@@ -1377,28 +1379,40 @@ td .with-ico .ico {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 8px 20px;
+  gap: 6px;
+  padding: 9px 12px;
   border-radius: var(--radius);
-  border: 1px solid var(--azure);
-  background: var(--azure);
-  color: #fff;
-  font-size: 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 12.5px;
   font-weight: 400;
+  white-space: nowrap;
 }
 
-.btn:hover {
-  background: var(--azure-dark);
-  border-color: var(--azure-dark);
+.btn:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: transparent;
+  color: var(--ink);
+}
+
+.btn.primary {
+  color: var(--azure);
+}
+
+.btn.primary:hover:not(:disabled) {
+  background: var(--azure-light);
+  color: var(--azure);
 }
 
 .btn.ghost {
   background: transparent;
-  color: var(--azure);
+  color: var(--ink-2);
 }
 
 .btn.ghost:hover {
-  background: var(--azure-light);
+  background: var(--surface-2);
+  color: var(--ink);
 }
 
 .btn.block {
@@ -1413,40 +1427,7 @@ td .with-ico .ico {
   flex-shrink: 0;
 }
 
-/* dark mode: buttons in shades of dark grey with white text */
-[data-theme="dark"] .btn {
-  background: #3d3d3d;
-  border-color: #4a4a4a;
-  color: #fff;
-}
-
-[data-theme="dark"] .btn:hover {
-  background: #4a4a4a;
-  border-color: #585858;
-}
-
-[data-theme="dark"] .btn.ghost {
-  background: #2b2b2b;
-  border-color: #3d3d3d;
-  color: #fff;
-}
-
-[data-theme="dark"] .btn.ghost:hover {
-  background: #383838;
-  border-color: #4a4a4a;
-}
-
-[data-theme="dark"] .btn.danger {
-  background: #2b2b2b;
-  border-color: #4a4a4a;
-  color: #fff;
-  font-weight: 400;
-}
-
-[data-theme="dark"] .btn.danger:hover {
-  background: #383838;
-  border-color: #585858;
-}
+/* dark mode: quiet buttons — theme variables handle the colours */
 
 .pw-row .btn {
   margin-bottom: 1px;
@@ -3121,12 +3102,21 @@ table.data.kv tr:last-child td {
   gap: 16px;
   align-items: center;
   max-width: 1200px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--table-line);
   border-radius: var(--radius);
   background: var(--surface);
   padding: 12px 16px;
   margin-bottom: 8px;
 }
+
+/* POE evidence tables (one per section) */
+.poe-table-card {
+  max-width: 1200px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+}
+.poe-table td { vertical-align: middle; }
+.poe-table .poe-doc-cell { width: 480px; }
 
 .poe-item {
   display: flex;
@@ -3166,7 +3156,7 @@ table.data.kv tr:last-child td {
 }
 
 /* multi-file POE items stack their uploads as tidy file cards */
-.poe-row:has(.poe-doc.multi) {
+.poe-row:has(.poe-doc.multi .poe-doc-line) {
   grid-template-columns: 1fr;
 }
 
@@ -3187,7 +3177,7 @@ table.data.kv tr:last-child td {
 .poe-doc.multi .poe-doc-line {
   padding: 7px 12px;
   background: var(--surface-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--table-line);
   border-radius: var(--radius);
 }
 
@@ -4347,10 +4337,10 @@ a.plan-ppt:hover {
   padding: 10px 14px;
   font-size: 13px;
   border-radius: 6px;
-  border: 1px solid var(--azure);
+  border: 1px solid transparent;
   color: var(--azure-darker);
   background: transparent;
-  transition: transform 0.1s ease, border-color 0.12s ease;
+  transition: transform 0.1s ease, background 0.12s ease;
 }
 
 .btn.ghost.notes-upload:active {
@@ -4362,9 +4352,9 @@ a.plan-ppt:hover {
 }
 
 .btn.ghost.notes-upload:hover {
-  border-color: var(--azure-dark);
+  border-color: transparent;
   color: var(--azure-darker);
-  background: transparent;
+  background: var(--azure-light);
 }
 
 .notes-error {
@@ -6602,18 +6592,16 @@ input.att-sig {
   font-size: 0.78rem;
   font-weight: 400;
   letter-spacing: 0.02em;
-  border-radius: 999px;
+  border-radius: var(--radius);
   border: 0;
-  background: var(--surface-2);
+  background: transparent;
   color: var(--ink-2);
   cursor: pointer;
 }
-.lesson-quiz-reveal:hover { background: var(--surface-3); }
-[data-theme="dark"] .lesson-quiz-reveal { background: rgba(255, 255, 255, 0.06); color: #c9d1d9; }
-[data-theme="dark"] .lesson-quiz-reveal:hover { background: rgba(255, 255, 255, 0.11); }
+.lesson-quiz-reveal:hover { background: var(--surface-2); }
 .lesson-quiz-reveal.on {
   color: var(--green);
-  background: var(--green-bg);
+  background: transparent;
 }
 .lesson-slide-quiz-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
@@ -6707,6 +6695,40 @@ input.att-sig {
 
 .nowrap { white-space: nowrap; }
 
+/* --- compliance table: smaller headings that never wrap --- */
+table.data.compliance-table th {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* subtle row + column separator lines */
+table.data.compliance-table th,
+table.data.compliance-table td,
+table.data.deadline-table th,
+table.data.deadline-table td,
+table.data.poe-table th,
+table.data.poe-table td,
+table.data.outcome-table th,
+table.data.outcome-table td,
+table.data.training-table th,
+table.data.training-table td {
+  border-bottom: 1px solid var(--table-line);
+  border-right: 1px solid var(--table-line);
+}
+
+table.data.compliance-table th:last-child,
+table.data.compliance-table td:last-child,
+table.data.deadline-table th:last-child,
+table.data.deadline-table td:last-child,
+table.data.poe-table th:last-child,
+table.data.poe-table td:last-child,
+table.data.outcome-table th:last-child,
+table.data.outcome-table td:last-child,
+table.data.training-table th:last-child,
+table.data.training-table td:last-child {
+  border-right: none;
+}
+
 /* --- borderless inline icon link inside tables (e.g. Outlook calendar) --- */
 .table-icon-link {
   display: inline-flex;
@@ -6734,10 +6756,10 @@ input.att-sig {
   white-space: nowrap;
   color: var(--ink-2);
 }
-.status-chip.ok   { color: var(--green); }
-.status-chip.bad  { color: var(--red); }
-.status-chip.warn { color: var(--amber); }
-.status-chip.info { color: var(--azure); }
+.status-chip.ok   { color: var(--ink-2); }
+.status-chip.bad  { color: var(--ink-2); }
+.status-chip.warn { color: var(--ink-2); }
+.status-chip.info { color: var(--ink-2); }
 
 /* --- table helpers --- */
 .cell-person {
@@ -6811,6 +6833,116 @@ table.data th.sortable.sorted { color: var(--ink); }
   font-size: 13px;
 }
 .audit-filters input { flex: 1; min-width: 180px; }
+
+/* custom select chevron, inset from the border */
+.select-chevron-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.select-chevron-wrap select {
+  appearance: none;
+  padding-right: 32px;
+}
+.select-chevron-wrap::after {
+  content: "";
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-right: 1.6px solid var(--ink-3);
+  border-bottom: 1.6px solid var(--ink-3);
+  transform: translateY(-65%) rotate(45deg);
+  pointer-events: none;
+}
+
+/* --- unit-standard dropdown with table-formatted options --- */
+.unit-dd {
+  position: relative;
+}
+.unit-dd-btn {
+  position: relative;
+  width: 100%;
+  padding: 8px 32px 8px 10px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 350;
+  text-align: left;
+  color: var(--ink);
+  background: var(--surface);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.unit-dd-btn::after {
+  content: "";
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-right: 1.6px solid var(--ink-3);
+  border-bottom: 1.6px solid var(--ink-3);
+  transform: translateY(-65%) rotate(45deg);
+  pointer-events: none;
+}
+.unit-dd-panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.1);
+}
+.unit-dd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.unit-dd-table th {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+  font-weight: 400;
+  padding: 8px 10px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--table-line);
+}
+.unit-dd-table td {
+  padding: 7px 10px;
+  font-weight: 300;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--table-line);
+  border-right: 1px solid var(--table-line);
+}
+.unit-dd-table th:not(:last-child) {
+  border-right: 1px solid var(--table-line);
+}
+.unit-dd-table td:last-child {
+  border-right: none;
+}
+.unit-dd-table tbody tr {
+  cursor: pointer;
+}
+.unit-dd-table tbody tr:hover td {
+  background: var(--azure-lighter);
+}
+.unit-dd-table tbody tr.selected td {
+  color: var(--azure);
+}
 
 /* --- module averages (analytics) --- */
 .module-avg-row {
@@ -6937,17 +7069,44 @@ table.data th.sortable.sorted { color: var(--ink); }
 .compose-card textarea { resize: vertical; }
 
 .announce-card { margin-bottom: 12px; }
-.announce-card.pinned { border-color: color-mix(in srgb, var(--azure) 50%, transparent); }
+.announce-card.pinned {
+  border-color: transparent;
+  background: var(--azure-light);
+}
+.announce-card.pinned .announce-title-row strong {
+  color: var(--azure-darker);
+}
 .announce-head {
   display: flex;
-  align-items: center;
-  gap: 9px;
+  align-items: flex-start;
+  gap: 10px;
   flex-wrap: wrap;
 }
-.announce-head svg { color: var(--azure); }
+.announce-head svg { color: var(--azure); flex: 0 0 auto; }
+.announce-title {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.announce-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.announce-title-row strong { font-size: 14.5px; font-weight: 500; }
+.announce-meta {
+  font-size: 12px;
+  color: var(--ink-3);
+  font-weight: 350;
+}
 .announce-body {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   font-size: 14px;
+  font-weight: 350;
+  line-height: 1.65;
+  color: var(--ink-2);
   white-space: pre-wrap;
 }
 .announce-teaser {
@@ -6971,23 +7130,26 @@ table.data th.sortable.sorted { color: var(--ink); }
 /* --- Q&A --- */
 .qa-card { margin-bottom: 12px; }
 .qa-card.resolved { opacity: 0.72; }
+.qa-edit { margin-top: 12px; }
 .qa-reply {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   margin-top: 10px;
-  padding: 9px 12px;
-  border-left: 3px solid var(--border);
-  background: color-mix(in srgb, var(--ink-1) 3%, transparent);
-  border-radius: 0 9px 9px 0;
+  padding: 10px 14px;
+  border-left: 2px solid var(--border-2);
+  background: var(--surface-3);
+  border-radius: 0 8px 8px 0;
   font-size: 13.5px;
+  font-weight: 350;
+  line-height: 1.55;
 }
 .qa-reply.staff { border-left-color: var(--azure); }
 .qa-reply-by {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 12.5px;
 }
 .qa-replybox {
@@ -7028,8 +7190,8 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 
 /* flat danger text-button (delete/destructive) — no glow, just red ink */
-.btn.ghost.sm.danger { color: var(--red); }
-.btn.ghost.sm.danger:hover:not(:disabled) { background: var(--red-bg); border-color: transparent; color: var(--red); }
+.btn.ghost.sm.danger { color: var(--ink-2); }
+.btn.ghost.sm.danger:hover:not(:disabled) { background: var(--surface-2); border-color: transparent; color: var(--ink); }
 
 /* --- verdict segmented control (assessor decisions) --- */
 .verdict {

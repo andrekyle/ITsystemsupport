@@ -622,6 +622,8 @@ export interface QaThread {
   by: string;
   role: Role;
   at: string;
+  /** set when the author edits within the 24-hour window */
+  editedAt?: string;
   resolved?: boolean;
   replies: QaReply[];
 }
@@ -677,11 +679,29 @@ export function useQaThreads() {
       ),
     [update]
   );
+  /** Author edit (UI enforces the 24-hour window). Clears `unit` when omitted. */
+  const editQuestion = useCallback(
+    (threadId: string, title: string, body: string, unit?: string) =>
+      update((fresh) =>
+        fresh.map((t) => {
+          if (t.id !== threadId) return t;
+          const { unit: _drop, ...rest } = t;
+          return {
+            ...rest,
+            ...(unit ? { unit } : {}),
+            title: title.trim(),
+            body: body.trim(),
+            editedAt: new Date().toISOString(),
+          };
+        })
+      ),
+    [update]
+  );
   const remove = useCallback(
     (threadId: string) => update((fresh) => fresh.filter((t) => t.id !== threadId)),
     [update]
   );
-  return { threads, ask, reply, toggleResolved, remove };
+  return { threads, ask, reply, toggleResolved, editQuestion, remove };
 }
 
 /* ---------- POE reviews (assessor verdicts per evidence item) ---------- */

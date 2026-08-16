@@ -518,14 +518,16 @@ function AuditTrail() {
       </h2>
       <div className="card">
         <div className="audit-filters">
-          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-            <option value="all">All events ({events.length})</option>
-            {types.map((t) => (
-              <option key={t} value={t}>
-                {AUDIT_TYPE_LABELS[t] ?? t}
-              </option>
-            ))}
-          </select>
+          <span className="select-chevron-wrap">
+            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+              <option value="all">All events ({events.length})</option>
+              {types.map((t) => (
+                <option key={t} value={t}>
+                  {AUDIT_TYPE_LABELS[t] ?? t}
+                </option>
+              ))}
+            </select>
+          </span>
           <input
             placeholder="Search person or detail…"
             value={query}
