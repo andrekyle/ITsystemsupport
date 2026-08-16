@@ -109,6 +109,7 @@ function Shell({
         onUpdateProfile={onUpdateProfile}
         onOpenProfile={() => navigate({ page: "profile" })}
         onOpenUnit={(us) => navigate({ page: "unit", unitId: us })}
+        navigate={navigate}
       />
       <div className="body">
         <Sidebar

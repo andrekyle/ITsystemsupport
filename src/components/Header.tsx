@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../icons";
-import type { Profile } from "../types";
+import type { Profile, Route } from "../types";
 import { getContent } from "../data/content";
 import { MODULES } from "../data/course";
+import { loadProfiles, useChatThreads } from "../store";
 import { Avatar, fileToAvatar } from "./Avatar";
 
 /** Session schedule derived from the US 8252 lesson plan (starts 09:00). */
@@ -155,6 +156,7 @@ interface Props {
   onUpdateProfile: (patch: Partial<Profile>) => void;
   onOpenProfile: () => void;
   onOpenUnit?: (us: string) => void;
+  navigate?: (r: Route) => void;
 }
 
 export function Header({
@@ -166,10 +168,29 @@ export function Header({
   onUpdateProfile,
   onOpenProfile,
   onOpenUnit,
+  navigate,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  // Live-updating list of chat threads; filter to ones with unread messages for me.
+  const chatThreads = useChatThreads();
+  const notifs = useMemo(() => {
+    const nameFor = (id: string) => loadProfiles().find((p) => p.id === id)?.name ?? "Someone";
+    return chatThreads
+      .filter((t) => t.aId === profile.id || t.bId === profile.id)
+      .map((t) => {
+        const otherId = t.aId === profile.id ? t.bId : t.aId;
+        const unread = t.unreadFor(profile.id);
+        return { threadKey: t.key, otherId, otherName: nameFor(otherId), unread, latest: t.latest };
+      })
+      .filter((n) => n.unread > 0)
+      .sort((a, b) => (b.latest?.at ?? "").localeCompare(a.latest?.at ?? ""));
+  }, [chatThreads, profile.id]);
+  const unreadCount = notifs.reduce((n, x) => n + x.unread, 0);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -179,6 +200,15 @@ export function Header({
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, [menuOpen]);
+
+  useEffect(() => {
+    if (!notifOpen) return;
+    const close = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [notifOpen]);
 
   async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -204,9 +234,61 @@ export function Header({
       </div>
       <SessionClock onOpenUnit={onOpenUnit} />
       <div className="header-right">
-        <button className="icon-btn" title="Notifications">
-          <Icon name="bell" size={19} />
-        </button>
+        <div className="notif-wrap" ref={notifRef}>
+          <button
+            className={`icon-btn${unreadCount > 0 ? " has-unread" : ""}`}
+            title={unreadCount > 0 ? `${unreadCount} unread message${unreadCount === 1 ? "" : "s"}` : "No new notifications"}
+            aria-label="Notifications"
+            aria-expanded={notifOpen}
+            onClick={() => setNotifOpen((o) => !o)}
+          >
+            <Icon name="bell" size={19} />
+            {unreadCount > 0 && (
+              <span className="notif-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>
+            )}
+          </button>
+          {notifOpen && (
+            <div className="notif-menu" role="menu">
+              <div className="notif-head">Notifications</div>
+              {notifs.length === 0 ? (
+                <div className="notif-empty">
+                  <Icon name="bell" size={20} />
+                  <p className="mini-note">You're all caught up.</p>
+                </div>
+              ) : (
+                <>
+                  {notifs.map((n) => (
+                    <button
+                      key={n.threadKey}
+                      className="notif-item"
+                      onClick={() => {
+                        setNotifOpen(false);
+                        navigate?.({ page: "chat", studentId: n.otherId });
+                      }}
+                    >
+                      <span className="notif-item-title">
+                        <Icon name="chat" size={14} /> New message from <strong>{n.otherName}</strong>
+                      </span>
+                      {n.latest && (
+                        <span className="notif-item-preview mini-note">"{n.latest.body}"</span>
+                      )}
+                      <span className="notif-item-badge">{n.unread}</span>
+                    </button>
+                  ))}
+                  <button
+                    className="notif-foot btn ghost sm"
+                    onClick={() => {
+                      setNotifOpen(false);
+                      navigate?.({ page: "chat" });
+                    }}
+                  >
+                    Open all conversations
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
         <button
           className="icon-btn"
           onClick={onToggleTheme}
