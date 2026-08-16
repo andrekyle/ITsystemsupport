@@ -63,3 +63,4 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
+// deploy trigger: 2026-08-16T18:10:03+02:00
