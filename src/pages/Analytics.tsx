@@ -1,11 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, Route } from "../types";
 import { COURSE_META, MODULES, POE_TOTAL, TOTAL_UNITS } from "../data/course";
 import {
-  loadPoeDocs,
   loadProfiles,
-  loadProgress,
   moduleCompletion,
   overallStats,
   poeItemCount,
@@ -14,8 +12,15 @@ import { downloadText } from "../lib/audit";
 import {
   attendanceRegisterCount,
   attendanceSignedCount,
-  gamificationFor,
+  computeGamification,
 } from "../lib/gamification";
+import {
+  bestPoeDocs,
+  bestProgress,
+  fetchCloudLearnerData,
+  remoteOnlyProfiles,
+  type CloudLearnerData,
+} from "../lib/directory";
 import { Avatar } from "../components/Avatar";
 import { Bar } from "../components/Ring";
 
@@ -44,9 +49,10 @@ interface LearnerRow {
   riskReasons: string[];
 }
 
-function analyse(p: Profile, registers: number): LearnerRow {
-  const progress = loadProgress(p.id);
+function analyse(p: Profile, registers: number, cloud: CloudLearnerData | null): LearnerRow {
+  const progress = bestProgress(p.id, cloud);
   const s = overallStats(progress);
+  const docs = bestPoeDocs(p.id, cloud);
 
   let quizBestSum = 0;
   let quizCount = 0;
@@ -79,7 +85,7 @@ function analyse(p: Profile, registers: number): LearnerRow {
   else if (daysSinceSeen > 14) riskReasons.push(`inactive ${daysSinceSeen}d`);
   if (quizCount > 0 && quizBestSum / quizCount < 0.5) riskReasons.push("low quiz scores");
 
-  const g = gamificationFor(p.id);
+  const g = computeGamification(progress, poeItemCount(docs), attendance);
 
   return {
     profile: p,
@@ -89,7 +95,7 @@ function analyse(p: Profile, registers: number): LearnerRow {
     quizAvg: quizCount ? quizBestSum / quizCount : null,
     quizzesTaken: quizCount,
     exerciseAvg: exCount ? exSum / exCount : null,
-    poeDone: poeItemCount(loadPoeDocs(p.id)),
+    poeDone: poeItemCount(docs),
     attendance,
     attendanceRate,
     lastLogin: p.lastLogin,
@@ -145,6 +151,17 @@ export function AnalyticsPage({ profile }: { profile: Profile; navigate: (r: Rou
   const registers = attendanceRegisterCount();
   const [sort, setSort] = useState<SortKey>("completion");
   const [ascending, setAscending] = useState(false);
+  const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void fetchCloudLearnerData().then((d) => {
+      if (alive && d) setCloud(d);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   /** Click the active sort again to flip direction; a new column resets to its natural order. */
   const applySort = (key: SortKey) => {
@@ -157,10 +174,14 @@ export function AnalyticsPage({ profile }: { profile: Profile; navigate: (r: Rou
   };
 
   const rows = useMemo(() => {
-    const learners = loadProfiles().filter((p) => p.role === "Learner");
-    return learners.map((p) => analyse(p, registers));
+    const local = loadProfiles().filter((p) => p.role === "Learner");
+    const remote = remoteOnlyProfiles(loadProfiles(), cloud?.profiles ?? []).filter(
+      (p) => p.role === "Learner"
+    );
+    const all = [...local, ...remote];
+    return all.map((p) => analyse(p, registers, cloud));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [registers, profile.id]);
+  }, [registers, profile.id, cloud]);
 
   const sorted = useMemo(() => {
     const arr = [...rows];
@@ -206,13 +227,13 @@ export function AnalyticsPage({ profile }: { profile: Profile; navigate: (r: Rou
   const moduleAvgs = useMemo(
     () =>
       MODULES.map((m) => {
-        const vals = rows.map((r) => moduleCompletion(loadProgress(r.profile.id), m.id));
+        const vals = rows.map((r) => moduleCompletion(bestProgress(r.profile.id, cloud), m.id));
         return {
           module: m,
           avg: vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0,
         };
       }),
-    [rows]
+    [rows, cloud]
   );
 
   const sortBtn = (key: SortKey, label: string) => (

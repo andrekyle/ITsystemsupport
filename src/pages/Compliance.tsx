@@ -21,7 +21,12 @@ import { attendanceRegisterCount, attendanceSignedCount } from "../lib/gamificat
 import { downloadIcs, outlookEventLink, parseSessionDates } from "../lib/integrations";
 import type { IcsEvent } from "../lib/integrations";
 import { openCertificate, openStatementOfResults } from "../lib/certificates";
-import { fetchCloudLearnerData, remoteOnlyProfiles, type CloudLearnerData } from "../lib/directory";
+import {
+  bestProgress,
+  fetchCloudLearnerData,
+  remoteOnlyProfiles,
+  type CloudLearnerData,
+} from "../lib/directory";
 import { supabase } from "../lib/supabase";
 import { CHECKLIST_TOTAL } from "./Checklist";
 import { Avatar } from "../components/Avatar";
@@ -461,7 +466,11 @@ export function CompliancePage({
                           className="btn ghost sm"
                           title="Statement of results (print / PDF)"
                           onClick={() =>
-                            openStatementOfResults(r.profile, loadProgress(r.profile.id), outcomes)
+                            openStatementOfResults(
+                              r.profile,
+                              bestProgress(r.profile.id, cloud),
+                              outcomes
+                            )
                           }
                         >
                           <Icon name="document" size={14} /> Results

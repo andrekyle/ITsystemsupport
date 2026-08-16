@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { PoeDoc, Profile, ProgressState } from "../types";
+import { loadChecklistTicks, loadPoeDocs, loadProgress } from "../store";
 
 export interface CloudDirectory {
   /** profiles synced by other signed-in accounts (this account's own rows excluded) */
@@ -261,6 +262,36 @@ export async function fetchCloudProgress(
     return null;
   }
 }
+
+/** "Best" progress for a learner: prefer this device's local copy when it has
+ *  work; otherwise fall back to the owning cloud account's snapshot. */
+export function bestProgress(profileId: string, cloud?: CloudLearnerData | null): ProgressState {
+  const local = loadProgress(profileId);
+  if (Object.keys(local.units).length > 0) return local;
+  const remote = cloud?.progress?.[profileId];
+  return remote && Object.keys(remote.units).length > 0 ? remote : local;
+}
+
+/** "Best" POE docs for a learner (same fall-back rule as `bestProgress`). */
+export function bestPoeDocs(
+  profileId: string,
+  cloud?: CloudLearnerData | null
+): Record<string, PoeDoc> {
+  const local = loadPoeDocs(profileId);
+  if (Object.keys(local).length > 0) return local;
+  return cloud?.poe?.[profileId] ?? local;
+}
+
+/** "Best" Appendix C checklist (same fall-back rule). */
+export function bestChecklist(
+  profileId: string,
+  cloud?: CloudLearnerData | null
+): Record<string, "yes" | "no"> {
+  const local = loadChecklistTicks(profileId);
+  if (Object.keys(local).length > 0) return local;
+  return cloud?.checklists?.[profileId] ?? local;
+}
+
 
 const RLS_HINT =
   "Could not save to the cloud — make sure the latest supabase/schema.sql has been run and your account has been added to the admins table.";
