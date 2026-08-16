@@ -316,6 +316,9 @@ export function mergeProfileWithCloud(
     patch.enrolment = mergedEnrol as EnrolmentInfo;
   }
   if (!local.signatureImage && remote.signatureImage) patch.signatureImage = remote.signatureImage;
+  // learn the auth uid from the cloud directory owners map so chat can address
+  // this person even before they've signed in for the first time
+  if (!local.cloudUserId && link.owner) patch.cloudUserId = link.owner;
   return Object.keys(patch).length ? { ...local, ...patch } : local;
 }
 

@@ -692,6 +692,7 @@ function AddUser({ viewer, onAdded }: { viewer: Profile; onAdded: () => void }) 
       // dashboard and can sign in with their own credentials from any device.
       // A headless client keeps the admin's own session untouched.
       let cloudNotice = "";
+      let cloudUserId: string | undefined;
       const trimmedEmail = email.trim().toLowerCase();
       if (cloudEnabled && trimmedEmail) {
         const password = pw.trim() || generateTempPassword();
@@ -713,8 +714,10 @@ function AddUser({ viewer, onAdded }: { viewer: Profile; onAdded: () => void }) 
           } else if (!data.session) {
             cloudNotice =
               ` Sign-up email sent to ${trimmedEmail} — the learner must confirm it before signing in.`;
+            cloudUserId = data.user?.id;
           } else {
             cloudNotice = ` Supabase account created for ${trimmedEmail}.`;
+            cloudUserId = data.user?.id;
           }
         }
       }
@@ -730,6 +733,11 @@ function AddUser({ viewer, onAdded }: { viewer: Profile; onAdded: () => void }) 
         enrolment,
         pw ? await hashPassword(pw) : undefined
       );
+      // stamp the resolved auth uid on the profile so chat can address them
+      // immediately even before they sign in for the first time
+      if (cloudUserId) {
+        updateProfile(created.id, { cloudUserId });
+      }
       logAudit(viewer, "account.create", `Added ${role} account via People → Add User`, {
         id: created.id,
         name: created.name,

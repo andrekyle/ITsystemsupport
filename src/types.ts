@@ -124,6 +124,10 @@ export interface Profile {
   baseRole?: Role;
   /** ISO timestamp the learner completed the first-login onboarding tour */
   onboardedAt?: string;
+  /** Supabase auth.users.id for this person — recorded when the admin
+   *  provisions the account via Add User so chat can address them before
+   *  they've signed in for the first time. */
+  cloudUserId?: string;
 }
 
 /** Stages each unit standard moves through */

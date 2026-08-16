@@ -295,10 +295,16 @@ function ChatThread({
 }) {
   // Resolve the other party's Supabase auth user id (identity-aware). The
   // chat table is keyed by real auth ids so RLS can enforce privacy.
+  //
+  // Priority:
+  //   1. profile.cloudUserId (stamped when the admin added them via Add User)
+  //   2. identity-matched cloud directory (works once they've signed in)
+  //   3. direct id lookup in cloud.owners
   const otherAuthUserId = useMemo(() => {
+    if (other?.cloudUserId) return other.cloudUserId;
     if (!cloud) return undefined;
-    if (!other) return cloud.owners[otherId];
-    return resolveCloudLink(other, cloud)?.owner ?? cloud.owners[other.id];
+    if (other) return resolveCloudLink(other, cloud)?.owner ?? cloud.owners[other.id];
+    return cloud.owners[otherId];
   }, [cloud, other, otherId]);
 
   const { messages, send, markRead } = useChat(me, {
