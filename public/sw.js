@@ -5,7 +5,7 @@
  *  - static assets (js/css/fonts/images/pdf): stale-while-revalidate
  *  - never caches Supabase or other cross-origin API calls
  */
-const VERSION = "itss-v1";
+const VERSION = "itss-v2";
 const SHELL = "/";
 
 self.addEventListener("install", (event) => {
