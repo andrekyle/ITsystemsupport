@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { PoeDoc, Profile, ProgressState } from "../types";
+import type { EnrolmentInfo, PoeDoc, Profile, ProgressState } from "../types";
 import { loadChecklistTicks, loadPoeDocs, loadProgress } from "../store";
 
 export interface CloudDirectory {
@@ -283,6 +283,40 @@ export function resolveCloudLink(
     }
   }
   return undefined;
+}
+
+/** Fill a locally-seeded profile with visual/metadata fields (avatar,
+ *  lastLogin, enrolment name/email) from its owning cloud account when the
+ *  local copy is missing them. Used everywhere a seeded profile is shown so
+ *  learners look and feel the same across every page. */
+export function mergeProfileWithCloud(
+  local: Profile,
+  cloud: CloudLearnerData | CloudDirectory | null | undefined
+): Profile {
+  const link = resolveCloudLink(local, cloud);
+  if (!link || !cloud) return local;
+  const remote = cloud.profiles.find((p) => p.id === link.cloudId);
+  if (!remote) return local;
+  const patch: Partial<Profile> = {};
+  if (!local.avatar && remote.avatar) patch.avatar = remote.avatar;
+  const localLoginT = local.lastLogin ? Date.parse(local.lastLogin) : 0;
+  const remoteLoginT = remote.lastLogin ? Date.parse(remote.lastLogin) : 0;
+  if (remoteLoginT > localLoginT) patch.lastLogin = remote.lastLogin;
+  if (!local.enrolment && remote.enrolment) patch.enrolment = remote.enrolment;
+  else if (local.enrolment && remote.enrolment) {
+    // fill in individual missing enrolment fields (e.g. staff seeded name only)
+    const mergedEnrol = { ...remote.enrolment, ...local.enrolment } as EnrolmentInfo & Record<string, unknown>;
+    for (const k of Object.keys(remote.enrolment) as (keyof EnrolmentInfo)[]) {
+      const lv = local.enrolment[k];
+      const rv = remote.enrolment[k];
+      if ((lv === undefined || lv === "" || lv === null) && rv) {
+        mergedEnrol[k as string] = rv as unknown;
+      }
+    }
+    patch.enrolment = mergedEnrol as EnrolmentInfo;
+  }
+  if (!local.signatureImage && remote.signatureImage) patch.signatureImage = remote.signatureImage;
+  return Object.keys(patch).length ? { ...local, ...patch } : local;
 }
 
 /** "Best" progress for a learner: prefer this device's local copy when it has

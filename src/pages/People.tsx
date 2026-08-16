@@ -36,6 +36,7 @@ import {
   fetchCloudDirectory,
   fetchCloudProgress,
   identityKeys,
+  mergeProfileWithCloud,
   purgeOwnProfileCopy,
   resolveCloudLink,
   updateCloudProfile,
@@ -597,34 +598,36 @@ export function StudentsPage({
         const isRemote = remoteIds.has(s.id);
         const link = resolveCloudLink(s, cloud);
         const cloudId = link?.cloudId ?? s.id;
+        const displayed = mergeProfileWithCloud(s, cloud);
         const localCount = isRemote ? 0 : poeItemCount(loadPoeDocs(s.id));
         const cloudCount = poeItemCount(cloud?.poe[cloudId] ?? {});
         const docs = isRemote ? cloudCount : localCount || cloudCount;
-        const online = lastOnlineState(s.lastLogin);
+        const online = lastOnlineState(displayed.lastLogin);
+        const hasOwnCloudAccount = !!link || isRemote;
         return (
           <button
             key={s.id}
             className="profile-row"
             onClick={() => navigate({ page: "students", studentId: s.id })}
           >
-            <Avatar profile={s} />
+            <Avatar profile={displayed} />
             <span>
-              <span className="nm">{s.name}</span>
+              <span className="nm">{displayed.name}</span>
               <br />
               <span className="rl">
-                {s.role}
+                {displayed.role}
                 {" · last online "}
                 <span className={`chip ${online.tone}`}>{online.label}</span>
-                {s.lastLogin ? ` (${fmtDateTime(s.lastLogin)})` : ""}
+                {displayed.lastLogin ? ` (${fmtDateTime(displayed.lastLogin)})` : ""}
               {" · joined "}
-              {fmtDate(s.createdAt)}
-              {isPrivileged && isRemote ? " · own sign-in account" : ""}
-              {isPrivileged && s.role === "Learner" && !s.enrolment ? " · enrolment form outstanding" : ""}
-              {isPrivileged && s.passwordHash ? " · password set" : ""}
+              {fmtDate(displayed.createdAt)}
+              {isPrivileged && hasOwnCloudAccount ? " · own sign-in account" : ""}
+              {isPrivileged && displayed.role === "Learner" && !displayed.enrolment ? " · enrolment form outstanding" : ""}
+              {isPrivileged && displayed.passwordHash ? " · password set" : ""}
               </span>
             </span>
             <span className="rl docs">
-              {isPrivileged && s.role === "Learner" ? `${docs} / ${POE_TOTAL} documents` : ""}
+              {isPrivileged && displayed.role === "Learner" ? `${docs} / ${POE_TOTAL} documents` : ""}
             </span>
             <span className="chev">
               <Icon name="chevronRight" size={16} />

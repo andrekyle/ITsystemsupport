@@ -18,6 +18,7 @@ import {
   bestPoeDocs,
   bestProgress,
   fetchCloudLearnerData,
+  mergeProfileWithCloud,
   remoteOnlyProfiles,
   type CloudLearnerData,
 } from "../lib/directory";
@@ -174,11 +175,14 @@ export function AnalyticsPage({ profile }: { profile: Profile; navigate: (r: Rou
   };
 
   const rows = useMemo(() => {
-    const local = loadProfiles().filter((p) => p.role === "Learner");
-    const remote = remoteOnlyProfiles(loadProfiles(), cloud?.profiles ?? []).filter(
+    const localList = loadProfiles();
+    const localLearners = localList.filter((p) => p.role === "Learner");
+    const remote = remoteOnlyProfiles(localList, cloud?.profiles ?? []).filter(
       (p) => p.role === "Learner"
     );
-    const all = [...local, ...remote];
+    // fold in the cloud-side avatar / lastLogin / enrolment for seeded copies
+    // so the analytics view matches what the People page shows
+    const all = [...localLearners.map((p) => mergeProfileWithCloud(p, cloud)), ...remote];
     return all.map((p) => analyse(p, registers, cloud));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [registers, profile.id, cloud]);

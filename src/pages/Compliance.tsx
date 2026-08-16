@@ -26,6 +26,7 @@ import {
   bestPoeDocs,
   bestProgress,
   fetchCloudLearnerData,
+  mergeProfileWithCloud,
   remoteOnlyProfiles,
   type CloudLearnerData,
 } from "../lib/directory";
@@ -217,8 +218,11 @@ export function CompliancePage({
     const remoteLearners = remoteOnlyProfiles(profiles, cloud?.profiles ?? []).filter(
       (p) => p.role === "Learner"
     );
+    // enrich seeded local copies with cloud-only visuals (avatar, lastLogin,
+    // signature) so the compliance list looks the same as the People page
+    const mergedLearners = learners.map((p) => mergeProfileWithCloud(p, cloud));
     return [
-      ...learners.map((p) => complianceFor(p, outcomes, reviews, cloud ?? undefined)),
+      ...mergedLearners.map((p) => complianceFor(p, outcomes, reviews, cloud ?? undefined)),
       ...remoteLearners.map((p) => complianceFor(p, outcomes, reviews, cloud ?? undefined)),
     ].sort((a, b) =>
       a.profile.name.localeCompare(b.profile.name, undefined, { sensitivity: "base" })
