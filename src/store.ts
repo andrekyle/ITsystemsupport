@@ -81,16 +81,17 @@ export function loadProfiles(): Profile[] {
     // Entitled to the Super User role:
     //   - the designated super-user name (case-insensitive),
     //   - the super-user email as a profile name,
-    //   - in cloud mode on an admin account: a profile whose name matches the
-    //     signed-in email, or the profile the admin is actively signed in as.
-    // In local-only mode entitlement is strictly name-based so that learners
-    // sharing a local install are never promoted just by signing in.
+    //   - in cloud mode: a profile whose name matches the signed-in email
+    //     (that identifies the admin's own profile).
+    // We deliberately DO NOT promote just because a profile is the current
+    // session — otherwise any learner who signs in on the admin's device
+    // (or on their own new device before the admin check completes) would
+    // wrongly be marked Super User.
     const entitled =
       superAccount &&
       (nm === superName ||
         nm === SUPER_USER_EMAIL ||
-        (cloudEnabled && !!accountEmail && nm === accountEmail) ||
-        (cloudEnabled && !!currentSessionId && p.id === currentSessionId));
+        (cloudEnabled && !!accountEmail && nm === accountEmail));
     if (entitled && p.role !== "Super User") {
       p.baseRole = p.role; // remember the real role for when the promotion lapses
       p.role = "Super User";
