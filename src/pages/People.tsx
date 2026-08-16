@@ -2141,7 +2141,7 @@ function StudentDetail({
         <>
           <AcademicRecord student={student} remote={remote} owner={owner} canDownload={isSuper} />
           {student.role === "Learner" && canRecordOutcomes && (
-            <OutcomesPanel student={student} viewer={viewer} />
+            <OutcomesPanel student={student} viewer={viewer} remote={remote} owner={owner} />
           )}
           <h2 className="section-title">
             <span className="ico">
@@ -2228,9 +2228,37 @@ function StudentDetail({
 
 /* ---------- unit assessment outcomes (assessor / moderator / super user) ---------- */
 
-function OutcomesPanel({ student, viewer }: { student: Profile; viewer: Profile }) {
+function OutcomesPanel({
+  student,
+  viewer,
+  remote,
+  owner,
+}: {
+  student: Profile;
+  viewer: Profile;
+  /** profile belongs to another sign-in account — progress lives in their cloud rows */
+  remote?: boolean;
+  owner?: string;
+}) {
   const { outcomes, setOutcome, clearOutcome } = useOutcomes();
-  const progress = loadProgress(student.id);
+  const [progress, setProgress] = useState<ProgressState>(() =>
+    remote ? { units: {} } : loadProgress(student.id)
+  );
+  useEffect(() => {
+    if (!remote) {
+      setProgress(loadProgress(student.id));
+      return;
+    }
+    let alive = true;
+    setProgress({ units: {} });
+    if (!owner) return;
+    void fetchCloudProgress(owner, student.id).then((p) => {
+      if (alive && p) setProgress(p);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [student.id, remote, owner]);
   const forLearner = outcomes[student.id] ?? {};
   const recorded = Object.keys(forLearner).length;
   const competent = Object.values(forLearner).filter((o) => o.status === "C").length;
