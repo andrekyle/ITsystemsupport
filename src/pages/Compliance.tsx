@@ -121,10 +121,15 @@ function complianceFor(
   /** data from the owning cloud account — used for learners who sign in on their own devices */
   cloud?: CloudLearnerData
 ): ComplianceRecord {
-  const progress = cloud?.progress[p.id] ?? loadProgress(p.id);
+  // Prefer whichever source actually has the learner's work: a profile seeded
+  // on this device has empty local data while their real progress lives in
+  // their own cloud account (and vice versa).
+  const pick = <T,>(local: Record<string, T>, remote: Record<string, T> | undefined) =>
+    Object.keys(local).length > 0 ? local : (remote ?? local);
+  const progress = { units: pick(loadProgress(p.id).units, cloud?.progress[p.id]?.units) };
   const s = overallStats(progress);
-  const ticks = cloud?.checklists[p.id] ?? loadChecklistTicks(p.id);
-  const docs = cloud?.poe[p.id] ?? loadPoeDocs(p.id);
+  const ticks = pick(loadChecklistTicks(p.id), cloud?.checklists[p.id]);
+  const docs = pick(loadPoeDocs(p.id), cloud?.poe[p.id]);
   const myReviews = Object.values(reviews[p.id] ?? {});
   const myOutcomes = Object.values(outcomes[p.id] ?? {});
   return {
@@ -208,7 +213,7 @@ export function CompliancePage({
       (p) => p.role === "Learner"
     );
     return [
-      ...learners.map((p) => complianceFor(p, outcomes, reviews)),
+      ...learners.map((p) => complianceFor(p, outcomes, reviews, cloud ?? undefined)),
       ...remoteLearners.map((p) => complianceFor(p, outcomes, reviews, cloud ?? undefined)),
     ].sort((a, b) =>
       a.profile.name.localeCompare(b.profile.name, undefined, { sensitivity: "base" })

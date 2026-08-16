@@ -983,6 +983,12 @@ function DownloadAllAssignments({
           prog = owner ? await fetchCloudProgress(owner, s.id) : null;
         } else {
           prog = loadProgress(s.id);
+          // seeded local copy with no work on this device — use the learner's
+          // own cloud account when it has their real progress
+          const owner = owners[s.id];
+          if (owner && Object.keys(prog.units).length === 0) {
+            prog = (await fetchCloudProgress(owner, s.id)) ?? prog;
+          }
         }
         const blocks = prog ? assignmentUnitBlocks(prog) : [];
         if (blocks.length) withWork++;
@@ -1229,10 +1235,13 @@ function PeopleSummary({
     if (!open || !needScores) return;
     let alive = true;
     for (const p of people) {
-      if (p.role !== "Learner" || !remoteIds.has(p.id) || cloudStats[p.id]) continue;
+      if (p.role !== "Learner" || cloudStats[p.id]) continue;
+      const isRemote = remoteIds.has(p.id);
+      // local profiles with work on this device don't need a cloud fetch
+      if (!isRemote && Object.keys(loadProgress(p.id).units).length > 0) continue;
       const owner = cloud?.owners[p.id];
       if (!owner) {
-        setCloudStats((s) => ({ ...s, [p.id]: quizStats({ units: {} }) }));
+        if (isRemote) setCloudStats((s) => ({ ...s, [p.id]: quizStats({ units: {} }) }));
         continue;
       }
       void fetchCloudProgress(owner, p.id).then((prog) => {
@@ -1281,15 +1290,21 @@ function PeopleSummary({
   // build row contexts once so we can sort by any column's value
   const rows: SummaryRowCtx[] = filteredPeople.map((p) => {
     const isRemote = remoteIds.has(p.id);
+    const localDocs = isRemote ? {} : loadPoeDocs(p.id);
     const docs = isRemote
       ? poeItemCount(cloud?.poe[p.id] ?? {})
-      : poeItemCount(loadPoeDocs(p.id));
+      : poeItemCount(
+          Object.keys(localDocs).length > 0 ? localDocs : (cloud?.poe[p.id] ?? localDocs)
+        );
+    const localProg = isRemote ? null : loadProgress(p.id);
     const stats =
       p.role !== "Learner" || !needScores
         ? null
         : isRemote
           ? (cloudStats[p.id] ?? null)
-          : quizStats(loadProgress(p.id));
+          : localProg && Object.keys(localProg.units).length > 0
+            ? quizStats(localProg)
+            : (cloudStats[p.id] ?? quizStats(localProg ?? { units: {} }));
     return { p, docs, stats };
   });
 
@@ -1603,18 +1618,21 @@ function AcademicRecord({
     remote ? null : loadProgress(student.id)
   );
   useEffect(() => {
-    if (!remote) {
-      setProgress(loadProgress(student.id));
+    const local = remote ? null : loadProgress(student.id);
+    if (local && Object.keys(local.units).length > 0) {
+      setProgress(local);
+      return; // work done on this device — local copy is authoritative
+    }
+    if (!owner) {
+      setProgress(local ?? { units: {} });
       return;
     }
     let alive = true;
-    setProgress(null);
-    if (!owner) {
-      setProgress({ units: {} });
-      return;
-    }
+    setProgress(remote ? null : local);
     void fetchCloudProgress(owner, student.id).then((p) => {
-      if (alive) setProgress(p ?? { units: {} });
+      if (!alive) return;
+      // prefer the cloud account's work; fall back to the (empty) local copy
+      setProgress(p && Object.keys(p.units).length > 0 ? p : (local ?? { units: {} }));
     });
     return () => {
       alive = false;
@@ -2258,15 +2276,14 @@ function OutcomesPanel({
     remote ? { units: {} } : loadProgress(student.id)
   );
   useEffect(() => {
-    if (!remote) {
-      setProgress(loadProgress(student.id));
-      return;
-    }
+    const local = remote ? { units: {} } : loadProgress(student.id);
+    setProgress(local);
+    // a seeded local copy has no work on this device — the learner's real
+    // progress lives in their own cloud account, so prefer it when local is empty
+    if (!owner || Object.keys(local.units).length > 0) return;
     let alive = true;
-    setProgress({ units: {} });
-    if (!owner) return;
     void fetchCloudProgress(owner, student.id).then((p) => {
-      if (alive && p) setProgress(p);
+      if (alive && p && Object.keys(p.units).length > 0) setProgress(p);
     });
     return () => {
       alive = false;
