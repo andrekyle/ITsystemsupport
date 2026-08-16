@@ -35,6 +35,7 @@ import {
   deleteCloudProfile,
   fetchCloudDirectory,
   fetchCloudProgress,
+  identityKeys,
   updateCloudProfile,
   type CloudDirectory,
 } from "../lib/directory";
@@ -43,28 +44,6 @@ function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-/** Every identity token that identifies a person — the same profile on a
- *  different device may have a partially-filled enrolment, so we index by
- *  every token and match if *any* one lines up. */
-function identityKeys(p: Profile): string[] {
-  const keys: string[] = [];
-  const id = (p.enrolment?.idNumber ?? "").trim().toLowerCase();
-  if (id) keys.push(`id:${id}`);
-  const email = (p.enrolment?.email ?? "").trim().toLowerCase();
-  if (email) keys.push(`em:${email}`);
-  const name = (p.name ?? "").trim().toLowerCase();
-  if (name) keys.push(`nm:${name}`);
-  const enrolFull = [
-    (p.enrolment?.firstNames ?? "").trim(),
-    (p.enrolment?.surname ?? "").trim(),
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-  if (enrolFull && enrolFull !== name) keys.push(`nm:${enrolFull}`);
-  return keys;
 }
 
 /** True when `a` is a strictly newer ISO login timestamp than `b`. */

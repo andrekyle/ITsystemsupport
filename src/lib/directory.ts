@@ -10,6 +10,64 @@ export interface CloudDirectory {
   owners: Record<string, string>;
 }
 
+/** Every identity token that identifies a person — the same profile on a
+ *  different device may have a partially-filled enrolment, so we index by
+ *  every token and match if *any* one lines up. */
+export function identityKeys(p: Profile): string[] {
+  const keys: string[] = [];
+  const id = (p.enrolment?.idNumber ?? "").trim().toLowerCase();
+  if (id) keys.push(`id:${id}`);
+  const email = (p.enrolment?.email ?? "").trim().toLowerCase();
+  if (email) keys.push(`em:${email}`);
+  const name = (p.name ?? "").trim().toLowerCase();
+  if (name) keys.push(`nm:${name}`);
+  const enrolFull = [
+    (p.enrolment?.firstNames ?? "").trim(),
+    (p.enrolment?.surname ?? "").trim(),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  if (enrolFull && enrolFull !== name) keys.push(`nm:${enrolFull}`);
+  return keys;
+}
+
+/** True when `a` is a strictly newer ISO login timestamp than `b`. */
+function newerLoginTs(a?: string, b?: string): boolean {
+  return (a ? Date.parse(a) : 0) > (b ? Date.parse(b) : 0);
+}
+
+/** Cloud profiles that are not already represented locally (by id or any
+ *  identity token), with duplicate cloud copies of the same person collapsed
+ *  to the freshest one. */
+export function remoteOnlyProfiles(local: Profile[], cloudProfiles: Profile[]): Profile[] {
+  const localIds = new Set(local.map((p) => p.id));
+  const localKeys = new Set<string>();
+  for (const p of local) for (const k of identityKeys(p)) localKeys.add(k);
+  const remote = cloudProfiles.filter(
+    (p) => !localIds.has(p.id) && !identityKeys(p).some((k) => localKeys.has(k))
+  );
+  const deduped: Profile[] = [];
+  const chosen = new Map<string, Profile>();
+  for (const p of remote) {
+    const keys = identityKeys(p);
+    const existingKey = keys.find((k) => chosen.has(k));
+    if (!existingKey) {
+      for (const k of keys) chosen.set(k, p);
+      deduped.push(p);
+    } else {
+      const cur = chosen.get(existingKey)!;
+      if (newerLoginTs(p.lastLogin, cur.lastLogin)) {
+        const idx = deduped.indexOf(cur);
+        if (idx >= 0) deduped[idx] = p;
+        for (const k of identityKeys(cur)) if (chosen.get(k) === cur) chosen.delete(k);
+        for (const k of keys) chosen.set(k, p);
+      }
+    }
+  }
+  return deduped;
+}
+
 /**
  * Reads every account's synced profiles and POE document indexes so staff can
  * see users who sign in with their own email accounts. Requires the read-all
@@ -75,6 +133,55 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
   }
 
   return { profiles, poe, owners };
+}
+
+export interface CloudLearnerData extends CloudDirectory {
+  /** profile id -> saved progress from the owning account */
+  progress: Record<string, ProgressState>;
+  /** profile id -> Appendix C checklist ticks from the owning account */
+  checklists: Record<string, Record<string, "yes" | "no">>;
+}
+
+/**
+ * Directory plus each learner's progress and Appendix C checklist, for
+ * cross-account reporting (compliance records). Rows from the profile's
+ * owning account win when several accounts hold a copy of the same key.
+ */
+export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> {
+  if (!supabase) return null;
+  const [dir, progRes, checkRes] = await Promise.all([
+    fetchCloudDirectory(),
+    supabase.from("app_state").select("user_id,key,value").like("key", "itss.progress.%"),
+    supabase.from("app_state").select("user_id,key,value").like("key", "itss.checklist.%"),
+  ]);
+  if (!dir) return null;
+
+  const pick = <T,>(
+    rows: { user_id: string; key: string; value: string }[] | null,
+    prefix: string
+  ): Record<string, T> => {
+    const out: Record<string, T> = {};
+    for (const row of rows ?? []) {
+      const pid = row.key.slice(prefix.length);
+      // the owning account's copy wins; otherwise first row seen
+      if (pid in out && dir.owners[pid] !== row.user_id) continue;
+      try {
+        out[pid] = JSON.parse(row.value) as T;
+      } catch {
+        /* ignore malformed rows */
+      }
+    }
+    return out;
+  };
+
+  return {
+    ...dir,
+    progress: pick<ProgressState>(progRes.error ? null : progRes.data, "itss.progress."),
+    checklists: pick<Record<string, "yes" | "no">>(
+      checkRes.error ? null : checkRes.data,
+      "itss.checklist."
+    ),
+  };
 }
 
 /** Read a profile's saved progress (quiz/exercise scores) from its owning

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, ProgressState, Route } from "../types";
 import { isStaff } from "../types";
@@ -21,6 +21,8 @@ import { attendanceRegisterCount, attendanceSignedCount } from "../lib/gamificat
 import { downloadIcs, outlookEventLink, parseSessionDates } from "../lib/integrations";
 import type { IcsEvent } from "../lib/integrations";
 import { openCertificate, openStatementOfResults } from "../lib/certificates";
+import { fetchCloudLearnerData, remoteOnlyProfiles, type CloudLearnerData } from "../lib/directory";
+import { supabase } from "../lib/supabase";
 import { CHECKLIST_TOTAL } from "./Checklist";
 import { Avatar } from "../components/Avatar";
 
@@ -115,11 +117,14 @@ interface ComplianceRecord {
 function complianceFor(
   p: Profile,
   outcomes: Record<string, Record<string, { status: string }>>,
-  reviews: Record<string, Record<string, { status: string }>>
+  reviews: Record<string, Record<string, { status: string }>>,
+  /** data from the owning cloud account — used for learners who sign in on their own devices */
+  cloud?: CloudLearnerData
 ): ComplianceRecord {
-  const progress = loadProgress(p.id);
+  const progress = cloud?.progress[p.id] ?? loadProgress(p.id);
   const s = overallStats(progress);
-  const ticks = loadChecklistTicks(p.id);
+  const ticks = cloud?.checklists[p.id] ?? loadChecklistTicks(p.id);
+  const docs = cloud?.poe[p.id] ?? loadPoeDocs(p.id);
   const myReviews = Object.values(reviews[p.id] ?? {});
   const myOutcomes = Object.values(outcomes[p.id] ?? {});
   return {
@@ -127,7 +132,7 @@ function complianceFor(
     enrolmentSigned: !!p.enrolment?.signature && !!p.enrolment?.signedDate,
     signatureOnFile: !!p.signatureImage,
     checklistDone: Object.values(ticks).filter((t) => t === "yes").length,
-    poeDone: poeItemCount(loadPoeDocs(p.id)),
+    poeDone: poeItemCount(docs),
     poeCompetent: myReviews.filter((r) => r.status === "competent").length,
     poeNyc: myReviews.filter((r) => r.status === "nyc").length,
     attendanceSigned: attendanceSignedCount(p.id),
@@ -181,12 +186,34 @@ export function CompliancePage({
   const learners = profiles.filter((p) => p.role === "Learner");
   const registers = attendanceRegisterCount();
 
-  // learners see their own record; staff see every learner
-  const records = useMemo(
-    () => (staff ? learners : [profile]).map((p) => complianceFor(p, outcomes, reviews)),
+  // learners who sign in with their own accounts live in the cloud, not in
+  // this device's local profile list — staff pull them in for reporting
+  const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
+  useEffect(() => {
+    if (!staff) return;
+    let alive = true;
+    void fetchCloudLearnerData().then((d) => {
+      if (alive && d) setCloud(d);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [staff]);
+
+  // learners see their own record; staff see every learner (local + cloud)
+  const records = useMemo(() => {
+    if (!staff) return [complianceFor(profile, outcomes, reviews)];
+    const remoteLearners = remoteOnlyProfiles(profiles, cloud?.profiles ?? []).filter(
+      (p) => p.role === "Learner"
+    );
+    return [
+      ...learners.map((p) => complianceFor(p, outcomes, reviews)),
+      ...remoteLearners.map((p) => complianceFor(p, outcomes, reviews, cloud ?? undefined)),
+    ].sort((a, b) =>
+      a.profile.name.localeCompare(b.profile.name, undefined, { sensitivity: "base" })
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [staff, profile.id, outcomes, profiles.length]
-  );
+  }, [staff, profile.id, outcomes, profiles.length, cloud]);
 
   const deadlines = useMemo(() => buildDeadlines(progress), [progress]);
   const overdue = deadlines.filter((d) => d.status === "overdue").length;
@@ -346,7 +373,9 @@ export function CompliancePage({
       </h2>
       <div className="card" style={{ overflowX: "auto" }}>
         {records.length === 0 ? (
-          <p className="mini-note">No learners enrolled yet.</p>
+          <p className="mini-note">
+            {staff && supabase && !cloud ? "Loading learners from the cloud…" : "No learners enrolled yet."}
+          </p>
         ) : (
           <table className="data compliance-table">
             <thead>
