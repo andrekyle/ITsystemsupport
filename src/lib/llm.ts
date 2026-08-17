@@ -14,6 +14,10 @@ export interface ConceptForReview {
 export interface SemanticReview {
   credited: string[];
   reason: string;
+  /** true when the endpoint replied at all (deployed + reachable) */
+  ran: boolean;
+  /** Groq/config/timeout error name if the endpoint returned one */
+  error?: string;
 }
 
 const REVIEW_TIMEOUT_MS = 7000;
@@ -22,7 +26,8 @@ export async function requestSemanticReview(
   answer: string,
   concepts: ConceptForReview[]
 ): Promise<SemanticReview> {
-  if (!answer.trim() || concepts.length === 0) return { credited: [], reason: "" };
+  if (!answer.trim() || concepts.length === 0)
+    return { credited: [], reason: "", ran: false };
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), REVIEW_TIMEOUT_MS);
   try {
@@ -32,14 +37,18 @@ export async function requestSemanticReview(
       body: JSON.stringify({ answer, concepts }),
       signal: controller.signal,
     });
-    if (!r.ok) return { credited: [], reason: "" };
-    const data = (await r.json()) as SemanticReview;
+    if (!r.ok) return { credited: [], reason: "", ran: false, error: `http_${r.status}` };
+    const data = (await r.json()) as SemanticReview & { error?: string };
     return {
-      credited: Array.isArray(data.credited) ? data.credited.filter((v) => typeof v === "string") : [],
+      credited: Array.isArray(data.credited)
+        ? data.credited.filter((v) => typeof v === "string")
+        : [],
       reason: typeof data.reason === "string" ? data.reason : "",
+      ran: true,
+      error: typeof data.error === "string" ? data.error : undefined,
     };
   } catch {
-    return { credited: [], reason: "" };
+    return { credited: [], reason: "", ran: false, error: "network" };
   } finally {
     clearTimeout(t);
   }

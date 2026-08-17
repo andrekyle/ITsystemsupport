@@ -794,6 +794,11 @@ function ExerciseQuestion({
   const [extras, setExtras] = useState<Set<number>>(new Set());
   const [reviewing, setReviewing] = useState(false);
   const [reviewedText, setReviewedText] = useState<string | null>(null);
+  const [reviewStatus, setReviewStatus] = useState<
+    | { kind: "idle" }
+    | { kind: "ran"; promoted: number; reason: string }
+    | { kind: "unavailable"; error?: string }
+  >({ kind: "idle" });
 
   // Recompute the effective score/feedback using both the deterministic
   // marker and any LLM promotions. The `ok` flag reflects the merged view.
@@ -840,19 +845,22 @@ function ExerciseQuestion({
       if (!alive) return;
       setReviewing(false);
       setReviewedText(val);
-      if (res.credited.length === 0) return;
+      if (!res.ran) {
+        setReviewStatus({ kind: "unavailable", error: res.error });
+        return;
+      }
       const promoted = new Set<number>(extras);
-      let gained = false;
+      let gained = 0;
       for (const id of res.credited) {
         const gi = Number(id.replace(/^c/, ""));
         if (!Number.isNaN(gi) && !promoted.has(gi)) {
           promoted.add(gi);
-          gained = true;
+          gained++;
         }
       }
-      if (gained) {
+      setReviewStatus({ kind: "ran", promoted: gained, reason: res.reason });
+      if (gained > 0) {
         setExtras(promoted);
-        // If the promotion took the learner over the pass line, persist the OK.
         const rNow = scoreAnswer(val, check, promoted);
         if (rNow.ok) onSave(val, true);
       }
@@ -884,6 +892,7 @@ function ExerciseQuestion({
             if (result) setResult(null);
             if (extras.size) setExtras(new Set());
             if (reviewedText) setReviewedText(null);
+            if (reviewStatus.kind !== "idle") setReviewStatus({ kind: "idle" });
           }}
           onBlur={() => {
             if (!ok) onSave(val, false);
@@ -899,6 +908,7 @@ function ExerciseQuestion({
                 setResult(null);
                 setExtras(new Set());
                 setReviewedText(null);
+                setReviewStatus({ kind: "idle" });
               }}
             >
               <Icon name="design" size={15} />
@@ -912,6 +922,7 @@ function ExerciseQuestion({
                 setResult(r);
                 setExtras(new Set());
                 setReviewedText(null);
+                setReviewStatus({ kind: "idle" });
                 onSave(val, r.ok);
               }}
             >
@@ -931,6 +942,12 @@ function ExerciseQuestion({
                 ? `Answer too short — you wrote ${effectiveResult.words} word${effectiveResult.words === 1 ? "" : "s"}. Please explain your answer in your own words — a minimum of ${effectiveResult.minWords} words is required before any marks can be awarded.`
                 : `Not quite yet — your answer covers ${effectiveResult.matched} of ${check.concepts.length} key ideas (${effectiveResult.marks}/${effectiveResult.maxMarks} marks, 2 marks per point). Each idea needs a ≥${MIN_EXPLANATION_WORDS}-word explanation that mentions the concept or a clear synonym. Revisit the lesson and try again.`}
               {reviewing && " Checking for meaning…"}
+              {!reviewing && reviewStatus.kind === "ran" && reviewStatus.promoted === 0 && (
+                <> (Meaning check ran — no additional marks awarded.)</>
+              )}
+              {!reviewing && reviewStatus.kind === "unavailable" && (
+                <> (Meaning check unavailable{reviewStatus.error ? ` — ${reviewStatus.error}` : ""}.)</>
+              )}
             </span>
           )}
         </div>
