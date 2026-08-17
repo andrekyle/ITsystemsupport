@@ -1639,6 +1639,43 @@ export function unitCompletion(state: ProgressState, us: string): number {
   return done / UNIT_ACTIVITIES.length;
 }
 
+/**
+ * Like {@link unitCompletion} but also credits activities that have real
+ * supporting evidence even when the learner never ticked the checkbox:
+ *  • "Formative Assessment" — done if any exercise / question session has
+ *     been answered (best > 0).
+ *  • "Summative Assessment" — done if a quiz has been taken with any score.
+ *  • "POE Evidence" — done if any POE document has been uploaded for this
+ *     unit standard.
+ *  • "Lesson & Training Aids" — only counted when explicitly flagged.
+ * Use this for staff-side progress views so a learner who has done all the
+ * marked work but not clicked "Mark complete" no longer reads as 0%.
+ */
+export function unitProgress(
+  state: ProgressState,
+  us: string,
+  poe: Record<string, PoeDoc> = {}
+): number {
+  const p = state.units[us];
+  const activities = p?.activities ?? {};
+  const quizzes = p?.quizzes ?? {};
+  const quiz = p?.quiz;
+  const exercises = p?.exercises ?? {};
+  const anyQuizAttempted =
+    !!(quiz && quiz.total) ||
+    Object.values(quizzes).some((q) => q.total > 0);
+  const anyExerciseAttempted = Object.values(exercises).some((e) => e.total > 0);
+  const anyPoeForUnit = Object.keys(poe).some((k) => k.startsWith(`${us}__`));
+  const done = UNIT_ACTIVITIES.filter((a) => {
+    if (activities[a]) return true;
+    if (a === "Summative Assessment" && anyQuizAttempted) return true;
+    if (a === "Formative Assessment" && anyExerciseAttempted) return true;
+    if (a === "POE Evidence" && anyPoeForUnit) return true;
+    return false;
+  }).length;
+  return done / UNIT_ACTIVITIES.length;
+}
+
 export function unitStatus(state: ProgressState, us: string): "not-started" | "in-progress" | "completed" {
   const c = unitCompletion(state, us);
   if (c === 0) return "not-started";

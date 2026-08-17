@@ -16,6 +16,7 @@ import {
   loadProgress,
   poeItemCount,
   unitCompletion,
+  unitProgress,
   updateProfile,
   useOutcomes,
   usePoe,
@@ -2317,6 +2318,7 @@ function StudentDetail({
               remote={remote}
               owner={owner}
               cloudProfileId={cloudProfileId}
+              cloudDocs={cloudDocs}
             />
           )}
           <h2 className="section-title">
@@ -2410,6 +2412,7 @@ function OutcomesPanel({
   remote,
   owner,
   cloudProfileId,
+  cloudDocs,
 }: {
   student: Profile;
   viewer: Profile;
@@ -2418,6 +2421,8 @@ function OutcomesPanel({
   owner?: string;
   /** identity-matched profile id in the owner's cloud account */
   cloudProfileId?: string;
+  /** POE docs for this learner from the cloud directory (staff-side view) */
+  cloudDocs?: Record<string, PoeDoc>;
 }) {
   const { outcomes, setOutcome, clearOutcome } = useOutcomes();
   const [progress, setProgress] = useState<ProgressState>(() =>
@@ -2435,6 +2440,8 @@ function OutcomesPanel({
       alive = false;
     };
   }, [student.id, remote, owner, cloudProfileId]);
+  // POE docs — cloud copy for remote students, local for people on this device.
+  const poe = remote ? (cloudDocs ?? {}) : loadPoeDocs(student.id);
   const forLearner = outcomes[student.id] ?? {};
   const recorded = Object.keys(forLearner).length;
   const competent = Object.values(forLearner).filter((o) => o.status === "C").length;
@@ -2466,7 +2473,7 @@ function OutcomesPanel({
           <tbody>
             {MODULES.flatMap((m) => m.units).map((u) => {
               const o = forLearner[u.us];
-              const pct = Math.round(unitCompletion(progress, u.us) * 100);
+              const pct = Math.round(unitProgress(progress, u.us, poe) * 100);
               return (
                 <tr key={u.us}>
                   <td>
