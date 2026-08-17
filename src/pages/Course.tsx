@@ -643,7 +643,7 @@ function MarkedAnswer({ text, check, ok }: { text: string; check: ExerciseCheck;
           const perClause = attributeGroups(clauses, groupsHere);
           const rest = groupsHere.length - perClause.reduce((t, g) => t + g.length, 0);
           return (
-            <span key={i}>
+            <span key={i} className="exq-seg">
               {clauses.map((c, ci) => (
                 <span key={ci}>
                   {c}
@@ -659,7 +659,7 @@ function MarkedAnswer({ text, check, ok }: { text: string; check: ExerciseCheck;
           );
         }
         return (
-          <span key={i}>
+          <span key={i} className="exq-seg">
             {seg}
             {gis.map((_, t) => (
               <DoubleTick key={t} />

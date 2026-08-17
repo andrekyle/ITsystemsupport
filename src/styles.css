@@ -4663,6 +4663,14 @@ a.plan-ppt:hover {
   white-space: pre-wrap;
 }
 
+.exq-marked .exq-seg {
+  display: block;
+  margin-bottom: 2px;
+}
+.exq-marked .exq-seg:last-child {
+  margin-bottom: 0;
+}
+
 .exq-marked.ok {
   border-color: var(--green);
 }
