@@ -3097,6 +3097,24 @@ export const CONTENT: Record<string, UnitContent> = {
       projectChecklist: [{ no: "4", name: "10135 A" }],
     },
 
+    selfAssessment: {
+      intro: [
+        "You are now ready to go through a check list. Be honest with yourself.",
+        "Tick the box with either a \u221A or an X to indicate your response.",
+      ],
+      items: [
+        "I am able to demonstrate an understanding of criteria for working as a member of a team.",
+        "I am able to explain reasons why working autonomously and collaborating with other team members are important.",
+        "I am able to contribute to building relationships between team members and stakeholders.",
+        "I am able to make a positive contribution to team coherence, image and spirit.",
+        "I am able to explain the importance of respect for personal, ethical, religious and cultural differences to enhance interaction between team members.",
+      ],
+      outro: [
+        "You must think about any point you could not tick. Write this down as a goal.",
+        "Decide on a plan of action to achieve these goals. Regularly review these goals.",
+      ],
+    },
+
     quiz: [],
     quizzes: [
       {
