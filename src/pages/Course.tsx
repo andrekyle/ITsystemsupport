@@ -3104,8 +3104,7 @@ export function UnitPage({
                 <Icon name="exercise" size={17} />
                 <span className="ex-title">{ex.title}</span>
                 {hasChecks && (
-                  <span className="ex-status marks" title={`${exTotalMarks} marks available in total`}>
-                    <Icon name="clipboard" size={13} />
+                  <span className="ex-marks-inline" title={`${exTotalMarks} marks available in total`}>
                     <span className="ex-full">Marks available: {exTotalMarks}</span>
                     <span className="ex-short">/{exTotalMarks}</span>
                   </span>

@@ -4702,6 +4702,24 @@ a.plan-ppt:hover {
   white-space: nowrap;
 }
 
+.ex-marks-inline {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.ex-marks-inline .ex-short { display: none; }
+.saqa-details summary .ex-marks-inline ~ .ex-status {
+  margin-left: 8px;
+}
+@media (max-width: 760px) {
+  .ex-marks-inline .ex-full { display: none; }
+  .ex-marks-inline .ex-short { display: inline; }
+}
+
 .ex-status.done {
   color: var(--green);
   background: var(--green-bg);
