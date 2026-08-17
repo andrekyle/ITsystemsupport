@@ -212,7 +212,36 @@ function StudentRegistrationForm({
 
   function print() {
     save();
-    setTimeout(() => window.print(), 60);
+    // Clone the two .srf-page elements into a temporary print container
+    // appended to <body>. This isolates the form from the app shell's
+    // flex/overflow layout, which was causing blank print output.
+    const pages = Array.from(document.querySelectorAll<HTMLElement>(".srf-page"));
+    if (pages.length === 0) {
+      setTimeout(() => window.print(), 60);
+      return;
+    }
+    const holder = document.createElement("div");
+    holder.className = "srf-print-holder";
+    pages.forEach((p) => {
+      const clone = p.cloneNode(true) as HTMLElement;
+      // Neutralise any inline styles that may hide it
+      clone.style.display = "block";
+      clone.style.visibility = "visible";
+      holder.appendChild(clone);
+    });
+    document.body.appendChild(holder);
+    document.body.classList.add("srf-printing");
+    const cleanup = () => {
+      document.body.classList.remove("srf-printing");
+      if (holder.parentNode) holder.parentNode.removeChild(holder);
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+    setTimeout(() => {
+      window.print();
+      // Fallback cleanup for browsers that don't fire afterprint reliably
+      setTimeout(cleanup, 1000);
+    }, 80);
   }
 
   return (

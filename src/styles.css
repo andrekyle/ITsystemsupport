@@ -2527,14 +2527,24 @@ textarea:focus {
 }
 
 /* Print output */
+.srf-print-holder { display: none; }
 @media print {
-  /* Neutralise the app shell: remove flex/scroll/height so the whole
-     form flows onto the page instead of being clipped to the viewport. */
   html, body {
     height: auto !important;
     overflow: visible !important;
     background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
+  /* When the Forms page has cloned itself into .srf-print-holder we hide
+     the whole app shell so ONLY the cloned form prints. */
+  body.srf-printing > *:not(.srf-print-holder) { display: none !important; }
+  body.srf-printing .srf-print-holder {
+    display: block !important;
+    background: #ffffff !important;
+    color: #000 !important;
+  }
+  /* Legacy path (no holder) — unshackle the shell so the form still prints. */
   .app, .body, .content, .content-inner, .card, .srf-wrap {
     display: block !important;
     height: auto !important;
@@ -2548,7 +2558,7 @@ textarea:focus {
     border: 0 !important;
     flex: none !important;
   }
-  .sidebar, .header, .no-print { display: none !important; }
+  .sidebar, .header, .no-print, .srf-actions { display: none !important; }
   .srf-page {
     border: 0 !important;
     padding: 10mm 12mm !important;
@@ -2560,6 +2570,11 @@ textarea:focus {
     overflow: visible !important;
     break-inside: auto;
     page-break-inside: auto;
+  }
+  /* Every cloned .srf-page after the first starts on a new sheet. */
+  .srf-print-holder .srf-page + .srf-page {
+    break-before: page;
+    page-break-before: always;
   }
   .srf-page * {
     -webkit-print-color-adjust: exact;
