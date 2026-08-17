@@ -728,6 +728,39 @@ function MarkedAnswer({
   const fullCoverage = credited.length >= check.concepts.length;
   const segments = (text.match(/[^.!?;\n]+[.!?;\n]*\s*/g) ?? [text]).filter((s) => s.trim());
   const perSeg = attributeGroups(segments, credited);
+  // Any concept that couldn't be attributed to a segment by keyword (e.g. an
+  // LLM promotion via synonym / paraphrase) gets pinned to the segment with
+  // the strongest semantic overlap so its ticks appear inline after the
+  // relevant sentence — never as an orphan pair on a new line.
+  {
+    const attributed = new Set<number>();
+    perSeg.forEach((gis) => gis.forEach((gi) => attributed.add(gi)));
+    const unattributed: number[] = [];
+    for (let localGi = 0; localGi < credited.length; localGi++) {
+      if (!attributed.has(localGi)) unattributed.push(localGi);
+    }
+    if (unattributed.length > 0 && segments.length > 0) {
+      const segStems = segments.map((s) => contentStems(s));
+      for (const localGi of unattributed) {
+        const group = credited[localGi];
+        const lessonLine = check.answer.find((a) => {
+          const at = answerTokens(a);
+          return group.some((p) => phraseMatches(p, at));
+        });
+        const target = contentStems(`${group.join(" ")} ${lessonLine ?? ""}`);
+        let bestSeg = 0;
+        let bestOverlap = -1;
+        for (let si = 0; si < segments.length; si++) {
+          const overlap = stemOverlap(segStems[si], target);
+          if (overlap > bestOverlap) {
+            bestOverlap = overlap;
+            bestSeg = si;
+          }
+        }
+        perSeg[bestSeg] = [...perSeg[bestSeg], localGi];
+      }
+    }
+  }
   const leftover = credited.length - perSeg.reduce((t, g) => t + g.length, 0);
   return (
     <div className={`exq-marked${ok ? " ok" : ""}`}>
