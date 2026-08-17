@@ -2281,164 +2281,267 @@ textarea:focus {
 .quiz-option.right-pick .quiz-mark { color: var(--green); }
 .quiz-option.wrong-pick .quiz-mark { color: var(--red); }
 
-/* ============ Registration Form (paper-form replacement) ============ */
-.reg-form-wrap {
+/* ============ Student Registration Form (paper look) ============ */
+.srf-wrap {
   padding: 18px;
+  background: var(--surface);
 }
-.reg-form-actions {
+.srf-actions {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 14px;
   flex-wrap: wrap;
 }
-.reg-form {
+/* The page itself matches the paper form: cream background, black hairlines,
+   sans-serif type. Colours are hard-coded (not theme-linked) so it looks the
+   same in light and dark modes and prints identically. */
+.srf-page {
+  --srf-bg: #f7ecd8;           /* cream paper */
+  --srf-line: #000;            /* black hairlines */
+  --srf-strip: #f0a55b;        /* orange address strip */
+  --srf-qcto-dark: #143a5e;
+  --srf-seta-red: #a02b3d;
+  background: var(--srf-bg);
+  color: #000;
+  padding: 18px 22px 22px;
+  font-family: Arial, "Helvetica Neue", sans-serif;
+  font-size: 11px;
+  line-height: 1.25;
   border: 1px solid var(--border);
-  background: var(--surface);
-  padding: 18px 22px;
-  color: var(--ink);
-  font-size: 12.5px;
-  line-height: 1.4;
 }
-.reg-header {
+.srf-mast {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid var(--ink-2);
-  margin-bottom: 16px;
+  justify-content: space-between;
+  margin-bottom: 10px;
 }
-.reg-logo {
-  font-weight: 700;
-  letter-spacing: 0.25em;
-  color: var(--azure);
-  padding: 4px 10px;
-  border: 1px solid var(--azure);
-  border-radius: 3px;
-}
-.reg-header h2 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--ink);
-  flex: 1;
-  text-align: center;
-}
-.reg-fieldset {
-  border: 1px solid var(--border);
-  padding: 8px 12px 10px;
-  margin: 0 0 12px;
-}
-.reg-fieldset legend {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--ink-2);
-  padding: 0 6px;
-}
-.reg-row-2,
-.reg-row-3 {
-  display: grid;
-  gap: 8px 12px;
-  margin-bottom: 6px;
-}
-.reg-row-2 { grid-template-columns: 1fr 1fr; }
-.reg-row-3 { grid-template-columns: 1fr 1fr 1fr; }
-
-.reg-field {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.reg-field > span {
-  font-size: 10.5px;
-  font-weight: 500;
-  color: var(--ink-3);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.reg-field input,
-.reg-field select {
-  width: 100%;
-  padding: 4px 6px;
-  border: 0;
-  border-bottom: 1px solid var(--border);
-  background: transparent;
-  color: var(--ink);
-  font-size: 13px;
-  font-family: inherit;
-  border-radius: 0;
-}
-.reg-field input:focus,
-.reg-field select:focus {
-  outline: none;
-  border-bottom-color: var(--azure);
-}
-.reg-checks {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px 12px;
-}
-.reg-check {
+/* Erudite wordmark rendered from text/glyphs — swap for a real logo image
+   later if desired without touching layout. */
+.srf-logo {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
+  gap: 4px;
+  font-family: "Segoe UI", "Trebuchet MS", sans-serif;
 }
-.reg-check input {
-  margin: 0;
-}
-.reg-declaration {
-  font-size: 11.5px;
-  color: var(--ink-2);
-  line-height: 1.55;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  margin: 14px 0;
-}
-.reg-footer {
-  display: flex;
+.srf-logo-mark {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  gap: 22px;
-  margin-top: 18px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
+  width: 34px;
+  height: 34px;
+  background: #d8a24a;
+  color: #fff;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 22px;
+  font-style: italic;
+  letter-spacing: -0.05em;
+}
+.srf-logo-word {
+  font-size: 20px;
+  font-weight: 300;
+  color: #4a3417;
+  letter-spacing: 0.05em;
+}
+.srf-mast-title {
+  flex: 1;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #000;
+  border-bottom: 1.5px solid var(--srf-line);
+  padding-bottom: 4px;
+  margin-left: 20px;
+}
+.srf-section-label {
+  margin-top: 10px;
+  font-weight: 700;
   font-size: 11px;
-  letter-spacing: 0.15em;
-  color: var(--ink-3);
+  color: #000;
+}
+.srf-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 3px 0;
+}
+.srf-table td {
+  border: 1px solid var(--srf-line);
+  padding: 2px 4px;
+  vertical-align: middle;
+  font-size: 11px;
+}
+.srf-label {
+  background: transparent;
+  font-weight: 700;
+  white-space: nowrap;
+  font-size: 10.5px;
+}
+.srf-cell {
+  padding: 0 !important;
+}
+.srf-input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 3px 4px;
+  font: inherit;
+  color: #000;
+  outline: none;
+}
+.srf-input:focus {
+  background: rgba(255, 255, 255, 0.6);
+}
+.srf-input-narrow { width: 60px; display: inline-block; }
+.srf-input-inline {
+  display: inline-block;
+  width: auto;
+  min-width: 90px;
+  border-bottom: 1px solid var(--srf-line);
+  padding: 1px 4px;
+}
+.srf-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  padding: 3px 4px !important;
+}
+.srf-inline-gap { flex: 1; }
+.srf-inline-label {
+  font-weight: 700;
+  font-size: 10.5px;
+}
+.srf-tick {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+.srf-tick input {
+  margin: 0;
+  accent-color: #000;
+  width: 12px;
+  height: 12px;
 }
 
-/* Print styling — matches the paper form on A4. Hides sidebar/header. */
+/* Ethnic-group matrix (checkbox grid) */
+.srf-matrix {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 4px 0;
+}
+.srf-matrix th,
+.srf-matrix td {
+  border: 1px solid var(--srf-line);
+  padding: 3px 4px;
+  font-size: 10px;
+  vertical-align: middle;
+}
+.srf-matrix thead th {
+  background: transparent;
+  color: #000;
+  font-weight: 700;
+  text-align: center;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  min-height: 60px;
+}
+.srf-matrix tbody th {
+  text-align: left;
+  font-weight: 700;
+  background: transparent;
+  color: #000;
+}
+.srf-matrix td { text-align: center; }
+.srf-matrix input[type="checkbox"] {
+  accent-color: #000;
+}
+
+.srf-check-grid td { border: none; padding: 3px 6px; }
+
+/* Address strip (orange divider between education and employment) */
+.srf-strip {
+  background: var(--srf-strip);
+  color: #fff;
+  padding: 7px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  margin: 8px 0;
+}
+
+/* Declaration */
+.srf-decl {
+  font-size: 10.5px;
+  line-height: 1.4;
+  margin: 8px 0 6px;
+}
+.srf-decl p { margin: 4px 0; }
+.srf-sig-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+.srf-sig-line {
+  border-top: 1px solid var(--srf-line);
+  margin-top: 2px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  padding-top: 2px;
+}
+
+/* Footer with QCTO / W&RSETA badges */
+.srf-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--srf-line);
+}
+.srf-logo.srf-mini .srf-logo-mark { width: 26px; height: 26px; font-size: 16px; }
+.srf-logo.srf-mini .srf-logo-word { font-size: 14px; }
+.srf-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 12px;
+  color: #fff;
+}
+.srf-qcto { background: var(--srf-qcto-dark); }
+.srf-seta { background: var(--srf-seta-red); }
+
+/* Print output — every colour becomes ink; layout unchanged. */
 @media print {
-  body, .content, .content-inner, .card, .reg-form-wrap {
-    background: white !important;
-    color: black !important;
+  body, .content, .content-inner, .card, .srf-wrap {
+    background: #fff !important;
     padding: 0 !important;
     margin: 0 !important;
     box-shadow: none !important;
+    border: 0 !important;
   }
   .sidebar, .header, .no-print { display: none !important; }
-  .reg-form {
-    border: none;
-    padding: 12mm 15mm;
-    font-size: 11px;
+  .srf-page {
+    border: 0 !important;
+    padding: 10mm 12mm !important;
+    background: var(--srf-bg) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  .reg-form input, .reg-form select {
-    color: black !important;
-    border-bottom-color: black !important;
-    background: transparent !important;
+  .srf-strip, .srf-qcto, .srf-seta, .srf-logo-mark {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  .reg-fieldset {
-    border-color: black !important;
-    break-inside: avoid;
-  }
-  .reg-header { border-bottom-color: black !important; }
-  .reg-logo { color: black !important; border-color: black !important; }
-  .reg-declaration { background: transparent !important; border-color: black !important; }
-  .reg-footer { border-top-color: black !important; }
 }
 
 .attempt-row .col-left {
