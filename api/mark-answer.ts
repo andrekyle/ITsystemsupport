@@ -141,7 +141,13 @@ export default async function handler(req: Request): Promise<Response> {
 
     if (!upstream) {
       return json(
-        { credited: [], reason: "", error: `llm_${lastStatus}`, detail: lastBody },
+        {
+          credited: [],
+          reason: "",
+          error: `llm_${lastStatus}`,
+          detail: lastBody,
+          tried: MODEL_CANDIDATES,
+        },
         200
       );
     }
