@@ -632,9 +632,10 @@ function attributeTicks(sentences: string[], credited: string[][]): number[] {
 /** The learner's own answer rendered with two green ticks inserted after each
  *  part of the text that earned a key idea's 2 marks. */
 function MarkedAnswer({ text, check, ok }: { text: string; check: ExerciseCheck; ok: boolean }) {
-  const fullTokens = answerTokens(text);
-  // only concept groups the whole answer earned can be credited to a segment
-  const credited = check.concepts.filter((g) => g.some((p) => phraseMatches(p, fullTokens)));
+  // Use the same credit rule as the scorer (keyword/synonym + ≥10-word
+  // sentence) so ticks always match the score at the bottom of the box.
+  const creditedIdx = creditedConceptIndexes(text, check);
+  const credited = creditedIdx.map((gi) => check.concepts[gi]);
   // every key idea earned: nothing is missing, so per-sentence crosses would only mislead
   const fullCoverage = credited.length >= check.concepts.length;
   const segments = (text.match(/[^.!?;\n]+[.!?;\n]*\s*/g) ?? [text]).filter((s) => s.trim());
