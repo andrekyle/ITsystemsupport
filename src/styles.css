@@ -7461,7 +7461,6 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 .chat-bubble {
   position: relative;
-  align-self: flex-start;
   max-width: 70%;
   padding: 8px 12px;
   border-radius: 10px;
@@ -7470,6 +7469,24 @@ table.data th.sortable.sorted { color: var(--ink); }
   font-size: 13.5px;
   font-weight: 350;
   line-height: 1.55;
+}
+.chat-bubble-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  align-self: flex-start;
+  max-width: 100%;
+}
+.chat-bubble-row.mine {
+  align-self: flex-end;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+.chat-bubble-avatar {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-self: flex-end;
+  padding-bottom: 2px;
 }
 .chat-bubble.mine {
   align-self: flex-end;

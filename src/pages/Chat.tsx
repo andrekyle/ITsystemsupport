@@ -142,6 +142,7 @@ export function ChatPage({
               me={profile}
               otherId={openWith}
               other={peopleById.get(openWith)}
+              peopleById={peopleById}
               nameFor={nameFor}
               cloud={cloud}
               superUid={superUid}
@@ -334,6 +335,7 @@ function ChatThread({
   me,
   otherId,
   other,
+  peopleById,
   nameFor,
   cloud,
   superUid,
@@ -342,6 +344,7 @@ function ChatThread({
   me: Profile;
   otherId: string;
   other?: Profile;
+  peopleById: Map<string, Profile>;
   nameFor: (id: string) => string;
   cloud: CloudDirectory | null;
   superUid?: string;
@@ -430,7 +433,14 @@ function ChatThread({
             No messages yet — say hello.
           </p>
         ) : (
-          messages.map((m) => <ChatBubble key={m.id} msg={m} me={me} onEdit={edit} />)
+          messages.map((m) => {
+            // For super-user moderation view of a chat between others, `me`
+            // isn't the sender or the recipient — fall back to the profile
+            // lookup so the correct avatar still shows.
+            const sender =
+              m.byId === me.id ? me : peopleById.get(m.byId) ?? other;
+            return <ChatBubble key={m.id} msg={m} me={me} sender={sender} onEdit={edit} />;
+          })
         )}
       </div>
       <div className="chat-compose">
@@ -463,10 +473,12 @@ function ChatThread({
 function ChatBubble({
   msg,
   me,
+  sender,
   onEdit,
 }: {
   msg: ChatMessage;
   me: Profile;
+  sender?: Profile;
   onEdit: (msgId: string, newBody: string) => Promise<boolean>;
 }) {
   const mine = msg.byId === me.id;
@@ -501,64 +513,79 @@ function ChatBubble({
     if (ok) setEditing(false);
   }
 
+  const avatarProfile: Profile =
+    sender ?? ({ id: msg.byId, name: msg.by, role: msg.role, createdAt: msg.at } as Profile);
+
   return (
-    <div className={`chat-bubble${mine ? " mine" : ""}`}>
-      {!mine && <div className="chat-bubble-by">{msg.by}</div>}
-      {editing ? (
-        <div className="chat-bubble-edit">
-          <textarea
-            ref={textareaRef}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            rows={Math.min(6, Math.max(2, draft.split("\n").length))}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void save();
-              } else if (e.key === "Escape") {
-                e.preventDefault();
-                setEditing(false);
-              }
-            }}
-          />
-          <div className="chat-bubble-edit-actions">
-            <button
-              type="button"
-              className="btn ghost sm"
-              onClick={() => setEditing(false)}
-              disabled={saving}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="btn ghost sm"
-              onClick={() => void save()}
-              disabled={saving || !draft.trim() || draft.trim() === msg.body}
-            >
-              <Icon name="checkCircle" size={14} /> Save
-            </button>
+    <div className={`chat-bubble-row${mine ? " mine" : ""}`}>
+      {!mine && (
+        <span className="chat-bubble-avatar">
+          <Avatar profile={avatarProfile} size={28} />
+        </span>
+      )}
+      <div className={`chat-bubble${mine ? " mine" : ""}`}>
+        {!mine && <div className="chat-bubble-by">{msg.by}</div>}
+        {editing ? (
+          <div className="chat-bubble-edit">
+            <textarea
+              ref={textareaRef}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              rows={Math.min(6, Math.max(2, draft.split("\n").length))}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void save();
+                } else if (e.key === "Escape") {
+                  e.preventDefault();
+                  setEditing(false);
+                }
+              }}
+            />
+            <div className="chat-bubble-edit-actions">
+              <button
+                type="button"
+                className="btn ghost sm"
+                onClick={() => setEditing(false)}
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn ghost sm"
+                onClick={() => void save()}
+                disabled={saving || !draft.trim() || draft.trim() === msg.body}
+              >
+                <Icon name="checkCircle" size={14} /> Save
+              </button>
+            </div>
           </div>
-        </div>
-      ) : (
-        <>
-          <div className="chat-bubble-body">{msg.body}</div>
-          <div className="chat-bubble-at mini-note">
-            {fmtWhen(msg.at)}
-            {msg.editedAt && <span title={`Edited ${fmtWhen(msg.editedAt)}`}> · edited</span>}
-          </div>
-          {mine && (
-            <button
-              type="button"
-              className="chat-bubble-edit-btn"
-              title="Edit this message"
-              aria-label="Edit this message"
-              onClick={() => setEditing(true)}
-            >
-              <Icon name="design" size={12} />
-            </button>
-          )}
-        </>
+        ) : (
+          <>
+            <div className="chat-bubble-body">{msg.body}</div>
+            <div className="chat-bubble-at mini-note">
+              {fmtWhen(msg.at)}
+              {msg.editedAt && <span title={`Edited ${fmtWhen(msg.editedAt)}`}> · edited</span>}
+            </div>
+            {mine && (
+              <button
+                type="button"
+                className="chat-bubble-edit-btn"
+                title="Edit this message"
+                aria-label="Edit this message"
+                onClick={() => setEditing(true)}
+              >
+                <Icon name="design" size={12} />
+              </button>
+            )}
+          </>
+        )}
+      </div>
+      {mine && (
+        <span className="chat-bubble-avatar">
+          <Avatar profile={avatarProfile} size={28} />
+        </span>
       )}
     </div>
   );
