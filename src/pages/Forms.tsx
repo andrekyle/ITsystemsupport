@@ -218,8 +218,7 @@ function StudentRegistrationForm({
       return;
     }
 
-    // Extract only .srf-* rules from every stylesheet so we ship a small,
-    // self-contained document that can't be affected by the app shell CSS.
+    // Extract only .srf-* rules so we ship a small, self-contained document.
     const extractedRules: string[] = [];
     for (const sheet of Array.from(document.styleSheets)) {
       let rules: CSSRuleList | null = null;
@@ -231,14 +230,11 @@ function StudentRegistrationForm({
       if (!rules) continue;
       for (const rule of Array.from(rules)) {
         const text = rule.cssText || "";
-        if (/\.srf-|\.no-print|@font-face|@page/i.test(text)) {
-          extractedRules.push(text);
-        }
+        if (/\.srf-|@font-face|@page/i.test(text)) extractedRules.push(text);
       }
     }
 
-    // Serialize live input/select/checkbox values into HTML attributes so
-    // they show on the printed page (cloneNode does not copy live .value).
+    // Serialize live input values into HTML attributes.
     const cloneParts: string[] = [];
     pages.forEach((p) => {
       const clone = p.cloneNode(true) as HTMLElement;
@@ -270,10 +266,9 @@ function StudentRegistrationForm({
   html, body {
     margin: 0; padding: 0; background: #ffffff; color: #000;
     font-family: Arial, "Helvetica Neue", sans-serif;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
-  body { padding: 0; }
   ${extractedRules.join("\n")}
-  /* Neutralise anything from the app that could displace the form */
   .srf-page { display: block !important; background: #fff !important; color: #000 !important;
               border: 0 !important; margin: 0 !important; padding: 10mm 12mm !important;
               min-height: 0 !important; height: auto !important; overflow: visible !important;
@@ -288,24 +283,56 @@ function StudentRegistrationForm({
 </style>
 </head><body>
 ${cloneParts.join("\n")}
-<script>
-  window.addEventListener("load", function () {
-    setTimeout(function () {
-      try { window.focus(); window.print(); } catch (e) {}
-      setTimeout(function () { window.close(); }, 500);
-    }, 400);
-  });
-</script>
 </body></html>`;
 
-    const win = window.open("", "_blank", "width=900,height=1100");
-    if (!win) {
-      alert("Please allow pop-ups for this site to print the form.");
-      return;
+    // Render into a hidden same-origin iframe on the current page and print
+    // from the iframe's contentWindow. This avoids popup blockers and any
+    // app-shell CSS interference.
+    let iframe = document.getElementById("srf-print-iframe") as HTMLIFrameElement | null;
+    if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe);
+    iframe = document.createElement("iframe");
+    iframe.id = "srf-print-iframe";
+    iframe.setAttribute("aria-hidden", "true");
+    iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;";
+    document.body.appendChild(iframe);
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!doc) return;
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+    const doPrint = () => {
+      try {
+        iframe!.contentWindow?.focus();
+        iframe!.contentWindow?.print();
+      } catch (e) {
+        // fallback
+      }
+      setTimeout(() => {
+        if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe);
+      }, 1500);
+    };
+
+    // Wait for images (logos) inside the iframe to load before printing.
+    const imgs = Array.from(doc.images);
+    if (imgs.length === 0) {
+      setTimeout(doPrint, 200);
+    } else {
+      let pending = imgs.length;
+      const tick = () => {
+        pending -= 1;
+        if (pending <= 0) setTimeout(doPrint, 100);
+      };
+      imgs.forEach((img) => {
+        if (img.complete) tick();
+        else {
+          img.addEventListener("load", tick);
+          img.addEventListener("error", tick);
+        }
+      });
+      // Hard fallback in case some image never loads.
+      setTimeout(doPrint, 2500);
     }
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
   }
 
   return (
