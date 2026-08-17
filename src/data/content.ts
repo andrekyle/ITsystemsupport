@@ -1076,6 +1076,24 @@ export const CONTENT: Record<string, UnitContent> = {
       projectChecklist: [{ no: "3", name: "8252" }],
     },
 
+    selfAssessment: {
+      intro: [
+        "You are now ready to go through a check list. Be honest with yourself.",
+        "Tick the box with either a \u221A or an X to indicate your response.",
+      ],
+      items: [
+        "I am able to identify and explain different types of reports used in organisations.",
+        "I am able to explain the use of the different types of reports.",
+        "I am able to identify and explain the reasons for handling confidential information, confidentially.",
+        "I am able to explain a range of techniques for compiling reports.",
+        "I am able to explain how the reported information is checked for appropriateness and then distributed according to the intended audience of the report.",
+      ],
+      outro: [
+        "You must think about any point you could not tick. Write this down as a goal.",
+        "Decide on a plan of action to achieve these goals. Regularly review these goals.",
+      ],
+    },
+
     saqa: {
       notice:
         "SOUTH AFRICAN QUALIFICATIONS AUTHORITY — Registered unit standard that has passed the end date. In this record both the pre-2009 NQF Level and the NQF Level are shown; references to NQF Levels are to the pre-2009 levels unless stated otherwise. This unit standard does not replace any other unit standard and is not replaced by any other unit standard.",
