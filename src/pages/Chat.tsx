@@ -3,6 +3,7 @@ import { Icon } from "../icons";
 import type { Profile, Route } from "../types";
 import { isStaff } from "../types";
 import {
+  broadcastChatMessage,
   deleteChatThread,
   useChat,
   useChatThreads,
@@ -12,7 +13,8 @@ import {
 import { fetchCloudDirectory, fetchSuperUserAuthId } from "../lib/directory";
 import type { CloudDirectory } from "../lib/directory";
 import { Avatar } from "../components/Avatar";
-import { ConfirmModal } from "../components/Modal";
+import { AlertModal, ConfirmModal, Modal } from "../components/Modal";
+import { supabase } from "../lib/supabase";
 import { logAudit } from "../lib/audit";
 
 /**
@@ -115,6 +117,45 @@ export function ChatPage({
   );
 
   const [openWith, setOpenWith] = useState<string | null>(null);
+  const [broadcasting, setBroadcasting] = useState(false);
+  const [broadcastResult, setBroadcastResult] = useState<string | null>(null);
+
+  /** Learners the current viewer may broadcast to — must have a Supabase
+   *  auth uid attached (either stamped on their profile or in the owners map)
+   *  so the message can be addressed with RLS. */
+  const broadcastRecipients = useMemo(() => {
+    if (!cloud) return [] as { profileId: string; authUserId: string }[];
+    const out: { profileId: string; authUserId: string }[] = [];
+    for (const p of people) {
+      if (p.role !== "Learner") continue;
+      const authId = p.cloudUserId ?? cloud.owners[p.id];
+      if (!authId) continue;
+      out.push({ profileId: p.id, authUserId: authId });
+    }
+    return out;
+  }, [cloud, people]);
+
+  async function submitBroadcast(body: string): Promise<void> {
+    const sb = supabase;
+    if (!sb) {
+      setBroadcastResult("Cloud not available — cannot broadcast.");
+      return;
+    }
+    const { data } = await sb.auth.getUser();
+    const myAuthId = data.user?.id;
+    if (!myAuthId) {
+      setBroadcastResult("You must be signed in to broadcast.");
+      return;
+    }
+    const n = await broadcastChatMessage(profile, myAuthId, broadcastRecipients, body);
+    logAudit(profile, "qa.post", `Broadcast to ${n} learner${n === 1 ? "" : "s"}`);
+    setBroadcasting(false);
+    setBroadcastResult(
+      n === 0
+        ? "No message was sent — no learners with a cloud sign-in were reachable."
+        : `Message delivered to ${n} learner${n === 1 ? "" : "s"}.`
+    );
+  }
 
   // deep-linkable ?studentId (reused from the shared Route)
   useEffect(() => {
@@ -133,6 +174,19 @@ export function ChatPage({
         {isSuper
           ? "As super user you can see every conversation for moderation and message anyone in the class."
           : "Your facilitator can see every conversation for moderation."}
+        {staff && broadcastRecipients.length > 0 && (
+          <>
+            {" "}
+            <button
+              type="button"
+              className="linklike"
+              onClick={() => setBroadcasting(true)}
+              title={`Send one message to every learner (${broadcastRecipients.length})`}
+            >
+              <Icon name="people" size={13} /> Message all learners ({broadcastRecipients.length})
+            </button>
+          </>
+        )}
       </p>
 
       <div className="chat-layout">
@@ -172,7 +226,68 @@ export function ChatPage({
           )}
         </section>
       </div>
+      {broadcasting && (
+        <BroadcastModal
+          recipientCount={broadcastRecipients.length}
+          onCancel={() => setBroadcasting(false)}
+          onSend={submitBroadcast}
+        />
+      )}
+      {broadcastResult && (
+        <AlertModal message={broadcastResult} onClose={() => setBroadcastResult(null)} />
+      )}
     </div>
+  );
+}
+
+function BroadcastModal({
+  recipientCount,
+  onCancel,
+  onSend,
+}: {
+  recipientCount: number;
+  onCancel: () => void;
+  onSend: (body: string) => Promise<void>;
+}) {
+  const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
+  const canSend = text.trim().length > 0 && !sending;
+  return (
+    <Modal
+      title={`Message all learners (${recipientCount})`}
+      onClose={sending ? () => undefined : onCancel}
+      actions={
+        <>
+          <button className="btn ghost" onClick={onCancel} disabled={sending}>
+            Cancel
+          </button>
+          <button
+            className="btn primary"
+            disabled={!canSend}
+            onClick={async () => {
+              setSending(true);
+              await onSend(text.trim());
+              setSending(false);
+            }}
+          >
+            <Icon name="chevronRight" size={16} /> {sending ? "Sending…" : "Send to all"}
+          </button>
+        </>
+      }
+    >
+      <p style={{ marginTop: 0 }}>
+        The same message is delivered privately to every learner who has signed in with their
+        cloud account. Each learner sees it in their own conversation with you.
+      </p>
+      <textarea
+        rows={5}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Write a message to the class…"
+        style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--ink)", fontFamily: "inherit", fontSize: 13.5, resize: "vertical" }}
+        autoFocus
+      />
+    </Modal>
   );
 }
 

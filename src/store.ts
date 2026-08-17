@@ -916,6 +916,34 @@ export async function deleteChatThread(messageIds: string[]): Promise<boolean> {
   return !error;
 }
 
+/**
+ * Broadcast the same message to a list of recipients — one direct-message row
+ * per recipient, so RLS still privately delivers each copy. Returns the count
+ * of successful deliveries.
+ */
+export async function broadcastChatMessage(
+  sender: Profile,
+  senderAuthId: string,
+  recipients: { profileId: string; authUserId: string }[],
+  body: string
+): Promise<number> {
+  if (!supabase) return 0;
+  const text = body.trim();
+  if (!text) return 0;
+  const rows = recipients.map((r) => ({
+    sender_user_id: senderAuthId,
+    recipient_user_id: r.authUserId,
+    sender_profile_id: sender.id,
+    recipient_profile_id: r.profileId,
+    sender_name: sender.name,
+    sender_role: sender.role,
+    body: text,
+  }));
+  if (rows.length === 0) return 0;
+  const { error } = await supabase.from("chat_messages").insert(rows);
+  return error ? 0 : rows.length;
+}
+
 /** Summary of a single chat thread — for listing conversations in a sidebar. */
 export interface ChatThreadInfo {
   /** grouping key: sorted "profileA~~profileB" so both sides use the same value */
