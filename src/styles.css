@@ -1490,6 +1490,30 @@ textarea:focus {
   border-color: var(--azure) !important;
 }
 
+/* The native <select> popup adopts the OS's colour scheme. In dark mode we
+   need to tell the browser we render dark surfaces so the dropdown list
+   (rendered by the OS/UA) uses matching dark surface + light text. */
+[data-theme="dark"] select,
+[data-theme="dark"] input,
+[data-theme="dark"] textarea {
+  color-scheme: dark;
+}
+[data-theme="light"] select,
+[data-theme="light"] input,
+[data-theme="light"] textarea {
+  color-scheme: light;
+}
+/* Belt-and-braces: the browsers that ignore color-scheme still honour
+   background/color on <option>. */
+[data-theme="dark"] select option {
+  background: #2c2c2c;
+  color: #ffffff;
+}
+[data-theme="light"] select option {
+  background: #ffffff;
+  color: #1a1a1a;
+}
+
 .divider {
   display: flex;
   align-items: center;
