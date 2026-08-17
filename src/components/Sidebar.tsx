@@ -4,6 +4,7 @@ import { isStaff } from "../types";
 import { MODULES } from "../data/course";
 import type { ProgressState } from "../types";
 import { moduleCompletion } from "../store";
+import { openTrackerReport } from "../lib/reports";
 
 // Sentence case: first letter uppercased, subsequent words lowercased, but
 // leave all-uppercase tokens (acronyms like LAN, SAQA, IT) untouched.
@@ -70,7 +71,7 @@ export function Sidebar({ collapsed, route, progress, profile, navigate }: Props
     ...(profile.role === "Super User"
       ? [
           {
-            href: "/reports/learner-tracker-investec-aug-2026.html",
+            action: () => void openTrackerReport(),
             icon: "chart",
             label: "Learner Tracker Report",
           },
@@ -88,13 +89,8 @@ export function Sidebar({ collapsed, route, progress, profile, navigate }: Props
       <div className="sidebar-scroll">
         <div className="side-section">
           {nav.map((n) =>
-            "href" in n ? (
-              <button
-                key={n.href}
-                className="side-item"
-                onClick={() => window.open(n.href, "_blank", "noopener")}
-                title={n.label}
-              >
+            "action" in n ? (
+              <button key={n.label} className="side-item" onClick={n.action} title={n.label}>
                 <span className="ico">
                   <Icon name={n.icon} />
                 </span>
