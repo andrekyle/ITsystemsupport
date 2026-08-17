@@ -25,7 +25,8 @@ export type AuditType =
   | "outcome.set"
   | "attendance.sign"
   | "announce.post"
-  | "qa.post";
+  | "qa.post"
+  | "qa.delete";
 
 export interface AuditEvent {
   id: string;

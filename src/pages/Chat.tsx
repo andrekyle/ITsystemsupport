@@ -3,6 +3,7 @@ import { Icon } from "../icons";
 import type { Profile, Route } from "../types";
 import { isStaff } from "../types";
 import {
+  deleteChatThread,
   useChat,
   useChatThreads,
   type ChatMessage,
@@ -11,6 +12,7 @@ import {
 import { fetchCloudDirectory, fetchSuperUserAuthId } from "../lib/directory";
 import type { CloudDirectory } from "../lib/directory";
 import { Avatar } from "../components/Avatar";
+import { ConfirmModal } from "../components/Modal";
 import { logAudit } from "../lib/audit";
 
 /**
@@ -194,6 +196,8 @@ function ChatSidebar({
   const isSuper = viewer.role === "Super User";
   const [tab, setTab] = useState<"threads" | "people">("threads");
   const [query, setQuery] = useState("");
+  const [deleting, setDeleting] = useState<ChatThreadInfo | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const q = query.trim().toLowerCase();
 
   const threadRows = threads
@@ -254,6 +258,7 @@ function ChatSidebar({
                 isOnline={isOnline}
                 openWith={openWith}
                 onSelect={onSelect}
+                onDelete={isSuper ? () => setDeleting(thread) : undefined}
               />
             ))
           )
@@ -283,6 +288,37 @@ function ChatSidebar({
           ))
         )}
       </div>
+      {deleting && (
+        <ConfirmModal
+          title="Delete this conversation?"
+          message={
+            <>
+              <p>
+                All messages between <strong>{nameFor(deleting.aId)}</strong> and{" "}
+                <strong>{nameFor(deleting.bId)}</strong> will be permanently removed for
+                everyone.
+              </p>
+              <p style={{ marginTop: 8, fontSize: 13, color: "var(--ink-3)" }}>
+                This cannot be undone.
+              </p>
+            </>
+          }
+          confirmLabel={deleteBusy ? "Deleting…" : "Delete conversation"}
+          cancelLabel="Cancel"
+          danger
+          onCancel={() => (deleteBusy ? undefined : setDeleting(null))}
+          onConfirm={async () => {
+            if (deleteBusy) return;
+            setDeleteBusy(true);
+            const ok = await deleteChatThread(deleting.messages.map((m) => m.id));
+            setDeleteBusy(false);
+            if (ok) {
+              logAudit(viewer, "qa.delete", `Deleted chat between ${nameFor(deleting.aId)} and ${nameFor(deleting.bId)}`);
+              setDeleting(null);
+            }
+          }}
+        />
+      )}
     </>
   );
 }
@@ -295,6 +331,7 @@ function ChatThreadRow({
   isOnline,
   openWith,
   onSelect,
+  onDelete,
 }: {
   thread: ChatThreadInfo;
   viewer: Profile;
@@ -303,6 +340,7 @@ function ChatThreadRow({
   isOnline: (p: Profile) => boolean;
   openWith: string | null;
   onSelect: (otherId: string) => void;
+  onDelete?: () => void;
 }) {
   const isSuper = viewer.role === "Super User";
   const involves = thread.aId === viewer.id || thread.bId === viewer.id;
@@ -319,27 +357,43 @@ function ChatThreadRow({
   const otherProfile = people.find((p) => p.id === otherId);
   const otherOnline = otherProfile ? isOnline(otherProfile) : false;
   return (
-    <button
-      className={`chat-row${openWith === otherId ? " active" : ""}${unread ? " has-unread" : ""}`}
-      onClick={() => onSelect(otherId)}
-      title={isSuper && !involves ? "Read-only monitoring view" : undefined}
-    >
-      <span className="chat-row-name">
-        <strong>
-          {involves ? nameFor(otherId) : bothLabel}
-          {involves && otherOnline && (
-            <span className="presence-dot inline" title="Online now" aria-label="Online now" />
-          )}
-        </strong>
-        <span className="mini-note chat-preview">
-          {thread.latest ? `${thread.latest.by === viewer.name ? "You" : thread.latest.by}: ${preview}` : "No messages yet"}
+    <div className="chat-row-wrap">
+      <button
+        className={`chat-row${openWith === otherId ? " active" : ""}${unread ? " has-unread" : ""}`}
+        onClick={() => onSelect(otherId)}
+        title={isSuper && !involves ? "Read-only monitoring view" : undefined}
+      >
+        <span className="chat-row-name">
+          <strong>
+            {involves ? nameFor(otherId) : bothLabel}
+            {involves && otherOnline && (
+              <span className="presence-dot inline" title="Online now" aria-label="Online now" />
+            )}
+          </strong>
+          <span className="mini-note chat-preview">
+            {thread.latest ? `${thread.latest.by === viewer.name ? "You" : thread.latest.by}: ${preview}` : "No messages yet"}
+          </span>
         </span>
-      </span>
-      <span className="chat-row-meta">
-        {unread > 0 && <span className="chat-unread">{unread}</span>}
-        <span className="mini-note">{thread.latest ? fmtWhen(thread.latest.at) : ""}</span>
-      </span>
-    </button>
+        <span className="chat-row-meta">
+          {unread > 0 && <span className="chat-unread">{unread}</span>}
+          <span className="mini-note">{thread.latest ? fmtWhen(thread.latest.at) : ""}</span>
+        </span>
+      </button>
+      {onDelete && (
+        <button
+          type="button"
+          className="chat-row-delete"
+          title="Delete this conversation"
+          aria-label="Delete this conversation"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+        >
+          <Icon name="close" size={14} />
+        </button>
+      )}
+    </div>
   );
 }
 

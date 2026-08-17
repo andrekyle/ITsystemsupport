@@ -907,6 +907,15 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
   return { messages, send, markRead, edit };
 }
 
+/** Delete every message in a thread. RLS ensures only the super user (admin)
+ *  can wipe an entire conversation; ordinary senders can only delete their
+ *  own individual messages. Returns true on success. */
+export async function deleteChatThread(messageIds: string[]): Promise<boolean> {
+  if (!supabase || messageIds.length === 0) return true;
+  const { error } = await supabase.from("chat_messages").delete().in("id", messageIds);
+  return !error;
+}
+
 /** Summary of a single chat thread — for listing conversations in a sidebar. */
 export interface ChatThreadInfo {
   /** grouping key: sorted "profileA~~profileB" so both sides use the same value */

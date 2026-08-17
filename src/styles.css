@@ -7380,6 +7380,39 @@ table.data th.sortable.sorted { color: var(--ink); }
   cursor: pointer;
   color: var(--ink-2);
 }
+.chat-row-wrap {
+  position: relative;
+}
+.chat-row-wrap .chat-row {
+  padding-right: 40px;
+}
+.chat-row-delete {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.12s, background 0.12s, color 0.12s;
+}
+.chat-row-wrap:hover .chat-row-delete,
+.chat-row-delete:focus-visible {
+  opacity: 1;
+}
+.chat-row-delete:hover {
+  background: var(--azure-lighter);
+  color: var(--ink-1);
+}
 .chat-row:hover { background: var(--surface-2); color: var(--ink); }
 .chat-row.active { background: var(--surface-2); color: var(--ink); }
 .chat-row-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
