@@ -2061,7 +2061,7 @@ function QuizAnswers({
             )}
             {q.explain && (
               <p className="mini-note" style={{ marginTop: 6 }}>
-                <em>{q.explain}</em>
+                {q.explain}
               </p>
             )}
           </div>
@@ -2117,7 +2117,7 @@ function ExerciseAnswers({
             <div className={`exercise-answer-body${r.ok ? " ok" : ""}`}>{r.text}</div>
           ) : (
             <div className="mini-note" style={{ marginTop: 4 }}>
-              <em>No answer typed</em>
+              No answer typed
             </div>
           )}
         </div>
