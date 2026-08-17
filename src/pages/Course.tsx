@@ -611,7 +611,6 @@ function ExerciseQuestion({
   return (
     <div className="exq">
       <div className="exq-marks-hint" aria-label="Marks available for this question">
-        <Icon name="clipboard" size={13} />
         <span>
           Marks available: <strong>{check.concepts.length * 2}</strong>
           {" "}({check.concepts.length} key idea{check.concepts.length === 1 ? "" : "s"} × 2 marks each)
