@@ -9,9 +9,10 @@ import { FILES_BUCKET } from "../lib/files";
  *
  * The report HTML contains learner personal data (names, ID numbers), so it
  * is never bundled with the app or committed to the repo. It lives in the
- * private Supabase "files" bucket under shared/reports/ and renders here via
- * a short-lived signed URL. The Super User uploads the file once; after that
- * the report opens directly on any device.
+ * private Supabase "files" bucket under shared/reports/. The page downloads
+ * it with the signed-in client and renders it from a local blob: URL, which
+ * sidesteps any content-type / content-disposition quirks on the storage
+ * response (those made a plain signed-URL iframe render blank).
  */
 const TRACKER_PATH = "shared/reports/learner-tracker-investec-aug-2026.html";
 
@@ -22,6 +23,13 @@ export function TrackerReportPage({ profile }: { profile: Profile }) {
   const [url, setUrl] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
+  const currentUrl = useRef<string | null>(null);
+
+  function setBlobUrl(u: string | null) {
+    if (currentUrl.current) URL.revokeObjectURL(currentUrl.current);
+    currentUrl.current = u;
+    setUrl(u);
+  }
 
   async function refresh() {
     if (!supabase) {
@@ -29,19 +37,24 @@ export function TrackerReportPage({ profile }: { profile: Profile }) {
       setNote("Cloud storage is not configured on this device.");
       return;
     }
-    const { data } = await supabase.storage
-      .from(FILES_BUCKET)
-      .createSignedUrl(TRACKER_PATH, 3600);
-    if (data && data.signedUrl) {
-      setUrl(data.signedUrl);
-      setStatus("ready");
-    } else {
+    setStatus("loading");
+    const { data, error } = await supabase.storage.from(FILES_BUCKET).download(TRACKER_PATH);
+    if (error || !data) {
+      setBlobUrl(null);
       setStatus("missing");
+      return;
     }
+    // Force the HTML type so the browser always renders it (not download it).
+    const blob = new Blob([data], { type: "text/html" });
+    setBlobUrl(URL.createObjectURL(blob));
+    setStatus("ready");
   }
 
   useEffect(() => {
     void refresh();
+    return () => {
+      if (currentUrl.current) URL.revokeObjectURL(currentUrl.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -74,9 +87,12 @@ export function TrackerReportPage({ profile }: { profile: Profile }) {
         <h1 className="page-title" style={{ margin: 0 }}>Learner Tracker Report</h1>
         <div className="report-toolbar-actions">
           {status === "ready" && url && (
-            <a className="btn ghost sm" href={url} target="_blank" rel="noreferrer">
+            <button
+              className="btn ghost sm"
+              onClick={() => window.open(url, "_blank")}
+            >
               <Icon name="globe" size={15} /> Open in new tab
-            </a>
+            </button>
           )}
           {status === "ready" && (
             <button className="btn ghost sm" onClick={() => fileInput.current?.click()}>
