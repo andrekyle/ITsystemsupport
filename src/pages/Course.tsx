@@ -3955,7 +3955,7 @@ export function UnitPage({
                   Saved and locked
                 </button>
               ) : (
-                <button className="btn" onClick={confirmSave}>
+                <button className="btn primary" onClick={confirmSave}>
                   <Icon name="checkCircle" size={15} />
                   Save self assessment
                 </button>
