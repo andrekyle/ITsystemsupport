@@ -2590,6 +2590,18 @@ textarea:focus {
     background: var(--srf-strip) !important;
     color: #fff !important;
   }
+  /* Page 2 fills its printed sheet so the accreditation logos sit at the
+     very bottom of the page like the paper form. */
+  .srf-page2 {
+    display: flex;
+    flex-direction: column;
+    min-height: 266mm;
+  }
+  .srf-footer-logos {
+    margin-top: auto;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
 }
 
 .attempt-row .col-left {

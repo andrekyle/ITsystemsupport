@@ -488,6 +488,7 @@ function StudentRegistrationForm({
         <div className="srf-pagebreak" />
 
         {/* ============================== PAGE 2 ============================== */}
+        <div className="srf-page2">
         <div className="srf-section-title">Employment Details: <em>(Please print)</em></div>
         <table className="srf-table srf-p2">
           <colgroup>
@@ -701,6 +702,7 @@ function StudentRegistrationForm({
             alt="W&amp;RSETA"
             className="srf-footer-logo"
           />
+        </div>
         </div>
       </div>
     </div>
