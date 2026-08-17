@@ -553,7 +553,8 @@ export type PageId =
   | "analytics"
   | "chat"
   | "community"
-  | "forms";
+  | "forms"
+  | "reports";
 
 export interface Route {
   page: PageId;
