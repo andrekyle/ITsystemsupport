@@ -445,19 +445,23 @@ const SEMANTIC_THRESHOLD = 0.35;
 /**
  * Decide which concept groups have earned their 2 marks.
  *
- * A concept earns credit when one of the learner's sentences meets **both**
- * conditions:
- *   • it is at least {@link MIN_EXPLANATION_WORDS} words long, and
- *   • it *covers* the concept — either
- *       - directly, by containing one of the concept's keyword phrases
- *         (stem/typo tolerant, so "communicating" ≈ "communicate"), or
- *       - **semantically**, by having enough content-stem overlap with the
- *         concept phrases + its lesson line (synonyms, related wording).
+ * A concept earns credit ONLY when at least one of the learner's sentences
+ * meets **all** of these conditions:
+ *   • the sentence is at least {@link MIN_EXPLANATION_WORDS} words long, and
+ *   • the sentence contains the concept keyword or a clear synonym of it —
+ *     either directly, via one of the concept's keyword phrases (stem/typo
+ *     tolerant, so "communicating" ≈ "communicate"), or via a strong
+ *     content-stem overlap with the concept phrases + its lesson line
+ *     (recognises synonyms and paraphrased wording), and
+ *   • that same sentence is semantically on-topic (satisfied automatically by
+ *     the semantic overlap; enforced by a minimum overlap for the
+ *     keyword-only path so a single-word bullet like "Incident/investigation
+ *     reports." on its own cannot earn credit — the sentence still has to be
+ *     an actual explanation, not just a keyword drop).
  *
- * Additionally, an idea can be credited whenever the whole answer contains
- * its keyword AND there is enough surplus word count for another 10-word
- * block (so a long single-paragraph answer that covers multiple ideas is
- * not penalised for not having sentence breaks).
+ * There is deliberately no "whole-answer surplus" fallback: keyword drops in
+ * short bullet lines do not earn marks, no matter how many words the rest of
+ * the paragraph contains. Learners must both name and explain each idea.
  */
 function creditedConceptIndexes(text: string, check: ExerciseCheck): number[] {
   const tokens = answerTokens(text);
@@ -481,37 +485,24 @@ function creditedConceptIndexes(text: string, check: ExerciseCheck): number[] {
 
   const credited = new Set<number>();
 
-  // (a) per-sentence credit: sentence has ≥ 10 words and covers the concept
-  //     either by keyword or by semantic overlap
+  // Per-sentence credit only: the sentence must have ≥ 10 words AND either
+  // hit the keyword/synonym OR be semantically on-topic.
   for (let gi = 0; gi < check.concepts.length; gi++) {
     const group = check.concepts[gi];
     const target = conceptTargets[gi];
     for (let si = 0; si < sentences.length; si++) {
       if (sentenceTokens[si].length < MIN_EXPLANATION_WORDS) continue;
+      const overlap = stemOverlap(sentenceStems[si], target);
       const keywordHit = conceptInSentence(group, sentenceTokens[si]);
-      const semanticHit = stemOverlap(sentenceStems[si], target) >= SEMANTIC_THRESHOLD;
-      if (keywordHit || semanticHit) {
+      // A pure keyword hit still needs the *sentence itself* to be on-topic —
+      // otherwise a long unrelated sentence that happens to mention the word
+      // once would score. Half the semantic threshold is enough for that.
+      const semanticHit = overlap >= SEMANTIC_THRESHOLD;
+      const supported = keywordHit && overlap >= SEMANTIC_THRESHOLD / 2;
+      if (supported || semanticHit) {
         credited.add(gi);
         break;
       }
-    }
-  }
-
-  // (b) whole-answer surplus for keyword-only mentions in short sentences
-  //     — award the 2 marks if there are enough leftover words to be a
-  //     ≥10-word explanation dedicated to this idea.
-  const uncredited = check.concepts
-    .map((g, gi) => ({ gi, group: g }))
-    .filter(({ gi }) => !credited.has(gi))
-    .filter(({ group }) => conceptInSentence(group, tokens));
-  const alreadyCommittedWords = credited.size * MIN_EXPLANATION_WORDS;
-  let surplus = tokens.length - alreadyCommittedWords;
-  for (const { gi } of uncredited) {
-    if (surplus >= MIN_EXPLANATION_WORDS) {
-      credited.add(gi);
-      surplus -= MIN_EXPLANATION_WORDS;
-    } else {
-      break;
     }
   }
 
