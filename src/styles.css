@@ -1456,6 +1456,20 @@ td .with-ico .ico {
   color: var(--azure);
 }
 
+/* Solid call-to-action: blue background, white text */
+.btn.solid {
+  background: var(--azure);
+  color: #ffffff;
+  border-color: var(--azure);
+}
+
+.btn.solid:hover:not(:disabled) {
+  background: var(--azure);
+  border-color: var(--azure);
+  color: #ffffff;
+  filter: brightness(1.12);
+}
+
 .btn.ghost {
   background: transparent;
   color: var(--ink-2);

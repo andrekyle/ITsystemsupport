@@ -65,7 +65,7 @@ export function ConfirmModal({
           <button className="btn ghost" onClick={onCancel}>
             {cancelLabel}
           </button>
-          <button className={`btn ${danger ? "danger" : "primary"}`} onClick={onConfirm}>
+          <button className={`btn ${danger ? "danger" : "solid"}`} onClick={onConfirm}>
             {confirmLabel}
           </button>
         </>
