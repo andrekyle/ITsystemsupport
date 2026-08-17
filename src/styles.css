@@ -2590,6 +2590,10 @@ textarea:focus {
      words like "Divorced" keep clear air between text and cell borders. */
   .srf-tick-cell { padding: 3px 4px !important; }
   .srf-cell-label { font-size: 9.5px; }
+  /* No textarea resize grips on paper */
+  .srf-textarea { resize: none !important; }
+  .srf-textarea::-webkit-resizer { display: none !important; }
+  .srf-input::-webkit-calendar-picker-indicator { display: none !important; }
   .srf-orange-strip {
     background: var(--srf-strip) !important;
     color: #fff !important;
