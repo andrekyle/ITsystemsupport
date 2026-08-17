@@ -2240,6 +2240,48 @@ textarea:focus {
   background: color-mix(in srgb, var(--green) 12%, transparent);
 }
 
+.quiz-history {
+  padding-bottom: 4px;
+}
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+.quiz-option {
+  font-size: 13px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.quiz-option.correct {
+  background: color-mix(in srgb, var(--green) 12%, transparent);
+  color: var(--ink);
+}
+.quiz-option.wrong-pick {
+  background: color-mix(in srgb, var(--red) 12%, transparent);
+  color: var(--ink);
+}
+.quiz-option.right-pick {
+  background: color-mix(in srgb, var(--green) 22%, transparent);
+  color: var(--ink);
+  font-weight: 500;
+}
+.quiz-mark {
+  display: inline-block;
+  width: 14px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--ink-3);
+}
+.quiz-option.correct .quiz-mark,
+.quiz-option.right-pick .quiz-mark { color: var(--green); }
+.quiz-option.wrong-pick .quiz-mark { color: var(--red); }
+
 .attempt-row .col-left {
   display: inline-flex;
   align-items: center;

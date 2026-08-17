@@ -18,7 +18,8 @@ type ChoiceAns = { kind: "choice"; picks: number[] };
 type OrderAns = { kind: "order"; order: number[] }; // current visible order as original indices
 type MatchAns = { kind: "match"; picks: Record<number, number> }; // leftIdx -> rightOriginalIdx
 
-type Ans = ChoiceAns | OrderAns | MatchAns;
+export type Ans = ChoiceAns | OrderAns | MatchAns;
+export type QuizAttemptAnswers = Record<number, Ans>;
 
 export function Quiz({
   questions,
@@ -29,7 +30,9 @@ export function Quiz({
 }: {
   questions: QuizQuestion[];
   previous?: QuizResult;
-  onSubmit: (score: number, total: number) => void;
+  /** `attempt` is a JSON-serialisable per-question snapshot of what the
+   *  learner picked, so staff can review individual answers later. */
+  onSubmit: (score: number, total: number, attempt?: Record<number, Ans>) => void;
   /** Staff-only: renders a "Reveal answer key" toggle above the questions. */
   showAnswers?: boolean;
   /** Exam-paper numbering, e.g. "1.1" renders question numbers 1.1.1, 1.1.2, … */
@@ -102,7 +105,7 @@ export function Quiz({
 
   function submit() {
     setSubmitted(true);
-    onSubmit(score, questions.length);
+    onSubmit(score, questions.length, answers);
     document.querySelector(".content")?.scrollTo({ top: 0, behavior: "smooth" });
   }
 

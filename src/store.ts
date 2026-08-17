@@ -405,7 +405,7 @@ export function useProgress(profileId: string) {
   );
 
   const saveQuizResult = useCallback(
-    (us: string, score: number, total: number, quizId?: string) => {
+    (us: string, score: number, total: number, quizId?: string, attempt?: unknown) => {
       const actor = read<Profile[]>(PROFILES_KEY, []).find((p) => p.id === profileId);
       if (actor) {
         logAudit(actor, "quiz.submit", `US ${us}${quizId ? ` (${quizId})` : ""}: scored ${score}/${total}`);
@@ -423,13 +423,19 @@ export function useProgress(profileId: string) {
           attempts: (q?.attempts ?? 0) + 1,
           history,
         };
+        // Also persist the per-question snapshot to the logbook so staff can
+        // review which options the learner picked, not just the score.
+        const logbookKey = `quiz.${quizId ?? "quiz"}.picks`;
+        const nextLogbook = attempt !== undefined
+          ? { ...unit.logbook, [logbookKey]: JSON.stringify(attempt) }
+          : unit.logbook;
         return {
           ...prev,
           units: {
             ...prev.units,
             [us]: quizId
-              ? { ...unit, quizzes: { ...unit.quizzes, [quizId]: result } }
-              : { ...unit, quiz: result },
+              ? { ...unit, logbook: nextLogbook, quizzes: { ...unit.quizzes, [quizId]: result } }
+              : { ...unit, logbook: nextLogbook, quiz: result },
           },
         };
       });

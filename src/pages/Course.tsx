@@ -1573,7 +1573,7 @@ export function UnitPage({
   profile: Profile;
   progress: ProgressState;
   toggleActivity: (us: string, a: UnitActivity) => void;
-  saveQuizResult: (us: string, score: number, total: number, quizId?: string) => void;
+  saveQuizResult: (us: string, score: number, total: number, quizId?: string, attempt?: unknown) => void;
   setLogbookField: (us: string, key: string, value: string | boolean) => void;
   saveExerciseResult: (us: string, exId: string, score: number, total: number) => void;
   navigate: (r: Route) => void;
@@ -3833,7 +3833,7 @@ export function UnitPage({
               key={active.id}
               questions={active.questions}
               previous={results[active.id]}
-              onSubmit={(score, total) => saveQuizResult(u.us, score, total, active.id)}
+              onSubmit={(score, total, attempt) => saveQuizResult(u.us, score, total, active.id, attempt)}
               showAnswers={isPrivileged}
             />
           </>
@@ -3858,7 +3858,7 @@ export function UnitPage({
           <Quiz
             questions={content.quiz}
             previous={quizResult}
-            onSubmit={(score, total) => saveQuizResult(u.us, score, total)}
+            onSubmit={(score, total, attempt) => saveQuizResult(u.us, score, total, undefined, attempt)}
             showAnswers={isPrivileged}
           />
         </>

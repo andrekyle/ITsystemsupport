@@ -1884,32 +1884,44 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
               const r = row.result;
               const pct = r ? Math.round((r.best / r.total) * 100) : null;
               const latest = r?.history?.[0]?.date;
+              // Look up the quiz's question set so we can render it below.
+              const quiz =
+                row.key === "quiz"
+                  ? content?.quiz
+                  : content?.quizzes?.find((q) => q.id === row.key)?.questions;
               return (
-                <div className="attempt-row acad" key={row.key}>
-                  <Icon
-                    name={pct !== null && pct >= 80 ? "checkCircle" : "clipboard"}
-                    size={17}
-                    color={pct !== null && pct >= 80 ? "var(--green)" : "var(--ink-3)"}
+                <details className="exercise-answers" key={row.key}>
+                  <summary className="attempt-row acad">
+                    <Icon
+                      name={pct !== null && pct >= 80 ? "checkCircle" : "clipboard"}
+                      size={17}
+                      color={pct !== null && pct >= 80 ? "var(--green)" : "var(--ink-3)"}
+                    />
+                    <span className="sc">{row.label}</span>
+                    <span className="cell">
+                      {r ? (
+                        <span className={`chip ${pct !== null && pct >= 80 ? "done" : "none"}`}>
+                          {r.best}/{r.total} · {pct}%
+                        </span>
+                      ) : (
+                        <span className="chip none">not attempted</span>
+                      )}
+                    </span>
+                    <span className="cell">
+                      {r ? (
+                        <span className="chip progress">
+                          {r.attempts} attempt{r.attempts === 1 ? "" : "s"}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="dt">{latest ? fmtDateTime(latest) : `${row.totalQuestions} questions`}</span>
+                  </summary>
+                  <QuizAnswers
+                    questions={quiz ?? []}
+                    result={r}
+                    picks={prog?.logbook?.[`quiz.${row.key}.picks`]}
                   />
-                  <span className="sc">{row.label}</span>
-                  <span className="cell">
-                    {r ? (
-                      <span className={`chip ${pct !== null && pct >= 80 ? "done" : "none"}`}>
-                        {r.best}/{r.total} · {pct}%
-                      </span>
-                    ) : (
-                      <span className="chip none">not attempted</span>
-                    )}
-                  </span>
-                  <span className="cell">
-                    {r ? (
-                      <span className="chip progress">
-                        {r.attempts} attempt{r.attempts === 1 ? "" : "s"}
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className="dt">{latest ? fmtDateTime(latest) : `${row.totalQuestions} questions`}</span>
-                </div>
+                </details>
               );
             })}
             {exercises.map((ex) => {
@@ -1959,6 +1971,109 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
         );
       })}
     </>
+  );
+}
+
+/** Inline view of a quiz's questions with the correct answer(s), the
+ *  learner's picks (when available), and attempt history. Persisted picks
+ *  come from `progress.units[us].logbook['quiz.<id>.picks']` — for older
+ *  attempts made before we saved picks, only questions + correct answers
+ *  are shown. */
+function QuizAnswers({
+  questions,
+  result,
+  picks,
+}: {
+  questions: import("../types").QuizQuestion[];
+  result?: { best: number; total: number; attempts: number; history?: { score: number; total: number; date: string }[] };
+  picks?: unknown;
+}) {
+  let parsedPicks: Record<number, { kind: string; picks?: number[] }> | null = null;
+  if (typeof picks === "string") {
+    try {
+      const raw = JSON.parse(picks);
+      if (raw && typeof raw === "object") {
+        parsedPicks = raw as Record<number, { kind: string; picks?: number[] }>;
+      }
+    } catch {
+      parsedPicks = null;
+    }
+  }
+  if (questions.length === 0) {
+    return (
+      <p className="muted" style={{ margin: "6px 0 0 32px", fontSize: 12.5 }}>
+        Quiz questions are not available.
+      </p>
+    );
+  }
+  return (
+    <div className="exercise-answer-list">
+      {result?.history && result.history.length > 0 && (
+        <div className="quiz-history">
+          <span className="mini-note">Attempt history: </span>
+          {result.history.map((h, i) => (
+            <span className="chip progress" key={i} style={{ marginRight: 6 }}>
+              {new Date(h.date).toLocaleDateString()} · {h.score}/{h.total}
+            </span>
+          ))}
+        </div>
+      )}
+      {questions.map((q, qi) => {
+        const correct = q.answers ?? [q.answer];
+        const pick = parsedPicks ? parsedPicks[qi] : undefined;
+        const chosen: number[] =
+          pick && pick.kind === "choice" && Array.isArray(pick.picks) ? pick.picks : [];
+        return (
+          <div className="exercise-answer" key={qi}>
+            <div className="exercise-answer-head">
+              <span className="mini-note">Question {qi + 1}</span>
+            </div>
+            <div className="exercise-answer-q">{q.q}</div>
+            {q.kind === "choice" || !q.kind ? (
+              <div className="quiz-options">
+                {q.options.map((opt, oi) => {
+                  const isCorrect = correct.includes(oi);
+                  const isPicked = chosen.includes(oi);
+                  let cls = "quiz-option";
+                  if (isCorrect) cls += " correct";
+                  if (isPicked && !isCorrect) cls += " wrong-pick";
+                  if (isPicked && isCorrect) cls += " right-pick";
+                  return (
+                    <div className={cls} key={oi}>
+                      <span className="quiz-mark">
+                        {isCorrect ? "✓" : isPicked ? "✗" : ""}
+                      </span>
+                      {String.fromCharCode(65 + oi)}. {opt}
+                      {isPicked && (
+                        <span className="mini-note" style={{ marginLeft: 6 }}>
+                          (learner's pick)
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="mini-note" style={{ marginTop: 4 }}>
+                {q.kind === "order" ? "Ordering question" : "Matching question"} — see quiz for
+                full detail.
+              </p>
+            )}
+            {q.explain && (
+              <p className="mini-note" style={{ marginTop: 6 }}>
+                <em>{q.explain}</em>
+              </p>
+            )}
+          </div>
+        );
+      })}
+      {!parsedPicks && result && (
+        <p className="mini-note" style={{ marginLeft: 12 }}>
+          Only the overall score is available for this attempt — the learner's individual picks
+          were not recorded on that attempt.
+        </p>
+      )}
+    </div>
   );
 }
 
