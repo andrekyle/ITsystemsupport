@@ -2253,7 +2253,7 @@ textarea:focus {
   font-size: 13px;
   padding: 5px 8px;
   border-radius: 4px;
-  background: var(--surface-2);
+  background: transparent;
   display: flex;
   align-items: center;
   gap: 6px;
