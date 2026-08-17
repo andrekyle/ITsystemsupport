@@ -2526,26 +2526,28 @@ textarea:focus {
   }
 }
 
-/* Print output */
-.srf-print-holder { display: none; }
+/* Print output — scoped to pages that contain the registration form so it
+   can never affect other pages' printing. Portrait A4 is the app default;
+   the attendance register injects its own landscape @page at print time. */
 @media print {
-  html, body {
+  @page { size: A4; margin: 8mm; }
+  .sidebar, .header, .no-print { display: none !important; }
+
+  html:has(.srf-wrap), body:has(.srf-wrap) {
     height: auto !important;
     overflow: visible !important;
     background: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
   }
-  /* When the Forms page has cloned itself into .srf-print-holder we hide
-     the whole app shell so ONLY the cloned form prints. */
-  body.srf-printing > *:not(.srf-print-holder) { display: none !important; }
-  body.srf-printing .srf-print-holder {
-    display: block !important;
-    background: #ffffff !important;
-    color: #000 !important;
-  }
-  /* Legacy path (no holder) — unshackle the shell so the form still prints. */
-  .app, .body, .content, .content-inner, .card, .srf-wrap {
+  /* Unshackle the app shell (flex + 100vh + overflow scroll) so the form
+     flows across as many printed pages as it needs. */
+  body:has(.srf-wrap) .app,
+  body:has(.srf-wrap) .body,
+  body:has(.srf-wrap) .content,
+  body:has(.srf-wrap) .content-inner,
+  body:has(.srf-wrap) .card,
+  body:has(.srf-wrap) .srf-wrap {
     display: block !important;
     height: auto !important;
     max-height: none !important;
@@ -2558,7 +2560,7 @@ textarea:focus {
     border: 0 !important;
     flex: none !important;
   }
-  .sidebar, .header, .no-print, .srf-actions { display: none !important; }
+  .srf-actions { display: none !important; }
   .srf-page {
     border: 0 !important;
     padding: 10mm 12mm !important;
@@ -2571,11 +2573,6 @@ textarea:focus {
     break-inside: auto;
     page-break-inside: auto;
   }
-  /* Every cloned .srf-page after the first starts on a new sheet. */
-  .srf-print-holder .srf-page + .srf-page {
-    break-before: page;
-    page-break-before: always;
-  }
   .srf-page * {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -2586,7 +2583,6 @@ textarea:focus {
     background: var(--srf-strip) !important;
     color: #fff !important;
   }
-  @page { size: A4; margin: 8mm; }
 }
 
 .attempt-row .col-left {
@@ -6774,24 +6770,24 @@ input.att-sig {
   width: 1200px;
 }
 
-/* print: only the sheet, A4 landscape — "Download as PDF" uses the print dialog */
+/* print: only the sheet, A4 landscape — "Download as PDF" uses the print dialog.
+   Every rule is scoped to :has(.att-sheet) so this can never blank the print
+   output of other pages (it previously hid `body *` on ANY print, which made
+   the Registration Form and everything else print blank pages).
+   The landscape @page rule is injected at print time by Attendance.tsx. */
 @media print {
-  @page {
-    size: A4 landscape;
-    margin: 8mm;
-  }
-  html,
-  body {
+  html:has(.att-sheet),
+  body:has(.att-sheet) {
     overflow: hidden;
   }
-  body * {
+  body:has(.att-sheet) * {
     visibility: hidden;
   }
-  .att-sheet,
-  .att-sheet * {
+  body:has(.att-sheet) .att-sheet,
+  body:has(.att-sheet) .att-sheet * {
     visibility: visible;
   }
-  .att-sheet {
+  body:has(.att-sheet) .att-sheet {
     position: fixed;
     left: 0;
     top: 0;
@@ -6815,8 +6811,8 @@ input.att-sig {
     top: 0;
     width: 100%;
   }
-  .att-all,
-  .att-all * {
+  body:has(.att-all) .att-all,
+  body:has(.att-all) .att-all * {
     visibility: visible;
   }
   .att-all .att-sheet {

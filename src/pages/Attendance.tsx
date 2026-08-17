@@ -520,6 +520,17 @@ export function AttendancePage({
   /** Super user only: wipe the whole register for the selected date. */
   const clearRegister = () => save(EMPTY);
 
+  /** Print with a landscape @page rule injected for the duration of the dialog.
+      (The rule can't live in styles.css — @page is global and would flip every
+      other page's print, e.g. the Registration Form, into landscape.) */
+  const printLandscape = () => {
+    const style = document.createElement("style");
+    style.textContent = "@page { size: A4 landscape; margin: 8mm; }";
+    document.head.appendChild(style);
+    window.print();
+    setTimeout(() => style.remove(), 1000);
+  };
+
   /** Gather every signed register (local + cloud) and open the print dialog with all of them. */
   const downloadAll = async () => {
     setLoadingAll(true);
@@ -535,7 +546,7 @@ export function AttendancePage({
       setAllRegs(regs);
       // let React render the sheets (and images lay out) before opening the print dialog
       setTimeout(() => {
-        window.print();
+        printLandscape();
         setAllRegs(null);
       }, 700);
     } finally {
@@ -594,7 +605,7 @@ export function AttendancePage({
           <Icon name="check" size={15} /> {signed ? "Signed" : "Sign the register — I'm here"}
         </button>
         {staff && (
-          <button className="btn ghost sm" onClick={() => window.print()}>
+          <button className="btn ghost sm" onClick={printLandscape}>
             <Icon name="download" size={15} /> Download as PDF
           </button>
         )}
