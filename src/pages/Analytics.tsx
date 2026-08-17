@@ -52,8 +52,8 @@ interface LearnerRow {
 
 function analyse(p: Profile, registers: number, cloud: CloudLearnerData | null): LearnerRow {
   const progress = bestProgress(p, cloud);
-  const s = overallStats(progress);
   const docs = bestPoeDocs(p, cloud);
+  const s = overallStats(progress, docs);
 
   let quizBestSum = 0;
   let quizCount = 0;

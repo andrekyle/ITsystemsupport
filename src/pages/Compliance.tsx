@@ -133,9 +133,11 @@ function complianceFor(
   // has empty data while their real progress may sit in their own cloud
   // account under a different profile id.
   const progress = bestProgress(p, cloud);
-  const s = overallStats(progress);
   const ticks = bestChecklist(p, cloud);
   const docs = bestPoeDocs(p, cloud);
+  // Feed POE into overallStats so a learner who uploaded evidence for a unit
+  // gets credit for that activity even when they never ticked "Mark complete".
+  const s = overallStats(progress, docs);
   const myReviews = Object.values(reviews[p.id] ?? {});
   const myOutcomes = Object.values(outcomes[p.id] ?? {});
   return {

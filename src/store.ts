@@ -1739,7 +1739,10 @@ export function moduleCompletion(state: ProgressState, moduleId: string): number
   return sum / mod.units.length;
 }
 
-export function overallStats(state: ProgressState) {
+export function overallStats(
+  state: ProgressState,
+  poe: Record<string, PoeDoc> = {}
+) {
   let unitsCompleted = 0;
   let unitsInProgress = 0;
   let creditsEarned = 0;
@@ -1748,12 +1751,18 @@ export function overallStats(state: ProgressState) {
   for (const m of MODULES) {
     for (const u of m.units) {
       total++;
+      // "Progress" reflects real work done (quiz taken, POE uploaded, etc.)
+      // even when the learner never ticked "Mark complete" — a friendlier
+      // rollup for the staff-side compliance view.
+      const p = unitProgress(state, u.us, poe);
+      completionSum += p;
+      // Credits are still only earned when the strict "Mark complete" flags
+      // are all set — that is the auditable moment the SAQA credit accrues.
       const c = unitCompletion(state, u.us);
-      completionSum += c;
       if (c === 1) {
         unitsCompleted++;
         creditsEarned += u.credits;
-      } else if (c > 0) {
+      } else if (p > 0) {
         unitsInProgress++;
       }
     }

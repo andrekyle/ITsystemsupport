@@ -140,7 +140,7 @@ function Shell({
                 navigate={navigate}
               />
             )}
-            {route.page === "progress" && <ProgressPage progress={state} navigate={navigate} />}
+            {route.page === "progress" && <ProgressPage profile={profile} progress={state} navigate={navigate} />}
             {route.page === "poe" && <PoePage profile={profile} />}
             {route.page === "checklist" && <ChecklistPage profile={profile} />}
             {route.page === "sectiond" && <SectionDPage profile={profile} />}

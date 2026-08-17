@@ -23,8 +23,8 @@ export function Dashboard({
   progress: ProgressState;
   navigate: (r: Route) => void;
 }) {
-  const s = overallStats(progress);
   const { docs: poeDocs } = usePoe(profile.id);
+  const s = overallStats(progress, poeDocs);
   const poeDone = Object.keys(poeDocs).length;
   const game = computeGamification(progress, poeDone, attendanceSignedCount(profile.id));
   const announcements = loadAnnouncements().slice(0, 2);
@@ -305,13 +305,16 @@ export function Dashboard({
 }
 
 export function ProgressPage({
+  profile,
   progress,
   navigate,
 }: {
+  profile: Profile;
   progress: ProgressState;
   navigate: (r: Route) => void;
 }) {
-  const s = overallStats(progress);
+  const { docs: poeDocs } = usePoe(profile.id);
+  const s = overallStats(progress, poeDocs);
   return (
     <>
       <div className="eyebrow">
