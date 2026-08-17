@@ -2172,6 +2172,74 @@ textarea:focus {
   border-bottom: 1px solid var(--border);
 }
 
+/* Exercise <details> row — keep the summary looking like a normal attempt-row
+   so the whole line remains clickable to expand the answers below. */
+.exercise-answers {
+  border-bottom: 1px solid var(--border);
+}
+.exercise-answers:last-child {
+  border-bottom: none;
+}
+.exercise-answers > summary {
+  cursor: pointer;
+  list-style: none;
+  border-bottom: 0;
+  padding-right: 22px;
+  position: relative;
+}
+.exercise-answers > summary::-webkit-details-marker { display: none; }
+.exercise-answers > summary::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid var(--ink-3);
+  border-bottom: 1.5px solid var(--ink-3);
+  transform: translateY(-70%) rotate(45deg);
+  transition: transform 0.15s;
+}
+.exercise-answers[open] > summary::after {
+  transform: translateY(-30%) rotate(-135deg);
+}
+.exercise-answers > summary:hover {
+  background: color-mix(in srgb, var(--azure) 5%, transparent);
+}
+.exercise-answer-list {
+  padding: 6px 0 12px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.exercise-answer {
+  border-left: 2px solid var(--border);
+  padding: 4px 0 4px 10px;
+}
+.exercise-answer-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.exercise-answer-q {
+  font-size: 12.5px;
+  color: var(--ink-2);
+  margin-bottom: 4px;
+  font-style: italic;
+}
+.exercise-answer-body {
+  white-space: pre-wrap;
+  background: var(--surface-2);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.exercise-answer-body.ok {
+  background: color-mix(in srgb, var(--green) 12%, transparent);
+}
+
 .attempt-row .col-left {
   display: inline-flex;
   align-items: center;

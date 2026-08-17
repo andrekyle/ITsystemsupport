@@ -1915,32 +1915,39 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
             {exercises.map((ex) => {
               const r = prog?.exercises?.[ex.id];
               const pct = r ? Math.round((r.best / r.total) * 100) : null;
+              const lb = prog?.logbook ?? {};
+              const typedAny = ex.checks?.some((_, i) => String(lb[`exq.${ex.id}.${i}`] ?? "").trim());
               return (
-                <div className="attempt-row acad" key={ex.id}>
-                  <Icon
-                    name={pct !== null && pct >= 80 ? "checkCircle" : "design"}
-                    size={17}
-                    color={pct !== null && pct >= 80 ? "var(--green)" : "var(--ink-3)"}
-                  />
-                  <span className="sc">Exercise — {ex.title}</span>
-                  <span className="cell">
-                    {r ? (
-                      <span className={`chip ${pct !== null && pct >= 80 ? "done" : "none"}`}>
-                        {r.best}/{r.total} marks · {pct}%
-                      </span>
-                    ) : (
-                      <span className="chip none">not attempted</span>
-                    )}
-                  </span>
-                  <span className="cell">
-                    {r ? (
-                      <span className="chip progress">
-                        {r.attempts} attempt{r.attempts === 1 ? "" : "s"}
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className="dt">{r ? `last score ${r.last}/${r.total}` : ""}</span>
-                </div>
+                <details key={ex.id} className="exercise-answers">
+                  <summary className="attempt-row acad">
+                    <Icon
+                      name={pct !== null && pct >= 80 ? "checkCircle" : "design"}
+                      size={17}
+                      color={pct !== null && pct >= 80 ? "var(--green)" : "var(--ink-3)"}
+                    />
+                    <span className="sc">Exercise — {ex.title}</span>
+                    <span className="cell">
+                      {r ? (
+                        <span className={`chip ${pct !== null && pct >= 80 ? "done" : "none"}`}>
+                          {r.best}/{r.total} marks · {pct}%
+                        </span>
+                      ) : (
+                        <span className="chip none">not attempted</span>
+                      )}
+                    </span>
+                    <span className="cell">
+                      {r ? (
+                        <span className="chip progress">
+                          {r.attempts} attempt{r.attempts === 1 ? "" : "s"}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="dt">
+                      {r ? `last score ${r.last}/${r.total}` : typedAny ? "draft in logbook" : ""}
+                    </span>
+                  </summary>
+                  <ExerciseAnswers exercise={ex} logbook={lb} />
+                </details>
               );
             })}
             {quizRows.length === 0 && exercises.length === 0 && (
@@ -1952,6 +1959,55 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
         );
       })}
     </>
+  );
+}
+
+/** Inline view of a learner's typed answers to an exercise's questions,
+ *  with the marker's verdict pulled straight from their logbook. Used inside
+ *  the AcademicRecord expandable row so staff can drill into any exercise
+ *  without leaving the profile page. */
+function ExerciseAnswers({
+  exercise,
+  logbook,
+}: {
+  exercise: { id: string; title: string; steps: string[]; checks?: unknown[] };
+  logbook: Record<string, unknown>;
+}) {
+  const rows = (exercise.checks ?? []).map((_, i) => {
+    const key = `exq.${exercise.id}.${i}`;
+    const text = String(logbook[key] ?? "").trim();
+    const ok = logbook[`${key}.ok`] === true;
+    return { i, step: exercise.steps[i] ?? "", text, ok };
+  });
+  const anyTyped = rows.some((r) => r.text);
+  if (!anyTyped) {
+    return (
+      <p className="muted" style={{ margin: "6px 0 0 32px", fontSize: 12.5 }}>
+        No answers typed yet.
+      </p>
+    );
+  }
+  return (
+    <div className="exercise-answer-list">
+      {rows.map((r) => (
+        <div className="exercise-answer" key={r.i}>
+          <div className="exercise-answer-head">
+            <span className={`chip ${r.ok ? "done" : "none"}`}>
+              {r.ok ? "✓ correct" : r.text ? "not yet" : "no answer"}
+            </span>
+            <span className="mini-note">Question {r.i + 1}</span>
+          </div>
+          <div className="exercise-answer-q">{r.step}</div>
+          {r.text ? (
+            <div className={`exercise-answer-body${r.ok ? " ok" : ""}`}>{r.text}</div>
+          ) : (
+            <div className="mini-note" style={{ marginTop: 4 }}>
+              <em>No answer typed</em>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
 
