@@ -476,11 +476,24 @@ function creditedConceptIndexes(text: string, check: ExerciseCheck): number[] {
   //   fullTarget       — the concept keywords + the lesson line stems.
   //                      Used for the semantic-only path (no keyword hit).
   //   explanationTarget — the lesson line stems MINUS the concept's own
-  //                      keywords. This is what a real explanation of the
-  //                      idea looks like. Used when the sentence hit the
-  //                      keyword: the *rest* of the sentence must resemble
-  //                      the lesson wording, so a keyword drop with random
-  //                      unrelated filler cannot score.
+  //                      keywords AND MINUS any stems that appear in more
+  //                      than half of the model-answer bullets (cross-idea
+  //                      filler like "reports" when every bullet is a report
+  //                      type). This is what a real *distinctive* explanation
+  //                      of the idea looks like, so a keyword drop wrapped
+  //                      in filler can't score.
+  const filler = new Set<string>();
+  {
+    const perLineStems = check.answer.map((a) => contentStems(a));
+    const counts = new Map<string, number>();
+    for (const line of perLineStems) {
+      line.forEach((s) => counts.set(s, (counts.get(s) ?? 0) + 1));
+    }
+    const half = check.answer.length / 2;
+    for (const [stem, n] of counts) {
+      if (n > half) filler.add(stem);
+    }
+  }
   const conceptData = check.concepts.map((g) => {
     const keywordStems = new Set(answerTokens(g.join(" ")));
     const lessonLine = check.answer.find((a) => {
@@ -490,7 +503,7 @@ function creditedConceptIndexes(text: string, check: ExerciseCheck): number[] {
     const fullTarget = contentStems(`${g.join(" ")} ${lessonLine ?? ""}`);
     const explanationTarget = new Set<string>();
     contentStems(lessonLine ?? "").forEach((s) => {
-      if (!keywordStems.has(s)) explanationTarget.add(s);
+      if (!keywordStems.has(s) && !filler.has(s)) explanationTarget.add(s);
     });
     return { keywordStems, fullTarget, explanationTarget };
   });
