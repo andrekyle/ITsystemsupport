@@ -448,6 +448,19 @@ a:hover {
   font-size: 13.5px;
 }
 
+/* Modules list: smaller text, no trailing progress ring */
+.side-item.mod {
+  font-size: 13px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.side-item.mod .txt {
+  font-weight: 400;
+}
+.side-item.mod.active .txt {
+  font-weight: 600;
+}
+
 .side-mini-progress {
   margin-left: auto;
   width: 26px;

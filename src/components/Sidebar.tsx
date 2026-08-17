@@ -4,7 +4,29 @@ import { isStaff } from "../types";
 import { MODULES } from "../data/course";
 import type { ProgressState } from "../types";
 import { moduleCompletion } from "../store";
-import { Ring } from "./Ring";
+
+// Sentence case: first letter uppercased, subsequent words lowercased, but
+// leave all-uppercase tokens (acronyms like LAN, SAQA, IT) untouched.
+function toSentenceCase(s: string): string {
+  const parts = s.split(/(\s+|[/&,\-])/);
+  let seenFirst = false;
+  return parts
+    .map((tok) => {
+      if (!tok.trim() || /^[/&,\-]$/.test(tok)) return tok;
+      const isAcronym = tok.length > 1 && tok === tok.toUpperCase() && /[A-Z]/.test(tok);
+      if (isAcronym) {
+        seenFirst = true;
+        return tok;
+      }
+      const lower = tok.toLowerCase();
+      if (!seenFirst) {
+        seenFirst = true;
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      }
+      return lower;
+    })
+    .join("");
+}
 
 interface Props {
   collapsed: boolean;
@@ -79,22 +101,17 @@ export function Sidebar({ collapsed, route, progress, profile, navigate }: Props
             return (
               <button
                 key={m.id}
-                className={`side-item${active ? " active" : ""}`}
+                className={`side-item mod${active ? " active" : ""}`}
                 onClick={() => navigate({ page: "module", moduleId: m.id })}
-                title={`Module ${i + 1}: ${m.name}`}
+                title={`Module ${i + 1}: ${m.name}${c ? ` — ${Math.round(c * 100)}%` : ""}`}
               >
                 <span className="ico">
                   <Icon name={m.icon} />
                 </span>
                 {!collapsed && (
-                  <>
-                    <span className="txt">
-                      {i + 1}. {m.name}
-                    </span>
-                    <span className="side-mini-progress">
-                      <Ring value={c} size={24} stroke={2.6} />
-                    </span>
-                  </>
+                  <span className="txt">
+                    {i + 1}. {toSentenceCase(m.name)}
+                  </span>
                 )}
               </button>
             );
