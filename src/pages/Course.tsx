@@ -986,6 +986,22 @@ function ExerciseQuestion({
               · Reviewed for meaning
             </span>
           )}
+          <button
+            type="button"
+            className="btn ghost sm"
+            style={{ marginLeft: "auto" }}
+            title="Improve your answer to earn more marks"
+            onClick={() => {
+              setResult(null);
+              setExtras(new Set());
+              setReviewedText(null);
+              setReviewStatus({ kind: "idle" });
+              onSave(val, false);
+            }}
+          >
+            <Icon name="design" size={14} />
+            Edit my answer
+          </button>
         </div>
       )}
       {feedback && missed.length > 0 && (
