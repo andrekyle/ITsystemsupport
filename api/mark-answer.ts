@@ -54,14 +54,13 @@ const MAX_CONCEPTS = 12;
 const LLM_TIMEOUT_MS = 6000;
 
 /** Groq model names to try, in order. First 200 response wins. Falls through
- *  to the next name on 404 (model not found on this key's plan). */
+ *  to the next name on 4xx (model not found / decommissioned / plan-restricted). */
 const MODEL_CANDIDATES = [
   "llama-3.3-70b-versatile",
   "llama-3.1-8b-instant",
   "openai/gpt-oss-120b",
   "openai/gpt-oss-20b",
   "moonshotai/kimi-k2-instruct-0905",
-  "deepseek-r1-distill-llama-70b",
 ];
 
 export default async function handler(req: Request): Promise<Response> {
@@ -106,6 +105,10 @@ export default async function handler(req: Request): Promise<Response> {
     let lastStatus = 0;
     let lastBody = "";
     for (const model of MODEL_CANDIDATES) {
+      // NOTE: response_format: json_object is deliberately omitted — Groq
+      // returns 400 for some models when it's combined with a complex
+      // multi-concept prompt. The system prompt already enforces STRICT
+      // JSON output, and JSON.parse below tolerates parse failures.
       const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -115,8 +118,7 @@ export default async function handler(req: Request): Promise<Response> {
         body: JSON.stringify({
           model,
           temperature: 0,
-          max_tokens: 300,
-          response_format: { type: "json_object" },
+          max_tokens: 400,
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
             { role: "user", content: userMsg },
