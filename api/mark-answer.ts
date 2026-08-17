@@ -1,5 +1,6 @@
 /**
  * Semantic-meaning fallback for the deterministic answer marker.
+ * Build: 20260817-1520
  *
  * Called by the client only when the local keyword + stem-overlap check has
  * rejected one or more concepts but the sentence looked on-topic. Sends the
@@ -149,6 +150,7 @@ export default async function handler(req: Request): Promise<Response> {
           error: `llm_${lastStatus}`,
           detail: lastBody,
           tried: MODEL_CANDIDATES,
+          build: "20260817-1520",
         },
         200
       );
