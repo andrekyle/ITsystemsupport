@@ -3193,7 +3193,7 @@ export function UnitPage({
             </span>
             <span>
               <strong>Answer in your own words.</strong> Each key idea earns 2 marks only when
-              the learner mentions the concept (either by keyword or a clear synonym) <em>and</em>
+              the learner mentions the concept (either by keyword or a clear synonym) <em>and</em>{" "}
               gives an explanation of at least <strong>{MIN_EXPLANATION_WORDS} words</strong> that is
               semantically correct.
             </span>
@@ -3412,7 +3412,7 @@ export function UnitPage({
             </span>
             <span>
               <strong>Answer in your own words.</strong> Each key idea earns 2 marks only when
-              the learner mentions the concept (either by keyword or a clear synonym) <em>and</em>
+              the learner mentions the concept (either by keyword or a clear synonym) <em>and</em>{" "}
               gives an explanation of at least <strong>{MIN_EXPLANATION_WORDS} words</strong> that is
               semantically correct.
             </span>
