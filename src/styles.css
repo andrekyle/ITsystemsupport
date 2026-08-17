@@ -2586,6 +2586,10 @@ textarea:focus {
   }
   .srf-tick-cell.on { background: transparent !important; }
   .srf-tick-cell.on .srf-cell-label { color: #c05a12 !important; font-weight: 700 !important; }
+  /* Narrow tick cells: slightly smaller label + tighter padding in print so
+     words like "Divorced" keep clear air between text and cell borders. */
+  .srf-tick-cell { padding: 3px 4px !important; }
+  .srf-cell-label { font-size: 9.5px; }
   .srf-orange-strip {
     background: var(--srf-strip) !important;
     color: #fff !important;
