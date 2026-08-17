@@ -54,7 +54,8 @@ const MODEL_CANDIDATES = [
   "llama-3.1-8b-instant",
   "openai/gpt-oss-120b",
   "openai/gpt-oss-20b",
-  "gemma2-9b-it",
+  "moonshotai/kimi-k2-instruct-0905",
+  "deepseek-r1-distill-llama-70b",
 ];
 
 export default async function handler(req: Request): Promise<Response> {
