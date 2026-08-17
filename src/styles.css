@@ -7473,7 +7473,7 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 .chat-bubble.mine {
   align-self: flex-end;
-  background: var(--azure);
+  background: #2c2c2c;
   color: #ffffff;
 }
 .chat-bubble.mine .chat-bubble-at { color: #ffffff; }
