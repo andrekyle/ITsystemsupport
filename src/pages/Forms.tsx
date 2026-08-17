@@ -237,13 +237,19 @@ function StudentRegistrationForm({
         <h2 className="srf-title">Student Registration Form</h2>
 
         <div className="srf-section-title">Student Information: <em>(Please print)</em></div>
-        <table className="srf-table">
+        <table className="srf-table srf-p2">
+          <colgroup>
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "32%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "32%" }} />
+          </colgroup>
           <tbody>
             <tr>
-              <TL w="14%">National ID</TL>
-              <TF w="36%" value={form.nationalId} onChange={(v) => set("nationalId", v)} />
-              <TL w="14%">Date of Birth</TL>
-              <TF w="36%" type="date" value={form.dateOfBirth} onChange={(v) => set("dateOfBirth", v)} />
+              <TL>National ID</TL>
+              <TF value={form.nationalId} onChange={(v) => set("nationalId", v)} />
+              <TL>Date of Birth</TL>
+              <TF type="date" value={form.dateOfBirth} onChange={(v) => set("dateOfBirth", v)} />
             </tr>
             <tr>
               <TL>Full Names</TL>
@@ -267,18 +273,29 @@ function StudentRegistrationForm({
         </table>
 
         {/* Title | Gender | Ethnic Group row */}
-        <table className="srf-table srf-narrow-labels">
+        <table className="srf-table srf-narrow-labels srf-p2">
+          <colgroup>
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "9%" }} />
+            <col style={{ width: "9%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "8%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "8%" }} />
+            <col style={{ width: "8%" }} />
+          </colgroup>
           <tbody>
             <tr>
-              <TL w="7%">Title</TL>
-              <TF w="10%" value={form.title} onChange={(v) => set("title", v)} />
-              <TL w="8%">Gender</TL>
-              <TF w="7%" value={form.gender} onChange={(v) => set("gender", v)} />
-              <TL w="12%">Ethnic Group</TL>
+              <TL>Title</TL>
+              <TF value={form.title} onChange={(v) => set("title", v)} />
+              <TL>Gender</TL>
+              <TF value={form.gender} onChange={(v) => set("gender", v)} />
+              <TL>Ethnic Group</TL>
               {["African", "Indian", "Coloured", "Asian", "White"].map((eg) => (
                 <TCTick
                   key={eg}
-                  w="11.2%"
                   label={eg}
                   checked={form.ethnicGroup === eg}
                   onChange={(v) => set("ethnicGroup", v ? eg : "")}
@@ -287,15 +304,15 @@ function StudentRegistrationForm({
             </tr>
             <tr>
               <TL>Marital Status</TL>
-              <TCTick w="10%" label="Single" checked={form.maritalStatus === "Single"} onChange={(v) => set("maritalStatus", v ? "Single" : "")} />
-              <TCTick w="9%" label="Married" checked={form.maritalStatus === "Married"} onChange={(v) => set("maritalStatus", v ? "Married" : "")} />
-              <TCTick w="9%" label="Divorced" checked={form.maritalStatus === "Divorced"} onChange={(v) => set("maritalStatus", v ? "Divorced" : "")} />
-              <TCTick w="9%" label="Widowed" checked={form.maritalStatus === "Widowed"} onChange={(v) => set("maritalStatus", v ? "Widowed" : "")} />
-              <TL w="11%">Dependants</TL>
-              <TF w="12%" value={form.dependants} onChange={(v) => set("dependants", v)} />
-              <TL w="15%">Employment Status</TL>
-              <TCTick w="7%" label="Yes" checked={form.employmentStatusYesNo === "yes"} onChange={(v) => set("employmentStatusYesNo", v ? "yes" : "")} />
-              <TCTick w="7%" label="No" checked={form.employmentStatusYesNo === "no"} onChange={(v) => set("employmentStatusYesNo", v ? "no" : "")} />
+              <TCTick label="Single" checked={form.maritalStatus === "Single"} onChange={(v) => set("maritalStatus", v ? "Single" : "")} />
+              <TCTick label="Married" checked={form.maritalStatus === "Married"} onChange={(v) => set("maritalStatus", v ? "Married" : "")} />
+              <TCTick label="Divorced" checked={form.maritalStatus === "Divorced"} onChange={(v) => set("maritalStatus", v ? "Divorced" : "")} />
+              <TCTick label="Widowed" checked={form.maritalStatus === "Widowed"} onChange={(v) => set("maritalStatus", v ? "Widowed" : "")} />
+              <TL>Dependants</TL>
+              <TF value={form.dependants} onChange={(v) => set("dependants", v)} />
+              <TL>Employment Status</TL>
+              <TCTick label="Yes" checked={form.employmentStatusYesNo === "yes"} onChange={(v) => set("employmentStatusYesNo", v ? "yes" : "")} />
+              <TCTick label="No" checked={form.employmentStatusYesNo === "no"} onChange={(v) => set("employmentStatusYesNo", v ? "no" : "")} />
             </tr>
             <tr>
               <TL>ID Type</TL>
@@ -313,19 +330,25 @@ function StudentRegistrationForm({
         </table>
 
         {/* Physical / Postal addresses */}
-        <table className="srf-table">
+        <table className="srf-table srf-p2">
+          <colgroup>
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "32%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "32%" }} />
+          </colgroup>
           <tbody>
             <tr>
-              <TL w="14%">Physical Address</TL>
-              <td className="srf-cell" style={{ width: "36%" }}>
+              <TL>Physical Address</TL>
+              <td className="srf-cell">
                 <textarea
                   className="srf-input srf-textarea"
                   value={form.physicalAddress}
                   onChange={(e) => set("physicalAddress", e.target.value)}
                 />
               </td>
-              <TL w="14%">Postal Address</TL>
-              <td className="srf-cell" style={{ width: "36%" }}>
+              <TL>Postal Address</TL>
+              <td className="srf-cell">
                 <textarea
                   className="srf-input srf-textarea"
                   value={form.postalAddress}
@@ -411,13 +434,19 @@ function StudentRegistrationForm({
 
         {/* Educational Status */}
         <div className="srf-section-title">Educational Status: <em>(Please print)</em></div>
-        <table className="srf-table">
+        <table className="srf-table srf-p2">
+          <colgroup>
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "32%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "32%" }} />
+          </colgroup>
           <tbody>
             <tr>
-              <TL w="18%">Last School Attended</TL>
-              <TF w="47%" value={form.lastSchoolAttended} onChange={(v) => set("lastSchoolAttended", v)} />
-              <TL w="15%">Grade Completed</TL>
-              <TF w="20%" value={form.highestGradeCompleted} onChange={(v) => set("highestGradeCompleted", v)} />
+              <TL>Last School Attended</TL>
+              <TF value={form.lastSchoolAttended} onChange={(v) => set("lastSchoolAttended", v)} />
+              <TL>Grade Completed</TL>
+              <TF value={form.highestGradeCompleted} onChange={(v) => set("highestGradeCompleted", v)} />
             </tr>
             <tr>
               <TL>School District</TL>

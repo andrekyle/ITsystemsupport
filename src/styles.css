@@ -2356,10 +2356,17 @@ textarea:focus {
   border-collapse: collapse;
   margin: 0 0 4px;
 }
-/* Page 2 tables share the same 18/32/18/32 column split so their vertical
-   lines are perfectly aligned between Employment, Alt Contact and
-   Qualification blocks. */
+/* Page 1 + 2 label/field tables share a fixed colgroup so vertical lines
+   are perfectly aligned between sections. */
 .srf-table.srf-p2 {
+  table-layout: fixed;
+}
+/* Fixed layout means long labels must be allowed to wrap. */
+.srf-table.srf-p2 .srf-label {
+  white-space: normal;
+}
+/* Tick matrices (nationality / language / disability): equal columns. */
+.srf-table.srf-nationality {
   table-layout: fixed;
 }
 .srf-table td {
