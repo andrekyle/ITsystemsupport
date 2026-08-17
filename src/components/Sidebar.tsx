@@ -68,7 +68,13 @@ export function Sidebar({ collapsed, route, progress, profile, navigate }: Props
           },
         ]),
     ...(profile.role === "Super User"
-      ? [{ page: "reports" as const, icon: "chart", label: "Reports" }]
+      ? [
+          {
+            href: "/reports/learner-tracker-investec-aug-2026.html",
+            icon: "chart",
+            label: "Learner Tracker Report",
+          },
+        ]
       : []),
     { page: "calendar" as const, icon: "calendar", label: "Training Calendar" },
     { page: "attendance" as const, icon: "clipboard", label: "Attendance Register" },
@@ -81,19 +87,33 @@ export function Sidebar({ collapsed, route, progress, profile, navigate }: Props
     <nav className={`sidebar${collapsed ? " collapsed" : ""}`} aria-label="Main navigation">
       <div className="sidebar-scroll">
         <div className="side-section">
-          {nav.map((n) => (
-            <button
-              key={n.page}
-              className={`side-item${route.page === n.page ? " active" : ""}`}
-              onClick={() => navigate({ page: n.page })}
-              title={n.label}
-            >
-              <span className="ico">
-                <Icon name={n.icon} />
-              </span>
-              {!collapsed && <span className="txt">{n.label}</span>}
-            </button>
-          ))}
+          {nav.map((n) =>
+            "href" in n ? (
+              <button
+                key={n.href}
+                className="side-item"
+                onClick={() => window.open(n.href, "_blank", "noopener")}
+                title={n.label}
+              >
+                <span className="ico">
+                  <Icon name={n.icon} />
+                </span>
+                {!collapsed && <span className="txt">{n.label}</span>}
+              </button>
+            ) : (
+              <button
+                key={n.page}
+                className={`side-item${route.page === n.page ? " active" : ""}`}
+                onClick={() => navigate({ page: n.page })}
+                title={n.label}
+              >
+                <span className="ico">
+                  <Icon name={n.icon} />
+                </span>
+                {!collapsed && <span className="txt">{n.label}</span>}
+              </button>
+            )
+          )}
         </div>
 
         {!collapsed && <div className="side-label">Modules · SAQA 48573</div>}

@@ -2612,57 +2612,6 @@ textarea:focus {
   }
 }
 
-/* ============ Reports (Super User) ============ */
-.reports-list {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-.report-card-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.report-ico {
-  flex-shrink: 0;
-  display: inline-flex;
-  color: var(--azure);
-}
-.report-meta {
-  min-width: 0;
-  flex: 1;
-}
-.report-title {
-  font-weight: 600;
-  font-size: 14.5px;
-}
-.report-desc {
-  font-size: 12.5px;
-  color: var(--ink-3);
-  margin-top: 2px;
-}
-.report-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-  align-items: center;
-}
-.report-actions .btn {
-  text-decoration: none;
-}
-.report-frame-card {
-  padding: 0;
-  overflow: hidden;
-}
-.report-frame {
-  display: block;
-  width: 100%;
-  height: calc(100vh - 220px);
-  min-height: 480px;
-  border: 0;
-  background: #fff;
-}
-
 .attempt-row .col-left {
   display: inline-flex;
   align-items: center;
