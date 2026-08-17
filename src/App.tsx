@@ -19,6 +19,7 @@ import { AnalyticsPage } from "./pages/Analytics";
 import { CommunityPage } from "./pages/Community";
 import { ChatPage } from "./pages/Chat";
 import { FormsPage } from "./pages/Forms";
+import { TrackerReportPage } from "./pages/TrackerReport";
 import { cloudEnabled, supabase } from "./lib/supabase";
 import { installSync, startSync, stopSync, wipeLocalData } from "./lib/sync";
 import { logAudit } from "./lib/audit";
@@ -48,6 +49,7 @@ const VALID_PAGES = new Set([
   "community",
   "chat",
   "forms",
+  "trackerReport",
 ]);
 
 function loadRoute(): Route {
@@ -175,6 +177,7 @@ function Shell({
                 navigate={navigate}
               />
             )}
+            {route.page === "trackerReport" && <TrackerReportPage profile={profile} />}
             {route.page === "resources" && <ResourcesPage />}
           </div>
         </main>

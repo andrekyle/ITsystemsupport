@@ -4,7 +4,6 @@ import { isStaff } from "../types";
 import { MODULES } from "../data/course";
 import type { ProgressState } from "../types";
 import { moduleCompletion } from "../store";
-import { openTrackerReport } from "../lib/reports";
 
 // Sentence case: first letter uppercased, subsequent words lowercased, but
 // leave all-uppercase tokens (acronyms like LAN, SAQA, IT) untouched.
@@ -69,13 +68,7 @@ export function Sidebar({ collapsed, route, progress, profile, navigate }: Props
           },
         ]),
     ...(profile.role === "Super User"
-      ? [
-          {
-            action: () => void openTrackerReport(),
-            icon: "chart",
-            label: "Learner Tracker Report",
-          },
-        ]
+      ? [{ page: "trackerReport" as const, icon: "chart", label: "Learner Tracker Report" }]
       : []),
     { page: "calendar" as const, icon: "calendar", label: "Training Calendar" },
     { page: "attendance" as const, icon: "clipboard", label: "Attendance Register" },
@@ -88,28 +81,19 @@ export function Sidebar({ collapsed, route, progress, profile, navigate }: Props
     <nav className={`sidebar${collapsed ? " collapsed" : ""}`} aria-label="Main navigation">
       <div className="sidebar-scroll">
         <div className="side-section">
-          {nav.map((n) =>
-            "action" in n ? (
-              <button key={n.label} className="side-item" onClick={n.action} title={n.label}>
-                <span className="ico">
-                  <Icon name={n.icon} />
-                </span>
-                {!collapsed && <span className="txt">{n.label}</span>}
-              </button>
-            ) : (
-              <button
-                key={n.page}
-                className={`side-item${route.page === n.page ? " active" : ""}`}
-                onClick={() => navigate({ page: n.page })}
-                title={n.label}
-              >
-                <span className="ico">
-                  <Icon name={n.icon} />
-                </span>
-                {!collapsed && <span className="txt">{n.label}</span>}
-              </button>
-            )
-          )}
+          {nav.map((n) => (
+            <button
+              key={n.page}
+              className={`side-item${route.page === n.page ? " active" : ""}`}
+              onClick={() => navigate({ page: n.page })}
+              title={n.label}
+            >
+              <span className="ico">
+                <Icon name={n.icon} />
+              </span>
+              {!collapsed && <span className="txt">{n.label}</span>}
+            </button>
+          ))}
         </div>
 
         {!collapsed && <div className="side-label">Modules · SAQA 48573</div>}
