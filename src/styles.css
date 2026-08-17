@@ -4670,6 +4670,11 @@ a.plan-ppt:hover {
 .exq-marked .exq-seg:last-child {
   margin-bottom: 0;
 }
+/* Keep the last word + its marker (tick or X) glued together so the marker
+   never wraps down to a line of its own — the whole tail wraps as one unit. */
+.exq-marked .exq-tail {
+  white-space: nowrap;
+}
 
 .exq-marked.ok {
   border-color: var(--green);

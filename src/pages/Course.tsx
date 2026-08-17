@@ -620,6 +620,17 @@ function attributeTicks(sentences: string[], credited: string[][]): number[] {
   return attributeGroups(sentences, credited).map((g) => g.length);
 }
 
+/** Split a piece of text into (head, tail) where tail is the final
+ *  non-whitespace chunk plus any trailing whitespace. Used so the marker
+ *  glyph after a segment can be glued to the last word — that word + glyph
+ *  wrap together as one unit and the glyph is never orphaned on its own
+ *  line below the sentence. */
+function splitTail(seg: string): { head: string; tail: string } {
+  const m = seg.match(/^([\s\S]*?)(\S+\s*)$/);
+  if (!m) return { head: "", tail: seg };
+  return { head: m[1], tail: m[2] };
+}
+
 /** The learner's own answer rendered with two green ticks inserted after each
  *  part of the text that earned a key idea's 2 marks. */
 function MarkedAnswer({ text, check, ok }: { text: string; check: ExerciseCheck; ok: boolean }) {
@@ -644,31 +655,47 @@ function MarkedAnswer({ text, check, ok }: { text: string; check: ExerciseCheck;
           const rest = groupsHere.length - perClause.reduce((t, g) => t + g.length, 0);
           return (
             <span key={i} className="exq-seg">
-              {clauses.map((c, ci) => (
-                <span key={ci}>
-                  {c}
-                  {perClause[ci].map((_, t) => (
-                    <DoubleTick key={t} />
-                  ))}
-                </span>
-              ))}
+              {clauses.map((c, ci) => {
+                const ticks = perClause[ci];
+                if (ticks.length === 0) return <span key={ci}>{c}</span>;
+                const { head, tail } = splitTail(c);
+                return (
+                  <span key={ci}>
+                    {head}
+                    <span className="exq-tail">
+                      {tail}
+                      {ticks.map((_, t) => (
+                        <DoubleTick key={t} />
+                      ))}
+                    </span>
+                  </span>
+                );
+              })}
               {Array.from({ length: rest }).map((_, t) => (
                 <DoubleTick key={`r${t}`} />
               ))}
             </span>
           );
         }
+        const showX = gis.length === 0 && !fullCoverage && contentStems(seg).size > 0;
+        if (gis.length === 0 && !showX) {
+          return <span key={i} className="exq-seg">{seg}</span>;
+        }
+        const { head, tail } = splitTail(seg);
         return (
           <span key={i} className="exq-seg">
-            {seg}
-            {gis.map((_, t) => (
-              <DoubleTick key={t} />
-            ))}
-            {gis.length === 0 && !fullCoverage && contentStems(seg).size > 0 && (
-              <span className="exq-x" title="No marks for this sentence" aria-label="No marks">
-                <Icon name="close" size={14} />
-              </span>
-            )}
+            {head}
+            <span className="exq-tail">
+              {tail}
+              {gis.map((_, t) => (
+                <DoubleTick key={t} />
+              ))}
+              {showX && (
+                <span className="exq-x" title="No marks for this sentence" aria-label="No marks">
+                  <Icon name="close" size={14} />
+                </span>
+              )}
+            </span>
           </span>
         );
       })}
