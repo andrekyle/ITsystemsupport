@@ -212,36 +212,85 @@ function StudentRegistrationForm({
 
   function print() {
     save();
-    // Clone the two .srf-page elements into a temporary print container
-    // appended to <body>. This isolates the form from the app shell's
-    // flex/overflow layout, which was causing blank print output.
     const pages = Array.from(document.querySelectorAll<HTMLElement>(".srf-page"));
     if (pages.length === 0) {
       setTimeout(() => window.print(), 60);
       return;
     }
-    const holder = document.createElement("div");
-    holder.className = "srf-print-holder";
+
+    // Build a printable HTML document in a new window. This bypasses every
+    // parent flex/overflow/scroll container so the browser has zero reason
+    // to hand back a blank sheet.
+    const parts: string[] = [];
     pages.forEach((p) => {
       const clone = p.cloneNode(true) as HTMLElement;
-      // Neutralise any inline styles that may hide it
-      clone.style.display = "block";
-      clone.style.visibility = "visible";
-      holder.appendChild(clone);
+      // Copy live input/textarea/select values back into the attribute so they
+      // survive serialization (cloneNode does not copy live .value into HTML).
+      const origInputs = p.querySelectorAll<HTMLInputElement>("input, textarea, select");
+      const cloneInputs = clone.querySelectorAll<HTMLInputElement>("input, textarea, select");
+      origInputs.forEach((el, i) => {
+        const dst = cloneInputs[i];
+        if (!dst) return;
+        if (el.tagName === "SELECT") {
+          const sel = el as unknown as HTMLSelectElement;
+          const dstSel = dst as unknown as HTMLSelectElement;
+          Array.from(dstSel.options).forEach((opt, j) => {
+            if (sel.options[j] && sel.options[j].selected) opt.setAttribute("selected", "");
+          });
+        } else if (el.type === "checkbox" || el.type === "radio") {
+          if (el.checked) dst.setAttribute("checked", "");
+          else dst.removeAttribute("checked");
+        } else {
+          dst.setAttribute("value", el.value);
+        }
+      });
+      parts.push(clone.outerHTML);
     });
-    document.body.appendChild(holder);
-    document.body.classList.add("srf-printing");
-    const cleanup = () => {
-      document.body.classList.remove("srf-printing");
-      if (holder.parentNode) holder.parentNode.removeChild(holder);
-      window.removeEventListener("afterprint", cleanup);
-    };
-    window.addEventListener("afterprint", cleanup);
-    setTimeout(() => {
-      window.print();
-      // Fallback cleanup for browsers that don't fire afterprint reliably
-      setTimeout(cleanup, 1000);
-    }, 80);
+
+    // Pull all currently loaded stylesheets so the .srf-* styles come along.
+    const styleLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+      .map((l) => `<link rel="stylesheet" href="${(l as HTMLLinkElement).href}">`)
+      .join("\n");
+    const inlineStyles = Array.from(document.querySelectorAll("style"))
+      .map((s) => `<style>${s.textContent || ""}</style>`)
+      .join("\n");
+
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Student Registration Form</title>
+${styleLinks}
+${inlineStyles}
+<style>
+  html, body { margin: 0; padding: 0; background: #ffffff; color: #000; }
+  body { font-family: Arial, "Helvetica Neue", sans-serif; }
+  .srf-page { background: #fff !important; color: #000 !important; border: 0 !important; padding: 10mm 12mm; }
+  .srf-page + .srf-page { break-before: page; page-break-before: always; }
+  .no-print, .srf-actions { display: none !important; }
+  @page { size: A4; margin: 8mm; }
+  @media print {
+    html, body { background: #fff !important; }
+    .srf-page { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .srf-page * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head><body>
+${parts.join("\n")}
+<script>
+  window.addEventListener("load", function () {
+    setTimeout(function () {
+      try { window.focus(); window.print(); } catch (e) {}
+      setTimeout(function () { window.close(); }, 500);
+    }, 300);
+  });
+</script>
+</body></html>`;
+
+    const win = window.open("", "_blank", "width=900,height=1100");
+    if (!win) {
+      alert("Please allow pop-ups for this site to print the form.");
+      return;
+    }
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
   }
 
   return (
