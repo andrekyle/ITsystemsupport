@@ -10,9 +10,11 @@ import {
   useSharedSettings,
 } from "../store";
 import { logAudit } from "../lib/audit";
-import { leaderboard } from "../lib/gamification";
+import { cloudLeaderboard, leaderboard, type LeaderboardRow } from "../lib/gamification";
+import { fetchCloudLearnerData, type CloudLearnerData } from "../lib/directory";
 import { mailtoLink, outlookComposeLink, teamsChatLink } from "../lib/integrations";
 import { Avatar } from "../components/Avatar";
+import { cloudEnabled } from "../lib/supabase";
 
 const fmtWhen = (iso: string) => {
   const d = new Date(iso);
@@ -536,7 +538,34 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
 /* ---------- leaderboard ---------- */
 
 function Leaderboard({ profile }: { profile: Profile }) {
-  const rows = leaderboard(loadProfiles());
+  const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
+  useEffect(() => {
+    if (!cloudEnabled) return;
+    let alive = true;
+    void fetchCloudLearnerData().then((d) => {
+      if (alive && d) setCloud(d);
+    });
+    const refresh = window.setInterval(() => {
+      void fetchCloudLearnerData().then((d) => {
+        if (alive && d) setCloud(d);
+      });
+    }, 60_000);
+    return () => {
+      alive = false;
+      window.clearInterval(refresh);
+    };
+  }, []);
+
+  // Cloud-first: real accounts from Supabase drive the roster, and each
+  // learner's XP is computed from THEIR cloud-synced progress. Falls back
+  // to local-only ranking when the app is offline or cloud sync is
+  // unavailable (dev / signed-out use).
+  const rows: LeaderboardRow[] = cloud
+    ? cloudLeaderboard(profile.id, cloud.profiles, cloud.progress, cloud.poe)
+    : cloudEnabled
+    ? [] // still loading — keep the spinner-less empty state until cloud lands
+    : leaderboard(loadProfiles());
+
   const top = rows.slice(0, 10);
   const myIndex = rows.findIndex((r) => r.profile.id === profile.id);
 
@@ -550,7 +579,11 @@ function Leaderboard({ profile }: { profile: Profile }) {
       </h2>
       <div className="card leaderboard-card">
         {top.length === 0 ? (
-          <p className="mini-note">No learners yet — the leaderboard fills up as the class works.</p>
+          <p className="mini-note">
+            {cloudEnabled && !cloud
+              ? "Loading class data…"
+              : "No learners yet — the leaderboard fills up as the class works."}
+          </p>
         ) : (
           <ol className="leaderboard">
             {top.map((r, i) => (
