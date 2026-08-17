@@ -120,7 +120,7 @@ export function ChatPage({
   }, [route.studentId, profile.id]);
 
   return (
-    <>
+    <div className="chat-page">
       <div className="eyebrow">
         <Icon name="chat" size={15} />
         Direct messages
@@ -170,7 +170,7 @@ export function ChatPage({
           )}
         </section>
       </div>
-    </>
+    </div>
   );
 }
 
