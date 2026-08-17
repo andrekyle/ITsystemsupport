@@ -633,13 +633,16 @@ function StudentRegistrationForm({
         </div>
 
         <div className="srf-footer-logos">
-          <div className="srf-logo-badge srf-qcto">
-            <span className="srf-qcto-mark">Q</span>
-            <div className="srf-qcto-word">QCTO</div>
-          </div>
-          <div className="srf-logo-badge srf-services">
-            <div className="srf-services-mark">SERVICES<br />SETA</div>
-          </div>
+          <img
+            src="/logos/Quality-Council-for-Trades-and-Occupations.png"
+            alt="QCTO — Quality Council for Trades and Occupations"
+            className="srf-footer-logo"
+          />
+          <img
+            src="/logos/Services-SETAFavicon.png"
+            alt="Services SETA"
+            className="srf-footer-logo"
+          />
           <div className="srf-logo-badge srf-seta">
             <span className="srf-seta-word">W&amp;RSETA</span>
           </div>
@@ -660,18 +663,7 @@ function chunks<T>(arr: T[], n: number): T[][] {
 function EruditioMasthead() {
   return (
     <div className="srf-masthead">
-      <div className="srf-eruditio">
-        <div className="srf-eruditio-graphic" aria-hidden>
-          <svg viewBox="0 0 60 40" width="60" height="40">
-            <path d="M10 25 Q18 5 28 20" fill="none" stroke="#3e8f5e" strokeWidth="4" strokeLinecap="round" />
-            <path d="M14 32 Q22 12 32 27" fill="none" stroke="#f0c04d" strokeWidth="4" strokeLinecap="round" />
-          </svg>
-        </div>
-        <div className="srf-eruditio-word">
-          <span className="srf-eruditio-e">E</span>ruditio
-        </div>
-        <div className="srf-eruditio-tag">EMPOWER · DEVELOP · TRANSFORM</div>
-      </div>
+      <img src="/logos/eruditio.png" alt="Eruditio" className="srf-eruditio-logo" />
     </div>
   );
 }
