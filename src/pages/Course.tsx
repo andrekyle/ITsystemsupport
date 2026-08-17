@@ -472,34 +472,61 @@ function creditedConceptIndexes(text: string, check: ExerciseCheck): number[] {
   const sentenceTokens = sentences.map((s) => answerTokens(s));
   const sentenceStems = sentences.map((s) => contentStems(s));
 
-  // Precompute the semantic "target" for each concept: the concept's own
-  // phrases plus the matching lesson line, so synonyms in the lesson wording
-  // help identify semantically-correct explanations.
-  const conceptTargets = check.concepts.map((g) => {
+  // Precompute two stem sets per concept:
+  //   fullTarget       — the concept keywords + the lesson line stems.
+  //                      Used for the semantic-only path (no keyword hit).
+  //   explanationTarget — the lesson line stems MINUS the concept's own
+  //                      keywords. This is what a real explanation of the
+  //                      idea looks like. Used when the sentence hit the
+  //                      keyword: the *rest* of the sentence must resemble
+  //                      the lesson wording, so a keyword drop with random
+  //                      unrelated filler cannot score.
+  const conceptData = check.concepts.map((g) => {
+    const keywordStems = new Set(answerTokens(g.join(" ")));
     const lessonLine = check.answer.find((a) => {
       const at = answerTokens(a);
       return g.some((p) => phraseMatches(p, at));
     });
-    return contentStems(`${g.join(" ")} ${lessonLine ?? ""}`);
+    const fullTarget = contentStems(`${g.join(" ")} ${lessonLine ?? ""}`);
+    const explanationTarget = new Set<string>();
+    contentStems(lessonLine ?? "").forEach((s) => {
+      if (!keywordStems.has(s)) explanationTarget.add(s);
+    });
+    return { keywordStems, fullTarget, explanationTarget };
   });
+
+  /** How much the non-keyword content of `sentenceStems` overlaps with the
+   *  non-keyword content of the lesson wording. Prevents the keyword itself
+   *  from inflating the score. */
+  const explanationOverlap = (sSet: Set<string>, keywordStems: Set<string>, target: Set<string>): number => {
+    if (!target.size) return 0;
+    const withoutKw = new Set<string>();
+    sSet.forEach((s) => {
+      if (!keywordStems.has(s)) withoutKw.add(s);
+    });
+    return stemOverlap(withoutKw, target);
+  };
 
   const credited = new Set<number>();
 
-  // Per-sentence credit only: the sentence must have ≥ 10 words AND either
-  // hit the keyword/synonym OR be semantically on-topic.
+  // Per-sentence credit only: a sentence needs ≥ 10 words AND either
+  //  • keyword hit + a real explanation supporting it, or
+  //  • strong semantic overlap on its own (a paraphrase / clear synonym).
   for (let gi = 0; gi < check.concepts.length; gi++) {
     const group = check.concepts[gi];
-    const target = conceptTargets[gi];
+    const { keywordStems, fullTarget, explanationTarget } = conceptData[gi];
     for (let si = 0; si < sentences.length; si++) {
       if (sentenceTokens[si].length < MIN_EXPLANATION_WORDS) continue;
-      const overlap = stemOverlap(sentenceStems[si], target);
       const keywordHit = conceptInSentence(group, sentenceTokens[si]);
-      // A pure keyword hit still needs the *sentence itself* to be on-topic —
-      // otherwise a long unrelated sentence that happens to mention the word
-      // once would score. Half the semantic threshold is enough for that.
-      const semanticHit = overlap >= SEMANTIC_THRESHOLD;
-      const supported = keywordHit && overlap >= SEMANTIC_THRESHOLD / 2;
-      if (supported || semanticHit) {
+      if (keywordHit) {
+        // Sentence must actually explain the idea — its non-keyword content
+        // has to resemble the lesson line's non-keyword content.
+        if (explanationOverlap(sentenceStems[si], keywordStems, explanationTarget) >= SEMANTIC_THRESHOLD) {
+          credited.add(gi);
+          break;
+        }
+      } else if (stemOverlap(sentenceStems[si], fullTarget) >= SEMANTIC_THRESHOLD + 0.15) {
+        // No keyword — synonym / paraphrase must be strong to earn credit.
         credited.add(gi);
         break;
       }
