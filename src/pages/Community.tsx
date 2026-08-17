@@ -251,7 +251,7 @@ function Announcements({
 /* ---------- Q&A support board ---------- */
 
 function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
-  const { threads, ask, reply, toggleResolved, editQuestion, remove } = useQaThreads();
+  const { threads, ask, reply, toggleResolved, editQuestion, editReply, remove } = useQaThreads();
   const isSuper = profile.role === "Super User";
   const [asking, setAsking] = useState(false);
   const [title, setTitle] = useState("");
@@ -264,11 +264,20 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
   const [editTitle, setEditTitle] = useState("");
   const [editBody, setEditBody] = useState("");
   const [editUnit, setEditUnit] = useState("");
+  // Reply editing — key is `${threadId}:${replyId}`; body is the in-flight draft
+  const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
+  const [editReplyBody, setEditReplyBody] = useState("");
 
   /** Authors may edit their question for 24 hours after posting. */
   const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
   const canEditQuestion = (t: { byId: string; at: string }) =>
     t.byId === profile.id && Date.now() - new Date(t.at).getTime() < EDIT_WINDOW_MS;
+  /** Reply author (or super user) may edit within the 24-hour window. Super
+   *  users can edit anyone's reply — same rule as their moderation powers
+   *  elsewhere. */
+  const canEditReply = (r: { byId: string; at: string }) =>
+    (r.byId === profile.id || isSuper) &&
+    Date.now() - new Date(r.at).getTime() < EDIT_WINDOW_MS;
 
   const allUnits = MODULES.flatMap((m) => m.units);
   const [unitOpen, setUnitOpen] = useState(false);
@@ -315,6 +324,14 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
     editQuestion(threadId, editTitle, editBody, editUnit || undefined);
     logAudit(profile, "qa.post", `Edited “${editTitle.trim()}”`);
     setEditingId(null);
+  }
+
+  function submitReplyEdit(threadId: string, replyId: string) {
+    if (!editReplyBody.trim()) return;
+    editReply(threadId, replyId, editReplyBody);
+    logAudit(profile, "qa.post", "Edited a reply");
+    setEditingReplyId(null);
+    setEditReplyBody("");
   }
 
   return (
@@ -499,16 +516,66 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
           ) : (
             t.body && <p className="announce-body">{t.body}</p>
           )}
-          {t.replies.map((r) => (
-            <div className={`qa-reply${isStaff(r.role) ? " staff" : ""}`} key={r.id}>
-              <span className="qa-reply-by">
-                {r.by}
-                {isStaff(r.role) && <span className="status-chip info">{r.role}</span>}
-                <span className="mini-note">{fmtWhen(r.at)}</span>
-              </span>
-              <span>{r.body}</span>
-            </div>
-          ))}
+          {t.replies.map((r) => {
+            const isEditingThis = editingReplyId === `${t.id}:${r.id}`;
+            return (
+              <div className={`qa-reply${isStaff(r.role) ? " staff" : ""}`} key={r.id}>
+                <span className="qa-reply-by">
+                  {r.by}
+                  {isStaff(r.role) && <span className="status-chip info">{r.role}</span>}
+                  <span className="mini-note">{fmtWhen(r.at)}{r.editedAt ? " · edited" : ""}</span>
+                  {!isEditingThis && canEditReply(r) && (
+                    <button
+                      type="button"
+                      className="linklike"
+                      style={{ marginLeft: 8, fontSize: 12 }}
+                      title="You can edit this reply for 24 hours after posting"
+                      onClick={() => {
+                        setEditingReplyId(`${t.id}:${r.id}`);
+                        setEditReplyBody(r.body);
+                      }}
+                    >
+                      <Icon name="design" size={13} /> Edit
+                    </button>
+                  )}
+                </span>
+                {isEditingThis ? (
+                  <div className="qa-replybox" style={{ marginTop: 4 }}>
+                    <input
+                      value={editReplyBody}
+                      onChange={(e) => setEditReplyBody(e.target.value)}
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") submitReplyEdit(t.id, r.id);
+                        else if (e.key === "Escape") {
+                          setEditingReplyId(null);
+                          setEditReplyBody("");
+                        }
+                      }}
+                    />
+                    <button
+                      className="btn sm"
+                      onClick={() => submitReplyEdit(t.id, r.id)}
+                      disabled={!editReplyBody.trim() || editReplyBody.trim() === r.body}
+                    >
+                      Save
+                    </button>
+                    <button
+                      className="btn ghost sm"
+                      onClick={() => {
+                        setEditingReplyId(null);
+                        setEditReplyBody("");
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <span>{r.body}</span>
+                )}
+              </div>
+            );
+          })}
           {replyFor === t.id ? (
             <div className="qa-replybox">
               <input

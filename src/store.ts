@@ -638,6 +638,8 @@ export interface QaReply {
   by: string;
   role: Role;
   at: string;
+  /** set when the author edits within the 24-hour window */
+  editedAt?: string;
 }
 
 export interface QaThread {
@@ -725,11 +727,30 @@ export function useQaThreads() {
       ),
     [update]
   );
+  /** Edit an existing reply's body. UI enforces who may edit + the time window. */
+  const editReply = useCallback(
+    (threadId: string, replyId: string, body: string) =>
+      update((fresh) =>
+        fresh.map((t) =>
+          t.id !== threadId
+            ? t
+            : {
+                ...t,
+                replies: t.replies.map((r) =>
+                  r.id !== replyId
+                    ? r
+                    : { ...r, body: body.trim(), editedAt: new Date().toISOString() }
+                ),
+              }
+        )
+      ),
+    [update]
+  );
   const remove = useCallback(
     (threadId: string) => update((fresh) => fresh.filter((t) => t.id !== threadId)),
     [update]
   );
-  return { threads, ask, reply, toggleResolved, editQuestion, remove };
+  return { threads, ask, reply, toggleResolved, editQuestion, editReply, remove };
 }
 
 /* ---------- direct chat (1-to-1 conversations, database-enforced privacy) --------- */
