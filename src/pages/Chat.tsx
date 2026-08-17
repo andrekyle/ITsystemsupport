@@ -3,24 +3,25 @@ import { Icon } from "../icons";
 import type { Profile, Route } from "../types";
 import { isStaff } from "../types";
 import {
-  loadProfiles,
   useChat,
   useChatThreads,
   type ChatMessage,
   type ChatThreadInfo,
 } from "../store";
-import { fetchCloudDirectory, fetchSuperUserAuthId, resolveCloudLink } from "../lib/directory";
-import { mergeProfileWithCloud, remoteOnlyProfiles } from "../lib/directory";
+import { fetchCloudDirectory, fetchSuperUserAuthId } from "../lib/directory";
 import type { CloudDirectory } from "../lib/directory";
 import { Avatar } from "../components/Avatar";
 import { logAudit } from "../lib/audit";
 
 /**
  * Direct messages: 1-to-1 chat between any two people on the course.
- * - Learners can chat with other learners and staff.
- * - Super users can open a chat with anyone and see every conversation.
- * - Each conversation is stored as one shared_state row (`itss.chat.<a>~~<b>.shared`)
- *   so both sides — and moderators — always see the same thread.
+ *
+ * All identities are cloud identities: the sidebar lists every account that
+ * has signed in to Supabase (via `cloud.profiles`) and the sender of every
+ * message is resolved through their `sender_user_id` (auth uid) — the
+ * canonical identity. No local seeded profile is ever considered here, so
+ * a learner appearing on this page is guaranteed to be the *real* user
+ * behind that account.
  */
 export function ChatPage({
   profile,
@@ -34,7 +35,6 @@ export function ChatPage({
   const isSuper = profile.role === "Super User";
   const staff = isStaff(profile.role);
 
-  // People I can chat with (local + cloud, deduped, self excluded)
   const [cloud, setCloud] = useState<CloudDirectory | null>(null);
   const [superUid, setSuperUid] = useState<string | undefined>(undefined);
   // Bump every ~30s so the "online now" dots (derived from lastLogin) refresh.
@@ -72,23 +72,35 @@ export function ChatPage({
   // depending on it — the value doesn't matter, only the re-render trigger
   void presenceTick;
 
-  const people = useMemo(() => {
-    const local = loadProfiles();
-    const remote = remoteOnlyProfiles(local, cloud?.profiles ?? []);
-    const all = [
-      ...local.map((p) => mergeProfileWithCloud(p, cloud ?? undefined)),
-      ...remote,
-    ]
+  /** Every profile that has signed into the cloud (excluding self). */
+  const people = useMemo<Profile[]>(() => {
+    if (!cloud) return [];
+    const all = cloud.profiles
       .filter((p) => p.id !== profile.id)
+      // learners only see other learners and staff — never other learners' chats
+      .filter((p) => (staff ? true : p.role === "Learner" || isStaff(p.role)))
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
-    // learners can only see other learners + staff; they don't need to see other people's private chats
-    return staff ? all : all.filter((p) => p.role === "Learner" || isStaff(p.role));
+    return all;
   }, [cloud, profile.id, staff]);
 
+  /** Index by profile id AND by that profile's Supabase auth uid so we can
+   *  resolve senders no matter which identifier a message carries. */
+  const peopleByAny = useMemo(() => {
+    const m = new Map<string, Profile>();
+    for (const p of people) {
+      m.set(p.id, p);
+      const authId = p.cloudUserId ?? cloud?.owners[p.id];
+      if (authId) m.set(authId, p);
+    }
+    // include the viewer so their own bubbles render with their own avatar
+    m.set(profile.id, profile);
+    if (profile.cloudUserId) m.set(profile.cloudUserId, profile);
+    return m;
+  }, [people, cloud, profile]);
+
   const peopleById = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
-  // include the viewer so their own chats render their own name/avatar for super users
   const nameFor = (id: string): string =>
-    id === profile.id ? profile.name : peopleById.get(id)?.name ?? "Unknown";
+    id === profile.id ? profile.name : peopleByAny.get(id)?.name ?? "Unknown";
 
   const threads = useChatThreads();
 
@@ -142,7 +154,7 @@ export function ChatPage({
               me={profile}
               otherId={openWith}
               other={peopleById.get(openWith)}
-              peopleById={peopleById}
+              peopleByAny={peopleByAny}
               nameFor={nameFor}
               cloud={cloud}
               superUid={superUid}
@@ -335,7 +347,7 @@ function ChatThread({
   me,
   otherId,
   other,
-  peopleById,
+  peopleByAny,
   nameFor,
   cloud,
   superUid,
@@ -344,36 +356,27 @@ function ChatThread({
   me: Profile;
   otherId: string;
   other?: Profile;
-  peopleById: Map<string, Profile>;
+  peopleByAny: Map<string, Profile>;
   nameFor: (id: string) => string;
   cloud: CloudDirectory | null;
   superUid?: string;
   isOnline: (p: Profile) => boolean;
 }) {
-  // Resolve the other party's Supabase auth user id (identity-aware). The
-  // chat table is keyed by real auth ids so RLS can enforce privacy.
-  //
-  // Priority:
-  //   1. profile.cloudUserId (stamped when the admin added them via Add User,
-  //      or when they signed in on this device with cloud auth)
-  //   2. identity-matched cloud directory (works once they've signed in)
-  //   3. direct id lookup in cloud.owners
-  //   4. the sole super user's auth uid from the `admins` table — used when
-  //      the target is the designated super user but no identity path linked
-  //      them to a cloud row yet.
+  // Cloud-only identity resolution: the other party's Supabase auth user id
+  // is either stamped on their cloud profile (`cloudUserId`) or listed in the
+  // `owners` map returned with `fetchCloudDirectory`. Super-user fallback
+  // covers the case where their cloud row hasn't propagated yet.
   const otherAuthUserId = useMemo(() => {
     if (other?.cloudUserId) return other.cloudUserId;
-    if (cloud) {
-      if (other) {
-        const link = resolveCloudLink(other, cloud)?.owner ?? cloud.owners[other.id];
-        if (link) return link;
-      } else {
-        const link = cloud.owners[otherId];
-        if (link) return link;
-      }
+    if (cloud && other) {
+      const link = cloud.owners[other.id];
+      if (link) return link;
     }
-    // Super-user fallback: only one account holds this role, and every
-    // signed-in user can read the `admins` table.
+    if (cloud) {
+      const link = cloud.owners[otherId];
+      if (link) return link;
+    }
+    // Only the super user is dependably reachable via the admins table.
     if (other?.role === "Super User" && superUid) return superUid;
     return undefined;
   }, [cloud, other, otherId, superUid]);
@@ -434,31 +437,11 @@ function ChatThread({
           </p>
         ) : (
           messages.map((m) => {
-            // Resolve the sender profile so their avatar renders correctly.
-            // The message's byId is whatever local profile id the sender's
-            // device had — it may not exist in *our* peopleById, so we fall
-            // back through the cloud directory (indexed by id AND by
-            // cloudUserId) and finally to the chat partner as a last resort.
-            let sender: Profile | undefined;
-            if (m.byId === me.id) {
-              sender = me;
-            } else {
-              sender = peopleById.get(m.byId);
-              if (!sender && cloud) {
-                sender = cloud.profiles.find((p) => p.id === m.byId);
-                if (!sender) {
-                  // pair the sender's auth uid (via owners map) back to a
-                  // cloud profile — covers cross-device id mismatches
-                  const senderAuthId = cloud.owners[m.byId];
-                  if (senderAuthId) {
-                    sender = cloud.profiles.find(
-                      (p) => p.cloudUserId === senderAuthId || cloud.owners[p.id] === senderAuthId
-                    );
-                  }
-                }
-              }
-              if (!sender) sender = other;
-            }
+            // Auth uid is the canonical sender identity. The map indexes cloud
+            // profiles by BOTH auth uid AND profile id, so this single lookup
+            // always finds the sender if we have their cloud record.
+            const sender =
+              peopleByAny.get(m.bySenderAuthId) ?? peopleByAny.get(m.byId) ?? other;
             return <ChatBubble key={m.id} msg={m} me={me} sender={sender} onEdit={edit} />;
           })
         )}

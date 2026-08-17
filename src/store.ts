@@ -745,6 +745,8 @@ export const chatPairKey = (a: string, b: string): string => {
 export interface ChatMessage {
   id: string;
   byId: string;
+  /** the sender's Supabase auth.users.id — the canonical identity of the sender */
+  bySenderAuthId: string;
   by: string;
   role: Role;
   body: string;
@@ -774,6 +776,7 @@ function rowToMessage(row: DbChatRow): ChatMessage {
   return {
     id: row.id,
     byId: row.sender_profile_id,
+    bySenderAuthId: row.sender_user_id,
     by: row.sender_name,
     role: row.sender_role,
     body: row.body,
@@ -844,6 +847,7 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
       const optimistic: ChatMessage = {
         id: newId(),
         byId: author.id,
+        bySenderAuthId: myAuthId,
         by: author.name,
         role: author.role,
         body: text,
