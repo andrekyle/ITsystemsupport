@@ -460,42 +460,54 @@ function StudentRegistrationForm({
 
         {/* ============================== PAGE 2 ============================== */}
         <div className="srf-section-title">Employment Details: <em>(Please print)</em></div>
-        <table className="srf-table">
+        <table className="srf-table srf-p2">
+          <colgroup>
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "32%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "32%" }} />
+          </colgroup>
           <tbody>
             <tr>
-              <TL w="14%">Company</TL>
-              <TF w="36%" value={form.company} onChange={(v) => set("company", v)} />
-              <TL w="14%">Job Title</TL>
-              <TF w="18%" value={form.jobTitle} onChange={(v) => set("jobTitle", v)} />
-              <TL w="12%">Learnership</TL>
-              <TF w="6%" value={form.learnership} onChange={(v) => set("learnership", v)} />
+              <TL>Company</TL>
+              <TF value={form.company} onChange={(v) => set("company", v)} />
+              <TL>Job Title</TL>
+              <TF value={form.jobTitle} onChange={(v) => set("jobTitle", v)} />
             </tr>
             <tr>
               <TL>Start Date</TL>
               <TF type="date" value={form.startDate} onChange={(v) => set("startDate", v)} />
               <TL>Employment Status</TL>
-              <td className="srf-cell" colSpan={3}>
-                <input className="srf-input" value={form.employmentStatus} onChange={(e) => set("employmentStatus", e.target.value)} />
-              </td>
+              <TF value={form.employmentStatus} onChange={(v) => set("employmentStatus", v)} />
             </tr>
             <tr>
               <TL>Industry</TL>
               <TF value={form.industry} onChange={(v) => set("industry", v)} />
               <TL>Contact Number</TL>
+              <TF value={form.employerContactNumber} onChange={(v) => set("employerContactNumber", v)} />
+            </tr>
+            <tr>
+              <TL>Learnership</TL>
               <td className="srf-cell" colSpan={3}>
-                <input className="srf-input" value={form.employerContactNumber} onChange={(e) => set("employerContactNumber", e.target.value)} />
+                <input className="srf-input" value={form.learnership} onChange={(e) => set("learnership", e.target.value)} />
               </td>
             </tr>
           </tbody>
         </table>
 
         <div className="srf-section-title">Alternative Contact Details: <em>(Please print)</em></div>
-        <table className="srf-table">
+        <table className="srf-table srf-p2">
+          <colgroup>
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "32%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "32%" }} />
+          </colgroup>
           <tbody>
             <tr>
-              <TL w="14%">Name and Surname</TL>
+              <TL>Name and Surname</TL>
               <TF value={form.altContactName} onChange={(v) => set("altContactName", v)} />
-              <TL w="14%">Contact Number</TL>
+              <TL>Contact Number</TL>
               <TF value={form.altContactNumber} onChange={(v) => set("altContactNumber", v)} />
             </tr>
             <tr>
@@ -508,12 +520,18 @@ function StudentRegistrationForm({
         </table>
 
         <div className="srf-section-title">Qualification/Course Enrolment: <em>(Please print)</em></div>
-        <table className="srf-table">
+        <table className="srf-table srf-p2">
+          <colgroup>
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "32%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "32%" }} />
+          </colgroup>
           <tbody>
             <tr>
-              <TL w="14%">Qualification / Course Title</TL>
+              <TL>Qualification / Course Title</TL>
               <TF value={form.qualificationTitle} onChange={(v) => set("qualificationTitle", v)} />
-              <TL w="12%">NQF Level</TL>
+              <TL>NQF Level</TL>
               <TF value={form.nqfLevel} onChange={(v) => set("nqfLevel", v)} />
             </tr>
             <tr>
@@ -556,10 +574,16 @@ function StudentRegistrationForm({
         </div>
 
         {/* Signed at row */}
-        <table className="srf-table">
+        <table className="srf-table srf-p2">
+          <colgroup>
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "32%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "32%" }} />
+          </colgroup>
           <tbody>
             <tr>
-              <TL w="14%">Signed At</TL>
+              <TL>Signed At</TL>
               <td className="srf-cell" colSpan={3}>
                 <input className="srf-input" value={form.signedAt} onChange={(e) => set("signedAt", e.target.value)} />
               </td>
@@ -567,7 +591,7 @@ function StudentRegistrationForm({
             <tr>
               <TL>Student Signature</TL>
               <TF value={form.learnerSignature} onChange={(v) => set("learnerSignature", v)} />
-              <TL w="14%">Signature Date</TL>
+              <TL>Signature Date</TL>
               <TF type="date" value={form.learnerSignatureDate} onChange={(v) => set("learnerSignatureDate", v)} />
             </tr>
           </tbody>
