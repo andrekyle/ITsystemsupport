@@ -810,7 +810,7 @@ export const CONTENT: Record<string, UnitContent> = {
             concepts: [
               ["authorised", "approval", "formal request", "owner"],
               ["need-to-know", "need to know", "least privilege", "recorded"],
-              ["classified", "classification", "confidential", "approved channels"],
+              ["classified", "classification", "controlled distribution", "labelled", "labeled", "marked confidential"],
               ["popia", "policy", "breach"],
             ],
             labels: [

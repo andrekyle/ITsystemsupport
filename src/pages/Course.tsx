@@ -391,9 +391,32 @@ function tokenMatches(a: string, b: string): boolean {
   return false;
 }
 
-/** A concept phrase matches when every word of the phrase appears in the answer. */
+/** A concept phrase matches when every word of the phrase appears in the
+ *  answer. Single-word phrases match anywhere; multi-word phrases must
+ *  appear roughly in order and reasonably close together (within a small
+ *  window of tokens) so unrelated words scattered across a sentence can't
+ *  accidentally satisfy a phrase like "approved channels". */
 function phraseMatches(phrase: string, tokens: string[]): boolean {
-  return answerTokens(phrase).every((pw) => tokens.some((t) => tokenMatches(t, pw)));
+  const phraseTokens = answerTokens(phrase);
+  if (phraseTokens.length === 0) return false;
+  if (phraseTokens.length === 1) {
+    return tokens.some((t) => tokenMatches(t, phraseTokens[0]));
+  }
+  // Multi-word phrase: require in-order occurrence within a small window.
+  // The window is the phrase length + a couple of gap tokens, so common
+  // filler between adjacent phrase words ("in the classified document" or
+  // "need to actually know") still matches.
+  const maxSpan = phraseTokens.length + 3;
+  for (let start = 0; start <= tokens.length - phraseTokens.length; start++) {
+    let pi = 0;
+    for (let j = start; j < tokens.length && j - start < maxSpan; j++) {
+      if (tokenMatches(tokens[j], phraseTokens[pi])) {
+        pi++;
+        if (pi === phraseTokens.length) return true;
+      }
+    }
+  }
+  return false;
 }
 
 /** True when the concept group has at least one phrase whose words all
