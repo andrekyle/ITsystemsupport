@@ -2325,6 +2325,7 @@ textarea:focus {
 .attempt-row.acad .sc {
   min-width: 0;
   max-width: 56ch;
+  font-weight: 400;
 }
 
 .attempt-row.acad .cell {
