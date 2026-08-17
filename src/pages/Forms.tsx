@@ -218,14 +218,30 @@ function StudentRegistrationForm({
       return;
     }
 
-    // Build a printable HTML document in a new window. This bypasses every
-    // parent flex/overflow/scroll container so the browser has zero reason
-    // to hand back a blank sheet.
-    const parts: string[] = [];
+    // Extract only .srf-* rules from every stylesheet so we ship a small,
+    // self-contained document that can't be affected by the app shell CSS.
+    const extractedRules: string[] = [];
+    for (const sheet of Array.from(document.styleSheets)) {
+      let rules: CSSRuleList | null = null;
+      try {
+        rules = (sheet as CSSStyleSheet).cssRules;
+      } catch {
+        continue;
+      }
+      if (!rules) continue;
+      for (const rule of Array.from(rules)) {
+        const text = rule.cssText || "";
+        if (/\.srf-|\.no-print|@font-face|@page/i.test(text)) {
+          extractedRules.push(text);
+        }
+      }
+    }
+
+    // Serialize live input/select/checkbox values into HTML attributes so
+    // they show on the printed page (cloneNode does not copy live .value).
+    const cloneParts: string[] = [];
     pages.forEach((p) => {
       const clone = p.cloneNode(true) as HTMLElement;
-      // Copy live input/textarea/select values back into the attribute so they
-      // survive serialization (cloneNode does not copy live .value into HTML).
       const origInputs = p.querySelectorAll<HTMLInputElement>("input, textarea, select");
       const cloneInputs = clone.querySelectorAll<HTMLInputElement>("input, textarea, select");
       origInputs.forEach((el, i) => {
@@ -244,41 +260,40 @@ function StudentRegistrationForm({
           dst.setAttribute("value", el.value);
         }
       });
-      parts.push(clone.outerHTML);
+      cloneParts.push(clone.outerHTML);
     });
 
-    // Pull all currently loaded stylesheets so the .srf-* styles come along.
-    const styleLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-      .map((l) => `<link rel="stylesheet" href="${(l as HTMLLinkElement).href}">`)
-      .join("\n");
-    const inlineStyles = Array.from(document.querySelectorAll("style"))
-      .map((s) => `<style>${s.textContent || ""}</style>`)
-      .join("\n");
-
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Student Registration Form</title>
-${styleLinks}
-${inlineStyles}
+    const html = `<!doctype html>
+<html><head><meta charset="utf-8"><title>Student Registration Form</title>
 <style>
-  html, body { margin: 0; padding: 0; background: #ffffff; color: #000; }
-  body { font-family: Arial, "Helvetica Neue", sans-serif; }
-  .srf-page { background: #fff !important; color: #000 !important; border: 0 !important; padding: 10mm 12mm; }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: #ffffff; color: #000;
+    font-family: Arial, "Helvetica Neue", sans-serif;
+  }
+  body { padding: 0; }
+  ${extractedRules.join("\n")}
+  /* Neutralise anything from the app that could displace the form */
+  .srf-page { display: block !important; background: #fff !important; color: #000 !important;
+              border: 0 !important; margin: 0 !important; padding: 10mm 12mm !important;
+              min-height: 0 !important; height: auto !important; overflow: visible !important;
+              position: static !important; }
   .srf-page + .srf-page { break-before: page; page-break-before: always; }
   .no-print, .srf-actions { display: none !important; }
   @page { size: A4; margin: 8mm; }
   @media print {
     html, body { background: #fff !important; }
-    .srf-page { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .srf-page * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   }
 </style>
 </head><body>
-${parts.join("\n")}
+${cloneParts.join("\n")}
 <script>
   window.addEventListener("load", function () {
     setTimeout(function () {
       try { window.focus(); window.print(); } catch (e) {}
       setTimeout(function () { window.close(); }, 500);
-    }, 300);
+    }, 400);
   });
 </script>
 </body></html>`;
