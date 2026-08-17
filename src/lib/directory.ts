@@ -339,8 +339,24 @@ export function mergeProfileWithCloud(
   return Object.keys(patch).length ? { ...local, ...patch } : local;
 }
 
-/** "Best" progress for a learner: prefer this device's local copy when it has
- *  work; otherwise fall back to the owning cloud account's snapshot. The
+/** Rough count of recorded evidence in a progress state — used to choose the
+ *  richer of two copies of the same learner's progress. */
+function progressWeight(p: ProgressState): number {
+  let n = 0;
+  for (const unit of Object.values(p.units)) {
+    n += Object.values(unit.activities).filter(Boolean).length;
+    if (unit.quiz?.total) n++;
+    n += Object.values(unit.quizzes ?? {}).filter((q) => q.total > 0).length;
+    n += Object.values(unit.exercises ?? {}).filter((e) => e.total > 0).length;
+    n += Object.keys(unit.logbook ?? {}).length;
+  }
+  return n;
+}
+
+/** "Best" progress for a learner: whichever copy holds MORE evidence wins.
+ *  The viewer's own device copy is authoritative for themselves, but for other
+ *  learners a stale local snapshot must not shadow their real cloud-synced
+ *  work (that made Analytics XP disagree with the class leaderboard). The
  *  cloud lookup is identity-aware so a locally-seeded profile still pulls in
  *  its real cloud data even when the ids differ. */
 export function bestProgress(
@@ -348,32 +364,34 @@ export function bestProgress(
   cloud?: CloudLearnerData | null
 ): ProgressState {
   const local = loadProgress(profile.id);
-  if (Object.keys(local.units).length > 0) return local;
   const link = resolveCloudLink(profile, cloud);
   const remote = link ? cloud?.progress?.[link.cloudId] : undefined;
-  return remote && Object.keys(remote.units).length > 0 ? remote : local;
+  if (!remote) return local;
+  return progressWeight(local) >= progressWeight(remote) ? local : remote;
 }
 
-/** "Best" POE docs for a learner (same fall-back rule as `bestProgress`). */
+/** "Best" POE docs for a learner (same richer-copy rule as `bestProgress`). */
 export function bestPoeDocs(
   profile: Profile,
   cloud?: CloudLearnerData | null
 ): Record<string, PoeDoc> {
   const local = loadPoeDocs(profile.id);
-  if (Object.keys(local).length > 0) return local;
   const link = resolveCloudLink(profile, cloud);
-  return (link ? cloud?.poe?.[link.cloudId] : undefined) ?? local;
+  const remote = link ? cloud?.poe?.[link.cloudId] : undefined;
+  if (!remote) return local;
+  return Object.keys(local).length >= Object.keys(remote).length ? local : remote;
 }
 
-/** "Best" Appendix C checklist (same fall-back rule). */
+/** "Best" Appendix C checklist (same richer-copy rule). */
 export function bestChecklist(
   profile: Profile,
   cloud?: CloudLearnerData | null
 ): Record<string, "yes" | "no"> {
   const local = loadChecklistTicks(profile.id);
-  if (Object.keys(local).length > 0) return local;
   const link = resolveCloudLink(profile, cloud);
-  return (link ? cloud?.checklists?.[link.cloudId] : undefined) ?? local;
+  const remote = link ? cloud?.checklists?.[link.cloudId] : undefined;
+  if (!remote) return local;
+  return Object.keys(local).length >= Object.keys(remote).length ? local : remote;
 }
 
 

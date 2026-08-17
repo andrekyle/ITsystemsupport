@@ -624,11 +624,12 @@ function Leaderboard({ profile }: { profile: Profile }) {
   }, []);
 
   // Cloud-first: real accounts from Supabase drive the roster, and each
-  // learner's XP is computed from THEIR cloud-synced progress. Falls back
-  // to local-only ranking when the app is offline or cloud sync is
+  // learner's XP comes from the same bestProgress/bestPoeDocs data the
+  // Analytics page uses, so the two views always agree. Falls back to
+  // local-only ranking when the app is offline or cloud sync is
   // unavailable (dev / signed-out use).
   const rows: LeaderboardRow[] = cloud
-    ? cloudLeaderboard(profile.id, cloud.profiles, cloud.progress, cloud.poe)
+    ? cloudLeaderboard(cloud)
     : cloudEnabled
     ? [] // still loading — keep the spinner-less empty state until cloud lands
     : leaderboard(loadProfiles());

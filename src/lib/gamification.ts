@@ -2,6 +2,7 @@ import type { ProgressState, Profile } from "../types";
 import { UNIT_ACTIVITIES } from "../types";
 import { MODULES } from "../data/course";
 import { loadPoeDocs, loadProgress, poeItemCount } from "../store";
+import { bestPoeDocs, bestProgress, type CloudLearnerData } from "./directory";
 
 /**
  * Gamification layer: XP, levels and badges are computed deterministically
@@ -197,25 +198,17 @@ export function leaderboard(profiles: Profile[]): LeaderboardRow[] {
 /**
  * Cloud-first leaderboard. Uses the cloud directory as the authoritative
  * roster of accounts (only accounts that have actually signed in with their
- * own Supabase auth show up), and each learner's XP is computed from THEIR
- * cloud-synced progress and POE — not from stale data that happens to sit on
- * the viewer's device.
- *
- * The viewer's own row still uses their local records because those are
- * fresher than the last sync.
+ * own Supabase auth show up). Each learner's XP is computed through the same
+ * bestProgress/bestPoeDocs helpers the Analytics page uses — whichever copy
+ * (local snapshot or cloud sync) holds more evidence wins — so the
+ * leaderboard and Analytics can never disagree about a learner's XP.
  */
-export function cloudLeaderboard(
-  viewerId: string,
-  cloudProfiles: Profile[],
-  progressByProfileId: Record<string, ProgressState>,
-  poeByProfileId: Record<string, Record<string, import("../types").PoeDoc>>
-): LeaderboardRow[] {
-  return cloudProfiles
+export function cloudLeaderboard(cloud: CloudLearnerData): LeaderboardRow[] {
+  return cloud.profiles
     .filter((p) => p.role === "Learner")
     .map((p) => {
-      const isMe = p.id === viewerId;
-      const progress = isMe ? loadProgress(p.id) : progressByProfileId[p.id] ?? { units: {} };
-      const poe = isMe ? loadPoeDocs(p.id) : poeByProfileId[p.id] ?? {};
+      const progress = bestProgress(p, cloud);
+      const poe = bestPoeDocs(p, cloud);
       const g = computeGamification(progress, poeItemCount(poe), attendanceSignedCount(p.id));
       return { profile: p, xp: g.xp, level: g.level, levelName: g.levelName, earnedBadges: g.earnedCount };
     })
