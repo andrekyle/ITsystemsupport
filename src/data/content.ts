@@ -740,8 +740,8 @@ export const CONTENT: Record<string, UnitContent> = {
               "Progress or status reports — routine updates on work, projects or service performance.",
               "Incident or investigation reports — a factual record of what happened, why, and what was done.",
               "Feasibility reports / business cases — analysis and recommendation to support a decision.",
-              "Financial reports — budgets, expenditure and forecasts.",
-              "Performance reports — monthly service or SLA reporting against targets.",
+              "Financial reports — budgets, expenditure, income and forecasts used to control money and plan spending.",
+              "Performance reports — monthly service or SLA reporting against targets, showing whether the service is meeting agreed levels.",
               "Audit and compliance reports — findings against standards, policies or regulations.",
             ],
             concepts: [
@@ -2504,10 +2504,10 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Involve others and keep them informed.",
+              "Involve others and keep them informed at every stage of the team's work.",
               "In team decisions and actions, actively seek the input of quiet team members, and ask what would make it easier for them to participate.",
               "Listen to others respectfully and fully. Recognize and use the differences and talents of others.",
-              "Share information with everyone on the team.",
+              "Share information with everyone on the team so that no member is left in the dark.",
               "Ensure that each member gives input on an issue — ask everyone to voice their opinion one at a time, or cast votes.",
             ],
             concepts: [
@@ -4100,7 +4100,7 @@ export const CONTENT: Record<string, UnitContent> = {
         checks: [
           {
             answer: [
-              "Add more RAM (memory).",
+              "Add more RAM (memory) so the operating system does not run out of working memory.",
               "With too little RAM the operating system pages to the much slower drive (virtual memory), which is why the disk light flickers and everything crawls when many applications are open. More RAM gives the machine a bigger working desk, so it stops swapping to disk.",
             ],
             concepts: [
@@ -4142,7 +4142,7 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "A laser printer (a networked office laser / MFP).",
+              "A laser printer (a networked office laser or multifunction printer) is the right choice for this workload.",
               "Lasers are built for volume: fast pages per minute, sharp text, and toner gives by far the lowest cost per page — inkjet ink at that volume would cost a fortune and the printer would not keep up.",
             ],
             concepts: [
