@@ -18,6 +18,7 @@ import { CompliancePage } from "./pages/Compliance";
 import { AnalyticsPage } from "./pages/Analytics";
 import { CommunityPage } from "./pages/Community";
 import { ChatPage } from "./pages/Chat";
+import { FormsPage } from "./pages/Forms";
 import { cloudEnabled, supabase } from "./lib/supabase";
 import { installSync, startSync, stopSync, wipeLocalData } from "./lib/sync";
 import { logAudit } from "./lib/audit";
@@ -45,6 +46,8 @@ const VALID_PAGES = new Set([
   "compliance",
   "analytics",
   "community",
+  "chat",
+  "forms",
 ]);
 
 function loadRoute(): Route {
@@ -163,6 +166,14 @@ function Shell({
             {route.page === "community" && <CommunityPage profile={profile} navigate={navigate} />}
             {route.page === "chat" && (
               <ChatPage profile={profile} route={route} navigate={navigate} />
+            )}
+            {route.page === "forms" && (
+              <FormsPage
+                profile={profile}
+                onUpdateProfile={onUpdateProfile}
+                route={route}
+                navigate={navigate}
+              />
             )}
             {route.page === "resources" && <ResourcesPage />}
           </div>

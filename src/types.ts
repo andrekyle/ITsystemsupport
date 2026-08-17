@@ -128,6 +128,73 @@ export interface Profile {
    *  provisions the account via Add User so chat can address them before
    *  they've signed in for the first time. */
   cloudUserId?: string;
+  /** Filled-in Student Registration Form (paper-form replacement). */
+  registrationForm?: RegistrationForm;
+}
+
+/** Complete Student Registration Form — mirrors the paper form used at
+ *  learner intake. Persisted on `Profile.registrationForm` so staff can
+ *  view / print a filled copy on any device. */
+export interface RegistrationForm {
+  /* Student information */
+  title: string;
+  fullName: string;
+  nickName: string;
+  surname: string;
+  maidenName: string;
+  nationalId: string;
+  dateOfBirth: string;
+  emailAddress: string;
+  contactNumber: string;
+  maritalStatus: string;
+  dependants: string;
+  physicalAddress: string;
+  countryCode: string;
+  postalCode: string;
+  /* Passport */
+  passportNumber: string;
+  passportCountry: string;
+  passportExpiry: string;
+  /* Ethnic group + region — free text so any option can be recorded */
+  ethnicGroup: string;
+  ethnicRegion: string;
+  /* Home language */
+  homeLanguage: string;
+  /* Disability status */
+  disabilityPhysical: boolean;
+  disabilityHearing: boolean;
+  disabilityIntellectual: boolean;
+  disabilityVisual: boolean;
+  /* Education */
+  lastSchoolAttended: string;
+  highestGradeCompleted: string;
+  yearCompleted: string;
+  highestQualification: string;
+  /* Employment */
+  company: string;
+  jobTitle: string;
+  learnership: string;
+  registrationDate: string;
+  employmentStatus: string;
+  employerName: string;
+  employerAddress: string;
+  employerRelationship: string;
+  qualificationCourseNumber: string;
+  nqfLevel: string;
+  courseCode: string;
+  credits: string;
+  /* Learner declaration */
+  learnerSignature: string;
+  learnerSignatureDate: string;
+  studentNumber: string;
+  /* Admin (staff-completed) section */
+  admissionDecision: "" | "admit" | "not-admit";
+  meetsEntryRequirements: "" | "yes" | "no";
+  requiresBridging: boolean;
+  authorisedByName: string;
+  authorisedByDate: string;
+  /* ISO timestamp of the last save */
+  savedAt: string;
 }
 
 /** Stages each unit standard moves through */
@@ -442,7 +509,8 @@ export type PageId =
   | "compliance"
   | "analytics"
   | "chat"
-  | "community";
+  | "community"
+  | "forms";
 
 export interface Route {
   page: PageId;
