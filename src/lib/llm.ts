@@ -24,7 +24,8 @@ const REVIEW_TIMEOUT_MS = 7000;
 
 export async function requestSemanticReview(
   answer: string,
-  concepts: ConceptForReview[]
+  concepts: ConceptForReview[],
+  alreadyCredited: string[] = []
 ): Promise<SemanticReview> {
   if (!answer.trim() || concepts.length === 0)
     return { credited: [], reason: "", ran: false };
@@ -34,7 +35,7 @@ export async function requestSemanticReview(
     const r = await fetch("/api/mark-answer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ answer, concepts }),
+      body: JSON.stringify({ answer, concepts, alreadyCredited }),
       signal: controller.signal,
     });
     if (!r.ok) return { credited: [], reason: "", ran: false, error: `http_${r.status}` };

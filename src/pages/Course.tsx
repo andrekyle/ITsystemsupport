@@ -872,14 +872,11 @@ function ExerciseQuestion({
   useEffect(() => {
     if (!result || result.short || result.ok) return;
     if (reviewedText === val) return; // already reviewed this exact text
+    const detCredited = new Set(creditedConceptIndexes(val, check));
     const uncredited = check.concepts
       .map((g, gi) => ({ gi, g }))
       .filter(({ gi }) => !extras.has(gi))
-      .filter(({ gi }) => {
-        // exclude concepts that the deterministic marker already credited
-        const detCredited = new Set(creditedConceptIndexes(val, check));
-        return !detCredited.has(gi);
-      });
+      .filter(({ gi }) => !detCredited.has(gi));
     if (uncredited.length === 0) return;
 
     const concepts = uncredited.map(({ gi, g }) => {
@@ -895,9 +892,16 @@ function ExerciseQuestion({
       };
     });
 
+    // Labels of concepts the deterministic marker has ALREADY credited — the
+    // LLM must not promote another concept whose credit would rest on the
+    // same sentence(s) that earned those.
+    const alreadyCredited = [...detCredited].map(
+      (gi) => check.labels?.[gi] ?? check.concepts[gi][0]
+    );
+
     setReviewing(true);
     let alive = true;
-    void requestSemanticReview(val, concepts).then((res) => {
+    void requestSemanticReview(val, concepts, alreadyCredited).then((res) => {
       if (!alive) return;
       setReviewing(false);
       setReviewedText(val);
