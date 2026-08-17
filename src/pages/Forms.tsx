@@ -4,23 +4,16 @@ import type { Profile, RegistrationForm, Route } from "../types";
 import { updateProfile } from "../store";
 
 /**
- * Paper-form-accurate replacement for the Erudite Student Registration Form.
- * Layout follows the printed form section-by-section (see reference photo):
- *   - Student Information (label ⋮ value grid, 4-column rows)
- *   - Passport
- *   - Ethnic Group matrix (rows = subgroup, cols = region)
- *   - Home Language grid
- *   - Disability grid
- *   - Educational Details
- *   - Contact strip (orange bar with address + phone)
- *   - Employment Details
- *   - Learner declaration
- *   - Administration section
- *   - QCTO / W&RSETA footer strip
+ * Eruditio Student Registration Form — laid out to match the paper form
+ * exactly (see reference PDF in the repo). White background, blue title,
+ * black hairline grid, orange contact strip, matching country nationality
+ * matrix, home-language grid, disability grid, and page-2 employment /
+ * declaration / admission decision blocks.
  */
 
 const BLANK: RegistrationForm = {
   title: "",
+  gender: "",
   fullName: "",
   nickName: "",
   surname: "",
@@ -29,45 +22,80 @@ const BLANK: RegistrationForm = {
   dateOfBirth: "",
   emailAddress: "",
   contactNumber: "",
+  ethnicGroup: "",
   maritalStatus: "",
   dependants: "",
+  employmentStatusYesNo: "",
+  idType: "",
   physicalAddress: "",
-  countryCode: "",
+  postalAddress: "",
+  addressCode: "",
   postalCode: "",
   passportNumber: "",
   passportCountry: "",
   passportExpiry: "",
-  ethnicGroup: "",
+  nationality: "",
   ethnicRegion: "",
   homeLanguage: "",
+  disabilityStatus: "",
   disabilityPhysical: false,
   disabilityHearing: false,
   disabilityIntellectual: false,
   disabilityVisual: false,
   lastSchoolAttended: "",
   highestGradeCompleted: "",
-  yearCompleted: "",
+  schoolDistrict: "",
+  yearAchievedSchool: "",
   highestQualification: "",
+  yearAchievedQualification: "",
+  institution: "",
+  awards: "",
+  yearCompleted: "",
   company: "",
   jobTitle: "",
-  learnership: "Learnership",
-  registrationDate: "",
+  learnership: "",
+  startDate: "",
   employmentStatus: "",
+  industry: "",
+  employerContactNumber: "",
+  altContactName: "",
+  altContactNumber: "",
+  altContactRelationship: "",
+  altContactEmail: "",
+  qualificationTitle: "",
+  nqfLevel: "",
+  saqaId: "",
+  credits: "",
+  courseCode: "",
+  notionalHours: "",
+  registrationDate: "",
+  enrolmentDate: "",
+  qualificationCourseNumber: "",
   employerName: "",
   employerAddress: "",
   employerRelationship: "",
-  qualificationCourseNumber: "",
-  nqfLevel: "",
-  courseCode: "",
-  credits: "",
+  signedAt: "",
   learnerSignature: "",
   learnerSignatureDate: "",
   studentNumber: "",
+  docIdPassport: false,
+  docHighestCert: false,
+  docProofResidence: false,
+  docCvProfile: false,
+  verifiedBy: "",
+  verificationDate: "",
+  entryReqMeets: false,
+  entryReqDoesntMeet: false,
+  entryReqBridging: false,
+  entryReqOther: "",
+  admitStudent: false,
+  doNotAdmit: false,
+  requiresAdditionalDocs: false,
+  authorisedByName: "",
+  authorisedByDate: "",
   admissionDecision: "",
   meetsEntryRequirements: "",
   requiresBridging: false,
-  authorisedByName: "",
-  authorisedByDate: "",
   savedAt: "",
 };
 
@@ -84,6 +112,7 @@ function seedFromProfile(p: Profile): RegistrationForm {
     emailAddress: p.registrationForm?.emailAddress || e?.email || "",
     contactNumber: p.registrationForm?.contactNumber || e?.cellphone || e?.telephone || "",
     physicalAddress: p.registrationForm?.physicalAddress || e?.physicalAddress || "",
+    postalAddress: p.registrationForm?.postalAddress || e?.postalAddress || e?.physicalAddress || "",
     postalCode: p.registrationForm?.postalCode || e?.physicalPostalCode || "",
     homeLanguage: p.registrationForm?.homeLanguage || e?.homeLanguage || "",
     highestQualification:
@@ -94,6 +123,39 @@ function seedFromProfile(p: Profile): RegistrationForm {
     studentNumber: p.registrationForm?.studentNumber || p.id,
   };
 }
+
+const NATIONALITIES = [
+  "Angola",
+  "Asian Countries",
+  "Australia & New Zeeland",
+  "Botswana",
+  "Brittan & British Isles",
+  "Central & South American Countries",
+  "European Countries",
+  "Lesotho",
+  "Malawi",
+  "Mauritius",
+  "Mozambique",
+  "Namibia",
+  "North American Countries",
+  "Other & Rest of Oceania",
+  "Rest of Africa",
+  "SADC",
+  "Seychelles",
+  "South Africa",
+  "Swaziland",
+  "Tanzania",
+  "Zaire",
+  "Zambia",
+  "Zimbabwe",
+  "Other",
+];
+
+const HOME_LANG_ROW_1 = ["Afrikaans", "English", "isiNdebele", "xiTsonga", "isiXhosa", "isiZulu"];
+const HOME_LANG_ROW_2 = ["sePedi", "seSotho", "seTswana", "siSwati", "tshiVenda", "Other"];
+
+const DISABILITY_ROW_1 = ["Communication", "Emotional", "Hearing", "Intellectual"];
+const DISABILITY_ROW_2 = ["Physical", "Multiple", "Unspecified", "None"];
 
 export function FormsPage({
   profile,
@@ -112,47 +174,13 @@ export function FormsPage({
       </div>
       <h1 className="page-title no-print">Forms</h1>
       <p className="page-sub no-print">
-        Fill in the paper forms online — your details save automatically and staff can print an
+        Complete the paper forms online — details save automatically and staff can print an
         official copy from your profile.
       </p>
       <StudentRegistrationForm profile={profile} onUpdateProfile={onUpdateProfile} />
     </>
   );
 }
-
-/* ------------------------------------------------------------------------- */
-
-const ETHNIC_ROWS = [
-  "Angola",
-  "European Countries",
-  "North American Countries",
-  "South American Countries",
-];
-const ETHNIC_COLS = [
-  "Asian Countries",
-  "Australia & New Zealand",
-  "Mauritius",
-  "Mozambique",
-  "Namibia",
-  "Botswana",
-  "British & British Commonwealth Countries",
-  "Central & South American Countries",
-  "Seychelles",
-  "South Africa",
-];
-
-const HOME_LANGS = [
-  ["Afrikaans", "English", "isiNdebele", "isiXhosa", "isiZulu"],
-  ["Sepedi", "Sesotho", "Setswana", "siSwati", "Tshivenda"],
-  ["Xitsonga", "Other"],
-];
-
-const DISABILITIES: Array<{ key: keyof RegistrationForm; label: string }> = [
-  { key: "disabilityPhysical", label: "Physical" },
-  { key: "disabilityHearing", label: "Hearing" },
-  { key: "disabilityIntellectual", label: "Intellectual" },
-  { key: "disabilityVisual", label: "Visual" },
-];
 
 function StudentRegistrationForm({
   profile,
@@ -203,28 +231,22 @@ function StudentRegistrationForm({
         )}
       </div>
 
+      {/* ============================== PAGE 1 ============================== */}
       <div className="srf-page">
-        {/* --- Masthead ------------------------------------------------------ */}
-        <div className="srf-mast">
-          <div className="srf-logo" aria-hidden>
-            <span className="srf-logo-mark">e</span>
-            <span className="srf-logo-word">rudite</span>
-          </div>
-          <div className="srf-mast-title">Student Registration Form</div>
-        </div>
+        <EruditioMasthead />
+        <h2 className="srf-title">Student Registration Form</h2>
 
-        {/* --- Student Information ----------------------------------------- */}
-        <SectionLabel text="Student Information (Please print)" />
+        <div className="srf-section-title">Student Information: <em>(Please print)</em></div>
         <table className="srf-table">
           <tbody>
             <tr>
-              <TL w="15%">National ID</TL>
-              <TF w="35%" value={form.nationalId} onChange={(v) => set("nationalId", v)} />
-              <TL w="15%">Date of Birth</TL>
-              <TF w="35%" type="date" value={form.dateOfBirth} onChange={(v) => set("dateOfBirth", v)} />
+              <TL w="14%">National ID</TL>
+              <TF w="36%" value={form.nationalId} onChange={(v) => set("nationalId", v)} />
+              <TL w="14%">Date of Birth</TL>
+              <TF w="36%" type="date" value={form.dateOfBirth} onChange={(v) => set("dateOfBirth", v)} />
             </tr>
             <tr>
-              <TL>Full Name</TL>
+              <TL>Full Names</TL>
               <TF value={form.fullName} onChange={(v) => set("fullName", v)} />
               <TL>Surname</TL>
               <TF value={form.surname} onChange={(v) => set("surname", v)} />
@@ -244,338 +266,414 @@ function StudentRegistrationForm({
           </tbody>
         </table>
 
-        {/* Title tickboxes + marital status + physical address ------------- */}
-        <table className="srf-table">
+        {/* Title | Gender | Ethnic Group row */}
+        <table className="srf-table srf-narrow-labels">
           <tbody>
             <tr>
-              <TL w="8%">Title</TL>
-              <td className="srf-inline" colSpan={3}>
-                {["Adv", "Prof", "Dr", "Mr", "Mrs", "Ms"].map((t) => (
-                  <Tick
-                    key={t}
-                    label={t}
-                    checked={form.title === t}
-                    onChange={(v) => set("title", v ? t : "")}
-                  />
-                ))}
-              </td>
+              <TL w="7%">Title</TL>
+              <TF w="10%" value={form.title} onChange={(v) => set("title", v)} />
+              <TL w="8%">Gender</TL>
+              <TF w="7%" value={form.gender} onChange={(v) => set("gender", v)} />
+              <TL w="12%">Ethnic Group</TL>
+              {["African", "Indian", "Coloured", "Asian", "White"].map((eg) => (
+                <TCTick
+                  key={eg}
+                  w="11.2%"
+                  label={eg}
+                  checked={form.ethnicGroup === eg}
+                  onChange={(v) => set("ethnicGroup", v ? eg : "")}
+                />
+              ))}
             </tr>
             <tr>
               <TL>Marital Status</TL>
-              <td className="srf-inline" colSpan={3}>
-                {["Married", "Single", "Divorced", "Widowed"].map((s) => (
-                  <Tick
-                    key={s}
-                    label={s}
-                    checked={form.maritalStatus === s}
-                    onChange={(v) => set("maritalStatus", v ? s : "")}
-                  />
-                ))}
-                <span className="srf-inline-gap" />
-                <TInlineLabel>Dependants</TInlineLabel>
-                <input
-                  className="srf-input srf-input-narrow"
-                  value={form.dependants}
-                  onChange={(e) => set("dependants", e.target.value)}
-                />
-              </td>
+              <TCTick w="10%" label="Single" checked={form.maritalStatus === "Single"} onChange={(v) => set("maritalStatus", v ? "Single" : "")} />
+              <TCTick w="9%" label="Married" checked={form.maritalStatus === "Married"} onChange={(v) => set("maritalStatus", v ? "Married" : "")} />
+              <TCTick w="9%" label="Divorced" checked={form.maritalStatus === "Divorced"} onChange={(v) => set("maritalStatus", v ? "Divorced" : "")} />
+              <TCTick w="9%" label="Widowed" checked={form.maritalStatus === "Widowed"} onChange={(v) => set("maritalStatus", v ? "Widowed" : "")} />
+              <TL w="11%">Dependants</TL>
+              <TF w="12%" value={form.dependants} onChange={(v) => set("dependants", v)} />
+              <TL w="15%">Employment Status</TL>
+              <TCTick w="7%" label="Yes" checked={form.employmentStatusYesNo === "yes"} onChange={(v) => set("employmentStatusYesNo", v ? "yes" : "")} />
+              <TCTick w="7%" label="No" checked={form.employmentStatusYesNo === "no"} onChange={(v) => set("employmentStatusYesNo", v ? "no" : "")} />
             </tr>
             <tr>
-              <TL w="15%">Physical Address</TL>
-              <td colSpan={3}>
-                <input
-                  className="srf-input"
+              <TL>ID Type</TL>
+              {["Passport No", "Driver's License", "Temp ID No", "ID Number"].map((t) => (
+                <TCTick
+                  key={t}
+                  label={t}
+                  checked={form.idType === t}
+                  onChange={(v) => set("idType", v ? t : "")}
+                />
+              ))}
+              <td colSpan={5} />
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Physical / Postal addresses */}
+        <table className="srf-table">
+          <tbody>
+            <tr>
+              <TL w="14%">Physical Address</TL>
+              <td className="srf-cell" style={{ width: "36%" }}>
+                <textarea
+                  className="srf-input srf-textarea"
                   value={form.physicalAddress}
                   onChange={(e) => set("physicalAddress", e.target.value)}
                 />
               </td>
+              <TL w="14%">Postal Address</TL>
+              <td className="srf-cell" style={{ width: "36%" }}>
+                <textarea
+                  className="srf-input srf-textarea"
+                  value={form.postalAddress}
+                  onChange={(e) => set("postalAddress", e.target.value)}
+                />
+              </td>
             </tr>
             <tr>
-              <TL>Country Code</TL>
-              <TF value={form.countryCode} onChange={(v) => set("countryCode", v)} />
+              <TL>Address Code</TL>
+              <TF value={form.addressCode} onChange={(v) => set("addressCode", v)} />
               <TL>Postal Code</TL>
               <TF value={form.postalCode} onChange={(v) => set("postalCode", v)} />
             </tr>
           </tbody>
         </table>
 
-        {/* --- Passport ----------------------------------------------------- */}
-        <table className="srf-table">
+        {/* Nationality matrix */}
+        <div className="srf-section-title">Nationality: <em>(Please tick the relevant country you are from)</em></div>
+        <table className="srf-table srf-nationality">
           <tbody>
-            <tr>
-              <TL w="8%">Passport</TL>
-              <TL w="8%">Number</TL>
-              <TF w="18%" value={form.passportNumber} onChange={(v) => set("passportNumber", v)} />
-              <TL w="10%">Country</TL>
-              <TF w="20%" value={form.passportCountry} onChange={(v) => set("passportCountry", v)} />
-              <TL w="10%">Expiry</TL>
-              <TF w="16%" type="date" value={form.passportExpiry} onChange={(v) => set("passportExpiry", v)} />
-            </tr>
-          </tbody>
-        </table>
-
-        {/* --- Ethnic Group matrix ---------------------------------------- */}
-        <SectionLabel text="Ethnic Group (Please tick the appropriate box(es))" />
-        <table className="srf-matrix">
-          <thead>
-            <tr>
-              <th></th>
-              {ETHNIC_COLS.map((c) => (
-                <th key={c}>{c}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {ETHNIC_ROWS.map((r) => (
-              <tr key={r}>
-                <th>{r}</th>
-                {ETHNIC_COLS.map((c) => {
-                  const key = `${r}||${c}`;
-                  const on = form.ethnicGroup === key;
-                  return (
-                    <td key={c}>
-                      <input
-                        type="checkbox"
-                        checked={on}
-                        onChange={(e) => set("ethnicGroup", e.target.checked ? key : "")}
-                        aria-label={`${r} — ${c}`}
-                      />
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* --- Home Language grid ----------------------------------------- */}
-        <SectionLabel text="Home Language (Please tick)" />
-        <table className="srf-table srf-check-grid">
-          <tbody>
-            {HOME_LANGS.map((row, ri) => (
+            {chunks(NATIONALITIES, 6).map((row, ri) => (
               <tr key={ri}>
-                {row.map((lang) => (
-                  <td key={lang} className="srf-inline">
-                    <Tick
-                      label={lang}
-                      checked={form.homeLanguage === lang}
-                      onChange={(v) => set("homeLanguage", v ? lang : "")}
-                    />
+                {row.map((n) => (
+                  <td key={n} className={`srf-tick-cell${form.nationality === n ? " on" : ""}`}
+                      onClick={() => set("nationality", form.nationality === n ? "" : n)}>
+                    <div className="srf-cell-label">{n}</div>
                   </td>
                 ))}
-                {/* pad the row so columns align */}
-                {Array.from({ length: 5 - row.length }).map((_, i) => (
-                  <td key={`p${i}`} />
+                {/* pad row so every row has 6 cells */}
+                {Array.from({ length: 6 - row.length }).map((_, i) => (
+                  <td key={`pad-${i}`} className="srf-tick-cell" />
                 ))}
               </tr>
             ))}
           </tbody>
         </table>
 
-        {/* --- Disability Status ------------------------------------------ */}
-        <SectionLabel text="Disability Status (Please tick)" />
-        <table className="srf-table srf-check-grid">
+        {/* Home Language */}
+        <div className="srf-section-title">Home Language: <em>(Please tick)</em></div>
+        <table className="srf-table srf-nationality">
           <tbody>
             <tr>
-              {DISABILITIES.map((d) => (
-                <td key={d.label} className="srf-inline">
-                  <Tick
-                    label={d.label}
-                    checked={form[d.key] as boolean}
-                    onChange={(v) => set(d.key, v as never)}
-                  />
+              {HOME_LANG_ROW_1.map((l) => (
+                <td key={l} className={`srf-tick-cell${form.homeLanguage === l ? " on" : ""}`}
+                    onClick={() => set("homeLanguage", form.homeLanguage === l ? "" : l)}>
+                  <div className="srf-cell-label">{l}</div>
+                </td>
+              ))}
+            </tr>
+            <tr>
+              {HOME_LANG_ROW_2.map((l) => (
+                <td key={l} className={`srf-tick-cell${form.homeLanguage === l ? " on" : ""}`}
+                    onClick={() => set("homeLanguage", form.homeLanguage === l ? "" : l)}>
+                  <div className="srf-cell-label">{l}</div>
                 </td>
               ))}
             </tr>
           </tbody>
         </table>
 
-        {/* --- Educational Details ---------------------------------------- */}
-        <SectionLabel text="Educational Details (Please print)" />
+        {/* Disability Status */}
+        <div className="srf-section-title">Disability Status: <em>(Please tick)</em></div>
+        <table className="srf-table srf-nationality">
+          <tbody>
+            <tr>
+              {DISABILITY_ROW_1.map((d) => (
+                <td key={d} className={`srf-tick-cell${form.disabilityStatus === d ? " on" : ""}`}
+                    onClick={() => set("disabilityStatus", form.disabilityStatus === d ? "" : d)}>
+                  <div className="srf-cell-label">{d}</div>
+                </td>
+              ))}
+            </tr>
+            <tr>
+              {DISABILITY_ROW_2.map((d) => (
+                <td key={d} className={`srf-tick-cell${form.disabilityStatus === d ? " on" : ""}`}
+                    onClick={() => set("disabilityStatus", form.disabilityStatus === d ? "" : d)}>
+                  <div className="srf-cell-label">{d}</div>
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Educational Status */}
+        <div className="srf-section-title">Educational Status: <em>(Please print)</em></div>
         <table className="srf-table">
           <tbody>
             <tr>
-              <TL w="20%">Last School Attended</TL>
-              <TF value={form.lastSchoolAttended} onChange={(v) => set("lastSchoolAttended", v)} />
-              <TL w="20%">Grade Completed</TL>
-              <TF value={form.highestGradeCompleted} onChange={(v) => set("highestGradeCompleted", v)} />
+              <TL w="18%">Last School Attended</TL>
+              <TF w="47%" value={form.lastSchoolAttended} onChange={(v) => set("lastSchoolAttended", v)} />
+              <TL w="15%">Grade Completed</TL>
+              <TF w="20%" value={form.highestGradeCompleted} onChange={(v) => set("highestGradeCompleted", v)} />
+            </tr>
+            <tr>
+              <TL>School District</TL>
+              <TF value={form.schoolDistrict} onChange={(v) => set("schoolDistrict", v)} />
+              <TL>Year Achieved</TL>
+              <TF value={form.yearAchievedSchool} onChange={(v) => set("yearAchievedSchool", v)} />
             </tr>
             <tr>
               <TL>Highest Qualification</TL>
               <TF value={form.highestQualification} onChange={(v) => set("highestQualification", v)} />
-              <TL>Year Completed</TL>
-              <TF value={form.yearCompleted} onChange={(v) => set("yearCompleted", v)} />
+              <TL>Year Achieved</TL>
+              <TF value={form.yearAchievedQualification} onChange={(v) => set("yearAchievedQualification", v)} />
+            </tr>
+            <tr>
+              <TL>Institution</TL>
+              <TF value={form.institution} onChange={(v) => set("institution", v)} />
+              <TL>Awards</TL>
+              <TF value={form.awards} onChange={(v) => set("awards", v)} />
             </tr>
           </tbody>
         </table>
 
-        {/* --- Address strip (orange) ------------------------------------- */}
-        <div className="srf-strip">
-          <span>85 Vale Avenue, 2 Anniston Road, New Redruth, Alberton Park, 1449</span>
-          <span>011 972 6266</span>
+        {/* Orange contact strip */}
+        <div className="srf-orange-strip">
+          <span className="srf-pin">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+              <path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5z"/>
+            </svg>
+            45 Villa Valencia, 2 Anemoon Road, Glen Marais, Kempton Park, 1619
+          </span>
+          <span className="srf-phone">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+              <path d="M6.6 10.8c1.4 2.8 3.7 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.2 1.2.4 2.5.6 3.9.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10 21 3 14 3 5c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.4.2 2.7.6 3.9.1.4 0 .8-.2 1.1L6.6 10.8z"/>
+            </svg>
+            011 973 0205
+          </span>
         </div>
 
-        {/* --- Employment Details ----------------------------------------- */}
-        <SectionLabel text="Employment Details (Please print)" />
+        <div className="srf-pagebreak" />
+
+        {/* ============================== PAGE 2 ============================== */}
+        <div className="srf-section-title">Employment Details: <em>(Please print)</em></div>
         <table className="srf-table">
           <tbody>
             <tr>
-              <TL w="12%">Company</TL>
-              <TF value={form.company} onChange={(v) => set("company", v)} />
-              <TL w="12%">Job Title</TL>
-              <TF value={form.jobTitle} onChange={(v) => set("jobTitle", v)} />
+              <TL w="14%">Company</TL>
+              <TF w="36%" value={form.company} onChange={(v) => set("company", v)} />
+              <TL w="14%">Job Title</TL>
+              <TF w="18%" value={form.jobTitle} onChange={(v) => set("jobTitle", v)} />
               <TL w="12%">Learnership</TL>
-              <TF value={form.learnership} onChange={(v) => set("learnership", v)} />
+              <TF w="6%" value={form.learnership} onChange={(v) => set("learnership", v)} />
             </tr>
             <tr>
-              <TL>Registration Date</TL>
-              <TF type="date" value={form.registrationDate} onChange={(v) => set("registrationDate", v)} />
+              <TL>Start Date</TL>
+              <TF type="date" value={form.startDate} onChange={(v) => set("startDate", v)} />
               <TL>Employment Status</TL>
-              <TF value={form.employmentStatus} onChange={(v) => set("employmentStatus", v)} />
-              <TL>Contact</TL>
-              <TF value={form.contactNumber} onChange={(v) => set("contactNumber", v)} />
+              <td className="srf-cell" colSpan={3}>
+                <input className="srf-input" value={form.employmentStatus} onChange={(e) => set("employmentStatus", e.target.value)} />
+              </td>
             </tr>
             <tr>
-              <TL>Name and Surname</TL>
-              <TF value={form.employerName} onChange={(v) => set("employerName", v)} />
-              <TL>Employer Address</TL>
-              <TF value={form.employerAddress} onChange={(v) => set("employerAddress", v)} />
-              <TL>Email Address</TL>
-              <TF value={form.emailAddress} onChange={(v) => set("emailAddress", v)} />
+              <TL>Industry</TL>
+              <TF value={form.industry} onChange={(v) => set("industry", v)} />
+              <TL>Contact Number</TL>
+              <td className="srf-cell" colSpan={3}>
+                <input className="srf-input" value={form.employerContactNumber} onChange={(e) => set("employerContactNumber", e.target.value)} />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div className="srf-section-title">Alternative Contact Details: <em>(Please print)</em></div>
+        <table className="srf-table">
+          <tbody>
+            <tr>
+              <TL w="14%">Name and Surname</TL>
+              <TF value={form.altContactName} onChange={(v) => set("altContactName", v)} />
+              <TL w="14%">Contact Number</TL>
+              <TF value={form.altContactNumber} onChange={(v) => set("altContactNumber", v)} />
             </tr>
             <tr>
               <TL>Relationship</TL>
-              <TF value={form.employerRelationship} onChange={(v) => set("employerRelationship", v)} />
-              <TL>NQF Level</TL>
+              <TF value={form.altContactRelationship} onChange={(v) => set("altContactRelationship", v)} />
+              <TL>Email Address</TL>
+              <TF type="email" value={form.altContactEmail} onChange={(v) => set("altContactEmail", v)} />
+            </tr>
+          </tbody>
+        </table>
+
+        <div className="srf-section-title">Qualification/Course Enrolment: <em>(Please print)</em></div>
+        <table className="srf-table">
+          <tbody>
+            <tr>
+              <TL w="14%">Qualification / Course Title</TL>
+              <TF value={form.qualificationTitle} onChange={(v) => set("qualificationTitle", v)} />
+              <TL w="12%">NQF Level</TL>
               <TF value={form.nqfLevel} onChange={(v) => set("nqfLevel", v)} />
+            </tr>
+            <tr>
+              <TL>SAQA ID</TL>
+              <TF value={form.saqaId} onChange={(v) => set("saqaId", v)} />
               <TL>Credits</TL>
               <TF value={form.credits} onChange={(v) => set("credits", v)} />
             </tr>
             <tr>
-              <TL>Qualification / Course Title</TL>
-              <TF value={form.qualificationCourseNumber} onChange={(v) => set("qualificationCourseNumber", v)} />
               <TL>Course Code</TL>
               <TF value={form.courseCode} onChange={(v) => set("courseCode", v)} />
+              <TL>Notional Hours</TL>
+              <TF value={form.notionalHours} onChange={(v) => set("notionalHours", v)} />
+            </tr>
+            <tr>
               <TL>Registration Date</TL>
               <TF type="date" value={form.registrationDate} onChange={(v) => set("registrationDate", v)} />
+              <TL>Enrolment Date</TL>
+              <TF type="date" value={form.enrolmentDate} onChange={(v) => set("enrolmentDate", v)} />
             </tr>
           </tbody>
         </table>
 
-        {/* --- Declaration + Student Number ------------------------------- */}
-        <div className="srf-decl">
+        {/* Declaration */}
+        <div className="srf-declaration">
           <p>
-            I, <SmallInput value={form.learnerSignature} onChange={(v) => set("learnerSignature", v)} />
-            <strong> STUDENT NUMBER</strong>{" "}
-            <SmallInput value={form.studentNumber} onChange={(v) => set("studentNumber", v)} />{" "}
-            <strong>STUDENT ID</strong> — hereby confirm that the programme I have enrolled in with
-            Erudite Skills Development Consultants (Pty) Ltd is compliant with Erudite Skills
-            Development Consultants (Pty) Ltd's official qualification and I agree that all
-            coursework and assessments will be conducted in accordance with this qualification.
+            &ldquo;I, <SmallInput value={form.learnerSignature} onChange={(v) => set("learnerSignature", v)} />
+            <strong> (STUDENT NAME)</strong>,{" "}
+            <SmallInput value={form.studentNumber} onChange={(v) => set("studentNumber", v)} />
+            <strong> (STUDENT ID NUMBER)</strong>, am fully aware that the programme I have enrolled in
+            with Eruditio Skills Development Consultants (Pty) Ltd is registered with the Department of
+            Education and that Eruditio Skills Development Consultants (Pty) Ltd is accredited to offer
+            this qualification.
           </p>
           <p>
-            I hereby confirm that I am aware of Erudite Skills Development Consultants (Pty) Ltd's
-            refund policy. I hereby declare that I will conduct myself as a good and responsible
-            learner.
+            I hereby confirm that I am aware of Eruditio Skills Development Consultant&apos;s cancelation
+            and refund policy. I hereby declare that I will adhere to the student code of conduct provided
+            to me and signed by me.
           </p>
-          <div className="srf-sig-row">
-            <div>
-              <SmallInput value={form.learnerSignature} onChange={(v) => set("learnerSignature", v)} placeholder="Signature" />
-              <div className="srf-sig-line">Signature</div>
-            </div>
-            <div>
-              <SmallInput value={form.physicalAddress} onChange={(v) => set("physicalAddress", v)} placeholder="Place" />
-              <div className="srf-sig-line">Place</div>
-            </div>
-            <div>
-              <SmallInput type="date" value={form.learnerSignatureDate} onChange={(v) => set("learnerSignatureDate", v)} />
-              <div className="srf-sig-line">Date</div>
-            </div>
-          </div>
         </div>
 
-        {/* --- Administration and Document Control ------------------------ */}
-        <SectionLabel text="Administration and Document Control (To be completed by the Administrator)" />
+        {/* Signed at row */}
         <table className="srf-table">
           <tbody>
             <tr>
-              <TL w="20%">Certified Copy of ID</TL>
-              <td className="srf-inline">
-                <TickYesNo yes={form.meetsEntryRequirements === "yes"} no={form.meetsEntryRequirements === "no"} onYes={() => set("meetsEntryRequirements", "yes")} onNo={() => set("meetsEntryRequirements", "no")} />
-              </td>
-              <TL w="20%">Certified Copy of Highest Qualification</TL>
-              <td className="srf-inline">
-                <TickYesNo yes={form.admissionDecision === "admit"} no={form.admissionDecision === "not-admit"} onYes={() => set("admissionDecision", "admit")} onNo={() => set("admissionDecision", "not-admit")} />
+              <TL w="14%">Signed At</TL>
+              <td className="srf-cell" colSpan={3}>
+                <input className="srf-input" value={form.signedAt} onChange={(e) => set("signedAt", e.target.value)} />
               </td>
             </tr>
             <tr>
+              <TL>Student Signature</TL>
+              <TF value={form.learnerSignature} onChange={(v) => set("learnerSignature", v)} />
+              <TL w="14%">Signature Date</TL>
+              <TF type="date" value={form.learnerSignatureDate} onChange={(v) => set("learnerSignatureDate", v)} />
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Administration and Document Control */}
+        <div className="srf-section-title">
+          Administration and Document Control: <em>(To be completed by the Admissions Officer)</em>
+        </div>
+        <table className="srf-table srf-admin">
+          <tbody>
+            <tr>
+              <TL w="18%">Documents Submitted &amp; Verified</TL>
+              <TCTick label="Certified Copy of ID/Passport" checked={form.docIdPassport} onChange={(v) => set("docIdPassport", v)} />
+              <TCTick label="Certified Copy of Highest Certificate" checked={form.docHighestCert} onChange={(v) => set("docHighestCert", v)} />
+              <TCTick label="Proof of Residence" checked={form.docProofResidence} onChange={(v) => set("docProofResidence", v)} />
+              <TCTick label="CV / Profile" checked={form.docCvProfile} onChange={(v) => set("docCvProfile", v)} />
+            </tr>
+            <tr>
+              <TL>Verified By</TL>
+              <td className="srf-cell" colSpan={2}>
+                <input className="srf-input" value={form.verifiedBy} onChange={(e) => set("verifiedBy", e.target.value)} placeholder="SD Administrator" />
+              </td>
+              <TL>Verification Date</TL>
+              <TF type="date" value={form.verificationDate} onChange={(v) => set("verificationDate", v)} />
+            </tr>
+            <tr>
               <TL>Entry Requirements</TL>
-              <td className="srf-inline" colSpan={3}>
-                {["Meets Entry", "Doesn't Meet Entry", "Requires Bridging"].map((opt) => (
-                  <Tick
-                    key={opt}
-                    label={opt}
-                    checked={
-                      (opt === "Meets Entry" && form.meetsEntryRequirements === "yes") ||
-                      (opt === "Doesn't Meet Entry" && form.meetsEntryRequirements === "no") ||
-                      (opt === "Requires Bridging" && form.requiresBridging)
-                    }
-                    onChange={(v) => {
-                      if (opt === "Meets Entry") set("meetsEntryRequirements", v ? "yes" : "");
-                      else if (opt === "Doesn't Meet Entry") set("meetsEntryRequirements", v ? "no" : "");
-                      else set("requiresBridging", v);
-                    }}
-                  />
-                ))}
+              <TCTick label="Meets Entry Requirements" checked={form.entryReqMeets} onChange={(v) => set("entryReqMeets", v)} />
+              <TCTick label="Doesn't Meet Entry Requirements" checked={form.entryReqDoesntMeet} onChange={(v) => set("entryReqDoesntMeet", v)} />
+              <TCTick label="Requires Bridging Course" checked={form.entryReqBridging} onChange={(v) => set("entryReqBridging", v)} />
+              <td className="srf-cell">
+                <div className="srf-inline-with-label">
+                  <span className="srf-inline-label">Other:</span>
+                  <input className="srf-input" value={form.entryReqOther} onChange={(e) => set("entryReqOther", e.target.value)} />
+                </div>
               </td>
             </tr>
             <tr>
               <TL>Admission Decision</TL>
-              <td className="srf-inline" colSpan={3}>
-                {["Accepted with Merit", "Accepted", "Rejected"].map((opt) => (
-                  <Tick
-                    key={opt}
-                    label={opt}
-                    checked={
-                      (opt === "Accepted" && form.admissionDecision === "admit") ||
-                      (opt === "Rejected" && form.admissionDecision === "not-admit") ||
-                      (opt === "Accepted with Merit" && form.admissionDecision === "admit" && form.requiresBridging)
-                    }
-                    onChange={(v) => {
-                      if (opt === "Accepted") set("admissionDecision", v ? "admit" : "");
-                      else if (opt === "Rejected") set("admissionDecision", v ? "not-admit" : "");
-                    }}
-                  />
-                ))}
-              </td>
+              <TCTick label="Admit Student" checked={form.admitStudent} onChange={(v) => set("admitStudent", v)} />
+              <TCTick label="Do Not Admit Student" checked={form.doNotAdmit} onChange={(v) => set("doNotAdmit", v)} />
+              <TCTick label="Requires Additional Documents" checked={form.requiresAdditionalDocs} onChange={(v) => set("requiresAdditionalDocs", v)} />
+              <td className="srf-cell" />
             </tr>
             <tr>
               <TL>Authorised By</TL>
-              <TF value={form.authorisedByName} onChange={(v) => set("authorisedByName", v)} />
+              <td className="srf-cell" colSpan={2}>
+                <input className="srf-input" value={form.authorisedByName} onChange={(e) => set("authorisedByName", e.target.value)} placeholder="Training Manager" />
+              </td>
               <TL>Authorised Date</TL>
               <TF type="date" value={form.authorisedByDate} onChange={(v) => set("authorisedByDate", v)} />
             </tr>
           </tbody>
         </table>
 
-        {/* --- Footer with partner logos ----------------------------------- */}
-        <div className="srf-footer">
-          <span className="srf-logo srf-mini" aria-hidden>
-            <span className="srf-logo-mark">e</span>
-            <span className="srf-logo-word">rudite</span>
-          </span>
-          <div className="srf-badge srf-qcto">QCTO</div>
-          <div className="srf-badge srf-seta">W&amp;RSETA</div>
+        {/* Footer accreditation lines + logos */}
+        <div className="srf-accred-lines">
+          <div>Company Reg no: 2012/017833/07</div>
+          <div>QCTO Accreditation: 07-QCTO/SDP030222-439</div>
+          <div>W&amp;R SETA Accreditation: 100</div>
+          <div>Services SETA: 12709</div>
+        </div>
+
+        <div className="srf-footer-logos">
+          <div className="srf-logo-badge srf-qcto">
+            <span className="srf-qcto-mark">Q</span>
+            <div className="srf-qcto-word">QCTO</div>
+          </div>
+          <div className="srf-logo-badge srf-services">
+            <div className="srf-services-mark">SERVICES<br />SETA</div>
+          </div>
+          <div className="srf-logo-badge srf-seta">
+            <span className="srf-seta-word">W&amp;RSETA</span>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-/* ---------- small primitives (kept private to this file) ---------- */
+/* ---------- helpers ---------- */
 
-function SectionLabel({ text }: { text: string }) {
-  return <div className="srf-section-label">{text}</div>;
+function chunks<T>(arr: T[], n: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
+  return out;
+}
+
+function EruditioMasthead() {
+  return (
+    <div className="srf-masthead">
+      <div className="srf-eruditio">
+        <div className="srf-eruditio-graphic" aria-hidden>
+          <svg viewBox="0 0 60 40" width="60" height="40">
+            <path d="M10 25 Q18 5 28 20" fill="none" stroke="#3e8f5e" strokeWidth="4" strokeLinecap="round" />
+            <path d="M14 32 Q22 12 32 27" fill="none" stroke="#f0c04d" strokeWidth="4" strokeLinecap="round" />
+          </svg>
+        </div>
+        <div className="srf-eruditio-word">
+          <span className="srf-eruditio-e">E</span>ruditio
+        </div>
+        <div className="srf-eruditio-tag">EMPOWER · DEVELOP · TRANSFORM</div>
+      </div>
+    </div>
+  );
 }
 
 function TL({ children, w }: { children: React.ReactNode; w?: string }) {
@@ -609,49 +707,25 @@ function TF({
   );
 }
 
-function TInlineLabel({ children }: { children: React.ReactNode }) {
-  return <span className="srf-inline-label">{children}</span>;
-}
-
-function Tick({
+function TCTick({
   label,
   checked,
   onChange,
+  w,
 }: {
   label: string;
   checked: boolean;
   onChange: (v: boolean) => void;
+  w?: string;
 }) {
   return (
-    <label className="srf-tick">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      <span>{label}</span>
-    </label>
-  );
-}
-
-function TickYesNo({
-  yes,
-  no,
-  onYes,
-  onNo,
-}: {
-  yes: boolean;
-  no: boolean;
-  onYes: () => void;
-  onNo: () => void;
-}) {
-  return (
-    <>
-      <label className="srf-tick">
-        <input type="checkbox" checked={yes} onChange={onYes} />
-        <span>Yes</span>
-      </label>
-      <label className="srf-tick">
-        <input type="checkbox" checked={no} onChange={onNo} />
-        <span>No</span>
-      </label>
-    </>
+    <td
+      className={`srf-tick-cell${checked ? " on" : ""}`}
+      onClick={() => onChange(!checked)}
+      style={w ? { width: w } : undefined}
+    >
+      <div className="srf-cell-label">{label}</div>
+    </td>
   );
 }
 
@@ -659,12 +733,10 @@ function SmallInput({
   value,
   onChange,
   type = "text",
-  placeholder,
 }: {
   value: string;
   onChange: (v: string) => void;
   type?: string;
-  placeholder?: string;
 }) {
   return (
     <input
@@ -672,7 +744,6 @@ function SmallInput({
       type={type}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
     />
   );
 }

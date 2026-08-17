@@ -138,6 +138,7 @@ export interface Profile {
 export interface RegistrationForm {
   /* Student information */
   title: string;
+  gender: string;
   fullName: string;
   nickName: string;
   surname: string;
@@ -146,53 +147,95 @@ export interface RegistrationForm {
   dateOfBirth: string;
   emailAddress: string;
   contactNumber: string;
+  ethnicGroup: string; // African | Indian | Coloured | Asian | White
   maritalStatus: string;
   dependants: string;
+  employmentStatusYesNo: string; // "yes" | "no"
+  idType: string; // Passport No | Driver's License | Temp ID No | ID Number
   physicalAddress: string;
-  countryCode: string;
+  postalAddress: string;
+  addressCode: string;
   postalCode: string;
-  /* Passport */
+  /* Passport / alternative ID (kept for backwards-compat with earlier builds) */
   passportNumber: string;
   passportCountry: string;
   passportExpiry: string;
-  /* Ethnic group + region — free text so any option can be recorded */
-  ethnicGroup: string;
+  /* Nationality (single-select from the matrix on page 1) */
+  nationality: string;
   ethnicRegion: string;
   /* Home language */
   homeLanguage: string;
-  /* Disability status */
+  /* Disability status — Communication / Emotional / Hearing / Intellectual /
+   *  Physical / Multiple / Unspecified / None. `disabilityStatus` is the
+   *  single selected radio choice; the individual boolean fields are kept
+   *  for compat but no longer used by the paper-form layout. */
+  disabilityStatus: string;
   disabilityPhysical: boolean;
   disabilityHearing: boolean;
   disabilityIntellectual: boolean;
   disabilityVisual: boolean;
-  /* Education */
+  /* Educational Status */
   lastSchoolAttended: string;
   highestGradeCompleted: string;
-  yearCompleted: string;
+  schoolDistrict: string;
+  yearAchievedSchool: string;
   highestQualification: string;
-  /* Employment */
+  yearAchievedQualification: string;
+  institution: string;
+  awards: string;
+  yearCompleted: string;
+  /* Employment Details */
   company: string;
   jobTitle: string;
   learnership: string;
-  registrationDate: string;
+  startDate: string;
   employmentStatus: string;
+  industry: string;
+  employerContactNumber: string;
+  /* Alternative Contact Details (next of kin) */
+  altContactName: string;
+  altContactNumber: string;
+  altContactRelationship: string;
+  altContactEmail: string;
+  /* Qualification / Course Enrolment */
+  qualificationTitle: string;
+  nqfLevel: string;
+  saqaId: string;
+  credits: string;
+  courseCode: string;
+  notionalHours: string;
+  registrationDate: string;
+  enrolmentDate: string;
+  /* Alias kept for legacy code paths */
+  qualificationCourseNumber: string;
   employerName: string;
   employerAddress: string;
   employerRelationship: string;
-  qualificationCourseNumber: string;
-  nqfLevel: string;
-  courseCode: string;
-  credits: string;
-  /* Learner declaration */
+  /* Signature block */
+  signedAt: string;
   learnerSignature: string;
   learnerSignatureDate: string;
   studentNumber: string;
-  /* Admin (staff-completed) section */
+  /* Administration and Document Control */
+  docIdPassport: boolean;
+  docHighestCert: boolean;
+  docProofResidence: boolean;
+  docCvProfile: boolean;
+  verifiedBy: string;
+  verificationDate: string;
+  entryReqMeets: boolean;
+  entryReqDoesntMeet: boolean;
+  entryReqBridging: boolean;
+  entryReqOther: string;
+  admitStudent: boolean;
+  doNotAdmit: boolean;
+  requiresAdditionalDocs: boolean;
+  authorisedByName: string;
+  authorisedByDate: string;
+  /* Legacy admin picks — kept for backwards-compat with earlier builds */
   admissionDecision: "" | "admit" | "not-admit";
   meetsEntryRequirements: "" | "yes" | "no";
   requiresBridging: boolean;
-  authorisedByName: string;
-  authorisedByDate: string;
   /* ISO timestamp of the last save */
   savedAt: string;
 }
