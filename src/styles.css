@@ -4584,15 +4584,25 @@ a.plan-ppt:hover {
 }
 
 .exq-cross {
-  color: var(--amber);
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--red);
 }
 
 .exq-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   margin: 0 5px;
-  color: var(--amber);
-  font-weight: 700;
-  font-size: 14px;
+  color: var(--red);
+  vertical-align: middle;
+}
+.exq-x svg,
+.exq-cross svg {
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .exq-miss-p {
@@ -4627,6 +4637,9 @@ a.plan-ppt:hover {
 
 .exq-ticks svg {
   flex-shrink: 0;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .exq-ticks svg + svg {

@@ -674,8 +674,8 @@ function MarkedAnswer({ text, check, ok }: { text: string; check: ExerciseCheck;
               <DoubleTick key={t} />
             ))}
             {gis.length === 0 && !fullCoverage && contentStems(seg).size > 0 && (
-              <span className="exq-x" title="No marks for this sentence">
-                ✗
+              <span className="exq-x" title="No marks for this sentence" aria-label="No marks">
+                <Icon name="close" size={14} />
               </span>
             )}
           </span>
@@ -789,7 +789,9 @@ function ExerciseQuestion({
           {missed.map((f) => (
             <div className="exq-miss" key={f.label}>
               <div className="exq-miss-head">
-                <span className="exq-cross">✗</span>
+                <span className="exq-cross" aria-label="Not awarded">
+                  <Icon name="close" size={14} />
+                </span>
                 {f.label} — 2 marks not awarded
               </div>
               <p className="exq-miss-p">
