@@ -4540,6 +4540,10 @@ a.plan-ppt:hover {
   color: var(--amber);
 }
 
+.exq-status.short {
+  color: var(--azure);
+}
+
 .exq-status.ok {
   display: flex;
   align-items: center;

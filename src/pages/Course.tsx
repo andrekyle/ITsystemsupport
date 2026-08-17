@@ -764,7 +764,7 @@ function ExerciseQuestion({
             </button>
           )}
           {result && !result.ok && (
-            <span className="exq-status wrong">
+            <span className={`exq-status ${result.short ? "short" : "wrong"}`}>
               {result.short
                 ? `Answer too short — you wrote ${result.words} word${result.words === 1 ? "" : "s"}. Please explain your answer in your own words — a minimum of ${result.minWords} words is required before any marks can be awarded.`
                 : `Not quite yet — your answer covers ${result.matched} of ${check.concepts.length} key ideas (${result.marks}/${result.maxMarks} marks, 2 marks per point). Each idea needs a ≥${MIN_EXPLANATION_WORDS}-word explanation that mentions the concept or a clear synonym. Revisit the lesson and try again.`}
