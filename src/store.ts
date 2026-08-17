@@ -751,6 +751,8 @@ export interface ChatMessage {
   at: string;
   /** whether the recipient has read the message */
   read?: boolean;
+  /** timestamp of the last edit, if the sender has edited this message */
+  editedAt?: string;
 }
 
 /** Wire representation of a message row in Supabase. */
@@ -765,6 +767,7 @@ interface DbChatRow {
   body: string;
   sent_at: string;
   read_at: string | null;
+  edited_at?: string | null;
 }
 
 function rowToMessage(row: DbChatRow): ChatMessage {
@@ -776,6 +779,7 @@ function rowToMessage(row: DbChatRow): ChatMessage {
     body: row.body,
     at: row.sent_at,
     read: !!row.read_at,
+    editedAt: row.edited_at ?? undefined,
   };
 }
 
@@ -874,7 +878,29 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
       .is("read_at", null);
   }, [myAuthId, otherAuthId]);
 
-  return { messages, send, markRead };
+  /** Update the body of one of my own messages. The `.eq("sender_user_id", ...)`
+   *  filter — plus the RLS policy — guarantees you can only edit your own. */
+  const edit = useCallback(
+    async (msgId: string, newBody: string): Promise<boolean> => {
+      if (!supabase || !myAuthId) return false;
+      const body = newBody.trim();
+      if (!body) return false;
+      const editedAt = new Date().toISOString();
+      // optimistic update so the UI feels instant
+      setMessages((prev) =>
+        prev.map((m) => (m.id === msgId ? { ...m, body, editedAt } : m))
+      );
+      const { error } = await supabase
+        .from("chat_messages")
+        .update({ body, edited_at: editedAt })
+        .eq("id", msgId)
+        .eq("sender_user_id", myAuthId);
+      return !error;
+    },
+    [myAuthId]
+  );
+
+  return { messages, send, markRead, edit };
 }
 
 /** Summary of a single chat thread — for listing conversations in a sidebar. */

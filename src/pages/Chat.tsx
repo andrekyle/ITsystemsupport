@@ -375,7 +375,7 @@ function ChatThread({
     return undefined;
   }, [cloud, other, otherId, superUid]);
 
-  const { messages, send, markRead } = useChat(me, {
+  const { messages, send, markRead, edit } = useChat(me, {
     profileId: otherId,
     authUserId: otherAuthUserId,
   });
@@ -430,7 +430,7 @@ function ChatThread({
             No messages yet — say hello.
           </p>
         ) : (
-          messages.map((m) => <ChatBubble key={m.id} msg={m} me={me} />)
+          messages.map((m) => <ChatBubble key={m.id} msg={m} me={me} onEdit={edit} />)
         )}
       </div>
       <div className="chat-compose">
@@ -460,13 +460,106 @@ function ChatThread({
   );
 }
 
-function ChatBubble({ msg, me }: { msg: ChatMessage; me: Profile }) {
+function ChatBubble({
+  msg,
+  me,
+  onEdit,
+}: {
+  msg: ChatMessage;
+  me: Profile;
+  onEdit: (msgId: string, newBody: string) => Promise<boolean>;
+}) {
   const mine = msg.byId === me.id;
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(msg.body);
+  const [saving, setSaving] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    if (editing) {
+      setDraft(msg.body);
+      // focus + move caret to end after render
+      requestAnimationFrame(() => {
+        const el = textareaRef.current;
+        if (el) {
+          el.focus();
+          el.selectionStart = el.selectionEnd = el.value.length;
+        }
+      });
+    }
+  }, [editing, msg.body]);
+
+  async function save() {
+    const next = draft.trim();
+    if (!next || next === msg.body) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    const ok = await onEdit(msg.id, next);
+    setSaving(false);
+    if (ok) setEditing(false);
+  }
+
   return (
     <div className={`chat-bubble${mine ? " mine" : ""}`}>
       {!mine && <div className="chat-bubble-by">{msg.by}</div>}
-      <div className="chat-bubble-body">{msg.body}</div>
-      <div className="chat-bubble-at mini-note">{fmtWhen(msg.at)}</div>
+      {editing ? (
+        <div className="chat-bubble-edit">
+          <textarea
+            ref={textareaRef}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={Math.min(6, Math.max(2, draft.split("\n").length))}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                void save();
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                setEditing(false);
+              }
+            }}
+          />
+          <div className="chat-bubble-edit-actions">
+            <button
+              type="button"
+              className="btn ghost sm"
+              onClick={() => setEditing(false)}
+              disabled={saving}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn ghost sm"
+              onClick={() => void save()}
+              disabled={saving || !draft.trim() || draft.trim() === msg.body}
+            >
+              <Icon name="checkCircle" size={14} /> Save
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="chat-bubble-body">{msg.body}</div>
+          <div className="chat-bubble-at mini-note">
+            {fmtWhen(msg.at)}
+            {msg.editedAt && <span title={`Edited ${fmtWhen(msg.editedAt)}`}> · edited</span>}
+          </div>
+          {mine && (
+            <button
+              type="button"
+              className="chat-bubble-edit-btn"
+              title="Edit this message"
+              aria-label="Edit this message"
+              onClick={() => setEditing(true)}
+            >
+              <Icon name="design" size={12} />
+            </button>
+          )}
+        </>
+      )}
     </div>
   );
 }

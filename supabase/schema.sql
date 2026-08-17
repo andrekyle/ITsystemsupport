@@ -177,8 +177,12 @@ create table if not exists public.chat_messages (
   sender_role          text        not null,
   body                 text        not null,
   sent_at              timestamptz not null default now(),
-  read_at              timestamptz
+  read_at              timestamptz,
+  edited_at            timestamptz
 );
+
+-- Older installs that created the table before message editing existed:
+alter table public.chat_messages add column if not exists edited_at timestamptz;
 
 create index if not exists chat_messages_participants_idx
   on public.chat_messages (sender_user_id, recipient_user_id, sent_at);
