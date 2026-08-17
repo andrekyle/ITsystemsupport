@@ -4554,6 +4554,13 @@ a.plan-ppt:hover {
   color: var(--green);
 }
 
+.exq-reviewed {
+  font-weight: 400;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  margin-left: 4px;
+}
+
 .exq-answer {
   margin-top: 10px;
   padding: 10px 14px 6px;

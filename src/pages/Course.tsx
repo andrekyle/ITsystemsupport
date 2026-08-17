@@ -15,6 +15,7 @@ import { Logbook } from "../components/Logbook";
 import { SlideViewer } from "../components/SlideViewer";
 import { fileToImageDataUrl } from "../components/Avatar";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
+import { requestSemanticReview } from "../lib/llm";
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
 
@@ -463,9 +464,13 @@ const SEMANTIC_THRESHOLD = 0.35;
  * short bullet lines do not earn marks, no matter how many words the rest of
  * the paragraph contains. Learners must both name and explain each idea.
  */
-function creditedConceptIndexes(text: string, check: ExerciseCheck): number[] {
+function creditedConceptIndexes(
+  text: string,
+  check: ExerciseCheck,
+  extras?: ReadonlySet<number>
+): number[] {
   const tokens = answerTokens(text);
-  if (tokens.length < MIN_ANSWER_WORDS) return [];
+  if (tokens.length < MIN_ANSWER_WORDS) return extras ? [...extras].sort((a, b) => a - b) : [];
   const sentences = (text.match(/[^.!?;\n]+[.!?;\n]*/g) ?? [text])
     .map((s) => s.trim())
     .filter(Boolean);
@@ -546,6 +551,8 @@ function creditedConceptIndexes(text: string, check: ExerciseCheck): number[] {
     }
   }
 
+  if (extras) for (const gi of extras) credited.add(gi);
+
   return [...credited].sort((a, b) => a - b);
 }
 
@@ -553,10 +560,11 @@ function creditedConceptIndexes(text: string, check: ExerciseCheck): number[] {
  *  Each key idea (concept group) is worth 2 marks. A key idea only earns
  *  its 2 marks when the learner has written at least
  *  {@link MIN_EXPLANATION_WORDS} words explaining it — the keyword alone
- *  is not enough. */
-function scoreAnswer(text: string, check: ExerciseCheck) {
+ *  is not enough. `extras` promotes additional concept indexes to credited
+ *  (used by the LLM semantic-review fallback). */
+function scoreAnswer(text: string, check: ExerciseCheck, extras?: ReadonlySet<number>) {
   const tokens = answerTokens(text);
-  const credited = creditedConceptIndexes(text, check);
+  const credited = creditedConceptIndexes(text, check, extras);
   const need = check.min ?? Math.ceil(check.concepts.length / 2);
   const short = tokens.length < MIN_ANSWER_WORDS;
   const matched = credited.length;
@@ -588,17 +596,21 @@ interface IdeaFeedback {
 
 /** Explain, per key idea, whether its 2 marks were awarded — and if not, why:
  *  quotes the lesson's point, finds the learner's semantically closest sentence
- *  (stem-overlap similarity) and shows what was missing. Runs fully in the
- *  browser — no API or key needed. */
-function explainCheck(text: string, check: ExerciseCheck): IdeaFeedback[] {
-  const tokens = answerTokens(text);
+ *  (stem-overlap similarity) and shows what was missing. `extras` lists concept
+ *  indexes promoted by the LLM semantic-review fallback so the feedback stays
+ *  in sync with the score. */
+function explainCheck(
+  text: string,
+  check: ExerciseCheck,
+  extras?: ReadonlySet<number>
+): IdeaFeedback[] {
   const sentences = (text.match(/[^.!?;\n]+[.!?;\n]*/g) ?? [text])
     .map((s) => s.trim())
     .filter(Boolean);
   // Which concept groups actually earned their 2 marks under the new rule
   // (keyword + ≥10-word explanation). Feedback must line up with what the
   // score says — otherwise learners see contradictory guidance.
-  const credited = new Set(creditedConceptIndexes(text, check));
+  const credited = new Set(creditedConceptIndexes(text, check, extras));
   // sentences that already earned ticks for other ideas are never quoted as "wrong"
   const creditedGroups = check.concepts.filter((_, gi) => credited.has(gi));
   const ticksPer = attributeTicks(sentences, creditedGroups);
@@ -672,11 +684,22 @@ function splitTail(seg: string): { head: string; tail: string } {
 }
 
 /** The learner's own answer rendered with two green ticks inserted after each
- *  part of the text that earned a key idea's 2 marks. */
-function MarkedAnswer({ text, check, ok }: { text: string; check: ExerciseCheck; ok: boolean }) {
+ *  part of the text that earned a key idea's 2 marks. `extras` promotes
+ *  additional concept indexes to credited (LLM semantic-review fallback). */
+function MarkedAnswer({
+  text,
+  check,
+  ok,
+  extras,
+}: {
+  text: string;
+  check: ExerciseCheck;
+  ok: boolean;
+  extras?: ReadonlySet<number>;
+}) {
   // Use the same credit rule as the scorer (keyword/synonym + ≥10-word
   // sentence) so ticks always match the score at the bottom of the box.
-  const creditedIdx = creditedConceptIndexes(text, check);
+  const creditedIdx = creditedConceptIndexes(text, check, extras);
   const credited = creditedIdx.map((gi) => check.concepts[gi]);
   // every key idea earned: nothing is missing, so per-sentence crosses would only mislead
   const fullCoverage = credited.length >= check.concepts.length;
@@ -766,9 +789,79 @@ function ExerciseQuestion({
   const [val, setVal] = useState(saved);
   const [result, setResult] = useState<ReturnType<typeof scoreAnswer> | null>(null);
   const [revealed, setRevealed] = useState(false);
-  const ok = savedOk || (result?.ok ?? false);
-  const feedback = ok || result ? explainCheck(val, check) : null;
+  // LLM semantic-review state: concept indexes the model promoted to credited
+  // after the deterministic check said they were not credited.
+  const [extras, setExtras] = useState<Set<number>>(new Set());
+  const [reviewing, setReviewing] = useState(false);
+  const [reviewedText, setReviewedText] = useState<string | null>(null);
+
+  // Recompute the effective score/feedback using both the deterministic
+  // marker and any LLM promotions. The `ok` flag reflects the merged view.
+  const effectiveResult = result ? scoreAnswer(val, check, extras) : null;
+  const ok = savedOk || (effectiveResult?.ok ?? false);
+  const feedback =
+    ok || result ? explainCheck(val, check, extras) : null;
   const missed = feedback?.filter((f) => !f.awarded) ?? [];
+
+  // Kick off the LLM semantic review after the deterministic check has run
+  // and there are still uncredited concepts. Fire-and-forget; the marker's
+  // verdict stands unchanged if the review fails, times out, or is
+  // unavailable (env var not set). We key by the exact text so we don't
+  // re-fire when the learner just re-clicks Check.
+  useEffect(() => {
+    if (!result || result.short || result.ok) return;
+    if (reviewedText === val) return; // already reviewed this exact text
+    const uncredited = check.concepts
+      .map((g, gi) => ({ gi, g }))
+      .filter(({ gi }) => !extras.has(gi))
+      .filter(({ gi }) => {
+        // exclude concepts that the deterministic marker already credited
+        const detCredited = new Set(creditedConceptIndexes(val, check));
+        return !detCredited.has(gi);
+      });
+    if (uncredited.length === 0) return;
+
+    const concepts = uncredited.map(({ gi, g }) => {
+      const label = check.labels?.[gi] ?? g[0];
+      const lessonLine = check.answer.find((a) => {
+        const at = answerTokens(a);
+        return g.some((p) => phraseMatches(p, at));
+      });
+      return {
+        id: `c${gi}`,
+        label,
+        lessonLine: lessonLine ?? label,
+      };
+    });
+
+    setReviewing(true);
+    let alive = true;
+    void requestSemanticReview(val, concepts).then((res) => {
+      if (!alive) return;
+      setReviewing(false);
+      setReviewedText(val);
+      if (res.credited.length === 0) return;
+      const promoted = new Set<number>(extras);
+      let gained = false;
+      for (const id of res.credited) {
+        const gi = Number(id.replace(/^c/, ""));
+        if (!Number.isNaN(gi) && !promoted.has(gi)) {
+          promoted.add(gi);
+          gained = true;
+        }
+      }
+      if (gained) {
+        setExtras(promoted);
+        // If the promotion took the learner over the pass line, persist the OK.
+        const rNow = scoreAnswer(val, check, promoted);
+        if (rNow.ok) onSave(val, true);
+      }
+    });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result, val]);
 
   return (
     <div className="exq">
@@ -779,7 +872,7 @@ function ExerciseQuestion({
         </span>
       </div>
       {ok || result ? (
-        <MarkedAnswer text={val} check={check} ok={ok} />
+        <MarkedAnswer text={val} check={check} ok={ok} extras={extras} />
       ) : (
         <textarea
           className="exq-input"
@@ -789,6 +882,8 @@ function ExerciseQuestion({
           onChange={(e) => {
             setVal(e.target.value);
             if (result) setResult(null);
+            if (extras.size) setExtras(new Set());
+            if (reviewedText) setReviewedText(null);
           }}
           onBlur={() => {
             if (!ok) onSave(val, false);
@@ -798,7 +893,14 @@ function ExerciseQuestion({
       {!ok && (
         <div className="exq-check">
           {result ? (
-            <button className="btn ghost" onClick={() => setResult(null)}>
+            <button
+              className="btn ghost"
+              onClick={() => {
+                setResult(null);
+                setExtras(new Set());
+                setReviewedText(null);
+              }}
+            >
               <Icon name="design" size={15} />
               Edit my answer
             </button>
@@ -808,6 +910,8 @@ function ExerciseQuestion({
               onClick={() => {
                 const r = scoreAnswer(val, check);
                 setResult(r);
+                setExtras(new Set());
+                setReviewedText(null);
                 onSave(val, r.ok);
               }}
             >
@@ -821,11 +925,12 @@ function ExerciseQuestion({
               {revealed ? "Hide answer" : "Show answer — super user"}
             </button>
           )}
-          {result && !result.ok && (
-            <span className={`exq-status ${result.short ? "short" : "wrong"}`}>
-              {result.short
-                ? `Answer too short — you wrote ${result.words} word${result.words === 1 ? "" : "s"}. Please explain your answer in your own words — a minimum of ${result.minWords} words is required before any marks can be awarded.`
-                : `Not quite yet — your answer covers ${result.matched} of ${check.concepts.length} key ideas (${result.marks}/${result.maxMarks} marks, 2 marks per point). Each idea needs a ≥${MIN_EXPLANATION_WORDS}-word explanation that mentions the concept or a clear synonym. Revisit the lesson and try again.`}
+          {effectiveResult && !effectiveResult.ok && (
+            <span className={`exq-status ${effectiveResult.short ? "short" : "wrong"}`}>
+              {effectiveResult.short
+                ? `Answer too short — you wrote ${effectiveResult.words} word${effectiveResult.words === 1 ? "" : "s"}. Please explain your answer in your own words — a minimum of ${effectiveResult.minWords} words is required before any marks can be awarded.`
+                : `Not quite yet — your answer covers ${effectiveResult.matched} of ${check.concepts.length} key ideas (${effectiveResult.marks}/${effectiveResult.maxMarks} marks, 2 marks per point). Each idea needs a ≥${MIN_EXPLANATION_WORDS}-word explanation that mentions the concept or a clear synonym. Revisit the lesson and try again.`}
+              {reviewing && " Checking for meaning…"}
             </span>
           )}
         </div>
@@ -833,9 +938,14 @@ function ExerciseQuestion({
       {ok && (
         <div className="exq-status ok">
           <Icon name="checkCircle" size={15} />
-          Correct — {scoreAnswer(val, check).marks} of {scoreAnswer(val, check).maxMarks} marks (2
+          Correct — {scoreAnswer(val, check, extras).marks} of {scoreAnswer(val, check, extras).maxMarks} marks (2
           marks per point).
           <DoubleTick />
+          {extras.size > 0 && (
+            <span className="exq-reviewed" title="Some marks were confirmed by a semantic review of your wording">
+              · Reviewed for meaning
+            </span>
+          )}
         </div>
       )}
       {feedback && missed.length > 0 && (
