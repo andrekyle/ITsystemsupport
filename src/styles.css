@@ -2528,12 +2528,25 @@ textarea:focus {
 
 /* Print output */
 @media print {
-  body, .content, .content-inner, .card, .srf-wrap {
+  /* Neutralise the app shell: remove flex/scroll/height so the whole
+     form flows onto the page instead of being clipped to the viewport. */
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+  .app, .body, .content, .content-inner, .card, .srf-wrap {
+    display: block !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
     background: #ffffff !important;
     padding: 0 !important;
     margin: 0 !important;
     box-shadow: none !important;
     border: 0 !important;
+    flex: none !important;
   }
   .sidebar, .header, .no-print { display: none !important; }
   .srf-page {
@@ -2544,6 +2557,9 @@ textarea:focus {
     font-size: 10px;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    overflow: visible !important;
+    break-inside: auto;
+    page-break-inside: auto;
   }
   .srf-page * {
     -webkit-print-color-adjust: exact;
@@ -2555,6 +2571,7 @@ textarea:focus {
     background: var(--srf-strip) !important;
     color: #fff !important;
   }
+  @page { size: A4; margin: 8mm; }
 }
 
 .attempt-row .col-left {
