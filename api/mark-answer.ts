@@ -39,6 +39,16 @@ const MAX_ANSWER_LEN = 4000;
 const MAX_CONCEPTS = 12;
 const LLM_TIMEOUT_MS = 6000;
 
+/** Groq model names to try, in order. First 200 response wins. Falls through
+ *  to the next name on 404 (model not found on this key's plan). */
+const MODEL_CANDIDATES = [
+  "llama-3.3-70b-versatile",
+  "llama-3.1-8b-instant",
+  "openai/gpt-oss-120b",
+  "openai/gpt-oss-20b",
+  "gemma2-9b-it",
+];
+
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== "POST") {
     return json({ error: "method_not_allowed" }, 405);
@@ -73,27 +83,48 @@ export default async function handler(req: Request): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS);
   try {
-    const upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        temperature: 0,
-        max_tokens: 300,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userMsg },
-        ],
-      }),
-      signal: controller.signal,
-    });
+    let upstream: Response | null = null;
+    let lastStatus = 0;
+    let lastBody = "";
+    for (const model of MODEL_CANDIDATES) {
+      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          temperature: 0,
+          max_tokens: 300,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: userMsg },
+          ],
+        }),
+        signal: controller.signal,
+      });
+      lastStatus = r.status;
+      if (r.ok) {
+        upstream = r;
+        break;
+      }
+      // Read body for diagnostics but keep trying the next candidate on 404,
+      // which is how Groq reports "model no longer available on your plan".
+      try {
+        lastBody = (await r.text()).slice(0, 200);
+      } catch {
+        lastBody = "";
+      }
+      if (r.status !== 404 && r.status !== 400) break;
+    }
 
-    if (!upstream.ok) {
-      return json({ credited: [], reason: "", error: `llm_${upstream.status}` }, 200);
+    if (!upstream) {
+      return json(
+        { credited: [], reason: "", error: `llm_${lastStatus}`, detail: lastBody },
+        200
+      );
     }
 
     const data = (await upstream.json()) as {
