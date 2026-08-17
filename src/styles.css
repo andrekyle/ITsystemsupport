@@ -7443,6 +7443,12 @@ table.data th.sortable.sorted { color: var(--ink); }
   border-bottom: 1px solid var(--table-line);
 }
 .chat-head strong { font-weight: 500; font-size: 15px; display: block; }
+.chat-head .mini-note {
+  font-size: 10.5px;
+  font-weight: 300;
+  letter-spacing: 0.1px;
+}
+.chat-head .presence-label { font-weight: 400; }
 .chat-empty {
   flex: 1;
   display: flex;
