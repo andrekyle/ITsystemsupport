@@ -274,17 +274,18 @@ function StudentRegistrationForm({
 
         {/* Title | Gender | Ethnic Group row */}
         <table className="srf-table srf-narrow-labels srf-p2">
+          {/* Column sums hit the shared 18% and 50% page grid lines. */}
           <colgroup>
-            <col style={{ width: "12%" }} />
-            <col style={{ width: "10%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "8%" }} />
             <col style={{ width: "9%" }} />
-            <col style={{ width: "9%" }} />
-            <col style={{ width: "12%" }} />
+            <col style={{ width: "7%" }} />
+            <col style={{ width: "8%" }} />
             <col style={{ width: "10%" }} />
             <col style={{ width: "8%" }} />
             <col style={{ width: "14%" }} />
-            <col style={{ width: "8%" }} />
-            <col style={{ width: "8%" }} />
+            <col style={{ width: "9%" }} />
+            <col style={{ width: "9%" }} />
           </colgroup>
           <tbody>
             <tr>
@@ -631,10 +632,19 @@ function StudentRegistrationForm({
         <div className="srf-section-title">
           Administration and Document Control: <em>(To be completed by the Admissions Officer)</em>
         </div>
-        <table className="srf-table srf-admin">
+        <table className="srf-table srf-admin srf-p2">
+          {/* Columns 18/16/16/18/32 put the boundaries at 18%, 50% and 68% —
+              exactly the same vertical lines as every other table on the form. */}
+          <colgroup>
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "16%" }} />
+            <col style={{ width: "16%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "32%" }} />
+          </colgroup>
           <tbody>
             <tr>
-              <TL w="18%">Documents Submitted &amp; Verified</TL>
+              <TL>Documents Submitted &amp; Verified</TL>
               <TCTick label="Certified Copy of ID/Passport" checked={form.docIdPassport} onChange={(v) => set("docIdPassport", v)} />
               <TCTick label="Certified Copy of Highest Certificate" checked={form.docHighestCert} onChange={(v) => set("docHighestCert", v)} />
               <TCTick label="Proof of Residence" checked={form.docProofResidence} onChange={(v) => set("docProofResidence", v)} />
