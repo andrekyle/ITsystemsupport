@@ -643,9 +643,11 @@ function StudentRegistrationForm({
             alt="Services SETA"
             className="srf-footer-logo"
           />
-          <div className="srf-logo-badge srf-seta">
-            <span className="srf-seta-word">W&amp;RSETA</span>
-          </div>
+          <img
+            src="/logos/w&Rseta.png"
+            alt="W&amp;RSETA"
+            className="srf-footer-logo"
+          />
         </div>
       </div>
     </div>
