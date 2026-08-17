@@ -395,32 +395,14 @@ function phraseMatches(phrase: string, tokens: string[]): boolean {
   return answerTokens(phrase).every((pw) => tokens.some((t) => tokenMatches(t, pw)));
 }
 
-/** Minimum answer length (in words) required before any marks can be awarded.
- *  Answers of 1–4 words (and up to 9) score 0 regardless of key‑idea coverage —
- *  learners must give a real explanation to earn credit. */
-const MIN_ANSWER_WORDS = 10;
-
-/** Score a learner's answer against the concept groups of the answer key.
- *  Each key idea (concept group) is worth 2 marks. Answers shorter than
- *  {@link MIN_ANSWER_WORDS} words score 0 marks — an explanation is required. */
-function scoreAnswer(text: string, check: ExerciseCheck) {
-  const tokens = answerTokens(text);
-  const matched = check.concepts.filter((g) => g.some((p) => phraseMatches(p, tokens))).length;
-  const need = check.min ?? Math.ceil(check.concepts.length / 2);
-  const short = tokens.length < MIN_ANSWER_WORDS;
-  return {
-    ok: !short && matched >= need,
-    matched,
-    need,
-    short,
-    words: tokens.length,
-    minWords: MIN_ANSWER_WORDS,
-    marks: short ? 0 : matched * 2,
-    maxMarks: check.concepts.length * 2,
-  };
+/** True when the concept group has at least one phrase whose words all
+ *  appear in `sentenceTokens`. Used to detect the keyword hit *inside a
+ *  specific sentence*, not just anywhere in the answer. */
+function conceptInSentence(group: string[], sentenceTokens: string[]): boolean {
+  return group.some((p) => phraseMatches(p, sentenceTokens));
 }
 
-/* ---- marker feedback: explains WHY a key idea's marks were not awarded ---- */
+/* ---- Marker: stopword-aware content stems (used by scoring and feedback) ---- */
 
 const STOP_WORDS = new Set(
   "the a an and or but of to in on for with is are was were be been being it its this that these those you your yours we our ours they their them theirs he she his her him i me my mine as at by from not no nor do does did done don doesn didn have has had having will would shall should can could may might must when while if then than so too also there here where what which who whom whose why how all each every both few many more most other others some such any only own same very just like unto up down out off about into onto over under again further once".split(
@@ -432,6 +414,134 @@ const STOP_WORDS = new Set(
 function contentStems(s: string): Set<string> {
   return new Set(answerTokens(s).filter((t) => t.length > 2 && !STOP_WORDS.has(t)));
 }
+
+/** Semantic-overlap similarity between two stem sets. Symmetric, in [0..1]. */
+function stemOverlap(a: Set<string>, b: Set<string>): number {
+  if (!a.size || !b.size) return 0;
+  let overlap = 0;
+  a.forEach((t) => {
+    for (const tt of b) {
+      if (tokenMatches(t, tt)) {
+        overlap++;
+        break;
+      }
+    }
+  });
+  return overlap / Math.min(a.size, b.size);
+}
+
+/** Minimum explanation length (in words) that must accompany a key‑idea's
+ *  keyword or synonym before the idea earns its 2 marks. Keyword alone is
+ *  not enough — the learner must actually explain it in their own words. */
+const MIN_EXPLANATION_WORDS = 10;
+/** Minimum overall answer length (in words) required before any marks can be
+ *  awarded at all. Kept equal to the per-idea minimum for consistency. */
+const MIN_ANSWER_WORDS = MIN_EXPLANATION_WORDS;
+
+/** Semantic-similarity threshold above which a sentence is treated as
+ *  covering the meaning of a concept even without exact-keyword overlap. */
+const SEMANTIC_THRESHOLD = 0.35;
+
+/**
+ * Decide which concept groups have earned their 2 marks.
+ *
+ * A concept earns credit when one of the learner's sentences meets **both**
+ * conditions:
+ *   • it is at least {@link MIN_EXPLANATION_WORDS} words long, and
+ *   • it *covers* the concept — either
+ *       - directly, by containing one of the concept's keyword phrases
+ *         (stem/typo tolerant, so "communicating" ≈ "communicate"), or
+ *       - **semantically**, by having enough content-stem overlap with the
+ *         concept phrases + its lesson line (synonyms, related wording).
+ *
+ * Additionally, an idea can be credited whenever the whole answer contains
+ * its keyword AND there is enough surplus word count for another 10-word
+ * block (so a long single-paragraph answer that covers multiple ideas is
+ * not penalised for not having sentence breaks).
+ */
+function creditedConceptIndexes(text: string, check: ExerciseCheck): number[] {
+  const tokens = answerTokens(text);
+  if (tokens.length < MIN_ANSWER_WORDS) return [];
+  const sentences = (text.match(/[^.!?;\n]+[.!?;\n]*/g) ?? [text])
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const sentenceTokens = sentences.map((s) => answerTokens(s));
+  const sentenceStems = sentences.map((s) => contentStems(s));
+
+  // Precompute the semantic "target" for each concept: the concept's own
+  // phrases plus the matching lesson line, so synonyms in the lesson wording
+  // help identify semantically-correct explanations.
+  const conceptTargets = check.concepts.map((g) => {
+    const lessonLine = check.answer.find((a) => {
+      const at = answerTokens(a);
+      return g.some((p) => phraseMatches(p, at));
+    });
+    return contentStems(`${g.join(" ")} ${lessonLine ?? ""}`);
+  });
+
+  const credited = new Set<number>();
+
+  // (a) per-sentence credit: sentence has ≥ 10 words and covers the concept
+  //     either by keyword or by semantic overlap
+  for (let gi = 0; gi < check.concepts.length; gi++) {
+    const group = check.concepts[gi];
+    const target = conceptTargets[gi];
+    for (let si = 0; si < sentences.length; si++) {
+      if (sentenceTokens[si].length < MIN_EXPLANATION_WORDS) continue;
+      const keywordHit = conceptInSentence(group, sentenceTokens[si]);
+      const semanticHit = stemOverlap(sentenceStems[si], target) >= SEMANTIC_THRESHOLD;
+      if (keywordHit || semanticHit) {
+        credited.add(gi);
+        break;
+      }
+    }
+  }
+
+  // (b) whole-answer surplus for keyword-only mentions in short sentences
+  //     — award the 2 marks if there are enough leftover words to be a
+  //     ≥10-word explanation dedicated to this idea.
+  const uncredited = check.concepts
+    .map((g, gi) => ({ gi, group: g }))
+    .filter(({ gi }) => !credited.has(gi))
+    .filter(({ group }) => conceptInSentence(group, tokens));
+  const alreadyCommittedWords = credited.size * MIN_EXPLANATION_WORDS;
+  let surplus = tokens.length - alreadyCommittedWords;
+  for (const { gi } of uncredited) {
+    if (surplus >= MIN_EXPLANATION_WORDS) {
+      credited.add(gi);
+      surplus -= MIN_EXPLANATION_WORDS;
+    } else {
+      break;
+    }
+  }
+
+  return [...credited].sort((a, b) => a - b);
+}
+
+/** Score a learner's answer against the concept groups of the answer key.
+ *  Each key idea (concept group) is worth 2 marks. A key idea only earns
+ *  its 2 marks when the learner has written at least
+ *  {@link MIN_EXPLANATION_WORDS} words explaining it — the keyword alone
+ *  is not enough. */
+function scoreAnswer(text: string, check: ExerciseCheck) {
+  const tokens = answerTokens(text);
+  const credited = creditedConceptIndexes(text, check);
+  const need = check.min ?? Math.ceil(check.concepts.length / 2);
+  const short = tokens.length < MIN_ANSWER_WORDS;
+  const matched = credited.length;
+  return {
+    ok: !short && matched >= need,
+    matched,
+    need,
+    short,
+    words: tokens.length,
+    minWords: MIN_ANSWER_WORDS,
+    marks: matched * 2,
+    maxMarks: check.concepts.length * 2,
+  };
+}
+
+/* ---- marker feedback: explains WHY a key idea's marks were not awarded ---- */
 
 interface IdeaFeedback {
   /** short name of the key idea */
@@ -454,12 +564,16 @@ function explainCheck(text: string, check: ExerciseCheck): IdeaFeedback[] {
   const sentences = (text.match(/[^.!?;\n]+[.!?;\n]*/g) ?? [text])
     .map((s) => s.trim())
     .filter(Boolean);
+  // Which concept groups actually earned their 2 marks under the new rule
+  // (keyword + ≥10-word explanation). Feedback must line up with what the
+  // score says — otherwise learners see contradictory guidance.
+  const credited = new Set(creditedConceptIndexes(text, check));
   // sentences that already earned ticks for other ideas are never quoted as "wrong"
-  const creditedGroups = check.concepts.filter((g) => g.some((p) => phraseMatches(p, tokens)));
+  const creditedGroups = check.concepts.filter((_, gi) => credited.has(gi));
   const ticksPer = attributeTicks(sentences, creditedGroups);
   const candidates = sentences.filter((_, si) => ticksPer[si] === 0);
   return check.concepts.map((g, gi) => {
-    const awarded = g.some((p) => phraseMatches(p, tokens));
+    const awarded = credited.has(gi);
     const label = check.labels?.[gi] ?? g[0];
     const lessonLine = check.answer.find((a) => {
       const at = answerTokens(a);
@@ -470,18 +584,7 @@ function explainCheck(text: string, check: ExerciseCheck): IdeaFeedback[] {
       const target = contentStems(`${lessonLine ?? ""} ${g.join(" ")}`);
       let best = 0;
       for (const s of candidates) {
-        const st = contentStems(s);
-        if (!st.size || !target.size) continue;
-        let overlap = 0;
-        st.forEach((t) => {
-          for (const tt of target) {
-            if (tokenMatches(t, tt)) {
-              overlap++;
-              break;
-            }
-          }
-        });
-        const sim = overlap / Math.min(st.size, target.size);
+        const sim = stemOverlap(contentStems(s), target);
         if (sim > best) {
           best = sim;
           closest = s;
@@ -662,8 +765,8 @@ function ExerciseQuestion({
           {result && !result.ok && (
             <span className="exq-status wrong">
               {result.short
-                ? `Answer too short — you wrote ${result.words} word${result.words === 1 ? "" : "s"}. Answers of 1–4 words score 0 marks. Please explain your answer in your own words — a minimum of ${result.minWords} words is required before any marks can be awarded.`
-                : `Not quite yet — your answer covers ${result.matched} of ${check.concepts.length} key ideas (${result.marks}/${result.maxMarks} marks, 2 marks per point). Revisit the lesson and try again.`}
+                ? `Answer too short — you wrote ${result.words} word${result.words === 1 ? "" : "s"}. Please explain your answer in your own words — a minimum of ${result.minWords} words is required before any marks can be awarded.`
+                : `Not quite yet — your answer covers ${result.matched} of ${check.concepts.length} key ideas (${result.marks}/${result.maxMarks} marks, 2 marks per point). Each idea needs a ≥${MIN_EXPLANATION_WORDS}-word explanation that mentions the concept or a clear synonym. Revisit the lesson and try again.`}
             </span>
           )}
         </div>
@@ -3089,9 +3192,10 @@ export function UnitPage({
               <Icon name="info" size={19} />
             </span>
             <span>
-              <strong>Answer in your own words.</strong> One‑, two‑, three‑ or four‑word answers
-              score <strong>0 marks</strong>. Every answer must include an explanation of at
-              least <strong>{MIN_ANSWER_WORDS} words</strong> before any marks can be awarded.
+              <strong>Answer in your own words.</strong> Each key idea earns 2 marks only when
+              the learner mentions the concept (either by keyword or a clear synonym) <em>and</em>
+              gives an explanation of at least <strong>{MIN_EXPLANATION_WORDS} words</strong> that is
+              semantically correct.
             </span>
           </div>
           {(tab === "questions" ? content.questionSessions ?? [] : content.exercises).map((ex) => {
@@ -3307,9 +3411,10 @@ export function UnitPage({
               <Icon name="info" size={19} />
             </span>
             <span>
-              <strong>Answer in your own words.</strong> One‑, two‑, three‑ or four‑word answers
-              score <strong>0 marks</strong>. Each response must include an explanation of at
-              least <strong>{MIN_ANSWER_WORDS} words</strong> before any marks can be awarded.
+              <strong>Answer in your own words.</strong> Each key idea earns 2 marks only when
+              the learner mentions the concept (either by keyword or a clear synonym) <em>and</em>
+              gives an explanation of at least <strong>{MIN_EXPLANATION_WORDS} words</strong> that is
+              semantically correct.
             </span>
           </div>
           {content.assignments.map((as) => (
