@@ -2420,29 +2420,15 @@ textarea:focus {
   user-select: none;
   min-width: 50px;
   height: 26px;
-  transition: background 0.08s;
+  transition: color 0.08s, background 0.08s;
   position: relative;
 }
 .srf-tick-cell:hover { background: #fffbe6; }
 .srf-tick-cell.on { background: transparent; }
 .srf-tick-cell.on .srf-cell-label {
-  text-decoration: line-through;
-  text-decoration-thickness: 1.5px;
-  text-decoration-color: #000;
+  color: #c05a12;
+  font-weight: 700;
 }
-.srf-tick-cell.on::before,
-.srf-tick-cell.on::after {
-  content: "";
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  top: 50%;
-  height: 1.5px;
-  background: #000;
-  pointer-events: none;
-}
-.srf-tick-cell.on::before { transform: rotate(20deg); }
-.srf-tick-cell.on::after  { transform: rotate(-20deg); }
 .srf-cell-label {
   font-size: 10.5px;
   line-height: 1.15;
@@ -2564,8 +2550,7 @@ textarea:focus {
     print-color-adjust: exact;
   }
   .srf-tick-cell.on { background: transparent !important; }
-  .srf-tick-cell.on::before,
-  .srf-tick-cell.on::after { background: #000 !important; }
+  .srf-tick-cell.on .srf-cell-label { color: #c05a12 !important; font-weight: 700 !important; }
   .srf-orange-strip {
     background: var(--srf-strip) !important;
     color: #fff !important;
