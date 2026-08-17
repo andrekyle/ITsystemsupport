@@ -2356,6 +2356,14 @@ textarea:focus {
     grid-column: auto;
   }
 
+  /* subtle vertical dividers between title | score | attempts | date so the
+     columns line up visually across every row without adding a full table. */
+  .attempt-row.acad .cell,
+  .attempt-row.acad .dt {
+    border-left: 1px solid var(--table-line, var(--border));
+    padding-left: 12px;
+  }
+
   .attempt-row.acad .cell:empty {
     display: inline-flex;
   }
