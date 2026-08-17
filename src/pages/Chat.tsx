@@ -434,11 +434,31 @@ function ChatThread({
           </p>
         ) : (
           messages.map((m) => {
-            // For super-user moderation view of a chat between others, `me`
-            // isn't the sender or the recipient — fall back to the profile
-            // lookup so the correct avatar still shows.
-            const sender =
-              m.byId === me.id ? me : peopleById.get(m.byId) ?? other;
+            // Resolve the sender profile so their avatar renders correctly.
+            // The message's byId is whatever local profile id the sender's
+            // device had — it may not exist in *our* peopleById, so we fall
+            // back through the cloud directory (indexed by id AND by
+            // cloudUserId) and finally to the chat partner as a last resort.
+            let sender: Profile | undefined;
+            if (m.byId === me.id) {
+              sender = me;
+            } else {
+              sender = peopleById.get(m.byId);
+              if (!sender && cloud) {
+                sender = cloud.profiles.find((p) => p.id === m.byId);
+                if (!sender) {
+                  // pair the sender's auth uid (via owners map) back to a
+                  // cloud profile — covers cross-device id mismatches
+                  const senderAuthId = cloud.owners[m.byId];
+                  if (senderAuthId) {
+                    sender = cloud.profiles.find(
+                      (p) => p.cloudUserId === senderAuthId || cloud.owners[p.id] === senderAuthId
+                    );
+                  }
+                }
+              }
+              if (!sender) sender = other;
+            }
             return <ChatBubble key={m.id} msg={m} me={me} sender={sender} onEdit={edit} />;
           })
         )}
