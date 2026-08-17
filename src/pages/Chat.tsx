@@ -37,18 +37,40 @@ export function ChatPage({
   // People I can chat with (local + cloud, deduped, self excluded)
   const [cloud, setCloud] = useState<CloudDirectory | null>(null);
   const [superUid, setSuperUid] = useState<string | undefined>(undefined);
+  // Bump every ~30s so the "online now" dots (derived from lastLogin) refresh.
+  const [presenceTick, setPresenceTick] = useState(0);
   useEffect(() => {
     let alive = true;
-    void fetchCloudDirectory().then((d) => {
-      if (alive && d) setCloud(d);
-    });
+    const load = () => {
+      void fetchCloudDirectory().then((d) => {
+        if (alive && d) setCloud(d);
+      });
+    };
+    load();
     void fetchSuperUserAuthId().then((uid) => {
       if (alive && uid) setSuperUid(uid);
     });
+    const refresh = window.setInterval(() => {
+      if (!alive) return;
+      load();
+      setPresenceTick((n) => n + 1);
+    }, 30_000);
     return () => {
       alive = false;
+      window.clearInterval(refresh);
     };
   }, []);
+
+  // Someone is "online now" if their last-online stamp landed in the last 5
+  // minutes (App.tsx re-touches it every 4 minutes while the app is open).
+  const isOnline = (p: Profile): boolean => {
+    if (p.id === profile.id) return true; // you're always online in your own view
+    if (!p.lastLogin) return false;
+    return Date.now() - Date.parse(p.lastLogin) < 5 * 60_000;
+  };
+  // reference presenceTick so lint / memoization treats the closure as
+  // depending on it — the value doesn't matter, only the re-render trigger
+  void presenceTick;
 
   const people = useMemo(() => {
     const local = loadProfiles();
@@ -106,6 +128,7 @@ export function ChatPage({
             people={people}
             threads={visibleThreads}
             nameFor={nameFor}
+            isOnline={isOnline}
             openWith={openWith}
             onSelect={(id) => {
               setOpenWith(id);
@@ -122,6 +145,7 @@ export function ChatPage({
               nameFor={nameFor}
               cloud={cloud}
               superUid={superUid}
+              isOnline={isOnline}
             />
           ) : (
             <div className="chat-empty">
@@ -142,6 +166,7 @@ function ChatSidebar({
   people,
   threads,
   nameFor,
+  isOnline,
   openWith,
   onSelect,
 }: {
@@ -149,6 +174,7 @@ function ChatSidebar({
   people: Profile[];
   threads: ChatThreadInfo[];
   nameFor: (id: string) => string;
+  isOnline: (p: Profile) => boolean;
   openWith: string | null;
   onSelect: (otherId: string) => void;
 }) {
@@ -210,7 +236,9 @@ function ChatSidebar({
                 key={thread.key}
                 thread={thread}
                 viewer={viewer}
+                people={people}
                 nameFor={nameFor}
+                isOnline={isOnline}
                 openWith={openWith}
                 onSelect={onSelect}
               />
@@ -227,10 +255,16 @@ function ChatSidebar({
               className={`chat-row${openWith === p.id ? " active" : ""}`}
               onClick={() => onSelect(p.id)}
             >
-              <Avatar profile={p} size={28} />
+              <span className="chat-avatar">
+                <Avatar profile={p} size={28} />
+                {isOnline(p) && <span className="presence-dot" title="Online now" />}
+              </span>
               <span className="chat-row-name">
                 <strong>{p.name}</strong>
-                <span className="mini-note">{p.role}</span>
+                <span className="mini-note">
+                  {isOnline(p) ? <span className="presence-label">Online now · </span> : null}
+                  {p.role}
+                </span>
               </span>
             </button>
           ))
@@ -243,13 +277,17 @@ function ChatSidebar({
 function ChatThreadRow({
   thread,
   viewer,
+  people,
   nameFor,
+  isOnline,
   openWith,
   onSelect,
 }: {
   thread: ChatThreadInfo;
   viewer: Profile;
+  people: Profile[];
   nameFor: (id: string) => string;
+  isOnline: (p: Profile) => boolean;
   openWith: string | null;
   onSelect: (otherId: string) => void;
 }) {
@@ -265,6 +303,8 @@ function ChatThreadRow({
   const bothLabel = `${nameFor(thread.aId)} · ${nameFor(thread.bId)}`;
   const unread = involves ? thread.unreadFor(viewer.id) : 0;
   const preview = thread.latest?.body ?? "";
+  const otherProfile = people.find((p) => p.id === otherId);
+  const otherOnline = otherProfile ? isOnline(otherProfile) : false;
   return (
     <button
       className={`chat-row${openWith === otherId ? " active" : ""}${unread ? " has-unread" : ""}`}
@@ -272,7 +312,12 @@ function ChatThreadRow({
       title={isSuper && !involves ? "Read-only monitoring view" : undefined}
     >
       <span className="chat-row-name">
-        <strong>{involves ? nameFor(otherId) : bothLabel}</strong>
+        <strong>
+          {involves ? nameFor(otherId) : bothLabel}
+          {involves && otherOnline && (
+            <span className="presence-dot inline" title="Online now" aria-label="Online now" />
+          )}
+        </strong>
         <span className="mini-note chat-preview">
           {thread.latest ? `${thread.latest.by === viewer.name ? "You" : thread.latest.by}: ${preview}` : "No messages yet"}
         </span>
@@ -292,6 +337,7 @@ function ChatThread({
   nameFor,
   cloud,
   superUid,
+  isOnline,
 }: {
   me: Profile;
   otherId: string;
@@ -299,6 +345,7 @@ function ChatThread({
   nameFor: (id: string) => string;
   cloud: CloudDirectory | null;
   superUid?: string;
+  isOnline: (p: Profile) => boolean;
 }) {
   // Resolve the other party's Supabase auth user id (identity-aware). The
   // chat table is keyed by real auth ids so RLS can enforce privacy.
@@ -353,13 +400,23 @@ function ChatThread({
 
   const canSend = !!otherAuthUserId;
 
+  const otherOnline = other ? isOnline(other) : false;
+
   return (
     <>
       <header className="chat-head">
-        {other && <Avatar profile={other} size={30} />}
+        {other && (
+          <span className="chat-avatar">
+            <Avatar profile={other} size={30} />
+            {otherOnline && <span className="presence-dot" title="Online now" />}
+          </span>
+        )}
         <span>
           <strong>{other?.name ?? nameFor(otherId)}</strong>
-          <div className="mini-note">{other?.role ?? "Unknown role"}</div>
+          <div className="mini-note">
+            {otherOnline ? <span className="presence-label">Online now · </span> : null}
+            {other?.role ?? "Unknown role"}
+          </div>
         </span>
       </header>
       <div className="chat-messages" ref={scrollRef}>
