@@ -12,6 +12,7 @@ import { moduleCompletion, unitCompletion, unitStatus, useLessonEdits, useLesson
 import { Bar } from "../components/Ring";
 import { Quiz } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
+import { ConfirmModal } from "../components/Modal";
 import { SlideViewer } from "../components/SlideViewer";
 import { fileToImageDataUrl } from "../components/Avatar";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
@@ -1999,6 +2000,8 @@ export function UnitPage({
   const [evalDraft, setEvalDraft] = useState<string | null>(null);
   /** transient "Saved" flash on the Self assessment tab, keyed by unit id */
   const [saJustSaved, setSaJustSaved] = useState<string | null>(null);
+  /** pending in-app confirmation on the Self assessment tab */
+  const [saConfirm, setSaConfirm] = useState<"save" | "unlock" | null>(null);
   // shared/staff-uploaded content may only be downloaded by the super user,
   // unless the super user has explicitly allowed it for everyone
   const canDownloadShared = isSuperUser || sharedSettings.allowSharedDownloads;
@@ -3875,23 +3878,20 @@ export function UnitPage({
         const justSaved = saJustSaved === u.us;
         const confirmSave = () => {
           if (locked) return;
-          const ok = window.confirm(
-            `Save this self assessment?\n\n${ticked} of ${total} items ticked.\n\nOnce saved you will not be able to change your answers.`
-          );
-          if (!ok) return;
+          setSaConfirm("save");
+        };
+        const doSave = () => {
+          setSaConfirm(null);
+          if (locked) return;
           setLogbookField(u.us, "selfassess.savedAt", new Date().toISOString());
           setSaJustSaved(u.us);
           window.setTimeout(() => {
             setSaJustSaved((cur) => (cur === u.us ? null : cur));
           }, 2500);
         };
-        const superUserReset = () => {
-          if (
-            !window.confirm(
-              "Super user override: unlock this learner's self assessment so it can be edited again?"
-            )
-          )
-            return;
+        const superUserReset = () => setSaConfirm("unlock");
+        const doUnlock = () => {
+          setSaConfirm(null);
           setLogbookField(u.us, "selfassess.savedAt", "");
         };
         return (
@@ -3999,6 +3999,34 @@ export function UnitPage({
                 <Gloss text={p} />
               </p>
             ))}
+            {saConfirm === "save" && (
+              <ConfirmModal
+                title="Save self assessment"
+                message={
+                  <>
+                    <p style={{ margin: "0 0 8px" }}>
+                      <strong>{ticked} of {total}</strong> items ticked.
+                    </p>
+                    <p style={{ margin: 0 }}>
+                      Once saved you will not be able to change your answers.
+                    </p>
+                  </>
+                }
+                confirmLabel="Save and lock"
+                onConfirm={doSave}
+                onCancel={() => setSaConfirm(null)}
+              />
+            )}
+            {saConfirm === "unlock" && (
+              <ConfirmModal
+                title="Unlock self assessment"
+                message="Super user override: unlock this learner's self assessment so it can be edited again?"
+                confirmLabel="Unlock"
+                danger
+                onConfirm={doUnlock}
+                onCancel={() => setSaConfirm(null)}
+              />
+            )}
           </>
         );
       })()}
