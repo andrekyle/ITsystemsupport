@@ -566,7 +566,6 @@ function Leaderboard({ profile }: { profile: Profile }) {
     ? [] // still loading — keep the spinner-less empty state until cloud lands
     : leaderboard(loadProfiles());
 
-  const top = rows.slice(0, 10);
   const myIndex = rows.findIndex((r) => r.profile.id === profile.id);
 
   return (
@@ -578,7 +577,7 @@ function Leaderboard({ profile }: { profile: Profile }) {
         Class leaderboard
       </h2>
       <div className="card leaderboard-card">
-        {top.length === 0 ? (
+        {rows.length === 0 ? (
           <p className="mini-note">
             {cloudEnabled && !cloud
               ? "Loading class data…"
@@ -586,7 +585,7 @@ function Leaderboard({ profile }: { profile: Profile }) {
           </p>
         ) : (
           <ol className="leaderboard">
-            {top.map((r, i) => (
+            {rows.map((r, i) => (
               <li
                 key={r.profile.id}
                 className={r.profile.id === profile.id ? "me" : ""}
@@ -604,7 +603,7 @@ function Leaderboard({ profile }: { profile: Profile }) {
             ))}
           </ol>
         )}
-        {myIndex >= 10 && (
+        {myIndex >= 0 && (
           <p className="mini-note">
             You are ranked #{myIndex + 1} of {rows.length} — keep going!
           </p>
