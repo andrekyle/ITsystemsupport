@@ -6490,7 +6490,7 @@ table.data tr.done-row .text-link {
 
 .modal-card {
   background: var(--surface);
-  color: var(--text-1);
+  color: var(--ink);
   border: 1px solid var(--border-2);
   border-radius: 6px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
@@ -6507,7 +6507,7 @@ table.data tr.done-row .text-link {
 .modal-body {
   font-size: 13.5px;
   line-height: 1.55;
-  color: var(--text-2);
+  color: var(--ink-2);
 }
 
 .modal-actions {
