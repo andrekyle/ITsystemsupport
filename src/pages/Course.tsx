@@ -798,6 +798,13 @@ function MarkedAnswer({
     }
   }
   const leftover = credited.length - perSeg.reduce((t, g) => t + g.length, 0);
+  // A ✗ is only shown on a sentence that NAMES a still-missing key idea but
+  // failed to earn it. Sentences that continue / support an already-earned
+  // idea (a statement may span several sentences) and neutral sentences get
+  // no mark at all instead of a misleading cross.
+  const uncreditedGroups = check.concepts.filter((_, gi) => !creditedIdx.includes(gi));
+  const namesMissingIdea = (si: number): boolean =>
+    uncreditedGroups.some((g) => conceptInSentence(g, answerTokens(segments[si])));
   return (
     <div className={`exq-marked${ok ? " ok" : ""}`}>
       {segments.map((seg, i) => {
@@ -832,7 +839,7 @@ function MarkedAnswer({
             </span>
           );
         }
-        const showX = gis.length === 0 && !fullCoverage && contentStems(seg).size > 0;
+        const showX = gis.length === 0 && !fullCoverage && namesMissingIdea(i);
         if (gis.length === 0 && !showX) {
           return <span key={i} className="exq-seg">{seg}</span>;
         }
