@@ -1861,9 +1861,9 @@ textarea:focus {
   width: 100%;
   text-align: left;
   padding: 9px 12px;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--radius);
-  background: var(--surface);
+  background: transparent;
   font-size: 14px;
   line-height: 1.45;
   color: var(--ink-2);
@@ -1871,7 +1871,6 @@ textarea:focus {
 }
 
 .opt:hover:not(:disabled) {
-  border-color: var(--azure);
   background: var(--azure-lighter);
 }
 
@@ -1889,7 +1888,6 @@ textarea:focus {
 }
 
 .opt.selected {
-  border-color: var(--azure);
   background: var(--azure-light);
   color: var(--ink);
 }
@@ -1899,7 +1897,6 @@ textarea:focus {
 }
 
 .opt.correct {
-  border-color: var(--green);
   background: var(--green-bg);
   color: var(--ink);
 }
@@ -1909,7 +1906,6 @@ textarea:focus {
 }
 
 .opt.wrong {
-  border-color: var(--red);
   background: var(--red-bg);
 }
 
