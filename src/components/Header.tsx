@@ -274,7 +274,7 @@ export function Header({
                       }}
                     >
                       <span className="notif-item-title">
-                        <Icon name="chat" size={14} /> New message from <strong>{n.otherName}</strong>
+                        <Icon name="chat" size={14} /> <strong>{n.otherName}</strong>
                       </span>
                       {n.latest && (
                         <span className="notif-item-preview mini-note">"{n.latest.body}"</span>
