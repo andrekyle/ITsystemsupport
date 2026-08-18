@@ -94,13 +94,22 @@ export function computeGamification(
       if (!q.total) continue;
       unitHasQuiz = true;
       const ratio = q.best / q.total;
+      // First-attempt mastery is worth full XP. A best score reached by
+      // retaking (answers + explanations are shown after each submission)
+      // earns half — so grinding retakes can't out-rank honest first passes.
+      const retried = (q.attempts ?? 1) > 1;
+      const firstTry = q.history && q.history.length >= (q.attempts ?? 1)
+        ? q.history[q.history.length - 1] // oldest kept attempt = the first one
+        : null;
+      const firstRatio = firstTry && firstTry.total ? firstTry.score / firstTry.total : null;
+      const scale = !retried || (firstRatio !== null && firstRatio >= 0.8) ? 1 : 0.5;
       if (ratio >= 1) {
         quizzesPerfect++;
         quizzesCompetent++;
-        xp += 75;
+        xp += Math.round(75 * scale);
       } else if (ratio >= 0.8) {
         quizzesCompetent++;
-        xp += 50;
+        xp += Math.round(50 * scale);
       } else if (q.best > 0) {
         xp += 10;
       }
@@ -111,12 +120,16 @@ export function computeGamification(
       if (!ex.total) continue;
       unitHasExercise = true;
       const ratio = ex.best / ex.total;
+      // Written exercises take real effort (typed answers, AI-marked) —
+      // they pay more than quizzes so quiz-only grinding can't dominate.
       if (ratio >= 1) {
         exercisesPassed++;
-        xp += 45;
+        xp += 90;
       } else if (ratio >= 0.5) {
         exercisesPassed++;
-        xp += 30;
+        xp += 60;
+      } else {
+        xp += 15;
       }
     }
 

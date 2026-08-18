@@ -677,8 +677,9 @@ function Leaderboard({ profile }: { profile: Profile }) {
           </p>
         )}
         <p className="mini-note">
-          XP comes from completed activities (25), quizzes at 80%+ (50, perfect 75), passed
-          exercises (30–45), POE uploads (20) and signed registers (15).
+          XP comes from real recorded work only: quizzes at 80%+ (50, perfect 75 — halved when the
+          pass needed retakes), marked written exercises (60–90), POE uploads (20), signed
+          registers (15) and evidence-backed activities (25). Ticking stages by hand earns nothing.
         </p>
       </div>
     </>
