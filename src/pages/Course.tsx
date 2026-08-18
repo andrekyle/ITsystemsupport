@@ -1986,6 +1986,23 @@ export function UnitPage({
   const isPrivileged = isStaff(profile.role);
   const isSuperUser = profile.role === "Super User";
 
+  // Reaching the final lesson slide with its gate passed IS the evidence of
+  // working through the training material — credit "Lesson & Training Aids"
+  // automatically so lessons count toward progress without a manual tick.
+  useEffect(() => {
+    if (!content || !content.lesson.length) return;
+    if (acts["Lesson & Training Aids"]) return;
+    const lastIdx = content.lesson.length - 1;
+    if (lessonStep < lastIdx) return;
+    const lastQuiz = content.lesson[lastIdx].slideQuiz ?? [];
+    const answers = lessonQuizAnswers[lastIdx] ?? [];
+    const passed =
+      lastQuiz.length === 0 ||
+      (answers.length >= lastQuiz.length && lastQuiz.every((q, i) => answers[i] === q.answer));
+    if (passed) toggleActivity(u.us, "Lesson & Training Aids");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lessonStep, lessonQuizAnswers, content, u.us]);
+
   /** Collect every figure across every lesson section that has a resolvable image. */
   const buildPresenterSlides = (): PresenterSlide[] => {
     if (!content) return [];
@@ -3234,8 +3251,8 @@ export function UnitPage({
                       <Icon name="checkCircle" size={19} />
                     </span>
                     <span>
-                      Finished the lesson? Mark <strong>Lesson & Training Aids</strong> as complete
-                      on the Overview tab, then work through the Exercises.
+                      Lesson finished — <strong>Lesson &amp; Training Aids</strong> has been credited
+                      to your progress automatically. Now work through the Exercises and Quiz.
                     </span>
                   </div>
                 )}
