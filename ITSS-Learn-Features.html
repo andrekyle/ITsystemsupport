@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ITSS Learn â€” Features</title>
+<style>
+  @page { size: A4; margin: 14mm 16mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Arial, "Helvetica Neue", sans-serif;
+    color: #1a1a1a; font-size: 10pt; line-height: 1.42;
+  }
+  .brand {
+    display: flex; align-items: baseline; gap: 10px;
+    border-bottom: 3px solid #0078d4; padding-bottom: 10px; margin-bottom: 6px;
+  }
+  .brand h1 { font-size: 21pt; color: #0078d4; font-weight: 700; letter-spacing: -0.5px; }
+  .brand .sub { font-size: 10pt; color: #555; }
+  .tagline { font-size: 10.5pt; color: #333; font-style: normal; margin: 7px 0 10px; max-width: 175mm; }
+  h2 {
+    font-size: 12.5pt; color: #0078d4; margin: 11px 0 6px;
+    padding-bottom: 3px; border-bottom: 1px solid #d5e5f5;
+  }
+  h3 { font-size: 10.5pt; color: #005a9e; margin: 10px 0 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+  ol { margin: 2px 0 6px 20px; }
+  li { margin-bottom: 2px; }
+  strong { color: #000; }
+  .cols { display: flex; gap: 24px; break-inside: avoid; page-break-inside: avoid; margin-top: 14px; }
+  .cols > div { flex: 1; }
+  .panel {
+    background: #f2f8fd; border: 1px solid #d5e5f5; border-radius: 6px;
+    padding: 10px 14px; margin-top: 6px;
+  }
+  .panel.green { background: #f0faf2; border-color: #cfe9d6; }
+  .panel.green h2 { color: #107c41; border-bottom-color: #cfe9d6; }
+  .closing {
+    margin-top: 16px; padding: 12px 16px; background: #0078d4; color: #fff;
+    border-radius: 6px; font-size: 11pt; line-height: 1.55;
+    break-inside: avoid; page-break-inside: avoid;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .footer { margin-top: 10px; font-size: 8.5pt; color: #888; text-align: center; }
+  .pagebreak { break-before: page; page-break-before: always; }
+</style>
+</head>
+<body>
+
+<div class="brand">
+  <h1>ITSS Learn</h1>
+  <span class="sub">Platform capabilities overview</span>
+</div>
+<p class="tagline"><strong>What the platform is capable of:</strong> a single web app that can teach,
+assess, mark, track, message, report and audit &mdash; automatically, on any device, with
+bank-grade data privacy.</p>
+
+<h2>Teaching &amp; delivery capabilities</h2>
+<ol>
+  <li><strong>Interactive lesson engine</strong> &mdash; slide-based lessons with images, pop-up glossary definitions, worked examples and collapsible sections</li>
+  <li><strong>Classroom presenter mode</strong> &mdash; full-screen slides with speaker notes for teaching the same material live</li>
+  <li><strong>Knowledge gating</strong> &mdash; can lock the next slide until the learner answers checkpoint questions correctly</li>
+  <li><strong>Content management</strong> &mdash; staff can upload slide decks, images and lesson figures that sync to every device</li>
+</ol>
+
+<h2>Assessment &amp; AI-marking capabilities</h2>
+<ol>
+  <li><strong>Auto-marking of 4 question types</strong> &mdash; multiple choice, select-all, drag-to-order and matching, with instant scoring, attempt history and best-score tracking</li>
+  <li><strong>AI marking of written answers</strong> &mdash; a two-stage marker: key-idea detection places a tick on the exact sentence that earned each mark, then a large language model reviews rejected answers for <em>meaning</em>, so learners who answer in their own words still get credit</li>
+  <li><strong>Explanatory feedback</strong> &mdash; can tell a learner which idea is missing and quote the exact lesson line that teaches it</li>
+  <li><strong>Attempt limiting &amp; locking</strong> &mdash; marked attempts are capped; self-assessments lock after saving with a staff-only unlock</li>
+  <li><strong>Answer transparency</strong> &mdash; staff can open any learner and see every option they picked and every sentence they typed</li>
+</ol>
+
+<h2>Progress-tracking capabilities</h2>
+<ol>
+  <li><strong>Automatic credit of completed work</strong> &mdash; taking a quiz, passing an exercise or uploading evidence updates completion instantly; no manual capture anywhere</li>
+  <li><strong>Dual accounting</strong> &mdash; a lenient progress view for coaching and a strict, auditable view for awarding credits</li>
+  <li><strong>Gamification engine</strong> &mdash; XP, 8 levels and badges computed purely from real recorded work; a live class leaderboard that cannot be inflated</li>
+</ol>
+
+<h2>Evidence &amp; document capabilities</h2>
+<ol>
+  <li><strong>Cloud file storage</strong> &mdash; learners upload evidence (photos, PDFs, documents) from any device; files live in private cloud storage</li>
+  <li><strong>One-click ZIP export</strong> of a learner&rsquo;s entire portfolio for external moderation</li>
+  <li><strong>Paper-form digitisation</strong> &mdash; pixel-accurate replicas of official paper forms (registration form, attendance register) that auto-fill from stored data and print exactly like the originals</li>
+  <li><strong>Bulk PDF output</strong> &mdash; print any register, form or report to PDF straight from the browser, including every register at once</li>
+</ol>
+
+<h2>Communication capabilities</h2>
+<ol>
+  <li><strong>Private 1-to-1 messaging</strong> with online presence, read receipts, message editing and per-sender notifications</li>
+  <li><strong>One-to-many broadcast</strong> &mdash; a single message privately delivered to every learner</li>
+  <li><strong>Q&amp;A and announcements</strong> &mdash; class-wide questions with threaded replies</li>
+  <li><strong>Conversation moderation</strong> &mdash; authorised staff can open any conversation read-only; enforced by the database, not the app</li>
+</ol>
+
+<h2>Analytics &amp; reporting capabilities</h2>
+<ol>
+  <li><strong>Live cohort dashboard</strong> &mdash; completion, quiz &amp; exercise averages, attendance rate, last-seen and XP for every learner in one sortable table</li>
+  <li><strong>Early-warning engine</strong> &mdash; automatically flags at-risk learners and states the reasons (low completion, poor attendance, inactivity, low scores)</li>
+  <li><strong>CSV export</strong> of the full analytics table for external reporting</li>
+  <li><strong>Embedded management reports</strong> &mdash; formal report documents servable inside the app, restricted to the Super User</li>
+</ol>
+
+<h2>Security, privacy &amp; audit capabilities</h2>
+<ol>
+  <li><strong>Row-level security</strong> &mdash; privacy enforced in the database itself: a learner physically cannot query another learner&rsquo;s messages, files or records, even outside the app</li>
+  <li><strong>5-tier role system</strong> &mdash; Learner, Facilitator, Assessor, Moderator, Super User; every screen adapts to the role</li>
+  <li><strong>Audit logging</strong> &mdash; every significant action (submissions, messages, deletions, sign-offs) is recorded with actor and timestamp</li>
+  <li><strong>Account lifecycle</strong> &mdash; email sign-up, password recovery, admin promotion/demotion, remove-profile-from-device</li>
+</ol>
+
+<h2>Platform capabilities</h2>
+<ol>
+  <li><strong>Runs everywhere</strong> &mdash; phone, tablet, laptop, desktop; installable as an app (PWA) with offline support</li>
+  <li><strong>Real-time cloud sync</strong> &mdash; work saved on one device appears on every other; local cache keeps the app usable with no signal</li>
+  <li><strong>Zero-install updates</strong> &mdash; new features deploy centrally; every user gets them on next refresh</li>
+  <li><strong>Dark &amp; light themes</strong>, print-optimised styling, and full keyboard/browser accessibility patterns</li>
+</ol>
+
+<div class="cols">
+  <div>
+    <div class="panel">
+      <h2>Capabilities in learners&rsquo; hands</h2>
+      <ol>
+        <li>Learn, practise, get marked and submit evidence from one app &mdash; on their phone</li>
+        <li>Instant marks with reasons, plus AI that understands answers in their own words</li>
+        <li>Progress that updates itself the moment work is done</li>
+        <li>Private chat to the facilitator; class Q&amp;A; motivating XP &amp; leaderboard</li>
+        <li>Digital signing of the attendance register in seconds</li>
+        <li>Forms completed once online &mdash; never re-written on paper</li>
+      </ol>
+    </div>
+  </div>
+  <div>
+    <div class="panel green">
+      <h2>Capabilities in admins&rsquo; hands</h2>
+      <ol>
+        <li>See every learner&rsquo;s real answers, activity and risk status live</li>
+        <li>Automatic marking and progress capture &mdash; zero admin typing</li>
+        <li>Audit-ready evidence: registers, portfolios, logbooks and declarations printable on demand</li>
+        <li>One-click CSV / PDF / ZIP exports for SETA &amp; QCTO reporting</li>
+        <li>Broadcast to the cohort; moderate any conversation read-only</li>
+        <li>Role-controlled access with a full audit trail behind every action</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<div class="closing">
+  ITSS Learn can run the entire learnership digitally: it teaches, marks, tracks, communicates,
+  reports and audits on its own.
+</div>
+
+<div class="footer">ITSS Learn &middot; i-tsystemsupport.vercel.app</div>
+
+</body>
+</html>
+

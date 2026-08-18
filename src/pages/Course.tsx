@@ -493,8 +493,45 @@ function creditedConceptIndexes(
   check: ExerciseCheck,
   extras?: ReadonlySet<number>
 ): number[] {
+  return creditConcepts(text, check, extras).credited;
+}
+
+/** Resolve the lesson-answer line that carries concept `gi`.
+ *  Checks are authored with `answer[i]` describing `concepts[i]`, so when the
+ *  arrays are the same length the aligned line wins — this stops a keyword
+ *  that also appears incidentally in another line (e.g. "service performance"
+ *  at the end of the Progress-reports line) from binding the concept to the
+ *  wrong line and mis-directing both scoring and tick placement. Falls back
+ *  to first-keyword-hit for non-aligned checks. */
+function lessonLineFor(check: ExerciseCheck, gi: number): string | undefined {
+  const g = check.concepts[gi];
+  if (check.answer.length === check.concepts.length) {
+    const aligned = check.answer[gi];
+    if (aligned && g.some((p) => phraseMatches(p, answerTokens(aligned)))) return aligned;
+  }
+  return check.answer.find((a) => {
+    const at = answerTokens(a);
+    return g.some((p) => phraseMatches(p, at));
+  });
+}
+
+/**
+ * Core credit engine. Returns the credited concept indexes AND, for each
+ * concept earned by the learner's own wording, the exact (trimmed) sentence
+ * that earned it — so tick placement can mirror the scoring instead of
+ * guessing by first keyword hit. Concepts promoted by `extras` (LLM review)
+ * carry no sentence and are pinned semantically by the renderer.
+ */
+function creditConcepts(
+  text: string,
+  check: ExerciseCheck,
+  extras?: ReadonlySet<number>
+): { credited: number[]; earnedBy: Map<number, string> } {
+  const earnedBy = new Map<number, string>();
   const tokens = answerTokens(text);
-  if (tokens.length < MIN_ANSWER_WORDS) return extras ? [...extras].sort((a, b) => a - b) : [];
+  if (tokens.length < MIN_ANSWER_WORDS) {
+    return { credited: extras ? [...extras].sort((a, b) => a - b) : [], earnedBy };
+  }
   const sentences = (text.match(/[^.!?;\n]+[.!?;\n]*/g) ?? [text])
     .map((s) => s.trim())
     .filter(Boolean);
@@ -523,12 +560,9 @@ function creditedConceptIndexes(
       if (n > half) filler.add(stem);
     }
   }
-  const conceptData = check.concepts.map((g) => {
+  const conceptData = check.concepts.map((g, gi) => {
     const keywordStems = new Set(answerTokens(g.join(" ")));
-    const lessonLine = check.answer.find((a) => {
-      const at = answerTokens(a);
-      return g.some((p) => phraseMatches(p, at));
-    });
+    const lessonLine = lessonLineFor(check, gi);
     const fullTarget = contentStems(`${g.join(" ")} ${lessonLine ?? ""}`);
     const explanationTarget = new Set<string>();
     contentStems(lessonLine ?? "").forEach((s) => {
@@ -565,11 +599,13 @@ function creditedConceptIndexes(
         // has to resemble the lesson line's non-keyword content.
         if (explanationOverlap(sentenceStems[si], keywordStems, explanationTarget) >= SEMANTIC_THRESHOLD) {
           credited.add(gi);
+          earnedBy.set(gi, sentences[si]);
           break;
         }
       } else if (stemOverlap(sentenceStems[si], fullTarget) >= SEMANTIC_THRESHOLD + 0.15) {
         // No keyword — synonym / paraphrase must be strong to earn credit.
         credited.add(gi);
+        earnedBy.set(gi, sentences[si]);
         break;
       }
     }
@@ -577,7 +613,7 @@ function creditedConceptIndexes(
 
   if (extras) for (const gi of extras) credited.add(gi);
 
-  return [...credited].sort((a, b) => a - b);
+  return { credited: [...credited].sort((a, b) => a - b), earnedBy };
 }
 
 /** Score a learner's answer against the concept groups of the answer key.
@@ -634,18 +670,15 @@ function explainCheck(
   // Which concept groups actually earned their 2 marks under the new rule
   // (keyword + ≥10-word explanation). Feedback must line up with what the
   // score says — otherwise learners see contradictory guidance.
-  const credited = new Set(creditedConceptIndexes(text, check, extras));
-  // sentences that already earned ticks for other ideas are never quoted as "wrong"
-  const creditedGroups = check.concepts.filter((_, gi) => credited.has(gi));
-  const ticksPer = attributeTicks(sentences, creditedGroups);
-  const candidates = sentences.filter((_, si) => ticksPer[si] === 0);
+  const { credited: creditedList, earnedBy } = creditConcepts(text, check, extras);
+  const credited = new Set(creditedList);
+  // sentences that already earned ticks are never quoted as "wrong"
+  const earningSentences = new Set(earnedBy.values());
+  const candidates = sentences.filter((s) => !earningSentences.has(s));
   return check.concepts.map((g, gi) => {
     const awarded = credited.has(gi);
     const label = check.labels?.[gi] ?? g[0];
-    const lessonLine = check.answer.find((a) => {
-      const at = answerTokens(a);
-      return g.some((p) => phraseMatches(p, at));
-    });
+    const lessonLine = lessonLineFor(check, gi);
     let closest: string | undefined;
     if (!awarded && candidates.length) {
       const target = contentStems(`${lessonLine ?? ""} ${g.join(" ")}`);
@@ -691,11 +724,6 @@ function attributeGroups(segments: string[], credited: string[][]): number[][] {
   });
 }
 
-/** Number of 2-mark ticks earned by each sentence. */
-function attributeTicks(sentences: string[], credited: string[][]): number[] {
-  return attributeGroups(sentences, credited).map((g) => g.length);
-}
-
 /** Split a piece of text into (head, tail) where tail is the final
  *  non-whitespace chunk plus any trailing whitespace. Used so the marker
  *  glyph after a segment can be glued to the last word — that word + glyph
@@ -721,45 +749,52 @@ function MarkedAnswer({
   ok: boolean;
   extras?: ReadonlySet<number>;
 }) {
-  // Use the same credit rule as the scorer (keyword/synonym + ≥10-word
-  // sentence) so ticks always match the score at the bottom of the box.
-  const creditedIdx = creditedConceptIndexes(text, check, extras);
+  // Use the same credit engine as the scorer so ticks always match the score
+  // at the bottom of the box — including WHICH sentence earned each concept.
+  const { credited: creditedIdx, earnedBy } = creditConcepts(text, check, extras);
   const credited = creditedIdx.map((gi) => check.concepts[gi]);
   // every key idea earned: nothing is missing, so per-sentence crosses would only mislead
   const fullCoverage = credited.length >= check.concepts.length;
   const segments = (text.match(/[^.!?;\n]+[.!?;\n]*\s*/g) ?? [text]).filter((s) => s.trim());
-  const perSeg = attributeGroups(segments, credited);
-  // Any concept that couldn't be attributed to a segment by keyword (e.g. an
-  // LLM promotion via synonym / paraphrase) gets pinned to the segment with
-  // the strongest semantic overlap so its ticks appear inline after the
-  // relevant sentence — never as an orphan pair on a new line.
+  // Attribute each credited concept to the segment whose trimmed text matches
+  // the sentence the scorer says earned it. Falls back to keyword attribution
+  // only for concepts with no recorded sentence (LLM promotions).
+  const perSeg: number[][] = segments.map(() => []);
+  const unattributed: number[] = [];
   {
-    const attributed = new Set<number>();
-    perSeg.forEach((gis) => gis.forEach((gi) => attributed.add(gi)));
-    const unattributed: number[] = [];
-    for (let localGi = 0; localGi < credited.length; localGi++) {
-      if (!attributed.has(localGi)) unattributed.push(localGi);
-    }
-    if (unattributed.length > 0 && segments.length > 0) {
-      const segStems = segments.map((s) => contentStems(s));
-      for (const localGi of unattributed) {
-        const group = credited[localGi];
-        const lessonLine = check.answer.find((a) => {
-          const at = answerTokens(a);
-          return group.some((p) => phraseMatches(p, at));
-        });
-        const target = contentStems(`${group.join(" ")} ${lessonLine ?? ""}`);
-        let bestSeg = 0;
-        let bestOverlap = -1;
-        for (let si = 0; si < segments.length; si++) {
-          const overlap = stemOverlap(segStems[si], target);
-          if (overlap > bestOverlap) {
-            bestOverlap = overlap;
-            bestSeg = si;
-          }
+    const segTrim = segments.map((s) => s.trim());
+    creditedIdx.forEach((gi, localGi) => {
+      const sentence = earnedBy.get(gi);
+      if (sentence) {
+        const si = segTrim.findIndex((s) => s === sentence || s.includes(sentence) || sentence.includes(s));
+        if (si >= 0) {
+          perSeg[si].push(localGi);
+          return;
         }
-        perSeg[bestSeg] = [...perSeg[bestSeg], localGi];
       }
+      unattributed.push(localGi);
+    });
+  }
+  // Any concept without a recorded sentence (e.g. an LLM promotion via
+  // synonym / paraphrase) gets pinned to the segment with the strongest
+  // semantic overlap so its ticks appear inline after the relevant sentence
+  // — never as an orphan pair on a new line.
+  if (unattributed.length > 0 && segments.length > 0) {
+    const segStems = segments.map((s) => contentStems(s));
+    for (const localGi of unattributed) {
+      const group = credited[localGi];
+      const lessonLine = lessonLineFor(check, creditedIdx[localGi]);
+      const target = contentStems(`${group.join(" ")} ${lessonLine ?? ""}`);
+      let bestSeg = 0;
+      let bestOverlap = -1;
+      for (let si = 0; si < segments.length; si++) {
+        const overlap = stemOverlap(segStems[si], target);
+        if (overlap > bestOverlap) {
+          bestOverlap = overlap;
+          bestSeg = si;
+        }
+      }
+      perSeg[bestSeg] = [...perSeg[bestSeg], localGi];
     }
   }
   const leftover = credited.length - perSeg.reduce((t, g) => t + g.length, 0);
@@ -882,10 +917,7 @@ function ExerciseQuestion({
 
     const concepts = uncredited.map(({ gi, g }) => {
       const label = check.labels?.[gi] ?? g[0];
-      const lessonLine = check.answer.find((a) => {
-        const at = answerTokens(a);
-        return g.some((p) => phraseMatches(p, at));
-      });
+      const lessonLine = lessonLineFor(check, gi);
       return {
         id: `c${gi}`,
         label,
