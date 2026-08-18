@@ -3,6 +3,7 @@ import { Icon } from "../icons";
 import type { Profile, Route } from "../types";
 import { COURSE_META, MODULES, POE_TOTAL, TOTAL_UNITS } from "../data/course";
 import {
+  loadOutcomes,
   loadProfiles,
   moduleCompletion,
   overallStats,
@@ -53,7 +54,8 @@ interface LearnerRow {
 function analyse(p: Profile, registers: number, cloud: CloudLearnerData | null): LearnerRow {
   const progress = bestProgress(p, cloud);
   const docs = bestPoeDocs(p, cloud);
-  const s = overallStats(progress, docs);
+  // Credits: only assessor-recorded Competent outcomes count.
+  const s = overallStats(progress, docs, loadOutcomes()[p.id] ?? {});
 
   let quizBestSum = 0;
   let quizCount = 0;

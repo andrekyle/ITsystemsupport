@@ -69,7 +69,7 @@ export function openStatementOfResults(
           : complete
             ? "C*"
             : "";
-        if (outcome?.status === "C" || (!outcome && complete)) creditsAchieved += u.credits;
+        if (outcome?.status === "C") creditsAchieved += u.credits;
         const chip =
           status === "C" || status === "C*"
             ? `<span class="chip ok">${status === "C" ? "Competent" : "Complete*"}</span>`
@@ -107,7 +107,8 @@ export function openStatementOfResults(
     <tr><th>Unit standard</th><th>Title</th><th class="c">Level</th><th class="c">Credits</th><th class="c">Best quiz</th><th class="c">Exercises</th><th class="c">Outcome</th></tr>
     ${rows}
   </table>
-  <p class="small">* Complete: all learning activities finished; formal assessor outcome pending.
+  <p class="small">* Complete: all learning activities finished; formal assessor outcome pending —
+  credits accrue only once a registered assessor records Competent.
   Outcomes marked Competent / Not Yet Competent were recorded by a registered assessor in ITSS Learn.</p>
   <div class="sign">
     <div>Assessor signature &amp; date</div>

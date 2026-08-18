@@ -14,6 +14,7 @@ import {
   unitCompletion,
   useOutcomes,
   useSharedSettings,
+  type UnitOutcome,
 } from "../store";
 import { auditCsv, downloadText, useAudit } from "../lib/audit";
 import type { AuditEvent } from "../lib/audit";
@@ -124,7 +125,7 @@ interface ComplianceRecord {
 
 function complianceFor(
   p: Profile,
-  outcomes: Record<string, Record<string, { status: string }>>,
+  outcomes: Record<string, Record<string, UnitOutcome>>,
   reviews: Record<string, Record<string, { status: string }>>,
   /** data from the owning cloud account — used for learners who sign in on their own devices */
   cloud?: CloudLearnerData
@@ -137,7 +138,8 @@ function complianceFor(
   const docs = bestPoeDocs(p, cloud);
   // Feed POE into overallStats so a learner who uploaded evidence for a unit
   // gets credit for that activity even when they never ticked "Mark complete".
-  const s = overallStats(progress, docs);
+  // Credits come exclusively from assessor-recorded Competent outcomes.
+  const s = overallStats(progress, docs, outcomes[p.id] ?? {});
   const myReviews = Object.values(reviews[p.id] ?? {});
   const myOutcomes = Object.values(outcomes[p.id] ?? {});
   return {

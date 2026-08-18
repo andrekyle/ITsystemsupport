@@ -1855,7 +1855,11 @@ export function moduleCompletion(state: ProgressState, moduleId: string): number
 
 export function overallStats(
   state: ProgressState,
-  poe: Record<string, PoeDoc> = {}
+  poe: Record<string, PoeDoc> = {},
+  /** the learner's assessor-recorded unit outcomes — credits count ONLY for
+   *  units an assessor has marked Competent ("C"); learners cannot award
+   *  themselves credits by ticking their own activity stages. */
+  assessed: Record<string, UnitOutcome> = {}
 ) {
   let unitsCompleted = 0;
   let unitsInProgress = 0;
@@ -1870,15 +1874,15 @@ export function overallStats(
       // rollup for the staff-side compliance view.
       const p = unitProgress(state, u.us, poe);
       completionSum += p;
-      // Credits are still only earned when the strict "Mark complete" flags
-      // are all set — that is the auditable moment the SAQA credit accrues.
       const c = unitCompletion(state, u.us);
       if (c === 1) {
         unitsCompleted++;
-        creditsEarned += u.credits;
       } else if (p > 0) {
         unitsInProgress++;
       }
+      // SAQA credits accrue at exactly one auditable moment: a registered
+      // assessor recording Competent for the unit on the learner's profile.
+      if (assessed[u.us]?.status === "C") creditsEarned += u.credits;
     }
   }
   return {

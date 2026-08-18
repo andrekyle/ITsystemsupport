@@ -10,7 +10,7 @@ import {
   isSaqaUnit,
   usLabel,
 } from "../data/course";
-import { loadAnnouncements, moduleCompletion, overallStats, unitStatus, usePoe } from "../store";
+import { loadAnnouncements, moduleCompletion, overallStats, unitStatus, useOutcomes, usePoe } from "../store";
 import { attendanceSignedCount, computeGamification } from "../lib/gamification";
 import { Bar, Ring } from "../components/Ring";
 
@@ -24,7 +24,8 @@ export function Dashboard({
   navigate: (r: Route) => void;
 }) {
   const { docs: poeDocs } = usePoe(profile.id);
-  const s = overallStats(progress, poeDocs);
+  const { outcomes } = useOutcomes();
+  const s = overallStats(progress, poeDocs, outcomes[profile.id] ?? {});
   const poeDone = Object.keys(poeDocs).length;
   const game = computeGamification(progress, poeDone, attendanceSignedCount(profile.id));
   const announcements = loadAnnouncements().slice(0, 2);
@@ -314,7 +315,8 @@ export function ProgressPage({
   navigate: (r: Route) => void;
 }) {
   const { docs: poeDocs } = usePoe(profile.id);
-  const s = overallStats(progress, poeDocs);
+  const { outcomes } = useOutcomes();
+  const s = overallStats(progress, poeDocs, outcomes[profile.id] ?? {});
   return (
     <>
       <div className="eyebrow">
