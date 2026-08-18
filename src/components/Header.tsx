@@ -179,13 +179,20 @@ export function Header({
   // Live-updating list of chat threads; filter to ones with unread messages for me.
   const chatThreads = useChatThreads();
   const notifs = useMemo(() => {
-    const nameFor = (id: string) => loadProfiles().find((p) => p.id === id)?.name ?? "Someone";
     return chatThreads
       .filter((t) => t.aId === profile.id || t.bId === profile.id)
       .map((t) => {
         const otherId = t.aId === profile.id ? t.bId : t.aId;
         const unread = t.unreadFor(profile.id);
-        return { threadKey: t.key, otherId, otherName: nameFor(otherId), unread, latest: t.latest };
+        // The other person's name: every chat message stores its sender's
+        // display name, so read it off their most recent message. Fall back
+        // to the local profile list, then a generic label.
+        const fromMsgs = [...t.messages].reverse().find((m) => m.byId === otherId && m.by)?.by;
+        const otherName =
+          fromMsgs ||
+          loadProfiles().find((p) => p.id === otherId)?.name ||
+          "Someone";
+        return { threadKey: t.key, otherId, otherName, unread, latest: t.latest };
       })
       .filter((n) => n.unread > 0)
       .sort((a, b) => (b.latest?.at ?? "").localeCompare(a.latest?.at ?? ""));
