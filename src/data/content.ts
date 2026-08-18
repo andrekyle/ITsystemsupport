@@ -4891,6 +4891,658 @@ export const CONTENT: Record<string, UnitContent> = {
   },
 
   /* ================================================================
+     US 114050 — Explain the principles of business and the role of
+     information technology
+     NQF 5 · 4 credits
+     ================================================================ */
+  "114050": {
+    lesson: [
+      {
+        heading: "Principles of business and the role of information technology — introduction",
+        icon: "presenter",
+        flat: true,
+        paragraphs: [
+          "Time: 90 minutes · Activity: Self & Group.",
+          "Unit Standard 114050 — Explain the principles of business and the role of information technology. In this lesson you will be assessed against these specific outcomes and related assessment criteria: the description distinguishes types of business organisations (Sole trader, Partnership, Limited Co, Private Co, Public Ltd Company); the description outlines the common objectives within which businesses operate (Buying & Selling activity, Profit, Charity, Social Clubs); and the description outlines the environment within which businesses operate.",
+          "Let's take a closer look at the different types of businesses there are, from which you must choose for your own setup.",
+          "Forms of Enterprises: Sole Proprietor · Partnership · Closed Corporation · Company.",
+        ],
+        slideQuiz: [
+          {
+            q: "Which of these is NOT one of the four forms of enterprise covered in this lesson?",
+            options: ["Sole Proprietor", "Partnership", "Closed Corporation", "Stokvel"],
+            answer: 3,
+            explain: "The four forms of enterprise are the Sole Proprietor, Partnership, Closed Corporation and Company.",
+          },
+          {
+            q: "Which are common objectives within which businesses operate?",
+            options: [
+              "Buying & selling activity, profit, charity and social clubs",
+              "Only maximum profit",
+              "Only charity work",
+              "Avoiding all risk",
+            ],
+            answer: 0,
+            explain: "The assessment criteria list buying & selling activity, profit, charity and social clubs as common objectives within which businesses operate.",
+          },
+        ],
+      },
+      {
+        heading: "The company (Pty Ltd) — private vs public",
+        icon: "briefcase",
+        flat: true,
+        paragraphs: [
+          "The company (which functions under Act 61 of 1973, as amended) may be considered as a more advanced form of ownership that eliminates the disadvantages of the sole proprietorship, partnership and close corporation, especially regarding unlimited liability and the possibilities to acquire capital.",
+          "In South Africa two types of profit-seeking companies are found, namely the private and the public company. The most important differences between these two business forms are briefly summarised below:",
+        ],
+        table: {
+          headers: ["", "Private Company", "Public Company"],
+          rows: [
+            ["Number of members (shareholders)", "Between one and 50", "At least seven"],
+            ["Directors", "At least one", "At least two"],
+            ["Shares", "May not be offered to the general public", "May be offered to the general public"],
+            ["Transferability of shares", "Limited, may occur only with the consent of the board of directors", "Freely transferable"],
+            ["Name", "Ends with: (Pty.) Ltd. or Proprietary (Limited)", "Ends with: Ltd. or Limited"],
+            ["Legal requirements and limitations", "Subject to less requirements and limitations", "Subject to numerous requirements and limitations"],
+          ],
+        },
+        figures: [
+          {
+            id: "114050-pty-ltd-sign",
+            caption: "A (Pty) Ltd sign — the naming that marks a South African private company",
+            hint: "Photo or illustration of a '(Pty) Ltd' company sign",
+          },
+        ],
+        slideQuiz: [
+          {
+            q: "Under which Act does the company function?",
+            options: ["Act 61 of 1973, as amended", "Act 108 of 1996", "Act 71 of 2008 only", "The Closed Corporations Act"],
+            answer: 0,
+            explain: "The company functions under Act 61 of 1973, as amended.",
+          },
+          {
+            q: "How many members (shareholders) may a private company have?",
+            options: ["Between one and 50", "At least seven", "No more than ten", "Unlimited"],
+            answer: 0,
+            explain: "A private company has between one and 50 members; a public company has at least seven.",
+          },
+          {
+            q: "Which is TRUE of a public company's shares?",
+            options: [
+              "They may be offered to the general public and are freely transferable",
+              "They may not be offered to the public",
+              "Transfers need board consent",
+              "They do not exist",
+            ],
+            answer: 0,
+            explain: "Public company shares may be offered to the general public and are freely transferable; private company shares are limited and need board consent.",
+          },
+          {
+            q: "A private company's name ends with…",
+            options: ["(Pty.) Ltd. or Proprietary (Limited)", "Ltd. or Limited", "CC", "Inc."],
+            answer: 0,
+            explain: "Private companies end with (Pty.) Ltd. or Proprietary (Limited); public companies end with Ltd. or Limited.",
+          },
+        ],
+      },
+      {
+        heading: "Closed corporations (CC)",
+        icon: "people",
+        flat: true,
+        paragraphs: [
+          "This type of business provides a simple, flexible, inexpensive and legal business structure for up to ten natural persons involved in business together.",
+          "A closed corporation may not have more than ten members and must be registered with the Registrar of Closed Corporations in Pretoria.",
+          "A closed corporation is seen as a legal person who can enter into contracts, operate a bank account, own property, sue or be sued in court.",
+          "Certain registration and formation formalities as laid down in the Closed Corporations Act need to be completed before it is recognised. A closed corporation continues to exist until it is wound up or deregistered in terms of the Act.",
+          "A closed corporation is formed and owned by its members, but it exists independently of them. Therefore, it continues to be a legal person even if membership changes or if all the members die. Its establishment, existence or termination can be done only by law, in terms of the Act.",
+          "A closed corporation is owned and managed by its members; each has an interest (a percentage) in the business and this must always add up to 100 percent. A company, corporation or trust may not be a member of a closed corporation.",
+        ],
+        slideQuiz: [
+          {
+            q: "What is the maximum number of members a closed corporation may have?",
+            options: ["Ten", "Twenty", "Fifty", "Seven"],
+            answer: 0,
+            explain: "A closed corporation may not have more than ten members and must be registered with the Registrar of Closed Corporations in Pretoria.",
+          },
+          {
+            q: "Which statement about a CC is TRUE?",
+            options: [
+              "It is a legal person that can contract, bank, own property and sue or be sued",
+              "It dies when a member dies",
+              "A company or trust may be a member",
+              "Members' interests may add up to any total",
+            ],
+            answer: 0,
+            explain: "A CC is a legal person, exists independently of its members, may not have a company/corporation/trust as a member, and members' interests must always add up to 100 percent.",
+          },
+        ],
+      },
+      {
+        heading: "Partnerships",
+        icon: "people",
+        flat: true,
+        paragraphs: [
+          "This is a particular type of business association concluded between people who intend making and sharing profits.",
+          "A partnership is not a legal person. The rights, duties and liabilities of a partnership bind the individual partners. In case of insolvency, a partnership estate may be sequestrated as it is then recognised as having a separate existence. If a partnership is sequestrated due to insolvency, the estates of all the partners are simultaneously sequestrated.",
+          "Partnerships have a minimum of two and a maximum of 20 partners. However, certain professional partnerships may have more partners.",
+          "A partnership is managed according to the agreement between the partners. Each partner is an agent of the partnership and thereby binds all other partners. Partners are jointly and severally liable for partnership debts.",
+          "If you enter a partnership, it is always advisable to have a properly worded agreement drawn up by an attorney and signed by yourself and your partner. Among other things, the agreement should stipulate the action that needs to be taken if one of the partners should die or if the partnership should be dissolved.",
+        ],
+        slideQuiz: [
+          {
+            q: "How many partners may a partnership have?",
+            options: [
+              "A minimum of two and a maximum of 20 (certain professional partnerships may have more)",
+              "One to ten",
+              "At least seven",
+              "Unlimited in all cases",
+            ],
+            answer: 0,
+            explain: "Partnerships have a minimum of two and a maximum of 20 partners, though certain professional partnerships may have more.",
+          },
+          {
+            q: "Which is TRUE of partners' liability?",
+            options: [
+              "Partners are jointly and severally liable for partnership debts",
+              "Only the senior partner is liable",
+              "The partnership is a legal person so no partner is liable",
+              "Liability is limited to each partner's contribution",
+            ],
+            answer: 0,
+            explain: "A partnership is not a legal person — each partner is an agent of the partnership and partners are jointly and severally liable for its debts.",
+          },
+        ],
+      },
+      {
+        heading: "Sole proprietor — and researching the need for your business",
+        icon: "person",
+        flat: true,
+        paragraphs: [
+          "Only one person owns this type of business; there are no partners or co-owners. In this form of business there is no need for formal registration, administration or termination; no statutes regulate sole owners and no documentation needs registering. You do not necessarily have to carry on business alone and may employ people to manage or help you run the business. If your business becomes insolvent, it means that you will personally become insolvent.",
+          "You will need to assess and research the need for this type of business in the area. In order to do this, you will have to take the following into account:",
+        ],
+        bullets: [
+          "Your skills — can you do it or do you need help to successfully achieve it?",
+          "Your interests — will you enjoy doing this type of business and the hours that come with it?",
+          "Your other commitments — family, friends, other job or any other item that requires your attention away from this.",
+          "Is there a market for the business? There must be a need for that type of business for it to be able to succeed.",
+          "Who is the market? Who are your clients going to be — businesses or private individuals?",
+          "How big is the market? Do you need to be able to produce in masses or can you take orders and produce on order?",
+          "Who will your competition be? Are they close to your prospective location or not?",
+          "Is the market you would like to enter still growing or is it stagnant? Are there other companies of similar nature? Are they growing or closing?",
+          "Where will you open your business? Will it be in an office block or do you need retail space?",
+          "What are the capital requirements of your business? How much do you need to open your business and operate it, until there is enough to provide for all the debts?",
+          "How big must the business be to be successful — not too big (costing too much) or too small (will not have the capability to complete all the work)?",
+          "What will the working hours be? Long working hours will require additional (overtime) pay; shorter working hours can affect productivity.",
+          "How many people will be employed? Employing 10 if you need 20 can cause a delay in your delivery time to your clients, seen as bad service; vice versa, if you have 20 and only need 10, then you will be paying for staff that you do not need.",
+          "What is the risk? How many other companies offer the same as you? Are they flourishing or closing down? Do you have existing clients? Can you afford to lose what you put into the company?",
+          "Can the business operate from home? This will save on costs as well as travelling and many other expenses.",
+        ],
+        slideQuiz: [
+          {
+            q: "What happens if a sole proprietor's business becomes insolvent?",
+            options: [
+              "The owner personally becomes insolvent",
+              "Only the business assets are lost",
+              "The Registrar winds it up",
+              "The shareholders absorb the loss",
+            ],
+            answer: 0,
+            explain: "A sole proprietorship is not separate from its owner — if the business becomes insolvent, you personally become insolvent.",
+          },
+          {
+            q: "Which of these is part of researching the need for a business?",
+            options: [
+              "Your skills, the market, the competition and the capital requirements",
+              "Only the business name",
+              "Only the logo design",
+              "Only the working hours",
+            ],
+            answer: 0,
+            explain: "The research checklist covers your skills, interests, commitments, the market and its size, competition, location, capital requirements, business size, working hours, staffing, risk and whether the business can operate from home.",
+          },
+        ],
+      },
+      {
+        heading: "Choosing an idea — new, existing or franchised",
+        icon: "design",
+        flat: true,
+        paragraphs: [
+          "You may have a few ideas for a business that you would like to start. Taking the above criteria and rating them on a scale of 1–10, for each of the business ideas you have, will give you a better understanding of which business to start with at first.",
+          "Another factor you may want to consider is the purchase of an existing business. The advantages being that the business is an ongoing concern and revenue would come in from day one. In addition, there is already a customer and supplier base; you would not have to hunt for premises or equipment. Bear in mind, however, that you will also be paying for goodwill and there may be unseen flaws.",
+          "You could also decide upon opening a franchised business. This is a type of in-between business, from the two mentioned above. It is a new business — yes, you will be the first owner of the business — but it is also a known business (brand), so it is also an ongoing concern. Franchising is becoming very popular in South Africa; it can be explained as a marriage between a big business and a small business. The franchisor is usually a person or company with a highly marketable product or service. The franchisee is a person or company who is licensed by the franchisor to perform the marketing function and who provides most of the capital required for this purpose. The franchisor achieves rapid expansion at relatively low cost to him.",
+          "The franchisee sets up a business with a good (already successful) product or service and obtains a number of big-business purchasing and advertising advantages. The relatively small size of the franchisee's business provides small-business advantages such as personal dedication and commitment and is therefore particularly suited to service-type businesses. Franchising has provided numerous opportunities for individuals to set up a business at relatively low risk. In South Africa today, franchising probably represents one of the best opportunities for aspiring entrepreneurs. According to the South African Franchise Association, franchising is about to explode in South Africa.",
+        ],
+        figures: [
+          {
+            id: "114050-existing-business",
+            caption: "Buying an existing business — trading, customers and suppliers from day one",
+            hint: "Photo of a small trading business (e.g. a milkshake bar / café)",
+          },
+        ],
+        slideQuiz: [
+          {
+            q: "What is an advantage of buying an existing business?",
+            options: [
+              "It is an ongoing concern — revenue from day one, with an existing customer and supplier base",
+              "It never has flaws",
+              "You never pay for goodwill",
+              "It requires no capital",
+            ],
+            answer: 0,
+            explain: "An existing business trades from day one with customers, suppliers, premises and equipment in place — but you pay for goodwill and there may be unseen flaws.",
+          },
+          {
+            q: "In franchising, who provides most of the capital and performs the marketing function?",
+            options: ["The franchisee", "The franchisor", "The Registrar", "The bank"],
+            answer: 0,
+            explain: "The franchisee is licensed by the franchisor to perform the marketing function and provides most of the capital; the franchisor achieves rapid expansion at relatively low cost.",
+          },
+        ],
+      },
+      {
+        heading: "Franchising — advantages, disadvantages and what you need",
+        icon: "award",
+        flat: true,
+        paragraphs: ["Advantages of franchising:"],
+        bullets: [
+          "The chances of success are far greater because the franchisor can provide goods (or services) to the franchisee more cheaply than in the case of an independent business.",
+          "The franchisor obtains bigger discounts by buying in bulk for his outlets.",
+          "The franchisee sets up a business with a product or service which has an existing or acceptable image.",
+          "Customers know the business, even if the outlet is new.",
+          "An accepted image (brand) often takes years to build up, while a franchise business has this image (brand) from the start.",
+          "Most franchisors offer franchisees a complete package which includes an operations manual, an accounting system, marketing assistance (including advertising and promotional aids), assistance with the design of the outlet as well as staff selection and training.",
+          "Franchisees can look to the franchisor for management advice on an ongoing basis, because it is in the franchisor's own interest to ensure the success of every franchised outlet.",
+        ],
+        cards: [
+          {
+            icon: "info",
+            title: "Disadvantages of franchising",
+            text: "The franchisee normally enjoys selling rights which are restricted to a particular area only. Franchising demands strict controls by the franchisor in order to maintain uniform quality standards and cleanliness. Disadvantages may develop if the franchisee becomes too dependent on the franchisor. It does cost money to buy a franchise; initial franchise fees as well as ongoing royalty fees are charged.",
+          },
+          {
+            icon: "checklist",
+            title: "What do you need to be a franchisee?",
+            text: "You must possess the qualities of a successful entrepreneur. Do a thorough investigation of the franchisor whose product or service interests you. Research the franchisor's track record with other franchisees and outlets, and the growth of the industry from within which the franchisor operates. Contact existing franchisees to find out how satisfied they are with the business. Establish what training will be provided. Get an attorney to scrutinise the franchise agreement form. The legal and financial aspects of the franchise business are important considerations and should be clearly defined and fair to both parties. Loans from financial institutions are more readily available to franchise businesses because of the reduced risk factor.",
+          },
+          {
+            icon: "globe",
+            title: "What are franchised businesses?",
+            text: "Think of McDonald's, Steers, Spar and Shoprite. It is basically a business that has the same name and trades the same goods at more or less the same prices. The largest criteria for franchised outlets are that they must all look uniformly the same as well as sell the branded products which the franchisor suggests. More and more these products are being labelled as \u201chouse brands\u201d, which is a building tool for the franchise brand name. It gives the consumer the peace of mind that no matter where they are doing their purchases, they can be confident that they will receive the same quality from one outlet as they would from the next. This is the brand that consumers long for, which gives them confidence in the quality of the product they are buying.",
+          },
+        ],
+        figures: [
+          {
+            id: "114050-franchise-brands",
+            caption: "Familiar South African franchise brands — the same look, goods and prices at every outlet",
+            hint: "Collage of franchise logos (McDonald's, Steers, Spar, Shoprite)",
+          },
+        ],
+        slideQuiz: [
+          {
+            q: "Why are a franchisee's chances of success far greater?",
+            options: [
+              "The franchisor can provide goods or services more cheaply than an independent business could get them",
+              "Franchises pay no fees",
+              "Franchises have no competition",
+              "Franchises need no staff",
+            ],
+            answer: 0,
+            explain: "Bulk buying lets the franchisor supply outlets more cheaply, and the franchisee starts with an accepted brand, a complete package and ongoing management advice.",
+          },
+          {
+            q: "Which is a DISADVANTAGE of franchising?",
+            options: [
+              "Selling rights restricted to a particular area, strict controls, dependence and franchise/royalty fees",
+              "Customers already know the business",
+              "The brand exists from the start",
+              "Training is provided",
+            ],
+            answer: 0,
+            explain: "Disadvantages: restricted selling rights, strict franchisor controls for uniform quality, possible over-dependence on the franchisor, plus initial franchise fees and ongoing royalties.",
+          },
+          {
+            q: "What is the largest criterion for franchised outlets?",
+            options: [
+              "They must all look uniformly the same and sell the branded products the franchisor suggests",
+              "Each outlet must look different",
+              "Each outlet sets its own prices freely",
+              "Outlets may not advertise",
+            ],
+            answer: 0,
+            explain: "Franchised outlets share the same name, look uniformly the same and trade the same goods at more or less the same prices — giving consumers confidence in consistent quality.",
+          },
+        ],
+      },
+      {
+        heading: "Aims, objectives and mission statements",
+        icon: "target",
+        flat: true,
+        paragraphs: [
+          "When a sole trader sets up they may have some unstated aims or objectives — for example to survive for the first year. Other businesses may wish to state exactly what they are aiming to do, such as Amazon, the Internet CD and bookseller, who wants to \u201cmake history and have fun\u201d.",
+          "An aim is where the business wants to go in the future — its goals. It is a statement of purpose, e.g. we want to grow the business into Europe.",
+          "Business objectives are the stated, measurable targets of how to achieve business aims. For instance: we want to achieve sales of €10 million in European markets in 2004.",
+          "A mission statement sets out the business vision and values that enable employees, managers, customers and even suppliers to understand the underlying basis for the actions of the business.",
+        ],
+        slideQuiz: [
+          {
+            q: "What is an aim?",
+            options: [
+              "Where the business wants to go in the future — a statement of purpose",
+              "A measurable sales target",
+              "A legal registration document",
+              "A staff roster",
+            ],
+            answer: 0,
+            explain: "An aim is where the business wants to go in the future, its goals — e.g. \u201cwe want to grow the business into Europe.\u201d",
+          },
+          {
+            q: "What are business objectives?",
+            options: [
+              "The stated, measurable targets of how to achieve business aims",
+              "The company's values",
+              "The founding documents",
+              "The org chart",
+            ],
+            answer: 0,
+            explain: "Objectives are measurable targets that deliver the aims — e.g. sales of €10 million in European markets in 2004.",
+          },
+          {
+            q: "What does a mission statement do?",
+            options: [
+              "Sets out the vision and values so employees, managers, customers and suppliers understand the basis for the business's actions",
+              "Lists the shareholders",
+              "Replaces the business plan",
+              "Sets the tax rate",
+            ],
+            answer: 0,
+            explain: "A mission statement sets out the business vision and values that explain the underlying basis for the actions of the business.",
+          },
+        ],
+      },
+      {
+        heading: "SMART objectives and the main objectives businesses pursue",
+        icon: "checklist",
+        flat: true,
+        paragraphs: [
+          "Objectives give the business a clearly defined target. Plans can then be made to achieve these targets. This can motivate the employees. It also enables the business to measure the progress towards its stated aims. The most effective business objectives meet the SMART criteria:",
+        ],
+        bullets: [
+          "S — Specific: objectives are aimed at what the business does, e.g. a hotel might have an objective of filling 60% of its beds a night during October — an objective specific to that business.",
+          "M — Measurable: the business can put a value to the objective, e.g. €10,000 in sales in the next half year of trading.",
+          "A — Agreed by all those concerned in trying to achieve the objective.",
+          "R — Realistic: the objective should be challenging, but it should also be achievable with the resources available.",
+          "T — Time specific: they have a time limit of when the objective should be achieved, e.g. by the end of the year.",
+        ],
+        cards: [
+          {
+            icon: "shield",
+            title: "Survival",
+            text: "A short-term objective, probably for a small business just starting out, or when a new firm enters the market or at a time of crisis.",
+          },
+          {
+            icon: "trend",
+            title: "Profit maximisation",
+            text: "Try to make the most profit possible — most likely to be the aim of the owners and shareholders.",
+          },
+          {
+            icon: "checkCircle",
+            title: "Profit satisfying",
+            text: "Try to make enough profit to keep the owners comfortable — probably the aim of smaller businesses whose owners do not want to work longer hours.",
+          },
+          {
+            icon: "chart",
+            title: "Sales growth",
+            text: "The business tries to make as many sales as possible. Managers may believe survival depends on being large, and large businesses can also benefit from economies of scale.",
+          },
+        ],
+        example: {
+          title: "When objectives conflict",
+          lines: [
+            "A business may find that some of its objectives conflict with one another:",
+            "Growth versus profit — achieving higher sales in the short term (e.g. by cutting prices) will reduce short-term profit.",
+            "Short-term versus long-term — a business may accept lower cash flows in the short term while it invests heavily in new products or plant and equipment.",
+            "Large investors in the Stock Exchange are often accused of looking too much at short-term objectives and company performance rather than investing in a business for the long term.",
+          ],
+        },
+        slideQuiz: [
+          {
+            q: "In SMART objectives, what does the R stand for?",
+            options: [
+              "Realistic — challenging but achievable with the resources available",
+              "Rich",
+              "Rapid",
+              "Recorded",
+            ],
+            answer: 0,
+            explain: "SMART = Specific, Measurable, Agreed, Realistic, Time specific.",
+          },
+          {
+            q: "Which objective aims to make enough profit to keep the owners comfortable?",
+            options: ["Profit satisfying", "Profit maximisation", "Survival", "Sales growth"],
+            answer: 0,
+            explain: "Profit satisfying is making enough profit to keep the owners comfortable — typical of smaller businesses whose owners don't want longer hours.",
+          },
+          {
+            q: "Cutting prices to grow sales in the short term is an example of which conflict?",
+            options: [
+              "Growth versus profit",
+              "Ethics versus law",
+              "Public versus private",
+              "Franchisor versus franchisee",
+            ],
+            answer: 0,
+            explain: "Higher short-term sales through price cuts reduce short-term profit — the growth-versus-profit conflict.",
+          },
+        ],
+      },
+      {
+        heading: "Alternative aims and objectives — and why objectives change",
+        icon: "globe",
+        flat: true,
+        paragraphs: [
+          "Not all businesses seek profit or growth. Some organisations have alternative objectives.",
+        ],
+        cards: [
+          {
+            icon: "shield",
+            title: "Ethical and socially responsible objectives",
+            text: "Organisations like the Co-op or the Body Shop have objectives based on their beliefs about how one should treat the environment and people who are less fortunate.",
+          },
+          {
+            icon: "briefcase",
+            title: "Public sector corporations",
+            text: "Run not only to generate a profit but to provide a service to the public — meeting the needs of the less well off or helping the economy function, e.g. a cheap and accessible transport service.",
+          },
+          {
+            icon: "search",
+            title: "Public sector organisations",
+            text: "Those that monitor or control private sector activities have objectives to ensure that the businesses they are monitoring comply with the laws laid down.",
+          },
+          {
+            icon: "gradcap",
+            title: "Health care and education establishments",
+            text: "Their objectives are to provide a service — most private schools, for instance, have charitable status. Their aim is the enhancement of their pupils through education.",
+          },
+          {
+            icon: "people",
+            title: "Charities and voluntary organisations",
+            text: "Their aims and objectives are led by the beliefs they stand for.",
+          },
+        ],
+        example: {
+          title: "Changing objectives",
+          lines: [
+            "A business may change its objectives over time due to the following reasons:",
+            "A business may achieve an objective and will need to move on to another one — e.g. survival in the first year may lead to an objective of increasing profit in the second year.",
+            "The competitive environment might change, with the launch of new products from competitors.",
+            "Technology might change product designs, so sales and production targets might need to change.",
+          ],
+        },
+        slideQuiz: [
+          {
+            q: "Which organisations have objectives led by the beliefs they stand for?",
+            options: [
+              "Charities and voluntary organisations",
+              "Public companies",
+              "Closed corporations",
+              "Franchisors",
+            ],
+            answer: 0,
+            explain: "Charities and voluntary organisations are led by their beliefs; ethical businesses like the Co-op and Body Shop similarly act on beliefs about the environment and the less fortunate.",
+          },
+          {
+            q: "Why do public sector corporations exist?",
+            options: [
+              "Not only to generate profit but to provide a service to the public",
+              "Purely for profit maximisation",
+              "Only to monitor other businesses",
+              "To pay dividends",
+            ],
+            answer: 0,
+            explain: "Public sector corporations provide services the public needs — e.g. cheap, accessible transport — not just profit.",
+          },
+          {
+            q: "Which is a reason a business might CHANGE its objectives?",
+            options: [
+              "An objective is achieved, competitors launch new products, or technology changes product designs",
+              "Objectives may never change",
+              "Only a court order changes objectives",
+              "Only new shareholders change objectives",
+            ],
+            answer: 0,
+            explain: "Objectives change when they are achieved (survival → profit), when the competitive environment shifts, or when technology changes designs and targets.",
+          },
+        ],
+      },
+    ],
+
+    exercises: [],
+    assignments: [],
+
+    quiz: [
+      {
+        q: "Which types of business organisation must you be able to distinguish for this unit standard?",
+        options: [
+          "Sole trader, Partnership, Limited Co, Private Co, Public Ltd Company",
+          "Only companies",
+          "Only sole traders and partnerships",
+          "Trusts and stokvels",
+        ],
+        answer: 0,
+        explain: "The assessment criteria require distinguishing the sole trader, partnership, limited company, private company and public limited company.",
+      },
+      {
+        q: "A private company may have how many members, and a public company at least how many?",
+        options: [
+          "Between one and 50; at least seven",
+          "Up to ten; at least two",
+          "Two to 20; at least 50",
+          "Exactly one; at least one",
+        ],
+        answer: 0,
+        explain: "Private company: between one and 50 members. Public company: at least seven members (and at least two directors).",
+      },
+      {
+        q: "Who may NOT be a member of a closed corporation?",
+        options: [
+          "A company, corporation or trust",
+          "A natural person",
+          "One of ten members",
+          "The founding member",
+        ],
+        answer: 0,
+        explain: "A CC is for up to ten natural persons — a company, corporation or trust may not be a member, and members' interests must total 100 percent.",
+      },
+      {
+        q: "What happens when a partnership is sequestrated due to insolvency?",
+        options: [
+          "The estates of all the partners are simultaneously sequestrated",
+          "Only the partnership's estate is affected",
+          "Only the managing partner is affected",
+          "Nothing — a partnership cannot be sequestrated",
+        ],
+        answer: 0,
+        explain: "A partnership is not a legal person: partners are jointly and severally liable, and sequestration of the partnership sequestrates all the partners' estates simultaneously.",
+      },
+      {
+        q: "Which business form needs NO formal registration, administration or termination?",
+        options: ["Sole proprietor", "Public company", "Closed corporation", "Private company"],
+        answer: 0,
+        explain: "No statutes regulate sole owners and no documentation needs registering — but if the business becomes insolvent, the owner personally becomes insolvent.",
+      },
+      {
+        q: "Franchising is best described as…",
+        options: [
+          "A marriage between a big business and a small business",
+          "A type of public company",
+          "A government grant scheme",
+          "An unregistered partnership",
+        ],
+        answer: 0,
+        explain: "The franchisor (big business, marketable product) licenses the franchisee (small business) to market it — the franchisor expands cheaply, the franchisee starts with a proven brand.",
+      },
+      {
+        q: "Why are loans more readily available to franchise businesses?",
+        options: [
+          "Because of the reduced risk factor",
+          "Because banks own the franchises",
+          "Because no capital is needed",
+          "Because royalties are paid to the bank",
+        ],
+        answer: 0,
+        explain: "Financial institutions lend more readily to franchises because the proven brand and support package reduce the risk.",
+      },
+      {
+        q: "\u201cAchieve sales of €10 million in European markets in 2004\u201d is an example of…",
+        options: [
+          "A business objective — a stated, measurable target",
+          "A mission statement",
+          "An aim",
+          "A code of conduct",
+        ],
+        answer: 0,
+        explain: "Objectives are the stated, measurable targets of how to achieve business aims; the aim would be e.g. \u201cgrow the business into Europe.\u201d",
+      },
+      {
+        q: "Which SMART element says an objective must have a deadline?",
+        options: ["Time specific", "Specific", "Measurable", "Agreed"],
+        answer: 0,
+        explain: "T — Time specific: objectives carry a time limit, e.g. by the end of the year.",
+      },
+      {
+        q: "Which objective is typical of a small business just starting out or a firm in crisis?",
+        options: ["Survival", "Profit maximisation", "Sales growth", "Economies of scale"],
+        answer: 0,
+        explain: "Survival is the short-term objective of new entrants and businesses in crisis; profit and growth objectives usually come later.",
+      },
+    ],
+
+    saqa: {
+      notice:
+        "SOUTH AFRICAN QUALIFICATIONS AUTHORITY — Registered unit standard. Specific outcomes and related assessment criteria as supplied in the learner material.",
+      registration: [
+        { label: "SAQA US ID", value: "114050" },
+        { label: "Unit standard title", value: "Explain the principles of business and the role of information technology" },
+        { label: "NQF level", value: "5" },
+        { label: "Credits", value: "4" },
+      ],
+      sections: [
+        {
+          heading: "Specific outcomes and related assessment criteria",
+          icon: "target",
+          paragraphs: ["Specific outcome: Explain the principles of business and the role of information technology."],
+          bullets: [
+            "The description distinguishes types of business organisations. (Sole trader, Partnership, Limited Co, Private Co, Public Ltd Company)",
+            "The description outlines the common objectives within which businesses operate. (Buying & Selling activity, Profit, Charity, Social Clubs)",
+            "The description outlines the environment within which businesses operate.",
+          ],
+        },
+      ],
+    },
+  },
+
+  /* ================================================================
      US 114055 — Ethics and professionalism for the computer industry
      NQF 5 · 3 credits
      ================================================================ */
