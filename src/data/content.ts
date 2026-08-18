@@ -5417,8 +5417,260 @@ export const CONTENT: Record<string, UnitContent> = {
       },
     ],
 
-    exercises: [],
+    exercises: [
+      {
+        id: "qs114050",
+        title: "Questioning — Principles of business and the role of information technology",
+        task: "Time: 45 minutes · Activity: Self & Group",
+        steps: [
+          "Distinguish the types of business organisations found in South Africa",
+          "Outline the common objectives within which businesses operate",
+          "Outline the environment within which a business operates and what you must research before starting one",
+        ],
+        checks: [
+          {
+            answer: [
+              "A sole proprietor is owned by one person with no partners or co-owners; no formal registration is needed and if the business becomes insolvent the owner personally becomes insolvent.",
+              "A partnership is an association of between two and 20 partners who intend making and sharing profits; it is not a legal person and partners are jointly and severally liable for its debts.",
+              "A closed corporation is a simple, flexible legal structure for up to ten natural persons; it is a legal person registered with the Registrar and its members' interests always add up to 100 percent.",
+              "A private company has between one and 50 shareholders, at least one director, its shares may not be offered to the public and its name ends with (Pty) Ltd.",
+              "A public company has at least seven members and two directors, its shares may be offered to the general public and are freely transferable, and its name ends with Ltd.",
+            ],
+            concepts: [
+              ["sole proprietor", "sole trader", "one person", "personally insolvent"],
+              ["partnership", "partners", "jointly and severally"],
+              ["closed corporation", "ten members", "members interest"],
+              ["private company", "pty", "fifty", "board consent"],
+              ["public company", "seven", "freely transferable", "general public"],
+            ],
+            labels: [
+              "Sole proprietor",
+              "Partnership",
+              "Closed corporation",
+              "Private company",
+              "Public company",
+            ],
+            min: 3,
+          },
+          {
+            answer: [
+              "Buying and selling activity — trading goods or services is the core activity around which a business operates.",
+              "Profit — businesses may aim for profit maximisation (the most profit possible) or profit satisfying (enough profit to keep the owners comfortable).",
+              "Charity — some organisations exist for charitable purposes, with aims and objectives led by the beliefs they stand for.",
+              "Social clubs — organisations can operate to provide a service to members rather than to make a profit.",
+            ],
+            concepts: [
+              ["buying", "selling", "trading"],
+              ["profit", "maximisation", "satisfying"],
+              ["charity", "charitable", "beliefs"],
+              ["social club", "service to members", "community"],
+            ],
+            labels: [
+              "Buying & selling activity",
+              "Profit",
+              "Charity",
+              "Social clubs",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "The market — there must be a need for the business, and you must know who the clients are, how big the market is and whether it is growing or stagnant.",
+              "The competition — who your competitors will be, how close they are to your location and whether they are flourishing or closing down.",
+              "Capital requirements — how much money is needed to open and operate the business until it can provide for all its debts.",
+              "Location and premises — where the business will operate, whether it needs an office, retail space or can run from home to save costs.",
+              "Risk and resources — your own skills, interests and commitments, the working hours, the number of people employed and whether you can afford to lose what you put in.",
+            ],
+            concepts: [
+              ["market", "need", "clients", "customers"],
+              ["competition", "competitors"],
+              ["capital", "money", "debts", "funding"],
+              ["location", "premises", "retail space", "from home"],
+              ["risk", "skills", "working hours", "employ"],
+            ],
+            labels: [
+              "The market and its size",
+              "The competition",
+              "Capital requirements",
+              "Location and premises",
+              "Risk, skills and resources",
+            ],
+            min: 3,
+          },
+        ],
+      },
+    ],
     assignments: [],
+
+    selfAssessment: {
+      intro: [
+        "You are now ready to go through a check list. Be honest with yourself.",
+        "Tick the box with either a \u221A or an X to indicate your response.",
+      ],
+      items: [
+        "I am able to distinguish the types of business organisations (sole trader, partnership, limited company, private company, public limited company).",
+        "I am able to outline the common objectives within which businesses operate (buying and selling activity, profit, charity, social clubs).",
+        "I am able to outline the environment within which businesses operate.",
+        "I am able to explain the difference between an aim, a business objective and a mission statement.",
+        "I am able to explain SMART objectives and how a business's objectives can change over time.",
+      ],
+      outro: [
+        "You must think about any point you could not tick. Write this down as a goal.",
+        "Decide on a plan of action to achieve these goals. Regularly review these goals.",
+      ],
+    },
+
+    logbook: {
+      assignmentTitle: "Assignment",
+      programme: "Information Technology — Systems Support",
+      unitLabel: "114050 — Explain the principles of business and the role of information technology",
+      detailFields: [
+        "Learner Name",
+        "Qualification",
+        "Group / Class",
+        "Workplace Name",
+        "Supervisor / Mentor",
+        "Start & Completion Date",
+      ],
+      project: {
+        time: "30 minutes",
+        title: "Project — Business proposal",
+        text: "Choose a business idea. Rate it against the research checklist (skills, market, competition, capital, location, risk), recommend the form of enterprise best suited to it (sole proprietor, partnership, closed corporation, private or public company, or a franchise), and state the business's aim plus three SMART objectives. Attach your proposal here and mark it 114050.",
+        resource: "Logbook",
+      },
+      knowledgeQuestions: [
+        { text: "Types of business organisations (sole trader, partnership, limited company, private company, public limited company)", marks: [true, false, false, true, false, false] },
+        { text: "The common objectives within which businesses operate (buying & selling activity, profit, charity, social clubs)", marks: [true, false, false, true, false, false] },
+        { text: "The environment within which businesses operate", marks: [true, false, false, true, false, false] },
+        { text: "Aims, business objectives and mission statements", marks: [true, false, false, true, false, false] },
+        { text: "SMART objectives and changing objectives", marks: [true, false, false, true, false, false] },
+      ],
+      practicalActivities: [
+        { text: "Distinguishing forms of enterprise and recommending the most suitable form for a given business idea", marks: [false, true, false, false, true, false] },
+        { text: "Researching the need for a business: market, competition, capital requirements, location and risk", marks: [true, true, true, true, true, true] },
+        { text: "Writing an aim, SMART objectives and a mission statement for a business", marks: [false, true, false, false, true, false] },
+      ],
+      workplaceActivities: [
+        "Distinguishing forms of enterprise and recommending the most suitable form for a given business idea",
+        "Researching the need for a business: market, competition, capital requirements, location and risk",
+        "Writing an aim, SMART objectives and a mission statement for a business",
+      ],
+      workplaceEvidenceNote: "The workplace completes this section after observing the learner having complied to and completed all the activities as mentioned below.",
+      otherActivities: [
+        {
+          activity: "Researching the need for a business and recommending the most suitable form of enterprise",
+          evidence: "Project — Business proposal: rate a business idea against the research checklist, recommend the form of enterprise, and state the aim plus three SMART objectives. Attach your proposal here and mark it 114050.",
+        },
+      ],
+      otherEvidenceNote: "Learner evidence and experience is recorded here. Make reference to equipment, chemicals and materials that were used in these processes.",
+      projectChecklist: [{ no: "5", name: "114050" }],
+    },
+
+    lessonPlan: {
+      title: "Facilitator Preparation",
+      startTime: "09:00",
+      details: [
+        { icon: "calendar", label: "Date", value: "Friday, 21 August 2026" },
+        { icon: "clock", label: "Time", value: "09:00 \u2013 14:00 · lunch 12:00 \u2013 13:00" },
+        { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
+        { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
+      ],
+      prep: [
+        "Study the notes in this lesson plan carefully to ensure preparation is done before the start of classes.",
+        "Study the learner materials so that you are familiar with the topics that will be covered in this part of the course.",
+      ],
+      sections: [
+        {
+          rows: [
+            {
+              title: "Room Set Up",
+              text: ["Ensure venue and equipment needed is ready."],
+            },
+            {
+              time: "20 minutes",
+              title: "Meet, Greet & Seat",
+              text: [
+                "Learners to get out their stationery and settle. Allow learners to sign the class register OR check learners against the class register.",
+                "Explain the parking bay to the learners where they can ask questions and it will be parked until the class has been completed, and then attended to.",
+              ],
+              resources: ["Class Register", "LM p1"],
+            },
+          ],
+        },
+        {
+          heading: "Unit Standard 114050",
+          rows: [
+            {
+              time: "20 minutes",
+              title: "Index & Unit Standard Alignment — Facilitator",
+              text: [
+                "Read through the index with the learners, highlighting the areas that will be covered in this manual. Make reference to the Unit Standard Alignment Index to outline the specific outcomes that will be covered.",
+              ],
+              resources: ["LM index"],
+            },
+            {
+              time: "60 minutes",
+              title: "Forms of enterprises — Facilitator & Class",
+              bullets: [
+                "Work through the sole proprietor, partnership, closed corporation and company (private vs public), using the comparison table to distinguish the private and public company.",
+              ],
+              resources: ["Learner manual — forms of enterprises"],
+            },
+            {
+              time: "10 minutes",
+              title: "Break",
+              break: true,
+            },
+            {
+              time: "45 minutes",
+              title: "Researching a business idea & franchising — Facilitator & Class",
+              bullets: [
+                "Work through the research checklist (skills, market, competition, capital, location, risk), buying an existing business, and the advantages and disadvantages of franchising with South African examples.",
+              ],
+              resources: ["Learner manual — franchising"],
+            },
+            {
+              time: "60 minutes",
+              title: "Lunch",
+              break: true,
+            },
+            {
+              time: "40 minutes",
+              title: "Aims, objectives and mission statements — Facilitator & Class",
+              bullets: [
+                "Define aims, business objectives and mission statements; work through SMART; cover survival, profit maximisation, profit satisfying and sales growth, conflicting objectives, alternative aims and why objectives change.",
+              ],
+              resources: ["Learner manual — objectives"],
+            },
+            {
+              time: "30 minutes",
+              title: "Questioning session — Class in pairs",
+              bullets: [
+                "Facilitator to read through the questions with the learners, ensuring they understand what is expected of them.",
+                "Allow the learners to complete the questions; take feedback from two groups/pairs.",
+              ],
+              resources: ["Activity tab"],
+            },
+            {
+              time: "10 minutes",
+              title: "Self-Assessment — Learners individually",
+              bullets: [
+                "Learners complete the self-assessment checklist honestly and write down goals for any point they could not tick.",
+              ],
+              resources: ["Self assessment tab"],
+            },
+            {
+              time: "20 minutes",
+              title: "Knowledge check quiz & wrap-up — Learners individually",
+              bullets: [
+                "Learners complete the end-of-unit quiz. Address parking-bay questions and outline the logbook project (business proposal) for workplace evidence.",
+              ],
+              resources: ["Quiz tab", "Logbook"],
+            },
+          ],
+        },
+      ],
+    },
 
     quiz: [
       {
