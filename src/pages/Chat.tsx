@@ -117,6 +117,12 @@ export function ChatPage({
   );
 
   const [openWith, setOpenWith] = useState<string | null>(null);
+  /** thread key of a third-party conversation the super user is monitoring */
+  const [monitorKey, setMonitorKey] = useState<string | null>(null);
+  const monitorThread = useMemo(
+    () => (monitorKey ? visibleThreads.find((t) => t.key === monitorKey) ?? null : null),
+    [monitorKey, visibleThreads]
+  );
   const [broadcasting, setBroadcasting] = useState(false);
   const [broadcastResult, setBroadcastResult] = useState<string | null>(null);
 
@@ -198,14 +204,22 @@ export function ChatPage({
             nameFor={nameFor}
             isOnline={isOnline}
             openWith={openWith}
+            monitorKey={monitorKey}
             onSelect={(id) => {
+              setMonitorKey(null);
               setOpenWith(id);
               navigate({ page: "chat", studentId: id });
+            }}
+            onMonitor={(key) => {
+              setOpenWith(null);
+              setMonitorKey(key);
             }}
           />
         </aside>
         <section className="chat-main card">
-          {openWith ? (
+          {monitorThread ? (
+            <MonitorThread thread={monitorThread} me={profile} nameFor={nameFor} peopleByAny={peopleByAny} />
+          ) : openWith ? (
             <ChatThread
               me={profile}
               otherId={openWith}
@@ -298,7 +312,9 @@ function ChatSidebar({
   nameFor,
   isOnline,
   openWith,
+  monitorKey,
   onSelect,
+  onMonitor,
 }: {
   viewer: Profile;
   people: Profile[];
@@ -306,7 +322,9 @@ function ChatSidebar({
   nameFor: (id: string) => string;
   isOnline: (p: Profile) => boolean;
   openWith: string | null;
+  monitorKey: string | null;
   onSelect: (otherId: string) => void;
+  onMonitor: (threadKey: string) => void;
 }) {
   const isSuper = viewer.role === "Super User";
   const [tab, setTab] = useState<"threads" | "people">("threads");
@@ -372,7 +390,9 @@ function ChatSidebar({
                 nameFor={nameFor}
                 isOnline={isOnline}
                 openWith={openWith}
+                monitorKey={monitorKey}
                 onSelect={onSelect}
+                onMonitor={onMonitor}
                 onDelete={isSuper ? () => setDeleting(thread) : undefined}
               />
             ))
@@ -445,7 +465,9 @@ function ChatThreadRow({
   nameFor,
   isOnline,
   openWith,
+  monitorKey,
   onSelect,
+  onMonitor,
   onDelete,
 }: {
   thread: ChatThreadInfo;
@@ -454,29 +476,32 @@ function ChatThreadRow({
   nameFor: (id: string) => string;
   isOnline: (p: Profile) => boolean;
   openWith: string | null;
+  monitorKey: string | null;
   onSelect: (otherId: string) => void;
+  onMonitor: (threadKey: string) => void;
   onDelete?: () => void;
 }) {
   const isSuper = viewer.role === "Super User";
   const involves = thread.aId === viewer.id || thread.bId === viewer.id;
   // For your own chats, the "other party" is the one that isn't you.
-  // For super-user moderation view, show both parties' names.
+  // For super-user moderation view, clicking opens the read-only thread.
   const otherId = involves
     ? thread.aId === viewer.id
       ? thread.bId
       : thread.aId
-    : thread.aId; // clicking a moderation-view row opens the a-side chat for read-only monitoring
+    : thread.aId;
   const bothLabel = `${nameFor(thread.aId)} · ${nameFor(thread.bId)}`;
   const unread = involves ? thread.unreadFor(viewer.id) : 0;
   const preview = thread.latest?.body ?? "";
   const otherProfile = people.find((p) => p.id === otherId);
   const otherOnline = otherProfile ? isOnline(otherProfile) : false;
+  const active = involves ? openWith === otherId : monitorKey === thread.key;
   return (
     <div className="chat-row-wrap">
       <button
-        className={`chat-row${openWith === otherId ? " active" : ""}${unread ? " has-unread" : ""}`}
-        onClick={() => onSelect(otherId)}
-        title={isSuper && !involves ? "Read-only monitoring view" : undefined}
+        className={`chat-row${active ? " active" : ""}${unread ? " has-unread" : ""}`}
+        onClick={() => (involves ? onSelect(otherId) : onMonitor(thread.key))}
+        title={isSuper && !involves ? "Open read-only monitoring view" : undefined}
       >
         <span className="chat-row-name">
           <strong>
@@ -642,6 +667,47 @@ function ChatThread({
         >
           <Icon name="chevronRight" size={16} /> Send
         </button>
+      </div>
+    </>
+  );
+}
+
+/** Read-only view of a conversation between two OTHER people — Super User
+ *  moderation. Messages come straight off the polled thread list; there is no
+ *  composer and nothing is marked as read on the participants' behalf. */
+function MonitorThread({
+  thread,
+  me,
+  nameFor,
+  peopleByAny,
+}: {
+  thread: ChatThreadInfo;
+  me: Profile;
+  nameFor: (id: string) => string;
+  peopleByAny: Map<string, Profile>;
+}) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+  }, [thread.messages.length]);
+  const noEdit = async () => false;
+  return (
+    <>
+      <header className="chat-head">
+        <span>
+          <strong>
+            {nameFor(thread.aId)} · {nameFor(thread.bId)}
+          </strong>
+          <div className="mini-note">
+            Read-only monitoring — you can see this conversation because you are the Super User.
+          </div>
+        </span>
+      </header>
+      <div className="chat-messages" ref={scrollRef}>
+        {thread.messages.map((m) => {
+          const sender = peopleByAny.get(m.bySenderAuthId) ?? peopleByAny.get(m.byId);
+          return <ChatBubble key={m.id} msg={m} me={me} sender={sender} onEdit={noEdit} />;
+        })}
       </div>
     </>
   );
