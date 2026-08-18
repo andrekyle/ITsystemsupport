@@ -467,6 +467,13 @@ const MIN_ANSWER_WORDS = MIN_EXPLANATION_WORDS;
  *  covering the meaning of a concept even without exact-keyword overlap. */
 const SEMANTIC_THRESHOLD = 0.35;
 
+/** Explanation-overlap required when the sentence ALREADY names the concept
+ *  keyword. Deliberately lower than {@link SEMANTIC_THRESHOLD}: a learner who
+ *  names the idea and writes a genuine ≥10-word definition in their own words
+ *  must earn the marks even when their wording shares few stems with the
+ *  model answer. Bare keyword drops still score ~0 and stay rejected. */
+const KEYWORD_EXPLANATION_THRESHOLD = 0.2;
+
 /**
  * Decide which concept groups have earned their 2 marks.
  *
@@ -597,7 +604,7 @@ function creditConcepts(
       if (keywordHit) {
         // Sentence must actually explain the idea — its non-keyword content
         // has to resemble the lesson line's non-keyword content.
-        if (explanationOverlap(sentenceStems[si], keywordStems, explanationTarget) >= SEMANTIC_THRESHOLD) {
+        if (explanationOverlap(sentenceStems[si], keywordStems, explanationTarget) >= KEYWORD_EXPLANATION_THRESHOLD) {
           credited.add(gi);
           earnedBy.set(gi, sentences[si]);
           break;
