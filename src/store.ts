@@ -368,6 +368,7 @@ export function useProgress(profileId: string) {
   // One-time backfill per load: credit evidence-backed activities that were
   // recorded before auto-crediting existed, so learners who did quizzes /
   // exercises / POE uploads without ticking the stage no longer read as 0%.
+  // Quizzes and marked exercises are both FORMATIVE assessment evidence.
   useEffect(() => {
     const key = progressKey(profileId);
     const cur = read<ProgressState>(key, EMPTY);
@@ -379,11 +380,7 @@ export function useProgress(profileId: string) {
         !!(unit.quiz && unit.quiz.total) ||
         Object.values(unit.quizzes ?? {}).some((q) => q.total > 0);
       const hasExercise = Object.values(unit.exercises ?? {}).some((e) => e.total > 0);
-      if (hasQuiz && !acts["Summative Assessment"]) {
-        acts["Summative Assessment"] = true;
-        changed = true;
-      }
-      if (hasExercise && !acts["Formative Assessment"]) {
+      if ((hasQuiz || hasExercise) && !acts["Formative Assessment"]) {
         acts["Formative Assessment"] = true;
         changed = true;
       }
@@ -469,9 +466,9 @@ export function useProgress(profileId: string) {
         const nextLogbook = attempt !== undefined
           ? { ...unit.logbook, [logbookKey]: JSON.stringify(attempt) }
           : unit.logbook;
-        // Taking a quiz IS the summative evidence — credit the activity so
-        // completion reflects the work without a separate manual tick.
-        const nextActivities = { ...unit.activities, "Summative Assessment": true as const };
+        // Quizzes are formative assessment — taking one IS the formative
+        // evidence, so credit that activity automatically.
+        const nextActivities = { ...unit.activities, "Formative Assessment": true as const };
         return {
           ...prev,
           units: {
@@ -1805,12 +1802,14 @@ export function unitCompletion(state: ProgressState, us: string): number {
 /**
  * Like {@link unitCompletion} but also credits activities that have real
  * supporting evidence even when the learner never ticked the checkbox:
- *  • "Formative Assessment" — done if any exercise / question session has
- *     been answered (best > 0).
- *  • "Summative Assessment" — done if a quiz has been taken with any score.
+ *  • "Formative Assessment" — done if any quiz has been taken or any
+ *     exercise / question session answered (quizzes are formative).
+ *  • "Summative Assessment" — only counted when explicitly flagged (the
+ *     formal summative event is recorded by staff, not by app evidence).
  *  • "POE Evidence" — done if any POE document has been uploaded for this
  *     unit standard.
- *  • "Lesson & Training Aids" — only counted when explicitly flagged.
+ *  • "Lesson & Training Aids" — only counted when explicitly flagged
+ *     (auto-set when the learner finishes the lesson slides).
  * Use this for staff-side progress views so a learner who has done all the
  * marked work but not clicked "Mark complete" no longer reads as 0%.
  */
@@ -1831,8 +1830,7 @@ export function unitProgress(
   const anyPoeForUnit = Object.keys(poe).some((k) => poeDocUnits(k).includes(us));
   const done = UNIT_ACTIVITIES.filter((a) => {
     if (activities[a]) return true;
-    if (a === "Summative Assessment" && anyQuizAttempted) return true;
-    if (a === "Formative Assessment" && anyExerciseAttempted) return true;
+    if (a === "Formative Assessment" && (anyQuizAttempted || anyExerciseAttempted)) return true;
     if (a === "POE Evidence" && anyPoeForUnit) return true;
     return false;
   }).length;
