@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { EnrolmentInfo, PoeDoc, Profile, ProgressState, Role, UnitActivity, UnitProgress } from "./types";
 import { UNIT_ACTIVITIES } from "./types";
-import { MODULES } from "./data/course";
+import { MODULES, POE_SECTIONS } from "./data/course";
 import { cloudEnabled, supabase } from "./lib/supabase";
 import { logAudit } from "./lib/audit";
 
@@ -365,6 +365,46 @@ export function useProgress(profileId: string) {
     setState(read<ProgressState>(progressKey(profileId), EMPTY));
   }, [profileId]);
 
+  // One-time backfill per load: credit evidence-backed activities that were
+  // recorded before auto-crediting existed, so learners who did quizzes /
+  // exercises / POE uploads without ticking the stage no longer read as 0%.
+  useEffect(() => {
+    const key = progressKey(profileId);
+    const cur = read<ProgressState>(key, EMPTY);
+    let changed = false;
+    const units = { ...cur.units };
+    for (const [us, unit] of Object.entries(cur.units)) {
+      const acts = { ...unit.activities };
+      const hasQuiz =
+        !!(unit.quiz && unit.quiz.total) ||
+        Object.values(unit.quizzes ?? {}).some((q) => q.total > 0);
+      const hasExercise = Object.values(unit.exercises ?? {}).some((e) => e.total > 0);
+      if (hasQuiz && !acts["Summative Assessment"]) {
+        acts["Summative Assessment"] = true;
+        changed = true;
+      }
+      if (hasExercise && !acts["Formative Assessment"]) {
+        acts["Formative Assessment"] = true;
+        changed = true;
+      }
+      units[us] = { ...unit, activities: acts };
+    }
+    const poe = read<Record<string, PoeDoc>>(poeKey(profileId), {});
+    for (const k of Object.keys(poe)) {
+      for (const us of poeDocUnits(k)) {
+        const unit = units[us] ?? { activities: {} };
+        if (!unit.activities["POE Evidence"]) {
+          units[us] = { ...unit, activities: { ...unit.activities, "POE Evidence": true } };
+          changed = true;
+        }
+      }
+    }
+    if (changed) {
+      write(key, { ...cur, units });
+      setState(read<ProgressState>(key, EMPTY));
+    }
+  }, [profileId]);
+
   // live-sync when another tab writes this profile's progress
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
@@ -429,13 +469,16 @@ export function useProgress(profileId: string) {
         const nextLogbook = attempt !== undefined
           ? { ...unit.logbook, [logbookKey]: JSON.stringify(attempt) }
           : unit.logbook;
+        // Taking a quiz IS the summative evidence — credit the activity so
+        // completion reflects the work without a separate manual tick.
+        const nextActivities = { ...unit.activities, "Summative Assessment": true as const };
         return {
           ...prev,
           units: {
             ...prev.units,
             [us]: quizId
-              ? { ...unit, logbook: nextLogbook, quizzes: { ...unit.quizzes, [quizId]: result } }
-              : { ...unit, logbook: nextLogbook, quiz: result },
+              ? { ...unit, activities: nextActivities, logbook: nextLogbook, quizzes: { ...unit.quizzes, [quizId]: result } }
+              : { ...unit, activities: nextActivities, logbook: nextLogbook, quiz: result },
           },
         };
       });
@@ -474,6 +517,9 @@ export function useProgress(profileId: string) {
             ...prev.units,
             [us]: {
               ...unit,
+              // Marked exercise attempts ARE the formative evidence — credit
+              // the activity so completion reflects the work automatically.
+              activities: { ...unit.activities, "Formative Assessment": true },
               exercises: {
                 ...unit.exercises,
                 [exId]: {
@@ -1240,6 +1286,49 @@ export function useSectionD(profileId: string) {
 
 const poeKey = (profileId: string) => `itss.poe.${profileId}`;
 
+/* POE checklist items -> the unit standards they evidence, parsed from labels
+   like "Business reports written at work (US 8252)". */
+const POE_ITEM_UNITS: Record<string, string[]> = (() => {
+  const map: Record<string, string[]> = {};
+  for (const s of POE_SECTIONS) {
+    for (const it of s.items) {
+      const units = [...it.label.matchAll(/US\s+(\d{4,6})/g)].map((m) => m[1]);
+      if (units.length) map[it.id] = units;
+    }
+  }
+  return map;
+})();
+
+/** Unit standards evidenced by an uploaded POE doc key ("we-reports" or "we-reports__2"). */
+export function poeDocUnits(docKey: string): string[] {
+  const base = docKey.split("__")[0];
+  const mapped = POE_ITEM_UNITS[base];
+  if (mapped && mapped.length) return mapped;
+  // legacy "<us>__file" keys named the unit standard directly
+  return /^\d{4,6}$/.test(base) ? [base] : [];
+}
+
+/** Set an activity flag when real evidence lands so completion reflects the
+ *  work without the learner needing a separate manual tick. Safe no-op when
+ *  the flag is already set. */
+function creditActivityEvidence(profileId: string, us: string, activity: UnitActivity) {
+  const key = progressKey(profileId);
+  const prev = read<ProgressState>(key, EMPTY);
+  const unit: UnitProgress = prev.units[us] ?? { activities: {} };
+  if (unit.activities[activity]) return;
+  const next: ProgressState = {
+    ...prev,
+    units: { ...prev.units, [us]: { ...unit, activities: { ...unit.activities, [activity]: true } } },
+  };
+  write(key, next);
+  // let same-tab useProgress hooks re-read the fresh state
+  try {
+    window.dispatchEvent(new StorageEvent("storage", { key }));
+  } catch {
+    /* synthetic StorageEvent unsupported — cross-tab listeners still fire */
+  }
+}
+
 export function usePoe(profileId: string) {
   const [docs, setDocs] = useState<Record<string, PoeDoc>>(() =>
     read<Record<string, PoeDoc>>(poeKey(profileId), {})
@@ -1269,6 +1358,10 @@ export function usePoe(profileId: string) {
         return false; // storage quota exceeded
       }
       setDocs(next);
+      // uploading evidence credits the unit's "POE Evidence" activity
+      for (const us of poeDocUnits(itemId)) {
+        creditActivityEvidence(profileId, us, "POE Evidence");
+      }
       return true;
     },
     [profileId]
@@ -1720,7 +1813,7 @@ export function unitProgress(
     !!(quiz && quiz.total) ||
     Object.values(quizzes).some((q) => q.total > 0);
   const anyExerciseAttempted = Object.values(exercises).some((e) => e.total > 0);
-  const anyPoeForUnit = Object.keys(poe).some((k) => k.startsWith(`${us}__`));
+  const anyPoeForUnit = Object.keys(poe).some((k) => poeDocUnits(k).includes(us));
   const done = UNIT_ACTIVITIES.filter((a) => {
     if (activities[a]) return true;
     if (a === "Summative Assessment" && anyQuizAttempted) return true;
