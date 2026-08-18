@@ -1875,6 +1875,19 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
               ]
             : [];
         const exercises = (content?.exercises ?? []).filter((e) => e.checks);
+        // Logbook project upload (stored as a JSON PoeDoc under project.upload)
+        let logbookDoc: PoeDoc | null = null;
+        {
+          const raw = prog?.logbook?.["project.upload"];
+          if (typeof raw === "string" && raw) {
+            try {
+              const parsed = JSON.parse(raw) as PoeDoc;
+              if (parsed && parsed.name) logbookDoc = parsed;
+            } catch {
+              /* older/corrupt value — ignore */
+            }
+          }
+        }
         return (
           <div className="card attempts-card" key={unit.us}>
             <div className="task-label" style={{ marginTop: 0 }}>
@@ -1962,7 +1975,27 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
                 </details>
               );
             })}
-            {quizRows.length === 0 && exercises.length === 0 && (
+            {logbookDoc && (
+              <div className="attempt-row acad">
+                <Icon name="folder" size={17} color="var(--green)" />
+                <span className="sc">Logbook project — uploaded report</span>
+                <span className="cell">
+                  <button
+                    type="button"
+                    className="linklike"
+                    onClick={() => void downloadDoc(logbookDoc!)}
+                    title="Download this learner's uploaded logbook report"
+                  >
+                    <Icon name="download" size={13} /> {logbookDoc.name}
+                  </button>
+                </span>
+                <span className="cell">
+                  <span className="chip done">submitted</span>
+                </span>
+                <span className="dt">{logbookDoc.uploadedAt ? fmtDateTime(logbookDoc.uploadedAt) : ""}</span>
+              </div>
+            )}
+            {quizRows.length === 0 && exercises.length === 0 && !logbookDoc && (
               <p className="muted" style={{ margin: 0 }}>
                 No marked work in this unit.
               </p>
