@@ -484,6 +484,11 @@ function ChatThreadRow({
             {involves && otherOnline && (
               <span className="presence-dot inline" title="Online now" aria-label="Online now" />
             )}
+            {isSuper && !involves && (
+              <span className="chat-mon-tag" title="A conversation between two other people — you see it as the Super User">
+                monitoring
+              </span>
+            )}
           </strong>
           <span className="mini-note chat-preview">
             {thread.latest ? `${thread.latest.by === viewer.name ? "You" : thread.latest.by}: ${preview}` : "No messages yet"}

@@ -7988,6 +7988,19 @@ table.data th.sortable.sorted { color: var(--ink); }
 .chat-row.active { background: var(--surface-2); color: var(--ink); }
 .chat-row-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .chat-row-name strong { font-weight: 500; font-size: 13.5px; }
+.chat-mon-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--ink-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  vertical-align: 1px;
+}
 .chat-preview {
   white-space: nowrap;
   overflow: hidden;
