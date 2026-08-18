@@ -224,9 +224,26 @@ export function openCertificate(profile: Profile, creditsEarned: number) {
   .serials { display: flex; justify-content: space-between; font-size: 11px; color: #4d5a75; margin-top: 10px; letter-spacing: 0.5px; }
 
   @media print {
+    @page { size: A4 landscape; margin: 6mm; }
     body { background: #fff; }
-    .page { min-height: auto; padding: 0; }
-    .sheet { width: 100%; box-shadow: none; }
+    .page { min-height: auto; padding: 0; display: block; }
+    .sheet { width: 100%; box-shadow: none; padding: 6px; }
+    .frame { padding: 20px 40px 16px; }
+    .frame::before, .frame::after { width: 48px; height: 48px; }
+    .rule { margin: 9px auto; }
+    h1 { font-size: 31px; }
+    .subtitle { margin-top: 2px; }
+    .certify { margin-top: 10px; font-size: 13.5px; }
+    .name { font-size: 25px; padding-bottom: 5px; }
+    .idline { margin-top: 4px; }
+    .body { margin-top: 10px; font-size: 13px; line-height: 1.5; }
+    .body .qual { font-size: 16.5px; }
+    .detail-table { margin: 10px auto 0; font-size: 11px; }
+    .detail-table td { padding: 3px 10px; }
+    .footer { margin-top: 12px; gap: 22px; }
+    .seal { flex: 0 0 96px; width: 96px; height: 126px; }
+    .fineprint { margin-top: 10px; padding-top: 8px; font-size: 8.5px; line-height: 1.45; }
+    .serials { margin-top: 5px; font-size: 9px; }
   }
 </style></head>
 <body>
