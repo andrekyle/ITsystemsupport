@@ -956,23 +956,38 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
   }, [myAuthId, otherAuthId]);
 
   /** Update the body of one of my own messages. The `.eq("sender_user_id", ...)`
-   *  filter — plus the RLS policy — guarantees you can only edit your own. */
+   *  filter — plus the RLS policy — guarantees you can only edit your own.
+   *  RLS-blocked updates return NO error, just 0 rows — so we require the
+   *  updated row back (.select) and roll the optimistic change back on failure. */
   const edit = useCallback(
     async (msgId: string, newBody: string): Promise<boolean> => {
       if (!supabase || !myAuthId) return false;
       const body = newBody.trim();
       if (!body) return false;
       const editedAt = new Date().toISOString();
-      // optimistic update so the UI feels instant
+      // optimistic update so the UI feels instant (keep the old value for rollback)
+      let old: { body: string; editedAt?: string } | null = null;
       setMessages((prev) =>
-        prev.map((m) => (m.id === msgId ? { ...m, body, editedAt } : m))
+        prev.map((m) => {
+          if (m.id !== msgId) return m;
+          old = { body: m.body, editedAt: m.editedAt };
+          return { ...m, body, editedAt };
+        })
       );
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("chat_messages")
         .update({ body, edited_at: editedAt })
         .eq("id", msgId)
-        .eq("sender_user_id", myAuthId);
-      return !error;
+        .eq("sender_user_id", myAuthId)
+        .select("id");
+      const ok = !error && !!data && data.length > 0;
+      if (!ok && old) {
+        const o = old as { body: string; editedAt?: string };
+        setMessages((prev) =>
+          prev.map((m) => (m.id === msgId ? { ...m, body: o.body, editedAt: o.editedAt } : m))
+        );
+      }
+      return ok;
     },
     [myAuthId]
   );

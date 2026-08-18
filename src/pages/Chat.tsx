@@ -657,6 +657,7 @@ function ChatBubble({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(msg.body);
   const [saving, setSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
@@ -680,9 +681,14 @@ function ChatBubble({
       return;
     }
     setSaving(true);
+    setSaveFailed(false);
     const ok = await onEdit(msg.id, next);
     setSaving(false);
-    if (ok) setEditing(false);
+    if (ok) {
+      setEditing(false);
+    } else {
+      setSaveFailed(true);
+    }
   }
 
   const avatarProfile: Profile =
@@ -729,9 +735,16 @@ function ChatBubble({
                 onClick={() => void save()}
                 disabled={saving || !draft.trim() || draft.trim() === msg.body}
               >
-                <Icon name="checkCircle" size={14} /> Save
+                <Icon name="checkCircle" size={14} /> {saving ? "Saving…" : "Save"}
               </button>
             </div>
+            {saveFailed && (
+              <div className="mini-note" style={{ color: "var(--red)", marginTop: 4 }}>
+                Could not save the edit — the change was not accepted by the server. Ask the
+                administrator to re-run the database setup (supabase/schema.sql) so message
+                editing is allowed.
+              </div>
+            )}
           </div>
         ) : (
           <>
