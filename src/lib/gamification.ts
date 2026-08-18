@@ -77,20 +77,22 @@ export function computeGamification(
   attendanceSigned: number
 ): Gamification {
   let xp = 0;
-  let activitiesDone = 0;
+  /** stages backed by real recorded evidence (quiz / exercise attempts) —
+   *  the ONLY activity XP source, so self-ticking stages cannot farm XP. */
+  let evidenceStages = 0;
   let quizzesCompetent = 0;
   let quizzesPerfect = 0;
   let exercisesPassed = 0;
 
   for (const [, unit] of Object.entries(progress.units)) {
-    for (const a of UNIT_ACTIVITIES) if (unit.activities[a]) activitiesDone++;
-
     const quizResults = [
       ...(unit.quiz ? [unit.quiz] : []),
       ...Object.values(unit.quizzes ?? {}),
     ];
+    let unitHasQuiz = false;
     for (const q of quizResults) {
       if (!q.total) continue;
+      unitHasQuiz = true;
       const ratio = q.best / q.total;
       if (ratio >= 1) {
         quizzesPerfect++;
@@ -104,8 +106,10 @@ export function computeGamification(
       }
     }
 
+    let unitHasExercise = false;
     for (const ex of Object.values(unit.exercises ?? {})) {
       if (!ex.total) continue;
+      unitHasExercise = true;
       const ratio = ex.best / ex.total;
       if (ratio >= 1) {
         exercisesPassed++;
@@ -115,9 +119,15 @@ export function computeGamification(
         xp += 30;
       }
     }
+
+    if (unitHasQuiz) evidenceStages++;
+    if (unitHasExercise) evidenceStages++;
   }
 
-  xp += activitiesDone * 25;
+  // Activity XP comes from evidence-backed stages only — a manual tick on
+  // "Mark each stage" earns nothing, so the leaderboard can't be gamed by
+  // ticking stages on units that were never actually done.
+  xp += evidenceStages * 25;
   xp += poeItems * 20;
   xp += attendanceSigned * 15;
 
@@ -141,7 +151,7 @@ export function computeGamification(
   const overall = totalUnits ? unitsCompleted / totalUnits : 0;
 
   const badges: Badge[] = [
-    { id: "first-steps", name: "First Steps", desc: "Complete your first learning activity", icon: "play", earned: activitiesDone >= 1 },
+    { id: "first-steps", name: "First Steps", desc: "Complete your first learning activity", icon: "play", earned: evidenceStages >= 1 || poeItems >= 1 || attendanceSigned >= 1 },
     { id: "quiz-whiz", name: "Quiz Whiz", desc: "Score 80%+ on five quizzes", icon: "target", earned: quizzesCompetent >= 5 },
     { id: "perfectionist", name: "Perfectionist", desc: "Score 100% on a quiz", icon: "award", earned: quizzesPerfect >= 1 },
     { id: "scholar", name: "Scholar", desc: "Pass ten marked exercises", icon: "exercise", earned: exercisesPassed >= 10 },
