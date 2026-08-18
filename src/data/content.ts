@@ -5508,11 +5508,10 @@ export const CONTENT: Record<string, UnitContent> = {
         "Tick the box with either a \u221A or an X to indicate your response.",
       ],
       items: [
-        "I am able to distinguish the types of business organisations (sole trader, partnership, limited company, private company, public limited company).",
-        "I am able to outline the common objectives within which businesses operate (buying and selling activity, profit, charity, social clubs).",
-        "I am able to outline the environment within which businesses operate.",
-        "I am able to explain the difference between an aim, a business objective and a mission statement.",
-        "I am able to explain SMART objectives and how a business's objectives can change over time.",
+        "I am able to describe fundamental business concepts.",
+        "I am able to describe systems theory with respect to information systems.",
+        "I am able to explain how IT can be used in business.",
+        "I am able to explain the relationship between a business and its data requirements.",
       ],
       outro: [
         "You must think about any point you could not tick. Write this down as a goal.",
