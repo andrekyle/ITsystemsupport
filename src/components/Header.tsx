@@ -176,10 +176,12 @@ export function Header({
   const menuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
-  // Live-updating list of chat threads; filter to ones with unread messages for me.
+  // Live-updating list of chat threads. The dropdown shows every conversation
+  // with unread messages PLUS the two most recent conversations (read or not),
+  // so the panel is never empty once you've chatted with anyone.
   const chatThreads = useChatThreads();
   const notifs = useMemo(() => {
-    return chatThreads
+    const rows = chatThreads
       .filter((t) => t.aId === profile.id || t.bId === profile.id)
       .map((t) => {
         const otherId = t.aId === profile.id ? t.bId : t.aId;
@@ -194,8 +196,12 @@ export function Header({
           "Someone";
         return { threadKey: t.key, otherId, otherName, unread, latest: t.latest };
       })
-      .filter((n) => n.unread > 0)
       .sort((a, b) => (b.latest?.at ?? "").localeCompare(a.latest?.at ?? ""));
+    const merged = rows.filter((n) => n.unread > 0);
+    for (const r of rows.slice(0, 2)) {
+      if (!merged.some((m) => m.threadKey === r.threadKey)) merged.push(r);
+    }
+    return merged.sort((a, b) => (b.latest?.at ?? "").localeCompare(a.latest?.at ?? ""));
   }, [chatThreads, profile.id]);
   const unreadCount = notifs.reduce((n, x) => n + x.unread, 0);
 
@@ -279,7 +285,7 @@ export function Header({
                       {n.latest && (
                         <span className="notif-item-preview mini-note">"{n.latest.body}"</span>
                       )}
-                      <span className="notif-item-badge">{n.unread}</span>
+                      {n.unread > 0 && <span className="notif-item-badge">{n.unread}</span>}
                     </button>
                   ))}
                   <button
