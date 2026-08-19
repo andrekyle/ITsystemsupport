@@ -5684,6 +5684,912 @@ export const CONTENT: Record<string, UnitContent> = {
           },
         ],
       },
+      {
+        heading: "Lesson 2 — Systems theory and the business environment",
+        icon: "layers",
+        flat: true,
+        paragraphs: [
+          "Welcome to Lesson 2: describe systems theory with respect to information systems. Time: 90 minutes · Activity: Self & Group.",
+          "A manager is someone skilled in knowing how to analyse and improve the ability of an organisation to survive and grow in a complex and changing world. This means that managers have a set of tools that enable them to grasp the complexity of the organisation's environment.",
+          "A management system describes the organisation and the set of significant interacting institutions and forces in the organisation's complex and rapidly changing environment that affect its ability to serve its customers. The firm must continuously monitor and adapt to the environment if it is to survive and prosper.",
+          "Disturbances in the environment may spell profound threats or new opportunities for the firm. The successful firm will identify, appraise, and respond to the various opportunities and threats in its environment.",
+        ],
+        slideQuiz: [
+          {
+            q: "According to the lesson, what is a manager?",
+            options: [
+              "Someone skilled in analysing and improving the organisation's ability to survive and grow in a complex, changing world",
+              "Someone who only hires and fires staff",
+              "Someone who owns all the shares",
+              "Someone who audits the accounts",
+            ],
+            answer: 0,
+            explain: "Managers have a set of tools that enable them to grasp the complexity of the organisation's environment.",
+          },
+          {
+            q: "What does a management system describe?",
+            options: [
+              "The organisation and the interacting institutions and forces in its environment that affect its ability to serve customers",
+              "Only the payroll",
+              "Only the organisation chart",
+              "The tax rules",
+            ],
+            answer: 0,
+            explain: "A management system covers the organisation plus the significant interacting institutions and forces in its complex, rapidly changing environment.",
+          },
+          {
+            q: "What must a firm do to survive and prosper?",
+            options: [
+              "Continuously monitor and adapt to its environment",
+              "Ignore the environment",
+              "Freeze all change",
+              "Only cut costs",
+            ],
+            answer: 0,
+            explain: "The firm must continuously monitor and adapt to the environment if it is to survive and prosper.",
+          },
+          {
+            q: "What can disturbances in the environment mean for a firm?",
+            options: [
+              "Profound threats or new opportunities",
+              "Nothing at all",
+              "Only threats",
+              "Only opportunities",
+            ],
+            answer: 0,
+            explain: "Disturbances may spell profound threats or new opportunities — the successful firm identifies, appraises and responds to both.",
+          },
+          {
+            q: "What does the successful firm do about its environment?",
+            options: [
+              "Identifies, appraises and responds to the various opportunities and threats",
+              "Waits for instructions",
+              "Responds only to threats",
+              "Outsources the problem",
+            ],
+            answer: 0,
+            explain: "Identify, appraise, respond — that is how the successful firm treats the opportunities and threats in its environment.",
+          },
+        ],
+      },
+      {
+        heading: "The internal and external environment",
+        icon: "globe",
+        flat: true,
+        paragraphs: [
+          "The management system can be conceptualised on two levels. The first level involves the organisation's internal environment; the second involves its external environment.",
+          "Internally, an organisation can be viewed as a resource conversion machine that takes inputs (labour, money, materials and equipment) from the external environment — the outside world — converts them into useful products, goods and services, and makes them available to customers as outputs.",
+          "The external environment consists of all the outside institutions and forces that have an actual or potential interest or impact on the organisation's ability to achieve its objectives. Environmental forces create challenges and opportunities, and managers must react and adapt to changes in their internal and external environment:",
+        ],
+        bullets: [
+          "Competitive and economic forces",
+          "Technological, political and legal forces",
+          "Demographic and cultural forces",
+          "The ecosystem",
+        ],
+        example: {
+          title: "Globalisation — an opportunity",
+          lines: [
+            "Improving technologies, such as transportation and communications, have enabled companies to expand into global or worldwide markets.",
+            "Globalisation affects how organisations are managed — managers must learn to deal effectively with multiple cultures and political systems in the midst of rapidly changing markets and technology.",
+            "They must anticipate this changing environment and develop the vision and competencies at all levels of their organisations to embrace this dynamic future.",
+          ],
+        },
+        figures: [
+          {
+            id: "114050-environment-model",
+            caption: "The organisation as a resource conversion machine amid its external forces",
+            hint: "business environment diagram — inputs converted to outputs, surrounded by competitive, economic, technological, political, legal, demographic, cultural and ecosystem forces",
+          },
+        ],
+        slideQuiz: [
+          {
+            q: "On which two levels can the management system be conceptualised?",
+            options: [
+              "The internal environment and the external environment",
+              "Sales and marketing",
+              "Profit and loss",
+              "Head office and branches",
+            ],
+            answer: 0,
+            explain: "Level one is the organisation's internal environment; level two is its external environment.",
+          },
+          {
+            q: "Viewed internally, an organisation is…",
+            options: [
+              "A resource conversion machine that turns inputs into useful outputs",
+              "A collection of buildings",
+              "A legal document",
+              "A bank account",
+            ],
+            answer: 0,
+            explain: "Internally the organisation takes inputs from the outside world, converts them, and makes products, goods and services available as outputs.",
+          },
+          {
+            q: "Which of these are INPUTS the organisation takes from the outside world?",
+            options: [
+              "Labour, money, materials and equipment",
+              "Only sunlight",
+              "Only data",
+              "Finished products",
+            ],
+            answer: 0,
+            explain: "The inputs are labour, money, materials and equipment — converted into useful products, goods and services.",
+          },
+          {
+            q: "Which forces make up the external environment?",
+            options: [
+              "Competitive, economic, technological, political, legal, demographic, cultural and ecosystem forces",
+              "Only the weather",
+              "Only competitors",
+              "Only the government",
+            ],
+            answer: 0,
+            explain: "All outside institutions and forces with an actual or potential interest or impact on the organisation's objectives.",
+          },
+          {
+            q: "Globalisation is an example of…",
+            options: [
+              "An opportunity enabled by improving transportation and communications",
+              "A threat with no upside",
+              "An internal input",
+              "A database structure",
+            ],
+            answer: 0,
+            explain: "Improving technologies let companies expand into worldwide markets — an opportunity that changes how organisations are managed.",
+          },
+        ],
+      },
+      {
+        heading: "Types of information systems",
+        icon: "dashboard",
+        flat: true,
+        paragraphs: [
+          "Information systems serve different levels of the organisation. The diagram shows a typical pyramid hierarchy and the technology that is there to serve its needs — transaction processing at the base, knowledge work and management information in the middle, and decision and executive support at the top.",
+          "The description distinguishes these types of information systems (any three):",
+        ],
+        cards: [
+          {
+            icon: "database",
+            title: "Transaction Processing System (TPS)",
+            text: "Collects, stores, modifies and retrieves the transactions of an organisation — the day-to-day events that generate or modify data.",
+          },
+          {
+            icon: "design",
+            title: "Knowledge Work System (KWS)",
+            text: "Helps deal with problems requiring technical expertise or knowledge — word processing, spreadsheets, CAD, expert systems.",
+          },
+          {
+            icon: "chart",
+            title: "Management Information System (MIS)",
+            text: "Converts data from internal and external sources into information managers use for planning, directing and controlling.",
+          },
+          {
+            icon: "target",
+            title: "Decision Support System (DSS)",
+            text: "Supports \u201cwhat if\u201d analysis and unstructured decisions that require knowledge, insight and evaluation.",
+          },
+          {
+            icon: "briefcase",
+            title: "Executive Support System (ESS)",
+            text: "Gives senior management a long-term, strategic view of the organisation and its environment.",
+          },
+        ],
+        figures: [
+          {
+            id: "114050-is-pyramid",
+            caption: "The organisational pyramid — technology serving each level",
+            hint: "pyramid diagram with TPS at the base, KWS and MIS in the middle, DSS/ESS at the top",
+          },
+        ],
+        slideQuiz: [
+          {
+            q: "Which are types of information systems?",
+            options: [
+              "TPS, KWS, MIS, DSS and ESS",
+              "LAN, WAN and MAN",
+              "CPU, RAM and SSD",
+              "HTTP, FTP and SMTP",
+            ],
+            answer: 0,
+            explain: "Transaction Processing, Knowledge Work, Management Information, Decision Support and Executive Support systems.",
+          },
+          {
+            q: "Which system collects, stores, modifies and retrieves an organisation's transactions?",
+            options: [
+              "The Transaction Processing System (TPS)",
+              "The Knowledge Work System",
+              "The Executive Support System",
+              "The Decision Support System",
+            ],
+            answer: 0,
+            explain: "That is the definition of a TPS — it handles the organisation's day-to-day transactions.",
+          },
+          {
+            q: "Which system helps with problems requiring technical expertise or knowledge?",
+            options: [
+              "The Knowledge Work System (KWS)",
+              "The TPS",
+              "The MIS",
+              "A batch system",
+            ],
+            answer: 0,
+            explain: "Knowledge work systems support technical and specialist work — CAD for designers, expert systems for engineers, and so on.",
+          },
+          {
+            q: "Which system converts internal and external data into information for managers' decisions?",
+            options: [
+              "The Management Information System (MIS)",
+              "The TPS",
+              "CAD",
+              "A spreadsheet only",
+            ],
+            answer: 0,
+            explain: "The MIS converts data from internal and external sources into information for planning, directing and controlling.",
+          },
+          {
+            q: "What does the pyramid diagram show?",
+            options: [
+              "The organisational hierarchy and the technology that serves each level's needs",
+              "The office floor plan",
+              "The database schema",
+              "Company ownership",
+            ],
+            answer: 0,
+            explain: "Each level of the pyramid is served by its own kind of system — TPS at the base, up to executive support at the top.",
+          },
+        ],
+      },
+      {
+        heading: "Transaction Processing Systems (TPS)",
+        icon: "database",
+        flat: true,
+        paragraphs: [
+          "A Transaction Processing System (TPS) collects, stores, modifies and retrieves the transactions of an organisation. A transaction is an event that generates or modifies data that is eventually stored in an information system. To be considered a transaction processing system, the computer must pass the ACID test.",
+          "Contrasted with batch processing: batch processing is not transaction processing. Batch processing involves processing several transactions at the same time, and the results of each transaction are not immediately available when the transaction is being entered.",
+          "Features of transaction processing systems:",
+        ],
+        bullets: [
+          "Rapid response — fast performance with a rapid response time is critical. Businesses cannot afford to have customers waiting: the turnaround from input of the transaction to production of the output must be a few seconds or less.",
+          "Reliability — many organisations rely heavily on their TPS; a breakdown will disrupt operations or even stop the business. The failure rate must be very low, with quick and accurate recovery and well-designed backup and recovery procedures.",
+          "Inflexibility — a TPS wants every transaction processed in the same way regardless of the user, the customer or the time of day. If a TPS were flexible there would be too many opportunities for non-standard operations — an airline must consistently accept reservations from every travel agent.",
+          "Controlled processing — the processing must support the organisation's operations: if roles and responsibilities are allocated to particular employees, the TPS should enforce and maintain this requirement.",
+        ],
+        slideQuiz: [
+          {
+            q: "What does a TPS do?",
+            options: [
+              "Collects, stores, modifies and retrieves the transactions of an organisation",
+              "Designs new products",
+              "Writes the annual report",
+              "Manages e-mail",
+            ],
+            answer: 0,
+            explain: "A Transaction Processing System handles the organisation's transactions end to end.",
+          },
+          {
+            q: "What is a transaction?",
+            options: [
+              "An event that generates or modifies data that is eventually stored in an information system",
+              "Any meeting",
+              "A printed invoice only",
+              "A phone call",
+            ],
+            answer: 0,
+            explain: "A transaction is any event that generates or modifies data eventually stored in the information system.",
+          },
+          {
+            q: "Why is batch processing NOT transaction processing?",
+            options: [
+              "Several transactions are processed together and the results are not immediately available during entry",
+              "Batches are too small",
+              "Batches never store data",
+              "Batch systems have no computers",
+            ],
+            answer: 0,
+            explain: "In batch processing, results of each transaction are not immediately available while it is entered — a TPS responds at once.",
+          },
+          {
+            q: "Why must a TPS respond rapidly?",
+            options: [
+              "Customers cannot be kept waiting — turnaround must be a few seconds or less",
+              "Slow systems use less power",
+              "Speed is only cosmetic",
+              "It reduces the need for backups",
+            ],
+            answer: 0,
+            explain: "Fast performance with rapid response is critical — a few seconds or less from input to output.",
+          },
+          {
+            q: "Why is a TPS deliberately INFLEXIBLE?",
+            options: [
+              "Every transaction must be processed the same way — flexibility would invite non-standard operations",
+              "Programmers are lazy",
+              "Flexibility is illegal",
+              "It saves disk space",
+            ],
+            answer: 0,
+            explain: "A commercial airline must consistently accept reservations from a range of travel agents — different processing per agent would be a problem.",
+          },
+        ],
+      },
+      {
+        heading: "The ACID test",
+        icon: "shield",
+        flat: true,
+        paragraphs: [
+          "To be considered a transaction processing system, the computer must pass the ACID test. A transaction's properties are:",
+        ],
+        cards: [
+          {
+            icon: "check",
+            title: "Atomicity",
+            text: "A transaction's changes to the state are atomic: either all happen or none happen. These changes include database changes, messages, and actions on transducers.",
+          },
+          {
+            icon: "shield",
+            title: "Consistency",
+            text: "A transaction is a correct transformation of the state. The actions taken as a group do not violate any of the integrity constraints associated with the state.",
+          },
+          {
+            icon: "lock",
+            title: "Isolation",
+            text: "Even though transactions execute concurrently, it appears to each transaction T that the others executed either before T or after T — but not both.",
+          },
+          {
+            icon: "database",
+            title: "Durability",
+            text: "Once a transaction completes successfully (commits), its changes to the state survive failures.",
+          },
+        ],
+        slideQuiz: [
+          {
+            q: "Atomicity means…",
+            options: [
+              "A transaction's changes either all happen or none happen",
+              "Transactions are tiny",
+              "Data is stored in atoms",
+              "Only one user may work at a time",
+            ],
+            answer: 0,
+            explain: "Atomic changes include database changes, messages and actions on transducers — all or nothing.",
+          },
+          {
+            q: "Consistency means…",
+            options: [
+              "The transaction is a correct transformation that does not violate the state's integrity constraints",
+              "The system never changes",
+              "All data looks the same",
+              "Backups run daily",
+            ],
+            answer: 0,
+            explain: "The actions taken as a group must not violate any integrity constraints — the transaction must be a correct program.",
+          },
+          {
+            q: "Isolation means…",
+            options: [
+              "Concurrent transactions appear to each other to have run either before or after — not both",
+              "The server sits in a locked room",
+              "Users may not talk to each other",
+              "Data is encrypted",
+            ],
+            answer: 0,
+            explain: "Even though transactions execute concurrently, each transaction T sees the others as having run before it or after it.",
+          },
+          {
+            q: "Durability means…",
+            options: [
+              "Once a transaction commits, its changes survive failures",
+              "Hardware never breaks",
+              "Data is written twice",
+              "The UPS lasts an hour",
+            ],
+            answer: 0,
+            explain: "A successfully completed (committed) transaction's changes to the state survive failures.",
+          },
+          {
+            q: "What must a computer pass to be considered a transaction processing system?",
+            options: ["The ACID test", "The Turing test", "A stress test", "A spelling test"],
+            answer: 0,
+            explain: "Atomicity, Consistency, Isolation, Durability — the ACID test.",
+          },
+        ],
+      },
+      {
+        heading: "Storing and retrieving — databases and files",
+        icon: "server",
+        flat: true,
+        paragraphs: [
+          "Storing and retrieving information from a TPS must be efficient and effective. The data are stored in warehouses or other databases, and the system must be well designed for its backup and recovery procedures.",
+          "The storage and retrieval of data must be accurate, as it is used many times throughout the day. A database is a collection of data neatly organised, which stores the accounting and operational records. Databases are always protective of their delicate data, so they usually have a restricted view of certain data. Databases are designed using hierarchical, network or relational structures — each structure is effective in its own sense.",
+        ],
+        cards: [
+          {
+            icon: "layers",
+            title: "Hierarchical structure",
+            text: "Organises data in a series of levels — a top-to-bottom structure of nodes and branches. Each child node has branches and is linked to only one higher-level parent node.",
+          },
+          {
+            icon: "network",
+            title: "Network structure",
+            text: "Also organises data using nodes and branches — but unlike hierarchical, each child node can be linked to multiple higher parent nodes.",
+          },
+          {
+            icon: "dashboard",
+            title: "Relational structure",
+            text: "Organises its data in a series of related tables. This gives flexibility, as relationships between the tables are built.",
+          },
+        ],
+        figures: [
+          {
+            id: "114050-db-structures",
+            caption: "Hierarchical, network and relational database structures",
+            hint: "diagrams of a hierarchical tree, a network graph and related tables",
+          },
+        ],
+        slideQuiz: [
+          {
+            q: "Where does a TPS store its data?",
+            options: [
+              "In warehouses or other databases, with well-designed backup and recovery procedures",
+              "On paper",
+              "In RAM only",
+              "On the printer",
+            ],
+            answer: 0,
+            explain: "Data are stored in warehouses or databases; backup and recovery must be well designed because the data is used all day.",
+          },
+          {
+            q: "What is a database?",
+            options: [
+              "A collection of data neatly organised, storing the accounting and operational records",
+              "A spreadsheet printout",
+              "A type of network cable",
+              "An e-mail folder",
+            ],
+            answer: 0,
+            explain: "Databases protect their delicate data and usually give a restricted view of certain data.",
+          },
+          {
+            q: "In a HIERARCHICAL structure, each child node is linked to…",
+            options: [
+              "Only one higher-level parent node",
+              "Multiple parent nodes",
+              "No other nodes",
+              "Every other node",
+            ],
+            answer: 0,
+            explain: "Hierarchical structures are top-to-bottom trees of nodes and branches — one parent per child.",
+          },
+          {
+            q: "In a NETWORK structure, each child node can be linked to…",
+            options: [
+              "Multiple higher-level parent nodes",
+              "Only one parent",
+              "Only the root",
+              "Nothing",
+            ],
+            answer: 0,
+            explain: "Network structures use nodes and branches like hierarchical ones, but a child may have multiple parents.",
+          },
+          {
+            q: "How does a RELATIONAL database organise data?",
+            options: [
+              "In a series of related tables, giving flexibility as relationships are built",
+              "In one long list",
+              "As a single tree",
+              "In image files",
+            ],
+            answer: 0,
+            explain: "Relational databases hold related tables — relationships between the tables give the flexibility.",
+          },
+        ],
+      },
+      {
+        heading: "Data processing — batch and on-line",
+        icon: "clock",
+        flat: true,
+        paragraphs: [
+          "Data processing systems are also known as transaction processing systems. A transaction is any event that is recorded — a sale, or signing up to a college course. The data is recorded and dealt with by some process. There are two ways in which transactions can be dealt with:",
+        ],
+        bullets: [
+          "Batch systems — a number of transactions are collected over a period of time and dealt with all in one go. Goods ordered at a mail-order warehouse may have the tickets collected into a batch of 50 before the details are keyed in and saved to disk; only then is the stock-control program run. It may take several hours, but when someone is waiting four or five days for delivery this is not critical.",
+          "On-line systems — updates of data are done immediately, which is important when time is critical. Sensors feeding data to a production line must update the program constantly so imbalances can be checked immediately. When you buy a ticket at a travel agent, the airline's computer is updated almost immediately — pseudo-on-line processing, where a delay of a few seconds is neither here nor there.",
+        ],
+        slideQuiz: [
+          {
+            q: "In a batch system…",
+            options: [
+              "Transactions are collected over a period and dealt with all in one go",
+              "Each transaction updates instantly",
+              "Nothing is stored",
+              "Only one transaction exists",
+            ],
+            answer: 0,
+            explain: "Batch systems collect transactions — like 50 mail-order tickets — and process them together.",
+          },
+          {
+            q: "In the mail-order example, when is the stock-control program run?",
+            options: [
+              "Only after a batch of about 50 order tickets has been keyed in and saved",
+              "Before any orders arrive",
+              "Every second",
+              "Never",
+            ],
+            answer: 0,
+            explain: "The tickets are batched, keyed in and saved to disk — only then does the stock-control program run.",
+          },
+          {
+            q: "On-line systems update data…",
+            options: [
+              "Immediately — important when time is critical",
+              "Once a month",
+              "Only at night",
+              "Only on Mondays",
+            ],
+            answer: 0,
+            explain: "On-line systems do updates immediately, which matters when time is critical.",
+          },
+          {
+            q: "Sensors managing a production line need which kind of processing?",
+            options: [
+              "Constant, immediate updates so imbalances can be checked at once",
+              "Weekly batches",
+              "Manual entry",
+              "No processing",
+            ],
+            answer: 0,
+            explain: "The sensors must update the program constantly so imbalances can be checked immediately.",
+          },
+          {
+            q: "Buying an airline ticket at a travel agent is an example of…",
+            options: [
+              "Pseudo-on-line processing — a delay of a few seconds is neither here nor there",
+              "Pure batch processing",
+              "Off-line processing",
+              "No processing",
+            ],
+            answer: 0,
+            explain: "The airline's computer is updated almost immediately — a few seconds' delay does not matter.",
+          },
+        ],
+      },
+      {
+        heading: "Knowledge work systems (KWS)",
+        icon: "design",
+        flat: true,
+        paragraphs: [
+          "Knowledge work systems are there to help deal with problems requiring technical expertise or knowledge. Software includes:",
+        ],
+        bullets: [
+          "Word-processing for clerical staff.",
+          "Spreadsheets for accounts and sales staff.",
+          "Database management systems for keeping records.",
+          "CAD for designers.",
+          "Project management systems.",
+          "Expert systems for specialist staff.",
+          "In most organisations computers are networked; in large organisations several local area networks are linked together, with hardware and software that let groups of staff communicate using e-mail, document scanning, web-cams and video conferencing.",
+        ],
+        example: {
+          title: "An expert system in action",
+          lines: [
+            "A system enables an engineer to select a particular metal alloy for a bearing.",
+            "He types in the parameters he needs and the system suggests several different alloys.",
+            "It is then up to the engineer to use his knowledge and experience to decide which alloy he will use.",
+          ],
+        },
+        slideQuiz: [
+          {
+            q: "Knowledge work systems help deal with…",
+            options: [
+              "Problems requiring technical expertise or knowledge",
+              "Only payroll",
+              "Only cleaning rosters",
+              "Building maintenance",
+            ],
+            answer: 0,
+            explain: "KWS software supports technical and specialist work across the organisation.",
+          },
+          {
+            q: "Which software belongs in a knowledge work system?",
+            options: [
+              "Word processing, spreadsheets, database management, CAD, project management and expert systems",
+              "Only games",
+              "Only antivirus",
+              "Only e-mail",
+            ],
+            answer: 0,
+            explain: "Each serves a kind of knowledge worker — clerical staff, accounts, record-keepers, designers and specialists.",
+          },
+          {
+            q: "Who uses CAD in the examples given?",
+            options: ["Designers", "Clerical staff", "Accounts staff", "Drivers"],
+            answer: 0,
+            explain: "CAD is the designers' tool; word processing serves clerical staff and spreadsheets serve accounts and sales.",
+          },
+          {
+            q: "In the expert system example, what does the engineer do after the system suggests several alloys?",
+            options: [
+              "Uses his own knowledge and experience to decide which alloy to use",
+              "Accepts the first suggestion blindly",
+              "Asks the system to build the bearing",
+              "Ignores the system",
+            ],
+            answer: 0,
+            explain: "The expert system suggests options — the final decision still rests on the engineer's knowledge and experience.",
+          },
+          {
+            q: "How do staff in large organisations communicate across linked networks?",
+            options: [
+              "E-mail, document scanning, web-cams and video conferencing",
+              "Fax only",
+              "Carrier pigeon",
+              "Notice boards only",
+            ],
+            answer: 0,
+            explain: "Several LANs are linked together with hardware and software that let groups of staff communicate.",
+          },
+        ],
+      },
+      {
+        heading: "Management information systems (MIS)",
+        icon: "chart",
+        flat: true,
+        paragraphs: [
+          "Management Information Systems are designed to help managers monitor and control organisational performance, and plan for the future.",
+          "The role of a management information system is to convert data from internal and external sources into information that can be used to aid in making effective decisions for planning, directing and controlling.",
+          "The five classical functions of a manager are:",
+        ],
+        bullets: [
+          "Planning — the direction a company takes, e.g. diversifying, or where to operate.",
+          "Organising — resources such as people, space, equipment and services.",
+          "Coordinating — the activities of various departments.",
+          "Decision-making — about the organisation, the products or services made or sold, the employees, the use of IT.",
+          "Controlling — monitoring and supervising the activities of others.",
+        ],
+        cards: [
+          {
+            icon: "database",
+            title: "Data processing systems",
+            text: "Record day-to-day transactions, e.g. the sale of a CD to a customer.",
+          },
+          {
+            icon: "checklist",
+            title: "Operational information systems",
+            text: "Read the collected data and do things like producing lists of items that need to be re-ordered.",
+          },
+          {
+            icon: "chart",
+            title: "The MIS",
+            text: "Analyses the sales data to highlight sales trends of different product lines — should the product get special promotion, or be discontinued?",
+          },
+        ],
+        slideQuiz: [
+          {
+            q: "What is the role of an MIS?",
+            options: [
+              "To convert data from internal and external sources into information used to make effective decisions for planning, directing and controlling",
+              "To replace all managers",
+              "To process payroll only",
+              "To store paper files",
+            ],
+            answer: 0,
+            explain: "That is the best definition of an MIS — data in, decision-ready information out.",
+          },
+          {
+            q: "Which are the five classical functions of a manager?",
+            options: [
+              "Planning, organising, coordinating, decision-making and controlling",
+              "Buying, selling, hiring, firing and printing",
+              "Reading, writing and arithmetic",
+              "Input, process and output",
+            ],
+            answer: 0,
+            explain: "The MIS exists to give managers sufficient information to carry out these five functions.",
+          },
+          {
+            q: "A data-processing system…",
+            options: [
+              "Records day-to-day transactions, such as the sale of a CD to a customer",
+              "Analyses sales trends",
+              "Makes strategic decisions",
+              "Designs adverts",
+            ],
+            answer: 0,
+            explain: "Data-processing systems record the day-to-day transactions; analysis is the MIS's job.",
+          },
+          {
+            q: "An operational information system…",
+            options: [
+              "Reads the collected data and produces lists such as items that need re-ordering",
+              "Ignores collected data",
+              "Replaces the MIS",
+              "Is only for executives",
+            ],
+            answer: 0,
+            explain: "Operational information systems act on the collected data — like producing re-order lists.",
+          },
+          {
+            q: "What does the MIS do with sales data?",
+            options: [
+              "Analyses it to highlight sales trends per product line — special promotion or discontinue?",
+              "Deletes it monthly",
+              "Prints it unread",
+              "Encrypts it forever",
+            ],
+            answer: 0,
+            explain: "The MIS highlights trends so decisions can be made about promoting or discontinuing product lines.",
+          },
+        ],
+      },
+      {
+        heading: "MIS — information sources, flows and levels",
+        icon: "trend",
+        flat: true,
+        paragraphs: [
+          "The MIS deals with internal and external information. Internal information can be got quite easily from the various systems on the company network, e.g. sales figures for each product line. External information is gathered from:",
+        ],
+        bullets: [
+          "Intelligence about competitors' activities — through reading articles in the press, leaks, or even industrial espionage.",
+          "Information about population shifts — as the population gets older it is less likely to be interested in pop music or customising cars, and more likely to want weight-loss products or holidays for the over-50s.",
+          "Economic and social factors — sales of cars would go down in an area where a major employer had just closed a plant.",
+          "Government legislation — financial forecasts would change if the minimum wage rose.",
+        ],
+        cards: [
+          {
+            icon: "document",
+            title: "Formal flows of information",
+            text: "A procedure is adopted — e.g. downloading sales figures from several branches first thing on a Monday morning; specialised data collection agencies such as Dun and Bradstreet; people working on the same document at several locations; e-mail; company intranets.",
+          },
+          {
+            icon: "chat",
+            title: "Informal flows of information",
+            text: "Chance meetings, reading magazines or newspapers, or watching the news on TV.",
+          },
+        ],
+        table: {
+          headers: ["Level", "Decisions it serves", "Example"],
+          rows: [
+            ["Operational", "Day-to-day decisions", "Ordering in more stock"],
+            ["Tactical", "Short to medium term", "Introducing a new product to a particular retail outlet"],
+            ["Strategic", "Long term — the organisation's future", "Opening a new store, or taking over a rival concern"],
+          ],
+        },
+        slideQuiz: [
+          {
+            q: "Where does INTERNAL information for the MIS come from?",
+            options: [
+              "The various systems on the company network, e.g. sales figures for each product line",
+              "Newspapers only",
+              "Competitors' spies",
+              "The weather service",
+            ],
+            answer: 0,
+            explain: "Internal information is easily gathered from the systems already on the company network.",
+          },
+          {
+            q: "Which is a source of EXTERNAL information?",
+            options: [
+              "Intelligence about competitors, population shifts, economic and social factors, and government legislation",
+              "The canteen menu",
+              "The office plants",
+              "Staff birthdays",
+            ],
+            answer: 0,
+            explain: "External information covers competitors' activities, demographics, economic and social factors and legislation.",
+          },
+          {
+            q: "A FORMAL flow of information is…",
+            options: [
+              "One where a procedure is adopted, e.g. downloading branch sales figures every Monday morning",
+              "A chance meeting",
+              "Watching TV news",
+              "Reading a magazine",
+            ],
+            answer: 0,
+            explain: "Formal flows follow procedures — scheduled downloads, data agencies like Dun and Bradstreet, shared documents, e-mail, intranets.",
+          },
+          {
+            q: "INFORMAL information flows come from…",
+            options: [
+              "Chance meetings, magazines, newspapers or TV news",
+              "Company intranets",
+              "Scheduled downloads",
+              "Data collection agencies",
+            ],
+            answer: 0,
+            explain: "Informal flows are unplanned — chance meetings, magazines, newspapers, television.",
+          },
+          {
+            q: "Which decision level deals with long-term choices such as opening a new store?",
+            options: ["Strategic", "Operational", "Tactical", "Clerical"],
+            answer: 0,
+            explain: "Strategic decisions affect the organisation's future — new stores or taking over a rival. Operational is day-to-day; tactical is short-to-medium term.",
+          },
+        ],
+      },
+      {
+        heading: "Types of decision — and how managers take them",
+        icon: "target",
+        flat: true,
+        paragraphs: ["A manager can make two kinds of decision:"],
+        cards: [
+          {
+            icon: "checklist",
+            title: "Structured decisions",
+            text: "Repetitive, needing a definite routine and procedure to deal with them — e.g. stock is below 15%, so an order needs to be placed with a supplier.",
+          },
+          {
+            icon: "search",
+            title: "Unstructured decisions",
+            text: "Require knowledge, insight and evaluation. They may well crop up without warning, and the right decision can be critical.",
+          },
+        ],
+        bullets: [
+          "1. Recognise the problem — the MIS may give information about the performance of the department and where there is a problem.",
+          "2. Consider the solution — a spreadsheet could be used to consider \u201cwhat if\u201d scenarios.",
+          "3. Choose the solution — using the manager's experience as well as the information produced by the MIS.",
+          "4. Implement and review — the MIS can provide the data on which the solution is evaluated.",
+          "Often solutions do not proceed smoothly, and there may have to be backtracking from one stage to another.",
+        ],
+        slideQuiz: [
+          {
+            q: "A STRUCTURED decision is…",
+            options: [
+              "Repetitive, with a definite routine and procedure — e.g. stock below 15% triggers an order",
+              "A surprise crisis",
+              "Based on gut feel only",
+              "Never delegated",
+            ],
+            answer: 0,
+            explain: "Structured decisions repeat and follow a routine — like re-ordering when stock falls below 15%.",
+          },
+          {
+            q: "An UNSTRUCTURED decision…",
+            options: [
+              "Requires knowledge, insight and evaluation, and may crop up without warning",
+              "Follows a fixed script",
+              "Happens every day at 9am",
+              "Needs no thought",
+            ],
+            answer: 0,
+            explain: "Unstructured decisions demand judgement — and getting them right can be critical.",
+          },
+          {
+            q: "What is the FIRST stage when considering a decision?",
+            options: [
+              "Recognise the problem — the MIS shows where performance is off",
+              "Implement a fix",
+              "Buy new software",
+              "Blame a supplier",
+            ],
+            answer: 0,
+            explain: "First recognise the problem; the MIS gives information about the department's performance and where the problem lies.",
+          },
+          {
+            q: "How can \u201cwhat if\u201d scenarios be considered?",
+            options: [
+              "Using a spreadsheet",
+              "Using a printer",
+              "Using the phone",
+              "They cannot be modelled",
+            ],
+            answer: 0,
+            explain: "A spreadsheet lets the manager model \u201cwhat if\u201d scenarios before choosing a solution.",
+          },
+          {
+            q: "What happens after a solution is implemented?",
+            options: [
+              "It is reviewed — the MIS provides the data on which it is evaluated, and there may be backtracking",
+              "Nothing further",
+              "The MIS is switched off",
+              "The decision is final forever",
+            ],
+            answer: 0,
+            explain: "Solutions are implemented and reviewed; they do not always proceed smoothly, so stages may be revisited.",
+          },
+        ],
+      },
     ],
 
     exercises: [
@@ -5857,6 +6763,97 @@ export const CONTENT: Record<string, UnitContent> = {
               "Capital, premises, staffing and risk",
             ],
             min: 2,
+          },
+        ],
+      },
+      {
+        id: "qs114050sys",
+        title: "Questioning — Systems theory with respect to information systems",
+        task: "Time: 90 minutes · Activity: Self & Group",
+        steps: [
+          "Explain the concept of a system, making reference to whole or parts in an orderly arrangement according to a plan",
+          "Explain the theoretical components of systems (Input–Process–Output)",
+          "Distinguish between three different types of information systems — Type 1: Transaction Processing System (TPS)",
+          "Distinguish between three different types of information systems — Type 2: Knowledge Work System (KWS)",
+          "Distinguish between three different types of information systems — Type 3: Management Information System (MIS)",
+        ],
+        checks: [
+          {
+            answer: [
+              "A system is a whole made up of parts that work together.",
+              "The parts are put together in an orderly arrangement according to a plan, to achieve a purpose.",
+            ],
+            concepts: [
+              ["whole", "parts"],
+              ["orderly", "arrangement", "plan", "purpose"],
+            ],
+            labels: [
+              "A whole made up of parts",
+              "Orderly arrangement according to a plan",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "Input — the system takes in resources such as labour, money, materials, equipment or data from its environment.",
+              "Process — the system converts or transforms the inputs into something useful.",
+              "Output — the system delivers the useful products, goods, services or information to its customers.",
+            ],
+            concepts: [
+              ["input", "takes in", "resources"],
+              ["process", "convert", "transform"],
+              ["output", "delivers", "products", "services"],
+            ],
+            labels: ["Input", "Process", "Output"],
+            min: 3,
+          },
+          {
+            answer: [
+              "A Transaction Processing System collects, stores, modifies and retrieves the transactions of an organisation.",
+              "A transaction is an event that generates or modifies data that is eventually stored in the information system.",
+              "A TPS must pass the ACID test and offer rapid response, reliability and consistent, controlled (inflexible) processing.",
+            ],
+            concepts: [
+              ["transaction processing", "tps", "collects", "stores"],
+              ["event", "generates", "modifies data"],
+              ["acid", "rapid response", "reliability", "inflexib"],
+            ],
+            labels: [
+              "Collects, stores, modifies and retrieves transactions",
+              "A transaction is an event that creates or changes data",
+              "ACID test, rapid response and reliability",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "A Knowledge Work System helps people deal with problems requiring technical expertise or knowledge.",
+              "Its software includes word processing, spreadsheets, database management systems, CAD, project management and expert systems.",
+            ],
+            concepts: [
+              ["knowledge work", "kws", "technical expertise", "knowledge"],
+              ["word processing", "spreadsheet", "cad", "expert system", "database"],
+            ],
+            labels: [
+              "Supports work needing technical expertise or knowledge",
+              "Software: word processing, spreadsheets, CAD, expert systems",
+            ],
+            min: 1,
+          },
+          {
+            answer: [
+              "A Management Information System converts data from internal and external sources into information managers use to make effective decisions for planning, directing and controlling.",
+              "It serves decisions at the operational, tactical and strategic levels of the organisation.",
+            ],
+            concepts: [
+              ["management information", "mis", "internal and external", "effective decisions", "planning"],
+              ["operational", "tactical", "strategic"],
+            ],
+            labels: [
+              "Converts internal and external data into decision-making information",
+              "Serves operational, tactical and strategic levels",
+            ],
+            min: 1,
           },
         ],
       },
