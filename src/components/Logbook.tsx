@@ -98,13 +98,15 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState(false);
+  /** file chosen but not yet saved — committed by the Save report button */
+  const [pending, setPending] = useState<File | null>(null);
   const projectDoc: PoeDoc | null = (() => {
     const raw = values["project.upload"];
     if (typeof raw !== "string" || !raw) return null;
     try { return JSON.parse(raw) as PoeDoc; } catch { return null; }
   })();
 
-  async function onProjectFile(e: React.ChangeEvent<HTMLInputElement>) {
+  function onProjectFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
@@ -113,7 +115,15 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
       setUploadError(`"${file.name}" is too large — files must be 10 MB or smaller.`);
       return;
     }
+    // stage only — nothing is uploaded until the learner presses Save report
+    setPending(file);
+  }
+
+  async function saveReport() {
+    if (!pending || uploadPct !== null) return;
+    const file = pending;
     const previous = projectDoc;
+    setUploadError(null);
     setUploadPct(0);
     try {
       const prefix = await userPrefix();
@@ -121,10 +131,16 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
       onChange("project.upload", JSON.stringify(doc));
       // the replaced report is no longer referenced — clean it out of storage
       if (previous?.path && previous.path !== doc.path) void deleteFile(previous.path);
+      setPending(null);
     } catch {
-      setUploadError("The file could not be uploaded — check your connection and try again.");
+      setUploadError("The file could not be saved — check your connection and try again.");
     }
     setUploadPct(null);
+  }
+
+  function cancelPending() {
+    setPending(null);
+    setUploadError(null);
   }
 
   function removeReport() {
@@ -258,7 +274,35 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
                 <br />
                 {spec.project.text}
                 <div className="lb-upload">
-                  {projectDoc ? (
+                  {pending ? (
+                    <>
+                      <span className="lb-pending-chip">
+                        <Icon name="document" size={14} />
+                        {pending.name}
+                      </span>
+                      <span className="muted lb-attach-meta">
+                        {fmtSize(pending.size)} · not saved yet
+                      </span>
+                      <button
+                        type="button"
+                        className="btn solid"
+                        disabled={uploadPct !== null}
+                        onClick={() => void saveReport()}
+                        title="Save this report to your logbook"
+                      >
+                        <Icon name="checkCircle" size={15} />
+                        {uploadPct !== null ? `Saving… ${uploadPct}%` : "Save report"}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn ghost"
+                        disabled={uploadPct !== null}
+                        onClick={cancelPending}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : projectDoc ? (
                     <>
                       <button
                         type="button"
@@ -282,17 +326,15 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
                       <button
                         type="button"
                         className="btn"
-                        disabled={uploadPct !== null}
                         onClick={() => fileRef.current?.click()}
-                        title="Upload a new file in place of this one"
+                        title="Choose a new file to replace this one — you'll press Save to confirm"
                       >
                         <Icon name="folder" size={15} />
-                        {uploadPct !== null ? `Uploading… ${uploadPct}%` : "Replace report"}
+                        Replace report
                       </button>
                       <button
                         type="button"
                         className="btn ghost"
-                        disabled={uploadPct !== null}
                         onClick={() => setConfirmRemove(true)}
                         title="Remove this report from your logbook"
                       >
@@ -304,11 +346,10 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
                     <button
                       type="button"
                       className="btn"
-                      disabled={uploadPct !== null}
                       onClick={() => fileRef.current?.click()}
                     >
                       <Icon name="folder" size={15} />
-                      {uploadPct !== null ? `Uploading… ${uploadPct}%` : "Upload my report"}
+                      Upload my report
                     </button>
                   )}
                   <input
@@ -316,7 +357,7 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
                     type="file"
                     hidden
                     accept=".pdf,.doc,.docx,.odt,.rtf,.txt,image/*"
-                    onChange={(e) => void onProjectFile(e)}
+                    onChange={onProjectFile}
                   />
                   {uploadError && <span className="lb-upload-error">{uploadError}</span>}
                 </div>
