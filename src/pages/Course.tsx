@@ -4263,7 +4263,18 @@ export function UnitPage({
               download
             >
               <Icon name="download" size={15} />
-              Download training slides (.pptx)
+              Lesson 1 slides (.pptx)
+            </a>
+          )}
+          {canDownloadShared && u.us === "114050" && (
+            <a
+              className="btn ghost dl-sample plan-ppt"
+              href="/downloads/US-114050-L2-Systems-Theory.pptx"
+              download
+              style={{ marginLeft: 10 }}
+            >
+              <Icon name="download" size={15} />
+              Lesson 2 slides (.pptx)
             </a>
           )}
           <button

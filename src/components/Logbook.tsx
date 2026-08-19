@@ -285,17 +285,17 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
                       </span>
                       <button
                         type="button"
-                        className="btn solid"
+                        className="btn solid sm"
                         disabled={uploadPct !== null}
                         onClick={() => void saveReport()}
                         title="Save this report to your logbook"
                       >
-                        <Icon name="checkCircle" size={15} />
+                        <Icon name="checkCircle" size={14} />
                         {uploadPct !== null ? `Saving… ${uploadPct}%` : "Save report"}
                       </button>
                       <button
                         type="button"
-                        className="btn ghost"
+                        className="btn ghost sm"
                         disabled={uploadPct !== null}
                         onClick={cancelPending}
                       >
