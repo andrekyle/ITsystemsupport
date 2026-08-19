@@ -8165,6 +8165,94 @@ table.data th.sortable.sorted { color: var(--ink); }
 [data-theme="dark"] .chat-bubble-edit-btn:hover {
   background: rgba(255, 255, 255, 0.12);
 }
+
+/* message reactions (like / love) */
+.chat-react-btns {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 6px);
+  transform: translateY(-50%);
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px 4px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+  white-space: nowrap;
+  z-index: 2;
+}
+.chat-bubble:hover .chat-react-btns,
+.chat-react-btns:focus-within,
+.chat-react-btns:hover {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* invisible bridge over the 6px gap so hover survives the pointer crossing it */
+.chat-react-btns::before {
+  content: "";
+  position: absolute;
+  right: 100%;
+  top: -4px;
+  bottom: -4px;
+  width: 8px;
+}
+.chat-react-btn {
+  border: 0;
+  background: transparent;
+  font-size: 15px;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.12s;
+  filter: grayscale(1);
+}
+.chat-react-btn:hover {
+  transform: scale(1.25);
+  background: var(--surface-2);
+  filter: none;
+}
+.chat-react-btn.on {
+  filter: none;
+  background: var(--surface-2);
+}
+.chat-bubble-reaction {
+  position: absolute;
+  bottom: -10px;
+  right: 8px;
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+.chat-bubble.mine .chat-bubble-reaction {
+  right: auto;
+  left: 8px;
+}
+.chat-bubble-row:has(.chat-bubble-reaction) {
+  margin-bottom: 10px;
+}
+/* touch screens: no hover — show the buttons inline under the message */
+@media (hover: none) {
+  .chat-react-btns {
+    position: static;
+    transform: none;
+    opacity: 1;
+    pointer-events: auto;
+    margin-top: 4px;
+    box-shadow: none;
+  }
+  .chat-react-btns::before {
+    display: none;
+  }
+}
 .chat-bubble-edit {
   display: flex;
   flex-direction: column;

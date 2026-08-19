@@ -183,6 +183,8 @@ create table if not exists public.chat_messages (
 
 -- Older installs that created the table before message editing existed:
 alter table public.chat_messages add column if not exists edited_at timestamptz;
+-- Reactions: the recipient can like/love a message (stored as the emoji).
+alter table public.chat_messages add column if not exists reaction text;
 
 create index if not exists chat_messages_participants_idx
   on public.chat_messages (sender_user_id, recipient_user_id, sent_at);

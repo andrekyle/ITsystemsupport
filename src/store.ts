@@ -825,6 +825,8 @@ export interface ChatMessage {
   read?: boolean;
   /** timestamp of the last edit, if the sender has edited this message */
   editedAt?: string;
+  /** the recipient's reaction to this message — "👍" (like) or "❤️" (love) */
+  reaction?: string;
 }
 
 /** Wire representation of a message row in Supabase. */
@@ -840,6 +842,7 @@ interface DbChatRow {
   sent_at: string;
   read_at: string | null;
   edited_at?: string | null;
+  reaction?: string | null;
 }
 
 function rowToMessage(row: DbChatRow): ChatMessage {
@@ -853,6 +856,7 @@ function rowToMessage(row: DbChatRow): ChatMessage {
     at: row.sent_at,
     read: !!row.read_at,
     editedAt: row.edited_at ?? undefined,
+    reaction: row.reaction ?? undefined,
   };
 }
 
@@ -989,7 +993,38 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
     [myAuthId]
   );
 
-  return { messages, send, markRead, edit };
+  /** React to a message the other person sent me (👍 / ❤️ — null clears it).
+   *  Only the recipient may react, enforced by the `.eq("recipient_user_id")`
+   *  filter plus RLS. Like `edit`, a blocked update returns 0 rows, no error —
+   *  so we require the row back and roll the optimistic change back on failure. */
+  const react = useCallback(
+    async (msgId: string, reaction: string | null): Promise<boolean> => {
+      if (!supabase || !myAuthId) return false;
+      let old: string | undefined;
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== msgId) return m;
+          old = m.reaction;
+          return { ...m, reaction: reaction ?? undefined };
+        })
+      );
+      const { data, error } = await supabase
+        .from("chat_messages")
+        .update({ reaction })
+        .eq("id", msgId)
+        .eq("recipient_user_id", myAuthId)
+        .select("id");
+      const ok = !error && !!data && data.length > 0;
+      if (!ok) {
+        const o = old;
+        setMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, reaction: o } : m)));
+      }
+      return ok;
+    },
+    [myAuthId]
+  );
+
+  return { messages, send, markRead, edit, react };
 }
 
 /** Delete every message in a thread. RLS ensures only the super user (admin)

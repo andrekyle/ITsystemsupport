@@ -580,7 +580,7 @@ function ChatThread({
     return undefined;
   }, [cloud, other, otherId, superUid]);
 
-  const { messages, send, markRead, edit } = useChat(me, {
+  const { messages, send, markRead, edit, react } = useChat(me, {
     profileId: otherId,
     authUserId: otherAuthUserId,
   });
@@ -641,7 +641,9 @@ function ChatThread({
             // always finds the sender if we have their cloud record.
             const sender =
               peopleByAny.get(m.bySenderAuthId) ?? peopleByAny.get(m.byId) ?? other;
-            return <ChatBubble key={m.id} msg={m} me={me} sender={sender} onEdit={edit} />;
+            return (
+              <ChatBubble key={m.id} msg={m} me={me} sender={sender} onEdit={edit} onReact={react} />
+            );
           })
         )}
       </div>
@@ -718,11 +720,14 @@ function ChatBubble({
   me,
   sender,
   onEdit,
+  onReact,
 }: {
   msg: ChatMessage;
   me: Profile;
   sender?: Profile;
   onEdit: (msgId: string, newBody: string) => Promise<boolean>;
+  /** react to a received message (👍/❤️, null clears) — omit for read-only views */
+  onReact?: (msgId: string, reaction: string | null) => Promise<boolean>;
 }) {
   const mine = msg.byId === me.id;
   const [editing, setEditing] = useState(false);
@@ -824,6 +829,36 @@ function ChatBubble({
               {fmtWhen(msg.at)}
               {msg.editedAt && <span title={`Edited ${fmtWhen(msg.editedAt)}`}> · edited</span>}
             </div>
+            {msg.reaction && (
+              <span
+                className="chat-bubble-reaction"
+                title={mine ? "They reacted to your message" : "Your reaction"}
+              >
+                {msg.reaction}
+              </span>
+            )}
+            {!mine && onReact && (
+              <div className="chat-react-btns" role="group" aria-label="React to this message">
+                {["👍", "❤️"].map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    className={`chat-react-btn${msg.reaction === emoji ? " on" : ""}`}
+                    title={
+                      msg.reaction === emoji
+                        ? "Remove your reaction"
+                        : emoji === "👍"
+                        ? "Like this message"
+                        : "Love this message"
+                    }
+                    aria-pressed={msg.reaction === emoji}
+                    onClick={() => void onReact(msg.id, msg.reaction === emoji ? null : emoji)}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
             {mine && (
               <button
                 type="button"
