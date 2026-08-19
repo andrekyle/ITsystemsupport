@@ -7109,10 +7109,13 @@ input.att-sig {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--azure-light);
-  color: var(--azure);
+  background: #6b7280;
+  color: #ffffff;
   font-size: 0.8rem;
   font-weight: 500;
+}
+[data-theme="dark"] .lesson-quiz-q > strong {
+  background: #4a4a4a;
 }
 .lesson-quiz-options { display: grid; gap: 6px; }
 .lesson-quiz-opt {
