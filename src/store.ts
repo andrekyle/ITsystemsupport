@@ -890,6 +890,12 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
     };
   }, []);
 
+  // forget the previous conversation the moment the peer changes so the new
+  // thread never renders (or scroll-measures) another person's messages
+  useEffect(() => {
+    setMessages([]);
+  }, [otherAuthId]);
+
   useEffect(() => {
     if (!supabase || !myAuthId || !otherAuthId) return;
     let alive = true;

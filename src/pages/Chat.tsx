@@ -586,14 +586,22 @@ function ChatThread({
   });
   const [text, setText] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  /** which conversation the initial jump-to-newest has already run for */
+  const jumpedRef = useRef<string | null>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    // Jump (no animation) to the newest message once, when a conversation is
+    // opened. After that the position never moves automatically — incoming
+    // or polled messages must not drag the reader down while they scroll up.
+    if (messages.length > 0 && jumpedRef.current !== otherId) {
+      jumpedRef.current = otherId;
+      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+    }
     // mark unread incoming messages as read on the server
     if (messages.some((m) => m.byId !== me.id && !m.read)) {
       void markRead();
     }
-  }, [messages, me.id, markRead]);
+  }, [messages, otherId, me.id, markRead]);
 
   function submit() {
     const t = text.trim();
@@ -601,6 +609,10 @@ function ChatThread({
     void send(me, t);
     logAudit(me, "qa.post", `Messaged ${nameFor(otherId)}`);
     setText("");
+    // show the message you just sent (user-initiated, not an automatic scroll)
+    requestAnimationFrame(() =>
+      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })
+    );
   }
 
   const canSend = !!otherAuthUserId;
@@ -689,9 +701,16 @@ function MonitorThread({
   peopleByAny: Map<string, Profile>;
 }) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  /** which thread the initial jump-to-newest has already run for */
+  const jumpedRef = useRef<string | null>(null);
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-  }, [thread.messages.length]);
+    // one-time jump to the newest message when the monitored thread opens;
+    // later messages never move the reader's position
+    if (thread.messages.length > 0 && jumpedRef.current !== thread.key) {
+      jumpedRef.current = thread.key;
+      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+    }
+  }, [thread.key, thread.messages.length]);
   const noEdit = async () => false;
   return (
     <>
