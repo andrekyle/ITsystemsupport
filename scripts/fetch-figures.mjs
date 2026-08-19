@@ -129,6 +129,13 @@ const FIGURES = {
   "boot-sequence-diagram": ["GNU GRUB components.svg", "search:GRUB boot menu screenshot", "search:Linux boot process diagram"],
   "bsod": ["Bsodwindows10.png", "Blue Screen of Death (Windows 10).png", "Windows 10 BSOD.png", "BSoD in Windows 8.png"],
   "timeline-poster": ["Pc timeline.webp", "search:history of computers timeline poster"],
+  // ---- US 114050: South African franchised businesses ----
+  "114050-franchise-mcdonalds": ["McDonald's Sandton.jpg", "McDonald's Outlet in Kenilworth, Cape Town.jpg", "McDonald's Braamfontein.jpg"],
+  "114050-franchise-spar": ["Spar Store in De Waterkant, Cape Town.jpg", "Fresh Produce Section in a Spar Store in De Waterkant, Cape Town.jpg"],
+  "114050-franchise-shoprite": ["Shoprite, Zeerust.jpg", "Shoprite, Zeerust3.jpg"],
+  "114050-franchise-kfc": ["KFC Scottburgh.jpg", "KFC Outlet in Milnerton 2.jpg", "KFC Outlet in Milnerton 4.jpg"],
+  "114050-franchise-nandos": ["Nandos-Canal-Walk.jpg", "Nando's Restaurant.jpg"],
+  "114050-franchise-wimpy": ["Wimpy White River.jpg", "Wimpy South Africa interior.jpg"],
 };
 
 const args = process.argv.slice(2);

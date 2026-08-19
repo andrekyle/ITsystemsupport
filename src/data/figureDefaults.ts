@@ -16,6 +16,12 @@ export interface FigureDefault {
 }
 
 export const FIGURE_DEFAULTS: Record<string, FigureDefault> = {
+  "114050-franchise-kfc": { src: "/figures/114050-franchise-kfc.jpg", author: "Ossewa", license: "CC BY 4.0", sourceUrl: "https://commons.wikimedia.org/wiki/File:KFC_Scottburgh.jpg" },
+  "114050-franchise-mcdonalds": { src: "/figures/114050-franchise-mcdonalds.jpg", author: "Ossewa", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/wiki/File:McDonald%27s_Sandton.jpg" },
+  "114050-franchise-nandos": { src: "/figures/114050-franchise-nandos.jpg", author: "Unknown", license: "Public domain", sourceUrl: "https://commons.wikimedia.org/wiki/File:Nandos-Canal-Walk.jpg" },
+  "114050-franchise-shoprite": { src: "/figures/114050-franchise-shoprite.jpg", author: "Ossewa", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/wiki/File:Shoprite,_Zeerust.jpg" },
+  "114050-franchise-spar": { src: "/figures/114050-franchise-spar.jpg", author: "Husskeyy", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/wiki/File:Spar_Store_in_De_Waterkant,_Cape_Town.jpg" },
+  "114050-franchise-wimpy": { src: "/figures/114050-franchise-wimpy.jpg", author: "Ossewa", license: "CC BY 4.0", sourceUrl: "https://commons.wikimedia.org/wiki/File:Wimpy_White_River.jpg" },
   "ada-lovelace": { src: "/figures/ada-lovelace.jpg", author: "Alfred Edward Chalon", license: "Public domain", sourceUrl: "https://commons.wikimedia.org/wiki/File:Ada_Lovelace_portrait.jpg" },
   "ai-chat-llm": { src: "/figures/ai-chat-llm.png", author: "StereoFolic", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/wiki/File:GPT-5_Reasoning_UI.png" },
   "aio-cooler": { src: "/figures/aio-cooler.jpg", author: "Chi Ho Chan from Hong Kong", license: "CC BY 2.0", sourceUrl: "https://commons.wikimedia.org/wiki/File:Corsair_H100i_240mm_CPU_cooler._On_MSI_Z590_Torpedo_motherboard._(51987363353).jpg" },

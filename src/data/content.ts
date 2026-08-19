@@ -5339,9 +5339,34 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
         figures: [
           {
-            id: "114050-franchise-brands",
-            caption: "Familiar South African franchise brands — the same look, goods and prices at every outlet",
-            hint: "Collage of franchise logos (McDonald's, Steers, Spar, Shoprite)",
+            id: "114050-franchise-mcdonalds",
+            caption: "McDonald's, Sandton — a global franchise brand on a South African street",
+            note: "Customers know the business even if the outlet is new — the accepted brand exists from the start.",
+          },
+          {
+            id: "114050-franchise-spar",
+            caption: "Spar, De Waterkant, Cape Town — every outlet looks uniformly the same",
+            note: "The largest criterion for franchised outlets: a uniform look, selling the branded products the franchisor suggests.",
+          },
+          {
+            id: "114050-franchise-shoprite",
+            caption: "Shoprite, Zeerust — the same name and goods at more or less the same prices",
+            note: "Bulk buying lets the franchisor supply outlets more cheaply than an independent business could source them.",
+          },
+          {
+            id: "114050-franchise-kfc",
+            caption: "KFC, Scottburgh, KwaZulu-Natal — one look and menu wherever you are",
+            note: "Consumers get peace of mind: the same quality from one outlet as from the next.",
+          },
+          {
+            id: "114050-franchise-nandos",
+            caption: "Nando's, Canal Walk, Cape Town — a South African franchise that went global",
+            note: "Founded in Johannesburg in 1987 — proof that a local franchise brand can expand worldwide.",
+          },
+          {
+            id: "114050-franchise-wimpy",
+            caption: "Wimpy, White River — family restaurant franchise in the same stable as Steers",
+            note: "Famous Brands, the South African group behind Wimpy, Steers and Debonairs, franchises hundreds of outlets.",
           },
         ],
         slideQuiz: [

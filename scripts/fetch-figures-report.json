@@ -791,6 +791,54 @@
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:GNU_GRUB_components.svg",
       "file": "boot-sequence-diagram.png",
       "bytes": 184075
+    },
+    "114050-franchise-mcdonalds": {
+      "title": "McDonald's Sandton.jpg",
+      "author": "Ossewa",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:McDonald%27s_Sandton.jpg",
+      "file": "114050-franchise-mcdonalds.jpg",
+      "bytes": 798459
+    },
+    "114050-franchise-spar": {
+      "title": "Spar Store in De Waterkant, Cape Town.jpg",
+      "author": "Husskeyy",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Spar_Store_in_De_Waterkant,_Cape_Town.jpg",
+      "file": "114050-franchise-spar.jpg",
+      "bytes": 583466
+    },
+    "114050-franchise-shoprite": {
+      "title": "Shoprite, Zeerust.jpg",
+      "author": "Ossewa",
+      "license": "CC BY-SA 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Shoprite,_Zeerust.jpg",
+      "file": "114050-franchise-shoprite.jpg",
+      "bytes": 721936
+    },
+    "114050-franchise-kfc": {
+      "title": "KFC Scottburgh.jpg",
+      "author": "Ossewa",
+      "license": "CC BY 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:KFC_Scottburgh.jpg",
+      "file": "114050-franchise-kfc.jpg",
+      "bytes": 444105
+    },
+    "114050-franchise-nandos": {
+      "title": "Nandos-Canal-Walk.jpg",
+      "author": "Unknown",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Nandos-Canal-Walk.jpg",
+      "file": "114050-franchise-nandos.jpg",
+      "bytes": 405224
+    },
+    "114050-franchise-wimpy": {
+      "title": "Wimpy White River.jpg",
+      "author": "Ossewa",
+      "license": "CC BY 4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wimpy_White_River.jpg",
+      "file": "114050-franchise-wimpy.jpg",
+      "bytes": 920846
     }
   },
   "failures": []
