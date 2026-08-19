@@ -2697,7 +2697,7 @@ export function UnitPage({
                     const correct = picked === q.answer;
                     return (
                       <div key={qi} className={`lesson-quiz-card${qChecked ? (correct ? " ok" : " bad") : ""}`}>
-                        <div className="lesson-quiz-q"><strong>{qi + 1}</strong> <span>{q.q}</span></div>
+                        <div className="lesson-quiz-q"><strong>{qi + 1}.</strong> <span>{q.q}</span></div>
                         <div className="lesson-quiz-options">
                           {seededShuffle(q.options.map((_, i) => i), si * 977 + qi * 131 + q.q.length * 7 + 3).map((oi) => {
                             const opt = q.options[oi];
