@@ -5688,83 +5688,175 @@ export const CONTENT: Record<string, UnitContent> = {
 
     exercises: [
       {
-        id: "qs114050",
+        id: "qs114050b",
         title: "Questioning — Principles of business and the role of information technology",
         task: "Time: 45 minutes · Activity: Self & Group",
         steps: [
-          "Distinguish the types of business organisations found in South Africa",
-          "Outline the common objectives within which businesses operate",
-          "Outline the environment within which a business operates and what you must research before starting one",
+          "Explain the following type of company — Sole trader",
+          "Explain the following type of company — Partnership",
+          "Explain the following type of company — Limited Co",
+          "Explain the following type of company — Private Co",
+          "Explain the following type of company — Public Ltd Company",
+          "Explain how these companies interact with their clients with regards to — Buying & Selling activities",
+          "Explain how these companies interact with their clients with regards to — Profit",
+          "Explain how these companies interact with their clients with regards to — Charity",
+          "Explain how these companies interact with their clients with regards to — Social Clubs",
+          "Explain these businesses activities and the environment within which such businesses operate",
         ],
         checks: [
           {
             answer: [
-              "A sole proprietor is owned by one person with no partners or co-owners; no formal registration is needed and if the business becomes insolvent the owner personally becomes insolvent.",
-              "A partnership is an association of between two and 20 partners who intend making and sharing profits; it is not a legal person and partners are jointly and severally liable for its debts.",
-              "A closed corporation is a simple, flexible legal structure for up to ten natural persons; it is a legal person registered with the Registrar and its members' interests always add up to 100 percent.",
-              "A private company has between one and 50 shareholders, at least one director, its shares may not be offered to the public and its name ends with (Pty) Ltd.",
-              "A public company has at least seven members and two directors, its shares may be offered to the general public and are freely transferable, and its name ends with Ltd.",
+              "A sole trader is owned by one person — there are no partners or co-owners.",
+              "No formal registration, administration or termination is needed and no statutes regulate sole owners.",
+              "If the business becomes insolvent, the owner personally becomes insolvent.",
             ],
             concepts: [
-              ["sole proprietor", "sole trader", "one person", "personally insolvent"],
-              ["partnership", "partners", "jointly and severally"],
-              ["closed corporation", "ten members", "members interest"],
-              ["private company", "pty", "fifty", "board consent"],
-              ["public company", "seven", "freely transferable", "general public"],
+              ["one person", "one owner", "no partners", "single owner", "on your own"],
+              ["no registration", "no formal registration", "not registered", "no statutes"],
+              ["personally insolvent", "personal insolvency", "personally liable", "personal risk"],
             ],
             labels: [
-              "Sole proprietor",
-              "Partnership",
-              "Closed corporation",
-              "Private company",
-              "Public company",
-            ],
-            min: 3,
-          },
-          {
-            answer: [
-              "Buying and selling activity — trading goods or services is the core activity around which a business operates.",
-              "Profit — businesses may aim for profit maximisation (the most profit possible) or profit satisfying (enough profit to keep the owners comfortable).",
-              "Charity — some organisations exist for charitable purposes, with aims and objectives led by the beliefs they stand for.",
-              "Social clubs — organisations can operate to provide a service to members rather than to make a profit.",
-            ],
-            concepts: [
-              ["buying", "selling", "trading"],
-              ["profit", "maximisation", "satisfying"],
-              ["charity", "charitable", "beliefs"],
-              ["social club", "service to members", "community"],
-            ],
-            labels: [
-              "Buying & selling activity",
-              "Profit",
-              "Charity",
-              "Social clubs",
+              "One owner — no partners or co-owners",
+              "No formal registration needed",
+              "Owner personally insolvent if the business fails",
             ],
             min: 2,
           },
           {
             answer: [
-              "The market — there must be a need for the business, and you must know who the clients are, how big the market is and whether it is growing or stagnant.",
-              "The competition — who your competitors will be, how close they are to your location and whether they are flourishing or closing down.",
-              "Capital requirements — how much money is needed to open and operate the business until it can provide for all its debts.",
-              "Location and premises — where the business will operate, whether it needs an office, retail space or can run from home to save costs.",
-              "Risk and resources — your own skills, interests and commitments, the working hours, the number of people employed and whether you can afford to lose what you put in.",
+              "A partnership is a business association between people who intend making and sharing profits.",
+              "It has a minimum of two and a maximum of 20 partners and is not a legal person.",
+              "Partners are jointly and severally liable for the partnership's debts.",
             ],
             concepts: [
-              ["market", "need", "clients", "customers"],
+              ["sharing profits", "share profits", "making and sharing", "association"],
+              ["two", "twenty", "not a legal person"],
+              ["jointly and severally", "liable for", "debts"],
+            ],
+            labels: [
+              "Association to make and share profits",
+              "Two to 20 partners — not a legal person",
+              "Partners jointly and severally liable",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "A limited company is registered under the Companies Act (Act 61 of 1973) and is a legal person separate from its owners.",
+              "It eliminates unlimited liability — the shareholders' liability is limited.",
+              "It improves the business's ability to acquire capital.",
+            ],
+            concepts: [
+              ["companies act", "legal person", "act 61", "registered company"],
+              ["limited liability", "liability is limited", "unlimited liability"],
+              ["capital", "raise money", "funding"],
+            ],
+            labels: [
+              "Registered under the Companies Act — a legal person",
+              "Limits the owners' liability",
+              "Better able to acquire capital",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "A private company has between one and 50 members (shareholders) and at least one director.",
+              "Its shares may not be offered to the general public and transfers need the board of directors' consent.",
+              "Its name ends with (Pty) Ltd and it is subject to fewer legal requirements.",
+            ],
+            concepts: [
+              ["fifty", "50", "one director"],
+              ["not be offered", "may not offer", "board", "consent"],
+              ["pty", "proprietary", "fewer requirements", "less requirements"],
+            ],
+            labels: [
+              "One to 50 shareholders, at least one director",
+              "Shares not offered to the public — board consent to transfer",
+              "Name ends (Pty) Ltd — fewer requirements",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "A public company has at least seven members (shareholders) and at least two directors.",
+              "Its shares may be offered to the general public and are freely transferable.",
+              "Its name ends with Ltd and it is subject to numerous legal requirements and limitations.",
+            ],
+            concepts: [
+              ["seven", "two directors"],
+              ["general public", "freely transferable", "offered to the public"],
+              ["ltd", "limited", "numerous requirements"],
+            ],
+            labels: [
+              "At least seven members and two directors",
+              "Shares offered to the public — freely transferable",
+              "Name ends Ltd — numerous requirements",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "Buying and selling is the core trading activity — the business buys goods or services from suppliers and sells them to its clients.",
+              "The business interacts with clients by offering goods or services at prices clients are prepared to pay.",
+            ],
+            concepts: [
+              ["buying", "selling", "trade", "trading"],
+              ["clients", "customers", "prices", "goods or services"],
+            ],
+            labels: [
+              "Core trading activity — buying and selling",
+              "Serving clients with goods or services at a price",
+            ],
+            min: 1,
+          },
+          {
+            answer: [
+              "Businesses charge clients more for goods or services than they cost, so profit is made from serving clients.",
+              "Some businesses aim for profit maximisation while others are satisfied with enough profit to keep the owners comfortable.",
+            ],
+            concepts: [
+              ["profit", "charge", "more than they cost"],
+              ["maximisation", "maximise", "satisfying", "comfortable"],
+            ],
+            labels: [
+              "Profit is earned from serving clients",
+              "Profit maximisation vs profit satisfying",
+            ],
+            min: 1,
+          },
+          {
+            answer: [
+              "Charities interact with their clients to raise funds and provide help — their aims and objectives are led by the beliefs they stand for, not by profit.",
+            ],
+            concepts: [["charity", "charitable", "beliefs", "not for profit", "help"]],
+            labels: ["Charitable purpose — led by beliefs, not profit"],
+            min: 1,
+          },
+          {
+            answer: [
+              "Social clubs exist to provide a service to their members rather than to make a profit — the members are the clients.",
+            ],
+            concepts: [["social club", "members", "service"]],
+            labels: ["A service to members rather than profit"],
+            min: 1,
+          },
+          {
+            answer: [
+              "Businesses operate within a market — there must be a need for the business, and you must know who the clients are, how big the market is and whether it is growing or stagnant.",
+              "They operate within a competitive environment — who the competitors are, how close they are and whether they are flourishing.",
+              "They operate within an economic and resource environment — capital requirements, premises or working from home, staffing, working hours and the risks involved.",
+            ],
+            concepts: [
+              ["market", "need", "clients", "customers", "growing"],
               ["competition", "competitors"],
-              ["capital", "money", "debts", "funding"],
-              ["location", "premises", "retail space", "from home"],
-              ["risk", "skills", "working hours", "employ"],
+              ["capital", "premises", "risk", "staffing", "working hours"],
             ],
             labels: [
               "The market and its size",
               "The competition",
-              "Capital requirements",
-              "Location and premises",
-              "Risk, skills and resources",
+              "Capital, premises, staffing and risk",
             ],
-            min: 3,
+            min: 2,
           },
         ],
       },
