@@ -233,7 +233,7 @@ function bulletList(s, items, { x = MX, y = 1.7, w = CW, h = 5.0, fontSize = MIN
   const s = slide();
   eyebrowTitle(s, "The ACID test", "Four properties every transaction must have");
   iconCards(s, [
-    { icon: "check", text: "Atomicity", d: "Changes to the state are atomic: either all happen or none happen — database changes, messages and actions on transducers." },
+    { icon: "check", text: "Atomicity", d: "All or nothing: an R5,000 transfer must debit the sender AND credit the receiver — or be cancelled entirely." },
     { icon: "shield", text: "Consistency", d: "A correct transformation of the state — the actions as a group do not violate any integrity constraints." },
     { icon: "lock", text: "Isolation", d: "Concurrent transactions appear to each transaction T to have executed before T or after T — but not both." },
     { icon: "database", text: "Durability", d: "Once a transaction commits, its changes to the state survive failures." },

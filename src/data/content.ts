@@ -6026,7 +6026,7 @@ export const CONTENT: Record<string, UnitContent> = {
           {
             icon: "check",
             title: "Atomicity",
-            text: "A transaction's changes to the state are atomic: either all happen or none happen. These changes include database changes, messages, and actions on transducers.",
+            text: "A transaction must be completed fully, or not happen at all. Simple idea: all or nothing.",
           },
           {
             icon: "shield",
@@ -6044,6 +6044,16 @@ export const CONTENT: Record<string, UnitContent> = {
             text: "Once a transaction completes successfully (commits), its changes to the state survive failures.",
           },
         ],
+        example: {
+          title: "Atomicity — Investec example",
+          lines: [
+            "An Investec client transfers R5,000 to another account.",
+            "R5,000 is deducted from the sender's account.",
+            "R5,000 is credited to the receiver's account.",
+            "Both actions must happen. If something goes wrong, the transaction is cancelled and the money remains unchanged.",
+            "Simple idea: all or nothing.",
+          ],
+        },
         slideQuiz: [
           {
             q: "Atomicity means…",
@@ -6054,7 +6064,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Only one user may work on the system at any moment",
             ],
             answer: 0,
-            explain: "Atomic changes include database changes, messages and actions on transducers — all or nothing.",
+            explain: "All or nothing: an Investec client transfers R5,000 — the debit from the sender and the credit to the receiver must BOTH happen, or the transaction is cancelled and the money remains unchanged.",
           },
           {
             q: "Consistency means…",
