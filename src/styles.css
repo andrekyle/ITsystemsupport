@@ -6161,6 +6161,36 @@ a.plan-ppt:hover {
   margin: -12px 0 6px;
   box-shadow: 0 6px 8px -8px rgba(0, 0, 0, 0.35);
 }
+
+/* banner announcing the start of a numbered lesson within the unit */
+.lesson-start-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 10px 0 16px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--azure) 0%, #0a4f8f 100%);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(15, 108, 189, 0.25);
+}
+.lesson-start-badge {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.lesson-start-title {
+  font-size: 15.5px;
+  font-weight: 650;
+  line-height: 1.35;
+}
 .lesson-stepper-top {
   display: flex;
   align-items: baseline;
@@ -6222,6 +6252,21 @@ a.plan-ppt:hover {
   background: var(--surface);
   cursor: pointer;
   padding: 0;
+}
+/* a section that starts a new lesson gets a divider gap in the dot rail */
+.lesson-dot.lesson-start {
+  margin-left: 14px;
+  position: relative;
+}
+.lesson-dot.lesson-start::before {
+  content: "";
+  position: absolute;
+  left: -9px;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--border-2);
 }
 .lesson-dot:hover {
   border-color: var(--azure);

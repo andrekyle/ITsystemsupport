@@ -324,6 +324,9 @@ export interface LessonSection {
   quizGate?: boolean;
   /** per-slide gate quiz — learner must answer every question correctly before Next is unlocked */
   slideQuiz?: QuizQuestion[];
+  /** marks this section as the start of a numbered lesson within the unit —
+   *  renders a lesson banner above the section and a divider in the navigation */
+  lessonStart?: { n: number; title: string };
 }
 
 /** An image slot in a lesson section. The picture itself is uploaded by staff and shared to all devices. */

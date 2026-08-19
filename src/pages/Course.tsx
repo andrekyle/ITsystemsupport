@@ -3123,6 +3123,18 @@ export function UnitPage({
               <div className="lesson-stepper">
                 <div className="lesson-stepper-top">
                   <span className="lesson-step-count">
+                    {(() => {
+                      // which numbered lesson does this section belong to?
+                      let cur: { n: number; title: string } | undefined;
+                      for (let i = si; i >= 0; i--) {
+                        const ls = content.lesson[i].lessonStart;
+                        if (ls) {
+                          cur = ls;
+                          break;
+                        }
+                      }
+                      return cur ? `Lesson ${cur.n} · ` : "";
+                    })()}
                     Section {si + 1} of {total}
                   </span>
                   <span className="lesson-step-title">{secHeading}</span>
@@ -3181,12 +3193,13 @@ export function UnitPage({
                   Previous
                 </button>
                 <span className="lesson-nav-dots">
-                  {content.lesson.map((_, i) => (
+                  {content.lesson.map((s, i) => (
                     <button
                       key={i}
                       type="button"
-                      className={`lesson-dot${i === si ? " active" : ""}${i < si ? " done" : ""}`}
-                      aria-label={`Go to section ${i + 1}`}
+                      className={`lesson-dot${i === si ? " active" : ""}${i < si ? " done" : ""}${s.lessonStart && i > 0 ? " lesson-start" : ""}`}
+                      aria-label={`Go to section ${i + 1}${s.lessonStart ? ` (start of lesson ${s.lessonStart.n})` : ""}`}
+                      title={s.lessonStart ? `Lesson ${s.lessonStart.n} starts here` : undefined}
                       onClick={() => go(i)}
                     />
                   ))}
@@ -3207,6 +3220,12 @@ export function UnitPage({
             return (
               <div key={sec.heading} className="lesson-screen">
                 {stepper}
+                {sec.lessonStart && (
+                  <div className="lesson-start-banner">
+                    <span className="lesson-start-badge">Lesson {sec.lessonStart.n}</span>
+                    <span className="lesson-start-title">{sec.lessonStart.title}</span>
+                  </div>
+                )}
                 {isSlide && heroFig ? (() => {
                   const up = figureImages[heroFig.id];
                   const def = FIGURE_DEFAULTS[heroFig.id];

@@ -4901,6 +4901,7 @@ export const CONTENT: Record<string, UnitContent> = {
         heading: "Principles of business and the role of information technology — introduction",
         icon: "presenter",
         flat: true,
+        lessonStart: { n: 1, title: "Explain the principles of business and the role of information technology" },
         paragraphs: [
           "Time: 90 minutes · Activity: Self & Group.",
           "Unit Standard 114050 — Explain the principles of business and the role of information technology. In this lesson you will be assessed against these specific outcomes and related assessment criteria: the description distinguishes types of business organisations (Sole trader, Partnership, Limited Co, Private Co, Public Ltd Company); the description outlines the common objectives within which businesses operate (Buying & Selling activity, Profit, Charity, Social Clubs); and the description outlines the environment within which businesses operate.",
@@ -5685,9 +5686,10 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
       },
       {
-        heading: "Lesson 2 — Systems theory and the business environment",
+        heading: "Systems theory and the business environment",
         icon: "layers",
         flat: true,
+        lessonStart: { n: 2, title: "Describe systems theory with respect to information systems" },
         paragraphs: [
           "Welcome to Lesson 2: describe systems theory with respect to information systems. Time: 90 minutes · Activity: Self & Group.",
           "A manager is someone skilled in knowing how to analyse and improve the ability of an organisation to survive and grow in a complex and changing world. This means that managers have a set of tools that enable them to grasp the complexity of the organisation's environment.",
