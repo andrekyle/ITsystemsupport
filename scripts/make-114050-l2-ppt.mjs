@@ -234,7 +234,7 @@ function bulletList(s, items, { x = MX, y = 1.7, w = CW, h = 5.0, fontSize = MIN
   eyebrowTitle(s, "The ACID test", "Four properties every transaction must have");
   iconCards(s, [
     { icon: "check", text: "Atomicity", d: "All or nothing: an R5,000 transfer must debit the sender AND credit the receiver — or be cancelled entirely." },
-    { icon: "shield", text: "Consistency", d: "A correct transformation of the state — the actions as a group do not violate any integrity constraints." },
+    { icon: "shield", text: "Consistency", d: "Follows the rules and keeps the data correct: sender R20,000 \u2192 R15,000, receiver R10,000 \u2192 R15,000." },
     { icon: "lock", text: "Isolation", d: "Concurrent transactions appear to each transaction T to have executed before T or after T — but not both." },
     { icon: "database", text: "Durability", d: "Once a transaction commits, its changes to the state survive failures." },
   ], { y: 1.75, cols: 2, rowH: 2.35 });

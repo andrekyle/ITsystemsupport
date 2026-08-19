@@ -6031,7 +6031,7 @@ export const CONTENT: Record<string, UnitContent> = {
           {
             icon: "shield",
             title: "Consistency",
-            text: "A transaction is a correct transformation of the state. The actions taken as a group do not violate any of the integrity constraints associated with the state.",
+            text: "A transaction must follow the rules of the system and leave the data correct. Simple idea: follow the rules and keep the information accurate.",
           },
           {
             icon: "lock",
@@ -6044,16 +6044,32 @@ export const CONTENT: Record<string, UnitContent> = {
             text: "Once a transaction completes successfully (commits), its changes to the state survive failures.",
           },
         ],
-        example: {
-          title: "Atomicity — Investec example",
-          lines: [
-            "An Investec client transfers R5,000 to another account.",
-            "R5,000 is deducted from the sender's account.",
-            "R5,000 is credited to the receiver's account.",
-            "Both actions must happen. If something goes wrong, the transaction is cancelled and the money remains unchanged.",
-            "Simple idea: all or nothing.",
-          ],
-        },
+        examples: [
+          {
+            title: "Atomicity — Investec example",
+            lines: [
+              "An Investec client transfers R5,000 to another account.",
+              "R5,000 is deducted from the sender's account.",
+              "R5,000 is credited to the receiver's account.",
+              "Both actions must happen. If something goes wrong, the transaction is cancelled and the money remains unchanged.",
+              "Simple idea: all or nothing.",
+            ],
+          },
+          {
+            title: "Consistency — Investec example",
+            lines: [
+              "An Investec client transfers R5,000 to another account. The transaction must follow the rules of the system and leave the data correct:",
+              "1. The sender must have enough money.",
+              "2. The correct amount must be deducted.",
+              "3. The correct amount must be credited to the receiver.",
+              "4. The account balances must remain accurate.",
+              "Before the transfer — Sender: R20,000 · Receiver: R10,000.",
+              "After the transfer — Sender: R15,000 · Receiver: R15,000.",
+              "The database must show these correct balances. If the system deducted R5,000 from the sender but failed to add it to the receiver, the data would be incorrect.",
+              "Consistency = follow the rules + keep the information accurate.",
+            ],
+          },
+        ],
         slideQuiz: [
           {
             q: "Atomicity means…",
@@ -6075,7 +6091,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Backups run on a consistent daily schedule without fail",
             ],
             answer: 0,
-            explain: "The actions taken as a group must not violate any integrity constraints — the transaction must be a correct program.",
+            explain: "Follow the rules and keep the data correct: after an R5,000 transfer the sender's R20,000 must become R15,000 and the receiver's R10,000 must become R15,000 — deducting without crediting would leave the data incorrect.",
           },
           {
             q: "Isolation means…",

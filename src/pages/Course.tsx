@@ -2574,6 +2574,7 @@ export function UnitPage({
               !sec.table &&
               !sec.cards &&
               !sec.example &&
+              !sec.examples?.length &&
               !sec.bullets;
             const hero = heroFig && !isSlide
               ? (() => {
@@ -2986,6 +2987,17 @@ export function UnitPage({
                     ))}
                   </div>
                 )}
+                {sec.examples?.map((ex, xi) => (
+                  <div className="lesson-example" key={`x-${xi}`}>
+                    <div className="ex-title">
+                      <Icon name="info" size={15} />
+                      {ex.title}
+                    </div>
+                    {ex.lines.map((l, i) => (
+                      <ExampleLine key={i} text={l} />
+                    ))}
+                  </div>
+                ))}
                 {sec.figures && (
                   <div className="figure-grid">
                     {orderedFigures.filter((f) => f.id !== heroFig?.id).map((f) => {

@@ -314,6 +314,8 @@ export interface LessonSection {
   }[];
   /** worked example shown in a highlighted card after the bullets */
   example?: { title: string; lines: string[] };
+  /** additional worked examples rendered after `example` (same styling) */
+  examples?: { title: string; lines: string[] }[];
   /** image figure slots rendered after the content — staff upload the pictures, learners see placeholders until then */
   figures?: LessonFigure[];
   /** facilitator/super-user only model answers shown at the bottom of the section */
