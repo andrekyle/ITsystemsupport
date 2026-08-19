@@ -6036,7 +6036,7 @@ export const CONTENT: Record<string, UnitContent> = {
           {
             icon: "lock",
             title: "Isolation",
-            text: "Even though transactions execute concurrently, it appears to each transaction T that the others executed either before T or after T — but not both.",
+            text: "Transactions happening at the same time do not interfere with each other. Each transaction works independently.",
           },
           {
             icon: "database",
@@ -6067,6 +6067,17 @@ export const CONTENT: Record<string, UnitContent> = {
               "After the transfer — Sender: R15,000 · Receiver: R15,000.",
               "The database must show these correct balances. If the system deducted R5,000 from the sender but failed to add it to the receiver, the data would be incorrect.",
               "Consistency = follow the rules + keep the information accurate.",
+            ],
+          },
+          {
+            title: "Isolation — Investec example",
+            lines: [
+              "Two Investec clients make transactions at the same time.",
+              "Client A transfers R5,000.",
+              "Client B transfers R2,000.",
+              "Each transaction is processed as if it is happening on its own.",
+              "One transaction cannot accidentally affect or change the other transaction.",
+              "Each transaction works independently.",
             ],
           },
         ],
@@ -6102,7 +6113,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "Data is encrypted so that one transaction can never read the records another has written",
             ],
             answer: 0,
-            explain: "Even though transactions execute concurrently, each transaction T sees the others as having run before it or after it.",
+            explain: "Transactions running at the same time do not interfere: Client A transfers R5,000 while Client B transfers R2,000 — each is processed as if it were happening on its own.",
           },
           {
             q: "Durability means…",
