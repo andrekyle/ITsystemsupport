@@ -1,5 +1,5 @@
 // Generates the US 114050 lesson deck (Microsoft Fluent / Learn style — same
-// styling as the Course Overview deck).
+// styling as the Course Overview deck). Accessibility rule: NO text below 18pt.
 // Run: node scripts/make-114050-ppt.mjs -> public/downloads/US-114050-Principles-of-Business.pptx
 import pptxgen from "pptxgenjs";
 import { mkdirSync } from "node:fs";
@@ -16,6 +16,7 @@ const DARK_MUTED = "6E93BC";
 
 const TITLE_FONT = "Aptos Display";
 const BODY_FONT = "Aptos";
+const MIN_FONT = 18; // smallest font size used anywhere in the deck
 
 const W = 13.33;
 const H = 7.5;
@@ -70,56 +71,56 @@ function slide() {
   s.background = { color: WHITE };
   pageNo += 1;
   if (pageNo > 1) {
-    s.addText("US 114050 — Explain the principles of business and the role of information technology · NQF 5 · 4 credits", {
-      x: MX, y: H - 0.42, w: CW - 1, h: 0.3, fontFace: BODY_FONT, fontSize: 10, color: GREY,
+    s.addText("US 114050 · Principles of business & the role of IT · NQF 5 · 4 credits", {
+      x: MX, y: H - 0.5, w: CW - 1, h: 0.38, fontFace: BODY_FONT, fontSize: MIN_FONT, color: GREY,
     });
-    s.addText(String(pageNo), { x: W - MX - 0.6, y: H - 0.42, w: 0.6, h: 0.3, fontFace: BODY_FONT, fontSize: 10, color: GREY, align: "right" });
+    s.addText(String(pageNo), { x: W - MX - 0.7, y: H - 0.5, w: 0.7, h: 0.38, fontFace: BODY_FONT, fontSize: MIN_FONT, color: GREY, align: "right" });
     s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: W, h: 0.09, fill: { color: BLUE } });
   }
   return s;
 }
 
-function addIcon(s, name, x, y, size = 0.32, color) {
+function addIcon(s, name, x, y, size = 0.34, color) {
   s.addImage({ data: iconUri(name, color), x, y, w: size, h: size });
 }
 
 function eyebrowTitle(s, eyebrow, title) {
-  s.addText(eyebrow.toUpperCase(), { x: MX, y: 0.3, w: CW, h: 0.34, fontFace: BODY_FONT, fontSize: 13, bold: true, color: BLUE, charSpacing: 2 });
-  s.addText(title, { x: MX, y: 0.62, w: CW, h: 0.8, fontFace: TITLE_FONT, fontSize: 30, bold: true, color: NAVY });
+  s.addText(eyebrow.toUpperCase(), { x: MX, y: 0.26, w: CW, h: 0.38, fontFace: BODY_FONT, fontSize: MIN_FONT, bold: true, color: BLUE, charSpacing: 2 });
+  s.addText(title, { x: MX, y: 0.64, w: CW, h: 0.66, fontFace: TITLE_FONT, fontSize: 30, bold: true, color: NAVY });
 }
 
 function card(s, x, y, w, h, { fill = WHITE, line = BORDER } = {}) {
   s.addShape(pptx.ShapeType.roundRect, { x, y, w, h, rectRadius: 0.09, fill: { color: fill }, line: { color: line, width: 1 }, shadow: SHADOW });
 }
 
-function iconCards(s, items, { x = MX, y = 2.0, w = CW, cols = 4, rowH = 1.15, gap = 0.2, fontSize = 14 } = {}) {
+function iconCards(s, items, { x = MX, y = 2.0, w = CW, cols = 4, rowH = 1.6, gap = 0.2, fontSize = MIN_FONT, titleSize = 20 } = {}) {
   const cw = (w - gap * (cols - 1)) / cols;
   items.forEach((it, i) => {
     const cx = x + (i % cols) * (cw + gap);
     const cy = y + Math.floor(i / cols) * (rowH + gap);
     card(s, cx, cy, cw, rowH);
     if (it.d) {
-      addIcon(s, it.icon, cx + 0.18, cy + 0.18, 0.36);
+      addIcon(s, it.icon, cx + 0.18, cy + 0.2, 0.38);
       s.addText(it.text, {
-        x: cx + 0.64, y: cy + 0.12, w: cw - 0.82, h: 0.62, fontFace: TITLE_FONT, fontSize, bold: true, color: NAVY, valign: "middle", lineSpacingMultiple: 1.0,
+        x: cx + 0.66, y: cy + 0.12, w: cw - 0.84, h: 0.85, fontFace: TITLE_FONT, fontSize: titleSize, bold: true, color: NAVY, valign: "middle", lineSpacingMultiple: 1.0,
       });
       s.addText(it.d, {
-        x: cx + 0.18, y: cy + 0.8, w: cw - 0.36, h: rowH - 0.92, fontFace: BODY_FONT, fontSize: fontSize - 2, color: GREY, valign: "top", lineSpacingMultiple: 1.1,
+        x: cx + 0.18, y: cy + 1.02, w: cw - 0.36, h: rowH - 1.16, fontFace: BODY_FONT, fontSize, color: GREY, valign: "top", lineSpacingMultiple: 1.1,
       });
     } else {
-      addIcon(s, it.icon, cx + 0.18, cy + rowH / 2 - 0.18, 0.36);
+      addIcon(s, it.icon, cx + 0.18, cy + rowH / 2 - 0.19, 0.38);
       s.addText(it.text, {
-        x: cx + 0.66, y: cy + 0.08, w: cw - 0.84, h: rowH - 0.16, fontFace: BODY_FONT, fontSize, color: NAVY, valign: "middle", lineSpacingMultiple: 1.05,
+        x: cx + 0.68, y: cy + 0.08, w: cw - 0.86, h: rowH - 0.16, fontFace: BODY_FONT, fontSize, color: NAVY, valign: "middle", lineSpacingMultiple: 1.05,
       });
     }
   });
 }
 
-function introText(s, text, y = 1.42, h = 0.6) {
-  s.addText(text, { x: MX, y, w: CW, h, fontFace: BODY_FONT, fontSize: 16, color: GREY, valign: "top", lineSpacingMultiple: 1.15 });
+function introText(s, text, y = 1.4, h = 0.68) {
+  s.addText(text, { x: MX, y, w: CW, h, fontFace: BODY_FONT, fontSize: MIN_FONT, color: GREY, valign: "top", lineSpacingMultiple: 1.15 });
 }
 
-function dataTable(s, header, rows, { x = MX, y = 2.0, w = CW, colW, fontSize = 14, rowH = 0.46 } = {}) {
+function dataTable(s, header, rows, { x = MX, y = 2.0, w = CW, colW, fontSize = MIN_FONT, rowH = 0.55 } = {}) {
   const tableRows = [
     header.map((t) => ({ text: t, options: { bold: true, color: WHITE, fill: { color: BLUE }, fontFace: TITLE_FONT, fontSize } })),
     ...rows.map((r, i) => r.map((c) => ({ text: c, options: { color: NAVY, fill: { color: i % 2 ? LIGHT : WHITE }, fontFace: BODY_FONT, fontSize } }))),
@@ -127,10 +128,10 @@ function dataTable(s, header, rows, { x = MX, y = 2.0, w = CW, colW, fontSize = 
   s.addTable(tableRows, { x, y, w, colW, border: { type: "solid", color: BORDER, pt: 0.75 }, rowH, valign: "middle", margin: 0.09 });
 }
 
-function bulletList(s, items, { x = MX, y = 2.0, w = CW, h = 4.6, fontSize = 15 } = {}) {
+function bulletList(s, items, { x = MX, y = 1.7, w = CW, h = 5.0, fontSize = MIN_FONT } = {}) {
   s.addText(
-    items.map((t) => ({ text: t, options: { bullet: { characterCode: "2022", indent: 14 }, color: NAVY, breakLine: true } })),
-    { x, y, w, h, fontFace: BODY_FONT, fontSize, valign: "top", lineSpacingMultiple: 1.3, paraSpaceAfter: 8 }
+    items.map((t) => ({ text: t, options: { bullet: { characterCode: "2022", indent: 16 }, color: NAVY, breakLine: true } })),
+    { x, y, w, h, fontFace: BODY_FONT, fontSize, valign: "top", lineSpacingMultiple: 1.2, paraSpaceAfter: 10 }
   );
 }
 
@@ -138,12 +139,12 @@ function bulletList(s, items, { x = MX, y = 2.0, w = CW, h = 4.6, fontSize = 15 
 {
   const s = slide();
   s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: W, h: 0.12, fill: { color: BLUE } });
-  s.addShape(pptx.ShapeType.roundRect, { x: MX, y: 1.25, w: 4.5, h: 0.52, rectRadius: 0.26, fill: { color: BLUE } });
-  s.addText("US 114050 · NQF LEVEL 5 · 4 CREDITS", { x: MX, y: 1.25, w: 4.5, h: 0.52, fontFace: BODY_FONT, fontSize: 12, bold: true, color: WHITE, align: "center", valign: "middle", charSpacing: 1 });
-  s.addText("Explain the Principles of Business and the Role of Information Technology", { x: MX, y: 1.95, w: 10.8, h: 1.9, fontFace: TITLE_FONT, fontSize: 38, bold: true, color: NAVY });
-  s.addText("Forms of enterprise, business objectives and the environment within which businesses operate", { x: MX, y: 3.85, w: 9.5, h: 0.6, fontFace: BODY_FONT, fontSize: 19, color: GREY });
+  s.addShape(pptx.ShapeType.roundRect, { x: MX, y: 1.1, w: 5.9, h: 0.62, rectRadius: 0.31, fill: { color: BLUE } });
+  s.addText("US 114050 · NQF LEVEL 5 · 4 CREDITS", { x: MX, y: 1.1, w: 5.9, h: 0.62, fontFace: BODY_FONT, fontSize: MIN_FONT, bold: true, color: WHITE, align: "center", valign: "middle", charSpacing: 1 });
+  s.addText("Explain the Principles of Business and the Role of Information Technology", { x: MX, y: 1.9, w: 10.8, h: 1.85, fontFace: TITLE_FONT, fontSize: 38, bold: true, color: NAVY });
+  s.addText("Forms of enterprise, business objectives and the environment within which businesses operate", { x: MX, y: 3.8, w: 9.7, h: 0.75, fontFace: BODY_FONT, fontSize: 19, color: GREY, lineSpacingMultiple: 1.15 });
   addIcon(s, "briefcase", 11.0, 1.4, 1.8, "#" + BORDER);
-  s.addShape(pptx.ShapeType.line, { x: MX, y: 4.55, w: CW, h: 0, line: { color: BORDER, width: 1 } });
+  s.addShape(pptx.ShapeType.line, { x: MX, y: 4.62, w: CW, h: 0, line: { color: BORDER, width: 1 } });
   const meta = [
     ["TIME", "90 minutes · Self & Group"],
     ["SESSION", "Friday, 21 Aug 2026 · 09h00 – 14h00"],
@@ -152,26 +153,26 @@ function bulletList(s, items, { x = MX, y = 2.0, w = CW, h = 4.6, fontSize = 15 
   ];
   meta.forEach(([k, v], i) => {
     const x = MX + i * (CW / 4);
-    s.addText(k, { x, y: 4.8, w: CW / 4 - 0.2, h: 0.3, fontFace: BODY_FONT, fontSize: 11.5, bold: true, color: BLUE, charSpacing: 2 });
-    s.addText(v, { x, y: 5.12, w: CW / 4 - 0.2, h: 0.6, fontFace: BODY_FONT, fontSize: 14, color: NAVY });
+    s.addText(k, { x, y: 4.82, w: CW / 4 - 0.2, h: 0.36, fontFace: BODY_FONT, fontSize: MIN_FONT, bold: true, color: BLUE, charSpacing: 1 });
+    s.addText(v, { x, y: 5.2, w: CW / 4 - 0.2, h: 1.0, fontFace: BODY_FONT, fontSize: MIN_FONT, color: NAVY, lineSpacingMultiple: 1.1 });
   });
-  s.addText("ITSS Learn · Investec · Corporate Banking Technology", { x: MX, y: H - 0.55, w: CW, h: 0.35, fontFace: BODY_FONT, fontSize: 12, color: GREY });
+  s.addText("ITSS Learn · Investec · Corporate Banking Technology", { x: MX, y: H - 0.62, w: CW, h: 0.4, fontFace: BODY_FONT, fontSize: MIN_FONT, color: GREY });
 }
 
 /* ============================================================= OUTCOMES */
 {
   const s = slide();
   eyebrowTitle(s, "Specific outcomes & assessment criteria", "What you must be able to do");
-  introText(s, "Specific outcome: Explain the principles of business and the role of information technology. You will be assessed against these criteria:");
+  introText(s, "Specific outcome: explain the principles of business and the role of information technology. You will be assessed against these criteria:");
   iconCards(s, [
-    { icon: "layers", text: "Types of business organisations", d: "The description distinguishes types of business organisations — Sole trader, Partnership, Limited Co, Private Co, Public Ltd Company." },
-    { icon: "target", text: "Common objectives", d: "The description outlines the common objectives within which businesses operate — buying & selling activity, profit, charity, social clubs." },
-    { icon: "globe", text: "Business environment", d: "The description outlines the environment within which businesses operate." },
-  ], { y: 2.3, cols: 3, rowH: 2.1, fontSize: 15 });
-  card(s, MX, 5.0, CW, 0.62, { fill: LIGHT });
-  addIcon(s, "check", MX + 0.22, 5.15, 0.3);
+    { icon: "layers", text: "Types of business organisations", d: "Distinguish sole trader, partnership, limited, private and public companies." },
+    { icon: "target", text: "Common objectives", d: "Outline the objectives businesses pursue — buying & selling, profit, charity, social clubs." },
+    { icon: "globe", text: "Business environment", d: "Outline the environment within which businesses operate." },
+  ], { y: 2.25, cols: 3, rowH: 3.0 });
+  card(s, MX, 5.55, CW, 0.85, { fill: LIGHT });
+  addIcon(s, "check", MX + 0.22, 5.78, 0.38);
   s.addText("Choose your own business setup as you work through this lesson — every form of enterprise you meet is a candidate.", {
-    x: MX + 0.62, y: 5.0, w: CW - 0.88, h: 0.62, fontFace: BODY_FONT, fontSize: 13.5, color: NAVY, valign: "middle",
+    x: MX + 0.72, y: 5.55, w: CW - 0.98, h: 0.85, fontFace: BODY_FONT, fontSize: MIN_FONT, color: NAVY, valign: "middle", lineSpacingMultiple: 1.1,
   });
 }
 
@@ -179,28 +180,28 @@ function bulletList(s, items, { x = MX, y = 2.0, w = CW, h = 4.6, fontSize = 15 
 {
   const s = slide();
   eyebrowTitle(s, "Forms of enterprises", "Four ways to own a business");
-  introText(s, "Let's take a closer look at the different types of businesses there are, from which you must choose for your own setup.");
+  introText(s, "The different types of businesses — from which you must choose your own setup.", 1.4, 0.4);
   iconCards(s, [
-    { icon: "person", text: "Sole Proprietor", d: "One owner, no partners or co-owners. No formal registration — but if the business becomes insolvent, you personally become insolvent." },
-    { icon: "people", text: "Partnership", d: "Two to 20 people making and sharing profits. Not a legal person — partners are jointly and severally liable for its debts." },
-    { icon: "folder", text: "Closed Corporation", d: "Simple, flexible, inexpensive legal structure for up to ten natural persons. A legal person in its own right." },
-    { icon: "briefcase", text: "Company", d: "The most advanced form (Act 61 of 1973) — eliminates unlimited liability and improves the ability to acquire capital. Private or public." },
-  ], { y: 2.15, cols: 4, rowH: 2.5, fontSize: 14 });
+    { icon: "person", text: "Sole Proprietor", d: "One owner, no partners. No formal registration — but if the business fails, you personally become insolvent." },
+    { icon: "people", text: "Partnership", d: "Two to 20 people making and sharing profits. Partners are jointly and severally liable for its debts." },
+    { icon: "folder", text: "Closed Corporation", d: "A simple, flexible, inexpensive legal person for up to ten natural persons." },
+    { icon: "briefcase", text: "Company", d: "The most advanced form — limits liability and improves access to capital. Private or public." },
+  ], { y: 2.0, cols: 2, rowH: 2.15, fontSize: MIN_FONT });
 }
 
 /* ============================================================= COMPANY TABLE */
 {
   const s = slide();
   eyebrowTitle(s, "The company (Pty Ltd)", "Private vs public company");
-  introText(s, "In South Africa two types of profit-seeking companies are found — the private and the public company. The most important differences:");
+  introText(s, "Two types of profit-seeking companies are found in South Africa. The most important differences:", 1.4, 0.4);
   dataTable(s, ["", "Private Company", "Public Company"], [
     ["Members (shareholders)", "Between one and 50", "At least seven"],
     ["Directors", "At least one", "At least two"],
-    ["Shares", "May not be offered to the general public", "May be offered to the general public"],
-    ["Transferability of shares", "Limited — needs board of directors' consent", "Freely transferable"],
-    ["Name ends with", "(Pty.) Ltd. or Proprietary (Limited)", "Ltd. or Limited"],
-    ["Legal requirements", "Subject to less requirements and limitations", "Subject to numerous requirements and limitations"],
-  ], { y: 2.05, colW: [3.4, 4.4, 4.43], fontSize: 13, rowH: 0.62 });
+    ["Shares", "May not be offered to the public", "May be offered to the public"],
+    ["Transfer of shares", "Needs the board's consent", "Freely transferable"],
+    ["Name ends with", "(Pty.) Ltd.", "Ltd. or Limited"],
+    ["Legal requirements", "Fewer requirements", "Numerous requirements"],
+  ], { y: 1.95, colW: [3.6, 4.4, 4.23], rowH: 0.62 });
 }
 
 /* ============================================================= CLOSED CORPORATION */
@@ -208,14 +209,14 @@ function bulletList(s, items, { x = MX, y = 2.0, w = CW, h = 4.6, fontSize = 15 
   const s = slide();
   eyebrowTitle(s, "Forms of enterprises", "Closed corporations (CC)");
   bulletList(s, [
-    "A simple, flexible, inexpensive and legal business structure for up to ten natural persons involved in business together.",
-    "May not have more than ten members and must be registered with the Registrar of Closed Corporations in Pretoria.",
-    "A legal person — it can enter into contracts, operate a bank account, own property, sue or be sued in court.",
-    "Formed and owned by its members but exists independently of them — it continues even if membership changes or all members die.",
-    "Establishment, existence or termination can be done only by law, in terms of the Closed Corporations Act.",
-    "Owned and managed by its members: each holds an interest (a percentage) and these must always add up to 100 percent.",
+    "A simple, flexible, inexpensive legal structure for up to ten natural persons in business together.",
+    "Maximum ten members; must be registered with the Registrar of Closed Corporations in Pretoria.",
+    "A legal person — it can enter into contracts, operate a bank account, own property, sue or be sued.",
+    "Formed by its members but exists independently — it continues even if membership changes or all members die.",
+    "Established, run and terminated only in terms of the Closed Corporations Act.",
+    "Each member holds an interest (a percentage); the interests must always add up to 100 percent.",
     "A company, corporation or trust may not be a member of a closed corporation.",
-  ], { y: 1.75, fontSize: 15 });
+  ]);
 }
 
 /* ============================================================= PARTNERSHIPS */
@@ -224,13 +225,12 @@ function bulletList(s, items, { x = MX, y = 2.0, w = CW, h = 4.6, fontSize = 15 
   eyebrowTitle(s, "Forms of enterprises", "Partnerships");
   bulletList(s, [
     "A business association concluded between people who intend making and sharing profits.",
-    "Not a legal person — the rights, duties and liabilities of the partnership bind the individual partners.",
+    "Not a legal person — its rights, duties and liabilities bind the individual partners.",
     "Minimum of two and maximum of 20 partners (certain professional partnerships may have more).",
-    "Managed according to the agreement between the partners; each partner is an agent of the partnership and binds all other partners.",
-    "Partners are jointly and severally liable for partnership debts.",
-    "If sequestrated due to insolvency, the estates of all the partners are simultaneously sequestrated.",
-    "Always have a properly worded agreement drawn up by an attorney — stipulating what happens if a partner dies or the partnership dissolves.",
-  ], { y: 1.75, fontSize: 15 });
+    "Each partner is an agent of the partnership and binds all the other partners.",
+    "Partners are jointly and severally liable for partnership debts; insolvency sequestrates every partner's estate.",
+    "Always have a properly worded agreement drawn up by an attorney — covering death of a partner or dissolution.",
+  ]);
 }
 
 /* ============================================================= SOLE PROPRIETOR */
@@ -239,15 +239,15 @@ function bulletList(s, items, { x = MX, y = 2.0, w = CW, h = 4.6, fontSize = 15 
   eyebrowTitle(s, "Forms of enterprises", "Sole proprietor");
   bulletList(s, [
     "Only one person owns the business — there are no partners or co-owners.",
-    "No need for formal registration, administration or termination; no statutes regulate sole owners and no documentation needs registering.",
-    "You do not have to work alone — you may employ people to manage or help you run the business.",
+    "No formal registration, administration or termination; no statutes regulate sole owners.",
+    "You do not have to work alone — you may employ people to help you run the business.",
     "If the business becomes insolvent, you personally become insolvent.",
-  ], { y: 1.75, h: 2.6, fontSize: 15 });
-  card(s, MX, 4.7, CW, 1.9, { fill: LIGHT });
-  s.addText("BEFORE YOU START: RESEARCH THE NEED", { x: MX + 0.25, y: 4.9, w: CW - 0.5, h: 0.3, fontFace: BODY_FONT, fontSize: 12, bold: true, color: BLUE, charSpacing: 1.5 });
+  ], { y: 1.7, h: 2.6 });
+  card(s, MX, 4.35, CW, 2.15, { fill: LIGHT });
+  s.addText("BEFORE YOU START: RESEARCH THE NEED", { x: MX + 0.25, y: 4.55, w: CW - 0.5, h: 0.36, fontFace: BODY_FONT, fontSize: MIN_FONT, bold: true, color: BLUE, charSpacing: 1 });
   s.addText(
-    "Your skills · your interests · your other commitments · is there a market? · who is the market? · how big is it? · who is the competition? · growing or stagnant? · premises or home? · capital requirements · right size · working hours · staffing numbers · the risk",
-    { x: MX + 0.25, y: 5.25, w: CW - 0.5, h: 1.2, fontFace: BODY_FONT, fontSize: 14, color: NAVY, lineSpacingMultiple: 1.3 }
+    "Your skills · your interests · other commitments · is there a market? · who is it? · how big? · the competition · growing or stagnant? · premises or home? · capital · right size · working hours · staffing · the risk",
+    { x: MX + 0.25, y: 4.95, w: CW - 0.5, h: 1.45, fontFace: BODY_FONT, fontSize: MIN_FONT, color: NAVY, lineSpacingMultiple: 1.25 }
   );
 }
 
@@ -255,14 +255,14 @@ function bulletList(s, items, { x = MX, y = 2.0, w = CW, h = 4.6, fontSize = 15 
 {
   const s = slide();
   eyebrowTitle(s, "Choosing your idea", "New, existing or franchised?");
-  introText(s, "Rate each business idea against the research criteria on a scale of 1–10 to see which to start with first.");
+  introText(s, "Rate each idea against the research criteria on a scale of 1–10.", 1.4, 0.4);
   iconCards(s, [
-    { icon: "pen", text: "Start a new business", d: "Your own idea from scratch. Rate it 1–10 against the research checklist — skills, market, competition, capital, location, risk." },
-    { icon: "briefcase", text: "Buy an existing business", d: "An ongoing concern — revenue from day one with a customer and supplier base, premises and equipment. But you pay for goodwill and there may be unseen flaws." },
+    { icon: "pen", text: "Start a new business", d: "Your own idea from scratch — rate it against the checklist: skills, market, competition, capital, risk." },
+    { icon: "briefcase", text: "Buy an existing one", d: "Revenue from day one with customers and suppliers in place — but you pay for goodwill and there may be unseen flaws." },
     { icon: "globe", text: "Open a franchise", d: "The in-between: a new business that is also a known brand. \u201cA marriage between a big business and a small business.\u201d" },
-  ], { y: 2.15, cols: 3, rowH: 2.35, fontSize: 14.5 });
-  s.addText("According to the South African Franchise Association, franchising is about to explode in South Africa — one of the best opportunities for aspiring entrepreneurs.", {
-    x: MX, y: 4.85, w: CW, h: 0.6, fontFace: BODY_FONT, fontSize: 14, color: GREY, italic: true,
+  ], { y: 2.0, cols: 3, rowH: 3.2 });
+  s.addText("According to the South African Franchise Association, franchising is about to explode in South Africa.", {
+    x: MX, y: 5.5, w: CW, h: 0.75, fontFace: BODY_FONT, fontSize: MIN_FONT, color: GREY, italic: true, lineSpacingMultiple: 1.15,
   });
 }
 
@@ -272,10 +272,10 @@ function bulletList(s, items, { x = MX, y = 2.0, w = CW, h = 4.6, fontSize = 15 
   eyebrowTitle(s, "Franchising", "Franchisor and franchisee");
   iconCards(s, [
     { icon: "award", text: "The franchisor", d: "A person or company with a highly marketable product or service. Achieves rapid expansion at relatively low cost." },
-    { icon: "person", text: "The franchisee", d: "Licensed by the franchisor to perform the marketing function; provides most of the capital required. Gains big-business purchasing and advertising advantages." },
-  ], { y: 1.9, cols: 2, rowH: 1.9, fontSize: 15 });
-  s.addText("The relatively small size of the franchisee's business keeps small-business advantages — personal dedication and commitment — making franchising particularly suited to service-type businesses, at relatively low risk.", {
-    x: MX, y: 4.15, w: CW, h: 0.9, fontFace: BODY_FONT, fontSize: 15, color: GREY, lineSpacingMultiple: 1.25,
+    { icon: "person", text: "The franchisee", d: "Licensed to perform the marketing function; provides most of the capital. Gains big-business purchasing and advertising advantages." },
+  ], { y: 1.75, cols: 2, rowH: 2.5 });
+  s.addText("The small size of the franchisee's business keeps small-business advantages — personal dedication and commitment — making franchising particularly suited to service businesses, at relatively low risk.", {
+    x: MX, y: 4.55, w: CW, h: 1.3, fontFace: BODY_FONT, fontSize: MIN_FONT, color: GREY, lineSpacingMultiple: 1.25,
   });
 }
 
@@ -284,44 +284,43 @@ function bulletList(s, items, { x = MX, y = 2.0, w = CW, h = 4.6, fontSize = 15 
   const s = slide();
   eyebrowTitle(s, "Franchising", "Advantages of franchising");
   bulletList(s, [
-    "Far greater chances of success — the franchisor supplies goods or services more cheaply than an independent business could source them.",
+    "Far greater chances of success — the franchisor supplies goods or services more cheaply.",
     "The franchisor obtains bigger discounts by buying in bulk for his outlets.",
     "The franchisee starts with a product or service that has an existing, acceptable image.",
-    "Customers know the business, even if the outlet is new.",
-    "An accepted brand takes years to build — a franchise has it from the start.",
-    "Most franchisors offer a complete package: operations manual, accounting system, marketing assistance, outlet design, staff selection and training.",
-    "Ongoing management advice — it is in the franchisor's own interest that every outlet succeeds.",
-  ], { y: 1.75, fontSize: 15 });
+    "Customers know the business, even if the outlet is new — an accepted brand from the start.",
+    "A complete package: operations manual, accounting system, marketing, outlet design, staff training.",
+    "Ongoing management advice — every outlet's success is in the franchisor's own interest.",
+  ]);
 }
 
 /* ============================================================= FRANCHISE DISADVANTAGES + REQUIREMENTS */
 {
   const s = slide();
-  eyebrowTitle(s, "Franchising", "Disadvantages — and what you need to be a franchisee");
+  eyebrowTitle(s, "Franchising", "Disadvantages — and what you need");
   const colW = (CW - 0.3) / 2;
-  card(s, MX, 1.75, colW, 4.5);
-  s.addText("DISADVANTAGES", { x: MX + 0.25, y: 1.95, w: colW - 0.5, h: 0.3, fontFace: BODY_FONT, fontSize: 12, bold: true, color: BLUE, charSpacing: 1.5 });
+  card(s, MX, 1.7, colW, 5.0);
+  s.addText("DISADVANTAGES", { x: MX + 0.25, y: 1.9, w: colW - 0.5, h: 0.36, fontFace: BODY_FONT, fontSize: MIN_FONT, bold: true, color: BLUE, charSpacing: 1 });
   s.addText(
     [
-      "Selling rights normally restricted to a particular area only",
-      "Strict franchisor controls to keep uniform quality standards and cleanliness",
-      "Problems can develop if the franchisee becomes too dependent on the franchisor",
-      "It costs money — initial franchise fees plus ongoing royalty fees",
-    ].map((t) => ({ text: t, options: { bullet: { characterCode: "2022", indent: 12 }, color: NAVY, breakLine: true } })),
-    { x: MX + 0.25, y: 2.3, w: colW - 0.5, h: 3.8, fontFace: BODY_FONT, fontSize: 13.5, valign: "top", lineSpacingMultiple: 1.25, paraSpaceAfter: 8 }
+      "Selling rights restricted to a particular area only",
+      "Strict franchisor controls for uniform quality and cleanliness",
+      "Risk of becoming too dependent on the franchisor",
+      "It costs money — initial franchise fees plus ongoing royalties",
+    ].map((t) => ({ text: t, options: { bullet: { characterCode: "2022", indent: 14 }, color: NAVY, breakLine: true } })),
+    { x: MX + 0.25, y: 2.3, w: colW - 0.5, h: 4.2, fontFace: BODY_FONT, fontSize: MIN_FONT, valign: "top", lineSpacingMultiple: 1.2, paraSpaceAfter: 10 }
   );
   const x2 = MX + colW + 0.3;
-  card(s, x2, 1.75, colW, 4.5);
-  s.addText("WHAT YOU NEED", { x: x2 + 0.25, y: 1.95, w: colW - 0.5, h: 0.3, fontFace: BODY_FONT, fontSize: 12, bold: true, color: BLUE, charSpacing: 1.5 });
+  card(s, x2, 1.7, colW, 5.0);
+  s.addText("WHAT YOU NEED", { x: x2 + 0.25, y: 1.9, w: colW - 0.5, h: 0.36, fontFace: BODY_FONT, fontSize: MIN_FONT, bold: true, color: BLUE, charSpacing: 1 });
   s.addText(
     [
       "The qualities of a successful entrepreneur",
-      "A thorough investigation of the franchisor — track record, industry growth, satisfied franchisees",
-      "Established training provision, and an attorney to scrutinise the franchise agreement",
-      "Legal and financial aspects clearly defined and fair to both parties",
-      "Loans are more readily available to franchises because of the reduced risk",
-    ].map((t) => ({ text: t, options: { bullet: { characterCode: "2022", indent: 12 }, color: NAVY, breakLine: true } })),
-    { x: x2 + 0.25, y: 2.3, w: colW - 0.5, h: 3.8, fontFace: BODY_FONT, fontSize: 13.5, valign: "top", lineSpacingMultiple: 1.25, paraSpaceAfter: 8 }
+      "A thorough investigation of the franchisor's track record",
+      "Contact with existing franchisees; established training",
+      "An attorney to scrutinise the franchise agreement — fair to both parties",
+      "Loans come easier to franchises because of the reduced risk",
+    ].map((t) => ({ text: t, options: { bullet: { characterCode: "2022", indent: 14 }, color: NAVY, breakLine: true } })),
+    { x: x2 + 0.25, y: 2.3, w: colW - 0.5, h: 4.2, fontFace: BODY_FONT, fontSize: MIN_FONT, valign: "top", lineSpacingMultiple: 1.2, paraSpaceAfter: 10 }
   );
 }
 
@@ -329,13 +328,13 @@ function bulletList(s, items, { x = MX, y = 2.0, w = CW, h = 4.6, fontSize = 15 
 {
   const s = slide();
   eyebrowTitle(s, "Franchising", "What are franchised businesses?");
-  introText(s, "Think McDonald's, Steers, Spar, Shoprite — the same name, the same goods, at more or less the same prices.");
+  introText(s, "Think McDonald's, Steers, Spar, Shoprite — the same name and goods at the same prices.", 1.4, 0.4);
   bulletList(s, [
-    "The largest criteria: every outlet must look uniformly the same and sell the branded products the franchisor suggests.",
+    "The largest criterion: every outlet must look uniformly the same and sell the branded products the franchisor suggests.",
     "Products are increasingly labelled as \u201chouse brands\u201d — a building tool for the franchise brand name.",
-    "The brand gives consumers peace of mind: the same quality from one outlet as from the next, wherever they shop.",
+    "The brand gives consumers peace of mind: the same quality from one outlet as from the next.",
     "This is the brand consumers long for — confidence in the quality of the product they are buying.",
-  ], { y: 2.15, h: 3.6, fontSize: 15 });
+  ], { y: 2.05, h: 4.3 });
 }
 
 /* ============================================================= AIMS / OBJECTIVES / MISSION */
@@ -344,24 +343,24 @@ function bulletList(s, items, { x = MX, y = 2.0, w = CW, h = 4.6, fontSize = 15 
   eyebrowTitle(s, "Direction", "Aims, objectives and mission statements");
   introText(s, "A sole trader may have unstated aims — like surviving the first year. Others state exactly what they aim to do: Amazon wants to \u201cmake history and have fun\u201d.");
   iconCards(s, [
-    { icon: "target", text: "An aim", d: "Where the business wants to go in the future — its goals. A statement of purpose, e.g. \u201cwe want to grow the business into Europe.\u201d" },
-    { icon: "chart", text: "Business objectives", d: "The stated, measurable targets of how to achieve the aims — e.g. \u201csales of \u20ac10 million in European markets in 2004.\u201d" },
-    { icon: "document", text: "A mission statement", d: "Sets out the vision and values so employees, managers, customers and even suppliers understand the basis for the business's actions." },
-  ], { y: 2.3, cols: 3, rowH: 2.2, fontSize: 14.5 });
+    { icon: "target", text: "An aim", d: "Where the business wants to go — its goals. E.g. \u201cwe want to grow the business into Europe.\u201d" },
+    { icon: "chart", text: "Objectives", d: "Stated, measurable targets for achieving the aims — e.g. \u201c\u20ac10 million of European sales in 2004.\u201d" },
+    { icon: "document", text: "A mission statement", d: "Sets out the vision and values so staff, customers and suppliers understand the basis for the business's actions." },
+  ], { y: 2.3, cols: 3, rowH: 3.1 });
 }
 
 /* ============================================================= SMART */
 {
   const s = slide();
   eyebrowTitle(s, "Business objectives", "SMART objectives");
-  introText(s, "Objectives give the business a clearly defined target — plans can be made, employees are motivated and progress can be measured.");
+  introText(s, "Objectives give a clearly defined target — plans can be made and progress measured.", 1.4, 0.4);
   iconCards(s, [
-    { icon: "target", text: "S — Specific", d: "Aimed at what the business does, e.g. a hotel filling 60% of its beds a night during October." },
-    { icon: "chart", text: "M — Measurable", d: "A value can be put on it, e.g. \u20ac10,000 in sales in the next half year of trading." },
+    { icon: "target", text: "S — Specific", d: "Aimed at what the business does, e.g. a hotel filling 60% of its beds a night." },
+    { icon: "chart", text: "M — Measurable", d: "A value can be put on it, e.g. \u20ac10,000 in sales in the next half year." },
     { icon: "people", text: "A — Agreed", d: "By all those concerned in trying to achieve the objective." },
     { icon: "check", text: "R — Realistic", d: "Challenging, but achievable with the resources available." },
     { icon: "clock", text: "T — Time specific", d: "A time limit for achievement, e.g. by the end of the year." },
-  ], { y: 2.3, cols: 5, rowH: 2.15, fontSize: 13 });
+  ], { y: 2.0, cols: 3, rowH: 2.2 });
 }
 
 /* ============================================================= MAIN OBJECTIVES */
@@ -369,16 +368,36 @@ function bulletList(s, items, { x = MX, y = 2.0, w = CW, h = 4.6, fontSize = 15 
   const s = slide();
   eyebrowTitle(s, "Business objectives", "The main objectives businesses pursue");
   iconCards(s, [
-    { icon: "shield", text: "Survival", d: "Short-term — small businesses starting out, new entrants to a market, or a time of crisis." },
-    { icon: "trend", text: "Profit maximisation", d: "Make the most profit possible — most likely the aim of the owners and shareholders." },
-    { icon: "check", text: "Profit satisfying", d: "Enough profit to keep the owners comfortable — smaller businesses whose owners don't want longer hours." },
-    { icon: "chart", text: "Sales growth", d: "Make as many sales as possible — survival through size, plus economies of scale." },
-  ], { y: 1.9, cols: 4, rowH: 2.15, fontSize: 14 });
-  card(s, MX, 4.4, CW, 1.9, { fill: LIGHT });
-  s.addText("WHEN OBJECTIVES CONFLICT", { x: MX + 0.25, y: 4.6, w: CW - 0.5, h: 0.3, fontFace: BODY_FONT, fontSize: 12, bold: true, color: BLUE, charSpacing: 1.5 });
+    { icon: "shield", text: "Survival", d: "Short-term — new businesses, new entrants to a market, or a time of crisis." },
+    { icon: "trend", text: "Profit maximisation", d: "Make the most profit possible — the likely aim of the owners and shareholders." },
+    { icon: "check", text: "Profit satisfying", d: "Enough profit to keep the owners comfortable — without working longer hours." },
+    { icon: "chart", text: "Sales growth", d: "Make as many sales as possible — survival through size and economies of scale." },
+  ], { y: 1.75, cols: 2, rowH: 2.35 });
+}
+
+/* ============================================================= CONFLICTING & CHANGING OBJECTIVES */
+{
+  const s = slide();
+  eyebrowTitle(s, "Business objectives", "When objectives conflict — and why they change");
+  card(s, MX, 1.75, CW, 2.3, { fill: LIGHT });
+  s.addText("WHEN OBJECTIVES CONFLICT", { x: MX + 0.25, y: 1.95, w: CW - 0.5, h: 0.36, fontFace: BODY_FONT, fontSize: MIN_FONT, bold: true, color: BLUE, charSpacing: 1 });
   s.addText(
-    "Growth vs profit: higher short-term sales (e.g. price cuts) reduce short-term profit.  ·  Short-term vs long-term: lower cash flows now while investing in new products, plant and equipment.  ·  Large Stock Exchange investors are often accused of chasing short-term performance instead of investing for the long term.",
-    { x: MX + 0.25, y: 4.95, w: CW - 0.5, h: 1.2, fontFace: BODY_FONT, fontSize: 13.5, color: NAVY, lineSpacingMultiple: 1.3 }
+    [
+      "Growth vs profit: price cuts lift short-term sales but reduce short-term profit.",
+      "Short term vs long term: cash flow drops now while investing in new products and equipment.",
+      "Large Stock Exchange investors are often accused of chasing short-term performance.",
+    ].map((t) => ({ text: t, options: { bullet: { characterCode: "2022", indent: 14 }, color: NAVY, breakLine: true } })),
+    { x: MX + 0.25, y: 2.38, w: CW - 0.5, h: 1.55, fontFace: BODY_FONT, fontSize: MIN_FONT, valign: "top", lineSpacingMultiple: 1.2, paraSpaceAfter: 8 }
+  );
+  card(s, MX, 4.3, CW, 2.3);
+  s.addText("WHY OBJECTIVES CHANGE", { x: MX + 0.25, y: 4.5, w: CW - 0.5, h: 0.36, fontFace: BODY_FONT, fontSize: MIN_FONT, bold: true, color: BLUE, charSpacing: 1 });
+  s.addText(
+    [
+      "An objective is achieved and a new one is needed — survival in year one, profit in year two.",
+      "Competitors launch new products or cut prices, so targets must be revised.",
+      "Technology changes product designs, so sales and production targets change too.",
+    ].map((t) => ({ text: t, options: { bullet: { characterCode: "2022", indent: 14 }, color: NAVY, breakLine: true } })),
+    { x: MX + 0.25, y: 4.93, w: CW - 0.5, h: 1.55, fontFace: BODY_FONT, fontSize: MIN_FONT, valign: "top", lineSpacingMultiple: 1.2, paraSpaceAfter: 8 }
   );
 }
 
@@ -387,18 +406,12 @@ function bulletList(s, items, { x = MX, y = 2.0, w = CW, h = 4.6, fontSize = 15 
   const s = slide();
   eyebrowTitle(s, "Alternative aims and objectives", "Not all businesses seek profit or growth");
   iconCards(s, [
-    { icon: "shield", text: "Ethical & socially responsible", d: "The Co-op, the Body Shop — objectives based on beliefs about the environment and the less fortunate." },
-    { icon: "briefcase", text: "Public sector corporations", d: "Profit plus a public service — meeting the needs of the less well off, e.g. cheap and accessible transport." },
-    { icon: "search", text: "Public sector regulators", d: "Monitor or control private sector activities — ensuring businesses comply with the laws laid down." },
-    { icon: "gradcap", text: "Health care & education", d: "Provide a service — most private schools have charitable status; the aim is the enhancement of pupils through education." },
-    { icon: "people", text: "Charities & voluntary bodies", d: "Aims and objectives led by the beliefs they stand for." },
-  ], { y: 1.9, cols: 5, rowH: 2.35, fontSize: 12.5 });
-  card(s, MX, 4.6, CW, 1.5, { fill: LIGHT });
-  s.addText("WHY OBJECTIVES CHANGE", { x: MX + 0.25, y: 4.78, w: CW - 0.5, h: 0.3, fontFace: BODY_FONT, fontSize: 12, bold: true, color: BLUE, charSpacing: 1.5 });
-  s.addText(
-    "An objective is achieved and a new one is needed (survival year one \u2192 profit year two)  ·  competitors launch new products  ·  technology changes product designs, so sales and production targets must change.",
-    { x: MX + 0.25, y: 5.12, w: CW - 0.5, h: 0.85, fontFace: BODY_FONT, fontSize: 13.5, color: NAVY, lineSpacingMultiple: 1.3 }
-  );
+    { icon: "shield", text: "Ethical businesses", d: "The Co-op, the Body Shop — led by beliefs about the environment and people." },
+    { icon: "briefcase", text: "Public corporations", d: "Profit plus a public service — e.g. cheap, accessible transport." },
+    { icon: "search", text: "Public regulators", d: "Monitor the private sector — ensuring businesses comply with the law." },
+    { icon: "gradcap", text: "Health & education", d: "Most private schools have charitable status; the aim is educating pupils." },
+    { icon: "people", text: "Charities & voluntary", d: "Aims and objectives led by the beliefs they stand for." },
+  ], { y: 1.75, cols: 3, rowH: 2.3 });
 }
 
 /* ============================================================= WHAT'S NEXT */
@@ -406,11 +419,11 @@ function bulletList(s, items, { x = MX, y = 2.0, w = CW, h = 4.6, fontSize = 15 
   const s = slide();
   eyebrowTitle(s, "Now prove it", "Your work for this unit standard");
   iconCards(s, [
-    { icon: "chat", text: "Questioning session", d: "Distinguish the forms of enterprise, outline the common objectives and describe the business environment — typed answers, AI-marked." },
-    { icon: "dashboard", text: "Knowledge check quiz", d: "10 questions on everything covered in this lesson. 80%+ is competent." },
-    { icon: "check", text: "Self assessment", d: "Be honest with yourself — tick what you can do, write goals for what you can't." },
-    { icon: "folder", text: "Logbook project — Research", d: "Compile a project demonstrating how IT is used in everyday business. Use articles, pictures and other media. Mark it 114050." },
-  ], { y: 2.0, cols: 4, rowH: 2.35, fontSize: 13.5 });
+    { icon: "chat", text: "Questioning session", d: "Distinguish the forms of enterprise and outline the objectives — typed answers, AI-marked." },
+    { icon: "dashboard", text: "Knowledge check quiz", d: "10 questions on everything in this lesson. 80%+ is competent." },
+    { icon: "check", text: "Self assessment", d: "Be honest with yourself — tick what you can do, write goals for the rest." },
+    { icon: "folder", text: "Logbook project — Research", d: "Compile a project showing how IT is used in everyday business. Mark it 114050." },
+  ], { y: 1.75, cols: 2, rowH: 2.35 });
 }
 
 /* ============================================================= CLOSING */
@@ -418,19 +431,19 @@ function bulletList(s, items, { x = MX, y = 2.0, w = CW, h = 4.6, fontSize = 15 
   const s = slide();
   s.background = { color: NAVY };
   s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: W, h: 0.12, fill: { color: BLUE } });
-  addIcon(s, "briefcase", MX, 1.7, 0.65, "#" + DARK_LABEL);
+  addIcon(s, "briefcase", MX, 1.6, 0.7, "#" + DARK_LABEL);
   s.addText("Know the business — then support its technology.", {
-    x: MX, y: 2.5, w: CW, h: 1.4, fontFace: TITLE_FONT, fontSize: 36, bold: true, color: WHITE,
+    x: MX, y: 2.45, w: CW, h: 1.4, fontFace: TITLE_FONT, fontSize: 36, bold: true, color: WHITE,
   });
   s.addText("Forms of enterprise \u2192 researching the idea \u2192 franchising \u2192 aims, SMART objectives and the environments businesses operate in — the business context every IT systems support professional works inside.", {
-    x: MX, y: 3.95, w: 10.2, h: 1.0, fontFace: BODY_FONT, fontSize: 17, color: DARK_SUB, lineSpacingMultiple: 1.25,
+    x: MX, y: 3.95, w: 11.0, h: 1.4, fontFace: BODY_FONT, fontSize: MIN_FONT, color: DARK_SUB, lineSpacingMultiple: 1.25,
   });
-  s.addText("US 114050 · National Certificate: Information Technology — System Support · SAQA ID 48573 · ITSS Learn", {
-    x: MX, y: H - 0.6, w: CW, h: 0.35, fontFace: BODY_FONT, fontSize: 12, color: DARK_MUTED,
+  s.addText("US 114050 · National Certificate: IT — System Support · SAQA ID 48573 · ITSS Learn", {
+    x: MX, y: H - 0.62, w: CW, h: 0.4, fontFace: BODY_FONT, fontSize: MIN_FONT, color: DARK_MUTED,
   });
 }
 
 mkdirSync("public/downloads", { recursive: true });
 const OUT = "public/downloads/US-114050-Principles-of-Business.pptx";
 await pptx.writeFile({ fileName: OUT });
-console.log(`Written ${OUT} — ${pageNo} slides`);
+console.log(`Written ${OUT} — ${pageNo} slides (min font ${MIN_FONT}pt)`);
