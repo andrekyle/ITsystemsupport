@@ -6192,15 +6192,15 @@ a.plan-ppt:hover {
   line-height: 1.35;
 }
 [data-theme="dark"] .lesson-start-banner {
-  background: linear-gradient(135deg, #14293c 0%, #0e1d2c 100%);
-  color: var(--ink);
-  border: 1px solid #2a4a68;
+  background: #2c2c2c;
+  color: #ffffff;
+  border: 1px solid #383838;
   box-shadow: none;
 }
 [data-theme="dark"] .lesson-start-badge {
-  background: rgba(71, 158, 245, 0.16);
-  border-color: rgba(71, 158, 245, 0.45);
-  color: var(--azure);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
 }
 .lesson-stepper-top {
   display: flex;
