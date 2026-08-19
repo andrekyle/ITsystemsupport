@@ -3,7 +3,7 @@ import { Icon } from "../icons";
 import type { QuizQuestion, QuizResult } from "../types";
 
 /** A stable pseudo-random shuffle so re-renders don't move items around. */
-function seededShuffle<T>(arr: T[], seed: number): T[] {
+export function seededShuffle<T>(arr: T[], seed: number): T[] {
   const a = arr.slice();
   let s = seed || 1;
   for (let i = a.length - 1; i > 0; i--) {
@@ -45,6 +45,8 @@ export function Quiz({
   const [showKey, setShowKey] = useState(false);
 
   // Precompute the shuffled display orders (stable across renders using question index seeds).
+  // A fresh mount seed each attempt stops the answer from always sitting in the same slot.
+  const mountSeed = useMemo(() => Math.floor(Math.random() * 100000) + 1, []);
   const shuffled = useMemo(() => {
     return questions.map((q, qi) => {
       const seed = qi * 1000 + 7;
@@ -59,9 +61,13 @@ export function Quiz({
         const idx = q.pairs.map((_, i) => i);
         return { rightOrder: seededShuffle(idx, seed) };
       }
+      if (q.options?.length) {
+        // display order for choice options — answers keep their ORIGINAL indices
+        return { optOrder: seededShuffle(q.options.map((_, i) => i), seed + mountSeed) };
+      }
       return {};
     });
-  }, [questions]);
+  }, [questions, mountSeed]);
 
   function ansOf(qi: number, q: QuizQuestion): Ans {
     const cur = answers[qi];
@@ -287,7 +293,8 @@ export function Quiz({
             )}
 
             {kind === "choice" &&
-              q.options.map((opt, oi) => {
+              (shuffled[qi].optOrder ?? q.options.map((_, i) => i)).map((oi, displayPos) => {
+                const opt = q.options[oi];
                 const chosen = (answers[qi] as ChoiceAns | undefined)?.picks ?? [];
                 const want = q.answers ?? [q.answer];
                 let cls = "opt";
@@ -312,7 +319,7 @@ export function Quiz({
                         <Icon name={chosen.includes(oi) ? "checkCircle" : "circle"} size={17} />
                       )}
                     </span>
-                    <span className="opt-letter">{String.fromCharCode(65 + oi)}</span>
+                    <span className="opt-letter">{String.fromCharCode(65 + displayPos)}</span>
                     {opt}
                   </button>
                 );

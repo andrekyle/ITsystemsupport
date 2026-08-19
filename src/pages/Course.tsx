@@ -10,7 +10,7 @@ import { HWSW_SLIDE_FIGURES } from "../data/hwswSlideFigures";
 const FIGURE_DEFAULTS = { ...BASE_FIGURE_DEFAULTS, ...HWSW_SLIDE_FIGURES };
 import { moduleCompletion, unitCompletion, unitStatus, useLessonEdits, useLessonFigures, useNotes, usePlanSlides, useSharedSettings } from "../store";
 import { Bar } from "../components/Ring";
-import { Quiz } from "../components/Quiz";
+import { Quiz, seededShuffle } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
 import { ConfirmModal } from "../components/Modal";
 import { SlideViewer } from "../components/SlideViewer";
@@ -2672,7 +2672,8 @@ export function UnitPage({
                       <div key={qi} className={`lesson-quiz-card${qChecked ? (correct ? " ok" : " bad") : ""}`}>
                         <div className="lesson-quiz-q"><strong>{qi + 1}</strong> <span>{q.q}</span></div>
                         <div className="lesson-quiz-options">
-                          {q.options.map((opt, oi) => {
+                          {seededShuffle(q.options.map((_, i) => i), si * 977 + qi * 131 + q.q.length * 7 + 3).map((oi) => {
+                            const opt = q.options[oi];
                             const isPicked = picked === oi;
                             const showCorrect = qChecked && oi === q.answer;
                             const showWrong = qChecked && isPicked && oi !== q.answer;
@@ -4685,7 +4686,9 @@ export function UnitPage({
                       <li key={qi} className={`presenter-quiz-q${isCorrect ? " ok" : ""}${isWrong ? " bad" : ""}`}>
                         <div className="presenter-quiz-question">{q.q}</div>
                         <div className="presenter-quiz-options">
-                          {q.options.map((opt, oi) => (
+                          {seededShuffle(q.options.map((_, i) => i), qi * 419 + q.q.length * 11 + 5).map((oi) => {
+                            const opt = q.options[oi];
+                            return (
                             <label key={oi} className={`presenter-quiz-opt${chosen === oi ? " chosen" : ""}`}>
                               <input
                                 type="radio"
@@ -4700,7 +4703,8 @@ export function UnitPage({
                               />
                               <span>{opt}</span>
                             </label>
-                          ))}
+                            );
+                          })}
                         </div>
                         {presenterChecked && isWrong && q.explain && (
                           <div className="presenter-quiz-explain">{q.explain}</div>
