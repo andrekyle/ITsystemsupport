@@ -4237,9 +4237,19 @@ export function UnitPage({
               Download training slides (.pptx)
             </a>
           )}
+          {canDownloadShared && u.us === "114050" && (
+            <a
+              className="btn ghost dl-sample plan-ppt"
+              href="/downloads/US-114050-Principles-of-Business.pptx"
+              download
+            >
+              <Icon name="download" size={15} />
+              Download training slides (.pptx)
+            </a>
+          )}
           <button
             className="btn ghost dl-sample plan-ppt"
-            style={{ marginLeft: canDownloadShared && (u.us === "8252" || u.us === "114055") ? 10 : 0 }}
+            style={{ marginLeft: canDownloadShared && (u.us === "8252" || u.us === "114055" || u.us === "114050") ? 10 : 0 }}
             onClick={() => planFileRef.current?.click()}
           >
             <Icon name="presenter" size={15} />
