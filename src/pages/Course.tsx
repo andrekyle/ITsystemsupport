@@ -2622,6 +2622,32 @@ export function UnitPage({
                           </span>
                         )}
                       </button>
+                      {isPrivileged && !editable && (
+                        <div className="lesson-hero-tools">
+                          <button
+                            type="button"
+                            className="hero-tool"
+                            title="Upload a different picture for this section"
+                            onClick={() => {
+                              pendingFigId.current = heroFig.id;
+                              figFileRef.current?.click();
+                            }}
+                          >
+                            <Icon name="image" size={13} />
+                            Replace picture
+                          </button>
+                          {up && (
+                            <button
+                              type="button"
+                              className="hero-tool"
+                              title={FIGURE_DEFAULTS[heroFig.id] ? "Remove the uploaded picture (revert to the built-in one)" : "Remove the uploaded picture"}
+                              onClick={() => removeFigure(heroFig.id)}
+                            >
+                              <Icon name="close" size={13} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                       {editable && figControls(heroFig)}
                     </div>
                   );
@@ -3246,6 +3272,32 @@ export function UnitPage({
                           Click to enlarge
                         </span>
                       </button>
+                      {isPrivileged && (
+                        <div className="lesson-hero-tools lesson-slide-tools">
+                          <button
+                            type="button"
+                            className="hero-tool"
+                            title="Upload a different picture for this slide"
+                            onClick={() => {
+                              pendingFigId.current = heroFig.id;
+                              figFileRef.current?.click();
+                            }}
+                          >
+                            <Icon name="image" size={13} />
+                            Replace picture
+                          </button>
+                          {up && (
+                            <button
+                              type="button"
+                              className="hero-tool"
+                              title={def ? "Remove the uploaded picture (revert to the built-in one)" : "Remove the uploaded picture"}
+                              onClick={() => removeFigure(heroFig.id)}
+                            >
+                              <Icon name="close" size={13} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                       {body}
                       {quizBlock}
                     </div>

@@ -6527,13 +6527,17 @@ export const CONTENT: Record<string, UnitContent> = {
             text: "Require knowledge, insight and evaluation. They may well crop up without warning, and the right decision can be critical.",
           },
         ],
-        bullets: [
-          "1. Recognise the problem — the MIS may give information about the performance of the department and where there is a problem.",
-          "2. Consider the solution — a spreadsheet could be used to consider \u201cwhat if\u201d scenarios.",
-          "3. Choose the solution — using the manager's experience as well as the information produced by the MIS.",
-          "4. Implement and review — the MIS can provide the data on which the solution is evaluated.",
-          "Often solutions do not proceed smoothly, and there may have to be backtracking from one stage to another.",
-        ],
+        example: {
+          title: "The stages of taking a decision",
+          lines: [
+            "The manager may well go through the following stages when considering what decision to take:",
+            "1. Recognise the problem. The MIS may give information about the performance of the department, and where there is a problem.",
+            "2. Consider the solution. A spreadsheet could be used to consider \u201cwhat if\u201d scenarios.",
+            "3. The solution is chosen using the manager's experience as well as the information produced by the MIS.",
+            "4. The solution is implemented and reviewed. Again the MIS can provide the data on which the solution is evaluated.",
+            "Often solutions do not proceed smoothly and there may have to be backtracking from one stage to another.",
+          ],
+        },
         slideQuiz: [
           {
             q: "A STRUCTURED decision is…",
