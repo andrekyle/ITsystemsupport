@@ -7030,7 +7030,12 @@ export const CONTENT: Record<string, UnitContent> = {
       ],
     },
 
-    quiz: [
+    quiz: [],
+    quizzes: [
+      {
+        id: "q-business",
+        title: "Quiz 1 — Principles of business and the role of IT",
+        questions: [
       {
         q: "Which types of business organisation must you be able to distinguish for this unit standard?",
         options: [
@@ -7125,6 +7130,109 @@ export const CONTENT: Record<string, UnitContent> = {
         options: ["Survival", "Profit maximisation", "Sales growth", "Economies of scale"],
         answer: 0,
         explain: "Survival is the short-term objective of new entrants and businesses in crisis; profit and growth objectives usually come later.",
+      },
+        ],
+      },
+      {
+        id: "q-systems",
+        title: "Quiz 2 — Systems theory and information systems",
+        questions: [
+          {
+            q: "What does a management system describe?",
+            options: [
+              "The organisation and the interacting institutions and forces in its environment that affect its ability to serve customers",
+              "Only the payroll system",
+              "The office layout",
+              "The company logo",
+            ],
+            answer: 0,
+            explain: "A management system covers the organisation plus the significant interacting institutions and forces in its complex, rapidly changing environment — the firm must continuously monitor and adapt to survive and prosper.",
+          },
+          {
+            q: "Viewed internally, an organisation is a resource conversion machine. What does it convert?",
+            options: [
+              "Inputs — labour, money, materials and equipment — into useful products, goods and services as outputs",
+              "Data into paper",
+              "Customers into suppliers",
+              "Outputs into inputs",
+            ],
+            answer: 0,
+            explain: "The organisation takes inputs from the external environment, converts them, and makes products, goods and services available to customers as outputs.",
+          },
+          {
+            q: "Which forces make up the organisation's external environment?",
+            options: [
+              "Competitive, economic, technological, political, legal, demographic, cultural and ecosystem forces",
+              "Only competitors",
+              "Only the government",
+              "Internal staff only",
+            ],
+            answer: 0,
+            explain: "The external environment is all outside institutions and forces with an actual or potential interest or impact on the organisation's ability to achieve its objectives.",
+          },
+          {
+            q: "What is a transaction, and what does a Transaction Processing System do?",
+            options: [
+              "A transaction is an event that generates or modifies data; the TPS collects, stores, modifies and retrieves the organisation's transactions",
+              "A transaction is a meeting; the TPS records the minutes",
+              "A transaction is a report; the TPS prints it",
+              "A transaction is an e-mail; the TPS sends it",
+            ],
+            answer: 0,
+            explain: "A TPS collects, stores, modifies and retrieves transactions — events that generate or modify data eventually stored in the information system — and must pass the ACID test.",
+          },
+          {
+            q: "What does the ACID test stand for?",
+            options: [
+              "Atomicity, Consistency, Isolation, Durability",
+              "Accuracy, Control, Input, Data",
+              "Access, Copy, Insert, Delete",
+              "Audit, Check, Inspect, Document",
+            ],
+            answer: 0,
+            explain: "To be considered a transaction processing system the computer must pass the ACID test: Atomicity, Consistency, Isolation and Durability.",
+          },
+          {
+            q: "Which ACID property means a committed transaction's changes survive failures?",
+            options: ["Durability", "Atomicity", "Isolation", "Consistency"],
+            answer: 0,
+            explain: "Durability: once a transaction completes successfully (commits), its changes to the state survive failures.",
+          },
+          {
+            q: "Why is batch processing NOT transaction processing?",
+            options: [
+              "Several transactions are processed together and the results are not immediately available while a transaction is entered",
+              "Batches are illegal",
+              "Batch systems never store data",
+              "Batch systems respond in milliseconds",
+            ],
+            answer: 0,
+            explain: "Batch processing collects transactions and deals with them in one go; an on-line system updates immediately — like the airline computer updated within seconds of buying a ticket (pseudo-on-line processing).",
+          },
+          {
+            q: "In which database structure can a child node be linked to MULTIPLE higher parent nodes?",
+            options: ["Network structure", "Hierarchical structure", "Relational structure", "A flat file"],
+            answer: 0,
+            explain: "Network structures allow a child multiple parents; hierarchical structures allow only one parent per child; relational databases organise data in a series of related tables.",
+          },
+          {
+            q: "What is the role of a management information system (MIS)?",
+            options: [
+              "To convert data from internal and external sources into information used to make effective decisions for planning, directing and controlling",
+              "To type letters for clerical staff",
+              "To design bearings",
+              "To replace all managers",
+            ],
+            answer: 0,
+            explain: "The MIS provides managers with sufficient information to make informed decisions across the five functions: planning, organising, coordinating, decision-making and controlling.",
+          },
+          {
+            q: "Which level of MIS information serves LONG-TERM decisions such as opening a new store or taking over a rival?",
+            options: ["Strategic", "Operational", "Tactical", "Clerical"],
+            answer: 0,
+            explain: "Strategic information serves long-term decisions; operational covers day-to-day choices like re-ordering stock, and tactical covers short-to-medium-term moves like introducing a product to a retail outlet.",
+          },
+        ],
       },
     ],
 
