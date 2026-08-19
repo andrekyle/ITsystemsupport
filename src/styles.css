@@ -7084,9 +7084,9 @@ input.att-sig {
 /* Lesson-view final quiz gate */
 .lesson-quiz-list { display: grid; gap: 10px; margin: 10px 0; }
 .lesson-quiz-card {
-  padding: 4px 0;
-  border: 0;
-  border-radius: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   background: transparent;
   color: var(--ink);
 }
