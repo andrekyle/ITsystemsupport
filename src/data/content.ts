@@ -6041,7 +6041,7 @@ export const CONTENT: Record<string, UnitContent> = {
           {
             icon: "database",
             title: "Durability",
-            text: "Once a transaction completes successfully (commits), its changes to the state survive failures.",
+            text: "Once a transaction is successfully completed, the changes are saved permanently. Once saved, it stays saved.",
           },
         ],
         examples: [
@@ -6078,6 +6078,17 @@ export const CONTENT: Record<string, UnitContent> = {
               "Each transaction is processed as if it is happening on its own.",
               "One transaction cannot accidentally affect or change the other transaction.",
               "Each transaction works independently.",
+            ],
+          },
+          {
+            title: "Durability — Investec example",
+            lines: [
+              "An Investec client transfers R5,000 to another account.",
+              "The transfer is successfully completed.",
+              "The new account balances are saved.",
+              "Even if the system later crashes or loses power, the completed transaction is not lost.",
+              "When the system comes back online, the updated balances remain.",
+              "Once saved, it stays saved.",
             ],
           },
         ],
@@ -6124,7 +6135,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "The UPS can keep the system running for at least an hour",
             ],
             answer: 0,
-            explain: "A successfully completed (committed) transaction's changes to the state survive failures.",
+            explain: "Once the R5,000 transfer completes, the new balances are saved permanently — even if the system later crashes or loses power, the updated balances remain when it comes back online.",
           },
           {
             q: "What must a computer pass to be considered a transaction processing system?",
