@@ -7109,7 +7109,7 @@ input.att-sig {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #6b7280;
+  background: rgba(0, 0, 0, 0.95);
   color: #ffffff;
   font-size: 0.8rem;
   font-weight: 500;
@@ -7133,6 +7133,11 @@ input.att-sig {
   font-weight: 300;
   line-height: 1.35;
   transition: background 0.12s ease;
+}
+/* light mode: near-black option text for readability */
+:root:not([data-theme="dark"]) .lesson-quiz-opt,
+[data-theme="light"] .lesson-quiz-opt {
+  color: rgba(0, 0, 0, 0.95);
 }
 .lesson-quiz-opt:hover:not(.correct):not(.wrong) {
   background: var(--azure-lighter);
