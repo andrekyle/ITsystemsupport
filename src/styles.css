@@ -2939,6 +2939,11 @@ table.data.kv tr:last-child td {
   font-size: 13px;
 }
 
+.lb-attach-meta {
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
 .lb-fill {
   min-width: 40px;
   height: 34px;

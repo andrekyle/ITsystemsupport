@@ -1,7 +1,14 @@
 import React, { useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { LogbookChecklistRow, LogbookSpec, PoeDoc } from "../types";
-import { downloadDoc, uploadFile, userPrefix } from "../lib/files";
+import { deleteFile, downloadDoc, uploadFile, userPrefix } from "../lib/files";
+import { ConfirmModal } from "./Modal";
+
+function fmtSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 function ChecklistRows({
   rows,
@@ -90,6 +97,7 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState(false);
   const projectDoc: PoeDoc | null = (() => {
     const raw = values["project.upload"];
     if (typeof raw !== "string" || !raw) return null;
@@ -105,15 +113,25 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
       setUploadError(`"${file.name}" is too large — files must be 10 MB or smaller.`);
       return;
     }
+    const previous = projectDoc;
     setUploadPct(0);
     try {
       const prefix = await userPrefix();
       const doc = await uploadFile(`${prefix}/logbook`, file, setUploadPct);
       onChange("project.upload", JSON.stringify(doc));
+      // the replaced report is no longer referenced — clean it out of storage
+      if (previous?.path && previous.path !== doc.path) void deleteFile(previous.path);
     } catch {
       setUploadError("The file could not be uploaded — check your connection and try again.");
     }
     setUploadPct(null);
+  }
+
+  function removeReport() {
+    setConfirmRemove(false);
+    if (projectDoc?.path) void deleteFile(projectDoc.path);
+    onChange("project.upload", "");
+    setUploadError(null);
   }
 
   const field = (k: string, placeholder = "") => (
@@ -240,19 +258,59 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
                 <br />
                 {spec.project.text}
                 <div className="lb-upload">
-                  <button
-                    type="button"
-                    className="btn"
-                    disabled={uploadPct !== null}
-                    onClick={() => fileRef.current?.click()}
-                  >
-                    <Icon name="folder" size={15} />
-                    {uploadPct !== null
-                      ? `Uploading… ${uploadPct}%`
-                      : projectDoc
-                      ? "Replace uploaded report"
-                      : "Upload my report"}
-                  </button>
+                  {projectDoc ? (
+                    <>
+                      <button
+                        type="button"
+                        className="btn ghost"
+                        onClick={() => void downloadDoc(projectDoc)}
+                        title="Download your uploaded report"
+                      >
+                        <Icon name="document" size={14} />
+                        {projectDoc.name}
+                      </button>
+                      <span className="muted lb-attach-meta">
+                        {fmtSize(projectDoc.size)}
+                        {projectDoc.uploadedAt
+                          ? ` · uploaded ${new Date(projectDoc.uploadedAt).toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}`
+                          : ""}
+                      </span>
+                      <button
+                        type="button"
+                        className="btn"
+                        disabled={uploadPct !== null}
+                        onClick={() => fileRef.current?.click()}
+                        title="Upload a new file in place of this one"
+                      >
+                        <Icon name="folder" size={15} />
+                        {uploadPct !== null ? `Uploading… ${uploadPct}%` : "Replace report"}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn ghost"
+                        disabled={uploadPct !== null}
+                        onClick={() => setConfirmRemove(true)}
+                        title="Remove this report from your logbook"
+                      >
+                        <Icon name="close" size={14} />
+                        Remove
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={uploadPct !== null}
+                      onClick={() => fileRef.current?.click()}
+                    >
+                      <Icon name="folder" size={15} />
+                      {uploadPct !== null ? `Uploading… ${uploadPct}%` : "Upload my report"}
+                    </button>
+                  )}
                   <input
                     ref={fileRef}
                     type="file"
@@ -260,19 +318,23 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
                     accept=".pdf,.doc,.docx,.odt,.rtf,.txt,image/*"
                     onChange={(e) => void onProjectFile(e)}
                   />
-                  {projectDoc && (
-                    <button
-                      type="button"
-                      className="btn ghost"
-                      onClick={() => void downloadDoc(projectDoc)}
-                      title="Download your uploaded report"
-                    >
-                      <Icon name="download" size={14} />
-                      {projectDoc.name}
-                    </button>
-                  )}
                   {uploadError && <span className="lb-upload-error">{uploadError}</span>}
                 </div>
+                {confirmRemove && projectDoc && (
+                  <ConfirmModal
+                    title="Remove uploaded report?"
+                    message={
+                      <>
+                        <strong>{projectDoc.name}</strong> will be removed from your logbook. You
+                        can upload a new report at any time.
+                      </>
+                    }
+                    confirmLabel="Remove report"
+                    danger
+                    onConfirm={removeReport}
+                    onCancel={() => setConfirmRemove(false)}
+                  />
+                )}
               </td>
               <td>{spec.project.resource}</td>
             </tr>
