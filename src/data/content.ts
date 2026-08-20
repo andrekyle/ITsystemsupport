@@ -7001,6 +7001,13 @@ export const CONTENT: Record<string, UnitContent> = {
             "Responsibility: in South Africa, POPIA requires a business to protect the personal information in its databases and to use it only for the purpose it was collected.",
           ],
         },
+        figures: [
+          {
+            id: "114050-database",
+            caption: "A database — related tables of records, queried through a DBMS",
+            hint: "screenshot or diagram of a database — e.g. related tables in Microsoft Access / SQL Server, or a query returning records",
+          },
+        ],
         slideQuiz: [
           {
             q: "What is a database?",
