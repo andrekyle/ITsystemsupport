@@ -3338,6 +3338,34 @@ export function UnitPage({
                     <Icon name="play" size={13} />
                     Present
                   </button>
+                  <span className="lesson-top-nav">
+                    <button
+                      type="button"
+                      className="btn ghost sm"
+                      disabled={isFirst}
+                      onClick={() => go(si - 1)}
+                      title="Previous section"
+                    >
+                      <Icon name="chevronLeft" size={14} />
+                      Previous
+                    </button>
+                    <button
+                      type="button"
+                      className="btn ghost sm"
+                      disabled={!quizPassed}
+                      onClick={() => (isLast ? setTab("exercises") : go(si + 1))}
+                      title={
+                        !quizPassed
+                          ? "Answer this section's questions to unlock Next"
+                          : isLast
+                          ? "Continue to the exercises"
+                          : "Next section"
+                      }
+                    >
+                      Next
+                      <Icon name="chevronRight" size={14} />
+                    </button>
+                  </span>
                   {isSuperUser && (
                     <span className="lesson-edit-toolbar">
                       <button

@@ -6088,10 +6088,11 @@ a.plan-ppt:hover {
 
 /* ---- Super-user edit mode for the lesson wizard ---- */
 .lesson-edit-toolbar {
-  margin-left: auto;
+  margin-left: 0;
   display: inline-flex;
   gap: 6px;
   align-items: center;
+  align-self: center;
 }
 .btn.ghost.sm {
   height: auto;
@@ -6355,6 +6356,12 @@ a.plan-ppt:hover {
   align-items: baseline;
   gap: 12px;
   margin-bottom: 8px;
+}
+.lesson-top-nav {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: auto;
+  align-self: center;
 }
 .lesson-step-count {
   font-size: 11.5px;
