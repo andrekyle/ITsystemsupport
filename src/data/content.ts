@@ -6158,16 +6158,19 @@ export const CONTENT: Record<string, UnitContent> = {
             icon: "layers",
             title: "Hierarchical structure",
             text: "Organises data in a series of levels — a top-to-bottom structure of nodes and branches. Each child node has branches and is linked to only one higher-level parent node.",
+            figId: "114050-db-hierarchical",
           },
           {
             icon: "network",
             title: "Network structure",
             text: "Also organises data using nodes and branches — but unlike hierarchical, each child node can be linked to multiple higher parent nodes.",
+            figId: "114050-db-network",
           },
           {
             icon: "dashboard",
             title: "Relational structure",
             text: "Organises its data in a series of related tables. This gives flexibility, as relationships between the tables are built.",
+            figId: "114050-db-relational",
           },
         ],
         figures: [

@@ -2987,8 +2987,65 @@ export function UnitPage({
                 })()}
                 {sec.cards && (
                   <div className="card-grid lesson-cards">
-                    {sec.cards.map((c, ci) => (
+                    {sec.cards.map((c, ci) => {
+                      const cardFigSrc = c.figId
+                        ? figureImages[c.figId]?.image ?? FIGURE_DEFAULTS[c.figId]?.src
+                        : undefined;
+                      const cardTitle = cardText(ci, "t", c.title);
+                      return (
                       <div className="card lesson-card" key={ci}>
+                        {c.figId && cardFigSrc && (
+                          <div className="lesson-card-imgwrap">
+                            <button
+                              type="button"
+                              className="lesson-card-img"
+                              title="Click to enlarge"
+                              onClick={() =>
+                                setLightbox({ items: [{ src: cardFigSrc, caption: cardTitle }], index: 0 })
+                              }
+                            >
+                              <img src={cardFigSrc} alt={cardTitle} loading="lazy" />
+                            </button>
+                            {isPrivileged && (
+                              <div className="lesson-hero-tools lesson-card-tools">
+                                <button
+                                  type="button"
+                                  className="hero-tool"
+                                  title="Upload a different picture"
+                                  onClick={() => {
+                                    pendingFigId.current = c.figId!;
+                                    figFileRef.current?.click();
+                                  }}
+                                >
+                                  <Icon name="image" size={13} />
+                                </button>
+                                {figureImages[c.figId] && (
+                                  <button
+                                    type="button"
+                                    className="hero-tool"
+                                    title="Remove the uploaded picture"
+                                    onClick={() => removeFigure(c.figId!)}
+                                  >
+                                    <Icon name="close" size={13} />
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {c.figId && !cardFigSrc && isPrivileged && (
+                          <button
+                            type="button"
+                            className="lesson-card-imgdrop"
+                            onClick={() => {
+                              pendingFigId.current = c.figId!;
+                              figFileRef.current?.click();
+                            }}
+                          >
+                            <Icon name="image" size={20} />
+                            Upload picture
+                          </button>
+                        )}
                         <span className="ico">
                           <Icon name={c.icon} size={22} />
                         </span>
@@ -3029,7 +3086,8 @@ export function UnitPage({
                           </table>
                         )}
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
                 {sec.example && (

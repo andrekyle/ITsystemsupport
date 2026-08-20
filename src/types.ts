@@ -311,6 +311,8 @@ export interface LessonSection {
     title: string;
     text: string;
     table?: { headers: string[]; rows: string[][] };
+    /** optional picture slot id — staff upload an image shown at the top of the card */
+    figId?: string;
   }[];
   /** worked example shown in a highlighted card after the bullets */
   example?: { title: string; lines: string[] };
