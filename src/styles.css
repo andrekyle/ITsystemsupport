@@ -5964,7 +5964,20 @@ a.plan-ppt:hover {
   background: rgba(255, 255, 255, 0.12);
 }
 .presenter-quiz-opt input {
-  margin-top: 2px;
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 2px 0 0;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  background: transparent;
+  cursor: pointer;
+}
+.presenter-quiz-opt input:checked {
+  border-color: #d6d6d6;
+  background: radial-gradient(circle, #d6d6d6 0 42%, transparent 46%);
 }
 .presenter-quiz-explain {
   margin-top: 8px;
@@ -7271,8 +7284,8 @@ input.att-sig {
   cursor: pointer;
 }
 .lesson-quiz-opt input[type="radio"]:checked {
-  border-color: var(--azure);
-  background: radial-gradient(circle, var(--azure) 0 42%, transparent 46%);
+  border-color: var(--ink-2);
+  background: radial-gradient(circle, var(--ink-2) 0 42%, transparent 46%);
 }
 .lesson-quiz-opt .lesson-quiz-mark {
   display: none;
@@ -7286,10 +7299,6 @@ input.att-sig {
 }
 [data-theme="dark"] .lesson-quiz-opt.picked:not(.correct):not(.wrong) {
   background: var(--surface-2);
-}
-[data-theme="dark"] .lesson-quiz-opt input[type="radio"]:checked {
-  border-color: #d6d6d6;
-  background: radial-gradient(circle, #d6d6d6 0 42%, transparent 46%);
 }
 .lesson-quiz-opt.correct {
   background: transparent;
