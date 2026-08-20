@@ -1647,8 +1647,6 @@ textarea:focus {
   justify-content: center;
   width: 22px;
   height: 22px;
-  border-radius: 50%;
-  background: var(--azure-lighter, rgba(45, 125, 210, 0.12));
 }
 
 /* Grid of short-item paragraphs — reuses .card.lesson-card look so it matches other sections */
