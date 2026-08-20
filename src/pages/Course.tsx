@@ -4534,6 +4534,17 @@ export function UnitPage({
               Lesson 3 slides (.pptx)
             </a>
           )}
+          {canDownloadShared && u.us === "114050" && (
+            <a
+              className="btn ghost dl-sample plan-ppt"
+              href="/downloads/US-114050-L4-Business-Information-Needs.pptx"
+              download
+              style={{ marginLeft: 10 }}
+            >
+              <Icon name="download" size={15} />
+              Lesson 4 slides (.pptx)
+            </a>
+          )}
           <button
             className="btn ghost dl-sample plan-ppt"
             style={{ marginLeft: canDownloadShared && (u.us === "8252" || u.us === "114055" || u.us === "114050") ? 10 : 0 }}

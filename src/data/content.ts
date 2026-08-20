@@ -8799,7 +8799,7 @@ export const CONTENT: Record<string, UnitContent> = {
       prep: [
         "Study the notes in this lesson plan carefully to ensure preparation is done before the start of classes.",
         "Study the learner materials so that you are familiar with the topics that will be covered in this part of the course.",
-        "Download the Lesson 1, 2 and 3 slide decks from this tab; the lesson pages carry the figures and gate quizzes used in class.",
+        "Download the Lesson 1\u20134 slide decks from this tab; the lesson pages carry the figures and gate quizzes used in class.",
       ],
       sections: [
         {
@@ -8946,7 +8946,7 @@ export const CONTENT: Record<string, UnitContent> = {
                 "Communication in decision making; price control; quality control and PDCA; marketing and business performance (BPM).",
                 "Protecting the information: unauthorised access, viruses and ransomware, disgruntled staff — and the information needs of HR, Production, Marketing and Finance.",
               ],
-              resources: ["Lesson tab — sections 31\u201339"],
+              resources: ["Lesson tab — sections 31\u201339", "Lesson 4 slides (.pptx)"],
             },
             {
               time: "60 minutes",
