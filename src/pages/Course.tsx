@@ -2601,10 +2601,11 @@ export function UnitPage({
                   const src = up?.image ?? def?.src;
                   const heroScale = scaleOf(heroFig.id);
                   const heroCap = capOf(heroFig.id, heroFig.caption);
+                  const HeroTag: "button" | "div" = editable ? "div" : "button";
                   return (
                     <div className={`lesson-hero-wrap${editable ? " editable" : ""}`}>
-                      <button
-                        type="button"
+                      <HeroTag
+                        {...(editable ? {} : { type: "button" as const })}
                         className="lesson-hero"
                         onClick={() => !editable && openLightboxFor({ id: heroFig.id, caption: heroCap })}
                         title={editable ? "Editing" : "Click to enlarge"}
@@ -2640,7 +2641,7 @@ export function UnitPage({
                             Click to enlarge
                           </span>
                         )}
-                      </button>
+                      </HeroTag>
                       {isPrivileged && !editable && (
                         <div className="lesson-hero-tools">
                           <button
