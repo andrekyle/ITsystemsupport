@@ -1546,6 +1546,20 @@ textarea:focus {
 [data-theme="dark"] .att-sheet textarea {
   color-scheme: light;
 }
+/* Browser autofill paints its own (dark) background — keep the paper forms white */
+.srf-wrap input:-webkit-autofill,
+.srf-wrap input:-webkit-autofill:hover,
+.srf-wrap input:-webkit-autofill:focus,
+.srf-wrap textarea:-webkit-autofill,
+.att-sheet input:-webkit-autofill,
+.att-sheet input:-webkit-autofill:hover,
+.att-sheet input:-webkit-autofill:focus,
+.att-sheet textarea:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+  box-shadow: 0 0 0 1000px #ffffff inset;
+  -webkit-text-fill-color: #000000;
+  caret-color: #000000;
+}
 /* Belt-and-braces: the browsers that ignore color-scheme still honour
    background/color on <option>. */
 [data-theme="dark"] select option {
