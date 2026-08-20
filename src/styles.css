@@ -7298,6 +7298,9 @@ input.att-sig {
   background: var(--green-bg);
   color: var(--ink);
 }
+[data-theme="dark"] .lesson-quiz-opt.staff-answer {
+  background: rgba(76, 195, 138, 0.22);
+}
 .lesson-quiz-answer-badge {
   margin-left: auto;
   display: inline-flex;
