@@ -2469,7 +2469,7 @@ textarea:focus {
 .srf-tick-cell:hover { background: #fffbe6; }
 .srf-tick-cell.on { background: transparent; }
 .srf-tick-cell.on .srf-cell-label {
-  color: #c05a12;
+  color: #ee7a15;
   font-weight: 700;
 }
 .srf-cell-label {
@@ -2621,7 +2621,7 @@ textarea:focus {
     print-color-adjust: exact;
   }
   .srf-tick-cell.on { background: transparent !important; }
-  .srf-tick-cell.on .srf-cell-label { color: #c05a12 !important; font-weight: 700 !important; }
+  .srf-tick-cell.on .srf-cell-label { color: #ee7a15 !important; font-weight: 700 !important; }
   /* Narrow tick cells: slightly smaller label + tighter padding in print so
      words like "Divorced" keep clear air between text and cell borders. */
   .srf-tick-cell { padding: 3px 4px !important; }
