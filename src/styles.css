@@ -7164,10 +7164,12 @@ input.att-sig {
 .lesson-quiz-opt.correct {
   background: transparent;
   color: var(--green);
+  font-weight: 500;
 }
 .lesson-quiz-opt.wrong {
   background: transparent;
   color: var(--red);
+  font-weight: 500;
 }
 /* When checked, hide the radio and show the check/info mark instead. */
 .lesson-quiz-opt.correct input[type="radio"],
@@ -7297,6 +7299,7 @@ input.att-sig {
 .lesson-quiz-opt.staff-answer {
   background: transparent;
   color: var(--green);
+  font-weight: 500;
 }
 .lesson-quiz-answer-badge {
   margin-left: auto;
