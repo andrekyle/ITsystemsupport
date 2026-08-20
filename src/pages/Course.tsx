@@ -88,6 +88,17 @@ function LessonBullet({ text }: { text: string }) {
   if (num) text = num[2];
   const m = text.match(/^(.{2,60}?) — (.*)$/s);
   if (!m) return <Gloss text={text} />;
+  // single-letter leads (S/M/A/R/T…): hang wrapped lines under the descriptor
+  if (m[1].length <= 2) {
+    return (
+      <span className="lb-hang">
+        <strong className="lb-lead">{m[1]} —</strong>
+        <span className="lb-rest">
+          <Gloss text={m[2]} />
+        </span>
+      </span>
+    );
+  }
   return (
     <>
       <strong>{m[1]}</strong> — <Gloss text={m[2]} />

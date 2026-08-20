@@ -7064,6 +7064,20 @@ input.att-sig {
   padding: 4px 0;
   max-width: 900px;
 }
+/* "S — Specific: …" bullets — wrapped lines align under the descriptor */
+.lb-hang {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+.lb-hang .lb-lead {
+  flex: none;
+  white-space: nowrap;
+}
+.lb-hang .lb-rest {
+  flex: 1 1 auto;
+  min-width: 0;
+}
 .lesson-numlist li {
   display: flex;
   align-items: flex-start;
