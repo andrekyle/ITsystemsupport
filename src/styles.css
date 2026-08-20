@@ -7293,13 +7293,10 @@ input.att-sig {
   letter-spacing: 0.02em;
 }
 
-/* Staff-only "Answer" badge on the correct option */
+/* Staff-only "Answer" badge on the correct option: green text, no fill */
 .lesson-quiz-opt.staff-answer {
-  background: var(--green-bg);
-  color: var(--ink);
-}
-[data-theme="dark"] .lesson-quiz-opt.staff-answer {
-  background: rgba(76, 195, 138, 0.22);
+  background: transparent;
+  color: var(--green);
 }
 .lesson-quiz-answer-badge {
   margin-left: auto;
