@@ -1907,6 +1907,8 @@ textarea:focus {
   flex-shrink: 0;
   color: var(--border-2);
   display: inline-flex;
+  justify-content: center;
+  width: 17px;
   margin-top: 1px;
 }
 
