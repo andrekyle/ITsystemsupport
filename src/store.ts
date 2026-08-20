@@ -1541,6 +1541,14 @@ export interface LessonEdits {
   headings?: Record<number, string>;
   /** `${sectionIdx}:${paraIdx}` -> replacement paragraph text */
   paragraphs?: Record<string, string>;
+  /** `${sectionIdx}:${bulletIdx}` -> replacement bullet text */
+  bullets?: Record<string, string>;
+  /** `${sectionIdx}:${cardIdx}:t` (title) / `:d` (text) -> replacement card content */
+  cards?: Record<string, string>;
+  /** `${sectionIdx}:${exIdx}:t` (title) / `${sectionIdx}:${exIdx}:${lineIdx}` -> example content */
+  examples?: Record<string, string>;
+  /** `${sectionIdx}:h:${colIdx}` (header) / `${sectionIdx}:${rowIdx}:${colIdx}` -> table cell */
+  tableCells?: Record<string, string>;
   /** figure id -> replacement caption */
   captions?: Record<string, string>;
   /** section index -> ordered list of figure ids (unknown ids preserved after) */
@@ -1609,6 +1617,17 @@ export function useLessonEdits(us: string) {
     [apply]
   );
 
+  /** generic keyed-text setter for bullets / cards / examples / table cells */
+  const setKeyed = useCallback(
+    (field: "bullets" | "cards" | "examples" | "tableCells", key: string, text: string) =>
+      apply((d) => {
+        const map = { ...(d[field] ?? {}) };
+        if (text.trim()) map[key] = text; else delete map[key];
+        return { ...d, [field]: map };
+      }),
+    [apply]
+  );
+
   const moveFigure = useCallback(
     (sIdx: number, allIds: string[], figId: string, dir: -1 | 1) =>
       apply((d) => {
@@ -1656,8 +1675,16 @@ export function useLessonEdits(us: string) {
       apply((d) => {
         const headings = { ...(d.headings ?? {}) };
         delete headings[sIdx];
-        const paragraphs = { ...(d.paragraphs ?? {}) };
-        for (const k of Object.keys(paragraphs)) if (k.startsWith(`${sIdx}:`)) delete paragraphs[k];
+        const scrub = (map?: Record<string, string>) => {
+          const next = { ...(map ?? {}) };
+          for (const k of Object.keys(next)) if (k.startsWith(`${sIdx}:`)) delete next[k];
+          return next;
+        };
+        const paragraphs = scrub(d.paragraphs);
+        const bullets = scrub(d.bullets);
+        const cards = scrub(d.cards);
+        const examples = scrub(d.examples);
+        const tableCells = scrub(d.tableCells);
         const figureOrder = { ...(d.figureOrder ?? {}) };
         delete figureOrder[sIdx];
         const captions = { ...(d.captions ?? {}) };
@@ -1668,12 +1695,12 @@ export function useLessonEdits(us: string) {
         }
         const figureOffsetY = { ...(d.figureOffsetY ?? {}) };
         for (const id of figIds) delete figureOffsetY[id];
-        return { ...d, headings, paragraphs, figureOrder, captions, figureScale, figureOffsetY };
+        return { ...d, headings, paragraphs, bullets, cards, examples, tableCells, figureOrder, captions, figureScale, figureOffsetY };
       }),
     [apply]
   );
 
-  return { edits, setHeading, setParagraph, setCaption, moveFigure, setScale, setOffsetY, resetSection };
+  return { edits, setHeading, setParagraph, setCaption, setKeyed, moveFigure, setScale, setOffsetY, resetSection };
 }
 
 /* ---------- user-uploaded notes (stored separately per profile) ---------- */

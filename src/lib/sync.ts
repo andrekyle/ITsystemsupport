@@ -20,6 +20,7 @@ function isShared(key: string) {
     key.endsWith(".shared") ||
     key.startsWith("itss.planslides.") ||
     key.startsWith("itss.lessonfigs.") ||
+    key.startsWith("itss.lessonedits.") ||
     key.startsWith("itss.attendance.")
   );
 }

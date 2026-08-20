@@ -1977,7 +1977,7 @@ export function UnitPage({
   const [planUploadPct, setPlanUploadPct] = useState<number | null>(null);
   const { slides: planSlides, addSlide: addPlanSlide, removeSlide: removePlanSlide } = usePlanSlides(unitId);
   const { figures: figureImages, setFigure, removeFigure } = useLessonFigures(unitId);
-  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection } = useLessonEdits(unitId);
+  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection } = useLessonEdits(unitId);
   const [editMode, setEditMode] = useState(false);
   const figFileRef = useRef<HTMLInputElement>(null);
   const pendingFigId = useRef<string | null>(null);
@@ -2469,6 +2469,13 @@ export function UnitPage({
             };
             const secHeading = lessonEdits.headings?.[si] ?? sec.heading;
             const paraText = (pi: number) => lessonEdits.paragraphs?.[`${si}:${pi}`] ?? sec.paragraphs[pi];
+            const bulletText = (bi: number) => lessonEdits.bullets?.[`${si}:${bi}`] ?? sec.bullets?.[bi] ?? "";
+            const cardText = (ci: number, field: "t" | "d", original: string) =>
+              lessonEdits.cards?.[`${si}:${ci}:${field}`] ?? original;
+            const exText = (xi: number, part: string, original: string) =>
+              lessonEdits.examples?.[`${si}:${xi}:${part}`] ?? original;
+            const cellText = (r: number | "h", ci: number, original: string) =>
+              lessonEdits.tableCells?.[`${si}:${r}:${ci}`] ?? original;
             const capOf = (id: string, original: string) => lessonEdits.captions?.[id] ?? original;
             const scaleOf = (id: string) => lessonEdits.figureScale?.[id] ?? 1;
             const offsetYOf = (id: string) => lessonEdits.figureOffsetY?.[id] ?? 50;
@@ -2826,11 +2833,22 @@ export function UnitPage({
                 {sec.bullets && (
                   <ol className="lesson-numlist">
                     {sec.bullets.map((b, bi) => (
-                      <li key={b}>
+                      <li key={bi}>
                         <span className="num">{bi + 1}</span>
-                        <span>
-                          <LessonBullet text={b} />
-                        </span>
+                        {editable ? (
+                          <span
+                            className="editable-inline"
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => editKeyed("bullets", `${si}:${bi}`, e.currentTarget.textContent ?? "")}
+                          >
+                            {bulletText(bi)}
+                          </span>
+                        ) : (
+                          <span>
+                            <LessonBullet text={bulletText(bi)} />
+                          </span>
+                        )}
                       </li>
                     ))}
                   </ol>
@@ -2844,8 +2862,15 @@ export function UnitPage({
                       <table className="data lesson-table" style={{ marginTop: 10 }}>
                         <thead>
                           <tr>
-                            {sec.table.headers.map((h) => (
-                              <th key={h}>{h}</th>
+                            {sec.table.headers.map((h, ci) => (
+                              <th
+                                key={ci}
+                                contentEditable={editable}
+                                suppressContentEditableWarning
+                                onBlur={(e) => editable && editKeyed("tableCells", `${si}:h:${ci}`, e.currentTarget.textContent ?? "")}
+                              >
+                                {cellText("h", ci, h)}
+                              </th>
                             ))}
                           </tr>
                         </thead>
@@ -2854,11 +2879,19 @@ export function UnitPage({
                             const so = /^SO\b/.test(row[0]);
                             return (
                               <tr key={ri} className={so ? "so-row" : sec.table!.rows.some((r) => /^SO\b/.test(r[0])) ? "ac-row" : undefined}>
-                                {row.map((cell, ci) => (
-                                  <td key={ci}>
-                                    {ci === 0 || so ? <strong>{cell}</strong> : <Gloss text={cell} />}
-                                  </td>
-                                ))}
+                                {row.map((cell, ci) => {
+                                  const cv = cellText(ri, ci, cell);
+                                  return (
+                                    <td
+                                      key={ci}
+                                      contentEditable={editable}
+                                      suppressContentEditableWarning
+                                      onBlur={(e) => editable && editKeyed("tableCells", `${si}:${ri}:${ci}`, e.currentTarget.textContent ?? "")}
+                                    >
+                                      {editable ? cv : ci === 0 || so ? <strong>{cv}</strong> : <Gloss text={cv} />}
+                                    </td>
+                                  );
+                                })}
                               </tr>
                             );
                           })}
@@ -2943,14 +2976,26 @@ export function UnitPage({
                 })()}
                 {sec.cards && (
                   <div className="card-grid lesson-cards">
-                    {sec.cards.map((c) => (
-                      <div className="card lesson-card" key={c.title}>
+                    {sec.cards.map((c, ci) => (
+                      <div className="card lesson-card" key={ci}>
                         <span className="ico">
                           <Icon name={c.icon} size={22} />
                         </span>
-                        <div className="t">{c.title}</div>
-                        <div className="d">
-                          <Gloss text={c.text} />
+                        <div
+                          className={editable ? "t editable-inline" : "t"}
+                          contentEditable={editable}
+                          suppressContentEditableWarning
+                          onBlur={(e) => editable && editKeyed("cards", `${si}:${ci}:t`, e.currentTarget.textContent ?? "")}
+                        >
+                          {cardText(ci, "t", c.title)}
+                        </div>
+                        <div
+                          className={editable ? "d editable-inline" : "d"}
+                          contentEditable={editable}
+                          suppressContentEditableWarning
+                          onBlur={(e) => editable && editKeyed("cards", `${si}:${ci}:d`, e.currentTarget.textContent ?? "")}
+                        >
+                          {editable ? cardText(ci, "d", c.text) : <Gloss text={cardText(ci, "d", c.text)} />}
                         </div>
                         {c.table && (
                           <table className="data card-table">
@@ -2980,22 +3025,60 @@ export function UnitPage({
                   <div className="lesson-example">
                     <div className="ex-title">
                       <Icon name="info" size={15} />
-                      {sec.example.title}
+                      <span
+                        contentEditable={editable}
+                        suppressContentEditableWarning
+                        className={editable ? "editable-inline" : undefined}
+                        onBlur={(e) => editable && editKeyed("examples", `${si}:0:t`, e.currentTarget.textContent ?? "")}
+                      >
+                        {exText(0, "t", sec.example.title)}
+                      </span>
                     </div>
-                    {sec.example.lines.map((l, i) => (
-                      <ExampleLine key={i} text={l} />
-                    ))}
+                    {sec.example.lines.map((l, i) =>
+                      editable ? (
+                        <p
+                          key={i}
+                          className="lesson-p editable"
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => editKeyed("examples", `${si}:0:${i}`, e.currentTarget.textContent ?? "")}
+                        >
+                          {exText(0, String(i), l)}
+                        </p>
+                      ) : (
+                        <ExampleLine key={i} text={exText(0, String(i), l)} />
+                      )
+                    )}
                   </div>
                 )}
                 {sec.examples?.map((ex, xi) => (
                   <div className="lesson-example" key={`x-${xi}`}>
                     <div className="ex-title">
                       <Icon name="info" size={15} />
-                      {ex.title}
+                      <span
+                        contentEditable={editable}
+                        suppressContentEditableWarning
+                        className={editable ? "editable-inline" : undefined}
+                        onBlur={(e) => editable && editKeyed("examples", `${si}:${xi + 1}:t`, e.currentTarget.textContent ?? "")}
+                      >
+                        {exText(xi + 1, "t", ex.title)}
+                      </span>
                     </div>
-                    {ex.lines.map((l, i) => (
-                      <ExampleLine key={i} text={l} />
-                    ))}
+                    {ex.lines.map((l, i) =>
+                      editable ? (
+                        <p
+                          key={i}
+                          className="lesson-p editable"
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => editKeyed("examples", `${si}:${xi + 1}:${i}`, e.currentTarget.textContent ?? "")}
+                        >
+                          {exText(xi + 1, String(i), l)}
+                        </p>
+                      ) : (
+                        <ExampleLine key={i} text={exText(xi + 1, String(i), l)} />
+                      )
+                    )}
                   </div>
                 ))}
                 {sec.figures && (
