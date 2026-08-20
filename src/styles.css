@@ -7287,7 +7287,7 @@ input.att-sig {
   align-items: center;
   gap: 8px;
   font-weight: 400;
-  color: #56d364;
+  color: var(--green);
   margin-bottom: 10px;
   font-size: 0.9rem;
   letter-spacing: 0.02em;
@@ -7310,7 +7310,7 @@ input.att-sig {
   color: var(--green);
   padding: 2px 6px;
   border-radius: 999px;
-  background: var(--green-bg);
+  background: transparent;
 }
 
 .lesson-quiz-reveal {
