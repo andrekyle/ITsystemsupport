@@ -8791,7 +8791,7 @@ export const CONTENT: Record<string, UnitContent> = {
       title: "Facilitator Preparation",
       startTime: "09:00",
       details: [
-        { icon: "calendar", label: "Dates", value: "Fri 21 · Mon 24 · Tue 25 August 2026" },
+        { icon: "calendar", label: "Dates", value: "Friday 21 · Monday 24 August 2026" },
         { icon: "clock", label: "Time", value: "09:00 \u2013 14:00 daily · lunch 12:00 \u2013 13:00" },
         { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
         { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
@@ -8820,10 +8820,10 @@ export const CONTENT: Record<string, UnitContent> = {
           ],
         },
         {
-          heading: "Day 1 — Friday, 21 August 2026 · Lesson 1: Principles of business",
+          heading: "Day 1 — Friday, 21 August 2026 · Lessons 1 & 2: Principles of business · Systems theory",
           rows: [
             {
-              time: "15 minutes",
+              time: "10 minutes",
               title: "Index & Unit Standard Alignment — Facilitator",
               text: [
                 "Read through the index with the learners, highlighting the areas that will be covered. Make reference to the Unit Standard Alignment Index to outline the specific outcomes, and show where the four lessons sit in the unit.",
@@ -8831,7 +8831,7 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["LM index"],
             },
             {
-              time: "90 minutes",
+              time: "80 minutes",
               title: "Lesson 1 — Principles of business & the role of IT — Facilitator & Class",
               bullets: [
                 "Forms of enterprises: sole proprietor, partnership, closed corporation, private vs public company (comparison table).",
@@ -8847,16 +8847,15 @@ export const CONTENT: Record<string, UnitContent> = {
               break: true,
             },
             {
-              time: "30 minutes",
+              time: "20 minutes",
               title: "Questioning — Lesson 1 — Class in pairs",
               bullets: [
-                "Read through the questions with the learners, ensuring they understand what is expected.",
                 "Learners complete \u201cPrinciples of business and the role of information technology\u201d; the AI marker gives instant feedback. Take feedback from two pairs.",
               ],
               resources: ["Exercises tab"],
             },
             {
-              time: "15 minutes",
+              time: "10 minutes",
               title: "Knowledge check — Quiz 1 — Learners individually",
               bullets: [
                 "Learners complete Quiz 1 (Principles of business and the role of IT). 80%+ is competent.",
@@ -8864,35 +8863,20 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["Quiz tab"],
             },
             {
+              time: "30 minutes",
+              title: "Lesson 2 (part 1) — Systems theory — Facilitator & Class",
+              bullets: [
+                "The manager and the management system; the internal and external environment; globalisation; types of information systems: TPS, KWS, MIS, DSS and ESS.",
+              ],
+              resources: ["Lesson tab — sections 11\u201315", "Lesson 2 slides (.pptx)"],
+            },
+            {
               time: "60 minutes",
               title: "Lunch",
               break: true,
             },
             {
-              time: "60 minutes",
-              title: "Lesson 2 (part 1) — Systems theory — Facilitator & Class",
-              bullets: [
-                "The manager and the management system; the internal and external environment; globalisation.",
-                "Types of information systems: TPS, KWS, MIS, DSS and ESS — technology serving every level of the pyramid.",
-              ],
-              resources: ["Lesson tab — sections 11\u201315", "Lesson 2 slides (.pptx)"],
-            },
-          ],
-        },
-        {
-          heading: "Day 2 — Monday, 24 August 2026 · Lessons 2 & 3: Systems theory · IT in business",
-          startTime: "09:00",
-          rows: [
-            {
-              time: "10 minutes",
-              title: "Recap & parking bay — Facilitator",
-              text: [
-                "Recap Day 1, answer parked questions, and check that gate quizzes for sections 1\u201315 are complete.",
-              ],
-              resources: ["Parking bay"],
-            },
-            {
-              time: "40 minutes",
+              time: "30 minutes",
               title: "Lesson 2 (part 2) — Transactions to decisions — Facilitator & Class",
               bullets: [
                 "TPS features and the ACID test with the Investec transfer examples.",
@@ -8909,73 +8893,45 @@ export const CONTENT: Record<string, UnitContent> = {
               resources: ["Exercises tab"],
             },
             {
-              time: "15 minutes",
+              time: "10 minutes",
               title: "Knowledge check — Quiz 2 — Learners individually",
               bullets: [
-                "Learners complete Quiz 2 (Systems theory and information systems).",
+                "Learners complete Quiz 2 (Systems theory and information systems). Unfinished gate quizzes are completed in own time before Day 2.",
               ],
               resources: ["Quiz tab"],
-            },
-            {
-              time: "10 minutes",
-              title: "Break",
-              break: true,
-            },
-            {
-              time: "85 minutes",
-              title: "Lesson 3 (part 1) — Office applications — Facilitator & Class",
-              bullets: [
-                "Word processors: what they are, the basic features, full-featured tools, and what 2026 adds (Copilot, Gemini, co-authoring).",
-                "Spreadsheets: rows, columns, formulas that recalculate, \u201cwhat if\u201d scenarios — Excel, Google Sheets, LibreOffice Calc.",
-                "Databases in business and the 2026 engines: SQL Server/Azure SQL, PostgreSQL, MySQL, Oracle, MongoDB — and POPIA duties.",
-              ],
-              resources: ["Lesson tab — sections 22\u201327", "Lesson 3 slides (.pptx)"],
-            },
-            {
-              time: "60 minutes",
-              title: "Lunch",
-              break: true,
-            },
-            {
-              time: "30 minutes",
-              title: "Lesson 3 (part 2) — Graphics & office suites — Facilitator & Class",
-              bullets: [
-                "Graphics subfields and the 2026 toolbox (Canva, Photoshop/Illustrator, Figma, Blender, CapCut/Premiere, AI image generation) — use the picture cards.",
-                "Microsoft 365, Google Workspace, LibreOffice and the suites that came before; function AND effect for every application family.",
-              ],
-              resources: ["Lesson tab — sections 28\u201330", "Lesson 3 slides (.pptx)"],
-            },
-            {
-              time: "30 minutes",
-              title: "Questioning — Lesson 3 — Class in pairs",
-              bullets: [
-                "Learners complete \u201cHow IT can be used in business\u201d — functions and effects of the five application families.",
-              ],
-              resources: ["Exercises tab"],
             },
           ],
         },
         {
-          heading: "Day 3 — Tuesday, 25 August 2026 · Lesson 4: Data & information needs · wrap-up",
+          heading: "Day 2 — Monday, 24 August 2026 · Lessons 3 & 4: IT in business · Information needs · wrap-up",
           startTime: "09:00",
           rows: [
             {
               time: "10 minutes",
               title: "Recap & parking bay — Facilitator",
               text: [
-                "Recap Days 1\u20132, answer parked questions, and check gate-quiz progress through section 30.",
+                "Recap Day 1, answer parked questions, and check that gate quizzes for sections 1\u201321 are complete.",
               ],
               resources: ["Parking bay"],
             },
             {
-              time: "90 minutes",
-              title: "Lesson 4 — The business and its information needs — Facilitator & Class",
+              time: "80 minutes",
+              title: "Lesson 3 — How IT can be used in business — Facilitator & Class",
               bullets: [
-                "From data to wisdom: Ackoff's five categories; data vs information; knowledge, understanding and wisdom; when a pattern is knowledge and when it is noise (the refrigerator riddle).",
-                "Communication in decision making; price control; quality control and PDCA; marketing and business performance (BPM).",
-                "Protecting the information: unauthorised access, viruses and ransomware, disgruntled staff — and the information needs of HR, Production, Marketing and Finance.",
+                "Word processors: the basic features, full-featured tools, and what 2026 adds (Copilot, Gemini, co-authoring).",
+                "Spreadsheets: rows, columns, formulas that recalculate, \u201cwhat if\u201d scenarios — Excel, Google Sheets, LibreOffice Calc.",
+                "Databases in business and the 2026 engines (SQL Server/Azure SQL, PostgreSQL, MySQL, Oracle, MongoDB) — and POPIA duties.",
+                "Graphics and the 2026 toolbox picture cards; Microsoft 365, Google Workspace and the suites that came before; function AND effect for every family.",
               ],
-              resources: ["Lesson tab — sections 31\u201339"],
+              resources: ["Lesson tab — sections 22\u201330", "Lesson 3 slides (.pptx)"],
+            },
+            {
+              time: "20 minutes",
+              title: "Questioning — Lesson 3 — Class in pairs",
+              bullets: [
+                "Learners complete \u201cHow IT can be used in business\u201d — functions and effects of the five application families.",
+              ],
+              resources: ["Exercises tab"],
             },
             {
               time: "10 minutes",
@@ -8983,18 +8939,28 @@ export const CONTENT: Record<string, UnitContent> = {
               break: true,
             },
             {
-              time: "70 minutes",
-              title: "Questioning — Lesson 4 — Class in pairs",
+              time: "60 minutes",
+              title: "Lesson 4 — The business and its information needs — Facilitator & Class",
               bullets: [
-                "Learners work through \u201cThe relationship between a business and its information needs\u201d — all 14 questions: data, information, the five roles, the three threats and the four sub-systems.",
-                "Anything not finished is completed in own time before the logbook deadline.",
+                "From data to wisdom: Ackoff's five categories; data vs information; knowledge, understanding and wisdom; pattern vs noise (the refrigerator riddle).",
+                "Communication in decision making; price control; quality control and PDCA; marketing and business performance (BPM).",
+                "Protecting the information: unauthorised access, viruses and ransomware, disgruntled staff — and the information needs of HR, Production, Marketing and Finance.",
               ],
-              resources: ["Exercises tab"],
+              resources: ["Lesson tab — sections 31\u201339"],
             },
             {
               time: "60 minutes",
               title: "Lunch",
               break: true,
+            },
+            {
+              time: "30 minutes",
+              title: "Questioning — Lesson 4 — Class in pairs",
+              bullets: [
+                "Learners work through \u201cThe relationship between a business and its information needs\u201d — data, information, the five roles, the three threats and the four sub-systems.",
+                "Anything not finished is completed in own time before the logbook deadline.",
+              ],
+              resources: ["Exercises tab"],
             },
             {
               time: "10 minutes",
@@ -9006,20 +8972,12 @@ export const CONTENT: Record<string, UnitContent> = {
             },
             {
               time: "20 minutes",
-              title: "Quiz retries & catch-up — Learners individually",
+              title: "Quiz retries, logbook briefing & wrap-up — Facilitator",
               bullets: [
                 "Learners retry any quiz below 80% and finish outstanding gate quizzes.",
+                "Outline the research project — how IT is used in everyday business — for workplace evidence; attach it in the logbook marked 114050. Address remaining parking-bay questions and close the unit.",
               ],
-              resources: ["Quiz tab"],
-            },
-            {
-              time: "30 minutes",
-              title: "Logbook project briefing & wrap-up — Facilitator",
-              bullets: [
-                "Outline the research project — how IT is used in everyday business — for workplace evidence; attach it in the logbook marked 114050.",
-                "Address remaining parking-bay questions and close the unit.",
-              ],
-              resources: ["Logbook", "Evaluation tab"],
+              resources: ["Quiz tab", "Logbook", "Evaluation tab"],
             },
           ],
         },
