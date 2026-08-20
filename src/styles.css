@@ -1891,14 +1891,21 @@ textarea:focus {
   background: var(--azure-light);
   color: var(--ink);
 }
+[data-theme="dark"] .opt.selected {
+  background: var(--surface-2);
+}
 
 .opt.selected .mark {
   color: var(--azure);
 }
+[data-theme="dark"] .opt.selected .mark {
+  color: #d6d6d6;
+}
 
 .opt.correct {
-  background: var(--green-bg);
-  color: var(--ink);
+  background: transparent;
+  color: var(--green);
+  font-weight: 500;
 }
 
 .opt.correct .mark {
@@ -1906,7 +1913,9 @@ textarea:focus {
 }
 
 .opt.wrong {
-  background: var(--red-bg);
+  background: transparent;
+  color: var(--red);
+  font-weight: 500;
 }
 
 .opt.wrong .mark {
@@ -1928,6 +1937,9 @@ textarea:focus {
   padding: 9px 12px;
   border-radius: var(--radius);
   margin-top: 8px;
+}
+[data-theme="dark"] .explain {
+  background: var(--surface-2);
 }
 
 .explain svg {
@@ -5917,7 +5929,7 @@ a.plan-ppt:hover {
   background: rgba(255, 255, 255, 0.05);
 }
 .presenter-quiz-opt.chosen {
-  background: rgba(158, 203, 255, 0.12);
+  background: rgba(255, 255, 255, 0.12);
 }
 .presenter-quiz-opt input {
   margin-top: 2px;
