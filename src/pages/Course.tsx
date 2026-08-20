@@ -86,7 +86,7 @@ export function Gloss({ text }: { text: string }) {
 function LessonBullet({ text }: { text: string }) {
   const num = text.match(/^(\d+\.\d+)\s+(.*)$/s);
   if (num) text = num[2];
-  const m = text.match(/^(.{2,60}?) — (.*)$/s);
+  const m = text.match(/^(.{1,60}?) — (.*)$/s);
   if (!m) return <Gloss text={text} />;
   // single-letter leads (S/M/A/R/T…): hang wrapped lines under the descriptor
   if (m[1].length <= 2) {
