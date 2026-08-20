@@ -11,6 +11,29 @@ import { unitCompletion } from "../store";
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+/** Floating Print / Download toolbar injected into generated documents —
+ *  nothing prints automatically; the reader chooses. Hidden on paper. */
+function docToolbar(filename: string): string {
+  return `
+  <style>
+    .doc-toolbar { position: fixed; top: 12px; right: 12px; display: flex; gap: 8px; z-index: 999; font-family: "Segoe UI", system-ui, sans-serif; }
+    .doc-toolbar button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border: 1px solid #c9d4e4; border-radius: 8px; background: #ffffff; color: #1f2b3d; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(15, 35, 70, 0.14); }
+    .doc-toolbar button:hover { background: #f0f5fb; }
+    .doc-toolbar svg { flex: none; }
+    @media print { .doc-toolbar { display: none !important; } }
+  </style>
+  <div class="doc-toolbar">
+    <button type="button" onclick="window.print()" title="Print (or save as PDF)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 8V3.5h11V8M6.5 17H4a1.5 1.5 0 0 1-1.5-1.5v-6A1.5 1.5 0 0 1 4 8h16a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 20 17h-2.5"/><rect x="6.5" y="13.5" width="11" height="7"/></svg>
+      Print
+    </button>
+    <button type="button" onclick="(function(){var b=new Blob(['<!doctype html>'+document.documentElement.outerHTML],{type:'text/html'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=${JSON.stringify(filename)};a.click();})()" title="Download this document">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v12M7 11l5 5 5-5M4 20.5h16"/></svg>
+      Download
+    </button>
+  </div>`;
+}
+
 const BASE_STYLE = `
   * { box-sizing: border-box; }
   body { font: 14px/1.5 "Segoe UI", system-ui, sans-serif; color: #17233b; margin: 0; padding: 34px 44px; }
@@ -114,7 +137,7 @@ export function openStatementOfResults(
     <div>Assessor signature &amp; date</div>
     <div>Moderator signature &amp; date</div>
   </div>
-  <script>window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 250); });</script>
+  ${docToolbar(`Statement-of-Results-${profile.name.replace(/[^\w]+/g, "-")}.html`)}
 </body></html>`;
 
   const win = window.open("", "_blank");
@@ -342,7 +365,7 @@ export function openCertificate(profile: Profile, creditsEarned: number) {
       <span>Issued: ${esc(issued)}</span>
     </div>
   </div></div></div>
-  <script>window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 250); });</script>
+  ${docToolbar(`Certificate-${profile.name.replace(/[^\w]+/g, "-")}.html`)}
 </body></html>`;
 
   const win = window.open("", "_blank");
