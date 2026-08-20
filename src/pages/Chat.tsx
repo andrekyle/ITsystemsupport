@@ -117,6 +117,12 @@ export function ChatPage({
   );
 
   const [openWith, setOpenWith] = useState<string | null>(null);
+  /** open a person's profile — learners may only view learner profiles */
+  const openProfile = (id: string) => {
+    const p = peopleByAny.get(id);
+    if (!p) return;
+    if (staff || p.role === "Learner") navigate({ page: "students", studentId: p.id });
+  };
   /** thread key of a third-party conversation the super user is monitoring */
   const [monitorKey, setMonitorKey] = useState<string | null>(null);
   const monitorThread = useMemo(
@@ -214,11 +220,12 @@ export function ChatPage({
               setOpenWith(null);
               setMonitorKey(key);
             }}
+            onOpenProfile={openProfile}
           />
         </aside>
         <section className="chat-main card">
           {monitorThread ? (
-            <MonitorThread thread={monitorThread} me={profile} nameFor={nameFor} peopleByAny={peopleByAny} />
+            <MonitorThread thread={monitorThread} me={profile} nameFor={nameFor} peopleByAny={peopleByAny} onOpenProfile={openProfile} />
           ) : openWith ? (
             <ChatThread
               me={profile}
@@ -229,6 +236,7 @@ export function ChatPage({
               cloud={cloud}
               superUid={superUid}
               isOnline={isOnline}
+              onOpenProfile={openProfile}
             />
           ) : (
             <div className="chat-empty">
@@ -315,6 +323,7 @@ function ChatSidebar({
   monitorKey,
   onSelect,
   onMonitor,
+  onOpenProfile,
 }: {
   viewer: Profile;
   people: Profile[];
@@ -325,6 +334,7 @@ function ChatSidebar({
   monitorKey: string | null;
   onSelect: (otherId: string) => void;
   onMonitor: (threadKey: string) => void;
+  onOpenProfile: (profileId: string) => void;
 }) {
   const isSuper = viewer.role === "Super User";
   const [tab, setTab] = useState<"threads" | "people">("threads");
@@ -408,7 +418,14 @@ function ChatSidebar({
               className={`chat-row${openWith === p.id ? " active" : ""}`}
               onClick={() => onSelect(p.id)}
             >
-              <span className="chat-avatar">
+              <span
+                className="chat-avatar chat-avatar-link"
+                title={`View ${p.name}'s profile`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenProfile(p.id);
+                }}
+              >
                 <Avatar profile={p} size={28} />
                 {isOnline(p) && <span className="presence-dot" title="Online now" />}
               </span>
@@ -551,6 +568,7 @@ function ChatThread({
   cloud,
   superUid,
   isOnline,
+  onOpenProfile,
 }: {
   me: Profile;
   otherId: string;
@@ -560,6 +578,7 @@ function ChatThread({
   cloud: CloudDirectory | null;
   superUid?: string;
   isOnline: (p: Profile) => boolean;
+  onOpenProfile: (profileId: string) => void;
 }) {
   // Cloud-only identity resolution: the other party's Supabase auth user id
   // is either stamped on their cloud profile (`cloudUserId`) or listed in the
@@ -622,19 +641,26 @@ function ChatThread({
   return (
     <>
       <header className="chat-head">
-        {other && (
-          <span className="chat-avatar">
-            <Avatar profile={other} size={30} />
-            {otherOnline && <span className="presence-dot" title="Online now" />}
+        <button
+          type="button"
+          className="chat-head-person"
+          title={`View ${other?.name ?? nameFor(otherId)}'s profile`}
+          onClick={() => onOpenProfile(otherId)}
+        >
+          {other && (
+            <span className="chat-avatar">
+              <Avatar profile={other} size={30} />
+              {otherOnline && <span className="presence-dot" title="Online now" />}
+            </span>
+          )}
+          <span>
+            <strong>{other?.name ?? nameFor(otherId)}</strong>
+            <div className="mini-note">
+              {otherOnline ? <span className="presence-label">Online now · </span> : null}
+              {other?.role ?? "Unknown role"}
+            </div>
           </span>
-        )}
-        <span>
-          <strong>{other?.name ?? nameFor(otherId)}</strong>
-          <div className="mini-note">
-            {otherOnline ? <span className="presence-label">Online now · </span> : null}
-            {other?.role ?? "Unknown role"}
-          </div>
-        </span>
+        </button>
       </header>
       <div className="chat-messages" ref={scrollRef}>
         {!canSend && messages.length === 0 ? (
@@ -654,7 +680,7 @@ function ChatThread({
             const sender =
               peopleByAny.get(m.bySenderAuthId) ?? peopleByAny.get(m.byId) ?? other;
             return (
-              <ChatBubble key={m.id} msg={m} me={me} sender={sender} onEdit={edit} onReact={react} />
+              <ChatBubble key={m.id} msg={m} me={me} sender={sender} onEdit={edit} onReact={react} onOpenProfile={onOpenProfile} />
             );
           })
         )}
@@ -694,11 +720,13 @@ function MonitorThread({
   me,
   nameFor,
   peopleByAny,
+  onOpenProfile,
 }: {
   thread: ChatThreadInfo;
   me: Profile;
   nameFor: (id: string) => string;
   peopleByAny: Map<string, Profile>;
+  onOpenProfile: (profileId: string) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   /** which thread the initial jump-to-newest has already run for */
@@ -727,7 +755,7 @@ function MonitorThread({
       <div className="chat-messages" ref={scrollRef}>
         {thread.messages.map((m) => {
           const sender = peopleByAny.get(m.bySenderAuthId) ?? peopleByAny.get(m.byId);
-          return <ChatBubble key={m.id} msg={m} me={me} sender={sender} onEdit={noEdit} />;
+          return <ChatBubble key={m.id} msg={m} me={me} sender={sender} onEdit={noEdit} onOpenProfile={onOpenProfile} />;
         })}
       </div>
     </>
@@ -740,6 +768,7 @@ function ChatBubble({
   sender,
   onEdit,
   onReact,
+  onOpenProfile,
 }: {
   msg: ChatMessage;
   me: Profile;
@@ -747,6 +776,8 @@ function ChatBubble({
   onEdit: (msgId: string, newBody: string) => Promise<boolean>;
   /** react to a received message (👍/❤️, null clears) — omit for read-only views */
   onReact?: (msgId: string, reaction: string | null) => Promise<boolean>;
+  /** open the sender's profile when their avatar is clicked */
+  onOpenProfile?: (profileId: string) => void;
 }) {
   const mine = msg.byId === me.id;
   const [editing, setEditing] = useState(false);
@@ -788,14 +819,19 @@ function ChatBubble({
 
   const avatarProfile: Profile =
     sender ?? ({ id: msg.byId, name: msg.by, role: msg.role, createdAt: msg.at } as Profile);
+  const avatarEl = (
+    <span
+      className={`chat-bubble-avatar${onOpenProfile ? " chat-avatar-link" : ""}`}
+      title={onOpenProfile ? `View ${avatarProfile.name}'s profile` : undefined}
+      onClick={onOpenProfile ? () => onOpenProfile(avatarProfile.id) : undefined}
+    >
+      <Avatar profile={avatarProfile} size={28} />
+    </span>
+  );
 
   return (
     <div className={`chat-bubble-row${mine ? " mine" : ""}`}>
-      {!mine && (
-        <span className="chat-bubble-avatar">
-          <Avatar profile={avatarProfile} size={28} />
-        </span>
-      )}
+      {!mine && avatarEl}
       <div className={`chat-bubble${mine ? " mine" : ""}`}>
         {!mine && <div className="chat-bubble-by">{msg.by}</div>}
         {editing ? (
@@ -892,11 +928,7 @@ function ChatBubble({
           </>
         )}
       </div>
-      {mine && (
-        <span className="chat-bubble-avatar">
-          <Avatar profile={avatarProfile} size={28} />
-        </span>
-      )}
+      {mine && avatarEl}
     </div>
   );
 }

@@ -150,7 +150,7 @@ const SORT_LABELS: Record<SortKey, string> = {
   name: "Name",
 };
 
-export function AnalyticsPage({ profile }: { profile: Profile; navigate: (r: Route) => void }) {
+export function AnalyticsPage({ profile, navigate }: { profile: Profile; navigate: (r: Route) => void }) {
   const registers = attendanceRegisterCount();
   const [sort, setSort] = useState<SortKey>("completion");
   const [ascending, setAscending] = useState(false);
@@ -416,10 +416,15 @@ export function AnalyticsPage({ profile }: { profile: Profile; navigate: (r: Rou
               {sorted.map((r) => (
                 <tr key={r.profile.id} className={r.atRisk ? "at-risk" : ""}>
                   <td>
-                    <span className="cell-person">
+                    <button
+                      type="button"
+                      className="cell-person cell-person-link"
+                      title={`View ${r.profile.name}'s profile`}
+                      onClick={() => navigate({ page: "students", studentId: r.profile.id })}
+                    >
                       <Avatar profile={r.profile} size={22} />
                       {r.profile.name}
-                    </span>
+                    </button>
                   </td>
                   <td>
                     <span className="cell-bar">

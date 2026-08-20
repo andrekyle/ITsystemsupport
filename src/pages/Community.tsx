@@ -24,7 +24,7 @@ const fmtWhen = (iso: string) => {
   return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 };
 
-export function CommunityPage({ profile }: { profile: Profile; navigate: (r: Route) => void }) {
+export function CommunityPage({ profile, navigate }: { profile: Profile; navigate: (r: Route) => void }) {
   const staff = isStaff(profile.role);
   const isSuper = profile.role === "Super User";
   const [settings, updateSettings] = useSharedSettings();
@@ -48,7 +48,7 @@ export function CommunityPage({ profile }: { profile: Profile; navigate: (r: Rou
           <QaBoard profile={profile} staff={staff} />
         </div>
         <div>
-          <Leaderboard profile={profile} />
+          <Leaderboard profile={profile} navigate={navigate} />
         </div>
       </div>
     </>
@@ -604,7 +604,7 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
 
 /* ---------- leaderboard ---------- */
 
-function Leaderboard({ profile }: { profile: Profile }) {
+function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Route) => void }) {
   const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
   useEffect(() => {
     if (!cloudEnabled) return;
@@ -653,10 +653,14 @@ function Leaderboard({ profile }: { profile: Profile }) {
           </p>
         ) : (
           <ol className="leaderboard">
-            {rows.map((r, i) => (
+            {rows.map((r, i) => {
+              const canView = isStaff(profile.role) || r.profile.role === "Learner";
+              return (
               <li
                 key={r.profile.id}
-                className={r.profile.id === profile.id ? "me" : ""}
+                className={`${r.profile.id === profile.id ? "me" : ""}${canView ? " lb-clickable" : ""}`}
+                title={canView ? `View ${r.profile.name}'s profile` : undefined}
+                onClick={canView ? () => navigate({ page: "students", studentId: r.profile.id }) : undefined}
               >
                 <span className={`rank r${i + 1}`}>{i + 1}</span>
                 <Avatar profile={r.profile} size={30} />
@@ -668,7 +672,8 @@ function Leaderboard({ profile }: { profile: Profile }) {
                 </span>
                 <span className="lb-xp">{r.xp} XP</span>
               </li>
-            ))}
+              );
+            })}
           </ol>
         )}
         {myIndex >= 0 && (
