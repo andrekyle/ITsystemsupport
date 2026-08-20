@@ -6647,6 +6647,758 @@ export const CONTENT: Record<string, UnitContent> = {
           },
         ],
       },
+      {
+        heading: "Word processors",
+        icon: "document",
+        flat: true,
+        lessonStart: { n: 3, title: "Explain how information technology can be used in business" },
+        paragraphs: [
+          "Welcome to Lesson 3: explain how information technology can be used in business. Time: 90 minutes · Activity: Self & Group.",
+          "Word processing means using a computer to create, edit and print documents. Of all computer applications, word processing is the most common. A word processor lets you create a document, store it electronically, display it on a screen, modify it by entering commands and characters from the keyboard, and print it — and in 2026 it also saves your work to the cloud automatically, keeps a version history, and lets several people edit the same document at the same time.",
+          "The great advantage of word processing over using a typewriter is that you can make changes without retyping the entire document. If you make a typing mistake, you simply back up the cursor and correct it. You can delete a paragraph without leaving a trace, insert a word, sentence or paragraph in the middle of a document, or move sections of text from one place to another — then print or share only when you are happy.",
+          "The word processors a business is most likely to use today are Microsoft Word (part of Microsoft 365, with the Copilot AI assistant built in), Google Docs (part of Google Workspace, with the Gemini assistant), and the free LibreOffice Writer. All of them run on Windows, macOS, tablets and phones — and in a web browser.",
+        ],
+        example: {
+          title: "In business",
+          lines: [
+            "Word processors produce the documents a business runs on: letters, quotations, contracts, reports, policies, meeting minutes and staff communications.",
+            "Effect on the business: documents go out faster and with fewer errors, templates keep every document on-brand, and cloud sharing means a team finishes one document together instead of emailing copies around.",
+          ],
+        },
+        figures: [
+          {
+            id: "114050-word-processor",
+            caption: "A modern word processor — Microsoft Word with the Copilot assistant",
+            hint: "screenshot of Microsoft Word (Microsoft 365) editing a business letter, with the Copilot AI side panel open",
+          },
+        ],
+        slideQuiz: [
+          {
+            q: "What is word processing?",
+            options: [
+              "Using a computer to create, edit and print documents",
+              "Using a computer to calculate budgets in a grid of cells",
+              "Using a computer to design logos and edit photographs",
+              "Using a computer to store customer records in tables",
+            ],
+            answer: 0,
+            explain: "Word processing is using a computer to create, edit and print documents — the most common of all computer applications.",
+          },
+          {
+            q: "What is the great advantage of a word processor over a typewriter?",
+            options: [
+              "You can make changes without retyping the entire document",
+              "It prints documents in colour rather than only in black ink",
+              "It never needs electricity, so it keeps working in a power cut",
+              "It writes the document itself, so nobody has to draft anything",
+            ],
+            answer: 0,
+            explain: "Mistakes are corrected in place — delete, insert and move text without retyping the document.",
+          },
+          {
+            q: "Which word processors is a business most likely to use in 2026?",
+            options: [
+              "Microsoft Word, Google Docs and LibreOffice Writer",
+              "Lotus Word Pro, WordStar and IBM DisplayWrite",
+              "Corel Ventura, PageMaker and Harvard Graphics",
+              "WordPad, Teletext and the Windows Notepad app",
+            ],
+            answer: 0,
+            explain: "Word (Microsoft 365), Google Docs (Google Workspace) and the free LibreOffice Writer are today's common choices.",
+          },
+          {
+            q: "Besides printing, what does a modern word processor do with your document?",
+            options: [
+              "Saves it to the cloud automatically and keeps a version history",
+              "Deletes it every evening so that the file server does not fill up",
+              "Faxes it to head office every time you press the spacebar",
+              "Locks it so that only the IT department can ever open it",
+            ],
+            answer: 0,
+            explain: "Cloud autosave, version history and real-time co-authoring are standard in 2026.",
+          },
+          {
+            q: "Which documents would a business produce with a word processor?",
+            options: [
+              "Letters, quotations, contracts, reports and policies",
+              "Only spreadsheet budgets and cash-flow forecasts",
+              "Only databases of customers and stock on hand",
+              "Only photographs, logos and video advertisements",
+            ],
+            answer: 0,
+            explain: "The business paperwork — letters, quotes, contracts, reports, policies — is word-processor territory.",
+          },
+        ],
+      },
+      {
+        heading: "Basic features every word processor supports",
+        icon: "checklist",
+        flat: true,
+        paragraphs: [
+          "Word processors vary considerably, but all of them support the following basic features:",
+        ],
+        bullets: [
+          "Insert text — add text anywhere in the document.",
+          "Delete text — erase characters, words, lines or pages as easily as crossing them out on paper.",
+          "Cut and paste — remove (cut) a section of text from one place and insert (paste) it somewhere else.",
+          "Copy — duplicate a section of text.",
+          "Page size and margins — define various page sizes and margins; the word processor automatically re-fits the text.",
+          "Search and replace — find a particular word or phrase, and optionally replace every occurrence with other text.",
+          "Word wrap — the word processor automatically starts a new line when the current one is full, and re-flows the text if the margins change.",
+          "Print — send the document to a printer, or save it as a PDF to email or WhatsApp to a client.",
+        ],
+        example: {
+          title: "Text editors vs full-featured word processors",
+          lines: [
+            "A program that supports only these basics (and maybe a few more) is called a text editor — Windows Notepad is the classic example.",
+            "Most word processors support far more, and are called full-featured word processors — the next slide looks at what they add.",
+          ],
+        },
+        slideQuiz: [
+          {
+            q: "What does CUT AND PASTE do?",
+            options: [
+              "Removes text from one place and inserts it somewhere else",
+              "Duplicates a section of text without removing the original",
+              "Erases a page so thoroughly that it can never be recovered",
+              "Prints the selected paragraph on a separate sheet of paper",
+            ],
+            answer: 0,
+            explain: "Cut removes the text; paste inserts it at the new position — copy is the feature that duplicates.",
+          },
+          {
+            q: "What does WORD WRAP do?",
+            options: [
+              "Starts a new line automatically when the current line is full",
+              "Draws a decorative border around the edge of every page",
+              "Underlines every word that the spell checker cannot recognise",
+              "Compresses the document so that it uses less disk space",
+            ],
+            answer: 0,
+            explain: "Word wrap moves to the next line automatically and re-flows the text when the margins change.",
+          },
+          {
+            q: "What does SEARCH AND REPLACE let you do?",
+            options: [
+              "Find a word or phrase and swap every occurrence for other text",
+              "Find a lost file anywhere on the computer's hard drive",
+              "Replace the printer with a newer model automatically",
+              "Search the internet for a better version of your document",
+            ],
+            answer: 0,
+            explain: "It searches for the characters you specify and can replace each occurrence with replacement text.",
+          },
+          {
+            q: "If you change the page size or margins, what happens to the text?",
+            options: [
+              "The word processor automatically readjusts it so that it fits",
+              "It disappears and must be typed in again from the beginning",
+              "It prints exactly as it did before, ignoring the new settings",
+              "It is moved into a brand-new empty document window",
+            ],
+            answer: 0,
+            explain: "Page size and margin settings re-fit the existing text automatically.",
+          },
+          {
+            q: "A program that supports only the basic features is called…",
+            options: [
+              "A text editor — Windows Notepad is the classic example",
+              "A desktop publishing system for full-colour magazines",
+              "A database management system for structured records",
+              "A presentation package for building slide shows",
+            ],
+            answer: 0,
+            explain: "Basics only = text editor; word processors with more are called full-featured word processors.",
+          },
+        ],
+      },
+      {
+        heading: "Full-featured word processors",
+        icon: "settings",
+        flat: true,
+        paragraphs: [
+          "Full-featured word processors let you manipulate and format documents in more sophisticated ways:",
+        ],
+        bullets: [
+          "File management — create, delete, move and search for files without leaving the program.",
+          "Font specifications — change fonts, sizes and typefaces; apply bold, italics and underlining.",
+          "Footnotes and cross-references — automatic numbering and placement of footnotes, and easy references to other sections of the document.",
+          "Graphics — embed illustrations, charts and photos into the document, drawn in the program or inserted from another one.",
+          "Headers, footers and page numbering — customised text at the top and bottom of every page, with the correct page number tracked automatically.",
+          "Layout — different margins and indenting methods within a single document.",
+          "Macros — record a series of keystrokes or commands and replay them to save time on common combinations.",
+          "Merges (mail merge) — merge names and addresses from a list into a template to generate personalised letters, labels or certificates.",
+          "Spell checker — highlights any words that it does not recognise.",
+          "Tables of contents and indexes — created automatically from codes you insert in the document.",
+          "Thesaurus — search for synonyms without leaving the word processor.",
+          "Windows — edit two or more documents at the same time, each in its own window.",
+          "WYSIWYG (what you see is what you get) — the document appears on screen exactly as it will look when printed.",
+        ],
+        example: {
+          title: "What 2026 adds",
+          lines: [
+            "Track changes and comments — colleagues suggest edits without destroying your text; you accept or reject each one.",
+            "Real-time co-authoring — several people type in the same document at once, each cursor labelled with a name.",
+            "AI assistants — Copilot in Word and Gemini in Google Docs draft, summarise, rewrite and translate text on request.",
+            "Dictation — speak, and the document types itself with punctuation added automatically.",
+          ],
+        },
+        slideQuiz: [
+          {
+            q: "What is a MACRO?",
+            options: [
+              "A recorded series of keystrokes or commands replayed to save time",
+              "A very large font used for the main heading on a title page",
+              "A picture embedded in the header of every page of a document",
+              "A list of all the files stored in the word processor's folder",
+            ],
+            answer: 0,
+            explain: "A macro represents a series of keystrokes or commands — replaying it saves time on common combinations.",
+          },
+          {
+            q: "What is MAIL MERGE particularly useful for?",
+            options: [
+              "Generating many personalised documents from one template and a list",
+              "Sending one email to the company's internet service provider",
+              "Combining two printers so that documents print twice as fast",
+              "Compressing old letters so that they use less storage space",
+            ],
+            answer: 0,
+            explain: "Merging a name-and-address list into a template produces personalised letters, labels or certificates — the classic example is mailing labels.",
+          },
+          {
+            q: "What does WYSIWYG mean?",
+            options: [
+              "The document on screen looks exactly as it will look when printed",
+              "The word processor warns you whenever your grammar is incorrect",
+              "The file is watermarked so that other people cannot copy it",
+              "The window resizes itself to match the size of the paper",
+            ],
+            answer: 0,
+            explain: "What You See Is What You Get — the screen matches the printed result exactly.",
+          },
+          {
+            q: "What does a SPELL CHECKER do?",
+            options: [
+              "Highlights any words that it does not recognise",
+              "Rewrites your paragraphs in more formal English",
+              "Translates the entire document into another language",
+              "Counts the words and reports the reading time",
+            ],
+            answer: 0,
+            explain: "The spell checker checks spelling and highlights words it does not recognise.",
+          },
+          {
+            q: "Which AI assistants are built into Word and Google Docs in 2026?",
+            options: [
+              "Copilot in Word and Gemini in Google Docs",
+              "Clippy in Word and Jeeves in Google Docs",
+              "Siri in Word and Cortana in Google Docs",
+              "Watson in Word and Bixby in Google Docs",
+            ],
+            answer: 0,
+            explain: "Microsoft 365 Copilot and Google Gemini draft, summarise, rewrite and translate text inside the document.",
+          },
+        ],
+      },
+      {
+        heading: "Spreadsheets",
+        icon: "chart",
+        flat: true,
+        paragraphs: [
+          "A spreadsheet is a rectangular table (or grid) of information, often financial information. The word comes from bookkeeping: ledgers were \u201cspread\u201d across two facing pages — categories of expenditure across the top, invoices down the left margin, and each amount in the cell where its row and column intersect.",
+          "An electronic spreadsheet keeps that layout — rows, columns and cells — but adds formulas. A cell can hold a calculation such as =SUM(B2:B13), and when any number changes, every formula that depends on it recalculates instantly. Charts, pivot tables and conditional formatting turn the numbers into pictures and summaries.",
+          "In 2026 the spreadsheets a business will meet are Microsoft Excel (Microsoft 365 — Copilot can write formulas and analyse the data for you), Google Sheets (browser-based and shared in real time) and the free LibreOffice Calc.",
+        ],
+        example: {
+          title: "In business",
+          lines: [
+            "Spreadsheets carry the numbers of the business: budgets, cash-flow forecasts, price lists, quotations, sales analysis, stock counts and simple dashboards.",
+            "They also answer \u201cwhat if\u201d questions — what happens to profit if a supplier raises prices 10%, or the rand weakens? — the same scenario modelling that supports the decision stages you met in Lesson 2.",
+            "Effect on the business: calculations are accurate and instant, scenarios are tested before money is spent, and managers see trends in charts instead of raw figures.",
+          ],
+        },
+        figures: [
+          {
+            id: "114050-spreadsheet",
+            caption: "A spreadsheet — rows, columns, cells and a chart",
+            hint: "screenshot of Microsoft Excel or Google Sheets showing a small business budget with a chart",
+          },
+        ],
+        slideQuiz: [
+          {
+            q: "What is a spreadsheet?",
+            options: [
+              "A rectangular grid of information, often financial information",
+              "A program for writing letters, contracts and reports",
+              "A structured collection of records managed by a DBMS",
+              "A tool for editing photographs and drawing illustrations",
+            ],
+            answer: 0,
+            explain: "A spreadsheet is a rectangular table (grid) of information — very often financial information.",
+          },
+          {
+            q: "Where does the word \u201cspreadsheet\u201d come from?",
+            options: [
+              "Bookkeeping ledgers spread across two facing pages",
+              "The sheet of plastic spread over early computer screens",
+              "A brand of accounting paper sold during the 1950s",
+              "The spread of personal computers through offices",
+            ],
+            answer: 0,
+            explain: "Ledgers were \u201cspread\u201d across facing pages — columns for expenditure, invoices down the margin, amounts in the intersecting cells.",
+          },
+          {
+            q: "What happens when you change one number in a spreadsheet?",
+            options: [
+              "Every formula that depends on it recalculates instantly",
+              "You must retype every calculation that used the old number",
+              "The spreadsheet locks until a manager approves the change",
+              "Nothing — formulas only calculate when the file is printed",
+            ],
+            answer: 0,
+            explain: "Automatic recalculation is the spreadsheet's superpower — change an input and every dependent formula updates.",
+          },
+          {
+            q: "Which spreadsheet applications will a business meet in 2026?",
+            options: [
+              "Microsoft Excel, Google Sheets and LibreOffice Calc",
+              "Lotus 1-2-3, Quattro Pro and VisiCalc",
+              "SuperCalc, Multiplan and Lotus Symphony",
+              "MS Works, ClarisWorks and AppleWorks",
+            ],
+            answer: 0,
+            explain: "Excel (with Copilot), Google Sheets and the free LibreOffice Calc are the 2026 line-up.",
+          },
+          {
+            q: "How do spreadsheets support the decision stages from Lesson 2?",
+            options: [
+              "\u201cWhat if\u201d scenarios can be tested before money is spent",
+              "They take the decision so that the manager does not have to",
+              "They replace the MIS so that no other reports are needed",
+              "They print each decision on letterhead for the records",
+            ],
+            answer: 0,
+            explain: "A spreadsheet models \u201cwhat if\u201d scenarios — exactly the tool the manager uses when considering solutions.",
+          },
+        ],
+      },
+      {
+        heading: "Databases",
+        icon: "database",
+        flat: true,
+        paragraphs: [
+          "A database is a structured collection of records or data stored in a computer system, so that a program — or a person using a query language — can consult it to answer questions. The records retrieved in answer to queries are information that can be used to make decisions. The computer program used to manage and query a database is the database management system (DBMS).",
+          "A typical query could be: \u201cHow many burgers with two or more patties were sold in March in region 4?\u201d To answer it, the database must store information about the burgers sold — number of patties, sales date and sales region. Strictly, database means the collection of related records and DBMS means the software; in everyday use, \u201cdatabase\u201d often covers both.",
+          "Every database has a schema — a structural description of the type of facts it holds and the relationships among them. The most common model is the relational model you met in Lesson 2: all information in multiple related tables of rows and columns, with relationships built through values shared between tables. Hierarchical and network models represent relationships more explicitly.",
+          "The DBMSs a business will meet in 2026: Microsoft SQL Server and its cloud twin Azure SQL, the open-source PostgreSQL and MySQL, Oracle Database in large enterprises, and MongoDB where records do not fit neatly into tables. Small businesses often start with Microsoft Access or Airtable — and most new databases run in the cloud rather than on a server in the office.",
+        ],
+        example: {
+          title: "In business",
+          lines: [
+            "Databases sit underneath almost every business system: customer records (the heart of CRM systems such as Salesforce and Microsoft Dynamics 365), stock and inventory, sales history, loyalty programmes, payroll and the point-of-sale itself.",
+            "Effect on the business: questions that would take days with paper records — which products sell best, which customers have not bought in six months — are answered in seconds, and decisions are made on facts.",
+            "Responsibility: in South Africa, POPIA requires a business to protect the personal information in its databases and to use it only for the purpose it was collected.",
+          ],
+        },
+        slideQuiz: [
+          {
+            q: "What is a database?",
+            options: [
+              "A structured collection of records stored so that it can be queried",
+              "A grid of cells holding numbers and automatic formulas",
+              "A program for creating, editing and printing documents",
+              "A folder of photographs organised by the date taken",
+            ],
+            answer: 0,
+            explain: "A database is a structured collection of records that a program or query language can consult to answer questions.",
+          },
+          {
+            q: "What is a DBMS?",
+            options: [
+              "The software used to manage and query a database",
+              "The person employed to type records into the system",
+              "The cable that connects the database to the network",
+              "The printed report produced at the end of each month",
+            ],
+            answer: 0,
+            explain: "The database management system is the software that manages and queries the database.",
+          },
+          {
+            q: "What is a SCHEMA?",
+            options: [
+              "A structural description of the facts a database holds and their relationships",
+              "A password that unlocks the database for the administrator only",
+              "A backup copy of the database stored safely in another building",
+              "A diagram of the office showing where each computer is placed",
+            ],
+            answer: 0,
+            explain: "The schema describes the objects represented in the database and the relationships among them.",
+          },
+          {
+            q: "Which DBMSs will a business most likely meet in 2026?",
+            options: [
+              "SQL Server / Azure SQL, PostgreSQL, MySQL, Oracle and MongoDB",
+              "dBase III, Paradox, FoxPro and Lotus Approach",
+              "Windows Media Player, WinZip, WinRAR and Paint",
+              "WordPerfect, Quattro Pro, Freelance and Organizer",
+            ],
+            answer: 0,
+            explain: "SQL Server/Azure SQL, PostgreSQL, MySQL, Oracle and MongoDB are the mainstream 2026 database engines.",
+          },
+          {
+            q: "What does POPIA require of a South African business?",
+            options: [
+              "Protect personal information and use it only for its collected purpose",
+              "Publish its customer database on the internet once every year",
+              "Keep all records on paper as well as inside the database",
+              "Delete its entire customer database every five years",
+            ],
+            answer: 0,
+            explain: "POPIA makes the business responsible for protecting personal information and using it only for the purpose it was collected.",
+          },
+        ],
+      },
+      {
+        heading: "Graphics",
+        icon: "design",
+        flat: true,
+        paragraphs: [
+          "Computer graphics is the field concerned with digitally creating and manipulating visual content — from 2D images and photo editing to 3D models, animation and video. A broad classification of its subfields:",
+        ],
+        bullets: [
+          "Geometry — ways to represent and process surfaces and shapes.",
+          "Animation — ways to represent and manipulate motion.",
+          "Rendering — algorithms that reproduce how light falls on a scene.",
+          "Imaging — image acquisition and image editing.",
+        ],
+        example: {
+          title: "The 2026 toolbox",
+          lines: [
+            "Canva — browser-based design for social posts, flyers and presentations; the tool most small businesses actually use.",
+            "Adobe Photoshop and Illustrator — professional photo editing and vector illustration, now with Firefly generative AI built in.",
+            "Figma — collaborative design in the browser, from marketing graphics to app interfaces.",
+            "Blender — free, professional 3D modelling and animation.",
+            "CapCut and Adobe Premiere Pro — video editing for adverts and social media.",
+            "AI image generation — tools such as Firefly, DALL·E and Midjourney draft visuals from a text description.",
+          ],
+        },
+        examples: [
+          {
+            title: "In business",
+            lines: [
+              "Graphics software produces the visual face of the business: logos and branding, adverts, social-media posts, product photos, packaging, signage and presentation slides.",
+              "Effect on the business: a professional image builds trust, and producing artwork in-house with tools like Canva is faster and far cheaper than outsourcing every design job.",
+            ],
+          },
+        ],
+        figures: [
+          {
+            id: "114050-graphics-tools",
+            caption: "Design tools of 2026 — templates, photo editing and generative AI",
+            hint: "screenshot or collage of Canva's template gallery and Adobe Photoshop's generative fill",
+          },
+        ],
+        slideQuiz: [
+          {
+            q: "What is computer graphics concerned with?",
+            options: [
+              "Digitally creating and manipulating visual content",
+              "Storing structured records so that they can be queried",
+              "Calculating budgets in a grid of rows and columns",
+              "Sending email between the branches of a business",
+            ],
+            answer: 0,
+            explain: "Computer graphics digitally synthesises and manipulates visual content — 2D, 3D, animation and imaging.",
+          },
+          {
+            q: "Which subfield of graphics deals with MOTION?",
+            options: ["Animation", "Geometry", "Rendering", "Imaging"],
+            answer: 0,
+            explain: "Animation studies ways to represent and manipulate motion.",
+          },
+          {
+            q: "What does RENDERING study?",
+            options: [
+              "Algorithms that reproduce how light falls on a scene",
+              "Ways to represent and process surfaces and shapes",
+              "Methods for acquiring and editing photographs",
+              "Techniques for compressing video for the internet",
+            ],
+            answer: 0,
+            explain: "Rendering studies algorithms to reproduce light transport — how light falls on a scene.",
+          },
+          {
+            q: "Which design tool do most small businesses use for social posts and flyers?",
+            options: [
+              "Canva — browser-based design with ready-made templates",
+              "Blender — free 3D modelling and animation software",
+              "AutoCAD — technical drawing for engineers and architects",
+              "Visual Studio — a programming environment for developers",
+            ],
+            answer: 0,
+            explain: "Canva's templates let non-designers produce professional artwork in minutes — which is why small businesses love it.",
+          },
+          {
+            q: "How does graphics software affect a business?",
+            options: [
+              "A professional visual image builds trust, and in-house design saves money",
+              "It removes the need for the business to do any advertising at all",
+              "It slows marketing down because pictures take longer than words",
+              "It only matters to businesses that sell cameras and lenses",
+            ],
+            answer: 0,
+            explain: "Professional visuals build trust — and tools like Canva make them cheap and fast to produce in-house.",
+          },
+        ],
+      },
+      {
+        heading: "Integrated office suites — Microsoft 365",
+        icon: "briefcase",
+        flat: true,
+        paragraphs: [
+          "An office suite bundles the applications an office needs — word processor, spreadsheet, presentations, email — built to work together: one look and feel, one spell checker, and live links so that an Excel chart pasted into a Word report updates when the numbers change. Suites are also platforms: businesses and third parties write add-ins that extend them with custom commands and specialised features.",
+          "Microsoft Office was introduced in 1989 on the Mac and in 1990 on Windows, originally as a bundle of Word, Excel and PowerPoint. Today it is Microsoft 365 — a cloud subscription rather than a boxed product.",
+          "A Microsoft 365 business subscription in 2026 includes Word, Excel, PowerPoint, Outlook (email and calendar), OneNote, Teams (chat, calls and meetings), OneDrive cloud storage and SharePoint — with the Copilot AI assistant woven through all of them. Files live in the cloud, open on desktop, browser, tablet or phone, and several people can work in the same file at once.",
+        ],
+        example: {
+          title: "In business",
+          lines: [
+            "One subscription per employee covers documents, spreadsheets, presentations, email, meetings and file storage — priced per user per month instead of a large once-off licence.",
+            "Effect on the business: everything works together and is always up to date. A quotation drafted in Word, costed in Excel and presented in PowerPoint can be shared in Teams and signed off the same day.",
+          ],
+        },
+        figures: [
+          {
+            id: "114050-office-suite",
+            caption: "Microsoft 365 — one subscription, one set of tools that work together",
+            hint: "collage of Microsoft 365 apps (Word, Excel, PowerPoint, Outlook, Teams, OneDrive) or the Microsoft 365 home screen",
+          },
+        ],
+        slideQuiz: [
+          {
+            q: "What is an office suite?",
+            options: [
+              "A bundle of office applications built to work together",
+              "A single program that can only edit photographs",
+              "The room in which a company's servers are kept",
+              "A collection of printers shared through the network",
+            ],
+            answer: 0,
+            explain: "A suite bundles the word processor, spreadsheet, presentations and email — with a shared look and live links between them.",
+          },
+          {
+            q: "Which three applications made up the first Microsoft Office?",
+            options: [
+              "Word, Excel and PowerPoint",
+              "Outlook, Teams and OneDrive",
+              "Access, Publisher and Visio",
+              "Paint, Notepad and WordPad",
+            ],
+            answer: 0,
+            explain: "The first Office (1989 on Mac, 1990 on Windows) bundled Word, Excel and PowerPoint.",
+          },
+          {
+            q: "How is Microsoft 365 sold in 2026?",
+            options: [
+              "As a cloud subscription priced per user per month",
+              "As a boxed DVD bought once from a computer shop",
+              "As free software paid for by on-screen advertising",
+              "As hardware built into every new laptop's keyboard",
+            ],
+            answer: 0,
+            explain: "Microsoft 365 is a cloud subscription — per user per month, always the latest version.",
+          },
+          {
+            q: "What advantage do LIVE LINKS between suite applications give?",
+            options: [
+              "An Excel chart in a Word report updates when the numbers change",
+              "Word documents print faster because Excel shares its printer",
+              "PowerPoint slides can never be edited by unauthorised users",
+              "Outlook deletes old emails to free up space for spreadsheets",
+            ],
+            answer: 0,
+            explain: "Linked data keeps documents current — change the spreadsheet and the chart in the report follows.",
+          },
+          {
+            q: "Which AI assistant is woven through Microsoft 365?",
+            options: ["Copilot", "Gemini", "Alexa", "Siri"],
+            answer: 0,
+            explain: "Copilot drafts documents, writes formulas, summarises meetings and answers questions across Microsoft 365.",
+          },
+        ],
+      },
+      {
+        heading: "Other suites on the 2026 market",
+        icon: "globe",
+        flat: true,
+        paragraphs: [
+          "Microsoft 365's biggest rival is Google Workspace: Docs, Sheets, Slides, Gmail, Drive, Meet and Chat, with the Gemini AI assistant. It was designed for the web browser from day one, so real-time collaboration is its greatest strength — many start-ups and schools run on it entirely.",
+          "LibreOffice (Writer, Calc, Impress and the Base database) is free and open-source, works fully offline, and opens Microsoft formats — a serious option where budgets or connectivity are tight. Other suites include Apple iWork (Pages, Numbers, Keynote), Zoho Workplace, OnlyOffice and WPS Office.",
+          "Whatever the suite, file compatibility is what matters: the Microsoft formats .docx, .xlsx and .pptx are the de facto standards for exchanging editable files, and PDF is the standard for final documents. Every suite above reads and writes them.",
+        ],
+        example: {
+          title: "Suites that came before — and what they teach us",
+          lines: [
+            "Lotus SmartSuite (Word Pro, the 1-2-3 spreadsheet, Freelance Graphics, the Approach database and Organizer) and Corel WordPerfect Office (WordPerfect, Quattro Pro, the Paradox database) once competed head-on with Microsoft Office.",
+            "Lotus 1-2-3 — the program that put a PC on every accountant's desk in the 1980s — was discontinued in 2013; WordPerfect survives only in a small legal niche. CorelDRAW lives on, but as a graphics tool rather than an office suite.",
+            "The lesson: compatibility beats features. Users would not switch away from the formats everyone else used — the same reason .docx and .xlsx still rule today.",
+          ],
+        },
+        examples: [
+          {
+            title: "Choosing a suite for a business",
+            lines: [
+              "Cost — subscription (Microsoft 365, Google Workspace) vs free (LibreOffice).",
+              "Collaboration — does the team co-author documents and meet online?",
+              "Compatibility — will customers and suppliers be able to open every file you send?",
+              "Connectivity — browser-first suites need reliable internet; LibreOffice does not.",
+              "Skills — most staff already know Word and Excel, which lowers training costs.",
+            ],
+          },
+        ],
+        slideQuiz: [
+          {
+            q: "What is Google Workspace's greatest strength?",
+            options: [
+              "Real-time collaboration in the browser",
+              "It works without any internet connection",
+              "It is the only suite that can print documents",
+              "It comes free with every Windows computer",
+            ],
+            answer: 0,
+            explain: "Workspace was designed for the browser from day one — live co-editing is its signature.",
+          },
+          {
+            q: "Why might a business choose LibreOffice?",
+            options: [
+              "It is free, open-source and works fully offline",
+              "It is the only suite that includes a spreadsheet",
+              "It includes unlimited cloud storage for every user",
+              "It is required by law for South African companies",
+            ],
+            answer: 0,
+            explain: "LibreOffice costs nothing, needs no internet connection, and still opens Microsoft formats.",
+          },
+          {
+            q: "Which file formats are the de facto standards for exchanging editable documents?",
+            options: [
+              ".docx, .xlsx and .pptx",
+              ".lwp, .123 and .prz",
+              ".wpd, .qpw and .dbf",
+              ".bmp, .wav and .exe",
+            ],
+            answer: 0,
+            explain: "The Microsoft formats .docx, .xlsx and .pptx are the exchange standards; PDF is the standard for final documents.",
+          },
+          {
+            q: "What happened to Lotus 1-2-3, the spreadsheet that dominated the 1980s?",
+            options: [
+              "It was discontinued — users would not leave the formats everyone else used",
+              "It is still the world's best-selling spreadsheet program in 2026",
+              "It became Google Sheets after Google purchased IBM's software",
+              "It was renamed Microsoft Excel after a court settlement",
+            ],
+            answer: 0,
+            explain: "1-2-3 was discontinued in 2013 — compatibility beats features, and the market had standardised on Microsoft's formats.",
+          },
+          {
+            q: "Which factors matter when choosing a suite for a business?",
+            options: [
+              "Cost, collaboration, compatibility, connectivity and staff skills",
+              "The colour of the icons and the surname of the founder",
+              "Only the price — every suite is otherwise identical",
+              "Whether it ships on floppy disks, CDs or DVDs",
+            ],
+            answer: 0,
+            explain: "Weigh cost, collaboration needs, file compatibility, internet reliability and existing staff skills.",
+          },
+        ],
+      },
+      {
+        heading: "How these applications serve the business",
+        icon: "target",
+        flat: true,
+        paragraphs: [
+          "Pull it all together: each family of applications has a function (what it does) and an effect (what it changes for the business). Being able to explain both — function and effect — is the outcome this lesson assesses.",
+        ],
+        cards: [
+          {
+            icon: "document",
+            title: "Word processors",
+            text: "Function: create, edit and share the business's documents — letters, quotes, contracts, reports. Effect: faster, error-free, on-brand paperwork, and a team finishing one copy together.",
+          },
+          {
+            icon: "chart",
+            title: "Spreadsheets",
+            text: "Function: calculate, analyse and chart numbers — budgets, forecasts, price lists. Effect: accurate instant arithmetic and \u201cwhat if\u201d answers before money is committed.",
+          },
+          {
+            icon: "database",
+            title: "Databases",
+            text: "Function: store and query the records the business runs on — customers, stock, sales. Effect: facts on demand for decisions, one trusted copy of the truth, POPIA-compliant custody of personal data.",
+          },
+          {
+            icon: "design",
+            title: "Graphics",
+            text: "Function: create the visual face of the business — logos, adverts, social posts, product photos. Effect: a professional image that builds trust, produced in-house at low cost.",
+          },
+          {
+            icon: "briefcase",
+            title: "Integrated suites",
+            text: "Function: bundle all of the above with email, meetings and cloud files that work together. Effect: one subscription, one login, shared data — and staff skills that transfer between tasks.",
+          },
+        ],
+        example: {
+          title: "Activity — Questioning (45 minutes · Self & Group)",
+          lines: [
+            "Open the Exercises tab and complete \u201cHow IT can be used in business\u201d.",
+            "For each application family, explain its functions and the effects it has on the business — the AI marker will check your answers.",
+          ],
+        },
+        slideQuiz: [
+          {
+            q: "When explaining an application for this outcome, what TWO things must you cover?",
+            options: [
+              "Its function (what it does) and its effect on the business",
+              "Its price in rand and the year it was first released",
+              "Its icon design and the colour of its splash screen",
+              "Its file size on disk and the speed of its installer",
+            ],
+            answer: 0,
+            explain: "Function and effect — what the application does, and what it changes for the business.",
+          },
+          {
+            q: "Which application family answers \u201cwhat if\u201d questions before money is committed?",
+            options: ["Spreadsheets", "Word processors", "Graphics packages", "Presentation software"],
+            answer: 0,
+            explain: "Spreadsheets model scenarios — change an assumption and every dependent figure recalculates.",
+          },
+          {
+            q: "Which application family is the trusted store of customers, stock and sales records?",
+            options: ["Databases", "Word processors", "Spreadsheets", "Graphics packages"],
+            answer: 0,
+            explain: "Databases hold the business's records and answer queries in seconds.",
+          },
+          {
+            q: "Which application family produces the visual face of the business?",
+            options: ["Graphics packages", "Databases", "Spreadsheets", "Email clients"],
+            answer: 0,
+            explain: "Graphics tools produce the logos, adverts, posts and photos that customers see.",
+          },
+          {
+            q: "What is the effect of adopting an integrated office suite?",
+            options: [
+              "One subscription with shared data and skills that transfer between tasks",
+              "The business no longer needs anyone in its accounts department",
+              "Documents can never again be sent to people outside the business",
+              "Each application must be bought separately from a different vendor",
+            ],
+            answer: 0,
+            explain: "A suite means one subscription, one login, applications that share data — and skills that carry across.",
+          },
+        ],
+      },
     ],
 
     exercises: [
@@ -6911,6 +7663,110 @@ export const CONTENT: Record<string, UnitContent> = {
               "Serves operational, tactical and strategic levels",
             ],
             min: 1,
+          },
+        ],
+      },
+      {
+        id: "qs114050apps",
+        title: "Questioning — How IT can be used in business",
+        task: "Time: 45 minutes · Activity: Self & Group — explain how each of the following aspects of IT can be used in businesses, making reference to their functions as well as the effects they have on the business.",
+        steps: [
+          "Explain how Word Processors can be used in business — their functions and the effects they have on the business",
+          "Explain how Spreadsheets can be used in business — their functions and the effects they have on the business",
+          "Explain how Databases can be used in business — their functions and the effects they have on the business",
+          "Explain how Graphics can be used in business — their functions and the effects they have on the business",
+          "Explain how Integrated office suites can be used in business — their functions and the effects they have on the business",
+        ],
+        checks: [
+          {
+            answer: [
+              "A word processor creates, edits, stores and prints business documents — letters, quotations, contracts, reports, policies and minutes.",
+              "Functions include inserting and deleting text, cut/copy/paste, formatting fonts, spell checking and mail merge for personalised letters — with cloud autosave and co-authoring in tools like Word and Google Docs.",
+              "Effect: documents are produced faster and more accurately without retyping, templates keep them on-brand, and the business presents a professional image.",
+            ],
+            concepts: [
+              ["letters", "contracts", "reports", "quotation", "documents", "create", "edit"],
+              ["insert", "delete", "cut", "paste", "spell", "mail merge", "format", "co-auth"],
+              ["faster", "professional", "retyp", "accura", "errors", "brand"],
+            ],
+            labels: [
+              "Creates and edits business documents",
+              "Functions: editing, formatting, spell check, mail merge",
+              "Effect: faster, accurate, professional documents",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "A spreadsheet holds numbers in a grid of rows, columns and cells, and formulas recalculate automatically whenever a value changes.",
+              "Businesses use spreadsheets — Excel, Google Sheets — for budgets, cash-flow forecasts, price lists, sales analysis, charts and \u201cwhat if\u201d scenarios.",
+              "Effect: calculations are accurate and instant, scenarios are tested before money is spent, and managers make better-informed decisions.",
+            ],
+            concepts: [
+              ["rows", "columns", "grid", "cells", "formula", "recalculat"],
+              ["budget", "forecast", "price", "sales", "what if", "cash", "chart"],
+              ["accura", "decision", "instant", "errors", "before money", "informed"],
+            ],
+            labels: [
+              "Grid of cells with automatically recalculating formulas",
+              "Used for budgets, forecasts and \u201cwhat if\u201d analysis",
+              "Effect: accuracy and better-informed decisions",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "A database is a structured collection of records managed by a DBMS that can be queried to answer business questions.",
+              "Businesses keep customer records (CRM), stock and inventory, sales history, loyalty programmes and payroll in databases such as SQL Server, PostgreSQL or MySQL.",
+              "Effect: questions are answered in seconds from large volumes of data, decisions rest on facts, and personal information is protected as POPIA requires.",
+            ],
+            concepts: [
+              ["structured", "records", "dbms", "query", "collection"],
+              ["customer", "stock", "sales", "inventory", "crm", "payroll", "loyalty"],
+              ["decision", "seconds", "facts", "popia", "protect", "quick"],
+            ],
+            labels: [
+              "Structured records managed and queried by a DBMS",
+              "Holds customer, stock and sales records",
+              "Effect: fast factual answers and protected personal data",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "Graphics software digitally creates and edits visual content — images, illustrations, animation and video.",
+              "Businesses use tools like Canva, Photoshop and Figma for logos and branding, adverts, social-media posts, product photos, packaging and presentations.",
+              "Effect: a professional visual image builds customer trust, and producing artwork in-house is faster and cheaper than outsourcing design.",
+            ],
+            concepts: [
+              ["visual", "images", "edit", "create", "illustrat", "animat", "video"],
+              ["logo", "advert", "social", "marketing", "brand", "presentation", "photos"],
+              ["professional", "trust", "in-house", "cheap", "faster", "image"],
+            ],
+            labels: [
+              "Creates and edits visual content",
+              "Used for logos, adverts and marketing material",
+              "Effect: professional image at low in-house cost",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "An integrated office suite bundles the word processor, spreadsheet, presentations and email into one package with a shared look, and the applications work together — an Excel chart linked into a Word report updates when the numbers change.",
+              "Suites such as Microsoft 365 and Google Workspace add cloud storage, meetings and AI assistants, so files are co-authored and available on any device.",
+              "Effect: one subscription covers most office work, data flows between applications instead of being retyped, and skills learned in one application transfer to the others.",
+            ],
+            concepts: [
+              ["bundle", "suite", "together", "word processor", "spreadsheet", "email", "linked"],
+              ["microsoft 365", "google workspace", "cloud", "co-auth", "any device", "meetings"],
+              ["subscription", "transfer", "retyp", "one login", "flows", "skills"],
+            ],
+            labels: [
+              "Bundled applications that share data and a common look",
+              "Cloud suites: Microsoft 365 and Google Workspace",
+              "Effect: one subscription, shared data, transferable skills",
+            ],
+            min: 2,
           },
         ],
       },
