@@ -1536,6 +1536,16 @@ textarea:focus {
 [data-theme="light"] textarea {
   color-scheme: light;
 }
+/* Paper-styled forms stay white in BOTH themes — native date-picker icons
+   must stay dark or they vanish on the white sheet in dark mode. */
+[data-theme="dark"] .srf-wrap input,
+[data-theme="dark"] .srf-wrap select,
+[data-theme="dark"] .srf-wrap textarea,
+[data-theme="dark"] .att-sheet input,
+[data-theme="dark"] .att-sheet select,
+[data-theme="dark"] .att-sheet textarea {
+  color-scheme: light;
+}
 /* Belt-and-braces: the browsers that ignore color-scheme still honour
    background/color on <option>. */
 [data-theme="dark"] select option {
