@@ -27,11 +27,25 @@ function docToolbar(filename: string): string {
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 8V3.5h11V8M6.5 17H4a1.5 1.5 0 0 1-1.5-1.5v-6A1.5 1.5 0 0 1 4 8h16a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 20 17h-2.5"/><rect x="6.5" y="13.5" width="11" height="7"/></svg>
       Print
     </button>
-    <button type="button" onclick="(function(){var b=new Blob(['<!doctype html>'+document.documentElement.outerHTML],{type:'text/html'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=${JSON.stringify(filename)};a.click();})()" title="Download this document">
+    <button type="button" onclick="__downloadDoc()" title="Download this document">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v12M7 11l5 5 5-5M4 20.5h16"/></svg>
       Download
     </button>
-  </div>`;
+  </div>
+  <script>
+    function __downloadDoc() {
+      var clone = document.documentElement.cloneNode(true);
+      var tb = clone.querySelector(".doc-toolbar");
+      if (tb) tb.remove();
+      var blob = new Blob(["<!doctype html>" + clone.outerHTML], { type: "text/html" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = ${JSON.stringify(filename)};
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+  </script>`;
 }
 
 const BASE_STYLE = `
