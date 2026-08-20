@@ -8363,6 +8363,10 @@ table.data th.sortable.sorted { color: var(--ink); }
   font-weight: 350;
   line-height: 1.55;
 }
+/* light mode: much lighter bubble grays */
+:root:not([data-theme="dark"]) .chat-bubble {
+  background: #f8f8f8;
+}
 .chat-bubble-row {
   display: flex;
   align-items: flex-start;
@@ -8383,7 +8387,7 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 .chat-bubble.mine {
   align-self: flex-end;
-  background: #e4e4e4;
+  background: #f0f0f0;
   color: #000000;
 }
 .chat-bubble.mine .chat-bubble-at { color: #000000; }
