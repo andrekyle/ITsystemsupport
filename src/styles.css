@@ -7134,8 +7134,8 @@ input.att-sig {
   transition: background 0.12s ease;
 }
 /* light mode: near-black option text for readability */
-:root:not([data-theme="dark"]) .lesson-quiz-opt,
-[data-theme="light"] .lesson-quiz-opt {
+:root:not([data-theme="dark"]) .lesson-quiz-opt:not(.correct):not(.wrong):not(.staff-answer),
+[data-theme="light"] .lesson-quiz-opt:not(.correct):not(.wrong):not(.staff-answer) {
   color: rgba(0, 0, 0, 0.95);
 }
 .lesson-quiz-opt:hover:not(.correct):not(.wrong) {
