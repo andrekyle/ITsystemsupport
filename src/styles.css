@@ -2360,7 +2360,7 @@ textarea:focus {
    light and dark mode and prints without translation. */
 .srf-page {
   --srf-line: #000;
-  --srf-strip: #f3a866;
+  --srf-strip: #ee7a15;
   background: #ffffff;
   color: #000;
   padding: 18px 22px 22px;
