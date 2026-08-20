@@ -7426,6 +7426,718 @@ export const CONTENT: Record<string, UnitContent> = {
           },
         ],
       },
+      {
+        heading: "From data to wisdom",
+        icon: "gradcap",
+        flat: true,
+        lessonStart: { n: 4, title: "Explain the relationship between a business and its data requirements" },
+        paragraphs: [
+          "Welcome to Lesson 4 — the final lesson of this unit: the relationship between a business and its information needs. Time: 90 minutes · Activity: Self & Group.",
+          "No field of activity attracts more attention than knowledge management — yet few sources clearly define what knowledge actually is, and how it differs from data, information and wisdom. To understand one of them, you have to understand all of them.",
+          "According to Russell Ackoff, a systems theorist and professor of organisational change, the content of the human mind can be classified into five categories:",
+        ],
+        cards: [
+          {
+            icon: "database",
+            title: "Data",
+            text: "Symbols — raw facts with no significance beyond their existence.",
+          },
+          {
+            icon: "chart",
+            title: "Information",
+            text: "Data processed to be useful; answers \u201cwho\u201d, \u201cwhat\u201d, \u201cwhere\u201d and \u201cwhen\u201d questions.",
+          },
+          {
+            icon: "book",
+            title: "Knowledge",
+            text: "The application of data and information; answers \u201chow\u201d questions.",
+          },
+          {
+            icon: "search",
+            title: "Understanding",
+            text: "Appreciation of \u201cwhy\u201d — it supports the move from each level to the next.",
+          },
+          {
+            icon: "gradcap",
+            title: "Wisdom",
+            text: "Evaluated understanding — the only category that deals with the future, because it incorporates vision and design.",
+          },
+        ],
+        example: {
+          title: "Past and future",
+          lines: [
+            "The first four categories relate to the past — they deal with what has been or what is known.",
+            "Only wisdom deals with the future: with wisdom, people can create the future rather than just grasp the present and past. But achieving wisdom is not easy — people must move successively through the other categories.",
+          ],
+        },
+        figures: [
+          {
+            id: "114050-dikw-pyramid",
+            caption: "The journey from data to wisdom — understanding supports each transition",
+            hint: "DIKW pyramid or staircase diagram: data \u2192 information \u2192 knowledge \u2192 wisdom",
+          },
+        ],
+        slideQuiz: [
+          {
+            q: "According to Ackoff, what is DATA?",
+            options: [
+              "Symbols — raw facts with no significance beyond their existence",
+              "Evaluated understanding that incorporates vision and design",
+              "The appropriate collection of information intended to be useful",
+              "The appreciation of \u201cwhy\u201d that connects the other levels",
+            ],
+            answer: 0,
+            explain: "Data is symbols — raw, it simply exists, with no meaning of itself.",
+          },
+          {
+            q: "Which questions does INFORMATION answer?",
+            options: [
+              "\u201cWho\u201d, \u201cwhat\u201d, \u201cwhere\u201d and \u201cwhen\u201d",
+              "Only \u201chow\u201d and never anything else",
+              "Only \u201cwhy\u201d and never anything else",
+              "Questions that have no humanly-known answers",
+            ],
+            answer: 0,
+            explain: "Information is data processed to be useful — it answers who, what, where and when.",
+          },
+          {
+            q: "KNOWLEDGE answers which kind of question?",
+            options: [
+              "\u201cHow\u201d questions — the application of data and information",
+              "\u201cWhen\u201d questions — the timing of events in the business",
+              "\u201cWhere\u201d questions — the location of the organisation's assets",
+              "No questions — knowledge cannot be put into words at all",
+            ],
+            answer: 0,
+            explain: "Knowledge is the application of data and information; it answers \u201chow\u201d questions.",
+          },
+          {
+            q: "Which is the ONLY category that deals with the future?",
+            options: [
+              "Wisdom — it incorporates vision and design",
+              "Data — symbols always describe what is still to come",
+              "Information — the who/what/where/when of tomorrow",
+              "Knowledge — memorised answers predict everything",
+            ],
+            answer: 0,
+            explain: "The first four categories deal with the past; only wisdom deals with the future.",
+          },
+          {
+            q: "How is wisdom achieved?",
+            options: [
+              "By moving successively through the other categories",
+              "By purchasing a sufficiently powerful computer system",
+              "By memorising every entry in a very large database",
+              "By skipping understanding and jumping straight to it",
+            ],
+            answer: 0,
+            explain: "Achieving wisdom is not easy — people must move successively through data, information, knowledge and understanding.",
+          },
+        ],
+      },
+      {
+        heading: "Data and information",
+        icon: "database",
+        flat: true,
+        paragraphs: [
+          "Data is raw. It simply exists and has no significance beyond its existence. It can exist in any form, usable or not, and it does not have meaning of itself. In computer terms, a spreadsheet generally starts out by holding data.",
+          "Information is data that has been given meaning by way of relational connection. This meaning can be useful — but does not have to be. In computer terms, a relational database makes information from the data stored within it.",
+        ],
+        example: {
+          title: "The weather example",
+          lines: [
+            "Data — a fact or statement of an event without relation to other things: \u201cIt is raining.\u201d",
+            "Information — embodies the understanding of a relationship, possibly cause and effect: \u201cThe temperature dropped 15 degrees and then it started raining.\u201d",
+          ],
+        },
+        slideQuiz: [
+          {
+            q: "What gives DATA meaning, turning it into information?",
+            options: [
+              "Relational connection — relating it to other things",
+              "Printing it out on paper and filing it in a cabinet",
+              "Storing it twice so that it can never be lost",
+              "Converting it into capital letters and bold type",
+            ],
+            answer: 0,
+            explain: "Information is data that has been given meaning by way of relational connection.",
+          },
+          {
+            q: "In computer terms, what generally starts out by holding DATA?",
+            options: ["A spreadsheet", "A firewall", "A printer", "A web browser"],
+            answer: 0,
+            explain: "A spreadsheet generally starts out by holding raw data.",
+          },
+          {
+            q: "In computer terms, what makes INFORMATION from stored data?",
+            options: [
+              "A relational database",
+              "A screen saver",
+              "A paper shredder",
+              "An extension cable",
+            ],
+            answer: 0,
+            explain: "A relational database makes information from the data stored within it — by connecting it.",
+          },
+          {
+            q: "\u201cIt is raining\u201d is an example of…",
+            options: [
+              "Data — a fact without relation to other things",
+              "Wisdom — a systemic grasp of the whole weather cycle",
+              "Knowledge — a pattern that predicts what happens next",
+              "Understanding — the appreciation of why the sky is grey",
+            ],
+            answer: 0,
+            explain: "A bare fact, unrelated to anything else, is data.",
+          },
+          {
+            q: "\u201cThe temperature dropped 15 degrees and then it started raining\u201d is…",
+            options: [
+              "Information — a relationship, possibly cause and effect",
+              "Noise — two unrelated statements placed side by side",
+              "Wisdom — an evaluated understanding of the atmosphere",
+              "Data — a symbol with no significance beyond existing",
+            ],
+            answer: 0,
+            explain: "Relating the temperature drop to the rain embodies a relationship — that is information.",
+          },
+        ],
+      },
+      {
+        heading: "Knowledge, understanding and wisdom",
+        icon: "book",
+        flat: true,
+        paragraphs: [
+          "Knowledge is the appropriate collection of information, such that its intent is to be useful. Knowledge is a deterministic process: when someone memorises information, they have amassed knowledge — useful to them, but it does not by itself infer further knowledge. School children memorise the times table: they can tell you 2 × 2 = 4, but asked 1267 × 300 they cannot respond, because that entry is not in their table.",
+          "Understanding is an interpolative, probabilistic, cognitive and analytical process — the ability to take knowledge and synthesise new knowledge from it. The difference between understanding and knowledge is the difference between learning and memorising. In computer terms, AI systems possess understanding: they synthesise new knowledge from previously stored information — in 2026, generative AI assistants like Copilot and Gemini do exactly this at scale.",
+          "Wisdom is an extrapolative, non-deterministic, non-probabilistic process. It calls upon all the previous levels — and on uniquely human programming such as moral and ethical codes. It asks questions to which there is no easily-achievable answer, and it is how we judge between right and wrong, good and bad. The authors' view: computers do not have, and will never have, wisdom — it resides as much in the heart as in the mind.",
+        ],
+        example: {
+          title: "The weather example, continued",
+          lines: [
+            "Knowledge — a pattern that connects and predicts: \u201cIf the humidity is very high and the temperature drops substantially, the atmosphere is often unlikely to hold the moisture — so it rains.\u201d",
+            "Wisdom — grasps the fundamental principles behind the knowledge; it is essentially systemic: \u201cIt rains because it rains\u201d — an understanding of all the interactions between raining, evaporation, air currents and temperature gradients.",
+          ],
+        },
+        slideQuiz: [
+          {
+            q: "Why can a child who memorised the times table not answer 1267 × 300?",
+            options: [
+              "That entry is not in their table — they memorised, but do not yet understand",
+              "The answer changes every year, so no table could ever contain it",
+              "Times tables are secret and children may not see the big entries",
+              "Multiplication of large numbers is impossible without a computer",
+            ],
+            answer: 0,
+            explain: "Memorised knowledge only covers what was memorised — answering beyond it needs understanding.",
+          },
+          {
+            q: "The difference between understanding and knowledge is the difference between…",
+            options: [
+              "Learning and memorising",
+              "Reading and writing",
+              "Hardware and software",
+              "Speaking and listening",
+            ],
+            answer: 0,
+            explain: "Understanding synthesises new knowledge from what is known — learning, not just memorising.",
+          },
+          {
+            q: "In computer terms, which systems possess UNDERSTANDING?",
+            options: [
+              "AI systems — they synthesise new knowledge from stored information",
+              "Screen savers — they activate when the computer becomes idle",
+              "Printers — they convert digital documents into paper copies",
+              "Extension cables — they carry power to wherever it is needed",
+            ],
+            answer: 0,
+            explain: "AI systems synthesise new knowledge from previously stored information and knowledge — in 2026, generative AI does this at scale.",
+          },
+          {
+            q: "What does WISDOM call upon that the other levels do not?",
+            options: [
+              "Uniquely human programming — moral and ethical codes",
+              "A faster processor and considerably more memory",
+              "A larger times table with many more entries",
+              "A reliable connection to the internet at all times",
+            ],
+            answer: 0,
+            explain: "Wisdom calls on moral and ethical codes — it is how we judge right from wrong.",
+          },
+          {
+            q: "What is the authors' view on computers and wisdom?",
+            options: [
+              "Computers do not have, and will never have, wisdom",
+              "Computers achieved wisdom when AI systems first appeared",
+              "Computers will gain wisdom once they can beat us at chess",
+              "Computers are already wiser than every living human being",
+            ],
+            answer: 0,
+            explain: "Wisdom is seen as uniquely human — it resides as much in the heart as in the mind.",
+          },
+        ],
+      },
+      {
+        heading: "When is a pattern knowledge — and when is it noise?",
+        icon: "search",
+        flat: true,
+        paragraphs: [
+          "There is still a question: when is a pattern knowledge, and when is it noise? Consider: \u201cAbugt dbesbt regtc uatn s uitrzt. ubtxte pstye ysote anet sser extess…\u201d To you this sequence is 100% novelty — equivalent to noise. There is no foundation for you to connect with the pattern. Yet to someone who knows the translation, the statements are Newton's three laws of motion. Is something knowledge if you can't understand it?",
+          "Now consider a different sequence: I have a box. It is 3 feet wide, 3 feet deep and 6 feet high. It is very heavy, with a door on the front. When I open it, there is food inside. It is colder inside than outside. You usually find it in the kitchen. There is a smaller compartment with ice in it. When you open the door, a light comes on. When you move it, you usually find dirt underneath — and junk collects on top.",
+          "What is it? A refrigerator — you knew, because at some point you connected with the pattern; every further statement only confirmed your understanding. In a society that had never seen a refrigerator, you might still be scratching your head.",
+        ],
+        example: {
+          title: "The point for business",
+          lines: [
+            "Information only becomes knowledge when the receiver can connect it to a pattern they understand.",
+            "That is why businesses must present information in the language and context of the people who must use it — a dashboard nobody understands is noise, however accurate its data.",
+          ],
+        },
+        slideQuiz: [
+          {
+            q: "Why does the scrambled text read as NOISE?",
+            options: [
+              "There is no foundation for you to connect with the pattern",
+              "It is printed in a font that is too small to read comfortably",
+              "It contains numbers as well as letters mixed close together",
+              "It was written by a computer rather than a human author",
+            ],
+            answer: 0,
+            explain: "100% novelty is equivalent to noise — without a foundation, you cannot connect with the pattern.",
+          },
+          {
+            q: "What was the scrambled text actually?",
+            options: [
+              "Newton's three laws of motion, in translation",
+              "The recipe for a traditional South African stew",
+              "A list of the world's ten longest rivers",
+              "The opening page of a well-known novel",
+            ],
+            answer: 0,
+            explain: "To someone who knows the translation, the lines are Newton's three laws — knowledge you could not access.",
+          },
+          {
+            q: "At what point did the box description become knowledge for you?",
+            options: [
+              "When you connected with the pattern and recognised a refrigerator",
+              "Only after all eleven statements had been read out in full",
+              "It never became knowledge — the description stayed noise",
+              "When the box's exact colour was finally revealed",
+            ],
+            answer: 0,
+            explain: "Once you connected with the pattern, each further statement only added confirmation.",
+          },
+          {
+            q: "Why might the same description stay meaningless to someone else?",
+            options: [
+              "Their society may never have seen a refrigerator",
+              "Descriptions can only be understood by their author",
+              "Boxes cannot be described accurately in words",
+              "They would need the description in capital letters",
+            ],
+            answer: 0,
+            explain: "Without the concept, there is no pattern to connect with — the sequence stays noise.",
+          },
+          {
+            q: "What does this teach a business about presenting information?",
+            options: [
+              "Present it in the language and context of the people who must use it",
+              "Present as much raw data as possible and let everyone dig through it",
+              "Keep dashboards deliberately complex so they appear professional",
+              "Only senior managers should ever see the business's information",
+            ],
+            answer: 0,
+            explain: "A dashboard nobody understands is noise — information must connect to patterns its users understand.",
+          },
+        ],
+      },
+      {
+        heading: "Communication in decision making",
+        icon: "chat",
+        flat: true,
+        paragraphs: [
+          "Decision making is the cognitive process leading to the selection of a course of action among variations. Every decision-making process produces a final choice — an action or an opinion. It begins when we need to do something but know not what. Decision making is therefore a reasoning process, which can be rational or irrational, and can be based on explicit or tacit assumptions.",
+          "Structured, rational decision making is an important part of all science-based professions, where specialists apply their knowledge to make informed decisions — for example, medical decision making often involves making a diagnosis and then selecting an appropriate treatment.",
+          "Research using naturalistic methods shows, however, that under higher time pressure, higher stakes or increased ambiguity, experts use intuitive decision making rather than structured approaches — recognition-primed decisions that fit a set of indicators into the expert's experience to arrive immediately at a satisfactory course of action without weighing alternatives. Recent robust-decision efforts also formally integrate uncertainty into the process.",
+        ],
+        slideQuiz: [
+          {
+            q: "What is DECISION MAKING?",
+            options: [
+              "The cognitive process of selecting a course of action among variations",
+              "The accounting process of balancing debits against credits",
+              "The manufacturing process of assembling parts into products",
+              "The marketing process of designing an advertising campaign",
+            ],
+            answer: 0,
+            explain: "Decision making selects a course of action among variations, producing a final choice.",
+          },
+          {
+            q: "Every decision-making process produces…",
+            options: [
+              "A final choice — an action or an opinion",
+              "A profit for the organisation, without exception",
+              "A written report of at least twenty pages",
+              "A committee to review the decision annually",
+            ],
+            answer: 0,
+            explain: "The output of decision making is a final choice — it can be an action or an opinion.",
+          },
+          {
+            q: "Decision making can be based on which kinds of assumptions?",
+            options: [
+              "Explicit assumptions or tacit assumptions",
+              "Only assumptions written into company policy",
+              "Only assumptions approved by the board",
+              "No assumptions — decisions never rest on them",
+            ],
+            answer: 0,
+            explain: "The reasoning can be rational or irrational, resting on explicit or tacit assumptions.",
+          },
+          {
+            q: "What does medical decision making typically involve?",
+            options: [
+              "Making a diagnosis and selecting an appropriate treatment",
+              "Choosing the cheapest medicine available on the shelf",
+              "Asking the patient to decide the treatment on their own",
+              "Repeating the same treatment for every single patient",
+            ],
+            answer: 0,
+            explain: "A science-based profession: specialists apply knowledge — diagnose, then select treatment.",
+          },
+          {
+            q: "Under time pressure and high stakes, experts tend to…",
+            options: [
+              "Use intuitive, recognition-primed decisions from experience",
+              "Stop working entirely until the pressure has subsided",
+              "Always convene a committee before any action is taken",
+              "Weigh every alternative exhaustively before moving",
+            ],
+            answer: 0,
+            explain: "Recognition-primed decision making fits indicators into experience for an immediate, satisfactory course of action.",
+          },
+        ],
+      },
+      {
+        heading: "Price control",
+        icon: "trend",
+        flat: true,
+        paragraphs: [
+          "A free price system (the price mechanism) is an economic system where prices are set by the interchange of supply and demand. The resulting prices are signals, communicated between producers and consumers, which guide the production and distribution of resources: supplies are rationed, income is distributed and resources are allocated.",
+          "A free price system contrasts with a controlled or fixed price system, where prices are set by government within a controlled market or planned economy.",
+          "The price control of an organisation is largely governed by other organisations and the prices they charge for similar products and services. Communication between the pricing, costing and manufacturing departments is essential to ensure goods or services can be rendered at the same or better price than competitors — so the organisation can sell to its market.",
+        ],
+        slideQuiz: [
+          {
+            q: "In a FREE price system, prices are set by…",
+            options: [
+              "The interchange of supply and demand",
+              "The government within a planned economy",
+              "The oldest business in each industry",
+              "A yearly vote among all the customers",
+            ],
+            answer: 0,
+            explain: "The free price mechanism sets prices through supply and demand.",
+          },
+          {
+            q: "In a free price system, prices act as…",
+            options: [
+              "Signals between producers and consumers guiding production and distribution",
+              "Fixed values that never change once they are first printed",
+              "Penalties issued to businesses that produce too much stock",
+              "Decorations with no effect on how resources are allocated",
+            ],
+            answer: 0,
+            explain: "Prices are signals — they ration supplies, distribute income and allocate resources.",
+          },
+          {
+            q: "In a CONTROLLED or fixed price system, prices are set by…",
+            options: [
+              "Government, within a controlled market or planned economy",
+              "Whichever business has the largest advertising budget",
+              "The interchange of supply and demand on open markets",
+              "International tourists visiting the country each season",
+            ],
+            answer: 0,
+            explain: "Controlled systems fix prices by government decision rather than by the market.",
+          },
+          {
+            q: "What largely governs an organisation's own pricing?",
+            options: [
+              "Other organisations' prices for similar products and services",
+              "The personal preferences of the organisation's founder",
+              "The weather conditions in the month the price is set",
+              "The number of employees on the payroll that year",
+            ],
+            answer: 0,
+            explain: "Competitors' prices for similar products and services largely govern the organisation's price control.",
+          },
+          {
+            q: "Which departments must communicate for competitive pricing?",
+            options: [
+              "Pricing, costing and manufacturing",
+              "Reception, catering and security",
+              "Legal, archiving and janitorial",
+              "Recruitment, payroll and training",
+            ],
+            answer: 0,
+            explain: "Pricing, costing and manufacturing must talk so goods sell at the same or better price than competitors.",
+          },
+        ],
+      },
+      {
+        heading: "Quality control",
+        icon: "shield",
+        flat: true,
+        paragraphs: [
+          "In engineering and manufacturing, quality control and quality engineering develop systems to ensure products or services are designed and produced to meet or exceed customer requirements — often together with other business and engineering disciplines in a cross-functional approach.",
+          "Quality assurance covers all activities from design, development, production and installation to servicing and documentation. It introduced the rules \u201cfit for purpose\u201d and \u201cdo it right the first time\u201d, and includes regulating the quality of raw materials, assemblies, products and components; services related to production; and management, production and inspection processes.",
+          "This function exists to ensure the quality of products or services is in line with — if not above — the level of competitors. Communication is highly required: competitors' items are checked and measured against the organisation's own quality.",
+        ],
+        cards: [
+          { icon: "target", title: "Plan", text: "Decide the objective and the process needed to deliver it." },
+          { icon: "wrench", title: "Do", text: "Carry out the plan and collect data along the way." },
+          { icon: "search", title: "Check", text: "Measure the results against the expected outcome." },
+          { icon: "check", title: "Act", text: "Correct the differences and standardise what worked." },
+        ],
+        example: {
+          title: "PDCA",
+          lines: [
+            "One of the most widely used paradigms for QA management is the PDCA approach: Plan – Do – Check – Act.",
+          ],
+        },
+        slideQuiz: [
+          {
+            q: "What do quality control systems ensure?",
+            options: [
+              "Products and services meet or exceed customer requirements",
+              "Products are always the cheapest available on the market",
+              "Services are rendered only to long-standing customers",
+              "Factories operate every day of the year without pause",
+            ],
+            answer: 0,
+            explain: "QC and quality engineering ensure products or services meet or exceed customer requirements.",
+          },
+          {
+            q: "Which activities does QUALITY ASSURANCE cover?",
+            options: [
+              "Design, development, production, installation, servicing and documentation",
+              "Only the final inspection immediately before an item is shipped",
+              "Only the marketing and advertising of the finished product",
+              "Only the recruitment and training of production staff",
+            ],
+            answer: 0,
+            explain: "QA covers everything from design through documentation — the whole life of the product.",
+          },
+          {
+            q: "Which two rules did quality assurance introduce?",
+            options: [
+              "\u201cFit for purpose\u201d and \u201cdo it right the first time\u201d",
+              "\u201cThe customer is always right\u201d and \u201cnever give refunds\u201d",
+              "\u201cCheapest wins\u201d and \u201cship now, fix problems later\u201d",
+              "\u201cMeasure twice\u201d and \u201conly inspect on Mondays\u201d",
+            ],
+            answer: 0,
+            explain: "QA introduced \u201cfit for purpose\u201d and \u201cdo it right the first time\u201d.",
+          },
+          {
+            q: "What does PDCA stand for?",
+            options: [
+              "Plan – Do – Check – Act",
+              "Price – Discount – Cost – Audit",
+              "Produce – Deliver – Collect – Advertise",
+              "Prepare – Design – Create – Approve",
+            ],
+            answer: 0,
+            explain: "PDCA — Plan, Do, Check, Act — is one of the most widely used QA management paradigms.",
+          },
+          {
+            q: "Why is communication required in quality control?",
+            options: [
+              "Competitors' items are checked and measured against the organisation's quality",
+              "Quality inspectors may never speak to the production department",
+              "Customers must approve each unit before it leaves the factory",
+              "The government sets every quality standard in every industry",
+            ],
+            answer: 0,
+            explain: "The organisation measures its quality against competitors — that comparison needs communication.",
+          },
+        ],
+      },
+      {
+        heading: "Marketing and business performance",
+        icon: "people",
+        flat: true,
+        paragraphs: [
+          "Marketing is done by means of meetings between the research & development department and the sales & marketing departments. This interaction ensures new products are fully understood by the marketing department, which can then market them to consumers and increase sales. The process is two-way: marketing surveys current clients to hear what they want, then returns to R&D to configure or manufacture the products and services clients are requesting.",
+          "Business performance management (BPM) is a set of processes that help organisations optimise their business performance — a framework for organising, automating and analysing the methodologies, metrics, processes and systems that drive performance. BPM is seen as the next generation of business intelligence (BI).",
+          "BPM helps businesses make efficient use of their financial, human, material and other resources. Performance areas are analysed by various individuals and departments to understand what the performing tools are — and to apply the same tools where the business performs less well, ensuring growth. Communication here is of utmost importance: all views, opinions and input are required to make educated decisions.",
+        ],
+        slideQuiz: [
+          {
+            q: "Which departments meet to make marketing work?",
+            options: [
+              "Research & development with sales & marketing",
+              "Security and catering with facilities management",
+              "The legal department with the janitorial service",
+              "Reception with the archives and the mail room",
+            ],
+            answer: 0,
+            explain: "R&D and sales & marketing meet so new products are fully understood before being marketed.",
+          },
+          {
+            q: "Why is the marketing process TWO-WAY?",
+            options: [
+              "Surveys of clients flow back to R&D to build what clients request",
+              "Every advert must be printed in two different languages",
+              "Marketing staff swap desks with production staff monthly",
+              "Each product is marketed twice — once locally, once abroad",
+            ],
+            answer: 0,
+            explain: "Marketing surveys clients, hears what they want, and returns to R&D to configure it.",
+          },
+          {
+            q: "What is business performance management (BPM)?",
+            options: [
+              "Processes that help organisations optimise their business performance",
+              "A payroll system that calculates overtime for factory workers",
+              "A legal requirement to publish accounts every three months",
+              "A brand of accounting software sold in the early nineties",
+            ],
+            answer: 0,
+            explain: "BPM organises, automates and analyses the methodologies, metrics, processes and systems that drive performance.",
+          },
+          {
+            q: "BPM is seen as the next generation of…",
+            options: [
+              "Business intelligence (BI)",
+              "Batch processing (BP)",
+              "Word processing (WP)",
+              "Desktop publishing (DTP)",
+            ],
+            answer: 0,
+            explain: "BPM is seen as the next generation of business intelligence.",
+          },
+          {
+            q: "How does a business use its performance analysis to grow?",
+            options: [
+              "Apply the tools from performing areas to the areas performing less well",
+              "Close every department whose results fall below the average",
+              "Keep the analysis secret so competitors cannot copy it",
+              "Reward only the single best-performing employee each year",
+            ],
+            answer: 0,
+            explain: "Understand what the performing tools are — then use them where the business performs less well.",
+          },
+        ],
+      },
+      {
+        heading: "Protecting the information — threats and sub-systems",
+        icon: "lock",
+        flat: true,
+        paragraphs: [
+          "The information a business gathers is valuable — which means it faces threats. The three classics you must be able to explain:",
+        ],
+        cards: [
+          {
+            icon: "lock",
+            title: "Unauthorised access",
+            text: "Outsiders (hackers) or insiders reading data they have no right to see. Defences: passwords and multi-factor authentication, access rights per role, encryption — and POPIA makes protecting personal information a legal duty.",
+          },
+          {
+            icon: "shield",
+            title: "Viruses and malware",
+            text: "Malicious software that corrupts, steals or destroys data — in 2026 above all ransomware, arriving through phishing email. Defences: antivirus, updates and patches, backups, and staff who think before they click.",
+          },
+          {
+            icon: "person",
+            title: "Disgruntled staff",
+            text: "Insiders who damage, leak or delete data deliberately. Defences: least-privilege access, audit trails of who did what, and immediately removing access when someone leaves.",
+          },
+        ],
+        examples: [
+          {
+            title: "Who needs what — the information needs of the sub-systems",
+            lines: [
+              "HR (employment) — employee records, contracts, leave and attendance, payslips, performance reviews.",
+              "Production (manufacture) — orders, raw-material stock, production schedules, quality measurements.",
+              "Marketing (branding) — brand assets, campaign results, customer feedback and survey data.",
+              "Financial (cash flow) — invoices, payments, debtors and creditors, cash-flow forecasts, budgets.",
+            ],
+          },
+          {
+            title: "Activity — Questioning (Self & Group)",
+            lines: [
+              "Open the Exercises tab and complete \u201cThe relationship between a business and its information needs\u201d.",
+              "You will explain how a business uses data, converts it to information, applies it in its roles, guards it against threats — and what each sub-system needs. The AI marker checks your answers.",
+            ],
+          },
+        ],
+        figures: [
+          {
+            id: "114050-data-threats",
+            caption: "Threats to business information — and the defences against them",
+            hint: "diagram or photo illustrating data security threats: hacker / phishing email / ransomware warning screen",
+          },
+        ],
+        slideQuiz: [
+          {
+            q: "What is UNAUTHORISED ACCESS?",
+            options: [
+              "Outsiders or insiders reading data they have no right to see",
+              "Logging into your own account from a different computer",
+              "Opening the office before the official working hours",
+              "Reading the company newsletter without subscribing",
+            ],
+            answer: 0,
+            explain: "Unauthorised access is any access to data by someone without the right to it — hacker or insider.",
+          },
+          {
+            q: "Which malware threat dominates in 2026, and how does it usually arrive?",
+            options: [
+              "Ransomware — usually arriving through phishing email",
+              "Floppy-disk boot viruses passed around by couriers",
+              "Fax-machine worms spreading over telephone lines",
+              "Screen savers that slowly fade the office monitors",
+            ],
+            answer: 0,
+            explain: "Ransomware delivered by phishing is the defining malware threat — backups and cautious staff are key defences.",
+          },
+          {
+            q: "Which defences fit the DISGRUNTLED STAFF threat?",
+            options: [
+              "Least-privilege access, audit trails, and removing access when someone leaves",
+              "Banning all employees from ever using the company's computers",
+              "Keeping no records at all so there is nothing anyone can leak",
+              "Trusting everyone equally and never reviewing what they do",
+            ],
+            answer: 0,
+            explain: "Limit what each person can touch, log what they do, and cut access immediately at exit.",
+          },
+          {
+            q: "Which information does the FINANCIAL sub-system need?",
+            options: [
+              "Invoices, payments, debtors and creditors, cash-flow forecasts",
+              "Raw-material stock levels and production schedules",
+              "Brand assets and the results of marketing campaigns",
+              "Leave records, contracts and performance reviews",
+            ],
+            answer: 0,
+            explain: "Finance runs on invoices, payments, debtors/creditors and the cash-flow forecast.",
+          },
+          {
+            q: "Which information does the HR sub-system need?",
+            options: [
+              "Employee records, contracts, leave, payslips and reviews",
+              "Machine maintenance logs and factory floor layouts",
+              "Competitors' price lists and market-share reports",
+              "Delivery routes and the fuel usage of the fleet",
+            ],
+            answer: 0,
+            explain: "HR needs the employment information — records, contracts, leave and attendance, payslips, reviews.",
+          },
+        ],
+      },
     ],
 
     exercises: [
@@ -7794,6 +8506,219 @@ export const CONTENT: Record<string, UnitContent> = {
               "Effect: one subscription, shared data, transferable skills",
             ],
             min: 2,
+          },
+        ],
+      },
+      {
+        id: "qs114050data",
+        title: "Questioning — The relationship between a business and its information needs",
+        task: "Time: 90 minutes · Activity: Self & Group — explain how a business requires, converts, uses and protects its data and information.",
+        steps: [
+          "Explain how a business requires and uses data",
+          "Explain how an organisation will convert this data into information",
+          "Explain how this information will be used in the following role — Communication (in decision making)",
+          "Explain how this information will be used in the following role — Price control",
+          "Explain how this information will be used in the following role — Quality control",
+          "Explain how this information will be used in the following role — Marketing",
+          "Explain how this information will be used in the following role — Business performance",
+          "Explain how the information obtained, gathered and used holds threats — Unauthorised access",
+          "Explain how the information obtained, gathered and used holds threats — Viruses",
+          "Explain how the information obtained, gathered and used holds threats — Disgruntled staff",
+          "Explain the information needs of the following sub-system — HR (employment)",
+          "Explain the information needs of the following sub-system — Production (manufacture)",
+          "Explain the information needs of the following sub-system — Marketing (branding)",
+          "Explain the information needs of the following sub-system — Financial (cash flow)",
+        ],
+        checks: [
+          {
+            answer: [
+              "A business collects raw facts from its daily operations — sales, purchases, stock counts, customer details, times and amounts.",
+              "Data is raw and has no meaning of itself; it is captured and stored (for example in spreadsheets and databases) so it can later be processed.",
+            ],
+            concepts: [
+              ["sales", "purchases", "stock", "customer", "collect", "captur", "transactions", "daily"],
+              ["raw", "no meaning", "stored", "spreadsheet", "database", "facts", "symbols"],
+            ],
+            labels: [
+              "Collects raw facts from daily operations",
+              "Data is raw — captured and stored for later processing",
+            ],
+            min: 1,
+          },
+          {
+            answer: [
+              "Data is given meaning by relational connection — relating one fact to another, as a relational database does with its tables.",
+              "Processing data (sorting, grouping, comparing, summarising) turns it into information that answers who, what, where and when.",
+            ],
+            concepts: [
+              ["relational", "relationship", "meaning", "connect", "database"],
+              ["process", "sort", "group", "summar", "who", "what", "where", "when", "compar"],
+            ],
+            labels: [
+              "Meaning through relational connection",
+              "Processing answers who, what, where and when",
+            ],
+            min: 1,
+          },
+          {
+            answer: [
+              "Information is communicated to decision makers, who select a course of action among variations.",
+              "Decisions can be structured and rational or intuitive under time pressure — either way the information must reach the right people to produce the final choice.",
+            ],
+            concepts: [
+              ["decision", "course of action", "choice", "select"],
+              ["rational", "intuitive", "communicat", "structured", "pressure", "reasoning"],
+            ],
+            labels: [
+              "Feeds decision makers' choice of action",
+              "Supports rational and intuitive decisions",
+            ],
+            min: 1,
+          },
+          {
+            answer: [
+              "Prices are signals set by supply and demand, and an organisation's prices are largely governed by what competitors charge for similar products.",
+              "Pricing, costing and manufacturing departments communicate the information so goods sell at the same or better price than competitors.",
+            ],
+            concepts: [
+              ["supply and demand", "signals", "competitor", "similar"],
+              ["pricing", "costing", "manufacturing", "better price", "same or better", "communicat"],
+            ],
+            labels: [
+              "Prices as signals; competitors govern pricing",
+              "Pricing, costing and manufacturing communicate",
+            ],
+            min: 1,
+          },
+          {
+            answer: [
+              "Quality information ensures products and services meet or exceed customer requirements — fit for purpose, done right the first time.",
+              "Quality assurance covers design through documentation, uses PDCA (Plan–Do–Check–Act), and measures the organisation's quality against competitors.",
+            ],
+            concepts: [
+              ["meet or exceed", "customer requirements", "fit for purpose", "first time"],
+              ["pdca", "plan", "check", "act", "competitor", "assurance", "inspect"],
+            ],
+            labels: [
+              "Meets or exceeds customer requirements",
+              "QA from design to documentation; PDCA; competitor checks",
+            ],
+            min: 1,
+          },
+          {
+            answer: [
+              "Marketing uses information from meetings between R&D and sales & marketing so new products are fully understood and marketed to consumers.",
+              "It is two-way: client surveys tell the business what customers want, and that information goes back to R&D to build it.",
+            ],
+            concepts: [
+              ["r&d", "research", "sales", "understood", "meetings", "market the product"],
+              ["survey", "two-way", "clients", "customers want", "feedback", "back to"],
+            ],
+            labels: [
+              "R&D and marketing share product information",
+              "Two-way: surveys feed customer wants back to R&D",
+            ],
+            min: 1,
+          },
+          {
+            answer: [
+              "Business performance management organises, automates and analyses the metrics, processes and systems that drive performance — the next generation of business intelligence.",
+              "Performance information shows which tools work, so they can be applied where the business performs less well — using financial, human and material resources efficiently.",
+            ],
+            concepts: [
+              ["bpm", "metrics", "analys", "business intelligence", "optimis", "performance"],
+              ["tools", "perform", "growth", "resources", "efficien", "areas"],
+            ],
+            labels: [
+              "BPM analyses the metrics that drive performance",
+              "Apply what works to weaker areas; efficient resources",
+            ],
+            min: 1,
+          },
+          {
+            answer: [
+              "Unauthorised access — hackers or insiders reading data they have no right to see, risking theft, fraud and POPIA breaches.",
+              "Defences include passwords and multi-factor authentication, per-role access rights and encryption.",
+            ],
+            concepts: [
+              ["hacker", "insider", "no right", "unauthoris", "steal", "popia", "fraud"],
+              ["password", "multi-factor", "mfa", "access rights", "encrypt", "authentication"],
+            ],
+            labels: [
+              "Outsiders/insiders reading data without the right",
+              "Defences: passwords, MFA, access rights, encryption",
+            ],
+            min: 1,
+          },
+          {
+            answer: [
+              "Viruses and malware corrupt, steal or destroy data — today above all ransomware arriving through phishing email.",
+              "Defences include antivirus, updates and patches, backups, and staff who think before they click.",
+            ],
+            concepts: [
+              ["virus", "malware", "ransomware", "phishing", "corrupt", "destroy"],
+              ["antivirus", "updates", "patch", "backup", "click", "defen"],
+            ],
+            labels: [
+              "Malware corrupts, steals or destroys data",
+              "Defences: antivirus, patches, backups, cautious staff",
+            ],
+            min: 1,
+          },
+          {
+            answer: [
+              "Disgruntled staff are insiders who deliberately damage, leak or delete the organisation's data.",
+              "Defences include least-privilege access, audit trails of who did what, and removing access immediately when someone leaves.",
+            ],
+            concepts: [
+              ["insider", "deliberate", "leak", "delete", "damage", "disgruntled"],
+              ["least-privilege", "least privilege", "audit", "remove access", "leaves", "offboard"],
+            ],
+            labels: [
+              "Insiders deliberately damaging or leaking data",
+              "Defences: least privilege, audit trails, access removal",
+            ],
+            min: 1,
+          },
+          {
+            answer: [
+              "HR needs employment information: employee records, contracts, leave and attendance, payslips and performance reviews.",
+            ],
+            concepts: [
+              ["employee records", "contracts", "leave", "payslip", "payroll", "performance", "attendance"],
+            ],
+            labels: ["Employee records, contracts, leave, payslips, reviews"],
+            min: 1,
+          },
+          {
+            answer: [
+              "Production needs manufacturing information: orders, raw-material stock, production schedules and quality measurements.",
+            ],
+            concepts: [
+              ["orders", "raw material", "stock", "schedule", "quality", "manufactur"],
+            ],
+            labels: ["Orders, materials, schedules, quality measurements"],
+            min: 1,
+          },
+          {
+            answer: [
+              "Marketing needs branding information: brand assets, campaign results, customer feedback and survey data.",
+            ],
+            concepts: [
+              ["brand", "campaign", "feedback", "survey", "customers", "advert"],
+            ],
+            labels: ["Brand assets, campaign results, customer feedback"],
+            min: 1,
+          },
+          {
+            answer: [
+              "Finance needs cash-flow information: invoices, payments, debtors and creditors, cash-flow forecasts and budgets.",
+            ],
+            concepts: [
+              ["invoice", "payment", "debtor", "creditor", "cash flow", "cash-flow", "budget", "forecast"],
+            ],
+            labels: ["Invoices, payments, debtors/creditors, forecasts, budgets"],
+            min: 1,
           },
         ],
       },
