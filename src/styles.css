@@ -96,7 +96,7 @@ a {
 }
 
 a:hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 /* ============ App layout ============ */
@@ -1255,7 +1255,8 @@ td .with-ico .ico {
 }
 
 .linklike:hover {
-  text-decoration: underline;
+  text-decoration: none;
+  filter: brightness(1.15);
 }
 
 /* password input with show/hide toggle */
@@ -7631,8 +7632,6 @@ button.cell-person-link {
 }
 button.cell-person-link:hover {
   color: var(--azure);
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 .cell-actions {
   display: inline-flex;
@@ -8328,8 +8327,6 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 .chat-head-person:hover strong {
   color: var(--azure);
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 .chat-avatar-link {
   cursor: pointer;
