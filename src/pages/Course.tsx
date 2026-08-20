@@ -2173,8 +2173,8 @@ export function UnitPage({
     setFigError(null);
     try {
       const dataUrl = await fileToImageDataUrl(file, 1400);
-      if (!setFigure(figId, dataUrl)) {
-        setFigError("Storage is full — remove some uploaded pictures and try again.");
+      if (!(await setFigure(figId, dataUrl))) {
+        setFigError("The picture could not be saved — check your connection and try again.");
       }
     } catch {
       setFigError("Could not read that image — try a clear JPG or PNG file.");
@@ -2569,7 +2569,7 @@ export function UnitPage({
                 const def = FIGURE_DEFAULTS[g.id];
                 const cap = capOf(g.id, g.caption);
                 let item: LightboxItem | null = null;
-                if (up) item = { src: up.image, caption: cap };
+                if (up?.image) item = { src: up.image, caption: cap };
                 else if (def)
                   item = {
                     src: def.src,
@@ -3179,7 +3179,7 @@ export function UnitPage({
                           </figcaption>
                         );
                       const up = figureImages[f.id];
-                      if (up)
+                      if (up?.image)
                         return (
                           <figure key={f.id} className={`lesson-figure${editable ? " editable" : ""}`} style={figStyle}>
                             <button

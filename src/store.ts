@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { EnrolmentInfo, PoeDoc, Profile, ProgressState, Role, UnitActivity, UnitProgress } from "./types";
 import { UNIT_ACTIVITIES } from "./types";
 import { MODULES, POE_SECTIONS } from "./data/course";
@@ -1479,17 +1479,49 @@ export function usePlanSlides(us: string) {
 /* ---------- staff-uploaded lesson figures (shared per unit standard) ---------- */
 
 export interface LessonFigureImage {
-  /** data-URL of the uploaded picture */
-  image: string;
+  /** data-URL of the uploaded picture (local-only mode / not yet migrated) */
+  image?: string;
+  /** Supabase Storage path of the uploaded picture (cloud mode) */
+  path?: string;
   uploadedAt: string;
 }
 
 const lessonFigsKey = (us: string) => `itss.lessonfigs.${us}`;
 
+/** signed-URL cache so figure images resolve once per path per session */
+const figUrlCache = new Map<string, { url: string; exp: number }>();
+const FIG_URL_TTL_S = 7 * 24 * 3600; // signed URL lifetime
+const FIG_URL_FRESH_MS = 6 * 24 * 3600 * 1000; // renew a day before expiry
+
+async function signedFigUrl(path: string): Promise<string | null> {
+  const hit = figUrlCache.get(path);
+  if (hit && hit.exp > Date.now()) return hit.url;
+  if (!supabase) return null;
+  const { data, error } = await supabase.storage.from("files").createSignedUrl(path, FIG_URL_TTL_S);
+  if (error || !data) return null;
+  figUrlCache.set(path, { url: data.signedUrl, exp: Date.now() + FIG_URL_FRESH_MS });
+  return data.signedUrl;
+}
+
+/** Upload a figure data-URL to Supabase Storage; returns the storage path. */
+async function uploadFigure(us: string, id: string, dataUrl: string): Promise<string> {
+  if (!supabase) throw new Error("cloud sync not configured");
+  const blob = await (await fetch(dataUrl)).blob();
+  const safeId = id.replace(/[^\w.\-]+/g, "_");
+  const path = `shared/lessonfigs/${us}/${safeId}-${Date.now().toString(36)}.jpg`;
+  const { error } = await supabase.storage
+    .from("files")
+    .upload(path, blob, { upsert: true, contentType: blob.type || "image/jpeg" });
+  if (error) throw error;
+  return path;
+}
+
 export function useLessonFigures(us: string) {
   const [figures, setFigures] = useState<Record<string, LessonFigureImage>>(() =>
     read<Record<string, LessonFigureImage>>(lessonFigsKey(us), {})
   );
+  /** figure id -> resolved signed URL for path-based entries */
+  const [figUrls, setFigUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setFigures(read<Record<string, LessonFigureImage>>(lessonFigsKey(us), {}));
@@ -1505,10 +1537,68 @@ export function useLessonFigures(us: string) {
     return () => window.removeEventListener("storage", onStorage);
   }, [us]);
 
+  // resolve signed URLs for cloud-stored figures
+  useEffect(() => {
+    let alive = true;
+    const need = Object.entries(figures).filter(([, f]) => f.path && !f.image);
+    if (!need.length) return;
+    void (async () => {
+      const resolved: Record<string, string> = {};
+      await Promise.all(
+        need.map(async ([id, f]) => {
+          const url = await signedFigUrl(f.path!);
+          if (url) resolved[id] = url;
+        })
+      );
+      if (alive && Object.keys(resolved).length) setFigUrls((u) => ({ ...u, ...resolved }));
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [figures]);
+
+  /** figures with `image` always usable as an <img> src (data-URL or signed URL) */
+  const merged = useMemo(() => {
+    const out: Record<string, LessonFigureImage> = {};
+    for (const [id, f] of Object.entries(figures)) {
+      out[id] = f.image ? f : { ...f, image: figUrls[id] };
+    }
+    return out;
+  }, [figures, figUrls]);
+
   const setFigure = useCallback(
-    (id: string, image: string): boolean => {
+    async (id: string, image: string): Promise<boolean> => {
       const fresh = read<Record<string, LessonFigureImage>>(lessonFigsKey(us), {});
-      const next = { ...fresh, [id]: { image, uploadedAt: new Date().toISOString() } };
+      const uploadedAt = new Date().toISOString();
+      if (supabase) {
+        try {
+          const path = await uploadFigure(us, id, image);
+          const next: Record<string, LessonFigureImage> = { ...fresh, [id]: { path, uploadedAt } };
+          // the replaced upload (if any) is no longer referenced — clean it up
+          const oldPath = fresh[id]?.path;
+          if (oldPath && oldPath !== path) {
+            void supabase.storage.from("files").remove([oldPath]).catch(() => {});
+          }
+          // migrate any legacy inline data-URL figures of this unit to storage,
+          // shrinking localStorage/shared-state far below the browser quota
+          for (const [fid, f] of Object.entries(next)) {
+            if (fid === id || !f.image || !f.image.startsWith("data:")) continue;
+            try {
+              const migrated = await uploadFigure(us, fid, f.image);
+              next[fid] = { path: migrated, uploadedAt: f.uploadedAt };
+            } catch {
+              break; // keep remaining inline images; retry on a later upload
+            }
+          }
+          write(lessonFigsKey(us), next);
+          setFigures(next);
+          return true;
+        } catch {
+          return false; // upload failed (offline / permissions)
+        }
+      }
+      // local-only mode: keep the picture inline in localStorage
+      const next = { ...fresh, [id]: { image, uploadedAt } };
       try {
         write(lessonFigsKey(us), next);
       } catch {
@@ -1523,6 +1613,10 @@ export function useLessonFigures(us: string) {
   const removeFigure = useCallback(
     (id: string) => {
       const fresh = read<Record<string, LessonFigureImage>>(lessonFigsKey(us), {});
+      const doomed = fresh[id]?.path;
+      if (doomed && supabase) {
+        void supabase.storage.from("files").remove([doomed]).catch(() => {});
+      }
       const next = { ...fresh };
       delete next[id];
       write(lessonFigsKey(us), next);
@@ -1531,7 +1625,7 @@ export function useLessonFigures(us: string) {
     [us]
   );
 
-  return { figures, setFigure, removeFigure };
+  return { figures: merged, setFigure, removeFigure };
 }
 
 /* ---------- super-user lesson edits (per unit, saved locally) ---------- */
