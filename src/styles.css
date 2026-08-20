@@ -5028,8 +5028,8 @@ a.plan-ppt:hover {
 
 .ex-status.marks {
   color: var(--azure);
-  background: color-mix(in srgb, var(--azure) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--azure) 35%, transparent);
+  background: transparent;
+  padding: 3px 0;
 }
 
 .ex-marks-total {
@@ -5308,13 +5308,14 @@ a.plan-ppt:hover {
 
 .ex-status.done {
   color: var(--green);
-  background: var(--green-bg);
+  background: transparent;
+  padding: 3px 0;
 }
 
 .ex-status.todo {
   color: var(--ink-3);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: transparent;
+  padding: 3px 0;
 }
 
 .saqa-details summary .ex-status ~ .chev {
