@@ -136,6 +136,13 @@ const FIGURES = {
   "114050-franchise-kfc": ["KFC Scottburgh.jpg", "KFC Outlet in Milnerton 2.jpg", "KFC Outlet in Milnerton 4.jpg"],
   "114050-franchise-nandos": ["Nandos-Canal-Walk.jpg", "Nando's Restaurant.jpg"],
   "114050-franchise-wimpy": ["Wimpy White River.jpg", "Wimpy South Africa interior.jpg"],
+  // ---- US 114050 Lesson 3: graphics tools of 2026 ----
+  "114050-tool-canva": ["Canva Logo.svg", "Canva logo.svg", "search:Canva logo"],
+  "114050-tool-adobe": ["Adobe Photoshop CC icon.svg", "Adobe Photoshop Express logo.svg", "search:Adobe Photoshop icon logo"],
+  "114050-tool-figma": ["Figma-logo.svg", "Figma logo.svg", "search:Figma logo"],
+  "114050-tool-blender": ["Blender logo no text.svg", "Logo Blender.svg", "search:Blender software logo"],
+  "114050-tool-video": ["Adobe Premiere Pro CC icon.svg", "search:Adobe Premiere Pro icon", "search:CapCut logo"],
+  "114050-tool-ai": ["Théâtre D'opéra Spatial.png", "search:Midjourney AI generated artwork", "search:DALL-E generated image"],
 };
 
 const args = process.argv.slice(2);

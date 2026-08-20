@@ -839,6 +839,54 @@
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wimpy_White_River.jpg",
       "file": "114050-franchise-wimpy.jpg",
       "bytes": 920846
+    },
+    "114050-tool-canva": {
+      "title": "Canva logo.svg",
+      "author": "Canva",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Canva_logo.svg",
+      "file": "114050-tool-canva.png",
+      "bytes": 264355
+    },
+    "114050-tool-adobe": {
+      "title": "Adobe Photoshop CC icon.svg",
+      "author": "Adobe Inc.",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Adobe_Photoshop_CC_icon.svg",
+      "file": "114050-tool-adobe.png",
+      "bytes": 64586
+    },
+    "114050-tool-figma": {
+      "title": "Figma-logo.svg",
+      "author": "Figma",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Figma-logo.svg",
+      "file": "114050-tool-figma.png",
+      "bytes": 93526
+    },
+    "114050-tool-blender": {
+      "title": "Blender logo no text.svg",
+      "author": "™/®Blender Foundation",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Blender_logo_no_text.svg",
+      "file": "114050-tool-blender.png",
+      "bytes": 84634
+    },
+    "114050-tool-video": {
+      "title": "Adobe Premiere Pro CC icon.svg",
+      "author": "Adobe Inc.",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Adobe_Premiere_Pro_CC_icon.svg",
+      "file": "114050-tool-video.png",
+      "bytes": 48073
+    },
+    "114050-tool-ai": {
+      "title": "Space opera 1 – Midjourney – Jason M. Allen – Colorado State Fair Fine Arts Competition entrant.jpg",
+      "author": "Left intentionally blank",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Space_opera_1_%E2%80%93_Midjourney_%E2%80%93_Jason_M._Allen_%E2%80%93_Colorado_State_Fair_Fine_Arts_Competition_entrant.jpg",
+      "file": "114050-tool-ai.jpg",
+      "bytes": 155273
     }
   },
   "failures": []
