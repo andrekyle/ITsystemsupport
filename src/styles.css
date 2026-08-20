@@ -7162,12 +7162,12 @@ input.att-sig {
   accent-color: #d6d6d6;
 }
 .lesson-quiz-opt.correct {
-  background: var(--green-bg);
-  color: var(--ink);
+  background: transparent;
+  color: var(--green);
 }
 .lesson-quiz-opt.wrong {
-  background: var(--red-bg);
-  color: var(--ink);
+  background: transparent;
+  color: var(--red);
 }
 /* When checked, hide the radio and show the check/info mark instead. */
 .lesson-quiz-opt.correct input[type="radio"],
