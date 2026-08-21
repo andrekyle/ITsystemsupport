@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
 import { Icon } from "../icons";
 import type { ExerciseCheck, LessonFigure, PoeDoc, ProgressState, Profile, Role, Route, UnitActivity, UnitStandard } from "../types";
@@ -17,6 +17,7 @@ import { SlideViewer } from "../components/SlideViewer";
 import { fileToImageDataUrl } from "../components/Avatar";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 import { requestSemanticReview } from "../lib/llm";
+import { checkSpelling, type SpellIssue } from "../lib/spellcheck";
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
 
@@ -989,6 +990,15 @@ function ExerciseQuestion({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result, val]);
 
+  // Words drawn from the lesson's answer key so lesson‑specific vocabulary is
+  // never flagged as a spelling mistake by the built‑in checker.
+  const lessonWords = useMemo(
+    () => [...check.answer, ...check.concepts.flat(), ...(check.labels ?? [])],
+    [check],
+  );
+  const spell = useMemo(() => checkSpelling(val, lessonWords), [val, lessonWords]);
+  const misspellings: SpellIssue[] = spell.unique;
+
   return (
     <div className="exq">
       <div className="exq-marks-hint" aria-label="Marks available for this question">
@@ -1000,22 +1010,106 @@ function ExerciseQuestion({
       {ok || result ? (
         <MarkedAnswer text={val} check={check} ok={ok} extras={extras} />
       ) : (
-        <textarea
-          className="exq-input"
-          rows={3}
-          placeholder={`Type your answer here (at least ${MIN_ANSWER_WORDS} words — explain in your own words), then check it…`}
-          value={val}
-          onChange={(e) => {
-            setVal(e.target.value);
-            if (result) setResult(null);
-            if (extras.size) setExtras(new Set());
-            if (reviewedText) setReviewedText(null);
-            if (reviewStatus.kind !== "idle") setReviewStatus({ kind: "idle" });
-          }}
-          onBlur={() => {
-            if (!ok) onSave(val, false);
-          }}
-        />
+        <>
+          <textarea
+            className="exq-input"
+            rows={3}
+            spellCheck
+            lang="en"
+            autoCorrect="on"
+            autoCapitalize="sentences"
+            placeholder={`Type your answer here (at least ${MIN_ANSWER_WORDS} words — explain in your own words), then check it…`}
+            value={val}
+            onChange={(e) => {
+              setVal(e.target.value);
+              if (result) setResult(null);
+              if (extras.size) setExtras(new Set());
+              if (reviewedText) setReviewedText(null);
+              if (reviewStatus.kind !== "idle") setReviewStatus({ kind: "idle" });
+            }}
+            onBlur={() => {
+              if (!ok) onSave(val, false);
+            }}
+          />
+          {val.trim().length > 0 && (
+            <div
+              className={`exq-spell ${misspellings.length ? "has-issues" : "clean"}`}
+              aria-live="polite"
+            >
+              <div className="exq-spell-head">
+                <Icon name={misspellings.length ? "info" : "checkCircle"} size={14} />
+                {misspellings.length === 0 ? (
+                  <span>Spelling looks good.</span>
+                ) : (
+                  <span>
+                    Spelling review — {misspellings.length} possible mistake
+                    {misspellings.length === 1 ? "" : "s"} to check:
+                  </span>
+                )}
+              </div>
+              {misspellings.length > 0 && (
+                <>
+                  <p className="exq-spell-preview">
+                    {spell.segments.map((seg, i) =>
+                      seg.kind === "text" ? (
+                        <span key={i}>{seg.text}</span>
+                      ) : (
+                        <span
+                          key={i}
+                          className="spell-bad"
+                          title={
+                            seg.suggestions.length
+                              ? `Did you mean: ${seg.suggestions.join(", ")}?`
+                              : "Possible spelling mistake"
+                          }
+                        >
+                          {seg.text}
+                        </span>
+                      ),
+                    )}
+                  </p>
+                  <ul className="exq-spell-list">
+                    {misspellings.map((m) => (
+                      <li key={m.start}>
+                        <span className="spell-bad">{m.word}</span>
+                        {m.suggestions.length > 0 && (
+                          <span className="exq-spell-sugg">
+                            {" "}— did you mean{" "}
+                            {m.suggestions.map((s, i) => (
+                              <span key={s}>
+                                <button
+                                  type="button"
+                                  className="spell-fix"
+                                  onClick={() => {
+                                    setVal((prev) => {
+                                      const re = new RegExp(
+                                        `\\b${m.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
+                                      );
+                                      const replacement =
+                                        /^[A-Z]/.test(m.word) && s.length > 0
+                                          ? s[0].toUpperCase() + s.slice(1)
+                                          : s;
+                                      return prev.replace(re, replacement);
+                                    });
+                                    if (result) setResult(null);
+                                  }}
+                                >
+                                  {s}
+                                </button>
+                                {i < m.suggestions.length - 1 ? ", " : ""}
+                              </span>
+                            ))}
+                            ?
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+          )}
+        </>
       )}
       {!ok && (
         <div className="exq-check">

@@ -5099,6 +5099,87 @@ a.plan-ppt:hover {
   border-color: var(--green);
 }
 
+/* ---------- spelling review panel ---------- */
+.exq-spell {
+  margin-top: 8px;
+  padding: 8px 12px 10px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.exq-spell.has-issues {
+  border-color: rgba(220, 38, 38, 0.35);
+  background: rgba(220, 38, 38, 0.04);
+}
+
+.exq-spell.clean {
+  border-style: solid;
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.05);
+  color: var(--green, #16a34a);
+}
+
+.exq-spell-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.exq-spell-preview {
+  margin: 6px 0 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.exq-spell-list {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  color: var(--ink-2, var(--ink));
+}
+
+.exq-spell-list li {
+  margin: 2px 0;
+}
+
+.exq-spell-sugg {
+  color: var(--ink-2, var(--ink));
+}
+
+/* the red‑squiggle highlight used both in the live preview and the
+   per‑issue list */
+.spell-bad {
+  text-decoration: underline wavy #dc2626;
+  text-decoration-skip-ink: none;
+  text-underline-offset: 3px;
+  background: rgba(220, 38, 38, 0.08);
+  color: #b91c1c;
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
+/* one‑click "did you mean" fix button */
+.spell-fix {
+  background: transparent;
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  color: #b91c1c;
+  padding: 0 6px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.spell-fix:hover {
+  background: rgba(220, 38, 38, 0.08);
+}
+
 .exq-check {
   display: flex;
   align-items: center;
