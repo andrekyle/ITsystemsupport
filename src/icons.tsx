@@ -177,6 +177,12 @@ export const PATHS: Record<string, React.ReactNode> = {
       <path d="M10 8.8v6.4l5.2-3.2z" />
     </>
   ),
+  pause: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M9.8 8.8v6.4M14.2 8.8v6.4" />
+    </>
+  ),
   shield: (
     <>
       <path d="M12 3.5 19 6v5.5c0 4.6-3 7.7-7 9-4-1.3-7-4.4-7-9V6z" />

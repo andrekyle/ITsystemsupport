@@ -560,6 +560,7 @@ export type PageId =
   | "analytics"
   | "chat"
   | "community"
+  | "memories"
   | "forms"
   | "trackerReport";
 

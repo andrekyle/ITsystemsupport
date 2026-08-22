@@ -8769,3 +8769,185 @@ table.data th.sortable.sorted { color: var(--ink); }
   font-weight: 500;
 }
 .notif-foot { width: 100%; justify-content: center; padding: 10px 14px; }
+
+/* ---------- Memories — class photo wall & slideshow ---------- */
+.mem-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 4px 0 18px;
+}
+.mem-busy {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.mem-error {
+  font-size: 13px;
+  color: var(--red);
+}
+.mem-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 48px 20px;
+  border: 1.5px dashed var(--border-2);
+  border-radius: var(--radius);
+  color: var(--ink-3);
+  font-size: 14px;
+}
+.mem-empty p {
+  margin: 0;
+}
+.mem-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+.mem-card {
+  position: relative;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+}
+.mem-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: var(--surface-2);
+  cursor: zoom-in;
+}
+.mem-open img {
+  display: block;
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+}
+.mem-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.mem-by {
+  font-weight: 600;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mem-when {
+  flex: none;
+}
+.mem-del {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.mem-card:hover .mem-del,
+.mem-del:focus-visible {
+  opacity: 1;
+}
+.mem-del:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+/* fullscreen slideshow */
+.mem-show {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mem-show img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.mem-show img.kenburns {
+  animation: mem-kenburns 5s ease-in-out both;
+}
+@keyframes mem-kenburns {
+  0% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+.mem-show-cap {
+  position: absolute;
+  left: 22px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #fff;
+  font-size: 14px;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.85);
+}
+.mem-show-cap strong {
+  font-size: 15px;
+}
+.mem-show-cap span {
+  opacity: 0.85;
+  font-size: 12.5px;
+}
+.mem-show-count {
+  position: absolute;
+  right: 22px;
+  bottom: 20px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.85);
+}
+.mem-show-ctrl {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  gap: 8px;
+}
+.mem-show-btn {
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.mem-show-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+}

@@ -17,6 +17,7 @@ import { AttendancePage } from "./pages/Attendance";
 import { CompliancePage } from "./pages/Compliance";
 import { AnalyticsPage } from "./pages/Analytics";
 import { CommunityPage } from "./pages/Community";
+import { MemoriesPage } from "./pages/Memories";
 import { ChatPage } from "./pages/Chat";
 import { FormsPage } from "./pages/Forms";
 import { TrackerReportPage } from "./pages/TrackerReport";
@@ -47,6 +48,7 @@ const VALID_PAGES = new Set([
   "compliance",
   "analytics",
   "community",
+  "memories",
   "chat",
   "forms",
   "trackerReport",
@@ -166,6 +168,7 @@ function Shell({
             )}
             {route.page === "analytics" && <AnalyticsPage profile={profile} navigate={navigate} />}
             {route.page === "community" && <CommunityPage profile={profile} navigate={navigate} />}
+            {route.page === "memories" && <MemoriesPage profile={profile} />}
             {route.page === "chat" && (
               <ChatPage profile={profile} route={route} navigate={navigate} />
             )}

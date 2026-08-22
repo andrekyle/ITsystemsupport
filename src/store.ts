@@ -3,6 +3,7 @@ import type { EnrolmentInfo, PoeDoc, Profile, ProgressState, Role, UnitActivity,
 import { UNIT_ACTIVITIES } from "./types";
 import { MODULES, POE_SECTIONS } from "./data/course";
 import { cloudEnabled, supabase } from "./lib/supabase";
+import { flushKey } from "./lib/sync";
 import { logAudit } from "./lib/audit";
 
 const PROFILES_KEY = "itss.profiles";
@@ -1626,6 +1627,138 @@ export function useLessonFigures(us: string) {
   );
 
   return { figures: merged, setFigure, removeFigure };
+}
+
+/* ---------- class memories photo wall (shared with everyone) ---------- */
+
+export interface MemoryPhoto {
+  id: string;
+  /** Supabase Storage path (cloud mode) */
+  path?: string;
+  /** inline data-URL (local-only mode) */
+  image?: string;
+  /** uploader display name */
+  by: string;
+  /** uploader profile id — owners may remove their own photos */
+  byId: string;
+  uploadedAt: string;
+}
+
+const MEMORIES_KEY = "itss.memories.shared";
+
+/** Fetch the freshest shared photo list from the cloud (null when offline/local). */
+async function pullMemories(): Promise<MemoryPhoto[] | null> {
+  if (!supabase) return null;
+  try {
+    const { data } = await supabase
+      .from("shared_state")
+      .select("value")
+      .eq("key", MEMORIES_KEY)
+      .maybeSingle();
+    if (data?.value) {
+      const list = JSON.parse(data.value) as MemoryPhoto[];
+      return Array.isArray(list) ? list : [];
+    }
+    return [];
+  } catch {
+    return null; // offline — caller falls back to the local copy
+  }
+}
+
+export function useMemories() {
+  const [photos, setPhotos] = useState<MemoryPhoto[]>(() => read<MemoryPhoto[]>(MEMORIES_KEY, []));
+  /** photo id -> resolved signed URL for cloud-stored photos */
+  const [urls, setUrls] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === MEMORIES_KEY) setPhotos(read<MemoryPhoto[]>(MEMORIES_KEY, []));
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  // freshen from the cloud on mount so classmates' photos appear without a re-login
+  useEffect(() => {
+    void (async () => {
+      const cloud = await pullMemories();
+      if (cloud) {
+        write(MEMORIES_KEY, cloud);
+        setPhotos(cloud);
+      }
+    })();
+  }, []);
+
+  // resolve signed URLs for cloud-stored photos
+  useEffect(() => {
+    let alive = true;
+    const need = photos.filter((p) => p.path && !p.image);
+    if (!need.length) return;
+    void (async () => {
+      const got: Record<string, string> = {};
+      await Promise.all(
+        need.map(async (p) => {
+          const u = await signedFigUrl(p.path!);
+          if (u) got[p.id] = u;
+        })
+      );
+      if (alive && Object.keys(got).length) setUrls((x) => ({ ...x, ...got }));
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [photos]);
+
+  /** Add downscaled JPEG data-URLs; returns how many photos were saved. */
+  const addPhotos = useCallback(async (who: Pick<Profile, "id" | "name">, images: string[]): Promise<number> => {
+    // start from the freshest shared list so other devices' photos are kept
+    const base = (await pullMemories()) ?? read<MemoryPhoto[]>(MEMORIES_KEY, []);
+    const added: MemoryPhoto[] = [];
+    for (const image of images) {
+      const id = newId();
+      const uploadedAt = new Date().toISOString();
+      if (supabase) {
+        try {
+          const blob = await (await fetch(image)).blob();
+          const path = `shared/memories/${id}.jpg`;
+          const { error } = await supabase.storage
+            .from("files")
+            .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+          if (error) throw error;
+          added.push({ id, path, by: who.name, byId: who.id, uploadedAt });
+        } catch {
+          // skip this photo (offline / permissions) — count reflects successes
+        }
+        continue;
+      }
+      added.push({ id, image, by: who.name, byId: who.id, uploadedAt });
+    }
+    if (added.length) {
+      const next = [...base, ...added];
+      try {
+        write(MEMORIES_KEY, next);
+      } catch {
+        return 0; // local-only quota exceeded
+      }
+      setPhotos(next);
+      void flushKey(MEMORIES_KEY);
+    }
+    return added.length;
+  }, []);
+
+  const removePhoto = useCallback(async (id: string) => {
+    const base = (await pullMemories()) ?? read<MemoryPhoto[]>(MEMORIES_KEY, []);
+    const doomed = base.find((p) => p.id === id);
+    if (doomed?.path && supabase) {
+      void supabase.storage.from("files").remove([doomed.path]).catch(() => {});
+    }
+    const next = base.filter((p) => p.id !== id);
+    write(MEMORIES_KEY, next);
+    setPhotos(next);
+    void flushKey(MEMORIES_KEY);
+  }, []);
+
+  return { photos, urls, addPhotos, removePhoto };
 }
 
 /* ---------- super-user lesson edits (per unit, saved locally) ---------- */
