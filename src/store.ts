@@ -1477,6 +1477,32 @@ export function usePlanSlides(us: string) {
   return { slides, addSlide, removeSlide };
 }
 
+/** Course-wide fallback material: every facilitator upload across all unit
+ *  standards, deduped by name+size. Units without their own uploads show
+ *  these shared decks so common files (course overview, learner manual)
+ *  don't have to be re-uploaded on each unit standard. */
+export function readCourseWideSlides(exceptUs?: string): PoeDoc[] {
+  const out: PoeDoc[] = [];
+  const seen = new Set<string>();
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || !key.startsWith("itss.planslides.")) continue;
+      if (exceptUs && key === planSlidesKey(exceptUs)) continue;
+      for (const doc of read<PoeDoc[]>(key, [])) {
+        if (!doc || !doc.name) continue;
+        const id = `${doc.name}|${doc.size}`;
+        if (seen.has(id)) continue;
+        seen.add(id);
+        out.push(doc);
+      }
+    }
+  } catch {
+    /* storage unavailable — no fallback material */
+  }
+  return out.sort((a, b) => (a.uploadedAt ?? "").localeCompare(b.uploadedAt ?? ""));
+}
+
 /* ---------- staff-uploaded lesson figures (shared per unit standard) ---------- */
 
 export interface LessonFigureImage {

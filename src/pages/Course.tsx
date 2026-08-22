@@ -8,7 +8,7 @@ import { GLOSSARY, getContent } from "../data/content";
 import { FIGURE_DEFAULTS as BASE_FIGURE_DEFAULTS } from "../data/figureDefaults";
 import { HWSW_SLIDE_FIGURES } from "../data/hwswSlideFigures";
 const FIGURE_DEFAULTS = { ...BASE_FIGURE_DEFAULTS, ...HWSW_SLIDE_FIGURES };
-import { moduleCompletion, unitCompletion, unitStatus, useLessonEdits, useLessonFigures, useNotes, usePlanSlides, useSharedSettings } from "../store";
+import { moduleCompletion, unitCompletion, unitStatus, readCourseWideSlides, useLessonEdits, useLessonFigures, useNotes, usePlanSlides, useSharedSettings } from "../store";
 import { Bar } from "../components/Ring";
 import { Quiz, seededShuffle } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
@@ -2174,8 +2174,17 @@ export function UnitPage({
   // unless the super user has explicitly allowed it for everyone
   const canDownloadShared = isSuperUser || sharedSettings.allowSharedDownloads;
 
-  const decks = planSlides
-    .filter((s) => /\.pdf$/i.test(s.name) || s.type.includes("pdf"))
+  const isPdfDoc = (s: PoeDoc) => /\.pdf$/i.test(s.name) || s.type.includes("pdf");
+  // Units without their own uploads fall back to material shared across the
+  // course (e.g. the course overview deck and learner manual), so every unit
+  // standard offers the Course material tab.
+  const deckSource = useMemo(() => {
+    const own = planSlides.filter(isPdfDoc);
+    if (own.length) return own;
+    return readCourseWideSlides(unitId).filter(isPdfDoc);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planSlides, unitId]);
+  const decks = deckSource
     .map((s) => ({
       id: `upload-${s.uploadedAt}-${s.name}`,
       name: s.name.replace(/\.pdf$/i, ""),
