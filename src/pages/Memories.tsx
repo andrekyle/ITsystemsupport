@@ -63,7 +63,7 @@ export function MemoriesPage({ profile }: { profile: Profile }) {
     <>
       <div className="eyebrow">
         <Icon name="image" size={15} />
-        Memories
+        Gallery
       </div>
       <h1 className="page-title">Class memories</h1>
       <p className="page-sub">
