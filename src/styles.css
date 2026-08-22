@@ -5099,26 +5099,21 @@ a.plan-ppt:hover {
   border-color: var(--green);
 }
 
-/* ---------- spelling review panel ---------- */
+/* ---------- spelling review (plain text, no box) ---------- */
 .exq-spell {
   margin-top: 8px;
-  padding: 8px 12px 10px;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
+  padding: 0;
+  border: 0;
+  background: transparent;
   font-size: 12.5px;
   line-height: 1.5;
 }
 
-.exq-spell.has-issues {
-  border-color: rgba(220, 38, 38, 0.35);
-  background: rgba(220, 38, 38, 0.04);
+.exq-spell.has-issues .exq-spell-head {
+  color: var(--red);
 }
 
 .exq-spell.clean {
-  border-style: solid;
-  border-color: rgba(34, 197, 94, 0.35);
-  background: rgba(34, 197, 94, 0.05);
   color: var(--green, #16a34a);
 }
 
