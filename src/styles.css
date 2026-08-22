@@ -1832,7 +1832,7 @@ textarea:focus {
   margin: 1px 0 0;
   flex: none;
   border: 1.5px solid var(--border-2);
-  border-radius: 50%;
+  border-radius: 4px;
   background: transparent;
   cursor: pointer;
   transition: border-color 0.12s ease, background 0.12s ease;
