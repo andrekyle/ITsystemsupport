@@ -7699,11 +7699,6 @@ table.data.training-table td:last-child {
   border-right: none;
 }
 
-/* deadline names read as headings via size/contrast, not boldness */
-table.data.deadline-table td strong {
-  font-weight: 400;
-}
-
 /* --- borderless inline icon link inside tables (e.g. Outlook calendar) --- */
 .table-icon-link {
   display: inline-flex;
