@@ -142,7 +142,7 @@ function OnlineNow({ people, viewer }: { people: Profile[]; viewer: Profile }) {
 function ProfileHead({ profile }: { profile: Profile }) {
   return (
     <div className="card profile-head">
-      <Avatar profile={profile} size={80} />
+      <Avatar profile={profile} size={96} />
       <div>
         <div className="nm">{profile.name}</div>
         <div className="rl">
