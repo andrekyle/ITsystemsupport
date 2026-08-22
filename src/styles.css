@@ -407,9 +407,13 @@ a:hover {
 }
 
 .side-item.active {
-  background: var(--azure-lighter);
+  background: transparent;
   color: var(--azure-darker);
   font-weight: 600;
+}
+
+.side-item.active:hover {
+  background: var(--surface-2);
 }
 
 .side-item.active::before {
