@@ -13,7 +13,7 @@ const esc = (s: string) =>
 
 /** Floating Print / Download toolbar injected into generated documents —
  *  nothing prints automatically; the reader chooses. Hidden on paper. */
-function docToolbar(filename: string): string {
+export function docToolbar(filename: string): string {
   return `
   <style>
     .doc-toolbar { position: fixed; top: 12px; right: 12px; display: flex; gap: 8px; z-index: 999; font-family: "Segoe UI", system-ui, sans-serif; }

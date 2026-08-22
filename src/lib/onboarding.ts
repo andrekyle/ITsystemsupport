@@ -6,6 +6,7 @@ import {
   PROGRAMME_MILESTONES,
   TOTAL_UNITS,
 } from "../data/course";
+import { docToolbar } from "./certificates";
 
 /**
  * Onboarding pack generator: builds a complete, printable welcome document
@@ -85,6 +86,7 @@ export function onboardingPackHtml(profile: Profile, contacts: OnboardingContact
 </style>
 </head>
 <body>
+  ${docToolbar(`onboarding-pack-${profile.name.replace(/\s+/g, "-").toLowerCase()}.html`)}
   <h1>Welcome to ${esc(COURSE_META.title)}</h1>
   <p class="sub">Learner Onboarding Pack · SAQA ID ${esc(COURSE_META.saqaId)} · NQF Level ${COURSE_META.nqfLevel} · ${COURSE_META.credits} Credits · Quality assured by ${esc(COURSE_META.qualityAssurance)}</p>
 
@@ -156,8 +158,6 @@ export function onboardingPackHtml(profile: Profile, contacts: OnboardingContact
     <div>Learner signature &amp; date</div>
     <div>Facilitator signature &amp; date</div>
   </div>
-
-  <script>window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 250); });</script>
 </body>
 </html>`;
 }
