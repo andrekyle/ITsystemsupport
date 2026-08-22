@@ -8793,6 +8793,12 @@ table.data th.sortable.sorted { color: var(--ink); }
   flex-wrap: wrap;
   margin: 4px 0 18px;
 }
+.mem-actions .btn {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 12.5px;
+  gap: 6px;
+}
 .mem-busy {
   font-size: 13px;
   color: var(--ink-3);
