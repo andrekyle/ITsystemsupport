@@ -72,17 +72,17 @@ export function MemoriesPage({ profile }: { profile: Profile }) {
       </p>
 
       <div className="mem-actions">
-        <button className="btn solid" onClick={() => fileRef.current?.click()} disabled={!!busy}>
-          <Icon name="image" size={15} />
+        <button className="btn solid sm" onClick={() => fileRef.current?.click()} disabled={!!busy}>
+          <Icon name="image" size={14} />
           Add pictures
         </button>
         <button
-          className="btn ghost"
+          className="btn ghost sm"
           onClick={() => setShow({ idx: 0, auto: true })}
           disabled={!chrono.length || !!busy}
           title={chrono.length ? "Play all pictures as a slideshow" : "Upload pictures first"}
         >
-          <Icon name="play" size={15} />
+          <Icon name="play" size={14} />
           Play slideshow
         </button>
         {busy && <span className="mem-busy">{busy}</span>}
