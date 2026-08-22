@@ -2758,6 +2758,9 @@ textarea:focus {
 .attempt-row.acad {
   grid-template-columns: 20px minmax(0, 1fr);
   row-gap: 4px;
+  /* match the chevron gutter of expandable summary rows so the score /
+     attempts / date columns line up across every row */
+  padding-right: 22px;
 }
 
 .attempt-row.acad .sc {
