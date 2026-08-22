@@ -2783,6 +2783,23 @@ textarea:focus {
 
 .attempt-row.acad .chip {
   white-space: nowrap;
+  font-weight: 400;
+}
+
+/* long uploaded-file names truncate inside their column instead of
+   overflowing into the neighbouring cells */
+.attempt-row.acad .cell {
+  min-width: 0;
+}
+.attempt-row.acad .cell .linklike {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: left;
+  padding: 0;
+  margin: 0;
 }
 
 @container (min-width: 640px) {
