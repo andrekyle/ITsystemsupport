@@ -1845,7 +1845,7 @@ textarea:focus {
 .self-assess-item input[type="checkbox"]:checked {
   border-color: var(--green);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23107c10' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 12.6l3.6 3.6 7.4-8.4'/%3E%3C/svg%3E");
-  background-size: 11px;
+  background-size: 13px;
   background-position: center;
   background-repeat: no-repeat;
 }
