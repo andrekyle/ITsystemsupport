@@ -7831,13 +7831,13 @@ table.data th.sortable.sorted { color: var(--ink); }
   background: var(--panel-2, var(--surface));
   color: var(--ink);
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--radius);
   font-family: inherit;
   font-size: 13px;
   font-weight: 450;
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 .nice-select-btn:hover {
   border-color: var(--border-2);
@@ -7846,7 +7846,6 @@ table.data th.sortable.sorted { color: var(--ink); }
 .nice-select-btn:focus-visible {
   outline: none;
   border-color: var(--azure);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--azure) 18%, transparent);
 }
 .nice-select-value {
   flex: 1;
@@ -7875,7 +7874,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   backdrop-filter: blur(14px) saturate(1.4);
   -webkit-backdrop-filter: blur(14px) saturate(1.4);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.04),
     0 10px 38px rgba(0, 0, 0, 0.22),
@@ -7903,7 +7902,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   align-items: center;
   gap: 10px;
   padding: 7px 10px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   font-size: 13px;
   font-weight: 350;
   color: var(--ink-2);
@@ -7912,7 +7911,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   transition: background 0.1s ease, color 0.1s ease;
 }
 .nice-select-opt.active {
-  background: var(--azure-lighter);
+  background: var(--surface-2);
   color: var(--ink);
 }
 .nice-select-opt.selected {
