@@ -34,6 +34,7 @@ import {
 import { supabase } from "../lib/supabase";
 import { CHECKLIST_TOTAL } from "./Checklist";
 import { Avatar } from "../components/Avatar";
+import { Select } from "../components/Select";
 
 /* ---------- deadline model ---------- */
 
@@ -581,16 +582,15 @@ function AuditTrail() {
       </h2>
       <div className="card">
         <div className="audit-filters">
-          <span className="select-chevron-wrap">
-            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-              <option value="all">All events ({events.length})</option>
-              {types.map((t) => (
-                <option key={t} value={t}>
-                  {AUDIT_TYPE_LABELS[t] ?? t}
-                </option>
-              ))}
-            </select>
-          </span>
+          <Select
+            value={typeFilter}
+            onChange={setTypeFilter}
+            ariaLabel="Filter by event type"
+            options={[
+              { value: "all", label: `All events (${events.length})` },
+              ...types.map((t) => ({ value: t, label: AUDIT_TYPE_LABELS[t] ?? t })),
+            ]}
+          />
           <input
             placeholder="Search person or detail…"
             value={query}

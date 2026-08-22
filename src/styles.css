@@ -7816,6 +7816,125 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 .audit-filters input { flex: 1; min-width: 180px; }
 
+/* --- refined custom select (styled option panel) --- */
+.nice-select {
+  position: relative;
+  display: inline-flex;
+  min-width: 190px;
+}
+.nice-select-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 11px;
+  background: var(--panel-2, var(--surface));
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 450;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.nice-select-btn:hover {
+  border-color: var(--border-2);
+}
+.nice-select-btn.open,
+.nice-select-btn:focus-visible {
+  outline: none;
+  border-color: var(--azure);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--azure) 18%, transparent);
+}
+.nice-select-value {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.nice-select-chev {
+  display: inline-flex;
+  color: var(--ink-3);
+  transition: transform 0.18s ease;
+}
+.nice-select-btn.open .nice-select-chev {
+  transform: rotate(180deg);
+}
+.nice-select-panel {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  max-height: 316px;
+  overflow-y: auto;
+  padding: 5px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.04),
+    0 10px 38px rgba(0, 0, 0, 0.22),
+    0 2px 8px rgba(0, 0, 0, 0.12);
+  animation: nice-select-in 0.14s ease;
+}
+[data-theme="dark"] .nice-select-panel {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 10px 38px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.35);
+}
+@keyframes nice-select-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.nice-select-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 350;
+  color: var(--ink-2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+.nice-select-opt.active {
+  background: var(--azure-lighter);
+  color: var(--ink);
+}
+.nice-select-opt.selected {
+  color: var(--azure);
+  font-weight: 500;
+}
+.nice-select-opt-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nice-select-opt-hint {
+  margin-left: 8px;
+  font-size: 11.5px;
+  font-weight: 350;
+  color: var(--ink-3);
+}
+.nice-select-tick {
+  display: inline-flex;
+  color: var(--azure);
+}
+
 /* custom select chevron, inset from the border */
 .select-chevron-wrap {
   position: relative;
@@ -7935,7 +8054,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   border-bottom: 1px solid var(--border);
 }
 .module-avg-row:last-child { border-bottom: none; }
-.module-avg-name { width: 320px; flex-shrink: 0; font-size: 14px; }
+.module-avg-name { width: 320px; flex-shrink: 0; font-size: 14px; font-weight: 350; color: var(--ink-2); }
 .module-avg-row .bar { flex: 1; }
 .module-avg-pct { width: 42px; text-align: right; font-size: 12.5px; color: var(--ink-3); }
 
