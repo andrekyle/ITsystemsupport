@@ -2190,15 +2190,17 @@ export function UnitPage({
   const canDownloadShared = isSuperUser || sharedSettings.allowSharedDownloads;
 
   const isPdfDoc = (s: PoeDoc) => /\.pdf$/i.test(s.name) || s.type.includes("pdf");
-  // Units without their own uploads fall back to material shared across the
+  // Units without their own material fall back to decks shared across the
   // course (e.g. the course overview deck and learner manual), so every unit
-  // standard offers the Course material tab.
+  // standard offers the Course material tab. Units with built-in lesson
+  // decks or own uploads show only those.
+  const hasBuiltinDecks = (BUILTIN_DECKS[u.us] ?? []).length > 0;
   const deckSource = useMemo(() => {
     const own = planSlides.filter(isPdfDoc);
-    if (own.length) return own;
+    if (own.length || hasBuiltinDecks) return own;
     return readCourseWideSlides(unitId).filter(isPdfDoc);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [planSlides, unitId]);
+  }, [planSlides, unitId, hasBuiltinDecks]);
   const decks: { id: string; name: string; doc?: PoeDoc; url?: string; builtinUrl?: string }[] = [
     ...(BUILTIN_DECKS[u.us] ?? []).map((d) => {
       const replacement = deckOverrides[d.url];
