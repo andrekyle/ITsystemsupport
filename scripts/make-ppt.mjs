@@ -120,7 +120,7 @@ function knowledgeCheck(s, q, y = H - 1.18) {
 
 function card(s, x, y, w, h, { fill = WHITE, line = BORDER } = {}) {
   s.addShape(pptx.ShapeType.roundRect, {
-    x, y, w, h, rectRadius: 0.09, fill: { color: fill }, line: { color: line, width: 1 }, shadow: SHADOW,
+    x, y, w, h, rectRadius: 0.09, fill: { color: fill }, line: { color: line, width: 1 }, shadow: { ...SHADOW },
   });
 }
 

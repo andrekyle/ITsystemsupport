@@ -1700,6 +1700,17 @@ function fmtSize(bytes: number) {
 
 type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "questions" | "assignments" | "logbook" | "quiz" | "selfassessment" | "evaluation" | "plan";
 
+/** Built-in lesson decks shipped with the app (public/downloads), per unit
+ *  standard — always shown on the Course material tab ahead of uploads. */
+const BUILTIN_DECKS: Record<string, { name: string; url: string }[]> = {
+  "114050": [
+    { name: "Principles of Business", url: "/downloads/US-114050-Principles-of-Business.pdf" },
+    { name: "Lesson 2 — Systems Theory", url: "/downloads/US-114050-L2-Systems-Theory.pdf" },
+    { name: "Lesson 3 — IT in Business", url: "/downloads/US-114050-L3-IT-in-Business.pdf" },
+    { name: "Lesson 4 — Business Information Needs", url: "/downloads/US-114050-L4-Business-Information-Needs.pdf" },
+  ],
+};
+
 const UNIT_TAB_KEY = "itss.unittab";
 const UNIT_TAB_US_KEY = "itss.unittab.us";
 const UNIT_TABS: UnitTab[] = ["overview", "lesson", "material", "notes", "exercises", "questions", "assignments", "logbook", "quiz", "selfassessment", "evaluation", "plan"];
@@ -2184,21 +2195,25 @@ export function UnitPage({
     return readCourseWideSlides(unitId).filter(isPdfDoc);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [planSlides, unitId]);
-  const decks = deckSource
-    .map((s) => ({
+  const decks: { id: string; name: string; doc?: PoeDoc; url?: string }[] = [
+    ...(BUILTIN_DECKS[u.us] ?? []).map((d) => ({ id: `builtin-${d.url}`, name: d.name, url: d.url })),
+    ...deckSource.map((s) => ({
       id: `upload-${s.uploadedAt}-${s.name}`,
       name: s.name.replace(/\.pdf$/i, ""),
       doc: s,
-    }));
+    })),
+  ];
   const activeDeck = decks.find((d) => d.id === deckId) ?? decks[0];
   const [deckUrl, setDeckUrl] = useState<string | null>(null);
   const activeDeckId = activeDeck?.id;
   useEffect(() => {
     let cancelled = false;
     setDeckUrl(null);
-    const doc = activeDeck?.doc;
-    if (doc) {
-      void getFileUrl(doc).then((url) => {
+    const active = decks.find((d) => d.id === activeDeckId);
+    if (active?.url) {
+      setDeckUrl(active.url); // built-in decks are served statically
+    } else if (active?.doc) {
+      void getFileUrl(active.doc).then((url) => {
         if (!cancelled) setDeckUrl(url);
       });
     }
@@ -4554,14 +4569,20 @@ export function UnitPage({
           </div>
           {activeDeck && (
             <>
-              {canDownloadShared && (
+              {canDownloadShared && activeDeck.doc && (
                 <button
                   className="btn ghost dl-sample plan-ppt"
-                  onClick={() => void downloadDoc(activeDeck.doc)}
+                  onClick={() => void downloadDoc(activeDeck.doc!)}
                 >
                   <Icon name="download" size={15} />
                   Download this file
                 </button>
+              )}
+              {canDownloadShared && activeDeck.url && (
+                <a className="btn ghost dl-sample plan-ppt" href={activeDeck.url} download>
+                  <Icon name="download" size={15} />
+                  Download this file
+                </a>
               )}
               {deckUrl ? (
                 <SlideViewer src={deckUrl} allowDownload={canDownloadShared} />
