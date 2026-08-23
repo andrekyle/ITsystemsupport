@@ -2092,7 +2092,7 @@ export function UnitPage({
   const [planError, setPlanError] = useState<string | null>(null);
   const [planUploadPct, setPlanUploadPct] = useState<number | null>(null);
   const { slides: planSlides, addSlide: addPlanSlide, removeSlide: removePlanSlide } = usePlanSlides(unitId);
-  const { overrides: deckOverrides, setOverride: setDeckOverride, clearOverride: clearDeckOverride } = useDeckOverrides(unitId);
+  const { overrides: deckOverrides, setOverride: setDeckOverride } = useDeckOverrides(unitId);
   const deckReplaceRef = useRef<HTMLInputElement>(null);
   const [deckReplacePct, setDeckReplacePct] = useState<number | null>(null);
   const [deckReplaceError, setDeckReplaceError] = useState<string | null>(null);
@@ -4646,17 +4646,6 @@ export function UnitPage({
                     <Icon name="presenter" size={15} />
                     Replace with my version (.pdf)
                   </button>
-                  {activeDeck.doc && (
-                    <button
-                      className="btn ghost dl-sample plan-ppt"
-                      style={{ marginLeft: 10 }}
-                      onClick={() => clearDeckOverride(activeDeck.builtinUrl!)}
-                      title="Remove the uploaded replacement and show the original built-in slides again"
-                    >
-                      <Icon name="close" size={15} />
-                      Restore original
-                    </button>
-                  )}
                   <input
                     ref={deckReplaceRef}
                     type="file"
