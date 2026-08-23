@@ -1503,6 +1503,51 @@ export function readCourseWideSlides(exceptUs?: string): PoeDoc[] {
   return out.sort((a, b) => (a.uploadedAt ?? "").localeCompare(b.uploadedAt ?? ""));
 }
 
+/* ---------- staff replacements for built-in lesson decks (shared) ---------- */
+
+const deckOverridesKey = (us: string) => `itss.deckoverrides.${us}`;
+
+/** Staff-uploaded replacements for the app's built-in slide decks, keyed by
+ *  the built-in deck's static URL. Shared with every account. */
+export function useDeckOverrides(us: string) {
+  const [overrides, setOverrides] = useState<Record<string, PoeDoc>>(() =>
+    read<Record<string, PoeDoc>>(deckOverridesKey(us), {})
+  );
+
+  useEffect(() => {
+    setOverrides(read<Record<string, PoeDoc>>(deckOverridesKey(us), {}));
+  }, [us]);
+
+  const setOverride = useCallback(
+    (deckUrl: string, doc: PoeDoc): boolean => {
+      const next = { ...read<Record<string, PoeDoc>>(deckOverridesKey(us), {}), [deckUrl]: doc };
+      try {
+        write(deckOverridesKey(us), next);
+      } catch {
+        return false; // storage quota exceeded
+      }
+      setOverrides(next);
+      return true;
+    },
+    [us]
+  );
+
+  const clearOverride = useCallback(
+    (deckUrl: string) => {
+      const fresh = read<Record<string, PoeDoc>>(deckOverridesKey(us), {});
+      const doomed = fresh[deckUrl];
+      const next = { ...fresh };
+      delete next[deckUrl];
+      write(deckOverridesKey(us), next);
+      setOverrides(next);
+      if (doomed?.path) void import("./lib/files").then((m) => m.deleteFile(doomed.path));
+    },
+    [us]
+  );
+
+  return { overrides, setOverride, clearOverride };
+}
+
 /* ---------- staff-uploaded lesson figures (shared per unit standard) ---------- */
 
 export interface LessonFigureImage {

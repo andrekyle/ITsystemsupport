@@ -8,7 +8,7 @@ import { GLOSSARY, getContent } from "../data/content";
 import { FIGURE_DEFAULTS as BASE_FIGURE_DEFAULTS } from "../data/figureDefaults";
 import { HWSW_SLIDE_FIGURES } from "../data/hwswSlideFigures";
 const FIGURE_DEFAULTS = { ...BASE_FIGURE_DEFAULTS, ...HWSW_SLIDE_FIGURES };
-import { moduleCompletion, unitCompletion, unitStatus, readCourseWideSlides, useLessonEdits, useLessonFigures, useNotes, usePlanSlides, useSharedSettings } from "../store";
+import { moduleCompletion, unitCompletion, unitStatus, readCourseWideSlides, useDeckOverrides, useLessonEdits, useLessonFigures, useNotes, usePlanSlides, useSharedSettings } from "../store";
 import { Bar } from "../components/Ring";
 import { Quiz, seededShuffle } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
@@ -2092,6 +2092,10 @@ export function UnitPage({
   const [planError, setPlanError] = useState<string | null>(null);
   const [planUploadPct, setPlanUploadPct] = useState<number | null>(null);
   const { slides: planSlides, addSlide: addPlanSlide, removeSlide: removePlanSlide } = usePlanSlides(unitId);
+  const { overrides: deckOverrides, setOverride: setDeckOverride, clearOverride: clearDeckOverride } = useDeckOverrides(unitId);
+  const deckReplaceRef = useRef<HTMLInputElement>(null);
+  const [deckReplacePct, setDeckReplacePct] = useState<number | null>(null);
+  const [deckReplaceError, setDeckReplaceError] = useState<string | null>(null);
   const { figures: figureImages, setFigure, removeFigure } = useLessonFigures(unitId);
   const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection } = useLessonEdits(unitId);
   const [editMode, setEditMode] = useState(false);
@@ -2195,8 +2199,13 @@ export function UnitPage({
     return readCourseWideSlides(unitId).filter(isPdfDoc);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [planSlides, unitId]);
-  const decks: { id: string; name: string; doc?: PoeDoc; url?: string }[] = [
-    ...(BUILTIN_DECKS[u.us] ?? []).map((d) => ({ id: `builtin-${d.url}`, name: d.name, url: d.url })),
+  const decks: { id: string; name: string; doc?: PoeDoc; url?: string; builtinUrl?: string }[] = [
+    ...(BUILTIN_DECKS[u.us] ?? []).map((d) => {
+      const replacement = deckOverrides[d.url];
+      return replacement
+        ? { id: `builtin-${d.url}`, name: d.name, doc: replacement, builtinUrl: d.url }
+        : { id: `builtin-${d.url}`, name: d.name, url: d.url, builtinUrl: d.url };
+    }),
     ...deckSource.map((s) => ({
       id: `upload-${s.uploadedAt}-${s.name}`,
       name: s.name.replace(/\.pdf$/i, ""),
@@ -2206,6 +2215,7 @@ export function UnitPage({
   const activeDeck = decks.find((d) => d.id === deckId) ?? decks[0];
   const [deckUrl, setDeckUrl] = useState<string | null>(null);
   const activeDeckId = activeDeck?.id;
+  const activeDeckSource = activeDeck?.url ?? activeDeck?.doc?.uploadedAt;
   useEffect(() => {
     let cancelled = false;
     setDeckUrl(null);
@@ -2221,7 +2231,7 @@ export function UnitPage({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeDeckId]);
+  }, [activeDeckId, activeDeckSource]);
 
   // learners may only open a unit from its start day at 12:00
   if (unitLocked(u, profile.role)) {
@@ -2280,6 +2290,35 @@ export function UnitPage({
       setPlanError("The file could not be uploaded — check your connection and try again.");
     }
     setPlanUploadPct(null);
+  }
+
+  /** Staff replacement of a built-in deck with an edited version (PDF export). */
+  async function onPickDeckReplacement(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    const target = activeDeck?.builtinUrl;
+    if (!file || !target) return;
+    setDeckReplaceError(null);
+    if (!/\.pdf$/i.test(file.name) && !file.type.includes("pdf")) {
+      setDeckReplaceError(
+        "Please upload a PDF — edit the .pptx in PowerPoint, use File › Save As › PDF, then upload that file. It will display exactly as designed."
+      );
+      return;
+    }
+    if (file.size > MAX_SLIDE_MB * 1024 * 1024) {
+      setDeckReplaceError(`"${file.name}" is too large — files must be ${MAX_SLIDE_MB} MB or smaller.`);
+      return;
+    }
+    setDeckReplacePct(0);
+    try {
+      const doc: PoeDoc = await uploadFile(`shared/planslides/${u.us}`, file, setDeckReplacePct);
+      if (!setDeckOverride(target, doc)) {
+        setDeckReplaceError("Storage is full — remove some uploaded files and try again.");
+      }
+    } catch {
+      setDeckReplaceError("The file could not be uploaded — check your connection and try again.");
+    }
+    setDeckReplacePct(null);
   }
 
   async function onPickFigureFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -4583,6 +4622,68 @@ export function UnitPage({
                   <Icon name="download" size={15} />
                   Download this file
                 </a>
+              )}
+              {isPrivileged && activeDeck.builtinUrl && (
+                <>
+                  <a
+                    className="btn ghost dl-sample plan-ppt"
+                    style={{ marginLeft: 10 }}
+                    href={activeDeck.builtinUrl.replace(/\.pdf$/i, ".pptx")}
+                    download
+                    title="Download the editable PowerPoint source of this deck"
+                  >
+                    <Icon name="download" size={15} />
+                    Editable slides (.pptx)
+                  </a>
+                  <button
+                    className="btn ghost dl-sample plan-ppt"
+                    style={{ marginLeft: 10 }}
+                    onClick={() => deckReplaceRef.current?.click()}
+                    title="Upload your edited version of this deck (export it as PDF first) — it replaces the built-in slides for everyone"
+                  >
+                    <Icon name="presenter" size={15} />
+                    Replace with my version (.pdf)
+                  </button>
+                  {activeDeck.doc && (
+                    <button
+                      className="btn ghost dl-sample plan-ppt"
+                      style={{ marginLeft: 10 }}
+                      onClick={() => clearDeckOverride(activeDeck.builtinUrl!)}
+                      title="Remove the uploaded replacement and show the original built-in slides again"
+                    >
+                      <Icon name="close" size={15} />
+                      Restore original
+                    </button>
+                  )}
+                  <input
+                    ref={deckReplaceRef}
+                    type="file"
+                    accept=".pdf,application/pdf"
+                    style={{ display: "none" }}
+                    onChange={onPickDeckReplacement}
+                  />
+                  {deckReplacePct !== null && (
+                    <div className="upload-progress plan-upload-progress" role="progressbar" aria-valuenow={deckReplacePct}>
+                      <div className="track">
+                        <div className="fill" style={{ width: `${deckReplacePct}%` }} />
+                      </div>
+                      <span className="pct">Uploading… {deckReplacePct}%</span>
+                    </div>
+                  )}
+                  {deckReplaceError && (
+                    <div className="callout poe-error">
+                      <span className="ico">
+                        <Icon name="info" size={19} />
+                      </span>
+                      <span>{deckReplaceError}</span>
+                    </div>
+                  )}
+                  {activeDeck.doc && (
+                    <p className="mini-note" style={{ margin: "6px 0 0" }}>
+                      Showing your uploaded version ({activeDeck.doc.name}) instead of the built-in slides.
+                    </p>
+                  )}
+                </>
               )}
               {deckUrl ? (
                 <SlideViewer src={deckUrl} allowDownload={canDownloadShared} />

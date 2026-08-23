@@ -19,6 +19,7 @@ function isShared(key: string) {
   return (
     key.endsWith(".shared") ||
     key.startsWith("itss.planslides.") ||
+    key.startsWith("itss.deckoverrides.") ||
     key.startsWith("itss.lessonfigs.") ||
     key.startsWith("itss.lessonedits.") ||
     key.startsWith("itss.attendance.")
