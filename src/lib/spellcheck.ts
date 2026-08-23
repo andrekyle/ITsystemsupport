@@ -82,7 +82,7 @@ system table take talk task teach team technical technology tell temperature ten
 thank that the their them then there therefore they thing think third this those though thought three
 through throw thus time to today together too took tool top total touch toward town track trade traffic
 train transfer translate travel treat tree trial trip trouble true trust try turn twelve twenty two type
-under understand union unit universal university unless until update upgrade upload upon us use user
+under understand union unit universal university unless until update upgrade upload upon us use used uses using user
 usual value various very video view visit voice wait walk wall want war warm was watch water way we
 weather web website week weight welcome well went were west what when where whether which while white
 who whole whom whose why wide will win window wire with within without woman word work worker world would
@@ -93,6 +93,9 @@ lesson lessons homework assignment assignments exercise exercises exam exams tes
 answer answers question questions correct incorrect complete completed submit submitted
 practical theory theoretical practice practices reason reasons explanation explanations
 because since due therefore hence thus although however moreover furthermore additionally
+regulation regulations regulatory compliance audit auditor feasibility recommendation
+recommendations budget budgets expenditure income forecast forecasts finance financial
+incident incidents progress status summary conclusion introduction findings appendix
 `;
 
 /** Additional IT / hardware / software / networking / cyber‑safety vocabulary
@@ -245,12 +248,15 @@ function editDistance(a: string, b: string, limit: number): number {
 
 /** Find up to {@link maxSuggestions} closest dictionary words to `word`.
  *  Only considers candidates that share the first letter and whose length is
- *  within `limit` of `word` — keeps the scan fast. */
-function suggestFor(word: string, limit: number, maxSuggestions = 3): string[] {
+ *  within `limit` of `word` — keeps the scan fast. Caller‑supplied allowed
+ *  words (lesson terminology) are searched too, so typos of lesson‑specific
+ *  vocabulary are caught even when it isn't in the base dictionary. */
+function suggestFor(word: string, limit: number, maxSuggestions = 3, extraCandidates?: Iterable<string>): string[] {
   const w = word.toLowerCase();
   const first = w[0];
+  const pool = extraCandidates ? [...DICT_ARRAY, ...extraCandidates] : DICT_ARRAY;
   const scored: { word: string; d: number }[] = [];
-  for (const cand of DICT_ARRAY) {
+  for (const cand of pool) {
     if (cand[0] !== first) continue;
     if (Math.abs(cand.length - w.length) > limit) continue;
     if (NEVER_SUGGEST.has(cand)) continue;
@@ -259,7 +265,7 @@ function suggestFor(word: string, limit: number, maxSuggestions = 3): string[] {
   }
   // If no same‑initial candidates match, allow any initial (typo of the first letter).
   if (scored.length === 0) {
-    for (const cand of DICT_ARRAY) {
+    for (const cand of pool) {
       if (Math.abs(cand.length - w.length) > limit) continue;
       if (NEVER_SUGGEST.has(cand)) continue;
       const d = editDistance(w, cand, limit);
@@ -341,7 +347,7 @@ export function findMisspellings(text: string, extraAllowed?: Iterable<string>):
     if (!suggestions) {
       // Short words: only accept edit distance 1 to keep the flag conservative.
       const limit = tok.word.length <= 4 ? 1 : 2;
-      suggestions = suggestFor(tok.word, limit);
+      suggestions = suggestFor(tok.word, limit, 3, allowed);
       suggestCache.set(key, suggestions);
     }
     // Only report as misspelled if we found at least one plausible correction —
