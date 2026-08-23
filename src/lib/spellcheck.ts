@@ -3,8 +3,9 @@
  * their typed exercise answers.
  *
  * Strategy — high precision, low false‑positive rate:
- *   1. Maintain a compact dictionary of common English words plus IT / hardware
- *      / software / networking terminology students are expected to use.
+ *   1. Maintain curated dictionaries: common + extended English, business /
+ *      workplace vocabulary, and IT / hardware / software / networking
+ *      terminology students are expected to use.
  *   2. A word is only reported as misspelled when it looks like a *typo* of a
  *      dictionary word — i.e. there is at least one dictionary word within an
  *      edit distance of 1 (short words) or 2 (longer words).
@@ -22,7 +23,7 @@
 /** Common English words (base forms). Suffixed forms (‑s, ‑es, ‑ed, ‑ing, …)
  *  are accepted automatically at check time — see {@link isKnown}. */
 const COMMON_ENGLISH = `
-a about above accept access according account across act action activate active add address advance
+a about above accept access according account across acquire act action activate active add address advance
 advice affect after again against age ago agree ahead aid aim air alert all allow almost alone along
 already also although always among amount analyse analyze and animal announce another answer any
 anyone anything appear apply approach appropriate approve area argue arise around arrange arrive art
@@ -96,6 +97,238 @@ because since due therefore hence thus although however moreover furthermore add
 regulation regulations regulatory compliance audit auditor feasibility recommendation
 recommendations budget budgets expenditure income forecast forecasts finance financial
 incident incidents progress status summary conclusion introduction findings appendix
+formal informal approval confidential channel escalation escalate
+`;
+
+/** Extended English dictionary — everyday vocabulary and irregular verb forms
+ *  beyond the compact core list. */
+const ENGLISH_EXTENDED = `
+able absence absent absolutely accident accommodation accompany accurate accuracy achieve achievement
+acknowledge activity actual actually adapt additional adequate adjust administer admire admission admit
+adopt adult advantage adventure advertise advertisement advise adviser afford afraid agency agenda
+aggressive agreement airport alarm alive allowance alternative amazing ambition ambitious ambulance
+analysis ancient anger angle angry anniversary announce annual anxious apart apartment apologise apologize
+apology apparent apparently appeal appearance appetite applicant application appointment appreciate
+appreciation approximate approximately argument arrangement arrival arrow artificial asleep assessment
+assistance assistant associate association assumption atmosphere attendance attention attitude attorney
+attract attraction attractive audience aunt authority autumn average awake award aware awareness awful
+awkward bachelor backwards baggage bake banana bandage barrier basket bathroom battery battle beach bean
+bear beautiful beauty bedroom beginner beginning behalf belief believe belong beneath benefit beside
+besides bicycle billion biology bird birthday biscuit bitter blanket blind boil bone bonus border boring
+borrow boss bother bottle bottom boundary bowl brain branch brave bread breadth breakfast breath breathe
+brick bridge brief briefly bright brilliant brother brown brush bubble bucket builder bulb bunch burden
+burn bury bus bush busy butter button cabbage cabinet cable cake calculate calculation calendar calm
+campaign campus candidate capable capacity capture carbon career careful carefully careless carpet
+carriage carrot cassette castle casual category cattle ceiling celebrate celebration cement cemetery
+central century ceremony certificate certain certainly chairman chalk champion championship channel
+chapter charity cheap cheat cheese chemical chemistry cheque chest chicken chief child childhood chimney
+chocolate church cigarette cinema circle circumstance citizen civilization classic classical
+classification clerk clever climate climb clinic cloth clothes clothing cloud coach coal coast coat
+coffee coin cold collapse collar colleague collection comfort comfortable comfortably comma commercial
+commission commit commitment committee communicate communication companion comparison compete competition
+competitive complaint completely complicated compliment compose composition compromise conclude concrete
+conference confidence confident confirm confusion congratulate congratulations conjunction connection
+conscience conscious consequence consequently conservative considerable consideration consistent
+constitution construction consult consultant consumer contemporary continent continuous contrast
+contribute contribution convenience convenient conversation convince cook cooker cool cooperate
+cooperation corner corporation correction correctly correspond corridor cottage cotton cough council
+counter county couple courage cousin coverage cow crack craft crash crazy cream creation creative
+creature crew cricket crime criminal crisis criterion critic critical criticism crop crowd crowded
+crucial cruel crystal cultural cup cupboard cure curious curriculum curtain curve cushion custom
+cycle daily dairy dance danger dangerous dare dark darkness daughter dawn dead deadline deaf dear
+debate debt decade December decent decorate decoration deed deeply defeat defence defend definite
+definitely definition delay deliberate deliberately delicate delicious delight delivery democracy
+democratic demonstrate demonstration dentist deny departure dependent deposit depression depth deputy
+description desert deserve desirable desire desperate despite dessert destination destroy destruction
+detailed detective determination determined devote diagram dialogue diamond diary dictionary diet
+differ difficulty dig dinner diploma diplomat dirt dirty disadvantage disagree disappear disappoint
+disappointment disaster discipline discount discovery discussion disease dish dismiss distance distant
+distinguish distribute distribution district disturb divide division divorce doctor dog dollar
+domestic dominant dominate donate donation dot doubt dozen draft drag drama dramatic drawer drawing
+dream dress drink drug drum dry duck dust duty eager ear earn earnings earth earthquake ease east
+eastern economic economics economy edge editor educate educational effective effectively efficiency
+efficient effort egg elderly elect election electricity elegant elephant elevator eliminate elsewhere
+embarrassed emergency emotion emotional emphasis emphasise emphasize empire employee employer employment
+enable encounter encourage encouragement enemy engage engagement engine enormous enquiry enthusiasm
+enthusiastic entrance entry envelope environmental equally equivalent era escape essay estate estimate
+ethnic evaluate evaluation evening everybody everywhere evil evolution evolve exaggerate examination
+excellent exception excite excitement exciting excuse executive exhibition existence expand expansion
+expectation expense expensive explanation explode explosion expose exposure extension extensive extent
+external extraordinary extreme extremely eye fabric facility factory faculty failure faith
+fairly fall fame familiar famous fan fancy fantastic fare farm farmer fashion fashionable fat fault
+favour favourite fear feather February federal fee feed feedback feel feeling fellow female fence
+festival fever fiction fierce fifth fifty fight filing finally financial finding finger finish fire
+firm firmly fisherman fitness fixed flame flash flavour flexible flight flood floor flour flow flower
+flu fluid fly focus fold folk fond football forecast forehead foreign foreigner forest forever
+forgive fork formation former formula fortnight fortunate fortunately fortune forum forward foundation
+fountain fourth fox fragment frame freedom freeze frequency frequently fridge friendly friendship
+frighten frog fruit frustrate fuel fun function fundamental funeral funny fur furniture gap garage
+garden gas gate gender generally generate generation generous gentle gentleman gently genuine
+geography gesture ghost giant gift girl glad glass global glory glove glue gold golden golf
+goodbye goods gorgeous gossip grab grade gradually graduate grain grand grandfather grandmother
+grant grass grateful grave gray grey great greatly greet greeting grocery gross guarantee
+guard guess guest guilty guitar gun guy habit hair haircut hall hammer handle handsome
+hardly harm harmful harvest hat hate hatred heading headline healthy heavily heavy heel height
+hello helpful helpless hero hesitate highlight highly highway hill hint hip hire historian historic
+historical hobby hole holiday hollow holy honest honesty honour hook horizon horn horrible horror
+horse hospital hotel household housing huge humble humour hunger hungry hunt hunter hurry hurt
+husband ice ideal identical identity ignore ill illegal illness illustrate illustration imagination
+immediately immigrant immune implication imply importance impose impossible impress impression
+impressive incident income incorporate incredible indeed independence independent indication individual
+indoor industrial inevitable infection inflation influence inform ingredient inhabitant initial
+initially initiative injure injury inner innocent insect insert insight insist inspect inspection
+inspector inspiration inspire instant instantly instinct institution instrument insult insurance
+intellectual intelligence intelligent intend intense intention interaction interested interesting
+interior internal interpretation interrupt interval intervention introduction invent invention
+investigate investigation invitation invite involve involvement iron island isolate isolation
+jacket jail jam January jealous jeans jewellery joke journal journalist journey joy judgement
+judgment juice July jump June jungle junior jury justice justify keen kettle kick kid kill
+kilometre kindness king kingdom kiss kitchen knee knife knock knot ladder lady lake lamp land
+landscape lane laugh laughter laundry lawyer layer lazy leaf league lean leap leather lecture
+legal legend leisure lemon lend length lesson lever liberal liberty lid lie lifestyle lifetime
+lift likely limitation lip liquid literary literature litter lively liver living loan lobby
+logical lonely loose lord lorry loud loudly lounge lover loyal loyalty luck lucky luggage lunch
+lung luxury mad magazine magic magnificent maid mail mainly maintenance majority male mall manner
+manufacturer marble March margin marriage married marry mask mass massive master match mate
+mathematics mature maximum mayor meal meanwhile meat mechanic mechanical mechanism medal medicine
+membership memorial mental mentally merchant mercy mere merely mess metal metaphor metre midnight
+mild mile military milk mill mineral minimum minister ministry minor minority miracle mirror
+miserable misery mistake mixture mode moderate modest moment Monday monkey monster monthly monument
+mood moon moral moreover mostly mother motion motivate motivation motor mountain mouth movement
+movie mud mug multiply murder muscle museum mushroom musical musician mutual mystery nail naked
+narrow nasty nation native naturally navy nearby nearly neat necessarily necessary neck needle negative
+neglect neighbour neighbourhood neither nephew nerve nervous nest net neutral nevertheless newly
+newspaper niece noble nobody nod noise noisy nonsense noon normally northern nose notebook
+notion novel novelist nowadays nowhere nuclear nurse nut oak obey observation observe obstacle
+occasion occasionally occupation occupy occur ocean o'clock October odd offence offend offensive
+officer official officially onion onto opponent opportunity opposite opposition orange
+ordinary organ organic origin original originally otherwise ought outcome outdoor outer outline
+oven overall overcome overseas owe owl ownership ox oxygen pace pack packet pain painful paint
+painter painting pair palace pale palm pan panel panic pants parallel parcel pardon parent park
+parking parliament partial participant participate participation particularly partly passage
+passenger passion passive passport patience pause pavement peak pen penalty pencil penny
+perception perfect perfectly permanent permission permit personality personally persuade
+petrol phase phenomenon philosophy photograph photographer phrase physically physician piano
+pig pile pilot pin pink pipe pitch pity plain planet plant plastic plate platform pleasant
+pleasure plenty plot pocket poem poet poetry poison pole political politician politics
+pollution pond pool population porter portion portrait possess possession possibility possibly
+postpone pot potato potential potentially pound pour poverty powder powerful praise pray prayer
+precious precise precisely predict prediction preference pregnant preparation prescription
+presence presentation preserve president press pressure presumably pretend pretty priest
+primarily prime prince princess principal principle priority prison prisoner privacy prize
+probable procedure proceed producer production profession professor profile profound
+prohibit prominent promise promote promotion prompt pronunciation proof proper properly proportion
+proposal propose prospect protect protection protest proud prove province provision psychological
+psychology pub publication publish publisher pump punch punish punishment pupil purchase pure
+purple pursue puzzle qualification qualify quantity quarter queen quit quotation quote rabbit
+radical rail railway rain rare rarely rat ratio rational raw ray razor reaction
+realistic reasonable rebuild recall recipe recognise recognition recognize recommend
+reconstruction recover recovery recruit recruitment rediscover reduction redundant
+reference regard regardless regional regret regular regularly reject relation relationship relative
+relatively relax relaxed relevant relief religion religious reluctant rely remarkable remedy
+remind remote removal rent repeatedly replacement representative reputation rescue resemble
+reservation reserve resident resign resignation resist resistance resolve resort respect
+respectively responsibility restaurant restrict restriction retain retire retirement retreat
+reverse revise revision revolution reward rhythm rice rich rid ride ridiculous rival river
+road roast rob robbery rock rocket rod roll romantic roof rope rose rough roughly routine
+royal rubber rubbish rude ruin rural rush sack sad sadly safety sail sailor saint sake salad
+salary salt sample sand sandwich satisfaction satisfactory satisfy Saturday sauce sausage
+scandal scared scarcely scare scheme scholar scholarship scientific scientist scope score
+scratch scream sea seal seat secondary secret secretary security seed seldom self sell
+seminar senior sensible sensitive sentence September sequence series servant settlement severe
+shade shadow shake shallow shame shape sharp shave sheep sheet shelf shell shelter shine
+ship shirt shock shoe shoot shopping shore shortage shortly shoulder shout shower shut shy
+sick sight signature significance significant significantly silence silent silly silver
+similarly simply sin sincere sing singer sink sister situation sixth skill skilled skin
+skirt sky slave sleep slice slight slightly slim slip slope smart smell smile smoke smooth
+snake snow soap soccer socks soft software soil soldier sole solve somebody somehow someone
+somewhat somewhere son song sorry soul soup southern spare speaker specialist species
+spectacular spectrum spelling spider spirit spiritual spite splendid split spoon sport spot
+spray spring square squeeze stable stadium staff stair stamp stare statement statistics
+statue steady steal steam steel steep stick sticky stiff stomach stone storm
+stranger strategic straw stream strength strengthen stress stretch strict strictly strike
+string strip stroke struggle stupid subsequent substance substantial substitute suburb
+succeed successful successfully suffer sufficient sugar suggestion suicide suit sum
+Sunday sunlight sunny sunshine superb superior supermarket supper surely surface surgeon
+surgery surprise surprisingly surround surroundings survey survival survive suspect suspicion
+suspicious swallow swear sweater sweep sweet swim swing sword symbol sympathy symptom
+tail tale talent talented tall tank tap tape target taste tax taxi tea tear tease
+technique teenager telephone television temper temple temporary tendency tennis tension tent
+territory terror terrible thankfully theatre theme theory thick thief thin thirst thorough
+thoroughly thread threat threaten throat throughout thumb thunder Thursday ticket tide tidy
+tie tight tiny tip tired tissue title tobacco toe toilet tomato ton tone tongue tonight
+tooth topic torch tough tour tourism tourist towel tower toy trace tradition traditional
+tragedy trail transform transformation transition transport trap tray treasure treatment
+tremendous trend trick trousers truck truly trumpet trunk truth tube Tuesday tune tunnel
+twin typical typically tyre ugly umbrella uncle uncomfortable underground unemployment
+unexpected unfair unfortunately uniform unique universe unknown unlike unlikely unnecessary unpleasant
+unusual upper upset upstairs urban urge urgent usage useful useless usually valley valuable
+van variation variety vast vegetable vehicle venue verse vertical vessel victim victory
+village violence violent virtually visible vision visitor vital vocabulary volume voluntary
+volunteer vote wage waist wake wander warn warning wash waste wave weak weakness wealth
+wealthy weapon wear weekly welfare western wet wheel whenever whereas wherever whisper
+whistle widely widespread width wild wildlife willing wind wine wing winner winter wisdom
+wise wish witness wonder wonderful wood wooden wool worry worse worship worst worth wound
+wrap wrist yard yellow yield youth zero
+`;
+
+/** Business, workplace and commerce dictionary — vocabulary learners use when
+ *  writing about organisations, money, HR and professional conduct. */
+const BUSINESS_TERMS = `
+accountability accountant accounting acquisition administration administrative administrator
+advertise advertising agenda agreement allocate allocation apprentice apprenticeship appraisal
+arbitration asset assets authorisation authorization bankrupt bankruptcy benchmark beneficiary
+billing board bonus branding briefing broker bureaucracy businessman businesswoman buyer
+capital cashier cashflow chairperson clause clientele collaborate collaboration colleague
+commerce commercial commission commodity compensation competence competency competitor
+complaint concession consortium consultancy consultant consumer contract contractor
+corporate corporation costing courier credit creditor criteria debit debtor deduction
+delegate delegation deliverable demand department depreciation deputy director directive
+disciplinary dismissal dispatch dispute distributor dividend documentation economist
+efficiency employ employee employer employment endorsement enterprise entrepreneur
+entrepreneurship equity ethics etiquette evaluation executive expense export franchise
+freelance freelancer funding goods governance grievance gross headquarters hierarchy
+incentive induction industry inflation infrastructure innovation insurance intern internship
+interview inventory invest investment investor invoice leadership ledger legislation
+liability liaison litigation logistics losses management mandate manufacture manufacturer
+manufacturing margin marketing mediation meeting memo memorandum mentor mentorship merger
+milestone minutes mission monetary morale motivation negotiable negotiate negotiation
+objective obligation onboarding operational organisational organizational orientation outsource
+outsourcing overhead overtime paperwork partnership payment payroll payslip pension
+performance personnel portfolio premises procurement productive productivity profession
+professional professionalism profit profitable profitability projection promotion proposal
+purchase quotation receipt receptionist recruitment redundancy remuneration requisition
+resign resignation retail retailer retention revenue salary seminar shareholder shift
+sponsor sponsorship stakeholder stationery statutory stipend stock strategy subordinate
+subsidiary subsidy supervise supervision supervisor supplier surplus takeover tariff
+taxation teamwork tender termination timesheet trademark transaction turnover vacancy
+vendor venture verbal vocational voucher wages warehouse wholesale wholesaler workforce
+workplace workshop
+`;
+
+/** Extended IT dictionary — development, networking, security and operations
+ *  vocabulary beyond the core hardware/software list. */
+const IT_EXTENDED = `
+accessibility administrator agile analytics android antenna archive array attachment
+authenticate authentication automation availability avatar backend backlog benchmark beta
+botnet breach bugfix cabling capacitor captcha certificate charger chipset ciphertext
+clipboard cluster codec compatibility component compress compression computing conditional
+configuration connectivity connector console credential credentials cryptography cursor
+dashboard datacentre datacenter debugging decode decompress deploy deployment deprecated developer
+development dialog directory downgrade emulator encryption endpoint exploit extension fibre
+fiber filename filesystem filter folder font footer formatting formula framework frontend
+gateway gigabit hashing hashtag heatsink hostname hotfix hotspot implementation incognito
+indexing installation installer integration iteration javascript kernel keylogger keyword
+loader localhost macro maintenance metadata microchip middleware migration multitask
+navigation notification overclock pairing partition patching permission pipeline playback
+plaintext pointer popup preview production prototype provisioning quarantine recovery
+refactor registry reinstall rendering repository requirement resistor responsive retrieval
+rollback rollout sandbox scalability scam scammer schema screenshot scripting scroll scrum
+sensor serial shareware silicon simulation sitemap slideshow snapshot socket spooler stack
+staging subroutine subscription taskbar telemetry thermal thread throughput thumbnail
+timeout timestamp toolbar topology transaction turnaround tutorial unicode uptime usability
+validation vulnerability wallpaper warranty wearable webinar webpage whiteboard workflow
+workload
 `;
 
 /** Additional IT / hardware / software / networking / cyber‑safety vocabulary
@@ -125,6 +358,13 @@ recycle recycling refurbish refurbishment sustainable sustainability disposal e-
 /** Words that should NOT be suggested as corrections (very short / ambiguous). */
 const NEVER_SUGGEST = new Set(["a", "i"]);
 
+/** Known acronyms (course + IT) — all‑caps tokens matching these are fine. */
+const ACRONYMS = new Set(
+  `SAQA NQF QCTO MICT SETA SETAS POE ITSS NCV POPIA GDPR COBIT ITIL SDLC HTTPS HTTP HTML XHTML
+   PPTX DOCX XLSX JSON YAML EEPROM SDRAM NVME SODIMM CMOS BIOS RAID PCIE SATA WLAN VLAN
+   BBBEE TCPIP SMTP IMAP DHCP VOIP IPSEC OAUTH SIEM MPLS ISCSI`.split(/\s+/).filter(Boolean)
+);
+
 /** Common suffix stripping rules used to accept inflected forms
  *  (plurals, past tense, ‑ing, comparatives, adverbs, possessives). */
 const SUFFIX_RULES: { suffix: string; add: string[] }[] = [
@@ -151,10 +391,40 @@ function tokeniseDict(text: string): string[] {
     .filter((w) => /^[a-z][a-z'-]*$/.test(w));
 }
 
-const BASE_DICT = new Set<string>([...tokeniseDict(COMMON_ENGLISH), ...tokeniseDict(IT_TERMS)]);
+const BASE_DICT = new Set<string>([
+  ...tokeniseDict(COMMON_ENGLISH),
+  ...tokeniseDict(ENGLISH_EXTENDED),
+  ...tokeniseDict(BUSINESS_TERMS),
+  ...tokeniseDict(IT_TERMS),
+  ...tokeniseDict(IT_EXTENDED),
+]);
 
 /** All dictionary words as an array, used to search for close matches. */
 const DICT_ARRAY = Array.from(BASE_DICT);
+
+/** Bigrams observed in the dictionary (base words + simple plurals). Unknown
+ *  words containing several bigrams never seen here look like keyboard mash
+ *  ("fisbhj") rather than a name or unusual term, and get flagged even though
+ *  no close dictionary neighbour exists. */
+const BIGRAMS = new Set<string>();
+for (const w of DICT_ARRAY) {
+  const f = w + "s"; // cheap plural: covers common word-final bigrams (hs, ds, …)
+  for (let i = 0; i < f.length - 1; i++) BIGRAMS.add(f.slice(i, i + 2));
+}
+
+/** Does this unknown word look like random letters rather than a real word,
+ *  name or acronym? Conservative: only 5+ letter words with at least two
+ *  never-seen bigrams (or no vowels at all) are treated as gibberish. */
+function looksLikeGibberish(word: string): boolean {
+  const w = word.toLowerCase().replace(/[^a-z]/g, "");
+  if (w.length < 5) return false;
+  let unseen = 0;
+  for (let i = 0; i < w.length - 1; i++) {
+    if (!BIGRAMS.has(w.slice(i, i + 2))) unseen++;
+    if (unseen >= 2) return true;
+  }
+  return !/[aeiouy]/.test(w);
+}
 
 /** Extract the individual English‑word candidates that appear in a piece of text
  *  extracted from an exercise's answer key or concept list.
@@ -246,6 +516,18 @@ function editDistance(a: string, b: string, limit: number): number {
 
 /* ---------- suggestions ---------- */
 
+/** Simple inflected forms of a dictionary base word, used so suggestions can
+ *  match the learner's tense/number ("aquired" → "acquired", not "acquire"). */
+function inflections(base: string): string[] {
+  const out = [base];
+  if (/[sxz]$|[sc]h$/.test(base)) out.push(base + "es");
+  else if (/[bcdfghjklmnpqrstvwxz]y$/.test(base)) out.push(base.slice(0, -1) + "ies");
+  else out.push(base + "s");
+  out.push(base.endsWith("e") ? base + "d" : base + "ed");
+  out.push(base.endsWith("e") ? base.slice(0, -1) + "ing" : base + "ing");
+  return out;
+}
+
 /** Find up to {@link maxSuggestions} closest dictionary words to `word`.
  *  Only considers candidates that share the first letter and whose length is
  *  within `limit` of `word` — keeps the scan fast. Caller‑supplied allowed
@@ -256,22 +538,21 @@ function suggestFor(word: string, limit: number, maxSuggestions = 3, extraCandid
   const first = w[0];
   const pool = extraCandidates ? [...DICT_ARRAY, ...extraCandidates] : DICT_ARRAY;
   const scored: { word: string; d: number }[] = [];
-  for (const cand of pool) {
-    if (cand[0] !== first) continue;
-    if (Math.abs(cand.length - w.length) > limit) continue;
-    if (NEVER_SUGGEST.has(cand)) continue;
-    const d = editDistance(w, cand, limit);
-    if (d <= limit) scored.push({ word: cand, d });
-  }
-  // If no same‑initial candidates match, allow any initial (typo of the first letter).
-  if (scored.length === 0) {
+  const consider = (sameInitialOnly: boolean) => {
     for (const cand of pool) {
-      if (Math.abs(cand.length - w.length) > limit) continue;
+      if (sameInitialOnly && cand[0] !== first) continue;
       if (NEVER_SUGGEST.has(cand)) continue;
-      const d = editDistance(w, cand, limit);
-      if (d <= limit) scored.push({ word: cand, d });
+      if (Math.abs(cand.length - w.length) > limit + 4) continue;
+      for (const form of inflections(cand)) {
+        if (Math.abs(form.length - w.length) > limit) continue;
+        const d = editDistance(w, form, limit);
+        if (d <= limit) scored.push({ word: form, d });
+      }
     }
-  }
+  };
+  consider(true);
+  // If no same‑initial candidates match, allow any initial (typo of the first letter).
+  if (scored.length === 0) consider(false);
   scored.sort((a, b) => a.d - b.d || a.word.length - b.word.length || a.word.localeCompare(b.word));
   const out: string[] = [];
   for (const s of scored) {
@@ -314,17 +595,18 @@ function* tokensOf(text: string): Generator<{ word: string; start: number; end: 
 /** Should this word be considered as a candidate for spell‑checking? */
 function isCheckable(word: string): boolean {
   if (word.length < 4) return false; // very short words: not worth flagging
-  // Any word starting with a capital letter — sentence starter or mid‑sentence
-  // — is treated as a possible proper noun (name, place, brand, acronym) and
-  // skipped. The browser's built‑in spell checker still underlines these live
-  // in the textarea so real typos aren't silently missed.
-  if (/^[A-Z]/.test(word)) return false;
-  // Mixed case in middle of the word (e.g. iPhone, YouTube) → brand, skip.
-  if (/[a-z][A-Z]/.test(word)) return false;
-  // ALL‑CAPS acronym → skip (RAM, CPU, HTML, …).
-  if (word === word.toUpperCase()) return false;
   // Contains digits or unusual punctuation → skip.
   if (/[^A-Za-z'-]/.test(word)) return false;
+  // Mixed case in middle of the word (e.g. iPhone, YouTube) → brand, skip.
+  if (/[a-z][A-Z]/.test(word)) return false;
+  // ALL‑CAPS: 4‑letter tokens are plausible acronyms (BYOD, SDLC) and are
+  // skipped; longer ones are checked further (known acronym vs gibberish).
+  if (word === word.toUpperCase()) return word.length >= 5;
+  // Any other word starting with a capital letter — sentence starter or
+  // mid‑sentence — is treated as a possible proper noun (name, place, brand)
+  // and skipped. The browser's built‑in spell checker still underlines these
+  // live in the textarea so real typos aren't silently missed.
+  if (/^[A-Z]/.test(word)) return false;
   return true;
 }
 
@@ -340,6 +622,9 @@ export function findMisspellings(text: string, extraAllowed?: Iterable<string>):
 
   for (const tok of tokensOf(text)) {
     if (!isCheckable(tok.word)) continue;
+
+    const isAllCaps = tok.word === tok.word.toUpperCase();
+    if (isAllCaps && ACRONYMS.has(tok.word)) continue;
     if (isKnown(tok.word, allowed)) continue;
 
     const key = tok.word.toLowerCase();
@@ -350,10 +635,17 @@ export function findMisspellings(text: string, extraAllowed?: Iterable<string>):
       suggestions = suggestFor(tok.word, limit, 3, allowed);
       suggestCache.set(key, suggestions);
     }
-    // Only report as misspelled if we found at least one plausible correction —
-    // words with no close dictionary neighbour are treated as unknown but not
-    // wrong (proper nouns, brand names, unusual technical terms, …).
-    if (suggestions.length === 0) continue;
+
+    if (isAllCaps) {
+      // Unknown all-caps token: flag only when it looks like keyboard mash —
+      // otherwise treat it as an unlisted acronym and leave it alone.
+      if (!looksLikeGibberish(tok.word)) continue;
+    } else if (suggestions.length === 0 && !looksLikeGibberish(tok.word)) {
+      // Only report as misspelled if we found at least one plausible correction
+      // or the word looks like random letters. Unknown words that are neither
+      // (proper nouns, brand names, unusual technical terms, …) are left alone.
+      continue;
+    }
 
     issues.push({ word: tok.word, start: tok.start, end: tok.end, suggestions });
     seen.add(key);
