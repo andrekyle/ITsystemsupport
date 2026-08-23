@@ -1,4 +1,4 @@
-// Generates the US 114050 Lesson 4 deck (the relationship between a business and
+ï»¿// Generates the US 114050 Lesson 4 deck (the relationship between a business and
 // its data / information needs) in the same Microsoft Fluent / Learn style.
 // Accessibility rule: NO text below 18pt.
 // Run: node scripts/make-114050-l4-ppt.mjs -> public/downloads/US-114050-L4-Business-Information-Needs.pptx
@@ -69,8 +69,8 @@ const pptx = new pptxgen();
 pptx.defineLayout({ name: "WIDE", width: W, height: H });
 pptx.layout = "WIDE";
 pptx.author = "Andre Snell";
-pptx.company = "Investec â€” Corporate Banking Technology";
-pptx.title = "US 114050 Lesson 4 â€” The relationship between a business and its data requirements";
+pptx.company = "Investec Ã¢â‚¬â€ Corporate Banking Technology";
+pptx.title = "US 114050 Lesson 4 Ã¢â‚¬â€ The relationship between a business and its data requirements";
 
 let pageNo = 0;
 
@@ -79,7 +79,7 @@ function slide() {
   s.background = { color: WHITE };
   pageNo += 1;
   if (pageNo > 1) {
-    s.addText("US 114050 Â· Lesson 4 â€” The business and its information needs Â· NQF 5", {
+    s.addText("US 114050 Ã‚Â· Lesson 4 Ã¢â‚¬â€ The business and its information needs Ã‚Â· NQF 5", {
       x: MX, y: H - 0.5, w: CW - 1, h: 0.38, fontFace: BODY_FONT, fontSize: MIN_FONT, color: GREY,
     });
     s.addText(String(pageNo), { x: W - MX - 0.7, y: H - 0.5, w: 0.7, h: 0.38, fontFace: BODY_FONT, fontSize: MIN_FONT, color: GREY, align: "right" });
@@ -98,7 +98,7 @@ function eyebrowTitle(s, eyebrow, title) {
 }
 
 function card(s, x, y, w, h, { fill = WHITE, line = BORDER } = {}) {
-  s.addShape(pptx.ShapeType.roundRect, { x, y, w, h, rectRadius: 0.09, fill: { color: fill }, line: { color: line, width: 1 }, shadow: { ...SHADOW } });
+  s.addShape(pptx.ShapeType.roundRect, { x, y, w, h, rectRadius: 0.09, fill: { color: fill }, line: { color: line, width: 1 }, shadow: SHADOW });
 }
 
 function iconCards(s, items, { x = MX, y = 2.0, w = CW, cols = 4, rowH = 1.6, gap = 0.2, fontSize = MIN_FONT, titleSize = 20 } = {}) {
@@ -171,15 +171,15 @@ function strip(s, label, text, { y = 5.35, h = 1.3 } = {}) {
   const s = slide();
   s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: W, h: 0.12, fill: { color: BLUE } });
   s.addShape(pptx.ShapeType.roundRect, { x: MX, y: 1.1, w: 5.9, h: 0.62, rectRadius: 0.31, fill: { color: BLUE } });
-  s.addText("US 114050 · LESSON 4 · NQF LEVEL 5", { x: MX, y: 1.1, w: 5.9, h: 0.62, fontFace: BODY_FONT, fontSize: MIN_FONT, bold: true, color: WHITE, align: "center", valign: "middle", charSpacing: 1 });
+  s.addText("US 114050 Â· LESSON 4 Â· NQF LEVEL 5", { x: MX, y: 1.1, w: 5.9, h: 0.62, fontFace: BODY_FONT, fontSize: MIN_FONT, bold: true, color: WHITE, align: "center", valign: "middle", charSpacing: 1 });
   s.addText("The Relationship between a Business and its Information Needs", { x: MX, y: 1.9, w: 10.8, h: 1.85, fontFace: TITLE_FONT, fontSize: 38, bold: true, color: NAVY });
-  s.addText("From data to wisdom — how a business gathers data, turns it into information, uses it in its roles, and protects it from threats", { x: MX, y: 3.8, w: 9.7, h: 0.75, fontFace: BODY_FONT, fontSize: 19, color: GREY, lineSpacingMultiple: 1.15 });
+  s.addText("From data to wisdom â€” how a business gathers data, turns it into information, uses it in its roles, and protects it from threats", { x: MX, y: 3.8, w: 9.7, h: 0.75, fontFace: BODY_FONT, fontSize: 19, color: GREY, lineSpacingMultiple: 1.15 });
   addIcon(s, "database", 11.0, 1.4, 1.8, "#" + BORDER);
   s.addShape(pptx.ShapeType.line, { x: MX, y: 4.62, w: CW, h: 0, line: { color: BORDER, width: 1 } });
   const meta = [
-    ["TIME", "90 minutes · Self & Group"],
-    ["SESSION", "Thursday, 27 Aug 2026 · 09h00 – 14h00"],
-    ["MODULE", "Module 1 · Professional Team Development"],
+    ["TIME", "90 minutes Â· Self & Group"],
+    ["SESSION", "Thursday, 27 Aug 2026 Â· 09h00 â€“ 14h00"],
+    ["MODULE", "Module 1 Â· Professional Team Development"],
     ["QUALITY ASSURANCE", "QCTO / MICT SETA"],
   ];
   meta.forEach(([k, v], i) => {
@@ -187,7 +187,7 @@ function strip(s, label, text, { y = 5.35, h = 1.3 } = {}) {
     s.addText(k, { x, y: 4.82, w: CW / 4 - 0.2, h: 0.36, fontFace: BODY_FONT, fontSize: MIN_FONT, bold: true, color: BLUE, charSpacing: 1 });
     s.addText(v, { x, y: 5.2, w: CW / 4 - 0.2, h: 1.0, fontFace: BODY_FONT, fontSize: MIN_FONT, color: NAVY, lineSpacingMultiple: 1.1 });
   });
-  s.addText("ITSS Learn · Investec · Corporate Banking Technology", { x: MX, y: H - 0.62, w: CW, h: 0.4, fontFace: BODY_FONT, fontSize: MIN_FONT, color: GREY });
+  s.addText("ITSS Learn Â· Investec Â· Corporate Banking Technology", { x: MX, y: H - 0.62, w: CW, h: 0.4, fontFace: BODY_FONT, fontSize: MIN_FONT, color: GREY });
 }
 
 /* ============================================================= ACKOFF */
@@ -196,13 +196,13 @@ function strip(s, label, text, { y = 5.35, h = 1.3 } = {}) {
   eyebrowTitle(s, "From data to wisdom", "Ackoff's five categories of the human mind");
   introText(s, "According to Russell Ackoff, systems theorist and professor of organisational change:", 1.4, 0.4);
   iconCards(s, [
-    { icon: "database", text: "Data", d: "Symbols — raw facts with no significance beyond their existence." },
-    { icon: "chart", text: "Information", d: "Data processed to be useful — answers who, what, where, when." },
-    { icon: "book", text: "Knowledge", d: "Application of data and information — answers how." },
-    { icon: "search", text: "Understanding", d: "Appreciation of why — carries each level to the next." },
-    { icon: "gradcap", text: "Wisdom", d: "Evaluated understanding — vision and design." },
+    { icon: "database", text: "Data", d: "Symbols â€” raw facts with no significance beyond their existence." },
+    { icon: "chart", text: "Information", d: "Data processed to be useful â€” answers who, what, where, when." },
+    { icon: "book", text: "Knowledge", d: "Application of data and information â€” answers how." },
+    { icon: "search", text: "Understanding", d: "Appreciation of why â€” carries each level to the next." },
+    { icon: "gradcap", text: "Wisdom", d: "Evaluated understanding â€” vision and design." },
   ], { y: 2.0, cols: 3, rowH: 1.85 });
-  strip(s, "Past and future", "The first four categories deal with the past — what has been or what is known. Only wisdom deals with the future; people must move successively through the other categories to reach it.", { y: 5.95, h: 1.15 });
+  strip(s, "Past and future", "The first four categories deal with the past â€” what has been or what is known. Only wisdom deals with the future; people must move successively through the other categories to reach it.", { y: 5.95, h: 1.15 });
 }
 
 /* ============================================================= DATA & INFO */
@@ -210,10 +210,10 @@ function strip(s, label, text, { y = 5.35, h = 1.3 } = {}) {
   const s = slide();
   eyebrowTitle(s, "The first two levels", "Data and information");
   iconCards(s, [
-    { icon: "database", text: "Data is raw", d: "It simply exists — usable or not — and has no meaning of itself. In computer terms, a spreadsheet generally starts out by holding data." },
+    { icon: "database", text: "Data is raw", d: "It simply exists â€” usable or not â€” and has no meaning of itself. In computer terms, a spreadsheet generally starts out by holding data." },
     { icon: "chart", text: "Information has meaning", d: "Data given meaning by relational connection. In computer terms, a relational database makes information from the data stored within it." },
   ], { y: 1.7, cols: 2, rowH: 2.35 });
-  strip(s, "The weather example", "Data: \u201cIt is raining.\u201d  ·  Information: \u201cThe temperature dropped 15 degrees and then it started raining\u201d — a relationship, possibly cause and effect.", { y: 4.5, h: 1.3 });
+  strip(s, "The weather example", "Data: \u201cIt is raining.\u201d  Â·  Information: \u201cThe temperature dropped 15 degrees and then it started raining\u201d â€” a relationship, possibly cause and effect.", { y: 4.5, h: 1.3 });
 }
 
 /* ============================================================= KNOWLEDGE / UNDERSTANDING / WISDOM */
@@ -221,24 +221,24 @@ function strip(s, label, text, { y = 5.35, h = 1.3 } = {}) {
   const s = slide();
   eyebrowTitle(s, "The higher levels", "Knowledge, understanding and wisdom");
   iconCards(s, [
-    { icon: "book", text: "Knowledge", d: "The appropriate collection of information — memorised, deterministic. The times table answers 2 \u00d7 2, but not 1267 \u00d7 300." },
-    { icon: "search", text: "Understanding", d: "Cognitive and analytical — synthesises NEW knowledge from what is known. Learning, not memorising. AI systems (2026: Copilot, Gemini) do this at scale." },
+    { icon: "book", text: "Knowledge", d: "The appropriate collection of information â€” memorised, deterministic. The times table answers 2 \u00d7 2, but not 1267 \u00d7 300." },
+    { icon: "search", text: "Understanding", d: "Cognitive and analytical â€” synthesises NEW knowledge from what is known. Learning, not memorising. AI systems (2026: Copilot, Gemini) do this at scale." },
     { icon: "gradcap", text: "Wisdom", d: "Extrapolative, non-deterministic. Calls on moral and ethical codes; judges right from wrong. The authors: computers will never possess it." },
   ], { y: 1.7, cols: 3, rowH: 2.6 });
-  strip(s, "The weather example, continued", "Knowledge: high humidity + a sharp temperature drop usually means rain. Wisdom is systemic: \u201cit rains because it rains\u201d — grasping all the interactions between evaporation, air currents and temperature gradients.", { y: 4.75, h: 1.4 });
+  strip(s, "The weather example, continued", "Knowledge: high humidity + a sharp temperature drop usually means rain. Wisdom is systemic: \u201cit rains because it rains\u201d â€” grasping all the interactions between evaporation, air currents and temperature gradients.", { y: 4.75, h: 1.4 });
 }
 
 /* ============================================================= PATTERN OR NOISE */
 {
   const s = slide();
-  eyebrowTitle(s, "A test", "When is a pattern knowledge — and when is it noise?");
+  eyebrowTitle(s, "A test", "When is a pattern knowledge â€” and when is it noise?");
   bulletList(s, [
-    "\u201cAbugt dbesbt regtc uatn s uitrzt\u2026\u201d — 100% novelty. To you it is noise; there is no foundation to connect with the pattern. Yet translated, these are Newton's three laws of motion.",
+    "\u201cAbugt dbesbt regtc uatn s uitrzt\u2026\u201d â€” 100% novelty. To you it is noise; there is no foundation to connect with the pattern. Yet translated, these are Newton's three laws of motion.",
     "Is something knowledge if you can't understand it?",
     "Now: a heavy 3\u00d73\u00d76 box with a door, food inside, colder inside than out, usually in the kitchen, ice compartment, light when it opens, dirt underneath, junk on top\u2026",
-    "A refrigerator — at some point you connected with the pattern, and every further statement only confirmed it. In a society without refrigerators, it stays a riddle.",
+    "A refrigerator â€” at some point you connected with the pattern, and every further statement only confirmed it. In a society without refrigerators, it stays a riddle.",
   ], { y: 1.6, h: 3.7 });
-  strip(s, "The point for business", "Information only becomes knowledge when the receiver can connect it to a pattern they understand — present information in the language and context of its users, or it is noise.", { y: 5.5, h: 1.25 });
+  strip(s, "The point for business", "Information only becomes knowledge when the receiver can connect it to a pattern they understand â€” present information in the language and context of its users, or it is noise.", { y: 5.5, h: 1.25 });
 }
 
 /* ============================================================= DECISION MAKING */
@@ -246,9 +246,9 @@ function strip(s, label, text, { y = 5.35, h = 1.3 } = {}) {
   const s = slide();
   eyebrowTitle(s, "Communication in decision making", "From information to a final choice");
   bulletList(s, [
-    "Decision making is the cognitive process leading to the selection of a course of action among variations — every process produces a final choice: an action or an opinion.",
-    "It begins when we need to do something but know not what — a reasoning process, rational or irrational, on explicit or tacit assumptions.",
-    "Structured, rational decisions drive science-based professions — e.g. medical diagnosis, then treatment selection.",
+    "Decision making is the cognitive process leading to the selection of a course of action among variations â€” every process produces a final choice: an action or an opinion.",
+    "It begins when we need to do something but know not what â€” a reasoning process, rational or irrational, on explicit or tacit assumptions.",
+    "Structured, rational decisions drive science-based professions â€” e.g. medical diagnosis, then treatment selection.",
     "Under time pressure, high stakes or ambiguity, experts decide intuitively: recognition-primed decisions fit the indicators into experience and arrive immediately at a satisfactory course of action.",
     "Robust-decision approaches formally integrate uncertainty into the process.",
   ], { y: 1.6, h: 4.8 });
@@ -259,7 +259,7 @@ function strip(s, label, text, { y = 5.35, h = 1.3 } = {}) {
   const s = slide();
   eyebrowTitle(s, "Using the information", "Price control");
   iconCards(s, [
-    { icon: "trend", text: "Free price system", d: "Prices set by supply and demand — signals between producers and consumers that ration supplies, distribute income and allocate resources." },
+    { icon: "trend", text: "Free price system", d: "Prices set by supply and demand â€” signals between producers and consumers that ration supplies, distribute income and allocate resources." },
     { icon: "lock", text: "Controlled price system", d: "Prices set by government within a controlled market or planned economy." },
   ], { y: 1.7, cols: 2, rowH: 2.3 });
   strip(s, "In the organisation", "Your prices are largely governed by what competitors charge for similar products. Pricing, costing and manufacturing must communicate so goods sell at the same or better price than competitors.", { y: 4.45, h: 1.35 });
@@ -269,14 +269,14 @@ function strip(s, label, text, { y = 5.35, h = 1.3 } = {}) {
 {
   const s = slide();
   eyebrowTitle(s, "Using the information", "Quality control and PDCA");
-  introText(s, "Quality systems ensure products and services meet or exceed customer requirements — \u201cfit for purpose\u201d, \u201cdo it right the first time\u201d. QA covers design through documentation.", 1.4, 0.72);
+  introText(s, "Quality systems ensure products and services meet or exceed customer requirements â€” \u201cfit for purpose\u201d, \u201cdo it right the first time\u201d. QA covers design through documentation.", 1.4, 0.72);
   iconCards(s, [
     { icon: "target", text: "Plan", d: "Decide the objective and the process to deliver it." },
     { icon: "check", text: "Do", d: "Carry out the plan; collect data along the way." },
     { icon: "search", text: "Check", d: "Measure results against the expected outcome." },
     { icon: "shield", text: "Act", d: "Correct differences; standardise what worked." },
   ], { y: 2.3, cols: 4, rowH: 1.95 });
-  strip(s, "Communication", "Competitors' items are checked and measured against the organisation's own quality — that comparison depends on communication.", { y: 4.6, h: 1.2 });
+  strip(s, "Communication", "Competitors' items are checked and measured against the organisation's own quality â€” that comparison depends on communication.", { y: 4.6, h: 1.2 });
 }
 
 /* ============================================================= MARKETING & BPM */
@@ -285,7 +285,7 @@ function strip(s, label, text, { y = 5.35, h = 1.3 } = {}) {
   eyebrowTitle(s, "Using the information", "Marketing and business performance");
   iconCards(s, [
     { icon: "people", text: "Marketing", d: "R&D meets sales & marketing so new products are fully understood, then marketed to consumers. Two-way: client surveys flow back to R&D to build what customers request." },
-    { icon: "chart", text: "Business performance (BPM)", d: "Processes that organise, automate and analyse the metrics, processes and systems driving performance — the next generation of business intelligence (BI)." },
+    { icon: "chart", text: "Business performance (BPM)", d: "Processes that organise, automate and analyse the metrics, processes and systems driving performance â€” the next generation of business intelligence (BI)." },
   ], { y: 1.7, cols: 2, rowH: 2.6 });
   strip(s, "Growth through communication", "Analyse the performing areas, understand the tools that work, and apply them where the business performs less well. All views, opinions and input are needed for educated decisions.", { y: 4.75, h: 1.3 });
 }
@@ -295,8 +295,8 @@ function strip(s, label, text, { y = 5.35, h = 1.3 } = {}) {
   const s = slide();
   eyebrowTitle(s, "Protecting the information", "Three threats you must be able to explain");
   iconCards(s, [
-    { icon: "lock", text: "Unauthorised access", d: "Hackers or insiders reading data they have no right to see. Defend: passwords + MFA, per-role access rights, encryption — POPIA makes it a legal duty." },
-    { icon: "shield", text: "Viruses & malware", d: "Software that corrupts, steals or destroys data — in 2026 above all ransomware via phishing email. Defend: antivirus, patches, backups, cautious staff." },
+    { icon: "lock", text: "Unauthorised access", d: "Hackers or insiders reading data they have no right to see. Defend: passwords + MFA, per-role access rights, encryption â€” POPIA makes it a legal duty." },
+    { icon: "shield", text: "Viruses & malware", d: "Software that corrupts, steals or destroys data â€” in 2026 above all ransomware via phishing email. Defend: antivirus, patches, backups, cautious staff." },
     { icon: "person", text: "Disgruntled staff", d: "Insiders who deliberately damage, leak or delete data. Defend: least-privilege access, audit trails, remove access the day someone leaves." },
   ], { y: 1.75, cols: 3, rowH: 2.9 });
 }
@@ -318,10 +318,10 @@ function strip(s, label, text, { y = 5.35, h = 1.3 } = {}) {
   const s = slide();
   eyebrowTitle(s, "Now prove it", "Your work for Lesson 4");
   iconCards(s, [
-    { icon: "chat", text: "Questioning session", d: "90 minutes · Self & Group — all 14 questions: data, information, the five roles, the three threats and the four sub-systems. AI-marked." },
-    { icon: "dashboard", text: "Slide quizzes", d: "Every section gates on its five questions — all correct unlocks Next." },
-    { icon: "check", text: "Self assessment", d: "\u201cI am able to explain the relationship between a business and its data requirements\u201d — tick it honestly, or write it down as a goal." },
-    { icon: "folder", text: "Logbook project — Research", d: "Your IT-in-business research project also evidences this outcome. Mark it 114050." },
+    { icon: "chat", text: "Questioning session", d: "90 minutes Â· Self & Group â€” all 14 questions: data, information, the five roles, the three threats and the four sub-systems. AI-marked." },
+    { icon: "dashboard", text: "Slide quizzes", d: "Every section gates on its five questions â€” all correct unlocks Next." },
+    { icon: "check", text: "Self assessment", d: "\u201cI am able to explain the relationship between a business and its data requirements\u201d â€” tick it honestly, or write it down as a goal." },
+    { icon: "folder", text: "Logbook project â€” Research", d: "Your IT-in-business research project also evidences this outcome. Mark it 114050." },
   ], { y: 1.75, cols: 2, rowH: 2.35 });
 }
 
@@ -334,10 +334,10 @@ function strip(s, label, text, { y = 5.35, h = 1.3 } = {}) {
   s.addText("Data is raw. Information has meaning. Wisdom stays human.", {
     x: MX, y: 2.45, w: CW, h: 1.4, fontFace: TITLE_FONT, fontSize: 36, bold: true, color: WHITE,
   });
-  s.addText("Data \u2192 information \u2192 knowledge \u2192 understanding \u2192 wisdom · decisions, price control, quality (PDCA), marketing and BPM · guard it against unauthorised access, malware and insiders · give HR, Production, Marketing and Finance the information they need.", {
+  s.addText("Data \u2192 information \u2192 knowledge \u2192 understanding \u2192 wisdom Â· decisions, price control, quality (PDCA), marketing and BPM Â· guard it against unauthorised access, malware and insiders Â· give HR, Production, Marketing and Finance the information they need.", {
     x: MX, y: 3.95, w: 11.0, h: 1.4, fontFace: BODY_FONT, fontSize: MIN_FONT, color: DARK_SUB, lineSpacingMultiple: 1.2,
   });
-  s.addText("US 114050 · National Certificate: IT — System Support · SAQA ID 48573 · ITSS Learn", {
+  s.addText("US 114050 Â· National Certificate: IT â€” System Support Â· SAQA ID 48573 Â· ITSS Learn", {
     x: MX, y: H - 0.62, w: CW, h: 0.4, fontFace: BODY_FONT, fontSize: MIN_FONT, color: DARK_MUTED,
   });
 }
@@ -345,4 +345,4 @@ function strip(s, label, text, { y = 5.35, h = 1.3 } = {}) {
 mkdirSync("public/downloads", { recursive: true });
 const OUT = "public/downloads/US-114050-L4-Business-Information-Needs.pptx";
 await pptx.writeFile({ fileName: OUT });
-console.log(`Written ${OUT} — ${pageNo} slides (min font ${MIN_FONT}pt)`);
+console.log(`Written ${OUT} â€” ${pageNo} slides (min font ${MIN_FONT}pt)`);
