@@ -69,8 +69,8 @@ const pptx = new pptxgen();
 pptx.defineLayout({ name: "WIDE", width: W, height: H });
 pptx.layout = "WIDE";
 pptx.author = "Andre Snell";
-pptx.company = "Investec â€” Corporate Banking Technology";
-pptx.title = "US 114050 Lesson 4 â€” The relationship between a business and its data requirements";
+pptx.company = "Investec — Corporate Banking Technology";
+pptx.title = "US 114050 Lesson 4 — The relationship between a business and its data requirements";
 
 let pageNo = 0;
 
@@ -79,7 +79,7 @@ function slide() {
   s.background = { color: WHITE };
   pageNo += 1;
   if (pageNo > 1) {
-    s.addText("US 114050 Â· Lesson 4 â€” The business and its information needs Â· NQF 5", {
+    s.addText("US 114050 · Lesson 4 — The business and its information needs · NQF 5", {
       x: MX, y: H - 0.5, w: CW - 1, h: 0.38, fontFace: BODY_FONT, fontSize: MIN_FONT, color: GREY,
     });
     s.addText(String(pageNo), { x: W - MX - 0.7, y: H - 0.5, w: 0.7, h: 0.38, fontFace: BODY_FONT, fontSize: MIN_FONT, color: GREY, align: "right" });
