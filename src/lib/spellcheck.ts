@@ -362,7 +362,9 @@ const NEVER_SUGGEST = new Set(["a", "i"]);
 const ACRONYMS = new Set(
   `SAQA NQF QCTO MICT SETA SETAS POE ITSS NCV POPIA GDPR COBIT ITIL SDLC HTTPS HTTP HTML XHTML
    PPTX DOCX XLSX JSON YAML EEPROM SDRAM NVME SODIMM CMOS BIOS RAID PCIE SATA WLAN VLAN
-   BBBEE TCPIP SMTP IMAP DHCP VOIP IPSEC OAUTH SIEM MPLS ISCSI`.split(/\s+/).filter(Boolean)
+   BBBEE TCPIP SMTP IMAP DHCP VOIP IPSEC OAUTH SIEM MPLS ISCSI MYSQL MSSQL NOSQL PLSQL SQLITE
+   HTTPD NGINX XAMPP ESKOM TELKOM VODACOM SANLAM NEDBANK CAPITEC UNISA NSFAS SASSA TRANSNET
+   PRASA SANRAL DENEL INVESTEC`.split(/\s+/).filter(Boolean)
 );
 
 /** Common suffix stripping rules used to accept inflected forms
@@ -413,15 +415,15 @@ for (const w of DICT_ARRAY) {
 }
 
 /** Does this unknown word look like random letters rather than a real word,
- *  name or acronym? Conservative: only 5+ letter words with at least two
+ *  name or acronym? Only 5+ letter words with at least {@link minUnseen}
  *  never-seen bigrams (or no vowels at all) are treated as gibberish. */
-function looksLikeGibberish(word: string): boolean {
+function looksLikeGibberish(word: string, minUnseen = 2): boolean {
   const w = word.toLowerCase().replace(/[^a-z]/g, "");
   if (w.length < 5) return false;
   let unseen = 0;
   for (let i = 0; i < w.length - 1; i++) {
     if (!BIGRAMS.has(w.slice(i, i + 2))) unseen++;
-    if (unseen >= 2) return true;
+    if (unseen >= minUnseen) return true;
   }
   return !/[aeiouy]/.test(w);
 }
@@ -553,7 +555,21 @@ function suggestFor(word: string, limit: number, maxSuggestions = 3, extraCandid
   consider(true);
   // If no same‑initial candidates match, allow any initial (typo of the first letter).
   if (scored.length === 0) consider(false);
-  scored.sort((a, b) => a.d - b.d || a.word.length - b.word.length || a.word.localeCompare(b.word));
+  // Typos usually preserve the start of the word, so on equal edit distance
+  // prefer the candidate sharing the longest prefix with the input, then the
+  // closest length.
+  const prefixLen = (cand: string) => {
+    let n = 0;
+    while (n < cand.length && n < w.length && cand[n] === w[n]) n++;
+    return n;
+  };
+  scored.sort(
+    (a, b) =>
+      a.d - b.d ||
+      prefixLen(b.word) - prefixLen(a.word) ||
+      Math.abs(a.word.length - w.length) - Math.abs(b.word.length - w.length) ||
+      a.word.localeCompare(b.word)
+  );
   const out: string[] = [];
   for (const s of scored) {
     if (!out.includes(s.word)) out.push(s.word);
@@ -637,9 +653,10 @@ export function findMisspellings(text: string, extraAllowed?: Iterable<string>):
     }
 
     if (isAllCaps) {
-      // Unknown all-caps token: flag only when it looks like keyboard mash —
-      // otherwise treat it as an unlisted acronym and leave it alone.
-      if (!looksLikeGibberish(tok.word)) continue;
+      // Unknown all-caps token: not a listed acronym and not a word. A single
+      // never-seen letter pair marks it as keyboard mash ("QCTOHYT"); tokens
+      // made of plausible English letter pairs (BYOD, NSFAS) are left alone.
+      if (!looksLikeGibberish(tok.word, 1)) continue;
     } else if (suggestions.length === 0 && !looksLikeGibberish(tok.word)) {
       // Only report as misspelled if we found at least one plausible correction
       // or the word looks like random letters. Unknown words that are neither
