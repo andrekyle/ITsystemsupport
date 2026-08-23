@@ -2874,41 +2874,47 @@ export function UnitPage({
                     const picked = qAnswers[qi];
                     const correct = picked === q.answer;
                     return (
-                      <div key={qi} className={`lesson-quiz-card${qChecked ? (correct ? " ok" : " bad") : ""}`}>
-                        <div className="lesson-quiz-q"><strong>{qi + 1}.</strong> <span>{q.q}</span></div>
+                      <div key={qi} className="quiz-q">
+                        <div className="qt">
+                          <span className="qn">{qi + 1}</span>
+                          {q.q}
+                        </div>
                         <div className="lesson-quiz-options">
-                          {seededShuffle(q.options.map((_, i) => i), si * 977 + qi * 131 + q.q.length * 7 + 3).map((oi) => {
+                          {seededShuffle(q.options.map((_, i) => i), si * 977 + qi * 131 + q.q.length * 7 + 3).map((oi, displayPos) => {
                             const opt = q.options[oi];
                             const isPicked = picked === oi;
                             const showCorrect = qChecked && oi === q.answer;
                             const showWrong = qChecked && isPicked && oi !== q.answer;
                             const staffAnswer = isPrivileged && showAnswers && oi === q.answer && !qChecked;
+                            let cls = "opt";
+                            if (isPicked && !qChecked && !staffAnswer) cls += " selected";
+                            if (showCorrect || staffAnswer) cls += " correct";
+                            if (showWrong) cls += " wrong";
                             return (
-                              <label
+                              <button
+                                type="button"
                                 key={oi}
-                                className={`lesson-quiz-opt${isPicked ? " picked" : ""}${showCorrect ? " correct" : ""}${showWrong ? " wrong" : ""}${staffAnswer ? " staff-answer" : ""}`}
+                                className={cls}
+                                onClick={() => setAnswer(qi, oi)}
                               >
-                                <input
-                                  type="radio"
-                                  name={`lesson-quiz-${si}-${qi}`}
-                                  checked={isPicked}
-                                  onChange={() => setAnswer(qi, oi)}
-                                />
-                                <span className="lesson-quiz-mark" aria-hidden="true">
-                                  {showCorrect ? (
-                                    <Icon name="checkCircle" size={15} />
+                                <span className="mark">
+                                  {showCorrect || staffAnswer ? (
+                                    <Icon name="checkCircle" size={17} />
                                   ) : showWrong ? (
-                                    <Icon name="info" size={15} />
-                                  ) : null}
+                                    <Icon name="info" size={17} />
+                                  ) : (
+                                    <Icon name={isPicked ? "checkCircle" : "circle"} size={17} />
+                                  )}
                                 </span>
-                                <span className="lesson-quiz-opt-text">{opt}</span>
+                                <span className="opt-letter">{String.fromCharCode(65 + displayPos)}</span>
+                                {opt}
                                 {staffAnswer && (
                                   <span className="lesson-quiz-answer-badge" aria-hidden="true">
                                     <Icon name="checkCircle" size={14} />
                                     Answer
                                   </span>
                                 )}
-                              </label>
+                              </button>
                             );
                           })}
                         </div>
@@ -5146,25 +5152,30 @@ export function UnitPage({
                     const isWrong = presenterChecked && chosen !== q.answer;
                     return (
                       <li key={qi} className={`presenter-quiz-q${isCorrect ? " ok" : ""}${isWrong ? " bad" : ""}`}>
-                        <div className="presenter-quiz-question">{q.q}</div>
+                        <div className="presenter-quiz-question">
+                          <span className="pq-num">{qi + 1}</span>
+                          {q.q}
+                        </div>
                         <div className="presenter-quiz-options">
-                          {seededShuffle(q.options.map((_, i) => i), qi * 419 + q.q.length * 11 + 5).map((oi) => {
+                          {seededShuffle(q.options.map((_, i) => i), qi * 419 + q.q.length * 11 + 5).map((oi, displayPos) => {
                             const opt = q.options[oi];
                             return (
-                            <label key={oi} className={`presenter-quiz-opt${chosen === oi ? " chosen" : ""}`}>
-                              <input
-                                type="radio"
-                                name={`pquiz-${qi}`}
-                                value={oi}
-                                checked={chosen === oi}
+                              <button
+                                type="button"
+                                key={oi}
+                                className={`presenter-quiz-opt${chosen === oi ? " chosen" : ""}`}
                                 disabled={presenterPassed}
-                                onChange={() => {
+                                onClick={() => {
                                   setPresenterAnswers((a) => ({ ...a, [qi]: oi }));
                                   if (presenterChecked) setPresenterChecked(false);
                                 }}
-                              />
-                              <span>{opt}</span>
-                            </label>
+                              >
+                                <span className="mark">
+                                  <Icon name={chosen === oi ? "checkCircle" : "circle"} size={17} />
+                                </span>
+                                <span className="opt-letter">{String.fromCharCode(65 + displayPos)}</span>
+                                {opt}
+                              </button>
                             );
                           })}
                         </div>
