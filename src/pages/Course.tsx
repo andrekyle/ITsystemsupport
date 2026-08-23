@@ -4669,11 +4669,6 @@ export function UnitPage({
                       <span>{deckReplaceError}</span>
                     </div>
                   )}
-                  {activeDeck.doc && (
-                    <p className="mini-note" style={{ margin: "6px 0 0" }}>
-                      Showing your uploaded version ({activeDeck.doc.name}) instead of the built-in slides.
-                    </p>
-                  )}
                 </>
               )}
               {deckUrl ? (
