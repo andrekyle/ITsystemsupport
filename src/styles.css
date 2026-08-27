@@ -7217,18 +7217,19 @@ input.att-sig {
    the Registration Form and everything else print blank pages).
    The landscape @page rule is injected at print time by Attendance.tsx. */
 @media print {
-  html:has(.att-sheet),
-  body:has(.att-sheet) {
+  /* single-register print: hide everything except the active attendance sheet */
+  html:has(.att-sheet):not(:has(.att-all)),
+  body:has(.att-sheet):not(:has(.att-all)) {
     overflow: hidden;
   }
-  body:has(.att-sheet) * {
+  body:has(.att-sheet):not(:has(.att-all)) * {
     visibility: hidden;
   }
-  body:has(.att-sheet) .att-sheet,
-  body:has(.att-sheet) .att-sheet * {
+  body:has(.att-sheet):not(:has(.att-all)) .att-sheet,
+  body:has(.att-sheet):not(:has(.att-all)) .att-sheet * {
     visibility: visible;
   }
-  body:has(.att-sheet) .att-sheet {
+  body:has(.att-sheet):not(:has(.att-all)) .att-sheet {
     position: fixed;
     left: 0;
     top: 0;
