@@ -334,6 +334,9 @@ export function AttendancePage({
   /** all signed registers, loaded for the print-all view (null = normal single-register mode) */
   const [allRegs, setAllRegs] = useState<{ date: string; data: AttData }[] | null>(null);
   const [loadingAll, setLoadingAll] = useState(false);
+  /** bulk-print chooser: every signed register, so staff can pick which session dates to print */
+  const [pickRegs, setPickRegs] = useState<{ date: string; data: AttData }[] | null>(null);
+  const [pickedDates, setPickedDates] = useState<Set<string>>(new Set());
   const storageKey = attKey(dateIso);
 
   const refresh = useCallback(async () => {
@@ -531,7 +534,7 @@ export function AttendancePage({
     setTimeout(() => style.remove(), 1000);
   };
 
-  /** Gather every signed register (local + cloud) and open the print dialog with all of them. */
+  /** Gather every signed register (local + cloud) and let staff pick the dates to print. */
   const downloadAll = async () => {
     setLoadingAll(true);
     try {
@@ -543,15 +546,33 @@ export function AttendancePage({
       }
       regs.sort((a, b) => a.date.localeCompare(b.date));
       if (!regs.length) return;
-      setAllRegs(regs);
-      // let React render the sheets (and images lay out) before opening the print dialog
-      setTimeout(() => {
-        printLandscape();
-        setAllRegs(null);
-      }, 700);
+      setPickRegs(regs);
+      setPickedDates(new Set(regs.map((r) => r.date))); // everything selected by default
     } finally {
       setLoadingAll(false);
     }
+  };
+
+  const togglePicked = (date: string) =>
+    setPickedDates((prev) => {
+      const next = new Set(prev);
+      if (next.has(date)) next.delete(date);
+      else next.add(date);
+      return next;
+    });
+
+  /** Print the chosen registers — one A4 landscape page per session date. */
+  const printPicked = () => {
+    if (!pickRegs) return;
+    const regs = pickRegs.filter((r) => pickedDates.has(r.date));
+    if (!regs.length) return;
+    setPickRegs(null);
+    setAllRegs(regs);
+    // let React render the sheets (and images lay out) before opening the print dialog
+    setTimeout(() => {
+      printLandscape();
+      setAllRegs(null);
+    }, 700);
   };
 
   const onConfirm = () => {
@@ -611,7 +632,7 @@ export function AttendancePage({
         )}
         {staff && (
           <button className="btn ghost sm" disabled={loadingAll} onClick={() => void downloadAll()}>
-            <Icon name="download" size={15} /> {loadingAll ? "Gathering registers…" : "Download all registers"}
+            <Icon name="download" size={15} /> {loadingAll ? "Gathering registers…" : "Download registers…"}
           </button>
         )}
         {staff && (
@@ -661,6 +682,61 @@ export function AttendancePage({
             </button>
             <button className="btn ghost" onClick={skipSig}>
               Continue without a signature image
+            </button>
+          </div>
+        </div>
+      )}
+
+      {pickRegs && (
+        <div className="card att-pickdates no-print">
+          <h3>Bulk print registers</h3>
+          <p>
+            Choose the session dates to include. Each register prints on its own A4 landscape
+            page — pick “Save as PDF” in the print dialog to download them as one document.
+          </p>
+          <div className="att-pick-list">
+            {pickRegs.map((r) => {
+              const n = Object.keys(r.data.rows).length;
+              return (
+                <label key={r.date} className="att-pick-date">
+                  <input
+                    type="checkbox"
+                    checked={pickedDates.has(r.date)}
+                    onChange={() => togglePicked(r.date)}
+                  />
+                  <span className="att-pick-when">
+                    {new Date(`${r.date}T12:00:00`).toLocaleDateString(undefined, {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </span>
+                  <span className="att-pick-count">
+                    {n} signature{n === 1 ? "" : "s"}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+          <div className="att-sigask-actions">
+            <button className="btn primary" disabled={!pickedDates.size} onClick={printPicked}>
+              <Icon name="download" /> Print selected ({pickedDates.size})
+            </button>
+            <button
+              className="btn ghost"
+              onClick={() =>
+                setPickedDates(
+                  pickedDates.size === pickRegs.length
+                    ? new Set()
+                    : new Set(pickRegs.map((r) => r.date))
+                )
+              }
+            >
+              {pickedDates.size === pickRegs.length ? "Clear all" : "Select all"}
+            </button>
+            <button className="btn ghost" onClick={() => setPickRegs(null)}>
+              Cancel
             </button>
           </div>
         </div>
