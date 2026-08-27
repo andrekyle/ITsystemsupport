@@ -439,21 +439,28 @@ function conceptInSentence(group: string[], sentenceTokens: string[]): boolean {
   return group.some((p) => phraseMatches(p, sentenceTokens));
 }
 
-/** Reject obvious junk tails such as "in the morning" appended after an
- *  otherwise relevant concept statement. These are not explanations and
- *  should not earn marks. We keep this deliberately broad because learners
- *  often append time-of-day filler with typos ("in yhe morning"). */
-function hasNonsenseTail(sentence: string): boolean {
-  const s = sentence.toLowerCase();
-  return /\b(?:morning|afternoon|evening|night)\b/.test(s)
-    || /\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/.test(s);
-}
-
-function answerHasNonsenseTail(text: string): boolean {
-  const sentences = (text.match(/[^.!?;\n]+[.!?;\n]*/g) ?? [text])
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return sentences.some((sentence) => hasNonsenseTail(sentence));
+/** Reject a sentence when the concept is stated and then followed by a
+ *  meaningless tail that is unrelated to the lesson content. This catches
+ *  cases like "... authorised channels in dog hello world" where the final
+ *  words add no real explanation. */
+function hasTrailingNoise(sentence: string, target: Set<string>): boolean {
+  const tokens = answerTokens(sentence);
+  if (tokens.length < 2) return false;
+  const relevant = new Set<string>();
+  target.forEach((stem) => {
+    if (stem.length > 2 && !STOP_WORDS.has(stem)) relevant.add(stem);
+  });
+  let lastRelevant = -1;
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (relevant.has(t) || [...relevant].some((rt) => tokenMatches(t, rt))) {
+      lastRelevant = i;
+    }
+  }
+  if (lastRelevant < 0 || lastRelevant >= tokens.length - 1) return false;
+  const tail = tokens.slice(lastRelevant + 1).filter((t) => t.length > 2 && !STOP_WORDS.has(t));
+  if (tail.length === 0) return false;
+  return tail.every((t) => ![...relevant].some((rt) => tokenMatches(t, rt)));
 }
 
 /* ---- Marker: stopword-aware content stems (used by scoring and feedback) ---- */
@@ -628,14 +635,14 @@ function creditConcepts(
     const { keywordStems, fullTarget, explanationTarget } = conceptData[gi];
     for (let si = 0; si < sentences.length; si++) {
       if (sentenceTokens[si].length < MIN_EXPLANATION_WORDS) continue;
-      if (hasNonsenseTail(sentences[si])) continue;
       const keywordHit = conceptInSentence(group, sentenceTokens[si]);
       if (keywordHit) {
         // Sentence must actually explain the idea — its non-keyword content
-        // has to resemble the lesson line's non-keyword content, and it must
-        // carry real explanatory detail rather than a keyword-plus-junk tail.
+        // has to resemble the lesson line's non-keyword content, and any tail
+        // after the last relevant concept term must still be explanatory.
         const overlap = explanationOverlap(sentenceStems[si], keywordStems, explanationTarget);
         const nonKeywordWords = [...sentenceStems[si]].filter((s) => !keywordStems.has(s) && s.length > 2 && !STOP_WORDS.has(s));
+        if (hasTrailingNoise(sentences[si], explanationTarget)) continue;
         if (overlap >= KEYWORD_EXPLANATION_THRESHOLD && nonKeywordWords.length >= 2) {
           credited.add(gi);
           earnedBy.set(gi, sentences[si]);
@@ -644,6 +651,7 @@ function creditConcepts(
       } else {
         const semanticMatch = stemOverlap(sentenceStems[si], fullTarget);
         const nonKeywordWords = [...sentenceStems[si]].filter((s) => s.length > 2 && !STOP_WORDS.has(s));
+        if (hasTrailingNoise(sentences[si], fullTarget)) continue;
         if (semanticMatch >= SEMANTIC_THRESHOLD + 0.15 && nonKeywordWords.length >= 2) {
           // No keyword — synonym / paraphrase must be strong to earn credit.
           credited.add(gi);
@@ -956,7 +964,6 @@ function ExerciseQuestion({
   // unavailable (env var not set). We key by the exact text so we don't
   // re-fire when the learner just re-clicks Check.
   useEffect(() => {
-    if (answerHasNonsenseTail(val)) return;
     if (!result || result.short || result.ok) return;
     if (reviewedText === val) return; // already reviewed this exact text
     const detCredited = new Set(creditedConceptIndexes(val, check));
