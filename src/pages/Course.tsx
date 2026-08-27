@@ -439,8 +439,15 @@ function conceptInSentence(group: string[], sentenceTokens: string[]): boolean {
   return group.some((p) => phraseMatches(p, sentenceTokens));
 }
 
-/* ---- Marker: stopword-aware content stems (used by scoring and feedback) ---- */
+/** Reject obvious junk tails such as "in the morning" appended after an
+ *  otherwise relevant concept statement. These are not explanations and
+ *  should not earn marks. */
+function hasNonsenseTail(sentence: string): boolean {
+  return /(?:^|\s)(?:in|at|on|this|that|every|each|all)\s+(?:the\s+)?(?:morning|afternoon|evening|night)\b/i.test(sentence)
+    || /\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+(?:morning|afternoon|evening)\b/i.test(sentence);
+}
 
+/* ---- Marker: stopword-aware content stems (used by scoring and feedback) ---- */
 const STOP_WORDS = new Set(
   "the a an and or but of to in on for with is are was were be been being it its this that these those you your yours we our ours they their them theirs he she his her him i me my mine as at by from not no nor do does did done don doesn didn have has had having will would shall should can could may might must when while if then than so too also there here where what which who whom whose why how all each every both few many more most other others some such any only own same very just like unto up down out off about into onto over under again further once".split(
     " "
@@ -612,6 +619,7 @@ function creditConcepts(
     const { keywordStems, fullTarget, explanationTarget } = conceptData[gi];
     for (let si = 0; si < sentences.length; si++) {
       if (sentenceTokens[si].length < MIN_EXPLANATION_WORDS) continue;
+      if (hasNonsenseTail(sentences[si])) continue;
       const keywordHit = conceptInSentence(group, sentenceTokens[si]);
       if (keywordHit) {
         // Sentence must actually explain the idea — its non-keyword content
