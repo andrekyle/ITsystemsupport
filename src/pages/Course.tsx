@@ -447,6 +447,13 @@ function hasNonsenseTail(sentence: string): boolean {
     || /\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+(?:morning|afternoon|evening)\b/i.test(sentence);
 }
 
+function answerHasNonsenseTail(text: string): boolean {
+  const sentences = (text.match(/[^.!?;\n]+[.!?;\n]*/g) ?? [text])
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return sentences.some((sentence) => hasNonsenseTail(sentence));
+}
+
 /* ---- Marker: stopword-aware content stems (used by scoring and feedback) ---- */
 const STOP_WORDS = new Set(
   "the a an and or but of to in on for with is are was were be been being it its this that these those you your yours we our ours they their them theirs he she his her him i me my mine as at by from not no nor do does did done don doesn didn have has had having will would shall should can could may might must when while if then than so too also there here where what which who whom whose why how all each every both few many more most other others some such any only own same very just like unto up down out off about into onto over under again further once".split(
@@ -947,6 +954,7 @@ function ExerciseQuestion({
   // unavailable (env var not set). We key by the exact text so we don't
   // re-fire when the learner just re-clicks Check.
   useEffect(() => {
+    if (answerHasNonsenseTail(val)) return;
     if (!result || result.short || result.ok) return;
     if (reviewedText === val) return; // already reviewed this exact text
     const detCredited = new Set(creditedConceptIndexes(val, check));
