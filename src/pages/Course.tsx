@@ -441,10 +441,12 @@ function conceptInSentence(group: string[], sentenceTokens: string[]): boolean {
 
 /** Reject obvious junk tails such as "in the morning" appended after an
  *  otherwise relevant concept statement. These are not explanations and
- *  should not earn marks. */
+ *  should not earn marks. We keep this deliberately broad because learners
+ *  often append time-of-day filler with typos ("in yhe morning"). */
 function hasNonsenseTail(sentence: string): boolean {
-  return /(?:^|\s)(?:in|at|on|this|that|every|each|all)\s+(?:the\s+)?(?:morning|afternoon|evening|night)\b/i.test(sentence)
-    || /\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+(?:morning|afternoon|evening)\b/i.test(sentence);
+  const s = sentence.toLowerCase();
+  return /\b(?:morning|afternoon|evening|night)\b/.test(s)
+    || /\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/.test(s);
 }
 
 function answerHasNonsenseTail(text: string): boolean {
