@@ -597,7 +597,7 @@ function creditConcepts(
     if (!target.size) return 0;
     const withoutKw = new Set<string>();
     sSet.forEach((s) => {
-      if (!keywordStems.has(s)) withoutKw.add(s);
+      if (!keywordStems.has(s) && s.length > 2 && !STOP_WORDS.has(s)) withoutKw.add(s);
     });
     return stemOverlap(withoutKw, target);
   };
@@ -615,17 +615,24 @@ function creditConcepts(
       const keywordHit = conceptInSentence(group, sentenceTokens[si]);
       if (keywordHit) {
         // Sentence must actually explain the idea — its non-keyword content
-        // has to resemble the lesson line's non-keyword content.
-        if (explanationOverlap(sentenceStems[si], keywordStems, explanationTarget) >= KEYWORD_EXPLANATION_THRESHOLD) {
+        // has to resemble the lesson line's non-keyword content, and it must
+        // carry real explanatory detail rather than a keyword-plus-junk tail.
+        const overlap = explanationOverlap(sentenceStems[si], keywordStems, explanationTarget);
+        const nonKeywordWords = [...sentenceStems[si]].filter((s) => !keywordStems.has(s) && s.length > 2 && !STOP_WORDS.has(s));
+        if (overlap >= KEYWORD_EXPLANATION_THRESHOLD && nonKeywordWords.length >= 2) {
           credited.add(gi);
           earnedBy.set(gi, sentences[si]);
           break;
         }
-      } else if (stemOverlap(sentenceStems[si], fullTarget) >= SEMANTIC_THRESHOLD + 0.15) {
-        // No keyword — synonym / paraphrase must be strong to earn credit.
-        credited.add(gi);
-        earnedBy.set(gi, sentences[si]);
-        break;
+      } else {
+        const semanticMatch = stemOverlap(sentenceStems[si], fullTarget);
+        const nonKeywordWords = [...sentenceStems[si]].filter((s) => s.length > 2 && !STOP_WORDS.has(s));
+        if (semanticMatch >= SEMANTIC_THRESHOLD + 0.15 && nonKeywordWords.length >= 2) {
+          // No keyword — synonym / paraphrase must be strong to earn credit.
+          credited.add(gi);
+          earnedBy.set(gi, sentences[si]);
+          break;
+        }
       }
     }
   }
