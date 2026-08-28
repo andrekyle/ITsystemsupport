@@ -14,6 +14,7 @@ import {
 import { logAudit } from "../lib/audit";
 import { Avatar } from "../components/Avatar";
 import { Ring } from "../components/Ring";
+import { Select } from "../components/Select";
 import { VerdictSwitch } from "../components/VerdictSwitch";
 import { PromptModal } from "../components/Modal";
 
@@ -188,13 +189,12 @@ export function PoePage({ profile }: { profile: Profile }) {
           <span>
             {profile.role} — {isSuper ? "viewing and managing" : "viewing (read-only)"} POE for
           </span>
-          <select value={viewId} onChange={(e) => setViewId(e.target.value)}>
-            {profiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} ({p.role})
-              </option>
-            ))}
-          </select>
+          <Select
+            value={viewId}
+            onChange={setViewId}
+            ariaLabel="Choose whose POE to view"
+            options={profiles.map((p) => ({ value: p.id, label: p.name, hint: p.role }))}
+          />
           {viewId !== profile.id && <Avatar profile={viewing} size={26} />}
         </div>
       )}

@@ -3705,19 +3705,8 @@ table.data.kv tr:last-child td {
   color: var(--ink-2);
 }
 
-.poe-viewer svg {
+.poe-viewer > svg {
   color: var(--azure);
-}
-
-.poe-viewer select {
-  padding: 6px 10px;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius);
-  font-family: inherit;
-  font-size: 13.5px;
-  background: var(--surface);
-  color: var(--ink);
-  outline-color: var(--azure);
 }
 
 .poe-progress {
