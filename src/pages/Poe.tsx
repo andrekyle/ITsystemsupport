@@ -1,10 +1,16 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import JSZip from "jszip";
 import { Icon } from "../icons";
 import type { PoeDoc, Profile } from "../types";
 import { MAX_POE_FILES, POE_SECTIONS, POE_TOTAL } from "../data/course";
 import { loadProfiles, poeItemCount, usePoe, usePoeReviews } from "../store";
 import { downloadDoc, getFileBlob, uploadFile, userPrefix } from "../lib/files";
+import {
+  fetchCloudDirectory,
+  remoteOnlyProfiles,
+  resolveCloudLink,
+  type CloudDirectory,
+} from "../lib/directory";
 import { logAudit } from "../lib/audit";
 import { Avatar } from "../components/Avatar";
 import { Ring } from "../components/Ring";
@@ -31,7 +37,29 @@ export function PoePage({ profile }: { profile: Profile }) {
   const isSuper = profile.role === "Super User";
   // assessors and moderators may open any learner's POE (read-only); the super user may also manage it
   const canBrowse = isSuper || profile.role === "Assessor" || profile.role === "Moderator";
-  const profiles = loadProfiles();
+  // Cloud directory: students who sign in with their own accounts live in
+  // other accounts' storage, so the browse dropdown must merge them in —
+  // along with their POE document indexes — exactly like the People page.
+  const [cloud, setCloud] = useState<CloudDirectory | null>(null);
+  useEffect(() => {
+    if (!canBrowse) return;
+    let alive = true;
+    void fetchCloudDirectory().then((d) => {
+      if (alive && d) setCloud(d);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [canBrowse]);
+  const localProfiles = loadProfiles();
+  const remoteProfiles = canBrowse && cloud ? remoteOnlyProfiles(localProfiles, cloud.profiles) : [];
+  const profiles = [...localProfiles, ...remoteProfiles].sort((a, b) =>
+    a.id === profile.id
+      ? -1
+      : b.id === profile.id
+        ? 1
+        : a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+  );
   const [viewId, setViewId] = useState(profile.id);
   const viewing = profiles.find((p) => p.id === viewId) ?? profile;
   const readOnly = viewId !== profile.id && !isSuper;
@@ -39,7 +67,18 @@ export function PoePage({ profile }: { profile: Profile }) {
   // downloads: the super user may download anything; everyone else only their own uploads
   const canDownload = viewId === profile.id || isSuper;
 
-  const { docs, saveDoc, removeDoc } = usePoe(viewId);
+  const { docs: ownDocs, saveDoc, removeDoc } = usePoe(viewId);
+  // Documents a cloud-account student uploaded under their own account are
+  // not in this account's storage — pull them from the directory. Documents
+  // stored locally win on key collisions; a locally-managed profile with its
+  // own uploads keeps using the local copy (mirrors the People page).
+  const isRemoteProfile = !localProfiles.some((p) => p.id === viewId);
+  const cloudLink = resolveCloudLink(viewing, cloud);
+  const cloudDocs = (cloudLink && cloud?.poe[cloudLink.cloudId]) || cloud?.poe[viewId];
+  const docs: Record<string, PoeDoc> =
+    cloudDocs && (isRemoteProfile || Object.keys(ownDocs).length === 0)
+      ? { ...cloudDocs, ...ownDocs }
+      : ownDocs;
   const { reviews, setReview, clearReview } = usePoeReviews();
   // assessors, moderators and the super user record review outcomes on learner POEs
   const canReview =
@@ -281,7 +320,9 @@ export function PoePage({ profile }: { profile: Profile }) {
                           <Icon name="download" size={17} />
                         </button>
                       )}
-                      {canEdit && (
+                      {/* cloud-account students' own uploads live in their account —
+                          they can only be removed by the student, not from here */}
+                      {canEdit && ownDocs[key] !== undefined && (
                         <button
                           className="poe-remove"
                           onClick={() => {
