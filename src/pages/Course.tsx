@@ -442,7 +442,8 @@ function conceptInSentence(group: string[], sentenceTokens: string[]): boolean {
 /** Reject a sentence when the concept is stated and then followed by a
  *  meaningless tail that is unrelated to the lesson content. This catches
  *  cases like "... authorised channels in dog hello world" where the final
- *  words add no real explanation. */
+ *  words add no real explanation. A single benign closing word (e.g. "…no
+ *  partners involved") is tolerated — real junk tails run several words. */
 function hasTrailingNoise(sentence: string, target: Set<string>): boolean {
   const tokens = answerTokens(sentence);
   if (tokens.length < 2) return false;
@@ -459,7 +460,7 @@ function hasTrailingNoise(sentence: string, target: Set<string>): boolean {
   }
   if (lastRelevant < 0 || lastRelevant >= tokens.length - 1) return false;
   const tail = tokens.slice(lastRelevant + 1).filter((t) => t.length > 2 && !STOP_WORDS.has(t));
-  if (tail.length === 0) return false;
+  if (tail.length < 2) return false;
   return tail.every((t) => ![...relevant].some((rt) => tokenMatches(t, rt)));
 }
 
@@ -639,10 +640,14 @@ function creditConcepts(
       if (keywordHit) {
         // Sentence must actually explain the idea — its non-keyword content
         // has to resemble the lesson line's non-keyword content, and any tail
-        // after the last relevant concept term must still be explanatory.
+        // after the last relevant term must still be explanatory. The noise
+        // check runs against fullTarget (keywords + whole lesson line) so a
+        // sentence that *ends* with the keyword phrase itself — like the
+        // model answer's "— there are no partners or co-owners" — is never
+        // mistaken for a nonsense tail.
         const overlap = explanationOverlap(sentenceStems[si], keywordStems, explanationTarget);
         const nonKeywordWords = [...sentenceStems[si]].filter((s) => !keywordStems.has(s) && s.length > 2 && !STOP_WORDS.has(s));
-        if (hasTrailingNoise(sentences[si], explanationTarget)) continue;
+        if (hasTrailingNoise(sentences[si], fullTarget)) continue;
         if (overlap >= KEYWORD_EXPLANATION_THRESHOLD && nonKeywordWords.length >= 2) {
           credited.add(gi);
           earnedBy.set(gi, sentences[si]);
