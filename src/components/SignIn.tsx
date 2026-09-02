@@ -20,6 +20,7 @@ import { COURSE_META } from "../data/course";
 import { Avatar } from "./Avatar";
 import { EMPTY_ENROLMENT, EnrolmentForm } from "./EnrolmentForm";
 import { PasswordInput } from "./PasswordInput";
+import { Select } from "./Select";
 import { cloudEnabled, supabase } from "../lib/supabase";
 import { fetchCloudDirectory } from "../lib/directory";
 import { ConfirmModal } from "./Modal";
@@ -439,13 +440,18 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
               />
             </div>
             <div className="field">
-              <label htmlFor="rl">Role</label>
-              <select id="rl" value={role} onChange={(e) => setRole(e.target.value as Role)}>
-                <option value="Learner">Learner</option>
-                <option value="Facilitator">Facilitator</option>
-                <option value="Assessor">Assessor</option>
-                <option value="Moderator">Moderator</option>
-              </select>
+              <label>Role</label>
+              <Select
+                value={role}
+                onChange={(v) => setRole(v as Role)}
+                ariaLabel="Role"
+                options={[
+                  { value: "Learner", label: "Learner" },
+                  { value: "Facilitator", label: "Facilitator" },
+                  { value: "Assessor", label: "Assessor" },
+                  { value: "Moderator", label: "Moderator" },
+                ]}
+              />
             </div>
             {role !== "Learner" && !isDesignatedSuperUser(name) && (
               <div className="field">

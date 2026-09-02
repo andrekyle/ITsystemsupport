@@ -7802,6 +7802,10 @@ table.data th.sortable.sorted { color: var(--ink); }
   display: inline-flex;
   min-width: 190px;
 }
+.field .nice-select {
+  display: flex;
+  width: 100%;
+}
 .nice-select-btn {
   display: inline-flex;
   align-items: center;
