@@ -1746,6 +1746,9 @@ const BUILTIN_DECKS: Record<string, { name: string; url: string }[]> = {
     { name: "Lesson 3 — IT in Business", url: "/downloads/US-114050-L3-IT-in-Business.pdf" },
     { name: "Lesson 4 — Business Information Needs", url: "/downloads/US-114050-L4-Business-Information-Needs.pdf" },
   ],
+  "114051": [
+    { name: "Conduct a Technical Practitioners Meeting", url: "/downloads/US-114051-Technical-Practitioners-Meeting.pdf" },
+  ],
 };
 
 const UNIT_TAB_KEY = "itss.unittab";

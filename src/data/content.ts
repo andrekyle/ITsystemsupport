@@ -9744,9 +9744,937 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
       },
     ],
-    exercises: [],
+    exercises: [
+      {
+        id: "qs114051a",
+        title: "Questioning — Types of meetings, leadership styles and decision processes",
+        task: "Time: 45 minutes · Activity: Self & Group",
+        steps: [
+          "Name the three types of technical practitioners meetings and state one use of each",
+          "Explain the difference between a democratic meeting and an autocratic meeting",
+          "Explain what a facilitative meeting is",
+          "Name and describe three decision-making processes used in meetings",
+          "Explain why the note taker at a technical practitioners meeting should have a technical background",
+        ],
+        checks: [
+          {
+            answer: [
+              "Contract meetings deal with negotiating, reviewing and managing contracts with clients and suppliers.",
+              "Technical review meetings evaluate designs, systems and technical work against requirements and standards.",
+              "Project review meetings track project progress, risks, resources and milestones.",
+            ],
+            concepts: [
+              ["contract"],
+              ["technical review", "design review", "review technical", "evaluate designs"],
+              ["project review", "progress", "milestone", "project meeting"],
+            ],
+            labels: [
+              "Contract meetings — contracts with clients and suppliers",
+              "Technical review meetings — evaluate technical work",
+              "Project review meetings — track project progress",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "In a democratic meeting the members make the decisions through discussion and voting — the chair guides the process but the group decides.",
+              "In an autocratic meeting the chairperson controls the meeting and takes the decisions, with members giving input only when asked.",
+            ],
+            concepts: [
+              ["democratic", "vote", "voting", "group decides", "members decide", "majority"],
+              ["autocratic", "chair decides", "chairperson controls", "one person decides", "directive"],
+            ],
+            labels: [
+              "Democratic — the group discusses and decides",
+              "Autocratic — the chair controls and decides",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "A facilitative meeting is a group effort: a facilitator guides the process while staying neutral, and the group generates the ideas and reaches the outcome together.",
+            ],
+            concepts: [
+              ["facilitator", "facilitative"],
+              ["group effort", "participation", "everyone contributes", "group generates", "together"],
+              ["neutral", "guides the process", "process not the content"],
+            ],
+            labels: [
+              "A facilitator guides the process",
+              "The group participates and produces the outcome",
+              "The facilitator stays neutral",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "Voting — each member votes and the option with the majority is adopted.",
+              "Consensus — discussion continues until every member can accept the decision.",
+              "Criteria-based rating — options are scored against agreed criteria and the highest score wins.",
+              "Ranking — members place the options in order of preference and the rankings are combined.",
+              "Paired comparisons — options are compared two at a time and the overall preferred option is selected.",
+            ],
+            concepts: [
+              ["voting", "vote", "majority"],
+              ["consensus", "everyone agrees", "all members accept", "general agreement"],
+              ["criteria", "rating", "score", "rate each option"],
+              ["ranking", "rank", "order of preference"],
+              ["paired", "pairwise", "two at a time", "pairs"],
+            ],
+            labels: [
+              "Voting — majority rules",
+              "Consensus — all members accept",
+              "Criteria-based rating — score against criteria",
+              "Ranking — order of preference",
+              "Paired comparisons — compare two at a time",
+            ],
+            min: 3,
+          },
+          {
+            answer: [
+              "A note taker with a technical background understands the terminology and the issues being discussed, so the minutes accurately capture the technical decisions, actions and reasons without misinterpretation.",
+            ],
+            concepts: [
+              ["terminology", "technical terms", "jargon", "technical language"],
+              ["accurate", "accurately", "correct minutes", "capture the decisions"],
+              ["understand", "follow the discussion", "knows the subject", "technical background"],
+            ],
+            labels: [
+              "Understands the technical terminology",
+              "Minutes capture decisions accurately",
+              "Can follow the technical discussion",
+            ],
+            min: 2,
+          },
+        ],
+      },
+      {
+        id: "qs114051b",
+        title: "Questioning — Preparing for a technical practitioners meeting",
+        task: "Time: 30 minutes · Activity: Self & Group",
+        steps: [
+          "List the physical arrangements that must be in place before a technical practitioners meeting",
+          "Explain why the intended outcomes of the meeting must be clear, concise and documented before the meeting",
+          "Explain why participants must be invited timeously",
+          "What must be completed and distributed to participants before the meeting?",
+        ],
+        checks: [
+          {
+            answer: [
+              "The venue must be booked and set up, the facilities arranged (seating, refreshments, stationery), the technology prepared and tested (projector, video conferencing, network access), and the supporting information made available.",
+            ],
+            concepts: [
+              ["venue", "room", "boardroom"],
+              ["facilities", "seating", "refreshments", "equipment"],
+              ["technology", "projector", "video", "network", "laptop"],
+              ["supporting information", "documents", "documentation"],
+            ],
+            labels: [
+              "Venue booked and set up",
+              "Facilities arranged",
+              "Technology prepared and tested",
+              "Supporting information available",
+            ],
+            min: 3,
+          },
+          {
+            answer: [
+              "Clear, concise, documented outcomes keep the meeting focused: participants know what must be achieved, the agenda can be built around the outcomes, and afterwards the meeting can be measured against them.",
+            ],
+            concepts: [
+              ["focused", "focus", "purpose", "what must be achieved"],
+              ["agenda", "plan the meeting", "structure"],
+              ["measure", "evaluate", "know if the meeting succeeded", "achieved"],
+            ],
+            labels: [
+              "Keeps the meeting focused on its purpose",
+              "The agenda is built around the outcomes",
+              "Success can be measured against the outcomes",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "Timeous invitations give participants enough time to prepare, to study the agenda and documentation, and to arrange their schedules so the right people actually attend.",
+            ],
+            concepts: [
+              ["prepare", "preparation", "study the documents", "read the agenda"],
+              ["schedule", "diary", "availability", "arrange"],
+              ["attend", "attendance", "right people"],
+            ],
+            labels: [
+              "Participants can prepare properly",
+              "Participants can arrange their schedules",
+              "The right people attend",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "The agenda, together with the supporting documentation, must be completed and distributed to all participants before the meeting.",
+            ],
+            concepts: [
+              ["agenda"],
+              ["supporting documentation", "documents", "documentation", "papers"],
+              ["distributed", "sent", "circulated", "before the meeting"],
+            ],
+            labels: [
+              "A completed agenda",
+              "Supporting documentation",
+              "Distributed to participants before the meeting",
+            ],
+            min: 2,
+          },
+        ],
+      },
+      {
+        id: "qs114051c",
+        title: "Questioning — Chairing a technical practitioners meeting",
+        task: "Time: 30 minutes · Activity: Self & Group",
+        steps: [
+          "Explain why the chairperson should establish rules and guidelines together with the members at the start of the meeting",
+          "How does the chairperson ensure the meeting follows the published agenda?",
+          "Describe two techniques the chairperson can use to enable active participation while minimising conflict",
+          "Explain how topics should be prioritised and discussion time allocated",
+          "What must the chairperson ensure about every decision taken in the meeting?",
+        ],
+        checks: [
+          {
+            answer: [
+              "Rules agreed with the members create buy-in: everyone knows how the meeting will run, how to get the floor and how decisions will be taken, which prevents disputes about procedure later.",
+            ],
+            concepts: [
+              ["buy-in", "agree", "agreed with the members", "in conjunction", "together"],
+              ["know how", "expectations", "how the meeting will run", "procedure"],
+              ["prevents", "avoid", "conflict", "disputes"],
+            ],
+            labels: [
+              "Members agree the rules — buy-in",
+              "Everyone knows the procedure",
+              "Prevents procedural disputes",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "The chairperson works through the agenda item by item, keeps discussion on the current item, parks unrelated issues, and watches the time allocated to each item.",
+            ],
+            concepts: [
+              ["item by item", "follow the agenda", "work through the agenda"],
+              ["keep discussion", "on the topic", "stick to", "parks", "parking"],
+              ["time", "allocated time", "time keeping"],
+            ],
+            labels: [
+              "Works through the agenda item by item",
+              "Keeps discussion on the current item",
+              "Watches the allocated time",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "Invite quiet members by name to give input, use round-robin turns so everyone speaks, acknowledge each contribution, keep debate on the issue not the person, and summarise areas of agreement before moving on.",
+            ],
+            concepts: [
+              ["invite", "by name", "ask the quiet", "round robin", "everyone speaks", "draw in"],
+              ["acknowledge", "respect", "issue not the person", "no personal attacks", "neutral"],
+              ["summarise", "summary", "areas of agreement"],
+            ],
+            labels: [
+              "Draw all members into the discussion",
+              "Keep debate on issues, not people",
+              "Summarise agreement before moving on",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "Urgent and important topics are placed early on the agenda, each topic gets a time allocation in proportion to its importance, and less critical items are moved to the end or carried over.",
+            ],
+            concepts: [
+              ["urgent", "important", "priority", "prioritise", "early"],
+              ["time allocation", "allocate time", "proportion", "time box"],
+              ["carried over", "end of the agenda", "defer", "next meeting"],
+            ],
+            labels: [
+              "Important topics come first",
+              "Time allocated per topic",
+              "Minor items deferred or carried over",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "Every decision must be clear and accurate, recorded with the person responsible and a timeframe for implementation, and confirmed with the members before the meeting moves on.",
+            ],
+            concepts: [
+              ["clear", "accurate", "unambiguous"],
+              ["timeframe", "deadline", "by when", "time frame"],
+              ["responsible", "who", "action owner", "confirmed", "restate"],
+            ],
+            labels: [
+              "Decisions are clear and accurate",
+              "Each decision has a timeframe",
+              "Ownership confirmed with members",
+            ],
+            min: 2,
+          },
+        ],
+      },
+      {
+        id: "qs114051d",
+        title: "Questioning — Post-meeting follow-up",
+        task: "Time: 30 minutes · Activity: Self & Group",
+        steps: [
+          "What makes the minutes of a technical practitioners meeting accurate and acceptable in terms of organisational policy?",
+          "How and when should the decisions taken at the meeting be communicated?",
+          "What should the summary of discussions and actions contain?",
+        ],
+        checks: [
+          {
+            answer: [
+              "Minutes must record the attendees and apologies, follow the agenda, capture each discussion, decision and action with its owner and timeframe, use the organisation's minute format, and be checked and distributed within the required time.",
+            ],
+            concepts: [
+              ["attendees", "apologies", "present"],
+              ["decision", "action", "owner", "timeframe"],
+              ["format", "template", "organisational policy", "policy"],
+              ["distributed", "circulated", "within", "required time"],
+            ],
+            labels: [
+              "Attendance and apologies recorded",
+              "Decisions and actions with owners and timeframes",
+              "Organisation's format followed",
+              "Checked and distributed in time",
+            ],
+            min: 3,
+          },
+          {
+            answer: [
+              "Decisions are communicated in the format the organisation requires — minutes, e-mail summaries or reports — to all affected stakeholders, within the agreed timeframe after the meeting.",
+            ],
+            concepts: [
+              ["format", "minutes", "e-mail", "email", "report"],
+              ["stakeholders", "affected", "all participants", "who need"],
+              ["timeframe", "within", "agreed time", "promptly"],
+            ],
+            labels: [
+              "In the required format",
+              "To all affected stakeholders",
+              "Within the required timeframe",
+            ],
+            min: 2,
+          },
+          {
+            answer: [
+              "The summary lists each topic discussed, the outcome or decision, the actions arising with the responsible person and deadline, and any items carried over to the next meeting — in the format the organisation requires.",
+            ],
+            concepts: [
+              ["topic", "discussed", "outcome"],
+              ["action", "responsible", "deadline", "by whom", "owner"],
+              ["carried over", "next meeting", "outstanding"],
+              ["format", "required format", "template"],
+            ],
+            labels: [
+              "Topics and outcomes",
+              "Actions with owners and deadlines",
+              "Items carried over",
+              "Required format",
+            ],
+            min: 3,
+          },
+        ],
+      },
+    ],
     assignments: [],
+
+    selfAssessment: {
+      intro: [
+        "You are now ready to go through a check list. Be honest with yourself.",
+        "Tick the box with either a \u221A or an X to indicate your response.",
+      ],
+      items: [
+        "I am able to describe the types of technical practitioners meetings and their uses.",
+        "I am able to identify the leadership styles used in meeting procedures.",
+        "I am able to identify the decision-making processes used in meetings.",
+        "I am able to describe meeting conventions and procedures — moving, seconding, amending and voting.",
+        "I am able to prepare the physical arrangements, outcomes, invitations and agenda for a technical practitioners meeting.",
+        "I am able to chair a technical practitioners meeting using agreed rules and conventions.",
+        "I am able to conduct post-meeting follow-up — minutes, communication of decisions and action summaries.",
+      ],
+      outro: [
+        "You must think about any point you could not tick. Write this down as a goal.",
+        "Decide on a plan of action to achieve these goals. Regularly review these goals.",
+      ],
+    },
+
+    logbook: {
+      assignmentTitle: "Assignment",
+      programme: "Information Technology — Systems Support",
+      unitLabel: "114051 — Conduct a technical practitioners meeting",
+      detailFields: [
+        "Learner Name",
+        "Qualification",
+        "Group / Class",
+        "Workplace Name",
+        "Supervisor / Mentor",
+        "Start & Completion Date",
+      ],
+      project: {
+        time: "Own time",
+        title: "Project — Meeting portfolio",
+        text: "Prepare, chair and follow up a technical practitioners meeting. Compile the notice and agenda, invitations, attendance register, minutes and action summary into a portfolio. Attach your portfolio here and mark it 114051.",
+        resource: "Logbook",
+      },
+      knowledgeQuestions: [
+        { text: "The demonstration describes the types of technical meetings and their uses.", marks: [true, false, false, true, false, false] },
+        { text: "The demonstration identifies leadership styles used in meeting procedures.", marks: [true, false, false, true, false, false] },
+        { text: "The demonstration identifies decision-making processes used in meetings.", marks: [true, false, false, true, false, false] },
+        { text: "The demonstration describes meeting conventions and procedures — moving, seconding, amending and voting.", marks: [true, false, false, true, false, false] },
+        { text: "The demonstration explains why the note taker requires a technical background.", marks: [true, false, false, true, false, false] },
+      ],
+      practicalActivities: [
+        { text: "Prepare a technical practitioners meeting — venue, facilities, technology, outcomes, invitations, agenda and supporting documentation.", marks: [true, true, true, true, true, true] },
+        { text: "Chair a technical practitioners meeting — agreed rules and conventions, published agenda, active participation, prioritised topics and clear decisions with timeframes.", marks: [true, true, true, true, true, true] },
+        { text: "Conduct post-meeting follow-up — accurate minutes per organisational policy, decisions communicated in the required format and timeframe, and action summaries.", marks: [true, true, true, true, true, true] },
+      ],
+      workplaceActivities: [
+        "Prepare a technical practitioners meeting in the workplace.",
+        "Chair a technical practitioners meeting in the workplace.",
+        "Produce and distribute the minutes, decisions and action summary of a workplace meeting.",
+      ],
+      workplaceEvidenceNote: "This is to verify that the learner has taken part in the activities in their workplace.",
+      otherActivities: [
+        {
+          activity: "Conduct a technical practitioners meeting.",
+          evidence: "Project — Meeting portfolio: the notice and agenda, invitations, attendance register, minutes and action summary of a meeting you chaired. Attach your portfolio here and mark it 114051.",
+        },
+      ],
+      otherEvidenceNote: "Learner evidence and experience is recorded here. Make reference to equipment, chemicals and materials that were used in these processes.",
+      projectChecklist: [{ no: "6", name: "114051" }],
+    },
+
+    lessonPlan: {
+      title: "Facilitator Preparation",
+      startTime: "09:00",
+      details: [
+        { icon: "calendar", label: "Dates", value: "Friday 4 · Friday 11 September 2026" },
+        { icon: "clock", label: "Time", value: "09:00 \u2013 14:00 daily · lunch 12:00 \u2013 13:00" },
+        { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
+        { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
+      ],
+      prep: [
+        "Study the notes in this lesson plan carefully to ensure preparation is done before the start of classes.",
+        "Study the learner materials so that you are familiar with the topics that will be covered in this part of the course.",
+        "Prepare the role-play scenarios for the Day 2 practical: each group needs an agenda template, a scenario card and an observation checklist.",
+      ],
+      sections: [
+        {
+          rows: [
+            {
+              title: "Room Set Up",
+              text: ["Ensure venue and equipment needed is ready. Set the room so groups can face each other for the meeting role-plays."],
+            },
+            {
+              time: "20 minutes",
+              title: "Meet, Greet & Seat",
+              text: [
+                "Learners to get out their stationery and settle. Allow learners to sign the class register OR check learners against the class register.",
+                "Explain the parking bay to the learners where they can ask questions and it will be parked until the class has been completed, and then attended to.",
+              ],
+              resources: ["Class Register", "LM p1"],
+            },
+          ],
+        },
+        {
+          heading: "Day 1 — Friday, 4 September 2026 · Lessons 1\u20135: Knowledge of technical practitioners meetings",
+          rows: [
+            {
+              time: "10 minutes",
+              title: "Index & Unit Standard Alignment — Facilitator",
+              text: [
+                "Read through the index with the learners, highlighting the areas that will be covered. Make reference to the Unit Standard Alignment Index to outline the four specific outcomes: knowledge of meetings, preparing, chairing and post-meeting follow-up.",
+              ],
+              resources: ["LM index"],
+            },
+            {
+              time: "80 minutes",
+              title: "Lessons 1 & 2 — Introduction · Types of technical meetings — Facilitator & Class",
+              bullets: [
+                "Why technical practitioners meet: collective decisions, coordination and accountability.",
+                "Contract meetings, technical review meetings and project review meetings — uses and examples from the learners' workplaces.",
+                "Learners answer each section's gate quiz as you go.",
+              ],
+              resources: ["Lesson tab — lessons 1\u20132"],
+            },
+            {
+              time: "10 minutes",
+              title: "Break",
+              break: true,
+            },
+            {
+              time: "30 minutes",
+              title: "Lesson 3 — Leadership styles in meetings — Facilitator & Class",
+              bullets: [
+                "Democratic, autocratic and facilitative meetings — when each style fits, and what it means for the chairperson's role.",
+              ],
+              resources: ["Lesson tab — lesson 3"],
+            },
+            {
+              time: "20 minutes",
+              title: "Questioning — Types, styles and decision processes — Class in pairs",
+              bullets: [
+                "Learners complete \u201cTypes of meetings, leadership styles and decision processes\u201d; the AI marker gives instant feedback. Take feedback from two pairs.",
+              ],
+              resources: ["Exercises tab"],
+            },
+            {
+              time: "10 minutes",
+              title: "Knowledge check — Quiz 1 — Learners individually",
+              bullets: [
+                "Learners complete Quiz 1 (Types of meetings and leadership styles). 80%+ is competent.",
+              ],
+              resources: ["Quiz tab"],
+            },
+            {
+              time: "60 minutes",
+              title: "Lunch",
+              break: true,
+            },
+            {
+              time: "50 minutes",
+              title: "Lessons 4 & 5 — Decision-making · Meeting conventions — Facilitator & Class",
+              bullets: [
+                "Voting, consensus, criteria-based rating, ranking and paired comparisons — run a quick criteria-rating demonstration with the class.",
+                "Meeting conventions: moving, seconding, amending and voting procedures; why the note taker needs a technical background.",
+              ],
+              resources: ["Lesson tab — lessons 4\u20135"],
+            },
+            {
+              time: "10 minutes",
+              title: "Knowledge check — Quiz 2 — Learners individually",
+              bullets: [
+                "Learners complete Quiz 2 (Decision-making and meeting conventions). Unfinished gate quizzes are completed in own time before Day 2.",
+              ],
+              resources: ["Quiz tab"],
+            },
+          ],
+        },
+        {
+          heading: "Day 2 — Friday, 11 September 2026 · Lessons 6\u20139: Prepare · Chair · Follow up",
+          startTime: "09:00",
+          rows: [
+            {
+              time: "10 minutes",
+              title: "Recap & parking bay — Facilitator",
+              text: [
+                "Recap Day 1, answer parked questions, and check that the Day 1 gate quizzes are complete.",
+              ],
+              resources: ["Parking bay"],
+            },
+            {
+              time: "40 minutes",
+              title: "Lesson 6 — Preparing for the meeting — Facilitator & Class",
+              bullets: [
+                "Physical arrangements: venue, facilities, technology and supporting information.",
+                "Clear documented outcomes, timeous invitations, and completing and distributing the agenda.",
+              ],
+              resources: ["Lesson tab — lesson 6"],
+            },
+            {
+              time: "40 minutes",
+              title: "Lesson 7 — Chairing the meeting — Facilitator & Class",
+              bullets: [
+                "Establishing rules with members, applying conventions, following the agenda.",
+                "Enabling participation and managing difficult behaviours; prioritising topics; clear decisions with timeframes.",
+              ],
+              resources: ["Lesson tab — lesson 7"],
+            },
+            {
+              time: "10 minutes",
+              title: "Break",
+              break: true,
+            },
+            {
+              time: "60 minutes",
+              title: "Practical — chair a technical meeting — Groups",
+              bullets: [
+                "In groups of four or five, each learner chairs a 10-minute technical meeting from a scenario card (e.g. change-freeze review, incident post-mortem, upgrade go/no-go).",
+                "One learner takes minutes, the rest participate; observers complete the checklist. Rotate so every learner chairs once — this is the observed evidence for SO 2 and SO 3.",
+              ],
+              resources: ["Scenario cards", "Agenda template", "Observation checklist"],
+            },
+            {
+              time: "60 minutes",
+              title: "Lunch",
+              break: true,
+            },
+            {
+              time: "30 minutes",
+              title: "Lesson 8 — Post-meeting follow-up — Facilitator & Class",
+              bullets: [
+                "Accurate minutes per organisational policy; communicating decisions in the required format and timeframe; summarising discussions and actions.",
+              ],
+              resources: ["Lesson tab — lesson 8"],
+            },
+            {
+              time: "20 minutes",
+              title: "Questioning — Preparation, chairing and follow-up — Class in pairs",
+              bullets: [
+                "Learners complete the three remaining questioning exercises; the AI marker gives instant feedback.",
+              ],
+              resources: ["Exercises tab"],
+            },
+            {
+              time: "10 minutes",
+              title: "Knowledge check — Quizzes 3 & 4 — Learners individually",
+              bullets: [
+                "Learners complete Quiz 3 (Preparing and chairing) and Quiz 4 (Post-meeting follow-up). 80%+ is competent.",
+              ],
+              resources: ["Quiz tab"],
+            },
+            {
+              time: "10 minutes",
+              title: "Self-Assessment — Learners individually",
+              bullets: [
+                "Learners complete the self-assessment checklist honestly and write down goals for any point they could not tick.",
+              ],
+              resources: ["Self assessment tab"],
+            },
+            {
+              time: "10 minutes",
+              title: "Quiz retries, logbook briefing & wrap-up — Facilitator",
+              bullets: [
+                "Learners retry any quiz below 80% and finish outstanding gate quizzes.",
+                "Outline the meeting portfolio project — notice and agenda, invitations, attendance register, minutes and action summary — attached in the logbook marked 114051. Address remaining parking-bay questions and close the unit.",
+              ],
+              resources: ["Quiz tab", "Logbook", "Evaluation tab"],
+            },
+          ],
+        },
+      ],
+    },
+
     quiz: [],
+    quizzes: [
+      {
+        id: "q-meeting-types",
+        title: "Quiz 1 — Types of meetings and leadership styles",
+        questions: [
+          {
+            q: "Which three types of technical practitioners meetings must you be able to describe for this unit standard?",
+            options: [
+              "Contract meetings, technical review meetings and project review meetings",
+              "Board meetings, shareholder meetings and annual general meetings",
+              "Stand-ups, retrospectives and sprint planning meetings only",
+              "Disciplinary hearings, grievance meetings and exit interviews",
+            ],
+            answer: 0,
+            explain: "The assessment criteria name contract meetings, technical review meetings and project review meetings as the types of technical meetings and their uses.",
+          },
+          {
+            q: "A technical review meeting is primarily used to…",
+            options: [
+              "Evaluate designs, systems and technical work against requirements and standards",
+              "Negotiate salaries and employment conditions with staff",
+              "Approve the company's annual financial statements",
+              "Plan the year-end function and social events",
+            ],
+            answer: 0,
+            explain: "Technical review meetings evaluate technical work — designs, systems, code or configurations — against the agreed requirements and standards.",
+          },
+          {
+            q: "In a democratic meeting, decisions are taken by…",
+            options: [
+              "The members, through discussion and voting, with the chair guiding the process",
+              "The chairperson alone, with members giving input only when asked",
+              "The most senior technical practitioner present",
+              "An external consultant appointed before the meeting",
+            ],
+            answer: 0,
+            explain: "In a democratic meeting the group decides — the chair guides the discussion and the vote, but the members make the decision.",
+          },
+          {
+            q: "Which leadership style has the chairperson controlling the meeting and taking the decisions?",
+            options: ["Autocratic", "Democratic", "Facilitative", "Laissez-faire"],
+            answer: 0,
+            explain: "In an autocratic meeting the chair controls proceedings and takes the decisions; members provide input only when it is requested.",
+          },
+          {
+            q: "In a facilitative meeting, the facilitator's role is to…",
+            options: [
+              "Guide the process while staying neutral, so the group produces the outcome together",
+              "Decide the outcome in advance and steer the group towards it",
+              "Take the minutes and remain silent for the whole meeting",
+              "Vote first so members know which option to support",
+            ],
+            answer: 0,
+            explain: "A facilitative meeting is a group effort — the facilitator manages the process, stays neutral on content, and the group generates and owns the outcome.",
+          },
+          {
+            q: "Why should the note taker at a technical practitioners meeting have a technical background?",
+            options: [
+              "So the minutes accurately capture the technical terminology, decisions and reasons",
+              "So the note taker can chair the meeting when the chairperson is absent",
+              "Because organisational policy forbids non-technical staff from attending",
+              "So the note taker can veto decisions the members take",
+            ],
+            answer: 0,
+            explain: "A technically literate note taker follows the discussion and terminology, so the minutes record the decisions and their technical reasons accurately.",
+          },
+        ],
+      },
+      {
+        id: "q-decisions-conventions",
+        title: "Quiz 2 — Decision-making and meeting conventions",
+        questions: [
+          {
+            q: "Which decision-making process adopts the option supported by most members?",
+            options: ["Voting", "Consensus", "Paired comparisons", "Criteria-based rating"],
+            answer: 0,
+            explain: "Voting adopts the majority's option. Consensus continues discussion until all members can accept the decision.",
+          },
+          {
+            q: "Reaching consensus means…",
+            options: [
+              "Discussion continues until every member can accept the decision",
+              "The chairperson casts the deciding vote on every item",
+              "Exactly half of the members support the proposal",
+              "The most senior member decides after hearing the others",
+            ],
+            answer: 0,
+            explain: "Consensus is general agreement — the discussion is refined until all members can live with (accept) the decision, even if it is not everyone's first choice.",
+          },
+          {
+            q: "Scoring each option against agreed criteria and choosing the highest score is called…",
+            options: ["Criteria-based rating", "Ranking", "Voting", "Seconding"],
+            answer: 0,
+            explain: "Criteria-based rating scores options against weighted criteria (e.g. cost, risk, effort); the best-scoring option is selected.",
+          },
+          {
+            q: "In paired comparisons, options are evaluated by…",
+            options: [
+              "Comparing them two at a time and selecting the overall preferred option",
+              "Placing all the options in a single order of preference at once",
+              "Voting on all the options simultaneously by a show of hands",
+              "Asking the note taker to eliminate the weakest option",
+            ],
+            answer: 0,
+            explain: "Paired comparisons judge options two at a time; the option that wins the most pairings is preferred overall.",
+          },
+          {
+            q: "In meeting procedure, 'moving' a motion means…",
+            options: [
+              "Formally proposing a motion for the meeting to consider",
+              "Postponing the item to the next meeting",
+              "Deleting the item from the agenda",
+              "Physically rearranging the seating in the venue",
+            ],
+            answer: 0,
+            explain: "To move a motion is to formally propose it. Another member must second it before it can be discussed and voted on.",
+          },
+          {
+            q: "Before a motion can be discussed and voted on, it must be…",
+            options: [
+              "Seconded by another member",
+              "Approved by the note taker",
+              "Published in the company newsletter",
+              "Signed by the venue manager",
+            ],
+            answer: 0,
+            explain: "Seconding shows the motion has support beyond the mover; an unseconded motion falls away. Motions may then be amended before the vote.",
+          },
+        ],
+      },
+      {
+        id: "q-prep-chair",
+        title: "Quiz 3 — Preparing and chairing the meeting",
+        questions: [
+          {
+            q: "Which set of physical arrangements must be in place before a technical practitioners meeting?",
+            options: [
+              "Venue, facilities, technology and supporting information",
+              "Venue only — everything else is arranged during the meeting",
+              "Refreshments and parking only",
+              "A signed contract with every participant",
+            ],
+            answer: 0,
+            explain: "The assessment criterion requires the venue, facilities, technology and supporting information to be arranged as part of preparation.",
+          },
+          {
+            q: "The intended outcomes of the meeting must be…",
+            options: [
+              "Clear, concise and well documented before the meeting",
+              "Kept secret so participants stay curious",
+              "Decided only after the meeting has ended",
+              "Communicated verbally to the chairperson only",
+            ],
+            answer: 0,
+            explain: "Documented outcomes focus the agenda and let the meeting be measured against what it was meant to achieve.",
+          },
+          {
+            q: "Why must participants be invited timeously?",
+            options: [
+              "So they can prepare, study the documentation and arrange their schedules",
+              "So the venue can charge a higher booking fee",
+              "Because late invitations are only allowed for managers",
+              "So that fewer people attend and the meeting is shorter",
+            ],
+            answer: 0,
+            explain: "Timeous invitations give participants time to prepare and ensure the right people can actually attend.",
+          },
+          {
+            q: "At the START of the meeting, the chairperson should…",
+            options: [
+              "Establish the rules and guidelines in conjunction with the members",
+              "Read the entire previous year's minutes aloud",
+              "Take the first vote before any discussion",
+              "Ask the note taker to chair the rest of the meeting",
+            ],
+            answer: 0,
+            explain: "Rules agreed with the members create buy-in and prevent procedural disputes during the meeting.",
+          },
+          {
+            q: "How should the chairperson handle discussion time across the agenda?",
+            options: [
+              "Prioritise the topics and allocate discussion time to each item",
+              "Let every item run until the discussion dies out naturally",
+              "Give every item exactly the same time regardless of importance",
+              "Discuss only the items raised by the most senior member",
+            ],
+            answer: 0,
+            explain: "Topics are prioritised — important items early — and each item gets time in proportion to its importance; minor items are deferred or carried over.",
+          },
+          {
+            q: "Every decision taken in the meeting must be…",
+            options: [
+              "Clear and accurate, with a timeframe for implementation",
+              "Vague enough to allow different interpretations later",
+              "Kept off the record to protect the members",
+              "Approved afterwards by everyone who was absent",
+            ],
+            answer: 0,
+            explain: "The chair ensures decisions are clearly and accurately captured — what was decided, who is responsible and by when.",
+          },
+        ],
+      },
+      {
+        id: "q-followup",
+        title: "Quiz 4 — Post-meeting follow-up",
+        questions: [
+          {
+            q: "Minutes of a technical practitioners meeting must be…",
+            options: [
+              "Accurate and produced in line with organisational policy",
+              "Written only when someone requests them months later",
+              "A word-for-word transcript of everything that was said",
+              "Kept by the chairperson and never distributed",
+            ],
+            answer: 0,
+            explain: "The assessment criterion requires minutes that are accurately produced and comply with the organisation's policy and format.",
+          },
+          {
+            q: "Decisions taken at the meeting must be communicated…",
+            options: [
+              "In the required format and within the required timeframe",
+              "Only to the members who voted in favour",
+              "Verbally only — writing them down creates risk",
+              "After the next meeting has confirmed them",
+            ],
+            answer: 0,
+            explain: "Decisions are communicated to affected stakeholders in the organisation's required format (minutes, e-mail, report) and within the required timeframe.",
+          },
+          {
+            q: "A good action summary lists…",
+            options: [
+              "Each action with its responsible person and deadline",
+              "Only the actions nobody wanted to take",
+              "The refreshments served during the meeting",
+              "The voting record of each individual member",
+            ],
+            answer: 0,
+            explain: "Summaries of discussions and actions must meet the format requirements — each action needs an owner and a timeframe so it can be followed up.",
+          },
+          {
+            q: "Who should receive the minutes and decision summary after the meeting?",
+            options: [
+              "All participants and affected stakeholders",
+              "Only the chairperson and the note taker",
+              "Only members who missed the meeting",
+              "Nobody — minutes are archived unread",
+            ],
+            answer: 0,
+            explain: "Follow-up communication goes to all participants and stakeholders affected by the decisions, so actions can be implemented and tracked.",
+          },
+          {
+            q: "Items that were not resolved during the meeting should be…",
+            options: [
+              "Recorded and carried over to the agenda of the next meeting",
+              "Deleted from the record as if never raised",
+              "Decided privately by the note taker afterwards",
+              "Ignored unless a member complains in writing",
+            ],
+            answer: 0,
+            explain: "Unresolved items are recorded in the summary and carried over, keeping the follow-up loop complete and auditable.",
+          },
+        ],
+      },
+    ],
+
+    saqa: {
+      notice:
+        "SOUTH AFRICAN QUALIFICATIONS AUTHORITY — Registered unit standard. Specific outcomes and related assessment criteria as supplied in the learner material.",
+      registration: [
+        { label: "SAQA US ID", value: "114051" },
+        { label: "Unit standard title", value: "Conduct a technical practitioners meeting" },
+        { label: "NQF level", value: "5" },
+        { label: "Credits", value: "4" },
+      ],
+      sections: [
+        {
+          heading: "Specific outcome 1 — Demonstrate knowledge of different types of technical practitioners meetings",
+          icon: "target",
+          bullets: [
+            "The demonstration describes the types of technical meetings and their uses. (Contract meetings, technical review meetings, project review meetings)",
+            "The demonstration identifies leadership styles used in meeting procedures. (Democratic, autocratic, facilitative)",
+            "The demonstration identifies decision-making processes used in meetings. (Voting, consensus, criteria-based rating, ranking, paired comparisons)",
+            "The demonstration describes meeting conventions and procedures. (Moving, seconding, amending, voting procedures)",
+            "The demonstration explains why the note taker requires a technical background.",
+          ],
+        },
+        {
+          heading: "Specific outcome 2 — Prepare for a technical practitioners meeting",
+          icon: "target",
+          bullets: [
+            "The preparation ensures physical arrangements are in place. (Venue, facilities, technology, supporting information)",
+            "The preparation ensures the intended outcomes of the meeting are clear, concise and well documented.",
+            "The preparation ensures participants are invited timeously.",
+            "The preparation ensures the agenda and supporting documentation are completed and distributed.",
+          ],
+        },
+        {
+          heading: "Specific outcome 3 — Chair a technical practitioners meeting",
+          icon: "target",
+          bullets: [
+            "The chairing establishes rules and guidelines in conjunction with meeting members.",
+            "The chairing applies the meeting conventions agreed by the members.",
+            "The chairing follows the published agenda.",
+            "The chairing enables active participation and minimises conflict.",
+            "The chairing prioritises topics and allocates discussion time.",
+            "The chairing ensures decisions are clear and accurate and include timeframes.",
+          ],
+        },
+        {
+          heading: "Specific outcome 4 — Conduct post-meeting follow-up for a technical meeting",
+          icon: "target",
+          bullets: [
+            "The follow-up produces accurate minutes that comply with organisational policy.",
+            "The follow-up communicates decisions in the required format and timeframe.",
+            "The follow-up summarises discussions and actions in the required format.",
+          ],
+        },
+      ],
+    },
   },
 
   /* ================================================================
