@@ -21,10 +21,10 @@ export const MODULES: CourseModule[] = [
       { us: "HWSW", title: "Hardware and Software", nqf: 5, credits: 0, dates: "5, 6 Aug 2026", time: "12h00 - 16h00" },
       { us: "HWSW2", title: "Hardware and Software — Illustrated Slide Deck", nqf: 5, credits: 0, dates: "5, 6 Aug 2026", time: "12h00 - 16h00" },
       { us: "114055", title: "Demonstrate an awareness of ethics and professionalism for the computer industry in South Africa", nqf: 5, credits: 3, dates: "14 Aug 2026", time: "09h00 - 14h00" },
-      { us: "114050", title: "Explain the principles of business and the role of information technology", nqf: 5, credits: 4, dates: "21, 22 Aug 2026", time: "09h00 - 14h00" },
-      { us: "114051", title: "Conduct a technical practitioners meeting", nqf: 5, credits: 4, dates: "04, 05 Sep 2026", time: "09h00 - 14h00" },
-      { us: "114046", title: "Demonstrate an understanding of issues affecting the management of a local area computer network (LAN)", nqf: 5, credits: 4, dates: "4 Sep 2026", time: "09h00 - 14h00" },
-      { us: "114183", title: "Apply the principles of resolving problems for single-user and multi-user computer operating systems", nqf: 5, credits: 7, dates: "11, 18 Sep 2026", time: "09h00 - 14h00" },
+      { us: "114050", title: "Explain the principles of business and the role of information technology", nqf: 5, credits: 4, dates: "21, 28 Aug 2026", time: "09h00 - 14h00" },
+      { us: "114051", title: "Conduct a technical practitioners meeting", nqf: 5, credits: 4, dates: "4, 11 Sep 2026", time: "09h00 - 14h00" },
+      { us: "114046", title: "Demonstrate an understanding of issues affecting the management of a local area computer network (LAN)", nqf: 5, credits: 4, dates: "18 Sep 2026", time: "09h00 - 14h00" },
+      { us: "114183", title: "Apply the principles of resolving problems for single-user and multi-user computer operating systems", nqf: 5, credits: 7, dates: "25 Sep, 2 Oct 2026", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -33,9 +33,9 @@ export const MODULES: CourseModule[] = [
     icon: "network",
     activities: 4,
     units: [
-      { us: "114058", title: "Demonstrate an understanding of the concepts of Multi-User computer Operating systems", nqf: 5, credits: 7, dates: "25 Sep, 2 Oct 2026", time: "09h00 - 14h00" },
-      { us: "114059", title: "Demonstrate an understanding of estimating a unit of work and the implications of late delivery", nqf: 5, credits: 5, dates: "9 Oct 2026", time: "09h00 - 14h00" },
-      { us: "114076", title: "Use computer technology to research a computer topic", nqf: 4, credits: 3, dates: "16 Oct 2026", time: "09h00 - 14h00" },
+      { us: "114058", title: "Demonstrate an understanding of the concepts of Multi-User computer Operating systems", nqf: 5, credits: 7, dates: "9, 16 Oct 2026", time: "09h00 - 14h00" },
+      { us: "114059", title: "Demonstrate an understanding of estimating a unit of work and the implications of late delivery", nqf: 5, credits: 5, dates: "23 Oct 2026", time: "09h00 - 14h00" },
+      { us: "114076", title: "Use computer technology to research a computer topic", nqf: 4, credits: 3, dates: "30 Oct 2026", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -44,10 +44,10 @@ export const MODULES: CourseModule[] = [
     icon: "globe",
     activities: 5,
     units: [
-      { us: "114060", title: "Demonstrate an understanding of local area computer networks, by installing a networked workstation", nqf: 5, credits: 5, dates: "23 Oct 2026", time: "09h00 - 14h00" },
-      { us: "114061", title: "Demonstrate an understanding of Wide Area Computer Networks (WANs), comparing them with Local Area Networks (LANs)", nqf: 5, credits: 5, dates: "30 Oct 2026", time: "09h00 - 14h00" },
-      { us: "114072", title: "Install and commission a local area computer network", nqf: 5, credits: 9, dates: "6, 13 Nov 2026", time: "09h00 - 14h00" },
-      { us: "114074", title: "Demonstrate an understanding of different computer network architectures and standards", nqf: 5, credits: 5, dates: "20 Nov 2026", time: "09h00 - 14h00" },
+      { us: "114060", title: "Demonstrate an understanding of local area computer networks, by installing a networked workstation", nqf: 5, credits: 5, dates: "6 Nov 2026", time: "09h00 - 14h00" },
+      { us: "114061", title: "Demonstrate an understanding of Wide Area Computer Networks (WANs), comparing them with Local Area Networks (LANs)", nqf: 5, credits: 5, dates: "13 Nov 2026", time: "09h00 - 14h00" },
+      { us: "114072", title: "Install and commission a local area computer network", nqf: 5, credits: 9, dates: "20, 27 Nov 2026", time: "09h00 - 14h00" },
+      { us: "114074", title: "Demonstrate an understanding of different computer network architectures and standards", nqf: 5, credits: 5, dates: "4 Dec 2026", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -56,9 +56,9 @@ export const MODULES: CourseModule[] = [
     icon: "design",
     activities: 5,
     units: [
-      { us: "114052", title: "Demonstrate appropriate customer care in the context of IT support, according to a Service Level Agreement", nqf: 5, credits: 8, dates: "27 Nov, 4 Dec 2026", time: "09h00 - 14h00" },
-      { us: "114056", title: "Describe enterprise systems management and its role in IT systems support", nqf: 5, credits: 3, dates: "11 Dec 2026", time: "09h00 - 14h00" },
-      { us: "114075", title: "Design a local area computer network for a departmental office environment", nqf: 5, credits: 3, dates: "18 Dec 2026", time: "09h00 - 14h00" },
+      { us: "114052", title: "Demonstrate appropriate customer care in the context of IT support, according to a Service Level Agreement", nqf: 5, credits: 8, dates: "11, 18 Dec 2026", time: "09h00 - 14h00" },
+      { us: "114056", title: "Describe enterprise systems management and its role in IT systems support", nqf: 5, credits: 3, dates: "8 Jan 2027", time: "09h00 - 14h00" },
+      { us: "114075", title: "Design a local area computer network for a departmental office environment", nqf: 5, credits: 3, dates: "15 Jan 2027", time: "09h00 - 14h00" },
     ],
   },
   {
