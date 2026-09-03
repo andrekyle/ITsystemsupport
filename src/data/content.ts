@@ -9229,9 +9229,28 @@ export const CONTENT: Record<string, UnitContent> = {
           "Time: 90 minutes · Activity: Self & Group.",
           "Unit Standard 114051 — Conduct a technical practitioners meeting. In this lesson you will be assessed against these specific outcomes and related assessment criteria: the demonstration describes the types of technical meetings and their uses (contract meetings, technical review meetings, project review meetings); the demonstration identifies leadership styles used in meeting procedures (democratic, autocratic, facilitative); and the demonstration identifies decision-making processes used in meetings (voting, consensus, criteria-based rating, ranking, paired comparisons).",
           "Meetings are very important for the work of any organisation. Good meetings are important for collective decision-making, planning and follow-up, accountability, democracy, and other practices that will help you to build a good organisation.",
-          "If meetings are used in the correct way, they can help an organisation to be efficient. However, like all organising tools, meetings can be used badly and end up not serving their purpose: too many long meetings that discuss the same thing over and over without moving forward, meetings where conflict is played out, or people who see attending meetings as working for the organisation instead of a tool for getting work done. We should try to make our meetings places of democratic and constructive participation by every member.",
-          "Most people do not like attending meetings — especially if they are not sure what the purpose of the meeting is, or if it goes on too long and achieves too little. Meetings must not be too frequent or held just for the sake of it: there must be a need for a meeting, and members must know what type of meeting they are going to and what it is for — the PURPOSE of the meeting. Some meetings discuss policy, others discuss organisation (practical work), and sometimes a special or extraordinary meeting is called.",
-          "The principal activities of a technical committee are the development and maintenance of its associated standards, technical reports, and data files in accordance with the purpose of the organisation.",
+        ],
+        cards: [
+          {
+            icon: "target",
+            title: "1 · There must be a need",
+            text: "Meetings must not be too frequent or held just for the sake of it. Decide the different types of meetings needed — some discuss policy, others discuss organisation (practical work).",
+          },
+          {
+            icon: "info",
+            title: "2 · Members must know the PURPOSE",
+            text: "Most people do not like attending meetings — especially if they are not sure what the purpose is, or if it goes on too long and achieves too little. Wherever possible, members must know what type of meeting they are going to and what it is for.",
+          },
+          {
+            icon: "eyeOff",
+            title: "3 · How meetings go wrong",
+            text: "Too many long meetings that discuss the same thing over and over without moving forward; meetings where conflict is played out; people who see attending meetings as working for the organisation instead of a tool for getting work done.",
+          },
+          {
+            icon: "people",
+            title: "4 · The technical committee",
+            text: "The principal activities of a technical committee are the development and maintenance of its associated standards, technical reports, and data files in accordance with the purpose of the organisation. Aim for democratic, constructive participation from every member.",
+          },
         ],
         slideQuiz: [
           {
@@ -9296,15 +9315,46 @@ export const CONTENT: Record<string, UnitContent> = {
         icon: "briefcase",
         flat: true,
         paragraphs: [
-          "There are different types of meetings and planning should take account of this. Most organisations will hold general members meetings, special meetings, executive meetings, and annual general meetings.",
-          "The general members meeting is the most common, usually held monthly or every two weeks. It is where members are informed of developments, involved in decisions, and given education and information that helps them become more active. General meetings are usually where decisions are made and where the executive reports on work done by them and the sub-committees.",
-          "Special meetings are called to discuss specific issues — for example preparing for a national conference or planning activities for the year. Any interested members should be invited. They are not run like general meetings (with minutes, reports etc) but focus only on the issues they were called to discuss.",
-          "Executive meetings happen more regularly and have a business-like focus: planning implementation, monitoring work done, dealing with problems, discussing correspondence in detail, and keeping an eye on the organisation's income and expenditure. Every executive meeting should have an agenda item that plans the next general members meeting.",
-          "The Annual General Meeting (AGM) is laid down in the constitution. It is where the executive accounts to all members for the year's activities and finances, and where new leaders are elected and given a mandate. Most AGMs need at least two detailed reports: the secretary's report (plans, actual activities, achievements and problems of the year) and the treasurer's report (all income from subscriptions, grants, donations and fundraising; all expenditure; and the balance and where it is held — explained in plain language).",
-          "For technical practitioners, three key meeting types are most relevant:",
-          "Contract meetings are held to discuss, review, and manage contractual obligations and deliverables related to technical projects or services.",
-          "Technical review meetings are conducted to evaluate technical solutions, designs, implementations, and to resolve technical issues and problems.",
-          "Project review meetings are held to assess project progress, timelines, resource allocation, and project deliverables.",
+          "There are different types of meetings and planning should take account of this. Most organisations will hold four kinds of meetings — and for technical practitioners, three further meeting types matter most.",
+        ],
+        cards: [
+          {
+            icon: "people",
+            title: "1 · The general members meeting",
+            text: "The most common meeting, usually held monthly or every two weeks. Members are informed of developments, involved in decisions, and given education and information that helps them become more active. This is usually where decisions are made and where the executive reports on work done by them and the sub-committees.",
+          },
+          {
+            icon: "target",
+            title: "2 · Special meetings",
+            text: "Called to discuss specific issues — for example preparing for a national conference or planning activities for the year. Any interested members should be invited. They are not run like general meetings (with minutes, reports etc) but focus only on the issues they were called to discuss.",
+          },
+          {
+            icon: "briefcase",
+            title: "3 · Executive meetings",
+            text: "Held more regularly, with a business-like focus: planning implementation, monitoring work done, dealing with problems, discussing correspondence in detail, and keeping an eye on income and expenditure. Every executive meeting should have an agenda item planning the next general members meeting.",
+          },
+          {
+            icon: "award",
+            title: "4 · The Annual General Meeting",
+            text: "Laid down in the constitution. The executive accounts to all members for the year's activities and finances, and new leaders are elected and given a mandate to run the organisation for another year.",
+          },
+        ],
+        example: {
+          title: "The AGM needs two detailed reports",
+          lines: [
+            "1. The secretary's report — the plans of the organisation, the actual activities that took place that year, the achievements of the year, and the problems experienced.",
+            "2. The treasurer's report — all income from subscriptions, grants, donations and fundraising; all expenditure; and the balance and where it is held. Put the main headings on news-prints and explain it in less financial language.",
+          ],
+        },
+        examples: [
+          {
+            title: "The three technical practitioners meetings",
+            lines: [
+              "1. Contract meetings — held to discuss, review, and manage contractual obligations and deliverables related to technical projects or services.",
+              "2. Technical review meetings — conducted to evaluate technical solutions, designs, implementations, and to resolve technical issues and problems.",
+              "3. Project review meetings — held to assess project progress, timelines, resource allocation, and project deliverables.",
+            ],
+          },
         ],
         slideQuiz: [
           {
@@ -9347,10 +9397,24 @@ export const CONTENT: Record<string, UnitContent> = {
         icon: "people",
         flat: true,
         paragraphs: [
-          "There are three main leadership styles used in meeting procedures: democratic, autocratic, and facilitative.",
-          "Democratic meetings are held with appointed or nominated delegates from departments, organisations or areas. These delegates will be given the information and the meeting will be conducted in this manner. All members have a voice and participate in decision-making.",
-          "Autocratic meetings are hosted and led by a chairperson who will run the entire meeting and will give most of the input. The other attendees will be required to give input only when instructed. Decision-making is centralised and controlled by the chair.",
-          "Facilitative meetings are group efforts where the leader sets a trend of ensuring that all members are actively participating in the meeting to achieve the outcome or goal. The facilitator guides discussion while enabling full participation.",
+          "There are three main leadership styles used in meeting procedures: democratic, autocratic, and facilitative. Various outcomes require various types of commitment and involvement from the participants — choose the style that fits the meeting's purpose.",
+        ],
+        cards: [
+          {
+            icon: "people",
+            title: "1 · Democratic meetings",
+            text: "Held with appointed or nominated delegates from departments, organisations or areas. These delegates will be given the information and the meeting will be conducted in this manner. All members have a voice and participate in decision-making.",
+          },
+          {
+            icon: "person",
+            title: "2 · Autocratic meetings",
+            text: "Hosted and led by a chairperson who runs the entire meeting and gives most of the input. The other attendees are required to give input only when instructed. Decision-making is centralised and controlled by the chair.",
+          },
+          {
+            icon: "chat",
+            title: "3 · Facilitative meetings",
+            text: "Group efforts where the leader sets a trend of ensuring that all members are actively participating in the meeting to achieve the outcome or goal. The facilitator guides discussion while enabling full participation.",
+          },
         ],
         slideQuiz: [
           {
@@ -9393,16 +9457,59 @@ export const CONTENT: Record<string, UnitContent> = {
         icon: "chart",
         flat: true,
         paragraphs: [
-          "Meetings use various decision-making processes to arrive at conclusions and take action. The main processes are: voting, consensus, criteria-based rating, ranking, and paired comparisons.",
-          "Voting is a direct democratic process where each participant votes, typically by show of hands or ballot, and the option with the most votes wins. Simple majority (50% + 1) or supermajority (two-thirds or 75%) rules may apply.",
-          "Consensus means that all participants agree or at least can accept the decision. It requires discussion and compromise until all can support the outcome.",
-          "Criteria-based rating involves evaluating options against predetermined criteria and rating each option on each criterion, then scoring to identify the best option.",
-          "Ranking involves having participants rank options from best to worst, with scores assigned based on ranking position, then totaling scores across all participants.",
-          "Paired comparisons involve comparing options two at a time, with participants indicating their preference for each pair, and then scoring based on how many times each option is preferred.",
-          "In practice, voting works like this: one person puts forward a proposal, someone else seconds it, and then people vote. If the majority accept the proposal, it becomes binding on the organisation. Voting can be done by a show of hands — the chairperson calls for hands for and against, counts them, and the majority decides whether the proposal stands or falls away — or by secret ballot, where each person writes their support or objection on paper and the votes are counted.",
-          "It is usually better to reach consensus than to vote. Reaching consensus often means compromises from everyone, but it ensures that most people feel part of the decision. Sometimes a vote does need to be taken — for example in elections, or when the meeting cannot reach a decision through consensus.",
-          "Resolutions are formal proposals put forward to the meeting for people to agree or disagree with; if passed, they become policy of the organisation. Each resolution needs a proposer and a seconder, and usually has three parts: NOTING (the main issues of concern), BELIEVING (the points that show your understanding of the issue and its causes), and THEREFORE RESOLVES (exactly what the organisation has decided to do or what its policy is).",
-          "Amendments to resolutions should be accepted by everyone present. If there is not total agreement, a vote is held and the chairperson records the votes for, against, and abstaining. If the majority support the amendment, it stands and the original section of the resolution falls away. The chairperson and members must study the constitution of the organisation to know and understand all these procedures.",
+          "Meetings use various decision-making processes to arrive at conclusions and take action. The five main processes are numbered below — pick the one that fits the decision's importance, urgency and need for buy-in.",
+        ],
+        cards: [
+          {
+            icon: "checkCircle",
+            title: "1 · Voting",
+            text: "A direct democratic process where each participant votes, typically by show of hands or ballot, and the option with the most votes wins. Simple majority (50% + 1) or supermajority (two-thirds or 75%) rules may apply.",
+          },
+          {
+            icon: "people",
+            title: "2 · Consensus",
+            text: "All participants agree or at least can accept the decision. It requires discussion and compromise until all can support the outcome.",
+          },
+          {
+            icon: "chart",
+            title: "3 · Criteria-based rating",
+            text: "Evaluate options against predetermined criteria, rating each option on each criterion, then score to identify the best option.",
+          },
+          {
+            icon: "layers",
+            title: "4 · Ranking",
+            text: "Participants rank options from best to worst, scores are assigned by ranking position, and the totals across all participants decide.",
+          },
+          {
+            icon: "design",
+            title: "5 · Paired comparisons",
+            text: "Options are compared two at a time, participants indicate a preference for each pair, and scoring is based on how many times each option is preferred.",
+          },
+          {
+            icon: "shield",
+            title: "Prefer consensus — vote when you must",
+            text: "Consensus often means compromises from everyone, but most people feel part of the decision. A vote is needed in elections, or when the meeting cannot reach consensus.",
+          },
+        ],
+        example: {
+          title: "Voting in practice",
+          lines: [
+            "1. One person puts forward a proposal and someone else seconds it — then people vote. If the majority accept the proposal, it becomes binding on the organisation.",
+            "2. Show of hands — the chairperson calls for hands for and against, the votes are counted, and the majority decides whether the proposal stands or falls away.",
+            "3. Secret ballot — each person writes their support or objection on paper; the votes are counted and the majority decides.",
+          ],
+        },
+        examples: [
+          {
+            title: "Resolutions — formal decisions with three parts",
+            lines: [
+              "Resolutions are formal proposals put to the meeting to agree or disagree with; if passed, they become policy of the organisation. Each needs a proposer and a seconder.",
+              "1. NOTING — list the main issues you are concerned about.",
+              "2. BELIEVING — list the points that show your understanding of the issue and its causes.",
+              "3. THEREFORE RESOLVES — list exactly what the organisation has decided to do or what its policy is on the issue.",
+              "Amendments must be accepted by everyone present; if not, a vote is held and the chairperson records those for, against and abstaining. If the majority support the amendment, the original section falls away. Study the constitution to know all these procedures.",
+            ],
+          },
         ],
         slideQuiz: [
           {
@@ -9456,14 +9563,48 @@ export const CONTENT: Record<string, UnitContent> = {
         icon: "document",
         flat: true,
         paragraphs: [
-          "Good meetings follow established conventions and procedures to ensure order, fairness, and effectiveness. Key conventions include moving, seconding, amending, and voting procedures.",
-          "Moving means formally proposing a resolution or course of action. A mover states their proposal clearly: 'I move that we...'",
-          "Seconding means supporting a motion by indicating another member agrees it is worthy of discussion. A seconder says: 'I second that motion.'",
-          "Amending means modifying a motion before voting. Amendments can change the wording, scope, or terms of the original motion. All amendments must be voted on.",
-          "Voting procedures ensure fair counting of votes. They include methods for raising hands, show of hands, ballot voting, and recording abstentions (members not voting either way).",
-          "All members should also know the procedural points used in meetings to keep them running smoothly. A Point of Order is raised when meeting procedure is not being stuck to — for example when a speaker is totally off the point — to bring the meeting back to correct order. A Point of Information lets a member speak out of turn to request or give more information on the matter being discussed. The chairperson may rule a member Out of Order for not sticking to procedure, being rude, interjecting or misbehaving. A speaker who is being harassed can ask for the Protection of the chairperson.",
-          "A quorum is the minimum number of people who must be present for the meeting to conduct business and take decisions — the number is stated in the organisation's constitution. The meeting cannot start until there is a quorum; if decisions are taken without one, absent members can demand the matter be re-discussed, wasting everyone's time. These rules and procedures exist to make meetings more efficient and effective — they should not be over-used just for the sake of it.",
-          "An important note: the note taker should have technical background knowledge. This ensures that technical terminology is correctly recorded and that technical context is properly understood and documented in the minutes.",
+          "Good meetings follow established conventions and procedures to ensure order, fairness, and effectiveness. The four key conventions are numbered below, followed by the procedural points every member should know.",
+        ],
+        cards: [
+          {
+            icon: "pen",
+            title: "1 · Moving",
+            text: "Formally proposing a resolution or course of action. A mover states their proposal clearly: 'I move that we...'",
+          },
+          {
+            icon: "person",
+            title: "2 · Seconding",
+            text: "Supporting a motion by indicating another member agrees it is worthy of discussion. A seconder says: 'I second that motion.'",
+          },
+          {
+            icon: "document",
+            title: "3 · Amending",
+            text: "Modifying a motion before voting. Amendments can change the wording, scope, or terms of the original motion. All amendments must be voted on.",
+          },
+          {
+            icon: "checkCircle",
+            title: "4 · Voting procedures",
+            text: "Fair counting of votes: raising hands, show of hands, ballot voting, and recording abstentions (members not voting either way).",
+          },
+        ],
+        example: {
+          title: "Procedural points every member should know",
+          lines: [
+            "1. Point of Order — raised when meeting procedure is not being stuck to (for example a speaker totally off the point) to bring the meeting back to correct order.",
+            "2. Point of Information — lets a member speak out of turn to request or give more information on the matter being discussed.",
+            "3. Out of Order — the chairperson rules a member out of order for not sticking to procedure, being rude, interjecting or misbehaving.",
+            "4. Protection — a speaker who is being harassed can ask for the protection of the chairperson.",
+            "5. Quorum — the minimum number of people (stated in the constitution) who must be present to conduct business. The meeting cannot start without it; decisions taken without a quorum can be forced to be re-discussed.",
+            "These rules exist to make meetings more efficient and effective — they should not be over-used just for the sake of it.",
+          ],
+        },
+        examples: [
+          {
+            title: "The note taker",
+            lines: [
+              "The note taker should have technical background knowledge. This ensures that technical terminology is correctly recorded and that technical context is properly understood and documented in the minutes.",
+            ],
+          },
         ],
         slideQuiz: [
           {
@@ -9519,17 +9660,51 @@ export const CONTENT: Record<string, UnitContent> = {
         lessonStart: { n: 2, title: "Prepare for a technical practitioners meeting" },
         paragraphs: [
           "Time: 90 minutes · Activity: Self & Group.",
-          "When meetings are arranged, the outcome of such meetings is heavily dependent on the preparation and input into the meetings. Proper preparation ensures clarity, engagement, and successful outcomes.",
-          "Venue selection is critical. The size and interactive capabilities of the venue will heavily affect the meeting outcome. The venue must be able to accommodate required group movements and activities. Location accessibility affects participant turnout. The venue should be positioned to minimise distractions.",
-          "Facilities must be appropriate to the meeting type and outcomes required. These may include tables, chairs, flipcharts, whiteboards, screens, audio/visual equipment, and breakout spaces for group work.",
-          "Technology requirements depend on the meeting type. Online meetings may require internet access and video conferencing software. Technical demonstrations may require specific equipment or software access.",
-          "Relevant supporting information includes user guides, manuals, reference documents, and background information that participants need to understand the meeting topics and prepare adequately.",
-          "Meeting outcomes must be clear, concise, and well-documented. Participants need to understand what the meeting aims to achieve, what is expected of them, and in which format the presenter requires it returned. The outcomes should be outlined in the invitation together with the requirements of the meeting.",
-          "Notification is part of preparation: everyone must know the date, time and venue of the meeting as well as the main issues to be discussed. A consistent meeting day, time and place — for example the first Friday of every month in the same room — helps people make attendance a habit and cuts notification costs. Choose a space private enough for strong disagreements, make sure the room is unlocked and set up properly with enough chairs, arrange seating in a circle, and sit where you can see everyone.",
-          "Meeting invitations must be extended timeously to all relevant participants, giving them sufficient time to prepare and arrange their schedules.",
-          "Preparing the agenda: the agenda is a list of the most important issues for the members to discuss, and is the responsibility of the chairperson and the secretary. It is drawn from the Matters Arising of the previous meeting's minutes — tasks that need a report-back, matters that needed further information, and matters deferred to this meeting — so the chairperson should read the previous minutes to prepare. Items are arranged in order of priority with time allocated for each discussion, and the last item is General or Any Other Business, for short items not on the agenda.",
-          "A standard agenda includes: (1) additions to and approval of the agenda; (2) reading, corrections and approval of the previous meeting's minutes; (3) announcements and correspondence; (4) the treasurer's report; (5) committee reports; (6) unfinished business left over from previous meetings; and (7) new business. If there is disagreement over the order, it is quickly discussed and voted on at the start — and the chair may set a maximum time per topic if there is a lot to get through.",
-          "The meeting agenda and supporting documentation must be completed and distributed before the meeting, ideally a week in advance. The agenda gives people time to plan, think over the issues, do assignments and bring the necessary information and materials — it can also be written up on a whiteboard where everyone can see it, and adjusted during the meeting if needed.",
+          "When meetings are arranged, the outcome of such meetings is heavily dependent on the preparation and input into the meetings. Proper preparation ensures clarity, engagement, and successful outcomes — the four physical arrangements are numbered below.",
+        ],
+        cards: [
+          {
+            icon: "globe",
+            title: "1 · Venue selection",
+            text: "The size and interactive capabilities of the venue heavily affect the meeting outcome. The venue must accommodate required group movements and activities, be accessible (location affects turnout), and be positioned to minimise distractions.",
+          },
+          {
+            icon: "folder",
+            title: "2 · Facilities",
+            text: "Appropriate to the meeting type and outcomes required: tables, chairs, flipcharts, whiteboards, screens, audio/visual equipment, and breakout spaces for group work.",
+          },
+          {
+            icon: "dashboard",
+            title: "3 · Technology required",
+            text: "Depends on the meeting type: online meetings may require internet access and video conferencing software; technical demonstrations may require specific equipment or software access — prepared and tested in advance.",
+          },
+          {
+            icon: "document",
+            title: "4 · Relevant supporting information",
+            text: "User guides, manuals, reference documents, and background information that participants need to understand the meeting topics and prepare adequately.",
+          },
+        ],
+        example: {
+          title: "Notification — make the meeting easy to attend",
+          lines: [
+            "1. Ensure everyone is notified of the date, time and venue, and the main issues to be discussed.",
+            "2. A consistent meeting day, time and place — e.g. the first Friday of every month in the same room — helps people make attendance a habit and cuts notification costs.",
+            "3. Choose a space private enough for strong disagreements, where only the members of the group will be.",
+            "4. Make sure the room is unlocked and set up with enough chairs; arrange seating in a circle and sit where you can see everyone.",
+            "5. Meeting outcomes must be clear, concise and well documented — outline them in the invitation with the requirements of the meeting, so participants understand what is expected of them and in which format it must be returned.",
+            "6. Extend the invitations timeously so participants can prepare and arrange their schedules.",
+          ],
+        },
+        examples: [
+          {
+            title: "Preparing the agenda",
+            lines: [
+              "The agenda is a list of the most important issues for the members to discuss — the responsibility of the chairperson and the secretary. It is drawn from the Matters Arising of the previous minutes: tasks needing a report-back, matters that needed further information, and matters deferred to this meeting.",
+              "Arrange items in order of priority and allocate time to each; the last item is General / Any Other Business for short items not on the agenda.",
+              "The standard agenda: 1. Additions to and approval of the agenda · 2. Reading, corrections and approval of the previous minutes · 3. Announcements and correspondence · 4. Treasurer's report · 5. Committee reports · 6. Unfinished business · 7. New business.",
+              "Distribute the agenda and supporting documentation before the meeting, ideally a week in advance — it gives people time to plan, do assignments and bring the necessary information. It can also be written up on a whiteboard, and adjusted during the meeting if needed.",
+            ],
+          },
         ],
         slideQuiz: [
           {
@@ -9585,17 +9760,88 @@ export const CONTENT: Record<string, UnitContent> = {
         lessonStart: { n: 3, title: "Chair a technical practitioners meeting" },
         paragraphs: [
           "Time: 90 minutes · Activity: Self & Group.",
-          "The chairperson is the most important person in the meeting. They will set the pace, ensure people stick to topics, ensure democratic decisions are taken, and ensure everyone agrees with these decisions. Chairing is a great skill: organisations should teach members to chair and rotate the job so more people practise it — but always use an experienced chairperson for important meetings.",
-          "A good chairperson is an ACTIVE chairperson — not someone who simply keeps a list of speakers and lets them talk one after the other. The chair introduces each topic clearly and guides the discussion, especially when people start repeating points. When a discussion throws up opposing views, the chair summarises the different positions and proposes a way forward: taking a vote, holding a further discussion at another date, or making a compromise most people can agree with — then asks the meeting to agree on the way forward and apologises to those who still wanted to speak.",
-          "Before the meeting starts, the chair and members should agree on rules and guidelines on behaviour to ensure smooth and respectful proceedings. Start on time, set a cut-off time that everyone agrees on — it encourages people to be brief — and make sure everyone knows who everyone else is.",
-          "The chair must apply agreed meeting conventions throughout the meeting, according to the type of meeting and in accordance with the standing procedures of the organisation involved.",
-          "The chair should ensure that the published agenda is followed, working through it step by step: record those present and apologies (send round an attendance register for large meetings); circulate or read the previous minutes, let members add anything left out, and adopt them as accurate; work through matters arising from those minutes; deal with correspondence, with the chairperson suggesting action on each letter; then have someone introduce each remaining item as a discussion or a report — a report covers what was completed, the problems experienced, and what still needs to be done.",
-          "Basic steps for chairing: call on individuals to introduce or lead each agenda point and give everyone a chance to speak; ensure no one dominates the discussion; summarise clearly, restating ideas and proposals without repeating everything; get agreement on what the decision is and make sure everyone understands it; delegate the duty of carrying out the decision to someone who knows exactly what to do, by when, and when to report back; and always set the date of the next meeting before the meeting ends.",
-          "Good facilitation makes the difference: turn questions back to the group and ask open-ended questions; jot down speakers' names in order when things get busy and let people who have not yet spoken skip the queue; do not use the chair to impose your own opinions — step aside if you feel strongly about an issue, keep your comments to a minimum and identify them as personal views; watch the non-verbals (look at speakers, nod, make eye contact with those who need encouragement to speak); do not be afraid of silence — it gives people a chance to collect their thoughts; and guide the discussion toward closure by restating comments, summarising what is agreed and suggesting when it is time to decide.",
-          "The chair must provide for active participation by all members to avoid or minimise conflict. This includes managing difficult behaviours: the heckler (stay calm, find merit in one point, agree and move on); the one who won't shut up (wait for a breath, thank them, ask to hear from someone else — and toss obvious misstatements back to the group to correct); the cynic (point out that the meeting seeks better ways through constructive cooperation, or let a group member answer); the silent one (ask directly for their opinion, show respect for their experience, encourage their first contribution — but never force them); conflicting egos (compliment their enthusiasm, ask for constructive solutions, emphasise points they agree on and draw the rest of the group back in); the chatty couple having side conversations (remind them of the debate and draw them back with an easy question and a recap); and the one who is defiantly wrong (tactfully restate their point to show the error, or leave the debate open so the group can supply the correct information).",
-          "The chair should ensure that meeting topics are prioritised and that discussion times are allocated according to importance, urgency, and complexity. If discussion strays off-topic, point it out and redirect; if the group is only repeating itself, restate the issues and ask if people are ready to decide — or table the matter, ask someone to bring back more information, or form a committee. If a decision is too contentious, postpone it to the next meeting so people can think things over and calm down.",
-          "Most importantly, the chair must ensure that agreed decisions are clear, accurate, include a time frame for action, and are within the mandate of the type of meeting being conducted. Take time at the end of the meeting to process — what went well and any lingering concerns — and end on time: nothing makes people dread meetings more than knowing they will run on and on.",
+          "The chairperson is the most important person in the meeting: they set the pace, ensure people stick to topics, ensure democratic decisions are taken, and ensure everyone is on board with these decisions. Chairing is a great skill — teach members to chair and rotate the job so more people practise it, but use an experienced chairperson for important meetings.",
+          "A good chairperson is an ACTIVE chairperson — not someone who simply keeps a list of speakers and lets them talk one after the other. Introduce each topic clearly and guide the discussion, especially when people start repeating points. When opposing views emerge, summarise the different positions and propose a way forward: a vote, a further discussion at another date, or a compromise most people can agree with.",
         ],
+        cards: [
+          {
+            icon: "pen",
+            title: "1 · Agree the rules",
+            text: "Before the meeting starts, the chair and members agree on rules and guidelines on behaviour. Start on time, set a cut-off time everyone agrees on — it encourages people to be brief — and make sure everyone knows who everyone else is.",
+          },
+          {
+            icon: "checkCircle",
+            title: "2 · Apply the conventions",
+            text: "Apply the agreed meeting conventions throughout, according to the type of meeting and the standing procedures of the organisation involved — the same rules for everyone.",
+          },
+          {
+            icon: "document",
+            title: "3 · Follow the published agenda",
+            text: "Work through the agenda item by item, keep the discussion on track, and allocate time according to topic importance.",
+          },
+          {
+            icon: "people",
+            title: "4 · Enable participation",
+            text: "Provide for active participation by ALL members to avoid or minimise conflict — invite quiet members by name and draw the whole group into the discussion.",
+          },
+          {
+            icon: "clock",
+            title: "5 · Prioritise and time-box",
+            text: "Ensure topics are prioritised and discussion times allocated according to importance, urgency, and complexity. Redirect off-topic discussion; table matters the group cannot decide; postpone contentious decisions so people can calm down.",
+          },
+          {
+            icon: "target",
+            title: "6 · Land clear decisions",
+            text: "Agreed decisions must be clear, accurate, include a time frame for action, and be within the mandate of the type of meeting conducted. End on time — then process what went well.",
+          },
+        ],
+        example: {
+          title: "Running the agenda step by step",
+          lines: [
+            "1. Open the meeting, welcome everyone, and record those present and apologies — send round an attendance register for large meetings.",
+            "2. Circulate or read the previous minutes, let members add anything left out, and adopt them as an accurate record.",
+            "3. Work through matters arising from the previous minutes — tasks report back, deferred matters are discussed.",
+            "4. Deal with correspondence — the letters received are read out or listed, with the chairperson suggesting action on each.",
+            "5. Have someone introduce each remaining item as a discussion or a report — a report covers what was completed, the problems experienced, and what still needs to be done.",
+            "6. For each discussion: examine the issue, get everyone's ideas, arrive at a decision, delegate responsibility, and follow up to ensure completion.",
+          ],
+        },
+        examples: [
+          {
+            title: "Basic steps for chairing — decisions that stick",
+            lines: [
+              "1. Call on individuals to introduce or lead each agenda point, and give everyone a chance to speak.",
+              "2. Ensure no one dominates the discussion.",
+              "3. Summarise clearly, restating ideas and proposals — without repeating everything that was said.",
+              "4. Get agreement on what the decision is and make sure everyone understands it.",
+              "5. Delegate the duty of carrying out each decision — the responsible person must know exactly what to do, by when, and when to report back.",
+              "6. Always set the date of the next meeting before the meeting ends.",
+            ],
+          },
+          {
+            title: "Facilitation skills that make it work",
+            lines: [
+              "1. Encourage discussion — turn questions back to the group, ask open-ended questions, compliment ideas, and let people say \u201cditto\u201d instead of repeating.",
+              "2. Manage the traffic — jot down speakers' names in order; let first-time speakers skip the queue; no second turn until everyone has spoken once.",
+              "3. Stay neutral — don't use the chair to impose your own opinions; step aside if you feel strongly, and mark personal views as personal.",
+              "4. Watch the non-verbals — look at speakers, nod, make eye contact with people who need encouragement; spot the half-raised hand.",
+              "5. Use silence — it gives people a chance to collect their thoughts and often draws out hesitant comments.",
+              "6. Guide to closure — restate comments, ask for clarification, summarise what is agreed and what is left, and call the decision when it's time.",
+            ],
+          },
+        ],
+        table: {
+          headers: ["Difficult behaviour", "What the chair does"],
+          rows: [
+            ["The heckler", "Aggressive and argumentative — stay calm, find merit in one point, express agreement, move on."],
+            ["The one who won't shut up", "Wait for a breath, thank them, ask to hear from someone else — toss obvious misstatements back to the group to correct."],
+            ["The cynic", "Point out that the meeting seeks better ways through constructive cooperation, or let a group member answer."],
+            ["The silent one", "Ask directly for their opinion, show respect for their experience, encourage their first contribution — never force them."],
+            ["The egos", "Compliment their enthusiasm, ask for constructive solutions, emphasise points they agree on, and draw the rest of the group back in."],
+            ["The chatty couple", "Remind them of the debate and draw them back with an easy question and a recap of what was just discussed."],
+            ["The one who is defiantly wrong", "Tactfully restate their point to show the error, or leave the debate open so the group can supply the correct information."],
+          ],
+        },
         slideQuiz: [
           {
             q: "What is the primary role of a chairperson in a meeting?",
@@ -9650,17 +9896,74 @@ export const CONTENT: Record<string, UnitContent> = {
         lessonStart: { n: 4, title: "Conduct post-meeting follow-up for a technical meeting" },
         paragraphs: [
           "Time: 90 minutes · Activity: Self & Group.",
-          "There has been much emphasis on group decision support systems but little attention has been paid to the implementation stage that follows a decision meeting. The gap between the end of a meeting and its post-meeting activities may turn the decision inconsequent, due to inappropriate support to the implementation stage.",
-          "Decisions that are implemented without necessary follow-up may generate outcomes different from those planned at the time of the decision. Supporting post-decision activities and linking them to the corresponding decision meeting are essential to make the meeting cycle fully successful.",
-          "Post-meeting support includes four key aspects: the decision implementation plan; the follow-up of implementation activities; support for interaction between decision makers and implementers; and awareness support to external members.",
-          "The follow-up ensures that minutes of the meeting are produced accurately and in line with the policy of the organisation. Minutes form a historical record of the group's work: a record of decisions and details when memories fail or people disagree, a reminder of assignments and deadlines, information for those not present, and a way for future members to build on past successes instead of reinventing the wheel.",
-          "Taking good minutes rests on three skills. Listening: not just hearing what is said but making sure you understand it. Taking notes: write down only the main points and the decisions taken, in your own words — identify the main aim of each discussion and the important information, pay special attention to decisions (ask for them to be repeated if necessary), and do not hesitate to stop the meeting to ask for clarification. Writing the minutes: neatly, in a dedicated minute book or file — never on scraps of paper — kept safe and available for consultation at any time.",
-          "The minutes should include: the nature of the meeting, date, time and venue; the names of those present, visitors, apologies and absentees; the time the meeting was called to order; approval of the previous minutes with any amendments; a summary of reports and announcements; proposals, resolutions, motions and amendments with a summary of the discussion and their final disposition — motions and resolutions recorded verbatim, with mover and seconder, and read back during the meeting to confirm accuracy; who took on each assignment and its deadline; the time of adjournment; and the next meeting's date, time and location. Separate fact from opinion: attribute views to their source — 'Jane suggested that…', 'the group concluded that…'.",
-          "After the meeting, make sure the minutes are written up, organised and distributed to those who attended within a reasonable time — distributing them before the next meeting reminds people of assignments and deadlines. Corrections or additions are recorded in the minutes of the next meeting, and the group then approves them as accurate, as read or as amended. Follow up with people: thank them for their input and make sure they understand their assignments and have what they need to do them.",
-          "The follow-up communicates agreed records of discussion to interested parties in a format and timeframe that meet requirements of the type of meeting and of the organisation involved — contractual, technical review or project specific.",
-          "The follow-up includes a summary of discussions and actions, and meets format requirements. This ensures clarity about what was discussed and what actions need to be taken by whom and when.",
-          "Decision meetings are part of a continuous cycle of pre-meeting, meeting and post-meeting activities. The pre-meeting includes creating the agenda, identifying the people to invite and their roles, preparing each participant and gathering background information. The meeting itself concludes with decisions to be implemented afterwards. The post-meeting stage — often carried out by implementers who were not in the room — covers dissemination, monitoring the implementation of decisions, and clarifying ambiguous decision details. Each stage can be face-to-face or distributed, synchronous or asynchronous, and it is not enough to simply make a decision and move on: decisions must be periodically reviewed.",
-          "Structured post-meeting support pays for itself: a formal link between each meeting outcome and its implementation defines responsibilities and expected results; explicit awareness of task progress serves implementers, management and affected outsiders alike (avoiding the informal, time-consuming requests that happen otherwise); a structured, persistent communication channel between decision makers and implementers resolves ambiguities without waiting for the next meeting; and the organisation captures a memory of valuable information — making it easier to spot issues for the next cycle, unclear details of decisions just made, and unsettled issues after tasks are done.",
+          "There has been much emphasis on group decision support systems but little attention has been paid to the implementation stage that follows a decision meeting. The gap between the end of a meeting and its post-meeting activities may turn the decision inconsequent — decisions implemented without the necessary follow-up may generate outcomes different from those planned.",
+        ],
+        cards: [
+          {
+            icon: "document",
+            title: "1 · Accurate minutes",
+            text: "The follow-up ensures minutes are produced accurately and in line with the policy of the organisation. Minutes form a historical record: decisions and details when memories fail, a reminder of assignments and deadlines, information for those not present, and a way for future members to build on past successes.",
+          },
+          {
+            icon: "chat",
+            title: "2 · Communicate the decisions",
+            text: "Agreed records of discussion are communicated to interested parties in a format and timeframe that meet the requirements of the type of meeting and the organisation involved — contractual, technical review or project specific.",
+          },
+          {
+            icon: "checkCircle",
+            title: "3 · Summarise discussions & actions",
+            text: "The follow-up includes a summary of discussions and actions that meets format requirements — clarity about what was discussed and what must be done, by whom and by when.",
+          },
+        ],
+        example: {
+          title: "Taking good minutes — three skills",
+          lines: [
+            "1. Listening — not just hearing what is said but making sure you understand it; this is where the note taker's technical background earns its keep.",
+            "2. Taking notes — write only the main points and the decisions taken, in your own words. Pay special attention to decisions (ask for them to be repeated) and stop the meeting to ask for clarification when needed.",
+            "3. Writing the minutes — neatly, in a dedicated minute book or file, never on scraps of paper — kept safe and available for consultation at any time.",
+          ],
+        },
+        examples: [
+          {
+            title: "What the minutes must contain",
+            lines: [
+              "1. Nature of the meeting, date, time and venue — and who took the minutes.",
+              "2. Names of those present, visitors, apologies and absentees; the time the meeting was called to order.",
+              "3. Approval of the previous meeting's minutes, with any corrections or amendments.",
+              "4. Summary of reports, announcements and other information shared.",
+              "5. Proposals, resolutions, motions and amendments with a summary of the discussion and their final disposition — motions recorded verbatim with mover and seconder, and read back to confirm accuracy.",
+              "6. Decisions, who took on each assignment and its deadline.",
+              "7. Time of adjournment — and the next meeting's date, time and location.",
+              "Separate fact from opinion: attribute views to their source — \u201cJane suggested that\u2026\u201d, \u201cthe group concluded that\u2026\u201d.",
+            ],
+          },
+          {
+            title: "After the meeting — close the loop",
+            lines: [
+              "1. Write up, organise and distribute the minutes to those who attended within a reasonable time — distributing before the next meeting reminds people of assignments and deadlines.",
+              "2. Corrections or additions are recorded in the next meeting's minutes, and the group approves them as accurate — as read or as amended.",
+              "3. Follow up with people: thank them for their input and make sure they understand their assignments and have what they need.",
+              "4. Then start getting ready for the next meeting.",
+            ],
+          },
+          {
+            title: "The decision meeting life cycle",
+            lines: [
+              "Decision meetings are part of a continuous cycle — and each stage can be face-to-face or distributed, synchronous or asynchronous.",
+              "1. Pre-meeting — create the agenda, identify the people to invite and their roles, prepare each participant, gather background information.",
+              "2. Meeting — interactions among participants conclude with one or more decisions to be implemented afterwards.",
+              "3. Post-meeting — dissemination, monitoring the implementation of decisions, and clarifying ambiguous details — often by implementers who were not in the room. It is not enough to make a decision and move on: decisions must be periodically reviewed.",
+            ],
+          },
+          {
+            title: "Four aspects of post-meeting support",
+            lines: [
+              "1. The implementation plan — draft and publish an execution plan for each decision, allow changes during execution, generate tasks for the implementation team and record completed tasks.",
+              "2. Follow-up of activities — a formal link between each meeting outcome and its implementation, with working steps whose execution can be tracked and corrected.",
+              "3. Means of interaction — a structured, persistent communication channel between decision makers and implementers, an extension of the meeting for resolving ambiguities.",
+              "4. Awareness — filtered progress information for the people affected by the decision; subscriptions and notifications avoid the informal, time-consuming requests that happen otherwise.",
+            ],
+          },
         ],
         slideQuiz: [
           {
@@ -9715,14 +10018,18 @@ export const CONTENT: Record<string, UnitContent> = {
         flat: true,
         paragraphs: [
           "Once you have completed all the lessons and questions for Unit Standard 114051, you need to check the progress you have made. Below is a competency checklist to help you assess your understanding.",
-          "You should be able to demonstrate:",
-          "Knowledge of different types of technical practitioners meetings and their purposes",
-          "Understanding of leadership styles (democratic, autocratic, facilitative) and their applications",
-          "Knowledge of decision-making processes (voting, consensus, criteria-based rating, ranking, paired comparisons)",
-          "Ability to prepare adequately for technical meetings including venue, facilities, technology, and documentation",
-          "Skills to chair meetings effectively, manage discussions, and ensure productive outcomes",
-          "Ability to conduct post-meeting follow-up including accurate minutes and action tracking",
         ],
+        example: {
+          title: "You should be able to demonstrate",
+          lines: [
+            "1. Knowledge of different types of technical practitioners meetings and their purposes.",
+            "2. Understanding of leadership styles (democratic, autocratic, facilitative) and their applications.",
+            "3. Knowledge of decision-making processes (voting, consensus, criteria-based rating, ranking, paired comparisons).",
+            "4. The ability to prepare adequately for technical meetings — venue, facilities, technology, and documentation.",
+            "5. The skills to chair meetings effectively, manage discussions, and ensure productive outcomes.",
+            "6. The ability to conduct post-meeting follow-up, including accurate minutes and action tracking.",
+          ],
+        },
         bullets: [
           "I am able to describe different types of technical practitioners meetings and their uses",
           "I am able to identify leadership styles used in meeting procedures",
