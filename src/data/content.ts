@@ -9744,6 +9744,8 @@ export const CONTENT: Record<string, UnitContent> = {
         ],
       },
     ],
+    exercises: [],
+    assignments: [],
     quiz: [],
   },
 
