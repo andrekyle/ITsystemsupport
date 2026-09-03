@@ -9215,6 +9215,539 @@ export const CONTENT: Record<string, UnitContent> = {
   },
 
   /* ================================================================
+     US 114051 — Conduct a technical practitioners meeting
+     NQF 5 · 4 credits
+     ================================================================ */
+  "114051": {
+    lesson: [
+      {
+        heading: "Conduct a technical practitioners meeting — introduction",
+        icon: "presenter",
+        flat: true,
+        lessonStart: { n: 1, title: "Demonstrate knowledge of different types of technical practitioners meetings" },
+        paragraphs: [
+          "Time: 90 minutes · Activity: Self & Group.",
+          "Unit Standard 114051 — Conduct a technical practitioners meeting. In this lesson you will be assessed against these specific outcomes and related assessment criteria: the demonstration describes the types of technical meetings and their uses (contract meetings, technical review meetings, project review meetings); the demonstration identifies leadership styles used in meeting procedures (democratic, autocratic, facilitative); and the demonstration identifies decision-making processes used in meetings (voting, consensus, criteria-based rating, ranking, paired comparisons).",
+          "Meetings are very important for the work of any organisation. Good meetings are important for collective decision-making, planning and follow-up, accountability, democracy, and other practices that will help you to build a good organisation.",
+          "The principal activities of a technical committee are the development and maintenance of its associated standards, technical reports, and data files in accordance with the purpose of the organisation.",
+        ],
+        slideQuiz: [
+          {
+            q: "What is Unit Standard 114051 about?",
+            options: [
+              "Conducting a technical practitioners meeting",
+              "Writing business reports and proposals",
+              "Designing IT systems and networks",
+              "Managing hardware and software installations",
+            ],
+            answer: 0,
+            explain: "Unit Standard 114051 is about conducting a technical practitioners meeting.",
+          },
+          {
+            q: "What are the three types of technical meetings covered in this standard?",
+            options: [
+              "Contract meetings, technical review meetings, and project review meetings",
+              "Board meetings, staff meetings, and training sessions",
+              "Annual meetings, quarterly reviews, and monthly updates",
+              "Planning meetings, execution meetings, and evaluation meetings",
+            ],
+            answer: 0,
+            explain: "The assessment criteria list contract meetings, technical review meetings, and project review meetings as the types to be covered.",
+          },
+          {
+            q: "How many leadership styles are identified in meeting procedures?",
+            options: [
+              "Three: democratic, autocratic, and facilitative",
+              "Two: formal and informal",
+              "Four: strict, flexible, collaborative, and directive",
+              "Five: traditional, modern, participative, authoritative, and balanced",
+            ],
+            answer: 0,
+            explain: "The three leadership styles are democratic, autocratic, and facilitative.",
+          },
+          {
+            q: "Which decision-making processes are used in meetings?",
+            options: [
+              "Voting, consensus, criteria-based rating, ranking, and paired comparisons",
+              "Only voting and consensus",
+              "Only majority rule and negotiation",
+              "Random selection and coin-toss methods",
+            ],
+            answer: 0,
+            explain: "Meetings use voting, consensus, criteria-based rating, ranking, and paired comparisons for decision-making.",
+          },
+          {
+            q: "What is the importance of good meetings?",
+            options: [
+              "Collective decision-making, planning and follow-up, accountability, and democracy",
+              "Only to discuss problems and complaints",
+              "Only to announce company decisions to employees",
+              "Only to socialise and build relationships",
+            ],
+            answer: 0,
+            explain: "Good meetings support collective decision-making, planning and follow-up, accountability, and democratic participation.",
+          },
+        ],
+      },
+      {
+        heading: "Different types of technical practitioners meetings",
+        icon: "briefcase",
+        flat: true,
+        paragraphs: [
+          "There are different types of meetings and planning should take account of this. Most organisations will hold general members meetings, special meetings, executive meetings, and annual general meetings. However, for technical practitioners, three key meeting types are most relevant:",
+          "Contract meetings are held to discuss, review, and manage contractual obligations and deliverables related to technical projects or services.",
+          "Technical review meetings are conducted to evaluate technical solutions, designs, implementations, and to resolve technical issues and problems.",
+          "Project review meetings are held to assess project progress, timelines, resource allocation, and project deliverables.",
+        ],
+        slideQuiz: [
+          {
+            q: "What is the primary purpose of a contract meeting?",
+            options: [
+              "To discuss, review, and manage contractual obligations and deliverables",
+              "To teach employees new technical skills",
+              "To celebrate company milestones and achievements",
+              "To plan social events and team building activities",
+            ],
+            answer: 0,
+            explain: "Contract meetings are held to discuss, review, and manage contractual obligations and deliverables related to technical projects or services.",
+          },
+          {
+            q: "What is discussed in a technical review meeting?",
+            options: [
+              "Technical solutions, designs, implementations, and technical issues",
+              "Salary reviews and employee performance ratings",
+              "Marketing strategies and sales targets",
+              "Financial reports and budget allocations",
+            ],
+            answer: 0,
+            explain: "Technical review meetings evaluate technical solutions, designs, implementations, and resolve technical issues and problems.",
+          },
+          {
+            q: "Why are project review meetings important?",
+            options: [
+              "To assess project progress, timelines, resource allocation, and deliverables",
+              "To assign blame for project delays",
+              "To replace project managers with consultants",
+              "To cancel projects that are behind schedule",
+            ],
+            answer: 0,
+            explain: "Project review meetings help assess project progress, timelines, resource allocation, and project deliverables.",
+          },
+        ],
+      },
+      {
+        heading: "Leadership styles in meetings",
+        icon: "people",
+        flat: true,
+        paragraphs: [
+          "There are three main leadership styles used in meeting procedures: democratic, autocratic, and facilitative.",
+          "Democratic meetings are held with appointed or nominated delegates from departments, organisations or areas. These delegates will be given the information and the meeting will be conducted in this manner. All members have a voice and participate in decision-making.",
+          "Autocratic meetings are hosted and led by a chairperson who will run the entire meeting and will give most of the input. The other attendees will be required to give input only when instructed. Decision-making is centralised and controlled by the chair.",
+          "Facilitative meetings are group efforts where the leader sets a trend of ensuring that all members are actively participating in the meeting to achieve the outcome or goal. The facilitator guides discussion while enabling full participation.",
+        ],
+        slideQuiz: [
+          {
+            q: "Which leadership style gives all members equal voice in decision-making?",
+            options: [
+              "Democratic",
+              "Autocratic",
+              "Facilitative",
+              "Authoritarian",
+            ],
+            answer: 0,
+            explain: "Democratic meetings ensure that all members have a voice and participate in decision-making.",
+          },
+          {
+            q: "In an autocratic meeting, who primarily controls the discussion and decisions?",
+            options: [
+              "The chairperson",
+              "All participants equally",
+              "The facilitator",
+              "The majority of attendees",
+            ],
+            answer: 0,
+            explain: "In autocratic meetings, the chairperson runs the entire meeting and gives most of the input, with attendees providing input only when instructed.",
+          },
+          {
+            q: "What is the role of a facilitator in a facilitative meeting?",
+            options: [
+              "To guide discussion while enabling full participation from all members",
+              "To make all decisions for the group",
+              "To observe silently without contributing",
+              "To favour the views of senior members only",
+            ],
+            answer: 0,
+            explain: "In facilitative meetings, the facilitator guides discussion while ensuring all members actively participate to achieve the meeting's goal.",
+          },
+        ],
+      },
+      {
+        heading: "Decision-making processes in meetings",
+        icon: "chart",
+        flat: true,
+        paragraphs: [
+          "Meetings use various decision-making processes to arrive at conclusions and take action. The main processes are: voting, consensus, criteria-based rating, ranking, and paired comparisons.",
+          "Voting is a direct democratic process where each participant votes, typically by show of hands or ballot, and the option with the most votes wins. Simple majority (50% + 1) or supermajority (two-thirds or 75%) rules may apply.",
+          "Consensus means that all participants agree or at least can accept the decision. It requires discussion and compromise until all can support the outcome.",
+          "Criteria-based rating involves evaluating options against predetermined criteria and rating each option on each criterion, then scoring to identify the best option.",
+          "Ranking involves having participants rank options from best to worst, with scores assigned based on ranking position, then totaling scores across all participants.",
+          "Paired comparisons involve comparing options two at a time, with participants indicating their preference for each pair, and then scoring based on how many times each option is preferred.",
+        ],
+        slideQuiz: [
+          {
+            q: "What is the main feature of a voting decision-making process?",
+            options: [
+              "Each participant votes and the option with most votes wins",
+              "Everyone must agree with the decision",
+              "Options are scored against predetermined criteria",
+              "Options are compared two at a time",
+            ],
+            answer: 0,
+            explain: "Voting is a democratic process where each participant votes and the option with the most votes wins.",
+          },
+          {
+            q: "What does consensus mean in a meeting context?",
+            options: [
+              "All participants agree or at least can accept the decision",
+              "The majority makes a decision that others must follow",
+              "The loudest voice determines the decision",
+              "A randomly selected participant decides for the group",
+            ],
+            answer: 0,
+            explain: "Consensus requires discussion and compromise until all participants agree or can at least accept the decision.",
+          },
+          {
+            q: "How does criteria-based rating work?",
+            options: [
+              "Options are evaluated against predetermined criteria and rated on each criterion",
+              "Each person randomly selects an option without discussion",
+              "The chair unilaterally selects the best option",
+              "Options are eliminated based on personal preferences only",
+            ],
+            answer: 0,
+            explain: "Criteria-based rating involves evaluating options against predetermined criteria and rating each option on each criterion, then scoring to identify the best option.",
+          },
+          {
+            q: "What is paired comparisons?",
+            options: [
+              "Comparing options two at a time and scoring based on preferences",
+              "Comparing only the top two options selected by vote",
+              "Pairing team members to discuss options privately",
+              "Comparing meeting notes from previous meetings",
+            ],
+            answer: 0,
+            explain: "Paired comparisons involve comparing options two at a time, with scores assigned based on how many times each option is preferred over others.",
+          },
+        ],
+      },
+      {
+        heading: "Meeting conventions and procedures",
+        icon: "document",
+        flat: true,
+        paragraphs: [
+          "Good meetings follow established conventions and procedures to ensure order, fairness, and effectiveness. Key conventions include moving, seconding, amending, and voting procedures.",
+          "Moving means formally proposing a resolution or course of action. A mover states their proposal clearly: 'I move that we...'",
+          "Seconding means supporting a motion by indicating another member agrees it is worthy of discussion. A seconder says: 'I second that motion.'",
+          "Amending means modifying a motion before voting. Amendments can change the wording, scope, or terms of the original motion. All amendments must be voted on.",
+          "Voting procedures ensure fair counting of votes. They include methods for raising hands, show of hands, ballot voting, and recording abstentions (members not voting either way).",
+          "An important note: the note taker should have technical background knowledge. This ensures that technical terminology is correctly recorded and that technical context is properly understood and documented in the minutes.",
+        ],
+        slideQuiz: [
+          {
+            q: "What does 'moving' mean in a meeting context?",
+            options: [
+              "Formally proposing a resolution or course of action",
+              "Walking around the room to get attention",
+              "Adjourning the meeting early",
+              "Asking people to relocate to a different venue",
+            ],
+            answer: 0,
+            explain: "Moving means formally proposing a resolution or course of action, stated as 'I move that we...'",
+          },
+          {
+            q: "What is the purpose of seconding a motion?",
+            options: [
+              "To indicate another member agrees it is worthy of discussion",
+              "To reject the motion immediately",
+              "To delay the vote for one week",
+              "To replace the original motion with a new one",
+            ],
+            answer: 0,
+            explain: "Seconding means supporting a motion by indicating another member agrees it is worthy of discussion.",
+          },
+          {
+            q: "What is an amendment in meeting procedures?",
+            options: [
+              "A modification to a motion before voting",
+              "A decision to end the meeting early",
+              "A request for a recess or break",
+              "An appeal to change the venue",
+            ],
+            answer: 0,
+            explain: "Amending means modifying a motion before voting, changing its wording, scope, or terms.",
+          },
+          {
+            q: "Why should the note taker have technical background knowledge?",
+            options: [
+              "To ensure technical terminology is correctly recorded and technical context is properly understood",
+              "To manage the financial budget of the meeting",
+              "To set up the audio-visual equipment",
+              "To hire new technical staff members",
+            ],
+            answer: 0,
+            explain: "The note taker should have technical background knowledge so that technical terminology is correctly recorded and technical context is properly understood in the minutes.",
+          },
+        ],
+      },
+      {
+        heading: "Preparing for a technical practitioners meeting",
+        icon: "checklist",
+        flat: true,
+        lessonStart: { n: 2, title: "Prepare for a technical practitioners meeting" },
+        paragraphs: [
+          "Time: 90 minutes · Activity: Self & Group.",
+          "When meetings are arranged, the outcome of such meetings is heavily dependent on the preparation and input into the meetings. Proper preparation ensures clarity, engagement, and successful outcomes.",
+          "Venue selection is critical. The size and interactive capabilities of the venue will heavily affect the meeting outcome. The venue must be able to accommodate required group movements and activities. Location accessibility affects participant turnout. The venue should be positioned to minimise distractions.",
+          "Facilities must be appropriate to the meeting type and outcomes required. These may include tables, chairs, flipcharts, whiteboards, screens, audio/visual equipment, and breakout spaces for group work.",
+          "Technology requirements depend on the meeting type. Online meetings may require internet access and video conferencing software. Technical demonstrations may require specific equipment or software access.",
+          "Relevant supporting information includes user guides, manuals, reference documents, and background information that participants need to understand the meeting topics and prepare adequately.",
+          "Meeting outcomes must be clear, concise, and well-documented. Participants need to understand what the meeting aims to achieve and what outputs are expected.",
+          "Meeting invitations must be extended timeously to all relevant participants, giving them sufficient time to prepare and arrange their schedules.",
+          "The meeting agenda and supporting documentation must be completed and distributed before the meeting, ideally a week in advance.",
+        ],
+        slideQuiz: [
+          {
+            q: "Why is venue selection important for a technical meeting?",
+            options: [
+              "The size and interactive capabilities affect the meeting outcome",
+              "It determines the refreshments that will be served",
+              "It decides who will be invited to attend",
+              "It controls how long the meeting will last",
+            ],
+            answer: 0,
+            explain: "The size and interactive capabilities of the venue heavily affect the meeting outcome and whether participants can engage effectively.",
+          },
+          {
+            q: "What should facilities for a meeting include?",
+            options: [
+              "Tables, chairs, flipcharts, whiteboards, screens, audio/visual equipment, and breakout spaces",
+              "Only chairs and a table for the chairperson",
+              "Only a computer for presentations",
+              "Only refreshments and coffee",
+            ],
+            answer: 0,
+            explain: "Facilities should be appropriate to the meeting type and include various equipment depending on what is needed.",
+          },
+          {
+            q: "What is the importance of providing supporting information before a meeting?",
+            options: [
+              "It helps participants understand topics and prepare adequately",
+              "It determines who will be appointed as chair",
+              "It allows the secretary to write better minutes",
+              "It reduces the need for taking notes during the meeting",
+            ],
+            answer: 0,
+            explain: "Relevant supporting information helps participants understand the meeting topics and prepare adequately.",
+          },
+          {
+            q: "When should meeting agendas be distributed?",
+            options: [
+              "Ideally a week in advance, with supporting documentation",
+              "Only on the day of the meeting",
+              "Only to the chairperson, not to other participants",
+              "After the meeting is completed",
+            ],
+            answer: 0,
+            explain: "Meeting agendas and supporting documentation should be distributed well in advance to allow participants to prepare.",
+          },
+        ],
+      },
+      {
+        heading: "Chairing a technical practitioners meeting",
+        icon: "gavel",
+        flat: true,
+        lessonStart: { n: 3, title: "Chair a technical practitioners meeting" },
+        paragraphs: [
+          "Time: 90 minutes · Activity: Self & Group.",
+          "The chairperson is the most important person in the meeting. They will set the pace, ensure people stick to topics, ensure democratic decisions are taken, and ensure everyone agrees with these decisions.",
+          "Before the meeting starts, the chair and members should agree on rules and guidelines on behaviour to ensure smooth and respectful proceedings.",
+          "The chair must apply agreed meeting conventions throughout the meeting, according to the type of meeting and in accordance with the standing procedures of the organisation involved.",
+          "The chair should ensure that the published agenda is followed, keeping discussion on track and allocating time according to topic importance.",
+          "The chair must provide for active participation by all members to avoid or minimise conflict. This includes managing difficult behaviours: the heckler, the overly talkative person, the cynic, the silent member, conflicting egos, side conversations, and factually wrong statements.",
+          "The chair should ensure that meeting topics are prioritised and that discussion times are allocated according to importance, urgency, and complexity.",
+          "Most importantly, the chair must ensure that agreed decisions are clear, accurate, include a time frame for action, and are within the mandate of the type of meeting being conducted.",
+        ],
+        slideQuiz: [
+          {
+            q: "What is the primary role of a chairperson in a meeting?",
+            options: [
+              "To set the pace, ensure people stick to topics, and ensure democratic decisions are taken",
+              "To make all decisions for the group without consultation",
+              "To prevent anyone from speaking except themselves",
+              "To extend the meeting as long as possible",
+            ],
+            answer: 0,
+            explain: "The chairperson sets the pace, ensures people stick to topics, ensures democratic decisions are taken, and ensures everyone agrees with these decisions.",
+          },
+          {
+            q: "What should the chair do before the meeting starts?",
+            options: [
+              "Ensure the chair and members agree on rules and guidelines on behaviour",
+              "Decide all meeting outcomes in advance",
+              "Exclude participants who might disagree",
+              "Cancel the meeting if not all expected attendees arrive",
+            ],
+            answer: 0,
+            explain: "Before the meeting starts, the chair and members should agree on rules and guidelines on behaviour.",
+          },
+          {
+            q: "How should the chairperson manage difficult meeting behaviours?",
+            options: [
+              "By providing for active participation by all and addressing problematic behaviours directly but respectfully",
+              "By excluding disruptive people from the meeting",
+              "By ignoring negative behaviours and hoping they stop",
+              "By adjourning the meeting immediately",
+            ],
+            answer: 0,
+            explain: "The chairperson should manage difficult behaviours by ensuring active participation from all while addressing problems directly and respectfully.",
+          },
+          {
+            q: "What must be true of meeting decisions?",
+            options: [
+              "They must be clear, accurate, include a time frame for action, and be within the mandate of the meeting",
+              "They need to satisfy only the chairperson",
+              "They can be changed after they are recorded in the minutes",
+              "They don't need to be documented or communicated",
+            ],
+            answer: 0,
+            explain: "Agreed decisions must be clear, accurate, include a time frame for action, and be within the mandate of the type of meeting being conducted.",
+          },
+        ],
+      },
+      {
+        heading: "Conducting post-meeting follow-up for a technical meeting",
+        icon: "report",
+        flat: true,
+        lessonStart: { n: 4, title: "Conduct post-meeting follow-up for a technical meeting" },
+        paragraphs: [
+          "Time: 90 minutes · Activity: Self & Group.",
+          "There has been much emphasis on group decision support systems but little attention has been paid to the implementation stage that follows a decision meeting. The gap between the end of a meeting and its post-meeting activities may turn the decision inconsequent, due to inappropriate support to the implementation stage.",
+          "Decisions that are implemented without necessary follow-up may generate outcomes different from those planned at the time of the decision. Supporting post-decision activities and linking them to the corresponding decision meeting are essential to make the meeting cycle fully successful.",
+          "Post-meeting support includes four key aspects: the decision implementation plan; the follow-up of implementation activities; support for interaction between decision makers and implementers; and awareness support to external members.",
+          "The follow-up ensures that minutes of the meeting are produced accurately and in line with the policy of the organisation. Minutes serve as a reminder of issues that need follow-up and prevent arguments about previous decisions.",
+          "The follow-up communicates agreed records of discussion to interested parties in a format and timeframe that meet requirements of the type of meeting and of the organisation involved.",
+          "The follow-up includes a summary of discussions and actions, and meets format requirements. This ensures clarity about what was discussed and what actions need to be taken by whom and when.",
+        ],
+        slideQuiz: [
+          {
+            q: "Why is post-meeting follow-up important?",
+            options: [
+              "It ensures decisions are properly implemented and outcomes match what was planned",
+              "It allows people to forget about the meeting immediately",
+              "It extends the meeting cycle unnecessarily",
+              "It gives administrators something to do after the meeting ends",
+            ],
+            answer: 0,
+            explain: "Post-meeting follow-up is essential because decisions without proper implementation support may generate outcomes different from those planned.",
+          },
+          {
+            q: "What are the four key aspects of post-meeting support?",
+            options: [
+              "Decision implementation plan, follow-up of activities, interaction support, and awareness to external members",
+              "Writing minutes, adjourning the meeting, sending thank-you notes, and planning the next meeting",
+              "Collecting feedback, paying invoices, updating calendars, and scheduling refreshments",
+              "Deleting meeting notes, archiving files, updating websites, and notifying departments",
+            ],
+            answer: 0,
+            explain: "Post-meeting support includes the decision implementation plan, follow-up of implementation activities, support for interaction between decision makers and implementers, and awareness support to external members.",
+          },
+          {
+            q: "What should accurate meeting minutes achieve?",
+            options: [
+              "Serve as a reminder of issues needing follow-up and prevent arguments about previous decisions",
+              "Provide entertainment for those who attended",
+              "Give the secretary a permanent record to keep private",
+              "Allow people to dispute what was decided at the meeting",
+            ],
+            answer: 0,
+            explain: "Minutes serve as a reminder of issues that need to be followed up and prevent arguments about previous decisions.",
+          },
+          {
+            q: "What should a summary of discussions and actions include?",
+            options: [
+              "What was discussed, what actions need to be taken, by whom, and when",
+              "Only the decisions that were made",
+              "Only the people who were absent from the meeting",
+              "Only financial implications of the decisions",
+            ],
+            answer: 0,
+            explain: "A follow-up summary should include what was discussed, what actions are needed, who is responsible, and what the timeframes are.",
+          },
+        ],
+      },
+      {
+        heading: "Self-assessment and competency checklist",
+        icon: "target",
+        flat: true,
+        paragraphs: [
+          "Once you have completed all the lessons and questions for Unit Standard 114051, you need to check the progress you have made. Below is a competency checklist to help you assess your understanding.",
+          "You should be able to demonstrate:",
+          "Knowledge of different types of technical practitioners meetings and their purposes",
+          "Understanding of leadership styles (democratic, autocratic, facilitative) and their applications",
+          "Knowledge of decision-making processes (voting, consensus, criteria-based rating, ranking, paired comparisons)",
+          "Ability to prepare adequately for technical meetings including venue, facilities, technology, and documentation",
+          "Skills to chair meetings effectively, manage discussions, and ensure productive outcomes",
+          "Ability to conduct post-meeting follow-up including accurate minutes and action tracking",
+        ],
+        bullets: [
+          "I am able to describe different types of technical practitioners meetings and their uses",
+          "I am able to identify leadership styles used in meeting procedures",
+          "I am able to identify decision-making processes used in meetings",
+          "I am able to prepare for a technical practitioners meeting",
+          "I am able to chair a technical practitioners meeting",
+          "I am able to conduct post-meeting follow-up for a technical meeting",
+        ],
+        slideQuiz: [
+          {
+            q: "What are the main assessment outcomes for Unit Standard 114051?",
+            options: [
+              "Knowledge of meeting types, leadership styles, decision-making processes, preparation, chairing, and follow-up",
+              "Only the ability to take minutes and write reports",
+              "Only the ability to use video conferencing software",
+              "Only knowledge of meeting conventions and procedures",
+            ],
+            answer: 0,
+            explain: "Unit Standard 114051 assesses knowledge of meeting types, leadership styles, decision-making processes, preparation skills, chairing ability, and follow-up procedures.",
+          },
+          {
+            q: "If you don't feel confident about any area, what should you do?",
+            options: [
+              "Indicate which areas need improvement and work with your facilitator for additional support",
+              "Accept that you cannot be competent in that area",
+              "Move on to the next unit without addressing the gap",
+              "Assume the other participants will help you when needed",
+            ],
+            answer: 0,
+            explain: "If you feel you require additional knowledge in any area, you should indicate this and make arrangements with your facilitator to assist you.",
+          },
+          {
+            q: "How often should you review your learning progress in this unit?",
+            options: [
+              "Regularly throughout the course to ensure understanding",
+              "Only at the end of the course",
+              "Never — once you complete it, you're done",
+              "Only if you are having difficulties",
+            ],
+            answer: 0,
+            explain: "Regular review of your progress helps ensure thorough understanding and identifies areas needing reinforcement.",
+          },
+        ],
+      },
+    ],
+    quiz: [],
+  },
+
+  /* ================================================================
      US 114055 — Ethics and professionalism for the computer industry
      NQF 5 · 3 credits
      ================================================================ */
