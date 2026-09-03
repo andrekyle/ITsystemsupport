@@ -10166,6 +10166,7 @@ export const CONTENT: Record<string, UnitContent> = {
       prep: [
         "Study the notes in this lesson plan carefully to ensure preparation is done before the start of classes.",
         "Study the learner materials so that you are familiar with the topics that will be covered in this part of the course.",
+        "Download the four Specific Outcome slide decks from the Course material tab — Knowledge of Meetings, Preparing, Chairing and Post-Meeting Follow-Up.",
         "Prepare the role-play scenarios for the Day 2 practical: each group needs an agenda template, a scenario card and an observation checklist.",
       ],
       sections: [

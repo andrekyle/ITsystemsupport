@@ -1747,7 +1747,10 @@ const BUILTIN_DECKS: Record<string, { name: string; url: string }[]> = {
     { name: "Lesson 4 — Business Information Needs", url: "/downloads/US-114050-L4-Business-Information-Needs.pdf" },
   ],
   "114051": [
-    { name: "Conduct a Technical Practitioners Meeting", url: "/downloads/US-114051-Technical-Practitioners-Meeting.pdf" },
+    { name: "Knowledge of Technical Meetings", url: "/downloads/US-114051-L1-Knowledge-of-Meetings.pdf" },
+    { name: "Lesson 2 — Preparing the Meeting", url: "/downloads/US-114051-L2-Preparing-the-Meeting.pdf" },
+    { name: "Lesson 3 — Chairing the Meeting", url: "/downloads/US-114051-L3-Chairing-the-Meeting.pdf" },
+    { name: "Lesson 4 — Post-Meeting Follow-Up", url: "/downloads/US-114051-L4-Post-Meeting-Follow-Up.pdf" },
   ],
 };
 
