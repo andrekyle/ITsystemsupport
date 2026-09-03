@@ -106,6 +106,8 @@ interface TextOpts {
   valign?: "top" | "middle";
   lineGap?: number;
   charSpacing?: number;
+  /** render on a single line even if wider than the box */
+  noWrap?: boolean;
 }
 
 /** Text inside an inch-based box, with optional vertical centring. */
@@ -118,6 +120,7 @@ function textBox(text: string, x: number, y: number, w: number, h: number, o: Te
     align: o.align ?? ("left" as const),
     lineGap: o.lineGap ?? size * 0.18,
     characterSpacing: o.charSpacing ?? 0,
+    ...(o.noWrap ? { lineBreak: false } : {}),
   };
   let ty = inx(y);
   if (o.valign === "middle") {
@@ -250,7 +253,7 @@ const meta: [string, string][] = [
 ];
 meta.forEach(([k, v], i) => {
   const x = 0.55 + (i * CW) / 4 / IN;
-  textBox(k, x, 4.84, CW / 4 / IN - 0.2, 0.36, { font: TITLE_FONT, color: BLUE, charSpacing: 1 });
+  textBox(k, x, 4.84, CW / 4 / IN - 0.2, 0.36, { font: TITLE_FONT, color: BLUE, charSpacing: 0.5, noWrap: true });
   textBox(v, x, 5.22, CW / 4 / IN - 0.2, 1.0, {});
 });
 textBox("ITSS Learn · Investec · Corporate Banking Technology", 0.55, 7.5 - 0.58, CW / IN, 0.4, { color: GREY });
