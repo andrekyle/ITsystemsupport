@@ -18,6 +18,7 @@ const out = {
   headings: (u?.lesson ?? []).map((l: any) => l.heading),
   allHaveFields: (u?.lesson ?? []).every((l: any) => l.heading && l.icon && Array.isArray(l.paragraphs)),
   gateQuizzes: (u?.lesson ?? []).reduce((n: number, l: any) => n + (l.slideQuiz?.length ?? 0), 0),
+  slidesWithFiveQs: (u?.lesson ?? []).filter((l: any) => (l.slideQuiz?.length ?? 0) === 5).length,
   exercises: u?.exercises?.length ?? 0,
   quizzes: (u?.quizzes ?? []).reduce((n: number, q: any) => n + q.questions.length, 0),
   namedQuizzes: u?.quizzes?.length ?? 0,
@@ -77,7 +78,7 @@ const topics = [
 ];
 const missing = topics.filter((t) => !u.headings.some((h) => t.test(h)));
 test("TEST 5: Key topics covered in slide headings", missing.length === 0, missing.length ? `missing ${missing.join(", ")}` : `${topics.length}/${topics.length} topics`);
-test("TEST 6: Gate quizzes present across slides", u.gateQuizzes >= 30, `${u.gateQuizzes} questions`);
+test("TEST 6: Every slide has a 5-question gate quiz", u.slidesWithFiveQs === u.lessons, `${u.slidesWithFiveQs}/${u.lessons} slides · ${u.gateQuizzes} questions`);
 test("TEST 7: Exercises for all four SOs", u.exercises >= 4, `${u.exercises} exercises`);
 test("TEST 8: Named quizzes with full question bank", u.namedQuizzes >= 4 && u.quizzes >= 20, `${u.namedQuizzes} quizzes, ${u.quizzes} questions`);
 test("TEST 9: Logbook, self assessment, lesson plan and SAQA present", u.logbook && u.selfAssessment && u.lessonPlan && u.saqaSections === 4, `saqa sections: ${u.saqaSections}`);
