@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "make:hwsw2-pdf": "tsx scripts/make-hwsw2-pdf.ts",
     "make:114051-pdf": "tsx scripts/make-114051-pdf.ts",
+    "make:114051-ppt": "node scripts/make-114051-ppt.mjs",
     "make:pitch-ppt": "node scripts/make-platform-pitch-ppt.mjs",
     "make:music-piracy-pdf": "tsx scripts/make-music-piracy-pdf.ts"
   },
