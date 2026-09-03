@@ -111,7 +111,7 @@ Each quiz question includes:
   title: "Conduct a technical practitioners meeting", 
   nqf: 5, 
   credits: 4, 
-  dates: "28 Aug 2026", 
+  dates: "03, 04 Sep 2026", 
   time: "09h00 - 14h00" 
 }
 ```
