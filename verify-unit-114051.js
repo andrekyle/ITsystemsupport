@@ -1,184 +1,92 @@
-#!/usr/bin/env node
+// Verifies unit 114051 in the REAL src/data/content.ts (no mocks).
+// Run: node verify-unit-114051.js   (spawns tsx to load the TS module)
+import { execFileSync } from "node:child_process";
+import { writeFileSync, unlinkSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
-/**
- * Unit 114051 Content Verification Script
- * Verifies that the newly added unit 114051 content is properly structured and accessible
- */
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const tsx = join(__dirname, "node_modules", ".bin", process.platform === "win32" ? "tsx.cmd" : "tsx");
 
-// Mock content structure for testing (simplified version)
-const mockContent = {
-  "114051": {
-    lesson: [
-      {
-        heading: "Conduct a technical practitioners meeting — introduction",
-        icon: "presenter",
-        flat: true,
-        lessonStart: { n: 1, title: "Demonstrate knowledge of different types of technical practitioners meetings" },
-        slideQuiz: []
-      },
-      {
-        heading: "Different types of technical practitioners meetings",
-        icon: "briefcase",
-        slideQuiz: []
-      },
-      {
-        heading: "Leadership styles in meetings",
-        icon: "people",
-        slideQuiz: []
-      },
-      {
-        heading: "Decision-making processes in meetings",
-        icon: "chart",
-        slideQuiz: []
-      },
-      {
-        heading: "Meeting conventions and procedures",
-        icon: "document",
-        slideQuiz: []
-      },
-      {
-        heading: "Preparing for a technical practitioners meeting",
-        icon: "checklist",
-        flat: true,
-        lessonStart: { n: 2, title: "Prepare for a technical practitioners meeting" },
-        slideQuiz: []
-      },
-      {
-        heading: "Chairing a technical practitioners meeting",
-        icon: "gavel",
-        flat: true,
-        lessonStart: { n: 3, title: "Chair a technical practitioners meeting" },
-        slideQuiz: []
-      },
-      {
-        heading: "Conducting post-meeting follow-up for a technical meeting",
-        icon: "report",
-        flat: true,
-        lessonStart: { n: 4, title: "Conduct post-meeting follow-up for a technical meeting" },
-        slideQuiz: []
-      },
-      {
-        heading: "Self-assessment and competency checklist",
-        icon: "target",
-        slideQuiz: []
-      }
-    ],
-    quiz: []
-  }
+const probe = `
+import { CONTENT } from "./src/data/content";
+const u: any = CONTENT["114051"];
+const out = {
+  exists: !!u,
+  lessons: u?.lesson?.length ?? 0,
+  soMarkers: (u?.lesson ?? []).filter((l: any) => l.lessonStart).map((l: any) => l.lessonStart),
+  headings: (u?.lesson ?? []).map((l: any) => l.heading),
+  allHaveFields: (u?.lesson ?? []).every((l: any) => l.heading && l.icon && Array.isArray(l.paragraphs)),
+  gateQuizzes: (u?.lesson ?? []).reduce((n: number, l: any) => n + (l.slideQuiz?.length ?? 0), 0),
+  exercises: u?.exercises?.length ?? 0,
+  quizzes: (u?.quizzes ?? []).reduce((n: number, q: any) => n + q.questions.length, 0),
+  namedQuizzes: u?.quizzes?.length ?? 0,
+  logbook: !!u?.logbook,
+  selfAssessment: !!u?.selfAssessment,
+  lessonPlan: !!u?.lessonPlan,
+  saqaSections: u?.saqa?.sections?.length ?? 0,
 };
+console.log(JSON.stringify(out));
+`;
 
-// Verification tests
-console.log("=".repeat(80));
+const raw = (() => {
+  const probeFile = join(__dirname, ".verify-114051-probe.mts");
+  writeFileSync(probeFile, probe);
+  try {
+    return execFileSync(tsx, [probeFile], { cwd: __dirname, encoding: "utf8", shell: process.platform === "win32" });
+  } finally {
+    unlinkSync(probeFile);
+  }
+})();
+const u = JSON.parse(raw.trim().split("\n").pop());
+
+const line = "=".repeat(80);
+console.log(line);
 console.log("UNIT STANDARD 114051 - CONTENT VERIFICATION");
-console.log("=".repeat(80));
+console.log(line);
 
-// Test 1: Unit exists
-console.log("\n✓ TEST 1: Unit 114051 exists in content");
-console.log(`  Result: ${mockContent["114051"] ? "PASS" : "FAIL"}`);
-
-// Test 2: Unit has lesson array
-console.log("\n✓ TEST 2: Unit has lesson array");
-const hasLessons = mockContent["114051"] && Array.isArray(mockContent["114051"].lesson);
-console.log(`  Result: ${hasLessons ? "PASS" : "FAIL"}`);
-
-// Test 3: Unit has 9 lessons
-console.log("\n✓ TEST 3: Unit has 9 lessons");
-const lessonCount = mockContent["114051"].lesson.length;
-console.log(`  Result: ${lessonCount === 9 ? "PASS" : "FAIL"} (Found ${lessonCount} lessons)`);
-
-// Test 4: All lessons have required fields
-console.log("\n✓ TEST 4: All lessons have required fields (heading, icon)");
-let allLessonsValid = true;
-mockContent["114051"].lesson.forEach((lesson, idx) => {
-  if (!lesson.heading || !lesson.icon) {
-    console.log(`  ✗ Lesson ${idx + 1} missing required fields`);
-    allLessonsValid = false;
-  }
-});
-console.log(`  Result: ${allLessonsValid ? "PASS" : "FAIL"}`);
-
-// Test 5: Lessons with lessonStart field
-console.log("\n✓ TEST 5: Check for lesson start markers (Specific Outcomes)");
-const lessonsWithStart = mockContent["114051"].lesson.filter(l => l.lessonStart);
-console.log(`  Result: PASS (Found ${lessonsWithStart.length} lessons with SO markers)`);
-lessonsWithStart.forEach(l => {
-  console.log(`    - SO ${l.lessonStart.n}: ${l.lessonStart.title}`);
-});
-
-// Test 6: Quiz questions exist
-console.log("\n✓ TEST 6: Quiz structure exists");
-const hasQuiz = mockContent["114051"].quiz !== undefined;
-console.log(`  Result: ${hasQuiz ? "PASS" : "FAIL"}`);
-
-// Test 7: Verify specific outcomes coverage
-console.log("\n✓ TEST 7: Specific Outcomes Coverage");
-const specificOutcomes = new Set(lessonsWithStart.map(l => l.lessonStart.n));
-const expectedSOs = new Set([1, 2, 3, 4]);
-let soMatch = true;
-expectedSOs.forEach(so => {
-  if (specificOutcomes.has(so)) {
-    console.log(`  ✓ SO ${so}: Covered`);
-  } else {
-    console.log(`  ✗ SO ${so}: MISSING`);
-    soMatch = false;
-  }
-});
-console.log(`  Result: ${soMatch ? "PASS" : "FAIL"}`);
-
-// Test 8: Verify lesson topics
-console.log("\n✓ TEST 8: Lesson Topics Coverage");
-const requiredTopics = [
-  "introduction",
-  "types of technical practitioners meetings",
-  "leadership styles",
-  "decision-making processes",
-  "meeting conventions",
-  "preparing for",
-  "chairing",
-  "post-meeting follow-up",
-  "self-assessment"
-];
-
-mockContent["114051"].lesson.forEach((lesson, idx) => {
-  const headingLower = lesson.heading.toLowerCase();
-  const matchedTopics = requiredTopics.filter(topic => headingLower.includes(topic));
-  if (matchedTopics.length > 0) {
-    console.log(`  ✓ Lesson ${idx + 1}: ${lesson.heading}`);
-  }
-});
-console.log(`  Result: PASS`);
-
-// Test 9: Verify accessibility via getContent function
-console.log("\n✓ TEST 9: Unit accessible via getContent('114051')");
-function getContent(us) {
-  return mockContent[us];
+let failures = 0;
+function test(name, pass, detail = "") {
+  if (!pass) failures++;
+  console.log(`\n${pass ? "✓" : "✗"} ${name}`);
+  console.log(`  Result: ${pass ? "PASS" : "FAIL"}${detail ? ` (${detail})` : ""}`);
 }
-const retrieved = getContent("114051");
-console.log(`  Result: ${retrieved ? "PASS" : "FAIL"}`);
 
-// Summary
-console.log("\n" + "=".repeat(80));
+test("TEST 1: Unit 114051 exists in content", u.exists);
+test("TEST 2: Unit has a full set of lesson slides", u.lessons >= 28, `Found ${u.lessons} slides`);
+test("TEST 3: All slides have heading, icon and paragraphs", u.allHaveFields);
+test("TEST 4: All four Specific Outcome markers present", u.soMarkers.length === 4, u.soMarkers.map((s) => `SO ${s.n}`).join(", "));
+const topics = [
+  /introduction/i,
+  /types of technical practitioners meetings/i,
+  /leadership styles/i,
+  /decision-making processes/i,
+  /conventions/i,
+  /resolutions/i,
+  /procedural points/i,
+  /note taker/i,
+  /preparing for a technical/i,
+  /notification/i,
+  /agenda/i,
+  /chairing a technical/i,
+  /difficult behaviours/i,
+  /post-meeting follow-up/i,
+  /minutes/i,
+  /life cycle/i,
+  /self-assessment/i,
+];
+const missing = topics.filter((t) => !u.headings.some((h) => t.test(h)));
+test("TEST 5: Key topics covered in slide headings", missing.length === 0, missing.length ? `missing ${missing.join(", ")}` : `${topics.length}/${topics.length} topics`);
+test("TEST 6: Gate quizzes present across slides", u.gateQuizzes >= 30, `${u.gateQuizzes} questions`);
+test("TEST 7: Exercises for all four SOs", u.exercises >= 4, `${u.exercises} exercises`);
+test("TEST 8: Named quizzes with full question bank", u.namedQuizzes >= 4 && u.quizzes >= 20, `${u.namedQuizzes} quizzes, ${u.quizzes} questions`);
+test("TEST 9: Logbook, self assessment, lesson plan and SAQA present", u.logbook && u.selfAssessment && u.lessonPlan && u.saqaSections === 4, `saqa sections: ${u.saqaSections}`);
+
+console.log(`\n${line}`);
 console.log("VERIFICATION SUMMARY");
-console.log("=".repeat(80));
-console.log(`
-Unit: 114051 - Conduct a technical practitioners meeting
-Lessons: ${lessonCount}
-Status: ✓ READY FOR TESTING
-
-The unit has been successfully added to src/data/content.ts with:
-- 9 comprehensive lessons covering all specific outcomes (SO 1-4)
-- Quiz questions for formative assessment
-- Self-assessment checklist for learner evaluation
-- Meeting types, leadership styles, and decision-making processes
-- Preparation, chairing, and follow-up procedures
-- Full assessment criteria alignment
-
-Next Steps:
-1. Run the build process to ensure TypeScript compilation succeeds
-2. Test the web interface to verify unit displays correctly
-3. Test quiz functionality in each lesson
-4. Verify course navigation flows properly through unit 114051
-5. Test learner feedback and progress tracking
-
-`);
-console.log("=".repeat(80));
+console.log(line);
+console.log(`\nUnit: 114051 - Conduct a technical practitioners meeting`);
+console.log(`Slides: ${u.lessons} · Gate quiz questions: ${u.gateQuizzes} · Exercises: ${u.exercises} · Quiz bank: ${u.quizzes}`);
+console.log(`Status: ${failures === 0 ? "✓ READY FOR TESTING" : `✗ ${failures} TEST(S) FAILED`}`);
+console.log(`\n${line}`);
+process.exit(failures === 0 ? 0 : 1);

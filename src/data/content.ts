@@ -9230,6 +9230,14 @@ export const CONTENT: Record<string, UnitContent> = {
           "Unit Standard 114051 — Conduct a technical practitioners meeting. In this lesson you will be assessed against these specific outcomes and related assessment criteria: the demonstration describes the types of technical meetings and their uses (contract meetings, technical review meetings, project review meetings); the demonstration identifies leadership styles used in meeting procedures (democratic, autocratic, facilitative); and the demonstration identifies decision-making processes used in meetings (voting, consensus, criteria-based rating, ranking, paired comparisons).",
           "Meetings are very important for the work of any organisation. Good meetings are important for collective decision-making, planning and follow-up, accountability, democracy, and other practices that will help you to build a good organisation.",
         ],
+      },
+      {
+        heading: "Using meetings well — four things to get right",
+        icon: "target",
+        flat: true,
+        paragraphs: [
+          "If meetings are used in the correct way, they help an organisation to be efficient. Four things decide whether they do:",
+        ],
         cards: [
           {
             icon: "target",
@@ -9339,6 +9347,14 @@ export const CONTENT: Record<string, UnitContent> = {
             text: "Laid down in the constitution. The executive accounts to all members for the year's activities and finances, and new leaders are elected and given a mandate to run the organisation for another year.",
           },
         ],
+      },
+      {
+        heading: "The Annual General Meeting's two reports",
+        icon: "award",
+        flat: true,
+        paragraphs: [
+          "Most AGMs need at least the following two detailed reports to the members:",
+        ],
         example: {
           title: "The AGM needs two detailed reports",
           lines: [
@@ -9346,6 +9362,14 @@ export const CONTENT: Record<string, UnitContent> = {
             "2. The treasurer's report — all income from subscriptions, grants, donations and fundraising; all expenditure; and the balance and where it is held. Put the main headings on news-prints and explain it in less financial language.",
           ],
         },
+      },
+      {
+        heading: "The three technical practitioners meetings",
+        icon: "briefcase",
+        flat: true,
+        paragraphs: [
+          "For technical practitioners, three key meeting types are most relevant:",
+        ],
         examples: [
           {
             title: "The three technical practitioners meetings",
@@ -9491,6 +9515,14 @@ export const CONTENT: Record<string, UnitContent> = {
             text: "Consensus often means compromises from everyone, but most people feel part of the decision. A vote is needed in elections, or when the meeting cannot reach consensus.",
           },
         ],
+      },
+      {
+        heading: "Voting in practice",
+        icon: "checkCircle",
+        flat: true,
+        paragraphs: [
+          "When the meeting does vote, the procedure matters as much as the count:",
+        ],
         example: {
           title: "Voting in practice",
           lines: [
@@ -9499,6 +9531,14 @@ export const CONTENT: Record<string, UnitContent> = {
             "3. Secret ballot — each person writes their support or objection on paper; the votes are counted and the majority decides.",
           ],
         },
+      },
+      {
+        heading: "Resolutions — formal decisions with three parts",
+        icon: "document",
+        flat: true,
+        paragraphs: [
+          "When a decision must stand as organisational policy, it is taken as a resolution:",
+        ],
         examples: [
           {
             title: "Resolutions — formal decisions with three parts",
@@ -9587,6 +9627,14 @@ export const CONTENT: Record<string, UnitContent> = {
             text: "Fair counting of votes: raising hands, show of hands, ballot voting, and recording abstentions (members not voting either way).",
           },
         ],
+      },
+      {
+        heading: "Procedural points every member should know",
+        icon: "shield",
+        flat: true,
+        paragraphs: [
+          "Members use these points to help the chairperson keep the meeting running smoothly:",
+        ],
         example: {
           title: "Procedural points every member should know",
           lines: [
@@ -9598,6 +9646,14 @@ export const CONTENT: Record<string, UnitContent> = {
             "These rules exist to make meetings more efficient and effective — they should not be over-used just for the sake of it.",
           ],
         },
+      },
+      {
+        heading: "The note taker",
+        icon: "book",
+        flat: true,
+        paragraphs: [
+          "One appointment deserves special care in a technical practitioners meeting:",
+        ],
         examples: [
           {
             title: "The note taker",
@@ -9684,6 +9740,14 @@ export const CONTENT: Record<string, UnitContent> = {
             text: "User guides, manuals, reference documents, and background information that participants need to understand the meeting topics and prepare adequately.",
           },
         ],
+      },
+      {
+        heading: "Notification and invitations",
+        icon: "calendar",
+        flat: true,
+        paragraphs: [
+          "Participants can only prepare for a meeting they know about — and understand:",
+        ],
         example: {
           title: "Notification — make the meeting easy to attend",
           lines: [
@@ -9695,6 +9759,14 @@ export const CONTENT: Record<string, UnitContent> = {
             "6. Extend the invitations timeously so participants can prepare and arrange their schedules.",
           ],
         },
+      },
+      {
+        heading: "Preparing the agenda",
+        icon: "pen",
+        flat: true,
+        paragraphs: [
+          "The agenda is the meeting's roadmap — prepared by the chairperson and the secretary:",
+        ],
         examples: [
           {
             title: "Preparing the agenda",
@@ -9763,6 +9835,14 @@ export const CONTENT: Record<string, UnitContent> = {
           "The chairperson is the most important person in the meeting: they set the pace, ensure people stick to topics, ensure democratic decisions are taken, and ensure everyone is on board with these decisions. Chairing is a great skill — teach members to chair and rotate the job so more people practise it, but use an experienced chairperson for important meetings.",
           "A good chairperson is an ACTIVE chairperson — not someone who simply keeps a list of speakers and lets them talk one after the other. Introduce each topic clearly and guide the discussion, especially when people start repeating points. When opposing views emerge, summarise the different positions and propose a way forward: a vote, a further discussion at another date, or a compromise most people can agree with.",
         ],
+      },
+      {
+        heading: "The six duties of the chair",
+        icon: "checklist",
+        flat: true,
+        paragraphs: [
+          "The assessment criteria for chairing map onto six duties:",
+        ],
         cards: [
           {
             icon: "pen",
@@ -9795,6 +9875,14 @@ export const CONTENT: Record<string, UnitContent> = {
             text: "Agreed decisions must be clear, accurate, include a time frame for action, and be within the mandate of the type of meeting conducted. End on time — then process what went well.",
           },
         ],
+      },
+      {
+        heading: "Running the agenda step by step",
+        icon: "document",
+        flat: true,
+        paragraphs: [
+          "Open the meeting and welcome everyone — then go through the agenda step by step:",
+        ],
         example: {
           title: "Running the agenda step by step",
           lines: [
@@ -9806,6 +9894,14 @@ export const CONTENT: Record<string, UnitContent> = {
             "6. For each discussion: examine the issue, get everyone's ideas, arrive at a decision, delegate responsibility, and follow up to ensure completion.",
           ],
         },
+      },
+      {
+        heading: "Basic steps for chairing",
+        icon: "presenter",
+        flat: true,
+        paragraphs: [
+          "Here are the basic steps for chairing a meeting so its decisions stick:",
+        ],
         examples: [
           {
             title: "Basic steps for chairing — decisions that stick",
@@ -9818,6 +9914,16 @@ export const CONTENT: Record<string, UnitContent> = {
               "6. Always set the date of the next meeting before the meeting ends.",
             ],
           },
+        ],
+      },
+      {
+        heading: "Facilitation skills that make it work",
+        icon: "chat",
+        flat: true,
+        paragraphs: [
+          "Good facilitation is what turns a room of speakers into a working meeting:",
+        ],
+        examples: [
           {
             title: "Facilitation skills that make it work",
             lines: [
@@ -9829,6 +9935,14 @@ export const CONTENT: Record<string, UnitContent> = {
               "6. Guide to closure — restate comments, ask for clarification, summarise what is agreed and what is left, and call the decision when it's time.",
             ],
           },
+        ],
+      },
+      {
+        heading: "Managing difficult behaviours",
+        icon: "people",
+        flat: true,
+        paragraphs: [
+          "In meetings, as the chair, you are bound to experience some indifferent behaviour. Here are the most common examples — and the methods used to rectify them:",
         ],
         table: {
           headers: ["Difficult behaviour", "What the chair does"],
@@ -9915,6 +10029,14 @@ export const CONTENT: Record<string, UnitContent> = {
             text: "The follow-up includes a summary of discussions and actions that meets format requirements — clarity about what was discussed and what must be done, by whom and by when.",
           },
         ],
+      },
+      {
+        heading: "Taking good minutes — three skills",
+        icon: "pen",
+        flat: true,
+        paragraphs: [
+          "It is essential that minutes are recorded accurately — three skills make it possible:",
+        ],
         example: {
           title: "Taking good minutes — three skills",
           lines: [
@@ -9923,6 +10045,14 @@ export const CONTENT: Record<string, UnitContent> = {
             "3. Writing the minutes — neatly, in a dedicated minute book or file, never on scraps of paper — kept safe and available for consultation at any time.",
           ],
         },
+      },
+      {
+        heading: "What the minutes must contain",
+        icon: "document",
+        flat: true,
+        paragraphs: [
+          "Produce the minutes in the organisation's format, check them, and include the following:",
+        ],
         examples: [
           {
             title: "What the minutes must contain",
@@ -9937,6 +10067,16 @@ export const CONTENT: Record<string, UnitContent> = {
               "Separate fact from opinion: attribute views to their source — \u201cJane suggested that\u2026\u201d, \u201cthe group concluded that\u2026\u201d.",
             ],
           },
+        ],
+      },
+      {
+        heading: "After the meeting — close the loop",
+        icon: "checkCircle",
+        flat: true,
+        paragraphs: [
+          "The minutes only earn their keep once they are distributed, approved and acted on:",
+        ],
+        examples: [
           {
             title: "After the meeting — close the loop",
             lines: [
@@ -9946,6 +10086,16 @@ export const CONTENT: Record<string, UnitContent> = {
               "4. Then start getting ready for the next meeting.",
             ],
           },
+        ],
+      },
+      {
+        heading: "The decision meeting life cycle",
+        icon: "report",
+        flat: true,
+        paragraphs: [
+          "Decision meetings are not isolated events — they are part of a continuous cycle:",
+        ],
+        examples: [
           {
             title: "The decision meeting life cycle",
             lines: [
@@ -9955,6 +10105,16 @@ export const CONTENT: Record<string, UnitContent> = {
               "3. Post-meeting — dissemination, monitoring the implementation of decisions, and clarifying ambiguous details — often by implementers who were not in the room. It is not enough to make a decision and move on: decisions must be periodically reviewed.",
             ],
           },
+        ],
+      },
+      {
+        heading: "Four aspects of post-meeting support",
+        icon: "checklist",
+        flat: true,
+        paragraphs: [
+          "Supporting post-decision activities and linking them to the decision meeting makes the meeting cycle fully successful:",
+        ],
+        examples: [
           {
             title: "Four aspects of post-meeting support",
             lines: [
