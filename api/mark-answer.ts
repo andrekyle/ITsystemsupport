@@ -1,14 +1,14 @@
 /**
  * Semantic-meaning fallback for the deterministic answer marker.
- * Build: 20260817-1520
+ * Build: 20260904-1
  *
  * Called by the client only when the local keyword + stem-overlap check has
  * rejected one or more concepts but the sentence looked on-topic. Sends the
- * learner's answer and the uncredited concepts to Groq's Llama 3.3 70B and
- * returns which concept ids the model believes are clearly expressed.
+ * learner's answer and the uncredited concepts to OpenAI and returns which
+ * concept ids the model believes are clearly expressed.
  *
  * Runs on Vercel's Edge runtime — no cold-start hit for common paths.
- * Requires the `GROQ_API_KEY` env var to be set in Vercel project settings.
+ * Requires the `OPENAI_API_KEY` env var (used ONLY for marking answers).
  */
 export const config = { runtime: "edge" };
 
@@ -55,21 +55,19 @@ const MAX_ANSWER_LEN = 4000;
 const MAX_CONCEPTS = 12;
 const LLM_TIMEOUT_MS = 6000;
 
-/** Groq model names to try, in order. First 200 response wins. Falls through
- *  to the next name on 4xx (model not found / decommissioned / plan-restricted). */
+/** OpenAI model names to try, in order. First 200 response wins. Falls
+ *  through to the next name on 4xx (model not found / plan-restricted). */
 const MODEL_CANDIDATES = [
-  "llama-3.3-70b-versatile",
-  "llama-3.1-8b-instant",
-  "openai/gpt-oss-120b",
-  "openai/gpt-oss-20b",
-  "moonshotai/kimi-k2-instruct-0905",
+  "gpt-4o-mini",
+  "gpt-4.1-mini",
+  "gpt-4o",
 ];
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== "POST") {
     return json({ error: "method_not_allowed" }, 405);
   }
-  const apiKey = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.GROQ_API_KEY;
+  const apiKey = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.OPENAI_API_KEY;
   if (!apiKey) {
     return json({ credited: [], reason: "", error: "not_configured" }, 200);
   }
@@ -107,11 +105,7 @@ export default async function handler(req: Request): Promise<Response> {
     let lastStatus = 0;
     let lastBody = "";
     for (const model of MODEL_CANDIDATES) {
-      // NOTE: response_format: json_object is deliberately omitted — Groq
-      // returns 400 for some models when it's combined with a complex
-      // multi-concept prompt. The system prompt already enforces STRICT
-      // JSON output, and JSON.parse below tolerates parse failures.
-      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      const r = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -121,6 +115,7 @@ export default async function handler(req: Request): Promise<Response> {
           model,
           temperature: 0,
           max_tokens: 400,
+          response_format: { type: "json_object" },
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
             { role: "user", content: userMsg },
@@ -151,7 +146,7 @@ export default async function handler(req: Request): Promise<Response> {
           error: `llm_${lastStatus}`,
           detail: lastBody,
           tried: MODEL_CANDIDATES,
-          build: "20260817-1520",
+          build: "20260904-1",
         },
         200
       );

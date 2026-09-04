@@ -973,12 +973,13 @@ function ExerciseQuestion({
   const missed = feedback?.filter((f) => !f.awarded) ?? [];
 
   // Kick off the LLM semantic review after the deterministic check has run
-  // and there are still uncredited concepts. Fire-and-forget; the marker's
-  // verdict stands unchanged if the review fails, times out, or is
+  // and there are still uncredited concepts — even when the answer already
+  // passes, so paraphrased extra ideas still earn their marks. Fire-and-forget;
+  // the marker's verdict stands unchanged if the review fails, times out, or is
   // unavailable (env var not set). We key by the exact text so we don't
   // re-fire when the learner just re-clicks Check.
   useEffect(() => {
-    if (!result || result.short || result.ok) return;
+    if (!result || result.short) return;
     if (reviewedText === val) return; // already reviewed this exact text
     const detCredited = new Set(creditedConceptIndexes(val, check));
     const uncredited = check.concepts
@@ -997,10 +998,10 @@ function ExerciseQuestion({
       };
     });
 
-    // Labels of concepts the deterministic marker has ALREADY credited — the
-    // LLM must not promote another concept whose credit would rest on the
-    // same sentence(s) that earned those.
-    const alreadyCredited = [...detCredited].map(
+    // Labels of concepts ALREADY credited — deterministically or by an earlier
+    // review — the LLM must not promote another concept whose credit would
+    // rest on the same sentence(s) that earned those.
+    const alreadyCredited = [...new Set([...detCredited, ...extras])].map(
       (gi) => check.labels?.[gi] ?? check.concepts[gi][0]
     );
 
