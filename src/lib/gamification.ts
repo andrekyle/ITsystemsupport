@@ -83,6 +83,7 @@ export function computeGamification(
   let quizzesCompetent = 0;
   let quizzesPerfect = 0;
   let exercisesPassed = 0;
+  let slideGates = 0;
 
   for (const [, unit] of Object.entries(progress.units)) {
     const quizResults = [
@@ -135,6 +136,12 @@ export function computeGamification(
 
     if (unitHasQuiz) evidenceStages++;
     if (unitHasExercise) evidenceStages++;
+
+    // Slide gate quizzes passed while working through the lesson wizard —
+    // recorded as logbook flags so they can't be self-ticked.
+    for (const [k, v] of Object.entries(unit.logbook ?? {})) {
+      if (v === true && k.startsWith("slidegate.")) slideGates++;
+    }
   }
 
   // Activity XP comes from evidence-backed stages only — a manual tick on
@@ -143,6 +150,9 @@ export function computeGamification(
   xp += evidenceStages * 25;
   xp += poeItems * 20;
   xp += attendanceSigned * 15;
+  // each 5-question gate passed on a lesson slide is honest evidence of
+  // working through the material — smaller than a full quiz (75/50)
+  xp += slideGates * 5;
 
   // module completion (all 4 activities on every unit) for the badge
   let anyModuleComplete = false;

@@ -2218,6 +2218,24 @@ export function UnitPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonStep, lessonQuizAnswers, content, u.us]);
 
+  // Record each passed slide gate in the unit's progress logbook so it counts
+  // toward the learner's XP (see computeGamification) and staff results views.
+  useEffect(() => {
+    if (!content) return;
+    const logbook = progress.units[u.us]?.logbook ?? {};
+    content.lesson.forEach((sec, si) => {
+      const quiz = sec.slideQuiz ?? [];
+      if (!quiz.length) return;
+      const key = `slidegate.${si}`;
+      if (logbook[key] === true) return;
+      const ans = lessonQuizAnswers[si];
+      if (ans && quiz.every((q, i) => ans[i] === q.answer)) {
+        setLogbookField(u.us, key, true);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lessonQuizAnswers, content, u.us]);
+
   /** Collect every figure across every lesson section that has a resolvable image. */
   const buildPresenterSlides = (): PresenterSlide[] => {
     if (!content) return [];
