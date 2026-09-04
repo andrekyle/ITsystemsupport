@@ -628,6 +628,15 @@ function creditConcepts(
 
   const credited = new Set<number>();
 
+  // Junk-tail detection target: the WHOLE check's content (every model line,
+  // concept phrase and label). A sentence tail made of on-topic words — even
+  // words belonging to another key idea or general question context like
+  // "before the meeting starts" — is a natural ending, not noise; only
+  // genuinely off-topic tails ("in dog hello world") stay rejected.
+  const checkWideTarget = contentStems(
+    `${check.answer.join(" ")} ${check.concepts.flat().join(" ")} ${(check.labels ?? []).join(" ")}`
+  );
+
   // Per-sentence credit only: a sentence needs ≥ 10 words AND either
   //  • keyword hit + a real explanation supporting it, or
   //  • strong semantic overlap on its own (a paraphrase / clear synonym).
@@ -640,14 +649,14 @@ function creditConcepts(
       if (keywordHit) {
         // Sentence must actually explain the idea — its non-keyword content
         // has to resemble the lesson line's non-keyword content, and any tail
-        // after the last relevant term must still be explanatory. The noise
-        // check runs against fullTarget (keywords + whole lesson line) so a
-        // sentence that *ends* with the keyword phrase itself — like the
-        // model answer's "— there are no partners or co-owners" — is never
-        // mistaken for a nonsense tail.
-        const overlap = explanationOverlap(sentenceStems[si], keywordStems, explanationTarget);
+        // after the last relevant term must still be explanatory. When the
+        // model line is nothing but the keywords (empty explanation target),
+        // judge the whole sentence against keywords + lesson line instead.
+        const overlap = explanationTarget.size
+          ? explanationOverlap(sentenceStems[si], keywordStems, explanationTarget)
+          : stemOverlap(sentenceStems[si], fullTarget);
         const nonKeywordWords = [...sentenceStems[si]].filter((s) => !keywordStems.has(s) && s.length > 2 && !STOP_WORDS.has(s));
-        if (hasTrailingNoise(sentences[si], fullTarget)) continue;
+        if (hasTrailingNoise(sentences[si], checkWideTarget)) continue;
         if (overlap >= KEYWORD_EXPLANATION_THRESHOLD && nonKeywordWords.length >= 2) {
           credited.add(gi);
           earnedBy.set(gi, sentences[si]);
@@ -656,7 +665,7 @@ function creditConcepts(
       } else {
         const semanticMatch = stemOverlap(sentenceStems[si], fullTarget);
         const nonKeywordWords = [...sentenceStems[si]].filter((s) => s.length > 2 && !STOP_WORDS.has(s));
-        if (hasTrailingNoise(sentences[si], fullTarget)) continue;
+        if (hasTrailingNoise(sentences[si], checkWideTarget)) continue;
         if (semanticMatch >= SEMANTIC_THRESHOLD + 0.15 && nonKeywordWords.length >= 2) {
           // No keyword — synonym / paraphrase must be strong to earn credit.
           credited.add(gi);

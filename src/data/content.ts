@@ -11617,9 +11617,9 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "The agenda must be completed before the meeting.",
+              "The agenda must be fully completed and finalised well before the meeting takes place.",
               "The supporting documentation and papers must be prepared together with the agenda.",
-              "Both must be distributed and circulated to all participants before the meeting.",
+              "Both must be distributed and circulated to all participants in good time, so everyone arrives prepared for the meeting.",
             ],
             concepts: [
               ["agenda"],
@@ -11721,7 +11721,7 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Every decision must be clear, accurate and unambiguous.",
+              "Every decision taken in the meeting must be clear, accurate and unambiguous so nobody misunderstands what was decided.",
               "Every decision must have a timeframe or deadline for its implementation.",
               "The person responsible must be recorded and the decision confirmed with the members before the meeting moves on.",
             ],
