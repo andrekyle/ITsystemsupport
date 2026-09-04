@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { Icon } from "../icons";
 import type { EnrolmentInfo, Profile, Role, Route } from "../types";
-import { isStaff } from "../types";
-import { POE_SECTIONS, POE_TOTAL } from "../data/course";
+import { UNIT_ACTIVITIES, isStaff } from "../types";
+import { MODULES, POE_SECTIONS, POE_TOTAL } from "../data/course";
 import {
   createProfile,
   deleteProfile,
   hashPassword,
+  loadAllPeople,
   loadPoeDocs,
-  loadProfiles,
+  loadProgress,
   updateProfile,
   usePoe,
 } from "../store";
@@ -214,16 +215,24 @@ export function StudentsPage({
     );
   }
 
-  const all = loadProfiles();
+  const all = loadAllPeople();
   // Super Users manage every account; facilitators see their learners only
-  const people = isSuper
-    ? all.filter((p) => p.id !== profile.id)
-    : all.filter((p) => p.role === "Learner");
-  const student = route.studentId ? all.find((p) => p.id === route.studentId) : undefined;
+  const people = all.filter(({ profile: p }) =>
+    isSuper ? p.id !== profile.id : p.role === "Learner"
+  );
+  const student = route.studentId
+    ? all.find(({ profile: p }) => p.id === route.studentId)
+    : undefined;
 
   if (student)
     return (
-      <StudentDetail student={student} viewer={profile} navigate={navigate} onChanged={refresh} />
+      <StudentDetail
+        student={student.profile}
+        remote={student.remote}
+        viewer={profile}
+        navigate={navigate}
+        onChanged={refresh}
+      />
     );
 
   return (
@@ -235,8 +244,8 @@ export function StudentsPage({
       <h1 className="page-title">{isSuper ? "Users" : "Students"}</h1>
       <p className="page-sub">
         {isSuper
-          ? "All accounts on this device — select a user to view their profile, update their details, reset their password or remove the account."
-          : "All learner profiles on this device — select a student to view their enrolment information and uploaded documents."}
+          ? "Every account on this installation, including learners signed in on other devices — select a user to view their profile, results and documents."
+          : "All learner profiles, including learners signed in on other devices — select a student to view their enrolment information, results and uploaded documents."}
       </p>
 
       {isSuper && <AddUser onAdded={refresh} />}
@@ -250,7 +259,7 @@ export function StudentsPage({
         </div>
       )}
 
-      {people.map((s) => {
+      {people.map(({ profile: s, remote }) => {
         const docs = Object.keys(loadPoeDocs(s.id)).length;
         return (
           <button
@@ -265,6 +274,7 @@ export function StudentsPage({
               <span className="rl">
                 {s.role} · {s.enrolment?.idNumber ? `ID ${s.enrolment.idNumber} · ` : ""}
                 joined {fmtDate(s.createdAt)}
+                {remote ? " · cloud account" : ""}
                 {s.role === "Learner" && !s.enrolment ? " · enrolment form outstanding" : ""}
                 {s.passwordHash ? " · password set" : ""}
               </span>
@@ -451,17 +461,20 @@ function AdminPanel({
 
 function StudentDetail({
   student,
+  remote,
   viewer,
   navigate,
   onChanged,
 }: {
   student: Profile;
+  remote: boolean;
   viewer: Profile;
   navigate: (r: Route) => void;
   onChanged: () => void;
 }) {
   const isSuper = viewer.role === "Super User";
-  const { docs } = usePoe(student.id);
+  const { docs: localDocs } = usePoe(student.id);
+  const docs = Object.keys(localDocs).length ? localDocs : loadPoeDocs(student.id);
   const [editingEnrol, setEditingEnrol] = useState(false);
   const [draft, setDraft] = useState<EnrolmentInfo>({ ...EMPTY_ENROLMENT, ...student.enrolment });
   const uploaded = POE_SECTIONS.flatMap((sec) =>
@@ -503,14 +516,27 @@ function StudentDetail({
 
       <ProfileHead profile={student} />
 
-      {isSuper && <AdminPanel student={student} onChanged={onChanged} onDelete={removeUser} />}
+      {isSuper && !remote && (
+        <AdminPanel student={student} onChanged={onChanged} onDelete={removeUser} />
+      )}
+      {isSuper && remote && (
+        <div className="callout">
+          <span className="ico">
+            <Icon name="info" size={19} />
+          </span>
+          <span>
+            This is a cloud account synced from another sign-in. Their profile, results and
+            documents are shown read-only; the account itself is managed from their own sign-in.
+          </span>
+        </div>
+      )}
 
       <h2 className="section-title">
         <span className="ico">
           <Icon name="clipboard" size={20} />
         </span>
         Biographical enrolment information
-        {isSuper && !editingEnrol && (
+        {isSuper && !remote && !editingEnrol && (
           <button
             className="btn ghost profile-edit"
             style={{ marginRight: 23 }} /* align with the Delete user button inside the card above */
@@ -550,6 +576,14 @@ function StudentDetail({
 
       <h2 className="section-title">
         <span className="ico">
+          <Icon name="chart" size={20} />
+        </span>
+        Results &amp; progress
+      </h2>
+      <ResultsSection profileId={student.id} />
+
+      <h2 className="section-title">
+        <span className="ico">
           <Icon name="folder" size={20} />
         </span>
         Uploaded documents — {uploaded.length} / {POE_TOTAL}
@@ -581,6 +615,52 @@ function StudentDetail({
           </div>
         ))
       )}
+    </>
+  );
+}
+
+function ResultsSection({ profileId }: { profileId: string }) {
+  const progress = loadProgress(profileId);
+  const rows = MODULES.flatMap((m) => m.units)
+    .map((unit) => ({ unit, p: progress.units[unit.us] }))
+    .filter(
+      ({ p }) => p && (p.quiz || Object.values(p.activities ?? {}).some(Boolean))
+    );
+
+  if (rows.length === 0)
+    return (
+      <div className="callout">
+        <span className="ico">
+          <Icon name="info" size={19} />
+        </span>
+        <span>No quiz results or activity progress recorded yet.</span>
+      </div>
+    );
+
+  return (
+    <>
+      {rows.map(({ unit, p }) => {
+        const done = UNIT_ACTIVITIES.filter((a) => p!.activities?.[a]).length;
+        const quiz = p!.quiz;
+        return (
+          <div className="plan-upload-row" key={unit.us}>
+            <Icon name="checkCircle" size={17} />
+            <span className="fileinfo">
+              <span className="poe-file" title={unit.title}>
+                US {unit.us} — {unit.title}
+              </span>
+              <span className="meta">
+                {quiz
+                  ? `Quiz best ${quiz.best}/${quiz.total} (${Math.round(
+                      (quiz.best / Math.max(quiz.total, 1)) * 100
+                    )}%) · ${quiz.attempts} attempt${quiz.attempts === 1 ? "" : "s"} · `
+                  : "No quiz attempts yet · "}
+                {done}/{UNIT_ACTIVITIES.length} activities complete
+              </span>
+            </span>
+          </div>
+        );
+      })}
     </>
   );
 }

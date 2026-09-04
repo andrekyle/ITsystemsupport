@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import type { PoeDoc, Profile, ProgressState } from "../types";
 
 /**
  * Cloud sync for the app's localStorage state.
@@ -18,13 +19,75 @@ function isShared(key: string) {
   return (
     key === "itss.notes.shared" ||
     key === "itss.settings.shared" ||
-    key.startsWith("itss.planslides.")
+    key.startsWith("itss.planslides.") ||
+    key.startsWith("itss.roster.")
+  );
+}
+
+/** keys whose changes should be re-published to this account's shared roster */
+function isRosterSource(key: string) {
+  return (
+    key === "itss.profiles" ||
+    key.startsWith("itss.progress.") ||
+    key.startsWith("itss.poe.")
   );
 }
 
 let userId: string | null = null;
 let hydrating = false;
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
+let rosterTimer: ReturnType<typeof setTimeout> | null = null;
+
+function readJson<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+/**
+ * Publish this account's profiles, progress and POE metadata to the shared
+ * `itss.roster.<auth-uid>` key so facilitators and the super user can see
+ * every learner across accounts. Password hashes, avatars and inline file
+ * data are stripped before publishing.
+ */
+function publishRoster() {
+  if (!userId) return;
+  const profiles = readJson<Profile[]>("itss.profiles", []);
+  if (profiles.length === 0) return;
+  const progress: Record<string, ProgressState> = {};
+  const poe: Record<string, Record<string, PoeDoc>> = {};
+  for (const p of profiles) {
+    delete p.passwordHash;
+    delete p.avatar;
+    const prog = readJson<ProgressState | null>(`itss.progress.${p.id}`, null);
+    if (prog) progress[p.id] = prog;
+    const docs = readJson<Record<string, PoeDoc> | null>(`itss.poe.${p.id}`, null);
+    if (docs && Object.keys(docs).length) {
+      const slim: Record<string, PoeDoc> = {};
+      for (const [item, doc] of Object.entries(docs)) {
+        const { data: _inline, ...rest } = doc;
+        slim[item] = rest;
+      }
+      poe[p.id] = slim;
+    }
+  }
+  localStorage.setItem(
+    `itss.roster.${userId}`,
+    JSON.stringify({ updatedAt: new Date().toISOString(), profiles, progress, poe })
+  );
+}
+
+function queueRoster() {
+  if (hydrating || !userId) return;
+  if (rosterTimer) clearTimeout(rosterTimer);
+  rosterTimer = setTimeout(() => {
+    rosterTimer = null;
+    publishRoster();
+  }, 800);
+}
 
 function syncable(key: string) {
   return key.startsWith(PREFIX) && !LOCAL_ONLY.has(key);
@@ -81,10 +144,12 @@ export function installSync() {
   localStorage.setItem = (key: string, value: string) => {
     set(key, value);
     if (syncable(key)) queue(key, value);
+    if (isRosterSource(key)) queueRoster();
   };
   localStorage.removeItem = (key: string) => {
     remove(key);
     if (syncable(key)) queue(key, null);
+    if (isRosterSource(key)) queueRoster();
   };
 }
 
@@ -123,12 +188,19 @@ export async function startSync(authUserId: string): Promise<void> {
       if (value !== null) void pushKey(key, value);
     }
   }
+
+  // publish this account's roster so staff on other accounts can see it
+  publishRoster();
 }
 
 export function stopSync() {
   userId = null;
   for (const t of timers.values()) clearTimeout(t);
   timers.clear();
+  if (rosterTimer) {
+    clearTimeout(rosterTimer);
+    rosterTimer = null;
+  }
 }
 
 /** Remove all synced app data from this browser (used on cloud sign-out). */

@@ -85,7 +85,74 @@ export async function hashPassword(password: string): Promise<string> {
 
 /** Read a profile's POE documents without subscribing (for lists/counts). */
 export function loadPoeDocs(profileId: string): Record<string, PoeDoc> {
-  return read<Record<string, PoeDoc>>(`itss.poe.${profileId}`, {});
+  const local = read<Record<string, PoeDoc>>(`itss.poe.${profileId}`, {});
+  if (Object.keys(local).length) return local;
+  for (const roster of loadRosters()) {
+    const docs = roster.poe[profileId];
+    if (docs && Object.keys(docs).length) return docs;
+  }
+  return local;
+}
+
+/* ---------- cross-account roster (published by each cloud account) ---------- */
+
+const ROSTER_PREFIX = "itss.roster.";
+
+export interface RosterEntry {
+  accountId: string;
+  updatedAt: string;
+  profiles: Profile[];
+  progress: Record<string, ProgressState>;
+  poe: Record<string, Record<string, PoeDoc>>;
+}
+
+/** All rosters published by cloud accounts (hydrated into localStorage by sync). */
+export function loadRosters(): RosterEntry[] {
+  const entries: RosterEntry[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key?.startsWith(ROSTER_PREFIX)) continue;
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw) as Partial<RosterEntry>;
+      entries.push({
+        accountId: key.slice(ROSTER_PREFIX.length),
+        updatedAt: parsed.updatedAt ?? "",
+        profiles: parsed.profiles ?? [],
+        progress: parsed.progress ?? {},
+        poe: parsed.poe ?? {},
+      });
+    } catch {
+      // ignore malformed roster entries
+    }
+  }
+  return entries;
+}
+
+/** Local profiles plus every profile published by other cloud accounts (local wins on id clashes). */
+export function loadAllPeople(): { profile: Profile; remote: boolean }[] {
+  const local = loadProfiles();
+  const seen = new Set(local.map((p) => p.id));
+  const people = local.map((profile) => ({ profile, remote: false }));
+  for (const roster of loadRosters()) {
+    for (const p of roster.profiles) {
+      if (p.name === SUPER_USER_NAME || p.role === "Super User" || seen.has(p.id)) continue;
+      seen.add(p.id);
+      people.push({ profile: p, remote: true });
+    }
+  }
+  return people;
+}
+
+/** A profile's progress without subscribing — local storage first, then any published roster. */
+export function loadProgress(profileId: string): ProgressState {
+  const local = read<ProgressState | null>(progressKey(profileId), null);
+  if (local) return local;
+  for (const roster of loadRosters()) {
+    if (roster.progress[profileId]) return roster.progress[profileId];
+  }
+  return EMPTY;
 }
 
 export function deleteProfile(id: string) {
