@@ -598,7 +598,7 @@ function creditConcepts(
     for (const line of perLineStems) {
       line.forEach((s) => counts.set(s, (counts.get(s) ?? 0) + 1));
     }
-    const half = check.answer.length / 2;
+    const half = Math.max(check.answer.length / 2, 1); // single-line answers have no cross-idea filler
     for (const [stem, n] of counts) {
       if (n > half) filler.add(stem);
     }

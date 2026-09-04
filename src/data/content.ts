@@ -11487,7 +11487,9 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "A facilitative meeting is a group effort: a facilitator guides the process while staying neutral, and the group generates the ideas and reaches the outcome together.",
+              "A facilitative meeting is run by a facilitator — a meeting leader who manages the discussion so the members can solve the problem.",
+              "The whole group participates: everyone contributes ideas and the group generates the solution and reaches the outcome together.",
+              "The facilitator stays neutral, guiding the process of the meeting rather than the content of the decisions.",
             ],
             concepts: [
               ["facilitator", "facilitative"],
@@ -11527,7 +11529,9 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "A note taker with a technical background understands the terminology and the issues being discussed, so the minutes accurately capture the technical decisions, actions and reasons without misinterpretation.",
+              "The note taker must understand the technical terminology and jargon used in the discussion.",
+              "The minutes must accurately capture the technical decisions, actions and reasons without misinterpretation.",
+              "A note taker with a technical background knows the subject and can follow the technical discussion.",
             ],
             concepts: [
               ["terminology", "technical terms", "jargon", "technical language"],
@@ -11556,7 +11560,10 @@ export const CONTENT: Record<string, UnitContent> = {
         checks: [
           {
             answer: [
-              "The venue must be booked and set up, the facilities arranged (seating, refreshments, stationery), the technology prepared and tested (projector, video conferencing, network access), and the supporting information made available.",
+              "The venue must be booked and the room set up for the meeting.",
+              "The facilities must be arranged — seating, refreshments, stationery and equipment.",
+              "The technology must be prepared and tested: projector, video conferencing, network access and laptops.",
+              "The supporting information and documents must be made available to the participants.",
             ],
             concepts: [
               ["venue", "room", "boardroom"],
@@ -11574,7 +11581,9 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Clear, concise, documented outcomes keep the meeting focused: participants know what must be achieved, the agenda can be built around the outcomes, and afterwards the meeting can be measured against them.",
+              "Clear, concise, documented outcomes keep the meeting focused on its purpose — participants know what must be achieved.",
+              "The agenda can be planned and structured around the documented outcomes.",
+              "After the meeting, success can be measured and evaluated against the documented outcomes.",
             ],
             concepts: [
               ["focused", "focus", "purpose", "what must be achieved"],
@@ -11590,7 +11599,9 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Timeous invitations give participants enough time to prepare, to study the agenda and documentation, and to arrange their schedules so the right people actually attend.",
+              "Timeous invitations give participants enough time to prepare — to study the agenda and read the documentation.",
+              "Participants can arrange their schedules and diaries so they are available for the meeting.",
+              "The right people actually attend because their attendance was secured well in advance.",
             ],
             concepts: [
               ["prepare", "preparation", "study the documents", "read the agenda"],
@@ -11606,7 +11617,9 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "The agenda, together with the supporting documentation, must be completed and distributed to all participants before the meeting.",
+              "The agenda must be completed before the meeting.",
+              "The supporting documentation and papers must be prepared together with the agenda.",
+              "Both must be distributed and circulated to all participants before the meeting.",
             ],
             concepts: [
               ["agenda"],
@@ -11636,7 +11649,9 @@ export const CONTENT: Record<string, UnitContent> = {
         checks: [
           {
             answer: [
-              "Rules agreed with the members create buy-in: everyone knows how the meeting will run, how to get the floor and how decisions will be taken, which prevents disputes about procedure later.",
+              "Rules agreed together with the members create buy-in for how the meeting is run.",
+              "Everyone knows the procedure and expectations — how the meeting will run, how to get the floor and how decisions will be taken.",
+              "Agreed rules prevent conflict and disputes about procedure later in the meeting.",
             ],
             concepts: [
               ["buy-in", "agree", "agreed with the members", "in conjunction", "together"],
@@ -11652,7 +11667,9 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "The chairperson works through the agenda item by item, keeps discussion on the current item, parks unrelated issues, and watches the time allocated to each item.",
+              "The chairperson works through the agenda item by item.",
+              "The chairperson keeps discussion on the current item and parks unrelated issues.",
+              "The chairperson watches the time allocated to each agenda item.",
             ],
             concepts: [
               ["item by item", "follow the agenda", "work through the agenda"],
@@ -11668,7 +11685,9 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Invite quiet members by name to give input, use round-robin turns so everyone speaks, acknowledge each contribution, keep debate on the issue not the person, and summarise areas of agreement before moving on.",
+              "Invite quiet members by name to give input and use round-robin turns so everyone speaks.",
+              "Acknowledge each contribution and keep debate on the issue, not the person.",
+              "Summarise areas of agreement before moving on to the next point.",
             ],
             concepts: [
               ["invite", "by name", "ask the quiet", "round robin", "everyone speaks", "draw in"],
@@ -11684,7 +11703,9 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Urgent and important topics are placed early on the agenda, each topic gets a time allocation in proportion to its importance, and less critical items are moved to the end or carried over.",
+              "Urgent and important topics are prioritised and placed early on the agenda.",
+              "Each topic gets a time allocation in proportion to its importance.",
+              "Less critical items are moved to the end of the agenda, deferred or carried over to the next meeting.",
             ],
             concepts: [
               ["urgent", "important", "priority", "prioritise", "early"],
@@ -11700,7 +11721,9 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Every decision must be clear and accurate, recorded with the person responsible and a timeframe for implementation, and confirmed with the members before the meeting moves on.",
+              "Every decision must be clear, accurate and unambiguous.",
+              "Every decision must have a timeframe or deadline for its implementation.",
+              "The person responsible must be recorded and the decision confirmed with the members before the meeting moves on.",
             ],
             concepts: [
               ["clear", "accurate", "unambiguous"],
@@ -11728,7 +11751,10 @@ export const CONTENT: Record<string, UnitContent> = {
         checks: [
           {
             answer: [
-              "Minutes must record the attendees and apologies, follow the agenda, capture each discussion, decision and action with its owner and timeframe, use the organisation's minute format, and be checked and distributed within the required time.",
+              "Minutes must record the attendees present and the apologies received.",
+              "Minutes must capture each discussion, decision and action with its owner and timeframe.",
+              "Minutes must follow the organisation's minute format and template as required by organisational policy.",
+              "Minutes must be checked and distributed within the required time.",
             ],
             concepts: [
               ["attendees", "apologies", "present"],
@@ -11746,7 +11772,9 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Decisions are communicated in the format the organisation requires — minutes, e-mail summaries or reports — to all affected stakeholders, within the agreed timeframe after the meeting.",
+              "Decisions are communicated in the format the organisation requires — minutes, e-mail summaries or reports.",
+              "Decisions must reach all affected stakeholders and participants who need them.",
+              "Decisions must be communicated promptly, within the agreed timeframe after the meeting.",
             ],
             concepts: [
               ["format", "minutes", "e-mail", "email", "report"],
@@ -11762,7 +11790,10 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "The summary lists each topic discussed, the outcome or decision, the actions arising with the responsible person and deadline, and any items carried over to the next meeting — in the format the organisation requires.",
+              "The summary lists each topic discussed and its outcome or decision.",
+              "The summary lists the actions arising, each with the responsible person and a deadline.",
+              "The summary notes any outstanding items carried over to the next meeting.",
+              "The summary is presented in the format the organisation requires.",
             ],
             concepts: [
               ["topic", "discussed", "outcome"],
