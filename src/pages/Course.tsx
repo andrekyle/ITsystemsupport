@@ -1765,6 +1765,37 @@ function loadUnitTab(unitId: string): UnitTab {
   return savedFor === unitId && saved && UNIT_TABS.includes(saved) ? saved : "overview";
 }
 
+/* Per-learner lesson state under itss.* keys so it cloud-syncs with the account
+   and never leaks between profiles sharing a device. */
+const lessonStepKey = (profileId: string, unitId: string) => `itss.lessonstep.${profileId}.${unitId}`;
+const lessonQuizKey = (profileId: string, unitId: string) => `itss.lessonquiz.${profileId}.${unitId}`;
+
+function loadLessonStep(profileId: string, unitId: string): number {
+  const raw =
+    localStorage.getItem(lessonStepKey(profileId, unitId)) ??
+    localStorage.getItem(`lessonStep:${unitId}`); // legacy device-wide key
+  const n = raw ? Number(raw) : 0;
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+
+interface LessonQuizState {
+  answers: Record<number, number[]>;
+  checked: Record<number, boolean>;
+}
+
+function loadLessonQuizState(profileId: string, unitId: string): LessonQuizState {
+  try {
+    const raw = localStorage.getItem(lessonQuizKey(profileId, unitId));
+    if (raw) {
+      const p = JSON.parse(raw) as Partial<LessonQuizState>;
+      return { answers: p.answers ?? {}, checked: p.checked ?? {} };
+    }
+  } catch {
+    // malformed state — start fresh
+  }
+  return { answers: {}, checked: {} };
+}
+
 export function UnitPage({
   unitId,
   profile,
@@ -1793,15 +1824,15 @@ export function UnitPage({
   /** bumped per exercise on "Try again" so the answer blocks remount empty */
   const [exReset, setExReset] = useState<Record<string, number>>({});
   /** edX-style lesson wizard — index of the section currently on screen */
-  const [lessonStep, setLessonStep] = useState<number>(() => {
-    const raw = localStorage.getItem(`lessonStep:${unitId}`);
-    const n = raw ? Number(raw) : 0;
-    return Number.isFinite(n) && n >= 0 ? n : 0;
-  });
-  /** lesson-view per-slide quiz answers, keyed by section index */
-  const [lessonQuizAnswers, setLessonQuizAnswers] = useState<Record<number, number[]>>({});
+  const [lessonStep, setLessonStep] = useState<number>(() => loadLessonStep(profile.id, unitId));
+  /** lesson-view per-slide quiz answers, keyed by section index — persisted per learner */
+  const [lessonQuizAnswers, setLessonQuizAnswers] = useState<Record<number, number[]>>(
+    () => loadLessonQuizState(profile.id, unitId).answers
+  );
   /** lesson-view per-slide quiz: has the learner clicked "Check answers" for this section */
-  const [lessonQuizChecked, setLessonQuizChecked] = useState<Record<number, boolean>>({});
+  const [lessonQuizChecked, setLessonQuizChecked] = useState<Record<number, boolean>>(
+    () => loadLessonQuizState(profile.id, unitId).checked
+  );
   /** staff-only toggle: reveal correct answer on every slide quiz */
   const [showAnswers, setShowAnswers] = useState(false);
   /** clicked lesson figure shown fullscreen in a lightbox (null = closed) */
@@ -2112,18 +2143,25 @@ export function UnitPage({
   useEffect(() => {
     setTab(loadUnitTab(unitId));
     setQuizId(null);
-    const raw = localStorage.getItem(`lessonStep:${unitId}`);
-    const n = raw ? Number(raw) : 0;
-    setLessonStep(Number.isFinite(n) && n >= 0 ? n : 0);
-  }, [unitId]);
+    setLessonStep(loadLessonStep(profile.id, unitId));
+    const savedQuiz = loadLessonQuizState(profile.id, unitId);
+    setLessonQuizAnswers(savedQuiz.answers);
+    setLessonQuizChecked(savedQuiz.checked);
+  }, [unitId, profile.id]);
 
   useEffect(() => {
     localStorage.setItem(UNIT_TAB_KEY, tab);
     localStorage.setItem(UNIT_TAB_US_KEY, unitId);
   }, [tab, unitId]);
   useEffect(() => {
-    localStorage.setItem(`lessonStep:${unitId}`, String(lessonStep));
-  }, [lessonStep, unitId]);
+    localStorage.setItem(lessonStepKey(profile.id, unitId), String(lessonStep));
+  }, [lessonStep, unitId, profile.id]);
+  useEffect(() => {
+    localStorage.setItem(
+      lessonQuizKey(profile.id, unitId),
+      JSON.stringify({ answers: lessonQuizAnswers, checked: lessonQuizChecked })
+    );
+  }, [lessonQuizAnswers, lessonQuizChecked, unitId, profile.id]);
   const [noteError, setNoteError] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const dragIdRef = useRef<string | null>(null);
