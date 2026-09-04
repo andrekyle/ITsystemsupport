@@ -6,3 +6,6 @@ dist
 # Learner reports contain personal data (names, ID numbers, results) - keep out of the public repo
 Learner-*.html
 Learnership-*.html
+
+.vercel
+.env*
