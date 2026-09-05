@@ -56,7 +56,7 @@ Input:
 
 For each concept, compare every NON-SPENT learner sentence against the concept's lesson_reference and score a confidence in [0..1]:
   - 1.0: a non-spent sentence states the same idea as the lesson_reference using the concept's own vocabulary, with a real explanation (≥10 words).
-  - 0.9: a non-spent sentence expresses the SAME MEANING as the lesson_reference in different words — a genuine paraphrase using synonyms or equivalent professional terminology counts fully (e.g. "service level" ≈ "SLA", "benchmarks"/"agreed standards" ≈ "targets"/"agreed levels", "spending plan" ≈ "budget").
+  - 0.9: a non-spent sentence expresses the SAME MEANING as the lesson_reference in different words — a genuine paraphrase using synonyms or equivalent professional terminology counts fully (e.g. "service level" ≈ "SLA", "benchmarks"/"agreed standards" ≈ "targets"/"agreed levels", "spending plan" ≈ "budget"). A paraphrase may omit minor illustrative details of the lesson_reference (an example frequency like "monthly", or one item of an illustrative list) as long as the core idea is unmistakably the same.
   - 0.5–0.8: the sentence is on-topic or shares some wording but does NOT express the lesson_reference's specific idea — DO NOT CREDIT.
   - <0.5: no coverage. Default when in doubt.
 
@@ -75,7 +75,7 @@ Reply with STRICT JSON only, no prose:
 const MAX_ANSWER_LEN = 4000;
 const MAX_CONCEPTS = 12;
 const LLM_TIMEOUT_MS = 6000;
-const BUILD = "20260905-3";
+const BUILD = "20260905-4";
 
 /** OpenAI model names to try, in order. First 200 response wins. Falls
  *  through to the next name on 4xx (model not found / plan-restricted).
@@ -86,9 +86,21 @@ const BUILD = "20260905-3";
  *  chain stays as fallback. */
 const MODEL_CANDIDATES = [
   "gpt-4.1-mini",
+  "gpt-5.6-luna",
   "gpt-4o-mini",
   "gpt-4o",
 ];
+
+/** Model-specific request parameters. The gpt-5 family rejects `max_tokens`
+ *  (wants `max_completion_tokens`) and only supports the default temperature;
+ *  older models keep temperature 0 for deterministic marking. */
+function paramsFor(model: string): Record<string, unknown> {
+  if (model.startsWith("gpt-5")) {
+    // extra headroom: gpt-5 models may spend hidden reasoning tokens
+    return { max_completion_tokens: 800 };
+  }
+  return { temperature: 0, max_tokens: 400 };
+}
 
 export default async function handler(req: Request): Promise<Response> {
   // GET = configuration health check. Reports only booleans/names, never
@@ -183,8 +195,7 @@ export default async function handler(req: Request): Promise<Response> {
         },
         body: JSON.stringify({
           model,
-          temperature: 0,
-          max_tokens: 400,
+          ...paramsFor(model),
           response_format: { type: "json_object" },
           messages: [
             { role: "system", content: SYSTEM_PROMPT },

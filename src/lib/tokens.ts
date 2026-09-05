@@ -151,6 +151,7 @@ const PRICES_PER_MTOK: Record<string, { in: number; out: number }> = {
   "gpt-4o-mini": { in: 0.15, out: 0.6 },
   "gpt-4.1-mini": { in: 0.4, out: 1.6 },
   "gpt-4o": { in: 2.5, out: 10 },
+  "gpt-5.6-luna": { in: 0.2, out: 1.2 },
 };
 
 /* ---------- super-user marking-model setting ---------- */
@@ -175,6 +176,13 @@ export const MARKING_MODELS: MarkingModelInfo[] = [
     inPerM: 0.4,
     outPerM: 1.6,
     recommended: true,
+  },
+  {
+    id: "gpt-5.6-luna",
+    name: "GPT-5.6 Luna",
+    desc: "Newest cost-efficient GPT-5 tier — strong judgement at low cost",
+    inPerM: 0.2,
+    outPerM: 1.2,
   },
   {
     id: "gpt-4o-mini",
