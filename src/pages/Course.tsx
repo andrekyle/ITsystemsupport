@@ -564,8 +564,9 @@ function lessonLineFor(check: ExerciseCheck, gi: number): string | undefined {
  * that earned it — so tick placement can mirror the scoring instead of
  * guessing by first keyword hit. Concepts promoted by `extras` (LLM review)
  * carry no sentence and are pinned semantically by the renderer.
+ * Exported for the marking test harnesses.
  */
-function creditConcepts(
+export function creditConcepts(
   text: string,
   check: ExerciseCheck,
   extras?: ReadonlySet<number>
@@ -637,43 +638,66 @@ function creditConcepts(
     `${check.answer.join(" ")} ${check.concepts.flat().join(" ")} ${(check.labels ?? []).join(" ")}`
   );
 
-  // Per-sentence credit only: a sentence needs ≥ 10 words AND either
-  //  • keyword hit + a real explanation supporting it, or
-  //  • strong semantic overlap on its own (a paraphrase / clear synonym).
+  // Score every eligible (concept, sentence) pair. A sentence needs ≥ 10
+  // words AND either keyword hit + a real explanation supporting it, or
+  // strong semantic overlap on its own (a paraphrase / clear synonym).
+  // Keyword-path scores start at 2 and grow with the number of distinct
+  // concept phrases matched plus the explanation overlap, so a sentence that
+  // IS the model line outranks one that merely shares a keyword.
+  const candidates: { gi: number; si: number; score: number }[] = [];
   for (let gi = 0; gi < check.concepts.length; gi++) {
     const group = check.concepts[gi];
     const { keywordStems, fullTarget, explanationTarget } = conceptData[gi];
     for (let si = 0; si < sentences.length; si++) {
       if (sentenceTokens[si].length < MIN_EXPLANATION_WORDS) continue;
+      if (hasTrailingNoise(sentences[si], checkWideTarget)) continue;
       const keywordHit = conceptInSentence(group, sentenceTokens[si]);
       if (keywordHit) {
         // Sentence must actually explain the idea — its non-keyword content
-        // has to resemble the lesson line's non-keyword content, and any tail
-        // after the last relevant term must still be explanatory. When the
+        // has to resemble the lesson line's non-keyword content. When the
         // model line is nothing but the keywords (empty explanation target),
         // judge the whole sentence against keywords + lesson line instead.
         const overlap = explanationTarget.size
           ? explanationOverlap(sentenceStems[si], keywordStems, explanationTarget)
           : stemOverlap(sentenceStems[si], fullTarget);
-        const nonKeywordWords = [...sentenceStems[si]].filter((s) => !keywordStems.has(s) && s.length > 2 && !STOP_WORDS.has(s));
-        if (hasTrailingNoise(sentences[si], checkWideTarget)) continue;
+        const nonKeywordWords = [...sentenceStems[si]].filter(
+          (s) => !keywordStems.has(s) && s.length > 2 && !STOP_WORDS.has(s)
+        );
         if (overlap >= KEYWORD_EXPLANATION_THRESHOLD && nonKeywordWords.length >= 2) {
-          credited.add(gi);
-          earnedBy.set(gi, sentences[si]);
-          break;
+          const phrasesMatched = group.filter((p) => phraseMatches(p, sentenceTokens[si])).length;
+          candidates.push({ gi, si, score: 2 + phrasesMatched + overlap });
         }
       } else {
         const semanticMatch = stemOverlap(sentenceStems[si], fullTarget);
-        const nonKeywordWords = [...sentenceStems[si]].filter((s) => s.length > 2 && !STOP_WORDS.has(s));
-        if (hasTrailingNoise(sentences[si], checkWideTarget)) continue;
+        const nonKeywordWords = [...sentenceStems[si]].filter(
+          (s) => s.length > 2 && !STOP_WORDS.has(s)
+        );
         if (semanticMatch >= SEMANTIC_THRESHOLD + 0.15 && nonKeywordWords.length >= 2) {
           // No keyword — synonym / paraphrase must be strong to earn credit.
-          credited.add(gi);
-          earnedBy.set(gi, sentences[si]);
-          break;
+          candidates.push({ gi, si, score: semanticMatch });
         }
       }
     }
+  }
+
+  // Phase 1 — one concept per sentence, strongest matches first, so each
+  // sentence credits the model answer it matches BEST. This stops a
+  // paraphrase of idea A that happens to contain idea B's keyword from
+  // stealing B's credit away from the learner's actual B sentence.
+  candidates.sort((a, b) => b.score - a.score || a.si - b.si || a.gi - b.gi);
+  const usedSentence = new Set<number>();
+  for (const c of candidates) {
+    if (credited.has(c.gi) || usedSentence.has(c.si)) continue;
+    credited.add(c.gi);
+    usedSentence.add(c.si);
+    earnedBy.set(c.gi, sentences[c.si]);
+  }
+  // Phase 2 — a single sentence may genuinely cover a second idea; leftover
+  // concepts take their best candidate even on an already-used sentence.
+  for (const c of candidates) {
+    if (credited.has(c.gi)) continue;
+    credited.add(c.gi);
+    earnedBy.set(c.gi, sentences[c.si]);
   }
 
   if (extras) for (const gi of extras) credited.add(gi);
@@ -1011,7 +1035,8 @@ function ExerciseQuestion({
   useEffect(() => {
     if (!result || result.short) return;
     if (reviewedText === val) return; // already reviewed this exact text
-    const detCredited = new Set(creditedConceptIndexes(val, check));
+    const { credited: detCreditedList, earnedBy } = creditConcepts(val, check);
+    const detCredited = new Set(detCreditedList);
     const uncredited = check.concepts
       .map((g, gi) => ({ gi, g }))
       .filter(({ gi }) => !extras.has(gi))
@@ -1029,15 +1054,16 @@ function ExerciseQuestion({
     });
 
     // Labels of concepts ALREADY credited — deterministically or by an earlier
-    // review — the LLM must not promote another concept whose credit would
-    // rest on the same sentence(s) that earned those.
+    // review — plus the exact sentences that earned them, so the LLM judges
+    // the remaining concepts against the learner's FREE sentences only.
     const alreadyCredited = [...new Set([...detCredited, ...extras])].map(
       (gi) => check.labels?.[gi] ?? check.concepts[gi][0]
     );
+    const spentSentences = [...new Set(earnedBy.values())];
 
     setReviewing(true);
     let alive = true;
-    void requestSemanticReview(val, concepts, alreadyCredited, unitUs).then((res) => {
+    void requestSemanticReview(val, concepts, alreadyCredited, unitUs, spentSentences).then((res) => {
       if (!alive) return;
       setReviewing(false);
       setReviewedText(val);

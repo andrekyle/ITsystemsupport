@@ -29,7 +29,9 @@ export async function requestSemanticReview(
   concepts: ConceptForReview[],
   alreadyCredited: string[] = [],
   /** unit standard the learner is working in — used only for token accounting */
-  unitUs?: string
+  unitUs?: string,
+  /** learner sentences that already earned a concept — spent for new credit */
+  spentSentences: string[] = []
 ): Promise<SemanticReview> {
   if (!answer.trim() || concepts.length === 0)
     return { credited: [], reason: "", ran: false };
@@ -39,7 +41,7 @@ export async function requestSemanticReview(
     const r = await fetch("/api/mark-answer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ answer, concepts, alreadyCredited }),
+      body: JSON.stringify({ answer, concepts, alreadyCredited, spentSentences }),
       signal: controller.signal,
     });
     if (!r.ok) return { credited: [], reason: "", ran: false, error: `http_${r.status}` };
