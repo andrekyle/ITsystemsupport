@@ -42,6 +42,8 @@ interface Body {
   alreadyCredited?: string[];
   /** learner sentences that already earned a concept — spent for new credit */
   spentSentences?: string[];
+  /** marking model chosen by the super user — must be on the allowlist */
+  model?: string;
 }
 
 const SYSTEM_PROMPT = `You mark short-answer questions in a South African vocational IT course. Your job: decide which remaining model answers the learner's answer genuinely covers. Be a CAREFUL, CONSERVATIVE marker.
@@ -73,12 +75,15 @@ Reply with STRICT JSON only, no prose:
 const MAX_ANSWER_LEN = 4000;
 const MAX_CONCEPTS = 12;
 const LLM_TIMEOUT_MS = 6000;
-const BUILD = "20260905-2";
+const BUILD = "20260905-3";
 
 /** OpenAI model names to try, in order. First 200 response wins. Falls
  *  through to the next name on 4xx (model not found / plan-restricted).
  *  gpt-4.1-mini leads: in marking evaluations it judges paraphrase
- *  equivalence against the model line correctly where gpt-4o-mini refuses. */
+ *  equivalence against the model line correctly where gpt-4o-mini refuses.
+ *  The super user may pick a specific model on the dashboard; the request's
+ *  `model` is honoured when it is on this allowlist and the rest of the
+ *  chain stays as fallback. */
 const MODEL_CANDIDATES = [
   "gpt-4.1-mini",
   "gpt-4o-mini",
@@ -145,6 +150,13 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ credited: [], reason: "" }, 200);
   }
 
+  // Super-user model choice: honoured only when on the allowlist; the other
+  // candidates stay behind it as fallback.
+  const requested = typeof body?.model === "string" ? body.model : "";
+  const modelChain = MODEL_CANDIDATES.includes(requested)
+    ? [requested, ...MODEL_CANDIDATES.filter((m) => m !== requested)]
+    : MODEL_CANDIDATES;
+
   const userMsg = JSON.stringify({
     learner_answer: answer,
     already_credited_labels: alreadyCredited,
@@ -162,7 +174,7 @@ export default async function handler(req: Request): Promise<Response> {
     let upstream: Response | null = null;
     let lastStatus = 0;
     let lastBody = "";
-    for (const model of MODEL_CANDIDATES) {
+    for (const model of modelChain) {
       const r = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -203,7 +215,7 @@ export default async function handler(req: Request): Promise<Response> {
           reason: "",
           error: `llm_${lastStatus}`,
           detail: lastBody,
-          tried: MODEL_CANDIDATES,
+          tried: modelChain,
           build: BUILD,
         },
         200

@@ -4,7 +4,7 @@
  * so the deterministic marker's verdict stands on any failure.
  */
 
-import { recordTokenUsage } from "./tokens";
+import { loadMarkingModel, recordTokenUsage } from "./tokens";
 
 export interface ConceptForReview {
   /** stable id used by the client to map credit back to concept indexes */
@@ -41,7 +41,13 @@ export async function requestSemanticReview(
     const r = await fetch("/api/mark-answer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ answer, concepts, alreadyCredited, spentSentences }),
+      body: JSON.stringify({
+        answer,
+        concepts,
+        alreadyCredited,
+        spentSentences,
+        model: loadMarkingModel(),
+      }),
       signal: controller.signal,
     });
     if (!r.ok) return { credited: [], reason: "", ran: false, error: `http_${r.status}` };

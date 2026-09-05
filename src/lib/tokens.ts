@@ -153,6 +153,67 @@ const PRICES_PER_MTOK: Record<string, { in: number; out: number }> = {
   "gpt-4o": { in: 2.5, out: 10 },
 };
 
+/* ---------- super-user marking-model setting ---------- */
+
+export interface MarkingModelInfo {
+  id: string;
+  name: string;
+  desc: string;
+  /** USD per 1M input / output tokens (OpenAI list prices) */
+  inPerM: number;
+  outPerM: number;
+  recommended?: boolean;
+}
+
+/** Models the super user may choose for AI marking. Must stay in step with
+ *  the MODEL_CANDIDATES allowlist in api/mark-answer.ts. */
+export const MARKING_MODELS: MarkingModelInfo[] = [
+  {
+    id: "gpt-4.1-mini",
+    name: "GPT-4.1 mini",
+    desc: "Best marking judgement — credits genuine paraphrases correctly",
+    inPerM: 0.4,
+    outPerM: 1.6,
+    recommended: true,
+  },
+  {
+    id: "gpt-4o-mini",
+    name: "GPT-4o mini",
+    desc: "Cheapest — stricter on paraphrased answers, may under-credit",
+    inPerM: 0.15,
+    outPerM: 0.6,
+  },
+  {
+    id: "gpt-4o",
+    name: "GPT-4o",
+    desc: "Largest and most expensive — for comparison testing",
+    inPerM: 2.5,
+    outPerM: 10,
+  },
+];
+
+export const DEFAULT_MARKING_MODEL = "gpt-4.1-mini";
+
+/** Shared key (`.shared` suffix → synced via shared_state to every account)
+ *  so all learners' marking calls use the model the super user picked. */
+const MODEL_KEY = "itss.aimodel.shared";
+
+export function loadMarkingModel(): string {
+  try {
+    const v = JSON.parse(localStorage.getItem(MODEL_KEY) ?? "null");
+    if (typeof v === "string" && MARKING_MODELS.some((m) => m.id === v)) return v;
+  } catch {
+    /* fall through to default */
+  }
+  return DEFAULT_MARKING_MODEL;
+}
+
+export function saveMarkingModel(id: string): void {
+  if (MARKING_MODELS.some((m) => m.id === id)) {
+    localStorage.setItem(MODEL_KEY, JSON.stringify(id));
+  }
+}
+
 function priceFor(model: string): { in: number; out: number } {
   const hit = Object.keys(PRICES_PER_MTOK).find((k) => model.startsWith(k));
   return hit ? PRICES_PER_MTOK[hit] : PRICES_PER_MTOK["gpt-4o-mini"];

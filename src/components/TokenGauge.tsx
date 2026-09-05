@@ -6,6 +6,9 @@ import {
   fetchTokenRecords,
   fetchTokenSummary,
   fmtTokens,
+  loadMarkingModel,
+  MARKING_MODELS,
+  saveMarkingModel,
   type TokenRecord,
   type TokenRecordsResult,
   type TokenSummaryResult,
@@ -192,6 +195,7 @@ export function TokenGauge() {
   const [budget, setBudget] = useState<number>(loadBudget);
   const [editBudget, setEditBudget] = useState(false);
   const [closedMods, setClosedMods] = useState<Set<string>>(new Set());
+  const [markingModel, setMarkingModel] = useState<string>(loadMarkingModel);
 
   const now = new Date();
   const from = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
@@ -541,6 +545,46 @@ export function TokenGauge() {
               <span className={`oa-budget-bar${overBudget ? " over" : ""}`}>
                 <span style={{ width: `${Math.min(100, Math.round(budgetShare * 100))}%` }} />
               </span>
+            </div>
+
+            {/* ——— marking model choice ——— */}
+            <div className="oa-models">
+              <div className="oa-sec-lbl">AI marking model</div>
+              <div className="oa-models-list" role="radiogroup" aria-label="AI marking model">
+                {MARKING_MODELS.map((m) => {
+                  const active = markingModel === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      className={`oa-model-row${active ? " active" : ""}`}
+                      onClick={() => {
+                        saveMarkingModel(m.id);
+                        setMarkingModel(m.id);
+                      }}
+                      title={`Mark answers with ${m.name}`}
+                    >
+                      <span className={`oa-radio${active ? " on" : ""}`} aria-hidden="true" />
+                      <span className="oa-model-name">
+                        {m.name}
+                        {m.recommended && <span className="oa-model-tag">Recommended</span>}
+                        {active && <span className="oa-model-tag on">In use</span>}
+                      </span>
+                      <span className="oa-model-desc">{m.desc}</span>
+                      <span className="oa-model-price">
+                        ${m.inPerM.toFixed(2)} in / ${m.outPerM.toFixed(2)} out per 1M
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mini-note" style={{ margin: "6px 0 0" }}>
+                Applies to every learner's marking calls (each device picks it up on its next
+                sign-in or page load). If the chosen model is unavailable, marking falls back to
+                the next one automatically.
+              </p>
             </div>
 
             {/* ——— breakdown ——— */}
