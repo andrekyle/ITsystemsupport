@@ -5133,80 +5133,117 @@ a.plan-ppt:hover {
 }
 
 /* ---------- spelling review (plain text, no box) ---------- */
+/* ---- spelling review: quiet, Microsoft-Word-Editor-style panel ---- */
+
 .exq-spell {
   margin-top: 8px;
-  padding: 0;
-  border: 0;
-  background: transparent;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
   font-size: 12.5px;
   line-height: 1.5;
 }
 
-.exq-spell.has-issues .exq-spell-head {
-  color: var(--red);
+.exq-spell.clean {
+  padding: 6px 12px;
+  color: var(--ink-3);
+  background: transparent;
+  border-color: transparent;
 }
 
-.exq-spell.clean {
-  color: var(--green, #16a34a);
-}
+.exq-spell.clean .exq-spell-head { color: var(--green, #16a34a); font-weight: 500; }
 
 .exq-spell-head {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.exq-spell-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #c42b1c;
+  color: #fff;
+  font-size: 11px;
   font-weight: 600;
 }
 
-.exq-spell-preview {
-  margin: 6px 0 4px;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--ink);
-}
-
 .exq-spell-list {
-  margin: 4px 0 0;
-  padding-left: 18px;
-  color: var(--ink-2, var(--ink));
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
 }
 
-.exq-spell-list li {
-  margin: 2px 0;
+.exq-spell-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 5px 0;
+}
+
+.exq-spell-item + .exq-spell-item {
+  border-top: 1px solid var(--border);
 }
 
 .exq-spell-sugg {
-  color: var(--ink-2, var(--ink));
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
-/* the red‑squiggle highlight used both in the live preview and the
-   per‑issue list */
+/* the red squiggle — Word's signature treatment: underline only, normal ink */
 .spell-bad {
-  text-decoration: underline wavy #dc2626;
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: underline wavy #c42b1c;
   text-decoration-skip-ink: none;
   text-underline-offset: 3px;
-  background: rgba(220, 38, 38, 0.08);
-  color: #b91c1c;
-  border-radius: 3px;
-  padding: 0 1px;
+  text-decoration-thickness: 1px;
 }
 
-/* one‑click "did you mean" fix button */
+/* one-click suggestion chips, Word-suggestion style */
 .spell-fix {
-  background: transparent;
-  border: 1px solid rgba(220, 38, 38, 0.35);
-  color: #b91c1c;
-  padding: 0 6px;
-  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  padding: 2px 10px;
+  border-radius: 4px;
   font: inherit;
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
 }
 
 .spell-fix:hover {
-  background: rgba(220, 38, 38, 0.08);
+  background: var(--azure-lighter, var(--surface-2));
+  border-color: var(--azure);
+  color: var(--azure-darker, var(--azure));
 }
+
+.spell-ignore {
+  margin-left: auto;
+  background: none;
+  border: 0;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.spell-ignore:hover { background: var(--surface-2); color: var(--ink-2); }
 
 .exq-check {
   display: flex;

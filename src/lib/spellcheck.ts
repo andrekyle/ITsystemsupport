@@ -18,6 +18,8 @@
  *
  * Everything runs client‑side — no network calls, no external dictionaries. */
 
+import { ENGLISH_WORDS } from "../data/englishWords";
+
 /* ---------- dictionary ---------- */
 
 /** Common English words (base forms). Suffixed forms (‑s, ‑es, ‑ed, ‑ing, …)
@@ -358,6 +360,60 @@ recycle recycling refurbish refurbishment sustainable sustainability disposal e-
 /** Words that should NOT be suggested as corrections (very short / ambiguous). */
 const NEVER_SUGGEST = new Set(["a", "i"]);
 
+/** South African / course-specific vocabulary that general English frequency
+ *  lists miss. Kept small: only words that appear in the course's own
+ *  professionally authored content. */
+const COURSE_TERMS = `
+learnership learnerships moderator moderators formative summative facilitation invigilator invigilators
+unisa sassa nsfas eskom telkom vodacom transnet gauteng johannesburg pretoria durban soweto
+rand rands braai indaba ubuntu fundi bakkie robot robots stokvel lekker timeous timeously biasness
+onboarding offboarding offboard upskill upskilling reskill reskilling walkthrough walkthroughs signoff signoffs
+whistleblowing whistleblower whistleblowers timeboxed retrospectives standup standups
+cybersafety cyberspace netiquette phablet minicomputer minicomputers microcomputer microcomputers
+mainframes plaintext ciphertext keypair keypairs passphrase passphrases
+screenshare screensharing videoconference videoconferencing teleconference teleconferencing
+helpdesk helpdesks servicedesk deskside crimper crimpers punchdown trunking cabletie
+multimeter multimeters wattage voltmeter ammeter ohmmeter oscilloscope
+antistatic earthing busbar aircon distro distros
+subfolder subfolders subdirectory subdirectories autosave autosaved autosaves undelete
+defrag defragging defragmentation hibernation lockscreen lockout lockouts
+qwerty numpad trackpad trackball trackballs docking undock undocking
+resellers reseller resell reselling procurement procure procuring
+invoicing invoiced learner learners assessor assessors accredit accredits accredited accreditation
+apprised auditable autocratic backtrack barcode barcodes callout callouts chatbot chatbots
+checkbox checkboxes debrief debriefs debriefing deregister deregistered doughboy druthers
+edifying elapse elapses extrude extruded foresaw handover handovers haptic heckler hecklers
+hypervisor hypervisors inkjet interject interjects interjecting leery nagware obviate obviates
+outro pagefile printhead reseat reseats reseating roadmap roadmaps shrank signage spacebar
+timeline timelines tooltip tooltips wimpy regex async todo todos href hyperlinks
+saqa qcto mict seta setas popia bsod dimm dimms sodimm msdos nvme pcie sata usbc fisa pdca
+fsca icasa safact comptia eniac dikw nand vlan wlan dhcp smtp imap voip gigabyte gigabytes
+anonymise anonymised anonymises anonymising empathise empathised empathises empathising
+memorise memorised memorises memorising modernise modernised moralise moralised socialise
+socialised scrutinise scrutinised synthesise synthesised standardise standardised prioritise
+prioritised prioritises prioritising finalise finalised finalises finalising subsidise subsidised
+customise customised customises customising personalise personalised popularise popularised
+visualise visualised virtualise virtualised virtualisation utilisation globalisation legalisation
+maximisation minimisation standardisation organiser organisers bootable rebootable
+condense condenses narrate narrates empathize empathizes fingernail tabulate tabulates
+tabulator tabulators interpolate interpolates extrapolate extrapolates legibility irresistibly inconsequent
+stringify docx pptx xlsx cmos bombe msdos webforms
+`;
+
+/** Brand, product and notable-figure names learners commonly type in
+ *  lowercase ("google it", "made in excel", "babbage's engine"). */
+const PROPER_NAMES = `
+google adobe amazon apple microsoft facebook whatsapp gmail outlook excel powerpoint onenote
+sharepoint onedrive teams zoom skype chrome firefox safari edge opera youtube twitter instagram
+tiktok linkedin netflix spotify samsung huawei lenovo dell asus acer intel nvidia xerox epson
+canon logitech seagate sandisk kingston corsair gigabyte toshiba fujitsu hitachi panasonic
+shoprite nandos takealot figma canva slack notion dropbox github gitlab bitbucket stackoverflow
+wikipedia reddit babbage lovelace turing neumann hollerith pascal jacquard berners vaughan
+wozniak jobs gates musk zuckerberg bezos torvalds hopper
+`;
+
+
+
 /** Known acronyms (course + IT) — all‑caps tokens matching these are fine. */
 const ACRONYMS = new Set(
   `SAQA NQF QCTO MICT SETA SETAS POE ITSS NCV POPIA GDPR COBIT ITIL SDLC HTTPS HTTP HTML XHTML
@@ -372,6 +428,12 @@ const ACRONYMS = new Set(
 const SUFFIX_RULES: { suffix: string; add: string[] }[] = [
   { suffix: "'s", add: [""] },
   { suffix: "s'", add: [""] },
+  { suffix: "n't", add: [""] },
+  { suffix: "'t", add: [""] },
+  { suffix: "'re", add: [""] },
+  { suffix: "'ve", add: [""] },
+  { suffix: "'ll", add: [""] },
+  { suffix: "'d", add: [""] },
   { suffix: "ies", add: ["y"] },
   { suffix: "ied", add: ["y"] },
   { suffix: "ier", add: ["y"] },
@@ -381,10 +443,54 @@ const SUFFIX_RULES: { suffix: string; add: string[] }[] = [
   { suffix: "ed", add: ["", "e"] },
   { suffix: "ing", add: ["", "e"] },
   { suffix: "er", add: ["", "e"] },
+  { suffix: "or", add: [""] },
   { suffix: "est", add: ["", "e"] },
   { suffix: "ly", add: [""] },
   { suffix: "ally", add: ["al"] },
 ];
+
+/** Contractions accepted as words even though their stem alone isn't one. */
+const CONTRACTIONS = new Set(
+  `won't shan't ain't i'm let's o'clock ma'am y'all`.split(/\s+/)
+);
+
+/** Notorious misspellings that morphology would otherwise legitimise
+ *  ("occured" = occur + ed, "untill" = un + till). Always flagged. */
+const KNOWN_TYPOS = new Set(
+  (
+    "occured occuring occurence occurences untill tommorow tommorrow wich thier recieve recieved " +
+    "recieves recieving beleive beleived beleives beleiving seperate seperated seperates seperately " +
+    "seperation definately definatly accomodate accomodated accomodation embarass embarassed " +
+    "embarassing occassion occassional occassionally publically recomend recomended recomending " +
+    "refered refering targetted targetting truely arguement arguements acheive acheived acheiving " +
+    "alot enviroment enviromental goverment managment commitee committe existance existant " +
+    "persistant independant relevent apparant neccessary neccesary necesary occurance occurances " +
+    "performence begining beggining sucess sucessful sucessfully sucesses paralel parallell " +
+    "comparision comparisions dissapoint dissapointed dissapear dissapeared futher greatful " +
+    "grammer harrass harrassment immediatly interupt interupted knowlege liason libary lisence " +
+    "maintainance maintenence miniscule mispell mispelled noticable noticably occassions payed " +
+    "personel posession posessions prefered prefering priviledge priviledges probally proffesional " +
+    "promiss pronounciation prupose psuedo realy reciept rediculous rember remeber " +
+    "resistence responce rythm rythem safty scedule secratary seige succesful succesfully sumary " +
+    "surpise surprize tendancy therefor threshhold tounge transfered transfering unforseen " +
+    "unfortunatly usualy vaccuum vegatarian vehical visable wierd wilst " +
+    "writting yeild yeilds"
+  ).split(/\s+/)
+);
+
+/** Derivational prefixes: an unknown word is accepted when stripping one of
+ *  these leaves a dictionary word ("unencrypted" → "encrypted",
+ *  "reallocated" → "allocated", "multibillion" → "billion"). */
+const PREFIXES = [
+  "un", "re", "non", "mis", "pre", "de", "dis", "over", "under", "multi",
+  "sub", "anti", "inter", "intra", "semi", "auto", "co", "micro", "macro",
+  "hyper", "super", "out", "cross", "self", "meta", "pseudo", "post",
+];
+
+/** Derivational suffixes: accepted when the remaining stem (with or without a
+ *  trailing "e") is a dictionary word ("auditable" → "audit",
+ *  "suppressive" → "suppress", "functionary" → "function"). */
+const DERIV_SUFFIXES = ["able", "ible", "ness", "ive", "ish", "ism", "ist", "ful", "less", "ment", "ary", "ation"];
 
 function tokeniseDict(text: string): string[] {
   return text
@@ -394,15 +500,32 @@ function tokeniseDict(text: string): string[] {
 }
 
 const BASE_DICT = new Set<string>([
+  ...tokeniseDict(ENGLISH_WORDS),
   ...tokeniseDict(COMMON_ENGLISH),
   ...tokeniseDict(ENGLISH_EXTENDED),
   ...tokeniseDict(BUSINESS_TERMS),
   ...tokeniseDict(IT_TERMS),
   ...tokeniseDict(IT_EXTENDED),
+  ...tokeniseDict(COURSE_TERMS),
+  ...tokeniseDict(PROPER_NAMES),
 ]);
 
 /** All dictionary words as an array, used to search for close matches. */
 const DICT_ARRAY = Array.from(BASE_DICT);
+
+/** Frequency rank per word (lower = more common English), taken from the
+ *  order of {@link ENGLISH_WORDS}. Curated domain words get a mid rank so
+ *  they can still win as suggestions in this course's context. */
+const RANK = new Map<string, number>();
+{
+  let i = 0;
+  for (const w of tokeniseDict(ENGLISH_WORDS)) {
+    if (!RANK.has(w)) RANK.set(w, i);
+    i++;
+  }
+}
+const DOMAIN_RANK = 4000;
+const rankOf = (w: string): number => RANK.get(w) ?? DOMAIN_RANK;
 
 /** Bigrams observed in the dictionary (base words + simple plurals). Unknown
  *  words containing several bigrams never seen here look like keyboard mash
@@ -445,29 +568,53 @@ function extractAllowedFromPhrases(phrases: Iterable<string>): Set<string> {
 function baseForms(word: string): string[] {
   const bases = new Set<string>([word]);
   for (const rule of SUFFIX_RULES) {
-    if (word.length > rule.suffix.length + 2 && word.endsWith(rule.suffix)) {
-      const stem = word.slice(0, word.length - rule.suffix.length);
-      for (const add of rule.add) bases.add(stem + add);
-      // handle doubled consonant: "running" -> "run", "stopped" -> "stop"
-      if ((rule.suffix === "ing" || rule.suffix === "ed") && stem.length >= 2) {
-        const last = stem[stem.length - 1];
-        const prev = stem[stem.length - 2];
-        if (last === prev && "bcdfghjklmnpqrstvwxz".includes(last)) {
-          bases.add(stem.slice(0, -1));
-        }
+    if (!word.endsWith(rule.suffix)) continue;
+    const stem = word.slice(0, word.length - rule.suffix.length);
+    // contraction endings allow two-letter stems ("it's", "we're", "can't");
+    // plain suffixes need at least three letters to avoid junk matches
+    if (stem.length < (rule.suffix.includes("'") ? 2 : 3)) continue;
+    for (const add of rule.add) bases.add(stem + add);
+    // handle doubled consonant: "running" -> "run", "stopped" -> "stop"
+    if ((rule.suffix === "ing" || rule.suffix === "ed") && stem.length >= 2) {
+      const last = stem[stem.length - 1];
+      const prev = stem[stem.length - 2];
+      if (last === prev && "bcdfghjklmnpqrstvwxz".includes(last)) {
+        bases.add(stem.slice(0, -1));
       }
     }
   }
   return Array.from(bases);
 }
 
-/** Is a word known to the dictionary (base + inflected forms + caller‑supplied
- *  allow‑list)? */
+/** Is a word known to the dictionary (base + inflected forms + contractions +
+ *  derivational prefixes/suffixes + caller‑supplied allow‑list)? */
 function isKnown(word: string, allowed: Set<string>): boolean {
   const w = word.toLowerCase();
-  if (BASE_DICT.has(w) || allowed.has(w)) return true;
-  for (const b of baseForms(w)) {
-    if (BASE_DICT.has(b) || allowed.has(b)) return true;
+  if (BASE_DICT.has(w) || allowed.has(w) || CONTRACTIONS.has(w)) return true;
+  // base forms up to two suffix strips deep ("tabulators" → "tabulator" → "tabulate")
+  const level1 = baseForms(w);
+  const candidates = new Set<string>(level1);
+  for (const c of level1) for (const b of baseForms(c)) candidates.add(b);
+  for (const c of candidates) {
+    if (c !== w && (BASE_DICT.has(c) || allowed.has(c))) return true;
+  }
+  // derivational morphology: prefix + known word, or known stem + suffix
+  for (const c of candidates) {
+    for (const p of PREFIXES) {
+      if (c.length >= p.length + 3 && c.startsWith(p)) {
+        const rest = c.slice(p.length);
+        if (BASE_DICT.has(rest) || allowed.has(rest)) return true;
+        for (const b of baseForms(rest)) {
+          if (BASE_DICT.has(b) || allowed.has(b)) return true;
+        }
+      }
+    }
+    for (const sfx of DERIV_SUFFIXES) {
+      if (c.length >= sfx.length + 3 && c.endsWith(sfx)) {
+        const stem = c.slice(0, c.length - sfx.length);
+        if (BASE_DICT.has(stem) || BASE_DICT.has(stem + "e") || allowed.has(stem)) return true;
+      }
+    }
   }
   return false;
 }
@@ -518,46 +665,32 @@ function editDistance(a: string, b: string, limit: number): number {
 
 /* ---------- suggestions ---------- */
 
-/** Simple inflected forms of a dictionary base word, used so suggestions can
- *  match the learner's tense/number ("aquired" → "acquired", not "acquire"). */
-function inflections(base: string): string[] {
-  const out = [base];
-  if (/[sxz]$|[sc]h$/.test(base)) out.push(base + "es");
-  else if (/[bcdfghjklmnpqrstvwxz]y$/.test(base)) out.push(base.slice(0, -1) + "ies");
-  else out.push(base + "s");
-  out.push(base.endsWith("e") ? base + "d" : base + "ed");
-  out.push(base.endsWith("e") ? base.slice(0, -1) + "ing" : base + "ing");
-  return out;
-}
-
-/** Find up to {@link maxSuggestions} closest dictionary words to `word`.
- *  Only considers candidates that share the first letter and whose length is
- *  within `limit` of `word` — keeps the scan fast. Caller‑supplied allowed
- *  words (lesson terminology) are searched too, so typos of lesson‑specific
- *  vocabulary are caught even when it isn't in the base dictionary. */
+/** Find up to {@link maxSuggestions} closest dictionary words to `word`,
+ *  best first. Candidates are REAL dictionary entries only (the dictionary
+ *  already contains inflected forms), ranked Word-style: smallest edit
+ *  distance, then how common the word is in English, then longest shared
+ *  prefix. Caller‑supplied allowed words (lesson terminology) are searched
+ *  too, so typos of lesson‑specific vocabulary are caught even when they are
+ *  not in the base dictionary. */
 function suggestFor(word: string, limit: number, maxSuggestions = 3, extraCandidates?: Iterable<string>): string[] {
   const w = word.toLowerCase();
   const first = w[0];
-  const pool = extraCandidates ? [...DICT_ARRAY, ...extraCandidates] : DICT_ARRAY;
-  const scored: { word: string; d: number }[] = [];
+  const extra = extraCandidates ? Array.from(extraCandidates) : [];
+  const scored: { word: string; d: number; rank: number }[] = [];
+  const scan = (cand: string, sameInitialOnly: boolean) => {
+    if (NEVER_SUGGEST.has(cand)) return;
+    if (sameInitialOnly && cand[0] !== first) return;
+    if (Math.abs(cand.length - w.length) > limit) return;
+    const d = editDistance(w, cand, limit);
+    if (d <= limit) scored.push({ word: cand, d, rank: rankOf(cand) });
+  };
   const consider = (sameInitialOnly: boolean) => {
-    for (const cand of pool) {
-      if (sameInitialOnly && cand[0] !== first) continue;
-      if (NEVER_SUGGEST.has(cand)) continue;
-      if (Math.abs(cand.length - w.length) > limit + 4) continue;
-      for (const form of inflections(cand)) {
-        if (Math.abs(form.length - w.length) > limit) continue;
-        const d = editDistance(w, form, limit);
-        if (d <= limit) scored.push({ word: form, d });
-      }
-    }
+    for (const cand of DICT_ARRAY) scan(cand, sameInitialOnly);
+    for (const cand of extra) scan(cand, sameInitialOnly);
   };
   consider(true);
   // If no same‑initial candidates match, allow any initial (typo of the first letter).
   if (scored.length === 0) consider(false);
-  // Typos usually preserve the start of the word, so on equal edit distance
-  // prefer the candidate sharing the longest prefix with the input, then the
-  // closest length.
   const prefixLen = (cand: string) => {
     let n = 0;
     while (n < cand.length && n < w.length && cand[n] === w[n]) n++;
@@ -566,6 +699,7 @@ function suggestFor(word: string, limit: number, maxSuggestions = 3, extraCandid
   scored.sort(
     (a, b) =>
       a.d - b.d ||
+      a.rank - b.rank ||
       prefixLen(b.word) - prefixLen(a.word) ||
       Math.abs(a.word.length - w.length) - Math.abs(b.word.length - w.length) ||
       a.word.localeCompare(b.word)
@@ -603,8 +737,12 @@ function* tokensOf(text: string): Generator<{ word: string; start: number; end: 
   const re = /[A-Za-z][A-Za-z'’-]*/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text))) {
-    const w = m[0].replace(/[’]/g, "'");
-    yield { word: w, start: m.index, end: m.index + m[0].length };
+    // trim trailing apostrophes/hyphens ("agenda'" → "agenda") so quoting
+    // styles never turn a correct word into an unknown token
+    let raw = m[0];
+    while (raw.length > 1 && /['’-]$/.test(raw)) raw = raw.slice(0, -1);
+    const w = raw.replace(/[’]/g, "'");
+    yield { word: w, start: m.index, end: m.index + raw.length };
   }
 }
 
@@ -630,26 +768,34 @@ function isCheckable(word: string): boolean {
  *  @param text        The learner's answer.
  *  @param extraAllowed  Optional extra words to treat as correctly spelled
  *                       (e.g. lesson terminology drawn from the answer key). */
+const SUGGEST_CACHE = new Map<string, string[]>();
+
 export function findMisspellings(text: string, extraAllowed?: Iterable<string>): SpellIssue[] {
   const allowed = extractAllowedFromPhrases(extraAllowed ?? []);
   const issues: SpellIssue[] = [];
   const seen = new Set<string>(); // dedupe suggestions per unique lowercase word
-  const suggestCache = new Map<string, string[]>();
 
   for (const tok of tokensOf(text)) {
     if (!isCheckable(tok.word)) continue;
 
     const isAllCaps = tok.word === tok.word.toUpperCase();
     if (isAllCaps && ACRONYMS.has(tok.word)) continue;
-    if (isKnown(tok.word, allowed)) continue;
+    // Notorious misspellings are flagged even though morphology could parse
+    // them ("occured" = occur + ed); the lesson allow-list still wins.
+    const knownTypo = KNOWN_TYPOS.has(tok.word.toLowerCase()) && !allowed.has(tok.word.toLowerCase());
+    if (!knownTypo && isKnown(tok.word, allowed)) continue;
 
     const key = tok.word.toLowerCase();
-    let suggestions = suggestCache.get(key);
+    // Module-level cache: repeated checks while the learner types don't
+    // rescan the dictionary for words already analysed.
+    const limit = tok.word.length <= 4 ? 1 : 2;
+    const cacheKey = `${key}|${limit}|${allowed.size}`;
+    let suggestions = SUGGEST_CACHE.get(cacheKey);
     if (!suggestions) {
       // Short words: only accept edit distance 1 to keep the flag conservative.
-      const limit = tok.word.length <= 4 ? 1 : 2;
       suggestions = suggestFor(tok.word, limit, 3, allowed);
-      suggestCache.set(key, suggestions);
+      if (SUGGEST_CACHE.size > 500) SUGGEST_CACHE.clear();
+      SUGGEST_CACHE.set(cacheKey, suggestions);
     }
 
     if (isAllCaps) {

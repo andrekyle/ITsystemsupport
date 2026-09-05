@@ -956,6 +956,7 @@ function ExerciseQuestion({
   const [val, setVal] = useState(saved);
   const [result, setResult] = useState<ReturnType<typeof scoreAnswer> | null>(null);
   const [revealed, setRevealed] = useState(false);
+  const [typing, setTyping] = useState(false);
   // LLM semantic-review state: concept indexes the model promoted to credited
   // after the deterministic check said they were not credited.
   const [extras, setExtras] = useState<Set<number>>(new Set());
@@ -1041,12 +1042,20 @@ function ExerciseQuestion({
   }, [result, val]);
 
   // Words drawn from the lesson's answer key so lesson‑specific vocabulary is
-  // never flagged as a spelling mistake by the built‑in checker.
+  // never flagged as a spelling mistake by the built‑in checker. Learners can
+  // also ignore a flagged word (their own name, a brand …) — Word-style.
+  const [ignoredWords, setIgnoredWords] = useState<string[]>([]);
   const lessonWords = useMemo(
-    () => [...check.answer, ...check.concepts.flat(), ...(check.labels ?? [])],
-    [check],
+    () => [...check.answer, ...check.concepts.flat(), ...(check.labels ?? []), ...ignoredWords],
+    [check, ignoredWords],
   );
-  const spell = useMemo(() => checkSpelling(val, lessonWords), [val, lessonWords]);
+  // Word behaviour: while the learner is typing, the trailing in-progress
+  // word is not reviewed; the full text is checked once they leave the field.
+  const reviewText = useMemo(
+    () => (typing ? val.replace(/[A-Za-z'’-]+$/, "") : val),
+    [val, typing],
+  );
+  const spell = useMemo(() => checkSpelling(reviewText, lessonWords), [reviewText, lessonWords]);
   const misspellings: SpellIssue[] = spell.unique;
 
   return (
@@ -1070,6 +1079,7 @@ function ExerciseQuestion({
             autoCapitalize="sentences"
             placeholder={`Type your answer here (at least ${MIN_ANSWER_WORDS} words — explain in your own words), then check it…`}
             value={val}
+            onFocus={() => setTyping(true)}
             onChange={(e) => {
               setVal(e.target.value);
               if (result) setResult(null);
@@ -1078,6 +1088,7 @@ function ExerciseQuestion({
               if (reviewStatus.kind !== "idle") setReviewStatus({ kind: "idle" });
             }}
             onBlur={() => {
+              setTyping(false);
               if (!ok) onSave(val, false);
             }}
           />
@@ -1086,72 +1097,58 @@ function ExerciseQuestion({
               className={`exq-spell ${misspellings.length ? "has-issues" : "clean"}`}
               aria-live="polite"
             >
-              <div className="exq-spell-head">
-                <Icon name={misspellings.length ? "info" : "checkCircle"} size={14} />
-                {misspellings.length === 0 ? (
+              {misspellings.length === 0 ? (
+                <div className="exq-spell-head">
+                  <Icon name="checkCircle" size={14} />
                   <span>Spelling looks good.</span>
-                ) : (
-                  <span>
-                    Spelling review — {misspellings.length} possible mistake
-                    {misspellings.length === 1 ? "" : "s"} to check:
-                  </span>
-                )}
-              </div>
-              {misspellings.length > 0 && (
+                </div>
+              ) : (
                 <>
-                  <p className="exq-spell-preview">
-                    {spell.segments.map((seg, i) =>
-                      seg.kind === "text" ? (
-                        <span key={i}>{seg.text}</span>
-                      ) : (
-                        <span
-                          key={i}
-                          className="spell-bad"
-                          title={
-                            seg.suggestions.length
-                              ? `Did you mean: ${seg.suggestions.join(", ")}?`
-                              : "Possible spelling mistake"
-                          }
-                        >
-                          {seg.text}
-                        </span>
-                      ),
-                    )}
-                  </p>
+                  <div className="exq-spell-head">
+                    <Icon name="document" size={14} />
+                    <span>Spelling</span>
+                    <span className="exq-spell-count">{misspellings.length}</span>
+                  </div>
                   <ul className="exq-spell-list">
                     {misspellings.map((m) => (
-                      <li key={m.start}>
+                      <li key={m.start} className="exq-spell-item">
                         <span className="spell-bad">{m.word}</span>
                         {m.suggestions.length > 0 && (
                           <span className="exq-spell-sugg">
-                            {" "}— did you mean{" "}
-                            {m.suggestions.map((s, i) => (
-                              <span key={s}>
-                                <button
-                                  type="button"
-                                  className="spell-fix"
-                                  onClick={() => {
-                                    setVal((prev) => {
-                                      const re = new RegExp(
-                                        `\\b${m.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
-                                      );
-                                      const replacement =
-                                        /^[A-Z]/.test(m.word) && s.length > 0
-                                          ? s[0].toUpperCase() + s.slice(1)
-                                          : s;
-                                      return prev.replace(re, replacement);
-                                    });
-                                    if (result) setResult(null);
-                                  }}
-                                >
-                                  {s}
-                                </button>
-                                {i < m.suggestions.length - 1 ? ", " : ""}
-                              </span>
+                            {m.suggestions.map((s) => (
+                              <button
+                                key={s}
+                                type="button"
+                                className="spell-fix"
+                                title={`Replace “${m.word}” with “${s}”`}
+                                onClick={() => {
+                                  setVal((prev) => {
+                                    const re = new RegExp(
+                                      `\\b${m.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
+                                      "g",
+                                    );
+                                    const replacement =
+                                      /^[A-Z]/.test(m.word) && s.length > 0
+                                        ? s[0].toUpperCase() + s.slice(1)
+                                        : s;
+                                    return prev.replace(re, replacement);
+                                  });
+                                  if (result) setResult(null);
+                                }}
+                              >
+                                {s}
+                              </button>
                             ))}
-                            ?
                           </span>
                         )}
+                        <button
+                          type="button"
+                          className="spell-ignore"
+                          title={`Treat “${m.word}” as correctly spelled`}
+                          onClick={() => setIgnoredWords((w) => [...w, m.word])}
+                        >
+                          Ignore
+                        </button>
                       </li>
                     ))}
                   </ul>
