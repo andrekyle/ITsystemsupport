@@ -1147,11 +1147,11 @@ function ExerciseQuestion({
                             <span className="exq-spell-arrow" aria-hidden="true">
                               <Icon name="chevronRight" size={13} />
                             </span>
-                            {m.suggestions.map((s, si) => (
+                            {m.suggestions.map((s) => (
                               <button
                                 key={s}
                                 type="button"
-                                className={`spell-fix${si === 0 ? " primary" : ""}`}
+                                className="spell-fix"
                                 title={`Replace “${m.word}” with “${s}”`}
                                 onClick={() => {
                                   setVal((prev) => {

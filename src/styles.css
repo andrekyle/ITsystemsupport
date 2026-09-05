@@ -5258,60 +5258,45 @@ a.plan-ppt:hover {
 
 [data-theme="dark"] .spell-bad { text-decoration-color: #e37d80; }
 
-/* one-click suggestion pills; the first (best) suggestion is emphasised */
+/* suggestions as in Word's spelling menu: plain bold text, no pill, with a
+   quiet menu-item highlight on hover only */
 .spell-fix {
-  background: var(--surface);
-  border: 1px solid var(--border-2);
-  color: var(--ink-2);
-  padding: 3px 13px;
-  border-radius: 999px;
+  background: none;
+  border: 0;
+  color: var(--ink);
+  padding: 3px 9px;
+  border-radius: 4px;
   font: inherit;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 12.5px;
+  font-weight: 600;
   cursor: pointer;
-  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease,
-    color 0.12s ease, box-shadow 0.12s ease;
+  transition: background 0.1s ease;
 }
 
 .spell-fix:hover {
-  transform: translateY(-1px);
-  background: var(--azure-lighter, var(--surface-2));
-  border-color: var(--azure);
-  color: var(--azure-darker, var(--azure));
-  box-shadow: 0 2px 8px rgba(0, 120, 212, 0.22);
+  background: var(--surface-2);
 }
 
-.spell-fix:active { transform: none; }
-
-.spell-fix.primary {
-  background: var(--azure-light);
-  border-color: var(--azure);
-  color: var(--azure-darker, var(--azure));
-  font-weight: 600;
-}
-
-.spell-fix.primary:hover {
-  background: var(--azure);
-  color: #fff;
+.spell-fix:active {
+  background: var(--border);
 }
 
 .spell-ignore {
   margin-left: auto;
   background: none;
-  border: 1px solid transparent;
+  border: 0;
   color: var(--ink-3);
   font: inherit;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  padding: 3px 10px;
-  border-radius: 999px;
-  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  padding: 3px 9px;
+  border-radius: 4px;
+  transition: background 0.1s ease, color 0.1s ease;
 }
 
 .spell-ignore:hover {
   background: var(--surface-2);
-  border-color: var(--border);
   color: var(--ink-2);
 }
 
