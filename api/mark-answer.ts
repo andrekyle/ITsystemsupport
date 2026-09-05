@@ -75,7 +75,7 @@ Reply with STRICT JSON only, no prose:
 const MAX_ANSWER_LEN = 4000;
 const MAX_CONCEPTS = 12;
 const LLM_TIMEOUT_MS = 6000;
-const BUILD = "20260905-5";
+const BUILD = "20260905-6";
 
 /** OpenAI model names to try, in order. First 200 response wins. Falls
  *  through to the next name on 4xx (model not found / plan-restricted).
@@ -183,77 +183,64 @@ export default async function handler(req: Request): Promise<Response> {
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS);
-  try {
-    let upstream: Response | null = null;
-    let lastStatus = 0;
-    let lastBody = "";
-    for (const model of modelChain) {
-      const r = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          ...paramsFor(model),
-          response_format: { type: "json_object" },
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: userMsg },
-          ],
-        }),
-        signal: controller.signal,
-      });
-      lastStatus = r.status;
-      if (r.ok) {
-        upstream = r;
-        break;
-      }
-      // Read body for diagnostics but keep trying the next candidate on 404,
-      // which is how Groq reports "model no longer available on your plan".
+
+  const validIds = new Set(concepts.map((c) => String(c.id)));
+  const n = (v: unknown) => (typeof v === "number" && isFinite(v) && v >= 0 ? Math.round(v) : 0);
+
+  interface Verdict {
+    credited: string[];
+    reason: string;
+    usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+    model: string;
+  }
+  interface Failure {
+    httpStatus: number;
+    detail: string;
+  }
+  const isVerdict = (v: Verdict | Failure): v is Verdict => "credited" in v;
+
+  /** One completion call → parsed verdict (or HTTP failure info). */
+  const judgeOnce = async (model: string): Promise<Verdict | Failure> => {
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        ...paramsFor(model),
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userMsg },
+        ],
+      }),
+      signal: controller.signal,
+    });
+    if (!r.ok) {
+      let detail = "";
       try {
-        lastBody = (await r.text()).slice(0, 200);
+        detail = (await r.text()).slice(0, 200);
       } catch {
-        lastBody = "";
+        detail = "";
       }
-      if (r.status !== 404 && r.status !== 400) break;
+      return { httpStatus: r.status, detail };
     }
-
-    if (!upstream) {
-      return json(
-        {
-          credited: [],
-          reason: "",
-          error: `llm_${lastStatus}`,
-          detail: lastBody,
-          tried: modelChain,
-          build: BUILD,
-        },
-        200
-      );
-    }
-
-    const data = (await upstream.json()) as {
+    const data = (await r.json()) as {
       choices?: { message?: { content?: string } }[];
       model?: string;
-      usage?: {
-        prompt_tokens?: number;
-        completion_tokens?: number;
-        total_tokens?: number;
-      };
+      usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
     };
     const content = data.choices?.[0]?.message?.content ?? "{}";
     let parsed: { credited?: unknown; scores?: unknown; reason?: unknown } = {};
     try {
       parsed = JSON.parse(content);
     } catch {
-      /* invalid JSON from the model — return empty */
+      /* invalid JSON from the model — treated as an empty verdict */
     }
-    const validIds = new Set(concepts.map((c) => String(c.id)));
-
     // Support two response shapes for forward-compat:
-    //   1. { scores: [{ id, confidence }, ...] } — new confidence-scored shape
+    //   1. { scores: [{ id, confidence }, ...] } — confidence-scored shape
     //   2. { credited: ["<id>", ...] } — legacy shape (older prompts)
     // Only concepts with confidence >= CREDIT_THRESHOLD are credited.
     const CREDIT_THRESHOLD = 0.9;
@@ -261,9 +248,7 @@ export default async function handler(req: Request): Promise<Response> {
     if (Array.isArray(parsed.scores)) {
       credited = parsed.scores
         .filter(
-          (
-            s: unknown
-          ): s is { id: string; confidence: number } =>
+          (s: unknown): s is { id: string; confidence: number } =>
             !!s &&
             typeof (s as { id?: unknown }).id === "string" &&
             typeof (s as { confidence?: unknown }).confidence === "number" &&
@@ -276,18 +261,76 @@ export default async function handler(req: Request): Promise<Response> {
         (id): id is string => typeof id === "string" && validIds.has(id)
       );
     }
-    const reason =
-      typeof parsed.reason === "string" ? parsed.reason.slice(0, 200) : "";
-    // Token accounting for the super-user usage gauge. Reported per call so
-    // the client can log spend against the unit standard being marked.
-    const n = (v: unknown) => (typeof v === "number" && isFinite(v) && v >= 0 ? Math.round(v) : 0);
-    const usage = {
-      prompt_tokens: n(data.usage?.prompt_tokens),
-      completion_tokens: n(data.usage?.completion_tokens),
-      total_tokens: n(data.usage?.total_tokens),
+    return {
+      credited,
+      reason: typeof parsed.reason === "string" ? parsed.reason.slice(0, 200) : "",
+      usage: {
+        prompt_tokens: n(data.usage?.prompt_tokens),
+        completion_tokens: n(data.usage?.completion_tokens),
+        total_tokens: n(data.usage?.total_tokens),
+      },
+      model: typeof data.model === "string" ? data.model.slice(0, 60) : model,
     };
-    const model = typeof data.model === "string" ? data.model.slice(0, 60) : "";
-    return json({ credited, reason, usage, model }, 200);
+  };
+
+  try {
+    let lastStatus = 0;
+    let lastBody = "";
+    for (const model of modelChain) {
+      // gpt-5 models run at a forced temperature of 1, so single calls can
+      // flip on borderline answers. Self-consistency: three parallel votes,
+      // credit only what the majority credits. Deterministic (temp-0) models
+      // need one call.
+      const runs = model.startsWith("gpt-5") ? 3 : 1;
+      const settled = await Promise.all(
+        Array.from({ length: runs }, () =>
+          judgeOnce(model).catch((e): Failure => {
+            // AbortError must escape to the outer timeout handler
+            if ((e as Error)?.name === "AbortError") throw e;
+            return { httpStatus: 0, detail: String(e).slice(0, 200) };
+          })
+        )
+      );
+      const oks = settled.filter(isVerdict);
+      if (oks.length === 0) {
+        const f = settled[0] as Failure;
+        lastStatus = f.httpStatus;
+        lastBody = f.detail;
+        // Keep trying the next candidate on 404/400 (model not available /
+        // parameter rejected); other statuses (401, 429, 5xx) stop the chain.
+        if (f.httpStatus !== 404 && f.httpStatus !== 400 && f.httpStatus !== 0) break;
+        continue;
+      }
+      // Majority vote across successful runs (1 run → its own verdict).
+      const need = Math.floor(oks.length / 2) + 1;
+      const counts = new Map<string, number>();
+      for (const v of oks) for (const id of v.credited) counts.set(id, (counts.get(id) ?? 0) + 1);
+      const credited = [...counts.entries()].filter(([, c]) => c >= need).map(([id]) => id);
+      const usage = oks.reduce(
+        (t, v) => ({
+          prompt_tokens: t.prompt_tokens + v.usage.prompt_tokens,
+          completion_tokens: t.completion_tokens + v.usage.completion_tokens,
+          total_tokens: t.total_tokens + v.usage.total_tokens,
+        }),
+        { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 }
+      );
+      const sameSet = (a: string[], b: string[]) =>
+        a.length === b.length && a.every((x) => b.includes(x));
+      const reason = (oks.find((v) => sameSet(v.credited, credited)) ?? oks[0]).reason;
+      return json({ credited, reason, usage, model: oks[0].model, votes: oks.length }, 200);
+    }
+
+    return json(
+      {
+        credited: [],
+        reason: "",
+        error: `llm_${lastStatus}`,
+        detail: lastBody,
+        tried: modelChain,
+        build: BUILD,
+      },
+      200
+    );
   } catch {
     return json({ credited: [], reason: "", error: "timeout" }, 200);
   } finally {
