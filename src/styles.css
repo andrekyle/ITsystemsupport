@@ -9382,7 +9382,9 @@ table.data th.sortable.sorted { color: var(--ink); }
 .token-unit-row .token-bar > span { background: #6ee7b7; }
 
 .token-unit-name {
-  width: 276px;
+  /* 26px container indent + 298px + 10px gap = chevron(14) + gap(10) + 300 + gap(10)
+     on the module row above — bars in both rows start at the same x */
+  width: 298px;
   flex-shrink: 0;
   font-size: 12.5px;
   color: var(--ink-2);
@@ -9393,7 +9395,7 @@ table.data th.sortable.sorted { color: var(--ink); }
 
 @media (max-width: 760px) {
   .token-mod-name { width: 150px; }
-  .token-unit-name { width: 126px; }
+  .token-unit-name { width: 148px; } /* 26 + 148 + 10 = 14 + 10 + 150 + 10 */
   .token-sub { display: none; }
   .oa-month-label { min-width: 0; }
 }
