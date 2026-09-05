@@ -591,6 +591,17 @@ function baseForms(word: string): string[] {
 function isKnown(word: string, allowed: Set<string>): boolean {
   const w = word.toLowerCase();
   if (BASE_DICT.has(w) || allowed.has(w) || CONTRACTIONS.has(w)) return true;
+  // hyphenated compounds ("check-ins", "e-mail", "decision-making") are fine
+  // when every part is a known word; single letters ("e-", "x-") and simple
+  // plurals of short parts ("ins") are accepted within a compound
+  if (w.includes("-")) {
+    const parts = w.split("-").filter(Boolean);
+    const partOk = (p: string): boolean =>
+      p.length <= 1 ||
+      isKnown(p, allowed) ||
+      (p.endsWith("s") && p.length >= 3 && isKnown(p.slice(0, -1), allowed));
+    if (parts.length >= 2 && parts.every(partOk)) return true;
+  }
   // base forms up to two suffix strips deep ("tabulators" → "tabulator" → "tabulate")
   const level1 = baseForms(w);
   const candidates = new Set<string>(level1);

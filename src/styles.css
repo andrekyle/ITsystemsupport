@@ -5133,117 +5133,187 @@ a.plan-ppt:hover {
 }
 
 /* ---------- spelling review (plain text, no box) ---------- */
-/* ---- spelling review: quiet, Microsoft-Word-Editor-style panel ---- */
+/* ---- spelling review: premium, Word-Editor-style panel ---- */
 
 .exq-spell {
-  margin-top: 8px;
-  padding: 10px 12px;
+  margin-top: 10px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 6px 18px rgba(0, 0, 0, 0.05);
   font-size: 12.5px;
   line-height: 1.5;
+  overflow: hidden;
+  animation: exq-spell-in 0.16s ease;
+}
+
+@keyframes exq-spell-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: none; }
 }
 
 .exq-spell.clean {
-  padding: 6px 12px;
-  color: var(--ink-3);
-  background: transparent;
   border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  padding: 4px 2px;
+  color: var(--ink-3);
 }
 
-.exq-spell.clean .exq-spell-head { color: var(--green, #16a34a); font-weight: 500; }
+.exq-spell.clean .exq-spell-head {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--green, #16a34a);
+  font-weight: 500;
+}
 
 .exq-spell-head {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
+  padding: 9px 14px;
+  background: var(--surface-3);
+  border-bottom: 1px solid var(--border);
   font-weight: 600;
   color: var(--ink-2);
+}
+
+.exq-spell-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--red-bg);
+  color: var(--red);
+  flex-shrink: 0;
 }
 
 .exq-spell-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
   border-radius: 999px;
-  background: #c42b1c;
-  color: #fff;
+  background: var(--red-bg);
+  color: var(--red);
+  border: 1px solid currentColor;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.exq-spell-hint {
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--ink-3);
 }
 
 .exq-spell-list {
   list-style: none;
-  margin: 6px 0 0;
-  padding: 0;
+  margin: 0;
+  padding: 2px 14px;
 }
 
 .exq-spell-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
-  padding: 5px 0;
+  padding: 9px 0;
 }
 
 .exq-spell-item + .exq-spell-item {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--table-line);
 }
 
 .exq-spell-sugg {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   flex-wrap: wrap;
+}
+
+.exq-spell-arrow {
+  display: inline-flex;
+  color: var(--ink-3);
+  opacity: 0.7;
 }
 
 /* the red squiggle — Word's signature treatment: underline only, normal ink */
 .spell-bad {
   color: var(--ink);
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 13px;
   text-decoration: underline wavy #c42b1c;
   text-decoration-skip-ink: none;
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
 }
 
-/* one-click suggestion chips, Word-suggestion style */
+[data-theme="dark"] .spell-bad { text-decoration-color: #e37d80; }
+
+/* one-click suggestion pills; the first (best) suggestion is emphasised */
 .spell-fix {
   background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--ink);
-  padding: 2px 10px;
-  border-radius: 4px;
+  border: 1px solid var(--border-2);
+  color: var(--ink-2);
+  padding: 3px 13px;
+  border-radius: 999px;
   font: inherit;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.1s, border-color 0.1s;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease,
+    color 0.12s ease, box-shadow 0.12s ease;
 }
 
 .spell-fix:hover {
+  transform: translateY(-1px);
   background: var(--azure-lighter, var(--surface-2));
   border-color: var(--azure);
   color: var(--azure-darker, var(--azure));
+  box-shadow: 0 2px 8px rgba(0, 120, 212, 0.22);
+}
+
+.spell-fix:active { transform: none; }
+
+.spell-fix.primary {
+  background: var(--azure-light);
+  border-color: var(--azure);
+  color: var(--azure-darker, var(--azure));
+  font-weight: 600;
+}
+
+.spell-fix.primary:hover {
+  background: var(--azure);
+  color: #fff;
 }
 
 .spell-ignore {
   margin-left: auto;
   background: none;
-  border: 0;
+  border: 1px solid transparent;
   color: var(--ink-3);
   font: inherit;
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
 
-.spell-ignore:hover { background: var(--surface-2); color: var(--ink-2); }
+.spell-ignore:hover {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--ink-2);
+}
 
 .exq-check {
   display: flex;

@@ -1131,9 +1131,12 @@ function ExerciseQuestion({
               ) : (
                 <>
                   <div className="exq-spell-head">
-                    <Icon name="document" size={14} />
+                    <span className="exq-spell-ico">
+                      <Icon name="document" size={13} />
+                    </span>
                     <span>Spelling</span>
                     <span className="exq-spell-count">{misspellings.length}</span>
+                    <span className="exq-spell-hint">Select a suggestion to correct your answer</span>
                   </div>
                   <ul className="exq-spell-list">
                     {misspellings.map((m) => (
@@ -1141,11 +1144,14 @@ function ExerciseQuestion({
                         <span className="spell-bad">{m.word}</span>
                         {m.suggestions.length > 0 && (
                           <span className="exq-spell-sugg">
-                            {m.suggestions.map((s) => (
+                            <span className="exq-spell-arrow" aria-hidden="true">
+                              <Icon name="chevronRight" size={13} />
+                            </span>
+                            {m.suggestions.map((s, si) => (
                               <button
                                 key={s}
                                 type="button"
-                                className="spell-fix"
+                                className={`spell-fix${si === 0 ? " primary" : ""}`}
                                 title={`Replace “${m.word}” with “${s}”`}
                                 onClick={() => {
                                   setVal((prev) => {
