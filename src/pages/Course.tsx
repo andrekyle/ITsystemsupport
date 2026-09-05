@@ -803,7 +803,7 @@ function splitTail(seg: string): { head: string; tail: string } {
 /** The learner's own answer rendered with two green ticks inserted after each
  *  part of the text that earned a key idea's 2 marks. `extras` promotes
  *  additional concept indexes to credited (LLM semantic-review fallback). */
-function MarkedAnswer({
+export function MarkedAnswer({
   text,
   check,
   ok,
@@ -843,22 +843,48 @@ function MarkedAnswer({
   // Any concept without a recorded sentence (e.g. an LLM promotion via
   // synonym / paraphrase) gets pinned to the segment with the strongest
   // semantic overlap so its ticks appear inline after the relevant sentence
-  // — never as an orphan pair on a new line.
+  // — never as an orphan pair on a new line. Two rules keep the pin honest:
+  //   • overlap is judged on the concept's DISTINCTIVE vocabulary — stems it
+  //     shares with the other key ideas ("meeting", "decisions") are ignored,
+  //     so a sentence about another idea can't attract the ticks;
+  //   • sentences that already earned a concept are only reused when no
+  //     unclaimed sentence shows any overlap (the marker itself treats an
+  //     earning sentence as spent).
   if (unattributed.length > 0 && segments.length > 0) {
     const segStems = segments.map((s) => contentStems(s));
     for (const localGi of unattributed) {
+      const gi = creditedIdx[localGi];
       const group = credited[localGi];
-      const lessonLine = lessonLineFor(check, creditedIdx[localGi]);
-      const target = contentStems(`${group.join(" ")} ${lessonLine ?? ""}`);
-      let bestSeg = 0;
-      let bestOverlap = -1;
-      for (let si = 0; si < segments.length; si++) {
-        const overlap = stemOverlap(segStems[si], target);
-        if (overlap > bestOverlap) {
-          bestOverlap = overlap;
-          bestSeg = si;
+      const lessonLine = lessonLineFor(check, gi);
+      const otherStems = new Set<string>();
+      check.concepts.forEach((og, ogi) => {
+        if (ogi === gi) return;
+        contentStems(`${og.join(" ")} ${lessonLineFor(check, ogi) ?? ""}`).forEach((s) =>
+          otherStems.add(s)
+        );
+      });
+      const rawTarget = contentStems(`${group.join(" ")} ${lessonLine ?? ""}`);
+      const distinct = new Set([...rawTarget].filter((s) => !otherStems.has(s)));
+      const target = distinct.size >= 2 ? distinct : rawTarget;
+      const claimed = new Set<number>();
+      perSeg.forEach((g, si) => {
+        if (g.length > 0) claimed.add(si);
+      });
+      let bestSeg = -1;
+      let bestOverlap = 0;
+      const pick = (skipClaimed: boolean) => {
+        for (let si = 0; si < segments.length; si++) {
+          if (skipClaimed && claimed.has(si)) continue;
+          const overlap = stemOverlap(segStems[si], target);
+          if (overlap > bestOverlap) {
+            bestOverlap = overlap;
+            bestSeg = si;
+          }
         }
-      }
+      };
+      pick(true);
+      if (bestSeg < 0) pick(false);
+      if (bestSeg < 0) bestSeg = claimed.size < segments.length ? segments.findIndex((_, si) => !claimed.has(si)) : 0;
       perSeg[bestSeg] = [...perSeg[bestSeg], localGi];
     }
   }
