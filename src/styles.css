@@ -9079,6 +9079,8 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 
 /* ============ AI-marking token gauge (super user dashboard) ============ */
+/* Styled after platform.openai.com → Usage: month nav, headline metrics,
+   daily stacked bar chart in OpenAI greens, thin budget bar. */
 
 .token-super-pill {
   display: inline-flex;
@@ -9100,78 +9102,200 @@ table.data th.sortable.sorted { color: var(--ink); }
   gap: 16px;
 }
 
-.token-top {
+/* ---- header: ‹ Month › + legend ---- */
+.oa-head {
   display: flex;
   align-items: center;
-  gap: 26px;
+  justify-content: space-between;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-.token-ring {
+.oa-month-nav {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 6px;
-  flex-shrink: 0;
 }
 
-.token-ring .ring .val { stroke: var(--azure); }
-.token-ring .ring.done .val { stroke: var(--red); }
-.token-ring.over .token-ring-cap { color: var(--red); font-weight: 600; }
-
-.token-stats {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 14px 18px;
-  min-width: 260px;
+.oa-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--ink-2);
+  cursor: pointer;
 }
 
-.token-stat .num {
-  font-size: 22px;
+.oa-nav-btn:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
+.oa-nav-btn:disabled { opacity: 0.4; cursor: default; }
+
+.oa-month-label {
+  min-width: 150px;
+  text-align: center;
+  font-size: 14.5px;
   font-weight: 600;
-  line-height: 1.15;
 }
 
-.token-stat .lbl {
-  font-size: 12.5px;
+.oa-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.oa-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
   color: var(--ink-3);
-  margin-top: 2px;
+}
+
+.oa-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.oa-dot.in { background: #10a37f; }
+.oa-dot.out { background: #6ee7b7; }
+
+/* ---- headline metrics row ---- */
+.oa-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px 22px;
+  padding: 2px 0 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.oa-metric-lbl {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.oa-metric-num {
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+
+.oa-metric-num.oa-metric-sm { font-size: 14.5px; padding-top: 4px; }
+
+/* ---- daily stacked bar chart ---- */
+.oa-chart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.oa-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.oa-baseline {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.oa-axis {
+  fill: var(--ink-3);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.oa-bar-in { fill: #10a37f; }
+.oa-bar-out { fill: #6ee7b7; }
+
+.oa-empty { margin: -6px 0 0; }
+
+/* ---- budget bar ---- */
+.oa-budget {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 2px;
+}
+
+.oa-budget-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.oa-budget-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.oa-budget-bar {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.oa-budget-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: #10a37f;
+  transition: width 0.3s ease;
+}
+
+.oa-budget-bar.over > span { background: var(--red); }
+.oa-over { color: var(--red); }
+
+.oa-sec-lbl {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 6px;
+}
+
+.oa-breakdown {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
 }
 
 .token-budget-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   border: 0;
   background: none;
   padding: 0;
   cursor: pointer;
   color: var(--ink);
+  font-size: inherit;
+  font-weight: 600;
 }
 
-.token-budget-btn:hover { color: var(--azure); }
+.token-budget-btn:hover { color: #10a37f; }
 
 .token-budget-btn svg { color: var(--ink-3); }
 
 .token-budget-input {
-  width: 130px;
-  font-size: 16px;
+  width: 120px;
+  font-size: 12.5px;
   font-weight: 600;
-  padding: 3px 8px;
+  padding: 2px 7px;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: 6px;
   background: var(--surface);
   color: var(--ink);
-}
-
-.token-range-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  border-top: 1px solid var(--border);
-  padding-top: 12px;
 }
 
 .token-qual { display: flex; flex-direction: column; gap: 4px; }
@@ -9185,7 +9309,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   padding-bottom: 4px;
 }
 
-.token-qual-head svg { color: var(--azure); }
+.token-qual-head svg { color: #10a37f; }
 
 .token-mod-row {
   display: flex;
@@ -9218,6 +9342,9 @@ table.data th.sortable.sorted { color: var(--ink); }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* breakdown bars pick up the OpenAI green inside this card */
+.token-gauge .token-bar > span { background: #10a37f; }
 
 .token-bar { flex: 1; min-width: 60px; }
 
@@ -9252,7 +9379,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   padding: 5px 2px;
 }
 
-.token-unit-row .token-bar > span { background: var(--azure); opacity: 0.55; }
+.token-unit-row .token-bar > span { background: #6ee7b7; }
 
 .token-unit-name {
   width: 276px;
@@ -9268,6 +9395,6 @@ table.data th.sortable.sorted { color: var(--ink); }
   .token-mod-name { width: 150px; }
   .token-unit-name { width: 126px; }
   .token-sub { display: none; }
-  .token-top { gap: 16px; }
+  .oa-month-label { min-width: 0; }
 }
 

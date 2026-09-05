@@ -93,6 +93,58 @@ export async function fetchTokenSummary(since?: Date): Promise<TokenSummaryResul
   return { ok: true, rows };
 }
 
+/** One raw usage record (admin-only read — used for the daily usage chart). */
+export interface TokenRecord {
+  createdAt: string;
+  qual: string;
+  moduleId: string;
+  us: string;
+  model: string;
+  prompt: number;
+  completion: number;
+  total: number;
+}
+
+export type TokenRecordsResult =
+  | { ok: true; rows: TokenRecord[] }
+  | { ok: false; error: "no-cloud" | "not-signed-in" | "missing-table" | "failed" };
+
+/** Raw usage rows in [from, to), paginated. RLS: only the admin gets rows. */
+export async function fetchTokenRecords(from: Date, to: Date): Promise<TokenRecordsResult> {
+  if (!supabase) return { ok: false, error: "no-cloud" };
+  const { data: sess } = await supabase.auth.getSession();
+  if (!sess.session) return { ok: false, error: "not-signed-in" };
+  const rows: TokenRecord[] = [];
+  const PAGE = 1000;
+  for (let page = 0; page < 20; page++) {
+    const { data, error } = await supabase
+      .from("token_usage")
+      .select("created_at,qual,module_id,us,model,prompt_tokens,completion_tokens,total_tokens")
+      .gte("created_at", from.toISOString())
+      .lt("created_at", to.toISOString())
+      .order("created_at", { ascending: true })
+      .range(page * PAGE, page * PAGE + PAGE - 1);
+    if (error) {
+      const missing = error.code === "42P01" || /token_usage/.test(error.message ?? "");
+      return { ok: false, error: missing ? "missing-table" : "failed" };
+    }
+    for (const r of data ?? []) {
+      rows.push({
+        createdAt: String(r.created_at ?? ""),
+        qual: String(r.qual ?? ""),
+        moduleId: String(r.module_id ?? ""),
+        us: String(r.us ?? ""),
+        model: String(r.model ?? ""),
+        prompt: Number(r.prompt_tokens ?? 0),
+        completion: Number(r.completion_tokens ?? 0),
+        total: Number(r.total_tokens ?? 0),
+      });
+    }
+    if (!data || data.length < PAGE) break;
+  }
+  return { ok: true, rows };
+}
+
 /** OpenAI list prices in USD per 1M tokens (input, output) for the models
  *  the marking endpoint may use. Unknown models fall back to gpt-4o-mini. */
 const PRICES_PER_MTOK: Record<string, { in: number; out: number }> = {
