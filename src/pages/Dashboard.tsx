@@ -13,6 +13,7 @@ import {
 import { loadAnnouncements, moduleCompletion, overallStats, unitStatus, useOutcomes, usePoe } from "../store";
 import { attendanceSignedCount, computeGamification } from "../lib/gamification";
 import { Bar, Ring } from "../components/Ring";
+import { TokenGauge } from "../components/TokenGauge";
 
 export function Dashboard({
   profile,
@@ -115,6 +116,8 @@ export function Dashboard({
           </div>
         </div>
       </div>
+
+      {profile.role === "Super User" && <TokenGauge />}
 
       <div className="card xp-card">
         <div className="xp-head">

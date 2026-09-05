@@ -240,4 +240,76 @@ create policy "delete chat messages"
   );
 
 
+-- ============================================================================
+-- AI-marking token usage (super-user token gauge)
+-- ============================================================================
+-- One row per /api/mark-answer call, inserted by the calling client and
+-- tagged qualification → module → unit standard. Rows are insert-only from
+-- the app; only admins (the super user) can read them, via RLS.
+create table if not exists public.token_usage (
+  id                bigint      generated always as identity primary key,
+  user_id           uuid        references auth.users (id) on delete set null,
+  qual              text        not null,
+  module_id         text        not null default '',
+  us                text        not null default '',
+  model             text        not null default '',
+  prompt_tokens     integer     not null default 0,
+  completion_tokens integer     not null default 0,
+  total_tokens      integer     not null default 0,
+  created_at        timestamptz not null default now()
+);
+
+create index if not exists token_usage_created_idx on public.token_usage (created_at);
+create index if not exists token_usage_us_idx on public.token_usage (qual, module_id, us);
+
+alter table public.token_usage enable row level security;
+
+drop policy if exists "read token usage" on public.token_usage;
+create policy "read token usage"
+  on public.token_usage
+  for select
+  to authenticated
+  using (public.is_admin());
+
+drop policy if exists "insert token usage" on public.token_usage;
+create policy "insert token usage"
+  on public.token_usage
+  for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
+-- Grouped sums for the dashboard gauge, optionally since a timestamp.
+-- SECURITY INVOKER (the default): RLS applies, so non-admins get no rows.
+create or replace function public.token_usage_summary(since timestamptz default null)
+returns table (
+  qual              text,
+  module_id         text,
+  us                text,
+  model             text,
+  requests          bigint,
+  prompt_tokens     bigint,
+  completion_tokens bigint,
+  total_tokens      bigint
+)
+language sql
+stable
+set search_path = public
+as $$
+  select
+    t.qual,
+    t.module_id,
+    t.us,
+    t.model,
+    count(*)::bigint,
+    coalesce(sum(t.prompt_tokens), 0)::bigint,
+    coalesce(sum(t.completion_tokens), 0)::bigint,
+    coalesce(sum(t.total_tokens), 0)::bigint
+  from public.token_usage t
+  where since is null or t.created_at >= since
+  group by t.qual, t.module_id, t.us, t.model
+  order by t.qual, t.module_id, t.us, t.model;
+$$;
+
+
+
 

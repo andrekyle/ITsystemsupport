@@ -202,6 +202,12 @@ export default async function handler(req: Request): Promise<Response> {
 
     const data = (await upstream.json()) as {
       choices?: { message?: { content?: string } }[];
+      model?: string;
+      usage?: {
+        prompt_tokens?: number;
+        completion_tokens?: number;
+        total_tokens?: number;
+      };
     };
     const content = data.choices?.[0]?.message?.content ?? "{}";
     let parsed: { credited?: unknown; scores?: unknown; reason?: unknown } = {};
@@ -238,7 +244,16 @@ export default async function handler(req: Request): Promise<Response> {
     }
     const reason =
       typeof parsed.reason === "string" ? parsed.reason.slice(0, 200) : "";
-    return json({ credited, reason }, 200);
+    // Token accounting for the super-user usage gauge. Reported per call so
+    // the client can log spend against the unit standard being marked.
+    const n = (v: unknown) => (typeof v === "number" && isFinite(v) && v >= 0 ? Math.round(v) : 0);
+    const usage = {
+      prompt_tokens: n(data.usage?.prompt_tokens),
+      completion_tokens: n(data.usage?.completion_tokens),
+      total_tokens: n(data.usage?.total_tokens),
+    };
+    const model = typeof data.model === "string" ? data.model.slice(0, 60) : "";
+    return json({ credited, reason, usage, model }, 200);
   } catch {
     return json({ credited: [], reason: "", error: "timeout" }, 200);
   } finally {

@@ -942,6 +942,7 @@ function ExerciseQuestion({
   savedOk,
   onSave,
   canReveal,
+  unitUs,
 }: {
   check: ExerciseCheck;
   saved: string;
@@ -949,6 +950,8 @@ function ExerciseQuestion({
   onSave: (text: string, ok: boolean) => void;
   /** super user only — allows revealing the answer without a correct attempt */
   canReveal?: boolean;
+  /** unit standard code — lets the LLM review log its token usage per unit */
+  unitUs?: string;
 }) {
   const [val, setVal] = useState(saved);
   const [result, setResult] = useState<ReturnType<typeof scoreAnswer> | null>(null);
@@ -1007,7 +1010,7 @@ function ExerciseQuestion({
 
     setReviewing(true);
     let alive = true;
-    void requestSemanticReview(val, concepts, alreadyCredited).then((res) => {
+    void requestSemanticReview(val, concepts, alreadyCredited, unitUs).then((res) => {
       if (!alive) return;
       setReviewing(false);
       setReviewedText(val);
@@ -4132,6 +4135,7 @@ export function UnitPage({
                             saved={String(lb[`exq.${ex.id}.${i}`] ?? "")}
                             savedOk={lb[`exq.${ex.id}.${i}.ok`] === true}
                             canReveal={isSuperUser}
+                            unitUs={u.us}
                             onSave={(text, okNow) => {
                               setLogbookField(u.us, `exq.${ex.id}.${i}`, text);
                               setLogbookField(u.us, `exq.${ex.id}.${i}.ok`, okNow);
