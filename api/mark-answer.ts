@@ -75,7 +75,7 @@ Reply with STRICT JSON only, no prose:
 const MAX_ANSWER_LEN = 4000;
 const MAX_CONCEPTS = 12;
 const LLM_TIMEOUT_MS = 6000;
-const BUILD = "20260905-4";
+const BUILD = "20260905-5";
 
 /** OpenAI model names to try, in order. First 200 response wins. Falls
  *  through to the next name on 4xx (model not found / plan-restricted).
@@ -92,12 +92,13 @@ const MODEL_CANDIDATES = [
 ];
 
 /** Model-specific request parameters. The gpt-5 family rejects `max_tokens`
- *  (wants `max_completion_tokens`) and only supports the default temperature;
+ *  (wants `max_completion_tokens`) and only supports the default temperature,
+ *  so a fixed seed keeps its verdicts reproducible for the same answer;
  *  older models keep temperature 0 for deterministic marking. */
 function paramsFor(model: string): Record<string, unknown> {
   if (model.startsWith("gpt-5")) {
     // extra headroom: gpt-5 models may spend hidden reasoning tokens
-    return { max_completion_tokens: 800 };
+    return { max_completion_tokens: 800, seed: 7 };
   }
   return { temperature: 0, max_tokens: 400 };
 }
