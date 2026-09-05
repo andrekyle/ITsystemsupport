@@ -1,6 +1,6 @@
 /**
  * Semantic-meaning fallback for the deterministic answer marker.
- * Build: 20260904-1
+ * Build: 20260905-1
  *
  * Called by the client only when the local keyword + stem-overlap check has
  * rejected one or more concepts but the sentence looked on-topic. Sends the
@@ -11,6 +11,24 @@
  * Requires the `OPENAI_API_KEY` env var (used ONLY for marking answers).
  */
 export const config = { runtime: "edge" };
+
+// api/ is outside tsconfig's include; declare the Edge-runtime process global
+// so we can reference process.env.OPENAI_API_KEY statically. Vercel's Edge
+// bundler only exposes env vars it can find via static analysis, so the
+// dynamic globalThis lookup alone can come back undefined even when the var
+// is set in project settings.
+declare const process: { env?: Record<string, string | undefined> } | undefined;
+
+function readApiKey(): string | undefined {
+  try {
+    const v = process?.env?.OPENAI_API_KEY;
+    if (v) return v;
+  } catch {
+    /* process not defined in this runtime — fall through */
+  }
+  return (globalThis as { process?: { env?: Record<string, string | undefined> } })
+    .process?.env?.OPENAI_API_KEY;
+}
 
 interface Concept {
   id: string;
@@ -54,6 +72,7 @@ Reply with STRICT JSON only, no prose:
 const MAX_ANSWER_LEN = 4000;
 const MAX_CONCEPTS = 12;
 const LLM_TIMEOUT_MS = 6000;
+const BUILD = "20260905-1";
 
 /** OpenAI model names to try, in order. First 200 response wins. Falls
  *  through to the next name on 4xx (model not found / plan-restricted). */
@@ -64,10 +83,39 @@ const MODEL_CANDIDATES = [
 ];
 
 export default async function handler(req: Request): Promise<Response> {
+  // GET = configuration health check. Reports only booleans/names, never
+  // values, so it is safe to expose. Lets us tell "env var missing in this
+  // deployment" apart from "endpoint can't read it" without dashboard access.
+  if (req.method === "GET") {
+    let staticKey = false;
+    let envNames: string[] = [];
+    try {
+      staticKey = Boolean(process?.env?.OPENAI_API_KEY);
+      envNames = Object.keys(process?.env ?? {}).filter((k) =>
+        /openai|groq|open_ai/i.test(k)
+      );
+    } catch {
+      /* process not defined */
+    }
+    const dynEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } })
+      .process?.env;
+    return json(
+      {
+        build: BUILD,
+        hasProcess: typeof process !== "undefined",
+        hasGlobalProcess: Boolean((globalThis as { process?: unknown }).process),
+        keyStatic: staticKey,
+        keyDynamic: Boolean(dynEnv?.OPENAI_API_KEY),
+        llmKeyLikeNames: envNames,
+        configured: Boolean(readApiKey()),
+      },
+      200
+    );
+  }
   if (req.method !== "POST") {
     return json({ error: "method_not_allowed" }, 405);
   }
-  const apiKey = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.OPENAI_API_KEY;
+  const apiKey = readApiKey();
   if (!apiKey) {
     return json({ credited: [], reason: "", error: "not_configured" }, 200);
   }
@@ -146,7 +194,7 @@ export default async function handler(req: Request): Promise<Response> {
           error: `llm_${lastStatus}`,
           detail: lastBody,
           tried: MODEL_CANDIDATES,
-          build: "20260904-1",
+          build: BUILD,
         },
         200
       );
