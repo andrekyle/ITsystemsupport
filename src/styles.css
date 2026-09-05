@@ -5165,7 +5165,7 @@ a.plan-ppt:hover {
   background: transparent;
   border: 0;
   color: var(--green, #16a34a);
-  font-weight: 500;
+  font-weight: 350;
 }
 
 .exq-spell-head {
@@ -5175,7 +5175,7 @@ a.plan-ppt:hover {
   padding: 9px 14px;
   background: var(--surface-3);
   border-bottom: 1px solid var(--border);
-  font-weight: 600;
+  font-weight: 350;
   color: var(--ink-2);
 }
 
@@ -5183,34 +5183,21 @@ a.plan-ppt:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: var(--red-bg);
-  color: var(--red);
+  color: var(--ink-3);
   flex-shrink: 0;
 }
 
 .exq-spell-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--red-bg);
-  color: var(--red);
-  border: 1px solid currentColor;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 350;
+  color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
 
 .exq-spell-hint {
   margin-left: auto;
   font-size: 11.5px;
-  font-weight: 400;
+  font-weight: 350;
   color: var(--ink-3);
 }
 
@@ -5248,7 +5235,7 @@ a.plan-ppt:hover {
 /* the red squiggle — Word's signature treatment: underline only, normal ink */
 .spell-bad {
   color: var(--ink);
-  font-weight: 600;
+  font-weight: 350;
   font-size: 13px;
   text-decoration: underline wavy #c42b1c;
   text-decoration-skip-ink: none;
@@ -5268,7 +5255,7 @@ a.plan-ppt:hover {
   border-radius: 4px;
   font: inherit;
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: 350;
   cursor: pointer;
   transition: background 0.1s ease;
 }
@@ -5288,7 +5275,7 @@ a.plan-ppt:hover {
   color: var(--ink-3);
   font: inherit;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 350;
   cursor: pointer;
   padding: 3px 9px;
   border-radius: 4px;
