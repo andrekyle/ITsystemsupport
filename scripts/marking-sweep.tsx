@@ -5,6 +5,7 @@
 //   A. full marks — every key idea credited deterministically
 //   B. renderer places every earned pair at the END of a statement (never
 //      mid-sentence) and shows exactly one pair per credited idea
+//   C. no statement boundary falls inside an abbreviation (e.g., i.e., Mr. …)
 import { CONTENT } from "../src/data/content";
 import { creditConcepts, MarkedAnswer, __markingInternals } from "../src/pages/Course";
 import type { ExerciseCheck } from "../src/types";
@@ -61,6 +62,13 @@ for (const [us, content] of Object.entries(CONTENT)) {
     const segs = [...host.querySelectorAll(".exq-seg")];
     let pairCount = 0;
     for (const seg of segs) {
+      // C — statement boundaries: no statement may end inside an abbreviation
+      // or decimal ("e.g.", "i.e.", "a.m.", "Mr.", "2.") — those dots are not
+      // sentence ends and a tick pair must never sit after them.
+      const segText = (seg.textContent ?? "").replace(/[✓\s]+$/g, "").trim();
+      if (/\b(e\.g\.|i\.e\.|a\.m\.|p\.m\.|vs\.|Mr\.|Mrs\.|Ms\.|Dr\.)$/i.test(segText)) {
+        fails.push({ us, q: qi, kind: "boundary", detail: `statement ends inside abbreviation: "…${segText.slice(-40)}"` });
+      }
       const ticks = [...seg.querySelectorAll(".exq-ticks")];
       pairCount += ticks.length;
       for (const t of ticks) {

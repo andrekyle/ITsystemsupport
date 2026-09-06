@@ -5132,6 +5132,55 @@ a.plan-ppt:hover {
   border-color: var(--green);
 }
 
+/* ---- answer guide: one box per key idea (marks ÷ 2 boxes) ---- */
+
+.exq-parts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.exq-part {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.exq-part-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+.exq-part-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  background: var(--surface);
+}
+
+.exq-part-marks {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--ink-2);
+  opacity: 0.85;
+}
+
+.exq-part-input {
+  min-height: 46px;
+}
+
 /* ---------- spelling review (plain text, no box) ---------- */
 /* ---- spelling review: premium, Word-Editor-style panel ---- */
 

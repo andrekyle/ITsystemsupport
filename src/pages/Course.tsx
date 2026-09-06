@@ -567,10 +567,25 @@ function lessonLineFor(check: ExerciseCheck, gi: number): string | undefined {
 /** MARKING STANDARD — statement splitting used by the scorer, the feedback
  *  and the tick renderer alike. A statement ends at . ! ? or a line break;
  *  semicolon/comma lists remain part of ONE statement, exactly as a human
- *  marker reads them. Ticks are always placed at the END of the statement
- *  that earned the idea, never mid-sentence. */
+ *  marker reads them. Dots that belong to abbreviations (e.g., i.e., a.m.,
+ *  p.m., vs., Mr. Smith, etc. mid-sentence) or decimals (2.5) do NOT end a
+ *  statement. Ticks are always placed at the END of the statement that
+ *  earned the idea, never mid-sentence. */
+const ABBREV_DOT = "\u0001";
+function maskAbbrevDots(text: string): string {
+  return text
+    .replace(/\b(e\.g\.|i\.e\.|a\.m\.|p\.m\.|vs\.)/gi, (m) => m.replace(/\./g, ABBREV_DOT))
+    .replace(/\b(Mr|Mrs|Ms|Dr)\.(?=\s+[A-Z])/g, (m) => m.replace(/\./g, ABBREV_DOT))
+    .replace(/\betc\.(?=\s*[a-z0-9(,;:—–-])/gi, (m) => m.replace(/\./g, ABBREV_DOT))
+    .replace(/(\d)\.(?=\d)/g, `$1${ABBREV_DOT}`);
+}
+function unmaskAbbrevDots(text: string): string {
+  return text.replace(/\u0001/g, ".");
+}
 function splitStatements(text: string): string[] {
-  return (text.match(/[^.!?\n]+[.!?\n]*/g) ?? [text]).map((s) => s.trim()).filter(Boolean);
+  return (maskAbbrevDots(text).match(/[^.!?\n]+[.!?\n]*/g) ?? [text])
+    .map((s) => unmaskAbbrevDots(s).trim())
+    .filter(Boolean);
 }
 
 /** Test hook for the marking harnesses — not used by the app itself. */
@@ -583,6 +598,7 @@ export const __markingInternals = {
   lessonLineFor,
   hasTrailingNoise,
   stemOverlap,
+  splitStatements,
 };
 
 /**
@@ -887,9 +903,12 @@ export function MarkedAnswer({
   // every key idea earned: nothing is missing, so per-sentence crosses would only mislead
   const fullCoverage = credited.length >= check.concepts.length;
   // MARKING STANDARD: same statement boundaries as the scorer (a statement
-  // ends at . ! ? or a line break — semicolon lists are one statement), with
-  // trailing whitespace kept so the answer renders byte-for-byte.
-  const segments = (text.match(/[^.!?\n]+[.!?\n]*\s*/g) ?? [text]).filter((s) => s.trim());
+  // ends at . ! ? or a line break — semicolon lists are one statement and
+  // abbreviation/decimal dots are not statement ends), with trailing
+  // whitespace kept so the answer renders byte-for-byte.
+  const segments = (maskAbbrevDots(text).match(/[^.!?\n]+[.!?\n]*\s*/g) ?? [text])
+    .map(unmaskAbbrevDots)
+    .filter((s) => s.trim());
   // Attribute each credited concept to the segment whose trimmed text matches
   // the sentence the scorer says earned it. Falls back to keyword attribution
   // only for concepts with no recorded sentence (LLM promotions).
@@ -1000,10 +1019,34 @@ export function MarkedAnswer({
   );
 }
 
+/** ANSWER GUIDE: the typed-answer area is split into one box per key idea —
+ *  marks ÷ 2 boxes (8 marks → 4 boxes, 4 marks → 2, 10 marks → 5 …) — so the
+ *  learner can see exactly where to type each point. Each box becomes one
+ *  line of the answer text, which is exactly one statement under the marking
+ *  standard, so the existing marker is fed unchanged. */
+function splitIntoParts(text: string, n: number): string[] {
+  const lines = text
+    .split(/\n+/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+  const parts =
+    lines.length > n ? [...lines.slice(0, n - 1), lines.slice(n - 1).join("\n")] : lines;
+  while (parts.length < n) parts.push("");
+  return parts;
+}
+
+/** Join the per-idea boxes back into the single answer text the marker sees. */
+function joinParts(parts: string[]): string {
+  return parts
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0)
+    .join("\n");
+}
+
 /** Typed answer block under an exercise question: the learner's answer is checked
  *  semantically against key ideas from the lesson; the correct answer is revealed
  *  only once the learner's own answer covers enough of those ideas. */
-function ExerciseQuestion({
+export function ExerciseQuestion({
   check,
   saved,
   savedOk,
@@ -1020,10 +1063,17 @@ function ExerciseQuestion({
   /** unit standard code — lets the LLM review log its token usage per unit */
   unitUs?: string;
 }) {
-  const [val, setVal] = useState(saved);
+  // ANSWER GUIDE: one box per key idea (marks ÷ 2 boxes). `parts` holds the
+  // per-box text; `val` — the joined answer, one line per box — feeds the
+  // existing marker, LLM review, spell checker and save path unchanged.
+  const nParts = check.concepts.length;
+  const [parts, setParts] = useState<string[]>(() => splitIntoParts(saved, check.concepts.length));
+  const val = useMemo(() => joinParts(parts), [parts]);
   const [result, setResult] = useState<ReturnType<typeof scoreAnswer> | null>(null);
   const [revealed, setRevealed] = useState(false);
-  const [typing, setTyping] = useState(false);
+  // which box the learner is typing in (Word-style: its trailing in-progress
+  // word is not spell-reviewed until they leave the field)
+  const [focusPart, setFocusPart] = useState<number | null>(null);
   // LLM semantic-review state: concept indexes the model promoted to credited
   // after the deterministic check said they were not credited.
   const [extras, setExtras] = useState<Set<number>>(new Set());
@@ -1119,11 +1169,14 @@ function ExerciseQuestion({
     [check, ignoredWords],
   );
   // Word behaviour: while the learner is typing, the trailing in-progress
-  // word is not reviewed; the full text is checked once they leave the field.
-  const reviewText = useMemo(
-    () => (typing ? val.replace(/[A-Za-z'’-]+$/, "") : val),
-    [val, typing],
-  );
+  // word of the focused box is not reviewed; the full text is checked once
+  // they leave the field.
+  const reviewText = useMemo(() => {
+    if (focusPart === null) return val;
+    return joinParts(
+      parts.map((p, i) => (i === focusPart ? p.replace(/[A-Za-z'’-]+$/, "") : p)),
+    );
+  }, [val, parts, focusPart]);
   const spell = useMemo(() => checkSpelling(reviewText, lessonWords), [reviewText, lessonWords]);
   const misspellings: SpellIssue[] = spell.unique;
 
@@ -1133,34 +1186,61 @@ function ExerciseQuestion({
         <span>
           Marks available: <strong>{check.concepts.length * 2}</strong>
           {" "}({check.concepts.length} key idea{check.concepts.length === 1 ? "" : "s"} × 2 marks each)
+          {!(ok || result) && (
+            <>
+              {" "}—{" "}
+              {nParts === 1
+                ? "write your answer in the box below."
+                : "write one key idea in each box below."}
+            </>
+          )}
         </span>
       </div>
       {ok || result ? (
         <MarkedAnswer text={val} check={check} ok={ok} extras={extras} />
       ) : (
         <>
-          <textarea
-            className="exq-input"
-            rows={3}
-            spellCheck
-            lang="en"
-            autoCorrect="on"
-            autoCapitalize="sentences"
-            placeholder={`Type your answer here (at least ${MIN_ANSWER_WORDS} words — explain in your own words), then check it…`}
-            value={val}
-            onFocus={() => setTyping(true)}
-            onChange={(e) => {
-              setVal(e.target.value);
-              if (result) setResult(null);
-              if (extras.size) setExtras(new Set());
-              if (reviewedText) setReviewedText(null);
-              if (reviewStatus.kind !== "idle") setReviewStatus({ kind: "idle" });
-            }}
-            onBlur={() => {
-              setTyping(false);
-              if (!ok) onSave(val, false);
-            }}
-          />
+          <div className="exq-parts" role="group" aria-label="Answer boxes — one key idea per box">
+            {parts.map((p, i) => (
+              <div className="exq-part" key={i}>
+                <div className="exq-part-label" aria-hidden="true">
+                  <span className="exq-part-num">{i + 1}</span>
+                  <span>
+                    {nParts === 1 ? "Your answer" : `Key idea ${i + 1} of ${nParts}`}
+                  </span>
+                  <span className="exq-part-marks">2 marks</span>
+                </div>
+                <textarea
+                  className="exq-input exq-part-input"
+                  rows={nParts === 1 ? 3 : 2}
+                  spellCheck
+                  lang="en"
+                  autoCorrect="on"
+                  autoCapitalize="sentences"
+                  aria-label={`Key idea ${i + 1} of ${nParts} — 2 marks`}
+                  placeholder={
+                    nParts === 1
+                      ? `Type your answer here (at least ${MIN_ANSWER_WORDS} words — explain in your own words), then check it…`
+                      : `Explain key idea ${i + 1} in your own words (at least ${MIN_EXPLANATION_WORDS} words)…`
+                  }
+                  value={p}
+                  onFocus={() => setFocusPart(i)}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setParts((prev) => prev.map((q, j) => (j === i ? next : q)));
+                    if (result) setResult(null);
+                    if (extras.size) setExtras(new Set());
+                    if (reviewedText) setReviewedText(null);
+                    if (reviewStatus.kind !== "idle") setReviewStatus({ kind: "idle" });
+                  }}
+                  onBlur={() => {
+                    setFocusPart(null);
+                    if (!ok) onSave(val, false);
+                  }}
+                />
+              </div>
+            ))}
+          </div>
           {val.trim().length > 0 && (
             <div
               className={`exq-spell ${misspellings.length ? "has-issues" : "clean"}`}
@@ -1197,17 +1277,15 @@ function ExerciseQuestion({
                                 className="spell-fix"
                                 title={`Replace “${m.word}” with “${s}”`}
                                 onClick={() => {
-                                  setVal((prev) => {
-                                    const re = new RegExp(
-                                      `\\b${m.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
-                                      "g",
-                                    );
-                                    const replacement =
-                                      /^[A-Z]/.test(m.word) && s.length > 0
-                                        ? s[0].toUpperCase() + s.slice(1)
-                                        : s;
-                                    return prev.replace(re, replacement);
-                                  });
+                                  const re = new RegExp(
+                                    `\\b${m.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
+                                    "g",
+                                  );
+                                  const replacement =
+                                    /^[A-Z]/.test(m.word) && s.length > 0
+                                      ? s[0].toUpperCase() + s.slice(1)
+                                      : s;
+                                  setParts((prev) => prev.map((p) => p.replace(re, replacement)));
                                   if (result) setResult(null);
                                 }}
                               >
