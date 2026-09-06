@@ -16,6 +16,7 @@ import { Avatar } from "../components/Avatar";
 import { AlertModal, ConfirmModal, Modal } from "../components/Modal";
 import { supabase } from "../lib/supabase";
 import { logAudit } from "../lib/audit";
+import { ensureNotifyPermission } from "../lib/notify";
 
 /**
  * Direct messages: 1-to-1 chat between any two people on the course.
@@ -174,8 +175,22 @@ export function ChatPage({
     if (route.studentId && route.studentId !== profile.id) setOpenWith(route.studentId);
   }, [route.studentId, profile.id]);
 
+  // Ask once for system-notification permission so incoming messages can
+  // alert the user (sound/vibration/badge work without it).
+  useEffect(() => {
+    void ensureNotifyPermission();
+  }, []);
+
+  /** WhatsApp-style mobile navigation: list OR conversation, never both. */
+  const hasOpen = !!(monitorThread || openWith);
+  const closeThread = () => {
+    setMonitorKey(null);
+    setOpenWith(null);
+    navigate({ page: "chat" });
+  };
+
   return (
-    <div className="chat-page">
+    <div className={`chat-page${hasOpen ? " has-open" : ""}`}>
       <div className="eyebrow">
         <Icon name="chat" size={15} />
         Direct messages
@@ -201,7 +216,7 @@ export function ChatPage({
         )}
       </p>
 
-      <div className="chat-layout">
+      <div className={`chat-layout${hasOpen ? " has-open" : ""}`}>
         <aside className="chat-side card">
           <ChatSidebar
             viewer={profile}
@@ -225,7 +240,7 @@ export function ChatPage({
         </aside>
         <section className="chat-main card">
           {monitorThread ? (
-            <MonitorThread thread={monitorThread} me={profile} nameFor={nameFor} peopleByAny={peopleByAny} onOpenProfile={openProfile} />
+            <MonitorThread thread={monitorThread} me={profile} nameFor={nameFor} peopleByAny={peopleByAny} onOpenProfile={openProfile} onBack={closeThread} />
           ) : openWith ? (
             <ChatThread
               me={profile}
@@ -237,6 +252,7 @@ export function ChatPage({
               superUid={superUid}
               isOnline={isOnline}
               onOpenProfile={openProfile}
+              onBack={closeThread}
             />
           ) : (
             <div className="chat-empty">
@@ -569,6 +585,7 @@ function ChatThread({
   superUid,
   isOnline,
   onOpenProfile,
+  onBack,
 }: {
   me: Profile;
   otherId: string;
@@ -579,6 +596,8 @@ function ChatThread({
   superUid?: string;
   isOnline: (p: Profile) => boolean;
   onOpenProfile: (profileId: string) => void;
+  /** mobile: return to the conversation list */
+  onBack: () => void;
 }) {
   // Cloud-only identity resolution: the other party's Supabase auth user id
   // is either stamped on their cloud profile (`cloudUserId`) or listed in the
@@ -641,6 +660,9 @@ function ChatThread({
   return (
     <>
       <header className="chat-head">
+        <button type="button" className="chat-back icon-btn" onClick={onBack} aria-label="Back to conversations" title="Back to conversations">
+          <Icon name="chevronLeft" size={19} />
+        </button>
         <button
           type="button"
           className="chat-head-person"
@@ -721,12 +743,15 @@ function MonitorThread({
   nameFor,
   peopleByAny,
   onOpenProfile,
+  onBack,
 }: {
   thread: ChatThreadInfo;
   me: Profile;
   nameFor: (id: string) => string;
   peopleByAny: Map<string, Profile>;
   onOpenProfile: (profileId: string) => void;
+  /** mobile: return to the conversation list */
+  onBack: () => void;
 }) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   /** which thread the initial jump-to-newest has already run for */
@@ -743,6 +768,9 @@ function MonitorThread({
   return (
     <>
       <header className="chat-head">
+        <button type="button" className="chat-back icon-btn" onClick={onBack} aria-label="Back to conversations" title="Back to conversations">
+          <Icon name="chevronLeft" size={19} />
+        </button>
         <span>
           <strong>
             {nameFor(thread.aId)} · {nameFor(thread.bId)}

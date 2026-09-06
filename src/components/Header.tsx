@@ -4,6 +4,7 @@ import type { Profile, Route } from "../types";
 import { getContent } from "../data/content";
 import { MODULES } from "../data/course";
 import { loadProfiles, useChatThreads } from "../store";
+import { notifyIncoming, syncUnreadBadge } from "../lib/notify";
 import { Avatar, fileToAvatar } from "./Avatar";
 
 /** Session schedule derived from the US 8252 lesson plan (starts 09:00). */
@@ -204,6 +205,24 @@ export function Header({
     return merged.sort((a, b) => (b.latest?.at ?? "").localeCompare(a.latest?.at ?? ""));
   }, [chatThreads, profile.id]);
   const unreadCount = notifs.reduce((n, x) => n + x.unread, 0);
+
+  // WhatsApp-style alerts: when the unread total RISES, play the message
+  // tone, vibrate and (with the tab hidden) raise a system notification.
+  // The app-icon badge and tab title mirror the count on every change.
+  const prevUnread = useRef(unreadCount);
+  useEffect(() => {
+    if (unreadCount > prevUnread.current) {
+      const top = notifs.find((n) => n.unread > 0);
+      notifyIncoming({
+        from: top?.otherName ?? "New message",
+        preview: top?.latest?.body ?? "You have a new chat message.",
+        unread: unreadCount,
+      });
+    } else {
+      syncUnreadBadge(unreadCount);
+    }
+    prevUnread.current = unreadCount;
+  }, [unreadCount, notifs]);
 
   useEffect(() => {
     if (!menuOpen) return;
