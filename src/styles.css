@@ -10070,3 +10070,47 @@ table.data th.sortable.sorted { color: var(--ink); }
     height: 19px;
   }
 }
+
+/* Mobile chat: chrome-less, edge-to-edge — no cards, no separator lines */
+@media (max-width: 860px) {
+  .chat-page {
+    margin: 0 -14px; /* cancel the content padding: chat fills the screen */
+    height: calc(100dvh - var(--header-h) - 40px);
+  }
+
+  .chat-page .eyebrow,
+  .chat-page h1 {
+    padding: 0 14px;
+  }
+
+  .chat-side.card,
+  .chat-main.card {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .chat-side-head,
+  .chat-head,
+  .chat-row,
+  .chat-row-wrap {
+    border-bottom: 0;
+  }
+
+  .chat-compose {
+    border-top: 0;
+    padding: 6px 10px 10px;
+  }
+
+  .chat-compose textarea {
+    border: 0;
+    background: var(--surface-2);
+    outline: none;
+  }
+  .chat-compose textarea:focus {
+    outline: none;
+    box-shadow: none;
+  }
+}
