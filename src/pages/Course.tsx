@@ -2035,6 +2035,13 @@ export function UnitPage({
   navigate: (r: Route) => void;
 }) {
   const [tab, setTab] = useState<UnitTab>(() => loadUnitTab(unitId));
+  // keep the active tab visible inside the horizontally scrollable tab bar
+  const tabsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    tabsRef.current
+      ?.querySelector(".tab.active")
+      ?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [tab]);
   const [noteId, setNoteId] = useState<string | null>(null);
   /** selected titled quiz on the Quiz tab (null = quiz chooser) */
   const [quizId, setQuizId] = useState<string | null>(null);
@@ -2726,7 +2733,7 @@ export function UnitPage({
         </div>
       </div>
 
-      <div className="tabs" role="tablist">
+      <div className="tabs" role="tablist" ref={tabsRef}>
         {tabs
           .filter((t) => t.show)
           .map((t) => (

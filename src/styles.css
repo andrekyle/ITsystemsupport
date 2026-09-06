@@ -9753,12 +9753,20 @@ table.data th.sortable.sorted { color: var(--ink); }
 /* ============ Mobile content polish (kept last so it wins the cascade) ============ */
 
 @media (max-width: 860px) {
-  /* unit tabs scroll sideways instead of wrapping into a tall block */
+  /* unit tabs scroll sideways instead of wrapping into a tall block;
+     scrolling shadows make the cut-off edge visibly scrollable */
   .tabs {
     flex-wrap: nowrap;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    background:
+      linear-gradient(to right, var(--surface) 40%, transparent) left / 28px 100%,
+      linear-gradient(to left, var(--surface) 40%, transparent) right / 28px 100%,
+      radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, 0.4), transparent) left / 14px 100%,
+      radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.4), transparent) right / 14px 100%;
+    background-repeat: no-repeat;
+    background-attachment: local, local, scroll, scroll;
   }
 
   .tabs::-webkit-scrollbar {
@@ -9768,7 +9776,9 @@ table.data th.sortable.sorted { color: var(--ink); }
   .tab {
     flex: 0 0 auto;
     white-space: nowrap;
-    padding: 9px 12px 10px;
+    padding: 8px 10px 9px;
+    font-size: 13px;
+    gap: 5px;
   }
 
   .crumbs {
