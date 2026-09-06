@@ -10286,3 +10286,21 @@ table.data th.sortable.sorted { color: var(--ink); }
     max-width: none;
   }
 }
+
+/* Lesson-plan action strip on phones: the download/upload buttons and the
+   share toggle stack as full-width blocks instead of a wrapping inline row
+   whose line boxes collide with the content below. */
+@media (max-width: 640px) {
+  .dl-sample.plan-ppt {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    margin-left: 0 !important; /* beats the inline marginLeft spacing */
+  }
+
+  .share-dl-toggle {
+    display: flex;
+    align-items: center;
+    margin: 10px 0 14px;
+  }
+}
