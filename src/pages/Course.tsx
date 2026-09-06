@@ -588,6 +588,16 @@ function splitStatements(text: string): string[] {
     .filter(Boolean);
 }
 
+/** BOX RULE — the marking unit. One answer box = one line of the answer
+ *  text; a line earns at most ONE key idea (one ✓✓ pair or nothing), placed
+ *  at the very end of the line's text. */
+function splitLines(text: string): string[] {
+  return text
+    .split(/\n+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 /** Test hook for the marking harnesses — not used by the app itself. */
 export const __markingInternals = {
   answerTokens,
@@ -599,27 +609,33 @@ export const __markingInternals = {
   hasTrailingNoise,
   stemOverlap,
   splitStatements,
+  splitLines,
 };
 
 /**
- * Core credit engine. Returns the credited concept indexes AND, for each
- * concept earned by the learner's own wording, the exact (trimmed) sentence
- * that earned it — so tick placement can mirror the scoring instead of
- * guessing by first keyword hit. Concepts promoted by `extras` (LLM review)
- * carry no sentence and are pinned semantically by the renderer.
+ * Core credit engine — BOX RULE: the marking unit is the LINE (one answer box
+ * = one line of the answer text). A line earns AT MOST one key idea — one ✓✓
+ * pair or nothing — and each key idea is earned by at most one line. Returns
+ * the credited concept indexes AND, for every credited concept, the exact
+ * line that earned it (`earnedBy`, trimmed) plus its line index
+ * (`earnedLine`) — so tick placement mirrors the scoring exactly. Concepts
+ * promoted by `extras` (LLM review) are pinned to a FREE line with the
+ * strongest distinctive-stem overlap; when every line has already earned an
+ * idea the promotion is dropped — a box strictly never carries two pairs.
  * Exported for the marking test harnesses.
  */
 export function creditConcepts(
   text: string,
   check: ExerciseCheck,
   extras?: ReadonlySet<number>
-): { credited: number[]; earnedBy: Map<number, string> } {
+): { credited: number[]; earnedBy: Map<number, string>; earnedLine: Map<number, number> } {
   const earnedBy = new Map<number, string>();
+  const earnedLine = new Map<number, number>();
   const tokens = answerTokens(text);
   if (tokens.length < MIN_ANSWER_WORDS) {
-    return { credited: extras ? [...extras].sort((a, b) => a - b) : [], earnedBy };
+    return { credited: [], earnedBy, earnedLine };
   }
-  const sentences = splitStatements(text);
+  const sentences = splitLines(text);
   const sentenceTokens = sentences.map((s) => answerTokens(s));
   const sentenceStems = sentences.map((s) => contentStems(s));
 
@@ -679,9 +695,9 @@ export function creditConcepts(
     `${check.answer.join(" ")} ${check.concepts.flat().join(" ")} ${(check.labels ?? []).join(" ")}`
   );
 
-  // Score every eligible (concept, sentence) pair. A sentence needs ≥ 10
-  // words AND either keyword hit + a real explanation supporting it, or
-  // strong semantic overlap on its own (a paraphrase / clear synonym).
+  // Score every eligible (concept, line) pair. A line (= one answer box)
+  // needs ≥ 10 words AND either keyword hit + a real explanation supporting
+  // it, or strong semantic overlap on its own (a paraphrase / clear synonym).
   // MARKING STANDARD: a statement that reproduces the concept's model-answer
   // line (≥ 80% of the line's content stems) ALWAYS earns the idea, even
   // when that line is shorter than the usual explanation minimum — the model
@@ -758,10 +774,10 @@ export function creditConcepts(
     }
   }
 
-  // Phase 1 — one concept per sentence, strongest matches first, so each
-  // sentence credits the model answer it matches BEST. This stops a
-  // paraphrase of idea A that happens to contain idea B's keyword from
-  // stealing B's credit away from the learner's actual B sentence.
+  // Phase 1 — BOX RULE assignment: one key idea per line and one line per
+  // key idea, strongest matches first, so each box credits the model answer
+  // it matches BEST. A box that covers two ideas still earns only one pair —
+  // the learner is guided to write one idea per box.
   candidates.sort((a, b) => b.score - a.score || a.si - b.si || a.gi - b.gi);
   const usedSentence = new Set<number>();
   for (const c of candidates) {
@@ -769,18 +785,48 @@ export function creditConcepts(
     credited.add(c.gi);
     usedSentence.add(c.si);
     earnedBy.set(c.gi, sentences[c.si]);
-  }
-  // Phase 2 — a single sentence may genuinely cover a second idea; leftover
-  // concepts take their best candidate even on an already-used sentence.
-  for (const c of candidates) {
-    if (credited.has(c.gi)) continue;
-    credited.add(c.gi);
-    earnedBy.set(c.gi, sentences[c.si]);
+    earnedLine.set(c.gi, c.si);
   }
 
-  if (extras) for (const gi of extras) credited.add(gi);
+  // LLM promotions obey the same rule: each promoted idea is pinned to the
+  // FREE line with the strongest overlap on the idea's DISTINCTIVE
+  // vocabulary (stems shared with other key ideas are ignored, so a line
+  // about another idea can't attract the pair). No free line — no credit.
+  if (extras && extras.size > 0) {
+    for (const gi of [...extras].sort((a, b) => a - b)) {
+      if (gi < 0 || gi >= check.concepts.length || credited.has(gi)) continue;
+      const group = check.concepts[gi];
+      const lessonLine = lessonLineFor(check, gi);
+      const otherStems = new Set<string>();
+      check.concepts.forEach((og, ogi) => {
+        if (ogi === gi) return;
+        contentStems(`${og.join(" ")} ${lessonLineFor(check, ogi) ?? ""}`).forEach((s) =>
+          otherStems.add(s)
+        );
+      });
+      const rawTarget = contentStems(`${group.join(" ")} ${lessonLine ?? ""}`);
+      const distinct = new Set([...rawTarget].filter((s) => !otherStems.has(s)));
+      const target = distinct.size >= 2 ? distinct : rawTarget;
+      let bestLi = -1;
+      let bestOverlap = -1;
+      for (let li = 0; li < sentences.length; li++) {
+        if (usedSentence.has(li)) continue;
+        const overlap = stemOverlap(sentenceStems[li], target);
+        if (overlap > bestOverlap) {
+          bestOverlap = overlap;
+          bestLi = li;
+        }
+      }
+      if (bestLi >= 0) {
+        credited.add(gi);
+        usedSentence.add(bestLi);
+        earnedBy.set(gi, sentences[bestLi]);
+        earnedLine.set(gi, bestLi);
+      }
+    }
+  }
 
-  return { credited: [...credited].sort((a, b) => a - b), earnedBy };
+  return { credited: [...credited].sort((a, b) => a - b), earnedBy, earnedLine };
 }
 
 /** Score a learner's answer against the concept groups of the answer key.
@@ -815,49 +861,61 @@ interface IdeaFeedback {
   awarded: boolean;
   /** the lesson line that carries this idea */
   lessonLine?: string;
-  /** the learner's sentence that came closest to the idea (only when not awarded) */
+  /** the learner's line that came closest to the idea (only when not awarded) */
   closest?: string;
+  /** the idea IS expressed, but inside a box that already earned another idea */
+  spentBox?: string;
   /** example phrases that would have earned the idea */
   examples: string[];
 }
 
 /** Explain, per key idea, whether its 2 marks were awarded — and if not, why:
- *  quotes the lesson's point, finds the learner's semantically closest sentence
- *  (stem-overlap similarity) and shows what was missing. `extras` lists concept
- *  indexes promoted by the LLM semantic-review fallback so the feedback stays
- *  in sync with the score. */
+ *  quotes the lesson's point, finds the learner's semantically closest line
+ *  (stem-overlap similarity) and shows what was missing. BOX RULE: when the
+ *  idea is actually named inside a box that already earned a different
+ *  idea, the feedback says so — the learner must give the idea its own box.
+ *  `extras` lists concept indexes promoted by the LLM semantic-review
+ *  fallback so the feedback stays in sync with the score. */
 function explainCheck(
   text: string,
   check: ExerciseCheck,
   extras?: ReadonlySet<number>
 ): IdeaFeedback[] {
-  const sentences = splitStatements(text);
-  // Which concept groups actually earned their 2 marks under the new rule
-  // (keyword + ≥10-word explanation). Feedback must line up with what the
-  // score says — otherwise learners see contradictory guidance.
+  const lines = splitLines(text);
+  // Which concept groups actually earned their 2 marks under the box rule.
+  // Feedback must line up with what the score says — otherwise learners see
+  // contradictory guidance.
   const { credited: creditedList, earnedBy } = creditConcepts(text, check, extras);
   const credited = new Set(creditedList);
-  // sentences that already earned ticks are never quoted as "wrong"
-  const earningSentences = new Set(earnedBy.values());
-  const candidates = sentences.filter((s) => !earningSentences.has(s));
+  // lines that already earned ticks are never quoted as "wrong"…
+  const earningLines = new Set(earnedBy.values());
+  const candidates = lines.filter((s) => !earningLines.has(s));
   return check.concepts.map((g, gi) => {
     const awarded = credited.has(gi);
     const label = check.labels?.[gi] ?? g[0];
     const lessonLine = lessonLineFor(check, gi);
     let closest: string | undefined;
-    if (!awarded && candidates.length) {
-      const target = contentStems(`${lessonLine ?? ""} ${g.join(" ")}`);
-      let best = 0;
-      for (const s of candidates) {
-        const sim = stemOverlap(contentStems(s), target);
-        if (sim > best) {
-          best = sim;
-          closest = s;
+    let spentBox: string | undefined;
+    if (!awarded) {
+      if (candidates.length) {
+        const target = contentStems(`${lessonLine ?? ""} ${g.join(" ")}`);
+        let best = 0;
+        for (const s of candidates) {
+          const sim = stemOverlap(contentStems(s), target);
+          if (sim > best) {
+            best = sim;
+            closest = s;
+          }
         }
+        if (best < 0.2) closest = undefined;
       }
-      if (best < 0.2) closest = undefined;
+      // …but when a spent box NAMES this idea, tell the learner exactly what
+      // happened: the box already earned its one pair for another idea.
+      if (!closest) {
+        spentBox = [...earningLines].find((s) => conceptInSentence(g, answerTokens(s)));
+      }
     }
-    return { label, awarded, lessonLine, closest, examples: g.slice(0, 2) };
+    return { label, awarded, lessonLine, closest, spentBox, examples: g.slice(0, 2) };
   });
 }
 
@@ -883,8 +941,10 @@ function splitTail(seg: string): { head: string; tail: string } {
 }
 
 /** The learner's own answer rendered with two green ticks inserted after each
- *  part of the text that earned a key idea's 2 marks. `extras` promotes
- *  additional concept indexes to credited (LLM semantic-review fallback). */
+ *  line (box) that earned a key idea's 2 marks. BOX RULE: a line shows
+ *  exactly ONE ✓✓ pair — at the very end of its text — or none at all.
+ *  `extras` promotes additional concept indexes to credited (LLM
+ *  semantic-review fallback); the engine pins those to free lines too. */
 export function MarkedAnswer({
   text,
   check,
@@ -897,114 +957,46 @@ export function MarkedAnswer({
   extras?: ReadonlySet<number>;
 }) {
   // Use the same credit engine as the scorer so ticks always match the score
-  // at the bottom of the box — including WHICH sentence earned each concept.
-  const { credited: creditedIdx, earnedBy } = creditConcepts(text, check, extras);
-  const credited = creditedIdx.map((gi) => check.concepts[gi]);
-  // every key idea earned: nothing is missing, so per-sentence crosses would only mislead
-  const fullCoverage = credited.length >= check.concepts.length;
-  // MARKING STANDARD: same statement boundaries as the scorer (a statement
-  // ends at . ! ? or a line break — semicolon lists are one statement and
-  // abbreviation/decimal dots are not statement ends), with trailing
-  // whitespace kept so the answer renders byte-for-byte.
-  const segments = (maskAbbrevDots(text).match(/[^.!?\n]+[.!?\n]*\s*/g) ?? [text])
-    .map(unmaskAbbrevDots)
-    .filter((s) => s.trim());
-  // Attribute each credited concept to the segment whose trimmed text matches
-  // the sentence the scorer says earned it. Falls back to keyword attribution
-  // only for concepts with no recorded sentence (LLM promotions).
+  // at the bottom of the box — including WHICH line earned each concept.
+  const { credited: creditedIdx, earnedLine } = creditConcepts(text, check, extras);
+  // every key idea earned: nothing is missing, so per-line crosses would only mislead
+  const fullCoverage = creditedIdx.length >= check.concepts.length;
+  // BOX RULE: segments are the answer's lines — exactly the learner's boxes —
+  // with trailing whitespace kept so the answer renders byte-for-byte.
+  const segments = (text.match(/[^\n]+\n*/g) ?? [text]).filter((s) => s.trim());
+  // Map segment index -> credited concept (at most one, engine-guaranteed).
+  // The engine indexes lines after trimming/blank-filtering in the same
+  // order, so the i-th non-blank segment is the engine's line i.
   const perSeg: number[][] = segments.map(() => []);
-  const unattributed: number[] = [];
-  {
-    const segTrim = segments.map((s) => s.trim());
-    creditedIdx.forEach((gi, localGi) => {
-      const sentence = earnedBy.get(gi);
-      if (sentence) {
-        const si = segTrim.findIndex((s) => s === sentence || s.includes(sentence) || sentence.includes(s));
-        if (si >= 0) {
-          perSeg[si].push(localGi);
-          return;
-        }
-      }
-      unattributed.push(localGi);
-    });
+  for (const gi of creditedIdx) {
+    const li = earnedLine.get(gi);
+    if (li !== undefined && li >= 0 && li < perSeg.length) perSeg[li].push(gi);
   }
-  // Any concept without a recorded sentence (e.g. an LLM promotion via
-  // synonym / paraphrase) gets pinned to the segment with the strongest
-  // semantic overlap so its ticks appear inline after the relevant sentence
-  // — never as an orphan pair on a new line. Two rules keep the pin honest:
-  //   • overlap is judged on the concept's DISTINCTIVE vocabulary — stems it
-  //     shares with the other key ideas ("meeting", "decisions") are ignored,
-  //     so a sentence about another idea can't attract the ticks;
-  //   • sentences that already earned a concept are only reused when no
-  //     unclaimed sentence shows any overlap (the marker itself treats an
-  //     earning sentence as spent).
-  if (unattributed.length > 0 && segments.length > 0) {
-    const segStems = segments.map((s) => contentStems(s));
-    for (const localGi of unattributed) {
-      const gi = creditedIdx[localGi];
-      const group = credited[localGi];
-      const lessonLine = lessonLineFor(check, gi);
-      const otherStems = new Set<string>();
-      check.concepts.forEach((og, ogi) => {
-        if (ogi === gi) return;
-        contentStems(`${og.join(" ")} ${lessonLineFor(check, ogi) ?? ""}`).forEach((s) =>
-          otherStems.add(s)
-        );
-      });
-      const rawTarget = contentStems(`${group.join(" ")} ${lessonLine ?? ""}`);
-      const distinct = new Set([...rawTarget].filter((s) => !otherStems.has(s)));
-      const target = distinct.size >= 2 ? distinct : rawTarget;
-      const claimed = new Set<number>();
-      perSeg.forEach((g, si) => {
-        if (g.length > 0) claimed.add(si);
-      });
-      let bestSeg = -1;
-      let bestOverlap = 0;
-      const pick = (skipClaimed: boolean) => {
-        for (let si = 0; si < segments.length; si++) {
-          if (skipClaimed && claimed.has(si)) continue;
-          const overlap = stemOverlap(segStems[si], target);
-          if (overlap > bestOverlap) {
-            bestOverlap = overlap;
-            bestSeg = si;
-          }
-        }
-      };
-      pick(true);
-      if (bestSeg < 0) pick(false);
-      if (bestSeg < 0) bestSeg = claimed.size < segments.length ? segments.findIndex((_, si) => !claimed.has(si)) : 0;
-      perSeg[bestSeg] = [...perSeg[bestSeg], localGi];
-    }
-  }
-  const leftover = credited.length - perSeg.reduce((t, g) => t + g.length, 0);
-  // A ✗ is only shown on a sentence that NAMES a still-missing key idea but
-  // failed to earn it. Sentences that continue / support an already-earned
-  // idea (a statement may span several sentences) and neutral sentences get
-  // no mark at all instead of a misleading cross.
+  // A ✗ is only shown on a line that NAMES a still-missing key idea but
+  // failed to earn it. Lines that continue / support an already-earned idea
+  // and neutral lines get no mark at all instead of a misleading cross.
   const uncreditedGroups = check.concepts.filter((_, gi) => !creditedIdx.includes(gi));
   const namesMissingIdea = (si: number): boolean =>
     uncreditedGroups.some((g) => conceptInSentence(g, answerTokens(segments[si])));
   return (
     <div className={`exq-marked${ok ? " ok" : ""}`}>
       {segments.map((seg, i) => {
-        const gis = perSeg[i];
-        const showX = gis.length === 0 && !fullCoverage && namesMissingIdea(i);
-        if (gis.length === 0 && !showX) {
+        const earned = perSeg[i].length > 0;
+        const showX = !earned && !fullCoverage && namesMissingIdea(i);
+        if (!earned && !showX) {
           return <span key={i} className="exq-seg">{seg}</span>;
         }
-        // MARKING STANDARD: every pair the statement earned sits together at
-        // its END, glued to the last word — never mid-sentence.
+        // BOX RULE: the single pair the line earned sits at its END, glued to
+        // the last word — never mid-text, never stacked.
         const { head, tail } = splitTail(seg);
         return (
           <span key={i} className="exq-seg">
             {head}
             <span className="exq-tail">
               {tail}
-              {gis.map((_, t) => (
-                <DoubleTick key={t} />
-              ))}
+              {earned && <DoubleTick />}
               {showX && (
-                <span className="exq-x" title="No marks for this sentence" aria-label="No marks">
+                <span className="exq-x" title="No marks for this line" aria-label="No marks">
                   <Icon name="close" size={14} />
                 </span>
               )}
@@ -1012,9 +1004,6 @@ export function MarkedAnswer({
           </span>
         );
       })}
-      {Array.from({ length: leftover }).map((_, t) => (
-        <DoubleTick key={`l${t}`} />
-      ))}
     </div>
   );
 }
@@ -1352,7 +1341,7 @@ export function ExerciseQuestion({
             <span className={`exq-status ${effectiveResult.short ? "short" : "wrong"}`}>
               {effectiveResult.short
                 ? `Answer too short — you wrote ${effectiveResult.words} word${effectiveResult.words === 1 ? "" : "s"}. Please explain your answer in your own words — a minimum of ${effectiveResult.minWords} words is required before any marks can be awarded.`
-                : `Not quite yet — your answer covers ${effectiveResult.matched} of ${check.concepts.length} key ideas (${effectiveResult.marks}/${effectiveResult.maxMarks} marks, 2 marks per point). Each idea needs a ≥${MIN_EXPLANATION_WORDS}-word explanation that mentions the concept or a clear synonym. Revisit the lesson and try again.`}
+                : `Not quite yet — your answer covers ${effectiveResult.matched} of ${check.concepts.length} key ideas (${effectiveResult.marks}/${effectiveResult.maxMarks} marks, 2 marks per point). Write ONE key idea per box — a box can earn at most one pair of ticks — and explain each idea in ≥${MIN_EXPLANATION_WORDS} words, mentioning the concept or a clear synonym. Revisit the lesson and try again.`}
               {reviewing && " Checking for meaning…"}
               {!reviewing && reviewStatus.kind === "ran" && reviewStatus.promoted === 0 && (
                 <> (Meaning check ran — no additional marks awarded.)</>
@@ -1408,9 +1397,15 @@ export function ExerciseQuestion({
                 {f.label} — 2 marks not awarded
               </div>
               <p className="exq-miss-p">
-                {f.closest ? (
+                {f.spentBox ? (
                   <>
-                    Your sentence “{f.closest}” was not awarded these marks — it says something
+                    Your box “{f.spentBox}” mentions this idea, but that box already earned its 2
+                    marks for another key idea — a box can only earn one pair of ticks. Write
+                    “{f.label.toLowerCase()}” in its own box.
+                  </>
+                ) : f.closest ? (
+                  <>
+                    Your box “{f.closest}” was not awarded these marks — it says something
                     different and does not express “{f.label.toLowerCase()}”.
                   </>
                 ) : (
@@ -4214,10 +4209,12 @@ export function UnitPage({
               <Icon name="info" size={19} />
             </span>
             <span>
-              <strong>Answer in your own words.</strong> Each key idea earns 2 marks only when
+              <strong>Answer in your own words — one key idea per box.</strong> Each key idea
+              earns 2 marks only when
               the learner mentions the concept (either by keyword or a clear synonym) <em>and</em>{" "}
               gives an explanation of at least <strong>{MIN_EXPLANATION_WORDS} words</strong> that is
-              semantically correct.
+              semantically correct. A box can earn at most one pair of ticks, placed at the end
+              of its text.
             </span>
           </div>
           {(tab === "questions" ? content.questionSessions ?? [] : content.exercises).map((ex) => {
@@ -4434,10 +4431,12 @@ export function UnitPage({
               <Icon name="info" size={19} />
             </span>
             <span>
-              <strong>Answer in your own words.</strong> Each key idea earns 2 marks only when
+              <strong>Answer in your own words — one key idea per box.</strong> Each key idea
+              earns 2 marks only when
               the learner mentions the concept (either by keyword or a clear synonym) <em>and</em>{" "}
               gives an explanation of at least <strong>{MIN_EXPLANATION_WORDS} words</strong> that is
-              semantically correct.
+              semantically correct. A box can earn at most one pair of ticks, placed at the end
+              of its text.
             </span>
           </div>
           {content.assignments.map((as) => (

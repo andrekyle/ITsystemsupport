@@ -1,11 +1,12 @@
 // MARKING STANDARD QA sweep over EVERY exercise question in EVERY unit
 // standard. Run `npm run dev`, then open http://localhost:5173/scripts/marking-sweep.html
 // For each check, a simulated learner submits the model answer
-// itself (every line). Standard asserted:
+// itself (every line = one answer box). Standard asserted:
 //   A. full marks — every key idea credited deterministically
-//   B. renderer places every earned pair at the END of a statement (never
-//      mid-sentence) and shows exactly one pair per credited idea
-//   C. no statement boundary falls inside an abbreviation (e.g., i.e., Mr. …)
+//   B. BOX RULE rendering — a line shows AT MOST one ✓✓ pair, at the very
+//      END of its text; total pairs == credited ideas; no orphan pairs
+//   C. content alignment — every check has exactly one model line per key
+//      idea, and line i carries concept i (one box per idea is achievable)
 import { CONTENT } from "../src/data/content";
 import { creditConcepts, MarkedAnswer, __markingInternals } from "../src/pages/Course";
 import type { ExerciseCheck } from "../src/types";
@@ -44,6 +45,18 @@ for (const [us, content] of Object.entries(CONTENT)) {
     total++;
     const answer = check.answer.join("\n");
 
+    // C — content alignment: one model line per key idea, line i carries
+    // concept i. Guarantees the guide's boxes map 1:1 onto the model answer.
+    if (check.answer.length !== check.concepts.length) {
+      fails.push({ us, q: qi, kind: "alignment", detail: `${check.answer.length} model lines for ${check.concepts.length} key ideas` });
+    } else {
+      check.concepts.forEach((g, gi) => {
+        if (!__markingInternals.conceptInSentence(g, __markingInternals.answerTokens(check.answer[gi]))) {
+          fails.push({ us, q: qi, kind: "alignment", detail: `line ${gi} does not carry concept "${check.labels?.[gi] ?? g[0]}"` });
+        }
+      });
+    }
+
     // A — scoring: model answer must earn every concept
     const { credited } = creditConcepts(answer, check);
     if (credited.length < check.concepts.length) {
@@ -54,7 +67,7 @@ for (const [us, content] of Object.entries(CONTENT)) {
       fails.push({ us, q: qi, kind: "score", detail: `model answer earned ${credited.length}/${check.concepts.length}; missing: ${missing.join(" | ")}` });
     }
 
-    // B — rendering: pairs only at statement ends, count == credited count
+    // B — BOX RULE rendering: at most ONE pair per line, at the line's end
     const root = createRoot(host);
     flushSync(() => {
       root.render(createElement(MarkedAnswer, { text: answer, check, ok: true }));
@@ -62,25 +75,21 @@ for (const [us, content] of Object.entries(CONTENT)) {
     const segs = [...host.querySelectorAll(".exq-seg")];
     let pairCount = 0;
     for (const seg of segs) {
-      // C — statement boundaries: no statement may end inside an abbreviation
-      // or decimal ("e.g.", "i.e.", "a.m.", "Mr.", "2.") — those dots are not
-      // sentence ends and a tick pair must never sit after them.
-      const segText = (seg.textContent ?? "").replace(/[✓\s]+$/g, "").trim();
-      if (/\b(e\.g\.|i\.e\.|a\.m\.|p\.m\.|vs\.|Mr\.|Mrs\.|Ms\.|Dr\.)$/i.test(segText)) {
-        fails.push({ us, q: qi, kind: "boundary", detail: `statement ends inside abbreviation: "…${segText.slice(-40)}"` });
-      }
       const ticks = [...seg.querySelectorAll(".exq-ticks")];
       pairCount += ticks.length;
+      if (ticks.length > 1) {
+        fails.push({ us, q: qi, kind: "boxrule", detail: `${ticks.length} pairs on one line: "${(seg.textContent ?? "").slice(0, 60)}…"` });
+      }
       for (const t of ticks) {
-        // a tick must live inside the tail wrapper (end of statement)
+        // a pair must live inside the tail wrapper (end of the line)
         if (!t.closest(".exq-tail")) {
-          fails.push({ us, q: qi, kind: "placement", detail: `tick outside statement tail in "${(seg.textContent ?? "").slice(0, 60)}…"` });
+          fails.push({ us, q: qi, kind: "placement", detail: `pair outside line tail in "${(seg.textContent ?? "").slice(0, 60)}…"` });
         }
-        // nothing but more ticks may follow it inside the tail
+        // nothing may follow the pair inside the tail
         let sib = t.nextSibling as Element | null;
         while (sib) {
           if (!(sib instanceof Element) || !sib.classList.contains("exq-ticks")) {
-            fails.push({ us, q: qi, kind: "placement", detail: `content after tick in "${(seg.textContent ?? "").slice(0, 60)}…"` });
+            fails.push({ us, q: qi, kind: "placement", detail: `content after pair in "${(seg.textContent ?? "").slice(0, 60)}…"` });
             break;
           }
           sib = sib.nextSibling as Element | null;
@@ -90,7 +99,7 @@ for (const [us, content] of Object.entries(CONTENT)) {
     const leftoverTicks = [...host.querySelectorAll(".exq-marked > .exq-ticks")].length;
     pairCount += leftoverTicks;
     if (leftoverTicks > 0) {
-      fails.push({ us, q: qi, kind: "placement", detail: `${leftoverTicks} orphan pair(s) not attached to any statement` });
+      fails.push({ us, q: qi, kind: "placement", detail: `${leftoverTicks} orphan pair(s) not attached to any line` });
     }
     if (pairCount !== credited.length) {
       fails.push({ us, q: qi, kind: "count", detail: `rendered ${pairCount} pairs for ${credited.length} credited ideas` });

@@ -2462,11 +2462,11 @@ export const CONTENT: Record<string, UnitContent> = {
           {
             answer: [
               "Active Listening — listen carefully to your team mates when they are speaking; don't tune speakers out.",
-              "Ask Questions — if you hear something that confuses you, ask about it; if a team member asks you a question, answer it courteously.",
-              "Constructive Feedback — critique the idea, not the person; be courteous; don't interrupt; explain your reasons; respond, don't react; avoid jargon.",
-              "Chat a Little — a meeting does not have to be 100% business; this can really help ease tension when disagreements occur later.",
-              "Body Language Awareness — even if you are saying the right thing, team members may react negatively if you send the wrong body language signals.",
-              "Humour and Patience — not everyone may understand your idea the first time; the same question may be asked more than once.",
+              "Ask Questions — if you hear something that confuses you, ask about it; if a team member asks you a question, answer it.",
+              "Constructive Feedback — critique the idea, not the person; don't interrupt; explain your reasons; respond, don't react; avoid jargon.",
+              "Be Courteous — treat team members with courtesy and respect; answer questions courteously and never talk down to anyone.",
+              "Have Patience — not everyone may understand your idea the first time; the same question may be asked more than once.",
+              "Body Language, Humour and a Little Chat — team members may react negatively if you send the wrong body language signals; a meeting does not have to be 100% business, and humour and friendly chat ease tension when disagreements occur later.",
             ],
             concepts: [
               ["listen", "listening"],
@@ -2509,11 +2509,11 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Actively help the team or work unit accomplish its goals.",
-              "Ask what are the team's specific goals and objectives; find out the team's milestones, dates and check-in times so the team can track progress toward goals.",
-              "Suggest procedures or processes for achieving team goals. Help the team obtain resources as necessary.",
-              "Where possible, help clear away obstacles to the team's accomplishments.",
-              "Take the time to help your fellow team mates, no matter the request.",
+              "Actively help the team or work unit accomplish its goals — take the time to help your fellow team mates, no matter the request.",
+              "Ask what are the team's specific goals and objectives — if there are none, work with other team members to create some.",
+              "Help the team obtain resources as necessary, and where possible help clear away obstacles to the team's accomplishments.",
+              "Find out the team's milestones, dates and check-in times so the team can track progress toward goals.",
+              "Suggest procedures or processes for achieving team goals, and share what you know.",
             ],
             concepts: [
               ["help", "assist", "support"],
@@ -2557,10 +2557,10 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Most teams will have a leader — a very important position because he or she is responsible for the management of the entire project: setting a base agenda, facilitating meetings, and monitoring progress with communicating with members as needed.",
+              "Most teams will have a leader — a very important position: setting a base agenda, facilitating meetings, and monitoring progress with communicating with members as needed.",
               "It is important not to have too \"heavy\" a hand, or team morale may be lowered — all actions must be agreed to by the team.",
-              "Other roles carry their own responsibilities: leader/editor, writer, graphic artist and Webmaster/HTML specialist — or initiator, recorder, devil's advocate/skeptic, optimist, timekeeper, gate keeper and summarizer.",
-              "Everyone must agree on appropriate roles, and everyone must be satisfied in their roles.",
+              "Other roles carry their own responsibilities: leader/editor, writer, graphic artist and Webmaster/HTML specialist — or initiator, recorder, devil's advocate/skeptic, optimist, timekeeper, gate keeper and summarizer — and everyone must be satisfied in their roles.",
+              "The leader is responsible for the management of the entire project.",
             ],
             concepts: [
               ["leader"],
@@ -2578,8 +2578,9 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "All actions must be agreed to by the team — although you may suggest a course of action, you must be sure the team agrees to it; if the team wants to go in another direction, you should be willing to compromise.",
-              "Everyone agrees on appropriate roles — this may take some negotiation to decide — and everyone is satisfied in their roles.",
+              "All actions must be agreed to by the team — although you may suggest a course of action, you must be sure the team agrees to it.",
+              "If the team wants to go in another direction, you should be willing to compromise — getting there may take some negotiation.",
+              "Everyone agrees on appropriate roles, and everyone is satisfied in their roles.",
               "Whatever role you may have, it is still important that the entire team provide input on every facet of the project; teams can rotate roles or combine them in one person.",
             ],
             concepts: [
@@ -2598,9 +2599,11 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Effective teamwork means a continual balancing act between meeting team needs and individual needs — people will only agree to team if it meets their own needs first.",
+              "Effective teamwork means a continual balancing act between meeting team needs and individual needs.",
+              "People will only agree to team if it meets their own needs first — the sooner we know one another's personal needs and hopes, the better for the team.",
+              "Team needs vs individual needs — both are always in play; ignore either and the team wobbles.",
               "Everyone has to put their agendas on the table for the others to examine; good teams uncover their own hidden agendas and expose them to the light of day.",
-              "Whatever the personal goals, we need to know what they are, and to deal with them, or at least acknowledge them, as a team — the sooner we know one another's personal needs and hopes, the better for the team.",
+              "Whatever the personal goals, we need to know what they are, and to deal with them, or at least acknowledge them, as a team.",
             ],
             concepts: [
               ["balance", "balancing"],
@@ -2639,9 +2642,9 @@ export const CONTENT: Record<string, UnitContent> = {
           {
             answer: [
               "Everyone has to put their agendas on the table for the others to examine — good teams uncover their own hidden agendas and expose them to the light of day.",
-              "The sooner we know one another's personal needs and hopes, the better for the team — acknowledging and addressing these needs as a group, early on, can help prevent \"selfish\" desires from sinking the team effort.",
+              "The sooner we know one another's personal needs and hopes, the better for the team.",
               "In team decisions and actions, actively seek the input of quiet team members, and ask what would make it easier for them to participate.",
-              "Ask what are the team's specific goals and objectives — if there are none, work with other team members to create some.",
+              "Acknowledge and address these needs openly as a group, early on — honest discussion prevents \"selfish\" desires from sinking the team effort.",
             ],
             concepts: [
               ["agenda", "agendas"],
@@ -2659,10 +2662,11 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Develop a clear statement of team mission or purpose, with ground rules governing participation and sharing of responsibilities.",
-              "Agree to depersonalize conflicts, use structured processes for problem solving and conflict resolution, and clearly define individual responsibilities, project standards and time lines.",
+              "Develop a clear statement of team mission or purpose.",
+              "Set ground rules governing participation in the team's work.",
+              "Clearly define individual responsibilities, project standards and time lines, and how responsibilities are shared.",
               "Model commitment — energetically and publicly pursue the team's goals, demonstrate enthusiasm and commitment for the team's projects and initiatives, and choose to have a can-do attitude.",
-              "Chat a Little — a meeting does not have to be 100% business; this can really help ease tension when disagreements occur later.",
+              "Agree to depersonalize conflicts, and use structured processes for problem solving and conflict resolution.",
             ],
             concepts: [
               ["mission", "purpose"],
@@ -2682,7 +2686,9 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Avoid behaviours that are clearly detrimental to the team: consistently missing meetings or deadlines, never coming prepared to meetings, not answering e-mail or messages in a reasonable time, and discourteous or disrespectful language.",
+              "Do not consistently miss meetings or deadlines — this is clearly detrimental to the team.",
+              "Always come prepared to meetings, and answer e-mail or messages in a reasonable time.",
+              "Avoid discourteous or disrespectful language — speak to team members respectfully.",
               "If you disagree with something the team is doing, raise your objection with the team — when you are in public, speak out in support of the team's initiatives and decisions.",
               "When your team encounters problems or setbacks, work at responding with energy, interest, and enthusiasm for finding a way to solve the problem.",
             ],
@@ -2725,9 +2731,11 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Don't express an opinion as a fact, and explain your reasons — this will allow others to evaluate your comments more effectively.",
+              "Don't express an opinion as a fact.",
+              "Explain your reasons — this will allow others to evaluate your comments more effectively.",
               "Restate the original idea to be sure you have correctly understood it, and compliment another's idea — some part of it may be valid and could be usable in another form.",
-              "Respond, don't react; don't interrupt; critique the idea, not the person; be courteous; avoid jargon.",
+              "Critique the idea, not the person.",
+              "Respond, don't react; don't interrupt; be courteous; avoid jargon.",
             ],
             concepts: [
               ["opinion", "fact"],
@@ -2749,7 +2757,8 @@ export const CONTENT: Record<string, UnitContent> = {
             answer: [
               "Having different opinions is one of the essential benefits of teamwork — team members have strong feelings and emotions.",
               "Let each person state his or her view briefly, and have neutral team members reflect on areas of agreement or disagreement.",
-              "Acknowledge that the conflict exists, gain common ground, and seek to understand all angles.",
+              "Acknowledge that the conflict exists.",
+              "Gain common ground, and seek to understand all angles.",
             ],
             concepts: [
               ["opinions", "different"],
@@ -2768,8 +2777,9 @@ export const CONTENT: Record<string, UnitContent> = {
           {
             answer: [
               "Discourteous or disrespectful language is clearly detrimental to the functioning of the team.",
-              "Listen to others respectfully and fully — recognize and use the differences and talents of others.",
-              "Critique the idea, not the person, and be courteous — morale may not be perfect all the time, but people should be able to work together.",
+              "Listen to others respectfully and fully.",
+              "Critique the idea, not the person, and be courteous.",
+              "Morale may not be perfect all the time, but people should be able to work together — recognize and use the differences and talents of others.",
             ],
             concepts: [
               ["respect", "respectful", "disrespect"],
@@ -2787,9 +2797,11 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Look at the person who's speaking to you, nod, ask probing questions and acknowledge what's said by paraphrasing points that have been made.",
-              "If a team member asks you a question, answer it courteously; listen to others respectfully and fully.",
-              "Actively seek the input of quiet team members; recognize and use the differences and talents of others; critique the idea, not the person.",
+              "Look at the person who's speaking to you, nod, ask probing questions and acknowledge what's said by paraphrasing points that have been made — listen to others respectfully and fully.",
+              "If a team member asks you a question, answer it courteously.",
+              "Actively seek the input of quiet team members.",
+              "Recognize and use the differences and talents of others.",
+              "Critique the idea, not the person.",
             ],
             concepts: [
               ["listen", "listening"],
@@ -2809,9 +2821,11 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "If you have a problem with someone in your group, talk to him about it — letting bad feelings brew will only make you sour and want to isolate yourself from the group; not only does it feel good to get it out, but it will be better for the team in the long run.",
-              "Make sure a specific behavior has been identified as unproductive — the problem is with the behavior not with the person.",
-              "When discussing the behavior with a person, try to frame the issue as: \"I/We feel (frustrated/concerned) when you (fill in behavior) because it (explain how it affects the team)\" — and allow the person to express his or her side of the issue.",
+              "If you have a problem with someone in your group, talk to him about it promptly — not only does it feel good to get it out, but it will be better for the team in the long run.",
+              "Letting bad feelings brew will only make you sour and want to isolate yourself from the group.",
+              "Make sure a specific behavior has been identified as unproductive, and frame the issue as: \"I/We feel (frustrated/concerned) when you (fill in behavior) because it (explain how it affects the team)\".",
+              "The problem is with the behavior, not with the person.",
+              "Allow the person to express his or her side of the issue.",
             ],
             concepts: [
               ["talk", "discuss", "raise"],
@@ -2891,8 +2905,11 @@ export const CONTENT: Record<string, UnitContent> = {
         checks: [
           {
             answer: [
-              "Cape Town Tourism, the Provincial Government of the Western Cape and its Provincial Tourism Safety and Security Unit, the City of Cape Town, the Tourism industry and Cape Town Routes Unlimited.",
-              "The Cape Town Partnership, the Chambers, City Improvement Districts (CIDs), community representatives and the Safety and Security Forces (SAPS, emergency services and Ambulance & Fire).",
+              "Cape Town Tourism and Cape Town Routes Unlimited, working with the tourism industry.",
+              "The Provincial Government of the Western Cape and its Provincial Tourism Safety and Security Unit.",
+              "The City of Cape Town.",
+              "The Safety and Security Forces — SAPS, emergency services and Ambulance & Fire.",
+              "The Cape Town Partnership, the Chambers, City Improvement Districts (CIDs) and community representatives.",
               "The Tourism Victim Support programme, the Cape Town Tourism Members Safety Forum, the Cape Town Tourism-run Band Aid Programme, the media and the residents and visitors themselves.",
             ],
             concepts: [
@@ -2915,9 +2932,11 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "No single agency can be responsible for a safe destination, plan or react alone to visitor incidents — every network of service providers has a role to play, so a practical partnership approach is required.",
-              "Co-ordination and communication is the single most important aspect in the Safety and Security Plan — in other words, an alignment that really works between all the parties.",
+              "No single agency can be responsible for a safe destination, plan or react alone to visitor incidents — a practical partnership approach is required.",
+              "Co-ordination and communication is the single most important aspect in the Safety and Security Plan.",
+              "What is needed is an alignment that really works between all the parties.",
               "Solid relations ensure that once incidents are reported to the dedicated response mechanisms, the relevant Cape Town Tourism Manager can be contacted to ensure immediate activation of the Victim Support Programme.",
+              "Every network of service providers has a role to play.",
             ],
             concepts: [
               ["no single agency", "partnership", "partnership approach"],
@@ -2937,10 +2956,12 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "A safe and secure environment for residents and visitors — the article says safety and security seriously impacts the functioning, sustainability and future growth of the Western Cape tourism industry.",
-              "Effective communication with the Provincial Tourism Safety and Security Unit, the Tourism Victim Support programme, SAPS, emergency services, media and other key role players.",
-              "Capacity to react quickly and effectively to visitor-related incidents, and immediate activation of the Victim Support Programme when incidents are reported.",
-              "Awareness and communication campaigns, joint monitoring of emergency response times, identification of hotspots and quantifying the success of the plan.",
+              "A safe and secure environment for residents and visitors — safety and security seriously impacts the functioning, sustainability and future growth of the Western Cape tourism industry.",
+              "Effective communication with the Provincial Tourism Safety and Security Unit, SAPS, emergency services, media and other key role players.",
+              "Capacity to react quickly and effectively to visitor-related incidents.",
+              "Immediate activation of the Victim Support Programme when incidents are reported, backed by the Band Aid Programme.",
+              "Awareness and communication campaigns that reach visitors and residents.",
+              "Joint monitoring of emergency response times, identification of hotspots and quantifying the success of the plan.",
             ],
             concepts: [
               ["safe", "secure", "safety"],
@@ -2962,10 +2983,11 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Awareness and communication campaigns, including distribution of practical safety tips to visitors and residents.",
+              "Awareness and communication campaigns that run throughout the year.",
               "Providing and assisting the media in obtaining correct and factual information about the Safety & Security Plan.",
               "Established and dedicated response mechanisms — telephone numbers such as 10111 for safety and security incidents, 10177 for Ambulance & Fire, 107 for other emergency services, and 0800 007 081 for consumer complaints.",
               "Structured forums for ongoing dialogue: the integrated Cape Town Safety Forum, Local Safety Forums throughout the Metropole, the Provincial and National safety forums, and the Cape Town Tourism Members Safety Forum.",
+              "Distribution of practical safety tips to visitors and residents.",
             ],
             concepts: [
               ["awareness", "campaign"],
@@ -2985,10 +3007,12 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "By participating in and integrating with the Provincial and National safety forums, Local Safety Forums throughout the Metropole, and the Cape Town Tourism Members Safety Forum — established venues for open discussion.",
+              "By integrating with the Provincial and National safety forums, Local Safety Forums throughout the Metropole, and the Cape Town Tourism Members Safety Forum — established venues for open discussion.",
               "By actively participating in and feeding into the Cape Town and Provincial Safety and Security Forums through the Cape Town Tourism Membership Forum.",
-              "By insisting on co-ordination and communication as the single most important aspect of the plan — an alignment that really works — so that every role player, from the citizen to the police, works together.",
-              "By ongoing, year-round proactive and reactive programmes, and by using dedicated response mechanisms so that everyone knows how to raise a concern and be heard.",
+              "By insisting on co-ordination and communication as the single most important aspect of the plan, so that every role player, from the citizen to the police, works together.",
+              "By ensuring an alignment that really works between all the parties.",
+              "By ongoing, year-round proactive and reactive programmes.",
+              "By using dedicated response mechanisms so that everyone knows how to raise a concern and be heard.",
             ],
             concepts: [
               ["forum", "forums"],
@@ -4149,7 +4173,8 @@ export const CONTENT: Record<string, UnitContent> = {
           {
             answer: [
               "Add more RAM (memory) so the operating system does not run out of working memory.",
-              "With too little RAM the operating system pages to the much slower drive (virtual memory), which is why the disk light flickers and everything crawls when many applications are open. More RAM gives the machine a bigger working desk, so it stops swapping to disk.",
+              "With too little RAM the operating system pages to the much slower drive (virtual memory), which is why the disk light flickers and everything crawls.",
+              "More RAM gives the machine a bigger working desk, so it can hold many applications open at once without swapping to disk.",
             ],
             concepts: [
               ["ram", "memory"],
@@ -4162,8 +4187,10 @@ export const CONTENT: Record<string, UnitContent> = {
           {
             answer: [
               "An HDD stores data on spinning magnetic platters read by moving heads — mechanical, cheaper per terabyte, but slower and fragile when dropped.",
-              "An SSD stores data in flash memory chips with no moving parts — much faster, silent and shock-resistant.",
-              "For a laptop: an SSD, because laptops get moved and knocked (no moving parts to damage) and the speed transforms boot and application load times.",
+              "An SSD stores data in flash memory chips with no moving parts.",
+              "An SSD is much faster — the speed transforms boot and application load times.",
+              "For the laptop, choose an SSD rather than an HDD.",
+              "Laptops get moved and knocked, so shock-resistance matters — with no moving parts there is nothing to damage when it is dropped.",
             ],
             concepts: [
               ["platter", "spinning", "magnetic", "moving parts", "mechanical", "heads"],
@@ -4177,7 +4204,8 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Use DisplayPort (or HDMI 2.1) — these digital connections have the bandwidth for 4K at high refresh rates.",
+              "Use DisplayPort (or HDMI 2.1) for the new monitor.",
+              "These digital connections have the bandwidth for 4K at high refresh rates.",
               "VGA is an old analogue standard: it cannot carry the bandwidth for 4K/high refresh, and the analogue signal goes soft and fuzzy at high resolutions.",
             ],
             concepts: [
@@ -4191,7 +4219,8 @@ export const CONTENT: Record<string, UnitContent> = {
           {
             answer: [
               "A laser printer (a networked office laser or multifunction printer) is the right choice for this workload.",
-              "Lasers are built for volume: fast pages per minute, sharp text, and toner gives by far the lowest cost per page — inkjet ink at that volume would cost a fortune and the printer would not keep up.",
+              "Toner gives by far the lowest cost per page — inkjet ink at that volume would cost a fortune.",
+              "Lasers are built for volume: fast pages per minute and sharp text — an inkjet would not keep up.",
             ],
             concepts: [
               ["laser"],
@@ -4203,8 +4232,10 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "The switch connects all the office devices into the local network and forwards traffic to the correct port.",
-              "The router is the gateway that connects the office network to the internet (and other networks), routing traffic and translating private addresses (NAT).",
+              "The switch connects all the office devices into the local network.",
+              "The router connects the office network to the internet and to other networks.",
+              "The router is the gateway: it routes traffic between networks and translates private addresses (NAT).",
+              "The switch forwards traffic to the correct port so the connected devices can talk to each other on the LAN.",
             ],
             concepts: [
               ["switch"],
@@ -4234,7 +4265,10 @@ export const CONTENT: Record<string, UnitContent> = {
         checks: [
           {
             answer: [
-              "Ada Lovelace. In 1843 she published notes on Babbage's Analytical Engine containing a step-by-step method for the machine to compute Bernoulli numbers — the first published algorithm intended for a machine — and she foresaw that computers could one day work with music, words and symbols, not just numbers.",
+              "Ada Lovelace is regarded as the first computer programmer.",
+              "In 1843 she published notes containing a step-by-step method for the machine to compute Bernoulli numbers — the first published algorithm intended for a machine.",
+              "She wrote it for Babbage's Analytical Engine, a mechanical computer designed a century before electronic computers existed.",
+              "She foresaw that computers could one day work with music, words and symbols, not just numbers.",
             ],
             concepts: [
               ["ada", "lovelace"],
@@ -4248,7 +4282,9 @@ export const CONTENT: Record<string, UnitContent> = {
           {
             answer: [
               "A 'computer' was a person employed to do calculations by hand — a job title.",
-              "At NASA (then NACA) that work was done largely by women, including the segregated West Area Computing unit of Black women mathematicians — Katherine Johnson, Dorothy Vaughan and Mary Jackson — who computed spaceflight trajectories.",
+              "At NASA (then NACA) that work was done largely by women.",
+              "They included the segregated West Area Computing unit of Black women mathematicians — Katherine Johnson, Dorothy Vaughan and Mary Jackson.",
+              "They computed the spaceflight trajectories — the calculations that got astronauts into orbit and home again.",
             ],
             concepts: [
               ["person", "people", "job", "by hand", "human"],
@@ -4261,8 +4297,10 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "ENIAC (1945) was the first general-purpose electronic computer — 30 tons and about 18,000 vacuum tubes.",
-              "It was programmed by six women — the ENIAC Six — who set switches and re-plugged cables by hand, without manuals or training, effectively inventing programming as a job.",
+              "ENIAC (1945) was the first general-purpose electronic computer.",
+              "It weighed 30 tons and used about 18,000 vacuum tubes (valves).",
+              "It was programmed by six women — the ENIAC Six — without manuals or training, effectively inventing programming as a job.",
+              "Programming it meant setting switches and re-plugging cables by hand.",
             ],
             concepts: [
               ["first", "general-purpose", "electronic"],
@@ -4275,8 +4313,10 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "The cloud is physical data centres owned by providers like Microsoft and Amazon — buildings full of servers, storage and network hardware that we rent over the internet.",
-              "Both Azure and AWS run data centre regions here in South Africa (Johannesburg, and Cape Town for AWS), so 'our cloud' may literally be servers up the road — virtualisation just slices those physical machines into the virtual ones we use.",
+              "The cloud is physical data centres — buildings owned by providers like Microsoft and Amazon.",
+              "Those buildings are full of servers, storage and network hardware — real physical machines.",
+              "We rent that hardware over the internet instead of owning it ourselves.",
+              "Both Azure and AWS run data centre regions here in South Africa (Johannesburg, and Cape Town for AWS) — virtualisation just slices those physical machines into the virtual ones we use.",
             ],
             concepts: [
               ["data centre", "data center", "datacentre", "datacenter", "buildings", "warehouse"],
@@ -4289,7 +4329,11 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "Examples: a rack server (compute in a 42U cabinet); a SAN storage array (shelves of drives serving many servers); a UPS battery system (instant bridge power); a diesel generator (long outages); a PDU (rack power distribution); a CRAC/cooling unit (removes heat); a blade chassis; a KVM console.",
+              "A rack server — the compute workhorse, stacked in a 42U cabinet (or a blade chassis packing many servers into one enclosure).",
+              "A SAN storage array — shelves of drives serving storage to many machines at once.",
+              "Power hardware: a UPS battery system bridges outages instantly, a diesel generator carries long outages, and PDUs distribute power to each rack.",
+              "A CRAC/cooling unit removes the heat that thousands of machines generate (hot/cold aisles, chillers).",
+              "Other data-centre kit: a KVM console, patch panels and core switches or firewall appliances.",
             ],
             concepts: [
               ["rack server", "blade", "1u", "42u", "server"],
@@ -13400,8 +13444,9 @@ export const CONTENT: Record<string, UnitContent> = {
         checks: [
           {
             answer: [
-              "Acceptable practices follow the CSSA Code of Practice: keep yourself and subordinates up to date with new technologies, practices, legal requirements and standards; accept only work you are competent to perform; train subordinates on an equal opportunity basis; communicate through proper channels; be accountable for quality, timeliness and resources.",
+              "Acceptable practices follow the CSSA Code of Practice: keep yourself and subordinates up to date with new technologies, practices, legal requirements and standards, and accept only work you are competent to perform.",
               "Protect privacy, security and integrity: protect life, data and equipment (in that order); protect confidential information; give individuals rights of review, correction and appeal over data that may harm them.",
+              "Be accountable for quality, timeliness and resources, train subordinates on an equal opportunity basis, and communicate through proper channels.",
               "Unacceptable practices include claiming competence you do not possess, neglecting security and confidentiality, ignoring legal requirements, software piracy in any form, and using parts of the code in isolation to justify errors of omission or commission.",
             ],
             concepts: [
@@ -13421,8 +13466,9 @@ export const CONTENT: Record<string, UnitContent> = {
           {
             answer: [
               "The CSSA (Computer Society of South Africa) is one of, if not the most respected associations concerned with South African Information Technology.",
-              "It is established to elevate ICT capability and professionalism in South Africa: facilitating the exchange of opinions and views on ICT, representing industry practitioners to inform and lobby Government on ICT policy, disseminating ICT information via journals, lectures, seminars and conferences, improving technical knowledge and elevating the professional status of persons engaged in ICT.",
+              "It is established to elevate ICT capability and professionalism in South Africa — improving technical knowledge and elevating the professional status of persons engaged in ICT.",
               "It publishes the Code of Practice and Code of Conduct that prescribe minimum standards of practice and behaviour for all professional members.",
+              "It represents industry practitioners to inform and lobby Government on ICT policy, facilitating the exchange of opinions and views on ICT and disseminating ICT information via journals, lectures, seminars and conferences.",
             ],
             concepts: [
               ["computer society", "cssa"],
@@ -13440,9 +13486,10 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "The BITF (Black Information Technology Forum) was launched in Cape Town in 1995 to propel black individuals into the mainstream of the ICT industry, becoming a national organisation in 1998 with 2 400 members.",
-              "It is the largest organisation representing the interests of black people in South Africa's ICT industry and has considerable credibility with government bodies.",
-              "It aims to empower members with technical and business skills, improve access to technology for historically disadvantaged communities, actively influence policy-making forums, and promote the status of historically disadvantaged individuals and communities in the ICT sector.",
+              "The BITF (Black Information Technology Forum) is the largest organisation representing the interests of black people in South Africa's ICT industry.",
+              "It was launched in Cape Town in 1995 to propel black individuals into the mainstream of the ICT industry, becoming a national organisation in 1998 with 2 400 members.",
+              "It aims to empower members with technical and business skills and improve access to technology for historically disadvantaged communities.",
+              "It actively influences policy-making forums, has considerable credibility with government bodies, and promotes the status of historically disadvantaged individuals and communities in the ICT sector.",
             ],
             concepts: [
               ["black information technology forum", "bitf", "black"],
@@ -13460,7 +13507,8 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "The ITUC (International Trade Union Confederation) is the world's largest trade union federation.",
+              "The ITUC (International Trade Union Confederation) is a trade union federation.",
+              "It is the world's largest trade union federation.",
               "It was formed on 1 November 2006 out of the merger of the International Confederation of Free Trade Unions (ICFTU) and the World Confederation of Labour (WCL).",
               "This union assists the South African IT market in trading internationally, thus empowering the market — but more so those in the emerging sector of the market.",
             ],
@@ -13501,9 +13549,10 @@ export const CONTENT: Record<string, UnitContent> = {
           },
           {
             answer: [
-              "The codes of practice are set out by the Computer Society of South Africa in its Code of Practice — a series of statements prescribing minimum standards of practice for all professional members, observed in the spirit and not merely to the word.",
-              "Its main areas are: personal competence and keeping up to date (accept only work you are competent to perform); organisation and management (plan and review objectives, assign tasks by ability, maintain communication, be accountable for quality and timeliness); contracting (seek expert advice; cover all requirements and responsibilities).",
-              "Privacy, security and integrity (evaluate risks; protect life, data and equipment in that order; protect confidential information; rights of review and correction); development (impartiality, standards, client participation, testing, documentation, plain-language input/output, restore procedures); implementation (training, planned changeover, adequate testing); and live systems (reliable processing, performance reviews, maintenance support, user liaison).",
+              "The codes of practice are set out by the Computer Society of South Africa in its Code of Practice.",
+              "They are a series of statements prescribing minimum standards of practice for all professional members, observed in the spirit and not merely to the word.",
+              "Its main areas include personal competence and keeping up to date (accept only work you are competent to perform), organisation and management (plan and review objectives, assign tasks by ability, be accountable for quality and timeliness), and contracting (seek expert advice; cover all requirements and responsibilities).",
+              "Further areas cover privacy, security and integrity (protect life, data and equipment in that order; protect confidential information), development (impartiality, standards, client participation, testing, documentation), implementation (training, planned changeover, adequate testing) and live systems (reliable processing, performance reviews, maintenance support, user liaison).",
             ],
             concepts: [
               ["cssa", "computer society", "code of practice"],
@@ -13534,8 +13583,9 @@ export const CONTENT: Record<string, UnitContent> = {
           {
             answer: [
               "The CSSA Code of Practice requires that subordinates are trained on an equal opportunity basis, in order to be effective in their duties and to qualify for increased responsibilities.",
-              "Bodies such as the BITF work to propel black individuals into the mainstream of the ICT industry, improve access to technology for historically disadvantaged communities, and promote the status of historically disadvantaged individuals and communities in the ICT sector.",
-              "The CSSA's constitution commits it to education and training that elevates the level of ICT capability in South Africa, and to community development that enhances the standards and levels of ICT for the greater good of the South African people.",
+              "The CSSA's constitution commits it to education and training that elevates the level of ICT capability in South Africa.",
+              "Bodies such as the BITF work to propel black individuals into the mainstream of the ICT industry and improve access to technology for historically disadvantaged communities.",
+              "The industry also commits to community development that enhances the standards and levels of ICT for the greater good of the South African people.",
             ],
             concepts: [
               ["equal opportunity", "equality"],
@@ -13555,7 +13605,8 @@ export const CONTENT: Record<string, UnitContent> = {
             answer: [
               "Software piracy is the failure to comply with software licence agreements — an unlawful action in any form, with offenders liable to civil or criminal prosecution.",
               "The Business Software Alliance (BSA) — an anti-piracy umbrella body made up of large software companies — raises public awareness, recovers losses through out-of-court settlements, and prosecutes offenders to the full extent of the law.",
-              "The industry emphasises the harm piracy does: lower vendor revenues limit re-investment in research and development and support infrastructures; pirate software may introduce viruses and gives users no quality guarantees or technical support; and piracy deprives the economy of jobs — 'software piracy is stealing, no more, no less.'",
+              "'Software piracy is stealing, no more, no less.'",
+              "The industry emphasises the harm piracy does: lower vendor revenues limit re-investment in research and development and support infrastructures; pirate software may introduce viruses and gives users no quality guarantees or technical support; and piracy deprives the economy of jobs.",
             ],
             concepts: [
               ["licence", "license", "agreement", "unlawful", "illegal"],
@@ -13574,7 +13625,8 @@ export const CONTENT: Record<string, UnitContent> = {
           {
             answer: [
               "Legislation: the Intellectual Property Laws Amendment Act (effective 1 October 1997) strengthened protection for computer programs, compilations of data and databases, moving South Africa closer to compliance with the World Trade Organisation's TRIPS agreement.",
-              "Enforcement and prosecution: the Business Software Alliance recovers losses through out-of-court settlements and prosecutes offenders; law enforcement (SAPS) and SAFACT conduct crackdowns and raids on pirated DVDs and CDs.",
+              "Enforcement and prosecution: the Business Software Alliance recovers losses through out-of-court settlements and prosecutes offenders.",
+              "Law enforcement (SAPS) and SAFACT conduct crackdowns and raids on pirated DVDs and CDs.",
               "Industry and marketplace action: online marketplaces such as bidorbuy work with SAPS, SAFACT, the BSA and ICASA to combat pirated goods sold online; and public awareness campaigns remind South Africans that buying, selling or illegally copying software supports crime.",
             ],
             concepts: [
