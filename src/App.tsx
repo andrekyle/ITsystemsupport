@@ -77,15 +77,19 @@ function Shell({
   onSignOut: () => void;
   onUpdateProfile: (patch: Partial<Profile>) => void;
 }) {
-  // on phones the sidebar starts collapsed so content gets the full width
-  const [collapsed, setCollapsed] = useState(() => window.innerWidth < 760);
+  // on phones/tablets the sidebar starts collapsed so content gets the full
+  // width; below this breakpoint the sidebar behaves as an overlay drawer
+  const MOBILE_BP = 860;
+  const [collapsed, setCollapsed] = useState(() => window.innerWidth < MOBILE_BP);
   const [route, setRoute] = useState<Route>(loadRoute);
   const { state, toggleActivity, saveQuizResult, setLogbookField, saveExerciseResult } = useProgress(profile.id);
 
-  // in-app navigation pushes a browser history entry so back/forward work
+  // in-app navigation pushes a browser history entry so back/forward work;
+  // on mobile the navigation drawer closes so the destination page is visible
   const navigate = useCallback((r: Route) => {
     window.history.pushState(r, "");
     setRoute(r);
+    if (window.innerWidth < MOBILE_BP) setCollapsed(true);
   }, []);
 
   useEffect(() => {
@@ -126,6 +130,13 @@ function Shell({
           profile={profile}
           navigate={navigate}
         />
+        {!collapsed && (
+          <button
+            className="side-scrim"
+            aria-label="Close navigation"
+            onClick={() => setCollapsed(true)}
+          />
+        )}
         <main className="content">
           <div className="content-inner">
             {route.page === "dashboard" && (

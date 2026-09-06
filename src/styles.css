@@ -105,6 +105,7 @@ a:hover {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh; /* mobile browsers: track the real visible viewport */
 }
 
 .body {
@@ -362,6 +363,94 @@ a:hover {
 
 .sidebar.collapsed {
   width: var(--sidebar-w-min);
+}
+
+/* scrim behind the mobile navigation drawer — desktop never shows it */
+.side-scrim {
+  display: none;
+}
+
+/* ============ Mobile shell (≤860px): drawer navigation + roomy header ============ */
+
+@media (max-width: 860px) {
+  /* The sidebar overlays the content as a drawer instead of squeezing it. */
+  .sidebar {
+    position: fixed;
+    top: var(--header-h);
+    bottom: 0;
+    left: 0;
+    z-index: 60;
+    width: min(300px, 85vw);
+    transform: translateX(0);
+    transition: transform 0.2s ease;
+    box-shadow: 0 16px 44px rgba(0, 0, 0, 0.38);
+  }
+
+  .sidebar.collapsed {
+    width: min(300px, 85vw); /* keep the drawer's width… */
+    transform: translateX(-105%); /* …but slide it fully out of view */
+    box-shadow: none;
+  }
+
+  .side-scrim {
+    display: block;
+    position: fixed;
+    inset: var(--header-h) 0 0 0;
+    z-index: 55;
+    border: 0;
+    padding: 0;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  .content-inner {
+    padding: 16px 14px 56px;
+  }
+}
+
+/* ============ Header: shed detail as the viewport narrows ============ */
+
+@media (max-width: 1100px) {
+  .header .brand .brand-sub {
+    display: none;
+  }
+  .header-clock .session,
+  .header-clock .ends {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .header {
+    padding: 0 10px;
+    gap: 6px;
+  }
+  .header-clock .date {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .header .brand {
+    gap: 7px;
+    font-size: 15px;
+    margin-right: 4px;
+  }
+  .header-clock {
+    gap: 6px;
+  }
+  .header-clock > svg {
+    display: none;
+  }
+  /* avatar stays; the name/role text yields the space */
+  .profile-chip .who {
+    display: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .header-clock {
+    display: none;
+  }
 }
 
 .sidebar-scroll {
@@ -9660,3 +9749,29 @@ table.data th.sortable.sorted { color: var(--ink); }
   .oa-month-label { min-width: 0; }
 }
 
+
+/* ============ Mobile content polish (kept last so it wins the cascade) ============ */
+
+@media (max-width: 860px) {
+  /* unit tabs scroll sideways instead of wrapping into a tall block */
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 9px 12px 10px;
+  }
+
+  .crumbs {
+    flex-wrap: wrap;
+  }
+}
