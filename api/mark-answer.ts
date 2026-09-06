@@ -70,22 +70,23 @@ Rules:
 Method — for each concept fill these JSON fields IN ORDER, so the verdict follows from the analysis:
   1. "restated": the strongest non-spent candidate sentence rewritten in your own plain words (or "" if none).
   2. "same_idea": true only when that plain-words restatement and the lesson_reference describe the same thing.
-  3. "confidence": the score. If same_idea is true and the sentence is a real explanation, this is 0.9+; never credit on shared words when same_idea is false.
+  3. "evidence": the learner sentence you restated, copied word-for-word from learner_answer ("" if none). Never cite a spent sentence.
+  4. "confidence": the score. If same_idea is true and the sentence is a real explanation, this is 0.9+; never credit on shared words when same_idea is false.
 
 Worked example:
   lesson_reference: "Backup reports — daily records of which systems were backed up, and whether the backup succeeded or failed."
   learner sentence: "Routine data-protection summaries capturing copy-job outcomes across the server estate."
-  restated: "regular summaries of whether data copy jobs (backups) worked" → same_idea: true → confidence 0.9 (paraphrase using equivalent terms; omitting the example word "daily" is fine).
+  restated: "regular summaries of whether data copy jobs (backups) worked" → same_idea: true → evidence: "Routine data-protection summaries capturing copy-job outcomes across the server estate." → confidence 0.9 (paraphrase using equivalent terms; omitting the example word "daily" is fine).
 
 Only score >= 0.9 when the meaning match to the lesson_reference is clear and specific.
 
 Reply with STRICT JSON only, no prose:
-{"scores":[{"id":"<conceptId>","restated":"<plain words>","same_idea":<true|false>,"confidence":<0..1>}, ...],"reason":"one short sentence"}`;
+{"scores":[{"id":"<conceptId>","restated":"<plain words>","same_idea":<true|false>,"evidence":"<verbatim sentence>","confidence":<0..1>}, ...],"reason":"one short sentence"}`;
 
 const MAX_ANSWER_LEN = 4000;
 const MAX_CONCEPTS = 12;
 const LLM_TIMEOUT_MS = 6000;
-const BUILD = "20260905-7";
+const BUILD = "20260905-8";
 
 /** OpenAI model names to try, in order. First 200 response wins. Falls
  *  through to the next name on 4xx (model not found / plan-restricted).
@@ -180,21 +181,21 @@ export default async function handler(req: Request): Promise<Response> {
     ? [requested, ...MODEL_CANDIDATES.filter((m) => m !== requested)]
     : MODEL_CANDIDATES;
 
-  const userMsg = JSON.stringify({
-    learner_answer: answer,
-    already_credited_labels: alreadyCredited,
-    spent_sentences: spentSentences,
-    concepts_to_check: concepts.map((c) => ({
-      id: String(c.id),
-      label: String(c.label ?? ""),
-      lesson_reference: String(c.lessonLine ?? ""),
-    })),
-  });
+  const userMsgFor = (subset: Concept[]) =>
+    JSON.stringify({
+      learner_answer: answer,
+      already_credited_labels: alreadyCredited,
+      spent_sentences: spentSentences,
+      concepts_to_check: subset.map((c) => ({
+        id: String(c.id),
+        label: String(c.label ?? ""),
+        lesson_reference: String(c.lessonLine ?? ""),
+      })),
+    });
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS);
 
-  const validIds = new Set(concepts.map((c) => String(c.id)));
   const n = (v: unknown) => (typeof v === "number" && isFinite(v) && v >= 0 ? Math.round(v) : 0);
 
   interface Verdict {
@@ -209,8 +210,10 @@ export default async function handler(req: Request): Promise<Response> {
   }
   const isVerdict = (v: Verdict | Failure): v is Verdict => "credited" in v;
 
-  /** One completion call → parsed verdict (or HTTP failure info). */
-  const judgeOnce = async (model: string): Promise<Verdict | Failure> => {
+  /** One completion call over a subset of concepts → parsed verdict (or HTTP
+   *  failure info). */
+  const judgeOnce = async (model: string, subset: Concept[]): Promise<Verdict | Failure> => {
+    const validIds = new Set(subset.map((c) => String(c.id)));
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -223,7 +226,7 @@ export default async function handler(req: Request): Promise<Response> {
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userMsg },
+          { role: "user", content: userMsgFor(subset) },
         ],
       }),
       signal: controller.signal,
@@ -250,22 +253,44 @@ export default async function handler(req: Request): Promise<Response> {
       /* invalid JSON from the model — treated as an empty verdict */
     }
     // Support two response shapes for forward-compat:
-    //   1. { scores: [{ id, confidence }, ...] } — confidence-scored shape
+    //   1. { scores: [{ id, evidence, confidence }, ...] } — evidence-cited shape
     //   2. { credited: ["<id>", ...] } — legacy shape (older prompts)
-    // Only concepts with confidence >= CREDIT_THRESHOLD are credited.
+    // A credit is only accepted when its confidence is >= CREDIT_THRESHOLD
+    // AND its cited evidence passes the mechanical checks below — the model
+    // is not trusted to police the spent-sentence rule by itself.
     const CREDIT_THRESHOLD = 0.9;
+    const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
+    const answerNorm = norm(answer);
+    const spentNorm = spentSentences.map(norm).filter(Boolean);
     let credited: string[] = [];
     if (Array.isArray(parsed.scores)) {
-      credited = parsed.scores
+      const eligible = parsed.scores
         .filter(
-          (s: unknown): s is { id: string; confidence: number } =>
+          (s: unknown): s is { id: string; confidence: number; evidence?: unknown } =>
             !!s &&
             typeof (s as { id?: unknown }).id === "string" &&
             typeof (s as { confidence?: unknown }).confidence === "number" &&
             validIds.has((s as { id: string }).id) &&
             (s as { confidence: number }).confidence >= CREDIT_THRESHOLD
         )
-        .map((s) => s.id);
+        .map((s) => ({
+          id: s.id,
+          confidence: s.confidence,
+          ev: norm(typeof s.evidence === "string" ? s.evidence : ""),
+        }))
+        // evidence must be a real quote from the learner's answer…
+        .filter((s) => s.ev.length >= 15 && answerNorm.includes(s.ev))
+        // …and must not be (part of) a sentence that already earned a concept
+        .filter((s) => !spentNorm.some((sp) => sp.includes(s.ev) || s.ev.includes(sp)));
+      // one sentence earns at most one concept: strongest confidence claims
+      // its evidence; later claims overlapping the same text are dropped
+      eligible.sort((a, b) => b.confidence - a.confidence);
+      const claimed: string[] = [];
+      for (const s of eligible) {
+        if (claimed.some((c) => c.includes(s.ev) || s.ev.includes(c))) continue;
+        claimed.push(s.ev);
+        credited.push(s.id);
+      }
     } else if (Array.isArray(parsed.credited)) {
       credited = parsed.credited.filter(
         (id): id is string => typeof id === "string" && validIds.has(id)
@@ -286,7 +311,12 @@ export default async function handler(req: Request): Promise<Response> {
   try {
     let lastStatus = 0;
     let lastBody = "";
-    for (const model of modelChain) {
+    /** Majority-voted judgement over a concept subset. Returns null when every
+     *  run failed (fills lastStatus/lastBody for the fallback chain). */
+    const judgeVoted = async (
+      model: string,
+      subset: Concept[]
+    ): Promise<{ credited: string[]; reason: string; usage: Verdict["usage"]; model: string; votes: number } | null> => {
       // gpt-5 models run at a forced temperature of 1, so single calls can
       // flip on borderline answers. Self-consistency: three parallel votes,
       // credit only what the majority credits. Deterministic (temp-0) models
@@ -294,7 +324,7 @@ export default async function handler(req: Request): Promise<Response> {
       const runs = model.startsWith("gpt-5") ? 3 : 1;
       const settled = await Promise.all(
         Array.from({ length: runs }, () =>
-          judgeOnce(model).catch((e): Failure => {
+          judgeOnce(model, subset).catch((e): Failure => {
             // AbortError must escape to the outer timeout handler
             if ((e as Error)?.name === "AbortError") throw e;
             return { httpStatus: 0, detail: String(e).slice(0, 200) };
@@ -306,10 +336,7 @@ export default async function handler(req: Request): Promise<Response> {
         const f = settled[0] as Failure;
         lastStatus = f.httpStatus;
         lastBody = f.detail;
-        // Keep trying the next candidate on 404/400 (model not available /
-        // parameter rejected); other statuses (401, 429, 5xx) stop the chain.
-        if (f.httpStatus !== 404 && f.httpStatus !== 400 && f.httpStatus !== 0) break;
-        continue;
+        return null;
       }
       // Majority vote across successful runs (1 run → its own verdict).
       const need = Math.floor(oks.length / 2) + 1;
@@ -327,7 +354,59 @@ export default async function handler(req: Request): Promise<Response> {
       const sameSet = (a: string[], b: string[]) =>
         a.length === b.length && a.every((x) => b.includes(x));
       const reason = (oks.find((v) => sameSet(v.credited, credited)) ?? oks[0]).reason;
-      return json({ credited, reason, usage, model: oks[0].model, votes: oks.length }, 200);
+      return { credited, reason, usage, model: oks[0].model, votes: oks.length };
+    };
+
+    for (const model of modelChain) {
+      const batch = await judgeVoted(model, concepts);
+      if (batch === null) {
+        // Keep trying the next candidate on 404/400 (model not available /
+        // parameter rejected); other statuses (401, 429, 5xx) stop the chain.
+        if (lastStatus !== 404 && lastStatus !== 400 && lastStatus !== 0) break;
+        continue;
+      }
+
+      // Small models lose precision when judging many concepts at once (they
+      // start crediting near-misses). Every batch credit must therefore be
+      // CONFIRMED by an isolated single-concept judgement — made by the
+      // strongest marking model as an independent moderator (falling back to
+      // the selected model if the moderator is unavailable). Verification can
+      // only remove credits, never add.
+      let credited = batch.credited;
+      let reason = batch.reason;
+      let usage = batch.usage;
+      if (credited.length > 0 && concepts.length > 1) {
+        const VERIFIER = "gpt-4.1-mini";
+        const confirmations = await Promise.all(
+          credited.map(async (id) => {
+            const concept = concepts.find((c) => String(c.id) === id);
+            if (!concept) return { id, confirmed: false, usage: null as Verdict["usage"] | null };
+            const v =
+              (await judgeVoted(VERIFIER, [concept])) ?? (await judgeVoted(model, [concept]));
+            return {
+              id,
+              confirmed: v !== null && v.credited.includes(id),
+              usage: v?.usage ?? null,
+            };
+          })
+        );
+        for (const c of confirmations) {
+          if (c.usage) {
+            usage = {
+              prompt_tokens: usage.prompt_tokens + c.usage.prompt_tokens,
+              completion_tokens: usage.completion_tokens + c.usage.completion_tokens,
+              total_tokens: usage.total_tokens + c.usage.total_tokens,
+            };
+          }
+        }
+        const dropped = confirmations.filter((c) => !c.confirmed).map((c) => c.id);
+        if (dropped.length > 0) {
+          credited = credited.filter((id) => !dropped.includes(id));
+          reason = credited.length > 0 ? reason : "not confirmed on isolated re-check";
+        }
+      }
+
+      return json({ credited, reason, usage, model: batch.model, votes: batch.votes }, 200);
     }
 
     return json(
