@@ -237,22 +237,19 @@ export function Dashboard({
           return (
             <div
               key={m.id}
+              className="dash-mod-row"
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-                padding: "11px 0",
                 borderBottom: i < MODULES.length - 1 ? "1px solid var(--border)" : "none",
               }}
             >
               <Icon name={m.icon} size={19} color="var(--azure)" />
-              <span style={{ width: 320, fontSize: 14, flexShrink: 0 }}>
+              <span className="dash-mod-name">
                 {i + 1}. {m.name}
               </span>
-              <span style={{ flex: 1 }}>
+              <span className="dash-mod-bar">
                 <Bar value={c} green={c === 1} />
               </span>
-              <span className="pct" style={{ fontSize: 12.5, color: "var(--ink-3)", width: 38, textAlign: "right" }}>
+              <span className="pct dash-mod-pct">
                 {Math.round(c * 100)}%
               </span>
             </div>
