@@ -187,7 +187,7 @@ export const MARKING_MODELS: MarkingModelInfo[] = [
   {
     id: "gpt-4o-mini",
     name: "GPT-4o mini",
-    desc: "Cheapest — stricter on paraphrased answers, may under-credit",
+    desc: "Cheapest — marks with guided reasoning steps; may still miss unusual paraphrases",
     inPerM: 0.15,
     outPerM: 0.6,
   },
