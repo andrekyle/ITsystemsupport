@@ -1342,7 +1342,12 @@ export function ExerciseQuestion({
               {effectiveResult.short
                 ? `Answer too short — you wrote ${effectiveResult.words} word${effectiveResult.words === 1 ? "" : "s"}. Please explain your answer in your own words — a minimum of ${effectiveResult.minWords} words is required before any marks can be awarded.`
                 : `Not quite yet — your answer covers ${effectiveResult.matched} of ${check.concepts.length} key ideas (${effectiveResult.marks}/${effectiveResult.maxMarks} marks, 2 marks per point). Write ONE key idea per box — a box can earn at most one pair of ticks — and explain each idea in ≥${MIN_EXPLANATION_WORDS} words, mentioning the concept or a clear synonym. Revisit the lesson and try again.`}
-              {reviewing && " Checking for meaning…"}
+              {reviewing && (
+                <span className="exq-reviewed reviewing" role="status">
+                  <span className="exq-spinner" aria-hidden="true" />
+                  Checking your wording for meaning…
+                </span>
+              )}
               {!reviewing && reviewStatus.kind === "ran" && reviewStatus.promoted === 0 && (
                 <> (Meaning check ran — no additional marks awarded.)</>
               )}
@@ -1359,11 +1364,20 @@ export function ExerciseQuestion({
           Correct — {scoreAnswer(val, check, extras).marks} of {scoreAnswer(val, check, extras).maxMarks} marks (2
           marks per point).
           <DoubleTick />
-          {extras.size > 0 && (
+          {reviewing ? (
+            <span
+              className="exq-reviewed reviewing"
+              role="status"
+              title="Your wording is being reviewed for meaning — extra marks may still be awarded"
+            >
+              <span className="exq-spinner" aria-hidden="true" />
+              Checking your wording for meaning…
+            </span>
+          ) : extras.size > 0 ? (
             <span className="exq-reviewed" title="Some marks were confirmed by a semantic review of your wording">
               · Reviewed for meaning
             </span>
-          )}
+          ) : null}
           <button
             type="button"
             className="btn ghost sm"

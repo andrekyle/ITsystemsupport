@@ -5374,6 +5374,29 @@ a.plan-ppt:hover {
   margin-left: 4px;
 }
 
+.exq-reviewed.reviewing {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* small azure ring spinner shown while the meaning check runs */
+.exq-spinner {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  border: 2px solid var(--border);
+  border-top-color: var(--azure);
+  border-radius: 50%;
+  animation: exq-spin 0.8s linear infinite;
+}
+
+@keyframes exq-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .exq-answer {
   margin-top: 10px;
   padding: 10px 14px 6px;
