@@ -368,7 +368,13 @@ function answerTokens(s: string): string[] {
     .map((w) => {
       let x = w.replace(/'.*$/, "");
       x = x.replace(/ies$/, "y");
-      if (x.length > 4) x = x.replace(/(ations|ation|ings|ing|ed|es|s|ly)$/, "");
+      if (x.length > 4) {
+        x = x.replace(/(ations|ation|ings|ing|ed|ly)$/, "");
+        // plural stripping: "-es" only after sibilants ("boxes" → "box"),
+        // otherwise a plain "-s" ("tubes" → "tube", never "tub")
+        if (/(ses|xes|zes|ches|shes)$/.test(x)) x = x.slice(0, -2);
+        else if (x.endsWith("s") && !x.endsWith("ss")) x = x.slice(0, -1);
+      }
       return x;
     });
 }
@@ -558,6 +564,27 @@ function lessonLineFor(check: ExerciseCheck, gi: number): string | undefined {
   });
 }
 
+/** MARKING STANDARD — statement splitting used by the scorer, the feedback
+ *  and the tick renderer alike. A statement ends at . ! ? or a line break;
+ *  semicolon/comma lists remain part of ONE statement, exactly as a human
+ *  marker reads them. Ticks are always placed at the END of the statement
+ *  that earned the idea, never mid-sentence. */
+function splitStatements(text: string): string[] {
+  return (text.match(/[^.!?\n]+[.!?\n]*/g) ?? [text]).map((s) => s.trim()).filter(Boolean);
+}
+
+/** Test hook for the marking harnesses — not used by the app itself. */
+export const __markingInternals = {
+  answerTokens,
+  contentStems,
+  tokenMatches,
+  phraseMatches,
+  conceptInSentence,
+  lessonLineFor,
+  hasTrailingNoise,
+  stemOverlap,
+};
+
 /**
  * Core credit engine. Returns the credited concept indexes AND, for each
  * concept earned by the learner's own wording, the exact (trimmed) sentence
@@ -576,9 +603,7 @@ export function creditConcepts(
   if (tokens.length < MIN_ANSWER_WORDS) {
     return { credited: extras ? [...extras].sort((a, b) => a - b) : [], earnedBy };
   }
-  const sentences = (text.match(/[^.!?;\n]+[.!?;\n]*/g) ?? [text])
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const sentences = splitStatements(text);
   const sentenceTokens = sentences.map((s) => answerTokens(s));
   const sentenceStems = sentences.map((s) => contentStems(s));
 
@@ -641,6 +666,10 @@ export function creditConcepts(
   // Score every eligible (concept, sentence) pair. A sentence needs ≥ 10
   // words AND either keyword hit + a real explanation supporting it, or
   // strong semantic overlap on its own (a paraphrase / clear synonym).
+  // MARKING STANDARD: a statement that reproduces the concept's model-answer
+  // line (≥ 80% of the line's content stems) ALWAYS earns the idea, even
+  // when that line is shorter than the usual explanation minimum — the model
+  // answer can never fail its own marking.
   // Keyword-path scores start at 2 and grow with the number of distinct
   // concept phrases matched plus the explanation overlap, so a sentence that
   // IS the model line outranks one that merely shares a keyword.
@@ -648,9 +677,42 @@ export function creditConcepts(
   for (let gi = 0; gi < check.concepts.length; gi++) {
     const group = check.concepts[gi];
     const { keywordStems, fullTarget, explanationTarget } = conceptData[gi];
+    const lessonLine = lessonLineFor(check, gi);
+    // MARKING STANDARD: reproduction targets are the model line's individual
+    // statements that carry this concept — a model "line" may contain two
+    // sentences serving different ideas, and quoting the relevant one is
+    // enough. Whole-line stems remain a target for one-sentence lines.
+    const reproductionTargets = splitStatements(lessonLine ?? "")
+      .filter((st) => conceptInSentence(group, answerTokens(st)))
+      .map((st) => contentStems(st))
+      .filter((t) => t.size >= 3);
+    {
+      const whole = contentStems(lessonLine ?? "");
+      if (whole.size >= 3) reproductionTargets.push(whole);
+    }
     for (let si = 0; si < sentences.length; si++) {
-      if (sentenceTokens[si].length < MIN_EXPLANATION_WORDS) continue;
       if (hasTrailingNoise(sentences[si], checkWideTarget)) continue;
+      // model-line reproduction: the statement carries (nearly) all of the
+      // target's own content words
+      let reproduced = 0;
+      for (const target of reproductionTargets) {
+        let hit = 0;
+        target.forEach((t) => {
+          for (const s of sentenceStems[si]) {
+            if (tokenMatches(s, t)) {
+              hit++;
+              break;
+            }
+          }
+        });
+        const ratio = hit / target.size;
+        if (ratio >= 0.8 && ratio > reproduced) reproduced = ratio;
+      }
+      if (reproduced > 0) {
+        candidates.push({ gi, si, score: 10 + reproduced });
+        continue;
+      }
+      if (sentenceTokens[si].length < MIN_EXPLANATION_WORDS) continue;
       const keywordHit = conceptInSentence(group, sentenceTokens[si]);
       if (keywordHit) {
         // Sentence must actually explain the idea — its non-keyword content
@@ -753,9 +815,7 @@ function explainCheck(
   check: ExerciseCheck,
   extras?: ReadonlySet<number>
 ): IdeaFeedback[] {
-  const sentences = (text.match(/[^.!?;\n]+[.!?;\n]*/g) ?? [text])
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const sentences = splitStatements(text);
   // Which concept groups actually earned their 2 marks under the new rule
   // (keyword + ≥10-word explanation). Feedback must line up with what the
   // score says — otherwise learners see contradictory guidance.
@@ -795,24 +855,6 @@ function DoubleTick() {
   );
 }
 
-/** Attribute each credited concept group to the first segment that expresses it;
- *  returns, per segment, the indices of the groups it earned. */
-function attributeGroups(segments: string[], credited: string[][]): number[][] {
-  const used = new Set<number>();
-  return segments.map((seg) => {
-    const segTokens = answerTokens(seg);
-    const earned: number[] = [];
-    credited.forEach((g, gi) => {
-      if (used.has(gi)) return;
-      if (g.some((p) => phraseMatches(p, segTokens))) {
-        used.add(gi);
-        earned.push(gi);
-      }
-    });
-    return earned;
-  });
-}
-
 /** Split a piece of text into (head, tail) where tail is the final
  *  non-whitespace chunk plus any trailing whitespace. Used so the marker
  *  glyph after a segment can be glued to the last word — that word + glyph
@@ -844,7 +886,10 @@ export function MarkedAnswer({
   const credited = creditedIdx.map((gi) => check.concepts[gi]);
   // every key idea earned: nothing is missing, so per-sentence crosses would only mislead
   const fullCoverage = credited.length >= check.concepts.length;
-  const segments = (text.match(/[^.!?;\n]+[.!?;\n]*\s*/g) ?? [text]).filter((s) => s.trim());
+  // MARKING STANDARD: same statement boundaries as the scorer (a statement
+  // ends at . ! ? or a line break — semicolon lists are one statement), with
+  // trailing whitespace kept so the answer renders byte-for-byte.
+  const segments = (text.match(/[^.!?\n]+[.!?\n]*\s*/g) ?? [text]).filter((s) => s.trim());
   // Attribute each credited concept to the segment whose trimmed text matches
   // the sentence the scorer says earned it. Falls back to keyword attribution
   // only for concepts with no recorded sentence (LLM promotions).
@@ -924,40 +969,12 @@ export function MarkedAnswer({
     <div className={`exq-marked${ok ? " ok" : ""}`}>
       {segments.map((seg, i) => {
         const gis = perSeg[i];
-        if (gis.length > 1) {
-          // the sentence earned several ideas — place each pair after the clause that expressed it
-          const clauses = (seg.match(/[^,]+,?\s*/g) ?? [seg]).filter((c) => c.trim());
-          const groupsHere = gis.map((gi) => credited[gi]);
-          const perClause = attributeGroups(clauses, groupsHere);
-          const rest = groupsHere.length - perClause.reduce((t, g) => t + g.length, 0);
-          return (
-            <span key={i} className="exq-seg">
-              {clauses.map((c, ci) => {
-                const ticks = perClause[ci];
-                if (ticks.length === 0) return <span key={ci}>{c}</span>;
-                const { head, tail } = splitTail(c);
-                return (
-                  <span key={ci}>
-                    {head}
-                    <span className="exq-tail">
-                      {tail}
-                      {ticks.map((_, t) => (
-                        <DoubleTick key={t} />
-                      ))}
-                    </span>
-                  </span>
-                );
-              })}
-              {Array.from({ length: rest }).map((_, t) => (
-                <DoubleTick key={`r${t}`} />
-              ))}
-            </span>
-          );
-        }
         const showX = gis.length === 0 && !fullCoverage && namesMissingIdea(i);
         if (gis.length === 0 && !showX) {
           return <span key={i} className="exq-seg">{seg}</span>;
         }
+        // MARKING STANDARD: every pair the statement earned sits together at
+        // its END, glued to the last word — never mid-sentence.
         const { head, tail } = splitTail(seg);
         return (
           <span key={i} className="exq-seg">

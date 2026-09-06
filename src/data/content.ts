@@ -3014,6 +3014,7 @@ export const CONTENT: Record<string, UnitContent> = {
               "The city desperately relies on tourism as a vehicle to spread economic benefits to all its people and as a means of improving living standards by creating sustainable employment opportunities.",
               "Honouring commitments builds and maintains the trust between the stakeholders — Cape Town Tourism, government, SAPS, emergency services and community — that lets the partnership react quickly and effectively when incidents happen.",
               "If commitments are not met, communication breaks down between the parties — and, as the introduction warns, a breakdown in communication leads directly to a breakdown in the organisation as a whole.",
+              "Ultimately the partnership exists to keep residents and visitors safe — meeting its commitments is what protects the safety and security of everyone in the destination.",
             ],
             concepts: [
               ["image", "tarnish", "brand", "reputation"],
