@@ -78,6 +78,21 @@ Worked example:
   learner sentence: "Routine data-protection summaries capturing copy-job outcomes across the server estate."
   restated: "regular summaries of whether data copy jobs (backups) worked" → same_idea: true → evidence: "Routine data-protection summaries capturing copy-job outcomes across the server estate." → confidence 0.9 (paraphrase using equivalent terms; omitting the example word "daily" is fine).
 
+Counter-example (do NOT credit):
+  lesson_reference: "Progress reports — weekly summaries of tasks completed against the project plan."
+  learner sentence: "Reports are written documents that keep everyone in the business informed."
+  restated: "reports keep people informed" → same_idea: false (a generic statement about reports in general; it does not express the specific idea of weekly summaries measured against the project plan) → evidence: "" → confidence 0.3. Sharing the word "reports" is not meaning equivalence.
+
+Counter-example (keyword without explanation — do NOT credit):
+  lesson_reference: "Firewalls — filter incoming and outgoing network traffic against security rules to block unauthorised access."
+  learner sentence: "The company also uses firewalls and other things to stay safe every day."
+  restated: "the company uses firewalls to stay safe" → same_idea: false (names the keyword but gives no actual explanation of what the firewall does — no filtering of traffic, no rules, no blocking of unauthorised access) → evidence: "" → confidence 0.4. Dropping the keyword into a vague sentence is not covering the model answer.
+
+Marking discipline:
+- One learner sentence can earn AT MOST one concept. If a single sentence could satisfy two concepts, credit only the concept it matches most specifically and leave the other uncredited.
+- A semicolon- or comma-separated list is ONE sentence: crediting one concept from it spends the whole sentence.
+- Never infer a concept from the general topic of the answer; the specific idea of the lesson_reference must be stated by one identifiable sentence.
+
 Only score >= 0.9 when the meaning match to the lesson_reference is clear and specific.
 
 Reply with STRICT JSON only, no prose:
@@ -86,7 +101,38 @@ Reply with STRICT JSON only, no prose:
 const MAX_ANSWER_LEN = 4000;
 const MAX_CONCEPTS = 12;
 const LLM_TIMEOUT_MS = 6000;
-const BUILD = "20260905-8";
+const BUILD = "20260906-1";
+
+/* ---- token savers ----
+ * 1. Prompt caching: SYSTEM_PROMPT is a byte-identical prefix of every call
+ *    and (with the counter-example) exceeds OpenAI's 1,024-token caching
+ *    minimum, so repeat calls within ~5-60 min bill the instructions at a
+ *    75-90% discount automatically. `prompt_cache_key` routes all marking
+ *    traffic to the same cache shard to raise the hit rate.
+ * 2. Verdict memo: identical marking requests (same answer, model, concepts,
+ *    spent sentences) within MEMO_TTL_MS return the stored verdict without
+ *    calling OpenAI at all — e.g. a learner's second check on an unchanged
+ *    question, or classmates submitting the same copied text. Cached replies
+ *    report zero usage so the token gauge stays truthful. Best-effort: the
+ *    Edge isolate may be recycled at any time. */
+const PROMPT_CACHE_KEY = "itss-marking-v1";
+const MEMO_TTL_MS = 15 * 60 * 1000;
+const MEMO_MAX = 300;
+interface MemoEntry {
+  at: number;
+  payload: { credited: string[]; reason: string; model: string; votes: number };
+}
+const VERDICT_MEMO = new Map<string, MemoEntry>();
+
+/** FNV-1a over the request's marking-relevant fields. */
+function memoKey(s: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(36) + ":" + s.length;
+}
 
 /** OpenAI model names to try, in order. First 200 response wins. Falls
  *  through to the next name on 4xx (model not found / plan-restricted).
@@ -181,6 +227,32 @@ export default async function handler(req: Request): Promise<Response> {
     ? [requested, ...MODEL_CANDIDATES.filter((m) => m !== requested)]
     : MODEL_CANDIDATES;
 
+  // Verdict memo: identical request seen recently → answer without any
+  // OpenAI call. Keyed on everything that affects the verdict.
+  const memoK = memoKey(
+    JSON.stringify([
+      modelChain[0],
+      answer,
+      concepts.map((c) => [c.id, c.label, c.lessonLine]),
+      alreadyCredited,
+      spentSentences,
+    ])
+  );
+  {
+    const hit = VERDICT_MEMO.get(memoK);
+    if (hit && Date.now() - hit.at < MEMO_TTL_MS) {
+      return json(
+        {
+          ...hit.payload,
+          usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+          cached: true,
+        },
+        200
+      );
+    }
+    if (hit) VERDICT_MEMO.delete(memoK);
+  }
+
   const userMsgFor = (subset: Concept[]) =>
     JSON.stringify({
       learner_answer: answer,
@@ -224,6 +296,7 @@ export default async function handler(req: Request): Promise<Response> {
         model,
         ...paramsFor(model),
         response_format: { type: "json_object" },
+        prompt_cache_key: PROMPT_CACHE_KEY,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userMsgFor(subset) },
@@ -405,6 +478,17 @@ export default async function handler(req: Request): Promise<Response> {
           reason = credited.length > 0 ? reason : "not confirmed on isolated re-check";
         }
       }
+
+      // Memoise the final verdict so an identical request within the TTL
+      // costs nothing. Size-capped FIFO eviction.
+      if (VERDICT_MEMO.size >= MEMO_MAX) {
+        const oldest = VERDICT_MEMO.keys().next().value;
+        if (oldest !== undefined) VERDICT_MEMO.delete(oldest);
+      }
+      VERDICT_MEMO.set(memoK, {
+        at: Date.now(),
+        payload: { credited, reason, model: batch.model, votes: batch.votes },
+      });
 
       return json({ credited, reason, usage, model: batch.model, votes: batch.votes }, 200);
     }
