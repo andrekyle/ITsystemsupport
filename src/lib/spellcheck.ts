@@ -410,6 +410,11 @@ canon logitech seagate sandisk kingston corsair gigabyte toshiba fujitsu hitachi
 shoprite nandos takealot figma canva slack notion dropbox github gitlab bitbucket stackoverflow
 wikipedia reddit babbage lovelace turing neumann hollerith pascal jacquard berners vaughan
 wozniak jobs gates musk zuckerberg bezos torvalds hopper
+investec absa fnb nedbank capitec sanlam discovery momentum outsurance santam mtn vodacom telkom
+dstv multichoice checkers woolworths spar makro incredible bidvest sasol
+nkosi dlamini khumalo ndlovu sithole mokoena botha venter pretorius vanwyk naidoo pillay govender
+thabo sipho bongani thandiwe lerato ayanda naledi kagiso tshepo andile zanele lindiwe mpho palesa
+johan pieter annelie elmarie riaan hendrik francois
 `;
 
 
@@ -474,9 +479,49 @@ const KNOWN_TYPOS = new Set(
     "resistence responce rythm rythem safty scedule secratary seige succesful succesfully sumary " +
     "surpise surprize tendancy therefor threshhold tounge transfered transfering unforseen " +
     "unfortunatly usualy vaccuum vegatarian vehical visable wierd wilst " +
-    "writting yeild yeilds"
+    "writting yeild yeilds teh hte adn nad taht thsi tihs waht wih woudl coudl shoudl whcih " +
+    "becuase becasue beacuse freind fisrt frist jsut knwo litle mroe onyl olny somthing " +
+    "soemthing tehre thier ther wehn whn yuo yoru sotware softwre compuer comptuer"
   ).split(/\s+/)
 );
+
+/** Apostrophe-less contractions → the correction Word would suggest first. */
+const CONTRACTION_FIXES = new Map<string, string>([
+  ["dont", "don't"],
+  ["wont", "won't"],
+  ["cant", "can't"],
+  ["isnt", "isn't"],
+  ["arent", "aren't"],
+  ["doesnt", "doesn't"],
+  ["didnt", "didn't"],
+  ["wasnt", "wasn't"],
+  ["werent", "weren't"],
+  ["hasnt", "hasn't"],
+  ["havent", "haven't"],
+  ["hadnt", "hadn't"],
+  ["shouldnt", "shouldn't"],
+  ["wouldnt", "wouldn't"],
+  ["couldnt", "couldn't"],
+  ["mustnt", "mustn't"],
+  ["aint", "ain't"],
+  ["ive", "I've"],
+  ["youre", "you're"],
+  ["youve", "you've"],
+  ["youll", "you'll"],
+  ["youd", "you'd"],
+  ["theyre", "they're"],
+  ["theyve", "they've"],
+  ["theyll", "they'll"],
+  ["theyd", "they'd"],
+  ["weve", "we've"],
+  ["whos", "who's"],
+  ["whats", "what's"],
+  ["thats", "that's"],
+  ["theres", "there's"],
+  ["heres", "here's"],
+  ["hes", "he's"],
+  ["shes", "she's"],
+]);
 
 /** Derivational prefixes: an unknown word is accepted when stripping one of
  *  these leaves a dictionary word ("unencrypted" → "encrypted",
@@ -759,19 +804,18 @@ function* tokensOf(text: string): Generator<{ word: string; start: number; end: 
 
 /** Should this word be considered as a candidate for spell‑checking? */
 function isCheckable(word: string): boolean {
-  if (word.length < 4) return false; // very short words: not worth flagging
+  if (word.length < 3) return false; // 1–2 letter tokens: initials, units — skip
   // Contains digits or unusual punctuation → skip.
   if (/[^A-Za-z'-]/.test(word)) return false;
   // Mixed case in middle of the word (e.g. iPhone, YouTube) → brand, skip.
   if (/[a-z][A-Z]/.test(word)) return false;
-  // ALL‑CAPS: 4‑letter tokens are plausible acronyms (BYOD, SDLC) and are
+  // ALL‑CAPS: 3–4 letter tokens are plausible acronyms (BYOD, SDLC) and are
   // skipped; longer ones are checked further (known acronym vs gibberish).
   if (word === word.toUpperCase()) return word.length >= 5;
-  // Any other word starting with a capital letter — sentence starter or
-  // mid‑sentence — is treated as a possible proper noun (name, place, brand)
-  // and skipped. The browser's built‑in spell checker still underlines these
-  // live in the textarea so real typos aren't silently missed.
-  if (/^[A-Z]/.test(word)) return false;
+  // Capitalised words ARE checked, like Word and Google Docs: a known word
+  // ("The", "Google") passes via its lowercase form, a typo of one
+  // ("Teh", "Googleh") gets flagged, and an unknown name with no close
+  // dictionary neighbour ("Nkosi") is left alone by the suggestion gate.
   return true;
 }
 
@@ -791,15 +835,22 @@ export function findMisspellings(text: string, extraAllowed?: Iterable<string>):
 
     const isAllCaps = tok.word === tok.word.toUpperCase();
     if (isAllCaps && ACRONYMS.has(tok.word)) continue;
-    // Notorious misspellings are flagged even though morphology could parse
-    // them ("occured" = occur + ed); the lesson allow-list still wins.
-    const knownTypo = KNOWN_TYPOS.has(tok.word.toLowerCase()) && !allowed.has(tok.word.toLowerCase());
+    // Notorious misspellings and apostrophe-less contractions are flagged
+    // even though morphology could parse them ("occured" = occur + ed,
+    // "cant" = a real-but-rare word); the lesson allow-list still wins.
+    const key0 = tok.word.toLowerCase();
+    const knownTypo =
+      (KNOWN_TYPOS.has(key0) || CONTRACTION_FIXES.has(key0)) && !allowed.has(key0);
     if (!knownTypo && isKnown(tok.word, allowed)) continue;
 
     const key = tok.word.toLowerCase();
     // Module-level cache: repeated checks while the learner types don't
     // rescan the dictionary for words already analysed.
-    const limit = tok.word.length <= 4 ? 1 : 2;
+    // Short words only accept edit distance 1 to keep the flag conservative;
+    // capitalised words likewise, so unusual NAMES (which have no distance-1
+    // neighbour) are left alone while true typos ("Teh", "Googleh") that sit
+    // one edit from a real word are still caught.
+    const limit = tok.word.length <= 4 || /^[A-Z]/.test(tok.word) ? 1 : 2;
     const cacheKey = `${key}|${limit}|${allowed.size}`;
     let suggestions = SUGGEST_CACHE.get(cacheKey);
     if (!suggestions) {
@@ -807,6 +858,17 @@ export function findMisspellings(text: string, extraAllowed?: Iterable<string>):
       suggestions = suggestFor(tok.word, limit, 3, allowed);
       if (SUGGEST_CACHE.size > 500) SUGGEST_CACHE.clear();
       SUGGEST_CACHE.set(cacheKey, suggestions);
+    }
+
+    // Missing-apostrophe contraction: Word's correction comes first.
+    const contractionFix = CONTRACTION_FIXES.get(key);
+    if (contractionFix && !suggestions.includes(contractionFix)) {
+      suggestions = [contractionFix, ...suggestions].slice(0, 3);
+    }
+
+    // Match the learner's capitalisation, as Word does ("Googleh" → "Google").
+    if (/^[A-Z]/.test(tok.word)) {
+      suggestions = suggestions.map((s) => (s ? s[0].toUpperCase() + s.slice(1) : s));
     }
 
     if (isAllCaps) {
