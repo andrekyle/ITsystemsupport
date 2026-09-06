@@ -180,7 +180,7 @@ export const MARKING_MODELS: MarkingModelInfo[] = [
   {
     id: "gpt-5.6-luna",
     name: "GPT-5.6 Luna",
-    desc: "Newest GPT-5 tier — takes 3 votes per check for consistency (≈3× tokens)",
+    desc: "Newest GPT-5 tier — 3 AI markers vote on every answer, majority decides (uses ±3× tokens per check)",
     inPerM: 0.2,
     outPerM: 1.2,
   },
