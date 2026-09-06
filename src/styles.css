@@ -10337,3 +10337,62 @@ table.data th.sortable.sorted { color: var(--ink); }
     padding: 14px;
   }
 }
+
+/* ============ Portfolio of Evidence on phones (<=640px) ============ */
+
+@media (max-width: 640px) {
+  /* header card stacks: ring, then the summary text, then Download all */
+  .poe-progress {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    text-align: left;
+  }
+  .poe-progress .poe-upload {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* each Item/Evidence table row becomes a stacked card: the item name
+     full-width on top, the evidence/upload area underneath */
+  .poe-table,
+  .poe-table tbody,
+  .poe-table tr,
+  .poe-table td {
+    display: block;
+    width: 100%;
+  }
+  .poe-table {
+    overflow-x: visible; /* undo the generic mobile table scroller */
+  }
+  .poe-table thead {
+    display: none;
+  }
+  .poe-table tr {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--table-line);
+  }
+  .poe-table tr:last-child {
+    border-bottom: 0;
+  }
+  .card .poe-table tbody tr,
+  .card .poe-table tbody tr td {
+    background: transparent;
+  }
+  .card .poe-table tbody tr td {
+    width: 100%;
+    border: 0;
+    padding: 2px 0;
+  }
+  .poe-table td.poe-item-cell {
+    font-weight: 500;
+    line-height: 1.35;
+    padding-bottom: 6px;
+  }
+  .poe-table td.poe-doc-cell {
+    padding-left: 26px; /* aligns under the item name, past the tick */
+  }
+  .poe-table .poe-doc {
+    justify-content: flex-start; /* desktop right-aligns; stacked cards read left */
+  }
+}
