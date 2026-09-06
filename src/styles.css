@@ -10304,3 +10304,36 @@ table.data th.sortable.sorted { color: var(--ink); }
     margin: 10px 0 14px;
   }
 }
+
+/* ============ My Course about-cards on phones (<=640px) ============ */
+
+@media (max-width: 640px) {
+  /* outcome/competency tiles: single column that respects the card edge
+     (the 340px minimum column used to overflow the card's right border) */
+  .about-grid,
+  .about-grid.four {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .about-item {
+    padding: 12px 14px;
+  }
+
+  /* qualification pathway stacks as a vertical journey - the sideways
+     arrows between cards disappear */
+  .path-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .path-arrow {
+    display: none;
+  }
+  .path-card {
+    width: 100%;
+  }
+
+  .about-card {
+    padding: 14px;
+  }
+}
