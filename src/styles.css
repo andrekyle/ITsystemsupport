@@ -10114,3 +10114,69 @@ table.data th.sortable.sorted { color: var(--ink); }
     box-shadow: none;
   }
 }
+
+/* ============ AI-marking gauge on phones (<=640px) ============ */
+
+@media (max-width: 640px) {
+  /* headline metrics: tidy 2-up grid with smaller numerals */
+  .oa-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+  }
+  .oa-metric-num {
+    font-size: 17px;
+  }
+  .oa-metric-num.oa-metric-sm {
+    font-size: 13px;
+  }
+
+  /* model picker: name on the first line, price wraps underneath;
+     the one-line description is dropped - the row stays one tap target */
+  .oa-model-row {
+    flex-wrap: wrap;
+    row-gap: 2px;
+    padding: 10px 6px;
+  }
+  .oa-model-name {
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .oa-model-desc {
+    display: none;
+  }
+  .oa-model-price {
+    flex-basis: 100%;
+    padding-left: 26px; /* aligns under the name, past the radio */
+    white-space: normal;
+  }
+
+  /* usage breakdown: names take their own full line, the bar and numbers
+     flow underneath - nothing is squeezed or cut off */
+  .token-mod-row,
+  .token-unit-row {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .token-mod-name {
+    width: calc(100% - 26px);
+    white-space: normal;
+    line-height: 1.3;
+  }
+  .token-unit-name {
+    width: 100%;
+    white-space: normal;
+    line-height: 1.3;
+  }
+  .token-bar {
+    min-width: 120px;
+  }
+
+  /* month header stacks: nav row, then the legend */
+  .oa-head {
+    row-gap: 6px;
+  }
+  .oa-month-label {
+    font-size: 15px;
+  }
+}
