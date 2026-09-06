@@ -10180,3 +10180,32 @@ table.data th.sortable.sorted { color: var(--ink); }
     font-size: 15px;
   }
 }
+
+/* ============ Lesson slide navigation on phones (<=640px) ============ */
+
+@media (max-width: 640px) {
+  /* the dot rail takes its own full-width line above the buttons instead
+     of being crushed into a vertical strip between them */
+  .lesson-nav {
+    flex-wrap: wrap;
+    row-gap: 12px;
+    gap: 10px;
+  }
+  .lesson-nav-dots {
+    flex: 0 0 100%;
+    order: -1;
+    padding: 0;
+  }
+  .lesson-nav .btn {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  /* the bottom navigation handles prev/next on phones - the duplicate
+     buttons in the crowded slide header go */
+  .lesson-top-nav {
+    display: none;
+  }
+}
