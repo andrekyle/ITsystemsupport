@@ -23,6 +23,8 @@ const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
 
 /** Maximum marked attempts per exercise / question session. */
 const EX_MAX_ATTEMPTS = 3;
+/** Maximum times a learner may CHECK a single activity question. */
+const EXQ_MAX_CHECKS = 2;
 const URL_RE = /(https?:\/\/[^\s)]+)/g;
 
 /** Renders text with an explanatory bubble on any glossary term; bare URLs become links. */
@@ -1039,14 +1041,20 @@ export function ExerciseQuestion({
   check,
   saved,
   savedOk,
+  savedTries,
   onSave,
+  onTries,
   canReveal,
   unitUs,
 }: {
   check: ExerciseCheck;
   saved: string;
   savedOk: boolean;
+  /** how many of the allowed checks the learner has already used */
+  savedTries: number;
   onSave: (text: string, ok: boolean) => void;
+  /** persists the number of checks used */
+  onTries: (n: number) => void;
   /** super user only — allows revealing the answer without a correct attempt */
   canReveal?: boolean;
   /** unit standard code — lets the LLM review log its token usage per unit */
@@ -1063,6 +1071,11 @@ export function ExerciseQuestion({
   // which box the learner is typing in (Word-style: its trailing in-progress
   // word is not spell-reviewed until they leave the field)
   const [focusPart, setFocusPart] = useState<number | null>(null);
+  // CHECK LIMIT: a learner may check this question EXQ_MAX_CHECKS times.
+  // Super users are exempt. With no checks left the answer locks: the last
+  // marked answer is shown and the recorded marks stand.
+  const [tries, setTries] = useState(savedTries);
+  const checksLeft = Math.max(0, EXQ_MAX_CHECKS - tries);
   // LLM semantic-review state: concept indexes the model promoted to credited
   // after the deterministic check said they were not credited.
   const [extras, setExtras] = useState<Set<number>>(new Set());
@@ -1078,8 +1091,10 @@ export function ExerciseQuestion({
   // marker and any LLM promotions. The `ok` flag reflects the merged view.
   const effectiveResult = result ? scoreAnswer(val, check, extras) : null;
   const ok = savedOk || (effectiveResult?.ok ?? false);
+  // no checks left and still not correct: the answer locks with its marks
+  const locked = !canReveal && !ok && tries >= EXQ_MAX_CHECKS;
   const feedback =
-    ok || result ? explainCheck(val, check, extras) : null;
+    ok || result || locked ? explainCheck(val, check, extras) : null;
   const missed = feedback?.filter((f) => !f.awarded) ?? [];
 
   // Kick off the LLM semantic review after the deterministic check has run
@@ -1175,7 +1190,7 @@ export function ExerciseQuestion({
         <span>
           Marks available: <strong>{check.concepts.length * 2}</strong>
           {" "}({check.concepts.length} key idea{check.concepts.length === 1 ? "" : "s"} × 2 marks each)
-          {!(ok || result) && (
+          {!(ok || result || locked) && (
             <>
               {" "}—{" "}
               {nParts === 1
@@ -1185,7 +1200,7 @@ export function ExerciseQuestion({
           )}
         </span>
       </div>
-      {ok || result ? (
+      {ok || result || locked ? (
         <MarkedAnswer text={val} check={check} ok={ok} extras={extras} />
       ) : (
         <>
@@ -1302,7 +1317,14 @@ export function ExerciseQuestion({
       )}
       {!ok && (
         <div className="exq-check">
-          {result ? (
+          {locked && !result ? (
+            <span className="exq-status wrong">
+              No checks left — you have used your {EXQ_MAX_CHECKS} checks for this question, so
+              this answer is final: {scoreAnswer(val, check, extras).marks} of{" "}
+              {scoreAnswer(val, check, extras).maxMarks} marks. Submitting the activity records
+              your marks; “Try again” starts a fresh attempt with new checks.
+            </span>
+          ) : result && !locked ? (
             <button
               className="btn ghost"
               onClick={() => {
@@ -1315,22 +1337,41 @@ export function ExerciseQuestion({
               <Icon name="design" size={15} />
               Edit my answer
             </button>
-          ) : (
-            <button
-              className="btn"
-              onClick={() => {
-                const r = scoreAnswer(val, check);
-                setResult(r);
-                setExtras(new Set());
-                setReviewedText(null);
-                setReviewStatus({ kind: "idle" });
-                onSave(val, r.ok);
-              }}
-            >
-              <Icon name="checkCircle" size={15} />
-              Check my answer
-            </button>
-          )}
+          ) : !result && !locked ? (
+            <>
+              <button
+                className="btn"
+                onClick={() => {
+                  const r = scoreAnswer(val, check);
+                  // a too-short answer is bounced by validation, not marked —
+                  // it does not use up one of the learner's checks
+                  if (!canReveal && !r.short) {
+                    const next = tries + 1;
+                    setTries(next);
+                    onTries(next);
+                  }
+                  setResult(r);
+                  setExtras(new Set());
+                  setReviewedText(null);
+                  setReviewStatus({ kind: "idle" });
+                  onSave(val, r.ok);
+                }}
+              >
+                <Icon name="checkCircle" size={15} />
+                Check my answer
+              </button>
+              {!canReveal && (
+                <span
+                  className="exq-checks-note"
+                  title={`Each question allows ${EXQ_MAX_CHECKS} checks — make your answer as complete as you can before checking`}
+                >
+                  {tries === 0
+                    ? `You can check your answer ${EXQ_MAX_CHECKS} times.`
+                    : `Last check — you have used ${tries} of ${EXQ_MAX_CHECKS}.`}
+                </span>
+              )}
+            </>
+          ) : null}
           {canReveal && (
             <button className="btn ghost" onClick={() => setRevealed((r) => !r)}>
               <Icon name={revealed ? "eyeOff" : "eye"} size={15} />
@@ -1342,6 +1383,10 @@ export function ExerciseQuestion({
               {effectiveResult.short
                 ? `Answer too short — you wrote ${effectiveResult.words} word${effectiveResult.words === 1 ? "" : "s"}. Please explain your answer in your own words — a minimum of ${effectiveResult.minWords} words is required before any marks can be awarded.`
                 : `Not quite yet — your answer covers ${effectiveResult.matched} of ${check.concepts.length} key ideas (${effectiveResult.marks}/${effectiveResult.maxMarks} marks, 2 marks per point). Write ONE key idea per box — a box can earn at most one pair of ticks — and explain each idea in ≥${MIN_EXPLANATION_WORDS} words, mentioning the concept or a clear synonym. Revisit the lesson and try again.`}
+              {!canReveal &&
+                (checksLeft > 0
+                  ? ` You have ${checksLeft} check${checksLeft === 1 ? "" : "s"} left.`
+                  : ` You have used your ${EXQ_MAX_CHECKS} checks — this result is final.`)}
               {reviewing && (
                 <span className="exq-reviewed reviewing" role="status">
                   <span className="exq-spinner" aria-hidden="true" />
@@ -1378,22 +1423,24 @@ export function ExerciseQuestion({
               · Reviewed for meaning
             </span>
           ) : null}
-          <button
-            type="button"
-            className="btn ghost sm"
-            style={{ marginLeft: "auto" }}
-            title="Improve your answer to earn more marks"
-            onClick={() => {
-              setResult(null);
-              setExtras(new Set());
-              setReviewedText(null);
-              setReviewStatus({ kind: "idle" });
-              onSave(val, false);
-            }}
-          >
-            <Icon name="design" size={14} />
-            Edit my answer
-          </button>
+          {(canReveal || checksLeft > 0) && (
+            <button
+              type="button"
+              className="btn ghost sm"
+              style={{ marginLeft: "auto" }}
+              title="Improve your answer to earn more marks"
+              onClick={() => {
+                setResult(null);
+                setExtras(new Set());
+                setReviewedText(null);
+                setReviewStatus({ kind: "idle" });
+                onSave(val, false);
+              }}
+            >
+              <Icon name="design" size={14} />
+              Edit my answer
+            </button>
+          )}
         </div>
       )}
       {feedback && missed.length > 0 && (
@@ -4295,11 +4342,15 @@ export function UnitPage({
                             check={check}
                             saved={String(lb[`exq.${ex.id}.${i}`] ?? "")}
                             savedOk={lb[`exq.${ex.id}.${i}.ok`] === true}
+                            savedTries={Number(lb[`exq.${ex.id}.${i}.tries`] ?? 0) || 0}
                             canReveal={isSuperUser}
                             unitUs={u.us}
                             onSave={(text, okNow) => {
                               setLogbookField(u.us, `exq.${ex.id}.${i}`, text);
                               setLogbookField(u.us, `exq.${ex.id}.${i}.ok`, okNow);
+                            }}
+                            onTries={(n) => {
+                              setLogbookField(u.us, `exq.${ex.id}.${i}.tries`, String(n));
                             }}
                           />
                         )}
@@ -4382,6 +4433,7 @@ export function UnitPage({
                             checks.forEach((_, i) => {
                               setLogbookField(u.us, `exq.${ex.id}.${i}`, "");
                               setLogbookField(u.us, `exq.${ex.id}.${i}.ok`, false);
+                              setLogbookField(u.us, `exq.${ex.id}.${i}.tries`, "");
                             });
                             setExReset((m) => ({ ...m, [ex.id]: (m[ex.id] ?? 0) + 1 }));
                           }}

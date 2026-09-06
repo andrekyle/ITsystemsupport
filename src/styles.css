@@ -5380,6 +5380,12 @@ a.plan-ppt:hover {
   gap: 6px;
 }
 
+/* checks-remaining note beside the Check button */
+.exq-checks-note {
+  font-size: 11.5px;
+  color: var(--ink-2);
+}
+
 /* small azure ring spinner shown while the meaning check runs */
 .exq-spinner {
   width: 12px;
