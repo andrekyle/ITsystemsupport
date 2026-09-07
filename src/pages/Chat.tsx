@@ -634,6 +634,7 @@ function ChatThread({
     authUserId: otherAuthUserId,
   });
   const [text, setText] = useState("");
+  const [selectedMsgId, setSelectedMsgId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   /** which conversation the initial jump-to-newest has already run for */
   const jumpedRef = useRef<string | null>(null);
@@ -724,7 +725,14 @@ function ChatThread({
           </span>
         </button>
       </header>
-      <div className="chat-messages" ref={scrollRef}>
+      <div
+        className="chat-messages"
+        ref={scrollRef}
+        onClick={(e) => {
+          // WhatsApp-style: tapping the wallpaper deselects the bubble
+          if (!(e.target as HTMLElement).closest(".chat-bubble")) setSelectedMsgId(null);
+        }}
+      >
         {!canSend && messages.length === 0 ? (
           <p className="mini-note" style={{ padding: 16, textAlign: "center" }}>
             This person hasn't signed in with their own cloud account yet — you can send them a
@@ -742,7 +750,17 @@ function ChatThread({
             const sender =
               peopleByAny.get(m.bySenderAuthId) ?? peopleByAny.get(m.byId) ?? other;
             return (
-              <ChatBubble key={m.id} msg={m} me={me} sender={sender} onEdit={edit} onReact={react} onOpenProfile={onOpenProfile} />
+              <ChatBubble
+                key={m.id}
+                msg={m}
+                me={me}
+                sender={sender}
+                onEdit={edit}
+                onReact={react}
+                onOpenProfile={onOpenProfile}
+                selected={selectedMsgId === m.id}
+                onToggleSelect={() => setSelectedMsgId((p) => (p === m.id ? null : m.id))}
+              />
             );
           })
         )}
@@ -866,6 +884,8 @@ function ChatBubble({
   onEdit,
   onReact,
   onOpenProfile,
+  selected,
+  onToggleSelect,
 }: {
   msg: ChatMessage;
   me: Profile;
@@ -875,6 +895,9 @@ function ChatBubble({
   onReact?: (msgId: string, reaction: string | null) => Promise<boolean>;
   /** open the sender's profile when their avatar is clicked */
   onOpenProfile?: (profileId: string) => void;
+  /** WhatsApp-style: the reaction bar only shows on the selected bubble */
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }) {
   const mine = msg.byId === me.id;
   const [editing, setEditing] = useState(false);
@@ -930,7 +953,18 @@ function ChatBubble({
   return (
     <div className={`chat-bubble-row${mine ? " mine" : ""}`}>
       {!mine && avatarEl}
-      <div className={`chat-bubble${mine ? " mine" : ""}`}>
+      <div
+        className={`chat-bubble${mine ? " mine" : ""}${selected ? " selected" : ""}`}
+        onClick={
+          !mine && onReact && onToggleSelect
+            ? (e) => {
+                // taps on the reaction buttons themselves must not re-toggle
+                if ((e.target as HTMLElement).closest("button, textarea, a")) return;
+                onToggleSelect();
+              }
+            : undefined
+        }
+      >
         {!mine && <div className="chat-bubble-by">{msg.by}</div>}
         {editing ? (
           <div className="chat-bubble-edit">

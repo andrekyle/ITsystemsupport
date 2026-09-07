@@ -9048,6 +9048,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   z-index: 2;
 }
 .chat-bubble:hover .chat-react-btns,
+.chat-bubble.selected .chat-react-btns,
 .chat-react-btns:focus-within,
 .chat-react-btns:hover {
   opacity: 1;
@@ -9101,15 +9102,20 @@ table.data th.sortable.sorted { color: var(--ink); }
 .chat-bubble-row:has(.chat-bubble-reaction) {
   margin-bottom: 10px;
 }
-/* touch screens: no hover — show the buttons inline under the message */
+/* touch screens: no hover — reactions appear inline only when the message
+   is tapped (selected), like WhatsApp */
 @media (hover: none) {
   .chat-react-btns {
+    display: none;
     position: static;
     transform: none;
     opacity: 1;
     pointer-events: auto;
     margin-top: 4px;
     box-shadow: none;
+  }
+  .chat-bubble.selected .chat-react-btns {
+    display: inline-flex;
   }
   .chat-react-btns::before {
     display: none;
@@ -9214,7 +9220,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   border-radius: var(--radius);
   padding: 8px 10px;
   font-family: inherit;
-  font-size: 15px;
+  font-size: 16px;
   background: var(--surface);
   color: var(--ink);
   outline-color: var(--azure);
@@ -10272,7 +10278,7 @@ table.data th.sortable.sorted { color: var(--ink); }
     padding: 10px 15px;
     min-height: 42px;
     max-height: 110px;
-    font-size: 16px;
+    font-size: 17px;
   }
   .chat-compose .btn.ghost.sm {
     width: 42px;
