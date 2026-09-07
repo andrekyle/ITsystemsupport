@@ -10413,6 +10413,20 @@ table.data th.sortable.sorted { color: var(--ink); }
   .poe-review-actions {
     flex-wrap: wrap;
   }
+  /* assessor view: the file line and the Competent/Not-yet switch each get
+     their own full-width line — side by side they crushed the filename into
+     a one-character-per-line column */
+  .poe-table .poe-doc {
+    flex-wrap: wrap;
+  }
+  .poe-table .poe-doc .poe-doc-line {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .poe-table .poe-doc .poe-review-actions {
+    flex-basis: 100%;
+    margin-top: 8px;
+  }
   /* file lines: name+meta flex and truncate instead of tangling with the
      download/remove buttons */
   .poe-doc-line .fileinfo {
