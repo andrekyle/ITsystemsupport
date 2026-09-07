@@ -19,12 +19,11 @@ import { logAudit } from "../lib/audit";
 import { ensureNotifyPermission } from "../lib/notify";
 import { autoGrowTextarea } from "../lib/autoGrow";
 
-/** quick-pick emojis for the composer, WhatsApp-style */
+/** quick-pick emojis for the composer — kept professional for a learning platform */
 const COMPOSER_EMOJIS = [
-  "😀", "😂", "😊", "😍", "😎", "🤔", "😢",
-  "😭", "😡", "🥳", "👍", "👎", "🙏", "👏",
-  "💪", "🤝", "👋", "❤️", "🔥", "⭐", "🎉",
-  "✅", "❌", "☕", "📚", "💻", "🕒", "🎓",
+  "😀", "😂", "😊", "😎", "🤔", "😢", "🥳",
+  "👍", "🙏", "👏", "💪", "🤝", "👋", "⭐",
+  "🎉", "✅", "❌", "☕", "📚", "💻", "🎓",
 ];
 
 /**
@@ -1027,7 +1026,7 @@ function ChatBubble({
             )}
             {!mine && onReact && (
               <div className="chat-react-btns" role="group" aria-label="React to this message">
-                {(["👍", "❤️", "😊", "😂", "😎", "😢"] as const).map((emoji) => (
+                {(["👍", "😊", "😂", "😎", "😢"] as const).map((emoji) => (
                   <button
                     key={emoji}
                     type="button"
@@ -1037,7 +1036,6 @@ function ChatBubble({
                         ? "Remove your reaction"
                         : {
                             "👍": "Like this message",
-                            "❤️": "Love this message",
                             "😊": "Happy",
                             "😂": "Laughing",
                             "😎": "Cool",
