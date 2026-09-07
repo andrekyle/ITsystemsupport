@@ -10496,6 +10496,76 @@ table.data th.sortable.sorted { color: var(--ink); }
   }
 }
 
+/* ============ Exercises on phones (<=640px): borderless, bigger text ============ */
+
+@media (max-width: 640px) {
+  /* boxes-in-boxes eat width - the accordion card and the answer/feedback
+     panels lose their borders and side padding so text runs full width */
+  .saqa-details {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    margin-bottom: 4px;
+  }
+  .saqa-details summary {
+    padding: 12px 2px;
+  }
+  .saqa-details summary:hover {
+    background: transparent;
+  }
+  .saqa-details .saqa-body {
+    padding: 2px 0 12px;
+    border-top: 0;
+  }
+  .exq-answer,
+  .exq-feedback {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 8px 0 2px;
+  }
+
+  /* bigger, easier reading */
+  .saqa-body .duty-list li {
+    font-size: 15.5px;
+    line-height: 1.65;
+    padding: 9px 0;
+  }
+  .exq-input {
+    font-size: 15px;
+  }
+  .exq-marks-hint {
+    font-size: 13px;
+  }
+  .exq-part-label {
+    font-size: 12.5px;
+  }
+  .exq-status {
+    font-size: 13.5px;
+  }
+  .exq-status.ok {
+    font-size: 14.5px;
+  }
+  .exq-miss-head {
+    font-size: 14.5px;
+  }
+  .exq-miss-p {
+    font-size: 14px;
+  }
+  .exq-answer-title {
+    font-size: 12.5px;
+  }
+  .exq-score {
+    font-size: 13.5px;
+  }
+
+  /* sticky submit bar: full-bleed, shadow instead of a border line */
+  .exq-submit {
+    border-top: 0;
+    box-shadow: 0 -6px 14px -10px rgba(0, 0, 0, 0.45);
+  }
+}
+
 /* ============ Lesson plan on phones (<=640px): timeline cards ============ */
 
 @media (max-width: 640px) {
