@@ -10463,3 +10463,69 @@ table.data th.sortable.sorted { color: var(--ink); }
     flex: 0 0 auto;
   }
 }
+
+/* ============ Compliance deadlines on phones (<=640px): stacked cards ============ */
+
+@media (max-width: 640px) {
+  .deadline-table,
+  .deadline-table tbody,
+  .deadline-table tr,
+  .deadline-table td {
+    display: block;
+    width: 100%;
+  }
+  .deadline-table {
+    overflow-x: visible; /* undo the generic mobile table scroller */
+  }
+  .deadline-table thead {
+    display: none;
+  }
+  .deadline-table tr {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--table-line);
+  }
+  .deadline-table tr:last-child {
+    border-bottom: 0;
+  }
+  .card .deadline-table tbody tr,
+  .card .deadline-table tbody tr td {
+    background: transparent;
+  }
+  .card .deadline-table tbody tr td {
+    border: 0;
+    padding: 2px 0;
+  }
+
+  /* dates get inline labels since the header row is hidden */
+  .deadline-table td:nth-child(2)::before {
+    content: "First session: ";
+    color: var(--ink-3);
+    font-size: 12px;
+  }
+  .deadline-table td:nth-child(3)::before {
+    content: "Records due: ";
+    color: var(--ink-3);
+    font-size: 12px;
+  }
+  .deadline-table td:nth-child(2),
+  .deadline-table td:nth-child(3) {
+    display: inline-block;
+    width: auto;
+    margin-right: 14px;
+    font-size: 13px;
+  }
+  .deadline-table td:nth-child(4) {
+    display: inline-block;
+    width: auto;
+    padding-top: 6px;
+  }
+  .deadline-table td:nth-child(5) {
+    display: inline-block;
+    width: auto;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .deadline-table td:first-child {
+    padding-bottom: 6px;
+  }
+}
