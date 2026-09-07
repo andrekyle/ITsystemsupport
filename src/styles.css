@@ -8955,6 +8955,7 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 .chat-bubble {
   position: relative;
+  width: fit-content;
   max-width: 85%;
   padding: 8px 12px;
   border-radius: 10px;
@@ -8966,16 +8967,16 @@ table.data th.sortable.sorted { color: var(--ink); }
   font-weight: 400;
   line-height: 19px;
 }
+/* the row spans the whole line so the bubble's percentage cap is measured
+   against the screen, not against a shrink-wrapped row - text then flows
+   across like WhatsApp instead of wrapping every few characters */
 .chat-bubble-row {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  align-self: flex-start;
-  max-width: 100%;
+  width: 100%;
 }
 .chat-bubble-row.mine {
-  align-self: flex-end;
-  flex-direction: row;
   justify-content: flex-end;
 }
 .chat-bubble-avatar {
@@ -8985,7 +8986,6 @@ table.data th.sortable.sorted { color: var(--ink); }
   padding-top: 2px;
 }
 .chat-bubble.mine {
-  align-self: flex-end;
   background: #f0f0f0;
   color: #000000;
 }
