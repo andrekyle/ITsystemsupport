@@ -9220,9 +9220,11 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 .chat-compose textarea {
   flex: 1;
-  min-height: 40px;
+  height: 42px; /* exactly one line until the text wraps; autogrow takes over from there */
+  min-height: 42px;
   max-height: 120px;
   resize: none;
+  overflow-y: hidden;
   border: 1px solid var(--border-2);
   border-radius: var(--radius);
   padding: 8px 10px;

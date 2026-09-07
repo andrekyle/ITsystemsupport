@@ -801,12 +801,6 @@ function ChatThread({
           onInput={(e) => autoGrowTextarea(e.currentTarget, 120)}
           rows={1}
           disabled={!canSend}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              submit();
-            }
-          }}
         />
         <button
           className="btn ghost sm"
