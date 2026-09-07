@@ -10530,3 +10530,96 @@ table.data th.sortable.sorted { color: var(--ink); }
     padding-bottom: 6px;
   }
 }
+
+/* ============ Compliance audit trail on phones (<=640px) ============ */
+
+@media (max-width: 640px) {
+  .audit-filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .audit-filters .nice-select,
+  .audit-filters input {
+    width: 100%;
+    min-width: 0;
+  }
+  .audit-filters .nice-select .nice-select-btn {
+    width: 100%;
+  }
+
+  /* each audit event becomes a compact stacked entry:
+     event chip + time, then who, then the detail */
+  .audit-table,
+  .audit-table tbody,
+  .audit-table tr,
+  .audit-table td {
+    display: block;
+    width: 100%;
+  }
+  .audit-table {
+    overflow-x: visible;
+  }
+  .audit-table thead {
+    display: none;
+  }
+  .audit-table tr {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--table-line);
+  }
+  .audit-table tr:last-child {
+    border-bottom: 0;
+  }
+  .card .audit-table tbody tr,
+  .card .audit-table tbody tr td {
+    background: transparent;
+  }
+  .card .audit-table tbody tr td {
+    border: 0;
+    padding: 1px 0;
+  }
+  /* order: event chip first, then when + who on one line, detail last */
+  .audit-table td:nth-child(3) {
+    display: inline-block;
+    width: auto;
+    margin-right: 10px;
+  }
+  .audit-table td:nth-child(1) {
+    display: inline-block;
+    width: auto;
+    font-size: 11.5px;
+    color: var(--ink-3);
+    white-space: normal;
+  }
+  .audit-table td:nth-child(2) {
+    font-size: 12.5px;
+    padding-top: 3px;
+  }
+  .audit-table td:nth-child(4) {
+    font-size: 13px;
+    padding-top: 2px;
+    overflow-wrap: anywhere;
+  }
+  .audit-table tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 10px;
+  }
+  .audit-table td:nth-child(3) {
+    order: 0;
+  }
+  .audit-table td:nth-child(1) {
+    order: 1;
+  }
+  .audit-table td:nth-child(2) {
+    order: 2;
+  }
+  .audit-table td:nth-child(4) {
+    order: 3;
+  }
+  .audit-table td:nth-child(2),
+  .audit-table td:nth-child(4) {
+    flex-basis: 100%;
+  }
+}
