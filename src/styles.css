@@ -4715,6 +4715,64 @@ a.plan-ppt:hover {
   background: var(--surface-2);
 }
 
+/* pdf.js fallback deck — phones/tablets where iframes can't show PDFs */
+.deck-inline {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.deck-page {
+  position: relative;
+  min-height: 180px;
+  touch-action: pan-y; /* vertical scroll stays native; horizontal swipes page the deck */
+}
+.deck-page canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.deck-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-3);
+  font-size: 13.5px;
+}
+.deck-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.deck-nav .btn {
+  flex: 0 1 auto;
+}
+.deck-count {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.deck-error {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px;
+  color: var(--ink-2);
+  font-size: 13.5px;
+}
+.deck-error svg {
+  color: var(--azure);
+  flex-shrink: 0;
+}
+
 .presenter {
   position: fixed;
   inset: 0;
@@ -4726,6 +4784,29 @@ a.plan-ppt:hover {
   cursor: none;
   overflow: hidden;
   touch-action: none;
+}
+
+/* touch devices have no Escape key - always give a way out */
+.presenter-close {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 1010;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0.45;
+}
+.presenter-close:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.24);
 }
 
 .presenter canvas {
@@ -10240,11 +10321,178 @@ table.data th.sortable.sorted { color: var(--ink); }
   }
 }
 
+/* ============ Unit/lesson page on phones (<=640px) ============ */
+
 @media (max-width: 640px) {
+  /* --- page furniture above the tabs: shrink, don't crowd --- */
+  .crumbs {
+    font-size: 12px;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+  .content h1 {
+    font-size: 22px;
+  }
+  .eyebrow-lg {
+    font-size: 13.5px;
+    gap: 7px;
+  }
+  .meta-row {
+    gap: 6px;
+    margin: 10px 0 4px;
+  }
+  .pill {
+    font-size: 11.5px;
+    padding: 3px 10px;
+    gap: 5px;
+  }
+
   /* the bottom navigation handles prev/next on phones - the duplicate
      buttons in the crowded slide header go */
   .lesson-top-nav {
     display: none;
+  }
+
+  /* slide header: "Section x of y" keeps the left, the Present/Edit
+     buttons sit on the right, and anything extra wraps onto its own
+     line instead of being crushed together */
+  .lesson-stepper {
+    padding: 10px 0 12px;
+  }
+  .lesson-stepper-top {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+    margin-bottom: 10px;
+  }
+  /* the section heading is repeated in full right below - the truncated
+     inline copy just eats space here */
+  .lesson-step-title {
+    display: none;
+  }
+  .lesson-present-btn {
+    margin-left: auto;
+  }
+
+  /* lesson-start banner: tighter block, smaller badge */
+  .lesson-start-banner {
+    padding: 10px 12px;
+    gap: 8px 10px;
+    margin: 8px 0 12px;
+  }
+  .lesson-start-badge {
+    font-size: 11px;
+    padding: 3px 9px;
+  }
+  .lesson-start-title {
+    font-size: 14px;
+  }
+
+  /* hero picture: shorter frame (!important beats the inline editor
+     min/max-height so a scaled-up hero can't swallow the screen) */
+  .lesson-hero {
+    aspect-ratio: 16 / 10;
+    min-height: 0 !important;
+    max-height: 320px !important;
+  }
+  .lesson-hero-body {
+    padding: 12px 14px;
+  }
+  .lesson-hero-title {
+    font-size: 18px;
+  }
+  .lesson-hero-cap {
+    font-size: 12.5px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* the big edX-style heading scales down so it doesn't dwarf the screen */
+  .lesson-screen .lesson-flat > .section-title {
+    font-size: 20px;
+    line-height: 1.3;
+    padding: 4px 0 10px;
+    margin-bottom: 14px;
+  }
+  .lesson-screen .lesson-section > .lesson-p:first-of-type {
+    font-size: 15px;
+    padding-left: 12px;
+    margin-left: 0;
+  }
+
+  /* body copy: slightly smaller with a tighter leading */
+  .lesson-screen .lesson-section > .lesson-p {
+    font-size: 14.5px;
+    line-height: 1.65;
+  }
+  .lesson-numlist li {
+    gap: 10px;
+    font-size: 14px;
+  }
+  .lesson-screen .lesson-section > .duty-list li {
+    gap: 10px;
+    padding: 8px 10px;
+  }
+
+  /* text cards read as a single comfortable column, not two slivers */
+  .card-grid.lesson-cards {
+    grid-template-columns: 1fr;
+  }
+
+  /* lesson tables stay scrollable but denser */
+  table.data.lesson-table {
+    font-size: 13px;
+  }
+  table.data.lesson-table th,
+  table.data.lesson-table td {
+    padding: 6px 10px;
+  }
+
+  .lesson-example {
+    padding: 10px 12px 4px;
+  }
+
+  /* secondary figures: shorter crops so a stack of pictures scrolls fast */
+  .lesson-screen .lesson-figure .fig-open,
+  .lesson-screen .lesson-figure > img {
+    height: 180px;
+  }
+
+  /* quiz cards (slide quiz + quiz tab share these) */
+  .lesson-slide-quiz {
+    padding: 12px 10px;
+  }
+  .quiz-q {
+    padding: 12px;
+  }
+  .quiz-q .qt {
+    gap: 8px;
+    font-size: 14px;
+  }
+  .opt {
+    padding: 8px 10px;
+    gap: 8px;
+    font-size: 13.5px;
+  }
+  .exam-instruction {
+    padding: 10px 12px;
+  }
+  .lesson-quiz-actions {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .lesson-quiz-actions .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .callout {
+    padding: 12px;
+    gap: 10px;
+    font-size: 13.5px;
+    margin: 14px 0;
   }
 }
 

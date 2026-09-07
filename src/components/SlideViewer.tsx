@@ -211,6 +211,17 @@ function Presenter({ src, onClose }: { src: string; onClose: () => void }) {
       }}
     >
       {pages === 0 && <div className="loading">Loading presentation…</div>}
+      <button
+        type="button"
+        className="presenter-close"
+        aria-label="Close presentation"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
+      >
+        <Icon name="close" size={18} />
+      </button>
       <canvas
         ref={canvasRef}
         style={{
@@ -241,8 +252,147 @@ export function SlideViewer({ src, allowDownload = true }: { src: string; allowD
           Present — full screen
         </button>
       </div>
-      <iframe className="slide-frame" src={frameSrc} title="Course material" />
+      {EMBED_PDF_SUPPORTED ? (
+        <iframe className="slide-frame" src={frameSrc} title="Course material" />
+      ) : (
+        <InlineDeck src={src} allowDownload={allowDownload} />
+      )}
       {presenting && <Presenter src={src} onClose={() => setPresenting(false)} />}
+    </div>
+  );
+}
+
+/** True when the browser has a built-in PDF viewer that works inside iframes
+ *  (desktop browsers). Phones/tablets only show a download card or the first
+ *  page, so they always get the pdf.js preview instead. */
+const EMBED_PDF_SUPPORTED = (() => {
+  if (typeof navigator === "undefined") return true;
+  const n = navigator as Navigator & { pdfViewerEnabled?: boolean };
+  if (/Android|iPhone|iPad|iPod|Mobile/i.test(n.userAgent)) return false;
+  // iPadOS 13+ reports itself as macOS but is still a touch-first Safari
+  if (n.maxTouchPoints > 1 && /Mac/.test(n.userAgent)) return false;
+  return n.pdfViewerEnabled !== false;
+})();
+
+/** pdf.js fallback viewer: one slide at a time, fit to the card width,
+ *  swipe or use the buttons to page. */
+function InlineDeck({ src, allowDownload }: { src: string; allowDownload: boolean }) {
+  const holderRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const docRef = useRef<PDFDocumentProxy | null>(null);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(0);
+  const [error, setError] = useState(false);
+  const swipeRef = useRef<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const task = pdfjs.getDocument(srcToParams(src));
+    task.promise
+      .then((doc) => {
+        if (cancelled) return;
+        docRef.current = doc;
+        setPages(doc.numPages);
+        setPage(1);
+      })
+      .catch(() => {
+        if (!cancelled) setError(true);
+      });
+    return () => {
+      cancelled = true;
+      docRef.current = null;
+      task.destroy().catch(() => {});
+    };
+  }, [src]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function render() {
+      const doc = docRef.current;
+      const canvas = canvasRef.current;
+      const holder = holderRef.current;
+      if (!doc || !canvas || !holder || pages === 0) return;
+      try {
+        const p = await doc.getPage(page);
+        if (cancelled) return;
+        const base = p.getViewport({ scale: 1 });
+        const width = holder.clientWidth || base.width;
+        const dpr = Math.min(window.devicePixelRatio || 1, 3);
+        const viewport = p.getViewport({ scale: (width / base.width) * dpr });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        canvas.style.width = "100%";
+        canvas.style.height = "auto";
+        await p.render({ canvas, viewport }).promise;
+      } catch {
+        /* render cancelled mid-flight — ignore */
+      }
+    }
+    render();
+    const onResize = () => render();
+    window.addEventListener("resize", onResize);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("resize", onResize);
+    };
+  }, [page, pages]);
+
+  if (error)
+    return (
+      <div className="deck-inline deck-error">
+        <Icon name="info" size={18} />
+        <span>
+          The slides could not be displayed here — use <strong>Present — full screen</strong> above
+          {allowDownload ? " or open the PDF directly." : "."}
+        </span>
+        {allowDownload && (
+          <a className="btn ghost" href={src} target="_blank" rel="noreferrer">
+            Open the PDF
+          </a>
+        )}
+      </div>
+    );
+
+  const prev = () => setPage((p) => Math.max(1, p - 1));
+  const next = () => setPage((p) => Math.min(pages || p, p + 1));
+  return (
+    <div className="deck-inline">
+      <div
+        className="deck-page"
+        ref={holderRef}
+        onPointerDown={(e) => {
+          swipeRef.current = { x: e.clientX, y: e.clientY };
+        }}
+        onPointerUp={(e) => {
+          const s = swipeRef.current;
+          swipeRef.current = null;
+          if (!s) return;
+          const dx = e.clientX - s.x;
+          const dy = e.clientY - s.y;
+          if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            if (dx < 0) next();
+            else prev();
+          }
+        }}
+      >
+        {pages === 0 && <div className="deck-loading">Loading slides…</div>}
+        <canvas ref={canvasRef} />
+      </div>
+      {pages > 0 && (
+        <div className="deck-nav">
+          <button type="button" className="btn ghost" disabled={page <= 1} onClick={prev}>
+            <Icon name="chevronLeft" size={15} />
+            Previous
+          </button>
+          <span className="deck-count">
+            {page} / {pages}
+          </span>
+          <button type="button" className="btn ghost" disabled={page >= pages} onClick={next}>
+            Next
+            <Icon name="chevronRight" size={15} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
