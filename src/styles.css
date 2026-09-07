@@ -9075,15 +9075,12 @@ table.data th.sortable.sorted { color: var(--ink); }
   border-radius: 999px;
   cursor: pointer;
   transition: transform 0.1s, background 0.12s;
-  filter: grayscale(1);
 }
 .chat-react-btn:hover {
   transform: scale(1.25);
   background: var(--surface-2);
-  filter: none;
 }
 .chat-react-btn.on {
-  filter: none;
   background: var(--surface-2);
 }
 .chat-bubble-reaction {
@@ -10293,6 +10290,11 @@ table.data th.sortable.sorted { color: var(--ink); }
   .chat-compose .btn.ghost.sm svg {
     width: 19px;
     height: 19px;
+  }
+  /* smiley, input and send button share one 42px baseline row */
+  .chat-emoji-btn {
+    width: 42px;
+    height: 42px;
   }
 }
 

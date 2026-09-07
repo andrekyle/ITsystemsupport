@@ -776,7 +776,7 @@ function ChatThread({
             title="Insert an emoji"
             onClick={() => setEmojiOpen((v) => !v)}
           >
-            <Icon name="smile" size={24} />
+            <Icon name="smile" size={26} strokeWidth={1.5} />
           </button>
           {emojiOpen && (
             <div className="chat-emoji-pop" role="menu" aria-label="Emojis">
@@ -799,7 +799,7 @@ function ChatThread({
           value={text}
           onChange={(e) => setText(e.target.value)}
           onInput={(e) => autoGrowTextarea(e.currentTarget, 120)}
-          rows={2}
+          rows={1}
           disabled={!canSend}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
