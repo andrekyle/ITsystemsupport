@@ -8934,11 +8934,11 @@ table.data th.sortable.sorted { color: var(--ink); }
   flex-direction: column;
   gap: 10px;
 }
-/* light mode: WhatsApp wallpaper — beige base with a faint doodle tile */
+/* light mode: WhatsApp wallpaper — beige base with faint tech-hardware doodles */
 :root:not([data-theme="dark"]) .chat-messages {
   background-color: #efeae2;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280' viewBox='0 0 280 280'%3E%3Cg fill='none' stroke='%23ded2bf' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M40 36c-3-6-12-5-13 2-1 6 6 10 13 15 7-5 14-9 13-15-1-7-10-8-13-2z'/%3E%3Cpath d='M204 24l3 6.5 7 1-5 5 1.2 7-6.2-3.5-6.2 3.5 1.2-7-5-5 7-1z'/%3E%3Cpath d='M122 84V60l18-4v24'/%3E%3Ccircle cx='117' cy='86' r='5'/%3E%3Ccircle cx='135' cy='82' r='5'/%3E%3Cpath d='M28 130h44a8 8 0 0 1 8 8v18a8 8 0 0 1-8 8H48l-10 9v-9h-10a8 8 0 0 1-8-8v-18a8 8 0 0 1 8-8z'/%3E%3Cpath d='M34 144h32M34 152h22'/%3E%3Cpath d='M180 132h34v14a12 12 0 0 1-12 12h-10a12 12 0 0 1-12-12z'/%3E%3Cpath d='M214 136h5a6 6 0 0 1 0 12h-5'/%3E%3Cpath d='M188 126c0-4 4-4 4-8M198 126c0-4 4-4 4-8'/%3E%3Ccircle cx='70' cy='216' r='6'/%3E%3Cpath d='M70 210c-2-8 8-10 8-2M70 210c2-8-8-10-8-2M64 220c-8 2-6 12 2 8M76 220c8 2 6 12-2 8M70 222v14'/%3E%3Cpath d='M158 198l-10 18h9l-6 16 16-20h-9l8-14z'/%3E%3Crect x='210' y='206' width='38' height='26' rx='5'/%3E%3Ccircle cx='229' cy='219' r='7'/%3E%3Cpath d='M132 16c10 4 12 16 2 22-10-6-8-18-2-22zM133 22v14'/%3E%3Ccircle cx='16' cy='182' r='2.5'/%3E%3Ccircle cx='252' cy='62' r='2.5'/%3E%3Ccircle cx='122' cy='250' r='2.5'/%3E%3Cpath d='M246 154v12M240 160h12'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 280px 280px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Cg fill='none' stroke='%23ded2bf' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='26' y='20' width='32' height='20' rx='2'/%3E%3Cpath d='M20 46h44M24 40l-4 6M60 40l4 6'/%3E%3Crect x='150' y='16' width='36' height='24' rx='2'/%3E%3Cpath d='M168 40v6M160 46h16'/%3E%3Crect x='246' y='22' width='16' height='24' rx='8'/%3E%3Cpath d='M254 28v5'/%3E%3Crect x='46' y='114' width='50' height='22' rx='3'/%3E%3Cpath d='M52 120h4M60 120h4M68 120h4M76 120h4M84 120h4M56 128h30'/%3E%3Cpath d='M172 116c-6 0-9 5-10 12-1 8 3 13 7 12 3-1 4-5 7-5h12c3 0 4 4 7 5 4 1 8-4 7-12-1-7-4-12-10-12z'/%3E%3Cpath d='M177 123v8M173 127h8'/%3E%3Ccircle cx='194' cy='125' r='1.6'/%3E%3Ccircle cx='199' cy='129' r='1.6'/%3E%3Cpath d='M22 212v-5a14 14 0 0 1 28 0v5'/%3E%3Crect x='19' y='210' width='7' height='12' rx='3'/%3E%3Crect x='46' y='210' width='7' height='12' rx='3'/%3E%3Crect x='128' y='186' width='16' height='28' rx='3'/%3E%3Cpath d='M133 208h6'/%3E%3Crect x='222' y='176' width='20' height='20' rx='2'/%3E%3Crect x='228' y='182' width='8' height='8'/%3E%3Cpath d='M226 176v-4M232 176v-4M238 176v-4M226 196v4M232 196v4M238 196v4M222 180h-4M222 186h-4M222 192h-4M242 180h4M242 186h4M242 192h4'/%3E%3Cpath d='M82 258a16 16 0 0 1 22 0M86 263a10 10 0 0 1 14 0'/%3E%3Ccircle cx='93' cy='268' r='1.6'/%3E%3Crect x='192' y='246' width='22' height='11' rx='2'/%3E%3Cpath d='M214 248h7v7h-7M196 250h3M196 253h3'/%3E%3Cpath d='M268 106l9 22 3-8 8-3z'/%3E%3Ccircle cx='272' cy='224' r='7'/%3E%3Cpath d='M272 214v8'/%3E%3Cpath d='M118 150v8M114 154h8'/%3E%3Ccircle cx='12' cy='86' r='1.8'/%3E%3Ccircle cx='288' cy='62' r='1.8'/%3E%3Ccircle cx='150' cy='262' r='1.8'/%3E%3Ccircle cx='60' cy='170' r='1.8'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 300px 300px;
 }
 /* light mode: WhatsApp bubble colours on the beige wallpaper */
 :root:not([data-theme="dark"]) .chat-bubble {
@@ -9144,6 +9144,67 @@ table.data th.sortable.sorted { color: var(--ink); }
   padding: 10px 12px;
   border-top: 1px solid var(--table-line);
 }
+/* WhatsApp-style emoji button on the left of the composer */
+.chat-emoji-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  align-self: flex-end;
+}
+.chat-emoji-btn {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 50%;
+  font-size: 22px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  filter: grayscale(1);
+  opacity: 0.7;
+  transition: opacity 0.12s, background 0.12s;
+}
+.chat-emoji-btn:hover:not(:disabled),
+.chat-emoji-btn[aria-expanded="true"] {
+  opacity: 1;
+  background: var(--surface-2);
+  filter: none;
+}
+.chat-emoji-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.chat-emoji-pop {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  width: 266px;
+  max-width: calc(100vw - 24px);
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  z-index: 30;
+}
+.chat-emoji-item {
+  border: 0;
+  background: transparent;
+  font-size: 20px;
+  line-height: 1;
+  padding: 6px 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.chat-emoji-item:hover {
+  background: var(--surface-2);
+}
 .chat-compose textarea {
   flex: 1;
   min-height: 40px;
@@ -9153,7 +9214,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   border-radius: var(--radius);
   padding: 8px 10px;
   font-family: inherit;
-  font-size: 13.5px;
+  font-size: 15px;
   background: var(--surface);
   color: var(--ink);
   outline-color: var(--azure);
@@ -10211,7 +10272,7 @@ table.data th.sortable.sorted { color: var(--ink); }
     padding: 10px 15px;
     min-height: 42px;
     max-height: 110px;
-    font-size: 15px;
+    font-size: 16px;
   }
   .chat-compose .btn.ghost.sm {
     width: 42px;

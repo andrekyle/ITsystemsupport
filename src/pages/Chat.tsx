@@ -19,6 +19,14 @@ import { logAudit } from "../lib/audit";
 import { ensureNotifyPermission } from "../lib/notify";
 import { autoGrowTextarea } from "../lib/autoGrow";
 
+/** quick-pick emojis for the composer, WhatsApp-style */
+const COMPOSER_EMOJIS = [
+  "😀", "😂", "😊", "😍", "😎", "🤔", "😢",
+  "😭", "😡", "🥳", "👍", "👎", "🙏", "👏",
+  "💪", "🤝", "👋", "❤️", "🔥", "⭐", "🎉",
+  "✅", "❌", "☕", "📚", "💻", "🕒", "🎓",
+];
+
 /**
  * Direct messages: 1-to-1 chat between any two people on the course.
  *
@@ -630,6 +638,29 @@ function ChatThread({
   /** which conversation the initial jump-to-newest has already run for */
   const jumpedRef = useRef<string | null>(null);
   const composeRef = useRef<HTMLTextAreaElement | null>(null);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const emojiWrapRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!emojiOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!emojiWrapRef.current?.contains(e.target as Node)) setEmojiOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [emojiOpen]);
+  /** insert at the caret so an emoji can join a half-written sentence */
+  const insertEmoji = (emoji: string) => {
+    const ta = composeRef.current;
+    const start = ta?.selectionStart ?? text.length;
+    const end = ta?.selectionEnd ?? start;
+    setText(text.slice(0, start) + emoji + text.slice(end));
+    requestAnimationFrame(() => {
+      if (!ta) return;
+      ta.focus();
+      const pos = start + emoji.length;
+      ta.setSelectionRange(pos, pos);
+    });
+  };
   // Re-fit the box when the text changes programmatically (cleared after
   // send) — typing itself is already handled by the textarea's onInput.
   useEffect(() => {
@@ -717,6 +748,33 @@ function ChatThread({
         )}
       </div>
       <div className="chat-compose">
+        <div className="chat-emoji-wrap" ref={emojiWrapRef}>
+          <button
+            type="button"
+            className="chat-emoji-btn"
+            disabled={!canSend}
+            aria-label="Insert an emoji"
+            aria-expanded={emojiOpen}
+            title="Insert an emoji"
+            onClick={() => setEmojiOpen((v) => !v)}
+          >
+            🙂
+          </button>
+          {emojiOpen && (
+            <div className="chat-emoji-pop" role="menu" aria-label="Emojis">
+              {COMPOSER_EMOJIS.map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  className="chat-emoji-item"
+                  onClick={() => insertEmoji(e)}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <textarea
           ref={composeRef}
           placeholder={canSend ? "Write a message…" : "Waiting for the recipient to activate their account…"}
@@ -938,7 +996,7 @@ function ChatBubble({
             )}
             {!mine && onReact && (
               <div className="chat-react-btns" role="group" aria-label="React to this message">
-                {["👍", "❤️"].map((emoji) => (
+                {(["👍", "❤️", "😊", "😂", "😎", "😢"] as const).map((emoji) => (
                   <button
                     key={emoji}
                     type="button"
@@ -946,9 +1004,14 @@ function ChatBubble({
                     title={
                       msg.reaction === emoji
                         ? "Remove your reaction"
-                        : emoji === "👍"
-                        ? "Like this message"
-                        : "Love this message"
+                        : {
+                            "👍": "Like this message",
+                            "❤️": "Love this message",
+                            "😊": "Happy",
+                            "😂": "Laughing",
+                            "😎": "Cool",
+                            "😢": "Sad",
+                          }[emoji]
                     }
                     aria-pressed={msg.reaction === emoji}
                     onClick={() => void onReact(msg.id, msg.reaction === emoji ? null : emoji)}

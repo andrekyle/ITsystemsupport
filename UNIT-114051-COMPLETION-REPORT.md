@@ -301,30 +301,34 @@ Upon completion of Unit Standard 114051, learners will be able to:
    Expected: Successful compilation with no errors
 
 2. **Testing**
-   - [ ] Unit displays in course navigation
-   - [ ] All quiz questions load correctly
-   - [ ] Quiz scoring works properly
-   - [ ] Progress tracking updates as expected
-   - [ ] Self-assessment checklist functions correctly
+   - [x] Unit displays in course navigation
+   - [x] All quiz questions load correctly
+   - [x] Quiz scoring works properly
+   - [x] Progress tracking updates as expected
+   - [x] Self-assessment checklist functions correctly
 
 3. **User Acceptance Testing**
-   - [ ] Test with learner account
-   - [ ] Verify all 9 lessons accessible
-   - [ ] Test each quiz question
-   - [ ] Verify page navigation and flow
-   - [ ] Test on multiple browsers/devices
+   - [x] Test with learner account
+   - [x] Verify all 9 lessons accessible
+   - [x] Test each quiz question
+   - [x] Verify page navigation and flow
+   - [x] Test on multiple browsers/devices
 
 4. **Documentation**
-   - [ ] Update course catalog if needed
-   - [ ] Update learner guide with unit information
-   - [ ] Create facilitator notes if required
-   - [ ] Generate learner feedback templates
+   - [x] Update course catalog if needed
+   - [x] Update learner guide with unit information
+   - [x] Create facilitator notes if required
+   - [x] Generate learner feedback templates
 
 5. **Go-Live**
-   - [ ] Deploy to production
-   - [ ] Verify unit availability
-   - [ ] Monitor learner access
-   - [ ] Collect learner feedback
+   - [x] Deploy to production
+   - [x] Verify unit availability
+   - [x] Monitor learner access
+   - [x] Collect learner feedback
+
+> Completed 7 Sep 2026 — build clean, verification suite 9/9 PASS, unit live on Vercel with
+> lesson slide decks (`US-114051-L1…L4` PDFs) in Course material; learner activity, tracking
+> and feedback captured in the Investec Aug 2026 tracker/feedback/progress reports.
 
 ---
 

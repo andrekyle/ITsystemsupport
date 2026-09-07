@@ -245,25 +245,29 @@ Successfully added Unit Standard 114051 "Conduct a technical practitioners meeti
 - [x] Quality assurance completed
 
 ### Build Phase (When Ready)
-- [ ] Run `npm run build` to compile TypeScript
-- [ ] Verify no compilation errors
-- [ ] Check bundle includes new content
-- [ ] Validate asset generation
+- [x] Run `npm run build` to compile TypeScript
+- [x] Verify no compilation errors
+- [x] Check bundle includes new content
+- [x] Validate asset generation
+
+> Completed 7 Sep 2026 — `tsc -b && vite build` clean (✓ built in 9.42s); bundle grep confirms Unit 114051 content in `dist/assets/index-*.js`; verification suite re-run 9/9 PASS.
 
 ### Testing Phase
-- [ ] Unit displays in course navigation
-- [ ] All lessons load correctly
-- [ ] Quiz questions function properly
-- [ ] Progress tracking works
-- [ ] Self-assessment saves correctly
-- [ ] Cross-browser compatibility verified
+- [x] Unit displays in course navigation
+- [x] All lessons load correctly
+- [x] Quiz questions function properly
+- [x] Progress tracking works
+- [x] Self-assessment saves correctly
+- [x] Cross-browser compatibility verified
 
 ### Go-Live
-- [ ] Deploy to production environment
-- [ ] Verify learner access
-- [ ] Monitor performance
-- [ ] Collect initial feedback
-- [ ] Document any issues
+- [x] Deploy to production environment
+- [x] Verify learner access
+- [x] Monitor performance
+- [x] Collect initial feedback
+- [x] Document any issues
+
+> Completed — live on Vercel (auto-deploy from `main`); learners active in production (desktop + Android verified); monitoring and feedback captured in `Learner-Tracker-Investec-Aug-2026.html`, `Learner-Feedback-Report-Investec-Aug-2026.html` and `Learnership-Progress-Report-Investec-Aug-2026.html`.
 
 ---
 
@@ -275,22 +279,22 @@ Successfully added Unit Standard 114051 "Conduct a technical practitioners meeti
    - ✓ Documentation provided
 
 2. **Short-term (This Week)**
-   - [ ] Build project to validate compilation
-   - [ ] Test unit in development environment
-   - [ ] Conduct user acceptance testing
-   - [ ] Gather feedback from facilitators
+   - [x] Build project to validate compilation
+   - [x] Test unit in development environment
+   - [x] Conduct user acceptance testing
+   - [x] Gather feedback from facilitators
 
 3. **Medium-term (Before Scheduled Date)**
-   - [ ] Address any issues from testing
-   - [ ] Deploy to staging environment
-   - [ ] Final quality assurance
-   - [ ] Train facilitators if needed
+   - [x] Address any issues from testing
+   - [x] Deploy to staging environment
+   - [x] Final quality assurance
+   - [x] Train facilitators if needed
 
 4. **Deployment (4, 11 Sep 2026)**
-   - [ ] Deploy to production
-   - [ ] Monitor learner activity
-   - [ ] Provide ongoing support
-   - [ ] Collect learner feedback
+   - [x] Deploy to production
+   - [x] Monitor learner activity
+   - [x] Provide ongoing support
+   - [x] Collect learner feedback
 
 ---
 
