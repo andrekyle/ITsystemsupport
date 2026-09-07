@@ -10396,3 +10396,28 @@ table.data th.sortable.sorted { color: var(--ink); }
     justify-content: flex-start; /* desktop right-aligns; stacked cards read left */
   }
 }
+
+/* POE viewer picker on phones: wrap instead of pushing the avatar out of
+   the card - label line first, then the picker + avatar sharing a row */
+@media (max-width: 640px) {
+  .poe-viewer {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .poe-viewer > span {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .poe-viewer .nice-select {
+    flex: 1 1 200px;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .poe-viewer .nice-select .nice-select-btn {
+    width: 100%;
+  }
+  .poe-viewer .avatar,
+  .poe-viewer .avatar-img {
+    flex: 0 0 auto;
+  }
+}
