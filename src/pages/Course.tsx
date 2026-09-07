@@ -1427,23 +1427,25 @@ export function ExerciseQuestion({
       {ok && (
         <div className="exq-status ok">
           <Icon name="checkCircle" size={15} />
-          Correct — {scoreAnswer(val, check, extras).marks} of {scoreAnswer(val, check, extras).maxMarks} marks (2
-          marks per point).
-          <DoubleTick />
-          {reviewing ? (
-            <span
-              className="exq-reviewed reviewing"
-              role="status"
-              title="Your wording is being reviewed for meaning — extra marks may still be awarded"
-            >
-              <span className="exq-spinner" aria-hidden="true" />
-              Checking your wording for meaning…
-            </span>
-          ) : extras.size > 0 ? (
-            <span className="exq-reviewed" title="Some marks were confirmed by a semantic review of your wording">
-              · Reviewed for meaning
-            </span>
-          ) : null}
+          <span className="exq-ok-text">
+            Correct — {scoreAnswer(val, check, extras).marks} of {scoreAnswer(val, check, extras).maxMarks} marks (2
+            marks per point).
+            <DoubleTick />
+            {reviewing ? (
+              <span
+                className="exq-reviewed reviewing"
+                role="status"
+                title="Your wording is being reviewed for meaning — extra marks may still be awarded"
+              >
+                <span className="exq-spinner" aria-hidden="true" />
+                Checking your wording for meaning…
+              </span>
+            ) : extras.size > 0 ? (
+              <span className="exq-reviewed" title="Some marks were confirmed by a semantic review of your wording">
+                · Reviewed for meaning
+              </span>
+            ) : null}
+          </span>
           {(canReveal || checksLeft > 0) && (
             <button
               type="button"

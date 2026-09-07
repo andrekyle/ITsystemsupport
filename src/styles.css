@@ -5454,10 +5454,23 @@ a.plan-ppt:hover {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
   margin-top: 8px;
   font-size: 13px;
   font-weight: 600;
   color: var(--green);
+}
+
+.exq-status.ok > svg {
+  flex-shrink: 0;
+}
+
+/* the "Correct — X of Y marks…" sentence + ticks: grows to fill the row,
+   so "Edit my answer" wraps onto its own line on narrow screens instead
+   of squeezing this text down to a cramped sliver */
+.exq-ok-text {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .exq-reviewed {
