@@ -776,7 +776,7 @@ function ChatThread({
             title="Insert an emoji"
             onClick={() => setEmojiOpen((v) => !v)}
           >
-            🙂
+            <Icon name="smile" size={24} />
           </button>
           {emojiOpen && (
             <div className="chat-emoji-pop" role="menu" aria-label="Emojis">

@@ -29,6 +29,14 @@ export const PATHS: Record<string, React.ReactNode> = {
     </>
   ),
   close: <path d="M6.5 6.5l11 11M17.5 6.5l-11 11" />,
+  smile: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M8.3 14.2c.9 1.4 2.2 2.2 3.7 2.2s2.8-.8 3.7-2.2" />
+      <circle cx="9.2" cy="9.7" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="14.8" cy="9.7" r="0.9" fill="currentColor" stroke="none" />
+    </>
+  ),
   dashboard: (
     <>
       <rect x="3.5" y="3.5" width="7" height="7" rx="1" />

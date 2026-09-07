@@ -8955,6 +8955,7 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 .chat-bubble {
   position: relative;
+  display: flow-root; /* contains the floated timestamp without clipping the reaction overlays */
   width: fit-content;
   max-width: 85%;
   padding: 8px 12px;
@@ -8996,8 +8997,10 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 [data-theme="dark"] .chat-bubble.mine .chat-bubble-at { color: #ffffff; }
 .chat-bubble-by { font-size: 12px; color: var(--ink-3); margin-bottom: 2px; font-weight: 500; }
-.chat-bubble-body { white-space: pre-wrap; word-wrap: break-word; }
-.chat-bubble-at { font-size: 11px; margin-top: 3px; opacity: 0.7; }
+/* WhatsApp layout: text flows inline and the time floats to the bottom-right,
+   sharing the last line when it fits */
+.chat-bubble-body { display: inline; white-space: pre-wrap; word-wrap: break-word; }
+.chat-bubble-at { float: right; font-size: 11px; margin: 8px -2px -2px 12px; line-height: 1; opacity: 0.7; }
 .chat-bubble-edit-btn {
   position: absolute;
   top: 4px;
@@ -9163,21 +9166,17 @@ table.data th.sortable.sorted { color: var(--ink); }
   padding: 0;
   background: transparent;
   border-radius: 50%;
-  font-size: 22px;
-  line-height: 1;
+  color: var(--ink-3);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  filter: grayscale(1);
-  opacity: 0.7;
-  transition: opacity 0.12s, background 0.12s;
+  transition: color 0.12s, background 0.12s;
 }
 .chat-emoji-btn:hover:not(:disabled),
 .chat-emoji-btn[aria-expanded="true"] {
-  opacity: 1;
+  color: var(--ink);
   background: var(--surface-2);
-  filter: none;
 }
 .chat-emoji-btn:disabled {
   opacity: 0.35;
@@ -10261,11 +10260,6 @@ table.data th.sortable.sorted { color: var(--ink); }
   }
   .chat-bubble-avatar {
     display: none;
-  }
-  .chat-bubble-at {
-    text-align: right;
-    font-size: 11px;
-    margin-top: 2px;
   }
 
   /* composer: pill input + round azure send button */
