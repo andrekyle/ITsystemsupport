@@ -10272,6 +10272,28 @@ table.data th.sortable.sorted { color: var(--ink); }
     outline: none;
     box-shadow: none;
   }
+
+  /* a thread is open: the conversation takes over the whole screen -
+     the app header and page padding give way to the messages */
+  .app:has(.chat-page.has-open) .header {
+    display: none;
+  }
+  .chat-page.has-open {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    margin: 0;
+    height: 100vh;
+    height: 100dvh;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    padding: 0 0 env(safe-area-inset-bottom);
+  }
+  .chat-page.has-open .chat-layout {
+    flex: 1;
+    min-height: 0;
+  }
 }
 
 /* ============ AI-marking gauge on phones (<=640px) ============ */
