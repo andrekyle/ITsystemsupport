@@ -7,8 +7,25 @@ import "./styles.css";
 // server never fights a stale cache.
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {
-      /* offline support is progressive enhancement — never block the app */
+    navigator.serviceWorker
+      .register("/sw.js", { updateViaCache: "none" })
+      .then((reg) => {
+        // check for a newer build on every launch and when returning to the tab
+        reg.update().catch(() => {});
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") reg.update().catch(() => {});
+        });
+      })
+      .catch(() => {
+        /* offline support is progressive enhancement — never block the app */
+      });
+    // when the new worker takes over, reload once so the fresh UI shows now,
+    // not on the visit after next
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (reloaded) return;
+      reloaded = true;
+      window.location.reload();
     });
   });
 }

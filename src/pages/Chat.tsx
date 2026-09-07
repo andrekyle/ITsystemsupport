@@ -664,9 +664,12 @@ function ChatThread({
   };
   // Re-fit the box when the text changes programmatically (cleared after
   // send) — typing itself is already handled by the textarea's onInput.
+  // Also keyed on the recipient resolving: the long "Waiting for the
+  // recipient…" placeholder wraps to two lines, and the box must shrink
+  // back once the short "Write a message…" placeholder replaces it.
   useEffect(() => {
     autoGrowTextarea(composeRef.current, 120);
-  }, [text]);
+  }, [text, otherAuthUserId]);
 
   useEffect(() => {
     // Jump (no animation) to the newest message once, when a conversation is
