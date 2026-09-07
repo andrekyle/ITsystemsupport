@@ -8942,6 +8942,7 @@ table.data th.sortable.sorted { color: var(--ink); }
 /* light mode: WhatsApp bubble colours on the beige wallpaper */
 :root:not([data-theme="dark"]) .chat-bubble {
   background: #fff;
+  color: #111b21;
   box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.1);
 }
 :root:not([data-theme="dark"]) .chat-bubble.mine {
@@ -8958,9 +8959,11 @@ table.data th.sortable.sorted { color: var(--ink); }
   border-radius: 10px;
   background: var(--surface-2);
   color: var(--ink);
-  font-size: 14.5px;
-  font-weight: 350;
-  line-height: 1.5;
+  /* WhatsApp message typography */
+  font-family: "Segoe UI", "Helvetica Neue", Helvetica, "Lucida Grande", Arial, Ubuntu, Cantarell, "Fira Sans", sans-serif;
+  font-size: 14.2px;
+  font-weight: 400;
+  line-height: 19px;
 }
 .chat-bubble-row {
   display: flex;
@@ -10164,7 +10167,8 @@ table.data th.sortable.sorted { color: var(--ink); }
     max-width: 82%;
     border-radius: 14px;
     padding: 7px 11px 5px;
-    font-size: 15px;
+    font-size: 16px;
+    line-height: 21px;
   }
   .chat-bubble-row:not(.mine) .chat-bubble {
     border-bottom-left-radius: 4px;
