@@ -4315,27 +4315,29 @@ export function UnitPage({
               <summary>
                 <Icon name="exercise" size={17} />
                 <span className="ex-title">{ex.title}</span>
-                {hasChecks && (
-                  <span className="ex-marks-inline" title={`${exTotalMarks} marks available in total`}>
-                    <span className="ex-full">Marks available: {exTotalMarks}</span>
-                    <span className="ex-short">/{exTotalMarks}</span>
-                  </span>
-                )}
-                {exRes ? (
-                  <span className="ex-status done">
-                    <Icon name="checkCircle" size={13} />
-                    <span className="ex-full">
-                      Submitted — best {exRes.total ? Math.round((exRes.best / exRes.total) * 100) : 0}% · attempt {exRes.attempts} of {EX_MAX_ATTEMPTS}
+                <span className="ex-meta">
+                  {hasChecks && (
+                    <span className="ex-marks-inline" title={`${exTotalMarks} marks available in total`}>
+                      <span className="ex-full">Marks available: {exTotalMarks}</span>
+                      <span className="ex-short">/{exTotalMarks}</span>
                     </span>
-                    <span className="ex-short">
-                      {exRes.total ? Math.round((exRes.best / exRes.total) * 100) : 0}% · {exRes.attempts}/{EX_MAX_ATTEMPTS}
+                  )}
+                  {exRes ? (
+                    <span className="ex-status done">
+                      <Icon name="checkCircle" size={13} />
+                      <span className="ex-full">
+                        Submitted — best {exRes.total ? Math.round((exRes.best / exRes.total) * 100) : 0}% · attempt {exRes.attempts} of {EX_MAX_ATTEMPTS}
+                      </span>
+                      <span className="ex-short">
+                        {exRes.total ? Math.round((exRes.best / exRes.total) * 100) : 0}% · {exRes.attempts}/{EX_MAX_ATTEMPTS}
+                      </span>
                     </span>
+                  ) : (
+                    hasChecks && <span className="ex-status todo">Not submitted</span>
+                  )}
+                  <span className="chev">
+                    <Icon name="chevronDown" size={15} />
                   </span>
-                ) : (
-                  hasChecks && <span className="ex-status todo">Not submitted</span>
-                )}
-                <span className="chev">
-                  <Icon name="chevronDown" size={15} />
                 </span>
               </summary>
               <div className="saqa-body">

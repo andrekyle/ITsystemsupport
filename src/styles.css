@@ -5661,6 +5661,14 @@ a.plan-ppt:hover {
   min-width: 0;
 }
 
+/* groups marks/status/chevron so they wrap onto their own row together on
+   phones, instead of squeezing the title down to a narrow sliver */
+.saqa-details summary .ex-meta {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
 .ex-status {
   display: inline-flex;
   align-items: center;
@@ -9893,8 +9901,20 @@ table.data th.sortable.sorted { color: var(--ink); }
   /* accordion summaries: give long titles room to wrap */
   .saqa-details > summary {
     flex-wrap: wrap;
-    row-gap: 4px;
+    row-gap: 6px;
     line-height: 1.35;
+  }
+
+  /* marks/status/chevron move together onto their own full-width row below
+     the title, instead of squeezing the title into a narrow column */
+  .saqa-details summary .ex-meta {
+    flex-basis: 100%;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .saqa-details summary .ex-meta .ex-marks-inline,
+  .saqa-details summary .ex-meta .ex-status {
+    margin-left: 0;
   }
 
   /* sticky submit bar hugs the phone edge */
