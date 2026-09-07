@@ -8970,7 +8970,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   width: fit-content;
   max-width: 85%;
   padding: 8px 12px;
-  border-radius: 10px;
+  border-radius: 16px;
   background: var(--surface-2);
   color: var(--ink);
   /* WhatsApp message typography */
@@ -9094,23 +9094,29 @@ table.data th.sortable.sorted { color: var(--ink); }
 .chat-react-btn.on {
   background: var(--surface-2);
 }
+/* WhatsApp-style reaction chip: a small white pill hugging the bubble's
+   bottom corner — bottom-left on received, bottom-right on sent */
 .chat-bubble-reaction {
   position: absolute;
-  bottom: -10px;
-  right: 8px;
-  font-size: 14px;
+  bottom: -13px;
+  left: 6px;
+  font-size: 13px;
   line-height: 1;
-  padding: 0;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
 }
 .chat-bubble.mine .chat-bubble-reaction {
-  right: auto;
-  left: 8px;
+  left: auto;
+  right: -2px;
+}
+[data-theme="dark"] .chat-bubble-reaction {
+  background: #233138;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 .chat-bubble-row:has(.chat-bubble-reaction) {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 /* touch screens: no hover — reactions appear inline only when the message
    is tapped (selected), like WhatsApp */
@@ -10242,17 +10248,10 @@ table.data th.sortable.sorted { color: var(--ink); }
   }
   .chat-bubble {
     max-width: 82%;
-    border-radius: 14px;
+    border-radius: 18px;
     padding: 7px 11px 5px;
     font-size: 16px;
     line-height: 21px;
-  }
-  .chat-bubble-row:not(.mine) .chat-bubble {
-    border-bottom-left-radius: 4px;
-  }
-  .chat-bubble-row.mine .chat-bubble,
-  .chat-bubble.mine {
-    border-bottom-right-radius: 4px;
   }
   .chat-bubble.mine {
     background: #d9fdd3;
