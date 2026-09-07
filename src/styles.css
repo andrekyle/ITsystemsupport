@@ -8933,6 +8933,24 @@ table.data th.sortable.sorted { color: var(--ink); }
   flex-direction: column;
   gap: 10px;
 }
+/* light mode: WhatsApp wallpaper — beige base with a faint doodle tile */
+:root:not([data-theme="dark"]) .chat-messages {
+  background-color: #efeae2;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280' viewBox='0 0 280 280'%3E%3Cg fill='none' stroke='%23ded2bf' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M40 36c-3-6-12-5-13 2-1 6 6 10 13 15 7-5 14-9 13-15-1-7-10-8-13-2z'/%3E%3Cpath d='M204 24l3 6.5 7 1-5 5 1.2 7-6.2-3.5-6.2 3.5 1.2-7-5-5 7-1z'/%3E%3Cpath d='M122 84V60l18-4v24'/%3E%3Ccircle cx='117' cy='86' r='5'/%3E%3Ccircle cx='135' cy='82' r='5'/%3E%3Cpath d='M28 130h44a8 8 0 0 1 8 8v18a8 8 0 0 1-8 8H48l-10 9v-9h-10a8 8 0 0 1-8-8v-18a8 8 0 0 1 8-8z'/%3E%3Cpath d='M34 144h32M34 152h22'/%3E%3Cpath d='M180 132h34v14a12 12 0 0 1-12 12h-10a12 12 0 0 1-12-12z'/%3E%3Cpath d='M214 136h5a6 6 0 0 1 0 12h-5'/%3E%3Cpath d='M188 126c0-4 4-4 4-8M198 126c0-4 4-4 4-8'/%3E%3Ccircle cx='70' cy='216' r='6'/%3E%3Cpath d='M70 210c-2-8 8-10 8-2M70 210c2-8-8-10-8-2M64 220c-8 2-6 12 2 8M76 220c8 2 6 12-2 8M70 222v14'/%3E%3Cpath d='M158 198l-10 18h9l-6 16 16-20h-9l8-14z'/%3E%3Crect x='210' y='206' width='38' height='26' rx='5'/%3E%3Ccircle cx='229' cy='219' r='7'/%3E%3Cpath d='M132 16c10 4 12 16 2 22-10-6-8-18-2-22zM133 22v14'/%3E%3Ccircle cx='16' cy='182' r='2.5'/%3E%3Ccircle cx='252' cy='62' r='2.5'/%3E%3Ccircle cx='122' cy='250' r='2.5'/%3E%3Cpath d='M246 154v12M240 160h12'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 280px 280px;
+}
+/* light mode: WhatsApp bubble colours on the beige wallpaper */
+:root:not([data-theme="dark"]) .chat-bubble {
+  background: #fff;
+  box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.1);
+}
+:root:not([data-theme="dark"]) .chat-bubble.mine {
+  background: #d9fdd3;
+  color: #111b21;
+}
+:root:not([data-theme="dark"]) .chat-bubble.mine .chat-bubble-at {
+  color: #4b6152;
+}
 .chat-bubble {
   position: relative;
   max-width: 85%;
@@ -8940,13 +8958,9 @@ table.data th.sortable.sorted { color: var(--ink); }
   border-radius: 10px;
   background: var(--surface-2);
   color: var(--ink);
-  font-size: 13.5px;
+  font-size: 14.5px;
   font-weight: 350;
-  line-height: 1.55;
-}
-/* light mode: much lighter bubble grays */
-:root:not([data-theme="dark"]) .chat-bubble {
-  background: #f8f8f8;
+  line-height: 1.5;
 }
 .chat-bubble-row {
   display: flex;
@@ -8977,9 +8991,9 @@ table.data th.sortable.sorted { color: var(--ink); }
   color: #ffffff;
 }
 [data-theme="dark"] .chat-bubble.mine .chat-bubble-at { color: #ffffff; }
-.chat-bubble-by { font-size: 11.5px; color: var(--ink-3); margin-bottom: 2px; font-weight: 500; }
+.chat-bubble-by { font-size: 12px; color: var(--ink-3); margin-bottom: 2px; font-weight: 500; }
 .chat-bubble-body { white-space: pre-wrap; word-wrap: break-word; }
-.chat-bubble-at { font-size: 10.5px; margin-top: 3px; opacity: 0.7; }
+.chat-bubble-at { font-size: 11px; margin-top: 3px; opacity: 0.7; }
 .chat-bubble-edit-btn {
   position: absolute;
   top: 4px;
@@ -10150,7 +10164,7 @@ table.data th.sortable.sorted { color: var(--ink); }
     max-width: 82%;
     border-radius: 14px;
     padding: 7px 11px 5px;
-    font-size: 14px;
+    font-size: 15px;
   }
   .chat-bubble-row:not(.mine) .chat-bubble {
     border-bottom-left-radius: 4px;
@@ -10178,7 +10192,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   }
   .chat-bubble-at {
     text-align: right;
-    font-size: 10px;
+    font-size: 11px;
     margin-top: 2px;
   }
 
@@ -10192,7 +10206,7 @@ table.data th.sortable.sorted { color: var(--ink); }
     padding: 10px 15px;
     min-height: 42px;
     max-height: 110px;
-    font-size: 14px;
+    font-size: 15px;
   }
   .chat-compose .btn.ghost.sm {
     width: 42px;
