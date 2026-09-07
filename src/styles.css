@@ -5201,7 +5201,8 @@ a.plan-ppt:hover {
 .exq-input {
   width: 100%;
   min-height: 72px;
-  resize: vertical;
+  resize: none;
+  overflow-y: hidden;
   padding: 9px 12px;
   font: inherit;
   font-size: 13.5px;

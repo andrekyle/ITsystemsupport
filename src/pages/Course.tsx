@@ -1034,6 +1034,16 @@ function joinParts(parts: string[]): string {
     .join("\n");
 }
 
+/** Grows a textarea to fit its content so the full answer is always visible.
+ *  Mobile browsers largely ignore CSS `resize` handles (there is no mouse to
+ *  drag), so without this the box stays at its tiny initial height and the
+ *  learner's own text gets clipped — this replaces manual resizing entirely. */
+function autoGrowTextarea(el: HTMLTextAreaElement | null): void {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = `${el.scrollHeight}px`;
+}
+
 /** Typed answer block under an exercise question: the learner's answer is checked
  *  semantically against key ideas from the lesson; the correct answer is revealed
  *  only once the learner's own answer covers enough of those ideas. */
@@ -1066,6 +1076,21 @@ export function ExerciseQuestion({
   const nParts = check.concepts.length;
   const [parts, setParts] = useState<string[]>(() => splitIntoParts(saved, check.concepts.length));
   const val = useMemo(() => joinParts(parts), [parts]);
+  // Auto-grow each answer box to fit its content (see autoGrowTextarea) —
+  // re-run whenever the boxes' text changes, including programmatic changes
+  // (initial load, reveal, reset) that don't go through the onChange handler.
+  const partRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
+  useEffect(() => {
+    partRefs.current.forEach((el) => autoGrowTextarea(el));
+  }, [parts]);
+  // Re-measure on viewport/orientation changes too: rotating a phone changes
+  // the box's width, which reflows the text and can change how tall it needs
+  // to be even though the text itself didn't change.
+  useEffect(() => {
+    const onResize = () => partRefs.current.forEach((el) => autoGrowTextarea(el));
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
   const [result, setResult] = useState<ReturnType<typeof scoreAnswer> | null>(null);
   const [revealed, setRevealed] = useState(false);
   // which box the learner is typing in (Word-style: its trailing in-progress
@@ -1215,6 +1240,10 @@ export function ExerciseQuestion({
                   <span className="exq-part-marks">2 marks</span>
                 </div>
                 <textarea
+                  ref={(el) => {
+                    partRefs.current[i] = el;
+                    autoGrowTextarea(el);
+                  }}
                   className="exq-input exq-part-input"
                   rows={nParts === 1 ? 3 : 2}
                   spellCheck
@@ -1229,6 +1258,7 @@ export function ExerciseQuestion({
                   }
                   value={p}
                   onFocus={() => setFocusPart(i)}
+                  onInput={(e) => autoGrowTextarea(e.currentTarget)}
                   onChange={(e) => {
                     const next = e.target.value;
                     setParts((prev) => prev.map((q, j) => (j === i ? next : q)));
