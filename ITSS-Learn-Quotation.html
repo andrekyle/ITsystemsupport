@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Quotation &mdash; ITSS Learn LMS</title>
+<title>Quotation &mdash; Eruditio LMS</title>
 <style>
   @page { size: A4; margin: 14mm 16mm; }
   * { box-sizing: border-box; margin: 0; padding: 0;
@@ -40,7 +40,7 @@
     border: none; border-radius: 3px; font-size: 8pt; line-height: 1; padding: 2px 5px;
     cursor: pointer; display: none;
   }
-  .logo-upload.has-logo:hover .logo-remove { display: block; }
+  
   @media print {
     .logo-upload { background: none; }
     .logo-upload:not(.has-logo) { display: none; }
@@ -130,12 +130,12 @@
   .cost-table tfoot td { font-weight: 700; border-top: 2px solid #1f4e79; border: 1px solid #d0dbe6; }
 
   /* Editable fields */
-  [contenteditable="true"] {
+  [contenteditable="false"] {
     outline: 1px dashed transparent; border-radius: 3px; padding: 0 2px;
     transition: outline-color 0.15s, background 0.15s;
   }
-  [contenteditable="true"]:hover { outline-color: #0078d4; }
-  [contenteditable="true"]:focus { outline: 1px solid #0078d4; background: #f2f8fd; }
+  [contenteditable="false"]:hover { outline-color: #0078d4; }
+  [contenteditable="false"]:focus { outline: 1px solid #0078d4; background: #f2f8fd; }
 
   /* Emptied lines collapse so content below moves up. td/th are kept to
      preserve table columns; a fully emptied table row hides as a whole. */
@@ -158,9 +158,9 @@
     .toolbar { display: none; }
     body { background: #fff; padding: 0; max-width: none; }
     .sheet { box-shadow: none; border-radius: 0; padding: 0; }
-    .brand, .panels, .panel, .closing, .signatures, tr { break-inside: avoid; page-break-inside: avoid; }
+    .brand, .panels, .panel, .closing, .signatures, tr, li { break-inside: avoid; page-break-inside: avoid; }
     h2 { break-after: avoid; page-break-after: avoid; }
-    [contenteditable="true"] { outline: none !important; background: transparent !important; }
+    [contenteditable="false"] { outline: none !important; background: transparent !important; }
     .is-empty:not(td):not(th) { display: none !important; }
     .row-hidden, tr.row-hidden { display: none !important; }
   }
@@ -168,13 +168,7 @@
 </head>
 <body>
 
-<div class="toolbar">
-  <span>Click any text to edit it. Delete all the text in a line to remove it &mdash; the content below moves up. Use Print to save as PDF.</span>
-  <div class="toolbar-buttons">
-    <button type="button" id="restoreLines" title="Bring back lines you removed">Restore removed lines</button>
-    <button type="button" onclick="window.print()">Print / Save as PDF</button>
-  </div>
-</div>
+
 
 <div class="sheet">
 
@@ -187,18 +181,18 @@
       <input type="file" accept="image/*" id="logoInput">
     </label>
     <div>
-      <h1 contenteditable="true">African Code Academy (Pty) Ltd</h1>
+      <h1 contenteditable="false">African Code Academy (Pty) Ltd</h1>
       <div class="sub-lines">
-        <div><span class="field-label">Business number:</span> <span contenteditable="true">071 948 8292</span></div>
-        <div><span class="field-label">Email:</span> <span contenteditable="true">info@africancodeacademy.co.za</span></div>
+        <div><span class="field-label">Business number:</span> <span contenteditable="false">+27 07 345 3909</span></div>
+        <div><span class="field-label">Email:</span> <span contenteditable="false">info@africancodeacademy.co.za</span></div>
       </div>
     </div>
   </div>
   <div class="quote-tag">
     <div class="big">QUOTATION</div>
-    <div>No. <span contenteditable="true">Q-2026-0091</span></div>
-    <div>Date: <span contenteditable="true">03 September 2026</span></div>
-    <div>Valid until: <span contenteditable="true">03 October 2026</span></div>
+    <div>No. <span contenteditable="false">QERU001</span></div>
+    <div>Date: <span contenteditable="false">07 September 2026</span></div>
+    <div>Valid until: <span contenteditable="false">11 September 2026</span></div>
   </div>
 </div>
 
@@ -206,30 +200,31 @@
   <div>
     <div class="panel">
       <div class="panel-label">From:</div>
-      <div class="panel-name" contenteditable="true">African Code Academy (Pty) Ltd</div>
-      <div class="panel-line" contenteditable="true">Company Reg Number: 2026/000000/07</div>
-      <div class="panel-line" contenteditable="true">VAT Number: VAT4000000000</div>
-      <div class="row rows-start"><span class="label">Contact</span><span class="value" contenteditable="true">Placeholder Name Ndlovu</span></div>
-      <div class="row"><span class="label">Email</span><span class="value" contenteditable="true">info@africancodeacademy.co.za</span></div>
-      <div class="row"><span class="label">Phone</span><span class="value" contenteditable="true">+27 82 000 0000</span></div>
+      <div class="panel-name" contenteditable="false">African Code Academy</div>
+      <div class="panel-name" contenteditable="false">(Pty) Ltd</div>
+      <div class="panel-line" contenteditable="false">Company Reg Number: 2024/633776/07</div>
+      <div class="panel-line" contenteditable="false">09 Denbigh Street, Greenside East, Randburg, Johannesburg, 2193</div>
+      <div class="row rows-start"><span class="label">Contact</span><span class="value" contenteditable="false">Mr Andre Snell</span></div>
+      <div class="row"><span class="label">Email</span><span class="value" contenteditable="false">info@africancodeacademy.co.za</span></div>
+      <div class="row"><span class="label">Phone</span><span class="value" contenteditable="false">+27 83 989 4586</span></div>
     </div>
   </div>
   <div>
     <div class="panel">
       <div class="panel-label">Bill To:</div>
-      <div class="panel-name" contenteditable="true">Eruditio Skills Development Consultants (PTY) LTD</div>
-      <div class="panel-line" contenteditable="true">Company Reg Number: 2012/074741/07</div>
-      <div class="panel-line" contenteditable="true">2 Anemoon Road, 45 Villa Valencia Anemoon Road Glen Marais, Kempton Park 1619</div>
-      <div class="row rows-start"><span class="label">Contact</span><span class="value" contenteditable="true">Placeholder Client Contact</span></div>
-      <div class="row"><span class="label">Email</span><span class="value" contenteditable="true">info@eruditioskills.co.za</span></div>
-      <div class="row"><span class="label">Phone</span><span class="value" contenteditable="true">+27 11 000 0000</span></div>
+      <div class="panel-name" contenteditable="false">Eruditio Skills Development Consultants (Pty) Ltd</div>
+      <div class="panel-line" contenteditable="false">Company Reg Number: 2012/074741/07</div>
+      <div class="panel-line" contenteditable="false">2 Anemoon Road, 45 Villa Valencia Anemoon Road Glen Marais, Kempton Park 1619</div>
+      <div class="row rows-start"><span class="label">Contact</span><span class="value" contenteditable="false">Mr Mbulelo Lekgetho</span></div>
+      <div class="row"><span class="label">Email</span><span class="value" contenteditable="false">info@eruditioskills.co.za</span></div>
+      <div class="row"><span class="label">Phone</span><span class="value" contenteditable="false">+27 84 311 6496</span></div>
     </div>
   </div>
 </div>
 
-<p class="muted" contenteditable="true">
+<p class="muted" contenteditable="false">
 This quotation sets out the pricing, scope and terms for the hosting/maintenance retainer,
-optional developer services, and contract terms for the ITSS Learn Learning Management System
+optional developer services, and contract terms for the Learning Management System
 ("the App") supplied to Eruditio Skills Development Consultants (PTY) LTD ("the Client").
 </p>
 
@@ -240,153 +235,263 @@ optional developer services, and contract terms for the ITSS Learn Learning Mana
   </thead>
   <tbody>
     <tr>
-      <td contenteditable="true">ITSS Learn LMS application fee</td>
-      <td contenteditable="true">Monthly</td>
-      <td contenteditable="true">R 9 000.00</td>
-      <td contenteditable="true">R 9 000.00</td>
+      <td contenteditable="false">ITSS Learn LMS application fee</td>
+      <td contenteditable="false">Monthly</td>
+      <td contenteditable="false">R 9 000.00</td>
+      <td contenteditable="false">R 9 000.00</td>
     </tr>
     <tr>
-      <td contenteditable="true">Annual total (12 months), paid in advance</td>
-      <td contenteditable="true">Annually</td>
-      <td contenteditable="true">&mdash;</td>
-      <td contenteditable="true">R 108 000.00</td>
+      <td contenteditable="false">Annual total (12 months), paid in advance</td>
+      <td contenteditable="false">Annually</td>
+      <td contenteditable="false">&mdash;</td>
+      <td contenteditable="false">R 108 000.00</td>
     </tr>
   </tbody>
 </table>
 <ol>
-  <li contenteditable="true">The monthly application fee of R 9 000.00 (R 108 000.00 per annum, being R 9 000.00 &times; 12) is payable <strong>annually in advance</strong>, before any new Client development request is performed.</li>
-  <li contenteditable="true">The monthly fee covers the ongoing operation, maintenance and support of the App only.</li>
-  <li contenteditable="true">The monthly fee <strong>EXCLUDES</strong>: domain registration/renewal fees, database hosting fees, and AI model/API usage fees. These are billed separately at cost, or may be paid for directly by the Client.</li>
-  <li contenteditable="true"><strong>Bespoke development during the optional 4-month period:</strong> all bespoke (custom) development requested by the Client is carried out during the optional 4-month Developer &amp; Content Creator engagement (Section 3) at <strong>no extra cost</strong>, as it forms part of that content-creation / developer agreement.</li>
-  <li contenteditable="true"><strong>New development requests outside the agreed scope:</strong> any new development requests raised by the Client outside of the agreed scope are quoted and invoiced separately, and are only carried out once the current annual application fee has been paid in full.</li>
+  <li contenteditable="false">The <strong>Annual Application Fee of R 108 000.00</strong>, calculated at R 9 000.00 per month &times; 12 months, is payable <strong>annually in advance</strong> and covers the applicable 12-month period.</li>
+  <li contenteditable="false">The Annual Application Fee covers the ongoing operation, routine maintenance and technical support of the App. This includes reasonable bug fixes, security and compatibility updates, and general technical support required to keep the App operational. It does <strong>not</strong> include new features, substantial modifications, bespoke development or integrations unless expressly stated otherwise in this Agreement.</li>
+  <li contenteditable="false">The Annual Application Fee <strong>EXCLUDES</strong> third-party costs, including domain registration and renewal fees, database and hosting fees, and AI model/API or other usage-based service fees. These costs may be paid directly by the Client to the relevant service provider or, where paid by the Developer on behalf of the Client, billed separately to the Client at cost.</li>
+  <li contenteditable="false"><strong>Bespoke development during the optional 4-month period:</strong> where the Client elects to proceed with the optional 4-month Developer &amp; Content Creator engagement (Section 3), bespoke development falling <strong>within the agreed scope, deliverables and timeframe</strong> of that engagement shall be carried out at <strong>no additional development cost</strong>. Any development requested outside the agreed scope, deliverables or timeframe shall be treated as additional development.</li>
+  <li contenteditable="false"><strong>New development requests outside the agreed scope:</strong> any new feature, functionality, integration, modification or other development requested by the Client that falls outside the agreed scope shall be separately scoped and quoted by the Developer. Such work shall only commence once the Client has accepted the quotation, any payment required under the quotation has been made, and the current Annual Application Fee has been paid in full.</li>
+  <li contenteditable="false"><strong>No unlimited development:</strong> payment of the Annual Application Fee does not entitle the Client to unlimited development, new functionality, integrations or modifications to the App. Except for development expressly included within the agreed scope of the optional 4-month engagement, all additional development shall be separately scoped, quoted and approved by the Client before work commences.</li>
 </ol>
+
 
 <h2>2. Delivery, Onboarding &amp; Timeline</h2>
 <ol>
-  <li contenteditable="true">Upon acceptance of this quotation, <strong>50% of the annual application fee (R 54 000.00) is due on 11 September 2026</strong>.</li>
-  <li contenteditable="true">Onboarding starts on <strong>25 September 2026</strong>.</li>
-  <li contenteditable="true"><strong>Admin documents &amp; workflows:</strong> all administrative documents and workflows must be communicated to the developer by <strong>11 September 2026</strong> so that they can be added into the App. Provided this payment and documentation deadline is met, they will be integrated into the App and ready by <strong>25 September 2026</strong> at <strong>no additional development cost</strong>.</li>
-  <li contenteditable="true"><strong>1 (one) free course</strong> will be uploaded; the Client decides which course.</li>
-  <li contenteditable="true">Recommended timeline: <strong>4 months</strong> from onboarding to complete all training materials and administrative documentation, depending on the final number of courses the Client wishes to upload. This estimate should be re-confirmed once the course list is finalised.</li>
+  <li contenteditable="false">Upon acceptance of this quotation, <strong>50% of the Annual Application Fee (R 54 000.00) is payable by 11 September 2026</strong>. The remaining <strong>50% (R 54 000.00) is payable by 1 January 2027</strong>.</li>
+  <li contenteditable="false"><strong>Pre-onboarding preparation:</strong> by <strong>11 September 2026</strong>, preferably the Client should provide the Developer with the administrative documents, workflows, requirements and other relevant information that the Client wishes to have incorporated into the App for the initial onboarding. This enables the Developer to commence the necessary configuration, development and integration work in preparation for the App to be ready for onboarding on <strong>25 September 2026</strong>.</li>
+  <li contenteditable="false">Provided that the initial payment and the required information are received by <strong>11 September 2026</strong>, the agreed requirements falling within the initial implementation scope will be configured and integrated into the App at <strong>no additional development cost</strong>, with the App prepared for onboarding on <strong>25 September 2026</strong>. Any delay in providing the required information, content, feedback or approvals may result in a corresponding adjustment to the delivery or onboarding timeline.</li>
+  <li contenteditable="false"><strong>Onboarding:</strong> Client onboarding will commence on <strong>25 September 2026</strong>.</li>
+  <li contenteditable="false"><strong>Course upload:</strong> <strong>1 (one) course</strong>, selected by the Client, will be uploaded to the App at <strong>no additional cost</strong> as part of the initial implementation.</li>
+  <li contenteditable="false"><strong>Recommended implementation period:</strong> a period of approximately <strong>4 months from the onboarding date</strong> is recommended for the development, preparation and uploading of the Client's training materials and administrative documentation. The final timeframe will depend on the number of courses, volume of content, complexity of the Client's requirements and the timely provision of content, information, feedback and approvals by the Client. The implementation timeline will be reviewed and confirmed once the final course list and scope have been agreed.</li>
 </ol>
 
 <h2>3. Optional &mdash; Developer &amp; Content Creator Services</h2>
-<p contenteditable="true">You have the option to hire me as a <strong>developer / content creator</strong> for <strong>R 25 000 per month for 4 months</strong> to create the content for your courses.</p>
+
+<p contenteditable="false">
+  The Client has the option to engage the Developer to provide <strong>Developer &amp; Content Creator services at R 25 000.00 per month for a period of 4 months, commencing on 25 September 2026 and ending on 24 January 2027</strong>. The purpose of this engagement is to assist the Client with the development, preparation, formatting and implementation of its training content, administrative processes and agreed App requirements.
+</p>
+
 <ol>
-  <li contenteditable="true">This engagement is optional, invoiced separately from the App's annual application fee, and may be scaled up or down by mutual written agreement.</li>
-  <li contenteditable="true"><strong>Ownership of content:</strong> all content, materials and works created by the Developer in the course of this engagement are and remain the exclusive property of Eruditio Skills Development Consultants (PTY) LTD. All intellectual property rights therein are hereby assigned to the Client upon creation, and the Developer retains no ownership, licence or other rights in such content.</li>
-  <li contenteditable="true"><strong>Confidentiality &amp; data protection (POPIA):</strong> all Client information and personal information processed in the course of this engagement is handled in accordance with the Protection of Personal Information Act, 2013 (POPIA). Such information is kept strictly confidential, is stored and transmitted in encrypted form, and is used solely for the purpose of delivering the agreed services; it is not disclosed to any third party without the Client's prior written consent, except as required by law.</li>
+  <li contenteditable="false">
+    <strong>Engagement period and payment:</strong> This engagement is optional and is invoiced separately from the Annual Application Fee. The engagement will run from <strong>25 September 2026 to 24 January 2027</strong>, at a fee of <strong>R 25 000.00 per month</strong>, totalling <strong>R 100 000.00</strong> for the full 4-month engagement. The monthly fee is payable in arrears as follows:
+
+    <div style="margin-left: 12px;">
+      <p contenteditable="false">3.1.1&nbsp;&nbsp;&nbsp;&nbsp; <strong>R 25 000.00</strong> &mdash; payable on <strong>25 October 2026</strong>.</p>
+      <p contenteditable="false">3.1.2&nbsp;&nbsp;&nbsp;&nbsp; <strong>R 25 000.00</strong> &mdash; payable on <strong>25 November 2026</strong>.</p>
+      <p contenteditable="false">3.1.3&nbsp;&nbsp;&nbsp;&nbsp; <strong>R 25 000.00</strong> &mdash; payable on <strong>25 December 2026</strong>.</p>
+      <p contenteditable="false">3.1.4&nbsp;&nbsp;&nbsp;&nbsp; <strong>R 25 000.00</strong> &mdash; payable on <strong>25 January 2027</strong>.</p>
+    </div>
+  </li>
+
+  <li contenteditable="false">
+    <strong>Scope of Developer &amp; Content Creator services:</strong> During the 4-month engagement, the services may include, within the agreed scope and priorities:
+
+    <div style="margin-left: 12px;">
+      <p contenteditable="false">3.2.1&nbsp;&nbsp;&nbsp;&nbsp; Creation and development of course and training content.</p>
+      <p contenteditable="false">3.2.2&nbsp;&nbsp;&nbsp;&nbsp; Formatting and adaptation of the Client's existing course materials for digital delivery.</p>
+      <p contenteditable="false">3.2.3&nbsp;&nbsp;&nbsp;&nbsp; Uploading and configuration of courses and learning materials within the LMS/App.</p>
+      <p contenteditable="false">3.2.4&nbsp;&nbsp;&nbsp;&nbsp; Creation and configuration of assessments, quizzes, activities and related learning resources.</p>
+      <p contenteditable="false">3.2.5&nbsp;&nbsp;&nbsp;&nbsp; Creation, formatting and integration of administrative documents and supporting materials.</p>
+      <p contenteditable="false">3.2.6&nbsp;&nbsp;&nbsp;&nbsp; Configuration and implementation of agreed administrative workflows within the App.</p>
+      <p contenteditable="false">3.2.7&nbsp;&nbsp;&nbsp;&nbsp; Organisation and structuring of course content for use within the App.</p>
+      <p contenteditable="false">3.2.8&nbsp;&nbsp;&nbsp;&nbsp; Content updates and amendments during the agreed engagement period.</p>
+      <p contenteditable="false">3.2.9&nbsp;&nbsp;&nbsp;&nbsp; Testing and refinement of agreed course, content and workflow functionality.</p>
+      <p contenteditable="false">3.2.10&nbsp;&nbsp;&nbsp;&nbsp; Agreed bespoke App development required to support the Client's training, content and</p>
+      <p contenteditable="false">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Administrative requirements.</p>
+    </div>
+  </li>
+
+  <li contenteditable="false">
+    <strong>Bespoke App development:</strong> Bespoke development falling within the <strong>agreed scope, deliverables and timeframe</strong> of the 4-month engagement is included in the monthly Developer &amp; Content Creator fee and shall not attract an additional development charge. Any substantial new feature, functionality, integration or development request falling outside the agreed scope shall be discussed with the Client and may be separately scoped and quoted before work commences.
+  </li>
+
+  <li contenteditable="false">
+    <strong>Scope and prioritisation:</strong> The R 25 000.00 monthly fee does not constitute an agreement for unlimited development, content creation or revisions. Work will be performed according to the agreed priorities, requirements and deliverables for the 4-month engagement. Where additional requirements materially increase the agreed scope or cannot reasonably be completed within the engagement period, the parties shall agree in writing on any revised scope, timeframe or additional fees before such work is undertaken.
+  </li>
+
+  <li contenteditable="false">
+    <strong>Client responsibilities:</strong> The Client shall provide the Developer with all information, source materials, existing course content, branding, administrative documents, requirements, feedback and approvals reasonably required to perform the services. Any delay in providing the required information, content, feedback or approvals may result in a corresponding adjustment to the delivery timeline but shall not automatically extend the 4-month engagement period.
+  </li>
+
+  <li contenteditable="false">
+    <strong>Ownership of Client-specific content:</strong> All course content, training materials, assessments, documents and other works created specifically for the Client and paid for under this engagement shall become the exclusive property of <strong>Eruditio Skills Development Consultants (Pty) Ltd</strong>, including the applicable intellectual property rights in such materials.
+  </li>
+
+  <li contenteditable="false">
+    <strong>Developer's pre-existing intellectual property:</strong> Ownership of Client-specific content does not transfer ownership of the Developer's pre-existing intellectual property, including the App, software, source code, frameworks, templates, development tools, methodologies, processes, systems, libraries, know-how or other materials developed independently of this engagement. Ownership and licensing of the App and its underlying technology are governed separately by the applicable provisions of this Agreement.
+  </li>
+
+  <li contenteditable="false">
+    <strong>Confidentiality &amp; data protection (POPIA):</strong> All confidential information and personal information received or processed in connection with this engagement shall be handled in accordance with the <strong>Protection of Personal Information Act, 2013 (POPIA)</strong> and used only to the extent reasonably necessary to provide the agreed services. The Developer shall take reasonable and appropriate technical and organisational measures to protect such information against unauthorised access, loss, disclosure or misuse and shall not disclose the Client's confidential information to third parties except where reasonably necessary for the provision of the services, with the Client's authorisation, or where required by law.
+  </li>
 </ol>
 
 <h2>4. Contract Term &amp; Renewal</h2>
+
+
 <ol>
-  <li contenteditable="true">This quotation, once accepted, forms the basis of a <strong>2 (two) year</strong> service contract between the Vendor and the Client.</li>
-  <li contenteditable="true">The contract is <strong>renewed every 12 (twelve) months</strong>, subject to both parties confirming continuation in writing prior to each renewal date.</li>
-  <li contenteditable="true">Pricing may be reviewed and adjusted at each annual renewal, with any changes communicated to the Client in writing at least 30 days before the renewal date.</li>
+  <li contenteditable="false">
+    <strong>Pre-contract implementation period:</strong> The period from acceptance of this quotation until <strong>31 December 2026</strong> will constitute the preparation, configuration, implementation and onboarding period. This period is intended to enable the Developer to prepare and configure the App, integrate the agreed requirements and complete the necessary onboarding activities before commencement of the 12-month service contract.
+  </li>
+
+  <li contenteditable="false">
+    <strong>Contract commencement:</strong> The initial <strong>12 (twelve) month service contract</strong> will commence on <strong>1 January 2027</strong> and will continue until <strong>31 December 2027</strong>.
+  </li>
+
+  <li contenteditable="false">
+    The contract may be <strong>renewed for a further 12 (twelve) month period</strong> by mutual written agreement between the Vendor and the Client prior to the expiry of the current contract term. Renewal is not automatic.
+  </li>
+
+  <li contenteditable="false">
+    The Vendor may review and adjust the Annual Application Fee and other applicable service fees for any renewal period. Any proposed pricing changes will be communicated to the Client in writing at least <strong>30 days before the expiry of the current contract term</strong>.
+  </li>
+
+  <li contenteditable="false">
+    If the parties agree to renew the contract for a further 12-month period, the Annual Application Fee for the renewed term will become payable on <strong>1 January 2028</strong>, subject to any revised pricing agreed in writing between the parties.
+  </li>
+
+  <li contenteditable="false">
+    Unless the parties agree to renew the contract in writing, the initial service contract will expire on <strong>31 December 2027</strong>, subject to any obligations expressly stated to continue after termination or expiry.
+  </li>
 </ol>
 
-<div class="pagebreak"></div>
-
 <h2>5. Platform Features by Role</h2>
-<p contenteditable="true">The App provides the following capabilities, organised by the role each serves. Access is governed by the role(s) assigned to each user (Facilitator, Assessor and/or Moderator, in any combination).</p>
+<p contenteditable="false">The App provides the following capabilities, organised by the role each serves. Access is governed by the role(s) assigned to each user (Facilitator, Assessor and/or Moderator, in any combination).</p>
 
 <h3>Administrator</h3>
 <ol>
-  <li contenteditable="true"><strong>User &amp; access management</strong> &mdash; create accounts and assign the Facilitator / Assessor / Moderator roles (one person may hold all three, or only one).</li>
-  <li contenteditable="true"><strong>Live cohort dashboard</strong> &mdash; completion, quiz &amp; exercise averages, attendance rate, last-seen and XP for every learner in one sortable table.</li>
-  <li contenteditable="true"><strong>Early-warning engine</strong> &mdash; automatically flags at-risk learners with the reasons (low completion, poor attendance, inactivity, low scores).</li>
-  <li contenteditable="true"><strong>Answer transparency</strong> &mdash; open any learner and see every option picked and every sentence typed.</li>
-  <li contenteditable="true"><strong>Audit-ready exports</strong> &mdash; one-click CSV / PDF / ZIP of registers, portfolios and the analytics table for SETA &amp; QCTO reporting.</li>
-  <li contenteditable="true"><strong>Audit logging</strong> &mdash; every significant action (submissions, messages, deletions, sign-offs) recorded with actor and timestamp.</li>
-  <li contenteditable="true"><strong>Conversation moderation</strong> &mdash; open any conversation read-only, enforced by the database.</li>
+  <li contenteditable="false"><strong>User &amp; access management</strong> &mdash; create accounts and assign the Facilitator / Assessor / Moderator roles (one person may hold all three, or only one).</li>
+  <li contenteditable="false"><strong>Live cohort dashboard</strong> &mdash; completion, quiz &amp; exercise averages, attendance rate, last-seen and XP for every learner in one sortable table.</li>
+  <li contenteditable="false"><strong>Early-warning engine</strong> &mdash; automatically flags at-risk learners with the reasons (low completion, poor attendance, inactivity, low scores).</li>
+  <li contenteditable="false"><strong>Answer transparency</strong> &mdash; open any learner and see every option picked and every sentence typed.</li>
+  <li contenteditable="false"><strong>Audit-ready exports</strong> &mdash; one-click CSV / PDF / ZIP of registers, portfolios and the analytics table for SETA &amp; QCTO reporting.</li>
+  <li contenteditable="false"><strong>Audit trail</strong> &mdash; every significant action (logins, submissions, marking decisions, messages, edits, deletions and sign-offs) is recorded with the actor, timestamp and affected record, retained for the contract period and available for review or export to support SETA / QCTO audits and POPIA accountability.</li>
+  <li contenteditable="false"><strong>Conversation moderation</strong> &mdash; open any conversation read-only, enforced by the database.</li>
   </ol>
 
 <h3>Student / Learner</h3>
   <ol>
-  <li contenteditable="true"><strong>Interactive lessons</strong> &mdash; slide-based lessons with images, pop-up glossary definitions, worked examples and collapsible sections.</li>
-  <li contenteditable="true"><strong>Auto-marked assessments</strong> &mdash; multiple choice, select-all, drag-to-order and matching, with instant scoring and best-score tracking.</li>
-  <li contenteditable="true"><strong>AI marking of written answers</strong> &mdash; understands answers written in the learner's own words and gives credit for meaning, with explanatory feedback.</li>
-  <li contenteditable="true"><strong>Evidence upload</strong> &mdash; submit photos, PDFs and documents from any device into private cloud storage.</li>
-  <li contenteditable="true"><strong>Automatic progress</strong> &mdash; completion updates instantly as work is done, with XP, levels and a class leaderboard.</li>
-  <li contenteditable="true"><strong>Digital attendance &amp; forms</strong> &mdash; sign the register and complete official forms online; never re-written on paper.</li>
-  <li contenteditable="true"><strong>Private chat &amp; Q&amp;A</strong> &mdash; message the facilitator and join class questions, from phone, tablet or computer.</li>
+  <li contenteditable="false"><strong>Interactive lessons</strong> &mdash; slide-based lessons with images, pop-up glossary definitions, worked examples and collapsible sections.</li>
+  <li contenteditable="false"><strong>Auto-marked assessments</strong> &mdash; multiple choice, select-all, drag-to-order and matching, with instant scoring and best-score tracking.</li>
+  <li contenteditable="false"><strong>AI marking of written answers</strong> &mdash; understands answers written in the learner's own words and gives credit for meaning, with explanatory feedback.</li>
+  <li contenteditable="false"><strong>Evidence upload</strong> &mdash; submit photos, PDFs and documents from any device into private cloud storage.</li>
+  <li contenteditable="false"><strong>Automatic progress</strong> &mdash; completion updates instantly as work is done, with XP, levels and a class leaderboard.</li>
+  <li contenteditable="false"><strong>Digital attendance &amp; forms</strong> &mdash; sign the register and complete official forms online; never re-written on paper.</li>
+  <li contenteditable="false"><strong>Private chat &amp; Q&amp;A</strong> &mdash; message the facilitator and join class questions, from phone, tablet or computer.</li>
   </ol>
 
 <h3>Facilitator</h3>
   <ol>
-  <li contenteditable="true"><strong>Classroom presenter mode</strong> &mdash; full-screen slides with speaker notes to teach the material live.</li>
-  <li contenteditable="true"><strong>Content management</strong> &mdash; upload slide decks, images and lesson figures that sync to every device.</li>
-  <li contenteditable="true"><strong>Knowledge gating</strong> &mdash; lock the next slide until learners answer checkpoint questions correctly.</li>
-  <li contenteditable="true"><strong>Marking oversight</strong> &mdash; review auto-marked and AI-marked answers, and unlock self-assessments for learners.</li>
-  <li contenteditable="true"><strong>Messaging &amp; broadcast</strong> &mdash; private 1-to-1 chat with each learner plus one-to-many announcements to the whole class.</li>
-  <li contenteditable="true"><strong>Attendance &amp; registers</strong> &mdash; capture and print attendance registers and paper-form replicas that auto-fill from stored data.</li>
+  <li contenteditable="false"><strong>Classroom presenter mode</strong> &mdash; full-screen slides with speaker notes to teach the material live.</li>
+  <li contenteditable="false"><strong>Content management</strong> &mdash; upload slide decks, images and lesson figures that sync to every device.</li>
+  <li contenteditable="false"><strong>Knowledge gating</strong> &mdash; lock the next slide until learners answer checkpoint questions correctly.</li>
+  <li contenteditable="false"><strong>Marking oversight</strong> &mdash; review auto-marked and AI-marked answers, and unlock self-assessments for learners.</li>
+  <li contenteditable="false"><strong>Messaging &amp; broadcast</strong> &mdash; private 1-to-1 chat with each learner plus one-to-many announcements to the whole class.</li>
+  <li contenteditable="false"><strong>Attendance &amp; registers</strong> &mdash; capture and print attendance registers and paper-form replicas that auto-fill from stored data.</li>
   </ol>
 
 <h2>6. Summary of Costs</h2>
-<table>
+
+<table style="width: 100%; border-collapse: collapse;">
   <thead>
-    <tr><th style="width:45%">Item</th><th>Type</th><th>Amount (ZAR)</th></tr>
+    <tr>
+      <th style="text-align: left;">Item</th>
+      <th style="text-align: left;">Type</th>
+      <th style="text-align: right;">Amount (ZAR)</th>
+    </tr>
   </thead>
   <tbody>
-    <tr><td contenteditable="true">Monthly application fee</td><td contenteditable="true">Recurring (paid annually in advance)</td><td contenteditable="true">R 9 000.00 / month</td></tr>
-    <tr><td contenteditable="true">Annual application fee total (R 9 000 &times; 12)</td><td contenteditable="true">Recurring (paid annually in advance)</td><td contenteditable="true">R 108 000.00 / year</td></tr>
-    <tr><td contenteditable="true">Domain, database hosting, app hosting &amp; AI model fees</td><td contenteditable="true">Excluded &mdash; billed at cost (see Annexure A)</td><td contenteditable="true">&plusmn;R 1 060 &ndash; R 1 310 / month</td></tr>
-    <tr><td contenteditable="true">Developer &amp; content creator (4-month content engagement)</td><td contenteditable="true">Optional, monthly</td><td contenteditable="true">R 25 000.00 / month &times; 4</td></tr>
+    <tr>
+      <td>Application fee</td>
+      <td>Annual recurring fee</td>
+      <td style="text-align: right;">R 9 000.00 / month equivalent</td>
+    </tr>
+    <tr>
+      <td>Annual Application Fee Total (R 9 000 &times; 12)</td>
+      <td>Annual &mdash; initial year payable in two instalments</td>
+      <td style="text-align: right;">R 108 000.00 / year</td>
+    </tr>
+    <tr>
+      <td>Domain, database hosting, app hosting &amp; AI model fees</td>
+      <td>Excluded &mdash; billed at cost (see Annexure A)</td>
+      <td style="text-align: right;">&plusmn; R 1 410&ndash;R 3 560 / month</td>
+    </tr>
+    <tr>
+      <td>Developer &amp; Content Creator (4-month engagement)</td>
+      <td>Optional, monthly</td>
+      <td style="text-align: right;">R 25 000.00 / month &times; 4</td>
+    </tr>
+    <tr>
+      <td colspan="2"><strong>Annual Application Fee</strong></td>
+      <td style="text-align: right;"><strong>R 108 000.00</strong></td>
+    </tr>
   </tbody>
-  <tfoot>
-    <tr><td colspan="2">Upfront total &mdash; annual application fee (R 9 000 &times; 12)</td><td>R 108 000.00</td></tr>
-  </tfoot>
 </table>
-<p contenteditable="true">Upfront cost is the annual subscription: R 9 000 &times; 12 = R 108 000. Upon acceptance, <strong>50% (R 54 000.00) is due on 11 September 2026</strong>; onboarding starts on <strong>25 September 2026</strong>. One free course will be uploaded &mdash; the Client decides which course.</p>
-<p class="muted" contenteditable="true">All amounts are quoted in South African Rand (ZAR) and are exclusive of VAT unless the Vendor
-is a registered VAT vendor, in which case VAT will be added at the applicable rate and reflected on the
-corresponding tax invoice.</p>
+
+<p contenteditable="false">
+  The Annual Application Fee for the initial <strong>12-month contract period from 1 January 2027 to 31 December 2027</strong> is <strong>R 108 000.00</strong>, calculated at R 9 000.00 &times; 12 months. The first <strong>50% instalment (R 54 000.00) is payable by 11 September 2026</strong> as part of the preparation and implementation arrangements for the commencement of the service contract. The remaining <strong>50% instalment (R 54 000.00) is payable by 1 January 2027</strong>. Subject to renewal, the Annual Application Fee for the next 12-month contract period will become payable on <strong>1 January 2028</strong>.
+</p>
+
+<p contenteditable="false">
+  The period prior to <strong>1 January 2027</strong> is the preparation, configuration, implementation and onboarding period and does not reduce the Client's initial 12-month service contract period.
+</p>
 
 <h2>7. Terms &amp; Acceptance</h2>
+
+
 <ol>
-  <li contenteditable="true">This quotation is valid until <strong>03 October 2026</strong> and is subject to the terms described above.</li>
-  <li contenteditable="true">Acceptance of this quotation constitutes agreement to the 2-year contract term described in Section 4.</li>
-  <li contenteditable="true">Any changes to scope, pricing or timelines must be agreed in writing by both parties.</li>
+  <li contenteditable="false">
+    This quotation is valid for acceptance until <strong>11 September 2026</strong> and is subject to the terms and conditions described herein.
+  </li>
+
+  <li contenteditable="false">
+    Acceptance of this quotation authorises the Developer to commence the agreed preparation, configuration, implementation and onboarding activities prior to the commencement of the service contract.
+  </li>
+
+  <li contenteditable="false">
+    The initial <strong>12 (twelve) month service contract</strong> will commence on <strong>1 January 2027</strong> and end on <strong>31 December 2027</strong>, as described in Section 4.
+  </li>
+
+  <li contenteditable="false">
+    The first <strong>50% instalment of the Annual Application Fee (R 54 000.00)</strong> is payable by <strong>11 September 2026</strong>, and the remaining <strong>50% instalment (R 54 000.00)</strong> is payable by <strong>1 January 2027</strong>.
+  </li>
+
+  <li contenteditable="false">
+    Any changes to the agreed scope, pricing, deliverables or timelines must be agreed to <strong>in writing by both parties</strong>.
+  </li>
 </ol>
 
 <h2>8. General Legal Terms</h2>
 <ol>
-  <li contenteditable="true"><strong>Relationship of the parties:</strong> the Vendor acts as an independent contractor. Nothing in this agreement creates a partnership, joint venture, or employer&ndash;employee relationship between the parties.</li>
-  <li contenteditable="true"><strong>Warranties:</strong> the Vendor warrants that the services will be performed with reasonable skill and care and that the App will substantially conform to the agreed scope. Except as expressly stated, all other warranties, express or implied, are excluded to the fullest extent permitted by law.</li>
-  <li contenteditable="true"><strong>Limitation of liability:</strong> to the extent permitted by law, neither party is liable to the other for any indirect, incidental, special or consequential loss (including loss of profit, revenue or data) arising from this agreement. Each party's total aggregate liability is limited to the fees actually paid by the Client under this agreement in the 12 months preceding the claim. Nothing in this clause limits liability for death or personal injury caused by negligence, or for fraud.</li>
-  <li contenteditable="true"><strong>Indemnification:</strong> each party indemnifies the other against claims, losses and expenses arising from its own breach of this agreement, negligence, or wilful misconduct.</li>
-  <li contenteditable="true"><strong>Intellectual property (Vendor tools):</strong> the Vendor retains ownership of its pre-existing software, code, tools, frameworks and know-how used to deliver the services. The Vendor grants the Client a non-exclusive, royalty-free licence to use such Vendor IP as embedded in the App and deliverables for the Client's internal business purposes. Content created specifically for the Client remains the Client's property as described in Section 3.</li>
-  <li contenteditable="true"><strong>Confidentiality (mutual):</strong> each party agrees to keep the other's confidential information strictly confidential, to use it only for the purposes of this agreement, and not to disclose it to any third party without prior written consent, except as required by law. This obligation survives termination of the agreement.</li>
-  <li contenteditable="true"><strong>Data protection:</strong> each party complies with the Protection of Personal Information Act, 2013 (POPIA) in respect of personal information processed under this agreement. The Vendor processes personal information only on the Client's documented instructions, maintains appropriate technical and organisational safeguards (including encryption), and notifies the Client without undue delay of any data breach.</li>
-  <li contenteditable="true"><strong>Force majeure:</strong> neither party is liable for any delay or failure to perform caused by events beyond its reasonable control (including power outages, internet failure, strikes, or acts of God), provided the affected party notifies the other promptly and resumes performance as soon as reasonably possible.</li>
-  <li contenteditable="true"><strong>Termination:</strong> either party may terminate this agreement on written notice if the other party commits a material breach and fails to remedy it within 14 (fourteen) days of written notice. On termination, the Client pays for all services rendered up to the termination date, and each party returns or deletes the other's confidential information on request.</li>
-  <li contenteditable="true"><strong>Non-solicitation:</strong> for the duration of this agreement and for 12 (twelve) months afterwards, neither party will solicit for employment the employees or contractors of the other who were involved in delivering or receiving the services, without the other's written consent.</li>
-  <li contenteditable="true"><strong>Dispute resolution &amp; governing law:</strong> the parties will first attempt to resolve any dispute amicably by good-faith negotiation, failing which the dispute may be referred to mediation and thereafter to the courts. This agreement is governed by and construed in accordance with the laws of the Republic of South Africa.</li>
-  <li contenteditable="true"><strong>Entire agreement &amp; variation:</strong> this document, once accepted, together with any written amendments signed by both parties, constitutes the entire agreement between the parties and supersedes all prior discussions or representations. No variation is valid unless recorded in writing and signed by both parties.</li>
-  <li contenteditable="true"><strong>Severability:</strong> if any provision of this agreement is found to be invalid or unenforceable, the remaining provisions continue in full force and effect.</li>
-  <li contenteditable="true"><strong>Notices:</strong> all formal notices under this agreement must be given in writing and delivered by hand, email or registered post to the addresses stated in this quotation (or as updated in writing), and are deemed received on delivery, on the date of successful email transmission, or 7 days after posting, as applicable.</li>
+  <li contenteditable="false"><strong>Relationship of the parties:</strong> the Vendor acts as an independent contractor. Nothing in this agreement creates a partnership, joint venture, or employer&ndash;employee relationship between the parties.</li>
+  <li contenteditable="false"><strong>Warranties:</strong> the Vendor warrants that the services will be performed with reasonable skill and care and that the App will substantially conform to the agreed scope. Except as expressly stated, all other warranties, express or implied, are excluded to the fullest extent permitted by law.</li>
+  <li contenteditable="false"><strong>Limitation of liability:</strong> to the extent permitted by law, neither party is liable to the other for any indirect, incidental, special or consequential loss (including loss of profit, revenue or data) arising from this agreement. Each party's total aggregate liability is limited to the fees actually paid by the Client under this agreement in the 12 months preceding the claim. Nothing in this clause limits liability for death or personal injury caused by negligence, or for fraud.</li>
+  <li contenteditable="false"><strong>Indemnification:</strong> each party indemnifies the other against claims, losses and expenses arising from its own breach of this agreement, negligence, or wilful misconduct.</li>
+  <li contenteditable="false"><strong>Intellectual property (Vendor tools):</strong> the Vendor retains ownership of its pre-existing software, code, tools, frameworks and know-how used to deliver the services. The Vendor grants the Client a non-exclusive, royalty-free licence to use such Vendor IP as embedded in the App and deliverables for the Client's internal business purposes. Content created specifically for the Client remains the Client's property as described in Section 3.</li>
+  <li contenteditable="false"><strong>Confidentiality (mutual):</strong> each party agrees to keep the other's confidential information strictly confidential, to use it only for the purposes of this agreement, and not to disclose it to any third party without prior written consent, except as required by law. This obligation survives termination of the agreement.</li>
+  <li contenteditable="false"><strong>Data protection:</strong> each party complies with the Protection of Personal Information Act, 2013 (POPIA) in respect of personal information processed under this agreement. The Vendor processes personal information only on the Client's documented instructions, maintains appropriate technical and organisational safeguards (including encryption), and notifies the Client without undue delay of any data breach.</li>
+  <li contenteditable="false"><strong>Force majeure:</strong> neither party is liable for any delay or failure to perform caused by events beyond its reasonable control (including power outages, internet failure, strikes, or acts of God), provided the affected party notifies the other promptly and resumes performance as soon as reasonably possible.</li>
+  <li contenteditable="false"><strong>Termination:</strong> either party may terminate this agreement on written notice if the other party commits a material breach and fails to remedy it within 14 (fourteen) days of written notice. On termination, the Client pays for all services rendered up to the termination date, and each party returns or deletes the other's confidential information on request.</li>
+  <li contenteditable="false"><strong>Non-solicitation:</strong> for the duration of this agreement and for 12 (twelve) months afterwards, neither party will solicit for employment the employees or contractors of the other who were involved in delivering or receiving the services, without the other's written consent.</li>
+  <li contenteditable="false"><strong>Dispute resolution &amp; governing law:</strong> the parties will first attempt to resolve any dispute amicably by good-faith negotiation, failing which the dispute may be referred to mediation and thereafter to the courts. This agreement is governed by and consfalsed in accordance with the laws of the Republic of South Africa.</li>
+  <li contenteditable="false"><strong>Entire agreement &amp; variation:</strong> this document, once accepted, together with any written amendments signed by both parties, constitutes the entire agreement between the parties and supersedes all prior discussions or representations. No variation is valid unless recorded in writing and signed by both parties.</li>
+  <li contenteditable="false"><strong>Severability:</strong> if any provision of this agreement is found to be invalid or unenforceable, the remaining provisions continue in full force and effect.</li>
+  <li contenteditable="false"><strong>Notices:</strong> all formal notices under this agreement must be given in writing and delivered by hand, email or registered post to the addresses stated in this quotation (or as updated in writing), and are deemed received on delivery, on the date of successful email transmission, or 7 days after posting, as applicable.</li>
 </ol>
 
-<div class="closing" contenteditable="true">
-  We appreciate the opportunity to partner with Eruditio Skills Development Consultants on the ITSS Learn platform.
-  Please sign below to confirm acceptance of this quotation and the accompanying 2-year service agreement.
+<div class="closing" contenteditable="false">
+  We appreciate the opportunity to partner with Eruditio Skills Development Consultants.
 </div>
 
-<div class="signatures">
-  <div>
-    <div class="sig-line"></div>
-    <div class="sig-label">Accepted on behalf of the Vendor &mdash; Name: <span contenteditable="true">Placeholder Name Ndlovu</span> &nbsp; Date: ______________</div>
-  </div>
-  <div>
-    <div class="sig-line"></div>
-    <div class="sig-label">Accepted on behalf of the Client &mdash; Name: <span contenteditable="true">Placeholder Client Contact</span> &nbsp; Date: ______________</div>
-  </div>
-</div>
+
 
 <div class="pagebreak"></div>
 
 <h2>Annexure A &mdash; Third-Party Fees (Excluded from Monthly Application Fee)</h2>
-<p contenteditable="true">The following third-party service fees are required to operate the App and are excluded from the
+<p contenteditable="false">The following third-party service fees are required to operate the App and are excluded from the
 monthly application fee. They are billed at cost to the Client (or may be paid by the Client directly to the
 provider). Estimates below are indicative as at September 2026; actual amounts depend on provider pricing and usage.</p>
 <table class="cost-table">
@@ -395,52 +500,52 @@ provider). Estimates below are indicative as at September 2026; actual amounts d
   </thead>
   <tbody>
     <tr>
-      <td contenteditable="true">Domain</td>
-      <td contenteditable="true">Website address registration</td>
-      <td contenteditable="true">Annual</td>
-      <td contenteditable="true">R 100</td>
-      <td contenteditable="true">R 250</td>
-      <td contenteditable="true">Required</td>
-      <td contenteditable="true">Approximately R100 per year</td>
+      <td contenteditable="false">Domain</td>
+      <td contenteditable="false">Website address registration</td>
+      <td contenteditable="false">Annual</td>
+      <td contenteditable="false">R 100 .co.za</td>
+      <td contenteditable="false">R 250 .com</td>
+      <td contenteditable="false">Required</td>
+      <td contenteditable="false">Approximately R100 per year</td>
     </tr>
     <tr>
-      <td contenteditable="true">Supabase Pro</td>
-      <td contenteditable="true">Database and backend hosting</td>
-      <td contenteditable="true">Monthly</td>
-      <td contenteditable="true">R 450</td>
-      <td contenteditable="true">R 450</td>
-      <td contenteditable="true">Standard plan</td>
-      <td contenteditable="true">Free tier may be used for the minimum setup</td>
+      <td contenteditable="false">Supabase Pro</td>
+      <td contenteditable="false">Database and backend hosting</td>
+      <td contenteditable="false">Monthly</td>
+      <td contenteditable="false">R 450</td>
+      <td contenteditable="false">R 450</td>
+      <td contenteditable="false">Standard plan</td>
+      <td contenteditable="false">Free tier may be used for the minimum setup</td>
     </tr>
     <tr>
-      <td contenteditable="true">Vercel Pro</td>
-      <td contenteditable="true">Application hosting and deployment</td>
-      <td contenteditable="true">Monthly</td>
-      <td contenteditable="true">R 360</td>
-      <td contenteditable="true">R 360</td>
-      <td contenteditable="true">Standard plan</td>
-      <td contenteditable="true">Free tier may be used for the minimum setup</td>
+      <td contenteditable="false">Vercel Pro</td>
+      <td contenteditable="false">Application hosting and deployment</td>
+      <td contenteditable="false">Monthly</td>
+      <td contenteditable="false">R 360</td>
+      <td contenteditable="false">R 360</td>
+      <td contenteditable="false">Standard plan</td>
+      <td contenteditable="false">Free tier may be used for the minimum setup</td>
     </tr>
     <tr>
-      <td contenteditable="true">OpenAI usage</td>
-      <td contenteditable="true">AI processing and API usage</td>
-      <td contenteditable="true">Monthly</td>
-      <td contenteditable="true">R 250</td>
-      <td contenteditable="true">R 500</td>
-      <td contenteditable="true">Usage-based</td>
-      <td contenteditable="true">Varies according to request volume</td>
+      <td contenteditable="false">OpenAI usage</td>
+      <td contenteditable="false">AI processing and API usage</td>
+      <td contenteditable="false">Monthly</td>
+      <td contenteditable="false">R 500</td>
+      <td contenteditable="false">R 2500</td>
+      <td contenteditable="false">Usage-based</td>
+      <td contenteditable="false">Varies according to request volume</td>
     </tr>
   </tbody>
   <tfoot>
-    <tr><td colspan="3">Indicative total</td><td>R 1,060</td><td>R 1,310</td><td colspan="2">per month (plus the annual domain fee)</td></tr>
+    <tr><td colspan="3">Indicative total</td><td>R 1, 410</td><td>R 3,560</td><td colspan="2">per month (plus the annual domain fee)</td></tr>
   </tfoot>
 </table>
-<p class="muted" contenteditable="true">Indicative total: &plusmn;R 1 060&ndash;R 1 310 per month plus the annual domain fee,
+<p class="muted" contenteditable="false">Indicative total: &plusmn;R 1 410&ndash;R 3 560 per month plus the annual domain fee,
 depending on usage. Provider prices may change; usage overages (storage, bandwidth, active users, AI tokens)
 are for the Client's account. Free tiers may be used where suitable during low-usage periods, reducing these
 amounts.</p>
 
-<div class="footer" contenteditable="true">Quotation Q-2026-0091 &middot; African Code Academy (Pty) Ltd &middot; Confidential</div>
+<div class="footer" contenteditable="false">Quotation QEUR001 &middot; African Code Academy (Pty) Ltd &middot; Confidential</div>
 
 </div>
 <script>
@@ -508,14 +613,14 @@ amounts.</p>
       el.childNodes.forEach(function (n) {
         if (n.nodeType === 3 && n.textContent.trim()) {
           var wrap = document.createElement('span');
-          wrap.setAttribute('contenteditable', 'true');
+          wrap.setAttribute('contenteditable', 'false');
           n.parentNode.insertBefore(wrap, n);
           wrap.appendChild(n);
         }
       });
       return;
     }
-    el.setAttribute('contenteditable', 'true');
+    el.setAttribute('contenteditable', 'false');
   });
 
   // ---- Removed-line handling: emptied lines collapse, content moves up ----
@@ -542,30 +647,30 @@ amounts.</p>
   }
 
   // Remember the last non-empty content of each line so it can be restored.
-  document.querySelectorAll('[contenteditable="true"]').forEach(function (el) {
+  document.querySelectorAll('[contenteditable="false"]').forEach(function (el) {
     if (!isBlank(el)) el.dataset.lastContent = el.innerHTML;
   });
 
   document.addEventListener('input', function (e) {
     var el = e.target;
-    if (!(el instanceof Element) || el.getAttribute('contenteditable') !== 'true') return;
+    if (!(el instanceof Element) || el.getAttribute('contenteditable') !== 'false') return;
     if (!isBlank(el)) el.dataset.lastContent = el.innerHTML;
     updateEmptyState(el);
   });
 
   document.addEventListener('blur', function (e) {
     var el = e.target;
-    if (!(el instanceof Element) || el.getAttribute('contenteditable') !== 'true') return;
+    if (!(el instanceof Element) || el.getAttribute('contenteditable') !== 'false') return;
     setTimeout(function () { updateEmptyState(el); }, 0);
-  }, true);
+  }, false);
 
   var restoreBtn = document.getElementById('restoreLines');
   if (restoreBtn) restoreBtn.addEventListener('click', function () {
     document.querySelectorAll('.is-empty, .row-hidden').forEach(function (node) {
       node.classList.remove('is-empty', 'row-hidden');
-      var targets = node.matches('[contenteditable="true"]')
+      var targets = node.matches('[contenteditable="false"]')
         ? [node]
-        : Array.prototype.slice.call(node.querySelectorAll('[contenteditable="true"]'));
+        : Array.prototype.slice.call(node.querySelectorAll('[contenteditable="false"]'));
       targets.forEach(function (el) {
         if (isBlank(el) && el.dataset.lastContent) el.innerHTML = el.dataset.lastContent;
         el.classList.remove('is-empty');
