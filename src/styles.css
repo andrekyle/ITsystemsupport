@@ -9243,6 +9243,32 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 .notif-foot { width: 100%; justify-content: center; padding: 10px 14px; }
 
+/* phones: the bell sits mid-header, so an anchored dropdown runs off the
+   left edge - pin it under the header across the full width instead */
+@media (max-width: 640px) {
+  .notif-menu {
+    position: fixed;
+    top: calc(var(--header-h) + 6px);
+    left: 10px;
+    right: 10px;
+    min-width: 0;
+    max-width: none;
+    max-height: calc(100dvh - var(--header-h) - 24px);
+    overflow-y: auto;
+    z-index: 80;
+  }
+  .notif-item {
+    padding: 12px 14px;
+  }
+  .notif-item-title {
+    font-size: 14px;
+  }
+  .notif-item-preview {
+    font-size: 13px;
+    max-width: none;
+  }
+}
+
 /* ---------- Memories — class photo wall & slideshow ---------- */
 .mem-actions {
   display: flex;
