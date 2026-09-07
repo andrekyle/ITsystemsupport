@@ -15,6 +15,7 @@ import { fetchCloudLearnerData, type CloudLearnerData } from "../lib/directory";
 import { mailtoLink, outlookComposeLink, teamsChatLink } from "../lib/integrations";
 import { Avatar } from "../components/Avatar";
 import { cloudEnabled } from "../lib/supabase";
+import { autoGrowTextarea } from "../lib/autoGrow";
 
 const fmtWhen = (iso: string) => {
   const d = new Date(iso);
@@ -204,7 +205,13 @@ function Announcements({
           </div>
           <div className="field">
             <label>Message</label>
-            <textarea rows={3} value={body} onChange={(e) => setBody(e.target.value)} />
+            <textarea
+              ref={(el) => autoGrowTextarea(el)}
+              rows={3}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              onInput={(e) => autoGrowTextarea(e.currentTarget)}
+            />
           </div>
           <button className="btn sm" onClick={submit} disabled={!title.trim() || !body.trim()}>
             <Icon name="bell" size={15} /> Publish to everyone
@@ -363,7 +370,13 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
           </div>
           <div className="field">
             <label>Details (optional)</label>
-            <textarea rows={3} value={body} onChange={(e) => setBody(e.target.value)} />
+            <textarea
+              ref={(el) => autoGrowTextarea(el)}
+              rows={3}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              onInput={(e) => autoGrowTextarea(e.currentTarget)}
+            />
           </div>
           <div className="field">
             <label>Related unit standard (optional)</label>
@@ -485,7 +498,13 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
               </div>
               <div className="field">
                 <label>Details (optional)</label>
-                <textarea rows={3} value={editBody} onChange={(e) => setEditBody(e.target.value)} />
+                <textarea
+                  ref={(el) => autoGrowTextarea(el)}
+                  rows={3}
+                  value={editBody}
+                  onChange={(e) => setEditBody(e.target.value)}
+                  onInput={(e) => autoGrowTextarea(e.currentTarget)}
+                />
               </div>
               <div className="field">
                 <label>Related unit standard (optional)</label>

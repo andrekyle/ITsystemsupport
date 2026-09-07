@@ -17,6 +17,7 @@ import { AlertModal, ConfirmModal, Modal } from "../components/Modal";
 import { supabase } from "../lib/supabase";
 import { logAudit } from "../lib/audit";
 import { ensureNotifyPermission } from "../lib/notify";
+import { autoGrowTextarea } from "../lib/autoGrow";
 
 /**
  * Direct messages: 1-to-1 chat between any two people on the course.
@@ -318,11 +319,13 @@ function BroadcastModal({
         cloud account. Each learner sees it in their own conversation with you.
       </p>
       <textarea
+        ref={(el) => autoGrowTextarea(el)}
         rows={5}
         value={text}
         onChange={(e) => setText(e.target.value)}
+        onInput={(e) => autoGrowTextarea(e.currentTarget)}
         placeholder="Write a message to the class…"
-        style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--ink)", fontFamily: "inherit", fontSize: 13.5, resize: "vertical" }}
+        style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--ink)", fontFamily: "inherit", fontSize: 13.5, resize: "none", overflowY: "hidden" }}
         autoFocus
       />
     </Modal>
@@ -626,6 +629,12 @@ function ChatThread({
   const scrollRef = useRef<HTMLDivElement | null>(null);
   /** which conversation the initial jump-to-newest has already run for */
   const jumpedRef = useRef<string | null>(null);
+  const composeRef = useRef<HTMLTextAreaElement | null>(null);
+  // Re-fit the box when the text changes programmatically (cleared after
+  // send) — typing itself is already handled by the textarea's onInput.
+  useEffect(() => {
+    autoGrowTextarea(composeRef.current, 120);
+  }, [text]);
 
   useEffect(() => {
     // Jump (no animation) to the newest message once, when a conversation is
@@ -709,9 +718,11 @@ function ChatThread({
       </div>
       <div className="chat-compose">
         <textarea
+          ref={composeRef}
           placeholder={canSend ? "Write a message…" : "Waiting for the recipient to activate their account…"}
           value={text}
           onChange={(e) => setText(e.target.value)}
+          onInput={(e) => autoGrowTextarea(e.currentTarget, 120)}
           rows={2}
           disabled={!canSend}
           onKeyDown={(e) => {
@@ -817,12 +828,13 @@ function ChatBubble({
   useEffect(() => {
     if (editing) {
       setDraft(msg.body);
-      // focus + move caret to end after render
+      // focus + move caret to end, and fit the box to the restored draft
       requestAnimationFrame(() => {
         const el = textareaRef.current;
         if (el) {
           el.focus();
           el.selectionStart = el.selectionEnd = el.value.length;
+          autoGrowTextarea(el);
         }
       });
     }
@@ -865,9 +877,13 @@ function ChatBubble({
         {editing ? (
           <div className="chat-bubble-edit">
             <textarea
-              ref={textareaRef}
+              ref={(el) => {
+                textareaRef.current = el;
+                autoGrowTextarea(el);
+              }}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
+              onInput={(e) => autoGrowTextarea(e.currentTarget)}
               rows={Math.min(6, Math.max(2, draft.split("\n").length))}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, RegistrationForm, Route } from "../types";
 import { updateProfile } from "../store";
+import { autoGrowTextarea } from "../lib/autoGrow";
 
 /**
  * Eruditio Student Registration Form — laid out to match the paper form
@@ -344,16 +345,20 @@ function StudentRegistrationForm({
               <td className="srf-cell">
                 <textarea
                   className="srf-input srf-textarea"
+                  ref={(el) => autoGrowTextarea(el)}
                   value={form.physicalAddress}
                   onChange={(e) => set("physicalAddress", e.target.value)}
+                  onInput={(e) => autoGrowTextarea(e.currentTarget)}
                 />
               </td>
               <TL>Postal Address</TL>
               <td className="srf-cell">
                 <textarea
                   className="srf-input srf-textarea"
+                  ref={(el) => autoGrowTextarea(el)}
                   value={form.postalAddress}
                   onChange={(e) => set("postalAddress", e.target.value)}
+                  onInput={(e) => autoGrowTextarea(e.currentTarget)}
                 />
               </td>
             </tr>

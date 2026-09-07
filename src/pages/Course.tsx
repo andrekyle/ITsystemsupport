@@ -18,6 +18,7 @@ import { fileToImageDataUrl } from "../components/Avatar";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 import { requestSemanticReview } from "../lib/llm";
 import { checkSpelling, type SpellIssue } from "../lib/spellcheck";
+import { autoGrowTextarea } from "../lib/autoGrow";
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
 
@@ -1032,16 +1033,6 @@ function joinParts(parts: string[]): string {
     .map((p) => p.trim())
     .filter((p) => p.length > 0)
     .join("\n");
-}
-
-/** Grows a textarea to fit its content so the full answer is always visible.
- *  Mobile browsers largely ignore CSS `resize` handles (there is no mouse to
- *  drag), so without this the box stays at its tiny initial height and the
- *  learner's own text gets clipped — this replaces manual resizing entirely. */
-function autoGrowTextarea(el: HTMLTextAreaElement | null): void {
-  if (!el) return;
-  el.style.height = "auto";
-  el.style.height = `${el.scrollHeight}px`;
 }
 
 /** Typed answer block under an exercise question: the learner's answer is checked

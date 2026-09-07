@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { LogbookChecklistRow, LogbookSpec, PoeDoc } from "../types";
 import { deleteFile, downloadDoc, uploadFile, userPrefix } from "../lib/files";
+import { autoGrowTextarea } from "../lib/autoGrow";
 import { ConfirmModal } from "./Modal";
 
 function fmtSize(bytes: number) {
@@ -164,8 +165,10 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
       <span className="muted">{label}</span>
       <textarea
         className="lb-textarea"
+        ref={(el) => autoGrowTextarea(el)}
         value={(values[k] as string) ?? ""}
         onChange={(e) => onChange(k, e.target.value)}
+        onInput={(e) => autoGrowTextarea(e.currentTarget)}
       />
     </div>
   );
@@ -182,9 +185,11 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
   const multiline = (k: string) => (
     <textarea
       className="lb-textarea lb-cellarea"
+      ref={(el) => autoGrowTextarea(el)}
       rows={3}
       value={(values[k] as string) ?? ""}
       onChange={(e) => onChange(k, e.target.value)}
+      onInput={(e) => autoGrowTextarea(e.currentTarget)}
     />
   );
   const dateField = (k: string) => {

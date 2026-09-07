@@ -1522,7 +1522,8 @@ td .with-ico .ico {
 }
 
 .field textarea {
-  resize: vertical;
+  resize: none;
+  overflow-y: hidden;
 }
 
 .btn {
@@ -2563,7 +2564,8 @@ textarea:focus {
 .srf-input:focus { background: #fff8d8; }
 .srf-textarea {
   min-height: 40px;
-  resize: vertical;
+  resize: none;
+  overflow-y: hidden;
   padding: 3px 5px;
   font: inherit;
 }
@@ -3190,7 +3192,8 @@ table.data.kv tr:last-child td {
   font-size: 13.5px;
   color: var(--typed-ink);
   outline: none;
-  resize: vertical;
+  resize: none;
+  overflow-y: hidden;
   margin-top: 6px;
 }
 
@@ -9006,7 +9009,8 @@ table.data th.sortable.sorted { color: var(--ink); }
   font: inherit;
   color: var(--ink);
   background: var(--surface);
-  resize: vertical;
+  resize: none;
+  overflow-y: hidden;
 }
 .chat-bubble-edit-actions {
   display: flex;
