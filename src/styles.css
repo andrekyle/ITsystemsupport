@@ -10395,6 +10395,34 @@ table.data th.sortable.sorted { color: var(--ink); }
   .poe-table .poe-doc {
     justify-content: flex-start; /* desktop right-aligns; stacked cards read left */
   }
+  /* multi-file items: the add-another button and progress bar align left too */
+  .poe-table .poe-doc.multi .poe-upload,
+  .poe-table .poe-doc.multi .upload-progress {
+    align-self: flex-start;
+  }
+  /* assessor verdict chip (and its note) drops to its own line under the
+     item name instead of cramming beside it */
+  .poe-review-line {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 4px 0 0;
+  }
+  .poe-review-line .mini-note {
+    flex-basis: 100%;
+  }
+  .poe-review-actions {
+    flex-wrap: wrap;
+  }
+  /* file lines: name+meta flex and truncate instead of tangling with the
+     download/remove buttons */
+  .poe-doc-line .fileinfo {
+    flex: 1;
+    min-width: 0;
+  }
+  .poe-doc-line .poe-file {
+    display: block;
+    overflow-wrap: anywhere;
+  }
 }
 
 /* POE viewer picker on phones: wrap instead of pushing the avatar out of
