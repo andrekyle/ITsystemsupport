@@ -73,7 +73,8 @@ body {
 }
 
 body {
-  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, system-ui, sans-serif;
+  /* WhatsApp's font stack, app-wide */
+  font-family: "Segoe UI", "Helvetica Neue", Helvetica, "Lucida Grande", Arial, Ubuntu, Cantarell, "Fira Sans", sans-serif;
   color: var(--ink);
   background: var(--surface);
   -webkit-font-smoothing: antialiased;
