@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, Fragment } from "react";
 import { Icon } from "../icons";
 import type { Profile, Route } from "../types";
 import { isStaff } from "../types";
@@ -744,73 +744,79 @@ function ChatThread({
             No messages yet — say hello.
           </p>
         ) : (
-          messages.map((m) => {
+          messages.map((m, i) => {
             // Auth uid is the canonical sender identity. The map indexes cloud
             // profiles by BOTH auth uid AND profile id, so this single lookup
             // always finds the sender if we have their cloud record.
             const sender =
               peopleByAny.get(m.bySenderAuthId) ?? peopleByAny.get(m.byId) ?? other;
+            const newDay = i === 0 || dayKey(messages[i - 1].at) !== dayKey(m.at);
             return (
-              <ChatBubble
-                key={m.id}
-                msg={m}
-                me={me}
-                sender={sender}
-                onEdit={edit}
-                onReact={react}
-                onOpenProfile={onOpenProfile}
-                selected={selectedMsgId === m.id}
-                onToggleSelect={() => setSelectedMsgId((p) => (p === m.id ? null : m.id))}
-              />
+              <Fragment key={m.id}>
+                {newDay && <div className="chat-day-chip">{fmtDayChip(m.at)}</div>}
+                <ChatBubble
+                  msg={m}
+                  me={me}
+                  sender={sender}
+                  onEdit={edit}
+                  onReact={react}
+                  onOpenProfile={onOpenProfile}
+                  selected={selectedMsgId === m.id}
+                  onToggleSelect={() => setSelectedMsgId((p) => (p === m.id ? null : m.id))}
+                />
+              </Fragment>
             );
           })
         )}
       </div>
       <div className="chat-compose">
-        <div className="chat-emoji-wrap" ref={emojiWrapRef}>
-          <button
-            type="button"
-            className="chat-emoji-btn"
+        <div className="chat-compose-pill">
+          <div className="chat-emoji-wrap" ref={emojiWrapRef}>
+            <button
+              type="button"
+              className="chat-emoji-btn"
+              disabled={!canSend}
+              aria-label="Insert an emoji"
+              aria-expanded={emojiOpen}
+              title="Insert an emoji"
+              onClick={() => setEmojiOpen((v) => !v)}
+            >
+              <Icon name="smile" size={26} strokeWidth={1.5} />
+            </button>
+            {emojiOpen && (
+              <div className="chat-emoji-pop" role="menu" aria-label="Emojis">
+                {COMPOSER_EMOJIS.map((e) => (
+                  <button
+                    key={e}
+                    type="button"
+                    className="chat-emoji-item"
+                    onClick={() => insertEmoji(e)}
+                  >
+                    {e}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <textarea
+            ref={composeRef}
+            placeholder={canSend ? "Type a message" : "Waiting for the recipient to activate their account…"}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onInput={(e) => autoGrowTextarea(e.currentTarget, 120)}
+            rows={1}
             disabled={!canSend}
-            aria-label="Insert an emoji"
-            aria-expanded={emojiOpen}
-            title="Insert an emoji"
-            onClick={() => setEmojiOpen((v) => !v)}
+          />
+          <button
+            className="btn ghost sm"
+            onClick={submit}
+            disabled={!text.trim() || !canSend}
+            title={canSend ? "Send" : "Waiting for the recipient's cloud account"}
+            aria-label="Send"
           >
-            <Icon name="smile" size={26} strokeWidth={1.5} />
+            <Icon name="chevronRight" size={16} /> Send
           </button>
-          {emojiOpen && (
-            <div className="chat-emoji-pop" role="menu" aria-label="Emojis">
-              {COMPOSER_EMOJIS.map((e) => (
-                <button
-                  key={e}
-                  type="button"
-                  className="chat-emoji-item"
-                  onClick={() => insertEmoji(e)}
-                >
-                  {e}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
-        <textarea
-          ref={composeRef}
-          placeholder={canSend ? "Write a message…" : "Waiting for the recipient to activate their account…"}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onInput={(e) => autoGrowTextarea(e.currentTarget, 120)}
-          rows={1}
-          disabled={!canSend}
-        />
-        <button
-          className="btn ghost sm"
-          onClick={submit}
-          disabled={!text.trim() || !canSend}
-          title={canSend ? undefined : "Waiting for the recipient's cloud account"}
-        >
-          <Icon name="chevronRight" size={16} /> Send
-        </button>
       </div>
     </>
   );
@@ -863,9 +869,15 @@ function MonitorThread({
         </span>
       </header>
       <div className="chat-messages" ref={scrollRef}>
-        {thread.messages.map((m) => {
+        {thread.messages.map((m, i) => {
           const sender = peopleByAny.get(m.bySenderAuthId) ?? peopleByAny.get(m.byId);
-          return <ChatBubble key={m.id} msg={m} me={me} sender={sender} onEdit={noEdit} onOpenProfile={onOpenProfile} />;
+          const newDay = i === 0 || dayKey(thread.messages[i - 1].at) !== dayKey(m.at);
+          return (
+            <Fragment key={m.id}>
+              {newDay && <div className="chat-day-chip">{fmtDayChip(m.at)}</div>}
+              <ChatBubble msg={m} me={me} sender={sender} onEdit={noEdit} onOpenProfile={onOpenProfile} />
+            </Fragment>
+          );
         })}
       </div>
     </>
@@ -1018,7 +1030,7 @@ function ChatBubble({
             <div className="chat-bubble-body">{msg.body}</div>
             <div className="chat-bubble-at mini-note">
               <span className="chat-at-text">
-                {fmtWhen(msg.at)}
+                {fmtBubbleTime(msg.at)}
                 {msg.editedAt && <span title={`Edited ${fmtWhen(msg.editedAt)}`}> · edited</span>}
               </span>
               {mine && (
@@ -1113,4 +1125,29 @@ function fmtListWhen(iso: string): string {
   if (dayDiff === 1) return "Yesterday";
   if (dayDiff < 7) return d.toLocaleDateString(undefined, { weekday: "long" });
   return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+}
+
+/** In-bubble timestamp — WhatsApp shows only the time (the day chip gives the date). */
+function fmtBubbleTime(iso: string): string {
+  return new Date(iso)
+    .toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+    .toLowerCase();
+}
+
+/** Calendar-day grouping key for the date-divider chips. */
+function dayKey(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+/** Label on a date-divider chip: Today / Yesterday / weekday / full date. */
+function fmtDayChip(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const dayDiff = Math.round((startOfDay(now) - startOfDay(d)) / 86400000);
+  if (dayDiff <= 0) return "Today";
+  if (dayDiff === 1) return "Yesterday";
+  if (dayDiff < 7) return d.toLocaleDateString(undefined, { weekday: "long" });
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
 }

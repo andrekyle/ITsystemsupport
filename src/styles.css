@@ -8992,6 +8992,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   align-items: center;
   padding: 12px 16px;
   border-bottom: 1px solid var(--table-line);
+  background: var(--surface);
 }
 /* clickable person identity (avatar + name) — opens their profile */
 .chat-head-person {
@@ -9045,8 +9046,9 @@ table.data th.sortable.sorted { color: var(--ink); }
   flex-direction: column;
   gap: 10px;
 }
-/* light mode: WhatsApp wallpaper — beige base with faint tech-hardware doodles */
-:root:not([data-theme="dark"]) .chat-messages {
+/* light mode: WhatsApp wallpaper — beige base with faint tech-hardware doodles.
+   Painted on the whole conversation pane so the composer floats on it too. */
+:root:not([data-theme="dark"]) .chat-main {
   background-color: #efeae2;
   background-image: url("/chat-wallpaper-light.svg");
   background-size: 420px 420px;
@@ -9065,7 +9067,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   color: #4b6152;
 }
 /* dark mode: same doodle wallpaper on WhatsApp's near-black canvas */
-[data-theme="dark"] .chat-messages {
+[data-theme="dark"] .chat-main {
   background-color: #0b141a;
   background-image: url("/chat-wallpaper-dark.svg");
   background-size: 420px 420px;
@@ -9081,7 +9083,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   width: fit-content;
   max-width: 85%;
   padding: 8px 12px;
-  border-radius: 16px;
+  border-radius: 8px;
   background: var(--surface-2);
   color: var(--ink);
   /* WhatsApp message typography */
@@ -9089,6 +9091,57 @@ table.data th.sortable.sorted { color: var(--ink); }
   font-size: 14.2px;
   font-weight: 400;
   line-height: 19px;
+}
+/* WhatsApp tail: a little corner nub on the first bubble of each group */
+.chat-bubble::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 13px;
+  background: inherit;
+}
+.chat-bubble:not(.mine) {
+  border-top-left-radius: 0;
+}
+.chat-bubble:not(.mine)::before {
+  left: -8px;
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
+}
+.chat-bubble.mine {
+  border-top-right-radius: 0;
+}
+.chat-bubble.mine::before {
+  right: -8px;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+/* consecutive bubbles from the same side: no tail, restore the rounded corner */
+.chat-bubble-row.mine + .chat-bubble-row.mine .chat-bubble::before,
+.chat-bubble-row:not(.mine) + .chat-bubble-row:not(.mine) .chat-bubble::before {
+  display: none;
+}
+.chat-bubble-row.mine + .chat-bubble-row.mine .chat-bubble.mine {
+  border-top-right-radius: 8px;
+}
+.chat-bubble-row:not(.mine) + .chat-bubble-row:not(.mine) .chat-bubble:not(.mine) {
+  border-top-left-radius: 8px;
+}
+/* WhatsApp date divider — a centred floating chip (“Today”, “Yesterday”…) */
+.chat-day-chip {
+  align-self: center;
+  flex: 0 0 auto;
+  background: var(--surface);
+  color: var(--ink-3);
+  font-size: 12.5px;
+  line-height: 1;
+  padding: 6px 12px;
+  border-radius: 8px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+  margin: 4px 0;
+}
+[data-theme="dark"] .chat-day-chip {
+  background: #182229;
+  color: #8696a0;
 }
 /* the row spans the whole line so the bubble's percentage cap is measured
    against the screen, not against a shrink-wrapped row - text then flows
@@ -9289,8 +9342,47 @@ table.data th.sortable.sorted { color: var(--ink); }
   display: flex;
   gap: 8px;
   align-items: flex-end;
-  padding: 10px 12px;
-  border-top: 1px solid var(--table-line);
+  padding: 10px 14px;
+  border-top: 0;
+}
+/* WhatsApp Web: one white pill holds the smiley, the input and the send arrow */
+.chat-compose-pill {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: flex-end;
+  gap: 2px;
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 3px 5px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+@media (min-width: 861px) {
+  /* round icon-only send arrow inside the pill */
+  .chat-compose .btn.ghost.sm {
+    width: 42px;
+    height: 42px;
+    min-height: 42px;
+    padding: 0;
+    border-radius: 50%;
+    justify-content: center;
+    font-size: 0;
+    gap: 0;
+    color: var(--ink-2);
+    align-self: flex-end;
+    flex: 0 0 auto;
+  }
+  .chat-compose .btn.ghost.sm svg {
+    width: 21px;
+    height: 21px;
+  }
+  .chat-compose .btn.ghost.sm:hover:not(:disabled) {
+    color: var(--azure);
+    background: var(--surface-2);
+  }
+  .chat-compose .btn.ghost.sm:disabled {
+    opacity: 0.4;
+  }
 }
 /* WhatsApp-style emoji button on the left of the composer */
 .chat-emoji-wrap {
@@ -9380,15 +9472,15 @@ table.data th.sortable.sorted { color: var(--ink); }
   max-height: 120px;
   resize: none;
   overflow-y: hidden;
-  border: 1px solid var(--border-2);
+  border: 0;
   border-radius: var(--radius);
-  padding: 8px 10px;
+  padding: 9px 10px;
   font-family: inherit;
   font-size: 17px;
   line-height: 24px;
-  background: var(--surface);
+  background: transparent;
   color: var(--ink);
-  outline-color: var(--azure);
+  outline: none;
 }
 @media (max-width: 900px) {
   .chat-layout { grid-template-columns: 1fr; height: auto; }
@@ -10461,11 +10553,17 @@ table.data th.sortable.sorted { color: var(--ink); }
     height: calc(100dvh - var(--header-h) - 40px);
   }
 
-  .chat-side.card,
-  .chat-main.card {
+  .chat-side.card {
     border: 0;
     border-radius: 0;
     background: transparent;
+    padding: 0;
+    box-shadow: none;
+  }
+  /* the conversation pane keeps its wallpaper — only the card chrome goes */
+  .chat-main.card {
+    border: 0;
+    border-radius: 0;
     padding: 0;
     box-shadow: none;
   }
@@ -10480,6 +10578,15 @@ table.data th.sortable.sorted { color: var(--ink); }
   .chat-compose {
     border-top: 0;
     padding: 6px 10px 10px;
+  }
+
+  /* phones keep the standalone pill textarea + round send — the wrapper goes flat */
+  .chat-compose-pill {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    gap: 8px;
+    border-radius: 0;
   }
 
   .chat-compose textarea {
