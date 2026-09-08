@@ -9182,6 +9182,13 @@ table.data th.sortable.sorted { color: var(--ink); }
 .chat-head-person:hover strong {
   color: var(--azure);
 }
+/* right-aligned role label in the thread header */
+.chat-head-role {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
 .chat-avatar-link {
   cursor: pointer;
 }

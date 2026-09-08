@@ -721,7 +721,7 @@ function ChatThread({
         >
           {other && (
             <span className="chat-avatar">
-              <Avatar profile={other} size={30} />
+              <Avatar profile={other} size={42} />
               {otherOnline && <span className="presence-dot" title="Online now" />}
             </span>
           )}
@@ -738,6 +738,7 @@ function ChatThread({
             </div>
           </span>
         </button>
+        <span className="chat-head-role">{other?.role ?? ""}</span>
       </header>
       <div
         className="chat-messages"
