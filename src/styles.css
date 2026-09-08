@@ -1891,7 +1891,7 @@ textarea:focus {
 }
 
 .task-label {
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -2532,7 +2532,7 @@ textarea:focus {
   align-items: center;
   gap: 12px;
   padding: 8px 0;
-  font-size: 13.5px;
+  font-size: 16px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -3023,9 +3023,13 @@ textarea:focus {
 
 .attempt-row .dt {
   color: var(--ink-3);
-  font-size: 12.5px;
+  font-size: 14.5px;
   text-align: right;
   white-space: nowrap;
+}
+
+.attempt-row .chip {
+  font-size: 14px;
 }
 
 /* academic record rows — stacked by default; on wide cards a table-like grid:
@@ -3082,7 +3086,7 @@ textarea:focus {
 
 @container (min-width: 640px) {
   .attempt-row.acad {
-    grid-template-columns: 20px minmax(0, 1fr) 122px 100px 152px;
+    grid-template-columns: 20px minmax(0, 1fr) 138px 112px 178px;
   }
 
   .attempt-row.acad .cell,
@@ -8296,6 +8300,14 @@ input.att-sig {
 table.data.compliance-table th {
   font-size: 11px;
   white-space: nowrap;
+}
+
+/* assessment outcomes: bigger, easier-to-read rows */
+table.data.outcome-table {
+  font-size: 16px;
+}
+table.data.outcome-table th {
+  font-size: 13px;
 }
 
 /* subtle row + column separator lines */

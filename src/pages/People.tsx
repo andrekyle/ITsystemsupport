@@ -2670,7 +2670,7 @@ function OutcomesPanel({
         Assessment outcomes — {recorded} recorded, {competent} competent
       </h2>
       <div className="card" style={{ overflowX: "auto" }}>
-        <p className="muted" style={{ margin: "0 0 10px" }}>
+        <p className="muted" style={{ margin: "0 0 10px", fontSize: 15 }}>
           Record the formal assessor decision per unit standard. Learners see their outcome on the
           Compliance page; outcomes feed the statement of results and certification checks.
         </p>
