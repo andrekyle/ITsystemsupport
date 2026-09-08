@@ -6,8 +6,6 @@ import { MODULES } from "../data/course";
 import { loadProfiles, useChatThreads } from "../store";
 import { notifyIncoming, syncUnreadBadge } from "../lib/notify";
 import { Avatar, fileToAvatar } from "./Avatar";
-import { isInstalled, installHelpMessage, onInstallChange, promptInstall } from "../lib/install";
-import { AlertModal } from "./Modal";
 
 /** Session schedule derived from the US 8252 lesson plan (starts 09:00). */
 const PLAN = getContent("8252")?.lessonPlan;
@@ -64,31 +62,6 @@ const ALL_SESSIONS = (() => {
 function fmtSession(d: Date): string {
   const day = d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
   return `${day}, ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
-
-/** Header entry point for installing the PWA — hidden once running installed. */
-function InstallButton() {
-  const [installed, setInstalled] = useState(isInstalled);
-  const [msg, setMsg] = useState<string | null>(null);
-  useEffect(() => onInstallChange(() => setInstalled(isInstalled())), []);
-  if (installed) return null;
-  return (
-    <>
-      <button
-        className="icon-btn install-btn"
-        title="Download the app — install ITSS Learn on this device"
-        aria-label="Download the app"
-        onClick={() =>
-          void promptInstall().then((shown) => {
-            if (!shown) setMsg(installHelpMessage());
-          })
-        }
-      >
-        <Icon name="download" size={19} />
-      </button>
-      {msg && <AlertModal message={msg} onClose={() => setMsg(null)} />}
-    </>
-  );
 }
 
 /** Live clock (real time) describing the current lesson-plan session — the session starts at 09:00. */
@@ -293,7 +266,6 @@ export function Header({
       </div>
       <SessionClock onOpenUnit={onOpenUnit} />
       <div className="header-right">
-        <InstallButton />
         <div className="notif-wrap" ref={notifRef}>
           <button
             className={`icon-btn${unreadCount > 0 ? " has-unread" : ""}`}
