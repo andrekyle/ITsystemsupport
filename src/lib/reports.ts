@@ -55,6 +55,13 @@ export const REPORT_KINDS: ReportKind[] = [
   },
 ];
 
+export const CUSTOM_KIND: ReportKind = {
+  id: "custom",
+  name: "Custom report",
+  desc: "Ask the AI anything about the programme — it answers with a full report grounded in the data.",
+  icon: "chat",
+};
+
 const pctStr = (v: number | null) => (v === null ? null : Math.round(v * 100));
 
 function learnerStat(r: LearnerRow) {
@@ -139,6 +146,13 @@ export function buildReportData(kind: string, rows: LearnerRow[], registers: num
       };
     case "outcomes":
       return { ...base, unitOutcomes: outcomesData(rows) };
+    case "custom":
+      // the question can be about anything, so send the full picture
+      return {
+        ...base,
+        learners: rows.map(learnerStat),
+        unitOutcomes: outcomesData(rows),
+      };
     case "executive":
       return {
         ...base,
@@ -166,12 +180,22 @@ export type ReportResult =
   | { ok: false; error: string };
 
 /** Ask the API to write the report. Records token usage under "REPORTS". */
-export async function requestReport(kind: ReportKind, data: unknown): Promise<ReportResult> {
+export async function requestReport(
+  kind: ReportKind,
+  data: unknown,
+  question?: string
+): Promise<ReportResult> {
   try {
     const r = await fetch("/api/generate-report", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ kind: kind.id, title: kind.name, data, model: loadMarkingModel() }),
+      body: JSON.stringify({
+        kind: kind.id,
+        title: kind.name,
+        data,
+        model: loadMarkingModel(),
+        ...(question?.trim() ? { question: question.trim() } : {}),
+      }),
     });
     if (!r.ok) return { ok: false, error: `http_${r.status}` };
     const payload = (await r.json()) as Partial<AiReport> & {
@@ -271,7 +295,8 @@ export function reportDocumentHtml(
   report: AiReport,
   rows: LearnerRow[],
   registers: number,
-  author: Profile
+  author: Profile,
+  question?: string
 ): string {
   const today = new Date().toLocaleDateString(undefined, {
     day: "numeric",
@@ -322,6 +347,7 @@ export function reportDocumentHtml(
 
   <div class="banner">
     <strong>${esc(kind.name)} — generated ${esc(today)}.</strong><br/>
+    ${question?.trim() ? `<em>Question asked: “${esc(question.trim())}”</em><br/>` : ""}
     ${esc(report.intro)}
     <span class="small">Written by the ITSS Learn AI reporting assistant from live platform data; reviewed by ${esc(author.name)}.</span>
   </div>
@@ -346,10 +372,11 @@ export function openReportDocument(
   report: AiReport,
   rows: LearnerRow[],
   registers: number,
-  author: Profile
+  author: Profile,
+  question?: string
 ) {
   const win = window.open("", "_blank");
   if (!win) return;
-  win.document.write(reportDocumentHtml(kind, report, rows, registers, author));
+  win.document.write(reportDocumentHtml(kind, report, rows, registers, author, question));
   win.document.close();
 }

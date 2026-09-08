@@ -10589,19 +10589,126 @@ table.data th.sortable.sorted { color: var(--ink); }
 
 /* ============ AI Reports (super user) ============ */
 
+.reports-ask {
+  max-width: 980px;
+  padding: 20px 22px;
+  margin-bottom: 26px;
+  border-color: var(--azure);
+  box-shadow: 0 2px 10px rgba(15, 108, 189, 0.08);
+}
+
+.reports-ask-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.reports-ask-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--azure-light);
+  color: var(--azure-darker);
+  flex-shrink: 0;
+}
+
+.reports-ask-title {
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.reports-ask-sub {
+  font-size: 14px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+
+.reports-q {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 15.5px;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 84px;
+}
+
+.reports-ask-foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.reports-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.reports-example {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  border-radius: 999px;
+  padding: 5px 13px;
+  font-size: 12.5px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.reports-example:hover {
+  border-color: var(--azure);
+  background: var(--azure-lighter);
+  color: var(--ink);
+}
+
+.reports-divider {
+  margin: 0 0 10px;
+}
+
 .reports-grid {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
 .report-kind {
   display: block;
+  position: relative;
+  padding: 18px 18px 16px;
 }
 
-.report-kind .ico {
+.report-kind-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--azure-light);
+  color: var(--azure-darker);
+  margin-bottom: 12px;
+}
+
+.report-kind-check {
+  position: absolute;
+  top: 14px;
+  right: 14px;
   display: inline-flex;
   color: var(--azure);
-  margin-bottom: 8px;
 }
 
 .report-kind .t {
@@ -10630,6 +10737,9 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 
 .reports-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--red);
   font-size: 14px;
 }
