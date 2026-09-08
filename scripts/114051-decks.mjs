@@ -18,7 +18,7 @@ export const DECKS = [
         type: "cover",
         pill: "US 114051 · SO 1 · NQF LEVEL 5 · 4 CREDITS",
         title: "Knowledge of Technical Practitioners Meetings",
-        subtitle: "What meetings are for, the types organisations hold, leadership styles, decision-making processes, resolutions and the conventions that keep meetings fair",
+        subtitle: "What meetings are for, the types companies hold, leadership styles, decision-making processes, resolutions and the conventions that keep meetings fair",
         icon: "people",
         meta: [
           ["TIME", "90-minute lessons · Self & Group"],
@@ -50,11 +50,11 @@ export const DECKS = [
         title: "What do we use meetings for?",
         y: 1.7,
         items: [
-          "Meetings are very important for the work of any organisation — good meetings support collective decision-making, planning and follow-up, accountability and democracy.",
-          "Used correctly, meetings help an organisation to be efficient. Used badly, they stop serving their purpose: too many long meetings that discuss the same thing over and over without moving forward.",
-          "Meetings can become places where conflict is played out — and some people see attending meetings as working for the organisation, instead of a tool for getting work done.",
+          "Meetings are very important for the work of any company — good meetings support collective decision-making, planning and follow-up, accountability and democracy.",
+          "Used correctly, meetings help a company to be efficient. Used badly, they stop serving their purpose: too many long meetings that discuss the same thing over and over without moving forward.",
+          "Meetings can become places where conflict is played out — and some people see attending meetings as working for the company, instead of a tool for getting work done.",
           "Aim for democratic, constructive participation and involvement from every member.",
-          "The principal activities of a technical committee are the development and maintenance of its standards, technical reports and data files, in accordance with the purpose of the organisation.",
+          "The principal activities of a technical committee are the development and maintenance of its standards, technical reports and data files, in accordance with the purpose of the company.",
         ],
       },
       {
@@ -65,15 +65,15 @@ export const DECKS = [
         items: [
           "Most people do not like attending meetings — especially when they are not sure what the purpose is, or when the meeting goes on too long and achieves too little.",
           "Meetings must not be too frequent or held just for the sake of it — there must be a need for a meeting.",
-          "Decide on the different types of meetings needed: some meetings discuss policy, others discuss organisation (practical work).",
+          "Decide on the different types of meetings needed: some meetings discuss policy, others discuss practical work.",
           "Wherever possible, members must know what type of meeting they are going to and what it is for — the PURPOSE of the meeting.",
-          "Sometimes an organisation calls a special or extraordinary meeting — planning should take account of the meeting type.",
+          "Sometimes a company calls a special or extraordinary meeting — planning should take account of the meeting type.",
         ],
       },
       {
         type: "cards",
         eyebrow: "Types of meetings",
-        title: "The meetings most organisations hold",
+        title: "The meetings most companies hold",
         cols: 2,
         rowH: 2.15,
         y: 1.7,
@@ -91,7 +91,7 @@ export const DECKS = [
         left: {
           label: "THE SECRETARY'S REPORT",
           items: [
-            "The plans of the organisation for the year",
+            "The plans of the company for the year",
             "The actual activities that took place",
             "The achievements of the year",
             "The problems experienced",
@@ -144,7 +144,7 @@ export const DECKS = [
         rowH: 3.0,
         y: 2.15,
         items: [
-          { icon: "people", text: "Democratic", d: "Held with appointed or nominated delegates from departments, organisations or areas. Delegates are given the information and all members have a voice in decision-making." },
+          { icon: "people", text: "Democratic", d: "Held with appointed or nominated delegates from departments, companies or areas. Delegates are given the information and all members have a voice in decision-making." },
           { icon: "person", text: "Autocratic", d: "Hosted and led by a chairperson who runs the entire meeting and gives most of the input. Attendees give input only when instructed." },
           { icon: "chat", text: "Facilitative", d: "A group effort — the leader sets a trend of ensuring all members actively participate in the meeting to achieve the outcome or goal." },
         ],
@@ -187,7 +187,7 @@ export const DECKS = [
         items: [
           "Show of hands: the chairperson calls for hands when opinions differ; votes are counted and the majority decides whether the proposal stands or falls away.",
           "Secret ballot: each person writes their support or objection on paper; votes are counted and the majority decides.",
-          "A proposal is usually put forward by one person, seconded by another, and then voted on — if the majority accept it, it becomes binding on the organisation.",
+          "A proposal is usually put forward by one person, seconded by another, and then voted on — if the majority accept it, it becomes binding on the company.",
           "It is usually better to reach consensus than to vote: consensus means compromises from everyone, but most people feel part of the decision.",
           "Sometimes a vote is necessary — for example in elections, or when the meeting cannot reach a decision through consensus.",
         ],
@@ -198,10 +198,10 @@ export const DECKS = [
         title: "Resolutions — formal decisions with three parts",
         y: 1.66,
         items: [
-          "Resolutions are formal proposals put to the meeting to agree or disagree with; if passed they become policy of the organisation. Each needs a proposer and a seconder.",
+          "Resolutions are formal proposals put to the meeting to agree or disagree with; if passed they become policy of the company. Each needs a proposer and a seconder.",
           "NOTING — list the main issues of concern: \u201cThe AGM, meeting on (date), notes the rapid increase in crime in this area and its devastating effects\u2026\u201d",
           "BELIEVING — list the points that show your understanding of the issue and its causes.",
-          "THEREFORE RESOLVES — list exactly what the organisation has decided to do or what its policy is on the issue.",
+          "THEREFORE RESOLVES — list exactly what the company has decided to do or what its policy is on the issue.",
           "Amendments must be accepted by everyone present; if not, a vote is held and the chairperson records those for, against and abstaining. If the majority support the amendment, the original section falls away.",
           "The chairperson and members must study the constitution so they know and understand all these procedures.",
         ],
@@ -308,7 +308,7 @@ export const DECKS = [
           { icon: "globe", text: "Venue selection", d: "Size and interactive capability affect the outcome: participants who must move between groups need the space for it. The venue must be accessible, and located where participants will not be distracted." },
           { icon: "folder", text: "Facilities", d: "Driven by the meeting type, the outcome required and the resources used. Where resources need extra facilities, arrange their availability in advance." },
           { icon: "dashboard", text: "Technology", d: "If delegates must work online, the venue needs internet access; any equipment participants must use has to be made available — and tested." },
-          { icon: "document", text: "Support information", d: "User guides and additional information gathered by the organisation must be readily available to the presenter and participants." },
+          { icon: "document", text: "Support information", d: "User guides and additional information gathered by the company must be readily available to the presenter and participants." },
         ],
       },
       {
@@ -433,7 +433,7 @@ export const DECKS = [
         y: 2.1,
         items: [
           { icon: "pen", text: "Establish rules", d: "The chair and members agree on rules and guidelines on behaviour." },
-          { icon: "check", text: "Apply conventions", d: "Agreed conventions applied throughout, per the standing procedures of the organisation." },
+          { icon: "check", text: "Apply conventions", d: "Agreed conventions applied throughout, per the standing procedures of the company." },
           { icon: "document", text: "Follow the agenda", d: "The published agenda is followed item by item." },
           { icon: "people", text: "Enable participation", d: "Active participation by all members to avoid or minimise conflict." },
           { icon: "clock", text: "Prioritise & time-box", d: "Topics prioritised; discussion time allocated by importance, urgency and complexity." },
@@ -591,7 +591,7 @@ export const DECKS = [
         type: "cover",
         pill: "US 114051 · SO 4 · NQF LEVEL 5 · 4 CREDITS",
         title: "Post-Meeting Follow-Up for a Technical Meeting",
-        subtitle: "Accurate minutes in line with organisational policy, decisions communicated on time — and an implementation stage that actually delivers",
+        subtitle: "Accurate minutes in line with company policy, decisions communicated on time — and an implementation stage that actually delivers",
         icon: "document",
         meta: [
           ["TIME", "90-minute lesson · Self & Group"],
@@ -609,8 +609,8 @@ export const DECKS = [
         rowH: 2.9,
         y: 2.1,
         items: [
-          { icon: "document", text: "Accurate minutes", d: "Minutes are produced accurately and in line with the policy of the organisation." },
-          { icon: "chat", text: "Decisions communicated", d: "Agreed records of discussion reach interested parties in the format and time frame the meeting type and organisation require." },
+          { icon: "document", text: "Accurate minutes", d: "Minutes are produced accurately and in line with the policy of the company." },
+          { icon: "chat", text: "Decisions communicated", d: "Agreed records of discussion reach interested parties in the format and time frame the meeting type and company require." },
           { icon: "check", text: "Actions summarised", d: "A summary of discussions and actions that meets format requirements." },
         ],
       },
@@ -709,7 +709,7 @@ export const DECKS = [
         items: [
           "A structured follow-up of the decisions made at the meeting — decisions stop getting lost on the way to implementation.",
           "Explicit awareness of task progress for every involved role — including management and affected outsiders.",
-          "Organisational memory: potentially valuable information is captured and can be consulted at any time, helping avoid recurrent mistakes.",
+          "Company memory: potentially valuable information is captured and can be consulted at any time, helping avoid recurrent mistakes.",
           "Easier identification of issues for the next cycle: unclear details of decisions just made and unsettled issues after tasks are done.",
           "Formal definition of responsibilities and expected results — with less meeting time spent on follow-up chores.",
         ],
