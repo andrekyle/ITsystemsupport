@@ -18,6 +18,7 @@ import { supabase } from "../lib/supabase";
 import { logAudit } from "../lib/audit";
 import { ensureNotifyPermission } from "../lib/notify";
 import { autoGrowTextarea } from "../lib/autoGrow";
+import { Em, emojiText } from "../lib/emoji";
 
 /** quick-pick emojis for the composer — kept professional for a learning platform */
 const COMPOSER_EMOJIS = [
@@ -558,7 +559,14 @@ function ChatThreadRow({
             )}
           </strong>
           <span className="mini-note chat-preview">
-            {thread.latest ? `${thread.latest.by === viewer.name ? "You" : thread.latest.by}: ${preview}` : "No messages yet"}
+            {thread.latest ? (
+              <>
+                {thread.latest.by === viewer.name ? "You" : thread.latest.by}:{" "}
+                {emojiText(preview, 15)}
+              </>
+            ) : (
+              "No messages yet"
+            )}
           </span>
         </span>
         <span className="chat-row-meta">
@@ -792,7 +800,7 @@ function ChatThread({
                     className="chat-emoji-item"
                     onClick={() => insertEmoji(e)}
                   >
-                    {e}
+                    <Em ch={e} size={26} />
                   </button>
                 ))}
               </div>
@@ -1027,7 +1035,7 @@ function ChatBubble({
           </div>
         ) : (
           <>
-            <div className="chat-bubble-body">{msg.body}</div>
+            <div className="chat-bubble-body">{emojiText(msg.body, 19)}</div>
             <div className="chat-bubble-at mini-note">
               <span className="chat-at-text">
                 {fmtBubbleTime(msg.at)}
@@ -1048,7 +1056,7 @@ function ChatBubble({
                 className="chat-bubble-reaction"
                 title={mine ? "They reacted to your message" : "Your reaction"}
               >
-                {msg.reaction}
+                <Em ch={msg.reaction} size={14} />
               </span>
             )}
             {!mine && onReact && (
@@ -1072,7 +1080,7 @@ function ChatBubble({
                     aria-pressed={msg.reaction === emoji}
                     onClick={() => void onReact(msg.id, msg.reaction === emoji ? null : emoji)}
                   >
-                    {emoji}
+                    <Em ch={emoji} size={17} />
                   </button>
                 ))}
               </div>

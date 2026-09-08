@@ -9446,13 +9446,23 @@ table.data th.sortable.sorted { color: var(--ink); }
     transform: scale(1) translateY(0);
   }
 }
+/* self-hosted Twemoji images — crisp, vivid emojis everywhere */
+.twemoji {
+  display: inline-block;
+  vertical-align: -0.22em;
+  margin: 0 0.5px;
+}
 .chat-emoji-item {
   border: 0;
   background: transparent;
   font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
   font-size: 23px;
   line-height: 1;
-  padding: 8px 0;
+  padding: 0;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 10px;
   cursor: pointer;
   transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.12s;
