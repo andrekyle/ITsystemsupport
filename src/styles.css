@@ -9122,15 +9122,18 @@ table.data th.sortable.sorted { color: var(--ink); }
 /* WhatsApp layout: text flows inline and the time floats to the bottom-right,
    sharing the last line when it fits */
 .chat-bubble-body { display: inline; white-space: pre-wrap; word-wrap: break-word; }
-.chat-bubble-at { float: right; font-size: 11px; margin: 8px -2px -2px 12px; line-height: 1; opacity: 0.7; }
+.chat-bubble-at { float: right; font-size: 11px; margin: 8px -2px -2px 12px; line-height: 1; }
+.chat-bubble-at .chat-at-text { opacity: 0.7; }
 /* WhatsApp-style delivery ticks on own messages — blue once read */
 .chat-tick {
   display: inline-flex;
   vertical-align: -3.5px;
   margin-left: 3px;
+  opacity: 0.7;
 }
 .chat-tick.read {
-  color: #53bdeb;
+  color: #34b7f1;
+  opacity: 1;
 }
 .chat-bubble-edit-btn {
   position: absolute;

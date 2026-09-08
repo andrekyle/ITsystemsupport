@@ -1017,15 +1017,17 @@ function ChatBubble({
           <>
             <div className="chat-bubble-body">{msg.body}</div>
             <div className="chat-bubble-at mini-note">
-              {fmtWhen(msg.at)}
-              {msg.editedAt && <span title={`Edited ${fmtWhen(msg.editedAt)}`}> · edited</span>}
+              <span className="chat-at-text">
+                {fmtWhen(msg.at)}
+                {msg.editedAt && <span title={`Edited ${fmtWhen(msg.editedAt)}`}> · edited</span>}
+              </span>
               {mine && (
                 <span
                   className={`chat-tick${msg.read ? " read" : ""}`}
                   title={msg.read ? "Read" : "Delivered"}
                   aria-label={msg.read ? "Read" : "Delivered"}
                 >
-                  <Icon name="doubleCheck" size={15} strokeWidth={1.7} />
+                  <Icon name="doubleCheck" size={15} strokeWidth={2} />
                 </span>
               )}
             </div>
