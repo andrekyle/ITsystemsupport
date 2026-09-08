@@ -7377,19 +7377,34 @@ table.data tr.done-row .text-link {
   overflow: hidden;
 }
 
+.sheet-fit-mid {
+  margin: 0 auto;
+  overflow: hidden;
+}
+
 .sheet-fit-inner {
   transform-origin: top left;
 }
 
 @media print {
-  .sheet-fit {
+  .sheet-fit,
+  .sheet-fit-mid {
     overflow: visible;
+    width: auto !important;
     height: auto !important;
     max-width: none;
+    margin: 0;
   }
   .sheet-fit-inner {
     transform: none !important;
     width: auto !important;
+  }
+}
+
+/* phones: slim the card padding so the sheet gets the full width */
+@media (max-width: 640px) {
+  .srf-wrap {
+    padding: 12px 8px;
   }
 }
 

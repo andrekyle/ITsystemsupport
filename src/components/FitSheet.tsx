@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
-/** Scales a fixed-width paper sheet down to fit the screen, PDF-style.
- *  Print output is unaffected — @media print resets the transform. */
+/** Scales a fixed-width paper sheet down to fit the screen, PDF-style, keeping
+ *  it horizontally centred. Print output is unaffected — @media print resets
+ *  the transform. */
 export function FitSheet({ width, children }: { width: number; children: ReactNode }) {
   const outerRef = useRef<HTMLDivElement | null>(null);
   const innerRef = useRef<HTMLDivElement | null>(null);
@@ -21,14 +22,21 @@ export function FitSheet({ width, children }: { width: number; children: ReactNo
     if (innerRef.current) ro.observe(innerRef.current);
     return () => ro.disconnect();
   }, [width]);
+  const scaled = fit.scale < 1;
   return (
-    <div ref={outerRef} className="sheet-fit" style={fit.height ? { height: fit.height } : undefined}>
+    <div ref={outerRef} className="sheet-fit">
+      {/* mid layer is exactly the sheet's visual size, so margin:auto centres it */}
       <div
-        ref={innerRef}
-        className="sheet-fit-inner"
-        style={{ width, transform: fit.scale < 1 ? `scale(${fit.scale})` : undefined }}
+        className="sheet-fit-mid"
+        style={scaled ? { width: Math.floor(width * fit.scale), height: fit.height } : undefined}
       >
-        {children}
+        <div
+          ref={innerRef}
+          className="sheet-fit-inner"
+          style={{ width, transform: scaled ? `scale(${fit.scale})` : undefined }}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );
