@@ -114,31 +114,21 @@ export function DeliverablesPage() {
         Standards and submission timelines for programme deliverables across the training calendar.
       </p>
 
-      <table className="data">
-        <thead>
-          <tr>
-            <th>Deliverable</th>
-            <th>Standard / Requirement</th>
-            <th>Due date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {DELIVERABLES.map((d) => (
-            <tr key={d.deliverable}>
-              <td>
-                <span className="with-ico">
-                  <span className="ico">
-                    <Icon name={d.icon} size={18} />
-                  </span>
-                  <strong>{d.deliverable}</strong>
-                </span>
-              </td>
-              <td>{d.standard}</td>
-              <td>{d.due}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="deliv-grid">
+        {DELIVERABLES.map((d) => (
+          <div className="card deliv-card" key={d.deliverable}>
+            <span className="deliv-ico">
+              <Icon name={d.icon} size={20} />
+            </span>
+            <strong className="deliv-name">{d.deliverable}</strong>
+            <p className="deliv-standard">{d.standard}</p>
+            <span className="deliv-due">
+              <Icon name="clock" size={14} />
+              {d.due}
+            </span>
+          </div>
+        ))}
+      </div>
 
       <div className="callout">
         <span className="ico">
