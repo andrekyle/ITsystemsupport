@@ -20,6 +20,12 @@ self.addEventListener("activate", (event) => {
       .keys()
       .then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
+      .then(() =>
+        // pages still running a bundle from the old cache reload onto the new one
+        self.clients.matchAll({ type: "window" }).then((clients) => {
+          for (const c of clients) c.navigate(c.url).catch(() => {});
+        })
+      )
   );
 });
 
