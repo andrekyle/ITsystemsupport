@@ -2041,6 +2041,10 @@ function QuizAnswers({
   }
   return (
     <div className="exercise-answer-list">
+      <p className="mini-note" style={{ margin: 0 }}>
+        Options are listed in their authored order here — during the quiz the learner saw them
+        shuffled, so picks were not simply the first option.
+      </p>
       {result?.history && result.history.length > 0 && (
         <div className="quiz-history">
           <span className="mini-note">Attempt history: </span>
