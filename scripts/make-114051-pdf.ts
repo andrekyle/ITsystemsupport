@@ -70,6 +70,8 @@ interface TextOpts {
   charSpacing?: number;
   /** render on a single line even if wider than the box */
   noWrap?: boolean;
+  /** shrink the font size until the wrapped text fits inside the box height */
+  fit?: boolean;
 }
 
 interface CardItem {
@@ -132,15 +134,23 @@ function renderDeck(deck: Deck): Promise<number> {
 
   function textBox(text: string, x: number, y: number, w: number, h: number, o: TextOpts = {}) {
     const font = o.font ?? BODY_FONT;
-    const size = o.size ?? MIN_FONT;
+    let size = o.size ?? MIN_FONT;
     doc.font(font).fontSize(size);
-    const opts = {
+    const makeOpts = () => ({
       width: inx(w),
       align: o.align ?? ("left" as const),
       lineGap: o.lineGap ?? size * 0.18,
       characterSpacing: o.charSpacing ?? 0,
       ...(o.noWrap ? { lineBreak: false } : {}),
-    };
+    });
+    let opts = makeOpts();
+    if (o.fit) {
+      while (size > 10 && doc.heightOfString(text, opts) > inx(h)) {
+        size -= 0.5;
+        doc.fontSize(size);
+        opts = makeOpts();
+      }
+    }
     let ty = inx(y);
     if (o.valign === "middle") {
       const th = doc.heightOfString(text, opts);
@@ -187,11 +197,11 @@ function renderDeck(deck: Deck): Promise<number> {
       card(cx, cy, cw, rowH);
       if (it.d) {
         drawIcon(it.icon, cx + 0.18, cy + 0.2, 0.38);
-        textBox(it.text, cx + 0.66, cy + 0.14, cw - 0.84, 0.85, { font: TITLE_FONT, size: titleSize, valign: "middle" });
-        textBox(it.d, cx + 0.18, cy + 1.06, cw - 0.36, rowH - 1.16, { color: GREY, lineGap: 2.5 });
+        textBox(it.text, cx + 0.66, cy + 0.14, cw - 0.84, 0.85, { font: TITLE_FONT, size: titleSize, valign: "middle", fit: true });
+        textBox(it.d, cx + 0.18, cy + 1.06, cw - 0.36, rowH - 1.16, { color: GREY, lineGap: 2.5, fit: true });
       } else {
         drawIcon(it.icon, cx + 0.18, cy + rowH / 2 - 0.19, 0.38);
-        textBox(it.text, cx + 0.68, cy + 0.08, cw - 0.86, rowH - 0.16, { valign: "middle" });
+        textBox(it.text, cx + 0.68, cy + 0.08, cw - 0.86, rowH - 0.16, { valign: "middle", fit: true });
       }
     });
   }
