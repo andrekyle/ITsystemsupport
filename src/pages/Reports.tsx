@@ -32,6 +32,14 @@ const EXAMPLE_QUESTIONS = [
   "Write a monthly progress update I can send to the employer.",
 ];
 
+const GEN_PHASES = [
+  "Reading the cohort's live data…",
+  "Crunching completion, quizzes and attendance…",
+  "Finding the story in the numbers…",
+  "Writing the sections…",
+  "Formatting your print-ready document…",
+];
+
 export function ReportsPage({ profile }: { profile: Profile }) {
   const registers = attendanceRegisterCount();
   const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
@@ -40,6 +48,14 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   const [busy, setBusy] = useState<"kind" | "ask" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const [phase, setPhase] = useState(0);
+
+  useEffect(() => {
+    if (!busy) return;
+    setPhase(0);
+    const t = setInterval(() => setPhase((p) => (p + 1) % GEN_PHASES.length), 2000);
+    return () => clearInterval(t);
+  }, [busy]);
 
   useEffect(() => {
     let alive = true;
@@ -96,6 +112,25 @@ export function ReportsPage({ profile }: { profile: Profile }) {
 
   return (
     <>
+      {busy && (
+        <div className="reports-genwrap" role="status" aria-live="polite">
+          <div className="reports-gen">
+            <div className="reports-orb">
+              <span className="lf-ring r1" />
+              <span className="lf-ring r2" />
+              <span className="lf-ring r3" />
+              <span className="lf-orbit o1" />
+              <span className="lf-orbit o2" />
+              <span className="lf-orbit o3" />
+              <span className="orb-core">
+                <Icon name="document" size={36} />
+              </span>
+            </div>
+            <div className="reports-gen-title">The AI is writing your report</div>
+            <div className="reports-gen-sub">{GEN_PHASES[phase]}</div>
+          </div>
+        </div>
+      )}
       <h2 className="section-title">
         <span className="ico">
           <Icon name="document" size={20} />
@@ -158,9 +193,6 @@ export function ReportsPage({ profile }: { profile: Profile }) {
               <Icon name="chevronRight" size={22} />
             </button>
           </div>
-          {busy === "ask" && (
-            <span className="reports-chat-note">The AI is analysing the data…</span>
-          )}
         </div>
       </div>
 
@@ -204,9 +236,6 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         >
           {busy === "kind" ? "Writing report…" : `Generate ${kind.name.toLowerCase()}`}
         </button>
-        {busy && (
-          <span className="mini-note">The AI is analysing the data — this takes a few seconds.</span>
-        )}
         {status}
       </div>
       <p className="mini-note" style={{ marginTop: 12 }}>
