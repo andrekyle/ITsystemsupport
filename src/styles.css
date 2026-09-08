@@ -10587,6 +10587,45 @@ table.data th.sortable.sorted { color: var(--ink); }
   .oa-month-label { min-width: 0; }
 }
 
+/* ============ LearnFlow (super user) ============ */
+
+.learnflow-page {
+  max-width: 1100px;
+  margin: 10vh auto 0;
+  padding: 0 8px;
+}
+
+.lf-title {
+  font-size: clamp(38px, 5.5vw, 64px);
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 36px;
+}
+
+.lf-brand {
+  color: var(--azure);
+}
+
+.lf-flow {
+  font-size: clamp(24px, 2.8vw, 34px);
+  line-height: 1.65;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin: 0;
+}
+
+.lf-step {
+  white-space: nowrap;
+}
+
+.lf-arrow {
+  color: var(--azure);
+  font-weight: 400;
+  padding: 0 8px;
+  white-space: normal;
+}
+
 
 /* ============ Mobile content polish (kept last so it wins the cascade) ============ */
 
