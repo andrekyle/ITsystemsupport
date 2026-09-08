@@ -50,8 +50,9 @@ interface LearnerRow {
   atRisk: boolean;
   riskReasons: string[];
 }
+export type { LearnerRow };
 
-function analyse(p: Profile, registers: number, cloud: CloudLearnerData | null): LearnerRow {
+export function analyse(p: Profile, registers: number, cloud: CloudLearnerData | null): LearnerRow {
   const progress = bestProgress(p, cloud);
   const docs = bestPoeDocs(p, cloud);
   // Credits: only assessor-recorded Competent outcomes count.

@@ -10587,6 +10587,61 @@ table.data th.sortable.sorted { color: var(--ink); }
   .oa-month-label { min-width: 0; }
 }
 
+/* ============ AI Reports (super user) ============ */
+
+.reports-grid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  margin-bottom: 18px;
+}
+
+.report-kind {
+  display: block;
+}
+
+.report-kind .ico {
+  display: inline-flex;
+  color: var(--azure);
+  margin-bottom: 8px;
+}
+
+.report-kind .t {
+  font-size: 16.5px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.report-kind .d {
+  font-size: 14px;
+  color: var(--ink-3);
+  line-height: 1.5;
+}
+
+.report-kind.selected {
+  border-color: var(--azure);
+  background: var(--azure-lighter);
+  box-shadow: 0 0 0 1px var(--azure) inset;
+}
+
+.reports-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.reports-error {
+  color: var(--red);
+  font-size: 14px;
+}
+
+.reports-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--green);
+  font-size: 14px;
+}
+
 /* ============ LearnFlow (super user) ============ */
 
 .learnflow-page {
