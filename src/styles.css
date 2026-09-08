@@ -2230,6 +2230,46 @@ textarea:focus {
   container-type: inline-size;
 }
 
+/* phones: drop the card chrome and stacked meta lines — flat sections with
+   one wrapped meta line per row make far better use of the narrow screen */
+@media (max-width: 640px) {
+  .card.attempts-card {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    margin-bottom: 22px;
+  }
+
+  .attempt-row.acad {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px 10px;
+    padding: 10px 30px 10px 27px;
+  }
+
+  .attempt-row.acad > svg {
+    margin-left: -27px;
+    flex: 0 0 auto;
+  }
+
+  .attempt-row.acad .sc {
+    flex: 1 1 calc(100% - 30px);
+    font-weight: 500;
+  }
+
+  .attempt-row.acad .cell,
+  .attempt-row.acad .dt {
+    display: inline-flex;
+    text-align: left;
+  }
+
+  .attempt-row.acad .cell:empty {
+    display: none;
+  }
+}
+
 /* ---------- profile signature ---------- */
 .sig-current {
   margin-bottom: 10px;
@@ -2492,14 +2532,14 @@ textarea:focus {
   cursor: pointer;
   list-style: none;
   border-bottom: 0;
-  padding-right: 22px;
+  padding-right: 34px;
   position: relative;
 }
 .exercise-answers > summary::-webkit-details-marker { display: none; }
 .exercise-answers > summary::after {
   content: "";
   position: absolute;
-  right: 4px;
+  right: 14px;
   top: 50%;
   width: 7px;
   height: 7px;
@@ -2979,7 +3019,7 @@ textarea:focus {
   row-gap: 4px;
   /* match the chevron gutter of expandable summary rows so the score /
      attempts / date columns line up across every row */
-  padding-right: 22px;
+  padding-right: 34px;
 }
 
 .attempt-row.acad .sc {
@@ -9093,7 +9133,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   bottom: -1px;
   width: 10px;
   height: 10px;
-  background: #22c55e;
+  background: #25d366;
   border: 2px solid var(--surface);
   border-radius: 50%;
   box-sizing: border-box;
@@ -9108,7 +9148,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   border-width: 0;
 }
 .presence-label {
-  color: #22c55e;
+  color: #25d366;
   font-weight: 500;
 }
 .chat-main {
@@ -9141,16 +9181,6 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 .chat-head-person:hover strong {
   color: var(--azure);
-}
-/* right-aligned presence stamp in the thread header */
-.chat-last-seen {
-  margin-left: auto;
-  flex: 0 0 auto;
-  max-width: 42%;
-  font-size: 12px;
-  line-height: 1.35;
-  color: var(--ink-3);
-  text-align: right;
 }
 .chat-avatar-link {
   cursor: pointer;

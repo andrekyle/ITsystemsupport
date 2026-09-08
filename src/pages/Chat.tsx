@@ -728,18 +728,16 @@ function ChatThread({
           <span>
             <strong>{other?.name ?? nameFor(otherId)}</strong>
             <div className="mini-note">
-              {otherOnline ? <span className="presence-label">Online now · </span> : null}
-              {other?.role ?? "Unknown role"}
+              {otherOnline ? (
+                <span className="presence-label">Online now</span>
+              ) : other?.lastLogin ? (
+                <>last seen {fmtLastSeen(other.lastLogin)}</>
+              ) : (
+                other?.role ?? "Unknown role"
+              )}
             </div>
           </span>
         </button>
-        <span className="chat-last-seen">
-          {otherOnline ? (
-            <span className="presence-label">Online now</span>
-          ) : other?.lastLogin ? (
-            <>last seen {fmtLastSeen(other.lastLogin)}</>
-          ) : null}
-        </span>
       </header>
       <div
         className="chat-messages"
