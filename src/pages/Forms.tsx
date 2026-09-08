@@ -3,6 +3,7 @@ import { Icon } from "../icons";
 import type { Profile, RegistrationForm, Route } from "../types";
 import { updateProfile } from "../store";
 import { autoGrowTextarea } from "../lib/autoGrow";
+import { FitSheet } from "../components/FitSheet";
 
 /**
  * Eruditio Student Registration Form — laid out to match the paper form
@@ -233,6 +234,7 @@ function StudentRegistrationForm({
       </div>
 
       {/* ============================== PAGE 1 ============================== */}
+      <FitSheet width={1000}>
       <div className="srf-page">
         <EruditioMasthead />
         <h2 className="srf-title">Student Registration Form</h2>
@@ -720,6 +722,7 @@ function StudentRegistrationForm({
         </div>
         </div>
       </div>
+      </FitSheet>
     </div>
   );
 }

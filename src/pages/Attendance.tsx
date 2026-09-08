@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Profile, UnitStandard } from "../types";
 import { isStaff } from "../types";
@@ -11,6 +10,7 @@ import { loadProfiles, updateProfile } from "../store";
 import { logAudit } from "../lib/audit";
 import { Icon } from "../icons";
 import { ConfirmModal } from "../components/Modal";
+import { FitSheet } from "../components/FitSheet";
 
 /**
  * Attendance Register — exact replica of the Eruditio paper form.
@@ -207,38 +207,6 @@ function headerDefaults(dateIso: string): Record<string, string> {
     facilitator: "Andre Snell",
     date: d.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }),
   };
-}
-
-/** Scales the fixed-width paper sheet down to fit the screen, PDF-style. */
-function FitSheet({ children }: { children: ReactNode }) {
-  const outerRef = useRef<HTMLDivElement | null>(null);
-  const innerRef = useRef<HTMLDivElement | null>(null);
-  const [fit, setFit] = useState<{ scale: number; height?: number }>({ scale: 1 });
-  useEffect(() => {
-    const measure = () => {
-      const outer = outerRef.current;
-      const inner = innerRef.current;
-      if (!outer || !inner || !inner.offsetWidth) return;
-      const scale = Math.min(1, outer.clientWidth / inner.offsetWidth);
-      setFit({ scale, height: scale < 1 ? inner.offsetHeight * scale : undefined });
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    if (outerRef.current) ro.observe(outerRef.current);
-    if (innerRef.current) ro.observe(innerRef.current);
-    return () => ro.disconnect();
-  }, []);
-  return (
-    <div ref={outerRef} className="sheet-fit" style={fit.height ? { height: fit.height } : undefined}>
-      <div
-        ref={innerRef}
-        className="sheet-fit-inner"
-        style={fit.scale < 1 ? { transform: `scale(${fit.scale})` } : undefined}
-      >
-        {children}
-      </div>
-    </div>
-  );
 }
 
 /** Read-only register sheet used by the "Download all registers" print view. */
@@ -784,7 +752,7 @@ export function AttendancePage({
           </div>,
           document.body
         )}
-      <FitSheet>
+      <FitSheet width={1060}>
       <div className="att-sheet">
         <div className="att-logo">
           <img src="/downloads/cropped-cropped-Final_Full-Logo2-768x255.png" alt="Eruditio — Empower · Develop · Transform" />
