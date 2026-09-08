@@ -567,6 +567,12 @@ a:hover {
   padding: 8px;
 }
 
+/* install-the-app entry — azure accent so it reads as an action */
+.side-item.install-app,
+.side-item.install-app .ico {
+  color: var(--azure);
+}
+
 /* ============ Breadcrumb ============ */
 
 .crumbs {

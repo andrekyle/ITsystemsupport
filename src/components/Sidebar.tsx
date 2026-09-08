@@ -1,9 +1,12 @@
+import { useEffect, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, Route } from "../types";
 import { isStaff } from "../types";
 import { MODULES } from "../data/course";
 import type { ProgressState } from "../types";
 import { moduleCompletion } from "../store";
+import { isInstalled, isIos, onInstallChange, promptInstall } from "../lib/install";
+import { AlertModal } from "./Modal";
 
 // Sentence case: first letter uppercased, subsequent words lowercased, but
 // leave all-uppercase tokens (acronyms like LAN, SAQA, IT) untouched.
@@ -38,6 +41,19 @@ interface Props {
 
 export function Sidebar({ collapsed, route, progress, profile, navigate }: Props) {
   const isPrivileged = isStaff(profile.role);
+  const [installed, setInstalled] = useState(isInstalled);
+  const [installMsg, setInstallMsg] = useState<string | null>(null);
+  useEffect(() => onInstallChange(() => setInstalled(isInstalled())), []);
+
+  async function onInstallClick() {
+    if (await promptInstall()) return;
+    setInstallMsg(
+      isIos()
+        ? "On iPhone or iPad: open this site in Safari, tap the Share button and choose “Add to Home Screen”. ITSS Learn then opens as its own app."
+        : "Open your browser's menu (⋮) and choose “Install app” / “Add to Home screen”. If it is already installed, launch ITSS Learn from your home screen or Start menu."
+    );
+  }
+
   const nav = [
     { page: "dashboard" as const, icon: "dashboard", label: "Dashboard" },
     { page: "course" as const, icon: "book", label: "My Course" },
@@ -124,6 +140,18 @@ export function Sidebar({ collapsed, route, progress, profile, navigate }: Props
       </div>
 
       <div className="sidebar-footer">
+        {!installed && (
+          <button
+            className="side-item install-app"
+            title="Install ITSS Learn on this device — works offline once installed"
+            onClick={() => void onInstallClick()}
+          >
+            <span className="ico">
+              <Icon name="download" />
+            </span>
+            {!collapsed && <span className="txt">Download the app</span>}
+          </button>
+        )}
         <button
           className={`side-item${route.page === "profile" ? " active" : ""}`}
           title={`${profile.name} · ${profile.role} — view profile`}
@@ -136,6 +164,7 @@ export function Sidebar({ collapsed, route, progress, profile, navigate }: Props
           {!collapsed && <span className="badge">{profile.role}</span>}
         </button>
       </div>
+      {installMsg && <AlertModal message={installMsg} onClose={() => setInstallMsg(null)} />}
     </nav>
   );
 }

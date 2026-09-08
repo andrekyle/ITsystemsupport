@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./styles.css";
+import "./lib/install"; // capture the PWA install prompt before React mounts
 
 // Offline/installable app support — production builds only, so the dev
 // server never fights a stale cache.
