@@ -10,7 +10,7 @@ import {
   type ChatMessage,
   type ChatThreadInfo,
 } from "../store";
-import { fetchCloudDirectory, fetchSuperUserAuthId } from "../lib/directory";
+import { fetchCloudDirectory, fetchSuperUserAuthId, getCachedDirectory, getCachedSuperUserAuthId } from "../lib/directory";
 import type { CloudDirectory } from "../lib/directory";
 import { Avatar, initials } from "../components/Avatar";
 import { AlertModal, ConfirmModal, Modal } from "../components/Modal";
@@ -49,8 +49,10 @@ export function ChatPage({
   const isSuper = profile.role === "Super User";
   const staff = isStaff(profile.role);
 
-  const [cloud, setCloud] = useState<CloudDirectory | null>(null);
-  const [superUid, setSuperUid] = useState<string | undefined>(undefined);
+  // Seed from the cached directory so reopening the page never flashes
+  // "unknown" profiles while the fresh copy loads.
+  const [cloud, setCloud] = useState<CloudDirectory | null>(getCachedDirectory());
+  const [superUid, setSuperUid] = useState<string | undefined>(getCachedSuperUserAuthId());
   // Bump every ~30s so the "online now" dots (derived from lastLogin) refresh.
   const [presenceTick, setPresenceTick] = useState(0);
   useEffect(() => {

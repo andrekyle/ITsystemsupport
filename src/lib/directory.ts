@@ -69,6 +69,17 @@ export function remoteOnlyProfiles(local: Profile[], cloudProfiles: Profile[]): 
   return deduped;
 }
 
+/** Last successful reads — pages render instantly from these on remount
+ *  (stale-while-revalidate) instead of flashing “unknown” placeholders. */
+let cachedDirectory: CloudDirectory | null = null;
+let cachedSuperUid: string | undefined;
+export function getCachedDirectory(): CloudDirectory | null {
+  return cachedDirectory;
+}
+export function getCachedSuperUserAuthId(): string | undefined {
+  return cachedSuperUid;
+}
+
 /**
  * Reads every account's synced profiles and POE document indexes so staff can
  * see users who sign in with their own email accounts. Requires the read-all
@@ -133,7 +144,8 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
     }
   }
 
-  return { profiles, poe, owners };
+  cachedDirectory = { profiles, poe, owners };
+  return cachedDirectory;
 }
 
 /** Auth uid of the sole designated super user, read straight from the
@@ -147,7 +159,9 @@ export async function fetchSuperUserAuthId(): Promise<string | undefined> {
     const { data, error } = await supabase.from("admins").select("user_id").limit(1);
     if (error) return undefined;
     const row = Array.isArray(data) ? data[0] : undefined;
-    return row?.user_id as string | undefined;
+    const uid = row?.user_id as string | undefined;
+    if (uid) cachedSuperUid = uid;
+    return uid;
   } catch {
     return undefined;
   }
