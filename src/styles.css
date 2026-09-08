@@ -10495,6 +10495,24 @@ table.data th.sortable.sorted { color: var(--ink); }
     overflow-x: visible;
   }
 
+  /* uploaded-file rows: let the long meta lines wrap instead of bleeding
+     past the screen edge */
+  .plan-upload-row .meta,
+  .poe-doc .meta {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /* section headings with an action button: heading text wraps and the
+     button drops to its own line instead of squeezing the title */
+  h2.section-title {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  h2.section-title .profile-edit {
+    margin-left: 0;
+  }
+
   /* --- page furniture --- */
   .content h1 {
     font-size: 24px;
