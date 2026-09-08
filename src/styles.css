@@ -6111,7 +6111,7 @@ a.plan-ppt:hover {
 
 /* ---- Lead paragraph gets bigger and darker ---- */
 .lesson-screen .lesson-section > .lesson-p:first-of-type {
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1.75;
   color: var(--ink);
   font-weight: 400;
@@ -6123,7 +6123,7 @@ a.plan-ppt:hover {
 
 /* ---- Follow-on paragraphs a bit larger too ---- */
 .lesson-screen .lesson-section > .lesson-p {
-  font-size: 15px;
+  font-size: 19px;
   line-height: 1.75;
 }
 
@@ -11145,14 +11145,14 @@ table.data th.sortable.sorted { color: var(--ink); }
     margin-bottom: 14px;
   }
   .lesson-screen .lesson-section > .lesson-p:first-of-type {
-    font-size: 15px;
+    font-size: 18px;
     padding-left: 12px;
     margin-left: 0;
   }
 
   /* body copy: slightly smaller with a tighter leading */
   .lesson-screen .lesson-section > .lesson-p {
-    font-size: 14.5px;
+    font-size: 17px;
     line-height: 1.65;
   }
   .lesson-numlist li {
