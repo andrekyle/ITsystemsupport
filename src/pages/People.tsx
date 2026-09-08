@@ -2021,12 +2021,12 @@ function QuizAnswers({
   result?: { best: number; total: number; attempts: number; history?: { score: number; total: number; date: string }[] };
   picks?: unknown;
 }) {
-  let parsedPicks: Record<number, { kind: string; picks?: number[] }> | null = null;
+  let parsedPicks: Record<number, { kind: string; picks?: number[]; disp?: number[] }> | null = null;
   if (typeof picks === "string") {
     try {
       const raw = JSON.parse(picks);
       if (raw && typeof raw === "object") {
-        parsedPicks = raw as Record<number, { kind: string; picks?: number[] }>;
+        parsedPicks = raw as Record<number, { kind: string; picks?: number[]; disp?: number[] }>;
       }
     } catch {
       parsedPicks = null;
@@ -2042,8 +2042,8 @@ function QuizAnswers({
   return (
     <div className="exercise-answer-list">
       <p className="mini-note" style={{ margin: 0 }}>
-        Options are listed in their authored order here — during the quiz the learner saw them
-        shuffled, so picks were not simply the first option.
+        Where an attempt recorded it, options appear in the shuffled order the learner saw on
+        screen; older attempts list the authored order instead.
       </p>
       {result?.history && result.history.length > 0 && (
         <div className="quiz-history">
@@ -2060,6 +2060,11 @@ function QuizAnswers({
         const pick = parsedPicks ? parsedPicks[qi] : undefined;
         const chosen: number[] =
           pick && pick.kind === "choice" && Array.isArray(pick.picks) ? pick.picks : [];
+        // replay the exact on-screen order when the attempt captured it
+        const disp =
+          pick && Array.isArray(pick.disp) && pick.disp.length === q.options.length
+            ? pick.disp
+            : q.options.map((_, i) => i);
         return (
           <div className="exercise-answer" key={qi}>
             <div className="exercise-answer-head">
@@ -2068,7 +2073,8 @@ function QuizAnswers({
             <div className="exercise-answer-q">{q.q}</div>
             {q.kind === "choice" || !q.kind ? (
               <div className="quiz-options">
-                {q.options.map((opt, oi) => {
+                {disp.map((oi, pos) => {
+                  const opt = q.options[oi];
                   const isCorrect = correct.includes(oi);
                   const isPicked = chosen.includes(oi);
                   let cls = "quiz-option";
@@ -2080,7 +2086,7 @@ function QuizAnswers({
                       <span className="quiz-mark">
                         {isCorrect ? "✓" : isPicked ? "✗" : ""}
                       </span>
-                      {String.fromCharCode(65 + oi)}. {opt}
+                      {String.fromCharCode(65 + pos)}. {opt}
                       {isPicked && (
                         <span className="mini-note" style={{ marginLeft: 6 }}>
                           (learner's pick)

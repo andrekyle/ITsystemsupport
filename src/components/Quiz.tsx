@@ -14,7 +14,7 @@ export function seededShuffle<T>(arr: T[], seed: number): T[] {
   return a;
 }
 
-type ChoiceAns = { kind: "choice"; picks: number[] };
+type ChoiceAns = { kind: "choice"; picks: number[]; disp?: number[] };
 type OrderAns = { kind: "order"; order: number[] }; // current visible order as original indices
 type MatchAns = { kind: "match"; picks: Record<number, number> }; // leftIdx -> rightOriginalIdx
 
@@ -111,7 +111,17 @@ export function Quiz({
 
   function submit() {
     setSubmitted(true);
-    onSubmit(score, questions.length, answers);
+    // stamp each choice answer with its display order so reviews can mirror
+    // exactly what the learner saw on screen
+    const snapshot: Record<number, Ans> = {};
+    for (const [k, a] of Object.entries(answers)) {
+      const qi = Number(k);
+      snapshot[qi] =
+        a.kind === "choice" && shuffled[qi]?.optOrder
+          ? { ...a, disp: shuffled[qi].optOrder }
+          : a;
+    }
+    onSubmit(score, questions.length, snapshot);
     document.querySelector(".content")?.scrollTo({ top: 0, behavior: "smooth" });
   }
 
