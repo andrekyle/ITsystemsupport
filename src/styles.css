@@ -10788,6 +10788,24 @@ table.data th.sortable.sorted { color: var(--ink); }
   margin: 0 auto 30px;
 }
 
+/* spinning glow halo hugging the core — the visible "glowing border" */
+.reports-orb::before {
+  content: "";
+  position: absolute;
+  inset: 42px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 30deg,
+    rgba(56, 189, 248, 0.55) 90deg,
+    #22d3ee 150deg,
+    rgba(56, 189, 248, 0.55) 210deg,
+    transparent 270deg 360deg
+  );
+  filter: blur(7px);
+  animation: reports-spin 1.6s linear infinite;
+}
+
 .reports-orb .orb-core {
   position: absolute;
   inset: 52px;
@@ -10797,7 +10815,10 @@ table.data th.sortable.sorted { color: var(--ink); }
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 12px 44px rgba(15, 108, 189, 0.45);
+  box-shadow:
+    0 0 0 3px rgba(56, 189, 248, 0.55),
+    0 0 26px rgba(34, 211, 238, 0.75),
+    0 12px 44px rgba(15, 108, 189, 0.5);
   animation: reports-breathe 2.2s ease-in-out infinite;
 }
 
@@ -10810,7 +10831,8 @@ table.data th.sortable.sorted { color: var(--ink); }
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 2px solid var(--azure);
+  border: 3px solid #38bdf8;
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.8), inset 0 0 12px rgba(34, 211, 238, 0.45);
   opacity: 0;
   animation: reports-ring 2.4s ease-out infinite;
 }
