@@ -10486,6 +10486,15 @@ table.data th.sortable.sorted { color: var(--ink); }
     -webkit-overflow-scrolling: touch;
   }
 
+  /* paper-form replicas are scaled to fit by FitSheet — block display would
+     shrink-wrap their grids, so keep genuine table layout inside the sheets */
+  .content .srf-page table,
+  .content .att-sheet table {
+    display: table;
+    max-width: none;
+    overflow-x: visible;
+  }
+
   /* --- page furniture --- */
   .content h1 {
     font-size: 24px;
