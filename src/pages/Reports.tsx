@@ -178,15 +178,17 @@ export function ReportsPage({ profile }: { profile: Profile }) {
               className={`card clickable report-kind${active ? " selected" : ""}`}
               onClick={() => setKindId(k.id)}
             >
-              <span className="report-kind-ico">
-                <Icon name={k.icon} size={20} />
-              </span>
               {active && (
                 <span className="report-kind-check">
                   <Icon name="checkCircle" size={18} />
                 </span>
               )}
-              <div className="t">{k.name}</div>
+              <div className="report-kind-head">
+                <span className="report-kind-ico">
+                  <Icon name={k.icon} size={22} />
+                </span>
+                <div className="t">{k.name}</div>
+              </div>
               <div className="d">{k.desc}</div>
             </button>
           );
