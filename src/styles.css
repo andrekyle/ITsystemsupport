@@ -3458,7 +3458,8 @@ table.data.kv tr:last-child td {
 
 .lb-matrix th,
 .lb-matrix td {
-  font-size: 12.5px;
+  font-size: 16px;
+  line-height: 1.55;
 }
 
 .lb-matrix .lb-no {
@@ -3510,7 +3511,7 @@ table.data.kv tr:last-child td {
 .lb-headrow th {
   background: var(--surface-2);
   text-align: center;
-  font-size: 11px;
+  font-size: 12.5px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--ink-2);
@@ -3521,14 +3522,14 @@ table.data.kv tr:last-child td {
 
 .lb-headrow .lb-title {
   vertical-align: middle;
-  font-size: 12.5px;
+  font-size: 15px;
   color: var(--ink);
 }
 
 .lb-headrow .lb-title .sub {
   display: block;
   margin-top: 4px;
-  font-size: 11px;
+  font-size: 12.5px;
   color: var(--ink-2);
   font-weight: 600;
 }
@@ -3559,6 +3560,8 @@ table.data.kv tr:last-child td {
 .lb-table th,
 .lb-table td {
   border: 1px solid var(--border-2);
+  font-size: 16px;
+  line-height: 1.55;
 }
 
 .lb-table th {
@@ -3573,7 +3576,7 @@ table.data.kv tr:last-child td {
   font-weight: 350;
   text-transform: none;
   letter-spacing: normal;
-  font-size: 12px;
+  font-size: 13.5px;
   color: var(--ink-2);
   line-height: 1.45;
 }
