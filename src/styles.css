@@ -8385,6 +8385,48 @@ table.data .mini-note { display: block; }
   table.data.milestone-table td:nth-child(3)::before {
     content: " · ";
   }
+
+  /* assessment outcomes: stack each unit — name, then progress · outcome ·
+     recorded-by on one line, verdict buttons below */
+  .content table.data.outcome-table,
+  table.data.outcome-table tbody {
+    display: block;
+    width: 100%;
+    overflow-x: visible;
+  }
+  table.data.outcome-table thead {
+    display: none;
+  }
+  table.data.outcome-table tr {
+    display: block;
+    padding: 10px 2px;
+    border-bottom: 1px solid var(--table-line);
+  }
+  table.data.outcome-table tr:last-child {
+    border-bottom: 0;
+  }
+  table.data.outcome-table td {
+    display: inline-block;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    font-size: 12.5px;
+    color: var(--ink-2);
+    vertical-align: middle;
+    white-space: normal;
+  }
+  table.data.outcome-table td + td {
+    margin-right: 8px;
+  }
+  table.data.outcome-table td:first-child {
+    display: block;
+    padding-bottom: 5px;
+  }
+  table.data.outcome-table td:last-child {
+    display: block;
+    margin-right: 0;
+    padding-top: 8px;
+  }
 }
 
 .analytics-table th,
