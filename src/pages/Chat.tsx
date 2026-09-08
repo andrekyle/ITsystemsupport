@@ -199,31 +199,6 @@ export function ChatPage({
 
   return (
     <div className={`chat-page${hasOpen ? " has-open" : ""}`}>
-      <div className="eyebrow">
-        <Icon name="chat" size={15} />
-        Direct messages
-      </div>
-      <h1 className="page-title">Chat</h1>
-      <p className="page-sub">
-        Talk directly with anyone on the programme.{" "}
-        {isSuper
-          ? "As super user you can see every conversation for moderation and message anyone in the class."
-          : "Your facilitator can see every conversation for moderation."}
-        {staff && broadcastRecipients.length > 0 && (
-          <>
-            {" "}
-            <button
-              type="button"
-              className="linklike"
-              onClick={() => setBroadcasting(true)}
-              title={`Send one message to every learner (${broadcastRecipients.length})`}
-            >
-              <Icon name="people" size={13} /> Message all learners ({broadcastRecipients.length})
-            </button>
-          </>
-        )}
-      </p>
-
       <div className={`chat-layout${hasOpen ? " has-open" : ""}`}>
         <aside className="chat-side card">
           <ChatSidebar
@@ -234,6 +209,10 @@ export function ChatPage({
             isOnline={isOnline}
             openWith={openWith}
             monitorKey={monitorKey}
+            onBroadcast={
+              staff && broadcastRecipients.length > 0 ? () => setBroadcasting(true) : undefined
+            }
+            broadcastCount={broadcastRecipients.length}
             onSelect={(id) => {
               setMonitorKey(null);
               setOpenWith(id);
@@ -350,6 +329,8 @@ function ChatSidebar({
   onSelect,
   onMonitor,
   onOpenProfile,
+  onBroadcast,
+  broadcastCount = 0,
 }: {
   viewer: Profile;
   people: Profile[];
@@ -361,6 +342,8 @@ function ChatSidebar({
   onSelect: (otherId: string) => void;
   onMonitor: (threadKey: string) => void;
   onOpenProfile: (profileId: string) => void;
+  onBroadcast?: () => void;
+  broadcastCount?: number;
 }) {
   const isSuper = viewer.role === "Super User";
   const [tab, setTab] = useState<"threads" | "people">("threads");
@@ -401,6 +384,15 @@ function ChatSidebar({
           >
             <Icon name="people" size={14} /> New chat
           </button>
+          {onBroadcast && (
+            <button
+              className="btn ghost sm chat-broadcast-btn"
+              onClick={onBroadcast}
+              title={`Send one message to every learner (${broadcastCount})`}
+            >
+              <Icon name="people" size={14} /> Message all ({broadcastCount})
+            </button>
+          )}
         </div>
         <div className="field" style={{ marginBottom: 0 }}>
           <input
