@@ -6127,6 +6127,41 @@ a.plan-ppt:hover {
   line-height: 1.75;
 }
 
+/* ---- Every other slide text element follows the bigger reading size ---- */
+.lesson-screen .duty-list li {
+  font-size: 17px;
+}
+.lesson-screen .lesson-numlist li {
+  font-size: 17px;
+}
+.lesson-screen .lesson-example .lesson-p,
+.lesson-screen .lesson-example .ex-line,
+.lesson-screen .ex-signed {
+  font-size: 16px;
+}
+.lesson-screen .lesson-example .ex-title,
+.lesson-screen .lesson-example .ex-label {
+  font-size: 16px;
+}
+.lesson-screen .callout {
+  font-size: 16.5px;
+}
+.lesson-screen table.data.lesson-table th,
+.lesson-screen table.data.lesson-table td {
+  font-size: 16px;
+}
+.lesson-screen .opt {
+  font-size: 16.5px;
+  line-height: 1.55;
+}
+.lesson-screen .explain {
+  font-size: 16px;
+  line-height: 1.6;
+}
+.lesson-screen .lesson-figure figcaption {
+  font-size: 15px;
+}
+
 /* ---- Timeline-style bullets: "1804 — punched cards..." ---- */
 .lesson-screen .lesson-section > .duty-list {
   display: flex;
