@@ -9142,6 +9142,16 @@ table.data th.sortable.sorted { color: var(--ink); }
 .chat-head-person:hover strong {
   color: var(--azure);
 }
+/* right-aligned presence stamp in the thread header */
+.chat-last-seen {
+  margin-left: auto;
+  flex: 0 0 auto;
+  max-width: 42%;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--ink-3);
+  text-align: right;
+}
 .chat-avatar-link {
   cursor: pointer;
 }

@@ -733,6 +733,13 @@ function ChatThread({
             </div>
           </span>
         </button>
+        <span className="chat-last-seen">
+          {otherOnline ? (
+            <span className="presence-label">Online now</span>
+          ) : other?.lastLogin ? (
+            <>last seen {fmtLastSeen(other.lastLogin)}</>
+          ) : null}
+        </span>
       </header>
       <div
         className="chat-messages"
@@ -1140,6 +1147,19 @@ function fmtBubbleTime(iso: string): string {
   return new Date(iso)
     .toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
     .toLowerCase();
+}
+
+/** WhatsApp-style last-seen stamp: “today at 10:43 am”, “yesterday at …”, then dates. */
+function fmtLastSeen(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const dayDiff = Math.round((startOfDay(now) - startOfDay(d)) / 86400000);
+  const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }).toLowerCase();
+  if (dayDiff <= 0) return `today at ${time}`;
+  if (dayDiff === 1) return `yesterday at ${time}`;
+  if (dayDiff < 7) return `${d.toLocaleDateString(undefined, { weekday: "long" })} at ${time}`;
+  return `${d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })} at ${time}`;
 }
 
 /** Calendar-day grouping key for the date-divider chips. */
