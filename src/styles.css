@@ -8290,7 +8290,7 @@ input.att-sig {
 
 .mini-note {
   display: inline-block;
-  font-size: 12px;
+  font-size: 13.5px;
   color: var(--ink-3);
 }
 
@@ -10341,7 +10341,7 @@ table.data th.sortable.sorted { color: var(--ink); }
 .oa-over { color: var(--red); }
 
 .oa-sec-lbl {
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -10414,13 +10414,13 @@ table.data th.sortable.sorted { color: var(--ink); }
   gap: 8px;
   width: 290px;
   flex-shrink: 0;
-  font-size: 13px;
+  font-size: 15.5px;
   font-weight: 350;
   white-space: nowrap;
 }
 
 .oa-model-tag {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 350;
   color: var(--ink-3);
   border: 1px solid var(--border);
@@ -10436,7 +10436,7 @@ table.data th.sortable.sorted { color: var(--ink); }
 
 .oa-model-desc {
   flex: 1;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 350;
   color: var(--ink-3);
   overflow: hidden;
@@ -10446,7 +10446,7 @@ table.data th.sortable.sorted { color: var(--ink); }
 
 .oa-model-price {
   flex-shrink: 0;
-  font-size: 11.5px;
+  font-size: 13.5px;
   font-weight: 350;
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
@@ -10492,7 +10492,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  font-size: 13.5px;
+  font-size: 15.5px;
   padding-bottom: 4px;
 }
 
@@ -10522,9 +10522,9 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 
 .token-mod-name {
-  width: 300px;
+  width: 340px;
   flex-shrink: 0;
-  font-size: 13.5px;
+  font-size: 15.5px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -10536,18 +10536,18 @@ table.data th.sortable.sorted { color: var(--ink); }
 .token-bar { flex: 1; min-width: 60px; }
 
 .token-num {
-  width: 64px;
+  width: 76px;
   text-align: right;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
 
 .token-sub {
-  width: 170px;
+  width: 200px;
   flex-shrink: 0;
-  font-size: 11.5px;
+  font-size: 13.5px;
   color: var(--ink-3);
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -10569,11 +10569,11 @@ table.data th.sortable.sorted { color: var(--ink); }
 .token-unit-row .token-bar > span { background: #6ee7b7; }
 
 .token-unit-name {
-  /* 26px container indent + 298px + 10px gap = chevron(14) + gap(10) + 300 + gap(10)
+  /* 26px container indent + 338px + 10px gap = chevron(14) + gap(10) + 340 + gap(10)
      on the module row above — bars in both rows start at the same x */
-  width: 298px;
+  width: 338px;
   flex-shrink: 0;
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--ink-2);
   overflow: hidden;
   text-overflow: ellipsis;
