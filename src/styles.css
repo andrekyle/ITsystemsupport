@@ -11321,8 +11321,16 @@ table.data th.sortable.sorted { color: var(--ink); }
     line-height: 1.35;
     padding-bottom: 6px;
   }
+  /* the tick column is 20px + 10px gap — indent the evidence to match the title */
+  .poe-table .poe-item {
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .poe-table .poe-item .status {
+    margin-top: 1px;
+  }
   .poe-table td.poe-doc-cell {
-    padding-left: 26px; /* aligns under the item name, past the tick */
+    padding-left: 30px;
   }
   .poe-table .poe-doc {
     justify-content: flex-start; /* desktop right-aligns; stacked cards read left */
