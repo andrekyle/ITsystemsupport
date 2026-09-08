@@ -10628,40 +10628,20 @@ table.data th.sortable.sorted { color: var(--ink); }
 .lf-step {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
   font-size: clamp(21px, 2.1vw, 28px);
   font-weight: 650;
   color: var(--ink);
   background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: 999px;
-  padding: 12px 26px 12px 14px;
+  padding: 12px 26px;
   box-shadow: 0 2px 8px rgba(15, 108, 189, 0.08);
   white-space: nowrap;
-}
-
-.lf-step-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.7em;
-  height: 1.7em;
-  border-radius: 50%;
-  background: var(--azure-light);
-  color: var(--azure-darker);
-  font-size: 0.68em;
-  font-weight: 700;
-  flex-shrink: 0;
 }
 
 .lf-step.last {
   background: var(--azure);
   border-color: var(--azure);
-  color: #fff;
-}
-
-.lf-step.last .lf-step-num {
-  background: rgba(255, 255, 255, 0.22);
   color: #fff;
 }
 

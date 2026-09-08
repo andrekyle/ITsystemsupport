@@ -23,10 +23,7 @@ export function LearnFlowPage() {
       <div className="lf-flow">
         {STEPS.map((s, i) => (
           <span key={s} className="lf-seg">
-            <span className={`lf-step${i === STEPS.length - 1 ? " last" : ""}`}>
-              <span className="lf-step-num">{i + 1}</span>
-              {s}
-            </span>
+            <span className={`lf-step${i === STEPS.length - 1 ? " last" : ""}`}>{s}</span>
             {i < STEPS.length - 1 && (
               <span className="lf-arrow" aria-hidden="true">
                 →
