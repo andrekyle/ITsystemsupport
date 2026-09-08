@@ -9138,6 +9138,9 @@ table.data th.sortable.sorted { color: var(--ink); }
   border-radius: 50%;
   box-sizing: border-box;
 }
+[data-theme="dark"] .presence-dot {
+  background: #00a884;
+}
 .presence-dot.inline {
   position: static;
   display: inline-block;
@@ -9150,6 +9153,9 @@ table.data th.sortable.sorted { color: var(--ink); }
 .presence-label {
   color: #25d366;
   font-weight: 500;
+}
+[data-theme="dark"] .presence-label {
+  color: #00a884;
 }
 .chat-main {
   padding: 0;
