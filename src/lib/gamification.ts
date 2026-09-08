@@ -71,6 +71,33 @@ export function attendanceRegisterCount(): number {
   return n;
 }
 
+/** Registers a learner can fairly be measured against: those dated on/after
+ *  the first register they signed. Learners who joined the programme later
+ *  are not penalised for sessions held before they started; someone who has
+ *  signed every register since their first day rates 100%. Never signed →
+ *  measured against all registers. */
+export function attendanceExpectedCount(profileId: string): number {
+  const dates: string[] = [];
+  let first: string | null = null;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith("itss.attendance.")) continue;
+    const date = key.slice("itss.attendance.".length);
+    dates.push(date);
+    try {
+      const data = JSON.parse(localStorage.getItem(key) ?? "{}") as {
+        rows?: Record<string, unknown>;
+      };
+      if (data.rows && data.rows[profileId] && (!first || date < first)) first = date;
+    } catch {
+      /* corrupt register — skip */
+    }
+  }
+  if (!first) return dates.length;
+  const cutoff = first;
+  return dates.filter((d) => d >= cutoff).length;
+}
+
 export function computeGamification(
   progress: ProgressState,
   poeItems: number,

@@ -11,6 +11,7 @@ import {
 } from "../store";
 import { downloadText } from "../lib/audit";
 import {
+  attendanceExpectedCount,
   attendanceRegisterCount,
   attendanceSignedCount,
   computeGamification,
@@ -41,6 +42,7 @@ interface LearnerRow {
   exerciseAvg: number | null;
   poeDone: number;
   attendance: number;
+  attendanceExpected: number;
   attendanceRate: number | null;
   lastLogin: string | undefined;
   daysSinceSeen: number | null;
@@ -52,7 +54,7 @@ interface LearnerRow {
 }
 export type { LearnerRow };
 
-export function analyse(p: Profile, registers: number, cloud: CloudLearnerData | null): LearnerRow {
+export function analyse(p: Profile, cloud: CloudLearnerData | null): LearnerRow {
   const progress = bestProgress(p, cloud);
   const docs = bestPoeDocs(p, cloud);
   // Credits: only assessor-recorded Competent outcomes count.
@@ -77,7 +79,10 @@ export function analyse(p: Profile, registers: number, cloud: CloudLearnerData |
   }
 
   const attendance = attendanceSignedCount(p.id);
-  const attendanceRate = registers > 0 ? attendance / registers : null;
+  // measured against registers since the learner's first signed session, so
+  // late joiners who attend every one of their sessions rate 100%
+  const attendanceExpected = attendanceExpectedCount(p.id);
+  const attendanceRate = attendanceExpected > 0 ? attendance / attendanceExpected : null;
   const daysSinceSeen = p.lastLogin
     ? Math.floor((Date.now() - new Date(p.lastLogin).getTime()) / (24 * 3600 * 1000))
     : null;
@@ -101,6 +106,7 @@ export function analyse(p: Profile, registers: number, cloud: CloudLearnerData |
     exerciseAvg: exCount ? exSum / exCount : null,
     poeDone: poeItemCount(docs),
     attendance,
+    attendanceExpected,
     attendanceRate,
     lastLogin: p.lastLogin,
     daysSinceSeen,
@@ -114,7 +120,7 @@ export function analyse(p: Profile, registers: number, cloud: CloudLearnerData |
 
 const pct = (v: number | null) => (v === null ? "—" : `${Math.round(v * 100)}%`);
 
-function rowsCsv(rows: LearnerRow[], registers: number): string {
+function rowsCsv(rows: LearnerRow[]): string {
   const cell = (s: string | number) => `"${String(s).replace(/"/g, '""')}"`;
   const header =
     "Learner,Completion %,Units completed,Credits,Avg quiz %,Quizzes taken,Avg exercise %,POE items,Attendance,Attendance %,Last seen,XP,Level,At risk,Risk reasons";
@@ -128,7 +134,7 @@ function rowsCsv(rows: LearnerRow[], registers: number): string {
       cell(r.quizzesTaken),
       cell(r.exerciseAvg === null ? "" : Math.round(r.exerciseAvg * 100)),
       cell(r.poeDone),
-      cell(`${r.attendance}/${registers}`),
+      cell(`${r.attendance}/${r.attendanceExpected}`),
       cell(r.attendanceRate === null ? "" : Math.round(r.attendanceRate * 100)),
       cell(r.lastLogin ? new Date(r.lastLogin).toLocaleString() : "never"),
       cell(r.xp),
@@ -186,7 +192,7 @@ export function AnalyticsPage({ profile, navigate }: { profile: Profile; navigat
     // fold in the cloud-side avatar / lastLogin / enrolment for seeded copies
     // so the analytics view matches what the People page shows
     const all = [...localLearners.map((p) => mergeProfileWithCloud(p, cloud)), ...remote];
-    return all.map((p) => analyse(p, registers, cloud));
+    return all.map((p) => analyse(p, cloud));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [registers, profile.id, cloud]);
 
@@ -360,7 +366,7 @@ export function AnalyticsPage({ profile, navigate }: { profile: Profile; navigat
           onClick={() =>
             downloadText(
               `learning-analytics-${new Date().toISOString().slice(0, 10)}.csv`,
-              rowsCsv(sorted, registers)
+              rowsCsv(sorted)
             )
           }
         >
@@ -448,7 +454,7 @@ export function AnalyticsPage({ profile, navigate }: { profile: Profile; navigat
                     {r.poeDone}/{POE_TOTAL}
                   </td>
                   <td>
-                    {registers ? `${r.attendance}/${registers}` : "—"}
+                    {r.attendanceExpected ? `${r.attendance}/${r.attendanceExpected}` : "—"}
                     {r.attendanceRate !== null && (
                       <span className="mini-note"> ({Math.round(r.attendanceRate * 100)}%)</span>
                     )}

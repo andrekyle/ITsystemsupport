@@ -75,6 +75,7 @@ function learnerStat(r: LearnerRow) {
     exerciseAvgPct: pctStr(r.exerciseAvg),
     poeItems: r.poeDone,
     sessionsAttended: r.attendance,
+    sessionsExpected: r.attendanceExpected,
     attendanceRatePct: pctStr(r.attendanceRate),
     lastSeen: r.lastLogin ? new Date(r.lastLogin).toLocaleDateString() : "never signed in",
     atRisk: r.atRisk,
@@ -130,10 +131,11 @@ export function buildReportData(kind: string, rows: LearnerRow[], registers: num
     case "attendance":
       return {
         ...base,
+        note: "sessionsExpected counts registers since each learner's first signed session; late joiners are only measured from when they started.",
         learners: rows.map((r) => ({
           name: r.profile.name,
           sessionsAttended: r.attendance,
-          registersIssued: registers,
+          sessionsExpected: r.attendanceExpected,
           attendanceRatePct: pctStr(r.attendanceRate),
           lastSeen: r.lastLogin ? new Date(r.lastLogin).toLocaleDateString() : "never signed in",
         })),
@@ -229,7 +231,7 @@ export async function requestReport(
 }
 
 /** Deterministic data appendix table per report kind. */
-function appendixTable(kind: string, rows: LearnerRow[], registers: number): string {
+function appendixTable(kind: string, rows: LearnerRow[]): string {
   const th = (cells: string[]) =>
     `<tr>${cells.map((c) => `<th style="width:auto">${esc(c)}</th>`).join("")}</tr>`;
   const td = (cells: (string | number)[]) =>
@@ -237,12 +239,12 @@ function appendixTable(kind: string, rows: LearnerRow[], registers: number): str
   const pctCell = (v: number | null) => (v === null ? "—" : `${v}%`);
 
   if (kind === "attendance") {
-    return `<table>${th(["Learner", "Sessions signed", "Registers issued", "Attendance", "Last seen"])}${rows
+    return `<table>${th(["Learner", "Sessions signed", "Sessions expected", "Attendance", "Last seen"])}${rows
       .map((r) =>
         td([
           r.profile.name,
           r.attendance,
-          registers,
+          r.attendanceExpected,
           pctCell(pctStr(r.attendanceRate)),
           r.lastLogin ? new Date(r.lastLogin).toLocaleDateString() : "never",
         ])
@@ -356,7 +358,7 @@ export function reportDocumentHtml(
 
   <h2>Appendix · Data snapshot</h2>
   <p class="small">Figures as recorded on ITSS Learn at the time of generation (${esc(today)}).</p>
-  ${appendixTable(kind.id, rows, registers)}
+  ${appendixTable(kind.id, rows)}
 
   <div class="sign">
     <div>Compiled by (name &amp; signature)</div>

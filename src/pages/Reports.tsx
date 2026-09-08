@@ -58,7 +58,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
       (p) => p.role === "Learner"
     );
     const all = [...localLearners.map((p) => mergeProfileWithCloud(p, cloud)), ...remote];
-    return all.map((p) => analyse(p, registers, cloud));
+    return all.map((p) => analyse(p, cloud));
   }, [registers, cloud]);
 
   const kind: ReportKind = REPORT_KINDS.find((k) => k.id === kindId) ?? REPORT_KINDS[0];

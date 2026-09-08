@@ -18,7 +18,7 @@ import {
 } from "../store";
 import { auditCsv, downloadText, useAudit } from "../lib/audit";
 import type { AuditEvent } from "../lib/audit";
-import { attendanceRegisterCount, attendanceSignedCount } from "../lib/gamification";
+import { attendanceExpectedCount, attendanceRegisterCount, attendanceSignedCount } from "../lib/gamification";
 import { downloadIcs, outlookEventLink, parseSessionDates } from "../lib/integrations";
 import type { IcsEvent } from "../lib/integrations";
 import { openCertificate, openStatementOfResults } from "../lib/certificates";
@@ -117,6 +117,7 @@ interface ComplianceRecord {
   poeCompetent: number;
   poeNyc: number;
   attendanceSigned: number;
+  attendanceExpected: number;
   overall: number;
   creditsEarned: number;
   unitsCompleted: number;
@@ -152,6 +153,7 @@ function complianceFor(
     poeCompetent: myReviews.filter((r) => r.status === "competent").length,
     poeNyc: myReviews.filter((r) => r.status === "nyc").length,
     attendanceSigned: attendanceSignedCount(p.id),
+    attendanceExpected: attendanceExpectedCount(p.id),
     overall: s.overall,
     creditsEarned: s.creditsEarned,
     unitsCompleted: s.unitsCompleted,
@@ -160,7 +162,7 @@ function complianceFor(
   };
 }
 
-function recordCsv(records: ComplianceRecord[], registers: number): string {
+function recordCsv(records: ComplianceRecord[]): string {
   const header =
     "Learner,Enrolment signed,Signature on file,Appendix C docs,POE items,POE competent,POE NYC,Attendance,Overall %,Credits,Units completed,Outcomes C,Outcomes NYC";
   const cell = (s: string | number | boolean) => `"${String(s).replace(/"/g, '""')}"`;
@@ -173,7 +175,7 @@ function recordCsv(records: ComplianceRecord[], registers: number): string {
       cell(`${r.poeDone}/${POE_TOTAL}`),
       cell(r.poeCompetent),
       cell(r.poeNyc),
-      cell(`${r.attendanceSigned}/${registers}`),
+      cell(`${r.attendanceSigned}/${r.attendanceExpected}`),
       cell(Math.round(r.overall * 100)),
       cell(r.creditsEarned),
       cell(r.unitsCompleted),
@@ -383,7 +385,7 @@ export function CompliancePage({
             onClick={() =>
               downloadText(
                 `compliance-records-${new Date().toISOString().slice(0, 10)}.csv`,
-                recordCsv(records, registers)
+                recordCsv(records)
               )
             }
           >
@@ -457,7 +459,7 @@ export function CompliancePage({
                       {r.poeNyc > 0 && <span className="status-chip bad">{r.poeNyc} NYC</span>}
                     </td>
                     <td>
-                      {r.attendanceSigned}/{registers}
+                      {r.attendanceSigned}/{r.attendanceExpected}
                     </td>
                     <td>{Math.round(r.overall * 100)}%</td>
                     <td>
