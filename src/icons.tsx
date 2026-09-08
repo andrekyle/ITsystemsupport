@@ -166,6 +166,13 @@ export const PATHS: Record<string, React.ReactNode> = {
     </>
   ),
   check: <path d="M5.5 12.5l4.2 4.2 8.8-9.4" />,
+  /** WhatsApp-style delivery ticks — two overlapping checkmarks. */
+  doubleCheck: (
+    <>
+      <path d="M2.5 13.2l3.9 3.9L14.8 8" />
+      <path d="M10.6 15.4l1.7 1.7L20.7 8" />
+    </>
+  ),
   lock: (
     <>
       <rect x="5.5" y="10.5" width="13" height="9" rx="1.5" />

@@ -828,6 +828,8 @@ export interface ChatMessage {
   editedAt?: string;
   /** the recipient's reaction to this message — "👍" (like) or "❤️" (love) */
   reaction?: string;
+  /** shared id across every copy of a "message all learners" broadcast */
+  broadcastId?: string;
 }
 
 /** Wire representation of a message row in Supabase. */
@@ -844,6 +846,7 @@ interface DbChatRow {
   read_at: string | null;
   edited_at?: string | null;
   reaction?: string | null;
+  broadcast_id?: string | null;
 }
 
 function rowToMessage(row: DbChatRow): ChatMessage {
@@ -858,6 +861,7 @@ function rowToMessage(row: DbChatRow): ChatMessage {
     read: !!row.read_at,
     editedAt: row.edited_at ?? undefined,
     reaction: row.reaction ?? undefined,
+    broadcastId: row.broadcast_id ?? undefined,
   };
 }
 
@@ -966,9 +970,10 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
   /** Update the body of one of my own messages. The `.eq("sender_user_id", ...)`
    *  filter — plus the RLS policy — guarantees you can only edit your own.
    *  RLS-blocked updates return NO error, just 0 rows — so we require the
-   *  updated row back (.select) and roll the optimistic change back on failure. */
+   *  updated row back (.select) and roll the optimistic change back on failure.
+   *  Editing a broadcast copy (broadcastId set) updates EVERY recipient's copy. */
   const edit = useCallback(
-    async (msgId: string, newBody: string): Promise<boolean> => {
+    async (msgId: string, newBody: string, broadcastId?: string): Promise<boolean> => {
       if (!supabase || !myAuthId) return false;
       const body = newBody.trim();
       if (!body) return false;
@@ -982,13 +987,35 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
           return { ...m, body, editedAt };
         })
       );
-      const { data, error } = await supabase
-        .from("chat_messages")
-        .update({ body, edited_at: editedAt })
-        .eq("id", msgId)
-        .eq("sender_user_id", myAuthId)
-        .select("id");
-      const ok = !error && !!data && data.length > 0;
+      const patch = { body, edited_at: editedAt };
+      let ok = false;
+      if (broadcastId) {
+        const { data, error } = await supabase
+          .from("chat_messages")
+          .update(patch)
+          .eq("broadcast_id", broadcastId)
+          .eq("sender_user_id", myAuthId)
+          .select("id");
+        ok = !error && !!data && data.length > 0;
+        // un-migrated database (no broadcast_id column): fall back to this copy only
+        if (error && (error.code === "42703" || error.code === "PGRST204")) {
+          const res = await supabase
+            .from("chat_messages")
+            .update(patch)
+            .eq("id", msgId)
+            .eq("sender_user_id", myAuthId)
+            .select("id");
+          ok = !res.error && !!res.data && res.data.length > 0;
+        }
+      } else {
+        const { data, error } = await supabase
+          .from("chat_messages")
+          .update(patch)
+          .eq("id", msgId)
+          .eq("sender_user_id", myAuthId)
+          .select("id");
+        ok = !error && !!data && data.length > 0;
+      }
       if (!ok && old) {
         const o = old as { body: string; editedAt?: string };
         setMessages((prev) =>
@@ -1057,6 +1084,8 @@ export async function broadcastChatMessage(
   if (!supabase) return 0;
   const text = body.trim();
   if (!text) return 0;
+  // one shared id across all copies — lets the sender edit the broadcast later
+  const broadcastId = crypto.randomUUID();
   const rows = recipients.map((r) => ({
     sender_user_id: senderAuthId,
     recipient_user_id: r.authUserId,
@@ -1067,8 +1096,16 @@ export async function broadcastChatMessage(
     body: text,
   }));
   if (rows.length === 0) return 0;
-  const { error } = await supabase.from("chat_messages").insert(rows);
-  return error ? 0 : rows.length;
+  const { error } = await supabase
+    .from("chat_messages")
+    .insert(rows.map((r) => ({ ...r, broadcast_id: broadcastId })));
+  if (!error) return rows.length;
+  // un-migrated database (no broadcast_id column): deliver without the link
+  if (error.code === "42703" || error.code === "PGRST204") {
+    const res = await supabase.from("chat_messages").insert(rows);
+    return res.error ? 0 : rows.length;
+  }
+  return 0;
 }
 
 /** Summary of a single chat thread — for listing conversations in a sidebar. */

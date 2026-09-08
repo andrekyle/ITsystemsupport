@@ -185,6 +185,12 @@ create table if not exists public.chat_messages (
 alter table public.chat_messages add column if not exists edited_at timestamptz;
 -- Reactions: the recipient can like/love a message (stored as the emoji).
 alter table public.chat_messages add column if not exists reaction text;
+-- Broadcasts ("message all learners"): every per-recipient copy of one send
+-- shares this id so the sender can edit all copies in one statement.
+alter table public.chat_messages add column if not exists broadcast_id uuid;
+
+create index if not exists chat_messages_broadcast_idx
+  on public.chat_messages (broadcast_id) where broadcast_id is not null;
 
 create index if not exists chat_messages_participants_idx
   on public.chat_messages (sender_user_id, recipient_user_id, sent_at);

@@ -12,7 +12,7 @@ import {
 } from "../store";
 import { fetchCloudDirectory, fetchSuperUserAuthId } from "../lib/directory";
 import type { CloudDirectory } from "../lib/directory";
-import { Avatar } from "../components/Avatar";
+import { Avatar, initials } from "../components/Avatar";
 import { AlertModal, ConfirmModal, Modal } from "../components/Modal";
 import { supabase } from "../lib/supabase";
 import { logAudit } from "../lib/audit";
@@ -444,7 +444,7 @@ function ChatSidebar({
                   onOpenProfile(p.id);
                 }}
               >
-                <Avatar profile={p} size={28} />
+                <Avatar profile={p} size={48} />
                 {isOnline(p) && <span className="presence-dot" title="Online now" />}
               </span>
               <span className="chat-row-name">
@@ -538,12 +538,19 @@ function ChatThreadRow({
         onClick={() => (involves ? onSelect(otherId) : onMonitor(thread.key))}
         title={isSuper && !involves ? "Open read-only monitoring view" : undefined}
       >
+        <span className="chat-avatar">
+          {otherProfile ? (
+            <Avatar profile={otherProfile} size={48} />
+          ) : (
+            <span className="avatar" style={{ width: 48, height: 48, fontSize: 19 }}>
+              {initials(involves ? nameFor(otherId) : nameFor(thread.aId))}
+            </span>
+          )}
+          {involves && otherOnline && <span className="presence-dot" title="Online now" />}
+        </span>
         <span className="chat-row-name">
           <strong>
             {involves ? nameFor(otherId) : bothLabel}
-            {involves && otherOnline && (
-              <span className="presence-dot inline" title="Online now" aria-label="Online now" />
-            )}
             {isSuper && !involves && (
               <span className="chat-mon-tag" title="A conversation between two other people — you see it as the Super User">
                 monitoring
@@ -555,8 +562,8 @@ function ChatThreadRow({
           </span>
         </span>
         <span className="chat-row-meta">
+          <span className="mini-note">{thread.latest ? fmtListWhen(thread.latest.at) : ""}</span>
           {unread > 0 && <span className="chat-unread">{unread}</span>}
-          <span className="mini-note">{thread.latest ? fmtWhen(thread.latest.at) : ""}</span>
         </span>
       </button>
       {onDelete && (
@@ -878,7 +885,7 @@ function ChatBubble({
   msg: ChatMessage;
   me: Profile;
   sender?: Profile;
-  onEdit: (msgId: string, newBody: string) => Promise<boolean>;
+  onEdit: (msgId: string, newBody: string, broadcastId?: string) => Promise<boolean>;
   /** react to a received message (👍/❤️, null clears) — omit for read-only views */
   onReact?: (msgId: string, reaction: string | null) => Promise<boolean>;
   /** open the sender's profile when their avatar is clicked */
@@ -917,7 +924,7 @@ function ChatBubble({
     }
     setSaving(true);
     setSaveFailed(false);
-    const ok = await onEdit(msg.id, next);
+    const ok = await onEdit(msg.id, next, msg.broadcastId);
     setSaving(false);
     if (ok) {
       setEditing(false);
@@ -993,6 +1000,11 @@ function ChatBubble({
                 <Icon name="checkCircle" size={14} /> {saving ? "Saving…" : "Save"}
               </button>
             </div>
+            {msg.broadcastId && (
+              <div className="mini-note" style={{ marginTop: 4 }}>
+                Broadcast message — saving updates every learner's copy.
+              </div>
+            )}
             {saveFailed && (
               <div className="mini-note" style={{ color: "var(--red)", marginTop: 4 }}>
                 Could not save the edit — the change was not accepted by the server. Ask the
@@ -1007,6 +1019,15 @@ function ChatBubble({
             <div className="chat-bubble-at mini-note">
               {fmtWhen(msg.at)}
               {msg.editedAt && <span title={`Edited ${fmtWhen(msg.editedAt)}`}> · edited</span>}
+              {mine && (
+                <span
+                  className={`chat-tick${msg.read ? " read" : ""}`}
+                  title={msg.read ? "Read" : "Delivered"}
+                  aria-label={msg.read ? "Read" : "Delivered"}
+                >
+                  <Icon name="doubleCheck" size={15} strokeWidth={1.7} />
+                </span>
+              )}
             </div>
             {msg.reaction && (
               <span
@@ -1078,4 +1099,16 @@ function fmtWhen(iso: string): string {
     d.getDate() === yesterday.getDate();
   if (isYesterday) return `Yesterday · ${time}`;
   return `${d.toLocaleDateString(undefined, { day: "numeric", month: "short" })} · ${time}`;
+}
+
+/** WhatsApp-style list timestamp: time today, “Yesterday”, weekday within a week, then a date. */
+function fmtListWhen(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const dayDiff = Math.round((startOfDay(now) - startOfDay(d)) / 86400000);
+  if (dayDiff <= 0) return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  if (dayDiff === 1) return "Yesterday";
+  if (dayDiff < 7) return d.toLocaleDateString(undefined, { weekday: "long" });
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
