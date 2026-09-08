@@ -8338,6 +8338,55 @@ button.cell-person-link:hover {
 
 table.data .mini-note { display: block; }
 
+/* phones: the training calendar stacks each unit as a tidy row — title first,
+   then “US · dates · time” as one meta line. No sideways scrolling. */
+@media (max-width: 860px) {
+  .content table.data.training-table,
+  .content table.data.milestone-table,
+  table.data.training-table tbody,
+  table.data.milestone-table tbody {
+    display: block;
+    width: 100%;
+    overflow-x: visible;
+  }
+  table.data.training-table thead,
+  table.data.milestone-table thead {
+    display: none;
+  }
+  table.data.training-table tr,
+  table.data.milestone-table tr {
+    display: block;
+    padding: 10px 2px;
+    border-bottom: 1px solid var(--table-line);
+  }
+  table.data.training-table tr:last-child,
+  table.data.milestone-table tr:last-child {
+    border-bottom: 0;
+  }
+  table.data.training-table td,
+  table.data.milestone-table td {
+    display: inline;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    font-size: 12.5px;
+    color: var(--ink-3);
+    white-space: normal;
+  }
+  /* main line: the unit title / milestone name */
+  table.data.training-table td:nth-child(2),
+  table.data.milestone-table td:first-child {
+    display: block;
+    padding: 1px 0 3px;
+    font-size: 14.5px;
+    color: var(--ink);
+  }
+  table.data.training-table td:nth-child(4)::before,
+  table.data.milestone-table td:nth-child(3)::before {
+    content: " · ";
+  }
+}
+
 .analytics-table th,
 .analytics-table td { padding: 7px 10px; font-size: 12.5px; }
 .analytics-table .cell-bar { min-width: 100px; gap: 6px; }

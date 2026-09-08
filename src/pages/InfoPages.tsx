@@ -275,7 +275,7 @@ export function CalendarPage({
         </span>
         Programme milestones
       </h2>
-      <table className="data">
+      <table className="data milestone-table">
         <thead>
           <tr>
             <th>Milestone</th>
