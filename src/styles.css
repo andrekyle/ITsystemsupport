@@ -1961,10 +1961,10 @@ textarea:focus {
 .quiz-q .qt {
   display: flex;
   gap: 11px;
-  font-size: 14.5px;
+  font-size: 18px;
   font-weight: 600;
   margin-bottom: 12px;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .quiz-q .qn {
@@ -1986,8 +1986,8 @@ textarea:focus {
 
 .exam-instruction p {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 16.5px;
+  line-height: 1.6;
   color: var(--ink-2);
 }
 
@@ -2104,12 +2104,12 @@ textarea:focus {
   gap: 10px;
   width: 100%;
   text-align: left;
-  padding: 9px 12px;
+  padding: 10px 12px;
   border: 1px solid transparent;
   border-radius: var(--radius);
   background: transparent;
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: 17px;
+  line-height: 1.5;
   color: var(--ink-2);
   margin-bottom: 6px;
 }
@@ -2130,7 +2130,7 @@ textarea:focus {
 .opt .opt-letter {
   flex-shrink: 0;
   font-weight: 700;
-  width: 16px;
+  width: 20px;
 }
 
 .opt.selected {
@@ -2176,8 +2176,8 @@ textarea:focus {
   display: flex;
   gap: 8px;
   align-items: flex-start;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.6;
   color: var(--ink-2);
   background: var(--azure-lighter);
   padding: 9px 12px;
@@ -6074,7 +6074,7 @@ a.plan-ppt:hover {
 /* "select all that apply" hint on multi-answer quiz questions */
 .quiz-q .multi-hint {
   margin-left: 10px;
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -7226,7 +7226,7 @@ a.plan-ppt:hover {
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--ink-2);
-  font-size: 14px;
+  font-size: 16.5px;
   cursor: grab;
   user-select: none;
 }
@@ -7319,7 +7319,7 @@ a.plan-ppt:hover {
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--ink-2);
-  font-size: 14px;
+  font-size: 16.5px;
   text-align: left;
   cursor: pointer;
 }
@@ -11235,12 +11235,12 @@ table.data th.sortable.sorted { color: var(--ink); }
   }
   .quiz-q .qt {
     gap: 8px;
-    font-size: 14px;
+    font-size: 16.5px;
   }
   .opt {
     padding: 8px 10px;
     gap: 8px;
-    font-size: 13.5px;
+    font-size: 16px;
   }
   .exam-instruction {
     padding: 10px 12px;
