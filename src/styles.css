@@ -10593,8 +10593,6 @@ table.data th.sortable.sorted { color: var(--ink); }
   max-width: 980px;
   padding: 20px 22px;
   margin-bottom: 26px;
-  border-color: var(--azure);
-  box-shadow: 0 2px 10px rgba(15, 108, 189, 0.08);
 }
 
 .reports-ask-head {
@@ -10806,9 +10804,7 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 
 .report-kind.selected {
-  border-color: var(--azure);
   background: var(--azure-lighter);
-  box-shadow: 0 0 0 1px var(--azure) inset;
 }
 
 .reports-actions {
