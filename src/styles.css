@@ -7372,6 +7372,29 @@ table.data tr.done-row .text-link {
 
 /* ---------- Attendance Register (Eruditio form replica) ---------- */
 
+/* PDF-style fit-to-width: the fixed-width paper sheet scales down to the screen */
+.sheet-fit {
+  max-width: 1060px;
+  overflow: hidden;
+}
+
+.sheet-fit-inner {
+  width: 1060px;
+  transform-origin: top left;
+}
+
+@media print {
+  .sheet-fit {
+    overflow: visible;
+    height: auto !important;
+    max-width: none;
+  }
+  .sheet-fit-inner {
+    transform: none !important;
+    width: auto;
+  }
+}
+
 .att-controls {
   display: flex;
   align-items: center;
