@@ -2268,6 +2268,16 @@ textarea:focus {
   .attempt-row.acad .cell:empty {
     display: none;
   }
+
+  /* expanded quiz/exercise answers: slim the left gutter so the questions
+     and option pills use the whole width */
+  .exercise-answer-list {
+    padding: 6px 0 12px 4px;
+  }
+
+  .exercise-answer {
+    padding: 4px 0 4px 8px;
+  }
 }
 
 /* ---------- profile signature ---------- */
