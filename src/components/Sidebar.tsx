@@ -50,7 +50,7 @@ export function Sidebar({ collapsed, route, progress, profile, navigate }: Props
     setInstallMsg(
       isIos()
         ? "On iPhone or iPad: open this site in Safari, tap the Share button and choose “Add to Home Screen”. ITSS Learn then opens as its own app."
-        : "Open your browser's menu (⋮) and choose “Install app” / “Add to Home screen”. If it is already installed, launch ITSS Learn from your home screen or Start menu."
+        : "Tap Chrome's menu (⋮ top right) and choose “Add to Home screen”, then “Install”. That creates the ITSS Learn icon on your phone. If the option says “Open ITSS Learn”, the app is already installed — find its icon in your app drawer."
     );
   }
 

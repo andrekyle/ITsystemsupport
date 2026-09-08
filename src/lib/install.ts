@@ -8,6 +8,8 @@ type BipEvent = Event & {
 };
 
 let deferred: BipEvent | null = null;
+/** set when the user asked to install before the browser granted the prompt */
+let wantsInstall = false;
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((l) => l());
 
@@ -15,6 +17,10 @@ window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   deferred = e as BipEvent;
   notify();
+  if (wantsInstall) {
+    wantsInstall = false;
+    void promptInstall();
+  }
 });
 
 window.addEventListener("appinstalled", () => {
@@ -41,9 +47,14 @@ export function onInstallChange(fn: () => void): () => void {
   return () => listeners.delete(fn);
 }
 
-/** Show the browser's install dialog. Resolves true when it could be shown. */
+/** Show the browser's install dialog. Resolves true when it could be shown.
+ *  When the browser hasn't granted the prompt yet, remembers the request and
+ *  fires the dialog automatically as soon as it arrives. */
 export async function promptInstall(): Promise<boolean> {
-  if (!deferred) return false;
+  if (!deferred) {
+    wantsInstall = true;
+    return false;
+  }
   const ev = deferred;
   await ev.prompt();
   const { outcome } = await ev.userChoice;
