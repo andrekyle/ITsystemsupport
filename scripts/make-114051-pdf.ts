@@ -209,11 +209,11 @@ function renderDeck(deck: Deck): Promise<number> {
   function bulletList(items: string[], { x = MX, y = 1.7, w = CW_IN, size = MIN_FONT, gap = 0.155 } = {}) {
     let cy = inx(y);
     doc.font(BODY_FONT).fontSize(size);
-    for (const t of items) {
-      doc.circle(inx(x) + 5, cy + size * 0.55, 2.6).fill(NAVY);
-      doc.fillColor(NAVY).font(BODY_FONT).fontSize(size).text(t, inx(x) + 22, cy, { width: inx(w) - 26, lineGap: size * 0.2 });
+    items.forEach((t, i) => {
+      doc.fillColor(NAVY).font(TITLE_FONT).fontSize(size).text(`${i + 1}.`, inx(x), cy, { width: 26, lineBreak: false });
+      doc.fillColor(NAVY).font(BODY_FONT).fontSize(size).text(t, inx(x) + 30, cy, { width: inx(w) - 34, lineGap: size * 0.2 });
       cy = doc.y + inx(gap);
-    }
+    });
   }
 
   function callout(c: { icon: string; text: string }, y: number, h = 1.0) {
