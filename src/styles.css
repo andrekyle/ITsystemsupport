@@ -10666,7 +10666,10 @@ table.data th.sortable.sorted { color: var(--ink); }
 
 .reports-example:hover {
   color: var(--azure);
-  text-decoration: underline;
+}
+
+.reports-example.on {
+  color: var(--azure);
 }
 
 [data-theme="dark"] .reports-example {
@@ -10674,8 +10677,9 @@ table.data th.sortable.sorted { color: var(--ink); }
   color: #8696a0;
 }
 
-[data-theme="dark"] .reports-example:hover {
-  color: #e9edef;
+[data-theme="dark"] .reports-example:hover,
+[data-theme="dark"] .reports-example.on {
+  color: var(--azure);
 }
 
 .reports-pill {

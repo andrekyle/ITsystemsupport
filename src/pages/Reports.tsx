@@ -132,7 +132,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
               <button
                 key={q}
                 type="button"
-                className="reports-example"
+                className={`reports-example${question === q ? " on" : ""}`}
                 onClick={() => setQuestion(q)}
               >
                 {q}
