@@ -4598,7 +4598,7 @@ export function UnitPage({
                 </span>
                 Knowledge quizzes — choose one to start
               </h2>
-              <p className="muted" style={{ marginTop: -6, marginBottom: 16 }}>
+              <p className="muted" style={{ marginTop: -6, marginBottom: 16, fontSize: 15.5 }}>
                 Your best score for each quiz is saved to your profile. 80%+ is considered
                 competent.
               </p>
