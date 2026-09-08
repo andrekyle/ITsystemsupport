@@ -8941,6 +8941,24 @@ table.data th.sortable.sorted { color: var(--ink); }
   margin: 0 0 16px;
 }
 
+/* phones: even 2-up grid so the buttons line up instead of wrapping raggedly */
+@media (max-width: 640px) {
+  .contact-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .contact-row .btn {
+    justify-content: flex-start;
+    min-height: 40px;
+    height: auto;
+    white-space: normal;
+    text-align: left;
+    line-height: 1.25;
+    padding: 6px 10px;
+  }
+}
+
 /* --- responsive tables for the new report pages --- */
 @media (max-width: 800px) {
   .compliance-table, .analytics-table, .outcome-table, .audit-table, .deadline-table { font-size: 12px; }
