@@ -5,7 +5,7 @@ import { isStaff } from "../types";
 import { MODULES } from "../data/course";
 import type { ProgressState } from "../types";
 import { moduleCompletion } from "../store";
-import { isInstalled, isIos, onInstallChange, promptInstall } from "../lib/install";
+import { isInstalled, installHelpMessage, onInstallChange, promptInstall } from "../lib/install";
 import { AlertModal } from "./Modal";
 
 // Sentence case: first letter uppercased, subsequent words lowercased, but
@@ -47,11 +47,7 @@ export function Sidebar({ collapsed, route, progress, profile, navigate }: Props
 
   async function onInstallClick() {
     if (await promptInstall()) return;
-    setInstallMsg(
-      isIos()
-        ? "On iPhone or iPad: open this site in Safari, tap the Share button and choose “Add to Home Screen”. ITSS Learn then opens as its own app."
-        : "Tap Chrome's menu (⋮ top right) and choose “Add to Home screen”, then “Install”. That creates the ITSS Learn icon on your phone. If the option says “Open ITSS Learn”, the app is already installed — find its icon in your app drawer."
-    );
+    setInstallMsg(installHelpMessage());
   }
 
   const nav = [

@@ -6,7 +6,7 @@ import { MODULES } from "../data/course";
 import { loadProfiles, useChatThreads } from "../store";
 import { notifyIncoming, syncUnreadBadge } from "../lib/notify";
 import { Avatar, fileToAvatar } from "./Avatar";
-import { isInstalled, isIos, onInstallChange, promptInstall } from "../lib/install";
+import { isInstalled, installHelpMessage, onInstallChange, promptInstall } from "../lib/install";
 import { AlertModal } from "./Modal";
 
 /** Session schedule derived from the US 8252 lesson plan (starts 09:00). */
@@ -80,12 +80,7 @@ function InstallButton() {
         aria-label="Download the app"
         onClick={() =>
           void promptInstall().then((shown) => {
-            if (shown) return;
-            setMsg(
-              isIos()
-                ? "On iPhone or iPad: open this site in Safari, tap the Share button and choose “Add to Home Screen”. ITSS Learn then opens as its own app."
-                : "Tap Chrome's menu (⋮ top right) and choose “Add to Home screen”, then “Install”. That creates the ITSS Learn icon on your phone. If the option says “Open ITSS Learn”, the app is already installed — find its icon in your app drawer."
-            );
+            if (!shown) setMsg(installHelpMessage());
           })
         }
       >

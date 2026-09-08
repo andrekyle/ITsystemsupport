@@ -66,3 +66,19 @@ export async function promptInstall(): Promise<boolean> {
 export function isIos(): boolean {
   return /iphone|ipad|ipod/i.test(navigator.userAgent);
 }
+
+/** Browser-aware fallback instructions for when no install prompt exists. */
+export function installHelpMessage(): string {
+  const ua = navigator.userAgent;
+  const here = window.location.host;
+  if (isIos()) {
+    return "On iPhone or iPad: open this site in Safari, tap the Share button and choose “Add to Home Screen”. ITSS Learn then opens as its own app.";
+  }
+  const oemBrowser =
+    /(miuibrowser|vivobrowser|heytapbrowser|oppobrowser|ucbrowser|huaweibrowser|puffin|baidubrowser)/i.test(ua) ||
+    !/chrome\/\d+/i.test(ua);
+  if (oemBrowser) {
+    return `This browser cannot install apps. Open Google Chrome, type ${here} in the address bar, then tap the ⋮ menu → “Add to Home screen” → “Install”. That creates the ITSS Learn icon on your phone.`;
+  }
+  return "Tap Chrome's menu (⋮ top right) and choose “Add to Home screen”, then “Install”. That creates the ITSS Learn icon on your phone. If the option says “Open ITSS Learn”, the app is already installed — find its icon in your app drawer.";
+}
