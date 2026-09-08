@@ -3,6 +3,7 @@ import { Icon } from "../icons";
 import type { Profile } from "../types";
 import { loadProfiles } from "../store";
 import { attendanceRegisterCount } from "../lib/gamification";
+import { autoGrowTextarea } from "../lib/autoGrow";
 import {
   fetchCloudLearnerData,
   mergeProfileWithCloud,
@@ -125,14 +126,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
             </div>
           </div>
         </div>
-        <textarea
-          className="reports-q"
-          rows={3}
-          value={question}
-          placeholder={`e.g. ${EXAMPLE_QUESTIONS[0]}`}
-          onChange={(e) => setQuestion(e.target.value)}
-        />
-        <div className="reports-ask-foot">
+        <div className="reports-chat">
           <div className="reports-examples">
             {EXAMPLE_QUESTIONS.map((q) => (
               <button
@@ -145,14 +139,28 @@ export function ReportsPage({ profile }: { profile: Profile }) {
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            className="btn solid"
-            disabled={!!busy || rows.length === 0 || !question.trim()}
-            onClick={() => generate(CUSTOM_KIND, question, "ask")}
-          >
-            {busy === "ask" ? "Writing report…" : "Ask the AI"}
-          </button>
+          <div className="reports-pill">
+            <textarea
+              rows={1}
+              value={question}
+              placeholder="Ask for any report"
+              onChange={(e) => setQuestion(e.target.value)}
+              onInput={(e) => autoGrowTextarea(e.currentTarget, 120)}
+            />
+            <button
+              type="button"
+              className="reports-send"
+              disabled={!!busy || rows.length === 0 || !question.trim()}
+              onClick={() => generate(CUSTOM_KIND, question, "ask")}
+              title="Ask the AI"
+              aria-label="Ask the AI"
+            >
+              <Icon name="chevronRight" size={22} />
+            </button>
+          </div>
+          {busy === "ask" && (
+            <span className="reports-chat-note">The AI is analysing the data…</span>
+          )}
         </div>
       </div>
 
