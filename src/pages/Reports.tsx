@@ -203,6 +203,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   const [scope, setScope] = useState<ReportScope>("worked");
   const [wantReport, setWantReport] = useState(false);
   const [busy, setBusy] = useState<"kind" | "ask" | null>(null);
+  const [asked, setAsked] = useState<string | null>(null);
   const [genKind, setGenKind] = useState<ReportKind | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [aiNote, setAiNote] = useState<string | null>(null);
@@ -245,6 +246,10 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   async function generate(k: ReportKind, q: string | undefined, source: "kind" | "ask") {
     if (busy) return;
     const makingReport = source === "kind" || wantReport;
+    if (source === "ask" && q) {
+      setAsked(q);
+      setQuestion("");
+    }
     setGenKind(k);
     setBusy(source);
     setError(null);
@@ -276,17 +281,6 @@ export function ReportsPage({ profile }: { profile: Profile }) {
 
   const status = (
     <>
-      {busy === "ask" && !wantReport && (
-        <div className="reports-ai-note" role="status">
-          <NeonWaves />
-          <span className="ai-text">Thinking…</span>
-        </div>
-      )}
-      {aiNote && !busy && (
-        <div className="reports-ai-note" role="status">
-          <span className="ai-text">{aiNote}</span>
-        </div>
-      )}
       {error && (
         <span className="reports-error">
           <Icon name="info" size={15} /> {error}
@@ -299,6 +293,51 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         </span>
       )}
     </>
+  );
+
+  const composer = (
+    <div className="reports-gpt-pill">
+      <span className="reports-gpt-plus" aria-hidden="true">
+        <Icon name="plus" size={21} />
+      </span>
+      <textarea
+        rows={1}
+        value={question}
+        placeholder="Ask anything"
+        onChange={(e) => setQuestion(e.target.value)}
+        onInput={(e) => autoGrowTextarea(e.currentTarget, 140)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            if (question.trim() && !busy && rows.length > 0)
+              void generate(CUSTOM_KIND, question, "ask");
+          }
+        }}
+      />
+      <button
+        type="button"
+        role="switch"
+        aria-checked={wantReport}
+        className={`reports-inst${wantReport ? " on" : ""}`}
+        onClick={() => setWantReport((v) => !v)}
+        title="Answer: your question gets a short reply right here. Report: the AI writes a full print-ready report document."
+      >
+        {wantReport ? "Report" : "Answer"}
+        <Icon name="chevronDown" size={15} />
+      </button>
+      <button
+        type="button"
+        className="reports-gpt-send"
+        disabled={!!busy || rows.length === 0}
+        onClick={() => {
+          if (question.trim()) void generate(CUSTOM_KIND, question, "ask");
+        }}
+        title="Ask the AI"
+        aria-label="Ask the AI"
+      >
+        <Icon name={question.trim() ? "arrowUp" : "wave"} size={21} strokeWidth={2.1} />
+      </button>
+    </div>
   );
 
   return (
@@ -329,87 +368,71 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         AI Assistant
       </h2>
 
-      <div className="reports-hero">
-        <h1 className="reports-hero-title">{`How can I help, ${firstName}?`}</h1>
-
-        <div className="reports-gpt-pill">
-          <span className="reports-gpt-plus" aria-hidden="true">
-            <Icon name="plus" size={21} />
-          </span>
-          <textarea
-            rows={1}
-            value={question}
-            placeholder="Ask anything"
-            onChange={(e) => setQuestion(e.target.value)}
-            onInput={(e) => autoGrowTextarea(e.currentTarget, 140)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                if (question.trim() && !busy && rows.length > 0)
-                  void generate(CUSTOM_KIND, question, "ask");
-              }
-            }}
-          />
-          <button
-            type="button"
-            role="switch"
-            aria-checked={wantReport}
-            className={`reports-inst${wantReport ? " on" : ""}`}
-            onClick={() => setWantReport((v) => !v)}
-            title="Answer: your question gets a short reply right here. Report: the AI writes a full print-ready report document."
-          >
-            {wantReport ? "Report" : "Answer"}
-            <Icon name="chevronDown" size={15} />
-          </button>
-          <button
-            type="button"
-            className="reports-gpt-send"
-            disabled={!!busy || rows.length === 0}
-            onClick={() => {
-              if (question.trim()) void generate(CUSTOM_KIND, question, "ask");
-            }}
-            title="Ask the AI"
-            aria-label="Ask the AI"
-          >
-            <Icon name={question.trim() ? "arrowUp" : "wave"} size={21} strokeWidth={2.1} />
-          </button>
+      {asked !== null ? (
+        <div className="reports-chat">
+          <div className="chat-scroll">
+            <div className="chat-user">{asked}</div>
+            {busy === "ask" && !wantReport && <NeonWaves />}
+            {aiNote && !busy && (
+              <p className="chat-answer" role="status">
+                {aiNote}
+              </p>
+            )}
+            {status}
+          </div>
+          <div className="chat-composer">
+            <p className="chat-note">
+              The AI can make mistakes — it answers only from your live programme data.
+            </p>
+            {composer}
+          </div>
         </div>
+      ) : (
+        <div className="reports-hero">
+          <h1 className="reports-hero-title">{`How can I help, ${firstName}?`}</h1>
 
-        <div className="reports-list">
-          {REPORT_KINDS.map((k) => (
-            <button
-              key={k.id}
-              type="button"
-              className="reports-list-btn"
-              disabled={!!busy || rows.length === 0}
-              title={k.desc}
-              onClick={() => generate(k, undefined, "kind")}
-            >
-              <Icon name={k.icon} size={18} />
-              {k.name}
-            </button>
-          ))}
-          <button
-            type="button"
-            className="reports-list-btn"
-            role="switch"
-            aria-checked={scope === "all"}
-            title="Click to switch which units reports and answers cover"
-            onClick={() => setScope((s) => (s === "worked" ? "all" : "worked"))}
-          >
-            <Icon name="target" size={18} />
-            <span>Scope: {scope === "worked" ? "units we've worked on" : "whole programme"}</span>
-          </button>
+          {composer}
+
+          {!question.trim() && (
+            <div className="reports-list">
+              {REPORT_KINDS.map((k) => (
+                <button
+                  key={k.id}
+                  type="button"
+                  className="reports-list-btn"
+                  disabled={!!busy || rows.length === 0}
+                  title={k.desc}
+                  onClick={() => generate(k, undefined, "kind")}
+                >
+                  <Icon name={k.icon} size={18} />
+                  {k.name}
+                </button>
+              ))}
+              <button
+                type="button"
+                className="reports-list-btn"
+                role="switch"
+                aria-checked={scope === "all"}
+                title="Click to switch which units reports and answers cover"
+                onClick={() => setScope((s) => (s === "worked" ? "all" : "worked"))}
+              >
+                <Icon name="target" size={18} />
+                <span>Scope: {scope === "worked" ? "units we've worked on" : "whole programme"}</span>
+              </button>
+            </div>
+          )}
+
+          {status}
+
+          {!question.trim() && (
+            <p className="mini-note reports-hero-note">
+              Written from live data — {rows.length} learner{rows.length === 1 ? "" : "s"},{" "}
+              {registers} attendance register{registers === 1 ? "" : "s"} — by the AI model chosen
+              on the dashboard. Reports open print-ready in a new tab; nothing is stored.
+            </p>
+          )}
         </div>
-
-        {status}
-
-        <p className="mini-note reports-hero-note">
-          Written from live data — {rows.length} learner{rows.length === 1 ? "" : "s"},{" "}
-          {registers} attendance register{registers === 1 ? "" : "s"} — by the AI model chosen on
-          the dashboard. Reports open print-ready in a new tab; nothing is stored.
-        </p>
-      </div>
+      )}
     </>
   );
 }
