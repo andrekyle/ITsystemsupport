@@ -219,24 +219,73 @@ export function NeonWaves() {
   return <canvas ref={ref} className="ai-wavescreen" aria-hidden="true" />;
 }
 
+type ChatMsg = { role: "user" | "assistant"; text: string };
+
+interface SavedChat {
+  msgs: ChatMsg[];
+  question: string;
+  promptHist: string[];
+  wantReport: boolean;
+  scope: ReportScope;
+}
+
+const CHAT_STORE_KEY = "itss.aiAssistant.v1";
+
+/** The conversation survives page switches (and reloads) within the session. */
+function loadSavedChat(): SavedChat | null {
+  try {
+    const raw = sessionStorage.getItem(CHAT_STORE_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw) as Partial<SavedChat>;
+    return {
+      msgs: Array.isArray(p.msgs)
+        ? p.msgs.filter((m) => m && typeof m.text === "string").map((m) => ({
+            role: m.role === "assistant" ? ("assistant" as const) : ("user" as const),
+            text: m.text,
+          }))
+        : [],
+      question: typeof p.question === "string" ? p.question : "",
+      promptHist: Array.isArray(p.promptHist)
+        ? p.promptHist.filter((s): s is string => typeof s === "string").slice(-6)
+        : [],
+      wantReport: p.wantReport === true,
+      scope: p.scope === "all" ? "all" : "worked",
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function ReportsPage({ profile }: { profile: Profile }) {
   const firstName = profile.name.trim().split(/\s+/)[0] || profile.name;
   const registers = attendanceFilledRegisterDates().length;
+  const [saved] = useState(loadSavedChat);
   const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
-  const [question, setQuestion] = useState("");
-  const [scope, setScope] = useState<ReportScope>("worked");
-  const [wantReport, setWantReport] = useState(false);
+  const [question, setQuestion] = useState(saved?.question ?? "");
+  const [scope, setScope] = useState<ReportScope>(saved?.scope ?? "worked");
+  const [wantReport, setWantReport] = useState(saved?.wantReport ?? false);
   const [modeMenu, setModeMenu] = useState(false);
   const [busy, setBusy] = useState<"kind" | "ask" | null>(null);
-  const [msgs, setMsgs] = useState<{ role: "user" | "assistant"; text: string }[]>([]);
+  const [msgs, setMsgs] = useState<ChatMsg[]>(saved?.msgs ?? []);
   const [genKind, setGenKind] = useState<ReportKind | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [phase, setPhase] = useState(0);
   const endRef = useRef<HTMLDivElement | null>(null);
-  const [promptHist, setPromptHist] = useState<string[]>([]);
+  const [promptHist, setPromptHist] = useState<string[]>(saved?.promptHist ?? []);
   const [histIdx, setHistIdx] = useState<number | null>(null);
   const draftRef = useRef("");
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        CHAT_STORE_KEY,
+        JSON.stringify({ msgs, question, promptHist, wantReport, scope })
+      );
+    } catch {
+      /* storage full or unavailable — the chat just won't persist */
+    }
+  }, [msgs, question, promptHist, wantReport, scope]);
 
   const phases = (GEN_PHASES[genKind?.id ?? ""] ?? GEN_PHASES.progress)(firstName);
 
