@@ -41,9 +41,10 @@ PRONOUNS — HARD RULE: every learner entry carries a "pronouns" field. Before w
 
 ATTENDANCE — HARD RULE: attendance figures come from the filled registers. A learner's "sessionsExpected" only counts registers dated on/after their "firstSession" (they joined the programme then); "attendanceRatePct" is measured on that basis. A learner with attendanceRatePct 100 has NOT missed a class — never say they missed the earlier sessions; if relevant, say they joined later and have attended every session since.
 
-When the message starts with THE FACILITATOR'S QUESTION, you are not writing a standard report — you are ANSWERING THAT EXACT QUESTION as a document. Rules for questions:
-- SCOPE — you ONLY answer questions about this app's data: the learnership programme, its learners/students, attendance and registers, submissions and unit-standard statuses, quizzes and exercises, POE evidence, assessor outcomes, credits, risks, platform activity (sign-ins, engagement) and reporting on any of that. Nothing else, ever.
-- If the question is outside that scope (arithmetic, general knowledge, coding, jokes, personal advice, anything not answerable from the programme data), DO NOT answer it and DO NOT write a report. Reply with exactly {"offtopic": true, "answer": "I can only answer questions about the programme and its learners — ask me about attendance, submissions, quiz results, POE or progress."} and nothing else. Never include the answer to the off-topic question itself.
+When the message starts with THE FACILITATOR'S QUESTION, decide the response mode in this order:
+1. SCOPE — you ONLY handle questions about this app's data: the learnership programme, its learners/students, attendance and registers, submissions and unit-standard statuses, quizzes and exercises, POE evidence, assessor outcomes, credits, risks, platform activity (sign-ins, engagement) and reporting on any of that. If the question is outside that scope (arithmetic, general knowledge, coding, jokes, personal advice), reply with exactly {"offtopic": true, "answer": "I can only answer questions about the programme and its learners — ask me about attendance, submissions, quiz results, POE or progress."} and nothing else. Never include the answer to the off-topic question itself.
+2. DIRECT ANSWER (the default for in-scope questions) — unless the facilitator EXPLICITLY asks for a report, document, summary or write-up, do NOT produce a report. Answer the question concisely from the data with the actual figures/names, and reply with exactly {"direct": true, "answer": "<1-3 sentence answer>"} and nothing else. Example: "how many students in the program" → {"direct": true, "answer": "There are 12 learners in the programme."}.
+3. FULL REPORT — only when the question explicitly asks for one (words like "report", "write me", "compile", "document", "summary I can send"). Then:
 - The FIRST sentence of "intro" must directly answer the question in plain terms.
 - Every section heading must be derived from the question (use its key words), never generic headings like "Overview" or "Cohort performance" unless the question asks for them.
 - Address the specific learners, units, dates or numbers the question mentions; if the question asks to "write" something (an update, a letter, a summary for an employer), the sections ARE that piece of writing.
@@ -179,6 +180,7 @@ export default async function handler(req: Request): Promise<Response> {
         sections?: unknown;
         recommendations?: unknown;
         offtopic?: unknown;
+        direct?: unknown;
         answer?: unknown;
       } = {};
       try {
@@ -187,9 +189,14 @@ export default async function handler(req: Request): Promise<Response> {
         lastError = "bad_llm_json";
         continue;
       }
-      if (parsed.offtopic === true) {
+      if (parsed.offtopic === true || parsed.direct === true) {
         return json(
-          { error: "offtopic", answer: str(parsed.answer), model: data.model ?? model, usage: data.usage ?? {} },
+          {
+            error: parsed.offtopic === true ? "offtopic" : "direct",
+            answer: str(parsed.answer),
+            model: data.model ?? model,
+            usage: data.usage ?? {},
+          },
           200
         );
       }

@@ -145,7 +145,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     await new Promise((r) => setTimeout(r, 5000));
     setBusy(null);
     if (!result.ok) {
-      if (result.error === "offtopic") {
+      if (result.error === "offtopic" || result.error === "direct") {
         setAiNote(
           result.answer ||
             "I can only answer questions about the programme and its learners — no report was written."
