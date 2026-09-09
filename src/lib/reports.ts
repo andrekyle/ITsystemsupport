@@ -181,17 +181,13 @@ export function buildReportData(
         ? "whole programme — every unit standard in the qualification"
         : `only the ${workedCount} unit standard${workedCount === 1 ? "" : "s"} the cohort has worked on so far; unstarted units are excluded`,
     today: new Date().toDateString(),
-    schedule: MODULES.flatMap((m) =>
-      m.units.map((u) => ({
-        us: u.us,
-        title: u.title,
-        module: m.name,
-        sessionDates: u.dates,
-        time: u.time,
-      }))
+    schedule: MODULES.flatMap((m, mi) =>
+      m.units.map(
+        (u) => `US ${u.us} | ${u.title} | Module ${mi + 1}: ${m.name} | sessions: ${u.dates} | ${u.time}`
+      )
     ),
     scheduleNote:
-      "schedule is the full programme timetable (every unit's training session dates). Compare sessionDates with today to answer what has been trained, what is next or what happens on a given date.",
+      "schedule is the full programme timetable, one line per unit: 'US code | title | module | sessions: dates | time'. Compare the session dates with today to answer what has been trained, what is next or what happens on a given date.",
     cohort: cohort(rows, registers),
   };
   switch (kind) {
