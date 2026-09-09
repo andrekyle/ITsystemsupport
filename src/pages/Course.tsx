@@ -3353,7 +3353,7 @@ export function UnitPage({
                             if (!m) return <Gloss text={text} />;
                             return (
                               <>
-                                <span className="hang-num">{m[1]}</span>
+                                <span className="hang-num">{m[1].replace(/\s*·\s*$/, " ")}</span>
                                 <span className="hang-text">
                                   <Gloss text={m[2]} />
                                 </span>
@@ -3589,7 +3589,7 @@ export function UnitPage({
                             if (!m) return t;
                             return (
                               <>
-                                <span className="t-num">{m[1]}</span>
+                                <span className="t-num">{m[1].replace(/\s*·\s*$/, " ")}</span>
                                 <span className="t-text">{m[2]}</span>
                               </>
                             );
