@@ -442,6 +442,11 @@ function trackerBody(rows: LearnerRow[], report: AiReport, scope: ReportScope): 
     <tr>
       ${units.map((u) => `<th class="c">${u.credits} credits</th>`).join("")}
       ${dates.map((d) => `<th class="c">${esc(fmtRegDate(d))}</th>`).join("")}
+    </tr>
+    <tr class="flt">
+      ${Array.from({ length: 3 + units.length + Math.max(dates.length, 1) + 1 })
+        .map((_, i) => `<th><input data-col="${i}" type="text" placeholder="Filter" aria-label="Filter column" /></th>`)
+        .join("")}
     </tr>`;
   const body = rows
     .map((r) => {
@@ -531,6 +536,10 @@ export function reportDocumentHtml(
   .legend { display: flex; flex-wrap: wrap; gap: 10px 26px; margin: 4px 0 18px; }
   .legend .item { display: inline-flex; align-items: center; gap: 9px; font-size: 14px; color: #17233b; }
   .legend .sw { width: 16px; height: 16px; border-radius: 4px; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08); }
+  .tracker .flt input { width: 100%; min-width: 46px; padding: 3px 5px; border: 1px solid #ccd7ea; border-radius: 4px; font: inherit; font-size: 11.5px; color: #17233b; background: #fff; }
+  .tracker .flt input:focus { outline: none; border-color: #0F6CBD; }
+  .tracker .flt th { padding: 4px; }
+  @media print { .tracker .flt { display: none !important; } }
   .tracker th, .tracker td { font-size: 13.5px; padding: 6px 9px; border: 0.5px solid rgba(0, 0, 0, 0.94); }
   .tracker th { font-weight: 600; vertical-align: middle; text-align: left; }
   .tracker th.c, .tracker th[colspan] { text-align: center; }
@@ -577,6 +586,70 @@ ${tracker ? "" : `
       Reviewed by (name &amp; signature)
     </div>
   </div>
+
+  <style>
+    .edit-toolbar { position: fixed; bottom: 14px; right: 12px; z-index: 999; font-family: "Segoe UI", system-ui, sans-serif; }
+    .edit-toolbar button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border: 1px solid #c9d4e4; border-radius: 8px; background: #ffffff; color: #1f2b3d; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(15, 35, 70, 0.14); }
+    .edit-toolbar button:hover { background: #f0f5fb; }
+    .edit-toolbar button.on { border-color: #0F6CBD; color: #0F6CBD; }
+    body[contenteditable="true"] { caret-color: #0F6CBD; }
+    body[contenteditable="true"]:focus { outline: none; }
+    @media print { .edit-toolbar { display: none !important; } }
+  </style>
+  <div class="edit-toolbar">
+    <button type="button" id="__editBtn" onclick="__toggleEdit()" title="Click any text to change it before printing or downloading">✎ Editing: off</button>
+  </div>
+  <script>
+    // toggle whole-document editing — every character becomes editable
+    var __editing = false;
+    function __toggleEdit() {
+      __editing = !__editing;
+      document.body.contentEditable = __editing ? "true" : "false";
+      var b = document.getElementById("__editBtn");
+      b.textContent = "\\u270E Editing: " + (__editing ? "on" : "off");
+      b.className = __editing ? "on" : "";
+    }
+    // per-column filters on the tracker grid
+    (function () {
+      var t = document.querySelector("table.tracker");
+      if (!t) return;
+      var inputs = Array.prototype.slice.call(t.querySelectorAll(".flt input"));
+      function apply() {
+        var rows = Array.prototype.filter.call(t.rows, function (r) {
+          return r.cells.length && r.cells[0].tagName === "TD";
+        });
+        rows.forEach(function (r) {
+          var show = true;
+          inputs.forEach(function (inp) {
+            var v = inp.value.trim().toLowerCase();
+            if (!v || !show) return;
+            var cell = r.cells[Number(inp.getAttribute("data-col"))];
+            if (!cell || cell.innerText.toLowerCase().indexOf(v) === -1) show = false;
+          });
+          r.style.display = show ? "" : "none";
+        });
+      }
+      inputs.forEach(function (inp) {
+        inp.addEventListener("input", apply);
+        // typing in a filter must never trigger document editing side-effects
+        inp.setAttribute("contenteditable", "false");
+      });
+    })();
+    // download includes any edits, minus the toolbars and editing state
+    function __downloadDoc() {
+      var clone = document.documentElement.cloneNode(true);
+      clone.querySelectorAll(".doc-toolbar, .edit-toolbar").forEach(function (el) { el.remove(); });
+      var body = clone.querySelector("body");
+      if (body) body.removeAttribute("contenteditable");
+      var blob = new Blob(["<!doctype html>" + clone.outerHTML], { type: "text/html" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = ${JSON.stringify(`${slug}-${new Date().toISOString().slice(0, 10)}.html`)};
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+  </script>
 </body>
 </html>`;
 }
