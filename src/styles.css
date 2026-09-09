@@ -11078,7 +11078,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   flex: 0 0 auto;
   width: 176px;
   height: 50px;
-  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.45));
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.22));
 }
 
 .reports-done {

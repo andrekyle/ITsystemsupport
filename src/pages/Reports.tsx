@@ -96,10 +96,13 @@ export function NeonWaves() {
 
     // wave bundles — all time terms use integer multiples of θ so the loop is perfectly seamless
     const groups = [
-      { y: 0.5,  amps: [0.17, 0.09], freq: [1.5, 3.1], spd: [2, -1], lines: 7, gap: 2.0, stops: ["#22d3ee", "#3b82f6", "#8b5cf6"], alpha: 0.9,  pulse: 2, ph: 0 },
-      { y: 0.46, amps: [0.2, 0.08],  freq: [1.1, 2.4], spd: [-1, 2], lines: 6, gap: 2.2, stops: ["#f0abfc", "#ec4899", "#ff2d78"], alpha: 0.75, pulse: 1, ph: 2.1 },
-      { y: 0.56, amps: [0.14, 0.07], freq: [2.0, 3.6], spd: [1, 1],  lines: 5, gap: 1.8, stops: ["#2dd4bf", "#22d3ee", "#60a5fa"], alpha: 0.65, pulse: 2, ph: 4.2 },
+      { y: 0.5,  amps: [0.17, 0.09], freq: [1.5, 3.1], spd: [2, -1], lines: 7, gap: 2.0, stops: ["#ffffff", "#d4d4d8", "#a1a1aa"], alpha: 0.9,  pulse: 2, ph: 0 },
+      { y: 0.46, amps: [0.2, 0.08],  freq: [1.1, 2.4], spd: [-1, 2], lines: 6, gap: 2.2, stops: ["#e4e4e7", "#a1a1aa", "#71717a"], alpha: 0.75, pulse: 1, ph: 2.1 },
+      { y: 0.56, amps: [0.14, 0.07], freq: [2.0, 3.6], spd: [1, 1],  lines: 5, gap: 1.8, stops: ["#f4f4f5", "#bfbfc6", "#8b8b93"], alpha: 0.65, pulse: 2, ph: 4.2 },
     ].map((g) => ({ ...g, grad: null as CanvasGradient | null }));
+
+    let fadeX: CanvasGradient | null = null;
+    let fadeY: CanvasGradient | null = null;
 
     function resize() {
       const rect = canvas!.getBoundingClientRect();
@@ -115,6 +118,17 @@ export function NeonWaves() {
         grad.addColorStop(1, g.stops[2]);
         g.grad = grad;
       }
+      // soft masks that melt the drawing away before it reaches the canvas edges
+      fadeX = ctx!.createLinearGradient(0, 0, W, 0);
+      fadeX.addColorStop(0, "rgba(0,0,0,0)");
+      fadeX.addColorStop(0.2, "rgba(0,0,0,1)");
+      fadeX.addColorStop(0.8, "rgba(0,0,0,1)");
+      fadeX.addColorStop(1, "rgba(0,0,0,0)");
+      fadeY = ctx!.createLinearGradient(0, 0, 0, H);
+      fadeY.addColorStop(0, "rgba(0,0,0,0)");
+      fadeY.addColorStop(0.3, "rgba(0,0,0,1)");
+      fadeY.addColorStop(0.7, "rgba(0,0,0,1)");
+      fadeY.addColorStop(1, "rgba(0,0,0,0)");
     }
     resize();
     window.addEventListener("resize", resize);
@@ -160,7 +174,7 @@ export function NeonWaves() {
         }
       }
 
-      // tiny gold particles drifting and twinkling — positions derive from the index, motion from θ
+      // tiny particles drifting and twinkling — positions derive from the index, motion from θ
       for (let i = 0; i < 6; i++) {
         const x0 = (((i * 97) % 101) / 101) * W;
         const y0 = (0.22 + ((i * 53) % 56) / 100) * H;
@@ -168,19 +182,29 @@ export function NeonWaves() {
         const y = y0 + 3 * Math.sin(2 * th + i * 2.6);
         const tw = 0.5 + 0.5 * Math.sin(2 * th + i * 1.7);
         const r = 0.7 + ((i * 29) % 13) / 16;
-        ctx!.globalAlpha = 0.1 + 0.5 * tw;
-        ctx!.fillStyle = "#ffb85c";
+        ctx!.globalAlpha = 0.08 + 0.4 * tw;
+        ctx!.fillStyle = "#d4d4d8";
         ctx!.beginPath();
         ctx!.arc(x, y, r * 2.4, 0, TWO_PI);
         ctx!.fill();
-        ctx!.globalAlpha = 0.25 + 0.65 * tw;
-        ctx!.fillStyle = "#ffd9a0";
+        ctx!.globalAlpha = 0.2 + 0.6 * tw;
+        ctx!.fillStyle = "#ffffff";
         ctx!.beginPath();
         ctx!.arc(x, y, r, 0, TWO_PI);
         ctx!.fill();
       }
 
+      // melt the edges away so nothing is clipped square
       ctx!.globalAlpha = 1;
+      ctx!.globalCompositeOperation = "destination-in";
+      if (fadeX) {
+        ctx!.fillStyle = fadeX;
+        ctx!.fillRect(0, 0, W, H);
+      }
+      if (fadeY) {
+        ctx!.fillStyle = fadeY;
+        ctx!.fillRect(0, 0, W, H);
+      }
       ctx!.globalCompositeOperation = "source-over";
       raf = requestAnimationFrame(draw);
     }
