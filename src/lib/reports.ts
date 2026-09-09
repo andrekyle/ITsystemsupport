@@ -438,8 +438,11 @@ export function reportDocumentHtml(
   th, td { border: 1px solid #ccd7ea; padding: 6px 9px; text-align: left; vertical-align: top; font-size: 12.5px; }
   th { background: #f2f6fd; }
   ol li, ul li { margin: 4px 0; }
-  .sign { display: flex; gap: 60px; margin-top: 36px; }
-  .sign div { flex: 1; border-top: 1.5px solid #17233b; padding-top: 5px; font-size: 12.5px; color: #444; }
+  .sign { display: flex; gap: 60px; margin-top: 36px; align-items: flex-end; }
+  .sign div { flex: 1; padding-top: 0; font-size: 12.5px; color: #444; }
+  .sign .sign-img { display: block; max-height: 58px; max-width: 220px; margin-bottom: 2px; }
+  .sign .sign-line { display: block; border-top: 1.5px solid #17233b; margin-bottom: 5px; }
+  .sign .sign-line-tall { margin-top: 60px; }
   .small { color: #5a6b8c; font-size: 12px; }
   /* tracker grid — onboarding palette */
   .legend { display: flex; flex-wrap: wrap; gap: 10px 26px; margin: 4px 0 18px; }
@@ -480,8 +483,15 @@ ${tracker ? "" : `
   ${appendixTable(kind.id, rows)}
 `}
   <div class="sign">
-    <div>Compiled by (name &amp; signature)</div>
-    <div>Reviewed by (name &amp; signature)</div>
+    <div>
+      ${author.signatureImage ? `<img class="sign-img" src="${author.signatureImage}" alt="Signature of ${esc(author.name)}" />` : ""}
+      <span class="sign-line"></span>
+      Compiled by <strong>${esc(author.name)}</strong> · ${esc(today)}
+    </div>
+    <div>
+      <span class="sign-line sign-line-tall"></span>
+      Reviewed by (name &amp; signature)
+    </div>
   </div>
 </body>
 </html>`;
