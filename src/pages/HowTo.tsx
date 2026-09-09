@@ -80,27 +80,40 @@ export function HowToPage({ navigate }: { navigate: (r: Route) => void }) {
         How to reach 100% complete
       </h2>
       <p className="muted howto-intro">
-        Every unit standard tracks four stages: Lesson &amp; Training Aids, Formative Assessment,
-        Summative Assessment and POE Evidence. Do the steps below, in order, for every unit — and
-        your programme completion reaches 100%.
+        Every unit standard tracks four stages. Finish all four for every unit — and your programme
+        completion reaches 100%.
       </p>
 
-      <ol className="howto-grid">
+      <div className="howto-stages" aria-label="The four stages of every unit">
+        <span className="howto-stage"><Icon name="book" size={16} /> Lesson &amp; Training Aids</span>
+        <span className="howto-stage-arrow" aria-hidden="true">→</span>
+        <span className="howto-stage"><Icon name="exercise" size={16} /> Formative Assessment</span>
+        <span className="howto-stage-arrow" aria-hidden="true">→</span>
+        <span className="howto-stage"><Icon name="checkCircle" size={16} /> Summative Assessment</span>
+        <span className="howto-stage-arrow" aria-hidden="true">→</span>
+        <span className="howto-stage"><Icon name="folder" size={16} /> POE Evidence</span>
+      </div>
+
+      <ol className="howto-list">
         {STEPS.map((s, i) => (
-          <li className="howto-card" key={s.title}>
-            <div className="howto-head">
-              <span className="howto-num">{i + 1}</span>
-              <span className="howto-title">{s.title}</span>
+          <li className="howto-row" key={s.title}>
+            <span className="howto-bignum" aria-hidden="true">
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <div className="howto-row-body">
+              <div className="howto-row-title">
+                <span className="howto-row-ico">
+                  <Icon name={s.icon} size={20} />
+                </span>
+                {s.title}
+              </div>
+              <p className="howto-row-text">{s.text}</p>
+              {s.go && (
+                <button type="button" className="howto-link" onClick={() => navigate(s.go!.route)}>
+                  {s.go.label} <Icon name="chevronRight" size={15} />
+                </button>
+              )}
             </div>
-            <div className="howto-scene">
-              <Icon name={s.icon} size={58} strokeWidth={0.9} />
-            </div>
-            <p className="howto-text">{s.text}</p>
-            {s.go && (
-              <button type="button" className="btn ghost sm howto-go" onClick={() => navigate(s.go!.route)}>
-                {s.go.label} <Icon name="chevronRight" size={14} />
-              </button>
-            )}
           </li>
         ))}
       </ol>

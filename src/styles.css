@@ -10949,135 +10949,126 @@ table.data th.sortable.sorted { color: var(--ink); }
 /* ============ How to reach 100% (learner guide) ============ */
 
 .howto-intro {
-  margin: -6px 0 22px;
+  margin: -6px 0 16px;
   font-size: 15.5px;
   max-width: 760px;
 }
 
-/* infographic layout: two columns of step cards with arrows between them */
-.howto-grid {
+/* the four unit stages, flat inline strip */
+.howto-stages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 0 8px;
+}
+
+.howto-stage {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--azure);
+}
+
+.howto-stage-arrow {
+  color: var(--ink-3);
+  font-size: 15px;
+}
+
+/* editorial rows: huge outlined number, flat dividers, no boxes */
+.howto-list {
   list-style: none;
   margin: 0 0 26px;
   padding: 0;
-  max-width: 1020px;
+  max-width: 900px;
+}
+
+.howto-row {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 30px 74px;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 0 20px;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: start;
 }
 
-.howto-card {
-  position: relative;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 18px 20px 16px;
-  display: flex;
-  flex-direction: column;
+.howto-row:last-child {
+  border-bottom: 0;
 }
 
-/* bold blue arrow from the left card to the right card, like the poster */
-.howto-card:nth-child(odd)::after {
-  content: "➜";
-  position: absolute;
-  right: -56px;
-  top: 46%;
-  font-size: 34px;
-  line-height: 1;
-  color: var(--azure);
-  font-weight: 700;
+.howto-bignum {
+  font-size: 58px;
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--azure);
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
 }
 
-.howto-card:last-child::after {
-  content: none;
-}
-
-.howto-head {
+.howto-row-title {
   display: flex;
   align-items: center;
-  gap: 13px;
-  min-height: 52px;
+  gap: 10px;
+  font-size: 19px;
+  font-weight: 650;
+  margin-bottom: 7px;
 }
 
-.howto-num {
-  width: 44px;
-  height: 44px;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  background: var(--azure);
-  color: #fff;
-  font-size: 19px;
-  font-weight: 700;
+.howto-row-ico {
+  display: inline-flex;
+  color: var(--azure);
+  flex-shrink: 0;
+}
+
+.howto-row-text {
+  margin: 0 0 8px;
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: var(--ink-2);
+  max-width: 720px;
+}
+
+.howto-link {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 3px 8px rgba(15, 108, 189, 0.3);
-}
-
-.howto-title {
-  font-size: 17.5px;
-  font-weight: 700;
-  line-height: 1.25;
-  color: var(--azure-darker);
-}
-
-/* illustration scene: big icon floating over a pedestal tile */
-.howto-scene {
-  margin: 14px 0 12px;
-  height: 138px;
-  border-radius: 12px;
-  background: linear-gradient(180deg, var(--azure-lighter) 0%, var(--azure-light) 100%);
+  gap: 6px;
+  border: 0;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
   color: var(--azure);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
+  cursor: pointer;
 }
 
-.howto-scene svg {
-  position: relative;
-  z-index: 1;
-  transform: translateY(-7px);
-  filter: drop-shadow(0 6px 5px rgba(15, 108, 189, 0.25));
+.howto-link svg {
+  transition: transform 0.12s;
 }
 
-.howto-scene::after {
-  content: "";
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 56%;
-  height: 16px;
-  border-radius: 50%;
-  background: rgba(15, 108, 189, 0.16);
-  filter: blur(1.5px);
-}
-
-.howto-text {
-  margin: 0 0 8px;
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--ink-2);
-}
-
-.howto-go {
-  padding-left: 0;
-  margin-top: auto;
-  align-self: flex-start;
+.howto-link:hover svg {
+  transform: translateX(3px);
 }
 
 .howto-callout {
-  max-width: 1020px;
+  max-width: 900px;
   font-size: 15px;
 }
 
-@media (max-width: 900px) {
-  .howto-grid {
+@media (max-width: 640px) {
+  .howto-row {
     grid-template-columns: 1fr;
-    gap: 22px;
+    gap: 6px;
+    padding: 22px 0;
   }
-  .howto-card:nth-child(odd)::after {
-    content: none;
+  .howto-bignum {
+    font-size: 40px;
   }
 }
 
