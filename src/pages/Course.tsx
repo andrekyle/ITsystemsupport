@@ -28,8 +28,21 @@ const EX_MAX_ATTEMPTS = 3;
 const EXQ_MAX_CHECKS = 2;
 const URL_RE = /(https?:\/\/[^\s)]+)/g;
 
-/** Renders text with an explanatory bubble on any glossary term; bare URLs become links. */
+/** Renders text with an explanatory bubble on any glossary term; bare URLs become links.
+ *  Text starting "5. …" / "5 · …" gets a hanging indent — wrapped lines align under the
+ *  words, not the number — and the middot separator is dropped. */
 export function Gloss({ text }: { text: string }) {
+  const hang = /^(\d+[.·)]\s+)([\s\S]*)$/.exec(text);
+  if (hang) {
+    return (
+      <>
+        <span className="hang-num">{hang[1].replace(/\s*·\s*$/, " ")}</span>
+        <span className="hang-text">
+          <Gloss text={hang[2]} />
+        </span>
+      </>
+    );
+  }
   const parts = text.split(GLOSS_RE);
   const place = (e: React.SyntheticEvent<HTMLSpanElement>) => {
     const el = e.currentTarget;
@@ -3347,19 +3360,7 @@ export function UnitPage({
                               <Icon name={paraIcon} size={15} />
                             </span>
                           )}
-                          {(() => {
-                            // hanging indent for "5. …" items: wraps align under the words
-                            const m = !paraIcon && /^(\d+[.·)]\s+)(.*)$/.exec(text);
-                            if (!m) return <Gloss text={text} />;
-                            return (
-                              <>
-                                <span className="hang-num">{m[1].replace(/\s*·\s*$/, " ")}</span>
-                                <span className="hang-text">
-                                  <Gloss text={m[2]} />
-                                </span>
-                              </>
-                            );
-                          })()}
+                          <Gloss text={text} />
                         </p>
                       )
                     );
