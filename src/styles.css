@@ -4746,12 +4746,14 @@ a.plan-ppt:hover {
 }
 
 /* "3 · Title" cards: wrapped title lines start under the words, not the number */
-.lesson-card .t .t-num {
+.lesson-card .t .t-num,
+.hang-num {
   float: left;
   white-space: pre;
 }
 
-.lesson-card .t .t-text {
+.lesson-card .t .t-text,
+.hang-text {
   display: block;
   overflow: hidden;
 }

@@ -3347,7 +3347,19 @@ export function UnitPage({
                               <Icon name={paraIcon} size={15} />
                             </span>
                           )}
-                          <Gloss text={text} />
+                          {(() => {
+                            // hanging indent for "5. …" items: wraps align under the words
+                            const m = !paraIcon && /^(\d+[.·)]\s+)(.*)$/.exec(text);
+                            if (!m) return <Gloss text={text} />;
+                            return (
+                              <>
+                                <span className="hang-num">{m[1]}</span>
+                                <span className="hang-text">
+                                  <Gloss text={m[2]} />
+                                </span>
+                              </>
+                            );
+                          })()}
                         </p>
                       )
                     );
