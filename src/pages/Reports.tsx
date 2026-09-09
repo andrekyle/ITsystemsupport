@@ -248,11 +248,16 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     return all.map((p) => analyse(p, cloud));
   }, [registers, cloud]);
 
-  async function generate(k: ReportKind, q: string | undefined, source: "kind" | "ask") {
+  async function generate(
+    k: ReportKind,
+    q: string | undefined,
+    source: "kind" | "ask",
+    opts?: { skipAppend?: boolean; history?: { role: "user" | "assistant"; text: string }[]; forceAnswer?: boolean }
+  ) {
     if (busy) return;
-    const makingReport = source === "kind" || wantReport;
-    const history = msgs.slice(-12);
-    if (source === "ask" && q) {
+    const makingReport = source === "kind" || (wantReport && !opts?.forceAnswer);
+    const history = opts?.history ?? msgs.slice(-12);
+    if (source === "ask" && q && !opts?.skipAppend) {
       setMsgs((m) => [...m, { role: "user", text: q }]);
       setQuestion("");
     }
@@ -295,6 +300,40 @@ export function ReportsPage({ profile }: { profile: Profile }) {
       setDone(k.name);
     }
     openReportDocument(k, result.report, rows, registers, profile, q, scope);
+  }
+
+  const [copied, setCopied] = useState<number | null>(null);
+
+  function copyMsg(i: number, text: string) {
+    void navigator.clipboard?.writeText(text).then(() => {
+      setCopied(i);
+      setTimeout(() => setCopied((c) => (c === i ? null : c)), 1600);
+    });
+  }
+
+  function shareMsg(i: number, text: string) {
+    const nav = navigator as Navigator & { share?: (d: { text: string; title?: string }) => Promise<void> };
+    if (nav.share) {
+      void nav.share({ title: "ITSS Learn — AI Assistant", text }).catch(() => undefined);
+    } else {
+      copyMsg(i, text);
+    }
+  }
+
+  function regenerate(i: number) {
+    if (busy) return;
+    let j = -1;
+    for (let x = i - 1; x >= 0; x--) {
+      if (msgs[x].role === "user") {
+        j = x;
+        break;
+      }
+    }
+    if (j < 0) return;
+    const q = msgs[j].text;
+    const hist = msgs.slice(0, j).slice(-12);
+    setMsgs((m) => m.slice(0, j + 1)); // keep the question, drop the old answer
+    void generate(CUSTOM_KIND, q, "ask", { skipAppend: true, history: hist, forceAnswer: true });
   }
 
   const status = (
@@ -436,9 +475,38 @@ export function ReportsPage({ profile }: { profile: Profile }) {
                   {m.text}
                 </div>
               ) : (
-                <p key={i} className="chat-answer" role="status">
-                  {m.text}
-                </p>
+                <div key={i} className="chat-msg">
+                  <p className="chat-answer" role="status">
+                    {m.text}
+                  </p>
+                  <div className="chat-actions">
+                    <button
+                      type="button"
+                      title={copied === i ? "Copied" : "Copy"}
+                      aria-label="Copy answer"
+                      onClick={() => copyMsg(i, m.text)}
+                    >
+                      <Icon name={copied === i ? "check" : "copy"} size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      title="Share"
+                      aria-label="Share answer"
+                      onClick={() => shareMsg(i, m.text)}
+                    >
+                      <Icon name="share" size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      title="Regenerate"
+                      aria-label="Regenerate answer"
+                      disabled={!!busy}
+                      onClick={() => regenerate(i)}
+                    >
+                      <Icon name="refresh" size={15} />
+                    </button>
+                  </div>
+                </div>
               )
             )}
             {busy === "ask" && !wantReport && <NeonWaves />}

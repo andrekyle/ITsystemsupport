@@ -287,6 +287,24 @@ export const PATHS: Record<string, React.ReactNode> = {
       <path d="M2 12.5v3M22 12.5v3" />
     </>
   ),
+  copy: (
+    <>
+      <rect x="9" y="9" width="11" height="11" rx="2.5" />
+      <path d="M5.5 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v.5" />
+    </>
+  ),
+  share: (
+    <>
+      <path d="M12 15V3.5M7.5 7.5 12 3l4.5 4.5" />
+      <path d="M5 12v7a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19v-7" />
+    </>
+  ),
+  refresh: (
+    <>
+      <path d="M20 12a8 8 0 1 1-2.4-5.7" />
+      <path d="M20 3.5V6.5a0.8 0.8 0 0 1-0.8 0.8H16.2" />
+    </>
+  ),
   award: (
     <>
       <circle cx="12" cy="9.5" r="5.5" />

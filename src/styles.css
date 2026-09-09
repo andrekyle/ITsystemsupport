@@ -10989,6 +10989,47 @@ table.data th.sortable.sorted { color: var(--ink); }
   animation: reports-fade-in 0.3s ease;
 }
 
+/* assistant message + its action row */
+.chat-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 0 0 26px;
+}
+
+.chat-msg .chat-answer {
+  margin: 0 0 6px;
+}
+
+.chat-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.chat-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.chat-actions button:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.chat-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 .chat-composer {
   position: sticky;
   bottom: 0;
