@@ -145,7 +145,8 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     if (!result.ok) {
       setError(
         result.error === "offtopic"
-          ? `That isn't a question about the programme, so no report was written.${result.answer ? ` Quick answer: ${result.answer}` : ""}`
+          ? result.answer ||
+              "I can only answer questions about the programme and its learners — no report was written."
           : ERROR_TEXT[result.error] ?? `The AI could not write the report (${result.error}).`
       );
       return;
