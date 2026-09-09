@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import JSZip from "jszip";
 import { Icon } from "../icons";
 import type { EnrolmentInfo, PoeDoc, Profile, ProgressState, Role, Route } from "../types";
+import { Select } from "../components/Select";
 import { isStaff } from "../types";
 import { COURSE_META, MODULES, POE_SECTIONS, POE_TOTAL, usLabel } from "../data/course";
 import { getContent } from "../data/content";
@@ -785,12 +786,17 @@ function AddUser({ viewer, onAdded }: { viewer: Profile; onAdded: () => void }) 
         </div>
         <div className="field" style={{ flex: 1, marginBottom: 0 }}>
           <label htmlFor="au-rl">Role</label>
-          <select id="au-rl" value={role} onChange={(e) => setRole(e.target.value as Role)}>
-            <option value="Learner">Learner</option>
-            <option value="Facilitator">Facilitator</option>
-            <option value="Assessor">Assessor</option>
-            <option value="Moderator">Moderator</option>
-          </select>
+          <Select
+            value={role}
+            onChange={(v) => setRole(v as Role)}
+            ariaLabel="Role"
+            options={[
+              { value: "Learner", label: "Learner" },
+              { value: "Facilitator", label: "Facilitator" },
+              { value: "Assessor", label: "Assessor" },
+              { value: "Moderator", label: "Moderator" },
+            ]}
+          />
         </div>
         <div className="field" style={{ flex: 1, marginBottom: 0 }}>
           <label htmlFor="au-pw">Password (optional)</label>
@@ -886,12 +892,17 @@ function AdminPanel({
           </div>
           <div className="field" style={{ flex: 1, marginBottom: 0 }}>
             <label htmlFor="ad-rl">Role</label>
-            <select id="ad-rl" value={role} onChange={(e) => setRole(e.target.value as Role)}>
-              <option value="Learner">Learner</option>
-              <option value="Facilitator">Facilitator</option>
-              <option value="Assessor">Assessor</option>
-              <option value="Moderator">Moderator</option>
-            </select>
+            <Select
+              value={role}
+              onChange={(v) => setRole(v as Role)}
+              ariaLabel="Role"
+              options={[
+                { value: "Learner", label: "Learner" },
+                { value: "Facilitator", label: "Facilitator" },
+                { value: "Assessor", label: "Assessor" },
+                { value: "Moderator", label: "Moderator" },
+              ]}
+            />
           </div>
           <button className="btn sm" type="submit">
             <Icon name="checkCircle" size={15} />
