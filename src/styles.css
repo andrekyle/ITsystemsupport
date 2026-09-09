@@ -10698,7 +10698,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   max-width: 780px;
 }
 
-/* scope toggle: flat underline tabs — no pills */
+/* scope toggle: flat text options — active is simply azure */
 .reports-scope {
   display: flex;
   gap: 26px;
@@ -10709,13 +10709,12 @@ table.data th.sortable.sorted { color: var(--ink); }
   border: 0;
   background: none;
   color: var(--ink-3);
-  padding: 2px 2px 7px;
+  padding: 2px 2px 5px;
   font-size: 14px;
   font-family: inherit;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
   border-radius: 0;
-  transition: color 0.12s, border-color 0.12s;
+  transition: color 0.12s;
 }
 
 .reports-scope-btn:hover {
@@ -10729,7 +10728,6 @@ table.data th.sortable.sorted { color: var(--ink); }
 
 .reports-scope-btn.on {
   color: var(--azure);
-  border-bottom-color: var(--azure);
   font-weight: 600;
 }
 
