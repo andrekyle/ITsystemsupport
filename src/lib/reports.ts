@@ -71,9 +71,12 @@ export const CUSTOM_KIND: ReportKind = {
 
 const pctStr = (v: number | null) => (v === null ? null : Math.round(v * 100));
 
+const genderOf = (r: LearnerRow) => r.profile.enrolment?.gender?.trim() || "unspecified";
+
 function learnerStat(r: LearnerRow) {
   return {
     name: r.profile.name,
+    gender: genderOf(r),
     completionPct: Math.round(r.completion * 100),
     unitsCompleted: r.unitsCompleted,
     creditsEarned: r.creditsEarned,
@@ -171,6 +174,7 @@ export function buildReportData(
         note: "sessionsExpected counts registers since each learner's first signed session; late joiners are only measured from when they started.",
         learners: rows.map((r) => ({
           name: r.profile.name,
+          gender: genderOf(r),
           sessionsAttended: r.attendance,
           sessionsExpected: r.attendanceExpected,
           attendanceRatePct: pctStr(r.attendanceRate),
@@ -193,6 +197,7 @@ export function buildReportData(
           "Write one facilitator comment per learner (2-3 sentences) from their figures below.",
         learners: rows.map((r) => ({
           name: r.profile.name,
+          gender: genderOf(r),
           completionPct: Math.round(r.completion * 100),
           quizAvgPct: pctStr(r.quizAvg),
           attendanceRatePct: pctStr(r.attendanceRate),
@@ -219,10 +224,14 @@ export function buildReportData(
         topLearners: [...rows]
           .sort((a, b) => b.completion - a.completion)
           .slice(0, 3)
-          .map((r) => ({ name: r.profile.name, completionPct: Math.round(r.completion * 100) })),
+          .map((r) => ({
+            name: r.profile.name,
+            gender: genderOf(r),
+            completionPct: Math.round(r.completion * 100),
+          })),
         atRiskLearners: rows
           .filter((r) => r.atRisk)
-          .map((r) => ({ name: r.profile.name, reasons: r.riskReasons })),
+          .map((r) => ({ name: r.profile.name, gender: genderOf(r), reasons: r.riskReasons })),
       };
     default:
       return { ...base, learners: rows.map(learnerStat) };
