@@ -11887,7 +11887,7 @@ GROUP ROLE-PLAY: Investec IT support team — monthly technical practitioners me
 Print, cut out the cards, and let each learner draw ONE role.
 
 MEETING AGENDA (run it in this order)
-1. Opening and welcome (Chair)
+1. Opening, welcome and a round of introductions (name + role + what it does)
 2. Attendance and apologies (Secretary)
 3. Confirmation of the agenda (Chair)
 4. Minutes of the previous meeting (Secretary)
@@ -11903,6 +11903,8 @@ GROUND RULES: speak through the chair; one speaker at a time; keep to time; acce
 
 ----------------------------------------------------------------------
 CARD 1 — CHAIRPERSON
+Intro: "I am [name], the chairperson — I run the meeting to the agenda, keep
+order and make sure every decision is clear, with a deadline and an owner."
 Run the meeting democratically: follow the agenda, give everyone the floor,
 keep order, put the motion to the vote, casting vote only on a tie.
 Opening line: "Good morning, colleagues. I declare this monthly technical
@@ -11917,6 +11919,8 @@ please minute the decision, the deadline and the responsible person." /
 
 ----------------------------------------------------------------------
 CARD 2 — VICE-CHAIRPERSON & PREPARATION OFFICER
+Intro: "I am [name], the vice-chairperson — I make sure the meeting is set
+up properly and I stand in for the chair when needed."
 Confirm the preparation and support the chair.
 Say: "Chairperson, the boardroom was booked, the projector works, and the
 notice, agenda and documents were e-mailed to all twelve members seven days
@@ -11926,6 +11930,8 @@ vote, so we keep to the agenda times."
 
 ----------------------------------------------------------------------
 CARD 3 — SECRETARY / MINUTE-TAKER
+Intro: "I am [name], the secretary — I record who is here, what is decided,
+who must do it and by when, and I distribute the minutes afterwards."
 Apologies, previous minutes, correspondence, record decisions.
 Say: "One apology — the service manager is at a client site."
 Read the minutes of 7 August (backup rotation approved; printer audit
@@ -11939,6 +11945,8 @@ company template."
 
 ----------------------------------------------------------------------
 CARD 4 — TREASURER
+Intro: "I am [name], the treasurer — I look after the money and tell the
+meeting what is affordable."
 Present the financial report; confirm affordability.
 Say: "Opening balance R42 000; spent R6 200 on toner, R3 800 on cabling;
 closing balance R32 000. Equipment budget still has R25 000 unspent.
@@ -11948,6 +11956,8 @@ rest of the quarter."
 
 ----------------------------------------------------------------------
 CARD 5 — SENIOR TECHNICIAN (TECHNICAL REPORT)
+Intro: "I am [name], the senior technician — I present the technical facts
+and measurements this meeting needs to decide."
 Present facts and figures that motivate the upgrade.
 Say: "The network dropped twelve times this month. The switch is a
 ten-year-old 100-megabit model at 96% port capacity; the single access
@@ -11958,6 +11968,8 @@ Answer: "Our Cat5e cabling supports gigabit — no hidden cost."
 
 ----------------------------------------------------------------------
 CARD 6 — MOVER OF THE MOTION
+Intro: "I am [name], a team member — today I move the motion, formally
+putting the upgrade proposal on the table."
 Say: "Chairperson, I MOVE THAT the company purchases the 24-port gigabit
 switch and additional access point on the NetSupplies quotation of R18 500,
 and that the upgrade be installed and tested by 30 September. The downtime
@@ -11966,6 +11978,8 @@ On the amendment: "I accept the amendment."
 
 ----------------------------------------------------------------------
 CARD 7 — SECONDER
+Intro: "I am [name], a team member — today I second the motion, the
+supporting voice it needs before the meeting may debate it."
 Say, straight after the mover: "Chairperson, I SECOND the motion.
 Last Thursday the class lost twenty minutes because the network dropped —
 twelve learners' time is worth more than one switch."
@@ -11973,6 +11987,8 @@ Vote in favour.
 
 ----------------------------------------------------------------------
 CARD 8 — OBJECTOR & AMENDMENT PROPOSER
+Intro: "I am [name], a team member — my part is to test the motion with an
+objection and an amendment, so we take a better decision."
 Say: "Chairperson, I OBJECT to the motion in its current form — installing
 during the week takes the training room offline mid-timetable."
 Then: "I PROPOSE AN AMENDMENT: replace 'installed and tested by
@@ -11981,6 +11997,8 @@ Then: "I PROPOSE AN AMENDMENT: replace 'installed and tested by
 
 ----------------------------------------------------------------------
 CARD 9 — POINT OF ORDER & QUESTIONS
+Intro: "I am [name], a team member — I protect the meeting rules and raise a
+point of order when procedure is broken."
 When Card 11 speaks out of turn:
 "POINT OF ORDER, Chairperson — the member is addressing the treasurer
 directly and discussing next month's business. Members must speak through
@@ -11990,6 +12008,8 @@ existing cabling, or is there a hidden cost?"
 
 ----------------------------------------------------------------------
 CARD 10 — SCRUTINEER (VOTING OFFICER)
+Intro: "I am [name], the scrutineer — when we vote I explain the method,
+count the votes and announce the result."
 Before the vote: "We decide by show of hands — simple majority. FOR,
 AGAINST or ABSTAIN. On a tie the chairperson has the casting vote.
 (Other decision processes a meeting can use: consensus, criteria-based
@@ -11999,6 +12019,8 @@ abstention — the motion, as amended, is carried."
 
 ----------------------------------------------------------------------
 CARD 11 — MATTERS ARISING & REPORT-BACK
+Intro: "I am [name], a team member — I report back on the action items from
+the previous meeting so we can check decisions were carried out."
 Matters arising: "Reporting back on the printer-fleet audit assigned to me
 on 7 August: complete — fourteen printers checked, two need toner rollers;
 the list is with the secretary."
@@ -12009,6 +12031,8 @@ General: "I propose for the next agenda: a standby-duty roster for exam week."
 
 ----------------------------------------------------------------------
 CARD 12 — TIMEKEEPER & MEETING EVALUATOR
+Intro: "I am [name], the timekeeper and evaluator — I watch the clock on
+every item and give feedback on the meeting at the end."
 Allocations: minutes 5 · matters arising 5 · correspondence 3 · treasurer 7 ·
 technical report 10 · new business 20 · general 5.
 During: "Chairperson, time check — two minutes left on this item."
