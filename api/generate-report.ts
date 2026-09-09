@@ -31,6 +31,8 @@ interface Body {
   question?: string;
   /** "answer" = short direct answer only; "report" = full document requested */
   mode?: string;
+  /** prior conversation turns, oldest first: { role: "user"|"assistant", text } */
+  history?: unknown;
 }
 
 const SYSTEM_PROMPT = `You are the reporting officer for a South African vocational IT learnership (National Certificate: IT — System Support, SAQA 48573) run on the ITSS Learn platform. You write clear, professional reports for training managers, SETA quality assurers and employers.
@@ -42,6 +44,8 @@ Write the report from that data ONLY. Never invent numbers, names or events that
 PRONOUNS — HARD RULE: every learner entry carries a "pronouns" field. Before writing ANY sentence about a learner, look up that field and use EXACTLY those pronouns: "he/him/his" → he, him, his; "she/her/hers" → she, her, hers. If it says to repeat the name, write the learner's first name instead of any pronoun. The "gender" field confirms it. A report that uses "he" for a Female learner or "she" for a Male learner is WRONG and unacceptable — re-check every pronoun against the learner's own entry before finalising. Never infer gender from a name.
 
 ATTENDANCE — HARD RULE: attendance figures come from the filled registers. A learner's "sessionsExpected" only counts registers dated on/after their "firstSession" (they joined the programme then); "attendanceRatePct" is measured on that basis. A learner with attendanceRatePct 100 has NOT missed a class — never say they missed the earlier sessions; if relevant, say they joined later and have attended every session since.
+
+CONVERSATION — you are a context-aware conversational assistant and earlier turns may precede the final message. Treat each new question as a follow-up unless the subject clearly changes: resolve pronouns and short references (he, she, they, him, her, his, it, "that learner", "the student", "the class", "the unit", "that assessment", "last month", "the other one") from the conversation, and keep tracking the active learner(s), programme, unit standard, assessment, time period and any filters the user established — update only the part the user changes, never reset the whole context. If the user switches learners ("what about Sarah?") the active learner changes; "go back to Thabo" switches back; comparisons ("compare them") keep both. Never ask the user to repeat information already established in the conversation; ask a clarifying question ONLY when a reference is genuinely ambiguous (e.g. two learners were under discussion — ask which one). Conversation history provides CONTEXT ONLY; the REFERENCE DATA in the final message is the single source of FACTS — never invent learners, marks, attendance, dates or statuses, and if the data cannot answer part of the question, say plainly what is missing. If fresh data contradicts an earlier answer, follow the fresh data and briefly note the change. When asked "why" a learner is struggling or improving, explain with the evidence in the data (attendance rate, quiz and exercise averages, submissions, unit progress, sign-ins) and hedge causal claims ("the data suggests…", "this coincides with…") unless causation is clear. Answer naturally and directly — never say "as previously mentioned" or restate the question back.
 
 When the message starts with THE FACILITATOR'S QUESTION, decide the response mode in this order:
 1. SCOPE — you ONLY handle questions about this app's data: the learnership programme, its learners/students, attendance and registers, submissions and unit-standard statuses, quizzes and exercises, POE evidence, assessor outcomes, credits, risks, platform activity (sign-ins, engagement) and reporting on any of that. If the question is outside that scope (arithmetic, general knowledge, coding, jokes, personal advice), reply with exactly {"offtopic": true, "answer": "I can only answer questions about the programme and its learners — ask me about attendance, submissions, quiz results, POE or progress."} and nothing else. Never include the answer to the off-topic question itself.
@@ -69,7 +73,7 @@ Reply with STRICT JSON only, no prose outside JSON:
 
 const MAX_DATA_LEN = 60_000;
 const LLM_TIMEOUT_MS = 45_000;
-const BUILD = "20260909-1";
+const BUILD = "20260909-2";
 
 const MODEL_CANDIDATES = ["gpt-4.1-mini", "gpt-5.6-luna", "gpt-4o-mini", "gpt-4o"];
 
@@ -111,6 +115,15 @@ export default async function handler(req: Request): Promise<Response> {
   const title = String(body?.title ?? "").slice(0, 160);
   const question = String(body?.question ?? "").slice(0, 1200);
   const mode = body?.mode === "report" ? "report" : "answer";
+  const history = Array.isArray(body?.history)
+    ? (body.history as { role?: unknown; text?: unknown }[])
+        .slice(-12)
+        .map((m) => ({
+          role: m?.role === "assistant" ? ("assistant" as const) : ("user" as const),
+          content: String(m?.text ?? "").slice(0, 1500),
+        }))
+        .filter((m) => m.content.trim().length > 0)
+    : [];
   let dataStr = "";
   try {
     dataStr = JSON.stringify(body?.data ?? {});
@@ -168,6 +181,7 @@ export default async function handler(req: Request): Promise<Response> {
           response_format: { type: "json_object" },
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
+            ...history,
             { role: "user", content: userMsg },
           ],
         }),

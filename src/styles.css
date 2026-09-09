@@ -10918,7 +10918,7 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 
 .chat-answer {
-  margin: 0;
+  margin: 0 0 26px;
   font-size: 16px;
   line-height: 1.7;
   color: var(--ink);

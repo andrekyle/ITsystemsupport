@@ -203,14 +203,18 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   const [scope, setScope] = useState<ReportScope>("worked");
   const [wantReport, setWantReport] = useState(false);
   const [busy, setBusy] = useState<"kind" | "ask" | null>(null);
-  const [asked, setAsked] = useState<string | null>(null);
+  const [msgs, setMsgs] = useState<{ role: "user" | "assistant"; text: string }[]>([]);
   const [genKind, setGenKind] = useState<ReportKind | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [aiNote, setAiNote] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [phase, setPhase] = useState(0);
+  const endRef = useRef<HTMLDivElement | null>(null);
 
   const phases = (GEN_PHASES[genKind?.id ?? ""] ?? GEN_PHASES.progress)(firstName);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [msgs, busy]);
 
   useEffect(() => {
     if (!busy) return;
@@ -246,36 +250,49 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   async function generate(k: ReportKind, q: string | undefined, source: "kind" | "ask") {
     if (busy) return;
     const makingReport = source === "kind" || wantReport;
+    const history = msgs.slice(-12);
     if (source === "ask" && q) {
-      setAsked(q);
+      setMsgs((m) => [...m, { role: "user", text: q }]);
       setQuestion("");
     }
     setGenKind(k);
     setBusy(source);
     setError(null);
-    setAiNote(null);
     setDone(null);
     const result = await requestReport(
       k,
       buildReportData(k.id, rows, registers, scope),
       q,
-      makingReport ? "report" : "answer"
+      makingReport ? "report" : "answer",
+      history
     );
     // hold the report overlay a little longer so its narration can be read
     if (makingReport) await new Promise((r) => setTimeout(r, 5000));
     setBusy(null);
     if (!result.ok) {
       if (result.error === "offtopic" || result.error === "direct") {
-        setAiNote(
-          result.answer ||
-            "I can only answer questions about the programme and its learners — no report was written."
-        );
+        setMsgs((m) => [
+          ...m,
+          {
+            role: "assistant",
+            text:
+              result.answer ||
+              "I can only answer questions about the programme and its learners — no report was written.",
+          },
+        ]);
       } else {
         setError(ERROR_TEXT[result.error] ?? `The AI could not write the report (${result.error}).`);
       }
       return;
     }
-    setDone(k.name);
+    if (source === "ask") {
+      setMsgs((m) => [
+        ...m,
+        { role: "assistant", text: `Your ${k.name.toLowerCase()} has opened in a new tab — print or save it as PDF.` },
+      ]);
+    } else {
+      setDone(k.name);
+    }
     openReportDocument(k, result.report, rows, registers, profile, q, scope);
   }
 
@@ -368,17 +385,23 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         AI Assistant
       </h2>
 
-      {asked !== null ? (
+      {msgs.length > 0 ? (
         <div className="reports-chat">
           <div className="chat-scroll">
-            <div className="chat-user">{asked}</div>
-            {busy === "ask" && !wantReport && <NeonWaves />}
-            {aiNote && !busy && (
-              <p className="chat-answer" role="status">
-                {aiNote}
-              </p>
+            {msgs.map((m, i) =>
+              m.role === "user" ? (
+                <div key={i} className="chat-user">
+                  {m.text}
+                </div>
+              ) : (
+                <p key={i} className="chat-answer" role="status">
+                  {m.text}
+                </p>
+              )
             )}
+            {busy === "ask" && !wantReport && <NeonWaves />}
             {status}
+            <div ref={endRef} />
           </div>
           <div className="chat-composer">
             <p className="chat-note">

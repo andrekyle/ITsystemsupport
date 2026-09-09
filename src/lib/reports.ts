@@ -282,7 +282,8 @@ export async function requestReport(
   kind: ReportKind,
   data: unknown,
   question?: string,
-  mode: "answer" | "report" = "report"
+  mode: "answer" | "report" = "report",
+  history?: { role: "user" | "assistant"; text: string }[]
 ): Promise<ReportResult> {
   try {
     const r = await fetch("/api/generate-report", {
@@ -295,6 +296,7 @@ export async function requestReport(
         model: loadMarkingModel(),
         mode,
         ...(question?.trim() ? { question: question.trim() } : {}),
+        ...(history && history.length ? { history } : {}),
       }),
     });
     if (!r.ok) return { ok: false, error: `http_${r.status}` };
