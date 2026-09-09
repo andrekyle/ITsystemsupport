@@ -502,14 +502,14 @@ export function reportDocumentHtml(
     : report.sections
         .map(
           (s, i) => `
-  <h2>${i + 1} · ${esc(s.heading)}</h2>
+  <h2><span class="sec-num">${String(i + 1).padStart(2, "0")}</span>${esc(s.heading)}</h2>
   ${s.paragraphs.map((p) => `<p>${esc(p)}</p>`).join("")}
   ${s.bullets && s.bullets.length ? `<ul>${s.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>` : ""}`
         )
         .join("");
   const recs = report.recommendations.length
     ? `
-  <h2>${tracker ? "Recommendations" : `${report.sections.length + 1} · Recommendations`}</h2>
+  <h2>${tracker ? "Recommendations" : `<span class="sec-num">${String(report.sections.length + 1).padStart(2, "0")}</span>Recommendations`}</h2>
   <ol>${report.recommendations.map((r) => `<li>${esc(r)}</li>`).join("")}</ol>`
     : "";
 
@@ -521,15 +521,18 @@ export function reportDocumentHtml(
 <title>${esc(kind.name)} — ${esc(COURSE_META.title)}</title>
 <style>
   * { box-sizing: border-box; }
-  body { font: 15px/1.55 "Segoe UI", "Helvetica Neue", Helvetica, "Lucida Grande", Arial, Ubuntu, Cantarell, "Fira Sans", sans-serif; color: #17233b; margin: 0; padding: 34px 44px; }
-  h1 { font-size: 27px; margin: 0 0 2px; color: #0b3f8a; }
-  h2 { font-size: 18px; margin: 30px 0 8px; color: #0b3f8a; border-bottom: 2px solid #dbe6f7; padding-bottom: 5px; }
+  body { font: 15px/1.7 "Segoe UI", "Helvetica Neue", Helvetica, "Lucida Grande", Arial, Ubuntu, Cantarell, "Fira Sans", sans-serif; color: #24324d; margin: 0; padding: 34px 44px; }
+  h1 { font-size: 26px; margin: 0 0 3px; color: #0b3f8a; letter-spacing: -0.01em; }
+  h2 { display: flex; align-items: center; gap: 12px; font-size: 17.5px; font-weight: 650; margin: 36px 0 12px; color: #0b3f8a; }
+  h2::after { content: ""; flex: 1; border-top: 1px solid #e1e9f6; }
+  h2 .sec-num { font-size: 11.5px; font-weight: 700; color: #97a9c9; letter-spacing: 0.16em; }
+  p { margin: 0 0 12px; }
   .sub { color: #5a6b8c; margin: 0 0 18px; }
   .banner { background: #eef4ff; border: 1px solid #c9dbf7; border-radius: 10px; padding: 14px 18px; margin: 18px 0; }
   table { border-collapse: collapse; width: 100%; margin: 8px 0 4px; }
   th, td { border: 1px solid #ccd7ea; padding: 6px 9px; text-align: left; vertical-align: top; font-size: 13.5px; }
   th { background: #f2f6fd; }
-  ol li, ul li { margin: 4px 0; }
+  ol li, ul li { margin: 6px 0; line-height: 1.65; }
   .sign { display: flex; gap: 60px; margin-top: 36px; align-items: flex-end; }
   .sign div { flex: 1; padding-top: 0; font-size: 12.5px; color: #444; }
   .sign .sign-img { display: block; max-height: 58px; max-width: 220px; margin-bottom: 2px; }
