@@ -32,11 +32,11 @@ const URL_RE = /(https?:\/\/[^\s)]+)/g;
  *  Text starting "5. …" / "5 · …" gets a hanging indent — wrapped lines align under the
  *  words, not the number — and the middot separator is dropped. */
 export function Gloss({ text }: { text: string }) {
-  const hang = /^(\d+[.·)]\s+)([\s\S]*)$/.exec(text);
+  const hang = /^(\d+)[.·)]\s+([\s\S]*)$/.exec(text);
   if (hang) {
     return (
       <>
-        <span className="hang-num">{hang[1].replace(/\s*·\s*$/, " ")}</span>
+        <span className="hang-num">{`${hang[1]}. `}</span>
         <span className="hang-text">
           <Gloss text={hang[2]} />
         </span>
@@ -3586,11 +3586,11 @@ export function UnitPage({
                             const t = cardText(ci, "t", c.title);
                             if (editable) return t;
                             // hanging indent: wrapped lines align under the words, not the number
-                            const m = /^(\d+\s*·\s*)(.*)$/.exec(t);
+                            const m = /^(\d+)\s*·\s*(.*)$/.exec(t);
                             if (!m) return t;
                             return (
                               <>
-                                <span className="t-num">{m[1].replace(/\s*·\s*$/, " ")}</span>
+                                <span className="t-num">{`${m[1]}. `}</span>
                                 <span className="t-text">{m[2]}</span>
                               </>
                             );
