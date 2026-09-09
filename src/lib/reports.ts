@@ -360,7 +360,7 @@ function trackerBody(rows: LearnerRow[], report: AiReport): string {
       ${units.map((u) => `<th class="c">${esc(u.us)}</th>`).join("")}
       ${dates.length ? dates.map((d) => `<th class="c" rowspan="2">${esc(fmtRegDate(d))}</th>`).join("") : `<th class="c" rowspan="2">—</th>`}
     </tr>
-    <tr>${units.map((u) => `<th class="c">${u.credits} cr</th>`).join("")}</tr>`;
+    <tr>${units.map((u) => `<th class="c">${u.credits} credits</th>`).join("")}</tr>`;
   const body = rows
     .map((r) => {
       const parts = r.profile.name.trim().split(/\s+/);
@@ -429,13 +429,13 @@ export function reportDocumentHtml(
 <title>${esc(kind.name)} — ${esc(COURSE_META.title)}</title>
 <style>
   * { box-sizing: border-box; }
-  body { font: 14px/1.55 "Segoe UI", system-ui, sans-serif; color: #17233b; margin: 0; padding: 34px 44px; }
+  body { font: 15px/1.55 "Segoe UI", "Helvetica Neue", Helvetica, "Lucida Grande", Arial, Ubuntu, Cantarell, "Fira Sans", sans-serif; color: #17233b; margin: 0; padding: 34px 44px; }
   h1 { font-size: 27px; margin: 0 0 2px; color: #0b3f8a; }
   h2 { font-size: 18px; margin: 30px 0 8px; color: #0b3f8a; border-bottom: 2px solid #dbe6f7; padding-bottom: 5px; }
   .sub { color: #5a6b8c; margin: 0 0 18px; }
   .banner { background: #eef4ff; border: 1px solid #c9dbf7; border-radius: 10px; padding: 14px 18px; margin: 18px 0; }
   table { border-collapse: collapse; width: 100%; margin: 8px 0 4px; }
-  th, td { border: 1px solid #ccd7ea; padding: 6px 9px; text-align: left; vertical-align: top; font-size: 12.5px; }
+  th, td { border: 1px solid #ccd7ea; padding: 6px 9px; text-align: left; vertical-align: top; font-size: 13.5px; }
   th { background: #f2f6fd; }
   ol li, ul li { margin: 4px 0; }
   .sign { display: flex; gap: 60px; margin-top: 36px; align-items: flex-end; }
@@ -444,12 +444,13 @@ export function reportDocumentHtml(
   .sign .sign-line { display: block; border-top: 1.5px solid #17233b; margin-bottom: 5px; }
   .sign .sign-line-tall { margin-top: 60px; }
   .small { color: #5a6b8c; font-size: 12px; }
-  /* tracker grid — onboarding palette */
+  /* tracker grid — same table styling as the data-snapshot appendix */
   .legend { display: flex; flex-wrap: wrap; gap: 10px 26px; margin: 4px 0 18px; }
-  .legend .item { display: inline-flex; align-items: center; gap: 9px; font-size: 12.5px; color: #17233b; }
+  .legend .item { display: inline-flex; align-items: center; gap: 9px; font-size: 14px; color: #17233b; }
   .legend .sw { width: 16px; height: 16px; border-radius: 4px; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08); }
-  .tracker th, .tracker td { font-size: 11px; padding: 5px 6px; }
-  .tracker th { text-align: center; vertical-align: middle; }
+  .tracker th, .tracker td { font-size: 13.5px; padding: 6px 9px; }
+  .tracker th { font-weight: 600; vertical-align: middle; text-align: left; }
+  .tracker th.c, .tracker th[colspan] { text-align: center; }
   .tracker .c { text-align: center; white-space: nowrap; }
   .tracker .nm { min-width: 90px; }
   .tracker .idn { min-width: 95px; }
