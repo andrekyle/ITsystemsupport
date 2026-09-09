@@ -347,8 +347,37 @@ function ExampleLine({ text, doc = true }: { text: string; doc?: boolean }) {
   );
 }
 
-/** Exercise step: hangs wrapped text after the "Label:" colon. */
+/** Exercise step: hangs wrapped text after the "Label:" colon. Multi-line steps
+ *  (\n-separated) render as a titled block with highlighted cue labels. */
 function StepText({ text }: { text: string }) {
+  if (text.includes("\n")) {
+    const lines = text.split("\n").filter((l) => l.trim());
+    return (
+      <span className="step-multi">
+        {lines.map((l, i) => {
+          if (i === 0) {
+            return (
+              <span key={i} className="step-role">
+                {l}
+              </span>
+            );
+          }
+          const cue = l.match(/^([A-Za-z][^:“”]{0,48}):\s*(.*)$/s);
+          return (
+            <span key={i} className={`step-line${l.startsWith("“") || cue?.[2].startsWith("“") ? " quote" : ""}`}>
+              {cue ? (
+                <>
+                  <span className="cue">{cue[1]}</span> <Gloss text={cue[2]} />
+                </>
+              ) : (
+                <Gloss text={l} />
+              )}
+            </span>
+          );
+        })}
+      </span>
+    );
+  }
   const m = text.match(/^([^:]{2,28}):\s(.*)$/s);
   if (!m) return <Gloss text={text} />;
   const items = m[2].split(" · ");

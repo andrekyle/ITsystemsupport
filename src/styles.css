@@ -1916,6 +1916,39 @@ textarea:focus {
   gap: 6px;
 }
 
+/* multi-line role-play step: bold role title, description, highlighted cue lines */
+.step-multi {
+  display: block;
+  margin: 2px 0 20px;
+}
+
+.step-multi .step-role {
+  display: block;
+  font-weight: 650;
+  color: var(--ink);
+  margin-bottom: 5px;
+}
+
+.step-multi .step-line {
+  display: block;
+  margin: 8px 0 0;
+}
+
+.step-multi .step-line .cue {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--azure);
+  margin-bottom: 1px;
+}
+
+.step-multi .step-line.quote {
+  border-left: 3px solid var(--border-2);
+  padding-left: 14px;
+}
+
 .step-label {
   white-space: nowrap;
   flex-shrink: 0;
