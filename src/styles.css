@@ -1905,7 +1905,7 @@ textarea:focus {
 }
 
 .step-list li {
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.6;
   color: var(--ink-2);
   margin-bottom: 7px;
@@ -5504,6 +5504,13 @@ a.plan-ppt:hover {
 .exq-input:focus {
   outline: none;
   border-color: var(--azure);
+}
+
+/* quiet placeholders — the guide text should not compete with real answers */
+.exq-input::placeholder {
+  color: var(--ink-3);
+  opacity: 0.5;
+  font-size: 14.5px;
 }
 
 .exq-input[readonly] {
