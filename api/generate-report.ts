@@ -42,6 +42,7 @@ PRONOUNS — HARD RULE: every learner entry carries a "pronouns" field. Before w
 ATTENDANCE — HARD RULE: attendance figures come from the filled registers. A learner's "sessionsExpected" only counts registers dated on/after their "firstSession" (they joined the programme then); "attendanceRatePct" is measured on that basis. A learner with attendanceRatePct 100 has NOT missed a class — never say they missed the earlier sessions; if relevant, say they joined later and have attended every session since.
 
 When the message starts with THE FACILITATOR'S QUESTION, you are not writing a standard report — you are ANSWERING THAT EXACT QUESTION as a document. Rules for questions:
+- RELEVANCE CHECK FIRST: if the question is NOT about this learnership programme — its learners, attendance, submissions, assessments, progress, risks or reporting — (e.g. general knowledge, arithmetic, jokes, chit-chat), do NOT write a report. Reply with exactly {"offtopic": true, "answer": "<one short sentence that answers or politely declines>"} and nothing else.
 - The FIRST sentence of "intro" must directly answer the question in plain terms.
 - Every section heading must be derived from the question (use its key words), never generic headings like "Overview" or "Cohort performance" unless the question asks for them.
 - Address the specific learners, units, dates or numbers the question mentions; if the question asks to "write" something (an update, a letter, a summary for an employer), the sections ARE that piece of writing.
@@ -172,12 +173,24 @@ export default async function handler(req: Request): Promise<Response> {
         model?: string;
         usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
       };
-      let parsed: { intro?: unknown; sections?: unknown; recommendations?: unknown } = {};
+      let parsed: {
+        intro?: unknown;
+        sections?: unknown;
+        recommendations?: unknown;
+        offtopic?: unknown;
+        answer?: unknown;
+      } = {};
       try {
         parsed = JSON.parse(data.choices?.[0]?.message?.content ?? "{}");
       } catch {
         lastError = "bad_llm_json";
         continue;
+      }
+      if (parsed.offtopic === true) {
+        return json(
+          { error: "offtopic", answer: str(parsed.answer), model: data.model ?? model, usage: data.usage ?? {} },
+          200
+        );
       }
       const sections: Section[] = Array.isArray(parsed.sections)
         ? parsed.sections

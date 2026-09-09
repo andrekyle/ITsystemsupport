@@ -275,7 +275,7 @@ export interface AiReport {
 
 export type ReportResult =
   | { ok: true; report: AiReport }
-  | { ok: false; error: string };
+  | { ok: false; error: string; answer?: string };
 
 /** Ask the API to write the report. Records token usage under "REPORTS". */
 export async function requestReport(
@@ -298,6 +298,7 @@ export async function requestReport(
     if (!r.ok) return { ok: false, error: `http_${r.status}` };
     const payload = (await r.json()) as Partial<AiReport> & {
       error?: string;
+      answer?: string;
       model?: string;
       usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
     };
@@ -311,7 +312,7 @@ export async function requestReport(
       });
     }
     if (payload.error || !Array.isArray(payload.sections) || payload.sections.length === 0) {
-      return { ok: false, error: payload.error ?? "empty_report" };
+      return { ok: false, error: payload.error ?? "empty_report", answer: payload.answer };
     }
     return {
       ok: true,

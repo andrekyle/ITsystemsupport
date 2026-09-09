@@ -143,7 +143,11 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     await new Promise((r) => setTimeout(r, 5000));
     setBusy(null);
     if (!result.ok) {
-      setError(ERROR_TEXT[result.error] ?? `The AI could not write the report (${result.error}).`);
+      setError(
+        result.error === "offtopic"
+          ? `That isn't a question about the programme, so no report was written.${result.answer ? ` Quick answer: ${result.answer}` : ""}`
+          : ERROR_TEXT[result.error] ?? `The AI could not write the report (${result.error}).`
+      );
       return;
     }
     setDone(k.name);
