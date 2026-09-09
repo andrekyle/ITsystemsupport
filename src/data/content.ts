@@ -11856,6 +11856,169 @@ export const CONTENT: Record<string, UnitContent> = {
           },
         ],
       },
+      {
+        id: "rp114051",
+        title: "Group role-play — Conduct a full technical practitioners meeting (12 roles)",
+        task: "Time: 90 minutes (10 min preparation · 60 min meeting · 20 min debrief) · Activity: Whole group — all 12 learners, one role each · Venue: training room arranged as a boardroom · Assessment: the facilitator observes against SO1–SO4.",
+        scenario: [
+          "The class is the technical team of BlueRiver IT Services, a systems-support company. Today is the monthly technical practitioners meeting — a combined technical review and project review meeting. The big item on the agenda: a proposal to upgrade the training-room network — replacing the old 100 Mbps switch with a 24-port gigabit switch and adding a second wireless access point — on a quotation of R18 500 from NetSupplies.",
+          "Every learner is assigned ONE role below and must role-play it fully — say the words and perform the actions. The meeting runs through the complete agenda in this order: 1. Opening and welcome · 2. Attendance and apologies · 3. Confirmation of the agenda · 4. Minutes of the previous meeting · 5. Matters arising · 6. Correspondence · 7. Treasurer's report · 8. Technical report · 9. New business — the network upgrade motion (move, second, debate, objection, amendment, vote) · 10. General · 11. Date of next meeting and closing.",
+          "Ground rules for everyone: speak THROUGH THE CHAIR (“Chairperson, …”), one speaker at a time, keep to your allocated time, accept the ruling of the chair, and respect the outcome of the vote. The scripts below give each role its key lines — deliver them in your own natural words, and improvise realistic discussion around them. Download and print the role cards, cut them up, and let learners draw their roles.",
+        ],
+        steps: [
+          "Role 1 — CHAIRPERSON: you lead the whole meeting in a democratic style — the group decides by vote, you guide the process. DO: open on time; follow the agenda item by item; give each speaker the floor; keep order; put the motion to the vote; use your casting vote ONLY if the vote is tied; close the meeting. SAY (opening): “Good morning, colleagues. I declare this monthly technical practitioners meeting of BlueRiver IT Services open at 09h00. As chairperson my role is to run the meeting according to the agenda, give every member a fair chance to speak, keep the discussion on the item at hand, and make sure every decision is clear and has a timeframe. This is a democratic meeting — decisions are taken by majority vote. Secretary, do we have any apologies?” Move between items: “The next item is the treasurer's report — Treasurer, please take us through it.” When debate wanders: “Order, colleagues — please address the current item, through the chair.” Before the vote: “If there is no further discussion, I put the amended motion to the vote — Scrutineer, please proceed.” After the count: “The motion is carried by eight votes to three, with one abstention. Decision: the network upgrade is approved, installation on a Saturday, tested before 30 September, the senior technician responsible. Secretary, please minute that.” Closing: “Thank you all. The next meeting is on the first Friday of next month, 09h00, in this boardroom. I declare the meeting closed at 10h05.”",
+          "Role 2 — VICE-CHAIRPERSON & PREPARATION OFFICER: you prove the meeting was properly PREPARED and you support the chair. DO: before the meeting, check the venue, seating, projector and documents; confirm the invitations went out in good time; be ready to take over if the chair steps out. SAY (when the chair asks whether the meeting is properly constituted): “Chairperson, the boardroom was booked, the projector and flip chart are working, and the notice, agenda and supporting documents were e-mailed to all twelve members seven days ago, as required. Eleven members are present and one apology was received — we have a quorum, the meeting can proceed.” During a heated debate, support the chair: “Chairperson, may I suggest we allow five more minutes on this item and then move to the vote, so that we keep to the agenda times.”",
+          "Role 3 — SECRETARY (MINUTE-TAKER): you are the note taker — and you must explain why the note taker needs a TECHNICAL background. DO: record attendance, apologies and every decision with its owner and deadline; read the previous minutes; table the correspondence; commit to distributing the minutes. SAY (apologies): “Chairperson, one apology — the service manager is at a client site. Eleven members are present.” (Minutes): “The minutes of the meeting of 7 August: the meeting approved the new backup rotation; the printer-fleet audit was assigned to Role 11, due 30 August; the toner budget query was referred to the treasurer. Those are the minutes as recorded.” (Why a technical note taker): “Colleagues, note why the note taker must have a technical background — when you debate VLANs, port counts and access points, I must minute the decisions accurately, not guess at the terminology.” (Correspondence): “One letter received — a quotation from NetSupplies: R18 500 for a 24-port gigabit switch and one access point, valid for 30 days.” (Closing): “I will circulate the minutes and the action list to all members by e-mail within 48 hours, in the company minute template.”",
+          "Role 4 — TREASURER: you present the FINANCIAL REPORT and tell the meeting whether the proposal is affordable. DO: present the figures slowly; answer all money questions through the chair; move the acceptance of your own report. SAY: “Chairperson, the treasurer's report for August: opening balance R42 000; expenditure — R6 200 on toner and R3 800 on cabling and connectors; closing balance R32 000. The equipment budget for this quarter still has R25 000 unspent. I move that the financial report be accepted.” (A member seconds; the chair declares it accepted.) Later, in the upgrade debate: “Chairperson, to assist the meeting: the R18 500 quotation fits within the remaining equipment budget of R25 000 — but it would leave only R6 500 for the rest of the quarter, so nothing else major can be bought.”",
+          "Role 5 — SENIOR TECHNICIAN (TECHNICAL REPORT): you present the TECHNICAL REPORT that motivates the upgrade. DO: give facts and figures, not opinions; answer technical questions through the chair; accept the action if the motion passes. SAY: “Chairperson, my technical report. Over the past month the training-room network dropped twelve times during practical lessons. The current switch is a ten-year-old 100-megabit model running at 96% port capacity, and the single access point is serving 25 devices — double its design load. Lesson image downloads currently take 40 minutes; on a gigabit switch they would take under five. My recommendation to this meeting: replace the switch with a 24-port gigabit switch and add a second access point.” (When asked by Role 9): “Through you, Chairperson: yes — our existing Cat5e cabling supports gigabit, so there is no hidden cabling cost.”",
+          "Role 6 — MOVER OF THE MOTION: you formally MOVE the motion — the convention that puts a proposal on the table for decision. DO: address the chair; state the motion clearly with the cost and the timeframe; speak briefly in support; decide whether to accept the amendment. SAY: “Chairperson, in the light of the technical report I MOVE THAT the company purchases the 24-port gigabit switch and the additional access point on the NetSupplies quotation of R18 500, and that the upgrade be installed and tested by 30 September. Speaking to my motion: the downtime is costing us training hours every single week — this is the cheapest reliable fix.” (When the amendment is proposed): “Chairperson, I accept the amendment — the motion now reads that installation takes place on a Saturday and testing is complete before 30 September.”",
+          "Role 7 — SECONDER: a motion falls away if nobody SECONDS it — you give it life. DO: immediately after the mover sits down, address the chair and second the motion; add ONE supporting reason of your own; vote in favour. SAY: “Chairperson, I SECOND the motion. Speaking in support: last Thursday the whole class lost twenty minutes of a practical because the network dropped. Twelve learners' lost time every week is worth far more than the price of one switch.”",
+          "Role 8 — OBJECTOR & AMENDMENT PROPOSER: you show how DISAGREEMENT works correctly — objections go through the chair and an AMENDMENT changes the wording of a motion before the vote. DO: object with a reason (attack the issue, never the person); then propose a concrete amendment; vote for the amended motion. SAY (objection): “Chairperson, I OBJECT to the motion in its current form. My concern is operational, not financial: installing the switch during the week will take the training room offline in the middle of the timetable.” (Amendment): “Chairperson, I PROPOSE AN AMENDMENT: that the words ‘installed and tested by 30 September’ be replaced with ‘installed on a Saturday and tested before 30 September’. If the mover accepts, I will support the motion.”",
+          "Role 9 — POINT OF ORDER & QUESTIONS: you police the meeting CONVENTIONS. DO: when Role 11 (by arrangement) speaks directly to the treasurer out of turn, interrupt correctly with a point of order; later ask one clarifying question through the chair; vote honestly. SAY (point of order): “POINT OF ORDER, Chairperson — the member is addressing the treasurer directly and discussing next month's business. Members must speak through the chair and keep to the item under discussion.” (Wait for the chair: “The point of order is upheld.”) (Question, during the debate): “Chairperson, through you: can the senior technician confirm that the new switch works with our existing cabling, or is there a hidden cost?”",
+          "Role 10 — SCRUTINEER (VOTING OFFICER): you run the VOTE — voting is one of the unit's decision-making processes (voting, consensus, criteria-based rating, ranking, paired comparisons — name them!). DO: explain the method before the vote; count the hands twice; report exact numbers to the chair; keep a written note for the minutes. SAY (before): “Chairperson, colleagues — we decide by a show of hands, a simple majority of members present. You may vote FOR, AGAINST, or ABSTAIN. If the vote is tied, the chairperson has the casting vote. Alternatives such as consensus or ranking are available to a meeting, but today the notice specified a vote. As scrutineer I will count and announce the result.” (After counting twice): “Chairperson, the result: eight in favour, three against, one abstention — the motion, as amended, is carried.”",
+          "Role 11 — MATTERS ARISING & REPORT-BACK: you show the FOLLOW-UP loop working — actions from the previous minutes get reported back. DO: report on your completed action item under matters arising; deliberately speak out of turn ONCE (arranged with Role 9) so the point of order can be demonstrated, then apologise and withdraw; propose an item for the next agenda under General. SAY (matters arising): “Chairperson, reporting back on the printer-fleet audit assigned to me on 7 August: the audit is complete — fourteen printers checked, two need new toner rollers, and the full list has been handed to the secretary for the record.” (Out of turn, during the treasurer's report): “And another thing, Treasurer — next month we must also talk about laptop bags and…” (after the ruling) “Apologies, Chairperson — I withdraw, and will raise it under General.” (General): “Chairperson, I propose an item for the next agenda: a standby-duty roster for exam week.”",
+          "Role 12 — TIMEKEEPER & MEETING EVALUATOR: you keep the meeting to time and evaluate the chairing at the end. DO: note the opening time; watch each item against its allocation (minutes 5 · matters arising 5 · correspondence 3 · treasurer 7 · technical report 10 · new business 20 · general 5); warn the chair when an item runs two minutes over; record the closing time; give a one-minute evaluation when the chair calls on you. SAY (during): “Chairperson, time check — two minutes left on this item.” (Evaluation at the end): “Chairperson, the meeting ran 65 minutes against the planned 60. The agenda was followed in order, every member spoke, the objection and the amendment were handled through the chair, and the final decision was clear, with a deadline and a responsible person. One improvement for next month: the technical report ran four minutes over — distributing the slides beforehand would save that time.”",
+        ],
+        download: {
+          filename: "114051-meeting-role-cards.txt",
+          label: "Download the 12 printable role cards",
+          content: `US 114051 — CONDUCT A TECHNICAL PRACTITIONERS MEETING
+GROUP ROLE-PLAY: BlueRiver IT Services — monthly technical practitioners meeting
+Print, cut out the cards, and let each learner draw ONE role.
+
+MEETING AGENDA (run it in this order)
+1. Opening and welcome (Chair)
+2. Attendance and apologies (Secretary)
+3. Confirmation of the agenda (Chair)
+4. Minutes of the previous meeting (Secretary)
+5. Matters arising (Role 11)
+6. Correspondence (Secretary)
+7. Treasurer's report (Treasurer)
+8. Technical report (Senior technician)
+9. New business: network upgrade motion — move (6), second (7), debate, objection & amendment (8), vote (10)
+10. General
+11. Date of next meeting and closing (Chair)
+
+GROUND RULES: speak through the chair; one speaker at a time; keep to time; accept the chair's ruling; respect the vote.
+
+----------------------------------------------------------------------
+CARD 1 — CHAIRPERSON
+Run the meeting democratically: follow the agenda, give everyone the floor,
+keep order, put the motion to the vote, casting vote only on a tie.
+Opening line: "Good morning, colleagues. I declare this monthly technical
+practitioners meeting of BlueRiver IT Services open at 09h00. My role as
+chairperson is to run the meeting to the agenda, give every member a fair
+chance to speak and make sure every decision is clear and has a timeframe.
+Decisions are taken by majority vote."
+Also say: "Order, colleagues — through the chair, please." /
+"I put the amended motion to the vote." / "The motion is carried — Secretary,
+please minute the decision, the deadline and the responsible person." /
+"I declare the meeting closed at 10h05."
+
+----------------------------------------------------------------------
+CARD 2 — VICE-CHAIRPERSON & PREPARATION OFFICER
+Confirm the preparation and support the chair.
+Say: "Chairperson, the boardroom was booked, the projector works, and the
+notice, agenda and documents were e-mailed to all twelve members seven days
+ago. Eleven members are present, one apology — we have a quorum."
+Later: "Chairperson, may I suggest five more minutes on this item, then the
+vote, so we keep to the agenda times."
+
+----------------------------------------------------------------------
+CARD 3 — SECRETARY / MINUTE-TAKER
+Apologies, previous minutes, correspondence, record decisions.
+Say: "One apology — the service manager is at a client site."
+Read the minutes of 7 August (backup rotation approved; printer audit
+assigned, due 30 Aug; toner query to treasurer).
+Explain: "The note taker needs a technical background — when you debate
+VLANs and port counts I must minute the decisions accurately."
+Correspondence: "A quotation from NetSupplies: R18 500, 24-port gigabit
+switch plus access point, valid 30 days."
+Close: "Minutes and action list to all members within 48 hours, in the
+company template."
+
+----------------------------------------------------------------------
+CARD 4 — TREASURER
+Present the financial report; confirm affordability.
+Say: "Opening balance R42 000; spent R6 200 on toner, R3 800 on cabling;
+closing balance R32 000. Equipment budget still has R25 000 unspent.
+I move that the financial report be accepted."
+In the debate: "The R18 500 fits the budget but leaves only R6 500 for the
+rest of the quarter."
+
+----------------------------------------------------------------------
+CARD 5 — SENIOR TECHNICIAN (TECHNICAL REPORT)
+Present facts and figures that motivate the upgrade.
+Say: "The network dropped twelve times this month. The switch is a
+ten-year-old 100-megabit model at 96% port capacity; the single access
+point serves 25 devices — double its design load. Image downloads take
+40 minutes; on gigabit, under five. I recommend a 24-port gigabit switch
+and a second access point."
+Answer: "Our Cat5e cabling supports gigabit — no hidden cost."
+
+----------------------------------------------------------------------
+CARD 6 — MOVER OF THE MOTION
+Say: "Chairperson, I MOVE THAT the company purchases the 24-port gigabit
+switch and additional access point on the NetSupplies quotation of R18 500,
+and that the upgrade be installed and tested by 30 September. The downtime
+costs us training hours every week — this is the cheapest reliable fix."
+On the amendment: "I accept the amendment."
+
+----------------------------------------------------------------------
+CARD 7 — SECONDER
+Say, straight after the mover: "Chairperson, I SECOND the motion.
+Last Thursday the class lost twenty minutes because the network dropped —
+twelve learners' time is worth more than one switch."
+Vote in favour.
+
+----------------------------------------------------------------------
+CARD 8 — OBJECTOR & AMENDMENT PROPOSER
+Say: "Chairperson, I OBJECT to the motion in its current form — installing
+during the week takes the training room offline mid-timetable."
+Then: "I PROPOSE AN AMENDMENT: replace 'installed and tested by
+30 September' with 'installed on a Saturday and tested before
+30 September'." Support the amended motion in the vote.
+
+----------------------------------------------------------------------
+CARD 9 — POINT OF ORDER & QUESTIONS
+When Card 11 speaks out of turn:
+"POINT OF ORDER, Chairperson — the member is addressing the treasurer
+directly and discussing next month's business. Members must speak through
+the chair and keep to the item."
+Later: "Chairperson, through you: will the new switch work with our
+existing cabling, or is there a hidden cost?"
+
+----------------------------------------------------------------------
+CARD 10 — SCRUTINEER (VOTING OFFICER)
+Before the vote: "We decide by show of hands — simple majority. FOR,
+AGAINST or ABSTAIN. On a tie the chairperson has the casting vote.
+(Other decision processes a meeting can use: consensus, criteria-based
+rating, ranking, paired comparisons.)"
+Count twice, then: "Chairperson: eight in favour, three against, one
+abstention — the motion, as amended, is carried."
+
+----------------------------------------------------------------------
+CARD 11 — MATTERS ARISING & REPORT-BACK
+Matters arising: "Reporting back on the printer-fleet audit assigned to me
+on 7 August: complete — fourteen printers checked, two need toner rollers;
+the list is with the secretary."
+During the treasurer's report, deliberately speak out of turn (so Card 9
+can object): "And another thing, Treasurer — next month laptop bags and…"
+then: "Apologies, Chairperson — I withdraw, I'll raise it under General."
+General: "I propose for the next agenda: a standby-duty roster for exam week."
+
+----------------------------------------------------------------------
+CARD 12 — TIMEKEEPER & MEETING EVALUATOR
+Allocations: minutes 5 · matters arising 5 · correspondence 3 · treasurer 7 ·
+technical report 10 · new business 20 · general 5.
+During: "Chairperson, time check — two minutes left on this item."
+Evaluation at the end: "The meeting ran 65 minutes against 60. The agenda
+was followed, every member spoke, the objection and amendment were handled
+through the chair, and the decision was clear with a deadline and an owner.
+Improvement: distribute the technical slides beforehand."
+`,
+        },
+      },
     ],
     assignments: [],
 
