@@ -444,9 +444,10 @@ function trackerBody(rows: LearnerRow[], report: AiReport, scope: ReportScope): 
       ${dates.map((d) => `<th class="c">${esc(fmtRegDate(d))}</th>`).join("")}
     </tr>
     <tr class="flt">
-      ${Array.from({ length: 3 + units.length + Math.max(dates.length, 1) + 1 })
-        .map((_, i) => `<th><input data-col="${i}" type="text" placeholder="Filter" aria-label="Filter column" /></th>`)
+      ${[0, 1, 2]
+        .map((i) => `<th><input data-col="${i}" type="text" placeholder="Filter" aria-label="Filter column" /></th>`)
         .join("")}
+      <th colspan="${units.length + Math.max(dates.length, 1) + 1}"></th>
     </tr>`;
   const body = rows
     .map((r) => {
