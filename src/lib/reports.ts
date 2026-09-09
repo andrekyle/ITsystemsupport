@@ -486,7 +486,7 @@ export function reportDocumentHtml(
   .legend { display: flex; flex-wrap: wrap; gap: 10px 26px; margin: 4px 0 18px; }
   .legend .item { display: inline-flex; align-items: center; gap: 9px; font-size: 14px; color: #17233b; }
   .legend .sw { width: 16px; height: 16px; border-radius: 4px; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08); }
-  .tracker th, .tracker td { font-size: 13.5px; padding: 6px 9px; border-color: rgba(0, 0, 0, 0.94); }
+  .tracker th, .tracker td { font-size: 13.5px; padding: 6px 9px; border: 0.5px solid rgba(0, 0, 0, 0.94); }
   .tracker th { font-weight: 600; vertical-align: middle; text-align: left; }
   .tracker th.c, .tracker th[colspan] { text-align: center; }
   .tracker .c { text-align: center; white-space: nowrap; }
