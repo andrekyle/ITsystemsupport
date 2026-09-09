@@ -268,8 +268,8 @@ function titleCase(s: string) {
   return s.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
 }
 
-function ExampleLine({ text }: { text: string }) {
-  const m = text.match(DOC_LINE_RE);
+function ExampleLine({ text, doc = true }: { text: string; doc?: boolean }) {
+  const m = doc ? text.match(DOC_LINE_RE) : null;
   if (!m)
     return (
       <p className="lesson-p">
@@ -3642,21 +3642,27 @@ export function UnitPage({
                         {exText(0, "t", sec.example.title)}
                       </span>
                     </div>
-                    {sec.example.lines.map((l, i) =>
-                      editable ? (
-                        <p
-                          key={i}
-                          className="lesson-p editable"
-                          contentEditable
-                          suppressContentEditableWarning
-                          onBlur={(e) => editKeyed("examples", `${si}:0:${i}`, e.currentTarget.textContent ?? "")}
-                        >
-                          {exText(0, String(i), l)}
-                        </p>
-                      ) : (
-                        <ExampleLine key={i} text={exText(0, String(i), l)} />
-                      )
-                    )}
+                    {(() => {
+                      // consistent block: bold doc-style labels only when EVERY line fits
+                      const docBlock = sec.example.lines.every((l, i) =>
+                        DOC_LINE_RE.test(exText(0, String(i), l))
+                      );
+                      return sec.example.lines.map((l, i) =>
+                        editable ? (
+                          <p
+                            key={i}
+                            className="lesson-p editable"
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => editKeyed("examples", `${si}:0:${i}`, e.currentTarget.textContent ?? "")}
+                          >
+                            {exText(0, String(i), l)}
+                          </p>
+                        ) : (
+                          <ExampleLine key={i} text={exText(0, String(i), l)} doc={docBlock} />
+                        )
+                      );
+                    })()}
                   </div>
                 )}
                 {sec.examples?.map((ex, xi) => (
@@ -3672,21 +3678,26 @@ export function UnitPage({
                         {exText(xi + 1, "t", ex.title)}
                       </span>
                     </div>
-                    {ex.lines.map((l, i) =>
-                      editable ? (
-                        <p
-                          key={i}
-                          className="lesson-p editable"
-                          contentEditable
-                          suppressContentEditableWarning
-                          onBlur={(e) => editKeyed("examples", `${si}:${xi + 1}:${i}`, e.currentTarget.textContent ?? "")}
-                        >
-                          {exText(xi + 1, String(i), l)}
-                        </p>
-                      ) : (
-                        <ExampleLine key={i} text={exText(xi + 1, String(i), l)} />
-                      )
-                    )}
+                    {(() => {
+                      const docBlock = ex.lines.every((l, i) =>
+                        DOC_LINE_RE.test(exText(xi + 1, String(i), l))
+                      );
+                      return ex.lines.map((l, i) =>
+                        editable ? (
+                          <p
+                            key={i}
+                            className="lesson-p editable"
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => editKeyed("examples", `${si}:${xi + 1}:${i}`, e.currentTarget.textContent ?? "")}
+                          >
+                            {exText(xi + 1, String(i), l)}
+                          </p>
+                        ) : (
+                          <ExampleLine key={i} text={exText(xi + 1, String(i), l)} doc={docBlock} />
+                        )
+                      );
+                    })()}
                   </div>
                 ))}
                 {sec.figures && (
