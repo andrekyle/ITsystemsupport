@@ -339,13 +339,13 @@ function trackerBody(rows: LearnerRow[], report: AiReport): string {
     return hit ? hit.paragraphs.join(" ") : "";
   };
   const legend = `
-  <table class="legend">
-    <tr><td class="sw st-nys"></td><td><strong>NYS</strong> — Not yet submitted</td></tr>
-    <tr><td class="sw st-c"></td><td><strong>C</strong> — Competent</td></tr>
-    <tr><td class="sw st-sa"></td><td><strong>SA</strong> — Submitted, in assessment process</td></tr>
-    <tr><td class="sw st-ip"></td><td><strong>IP</strong> — In process of submission</td></tr>
-    <tr><td class="sw st-x"></td><td><strong>X</strong> — Absent</td></tr>
-  </table>`;
+  <div class="legend">
+    <span class="item"><span class="sw st-nys"></span><strong>NYS</strong> Not yet submitted</span>
+    <span class="item"><span class="sw st-c"></span><strong>C</strong> Competent</span>
+    <span class="item"><span class="sw st-sa"></span><strong>SA</strong> Submitted, in assessment</span>
+    <span class="item"><span class="sw st-ip"></span><strong>IP</strong> In process of submission</span>
+    <span class="item"><span class="sw st-x"></span><strong>X</strong> Absent</span>
+  </div>`;
   const head = `
     <tr>
       <th rowspan="4" class="nm">Learner name</th>
@@ -442,8 +442,9 @@ export function reportDocumentHtml(
   .sign div { flex: 1; border-top: 1.5px solid #17233b; padding-top: 5px; font-size: 12.5px; color: #444; }
   .small { color: #5a6b8c; font-size: 12px; }
   /* tracker grid — onboarding palette */
-  .legend { width: auto; margin: 0 0 16px; }
-  .legend .sw { width: 120px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 26px; margin: 4px 0 18px; }
+  .legend .item { display: inline-flex; align-items: center; gap: 9px; font-size: 12.5px; color: #17233b; }
+  .legend .sw { width: 16px; height: 16px; border-radius: 4px; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08); }
   .tracker th, .tracker td { font-size: 11px; padding: 5px 6px; }
   .tracker th { text-align: center; vertical-align: middle; }
   .tracker .c { text-align: center; white-space: nowrap; }
@@ -451,11 +452,12 @@ export function reportDocumentHtml(
   .tracker .idn { min-width: 95px; }
   .tracker .cm { min-width: 220px; text-align: left; }
   .tracker .ok { color: #0b6e3f; font-weight: 600; }
-  .st-nys { background: #fdf3c8; }
-  .st-c { background: #dff1df; }
-  .st-sa { background: #d9e9fb; }
-  .st-ip { background: #fbe3cf; }
-  .st-x { background: #fadbd8; color: #8c2f28; font-weight: 600; }
+  .st-nys { background: #ffdd33; }
+  .st-c { background: #3ecf6a; }
+  .st-sa { background: #45b6ff; }
+  .st-ip { background: #ffb266; }
+  .st-x { background: #ff5a52; }
+  .tracker td.st-x { color: #fff; font-weight: 600; }
   @media print { body { padding: 10mm 12mm; } h2 { break-after: avoid; } tr { break-inside: avoid; } ${tracker ? "@page { size: A3 landscape; }" : ""} }
 </style>
 </head>
