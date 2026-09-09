@@ -10827,11 +10827,14 @@ table.data th.sortable.sorted { color: var(--ink); }
   display: flex;
   align-items: center;
   justify-content: center;
-  background:
-    radial-gradient(90% 70% at 30% 20%, rgba(124, 45, 196, 0.4) 0%, transparent 60%),
-    radial-gradient(80% 65% at 72% 62%, rgba(190, 24, 130, 0.22) 0%, transparent 62%),
-    radial-gradient(120% 100% at 50% 40%, #2a0a4a 0%, #1a052f 48%, #0a0114 100%);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
   animation: reports-fade-in 0.25s ease;
+}
+
+[data-theme="dark"] .reports-genwrap {
+  background: rgba(9, 14, 20, 0.8);
 }
 
 @keyframes reports-fade-in {
@@ -10839,33 +10842,124 @@ table.data th.sortable.sorted { color: var(--ink); }
   to { opacity: 1; }
 }
 
-.reports-waves {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
 .reports-gen {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 13%;
   text-align: center;
   padding: 20px;
+}
+
+.reports-orb {
+  position: relative;
+  width: 190px;
+  height: 190px;
+  margin: 0 auto 30px;
+}
+
+/* spinning glow halo hugging the core — the visible "glowing border" */
+.reports-orb::before {
+  content: "";
+  position: absolute;
+  inset: 42px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 30deg,
+    rgba(56, 189, 248, 0.55) 90deg,
+    #22d3ee 150deg,
+    rgba(56, 189, 248, 0.55) 210deg,
+    transparent 270deg 360deg
+  );
+  filter: blur(7px);
+  animation: reports-spin 1.6s linear infinite;
+}
+
+.reports-orb .orb-core {
+  position: absolute;
+  inset: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--azure) 15%, #38bdf8 60%, #22d3ee 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 0 0 3px rgba(56, 189, 248, 0.55),
+    0 0 26px rgba(34, 211, 238, 0.75),
+    0 12px 44px rgba(15, 108, 189, 0.5);
+  animation: reports-breathe 2.2s ease-in-out infinite;
+}
+
+@keyframes reports-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.reports-orb .lf-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid #38bdf8;
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.8), inset 0 0 12px rgba(34, 211, 238, 0.45);
+  opacity: 0;
+  animation: reports-ring 2.4s ease-out infinite;
+}
+
+.reports-orb .lf-ring.r2 { animation-delay: 0.8s; }
+.reports-orb .lf-ring.r3 { animation-delay: 1.6s; }
+
+@keyframes reports-ring {
+  0% { transform: scale(0.5); opacity: 0.9; }
+  70% { opacity: 0.15; }
+  100% { transform: scale(1.22); opacity: 0; }
+}
+
+.reports-orb .lf-orbit {
+  position: absolute;
+  inset: 22px;
+  border-radius: 50%;
+  animation: reports-spin 3s linear infinite;
+}
+
+.reports-orb .lf-orbit::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  margin-left: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #22d3ee;
+  box-shadow: 0 0 14px #22d3ee;
+}
+
+.reports-orb .lf-orbit.o2 {
+  inset: 40px;
+  animation-duration: 2.1s;
+  animation-direction: reverse;
+}
+
+.reports-orb .lf-orbit.o2::before { background: var(--azure); box-shadow: 0 0 12px var(--azure); width: 8px; height: 8px; }
+
+.reports-orb .lf-orbit.o3 {
+  inset: 6px;
+  animation-duration: 4.4s;
+}
+
+.reports-orb .lf-orbit.o3::before { width: 7px; height: 7px; opacity: 0.85; }
+
+@keyframes reports-spin {
+  to { transform: rotate(360deg); }
 }
 
 .reports-gen-title {
   font-size: 26px;
   font-weight: 700;
   margin-bottom: 10px;
-  color: #fff;
-  text-shadow: 0 0 24px rgba(168, 85, 247, 0.55);
 }
 
 .reports-gen-sub {
   font-size: 16px;
-  color: rgba(233, 224, 255, 0.72);
+  color: var(--ink-3);
   min-height: 24px;
 }
 
@@ -10894,43 +10988,16 @@ table.data th.sortable.sorted { color: var(--ink); }
   text-align: left;
 }
 
-/* sound-wave bars — shown only while the AI is thinking */
-.reports-ai-note .ai-wave {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 40px;
+/* mini neon signal-wave screen — shown only while the AI is thinking */
+.reports-ai-note .ai-wavescreen {
   flex: 0 0 auto;
-  filter: drop-shadow(0 0 7px rgba(96, 165, 250, 0.55)) drop-shadow(0 0 14px rgba(168, 85, 247, 0.3));
-}
-
-.reports-ai-note .ai-wave i {
-  width: 4px;
-  height: var(--h, 16px);
-  border-radius: 999px;
-  background: linear-gradient(180deg, #60a5fa, #a855f7);
-  animation: ai-wave-bounce 1.05s ease-in-out infinite;
-  animation-delay: var(--d, 0s);
-}
-
-.reports-ai-note .ai-wave i:nth-child(1) { --h: 9px; --d: -0.95s; }
-.reports-ai-note .ai-wave i:nth-child(2) { --h: 16px; --d: -0.5s; }
-.reports-ai-note .ai-wave i:nth-child(3) { --h: 28px; --d: -0.72s; }
-.reports-ai-note .ai-wave i:nth-child(4) { --h: 14px; --d: -0.18s; }
-.reports-ai-note .ai-wave i:nth-child(5) { --h: 24px; --d: -0.85s; }
-.reports-ai-note .ai-wave i:nth-child(6) { --h: 17px; --d: -0.35s; }
-.reports-ai-note .ai-wave i:nth-child(7) { --h: 33px; --d: -0.62s; }
-.reports-ai-note .ai-wave i:nth-child(8) { --h: 14px; --d: -0.08s; }
-.reports-ai-note .ai-wave i:nth-child(9) { --h: 22px; --d: -0.78s; }
-.reports-ai-note .ai-wave i:nth-child(10) { --h: 40px; --d: -0.42s; }
-.reports-ai-note .ai-wave i:nth-child(11) { --h: 16px; --d: -0.9s; }
-.reports-ai-note .ai-wave i:nth-child(12) { --h: 26px; --d: -0.25s; }
-.reports-ai-note .ai-wave i:nth-child(13) { --h: 12px; --d: -0.55s; }
-.reports-ai-note .ai-wave i:nth-child(14) { --h: 19px; --d: -0.12s; }
-
-@keyframes ai-wave-bounce {
-  0%, 100% { transform: scaleY(0.45); }
-  50% { transform: scaleY(1); }
+  width: 176px;
+  height: 50px;
+  border-radius: 10px;
+  background:
+    radial-gradient(90% 80% at 28% 12%, rgba(124, 45, 196, 0.45) 0%, transparent 60%),
+    radial-gradient(120% 100% at 50% 45%, #2a0a4a 0%, #1a052f 50%, #0a0114 100%);
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.35), inset 0 0 10px rgba(0, 0, 0, 0.4);
 }
 
 .reports-ai-note .ai-text {
