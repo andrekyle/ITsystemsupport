@@ -1620,19 +1620,22 @@ function PeopleSummary({
       </div>
 
       <div className="summary-filters">
-        <label className="summary-filter">
+        <div className="summary-filter">
           <span>Role</span>
-          <span className="summary-select-wrap">
-            <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as Role | "all")}>
-              <option value="all">All roles</option>
-              <option value="Learner">Learner</option>
-              <option value="Facilitator">Facilitator</option>
-              <option value="Assessor">Assessor</option>
-              <option value="Moderator">Moderator</option>
-              <option value="Super User">Super User</option>
-            </select>
-          </span>
-        </label>
+          <Select
+            value={roleFilter}
+            onChange={(v) => setRoleFilter(v as Role | "all")}
+            ariaLabel="Filter by role"
+            options={[
+              { value: "all", label: "All roles" },
+              { value: "Learner", label: "Learner" },
+              { value: "Facilitator", label: "Facilitator" },
+              { value: "Assessor", label: "Assessor" },
+              { value: "Moderator", label: "Moderator" },
+              { value: "Super User", label: "Super User" },
+            ]}
+          />
+        </div>
         {hasActiveFilters && (
           <button
             className="btn ghost sm summary-btn summary-clear"
