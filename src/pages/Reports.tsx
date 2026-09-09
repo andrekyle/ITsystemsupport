@@ -466,8 +466,19 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         AI Assistant
       </h2>
 
-      {msgs.length > 0 ? (
+      {msgs.length > 0 && !wantReport ? (
         <div className="reports-chat">
+          <div className="chat-top">
+            <button
+              type="button"
+              className="chat-clear"
+              disabled={!!busy}
+              title="Clear this conversation"
+              onClick={() => setMsgs([])}
+            >
+              <Icon name="trash" size={15} /> Clear
+            </button>
+          </div>
           <div className="chat-scroll">
             {msgs.map((m, i) =>
               m.role === "user" ? (

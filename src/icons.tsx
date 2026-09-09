@@ -305,6 +305,14 @@ export const PATHS: Record<string, React.ReactNode> = {
       <path d="M20 3.5V6.5a0.8 0.8 0 0 1-0.8 0.8H16.2" />
     </>
   ),
+  trash: (
+    <>
+      <path d="M4 6.5h16" />
+      <path d="M9.5 6.5V4.8a1.3 1.3 0 0 1 1.3-1.3h2.4a1.3 1.3 0 0 1 1.3 1.3v1.7" />
+      <path d="M6.5 6.5 7.3 19a1.8 1.8 0 0 0 1.8 1.7h5.8a1.8 1.8 0 0 0 1.8-1.7l.8-12.5" />
+      <path d="M10 10.5v6M14 10.5v6" />
+    </>
+  ),
   award: (
     <>
       <circle cx="12" cy="9.5" r="5.5" />

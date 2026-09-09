@@ -10963,6 +10963,37 @@ table.data th.sortable.sorted { color: var(--ink); }
   padding: 8px 0 24px;
 }
 
+.chat-top {
+  display: flex;
+  justify-content: flex-end;
+  padding: 2px 0;
+}
+
+.chat-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  font-size: 13.5px;
+  font-family: inherit;
+  padding: 5px 9px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+}
+
+.chat-clear:hover:not(:disabled) {
+  color: var(--red);
+  background: var(--surface-2);
+}
+
+.chat-clear:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 .chat-user {
   align-self: flex-end;
   background: var(--azure);
