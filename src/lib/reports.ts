@@ -281,7 +281,8 @@ export type ReportResult =
 export async function requestReport(
   kind: ReportKind,
   data: unknown,
-  question?: string
+  question?: string,
+  mode: "answer" | "report" = "report"
 ): Promise<ReportResult> {
   try {
     const r = await fetch("/api/generate-report", {
@@ -292,6 +293,7 @@ export async function requestReport(
         title: kind.name,
         data,
         model: loadMarkingModel(),
+        mode,
         ...(question?.trim() ? { question: question.trim() } : {}),
       }),
     });

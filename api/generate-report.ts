@@ -29,6 +29,8 @@ interface Body {
   data?: unknown;
   model?: string;
   question?: string;
+  /** "answer" = short direct answer only; "report" = full document requested */
+  mode?: string;
 }
 
 const SYSTEM_PROMPT = `You are the reporting officer for a South African vocational IT learnership (National Certificate: IT — System Support, SAQA 48573) run on the ITSS Learn platform. You write clear, professional reports for training managers, SETA quality assurers and employers.
@@ -108,6 +110,7 @@ export default async function handler(req: Request): Promise<Response> {
   const kind = String(body?.kind ?? "").slice(0, 60);
   const title = String(body?.title ?? "").slice(0, 160);
   const question = String(body?.question ?? "").slice(0, 1200);
+  const mode = body?.mode === "report" ? "report" : "answer";
   let dataStr = "";
   try {
     dataStr = JSON.stringify(body?.data ?? {});
@@ -131,7 +134,11 @@ export default async function handler(req: Request): Promise<Response> {
     data: JSON.parse(dataStr),
   });
   const userMsg = question.trim()
-    ? `THE FACILITATOR'S QUESTION:\n“${question.trim()}”\n\nAnswer this question directly as the report. Open the intro with the answer itself, build every section around the question, and use ONLY the reference data below for facts and figures.\n\nREFERENCE DATA:\n${payload}`
+    ? `THE FACILITATOR'S QUESTION:\n“${question.trim()}”\n\n${
+        mode === "report"
+          ? "MODE: FULL REPORT — the facilitator has explicitly toggled on a report document. Write the full report JSON answering the question (the off-topic rule still applies; never use the direct-answer shape)."
+          : "MODE: SHORT ANSWER — the facilitator wants a quick reply, NOT a document. Respond ONLY with the direct-answer shape {\"direct\": true, \"answer\": \"…\"} (or the off-topic shape). Never produce the full report JSON in this mode."
+      }\n\nUse ONLY the reference data below for facts and figures.\n\nREFERENCE DATA:\n${payload}`
     : payload;
 
   const controller = new AbortController();

@@ -93,6 +93,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
   const [question, setQuestion] = useState("");
   const [scope, setScope] = useState<ReportScope>("worked");
+  const [wantReport, setWantReport] = useState(false);
   const [busy, setBusy] = useState<"kind" | "ask" | null>(null);
   const [genKind, setGenKind] = useState<ReportKind | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -135,14 +136,20 @@ export function ReportsPage({ profile }: { profile: Profile }) {
 
   async function generate(k: ReportKind, q: string | undefined, source: "kind" | "ask") {
     if (busy) return;
+    const makingReport = source === "kind" || wantReport;
     setGenKind(k);
     setBusy(source);
     setError(null);
     setAiNote(null);
     setDone(null);
-    const result = await requestReport(k, buildReportData(k.id, rows, registers, scope), q);
-    // hold the overlay a little longer so its narration can be read
-    await new Promise((r) => setTimeout(r, 5000));
+    const result = await requestReport(
+      k,
+      buildReportData(k.id, rows, registers, scope),
+      q,
+      makingReport ? "report" : "answer"
+    );
+    // hold the report overlay a little longer so its narration can be read
+    if (makingReport) await new Promise((r) => setTimeout(r, 5000));
     setBusy(null);
     if (!result.ok) {
       if (result.error === "offtopic" || result.error === "direct") {
@@ -161,6 +168,13 @@ export function ReportsPage({ profile }: { profile: Profile }) {
 
   const status = (
     <>
+      {busy === "ask" && !wantReport && (
+        <div className="reports-ai-note" role="status">
+          <span className="ai-orb" aria-hidden="true" />
+          <span className="ai-tag">AI</span>
+          <span className="ai-text">Thinking…</span>
+        </div>
+      )}
       {aiNote && !busy && (
         <div className="reports-ai-note" role="status">
           <span className="ai-orb" aria-hidden="true" />
@@ -184,7 +198,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
 
   return (
     <>
-      {busy && (
+      {busy && (busy === "kind" || wantReport) && (
         <div className="reports-genwrap" role="status" aria-live="polite">
           <div className="reports-gen">
             <div className="reports-orb">
@@ -243,6 +257,22 @@ export function ReportsPage({ profile }: { profile: Profile }) {
             aria-label="Ask the AI"
           >
             <Icon name="arrowUp" size={21} strokeWidth={2.1} />
+          </button>
+        </div>
+
+        <div className="reports-mode-row">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={wantReport}
+            className={`reports-mode${wantReport ? " on" : ""}`}
+            onClick={() => setWantReport((v) => !v)}
+            title="Off: your question gets a short answer right here. On: the AI writes a full print-ready report document."
+          >
+            <span className="reports-mode-track" aria-hidden="true">
+              <span className="reports-mode-thumb" />
+            </span>
+            Report document: {wantReport ? "on" : "off"}
           </button>
         </div>
 
