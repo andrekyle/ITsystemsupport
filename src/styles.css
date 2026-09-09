@@ -10665,12 +10665,16 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 
 /* answer/report mode selector inside the pill — quiet, ChatGPT style */
+.reports-inst-wrap {
+  position: relative;
+  align-self: center;
+  flex: 0 0 auto;
+}
+
 .reports-inst {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  align-self: center;
-  flex: 0 0 auto;
   border: 0;
   background: none;
   padding: 4px 6px;
@@ -10689,6 +10693,66 @@ table.data th.sortable.sorted { color: var(--ink); }
 .reports-inst.on {
   color: var(--azure);
   font-weight: 600;
+}
+
+.reports-inst-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.reports-inst-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 12px);
+  z-index: 41;
+  min-width: 240px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.reports-inst-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 9px 12px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 14.5px;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.reports-inst-item:hover {
+  background: var(--surface-3);
+}
+
+.reports-inst-item .mi {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 1px;
+}
+
+.reports-inst-item .mi small {
+  color: var(--ink-3);
+  font-size: 12.5px;
+}
+
+.reports-inst-item > svg {
+  color: var(--azure);
+  flex: 0 0 auto;
 }
 
 /* quiet vertical suggestion list — ChatGPT home style */

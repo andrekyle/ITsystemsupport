@@ -202,6 +202,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   const [question, setQuestion] = useState("");
   const [scope, setScope] = useState<ReportScope>("worked");
   const [wantReport, setWantReport] = useState(false);
+  const [modeMenu, setModeMenu] = useState(false);
   const [busy, setBusy] = useState<"kind" | "ask" | null>(null);
   const [msgs, setMsgs] = useState<{ role: "user" | "assistant"; text: string }[]>([]);
   const [genKind, setGenKind] = useState<ReportKind | null>(null);
@@ -331,17 +332,58 @@ export function ReportsPage({ profile }: { profile: Profile }) {
           }
         }}
       />
-      <button
-        type="button"
-        role="switch"
-        aria-checked={wantReport}
-        className={`reports-inst${wantReport ? " on" : ""}`}
-        onClick={() => setWantReport((v) => !v)}
-        title="Answer: your question gets a short reply right here. Report: the AI writes a full print-ready report document."
-      >
-        {wantReport ? "Report" : "Answer"}
-        <Icon name="chevronDown" size={15} />
-      </button>
+      <div className="reports-inst-wrap">
+        <button
+          type="button"
+          className={`reports-inst${wantReport ? " on" : ""}`}
+          aria-haspopup="menu"
+          aria-expanded={modeMenu}
+          onClick={() => setModeMenu((v) => !v)}
+          title="Choose how the AI replies"
+        >
+          {wantReport ? "Report" : "Answer"}
+          <Icon name="chevronDown" size={15} />
+        </button>
+        {modeMenu && (
+          <>
+            <div className="reports-inst-backdrop" onClick={() => setModeMenu(false)} />
+            <div className="reports-inst-menu" role="menu">
+              <button
+                type="button"
+                role="menuitemradio"
+                aria-checked={!wantReport}
+                className="reports-inst-item"
+                onClick={() => {
+                  setWantReport(false);
+                  setModeMenu(false);
+                }}
+              >
+                <span className="mi">
+                  Answer
+                  <small>Quick reply here in the chat</small>
+                </span>
+                {!wantReport && <Icon name="check" size={16} />}
+              </button>
+              <button
+                type="button"
+                role="menuitemradio"
+                aria-checked={wantReport}
+                className="reports-inst-item"
+                onClick={() => {
+                  setWantReport(true);
+                  setModeMenu(false);
+                }}
+              >
+                <span className="mi">
+                  Report
+                  <small>Full print-ready document</small>
+                </span>
+                {wantReport && <Icon name="check" size={16} />}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
       <button
         type="button"
         className="reports-gpt-send"
