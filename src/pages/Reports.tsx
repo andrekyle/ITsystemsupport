@@ -88,6 +88,8 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     setError(null);
     setDone(null);
     const result = await requestReport(k, buildReportData(k.id, rows, registers, scope), q);
+    // hold the overlay a little longer so its narration can be read
+    await new Promise((r) => setTimeout(r, 5000));
     setBusy(null);
     if (!result.ok) {
       setError(ERROR_TEXT[result.error] ?? `The AI could not write the report (${result.error}).`);
