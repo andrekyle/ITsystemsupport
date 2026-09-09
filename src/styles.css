@@ -10988,28 +10988,34 @@ table.data th.sortable.sorted { color: var(--ink); }
   text-align: left;
 }
 
-/* morphing outline blob — just a glowing crinkling rim, hollow inside */
+/* crinkling outline made of dots — shown only while the AI is thinking */
 .reports-ai-note .ai-blob {
   position: relative;
   width: 48px;
   height: 48px;
   flex: 0 0 auto;
-  filter: drop-shadow(0 0 9px rgba(99, 102, 241, 0.55)) drop-shadow(0 0 4px rgba(34, 211, 238, 0.5));
+  filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.55)) drop-shadow(0 0 4px rgba(34, 211, 238, 0.5));
   animation: ai-blob-spin 7s linear infinite;
 }
 
-.reports-ai-note .ai-blob::before {
+.reports-ai-note .ai-blob::before,
+.reports-ai-note .ai-blob::after {
   content: "";
   position: absolute;
   inset: 0;
-  border: 2px solid transparent;
   border-radius: 46% 54% 55% 45% / 48% 42% 58% 52%;
-  background: conic-gradient(from 210deg, #60a5fa, #a855f7, #22d3ee, #60a5fa) border-box;
-  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
   animation: ai-blob-morph 2.8s ease-in-out infinite;
+}
+
+.reports-ai-note .ai-blob::before {
+  border: 3px dotted #60a5fa;
+}
+
+.reports-ai-note .ai-blob::after {
+  border: 3px dotted #a855f7;
+  inset: 3px;
+  animation-duration: 3.4s;
+  animation-direction: reverse;
 }
 
 @keyframes ai-blob-morph {

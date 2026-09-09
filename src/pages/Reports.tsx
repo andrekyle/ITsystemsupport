@@ -176,7 +176,6 @@ export function ReportsPage({ profile }: { profile: Profile }) {
       )}
       {aiNote && !busy && (
         <div className="reports-ai-note" role="status">
-          <span className="ai-blob" aria-hidden="true" />
           <span className="ai-text">{aiNote}</span>
         </div>
       )}
