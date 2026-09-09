@@ -43,20 +43,51 @@ const LEVELS: { name: string; xp: number }[] = [
   { name: "Legend", xp: 4500 },
 ];
 
+/** A row as stored on a register sheet (subset used for identity matching). */
+interface AttRowLike {
+  name?: string;
+  surname?: string;
+  idNumber?: string;
+}
+
+/** Accepts a bare profile id (matches only its own row key) or a profile
+ *  object — then a filled register also counts when a row carries the same
+ *  ID number or full name, so signatures under an older duplicate profile
+ *  id still belong to the learner. */
+type ProfileRef = string | { id: string; name?: string; enrolment?: { idNumber?: string } };
+
+function signedRegister(rows: Record<string, AttRowLike> | undefined, ref: ProfileRef): boolean {
+  if (!rows) return false;
+  const id = typeof ref === "string" ? ref : ref.id;
+  if (rows[id]) return true;
+  if (typeof ref === "string") return false;
+  const pid = (ref.enrolment?.idNumber ?? "").replace(/\D/g, "");
+  const pname = (ref.name ?? "").trim().toLowerCase();
+  for (const r of Object.values(rows)) {
+    const rid = (r.idNumber ?? "").replace(/\D/g, "");
+    if (pid && rid && pid === rid) return true;
+    const rname = `${(r.name ?? "").trim()} ${(r.surname ?? "").trim()}`.trim().toLowerCase();
+    if (pname && rname && rname === pname) return true;
+  }
+  return false;
+}
+
+function readRegisterRows(key: string): Record<string, AttRowLike> | undefined {
+  try {
+    return (JSON.parse(localStorage.getItem(key) ?? "{}") as { rows?: Record<string, AttRowLike> })
+      .rows;
+  } catch {
+    return undefined; /* corrupt register — skip */
+  }
+}
+
 /** Count attendance registers on this device that the profile has signed. */
-export function attendanceSignedCount(profileId: string): number {
+export function attendanceSignedCount(ref: ProfileRef): number {
   let signed = 0;
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (!key || !key.startsWith("itss.attendance.")) continue;
-    try {
-      const data = JSON.parse(localStorage.getItem(key) ?? "{}") as {
-        rows?: Record<string, unknown>;
-      };
-      if (data.rows && data.rows[profileId]) signed++;
-    } catch {
-      /* corrupt register — skip */
-    }
+    if (signedRegister(readRegisterRows(key), ref)) signed++;
   }
   return signed;
 }
@@ -82,19 +113,12 @@ export function attendanceRegisterDates(): string[] {
 }
 
 /** ISO dates of the registers this profile has signed. */
-export function attendanceSignedDates(profileId: string): string[] {
+export function attendanceSignedDates(ref: ProfileRef): string[] {
   const dates: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (!key || !key.startsWith("itss.attendance.")) continue;
-    try {
-      const data = JSON.parse(localStorage.getItem(key) ?? "{}") as {
-        rows?: Record<string, unknown>;
-      };
-      if (data.rows && data.rows[profileId]) dates.push(key.slice("itss.attendance.".length));
-    } catch {
-      /* corrupt register — skip */
-    }
+    if (signedRegister(readRegisterRows(key), ref)) dates.push(key.slice("itss.attendance.".length));
   }
   return dates.sort();
 }
@@ -104,7 +128,7 @@ export function attendanceSignedDates(profileId: string): string[] {
  *  are not penalised for sessions held before they started; someone who has
  *  signed every register since their first day rates 100%. Never signed →
  *  measured against all registers. */
-export function attendanceExpectedCount(profileId: string): number {
+export function attendanceExpectedCount(ref: ProfileRef): number {
   const dates: string[] = [];
   let first: string | null = null;
   for (let i = 0; i < localStorage.length; i++) {
@@ -112,14 +136,7 @@ export function attendanceExpectedCount(profileId: string): number {
     if (!key || !key.startsWith("itss.attendance.")) continue;
     const date = key.slice("itss.attendance.".length);
     dates.push(date);
-    try {
-      const data = JSON.parse(localStorage.getItem(key) ?? "{}") as {
-        rows?: Record<string, unknown>;
-      };
-      if (data.rows && data.rows[profileId] && (!first || date < first)) first = date;
-    } catch {
-      /* corrupt register — skip */
-    }
+    if (signedRegister(readRegisterRows(key), ref) && (!first || date < first)) first = date;
   }
   if (!first) return dates.length;
   const cutoff = first;

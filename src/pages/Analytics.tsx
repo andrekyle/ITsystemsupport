@@ -85,10 +85,10 @@ export function analyse(p: Profile, cloud: CloudLearnerData | null): LearnerRow 
     }
   }
 
-  const attendance = attendanceSignedCount(p.id);
+  const attendance = attendanceSignedCount(p);
   // measured against registers since the learner's first signed session, so
   // late joiners who attend every one of their sessions rate 100%
-  const attendanceExpected = attendanceExpectedCount(p.id);
+  const attendanceExpected = attendanceExpectedCount(p);
   const attendanceRate = attendanceExpected > 0 ? attendance / attendanceExpected : null;
   const daysSinceSeen = p.lastLogin
     ? Math.floor((Date.now() - new Date(p.lastLogin).getTime()) / (24 * 3600 * 1000))
@@ -131,7 +131,7 @@ export function analyse(p: Profile, cloud: CloudLearnerData | null): LearnerRow 
     atRisk: riskReasons.length >= 2,
     riskReasons,
     unitStatus,
-    signedDates: attendanceSignedDates(p.id),
+    signedDates: attendanceSignedDates(p),
   };
 }
 

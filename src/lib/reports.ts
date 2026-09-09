@@ -101,6 +101,7 @@ function learnerStat(r: LearnerRow) {
     sessionsAttended: r.attendance,
     sessionsExpected: r.attendanceExpected,
     attendanceRatePct: pctStr(r.attendanceRate),
+    firstSession: r.signedDates[0] ?? null,
     lastSeen: r.lastLogin ? new Date(r.lastLogin).toLocaleDateString() : "never signed in",
     atRisk: r.atRisk,
     riskReasons: r.riskReasons,
@@ -185,7 +186,8 @@ export function buildReportData(
     case "attendance":
       return {
         ...base,
-        note: "sessionsExpected counts registers since each learner's first signed session; late joiners are only measured from when they started.",
+        note: "Figures come straight from the filled attendance registers. sessionsExpected counts registers dated on/after the learner's firstSession — learners who joined later are only measured from when they started, so attending every session since firstSession is a 100% attendance rate, not a shortfall.",
+        registerDates: attendanceRegisterDates(),
         learners: rows.map((r) => ({
           name: r.profile.name,
           gender: genderOf(r),
@@ -193,6 +195,8 @@ export function buildReportData(
           sessionsAttended: r.attendance,
           sessionsExpected: r.attendanceExpected,
           attendanceRatePct: pctStr(r.attendanceRate),
+          firstSession: r.signedDates[0] ?? null,
+          signedDates: r.signedDates,
           lastSeen: r.lastLogin ? new Date(r.lastLogin).toLocaleDateString() : "never signed in",
         })),
       };
@@ -209,7 +213,8 @@ export function buildReportData(
       return {
         ...base,
         instruction:
-          "Write one facilitator comment per learner (2-3 sentences) from their figures below.",
+          "Write one facilitator comment per learner (2-3 sentences) from their figures below. Attendance comes from the filled registers: sessionsExpected only counts sessions from the learner's firstSession onwards, so a learner who joined later but attended every session since is at 100% — never describe that as missing classes.",
+        registerDates: attendanceRegisterDates(),
         learners: rows.map((r) => ({
           name: r.profile.name,
           gender: genderOf(r),
@@ -218,6 +223,8 @@ export function buildReportData(
           quizAvgPct: pctStr(r.quizAvg),
           attendanceRatePct: pctStr(r.attendanceRate),
           sessionsAttended: r.attendance,
+          sessionsExpected: r.attendanceExpected,
+          firstSession: r.signedDates[0] ?? null,
           unitStatus: Object.fromEntries(
             Object.entries(r.unitStatus).filter(([us]) => units.has(us))
           ),

@@ -39,6 +39,8 @@ Write the report from that data ONLY. Never invent numbers, names or events that
 
 PRONOUNS — HARD RULE: every learner entry carries a "pronouns" field. Before writing ANY sentence about a learner, look up that field and use EXACTLY those pronouns: "he/him/his" → he, him, his; "she/her/hers" → she, her, hers. If it says to repeat the name, write the learner's first name instead of any pronoun. The "gender" field confirms it. A report that uses "he" for a Female learner or "she" for a Male learner is WRONG and unacceptable — re-check every pronoun against the learner's own entry before finalising. Never infer gender from a name.
 
+ATTENDANCE — HARD RULE: attendance figures come from the filled registers. A learner's "sessionsExpected" only counts registers dated on/after their "firstSession" (they joined the programme then); "attendanceRatePct" is measured on that basis. A learner with attendanceRatePct 100 has NOT missed a class — never say they missed the earlier sessions; if relevant, say they joined later and have attended every session since.
+
 When the message starts with THE FACILITATOR'S QUESTION, you are not writing a standard report — you are ANSWERING THAT EXACT QUESTION as a document. Rules for questions:
 - The FIRST sentence of "intro" must directly answer the question in plain terms.
 - Every section heading must be derived from the question (use its key words), never generic headings like "Overview" or "Cohort performance" unless the question asks for them.
