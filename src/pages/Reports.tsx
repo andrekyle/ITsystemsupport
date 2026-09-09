@@ -290,7 +290,11 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   const phases = (GEN_PHASES[genKind?.id ?? ""] ?? GEN_PHASES.progress)(firstName);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    // wait a frame so the new message has painted, then keep it above the docked composer
+    const id = requestAnimationFrame(() =>
+      endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
+    );
+    return () => cancelAnimationFrame(id);
   }, [msgs, busy]);
 
   useEffect(() => {
@@ -628,7 +632,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
             )}
             {busy === "ask" && !wantReport && <NeonWaves />}
             {status}
-            <div ref={endRef} />
+            <div ref={endRef} className="chat-end" />
           </div>
           <div className="chat-composer">
             <p className="chat-note">

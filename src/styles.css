@@ -10980,6 +10980,11 @@ table.data th.sortable.sorted { color: var(--ink); }
   padding: 8px 0 24px;
 }
 
+/* the scroll anchor stays clear of the sticky composer covering the bottom of the view */
+.chat-end {
+  scroll-margin-bottom: 130px;
+}
+
 .chat-top {
   display: flex;
   justify-content: flex-end;
