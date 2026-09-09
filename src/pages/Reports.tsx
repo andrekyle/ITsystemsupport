@@ -34,15 +34,17 @@ const EXAMPLE_QUESTIONS = [
   "Write a monthly progress update I can send to the employer.",
 ];
 
-const GEN_PHASES = [
-  "Reading the cohort's live data…",
+const GEN_PHASES = (name: string) => [
+  `Reading the cohort's live data for you, ${name}…`,
   "Crunching completion, quizzes and attendance…",
-  "Finding the story in the numbers…",
-  "Writing the sections…",
-  "Formatting your print-ready document…",
+  `Finding the story in the numbers, ${name}…`,
+  "Writing the sections of your report…",
+  `Almost there, ${name} — formatting your print-ready document…`,
 ];
 
 export function ReportsPage({ profile }: { profile: Profile }) {
+  const firstName = profile.name.trim().split(/\s+/)[0] || profile.name;
+  const phases = GEN_PHASES(firstName);
   const registers = attendanceRegisterCount();
   const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
   const [question, setQuestion] = useState("");
@@ -55,8 +57,9 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   useEffect(() => {
     if (!busy) return;
     setPhase(0);
-    const t = setInterval(() => setPhase((p) => (p + 1) % GEN_PHASES.length), 2000);
+    const t = setInterval(() => setPhase((p) => (p + 1) % phases.length), 2000);
     return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [busy]);
 
   useEffect(() => {
@@ -126,8 +129,8 @@ export function ReportsPage({ profile }: { profile: Profile }) {
                 <Icon name="document" size={36} />
               </span>
             </div>
-            <div className="reports-gen-title">The AI is writing your report</div>
-            <div className="reports-gen-sub">{GEN_PHASES[phase]}</div>
+            <div className="reports-gen-title">{`On it, ${firstName} — I'm writing your report`}</div>
+            <div className="reports-gen-sub">{phases[phase]}</div>
           </div>
         </div>
       )}
