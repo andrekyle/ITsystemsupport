@@ -8297,6 +8297,23 @@ table.data.outcome-table th {
   font-size: 13px;
 }
 
+/* module unit tables: lesson-sized text */
+table.data.training-table {
+  font-size: 17px;
+}
+table.data.training-table th {
+  font-size: 13px;
+}
+table.data.training-table td {
+  padding: 7px 12px;
+}
+
+/* non-SAQA unit codes (HWSW etc.) share the US-link colour without being links */
+.us-code {
+  color: var(--azure);
+  font-weight: 600;
+}
+
 /* subtle row + column separator lines */
 table.data.compliance-table th,
 table.data.compliance-table td,

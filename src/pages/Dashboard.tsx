@@ -399,7 +399,7 @@ export function ProgressPage({
                           {u.us}
                         </a>
                       ) : (
-                        u.us
+                        <span className="us-code">{u.us}</span>
                       )}
                     </td>
                     <td>{u.title}</td>

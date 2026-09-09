@@ -246,7 +246,7 @@ export function CalendarPage({
                           {u.us}
                         </a>
                       ) : (
-                        u.us
+                        <span className="us-code">{u.us}</span>
                       )}
                     </td>
                     <td>
