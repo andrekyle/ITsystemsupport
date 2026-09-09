@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile } from "../types";
 import { loadProfiles } from "../store";
-import { attendanceRegisterCount } from "../lib/gamification";
+import { attendanceFilledRegisterDates } from "../lib/gamification";
 import { autoGrowTextarea } from "../lib/autoGrow";
 import {
   dedupeProfiles,
@@ -89,7 +89,7 @@ const GEN_PHASES: Record<string, (n: string) => string[]> = {
 
 export function ReportsPage({ profile }: { profile: Profile }) {
   const firstName = profile.name.trim().split(/\s+/)[0] || profile.name;
-  const registers = attendanceRegisterCount();
+  const registers = attendanceFilledRegisterDates().length;
   const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
   const [question, setQuestion] = useState("");
   const [scope, setScope] = useState<ReportScope>("worked");

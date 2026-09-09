@@ -2,7 +2,7 @@ import type { Profile } from "../types";
 import { COURSE_META, MODULES } from "../data/course";
 import { loadOutcomes } from "../store";
 import { docToolbar } from "./certificates";
-import { attendanceRegisterDates } from "./gamification";
+import { attendanceFilledRegisterDates } from "./gamification";
 import { loadMarkingModel, recordTokenUsage } from "./tokens";
 import type { LearnerRow } from "../pages/Analytics";
 
@@ -187,7 +187,7 @@ export function buildReportData(
       return {
         ...base,
         note: "Figures come straight from the filled attendance registers. sessionsExpected counts registers dated on/after the learner's firstSession — learners who joined later are only measured from when they started, so attending every session since firstSession is a 100% attendance rate, not a shortfall.",
-        registerDates: attendanceRegisterDates(),
+        registerDates: attendanceFilledRegisterDates(),
         learners: rows.map((r) => ({
           name: r.profile.name,
           gender: genderOf(r),
@@ -214,7 +214,7 @@ export function buildReportData(
         ...base,
         instruction:
           "Write one facilitator comment per learner (2-3 sentences) from their figures below. Attendance comes from the filled registers: sessionsExpected only counts sessions from the learner's firstSession onwards, so a learner who joined later but attended every session since is at 100% — never describe that as missing classes.",
-        registerDates: attendanceRegisterDates(),
+        registerDates: attendanceFilledRegisterDates(),
         learners: rows.map((r) => ({
           name: r.profile.name,
           gender: genderOf(r),
@@ -394,6 +394,10 @@ function fmtRegDate(iso: string): string {
   return `${String(d.getDate()).padStart(2, "0")}-${d.toLocaleString("en", { month: "short" })}-${String(d.getFullYear()).slice(2)}`;
 }
 
+function fmtRegDay(iso: string): string {
+  return new Date(`${iso}T12:00:00`).toLocaleString("en", { weekday: "long" });
+}
+
 /** Tracker grid: legend + one row per learner with unit statuses, attendance
  *  ticks and the AI's per-learner comment — onboarding palette throughout. */
 function trackerBody(rows: LearnerRow[], report: AiReport, scope: ReportScope): string {
@@ -406,7 +410,7 @@ function trackerBody(rows: LearnerRow[], report: AiReport, scope: ReportScope): 
   })).filter((m) => m.units.length > 0);
   if (mods.length === 0) mods = [{ name: MODULES[0].name, units: MODULES[0].units }];
   const units = mods.flatMap((m) => m.units);
-  const dates = attendanceRegisterDates();
+  const dates = attendanceFilledRegisterDates();
   const commentFor = (name: string) => {
     const hit = report.sections.find(
       (s) => s.heading.trim().toLowerCase() === name.trim().toLowerCase()
@@ -433,9 +437,12 @@ function trackerBody(rows: LearnerRow[], report: AiReport, scope: ReportScope): 
     <tr><th colspan="${units.length}">Unit standards submissions</th></tr>
     <tr>
       ${units.map((u) => `<th class="c">${esc(u.us)}</th>`).join("")}
-      ${dates.length ? dates.map((d) => `<th class="c" rowspan="2">${esc(fmtRegDate(d))}</th>`).join("") : `<th class="c" rowspan="2">—</th>`}
+      ${dates.length ? dates.map((d) => `<th class="c">${esc(fmtRegDay(d))}</th>`).join("") : `<th class="c" rowspan="2">—</th>`}
     </tr>
-    <tr>${units.map((u) => `<th class="c">${u.credits} credits</th>`).join("")}</tr>`;
+    <tr>
+      ${units.map((u) => `<th class="c">${u.credits} credits</th>`).join("")}
+      ${dates.map((d) => `<th class="c">${esc(fmtRegDate(d))}</th>`).join("")}
+    </tr>`;
   const body = rows
     .map((r) => {
       const parts = r.profile.name.trim().split(/\s+/);

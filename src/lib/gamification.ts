@@ -112,6 +112,19 @@ export function attendanceRegisterDates(): string[] {
   return dates.sort();
 }
 
+/** Dates of FILLED registers only — at least one learner signed. Empty sheets
+ *  (created by browsing to a date, or future sessions) don't count in reports. */
+export function attendanceFilledRegisterDates(): string[] {
+  const dates: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith("itss.attendance.")) continue;
+    const rows = readRegisterRows(key);
+    if (rows && Object.keys(rows).length > 0) dates.push(key.slice("itss.attendance.".length));
+  }
+  return dates.sort();
+}
+
 /** ISO dates of the registers this profile has signed. */
 export function attendanceSignedDates(ref: ProfileRef): string[] {
   const dates: string[] = [];
@@ -129,14 +142,17 @@ export function attendanceSignedDates(ref: ProfileRef): string[] {
  *  signed every register since their first day rates 100%. Never signed →
  *  measured against all registers. */
 export function attendanceExpectedCount(ref: ProfileRef): number {
+  // measured against FILLED registers only — empty/future sheets don't count
   const dates: string[] = [];
   let first: string | null = null;
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (!key || !key.startsWith("itss.attendance.")) continue;
+    const rows = readRegisterRows(key);
+    if (!rows || Object.keys(rows).length === 0) continue;
     const date = key.slice("itss.attendance.".length);
     dates.push(date);
-    if (signedRegister(readRegisterRows(key), ref) && (!first || date < first)) first = date;
+    if (signedRegister(rows, ref) && (!first || date < first)) first = date;
   }
   if (!first) return dates.length;
   const cutoff = first;
