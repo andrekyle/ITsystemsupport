@@ -69,6 +69,31 @@ export function remoteOnlyProfiles(local: Profile[], cloudProfiles: Profile[]): 
   return deduped;
 }
 
+/** Collapse duplicate copies of the same person anywhere in a list (matching
+ *  identity keys) to the freshest-login copy — the local profile store can
+ *  hold the same learner twice (seeded copy + their own sign-in copy). */
+export function dedupeProfiles(list: Profile[]): Profile[] {
+  const deduped: Profile[] = [];
+  const chosen = new Map<string, Profile>();
+  for (const p of list) {
+    const keys = identityKeys(p);
+    const existingKey = keys.find((k) => chosen.has(k));
+    if (!existingKey) {
+      for (const k of keys) chosen.set(k, p);
+      deduped.push(p);
+    } else {
+      const cur = chosen.get(existingKey)!;
+      if (newerLoginTs(p.lastLogin, cur.lastLogin)) {
+        const idx = deduped.indexOf(cur);
+        if (idx >= 0) deduped[idx] = p;
+        for (const k of identityKeys(cur)) if (chosen.get(k) === cur) chosen.delete(k);
+        for (const k of keys) chosen.set(k, p);
+      }
+    }
+  }
+  return deduped;
+}
+
 /** Last successful reads — pages render instantly from these on remount
  *  (stale-while-revalidate) instead of flashing “unknown” placeholders. */
 let cachedDirectory: CloudDirectory | null = null;

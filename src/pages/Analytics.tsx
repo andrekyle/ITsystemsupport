@@ -21,6 +21,7 @@ import {
 import {
   bestPoeDocs,
   bestProgress,
+  dedupeProfiles,
   fetchCloudLearnerData,
   mergeProfileWithCloud,
   remoteOnlyProfiles,
@@ -207,7 +208,10 @@ export function AnalyticsPage({ profile, navigate }: { profile: Profile; navigat
     );
     // fold in the cloud-side avatar / lastLogin / enrolment for seeded copies
     // so the analytics view matches what the People page shows
-    const all = [...localLearners.map((p) => mergeProfileWithCloud(p, cloud)), ...remote];
+    const all = dedupeProfiles([
+      ...localLearners.map((p) => mergeProfileWithCloud(p, cloud)),
+      ...remote,
+    ]);
     return all.map((p) => analyse(p, cloud));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [registers, profile.id, cloud]);

@@ -5,6 +5,7 @@ import { loadProfiles } from "../store";
 import { attendanceRegisterCount } from "../lib/gamification";
 import { autoGrowTextarea } from "../lib/autoGrow";
 import {
+  dedupeProfiles,
   fetchCloudLearnerData,
   mergeProfileWithCloud,
   remoteOnlyProfiles,
@@ -124,7 +125,10 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     const remote = remoteOnlyProfiles(localList, cloud?.profiles ?? []).filter(
       (p) => p.role === "Learner"
     );
-    const all = [...localLearners.map((p) => mergeProfileWithCloud(p, cloud)), ...remote];
+    const all = dedupeProfiles([
+      ...localLearners.map((p) => mergeProfileWithCloud(p, cloud)),
+      ...remote,
+    ]);
     return all.map((p) => analyse(p, cloud));
   }, [registers, cloud]);
 
