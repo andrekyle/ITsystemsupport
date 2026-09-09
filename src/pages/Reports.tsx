@@ -167,7 +167,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
             title="Ask the AI"
             aria-label="Ask the AI"
           >
-            <Icon name="chevronUp" size={20} />
+            <Icon name="arrowUp" size={21} strokeWidth={2.1} />
           </button>
         </div>
 
