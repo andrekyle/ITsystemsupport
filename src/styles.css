@@ -10690,11 +10690,6 @@ table.data th.sortable.sorted { color: var(--ink); }
   color: var(--ink);
 }
 
-.reports-inst.on {
-  color: var(--azure);
-  font-weight: 600;
-}
-
 .reports-inst-backdrop {
   position: fixed;
   inset: 0;
