@@ -10912,6 +10912,50 @@ table.data th.sortable.sorted { color: var(--ink); }
   font-size: 14px;
 }
 
+/* futuristic AI reply panel — gradient ring, pulsing core, glow */
+.reports-ai-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 720px;
+  padding: 14px 20px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    linear-gradient(100deg, var(--azure) 0%, #38bdf8 45%, #22d3ee 100%) border-box;
+  box-shadow: 0 0 22px rgba(34, 211, 238, 0.18), 0 4px 18px rgba(15, 108, 189, 0.12);
+  animation: reports-fade-in 0.3s ease;
+  text-align: left;
+}
+
+.reports-ai-note .ai-orb {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #7dd3fc, var(--azure) 70%);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.9);
+  animation: reports-breathe 2s ease-in-out infinite;
+}
+
+.reports-ai-note .ai-tag {
+  flex: 0 0 auto;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  background: linear-gradient(92deg, var(--azure), #22d3ee);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.reports-ai-note .ai-text {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
 .reports-done {
   display: inline-flex;
   align-items: center;

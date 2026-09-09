@@ -96,6 +96,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   const [busy, setBusy] = useState<"kind" | "ask" | null>(null);
   const [genKind, setGenKind] = useState<ReportKind | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [aiNote, setAiNote] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [phase, setPhase] = useState(0);
 
@@ -137,18 +138,21 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     setGenKind(k);
     setBusy(source);
     setError(null);
+    setAiNote(null);
     setDone(null);
     const result = await requestReport(k, buildReportData(k.id, rows, registers, scope), q);
     // hold the overlay a little longer so its narration can be read
     await new Promise((r) => setTimeout(r, 5000));
     setBusy(null);
     if (!result.ok) {
-      setError(
-        result.error === "offtopic"
-          ? result.answer ||
-              "I can only answer questions about the programme and its learners — no report was written."
-          : ERROR_TEXT[result.error] ?? `The AI could not write the report (${result.error}).`
-      );
+      if (result.error === "offtopic") {
+        setAiNote(
+          result.answer ||
+            "I can only answer questions about the programme and its learners — no report was written."
+        );
+      } else {
+        setError(ERROR_TEXT[result.error] ?? `The AI could not write the report (${result.error}).`);
+      }
       return;
     }
     setDone(k.name);
@@ -157,6 +161,13 @@ export function ReportsPage({ profile }: { profile: Profile }) {
 
   const status = (
     <>
+      {aiNote && !busy && (
+        <div className="reports-ai-note" role="status">
+          <span className="ai-orb" aria-hidden="true" />
+          <span className="ai-tag">AI</span>
+          <span className="ai-text">{aiNote}</span>
+        </div>
+      )}
       {error && (
         <span className="reports-error">
           <Icon name="info" size={15} /> {error}
