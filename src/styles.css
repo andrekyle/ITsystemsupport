@@ -10590,9 +10590,9 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 
 .reports-hero-title {
-  font-size: clamp(26px, 3vw, 33px);
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-size: clamp(26px, 3vw, 32px);
+  font-weight: 400;
+  letter-spacing: normal;
   margin: 0;
 }
 
