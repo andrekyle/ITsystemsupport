@@ -327,9 +327,6 @@ export function ReportsPage({ profile }: { profile: Profile }) {
           <Icon name="robot" size={20} />
         </span>
         AI Assistant
-        <span className="token-super-pill" title="Visible only to the super user">
-          Super user
-        </span>
       </h2>
 
       <div className="reports-hero">
