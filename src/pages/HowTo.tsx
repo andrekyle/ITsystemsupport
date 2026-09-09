@@ -85,24 +85,22 @@ export function HowToPage({ navigate }: { navigate: (r: Route) => void }) {
         your programme completion reaches 100%.
       </p>
 
-      <ol className="howto-steps">
+      <ol className="howto-grid">
         {STEPS.map((s, i) => (
-          <li className="howto-step" key={s.title}>
-            <span className="howto-num">{i + 1}</span>
-            <div className="howto-body">
-              <div className="howto-title">
-                <span className="howto-ico">
-                  <Icon name={s.icon} size={18} />
-                </span>
-                {s.title}
-              </div>
-              <p className="howto-text">{s.text}</p>
-              {s.go && (
-                <button type="button" className="btn ghost sm howto-go" onClick={() => navigate(s.go!.route)}>
-                  {s.go.label} <Icon name="chevronRight" size={14} />
-                </button>
-              )}
+          <li className="howto-card" key={s.title}>
+            <div className="howto-head">
+              <span className="howto-num">{i + 1}</span>
+              <span className="howto-title">{s.title}</span>
             </div>
+            <div className="howto-scene">
+              <Icon name={s.icon} size={58} strokeWidth={0.9} />
+            </div>
+            <p className="howto-text">{s.text}</p>
+            {s.go && (
+              <button type="button" className="btn ghost sm howto-go" onClick={() => navigate(s.go!.route)}>
+                {s.go.label} <Icon name="chevronRight" size={14} />
+              </button>
+            )}
           </li>
         ))}
       </ol>
