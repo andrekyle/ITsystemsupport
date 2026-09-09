@@ -10698,33 +10698,38 @@ table.data th.sortable.sorted { color: var(--ink); }
   max-width: 780px;
 }
 
-/* scope toggle: worked-on units vs whole programme */
+/* scope toggle: flat underline tabs — no pills */
 .reports-scope {
   display: flex;
-  gap: 8px;
+  gap: 26px;
   justify-content: center;
 }
 
 .reports-scope-btn {
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: 0;
+  background: none;
   color: var(--ink-3);
-  border-radius: 8px;
-  padding: 7px 14px;
-  font-size: 13.5px;
+  padding: 2px 2px 7px;
+  font-size: 14px;
   font-family: inherit;
   cursor: pointer;
-  transition: border-color 0.12s, color 0.12s, background 0.12s;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  transition: color 0.12s, border-color 0.12s;
 }
 
 .reports-scope-btn:hover {
   color: var(--ink);
 }
 
+.reports-scope-btn:focus-visible {
+  outline: none;
+  color: var(--ink);
+}
+
 .reports-scope-btn.on {
-  border-color: var(--azure);
-  background: var(--azure-lighter);
   color: var(--azure);
+  border-bottom-color: var(--azure);
   font-weight: 600;
 }
 
