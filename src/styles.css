@@ -10691,39 +10691,6 @@ table.data th.sortable.sorted { color: var(--ink); }
   font-weight: 600;
 }
 
-/* scope toggle: flat text options — active is simply azure */
-.reports-scope {
-  display: flex;
-  gap: 26px;
-  justify-content: center;
-}
-
-.reports-scope-btn {
-  border: 0;
-  background: none;
-  color: var(--ink-3);
-  padding: 2px 2px 5px;
-  font-size: 14px;
-  font-family: inherit;
-  cursor: pointer;
-  border-radius: 0;
-  transition: color 0.12s;
-}
-
-.reports-scope-btn:hover {
-  color: var(--ink);
-}
-
-.reports-scope-btn:focus-visible {
-  outline: none;
-  color: var(--ink);
-}
-
-.reports-scope-btn.on {
-  color: var(--azure);
-  font-weight: 600;
-}
-
 /* quiet vertical suggestion list — ChatGPT home style */
 .reports-list {
   width: min(780px, 96%);
@@ -10761,6 +10728,11 @@ table.data th.sortable.sorted { color: var(--ink); }
 .reports-list-btn:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+.reports-list-btn .scope-val {
+  color: var(--azure);
+  font-weight: 600;
 }
 
 .reports-hero-note {

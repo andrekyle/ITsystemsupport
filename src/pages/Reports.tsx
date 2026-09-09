@@ -379,27 +379,6 @@ export function ReportsPage({ profile }: { profile: Profile }) {
           </button>
         </div>
 
-        <div className="reports-scope" role="radiogroup" aria-label="Report scope">
-          <button
-            type="button"
-            role="radio"
-            aria-checked={scope === "worked"}
-            className={`reports-scope-btn${scope === "worked" ? " on" : ""}`}
-            onClick={() => setScope("worked")}
-          >
-            Units we've worked on ({workedUnitCodes(rows).size})
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={scope === "all"}
-            className={`reports-scope-btn${scope === "all" ? " on" : ""}`}
-            onClick={() => setScope("all")}
-          >
-            Whole programme
-          </button>
-        </div>
-
         <div className="reports-list">
           {REPORT_KINDS.map((k) => (
             <button
@@ -414,6 +393,24 @@ export function ReportsPage({ profile }: { profile: Profile }) {
               {k.name}
             </button>
           ))}
+          <button
+            type="button"
+            className="reports-list-btn"
+            role="switch"
+            aria-checked={scope === "all"}
+            title="Click to switch which units reports and answers cover"
+            onClick={() => setScope((s) => (s === "worked" ? "all" : "worked"))}
+          >
+            <Icon name="target" size={18} />
+            <span>
+              Scope:{" "}
+              <b className="scope-val">
+                {scope === "worked"
+                  ? `units we've worked on (${workedUnitCodes(rows).size})`
+                  : "whole programme"}
+              </b>
+            </span>
+          </button>
         </div>
 
         {status}
