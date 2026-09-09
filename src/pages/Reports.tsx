@@ -18,7 +18,6 @@ import {
   buildReportData,
   openReportDocument,
   requestReport,
-  workedUnitCodes,
   type ReportKind,
   type ReportScope,
 } from "../lib/reports";
@@ -402,14 +401,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
             onClick={() => setScope((s) => (s === "worked" ? "all" : "worked"))}
           >
             <Icon name="target" size={18} />
-            <span>
-              Scope:{" "}
-              <b className="scope-val">
-                {scope === "worked"
-                  ? `units we've worked on (${workedUnitCodes(rows).size})`
-                  : "whole programme"}
-              </b>
-            </span>
+            <span>Scope: {scope === "worked" ? "units we've worked on" : "whole programme"}</span>
           </button>
         </div>
 

@@ -10730,11 +10730,6 @@ table.data th.sortable.sorted { color: var(--ink); }
   cursor: default;
 }
 
-.reports-list-btn .scope-val {
-  color: var(--azure);
-  font-weight: 600;
-}
-
 .reports-hero-note {
   max-width: 640px;
 }
