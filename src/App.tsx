@@ -27,6 +27,7 @@ import { HowToPage } from "./pages/HowTo";
 import { cloudEnabled, supabase } from "./lib/supabase";
 import { installSync, startSync, stopSync, wipeLocalData } from "./lib/sync";
 import { logAudit } from "./lib/audit";
+import { Icon } from "./icons";
 
 // mirror every itss.* localStorage write to the cloud (no-op until signed in)
 installSync();
@@ -207,6 +208,17 @@ function Shell({
           </div>
         </main>
       </div>
+      {profile.role === "Super User" && route.page !== "reports" && (
+        <button
+          type="button"
+          className="ai-fab"
+          title="AI Assistant"
+          aria-label="Open the AI Assistant"
+          onClick={() => navigate({ page: "reports" })}
+        >
+          <Icon name="robot" size={26} />
+        </button>
+      )}
     </div>
   );
 }

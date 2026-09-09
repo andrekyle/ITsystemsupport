@@ -11106,6 +11106,34 @@ table.data th.sortable.sorted { color: var(--ink); }
   font-size: 14px;
 }
 
+/* floating AI Assistant button — reachable from anywhere in the app */
+.ai-fab {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 900;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  background: var(--azure);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 22px rgba(15, 108, 189, 0.45);
+  transition: transform 0.15s, filter 0.15s;
+}
+
+.ai-fab:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
+
+/* floating AI assistant — end */
+
 /* ============ How to reach 100% (learner guide) ============ */
 
 h2.section-title.howto-heading {
