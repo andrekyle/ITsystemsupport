@@ -2006,8 +2006,8 @@ textarea:focus {
   gap: 12px;
   padding: 10px 12px;
   border-radius: 6px;
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 17px;
+  line-height: 1.6;
   color: var(--ink-2);
   cursor: pointer;
   transition: background 0.12s ease;
@@ -2020,9 +2020,9 @@ textarea:focus {
 .self-assess-item input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
-  margin: 1px 0 0;
+  width: 20px;
+  height: 20px;
+  margin: 3px 0 0;
   flex: none;
   border: 1.5px solid var(--border-2);
   border-radius: 4px;
@@ -2080,7 +2080,7 @@ textarea:focus {
 }
 
 .self-assess-status {
-  font-size: 13px;
+  font-size: 15.5px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
