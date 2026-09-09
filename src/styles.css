@@ -4745,6 +4745,17 @@ a.plan-ppt:hover {
   margin-bottom: 5px;
 }
 
+/* "3 · Title" cards: wrapped title lines start under the words, not the number */
+.lesson-card .t .t-num {
+  float: left;
+  white-space: pre;
+}
+
+.lesson-card .t .t-text {
+  display: block;
+  overflow: hidden;
+}
+
 .lesson-card .d {
   font-size: 15px;
   color: var(--ink-3);

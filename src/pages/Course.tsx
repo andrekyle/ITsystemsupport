@@ -3569,7 +3569,19 @@ export function UnitPage({
                           suppressContentEditableWarning
                           onBlur={(e) => editable && editKeyed("cards", `${si}:${ci}:t`, e.currentTarget.textContent ?? "")}
                         >
-                          {cardText(ci, "t", c.title)}
+                          {(() => {
+                            const t = cardText(ci, "t", c.title);
+                            if (editable) return t;
+                            // hanging indent: wrapped lines align under the words, not the number
+                            const m = /^(\d+\s*·\s*)(.*)$/.exec(t);
+                            if (!m) return t;
+                            return (
+                              <>
+                                <span className="t-num">{m[1]}</span>
+                                <span className="t-text">{m[2]}</span>
+                              </>
+                            );
+                          })()}
                         </div>
                         <div
                           className={editable ? "d editable-inline" : "d"}
