@@ -10988,16 +10988,12 @@ table.data th.sortable.sorted { color: var(--ink); }
   text-align: left;
 }
 
-/* mini neon signal-wave screen — shown only while the AI is thinking */
+/* mini neon signal-wave — shown only while the AI is thinking */
 .reports-ai-note .ai-wavescreen {
   flex: 0 0 auto;
   width: 176px;
   height: 50px;
-  border-radius: 10px;
-  background:
-    radial-gradient(90% 80% at 28% 12%, rgba(124, 45, 196, 0.45) 0%, transparent 60%),
-    radial-gradient(120% 100% at 50% 45%, #2a0a4a 0%, #1a052f 50%, #0a0114 100%);
-  box-shadow: 0 0 16px rgba(139, 92, 246, 0.35), inset 0 0 10px rgba(0, 0, 0, 0.4);
+  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.45));
 }
 
 .reports-ai-note .ai-text {
