@@ -527,7 +527,7 @@ export function reportDocumentHtml(
   h1 { font-size: 26px; margin: 0 0 3px; color: #0b3f8a; letter-spacing: -0.01em; }
   h2 { display: flex; align-items: center; gap: 12px; font-size: 17.5px; font-weight: 650; margin: 36px 0 12px; color: #0b3f8a; }
   h2::after { content: ""; flex: 1; border-top: 1px solid #e1e9f6; }
-  h2 .sec-num { font-size: 11.5px; font-weight: 700; color: #97a9c9; letter-spacing: 0.16em; }
+  h2 .sec-num { color: inherit; }
   p { margin: 0 0 12px; }
   .sub { color: #5a6b8c; margin: 0 0 18px; }
   .banner { background: #eef4ff; border: 1px solid #c9dbf7; border-radius: 10px; padding: 14px 18px; margin: 18px 0; }
