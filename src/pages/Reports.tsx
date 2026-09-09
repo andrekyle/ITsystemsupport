@@ -324,9 +324,9 @@ export function ReportsPage({ profile }: { profile: Profile }) {
       )}
       <h2 className="section-title">
         <span className="ico">
-          <Icon name="document" size={20} />
+          <Icon name="robot" size={20} />
         </span>
-        AI Reports
+        AI Assistant
         <span className="token-super-pill" title="Visible only to the super user">
           Super user
         </span>

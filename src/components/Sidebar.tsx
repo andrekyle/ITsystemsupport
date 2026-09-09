@@ -84,7 +84,7 @@ export function Sidebar({ collapsed, route, progress, profile, navigate }: Props
     ...(profile.role === "Super User"
       ? [
           { page: "trackerReport" as const, icon: "chart", label: "Learner Tracker Report" },
-          { page: "reports" as const, icon: "document", label: "AI Reports" },
+          { page: "reports" as const, icon: "robot", label: "AI Assistant" },
           { page: "learnflow" as const, icon: "layers", label: "LearnFlow" },
         ]
       : []),

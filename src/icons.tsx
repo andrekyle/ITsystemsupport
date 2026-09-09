@@ -278,6 +278,15 @@ export const PATHS: Record<string, React.ReactNode> = {
       <circle cx="12" cy="12" r="1.2" />
     </>
   ),
+  robot: (
+    <>
+      <rect x="4.5" y="8" width="15" height="11" rx="3" />
+      <path d="M12 8V4.8" />
+      <circle cx="12" cy="3.6" r="1.2" />
+      <path d="M9.1 12.4v2M14.9 12.4v2" />
+      <path d="M2 12.5v3M22 12.5v3" />
+    </>
+  ),
   award: (
     <>
       <circle cx="12" cy="9.5" r="5.5" />
