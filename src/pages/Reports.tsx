@@ -43,7 +43,6 @@ const GEN_PHASES = [
 export function ReportsPage({ profile }: { profile: Profile }) {
   const registers = attendanceRegisterCount();
   const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
-  const [kindId, setKindId] = useState<string>(REPORT_KINDS[0].id);
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState<"kind" | "ask" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -76,8 +75,6 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     const all = [...localLearners.map((p) => mergeProfileWithCloud(p, cloud)), ...remote];
     return all.map((p) => analyse(p, cloud));
   }, [registers, cloud]);
-
-  const kind: ReportKind = REPORT_KINDS.find((k) => k.id === kindId) ?? REPORT_KINDS[0];
 
   async function generate(k: ReportKind, q: string | undefined, source: "kind" | "ask") {
     if (busy) return;
@@ -140,108 +137,72 @@ export function ReportsPage({ profile }: { profile: Profile }) {
           Super user
         </span>
       </h2>
-      <p className="muted" style={{ marginTop: -6, marginBottom: 18, fontSize: 15.5 }}>
-        The AI writes professional, print-ready reports from live platform data — {rows.length}{" "}
-        learner{rows.length === 1 ? "" : "s"}, {registers} attendance register
-        {registers === 1 ? "" : "s"} on record. Documents open in the onboarding-pack style with a
-        data appendix.
-      </p>
 
-      {/* ——— ask your own question ——— */}
-      <div className="card reports-ask">
-        <div className="reports-ask-head">
-          <span className="reports-ask-ico">
-            <Icon name="chat" size={20} />
+      <div className="reports-hero">
+        <h1 className="reports-hero-title">What report do you need today?</h1>
+
+        <div className="reports-gpt-pill">
+          <span className="reports-gpt-plus" aria-hidden="true">
+            <Icon name="document" size={20} />
           </span>
-          <div>
-            <div className="reports-ask-title">Ask for any report</div>
-            <div className="reports-ask-sub">
-              Describe what you want to know — the AI answers with a full report grounded in the
-              cohort's data.
-            </div>
-          </div>
+          <textarea
+            rows={1}
+            value={question}
+            placeholder="Ask for any report"
+            onChange={(e) => setQuestion(e.target.value)}
+            onInput={(e) => autoGrowTextarea(e.currentTarget, 140)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                if (question.trim() && !busy && rows.length > 0)
+                  void generate(CUSTOM_KIND, question, "ask");
+              }
+            }}
+          />
+          <button
+            type="button"
+            className="reports-gpt-send"
+            disabled={!!busy || rows.length === 0 || !question.trim()}
+            onClick={() => generate(CUSTOM_KIND, question, "ask")}
+            title="Ask the AI"
+            aria-label="Ask the AI"
+          >
+            <Icon name="chevronUp" size={20} />
+          </button>
         </div>
-        <div className="reports-chat">
-          <div className="reports-examples">
-            {EXAMPLE_QUESTIONS.map((q) => (
-              <button
-                key={q}
-                type="button"
-                className={`reports-example${question === q ? " on" : ""}`}
-                onClick={() => setQuestion(q)}
-              >
-                {q}
-              </button>
-            ))}
-          </div>
-          <div className="reports-pill">
-            <textarea
-              rows={1}
-              value={question}
-              placeholder="Ask for any report"
-              onChange={(e) => setQuestion(e.target.value)}
-              onInput={(e) => autoGrowTextarea(e.currentTarget, 120)}
-            />
-            <button
-              type="button"
-              className="reports-send"
-              disabled={!!busy || rows.length === 0 || !question.trim()}
-              onClick={() => generate(CUSTOM_KIND, question, "ask")}
-              title="Ask the AI"
-              aria-label="Ask the AI"
-            >
-              <Icon name="chevronRight" size={22} />
-            </button>
-          </div>
-        </div>
-      </div>
 
-      {/* ——— ready-made reports ——— */}
-      <div className="task-label reports-divider">Or pick a ready-made report</div>
-      <div className="card-grid reports-grid" role="radiogroup" aria-label="Report type">
-        {REPORT_KINDS.map((k) => {
-          const active = k.id === kindId;
-          return (
+        <div className="reports-suggestions">
+          {REPORT_KINDS.map((k) => (
             <button
               key={k.id}
               type="button"
-              role="radio"
-              aria-checked={active}
-              className={`card clickable report-kind${active ? " selected" : ""}`}
-              onClick={() => setKindId(k.id)}
+              className="reports-suggestion"
+              disabled={!!busy || rows.length === 0}
+              title={k.desc}
+              onClick={() => generate(k, undefined, "kind")}
             >
-              {active && (
-                <span className="report-kind-check">
-                  <Icon name="checkCircle" size={18} />
-                </span>
-              )}
-              <div className="report-kind-head">
-                <span className="report-kind-ico">
-                  <Icon name={k.icon} size={22} />
-                </span>
-                <div className="t">{k.name}</div>
-              </div>
-              <div className="d">{k.desc}</div>
+              <Icon name={k.icon} size={16} />
+              {k.name}
             </button>
-          );
-        })}
-      </div>
+          ))}
+        </div>
 
-      <div className="reports-actions">
-        <button
-          type="button"
-          className="btn solid"
-          disabled={!!busy || rows.length === 0}
-          onClick={() => generate(kind, undefined, "kind")}
-        >
-          {busy === "kind" ? "Writing report…" : `Generate ${kind.name.toLowerCase()}`}
-        </button>
+        <div className="reports-hints">
+          {EXAMPLE_QUESTIONS.map((q) => (
+            <button key={q} type="button" className="reports-hint" onClick={() => setQuestion(q)}>
+              {q}
+            </button>
+          ))}
+        </div>
+
         {status}
+
+        <p className="mini-note reports-hero-note">
+          Written from live data — {rows.length} learner{rows.length === 1 ? "" : "s"},{" "}
+          {registers} attendance register{registers === 1 ? "" : "s"} — by the AI model chosen on
+          the dashboard. Reports open print-ready in a new tab; nothing is stored.
+        </p>
       </div>
-      <p className="mini-note" style={{ marginTop: 12 }}>
-        Reports are written by the AI marking model chosen on the dashboard and use live figures —
-        nothing is stored. If a pop-up blocker stops the tab, allow pop-ups for this site.
-      </p>
     </>
   );
 }

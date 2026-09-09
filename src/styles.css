@@ -10602,120 +10602,61 @@ table.data th.sortable.sorted { color: var(--ink); }
 
 /* ============ AI Reports (super user) ============ */
 
-.reports-ask {
-  max-width: 980px;
-  padding: 20px 22px;
-  margin-bottom: 26px;
-}
-
-.reports-ask-head {
+/* ChatGPT-style hero: centred heading, one big rounded composer pill,
+   suggestion chips and quiet example lines underneath */
+.reports-hero {
+  min-height: calc(100dvh - 240px);
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.reports-ask-ico {
-  display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--azure);
-  flex-shrink: 0;
-  margin-top: 2px;
+  gap: 26px;
+  text-align: center;
+  padding: 20px 0 30px;
 }
 
-.reports-ask-title {
-  font-size: 17px;
+.reports-hero-title {
+  font-size: clamp(28px, 3.4vw, 40px);
   font-weight: 650;
+  letter-spacing: -0.01em;
+  margin: 0;
 }
 
-.reports-ask-sub {
-  font-size: 14px;
-  color: var(--ink-3);
-  margin-top: 2px;
-}
-
-/* the ask area is a miniature chat: wallpaper panel, suggested questions as
-   received bubbles, and the WhatsApp-style compose pill with a send arrow */
-.reports-chat {
-  border-radius: 12px;
-  padding: 16px 14px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-height: calc(100dvh - 330px);
-}
-
-:root:not([data-theme="dark"]) .reports-chat {
-  background-color: #efeae2;
-  background-image: url("/chat-wallpaper-light.svg");
-  background-size: 420px 420px;
-}
-
-[data-theme="dark"] .reports-chat {
-  background-color: #0b141a;
-  background-image: url("/chat-wallpaper-dark.svg");
-  background-size: 420px 420px;
-}
-
-.reports-examples {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.reports-example {
-  border: 0;
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 14.5px;
-  font-family: inherit;
-  cursor: pointer;
-  text-align: left;
-  background: transparent;
-  color: #54656f;
-}
-
-.reports-example:hover {
-  color: var(--azure);
-}
-
-.reports-example.on {
-  color: var(--azure);
-}
-
-[data-theme="dark"] .reports-example {
-  background: transparent;
-  color: #8696a0;
-}
-
-[data-theme="dark"] .reports-example:hover,
-[data-theme="dark"] .reports-example.on {
-  color: var(--azure);
-}
-
-.reports-pill {
+.reports-gpt-pill {
   display: flex;
   align-items: flex-end;
-  gap: 2px;
+  gap: 10px;
+  width: min(780px, 96%);
   background: var(--surface);
-  border-radius: 24px;
-  padding: 3px 5px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-  margin-top: auto;
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  padding: 7px 8px 7px 20px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  text-align: left;
 }
 
-.reports-pill textarea {
+[data-theme="dark"] .reports-gpt-pill {
+  background: var(--surface-2);
+  border-color: transparent;
+}
+
+.reports-gpt-plus {
+  display: inline-flex;
+  color: var(--ink-3);
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.reports-gpt-pill textarea {
   flex: 1;
   min-width: 0;
-  height: 42px;
-  min-height: 42px;
-  max-height: 120px;
+  height: 44px;
+  min-height: 44px;
+  max-height: 140px;
   resize: none;
   overflow-y: hidden;
   border: 0;
-  padding: 9px 12px;
+  padding: 10px 0;
   font-family: inherit;
   font-size: 17px;
   line-height: 24px;
@@ -10724,46 +10665,92 @@ table.data th.sortable.sorted { color: var(--ink); }
   outline: none;
 }
 
-.reports-send {
+.reports-gpt-send {
   width: 42px;
   height: 42px;
   flex: 0 0 auto;
   border: 0;
   padding: 0;
   border-radius: 50%;
-  background: transparent;
-  color: var(--ink-2);
+  background: var(--azure);
+  color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  align-self: flex-end;
+  transition: filter 0.12s, opacity 0.12s;
 }
 
-.reports-send:hover:not(:disabled) {
-  color: var(--azure);
-  background: var(--surface-2);
+.reports-gpt-send:hover:not(:disabled) {
+  filter: brightness(1.12);
 }
 
-.reports-send:disabled {
-  opacity: 0.4;
+.reports-gpt-send:disabled {
+  opacity: 0.35;
   cursor: default;
 }
 
-/* centred status chip, like the chat's day chips */
-.reports-chat-note {
-  align-self: center;
-  font-size: 12.5px;
-  border-radius: 8px;
-  padding: 5px 12px;
-  background: #fff;
-  color: #54656f;
-  box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.1);
+.reports-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  max-width: 780px;
 }
 
-[data-theme="dark"] .reports-chat-note {
-  background: #182229;
-  color: #8696a0;
+.reports-suggestion {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-2);
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+
+.reports-suggestion svg {
+  color: var(--azure);
+}
+
+.reports-suggestion:hover:not(:disabled) {
+  border-color: var(--azure);
+  background: var(--azure-lighter);
+  color: var(--ink);
+}
+
+.reports-suggestion:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.reports-hints {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.reports-hint {
+  border: 0;
+  background: none;
+  padding: 2px 6px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+.reports-hint:hover {
+  color: var(--azure);
+}
+
+.reports-hero-note {
+  max-width: 640px;
 }
 
 /* ——— big “AI is writing” overlay ——— */
@@ -10908,71 +10895,6 @@ table.data th.sortable.sorted { color: var(--ink); }
   font-size: 16px;
   color: var(--ink-3);
   min-height: 24px;
-}
-
-.reports-divider {
-  margin: 0 0 10px;
-}
-
-.reports-grid {
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  margin-bottom: 20px;
-}
-
-.report-kind {
-  display: block;
-  position: relative;
-  padding: 18px 20px 17px;
-  transition: border-color 0.12s, box-shadow 0.12s, transform 0.12s;
-}
-
-.report-kind:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(15, 108, 189, 0.12);
-}
-
-.report-kind-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-  padding-right: 24px;
-}
-
-.report-kind-ico {
-  display: inline-flex;
-  color: var(--azure);
-  flex-shrink: 0;
-}
-
-.report-kind-check {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  display: inline-flex;
-  color: var(--azure);
-}
-
-.report-kind .t {
-  font-size: 16.5px;
-  font-weight: 600;
-}
-
-.report-kind .d {
-  font-size: 14px;
-  color: var(--ink-3);
-  line-height: 1.55;
-}
-
-.report-kind.selected {
-  background: var(--azure-lighter);
-}
-
-.reports-actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
 }
 
 .reports-error {
