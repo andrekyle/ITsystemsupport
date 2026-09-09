@@ -10988,48 +10988,38 @@ table.data th.sortable.sorted { color: var(--ink); }
   text-align: left;
 }
 
-.reports-ai-note .ai-swirl {
+/* morphing glossy blob with a glowing blue-purple rim */
+.reports-ai-note .ai-blob {
   position: relative;
-  width: 46px;
-  height: 46px;
+  width: 48px;
+  height: 48px;
   flex: 0 0 auto;
-  filter: drop-shadow(0 0 7px rgba(168, 85, 247, 0.45)) drop-shadow(0 0 5px rgba(34, 211, 238, 0.4));
+  filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.55)) drop-shadow(0 0 4px rgba(34, 211, 238, 0.5));
+  animation: ai-blob-spin 9s linear infinite;
 }
 
-.reports-ai-note .ai-swirl span {
+.reports-ai-note .ai-blob::before {
+  content: "";
   position: absolute;
-  inset: 4px;
-  border-radius: 50%;
-  border: 1.5px solid transparent;
-  background: conic-gradient(from 0deg, #22d3ee, #a855f7, #f59e0b, #10b981, #22d3ee) border-box;
-  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-  animation: ai-swirl-a 3.6s linear infinite;
+  inset: 0;
+  border: 2px solid transparent;
+  border-radius: 46% 54% 55% 45% / 48% 42% 58% 52%;
+  background:
+    radial-gradient(60% 60% at 30% 25%, rgba(255, 255, 255, 0.28), transparent 55%) padding-box,
+    linear-gradient(140deg, #0b1220 20%, #131f3a 80%) padding-box,
+    conic-gradient(from 210deg, #60a5fa, #a855f7, #22d3ee, #60a5fa) border-box;
+  animation: ai-blob-morph 6s ease-in-out infinite;
 }
 
-.reports-ai-note .ai-swirl span:nth-child(2) {
-  animation: ai-swirl-b 2.8s linear infinite;
+@keyframes ai-blob-morph {
+  0%, 100% { border-radius: 46% 54% 55% 45% / 48% 42% 58% 52%; }
+  25% { border-radius: 58% 42% 40% 60% / 55% 60% 40% 45%; }
+  50% { border-radius: 42% 58% 62% 38% / 40% 52% 48% 60%; }
+  75% { border-radius: 55% 45% 45% 55% / 60% 40% 60% 40%; }
 }
 
-.reports-ai-note .ai-swirl span:nth-child(3) {
-  animation: ai-swirl-c 4.6s linear infinite;
-}
-
-@keyframes ai-swirl-a {
-  from { transform: scaleY(0.62) rotate(0deg); }
-  to { transform: scaleY(0.62) rotate(360deg); }
-}
-
-@keyframes ai-swirl-b {
-  from { transform: scaleY(0.78) scaleX(0.9) rotate(140deg); }
-  to { transform: scaleY(0.78) scaleX(0.9) rotate(-220deg); }
-}
-
-@keyframes ai-swirl-c {
-  from { transform: scaleX(0.62) rotate(70deg); }
-  to { transform: scaleX(0.62) rotate(430deg); }
+@keyframes ai-blob-spin {
+  to { transform: rotate(360deg); }
 }
 
 .reports-ai-note .ai-tag {
