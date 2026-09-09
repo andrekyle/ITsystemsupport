@@ -34,25 +34,71 @@ const EXAMPLE_QUESTIONS = [
   "Write a monthly progress update I can send to the employer.",
 ];
 
-const GEN_PHASES = (name: string) => [
-  `Reading the cohort's live data for you, ${name}…`,
-  "Crunching completion, quizzes and attendance…",
-  `Finding the story in the numbers, ${name}…`,
-  "Writing the sections of your report…",
-  `Almost there, ${name} — formatting your print-ready document…`,
-];
+/** Overlay narration per report kind — spoken to the user by name. */
+const GEN_PHASES: Record<string, (n: string) => string[]> = {
+  progress: (n) => [
+    `Pulling every learner's completion for you, ${n}…`,
+    "Averaging quiz and exercise scores…",
+    "Comparing units done across the cohort…",
+    `Writing up the progress story, ${n}…`,
+    `Almost there — formatting your progress report…`,
+  ],
+  attendance: (n) => [
+    `Opening the attendance registers for you, ${n}…`,
+    "Counting who signed on each session day…",
+    "Working out each learner's attendance rate…",
+    `Noting the patterns worth flagging, ${n}…`,
+    `Almost there — formatting your attendance report…`,
+  ],
+  risk: (n) => [
+    `Scanning the cohort for warning signs, ${n}…`,
+    "Cross-checking completion, attendance and quiz scores…",
+    "Listing who needs support — and why…",
+    "Drafting practical interventions…",
+    `Almost there, ${n} — formatting the at-risk report…`,
+  ],
+  outcomes: (n) => [
+    `Fetching the assessor decisions for you, ${n}…`,
+    "Tallying Competent and Not-yet-competent per unit…",
+    "Checking progress towards certification…",
+    `Writing the outcomes summary, ${n}…`,
+    `Almost there — formatting your outcomes report…`,
+  ],
+  tracker: (n) => [
+    `Building the tracker grid for you, ${n}…`,
+    "Filling in each unit's submission status…",
+    "Ticking off the attendance columns…",
+    "Writing a comment for every learner…",
+    `Almost there, ${n} — laying out your tracker…`,
+  ],
+  executive: (n) => [
+    `Gathering the headline numbers for you, ${n}…`,
+    "Picking out the wins and the risks…",
+    "Summarising it for management…",
+    `Almost there, ${n} — formatting your executive summary…`,
+  ],
+  custom: (n) => [
+    `Reading your question, ${n}…`,
+    "Pulling the data that answers it…",
+    "Working out the answer…",
+    `Writing your report around the answer, ${n}…`,
+    `Almost there — formatting your document…`,
+  ],
+};
 
 export function ReportsPage({ profile }: { profile: Profile }) {
   const firstName = profile.name.trim().split(/\s+/)[0] || profile.name;
-  const phases = GEN_PHASES(firstName);
   const registers = attendanceRegisterCount();
   const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
   const [question, setQuestion] = useState("");
   const [scope, setScope] = useState<ReportScope>("worked");
   const [busy, setBusy] = useState<"kind" | "ask" | null>(null);
+  const [genKind, setGenKind] = useState<ReportKind | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [phase, setPhase] = useState(0);
+
+  const phases = (GEN_PHASES[genKind?.id ?? ""] ?? GEN_PHASES.progress)(firstName);
 
   useEffect(() => {
     if (!busy) return;
@@ -84,6 +130,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
 
   async function generate(k: ReportKind, q: string | undefined, source: "kind" | "ask") {
     if (busy) return;
+    setGenKind(k);
     setBusy(source);
     setError(null);
     setDone(null);
@@ -131,8 +178,8 @@ export function ReportsPage({ profile }: { profile: Profile }) {
                 <Icon name="document" size={36} />
               </span>
             </div>
-            <div className="reports-gen-title">{`On it, ${firstName} — I'm writing your report`}</div>
-            <div className="reports-gen-sub">{phases[phase]}</div>
+            <div className="reports-gen-title">{`On it, ${firstName} — writing your ${(genKind ?? REPORT_KINDS[0]).name.toLowerCase()}`}</div>
+            <div className="reports-gen-sub">{phases[phase % phases.length]}</div>
           </div>
         </div>
       )}
