@@ -4740,21 +4740,21 @@ a.plan-ppt:hover {
 }
 
 .lesson-card .t {
-  font-size: 14px;
+  font-size: 16.5px;
   font-weight: 600;
   margin-bottom: 5px;
 }
 
 .lesson-card .d {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--ink-3);
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .lesson-card .card-table {
   margin-top: 10px;
   width: 100%;
-  font-size: 12.5px;
+  font-size: 14px;
 }
 
 .lesson-card .card-table th,
