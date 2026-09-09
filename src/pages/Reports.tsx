@@ -210,6 +210,9 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   const [done, setDone] = useState<string | null>(null);
   const [phase, setPhase] = useState(0);
   const endRef = useRef<HTMLDivElement | null>(null);
+  const [promptHist, setPromptHist] = useState<string[]>([]);
+  const [histIdx, setHistIdx] = useState<number | null>(null);
+  const draftRef = useRef("");
 
   const phases = (GEN_PHASES[genKind?.id ?? ""] ?? GEN_PHASES.progress)(firstName);
 
@@ -259,6 +262,9 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     const history = opts?.history ?? msgs.slice(-12);
     if (source === "ask" && q && !opts?.skipAppend) {
       setMsgs((m) => [...m, { role: "user", text: q }]);
+      setPromptHist((h) => [...h.filter((p) => p !== q), q].slice(-6));
+      setHistIdx(null);
+      draftRef.current = "";
       setQuestion("");
     }
     setGenKind(k);
@@ -361,13 +367,40 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         rows={1}
         value={question}
         placeholder="Ask anything"
-        onChange={(e) => setQuestion(e.target.value)}
+        onChange={(e) => {
+          setQuestion(e.target.value);
+          setHistIdx(null);
+        }}
         onInput={(e) => autoGrowTextarea(e.currentTarget, 140)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             if (question.trim() && !busy && rows.length > 0)
               void generate(CUSTOM_KIND, question, "ask");
+            return;
+          }
+          // shell-style recall of the last 6 prompts
+          const el = e.currentTarget;
+          const recall = (idx: number | null) => {
+            const text = idx === null ? draftRef.current : promptHist[idx];
+            setHistIdx(idx);
+            setQuestion(text);
+            setTimeout(() => {
+              autoGrowTextarea(el, 140);
+              el.setSelectionRange(el.value.length, el.value.length);
+            }, 0);
+          };
+          if (e.key === "ArrowUp" && promptHist.length > 0) {
+            const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
+            if (histIdx !== null || question === "" || atStart) {
+              e.preventDefault();
+              if (histIdx === null) draftRef.current = question;
+              recall(histIdx === null ? promptHist.length - 1 : Math.max(0, histIdx - 1));
+            }
+          } else if (e.key === "ArrowDown" && histIdx !== null) {
+            e.preventDefault();
+            const next = histIdx + 1;
+            recall(next > promptHist.length - 1 ? null : next);
           }
         }}
       />
