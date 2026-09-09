@@ -29,12 +29,6 @@ const ERROR_TEXT: Record<string, string> = {
   timeout: "The AI took too long to answer. Try again in a moment.",
 };
 
-const EXAMPLE_QUESTIONS = [
-  "Which learners need extra support before the next session, and with what?",
-  "How is the cohort performing on quizzes compared to attendance?",
-  "Write a monthly progress update I can send to the employer.",
-];
-
 /** Overlay narration per report kind — spoken to the user by name. */
 const GEN_PHASES: Record<string, (n: string) => string[]> = {
   progress: (n) => [
@@ -340,16 +334,16 @@ export function ReportsPage({ profile }: { profile: Profile }) {
       </h2>
 
       <div className="reports-hero">
-        <h1 className="reports-hero-title">What report do you need today?</h1>
+        <h1 className="reports-hero-title">{`How can I help, ${firstName}?`}</h1>
 
         <div className="reports-gpt-pill">
           <span className="reports-gpt-plus" aria-hidden="true">
-            <Icon name="document" size={20} />
+            <Icon name="plus" size={21} />
           </span>
           <textarea
             rows={1}
             value={question}
-            placeholder="Ask for any report"
+            placeholder="Ask anything"
             onChange={(e) => setQuestion(e.target.value)}
             onInput={(e) => autoGrowTextarea(e.currentTarget, 140)}
             onKeyDown={(e) => {
@@ -362,29 +356,26 @@ export function ReportsPage({ profile }: { profile: Profile }) {
           />
           <button
             type="button"
+            role="switch"
+            aria-checked={wantReport}
+            className={`reports-inst${wantReport ? " on" : ""}`}
+            onClick={() => setWantReport((v) => !v)}
+            title="Answer: your question gets a short reply right here. Report: the AI writes a full print-ready report document."
+          >
+            {wantReport ? "Report" : "Answer"}
+            <Icon name="chevronDown" size={15} />
+          </button>
+          <button
+            type="button"
             className="reports-gpt-send"
-            disabled={!!busy || rows.length === 0 || !question.trim()}
-            onClick={() => generate(CUSTOM_KIND, question, "ask")}
+            disabled={!!busy || rows.length === 0}
+            onClick={() => {
+              if (question.trim()) void generate(CUSTOM_KIND, question, "ask");
+            }}
             title="Ask the AI"
             aria-label="Ask the AI"
           >
-            <Icon name="arrowUp" size={21} strokeWidth={2.1} />
-          </button>
-        </div>
-
-        <div className="reports-mode-row">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={wantReport}
-            className={`reports-mode${wantReport ? " on" : ""}`}
-            onClick={() => setWantReport((v) => !v)}
-            title="Off: your question gets a short answer right here. On: the AI writes a full print-ready report document."
-          >
-            <span className="reports-mode-track" aria-hidden="true">
-              <span className="reports-mode-thumb" />
-            </span>
-            Report document: {wantReport ? "on" : "off"}
+            <Icon name={question.trim() ? "arrowUp" : "wave"} size={21} strokeWidth={2.1} />
           </button>
         </div>
 
@@ -409,26 +400,18 @@ export function ReportsPage({ profile }: { profile: Profile }) {
           </button>
         </div>
 
-        <div className="reports-suggestions">
+        <div className="reports-list">
           {REPORT_KINDS.map((k) => (
             <button
               key={k.id}
               type="button"
-              className="reports-suggestion"
+              className="reports-list-btn"
               disabled={!!busy || rows.length === 0}
               title={k.desc}
               onClick={() => generate(k, undefined, "kind")}
             >
-              <Icon name={k.icon} size={16} />
+              <Icon name={k.icon} size={18} />
               {k.name}
-            </button>
-          ))}
-        </div>
-
-        <div className="reports-hints">
-          {EXAMPLE_QUESTIONS.map((q) => (
-            <button key={q} type="button" className="reports-hint" onClick={() => setQuestion(q)}>
-              {q}
             </button>
           ))}
         </div>
