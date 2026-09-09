@@ -10988,49 +10988,43 @@ table.data th.sortable.sorted { color: var(--ink); }
   text-align: left;
 }
 
-/* crinkling outline made of dots — shown only while the AI is thinking */
-.reports-ai-note .ai-blob {
-  position: relative;
-  width: 48px;
-  height: 48px;
+/* sound-wave bars — shown only while the AI is thinking */
+.reports-ai-note .ai-wave {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
   flex: 0 0 auto;
-  filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.55)) drop-shadow(0 0 4px rgba(34, 211, 238, 0.5));
-  animation: ai-blob-spin 7s linear infinite;
+  filter: drop-shadow(0 0 7px rgba(96, 165, 250, 0.55)) drop-shadow(0 0 14px rgba(168, 85, 247, 0.3));
 }
 
-.reports-ai-note .ai-blob::before,
-.reports-ai-note .ai-blob::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 46% 54% 55% 45% / 48% 42% 58% 52%;
-  animation: ai-blob-morph 2.8s ease-in-out infinite;
+.reports-ai-note .ai-wave i {
+  width: 4px;
+  height: var(--h, 16px);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #60a5fa, #a855f7);
+  animation: ai-wave-bounce 1.05s ease-in-out infinite;
+  animation-delay: var(--d, 0s);
 }
 
-.reports-ai-note .ai-blob::before {
-  border: 3px dotted #60a5fa;
-}
+.reports-ai-note .ai-wave i:nth-child(1) { --h: 9px; --d: -0.95s; }
+.reports-ai-note .ai-wave i:nth-child(2) { --h: 16px; --d: -0.5s; }
+.reports-ai-note .ai-wave i:nth-child(3) { --h: 28px; --d: -0.72s; }
+.reports-ai-note .ai-wave i:nth-child(4) { --h: 14px; --d: -0.18s; }
+.reports-ai-note .ai-wave i:nth-child(5) { --h: 24px; --d: -0.85s; }
+.reports-ai-note .ai-wave i:nth-child(6) { --h: 17px; --d: -0.35s; }
+.reports-ai-note .ai-wave i:nth-child(7) { --h: 33px; --d: -0.62s; }
+.reports-ai-note .ai-wave i:nth-child(8) { --h: 14px; --d: -0.08s; }
+.reports-ai-note .ai-wave i:nth-child(9) { --h: 22px; --d: -0.78s; }
+.reports-ai-note .ai-wave i:nth-child(10) { --h: 40px; --d: -0.42s; }
+.reports-ai-note .ai-wave i:nth-child(11) { --h: 16px; --d: -0.9s; }
+.reports-ai-note .ai-wave i:nth-child(12) { --h: 26px; --d: -0.25s; }
+.reports-ai-note .ai-wave i:nth-child(13) { --h: 12px; --d: -0.55s; }
+.reports-ai-note .ai-wave i:nth-child(14) { --h: 19px; --d: -0.12s; }
 
-.reports-ai-note .ai-blob::after {
-  border: 3px dotted #a855f7;
-  inset: 3px;
-  animation-duration: 3.4s;
-  animation-direction: reverse;
-}
-
-@keyframes ai-blob-morph {
-  0%, 100% { border-radius: 46% 54% 55% 45% / 48% 42% 58% 52%; transform: scale(1); }
-  12% { border-radius: 63% 37% 32% 68% / 57% 66% 34% 43%; transform: scale(0.96) skewX(2deg); }
-  25% { border-radius: 35% 65% 68% 32% / 38% 30% 70% 62%; transform: scale(1.04); }
-  38% { border-radius: 66% 34% 58% 42% / 66% 58% 42% 34%; transform: scale(0.97) skewY(-2.5deg); }
-  50% { border-radius: 38% 62% 34% 66% / 62% 36% 64% 38%; transform: scale(1.03) skewX(-2deg); }
-  63% { border-radius: 58% 42% 66% 34% / 34% 64% 36% 66%; transform: scale(0.95); }
-  75% { border-radius: 33% 67% 40% 60% / 68% 34% 66% 32%; transform: scale(1.05) skewY(2deg); }
-  88% { border-radius: 60% 40% 62% 38% / 42% 62% 38% 58%; transform: scale(0.98) skewX(1.5deg); }
-}
-
-@keyframes ai-blob-spin {
-  to { transform: rotate(360deg); }
+@keyframes ai-wave-bounce {
+  0%, 100% { transform: scaleY(0.45); }
+  50% { transform: scaleY(1); }
 }
 
 .reports-ai-note .ai-text {

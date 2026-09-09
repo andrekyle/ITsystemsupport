@@ -170,7 +170,9 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     <>
       {busy === "ask" && !wantReport && (
         <div className="reports-ai-note" role="status">
-          <span className="ai-blob" aria-hidden="true" />
+          <span className="ai-wave" aria-hidden="true">
+            {Array.from({ length: 14 }, (_, i) => <i key={i} />)}
+          </span>
           <span className="ai-text">Thinking…</span>
         </div>
       )}
