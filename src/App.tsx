@@ -216,7 +216,7 @@ function Shell({
           aria-label="Open the AI Assistant"
           onClick={() => navigate({ page: "reports" })}
         >
-          <Icon name="robot" size={26} />
+          <Icon name="robot" size={34} />
         </button>
       )}
     </div>

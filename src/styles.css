@@ -11112,23 +11112,20 @@ table.data th.sortable.sorted { color: var(--ink); }
   right: 22px;
   bottom: 22px;
   z-index: 900;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
   border: 0;
-  padding: 0;
-  background: var(--azure);
-  color: #fff;
+  padding: 6px;
+  background: none;
+  color: var(--azure);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 6px 22px rgba(15, 108, 189, 0.45);
+  filter: drop-shadow(0 4px 10px rgba(15, 108, 189, 0.35));
   transition: transform 0.15s, filter 0.15s;
 }
 
 .ai-fab:hover {
-  filter: brightness(1.1);
+  filter: drop-shadow(0 6px 14px rgba(15, 108, 189, 0.5)) brightness(1.1);
   transform: translateY(-2px);
 }
 
