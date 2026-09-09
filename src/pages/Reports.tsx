@@ -17,7 +17,9 @@ import {
   buildReportData,
   openReportDocument,
   requestReport,
+  workedUnitCodes,
   type ReportKind,
+  type ReportScope,
 } from "../lib/reports";
 
 const ERROR_TEXT: Record<string, string> = {
@@ -44,6 +46,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   const registers = attendanceRegisterCount();
   const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
   const [question, setQuestion] = useState("");
+  const [scope, setScope] = useState<ReportScope>("worked");
   const [busy, setBusy] = useState<"kind" | "ask" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
@@ -81,14 +84,14 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     setBusy(source);
     setError(null);
     setDone(null);
-    const result = await requestReport(k, buildReportData(k.id, rows, registers), q);
+    const result = await requestReport(k, buildReportData(k.id, rows, registers, scope), q);
     setBusy(null);
     if (!result.ok) {
       setError(ERROR_TEXT[result.error] ?? `The AI could not write the report (${result.error}).`);
       return;
     }
     setDone(k.name);
-    openReportDocument(k, result.report, rows, registers, profile, q);
+    openReportDocument(k, result.report, rows, registers, profile, q, scope);
   }
 
   const status = (
@@ -168,6 +171,27 @@ export function ReportsPage({ profile }: { profile: Profile }) {
             aria-label="Ask the AI"
           >
             <Icon name="arrowUp" size={21} strokeWidth={2.1} />
+          </button>
+        </div>
+
+        <div className="reports-scope" role="radiogroup" aria-label="Report scope">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={scope === "worked"}
+            className={`reports-scope-btn${scope === "worked" ? " on" : ""}`}
+            onClick={() => setScope("worked")}
+          >
+            Units we've worked on ({workedUnitCodes(rows).size})
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={scope === "all"}
+            className={`reports-scope-btn${scope === "all" ? " on" : ""}`}
+            onClick={() => setScope("all")}
+          >
+            Whole programme
           </button>
         </div>
 

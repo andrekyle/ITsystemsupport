@@ -10698,6 +10698,36 @@ table.data th.sortable.sorted { color: var(--ink); }
   max-width: 780px;
 }
 
+/* scope toggle: worked-on units vs whole programme */
+.reports-scope {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.reports-scope-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-3);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13.5px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+
+.reports-scope-btn:hover {
+  color: var(--ink);
+}
+
+.reports-scope-btn.on {
+  border-color: var(--azure);
+  background: var(--azure-lighter);
+  color: var(--azure);
+  font-weight: 600;
+}
+
 .reports-suggestion {
   display: inline-flex;
   align-items: center;

@@ -106,9 +106,29 @@ function cohort(rows: LearnerRow[], registers: number) {
   };
 }
 
-function outcomesData(rows: LearnerRow[]) {
+/** Report scope: only unit standards the cohort has worked on (default), or
+ *  every unit in the qualification. */
+export type ReportScope = "worked" | "all";
+
+/** Unit codes at least one learner has started (status other than NYS). */
+export function workedUnitCodes(rows: LearnerRow[]): Set<string> {
+  const set = new Set<string>();
+  for (const m of MODULES)
+    for (const u of m.units)
+      if (rows.some((r) => (r.unitStatus[u.us] ?? "NYS") !== "NYS")) set.add(u.us);
+  return set;
+}
+
+function scopedUnits(rows: LearnerRow[], scope: ReportScope) {
+  if (scope === "all") return MODULES.flatMap((m) => m.units);
+  const worked = workedUnitCodes(rows);
+  const units = MODULES.flatMap((m) => m.units).filter((u) => worked.has(u.us));
+  return units.length ? units : MODULES[0].units;
+}
+
+function outcomesData(rows: LearnerRow[], scope: ReportScope = "worked") {
   const outcomes = loadOutcomes();
-  const units = MODULES.flatMap((m) => m.units);
+  const units = scopedUnits(rows, scope);
   return units.map((u) => {
     let competent = 0;
     let notYet = 0;
@@ -129,9 +149,19 @@ function outcomesData(rows: LearnerRow[]) {
 }
 
 /** Compact JSON bundle the AI writes the report from. */
-export function buildReportData(kind: string, rows: LearnerRow[], registers: number): unknown {
+export function buildReportData(
+  kind: string,
+  rows: LearnerRow[],
+  registers: number,
+  scope: ReportScope = "worked"
+): unknown {
+  const workedCount = workedUnitCodes(rows).size;
   const base = {
     programme: `${COURSE_META.title} (SAQA ${COURSE_META.saqaId}, NQF ${COURSE_META.nqfLevel}, ${COURSE_META.credits} credits)`,
+    scope:
+      scope === "all"
+        ? "whole programme — every unit standard in the qualification"
+        : `only the ${workedCount} unit standard${workedCount === 1 ? "" : "s"} the cohort has worked on so far; unstarted units are excluded`,
     cohort: cohort(rows, registers),
   };
   switch (kind) {
@@ -154,8 +184,9 @@ export function buildReportData(kind: string, rows: LearnerRow[], registers: num
         healthyLearnerCount: rows.filter((r) => !r.atRisk).length,
       };
     case "outcomes":
-      return { ...base, unitOutcomes: outcomesData(rows) };
-    case "tracker":
+      return { ...base, unitOutcomes: outcomesData(rows, scope) };
+    case "tracker": {
+      const units = new Set(scopedUnits(rows, scope).map((u) => u.us));
       return {
         ...base,
         instruction:
@@ -166,18 +197,21 @@ export function buildReportData(kind: string, rows: LearnerRow[], registers: num
           quizAvgPct: pctStr(r.quizAvg),
           attendanceRatePct: pctStr(r.attendanceRate),
           sessionsAttended: r.attendance,
-          unitStatus: r.unitStatus,
+          unitStatus: Object.fromEntries(
+            Object.entries(r.unitStatus).filter(([us]) => units.has(us))
+          ),
           atRisk: r.atRisk,
           riskReasons: r.riskReasons,
           lastSeen: r.lastLogin ? new Date(r.lastLogin).toLocaleDateString() : "never signed in",
         })),
       };
+    }
     case "custom":
       // the question can be about anything, so send the full picture
       return {
         ...base,
         learners: rows.map(learnerStat),
-        unitOutcomes: outcomesData(rows),
+        unitOutcomes: outcomesData(rows, scope),
       };
     case "executive":
       return {
@@ -255,7 +289,7 @@ export async function requestReport(
 }
 
 /** Deterministic data appendix table per report kind. */
-function appendixTable(kind: string, rows: LearnerRow[]): string {
+function appendixTable(kind: string, rows: LearnerRow[], scope: ReportScope = "worked"): string {
   const th = (cells: string[]) =>
     `<tr>${cells.map((c) => `<th style="width:auto">${esc(c)}</th>`).join("")}</tr>`;
   const td = (cells: (string | number)[]) =>
@@ -277,7 +311,8 @@ function appendixTable(kind: string, rows: LearnerRow[]): string {
   }
   if (kind === "outcomes") {
     return `<table>${th(["Unit standard", "Title", "Credits", "Competent", "Not yet competent", "No decision"])}${outcomesData(
-      rows
+      rows,
+      scope
     )
       .map((u) =>
         td([u.unitStandard, u.title, u.credits, u.competent, u.notYetCompetent, u.noDecisionYet])
@@ -323,13 +358,15 @@ function fmtRegDate(iso: string): string {
 
 /** Tracker grid: legend + one row per learner with unit statuses, attendance
  *  ticks and the AI's per-learner comment — onboarding palette throughout. */
-function trackerBody(rows: LearnerRow[], report: AiReport): string {
-  // only modules the cohort has touched — keeps the grid the width of the
-  // reference tracker instead of every unit in the qualification
-  const active = MODULES.filter((m) =>
-    m.units.some((u) => rows.some((r) => (r.unitStatus[u.us] ?? "NYS") !== "NYS"))
-  );
-  const mods = active.length ? active : MODULES.slice(0, 1);
+function trackerBody(rows: LearnerRow[], report: AiReport, scope: ReportScope): string {
+  // scope "worked": only unit standards someone has started — grouped per
+  // module so the grid stays the width of the real tracker
+  const worked = workedUnitCodes(rows);
+  let mods = MODULES.map((m) => ({
+    name: m.name,
+    units: scope === "all" ? m.units : m.units.filter((u) => worked.has(u.us)),
+  })).filter((m) => m.units.length > 0);
+  if (mods.length === 0) mods = [{ name: MODULES[0].name, units: MODULES[0].units }];
   const units = mods.flatMap((m) => m.units);
   const dates = attendanceRegisterDates();
   const commentFor = (name: string) => {
@@ -397,7 +434,8 @@ export function reportDocumentHtml(
   rows: LearnerRow[],
   registers: number,
   author: Profile,
-  question?: string
+  question?: string,
+  scope: ReportScope = "worked"
 ): string {
   const today = new Date().toLocaleDateString(undefined, {
     day: "numeric",
@@ -406,7 +444,7 @@ export function reportDocumentHtml(
   });
   const tracker = kind.id === "tracker";
   const sections = tracker
-    ? trackerBody(rows, report)
+    ? trackerBody(rows, report, scope)
     : report.sections
         .map(
           (s, i) => `
@@ -474,14 +512,14 @@ export function reportDocumentHtml(
     <strong>${esc(kind.name)} — generated ${esc(today)}.</strong><br/>
     ${question?.trim() ? `<em>Question asked: “${esc(question.trim())}”</em><br/>` : ""}
     ${esc(report.intro)}
-    <span class="small">Written by the ITSS Learn AI reporting assistant from live platform data; reviewed by ${esc(author.name)}.</span>
+    <span class="small">${scope === "all" ? "Covers the whole programme." : "Covers only the unit standards worked on so far."} Written by the ITSS Learn AI reporting assistant from live platform data; reviewed by ${esc(author.name)}.</span>
   </div>
   ${sections}
   ${recs}
 ${tracker ? "" : `
   <h2>Appendix · Data snapshot</h2>
   <p class="small">Figures as recorded on ITSS Learn at the time of generation (${esc(today)}).</p>
-  ${appendixTable(kind.id, rows)}
+  ${appendixTable(kind.id, rows, scope)}
 `}
   <div class="sign">
     <div>
@@ -505,10 +543,11 @@ export function openReportDocument(
   rows: LearnerRow[],
   registers: number,
   author: Profile,
-  question?: string
+  question?: string,
+  scope: ReportScope = "worked"
 ) {
   const win = window.open("", "_blank");
   if (!win) return;
-  win.document.write(reportDocumentHtml(kind, report, rows, registers, author, question));
+  win.document.write(reportDocumentHtml(kind, report, rows, registers, author, question, scope));
   win.document.close();
 }
