@@ -71,14 +71,11 @@ export const CUSTOM_KIND: ReportKind = {
 
 const pctStr = (v: number | null) => (v === null ? null : Math.round(v * 100));
 
-/** Recorded gender, falling back to the SA ID number (digits 7-10: 0000-4999
- *  female, 5000-9999 male) when the enrolment form hasn't captured it. */
+/** Gender exactly as captured on the enrolment form. */
 const genderOf = (r: LearnerRow): "Male" | "Female" | "unspecified" => {
   const g = r.profile.enrolment?.gender?.trim().toLowerCase();
   if (g === "male") return "Male";
   if (g === "female") return "Female";
-  const id = (r.profile.enrolment?.idNumber ?? "").replace(/\D/g, "");
-  if (id.length === 13) return Number(id.slice(6, 10)) >= 5000 ? "Male" : "Female";
   return "unspecified";
 };
 
