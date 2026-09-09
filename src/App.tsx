@@ -23,6 +23,7 @@ import { FormsPage } from "./pages/Forms";
 import { TrackerReportPage } from "./pages/TrackerReport";
 import { LearnFlowPage } from "./pages/LearnFlow";
 import { ReportsPage } from "./pages/Reports";
+import { HowToPage } from "./pages/HowTo";
 import { cloudEnabled, supabase } from "./lib/supabase";
 import { installSync, startSync, stopSync, wipeLocalData } from "./lib/sync";
 import { logAudit } from "./lib/audit";
@@ -56,6 +57,7 @@ const VALID_PAGES = new Set([
   "trackerReport",
   "learnflow",
   "reports",
+  "howto",
 ]);
 
 function loadRoute(): Route {
@@ -200,6 +202,7 @@ function Shell({
             {route.page === "reports" && profile.role === "Super User" && (
               <ReportsPage profile={profile} />
             )}
+            {route.page === "howto" && <HowToPage navigate={navigate} />}
             {route.page === "resources" && <ResourcesPage />}
           </div>
         </main>

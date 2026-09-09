@@ -564,7 +564,8 @@ export type PageId =
   | "forms"
   | "trackerReport"
   | "learnflow"
-  | "reports";
+  | "reports"
+  | "howto";
 
 export interface Route {
   page: PageId;
