@@ -73,9 +73,9 @@ const STEPS: Step[] = [
 export function HowToPage({ navigate }: { navigate: (r: Route) => void }) {
   return (
     <>
-      <h2 className="section-title">
+      <h2 className="section-title howto-heading">
         <span className="ico">
-          <Icon name="target" size={20} />
+          <Icon name="target" size={26} />
         </span>
         How to reach 100% complete
       </h2>

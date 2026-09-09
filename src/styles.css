@@ -10948,6 +10948,11 @@ table.data th.sortable.sorted { color: var(--ink); }
 
 /* ============ How to reach 100% (learner guide) ============ */
 
+h2.section-title.howto-heading {
+  font-size: 27px;
+  font-weight: 650;
+}
+
 .howto-intro {
   margin: -6px 0 16px;
   font-size: 17px;
