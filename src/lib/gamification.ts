@@ -71,6 +71,34 @@ export function attendanceRegisterCount(): number {
   return n;
 }
 
+/** ISO dates (sorted) of every attendance register held on this device. */
+export function attendanceRegisterDates(): string[] {
+  const dates: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith("itss.attendance.")) dates.push(key.slice("itss.attendance.".length));
+  }
+  return dates.sort();
+}
+
+/** ISO dates of the registers this profile has signed. */
+export function attendanceSignedDates(profileId: string): string[] {
+  const dates: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith("itss.attendance.")) continue;
+    try {
+      const data = JSON.parse(localStorage.getItem(key) ?? "{}") as {
+        rows?: Record<string, unknown>;
+      };
+      if (data.rows && data.rows[profileId]) dates.push(key.slice("itss.attendance.".length));
+    } catch {
+      /* corrupt register — skip */
+    }
+  }
+  return dates.sort();
+}
+
 /** Registers a learner can fairly be measured against: those dated on/after
  *  the first register they signed. Learners who joined the programme later
  *  are not penalised for sessions held before they started; someone who has

@@ -8,12 +8,14 @@ import {
   moduleCompletion,
   overallStats,
   poeItemCount,
+  unitProgress,
 } from "../store";
 import { downloadText } from "../lib/audit";
 import {
   attendanceExpectedCount,
   attendanceRegisterCount,
   attendanceSignedCount,
+  attendanceSignedDates,
   computeGamification,
 } from "../lib/gamification";
 import {
@@ -51,6 +53,10 @@ interface LearnerRow {
   levelName: string;
   atRisk: boolean;
   riskReasons: string[];
+  /** per unit standard: C (competent) / SA (submitted) / IP (in process) / NYS */
+  unitStatus: Record<string, "C" | "SA" | "IP" | "NYS">;
+  /** ISO dates of registers this learner signed */
+  signedDates: string[];
 }
 export type { LearnerRow };
 
@@ -96,6 +102,14 @@ export function analyse(p: Profile, cloud: CloudLearnerData | null): LearnerRow 
 
   const g = computeGamification(progress, poeItemCount(docs), attendance);
 
+  const outcomesFor = loadOutcomes()[p.id] ?? {};
+  const unitStatus: LearnerRow["unitStatus"] = {};
+  for (const u of MODULES.flatMap((m) => m.units)) {
+    const frac = unitProgress(progress, u.us, docs);
+    unitStatus[u.us] =
+      outcomesFor[u.us]?.status === "C" ? "C" : frac >= 1 ? "SA" : frac > 0 ? "IP" : "NYS";
+  }
+
   return {
     profile: p,
     completion: s.overall,
@@ -115,6 +129,8 @@ export function analyse(p: Profile, cloud: CloudLearnerData | null): LearnerRow 
     levelName: g.levelName,
     atRisk: riskReasons.length >= 2,
     riskReasons,
+    unitStatus,
+    signedDates: attendanceSignedDates(p.id),
   };
 }
 

@@ -2,6 +2,7 @@ import type { Profile } from "../types";
 import { COURSE_META, MODULES } from "../data/course";
 import { loadOutcomes } from "../store";
 import { docToolbar } from "./certificates";
+import { attendanceRegisterDates } from "./gamification";
 import { loadMarkingModel, recordTokenUsage } from "./tokens";
 import type { LearnerRow } from "../pages/Analytics";
 
@@ -46,6 +47,12 @@ export const REPORT_KINDS: ReportKind[] = [
     name: "Assessment outcomes report",
     desc: "Formal assessor decisions per unit standard and how the cohort is tracking to certification.",
     icon: "award",
+  },
+  {
+    id: "tracker",
+    name: "Learner tracker report",
+    desc: "The submission & attendance tracker grid — status per unit standard, tick per session, and an AI comment per learner.",
+    icon: "checklist",
   },
   {
     id: "executive",
@@ -148,6 +155,23 @@ export function buildReportData(kind: string, rows: LearnerRow[], registers: num
       };
     case "outcomes":
       return { ...base, unitOutcomes: outcomesData(rows) };
+    case "tracker":
+      return {
+        ...base,
+        instruction:
+          "Write one facilitator comment per learner (2-3 sentences) from their figures below.",
+        learners: rows.map((r) => ({
+          name: r.profile.name,
+          completionPct: Math.round(r.completion * 100),
+          quizAvgPct: pctStr(r.quizAvg),
+          attendanceRatePct: pctStr(r.attendanceRate),
+          sessionsAttended: r.attendance,
+          unitStatus: r.unitStatus,
+          atRisk: r.atRisk,
+          riskReasons: r.riskReasons,
+          lastSeen: r.lastLogin ? new Date(r.lastLogin).toLocaleDateString() : "never signed in",
+        })),
+      };
     case "custom":
       // the question can be about anything, so send the full picture
       return {
@@ -291,6 +315,81 @@ function appendixTable(kind: string, rows: LearnerRow[]): string {
     .join("")}</table>`;
 }
 
+/** "17-Jul-26" style date for tracker column headers. */
+function fmtRegDate(iso: string): string {
+  const d = new Date(`${iso}T12:00:00`);
+  return `${String(d.getDate()).padStart(2, "0")}-${d.toLocaleString("en", { month: "short" })}-${String(d.getFullYear()).slice(2)}`;
+}
+
+/** Tracker grid: legend + one row per learner with unit statuses, attendance
+ *  ticks and the AI's per-learner comment — onboarding palette throughout. */
+function trackerBody(rows: LearnerRow[], report: AiReport): string {
+  // only modules the cohort has touched — keeps the grid the width of the
+  // reference tracker instead of every unit in the qualification
+  const active = MODULES.filter((m) =>
+    m.units.some((u) => rows.some((r) => (r.unitStatus[u.us] ?? "NYS") !== "NYS"))
+  );
+  const mods = active.length ? active : MODULES.slice(0, 1);
+  const units = mods.flatMap((m) => m.units);
+  const dates = attendanceRegisterDates();
+  const commentFor = (name: string) => {
+    const hit = report.sections.find(
+      (s) => s.heading.trim().toLowerCase() === name.trim().toLowerCase()
+    ) ?? report.sections.find((s) => name.toLowerCase().includes(s.heading.trim().toLowerCase()));
+    return hit ? hit.paragraphs.join(" ") : "";
+  };
+  const legend = `
+  <table class="legend">
+    <tr><td class="sw st-nys"></td><td><strong>NYS</strong> — Not yet submitted</td></tr>
+    <tr><td class="sw st-c"></td><td><strong>C</strong> — Competent</td></tr>
+    <tr><td class="sw st-sa"></td><td><strong>SA</strong> — Submitted, in assessment process</td></tr>
+    <tr><td class="sw st-ip"></td><td><strong>IP</strong> — In process of submission</td></tr>
+    <tr><td class="sw st-x"></td><td><strong>X</strong> — Absent</td></tr>
+  </table>`;
+  const head = `
+    <tr>
+      <th rowspan="4" class="nm">Learner name</th>
+      <th rowspan="4" class="nm">Learner surname</th>
+      <th rowspan="4" class="idn">ID number</th>
+      ${mods.map((m) => `<th colspan="${m.units.length}">${esc(m.name)}</th>`).join("")}
+      <th colspan="${Math.max(dates.length, 1)}" rowspan="2">Attendance</th>
+      <th rowspan="4" class="cm">Comments</th>
+    </tr>
+    <tr><th colspan="${units.length}">Unit standards submissions</th></tr>
+    <tr>
+      ${units.map((u) => `<th class="c">${esc(u.us)}</th>`).join("")}
+      ${dates.length ? dates.map((d) => `<th class="c" rowspan="2">${esc(fmtRegDate(d))}</th>`).join("") : `<th class="c" rowspan="2">—</th>`}
+    </tr>
+    <tr>${units.map((u) => `<th class="c">${u.credits} cr</th>`).join("")}</tr>`;
+  const body = rows
+    .map((r) => {
+      const parts = r.profile.name.trim().split(/\s+/);
+      const surname = parts.length > 1 ? parts[parts.length - 1] : "";
+      const first = parts.length > 1 ? parts.slice(0, -1).join(" ") : parts[0];
+      const firstSigned = r.signedDates[0];
+      const att = dates.length
+        ? dates
+            .map((d) => {
+              if (r.signedDates.includes(d)) return `<td class="c ok">✓</td>`;
+              if (firstSigned && d < firstSigned) return `<td class="c">–</td>`;
+              return `<td class="c st-x">X</td>`;
+            })
+            .join("")
+        : `<td class="c">–</td>`;
+      return `<tr>
+        <td>${esc(first)}</td>
+        <td>${esc(surname)}</td>
+        <td>${esc(r.profile.enrolment?.idNumber ?? "—")}</td>
+        ${units.map((u) => { const st = r.unitStatus[u.us] ?? "NYS"; return `<td class="c st-${st.toLowerCase()}"><strong>${st}</strong></td>`; }).join("")}
+        ${att}
+        <td class="cm">${esc(commentFor(r.profile.name))}</td>
+      </tr>`;
+    })
+    .join("");
+  return `${legend}
+  <table class="tracker">${head}${body}</table>`;
+}
+
 /** Printable report document — same look as the learner onboarding pack. */
 export function reportDocumentHtml(
   kind: ReportKind,
@@ -305,17 +404,20 @@ export function reportDocumentHtml(
     month: "long",
     year: "numeric",
   });
-  const sections = report.sections
-    .map(
-      (s, i) => `
+  const tracker = kind.id === "tracker";
+  const sections = tracker
+    ? trackerBody(rows, report)
+    : report.sections
+        .map(
+          (s, i) => `
   <h2>${i + 1} · ${esc(s.heading)}</h2>
   ${s.paragraphs.map((p) => `<p>${esc(p)}</p>`).join("")}
   ${s.bullets && s.bullets.length ? `<ul>${s.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>` : ""}`
-    )
-    .join("");
+        )
+        .join("");
   const recs = report.recommendations.length
     ? `
-  <h2>${report.sections.length + 1} · Recommendations</h2>
+  <h2>${tracker ? "Recommendations" : `${report.sections.length + 1} · Recommendations`}</h2>
   <ol>${report.recommendations.map((r) => `<li>${esc(r)}</li>`).join("")}</ol>`
     : "";
 
@@ -339,7 +441,22 @@ export function reportDocumentHtml(
   .sign { display: flex; gap: 60px; margin-top: 36px; }
   .sign div { flex: 1; border-top: 1.5px solid #17233b; padding-top: 5px; font-size: 12.5px; color: #444; }
   .small { color: #5a6b8c; font-size: 12px; }
-  @media print { body { padding: 10mm 12mm; } h2 { break-after: avoid; } tr { break-inside: avoid; } }
+  /* tracker grid — onboarding palette */
+  .legend { width: auto; margin: 0 0 16px; }
+  .legend .sw { width: 120px; }
+  .tracker th, .tracker td { font-size: 11px; padding: 5px 6px; }
+  .tracker th { text-align: center; vertical-align: middle; }
+  .tracker .c { text-align: center; white-space: nowrap; }
+  .tracker .nm { min-width: 90px; }
+  .tracker .idn { min-width: 95px; }
+  .tracker .cm { min-width: 220px; text-align: left; }
+  .tracker .ok { color: #0b6e3f; font-weight: 600; }
+  .st-nys { background: #fdf3c8; }
+  .st-c { background: #dff1df; }
+  .st-sa { background: #d9e9fb; }
+  .st-ip { background: #fbe3cf; }
+  .st-x { background: #fadbd8; color: #8c2f28; font-weight: 600; }
+  @media print { body { padding: 10mm 12mm; } h2 { break-after: avoid; } tr { break-inside: avoid; } ${tracker ? "@page { size: A3 landscape; }" : ""} }
 </style>
 </head>
 <body>
@@ -355,11 +472,11 @@ export function reportDocumentHtml(
   </div>
   ${sections}
   ${recs}
-
+${tracker ? "" : `
   <h2>Appendix · Data snapshot</h2>
   <p class="small">Figures as recorded on ITSS Learn at the time of generation (${esc(today)}).</p>
   ${appendixTable(kind.id, rows)}
-
+`}
   <div class="sign">
     <div>Compiled by (name &amp; signature)</div>
     <div>Reviewed by (name &amp; signature)</div>
