@@ -71,12 +71,29 @@ export const CUSTOM_KIND: ReportKind = {
 
 const pctStr = (v: number | null) => (v === null ? null : Math.round(v * 100));
 
-const genderOf = (r: LearnerRow) => r.profile.enrolment?.gender?.trim() || "unspecified";
+/** Recorded gender, falling back to the SA ID number (digits 7-10: 0000-4999
+ *  female, 5000-9999 male) when the enrolment form hasn't captured it. */
+const genderOf = (r: LearnerRow): "Male" | "Female" | "unspecified" => {
+  const g = r.profile.enrolment?.gender?.trim().toLowerCase();
+  if (g === "male") return "Male";
+  if (g === "female") return "Female";
+  const id = (r.profile.enrolment?.idNumber ?? "").replace(/\D/g, "");
+  if (id.length === 13) return Number(id.slice(6, 10)) >= 5000 ? "Male" : "Female";
+  return "unspecified";
+};
+
+const pronounsOf = (r: LearnerRow): string => {
+  const g = genderOf(r);
+  if (g === "Male") return "he/him/his";
+  if (g === "Female") return "she/her/hers";
+  return "no pronouns — repeat the name";
+};
 
 function learnerStat(r: LearnerRow) {
   return {
     name: r.profile.name,
     gender: genderOf(r),
+    pronouns: pronounsOf(r),
     completionPct: Math.round(r.completion * 100),
     unitsCompleted: r.unitsCompleted,
     creditsEarned: r.creditsEarned,
@@ -175,6 +192,7 @@ export function buildReportData(
         learners: rows.map((r) => ({
           name: r.profile.name,
           gender: genderOf(r),
+          pronouns: pronounsOf(r),
           sessionsAttended: r.attendance,
           sessionsExpected: r.attendanceExpected,
           attendanceRatePct: pctStr(r.attendanceRate),
@@ -198,6 +216,7 @@ export function buildReportData(
         learners: rows.map((r) => ({
           name: r.profile.name,
           gender: genderOf(r),
+          pronouns: pronounsOf(r),
           completionPct: Math.round(r.completion * 100),
           quizAvgPct: pctStr(r.quizAvg),
           attendanceRatePct: pctStr(r.attendanceRate),
@@ -227,11 +246,17 @@ export function buildReportData(
           .map((r) => ({
             name: r.profile.name,
             gender: genderOf(r),
+            pronouns: pronounsOf(r),
             completionPct: Math.round(r.completion * 100),
           })),
         atRiskLearners: rows
           .filter((r) => r.atRisk)
-          .map((r) => ({ name: r.profile.name, gender: genderOf(r), reasons: r.riskReasons })),
+          .map((r) => ({
+            name: r.profile.name,
+            gender: genderOf(r),
+            pronouns: pronounsOf(r),
+            reasons: r.riskReasons,
+          })),
       };
     default:
       return { ...base, learners: rows.map(learnerStat) };
