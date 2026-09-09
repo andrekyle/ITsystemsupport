@@ -170,14 +170,22 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     <>
       {busy === "ask" && !wantReport && (
         <div className="reports-ai-note" role="status">
-          <span className="ai-orb" aria-hidden="true" />
+          <span className="ai-swirl" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
           <span className="ai-tag">AI</span>
           <span className="ai-text">Thinking…</span>
         </div>
       )}
       {aiNote && !busy && (
         <div className="reports-ai-note" role="status">
-          <span className="ai-orb" aria-hidden="true" />
+          <span className="ai-swirl" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
           <span className="ai-tag">AI</span>
           <span className="ai-text">{aiNote}</span>
         </div>

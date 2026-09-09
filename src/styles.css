@@ -10988,14 +10988,48 @@ table.data th.sortable.sorted { color: var(--ink); }
   text-align: left;
 }
 
-.reports-ai-note .ai-orb {
-  width: 14px;
-  height: 14px;
+.reports-ai-note .ai-swirl {
+  position: relative;
+  width: 46px;
+  height: 46px;
   flex: 0 0 auto;
+  filter: drop-shadow(0 0 7px rgba(168, 85, 247, 0.45)) drop-shadow(0 0 5px rgba(34, 211, 238, 0.4));
+}
+
+.reports-ai-note .ai-swirl span {
+  position: absolute;
+  inset: 4px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #7dd3fc, var(--azure) 70%);
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.9);
-  animation: reports-breathe 2s ease-in-out infinite;
+  border: 1.5px solid transparent;
+  background: conic-gradient(from 0deg, #22d3ee, #a855f7, #f59e0b, #10b981, #22d3ee) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  animation: ai-swirl-a 3.6s linear infinite;
+}
+
+.reports-ai-note .ai-swirl span:nth-child(2) {
+  animation: ai-swirl-b 2.8s linear infinite;
+}
+
+.reports-ai-note .ai-swirl span:nth-child(3) {
+  animation: ai-swirl-c 4.6s linear infinite;
+}
+
+@keyframes ai-swirl-a {
+  from { transform: scaleY(0.62) rotate(0deg); }
+  to { transform: scaleY(0.62) rotate(360deg); }
+}
+
+@keyframes ai-swirl-b {
+  from { transform: scaleY(0.78) scaleX(0.9) rotate(140deg); }
+  to { transform: scaleY(0.78) scaleX(0.9) rotate(-220deg); }
+}
+
+@keyframes ai-swirl-c {
+  from { transform: scaleX(0.62) rotate(70deg); }
+  to { transform: scaleX(0.62) rotate(430deg); }
 }
 
 .reports-ai-note .ai-tag {
