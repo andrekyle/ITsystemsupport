@@ -12544,6 +12544,8 @@ h2.section-title.howto-heading {
 }
 
 /* ---------- Class Voting (polls) ---------- */
+/* Text sizes follow the lesson pages (.lesson-p / .self-assess-item / .exq-input):
+   Segoe UI Semilight 17px body copy, 15px hints — not the compact 13px form type. */
 
 .vote-card {
   margin-bottom: 14px;
@@ -12558,20 +12560,23 @@ h2.section-title.howto-heading {
 }
 
 .vote-question {
-  font-size: 16.5px;
+  font-size: 19px;
   font-weight: 600;
+  line-height: 1.35;
   margin: 0 0 4px;
 }
 
 .vote-desc {
   margin: 0 0 6px;
-  font-size: 13.5px;
-  line-height: 1.5;
-  color: var(--text-2);
+  font-size: 17px;
+  font-weight: 350;
+  line-height: 1.6;
+  color: var(--ink-2);
 }
 
 .vote-meta {
-  font-size: 12.5px;
+  font-size: 14px;
+  font-weight: 350;
   color: var(--ink-3);
 }
 
@@ -12618,7 +12623,7 @@ h2.section-title.howto-heading {
 }
 
 .vote-option-count {
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--ink-3);
   white-space: nowrap;
   flex-shrink: 0;
@@ -12626,7 +12631,9 @@ h2.section-title.howto-heading {
 
 .vote-hint {
   margin: 10px 0 0;
-  font-size: 12.5px;
+  font-size: 15px;
+  font-weight: 350;
+  line-height: 1.55;
   color: var(--ink-3);
 }
 
@@ -12646,9 +12653,10 @@ h2.section-title.howto-heading {
 .vote-voters {
   margin: 10px 0 0;
   padding: 0 0 0 18px;
-  font-size: 13px;
+  font-size: 15.5px;
+  font-weight: 350;
   line-height: 1.7;
-  color: var(--text-2);
+  color: var(--ink-2);
 }
 
 /* scheduled-poll chip */
@@ -12656,7 +12664,49 @@ h2.section-title.howto-heading {
   color: var(--amber);
 }
 
-/* who-can-vote picker in the new-poll form */
+/* ---- new-poll form ---- */
+
+/* field headings: lesson strong text, not the 13px .field label */
+.vote-form .field > label {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+/* typed fields read like lesson answer boxes (.exq-input) */
+.vote-form .field input,
+.vote-form .field textarea {
+  padding: 9px 12px;
+  font-size: 16.5px;
+  font-weight: 350;
+  line-height: 1.55;
+  color: var(--ink);
+  border-color: var(--border);
+}
+
+.vote-form .field input::placeholder,
+.vote-form .field textarea::placeholder {
+  color: var(--ink-3);
+  opacity: 0.5;
+}
+
+/* radios / ticks: undo .field input's full width + padding, which stacked
+   them on their own line above the label text */
+.vote-form input[type="radio"],
+.vote-form input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  accent-color: var(--azure);
+  cursor: pointer;
+}
+
+/* who-can-vote picker */
 .vote-restrict-row {
   display: flex;
   gap: 18px;
@@ -12664,16 +12714,16 @@ h2.section-title.howto-heading {
   margin-bottom: 8px;
 }
 
-.vote-restrict-choice {
+.vote-form .vote-restrict-choice {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: 13.5px;
+  gap: 9px;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 350;
+  line-height: 1.6;
+  color: var(--ink-2);
   cursor: pointer;
-}
-
-.vote-restrict-choice input {
-  accent-color: var(--azure);
 }
 
 .vote-picker {
@@ -12696,42 +12746,44 @@ h2.section-title.howto-heading {
 }
 
 .vote-picker-list {
-  max-height: 220px;
+  max-height: 260px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   border-top: 1px solid var(--border);
 }
 
-.vote-picker-person {
+/* one row per person, styled like the lesson self-assessment checklist */
+.vote-form .vote-picker-person {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 7px 4px;
+  gap: 12px;
+  margin: 0;
+  padding: 8px 6px;
   border-bottom: 1px solid var(--border);
-  font-size: 13.5px;
+  font-size: 17px;
+  font-weight: 350;
+  line-height: 1.6;
+  color: var(--ink-2);
   cursor: pointer;
 }
 
 .vote-picker-person:hover {
-  background: var(--hover, rgba(0, 0, 0, 0.04));
-}
-
-.vote-picker-person input {
-  accent-color: var(--azure);
+  background: var(--surface-2);
 }
 
 .vote-picker-name {
   flex: 1;
-  font-weight: 600;
+  font-weight: 400;
+  color: var(--ink);
 }
 
 .vote-picker-role {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--ink-3);
 }
 
-/* schedule fields in the new-poll form */
+/* schedule fields */
 .vote-schedule {
   display: flex;
   gap: 14px;
@@ -12744,10 +12796,11 @@ h2.section-title.howto-heading {
   gap: 4px;
 }
 
-.vote-schedule-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink-3);
+.vote-form .vote-schedule-label {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--ink-2);
 }
 
 .vote-hint.danger-text {
@@ -12757,7 +12810,9 @@ h2.section-title.howto-heading {
 /* invited-voters line on a restricted poll (staff view) */
 .vote-participants {
   margin: 10px 0 0;
-  font-size: 12.5px;
-  color: var(--text-2);
+  font-size: 15px;
+  font-weight: 350;
+  line-height: 1.55;
+  color: var(--ink-2);
 }
 

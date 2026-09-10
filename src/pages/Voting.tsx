@@ -104,7 +104,7 @@ function CreatePollForm({
 
   return (
     <form
-      className="card"
+      className="card vote-form"
       style={{ marginBottom: 16 }}
       onSubmit={(e) => {
         e.preventDefault();
@@ -312,7 +312,7 @@ function CreatePollForm({
           Cancel
         </button>
       </div>
-      <p className="page-sub" style={{ margin: "10px 0 0", fontSize: 13 }}>
+      <p className="page-sub" style={{ margin: "10px 0 0" }}>
         Posting as {profile.name} · {profile.role}. Every eligible voter gets one vote and can
         change it until the poll closes.
       </p>
