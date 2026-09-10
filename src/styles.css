@@ -12872,6 +12872,31 @@ h2.section-title.howto-heading {
   color: var(--ink);
 }
 
+/* the title is a button: tap it to jump between days → months → years */
+.dtp-month-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.dtp-month-btn svg {
+  color: var(--ink-3);
+}
+
+.dtp-month-btn:hover {
+  background: var(--surface-2);
+}
+
+.dtp-month-btn:hover svg {
+  color: var(--azure);
+}
+
 .dtp-nav {
   display: inline-flex;
   align-items: center;
@@ -12894,6 +12919,27 @@ h2.section-title.howto-heading {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 2px;
+}
+
+/* month / year pages fill the same height as the six-week day grid */
+.dtp-grid.months {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.dtp-grid.months .dtp-day {
+  height: 58px;
+  font-size: 15px;
+}
+
+.dtp-grid.years {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.dtp-grid.years .dtp-day {
+  height: 46px;
+  font-size: 15px;
 }
 
 .dtp-dow {

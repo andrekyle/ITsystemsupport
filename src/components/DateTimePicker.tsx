@@ -13,6 +13,11 @@ const DOW = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 const PANEL_W = 308;
 const GAP = 6;
 const EDGE = 8;
+const YEARS_PER_PAGE = 20;
+
+const MONTHS = Array.from({ length: 12 }, (_, m) =>
+  new Date(2000, m, 1).toLocaleDateString(undefined, { month: "short" })
+);
 
 /**
  * Themed stand-in for <input type="datetime-local"> (and, with withTime
@@ -67,6 +72,8 @@ export function DateTimePicker({
     const d = value ? new Date(value) : new Date();
     return { y: d.getFullYear(), m: d.getMonth() };
   });
+  // days → (tap the title) months of a year → (tap the year) 20-year page
+  const [mode, setMode] = useState<"days" | "months" | "years">("days");
 
   // The panel is portalled to <body> and fixed-positioned from the field's
   // screen rect: sheets like the registration form sit in a scaled,
@@ -76,6 +83,7 @@ export function DateTimePicker({
   const openPanel = () => {
     const d = value ? new Date(value) : new Date();
     setView({ y: d.getFullYear(), m: d.getMonth() });
+    setMode("days");
     setPos(null);
     setOpen(true);
   };
@@ -108,7 +116,7 @@ export function DateTimePicker({
       window.removeEventListener("scroll", place, { capture: true });
       window.removeEventListener("resize", place);
     };
-  }, [open, withTime]);
+  }, [open, withTime, mode]);
 
   useEffect(() => {
     if (!open) return;
@@ -138,6 +146,34 @@ export function DateTimePicker({
       const d = new Date(y, m + by, 1);
       return { y: d.getFullYear(), m: d.getMonth() };
     });
+
+  const shiftYear = (by: number) => setView(({ y, m }) => ({ y: y + by, m }));
+
+  const yearPageStart = Math.floor(view.y / YEARS_PER_PAGE) * YEARS_PER_PAGE;
+  const years = Array.from({ length: YEARS_PER_PAGE }, (_, i) => yearPageStart + i);
+
+  const minYear = minDay ? Number(minDay.slice(0, 4)) : -Infinity;
+  const minMonth = minDay ? Number(minDay.slice(5, 7)) - 1 : -1;
+  const todayYear = Number(today.slice(0, 4));
+  const todayMonth = Number(today.slice(5, 7)) - 1;
+  const dayYear = day ? Number(day.slice(0, 4)) : NaN;
+  const dayMonth = day ? Number(day.slice(5, 7)) - 1 : NaN;
+
+  const headerTitle =
+    mode === "days"
+      ? new Date(view.y, view.m, 1).toLocaleDateString(undefined, {
+          month: "long",
+          year: "numeric",
+        })
+      : mode === "months"
+        ? String(view.y)
+        : `${yearPageStart} – ${yearPageStart + YEARS_PER_PAGE - 1}`;
+
+  const stepBack = () =>
+    mode === "days" ? shiftMonth(-1) : shiftYear(mode === "months" ? -1 : -YEARS_PER_PAGE);
+  const stepForward = () =>
+    mode === "days" ? shiftMonth(1) : shiftYear(mode === "months" ? 1 : YEARS_PER_PAGE);
+  const stepLabel = mode === "days" ? "month" : mode === "months" ? "year" : `${YEARS_PER_PAGE} years`;
 
   // date-only pickers have nothing left to choose once a day is tapped
   const pickDay = (iso: string) => {
@@ -210,63 +246,134 @@ export function DateTimePicker({
               <button
                 type="button"
                 className="dtp-nav"
-                aria-label="Previous month"
-                onClick={() => shiftMonth(-1)}
+                aria-label={`Previous ${stepLabel}`}
+                onClick={stepBack}
               >
                 <Icon name="chevronLeft" size={16} />
               </button>
-              <span className="dtp-month">
-                {new Date(view.y, view.m, 1).toLocaleDateString(undefined, {
-                  month: "long",
-                  year: "numeric",
-                })}
-              </span>
+              {mode === "years" ? (
+                <span className="dtp-month">{headerTitle}</span>
+              ) : (
+                <button
+                  type="button"
+                  className="dtp-month dtp-month-btn"
+                  aria-label={mode === "days" ? "Choose a month" : "Choose a year"}
+                  onClick={() => setMode(mode === "days" ? "months" : "years")}
+                >
+                  {headerTitle}
+                  <Icon name="chevronDown" size={13} />
+                </button>
+              )}
               <button
                 type="button"
                 className="dtp-nav"
-                aria-label="Next month"
-                onClick={() => shiftMonth(1)}
+                aria-label={`Next ${stepLabel}`}
+                onClick={stepForward}
               >
                 <Icon name="chevronRight" size={16} />
               </button>
             </div>
 
-            <div className="dtp-grid">
-              {DOW.map((d) => (
-                <span key={d} className="dtp-dow" aria-hidden="true">
-                  {d}
-                </span>
-              ))}
-              {cells.map((d) => {
-                const iso = isoDay(d);
-                const cls = [
-                  "dtp-day",
-                  d.getMonth() !== view.m ? "outside" : "",
-                  iso === today ? "today" : "",
-                  iso === day ? "selected" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ");
-                return (
-                  <button
-                    key={iso}
-                    type="button"
-                    className={cls}
-                    disabled={!!minDay && iso < minDay}
-                    aria-pressed={iso === day}
-                    aria-label={d.toLocaleDateString(undefined, {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                    onClick={() => pickDay(iso)}
-                  >
-                    {d.getDate()}
-                  </button>
-                );
-              })}
-            </div>
+            {mode === "days" && (
+              <div className="dtp-grid">
+                {DOW.map((d) => (
+                  <span key={d} className="dtp-dow" aria-hidden="true">
+                    {d}
+                  </span>
+                ))}
+                {cells.map((d) => {
+                  const iso = isoDay(d);
+                  const cls = [
+                    "dtp-day",
+                    d.getMonth() !== view.m ? "outside" : "",
+                    iso === today ? "today" : "",
+                    iso === day ? "selected" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
+                  return (
+                    <button
+                      key={iso}
+                      type="button"
+                      className={cls}
+                      disabled={!!minDay && iso < minDay}
+                      aria-pressed={iso === day}
+                      aria-label={d.toLocaleDateString(undefined, {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                      onClick={() => pickDay(iso)}
+                    >
+                      {d.getDate()}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {mode === "months" && (
+              <div className="dtp-grid months">
+                {MONTHS.map((name, m) => {
+                  const cls = [
+                    "dtp-day",
+                    view.y === todayYear && m === todayMonth ? "today" : "",
+                    view.y === dayYear && m === dayMonth ? "selected" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
+                  return (
+                    <button
+                      key={name}
+                      type="button"
+                      className={cls}
+                      disabled={view.y < minYear || (view.y === minYear && m < minMonth)}
+                      aria-pressed={view.y === dayYear && m === dayMonth}
+                      aria-label={new Date(view.y, m, 1).toLocaleDateString(undefined, {
+                        month: "long",
+                        year: "numeric",
+                      })}
+                      onClick={() => {
+                        setView({ y: view.y, m });
+                        setMode("days");
+                      }}
+                    >
+                      {name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {mode === "years" && (
+              <div className="dtp-grid years">
+                {years.map((y) => {
+                  const cls = [
+                    "dtp-day",
+                    y === todayYear ? "today" : "",
+                    y === dayYear ? "selected" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
+                  return (
+                    <button
+                      key={y}
+                      type="button"
+                      className={cls}
+                      disabled={y < minYear}
+                      aria-pressed={y === dayYear}
+                      onClick={() => {
+                        setView({ y, m: view.m });
+                        setMode("months");
+                      }}
+                    >
+                      {y}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {withTime && (
               <div className="dtp-time">
@@ -313,6 +420,7 @@ export function DateTimePicker({
                 disabled={!!minDay && today < minDay}
                 onClick={() => {
                   setView({ y: new Date().getFullYear(), m: new Date().getMonth() });
+                  setMode("days");
                   pickDay(today);
                 }}
               >
