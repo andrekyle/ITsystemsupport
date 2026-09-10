@@ -1,4 +1,5 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "../icons";
 import { Select } from "./Select";
 
@@ -8,6 +9,10 @@ const isoDay = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d
 const HOURS = Array.from({ length: 24 }, (_, h) => ({ value: pad(h), label: pad(h) }));
 const MINUTES = Array.from({ length: 12 }, (_, i) => ({ value: pad(i * 5), label: pad(i * 5) }));
 const DOW = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+
+const PANEL_W = 308;
+const GAP = 6;
+const EDGE = 8;
 
 /**
  * Themed stand-in for <input type="datetime-local"> (and, with withTime
@@ -44,6 +49,8 @@ export function DateTimePicker({
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
 
   const day = value.slice(0, 10);
@@ -60,24 +67,57 @@ export function DateTimePicker({
     const d = value ? new Date(value) : new Date();
     return { y: d.getFullYear(), m: d.getMonth() };
   });
-  // panel is 308px wide; hang it from the right when it would leave the screen
-  const [alignRight, setAlignRight] = useState(false);
+
+  // The panel is portalled to <body> and fixed-positioned from the field's
+  // screen rect: sheets like the registration form sit in a scaled,
+  // overflow-hidden wrapper that would otherwise clip it.
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
 
   const openPanel = () => {
     const d = value ? new Date(value) : new Date();
     setView({ y: d.getFullYear(), m: d.getMonth() });
-    const rect = rootRef.current?.getBoundingClientRect();
-    setAlignRight(!!rect && rect.left + 308 > window.innerWidth - 12 && rect.right - 308 > 0);
+    setPos(null);
     setOpen(true);
   };
+
+  const close = () => {
+    setOpen(false);
+    btnRef.current?.focus({ preventScroll: true });
+  };
+
+  const place = () => {
+    const field = rootRef.current?.getBoundingClientRect();
+    const panelH = panelRef.current?.offsetHeight ?? 0;
+    if (!field) return;
+    const roomBelow = window.innerHeight - field.bottom - GAP - EDGE;
+    const roomAbove = field.top - GAP - EDGE;
+    let top = field.bottom + GAP;
+    if (panelH > roomBelow && roomAbove > roomBelow) top = field.top - GAP - panelH;
+    top = Math.max(EDGE, Math.min(top, window.innerHeight - panelH - EDGE));
+    const left = Math.max(EDGE, Math.min(field.left, window.innerWidth - PANEL_W - EDGE));
+    setPos({ top, left });
+  };
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    place();
+    // follow the field while the page scrolls or the window resizes
+    window.addEventListener("scroll", place, { capture: true, passive: true });
+    window.addEventListener("resize", place);
+    return () => {
+      window.removeEventListener("scroll", place, { capture: true });
+      window.removeEventListener("resize", place);
+    };
+  }, [open, withTime]);
 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (!rootRef.current?.contains(t) && !panelRef.current?.contains(t)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") close();
     };
     window.addEventListener("pointerdown", onDown);
     window.addEventListener("keydown", onKey);
@@ -102,7 +142,7 @@ export function DateTimePicker({
   // date-only pickers have nothing left to choose once a day is tapped
   const pickDay = (iso: string) => {
     onChange(withTime ? `${iso}T${hh}:${mm}` : iso);
-    if (!withTime) setOpen(false);
+    if (!withTime) close();
   };
 
   const pickTime = (h: string, m: string) => {
@@ -129,6 +169,7 @@ export function DateTimePicker({
   return (
     <div className={`dtp${withTime ? "" : " date-only"}${className ? ` ${className}` : ""}`} ref={rootRef}>
       <button
+        ref={btnRef}
         type="button"
         id={id}
         className={`dtp-btn${open ? " open" : ""}${value ? "" : " empty"}`}
@@ -154,131 +195,136 @@ export function DateTimePicker({
         </button>
       )}
 
-      {open && (
-        <div
-          className={`dtp-panel${alignRight ? " align-right" : ""}`}
-          role="dialog"
-          id={panelId}
-          aria-label="Choose a date and time"
-        >
-          <div className="dtp-head">
-            <button
-              type="button"
-              className="dtp-nav"
-              aria-label="Previous month"
-              onClick={() => shiftMonth(-1)}
-            >
-              <Icon name="chevronLeft" size={16} />
-            </button>
-            <span className="dtp-month">
-              {new Date(view.y, view.m, 1).toLocaleDateString(undefined, {
-                month: "long",
-                year: "numeric",
-              })}
-            </span>
-            <button
-              type="button"
-              className="dtp-nav"
-              aria-label="Next month"
-              onClick={() => shiftMonth(1)}
-            >
-              <Icon name="chevronRight" size={16} />
-            </button>
-          </div>
-
-          <div className="dtp-grid">
-            {DOW.map((d) => (
-              <span key={d} className="dtp-dow" aria-hidden="true">
-                {d}
+      {open &&
+        createPortal(
+          <div
+            ref={panelRef}
+            className="dtp-panel"
+            role="dialog"
+            id={panelId}
+            aria-label="Choose a date and time"
+            // stays invisible for the first paint until place() has measured it
+            style={pos ? { top: pos.top, left: pos.left } : { visibility: "hidden" }}
+          >
+            <div className="dtp-head">
+              <button
+                type="button"
+                className="dtp-nav"
+                aria-label="Previous month"
+                onClick={() => shiftMonth(-1)}
+              >
+                <Icon name="chevronLeft" size={16} />
+              </button>
+              <span className="dtp-month">
+                {new Date(view.y, view.m, 1).toLocaleDateString(undefined, {
+                  month: "long",
+                  year: "numeric",
+                })}
               </span>
-            ))}
-            {cells.map((d) => {
-              const iso = isoDay(d);
-              const cls = [
-                "dtp-day",
-                d.getMonth() !== view.m ? "outside" : "",
-                iso === today ? "today" : "",
-                iso === day ? "selected" : "",
-              ]
-                .filter(Boolean)
-                .join(" ");
-              return (
-                <button
-                  key={iso}
-                  type="button"
-                  className={cls}
-                  disabled={!!minDay && iso < minDay}
-                  aria-pressed={iso === day}
-                  aria-label={d.toLocaleDateString(undefined, {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                  onClick={() => pickDay(iso)}
-                >
-                  {d.getDate()}
-                </button>
-              );
-            })}
-          </div>
-
-          {withTime && (
-            <div className="dtp-time">
-              <span className="dtp-time-label">
-                <Icon name="clock" size={15} />
-                Time
-              </span>
-              <Select
-                className="dtp-select"
-                ariaLabel="Hour"
-                value={hh}
-                options={HOURS}
-                onChange={(h) => pickTime(h, mm)}
-              />
-              <span className="dtp-colon" aria-hidden="true">
-                :
-              </span>
-              <Select
-                className="dtp-select"
-                ariaLabel="Minutes"
-                value={mm}
-                options={MINUTES}
-                onChange={(m) => pickTime(hh, m)}
-              />
+              <button
+                type="button"
+                className="dtp-nav"
+                aria-label="Next month"
+                onClick={() => shiftMonth(1)}
+              >
+                <Icon name="chevronRight" size={16} />
+              </button>
             </div>
-          )}
 
-          <div className="dtp-foot">
-            {clearable && (
+            <div className="dtp-grid">
+              {DOW.map((d) => (
+                <span key={d} className="dtp-dow" aria-hidden="true">
+                  {d}
+                </span>
+              ))}
+              {cells.map((d) => {
+                const iso = isoDay(d);
+                const cls = [
+                  "dtp-day",
+                  d.getMonth() !== view.m ? "outside" : "",
+                  iso === today ? "today" : "",
+                  iso === day ? "selected" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
+                return (
+                  <button
+                    key={iso}
+                    type="button"
+                    className={cls}
+                    disabled={!!minDay && iso < minDay}
+                    aria-pressed={iso === day}
+                    aria-label={d.toLocaleDateString(undefined, {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                    onClick={() => pickDay(iso)}
+                  >
+                    {d.getDate()}
+                  </button>
+                );
+              })}
+            </div>
+
+            {withTime && (
+              <div className="dtp-time">
+                <span className="dtp-time-label">
+                  <Icon name="clock" size={15} />
+                  Time
+                </span>
+                <Select
+                  className="dtp-select"
+                  ariaLabel="Hour"
+                  value={hh}
+                  options={HOURS}
+                  onChange={(h) => pickTime(h, mm)}
+                />
+                <span className="dtp-colon" aria-hidden="true">
+                  :
+                </span>
+                <Select
+                  className="dtp-select"
+                  ariaLabel="Minutes"
+                  value={mm}
+                  options={MINUTES}
+                  onChange={(m) => pickTime(hh, m)}
+                />
+              </div>
+            )}
+
+            <div className="dtp-foot">
+              {clearable && (
+                <button
+                  type="button"
+                  className="btn ghost sm"
+                  onClick={() => {
+                    onChange("");
+                    close();
+                  }}
+                >
+                  Clear
+                </button>
+              )}
               <button
                 type="button"
                 className="btn ghost sm"
+                disabled={!!minDay && today < minDay}
                 onClick={() => {
-                  onChange("");
-                  setOpen(false);
+                  setView({ y: new Date().getFullYear(), m: new Date().getMonth() });
+                  pickDay(today);
                 }}
               >
-                Clear
+                Today
               </button>
-            )}
-            <button
-              type="button"
-              className="btn ghost sm"
-              disabled={!!minDay && today < minDay}
-              onClick={() => {
-                setView({ y: new Date().getFullYear(), m: new Date().getMonth() });
-                pickDay(today);
-              }}
-            >
-              Today
-            </button>
-            <button type="button" className="btn primary sm" onClick={() => setOpen(false)}>
-              Done
-            </button>
-          </div>
-        </div>
-      )}
+              <button type="button" className="btn primary sm" onClick={close}>
+                Done
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

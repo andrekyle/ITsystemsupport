@@ -12828,12 +12828,12 @@ h2.section-title.howto-heading {
 }
 
 /* popover shares the custom select's glass panel; it is app UI, so it keeps the
-   app font even inside Arial documents like the registration form */
+   app font even inside Arial documents like the registration form. It is
+   portalled to <body> and fixed-positioned by the component, so no scaled or
+   overflow-hidden sheet can clip it. */
 .dtp-panel {
-  position: absolute;
-  z-index: 60;
-  top: calc(100% + 6px);
-  left: 0;
+  position: fixed;
+  z-index: 1100;
   width: 308px;
   padding: 12px;
   font-family: "Segoe UI", "Helvetica Neue", Helvetica, "Lucida Grande", Arial, Ubuntu, Cantarell, "Fira Sans", sans-serif;
@@ -12857,12 +12857,6 @@ h2.section-title.howto-heading {
     0 0 0 1px rgba(255, 255, 255, 0.04),
     0 10px 38px rgba(0, 0, 0, 0.5),
     0 2px 8px rgba(0, 0, 0, 0.35);
-}
-
-/* near the right edge of the screen the panel hangs from the field's right side */
-.dtp-panel.align-right {
-  left: auto;
-  right: 0;
 }
 
 .dtp-head {
