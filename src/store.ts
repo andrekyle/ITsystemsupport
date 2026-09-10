@@ -803,7 +803,7 @@ export function useQaThreads() {
   return { threads, ask, reply, toggleResolved, editQuestion, editReply, remove };
 }
 
-/* ---------- class voting (polls: vote for an action or person) ---------- */
+/* ---------- Voting Station (polls: vote for an action or person) ---------- */
 
 const POLLS_KEY = "itss.polls.shared";
 

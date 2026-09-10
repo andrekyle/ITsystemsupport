@@ -608,9 +608,9 @@ export function VotingPage({ profile }: { profile: Profile }) {
     <>
       <div className="eyebrow">
         <Icon name="chart" size={15} />
-        Class Voting
+        Voting Station
       </div>
-      <h1 className="page-title">Class voting</h1>
+      <h1 className="page-title">Voting Station</h1>
       <p className="page-sub">
         Vote for an action or person put forward to the class. Each eligible voter gets one vote
         per poll and can change it until the poll closes. Results are shared with the whole class.
