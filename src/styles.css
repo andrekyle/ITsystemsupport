@@ -5332,6 +5332,29 @@ a.plan-ppt:hover {
   padding: 16px;
 }
 
+.notes-viewer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.notes-viewer-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notes-viewer-head .btn {
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
 .notes-viewer img {
   display: block;
   width: 100%;

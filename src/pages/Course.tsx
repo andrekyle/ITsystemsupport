@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
+import JSZip from "jszip";
 import { Icon } from "../icons";
 import type { ExerciseCheck, LessonFigure, PoeDoc, ProgressState, Profile, Role, Route, UnitActivity, UnitStandard } from "../types";
 import { UNIT_ACTIVITIES, isStaff } from "../types";
@@ -21,6 +22,42 @@ import { checkSpelling, type SpellIssue } from "../lib/spellcheck";
 import { autoGrowTextarea } from "../lib/autoGrow";
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
+
+/** Safe file name for a downloaded note, keeping the image's own extension
+ *  (data-URL mime type or the path's suffix). */
+function noteFileName(title: string, image: string): string {
+  const base = title.replace(/[\\/:*?"<>|]/g, "-").trim().slice(0, 80) || "note";
+  const mime = /^data:image\/([a-z0-9.+-]+)/i.exec(image)?.[1];
+  const ext = mime ? (mime === "jpeg" ? "jpg" : mime === "svg+xml" ? "svg" : mime) : (/\.([a-z0-9]+)(?:[?#]|$)/i.exec(image)?.[1] ?? "png");
+  return `${base}.${ext}`;
+}
+
+/** Bundle every note of a unit into one ZIP download. */
+async function downloadNotesZip(
+  unitLabel: string,
+  notes: { title: string; image: string }[]
+): Promise<void> {
+  const zip = new JSZip();
+  const used = new Set<string>();
+  let n = 0;
+  for (const note of notes) {
+    try {
+      const blob = await (await fetch(note.image)).blob();
+      let name = `${String(++n).padStart(2, "0")} ${noteFileName(note.title, note.image)}`;
+      while (used.has(name)) name = `_${name}`;
+      used.add(name);
+      zip.file(name, blob);
+    } catch {
+      /* unreadable image — leave it out of the bundle */
+    }
+  }
+  const blob = await zip.generateAsync({ type: "blob" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `Notes — ${unitLabel.replace(/[\\/:*?"<>|]/g, "-")}.zip`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
 
 /** Maximum marked attempts per exercise / question session. */
 const EX_MAX_ATTEMPTS = 3;
@@ -2454,6 +2491,7 @@ export function UnitPage({
     );
   }, [lessonQuizAnswers, lessonQuizChecked, unitId, profile.id]);
   const [noteError, setNoteError] = useState<string | null>(null);
+  const [zipping, setZipping] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
   const dragIdRef = useRef<string | null>(null);
   const [editNoteId, setEditNoteId] = useState<string | null>(null);
@@ -4215,6 +4253,24 @@ export function UnitPage({
                       No notes yet — upload an image to get started.
                     </div>
                   )}
+                  {all.length > 1 && (
+                    <button
+                      className="btn ghost notes-upload"
+                      disabled={zipping}
+                      onClick={async () => {
+                        setZipping(true);
+                        try {
+                          await downloadNotesZip(usLabel(u.us), all);
+                        } finally {
+                          setZipping(false);
+                        }
+                      }}
+                      title="Download every note for this unit as one ZIP file"
+                    >
+                      <Icon name="download" size={15} />
+                      {zipping ? "Preparing ZIP…" : `Download all (${all.length})`}
+                    </button>
+                  )}
                   {all.map((n) => (
                     <div
                       key={n.id}
@@ -4330,6 +4386,18 @@ export function UnitPage({
                 </div>
                 {active && (
                   <div className="notes-viewer card">
+                    <div className="notes-viewer-head">
+                      <span className="notes-viewer-title">{active.title}</span>
+                      <a
+                        className="btn ghost sm"
+                        href={active.image}
+                        download={noteFileName(active.title, active.image)}
+                        title="Save this note to your device"
+                      >
+                        <Icon name="download" size={15} />
+                        Download
+                      </a>
+                    </div>
                     <img
                       src={active.image}
                       alt={active.title}
