@@ -1,29 +1,96 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile } from "../types";
 import { isStaff } from "../types";
-import type { Poll } from "../store";
-import { usePolls } from "../store";
+import type { Poll, PollExtras } from "../store";
+import { canVoteInPoll, loadProfiles, pollStatus, usePolls } from "../store";
+import { fetchCloudDirectory, getCachedDirectory, remoteOnlyProfiles } from "../lib/directory";
 import { ConfirmModal } from "../components/Modal";
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 
+const fmtDateTime = (iso: string) =>
+  new Date(iso).toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+/** Local "YYYY-MM-DDTHH:mm" string for datetime-local min= attributes. */
+const localInputValue = (d: Date): string => {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+    d.getHours()
+  )}:${pad(d.getMinutes())}`;
+};
+
 /* ---------- staff: create a poll ---------- */
 
-function CreatePollForm({ profile, onCreate }: { profile: Profile; onCreate: (question: string, options: string[], description?: string) => void }) {
+function CreatePollForm({
+  profile,
+  people,
+  onCreate,
+}: {
+  profile: Profile;
+  people: Profile[];
+  onCreate: (question: string, options: string[], extras: PollExtras) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [description, setDescription] = useState("");
   const [options, setOptions] = useState<string[]>(["", ""]);
+  const [restrict, setRestrict] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState("");
+  const [opensAt, setOpensAt] = useState("");
+  const [closesAt, setClosesAt] = useState("");
 
   const filled = options.map((o) => o.trim()).filter(Boolean);
-  const canSubmit = question.trim().length > 0 && filled.length >= 2;
+
+  const now = Date.now();
+  const opensMs = opensAt ? new Date(opensAt).getTime() : null;
+  const closesMs = closesAt ? new Date(closesAt).getTime() : null;
+  let scheduleError = "";
+  if (closesMs !== null) {
+    if (closesMs <= now) scheduleError = "The closing time must be in the future.";
+    else if (opensMs !== null && closesMs <= opensMs)
+      scheduleError = "The closing time must be after the opening time.";
+  }
+  const scheduled = opensMs !== null && opensMs > now;
+
+  const canSubmit =
+    question.trim().length > 0 &&
+    filled.length >= 2 &&
+    !scheduleError &&
+    (!restrict || selected.size >= 1);
+
+  const visiblePeople = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return people;
+    return people.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.role.toLowerCase().includes(q)
+    );
+  }, [people, search]);
+
+  const togglePerson = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const reset = () => {
     setQuestion("");
     setDescription("");
     setOptions(["", ""]);
+    setRestrict(false);
+    setSelected(new Set());
+    setSearch("");
+    setOpensAt("");
+    setClosesAt("");
     setOpen(false);
   };
 
@@ -42,7 +109,17 @@ function CreatePollForm({ profile, onCreate }: { profile: Profile; onCreate: (qu
       onSubmit={(e) => {
         e.preventDefault();
         if (!canSubmit) return;
-        onCreate(question, filled, description);
+        const extras: PollExtras = {};
+        if (description.trim()) extras.description = description;
+        if (restrict && selected.size)
+          extras.participants = people
+            .filter((p) => selected.has(p.id))
+            .map(({ id, name }) => ({ id, name }));
+        // an opening time that's already past just means "open now"
+        if (opensMs !== null && opensMs > Date.now())
+          extras.opensAt = new Date(opensMs).toISOString();
+        if (closesMs !== null) extras.closesAt = new Date(closesMs).toISOString();
+        onCreate(question, filled, extras);
         reset();
       }}
     >
@@ -107,17 +184,137 @@ function CreatePollForm({ profile, onCreate }: { profile: Profile; onCreate: (qu
           + Add option
         </button>
       </div>
+
+      <div className="field">
+        <label>Who can vote</label>
+        <div className="vote-restrict-row">
+          <label className="vote-restrict-choice">
+            <input
+              type="radio"
+              name="poll-audience"
+              checked={!restrict}
+              onChange={() => setRestrict(false)}
+            />
+            Everyone in the class
+          </label>
+          <label className="vote-restrict-choice">
+            <input
+              type="radio"
+              name="poll-audience"
+              checked={restrict}
+              onChange={() => setRestrict(true)}
+            />
+            Only selected people
+          </label>
+        </div>
+        {restrict && (
+          <div className="vote-picker">
+            <div className="vote-picker-tools">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search people…"
+                aria-label="Search people"
+              />
+              <button
+                type="button"
+                className="btn ghost sm"
+                onClick={() =>
+                  setSelected(
+                    new Set(people.filter((p) => p.role === "Learner").map((p) => p.id))
+                  )
+                }
+              >
+                All learners
+              </button>
+              <button type="button" className="btn ghost sm" onClick={() => setSelected(new Set())}>
+                Clear
+              </button>
+            </div>
+            <div className="vote-picker-list" role="group" aria-label="Choose who may vote">
+              {visiblePeople.length === 0 ? (
+                <p className="vote-hint" style={{ margin: 8 }}>
+                  {people.length === 0
+                    ? "No accounts found yet — people appear here once their accounts have been added or have signed in."
+                    : "No people match your search."}
+                </p>
+              ) : (
+                visiblePeople.map((p) => (
+                  <label key={p.id} className="vote-picker-person">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(p.id)}
+                      onChange={() => togglePerson(p.id)}
+                    />
+                    <span className="vote-picker-name">
+                      {p.name}
+                      {p.id === profile.id ? " (you)" : ""}
+                    </span>
+                    <span className="vote-picker-role">{p.role}</span>
+                  </label>
+                ))
+              )}
+            </div>
+            <p className="vote-hint" style={{ marginTop: 6 }}>
+              {selected.size === 0
+                ? "Pick at least one person — only the people you tick will be able to vote."
+                : `${selected.size} ${selected.size === 1 ? "person" : "people"} selected.`}
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="field">
+        <label>Schedule (optional)</label>
+        <div className="vote-schedule">
+          <div>
+            <label htmlFor="poll-opens" className="vote-schedule-label">
+              Opens
+            </label>
+            <input
+              id="poll-opens"
+              type="datetime-local"
+              value={opensAt}
+              min={localInputValue(new Date())}
+              onChange={(e) => setOpensAt(e.target.value)}
+            />
+          </div>
+          <div>
+            <label htmlFor="poll-closes" className="vote-schedule-label">
+              Closes
+            </label>
+            <input
+              id="poll-closes"
+              type="datetime-local"
+              value={closesAt}
+              min={opensAt || localInputValue(new Date())}
+              onChange={(e) => setClosesAt(e.target.value)}
+            />
+          </div>
+        </div>
+        {scheduleError ? (
+          <p className="vote-hint danger-text" style={{ marginTop: 6 }}>
+            {scheduleError}
+          </p>
+        ) : (
+          <p className="vote-hint" style={{ marginTop: 6 }}>
+            Leave blank to open immediately and close manually. A scheduled poll unlocks itself at
+            the opening time and stops taking votes at the closing time.
+          </p>
+        )}
+      </div>
+
       <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
         <button className="btn primary" type="submit" disabled={!canSubmit}>
-          Open poll
+          {scheduled ? "Schedule poll" : "Open poll"}
         </button>
         <button className="btn ghost" type="button" onClick={reset}>
           Cancel
         </button>
       </div>
       <p className="page-sub" style={{ margin: "10px 0 0", fontSize: 13 }}>
-        Posting as {profile.name} · {profile.role}. Every learner gets one vote and can change it
-        until the poll is closed.
+        Posting as {profile.name} · {profile.role}. Every eligible voter gets one vote and can
+        change it until the poll closes.
       </p>
     </form>
   );
@@ -143,6 +340,10 @@ function PollCard({
   onDelete: () => void;
 }) {
   const [showVoters, setShowVoters] = useState(false);
+  const status = pollStatus(poll);
+  const restricted = !!poll.participants?.length;
+  const isParticipant = !restricted || poll.participants!.some((m) => m.id === profile.id);
+  const iCanVote = canVoteInPoll(poll, profile.id);
   const votes = Object.values(poll.votes);
   const total = votes.length;
   const myVote = poll.votes[profile.id]?.option;
@@ -150,6 +351,14 @@ function PollCard({
   for (const v of votes) counts.set(v.option, (counts.get(v.option) ?? 0) + 1);
   const leading = Math.max(0, ...counts.values());
   const canManage = staff || poll.byId === profile.id;
+
+  const optionTitle = (mine: boolean): string => {
+    if (status === "closed") return "This poll is closed";
+    if (status === "scheduled")
+      return `Voting opens ${poll.opensAt ? fmtDateTime(poll.opensAt) : "later"}`;
+    if (!isParticipant) return "Only the selected participants can vote in this poll";
+    return mine ? "Click to withdraw your vote" : "Click to vote for this option";
+  };
 
   return (
     <div className="card vote-card">
@@ -159,12 +368,24 @@ function PollCard({
           {poll.description && <p className="vote-desc">{poll.description}</p>}
           <div className="vote-meta">
             Started by {poll.by} · {poll.role} · {fmtDate(poll.at)}
+            {status === "scheduled" && poll.opensAt && <> · Opens {fmtDateTime(poll.opensAt)}</>}
+            {status === "open" && poll.closesAt && <> · Closes {fmtDateTime(poll.closesAt)}</>}
+            {status === "closed" && !poll.closed && poll.closesAt && (
+              <> · Closed {fmtDateTime(poll.closesAt)}</>
+            )}
           </div>
         </div>
         <div className="vote-chips">
-          <span className={`chip ${poll.closed ? "none" : "done"}`}>
-            {poll.closed ? "Closed" : "Open"}
+          <span
+            className={`chip ${status === "open" ? "done" : status === "scheduled" ? "sched" : "none"}`}
+          >
+            {status === "open" ? "Open" : status === "scheduled" ? "Scheduled" : "Closed"}
           </span>
+          {restricted && (
+            <span className="chip progress" title="Only selected people can vote in this poll">
+              {poll.participants!.length} invited
+            </span>
+          )}
           <span className="chip progress">
             {total} vote{total === 1 ? "" : "s"}
           </span>
@@ -172,56 +393,78 @@ function PollCard({
       </div>
 
       <div className="vote-options" role="group" aria-label={`Options for: ${poll.question}`}>
-        {poll.options.map((opt) => {
+        {poll.options.map((opt, displayPos) => {
           const n = counts.get(opt.id) ?? 0;
           const pct = total ? Math.round((n / total) * 100) : 0;
           const mine = myVote === opt.id;
           return (
             <button
               key={opt.id}
-              className={`vote-option${mine ? " mine" : ""}`}
-              disabled={!!poll.closed}
+              className={`opt vote-opt${mine ? " selected" : ""}`}
+              disabled={!iCanVote}
               onClick={() => (mine ? onRetract() : onVote(opt.id))}
               aria-pressed={mine}
-              title={
-                poll.closed
-                  ? "This poll is closed"
-                  : mine
-                    ? "Click to withdraw your vote"
-                    : "Click to vote for this option"
-              }
+              title={optionTitle(mine)}
             >
-              <span className="vote-option-row">
-                <span className="vote-option-label">
-                  {mine && (
-                    <span className="ico">
-                      <Icon name="checkCircle" size={16} />
-                    </span>
-                  )}
+              <span className="mark">
+                <Icon name={mine ? "checkCircle" : "circle"} size={17} />
+              </span>
+              <span className="opt-letter">{String.fromCharCode(65 + displayPos)}</span>
+              <span className="vote-opt-main">
+                <span className="vote-opt-label">
                   {opt.label}
                   {mine && <span className="badge">Your vote</span>}
                 </span>
-                <span className="vote-option-count">
-                  {n} · {pct}%
+                <span className={`bar${total && n === leading ? " green" : ""}`}>
+                  <span style={{ width: `${pct}%` }} />
                 </span>
               </span>
-              <span className={`bar${total && n === leading ? " green" : ""}`}>
-                <span style={{ width: `${pct}%` }} />
+              <span className="vote-option-count">
+                {n} · {pct}%
               </span>
             </button>
           );
         })}
       </div>
 
-      {!poll.closed && !myVote && (
+      {status === "scheduled" && (
+        <p className="vote-hint">
+          Voting hasn&rsquo;t opened yet
+          {poll.opensAt ? ` — it opens ${fmtDateTime(poll.opensAt)}.` : "."}
+        </p>
+      )}
+      {status === "open" && !isParticipant && (
+        <p className="vote-hint">
+          Only the {poll.participants!.length} selected participant
+          {poll.participants!.length === 1 ? "" : "s"} can vote in this poll — you can follow the
+          results here.
+        </p>
+      )}
+      {iCanVote && !myVote && (
         <p className="vote-hint">Tap an option to cast your vote — you can change it any time.</p>
+      )}
+
+      {canManage && restricted && (
+        <p className="vote-participants">
+          <strong>Invited voters:</strong> {poll.participants!.map((m) => m.name).join(", ")}
+        </p>
       )}
 
       {canManage && (
         <div className="vote-admin">
-          <button className="btn ghost sm" onClick={() => onSetClosed(!poll.closed)}>
-            {poll.closed ? "Reopen poll" : "Close poll"}
-          </button>
+          {status === "open" ? (
+            <button className="btn ghost sm" onClick={() => onSetClosed(true)}>
+              Close poll
+            </button>
+          ) : status === "scheduled" ? (
+            <button className="btn ghost sm" onClick={() => onSetClosed(false)}>
+              Open now
+            </button>
+          ) : (
+            <button className="btn ghost sm" onClick={() => onSetClosed(false)}>
+              Reopen poll
+            </button>
+          )}
           {staff && total > 0 && (
             <button className="btn ghost sm" onClick={() => setShowVoters((s) => !s)}>
               {showVoters ? "Hide voters" : "Show voters"}
@@ -258,6 +501,37 @@ export function VotingPage({ profile }: { profile: Profile }) {
   const staff = isStaff(profile.role);
   const [confirmDelete, setConfirmDelete] = useState<Poll | null>(null);
 
+  // re-render every 30s so scheduled polls unlock and timed polls close on their own
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const t = window.setInterval(() => setTick((n) => n + 1), 30_000);
+    return () => window.clearInterval(t);
+  }, []);
+
+  // roster for the participant picker — same merge as the People page:
+  // this device's accounts + cloud accounts, with duplicate copies of the
+  // same person (matched by id / ID number / email / name) collapsed
+  const [cloudProfiles, setCloudProfiles] = useState<Profile[]>(
+    () => getCachedDirectory()?.profiles ?? []
+  );
+  useEffect(() => {
+    if (!staff) return;
+    let alive = true;
+    void fetchCloudDirectory().then((d) => {
+      if (alive && d) setCloudProfiles(d.profiles);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [staff]);
+  const people = useMemo(() => {
+    const local = loadProfiles();
+    const remote = remoteOnlyProfiles(local, cloudProfiles);
+    return [...local, ...remote].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+    );
+  }, [cloudProfiles]);
+
   return (
     <>
       <div className="eyebrow">
@@ -266,11 +540,17 @@ export function VotingPage({ profile }: { profile: Profile }) {
       </div>
       <h1 className="page-title">Class voting</h1>
       <p className="page-sub">
-        Vote for an action or person put forward to the class. Each person gets one vote per poll
-        and can change it until the poll is closed. Results are shared with the whole class.
+        Vote for an action or person put forward to the class. Each eligible voter gets one vote
+        per poll and can change it until the poll closes. Results are shared with the whole class.
       </p>
 
-      {staff && <CreatePollForm profile={profile} onCreate={(q, opts, d) => create(profile, q, opts, d)} />}
+      {staff && (
+        <CreatePollForm
+          profile={profile}
+          people={people}
+          onCreate={(q, opts, extras) => create(profile, q, opts, extras)}
+        />
+      )}
 
       {polls.length === 0 ? (
         <div className="callout">

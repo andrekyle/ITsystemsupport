@@ -820,6 +820,12 @@ export interface PollVote {
   at: string;
 }
 
+/** A person invited to vote in a restricted poll (name denormalised for display). */
+export interface PollParticipant {
+  id: string;
+  name: string;
+}
+
 export interface Poll {
   id: string;
   question: string;
@@ -831,24 +837,60 @@ export interface Poll {
   at: string;
   /** closed polls show results only — no further votes accepted */
   closed?: boolean;
+  /** if set (non-empty), only these people may vote — everyone else sees results only */
+  participants?: PollParticipant[];
+  /** ISO timestamp voting opens — before this the poll is "scheduled" and locked */
+  opensAt?: string;
+  /** ISO timestamp voting automatically closes */
+  closesAt?: string;
   /** voter profile id -> their vote */
   votes: Record<string, PollVote>;
+}
+
+export type PollStatus = "scheduled" | "open" | "closed";
+
+/** Live status of a poll: manual close and the schedule window both count. */
+export function pollStatus(p: Poll, now: number = Date.now()): PollStatus {
+  if (p.closed) return "closed";
+  if (p.closesAt && Date.parse(p.closesAt) <= now) return "closed";
+  if (p.opensAt && Date.parse(p.opensAt) > now) return "scheduled";
+  return "open";
+}
+
+/** Whether this profile is allowed to cast a vote (poll open + on the participant list). */
+export function canVoteInPoll(p: Poll, profileId: string, now: number = Date.now()): boolean {
+  if (pollStatus(p, now) !== "open") return false;
+  return !p.participants?.length || p.participants.some((m) => m.id === profileId);
+}
+
+/** Extra settings when opening a poll. */
+export interface PollExtras {
+  description?: string;
+  /** restrict voting to these people (empty/absent = whole class) */
+  participants?: PollParticipant[];
+  /** schedule: when voting opens */
+  opensAt?: string;
+  /** schedule: when voting automatically closes */
+  closesAt?: string;
 }
 
 export function usePolls() {
   const [list, update] = useSharedState<Poll[]>(POLLS_KEY, []);
   const create = useCallback(
-    (author: Profile, question: string, options: string[], description?: string) =>
+    (author: Profile, question: string, options: string[], extras?: PollExtras) =>
       update((fresh) => [
         {
           id: newId(),
           question: question.trim(),
-          ...(description?.trim() ? { description: description.trim() } : {}),
+          ...(extras?.description?.trim() ? { description: extras.description.trim() } : {}),
           options: options.map((label) => ({ id: newId(), label: label.trim() })),
           byId: author.id,
           by: author.name,
           role: author.role,
           at: new Date().toISOString(),
+          ...(extras?.participants?.length ? { participants: extras.participants } : {}),
+          ...(extras?.opensAt ? { opensAt: extras.opensAt } : {}),
+          ...(extras?.closesAt ? { closesAt: extras.closesAt } : {}),
           votes: {},
         },
         ...fresh,
@@ -859,7 +901,9 @@ export function usePolls() {
     (voter: Profile, pollId: string, optionId: string) =>
       update((fresh) =>
         fresh.map((p) =>
-          p.id === pollId && !p.closed && p.options.some((o) => o.id === optionId)
+          p.id === pollId &&
+          canVoteInPoll(p, voter.id) &&
+          p.options.some((o) => o.id === optionId)
             ? {
                 ...p,
                 votes: {
@@ -876,7 +920,7 @@ export function usePolls() {
     (voterId: string, pollId: string) =>
       update((fresh) =>
         fresh.map((p) => {
-          if (p.id !== pollId || p.closed || !p.votes[voterId]) return p;
+          if (p.id !== pollId || pollStatus(p) !== "open" || !p.votes[voterId]) return p;
           const votes = { ...p.votes };
           delete votes[voterId];
           return { ...p, votes };
@@ -886,16 +930,30 @@ export function usePolls() {
   );
   const setClosed = useCallback(
     (pollId: string, closed: boolean) =>
-      update((fresh) => fresh.map((p) => (p.id === pollId ? { ...p, closed } : p))),
+      update((fresh) =>
+        fresh.map((p) => {
+          if (p.id !== pollId) return p;
+          if (closed) return { ...p, closed: true };
+          // reopening: a still-future opensAt would keep it locked and an elapsed
+          // closesAt would instantly re-close it — clear whichever applies
+          const now = Date.now();
+          const next: Poll = { ...p, closed: false };
+          if (next.opensAt && Date.parse(next.opensAt) > now) delete next.opensAt;
+          if (next.closesAt && Date.parse(next.closesAt) <= now) delete next.closesAt;
+          return next;
+        })
+      ),
     [update]
   );
   const remove = useCallback(
     (pollId: string) => update((fresh) => fresh.filter((p) => p.id !== pollId)),
     [update]
   );
-  // open polls first, newest first within each group
+  // open polls first, then scheduled, then closed — newest first within each group
+  const now = Date.now();
+  const rank: Record<PollStatus, number> = { open: 0, scheduled: 1, closed: 2 };
   const polls = [...list].sort(
-    (a, b) => Number(a.closed ?? false) - Number(b.closed ?? false) || b.at.localeCompare(a.at)
+    (a, b) => rank[pollStatus(a, now)] - rank[pollStatus(b, now)] || b.at.localeCompare(a.at)
   );
   return { polls, create, vote, retract, setClosed, remove };
 }
