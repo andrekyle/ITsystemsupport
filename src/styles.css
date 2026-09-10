@@ -12651,11 +12651,6 @@ h2.section-title.howto-heading {
   color: var(--ink-3);
 }
 
-.vote-tile.status.open {
-  background: var(--green-bg);
-  border-color: transparent;
-}
-
 .vote-tile.status.open .vote-tile-value {
   color: var(--green);
 }
@@ -12743,7 +12738,7 @@ h2.section-title.howto-heading {
 }
 
 .vote-voters li::marker {
-  color: var(--azure);
+  color: var(--ink-3);
   font-weight: 600;
 }
 
