@@ -6,6 +6,7 @@ import type { Poll, PollExtras } from "../store";
 import { canVoteInPoll, loadProfiles, pollStatus, usePolls } from "../store";
 import { fetchCloudDirectory, getCachedDirectory, remoteOnlyProfiles } from "../lib/directory";
 import { ConfirmModal } from "../components/Modal";
+import { DateTimePicker } from "../components/DateTimePicker";
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
@@ -18,7 +19,7 @@ const fmtDateTime = (iso: string) =>
     minute: "2-digit",
   });
 
-/** Local "YYYY-MM-DDTHH:mm" string for datetime-local min= attributes. */
+/** Local "YYYY-MM-DDTHH:mm" string — the datetime-local value format the pickers use. */
 const localInputValue = (d: Date): string => {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
@@ -271,24 +272,24 @@ function CreatePollForm({
             <label htmlFor="poll-opens" className="vote-schedule-label">
               Opens
             </label>
-            <input
+            <DateTimePicker
               id="poll-opens"
-              type="datetime-local"
               value={opensAt}
               min={localInputValue(new Date())}
-              onChange={(e) => setOpensAt(e.target.value)}
+              onChange={setOpensAt}
+              placeholder="Straight away"
             />
           </div>
           <div>
             <label htmlFor="poll-closes" className="vote-schedule-label">
               Closes
             </label>
-            <input
+            <DateTimePicker
               id="poll-closes"
-              type="datetime-local"
               value={closesAt}
               min={opensAt || localInputValue(new Date())}
-              onChange={(e) => setClosesAt(e.target.value)}
+              onChange={setClosesAt}
+              placeholder="When you close it"
             />
           </div>
         </div>
