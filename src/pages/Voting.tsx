@@ -29,6 +29,29 @@ const localInputValue = (d: Date): string => {
 
 /* ---------- staff: create a poll ---------- */
 
+/** Half-written poll, kept per user so leaving the page doesn't lose it. */
+type PollDraft = {
+  open: boolean;
+  question: string;
+  description: string;
+  options: string[];
+  restrict: boolean;
+  selected: string[];
+  opensAt: string;
+  closesAt: string;
+};
+
+const draftKey = (profileId: string) => `poll-draft:${profileId}`;
+
+function loadDraft(profileId: string): PollDraft | null {
+  try {
+    const raw = localStorage.getItem(draftKey(profileId));
+    return raw ? (JSON.parse(raw) as PollDraft) : null;
+  } catch {
+    return null;
+  }
+}
+
 function CreatePollForm({
   profile,
   people,
@@ -38,15 +61,44 @@ function CreatePollForm({
   people: Profile[];
   onCreate: (question: string, options: string[], extras: PollExtras) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [question, setQuestion] = useState("");
-  const [description, setDescription] = useState("");
-  const [options, setOptions] = useState<string[]>(["", ""]);
-  const [restrict, setRestrict] = useState(false);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [draft] = useState(() => loadDraft(profile.id));
+  const [open, setOpen] = useState(draft?.open ?? false);
+  const [question, setQuestion] = useState(draft?.question ?? "");
+  const [description, setDescription] = useState(draft?.description ?? "");
+  const [options, setOptions] = useState<string[]>(
+    draft?.options && draft.options.length >= 2 ? draft.options : ["", ""]
+  );
+  const [restrict, setRestrict] = useState(draft?.restrict ?? false);
+  const [selected, setSelected] = useState<Set<string>>(new Set(draft?.selected ?? []));
   const [search, setSearch] = useState("");
-  const [opensAt, setOpensAt] = useState("");
-  const [closesAt, setClosesAt] = useState("");
+  const [opensAt, setOpensAt] = useState(draft?.opensAt ?? "");
+  const [closesAt, setClosesAt] = useState(draft?.closesAt ?? "");
+
+  useEffect(() => {
+    const untouched =
+      !open &&
+      !question &&
+      !description &&
+      options.every((o) => !o) &&
+      !restrict &&
+      !opensAt &&
+      !closesAt;
+    if (untouched) {
+      localStorage.removeItem(draftKey(profile.id));
+      return;
+    }
+    const d: PollDraft = {
+      open,
+      question,
+      description,
+      options,
+      restrict,
+      selected: [...selected],
+      opensAt,
+      closesAt,
+    };
+    localStorage.setItem(draftKey(profile.id), JSON.stringify(d));
+  }, [open, question, description, options, restrict, selected, opensAt, closesAt, profile.id]);
 
   const filled = options.map((o) => o.trim()).filter(Boolean);
 
