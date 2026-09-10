@@ -4212,10 +4212,30 @@ export function UnitPage({
             return (
               <div className="notes-layout">
                 <div className="notes-list">
-                  <button className="btn ghost notes-upload" onClick={() => noteFileRef.current?.click()}>
-                    <Icon name="download" size={15} style={{ transform: "rotate(180deg)" }} />
-                    Upload note
-                  </button>
+                  <div className="notes-tools">
+                    <button className="btn ghost sm" onClick={() => noteFileRef.current?.click()}>
+                      <Icon name="download" size={15} style={{ transform: "rotate(180deg)" }} />
+                      Upload note
+                    </button>
+                    {all.length > 1 && (
+                      <button
+                        className="btn ghost sm"
+                        disabled={zipping}
+                        onClick={async () => {
+                          setZipping(true);
+                          try {
+                            await downloadNotesZip(usLabel(u.us), all);
+                          } finally {
+                            setZipping(false);
+                          }
+                        }}
+                        title="Download every note for this unit as one ZIP file"
+                      >
+                        <Icon name="download" size={15} />
+                        {zipping ? "Preparing ZIP…" : `Download all (${all.length})`}
+                      </button>
+                    )}
+                  </div>
                   <input
                     ref={noteFileRef}
                     type="file"
@@ -4252,24 +4272,6 @@ export function UnitPage({
                     <div className="muted" style={{ padding: "8px 4px" }}>
                       No notes yet — upload an image to get started.
                     </div>
-                  )}
-                  {all.length > 1 && (
-                    <button
-                      className="btn ghost notes-upload"
-                      disabled={zipping}
-                      onClick={async () => {
-                        setZipping(true);
-                        try {
-                          await downloadNotesZip(usLabel(u.us), all);
-                        } finally {
-                          setZipping(false);
-                        }
-                      }}
-                      title="Download every note for this unit as one ZIP file"
-                    >
-                      <Icon name="download" size={15} />
-                      {zipping ? "Preparing ZIP…" : `Download all (${all.length})`}
-                    </button>
                   )}
                   {all.map((n) => (
                     <div

@@ -5297,29 +5297,30 @@ a.plan-ppt:hover {
   outline: none;
 }
 
-.btn.ghost.notes-upload {
-  justify-content: center;
-  padding: 10px 14px;
+/* quiet grey toolbar above the notes list: Upload note · Download all */
+.notes-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin: 0 0 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.notes-tools .btn.ghost.sm {
+  padding: 7px 10px;
   font-size: 13px;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  color: var(--azure-darker);
-  background: transparent;
-  transition: transform 0.1s ease, background 0.12s ease;
+  gap: 7px;
+  color: var(--ink-2);
 }
 
-.btn.ghost.notes-upload:active {
-  transform: scale(0.97);
+.notes-tools .btn.ghost.sm svg {
+  color: var(--ink-3);
 }
 
-.btn.ghost.notes-upload svg {
-  color: var(--azure-darker);
-}
-
-.btn.ghost.notes-upload:hover {
-  border-color: transparent;
-  color: var(--azure-darker);
-  background: var(--azure-light);
+.notes-tools .btn.ghost.sm:hover:not(:disabled) svg {
+  color: var(--ink);
 }
 
 .notes-error {
