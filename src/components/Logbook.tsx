@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { Icon } from "../icons";
+import { DateTimePicker } from "./DateTimePicker";
 import type { LogbookChecklistRow, LogbookSpec, PoeDoc } from "../types";
 import { deleteFile, downloadDoc, uploadFile, userPrefix } from "../lib/files";
 import { autoGrowTextarea } from "../lib/autoGrow";
@@ -192,36 +193,16 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
       onInput={(e) => autoGrowTextarea(e.currentTarget)}
     />
   );
-  const dateField = (k: string) => {
-    const raw = (values[k] as string) ?? "";
-    const label = raw
-      ? new Date(`${raw}T00:00:00`).toLocaleDateString("en-GB", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        })
-      : "";
-    return (
-      <span className="lb-datewrap" title="Pick a date">
-        <Icon name="calendar" size={15} />
-        <span className={`lb-dateview${raw ? "" : " empty"}`}>{label || "Select date"}</span>
-        <input
-          className="lb-datehidden"
-          type="date"
-          value={raw}
-          onChange={(e) => onChange(k, e.target.value)}
-          onClick={(e) => {
-            try {
-              (e.currentTarget as HTMLInputElement).showPicker?.();
-            } catch {
-              /* picker requires user gesture; ignore */
-            }
-          }}
-          aria-label="Pick date"
-        />
-      </span>
-    );
-  };
+  const dateField = (k: string) => (
+    <DateTimePicker
+      className="bare"
+      withTime={false}
+      value={(values[k] as string) ?? ""}
+      onChange={(v) => onChange(k, v)}
+      placeholder="Select date"
+      ariaLabel="Pick date"
+    />
+  );
 
   return (
     <div className="logbook">

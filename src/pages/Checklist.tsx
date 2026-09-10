@@ -1,4 +1,5 @@
 import { Icon } from "../icons";
+import { DateTimePicker } from "../components/DateTimePicker";
 import type { Profile } from "../types";
 import { useChecklist, useSectionD } from "../store";
 import type { ChecklistTick } from "../store";
@@ -215,11 +216,12 @@ export function SectionDPage({ profile }: { profile: Profile }) {
                 placeholder="Name & signature"
                 aria-label={s.label}
               />
-              <input
-                type="date"
+              <DateTimePicker
+                withTime={false}
                 value={fields[`date.${s.id}`] ?? ""}
-                onChange={(e) => setField(`date.${s.id}`, e.target.value)}
-                aria-label={`${s.label} date`}
+                onChange={(v) => setField(`date.${s.id}`, v)}
+                placeholder="Date"
+                ariaLabel={`${s.label} date`}
               />
               <div className="lbl">
                 {s.label}

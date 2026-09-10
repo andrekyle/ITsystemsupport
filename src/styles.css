@@ -3391,56 +3391,6 @@ table.data.kv tr:last-child td {
   line-height: 1.5;
 }
 
-.lb-date {
-  width: auto;
-  min-width: 140px;
-  cursor: pointer;
-}
-
-.lb-datewrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 3px 2px;
-  cursor: pointer;
-  border-bottom: 1px dashed transparent;
-  min-width: 120px;
-}
-
-.lb-datewrap:hover {
-  border-bottom-color: var(--border-2);
-}
-
-.lb-datewrap:focus-within {
-  border-bottom: 1px solid var(--azure);
-}
-
-.lb-datewrap svg {
-  color: var(--azure);
-  flex-shrink: 0;
-}
-
-.lb-dateview {
-  font-size: 13.5px;
-  color: var(--typed-ink);
-  white-space: nowrap;
-}
-
-.lb-dateview.empty {
-  color: var(--ink-3);
-  font-size: 12.5px;
-}
-
-.lb-datehidden {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-  width: 100%;
-  height: 100%;
-}
-
 .lb-daterange {
   display: inline-flex;
   align-items: center;
@@ -3588,15 +3538,6 @@ table.data.kv tr:last-child td {
 .lb-compact th,
 .lb-compact td {
   padding: 8px 8px;
-  font-size: 12.5px;
-}
-
-.lb-compact .lb-datewrap {
-  min-width: 96px;
-  gap: 4px;
-}
-
-.lb-compact .lb-dateview {
   font-size: 12.5px;
 }
 
@@ -7542,15 +7483,16 @@ table.data tr.done-row .text-link {
   }
 
   .att-controls .att-date {
-    flex: 1 1 100%;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    flex: 0 0 auto;
     margin-bottom: 6px;
   }
 
-  .att-controls .att-date input {
-    flex: 1;
+  .att-controls .dtp {
+    flex: 1 1 auto;
+    margin-bottom: 6px;
+  }
+
+  .att-controls .dtp-btn {
     min-height: 40px;
     font-size: 16px;
   }
@@ -7577,16 +7519,6 @@ table.data tr.done-row .text-link {
   gap: 8px;
   font-size: 13px;
   color: var(--text-2);
-}
-
-.att-date input {
-  border: 1px solid var(--border-2);
-  border-radius: 4px;
-  background: var(--surface);
-  color: var(--text-1);
-  padding: 6px 8px;
-  font-family: inherit;
-  font-size: 13px;
 }
 
 .att-note {
@@ -12824,6 +12756,10 @@ h2.section-title.howto-heading {
   min-width: 272px;
 }
 
+.dtp.date-only {
+  min-width: 220px;
+}
+
 .dtp-btn {
   display: inline-flex;
   align-items: center;
@@ -12891,7 +12827,8 @@ h2.section-title.howto-heading {
   color: var(--ink);
 }
 
-/* popover shares the custom select's glass panel */
+/* popover shares the custom select's glass panel; it is app UI, so it keeps the
+   app font even inside Arial documents like the registration form */
 .dtp-panel {
   position: absolute;
   z-index: 60;
@@ -12899,6 +12836,10 @@ h2.section-title.howto-heading {
   left: 0;
   width: 308px;
   padding: 12px;
+  font-family: "Segoe UI", "Helvetica Neue", Helvetica, "Lucida Grande", Arial, Ubuntu, Cantarell, "Fira Sans", sans-serif;
+  font-weight: 400;
+  line-height: normal;
+  text-align: left;
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   backdrop-filter: blur(14px) saturate(1.4);
   -webkit-backdrop-filter: blur(14px) saturate(1.4);
@@ -12916,6 +12857,12 @@ h2.section-title.howto-heading {
     0 0 0 1px rgba(255, 255, 255, 0.04),
     0 10px 38px rgba(0, 0, 0, 0.5),
     0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* near the right edge of the screen the panel hangs from the field's right side */
+.dtp-panel.align-right {
+  left: auto;
+  right: 0;
 }
 
 .dtp-head {
@@ -13061,5 +13008,135 @@ h2.section-title.howto-heading {
 .dtp-foot .btn.sm {
   height: 32px;
   padding: 0 12px;
+}
+
+/* bare: lives inside document cells (logbook, registration form) — no field
+   chrome, inherits the document's type; a dashed underline appears on hover */
+.dtp.bare {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dtp.bare .dtp-btn {
+  gap: 6px;
+  padding: 3px 24px 3px 3px;
+  border: 0;
+  border-bottom: 1px dashed transparent;
+  border-radius: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+}
+
+.dtp.bare .dtp-btn:hover {
+  border-bottom-color: var(--border-2);
+}
+
+.dtp.bare .dtp-btn.open,
+.dtp.bare .dtp-btn:focus-visible {
+  border-bottom: 1px solid var(--azure);
+}
+
+.dtp.bare .dtp-ico svg {
+  width: 15px;
+  height: 15px;
+}
+
+.dtp.bare .dtp-clear {
+  right: 0;
+  width: 22px;
+  height: 22px;
+}
+
+/* logbook: typed values in the document's ink, like its other fields */
+.logbook .dtp.bare .dtp-value {
+  font-size: 13.5px;
+  color: var(--typed-ink);
+}
+
+.logbook .dtp.bare .dtp-btn.empty .dtp-value {
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+.lb-compact .dtp.bare .dtp-value {
+  font-size: 12.5px;
+}
+
+/* registration form cell: same 11px Arial as .srf-input, black on paper */
+.srf-cell .dtp {
+  width: 100%;
+}
+
+.srf-cell .dtp.bare .dtp-btn {
+  padding: 3px 24px 3px 5px;
+  color: #000;
+}
+
+.srf-cell .dtp.bare .dtp-btn.open,
+.srf-cell .dtp.bare .dtp-btn:focus-visible {
+  border-bottom: 0;
+  background: #fff8d8;
+}
+
+.srf-cell .dtp.bare .dtp-ico svg {
+  width: 12px;
+  height: 12px;
+}
+
+.srf-cell .dtp-clear {
+  color: #616161;
+}
+
+/* Section D declaration: matches the name input beside it */
+.decl-sign .dtp {
+  min-width: 0;
+}
+
+.decl-sign .dtp-btn {
+  padding: 7px 30px 7px 9px;
+  border-color: var(--border-2);
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+.decl-sign .dtp-ico svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* attendance register: compact control beside its label */
+.att-controls .dtp {
+  min-width: 0;
+}
+
+.att-controls .dtp-btn {
+  padding: 6px 10px;
+  border-color: var(--border-2);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.att-controls .dtp-ico svg {
+  width: 15px;
+  height: 15px;
+}
+
+@media print {
+  .dtp-ico,
+  .dtp-clear,
+  .dtp-panel {
+    display: none !important;
+  }
+  .dtp-btn {
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: inherit !important;
+  }
+  /* placeholders such as "Select date" stay off the paper */
+  .dtp-btn.empty .dtp-value {
+    visibility: hidden;
+  }
 }
 

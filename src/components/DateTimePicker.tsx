@@ -10,10 +10,12 @@ const MINUTES = Array.from({ length: 12 }, (_, i) => ({ value: pad(i * 5), label
 const DOW = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
 /**
- * Themed stand-in for <input type="datetime-local">. The native popup can't
- * be styled (its highlights follow the OS), so this draws the calendar and
- * time in the app's own colours. Value is the same local
- * "YYYY-MM-DDTHH:mm" string the native input produces.
+ * Themed stand-in for <input type="datetime-local"> (and, with withTime
+ * off, <input type="date">). The native popups can't be styled — their
+ * highlights follow the OS — so this draws the calendar and time in the
+ * app's own colours. Every calendar on the platform uses this component.
+ * Value is the same local "YYYY-MM-DDTHH:mm" / "YYYY-MM-DD" string the
+ * native inputs produce.
  */
 export function DateTimePicker({
   id,
@@ -21,20 +23,31 @@ export function DateTimePicker({
   min,
   onChange,
   placeholder = "Not set",
+  withTime = true,
+  clearable = true,
+  className,
+  ariaLabel,
 }: {
   id?: string;
   value: string;
-  /** earliest allowed moment, "YYYY-MM-DDTHH:mm" — earlier days are greyed out */
+  /** earliest allowed moment — earlier days are greyed out */
   min?: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  /** false = date only ("YYYY-MM-DD"), no time row */
+  withTime?: boolean;
+  /** false = a value is required, so no clear × or Clear button */
+  clearable?: boolean;
+  /** "bare" drops the field chrome for use inside document cells */
+  className?: string;
+  ariaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
 
   const day = value.slice(0, 10);
-  const time = value.slice(11, 16);
+  const time = withTime ? value.slice(11, 16) : "";
   // remembers the chosen time while no day has been picked yet
   const [stagedTime, setStagedTime] = useState(time || "09:00");
   const [hh, mm] = (time || stagedTime).split(":");
@@ -47,10 +60,14 @@ export function DateTimePicker({
     const d = value ? new Date(value) : new Date();
     return { y: d.getFullYear(), m: d.getMonth() };
   });
+  // panel is 308px wide; hang it from the right when it would leave the screen
+  const [alignRight, setAlignRight] = useState(false);
 
   const openPanel = () => {
     const d = value ? new Date(value) : new Date();
     setView({ y: d.getFullYear(), m: d.getMonth() });
+    const rect = rootRef.current?.getBoundingClientRect();
+    setAlignRight(!!rect && rect.left + 308 > window.innerWidth - 12 && rect.right - 308 > 0);
     setOpen(true);
   };
 
@@ -82,25 +99,35 @@ export function DateTimePicker({
       return { y: d.getFullYear(), m: d.getMonth() };
     });
 
-  const pickDay = (iso: string) => onChange(`${iso}T${hh}:${mm}`);
+  // date-only pickers have nothing left to choose once a day is tapped
+  const pickDay = (iso: string) => {
+    onChange(withTime ? `${iso}T${hh}:${mm}` : iso);
+    if (!withTime) setOpen(false);
+  };
 
   const pickTime = (h: string, m: string) => {
     setStagedTime(`${h}:${m}`);
     onChange(`${day || firstAllowedDay}T${h}:${m}`);
   };
 
-  // same shape as the header's session clock: locale date + 24h time
-  const label = value
-    ? `${new Date(value).toLocaleDateString(undefined, {
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })}, ${hh}:${mm}`
-    : placeholder;
+  // same shape as the header's session clock: locale date (+ 24h time)
+  const label = !value
+    ? placeholder
+    : withTime
+      ? `${new Date(value).toLocaleDateString(undefined, {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })}, ${hh}:${mm}`
+      : new Date(`${day}T00:00:00`).toLocaleDateString(undefined, {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
 
   return (
-    <div className="dtp" ref={rootRef}>
+    <div className={`dtp${withTime ? "" : " date-only"}${className ? ` ${className}` : ""}`} ref={rootRef}>
       <button
         type="button"
         id={id}
@@ -108,6 +135,7 @@ export function DateTimePicker({
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
+        aria-label={ariaLabel}
         onClick={() => (open ? setOpen(false) : openPanel())}
       >
         <span className="dtp-ico" aria-hidden="true">
@@ -115,11 +143,11 @@ export function DateTimePicker({
         </span>
         <span className="dtp-value">{label}</span>
       </button>
-      {value && (
+      {value && clearable && (
         <button
           type="button"
           className="dtp-clear"
-          aria-label="Clear date and time"
+          aria-label={withTime ? "Clear date and time" : "Clear date"}
           onClick={() => onChange("")}
         >
           <Icon name="close" size={14} />
@@ -127,7 +155,12 @@ export function DateTimePicker({
       )}
 
       {open && (
-        <div className="dtp-panel" role="dialog" id={panelId} aria-label="Choose a date and time">
+        <div
+          className={`dtp-panel${alignRight ? " align-right" : ""}`}
+          role="dialog"
+          id={panelId}
+          aria-label="Choose a date and time"
+        >
           <div className="dtp-head">
             <button
               type="button"
@@ -190,41 +223,45 @@ export function DateTimePicker({
             })}
           </div>
 
-          <div className="dtp-time">
-            <span className="dtp-time-label">
-              <Icon name="clock" size={15} />
-              Time
-            </span>
-            <Select
-              className="dtp-select"
-              ariaLabel="Hour"
-              value={hh}
-              options={HOURS}
-              onChange={(h) => pickTime(h, mm)}
-            />
-            <span className="dtp-colon" aria-hidden="true">
-              :
-            </span>
-            <Select
-              className="dtp-select"
-              ariaLabel="Minutes"
-              value={mm}
-              options={MINUTES}
-              onChange={(m) => pickTime(hh, m)}
-            />
-          </div>
+          {withTime && (
+            <div className="dtp-time">
+              <span className="dtp-time-label">
+                <Icon name="clock" size={15} />
+                Time
+              </span>
+              <Select
+                className="dtp-select"
+                ariaLabel="Hour"
+                value={hh}
+                options={HOURS}
+                onChange={(h) => pickTime(h, mm)}
+              />
+              <span className="dtp-colon" aria-hidden="true">
+                :
+              </span>
+              <Select
+                className="dtp-select"
+                ariaLabel="Minutes"
+                value={mm}
+                options={MINUTES}
+                onChange={(m) => pickTime(hh, m)}
+              />
+            </div>
+          )}
 
           <div className="dtp-foot">
-            <button
-              type="button"
-              className="btn ghost sm"
-              onClick={() => {
-                onChange("");
-                setOpen(false);
-              }}
-            >
-              Clear
-            </button>
+            {clearable && (
+              <button
+                type="button"
+                className="btn ghost sm"
+                onClick={() => {
+                  onChange("");
+                  setOpen(false);
+                }}
+              >
+                Clear
+              </button>
+            )}
             <button
               type="button"
               className="btn ghost sm"

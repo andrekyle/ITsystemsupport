@@ -11,6 +11,7 @@ import { logAudit } from "../lib/audit";
 import { Icon } from "../icons";
 import { ConfirmModal } from "../components/Modal";
 import { FitSheet } from "../components/FitSheet";
+import { DateTimePicker } from "../components/DateTimePicker";
 
 /**
  * Attendance Register — exact replica of the Eruditio paper form.
@@ -616,10 +617,16 @@ export function AttendancePage({
       </p>
 
       <div className="att-controls no-print">
-        <label className="att-date">
-          Session date{" "}
-          <input type="date" value={dateIso} onChange={(e) => e.target.value && setDateIso(e.target.value)} />
+        <label className="att-date" htmlFor="att-session-date">
+          Session date
         </label>
+        <DateTimePicker
+          id="att-session-date"
+          withTime={false}
+          clearable={false}
+          value={dateIso}
+          onChange={(v) => v && setDateIso(v)}
+        />
         <button className="btn ghost sm" onClick={() => void refresh()}>
           <Icon name="trend" size={15} /> Refresh
         </button>

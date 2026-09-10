@@ -4,6 +4,7 @@ import type { Profile, RegistrationForm, Route } from "../types";
 import { updateProfile } from "../store";
 import { autoGrowTextarea } from "../lib/autoGrow";
 import { FitSheet } from "../components/FitSheet";
+import { DateTimePicker } from "../components/DateTimePicker";
 
 /**
  * Eruditio Student Registration Form — laid out to match the paper form
@@ -764,12 +765,16 @@ function TF({
 }) {
   return (
     <td className="srf-cell" style={w ? { width: w } : undefined}>
-      <input
-        className="srf-input"
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
+      {type === "date" ? (
+        <DateTimePicker className="bare" withTime={false} value={value} onChange={onChange} placeholder="" />
+      ) : (
+        <input
+          className="srf-input"
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      )}
     </td>
   );
 }
