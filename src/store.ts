@@ -803,6 +803,103 @@ export function useQaThreads() {
   return { threads, ask, reply, toggleResolved, editQuestion, editReply, remove };
 }
 
+/* ---------- class voting (polls: vote for an action or person) ---------- */
+
+const POLLS_KEY = "itss.polls.shared";
+
+export interface PollOption {
+  id: string;
+  label: string;
+}
+
+/** One profile's vote in a poll (one vote per profile, changeable while open). */
+export interface PollVote {
+  /** id of the chosen option */
+  option: string;
+  by: string;
+  at: string;
+}
+
+export interface Poll {
+  id: string;
+  question: string;
+  description?: string;
+  options: PollOption[];
+  byId: string;
+  by: string;
+  role: Role;
+  at: string;
+  /** closed polls show results only — no further votes accepted */
+  closed?: boolean;
+  /** voter profile id -> their vote */
+  votes: Record<string, PollVote>;
+}
+
+export function usePolls() {
+  const [list, update] = useSharedState<Poll[]>(POLLS_KEY, []);
+  const create = useCallback(
+    (author: Profile, question: string, options: string[], description?: string) =>
+      update((fresh) => [
+        {
+          id: newId(),
+          question: question.trim(),
+          ...(description?.trim() ? { description: description.trim() } : {}),
+          options: options.map((label) => ({ id: newId(), label: label.trim() })),
+          byId: author.id,
+          by: author.name,
+          role: author.role,
+          at: new Date().toISOString(),
+          votes: {},
+        },
+        ...fresh,
+      ]),
+    [update]
+  );
+  const vote = useCallback(
+    (voter: Profile, pollId: string, optionId: string) =>
+      update((fresh) =>
+        fresh.map((p) =>
+          p.id === pollId && !p.closed && p.options.some((o) => o.id === optionId)
+            ? {
+                ...p,
+                votes: {
+                  ...p.votes,
+                  [voter.id]: { option: optionId, by: voter.name, at: new Date().toISOString() },
+                },
+              }
+            : p
+        )
+      ),
+    [update]
+  );
+  const retract = useCallback(
+    (voterId: string, pollId: string) =>
+      update((fresh) =>
+        fresh.map((p) => {
+          if (p.id !== pollId || p.closed || !p.votes[voterId]) return p;
+          const votes = { ...p.votes };
+          delete votes[voterId];
+          return { ...p, votes };
+        })
+      ),
+    [update]
+  );
+  const setClosed = useCallback(
+    (pollId: string, closed: boolean) =>
+      update((fresh) => fresh.map((p) => (p.id === pollId ? { ...p, closed } : p))),
+    [update]
+  );
+  const remove = useCallback(
+    (pollId: string) => update((fresh) => fresh.filter((p) => p.id !== pollId)),
+    [update]
+  );
+  // open polls first, newest first within each group
+  const polls = [...list].sort(
+    (a, b) => Number(a.closed ?? false) - Number(b.closed ?? false) || b.at.localeCompare(a.at)
+  );
+  return { polls, create, vote, retract, setClosed, remove };
+}
+
 /* ---------- direct chat (1-to-1 conversations, database-enforced privacy) --------- */
 
 /** Deterministic profile-pair key — same value regardless of which side asks.

@@ -24,6 +24,7 @@ import { TrackerReportPage } from "./pages/TrackerReport";
 import { LearnFlowPage } from "./pages/LearnFlow";
 import { ReportsPage } from "./pages/Reports";
 import { HowToPage } from "./pages/HowTo";
+import { VotingPage } from "./pages/Voting";
 import { cloudEnabled, supabase } from "./lib/supabase";
 import { installSync, startSync, stopSync, wipeLocalData } from "./lib/sync";
 import { logAudit } from "./lib/audit";
@@ -49,6 +50,7 @@ const VALID_PAGES = new Set([
   "checklist",
   "sectiond",
   "attendance",
+  "voting",
   "compliance",
   "analytics",
   "community",
@@ -181,6 +183,7 @@ function Shell({
             {route.page === "attendance" && (
               <AttendancePage profile={profile} onUpdateProfile={onUpdateProfile} />
             )}
+            {route.page === "voting" && <VotingPage profile={profile} />}
             {route.page === "compliance" && (
               <CompliancePage profile={profile} progress={state} navigate={navigate} />
             )}

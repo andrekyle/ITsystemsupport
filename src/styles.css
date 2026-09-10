@@ -12542,3 +12542,130 @@ h2.section-title.howto-heading {
     flex-basis: 100%;
   }
 }
+
+/* ---------- Class Voting (polls) ---------- */
+
+.vote-card {
+  margin-bottom: 14px;
+}
+
+.vote-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.vote-question {
+  font-size: 16.5px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.vote-desc {
+  margin: 0 0 6px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.vote-meta {
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+.vote-chips {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.vote-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vote-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-1);
+  font: inherit;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.vote-option:hover:not(:disabled) {
+  border-color: var(--azure);
+  box-shadow: 0 1.6px 3.6px rgba(0, 0, 0, 0.1);
+}
+
+.vote-option:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.vote-option.mine {
+  border-color: var(--green);
+}
+
+.vote-option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+
+.vote-option-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.vote-option-label .ico {
+  display: inline-flex;
+  color: var(--green);
+}
+
+.vote-option-count {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.vote-hint {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+.vote-admin {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.btn.ghost.danger-text {
+  color: var(--red);
+}
+
+.vote-voters {
+  margin: 10px 0 0;
+  padding: 0 0 0 18px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-2);
+}

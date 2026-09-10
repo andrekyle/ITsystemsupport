@@ -90,6 +90,7 @@ export function Sidebar({ collapsed, route, progress, profile, navigate }: Props
       : []),
     { page: "calendar" as const, icon: "calendar", label: "Training Calendar" },
     { page: "attendance" as const, icon: "clipboard", label: "Attendance Register" },
+    { page: "voting" as const, icon: "chart", label: "Class Voting" },
     { page: "assessments" as const, icon: "clipboard", label: "Assessments" },
     { page: "deliverables" as const, icon: "checklist", label: "Deliverables" },
     { page: "resources" as const, icon: "globe", label: "Resources" },
