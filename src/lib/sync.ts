@@ -29,6 +29,14 @@ function isShared(key: string) {
 let userId: string | null = null;
 let hydrating = false;
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
+// the untouched setter, captured before installSync() wraps it
+const rawSet = localStorage.setItem.bind(localStorage);
+
+/** Store a value that was just pulled FROM the cloud without echoing it back
+ *  up — an echo could land after someone else's newer save and undo it. */
+export function writeFromCloud(key: string, value: string) {
+  rawSet(key, value);
+}
 
 function syncable(key: string) {
   return key.startsWith(PREFIX) && !LOCAL_ONLY.has(key);
@@ -92,10 +100,9 @@ export async function flushKey(key: string): Promise<void> {
  * pushes are no-ops until a user id is set.
  */
 export function installSync() {
-  const set = localStorage.setItem.bind(localStorage);
   const remove = localStorage.removeItem.bind(localStorage);
   localStorage.setItem = (key: string, value: string) => {
-    set(key, value);
+    rawSet(key, value);
     if (syncable(key)) queue(key, value);
   };
   localStorage.removeItem = (key: string) => {

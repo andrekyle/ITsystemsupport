@@ -3,7 +3,7 @@ import type { EnrolmentInfo, PoeDoc, Profile, ProgressState, Role, UnitActivity,
 import { UNIT_ACTIVITIES } from "./types";
 import { MODULES, POE_SECTIONS } from "./data/course";
 import { cloudEnabled, supabase } from "./lib/supabase";
-import { flushKey } from "./lib/sync";
+import { flushKey, writeFromCloud } from "./lib/sync";
 import { logAudit } from "./lib/audit";
 
 const PROFILES_KEY = "itss.profiles";
@@ -874,11 +874,77 @@ export interface PollExtras {
   closesAt?: string;
 }
 
+/** Freshest shared poll list from the cloud (null when offline / local-only). */
+async function pullPolls(): Promise<Poll[] | null> {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from("shared_state")
+      .select("value")
+      .eq("key", POLLS_KEY)
+      .maybeSingle();
+    if (error) return null;
+    if (!data?.value) return [];
+    const list = JSON.parse(data.value) as Poll[];
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Polls are one shared list that every device writes back whole, so a change
+ * must always be applied to the freshest cloud copy — never to whatever this
+ * device last saw — or one stale save would erase other people's polls and
+ * votes. Every mutation therefore pulls, applies, saves and pushes at once,
+ * and the list is re-pulled every few seconds while the page is open.
+ */
 export function usePolls() {
-  const [list, update] = useSharedState<Poll[]>(POLLS_KEY, []);
+  const [list, setList] = useState<Poll[]>(() => read<Poll[]>(POLLS_KEY, []));
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === POLLS_KEY) setList(read<Poll[]>(POLLS_KEY, []));
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  // live refresh: on mount, every 5s, and whenever the tab regains focus
+  useEffect(() => {
+    let alive = true;
+    const refresh = async () => {
+      if (document.visibilityState === "hidden") return;
+      const cloud = await pullPolls();
+      if (!alive || !cloud) return;
+      const json = JSON.stringify(cloud);
+      if (json !== localStorage.getItem(POLLS_KEY)) {
+        writeFromCloud(POLLS_KEY, json);
+        setList(cloud);
+      }
+    };
+    void refresh();
+    const t = window.setInterval(() => void refresh(), 5000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      alive = false;
+      window.clearInterval(t);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
+
+  const mutate = useCallback(async (updater: (fresh: Poll[]) => Poll[]): Promise<Poll[]> => {
+    const base = (await pullPolls()) ?? read<Poll[]>(POLLS_KEY, []);
+    const next = updater(base);
+    write(POLLS_KEY, next);
+    setList(next);
+    await flushKey(POLLS_KEY);
+    return next;
+  }, []);
+
   const create = useCallback(
     (author: Profile, question: string, options: string[], extras?: PollExtras) =>
-      update((fresh) => [
+      mutate((fresh) => [
         {
           id: newId(),
           question: question.trim(),
@@ -895,11 +961,11 @@ export function usePolls() {
         },
         ...fresh,
       ]),
-    [update]
+    [mutate]
   );
   const vote = useCallback(
-    (voter: Profile, pollId: string, optionId: string) =>
-      update((fresh) =>
+    async (voter: Profile, pollId: string, optionId: string) => {
+      const cast = (fresh: Poll[]) =>
         fresh.map((p) =>
           p.id === pollId &&
           canVoteInPoll(p, voter.id) &&
@@ -912,13 +978,19 @@ export function usePolls() {
                 },
               }
             : p
-        )
-      ),
-    [update]
+        );
+      await mutate(cast);
+      // a classmate saving in the same instant can overwrite this vote — check it landed
+      const check = await pullPolls();
+      if (check && check.find((p) => p.id === pollId)?.votes[voter.id]?.option !== optionId) {
+        await mutate(cast);
+      }
+    },
+    [mutate]
   );
   const retract = useCallback(
     (voterId: string, pollId: string) =>
-      update((fresh) =>
+      mutate((fresh) =>
         fresh.map((p) => {
           if (p.id !== pollId || pollStatus(p) !== "open" || !p.votes[voterId]) return p;
           const votes = { ...p.votes };
@@ -926,11 +998,11 @@ export function usePolls() {
           return { ...p, votes };
         })
       ),
-    [update]
+    [mutate]
   );
   const setClosed = useCallback(
     (pollId: string, closed: boolean) =>
-      update((fresh) =>
+      mutate((fresh) =>
         fresh.map((p) => {
           if (p.id !== pollId) return p;
           if (closed) return { ...p, closed: true };
@@ -943,11 +1015,11 @@ export function usePolls() {
           return next;
         })
       ),
-    [update]
+    [mutate]
   );
   const remove = useCallback(
-    (pollId: string) => update((fresh) => fresh.filter((p) => p.id !== pollId)),
-    [update]
+    (pollId: string) => mutate((fresh) => fresh.filter((p) => p.id !== pollId)),
+    [mutate]
   );
   // open polls first, then scheduled, then closed — newest first within each group
   const now = Date.now();
