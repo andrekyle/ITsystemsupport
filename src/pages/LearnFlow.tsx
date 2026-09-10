@@ -14,29 +14,6 @@ const STEPS = [
   "Completion",
 ];
 
-function Chain() {
-  return (
-    <span className="lf-chain">
-      {STEPS.map((s, i) => {
-        const last = i === STEPS.length - 1;
-        return (
-          <span key={s} className="lf-seg">
-            <span className={`lf-step${last ? " last" : ""}`}>
-              <span className="lf-num">
-                {last ? <Icon name="check" size={15} /> : String(i + 1).padStart(2, "0")}
-              </span>
-              {s}
-            </span>
-            <svg className="lf-arrow" viewBox="0 0 44 24" aria-hidden="true">
-              <path d="M2 12h38M33.5 5.5 40 12l-6.5 6.5" />
-            </svg>
-          </span>
-        );
-      })}
-    </span>
-  );
-}
-
 export function LearnFlowPage() {
   return (
     <div className="learnflow-page">
@@ -45,15 +22,25 @@ export function LearnFlowPage() {
         <br />
         with <span className="lf-brand">LearnFlow</span>.
       </h1>
-      {/* the journey glides past as one continuous loop — the chain is drawn
-          twice so the animation can wrap seamlessly */}
+      {/* fixed number of pills per row; CSS hides the arrow on each row's last
+          pill so no arrow ever dangles at a line end */}
       <div className="lf-flow" aria-label={`The LearnFlow journey: ${STEPS.join(", ")}`}>
-        <div className="lf-track">
-          <Chain />
-          <span aria-hidden="true" className="lf-dup">
-            <Chain />
-          </span>
-        </div>
+        {STEPS.map((s, i) => {
+          const last = i === STEPS.length - 1;
+          return (
+            <span key={s} className="lf-seg">
+              <span className={`lf-step${last ? " last" : ""}`}>
+                <span className="lf-num">
+                  {last ? <Icon name="check" size={16} /> : String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="lf-label">{s}</span>
+              </span>
+              <svg className="lf-arrow" viewBox="0 0 44 24" aria-hidden="true">
+                <path d="M2 12h38M33.5 5.5 40 12l-6.5 6.5" />
+              </svg>
+            </span>
+          );
+        })}
       </div>
     </div>
   );

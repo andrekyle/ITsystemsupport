@@ -11235,15 +11235,14 @@ h2.section-title.howto-heading {
 /* ============ LearnFlow (super user) ============ */
 
 .learnflow-page {
-  margin: 8vh 0 40px;
-  padding: 0;
+  max-width: 1240px;
+  margin: 8vh auto 40px;
+  padding: 0 8px;
   text-align: center;
 }
 
 .lf-title {
-  max-width: 1240px;
-  margin: 0 auto 56px;
-  padding: 0 8px;
+  margin: 0 0 56px;
   font-size: clamp(44px, 6.5vw, 84px);
   line-height: 1.08;
   font-weight: 800;
@@ -11257,48 +11256,30 @@ h2.section-title.howto-heading {
   color: transparent;
 }
 
-/* The journey is one endless strip gliding left; both ends fade out so it
-   never shows a cut-off pill or a dangling arrow. Hover to pause. */
+/* Four equal pills per row (three, two, one on smaller screens). Every cell
+   keeps room for its arrow so pills line up; the arrow is simply hidden on
+   each row's last pill and on the final step. */
 .lf-flow {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  padding: 16px 0;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-}
-
-.lf-track {
   display: flex;
-  width: max-content;
-  animation: lf-glide 52s linear infinite;
+  flex-wrap: wrap;
+  justify-content: center;
+  row-gap: 18px;
 }
 
-.lf-flow:hover .lf-track {
-  animation-play-state: paused;
-}
-
-@keyframes lf-glide {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-.lf-chain,
-.lf-dup,
 .lf-seg {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  flex: 0 0 25%;
+  min-width: 0;
 }
 
 .lf-step {
+  flex: 1;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 26px 10px 12px;
+  gap: 10px;
+  padding: 11px 20px 11px 18px;
   border-radius: 999px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -11307,7 +11288,6 @@ h2.section-title.howto-heading {
   font-weight: 650;
   letter-spacing: -0.01em;
   color: var(--ink);
-  white-space: nowrap;
 }
 
 [data-theme="dark"] .lf-step {
@@ -11319,16 +11299,19 @@ h2.section-title.howto-heading {
 .lf-num {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--azure-light);
-  color: var(--azure);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  width: 26px;
   flex: none;
+  color: var(--azure);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.lf-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .lf-step.last {
@@ -11339,14 +11322,13 @@ h2.section-title.howto-heading {
 }
 
 .lf-step.last .lf-num {
-  background: rgba(255, 255, 255, 0.22);
   color: #fff;
 }
 
 .lf-arrow {
-  width: 44px;
-  height: 24px;
-  margin: 0 12px;
+  width: 40px;
+  height: 22px;
+  margin: 0 8px;
   flex: none;
   fill: none;
   stroke: var(--azure);
@@ -11356,21 +11338,46 @@ h2.section-title.howto-heading {
   opacity: 0.65;
 }
 
-/* no motion: a single still chain the reader can scroll sideways */
-@media (prefers-reduced-motion: reduce) {
-  .lf-track {
-    animation: none;
+.lf-seg:nth-child(4n) .lf-arrow,
+.lf-seg:last-child .lf-arrow {
+  visibility: hidden;
+}
+
+@media (max-width: 999px) {
+  .lf-seg {
+    flex-basis: 33.333%;
   }
-  .lf-flow {
-    overflow-x: auto;
-    -webkit-mask-image: none;
-    mask-image: none;
+  .lf-seg:nth-child(4n) .lf-arrow {
+    visibility: visible;
   }
-  .lf-dup {
-    display: none;
+  .lf-seg:nth-child(3n) .lf-arrow,
+  .lf-seg:last-child .lf-arrow {
+    visibility: hidden;
   }
 }
 
+@media (max-width: 639px) {
+  .lf-seg {
+    flex-basis: 50%;
+  }
+  .lf-seg:nth-child(3n) .lf-arrow,
+  .lf-seg:nth-child(4n) .lf-arrow {
+    visibility: visible;
+  }
+  .lf-seg:nth-child(2n) .lf-arrow,
+  .lf-seg:last-child .lf-arrow {
+    visibility: hidden;
+  }
+}
+
+@media (max-width: 419px) {
+  .lf-seg {
+    flex-basis: 100%;
+  }
+  .lf-arrow {
+    display: none;
+  }
+}
 
 /* ============ Mobile content polish (kept last so it wins the cascade) ============ */
 
