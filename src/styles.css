@@ -12689,11 +12689,17 @@ h2.section-title.howto-heading {
 
 .vote-voters {
   margin: 10px 0 0;
-  padding: 0 0 0 18px;
+  padding: 0 0 0 26px;
   font-size: 15.5px;
   font-weight: 350;
   line-height: 1.7;
   color: var(--ink-2);
+  list-style: decimal;
+}
+
+.vote-voters li::marker {
+  color: var(--azure);
+  font-weight: 600;
 }
 
 /* scheduled-poll chip */

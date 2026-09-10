@@ -530,7 +530,7 @@ function PollCard({
       )}
 
       {staff && showVoters && total > 0 && (
-        <ul className="vote-voters">
+        <ol className="vote-voters">
           {Object.entries(poll.votes)
             .sort(([, a], [, b]) => a.at.localeCompare(b.at))
             .map(([pid, v]) => {
@@ -541,7 +541,7 @@ function PollCard({
                 </li>
               );
             })}
-        </ul>
+        </ol>
       )}
     </div>
   );
