@@ -12617,10 +12617,55 @@ h2.section-title.howto-heading {
   color: var(--ink-3);
 }
 
-.vote-chips {
+/* big status / count tiles across the top of every poll card */
+.vote-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.vote-tile {
   display: flex;
-  gap: 6px;
-  flex-shrink: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-height: 96px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.vote-tile-value {
+  font-size: 34px;
+  font-weight: 650;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.vote-tile-label {
+  font-size: 14px;
+  font-weight: 350;
+  color: var(--ink-3);
+}
+
+.vote-tile.status.open {
+  background: var(--green-bg);
+  border-color: transparent;
+}
+
+.vote-tile.status.open .vote-tile-value {
+  color: var(--green);
+}
+
+.vote-tile.status.scheduled .vote-tile-value {
+  color: var(--amber);
+}
+
+.vote-tile.status.closed .vote-tile-value {
+  color: var(--ink-3);
 }
 
 .vote-options {
@@ -12700,11 +12745,6 @@ h2.section-title.howto-heading {
 .vote-voters li::marker {
   color: var(--azure);
   font-weight: 600;
-}
-
-/* scheduled-poll chip */
-.chip.sched {
-  color: var(--amber);
 }
 
 /* ---- new-poll form ---- */

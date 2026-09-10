@@ -19,6 +19,18 @@ const fmtDateTime = (iso: string) =>
     minute: "2-digit",
   });
 
+/** Exact moment a vote was cast — date plus time to the second. */
+const fmtStamp = (iso: string) => {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.toLocaleDateString(undefined, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  })} at ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+};
+
 /** Local "YYYY-MM-DDTHH:mm" string — the datetime-local value format the pickers use. */
 const localInputValue = (d: Date): string => {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -415,33 +427,40 @@ function PollCard({
 
   return (
     <div className="card vote-card">
+      <div className="vote-tiles">
+        <div className={`vote-tile status ${status}`}>
+          <span className="vote-tile-value">
+            {status === "open" ? "Open" : status === "scheduled" ? "Scheduled" : "Closed"}
+          </span>
+          <span className="vote-tile-label">
+            {status === "open" && poll.closesAt
+              ? `Closes ${fmtDateTime(poll.closesAt)}`
+              : status === "scheduled" && poll.opensAt
+                ? `Opens ${fmtDateTime(poll.opensAt)}`
+                : status === "closed" && !poll.closed && poll.closesAt
+                  ? `Closed ${fmtDateTime(poll.closesAt)}`
+                  : "Status"}
+          </span>
+        </div>
+        <div className="vote-tile">
+          <span className="vote-tile-value">{total}</span>
+          <span className="vote-tile-label">{total === 1 ? "vote cast" : "votes cast"}</span>
+        </div>
+        {restricted && (
+          <div className="vote-tile" title="Only selected people can vote in this poll">
+            <span className="vote-tile-value">{poll.participants!.length}</span>
+            <span className="vote-tile-label">invited to vote</span>
+          </div>
+        )}
+      </div>
+
       <div className="vote-head">
         <div>
           <h2 className="vote-question">{poll.question}</h2>
           {poll.description && <p className="vote-desc">{poll.description}</p>}
           <div className="vote-meta">
             Started by {poll.by} · {poll.role} · {fmtDate(poll.at)}
-            {status === "scheduled" && poll.opensAt && <> · Opens {fmtDateTime(poll.opensAt)}</>}
-            {status === "open" && poll.closesAt && <> · Closes {fmtDateTime(poll.closesAt)}</>}
-            {status === "closed" && !poll.closed && poll.closesAt && (
-              <> · Closed {fmtDateTime(poll.closesAt)}</>
-            )}
           </div>
-        </div>
-        <div className="vote-chips">
-          <span
-            className={`chip ${status === "open" ? "done" : status === "scheduled" ? "sched" : "none"}`}
-          >
-            {status === "open" ? "Open" : status === "scheduled" ? "Scheduled" : "Closed"}
-          </span>
-          {restricted && (
-            <span className="chip progress" title="Only selected people can vote in this poll">
-              {poll.participants!.length} invited
-            </span>
-          )}
-          <span className="chip progress">
-            {total} vote{total === 1 ? "" : "s"}
-          </span>
         </div>
       </div>
 
@@ -537,7 +556,7 @@ function PollCard({
               const label = poll.options.find((o) => o.id === v.option)?.label ?? "—";
               return (
                 <li key={pid}>
-                  <strong>{v.by}</strong> voted “{label}” · {fmtDate(v.at)}
+                  <strong>{v.by}</strong> voted “{label}” · {fmtStamp(v.at)}
                 </li>
               );
             })}
