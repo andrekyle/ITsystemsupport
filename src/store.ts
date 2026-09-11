@@ -2111,6 +2111,7 @@ export interface LessonEdits {
   examples?: Record<string, string>;
   /** `${sectionIdx}:h:${colIdx}` (header) / `${sectionIdx}:${rowIdx}:${colIdx}` -> table cell */
   tableCells?: Record<string, string>;
+  activityText?: Record<string, string>;
   /** figure id -> replacement caption */
   captions?: Record<string, string>;
   /** section index -> ordered list of figure ids (unknown ids preserved after) */
@@ -2181,7 +2182,7 @@ export function useLessonEdits(us: string) {
 
   /** generic keyed-text setter for bullets / cards / examples / table cells */
   const setKeyed = useCallback(
-    (field: "bullets" | "cards" | "examples" | "tableCells", key: string, text: string) =>
+    (field: "bullets" | "cards" | "examples" | "tableCells" | "activityText", key: string, text: string) =>
       apply((d) => {
         const map = { ...(d[field] ?? {}) };
         if (text.trim()) map[key] = text; else delete map[key];

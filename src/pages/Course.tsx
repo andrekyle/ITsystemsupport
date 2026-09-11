@@ -15,6 +15,7 @@ import { Quiz, seededShuffle } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
 import { ConfirmModal } from "../components/Modal";
 import { SlideViewer } from "../components/SlideViewer";
+import { EditableActivityText } from "../components/EditableActivityText";
 import { fileToImageDataUrl } from "../components/Avatar";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 import { requestSemanticReview } from "../lib/llm";
@@ -4447,6 +4448,11 @@ export function UnitPage({
             const exRes = progress.units[u.us]?.exercises?.[ex.id];
             const hasChecks = !!ex.checks && ex.checks.length > 0;
             const exTotalMarks = ex.checks?.reduce((t, c) => t + c.concepts.length * 2, 0) ?? 0;
+            const canEditScript = isSuperUser && ex.id === "rp114051";
+            const activityText = (part: string, original: string) =>
+              lessonEdits.activityText?.[`${ex.id}:${part}`] ?? original;
+            const saveActivityText = (part: string, original: string, text: string) =>
+              editKeyed("activityText", `${ex.id}:${part}`, text === original ? "" : text);
             return (
             <details key={ex.id} className="saqa-details lesson-acc">
               <summary>
@@ -4492,9 +4498,18 @@ export function UnitPage({
                   </p>
                 )}
                 {ex.scenario?.map((s, si) => (
-                  <p key={si} className="lesson-p">
-                    <LessonBullet text={s} />
-                  </p>
+                  <EditableActivityText
+                    key={si}
+                    label={`Scenario paragraph ${si + 1}`}
+                    text={activityText(`scenario:${si}`, s)}
+                    original={s}
+                    editable={canEditScript}
+                    onSave={(text) => saveActivityText(`scenario:${si}`, s, text)}
+                  >
+                    <p className="lesson-p">
+                      <LessonBullet text={activityText(`scenario:${si}`, s)} />
+                    </p>
+                  </EditableActivityText>
                 ))}
                 <ol className="step-list">
                   {ex.steps.map((s, i) => {
@@ -4502,7 +4517,15 @@ export function UnitPage({
                     const lb = progress.units[u.us]?.logbook ?? {};
                     return (
                       <li key={i}>
-                        <StepText text={s} />
+                        <EditableActivityText
+                          label={`Scene ${i + 1}`}
+                          text={activityText(`step:${i}`, s)}
+                          original={s}
+                          editable={canEditScript}
+                          onSave={(text) => saveActivityText(`step:${i}`, s, text)}
+                        >
+                          <StepText text={activityText(`step:${i}`, s)} />
+                        </EditableActivityText>
                         {check && (
                           <ExerciseQuestion
                             key={`${u.us}.${ex.id}.${i}.${exReset[ex.id] ?? 0}`}
