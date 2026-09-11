@@ -76,6 +76,78 @@ function usTitle(us: string): string {
 const usd = (v: number) =>
   v >= 0.995 ? `$${v.toFixed(2)}` : v > 0 ? `$${v.toFixed(3)}` : "$0.00";
 
+/** Fractions of a cent stay visible (per-answer costs are around $0.0005). */
+const usdFine = (v: number) => (v > 0 && v < 0.01 ? `$${v.toFixed(4)}` : usd(v));
+
+/** Luna marks every answer with three voting markers, so it burns ~3× the
+ *  tokens of a single-marker model per check. */
+const markersPerCheck = (model: string) => (model.startsWith("gpt-5.6-luna") ? 3 : 1);
+
+interface Capacity {
+  /** marked answers the budget pays for */
+  answers: number;
+  /** USD to burn the whole budget on this model */
+  budgetCost: number;
+  /** average tokens one marked answer costs on this model */
+  perCheck: number;
+  perAnswerCost: number;
+  /** share of tokens that are prompt (input) tokens */
+  inShare: number;
+  basis: "this month" | "all time" | "other models";
+}
+
+/**
+ * What a token budget buys on a given model: the observed tokens per marked
+ * answer (that model's own records first, else other models' averages
+ * normalised by their marker count) against the model's list prices.
+ */
+function budgetCapacity(
+  modelId: string,
+  budget: number,
+  month: TokenRecord[],
+  allTime: TokenSummaryResult | null
+): Capacity | null {
+  type Src = { model: string; requests: number; prompt: number; completion: number; total: number };
+  const monthSrc: Src[] = month.map((r) => ({ model: r.model, requests: 1, prompt: r.prompt, completion: r.completion, total: r.total }));
+  const allSrc: Src[] = allTime?.ok
+    ? allTime.rows.map((r) => ({ model: r.model, requests: r.requests, prompt: r.prompt_tokens, completion: r.completion_tokens, total: r.total_tokens }))
+    : [];
+  const own = (list: Src[]) => list.filter((s) => s.model.startsWith(modelId) && s.requests > 0);
+  const pick: [Src[], Capacity["basis"]][] = [
+    [own(monthSrc), "this month"],
+    [own(allSrc), "all time"],
+    [monthSrc, "other models"],
+    [allSrc, "other models"],
+  ];
+  const hit = pick.find(([list]) => list.some((s) => s.requests > 0));
+  if (!hit) return null;
+  const [src, basis] = hit;
+  let requests = 0;
+  let prompt = 0;
+  let total = 0;
+  let perMarker = 0; // tokens per single-marker check, summed
+  for (const s of src) {
+    requests += s.requests;
+    prompt += s.prompt;
+    total += s.total;
+    perMarker += s.total / markersPerCheck(s.model);
+  }
+  if (!requests || !total) return null;
+  const perCheck = (perMarker / requests) * markersPerCheck(modelId);
+  const inShare = prompt / total;
+  const price = MARKING_MODELS.find((m) => m.id === modelId) ?? MARKING_MODELS[0];
+  const perTokenUSD = (inShare * price.inPerM + (1 - inShare) * price.outPerM) / 1_000_000;
+  const answers = Math.floor(budget / perCheck);
+  return {
+    answers,
+    budgetCost: budget * perTokenUSD,
+    perCheck,
+    perAnswerCost: perCheck * perTokenUSD,
+    inShare,
+    basis,
+  };
+}
+
 /** Round a chart maximum up to a tidy number (588 → 600, 1234 → 2000). */
 function niceCeil(v: number): number {
   if (v <= 10) return 10;
@@ -293,6 +365,12 @@ export function TokenGauge() {
 
   const budgetShare = monthOffset === 0 ? monthTotals.total / budget : 0;
   const overBudget = monthOffset === 0 && monthTotals.total > budget;
+
+  const activeModel = MARKING_MODELS.find((m) => m.id === markingModel) ?? MARKING_MODELS[0];
+  const capacity = useMemo(
+    () => budgetCapacity(markingModel, budget, rows, allTime),
+    [markingModel, budget, rows, allTime]
+  );
 
   const err = records && !records.ok ? records.error : null;
 
@@ -547,12 +625,59 @@ export function TokenGauge() {
               </span>
             </div>
 
+            {/* ——— what the budget buys ——— */}
+            <div className="oa-capacity">
+              <div className="oa-sec-lbl">What the budget buys · {activeModel.name}</div>
+              {capacity ? (
+                <>
+                  <div className="oa-metrics oa-capacity-metrics">
+                    <div className="oa-metric">
+                      <div className="oa-metric-lbl">Activity &amp; question answers marked</div>
+                      <div className="oa-metric-num">≈ {capacity.answers.toLocaleString("en-ZA")}</div>
+                      <div className="oa-metric-lbl">with {budget.toLocaleString("en-ZA")} tokens</div>
+                    </div>
+                    <div className="oa-metric">
+                      <div className="oa-metric-lbl">Cost of the whole budget</div>
+                      <div className="oa-metric-num">≈ {usd(capacity.budgetCost)}</div>
+                      <div className="oa-metric-lbl">on {activeModel.name}</div>
+                    </div>
+                    <div className="oa-metric">
+                      <div className="oa-metric-lbl">Tokens per marked answer</div>
+                      <div className="oa-metric-num">
+                        {Math.round(capacity.perCheck).toLocaleString("en-ZA")}
+                      </div>
+                      <div className="oa-metric-lbl">{Math.round(capacity.inShare * 100)}% input · {Math.round((1 - capacity.inShare) * 100)}% output</div>
+                    </div>
+                    <div className="oa-metric">
+                      <div className="oa-metric-lbl">Cost per marked answer</div>
+                      <div className="oa-metric-num">≈ {usdFine(capacity.perAnswerCost)}</div>
+                      <div className="oa-metric-lbl">
+                        {Math.round(1 / Math.max(capacity.perAnswerCost, 1e-9)).toLocaleString("en-ZA")} answers per $1
+                      </div>
+                    </div>
+                  </div>
+                  <p className="mini-note" style={{ margin: "8px 0 0" }}>
+                    Worked out from the average tokens one marked answer has used{" "}
+                    {capacity.basis === "other models"
+                      ? `so far on other models (adjusted for ${activeModel.name}’s ${markersPerCheck(activeModel.id)} marker${markersPerCheck(activeModel.id) === 1 ? "" : "s"} per check)`
+                      : `on ${activeModel.name} ${capacity.basis}`}
+                    , at its list prices. Longer answers and longer questions use more tokens, so treat it as a guide.
+                  </p>
+                </>
+              ) : (
+                <p className="mini-note" style={{ margin: 0 }}>
+                  No marking recorded yet — the estimate appears after the first answers have been marked.
+                </p>
+              )}
+            </div>
+
             {/* ——— marking model choice ——— */}
             <div className="oa-models">
               <div className="oa-sec-lbl">AI marking model</div>
               <div className="oa-models-list" role="radiogroup" aria-label="AI marking model">
                 {MARKING_MODELS.map((m) => {
                   const active = markingModel === m.id;
+                  const cap = budgetCapacity(m.id, budget, rows, allTime);
                   return (
                     <button
                       key={m.id}
@@ -575,6 +700,11 @@ export function TokenGauge() {
                       <span className="oa-model-desc">{m.desc}</span>
                       <span className="oa-model-price">
                         ${m.inPerM.toFixed(2)} in / ${m.outPerM.toFixed(2)} out per 1M
+                        {cap && (
+                          <span className="oa-model-cap">
+                            ≈ {cap.answers.toLocaleString("en-ZA")} answers · ≈{usd(cap.budgetCost)} per budget
+                          </span>
+                        )}
                       </span>
                     </button>
                   );
