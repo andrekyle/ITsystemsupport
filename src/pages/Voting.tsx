@@ -5,7 +5,7 @@ import { isStaff } from "../types";
 import type { Poll, PollExtras } from "../store";
 import { canVoteInPoll, loadProfiles, pollStatus, usePolls } from "../store";
 import { fetchCloudDirectory, getCachedDirectory, remoteOnlyProfiles } from "../lib/directory";
-import { ConfirmModal } from "../components/Modal";
+import { ConfirmModal, Modal } from "../components/Modal";
 import { DateTimePicker } from "../components/DateTimePicker";
 
 const fmtDate = (iso: string) =>
@@ -395,6 +395,7 @@ function PollCard({
   onRetract,
   onSetClosed,
   onDelete,
+  onClearVotes,
 }: {
   poll: Poll;
   profile: Profile;
@@ -403,6 +404,7 @@ function PollCard({
   onRetract: () => void;
   onSetClosed: (closed: boolean) => void;
   onDelete: () => void;
+  onClearVotes: () => void;
 }) {
   const [showVoters, setShowVoters] = useState(false);
   const status = pollStatus(poll);
@@ -542,6 +544,16 @@ function PollCard({
               {showVoters ? "Hide voters" : "Show voters"}
             </button>
           )}
+          <button
+            type="button"
+            className="btn ghost sm"
+            style={{ minHeight: 44 }}
+            disabled={total === 0}
+            onClick={onClearVotes}
+            title="Clear all votes without deleting the poll"
+          >
+            <Icon name="refresh" size={15} /> Clear votes
+          </button>
           <button className="btn ghost sm danger-text" onClick={onDelete}>
             Delete
           </button>
@@ -569,9 +581,26 @@ function PollCard({
 /* ---------- page ---------- */
 
 export function VotingPage({ profile }: { profile: Profile }) {
-  const { polls, create, vote, retract, setClosed, remove } = usePolls();
+  const { polls, create, vote, retract, setClosed, remove, clearVotes } = usePolls();
   const staff = isStaff(profile.role);
   const [confirmDelete, setConfirmDelete] = useState<Poll | null>(null);
+  const [confirmClear, setConfirmClear] = useState<Poll | null>(null);
+  const [clearingVotes, setClearingVotes] = useState(false);
+  const [clearError, setClearError] = useState("");
+
+  const handleClearVotes = async () => {
+    if (!confirmClear || clearingVotes || (!staff && confirmClear.byId !== profile.id)) return;
+    setClearingVotes(true);
+    setClearError("");
+    try {
+      await clearVotes(confirmClear.id);
+      setConfirmClear(null);
+    } catch {
+      setClearError("Votes could not be cleared. Please try again.");
+    } finally {
+      setClearingVotes(false);
+    }
+  };
 
   // re-render every 30s so scheduled polls unlock and timed polls close on their own
   const [, setTick] = useState(0);
@@ -647,8 +676,36 @@ export function VotingPage({ profile }: { profile: Profile }) {
             onRetract={() => retract(profile.id, p.id)}
             onSetClosed={(closed) => setClosed(p.id, closed)}
             onDelete={() => setConfirmDelete(p)}
+            onClearVotes={() => {
+              setClearError("");
+              setConfirmClear(p);
+            }}
           />
         ))
+      )}
+
+      {confirmClear && (
+        <Modal
+          title="Clear votes"
+          onClose={() => { if (!clearingVotes) setConfirmClear(null); }}
+          actions={
+            <>
+              <button className="btn ghost" style={{ minHeight: 44 }} disabled={clearingVotes} onClick={() => setConfirmClear(null)}>
+                Cancel
+              </button>
+              <button className="btn danger" style={{ minHeight: 44 }} disabled={clearingVotes} onClick={() => void handleClearVotes()}>
+                <Icon name="refresh" size={15} /> {clearingVotes ? "Clearing..." : "Clear votes"}
+              </button>
+            </>
+          }
+        >
+          <p style={{ margin: 0 }}>
+            Clear all votes on <strong>“{confirmClear.question}”</strong>? The poll, options,
+            invited voters and schedule will be kept. Its open or closed status will not change.
+            This cannot be undone.
+          </p>
+          {clearError && <p className="auth-error" role="alert">{clearError}</p>}
+        </Modal>
       )}
 
       {confirmDelete && (

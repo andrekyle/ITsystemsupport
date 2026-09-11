@@ -1021,13 +1021,20 @@ export function usePolls() {
     (pollId: string) => mutate((fresh) => fresh.filter((p) => p.id !== pollId)),
     [mutate]
   );
+  const clearVotes = useCallback(
+    (pollId: string) =>
+      mutate((fresh) =>
+        fresh.map((poll) => (poll.id === pollId ? { ...poll, votes: {} } : poll))
+      ),
+    [mutate]
+  );
   // open polls first, then scheduled, then closed — newest first within each group
   const now = Date.now();
   const rank: Record<PollStatus, number> = { open: 0, scheduled: 1, closed: 2 };
   const polls = [...list].sort(
     (a, b) => rank[pollStatus(a, now)] - rank[pollStatus(b, now)] || b.at.localeCompare(a.at)
   );
-  return { polls, create, vote, retract, setClosed, remove };
+  return { polls, create, vote, retract, setClosed, remove, clearVotes };
 }
 
 /* ---------- direct chat (1-to-1 conversations, database-enforced privacy) --------- */
