@@ -13,11 +13,33 @@ export interface FormField {
   options: string[];
 }
 
+export const LAYOUT_CELL_KINDS = ["label", "field", "option", "blank"] as const;
+export type LayoutCellKind = typeof LAYOUT_CELL_KINDS[number];
+
+/** One cell of the paper grid: a printed caption, a write-in box bound to a
+ *  field, a tick box for one option of a choice field, or empty space. */
+export interface FormLayoutCell {
+  kind: LayoutCellKind;
+  /** caption for label cells, the option's printed text for option cells */
+  text: string;
+  /** field this cell belongs to (field / option cells; optional on labels) */
+  fieldId: string;
+  span: number;
+}
+
+export interface FormLayoutRow {
+  cells: FormLayoutCell[];
+}
+
 export interface FormSection {
   id: string;
   title: string;
   description: string;
   fields: FormField[];
+  /** number of equal grid columns the rows are laid out on */
+  columns: number;
+  /** the paper grid, top to bottom; empty = lay the fields out automatically */
+  rows: FormLayoutRow[];
 }
 
 export interface FormDefinition {
@@ -30,7 +52,11 @@ export type FormAnswer = string | boolean | string[];
 export type FormAnswers = Record<string, FormAnswer>;
 
 export const MAX_FORM_FIELDS = 150;
+export const MAX_LAYOUT_COLUMNS = 12;
+export const MAX_LAYOUT_ROWS = 200;
 export const CHOICE_FIELD_TYPES: readonly FormFieldType[] = ["select", "radio", "checkboxes"];
+/** field types that need a whole row of the auto layout */
+const WIDE_FIELD_TYPES: readonly FormFieldType[] = ["textarea", "radio", "checkboxes", "checkbox"];
 
 function objectValue(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Invalid form structure.");
@@ -95,9 +121,85 @@ export function parseFormDefinition(value: unknown): FormDefinition {
       title: textValue(section.title, 300, "section title", true),
       description: textValue(section.description, 5000, "section description"),
       fields,
+      ...parseLayout(section, fields),
     };
   });
   return { title, description, sections };
+}
+
+/** Layout is decorative, so it is repaired rather than rejected: cells that
+ *  point at a missing field or option become blank space. */
+function parseLayout(section: Record<string, unknown>, fields: FormField[]): Pick<FormSection, "columns" | "rows"> {
+  const byId = new Map(fields.map(field => [field.id, field]));
+  const columns = Number.isInteger(section.columns) && (section.columns as number) >= 1
+    ? Math.min(section.columns as number, MAX_LAYOUT_COLUMNS)
+    : 4;
+  if (!Array.isArray(section.rows)) return { columns, rows: [] };
+  const rows: FormLayoutRow[] = [];
+  for (const entry of section.rows.slice(0, MAX_LAYOUT_ROWS)) {
+    if (!entry || typeof entry !== "object" || !Array.isArray((entry as { cells?: unknown }).cells)) continue;
+    const cells: FormLayoutCell[] = [];
+    let used = 0;
+    for (const raw of (entry as { cells: unknown[] }).cells) {
+      if (!raw || typeof raw !== "object") continue;
+      const cell = raw as Record<string, unknown>;
+      let kind = LAYOUT_CELL_KINDS.includes(cell.kind as LayoutCellKind) ? cell.kind as LayoutCellKind : "blank";
+      const text = typeof cell.text === "string" ? cell.text.trim().slice(0, 500) : "";
+      let fieldId = typeof cell.fieldId === "string" ? cell.fieldId.trim() : "";
+      const span = Math.max(1, Math.min(Number.isInteger(cell.span) ? (cell.span as number) : 1, columns - used || 1));
+      const field = byId.get(fieldId);
+      if (kind === "field" && !field) kind = "blank";
+      if (kind === "option" && (!field || !CHOICE_FIELD_TYPES.includes(field.type) || !field.options.includes(text))) kind = "blank";
+      if (kind === "label" && !field) fieldId = "";
+      if (kind === "blank") fieldId = "";
+      cells.push({ kind, text: kind === "blank" || kind === "field" ? "" : text, fieldId, span });
+      used += span;
+      if (used >= columns) break;
+    }
+    if (cells.length) rows.push({ cells });
+  }
+  return { columns, rows };
+}
+
+/** Fields the section's grid does not place — rendered after it so nothing
+ *  the AI or an editor left out of the layout disappears. */
+export function unplacedFields(section: FormSection): FormField[] {
+  const placed = new Set<string>();
+  for (const row of section.rows) for (const cell of row.cells) if (cell.kind !== "blank" && cell.fieldId) placed.add(cell.fieldId);
+  return section.fields.filter(field => !placed.has(field.id));
+}
+
+/** Paper-style grid for fields without an explicit layout: two label/box
+ *  pairs per row on a four-column grid, wide fields on a row of their own. */
+export function autoLayout(fields: FormField[]): FormLayoutRow[] {
+  const rows: FormLayoutRow[] = [];
+  let pending: FormLayoutCell[] = [];
+  const flush = () => {
+    if (!pending.length) return;
+    if (pending.length === 2) pending.push({ kind: "blank", text: "", fieldId: "", span: 2 });
+    rows.push({ cells: pending });
+    pending = [];
+  };
+  for (const field of fields) {
+    if (field.type === "checkbox") {
+      // the tick box carries its own caption
+      flush();
+      rows.push({ cells: [{ kind: "field", text: "", fieldId: field.id, span: 4 }] });
+      continue;
+    }
+    if (WIDE_FIELD_TYPES.includes(field.type)) {
+      flush();
+      rows.push({ cells: [
+        { kind: "label", text: field.label, fieldId: field.id, span: 1 },
+        { kind: "field", text: "", fieldId: field.id, span: 3 },
+      ] });
+      continue;
+    }
+    pending.push({ kind: "label", text: field.label, fieldId: field.id, span: 1 }, { kind: "field", text: "", fieldId: field.id, span: 1 });
+    if (pending.length === 4) flush();
+  }
+  flush();
+  return rows;
 }
 
 export function validateFormAnswers(definition: FormDefinition, answers: FormAnswers): Record<string, string> {

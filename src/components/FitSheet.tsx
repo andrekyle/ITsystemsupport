@@ -13,6 +13,8 @@ export function FitSheet({ width, children }: { width: number; children: ReactNo
       const outer = outerRef.current;
       const inner = innerRef.current;
       if (!outer || !inner) return;
+      // a not-yet-laid-out (0 px) container would collapse the sheet to scale(0)
+      if (!outer.clientWidth) return;
       const scale = Math.min(1, outer.clientWidth / width);
       setFit({ scale, height: scale < 1 ? inner.offsetHeight * scale : undefined });
     };

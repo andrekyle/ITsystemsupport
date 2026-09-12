@@ -85,3 +85,33 @@
   .generated-form input, .generated-form textarea { border: 1px solid #999 !important; color: #000 !important; background: #fff !important; }
   .generated-form .fb-field-note { color: #444; }
 }
+
+/* ---- paper replica of a generated form (shares the .srf-* registration-form look) ---- */
+.paper-form-wrap { padding: 0; background: transparent; }
+.paper-form { min-height: 200px; }
+.paper-form-intro { font-size: 11px; line-height: 1.4; margin: 0 0 10px; }
+.paper-form-section { margin-bottom: 6px; }
+.paper-form .srf-section-title em { font-weight: 400; }
+.paper-form .srf-label label { cursor: pointer; }
+.paper-table .paper-blank { border: 1px solid var(--srf-line); }
+.paper-form .srf-tick-cell { height: auto; min-height: 26px; }
+.paper-form .srf-tick-cell:focus-visible { outline: 2px solid var(--azure); outline-offset: -2px; }
+/* tick chips inside one write-in cell (choice fields not laid out box by box) */
+.paper-ticks { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px 5px; }
+.paper-tick, .paper-check {
+  border: 1px solid var(--srf-line); background: transparent; color: #000; font: inherit; font-size: 10.5px;
+  padding: 2px 8px; cursor: pointer; line-height: 1.3; border-radius: 0;
+}
+.paper-tick.on { color: #ee7a15; font-weight: 700; }
+.paper-tick:hover, .paper-check:hover { background: #fffbe6; }
+.paper-check { display: inline-flex; align-items: center; gap: 6px; border: 0; padding: 3px 5px; width: 100%; text-align: left; }
+.paper-check-box { width: 13px; height: 13px; border: 1px solid var(--srf-line); display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #ee7a15; flex: none; }
+.paper-form .paper-signature { font-family: Georgia, serif; font-style: italic; }
+.paper-form .fb-required { color: #c00; }
+.paper-form .paper-error { box-shadow: inset 0 0 0 2px var(--red); }
+.paper-form .srf-input:focus { background: #fff8d8; }
+@media print {
+  .paper-form { border: 0 !important; }
+  .paper-form .paper-error { box-shadow: none; }
+  .paper-tick { border-color: #000; }
+}

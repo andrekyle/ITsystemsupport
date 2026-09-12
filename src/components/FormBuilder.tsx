@@ -4,7 +4,7 @@ import type { Profile } from "../types";
 import { CHOICE_FIELD_TYPES, FORM_FIELD_TYPES, MAX_FORM_FIELDS, parseFormDefinition, type FormAnswers, type FormDefinition, type FormField, type FormFieldType, type FormSection } from "../lib/formSchema";
 import { checkFormUpload, extractFormDocument, FORM_UPLOAD_ACCEPT, generateFormDefinition, type ImportedFormDocument } from "../lib/formImport";
 import { saveFormTemplate, type SavedForm } from "../lib/forms";
-import { FormFields } from "./FormFields";
+import { PaperForm } from "./PaperForm";
 import { Select } from "./Select";
 import { ConfirmModal } from "./Modal";
 
@@ -14,7 +14,7 @@ const FIELD_NAMES: Record<FormFieldType, string> = {
 };
 
 const newField = (): FormField => ({ id: `field_${crypto.randomUUID()}`, label: "", type: "text", required: false, helpText: "", options: [] });
-const newSection = (): FormSection => ({ id: `section_${crypto.randomUUID()}`, title: "Form details", description: "", fields: [newField()] });
+const newSection = (): FormSection => ({ id: `section_${crypto.randomUUID()}`, title: "Form details", description: "", fields: [newField()], columns: 4, rows: [] });
 
 export function FormBuilder({ profile, onSaved, onCancel }: {
   profile: Profile;
@@ -147,7 +147,7 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
             </div>
             {source && sourceUrl && <a className="btn ghost" href={sourceUrl} download={source.name}><Icon name="download" size={16} /> Original document</a>}
           </div>
-          {mode === "preview" ? <FormFields definition={draft} answers={previewAnswers} onChange={(fieldId, value) => setPreviewAnswers(current => ({ ...current, [fieldId]: value }))} /> : (
+          {mode === "preview" ? <PaperForm definition={draft} answers={previewAnswers} onChange={(fieldId, value) => setPreviewAnswers(current => ({ ...current, [fieldId]: value }))} /> : (
             <fieldset className="fb-editor" disabled={!!busy}>
               <div className="field"><label htmlFor="builder-title">Form title</label><input id="builder-title" value={draft.title} maxLength={200} onChange={event => setDraft({ ...draft, title: event.target.value })} /></div>
               <div className="field"><label htmlFor="builder-description">Introduction</label><textarea id="builder-description" value={draft.description} rows={2} maxLength={5000} onChange={event => setDraft({ ...draft, description: event.target.value })} /></div>
@@ -158,6 +158,7 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
                     <button type="button" className="btn fb-icon" aria-label={`Remove section ${sectionIndex + 1}`} title="Remove section" disabled={draft.sections.length === 1} onClick={() => setDraft({ ...draft, sections: draft.sections.filter(current => current.id !== section.id) })}><Icon name="close" size={16} /></button>
                   </div>
                   <div className="field"><label htmlFor={`${section.id}-description`}>Section instructions</label><textarea id={`${section.id}-description`} rows={2} value={section.description} maxLength={5000} onChange={event => updateSection(section.id, current => ({ ...current, description: event.target.value }))} /></div>
+                  {section.rows.length > 0 && <p className="fb-field-note">This section keeps the printed layout of the uploaded document ({section.columns} columns, {section.rows.length} rows). Fields you add here appear in a grid below it; removed fields leave their boxes blank.</p>}
                   {section.fields.map((field, fieldIndex) => (
                     <div key={field.id} className="fb-field-editor">
                       <div className="fb-field-editor-main">
