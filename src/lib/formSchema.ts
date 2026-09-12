@@ -83,74 +83,96 @@ function objectValue(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-function textValue(value: unknown, limit: number, label: string, required = false): string {
-  if (typeof value !== "string" || value.length > limit || (required && !value.trim())) {
-    throw new Error(`Invalid ${label}.`);
-  }
-  return value.trim();
+/** Trimmed string, or "" for anything that is not a string; hard-capped. */
+function text(value: unknown, limit: number): string {
+  return typeof value === "string" ? value.trim().slice(0, limit) : "";
 }
 
+const ID_PATTERN = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
+
+/**
+ * The AI's output is repaired rather than rejected wherever a repair is
+ * unambiguous: bad ids are renamed (and the layout follows), a field whose
+ * caption only exists as a label cell gets that caption, duplicate or empty
+ * options are dropped, option cells that differ from the option list only by
+ * case are matched, and sections with nothing to print are removed. Only a
+ * form with no usable content at all is an error.
+ */
 export function parseFormDefinition(value: unknown): FormDefinition {
   const source = objectValue(value);
-  const title = textValue(source.title, 200, "form title", true);
-  const description = textValue(source.description, 5000, "form description");
-  if (!Array.isArray(source.sections) || !source.sections.length || source.sections.length > 30) {
-    throw new Error("A form must contain between 1 and 30 sections.");
-  }
+  const title = text(source.title, 200) || "Form";
+  const description = text(source.description, 5000);
+  if (!Array.isArray(source.sections)) throw new Error("The form has no sections.");
   const identifiers = new Set<string>();
   let fieldCount = 0;
-  const readId = (value: unknown) => {
-    const id = textValue(value, 80, "field or section identifier", true);
-    if (!/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(id) || identifiers.has(id)) {
-      throw new Error("Form field and section identifiers must be unique.");
+  let generated = 0;
+  const readId = (value: unknown, prefix: string): string => {
+    let id = text(value, 80);
+    if (!ID_PATTERN.test(id) || identifiers.has(id)) {
+      const base = ID_PATTERN.test(id) ? id : prefix;
+      do id = `${base}_${++generated}`; while (identifiers.has(id));
     }
     identifiers.add(id);
     return id;
   };
-  const sections = source.sections.map((entry): FormSection => {
-    const section = objectValue(entry);
-    const id = readId(section.id);
-    if (!Array.isArray(section.fields)) throw new Error("Each section must list its fields.");
-    const fields = section.fields.map((entry): FormField => {
-      const field = objectValue(entry);
+  const sections: FormSection[] = [];
+  for (const entry of source.sections.slice(0, 30)) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) continue;
+    const section = entry as Record<string, unknown>;
+    const id = readId(section.id, "section");
+    // the layout refers to the AI's own ids, so renames must be followed there
+    const renamed = new Map<string, string>();
+    const fields: FormField[] = [];
+    for (const raw of Array.isArray(section.fields) ? section.fields : []) {
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) continue;
+      if (fieldCount >= MAX_FORM_FIELDS) break;
+      const field = raw as Record<string, unknown>;
+      let type: FormFieldType = FORM_FIELD_TYPES.includes(field.type as FormFieldType) ? field.type as FormFieldType : "text";
+      const seen = new Set<string>();
+      const options: string[] = [];
+      for (const option of Array.isArray(field.options) ? field.options : []) {
+        const label = text(option, 300);
+        if (label && !seen.has(label) && options.length < 80) { seen.add(label); options.push(label); }
+      }
+      if (CHOICE_FIELD_TYPES.includes(type) && !options.length) type = "text";
+      else if (!CHOICE_FIELD_TYPES.includes(type) && options.length) type = "radio";
+      const original = text(field.id, 80);
+      const fieldId = readId(field.id, "field");
+      if (original && original !== fieldId) renamed.set(original, fieldId);
       fieldCount += 1;
-      if (fieldCount > MAX_FORM_FIELDS) throw new Error(`A form can contain at most ${MAX_FORM_FIELDS} fields.`);
-      const type = field.type as FormFieldType;
-      if (!FORM_FIELD_TYPES.includes(type) || typeof field.required !== "boolean") {
-        throw new Error("Invalid field type or required setting.");
-      }
-      if (!Array.isArray(field.options) || field.options.length > 80) throw new Error("Invalid field options.");
-      const options = field.options.map(option => textValue(option, 300, "option", true));
-      if (new Set(options).size !== options.length) throw new Error("Field options must be unique.");
-      if (CHOICE_FIELD_TYPES.includes(type) ? !options.length : options.length > 0) {
-        throw new Error("Choice fields need options; other fields must not have options.");
-      }
-      return {
-        id: readId(field.id),
-        label: textValue(field.label, 500, "field label", true),
+      fields.push({
+        id: fieldId,
+        label: text(field.label, 500),
         type,
-        required: field.required,
-        helpText: textValue(field.helpText, 3000, "field help text"),
-        options,
-      };
-    });
-    const layout = parseLayout(section, fields);
-    const description = textValue(section.description, 5000, "section description");
-    const banner = textValue(section.banner ?? "", 1000, "section banner");
-    // a section with no fields must still print something (a declaration, a footer)
-    if (!fields.length && !description && !banner && !layout.rows.some(row => row.cells.some(cell => cell.kind === "text" && cell.text))) {
-      throw new Error("Each section must have at least one field or some printed text.");
+        required: field.required === true,
+        helpText: text(field.helpText, 3000),
+        options: CHOICE_FIELD_TYPES.includes(type) ? options : [],
+      });
     }
-    return {
+    const layout = parseLayout(section, fields, renamed);
+    const sectionTitle = text(section.title, 300);
+    // a field whose caption was only given as a label cell takes it from there;
+    // a tick grid under a heading is named after the heading
+    for (const field of fields) {
+      if (field.label) continue;
+      const caption = layout.rows.flatMap(row => row.cells).find(cell => cell.fieldId === field.id && cell.kind !== "option" && cell.text);
+      field.label = caption?.text ?? (fields.length === 1 && sectionTitle ? sectionTitle.replace(/[:\s]+$/, "") : `Field ${fields.indexOf(field) + 1}`);
+    }
+    const sectionDescription = text(section.description, 5000);
+    const banner = text(section.banner, 1000);
+    const printsSomething = fields.length || sectionDescription || banner || layout.rows.some(row => row.cells.some(cell => cell.kind === "text" && cell.text));
+    if (!printsSomething) continue;
+    sections.push({
       id,
-      title: textValue(section.title, 300, "section title"),
-      description,
+      title: sectionTitle,
+      description: sectionDescription,
       fields,
       ...layout,
       banner,
       pageBreak: section.pageBreak === true,
-    };
-  });
+    });
+  }
+  if (!sections.length) throw new Error("No fields or printed text were found.");
   const masthead = typeof source.masthead === "string" && /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(source.masthead) && source.masthead.length <= MAX_MASTHEAD_CHARS
     ? source.masthead
     : "";
@@ -158,8 +180,9 @@ export function parseFormDefinition(value: unknown): FormDefinition {
 }
 
 /** Layout is decorative, so it is repaired rather than rejected: cells that
- *  point at a missing field or option become blank space. */
-function parseLayout(section: Record<string, unknown>, fields: FormField[]): Pick<FormSection, "columns" | "widths" | "rows"> {
+ *  point at a missing field become text or blank space; an option cell whose
+ *  wording is not in the option list is added to it (the print wins). */
+function parseLayout(section: Record<string, unknown>, fields: FormField[], renamed: Map<string, string>): Pick<FormSection, "columns" | "widths" | "rows"> {
   const byId = new Map(fields.map(field => [field.id, field]));
   const columns = Number.isInteger(section.columns) && (section.columns as number) >= 1
     ? Math.min(section.columns as number, MAX_LAYOUT_COLUMNS)
@@ -180,15 +203,24 @@ function parseLayout(section: Record<string, unknown>, fields: FormField[]): Pic
       if (!raw || typeof raw !== "object") continue;
       const cell = raw as Record<string, unknown>;
       let kind = LAYOUT_CELL_KINDS.includes(cell.kind as LayoutCellKind) ? cell.kind as LayoutCellKind : "blank";
-      const text = typeof cell.text === "string" ? cell.text.trim().slice(0, kind === "text" ? 3000 : 500) : "";
-      let fieldId = typeof cell.fieldId === "string" ? cell.fieldId.trim() : "";
+      let cellText = text(cell.text, kind === "text" ? 3000 : 500);
+      const askedId = text(cell.fieldId, 80);
+      let fieldId = renamed.get(askedId) ?? askedId;
       const span = Math.max(1, Math.min(Number.isInteger(cell.span) ? (cell.span as number) : 1, columns - used || 1));
       const field = byId.get(fieldId);
-      if (kind === "field" && !field) kind = text ? "text" : "blank";
-      if (kind === "option" && (!field || !CHOICE_FIELD_TYPES.includes(field.type) || !field.options.includes(text))) kind = "blank";
+      if (kind === "field" && !field) kind = cellText ? "text" : "blank";
+      if (kind === "option") {
+        if (!field || !CHOICE_FIELD_TYPES.includes(field.type) || !cellText) kind = cellText ? "text" : "blank";
+        else {
+          const match = field.options.find(option => option === cellText) ?? field.options.find(option => option.toLowerCase() === cellText.toLowerCase());
+          if (match) cellText = match;
+          else if (field.options.length < 80) field.options.push(cellText);
+          else kind = "text";
+        }
+      }
       if ((kind === "label" || kind === "text") && !field) fieldId = "";
       if (kind === "blank") fieldId = "";
-      cells.push({ kind, text: kind === "blank" ? "" : kind === "field" ? text.slice(0, 80) : text, fieldId, span });
+      cells.push({ kind, text: kind === "blank" ? "" : kind === "field" ? cellText.slice(0, 80) : cellText, fieldId, span });
       used += span;
       if (used >= columns) break;
     }
