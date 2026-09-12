@@ -5,6 +5,7 @@ import { updateProfile } from "../store";
 import { autoGrowTextarea } from "../lib/autoGrow";
 import { FitSheet } from "../components/FitSheet";
 import { DateTimePicker } from "../components/DateTimePicker";
+import { FormLibrary } from "../components/FormLibrary";
 
 /**
  * Eruditio Student Registration Form — laid out to match the paper form
@@ -170,18 +171,9 @@ export function FormsPage({
   navigate: (r: Route) => void;
 }) {
   return (
-    <>
-      <div className="eyebrow no-print">
-        <Icon name="document" size={15} />
-        Learner forms
-      </div>
-      <h1 className="page-title no-print">Forms</h1>
-      <p className="page-sub no-print">
-        Complete the paper forms online — details save automatically and staff can print an
-        official copy from your profile.
-      </p>
+    <FormLibrary profile={profile}>
       <StudentRegistrationForm profile={profile} onUpdateProfile={onUpdateProfile} />
-    </>
+    </FormLibrary>
   );
 }
 
