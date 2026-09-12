@@ -152,6 +152,65 @@ export interface FormDefinition {
 export type FormAnswer = string | boolean | string[];
 export type FormAnswers = Record<string, FormAnswer>;
 
+/** Marks a person places on a replica page themselves, Acrobat-style: typed
+ *  text anywhere, ticks, crosses, dots, lines and signatures. Kept with the
+ *  answers under ANNOTATIONS_KEY as JSON. */
+export type FormAnnotationKind = "text" | "tick" | "cross" | "dot" | "line" | "signature";
+
+export interface FormAnnotation {
+  id: string;
+  kind: FormAnnotationKind;
+  page: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** text: the words; signature: the typed name */
+  text?: string;
+  /** text size as a fraction of the page width */
+  size?: number;
+  /** drawn signature: SVG path in 0-1 box coordinates */
+  path?: string;
+}
+
+export const ANNOTATIONS_KEY = "_annotations";
+export const MAX_ANNOTATIONS = 300;
+const ANNOTATION_KINDS: readonly FormAnnotationKind[] = ["text", "tick", "cross", "dot", "line", "signature"];
+
+/** The annotations stored with a set of answers (malformed entries dropped). */
+export function readAnnotations(answers: FormAnswers): FormAnnotation[] {
+  const raw = answers[ANNOTATIONS_KEY];
+  if (typeof raw !== "string" || !raw) return [];
+  let list: unknown;
+  try { list = JSON.parse(raw); } catch { return []; }
+  if (!Array.isArray(list)) return [];
+  const result: FormAnnotation[] = [];
+  for (const entry of list.slice(0, MAX_ANNOTATIONS)) {
+    if (!entry || typeof entry !== "object") continue;
+    const item = entry as Record<string, unknown>;
+    const box = readBox(item, true);
+    const kind = ANNOTATION_KINDS.find(k => k === item.kind);
+    const id = text(item.id, 40);
+    if (!box || !kind || !id) continue;
+    const page = Number.isInteger(item.page) && (item.page as number) >= 1 ? item.page as number : 1;
+    const size = fraction(item.size);
+    result.push({
+      id, kind, page, ...box,
+      ...(typeof item.text === "string" ? { text: item.text.slice(0, 2000) } : {}),
+      ...(size ? { size: Math.min(size, 0.2) } : {}),
+      ...(typeof item.path === "string" && /^[MLmlZz0-9 .,-]{1,20000}$/.test(item.path) ? { path: item.path } : {}),
+    });
+  }
+  return result;
+}
+
+export function writeAnnotations(answers: FormAnswers, annotations: FormAnnotation[]): FormAnswers {
+  const next = { ...answers };
+  if (annotations.length) next[ANNOTATIONS_KEY] = JSON.stringify(annotations.slice(0, MAX_ANNOTATIONS));
+  else delete next[ANNOTATIONS_KEY];
+  return next;
+}
+
 export const MAX_FORM_FIELDS = 400;
 export const MAX_LAYOUT_COLUMNS = 16;
 export const MAX_LAYOUT_ROWS = 200;
@@ -358,11 +417,12 @@ export function parseFormDefinition(value: unknown): FormDefinition {
       pageBreak: section.pageBreak === true,
     });
   }
-  if (!sections.length) throw new Error("No fields or printed text were found.");
+  const pages = readPages(source.pages);
+  // page images are content in themselves: a replica may carry no detected fields at all
+  if (!sections.length && !pages.length) throw new Error("No fields or printed text were found.");
   const masthead = typeof source.masthead === "string" && /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(source.masthead) && source.masthead.length <= MAX_MASTHEAD_CHARS
     ? source.masthead
     : "";
-  const pages = readPages(source.pages);
   if (pages.length) {
     // a placement off the end of the page set is not on any page
     for (const section of sections) {
@@ -436,7 +496,8 @@ export function parseReplicaOutput(value: unknown, pages: ReplicaPageBoxes[]): F
     banner: "",
     pageBreak: false,
   })).filter(section => section.fields.length);
-  if (!sections.length) throw new Error("No fields were identified.");
+  // a page with nothing to fill in (instructions, a cover) is a valid, empty answer
+  if (!sections.length) return { title: text(source.title, 200) || "Form", description: "", sections: [], titleColor: "", accentColor: "", masthead: "", pages: [], display: "image" };
   return parseFormDefinition({ title: source.title, description: source.description, sections, titleColor: "", accentColor: "", masthead: "", pages: [], display: "image" });
 }
 

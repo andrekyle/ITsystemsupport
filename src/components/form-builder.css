@@ -156,6 +156,10 @@
 .replica-drawing > img { pointer-events: auto; }
 /* the page rebuilt from its own text and shapes */
 .rp-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.rp-layer.editable { pointer-events: auto; }
+.rp-layer.editable .rp-text { cursor: text; outline: 1px dashed rgba(43, 108, 176, 0.35); outline-offset: 1px; }
+.rp-layer.editable .rp-text:focus { outline: 2px solid var(--azure); background: rgba(255, 248, 216, 0.9); }
+.replica-editing-text .replica-field { pointer-events: none; opacity: 0.6; }
 .rp-layer > * { position: absolute; box-sizing: border-box; }
 .rp-text { white-space: pre; line-height: 1; transform-origin: left top; letter-spacing: 0; }
 .rp-fill, .rp-rule { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
@@ -239,6 +243,47 @@
 .fb-armed-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .fb-armed-list .paper-tick { font-size: 13px; color: var(--ink); border-color: var(--border-2); }
 .fb-armed-list .paper-tick.on { color: var(--azure); border-color: var(--azure); }
+
+/* ---- Fill & sign: marks placed anywhere on a replica page ---- */
+.fill-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+.fill-bar-title { font-weight: 600; font-size: 13px; margin-right: 6px; color: var(--ink); }
+.fill-tool { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 10px; border: 1px solid var(--border-2); border-radius: 6px; background: transparent; color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; }
+.fill-tool:hover { background: var(--surface-2, rgba(43, 108, 176, 0.08)); }
+.fill-tool.on { border-color: var(--azure); color: var(--azure); box-shadow: inset 0 0 0 1px var(--azure); }
+.fill-glyph { display: inline-flex; width: 18px; justify-content: center; font-weight: 700; }
+.fill-glyph-text { font-family: Georgia, serif; }
+.fill-hint { flex: 1 1 100%; font-size: 12.5px; color: var(--ink-2); }
+@media (min-width: 900px) { .fill-hint { flex: 1 1 auto; margin-left: 8px; } }
+.replica-placing .replica-page { cursor: crosshair; }
+.fill-mark { position: absolute; box-sizing: border-box; color: #1a237e; line-height: 1; }
+.fill-mark:not(.readonly) { cursor: move; }
+.fill-mark.selected { outline: 1px dashed var(--azure); outline-offset: 2px; }
+.fill-mark-text { display: flex; align-items: center; width: auto !important; height: auto !important; min-height: 1.4em; cursor: default; }
+.fill-grip { cursor: move; user-select: none; color: var(--azure); opacity: 0; font-size: 0.9em; padding-right: 0.15em; margin-left: -0.9em; }
+.fill-mark-text:hover .fill-grip, .fill-mark-text.selected .fill-grip { opacity: 1; }
+.fill-text { border: 0; border-bottom: 1px dashed transparent; background: transparent; padding: 0 0.15em; margin: 0; font: inherit; color: inherit; outline: none; min-width: 3ch; }
+.fill-text:focus, .fill-mark-text.selected .fill-text { border-bottom-color: rgba(43, 108, 176, 0.5); background: rgba(255, 248, 216, 0.85); }
+.fill-text::placeholder { color: rgba(26, 35, 126, 0.45); }
+.fill-symbol { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: 700; user-select: none; }
+.fill-symbol-line { border-top: 2px solid #1a237e; height: 0 !important; margin-top: 0; }
+.fill-mark-line { display: flex; align-items: center; min-height: 6px; }
+.fill-mark-line .fill-symbol-line { width: 100%; }
+.fill-signature { width: 100%; height: 100%; display: flex; align-items: flex-end; }
+.fill-signature svg { width: 100%; height: 100%; display: block; }
+.fill-signature-text { font-family: "Segoe Script", "Brush Script MT", "Lucida Handwriting", cursive; font-size: 100cqh; line-height: 1; white-space: nowrap; color: #1a237e; }
+.fill-signature .fill-signature-text { font-size: 85cqh; }
+.fill-signature-preview { margin-top: 10px; font-size: 32px; min-height: 40px; }
+.fill-remove { position: absolute; top: -12px; right: -12px; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border-2); background: #fff; color: var(--red); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.fill-handle { position: absolute; right: -5px; bottom: -5px; width: 11px; height: 11px; background: var(--azure); border: 1px solid #fff; cursor: nwse-resize; touch-action: none; }
+.fill-pad { position: relative; height: 180px; border: 1px dashed var(--border-2); border-radius: 6px; background: #fff; touch-action: none; cursor: crosshair; margin-top: 12px; }
+.fill-pad svg { width: 100%; height: 100%; display: block; }
+.fill-pad-hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-3); pointer-events: none; font-size: 14px; }
+@media print {
+  .fill-bar, .fill-remove, .fill-handle, .fill-grip { display: none !important; }
+  .fill-mark.selected { outline: 0; }
+  .fill-text { border-bottom-color: transparent !important; background: transparent !important; }
+  .fill-text::placeholder { color: transparent; }
+}
 @media print {
   .replica-wrap .sheet-fit + .sheet-fit { margin-top: 0; }
   .replica-wrap .sheet-fit + .sheet-fit .replica-page { break-before: page; page-break-before: always; }

@@ -3,7 +3,7 @@ import type { Profile } from "../types";
 import { Icon } from "../icons";
 import { cloudEnabled } from "../lib/supabase";
 import { formSourceUrl, loadFormResponse, removeFormTemplate, saveFormResponse, useForms, type SavedForm } from "../lib/forms";
-import { validateFormAnswers, type FormAnswers } from "../lib/formSchema";
+import { validateFormAnswers, readAnnotations, writeAnnotations, type FormAnswers } from "../lib/formSchema";
 import { FormBuilder } from "./FormBuilder";
 import { PaperForm } from "./PaperForm";
 import { ConfirmModal, Modal } from "./Modal";
@@ -158,7 +158,7 @@ function SavedFormView({ template, profile, onClose }: { template: SavedForm; pr
       {loadError && <div className="fb-message"><p className="auth-error" role="alert">{loadError}</p><button type="button" className="btn" onClick={() => setRevision(value => value + 1)}>Retry</button></div>}
       {error && <p role="alert" className="auth-error">{error}</p>}
       <fieldset className="fb-response-controls" disabled={loading || saving || !!loadError}>
-        <PaperForm definition={template.definition} answers={answers} errors={fieldErrors} onChange={(fieldId, value) => {
+        <PaperForm definition={template.definition} answers={answers} errors={fieldErrors} annotations={readAnnotations(answers)} onAnnotationsChange={list => { setAnswers(current => writeAnnotations(current, list)); setDirty(true); }} onChange={(fieldId, value) => {
           setAnswers(current => ({ ...current, [fieldId]: value }));
           setDirty(true);
           setFieldErrors(current => { const next = { ...current }; delete next[fieldId]; return next; });

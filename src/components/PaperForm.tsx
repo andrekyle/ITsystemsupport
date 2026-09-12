@@ -1,8 +1,21 @@
-import { useId, type CSSProperties } from "react";
+import { useId, useState, type CSSProperties } from "react";
 import { DateTimePicker } from "./DateTimePicker";
 import { FitSheet } from "./FitSheet";
-import { isFullyPlaced, ReplicaForm, type ReplicaAdjust } from "./ReplicaForm";
-import { autoLayout, CHOICE_FIELD_TYPES, unplacedFields, type FormAnswer, type FormAnswers, type FormDefinition, type FormField, type FormLayoutCell, type FormLayoutRow, type FormSection } from "../lib/formSchema";
+import type { FillSign, FillTool } from "./FillSign";
+import { isFullyPlaced, ReplicaForm, type LayerTextEdit, type ReplicaAdjust } from "./ReplicaForm";
+import { autoLayout, CHOICE_FIELD_TYPES, unplacedFields, type FormAnnotation, type FormAnswer, type FormAnswers, type FormDefinition, type FormField, type FormLayoutCell, type FormLayoutRow, type FormSection } from "../lib/formSchema";
+
+const SIGNATURE_KEY = "fill-sign:signature";
+
+function savedSignature(): { text?: string; path?: string } | null {
+  try {
+    const raw = localStorage.getItem(SIGNATURE_KEY);
+    const value = raw ? JSON.parse(raw) as { text?: string; path?: string } : null;
+    return value && (typeof value.text === "string" || typeof value.path === "string") ? value : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Renders a generated form as a replica of the paper original. A form with
@@ -10,20 +23,35 @@ import { autoLayout, CHOICE_FIELD_TYPES, unplacedFields, type FormAnswer, type F
  * form gets the white sheet, hairline table grid, bold captions beside
  * write-in boxes and orange tick cells of the hand-built registration form.
  */
-export function PaperForm({ definition, answers, onChange, errors = {}, adjust }: {
+export function PaperForm({ definition, answers, onChange, errors = {}, adjust, annotations, onAnnotationsChange, onLayerText }: {
   definition: FormDefinition;
   answers: FormAnswers;
   onChange: (fieldId: string, value: FormAnswer) => void;
   errors?: Record<string, string>;
   /** form-builder box editing for replica pages */
   adjust?: ReplicaAdjust;
+  /** Acrobat-style marks the person filling in places anywhere on the pages */
+  annotations?: FormAnnotation[];
+  onAnnotationsChange?: (annotations: FormAnnotation[]) => void;
+  /** form-builder editing of the rebuilt page's printed text */
+  onLayerText?: LayerTextEdit;
 }) {
   const prefix = useId();
+  const [tool, setTool] = useState<FillTool>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [signature, setSignatureState] = useState(savedSignature);
+  const setSignature = (value: { text?: string; path?: string } | null) => {
+    setSignatureState(value);
+    try { value ? localStorage.setItem(SIGNATURE_KEY, JSON.stringify(value)) : localStorage.removeItem(SIGNATURE_KEY); } catch { /* storage unavailable */ }
+  };
   if (definition.pages.length) {
     const unplaced = definition.sections.flatMap(section => section.fields).filter(field => !isFullyPlaced(field));
+    const fill: FillSign | undefined = onAnnotationsChange && !adjust && !onLayerText
+      ? { annotations: annotations ?? [], onChange: onAnnotationsChange, tool, setTool, selected, setSelected, signature, setSignature }
+      : undefined;
     return (
       <>
-        <ReplicaForm definition={definition} answers={answers} onChange={onChange} errors={errors} adjust={adjust} />
+        <ReplicaForm definition={definition} answers={answers} onChange={onChange} errors={errors} adjust={adjust} fill={fill} onLayerText={onLayerText} />
         {unplaced.length > 0 && (
           <div className="srf-wrap paper-form-wrap replica-extra">
             <FitSheet width={1000}>

@@ -1,6 +1,7 @@
-import { useId, useLayoutEffect, useRef, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactElement, type ReactNode, type RefObject } from "react";
+import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactElement, type ReactNode, type RefObject } from "react";
 import { DateTimePicker } from "./DateTimePicker";
 import { FitSheet } from "./FitSheet";
+import { AnnotationLayer, annotationAt, FillSignBar, SignatureDialog, type FillSign } from "./FillSign";
 import { CHOICE_FIELD_TYPES, type FormAnswer, type FormAnswers, type FormBox, type FormDefinition, type FormField, type PageLayer } from "../lib/formSchema";
 
 /** Editing hooks for the form builder: move/resize boxes, draw a box for a
@@ -12,6 +13,9 @@ export interface ReplicaAdjust {
   armed: string | null;
   onDraw: (fieldId: string, page: number, box: FormBox) => void;
 }
+
+/** Builder editing of the rebuilt page's printed text ("" removes the run). */
+export type LayerTextEdit = (page: number, index: number, text: string) => void;
 
 /** A field that appears somewhere on the page images. */
 export function isPlaced(field: FormField): boolean {
@@ -45,17 +49,33 @@ const boxStyle = (box: FormBox, extra?: CSSProperties): CSSProperties => ({
  * The uploaded pages themselves, with the fields laid over the exact boxes
  * they were bound to — the digital form is the paper form.
  */
-export function ReplicaForm({ definition, answers, onChange, errors = {}, adjust }: {
+export function ReplicaForm({ definition, answers, onChange, errors = {}, adjust, fill, onLayerText }: {
   definition: FormDefinition;
   answers: FormAnswers;
   onChange: (fieldId: string, value: FormAnswer) => void;
   errors?: Record<string, string>;
   adjust?: ReplicaAdjust;
+  /** Acrobat-style marks anywhere on the page */
+  fill?: FillSign;
+  /** builder: printed text of the rebuilt page is editable in place */
+  onLayerText?: LayerTextEdit;
 }) {
   const prefix = useId();
   const fields = definition.sections.flatMap(section => section.fields);
+  // a signature tool click waits for the signature dialog the first time
+  const [pendingSignature, setPendingSignature] = useState<{ page: number; x: number; y: number; ratio: number } | null>(null);
+  const place = (page: number, x: number, y: number, ratio: number) => {
+    if (!fill?.tool) return;
+    if (fill.tool === "signature" && !fill.signature) { setPendingSignature({ page, x, y, ratio }); return; }
+    const mark = { ...annotationAt(fill.tool, x, y, ratio), page, ...(fill.tool === "signature" ? fill.signature : {}) };
+    fill.onChange([...fill.annotations, mark]);
+    fill.setSelected(mark.id);
+    // symbols keep the tool for the next box; text and signatures are placed one at a time
+    if (fill.tool === "text" || fill.tool === "signature") fill.setTool(null);
+  };
   return (
-    <div className={`srf-wrap paper-form-wrap replica-wrap${adjust ? " replica-adjust" : ""}`}>
+    <div className={`srf-wrap paper-form-wrap replica-wrap${adjust ? " replica-adjust" : ""}${fill?.tool ? " replica-placing" : ""}${onLayerText ? " replica-editing-text" : ""}`}>
+      {fill && <FillSignBar fill={fill} />}
       {definition.pages.map((page, index) => (
         <FitSheet width={PAGE_WIDTH} key={index}>
           <ReplicaPage
@@ -70,9 +90,26 @@ export function ReplicaForm({ definition, answers, onChange, errors = {}, adjust
             errors={errors}
             onChange={onChange}
             adjust={adjust}
+            fill={fill}
+            onPlace={place}
+            onLayerText={onLayerText}
           />
         </FitSheet>
       ))}
+      {pendingSignature && fill && (
+        <SignatureDialog
+          onCancel={() => { setPendingSignature(null); fill.setTool(null); }}
+          onApply={signature => {
+            fill.setSignature(signature);
+            const { page, x, y, ratio } = pendingSignature;
+            setPendingSignature(null);
+            const mark = { ...annotationAt("signature", x, y, ratio), page, ...signature };
+            fill.onChange([...fill.annotations, mark]);
+            fill.setSelected(mark.id);
+            fill.setTool(null);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -95,7 +132,7 @@ const clampBox = (box: FormBox): FormBox => {
   return { x: round(x), y: round(y), w: round(w), h: round(h) };
 };
 
-function ReplicaPage({ page, src, layer, ratio, title, fields, prefix, answers, errors, onChange, adjust }: {
+function ReplicaPage({ page, src, layer, ratio, title, fields, prefix, answers, errors, onChange, adjust, fill, onPlace, onLayerText }: {
   page: number;
   src: string;
   layer?: PageLayer;
@@ -107,16 +144,30 @@ function ReplicaPage({ page, src, layer, ratio, title, fields, prefix, answers, 
   errors: Record<string, string>;
   onChange: (fieldId: string, value: FormAnswer) => void;
   adjust?: ReplicaAdjust;
+  fill?: FillSign;
+  onPlace: (page: number, x: number, y: number, ratio: number) => void;
+  onLayerText?: LayerTextEdit;
 }) {
   const pageRef = useRef<HTMLDivElement>(null);
   const drawing = useRef<{ fieldId: string; start: { x: number; y: number } } | null>(null);
+  const onPaper = (target: EventTarget | null, current: HTMLElement) => target === current || (target as HTMLElement).tagName === "IMG" || (target as HTMLElement).classList?.contains("rp-layer");
+
+  // a click on bare paper places the active mark, or drops the selection
+  const clickPaper = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (!fill || !pageRef.current || !onPaper(event.target, event.currentTarget)) return;
+    if (fill.tool) {
+      const point = pageFraction(pageRef.current, event.clientX, event.clientY);
+      onPlace(page, point.x, point.y, ratio);
+    } else {
+      fill.setSelected(null);
+    }
+  };
 
   const startDraw = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const onPaper = event.target === event.currentTarget || (event.target as HTMLElement).tagName === "IMG";
-    if (!adjust?.armed || !pageRef.current || !onPaper) return;
+    if (!adjust?.armed || !pageRef.current || !onPaper(event.target, event.currentTarget)) return;
     event.preventDefault();
     drawing.current = { fieldId: adjust.armed, start: pageFraction(pageRef.current, event.clientX, event.clientY) };
-    event.currentTarget.setPointerCapture(event.pointerId);
+    try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* pointer already gone */ }
   };
   const endDraw = (event: ReactPointerEvent<HTMLDivElement>) => {
     const draw = drawing.current;
@@ -136,11 +187,13 @@ function ReplicaPage({ page, src, layer, ratio, title, fields, prefix, answers, 
       style={{ "--ratio": ratio, width: PAGE_WIDTH, height: Math.round(PAGE_WIDTH / ratio) } as CSSProperties}
       onPointerDown={adjust ? startDraw : undefined}
       onPointerUp={adjust ? endDraw : undefined}
+      onClick={fill ? clickPaper : undefined}
     >
-      {layer ? <DigitalPage layer={layer} ratio={ratio} /> : <img src={src} alt={`${title || "Form"} - page ${page}`} draggable={false} />}
+      {layer ? <DigitalPage layer={layer} ratio={ratio} onText={onLayerText ? (index, text) => onLayerText(page, index, text) : undefined} /> : <img src={src} alt={`${title || "Form"} - page ${page}`} draggable={false} />}
       {fields.map(field => (
         <ReplicaField key={field.id} field={field} ratio={ratio} pageRef={pageRef} prefix={prefix} value={answers[field.id]} error={errors[field.id]} onChange={value => onChange(field.id, value)} adjust={adjust} />
       ))}
+      {fill && <AnnotationLayer page={page} ratio={ratio} pageRef={pageRef} fill={fill} />}
     </div>
   );
 }
@@ -170,7 +223,7 @@ const FONT_STACKS: Record<string, string> = {
  * printed, in the printed face, size and ink, and is stretched or squeezed by
  * a hair so a substitute font still fills exactly the printed width.
  */
-function DigitalPage({ layer, ratio }: { layer: PageLayer; ratio: number }) {
+function DigitalPage({ layer, ratio, onText }: { layer: PageLayer; ratio: number; onText?: (index: number, text: string) => void }) {
   const rootRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -196,7 +249,7 @@ function DigitalPage({ layer, ratio }: { layer: PageLayer; ratio: number }) {
   }, [layer]);
   const box = (shape: { x: number; y: number; w: number; h: number }): CSSProperties => ({ left: `${shape.x * 100}%`, top: `${shape.y * 100}%`, width: `${shape.w * 100}%`, height: `${shape.h * 100}%` });
   return (
-    <div ref={rootRef} className="rp-layer" aria-hidden="true">
+    <div ref={rootRef} className={`rp-layer${onText ? " editable" : ""}`} aria-hidden={onText ? undefined : "true"}>
       {layer.fills.map((fill, index) => <div key={`f${index}`} className="rp-fill" style={{ ...box(fill), background: fill.c }} />)}
       {layer.pictures.map((picture, index) => <img key={`p${index}`} className="rp-picture" src={picture.src} alt="" draggable={false} style={box(picture)} />)}
       {layer.rules.map((rule, index) => {
@@ -229,6 +282,12 @@ function DigitalPage({ layer, ratio }: { layer: PageLayer; ratio: number }) {
           key={`t${index}`}
           className="rp-text"
           data-w={run.w}
+          contentEditable={onText ? true : undefined}
+          suppressContentEditableWarning
+          spellCheck={false}
+          title={onText ? "Click to edit this text; clear it to remove it" : undefined}
+          onBlur={onText ? event => { const next = (event.currentTarget.textContent ?? "").replace(/\s+/g, " ").trim(); if (next !== run.t) onText(index, next); } : undefined}
+          onKeyDown={onText ? event => { if (event.key === "Enter") { event.preventDefault(); event.currentTarget.blur(); } } : undefined}
           style={{
             left: `${run.x * 100}%`,
             // the run box starts 0.8 em above the baseline; an Arial line box puts its baseline 0.847 em down
@@ -360,7 +419,7 @@ function AdjustableBox({ box, pageRef, adjust, onBox, children }: {
     event.preventDefault();
     event.stopPropagation();
     gesture.current = { kind, start: pageFraction(pageRef.current, event.clientX, event.clientY), box };
-    event.currentTarget.setPointerCapture(event.pointerId);
+    try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* pointer already gone */ }
   };
   const move = (event: ReactPointerEvent<HTMLElement>) => {
     const current = gesture.current;

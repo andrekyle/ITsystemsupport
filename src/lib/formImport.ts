@@ -431,6 +431,11 @@ async function requestDefinition(body: unknown, token: string, signal?: AbortSig
     throw new Error(`The form-generation endpoint did not answer properly (HTTP ${response.status}). Check that the latest app is deployed.`);
   }
   if (!response.ok || result.error) throw new Error(result.error || "Form generation failed.");
+  // a page the model found nothing to fill in on comes back with no sections
+  const answer = result.definition as { sections?: unknown[]; title?: unknown } | undefined;
+  if (answer && Array.isArray(answer.sections) && !answer.sections.length) {
+    return { definition: { title: typeof answer.title === "string" ? answer.title : "", description: "", sections: [], titleColor: "", accentColor: "", masthead: "", pages: [], display: "image" }, mastheadBox: null };
+  }
   return { definition: parseFormDefinition(result.definition), mastheadBox: result.mastheadBox };
 }
 
@@ -478,11 +483,12 @@ export async function generateFormDefinition(document: ImportedFormDocument, sig
       banner: "",
       pageBreak: false,
     })).filter(section => section.fields.length);
-    if (!sections.length) throw new Error("No fillable fields could be identified. Upload a clearer blank form or add the fields manually.");
     const pages = document.pages.map(({ analysis: _analysis, ...page }) => page);
+    // no detected fields is still a usable replica: everything can be written with fill & sign
     return parseFormDefinition({ title, description: "", sections, titleColor: "", accentColor: "", masthead: "", pages, display: pages.some(page => page.layer) ? "digital" : "image" });
   }
   const { definition, mastheadBox } = await requestDefinition(generationRequest(document), token, signal);
+  if (!definition.sections.length) throw new Error("No fillable fields could be identified. Upload a clearer blank form or add the fields manually.");
   if (mastheadBox && !definition.masthead) {
     definition.masthead = await cropMasthead(document.images, mastheadBox);
   }

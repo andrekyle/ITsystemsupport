@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile } from "../types";
-import { CHOICE_FIELD_TYPES, FORM_FIELD_TYPES, MAX_FORM_FIELDS, parseFormDefinition, type FormAnswers, type FormBox, type FormDefinition, type FormField, type FormFieldType, type FormSection } from "../lib/formSchema";
+import { CHOICE_FIELD_TYPES, FORM_FIELD_TYPES, MAX_FORM_FIELDS, parseFormDefinition, readAnnotations, writeAnnotations, type FormAnswers, type FormBox, type FormDefinition, type FormField, type FormFieldType, type FormSection } from "../lib/formSchema";
 import { checkFormUpload, extractFormDocument, FORM_UPLOAD_ACCEPT, generateFormDefinition, missingPrintedText, type ImportedFormDocument } from "../lib/formImport";
 import { saveFormTemplate, type SavedForm } from "../lib/forms";
 import { PaperForm } from "./PaperForm";
@@ -38,6 +38,8 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
   // replica pages: boxes can be moved, resized and drawn in the preview
   const [adjusting, setAdjusting] = useState(false);
   const [armed, setArmed] = useState<string | null>(null);
+  // rebuilt pages: the printed text can be corrected in place
+  const [editingText, setEditingText] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const controller = useRef<AbortController | null>(null);
 
@@ -121,6 +123,19 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
       setArmed(null);
     },
   } : undefined;
+  const canEditText = isReplica && draft!.display === "digital" && draft!.pages.some(page => page.layer);
+  const onLayerText = canEditText && mode === "preview" && editingText && !adjusting
+    ? (page: number, index: number, text: string) => setDraft(current => {
+      if (!current) return current;
+      const pages = current.pages.map((item, pageIndex) => {
+        if (pageIndex !== page - 1 || !item.layer) return item;
+        // an edited run keeps its place but no longer squeezes to the old printed width
+        const runs = item.layer.text.flatMap((run, runIndex) => runIndex !== index ? [run] : text ? [{ ...run, t: text, w: 0 }] : []);
+        return { ...item, layer: { ...item.layer, text: runs } };
+      });
+      return { ...current, pages };
+    })
+    : undefined;
 
   const save = async () => {
     if (!draft || busy) return;
@@ -181,7 +196,8 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
                   <button type="button" role="radio" aria-checked={draft.display === "image"} onClick={() => setDraft({ ...draft, display: "image" })}>Original image</button>
                 </div>
               )}
-              {isReplica && mode === "preview" && <button type="button" className={`btn${adjusting ? " primary" : " ghost"}`} aria-pressed={adjusting} onClick={() => { setAdjusting(!adjusting); setArmed(null); }} title="Move, resize or draw the boxes the answers are written in"><Icon name="layers" size={16} /> {adjusting ? "Done adjusting" : "Adjust boxes"}</button>}
+              {isReplica && mode === "preview" && <button type="button" className={`btn${adjusting ? " primary" : " ghost"}`} aria-pressed={adjusting} onClick={() => { setAdjusting(!adjusting); setArmed(null); setEditingText(false); }} title="Move, resize or draw the boxes the answers are written in"><Icon name="layers" size={16} /> {adjusting ? "Done adjusting" : "Adjust boxes"}</button>}
+              {canEditText && mode === "preview" && <button type="button" className={`btn${editingText ? " primary" : " ghost"}`} aria-pressed={editingText} onClick={() => { setEditingText(!editingText); setAdjusting(false); setArmed(null); }} title="Click any printed text on the page to correct it; clear it to remove it"><Icon name="document" size={16} /> {editingText ? "Done editing text" : "Edit text"}</button>}
               {draft.masthead && <button type="button" className="btn ghost" onClick={() => setDraft({ ...draft, masthead: "" })} title="Drop the letterhead image cut from the upload"><Icon name="close" size={16} /> Remove letterhead</button>}
               {source && sourceUrl && <a className="btn ghost" href={sourceUrl} download={source.name}><Icon name="download" size={16} /> Original document</a>}
             </div>
@@ -203,7 +219,7 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
               <ul>{missing.map(line => <li key={line}>{line}</li>)}</ul>
             </details>
           )}
-          {mode === "preview" ? <PaperForm definition={draft} answers={previewAnswers} adjust={adjust} onChange={(fieldId, value) => setPreviewAnswers(current => ({ ...current, [fieldId]: value }))} /> : (
+          {mode === "preview" ? <PaperForm definition={draft} answers={previewAnswers} adjust={adjust} onLayerText={onLayerText} annotations={readAnnotations(previewAnswers)} onAnnotationsChange={list => setPreviewAnswers(current => writeAnnotations(current, list))} onChange={(fieldId, value) => setPreviewAnswers(current => ({ ...current, [fieldId]: value }))} /> : (
             <fieldset className="fb-editor" disabled={!!busy}>
               {isReplica && <p className="fb-field-note">This form shows the uploaded pages exactly as printed. Edit the captions, types and options here; move, resize or draw the answer boxes under Preview - Adjust boxes.</p>}
               <div className="field"><label htmlFor="builder-title">Form title</label><input id="builder-title" value={draft.title} maxLength={200} onChange={event => setDraft({ ...draft, title: event.target.value })} /></div>
