@@ -184,15 +184,19 @@ export async function generateFormDefinition(document: ImportedFormDocument, sig
     body: JSON.stringify({ name: document.name, text: document.text, images: document.images }),
     signal,
   });
+  // the server streams keep-alive spaces while OpenAI works, then the JSON
+  const raw = (await response.text()).trim();
   let body: { definition?: unknown; error?: string };
   try {
-    body = await response.json();
+    if (!raw) throw new Error("empty");
+    body = JSON.parse(raw);
   } catch {
     // no JSON means the platform answered, not our function (gateway timeout, size limit…)
     if (response.status === 504 || response.status === 408) {
       throw new Error("Form generation timed out on the server. Try fewer pages or a smaller file.");
     }
     if (response.status === 413) throw new Error("The document is too large to send. Upload a smaller file or fewer pages.");
+    if (response.ok) throw new Error("The connection dropped before the form came back. Try again, or use fewer pages.");
     throw new Error(`The form-generation endpoint did not answer properly (HTTP ${response.status}). Check that the latest app is deployed.`);
   }
   if (!response.ok || body.error) throw new Error(body.error || "Form generation failed.");

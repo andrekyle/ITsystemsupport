@@ -1,12 +1,14 @@
 import { FORM_FIELD_TYPES, parseFormDefinition } from "../src/lib/formSchema";
 
-// Node runtime, not Edge: the Edge runtime must start responding within 25 s,
-// and a multi-page form read at high detail plus a long JSON answer takes
-// longer than that — Vercel would cut it off with a 504 and no JSON body.
-export const config = { runtime: "nodejs", maxDuration: 120 };
+// Edge runtime. It must START responding within 25 s, so the slow OpenAI call
+// is streamed: a keep-alive space goes out immediately and every few seconds
+// (whitespace is a legal JSON lead-in), then the JSON result follows. Edge
+// streams may run for up to 300 s.
+export const config = { runtime: "edge" };
 
 const MAX_REQUEST_SIZE = 3_500_000;
-const OPENAI_TIMEOUT_MS = 110_000;
+const OPENAI_TIMEOUT_MS = 170_000;
+const HEARTBEAT_MS = 4_000;
 const MODEL = "gpt-4.1-mini";
 const textSchema = { type: "string" };
 const definitionSchema = {
@@ -84,55 +86,23 @@ async function describeOpenAiFailure(response: Response): Promise<string> {
   return `The form-generation service returned an error (HTTP ${response.status}${detail ? `, ${detail.slice(0, 120)}` : ""}). Please try again.`;
 }
 
-// method export: Vercel's Node runtime answers other verbs with 405 itself
-export async function POST(request: Request): Promise<Response> {
-  const authorization = request.headers.get("authorization") ?? "";
-  if (!/^Bearer\s+\S+$/i.test(authorization)) return json({ error: "Sign in to generate forms." }, 401);
-  const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env ?? {};
-  const url = env.SUPABASE_URL || env.VITE_SUPABASE_URL;
-  const anonKey = env.SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY;
-  const apiKey = env.OPENAI_API_KEY;
-  if (!url || !anonKey || !apiKey) {
-    return json({ error: "Form generation requires OPENAI_API_KEY and Supabase configuration on the server." }, 503);
-  }
-  if (Number(request.headers.get("content-length") ?? 0) > MAX_REQUEST_SIZE) {
-    return json({ error: "The document is too large to generate. Upload a smaller file." }, 413);
-  }
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
-  try {
-    const authHeaders = { Authorization: authorization, apikey: anonKey };
-    const user = await fetch(`${url}/auth/v1/user`, { headers: authHeaders, signal: controller.signal });
-    if (!user.ok) return json({ error: "Your session has expired. Sign in again." }, 401);
-    const admin = await fetch(`${url}/rest/v1/rpc/is_admin`, {
-      method: "POST",
-      headers: { ...authHeaders, "Content-Type": "application/json" },
-      body: "{}",
-      signal: controller.signal,
-    });
-    if (!admin.ok || await admin.json() !== true) return json({ error: "Only an administrator can generate form templates." }, 403);
+type Payload = { definition: unknown; model: string } | { error: string };
 
-    const raw = await request.text();
-    if (new TextEncoder().encode(raw).length > MAX_REQUEST_SIZE) return json({ error: "Document content exceeds the generation limit." }, 413);
-    let input: Record<string, unknown>;
-    try {
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error();
-      input = parsed;
-    } catch {
-      return json({ error: "Invalid document request." }, 400);
-    }
-    const name = typeof input.name === "string" ? input.name.slice(0, 250) : "Uploaded form";
-    const text = typeof input.text === "string" ? input.text : "";
-    const images = Array.isArray(input.images) ? input.images : [];
-    if (text.length > 80_000 || images.length > 12 || images.some(image => typeof image !== "string" || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(image))) {
-      return json({ error: "Unsupported document content or too many pages." }, 400);
-    }
-    if (!text.trim() && !images.length) return json({ error: "No readable content was found in the upload." }, 400);
+/** The slow part: ask OpenAI for the form definition. Always resolves to a
+ *  payload — errors are reported in the body because the response has
+ *  already started streaming by the time this runs. */
+async function generate(
+  apiKey: string,
+  name: string,
+  text: string,
+  images: string[],
+  signal: AbortSignal
+): Promise<Payload> {
+  try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      signal: controller.signal,
+      signal,
       body: JSON.stringify({
         model: MODEL,
         temperature: 0,
@@ -147,20 +117,106 @@ export async function POST(request: Request): Promise<Response> {
         ],
       }),
     });
-    if (!response.ok) return json({ error: await describeOpenAiFailure(response) }, 502);
+    if (!response.ok) return { error: await describeOpenAiFailure(response) };
     const result = await response.json() as { choices?: { finish_reason?: string; message?: { content?: string | null; refusal?: string | null } }[] };
     const choice = result.choices?.[0];
-    if (choice?.finish_reason === "length") return json({ error: "This form is too long. Split it into smaller documents." }, 422);
-    if (choice?.message?.refusal) return json({ error: "The AI declined to process this document. Make sure it is a blank form without personal information." }, 422);
+    if (choice?.finish_reason === "length") return { error: "This form is too long. Split it into smaller documents." };
+    if (choice?.message?.refusal) return { error: "The AI declined to process this document. Make sure it is a blank form without personal information." };
     try {
-      const definition = parseFormDefinition(JSON.parse(choice?.message?.content ?? "{}"));
-      return json({ definition, model: MODEL });
+      return { definition: parseFormDefinition(JSON.parse(choice?.message?.content ?? "{}")), model: MODEL };
     } catch {
-      return json({ error: "A complete form could not be identified. Upload a clearer blank form or add the fields manually." }, 422);
+      return { error: "A complete form could not be identified. Upload a clearer blank form or add the fields manually." };
     }
   } catch (error) {
-    return json({ error: error instanceof Error && error.name === "AbortError" ? "Form generation timed out after two minutes. Try fewer pages or a smaller file." : "Unable to reach the form-generation service." }, 502);
-  } finally {
-    clearTimeout(timeout);
+    return {
+      error: error instanceof Error && error.name === "AbortError"
+        ? "Form generation timed out. Try fewer pages or a smaller file."
+        : "Unable to reach the form-generation service.",
+    };
   }
+}
+
+export default async function handler(request: Request): Promise<Response> {
+  if (request.method !== "POST") return json({ error: "Use POST to generate a form." }, 405);
+  const authorization = request.headers.get("authorization") ?? "";
+  if (!/^Bearer\s+\S+$/i.test(authorization)) return json({ error: "Sign in to generate forms." }, 401);
+  const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env ?? {};
+  const url = env.SUPABASE_URL || env.VITE_SUPABASE_URL;
+  const anonKey = env.SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY;
+  const apiKey = env.OPENAI_API_KEY;
+  if (!url || !anonKey || !apiKey) {
+    return json({ error: "Form generation requires OPENAI_API_KEY and Supabase configuration on the server." }, 503);
+  }
+  if (Number(request.headers.get("content-length") ?? 0) > MAX_REQUEST_SIZE) {
+    return json({ error: "The document is too large to generate. Upload a smaller file." }, 413);
+  }
+
+  // quick checks answer with a normal status before any streaming starts
+  let name = "Uploaded form";
+  let text = "";
+  let images: string[] = [];
+  try {
+    const authHeaders = { Authorization: authorization, apikey: anonKey };
+    const user = await fetch(`${url}/auth/v1/user`, { headers: authHeaders });
+    if (!user.ok) return json({ error: "Your session has expired. Sign in again." }, 401);
+    const admin = await fetch(`${url}/rest/v1/rpc/is_admin`, {
+      method: "POST",
+      headers: { ...authHeaders, "Content-Type": "application/json" },
+      body: "{}",
+    });
+    if (!admin.ok || await admin.json() !== true) return json({ error: "Only an administrator can generate form templates." }, 403);
+
+    const raw = await request.text();
+    if (new TextEncoder().encode(raw).length > MAX_REQUEST_SIZE) return json({ error: "Document content exceeds the generation limit." }, 413);
+    let input: Record<string, unknown>;
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error();
+      input = parsed;
+    } catch {
+      return json({ error: "Invalid document request." }, 400);
+    }
+    if (typeof input.name === "string") name = input.name.slice(0, 250);
+    if (typeof input.text === "string") text = input.text;
+    const list = Array.isArray(input.images) ? input.images : [];
+    if (text.length > 80_000 || list.length > 12 || list.some(image => typeof image !== "string" || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(image))) {
+      return json({ error: "Unsupported document content or too many pages." }, 400);
+    }
+    images = list as string[];
+    if (!text.trim() && !images.length) return json({ error: "No readable content was found in the upload." }, 400);
+  } catch {
+    return json({ error: "Unable to reach the sign-in service." }, 502);
+  }
+
+  const controller = new AbortController();
+  const encoder = new TextEncoder();
+  let heartbeat: ReturnType<typeof setInterval> | undefined;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const stream = new ReadableStream<Uint8Array>({
+    start(sink) {
+      // enqueue throws once the client has gone away — that is not an error here
+      const push = (chunk: string) => { try { sink.enqueue(encoder.encode(chunk)); } catch { /* stream closed */ } };
+      // first byte leaves at once so the 25 s edge limit never trips
+      push(" ");
+      heartbeat = setInterval(() => push(" "), HEARTBEAT_MS);
+      timeout = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
+      void generate(apiKey, name, text, images, controller.signal)
+        .then(payload => push(JSON.stringify(payload)))
+        .catch(() => push(JSON.stringify({ error: "Form generation failed." })))
+        .finally(() => {
+          clearInterval(heartbeat);
+          clearTimeout(timeout);
+          try { sink.close(); } catch { /* already closed by cancel */ }
+        });
+    },
+    cancel() {
+      clearInterval(heartbeat);
+      clearTimeout(timeout);
+      controller.abort();
+    },
+  });
+  return new Response(stream, {
+    status: 200,
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "X-Accel-Buffering": "no" },
+  });
 }
