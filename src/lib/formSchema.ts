@@ -13,14 +13,16 @@ export interface FormField {
   options: string[];
 }
 
-export const LAYOUT_CELL_KINDS = ["label", "field", "option", "blank"] as const;
+export const LAYOUT_CELL_KINDS = ["label", "field", "option", "blank", "text"] as const;
 export type LayoutCellKind = typeof LAYOUT_CELL_KINDS[number];
 
 /** One cell of the paper grid: a printed caption, a write-in box bound to a
- *  field, a tick box for one option of a choice field, or empty space. */
+ *  field, a tick box for one option of a choice field, a run of printed text
+ *  (note, declaration, footer line) or empty space. */
 export interface FormLayoutCell {
   kind: LayoutCellKind;
-  /** caption for label cells, the option's printed text for option cells */
+  /** label: the caption · option: the printed choice · text: the printed
+   *  passage · field: an inline caption printed inside the box ("Other:") */
   text: string;
   /** field this cell belongs to (field / option cells; optional on labels) */
   fieldId: string;
@@ -36,27 +38,45 @@ export interface FormSection {
   title: string;
   description: string;
   fields: FormField[];
-  /** number of equal grid columns the rows are laid out on */
+  /** number of grid columns the rows are laid out on */
   columns: number;
+  /** printed width of each column as a percentage; [] = equal columns */
+  widths: number[];
   /** the paper grid, top to bottom; empty = lay the fields out automatically */
   rows: FormLayoutRow[];
+  /** text printed in a solid colour strip (contact footer, notice); "" = none */
+  banner: string;
+  /** this section starts a new printed page */
+  pageBreak: boolean;
 }
 
 export interface FormDefinition {
   title: string;
   description: string;
   sections: FormSection[];
+  /** printed colour of the title, CSS hex; "" = the default */
+  titleColor: string;
+  /** colour of banners and tick highlights, CSS hex; "" = the default */
+  accentColor: string;
+  /** letterhead / logo cropped from the uploaded page as a data URL; "" = none */
+  masthead: string;
 }
 
 export type FormAnswer = string | boolean | string[];
 export type FormAnswers = Record<string, FormAnswer>;
 
 export const MAX_FORM_FIELDS = 150;
-export const MAX_LAYOUT_COLUMNS = 12;
+export const MAX_LAYOUT_COLUMNS = 16;
 export const MAX_LAYOUT_ROWS = 200;
+export const MAX_MASTHEAD_CHARS = 220_000;
 export const CHOICE_FIELD_TYPES: readonly FormFieldType[] = ["select", "radio", "checkboxes"];
 /** field types that need a whole row of the auto layout */
 const WIDE_FIELD_TYPES: readonly FormFieldType[] = ["textarea", "radio", "checkboxes", "checkbox"];
+const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+function colorValue(value: unknown): string {
+  return typeof value === "string" && HEX_COLOR.test(value.trim()) ? value.trim().toLowerCase() : "";
+}
 
 function objectValue(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Invalid form structure.");
@@ -90,9 +110,7 @@ export function parseFormDefinition(value: unknown): FormDefinition {
   const sections = source.sections.map((entry): FormSection => {
     const section = objectValue(entry);
     const id = readId(section.id);
-    if (!Array.isArray(section.fields) || !section.fields.length) {
-      throw new Error("Each section must have at least one field.");
-    }
+    if (!Array.isArray(section.fields)) throw new Error("Each section must list its fields.");
     const fields = section.fields.map((entry): FormField => {
       const field = objectValue(entry);
       fieldCount += 1;
@@ -116,25 +134,43 @@ export function parseFormDefinition(value: unknown): FormDefinition {
         options,
       };
     });
+    const layout = parseLayout(section, fields);
+    const description = textValue(section.description, 5000, "section description");
+    const banner = textValue(section.banner ?? "", 1000, "section banner");
+    // a section with no fields must still print something (a declaration, a footer)
+    if (!fields.length && !description && !banner && !layout.rows.some(row => row.cells.some(cell => cell.kind === "text" && cell.text))) {
+      throw new Error("Each section must have at least one field or some printed text.");
+    }
     return {
       id,
-      title: textValue(section.title, 300, "section title", true),
-      description: textValue(section.description, 5000, "section description"),
+      title: textValue(section.title, 300, "section title"),
+      description,
       fields,
-      ...parseLayout(section, fields),
+      ...layout,
+      banner,
+      pageBreak: section.pageBreak === true,
     };
   });
-  return { title, description, sections };
+  const masthead = typeof source.masthead === "string" && /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(source.masthead) && source.masthead.length <= MAX_MASTHEAD_CHARS
+    ? source.masthead
+    : "";
+  return { title, description, sections, titleColor: colorValue(source.titleColor), accentColor: colorValue(source.accentColor), masthead };
 }
 
 /** Layout is decorative, so it is repaired rather than rejected: cells that
  *  point at a missing field or option become blank space. */
-function parseLayout(section: Record<string, unknown>, fields: FormField[]): Pick<FormSection, "columns" | "rows"> {
+function parseLayout(section: Record<string, unknown>, fields: FormField[]): Pick<FormSection, "columns" | "widths" | "rows"> {
   const byId = new Map(fields.map(field => [field.id, field]));
   const columns = Number.isInteger(section.columns) && (section.columns as number) >= 1
     ? Math.min(section.columns as number, MAX_LAYOUT_COLUMNS)
     : 4;
-  if (!Array.isArray(section.rows)) return { columns, rows: [] };
+  // printed proportions: one positive number per column, normalised to 100
+  let widths: number[] = [];
+  if (Array.isArray(section.widths) && section.widths.length === columns && section.widths.every(w => typeof w === "number" && Number.isFinite(w) && w > 0)) {
+    const total = (section.widths as number[]).reduce((sum, w) => sum + w, 0);
+    widths = (section.widths as number[]).map(w => Math.round((w / total) * 1000) / 10);
+  }
+  if (!Array.isArray(section.rows)) return { columns, widths, rows: [] };
   const rows: FormLayoutRow[] = [];
   for (const entry of section.rows.slice(0, MAX_LAYOUT_ROWS)) {
     if (!entry || typeof entry !== "object" || !Array.isArray((entry as { cells?: unknown }).cells)) continue;
@@ -144,21 +180,21 @@ function parseLayout(section: Record<string, unknown>, fields: FormField[]): Pic
       if (!raw || typeof raw !== "object") continue;
       const cell = raw as Record<string, unknown>;
       let kind = LAYOUT_CELL_KINDS.includes(cell.kind as LayoutCellKind) ? cell.kind as LayoutCellKind : "blank";
-      const text = typeof cell.text === "string" ? cell.text.trim().slice(0, 500) : "";
+      const text = typeof cell.text === "string" ? cell.text.trim().slice(0, kind === "text" ? 3000 : 500) : "";
       let fieldId = typeof cell.fieldId === "string" ? cell.fieldId.trim() : "";
       const span = Math.max(1, Math.min(Number.isInteger(cell.span) ? (cell.span as number) : 1, columns - used || 1));
       const field = byId.get(fieldId);
-      if (kind === "field" && !field) kind = "blank";
+      if (kind === "field" && !field) kind = text ? "text" : "blank";
       if (kind === "option" && (!field || !CHOICE_FIELD_TYPES.includes(field.type) || !field.options.includes(text))) kind = "blank";
-      if (kind === "label" && !field) fieldId = "";
+      if ((kind === "label" || kind === "text") && !field) fieldId = "";
       if (kind === "blank") fieldId = "";
-      cells.push({ kind, text: kind === "blank" || kind === "field" ? "" : text, fieldId, span });
+      cells.push({ kind, text: kind === "blank" ? "" : kind === "field" ? text.slice(0, 80) : text, fieldId, span });
       used += span;
       if (used >= columns) break;
     }
     if (cells.length) rows.push({ cells });
   }
-  return { columns, rows };
+  return { columns, widths, rows };
 }
 
 /** Fields the section's grid does not place — rendered after it so nothing

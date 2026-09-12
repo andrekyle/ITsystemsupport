@@ -22,6 +22,10 @@
 .fb-source-text { border: 1px solid var(--border); padding: 24px; overflow-wrap: anywhere; }
 .fb-source-text pre { white-space: pre-wrap; font-family: inherit; font-size: 14px; max-height: 500px; overflow: auto; }
 .fb-review-toolbar { justify-content: space-between; padding-bottom: 16px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.fb-missing { margin: -8px 0 20px; padding: 10px 14px; border: 1px solid var(--border); border-left: 3px solid var(--amber); border-radius: 4px; font-size: 14px; }
+.fb-missing summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+.fb-missing ul { margin: 6px 0 0; padding-left: 20px; max-height: 260px; overflow: auto; }
+.fb-missing li { margin: 2px 0; overflow-wrap: anywhere; color: var(--ink-2); }
 .fb-mode { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
 .fb-mode button { min-height: 44px; padding: 8px 16px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--ink-2); font: inherit; }
 .fb-mode button[aria-selected="true"] { border-bottom-color: var(--azure); color: var(--ink); }
@@ -102,16 +106,24 @@
   border: 1px solid var(--srf-line); background: transparent; color: #000; font: inherit; font-size: 10.5px;
   padding: 2px 8px; cursor: pointer; line-height: 1.3; border-radius: 0;
 }
-.paper-tick.on { color: #ee7a15; font-weight: 700; }
+.paper-tick.on { color: var(--paper-accent, #ee7a15); font-weight: 700; }
 .paper-tick:hover, .paper-check:hover { background: #fffbe6; }
 .paper-check { display: inline-flex; align-items: center; gap: 6px; border: 0; padding: 3px 5px; width: 100%; text-align: left; }
-.paper-check-box { width: 13px; height: 13px; border: 1px solid var(--srf-line); display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #ee7a15; flex: none; }
+.paper-check-box { width: 13px; height: 13px; border: 1px solid var(--srf-line); display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--paper-accent, #ee7a15); flex: none; }
+.paper-form .srf-tick-cell.on .srf-cell-label { color: var(--paper-accent, #ee7a15); }
 .paper-form .paper-signature { font-family: Georgia, serif; font-style: italic; }
 .paper-form .fb-required { color: #c00; }
 .paper-form .paper-error { box-shadow: inset 0 0 0 2px var(--red); }
 .paper-form .srf-input:focus { background: #fff8d8; }
+/* verbatim extras: letterhead, printed passages, colour strips */
+.paper-masthead { max-height: 110px; max-width: 100%; width: auto; height: auto; display: block; }
+.paper-form .paper-text { padding: 4px 6px !important; font-size: 10.5px; line-height: 1.4; vertical-align: top; }
+.paper-form .paper-banner { background: var(--paper-accent, #ee7a15); display: block; text-align: center; margin: 8px 0 10px; }
+.paper-form .srf-inline-with-label .srf-input { flex: 1; }
 @media print {
   .paper-form { border: 0 !important; }
   .paper-form .paper-error { box-shadow: none; }
   .paper-tick { border-color: #000; }
+  .paper-form .srf-tick-cell.on .srf-cell-label { color: var(--paper-accent, #ee7a15) !important; }
+  .paper-form .paper-banner { background: var(--paper-accent, #ee7a15) !important; color: #fff !important; }
 }

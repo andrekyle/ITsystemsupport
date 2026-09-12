@@ -1,7 +1,7 @@
 import JSZip from "jszip";
 import { GlobalWorkerOptions, getDocument, type PDFDocumentProxy } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-import { parseFormDefinition, type FormDefinition, type FormField } from "./formSchema";
+import { MAX_MASTHEAD_CHARS, parseFormDefinition, type FormDefinition, type FormField } from "./formSchema";
 import { supabase } from "./supabase";
 
 GlobalWorkerOptions.workerSrc = workerUrl;
@@ -186,7 +186,7 @@ export async function generateFormDefinition(document: ImportedFormDocument, sig
   });
   // the server streams keep-alive spaces while OpenAI works, then the JSON
   const raw = (await response.text()).trim();
-  let body: { definition?: unknown; error?: string };
+  let body: { definition?: unknown; mastheadBox?: MastheadBox | null; error?: string };
   try {
     if (!raw) throw new Error("empty");
     body = JSON.parse(raw);
@@ -200,5 +200,92 @@ export async function generateFormDefinition(document: ImportedFormDocument, sig
     throw new Error(`The form-generation endpoint did not answer properly (HTTP ${response.status}). Check that the latest app is deployed.`);
   }
   if (!response.ok || body.error) throw new Error(body.error || "Form generation failed.");
-  return parseFormDefinition(body.definition);
+  const definition = parseFormDefinition(body.definition);
+  if (body.mastheadBox && !definition.masthead) {
+    definition.masthead = await cropMasthead(document.images, body.mastheadBox);
+  }
+  return definition;
+}
+
+interface MastheadBox { page: number; x: number; y: number; width: number; height: number }
+
+/** Cut the letterhead the AI located out of the page image so the replica
+ *  carries the original logo. Implausible boxes (tiny, huge, off-page) are
+ *  ignored rather than risk pasting a random patch of the page. */
+async function cropMasthead(images: string[], box: MastheadBox): Promise<string> {
+  const source = images[box.page - 1];
+  const clamp = (v: number) => Math.min(1, Math.max(0, v));
+  const x = clamp(box.x);
+  const y = clamp(box.y);
+  const width = clamp(Math.min(box.width, 1 - x));
+  const height = clamp(Math.min(box.height, 1 - y));
+  if (!source || width < 0.08 || height < 0.02 || height > 0.35 || y > 0.4) return "";
+  try {
+    const bitmap = await createImageBitmap(await (await fetch(source)).blob());
+    try {
+      const sx = Math.round(x * bitmap.width);
+      const sy = Math.round(y * bitmap.height);
+      const sw = Math.max(1, Math.round(width * bitmap.width));
+      const sh = Math.max(1, Math.round(height * bitmap.height));
+      const scale = Math.min(1, 900 / sw);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(sw * scale));
+      canvas.height = Math.max(1, Math.round(sh * scale));
+      const context = canvas.getContext("2d");
+      if (!context) return "";
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(bitmap, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+      const url = canvas.toDataURL("image/jpeg", 0.85);
+      return url.length <= MAX_MASTHEAD_CHARS ? url : "";
+    } finally {
+      bitmap.close();
+    }
+  } catch {
+    return "";
+  }
+}
+
+const wordsOf = (text: string) => (text.toLowerCase().match(/[a-z0-9][a-z0-9'’&/-]*/g) ?? []).filter(word => word.length >= 3);
+
+/**
+ * Verbatim check: lines of the document's own text whose words do not all
+ * appear somewhere in the replica. Empty when there is no extracted text
+ * (image uploads) or when everything printed made it across.
+ */
+export function missingPrintedText(document: ImportedFormDocument, definition: FormDefinition): string[] {
+  if (!document.text.trim()) return [];
+  const known = new Set<string>();
+  const learn = (text: string) => { for (const word of wordsOf(text)) known.add(word); };
+  learn(definition.title);
+  learn(definition.description);
+  for (const section of definition.sections) {
+    learn(section.title);
+    learn(section.description);
+    learn(section.banner);
+    for (const field of section.fields) {
+      learn(field.label);
+      learn(field.helpText);
+      field.options.forEach(learn);
+    }
+    for (const row of section.rows) for (const cell of row.cells) learn(cell.text);
+  }
+  const missing: string[] = [];
+  const seen = new Set<string>();
+  for (const rawLine of document.text.split(/\n+/)) {
+    const line = rawLine.replace(/\s+/g, " ").trim();
+    if (!line || /^page \d+$/i.test(line)) continue;
+    const words = wordsOf(line);
+    if (words.length < 2) continue;
+    const lost = words.filter(word => !known.has(word));
+    // a line counts as missing when a real share of its words never appears
+    if (lost.length >= 2 && lost.length / words.length >= 0.4) {
+      const key = line.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      missing.push(line.length > 140 ? `${line.slice(0, 137)}…` : line);
+      if (missing.length >= 40) break;
+    }
+  }
+  return missing;
 }

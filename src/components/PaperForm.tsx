@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, type CSSProperties } from "react";
 import { DateTimePicker } from "./DateTimePicker";
 import { FitSheet } from "./FitSheet";
 import { autoLayout, CHOICE_FIELD_TYPES, unplacedFields, type FormAnswer, type FormAnswers, type FormDefinition, type FormField, type FormLayoutCell, type FormLayoutRow, type FormSection } from "../lib/formSchema";
@@ -15,12 +15,19 @@ export function PaperForm({ definition, answers, onChange, errors = {} }: {
   errors?: Record<string, string>;
 }) {
   const prefix = useId();
+  // the paper's own colours drive the title, tick highlights and banners
+  const accent = definition.accentColor || "#ee7a15";
   return (
     // .srf-wrap also opts the page into the registration form's print layout
     <div className="srf-wrap paper-form-wrap">
       <FitSheet width={1000}>
-        <div className="srf-page paper-form">
-          <h2 className="srf-title">{definition.title}</h2>
+        <div className="srf-page paper-form" style={{ "--paper-accent": accent } as CSSProperties}>
+          {definition.masthead && (
+            <div className="srf-masthead">
+              <img className="paper-masthead" src={definition.masthead} alt="" />
+            </div>
+          )}
+          {definition.title && <h2 className="srf-title" style={definition.titleColor ? { color: definition.titleColor } : undefined}>{definition.title}</h2>}
           {definition.description && <p className="paper-form-intro fb-preserve">{definition.description}</p>}
           {definition.sections.map(section => (
             <PaperSection key={section.id} section={section} prefix={prefix} answers={answers} errors={errors} onChange={onChange} />
@@ -45,33 +52,44 @@ function PaperSection({ section, prefix, answers, errors, onChange }: {
   const leftovers = section.rows.length ? autoLayout(unplacedFields(section)) : [];
   const leftoverColumns = 4;
   const headingId = `${prefix}-${section.id}`;
+  const hasHeading = !!(section.title || section.description);
   return (
-    <section className="paper-form-section" aria-labelledby={headingId}>
-      <div className="srf-section-title" id={headingId}>
-        {section.title}
-        {section.description && <em> {section.description}</em>}
-      </div>
-      <PaperTable rows={rows} columns={columns} byId={byId} prefix={prefix} answers={answers} errors={errors} onChange={onChange} />
-      {leftovers.length > 0 && (
-        <PaperTable rows={leftovers} columns={leftoverColumns} byId={byId} prefix={prefix} answers={answers} errors={errors} onChange={onChange} />
-      )}
-    </section>
+    <>
+      {section.pageBreak && <div className="srf-pagebreak" aria-hidden="true" />}
+      <section className="paper-form-section" aria-labelledby={hasHeading ? headingId : undefined}>
+        {hasHeading && (
+          <div className="srf-section-title" id={headingId}>
+            {section.title}
+            {section.description && <em> {section.description}</em>}
+          </div>
+        )}
+        {rows.length > 0 && (
+          <PaperTable rows={rows} columns={columns} widths={section.widths} byId={byId} prefix={prefix} answers={answers} errors={errors} onChange={onChange} />
+        )}
+        {leftovers.length > 0 && (
+          <PaperTable rows={leftovers} columns={leftoverColumns} widths={[]} byId={byId} prefix={prefix} answers={answers} errors={errors} onChange={onChange} />
+        )}
+        {section.banner && <div className="srf-orange-strip paper-banner fb-preserve">{section.banner}</div>}
+      </section>
+    </>
   );
 }
 
-function PaperTable({ rows, columns, byId, prefix, answers, errors, onChange }: {
+function PaperTable({ rows, columns, widths, byId, prefix, answers, errors, onChange }: {
   rows: FormLayoutRow[];
   columns: number;
+  widths: number[];
   byId: Map<string, FormField>;
   prefix: string;
   answers: FormAnswers;
   errors: Record<string, string>;
   onChange: (fieldId: string, value: FormAnswer) => void;
 }) {
+  const sized = widths.length === columns;
   return (
     <table className="srf-table srf-p2 paper-table">
       <colgroup>
-        {Array.from({ length: columns }, (_, i) => <col key={i} style={{ width: `${100 / columns}%` }} />)}
+        {Array.from({ length: columns }, (_, i) => <col key={i} style={{ width: `${sized ? widths[i] : 100 / columns}%` }} />)}
       </colgroup>
       <tbody>
         {rows.map((row, rowIndex) => {
@@ -129,11 +147,21 @@ function PaperCell({ cell, field, prefix, answers, errors, onChange }: {
     );
   }
   if (cell.kind === "field" && field) {
+    const input = <PaperInput field={field} id={`${prefix}-${field.id}`} value={answers[field.id]} onChange={value => onChange(field.id, value)} />;
     return (
       <td className={`srf-cell${errors[field.id] ? " paper-error" : ""}`} colSpan={span} title={errors[field.id] || undefined}>
-        <PaperInput field={field} id={`${prefix}-${field.id}`} value={answers[field.id]} onChange={value => onChange(field.id, value)} />
+        {cell.text ? (
+          // a caption printed inside the box, e.g. "Other:"
+          <div className="srf-inline-with-label">
+            <span className="srf-inline-label">{cell.text}</span>
+            {input}
+          </div>
+        ) : input}
       </td>
     );
+  }
+  if (cell.kind === "text" && cell.text) {
+    return <td className="srf-cell paper-text fb-preserve" colSpan={span}>{cell.text}</td>;
   }
   return <td className="srf-cell paper-blank" colSpan={span} />;
 }

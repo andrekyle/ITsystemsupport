@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile } from "../types";
 import { CHOICE_FIELD_TYPES, FORM_FIELD_TYPES, MAX_FORM_FIELDS, parseFormDefinition, type FormAnswers, type FormDefinition, type FormField, type FormFieldType, type FormSection } from "../lib/formSchema";
-import { checkFormUpload, extractFormDocument, FORM_UPLOAD_ACCEPT, generateFormDefinition, type ImportedFormDocument } from "../lib/formImport";
+import { checkFormUpload, extractFormDocument, FORM_UPLOAD_ACCEPT, generateFormDefinition, missingPrintedText, type ImportedFormDocument } from "../lib/formImport";
 import { saveFormTemplate, type SavedForm } from "../lib/forms";
 import { PaperForm } from "./PaperForm";
 import { Select } from "./Select";
@@ -14,7 +14,7 @@ const FIELD_NAMES: Record<FormFieldType, string> = {
 };
 
 const newField = (): FormField => ({ id: `field_${crypto.randomUUID()}`, label: "", type: "text", required: false, helpText: "", options: [] });
-const newSection = (): FormSection => ({ id: `section_${crypto.randomUUID()}`, title: "Form details", description: "", fields: [newField()], columns: 4, rows: [] });
+const newSection = (): FormSection => ({ id: `section_${crypto.randomUUID()}`, title: "Form details", description: "", fields: [newField()], columns: 4, widths: [], rows: [], banner: "", pageBreak: false });
 
 export function FormBuilder({ profile, onSaved, onCancel }: {
   profile: Profile;
@@ -31,6 +31,8 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [previewAnswers, setPreviewAnswers] = useState<FormAnswers>({});
   const [confirmLeave, setConfirmLeave] = useState(false);
+  // printed lines of the source the generated replica does not contain
+  const [missing, setMissing] = useState<string[]>([]);
   const fileInput = useRef<HTMLInputElement>(null);
   const controller = useRef<AbortController | null>(null);
 
@@ -73,7 +75,8 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
       const definition = await generateFormDefinition(document, nextController.signal);
       if (nextController.signal.aborted) return;
       setDraft(definition);
-      setMode("edit");
+      setMissing(missingPrintedText(document, definition));
+      setMode("preview");
       setPreviewAnswers({});
     } catch (error) {
       if (!nextController.signal.aborted) setError(error instanceof Error ? error.message : "Form generation failed.");
@@ -132,7 +135,7 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
             </label>
             <div className="fb-actions">
               <button type="button" className="btn primary" disabled={!source || !consent || !!busy} onClick={() => void generate()}><Icon name="refresh" size={16} /> {busy === "reading" ? "Reading document..." : busy === "generating" ? "Generating..." : "Generate form"}</button>
-              {busy ? <button type="button" className="btn ghost" onClick={() => controller.current?.abort()}>Cancel</button> : <button type="button" className="btn ghost" onClick={() => { setError(""); setDraft({ title: source?.name.replace(/\.[^.]+$/, "") ?? "Untitled form", description: "", sections: [newSection()] }); }}><Icon name="document" size={16} /> Create manually</button>}
+              {busy ? <button type="button" className="btn ghost" onClick={() => controller.current?.abort()}>Cancel</button> : <button type="button" className="btn ghost" onClick={() => { setError(""); setMissing([]); setDraft({ title: source?.name.replace(/\.[^.]+$/, "") ?? "Untitled form", description: "", sections: [newSection()], titleColor: "", accentColor: "", masthead: "" }); }}><Icon name="document" size={16} /> Create manually</button>}
             </div>
             {busy && <p role="status" className="fb-field-note">{busy === "reading" ? "Reading the uploaded document..." : "Generating form fields..."}</p>}
           </div>
@@ -145,8 +148,18 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
               <button type="button" role="tab" aria-selected={mode === "edit"} onClick={() => setMode("edit")}>Fields</button>
               <button type="button" role="tab" aria-selected={mode === "preview"} onClick={() => setMode("preview")}>Preview</button>
             </div>
-            {source && sourceUrl && <a className="btn ghost" href={sourceUrl} download={source.name}><Icon name="download" size={16} /> Original document</a>}
+            <div className="fb-actions">
+              {draft.masthead && <button type="button" className="btn ghost" onClick={() => setDraft({ ...draft, masthead: "" })} title="Drop the letterhead image cut from the upload"><Icon name="close" size={16} /> Remove letterhead</button>}
+              {source && sourceUrl && <a className="btn ghost" href={sourceUrl} download={source.name}><Icon name="download" size={16} /> Original document</a>}
+            </div>
           </div>
+          {missing.length > 0 && (
+            <details className="fb-missing">
+              <summary>Verbatim check: {missing.length} printed line{missing.length === 1 ? "" : "s"} of the original {missing.length === 1 ? "was" : "were"} not found in the replica</summary>
+              <p className="fb-field-note">Compare against the original document and add anything that matters under Fields (a caption, a note, a declaration). Handwritten answers, page numbers and decorative text can be ignored.</p>
+              <ul>{missing.map(line => <li key={line}>{line}</li>)}</ul>
+            </details>
+          )}
           {mode === "preview" ? <PaperForm definition={draft} answers={previewAnswers} onChange={(fieldId, value) => setPreviewAnswers(current => ({ ...current, [fieldId]: value }))} /> : (
             <fieldset className="fb-editor" disabled={!!busy}>
               <div className="field"><label htmlFor="builder-title">Form title</label><input id="builder-title" value={draft.title} maxLength={200} onChange={event => setDraft({ ...draft, title: event.target.value })} /></div>
@@ -159,6 +172,7 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
                   </div>
                   <div className="field"><label htmlFor={`${section.id}-description`}>Section instructions</label><textarea id={`${section.id}-description`} rows={2} value={section.description} maxLength={5000} onChange={event => updateSection(section.id, current => ({ ...current, description: event.target.value }))} /></div>
                   {section.rows.length > 0 && <p className="fb-field-note">This section keeps the printed layout of the uploaded document ({section.columns} columns, {section.rows.length} rows). Fields you add here appear in a grid below it; removed fields leave their boxes blank.</p>}
+                  {section.fields.length === 0 && <p className="fb-field-note">Printed text only (declaration, note or footer) — no fields to fill in.</p>}
                   {section.fields.map((field, fieldIndex) => (
                     <div key={field.id} className="fb-field-editor">
                       <div className="fb-field-editor-main">
@@ -168,7 +182,7 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
                         <div className="fb-actions">
                           <button type="button" className="btn fb-icon" aria-label={`Move field ${fieldIndex + 1} up`} title="Move field up" disabled={fieldIndex === 0} onClick={() => moveField(section.id, fieldIndex, -1)}><Icon name="chevronUp" size={16} /></button>
                           <button type="button" className="btn fb-icon" aria-label={`Move field ${fieldIndex + 1} down`} title="Move field down" disabled={fieldIndex === section.fields.length - 1} onClick={() => moveField(section.id, fieldIndex, 1)}><Icon name="chevronDown" size={16} /></button>
-                          <button type="button" className="btn fb-icon" aria-label={`Remove field ${fieldIndex + 1}`} title="Remove field" disabled={section.fields.length === 1} onClick={() => updateSection(section.id, current => ({ ...current, fields: current.fields.filter(item => item.id !== field.id) }))}><Icon name="close" size={16} /></button>
+                          <button type="button" className="btn fb-icon" aria-label={`Remove field ${fieldIndex + 1}`} title="Remove field" disabled={section.fields.length === 1 && !section.rows.some(row => row.cells.some(cell => cell.kind === "text"))} onClick={() => updateSection(section.id, current => ({ ...current, fields: current.fields.filter(item => item.id !== field.id) }))}><Icon name="close" size={16} /></button>
                         </div>
                       </div>
                       <div className="field"><label htmlFor={`${field.id}-help`}>Field instructions</label><textarea id={`${field.id}-help`} rows={2} maxLength={3000} value={field.helpText} onChange={event => updateField(section.id, field.id, { helpText: event.target.value })} /></div>
