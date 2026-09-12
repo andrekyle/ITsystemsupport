@@ -188,7 +188,12 @@ export async function generateFormDefinition(document: ImportedFormDocument, sig
   try {
     body = await response.json();
   } catch {
-    throw new Error("The form-generation endpoint is unavailable. Check that the latest app is deployed.");
+    // no JSON means the platform answered, not our function (gateway timeout, size limit…)
+    if (response.status === 504 || response.status === 408) {
+      throw new Error("Form generation timed out on the server. Try fewer pages or a smaller file.");
+    }
+    if (response.status === 413) throw new Error("The document is too large to send. Upload a smaller file or fewer pages.");
+    throw new Error(`The form-generation endpoint did not answer properly (HTTP ${response.status}). Check that the latest app is deployed.`);
   }
   if (!response.ok || body.error) throw new Error(body.error || "Form generation failed.");
   return parseFormDefinition(body.definition);

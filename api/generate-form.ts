@@ -1,8 +1,12 @@
 import { FORM_FIELD_TYPES, parseFormDefinition } from "../src/lib/formSchema";
 
-export const config = { runtime: "edge" };
+// Node runtime, not Edge: the Edge runtime must start responding within 25 s,
+// and a multi-page form read at high detail plus a long JSON answer takes
+// longer than that — Vercel would cut it off with a 504 and no JSON body.
+export const config = { runtime: "nodejs", maxDuration: 120 };
 
 const MAX_REQUEST_SIZE = 3_500_000;
+const OPENAI_TIMEOUT_MS = 110_000;
 const MODEL = "gpt-4.1-mini";
 const textSchema = { type: "string" };
 const definitionSchema = {
@@ -59,8 +63,29 @@ function json(payload: unknown, status = 200): Response {
   });
 }
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== "POST") return json({ error: "Use POST to generate a form." }, 405);
+/** Turn an OpenAI error response into a message the super user can act on. */
+async function describeOpenAiFailure(response: Response): Promise<string> {
+  let detail = "";
+  try {
+    const body = await response.json() as { error?: { message?: string; code?: string; type?: string } };
+    detail = body.error?.code || body.error?.type || body.error?.message || "";
+  } catch {
+    /* non-JSON error body */
+  }
+  if (response.status === 401) return "OpenAI rejected the server's API key (OPENAI_API_KEY). Check the key in the Vercel project settings.";
+  if (response.status === 429 || /insufficient_quota/i.test(detail)) {
+    return /insufficient_quota/i.test(detail)
+      ? "The OpenAI account has run out of credit (insufficient_quota). Top up billing at platform.openai.com and try again."
+      : "OpenAI is rate-limiting requests right now. Wait a minute and try again.";
+  }
+  if (response.status === 400 && /image|invalid_image|too large/i.test(detail)) {
+    return "OpenAI could not read one of the page images. Try a clearer scan or fewer pages.";
+  }
+  return `The form-generation service returned an error (HTTP ${response.status}${detail ? `, ${detail.slice(0, 120)}` : ""}). Please try again.`;
+}
+
+// method export: Vercel's Node runtime answers other verbs with 405 itself
+export async function POST(request: Request): Promise<Response> {
   const authorization = request.headers.get("authorization") ?? "";
   if (!/^Bearer\s+\S+$/i.test(authorization)) return json({ error: "Sign in to generate forms." }, 401);
   const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env ?? {};
@@ -74,7 +99,7 @@ export default async function handler(request: Request): Promise<Response> {
     return json({ error: "The document is too large to generate. Upload a smaller file." }, 413);
   }
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 55_000);
+  const timeout = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
   try {
     const authHeaders = { Authorization: authorization, apikey: anonKey };
     const user = await fetch(`${url}/auth/v1/user`, { headers: authHeaders, signal: controller.signal });
@@ -122,10 +147,11 @@ export default async function handler(request: Request): Promise<Response> {
         ],
       }),
     });
-    if (!response.ok) return json({ error: "The form-generation service is unavailable. Please try again." }, 502);
-    const result = await response.json() as { choices?: { finish_reason?: string; message?: { content?: string } }[] };
+    if (!response.ok) return json({ error: await describeOpenAiFailure(response) }, 502);
+    const result = await response.json() as { choices?: { finish_reason?: string; message?: { content?: string | null; refusal?: string | null } }[] };
     const choice = result.choices?.[0];
     if (choice?.finish_reason === "length") return json({ error: "This form is too long. Split it into smaller documents." }, 422);
+    if (choice?.message?.refusal) return json({ error: "The AI declined to process this document. Make sure it is a blank form without personal information." }, 422);
     try {
       const definition = parseFormDefinition(JSON.parse(choice?.message?.content ?? "{}"));
       return json({ definition, model: MODEL });
@@ -133,7 +159,7 @@ export default async function handler(request: Request): Promise<Response> {
       return json({ error: "A complete form could not be identified. Upload a clearer blank form or add the fields manually." }, 422);
     }
   } catch (error) {
-    return json({ error: error instanceof Error && error.name === "AbortError" ? "Form generation timed out. Try fewer pages." : "Unable to reach the form-generation service." }, 502);
+    return json({ error: error instanceof Error && error.name === "AbortError" ? "Form generation timed out after two minutes. Try fewer pages or a smaller file." : "Unable to reach the form-generation service." }, 502);
   } finally {
     clearTimeout(timeout);
   }
