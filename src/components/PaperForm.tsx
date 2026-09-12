@@ -1,20 +1,42 @@
 import { useId, type CSSProperties } from "react";
 import { DateTimePicker } from "./DateTimePicker";
 import { FitSheet } from "./FitSheet";
+import { isPlaced, ReplicaForm, type ReplicaAdjust } from "./ReplicaForm";
 import { autoLayout, CHOICE_FIELD_TYPES, unplacedFields, type FormAnswer, type FormAnswers, type FormDefinition, type FormField, type FormLayoutCell, type FormLayoutRow, type FormSection } from "../lib/formSchema";
 
 /**
- * Renders a generated form as a replica of the paper original: white sheet,
- * hairline table grid, bold captions beside write-in boxes and orange tick
- * cells — the same look as the hand-built Student Registration Form.
+ * Renders a generated form as a replica of the paper original. A form with
+ * page images shows those pages with the fields laid over them; a rebuilt
+ * form gets the white sheet, hairline table grid, bold captions beside
+ * write-in boxes and orange tick cells of the hand-built registration form.
  */
-export function PaperForm({ definition, answers, onChange, errors = {} }: {
+export function PaperForm({ definition, answers, onChange, errors = {}, adjust }: {
   definition: FormDefinition;
   answers: FormAnswers;
   onChange: (fieldId: string, value: FormAnswer) => void;
   errors?: Record<string, string>;
+  /** form-builder box editing for replica pages */
+  adjust?: ReplicaAdjust;
 }) {
   const prefix = useId();
+  if (definition.pages.length) {
+    const unplaced = definition.sections.flatMap(section => section.fields).filter(field => !isPlaced(field));
+    return (
+      <>
+        <ReplicaForm definition={definition} answers={answers} onChange={onChange} errors={errors} adjust={adjust} />
+        {unplaced.length > 0 && (
+          <div className="srf-wrap paper-form-wrap replica-extra">
+            <FitSheet width={1000}>
+              <div className="srf-page paper-form">
+                <div className="srf-section-title">Additional fields <em>(not printed on the pages above{adjust ? " - choose one under Adjust boxes and draw its box on a page" : ""})</em></div>
+                <PaperTable rows={autoLayout(unplaced)} columns={4} widths={[]} byId={new Map(unplaced.map(field => [field.id, field]))} prefix={prefix} answers={answers} errors={errors} onChange={onChange} />
+              </div>
+            </FitSheet>
+          </div>
+        )}
+      </>
+    );
+  }
   // the paper's own colours drive the title, tick highlights and banners
   const accent = definition.accentColor || "#ee7a15";
   return (

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { parseFormDefinition, type FormAnswers, type FormDefinition } from "./formSchema";
+import { parseFormDefinition, type FormAnswers, type FormDefinition, type FormPage } from "./formSchema";
 
 export interface SavedForm {
   id: string;
@@ -27,6 +27,8 @@ export interface FormResponse {
 const LOCAL_FORMS_KEY = "form-builder:templates";
 const FORMS_EVENT = "form-builder-changed";
 const SOURCE_BUCKET = "form-sources";
+// blank page images are public so every signed-in learner's browser can show them
+const PAGE_BUCKET = "form-pages";
 const FORM_COLUMNS = "id,title,description,definition,created_by,created_at,updated_at,source_name,source_type,source_size,source_path";
 
 function readLocal<T>(key: string, fallback: T): T {
@@ -56,6 +58,7 @@ export async function saveFormTemplate(definition: FormDefinition, source: File 
   const timestamp = new Date().toISOString();
   let createdBy = profileId;
   let sourcePath: string | null = null;
+  const uploaded: string[] = [];
   if (supabase) {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw new Error("Sign in before saving a form.");
@@ -64,6 +67,12 @@ export async function saveFormTemplate(definition: FormDefinition, source: File 
       sourcePath = `${createdBy}/${id}/${source.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100)}`;
       const { error } = await supabase.storage.from(SOURCE_BUCKET).upload(sourcePath, source, { contentType: source.type || "application/octet-stream", upsert: false });
       if (error) throw new Error("The original form could not be stored. Check the form-sources bucket and the form-builder migration.");
+    }
+    try {
+      parsed.pages = await storePages(parsed.pages, createdBy, id, uploaded);
+    } catch (error) {
+      await discardStorage(sourcePath, uploaded);
+      throw error;
     }
   }
   const template: SavedForm = {
@@ -74,7 +83,7 @@ export async function saveFormTemplate(definition: FormDefinition, source: File 
   if (supabase) {
     const { data, error } = await supabase.from("forms").insert(template).select(FORM_COLUMNS).single();
     if (error || !data) {
-      if (sourcePath) await supabase.storage.from(SOURCE_BUCKET).remove([sourcePath]);
+      await discardStorage(sourcePath, uploaded);
       throw databaseError(error ?? { message: "The form was not saved." });
     }
     window.dispatchEvent(new Event(FORMS_EVENT));
@@ -86,12 +95,36 @@ export async function saveFormTemplate(definition: FormDefinition, source: File 
   return template;
 }
 
+/** Replica pages drafted as data URLs move into the public page bucket; the
+ *  saved definition only keeps their URLs. */
+async function storePages(pages: FormPage[], ownerId: string, formId: string, uploaded: string[]): Promise<FormPage[]> {
+  if (!supabase) return pages;
+  const stored: FormPage[] = [];
+  for (const [index, page] of pages.entries()) {
+    if (!page.src.startsWith("data:")) { stored.push(page); continue; }
+    const blob = await (await fetch(page.src)).blob();
+    const path = `${ownerId}/${formId}/page-${index + 1}.${blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg"}`;
+    const { error } = await supabase.storage.from(PAGE_BUCKET).upload(path, blob, { contentType: blob.type || "image/jpeg", upsert: false, cacheControl: "31536000" });
+    if (error) throw new Error("The page images could not be stored. Apply the form-pages SQL migration in Supabase (bucket form-pages), then retry.");
+    uploaded.push(path);
+    const { data } = supabase.storage.from(PAGE_BUCKET).getPublicUrl(path);
+    stored.push({ src: data.publicUrl, width: page.width, height: page.height, path });
+  }
+  return stored;
+}
+
+async function discardStorage(sourcePath: string | null, pagePaths: string[]) {
+  if (!supabase) return;
+  if (sourcePath) await supabase.storage.from(SOURCE_BUCKET).remove([sourcePath]);
+  if (pagePaths.length) await supabase.storage.from(PAGE_BUCKET).remove(pagePaths);
+}
+
 export async function removeFormTemplate(template: SavedForm): Promise<void> {
   if (supabase) {
     const { data, error } = await supabase.from("forms").delete().eq("id", template.id).select("id");
     if (error) throw databaseError(error);
     if (!data?.length) throw new Error("The form could not be deleted. Check your permissions.");
-    if (template.source_path) await supabase.storage.from(SOURCE_BUCKET).remove([template.source_path]);
+    await discardStorage(template.source_path, template.definition.pages.map(page => page.path).filter(Boolean));
   } else {
     localStorage.setItem(LOCAL_FORMS_KEY, JSON.stringify(readLocal<SavedForm[]>(LOCAL_FORMS_KEY, []).filter(form => form.id !== template.id)));
     for (const key of Object.keys(localStorage)) if (key.startsWith(`form-builder:response:${template.id}:`)) localStorage.removeItem(key);

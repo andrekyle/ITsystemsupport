@@ -4,6 +4,22 @@ export const FORM_FIELD_TYPES = [
 
 export type FormFieldType = typeof FORM_FIELD_TYPES[number];
 
+/** A rectangle on a page as fractions (0-1) of the page width and height. */
+export interface FormBox {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** Where a field is written on a replica page: its write-in box, and for
+ *  choice fields the tick box of each option (null = not on the page). */
+export interface FormPlacement {
+  page: number;
+  box: FormBox | null;
+  options: (FormBox | null)[];
+}
+
 export interface FormField {
   id: string;
   label: string;
@@ -11,6 +27,7 @@ export interface FormField {
   required: boolean;
   helpText: string;
   options: string[];
+  placement?: FormPlacement;
 }
 
 export const LAYOUT_CELL_KINDS = ["label", "field", "option", "blank", "text"] as const;
@@ -50,6 +67,17 @@ export interface FormSection {
   pageBreak: boolean;
 }
 
+/** One page of the uploaded form as an image; the replica draws the fields
+ *  on top of it, so the printed page is reproduced exactly. */
+export interface FormPage {
+  /** data URL while drafting, storage URL once saved */
+  src: string;
+  width: number;
+  height: number;
+  /** storage object path, "" until saved */
+  path: string;
+}
+
 export interface FormDefinition {
   title: string;
   description: string;
@@ -60,6 +88,8 @@ export interface FormDefinition {
   accentColor: string;
   /** letterhead / logo cropped from the uploaded page as a data URL; "" = none */
   masthead: string;
+  /** page images of a replica form; [] = the form is rebuilt from sections */
+  pages: FormPage[];
 }
 
 export type FormAnswer = string | boolean | string[];
@@ -69,6 +99,8 @@ export const MAX_FORM_FIELDS = 150;
 export const MAX_LAYOUT_COLUMNS = 16;
 export const MAX_LAYOUT_ROWS = 200;
 export const MAX_MASTHEAD_CHARS = 220_000;
+export const MAX_FORM_PAGES = 12;
+export const MAX_PAGE_SRC_CHARS = 6_000_000;
 export const CHOICE_FIELD_TYPES: readonly FormFieldType[] = ["select", "radio", "checkboxes"];
 /** field types that need a whole row of the auto layout */
 const WIDE_FIELD_TYPES: readonly FormFieldType[] = ["textarea", "radio", "checkboxes", "checkbox"];
@@ -89,6 +121,51 @@ function text(value: unknown, limit: number): string {
 }
 
 const ID_PATTERN = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
+const PAGE_SRC = /^(?:https:\/\/[^\s"'<>]+|data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+=*)$/;
+
+const fraction = (value: unknown): number | null =>
+  typeof value === "number" && Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : null;
+
+/** A plausible box: inside the page and at least a sliver in size. */
+export function readBox(value: unknown): FormBox | null {
+  if (!value || typeof value !== "object") return null;
+  const box = value as Record<string, unknown>;
+  const x = fraction(box.x);
+  const y = fraction(box.y);
+  const w = fraction(box.w);
+  const h = fraction(box.h);
+  if (x === null || y === null || w === null || h === null) return null;
+  const width = Math.min(w, 1 - x);
+  const height = Math.min(h, 1 - y);
+  if (width < 0.004 || height < 0.003) return null;
+  const round = (v: number) => Math.round(v * 10000) / 10000;
+  return { x: round(x), y: round(y), w: round(width), h: round(height) };
+}
+
+function readPlacement(value: unknown, optionCount: number): FormPlacement | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const placement = value as Record<string, unknown>;
+  const page = Number.isInteger(placement.page) && (placement.page as number) >= 1 ? Math.min(placement.page as number, MAX_FORM_PAGES) : 1;
+  const box = readBox(placement.box);
+  const options = Array.from({ length: optionCount }, (_, index) => Array.isArray(placement.options) ? readBox(placement.options[index]) : null);
+  if (!box && !options.some(Boolean)) return undefined;
+  return { page, box, options };
+}
+
+function readPages(value: unknown): FormPage[] {
+  if (!Array.isArray(value)) return [];
+  const pages: FormPage[] = [];
+  for (const entry of value.slice(0, MAX_FORM_PAGES)) {
+    if (!entry || typeof entry !== "object") continue;
+    const page = entry as Record<string, unknown>;
+    const src = typeof page.src === "string" && page.src.length <= MAX_PAGE_SRC_CHARS && PAGE_SRC.test(page.src) ? page.src : "";
+    const width = Number.isInteger(page.width) && (page.width as number) > 0 && (page.width as number) <= 10000 ? page.width as number : 0;
+    const height = Number.isInteger(page.height) && (page.height as number) > 0 && (page.height as number) <= 10000 ? page.height as number : 0;
+    if (!src || !width || !height) continue;
+    pages.push({ src, width, height, path: text(page.path, 300) });
+  }
+  return pages;
+}
 
 /**
  * The AI's output is repaired rather than rejected wherever a repair is
@@ -140,6 +217,7 @@ export function parseFormDefinition(value: unknown): FormDefinition {
       const fieldId = readId(field.id, "field");
       if (original && original !== fieldId) renamed.set(original, fieldId);
       fieldCount += 1;
+      const placement = readPlacement(field.placement, options.length);
       fields.push({
         id: fieldId,
         label: text(field.label, 500),
@@ -147,6 +225,7 @@ export function parseFormDefinition(value: unknown): FormDefinition {
         required: field.required === true,
         helpText: text(field.helpText, 3000),
         options: CHOICE_FIELD_TYPES.includes(type) ? options : [],
+        ...(placement ? { placement } : {}),
       });
     }
     const layout = parseLayout(section, fields, renamed);
@@ -176,7 +255,77 @@ export function parseFormDefinition(value: unknown): FormDefinition {
   const masthead = typeof source.masthead === "string" && /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(source.masthead) && source.masthead.length <= MAX_MASTHEAD_CHARS
     ? source.masthead
     : "";
-  return { title, description, sections, titleColor: colorValue(source.titleColor), accentColor: colorValue(source.accentColor), masthead };
+  const pages = readPages(source.pages);
+  if (pages.length) {
+    // a placement off the end of the page set is not on any page
+    for (const section of sections) {
+      for (const field of section.fields) if (field.placement && field.placement.page > pages.length) delete field.placement;
+    }
+  }
+  return { title, description, sections, titleColor: colorValue(source.titleColor), accentColor: colorValue(source.accentColor), masthead, pages };
+}
+
+/** The box each id in an analysed page stands for. */
+export interface ReplicaPageBoxes {
+  boxes: { id: string; x: number; y: number; w: number; h: number }[];
+}
+
+/**
+ * Turns the AI's replica answer (fields bound to detected boxes by id, or to
+ * measured coordinates) into a form definition with one section per page.
+ * Unknown ids and empty boxes leave the field unplaced; it is then listed
+ * under the pages instead of disappearing.
+ */
+export function parseReplicaOutput(value: unknown, pages: ReplicaPageBoxes[]): FormDefinition {
+  const source = objectValue(value);
+  if (!Array.isArray(source.fields)) throw new Error("No fields were identified.");
+  const pageCount = Math.max(1, pages.length);
+  const resolve = (pageIndex: number, boxId: unknown, box: unknown): FormBox | null => {
+    const id = text(boxId, 40);
+    if (id) {
+      const found = pages[pageIndex]?.boxes.find(candidate => candidate.id === id);
+      if (found) return readBox(found);
+    }
+    return readBox(box);
+  };
+  const perPage: Record<string, unknown>[][] = Array.from({ length: pageCount }, () => []);
+  for (const entry of source.fields.slice(0, MAX_FORM_FIELDS)) {
+    if (!entry || typeof entry !== "object") continue;
+    const field = entry as Record<string, unknown>;
+    const page = Number.isInteger(field.page) ? Math.min(pageCount, Math.max(1, field.page as number)) : 1;
+    const rawOptions = Array.isArray(field.options) ? field.options : [];
+    const optionTexts: string[] = [];
+    const optionBoxes: (FormBox | null)[] = [];
+    for (const option of rawOptions) {
+      const item: Record<string, unknown> = option && typeof option === "object" ? option as Record<string, unknown> : { text: option };
+      const label = text(item.text, 300);
+      if (!label || optionTexts.includes(label)) continue;
+      optionTexts.push(label);
+      optionBoxes.push(resolve(page - 1, item.boxId, item.box));
+    }
+    perPage[page - 1].push({
+      id: field.id,
+      label: field.label,
+      type: field.type,
+      required: field.required,
+      helpText: field.helpText,
+      options: optionTexts,
+      placement: { page, box: resolve(page - 1, field.boxId, field.box), options: optionBoxes },
+    });
+  }
+  const sections = perPage.map((fields, index) => ({
+    id: `page_${index + 1}`,
+    title: pageCount > 1 ? `Page ${index + 1}` : "",
+    description: "",
+    fields,
+    columns: 4,
+    widths: [],
+    rows: [],
+    banner: "",
+    pageBreak: false,
+  })).filter(section => section.fields.length);
+  if (!sections.length) throw new Error("No fields were identified.");
+  return parseFormDefinition({ title: source.title, description: source.description, sections, titleColor: "", accentColor: "", masthead: "", pages: [] });
 }
 
 /** Layout is decorative, so it is repaired rather than rejected: cells that
