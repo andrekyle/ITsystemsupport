@@ -30,6 +30,8 @@ export interface FormField {
   helpText: string;
   options: string[];
   placement?: FormPlacement;
+  /** most characters the answer may have (a printed character limit) */
+  maxLength?: number;
 }
 
 export const LAYOUT_CELL_KINDS = ["label", "field", "option", "blank", "text"] as const;
@@ -384,6 +386,7 @@ export function parseFormDefinition(value: unknown): FormDefinition {
       if (original && original !== fieldId) renamed.set(original, fieldId);
       fieldCount += 1;
       const placement = readPlacement(field.placement, options.length);
+      const maxLength = Number.isInteger(field.maxLength) && (field.maxLength as number) >= 1 ? Math.min(field.maxLength as number, 2000) : 0;
       fields.push({
         id: fieldId,
         label: text(field.label, 500),
@@ -392,6 +395,7 @@ export function parseFormDefinition(value: unknown): FormDefinition {
         helpText: text(field.helpText, 3000),
         options: CHOICE_FIELD_TYPES.includes(type) ? options : [],
         ...(placement ? { placement } : {}),
+        ...(maxLength ? { maxLength } : {}),
       });
     }
     const layout = parseLayout(section, fields, renamed);
@@ -439,6 +443,14 @@ export interface ReplicaPageBoxes {
   boxes: { id: string; x: number; y: number; w: number; h: number; kind?: string; n?: number }[];
 }
 
+/** Shared area as a share of the smaller box (0 = apart, 1 = one inside the other). */
+function overlap(a: FormBox, b: FormBox): number {
+  const w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+  const h = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+  if (w <= 0 || h <= 0) return 0;
+  return (w * h) / Math.max(1e-9, Math.min(a.w * a.h, b.w * b.h));
+}
+
 /**
  * Turns the AI's replica answer (fields bound to detected boxes by id, or to
  * measured coordinates) into a form definition with one section per page.
@@ -451,13 +463,20 @@ export function parseReplicaOutput(value: unknown, pages: ReplicaPageBoxes[]): F
   const pageCount = Math.max(1, pages.length);
   const resolve = (pageIndex: number, boxId: unknown, box: unknown, tick = false): { box: FormBox | null; comb?: number } => {
     const id = text(boxId, 40);
+    const candidates = pages[pageIndex]?.boxes ?? [];
     if (id) {
-      const found = pages[pageIndex]?.boxes.find(candidate => candidate.id === id);
+      const found = candidates.find(candidate => candidate.id === id);
       // a tick can never be a write-on line or a comb, whatever the model says
       if (found && tick && (found.kind === "line" || found.kind === "comb")) return { box: null };
       if (found) return { box: readBox(found), ...(found.kind === "comb" && found.n ? { comb: found.n } : {}) };
     }
-    return { box: readBox(box) };
+    const measured = readBox(box);
+    if (measured && !tick) {
+      // coordinates that cover a detected comb mean that comb, cells and all
+      const comb = candidates.find(candidate => candidate.kind === "comb" && candidate.n && overlap(candidate, measured) >= 0.6);
+      if (comb) return { box: readBox(comb), comb: comb.n };
+    }
+    return { box: measured };
   };
   const perPage: Record<string, unknown>[][] = Array.from({ length: pageCount }, () => []);
   for (const entry of source.fields.slice(0, MAX_FORM_FIELDS)) {

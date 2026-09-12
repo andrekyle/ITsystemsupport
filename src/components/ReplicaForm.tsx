@@ -388,7 +388,7 @@ function ReplicaField({ field, ratio, pageRef, prefix, value, error, onChange, a
         inputMode={comb && (field.type === "number" || field.type === "tel") ? "numeric" : undefined}
         value={text}
         step={field.type === "number" && !comb ? "any" : undefined}
-        maxLength={comb || (field.type === "number" ? undefined : 2000)}
+        maxLength={comb || field.maxLength || (field.type === "number" ? undefined : 2000)}
         style={comb ? ({ "--n": comb, "--w": box.w } as CSSProperties) : undefined}
         autoComplete="off"
         aria-label={field.label}

@@ -614,6 +614,14 @@ export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect
     const colour = regionColour(pixels, { x: row.x, y: row.y, w: row.w, h: 2 }, lum => lum < 200);
     return { x: fx(row.x), y: fy(row.y), w: fx(row.w), h: fy(row.h), c: inkColour(colour.colour), t: fx(Math.max(1, Math.round(width * 0.0009))), n: row.n };
   });
+  // the frames draw a box's own edges; the same edges found as rules would double them
+  const framed = [...ticks, ...combRows];
+  const edgeTolerance = Math.max(3, Math.round(width * 0.003));
+  const drawnByFrame = (rule: LayerRect) => {
+    const px = { x: rule.x * width, y: rule.y * height, w: rule.w * width, h: rule.h * height };
+    return framed.some(box => px.x >= box.x - edgeTolerance && px.x + px.w <= box.x + box.w + edgeTolerance && px.y >= box.y - edgeTolerance && px.y + px.h <= box.y + box.h + edgeTolerance);
+  };
+  const keptRules = rules.filter(rule => !drawnByFrame(rule));
 
   // whatever dark paper is left, in coarse cells, clusters into pictures
   const cell = 8;
@@ -673,7 +681,7 @@ export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect
     }
   }
   return {
-    rules,
+    rules: keptRules,
     fills,
     frames,
     combs,

@@ -43,6 +43,9 @@ interface PdfFormWidget {
   multipleSelection?: boolean;
   exportValues?: string | string[];
   items?: { displayValue?: string; exportValue?: string }[];
+  /** text field: one character per cell, charLimit cells across */
+  comb?: boolean;
+  charLimit?: number;
 }
 
 /** A widget's rectangle on its page, as page fractions. */
@@ -273,13 +276,15 @@ async function pdfFields(document: PDFDocumentProxy): Promise<FormDefinition | u
     if (["radio", "select", "checkboxes"].includes(type) && !options.length) continue;
     const unique = [...new Set(options)];
     const placed = info?.widgets ?? [];
+    // a comb text field types one character per printed cell
+    const comb = type === "text" && field.comb === true && Number.isInteger(field.charLimit) && (field.charLimit as number) >= 2 ? field.charLimit as number : 0;
     let placement: FormPlacement | undefined;
     if (placed.length) {
       placement = type === "radio"
         ? { page: placed[0].page, box: null, options: unique.map(option => placed.find(widget => widget.exportValue === option)?.box ?? null) }
-        : { page: placed[0].page, box: placed[0].box, options: [] };
+        : { page: placed[0].page, box: placed[0].box, options: [], ...(comb ? { comb } : {}) };
     }
-    fields.push({ id: `field_${fields.length + 1}`, label: info?.label || field.alternativeText || name, type, required: info?.required === true || field.required === true, helpText: "", options: unique, ...(placement ? { placement } : {}) });
+    fields.push({ id: `field_${fields.length + 1}`, label: info?.label || field.alternativeText || name, type, required: info?.required === true || field.required === true, helpText: "", options: unique, ...(placement ? { placement } : {}), ...(Number.isInteger(field.charLimit) && (field.charLimit as number) > 0 ? { maxLength: field.charLimit as number } : {}) });
   }
   if (!fields.length) return undefined;
   return parseFormDefinition({ title: "Imported form", description: "", sections: [{ id: "section_1", title: "Form details", description: "", fields }], pages: [] });
