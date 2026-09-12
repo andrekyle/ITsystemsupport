@@ -1,7 +1,7 @@
-import { useId, useRef, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactElement, type ReactNode, type RefObject } from "react";
+import { useId, useLayoutEffect, useRef, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactElement, type ReactNode, type RefObject } from "react";
 import { DateTimePicker } from "./DateTimePicker";
 import { FitSheet } from "./FitSheet";
-import { CHOICE_FIELD_TYPES, type FormAnswer, type FormAnswers, type FormBox, type FormDefinition, type FormField } from "../lib/formSchema";
+import { CHOICE_FIELD_TYPES, type FormAnswer, type FormAnswers, type FormBox, type FormDefinition, type FormField, type PageLayer } from "../lib/formSchema";
 
 /** Editing hooks for the form builder: move/resize boxes, draw a box for a
  *  field that has none yet. Absent for learners filling the form in. */
@@ -61,6 +61,7 @@ export function ReplicaForm({ definition, answers, onChange, errors = {}, adjust
           <ReplicaPage
             page={index + 1}
             src={page.src}
+            layer={definition.display === "digital" ? page.layer : undefined}
             ratio={page.width / page.height}
             title={definition.title}
             fields={fields.filter(field => isPlaced(field) && field.placement!.page === index + 1)}
@@ -94,9 +95,10 @@ const clampBox = (box: FormBox): FormBox => {
   return { x: round(x), y: round(y), w: round(w), h: round(h) };
 };
 
-function ReplicaPage({ page, src, ratio, title, fields, prefix, answers, errors, onChange, adjust }: {
+function ReplicaPage({ page, src, layer, ratio, title, fields, prefix, answers, errors, onChange, adjust }: {
   page: number;
   src: string;
+  layer?: PageLayer;
   ratio: number;
   title: string;
   fields: FormField[];
@@ -130,14 +132,99 @@ function ReplicaPage({ page, src, ratio, title, fields, prefix, answers, errors,
   return (
     <div
       ref={pageRef}
-      className={`replica-page${adjust?.armed ? " replica-drawing" : ""}`}
+      className={`replica-page${layer ? " digital" : ""}${adjust?.armed ? " replica-drawing" : ""}`}
       style={{ "--ratio": ratio, width: PAGE_WIDTH, height: Math.round(PAGE_WIDTH / ratio) } as CSSProperties}
       onPointerDown={adjust ? startDraw : undefined}
       onPointerUp={adjust ? endDraw : undefined}
     >
-      <img src={src} alt={`${title || "Form"} - page ${page}`} draggable={false} />
+      {layer ? <DigitalPage layer={layer} ratio={ratio} /> : <img src={src} alt={`${title || "Form"} - page ${page}`} draggable={false} />}
       {fields.map(field => (
         <ReplicaField key={field.id} field={field} ratio={ratio} pageRef={pageRef} prefix={prefix} value={answers[field.id]} error={errors[field.id]} onChange={value => onChange(field.id, value)} adjust={adjust} />
+      ))}
+    </div>
+  );
+}
+
+const FONT_STACKS: Record<string, string> = {
+  arial: "Arial, 'Liberation Sans', Helvetica, sans-serif",
+  "arial-narrow": "'Arial Narrow', 'Liberation Sans Narrow', Arial, sans-serif",
+  calibri: "Calibri, Carlito, 'Segoe UI', Arial, sans-serif",
+  cambria: "Cambria, Caladea, Georgia, serif",
+  times: "'Times New Roman', Tinos, 'Liberation Serif', Times, serif",
+  georgia: "Georgia, 'Times New Roman', serif",
+  garamond: "Garamond, 'EB Garamond', Georgia, serif",
+  verdana: "Verdana, Geneva, sans-serif",
+  tahoma: "Tahoma, Geneva, sans-serif",
+  segoe: "'Segoe UI', Tahoma, Arial, sans-serif",
+  trebuchet: "'Trebuchet MS', Tahoma, sans-serif",
+  mono: "'Courier New', Cousine, Courier, monospace",
+  century: "'Century Schoolbook', 'Century Gothic', Georgia, serif",
+  palatino: "'Palatino Linotype', 'Book Antiqua', Palatino, serif",
+  comic: "'Comic Sans MS', 'Comic Neue', cursive",
+  impact: "Impact, 'Arial Black', sans-serif",
+  sans: "Arial, Helvetica, sans-serif",
+};
+
+/**
+ * The page rebuilt from its own text and shapes: every run sits where it was
+ * printed, in the printed face, size and ink, and is stretched or squeezed by
+ * a hair so a substitute font still fills exactly the printed width.
+ */
+function DigitalPage({ layer, ratio }: { layer: PageLayer; ratio: number }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    let cancelled = false;
+    const fit = () => {
+      if (cancelled) return;
+      const pageWidth = root.getBoundingClientRect().width;
+      if (!pageWidth) return;
+      root.querySelectorAll<HTMLElement>(".rp-text").forEach(span => {
+        span.style.transform = "";
+        const natural = span.getBoundingClientRect().width;
+        const target = Number(span.dataset.w) * pageWidth;
+        if (!natural || !target) return;
+        const scale = Math.min(1.3, Math.max(0.6, target / natural));
+        if (Math.abs(scale - 1) > 0.015) span.style.transform = `scaleX(${scale.toFixed(4)})`;
+      });
+    };
+    fit();
+    // substitute fonts may still be loading on first paint
+    void document.fonts?.ready.then(fit);
+    return () => { cancelled = true; };
+  }, [layer]);
+  const box = (shape: { x: number; y: number; w: number; h: number }): CSSProperties => ({ left: `${shape.x * 100}%`, top: `${shape.y * 100}%`, width: `${shape.w * 100}%`, height: `${shape.h * 100}%` });
+  return (
+    <div ref={rootRef} className="rp-layer" aria-hidden="true">
+      {layer.fills.map((fill, index) => <div key={`f${index}`} className="rp-fill" style={{ ...box(fill), background: fill.c }} />)}
+      {layer.pictures.map((picture, index) => <img key={`p${index}`} className="rp-picture" src={picture.src} alt="" draggable={false} style={box(picture)} />)}
+      {layer.rules.map((rule, index) => {
+        // hairlines keep at least one device pixel; dotted rules use a border instead of a fill
+        const horizontal = rule.w >= rule.h * ratio;
+        const style: CSSProperties = { ...box(rule), [horizontal ? "minHeight" : "minWidth"]: "1px" };
+        if (rule.d) return <div key={`r${index}`} className="rp-rule dotted" style={{ ...style, borderTop: horizontal ? `max(1px, ${(rule.h * 100).toFixed(3)}cqh) dotted ${rule.c}` : undefined, borderLeft: horizontal ? undefined : `max(1px, ${(rule.w * 100).toFixed(3)}cqw) dotted ${rule.c}`, height: horizontal ? 0 : style.height, width: horizontal ? style.width : 0 }} />;
+        return <div key={`r${index}`} className="rp-rule" style={{ ...style, background: rule.c }} />;
+      })}
+      {layer.frames.map((frame, index) => <div key={`b${index}`} className="rp-frame" style={{ ...box(frame), borderColor: frame.c, borderWidth: `max(1px, ${((frame.t ?? 0.001) * 100).toFixed(3)}cqw)` }} />)}
+      {layer.text.map((run, index) => (
+        <span
+          key={`t${index}`}
+          className="rp-text"
+          data-w={run.w}
+          style={{
+            left: `${run.x * 100}%`,
+            // the run box starts 0.8 em above the baseline; an Arial line box puts its baseline 0.847 em down
+            top: `${(run.y - run.s * ratio * 0.047) * 100}%`,
+            fontSize: `${(run.s * 100).toFixed(4)}cqw`,
+            fontFamily: FONT_STACKS[run.f] ?? FONT_STACKS.sans,
+            fontWeight: run.b ? 700 : 400,
+            fontStyle: run.i ? "italic" : "normal",
+            color: run.c,
+          }}
+        >
+          {run.t}
+        </span>
       ))}
     </div>
   );

@@ -76,7 +76,58 @@ export interface FormPage {
   height: number;
   /** storage object path, "" until saved */
   path: string;
+  /** the page rebuilt from real text and shapes; absent for scans */
+  layer?: PageLayer;
 }
+
+/** A printed run of text: position and size as page fractions (font size
+ *  relative to the page width), face, weight, slant and ink colour. */
+export interface LayerText {
+  t: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  s: number;
+  f: string;
+  b: boolean;
+  i: boolean;
+  c: string;
+}
+
+export interface LayerShape {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  c: string;
+  /** dotted or dashed rule */
+  d?: boolean;
+  /** hollow frame: stroke thickness as a fraction of the page width */
+  t?: number;
+}
+
+/** A patch of the page kept as picture (logo, signature block, artwork). */
+export interface LayerPicture {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** data URL while drafting, storage URL once saved */
+  src: string;
+  path: string;
+}
+
+export interface PageLayer {
+  text: LayerText[];
+  rules: LayerShape[];
+  fills: LayerShape[];
+  frames: LayerShape[];
+  pictures: LayerPicture[];
+}
+
+/** How replica pages are shown: rebuilt digitally, or the page image itself. */
+export type FormDisplay = "digital" | "image";
 
 export interface FormDefinition {
   title: string;
@@ -90,6 +141,7 @@ export interface FormDefinition {
   masthead: string;
   /** page images of a replica form; [] = the form is rebuilt from sections */
   pages: FormPage[];
+  display: FormDisplay;
 }
 
 export type FormAnswer = string | boolean | string[];
@@ -101,6 +153,9 @@ export const MAX_LAYOUT_ROWS = 200;
 export const MAX_MASTHEAD_CHARS = 220_000;
 export const MAX_FORM_PAGES = 12;
 export const MAX_PAGE_SRC_CHARS = 6_000_000;
+export const MAX_LAYER_TEXT = 800;
+export const MAX_LAYER_SHAPES = 400;
+export const MAX_LAYER_PICTURES = 20;
 export const CHOICE_FIELD_TYPES: readonly FormFieldType[] = ["select", "radio", "checkboxes"];
 /** field types that need a whole row of the auto layout */
 const WIDE_FIELD_TYPES: readonly FormFieldType[] = ["textarea", "radio", "checkboxes", "checkbox"];
@@ -126,8 +181,9 @@ const PAGE_SRC = /^(?:https:\/\/[^\s"'<>]+|data:image\/(?:jpeg|png|webp);base64,
 const fraction = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : null;
 
-/** A plausible box: inside the page and at least a sliver in size. */
-export function readBox(value: unknown): FormBox | null {
+/** A plausible box: inside the page and at least a sliver in size (rules may
+ *  be hairline-thin). */
+export function readBox(value: unknown, thin = false): FormBox | null {
   if (!value || typeof value !== "object") return null;
   const box = value as Record<string, unknown>;
   const x = fraction(box.x);
@@ -137,7 +193,7 @@ export function readBox(value: unknown): FormBox | null {
   if (x === null || y === null || w === null || h === null) return null;
   const width = Math.min(w, 1 - x);
   const height = Math.min(h, 1 - y);
-  if (width < 0.004 || height < 0.003) return null;
+  if (thin ? width <= 0 || height <= 0 : width < 0.004 || height < 0.003) return null;
   const round = (v: number) => Math.round(v * 10000) / 10000;
   return { x: round(x), y: round(y), w: round(width), h: round(height) };
 }
@@ -162,9 +218,52 @@ function readPages(value: unknown): FormPage[] {
     const width = Number.isInteger(page.width) && (page.width as number) > 0 && (page.width as number) <= 10000 ? page.width as number : 0;
     const height = Number.isInteger(page.height) && (page.height as number) > 0 && (page.height as number) <= 10000 ? page.height as number : 0;
     if (!src || !width || !height) continue;
-    pages.push({ src, width, height, path: text(page.path, 300) });
+    const layer = readLayer(page.layer);
+    pages.push({ src, width, height, path: text(page.path, 300), ...(layer ? { layer } : {}) });
   }
   return pages;
+}
+
+const FONT_KEY = /^[a-z0-9 -]{1,40}$/i;
+
+function readShape(value: unknown, frame: boolean): LayerShape | null {
+  const box = readBox(value, true);
+  if (!box) return null;
+  const shape = value as Record<string, unknown>;
+  const c = colorValue(shape.c);
+  if (!c) return null;
+  const t = fraction(shape.t);
+  return { ...box, c, ...(shape.d === true ? { d: true } : {}), ...(frame && t ? { t: Math.min(t, 0.01) } : {}) };
+}
+
+/** A page's digital layer; anything malformed is dropped item by item so one
+ *  odd run cannot lose the page. */
+function readLayer(value: unknown): PageLayer | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const layer = value as Record<string, unknown>;
+  const runs: LayerText[] = [];
+  for (const entry of Array.isArray(layer.text) ? layer.text.slice(0, MAX_LAYER_TEXT) : []) {
+    const box = readBox(entry, true);
+    if (!box) continue;
+    const item = entry as Record<string, unknown>;
+    const t = typeof item.t === "string" ? item.t.slice(0, 500) : "";
+    const s = fraction(item.s);
+    if (!t.trim() || !s || s > 0.2) continue;
+    runs.push({ t, ...box, s, f: typeof item.f === "string" && FONT_KEY.test(item.f) ? item.f : "sans", b: item.b === true, i: item.i === true, c: colorValue(item.c) || "#000000" });
+  }
+  const shapes = (list: unknown, frame: boolean) => (Array.isArray(list) ? list.slice(0, MAX_LAYER_SHAPES) : []).map(shape => readShape(shape, frame)).filter((shape): shape is LayerShape => !!shape);
+  const pictures: LayerPicture[] = [];
+  for (const entry of Array.isArray(layer.pictures) ? layer.pictures.slice(0, MAX_LAYER_PICTURES) : []) {
+    const box = readBox(entry);
+    if (!box) continue;
+    const item = entry as Record<string, unknown>;
+    const src = typeof item.src === "string" && item.src.length <= MAX_PAGE_SRC_CHARS && PAGE_SRC.test(item.src) ? item.src : "";
+    if (!src) continue;
+    pictures.push({ ...box, src, path: text(item.path, 300) });
+  }
+  const result: PageLayer = { text: runs, rules: shapes(layer.rules, false), fills: shapes(layer.fills, false), frames: shapes(layer.frames, true), pictures };
+  if (!result.text.length && !result.rules.length && !result.fills.length && !result.pictures.length) return undefined;
+  return result;
 }
 
 /**
@@ -262,7 +361,9 @@ export function parseFormDefinition(value: unknown): FormDefinition {
       for (const field of section.fields) if (field.placement && field.placement.page > pages.length) delete field.placement;
     }
   }
-  return { title, description, sections, titleColor: colorValue(source.titleColor), accentColor: colorValue(source.accentColor), masthead, pages };
+  // the rebuilt page is the default wherever it exists; scans stay images
+  const display: FormDisplay = source.display === "image" ? "image" : pages.some(page => page.layer) ? "digital" : "image";
+  return { title, description, sections, titleColor: colorValue(source.titleColor), accentColor: colorValue(source.accentColor), masthead, pages, display };
 }
 
 /** The box each id in an analysed page stands for. */
@@ -327,7 +428,7 @@ export function parseReplicaOutput(value: unknown, pages: ReplicaPageBoxes[]): F
     pageBreak: false,
   })).filter(section => section.fields.length);
   if (!sections.length) throw new Error("No fields were identified.");
-  return parseFormDefinition({ title: source.title, description: source.description, sections, titleColor: "", accentColor: "", masthead: "", pages: [] });
+  return parseFormDefinition({ title: source.title, description: source.description, sections, titleColor: "", accentColor: "", masthead: "", pages: [], display: "image" });
 }
 
 /** Layout is decorative, so it is repaired rather than rejected: cells that

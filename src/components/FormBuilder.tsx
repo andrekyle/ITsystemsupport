@@ -159,7 +159,7 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
             </label>
             <div className="fb-actions">
               <button type="button" className="btn primary" disabled={!source || !consent || !!busy} onClick={() => void generate()}><Icon name="refresh" size={16} /> {busy === "reading" ? "Reading document..." : busy === "generating" ? "Generating..." : "Generate form"}</button>
-              {busy ? <button type="button" className="btn ghost" onClick={() => controller.current?.abort()}>Cancel</button> : <button type="button" className="btn ghost" onClick={() => { setError(""); setMissing([]); setDraft({ title: source?.name.replace(/\.[^.]+$/, "") ?? "Untitled form", description: "", sections: [newSection()], titleColor: "", accentColor: "", masthead: "", pages: [] }); }}><Icon name="document" size={16} /> Create manually</button>}
+              {busy ? <button type="button" className="btn ghost" onClick={() => controller.current?.abort()}>Cancel</button> : <button type="button" className="btn ghost" onClick={() => { setError(""); setMissing([]); setDraft({ title: source?.name.replace(/\.[^.]+$/, "") ?? "Untitled form", description: "", sections: [newSection()], titleColor: "", accentColor: "", masthead: "", pages: [], display: "image" }); }}><Icon name="document" size={16} /> Create manually</button>}
             </div>
             {busy && <p role="status" className="fb-field-note">{busy === "reading" ? "Reading the uploaded document..." : "Generating form fields..."}</p>}
           </div>
@@ -173,6 +173,12 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
               <button type="button" role="tab" aria-selected={mode === "preview"} onClick={() => setMode("preview")}>Preview</button>
             </div>
             <div className="fb-actions">
+              {isReplica && mode === "preview" && draft.pages.some(page => page.layer) && (
+                <div className="fb-mode" role="radiogroup" aria-label="Page rendering" title="Digital: the page rebuilt from real text and lines. Original: the uploaded page image. Learners see the saved choice.">
+                  <button type="button" role="radio" aria-checked={draft.display === "digital"} onClick={() => setDraft({ ...draft, display: "digital" })}>Digital</button>
+                  <button type="button" role="radio" aria-checked={draft.display === "image"} onClick={() => setDraft({ ...draft, display: "image" })}>Original image</button>
+                </div>
+              )}
               {isReplica && mode === "preview" && <button type="button" className={`btn${adjusting ? " primary" : " ghost"}`} aria-pressed={adjusting} onClick={() => { setAdjusting(!adjusting); setArmed(null); }} title="Move, resize or draw the boxes the answers are written in"><Icon name="layers" size={16} /> {adjusting ? "Done adjusting" : "Adjust boxes"}</button>}
               {draft.masthead && <button type="button" className="btn ghost" onClick={() => setDraft({ ...draft, masthead: "" })} title="Drop the letterhead image cut from the upload"><Icon name="close" size={16} /> Remove letterhead</button>}
               {source && sourceUrl && <a className="btn ghost" href={sourceUrl} download={source.name}><Icon name="download" size={16} /> Original document</a>}

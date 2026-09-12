@@ -28,7 +28,7 @@
 .fb-missing li { margin: 2px 0; overflow-wrap: anywhere; color: var(--ink-2); }
 .fb-mode { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
 .fb-mode button { min-height: 44px; padding: 8px 16px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--ink-2); font: inherit; }
-.fb-mode button[aria-selected="true"] { border-bottom-color: var(--azure); color: var(--ink); }
+.fb-mode button[aria-selected="true"], .fb-mode button[aria-checked="true"] { border-bottom-color: var(--azure); color: var(--ink); }
 .fb-editor { border: 0; padding: 0; margin: 0; min-width: 0; }
 .fb-section { border-top: 1px solid var(--border); padding: 24px 0; margin-top: 16px; }
 .fb-section-head { align-items: flex-end; }
@@ -154,6 +154,14 @@
 }
 .replica-drawing { cursor: crosshair; }
 .replica-drawing > img { pointer-events: auto; }
+/* the page rebuilt from its own text and shapes */
+.rp-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.rp-layer > * { position: absolute; box-sizing: border-box; }
+.rp-text { white-space: pre; line-height: 1; transform-origin: left top; letter-spacing: 0; }
+.rp-fill, .rp-rule { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+.rp-rule.dotted { background: transparent; }
+.rp-frame { border-style: solid; }
+.rp-picture { display: block; object-fit: fill; }
 .replica-field { position: absolute; box-sizing: border-box; }
 .replica-field:hover { box-shadow: inset 0 0 0 1px rgba(43, 108, 176, 0.35); }
 .replica-input {

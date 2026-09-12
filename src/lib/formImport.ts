@@ -1,8 +1,8 @@
 import JSZip from "jszip";
 import { GlobalWorkerOptions, getDocument, type PDFDocumentProxy, type PDFPageProxy } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-import { MAX_MASTHEAD_CHARS, parseFormDefinition, type FormBox, type FormDefinition, type FormField, type FormPage, type FormPlacement } from "./formSchema";
-import { analysePage, estimateSkew, type PageAnalysis, type TextRun } from "./pageAnalysis";
+import { MAX_MASTHEAD_CHARS, parseFormDefinition, type FormBox, type FormDefinition, type FormField, type FormPage, type FormPlacement, type LayerText, type PageLayer } from "./formSchema";
+import { analysePage, estimateSkew, extractLayer, textColour, type PageAnalysis, type PixelSource, type TextRun } from "./pageAnalysis";
 import { supabase } from "./supabase";
 
 GlobalWorkerOptions.workerSrc = workerUrl;
@@ -128,12 +128,35 @@ function deskewCanvas(canvas: HTMLCanvasElement, runs: TextRun[]): HTMLCanvasEle
   return straight;
 }
 
-/** Text runs of a page in pixel coordinates of a canvas `width` px wide. */
-async function textRuns(page: PDFPageProxy, width: number): Promise<TextRun[]> {
+interface TextItem extends TextRun {
+  /** font size in canvas pixels */
+  size: number;
+  font: string;
+  bold: boolean;
+  italic: boolean;
+}
+
+/** The face the PDF used, reduced to a family the browser can offer. */
+function describeFont(name: string, generic: string): { font: string; bold: boolean; italic: boolean } {
+  const lower = name.toLowerCase();
+  const bold = /bold|black|heavy|semibold|demibold|extrabold/.test(lower);
+  const italic = /italic|oblique/.test(lower);
+  const families: [RegExp, string][] = [
+    [/calibri|carlito/, "calibri"], [/cambria|caladea/, "cambria"], [/times|tinos|liberationserif|nimbusroman/, "times"],
+    [/georgia/, "georgia"], [/garamond/, "garamond"], [/verdana/, "verdana"], [/tahoma/, "tahoma"], [/segoe/, "segoe"],
+    [/trebuchet/, "trebuchet"], [/courier|cousine|mono/, "mono"], [/arialnarrow|narrow/, "arial-narrow"], [/arial|helvetica|liberationsans|arimo|nimbussans/, "arial"],
+    [/century|schoolbook/, "century"], [/book ?antiqua|palatino/, "palatino"], [/comic/, "comic"], [/impact/, "impact"],
+  ];
+  const family = families.find(([pattern]) => pattern.test(lower.replace(/[\s_-]/g, "")) || pattern.test(lower))?.[1]
+    ?? (generic.includes("serif") && !generic.includes("sans") ? "times" : generic.includes("mono") ? "mono" : "sans");
+  return { font: family, bold, italic };
+}
+
+async function textItems(page: PDFPageProxy, width: number): Promise<TextItem[]> {
   const base = page.getViewport({ scale: 1 });
   const viewport = page.getViewport({ scale: width / base.width });
   const content = await page.getTextContent();
-  const runs: TextRun[] = [];
+  const items: TextItem[] = [];
   for (const item of content.items) {
     if (!("str" in item) || !item.str.trim()) continue;
     // transform: [scaleX, skewY, skewX, scaleY, x, y] in PDF space, y up from the bottom
@@ -143,9 +166,61 @@ async function textRuns(page: PDFPageProxy, width: number): Promise<TextRun[]> {
     const [x2, top] = viewport.convertToViewportPoint(e + item.width, f + fontSize * 0.8);
     const left = Math.min(x1, x2);
     const runTop = Math.min(baseline, top);
-    runs.push({ text: item.str, x: left, y: runTop, w: Math.abs(x2 - x1) || fontSize * viewport.scale * 0.5, h: Math.abs(baseline - top) + fontSize * viewport.scale * 0.2 });
+    const style = content.styles[item.fontName];
+    let fontName = "";
+    try {
+      fontName = (page.commonObjs.get(item.fontName) as { name?: string } | undefined)?.name ?? "";
+    } catch {
+      /* font not loaded for this page */
+    }
+    items.push({
+      text: item.str,
+      x: left,
+      y: runTop,
+      w: Math.abs(x2 - x1) || fontSize * viewport.scale * 0.5,
+      h: Math.abs(baseline - top) + fontSize * viewport.scale * 0.2,
+      size: fontSize * viewport.scale,
+      ...describeFont(fontName, style?.fontFamily ?? "sans-serif"),
+    });
   }
-  return runs;
+  return items;
+}
+
+/** The page rebuilt as real text plus its drawn shapes, with picture regions
+ *  cut from the render. */
+function buildLayer(canvas: HTMLCanvasElement, items: TextItem[], analysis: PageAnalysis): PageLayer | undefined {
+  if (!items.length) return undefined;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return undefined;
+  const image = context.getImageData(0, 0, canvas.width, canvas.height);
+  const pixels: PixelSource = { data: image.data, width: image.width, height: image.height, channels: 4 };
+  const round = (v: number) => Math.round(v * 10000) / 10000;
+  const text: LayerText[] = items.map(item => ({
+    t: item.text,
+    x: round(item.x / canvas.width),
+    y: round(item.y / canvas.height),
+    w: round(item.w / canvas.width),
+    h: round(item.h / canvas.height),
+    s: round(item.size / canvas.width),
+    f: item.font,
+    b: item.bold,
+    i: item.italic,
+    c: textColour(pixels, { x: item.x, y: item.y, w: item.w, h: item.h }),
+  }));
+  const ticks = analysis.boxes.filter(box => box.kind === "tick").map(box => ({ x: box.x * canvas.width, y: box.y * canvas.height, w: box.w * canvas.width, h: box.h * canvas.height }));
+  const geometry = extractLayer(pixels, items, ticks);
+  const pictures = geometry.pictures.flatMap(rect => {
+    const crop = window.document.createElement("canvas");
+    crop.width = Math.max(1, Math.round(rect.w));
+    crop.height = Math.max(1, Math.round(rect.h));
+    const target = crop.getContext("2d");
+    if (!target) return [];
+    target.drawImage(canvas, Math.round(rect.x), Math.round(rect.y), crop.width, crop.height, 0, 0, crop.width, crop.height);
+    const src = crop.toDataURL("image/png");
+    releaseCanvas(crop);
+    return [{ x: round(rect.x / canvas.width), y: round(rect.y / canvas.height), w: round(rect.w / canvas.width), h: round(rect.h / canvas.height), src, path: "" }];
+  });
+  return { text, rules: geometry.rules, fills: geometry.fills, frames: geometry.frames, pictures };
 }
 
 function widgetBox(page: PDFPageProxy, rect: number[]): FormBox | null {
@@ -234,17 +309,19 @@ async function importPdf(file: File, signal?: AbortSignal): Promise<ImportedForm
       texts.push(`Page ${pageNumber}\n${lines.join("")}`);
       let canvas = await renderPage(page, PAGE_PIXELS);
       checkAborted(signal);
-      const runs = await textRuns(page, canvas.width);
+      const items = await textItems(page, canvas.width);
+      const runs: TextRun[] = items;
       // scanned pages (with or without an OCR text layer) come in slightly rotated
       if (!nativeDefinition) canvas = deskewCanvas(canvas, runs);
       const analysis = nativeDefinition ? { page: pageNumber, width: canvas.width, height: canvas.height, text: [], boxes: [] } : analyseCanvas(canvas, runs, pageNumber);
-      pages.push({ src: canvas.toDataURL("image/jpeg", 0.85), width: canvas.width, height: canvas.height, path: "", analysis });
+      const layer = buildLayer(canvas, items, analysis);
+      pages.push({ src: canvas.toDataURL("image/jpeg", 0.85), width: canvas.width, height: canvas.height, path: "", ...(layer ? { layer } : {}), analysis });
       if (!nativeDefinition) images.push(shrink(canvas, AI_PIXELS, 0.7));
       releaseCanvas(canvas);
       page.cleanup();
     }
     const title = file.name.replace(/\.pdf$/i, "");
-    return { name: file.name, text: texts.join("\n\n"), images, pages, definition: nativeDefinition ? { ...nativeDefinition, title, pages: pages.map(({ analysis: _analysis, ...page }) => page) } : undefined };
+    return { name: file.name, text: texts.join("\n\n"), images, pages, definition: nativeDefinition ? { ...nativeDefinition, title, pages: pages.map(({ analysis: _analysis, ...page }) => page), display: pages.some(page => page.layer) ? "digital" : "image" } : undefined };
   } finally {
     signal?.removeEventListener("abort", cancel);
     await loading.destroy();
@@ -354,6 +431,7 @@ export async function generateFormDefinition(document: ImportedFormDocument, sig
   if (document.pages.length) {
     // the replica carries the full-size page images the fields were bound to
     definition.pages = document.pages.map(({ analysis: _analysis, ...page }) => page);
+    definition.display = definition.pages.some(page => page.layer) ? "digital" : "image";
     return definition;
   }
   if (body.mastheadBox && !definition.masthead) {
