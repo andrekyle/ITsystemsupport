@@ -27,6 +27,7 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
   const [imported, setImported] = useState<ImportedFormDocument | null>(null);
   const [draft, setDraft] = useState<FormDefinition | null>(null);
   const [busy, setBusy] = useState<"reading" | "generating" | "saving" | null>(null);
+  const [progress, setProgress] = useState("");
   const [error, setError] = useState("");
   const [consent, setConsent] = useState(false);
   const [mode, setMode] = useState<"edit" | "preview">("edit");
@@ -76,7 +77,8 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
       const document = imported ?? await extractFormDocument(source, nextController.signal);
       setImported(document);
       setBusy("generating");
-      const definition = await generateFormDefinition(document, nextController.signal);
+      setProgress("");
+      const definition = await generateFormDefinition(document, nextController.signal, (done, total) => setProgress(total > 1 ? `Page ${Math.min(done + 1, total)} of ${total}` : ""));
       if (nextController.signal.aborted) return;
       setDraft(definition);
       // a replica shows the printed page itself, so nothing can be missing from it
@@ -148,7 +150,7 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
             <div className="fb-upload" onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); chooseFile(event.dataTransfer.files[0]); }}>
               <Icon name="document" size={36} />
               <h3>{source ? source.name : "Upload a blank form"}</h3>
-              <p className="muted">{source ? `${(source.size / 1024).toFixed(0)} KB` : "PDF, Word, PNG, JPG or WebP. Up to 10 MB and 12 pages."}</p>
+              <p className="muted">{source ? `${(source.size / 1024).toFixed(0)} KB` : "PDF, Word, PNG, JPG, WebP, BMP or GIF. Up to 25 MB and 30 pages."}</p>
               {source?.name.toLowerCase().endsWith(".docx") && <p className="fb-field-note">A Word file is rebuilt from its text, not shown as printed. For an exact replica save it as a PDF first (File - Save As - PDF) and upload that.</p>}
               <input ref={fileInput} type="file" accept={FORM_UPLOAD_ACCEPT} aria-label="Upload blank form" hidden disabled={!!busy} onChange={event => chooseFile(event.target.files?.[0])} />
               <button className="btn" type="button" disabled={!!busy} onClick={() => fileInput.current?.click()}><Icon name="folder" size={16} /> {source ? "Choose another file" : "Choose file"}</button>
@@ -161,7 +163,7 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
               <button type="button" className="btn primary" disabled={!source || !consent || !!busy} onClick={() => void generate()}><Icon name="refresh" size={16} /> {busy === "reading" ? "Reading document..." : busy === "generating" ? "Generating..." : "Generate form"}</button>
               {busy ? <button type="button" className="btn ghost" onClick={() => controller.current?.abort()}>Cancel</button> : <button type="button" className="btn ghost" onClick={() => { setError(""); setMissing([]); setDraft({ title: source?.name.replace(/\.[^.]+$/, "") ?? "Untitled form", description: "", sections: [newSection()], titleColor: "", accentColor: "", masthead: "", pages: [], display: "image" }); }}><Icon name="document" size={16} /> Create manually</button>}
             </div>
-            {busy && <p role="status" className="fb-field-note">{busy === "reading" ? "Reading the uploaded document..." : "Generating form fields..."}</p>}
+            {busy && <p role="status" className="fb-field-note">{busy === "reading" ? "Reading the uploaded document..." : `Generating form fields...${progress ? ` ${progress}` : ""}`}</p>}
           </div>
           {source && sourceUrl && <SourcePreview source={source} url={sourceUrl} text={imported?.text} />}
         </div>

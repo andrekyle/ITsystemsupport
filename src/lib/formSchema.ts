@@ -18,6 +18,8 @@ export interface FormPlacement {
   page: number;
   box: FormBox | null;
   options: (FormBox | null)[];
+  /** the box is a comb of this many character cells */
+  comb?: number;
 }
 
 export interface FormField {
@@ -105,6 +107,8 @@ export interface LayerShape {
   d?: boolean;
   /** hollow frame: stroke thickness as a fraction of the page width */
   t?: number;
+  /** comb: number of character boxes across */
+  n?: number;
 }
 
 /** A patch of the page kept as picture (logo, signature block, artwork). */
@@ -123,6 +127,7 @@ export interface PageLayer {
   rules: LayerShape[];
   fills: LayerShape[];
   frames: LayerShape[];
+  combs: LayerShape[];
   pictures: LayerPicture[];
 }
 
@@ -147,15 +152,16 @@ export interface FormDefinition {
 export type FormAnswer = string | boolean | string[];
 export type FormAnswers = Record<string, FormAnswer>;
 
-export const MAX_FORM_FIELDS = 150;
+export const MAX_FORM_FIELDS = 400;
 export const MAX_LAYOUT_COLUMNS = 16;
 export const MAX_LAYOUT_ROWS = 200;
 export const MAX_MASTHEAD_CHARS = 220_000;
-export const MAX_FORM_PAGES = 12;
+export const MAX_FORM_PAGES = 30;
 export const MAX_PAGE_SRC_CHARS = 6_000_000;
 export const MAX_LAYER_TEXT = 800;
-export const MAX_LAYER_SHAPES = 400;
+export const MAX_LAYER_SHAPES = 600;
 export const MAX_LAYER_PICTURES = 20;
+export const MAX_COMB_CELLS = 120;
 export const CHOICE_FIELD_TYPES: readonly FormFieldType[] = ["select", "radio", "checkboxes"];
 /** field types that need a whole row of the auto layout */
 const WIDE_FIELD_TYPES: readonly FormFieldType[] = ["textarea", "radio", "checkboxes", "checkbox"];
@@ -205,7 +211,8 @@ function readPlacement(value: unknown, optionCount: number): FormPlacement | und
   const box = readBox(placement.box);
   const options = Array.from({ length: optionCount }, (_, index) => Array.isArray(placement.options) ? readBox(placement.options[index]) : null);
   if (!box && !options.some(Boolean)) return undefined;
-  return { page, box, options };
+  const comb = box && Number.isInteger(placement.comb) && (placement.comb as number) >= 2 ? Math.min(placement.comb as number, MAX_COMB_CELLS) : 0;
+  return { page, box, options, ...(comb ? { comb } : {}) };
 }
 
 function readPages(value: unknown): FormPage[] {
@@ -233,7 +240,8 @@ function readShape(value: unknown, frame: boolean): LayerShape | null {
   const c = colorValue(shape.c);
   if (!c) return null;
   const t = fraction(shape.t);
-  return { ...box, c, ...(shape.d === true ? { d: true } : {}), ...(frame && t ? { t: Math.min(t, 0.01) } : {}) };
+  const n = Number.isInteger(shape.n) && (shape.n as number) >= 2 ? Math.min(shape.n as number, MAX_COMB_CELLS) : 0;
+  return { ...box, c, ...(shape.d === true ? { d: true } : {}), ...(frame && t ? { t: Math.min(t, 0.01) } : {}), ...(frame && n ? { n } : {}) };
 }
 
 /** A page's digital layer; anything malformed is dropped item by item so one
@@ -261,7 +269,7 @@ function readLayer(value: unknown): PageLayer | undefined {
     if (!src) continue;
     pictures.push({ ...box, src, path: text(item.path, 300) });
   }
-  const result: PageLayer = { text: runs, rules: shapes(layer.rules, false), fills: shapes(layer.fills, false), frames: shapes(layer.frames, true), pictures };
+  const result: PageLayer = { text: runs, rules: shapes(layer.rules, false), fills: shapes(layer.fills, false), frames: shapes(layer.frames, true), combs: shapes(layer.combs, true).filter(shape => shape.n), pictures };
   if (!result.text.length && !result.rules.length && !result.fills.length && !result.pictures.length) return undefined;
   return result;
 }
@@ -368,7 +376,7 @@ export function parseFormDefinition(value: unknown): FormDefinition {
 
 /** The box each id in an analysed page stands for. */
 export interface ReplicaPageBoxes {
-  boxes: { id: string; x: number; y: number; w: number; h: number; kind?: string }[];
+  boxes: { id: string; x: number; y: number; w: number; h: number; kind?: string; n?: number }[];
 }
 
 /**
@@ -381,15 +389,15 @@ export function parseReplicaOutput(value: unknown, pages: ReplicaPageBoxes[]): F
   const source = objectValue(value);
   if (!Array.isArray(source.fields)) throw new Error("No fields were identified.");
   const pageCount = Math.max(1, pages.length);
-  const resolve = (pageIndex: number, boxId: unknown, box: unknown, tick = false): FormBox | null => {
+  const resolve = (pageIndex: number, boxId: unknown, box: unknown, tick = false): { box: FormBox | null; comb?: number } => {
     const id = text(boxId, 40);
     if (id) {
       const found = pages[pageIndex]?.boxes.find(candidate => candidate.id === id);
-      // a tick can never be a write-on line, whatever the model says
-      if (found && tick && found.kind === "line") return null;
-      if (found) return readBox(found);
+      // a tick can never be a write-on line or a comb, whatever the model says
+      if (found && tick && (found.kind === "line" || found.kind === "comb")) return { box: null };
+      if (found) return { box: readBox(found), ...(found.kind === "comb" && found.n ? { comb: found.n } : {}) };
     }
-    return readBox(box);
+    return { box: readBox(box) };
   };
   const perPage: Record<string, unknown>[][] = Array.from({ length: pageCount }, () => []);
   for (const entry of source.fields.slice(0, MAX_FORM_FIELDS)) {
@@ -404,8 +412,9 @@ export function parseReplicaOutput(value: unknown, pages: ReplicaPageBoxes[]): F
       const label = text(item.text, 300);
       if (!label || optionTexts.includes(label)) continue;
       optionTexts.push(label);
-      optionBoxes.push(resolve(page - 1, item.boxId, item.box, true));
+      optionBoxes.push(resolve(page - 1, item.boxId, item.box, true).box);
     }
+    const own = resolve(page - 1, field.boxId, field.box);
     perPage[page - 1].push({
       id: field.id,
       label: field.label,
@@ -413,7 +422,7 @@ export function parseReplicaOutput(value: unknown, pages: ReplicaPageBoxes[]): F
       required: field.required,
       helpText: field.helpText,
       options: optionTexts,
-      placement: { page, box: resolve(page - 1, field.boxId, field.box), options: optionBoxes },
+      placement: { page, box: own.box, options: optionBoxes, ...(own.comb ? { comb: own.comb } : {}) },
     });
   }
   const sections = perPage.map((fields, index) => ({

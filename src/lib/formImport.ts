@@ -7,13 +7,15 @@ import { supabase } from "./supabase";
 
 GlobalWorkerOptions.workerSrc = workerUrl;
 
-export const FORM_UPLOAD_ACCEPT = ".pdf,.docx,.png,.jpg,.jpeg,.webp";
-export const MAX_FORM_UPLOAD_BYTES = 10 * 1024 * 1024;
-const MAX_PAGES = 12;
+export const FORM_UPLOAD_ACCEPT = ".pdf,.docx,.png,.jpg,.jpeg,.webp,.bmp,.gif";
+export const MAX_FORM_UPLOAD_BYTES = 25 * 1024 * 1024;
+const MAX_PAGES = 30;
 const MAX_GENERATION_BYTES = 3_400_000;
 // the replica page (what the form shows and prints) and the lighter copy the AI reads
 const PAGE_PIXELS = 1654;
 const AI_PIXELS = 1300;
+// replica pages are generated one request at a time, this many at once
+const GENERATION_CONCURRENCY = 2;
 const WORD_NAMESPACE = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 
 /** A page of the upload rendered for the replica, with its detected geometry. */
@@ -208,7 +210,8 @@ function buildLayer(canvas: HTMLCanvasElement, items: TextItem[], analysis: Page
     c: textColour(pixels, { x: item.x, y: item.y, w: item.w, h: item.h }),
   }));
   const ticks = analysis.boxes.filter(box => box.kind === "tick").map(box => ({ x: box.x * canvas.width, y: box.y * canvas.height, w: box.w * canvas.width, h: box.h * canvas.height }));
-  const geometry = extractLayer(pixels, items, ticks);
+  const combs = analysis.boxes.filter(box => box.kind === "comb" && box.n).map(box => ({ x: box.x * canvas.width, y: box.y * canvas.height, w: box.w * canvas.width, h: box.h * canvas.height, n: box.n! }));
+  const geometry = extractLayer(pixels, items, ticks, combs);
   const pictures = geometry.pictures.flatMap(rect => {
     const crop = window.document.createElement("canvas");
     crop.width = Math.max(1, Math.round(rect.w));
@@ -220,7 +223,7 @@ function buildLayer(canvas: HTMLCanvasElement, items: TextItem[], analysis: Page
     releaseCanvas(crop);
     return [{ x: round(rect.x / canvas.width), y: round(rect.y / canvas.height), w: round(rect.w / canvas.width), h: round(rect.h / canvas.height), src, path: "" }];
   });
-  return { text, rules: geometry.rules, fills: geometry.fills, frames: geometry.frames, pictures };
+  return { text, rules: geometry.rules, fills: geometry.fills, frames: geometry.frames, combs: geometry.combs, pictures };
 }
 
 function widgetBox(page: PDFPageProxy, rect: number[]): FormBox | null {
@@ -330,10 +333,10 @@ async function importPdf(file: File, signal?: AbortSignal): Promise<ImportedForm
 
 export function checkFormUpload(file: File): string {
   if (!file.size) throw new Error("The uploaded file is empty.");
-  if (file.size > MAX_FORM_UPLOAD_BYTES) throw new Error("Choose a form smaller than 10 MB.");
+  if (file.size > MAX_FORM_UPLOAD_BYTES) throw new Error("Choose a form smaller than 25 MB.");
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
-  if (!["pdf", "docx", "png", "jpg", "jpeg", "webp"].includes(extension)) {
-    throw new Error("Upload a PDF, Word (.docx), PNG, JPG or WebP form.");
+  if (!["pdf", "docx", "png", "jpg", "jpeg", "webp", "bmp", "gif"].includes(extension)) {
+    throw new Error("Upload a PDF, Word (.docx), PNG, JPG, WebP, BMP or GIF form. Scan paper forms to PDF or JPG first.");
   }
   return extension;
 }
@@ -383,7 +386,8 @@ export async function extractFormDocument(file: File, signal?: AbortSignal): Pro
   const document = extension === "pdf" ? await importPdf(file, signal)
     : extension === "docx" ? await importWord(file) : await importImage(file);
   checkAborted(signal);
-  if (document.text.length > 80_000 || new TextEncoder().encode(JSON.stringify(generationRequest(document))).length > MAX_GENERATION_BYTES) {
+  // replica pages go to the AI one page per request, so only a text-only document can be too big
+  if (document.text.length > 80_000 || (!document.pages.length && new TextEncoder().encode(JSON.stringify(generationRequest(document))).length > MAX_GENERATION_BYTES)) {
     throw new Error("This form has too much content. Split it into smaller documents.");
   }
   return document;
@@ -391,7 +395,11 @@ export async function extractFormDocument(file: File, signal?: AbortSignal): Pro
 
 /** The body sent to /api/generate-form: the AI's page images and, for
  *  replica pages, their detected geometry (never the full-size pages). */
-function generationRequest(document: ImportedFormDocument) {
+function generationRequest(document: ImportedFormDocument, pageIndex?: number) {
+  if (pageIndex !== undefined) {
+    const page = document.pages[pageIndex];
+    return { name: document.name, text: "", images: [document.images[pageIndex]], pages: [{ text: page.analysis.text, boxes: page.analysis.boxes }] };
+  }
   return {
     name: document.name,
     text: document.text,
@@ -400,23 +408,19 @@ function generationRequest(document: ImportedFormDocument) {
   };
 }
 
-export async function generateFormDefinition(document: ImportedFormDocument, signal?: AbortSignal): Promise<FormDefinition> {
-  if (document.definition) return parseFormDefinition(document.definition);
-  if (!supabase) throw new Error("AI generation needs a signed-in cloud administrator. Fillable PDFs can be imported locally, or add fields manually.");
-  const { data, error } = await supabase.auth.getSession();
-  if (error || !data.session) throw new Error("Sign in before generating a form.");
+async function requestDefinition(body: unknown, token: string, signal?: AbortSignal): Promise<{ definition: FormDefinition; mastheadBox?: MastheadBox | null }> {
   const response = await fetch("/api/generate-form", {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
-    body: JSON.stringify(generationRequest(document)),
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
     signal,
   });
   // the server streams keep-alive spaces while OpenAI works, then the JSON
   const raw = (await response.text()).trim();
-  let body: { definition?: unknown; mastheadBox?: MastheadBox | null; error?: string };
+  let result: { definition?: unknown; mastheadBox?: MastheadBox | null; error?: string };
   try {
     if (!raw) throw new Error("empty");
-    body = JSON.parse(raw);
+    result = JSON.parse(raw);
   } catch {
     // no JSON means the platform answered, not our function (gateway timeout, size limit…)
     if (response.status === 504 || response.status === 408) {
@@ -426,16 +430,61 @@ export async function generateFormDefinition(document: ImportedFormDocument, sig
     if (response.ok) throw new Error("The connection dropped before the form came back. Try again, or use fewer pages.");
     throw new Error(`The form-generation endpoint did not answer properly (HTTP ${response.status}). Check that the latest app is deployed.`);
   }
-  if (!response.ok || body.error) throw new Error(body.error || "Form generation failed.");
-  const definition = parseFormDefinition(body.definition);
+  if (!response.ok || result.error) throw new Error(result.error || "Form generation failed.");
+  return { definition: parseFormDefinition(result.definition), mastheadBox: result.mastheadBox };
+}
+
+/** Fields of one page's answer, renumbered onto that page with ids that
+ *  cannot collide with the other pages' answers. */
+function pageFields(definition: FormDefinition, pageNumber: number): FormField[] {
+  return definition.sections.flatMap(section => section.fields).map(field => ({
+    ...field,
+    id: `p${pageNumber}_${field.id}`,
+    ...(field.placement ? { placement: { ...field.placement, page: pageNumber } } : {}),
+  }));
+}
+
+export async function generateFormDefinition(document: ImportedFormDocument, signal?: AbortSignal, onProgress?: (done: number, total: number) => void): Promise<FormDefinition> {
+  if (document.definition) return parseFormDefinition(document.definition);
+  if (!supabase) throw new Error("AI generation needs a signed-in cloud administrator. Fillable PDFs can be imported locally, or add fields manually.");
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session) throw new Error("Sign in before generating a form.");
+  const token = data.session.access_token;
   if (document.pages.length) {
-    // the replica carries the full-size page images the fields were bound to
-    definition.pages = document.pages.map(({ analysis: _analysis, ...page }) => page);
-    definition.display = definition.pages.some(page => page.layer) ? "digital" : "image";
-    return definition;
+    // one request per page: dense multi-page forms stay within the request and answer limits
+    const total = document.pages.length;
+    const results: FormDefinition[] = new Array(total);
+    let next = 0;
+    let done = 0;
+    onProgress?.(0, total);
+    const worker = async () => {
+      while (next < total) {
+        const index = next++;
+        results[index] = (await requestDefinition(generationRequest(document, index), token, signal)).definition;
+        done += 1;
+        onProgress?.(done, total);
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(GENERATION_CONCURRENCY, total) }, worker));
+    const title = results.map(result => result.title).find(value => value && value !== "Form") ?? results[0].title;
+    const sections = results.map((result, index) => ({
+      id: `page_${index + 1}`,
+      title: total > 1 ? `Page ${index + 1}` : "",
+      description: "",
+      fields: pageFields(result, index + 1),
+      columns: 4,
+      widths: [],
+      rows: [],
+      banner: "",
+      pageBreak: false,
+    })).filter(section => section.fields.length);
+    if (!sections.length) throw new Error("No fillable fields could be identified. Upload a clearer blank form or add the fields manually.");
+    const pages = document.pages.map(({ analysis: _analysis, ...page }) => page);
+    return parseFormDefinition({ title, description: "", sections, titleColor: "", accentColor: "", masthead: "", pages, display: pages.some(page => page.layer) ? "digital" : "image" });
   }
-  if (body.mastheadBox && !definition.masthead) {
-    definition.masthead = await cropMasthead(document.images, body.mastheadBox);
+  const { definition, mastheadBox } = await requestDefinition(generationRequest(document), token, signal);
+  if (mastheadBox && !definition.masthead) {
+    definition.masthead = await cropMasthead(document.images, mastheadBox);
   }
   return definition;
 }

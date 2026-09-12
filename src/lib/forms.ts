@@ -29,6 +29,8 @@ const FORMS_EVENT = "form-builder-changed";
 const SOURCE_BUCKET = "form-sources";
 // blank page images are public so every signed-in learner's browser can show them
 const PAGE_BUCKET = "form-pages";
+/** the originals bucket takes 10 MB; larger uploads are generated but not archived */
+const MAX_SOURCE_ARCHIVE_BYTES = 10 * 1024 * 1024;
 const FORM_COLUMNS = "id,title,description,definition,created_by,created_at,updated_at,source_name,source_type,source_size,source_path";
 
 function readLocal<T>(key: string, fallback: T): T {
@@ -63,7 +65,8 @@ export async function saveFormTemplate(definition: FormDefinition, source: File 
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw new Error("Sign in before saving a form.");
     createdBy = data.user.id;
-    if (source) {
+    // originals beyond the bucket limit are not archived; the form itself still saves
+    if (source && source.size <= MAX_SOURCE_ARCHIVE_BYTES) {
       sourcePath = `${createdBy}/${id}/${source.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100)}`;
       const { error } = await supabase.storage.from(SOURCE_BUCKET).upload(sourcePath, source, { contentType: source.type || "application/octet-stream", upsert: false });
       if (error) throw new Error("The original form could not be stored. Check the form-sources bucket and the form-builder migration.");

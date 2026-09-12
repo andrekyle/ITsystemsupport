@@ -9,7 +9,7 @@
  * width and height measured from the top-left corner.
  */
 
-export type PageBoxKind = "cell" | "tick" | "line";
+export type PageBoxKind = "cell" | "tick" | "line" | "comb";
 
 export interface PageBox {
   id: string;
@@ -20,6 +20,8 @@ export interface PageBox {
   h: number;
   /** printed text lies inside the box (a caption cell, a labelled tick cell) */
   text: boolean;
+  /** comb: number of character boxes in the row */
+  n?: number;
 }
 
 export interface PageText {
@@ -34,7 +36,7 @@ export interface PageText {
   right: string;
   /** id of the nearest empty box underneath, "" when none */
   below: string;
-  /** id of a tick box just left of the run ("[ ] I agree"), "" when none */
+  /** id of the nearest empty box just left of the run (a tick before "I agree", a box before a right-aligned caption), "" when none */
   left: string;
   /** id of the nearest empty box just above the run (a line captioned underneath), "" when none */
   above: string;
@@ -64,8 +66,8 @@ export interface PixelSource {
   channels: 3 | 4;
 }
 
-export const MAX_PAGE_BOXES = 400;
-export const MAX_PAGE_TEXT = 400;
+export const MAX_PAGE_BOXES = 600;
+export const MAX_PAGE_TEXT = 600;
 
 interface HLine { y: number; x1: number; x2: number; t: number; x1b?: number; x2b?: number }
 interface VLine { x: number; y1: number; y2: number; t: number; y1b?: number; y2b?: number }
@@ -324,18 +326,45 @@ export function analysePage(pixels: PixelSource, runs: TextRun[], page: number):
     return cx >= box.x && cx <= box.x + box.w && cy >= box.y && cy <= box.y + box.h;
   };
   const minTick = Math.max(12, width * 0.01);
-  const boxes: (Rect & { kind: PageBoxKind })[] = [];
+  const boxes: (Rect & { kind: PageBoxKind; n?: number })[] = [];
+  const squares: Rect[] = [];
   for (const rect of rects) {
     const small = rect.w <= width * 0.035 && rect.h <= width * 0.035;
     if (small) {
       const square = rect.w / rect.h > 0.6 && rect.w / rect.h < 1.6;
       if (!square || rect.w < minTick || rect.h < minTick) continue;
-      if (!isolated(mask, width, height, rect, Math.max(4, Math.round(0.4 * Math.max(rect.w, rect.h))))) continue;
       if (phrases.some(run => contains(rect, run))) continue;
-      boxes.push({ ...rect, kind: "tick" });
+      squares.push(rect);
     } else {
       boxes.push({ ...rect, kind: "cell" });
     }
+  }
+  // a row of touching, equal squares is a comb: one answer, one box per character
+  squares.sort((a, b) => a.y - b.y || a.x - b.x);
+  const inComb = new Set<Rect>();
+  for (let i = 0; i < squares.length; i++) {
+    if (inComb.has(squares[i])) continue;
+    const chain = [squares[i]];
+    for (let j = i + 1; j < squares.length; j++) {
+      const last = chain[chain.length - 1];
+      const next = squares[j];
+      if (inComb.has(next) || next.y - squares[i].y > tolerance * 2) continue;
+      if (Math.abs(next.y - last.y) <= tolerance && Math.abs(next.h - last.h) <= tolerance && Math.abs(next.w - last.w) <= tolerance * 1.5 && next.x - (last.x + last.w) <= tolerance * 2 && next.x > last.x) chain.push(next);
+    }
+    // three or more in a row, or two that share a side (a two-digit month box)
+    const touching = chain.length === 2 && chain[1].x - (chain[0].x + chain[0].w) <= tolerance;
+    if (chain.length >= 3 || touching) {
+      chain.forEach(square => inComb.add(square));
+      const first = chain[0];
+      const last = chain[chain.length - 1];
+      boxes.push({ x: first.x, y: Math.min(...chain.map(s => s.y)), w: last.x + last.w - first.x, h: Math.max(...chain.map(s => s.h)), kind: "comb", n: chain.length });
+    }
+  }
+  for (const square of squares) {
+    if (inComb.has(square)) continue;
+    // letters such as D or R close into small rectangles too; a lone tick box has clear paper around it
+    if (!isolated(mask, width, height, square, Math.max(4, Math.round(0.4 * Math.max(square.w, square.h))))) continue;
+    boxes.push({ ...square, kind: "tick" });
   }
   // a long rule with clear paper above it is a write-on line (text baselines
   // also join into rules, so anything with printed words above is skipped)
@@ -362,9 +391,10 @@ export function analysePage(pixels: PixelSource, runs: TextRun[], page: number):
     y: round(box.y / height),
     w: round(box.w / width),
     h: round(box.h / height),
-    text: phrases.length
+    text: box.kind === "comb" ? false : phrases.length
       ? phrases.some(run => contains(box, run))
       : darkRatio(mask, width, height, box, Math.max(3, tolerance)) > 0.015,
+    ...(box.n ? { n: box.n } : {}),
   }));
   const pixelBoxes = boxes.slice(0, MAX_PAGE_BOXES);
 
@@ -396,9 +426,9 @@ export function analysePage(pixels: PixelSource, runs: TextRun[], page: number):
         const distance = run.y - (empty.y + empty.h);
         if (distance < aboveDistance && distance <= height * 0.02) { aboveDistance = distance; above = index; }
       }
-      if (pageBoxes[index].kind === "tick" && cy >= empty.y - tolerance && cy <= empty.y + empty.h + tolerance && empty.x + empty.w <= run.x + tolerance) {
+      if (cy >= empty.y - tolerance && cy <= empty.y + empty.h + tolerance && empty.x + empty.w <= run.x + tolerance) {
         const distance = run.x - (empty.x + empty.w);
-        if (distance < leftDistance && distance <= width * 0.08) { leftDistance = distance; left = index; }
+        if (distance < leftDistance && distance <= width * 0.25) { leftDistance = distance; left = index; }
       }
     });
     return {
@@ -438,12 +468,15 @@ export interface LayerRect {
 export interface LayerFrame extends LayerRect {
   /** stroke thickness as a fraction of the page width */
   t: number;
+  /** comb: number of character boxes across */
+  n?: number;
 }
 
 export interface LayerGeometry {
   rules: LayerRect[];
   fills: LayerRect[];
   frames: LayerFrame[];
+  combs: LayerFrame[];
   /** regions that are neither text nor shapes (logos, pictures), in pixels */
   pictures: Rect[];
 }
@@ -531,7 +564,7 @@ function inkColour(colour: string): string {
  * colour blocks such as a contact strip), frames (small hollow squares) and
  * picture regions — dark areas explained by none of those nor by `textBoxes`.
  */
-export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect[]): LayerGeometry {
+export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect[], combRows: (Rect & { n: number })[] = []): LayerGeometry {
   const { width, height } = pixels;
   const mask = darkMask(pixels);
   const minLine = Math.max(10, Math.round(width * 0.0085));
@@ -577,6 +610,10 @@ export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect
     const colour = regionColour(pixels, { x: tick.x, y: tick.y, w: tick.w, h: 2 }, lum => lum < 200);
     return { x: fx(tick.x), y: fy(tick.y), w: fx(tick.w), h: fy(tick.h), c: inkColour(colour.colour), t: fx(Math.max(1, Math.round(width * 0.0009))) };
   });
+  const combs: LayerFrame[] = combRows.map(row => {
+    const colour = regionColour(pixels, { x: row.x, y: row.y, w: row.w, h: 2 }, lum => lum < 200);
+    return { x: fx(row.x), y: fy(row.y), w: fx(row.w), h: fy(row.h), c: inkColour(colour.colour), t: fx(Math.max(1, Math.round(width * 0.0009))), n: row.n };
+  });
 
   // whatever dark paper is left, in coarse cells, clusters into pictures
   const cell = 8;
@@ -592,6 +629,7 @@ export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect
     ...rules.map(rule => ({ x: rule.x * width - 2, y: rule.y * height - 2, w: rule.w * width + 4, h: rule.h * height + 4 })),
     ...fills.map(fill => ({ x: fill.x * width - 2, y: fill.y * height - 2, w: fill.w * width + 4, h: fill.h * height + 4 })),
     ...ticks.map(tick => ({ x: tick.x - 2, y: tick.y - 2, w: tick.w + 4, h: tick.h + 4 })),
+    ...combRows.map(row => ({ x: row.x - 2, y: row.y - 2, w: row.w + 4, h: row.h + 4 })),
   ];
   for (const rect of explained) {
     const c1 = Math.max(0, Math.floor(rect.x / cell)), c2 = Math.min(cols - 1, Math.floor((rect.x + rect.w) / cell));
@@ -638,6 +676,7 @@ export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect
     rules,
     fills,
     frames,
+    combs,
     pictures: merged.slice(0, 20).map(rect => ({
       x: Math.max(0, rect.x - 3), y: Math.max(0, rect.y - 3),
       w: Math.min(width - Math.max(0, rect.x - 3), rect.w + 6), h: Math.min(height - Math.max(0, rect.y - 3), rect.h + 6),

@@ -207,6 +207,23 @@ function DigitalPage({ layer, ratio }: { layer: PageLayer; ratio: number }) {
         return <div key={`r${index}`} className="rp-rule" style={{ ...style, background: rule.c }} />;
       })}
       {layer.frames.map((frame, index) => <div key={`b${index}`} className="rp-frame" style={{ ...box(frame), borderColor: frame.c, borderWidth: `max(1px, ${((frame.t ?? 0.001) * 100).toFixed(3)}cqw)` }} />)}
+      {layer.combs.map((comb, index) => {
+        const n = comb.n ?? 1;
+        const stroke = `max(1px, ${((comb.t ?? 0.001) * 100).toFixed(3)}cqw)`;
+        return (
+          <div
+            key={`c${index}`}
+            className="rp-frame rp-comb"
+            style={{
+              ...box(comb),
+              borderColor: comb.c,
+              borderWidth: stroke,
+              // one divider per character box
+              backgroundImage: `repeating-linear-gradient(to right, transparent, transparent calc(100% / ${n} - ${stroke}), ${comb.c} calc(100% / ${n} - ${stroke}), ${comb.c} calc(100% / ${n}))`,
+            }}
+          />
+        );
+      })}
       {layer.text.map((run, index) => (
         <span
           key={`t${index}`}
@@ -302,14 +319,18 @@ function ReplicaField({ field, ratio, pageRef, prefix, value, error, onChange, a
   } else if (field.type === "date") {
     control = <div className={`replica-date${errorClass}`}><DateTimePicker id={id} className="bare" withTime={false} value={text} onChange={onChange} placeholder="" ariaLabel={field.label} /></div>;
   } else {
+    // a comb: one character per printed box, spaced to the box pitch
+    const comb = placement.comb && placement.comb >= 2 ? placement.comb : 0;
     control = (
       <input
         id={id}
-        className={`replica-input${field.type === "signature" ? " paper-signature" : ""}${errorClass}`}
-        type={field.type === "signature" ? "text" : field.type}
+        className={`replica-input${field.type === "signature" ? " paper-signature" : ""}${comb ? " replica-comb" : ""}${errorClass}`}
+        type={field.type === "signature" || comb ? "text" : field.type}
+        inputMode={comb && (field.type === "number" || field.type === "tel") ? "numeric" : undefined}
         value={text}
-        step={field.type === "number" ? "any" : undefined}
-        maxLength={field.type === "number" ? undefined : 2000}
+        step={field.type === "number" && !comb ? "any" : undefined}
+        maxLength={comb || (field.type === "number" ? undefined : 2000)}
+        style={comb ? ({ "--n": comb, "--w": box.w } as CSSProperties) : undefined}
         autoComplete="off"
         aria-label={field.label}
         title={error || field.helpText || field.label}
