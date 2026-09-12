@@ -1,7 +1,7 @@
 import { useId, type CSSProperties } from "react";
 import { DateTimePicker } from "./DateTimePicker";
 import { FitSheet } from "./FitSheet";
-import { isPlaced, ReplicaForm, type ReplicaAdjust } from "./ReplicaForm";
+import { isFullyPlaced, ReplicaForm, type ReplicaAdjust } from "./ReplicaForm";
 import { autoLayout, CHOICE_FIELD_TYPES, unplacedFields, type FormAnswer, type FormAnswers, type FormDefinition, type FormField, type FormLayoutCell, type FormLayoutRow, type FormSection } from "../lib/formSchema";
 
 /**
@@ -20,7 +20,7 @@ export function PaperForm({ definition, answers, onChange, errors = {}, adjust }
 }) {
   const prefix = useId();
   if (definition.pages.length) {
-    const unplaced = definition.sections.flatMap(section => section.fields).filter(field => !isPlaced(field));
+    const unplaced = definition.sections.flatMap(section => section.fields).filter(field => !isFullyPlaced(field));
     return (
       <>
         <ReplicaForm definition={definition} answers={answers} onChange={onChange} errors={errors} adjust={adjust} />

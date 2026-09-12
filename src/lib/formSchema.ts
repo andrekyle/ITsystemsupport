@@ -267,7 +267,7 @@ export function parseFormDefinition(value: unknown): FormDefinition {
 
 /** The box each id in an analysed page stands for. */
 export interface ReplicaPageBoxes {
-  boxes: { id: string; x: number; y: number; w: number; h: number }[];
+  boxes: { id: string; x: number; y: number; w: number; h: number; kind?: string }[];
 }
 
 /**
@@ -280,10 +280,12 @@ export function parseReplicaOutput(value: unknown, pages: ReplicaPageBoxes[]): F
   const source = objectValue(value);
   if (!Array.isArray(source.fields)) throw new Error("No fields were identified.");
   const pageCount = Math.max(1, pages.length);
-  const resolve = (pageIndex: number, boxId: unknown, box: unknown): FormBox | null => {
+  const resolve = (pageIndex: number, boxId: unknown, box: unknown, tick = false): FormBox | null => {
     const id = text(boxId, 40);
     if (id) {
       const found = pages[pageIndex]?.boxes.find(candidate => candidate.id === id);
+      // a tick can never be a write-on line, whatever the model says
+      if (found && tick && found.kind === "line") return null;
       if (found) return readBox(found);
     }
     return readBox(box);
@@ -301,7 +303,7 @@ export function parseReplicaOutput(value: unknown, pages: ReplicaPageBoxes[]): F
       const label = text(item.text, 300);
       if (!label || optionTexts.includes(label)) continue;
       optionTexts.push(label);
-      optionBoxes.push(resolve(page - 1, item.boxId, item.box));
+      optionBoxes.push(resolve(page - 1, item.boxId, item.box, true));
     }
     perPage[page - 1].push({
       id: field.id,

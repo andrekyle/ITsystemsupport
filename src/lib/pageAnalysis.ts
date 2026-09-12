@@ -36,6 +36,8 @@ export interface PageText {
   below: string;
   /** id of a tick box just left of the run ("[ ] I agree"), "" when none */
   left: string;
+  /** id of the nearest empty box just above the run (a line captioned underneath), "" when none */
+  above: string;
 }
 
 export interface PageAnalysis {
@@ -69,21 +71,31 @@ interface HLine { y: number; x1: number; x2: number; t: number }
 interface VLine { x: number; y1: number; y2: number; t: number }
 interface Rect { x: number; y: number; w: number; h: number }
 
-const DARK = 176;
-const GAP = 4;
+const GAP_H = 6;
+const GAP_V = 3;
 const MAX_THICKNESS = 9;
 
+/** Pixels clearly darker than the paper. Thin light-grey rules render as
+ *  pale anti-aliased grey, so the cut is taken relative to the page's own
+ *  background rather than at a fixed level. */
 function darkMask({ data, width, height, channels }: PixelSource): Uint8Array {
   const mask = new Uint8Array(width * height);
-  for (let i = 0, p = 0; i < mask.length; i++, p += channels) {
-    const lum = data[p] * 0.299 + data[p + 1] * 0.587 + data[p + 2] * 0.114;
-    if (lum < DARK) mask[i] = 1;
+  const lum = new Uint8Array(width * height);
+  const histogram = new Uint32Array(256);
+  for (let i = 0, p = 0; i < lum.length; i++, p += channels) {
+    const value = data[p] * 0.299 + data[p + 1] * 0.587 + data[p + 2] * 0.114;
+    lum[i] = value;
+    histogram[value | 0]++;
   }
+  let background = 255;
+  for (let value = 1; value < 256; value++) if (histogram[value] > histogram[background]) background = value;
+  const cut = Math.min(225, background - 30);
+  for (let i = 0; i < lum.length; i++) if (lum[i] < cut) mask[i] = 1;
   return mask;
 }
 
-/** Dark runs along one scanline, bridging gaps of up to GAP pixels. */
-function runs(dark: (i: number) => boolean, length: number, minLength: number): [number, number][] {
+/** Dark runs along one scanline, bridging gaps of up to `gap` pixels. */
+function runs(dark: (i: number) => boolean, length: number, minLength: number, gap: number): [number, number][] {
   const found: [number, number][] = [];
   let i = 0;
   while (i < length) {
@@ -93,8 +105,8 @@ function runs(dark: (i: number) => boolean, length: number, minLength: number): 
     while (i < length) {
       if (dark(i)) { last = i; i++; continue; }
       let j = i + 1;
-      while (j < length && j - last <= GAP && !dark(j)) j++;
-      if (j < length && j - last <= GAP && dark(j)) { i = j; continue; }
+      while (j < length && j - last <= gap && !dark(j)) j++;
+      if (j < length && j - last <= gap && dark(j)) { i = j; continue; }
       break;
     }
     if (last - start + 1 >= minLength) found.push([start, last]);
@@ -107,7 +119,7 @@ function horizontalLines(mask: Uint8Array, width: number, height: number, minLen
   const segments: HLine[] = [];
   for (let y = 0; y < height; y++) {
     const row = y * width;
-    for (const [x1, x2] of runs(x => mask[row + x] === 1, width, minLength)) segments.push({ y, x1, x2, t: 1 });
+    for (const [x1, x2] of runs(x => mask[row + x] === 1, width, minLength, GAP_H)) segments.push({ y, x1, x2, t: 1 });
   }
   // stack the rows of one drawn line (2-6 px thick) into a single line
   const lines: HLine[] = [];
@@ -128,7 +140,7 @@ function horizontalLines(mask: Uint8Array, width: number, height: number, minLen
 function verticalLines(mask: Uint8Array, width: number, height: number, minLength: number): VLine[] {
   const segments: VLine[] = [];
   for (let x = 0; x < width; x++) {
-    for (const [y1, y2] of runs(y => mask[y * width + x] === 1, height, minLength)) segments.push({ x, y1, y2, t: 1 });
+    for (const [y1, y2] of runs(y => mask[y * width + x] === 1, height, minLength, GAP_V)) segments.push({ x, y1, y2, t: 1 });
   }
   const lines: VLine[] = [];
   for (const segment of segments) {
@@ -237,6 +249,58 @@ function mergeRuns(runs: TextRun[]): TextRun[] {
 
 const round = (value: number) => Math.round(value * 10000) / 10000;
 
+const SKEW_RANGE = 3;
+
+/**
+ * Skew of a scanned page in degrees (positive = content runs downhill to the
+ * right), found where the rows of a rotated projection of the dark pixels
+ * are sharpest. Rotate the image by the negative of this to straighten it.
+ */
+export function estimateSkew({ data, width, height, channels }: PixelSource): number {
+  const step = Math.max(1, Math.ceil(width / 500));
+  const points: number[] = [];
+  const histogram = new Uint32Array(256);
+  const lums: number[] = [];
+  for (let y = 0; y < height; y += step) {
+    for (let x = 0; x < width; x += step) {
+      const p = (y * width + x) * channels;
+      const lum = data[p] * 0.299 + data[p + 1] * 0.587 + data[p + 2] * 0.114;
+      lums.push(lum);
+      histogram[lum | 0]++;
+    }
+  }
+  let background = 255;
+  for (let value = 1; value < 256; value++) if (histogram[value] > histogram[background]) background = value;
+  const cut = Math.min(225, background - 30);
+  const columns = Math.ceil(width / step);
+  for (let i = 0; i < lums.length; i++) if (lums[i] < cut) points.push(i % columns, Math.floor(i / columns));
+  if (points.length < 400) return 0;
+  const rows = Math.ceil(height / step);
+  const offset = columns;
+  const bins = new Float64Array(rows + 2 * columns + 2);
+  const score = (degrees: number) => {
+    bins.fill(0);
+    const angle = (degrees * Math.PI) / 180;
+    const sin = Math.sin(angle);
+    const cos = Math.cos(angle);
+    for (let i = 0; i < points.length; i += 2) bins[Math.round(points[i + 1] * cos - points[i] * sin) + offset]++;
+    let total = 0;
+    for (let i = 0; i < bins.length; i++) total += bins[i] * bins[i];
+    return total;
+  };
+  let best = 0;
+  let bestScore = -1;
+  for (let degrees = -SKEW_RANGE; degrees <= SKEW_RANGE + 1e-9; degrees += 0.1) {
+    const value = score(degrees);
+    if (value > bestScore) { bestScore = value; best = degrees; }
+  }
+  for (let degrees = best - 0.09; degrees <= best + 0.09 + 1e-9; degrees += 0.02) {
+    const value = score(degrees);
+    if (value > bestScore) { bestScore = value; best = degrees; }
+  }
+  return Math.round(best * 100) / 100;
+}
+
 export function analysePage(pixels: PixelSource, runs: TextRun[], page: number): PageAnalysis {
   const { width, height } = pixels;
   const mask = darkMask(pixels);
@@ -268,12 +332,17 @@ export function analysePage(pixels: PixelSource, runs: TextRun[], page: number):
   }
   // a long rule with clear paper above it is a write-on line (text baselines
   // also join into rules, so anything with printed words above is skipped)
-  const lineBoxHeight = Math.round(height * 0.024);
+  const lineBoxHeight = Math.round(height * 0.018);
+  const edgeTolerance = 2 * tolerance;
   for (const line of hLines) {
     if (used.has(line) || line.x2 - line.x1 < width * 0.1) continue;
+    // a stretch of a cell's own border left over by a slight residual skew
+    if (boxes.some(box => box.kind === "cell"
+      && (Math.abs(line.y - box.y) <= edgeTolerance || Math.abs(line.y - (box.y + box.h)) <= edgeTolerance)
+      && line.x1 >= box.x - edgeTolerance && line.x2 <= box.x + box.w + edgeTolerance)) continue;
     const rect = { x: line.x1, y: line.y - lineBoxHeight, w: line.x2 - line.x1, h: lineBoxHeight };
     if (rect.y < 0) continue;
-    if (darkRatio(mask, width, height, rect, 2) > 0.03) continue;
+    if (darkRatio(mask, width, height, rect, 2) > 0.04) continue;
     if (phrases.some(run => contains(rect, run))) continue;
     boxes.push({ ...rect, kind: "line" });
   }
@@ -298,9 +367,11 @@ export function analysePage(pixels: PixelSource, runs: TextRun[], page: number):
     let right = -1;
     let below = -1;
     let left = -1;
+    let above = -1;
     let rightDistance = Infinity;
     let belowDistance = Infinity;
     let leftDistance = Infinity;
+    let aboveDistance = Infinity;
     pixelBoxes.forEach((box, index) => {
       if (contains(box, run) && (inside < 0 || box.w * box.h < pixelBoxes[inside].w * pixelBoxes[inside].h)) inside = index;
       if (pageBoxes[index].text) return;
@@ -309,9 +380,14 @@ export function analysePage(pixels: PixelSource, runs: TextRun[], page: number):
         const distance = empty.x - (run.x + run.w);
         if (distance < rightDistance && distance <= width * 0.25) { rightDistance = distance; right = index; }
       }
-      if (empty.x < run.x + run.w && empty.x + empty.w > run.x && empty.y >= run.y + run.h - tolerance) {
+      const overlapsX = empty.x < run.x + run.w && empty.x + empty.w > run.x;
+      if (overlapsX && empty.y >= run.y + run.h - tolerance) {
         const distance = empty.y - (run.y + run.h);
         if (distance < belowDistance && distance <= height * 0.06) { belowDistance = distance; below = index; }
+      }
+      if (overlapsX && empty.y + empty.h <= run.y + tolerance) {
+        const distance = run.y - (empty.y + empty.h);
+        if (distance < aboveDistance && distance <= height * 0.02) { aboveDistance = distance; above = index; }
       }
       if (pageBoxes[index].kind === "tick" && cy >= empty.y - tolerance && cy <= empty.y + empty.h + tolerance && empty.x + empty.w <= run.x + tolerance) {
         const distance = run.x - (empty.x + empty.w);
@@ -328,6 +404,7 @@ export function analysePage(pixels: PixelSource, runs: TextRun[], page: number):
       right: right >= 0 ? pageBoxes[right].id : "",
       below: below >= 0 ? pageBoxes[below].id : "",
       left: left >= 0 ? pageBoxes[left].id : "",
+      above: above >= 0 ? pageBoxes[above].id : "",
     };
   });
 

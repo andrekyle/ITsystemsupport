@@ -18,6 +18,16 @@ export function isPlaced(field: FormField): boolean {
   return !!field.placement && (!!field.placement.box || field.placement.options.some(Boolean));
 }
 
+/** A field whose every answer spot is on the pages: its box, or for a choice
+ *  field a tick box per option (or a box to hold the loose ones). Anything
+ *  less is also listed under the pages so no answer is lost. */
+export function isFullyPlaced(field: FormField): boolean {
+  if (!isPlaced(field)) return false;
+  const placement = field.placement!;
+  if (!CHOICE_FIELD_TYPES.includes(field.type) || placement.box) return true;
+  return field.options.every((_, index) => placement.options[index]);
+}
+
 const PAGE_WIDTH = 1000;
 const MIN_BOX = 0.006;
 

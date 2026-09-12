@@ -5,7 +5,7 @@ import { CHOICE_FIELD_TYPES, FORM_FIELD_TYPES, MAX_FORM_FIELDS, parseFormDefinit
 import { checkFormUpload, extractFormDocument, FORM_UPLOAD_ACCEPT, generateFormDefinition, missingPrintedText, type ImportedFormDocument } from "../lib/formImport";
 import { saveFormTemplate, type SavedForm } from "../lib/forms";
 import { PaperForm } from "./PaperForm";
-import { isPlaced } from "./ReplicaForm";
+import { isFullyPlaced } from "./ReplicaForm";
 import { Select } from "./Select";
 import { ConfirmModal } from "./Modal";
 
@@ -102,7 +102,7 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
   });
   const totalFields = draft?.sections.reduce((total, section) => total + section.fields.length, 0) ?? 0;
   const isReplica = !!draft?.pages.length;
-  const unplaced = isReplica ? draft!.sections.flatMap(section => section.fields).filter(field => !isPlaced(field)) : [];
+  const unplaced = isReplica ? draft!.sections.flatMap(section => section.fields).filter(field => !isFullyPlaced(field)) : [];
   const updatePlacement = (fieldId: string, update: (field: FormField) => FormField) =>
     setDraft(current => current ? { ...current, sections: current.sections.map(section => ({ ...section, fields: section.fields.map(field => field.id === fieldId ? update(field) : field) })) } : current);
   const adjust = isReplica && mode === "preview" && adjusting ? {
@@ -149,6 +149,7 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
               <Icon name="document" size={36} />
               <h3>{source ? source.name : "Upload a blank form"}</h3>
               <p className="muted">{source ? `${(source.size / 1024).toFixed(0)} KB` : "PDF, Word, PNG, JPG or WebP. Up to 10 MB and 12 pages."}</p>
+              {source?.name.toLowerCase().endsWith(".docx") && <p className="fb-field-note">A Word file is rebuilt from its text, not shown as printed. For an exact replica save it as a PDF first (File - Save As - PDF) and upload that.</p>}
               <input ref={fileInput} type="file" accept={FORM_UPLOAD_ACCEPT} aria-label="Upload blank form" hidden disabled={!!busy} onChange={event => chooseFile(event.target.files?.[0])} />
               <button className="btn" type="button" disabled={!!busy} onClick={() => fileInput.current?.click()}><Icon name="folder" size={16} /> {source ? "Choose another file" : "Choose file"}</button>
             </div>

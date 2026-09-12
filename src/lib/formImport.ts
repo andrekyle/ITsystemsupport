@@ -2,7 +2,7 @@ import JSZip from "jszip";
 import { GlobalWorkerOptions, getDocument, type PDFDocumentProxy, type PDFPageProxy } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { MAX_MASTHEAD_CHARS, parseFormDefinition, type FormBox, type FormDefinition, type FormField, type FormPage, type FormPlacement } from "./formSchema";
-import { analysePage, type PageAnalysis, type TextRun } from "./pageAnalysis";
+import { analysePage, estimateSkew, type PageAnalysis, type TextRun } from "./pageAnalysis";
 import { supabase } from "./supabase";
 
 GlobalWorkerOptions.workerSrc = workerUrl;
@@ -94,6 +94,38 @@ function analyseCanvas(canvas: HTMLCanvasElement, runs: TextRun[], pageNumber: n
   if (!context) throw new Error("This browser cannot process the page image.");
   const image = context.getImageData(0, 0, canvas.width, canvas.height);
   return analysePage({ data: image.data, width: image.width, height: image.height, channels: 4 }, runs, pageNumber);
+}
+
+/** A scan that came in slightly rotated is straightened, so its rules read as
+ *  rows again and the replica page hangs straight. Text runs measured on the
+ *  original pixels are turned with it. */
+function deskewCanvas(canvas: HTMLCanvasElement, runs: TextRun[]): HTMLCanvasElement {
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return canvas;
+  const image = context.getImageData(0, 0, canvas.width, canvas.height);
+  const skew = estimateSkew({ data: image.data, width: image.width, height: image.height, channels: 4 });
+  if (Math.abs(skew) < 0.15) return canvas;
+  const straight = window.document.createElement("canvas");
+  straight.width = canvas.width;
+  straight.height = canvas.height;
+  const target = straight.getContext("2d", { willReadFrequently: true });
+  if (!target) return canvas;
+  const angle = (-skew * Math.PI) / 180;
+  target.fillStyle = "#ffffff";
+  target.fillRect(0, 0, straight.width, straight.height);
+  target.translate(straight.width / 2, straight.height / 2);
+  target.rotate(angle);
+  target.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  for (const run of runs) {
+    const dx = run.x + run.w / 2 - cx;
+    const dy = run.y + run.h / 2 - cy;
+    run.x = cx + dx * Math.cos(angle) - dy * Math.sin(angle) - run.w / 2;
+    run.y = cy + dx * Math.sin(angle) + dy * Math.cos(angle) - run.h / 2;
+  }
+  releaseCanvas(canvas);
+  return straight;
 }
 
 /** Text runs of a page in pixel coordinates of a canvas `width` px wide. */
@@ -200,9 +232,11 @@ async function importPdf(file: File, signal?: AbortSignal): Promise<ImportedForm
         previousY = currentY;
       }
       texts.push(`Page ${pageNumber}\n${lines.join("")}`);
-      const canvas = await renderPage(page, PAGE_PIXELS);
+      let canvas = await renderPage(page, PAGE_PIXELS);
       checkAborted(signal);
       const runs = await textRuns(page, canvas.width);
+      // scanned pages (with or without an OCR text layer) come in slightly rotated
+      if (!nativeDefinition) canvas = deskewCanvas(canvas, runs);
       const analysis = nativeDefinition ? { page: pageNumber, width: canvas.width, height: canvas.height, text: [], boxes: [] } : analyseCanvas(canvas, runs, pageNumber);
       pages.push({ src: canvas.toDataURL("image/jpeg", 0.85), width: canvas.width, height: canvas.height, path: "", analysis });
       if (!nativeDefinition) images.push(shrink(canvas, AI_PIXELS, 0.7));
@@ -247,7 +281,7 @@ async function importImage(file: File): Promise<ImportedFormDocument> {
   const image = await createImageBitmap(file);
   try {
     const scale = Math.min(1, PAGE_PIXELS / Math.max(image.width, image.height));
-    const canvas = document.createElement("canvas");
+    let canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round(image.width * scale));
     canvas.height = Math.max(1, Math.round(image.height * scale));
     const context = canvas.getContext("2d", { willReadFrequently: true });
@@ -255,6 +289,7 @@ async function importImage(file: File): Promise<ImportedFormDocument> {
     context.fillStyle = "#ffffff";
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    canvas = deskewCanvas(canvas, []);
     const analysis = analyseCanvas(canvas, [], 1);
     const page: ImportedPage = { src: canvas.toDataURL("image/jpeg", 0.85), width: canvas.width, height: canvas.height, path: "", analysis };
     const ai = shrink(canvas, AI_PIXELS, 0.75);
