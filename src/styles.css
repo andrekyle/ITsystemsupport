@@ -648,6 +648,29 @@ h2.section-title .ico {
 
 /* ============ Meta pills ============ */
 
+/* floating bold toggle for lesson editing */
+.bold-tip {
+  position: fixed;
+  transform: translate(-50%, calc(-100% - 10px));
+  z-index: 1200;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--azure);
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.bold-tip:hover {
+  border-color: var(--azure);
+  background: var(--surface-3);
+}
+
 .course-switch {
   margin: 12px 0 2px;
   max-width: 360px;

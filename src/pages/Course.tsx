@@ -67,6 +67,79 @@ const EX_MAX_ATTEMPTS = 3;
 /** Maximum times a learner may CHECK a single activity question. */
 const EXQ_MAX_CHECKS = 2;
 const URL_RE = /(https?:\/\/[^\s)]+)/g;
+const BOLD_RE = /\*\*([^*]+)\*\*/g;
+
+/** Escape HTML, then turn **bold** markers into <b> for WYSIWYG editing. */
+function markedToHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(BOLD_RE, "<b>$1</b>");
+}
+
+/** Serialize a contentEditable element back to plain text with **bold** markers. */
+function htmlToMarked(el: HTMLElement): string {
+  const walk = (node: Node): string => {
+    if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? "";
+    if (node.nodeType !== Node.ELEMENT_NODE) return "";
+    const e = node as HTMLElement;
+    const inner = Array.from(e.childNodes).map(walk).join("");
+    if (e.tagName === "BR") return " ";
+    const styled = e.style && (e.style.fontWeight === "bold" || parseInt(e.style.fontWeight, 10) >= 600);
+    if (e.tagName === "B" || e.tagName === "STRONG" || styled) {
+      return inner.trim() ? `**${inner}**` : inner;
+    }
+    return inner;
+  };
+  return walk(el)
+    .replace(/\*\*\s*\*\*/g, " ") // empty/adjacent bold runs
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Floating bold toggle shown while text is selected inside an editable field (Ctrl+B also works). */
+function BoldTip({ enabled }: { enabled: boolean }) {
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    if (!enabled) {
+      setPos(null);
+      return;
+    }
+    const onSel = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || sel.rangeCount === 0) return setPos(null);
+      const anchor = sel.anchorNode;
+      const host = anchor instanceof Element ? anchor : anchor?.parentElement;
+      if (!host?.closest(".editable, .editable-inline")) return setPos(null);
+      const r = sel.getRangeAt(0).getBoundingClientRect();
+      if (!r.width && !r.height) return setPos(null);
+      setPos({ x: r.left + r.width / 2, y: r.top });
+    };
+    document.addEventListener("selectionchange", onSel);
+    window.addEventListener("scroll", onSel, true);
+    return () => {
+      document.removeEventListener("selectionchange", onSel);
+      window.removeEventListener("scroll", onSel, true);
+    };
+  }, [enabled]);
+  if (!enabled || !pos) return null;
+  return (
+    <button
+      type="button"
+      className="bold-tip"
+      style={{ left: pos.x, top: pos.y }}
+      title="Bold / unbold the selection (Ctrl+B)"
+      onMouseDown={(e) => {
+        e.preventDefault(); // keep the selection
+        document.execCommand("styleWithCSS", false, "false");
+        document.execCommand("bold");
+      }}
+    >
+      B
+    </button>
+  );
+}
 
 /** Renders text with an explanatory bubble on any glossary term; bare URLs become links.
  *  Text starting "5. …" / "5 · …" gets a hanging indent — wrapped lines align under the
@@ -80,6 +153,22 @@ export function Gloss({ text }: { text: string }) {
         <span className="hang-text">
           <Gloss text={hang[2]} />
         </span>
+      </>
+    );
+  }
+  const bold = text.split(BOLD_RE);
+  if (bold.length > 1) {
+    return (
+      <>
+        {bold.map((seg, i) =>
+          i % 2 === 1 ? (
+            <b key={i}>
+              <Gloss text={seg} />
+            </b>
+          ) : seg ? (
+            <Gloss key={i} text={seg} />
+          ) : null
+        )}
       </>
     );
   }
@@ -3043,6 +3132,7 @@ export function UnitPage({
       {tab === "lesson" && content && (
         <>
           <div style={{ marginTop: 18 }} />
+          <BoldTip enabled={editMode && isSuperUser} />
           {unitId === "HWSW2" && (
             <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
               <a
@@ -3429,10 +3519,9 @@ export function UnitPage({
                           className="lesson-p editable"
                           contentEditable
                           suppressContentEditableWarning
-                          onBlur={(e) => editParagraph(si, i, e.currentTarget.textContent ?? "")}
-                        >
-                          {text}
-                        </p>
+                          onBlur={(e) => editParagraph(si, i, htmlToMarked(e.currentTarget))}
+                          dangerouslySetInnerHTML={{ __html: markedToHtml(text) }}
+                        />
                       ) : (
                         <p key={i} className={paraIcon ? "lesson-p lesson-p-iconed" : "lesson-p"}>
                           {paraIcon && (
@@ -3458,10 +3547,9 @@ export function UnitPage({
                             className="editable-inline"
                             contentEditable
                             suppressContentEditableWarning
-                            onBlur={(e) => editKeyed("bullets", `${si}:${bi}`, e.currentTarget.textContent ?? "")}
-                          >
-                            {bulletText(bi)}
-                          </span>
+                            onBlur={(e) => editKeyed("bullets", `${si}:${bi}`, htmlToMarked(e.currentTarget))}
+                            dangerouslySetInnerHTML={{ __html: markedToHtml(bulletText(bi)) }}
+                          />
                         ) : (
                           <span>
                             <LessonBullet text={bulletText(bi)} />
@@ -3480,16 +3568,22 @@ export function UnitPage({
                       <table className="data lesson-table" style={{ marginTop: 10 }}>
                         <thead>
                           <tr>
-                            {sec.table.headers.map((h, ci) => (
-                              <th
-                                key={ci}
-                                contentEditable={editable}
-                                suppressContentEditableWarning
-                                onBlur={(e) => editable && editKeyed("tableCells", `${si}:h:${ci}`, e.currentTarget.textContent ?? "")}
-                              >
-                                {cellText("h", ci, h)}
-                              </th>
-                            ))}
+                            {sec.table.headers.map((h, ci) =>
+                              editable ? (
+                                <th
+                                  key={ci}
+                                  className="editable-inline"
+                                  contentEditable
+                                  suppressContentEditableWarning
+                                  onBlur={(e) => editKeyed("tableCells", `${si}:h:${ci}`, htmlToMarked(e.currentTarget))}
+                                  dangerouslySetInnerHTML={{ __html: markedToHtml(cellText("h", ci, h)) }}
+                                />
+                              ) : (
+                                <th key={ci}>
+                                  <Gloss text={cellText("h", ci, h)} />
+                                </th>
+                              )
+                            )}
                           </tr>
                         </thead>
                         <tbody>
@@ -3499,14 +3593,24 @@ export function UnitPage({
                               <tr key={ri} className={so ? "so-row" : sec.table!.rows.some((r) => /^SO\b/.test(r[0])) ? "ac-row" : undefined}>
                                 {row.map((cell, ci) => {
                                   const cv = cellText(ri, ci, cell);
-                                  return (
+                                  return editable ? (
                                     <td
                                       key={ci}
-                                      contentEditable={editable}
+                                      className="editable-inline"
+                                      contentEditable
                                       suppressContentEditableWarning
-                                      onBlur={(e) => editable && editKeyed("tableCells", `${si}:${ri}:${ci}`, e.currentTarget.textContent ?? "")}
-                                    >
-                                      {editable ? cv : ci === 0 || so ? <strong>{cv}</strong> : <Gloss text={cv} />}
+                                      onBlur={(e) => editKeyed("tableCells", `${si}:${ri}:${ci}`, htmlToMarked(e.currentTarget))}
+                                      dangerouslySetInnerHTML={{ __html: markedToHtml(cv) }}
+                                    />
+                                  ) : (
+                                    <td key={ci}>
+                                      {ci === 0 || so ? (
+                                        <strong>
+                                          <Gloss text={cv} />
+                                        </strong>
+                                      ) : (
+                                        <Gloss text={cv} />
+                                      )}
                                     </td>
                                   );
                                 })}
@@ -3676,14 +3780,19 @@ export function UnitPage({
                             );
                           })()}
                         </div>
-                        <div
-                          className={editable ? "d editable-inline" : "d"}
-                          contentEditable={editable}
-                          suppressContentEditableWarning
-                          onBlur={(e) => editable && editKeyed("cards", `${si}:${ci}:d`, e.currentTarget.textContent ?? "")}
-                        >
-                          {editable ? cardText(ci, "d", c.text) : <Gloss text={cardText(ci, "d", c.text)} />}
-                        </div>
+                        {editable ? (
+                          <div
+                            className="d editable-inline"
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => editKeyed("cards", `${si}:${ci}:d`, htmlToMarked(e.currentTarget))}
+                            dangerouslySetInnerHTML={{ __html: markedToHtml(cardText(ci, "d", c.text)) }}
+                          />
+                        ) : (
+                          <div className="d">
+                            <Gloss text={cardText(ci, "d", c.text)} />
+                          </div>
+                        )}
                         {c.table && (
                           <table className="data card-table">
                             <thead>
