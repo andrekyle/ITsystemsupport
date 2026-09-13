@@ -117,17 +117,22 @@ function runs(dark: (i: number) => boolean, length: number, minLength: number, g
   return found;
 }
 
-function horizontalLines(mask: Uint8Array, width: number, height: number, minLength: number, keepThick = false): HLine[] {
+function horizontalLines(mask: Uint8Array, width: number, height: number, minLength: number, keepThick = false, gap = GAP_H): HLine[] {
   const segments: HLine[] = [];
   for (let y = 0; y < height; y++) {
     const row = y * width;
-    for (const [x1, x2] of runs(x => mask[row + x] === 1, width, minLength, GAP_H)) segments.push({ y, x1, x2, t: 1 });
+    for (const [x1, x2] of runs(x => mask[row + x] === 1, width, minLength, gap)) segments.push({ y, x1, x2, t: 1 });
   }
-  // stack the rows of one drawn line (2-6 px thick) into a single line
+  // stack the rows of one drawn line (2-6 px thick) into a single line; a row
+  // must be of comparable length, or a crossing vertical would extend a rule
+  // downwards row by row until it counted as a block
   const lines: HLine[] = [];
   for (const segment of segments) {
+    const length = (line: HLine) => line.x2 - line.x1 + 1;
     const overlap = (a: HLine, b: HLine) => Math.min(a.x2, b.x2) - Math.max(a.x1, b.x1) + 1;
-    const previous = lines.find(line => segment.y - (line.y + line.t - 1) === 1 && overlap(line, segment) >= 0.8 * Math.min(line.x2 - line.x1 + 1, segment.x2 - segment.x1 + 1));
+    const previous = lines.find(line => segment.y - (line.y + line.t - 1) === 1
+      && overlap(line, segment) >= 0.8 * Math.min(length(line), length(segment))
+      && Math.min(length(line), length(segment)) >= 0.35 * Math.max(length(line), length(segment)));
     if (previous) {
       previous.t += 1;
       // the widest and narrowest extents tell a straight rule from an arc or a word
@@ -150,8 +155,11 @@ function verticalLines(mask: Uint8Array, width: number, height: number, minLengt
   }
   const lines: VLine[] = [];
   for (const segment of segments) {
+    const length = (line: VLine) => line.y2 - line.y1 + 1;
     const overlap = (a: VLine, b: VLine) => Math.min(a.y2, b.y2) - Math.max(a.y1, b.y1) + 1;
-    const previous = lines.find(line => segment.x - (line.x + line.t - 1) === 1 && overlap(line, segment) >= 0.8 * Math.min(line.y2 - line.y1 + 1, segment.y2 - segment.y1 + 1));
+    const previous = lines.find(line => segment.x - (line.x + line.t - 1) === 1
+      && overlap(line, segment) >= 0.8 * Math.min(length(line), length(segment))
+      && Math.min(length(line), length(segment)) >= 0.35 * Math.max(length(line), length(segment)));
     if (previous) {
       previous.t += 1;
       previous.y1b = Math.max(previous.y1b ?? previous.y1, segment.y1);
@@ -485,16 +493,18 @@ const hex = (r: number, g: number, b: number) => `#${[r, g, b].map(v => Math.rou
 
 /** The dominant colour of a region (quantised histogram mode, then the mean
  *  of the pixels near it) and how uniform the region is. */
-function regionColour({ data, width, channels }: PixelSource, rect: Rect, only?: (lum: number) => boolean): { colour: string; share: number; lum: number } {
+function regionColour({ data, width, channels }: PixelSource, rect: Rect, only?: (lum: number) => boolean, exclude: Rect[] = []): { colour: string; share: number; lum: number } {
   const x1 = Math.max(0, Math.round(rect.x));
   const x2 = Math.min(width - 1, Math.round(rect.x + rect.w - 1));
   const y1 = Math.max(0, Math.round(rect.y));
   const y2 = Math.min(Math.round((data.length / channels) / width) - 1, Math.round(rect.y + rect.h - 1));
   const bins = new Map<number, number>();
   const step = Math.max(1, Math.floor(Math.sqrt(((x2 - x1 + 1) * (y2 - y1 + 1)) / 4000)));
+  const skipped = (x: number, y: number) => exclude.some(box => x >= box.x - 2 && x <= box.x + box.w + 2 && y >= box.y - 2 && y <= box.y + box.h + 2);
   let total = 0;
   for (let y = y1; y <= y2; y += step) {
     for (let x = x1; x <= x2; x += step) {
+      if (exclude.length && skipped(x, y)) continue;
       const p = (y * width + x) * channels;
       const lum = data[p] * 0.299 + data[p + 1] * 0.587 + data[p + 2] * 0.114;
       if (only && !only(lum)) continue;
@@ -511,6 +521,7 @@ function regionColour({ data, width, channels }: PixelSource, rect: Rect, only?:
   let r = 0, g = 0, b = 0, n = 0;
   for (let y = y1; y <= y2; y += step) {
     for (let x = x1; x <= x2; x += step) {
+      if (exclude.length && skipped(x, y)) continue;
       const p = (y * width + x) * channels;
       const lum = data[p] * 0.299 + data[p + 1] * 0.587 + data[p + 2] * 0.114;
       if (only && !only(lum)) continue;
@@ -559,6 +570,31 @@ function inkColour(colour: string): string {
   return lum < 140 && saturation < 40 ? "#000000" : colour;
 }
 
+/** How many rows (or columns) in from one side of a shaded block are a
+ *  border - markedly darker than the block's own colour along their whole
+ *  length; 0 when the block has no border on that side. */
+function borderThickness({ data, width, channels }: PixelSource, rect: Rect, side: "top" | "bottom" | "left" | "right", fillLum: number): number {
+  const x1 = Math.max(0, Math.round(rect.x)), x2 = Math.min(width - 1, Math.round(rect.x + rect.w - 1));
+  const y1 = Math.max(0, Math.round(rect.y)), y2 = Math.round(rect.y + rect.h - 1);
+  const along = side === "top" || side === "bottom" ? [x1, x2] : [y1, y2];
+  const step = Math.max(1, Math.floor((along[1] - along[0]) / 200));
+  const lumAt = (x: number, y: number) => { const p = (y * width + x) * channels; return data[p] * 0.299 + data[p + 1] * 0.587 + data[p + 2] * 0.114; };
+  const darkRow = (k: number) => {
+    let dark = 0, n = 0;
+    for (let a = along[0]; a <= along[1]; a += step) {
+      const lum = side === "top" ? lumAt(a, y1 + k) : side === "bottom" ? lumAt(a, y2 - k) : side === "left" ? lumAt(x1 + k, a) : lumAt(x2 - k, a);
+      n++;
+      if (lum < fillLum - 40) dark++;
+    }
+    return dark / n >= 0.9;
+  };
+  // the outermost row may be the border's anti-aliased fringe
+  let t = darkRow(0) ? 0 : darkRow(1) ? 1 : -1;
+  if (t < 0) return 0;
+  while (t < MAX_THICKNESS && darkRow(t)) t++;
+  return t;
+}
+
 /**
  * Shapes of the page: rules (thin lines, solid or dotted), fills (solid
  * colour blocks such as a contact strip), frames (small hollow squares) and
@@ -582,22 +618,47 @@ export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect
     if (inText(rect) || line.t > MAX_THICKNESS) continue;
     if (rect.w < width * 0.02) continue;
     const straight = line.t <= 3 || ((line.x1b ?? line.x1) - line.x1 <= wobble && line.x2 - (line.x2b ?? line.x2) <= wobble);
-    if (!straight) { pictures.push(rect); continue; }
+    // a wobbly stack is lettering, not a rule; anything really drawn there is
+    // picked up by the leftover pass below
+    if (!straight) continue;
     // a light solid rule is only partly "dark"; the tint mask sees all of it
     const row = line.y + Math.floor(line.t / 2);
     let inked = 0;
     for (let x = line.x1; x <= line.x2; x++) inked += tint[row * width + x];
-    const colour = regionColour(pixels, rect, lum => lum < 200);
+    // the ink is the rule's darkest row; the others are anti-aliased fringe
+    const colour = Array.from({ length: line.t }, (_, k) => regionColour(pixels, { x: rect.x, y: rect.y + k, w: rect.w, h: 1 }, lum => lum < 200))
+      .reduce((best, sample) => sample.share > 0 && (best.share === 0 || sample.lum < best.lum) ? sample : best);
     rules.push({ x: fx(rect.x), y: fy(rect.y), w: fx(rect.w), h: fy(rect.h), c: inkColour(colour.colour), ...(inked / rect.w < 0.7 ? { d: true } : {}) });
   }
-  // solid blocks, including light shading, come from the gentler mask
-  for (const block of horizontalLines(tint, width, height, minLine, true)) {
+  // solid blocks, including light shading, come from the gentler mask; the
+  // wide gap bridges words printed on the block so its rows stay whole
+  const paper = regionColour(pixels, { x: 0, y: 0, w: width, h: height });
+  for (const block of horizontalLines(tint, width, height, minLine, true, Math.round(width * 0.03))) {
     if (block.t <= MAX_THICKNESS) continue;
     const rect = { x: block.x1, y: block.y, w: block.x2 - block.x1 + 1, h: block.t };
     if (inText(rect) || rect.w < width * 0.02) continue;
-    const colour = regionColour(pixels, rect);
-    if (colour.share >= 0.8) fills.push({ x: fx(rect.x), y: fy(rect.y), w: fx(rect.w), h: fy(rect.h), c: colour.colour });
-    else pictures.push(rect);
+    // judged inside its border (a heavy or doubled one is a good share of a
+    // shallow block) and without the words printed on it
+    const inset = Math.min(Math.max(4, Math.round(width * 0.006)), Math.floor(rect.h / 4));
+    const inner = { x: rect.x + inset, y: rect.y + inset, w: rect.w - 2 * inset, h: rect.h - 2 * inset };
+    const colour = regionColour(pixels, inner, undefined, textBoxes.filter(box => intersects(box, inner)));
+    // a paper-coloured "block" is just ruled structure (a comb, a grid), not shading
+    const tinted = Math.abs(colour.lum - paper.lum) > 10 || (() => { const r = parseInt(colour.colour.slice(1, 3), 16), g = parseInt(colour.colour.slice(3, 5), 16), b = parseInt(colour.colour.slice(5, 7), 16); return Math.max(r, g, b) - Math.min(r, g, b) > 24; })();
+    if (tinted && colour.share >= 0.8) {
+      fills.push({ x: fx(rect.x), y: fy(rect.y), w: fx(rect.w), h: fy(rect.h), c: colour.colour });
+      // a shaded block swallows its own border in the dark mask; find it from
+      // the edges inwards and draw it as rules
+      for (const side of ["top", "bottom", "left", "right"] as const) {
+        const t = borderThickness(pixels, rect, side, colour.lum);
+        if (!t) continue;
+        const strip = side === "top" ? { x: rect.x, y: rect.y, w: rect.w, h: t }
+          : side === "bottom" ? { x: rect.x, y: rect.y + rect.h - t, w: rect.w, h: t }
+          : side === "left" ? { x: rect.x, y: rect.y, w: t, h: rect.h }
+          : { x: rect.x + rect.w - t, y: rect.y, w: t, h: rect.h };
+        const ink = regionColour(pixels, strip, lum => lum < colour.lum - 40);
+        rules.push({ x: fx(strip.x), y: fy(strip.y), w: fx(strip.w), h: fy(strip.h), c: inkColour(ink.colour) });
+      }
+    }
   }
   for (const line of verticalLines(mask, width, height, Math.max(minLine, Math.round(height * 0.012)), false)) {
     const rect = { x: line.x - (line.t - 1) / 2, y: line.y1, w: line.t, h: line.y2 - line.y1 + 1 };
@@ -617,11 +678,42 @@ export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect
   // the frames draw a box's own edges; the same edges found as rules would double them
   const framed = [...ticks, ...combRows];
   const edgeTolerance = Math.max(3, Math.round(width * 0.003));
+  // (a frame edge may have bridged the small gap to a neighbouring rule, so
+  // "drawn by" means nearly all of the rule lies on the frame)
   const drawnByFrame = (rule: LayerRect) => {
     const px = { x: rule.x * width, y: rule.y * height, w: rule.w * width, h: rule.h * height };
-    return framed.some(box => px.x >= box.x - edgeTolerance && px.x + px.w <= box.x + box.w + edgeTolerance && px.y >= box.y - edgeTolerance && px.y + px.h <= box.y + box.h + edgeTolerance);
+    return framed.some(box => {
+      const w = Math.min(px.x + px.w, box.x + box.w + edgeTolerance) - Math.max(px.x, box.x - edgeTolerance);
+      const h = Math.min(px.y + px.h, box.y + box.h + edgeTolerance) - Math.max(px.y, box.y - edgeTolerance);
+      return w > 0 && h > 0 && (w * h) >= 0.9 * px.w * px.h;
+    });
   };
-  const keptRules = rules.filter(rule => !drawnByFrame(rule));
+  // a border printed twice a hair apart (adjacent cells each drawing theirs) is one rule
+  const joinedRules: LayerRect[] = [];
+  for (const rule of rules.filter(rule => !drawnByFrame(rule)).sort((a, b) => a.y - b.y || a.x - b.x)) {
+    const px = { x: rule.x * width, y: rule.y * height, w: rule.w * width, h: rule.h * height };
+    const horizontal = px.w >= px.h;
+    const twin = joinedRules.find(other => {
+      const o = { x: other.x * width, y: other.y * height, w: other.w * width, h: other.h * height };
+      if ((o.w >= o.h) !== horizontal) return false;
+      if (horizontal) {
+        const shared = Math.min(o.x + o.w, px.x + px.w) - Math.max(o.x, px.x);
+        return Math.abs(o.y - px.y) <= edgeTolerance && shared >= 0.8 * Math.min(o.w, px.w);
+      }
+      const shared = Math.min(o.y + o.h, px.y + px.h) - Math.max(o.y, px.y);
+      return Math.abs(o.x - px.x) <= edgeTolerance && shared >= 0.8 * Math.min(o.h, px.h);
+    });
+    if (twin) {
+      const o = { x: twin.x * width, y: twin.y * height, w: twin.w * width, h: twin.h * height };
+      const x = Math.min(o.x, px.x), y = Math.min(o.y, px.y);
+      twin.x = fx(x); twin.y = fy(y);
+      twin.w = fx(Math.max(o.x + o.w, px.x + px.w) - x);
+      twin.h = fy(Math.max(o.y + o.h, px.y + px.h) - y);
+    } else {
+      joinedRules.push({ ...rule });
+    }
+  }
+  const keptRules = joinedRules;
 
   // whatever dark paper is left, in coarse cells, clusters into pictures
   const cell = 8;
@@ -633,8 +725,9 @@ export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect
     for (let x = 0; x < width; x++) if (mask[row + x]) grid[Math.floor(y / cell) * cols + Math.floor(x / cell)] = 1;
   }
   const explained: Rect[] = [
-    ...textBoxes.map(box => ({ x: box.x - 3, y: box.y - 3, w: box.w + 6, h: box.h + 6 })),
-    ...rules.map(rule => ({ x: rule.x * width - 2, y: rule.y * height - 2, w: rule.w * width + 4, h: rule.h * height + 4 })),
+    // glyphs overshoot their boxes, and fake-bold prints a hair to the side
+    ...textBoxes.map(box => { const pad = Math.max(3, box.h * 0.35); return { x: box.x - pad, y: box.y - pad, w: box.w + 2 * pad, h: box.h + 2 * pad }; }),
+    ...keptRules.map(rule => ({ x: rule.x * width - 2, y: rule.y * height - 2, w: rule.w * width + 4, h: rule.h * height + 4 })),
     ...fills.map(fill => ({ x: fill.x * width - 2, y: fill.y * height - 2, w: fill.w * width + 4, h: fill.h * height + 4 })),
     ...ticks.map(tick => ({ x: tick.x - 2, y: tick.y - 2, w: tick.w + 4, h: tick.h + 4 })),
     ...combRows.map(row => ({ x: row.x - 2, y: row.y - 2, w: row.w + 4, h: row.h + 4 })),
@@ -665,6 +758,13 @@ export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect
     const rect = { x: c1 * cell, y: r1 * cell, w: (c2 - c1 + 1) * cell, h: (r2 - r1 + 1) * cell };
     if (rect.w < minSide || rect.h < minSide) continue;
     if (darkRatio(mask, width, height, rect, 0) < 0.03) continue;
+    // leftovers hugging printed text are that text's own edges, not a picture
+    const textShare = textBoxes.reduce((sum, box) => {
+      const w = Math.min(box.x + box.w, rect.x + rect.w) - Math.max(box.x, rect.x);
+      const h = Math.min(box.y + box.h, rect.y + rect.h) - Math.max(box.y, rect.y);
+      return sum + (w > 0 && h > 0 ? w * h : 0);
+    }, 0) / (rect.w * rect.h);
+    if (textShare > 0.35) continue;
     pictures.push(rect);
   }
   // overlapping picture regions become one crop

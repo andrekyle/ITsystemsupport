@@ -188,7 +188,19 @@ async function textItems(page: PDFPageProxy, width: number): Promise<TextItem[]>
       ...describeFont(fontName, style?.fontFamily ?? "sans-serif"),
     });
   }
-  return items;
+  // fake bold: the same words printed twice a hair apart (whole or letter by
+  // letter) become one bold run - widest runs first so fragments fall inside
+  const kept: TextItem[] = [];
+  for (const item of [...items].sort((a, b) => b.w - a.w)) {
+    const slack = item.size * 0.2;
+    const twin = kept.find(other => Math.abs(other.size - item.size) <= item.size * 0.1
+      && Math.abs(other.y - item.y) <= slack
+      && item.x >= other.x - slack && item.x + item.w <= other.x + other.w + slack
+      && (other.text === item.text || other.text.includes(item.text.trim())));
+    if (twin) { twin.bold = true; continue; }
+    kept.push(item);
+  }
+  return kept.sort((a, b) => a.y - b.y || a.x - b.x);
 }
 
 /** The page rebuilt as real text plus its drawn shapes, with picture regions
