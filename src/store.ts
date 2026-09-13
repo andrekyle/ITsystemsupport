@@ -1851,7 +1851,8 @@ async function uploadFigure(us: string, id: string, dataUrl: string): Promise<st
   if (!supabase) throw new Error("cloud sync not configured");
   const blob = await (await fetch(dataUrl)).blob();
   const safeId = id.replace(/[^\w.\-]+/g, "_");
-  const path = `shared/lessonfigs/${us}/${safeId}-${Date.now().toString(36)}.jpg`;
+  const ext = blob.type === "image/png" ? "png" : "jpg";
+  const path = `shared/lessonfigs/${us}/${safeId}-${Date.now().toString(36)}.${ext}`;
   const { error } = await supabase.storage
     .from("files")
     .upload(path, blob, { upsert: true, contentType: blob.type || "image/jpeg" });
@@ -2062,10 +2063,11 @@ export function useMemories() {
       if (supabase) {
         try {
           const blob = await (await fetch(image)).blob();
-          const path = `shared/memories/${id}.jpg`;
+          const ext = blob.type === "image/png" ? "png" : "jpg";
+          const path = `shared/memories/${id}.${ext}`;
           const { error } = await supabase.storage
             .from("files")
-            .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+            .upload(path, blob, { upsert: true, contentType: blob.type || "image/jpeg" });
           if (error) throw error;
           added.push({ id, path, by: who.name, byId: who.id, uploadedAt });
         } catch {

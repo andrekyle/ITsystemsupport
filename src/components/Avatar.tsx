@@ -60,7 +60,9 @@ export function fileToAvatar(file: File, px = 128): Promise<string> {
   });
 }
 
-/** Reads an image file and downscales it (keeping aspect ratio) to a JPEG data-URL. */
+/** Reads an image file and downscales it (keeping aspect ratio) to a data-URL.
+ *  Transparency is preserved: images with real alpha come back as PNG; opaque
+ *  images as JPEG. No background is ever painted behind the picture. */
 export function fileToImageDataUrl(file: File, maxDim = 1600): Promise<string> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -78,11 +80,20 @@ export function fileToImageDataUrl(file: File, maxDim = 1600): Promise<string> {
         reject(new Error("Canvas not supported"));
         return;
       }
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, w, h);
       ctx.drawImage(img, 0, 0, w, h);
       URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/jpeg", 0.85));
+      // JPEG can't store alpha — only fall back to it when the image is fully opaque
+      let transparent = false;
+      if (/image\/(png|webp|gif|svg\+xml)/.test(file.type)) {
+        const data = ctx.getImageData(0, 0, w, h).data;
+        for (let i = 3; i < data.length; i += 64) {
+          if (data[i] < 250) {
+            transparent = true;
+            break;
+          }
+        }
+      }
+      resolve(transparent ? canvas.toDataURL("image/png") : canvas.toDataURL("image/jpeg", 0.85));
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
