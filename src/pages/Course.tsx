@@ -2176,7 +2176,7 @@ const BUILTIN_DECKS: Record<string, { name: string; url: string }[]> = {
     { name: "Lesson 4 — Post-Meeting Follow-Up", url: "/downloads/US-114051-L4-Post-Meeting-Follow-Up.pdf" },
   ],
   "252034": [
-    { name: "Monitor & Evaluate Team Members — Lesson Slides", url: "/downloads/US-252034-Monitor-Evaluate-Performance.pptx" },
+    { name: "Monitor & Evaluate Team Members — Lesson Slides", url: "/downloads/US-252034-Monitor-Evaluate-Performance.pdf" },
   ],
 };
 
