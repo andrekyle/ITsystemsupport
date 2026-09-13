@@ -14,7 +14,7 @@ const modules: CourseModule[] = [
     id: "m1",
     name: "Personal Development",
     icon: "person",
-    image: "/figures/module-personal-growth.jpg",
+    image: "/figures/module-it-m1.jpg",
     activities: 6,
     units: [
       { us: "8252", title: "Writing business reports in Retail/Wholesale practices", nqf: 5, credits: 6, dates: "17 Jul 2026", time: "09h00 - 14h00" },
@@ -32,6 +32,7 @@ const modules: CourseModule[] = [
     id: "m2",
     name: "Client Server Networking",
     icon: "network",
+    image: "/figures/module-it-m2.jpg",
     activities: 4,
     units: [
       { us: "114058", title: "Demonstrate an understanding of the concepts of Multi-User computer Operating systems", nqf: 5, credits: 7, dates: "9, 16 Oct 2026", time: "09h00 - 14h00" },
@@ -43,6 +44,7 @@ const modules: CourseModule[] = [
     id: "m3",
     name: "Network, Concept, Architecture",
     icon: "globe",
+    image: "/figures/module-it-m3.jpg",
     activities: 5,
     units: [
       { us: "114060", title: "Demonstrate an understanding of local area computer networks, by installing a networked workstation", nqf: 5, credits: 5, dates: "6 Nov 2026", time: "09h00 - 14h00" },
@@ -55,6 +57,7 @@ const modules: CourseModule[] = [
     id: "m4",
     name: "Design a LAN for Developmental Office & Enterprise Development",
     icon: "design",
+    image: "/figures/module-it-m4.jpg",
     activities: 5,
     units: [
       { us: "114052", title: "Demonstrate appropriate customer care in the context of IT support, according to a Service Level Agreement", nqf: 5, credits: 8, dates: "11, 18 Dec 2026", time: "09h00 - 14h00" },
@@ -66,6 +69,7 @@ const modules: CourseModule[] = [
     id: "m5",
     name: "Configure, Operate & Administer Server Computer & Peripherals",
     icon: "server",
+    image: "/figures/module-it-m5.jpg",
     activities: 5,
     units: [
       { us: "114047", title: "Install and configure a multi-user networked operating system", nqf: 5, credits: 9, dates: "22, 29 Jan 2027", time: "09h00 - 14h00" },
@@ -78,6 +82,7 @@ const modules: CourseModule[] = [
     id: "m6",
     name: "Database Access",
     icon: "database",
+    image: "/figures/module-it-m6.jpg",
     activities: 5,
     units: [
       { us: "114048", title: "Create database access for a computer application using structured query language", nqf: 5, credits: 9, dates: "5, 12, 19 Mar 2027", time: "09h00 - 14h00" },
