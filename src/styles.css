@@ -404,7 +404,7 @@ a:hover {
   }
 
   .content-inner {
-    padding: 16px 14px 56px;
+    padding: 16px 10px 56px;
   }
 }
 
@@ -695,6 +695,11 @@ a.pill:hover {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 14px;
+}
+
+/* module tiles: 320px min on desktop, but never wider than the viewport */
+.card-grid.modules-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
 }
 
 .card {

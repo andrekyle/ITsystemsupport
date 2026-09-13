@@ -1741,7 +1741,7 @@ export function CoursePage({
         </span>
         Modules
       </h2>
-      <div className="card-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))" }}>
+      <div className="card-grid modules-grid">
         {MODULES.map((m, i) => {
           const c = moduleCompletion(progress, m.id);
           const credits = m.units.reduce((n, u) => n + u.credits, 0);
