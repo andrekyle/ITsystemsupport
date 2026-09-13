@@ -2,7 +2,7 @@ import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type Mous
 import { DateTimePicker } from "./DateTimePicker";
 import { FitSheet } from "./FitSheet";
 import { AnnotationLayer, annotationAt, FillSignBar, SignatureDialog, type FillSign } from "./FillSign";
-import { CHOICE_FIELD_TYPES, type FormAnswer, type FormAnswers, type FormBox, type FormDefinition, type FormField, type PageLayer } from "../lib/formSchema";
+import { CHOICE_FIELD_TYPES, replicaDateGroups, replicaDateValue, type FormAnswer, type FormAnswers, type FormBox, type FormDefinition, type FormField, type PageLayer, type ReplicaDateGroup } from "../lib/formSchema";
 
 /** Editing hooks for the form builder: move/resize boxes, draw a box for a
  *  field that has none yet. Absent for learners filling the form in. */
@@ -62,6 +62,7 @@ export function ReplicaForm({ definition, answers, onChange, errors = {}, adjust
 }) {
   const prefix = useId();
   const fields = definition.sections.flatMap(section => section.fields);
+  const dates = replicaDateGroups(fields, definition.pages);
   // a signature tool click waits for the signature dialog the first time
   const [pendingSignature, setPendingSignature] = useState<{ page: number; x: number; y: number; ratio: number } | null>(null);
   const place = (page: number, x: number, y: number, ratio: number) => {
@@ -85,6 +86,7 @@ export function ReplicaForm({ definition, answers, onChange, errors = {}, adjust
             ratio={page.width / page.height}
             title={definition.title}
             fields={fields.filter(field => isPlaced(field) && field.placement!.page === index + 1)}
+            dates={dates.filter(group => group.year.placement!.page === index + 1)}
             prefix={prefix}
             answers={answers}
             errors={errors}
@@ -132,13 +134,14 @@ const clampBox = (box: FormBox): FormBox => {
   return { x: round(x), y: round(y), w: round(w), h: round(h) };
 };
 
-function ReplicaPage({ page, src, layer, ratio, title, fields, prefix, answers, errors, onChange, adjust, fill, onPlace, onLayerText }: {
+function ReplicaPage({ page, src, layer, ratio, title, fields, dates, prefix, answers, errors, onChange, adjust, fill, onPlace, onLayerText }: {
   page: number;
   src: string;
   layer?: PageLayer;
   ratio: number;
   title: string;
   fields: FormField[];
+  dates: ReplicaDateGroup[];
   prefix: string;
   answers: FormAnswers;
   errors: Record<string, string>;
@@ -149,6 +152,7 @@ function ReplicaPage({ page, src, layer, ratio, title, fields, prefix, answers, 
   onLayerText?: LayerTextEdit;
 }) {
   const pageRef = useRef<HTMLDivElement>(null);
+  const dateIds = new Set(dates.flatMap(group => [group.year.id, group.month.id, group.day.id]));
   const drawing = useRef<{ fieldId: string; start: { x: number; y: number } } | null>(null);
   const onPaper = (target: EventTarget | null, current: HTMLElement) => target === current || (target as HTMLElement).tagName === "IMG" || (target as HTMLElement).classList?.contains("rp-layer");
 
@@ -190,9 +194,10 @@ function ReplicaPage({ page, src, layer, ratio, title, fields, prefix, answers, 
       onClick={fill ? clickPaper : undefined}
     >
       {layer ? <DigitalPage layer={layer} ratio={ratio} onText={onLayerText ? (index, text) => onLayerText(page, index, text) : undefined} /> : <img src={src} alt={`${title || "Form"} - page ${page}`} draggable={false} />}
-      {fields.map(field => (
+      {fields.filter(field => !dateIds.has(field.id)).map(field => (
         <ReplicaField key={field.id} field={field} ratio={ratio} pageRef={pageRef} prefix={prefix} value={answers[field.id]} error={errors[field.id]} onChange={value => onChange(field.id, value)} adjust={adjust} />
       ))}
+      {dates.map(group => <ReplicaDateFields key={group.year.id} group={group} pageRef={pageRef} prefix={prefix} answers={answers} errors={errors} onChange={onChange} adjust={adjust} />)}
       {fill && <AnnotationLayer page={page} ratio={ratio} pageRef={pageRef} fill={fill} />}
     </div>
   );
@@ -400,6 +405,55 @@ function ReplicaField({ field, ratio, pageRef, prefix, value, error, onChange, a
       {control}
     </AdjustableBox>
   );
+}
+
+function ReplicaDateFields({ group, pageRef, prefix, answers, errors, onChange, adjust }: {
+  group: ReplicaDateGroup;
+  pageRef: RefObject<HTMLDivElement>;
+  prefix: string;
+  answers: FormAnswers;
+  errors: Record<string, string>;
+  onChange: (fieldId: string, value: FormAnswer) => void;
+  adjust?: ReplicaAdjust;
+}) {
+  const parts = [group.year, group.month, group.day];
+  const boxes = parts.map(field => field.placement!.box!);
+  const left = Math.min(...boxes.map(box => box.x));
+  const top = Math.min(...boxes.map(box => box.y));
+  const bounds = { x: left, y: top, w: Math.max(...boxes.map(box => box.x + box.w)) - left, h: Math.max(...boxes.map(box => box.y + box.h)) - top };
+  const value = replicaDateValue(group, answers);
+  const values = value ? value.split("-") : ["", "", ""];
+  const prefixText = group.yearPrefix?.t;
+  const invalid = parts.some(field => errors[field.id]) || (!value && parts.some(field => answers[field.id] !== undefined && answers[field.id] !== ""));
+  const choose = (date: string) => {
+    const [year = "", month = "", day = ""] = date.split("-");
+    onChange(group.year.id, prefixText && group.year.maxLength === 2 ? year.slice(2) : year);
+    onChange(group.month.id, month);
+    onChange(group.day.id, day);
+  };
+  return <>
+    {parts.map((field, index) => {
+      const box = boxes[index];
+      const inset = index === 0 && group.yearPrefix ? Math.max(0, Math.min(0.8, (group.yearPrefix.x + group.yearPrefix.w - box.x) / box.w)) : 0;
+      const displayed = index === 0 && prefixText ? values[index].slice(2) : values[index];
+      return <AdjustableBox key={field.id} box={box} pageRef={pageRef} adjust={adjust} onBox={next => adjust?.onBox(field.id, -1, next)}>
+        <span className={`replica-date-part${invalid ? " replica-error" : ""}`} data-date-part={index === 0 ? "year" : index === 1 ? "month" : "day"} style={{ paddingLeft: `${inset * 100}%` }}>{displayed}</span>
+      </AdjustableBox>;
+    })}
+    {!adjust && <div className="replica-date-picker" style={boxStyle(bounds)}>
+      <DateTimePicker
+        id={`${prefix}-${group.year.id}-date`}
+        className="bare"
+        withTime={false}
+        value={value}
+        min={prefixText ? `${prefixText}00-01-01` : undefined}
+        max={prefixText ? `${prefixText}99-12-31` : undefined}
+        placeholder=""
+        ariaLabel={value ? `Date: ${value}` : "Choose date"}
+        onChange={choose}
+      />
+    </div>}
+  </>;
 }
 
 function ReplicaCombInput({ field, id, value, count, error, onChange }: {

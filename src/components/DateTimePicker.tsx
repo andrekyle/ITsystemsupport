@@ -31,6 +31,7 @@ export function DateTimePicker({
   id,
   value,
   min,
+  max,
   onChange,
   placeholder = "Not set",
   withTime = true,
@@ -42,6 +43,7 @@ export function DateTimePicker({
   value: string;
   /** earliest allowed moment — earlier days are greyed out */
   min?: string;
+  max?: string;
   onChange: (value: string) => void;
   placeholder?: string;
   /** false = date only ("YYYY-MM-DD"), no time row */
@@ -66,10 +68,11 @@ export function DateTimePicker({
 
   const today = isoDay(new Date());
   const minDay = min ? min.slice(0, 10) : "";
-  const firstAllowedDay = minDay > today ? minDay : today;
+  const maxDay = max ? max.slice(0, 10) : "";
+  const firstAllowedDay = minDay > today ? minDay : maxDay && maxDay < today ? maxDay : today;
 
   const [view, setView] = useState(() => {
-    const d = value ? new Date(value) : new Date();
+    const d = new Date(value || `${firstAllowedDay}T00:00:00`);
     return { y: d.getFullYear(), m: d.getMonth() };
   });
   // days → (tap the title) months of a year → (tap the year) 20-year page
@@ -81,7 +84,7 @@ export function DateTimePicker({
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
 
   const openPanel = () => {
-    const d = value ? new Date(value) : new Date();
+    const d = new Date(value || `${firstAllowedDay}T00:00:00`);
     setView({ y: d.getFullYear(), m: d.getMonth() });
     setMode("days");
     setPos(null);
@@ -154,6 +157,8 @@ export function DateTimePicker({
 
   const minYear = minDay ? Number(minDay.slice(0, 4)) : -Infinity;
   const minMonth = minDay ? Number(minDay.slice(5, 7)) - 1 : -1;
+  const maxYear = maxDay ? Number(maxDay.slice(0, 4)) : Infinity;
+  const maxMonth = maxDay ? Number(maxDay.slice(5, 7)) - 1 : 12;
   const todayYear = Number(today.slice(0, 4));
   const todayMonth = Number(today.slice(5, 7)) - 1;
   const dayYear = day ? Number(day.slice(0, 4)) : NaN;
@@ -177,6 +182,7 @@ export function DateTimePicker({
 
   // date-only pickers have nothing left to choose once a day is tapped
   const pickDay = (iso: string) => {
+    if ((minDay && iso < minDay) || (maxDay && iso > maxDay)) return;
     onChange(withTime ? `${iso}T${hh}:${mm}` : iso);
     if (!withTime) close();
   };
@@ -296,7 +302,7 @@ export function DateTimePicker({
                       key={iso}
                       type="button"
                       className={cls}
-                      disabled={!!minDay && iso < minDay}
+                      disabled={(!!minDay && iso < minDay) || (!!maxDay && iso > maxDay)}
                       aria-pressed={iso === day}
                       aria-label={d.toLocaleDateString(undefined, {
                         weekday: "long",
@@ -328,7 +334,7 @@ export function DateTimePicker({
                       key={name}
                       type="button"
                       className={cls}
-                      disabled={view.y < minYear || (view.y === minYear && m < minMonth)}
+                      disabled={view.y < minYear || (view.y === minYear && m < minMonth) || view.y > maxYear || (view.y === maxYear && m > maxMonth)}
                       aria-pressed={view.y === dayYear && m === dayMonth}
                       aria-label={new Date(view.y, m, 1).toLocaleDateString(undefined, {
                         month: "long",
@@ -361,7 +367,7 @@ export function DateTimePicker({
                       key={y}
                       type="button"
                       className={cls}
-                      disabled={y < minYear}
+                      disabled={y < minYear || y > maxYear}
                       aria-pressed={y === dayYear}
                       onClick={() => {
                         setView({ y, m: view.m });
@@ -417,7 +423,7 @@ export function DateTimePicker({
               <button
                 type="button"
                 className="btn ghost sm"
-                disabled={!!minDay && today < minDay}
+                disabled={(!!minDay && today < minDay) || (!!maxDay && today > maxDay)}
                 onClick={() => {
                   setView({ y: new Date().getFullYear(), m: new Date().getMonth() });
                   setMode("days");

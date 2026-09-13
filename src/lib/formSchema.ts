@@ -154,6 +154,14 @@ export interface FormDefinition {
 export type FormAnswer = string | boolean | string[];
 export type FormAnswers = Record<string, FormAnswer>;
 
+export type ReplicaDatePart = "year" | "month" | "day";
+export interface ReplicaDateGroup {
+  year: FormField;
+  month: FormField;
+  day: FormField;
+  yearPrefix?: LayerText;
+}
+
 /** Marks a person places on a replica page themselves, Acrobat-style: typed
  *  text anywhere, ticks, crosses, dots, lines and signatures. Kept with the
  *  answers under ANNOTATIONS_KEY as JSON. */
@@ -335,6 +343,32 @@ function readLayer(value: unknown): PageLayer | undefined {
   return result;
 }
 
+function alignReplicaSignature(field: FormField, page: FormPage): void {
+  const placement = field.placement;
+  const original = placement?.box;
+  const isSignature = field.type === "signature" || (field.type === "text" && /\b(signature|handtekening)\b/i.test(field.label));
+  if (!isSignature || !original || !page.layer) return;
+  const candidates = page.layer.text.filter(run => /^(signature|handtekening)\s*:?$/i.test(run.t.trim()));
+  const matches = candidates.flatMap(caption => {
+    const rowDistance = Math.abs(caption.y + caption.h / 2 - (original.y + original.h / 2));
+    if (rowDistance > Math.max(original.h * 1.5, caption.h * 3)) return [];
+    return page.layer!.rules.filter(rule => {
+      const sharedWidth = Math.min(rule.x + rule.w, original.x + original.w) - Math.max(rule.x, original.x);
+      return rule.w > 0.04 && rule.h <= caption.h * 0.2 && sharedWidth > Math.min(rule.w, original.w) * 0.5
+        && rule.y >= caption.y + caption.h * 0.4 && rule.y <= caption.y + caption.h * 1.2
+        && (rule.x >= caption.x + caption.w - 0.004 || rule.x + rule.w <= caption.x + 0.004);
+    }).map(rule => ({ caption, rule, rowDistance }));
+  }).sort((first, second) => first.rowDistance - second.rowDistance);
+  const match = matches[0];
+  if (!match) return;
+  const coversPrint = page.layer.text.some(run => overlap(original, run) > 0);
+  const pastLine = original.x < match.rule.x - 0.004 || original.x + original.w > match.rule.x + match.rule.w + 0.004
+    || original.y + original.h > match.rule.y + Math.max(match.rule.h, 0.002);
+  if (!coversPrint && !pastLine) return;
+  const height = match.caption.h * 1.25;
+  placement.box = readBox({ x: match.rule.x, y: match.rule.y - height, w: match.rule.w, h: height });
+}
+
 /**
  * The AI's output is repaired rather than rejected wherever a repair is
  * unambiguous: bad ids are renamed (and the layout follows), a field whose
@@ -437,6 +471,7 @@ export function parseFormDefinition(value: unknown): FormDefinition {
           delete field.placement;
           continue;
         }
+        alignReplicaSignature(field, pages[placement.page - 1]);
         if (placement.comb || !placement.box || !["text", "textarea", "email", "tel", "number"].includes(field.type)) continue;
         const box = placement.box;
         const comb = pages[placement.page - 1].layer?.combs.find(candidate => {
@@ -629,8 +664,80 @@ export function autoLayout(fields: FormField[]): FormLayoutRow[] {
   return rows;
 }
 
+function datePartLabel(label: string): ReplicaDatePart | undefined {
+  const value = label.trim().toLowerCase().replace(/[_-]+/g, " ");
+  if (/\b(year|jaar|yyyy|jjjj)\b/.test(value) || /^(y|j|y\s*\/\s*j|j\s*\/\s*y)\s*:?$/.test(value)) return "year";
+  if (/\b(month|maand|mm)\b/.test(value) || /^m\s*:?$/.test(value)) return "month";
+  if (/\b(day|dag|dd)\b/.test(value) || /^d\s*:?$/.test(value)) return "day";
+  return undefined;
+}
+
+export function replicaDateGroups(fields: FormField[], pages: FormPage[]): ReplicaDateGroup[] {
+  const candidates = fields.flatMap(field => {
+    const box = field.placement?.box;
+    const page = field.placement && pages[field.placement.page - 1];
+    if (!box || !page || !["text", "number", "date"].includes(field.type)) return [];
+    let part = datePartLabel(field.label);
+    if (!part) {
+      const caption = page.layer?.text.filter(run => {
+        const center = run.x + run.w / 2;
+        const gap = Math.max(run.y - (box.y + box.h), box.y - (run.y + run.h), 0);
+        return datePartLabel(run.t) && center >= box.x && center <= box.x + box.w && gap <= box.h;
+      }).sort((first, second) => Math.abs(first.y - box.y) - Math.abs(second.y - box.y))[0];
+      if (caption) part = datePartLabel(caption.t);
+    }
+    return part ? [{ field, part, box, page: field.placement!.page }] : [];
+  });
+  const used = new Set<string>();
+  const groups: ReplicaDateGroup[] = [];
+  for (const year of candidates.filter(candidate => candidate.part === "year")) {
+    if (used.has(year.field.id)) continue;
+    const row = candidates.filter(candidate => candidate.page === year.page && !used.has(candidate.field.id)
+      && Math.min(candidate.box.y + candidate.box.h, year.box.y + year.box.h) - Math.max(candidate.box.y, year.box.y) >= Math.max(candidate.box.h, year.box.h) * 0.7)
+      .sort((first, second) => first.box.x - second.box.x);
+    const yearIndex = row.indexOf(year);
+    for (let start = Math.max(0, yearIndex - 2); start <= yearIndex && start + 2 < row.length; start++) {
+      const parts = row.slice(start, start + 3);
+      if (new Set(parts.map(part => part.part)).size !== 3) continue;
+      const adjacent = parts.slice(1).every((part, index) => {
+        const previous = parts[index].box;
+        const gap = part.box.x - (previous.x + previous.w);
+        return gap >= -0.004 && gap <= Math.max(0.006, Math.min(previous.w, part.box.w) * 0.5);
+      });
+      if (!adjacent) continue;
+      const group: ReplicaDateGroup = {
+        year: year.field,
+        month: parts.find(part => part.part === "month")!.field,
+        day: parts.find(part => part.part === "day")!.field,
+      };
+      const prefix = pages[year.page - 1].layer?.text.find(run => /^(19|20)$/.test(run.t.replace(/[\s:]/g, ""))
+        && run.x >= year.box.x - 0.04 && run.x + run.w <= year.box.x + year.box.w * 0.7
+        && Math.min(run.y + run.h, year.box.y + year.box.h) - Math.max(run.y, year.box.y) >= run.h * 0.7);
+      if (prefix) group.yearPrefix = { ...prefix, t: prefix.t.replace(/[\s:]/g, "") };
+      groups.push(group);
+      parts.forEach(part => used.add(part.field.id));
+      break;
+    }
+  }
+  return groups;
+}
+
+export function replicaDateValue(group: ReplicaDateGroup, answers: FormAnswers): string {
+  const answer = (field: FormField) => typeof answers[field.id] === "string" ? (answers[field.id] as string).trim() : "";
+  let year = answer(group.year);
+  const month = answer(group.month);
+  const day = answer(group.day);
+  if (group.yearPrefix && /^\d{2}$/.test(year)) year = group.yearPrefix.t + year;
+  if (!/^\d{4}$/.test(year) || !/^\d{1,2}$/.test(month) || !/^\d{1,2}$/.test(day)) return "";
+  if (group.yearPrefix && !year.startsWith(group.yearPrefix.t)) return "";
+  const value = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  return Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value ? value : "";
+}
+
 export function validateFormAnswers(definition: FormDefinition, answers: FormAnswers): Record<string, string> {
   const errors: Record<string, string> = {};
+  const dates = replicaDateGroups(definition.sections.flatMap(section => section.fields), definition.pages);
+  const dateIds = new Set(dates.flatMap(group => [group.year.id, group.month.id, group.day.id]));
   for (const section of definition.sections) {
     for (const field of section.fields) {
       const value = answers[field.id];
@@ -640,6 +747,7 @@ export function validateFormAnswers(definition: FormDefinition, answers: FormAns
         continue;
       }
       if (empty) continue;
+      if (dateIds.has(field.id)) continue;
       if (field.type === "checkbox") {
         if (typeof value !== "boolean") errors[field.id] = "Choose a checkbox value.";
       } else if (field.type === "checkboxes") {
@@ -655,6 +763,13 @@ export function validateFormAnswers(definition: FormDefinition, answers: FormAns
       } else if (field.type === "date" && (!/^\d{4}-\d{2}-\d{2}$/.test(value) || !Number.isFinite(Date.parse(value)) || new Date(value).toISOString().slice(0, 10) !== value)) {
         errors[field.id] = "Enter a valid date.";
       }
+    }
+  }
+  for (const group of dates) {
+    const parts = [group.year, group.month, group.day];
+    const filled = parts.some(field => answers[field.id] !== undefined && answers[field.id] !== "");
+    if ((filled || parts.some(field => field.required)) && !replicaDateValue(group, answers)) {
+      parts.forEach(field => { errors[field.id] = filled ? "Choose a valid date." : "This date is required."; });
     }
   }
   return errors;
