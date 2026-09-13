@@ -769,7 +769,7 @@ export function validateFormAnswers(definition: FormDefinition, answers: FormAns
     const parts = [group.year, group.month, group.day];
     const filled = parts.some(field => answers[field.id] !== undefined && answers[field.id] !== "");
     if ((filled || parts.some(field => field.required)) && !replicaDateValue(group, answers)) {
-      parts.forEach(field => { errors[field.id] = filled ? "Choose a valid date." : "This date is required."; });
+      parts.forEach(field => { errors[field.id] = filled ? "Enter a valid date." : "This date is required."; });
     }
   }
   return errors;

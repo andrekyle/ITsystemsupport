@@ -1,8 +1,7 @@
 import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactElement, type ReactNode, type RefObject } from "react";
-import { DateTimePicker } from "./DateTimePicker";
 import { FitSheet } from "./FitSheet";
 import { AnnotationLayer, annotationAt, FillSignBar, SignatureDialog, type FillSign } from "./FillSign";
-import { CHOICE_FIELD_TYPES, replicaDateGroups, replicaDateValue, type FormAnswer, type FormAnswers, type FormBox, type FormDefinition, type FormField, type PageLayer, type ReplicaDateGroup } from "../lib/formSchema";
+import { CHOICE_FIELD_TYPES, replicaDateGroups, type FormAnswer, type FormAnswers, type FormBox, type FormDefinition, type FormField, type PageLayer, type ReplicaDateGroup } from "../lib/formSchema";
 
 /** Editing hooks for the form builder: move/resize boxes, draw a box for a
  *  field that has none yet. Absent for learners filling the form in. */
@@ -379,7 +378,19 @@ function ReplicaField({ field, ratio, pageRef, prefix, value, error, onChange, a
     const on = value === true;
     control = <button type="button" className={`${tickClass(box)}${on ? " on" : ""}${errorClass}`} role="checkbox" aria-checked={on} aria-label={field.label} title={field.label} onClick={() => onChange(!on)} />;
   } else if (field.type === "date") {
-    control = <div className={`replica-date${errorClass}`}><DateTimePicker id={id} className="bare" withTime={false} value={text} onChange={onChange} placeholder="" ariaLabel={field.label} /></div>;
+    control = <input
+      id={id}
+      className={`replica-input${errorClass}`}
+      type="text"
+      value={text}
+      maxLength={10}
+      placeholder="YYYY-MM-DD"
+      autoComplete="off"
+      aria-label={field.label}
+      aria-invalid={!!error}
+      title={error || field.helpText || field.label}
+      onChange={event => onChange(event.target.value.replace(/[^0-9-]/g, ""))}
+    />;
   } else if (placement.comb && placement.comb >= 2) {
     control = <ReplicaCombInput field={field} id={id} value={text} count={placement.comb} error={error} onChange={onChange} />;
   } else if (field.type === "textarea") {
@@ -417,42 +428,49 @@ function ReplicaDateFields({ group, pageRef, prefix, answers, errors, onChange, 
   adjust?: ReplicaAdjust;
 }) {
   const parts = [group.year, group.month, group.day];
-  const boxes = parts.map(field => field.placement!.box!);
-  const left = Math.min(...boxes.map(box => box.x));
-  const top = Math.min(...boxes.map(box => box.y));
-  const bounds = { x: left, y: top, w: Math.max(...boxes.map(box => box.x + box.w)) - left, h: Math.max(...boxes.map(box => box.y + box.h)) - top };
-  const value = replicaDateValue(group, answers);
-  const values = value ? value.split("-") : ["", "", ""];
-  const prefixText = group.yearPrefix?.t;
-  const invalid = parts.some(field => errors[field.id]) || (!value && parts.some(field => answers[field.id] !== undefined && answers[field.id] !== ""));
-  const choose = (date: string) => {
-    const [year = "", month = "", day = ""] = date.split("-");
-    onChange(group.year.id, prefixText && group.year.maxLength === 2 ? year.slice(2) : year);
-    onChange(group.month.id, month);
-    onChange(group.day.id, day);
-  };
   return <>
     {parts.map((field, index) => {
-      const box = boxes[index];
+      const box = field.placement!.box!;
+      const part = index === 0 ? "year" : index === 1 ? "month" : "day";
+      const prefixText = index === 0 ? group.yearPrefix?.t : undefined;
+      const value = typeof answers[field.id] === "string" ? answers[field.id] as string : "";
       const inset = index === 0 && group.yearPrefix ? Math.max(0, Math.min(0.8, (group.yearPrefix.x + group.yearPrefix.w - box.x) / box.w)) : 0;
-      const displayed = index === 0 && prefixText ? values[index].slice(2) : values[index];
+      const displayed = prefixText && value.length > 2 && value.startsWith(prefixText) ? value.slice(2) : value;
+      const limit = index === 0 && !prefixText ? 4 : 2;
+      const update = (text: string) => {
+        const digits = text.replace(/\D/g, "").slice(0, limit);
+        onChange(field.id, prefixText && digits && field.maxLength !== 2 ? prefixText + digits : digits);
+      };
       return <AdjustableBox key={field.id} box={box} pageRef={pageRef} adjust={adjust} onBox={next => adjust?.onBox(field.id, -1, next)}>
-        <span className={`replica-date-part${invalid ? " replica-error" : ""}`} data-date-part={index === 0 ? "year" : index === 1 ? "month" : "day"} style={{ paddingLeft: `${inset * 100}%` }}>{displayed}</span>
+        <input
+          id={`${prefix}-${field.id}`}
+          className={`replica-input replica-date-part${errors[field.id] ? " replica-error" : ""}`}
+          data-date-part={part}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={displayed}
+          maxLength={limit}
+          autoComplete="off"
+          aria-label={field.label}
+          aria-invalid={!!errors[field.id]}
+          title={errors[field.id] || field.helpText || field.label}
+          style={{ marginLeft: `${inset * 100}%`, width: `${(1 - inset) * 100}%` }}
+          onChange={event => update(event.target.value)}
+          onBlur={event => {
+            const digits = event.target.value;
+            if (index > 0 && /^\d$/.test(digits) && Number(digits) > 0) update(digits.padStart(2, "0"));
+          }}
+          onPaste={event => {
+            const digits = event.clipboardData.getData("text").replace(/\D/g, "");
+            if (prefixText && digits.length === 4 && digits.startsWith(prefixText)) {
+              event.preventDefault();
+              update(digits.slice(2));
+            }
+          }}
+        />
       </AdjustableBox>;
     })}
-    {!adjust && <div className="replica-date-picker" style={boxStyle(bounds)}>
-      <DateTimePicker
-        id={`${prefix}-${group.year.id}-date`}
-        className="bare"
-        withTime={false}
-        value={value}
-        min={prefixText ? `${prefixText}00-01-01` : undefined}
-        max={prefixText ? `${prefixText}99-12-31` : undefined}
-        placeholder=""
-        ariaLabel={value ? `Date: ${value}` : "Choose date"}
-        onChange={choose}
-      />
-    </div>}
   </>;
 }
 

@@ -175,6 +175,13 @@ test("replica split dates use printed bilingual labels and preserve a century pr
   assert.equal(replicaDateValue(groups[0], { signed_year: "26", signed_month: "9", signed_day: "13" }), "2026-09-13");
   assert.equal(replicaDateValue(groups[0], { signed_year: "1999", signed_month: "9", signed_day: "13" }), "");
   assert.deepEqual(parsed.sections[0].fields.map(field => field.id), ["signed_year", "signed_month", "signed_day"]);
+  const twentiethCentury = structuredClone(parsed);
+  twentiethCentury.pages[0].layer!.text.find(run => run.t === "20")!.t = "19";
+  const historical = replicaDateGroups(twentiethCentury.sections[0].fields, twentiethCentury.pages)[0];
+  assert.equal(replicaDateValue(historical, { signed_year: "99", signed_month: "12", signed_day: "1" }), "1999-12-01");
+  assert.equal(replicaDateValue(historical, { signed_year: "1999", signed_month: "12", signed_day: "01" }), "1999-12-01");
+  assert.equal(replicaDateValue(historical, { signed_year: "9", signed_month: "12", signed_day: "01" }), "");
+  assert.equal(replicaDateValue(historical, { signed_year: "99", signed_month: "13", signed_day: "01" }), "");
 });
 
 test("replica split date does not group distant boxes, different rows or missing parts", () => {

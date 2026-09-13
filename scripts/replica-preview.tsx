@@ -19,16 +19,19 @@ const fixtureFields = [
   { id: "signed_year", label: "Year", type: "text" as FormFieldType, page: 3, x: 0.30, y: 0.40, w: 0.16, h: 0.08, count: 0 },
   { id: "signed_month", label: "Month", type: "text" as FormFieldType, page: 3, x: 0.46, y: 0.40, w: 0.08, h: 0.08, count: 0 },
   { id: "signed_day", label: "Day", type: "text" as FormFieldType, page: 3, x: 0.54, y: 0.40, w: 0.08, h: 0.08, count: 0 },
+  { id: "review_date", label: "Review date", type: "date" as FormFieldType, page: 3, x: 0.20, y: 0.70, w: 0.26, h: 0.055, count: 0 },
 ];
 
 function makeDeclarationPage(): FormPage {
   const caption = (t: string, x: number, y: number, w: number): LayerText => ({ t, x, y, w, h: 0.04, s: 0.018, f: "arial", b: false, i: false, c: "#000000" });
+  const century = new URLSearchParams(location.search).get("century") ?? "20";
   const text = [
     caption("Signature", 0.06, 0.10, 0.12), caption("Handtekening", 0.80, 0.10, 0.15),
     caption("Place", 0.06, 0.22, 0.10), caption("Plek", 0.89, 0.22, 0.05),
     caption("Date", 0.06, 0.42, 0.08), caption("Datum", 0.86, 0.42, 0.08),
     caption("Y/J", 0.36, 0.50, 0.035), caption("M", 0.49, 0.50, 0.02), caption("D", 0.57, 0.50, 0.02),
-    caption("20", 0.31, 0.423, 0.045),
+    ...(["19", "20"].includes(century) ? [caption(century, 0.31, 0.423, 0.045)] : []),
+    caption("Review date", 0.04, 0.705, 0.14),
   ];
   const frames: LayerShape[] = [
     { x: 0.04, y: 0.04, w: 0.92, h: 0.44, c: "#000000", t: 0.002 },
@@ -37,6 +40,7 @@ function makeDeclarationPage(): FormPage {
   const rules: LayerShape[] = [
     { x: 0.20, y: 0.135, w: 0.56, h: 0.002, c: "#000000", d: true },
     { x: 0.20, y: 0.255, w: 0.64, h: 0.002, c: "#000000", d: true },
+    { x: 0.20, y: 0.757, w: 0.26, h: 0.002, c: "#000000" },
   ];
   const canvas = document.createElement("canvas");
   canvas.width = 1000;
