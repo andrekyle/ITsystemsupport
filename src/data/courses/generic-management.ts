@@ -15,6 +15,7 @@ const modules: CourseModule[] = [
     id: "m1",
     name: "Professional Team Development",
     icon: "people",
+    image: "/figures/module-gm-m1.jpg",
     activities: 5,
     units: [
       { us: "12433", title: "Use communication techniques effectively", nqf: 5, credits: 8, dates: "TBC", time: "09h00 - 14h00" },
@@ -28,6 +29,7 @@ const modules: CourseModule[] = [
     id: "m2",
     name: "Professional Conflict and Change Management",
     icon: "chat",
+    image: "/figures/module-gm-m2.jpg",
     activities: 4,
     units: [
       { us: "114226", title: "Interpret and manage conflicts within the workplace", nqf: 5, credits: 8, dates: "TBC", time: "09h00 - 14h00" },
@@ -40,6 +42,7 @@ const modules: CourseModule[] = [
     id: "m3",
     name: "Professional Human Resources Management",
     icon: "person",
+    image: "/figures/module-gm-m3.jpg",
     activities: 3,
     units: [
       { us: "12140", title: "Recruit and select candidates to fill defined positions", nqf: 5, credits: 9, dates: "TBC", time: "09h00 - 14h00" },
@@ -51,6 +54,7 @@ const modules: CourseModule[] = [
     id: "m4",
     name: "Professional Management and Leadership Development",
     icon: "gradcap",
+    image: "/figures/module-gm-m4.jpg",
     activities: 4,
     units: [
       { us: "15224", title: "Empower team members through recognising strengths, encouraging participation in decision making and delegating tasks", nqf: 5, credits: 4, dates: "TBC", time: "09h00 - 14h00" },
@@ -63,6 +67,7 @@ const modules: CourseModule[] = [
     id: "m5",
     name: "Financial Management for Professionals",
     icon: "chart",
+    image: "/figures/module-gm-m5.jpg",
     activities: 4,
     units: [
       { us: "252036", title: "Apply mathematical analysis to economic and financial information", nqf: 5, credits: 6, dates: "TBC", time: "09h00 - 14h00" },
@@ -75,6 +80,7 @@ const modules: CourseModule[] = [
     id: "m6",
     name: "Professional Results-Based Management — Planning, Monitoring and Evaluation",
     icon: "target",
+    image: "/figures/module-gm-m6.jpg",
     activities: 4,
     units: [
       { us: "252022", title: "Develop, implement and evaluate a project plan", nqf: 5, credits: 8, dates: "TBC", time: "09h00 - 14h00" },
