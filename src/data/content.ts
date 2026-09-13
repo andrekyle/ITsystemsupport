@@ -18783,11 +18783,25 @@ Improvement: distribute the technical slides beforehand."
           "According to Armstrong and Baron (1998), performance management is both a strategic and an integrated approach to delivering successful results in organisations by improving the performance and developing the capabilities of teams and individuals.",
         ],
         bullets: [
-          "Research shows why this matters: 70% of employees say managers do not provide clear goals and direction.",
-          "70% have never had a meaningful performance discussion with their manager.",
-          "80% say their supervisor does not follow up on the review.",
-          "80% do not see a relationship between good work and rewards — yet 98% believe pay should reflect performance.",
+          "Supervisors and managers are employed to manage the performance (effectiveness and efficiency) of the organisation and the people who make up its human resources. Unfortunately, research conducted in most organisations indicates they are not doing a very good job of it:",
         ],
+        table: {
+          headers: ["What employees say", "%"],
+          rows: [
+            ["Managers do not provide clear goals and directions", "70%"],
+            ["Managers are poor or average in providing direction", "55%"],
+            ["Performance expectations are not clearly defined", "70%"],
+            ["Have never had a meaningful performance discussion with their manager", "70%"],
+            ["The most important information needed concerns ways to improve performance", "65%"],
+            ["Their supervisor does not follow up on the review", "80%"],
+            ["Believe their company's system for evaluating performance is not fair", "71%"],
+            ["Poor performance is tolerated too long", "52%"],
+            ["Do not see a relationship between good work and rewards", "80%"],
+            ["Believe pay should reflect performance — yet only 48% believe their company's pay system does", "98%"],
+            ["Want more recognition of their efforts", "70%"],
+            ["Believe their pay is not tied to performance", "70%"],
+          ],
+        },
         figures: [
           { id: "252034-l1-cycle", caption: "The performance management cycle: plan → coach → appraise", hint: "Upload a diagram of the continuous performance management cycle." },
           { id: "252034-l1-team", caption: "A manager and team member in a performance conversation", hint: "Upload a photo of a one-on-one performance discussion." },
@@ -18866,9 +18880,21 @@ Improvement: distribute the technical slides beforehand."
           { icon: "search", title: "6 · Potential appraisal", text: "Assesses potential for lateral and vertical movement — inputs for succession planning and job rotation through competency mapping." },
         ],
         bullets: [
-          "Benefits: employees understand how they contribute to organisational goals; expectations are clear; objectives are aligned; and the relationship between employee and line manager is built on trust.",
-          "Good systems also improve job satisfaction: open feedback, a clear link between performance and compensation, learning opportunities, fair rewards and clear career paths.",
+          "A good performance management system improves overall organisational performance by managing the performance of teams and individuals towards the organisation's ambitions and goals. It plays this role by:",
+          "Ensuring employees understand the importance of their contributions to the organisational goals and objectives.",
+          "Ensuring each employee understands what is expected from them — and whether they possess the required skills and support to fulfil those expectations.",
+          "Properly aligning and linking objectives, and facilitating effective communication throughout the organisation.",
+          "Facilitating a cordial, harmonious relationship between the individual employee and the line manager, based on trust and empowerment.",
+          "It also lifts job satisfaction and employee loyalty through: regular open and transparent feedback; a clear link between performance and compensation; ample learning and development opportunities (e.g. leadership development programmes); fair and equal distribution of incentives and rewards; clear objectives set through open communication and joint dialogue; recognition of good performance; and maximum opportunities for career growth.",
         ],
+        table: {
+          headers: ["Who benefits", "How"],
+          rows: [
+            ["Organisation", "Improved organisational performance, employee retention and loyalty, improved productivity, overcoming barriers to communication, clear accountabilities, and cost advantages."],
+            ["Manager", "Saves time and reduces conflicts; ensures efficiency and consistency in performance."],
+            ["Employee", "Clarifies expectations; self-assessment opportunities clarify job accountabilities and contribute to improved performance; clearly defined career paths; promotes job satisfaction."],
+          ],
+        },
         figures: [
           { id: "252034-l1-components", caption: "Six components of a performance management system", hint: "Upload a diagram showing the six components as a cycle." },
         ],
@@ -18931,36 +18957,35 @@ Improvement: distribute the technical slides beforehand."
         ],
       },
       {
-        heading: "Developing performance standards — steps 1 to 4",
+        heading: "Developing performance standards — steps 1 to 3",
         icon: "target",
         flat: true,
         paragraphs: [
-          "There is an eight-step process for developing employee performance standards that support organisational goals. Do not start at the bottom with the position description — start at the top with the department's goals.",
+          "There is an eight-step process for developing employee performance standards that support organisational goals. Do not begin at the bottom of the organisation with the position description — begin by looking at your department's goals and objectives.",
         ],
         cards: [
-          { icon: "globe", title: "Step 1 · Look at the overall picture", text: "Gather your department's general outcome goals from the departmental plan before writing any individual standard." },
-          { icon: "layers", title: "Step 2 · Determine work-unit accomplishments", text: "Identify the products or services the unit delivers. Use goal cascading to turn departmental goals into unit goals, and flow-chart the process that produces each product or service." },
-          { icon: "people", title: "Step 3 · Individual accomplishments", text: "Build a role-results matrix: unit products across the top, team members down the side. In each cell — what must this member produce to support this product or service?" },
-          { icon: "checklist", title: "Step 4 · Convert to elements with priorities", text: "Choose which accomplishments become performance elements, classify them critical / non-critical / additional, and distribute 100 percentage points across them by importance." },
+          { icon: "globe", title: "Step 1 · Look at the overall picture", text: "Gather information relating to your department's general outcome goals as outlined in its departmental plan — before writing any individual standard." },
+          { icon: "layers", title: "Step 2 · Determine work-unit accomplishments", text: "Identify the unit's accomplishments — its products or services. Use the goal cascading method to determine unit goals from departmental goals; it works best where clear goals exist in strategic and annual performance plans." },
+          { icon: "people", title: "Step 3 · Individual accomplishments", text: "Determine how each individual contributes to the unit's goals using a role-results matrix — a table identifying the results each work-unit member must produce." },
         ],
         example: {
-          title: "Goal cascading — XY Insurance claims department",
+          title: "Goal cascading — XY Insurance (claims division)",
           lines: [
-            "Departmental goal: reduce claim processing time to 2 days by end September.",
-            "Departmental goal: reduce claims errors by 10% by 30 June.",
-            "Departmental goal: handle and solve customer complaints within 24 hours.",
-            "Each unit then derives its own objectives, products and services from these goals.",
+            "Departmental goal: to enhance customer service standards.",
+            "Team objective 1: reduce claim processing time to 2 days by end of 30 September.",
+            "Team objective 2: reduce claims errors by 10% by 30 June.",
+            "Team objective 3: handle and solve customer complaints within 24 hours.",
           ],
         },
         bullets: [
-          "Elements must describe accomplishments (nouns), not activities (verbs), and must be quantifiable or verifiable.",
-          "Every employee needs at least one critical element. Critical elements address individual performance only.",
-          "Test for critical: is it a major component of the work? Would failure have serious consequences? Does it take significant time?",
-          "The supervisor must check each team member's job description when building the role-results matrix.",
+          "Apart from unit objectives, the supervisor must determine the products and services the unit produces (knowing the customer quality standards for them) and the process the unit follows — presented on a flow chart that maps each successive step to the final product or service.",
+          "Building the role-results matrix: (1) list the unit's products or services across the top row; (2) list each member or job position down the left column; (3) for each cell ask — what must this member produce or perform to support this product or service?; (4) list those accomplishments in the cell — they are candidate performance elements for the employee's plan.",
+          "All performance elements should be quantifiable or verifiable, and described as accomplishments (nouns), not activities (verbs).",
+          "The supervisor must check the job description of each team member while developing the role matrix.",
         ],
         figures: [
           { id: "252034-l1-cascade", caption: "Goal cascading: department → unit → individual", hint: "Upload a cascade/waterfall diagram of goals flowing down the organisation." },
-          { id: "252034-l1-matrix", caption: "A role-results matrix", hint: "Upload an example role-results matrix table." },
+          { id: "252034-l1-matrix", caption: "A role-results matrix", hint: "Upload an example role-results matrix table (e.g. the news-article unit: planning, drafting, editing, visuals)." },
         ],
         slideQuiz: [
           {
@@ -18986,15 +19011,26 @@ Improvement: distribute the technical slides beforehand."
             explain: "Goal cascading derives unit objectives from departmental goals — it works best where clear organisational goals exist.",
           },
           {
-            q: "What does a role-results matrix identify?",
+            q: "In the XY Insurance example, 'to enhance customer service standards' is the departmental goal. Which is one of the TEAM objectives derived from it?",
             options: [
-              "The results each work-unit member must produce to support each unit product or service",
-              "The seating arrangement of the team",
-              "The salaries of each team member",
-              "The organisation's share price",
+              "Open five new branches",
+              "Reduce claim processing time to 2 days by end of 30 September",
+              "Double the marketing budget",
+              "Hire a new claims director",
             ],
-            answer: 0,
-            explain: "Products/services go across the top, members down the side — each cell asks what that member must accomplish for that product.",
+            answer: 1,
+            explain: "The three team objectives: 2-day claim processing, 10% fewer claims errors by 30 June, and complaints solved within 24 hours.",
+          },
+          {
+            q: "Besides unit objectives, what must the supervisor present on a FLOW CHART in step 2?",
+            options: [
+              "The office seating plan",
+              "The work process — each successive step ending with the unit's final product or service",
+              "The org chart of directors",
+              "The leave roster",
+            ],
+            answer: 1,
+            explain: "The flow chart maps the process the unit takes to produce its products and services, step by step.",
           },
           {
             q: "Performance elements should be described as…",
@@ -19007,6 +19043,38 @@ Improvement: distribute the technical slides beforehand."
             answer: 1,
             explain: "Elements are accomplishments — nouns, quantifiable or verifiable — not activities.",
           },
+        ],
+      },
+      {
+        heading: "Step 4 — elements, weights and the critical test",
+        icon: "checklist",
+        flat: true,
+        paragraphs: [
+          "In step 4 you identify which accomplishments become elements in the performance plan, select the type of each element, and assign weights or priorities. All employees must have at least one critical element in their plan, and critical elements must address individual performance only.",
+          "Once elements are classified as critical, non-critical or additional, prioritise them so work units and employees know which matter most — one way is to distribute 100 percentage points across the elements based on each one's importance to the organisation.",
+        ],
+        bullets: [
+          "The critical test — is the element a major component of the work? If yes, it might be critical.",
+          "Does the element address individual performance only? Elements measuring group performance cannot be critical (except for supervisors under certain circumstances).",
+          "If the employee performed unacceptably on the element, would there be serious consequences for completing the organisation's work? If errors affect the unit's accomplishments, it may be critical.",
+          "Does the element require a significant amount of the employee's time? If yes, it might be critical.",
+          "The supervisor must verify assignments against the job descriptions, or ask for team or individual input.",
+        ],
+        table: {
+          headers: ["Employee assignment or responsibility", "Type of element", "Priority points"],
+          rows: [
+            ["Receive, direct and relay telephone and fax messages", "Critical (CE)", "40"],
+            ["Pick up and deliver the mail", "Critical (CE)", "40"],
+            ["Maintain the general filing system and file all correspondence", "Additional (AE)", "10"],
+            ["Maintain an adequate inventory of office supplies", "Additional (AE)", "5"],
+            ["Coordinate the repair and maintenance of office equipment", "Additional (AE)", "5"],
+            ["Total", "", "100"],
+          ],
+        },
+        figures: [
+          { id: "252034-l1-weights", caption: "Weighing a receptionist's responsibilities", hint: "Upload an image of a weighted responsibility list or scale illustration." },
+        ],
+        slideQuiz: [
           {
             q: "Which statement about critical elements is TRUE?",
             options: [
@@ -19018,37 +19086,70 @@ Improvement: distribute the technical slides beforehand."
             answer: 2,
             explain: "All employees must have at least one critical element, and critical elements address individual performance only.",
           },
+          {
+            q: "How does the guide suggest prioritising elements?",
+            options: [
+              "Alphabetical order",
+              "Distribute 100 percentage points across the elements by importance to the organisation",
+              "Let each employee pick their favourite",
+              "All elements get equal points automatically",
+            ],
+            answer: 1,
+            explain: "One practical method: spread 100 points across the elements based on each one's importance.",
+          },
+          {
+            q: "In the receptionist example, how many priority points does 'receive, direct and relay telephone and fax messages' carry?",
+            options: ["5", "10", "40", "100"],
+            answer: 2,
+            explain: "Both critical elements (calls and mail) carry 40 points each; the three additional elements share the remaining 20.",
+          },
+          {
+            q: "Which question is part of the CRITICAL test for an element?",
+            options: [
+              "Is the element fun to perform?",
+              "Would unacceptable performance on it have serious consequences for the organisation's work?",
+              "Was the element used last year?",
+              "Does the element sound impressive?",
+            ],
+            answer: 1,
+            explain: "The test covers: major component of the work, individual-only, serious consequences of failure, and significant time.",
+          },
+          {
+            q: "Where must the supervisor verify the employee's assignments and responsibilities?",
+            options: [
+              "In the newspaper",
+              "Against the job descriptions — or by asking for team or individual input",
+              "In the competitor's handbook",
+              "Nowhere — memory is enough",
+            ],
+            answer: 1,
+            explain: "Assignments are verified per the job descriptions, or through team/individual input.",
+          },
         ],
       },
       {
-        heading: "Steps 5 and 6 — measures and standards",
+        heading: "Step 5 — determine work-unit and individual measures",
         icon: "chart",
         flat: true,
         paragraphs: [
-          "Measures are the yardsticks used to determine how well work units and employees produced or provided products or services. First determine the general measures that apply to each element, then make them specific.",
-          "Performance standards are management-approved expressions of the performance thresholds, requirements or expectations that employees must meet to be appraised at particular levels of performance.",
+          "Measures are the yardsticks used to determine how well work units and employees produced or provided products or services. First determine the general measure(s) that apply to each element, then determine how to measure it specifically.",
+          "If you can measure an accomplishment with numbers, record the form of measurement. If you can only describe performance (observe and verify), clarify who will appraise the performance and the factors they will appraise.",
         ],
         cards: [
-          { icon: "award", title: "Quality", text: "How well the work was performed — accuracy, appearance, usefulness or effectiveness. Think error rates and customer satisfaction rates." },
-          { icon: "chart", title: "Quantity", text: "How much work was produced — a number of products or services, or a general result to achieve." },
-          { icon: "clock", title: "Timeliness", text: "How quickly, when, or by what date the work was produced." },
+          { icon: "award", title: "Quality", text: "How well the work was performed — accuracy, appearance, usefulness or effectiveness. Includes error rates (number or percentage of errors allowable per unit of work) and customer satisfaction rates from surveys." },
+          { icon: "chart", title: "Quantity", text: "How much work was produced — expressed as a number of products or services, or a general result to achieve." },
+          { icon: "clock", title: "Timeliness", text: "How quickly, when, or by what date the employee or work unit produced the work." },
           { icon: "briefcase", title: "Cost-effectiveness", text: "Whether the result was achieved within the resources and budget available." },
         ],
-        example: {
-          title: "Receptionist — elements, measures and standards",
-          lines: [
-            "Critical element (40 points): receive, direct and relay telephone and fax messages.",
-            "Measures: number of rings before answering; seconds before transfer to the right person.",
-            "Fully successful: 3 rings, 5-second transfer. Below: 4–5 rings, 6–10 seconds. Outstanding: 1–2 rings, 2–4 seconds.",
-            "Additional element (10 points): maintain the general filing system.",
+        table: {
+          headers: ["Points", "Responsibility", "Element", "General measure", "Specific measure"],
+          rows: [
+            ["40", "Receive, direct and relay telephone and fax messages", "Critical (CE)", "Timeliness", "Number of rings for incoming calls · seconds before transfer to the right person"],
+            ["40", "Pick up and deliver the mail", "Critical (CE)", "Timeliness", "Number of minutes to pick up and deliver mail"],
+            ["10", "Maintain the general filing system and file all correspondence", "Additional (AE)", "Quality", "Ratio of filing errors"],
           ],
         },
-        bullets: [
-          "If the appraisal programme uses two levels, the Fully Successful standard is a single point; with five levels it is a range.",
-          "Be precise: 'meeting sales targets' — the annual target, or all 12 monthly targets? Vague standards cause disputes.",
-          "After development, standards must be recorded in the organisation's format, filed and treated as confidential.",
-          "Team involvement is required when setting measures and standards.",
-        ],
+        bullets: ["Team involvement is required when determining measures."],
         figures: [
           { id: "252034-l1-measures", caption: "The four general measures of performance", hint: "Upload a four-quadrant diagram: quality, quantity, timeliness, cost-effectiveness." },
         ],
@@ -19076,6 +19177,56 @@ Improvement: distribute the technical slides beforehand."
             explain: "The four general measures: quality, quantity, timeliness and cost-effectiveness.",
           },
           {
+            q: "In the receptionist example, 'ratio of filing errors' is a specific measure of which general measure?",
+            options: ["Quantity", "Timeliness", "Quality", "Cost-effectiveness"],
+            answer: 2,
+            explain: "Error rates measure quality — accuracy and effectiveness of the work.",
+          },
+          {
+            q: "'Number of minutes to pick up and deliver mail' measures…",
+            options: ["Quality", "Timeliness", "Quantity", "Cost-effectiveness"],
+            answer: 1,
+            explain: "Minutes of lead time is a timeliness measure — how quickly the work is done.",
+          },
+          {
+            q: "If performance can only be DESCRIBED rather than counted, what must you clarify?",
+            options: [
+              "Nothing — skip the element",
+              "Who will appraise the performance and which factors they will appraise",
+              "The employee's shoe size",
+              "The company's tax number",
+            ],
+            answer: 1,
+            explain: "For observe-and-verify measures, clarify the appraiser and the factors to be appraised.",
+          },
+        ],
+      },
+      {
+        heading: "Step 6 — develop work-unit and individual standards",
+        icon: "trend",
+        flat: true,
+        paragraphs: [
+          "Performance standards are management-approved expressions of the performance thresholds, requirements or expectations that employees must meet to be appraised at particular levels of performance.",
+          "Before writing the Fully Successful standard, know how many levels your appraisal programme uses. With two levels, Fully Successful is a single point — at or above it is Fully Successful, below it is Unacceptable. With five levels, Fully Successful is a range: above the range earns higher levels; below it is Minimally Successful or Unacceptable.",
+        ],
+        table: {
+          headers: ["Element", "Specific measure", "Minimally successful", "Fully successful", "Exceeds fully successful"],
+          rows: [
+            ["Receive, direct and relay calls (CE · 40 pts)", "Rings before answering · transfer lead time", "4–5 rings · 6–10 seconds", "3 rings · 5 seconds", "1–2 rings · 2–4 seconds"],
+            ["Pick up and deliver the mail (CE · 40 pts)", "Minutes lead time", "40–60 minutes", "30 minutes", "15–25 minutes"],
+            ["Maintain general filing system (AE · 10 pts)", "Ratio of filing errors", "12%–20%", "5%–10%", "1%–3%"],
+          ],
+        },
+        bullets: [
+          "Measures must be clear and concise — it is easy to overlook critical detail. 'Meeting sales targets' sounds simple: is that the annual target, or all 12 monthly targets?",
+          "After development, standards must be recorded in the format the organisation specifies, filed, and treated as confidential.",
+          "Team involvement is required when developing standards.",
+        ],
+        figures: [
+          { id: "252034-l1-standards", caption: "Standards at three performance levels", hint: "Upload the standards-per-level table or a levels diagram (minimal / fully / exceeds)." },
+        ],
+        slideQuiz: [
+          {
             q: "A performance standard is best defined as…",
             options: [
               "A guess about what employees might do",
@@ -19098,6 +19249,23 @@ Improvement: distribute the technical slides beforehand."
             explain: "With five levels the Fully Successful standard is a range; with two levels it is a single point.",
           },
           {
+            q: "For the receptionist, the FULLY SUCCESSFUL standard for answering calls is…",
+            options: [
+              "4–5 rings and 6–10 seconds transfer time",
+              "3 rings and a 5-second transfer lead time",
+              "1–2 rings and 2–4 seconds transfer time",
+              "Never answering the phone",
+            ],
+            answer: 1,
+            explain: "3 rings / 5 seconds is Fully Successful; 4–5 rings is Minimally Successful; 1–2 rings Exceeds.",
+          },
+          {
+            q: "Which filing error ratio EXCEEDS Fully Successful?",
+            options: ["12%–20%", "5%–10%", "1%–3%", "25%+"],
+            answer: 2,
+            explain: "1%–3% exceeds; 5%–10% is Fully Successful; 12%–20% is Minimally Successful.",
+          },
+          {
             q: "'Meet sales targets' is a weak standard because…",
             options: [
               "Sales should never be measured",
@@ -19111,22 +19279,29 @@ Improvement: distribute the technical slides beforehand."
         ],
       },
       {
-        heading: "Steps 7 and 8 — monitoring systems and checking the plan",
+        heading: "Step 7 — monitor performance and give feedback",
         icon: "monitor",
         flat: true,
         paragraphs: [
-          "Monitoring performance means measuring performance and providing feedback to employees. Beyond the formal once- or twice-a-year progress review, supervisors and employees should discuss performance informally and often.",
-          "Monitoring is not a witch-hunting exercise to get rid of your enemies. After setting up a monitoring system, the supervisor must communicate it to all team members — at shift meetings, via email, on notice boards, in a formal letter, and during induction and coaching.",
+          "Monitoring performance means measuring performance and providing feedback to employees. Appraisal programmes must provide ongoing appraisal — including one or more progress reviews per appraisal period — and beyond that, supervisors and employees should discuss performance informally and often.",
+          "You may have built great elements and standards through the first six steps, and then find monitoring an element is impossible, too costly or too time-consuming — if so, rethink the specific measures.",
+          "Monitoring is not a witch-hunting exercise to get rid of your enemies. After setting up the system, communicate it to all team members: at shift start/end meetings, via email, on notice boards, in a formal letter, and during induction and coaching.",
         ],
         bullets: [
-          "Monitoring methods: reviewing work (total output or samples); observing work activities; reading reports, charts, time sheets and logs; employee self-reporting; surveying other units or clients; noting and investigating complaints and commendations.",
-          "360-degree (multi-rater) feedback adds views from colleagues, peers, managers, self-assessment and sometimes clients — it broadens perspective, reduces bias and identifies gaps between self-perception and others' perception.",
-          "360-degree caution: it takes time, people may fear open feedback, anonymity prevents asking for clarification, and tying it to pay makes people hesitant.",
-          "The process of setting standards should include those responsible for meeting them — team members help set goals, develop measures, outline actions and report progress; the supervisor follows progress, reinforces achievement and assists with problems.",
-          "Step 8 — check the plan: are critical elements truly critical? Are expectations quantifiable, attainable, challenging, fair, applicable and flexible? Will employees understand what is required?",
+          "To complete this step: determine what data to collect for each element, its source, and whether to collect all data or a sample; decide when it is collected, by whom, and who receives it; review existing reports as feedback reports; create feedback tables or graphs where applicable; and design feedback processes that give feedback automatically.",
+          "Monitoring methods: (1) reviewing work — total output or samples; (2) observing work activities; (3) reading reports, charts, time sheets, work records or logs; (4) employee self-reporting on progress; (5) surveying other units, the public or clients; (6) noting and investigating complaints and commendations.",
+          "Some monitoring is ongoing to catch problems early (checking samples or observing several times a day or week); other monitoring is at wider intervals — monthly or quarterly reviews, or occasional random checks.",
+          "Team involvement is required when setting up the monitoring methods.",
         ],
+        table: {
+          headers: ["Element", "Feedback sources for monitoring"],
+          rows: [
+            ["Receive, direct and relay calls", "Supervisor observation (360° tool) · customers · peers"],
+            ["Pick up and deliver the mail", "Supervisor observation (360° tool) · customers · peers"],
+            ["Maintain the filing system", "Supervisor observation (360° tool) · peers · data from the automated system"],
+          ],
+        },
         figures: [
-          { id: "252034-l1-360", caption: "360-degree feedback: manager, peers, self, clients", hint: "Upload a 360-degree feedback diagram with the employee at the centre." },
           { id: "252034-l1-monitor", caption: "Monitoring methods in daily use", hint: "Upload a photo or diagram of work review / observation in progress." },
         ],
         slideQuiz: [
@@ -19153,26 +19328,26 @@ Improvement: distribute the technical slides beforehand."
             explain: "Legitimate methods include reviewing output, observing activities, reading records, self-reporting, surveys and investigating complaints/commendations.",
           },
           {
-            q: "What is 360-degree feedback?",
+            q: "When planning data collection for an element you must decide…",
             options: [
-              "Feedback given while walking in a circle",
-              "Feedback from colleagues, peers, managers, self-assessment and sometimes clients",
-              "Feedback given once every 360 days",
-              "Feedback only from the CEO",
+              "What data to collect, its source, sample or full data, when, by whom, and who receives it",
+              "Only the font of the report",
+              "Which employees to exclude from measurement",
+              "How to keep results secret from the employee",
             ],
-            answer: 1,
-            explain: "360-degree (multi-rater) feedback gathers views from all around the employee — including self-assessment.",
+            answer: 0,
+            explain: "Step 7 planning covers the what, source, sampling, timing, collector and recipient of the data — plus automatic feedback where possible.",
           },
           {
-            q: "Why might an organisation choose NOT to use 360-degree feedback?",
+            q: "What is the difference between ongoing and spaced monitoring?",
             options: [
-              "It gives too little information",
-              "It is always inaccurate",
-              "It takes organisational time, people may fear honest feedback, and anonymity prevents clarification",
-              "It is illegal in most industries",
+              "There is none",
+              "Ongoing monitoring catches problems early (e.g. daily/weekly checks); spaced monitoring runs monthly, quarterly or at random",
+              "Ongoing monitoring is illegal",
+              "Spaced monitoring only applies to managers",
             ],
-            answer: 2,
-            explain: "The drawbacks: time investment, reluctance to give/receive open feedback, pay-linkage hesitancy, and no chance to ask for clarification.",
+            answer: 1,
+            explain: "Ongoing monitoring detects problems in the early stages; other monitoring happens at wider, regular or random intervals.",
           },
           {
             q: "How should a new performance monitoring system reach the team?",
@@ -19184,6 +19359,167 @@ Improvement: distribute the technical slides beforehand."
             ],
             answer: 1,
             explain: "The supervisor must communicate the monitoring system to ALL team members through multiple channels — it is not a witch-hunt.",
+          },
+        ],
+      },
+      {
+        heading: "360-degree (multi-rater) feedback",
+        icon: "globe",
+        flat: true,
+        paragraphs: [
+          "360-degree feedback — also known as multi-rater feedback — is employee development feedback from colleagues, peers and managers, plus self-assessment, and sometimes clients, volunteers or other stakeholders.",
+          "Senior managers (including executive directors) assess others but often receive little feedback themselves — 360-degree feedback lets any individual understand how their effectiveness as an employee, manager or co-worker is viewed by others.",
+        ],
+        bullets: [
+          "What it can achieve: a broad perspective of how the person is perceived and their impact on others — positive and negative.",
+          "It encourages open feedback that is perceived as more valid and objective, leading to acceptance of results and required actions.",
+          "It clarifies critical performance aspects, reinforces desired competencies and identifies strengths the organisation can use.",
+          "It supports continuous improvement and focuses the development agenda for the individual, team or whole organisation.",
+          "It exposes gaps between self-perception and the perception of the manager, peers or direct reports.",
+          "Feedback from many people in various job functions reduces discrimination (race, age, gender) and the 'horns and halo' effect, where a supervisor rates on the most recent interactions only.",
+          "Why organisations may NOT adopt it: multiple assessors cost organisational time; people may not be ready to give or receive honest feedback (some cultures avoid feedback to superiors); tying it to pay makes people hesitant to participate; and written, anonymous feedback cannot be queried for clarification.",
+        ],
+        figures: [
+          { id: "252034-l1-360", caption: "360-degree feedback: manager, peers, self, clients", hint: "Upload a 360-degree feedback diagram with the employee at the centre." },
+        ],
+        slideQuiz: [
+          {
+            q: "What is 360-degree feedback?",
+            options: [
+              "Feedback given while walking in a circle",
+              "Feedback from colleagues, peers, managers, self-assessment and sometimes clients",
+              "Feedback given once every 360 days",
+              "Feedback only from the CEO",
+            ],
+            answer: 1,
+            explain: "360-degree (multi-rater) feedback gathers views from all around the employee — including self-assessment.",
+          },
+          {
+            q: "Why is 360-degree feedback especially useful for SENIOR managers?",
+            options: [
+              "They asked for it first",
+              "They assess others but often receive little adequate feedback themselves",
+              "It replaces their performance bonus",
+              "It shortens their working day",
+            ],
+            answer: 1,
+            explain: "Senior managers and executive directors rarely get feedback — 360° shows how others view their effectiveness.",
+          },
+          {
+            q: "What is the 'horns and halo' effect that 360° feedback reduces?",
+            options: [
+              "Decorating the office at year-end",
+              "A supervisor rating performance based on the most recent interactions with the employee",
+              "Employees wearing headphones at work",
+              "Rating everyone identically",
+            ],
+            answer: 1,
+            explain: "Multiple raters dilute the bias of judging on recent interactions only — and reduce race/age/gender discrimination.",
+          },
+          {
+            q: "Which gap does 360-degree feedback expose?",
+            options: [
+              "The gap between the branch and head office",
+              "The gap between self-perception and how the manager, peers or direct reports perceive the person",
+              "The gap in the parking lot",
+              "The gap between departments' budgets",
+            ],
+            answer: 1,
+            explain: "It identifies differences between how employees see themselves and how others see them.",
+          },
+          {
+            q: "Why might an organisation choose NOT to use 360-degree feedback?",
+            options: [
+              "It gives too little information",
+              "It is always inaccurate",
+              "It takes organisational time, people may fear honest feedback, and anonymous written feedback cannot be queried",
+              "It is illegal in most industries",
+            ],
+            answer: 2,
+            explain: "The drawbacks: time investment, reluctance around open feedback, pay-linkage hesitancy, and no chance to ask for clarification.",
+          },
+        ],
+      },
+      {
+        heading: "Step 8 — check the plan, involve the team, record the standards",
+        icon: "checklist",
+        flat: true,
+        paragraphs: [
+          "Once the performance plan is developed, check your work against this list: are the critical elements truly critical — does failure mean overall performance is unacceptable? Is the range of acceptable performance clear, quantifiable, observable and verifiable? Are the standards attainable and reasonable, yet challenging enough to require real effort? Are they fair and comparable to similar positions, with some margin of error? Are they applicable — can the appraiser actually use them, and manage the data collected? Will work units and employees understand what is required? Are elements and standards flexible enough to adapt to changed resources or objectives? And if your programme appraises above Fully Successful, is that standard surpassable?",
+          "The process of setting standards should include those responsible for meeting them — well-selected, trained employees know more about what is achievable than anyone else.",
+        ],
+        table: {
+          headers: ["Team member", "Supervisor"],
+          rows: [
+            ["Helps establish performance goals and standards — a 'self-contract' for achievement and a commitment to deliver a result for the team", "Ensures team goals are achievable but challenging enough to meet organisational needs and give a sense of accomplishment"],
+            ["Develops methods to measure results and checkpoints for control purposes", "Helps balance the complexity of measures and controls with the value received"],
+            ["Outlines the action required to accomplish goals and standards", "Participates with the team to test the action plan's validity against alternatives"],
+            ["Reports progress as work is performed; seeks guidance and assistance when needed; adjusts the plan as required", "Follows the progress of the work; reinforces achievement and assists in problem solving; ensures targets are met or modified if circumstances indicate"],
+          ],
+        },
+        bullets: [
+          "After finalising the standards, record and document them properly — in the format the organisation specifies.",
+          "Confidentiality of performance standards must be adhered to, in line with organisational policies and procedures.",
+        ],
+        figures: [
+          { id: "252034-l1-teamroles", caption: "Team member and supervisor roles in standard-setting", hint: "Upload a two-column roles diagram or a photo of a team planning session." },
+          { id: "252034-l1-record", caption: "Recording performance standards", hint: "Upload an example of a performance-standards recording template." },
+        ],
+        slideQuiz: [
+          {
+            q: "What is the purpose of step 8?",
+            options: [
+              "To start the process over",
+              "To check that the elements and standards are effective and meet regulatory requirements",
+              "To delete the performance plan",
+              "To set the year-end party date",
+            ],
+            answer: 1,
+            explain: "Step 8 is a quality check of the whole plan against a checklist: critical, clear, attainable, challenging, fair, applicable, understandable, flexible, surpassable.",
+          },
+          {
+            q: "Why should team members participate in setting the standards they must meet?",
+            options: [
+              "So they can make the standards easy",
+              "Well-selected, trained employees know more about what is achievable than anyone else",
+              "Because the supervisor is too busy",
+              "It is only a courtesy with no real value",
+            ],
+            answer: 1,
+            explain: "Participation produces achievable, credible standards — a 'self-contract' for achievement.",
+          },
+          {
+            q: "Which is a TEAM MEMBER role in standard-setting?",
+            options: [
+              "Ensures team goals meet organisational needs",
+              "Helps establish goals and standards, develops measures, outlines actions and reports progress",
+              "Balances measures and controls with value received",
+              "Follows progress and reinforces achievement",
+            ],
+            answer: 1,
+            explain: "The team member helps set goals/standards, builds measurement methods, outlines actions and reports progress; the supervisor guides, balances and follows up.",
+          },
+          {
+            q: "Which is a SUPERVISOR role in standard-setting?",
+            options: [
+              "Signs a self-contract for personal achievement",
+              "Reports own progress weekly",
+              "Ensures targets are met — or modified if circumstances so indicate",
+              "Writes every standard alone",
+            ],
+            answer: 2,
+            explain: "The supervisor follows progress, reinforces achievement, assists in problem-solving and ensures targets are met or sensibly modified.",
+          },
+          {
+            q: "How must finalised performance standards be handled?",
+            options: [
+              "Posted on social media",
+              "Recorded in the organisation's specified format, filed, and kept confidential per policy",
+              "Memorised and never written down",
+              "Emailed to competitors",
+            ],
+            answer: 1,
+            explain: "Standards are recorded and documented properly, with confidentiality maintained in line with organisational policies.",
           },
         ],
       },
