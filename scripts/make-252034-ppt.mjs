@@ -172,11 +172,12 @@ pptx.company = "Investec — Corporate Banking Technology";
 pptx.title = "US 252034 — Monitor and evaluate team members against performance standards";
 
 let pageNo = 0;
-function slide() {
+function slide(chrome = true) {
   const s = pptx.addSlide();
   s.background = { color: WHITE };
   pageNo += 1;
-  if (pageNo > 1) {
+  // navy divider/closing slides draw their own single attribution line
+  if (pageNo > 1 && chrome) {
     s.addText(FOOTER, { x: MX, y: H - 0.46, w: CW - 1, h: 0.34, fontFace: BODY_FONT, fontSize: 12, color: GREY });
     s.addText(String(pageNo), { x: W - MX - 0.7, y: H - 0.46, w: 0.7, h: 0.34, fontFace: BODY_FONT, fontSize: 12, color: GREY, align: "right" });
     s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: W, h: 0.09, fill: { color: BLUE } });
@@ -402,7 +403,7 @@ const sections = UNIT.lesson;
 for (const sec of sections) {
   if (sec.lessonStart) {
     currentLesson = sec.lessonStart.n;
-    const s = slide();
+    const s = slide(false);
     s.background = { color: NAVY };
     s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: W, h: 0.12, fill: { color: BLUE } });
     s.addText(`LESSON ${sec.lessonStart.n}`, { x: MX, y: 2.1, w: CW, h: 0.5, fontFace: BODY_FONT, fontSize: 20, bold: true, color: DARK_LABEL, charSpacing: 3 });
@@ -437,7 +438,7 @@ for (const sec of sections) {
 
 /* ---------- 3. Closing slide ---------- */
 {
-  const s = slide();
+  const s = slide(false);
   s.background = { color: NAVY };
   s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: W, h: 0.12, fill: { color: BLUE } });
   addIcon(s, "award", MX, 1.6, 0.7, "#" + DARK_LABEL);

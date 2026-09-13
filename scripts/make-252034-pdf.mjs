@@ -205,7 +205,8 @@ function slide({ bg = WHITE } = {}) {
   doc.addPage();
   pageNo += 1;
   if (bg !== WHITE) doc.rect(0, 0, W, H).fill(bg);
-  if (pageNo > 1) {
+  // navy divider/closing pages draw their own single attribution line
+  if (pageNo > 1 && bg === WHITE) {
     doc.rect(0, 0, W, 0.09 * IN).fill(BLUE);
     doc.font(HELV).fontSize(12).fillColor(GREY);
     doc.text(FOOTER, MX, H - 0.42 * IN, { width: CW - 1 * IN, lineBreak: false });
