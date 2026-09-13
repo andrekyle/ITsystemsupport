@@ -11,7 +11,7 @@ import { supabase } from "./supabase";
 
 const PREFIX = "itss.";
 /** device-local keys that should not follow the account across devices */
-const LOCAL_ONLY = new Set(["itss.session", "itss.route", "itss.theme"]);
+const LOCAL_ONLY = new Set(["itss.session", "itss.route", "itss.theme", "itss.activeCourse"]);
 
 /** keys whose content is shared with every account (facilitator uploads,
  *  attendance registers, announcements, Q&A, reviews, outcomes, audit trail) */
@@ -132,11 +132,11 @@ export async function startSync(authUserId: string): Promise<void> {
   const cloudKeys = new Set<string>();
   for (const row of own.data ?? []) {
     cloudKeys.add(row.key);
-    localStorage.setItem(row.key, row.value);
+    if (!LOCAL_ONLY.has(row.key)) localStorage.setItem(row.key, row.value);
   }
   for (const row of shared.error ? [] : shared.data ?? []) {
     cloudKeys.add(row.key);
-    localStorage.setItem(row.key, row.value);
+    if (!LOCAL_ONLY.has(row.key)) localStorage.setItem(row.key, row.value);
   }
   hydrating = false;
 
@@ -161,7 +161,7 @@ export function wipeLocalData() {
   const doomed: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && key.startsWith(PREFIX) && key !== "itss.theme") doomed.push(key);
+    if (key && key.startsWith(PREFIX) && key !== "itss.theme" && key !== "itss.activeCourse") doomed.push(key);
   }
   for (const key of doomed) localStorage.removeItem(key);
 }

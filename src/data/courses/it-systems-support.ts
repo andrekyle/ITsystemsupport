@@ -14,6 +14,7 @@ const modules: CourseModule[] = [
     id: "m1",
     name: "Personal Development",
     icon: "person",
+    image: "/figures/module-personal-growth.jpg",
     activities: 6,
     units: [
       { us: "8252", title: "Writing business reports in Retail/Wholesale practices", nqf: 5, credits: 6, dates: "17 Jul 2026", time: "09h00 - 14h00" },

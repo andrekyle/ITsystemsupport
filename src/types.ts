@@ -535,6 +535,8 @@ export interface CourseModule {
   id: string;
   name: string;
   icon: string;
+  /** hero picture shown at the top of the module tile, path under /public */
+  image?: string;
   /** number of formal learning activities in the module */
   activities: number;
   units: UnitStandard[];

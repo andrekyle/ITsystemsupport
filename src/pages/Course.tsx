@@ -1751,6 +1751,11 @@ export function CoursePage({
               className="card clickable module-card"
               onClick={() => navigate({ page: "module", moduleId: m.id })}
             >
+              {m.image && (
+                <span className="module-hero">
+                  <img src={m.image} alt="" loading="lazy" />
+                </span>
+              )}
               <div className="head">
                 <span className="ico">
                   <Icon name={m.icon} size={22} />
