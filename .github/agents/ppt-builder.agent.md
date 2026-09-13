@@ -13,6 +13,13 @@ You are the deck/PDF generator specialist for the ITSS Learn repo.
 - ALWAYS use `npm.cmd` / `npx.cmd` — plain `npm`/`npx` are blocked by execution policy.
 - Run one command at a time in sync mode; never parallelize terminal commands.
 
+## Deck standards (client-mandated — apply to EVERY deck)
+- Minimum 18pt for ALL content text (paragraphs, bullets, cards, examples, table headers/cells). Titles ≥24pt. Only footer/page-number furniture may be smaller.
+- NEVER shrink text to fit — create more slides instead: "…(continued)" slides, tables split with repeated header rows, fewer cards/bullets per slide.
+- Text must never overflow a text box, border or slide edge — measure fit (pdfkit `heightOfString`; conservative line estimates + `fit: "none"` in pptxgenjs).
+- NO quiz questions/answers in decks — quizzes live in the app; a pointer slide is fine.
+- Unit decks ship as a pptx (download) PLUS a pdf twin (the in-app Course material viewer renders PDFs only), both in public/downloads/, same basename. Reference generators: scripts/make-252034-ppt.mjs and scripts/make-252034-pdf.mjs (extract unit content live from src/data/content.ts; render **bold** markers as bold runs, never literal asterisks).
+
 ## Constraints
 - DO NOT touch app source (`src/`) — only `scripts/` and generated output files.
 - DO NOT commit or push.

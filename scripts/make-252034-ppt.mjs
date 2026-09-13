@@ -1,9 +1,11 @@
 // Generates the US 252034 deck ("Monitor and evaluate team members against
 // performance standards") in the Microsoft Fluent / Learn style — same styling
 // as the US 114051 / 114050 decks. Content is read live from src/data/content.ts
-// (key "252034"): lesson sections, per-section slideQuiz, and the unit quiz.
-// Quiz answers appear ONLY in the slide notes, never on the slide.
-// Text never drops below 12pt — long content continues onto "(continued)" slides.
+// (key "252034"): lesson sections only. Quizzes are NOT rendered in the deck —
+// learners answer them inside the ITSS Learn app.
+// DECK STANDARD: no content text below 18pt — long content is never shrunk,
+// it continues onto "(continued)" slides (tables split with repeated headers).
+// Only footer/page-number furniture may be smaller.
 // Run: node scripts/make-252034-ppt.mjs
 // Out: public/downloads/US-252034-Monitor-Evaluate-Performance.pptx
 import pptxgen from "pptxgenjs";
@@ -108,9 +110,10 @@ function runs(text, base = {}) {
 }
 const plain = (t) => String(t).replace(/\*\*/g, "");
 
-/* ---------- crude but reliable height estimation ---------- */
+/* ---------- conservative height estimation (never under-estimates) ---------- */
 function linesFor(text, fontSize, widthIn) {
-  const cpl = Math.max(10, Math.floor((widthIn * 72) / (fontSize * 0.52)));
+  // deliberately pessimistic chars-per-line so boxes are always tall enough
+  const cpl = Math.max(8, Math.floor((widthIn * 72) / (fontSize * 0.56)));
   const words = plain(text).split(/\s+/);
   let lines = 1;
   let len = 0;
@@ -122,7 +125,7 @@ function linesFor(text, fontSize, widthIn) {
   }
   return lines;
 }
-const textH = (text, fontSize, widthIn, lineMult = 1.18) =>
+const textH = (text, fontSize, widthIn, lineMult = 1.3) =>
   (linesFor(text, fontSize, widthIn) * fontSize * lineMult) / 72;
 
 /* ---------- deck ---------- */
@@ -150,7 +153,7 @@ function addIcon(s, name, x, y, size = 0.34, color) {
   s.addImage({ data: iconUri(name, color), x, y, w: size, h: size });
 }
 function eyebrowTitle(s, eyebrow, title) {
-  s.addText(eyebrow.toUpperCase(), { x: MX, y: 0.24, w: CW, h: 0.34, fontFace: BODY_FONT, fontSize: 14, bold: true, color: BLUE, charSpacing: 2 });
+  s.addText(eyebrow.toUpperCase(), { x: MX, y: 0.22, w: CW, h: 0.36, fontFace: BODY_FONT, fontSize: 18, bold: true, color: BLUE, charSpacing: 2 });
   s.addText(title, { x: MX, y: 0.58, w: CW, h: 0.62, fontFace: TITLE_FONT, fontSize: 28, bold: true, color: NAVY });
 }
 function cardShape(s, x, y, w, h, { fill = WHITE, line = BORDER } = {}) {
@@ -180,15 +183,15 @@ class Flow {
   gap(g = 0.12) {
     this.y = Math.min(this.y + g, MAXY);
   }
-  paragraph(text, { fontSize = 15, color = GREY } = {}) {
+  paragraph(text, { fontSize = 18, color = GREY } = {}) {
     const h = textH(text, fontSize, CW) + 0.06;
     this.ensure(Math.min(h, MAXY - 1.32));
     this.s.addText(runs(text, { color }), {
-      x: MX, y: this.y, w: CW, h, fontFace: BODY_FONT, fontSize, valign: "top", lineSpacingMultiple: 1.12,
+      x: MX, y: this.y, w: CW, h, fontFace: BODY_FONT, fontSize, valign: "top", lineSpacingMultiple: 1.12, fit: "none",
     });
     this.y += h + 0.08;
   }
-  bullet(text, { fontSize = 14 } = {}) {
+  bullet(text, { fontSize = 18 } = {}) {
     const h = textH(text, fontSize, CW - 0.3) + 0.05;
     this.ensure(h);
     this.s.addText(
@@ -198,32 +201,50 @@ class Flow {
           options: { ...r.options, ...(i === 0 ? { bullet: { characterCode: "2022", indent: 16 } } : {}) },
         }))
       ),
-      { x: MX + 0.08, y: this.y, w: CW - 0.16, h, fontFace: BODY_FONT, fontSize, valign: "top", lineSpacingMultiple: 1.12 }
+      { x: MX + 0.08, y: this.y, w: CW - 0.16, h, fontFace: BODY_FONT, fontSize, valign: "top", lineSpacingMultiple: 1.12, fit: "none" }
     );
     this.y += h + 0.07;
   }
   table(headers, rows) {
+    // 18pt everywhere; a table that doesn't fit is SPLIT across slides with the
+    // header row repeated — the font is never shrunk to force a fit.
     const nCols = headers.length;
-    let fontSize = 14;
-    let rowH = 0.44;
-    if (rows.length > 8) {
-      fontSize = 12;
-      rowH = 0.36;
-    } else if (rows.length > 5 || rows.some((r) => r.join(" ").length > 160)) {
-      fontSize = 13;
-      rowH = 0.4;
-    }
-    // rows with long cells wrap — estimate per-row height
+    const fontSize = 18;
     const colWIn = CW / nCols;
-    const rowHeights = rows.map((r) => Math.max(rowH, ...r.map((c) => textH(c, fontSize, colWIn - 0.2) + 0.14)));
-    const total = rowH + rowHeights.reduce((a, b) => a + b, 0);
-    this.ensure(Math.min(total + 0.1, MAXY - 1.32));
-    const tableRows = [
-      headers.map((t) => ({ text: plain(t), options: { bold: true, color: WHITE, fill: { color: BLUE }, fontFace: TITLE_FONT, fontSize } })),
-      ...rows.map((r, i) => r.map((c) => ({ text: plain(c), options: { color: NAVY, fill: { color: i % 2 ? LIGHT : WHITE }, fontFace: BODY_FONT, fontSize } }))),
-    ];
-    this.s.addTable(tableRows, { x: MX, y: this.y, w: CW, border: { type: "solid", color: BORDER, pt: 0.75 }, rowH, valign: "middle", margin: 0.07 });
-    this.y += total + 0.16;
+    const cellH = (c) => Math.max(0.52, textH(c, fontSize, colWIn - 0.24) + 0.18);
+    const headH = Math.max(0.52, ...headers.map(cellH));
+    const rowHeights = rows.map((r) => Math.max(...r.map(cellH)));
+    const headerCells = headers.map((t) => ({ text: plain(t), options: { bold: true, color: WHITE, fill: { color: BLUE }, fontFace: TITLE_FONT, fontSize } }));
+    let i = 0;
+    while (i < rows.length) {
+      if (this.y + headH + rowHeights[i] + 0.1 > MAXY) this.newSlide();
+      const startIdx = i;
+      const chunkHs = [];
+      let used = headH;
+      while (i < rows.length && this.y + used + rowHeights[i] + 0.1 <= MAXY) {
+        chunkHs.push(rowHeights[i]);
+        used += rowHeights[i];
+        i += 1;
+      }
+      if (!chunkHs.length) {
+        // single oversized row: place alone on its own fresh slide
+        chunkHs.push(rowHeights[i]);
+        used += rowHeights[i];
+        i += 1;
+      }
+      const chunk = rows.slice(startIdx, i);
+      const tableRows = [
+        headerCells,
+        ...chunk.map((r, ri) =>
+          r.map((c) => ({ text: plain(c), options: { color: NAVY, fill: { color: (startIdx + ri) % 2 ? LIGHT : WHITE }, fontFace: BODY_FONT, fontSize } }))
+        ),
+      ];
+      this.s.addTable(tableRows, {
+        x: MX, y: this.y, w: CW, border: { type: "solid", color: BORDER, pt: 0.75 },
+        rowH: [headH, ...chunkHs], valign: "middle", margin: 0.08, autoPage: false,
+      });
+      this.y += used + 0.16;
+    }
   }
   cards(items) {
     const cols = 2;
@@ -232,20 +253,20 @@ class Flow {
     for (let i = 0; i < items.length; i += cols) {
       const pair = items.slice(i, i + cols);
       const hEach = pair.map(
-        (it) => 0.36 + textH(it.title, 15, cw - 0.9) + textH(it.text, 13, cw - 0.4) + 0.14
+        (it) => 0.42 + textH(it.title, 18, cw - 0.9) + textH(it.text, 18, cw - 0.4) + 0.2
       );
-      const rowH = Math.max(...hEach, 0.9);
+      const rowH = Math.max(...hEach, 1.0);
       this.ensure(rowH + 0.06);
       pair.forEach((it, j) => {
         const cx = MX + j * (cw + gapX);
         cardShape(this.s, cx, this.y, cw, rowH);
         addIcon(this.s, it.icon, cx + 0.16, this.y + 0.16, 0.34);
-        const titleH = textH(it.title, 15, cw - 0.9);
+        const titleH = textH(it.title, 18, cw - 0.9);
         this.s.addText(runs(it.title, { color: NAVY, bold: true }), {
-          x: cx + 0.6, y: this.y + 0.1, w: cw - 0.78, h: titleH + 0.08, fontFace: TITLE_FONT, fontSize: 15, valign: "top", lineSpacingMultiple: 1.05,
+          x: cx + 0.6, y: this.y + 0.1, w: cw - 0.78, h: titleH + 0.08, fontFace: TITLE_FONT, fontSize: 18, valign: "top", lineSpacingMultiple: 1.05, fit: "none",
         });
         this.s.addText(runs(it.text, { color: GREY }), {
-          x: cx + 0.16, y: this.y + 0.16 + Math.max(titleH, 0.3) + 0.06, w: cw - 0.32, h: rowH - titleH - 0.34, fontFace: BODY_FONT, fontSize: 13, valign: "top", lineSpacingMultiple: 1.1,
+          x: cx + 0.16, y: this.y + 0.16 + Math.max(titleH, 0.32) + 0.08, w: cw - 0.32, h: rowH - titleH - 0.4, fontFace: BODY_FONT, fontSize: 18, valign: "top", lineSpacingMultiple: 1.1, fit: "none",
         });
       });
       this.y += rowH + 0.14;
@@ -253,23 +274,23 @@ class Flow {
   }
   example(ex) {
     const innerW = CW - 0.5;
-    const titleH = textH(ex.title, 15, innerW);
-    const linesH = ex.lines.reduce((a, l) => a + textH(l, 13, innerW - 0.25) + 0.04, 0);
-    const boxH = 0.18 + titleH + 0.08 + linesH + 0.16;
+    const titleH = textH("Example — " + ex.title, 18, innerW);
+    const linesH = ex.lines.reduce((a, l) => a + textH(l, 18, innerW - 0.25) + 0.04, 0);
+    const boxH = 0.18 + titleH + 0.08 + linesH + 0.18;
     this.ensure(boxH + 0.06);
     cardShape(this.s, MX, this.y, CW, boxH, { fill: LIGHT });
     this.s.addText(runs("Example — " + ex.title, { color: BLUE, bold: true }), {
-      x: MX + 0.25, y: this.y + 0.12, w: innerW, h: titleH + 0.06, fontFace: TITLE_FONT, fontSize: 15, valign: "top",
+      x: MX + 0.25, y: this.y + 0.12, w: innerW, h: titleH + 0.06, fontFace: TITLE_FONT, fontSize: 18, valign: "top", fit: "none",
     });
     let ly = this.y + 0.14 + titleH + 0.08;
     for (const l of ex.lines) {
-      const lh = textH(l, 13, innerW - 0.25) + 0.04;
+      const lh = textH(l, 18, innerW - 0.25) + 0.04;
       this.s.addText(
         runs(l, { color: NAVY }).map((r, i) => ({
           ...r,
           options: { ...r.options, ...(i === 0 ? { bullet: { characterCode: "2022", indent: 14 } } : {}) },
         })),
-        { x: MX + 0.3, y: ly, w: innerW - 0.15, h: lh, fontFace: BODY_FONT, fontSize: 13, valign: "top", lineSpacingMultiple: 1.1 }
+        { x: MX + 0.3, y: ly, w: innerW - 0.15, h: lh, fontFace: BODY_FONT, fontSize: 18, valign: "top", lineSpacingMultiple: 1.1, fit: "none" }
       );
       ly += lh;
     }
@@ -277,51 +298,12 @@ class Flow {
   }
 }
 
-/* ---------- quiz slides (answers go into slide NOTES only) ---------- */
-const LETTERS = ["a", "b", "c", "d", "e", "f"];
-function quizSlides(eyebrow, title, questions, startNum = 1) {
-  let s = null;
-  let y = 0;
-  let notes = [];
-  let part = 0;
-  const open = () => {
-    if (s && notes.length) s.addNotes(notes.join("\n"));
-    notes = [];
-    part += 1;
-    s = slide();
-    eyebrowTitle(s, eyebrow, part === 1 ? title : `${title} …(continued)`);
-    addIcon(s, "check", W - MX - 0.5, 0.3, 0.44);
-    y = 1.35;
-  };
-  open();
-  questions.forEach((q, qi) => {
-    const num = startNum + qi;
-    const qH = textH(`Q${num}. ${q.q}`, 15, CW) + 0.04;
-    const optHs = q.options.map((o, oi) => textH(`${LETTERS[oi]})  ${o}`, 13, CW - 0.45) + 0.03);
-    const blockH = qH + optHs.reduce((a, b) => a + b, 0) + 0.2;
-    if (y + blockH > MAXY) open();
-    s.addText(runs(`**Q${num}.** ${q.q}`, { color: NAVY }), {
-      x: MX, y, w: CW, h: qH, fontFace: BODY_FONT, fontSize: 15, valign: "top", lineSpacingMultiple: 1.1,
-    });
-    y += qH + 0.02;
-    q.options.forEach((o, oi) => {
-      s.addText(runs(`${LETTERS[oi]})  ${o}`, { color: GREY }), {
-        x: MX + 0.4, y, w: CW - 0.45, h: optHs[oi], fontFace: BODY_FONT, fontSize: 13, valign: "top", lineSpacingMultiple: 1.08,
-      });
-      y += optHs[oi];
-    });
-    y += 0.18;
-    notes.push(`Q${num}: correct answer ${LETTERS[q.answer]}) ${plain(q.options[q.answer])} — ${plain(q.explain ?? "")}`);
-  });
-  if (s && notes.length) s.addNotes(notes.join("\n"));
-}
-
 /* ---------- 1. Title slide ---------- */
 {
   const s = slide();
   s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: W, h: 0.12, fill: { color: BLUE } });
-  s.addShape(pptx.ShapeType.roundRect, { x: MX, y: 1.1, w: 6.6, h: 0.62, rectRadius: 0.31, fill: { color: BLUE } });
-  s.addText("GENERIC MANAGEMENT · UNIT STANDARD 252034", { x: MX, y: 1.1, w: 6.6, h: 0.62, fontFace: BODY_FONT, fontSize: 16, bold: true, color: WHITE, align: "center", valign: "middle", charSpacing: 1 });
+  s.addShape(pptx.ShapeType.roundRect, { x: MX, y: 1.1, w: 7.7, h: 0.62, rectRadius: 0.31, fill: { color: BLUE } });
+  s.addText("GENERIC MANAGEMENT · UNIT STANDARD 252034", { x: MX, y: 1.1, w: 7.7, h: 0.62, fontFace: BODY_FONT, fontSize: 18, bold: true, color: WHITE, align: "center", valign: "middle", charSpacing: 1 });
   s.addText("US 252034 — Monitor and evaluate team members against performance standards", { x: MX, y: 1.9, w: 10.8, h: 1.85, fontFace: TITLE_FONT, fontSize: 36, bold: true, color: NAVY });
   s.addText("Formulate performance standards and monitoring systems, prepare for a performance review, and conduct the review interview — the complete lesson deck.", { x: MX, y: 3.75, w: 9.7, h: 0.82, fontFace: BODY_FONT, fontSize: 18, color: GREY, lineSpacingMultiple: 1.15 });
   addIcon(s, "presenter", 11.0, 1.4, 1.8, "#" + BORDER);
@@ -334,8 +316,8 @@ function quizSlides(eyebrow, title, questions, startNum = 1) {
   ];
   meta.forEach(([k, v], i) => {
     const x = MX + i * (CW / 4);
-    s.addText(k, { x, y: 4.82, w: CW / 4 - 0.2, h: 0.36, fontFace: BODY_FONT, fontSize: 15, bold: true, color: BLUE, charSpacing: 0.5, wrap: false });
-    s.addText(v, { x, y: 5.2, w: CW / 4 - 0.2, h: 1.0, fontFace: BODY_FONT, fontSize: 15, color: NAVY, lineSpacingMultiple: 1.1 });
+    s.addText(k, { x, y: 4.82, w: CW / 4 - 0.2, h: 0.38, fontFace: BODY_FONT, fontSize: 18, bold: true, color: BLUE, charSpacing: 0.5, wrap: false });
+    s.addText(v, { x, y: 5.24, w: CW / 4 - 0.2, h: 1.1, fontFace: BODY_FONT, fontSize: 18, color: NAVY, lineSpacingMultiple: 1.1, fit: "none" });
   });
   s.addText("ITSS Learn · Investec · Corporate Banking Technology", { x: MX, y: H - 0.62, w: CW, h: 0.4, fontFace: BODY_FONT, fontSize: 15, color: GREY });
 }
@@ -375,16 +357,9 @@ for (const sec of sections) {
     flow.gap(0.06);
     flow.table(sec.table.headers, sec.table.rows);
   }
-
-  if (sec.slideQuiz?.length) {
-    quizSlides(eyebrow, `Check yourself — ${sec.heading}`, sec.slideQuiz);
-  }
 }
 
-/* ---------- 3. Unit quiz ---------- */
-quizSlides("Unit quiz", "Unit quiz — 10 questions", UNIT.quiz);
-
-/* ---------- 4. Closing slide ---------- */
+/* ---------- 3. Closing slide ---------- */
 {
   const s = slide();
   s.background = { color: NAVY };
@@ -392,7 +367,7 @@ quizSlides("Unit quiz", "Unit quiz — 10 questions", UNIT.quiz);
   addIcon(s, "award", MX, 1.6, 0.7, "#" + DARK_LABEL);
   s.addText("Plan. Coach. Appraise.", { x: MX, y: 2.45, w: CW, h: 1.4, fontFace: TITLE_FONT, fontSize: 36, bold: true, color: WHITE });
   s.addText("You can now formulate performance standards, build a monitoring system, prepare for a review, and conduct a fair, constructive performance review interview. Complete the unit quiz and your Portfolio of Evidence assignment in ITSS Learn.", {
-    x: MX, y: 3.95, w: 11.0, h: 1.4, fontFace: BODY_FONT, fontSize: 16, color: DARK_SUB, lineSpacingMultiple: 1.25,
+    x: MX, y: 3.95, w: 11.6, h: 1.7, fontFace: BODY_FONT, fontSize: 18, color: DARK_SUB, lineSpacingMultiple: 1.25, fit: "none",
   });
   s.addText("US 252034 · National Certificate: Generic Management · SAQA ID 59201 · ITSS Learn", {
     x: MX, y: H - 0.62, w: CW, h: 0.4, fontFace: BODY_FONT, fontSize: 14, color: DARK_MUTED,

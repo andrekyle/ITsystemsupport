@@ -1,12 +1,17 @@
 // PDF twin of the US 252034 PowerPoint deck for the in-app slide viewer.
 // Mirrors scripts/make-252034-ppt.mjs slide-for-slide: title slide, navy
 // lesson dividers, content slides (paragraphs/cards/example/bullets/tables
-// with "(continued)" overflow), "Check yourself" quiz slides, unit-quiz
-// slides and the navy closing slide. One landscape 16:9 page per slide
-// (960 x 540 pt). Content is read live from src/data/content.ts ("252034").
+// with "(continued)" overflow) and the navy closing slide. One landscape
+// 16:9 page per slide (960 x 540 pt). Content is read live from
+// src/data/content.ts ("252034").
 //
-// LEARNER-FACING: quiz pages show ONLY the question and options a)–d).
-// No correct answers or explanations appear anywhere in this PDF.
+// LEARNER-FACING: quizzes are NOT rendered in this PDF — learners answer
+// them inside the ITSS Learn app.
+//
+// DECK STANDARD: no content text below 18pt — fit is measured with
+// doc.heightOfString before placing; content that doesn't fit continues on
+// "(continued)" pages and tables split across pages with the header repeated.
+// Only footer/page-number furniture may be smaller.
 //
 // Run: node scripts/make-252034-pdf.mjs
 // Out: public/downloads/US-252034-Monitor-Evaluate-Performance.pdf
@@ -174,8 +179,8 @@ function slide({ bg = WHITE } = {}) {
   }
 }
 function eyebrowTitle(eyebrow, title) {
-  doc.font(HELVB).fontSize(14).fillColor(BLUE);
-  doc.text(String(eyebrow).toUpperCase(), MX, 0.28 * IN, { width: CW, characterSpacing: 2, lineBreak: false });
+  doc.font(HELVB).fontSize(18).fillColor(BLUE);
+  doc.text(String(eyebrow).toUpperCase(), MX, 0.24 * IN, { width: CW, characterSpacing: 2, lineBreak: false });
   doc.font(HELVB).fontSize(28).fillColor(NAVY);
   doc.text(plain(title), MX, 0.62 * IN, { width: CW - 0.7 * IN, lineBreak: false });
 }
@@ -208,13 +213,13 @@ class Flow {
   gap(g = 0.12) {
     this.y = Math.min(this.y + g * IN, MAXY);
   }
-  paragraph(text, { size = 15, color = GREY } = {}) {
+  paragraph(text, { size = 18, color = GREY } = {}) {
     const h = textH(text, size, CW) + 0.06 * IN;
     this.ensure(Math.min(h, MAXY - 1.32 * IN));
     drawRuns(text, MX, this.y, { width: CW, size, color });
     this.y += h + 0.08 * IN;
   }
-  bullet(text, { size = 14 } = {}) {
+  bullet(text, { size = 18 } = {}) {
     const tx = MX + 0.3 * IN;
     const tw = CW - 0.36 * IN;
     const h = textH(text, size, tw) + 0.05 * IN;
@@ -225,59 +230,62 @@ class Flow {
     this.y += h + 0.07 * IN;
   }
   table(headers, rows) {
+    // 18pt everywhere; heights come from doc.heightOfString. A table that
+    // doesn't fit is SPLIT across pages with the header repeated — never shrunk.
     const nCols = headers.length;
-    let size = 14;
-    let rowH = 0.44 * IN;
-    if (rows.length > 8) {
-      size = 12;
-      rowH = 0.36 * IN;
-    } else if (rows.length > 5 || rows.some((r) => r.join(" ").length > 160)) {
-      size = 13;
-      rowH = 0.4 * IN;
-    }
+    const size = 18;
     const colW = CW / nCols;
-    const pad = 0.07 * IN;
+    const pad = 0.08 * IN;
     const cellH = (c) => textH(c, size, colW - pad * 2) + pad * 2;
-    const headH = Math.max(rowH, ...headers.map(cellH));
-    const rowHeights = rows.map((r) => Math.max(rowH, ...r.map(cellH)));
-    const total = headH + rowHeights.reduce((a, b) => a + b, 0);
-    this.ensure(Math.min(total + 0.1 * IN, MAXY - 1.32 * IN));
-    let ty = this.y;
-    // header row
-    doc.rect(MX, ty, CW, headH).fill(BLUE);
-    headers.forEach((hText, c) => {
-      const th = textH(hText, size, colW - pad * 2);
-      doc.font(HELVB).fontSize(size).fillColor(WHITE);
-      doc.text(plain(hText), MX + c * colW + pad, ty + (headH - th) / 2, { width: colW - pad * 2, lineGap: lineGapFor(size) });
-    });
-    ty += headH;
-    // body rows
-    rows.forEach((r, i) => {
-      const rh = rowHeights[i];
-      if (i % 2) doc.rect(MX, ty, CW, rh).fill(LIGHT);
-      r.forEach((cText, c) => {
-        const th = textH(cText, size, colW - pad * 2);
-        doc.font(HELV).fontSize(size).fillColor(NAVY);
-        doc.text(plain(cText), MX + c * colW + pad, ty + (rh - th) / 2, { width: colW - pad * 2, lineGap: lineGapFor(size) });
+    const headH = Math.max(0.52 * IN, ...headers.map(cellH));
+    const rowHeights = rows.map((r) => Math.max(0.52 * IN, ...r.map(cellH)));
+
+    const drawHeader = (ty) => {
+      doc.rect(MX, ty, CW, headH).fill(BLUE);
+      headers.forEach((hText, c) => {
+        const th = textH(hText, size, colW - pad * 2);
+        doc.font(HELVB).fontSize(size).fillColor(WHITE);
+        doc.text(plain(hText), MX + c * colW + pad, ty + (headH - th) / 2, { width: colW - pad * 2, lineGap: lineGapFor(size) });
       });
-      ty += rh;
-    });
-    // grid lines
-    doc.save().lineWidth(0.75).strokeColor(BORDER);
-    let gy = this.y;
-    doc.moveTo(MX, gy).lineTo(MX + CW, gy).stroke();
-    gy += headH;
-    doc.moveTo(MX, gy).lineTo(MX + CW, gy).stroke();
-    rowHeights.forEach((rh) => {
-      gy += rh;
+    };
+
+    let i = 0;
+    while (i < rows.length) {
+      if (this.y + headH + rowHeights[i] + 0.1 * IN > MAXY) this.newSlide();
+      const startY = this.y;
+      drawHeader(startY);
+      let ty = startY + headH;
+      const startIdx = i;
+      while (i < rows.length && ty + rowHeights[i] <= MAXY) {
+        const rh = rowHeights[i];
+        if (i % 2) doc.rect(MX, ty, CW, rh).fill(LIGHT);
+        rows[i].forEach((cText, c) => {
+          const th = textH(cText, size, colW - pad * 2);
+          doc.font(HELV).fontSize(size).fillColor(NAVY);
+          doc.text(plain(cText), MX + c * colW + pad, ty + (rh - th) / 2, { width: colW - pad * 2, lineGap: lineGapFor(size) });
+        });
+        ty += rh;
+        i += 1;
+      }
+      if (i === startIdx) throw new Error("Table row taller than a page at 18pt — content must be shortened");
+      // grid lines for this chunk
+      const total = ty - startY;
+      doc.save().lineWidth(0.75).strokeColor(BORDER);
+      let gy = startY;
       doc.moveTo(MX, gy).lineTo(MX + CW, gy).stroke();
-    });
-    for (let c = 0; c <= nCols; c += 1) {
-      const gx = MX + c * colW;
-      doc.moveTo(gx, this.y).lineTo(gx, this.y + total).stroke();
+      gy += headH;
+      doc.moveTo(MX, gy).lineTo(MX + CW, gy).stroke();
+      for (let r = startIdx; r < i; r += 1) {
+        gy += rowHeights[r];
+        doc.moveTo(MX, gy).lineTo(MX + CW, gy).stroke();
+      }
+      for (let c = 0; c <= nCols; c += 1) {
+        const gx = MX + c * colW;
+        doc.moveTo(gx, startY).lineTo(gx, startY + total).stroke();
+      }
+      doc.restore();
+      this.y = ty + 0.16 * IN;
     }
-    doc.restore();
-    this.y += total + 0.16 * IN;
   }
   cards(items) {
     const cols = 2;
@@ -286,18 +294,18 @@ class Flow {
     for (let i = 0; i < items.length; i += cols) {
       const pair = items.slice(i, i + cols);
       const hEach = pair.map(
-        (it) => 0.36 * IN + textH(it.title, 15, cw - 0.9 * IN) + textH(it.text, 13, cw - 0.4 * IN) + 0.14 * IN
+        (it) => 0.42 * IN + textH(it.title, 18, cw - 0.9 * IN) + textH(it.text, 18, cw - 0.4 * IN) + 0.2 * IN
       );
-      const rowH = Math.max(...hEach, 0.9 * IN);
+      const rowH = Math.max(...hEach, 1.0 * IN);
       this.ensure(rowH + 0.06 * IN);
       pair.forEach((it, j) => {
         const cx = MX + j * (cw + gapX);
         cardShape(cx, this.y, cw, rowH);
         drawIcon(it.icon, cx + 0.16 * IN, this.y + 0.16 * IN, 0.34);
-        const titleH = textH(it.title, 15, cw - 0.9 * IN);
-        drawRuns(it.title, cx + 0.6 * IN, this.y + 0.14 * IN, { width: cw - 0.78 * IN, size: 15, color: NAVY, forceBold: true });
-        drawRuns(it.text, cx + 0.16 * IN, this.y + 0.16 * IN + Math.max(titleH, 0.3 * IN) + 0.06 * IN, {
-          width: cw - 0.32 * IN, size: 13, color: GREY,
+        const titleH = textH(it.title, 18, cw - 0.9 * IN);
+        drawRuns(it.title, cx + 0.6 * IN, this.y + 0.14 * IN, { width: cw - 0.78 * IN, size: 18, color: NAVY, forceBold: true });
+        drawRuns(it.text, cx + 0.16 * IN, this.y + 0.16 * IN + Math.max(titleH, 0.32 * IN) + 0.08 * IN, {
+          width: cw - 0.32 * IN, size: 18, color: GREY,
         });
       });
       this.y += rowH + 0.14 * IN;
@@ -305,61 +313,32 @@ class Flow {
   }
   example(ex) {
     const innerW = CW - 0.5 * IN;
-    const titleH = textH("Example — " + ex.title, 15, innerW);
-    const lineHs = ex.lines.map((l) => textH(l, 13, innerW - 0.4 * IN) + 0.04 * IN);
+    const titleH = textH("Example — " + ex.title, 18, innerW);
+    const lineHs = ex.lines.map((l) => textH(l, 18, innerW - 0.4 * IN) + 0.04 * IN);
     const linesH = lineHs.reduce((a, b) => a + b, 0);
-    const boxH = 0.18 * IN + titleH + 0.08 * IN + linesH + 0.16 * IN;
+    const boxH = 0.18 * IN + titleH + 0.08 * IN + linesH + 0.18 * IN;
     this.ensure(boxH + 0.06 * IN);
     cardShape(MX, this.y, CW, boxH, { fill: LIGHT });
-    drawRuns("Example — " + ex.title, MX + 0.25 * IN, this.y + 0.14 * IN, { width: innerW, size: 15, color: BLUE, forceBold: true });
+    drawRuns("Example — " + ex.title, MX + 0.25 * IN, this.y + 0.14 * IN, { width: innerW, size: 18, color: BLUE, forceBold: true });
     let ly = this.y + 0.16 * IN + titleH + 0.08 * IN;
     ex.lines.forEach((l, i) => {
-      doc.font(HELV).fontSize(13).fillColor(NAVY);
+      doc.font(HELV).fontSize(18).fillColor(NAVY);
       doc.text("•", MX + 0.3 * IN, ly, { lineBreak: false });
-      drawRuns(l, MX + 0.48 * IN, ly, { width: innerW - 0.4 * IN, size: 13, color: NAVY });
+      drawRuns(l, MX + 0.52 * IN, ly, { width: innerW - 0.4 * IN, size: 18, color: NAVY });
       ly += lineHs[i];
     });
     this.y += boxH + 0.16 * IN;
   }
 }
 
-/* ---------- quiz slides — LEARNER COPY: questions + options only, NO answers ---------- */
-const LETTERS = ["a", "b", "c", "d", "e", "f"];
-function quizSlides(eyebrow, title, questions, startNum = 1) {
-  let part = 0;
-  let y = 0;
-  const open = () => {
-    part += 1;
-    slide();
-    eyebrowTitle(eyebrow, part === 1 ? title : `${title} …(continued)`);
-    drawIcon("check", W - MX - 0.5 * IN, 0.3 * IN, 0.44);
-    y = 1.35 * IN;
-  };
-  open();
-  questions.forEach((q, qi) => {
-    const num = startNum + qi;
-    const qH = textH(`Q${num}. ${q.q}`, 15, CW) + 0.04 * IN;
-    const optHs = q.options.map((o) => textH(`${LETTERS[0]})  ${o}`, 13, CW - 0.45 * IN) + 0.03 * IN);
-    const blockH = qH + optHs.reduce((a, b) => a + b, 0) + 0.2 * IN;
-    if (y + blockH > MAXY) open();
-    drawRuns(`**Q${num}.** ${q.q}`, MX, y, { width: CW, size: 15, color: NAVY });
-    y += qH + 0.02 * IN;
-    q.options.forEach((o, oi) => {
-      drawRuns(`${LETTERS[oi]})  ${o}`, MX + 0.4 * IN, y, { width: CW - 0.45 * IN, size: 13, color: GREY });
-      y += optHs[oi];
-    });
-    y += 0.18 * IN;
-  });
-}
-
 /* ---------- 1. Title slide ---------- */
 {
   slide();
   doc.rect(0, 0, W, 0.12 * IN).fill(BLUE);
-  const pillW = 6.6 * IN;
+  const pillW = 7.7 * IN;
   const pillH = 0.62 * IN;
   doc.roundedRect(MX, 1.1 * IN, pillW, pillH, pillH / 2).fill(BLUE);
-  doc.font(HELVB).fontSize(16).fillColor(WHITE);
+  doc.font(HELVB).fontSize(18).fillColor(WHITE);
   const pillText = "GENERIC MANAGEMENT · UNIT STANDARD 252034";
   const ptH = doc.heightOfString(pillText, { width: pillW });
   doc.text(pillText, MX, 1.1 * IN + (pillH - ptH) / 2, { width: pillW, align: "center", characterSpacing: 1 });
@@ -380,10 +359,10 @@ function quizSlides(eyebrow, title, questions, startNum = 1) {
   ];
   meta.forEach(([k, v], i) => {
     const x = MX + i * (CW / 4);
-    doc.font(HELVB).fontSize(15).fillColor(BLUE);
+    doc.font(HELVB).fontSize(18).fillColor(BLUE);
     doc.text(k, x, 4.88 * IN, { width: CW / 4 - 0.2 * IN, characterSpacing: 0.5, lineBreak: false });
-    doc.font(HELV).fontSize(15).fillColor(NAVY);
-    doc.text(v, x, 5.26 * IN, { width: CW / 4 - 0.2 * IN, lineGap: 2 });
+    doc.font(HELV).fontSize(18).fillColor(NAVY);
+    doc.text(v, x, 5.28 * IN, { width: CW / 4 - 0.2 * IN, lineGap: 2 });
   });
   doc.font(HELV).fontSize(15).fillColor(GREY);
   doc.text("ITSS Learn · Investec · Corporate Banking Technology", MX, H - 0.56 * IN, { width: CW, lineBreak: false });
@@ -425,26 +404,19 @@ for (const sec of UNIT.lesson) {
     flow.gap(0.06);
     flow.table(sec.table.headers, sec.table.rows);
   }
-
-  if (sec.slideQuiz?.length) {
-    quizSlides(eyebrow, `Check yourself — ${sec.heading}`, sec.slideQuiz);
-  }
 }
 
-/* ---------- 3. Unit quiz ---------- */
-quizSlides("Unit quiz", "Unit quiz — 10 questions", UNIT.quiz);
-
-/* ---------- 4. Closing slide ---------- */
+/* ---------- 3. Closing slide ---------- */
 {
   slide({ bg: NAVY });
   doc.rect(0, 0, W, 0.12 * IN).fill(BLUE);
   drawIcon("award", MX, 1.6 * IN, 0.7, DARK_LABEL);
   doc.font(HELVB).fontSize(36).fillColor(WHITE);
   doc.text("Plan. Coach. Appraise.", MX, 2.55 * IN, { width: CW, lineBreak: false });
-  doc.font(HELV).fontSize(16).fillColor(DARK_SUB);
+  doc.font(HELV).fontSize(18).fillColor(DARK_SUB);
   doc.text(
     "You can now formulate performance standards, build a monitoring system, prepare for a review, and conduct a fair, constructive performance review interview. Complete the unit quiz and your Portfolio of Evidence assignment in ITSS Learn.",
-    MX, 4.0 * IN, { width: 11.0 * IN, lineGap: 5 }
+    MX, 4.0 * IN, { width: 11.6 * IN, lineGap: 5 }
   );
   doc.font(HELV).fontSize(14).fillColor(DARK_MUTED);
   doc.text("US 252034 · National Certificate: Generic Management · SAQA ID 59201 · ITSS Learn", MX, H - 0.56 * IN, { width: CW, lineBreak: false });
