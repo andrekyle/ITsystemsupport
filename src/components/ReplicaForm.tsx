@@ -377,19 +377,41 @@ function ReplicaField({ field, ratio, pageRef, prefix, value, error, onChange, a
     control = <textarea id={id} className={`replica-input replica-textarea${errorClass}`} value={text} maxLength={10000} aria-label={field.label} title={field.helpText || field.label} onChange={event => onChange(event.target.value)} />;
   } else if (field.type === "date") {
     control = <div className={`replica-date${errorClass}`}><DateTimePicker id={id} className="bare" withTime={false} value={text} onChange={onChange} placeholder="" ariaLabel={field.label} /></div>;
+  } else if (placement.comb && placement.comb >= 2) {
+    // a comb: each character is drawn centred in its own printed box, in the
+    // page's face; the real input sits invisibly on top for typing
+    const comb = placement.comb;
+    const chars = [...text].slice(0, comb);
+    control = (
+      <div className={`replica-comb${errorClass}`} style={{ "--n": comb } as CSSProperties}>
+        <div className="replica-comb-cells" aria-hidden="true">
+          {Array.from({ length: comb }, (_, index) => (
+            <span key={index} className={`replica-comb-cell${index === chars.length ? " caret" : ""}`}>{chars[index] ?? ""}</span>
+          ))}
+        </div>
+        <input
+          id={id}
+          className="replica-input replica-comb-input"
+          type="text"
+          inputMode={field.type === "number" || field.type === "tel" ? "numeric" : undefined}
+          value={text}
+          maxLength={comb}
+          autoComplete="off"
+          aria-label={field.label}
+          title={error || field.helpText || field.label}
+          onChange={event => onChange([...event.target.value].slice(0, comb).join(""))}
+        />
+      </div>
+    );
   } else {
-    // a comb: one character per printed box, spaced to the box pitch
-    const comb = placement.comb && placement.comb >= 2 ? placement.comb : 0;
     control = (
       <input
         id={id}
-        className={`replica-input${field.type === "signature" ? " paper-signature" : ""}${comb ? " replica-comb" : ""}${errorClass}`}
-        type={field.type === "signature" || comb ? "text" : field.type}
-        inputMode={comb && (field.type === "number" || field.type === "tel") ? "numeric" : undefined}
+        className={`replica-input${field.type === "signature" ? " paper-signature" : ""}${errorClass}`}
+        type={field.type === "signature" ? "text" : field.type}
         value={text}
-        step={field.type === "number" && !comb ? "any" : undefined}
-        maxLength={comb || field.maxLength || (field.type === "number" ? undefined : 2000)}
-        style={comb ? ({ "--n": comb, "--w": box.w } as CSSProperties) : undefined}
+        step={field.type === "number" ? "any" : undefined}
+        maxLength={field.maxLength || (field.type === "number" ? undefined : 2000)}
         autoComplete="off"
         aria-label={field.label}
         title={error || field.helpText || field.label}

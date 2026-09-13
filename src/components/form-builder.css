@@ -183,17 +183,35 @@
   box-sizing: border-box;
 }
 .replica-input:focus { background: rgba(255, 248, 216, 0.9); }
+/* browser autofill must not paint over the printed boxes or recolour the text */
+.replica-input:-webkit-autofill, .replica-input:-webkit-autofill:hover, .replica-input:-webkit-autofill:focus {
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  -webkit-text-fill-color: #000;
+  transition: background-color 999999s ease-in-out 0s;
+}
 .replica-textarea { resize: none; overflow: hidden; font-size: 1.45cqw; line-height: 1.35; padding: 0.15em 0.3em; }
 .replica-input.paper-signature { font-family: Georgia, serif; font-style: italic; }
-/* comb boxes: monospaced so every character advances exactly one printed box */
-.replica-comb {
-  font-family: "Courier New", Cousine, Courier, monospace;
-  font-weight: 700;
+/* comb boxes: every character sits centred in its own printed box, in the
+   page's face; the input itself is invisible and only carries the typing */
+.replica-comb { position: relative; width: 100%; height: 100%; }
+.replica-comb-cells {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  pointer-events: none;
   text-transform: uppercase;
-  white-space: pre;
-  letter-spacing: calc(100cqw * var(--w) / var(--n) - 1ch);
-  padding: 0 0 0 calc((100cqw * var(--w) / var(--n) - 1ch) / 2);
+  font-weight: 600;
+  color: #000;
 }
+.replica-comb-cell { display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.replica-comb:focus-within .replica-comb-cell.caret::after { content: ""; width: 1px; height: 65%; background: #000; animation: replica-caret 1.1s steps(1) infinite; }
+@keyframes replica-caret { 50% { opacity: 0; } }
+.replica-comb-input { position: absolute; inset: 0; padding: 0; color: transparent; caret-color: transparent; -webkit-text-fill-color: transparent; }
+.replica-comb-input::selection { background: transparent; }
+.replica-comb-input:focus { background: rgba(255, 248, 216, 0.45); }
+.replica-comb-input:-webkit-autofill, .replica-comb-input:-webkit-autofill:hover, .replica-comb-input:-webkit-autofill:focus { -webkit-text-fill-color: transparent; }
 .replica-tick {
   display: block;
   width: 100%;
