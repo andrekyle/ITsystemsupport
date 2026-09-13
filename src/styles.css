@@ -648,6 +648,11 @@ h2.section-title .ico {
 
 /* ============ Meta pills ============ */
 
+.course-switch {
+  margin: 12px 0 2px;
+  max-width: 360px;
+}
+
 .meta-row {
   display: flex;
   flex-wrap: wrap;

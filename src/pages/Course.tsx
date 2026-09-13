@@ -4,7 +4,9 @@ import JSZip from "jszip";
 import { Icon } from "../icons";
 import type { ExerciseCheck, LessonFigure, PoeDoc, ProgressState, Profile, Role, Route, UnitActivity, UnitStandard } from "../types";
 import { UNIT_ACTIVITIES, isStaff } from "../types";
-import { COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
+import { COURSE_BLURB, COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
+import { COURSES, activeCourseId, setActiveCourse } from "../data/courses";
+import { Select } from "../components/Select";
 import { GLOSSARY, getContent } from "../data/content";
 import { FIGURE_DEFAULTS as BASE_FIGURE_DEFAULTS } from "../data/figureDefaults";
 import { HWSW_SLIDE_FIGURES } from "../data/hwswSlideFigures";
@@ -1679,10 +1681,15 @@ export function CoursePage({
         Course
       </div>
       <h1 className="page-title">{COURSE_META.title}</h1>
-      <p className="page-sub">
-        A QCTO/SETA-aligned qualification covering business practice, client-server networking,
-        network architecture, LAN design, server administration and database access.
-      </p>
+      <p className="page-sub">{COURSE_BLURB}</p>
+      <div className="course-switch">
+        <Select
+          ariaLabel="Switch course"
+          value={activeCourseId()}
+          options={COURSES.map((c) => ({ value: c.id, label: c.label }))}
+          onChange={setActiveCourse}
+        />
+      </div>
       <div className="meta-row">
         <a
           className="pill"
