@@ -1,5 +1,5 @@
 import JSZip from "jszip";
-import { GlobalWorkerOptions, getDocument, type PDFDocumentProxy, type PDFPageProxy } from "pdfjs-dist";
+import { GlobalWorkerOptions, OPS, getDocument, type PDFDocumentProxy, type PDFPageProxy } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { MAX_MASTHEAD_CHARS, parseFormDefinition, type FormBox, type FormDefinition, type FormField, type FormPage, type FormPlacement, type LayerText, type PageLayer } from "./formSchema";
 import { analysePage, estimateSkew, extractLayer, textColour, type PageAnalysis, type PixelSource, type TextRun } from "./pageAnalysis";
@@ -203,6 +203,18 @@ async function textItems(page: PDFPageProxy, width: number): Promise<TextItem[]>
   return kept.sort((a, b) => a.y - b.y || a.x - b.x);
 }
 
+/** A scanned page carrying an OCR text layer draws its words invisibly over
+ *  the picture; that text only roughly follows the print and must not be
+ *  rebuilt as the page. */
+async function hasHiddenText(page: PDFPageProxy): Promise<boolean> {
+  try {
+    const ops = await page.getOperatorList();
+    return ops.fnArray.some((fn, index) => fn === OPS.setTextRenderingMode && [3, 7].includes(Number(ops.argsArray[index]?.[0])));
+  } catch {
+    return false;
+  }
+}
+
 /** The page rebuilt as real text plus its drawn shapes, with picture regions
  *  cut from the render. */
 function buildLayer(canvas: HTMLCanvasElement, items: TextItem[], analysis: PageAnalysis): PageLayer | undefined {
@@ -227,6 +239,10 @@ function buildLayer(canvas: HTMLCanvasElement, items: TextItem[], analysis: Page
   const ticks = analysis.boxes.filter(box => box.kind === "tick").map(box => ({ x: box.x * canvas.width, y: box.y * canvas.height, w: box.w * canvas.width, h: box.h * canvas.height }));
   const combs = analysis.boxes.filter(box => box.kind === "comb" && box.n).map(box => ({ x: box.x * canvas.width, y: box.y * canvas.height, w: box.w * canvas.width, h: box.h * canvas.height, n: box.n! }));
   const geometry = extractLayer(pixels, items, ticks, combs);
+  // text that leaves much of the page's ink unexplained is not the print
+  // (an OCR layer, outlined lettering): the picture is the truer page
+  const pictureArea = geometry.pictures.reduce((sum, rect) => sum + rect.w * rect.h, 0) / (canvas.width * canvas.height);
+  if (geometry.unexplained > 0.35 || pictureArea > 0.2) return undefined;
   const pictures = geometry.pictures.flatMap(rect => {
     const crop = window.document.createElement("canvas");
     crop.width = Math.max(1, Math.round(rect.w));
@@ -334,7 +350,7 @@ async function importPdf(file: File, signal?: AbortSignal): Promise<ImportedForm
       // scanned pages (with or without an OCR text layer) come in slightly rotated
       if (!nativeDefinition) canvas = deskewCanvas(canvas, runs);
       const analysis = nativeDefinition ? { page: pageNumber, width: canvas.width, height: canvas.height, text: [], boxes: [] } : analyseCanvas(canvas, runs, pageNumber);
-      const layer = buildLayer(canvas, items, analysis);
+      const layer = (await hasHiddenText(page)) ? undefined : buildLayer(canvas, items, analysis);
       pages.push({ src: canvas.toDataURL("image/jpeg", 0.85), width: canvas.width, height: canvas.height, path: "", ...(layer ? { layer } : {}), analysis });
       if (!nativeDefinition) images.push(shrink(canvas, AI_PIXELS, 0.7));
       releaseCanvas(canvas);

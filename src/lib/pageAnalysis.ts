@@ -487,6 +487,8 @@ export interface LayerGeometry {
   combs: LayerFrame[];
   /** regions that are neither text nor shapes (logos, pictures), in pixels */
   pictures: Rect[];
+  /** share of the page's dark pixels that no text, rule, fill or frame accounts for */
+  unexplained: number;
 }
 
 const hex = (r: number, g: number, b: number) => `#${[r, g, b].map(v => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, "0")).join("")}`;
@@ -605,6 +607,18 @@ export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect
   const mask = darkMask(pixels);
   const minLine = Math.max(10, Math.round(width * 0.0085));
   const inText = (rect: Rect) => textBoxes.some(box => intersects(box, rect, 1) && rect.x >= box.x - 4 && rect.x + rect.w <= box.x + box.w + 4 && rect.y >= box.y - 4 && rect.y + rect.h <= box.y + box.h + 4);
+  // a thin dark row running through the letters of words (bold or small
+  // print bridges its glyph gaps) is lettering; below the baseline it may be
+  // an underline
+  const throughText = (rect: Rect) => {
+    const middle = rect.y + rect.h / 2;
+    let covered = 0;
+    for (const box of textBoxes) {
+      if (middle < box.y || middle > box.y + box.h * 0.78) continue;
+      covered += Math.max(0, Math.min(box.x + box.w, rect.x + rect.w) - Math.max(box.x, rect.x));
+    }
+    return covered >= rect.w * 0.5;
+  };
   const wobble = Math.max(4, Math.round(width * 0.004));
   const rules: LayerRect[] = [];
   const fills: LayerRect[] = [];
@@ -615,7 +629,7 @@ export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect
 
   for (const line of horizontalLines(mask, width, height, minLine, true)) {
     const rect = { x: line.x1, y: line.y, w: line.x2 - line.x1 + 1, h: line.t };
-    if (inText(rect) || line.t > MAX_THICKNESS) continue;
+    if (inText(rect) || throughText(rect) || line.t > MAX_THICKNESS) continue;
     if (rect.w < width * 0.02) continue;
     const straight = line.t <= 3 || ((line.x1b ?? line.x1) - line.x1 <= wobble && line.x2 - (line.x2b ?? line.x2) <= wobble);
     // a wobbly stack is lettering, not a rule; anything really drawn there is
@@ -720,9 +734,11 @@ export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect
   const cols = Math.ceil(width / cell);
   const rows = Math.ceil(height / cell);
   const grid = new Uint8Array(cols * rows);
+  const inkPerCell = new Uint32Array(cols * rows);
+  let ink = 0;
   for (let y = 0; y < height; y++) {
     const row = y * width;
-    for (let x = 0; x < width; x++) if (mask[row + x]) grid[Math.floor(y / cell) * cols + Math.floor(x / cell)] = 1;
+    for (let x = 0; x < width; x++) if (mask[row + x]) { const index = Math.floor(y / cell) * cols + Math.floor(x / cell); grid[index] = 1; inkPerCell[index]++; ink++; }
   }
   const explained: Rect[] = [
     // glyphs overshoot their boxes, and fake-bold prints a hair to the side
@@ -737,6 +753,8 @@ export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect
     const r1 = Math.max(0, Math.floor(rect.y / cell)), r2 = Math.min(rows - 1, Math.floor((rect.y + rect.h) / cell));
     for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) grid[r * cols + c] = 0;
   }
+  let leftover = 0;
+  for (let index = 0; index < grid.length; index++) if (grid[index]) leftover += inkPerCell[index];
   const seen = new Uint8Array(cols * rows);
   const minSide = Math.max(12, width * 0.012);
   for (let start = 0; start < grid.length; start++) {
@@ -785,6 +803,7 @@ export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect
     fills,
     frames,
     combs,
+    unexplained: ink ? leftover / ink : 0,
     pictures: merged.slice(0, 20).map(rect => ({
       x: Math.max(0, rect.x - 3), y: Math.max(0, rect.y - 3),
       w: Math.min(width - Math.max(0, rect.x - 3), rect.w + 6), h: Math.min(height - Math.max(0, rect.y - 3), rect.h + 6),
