@@ -11509,6 +11509,11 @@ h2.section-title.howto-heading {
     max-width: 100%;
   }
 
+  /* the module-flow explainer is desktop furniture — hidden on phones */
+  .module-flow-block {
+    display: none;
+  }
+
   /* data tables scroll inside their card instead of stretching the page */
   .content table {
     display: block;

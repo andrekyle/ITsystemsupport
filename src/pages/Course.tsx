@@ -1778,13 +1778,13 @@ export function CoursePage({
         })}
       </div>
 
-      <h2 className="section-title">
+      <h2 className="section-title module-flow-block">
         <span className="ico">
           <Icon name="target" size={20} />
         </span>
         How each module works
       </h2>
-      <div className="card about-card">
+      <div className="card about-card module-flow-block">
         <div className="flow-steps">
           {MODULE_FLOW.steps.map((s, i) => (
             <div className="flow-step" key={s.name}>
