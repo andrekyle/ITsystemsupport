@@ -68,7 +68,12 @@ async function renderPage(page: PDFPageProxy, pixels: number): Promise<HTMLCanva
   const canvas = window.document.createElement("canvas");
   canvas.width = Math.ceil(viewport.width);
   canvas.height = Math.ceil(viewport.height);
-  await page.render({ canvas, viewport, intent: "print" }).promise;
+  // an opaque canvas gets sub-pixel (coloured) text anti-aliasing in Chrome,
+  // which reads back as orange and blue fringes on small print; the first
+  // getContext call fixes the canvas's attributes for good
+  const canvasContext = canvas.getContext("2d", { alpha: true, willReadFrequently: true });
+  if (!canvasContext) throw new Error("This browser cannot process the page image.");
+  await page.render({ canvas, canvasContext, viewport, intent: "print", background: "#ffffff" }).promise;
   return canvas;
 }
 

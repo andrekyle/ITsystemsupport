@@ -534,13 +534,34 @@ function regionColour({ data, width, channels }: PixelSource, rect: Rect, only?:
   return { colour: hex(r / n, g / n, b / n), share: n / total, lum: (r * 0.299 + g * 0.587 + b * 0.114) / n };
 }
 
-/** The ink colour of printed text: the most deviating pixels against the
- *  box's own background (so white text on an orange strip reads as white). */
+/** The ink colour of printed text: the pixels that stand out most against
+ *  the box's own background (so white text on an orange strip reads as
+ *  white). Small print is judged by its most solid pixels and averaged, so
+ *  the coloured fringes of sub-pixel anti-aliasing cancel out; near-grey ink
+ *  is pure black or white. */
 export function textColour(pixels: PixelSource, rect: Rect): string {
+  const { data, width, channels } = pixels;
   const background = regionColour(pixels, rect);
-  const ink = regionColour(pixels, rect, lum => Math.abs(lum - background.lum) > 60);
-  if (ink.share === 0) return background.lum < 128 ? "#ffffff" : "#000000";
-  return ink.colour;
+  const x1 = Math.max(0, Math.round(rect.x));
+  const x2 = Math.min(width - 1, Math.round(rect.x + rect.w - 1));
+  const y1 = Math.max(0, Math.round(rect.y));
+  const y2 = Math.min(Math.round((data.length / channels) / width) - 1, Math.round(rect.y + rect.h - 1));
+  const ink: { r: number; g: number; b: number; d: number }[] = [];
+  for (let y = y1; y <= y2; y++) {
+    for (let x = x1; x <= x2; x++) {
+      const p = (y * width + x) * channels;
+      const lum = data[p] * 0.299 + data[p + 1] * 0.587 + data[p + 2] * 0.114;
+      if (Math.abs(lum - background.lum) > 60) ink.push({ r: data[p], g: data[p + 1], b: data[p + 2], d: Math.abs(lum - background.lum) });
+    }
+  }
+  if (!ink.length) return background.lum < 128 ? "#ffffff" : "#000000";
+  ink.sort((a, b) => b.d - a.d);
+  const solid = ink.slice(0, Math.max(1, Math.ceil(ink.length * 0.25)));
+  const r = solid.reduce((sum, p) => sum + p.r, 0) / solid.length;
+  const g = solid.reduce((sum, p) => sum + p.g, 0) / solid.length;
+  const b = solid.reduce((sum, p) => sum + p.b, 0) / solid.length;
+  if (Math.max(r, g, b) - Math.min(r, g, b) < 48) return r * 0.299 + g * 0.587 + b * 0.114 < background.lum ? "#000000" : "#ffffff";
+  return hex(r, g, b);
 }
 
 const intersects = (a: Rect, b: Rect, pad = 0) => a.x < b.x + b.w + pad && a.x + a.w + pad > b.x && a.y < b.y + b.h + pad && a.y + a.h + pad > b.y;
@@ -619,6 +640,17 @@ export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect
     }
     return covered >= rect.w * 0.5;
   };
+  // a short dark column standing inside a line of print is a tall letter or
+  // a change mark, not a column line
+  const throughTextColumn = (rect: Rect) => {
+    const middle = rect.x + rect.w / 2;
+    let covered = 0;
+    for (const box of textBoxes) {
+      if (middle < box.x - 2 || middle > box.x + box.w + 2) continue;
+      covered += Math.max(0, Math.min(box.y + box.h, rect.y + rect.h) - Math.max(box.y, rect.y));
+    }
+    return covered >= rect.h * 0.5;
+  };
   const wobble = Math.max(4, Math.round(width * 0.004));
   const rules: LayerRect[] = [];
   const fills: LayerRect[] = [];
@@ -676,7 +708,7 @@ export function extractLayer(pixels: PixelSource, textBoxes: Rect[], ticks: Rect
   }
   for (const line of verticalLines(mask, width, height, Math.max(minLine, Math.round(height * 0.012)), false)) {
     const rect = { x: line.x - (line.t - 1) / 2, y: line.y1, w: line.t, h: line.y2 - line.y1 + 1 };
-    if (inText(rect)) continue;
+    if (inText(rect) || throughTextColumn(rect)) continue;
     if ((line.y1b ?? line.y1) - line.y1 > wobble || line.y2 - (line.y2b ?? line.y2) > wobble) continue;
     const colour = regionColour(pixels, rect, lum => lum < 200);
     rules.push({ x: fx(rect.x), y: fy(rect.y), w: fx(rect.w), h: fy(rect.h), c: inkColour(colour.colour) });
