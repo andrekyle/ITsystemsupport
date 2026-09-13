@@ -18763,6 +18763,1251 @@ Improvement: distribute the technical slides beforehand."
     ],
     quiz: [],
   },
+
+  /* ================================================================
+     US 252034 — Monitor and evaluate team members against
+     performance standards (NQF 5, 8 credits) — Generic Management
+     ================================================================ */
+  "252034": {
+    lesson: [
+      /* ---------- Lesson 1: Formulate performance standards & monitoring systems ---------- */
+      {
+        heading: "Performance management — the big picture",
+        icon: "presenter",
+        flat: true,
+        lessonStart: { n: 1, title: "Formulate performance standards and monitoring systems" },
+        paragraphs: [
+          "Unit Standard 252034 — Monitor and evaluate team members against performance standards. This unit is for managers in all economic sectors — typically second-level managers such as heads of department, section heads or divisional heads who may have more than one team reporting to them.",
+          "Most organisations are moving from a once-a-year appraisal to a continuous programme of performance management. A productive performance management system is a two-way avenue of communication between a supervisor and an employee: it helps employees improve their performance, and it helps the organisation succeed in a competitive, cost-conscious environment.",
+          "The annual performance appraisal is not an end in itself — it is a means to an end. It is only the third and final part of an ongoing process that starts with performance planning (setting reasonable expectations and standards) and coaching and counselling (constructive feedback, guidance and assistance to improve performance).",
+          "According to Armstrong and Baron (1998), performance management is both a strategic and an integrated approach to delivering successful results in organisations by improving the performance and developing the capabilities of teams and individuals.",
+        ],
+        bullets: [
+          "Research shows why this matters: 70% of employees say managers do not provide clear goals and direction.",
+          "70% have never had a meaningful performance discussion with their manager.",
+          "80% say their supervisor does not follow up on the review.",
+          "80% do not see a relationship between good work and rewards — yet 98% believe pay should reflect performance.",
+        ],
+        figures: [
+          { id: "252034-l1-cycle", caption: "The performance management cycle: plan → coach → appraise", hint: "Upload a diagram of the continuous performance management cycle." },
+          { id: "252034-l1-team", caption: "A manager and team member in a performance conversation", hint: "Upload a photo of a one-on-one performance discussion." },
+        ],
+        slideQuiz: [
+          {
+            q: "Who is Unit Standard 252034 intended for?",
+            options: [
+              "Learners with no work experience",
+              "Second-level managers such as section heads with teams reporting to them",
+              "Only human resources administrators",
+              "External auditors",
+            ],
+            answer: 1,
+            explain: "The unit targets managers in all economic sectors — typically second-level managers such as heads of department, section heads or divisional heads.",
+          },
+          {
+            q: "The annual performance appraisal is best described as…",
+            options: [
+              "An end in itself — once it is done, performance management is complete",
+              "A punishment tool for poor performers",
+              "The final part of an ongoing process that starts with planning and coaching",
+              "A replacement for day-to-day supervision",
+            ],
+            answer: 2,
+            explain: "Appraisal is a means to an end — it follows performance planning and ongoing coaching and counselling.",
+          },
+          {
+            q: "A productive performance management system provides…",
+            options: [
+              "A one-way instruction channel from managers to staff",
+              "A two-way avenue of communication between supervisor and employee",
+              "A secret record of employee mistakes",
+              "A way to avoid difficult conversations",
+            ],
+            answer: 1,
+            explain: "It is a two-way communication avenue: it helps the employee improve and the organisation succeed.",
+          },
+          {
+            q: "According to Armstrong and Baron, performance management is…",
+            options: [
+              "A strategic and integrated approach to improving performance and developing capabilities",
+              "A yearly form-filling exercise required by law",
+              "A software package for tracking attendance",
+              "A disciplinary procedure",
+            ],
+            answer: 0,
+            explain: "Their definition: a strategic and integrated approach to delivering successful results by improving performance and developing the capabilities of teams and individuals.",
+          },
+          {
+            q: "Which research finding shows why proper performance management matters?",
+            options: [
+              "Most employees say their goals are perfectly clear",
+              "70% of employees have never had a meaningful performance discussion with their manager",
+              "Almost nobody wants recognition for their efforts",
+              "Only 2% believe pay should reflect performance",
+            ],
+            answer: 1,
+            explain: "The research shows widespread failure: 70% never had a meaningful performance discussion, and 80% see no follow-up after reviews.",
+          },
+        ],
+      },
+      {
+        heading: "Components of a performance management system",
+        icon: "layers",
+        flat: true,
+        paragraphs: [
+          "An effective performance management system is built from six components that run right through the year — not a single meeting.",
+        ],
+        cards: [
+          { icon: "calendar", title: "1 · Performance planning", text: "Done jointly by the appraisee and reviewer at the start of the session. Targets and key performance areas for the year are agreed within the performance budget." },
+          { icon: "clipboard", title: "2 · Appraisal & reviewing", text: "Normally twice a year — mid review and annual review. The employee first completes a self-appraisal and describes achievements in quantifiable terms; the appraiser then gives final ratings." },
+          { icon: "chat", title: "3 · Feedback & counselling", text: "The employee learns about areas of improvement and whether expected performance levels are being met — open, transparent feedback plus identified training and development needs." },
+          { icon: "award", title: "4 · Rewarding good performance", text: "Public recognition and reward for good performance. This directly influences motivation, self-esteem and achievement orientation." },
+          { icon: "trend", title: "5 · Performance improvement plans", text: "Fresh goals and a deadline for improvement, clearly communicated, jointly developed and mutually approved." },
+          { icon: "search", title: "6 · Potential appraisal", text: "Assesses potential for lateral and vertical movement — inputs for succession planning and job rotation through competency mapping." },
+        ],
+        bullets: [
+          "Benefits: employees understand how they contribute to organisational goals; expectations are clear; objectives are aligned; and the relationship between employee and line manager is built on trust.",
+          "Good systems also improve job satisfaction: open feedback, a clear link between performance and compensation, learning opportunities, fair rewards and clear career paths.",
+        ],
+        figures: [
+          { id: "252034-l1-components", caption: "Six components of a performance management system", hint: "Upload a diagram showing the six components as a cycle." },
+        ],
+        slideQuiz: [
+          {
+            q: "When is performance planning done, and by whom?",
+            options: [
+              "At the start of the performance session, jointly by the appraisee and reviewer",
+              "At the end of the year, by the manager alone",
+              "Only when an employee underperforms",
+              "By Human Resources without the employee",
+            ],
+            answer: 0,
+            explain: "Planning is the first component — done jointly at the beginning, agreeing targets and key performance areas.",
+          },
+          {
+            q: "How often are appraisals normally performed?",
+            options: [
+              "Every week",
+              "Twice a year — a mid review and an annual review",
+              "Once every five years",
+              "Only when problems arise",
+            ],
+            answer: 1,
+            explain: "Appraisals normally happen twice a year: mid reviews and annual reviews at the end of the financial year.",
+          },
+          {
+            q: "In the appraisal component, who completes the ratings FIRST?",
+            options: [
+              "The appraiser gives final ratings before anyone else",
+              "The employee completes a self-appraisal first, then the appraiser rates",
+              "Human Resources rates first",
+              "The employee's colleagues rate first",
+            ],
+            answer: 1,
+            explain: "The appraisee first offers self-ratings and describes achievements in quantifiable terms; the appraiser then provides the final ratings.",
+          },
+          {
+            q: "Why is rewarding good performance a vital component?",
+            options: [
+              "It reduces the salary bill",
+              "It determines work motivation and affects self-esteem and achievement orientation",
+              "It removes the need for feedback",
+              "It replaces performance planning",
+            ],
+            answer: 1,
+            explain: "Recognition and reward directly influence motivation — and help employees cope with failures and feel valued.",
+          },
+          {
+            q: "What does potential appraisal provide inputs for?",
+            options: [
+              "Payroll deductions",
+              "Office seating plans",
+              "Succession planning and job rotation",
+              "Leave scheduling",
+            ],
+            answer: 2,
+            explain: "Potential appraisal, using competency mapping and assessment techniques, informs succession planning and job rotation.",
+          },
+        ],
+      },
+      {
+        heading: "Developing performance standards — steps 1 to 4",
+        icon: "target",
+        flat: true,
+        paragraphs: [
+          "There is an eight-step process for developing employee performance standards that support organisational goals. Do not start at the bottom with the position description — start at the top with the department's goals.",
+        ],
+        cards: [
+          { icon: "globe", title: "Step 1 · Look at the overall picture", text: "Gather your department's general outcome goals from the departmental plan before writing any individual standard." },
+          { icon: "layers", title: "Step 2 · Determine work-unit accomplishments", text: "Identify the products or services the unit delivers. Use goal cascading to turn departmental goals into unit goals, and flow-chart the process that produces each product or service." },
+          { icon: "people", title: "Step 3 · Individual accomplishments", text: "Build a role-results matrix: unit products across the top, team members down the side. In each cell — what must this member produce to support this product or service?" },
+          { icon: "checklist", title: "Step 4 · Convert to elements with priorities", text: "Choose which accomplishments become performance elements, classify them critical / non-critical / additional, and distribute 100 percentage points across them by importance." },
+        ],
+        example: {
+          title: "Goal cascading — XY Insurance claims department",
+          lines: [
+            "Departmental goal: reduce claim processing time to 2 days by end September.",
+            "Departmental goal: reduce claims errors by 10% by 30 June.",
+            "Departmental goal: handle and solve customer complaints within 24 hours.",
+            "Each unit then derives its own objectives, products and services from these goals.",
+          ],
+        },
+        bullets: [
+          "Elements must describe accomplishments (nouns), not activities (verbs), and must be quantifiable or verifiable.",
+          "Every employee needs at least one critical element. Critical elements address individual performance only.",
+          "Test for critical: is it a major component of the work? Would failure have serious consequences? Does it take significant time?",
+          "The supervisor must check each team member's job description when building the role-results matrix.",
+        ],
+        figures: [
+          { id: "252034-l1-cascade", caption: "Goal cascading: department → unit → individual", hint: "Upload a cascade/waterfall diagram of goals flowing down the organisation." },
+          { id: "252034-l1-matrix", caption: "A role-results matrix", hint: "Upload an example role-results matrix table." },
+        ],
+        slideQuiz: [
+          {
+            q: "Where does the eight-step process say you should START when developing performance standards?",
+            options: [
+              "With the individual's position description",
+              "With the department's goals and objectives — the overall picture",
+              "With the salary budget",
+              "With last year's disciplinary records",
+            ],
+            answer: 1,
+            explain: "Step 1 is to look at the overall picture: departmental goals first, not the bottom-up position description.",
+          },
+          {
+            q: "What is goal cascading?",
+            options: [
+              "Setting goals only for senior managers",
+              "Turning departmental goals into unit goals, and unit goals into individual contributions",
+              "Deleting goals that were not achieved",
+              "Announcing goals at a year-end function",
+            ],
+            answer: 1,
+            explain: "Goal cascading derives unit objectives from departmental goals — it works best where clear organisational goals exist.",
+          },
+          {
+            q: "What does a role-results matrix identify?",
+            options: [
+              "The results each work-unit member must produce to support each unit product or service",
+              "The seating arrangement of the team",
+              "The salaries of each team member",
+              "The organisation's share price",
+            ],
+            answer: 0,
+            explain: "Products/services go across the top, members down the side — each cell asks what that member must accomplish for that product.",
+          },
+          {
+            q: "Performance elements should be described as…",
+            options: [
+              "Activities (verbs) that keep people busy",
+              "Accomplishments (nouns) that are quantifiable or verifiable",
+              "Personality traits",
+              "Vague ambitions",
+            ],
+            answer: 1,
+            explain: "Elements are accomplishments — nouns, quantifiable or verifiable — not activities.",
+          },
+          {
+            q: "Which statement about critical elements is TRUE?",
+            options: [
+              "Group performance is usually a critical element",
+              "Employees may have zero critical elements",
+              "Every employee must have at least one critical element, addressing individual performance only",
+              "Critical elements never carry priority points",
+            ],
+            answer: 2,
+            explain: "All employees must have at least one critical element, and critical elements address individual performance only.",
+          },
+        ],
+      },
+      {
+        heading: "Steps 5 and 6 — measures and standards",
+        icon: "chart",
+        flat: true,
+        paragraphs: [
+          "Measures are the yardsticks used to determine how well work units and employees produced or provided products or services. First determine the general measures that apply to each element, then make them specific.",
+          "Performance standards are management-approved expressions of the performance thresholds, requirements or expectations that employees must meet to be appraised at particular levels of performance.",
+        ],
+        cards: [
+          { icon: "award", title: "Quality", text: "How well the work was performed — accuracy, appearance, usefulness or effectiveness. Think error rates and customer satisfaction rates." },
+          { icon: "chart", title: "Quantity", text: "How much work was produced — a number of products or services, or a general result to achieve." },
+          { icon: "clock", title: "Timeliness", text: "How quickly, when, or by what date the work was produced." },
+          { icon: "briefcase", title: "Cost-effectiveness", text: "Whether the result was achieved within the resources and budget available." },
+        ],
+        example: {
+          title: "Receptionist — elements, measures and standards",
+          lines: [
+            "Critical element (40 points): receive, direct and relay telephone and fax messages.",
+            "Measures: number of rings before answering; seconds before transfer to the right person.",
+            "Fully successful: 3 rings, 5-second transfer. Below: 4–5 rings, 6–10 seconds. Outstanding: 1–2 rings, 2–4 seconds.",
+            "Additional element (10 points): maintain the general filing system.",
+          ],
+        },
+        bullets: [
+          "If the appraisal programme uses two levels, the Fully Successful standard is a single point; with five levels it is a range.",
+          "Be precise: 'meeting sales targets' — the annual target, or all 12 monthly targets? Vague standards cause disputes.",
+          "After development, standards must be recorded in the organisation's format, filed and treated as confidential.",
+          "Team involvement is required when setting measures and standards.",
+        ],
+        figures: [
+          { id: "252034-l1-measures", caption: "The four general measures of performance", hint: "Upload a four-quadrant diagram: quality, quantity, timeliness, cost-effectiveness." },
+        ],
+        slideQuiz: [
+          {
+            q: "What are measures, in performance management?",
+            options: [
+              "The yardsticks used to determine how well work was produced or provided",
+              "The punishments for poor performance",
+              "The office floor dimensions",
+              "The salary scales of the unit",
+            ],
+            answer: 0,
+            explain: "Measures are the yardsticks for judging how well units and employees produced products or services.",
+          },
+          {
+            q: "Which set lists the FOUR general measures of performance?",
+            options: [
+              "Speed, effort, attitude, attendance",
+              "Quality, quantity, timeliness, cost-effectiveness",
+              "Loyalty, punctuality, neatness, friendliness",
+              "Profit, turnover, headcount, floor space",
+            ],
+            answer: 1,
+            explain: "The four general measures: quality, quantity, timeliness and cost-effectiveness.",
+          },
+          {
+            q: "A performance standard is best defined as…",
+            options: [
+              "A guess about what employees might do",
+              "A management-approved expression of the threshold employees must meet for a performance level",
+              "An informal chat about work",
+              "The company dress code",
+            ],
+            answer: 1,
+            explain: "Standards are management-approved expressions of the thresholds, requirements or expectations for each appraisal level.",
+          },
+          {
+            q: "In a five-level appraisal programme, the Fully Successful standard is described as…",
+            options: [
+              "A single point — anything below is unacceptable",
+              "A range — above it earns higher levels, below it lower levels",
+              "Whatever the employee decides",
+              "A secret number known only to HR",
+            ],
+            answer: 1,
+            explain: "With five levels the Fully Successful standard is a range; with two levels it is a single point.",
+          },
+          {
+            q: "'Meet sales targets' is a weak standard because…",
+            options: [
+              "Sales should never be measured",
+              "It is too harsh on employees",
+              "It is not specific — annual target or all 12 monthly targets?",
+              "Targets are illegal in South Africa",
+            ],
+            answer: 2,
+            explain: "Standards must be clear and concise — being too brief overlooks critical details in how the standard is judged.",
+          },
+        ],
+      },
+      {
+        heading: "Steps 7 and 8 — monitoring systems and checking the plan",
+        icon: "monitor",
+        flat: true,
+        paragraphs: [
+          "Monitoring performance means measuring performance and providing feedback to employees. Beyond the formal once- or twice-a-year progress review, supervisors and employees should discuss performance informally and often.",
+          "Monitoring is not a witch-hunting exercise to get rid of your enemies. After setting up a monitoring system, the supervisor must communicate it to all team members — at shift meetings, via email, on notice boards, in a formal letter, and during induction and coaching.",
+        ],
+        bullets: [
+          "Monitoring methods: reviewing work (total output or samples); observing work activities; reading reports, charts, time sheets and logs; employee self-reporting; surveying other units or clients; noting and investigating complaints and commendations.",
+          "360-degree (multi-rater) feedback adds views from colleagues, peers, managers, self-assessment and sometimes clients — it broadens perspective, reduces bias and identifies gaps between self-perception and others' perception.",
+          "360-degree caution: it takes time, people may fear open feedback, anonymity prevents asking for clarification, and tying it to pay makes people hesitant.",
+          "The process of setting standards should include those responsible for meeting them — team members help set goals, develop measures, outline actions and report progress; the supervisor follows progress, reinforces achievement and assists with problems.",
+          "Step 8 — check the plan: are critical elements truly critical? Are expectations quantifiable, attainable, challenging, fair, applicable and flexible? Will employees understand what is required?",
+        ],
+        figures: [
+          { id: "252034-l1-360", caption: "360-degree feedback: manager, peers, self, clients", hint: "Upload a 360-degree feedback diagram with the employee at the centre." },
+          { id: "252034-l1-monitor", caption: "Monitoring methods in daily use", hint: "Upload a photo or diagram of work review / observation in progress." },
+        ],
+        slideQuiz: [
+          {
+            q: "What does monitoring performance mean?",
+            options: [
+              "Watching employees secretly to catch them out",
+              "Measuring performance and providing feedback to employees",
+              "Counting who arrives first at the office",
+              "Reading employees' private messages",
+            ],
+            answer: 1,
+            explain: "Monitoring = measuring performance and giving feedback — including informal, frequent performance conversations.",
+          },
+          {
+            q: "Which of these is a legitimate monitoring method?",
+            options: [
+              "Reviewing work samples and reading reports, time sheets and logs",
+              "Guessing based on how friendly the employee is",
+              "Only listening to office gossip",
+              "Rating everyone the same to save time",
+            ],
+            answer: 0,
+            explain: "Legitimate methods include reviewing output, observing activities, reading records, self-reporting, surveys and investigating complaints/commendations.",
+          },
+          {
+            q: "What is 360-degree feedback?",
+            options: [
+              "Feedback given while walking in a circle",
+              "Feedback from colleagues, peers, managers, self-assessment and sometimes clients",
+              "Feedback given once every 360 days",
+              "Feedback only from the CEO",
+            ],
+            answer: 1,
+            explain: "360-degree (multi-rater) feedback gathers views from all around the employee — including self-assessment.",
+          },
+          {
+            q: "Why might an organisation choose NOT to use 360-degree feedback?",
+            options: [
+              "It gives too little information",
+              "It is always inaccurate",
+              "It takes organisational time, people may fear honest feedback, and anonymity prevents clarification",
+              "It is illegal in most industries",
+            ],
+            answer: 2,
+            explain: "The drawbacks: time investment, reluctance to give/receive open feedback, pay-linkage hesitancy, and no chance to ask for clarification.",
+          },
+          {
+            q: "How should a new performance monitoring system reach the team?",
+            options: [
+              "Keep it secret so results stay 'natural'",
+              "Communicate it via meetings, email, notice boards, formal letters, induction and coaching",
+              "Only tell the best performers",
+              "Publish it after the first dismissals",
+            ],
+            answer: 1,
+            explain: "The supervisor must communicate the monitoring system to ALL team members through multiple channels — it is not a witch-hunt.",
+          },
+        ],
+      },
+
+      /* ---------- Lesson 2: Prepare for a performance review ---------- */
+      {
+        heading: "The performance appraisal interview",
+        icon: "chat",
+        flat: true,
+        lessonStart: { n: 2, title: "Prepare for a performance review of a team member" },
+        paragraphs: [
+          "A performance appraisal interview is the first stage of the performance appraisal process: the employee and manager sit face to face to discuss all aspects of the employee's performance and thrash out any differences in perception or evaluation. It gives the employee a chance to respond to the evaluation, and the manager a chance to explain it.",
+          "The employee being evaluated is the appraisee; the person doing the evaluation — usually the manager — is the appraiser. Both prepare: the appraisee through self-evaluation, the appraiser through an objective evaluation.",
+          "The outcome of the appraisal process is the grade decided for the employee, and with it the salary increase or bonus potential awarded.",
+        ],
+        bullets: [
+          "Give at least a week's notice so the employee can review their work — more for senior or specialist positions.",
+          "Stress that the appraisal is designed mainly to help the employee understand their own performance.",
+          "Work out a mutually agreeable time; allow enough time in both schedules for the whole interview (45–90 minutes).",
+          "Choose a private, comfortable venue without interruptions. Do not sit behind a desk — it transmits a 'superior-subordinate' message; sit together at a table.",
+          "Explain thoroughly how the exercise will run, define the roles, and make clear it is a two-way conversation with your undivided attention.",
+        ],
+        figures: [
+          { id: "252034-l2-interview", caption: "Appraiser and appraisee meeting face to face", hint: "Upload a photo of a relaxed one-on-one meeting at a table (not across a desk)." },
+        ],
+        slideQuiz: [
+          {
+            q: "In an appraisal, who is the 'appraisee'?",
+            options: [
+              "The person doing the evaluation",
+              "The employee being evaluated",
+              "The HR administrator",
+              "An external consultant",
+            ],
+            answer: 1,
+            explain: "The appraisee is the employee being evaluated; the appraiser (usually the manager) does the evaluation.",
+          },
+          {
+            q: "How much notice should an employee get before their appraisal interview?",
+            options: [
+              "None — surprise keeps it honest",
+              "At least a week, so they can review their work",
+              "An hour",
+              "A full year",
+            ],
+            answer: 1,
+            explain: "Fair warning of at least a week lets the employee prepare; senior or specialist roles need even more time.",
+          },
+          {
+            q: "Why should you avoid sitting behind a desk during the interview?",
+            options: [
+              "Desks are usually too small",
+              "It transmits a non-verbal 'superior-subordinate' message of formality",
+              "It blocks the camera",
+              "It is against labour law",
+            ],
+            answer: 1,
+            explain: "Sitting together at a table creates a relaxed, informal atmosphere for a genuine two-way conversation.",
+          },
+          {
+            q: "What is the outcome of the appraisal process?",
+            options: [
+              "A new job description",
+              "The employee's grade, which feeds the salary hike or bonus decision",
+              "A team-building event",
+              "A written warning in every case",
+            ],
+            answer: 1,
+            explain: "The outcome is the agreed grade — typically linked to salary increase and bonus cycles.",
+          },
+          {
+            q: "How long should you set aside for an appraisal interview?",
+            options: [
+              "5 minutes",
+              "45 to 90 minutes depending on the complexity and seniority of the position",
+              "A full working week",
+              "It must never be scheduled",
+            ],
+            answer: 1,
+            explain: "Set aside 45–90 minutes in a private, comfortable venue without disturbances.",
+          },
+        ],
+      },
+      {
+        heading: "The preliminary assessment",
+        icon: "search",
+        flat: true,
+        paragraphs: [
+          "Before the interview, the supervisor conducts a preliminary assessment of the employee's performance against the agreed standards — and records the findings for the review meeting and future reference.",
+        ],
+        bullets: [
+          "Collect all the information you need for the interview.",
+          "Review the relevant job description — then weed out the important duties from the unimportant.",
+          "Compare the employee's performance against these criteria.",
+          "Look at previous appraisals and whether past goals were met — but do not let old evaluations bias your view of current performance.",
+          "Request comments from other managers who have observed the employee's work.",
+          "Complete the appraisal form so the interview is organised — but do NOT draft the improvement plan yet; that is developed WITH the employee in the interview.",
+          "Observe, observe, observe: be balanced and fair; avoid incidents that are too old, too new or from an atypical period; assess job performance, not personality; when in doubt, let the facts guide you; appraise only if you have enough information.",
+          "Record findings on a preliminary worksheet: job description changes, professional goals, employee strengths, areas for improvement, organisational strengths/weaknesses affecting the position, and ways the supervisor or organisation can assist.",
+        ],
+        figures: [
+          { id: "252034-l2-prelim", caption: "Preliminary evaluation worksheet", hint: "Upload an example of a completed preliminary assessment worksheet." },
+          { id: "252034-l2-evidence", caption: "Gathering performance evidence from records", hint: "Upload a photo of reports/records being reviewed." },
+        ],
+        slideQuiz: [
+          {
+            q: "What must the supervisor do BEFORE the performance review interview?",
+            options: [
+              "Nothing — spontaneity is best",
+              "Conduct a preliminary assessment of performance against agreed standards",
+              "Decide the final rating and lock it in",
+              "Ask the employee to write their own final review",
+            ],
+            answer: 1,
+            explain: "Preparation includes a preliminary assessment against the agreed standards, with findings recorded.",
+          },
+          {
+            q: "Why look at previous performance appraisals carefully?",
+            options: [
+              "To copy last year's comments word for word",
+              "To check whether past goals were met — without letting old evaluations bias the current one",
+              "To find reasons to reduce the salary",
+              "Previous appraisals must never be read",
+            ],
+            answer: 1,
+            explain: "Past appraisals show goal progress, but must not prejudice your impression of current performance.",
+          },
+          {
+            q: "Why should you NOT develop the improvement plan during preliminary assessment?",
+            options: [
+              "Improvement plans are HR's job only",
+              "The plan is developed in the interview itself, with primary responsibility on the employee",
+              "Improvement plans are optional paperwork",
+              "It saves printing costs",
+            ],
+            answer: 1,
+            explain: "Hold the plan for the interview — it must be built with the employee, not dictated beforehand.",
+          },
+          {
+            q: "When you dislike aspects of an employee's personality, you should…",
+            options: [
+              "Rate them lower to be safe",
+              "Assess job performance, not personality — and let facts guide your opinion",
+              "Skip their appraisal",
+              "Ask a friend to do the rating",
+            ],
+            answer: 1,
+            explain: "Ultimately it is the performance that counts — turn to the facts when feelings are mixed.",
+          },
+          {
+            q: "Which incidents can mislead a performance rater?",
+            options: [
+              "Incidents that are too old, too new, or from an atypical work period",
+              "Incidents witnessed by more than one manager",
+              "Incidents recorded in the job description",
+              "Incidents the employee reported themselves",
+            ],
+            answer: 0,
+            explain: "Raters go wrong relying on stale or very recent incidents, or judging from an unrepresentative period.",
+          },
+        ],
+      },
+      {
+        heading: "Employee self-preparation",
+        icon: "person",
+        flat: true,
+        paragraphs: [
+          "The employee must also be given the chance to prepare for the review. A self-appraisal preparation form guides their thinking about past performance and the year ahead — and self-evaluation stimulates discussion about how supervisor and employee can work together to increase effectiveness.",
+        ],
+        bullets: [
+          "Past performance: How well did I achieve my objectives? What are my key accountabilities, in order of importance? What were my major accomplishments and their measurable results?",
+          "Have any new accountabilities been added or removed this year? Were there special circumstances that helped or hindered my work?",
+          "What knowledge and skills did I develop, and how did I apply them? What development goals did I achieve?",
+          "Problems and support: What problems did I meet? Could my manager give more guidance or help? Are my skills and abilities being fully used?",
+          "The future: What are my goals for next year, and how do they fit the department's goals? Where do I need more experience or training? What direction should my career take? Am I ready for additional responsibilities?",
+          "Optional salary dialogue: How do I assess my current salary relative to my performance, and what changes are needed to be recommended for pay improvements?",
+        ],
+        figures: [
+          { id: "252034-l2-selfprep", caption: "Self-appraisal preparation form", hint: "Upload an example self-appraisal preparation form." },
+        ],
+        slideQuiz: [
+          {
+            q: "Why must the employee get a chance to prepare for the review?",
+            options: [
+              "So they can dispute every point in advance",
+              "Self-evaluation stimulates discussion on working together more effectively",
+              "It is only a legal formality",
+              "So the manager can skip preparation",
+            ],
+            answer: 1,
+            explain: "Self-preparation makes the interview a genuine two-way discussion about effectiveness — not a one-way verdict.",
+          },
+          {
+            q: "Which question belongs to the employee's PAST-performance preparation?",
+            options: [
+              "What are my goals for next year?",
+              "What were my major accomplishments and their measurable results?",
+              "What training do I want next year?",
+              "Which colleagues should be promoted?",
+            ],
+            answer: 1,
+            explain: "Past-performance questions cover accountabilities, accomplishments with measurable results, skills developed and circumstances.",
+          },
+          {
+            q: "Which question belongs to FUTURE-performance preparation?",
+            options: [
+              "How well did I achieve last year's objectives?",
+              "What were the special circumstances that hindered me?",
+              "In what aspects of my job do I need more experience and training?",
+              "What did I accomplish this year?",
+            ],
+            answer: 2,
+            explain: "Future questions cover next year's goals, development needs, career direction and readiness for more responsibility.",
+          },
+          {
+            q: "The self-appraisal should list key accountabilities…",
+            options: [
+              "In alphabetical order",
+              "In order of importance to the job and department",
+              "In order of how enjoyable they are",
+              "Only if they changed this year",
+            ],
+            answer: 1,
+            explain: "Accountabilities are listed in order of importance to the job and department — with reasons.",
+          },
+          {
+            q: "Is a salary discussion part of the self-preparation questions?",
+            options: [
+              "Yes — it is optional: assessing current salary relative to performance and expectations for improvement",
+              "No — salary may never be mentioned",
+              "Yes — the employee sets their own increase",
+              "Only if HR attends the interview",
+            ],
+            answer: 0,
+            explain: "A dialogue on salary is an optional part: current salary vs performance, chances and expectations for pay improvement.",
+          },
+        ],
+      },
+      {
+        heading: "Feedback methods and the BISA model",
+        icon: "chat",
+        flat: true,
+        paragraphs: [
+          "During preparation the supervisor decides how to give feedback. Feedback that is sent in a useful way is not rejected — but no matter how accurate it is, a defensive receiver gets no value from it. Give feedback so the receiver can hear it clearly and objectively.",
+          "The BISA model structures non-judgmental feedback: B = Behaviour — identify the specific behaviour you observed; I = Impact — communicate the impact it had on the people present; S = Silence — pause so the person can process and respond; A = Alternatives — ask what could have been done differently, then offer your own suggestions.",
+        ],
+        bullets: [
+          "Focus on the behaviour, not the person — 'she cried during the interview', not 'she's a cry baby'.",
+          "Describe rather than judge; be specific rather than general so the receiver knows exactly what to continue or change.",
+          "Feedback must be well timed — as soon as possible after the event — and at the right place: praise in public, criticise in private.",
+          "Only give feedback on behaviour the person can change; keep the amount usable ('less is more'); share ideas rather than give advice; and check the receiver understood.",
+          "Start with the positive: acknowledge specific good contributions and their impact — more meaningful than a generic 'Good job!'.",
+          "Documents to prepare: the Employee Goal Review & Planning form, the Peer Assessment form, the Performance Review form, and the Interview Questionnaire with guiding questions.",
+        ],
+        figures: [
+          { id: "252034-l2-bisa", caption: "The BISA feedback model", hint: "Upload a BISA diagram: Behaviour → Impact → Silence → Alternatives." },
+          { id: "252034-l2-docs", caption: "Documents for the review interview", hint: "Upload photos/scans of the review forms used in your organisation." },
+        ],
+        slideQuiz: [
+          {
+            q: "In the BISA model, what does the S stand for?",
+            options: [
+              "Salary — discuss pay immediately",
+              "Silence — pause so the person can process and respond",
+              "Sanctions — issue a warning",
+              "Signature — sign the form",
+            ],
+            answer: 1,
+            explain: "BISA = Behaviour, Impact, Silence, Alternatives — the pause lets the receiver process the information.",
+          },
+          {
+            q: "Which feedback statement follows the guidelines?",
+            options: [
+              "'You are useless at client work.'",
+              "'You're handling everything wrong.'",
+              "'Instead of ignoring your supervisor's comments, it might help to discuss the situation in detail.'",
+              "'Everyone thinks you have a bad attitude.'",
+            ],
+            answer: 2,
+            explain: "Good feedback is specific, descriptive and focused on changeable behaviour — not judgmental labels.",
+          },
+          {
+            q: "The general rule about where to give feedback is…",
+            options: [
+              "Praise in public, criticise in private",
+              "Criticise in public so others learn",
+              "Never praise anyone",
+              "Give all feedback by SMS",
+            ],
+            answer: 0,
+            explain: "Timing and place matter: praise publicly, criticise privately.",
+          },
+          {
+            q: "Why is feedback on unchangeable things (like a stutter) discouraged?",
+            options: [
+              "It takes too long to say",
+              "It only frustrates the receiver, who cannot change it",
+              "It is too cheap",
+              "It must be saved for the CEO",
+            ],
+            answer: 1,
+            explain: "Focus feedback on behaviour the receiver CAN change — anything else frustrates without helping.",
+          },
+          {
+            q: "Which documents should be ready for a performance review interview?",
+            options: [
+              "Goal review & planning form, peer assessment form, performance review form and interview questionnaire",
+              "Only the employee's payslip",
+              "The office lease agreement",
+              "The company's marketing brochure",
+            ],
+            answer: 0,
+            explain: "The four working documents: Employee Goal Review & Planning, Peer Assessment, Performance Review form and the Interview Questionnaire.",
+          },
+        ],
+      },
+
+      /* ---------- Lesson 3: Conduct the performance review interview ---------- */
+      {
+        heading: "Opening the interview",
+        icon: "presenter",
+        flat: true,
+        lessonStart: { n: 3, title: "Conduct a performance review interview" },
+        paragraphs: [
+          "The appraisal interview improves job performance by communicating appreciation for the employee's contribution, informing them of the overall appraisal and its criteria, opening a proactive dialogue about correcting weaknesses and building on strengths, clarifying expectations, strengthening the working relationship, and setting goals for the coming year.",
+        ],
+        bullets: [
+          "Open by establishing rapport. Explain the purpose of the interview and what will take place — some interviewers prepare a standard opening script.",
+          "Emphasise that the interview is part of an ongoing, two-way feedback process.",
+          "Discuss the job in general first and agree on its key tasks, content and responsibilities.",
+          "Start with areas of agreement and strengths, then move gradually into disagreements and performance weaknesses.",
+          "Use specific, actual examples of good performance — but avoid the pattern where praise always signals incoming criticism.",
+          "If the employee is quiet or nervous, ask how particular parts of the job are performed or how specific incidents were handled; give plenty of openings for their own issues, questions and improvement suggestions.",
+        ],
+        figures: [
+          { id: "252034-l3-open", caption: "Establishing rapport at the start of the interview", hint: "Upload a photo of a welcoming, relaxed interview opening." },
+        ],
+        slideQuiz: [
+          {
+            q: "How should a performance review interview open?",
+            options: [
+              "With the list of everything that went wrong",
+              "By establishing rapport and explaining the purpose and process",
+              "With the salary decision",
+              "In total silence",
+            ],
+            answer: 1,
+            explain: "Open with rapport, purpose and process — some interviewers even use a standard opening script.",
+          },
+          {
+            q: "What should be discussed FIRST, before any ratings?",
+            options: [
+              "The job in general — agreeing its key tasks, content and responsibilities",
+              "The employee's personality",
+              "Office gossip",
+              "The manager's own career",
+            ],
+            answer: 0,
+            explain: "Agree on the job itself first, then move to areas of agreement and strengths before weaknesses.",
+          },
+          {
+            q: "Why avoid always following praise with criticism?",
+            options: [
+              "Praise becomes a warning sign and loses its value",
+              "Criticism is never allowed",
+              "Praise must be saved for year-end",
+              "It makes interviews too short",
+            ],
+            answer: 0,
+            explain: "If praise always precedes criticism, employees brace for the 'but' — the positive feedback stops landing.",
+          },
+          {
+            q: "The interview should be emphasised as…",
+            options: [
+              "A one-way verdict from management",
+              "Part of an ongoing, two-way feedback process",
+              "A disciplinary hearing",
+              "A confidential HR investigation",
+            ],
+            answer: 1,
+            explain: "It is a two-way conversation within continuous feedback — not a once-a-year verdict.",
+          },
+          {
+            q: "A quiet, nervous employee should be…",
+            options: [
+              "Skipped over quickly",
+              "Asked to comment on how specific parts of the job or incidents were handled",
+              "Rated lower for poor communication",
+              "Sent back to their desk",
+            ],
+            answer: 1,
+            explain: "Draw them out with specific, concrete questions and give openings for their own issues and suggestions.",
+          },
+        ],
+      },
+      {
+        heading: "Handling disagreement and rating fairly",
+        icon: "shield",
+        flat: true,
+        paragraphs: [
+          "Focusing on actual job behaviour keeps the emotional temperature down. Employees may react unpredictably — the classic reactions are 'fight' (defend and argue back) or 'flight' (avoid the issue or pretend to agree). Both must be resolved during the interview.",
+        ],
+        bullets: [
+          "Fight: hear the employee out, acknowledge and note what was said, then restate the evidence behind the assessment.",
+          "Flight: persist with more direct questions until you get to the bottom of the issue — do not move on until you have.",
+          "Where performance problems exist, explore the specific gap between current and required performance, ways to close it, and the consequences if it is not closed.",
+          "Never link behaviour to personality — that is when interviews go out of control. Address every relevant matter; nothing may be 'left hanging'.",
+          "If a rating disagreement cannot be resolved, record that it occurred — do not escape with an 'average' rating. Consider follow-up action, and be ready to modify your appraisal if the self-appraisal sheds new light.",
+          "Rating techniques: be factual with specific examples; consider day-in, day-out performance over the whole period — not one or two outstanding events; rate the employee, not the importance of the job; avoid rating consistently high or low; build on strength without avoiding needed improvement; the immediate manager conducts the appraisal with no one else present; both parties sign the form.",
+        ],
+        figures: [
+          { id: "252034-l3-gap", caption: "The performance gap: current vs required", hint: "Upload a gap-analysis diagram (current performance vs required standard)." },
+          { id: "252034-l3-fightflight", caption: "Fight and flight reactions in reviews", hint: "Upload an illustration of handling difficult reactions calmly." },
+        ],
+        slideQuiz: [
+          {
+            q: "What are the two classic reactions when an employee disagrees with feedback?",
+            options: [
+              "Fight (argue back) and flight (avoid or pretend to agree)",
+              "Laughing and crying",
+              "Resigning and promotion",
+              "Silence and applause",
+            ],
+            answer: 0,
+            explain: "'Fight' defends and argues; 'flight' avoids or falsely agrees — both must be resolved in the interview.",
+          },
+          {
+            q: "How should you handle a 'fight' reaction?",
+            options: [
+              "Argue louder until you win",
+              "Hear the employee out, acknowledge and note it, then restate the evidence for the assessment",
+              "End the interview immediately",
+              "Change the rating to keep the peace",
+            ],
+            answer: 1,
+            explain: "Listen first, acknowledge, take notes — then stand on the evidence considered in the assessment.",
+          },
+          {
+            q: "If a rating disagreement cannot be resolved, you should…",
+            options: [
+              "Issue an 'average' rating to escape the conflict",
+              "Note that the disagreement occurred and consider follow-up action",
+              "Delete the element from the plan",
+              "Ask the employee to leave",
+            ],
+            answer: 1,
+            explain: "Do not take the 'flight' route with a neutral rating — record the disagreement and plan follow-up.",
+          },
+          {
+            q: "Which is a correct rating technique?",
+            options: [
+              "Let one outstanding incident define the whole year",
+              "Rate people in 'better' jobs higher automatically",
+              "Consider day-in, day-out performance over the whole rating period",
+              "Rate everyone consistently high to stay popular",
+            ],
+            answer: 2,
+            explain: "Rate the whole period factually — not single events, job status, or a habitual high/low pattern.",
+          },
+          {
+            q: "Who conducts the appraisal, and who signs the form?",
+            options: [
+              "The whole team conducts it; nobody signs",
+              "The immediate manager conducts it with no one else present; both manager and employee sign",
+              "HR conducts it; only HR signs",
+              "An external consultant conducts it; the CEO signs",
+            ],
+            answer: 1,
+            explain: "The immediate manager/supervisor conducts the appraisal one-on-one, and both parties sign the form.",
+          },
+        ],
+      },
+      {
+        heading: "Action plans, closing and records",
+        icon: "checklist",
+        flat: true,
+        paragraphs: [
+          "After agreeing the ratings, develop action plans to address performance gaps — in co-operation with the employee. You are NOT dictating a plan: you are working together on a viable plan focused on the most important goals, not every area that could improve.",
+          "By the time the appraisal is over, the employee must be able to answer the two most important questions about their work: HOW AM I DOING? and WHERE AM I GOING?",
+        ],
+        bullets: [
+          "Choose goals that are specific and practical; set a timetable and ways of measuring achievement.",
+          "Watch for obstacles outside the employee's control — improvement may need education, job experience, counselling, greater responsibility or even a new supervisor.",
+          "Close by summarising the key issues and agreed actions; develop the action plan and give copies to the employee and anyone affected (such as trainers); set a timetable for review and follow-up.",
+          "Complete the rating form; ask the employee to sign it (note if they decline); invite them to add or attach comments; give them a copy; keep appraisals on file for 3–5 years.",
+          "Assessment criteria you must meet: performance is monitored against agreed standards using monitoring systems; findings on positive and negative aspects are recorded accurately, fairly and honestly for report-back and follow-up; an action plan addressing gaps and building on positives is agreed with the employee; and agreed actions are documented and signed by both parties.",
+        ],
+        figures: [
+          { id: "252034-l3-plan", caption: "An agreed action plan with timelines", hint: "Upload an example action plan or goal-setting template." },
+          { id: "252034-l3-signoff", caption: "Both parties sign the review record", hint: "Upload a photo of a signed performance review form." },
+        ],
+        slideQuiz: [
+          {
+            q: "How is the action plan developed?",
+            options: [
+              "Dictated by the manager before the interview",
+              "In co-operation with the employee, focused on the most important goals",
+              "Copied from another employee's plan",
+              "Downloaded from the internet",
+            ],
+            answer: 1,
+            explain: "Action plans are co-developed and prioritised — not dictated, and not a list of every possible improvement.",
+          },
+          {
+            q: "The two questions every employee should be able to answer after the appraisal are…",
+            options: [
+              "'Who is to blame?' and 'When is lunch?'",
+              "'How am I doing?' and 'Where am I going?'",
+              "'What is my colleague earning?' and 'When is my leave?'",
+              "'Why me?' and 'Who decided this?'",
+            ],
+            answer: 1,
+            explain: "A complete appraisal answers: HOW AM I DOING? and WHERE AM I GOING?",
+          },
+          {
+            q: "What happens if the employee refuses to sign the completed rating form?",
+            options: [
+              "The appraisal is cancelled",
+              "Note that the invitation to sign was made, and let them attach comments",
+              "The employee is dismissed",
+              "The form is destroyed",
+            ],
+            answer: 1,
+            explain: "Record that signing was offered; the employee may add or attach comments to the file copy.",
+          },
+          {
+            q: "How long should appraisal records be kept on file?",
+            options: [
+              "They should be shredded immediately",
+              "One month",
+              "3 to 5 years",
+              "50 years",
+            ],
+            answer: 2,
+            explain: "The recommended retention period for appraisal records is 3–5 years.",
+          },
+          {
+            q: "Which sequence satisfies the unit's assessment criteria for recording results?",
+            options: [
+              "Record findings accurately, fairly and honestly; agree an action plan with the employee; document and sign the agreed actions",
+              "Record only negative findings; file them secretly",
+              "Agree actions verbally and never write them down",
+              "Sign the form before the interview happens",
+            ],
+            answer: 0,
+            explain: "Findings (positive AND negative) are recorded accurately, fairly and honestly; the action plan is agreed; and agreed actions are documented and signed by both parties.",
+          },
+        ],
+      },
+      {
+        heading: "Unit quiz — monitor and evaluate team members",
+        icon: "clipboard",
+        flat: true,
+        quizGate: true,
+        paragraphs: [
+          "Answer every question correctly to complete the unit. The quiz covers performance standards, monitoring systems, preparing for reviews, and conducting the review interview.",
+        ],
+      },
+    ],
+    exercises: [
+      {
+        id: "252034-e1",
+        title: "Develop performance standards for a team member",
+        task: "Use the eight-step process to develop performance standards for one team member of your choice.",
+        scenario: [
+          "Pick a real team member (or a receptionist as in the lesson example). Work through the eight steps: overall picture, unit accomplishments, individual accomplishments, elements and priorities, measures, standards, monitoring, and the final check.",
+        ],
+        steps: [
+          "State the departmental goal you start from, and cascade it into one work-unit objective (step 1–2).",
+          "Using a role-results matrix, name ONE accomplishment (a noun, not an activity) this member must produce, and classify it critical or non-critical with priority points (steps 3–4).",
+          "Write ONE specific measure and its Fully Successful standard for that element, naming which general measure it uses (quality, quantity, timeliness or cost-effectiveness) (steps 5–6).",
+          "Describe how you will monitor performance on this element and how you will communicate the monitoring system to the team (steps 7–8).",
+        ],
+        checks: [
+          {
+            answer: [
+              "Start with the department's goals from the departmental plan, then derive the unit objective from them — for example, the claims department goal of reducing claim processing time to 2 days becomes the unit's turnaround objective.",
+            ],
+            concepts: [
+              ["department", "organisation", "overall picture"],
+              ["goal", "objective"],
+              ["cascad", "derive", "flow", "transform"],
+              ["unit"],
+            ],
+            labels: ["departmental starting point", "goals stated", "cascading", "unit level"],
+            min: 3,
+          },
+          {
+            answer: [
+              "The role-results matrix lists unit products across the top and members down the side; each cell holds what the member must accomplish. The element is written as an accomplishment (noun), classified critical because failure would seriously affect the unit, and given priority points out of 100.",
+            ],
+            concepts: [
+              ["matrix", "role-results", "role results"],
+              ["accomplishment", "noun", "product", "service"],
+              ["critical", "non-critical"],
+              ["points", "weight", "priorit"],
+            ],
+            labels: ["role-results matrix", "accomplishment not activity", "critical classification", "priority points"],
+            min: 3,
+          },
+          {
+            answer: [
+              "A specific measure states the yardstick — e.g. number of rings before answering incoming calls (timeliness/quality): Fully Successful = 3 rings and a 5-second transfer lead time.",
+            ],
+            concepts: [
+              ["quality", "quantity", "timeliness", "cost"],
+              ["measure", "yardstick", "indicator"],
+              ["standard", "fully successful", "threshold", "expectation"],
+              ["number", "rate", "time", "seconds", "rings", "%", "percent"],
+            ],
+            labels: ["general measure named", "specific measure", "standard defined", "quantified"],
+            min: 3,
+          },
+          {
+            answer: [
+              "Monitor by reviewing work samples, observation, reports/logs, self-reporting, surveys or complaint investigation — then communicate the system to all team members via shift meetings, email, notice boards, formal letters and induction/coaching.",
+            ],
+            concepts: [
+              ["review", "observ", "report", "log", "sample", "survey", "self-report", "360"],
+              ["communicat", "meeting", "email", "notice", "letter", "induction"],
+              ["team", "member", "all"],
+            ],
+            labels: ["monitoring method", "communication channel", "whole team informed"],
+            min: 2,
+          },
+        ],
+      },
+      {
+        id: "252034-e2",
+        title: "Plan a BISA feedback conversation",
+        task: "Prepare a constructive feedback dialogue using the BISA model.",
+        scenario: [
+          "Your team member was supposed to use a meeting as a brainstorming session, but instead used all the time to share her own ideas. Plan how you would give her feedback.",
+        ],
+        steps: [
+          "Write the opening line and the B (Behaviour) statement — the specific, indisputable behaviour you observed.",
+          "Write the I (Impact) statement — the effect the behaviour had on the people present, including you.",
+          "Explain what you do at S (Silence) and why it matters.",
+          "Write the A (Alternatives) question you would ask, and one alternative you could offer. End with one piece of specific positive feedback.",
+        ],
+        checks: [
+          {
+            answer: [
+              "Open with permission — 'May I share an observation with you?' — then describe the specific behaviour: in the meeting meant for brainstorming, she used the time to present her own ideas.",
+            ],
+            concepts: [
+              ["observation", "may i share", "permission"],
+              ["behaviour", "behavior", "observed", "specific", "fact"],
+              ["meeting", "brainstorm", "own ideas"],
+            ],
+            labels: ["non-judgmental opening", "specific behaviour", "scenario detail"],
+            min: 2,
+          },
+          {
+            answer: [
+              "The impact: others did not get to contribute, the team lost the ideas the brainstorm was meant to gather, and people may feel their input is not valued.",
+            ],
+            concepts: [
+              ["impact", "effect", "result"],
+              ["team", "others", "people", "present"],
+              ["contribut", "ideas", "input", "participation"],
+            ],
+            labels: ["impact stated", "people affected", "lost contribution"],
+            min: 2,
+          },
+          {
+            answer: [
+              "Silence: pause for a moment to let the person process the information and respond — without filling the gap.",
+            ],
+            concepts: [
+              ["pause", "silence", "quiet", "wait"],
+              ["process", "respond", "think"],
+            ],
+            labels: ["deliberate pause", "processing time"],
+            min: 2,
+          },
+          {
+            answer: [
+              "Alternatives: ask if she has ideas about what she could have done differently — for example inviting each person to share before adding her own — and offer your suggestion. Then acknowledge something specific she did well, such as the quality of her ideas.",
+            ],
+            concepts: [
+              ["alternativ", "differently", "could have done", "ideas"],
+              ["ask", "question", "invite"],
+              ["suggest", "offer"],
+              ["positive", "well", "acknowledge", "strength"],
+            ],
+            labels: ["asks for alternatives", "invitation first", "own suggestion", "ends positive"],
+            min: 3,
+          },
+        ],
+      },
+    ],
+    assignments: [
+      {
+        id: "252034-a1",
+        title: "Conduct and document a performance review",
+        brief: "Plan, conduct and document a full performance review of one team member against agreed performance standards, following the process in this unit.",
+        requirements: [
+          "The performance standards and monitoring system you formulated for the team member (steps 1–8), showing team involvement.",
+          "Evidence of preparation: notice given to the employee, the preliminary assessment worksheet, and the employee's self-appraisal preparation form.",
+          "The completed performance review form with findings on positive AND negative aspects recorded accurately, fairly and honestly.",
+          "The agreed action plan addressing performance gaps and building on positive performance, with timelines and measures.",
+          "Signatures of both parties on the documented agreed actions.",
+        ],
+        evidence: "Upload the full review pack (standards, preparation documents, completed review form and signed action plan) to your Portfolio of Evidence.",
+      },
+    ],
+    quiz: [
+      {
+        q: "Performance management is best described as…",
+        options: [
+          "A once-a-year form-filling exercise",
+          "An ongoing communication process between supervisors and employees throughout the year",
+          "A disciplinary code",
+          "A software licence",
+        ],
+        answer: 1,
+        explain: "Performance management is an ongoing, year-round communication process — appraisal is only one part of it.",
+      },
+      {
+        q: "Which is the correct ORDER of the ongoing performance process?",
+        options: [
+          "Appraisal → planning → coaching",
+          "Performance planning → coaching and counselling → appraisal",
+          "Coaching → appraisal → planning",
+          "Appraisal only, repeated annually",
+        ],
+        answer: 1,
+        explain: "Planning sets expectations, coaching provides feedback and guidance, and appraisal completes the cycle.",
+      },
+      {
+        q: "In the eight-step process, which step converts accomplishments into weighted performance elements?",
+        options: ["Step 1", "Step 4", "Step 7", "Step 8"],
+        answer: 1,
+        explain: "Step 4 selects which accomplishments become elements, classifies them critical/non-critical/additional and assigns weights.",
+      },
+      {
+        q: "Which element type may NOT measure group performance (with narrow exceptions)?",
+        options: ["Additional elements", "Non-critical elements", "Critical elements", "Optional elements"],
+        answer: 2,
+        explain: "Critical elements must address individual performance only.",
+      },
+      {
+        q: "Error rates and customer satisfaction rates are examples of which general measure?",
+        options: ["Quantity", "Quality", "Timeliness", "Cost-effectiveness"],
+        answer: 1,
+        explain: "Quality covers accuracy, appearance, usefulness and effectiveness — error and satisfaction rates measure it.",
+      },
+      {
+        q: "Which monitoring approach adds feedback from peers, self-assessment and sometimes clients?",
+        options: [
+          "Time-sheet review",
+          "360-degree (multi-rater) feedback",
+          "Random spot fines",
+          "Annual staff party",
+        ],
+        answer: 1,
+        explain: "360-degree feedback gathers multi-rater views from around the employee, including self-assessment.",
+      },
+      {
+        q: "Before the review interview, the supervisor's preliminary assessment should NOT include…",
+        options: [
+          "Reviewing the job description",
+          "Comparing performance against criteria",
+          "Drafting the final improvement plan alone",
+          "Requesting comments from other managers",
+        ],
+        answer: 2,
+        explain: "The improvement plan is developed WITH the employee during the interview — not beforehand.",
+      },
+      {
+        q: "In the BISA model, 'B' means…",
+        options: [
+          "Blame — identify who is at fault",
+          "Behaviour — the specific, factual behaviour you observed",
+          "Bonus — discuss rewards first",
+          "Balance — average the ratings",
+        ],
+        answer: 1,
+        explain: "B = Behaviour: identify the specific behaviour observed or what was said — facts are indisputable.",
+      },
+      {
+        q: "During the interview, where should discussion START?",
+        options: [
+          "Areas of agreement and strengths",
+          "The biggest failure of the year",
+          "Salary demands",
+          "Personality flaws",
+        ],
+        answer: 0,
+        explain: "Agree on the job first, discuss strengths and agreement areas, then move gradually to weaknesses.",
+      },
+      {
+        q: "Which set of actions correctly closes a performance review?",
+        options: [
+          "Summarise key issues, agree the action plan with copies, set follow-up dates, sign the form, keep it on file 3–5 years",
+          "End abruptly and file nothing",
+          "Announce the rating and leave",
+          "Ask the employee to write the whole report alone",
+        ],
+        answer: 0,
+        explain: "Close with a summary, an agreed and distributed action plan, a review timetable, signatures and proper records.",
+      },
+    ],
+    selfAssessment: {
+      intro: [
+        "Tick each statement you can honestly claim. Be truthful with yourself — this checklist mirrors the unit's assessment criteria.",
+      ],
+      items: [
+        "I can formulate performance standards for team members using the eight-step process, starting from departmental goals.",
+        "I can build a role-results matrix and write elements as quantifiable accomplishments with priorities.",
+        "I can choose general and specific measures (quality, quantity, timeliness, cost-effectiveness) and write clear standards.",
+        "I can establish and communicate a monitoring system, including 360-degree feedback where appropriate.",
+        "I can prepare for a performance review: give notice, conduct a preliminary assessment and record it.",
+        "I can guide an employee's self-preparation for a review.",
+        "I can give constructive feedback using the BISA model, starting with the positive.",
+        "I can open a review interview with rapport, handle fight/flight reactions and rate fairly on facts.",
+        "I can agree an action plan with the employee, document it, and have it signed by both parties.",
+      ],
+      outro: [
+        "Any unticked statement points to the lesson slide you should revisit before attempting the unit quiz and your POE assignment.",
+      ],
+    },
+  },
 };
 
 export function getContent(us: string): UnitContent | undefined {
