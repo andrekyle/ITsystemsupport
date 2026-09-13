@@ -331,7 +331,7 @@ function readLayer(value: unknown): PageLayer | undefined {
     pictures.push({ ...box, src, path: text(item.path, 300) });
   }
   const result: PageLayer = { text: runs, rules: shapes(layer.rules, false), fills: shapes(layer.fills, false), frames: shapes(layer.frames, true), combs: shapes(layer.combs, true).filter(shape => shape.n), pictures };
-  if (!result.text.length && !result.rules.length && !result.fills.length && !result.pictures.length) return undefined;
+  if (!result.text.length && !result.rules.length && !result.fills.length && !result.frames.length && !result.combs.length && !result.pictures.length) return undefined;
   return result;
 }
 
@@ -430,7 +430,25 @@ export function parseFormDefinition(value: unknown): FormDefinition {
   if (pages.length) {
     // a placement off the end of the page set is not on any page
     for (const section of sections) {
-      for (const field of section.fields) if (field.placement && field.placement.page > pages.length) delete field.placement;
+      for (const field of section.fields) {
+        const placement = field.placement;
+        if (!placement) continue;
+        if (placement.page > pages.length) {
+          delete field.placement;
+          continue;
+        }
+        if (placement.comb || !placement.box || !["text", "textarea", "email", "tel", "number"].includes(field.type)) continue;
+        const box = placement.box;
+        const comb = pages[placement.page - 1].layer?.combs.find(candidate => {
+          const sharedWidth = Math.min(box.x + box.w, candidate.x + candidate.w) - Math.max(box.x, candidate.x);
+          const sharedHeight = Math.min(box.y + box.h, candidate.y + candidate.h) - Math.max(box.y, candidate.y);
+          return sharedWidth >= 0.8 * Math.max(box.w, candidate.w) && sharedHeight >= 0.7 * Math.max(box.h, candidate.h);
+        });
+        if (comb) {
+          placement.box = readBox(comb);
+          placement.comb = comb.n;
+        }
+      }
     }
   }
   // the rebuilt page is the default wherever it exists; scans stay images

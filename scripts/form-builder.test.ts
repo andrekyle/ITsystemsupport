@@ -41,3 +41,61 @@ test("validates required fields, choices, email and calendar dates", () => {
   const invalid = validateFormAnswers(parsed, { name: "Learner", equipment: "Printer", consent: true, email: "wrong", date: "2026-02-30" });
   assert.deepEqual(Object.keys(invalid), ["email", "date", "equipment"]);
 });
+
+test("replica saved fields recover their printed comb and exact bounds", () => {
+  const printed = { x: 0.2, y: 0.3, w: 0.6, h: 0.02 };
+  const parsed = parseFormDefinition({
+    title: "Saved replica",
+    sections: [{ id: "details", fields: [{
+      id: "surname", label: "Surname", type: "text", options: [],
+      placement: { page: 1, box: { x: 0.198, y: 0.301, w: 0.601, h: 0.018 }, options: [] },
+    }] }],
+    pages: [{
+      src: "https://example.test/form.png", width: 1000, height: 1400,
+      layer: {
+        text: [{ t: "Surname", x: 0.05, y: 0.3, w: 0.1, h: 0.02, s: 0.014, f: "arial", c: "#000000" }],
+        combs: [{ ...printed, n: 20, c: "#000000", t: 0.001 }],
+      },
+    }],
+  });
+  const field = parsed.sections[0].fields[0];
+  assert.equal(field.placement?.comb, 20);
+  assert.deepEqual(field.placement?.box, printed);
+  assert.deepEqual(parseFormDefinition(JSON.parse(JSON.stringify(parsed))), parsed);
+});
+
+test("replica comb recovery keeps unrelated fields and explicit placements intact", () => {
+  const printed = { x: 0.2, y: 0.3, w: 0.6, h: 0.02 };
+  const rawFields = [
+    { id: "address", type: "textarea", box: printed },
+    { id: "email", type: "email", box: printed },
+    { id: "telephone", type: "tel", box: printed },
+    { id: "quantity", type: "number", box: printed },
+    { id: "nearby", type: "text", box: { ...printed, y: 0.325 } },
+    { id: "multiple_rows", type: "textarea", box: { ...printed, h: 0.08 } },
+    { id: "small_field", type: "text", box: { ...printed, w: 0.04 } },
+    { id: "date", type: "date", box: printed },
+    { id: "signature", type: "signature", box: printed },
+    { id: "explicit", type: "text", box: { ...printed, x: 0.202 }, comb: 12 },
+  ];
+  const parsed = parseFormDefinition({
+    sections: [{ id: "details", fields: rawFields.map(field => ({
+      id: field.id, label: field.id, type: field.type, options: [], maxLength: 10,
+      placement: { page: 1, box: field.box, options: [], comb: field.comb },
+    })) }],
+    pages: [{
+      src: "https://example.test/form.png", width: 1000, height: 1400,
+      layer: { combs: [{ ...printed, n: 20, c: "#000000", t: 0.001 }] },
+    }],
+  });
+  assert.equal(parsed.pages[0].layer?.combs.length, 1);
+  assert.equal(parsed.display, "digital");
+  for (const field of parsed.sections[0].fields.slice(0, 4)) {
+    assert.equal(field.placement?.comb, 20);
+    assert.deepEqual(field.placement?.box, printed);
+    assert.equal(field.maxLength, 10);
+  }
+  for (const field of parsed.sections[0].fields.slice(4, 9)) assert.equal(field.placement?.comb, undefined);
+  assert.equal(parsed.sections[0].fields[9].placement?.comb, 12);
+  assert.deepEqual(parsed.sections[0].fields[9].placement?.box, rawFields[9].box);
+});

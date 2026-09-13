@@ -194,7 +194,7 @@
 .replica-input.paper-signature { font-family: Georgia, serif; font-style: italic; }
 /* comb boxes: every character sits centred in its own printed box, in the
    page's face; the input itself is invisible and only carries the typing */
-.replica-comb { position: relative; width: 100%; height: 100%; }
+.replica-comb { position: relative; width: 100%; height: 100%; overflow: hidden; }
 .replica-comb-cells {
   position: absolute;
   inset: 0;
@@ -202,13 +202,15 @@
   grid-template-columns: repeat(var(--n), minmax(0, 1fr));
   pointer-events: none;
   text-transform: uppercase;
-  font-weight: 600;
+  font: inherit;
   color: #000;
 }
-.replica-comb-cell { display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.replica-comb:focus-within .replica-comb-cell.caret::after { content: ""; width: 1px; height: 65%; background: #000; animation: replica-caret 1.1s steps(1) infinite; }
+.replica-comb-cell { position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.replica-comb:focus-within .replica-comb-cell.selected { background: rgba(43, 108, 176, 0.14); }
+.replica-comb:focus-within .replica-comb-cell.caret::after { content: ""; position: absolute; left: 2px; top: 18%; width: 1px; height: 65%; background: #000; animation: replica-caret 1.1s steps(1) infinite; }
+.replica-comb:focus-within .replica-comb-cell.caret-end::after { left: auto; right: 2px; }
 @keyframes replica-caret { 50% { opacity: 0; } }
-.replica-comb-input { position: absolute; inset: 0; padding: 0; color: transparent; caret-color: transparent; -webkit-text-fill-color: transparent; }
+.replica-comb-input { position: absolute; inset: 0; padding: 0; opacity: 0; color: transparent; caret-color: transparent; -webkit-text-fill-color: transparent; }
 .replica-comb-input::selection { background: transparent; }
 .replica-comb-input:focus { background: rgba(255, 248, 216, 0.45); }
 .replica-comb-input:-webkit-autofill, .replica-comb-input:-webkit-autofill:hover, .replica-comb-input:-webkit-autofill:focus { -webkit-text-fill-color: transparent; }
@@ -308,6 +310,8 @@
   .replica-page { border: 0 !important; width: 100% !important; height: auto !important; aspect-ratio: var(--ratio); overflow: visible; }
   .replica-field:hover { box-shadow: none; }
   .replica-input:focus { background: transparent; }
+  .replica-comb-cell::after { display: none; }
+  .replica-comb .replica-comb-cell.selected { background: transparent; }
   .replica-error { box-shadow: none !important; }
   .replica-extra { margin-top: 0; }
   .replica-extra .srf-page { break-before: page; page-break-before: always; }

@@ -373,36 +373,12 @@ function ReplicaField({ field, ratio, pageRef, prefix, value, error, onChange, a
   if (field.type === "checkbox") {
     const on = value === true;
     control = <button type="button" className={`${tickClass(box)}${on ? " on" : ""}${errorClass}`} role="checkbox" aria-checked={on} aria-label={field.label} title={field.label} onClick={() => onChange(!on)} />;
-  } else if (field.type === "textarea") {
-    control = <textarea id={id} className={`replica-input replica-textarea${errorClass}`} value={text} maxLength={10000} aria-label={field.label} title={field.helpText || field.label} onChange={event => onChange(event.target.value)} />;
   } else if (field.type === "date") {
     control = <div className={`replica-date${errorClass}`}><DateTimePicker id={id} className="bare" withTime={false} value={text} onChange={onChange} placeholder="" ariaLabel={field.label} /></div>;
   } else if (placement.comb && placement.comb >= 2) {
-    // a comb: each character is drawn centred in its own printed box, in the
-    // page's face; the real input sits invisibly on top for typing
-    const comb = placement.comb;
-    const chars = [...text].slice(0, comb);
-    control = (
-      <div className={`replica-comb${errorClass}`} style={{ "--n": comb } as CSSProperties}>
-        <div className="replica-comb-cells" aria-hidden="true">
-          {Array.from({ length: comb }, (_, index) => (
-            <span key={index} className={`replica-comb-cell${index === chars.length ? " caret" : ""}`}>{chars[index] ?? ""}</span>
-          ))}
-        </div>
-        <input
-          id={id}
-          className="replica-input replica-comb-input"
-          type="text"
-          inputMode={field.type === "number" || field.type === "tel" ? "numeric" : undefined}
-          value={text}
-          maxLength={comb}
-          autoComplete="off"
-          aria-label={field.label}
-          title={error || field.helpText || field.label}
-          onChange={event => onChange([...event.target.value].slice(0, comb).join(""))}
-        />
-      </div>
-    );
+    control = <ReplicaCombInput field={field} id={id} value={text} count={placement.comb} error={error} onChange={onChange} />;
+  } else if (field.type === "textarea") {
+    control = <textarea id={id} className={`replica-input replica-textarea${errorClass}`} value={text} maxLength={field.maxLength ?? 10000} aria-label={field.label} title={field.helpText || field.label} onChange={event => onChange(event.target.value)} />;
   } else {
     control = (
       <input
@@ -423,6 +399,80 @@ function ReplicaField({ field, ratio, pageRef, prefix, value, error, onChange, a
     <AdjustableBox box={box} pageRef={pageRef} adjust={adjust} onBox={next => adjust?.onBox(field.id, -1, next)}>
       {control}
     </AdjustableBox>
+  );
+}
+
+function ReplicaCombInput({ field, id, value, count, error, onChange }: {
+  field: FormField;
+  id: string;
+  value: string;
+  count: number;
+  error?: string;
+  onChange: (value: string) => void;
+}) {
+  const characters = [...value].slice(0, count);
+  const limit = Math.min(count, field.maxLength ?? count);
+  const [selection, setSelection] = useState({ start: characters.length, end: characters.length });
+  const dragAnchor = useRef<number | null>(null);
+  const recordSelection = (input: HTMLInputElement) => setSelection({
+    start: Math.min(limit, [...input.value.slice(0, input.selectionStart ?? 0)].length),
+    end: Math.min(limit, [...input.value.slice(0, input.selectionEnd ?? 0)].length),
+  });
+  const cellAt = (event: ReactPointerEvent<HTMLInputElement>) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    return Math.min(characters.length, Math.max(0, Math.floor((event.clientX - bounds.left) / bounds.width * count)));
+  };
+  const selectCells = (input: HTMLInputElement, anchor: number, cursor: number) => {
+    const start = Math.min(anchor, cursor);
+    const end = Math.max(anchor, cursor);
+    input.setSelectionRange(characters.slice(0, start).join("").length, characters.slice(0, end).join("").length, cursor < anchor ? "backward" : "forward");
+    setSelection({ start, end });
+  };
+  const startSelection = (event: ReactPointerEvent<HTMLInputElement>) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    const input = event.currentTarget;
+    const cursor = cellAt(event);
+    const anchor = event.shiftKey ? (input.selectionDirection === "backward" ? selection.end : selection.start) : cursor;
+    dragAnchor.current = anchor;
+    input.focus();
+    selectCells(input, anchor, cursor);
+    try { input.setPointerCapture(event.pointerId); } catch { }
+  };
+  const endSelection = () => { dragAnchor.current = null; };
+  return (
+    <div className={`replica-comb${error ? " replica-error" : ""}`} style={{ "--n": count } as CSSProperties}>
+      <div className="replica-comb-cells" aria-hidden="true">
+        {Array.from({ length: count }, (_, index) => {
+          const selected = index >= selection.start && index < selection.end;
+          const caret = selection.start === selection.end && index === Math.min(selection.end, count - 1);
+          return <span key={index} className={`replica-comb-cell${selected ? " selected" : ""}${caret ? " caret" : ""}${caret && selection.end === count ? " caret-end" : ""}`}>{characters[index] ?? ""}</span>;
+        })}
+      </div>
+      <input
+        id={id}
+        className="replica-input replica-comb-input"
+        type="text"
+        inputMode={field.type === "number" || field.type === "tel" ? "numeric" : undefined}
+        value={value}
+        maxLength={limit}
+        autoComplete="off"
+        aria-label={field.label}
+        aria-invalid={!!error}
+        title={error || field.helpText || field.label}
+        onFocus={event => recordSelection(event.currentTarget)}
+        onSelect={event => recordSelection(event.currentTarget)}
+        onPointerDown={startSelection}
+        onPointerMove={event => { if (dragAnchor.current !== null) selectCells(event.currentTarget, dragAnchor.current, cellAt(event)); }}
+        onPointerUp={endSelection}
+        onPointerCancel={endSelection}
+        onLostPointerCapture={endSelection}
+        onChange={event => {
+          recordSelection(event.currentTarget);
+          onChange([...event.currentTarget.value].slice(0, limit).join(""));
+        }}
+      />
+    </div>
   );
 }
 
