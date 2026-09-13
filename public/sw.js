@@ -5,7 +5,7 @@
  *  - static assets (js/css/fonts/images/pdf): stale-while-revalidate
  *  - never caches Supabase or other cross-origin API calls
  */
-const VERSION = "itss-v4";
+const VERSION = "itss-v5";
 const SHELL = "/";
 
 self.addEventListener("install", (event) => {
@@ -69,4 +69,4 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
-// deploy trigger: 2026-09-07 — v3: bust stale composer/chat styling
+// deploy trigger: 2026-09-13 — v5: module tile banners + course switcher onto installed mobile apps
