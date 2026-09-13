@@ -146,10 +146,44 @@ const plain = (t) => String(t).replace(/\*\*/g, "");
 function lineGapFor(size) {
   return size * 0.16;
 }
-function textH(text, size, width) {
-  const hasBold = String(text).includes("**");
-  doc.font(hasBold ? HELVB : HELV).fontSize(size);
+function textH(text, size, width, bold = false) {
+  const useBold = bold || String(text).includes("**");
+  doc.font(useBold ? HELVB : HELV).fontSize(size);
   return doc.heightOfString(plain(text), { width, lineGap: lineGapFor(size) });
+}
+
+/* ---------- keyword → icon picker for bullet-derived icon cards ---------- */
+const ICON_RULES = [
+  [/\bgoal|target|objectiv|standard|aim|expectation/i, "target"],
+  [/\bteam|people|staff|member|colleague|group|stakeholder|employe/i, "people"],
+  [/feedback|discuss|conversat|communicat|interview|meeting|talk|listen|agree/i, "chat"],
+  [/measur|data|kpi|metric|result|trend|productiv|output|score|rating|quantit/i, "chart"],
+  [/fair|legal|polic|compl(y|ian)|protect|confiden|right|ethic|disciplin/i, "shield"],
+  [/check|verif|monitor|review|evaluat|assess|audit|inspect|observ/i, "check"],
+  [/time|deadline|schedul|\bdate\b|frequen|weekly|monthly|quarter|annual/i, "clock"],
+  [/document|record|report|form|written|write|plan|agreement|contract|minute/i, "document"],
+  [/train|coach|develop|learn|skill|mentor|growth|improve/i, "book"],
+  [/search|investigat|identif|find|analys|diagnos/i, "search"],
+];
+function pickIcon(text) {
+  const t = plain(text);
+  for (const [re, ic] of ICON_RULES) if (re.test(t)) return ic;
+  return "check";
+}
+
+/* split text on word boundaries until every chunk satisfies fits(); keeps **bold** pairs balanced */
+function splitTextToFit(text, fits) {
+  if (fits(text)) return [text];
+  const words = String(text).trim().split(/\s+/);
+  if (words.length < 2) return [text];
+  const mid = Math.ceil(words.length / 2);
+  let a = words.slice(0, mid).join(" ");
+  let b = words.slice(mid).join(" ");
+  if ((a.match(/\*\*/g) || []).length % 2 === 1) {
+    a += "**";
+    b = "**" + b;
+  }
+  return [...splitTextToFit(a, fits), ...splitTextToFit(b, fits)];
 }
 function drawRuns(text, x, y, { width, size, color, align = "left", charSpacing = 0, forceBold = false } = {}) {
   const parts = String(text).split(/\*\*/).map((p, i) => ({ p, bold: forceBold || i % 2 === 1 })).filter((r) => r.p);
@@ -178,11 +212,16 @@ function slide({ bg = WHITE } = {}) {
     doc.text(String(pageNo), W - MX - 0.7 * IN, H - 0.42 * IN, { width: 0.7 * IN, align: "right", lineBreak: false });
   }
 }
+// Draws eyebrow + the (possibly wrapped) title at its MEASURED height and
+// returns the y where content may start — content can never run into the title.
 function eyebrowTitle(eyebrow, title) {
   doc.font(HELVB).fontSize(18).fillColor(BLUE);
   doc.text(String(eyebrow).toUpperCase(), MX, 0.24 * IN, { width: CW, characterSpacing: 2, lineBreak: false });
-  doc.font(HELVB).fontSize(28).fillColor(NAVY);
-  doc.text(plain(title), MX, 0.62 * IN, { width: CW - 0.7 * IN, lineBreak: false });
+  const tw = CW - 1.45 * IN; // keep clear of the corner watermark
+  doc.font(HELVB).fontSize(28);
+  const th = doc.heightOfString(plain(title), { width: tw, lineGap: 2 });
+  doc.fillColor(NAVY).text(plain(title), MX, 0.62 * IN, { width: tw, lineGap: 2 });
+  return Math.max(0.62 * IN + th + 0.3 * IN, 1.32 * IN);
 }
 function cardShape(x, y, w, h, { fill = WHITE, line = BORDER } = {}) {
   const r = 0.09 * IN;
@@ -191,7 +230,7 @@ function cardShape(x, y, w, h, { fill = WHITE, line = BORDER } = {}) {
   doc.roundedRect(x, y, w, h, r).fillAndStroke(fill, line);
 }
 
-/* ---------- Flow: writes blocks top-to-bottom, spilling onto "(continued)" pages ---------- */
+/* ---------- Flow: writes blocks top-to-bottom, spilling onto continued pages ---------- */
 class Flow {
   constructor(eyebrow, title, icon) {
     this.eyebrow = eyebrow;
@@ -203,9 +242,13 @@ class Flow {
   newSlide() {
     this.part += 1;
     slide();
-    eyebrowTitle(this.eyebrow, this.part === 1 ? this.title : `${this.title} …(continued)`);
+    // faint oversized corner watermark, clipped to the header band (never behind content)
+    drawIcon(this.icon ?? "design", W - 2.0 * IN, -1.08 * IN, 2.35, "#E8F1FA", 1.1);
+    doc.rect(0, 0, W, 0.09 * IN).fill(BLUE); // strip back over the bleed
     if (this.icon) drawIcon(this.icon, W - MX - 0.5 * IN, 0.3 * IN, 0.44);
-    this.y = 1.32 * IN;
+    const eb = this.part === 1 ? this.eyebrow : `${this.eyebrow} \u00B7 Continued`;
+    this.y = eyebrowTitle(eb, this.title);
+    this.top = this.y; // measured title bottom + gap: content can never touch the title
   }
   ensure(h) {
     if (this.y + h > MAXY) this.newSlide();
@@ -215,17 +258,17 @@ class Flow {
   }
   paragraph(text, { size = 18, color = GREY } = {}) {
     const h = textH(text, size, CW) + 0.06 * IN;
-    this.ensure(Math.min(h, MAXY - 1.32 * IN));
+    this.ensure(Math.min(h, MAXY - this.top));
     drawRuns(text, MX, this.y, { width: CW, size, color });
     this.y += h + 0.08 * IN;
   }
   bullet(text, { size = 18 } = {}) {
-    const tx = MX + 0.3 * IN;
-    const tw = CW - 0.36 * IN;
+    const tx = MX + 0.32 * IN;
+    const tw = CW - 0.42 * IN;
     const h = textH(text, size, tw) + 0.05 * IN;
     this.ensure(h);
-    doc.font(HELV).fontSize(size).fillColor(NAVY);
-    doc.text("•", MX + 0.1 * IN, this.y, { lineBreak: false });
+    // small azure dot glyph instead of a text bullet
+    doc.circle(MX + 0.11 * IN, this.y + 0.155 * IN, 3.4).fill(BLUE);
     drawRuns(text, tx, this.y, { width: tw, size, color: NAVY });
     this.y += h + 0.07 * IN;
   }
@@ -291,29 +334,59 @@ class Flow {
     const cols = 2;
     const gapX = 0.24 * IN;
     const cw = (CW - gapX) / cols;
-    for (let i = 0; i < items.length; i += cols) {
-      const pair = items.slice(i, i + cols);
-      const hEach = pair.map(
-        (it) => 0.42 * IN + textH(it.title, 18, cw - 0.9 * IN) + textH(it.text, 18, cw - 0.4 * IN) + 0.2 * IN
-      );
-      const rowH = Math.max(...hEach, 1.0 * IN);
+    const titleW = cw - 0.95 * IN; // right of the icon
+    const bodyW = cw - 0.32 * IN;
+    const padTop = 0.16 * IN;
+    const padBottom = 0.18 * IN;
+    const titleRow = (it) => Math.max(textH(it.title, 18, titleW, true), 0.36 * IN);
+    // a card body may use at most a whole (continued) page — split longer text
+    // (0.72in budgets a two-line title row so a split chunk always fits)
+    const maxBodyH = MAXY - this.top - padTop - 0.72 * IN - 0.1 * IN - padBottom - 0.1 * IN;
+    const expanded = [];
+    for (const it of items) {
+      const chunks = splitTextToFit(it.text, (t) => textH(t, 18, bodyW) <= maxBodyH);
+      chunks.forEach((c, k) => expanded.push({ ...it, text: c, title: k === 0 ? it.title : `${it.title} (continued)` }));
+    }
+    for (let i = 0; i < expanded.length; i += cols) {
+      const pair = expanded.slice(i, i + cols);
+      // measured: title row + measured body height + paddings; row takes the max
+      const heights = pair.map((it) => padTop + titleRow(it) + 0.1 * IN + textH(it.text, 18, bodyW) + padBottom);
+      const rowH = Math.max(...heights, 1.0 * IN);
       this.ensure(rowH + 0.06 * IN);
       pair.forEach((it, j) => {
         const cx = MX + j * (cw + gapX);
         cardShape(cx, this.y, cw, rowH);
         drawIcon(it.icon, cx + 0.16 * IN, this.y + 0.16 * IN, 0.34);
-        const titleH = textH(it.title, 18, cw - 0.9 * IN);
-        drawRuns(it.title, cx + 0.6 * IN, this.y + 0.14 * IN, { width: cw - 0.78 * IN, size: 18, color: NAVY, forceBold: true });
-        drawRuns(it.text, cx + 0.16 * IN, this.y + 0.16 * IN + Math.max(titleH, 0.32 * IN) + 0.08 * IN, {
-          width: cw - 0.32 * IN, size: 18, color: GREY,
-        });
+        const tRow = titleRow(it);
+        drawRuns(it.title, cx + 0.6 * IN, this.y + padTop, { width: titleW + 0.14 * IN, size: 18, color: NAVY, forceBold: true });
+        drawRuns(it.text, cx + 0.16 * IN, this.y + padTop + tRow + 0.1 * IN, { width: bodyW, size: 18, color: GREY });
+      });
+      this.y += rowH + 0.14 * IN;
+    }
+  }
+  // short-bullet lists render as 2-column icon cards (keyword-picked icons)
+  iconBullets(bullets) {
+    const cols = 2;
+    const gapX = 0.24 * IN;
+    const cw = (CW - gapX) / cols;
+    const textW = cw - 0.86 * IN;
+    for (let i = 0; i < bullets.length; i += cols) {
+      const pair = bullets.slice(i, i + cols);
+      const heights = pair.map((b) => Math.max(0.34 * IN, textH(b, 18, textW)) + 0.32 * IN);
+      const rowH = Math.max(...heights, 0.72 * IN);
+      this.ensure(rowH + 0.06 * IN);
+      pair.forEach((b, j) => {
+        const cx = MX + j * (cw + gapX);
+        cardShape(cx, this.y, cw, rowH);
+        drawIcon(pickIcon(b), cx + 0.18 * IN, this.y + 0.17 * IN, 0.34);
+        drawRuns(b, cx + 0.66 * IN, this.y + 0.16 * IN, { width: textW, size: 18, color: NAVY });
       });
       this.y += rowH + 0.14 * IN;
     }
   }
   example(ex) {
     const innerW = CW - 0.5 * IN;
-    const titleH = textH("Example — " + ex.title, 18, innerW);
+    const titleH = textH("Example — " + ex.title, 18, innerW, true);
     const lineHs = ex.lines.map((l) => textH(l, 18, innerW - 0.4 * IN) + 0.04 * IN);
     const linesH = lineHs.reduce((a, b) => a + b, 0);
     const boxH = 0.18 * IN + titleH + 0.08 * IN + linesH + 0.18 * IN;
@@ -322,8 +395,7 @@ class Flow {
     drawRuns("Example — " + ex.title, MX + 0.25 * IN, this.y + 0.14 * IN, { width: innerW, size: 18, color: BLUE, forceBold: true });
     let ly = this.y + 0.16 * IN + titleH + 0.08 * IN;
     ex.lines.forEach((l, i) => {
-      doc.font(HELV).fontSize(18).fillColor(NAVY);
-      doc.text("•", MX + 0.3 * IN, ly, { lineBreak: false });
+      doc.circle(MX + 0.34 * IN, ly + 0.15 * IN, 3.2).fill(BLUE);
       drawRuns(l, MX + 0.52 * IN, ly, { width: innerW - 0.4 * IN, size: 18, color: NAVY });
       ly += lineHs[i];
     });
@@ -398,7 +470,9 @@ for (const sec of UNIT.lesson) {
   }
   if (sec.bullets?.length) {
     flow.gap(0.04);
-    for (const b of sec.bullets) flow.bullet(b);
+    const short = sec.bullets.length >= 2 && sec.bullets.every((b) => plain(b).length <= 140);
+    if (short) flow.iconBullets(sec.bullets);
+    else for (const b of sec.bullets) flow.bullet(b);
   }
   if (sec.table) {
     flow.gap(0.06);

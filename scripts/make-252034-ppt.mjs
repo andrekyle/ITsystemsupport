@@ -111,9 +111,9 @@ function runs(text, base = {}) {
 const plain = (t) => String(t).replace(/\*\*/g, "");
 
 /* ---------- conservative height estimation (never under-estimates) ---------- */
-function linesFor(text, fontSize, widthIn) {
+function linesFor(text, fontSize, widthIn, bold = false) {
   // deliberately pessimistic chars-per-line so boxes are always tall enough
-  const cpl = Math.max(8, Math.floor((widthIn * 72) / (fontSize * 0.56)));
+  const cpl = Math.max(8, Math.floor((widthIn * 72) / (fontSize * (bold ? 0.6 : 0.58))));
   const words = plain(text).split(/\s+/);
   let lines = 1;
   let len = 0;
@@ -125,8 +125,42 @@ function linesFor(text, fontSize, widthIn) {
   }
   return lines;
 }
-const textH = (text, fontSize, widthIn, lineMult = 1.3) =>
-  (linesFor(text, fontSize, widthIn) * fontSize * lineMult) / 72;
+const textH = (text, fontSize, widthIn, lineMult = 1.35, bold = false) =>
+  (linesFor(text, fontSize, widthIn, bold) * fontSize * lineMult) / 72;
+
+/* ---------- keyword → icon picker for bullet-derived icon cards ---------- */
+const ICON_RULES = [
+  [/\bgoal|target|objectiv|standard|aim|expectation/i, "target"],
+  [/\bteam|people|staff|member|colleague|group|stakeholder|employe/i, "people"],
+  [/feedback|discuss|conversat|communicat|interview|meeting|talk|listen|agree/i, "chat"],
+  [/measur|data|kpi|metric|result|trend|productiv|output|score|rating|quantit/i, "chart"],
+  [/fair|legal|polic|compl(y|ian)|protect|confiden|right|ethic|disciplin/i, "shield"],
+  [/check|verif|monitor|review|evaluat|assess|audit|inspect|observ/i, "check"],
+  [/time|deadline|schedul|\bdate\b|frequen|weekly|monthly|quarter|annual/i, "clock"],
+  [/document|record|report|form|written|write|plan|agreement|contract|minute/i, "document"],
+  [/train|coach|develop|learn|skill|mentor|growth|improve/i, "book"],
+  [/search|investigat|identif|find|analys|diagnos/i, "search"],
+];
+function pickIcon(text) {
+  const t = plain(text);
+  for (const [re, ic] of ICON_RULES) if (re.test(t)) return ic;
+  return "check";
+}
+
+/* split text on word boundaries until every chunk satisfies fits(); keeps **bold** pairs balanced */
+function splitTextToFit(text, fits) {
+  if (fits(text)) return [text];
+  const words = String(text).trim().split(/\s+/);
+  if (words.length < 2) return [text];
+  const mid = Math.ceil(words.length / 2);
+  let a = words.slice(0, mid).join(" ");
+  let b = words.slice(mid).join(" ");
+  if ((a.match(/\*\*/g) || []).length % 2 === 1) {
+    a += "**";
+    b = "**" + b;
+  }
+  return [...splitTextToFit(a, fits), ...splitTextToFit(b, fits)];
+}
 
 /* ---------- deck ---------- */
 const FOOTER = "US 252034 · Monitor and evaluate team members against performance standards · NQF 5 · 8 credits";
@@ -149,18 +183,25 @@ function slide() {
   }
   return s;
 }
-function addIcon(s, name, x, y, size = 0.34, color) {
-  s.addImage({ data: iconUri(name, color), x, y, w: size, h: size });
+function addIcon(s, name, x, y, size = 0.34, color, sw) {
+  s.addImage({ data: iconUri(name, color, sw), x, y, w: size, h: size });
 }
+// Draws eyebrow + the (possibly wrapped) title at its MEASURED height and
+// returns the y where content may start — content can never run into the title.
 function eyebrowTitle(s, eyebrow, title) {
-  s.addText(eyebrow.toUpperCase(), { x: MX, y: 0.22, w: CW, h: 0.36, fontFace: BODY_FONT, fontSize: 18, bold: true, color: BLUE, charSpacing: 2 });
-  s.addText(title, { x: MX, y: 0.58, w: CW, h: 0.62, fontFace: TITLE_FONT, fontSize: 28, bold: true, color: NAVY });
+  s.addText(String(eyebrow).toUpperCase(), { x: MX, y: 0.22, w: CW, h: 0.36, fontFace: BODY_FONT, fontSize: 18, bold: true, color: BLUE, charSpacing: 2 });
+  const tw = CW - 1.45; // keep clear of the corner watermark
+  const th = Math.max(0.5, textH(title, 28, tw, 1.15, true));
+  s.addText(runs(title, { color: NAVY, bold: true }), {
+    x: MX, y: 0.58, w: tw, h: th + 0.12, fontFace: TITLE_FONT, fontSize: 28, valign: "top", lineSpacingMultiple: 1.05, fit: "none",
+  });
+  return Math.max(0.58 + th + 0.3, 1.32);
 }
 function cardShape(s, x, y, w, h, { fill = WHITE, line = BORDER } = {}) {
   s.addShape(pptx.ShapeType.roundRect, { x, y, w, h, rectRadius: 0.09, fill: { color: fill }, line: { color: line, width: 1 }, shadow: { ...SHADOW } });
 }
 
-/* Flow: writes blocks top-to-bottom, spilling onto "(continued)" slides. */
+/* Flow: writes blocks top-to-bottom, spilling onto continued slides. */
 class Flow {
   constructor(eyebrow, title, icon) {
     this.eyebrow = eyebrow;
@@ -172,10 +213,13 @@ class Flow {
   newSlide() {
     this.part += 1;
     this.s = slide();
-    const t = this.part === 1 ? this.title : `${this.title} …(continued)`;
-    eyebrowTitle(this.s, this.eyebrow, t);
+    // faint oversized corner watermark, clipped to the header band (never behind content)
+    addIcon(this.s, this.icon ?? "design", W - 2.0, -1.08, 2.35, "#E8F1FA", 1.1);
+    this.s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: W, h: 0.09, fill: { color: BLUE } }); // strip back over the bleed
     if (this.icon) addIcon(this.s, this.icon, W - MX - 0.5, 0.3, 0.44);
-    this.y = 1.32;
+    const eb = this.part === 1 ? this.eyebrow : `${this.eyebrow} \u00B7 Continued`;
+    this.y = eyebrowTitle(this.s, eb, this.title);
+    this.top = this.y; // measured title bottom + gap: content can never touch the title
   }
   ensure(h) {
     if (this.y + h > MAXY) this.newSlide();
@@ -185,24 +229,21 @@ class Flow {
   }
   paragraph(text, { fontSize = 18, color = GREY } = {}) {
     const h = textH(text, fontSize, CW) + 0.06;
-    this.ensure(Math.min(h, MAXY - 1.32));
+    this.ensure(Math.min(h, MAXY - this.top));
     this.s.addText(runs(text, { color }), {
       x: MX, y: this.y, w: CW, h, fontFace: BODY_FONT, fontSize, valign: "top", lineSpacingMultiple: 1.12, fit: "none",
     });
     this.y += h + 0.08;
   }
   bullet(text, { fontSize = 18 } = {}) {
-    const h = textH(text, fontSize, CW - 0.3) + 0.05;
+    const tw = CW - 0.42;
+    const h = textH(text, fontSize, tw) + 0.05;
     this.ensure(h);
-    this.s.addText(
-      [{ text: "", options: {} }].slice(0, 0).concat(
-        runs(text, { color: NAVY }).map((r, i) => ({
-          ...r,
-          options: { ...r.options, ...(i === 0 ? { bullet: { characterCode: "2022", indent: 16 } } : {}) },
-        }))
-      ),
-      { x: MX + 0.08, y: this.y, w: CW - 0.16, h, fontFace: BODY_FONT, fontSize, valign: "top", lineSpacingMultiple: 1.12, fit: "none" }
-    );
+    // small azure dot glyph instead of a text bullet
+    this.s.addShape(pptx.ShapeType.ellipse, { x: MX + 0.06, y: this.y + 0.12, w: 0.1, h: 0.1, fill: { color: BLUE } });
+    this.s.addText(runs(text, { color: NAVY }), {
+      x: MX + 0.32, y: this.y, w: tw, h, fontFace: BODY_FONT, fontSize, valign: "top", lineSpacingMultiple: 1.12, fit: "none",
+    });
     this.y += h + 0.07;
   }
   table(headers, rows) {
@@ -250,23 +291,58 @@ class Flow {
     const cols = 2;
     const gapX = 0.24;
     const cw = (CW - gapX) / cols;
-    for (let i = 0; i < items.length; i += cols) {
-      const pair = items.slice(i, i + cols);
-      const hEach = pair.map(
-        (it) => 0.42 + textH(it.title, 18, cw - 0.9) + textH(it.text, 18, cw - 0.4) + 0.2
-      );
-      const rowH = Math.max(...hEach, 1.0);
+    const titleW = cw - 0.95; // right of the icon
+    const bodyW = cw - 0.32;
+    const padTop = 0.16;
+    const padBottom = 0.18;
+    const titleRow = (it) => Math.max(textH(it.title, 18, titleW, 1.2, true), 0.36);
+    // a card body may use at most a whole (continued) slide — split longer text
+    // (0.72 budgets a two-line title row so a split chunk always fits)
+    const maxBodyH = MAXY - this.top - padTop - 0.72 - 0.1 - padBottom - 0.1;
+    const expanded = [];
+    for (const it of items) {
+      const chunks = splitTextToFit(it.text, (t) => textH(t, 18, bodyW) <= maxBodyH);
+      chunks.forEach((c, k) => expanded.push({ ...it, text: c, title: k === 0 ? it.title : `${it.title} (continued)` }));
+    }
+    for (let i = 0; i < expanded.length; i += cols) {
+      const pair = expanded.slice(i, i + cols);
+      // measured: title row + measured body height + paddings; row takes the max
+      const heights = pair.map((it) => padTop + titleRow(it) + 0.1 + textH(it.text, 18, bodyW) + padBottom);
+      const rowH = Math.max(...heights, 1.0);
       this.ensure(rowH + 0.06);
       pair.forEach((it, j) => {
         const cx = MX + j * (cw + gapX);
         cardShape(this.s, cx, this.y, cw, rowH);
         addIcon(this.s, it.icon, cx + 0.16, this.y + 0.16, 0.34);
-        const titleH = textH(it.title, 18, cw - 0.9);
+        const tRow = titleRow(it);
         this.s.addText(runs(it.title, { color: NAVY, bold: true }), {
-          x: cx + 0.6, y: this.y + 0.1, w: cw - 0.78, h: titleH + 0.08, fontFace: TITLE_FONT, fontSize: 18, valign: "top", lineSpacingMultiple: 1.05, fit: "none",
+          x: cx + 0.6, y: this.y + padTop - 0.04, w: titleW + 0.14, h: tRow + 0.08, fontFace: TITLE_FONT, fontSize: 18, valign: "top", lineSpacingMultiple: 1.05, fit: "none",
         });
+        const bodyY = this.y + padTop + tRow + 0.1;
         this.s.addText(runs(it.text, { color: GREY }), {
-          x: cx + 0.16, y: this.y + 0.16 + Math.max(titleH, 0.32) + 0.08, w: cw - 0.32, h: rowH - titleH - 0.4, fontFace: BODY_FONT, fontSize: 18, valign: "top", lineSpacingMultiple: 1.1, fit: "none",
+          x: cx + 0.16, y: bodyY, w: bodyW, h: rowH - (bodyY - this.y) - 0.06, fontFace: BODY_FONT, fontSize: 18, valign: "top", lineSpacingMultiple: 1.1, fit: "none",
+        });
+      });
+      this.y += rowH + 0.14;
+    }
+  }
+  // short-bullet lists render as 2-column icon cards (keyword-picked icons)
+  iconBullets(bullets) {
+    const cols = 2;
+    const gapX = 0.24;
+    const cw = (CW - gapX) / cols;
+    const textW = cw - 0.86;
+    for (let i = 0; i < bullets.length; i += cols) {
+      const pair = bullets.slice(i, i + cols);
+      const heights = pair.map((b) => Math.max(0.34, textH(b, 18, textW)) + 0.32);
+      const rowH = Math.max(...heights, 0.72);
+      this.ensure(rowH + 0.06);
+      pair.forEach((b, j) => {
+        const cx = MX + j * (cw + gapX);
+        cardShape(this.s, cx, this.y, cw, rowH);
+        addIcon(this.s, pickIcon(b), cx + 0.18, this.y + 0.17, 0.34);
+        this.s.addText(runs(b, { color: NAVY }), {
+          x: cx + 0.66, y: this.y + 0.14, w: textW, h: rowH - 0.24, fontFace: BODY_FONT, fontSize: 18, valign: "top", lineSpacingMultiple: 1.1, fit: "none",
         });
       });
       this.y += rowH + 0.14;
@@ -274,8 +350,9 @@ class Flow {
   }
   example(ex) {
     const innerW = CW - 0.5;
-    const titleH = textH("Example — " + ex.title, 18, innerW);
-    const linesH = ex.lines.reduce((a, l) => a + textH(l, 18, innerW - 0.25) + 0.04, 0);
+    const titleH = textH("Example — " + ex.title, 18, innerW, 1.35, true);
+    const lineHs = ex.lines.map((l) => textH(l, 18, innerW - 0.35) + 0.04);
+    const linesH = lineHs.reduce((a, b) => a + b, 0);
     const boxH = 0.18 + titleH + 0.08 + linesH + 0.18;
     this.ensure(boxH + 0.06);
     cardShape(this.s, MX, this.y, CW, boxH, { fill: LIGHT });
@@ -283,17 +360,14 @@ class Flow {
       x: MX + 0.25, y: this.y + 0.12, w: innerW, h: titleH + 0.06, fontFace: TITLE_FONT, fontSize: 18, valign: "top", fit: "none",
     });
     let ly = this.y + 0.14 + titleH + 0.08;
-    for (const l of ex.lines) {
-      const lh = textH(l, 18, innerW - 0.25) + 0.04;
-      this.s.addText(
-        runs(l, { color: NAVY }).map((r, i) => ({
-          ...r,
-          options: { ...r.options, ...(i === 0 ? { bullet: { characterCode: "2022", indent: 14 } } : {}) },
-        })),
-        { x: MX + 0.3, y: ly, w: innerW - 0.15, h: lh, fontFace: BODY_FONT, fontSize: 18, valign: "top", lineSpacingMultiple: 1.1, fit: "none" }
-      );
+    ex.lines.forEach((l, i) => {
+      const lh = lineHs[i];
+      this.s.addShape(pptx.ShapeType.ellipse, { x: MX + 0.28, y: ly + 0.12, w: 0.09, h: 0.09, fill: { color: BLUE } });
+      this.s.addText(runs(l, { color: NAVY }), {
+        x: MX + 0.5, y: ly, w: innerW - 0.35, h: lh, fontFace: BODY_FONT, fontSize: 18, valign: "top", lineSpacingMultiple: 1.1, fit: "none",
+      });
       ly += lh;
-    }
+    });
     this.y += boxH + 0.16;
   }
 }
@@ -351,7 +425,9 @@ for (const sec of sections) {
   }
   if (sec.bullets?.length) {
     flow.gap(0.04);
-    for (const b of sec.bullets) flow.bullet(b);
+    const short = sec.bullets.length >= 2 && sec.bullets.every((b) => plain(b).length <= 140);
+    if (short) flow.iconBullets(sec.bullets);
+    else for (const b of sec.bullets) flow.bullet(b);
   }
   if (sec.table) {
     flow.gap(0.06);
