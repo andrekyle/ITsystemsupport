@@ -236,7 +236,7 @@
 .replica-tick:focus-visible { outline: 2px solid var(--azure); outline-offset: -2px; }
 .replica-chips { height: 100%; overflow: hidden; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 0.2em; padding: 0.15em; font-size: 1.1cqw; }
 .replica-chips .paper-tick { font-size: 1em; padding: 0.1em 0.5em; }
-.replica-date-part { padding: 0; text-align: center; }
+.replica-date-part { padding: 0; text-align: center; line-height: 1; }
 .replica-error { box-shadow: inset 0 0 0 2px var(--red) !important; }
 .replica-extra { margin-top: 14px; }
 /* adjust mode (form builder) */

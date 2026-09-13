@@ -196,7 +196,7 @@ function ReplicaPage({ page, src, layer, ratio, title, fields, dates, prefix, an
       {fields.filter(field => !dateIds.has(field.id)).map(field => (
         <ReplicaField key={field.id} field={field} ratio={ratio} pageRef={pageRef} prefix={prefix} value={answers[field.id]} error={errors[field.id]} onChange={value => onChange(field.id, value)} adjust={adjust} />
       ))}
-      {dates.map(group => <ReplicaDateFields key={group.year.id} group={group} pageRef={pageRef} prefix={prefix} answers={answers} errors={errors} onChange={onChange} adjust={adjust} />)}
+      {dates.map(group => <ReplicaDateFields key={group.year.id} group={group} ratio={ratio} pageRef={pageRef} prefix={prefix} answers={answers} errors={errors} onChange={onChange} adjust={adjust} />)}
       {fill && <AnnotationLayer page={page} ratio={ratio} pageRef={pageRef} fill={fill} />}
     </div>
   );
@@ -418,8 +418,9 @@ function ReplicaField({ field, ratio, pageRef, prefix, value, error, onChange, a
   );
 }
 
-function ReplicaDateFields({ group, pageRef, prefix, answers, errors, onChange, adjust }: {
+function ReplicaDateFields({ group, ratio, pageRef, prefix, answers, errors, onChange, adjust }: {
   group: ReplicaDateGroup;
+  ratio: number;
   pageRef: RefObject<HTMLDivElement>;
   prefix: string;
   answers: FormAnswers;
@@ -428,6 +429,9 @@ function ReplicaDateFields({ group, pageRef, prefix, answers, errors, onChange, 
   adjust?: ReplicaAdjust;
 }) {
   const parts = [group.year, group.month, group.day];
+  const printed = group.yearPrefix;
+  const fontHeight = printed ? printed.s * ratio : 0;
+  const textTop = printed ? printed.y - fontHeight * 0.047 : 0;
   return <>
     {parts.map((field, index) => {
       const box = field.placement!.box!;
@@ -435,6 +439,20 @@ function ReplicaDateFields({ group, pageRef, prefix, answers, errors, onChange, 
       const prefixText = index === 0 ? group.yearPrefix?.t : undefined;
       const value = typeof answers[field.id] === "string" ? answers[field.id] as string : "";
       const inset = index === 0 && group.yearPrefix ? Math.max(0, Math.min(0.8, (group.yearPrefix.x + group.yearPrefix.w - box.x) / box.w)) : 0;
+      const inputStyle: CSSProperties = {
+        marginLeft: `${inset * 100}%`,
+        width: `${(1 - inset) * 100}%`,
+        ...(printed ? {
+          position: "absolute",
+          top: `${Math.max(0, textTop - box.y) / box.h * 100}%`,
+          height: `${Math.min(fontHeight, box.h) / box.h * 100}%`,
+          fontSize: `${printed.s * 100}cqw`,
+          fontFamily: FONT_STACKS[printed.f] ?? FONT_STACKS.sans,
+          fontWeight: printed.b ? 700 : 400,
+          fontStyle: printed.i ? "italic" : "normal",
+          textAlign: index === 0 ? "left" : "center",
+        } : {}),
+      };
       const displayed = prefixText && value.length > 2 && value.startsWith(prefixText) ? value.slice(2) : value;
       const limit = index === 0 && !prefixText ? 4 : 2;
       const update = (text: string) => {
@@ -455,7 +473,7 @@ function ReplicaDateFields({ group, pageRef, prefix, answers, errors, onChange, 
           aria-label={field.label}
           aria-invalid={!!errors[field.id]}
           title={errors[field.id] || field.helpText || field.label}
-          style={{ marginLeft: `${inset * 100}%`, width: `${(1 - inset) * 100}%` }}
+          style={inputStyle}
           onChange={event => update(event.target.value)}
           onBlur={event => {
             const digits = event.target.value;

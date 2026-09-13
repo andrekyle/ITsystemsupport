@@ -50,6 +50,8 @@ function makeDeclarationPage(): FormPage {
   context.fillRect(0, 0, canvas.width, canvas.height);
   context.fillStyle = "#000000";
   context.font = "18px Arial";
+  const printedCentury = text.find(run => run.t === century);
+  if (printedCentury) printedCentury.w = context.measureText(printedCentury.t).width / canvas.width;
   text.forEach(run => context.fillText(run.t, run.x * canvas.width, (run.y + run.h * 0.8) * canvas.height));
   context.lineWidth = 2;
   frames.forEach(frame => context.strokeRect(frame.x * canvas.width, frame.y * canvas.height, frame.w * canvas.width, frame.h * canvas.height));
