@@ -40,12 +40,11 @@ const modules: CourseModule[] = [
     id: "m3",
     name: "Professional Human Resources Management",
     icon: "person",
-    activities: 4,
+    activities: 3,
     units: [
       { us: "12140", title: "Recruit and select candidates to fill defined positions", nqf: 5, credits: 9, dates: "TBC", time: "09h00 - 14h00" },
-      { us: "252035", title: "Select and coach first line managers", nqf: 5, credits: 8, dates: "TBC", time: "09h00 - 14h00" },
       { us: "252029", title: "Lead people development and talent management", nqf: 5, credits: 8, dates: "TBC", time: "09h00 - 14h00" },
-      { us: "252041", title: "Promote a learning culture in an organisation", nqf: 5, credits: 5, dates: "TBC", time: "09h00 - 14h00" },
+      { us: "252034", title: "Monitor and evaluate team members against performance standards", nqf: 5, credits: 8, dates: "TBC", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -54,10 +53,10 @@ const modules: CourseModule[] = [
     icon: "gradcap",
     activities: 4,
     units: [
+      { us: "15224", title: "Empower team members through recognising strengths, encouraging participation in decision making and delegating tasks", nqf: 5, credits: 4, dates: "TBC", time: "09h00 - 14h00" },
       { us: "120300", title: "Analyse leadership and related theories in a work context", nqf: 5, credits: 8, dates: "TBC", time: "09h00 - 14h00" },
-      { us: "252042", title: "Apply the principles of ethics to improve organisational culture", nqf: 5, credits: 5, dates: "TBC", time: "09h00 - 14h00" },
       { us: "252026", title: "Apply a systems approach to decision making", nqf: 5, credits: 6, dates: "TBC", time: "09h00 - 14h00" },
-      { us: "252044", title: "Apply the principles of knowledge management", nqf: 5, credits: 6, dates: "TBC", time: "09h00 - 14h00" },
+      { us: "252035", title: "Select and coach first line managers", nqf: 5, credits: 8, dates: "TBC", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -75,12 +74,14 @@ const modules: CourseModule[] = [
     id: "m6",
     name: "Professional Results-Based Management — Planning, Monitoring and Evaluation",
     icon: "target",
-    activities: 4,
+    activities: 6,
     units: [
       { us: "252032", title: "Develop, implement and evaluate an operational plan", nqf: 5, credits: 8, dates: "TBC", time: "09h00 - 14h00" },
       { us: "252022", title: "Develop, implement and evaluate a project plan", nqf: 5, credits: 8, dates: "TBC", time: "09h00 - 14h00" },
-      { us: "252034", title: "Monitor and evaluate team members against performance standards", nqf: 5, credits: 8, dates: "TBC", time: "09h00 - 14h00" },
       { us: "252025", title: "Monitor, assess and manage risk", nqf: 5, credits: 8, dates: "TBC", time: "09h00 - 14h00" },
+      { us: "252044", title: "Apply the principles of knowledge management", nqf: 5, credits: 6, dates: "TBC", time: "09h00 - 14h00" },
+      { us: "252041", title: "Promote a learning culture in an organisation", nqf: 5, credits: 5, dates: "TBC", time: "09h00 - 14h00" },
+      { us: "252042", title: "Apply the principles of ethics to improve organisational culture", nqf: 5, credits: 5, dates: "TBC", time: "09h00 - 14h00" },
     ],
   },
 ];
