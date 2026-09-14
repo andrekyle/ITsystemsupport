@@ -26,8 +26,8 @@ export interface ReportKind {
 export const REPORT_KINDS: ReportKind[] = [
   {
     id: "progress",
-    name: "Cohort progress report",
-    desc: "Completion, credits, quiz and exercise performance for every learner, with cohort averages.",
+    name: "Learnership progress report",
+    desc: "The monthly sponsor deck — cover, headline numbers, signed attendance, delivery, assessment results, evidence readiness, cohort position and recommendations.",
     icon: "trend",
   },
   {
@@ -189,6 +189,12 @@ export function buildReportData(
     scheduleNote:
       "schedule is the full programme timetable, one line per unit: 'US code | title | module | sessions: dates | time'. Compare the session dates with today to answer what has been trained, what is next or what happens on a given date.",
     cohort: cohort(rows, registers),
+    // per-register signed counts so session-by-session slides carry real figures
+    sessionAttendance: attendanceFilledRegisterDates().map((d) => ({
+      date: d,
+      signed: rows.filter((r) => r.signedDates.includes(d)).length,
+      expected: rows.filter((r) => !r.signedDates[0] || r.signedDates[0] <= d).length,
+    })),
   };
   switch (kind) {
     case "attendance":
