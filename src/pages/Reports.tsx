@@ -382,7 +382,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     } else {
       setDone(k.name);
     }
-    openReportDocument(k, result.report, rows, registers, profile, q, scope);
+    openReportDocument(k, result, rows, registers, profile, q, scope);
   }
 
   const [copied, setCopied] = useState<number | null>(null);

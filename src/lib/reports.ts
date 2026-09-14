@@ -281,8 +281,49 @@ export interface AiReport {
   recommendations: string[];
 }
 
+/** Slide-deck report following the approved Eruditio/Investec monthly template. */
+export interface DeckKpi {
+  value?: string;
+  label?: string;
+  sub?: string;
+  tone?: string;
+}
+export interface DeckSlide {
+  layout: string;
+  headline: string;
+  kicker?: string;
+  kpis?: DeckKpi[];
+  callout?: { tag?: string; statement?: string; body?: string };
+  rows?: { label?: string; value?: string; ratio?: number }[];
+  panel?: {
+    stat?: string;
+    statLabel?: string;
+    tag?: string;
+    note?: string;
+    stats?: { value?: string; label?: string }[];
+  };
+  lead?: { left?: string; right?: string; caption?: string };
+  columns?: string[];
+  cells?: string[][];
+  highlight?: { row?: number; col?: number };
+  measures?: { measure?: string; indicator?: string; value?: string }[];
+  strip?: { text?: string; value?: string };
+  cards?: { title?: string; text?: string }[];
+  items?: { title?: string; text?: string }[];
+  note?: string;
+}
+export interface AiDeck {
+  cover: {
+    title?: string;
+    period?: string;
+    subtitle?: string;
+    card?: { tag?: string; heading?: string; body?: string };
+  };
+  slides: DeckSlide[];
+}
+
 export type ReportResult =
-  | { ok: true; report: AiReport }
+  | { ok: true; report?: AiReport; deck?: AiDeck }
   | { ok: false; error: string; answer?: string };
 
 /** Ask the API to write the report. Records token usage under "REPORTS". */
@@ -308,12 +349,13 @@ export async function requestReport(
       }),
     });
     if (!r.ok) return { ok: false, error: `http_${r.status}` };
-    const payload = (await r.json()) as Partial<AiReport> & {
-      error?: string;
-      answer?: string;
-      model?: string;
-      usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
-    };
+    const payload = (await r.json()) as Partial<AiReport> &
+      Partial<AiDeck> & {
+        error?: string;
+        answer?: string;
+        model?: string;
+        usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
+      };
     if (payload.usage) {
       void recordTokenUsage({
         us: "REPORTS",
@@ -323,8 +365,23 @@ export async function requestReport(
         totalTokens: Number(payload.usage.total_tokens ?? 0),
       });
     }
-    if (payload.error || !Array.isArray(payload.sections) || payload.sections.length === 0) {
-      return { ok: false, error: payload.error ?? "empty_report", answer: payload.answer };
+    if (payload.error) {
+      return { ok: false, error: payload.error, answer: payload.answer };
+    }
+    if (Array.isArray(payload.slides) && payload.slides.length > 0) {
+      return {
+        ok: true,
+        deck: {
+          cover: payload.cover && typeof payload.cover === "object" ? payload.cover : {},
+          slides: payload.slides.filter(
+            (s): s is DeckSlide =>
+              !!s && typeof s === "object" && typeof s.layout === "string" && typeof s.headline === "string"
+          ),
+        },
+      };
+    }
+    if (!Array.isArray(payload.sections) || payload.sections.length === 0) {
+      return { ok: false, error: "empty_report", answer: payload.answer };
     }
     return {
       ok: true,
@@ -674,7 +731,7 @@ ${tracker ? "" : `
 /** Open the finished report in a new window, ready to print / save as PDF. */
 export function openReportDocument(
   kind: ReportKind,
-  report: AiReport,
+  result: { report?: AiReport; deck?: AiDeck },
   rows: LearnerRow[],
   registers: number,
   author: Profile,
@@ -683,6 +740,406 @@ export function openReportDocument(
 ) {
   const win = window.open("", "_blank");
   if (!win) return;
-  win.document.write(reportDocumentHtml(kind, report, rows, registers, author, question, scope));
-  win.document.close();
+  void (async () => {
+    let html = "";
+    if (result.deck) {
+      html = deckDocumentHtml(kind, result.deck, rows, author, await eruditioLogoDataUrl());
+    } else if (result.report) {
+      html = reportDocumentHtml(kind, result.report, rows, registers, author, question, scope);
+    } else {
+      win.close();
+      return;
+    }
+    win.document.write(html);
+    win.document.close();
+  })();
+}
+
+/* ------------------------------------------------------------------ */
+/* Deck-template report — 1:1 replica of the approved Eruditio deck    */
+/* (16:9 pages, orange/green strips, warm panels, numbered furniture). */
+/* ------------------------------------------------------------------ */
+
+let logoCache: string | null = null;
+
+/** Eruditio logo as a data URL so downloaded reports stay self-contained. */
+async function eruditioLogoDataUrl(): Promise<string> {
+  if (logoCache !== null) return logoCache;
+  try {
+    const blob = await (await fetch("/logos/eruditio.jpg")).blob();
+    logoCache = await new Promise<string>((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result));
+      fr.onerror = () => reject(fr.error);
+      fr.readAsDataURL(blob);
+    });
+  } catch {
+    logoCache = "";
+  }
+  return logoCache;
+}
+
+const DECK = {
+  o: "#F0872B", // orange
+  g: "#2E9B7A", // green
+  y: "#F5D24C", // yellow
+  t: "#DCC0A0", // tan
+  ink: "#171717",
+  grey: "#62676B",
+  paper: "#F7F5F1",
+  mint: "#EDF7F3",
+  line: "#DED9D1",
+  cell: "#363636",
+  hl: "#B7E3A5",
+};
+
+const ACC_CYCLE = [DECK.o, DECK.g, DECK.y, DECK.t];
+
+const toneColor = (tone: string | undefined, i: number): string => {
+  const t = (tone ?? "").trim().toLowerCase();
+  if (t === "green") return DECK.g;
+  if (t === "orange") return DECK.o;
+  if (t === "yellow") return DECK.y;
+  if (t === "tan") return DECK.t;
+  return [DECK.g, DECK.o, DECK.y, DECK.g][i % 4];
+};
+
+const clamp01 = (v: unknown): number => {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return 1;
+  return Math.max(0, Math.min(1, n));
+};
+
+function deckSlideBody(s: DeckSlide): string {
+  const layout = s.layout.trim().toLowerCase();
+
+  if (layout === "kpi") {
+    const kpis = (s.kpis ?? []).slice(0, 4);
+    const cards = kpis
+      .map((k, i) => {
+        const acc = toneColor(k.tone, i);
+        return `<div class="kpi" style="--acc:${acc}"><i></i><div class="kv">${esc(k.value ?? "")}</div><div class="kl">${esc(k.label ?? "")}</div>${k.sub ? `<div class="ks">${esc(k.sub)}</div>` : ""}</div>`;
+      })
+      .join("");
+    const co = s.callout;
+    return `<div class="kpis" style="grid-template-columns:repeat(${Math.max(kpis.length, 1)},1fr)">${cards}</div>${
+      co
+        ? `<div class="callout">${co.tag ? `<div class="co-tag">${esc(co.tag)}</div>` : ""}${co.statement ? `<div class="co-stat">${esc(co.statement)}</div>` : ""}${co.body ? `<div class="co-body">${esc(co.body)}</div>` : ""}</div>`
+        : ""
+    }`;
+  }
+
+  if (layout === "sessions") {
+    const rows = (s.rows ?? []).slice(0, 6);
+    const bars = rows
+      .map(
+        (r) =>
+          `<div class="srow"><span class="lb">${esc(r.label ?? "")}</span><span class="bar"><i style="width:${Math.round(clamp01(r.ratio ?? 1) * 100)}%"></i></span><span class="vl">${esc(r.value ?? "")}</span></div>`
+      )
+      .join("");
+    const p = s.panel;
+    const panel = p
+      ? `<div class="spanel">${p.stat ? `<div class="sp-v">${esc(p.stat)}</div>` : ""}${p.statLabel ? `<div class="sp-l">${esc(p.statLabel)}</div>` : ""}<div class="sp-hr"></div>${p.tag ? `<div class="sp-t">${esc(p.tag)}</div>` : ""}${p.note ? `<div class="sp-n">${esc(p.note)}</div>` : ""}</div>`
+      : "";
+    return `${s.kicker ? `<div class="kicker">${esc(s.kicker)}</div>` : ""}<div class="sess"><div class="srows">${bars}</div>${panel}</div>${
+      s.note ? `<div class="ban-o">${esc(s.note)}</div>` : ""
+    }`;
+  }
+
+  if (layout === "table") {
+    const columns = (s.columns ?? []).slice(0, 5);
+    const nCols = Math.max(columns.length, 1);
+    const rows = (s.cells ?? []).slice(0, 6);
+    const hr = Number(s.highlight?.row);
+    const hc = Number(s.highlight?.col);
+    const lead = s.lead;
+    const head = `<tr>${columns.map((c) => `<th>${esc(c)}</th>`).join("")}</tr>`;
+    const body = rows
+      .map(
+        (r, ri) =>
+          `<tr>${(Array.isArray(r) ? r : []).slice(0, nCols).map((c, ci) => `<td${ri === hr && ci === hc ? ` class="hl"` : ""}>${esc(String(c ?? ""))}</td>`).join("")}</tr>`
+      )
+      .join("");
+    return `${s.kicker ? `<div class="kicker">${esc(s.kicker)}</div>` : ""}${
+      lead
+        ? `<div class="lead"><i></i><span class="ll">${esc(lead.left ?? "")}</span><span class="lr">${esc(lead.right ?? "")}</span></div>${lead.caption ? `<div class="lead-cap">${esc(lead.caption)}</div>` : ""}`
+        : ""
+    }<table class="grid">${head}${body}</table>${s.note ? `<div class="ban-m">${esc(s.note)}</div>` : ""}`;
+  }
+
+  if (layout === "measures") {
+    const ms = (s.measures ?? []).slice(0, 12);
+    const half = Math.ceil(ms.length / 2);
+    const tbl = (list: typeof ms) =>
+      list.length
+        ? `<table class="mt"><tr><th>Measure</th><th>Performance indicator</th><th>Value</th></tr>${list
+            .map(
+              (m) =>
+                `<tr><td class="mm">${esc(m.measure ?? "")}</td><td class="mi">${esc(m.indicator ?? "")}</td><td class="mv">${esc(m.value ?? "")}</td></tr>`
+            )
+            .join("")}</table>`
+        : "";
+    return `${s.kicker ? `<div class="kicker">${esc(s.kicker)}</div>` : ""}<div class="mgrid">${tbl(ms.slice(0, half))}${tbl(ms.slice(half))}</div>${
+      s.strip?.text
+        ? `<div class="ban-g"><span class="tx">${esc(s.strip.text)}</span>${s.strip.value ? `<span class="vv">${esc(s.strip.value)}</span>` : ""}</div>`
+        : ""
+    }`;
+  }
+
+  if (layout === "cards") {
+    const cards = (s.cards ?? []).slice(0, 4);
+    return `${s.kicker ? `<div class="kicker">${esc(s.kicker)}</div>` : ""}<div class="cgrid">${cards
+      .map((c, i) => {
+        const acc = ACC_CYCLE[i % 4];
+        return `<div class="ccard"><span class="chip${acc === DECK.y ? " dk" : ""}" style="--acc:${acc}">${String(i + 1).padStart(2, "0")}</span><div><div class="cc-t">${esc(c.title ?? "")}</div><div class="cc-b">${esc(c.text ?? "")}</div></div></div>`;
+      })
+      .join("")}</div>${s.strip?.text ? `<div class="ban-g"><span class="tx">${esc(s.strip.text)}</span></div>` : ""}`;
+  }
+
+  // recommendations (default for any unknown layout so nothing is lost)
+  const items = (s.items ?? s.cards ?? []).slice(0, 4);
+  const list = items
+    .map((c, i) => {
+      const acc = ACC_CYCLE[i % 4];
+      return `<div class="rec"><span class="chip big${acc === DECK.y ? " dk" : ""}" style="--acc:${acc}">${String(i + 1).padStart(2, "0")}</span><div><div class="cc-t">${esc(c.title ?? "")}</div><div class="cc-b">${esc(c.text ?? "")}</div></div></div>`;
+    })
+    .join("");
+  const stats = (s.panel?.stats ?? []).slice(0, 4);
+  const panel = `<div class="rbox">${s.panel?.tag ? `<div class="co-tag">${esc(s.panel.tag)}</div>` : ""}${stats
+    .map(
+      (st, i) =>
+        `<div class="rstat"><span class="v" style="--acc:${[DECK.g, DECK.o, DECK.y, DECK.g][i % 4]}">${esc(st.value ?? "")}</span><span class="l">${esc(st.label ?? "")}</span></div>`
+    )
+    .join("")}</div>`;
+  return `<div class="recwrap"><div class="recs">${list}</div><div class="rpanel">${panel}${
+    s.strip?.text ? `<div class="ban-o">${esc(s.strip.text)}</div>` : ""
+  }</div></div>`;
+}
+
+/** Printable deck document — pixel replica of the approved PPTX template. */
+export function deckDocumentHtml(
+  kind: ReportKind,
+  deck: AiDeck,
+  rows: LearnerRow[],
+  author: Profile,
+  logo: string
+): string {
+  const now = new Date();
+  const cover = deck.cover ?? {};
+  const period =
+    cover.period?.trim() ||
+    `1–${now.getDate()} ${now.toLocaleString("en-GB", { month: "long" })} ${now.getFullYear()}`;
+  // the deck reports a period — all month furniture follows it, not today's date
+  const monthMatch = period.match(
+    /January|February|March|April|May|June|July|August|September|October|November|December/gi
+  );
+  const month = monthMatch?.[monthMatch.length - 1] ?? now.toLocaleString("en-GB", { month: "long" });
+  const sponsor = (COURSE_META as { sponsor?: string }).sponsor ?? "";
+  const sponsorWord = (sponsor.trim().split(/\s+/)[0] || "Learnership").toUpperCase();
+  const eyebrow = `${sponsorWord} • ${month.toUpperCase()} LEARNERSHIP REPORT`;
+  const title = cover.title?.trim() || `${month} ${kind.name}`;
+  const subtitle = cover.subtitle?.trim() || `${COURSE_META.title} • ${month} ${now.getFullYear()}`;
+  const card = cover.card ?? {};
+  const slides = deck.slides.slice(0, 7);
+  const slug = kind.name.replace(/\s+/g, "-").toLowerCase();
+  const filename = `${slug}-${now.toISOString().slice(0, 10)}.html`;
+  const logoCss = logo
+    ? `.slogo{background-image:url("${logo}")}.clogo{background-image:url("${logo}")}`
+    : "";
+
+  const metaRows: [string, string][] = [
+    ["SAQA ID", COURSE_META.saqaId],
+    ...(sponsor ? ([["Sponsor", sponsor]] as [string, string][]) : []),
+    ["NQF level", `Level ${COURSE_META.nqfLevel} • ${COURSE_META.credits} credits`],
+    ["Reporting period", period],
+    ["Facilitator", author.name],
+    ["Cohort", `${rows.length} learner${rows.length === 1 ? "" : "s"}`],
+  ];
+
+  const coverHtml = `
+  <section class="slide cover">
+    <div class="so"></div><div class="sg"></div>
+    <div class="clogo"></div>
+    <div class="c-sp">${esc(sponsorWord)}</div>
+    <div class="c-title${title.length > 46 ? " long" : ""}">${esc(title)}</div>
+    <div class="c-sub">${esc(subtitle)}</div>
+    <table class="c-meta">${metaRows
+      .map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`)
+      .join("")}</table>
+    <div class="c-card">
+      <div class="tag">${esc(card.tag || "HR MANAGEMENT VIEW")}</div>
+      <div class="h">${esc(card.heading || "Attendance, delivery, assessment progress and learner engagement")}</div>
+      <div class="s">${esc(card.body || `Compiled from the ITSS Learn platform records by ${author.name}.`)}</div>
+    </div>
+    <div class="fline"></div>
+    <div class="ftext">Eruditio • Empower · Develop · Transform</div>
+    <div class="fpage">01</div>
+  </section>`;
+
+  const slideHtml = slides
+    .map(
+      (s, i) => `
+  <section class="slide">
+    <div class="so"></div><div class="sg"></div>
+    <div class="eyeb">${esc(eyebrow)}</div>
+    <div class="hline${s.headline.length > 58 ? " long" : ""}">${esc(s.headline)}</div>
+    <div class="slogo"></div>
+    <div class="rule"></div>
+    <div class="content">${deckSlideBody(s)}</div>
+    <div class="fline"></div>
+    <div class="ftext">Eruditio • Empower · Develop · Transform</div>
+    <div class="fpage">${String(i + 2).padStart(2, "0")}</div>
+  </section>`
+    )
+    .join("");
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>${esc(title)} — ${esc(COURSE_META.title)}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#4a4a50;font-family:Calibri,"Segoe UI",Arial,sans-serif;color:${DECK.ink};-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .slide{position:relative;width:13.333in;height:7.5in;background:#fff;margin:20px auto;box-shadow:0 6px 26px rgba(0,0,0,.4);overflow:hidden}
+  @media print{body{background:#fff}.slide{margin:0;box-shadow:none;break-after:page}.slide:last-child{break-after:auto}@page{size:13.333in 7.5in;margin:0}}
+  .so{position:absolute;top:0;left:0;width:100%;height:.146in;background:${DECK.o}}
+  .sg{position:absolute;top:.146in;left:0;width:100%;height:.073in;background:${DECK.g}}
+  .eyeb{position:absolute;left:.646in;top:.36in;font-size:9.75pt;font-weight:700;color:${DECK.g};letter-spacing:.1em;text-transform:uppercase}
+  .hline{position:absolute;left:.646in;top:.66in;width:9.7in;font-size:25.5pt;font-weight:700;line-height:1.06;color:${DECK.ink}}
+  .hline.long{font-size:21pt;top:.72in}
+  .slogo{position:absolute;left:10.421in;top:.295in;width:2.288in;height:.9in;background-repeat:no-repeat;background-position:right center;background-size:contain}
+  .rule{position:absolute;left:.646in;top:1.479in;width:12.042in;height:.031in;background:${DECK.o}}
+  .content{position:absolute;left:.646in;top:1.71in;width:12.042in;height:5.3in;display:flex;flex-direction:column;overflow:hidden}
+  .fline{position:absolute;left:.646in;top:7.083in;width:12.042in;border-top:1px solid ${DECK.t}}
+  .ftext{position:absolute;left:.646in;top:7.13in;font-size:8.25pt;color:${DECK.grey}}
+  .fpage{position:absolute;right:.646in;top:7.11in;font-size:9pt;font-weight:700;color:${DECK.o}}
+  .kicker{font-size:10.5pt;font-weight:700;color:${DECK.g};letter-spacing:.08em;text-transform:uppercase}
+  /* kpi */
+  .kpis{display:grid;gap:.26in;margin-top:.16in}
+  .kpi{position:relative;background:#fff;border:1px solid ${DECK.line};border-radius:.09in;padding:.29in .25in .18in;overflow:hidden}
+  .kpi i{position:absolute;top:0;left:0;width:100%;height:.094in;background:var(--acc)}
+  .kv{font-size:31.5pt;font-weight:700;line-height:1.02;color:var(--acc)}
+  .kl{font-size:12.75pt;font-weight:700;margin-top:.07in;line-height:1.15}
+  .ks{font-size:9.75pt;color:${DECK.grey};margin-top:.05in;line-height:1.25}
+  .callout{background:${DECK.paper};border-radius:.1in;padding:.27in .3in;margin-top:.38in}
+  .co-tag{font-size:10.5pt;font-weight:700;color:${DECK.g};letter-spacing:.09em;text-transform:uppercase}
+  .co-stat{font-size:21pt;font-weight:700;line-height:1.12;margin-top:.13in}
+  .co-body{font-size:12.75pt;color:${DECK.grey};line-height:1.4;margin-top:.12in}
+  /* sessions */
+  .sess{display:flex;gap:.28in;margin-top:.2in;flex:1;min-height:0}
+  .srows{flex:1;display:flex;flex-direction:column;gap:.24in}
+  .srow{display:flex;align-items:center;gap:.2in}
+  .srow .lb{width:2.2in;flex:none;font-size:12pt}
+  .srow:first-child .lb{font-weight:700}
+  .bar{flex:1;height:.26in;border-radius:.13in;background:${DECK.paper};position:relative;overflow:hidden}
+  .bar i{position:absolute;top:0;left:0;bottom:0;background:${DECK.g};border-radius:.13in}
+  .srow .vl{width:1in;flex:none;text-align:right;font-size:12.75pt;font-weight:700;color:${DECK.grey}}
+  .srow:first-child .vl{color:${DECK.g}}
+  .spanel{width:2.167in;flex:none;background:${DECK.mint};border-radius:.1in;padding:.3in .24in;text-align:center;align-self:flex-start}
+  .sp-v{font-size:36pt;font-weight:700;color:${DECK.g};line-height:1}
+  .sp-l{font-size:13.5pt;font-weight:700;line-height:1.2;margin-top:.09in}
+  .sp-hr{border-top:2px solid ${DECK.o};margin:.2in .1in}
+  .sp-t{font-size:10.5pt;font-weight:700;color:${DECK.o};letter-spacing:.06em;text-transform:uppercase}
+  .sp-n{font-size:12pt;font-weight:700;line-height:1.25;margin-top:.09in}
+  .ban-o{margin-top:auto;background:${DECK.o};color:#fff;font-size:12pt;font-weight:700;line-height:1.3;padding:.14in .23in}
+  /* table */
+  .lead{position:relative;height:.458in;border-radius:.1in;background:${DECK.paper};margin-top:.16in;overflow:hidden}
+  .lead i{position:absolute;left:0;top:0;bottom:0;width:47.1%;background:${DECK.g};border-radius:.1in}
+  .lead .ll{position:absolute;left:.17in;top:0;bottom:0;display:flex;align-items:center;color:#fff;font-size:12pt;font-weight:700}
+  .lead .lr{position:absolute;right:.38in;top:0;bottom:0;display:flex;align-items:center;font-size:12pt;font-weight:700}
+  .lead-cap{font-size:11.25pt;color:${DECK.grey};margin-top:.09in}
+  table.grid{border-collapse:collapse;width:100%;margin-top:.24in}
+  .grid th{background:${DECK.g};color:#fff;text-align:left;font-size:10.5pt;font-weight:700;padding:.1in .11in;border:1px solid ${DECK.cell}}
+  .grid td{background:#fff;font-size:10.5pt;line-height:1.25;padding:.11in;border:1px solid ${DECK.cell}}
+  .grid td.hl{background:${DECK.hl};font-weight:700}
+  .ban-m{margin-top:auto;background:${DECK.mint};border-radius:.09in;font-size:12pt;font-weight:700;line-height:1.3;padding:.13in .23in}
+  /* measures */
+  .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 .37in;margin-top:.18in;align-items:start}
+  table.mt{border-collapse:collapse;width:100%}
+  .mt th{background:${DECK.g};color:#fff;text-align:left;font-size:9.75pt;font-weight:700;padding:.07in .09in;border:1px solid ${DECK.cell}}
+  .mt td{border:1px solid ${DECK.cell};padding:.09in;line-height:1.2;background:#fff}
+  .mt td.mm{background:${DECK.paper};color:${DECK.o};font-weight:700;font-size:9.75pt;width:1.15in}
+  .mt td.mi{font-size:9.5pt}
+  .mt td.mv{font-size:9.75pt;width:.9in}
+  .ban-g{margin-top:auto;background:${DECK.g};color:#fff;display:flex;align-items:center;gap:.3in;padding:.12in .21in}
+  .ban-g .tx{font-size:12pt;font-weight:700;letter-spacing:.02em;text-transform:uppercase;flex:1;line-height:1.3}
+  .ban-g .vv{font-size:18pt;font-weight:700}
+  /* cards */
+  .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:.31in .37in;margin-top:.22in}
+  .ccard{background:${DECK.paper};border-radius:.1in;padding:.22in;display:flex;gap:.2in;min-height:1.708in}
+  .chip{width:.625in;height:.625in;flex:none;border-radius:.15in;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15pt;font-weight:700}
+  .chip.big{width:.75in;height:.75in;font-size:15.75pt;border-radius:.16in}
+  .chip.dk{color:${DECK.ink}}
+  .cc-t{font-size:14.25pt;font-weight:700;line-height:1.15}
+  .cc-b{font-size:11.25pt;color:${DECK.grey};line-height:1.38;margin-top:.08in}
+  /* recommendations */
+  .recwrap{display:flex;gap:.5in;margin-top:.18in;flex:1;min-height:0}
+  .recs{flex:1;display:flex;flex-direction:column;gap:.28in}
+  .rec{display:flex;gap:.27in}
+  .rpanel{width:5.396in;flex:none;display:flex;flex-direction:column;gap:.26in}
+  .rbox{background:${DECK.paper};border-radius:.1in;padding:.28in .31in;flex:1}
+  .rstat{display:flex;align-items:baseline;gap:.25in;margin-top:.2in}
+  .rstat .v{min-width:1.15in;font-size:22.5pt;font-weight:700;line-height:1;color:var(--acc)}
+  .rstat .l{font-size:12.75pt;font-weight:700}
+  .rpanel .ban-o{margin-top:0}
+  /* cover */
+  .cover .so{height:.229in}
+  .cover .sg{top:.229in;height:.083in}
+  .clogo{position:absolute;left:.729in;top:.529in;width:3.438in;height:1.35in;background-repeat:no-repeat;background-position:left center;background-size:contain}
+  .c-sp{position:absolute;left:.75in;top:2.104in;font-size:13.5pt;font-weight:700;color:${DECK.g};letter-spacing:.18em;text-transform:uppercase}
+  .c-title{position:absolute;left:.75in;top:2.42in;width:11in;font-size:34.5pt;font-weight:700;line-height:1.04;color:${DECK.ink}}
+  .c-title.long{font-size:28pt;top:2.5in}
+  .c-sub{position:absolute;left:.75in;top:3.365in;width:11.25in;font-size:14.25pt;color:${DECK.grey}}
+  table.c-meta{position:absolute;left:.75in;top:4.094in;width:8.646in;border-collapse:collapse}
+  .c-meta th{background:${DECK.g};color:#fff;width:2.708in;text-align:left;font-size:10.5pt;font-weight:700;padding:.088in .17in;border:1px solid ${DECK.cell}}
+  .c-meta td{background:#fff;font-size:10.5pt;padding:.088in .17in;border:1px solid ${DECK.cell}}
+  .c-card{position:absolute;left:9.875in;top:4.094in;width:2.708in;height:2.375in;background:${DECK.paper};border-radius:.1in;padding:.26in .27in}
+  .c-card .tag{font-size:9.75pt;font-weight:700;color:${DECK.o};letter-spacing:.08em;text-transform:uppercase}
+  .c-card .h{font-size:13.5pt;font-weight:700;line-height:1.28;margin-top:.14in}
+  .c-card .s{font-size:9.38pt;color:${DECK.grey};line-height:1.42;margin-top:.15in}
+  ${logoCss}
+</style>
+</head>
+<body>
+  ${docToolbar(filename)}
+  ${coverHtml}
+  ${slideHtml}
+  <style>
+    .edit-toolbar { position: fixed; bottom: 14px; right: 12px; z-index: 999; font-family: "Segoe UI", system-ui, sans-serif; }
+    .edit-toolbar button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border: 1px solid #c9d4e4; border-radius: 8px; background: #ffffff; color: #1f2b3d; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(15, 35, 70, 0.14); }
+    .edit-toolbar button:hover { background: #f0f5fb; }
+    .edit-toolbar button.on { border-color: #0F6CBD; color: #0F6CBD; }
+    body[contenteditable="true"] { caret-color: #0F6CBD; }
+    body[contenteditable="true"]:focus { outline: none; }
+    @media print { .edit-toolbar { display: none !important; } }
+  </style>
+  <div class="edit-toolbar">
+    <button type="button" id="__editBtn" onclick="__toggleEdit()" title="Click any text to change it before printing or downloading">✎ Editing: off</button>
+  </div>
+  <script>
+    var __editing = false;
+    function __toggleEdit() {
+      __editing = !__editing;
+      document.body.contentEditable = __editing ? "true" : "false";
+      var b = document.getElementById("__editBtn");
+      b.textContent = "\\u270E Editing: " + (__editing ? "on" : "off");
+      b.className = __editing ? "on" : "";
+    }
+    function __downloadDoc() {
+      var clone = document.documentElement.cloneNode(true);
+      clone.querySelectorAll(".doc-toolbar, .edit-toolbar").forEach(function (el) { el.remove(); });
+      var body = clone.querySelector("body");
+      if (body) body.removeAttribute("contenteditable");
+      var blob = new Blob(["<!doctype html>" + clone.outerHTML], { type: "text/html" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = ${JSON.stringify(filename)};
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+  </script>
+</body>
+</html>`;
 }

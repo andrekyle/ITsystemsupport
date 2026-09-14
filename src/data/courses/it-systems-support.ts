@@ -7,6 +7,7 @@ const meta = {
   credits: 148,
   qualityAssurance: "QCTO / MICT SETA",
   time: "09h00 - 14h00",
+  sponsor: "Investec Group",
 };
 
 const modules: CourseModule[] = [

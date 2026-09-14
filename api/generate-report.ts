@@ -58,44 +58,70 @@ const SCOPE_DIRECT_RULES = `When the message starts with THE FACILITATOR'S QUEST
 
 const ANSWER_TAIL = `You are in SHORT ANSWER mode: reply ONLY with one of the two JSON shapes above ({"direct": ...} or {"offtopic": ...}) — never the full report JSON.`;
 
-const REPORT_RULES = `For a FULL REPORT answering a question:
-- The FIRST sentence of "intro" must directly answer the question in plain terms.
-- Every section heading must be derived from the question (use its key words), never generic headings like "Overview" or "Cohort performance" unless the question asks for them.
-- Address the specific learners, units, dates or numbers the question mentions; if the question asks to "write" something (an update, a letter, a summary for an employer), the sections ARE that piece of writing.
-- If the data cannot answer part of the question, say so explicitly in a section rather than padding with unrelated statistics.
+const CLINICAL_RULES = `CLINICAL REGISTER — the report is a formal management record, not marketing. HARD RULES:
+- Every headline is a finding stated as fact with its figure ("Recorded attendance is 100% across four August sessions"), never a slogan.
+- Banned: superlatives and praise adjectives ("exceptional", "amazing", "fantastic", "impressive", "outstanding"), exclamation marks, motivational filler. An adjective is allowed only when the figure next to it proves it ("full attendance — 48 of 48 signatures").
+- Every number cited must come from the data or be a simple derivation of it (state derived figures to the same precision as the source; otherwise round to whole numbers).
+- Dates as "28 August"; ranges as "1–31 August 2026"; counts as "12 of 12" in prose and "12 / 12" in cells.
+- For each area state: what the records show, what is pending, and the next step. Distinguish learner-side completion from assessor-side finalisation precisely.
+- If a figure is not in the data, write "not recorded" — never estimate, never omit silently.
+- No markdown syntax anywhere. Plain sentences. South African English.`;
 
-SPECIAL CASE — report_kind "tracker": output ONE section PER LEARNER. Each section's "heading" must be exactly the learner's full name as given in the data, with a single paragraph of 2-3 sentences: a professional facilitator comment on that learner's submissions, attendance and progress (like a report card comment). Use that learner's "pronouns" field exactly. No bullets. Keep the intro to 1-2 sentences about the cohort overall.
+const DECK_RULES = `You write the report as a fixed slide-deck template (the client's approved monthly report format). Reply with STRICT JSON only:
+{
+  "cover": {
+    "period": "FIRST decide this: the span of the dated records being reported, e.g. 1–31 August 2026",
+    "title": "<period's month> <report kind>, e.g. August Learnership Progress Report — the month word MUST be copied from \"period\", never from today's date",
+    "subtitle": "one factual line: qualification name + the period's month and year",
+    "card": { "tag": "HR MANAGEMENT VIEW", "heading": "6-10 word statement of what the report covers", "body": "one clinical sentence on what the reader can verify from it" }
+  },
+  "slides": [ ... 5 to 7 slide objects, each one of the layouts below ... ]
+}
+
+SLIDE LAYOUTS (use exactly these field names):
+1. {"layout":"kpi","headline":"...","kpis":[{"value":"12","label":"Learners enrolled","sub":"context in ≤6 words","tone":"green|orange|yellow"}] , "callout":{"tag":"EXECUTIVE POSITION","statement":"one-sentence position ≤14 words","body":"2-3 clinical sentences of substantiation"}} — exactly 4 kpis. value ≤7 chars.
+2. {"layout":"sessions","headline":"...","kicker":"SIGNED ATTENDANCE BY CONTACT SESSION","rows":[{"label":"5 August","value":"12 / 12","ratio":1.0}],"panel":{"stat":"100%","statLabel":"recorded attendance","tag":"Signed registers","note":"≤8 words"},"note":"1-2 sentence factual banner"} — ≤6 rows: one per session date PLUS a final total row (e.g. "Month total" | "48 / 48"); "panel" and "note" are REQUIRED; ratio is attended/expected 0-1.
+3. {"layout":"table","headline":"...","kicker":"SHORT UPPERCASE TABLE TITLE","lead":{"left":"≤4 word status","right":"≤4 word next step","caption":"one factual line"},"columns":["..."],"cells":[["..."]],"highlight":{"row":0,"col":2},"note":"1-2 sentence factual banner"} — ≤5 columns, ≤6 rows, cell text ≤34 chars; "lead" and "highlight" optional; more rows than fit = continue on a second table slide with the same columns and headline suffixed " — continued".
+4. {"layout":"measures","headline":"...","measures":[{"measure":"≤13 chars","indicator":"what is measured ≤30 chars","value":"≤7 chars"}],"strip":{"text":"UPPERCASE KEY FINDING ≤70 CHARS","value":"92%"}} — 4 to 12 measures, only ones the data supports.
+5. {"layout":"cards","headline":"...","cards":[{"title":"≤28 chars","text":"one factual sentence ≤130 chars"}],"strip":{"text":"COHORT POSITION: one-line factual summary"}} — exactly 4 cards.
+6. {"layout":"recommendations","headline":"...","items":[{"title":"≤30 chars","text":"one actionable sentence ≤95 chars"}],"panel":{"tag":"PROPOSED SUPPORT MODEL","stats":[{"value":"3","label":"≤28 chars"}]},"strip":{"text":"Recommendation: the single priority action"}} — exactly 4 items and exactly 4 panel stats.
+
+COMPOSITION:
+- Default order (use it for progress/executive/monthly reports): kpi, sessions, table (curriculum delivery), measures (assessment results), table (evidence & submission readiness), cards (cohort position), recommendations.
+- Other kinds keep the SAME visual language but weight the slides to the kind: attendance → kpi, sessions, per-learner table(s) (Learner | Signed | Expected | Rate | Last seen), cards, recommendations; risk → kpi, table of flagged learners with reasons, cards, recommendations; outcomes → kpi, table(s) per unit standard (Competent / NYC / No decision), measures, recommendations. A question-driven report weights the slides to the question and the kpi callout must answer it directly.
+- Every slide headline ≤70 chars, stated as a finding with a figure. kicker/tag strings are UPPERCASE. tone: green for on-track, orange for attention, yellow for neutral counts.
+- The last slide is ALWAYS "recommendations": concrete facilitator/management actions from the data. If the data justifies no intervention, the items are monitoring/maintenance actions — never invented problems.`;
+
+const TRACKER_RULES = `report_kind "tracker": output ONE section PER LEARNER. Each section's "heading" must be exactly the learner's full name as given in the data, with a single paragraph of 2-3 sentences: a professional facilitator comment on that learner's submissions, attendance and progress (like a report card comment). Use that learner's "pronouns" field exactly. No bullets. Keep the intro to 1-2 sentences about the cohort overall.
 
 Reply with STRICT JSON only, no prose outside JSON:
 {
-  "intro": "2-4 sentence executive overview of what the report covers and the headline finding",
-  "sections": [
-    { "heading": "short section heading", "paragraphs": ["paragraph", ...], "bullets": ["optional bullet", ...] },
-    ...
-  ],
+  "intro": "1-2 sentence cohort overview",
+  "sections": [ { "heading": "Learner Full Name", "paragraphs": ["comment"] }, ... ],
   "recommendations": ["actionable recommendation", ...]
 }
-
-3 to 6 sections (unless report_kind is "tracker"), each 1-3 paragraphs (bullets optional). 3-6 recommendations. Do not use markdown syntax anywhere — plain sentences only.`;
+One section per learner, 3-6 recommendations. No markdown syntax anywhere.`;
 
 /** Answer-mode questions skip the report spec; kind runs skip the question ladder. Same rules, fewer tokens. */
-function buildSystemPrompt(hasQuestion: boolean, mode: string): string {
+function buildSystemPrompt(hasQuestion: boolean, mode: string, kind: string): string {
   if (hasQuestion && mode === "answer") return [CORE_PROMPT, SCOPE_DIRECT_RULES, ANSWER_TAIL].join("\n\n");
-  if (hasQuestion) return [CORE_PROMPT, SCOPE_DIRECT_RULES, REPORT_RULES].join("\n\n");
-  return [CORE_PROMPT, REPORT_RULES].join("\n\n");
+  if (kind === "tracker") return [CORE_PROMPT, CLINICAL_RULES, TRACKER_RULES].join("\n\n");
+  if (hasQuestion) return [CORE_PROMPT, SCOPE_DIRECT_RULES, CLINICAL_RULES, DECK_RULES].join("\n\n");
+  return [CORE_PROMPT, CLINICAL_RULES, DECK_RULES].join("\n\n");
 }
 
 const MAX_DATA_LEN = 60_000;
 const LLM_TIMEOUT_MS = 45_000;
-const BUILD = "20260909-4";
+const BUILD = "20260914-1";
 
 const MODEL_CANDIDATES = ["gpt-4.1-mini", "gpt-5.6-luna", "gpt-4o-mini", "gpt-4o"];
 
-function paramsFor(model: string, hasQuestion: boolean): Record<string, unknown> {
+function paramsFor(model: string, hasQuestion: boolean, mode: string): Record<string, unknown> {
   if (model.startsWith("gpt-5")) {
-    return { max_completion_tokens: 3000, seed: 7 };
+    return { max_completion_tokens: mode === "report" ? 4000 : 3000, seed: 7 };
   }
-  // a little more freedom for free-form questions; kinds stay near-deterministic
+  // clinical decks stay near-deterministic; free-form answers get a little freedom
+  if (mode === "report") return { temperature: 0.2, max_tokens: 3400 };
   return { temperature: hasQuestion ? 0.5 : 0.3, max_tokens: 2200 };
 }
 
@@ -191,10 +217,10 @@ export default async function handler(req: Request): Promise<Response> {
         },
         body: JSON.stringify({
           model,
-          ...paramsFor(model, Boolean(question.trim())),
+          ...paramsFor(model, Boolean(question.trim()), question.trim() ? mode : "report"),
           response_format: { type: "json_object" },
           messages: [
-            { role: "system", content: buildSystemPrompt(Boolean(question.trim()), mode) },
+            { role: "system", content: buildSystemPrompt(Boolean(question.trim()), mode, kind) },
             ...history,
             { role: "user", content: userMsg },
           ],
@@ -214,6 +240,8 @@ export default async function handler(req: Request): Promise<Response> {
         intro?: unknown;
         sections?: unknown;
         recommendations?: unknown;
+        cover?: unknown;
+        slides?: unknown;
         offtopic?: unknown;
         direct?: unknown;
         answer?: unknown;
@@ -229,6 +257,30 @@ export default async function handler(req: Request): Promise<Response> {
           {
             error: parsed.offtopic === true ? "offtopic" : "direct",
             answer: str(parsed.answer),
+            model: data.model ?? model,
+            usage: data.usage ?? {},
+          },
+          200
+        );
+      }
+      if (kind !== "tracker") {
+        // deck-template report: pass the cover + slides through; the client renders the fixed layout
+        const slides = Array.isArray(parsed.slides)
+          ? parsed.slides.filter(
+              (s): s is Record<string, unknown> =>
+                typeof s === "object" && s !== null &&
+                typeof (s as { layout?: unknown }).layout === "string" &&
+                typeof (s as { headline?: unknown }).headline === "string"
+            )
+          : [];
+        if (slides.length === 0) {
+          lastError = "empty_report";
+          continue;
+        }
+        return json(
+          {
+            cover: typeof parsed.cover === "object" && parsed.cover !== null ? parsed.cover : {},
+            slides,
             model: data.model ?? model,
             usage: data.usage ?? {},
           },
