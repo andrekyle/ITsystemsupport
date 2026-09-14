@@ -772,7 +772,7 @@ let logoCache: string | null = null;
 async function eruditioLogoDataUrl(): Promise<string> {
   if (logoCache !== null) return logoCache;
   try {
-    const blob = await (await fetch("/logos/eruditio.jpg")).blob();
+    const blob = await (await fetch("/logos/eruditio.svg")).blob();
     logoCache = await new Promise<string>((resolve, reject) => {
       const fr = new FileReader();
       fr.onload = () => resolve(String(fr.result));
