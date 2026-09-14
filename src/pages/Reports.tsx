@@ -444,6 +444,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         rows={1}
         value={question}
         placeholder="Ask anything"
+        aria-label="Message the AI assistant"
         onChange={(e) => {
           setQuestion(e.target.value);
           setHistIdx(null);

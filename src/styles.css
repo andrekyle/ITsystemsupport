@@ -10709,6 +10709,22 @@ table.data th.sortable.sorted { color: var(--ink); }
   flex-shrink: 0;
 }
 
+@media (max-width: 640px) {
+  .reports-gpt-pill {
+    width: 100%;
+    gap: 8px;
+    padding-left: 12px;
+  }
+
+  .reports-gpt-plus {
+    display: none;
+  }
+
+  .reports-gpt-pill textarea::placeholder {
+    opacity: 0;
+  }
+}
+
 .reports-gpt-pill textarea {
   flex: 1;
   min-width: 0;
