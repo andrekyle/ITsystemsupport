@@ -29,35 +29,46 @@ export interface SessionDate {
 
 /**
  * Parse programme date strings into concrete sessions.
- * Handles: "24, 31 Jul 2026" · "18, 25 Jun, 2 Jul 2027" · "4 – 11 Jun 2027".
+ * Handles: "24, 31 Jul 2026" · "18, 25 Jun, 2 Jul 2027" · "4 – 11 Jun 2027" ·
+ * cross-year lists like "11 Dec 2026, 15 Jan 2027".
  */
 export function parseSessionDates(dates: string, time: string): SessionDate[] {
-  const yearMatch = dates.match(/\b(20\d{2})\b/);
-  if (!yearMatch) return [];
-  const year = Number(yearMatch[1]);
   const [sh, sm, eh, em] = parseTimeWindow(time);
   const out: SessionDate[] = [];
 
-  // range: "4 – 11 Jun 2027" → one block from first day to last day
-  const range = dates.match(/(\d{1,2})\s*[–-]\s*(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i);
-  if (range) {
-    const mon = MONTHS[range[3].toLowerCase()];
-    out.push({
-      start: new Date(year, mon, Number(range[1]), sh, sm),
-      end: new Date(year, mon, Number(range[2]), eh, em),
-      range: true,
-    });
-    return out;
+  // split into chunks, each closed by its own year: "11 Dec 2026, 15 Jan 2027"
+  const chunks: { text: string; year: number }[] = [];
+  const yearRe = /\b(20\d{2})\b/g;
+  let last = 0;
+  let ym: RegExpExecArray | null;
+  while ((ym = yearRe.exec(dates))) {
+    chunks.push({ text: dates.slice(last, ym.index), year: Number(ym[1]) });
+    last = ym.index + ym[0].length;
   }
+  if (!chunks.length) return [];
 
-  // day lists, possibly across months: "18, 25 Jun, 2 Jul 2027"
-  const seg = /(\d{1,2}(?:\s*,\s*\d{1,2})*)\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/gi;
-  let m: RegExpExecArray | null;
-  while ((m = seg.exec(dates))) {
-    const mon = MONTHS[m[2].toLowerCase()];
-    for (const d of m[1].split(",").map((s) => Number(s.trim()))) {
-      if (!Number.isNaN(d)) {
-        out.push({ start: new Date(year, mon, d, sh, sm), end: new Date(year, mon, d, eh, em) });
+  for (const { text, year } of chunks) {
+    // range: "4 – 11 Jun 2027" → one block from first day to last day
+    const range = text.match(/(\d{1,2})\s*[–-]\s*(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i);
+    if (range) {
+      const mon = MONTHS[range[3].toLowerCase()];
+      out.push({
+        start: new Date(year, mon, Number(range[1]), sh, sm),
+        end: new Date(year, mon, Number(range[2]), eh, em),
+        range: true,
+      });
+      continue;
+    }
+
+    // day lists, possibly across months: "18, 25 Jun, 2 Jul 2027"
+    const seg = /(\d{1,2}(?:\s*,\s*\d{1,2})*)\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/gi;
+    let m: RegExpExecArray | null;
+    while ((m = seg.exec(text))) {
+      const mon = MONTHS[m[2].toLowerCase()];
+      for (const d of m[1].split(",").map((s) => Number(s.trim()))) {
+        if (!Number.isNaN(d)) {
+          out.push({ start: new Date(year, mon, d, sh, sm), end: new Date(year, mon, d, eh, em) });
+        }
       }
     }
   }

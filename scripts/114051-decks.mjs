@@ -22,7 +22,7 @@ export const DECKS = [
         icon: "people",
         meta: [
           ["TIME", "90-minute lessons · Self & Group"],
-          ["SESSION", "Friday, 4 Sep 2026 · 09h00 – 14h00"],
+          ["SESSION", "Thursday, 3 Sep 2026 · 09h00 – 14h00"],
           ["MODULE", "Module 1 · Personal Development"],
           ["QUALITY ASSURANCE", "QCTO / MICT SETA"],
         ],
@@ -276,7 +276,7 @@ export const DECKS = [
         icon: "calendar",
         meta: [
           ["TIME", "90-minute lesson · Self & Group"],
-          ["SESSION", "Friday, 11 Sep 2026 · 09h00 – 14h00"],
+          ["SESSION", "Friday, 4 Sep 2026 · 09h00 – 14h00"],
           ["MODULE", "Module 1 · Personal Development"],
           ["QUALITY ASSURANCE", "QCTO / MICT SETA"],
         ],
@@ -418,7 +418,7 @@ export const DECKS = [
         icon: "presenter",
         meta: [
           ["TIME", "90-minute lesson · Self & Group"],
-          ["SESSION", "Friday, 11 Sep 2026 · 09h00 – 14h00"],
+          ["SESSION", "Friday, 4 Sep 2026 · 09h00 – 14h00"],
           ["MODULE", "Module 1 · Personal Development"],
           ["QUALITY ASSURANCE", "QCTO / MICT SETA"],
         ],
@@ -595,7 +595,7 @@ export const DECKS = [
         icon: "document",
         meta: [
           ["TIME", "90-minute lesson · Self & Group"],
-          ["SESSION", "Friday, 11 Sep 2026 · 09h00 – 14h00"],
+          ["SESSION", "Friday, 4 Sep 2026 · 09h00 – 14h00"],
           ["MODULE", "Module 1 · Personal Development"],
           ["QUALITY ASSURANCE", "QCTO / MICT SETA"],
         ],

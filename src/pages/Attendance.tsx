@@ -8,6 +8,7 @@ import { fileToSignature, reprocessSignature } from "../lib/signature";
 import { fetchCloudDirectory, updateCloudProfile } from "../lib/directory";
 import { loadProfiles, updateProfile } from "../store";
 import { logAudit } from "../lib/audit";
+import { parseSessionDates } from "../lib/integrations";
 import { Icon } from "../icons";
 import { ConfirmModal } from "../components/Modal";
 import { FitSheet } from "../components/FitSheet";
@@ -25,25 +26,12 @@ import { DateTimePicker } from "../components/DateTimePicker";
 const ROW_COUNT = 15;
 const TYPE_OPTIONS = ["Induction", "Training", "Tutoring", "Assessment", "Interviews"] as const;
 
-const MONTHS_ATT: Record<string, number> = {
-  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
-  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
-};
-
 /** All calendar dates a unit is scheduled on (from its "dates" string like "5, 6 Aug 2026"). */
 function unitScheduledIsoDates(u: UnitStandard): string[] {
-  const days = Array.from(u.dates.matchAll(/\b(\d{1,2})\b/g)).map((m) => Number(m[1]));
-  const monMatch = u.dates.match(/jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec/i);
-  const yrMatch = u.dates.match(/\b(20\d{2})\b/);
-  if (!days.length || !monMatch || !yrMatch) return [];
-  const mon = MONTHS_ATT[monMatch[0].toLowerCase()];
-  const yr = Number(yrMatch[1]);
-  return days.map((d) => {
-    const dt = new Date(yr, mon, d);
-    const y = dt.getFullYear();
-    const mm = String(dt.getMonth() + 1).padStart(2, "0");
-    const dd = String(dt.getDate()).padStart(2, "0");
-    return `${y}-${mm}-${dd}`;
+  return parseSessionDates(u.dates, u.time).map(({ start }) => {
+    const mm = String(start.getMonth() + 1).padStart(2, "0");
+    const dd = String(start.getDate()).padStart(2, "0");
+    return `${start.getFullYear()}-${mm}-${dd}`;
   });
 }
 

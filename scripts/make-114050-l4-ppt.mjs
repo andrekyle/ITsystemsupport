@@ -178,7 +178,7 @@ function strip(s, label, text, { y = 5.35, h = 1.3 } = {}) {
   s.addShape(pptx.ShapeType.line, { x: MX, y: 4.62, w: CW, h: 0, line: { color: BORDER, width: 1 } });
   const meta = [
     ["TIME", "90 minutes · Self & Group"],
-    ["SESSION", "Thursday, 27 Aug 2026 · 09h00 – 14h00"],
+    ["SESSION", "Friday, 28 Aug 2026 · 09h00 – 14h00"],
     ["MODULE", "Module 1 · Professional Team Development"],
     ["QUALITY ASSURANCE", "QCTO / MICT SETA"],
   ];

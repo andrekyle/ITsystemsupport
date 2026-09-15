@@ -132,7 +132,7 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     def: "A design approach where one generic core qualification is adapted ('contextualised') to different industry settings. The core components teach the universal skills every systems-support professional needs, while the electives tailor the programme to a specific context — such as banking, retail or telecoms — so the same qualification stays relevant across many sectors.",
   },
   fisa: {
-    def: "Final Integrated Summative Assessment — the concluding assessment written after all six modules are complete (scheduled 28 May – 4 June 2027). Rather than testing one unit standard at a time, it integrates knowledge and skills from across the whole qualification into a single summative event. Passing the FISA — together with a complete Portfolio of Evidence and signed-off logbook — is required before certification.",
+    def: "Final Integrated Summative Assessment — the concluding assessment written after all six modules are complete (scheduled 2 & 9 July 2027). Rather than testing one unit standard at a time, it integrates knowledge and skills from across the whole qualification into a single summative event. Passing the FISA — together with a complete Portfolio of Evidence and signed-off logbook — is required before certification.",
   },
   poe: {
     def: "Portfolio of Evidence — the organised file proving your competence: assessed assignments, formative and summative results, workplace evidence, logbook entries and assessor feedback, collected per unit standard. The assessor and moderator check it, and it must be complete before you can be declared competent and certified.",
@@ -3535,7 +3535,7 @@ export const CONTENT: Record<string, UnitContent> = {
       title: "Facilitator Preparation",
       startTime: "09:00",
       details: [
-        { icon: "calendar", label: "Date", value: "Friday, 7 August 2026" },
+        { icon: "calendar", label: "Dates", value: "Friday 24 · Friday 31 July 2026" },
         { icon: "clock", label: "Time", value: "09:00 \u2013 14:00 · lunch 12:00 \u2013 13:00" },
         { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
         { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
@@ -3546,7 +3546,7 @@ export const CONTENT: Record<string, UnitContent> = {
       ],
       sections: [
         {
-          heading: "Day 1 — Friday, 7 August 2026 · Unit Standard 10135",
+          heading: "Day 1 — Friday, 24 July 2026 · Unit Standard 10135",
           startTime: "09:00",
           rows: [
             {
@@ -3597,7 +3597,7 @@ export const CONTENT: Record<string, UnitContent> = {
           ],
         },
         {
-          heading: "Day 2 — Friday, 7 August 2026 · Unit Standard 10135",
+          heading: "Day 2 — Friday, 31 July 2026 · Unit Standard 10135",
           startTime: "09:00",
           rows: [
             {
@@ -4926,7 +4926,7 @@ export const CONTENT: Record<string, UnitContent> = {
               bullets: [
                 "Full-circle recap: from human computers to AI — and where the systems support career fits in that story.",
                 "Issue the assignment (hardware audit & evolution poster) — due within 5 working days.",
-                "Thank the learners and confirm the next session (US 114055, Friday 14 August).",
+                "Thank the learners and confirm the next session (US 114055, Friday 7 August).",
               ],
             },
           ],
@@ -8836,7 +8836,7 @@ export const CONTENT: Record<string, UnitContent> = {
       title: "Facilitator Preparation",
       startTime: "09:00",
       details: [
-        { icon: "calendar", label: "Dates", value: "Friday 21 · Thursday 27 August 2026" },
+        { icon: "calendar", label: "Dates", value: "Friday 21 · Friday 28 August 2026" },
         { icon: "clock", label: "Time", value: "09:00 \u2013 14:00 daily · lunch 12:00 \u2013 13:00" },
         { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
         { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
@@ -8948,7 +8948,7 @@ export const CONTENT: Record<string, UnitContent> = {
           ],
         },
         {
-          heading: "Day 2 — Thursday, 27 August 2026 · Lessons 3 & 4: IT in business · Information needs · wrap-up",
+          heading: "Day 2 — Friday, 28 August 2026 · Lessons 3 & 4: IT in business · Information needs · wrap-up",
           startTime: "09:00",
           rows: [
             {
@@ -12131,7 +12131,7 @@ Improvement: distribute the technical slides beforehand."
       title: "Facilitator Preparation",
       startTime: "09:00",
       details: [
-        { icon: "calendar", label: "Dates", value: "Friday 4 · Friday 11 September 2026" },
+        { icon: "calendar", label: "Dates", value: "Thursday 3 · Friday 4 September 2026" },
         { icon: "clock", label: "Time", value: "09:00 \u2013 14:00 daily · lunch 12:00 \u2013 13:00" },
         { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
         { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
@@ -12161,7 +12161,7 @@ Improvement: distribute the technical slides beforehand."
           ],
         },
         {
-          heading: "Day 1 — Friday, 4 September 2026 · Lessons 1\u20135: Knowledge of technical practitioners meetings",
+          heading: "Day 1 — Thursday, 3 September 2026 · Lessons 1\u20135: Knowledge of technical practitioners meetings",
           rows: [
             {
               time: "10 minutes",
@@ -12235,7 +12235,7 @@ Improvement: distribute the technical slides beforehand."
           ],
         },
         {
-          heading: "Day 2 — Friday, 11 September 2026 · Lessons 6\u20139: Prepare · Chair · Follow up",
+          heading: "Day 2 — Friday, 4 September 2026 · Lessons 6\u20139: Prepare · Chair · Follow up",
           startTime: "09:00",
           rows: [
             {
@@ -14081,7 +14081,7 @@ Improvement: distribute the technical slides beforehand."
       title: "Facilitator Preparation",
       startTime: "09:00",
       details: [
-        { icon: "calendar", label: "Date", value: "Friday, 14 August 2026" },
+        { icon: "calendar", label: "Date", value: "Friday, 7 August 2026" },
         { icon: "clock", label: "Time", value: "09:00 \u2013 14:00 · lunch 12:00 \u2013 13:00" },
         { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
         { icon: "presenter", label: "Facilitator", value: "Andre Snell" },

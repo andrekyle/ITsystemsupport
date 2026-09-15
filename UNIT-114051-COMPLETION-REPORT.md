@@ -14,7 +14,7 @@ Unit Standard 114051 "Conduct a technical practitioners meeting" has been succes
 | **Title** | Conduct a technical practitioners meeting |
 | **NQF Level** | 5 |
 | **Credits** | 4 |
-| **Delivery Date** | 4, 11 Sep 2026 (Fridays) |
+| **Delivery Date** | 3, 4 Sep 2026 (Thu & Fri) |
 | **Time** | 09h00 - 14h00 |
 | **Total Lessons** | 9 |
 | **Total Quiz Questions** | 40+ |
@@ -236,7 +236,7 @@ All verification tests **PASSED**:
 ### **Course Structure Integration**
 - ✅ Unit 114051 already registered in `src/data/course.ts` (line 25)
 - ✅ Referenced in learner tracker as "Meeting agendas and minutes (US 114051)"
-- ✅ Scheduled for delivery: 4, 11 Sep 2026 (Fridays), 09h00-14h00
+- ✅ Scheduled for delivery: 3, 4 Sep 2026 (Thu & Fri), 09h00-14h00
 - ✅ Positioned in Personal Development module (m1)
 
 ### **Data Flow**

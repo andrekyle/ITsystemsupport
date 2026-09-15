@@ -146,8 +146,8 @@ function dataTable(s, header, rows, { x = MX, y = 2.0, w = CW, colW, fontSize = 
   s.addShape(pptx.ShapeType.line, { x: MX, y: 4.55, w: CW, h: 0, line: { color: BORDER, width: 1 } });
   const meta = [
     ["MODULES", "6 modules · 24 unit standards"],
-    ["DURATION", "1 Year · 17 Jul 2026 – 25 Jun 2027"],
-    ["SESSIONS", "Fridays · 09h00 – 14h00"],
+    ["DURATION", "1 Year · 17 Jul 2026 – 30 Jul 2027"],
+    ["SESSIONS", "Mainly Fridays · 09h00 – 14h00"],
     ["QUALITY ASSURANCE", "QCTO / MICT SETA"],
   ];
   meta.forEach(([k, v], i) => {
@@ -208,7 +208,7 @@ function dataTable(s, header, rows, { x = MX, y = 2.0, w = CW, colW, fontSize = 
     { icon: "award", label: "QUALIFICATION LEVEL", value: "NQF Level 5", detail: "148 credits · SAQA ID 48573" },
     { icon: "document", label: "MINIMUM ADMISSION REQUIREMENTS", value: "Grade 12", detail: "National Senior Certificate or equivalent" },
     { icon: "briefcase", label: "CAREER OPPORTUNITIES", value: "", detail: "End-User Support Technician · IT Technician · Network Technician · System Administrator" },
-    { icon: "clock", label: "DURATION", value: "1 Year", detail: "Full-time · 17 Jul 2026 – 25 Jun 2027" },
+    { icon: "clock", label: "DURATION", value: "1 Year", detail: "Full-time · 17 Jul 2026 – 30 Jul 2027" },
   ];
   facts.forEach((f, i) => {
     const cw = (CW - 0.66) / 4;
@@ -317,7 +317,7 @@ function dataTable(s, header, rows, { x = MX, y = 2.0, w = CW, colW, fontSize = 
   // Registration window — key SAQA dates
   const dates = [
     { icon: "calendar", label: "LAST DATE FOR ENROLMENT", value: "30 Dec 2026", detail: "New learners must be registered on the qualification by this date — this intake is inside the window." },
-    { icon: "award", label: "LAST DATE FOR ACHIEVEMENT", value: "30 Dec 2029", detail: "All assessment and certification must be completed by this date — this programme certificates in June 2027, well within it." },
+    { icon: "award", label: "LAST DATE FOR ACHIEVEMENT", value: "30 Dec 2029", detail: "All assessment and certification must be completed by this date — this programme certificates in July 2027, well within it." },
   ];
   dates.forEach((d, i) => {
     const cw = (CW - 0.22) / 2;
@@ -340,7 +340,7 @@ function dataTable(s, header, rows, { x = MX, y = 2.0, w = CW, colW, fontSize = 
   addIcon(s, "check", MX + 0.22, 6.08, 0.34);
   s.addText([
     { text: "Bottom line: ", options: { bold: true, color: NAVY } },
-    { text: "enrol within the window, certificate by June 2027, and the qualification — and the experience gained in the workplace — stays with you for life.", options: { color: NAVY } },
+    { text: "enrol within the window, certificate by July 2027, and the qualification — and the experience gained in the workplace — stays with you for life.", options: { color: NAVY } },
   ], { x: MX + 0.68, y: 5.85, w: CW - 0.95, h: 0.8, fontFace: BODY_FONT, fontSize: 14, valign: "middle" });
 }
 
@@ -379,7 +379,7 @@ function dataTable(s, header, rows, { x = MX, y = 2.0, w = CW, colW, fontSize = 
   addIcon(s, "check", MX + 0.22, 6.0, 0.34);
   s.addText([
     { text: "This intake is safely inside both windows: ", options: { bold: true, color: NAVY } },
-    { text: "enrolment July 2026, certification June 2027 — well before the last date for achievement.", options: { color: NAVY } },
+    { text: "enrolment July 2026, certification July 2027 — well before the last date for achievement.", options: { color: NAVY } },
   ], { x: MX + 0.68, y: 5.75, w: CW - 0.95, h: 0.85, fontFace: BODY_FONT, fontSize: 14, valign: "middle" });
 }
 
@@ -471,7 +471,7 @@ function dataTable(s, header, rows, { x = MX, y = 2.0, w = CW, colW, fontSize = 
     { text: "After all six modules:  ", options: { bold: true, color: NAVY } },
     { text: "Remedials (if needed) \u2192 FISA \u2192 Logbook sign-off \u2192 Certification (148 credits)", options: { color: NAVY } },
   ], { x: MX + 0.68, y: 4.5, w: CW - 0.95, h: 0.85, fontFace: BODY_FONT, fontSize: 14.5, valign: "middle" });
-  s.addText("Remedials: 7, 14, 21 May 2027 · FISA (Final Integrated Summative Assessment): 28 May – 4 Jun 2027 · Logbook: 11, 18, 25 Jun 2027 — all sessions 09h00 – 14h00.", {
+  s.addText("Remedials: 11, 18, 25 Jun 2027 · FISA (Final Integrated Summative Assessment): 2, 9 Jul 2027 · Logbook: 6, 23, 30 Jul 2027 — all sessions 09h00 – 14h00.", {
     x: MX, y: 5.55, w: CW, h: 0.4, fontFace: BODY_FONT, fontSize: 12.5, color: GREY, italic: true,
   });
 }
@@ -486,19 +486,19 @@ function dataTable(s, header, rows, { x = MX, y = 2.0, w = CW, colW, fontSize = 
       icon: "wrench",
       title: "Remedials",
       desc: "Extra support sessions to close any gaps identified in your assessments. You re-attempt only the outcomes not yet achieved — attend only if needed.",
-      dates: "7, 14, 21 May 2027",
+      dates: "11, 18, 25 Jun 2027",
     },
     {
       icon: "award",
       title: "FISA",
       desc: "Final Integrated Summative Assessment — the final comprehensive exam covering the whole curriculum, integrating all six modules and 24 unit standards.",
-      dates: "28 May – 4 Jun 2027",
+      dates: "2, 9 Jul 2027",
     },
     {
       icon: "document",
       title: "Logbook",
       desc: "Your workplace evidence logbook is completed, verified and signed off with your facilitator and workplace mentor as final proof of applied competence.",
-      dates: "11, 18, 25 Jun 2027",
+      dates: "6, 23, 30 Jul 2027",
     },
   ];
   finals.forEach((f, i) => {
@@ -563,38 +563,38 @@ const MODULE_UNITS = [
   ["Module 1 — Personal Development", [
     ["8252", "Writing business reports in Retail/Wholesale practices", "5", "6", "17 Jul 2026"],
     ["10135", "Work as a project team member", "4", "8", "24, 31 Jul 2026"],
-    ["114050", "Explain the principles of business and the role of information technology", "5", "4", "7 Aug 2026"],
-    ["114051", "Conduct a technical practitioners meeting", "5", "4", "14 Aug 2026"],
-    ["114055", "Demonstrate an awareness of ethics and professionalism for the computer industry in South Africa", "5", "3", "21 Aug 2026"],
-    ["114046", "Demonstrate an understanding of issues affecting the management of a local area computer network (LAN)", "5", "4", "28 Aug 2026"],
-    ["114183", "Apply the principles of resolving problems for single-user and multi-user computer operating systems", "5", "7", "4, 11 Sep 2026"],
+    ["114050", "Explain the principles of business and the role of information technology", "5", "4", "21, 28 Aug 2026"],
+    ["114051", "Conduct a technical practitioners meeting", "5", "4", "3, 4 Sep 2026"],
+    ["114055", "Demonstrate an awareness of ethics and professionalism for the computer industry in South Africa", "5", "3", "7 Aug 2026"],
+    ["114046", "Demonstrate an understanding of issues affecting the management of a local area computer network (LAN)", "5", "4", "25 Sep, 2 Oct 2026"],
+    ["114183", "Apply the principles of resolving problems for single-user and multi-user computer operating systems", "5", "7", "6, 13 Nov 2026"],
   ]],
   ["Module 2 — Client Server Networking", [
-    ["114058", "Demonstrate an understanding of the concepts of Multi-User computer Operating systems", "5", "7", "18, 25 Sep 2026"],
-    ["114059", "Demonstrate an understanding of estimating a unit of work and the implications of late delivery", "5", "5", "2 Oct 2026"],
-    ["114076", "Use computer technology to research a computer topic", "4", "3", "9 Oct 2026"],
+    ["114058", "Demonstrate an understanding of the concepts of Multi-User computer Operating systems", "5", "7", "20, 27 Nov 2026"],
+    ["114059", "Demonstrate an understanding of estimating a unit of work and the implications of late delivery", "5", "5", "11, 18 Sep 2026"],
+    ["114076", "Use computer technology to research a computer topic", "4", "3", "23 Oct 2026"],
   ]],
   ["Module 3 — Network, Concept, Architecture", [
-    ["114060", "Demonstrate an understanding of local area computer networks, by installing a networked workstation", "5", "5", "16 Oct 2026"],
-    ["114061", "Demonstrate an understanding of Wide Area Computer Networks (WANs), comparing them with Local Area Networks (LANs)", "5", "5", "23 Oct 2026"],
-    ["114072", "Install and commission a local area computer network", "5", "9", "30 Oct, 6 Nov 2026"],
-    ["114074", "Demonstrate an understanding of different computer network architectures and standards", "5", "5", "13 Nov 2026"],
+    ["114060", "Demonstrate an understanding of local area computer networks, by installing a networked workstation", "5", "5", "12 Feb 2027"],
+    ["114061", "Demonstrate an understanding of Wide Area Computer Networks (WANs), comparing them with Local Area Networks (LANs)", "5", "5", "4 Dec 2026"],
+    ["114072", "Install and commission a local area computer network", "5", "9", "29 Jan, 5 Feb 2027"],
+    ["114074", "Demonstrate an understanding of different computer network architectures and standards", "5", "5", "9, 16 Oct 2026"],
   ]],
   ["Module 4 — Design a LAN for Developmental Office & Enterprise Development", [
-    ["114052", "Demonstrate appropriate customer care in the context of IT support, according to a Service Level Agreement", "5", "8", "20, 27 Nov 2026"],
-    ["114056", "Describe enterprise systems management and its role in IT systems support", "5", "3", "4 Dec 2026"],
-    ["114075", "Design a local area computer network for a departmental office environment", "5", "3", "11 Dec 2026"],
+    ["114052", "Demonstrate appropriate customer care in the context of IT support, according to a Service Level Agreement", "5", "8", "2, 9 Apr 2027"],
+    ["114056", "Describe enterprise systems management and its role in IT systems support", "5", "3", "29, 30 Oct 2026"],
+    ["114075", "Design a local area computer network for a departmental office environment", "5", "3", "22 Jan 2027"],
   ]],
   ["Module 5 — Configure, Operate & Administer Server Computer & Peripherals", [
-    ["114047", "Install and configure a multi-user networked operating system", "5", "9", "15, 22 Jan 2027"],
-    ["114053", "Monitor and maintain a multi-user networked operating system", "5", "6", "29 Jan 2027"],
-    ["114054", "Administer a local area computer network", "5", "7", "5, 12 Feb 2027"],
-    ["114066", "Test Networked IT systems against given specifications", "5", "4", "19 Feb 2027"],
+    ["114047", "Install and configure a multi-user networked operating system", "5", "9", "19, 26 Feb 2027"],
+    ["114053", "Monitor and maintain a multi-user networked operating system", "5", "6", "5 Mar 2027"],
+    ["114054", "Administer a local area computer network", "5", "7", "11 Dec 2026, 15 Jan 2027"],
+    ["114066", "Test Networked IT systems against given specifications", "5", "4", "12 Mar 2027"],
   ]],
   ["Module 6 — Database Access", [
-    ["114048", "Create database access for a computer application using structured query language", "5", "9", "26 Feb, 5, 12 Mar 2027"],
+    ["114048", "Create database access for a computer application using structured query language", "5", "9", "16, 22, 23, 30 Apr 2027"],
     ["114049", "Demonstrate an understanding of Computer Database Management Systems", "5", "7", "19, 26 Mar 2027"],
-    ["114069", "Administer security systems for a multi-user computer system", "6", "15", "2, 9, 16, 23, 30 Apr 2027"],
+    ["114069", "Administer security systems for a multi-user computer system", "6", "15", "7, 14, 21, 28 May, 4 Jun 2027"],
   ]],
 ];
 MODULE_UNITS.forEach(([title, rows], i) => {
@@ -618,7 +618,7 @@ MODULE_UNITS.forEach(([title, rows], i) => {
   s.addText("Six modules. 24 unit standards. 148 credits. One career.", {
     x: MX, y: 2.5, w: CW, h: 1.4, fontFace: TITLE_FONT, fontSize: 36, bold: true, color: WHITE,
   });
-  s.addText("Study \u2192 Practise \u2192 Logbook \u2192 Quiz \u2192 Assignment, module by module — then Remedials, FISA and logbook sign-off to certification in June 2027.", {
+  s.addText("Study \u2192 Practise \u2192 Logbook \u2192 Quiz \u2192 Assignment, module by module — then Remedials, FISA and logbook sign-off to certification in July 2027.", {
     x: MX, y: 3.95, w: 10.2, h: 1.0, fontFace: BODY_FONT, fontSize: 17, color: DARK_SUB, lineSpacingMultiple: 1.25,
   });
   s.addText("National Certificate: Information Technology — System Support · SAQA ID 48573 · ITSS Learn", {

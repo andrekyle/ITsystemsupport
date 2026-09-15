@@ -19,14 +19,14 @@ const modules: CourseModule[] = [
     activities: 6,
     units: [
       { us: "8252", title: "Writing business reports in Retail/Wholesale practices", nqf: 5, credits: 6, dates: "17 Jul 2026", time: "09h00 - 14h00" },
-      { us: "10135", title: "Work as a project team member", nqf: 4, credits: 8, dates: "24 Jul, 7 Aug 2026", time: "09h00 - 14h00" },
+      { us: "10135", title: "Work as a project team member", nqf: 4, credits: 8, dates: "24, 31 Jul 2026", time: "09h00 - 14h00" },
       { us: "HWSW", title: "Hardware and Software", nqf: 5, credits: 0, dates: "5, 6 Aug 2026", time: "12h00 - 16h00" },
       { us: "HWSW2", title: "Hardware and Software — Illustrated Slide Deck", nqf: 5, credits: 0, dates: "5, 6 Aug 2026", time: "12h00 - 16h00" },
-      { us: "114055", title: "Demonstrate an awareness of ethics and professionalism for the computer industry in South Africa", nqf: 5, credits: 3, dates: "14 Aug 2026", time: "09h00 - 14h00" },
+      { us: "114055", title: "Demonstrate an awareness of ethics and professionalism for the computer industry in South Africa", nqf: 5, credits: 3, dates: "7 Aug 2026", time: "09h00 - 14h00" },
       { us: "114050", title: "Explain the principles of business and the role of information technology", nqf: 5, credits: 4, dates: "21, 28 Aug 2026", time: "09h00 - 14h00" },
-      { us: "114051", title: "Conduct a technical practitioners meeting", nqf: 5, credits: 4, dates: "4, 11 Sep 2026", time: "09h00 - 14h00" },
-      { us: "114046", title: "Demonstrate an understanding of issues affecting the management of a local area computer network (LAN)", nqf: 5, credits: 4, dates: "18 Sep 2026", time: "09h00 - 14h00" },
-      { us: "114183", title: "Apply the principles of resolving problems for single-user and multi-user computer operating systems", nqf: 5, credits: 7, dates: "25 Sep, 2 Oct 2026", time: "09h00 - 14h00" },
+      { us: "114051", title: "Conduct a technical practitioners meeting", nqf: 5, credits: 4, dates: "3, 4 Sep 2026", time: "09h00 - 14h00" },
+      { us: "114046", title: "Demonstrate an understanding of issues affecting the management of a local area computer network (LAN)", nqf: 5, credits: 4, dates: "25 Sep, 2 Oct 2026", time: "09h00 - 14h00" },
+      { us: "114183", title: "Apply the principles of resolving problems for single-user and multi-user computer operating systems", nqf: 5, credits: 7, dates: "6, 13 Nov 2026", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -36,9 +36,9 @@ const modules: CourseModule[] = [
     image: "/figures/module-it-m2.jpg",
     activities: 4,
     units: [
-      { us: "114058", title: "Demonstrate an understanding of the concepts of Multi-User computer Operating systems", nqf: 5, credits: 7, dates: "9, 16 Oct 2026", time: "09h00 - 14h00" },
-      { us: "114059", title: "Demonstrate an understanding of estimating a unit of work and the implications of late delivery", nqf: 5, credits: 5, dates: "23 Oct 2026", time: "09h00 - 14h00" },
-      { us: "114076", title: "Use computer technology to research a computer topic", nqf: 4, credits: 3, dates: "30 Oct 2026", time: "09h00 - 14h00" },
+      { us: "114058", title: "Demonstrate an understanding of the concepts of Multi-User computer Operating systems", nqf: 5, credits: 7, dates: "20, 27 Nov 2026", time: "09h00 - 14h00" },
+      { us: "114059", title: "Demonstrate an understanding of estimating a unit of work and the implications of late delivery", nqf: 5, credits: 5, dates: "11, 18 Sep 2026", time: "09h00 - 14h00" },
+      { us: "114076", title: "Use computer technology to research a computer topic", nqf: 4, credits: 3, dates: "23 Oct 2026", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -48,10 +48,10 @@ const modules: CourseModule[] = [
     image: "/figures/module-it-m3.jpg",
     activities: 5,
     units: [
-      { us: "114060", title: "Demonstrate an understanding of local area computer networks, by installing a networked workstation", nqf: 5, credits: 5, dates: "6 Nov 2026", time: "09h00 - 14h00" },
-      { us: "114061", title: "Demonstrate an understanding of Wide Area Computer Networks (WANs), comparing them with Local Area Networks (LANs)", nqf: 5, credits: 5, dates: "13 Nov 2026", time: "09h00 - 14h00" },
-      { us: "114072", title: "Install and commission a local area computer network", nqf: 5, credits: 9, dates: "20, 27 Nov 2026", time: "09h00 - 14h00" },
-      { us: "114074", title: "Demonstrate an understanding of different computer network architectures and standards", nqf: 5, credits: 5, dates: "4 Dec 2026", time: "09h00 - 14h00" },
+      { us: "114060", title: "Demonstrate an understanding of local area computer networks, by installing a networked workstation", nqf: 5, credits: 5, dates: "12 Feb 2027", time: "09h00 - 14h00" },
+      { us: "114061", title: "Demonstrate an understanding of Wide Area Computer Networks (WANs), comparing them with Local Area Networks (LANs)", nqf: 5, credits: 5, dates: "4 Dec 2026", time: "09h00 - 14h00" },
+      { us: "114072", title: "Install and commission a local area computer network", nqf: 5, credits: 9, dates: "29 Jan, 5 Feb 2027", time: "09h00 - 14h00" },
+      { us: "114074", title: "Demonstrate an understanding of different computer network architectures and standards", nqf: 5, credits: 5, dates: "9, 16 Oct 2026", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -61,9 +61,9 @@ const modules: CourseModule[] = [
     image: "/figures/module-it-m4.jpg",
     activities: 5,
     units: [
-      { us: "114052", title: "Demonstrate appropriate customer care in the context of IT support, according to a Service Level Agreement", nqf: 5, credits: 8, dates: "11, 18 Dec 2026", time: "09h00 - 14h00" },
-      { us: "114056", title: "Describe enterprise systems management and its role in IT systems support", nqf: 5, credits: 3, dates: "8 Jan 2027", time: "09h00 - 14h00" },
-      { us: "114075", title: "Design a local area computer network for a departmental office environment", nqf: 5, credits: 3, dates: "15 Jan 2027", time: "09h00 - 14h00" },
+      { us: "114052", title: "Demonstrate appropriate customer care in the context of IT support, according to a Service Level Agreement", nqf: 5, credits: 8, dates: "2, 9 Apr 2027", time: "09h00 - 14h00" },
+      { us: "114056", title: "Describe enterprise systems management and its role in IT systems support", nqf: 5, credits: 3, dates: "29, 30 Oct 2026", time: "09h00 - 14h00" },
+      { us: "114075", title: "Design a local area computer network for a departmental office environment", nqf: 5, credits: 3, dates: "22 Jan 2027", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -73,10 +73,10 @@ const modules: CourseModule[] = [
     image: "/figures/module-it-m5.jpg",
     activities: 5,
     units: [
-      { us: "114047", title: "Install and configure a multi-user networked operating system", nqf: 5, credits: 9, dates: "22, 29 Jan 2027", time: "09h00 - 14h00" },
-      { us: "114053", title: "Monitor and maintain a multi-user networked operating system", nqf: 5, credits: 6, dates: "5 Feb 2027", time: "09h00 - 14h00" },
-      { us: "114054", title: "Administer a local area computer network", nqf: 5, credits: 7, dates: "12, 19 Feb 2027", time: "09h00 - 14h00" },
-      { us: "114066", title: "Test Networked IT systems against given specifications", nqf: 5, credits: 4, dates: "26 Feb 2027", time: "09h00 - 14h00" },
+      { us: "114047", title: "Install and configure a multi-user networked operating system", nqf: 5, credits: 9, dates: "19, 26 Feb 2027", time: "09h00 - 14h00" },
+      { us: "114053", title: "Monitor and maintain a multi-user networked operating system", nqf: 5, credits: 6, dates: "5 Mar 2027", time: "09h00 - 14h00" },
+      { us: "114054", title: "Administer a local area computer network", nqf: 5, credits: 7, dates: "11 Dec 2026, 15 Jan 2027", time: "09h00 - 14h00" },
+      { us: "114066", title: "Test Networked IT systems against given specifications", nqf: 5, credits: 4, dates: "12 Mar 2027", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -86,9 +86,9 @@ const modules: CourseModule[] = [
     image: "/figures/module-it-m6.jpg",
     activities: 5,
     units: [
-      { us: "114048", title: "Create database access for a computer application using structured query language", nqf: 5, credits: 9, dates: "5, 12, 19 Mar 2027", time: "09h00 - 14h00" },
-      { us: "114049", title: "Demonstrate an understanding of Computer Database Management Systems", nqf: 5, credits: 7, dates: "26 Mar, 2 Apr 2027", time: "09h00 - 14h00" },
-      { us: "114069", title: "Administer security systems for a multi-user computer system", nqf: 6, credits: 15, dates: "9, 16, 23, 30 Apr, 7 May 2027", time: "09h00 - 14h00" },
+      { us: "114048", title: "Create database access for a computer application using structured query language", nqf: 5, credits: 9, dates: "16, 22, 23, 30 Apr 2027", time: "09h00 - 14h00" },
+      { us: "114049", title: "Demonstrate an understanding of Computer Database Management Systems", nqf: 5, credits: 7, dates: "19, 26 Mar 2027", time: "09h00 - 14h00" },
+      { us: "114069", title: "Administer security systems for a multi-user computer system", nqf: 6, credits: 15, dates: "7, 14, 21, 28 May, 4 Jun 2027", time: "09h00 - 14h00" },
     ],
   },
 ];
@@ -180,7 +180,7 @@ const whatYoullLearn = {
     { icon: "award", label: "Qualification level", value: "NQF Level 5", detail: "148 credits · SAQA ID 48573" },
     { icon: "document", label: "Minimum admission requirements", value: "Grade 12", detail: "National Senior Certificate or equivalent" },
     { icon: "briefcase", label: "Career opportunities", value: "", detail: "", pills: ["End-User Support Technician", "IT Technician", "Network Technician", "System Administrator"] },
-    { icon: "clock", label: "Duration", value: "1 Year", detail: "Full-time · 17 Jul 2026 – 2 Jul 2027" },
+    { icon: "clock", label: "Duration", value: "1 Year", detail: "Full-time · 17 Jul 2026 – 30 Jul 2027" },
   ] as { icon: string; label: string; value: string; detail: string; pills?: string[] }[],
 };
 
@@ -282,7 +282,7 @@ const poeSections: { heading: string; icon: string; multi?: boolean; items: { id
       { id: "tw-manager", label: "Witness testimony — line manager/supervisor" },
       { id: "lb-weekly", label: "Logbook complete with weekly entries" },
       { id: "lb-mentor", label: "Logbook signed by mentor per module" },
-      { id: "lb-final", label: "Final logbook sign-off (18, 25 Jun or 2 Jul 2027)" },
+      { id: "lb-final", label: "Final logbook sign-off (6, 23 or 30 Jul 2027)" },
     ],
   },
   {
@@ -291,7 +291,7 @@ const poeSections: { heading: string; icon: string; multi?: boolean; items: { id
     multi: true,
     items: [
       { id: "sr-remedial", label: "Remediation records filed (if applicable)" },
-      { id: "sr-fisa", label: "FISA completed (4 – 11 Jun 2027)" },
+      { id: "sr-fisa", label: "FISA completed (2, 9 Jul 2027)" },
       { id: "sr-moderation", label: "POE submitted for internal moderation" },
       { id: "sr-verified", label: "POE verified by MICT SETA" },
     ],
@@ -309,9 +309,9 @@ const moduleFlow = {
 };
 
 const programmeMilestones = [
-  { name: "Remedials", dates: "14, 21, 28 May 2027", time: "09h00 - 14h00", icon: "wrench" },
-  { name: "FISA (Final Integrated Summative Assessment)", dates: "4 – 11 Jun 2027", time: "09h00 - 14h00", icon: "certificate" },
-  { name: "Logbook", dates: "18, 25 Jun, 2 Jul 2027", time: "09h00 - 14h00", icon: "book" },
+  { name: "Remedials", dates: "11, 18, 25 Jun 2027", time: "09h00 - 14h00", icon: "wrench" },
+  { name: "FISA (Final Integrated Summative Assessment)", dates: "2, 9 Jul 2027", time: "09h00 - 14h00", icon: "certificate" },
+  { name: "Logbook", dates: "6, 23, 30 Jul 2027", time: "09h00 - 14h00", icon: "book" },
 ];
 
 const deliverables = [

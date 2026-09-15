@@ -290,7 +290,7 @@ Successfully added Unit Standard 114051 "Conduct a technical practitioners meeti
    - [x] Final quality assurance
    - [x] Train facilitators if needed
 
-4. **Deployment (4, 11 Sep 2026)**
+4. **Deployment (3, 4 Sep 2026)**
    - [x] Deploy to production
    - [x] Monitor learner activity
    - [x] Provide ongoing support
