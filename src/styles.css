@@ -13480,8 +13480,16 @@ h2.section-title input.cal-edit.cal-edit-name {
 td.cal-row-actions {
   text-align: center;
   padding: 4px !important;
+  white-space: nowrap;
 }
 
+.cal-row-btns {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.cal-row-move,
 .cal-row-remove {
   display: inline-flex;
   align-items: center;
@@ -13494,6 +13502,16 @@ td.cal-row-actions {
   background: transparent;
   color: var(--ink-3);
   cursor: pointer;
+}
+
+.cal-row-move:hover:not(:disabled) {
+  background: var(--azure-light);
+  color: var(--azure);
+}
+
+.cal-row-move:disabled {
+  opacity: 0.3;
+  cursor: default;
 }
 
 .cal-row-remove:hover {

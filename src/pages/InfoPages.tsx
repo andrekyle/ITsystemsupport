@@ -246,6 +246,19 @@ export function CalendarPage({
       modules: d.modules.map((m, i) => (i === mi ? { ...m, units: m.units.filter((_, j) => j !== ui) } : m)),
     }));
 
+  const moveUnitRow = (mi: number, ui: number, delta: -1 | 1) =>
+    setDraft((d) => ({
+      ...d,
+      modules: d.modules.map((m, i) => {
+        if (i !== mi) return m;
+        const target = ui + delta;
+        if (target < 0 || target >= m.units.length) return m;
+        const units = [...m.units];
+        [units[ui], units[target]] = [units[target], units[ui]];
+        return { ...m, units };
+      }),
+    }));
+
   const addMilestoneRow = () =>
     setDraft((d) => ({
       ...d,
@@ -254,6 +267,15 @@ export function CalendarPage({
 
   const removeMilestoneRow = (mi: number) =>
     setDraft((d) => ({ ...d, milestones: d.milestones.filter((_, i) => i !== mi) }));
+
+  const moveMilestoneRow = (mi: number, delta: -1 | 1) =>
+    setDraft((d) => {
+      const target = mi + delta;
+      if (target < 0 || target >= d.milestones.length) return d;
+      const milestones = [...d.milestones];
+      [milestones[mi], milestones[target]] = [milestones[target], milestones[mi]];
+      return { ...d, milestones };
+    });
 
   async function saveEdits() {
     setSaveState("saving");
@@ -364,7 +386,7 @@ export function CalendarPage({
                 <th>Unit standard title</th>
                 <th style={{ width: 190 }}>Training dates</th>
                 <th style={{ width: 130 }}>Time</th>
-                {editing && <th style={{ width: 36 }} aria-label="Row actions" />}
+                {editing && <th style={{ width: 96 }} aria-label="Row actions" />}
               </tr>
             </thead>
             <tbody>
@@ -405,14 +427,34 @@ export function CalendarPage({
                         />
                       </td>
                       <td className="cal-row-actions">
-                        <button
-                          className="cal-row-remove"
-                          title="Remove this row"
-                          aria-label="Remove this row"
-                          onClick={() => removeUnitRow(i, j)}
-                        >
-                          <Icon name="trash" size={15} />
-                        </button>
+                        <span className="cal-row-btns">
+                          <button
+                            className="cal-row-move"
+                            title="Move this row up"
+                            aria-label="Move this row up"
+                            onClick={() => moveUnitRow(i, j, -1)}
+                            disabled={j === 0}
+                          >
+                            <Icon name="chevronUp" size={14} />
+                          </button>
+                          <button
+                            className="cal-row-move"
+                            title="Move this row down"
+                            aria-label="Move this row down"
+                            onClick={() => moveUnitRow(i, j, 1)}
+                            disabled={j === m.units.length - 1}
+                          >
+                            <Icon name="chevronDown" size={14} />
+                          </button>
+                          <button
+                            className="cal-row-remove"
+                            title="Remove this row"
+                            aria-label="Remove this row"
+                            onClick={() => removeUnitRow(i, j)}
+                          >
+                            <Icon name="trash" size={15} />
+                          </button>
+                        </span>
                       </td>
                     </tr>
                   );
@@ -474,7 +516,7 @@ export function CalendarPage({
             <th>Milestone</th>
             <th style={{ width: 190 }}>Dates</th>
             <th style={{ width: 130 }}>Time</th>
-            {editing && <th style={{ width: 36 }} aria-label="Row actions" />}
+            {editing && <th style={{ width: 96 }} aria-label="Row actions" />}
           </tr>
         </thead>
         <tbody>
@@ -525,14 +567,34 @@ export function CalendarPage({
               </td>
               {editing && (
                 <td className="cal-row-actions">
-                  <button
-                    className="cal-row-remove"
-                    title="Remove this row"
-                    aria-label="Remove this row"
-                    onClick={() => removeMilestoneRow(i)}
-                  >
-                    <Icon name="trash" size={15} />
-                  </button>
+                  <span className="cal-row-btns">
+                    <button
+                      className="cal-row-move"
+                      title="Move this row up"
+                      aria-label="Move this row up"
+                      onClick={() => moveMilestoneRow(i, -1)}
+                      disabled={i === 0}
+                    >
+                      <Icon name="chevronUp" size={14} />
+                    </button>
+                    <button
+                      className="cal-row-move"
+                      title="Move this row down"
+                      aria-label="Move this row down"
+                      onClick={() => moveMilestoneRow(i, 1)}
+                      disabled={i === draft.milestones.length - 1}
+                    >
+                      <Icon name="chevronDown" size={14} />
+                    </button>
+                    <button
+                      className="cal-row-remove"
+                      title="Remove this row"
+                      aria-label="Remove this row"
+                      onClick={() => removeMilestoneRow(i)}
+                    >
+                      <Icon name="trash" size={15} />
+                    </button>
+                  </span>
                 </td>
               )}
             </tr>
