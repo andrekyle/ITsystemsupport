@@ -83,9 +83,39 @@ function formBuilderDev(env: Record<string, string>): Plugin {
   };
 }
 
+function saveCalendarDev(): Plugin {
+  return {
+    name: "save-calendar-dev",
+    configureServer(server: ViteDevServer) {
+      server.middlewares.use("/api/save-calendar", (request, response) => {
+        void (async () => {
+          const chunks: Buffer[] = [];
+          for await (const chunk of request) {
+            chunks.push(Buffer.from(chunk));
+          }
+          const module = await server.ssrLoadModule("/api/save-calendar.ts") as { default: (request: Request) => Promise<Response> };
+          const result = await module.default(new Request("http://localhost/api/save-calendar", {
+            method: request.method ?? "POST",
+            headers: { "Content-Type": "application/json" },
+            body: chunks.length ? Buffer.concat(chunks) : undefined,
+          }));
+          response.statusCode = result.status;
+          result.headers.forEach((value, key) => response.setHeader(key, value));
+          response.end(await result.text());
+        })().catch((error) => {
+          console.error("save-calendar error:", error);
+          response.statusCode = 500;
+          response.setHeader("Content-Type", "application/json");
+          response.end(JSON.stringify({ error: `Failed to save calendar: ${String(error)}` }));
+        });
+      });
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   return {
-    plugins: [react(), markAnswerDev(env), formBuilderDev(env)],
+    plugins: [react(), markAnswerDev(env), formBuilderDev(env), saveCalendarDev()],
   };
 });

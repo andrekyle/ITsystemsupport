@@ -1,0 +1,11 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "push-final",
+			"type": "shell",
+			"command": "git push origin main 2>&1; git fetch origin 2>&1 | Out-Null; git status -sb | Select-Object -First 1; git --no-pager log --oneline -1 origin/main",
+			"group": "build"
+		}
+	]
+}
