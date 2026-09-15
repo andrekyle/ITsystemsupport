@@ -36,9 +36,9 @@ const modules: CourseModule[] = [
     image: "/figures/module-it-m2.jpg",
     activities: 4,
     units: [
-      { us: "114058", title: "Demonstrate an understanding of the concepts of Multi-User computer Operating systems", nqf: 5, credits: 7, dates: "20, 27 Nov 2026", time: "09h00 - 14h00" },
       { us: "114059", title: "Demonstrate an understanding of estimating a unit of work and the implications of late delivery", nqf: 5, credits: 5, dates: "11, 18 Sep 2026", time: "09h00 - 14h00" },
       { us: "114076", title: "Use computer technology to research a computer topic", nqf: 4, credits: 3, dates: "23 Oct 2026", time: "09h00 - 14h00" },
+      { us: "114058", title: "Demonstrate an understanding of the concepts of Multi-User computer Operating systems", nqf: 5, credits: 7, dates: "20, 27 Nov 2026", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -48,10 +48,10 @@ const modules: CourseModule[] = [
     image: "/figures/module-it-m3.jpg",
     activities: 5,
     units: [
-      { us: "114060", title: "Demonstrate an understanding of local area computer networks, by installing a networked workstation", nqf: 5, credits: 5, dates: "12 Feb 2027", time: "09h00 - 14h00" },
+      { us: "114074", title: "Demonstrate an understanding of different computer network architectures and standards", nqf: 5, credits: 5, dates: "9, 16 Oct 2026", time: "09h00 - 14h00" },
       { us: "114061", title: "Demonstrate an understanding of Wide Area Computer Networks (WANs), comparing them with Local Area Networks (LANs)", nqf: 5, credits: 5, dates: "4 Dec 2026", time: "09h00 - 14h00" },
       { us: "114072", title: "Install and commission a local area computer network", nqf: 5, credits: 9, dates: "29 Jan, 5 Feb 2027", time: "09h00 - 14h00" },
-      { us: "114074", title: "Demonstrate an understanding of different computer network architectures and standards", nqf: 5, credits: 5, dates: "9, 16 Oct 2026", time: "09h00 - 14h00" },
+      { us: "114060", title: "Demonstrate an understanding of local area computer networks, by installing a networked workstation", nqf: 5, credits: 5, dates: "12 Feb 2027", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -61,9 +61,9 @@ const modules: CourseModule[] = [
     image: "/figures/module-it-m4.jpg",
     activities: 5,
     units: [
-      { us: "114052", title: "Demonstrate appropriate customer care in the context of IT support, according to a Service Level Agreement", nqf: 5, credits: 8, dates: "2, 9 Apr 2027", time: "09h00 - 14h00" },
       { us: "114056", title: "Describe enterprise systems management and its role in IT systems support", nqf: 5, credits: 3, dates: "29, 30 Oct 2026", time: "09h00 - 14h00" },
       { us: "114075", title: "Design a local area computer network for a departmental office environment", nqf: 5, credits: 3, dates: "22 Jan 2027", time: "09h00 - 14h00" },
+      { us: "114052", title: "Demonstrate appropriate customer care in the context of IT support, according to a Service Level Agreement", nqf: 5, credits: 8, dates: "2, 9 Apr 2027", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -73,9 +73,9 @@ const modules: CourseModule[] = [
     image: "/figures/module-it-m5.jpg",
     activities: 5,
     units: [
+      { us: "114054", title: "Administer a local area computer network", nqf: 5, credits: 7, dates: "11 Dec 2026, 15 Jan 2027", time: "09h00 - 14h00" },
       { us: "114047", title: "Install and configure a multi-user networked operating system", nqf: 5, credits: 9, dates: "19, 26 Feb 2027", time: "09h00 - 14h00" },
       { us: "114053", title: "Monitor and maintain a multi-user networked operating system", nqf: 5, credits: 6, dates: "5 Mar 2027", time: "09h00 - 14h00" },
-      { us: "114054", title: "Administer a local area computer network", nqf: 5, credits: 7, dates: "11 Dec 2026, 15 Jan 2027", time: "09h00 - 14h00" },
       { us: "114066", title: "Test Networked IT systems against given specifications", nqf: 5, credits: 4, dates: "12 Mar 2027", time: "09h00 - 14h00" },
     ],
   },
@@ -86,8 +86,8 @@ const modules: CourseModule[] = [
     image: "/figures/module-it-m6.jpg",
     activities: 5,
     units: [
-      { us: "114048", title: "Create database access for a computer application using structured query language", nqf: 5, credits: 9, dates: "16, 22, 23, 30 Apr 2027", time: "09h00 - 14h00" },
       { us: "114049", title: "Demonstrate an understanding of Computer Database Management Systems", nqf: 5, credits: 7, dates: "19, 26 Mar 2027", time: "09h00 - 14h00" },
+      { us: "114048", title: "Create database access for a computer application using structured query language", nqf: 5, credits: 9, dates: "16, 22, 23, 30 Apr 2027", time: "09h00 - 14h00" },
       { us: "114069", title: "Administer security systems for a multi-user computer system", nqf: 6, credits: 15, dates: "7, 14, 21, 28 May, 4 Jun 2027", time: "09h00 - 14h00" },
     ],
   },
