@@ -550,7 +550,6 @@ export type PageId =
   | "assessments"
   | "deliverables"
   | "calendar"
-  | "calendarEditor"
   | "progress"
   | "poe"
   | "resources"

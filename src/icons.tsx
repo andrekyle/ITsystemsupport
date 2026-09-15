@@ -29,6 +29,12 @@ export const PATHS: Record<string, React.ReactNode> = {
     </>
   ),
   close: <path d="M6.5 6.5l11 11M17.5 6.5l-11 11" />,
+  pencil: (
+    <>
+      <path d="M4.5 19.5l.9-3.8L16.1 5a2 2 0 0 1 2.9 0v0a2 2 0 0 1 0 2.9L8.3 18.6l-3.8.9z" />
+      <path d="M14.6 6.5l2.9 2.9" />
+    </>
+  ),
   smile: (
     <>
       <circle cx="12" cy="12" r="8.5" />

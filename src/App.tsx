@@ -9,7 +9,6 @@ import { Sidebar } from "./components/Sidebar";
 import { Dashboard, ProgressPage } from "./pages/Dashboard";
 import { CoursePage, ModulePage, UnitPage } from "./pages/Course";
 import { AssessmentsPage, CalendarPage, DeliverablesPage, ResourcesPage } from "./pages/InfoPages";
-import { CalendarEditor } from "./pages/CalendarEditor";
 import { PoePage } from "./pages/Poe";
 import { ProfilePage, StudentsPage } from "./pages/People";
 import { ChecklistPage } from "./pages/Checklist";
@@ -43,7 +42,6 @@ const VALID_PAGES = new Set([
   "assessments",
   "deliverables",
   "calendar",
-  "calendarEditor",
   "progress",
   "poe",
   "resources",
@@ -182,7 +180,6 @@ function Shell({
             {route.page === "assessments" && <AssessmentsPage profile={profile} />}
             {route.page === "deliverables" && <DeliverablesPage />}
             {route.page === "calendar" && <CalendarPage navigate={navigate} progress={state} />}
-            {route.page === "calendarEditor" && <CalendarEditor />}
             {route.page === "attendance" && (
               <AttendancePage profile={profile} onUpdateProfile={onUpdateProfile} />
             )}
@@ -230,17 +227,6 @@ function Shell({
 }
 
 export default function App() {
-  // Allow public access to calendar editor via query parameter
-  const isCalendarEditorPublic = new URLSearchParams(window.location.search).has("edit-calendar");
-  
-  if (isCalendarEditorPublic) {
-    return (
-      <div style={{ backgroundColor: "#fff", minHeight: "100vh" }}>
-        <CalendarEditor />
-      </div>
-    );
-  }
-
   const [cloudState, setCloudState] = useState<"loading" | "signedout" | "recovery" | "ready">(
     cloudEnabled ? "loading" : "ready"
   );

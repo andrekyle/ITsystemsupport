@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, ProgressState, Route } from "../types";
 import { isStaff } from "../types";
@@ -5,6 +6,7 @@ import { Gloss } from "./Course";
 import { unitStatus } from "../store";
 import { downloadIcs, parseSessionDates } from "../lib/integrations";
 import type { IcsEvent } from "../lib/integrations";
+import { activeCourseId } from "../data/courses";
 import {
   ASSESSMENT_FRAMEWORK,
   DELIVERABLES,
@@ -171,6 +173,23 @@ export function ResourcesPage() {
   );
 }
 
+type CalendarDraft = {
+  modules: {
+    id: string;
+    name: string;
+    icon: string;
+    image?: string;
+    activities: number;
+    units: { us: string; title: string; nqf: number; credits: number; dates: string; time: string }[];
+  }[];
+  milestones: { name: string; dates: string; time: string; icon: string }[];
+};
+
+const makeCalendarDraft = (): CalendarDraft => ({
+  modules: MODULES.map((m) => ({ ...m, units: m.units.map((u) => ({ ...u })) })),
+  milestones: PROGRAMME_MILESTONES.map((ms) => ({ ...ms })),
+});
+
 export function CalendarPage({
   navigate,
   progress,
@@ -178,6 +197,89 @@ export function CalendarPage({
   navigate?: (r: Route) => void;
   progress?: ProgressState;
 }) {
+  // In-place editing of the calendar (dev only — saving writes the edits
+  // straight back into the course data file through /api/save-calendar).
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<CalendarDraft>(makeCalendarDraft);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState("");
+
+  const startEditing = () => {
+    setDraft(makeCalendarDraft());
+    setSaveState("idle");
+    setEditing(true);
+  };
+
+  const setModuleName = (mi: number, value: string) =>
+    setDraft((d) => ({
+      ...d,
+      modules: d.modules.map((m, i) => (i === mi ? { ...m, name: value } : m)),
+    }));
+
+  const setUnitField = (mi: number, ui: number, field: "us" | "title" | "dates" | "time", value: string) =>
+    setDraft((d) => ({
+      ...d,
+      modules: d.modules.map((m, i) =>
+        i === mi ? { ...m, units: m.units.map((u, j) => (j === ui ? { ...u, [field]: value } : u)) } : m
+      ),
+    }));
+
+  const setMilestoneField = (mi: number, field: "name" | "dates" | "time", value: string) =>
+    setDraft((d) => ({
+      ...d,
+      milestones: d.milestones.map((ms, i) => (i === mi ? { ...ms, [field]: value } : ms)),
+    }));
+
+  const addUnitRow = (mi: number) =>
+    setDraft((d) => ({
+      ...d,
+      modules: d.modules.map((m, i) =>
+        i === mi
+          ? { ...m, units: [...m.units, { us: "", title: "", nqf: 5, credits: 0, dates: "", time: "09h00 - 14h00" }] }
+          : m
+      ),
+    }));
+
+  const removeUnitRow = (mi: number, ui: number) =>
+    setDraft((d) => ({
+      ...d,
+      modules: d.modules.map((m, i) => (i === mi ? { ...m, units: m.units.filter((_, j) => j !== ui) } : m)),
+    }));
+
+  const addMilestoneRow = () =>
+    setDraft((d) => ({
+      ...d,
+      milestones: [...d.milestones, { name: "", dates: "", time: "09h00 - 14h00", icon: "certificate" }],
+    }));
+
+  const removeMilestoneRow = (mi: number) =>
+    setDraft((d) => ({ ...d, milestones: d.milestones.filter((_, i) => i !== mi) }));
+
+  async function saveEdits() {
+    setSaveState("saving");
+    setSaveError("");
+    try {
+      // drop rows that were added but left completely empty
+      const modules = draft.modules.map((m) => ({
+        ...m,
+        units: m.units.filter((u) => `${u.us}${u.title}${u.dates}`.trim() !== ""),
+      }));
+      const milestones = draft.milestones.filter((ms) => `${ms.name}${ms.dates}`.trim() !== "");
+      const res = await fetch("/api/save-calendar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId: activeCourseId(), modules, milestones }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      setSaveState("saved");
+      setEditing(false);
+    } catch (e) {
+      setSaveState("error");
+      setSaveError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
   function exportIcs() {
     const events: IcsEvent[] = [];
     for (const m of MODULES)
@@ -206,19 +308,54 @@ export function CalendarPage({
         All sessions run 09h00 – 14h00 as per the QCTO-approved training schedule (Jul 2026 – Jul 2027).
       </p>
 
-      <p>
+      <p className="cal-toolbar">
         <button className="btn ghost sm" onClick={exportIcs} title="Import into Outlook, Teams or Google Calendar">
           <Icon name="download" size={15} /> Add all sessions to my calendar (.ics)
         </button>
+        {import.meta.env.DEV && !editing && (
+          <button className="btn ghost sm" onClick={startEditing} title="Edit the training calendar in place, then save">
+            <Icon name="pencil" size={15} /> Edit calendar
+          </button>
+        )}
+        {editing && (
+          <>
+            <button className="btn primary sm" onClick={saveEdits} disabled={saveState === "saving"}>
+              <Icon name="check" size={15} /> {saveState === "saving" ? "Saving…" : "Save changes"}
+            </button>
+            <button className="btn ghost sm" onClick={() => setEditing(false)} disabled={saveState === "saving"}>
+              <Icon name="close" size={15} /> Cancel
+            </button>
+          </>
+        )}
+        {saveState === "saved" && !editing && (
+          <span className="cal-save-note ok">
+            <Icon name="checkCircle" size={15} /> Calendar saved
+          </span>
+        )}
+        {saveState === "error" && <span className="cal-save-note err">Save failed: {saveError}</span>}
       </p>
 
-      {MODULES.map((m, i) => (
+      {(editing ? draft.modules : MODULES).map((m, i) => (
         <div key={m.id}>
           <h2 className="section-title">
             <span className="ico">
               <Icon name={m.icon} size={20} />
             </span>
-            Module {i + 1}: {m.name}
+            {editing ? (
+              <>
+                Module {i + 1}:{" "}
+                <input
+                  className="cal-edit cal-edit-name"
+                  value={m.name}
+                  onChange={(e) => setModuleName(i, e.target.value)}
+                  aria-label={`Module ${i + 1} name`}
+                />
+              </>
+            ) : (
+              <>
+                Module {i + 1}: {m.name}
+              </>
+            )}
           </h2>
           <table className="data training-table">
             <thead>
@@ -227,10 +364,59 @@ export function CalendarPage({
                 <th>Unit standard title</th>
                 <th style={{ width: 190 }}>Training dates</th>
                 <th style={{ width: 130 }}>Time</th>
+                {editing && <th style={{ width: 36 }} aria-label="Row actions" />}
               </tr>
             </thead>
             <tbody>
-              {m.units.map((u) => {
+              {m.units.map((u, j) => {
+                if (editing) {
+                  return (
+                    <tr key={j}>
+                      <td>
+                        <input
+                          className="cal-edit"
+                          value={u.us}
+                          onChange={(e) => setUnitField(i, j, "us", e.target.value)}
+                          aria-label="US ID"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className="cal-edit"
+                          value={u.title}
+                          onChange={(e) => setUnitField(i, j, "title", e.target.value)}
+                          aria-label="Unit standard title"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className="cal-edit"
+                          value={u.dates}
+                          onChange={(e) => setUnitField(i, j, "dates", e.target.value)}
+                          aria-label="Training dates"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className="cal-edit"
+                          value={u.time}
+                          onChange={(e) => setUnitField(i, j, "time", e.target.value)}
+                          aria-label="Time"
+                        />
+                      </td>
+                      <td className="cal-row-actions">
+                        <button
+                          className="cal-row-remove"
+                          title="Remove this row"
+                          aria-label="Remove this row"
+                          onClick={() => removeUnitRow(i, j)}
+                        >
+                          <Icon name="trash" size={15} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                }
                 const done = progress ? unitStatus(progress, u.us) === "completed" : false;
                 return (
                   <tr key={u.us} className={done ? "done-row" : undefined}>
@@ -266,6 +452,13 @@ export function CalendarPage({
               })}
             </tbody>
           </table>
+          {editing && (
+            <p className="cal-add-row">
+              <button className="btn ghost sm" onClick={() => addUnitRow(i)} title="Add a new unit standard row to this module">
+                <Icon name="plus" size={15} /> Add row
+              </button>
+            </p>
+          )}
         </div>
       ))}
 
@@ -281,27 +474,78 @@ export function CalendarPage({
             <th>Milestone</th>
             <th style={{ width: 190 }}>Dates</th>
             <th style={{ width: 130 }}>Time</th>
+            {editing && <th style={{ width: 36 }} aria-label="Row actions" />}
           </tr>
         </thead>
         <tbody>
-          {PROGRAMME_MILESTONES.map((ms) => (
-            <tr key={ms.name}>
+          {(editing ? draft.milestones : PROGRAMME_MILESTONES).map((ms, i) => (
+            <tr key={i}>
               <td>
-                <span className="with-ico">
+                <span className={`with-ico${editing ? " cal-ico-edit" : ""}`}>
                   <span className="ico">
                     <Icon name={ms.icon} size={18} />
                   </span>
-                  <strong>
-                    <Gloss text={ms.name} />
-                  </strong>
+                  {editing ? (
+                    <input
+                      className="cal-edit"
+                      value={ms.name}
+                      onChange={(e) => setMilestoneField(i, "name", e.target.value)}
+                      aria-label="Milestone name"
+                    />
+                  ) : (
+                    <strong>
+                      <Gloss text={ms.name} />
+                    </strong>
+                  )}
                 </span>
               </td>
-              <td>{ms.dates}</td>
-              <td>{ms.time}</td>
+              <td>
+                {editing ? (
+                  <input
+                    className="cal-edit"
+                    value={ms.dates}
+                    onChange={(e) => setMilestoneField(i, "dates", e.target.value)}
+                    aria-label="Milestone dates"
+                  />
+                ) : (
+                  ms.dates
+                )}
+              </td>
+              <td>
+                {editing ? (
+                  <input
+                    className="cal-edit"
+                    value={ms.time}
+                    onChange={(e) => setMilestoneField(i, "time", e.target.value)}
+                    aria-label="Milestone time"
+                  />
+                ) : (
+                  ms.time
+                )}
+              </td>
+              {editing && (
+                <td className="cal-row-actions">
+                  <button
+                    className="cal-row-remove"
+                    title="Remove this row"
+                    aria-label="Remove this row"
+                    onClick={() => removeMilestoneRow(i)}
+                  >
+                    <Icon name="trash" size={15} />
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
       </table>
+      {editing && (
+        <p className="cal-add-row">
+          <button className="btn ghost sm" onClick={addMilestoneRow} title="Add a new milestone row">
+            <Icon name="plus" size={15} /> Add row
+          </button>
+        </p>
+      )}
     </>
   );
 }
