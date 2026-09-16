@@ -14,12 +14,16 @@ export function Select({
   onChange,
   className,
   ariaLabel,
+  disabled = false,
+  placeholder = "",
 }: {
   value: string;
   options: SelectOption[];
   onChange: (value: string) => void;
   className?: string;
   ariaLabel?: string;
+  disabled?: boolean;
+  placeholder?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
@@ -91,6 +95,7 @@ export function Select({
     <div className={`nice-select${className ? ` ${className}` : ""}`} ref={rootRef}>
       <button
         type="button"
+        disabled={disabled}
         className={`nice-select-btn${open ? " open" : ""}`}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -99,12 +104,12 @@ export function Select({
         onClick={() => (open ? setOpen(false) : openPanel())}
         onKeyDown={onKeyDown}
       >
-        <span className="nice-select-value">{selected?.label ?? ""}</span>
+        <span className="nice-select-value">{selected?.label ?? placeholder}</span>
         <span className="nice-select-chev" aria-hidden="true">
           <Icon name="chevronDown" size={14} />
         </span>
       </button>
-      {open && (
+      {open && !disabled && (
         <div className="nice-select-panel" role="listbox" id={listId} ref={panelRef}>
           {options.map((o, i) => (
             <div
@@ -116,6 +121,7 @@ export function Select({
                 i === active ? " active" : ""
               }`}
               onPointerMove={() => setActive(i)}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => pick(o.value)}
             >
               <span className="nice-select-opt-label">

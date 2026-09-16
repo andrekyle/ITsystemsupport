@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
 import JSZip from "jszip";
 import { Icon } from "../icons";
-import type { ExerciseCheck, LessonFigure, PoeDoc, ProgressState, Profile, Role, Route, UnitActivity, UnitStandard } from "../types";
+import type { ExerciseCheck, LessonFigure, PoeDoc, ProgressState, Profile, QuizQuestion, Role, Route, UnitActivity, UnitStandard } from "../types";
 import { UNIT_ACTIVITIES, isStaff } from "../types";
 import { COURSE_BLURB, COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
 import { COURSES, activeCourseId, setActiveCourse } from "../data/courses";
@@ -16,7 +16,12 @@ import { Bar } from "../components/Ring";
 import { Quiz, seededShuffle } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
 import { ConfirmModal } from "../components/Modal";
+import { SlideEditableText } from "../components/SlideEditableText";
+import { SlideTextToolbar } from "../components/SlideTextToolbar";
+import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
+import { UnitBuilder, BuiltUnitDownloads } from "../components/UnitBuilder";
+import { useBuiltUnit } from "../lib/useBuiltUnit";
 import { EditableActivityText } from "../components/EditableActivityText";
 import { fileToImageDataUrl } from "../components/Avatar";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
@@ -69,82 +74,14 @@ const EXQ_MAX_CHECKS = 2;
 const URL_RE = /(https?:\/\/[^\s)]+)/g;
 const BOLD_RE = /\*\*([^*]+)\*\*/g;
 
-/** Escape HTML, then turn **bold** markers into <b> for WYSIWYG editing. */
-function markedToHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(BOLD_RE, "<b>$1</b>");
-}
-
-/** Serialize a contentEditable element back to plain text with **bold** markers. */
-function htmlToMarked(el: HTMLElement): string {
-  const walk = (node: Node): string => {
-    if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? "";
-    if (node.nodeType !== Node.ELEMENT_NODE) return "";
-    const e = node as HTMLElement;
-    const inner = Array.from(e.childNodes).map(walk).join("");
-    if (e.tagName === "BR") return " ";
-    const styled = e.style && (e.style.fontWeight === "bold" || parseInt(e.style.fontWeight, 10) >= 600);
-    if (e.tagName === "B" || e.tagName === "STRONG" || styled) {
-      return inner.trim() ? `**${inner}**` : inner;
-    }
-    return inner;
-  };
-  return walk(el)
-    .replace(/\*\*\s*\*\*/g, " ") // empty/adjacent bold runs
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-/** Floating bold toggle shown while text is selected inside an editable field (Ctrl+B also works). */
-function BoldTip({ enabled }: { enabled: boolean }) {
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
-  useEffect(() => {
-    if (!enabled) {
-      setPos(null);
-      return;
-    }
-    const onSel = () => {
-      const sel = window.getSelection();
-      if (!sel || sel.isCollapsed || sel.rangeCount === 0) return setPos(null);
-      const anchor = sel.anchorNode;
-      const host = anchor instanceof Element ? anchor : anchor?.parentElement;
-      if (!host?.closest(".editable, .editable-inline")) return setPos(null);
-      const r = sel.getRangeAt(0).getBoundingClientRect();
-      if (!r.width && !r.height) return setPos(null);
-      setPos({ x: r.left + r.width / 2, y: r.top });
-    };
-    document.addEventListener("selectionchange", onSel);
-    window.addEventListener("scroll", onSel, true);
-    return () => {
-      document.removeEventListener("selectionchange", onSel);
-      window.removeEventListener("scroll", onSel, true);
-    };
-  }, [enabled]);
-  if (!enabled || !pos) return null;
-  return (
-    <button
-      type="button"
-      className="bold-tip"
-      style={{ left: pos.x, top: pos.y }}
-      title="Bold / unbold the selection (Ctrl+B)"
-      onMouseDown={(e) => {
-        e.preventDefault(); // keep the selection
-        document.execCommand("styleWithCSS", false, "false");
-        document.execCommand("bold");
-      }}
-    >
-      B
-    </button>
-  );
-}
+const markedToHtml = richTextHtml;
+const htmlToMarked = saveRichText;
 
 /** Renders text with an explanatory bubble on any glossary term; bare URLs become links.
  *  Text starting "5. …" / "5 · …" gets a hanging indent — wrapped lines align under the
  *  words, not the number — and the middot separator is dropped. */
 export function Gloss({ text }: { text: string }) {
+  if (isRichText(text)) return <span className="slide-rich-text" dangerouslySetInnerHTML={{ __html: richTextHtml(text) }} />;
   const hang = /^(\d+)[.·)]\s+([\s\S]*)$/.exec(text);
   if (hang) {
     return (
@@ -227,9 +164,48 @@ export function Gloss({ text }: { text: string }) {
   );
 }
 
+/** Format pasted plain text into the lesson's standard structure: blank lines
+ *  separate paragraphs (wrapped lines are re-joined); lines starting with a
+ *  bullet marker (-, •, *, 1., 1)) become numbered points. When the paste has
+ *  no blank lines, every line is treated as its own paragraph. */
+function parsePastedLessonText(text: string): { paragraphs: string[]; bullets: string[] } {
+  const lines = text.replace(/\r\n?/g, "\n").replace(/\t/g, " ").split("\n");
+  const BULLET_RE = /^\s*(?:[-–—•*·▪◦]|\d{1,3}[.)])\s+/;
+  const inner = lines.slice(
+    lines.findIndex((l) => l.trim() !== ""),
+    lines.length
+  );
+  const hasBlank = inner.some((l, i) => !l.trim() && i > 0 && i < inner.length - 1);
+  const paragraphs: string[] = [];
+  const bullets: string[] = [];
+  let buf: string[] = [];
+  const flush = () => {
+    if (!buf.length) return;
+    paragraphs.push(buf.join(" ").replace(/\s{2,}/g, " ").trim());
+    buf = [];
+  };
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) {
+      flush();
+      continue;
+    }
+    if (BULLET_RE.test(line)) {
+      flush();
+      bullets.push(line.replace(BULLET_RE, "").trim());
+      continue;
+    }
+    if (hasBlank) buf.push(line);
+    else paragraphs.push(line);
+  }
+  flush();
+  return { paragraphs: paragraphs.filter(Boolean), bullets: bullets.filter(Boolean) };
+}
+
 /** Lesson bullet: bolds the lead-in term of "Term — description" bullets;
  *  leading clause numbers like "5.1" are stripped from display. */
 function LessonBullet({ text }: { text: string }) {
+  if (isRichText(text)) return <Gloss text={text} />;
   const num = text.match(/^(\d+\.\d+)\s+(.*)$/s);
   if (num) text = num[2];
   const m = text.match(/^(.{1,60}?) — (.*)$/s);
@@ -279,6 +255,12 @@ function pickBulletIcon(text: string): React.ComponentProps<typeof Icon>["name"]
 function isShortItemParagraph(text: string): boolean {
   const t = text.trim();
   return t.length > 0 && t.length <= 70 && !/[.!?]$/.test(t) && !/:$/.test(t);
+}
+
+/** Numbered report-outline lines remain individual paragraphs, even when
+ * they happen to be short enough to match the card heuristic. */
+function isLineByLineParagraph(text: string): boolean {
+  return /^\s*\d+\s+\S[\s\S]*?\s[—–-]\s/.test(text);
 }
 
 /** Pick an inline icon for a lesson paragraph, based on its content.
@@ -2242,6 +2224,7 @@ export function UnitPage({
   navigate: (r: Route) => void;
 }) {
   const [tab, setTab] = useState<UnitTab>(() => loadUnitTab(unitId));
+  const builtUnit = useBuiltUnit(unitId);
   // keep the active tab visible inside the horizontally scrollable tab bar
   const tabsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -2612,11 +2595,18 @@ export function UnitPage({
   const [deckReplacePct, setDeckReplacePct] = useState<number | null>(null);
   const [deckReplaceError, setDeckReplaceError] = useState<string | null>(null);
   const { figures: figureImages, setFigure, removeFigure } = useLessonFigures(unitId);
-  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection } = useLessonEdits(unitId);
+  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId);
+  const [generatingQuiz, setGeneratingQuiz] = useState<number | null>(null);
+  const [quizQuestionCount, setQuizQuestionCount] = useState(5);
+  const [quizGenerationError, setQuizGenerationError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
+  useEffect(() => { setEditMode(false); }, [unitId, tab]);
+  // per-slide "paste text" editor (super user): heading + free-text body
+  const [pasteEditor, setPasteEditor] = useState<{ si: number; heading: string; text: string } | null>(null);
   const figFileRef = useRef<HTMLInputElement>(null);
   const pendingFigId = useRef<string | null>(null);
   const [figError, setFigError] = useState<string | null>(null);
+  const [figUploading, setFigUploading] = useState(false);
   const [deckId, setDeckId] = useState<string | null>(null);
   const found = findUnit(unitId);
   if (!found) return <p>Unit standard not found.</p>;
@@ -2624,7 +2614,7 @@ export function UnitPage({
   const idx = MODULES.indexOf(mod);
   const uc = unitCompletion(progress, u.us);
   const acts = progress.units[u.us]?.activities ?? {};
-  const content = getContent(u.us);
+  const content = builtUnit?.content ?? getContent(u.us);
   const quizResult = progress.units[u.us]?.quiz;
   const namedQuizzes = content?.quizzes ?? [];
   const namedQuizResults = progress.units[u.us]?.quizzes ?? {};
@@ -2634,6 +2624,19 @@ export function UnitPage({
   }).length;
   const isPrivileged = isStaff(profile.role);
   const isSuperUser = profile.role === "Super User";
+  const generateSlideQuiz = async (si: number) => {
+    if (!content) return;
+    setGeneratingQuiz(si); setQuizGenerationError(null);
+    const section = content.lesson[si];
+    const source = [section.heading, ...section.paragraphs, ...(section.bullets ?? [])].join("\n");
+    try {
+      const response = await fetch("/api/generate-slide-quiz", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slideText: source, count: quizQuestionCount }) });
+      const data = await response.json() as { questions?: QuizQuestion[]; error?: string };
+      if (!response.ok || !data.questions?.length) throw new Error(data.error ?? "No questions were returned.");
+      editGeneratedQuiz(si, data.questions);
+    } catch (error) { setQuizGenerationError(error instanceof Error ? error.message : "Quiz generation failed."); }
+    finally { setGeneratingQuiz(null); }
+  };
 
   // Reaching the final lesson slide with its gate passed IS the evidence of
   // working through the training material — credit "Lesson & Training Aids"
@@ -2670,24 +2673,37 @@ export function UnitPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonQuizAnswers, content, u.us]);
 
+  /** Added images share the existing per-unit figure storage, including cloud sync. */
+  const sectionFigures = (si: number, originals: LessonFigure[] = []): LessonFigure[] => [
+    ...originals,
+    ...Object.keys(figureImages)
+      .filter((id) => id.startsWith(`lesson-added-${si}-`))
+      .sort()
+      .map((id, index) => ({
+        id,
+        caption: lessonEdits.captions?.[id] ?? `Image ${index + 1}`,
+      })),
+  ];
+
   /** Collect every figure across every lesson section that has a resolvable image. */
   const buildPresenterSlides = (): PresenterSlide[] => {
     if (!content) return [];
     const out: PresenterSlide[] = [];
     content.lesson.forEach((sec, si) => {
-      (sec.figures ?? []).forEach((fig) => {
+      sectionFigures(si, sec.figures).forEach((fig) => {
         const up = figureImages[fig.id];
         const def = FIGURE_DEFAULTS[fig.id];
         const src = up?.image ?? def?.src;
         if (!src) return;
-        const fallbackBullets = (sec.paragraphs ?? [])
+        const bodyOv = lessonEdits.sectionBody?.[si];
+        const fallbackBullets = (bodyOv ? bodyOv.paragraphs : sec.paragraphs ?? [])
           .map((p) => p.replace(/^[•\-\u2022]\s*/, "").trim())
           .filter(Boolean);
         out.push({
           kind: "image",
           src,
-          caption: fig.caption,
-          sectionTitle: sec.heading,
+          caption: lessonEdits.captions?.[fig.id] ?? fig.caption,
+          sectionTitle: lessonEdits.headings?.[si] ?? sec.heading,
           sectionIndex: si,
           figureId: fig.id,
           bullets: (fig.bullets && fig.bullets.length ? fig.bullets : fallbackBullets),
@@ -2697,6 +2713,34 @@ export function UnitPage({
     });
     return out;
   };
+  /** Open the per-slide paste editor pre-filled with the slide's current text. */
+  const openPasteEditor = (si: number) => {
+    if (!content) return;
+    const sec = content.lesson[si];
+    const bodyOv = lessonEdits.sectionBody?.[si];
+    const paras = bodyOv
+      ? bodyOv.paragraphs
+      : sec.paragraphs.map((p, pi) => lessonEdits.paragraphs?.[`${si}:${pi}`] ?? p);
+    const points = bodyOv
+      ? bodyOv.bullets ?? []
+      : (sec.bullets ?? []).map((b, bi) => lessonEdits.bullets?.[`${si}:${bi}`] ?? b);
+    const text =
+      paras.map(plainSlideText).join("\n\n") + (points.length ? "\n\n" + points.map((b) => `- ${plainSlideText(b)}`).join("\n") : "");
+    setPasteEditor({ si, heading: plainSlideText(lessonEdits.headings?.[si] ?? sec.heading), text: text.trim() });
+  };
+
+  /** Format the pasted text into paragraphs + numbered points and save it as the slide body. */
+  const savePasteEditor = () => {
+    if (!pasteEditor) return;
+    const { si, heading, text } = pasteEditor;
+    const { paragraphs, bullets } = parsePastedLessonText(text);
+    if (paragraphs.length || bullets.length) {
+      editHeading(si, heading);
+      editSetSectionBody(si, { paragraphs, bullets: bullets.length ? bullets : undefined });
+    }
+    setPasteEditor(null);
+  };
+
   const openPresenter = () => {
     const slides = buildPresenterSlides();
     if (!slides.length) return;
@@ -2861,8 +2905,13 @@ export function UnitPage({
     e.target.value = "";
     const figId = pendingFigId.current;
     pendingFigId.current = null;
-    if (!file || !figId) return;
+    if (!file || !figId || !isPrivileged || figUploading) return;
     setFigError(null);
+    if (!file.type.startsWith("image/")) {
+      setFigError("Choose an image file, such as JPG, PNG or WebP.");
+      return;
+    }
+    setFigUploading(true);
     try {
       const dataUrl = await fileToImageDataUrl(file, 1400);
       if (!(await setFigure(figId, dataUrl))) {
@@ -2870,17 +2919,19 @@ export function UnitPage({
       }
     } catch {
       setFigError("Could not read that image — try a clear JPG or PNG file.");
+    } finally {
+      setFigUploading(false);
     }
   }
 
   const tabs: { id: UnitTab; label: string; icon: string; show: boolean }[] = [
     { id: "overview", label: "Overview", icon: "dashboard", show: true },
     { id: "lesson", label: "Lesson", icon: "book", show: !!content?.lesson.length },
-    { id: "material", label: "Course material", icon: "play", show: decks.length > 0 },
+    { id: "material", label: "Course material", icon: "play", show: decks.length > 0 || !!builtUnit },
     { id: "notes", label: "Notes", icon: "document", show: !!content?.notes?.length || Object.values(userNotes).some((n) => n.us === unitId) || !!content?.lesson.length || unitId === "114055" },
     { id: "exercises", label: "Activity", icon: "exercise", show: !!content?.exercises.length },
-    { id: "questions", label: "Activity", icon: "chat", show: !!content?.questionSessions?.length },
-    { id: "assignments", label: "Activity", icon: "folder", show: !!content?.assignments.length },
+    { id: "questions", label: "Activity", icon: "chat", show: !builtUnit && !!content?.questionSessions?.length },
+    { id: "assignments", label: "Activity", icon: "folder", show: !builtUnit && !!content?.assignments.length },
     { id: "logbook", label: "Logbook", icon: "book", show: !!content?.logbook },
     { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content?.quiz.length || !!content?.quizzes?.length },
     { id: "selfassessment", label: "Self assessment", icon: "checkCircle", show: !!content?.selfAssessment },
@@ -2905,6 +2956,7 @@ export function UnitPage({
         {isSaqaUnit(u.us) ? `Unit standard ${u.us}` : "Internal lesson"}
       </div>
       <h1 className="page-title">{u.title}</h1>
+      {isSuperUser && <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} onSaved={() => { setTab("overview"); setLessonStep(0); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); }} />}
       <div className="meta-row">
         <span className="pill">
           <span className="ico">
@@ -3135,7 +3187,7 @@ export function UnitPage({
       {tab === "lesson" && content && (
         <>
           <div style={{ marginTop: 18 }} />
-          <BoldTip enabled={editMode && isSuperUser} />
+          {editMode && isSuperUser && <SlideTextToolbar key={`${unitId}:${lessonStep}`} enabled />}
           {unitId === "HWSW2" && (
             <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
               <a
@@ -3160,8 +3212,10 @@ export function UnitPage({
               onChange={(e) => void onPickFigureFile(e)}
             />
           )}
-          {figError && <p className="auth-error">{figError}</p>}
-          {content.lesson.map((sec, si) => {
+          {figUploading && <p role="status">Saving image...</p>}
+          {figError && <p className="auth-error" role="alert">{figError}</p>}
+          {content.lesson.map((originalSection, si) => {
+            const sec = { ...originalSection, figures: sectionFigures(si, originalSection.figures) };
             // edX-style wizard: only render the section that is currently on screen
             if (si !== Math.min(lessonStep, content.lesson.length - 1)) return null;
             const total = content.lesson.length;
@@ -3172,8 +3226,27 @@ export function UnitPage({
               document.querySelector(".content")?.scrollTo({ top: 0, behavior: "smooth" });
             };
             const secHeading = lessonEdits.headings?.[si] ?? sec.heading;
-            const paraText = (pi: number) => lessonEdits.paragraphs?.[`${si}:${pi}`] ?? sec.paragraphs[pi];
-            const bulletText = (bi: number) => lessonEdits.bullets?.[`${si}:${bi}`] ?? sec.bullets?.[bi] ?? "";
+            // a pasted body replaces the section's original paragraphs/bullets
+            const bodyOverride = lessonEdits.sectionBody?.[si];
+            const effParagraphs = bodyOverride ? bodyOverride.paragraphs : sec.paragraphs;
+            const effBullets = bodyOverride
+              ? bodyOverride.bullets && bodyOverride.bullets.length
+                ? bodyOverride.bullets
+                : undefined
+              : sec.bullets;
+            const paraText = (pi: number) =>
+              bodyOverride ? bodyOverride.paragraphs[pi] ?? "" : lessonEdits.paragraphs?.[`${si}:${pi}`] ?? sec.paragraphs[pi];
+            const bulletText = (bi: number) =>
+              bodyOverride
+                ? bodyOverride.bullets?.[bi] ?? ""
+                : lessonEdits.bullets?.[`${si}:${bi}`] ?? sec.bullets?.[bi] ?? "";
+            // Match the read-only list's emphasized lead-in while keeping the
+            // entire numbered list on one editable surface.
+            const bulletEditText = (bi: number) => {
+              const value = bulletText(bi);
+              const lead = /^(.{1,60}?)\s+—\s+/.exec(value);
+              return lead ? `**${lead[1]}** — ${value.slice(lead[0].length)}` : value;
+            };
             const cardText = (ci: number, field: "t" | "d", original: string) =>
               lessonEdits.cards?.[`${si}:${ci}:${field}`] ?? original;
             const exText = (xi: number, part: string, original: string) =>
@@ -3286,7 +3359,7 @@ export function UnitPage({
               !sec.cards &&
               !sec.example &&
               !sec.examples?.length &&
-              !sec.bullets;
+              !effBullets;
             const hero = heroFig && !isSlide
               ? (() => {
                   const up = figureImages[heroFig.id];
@@ -3305,28 +3378,24 @@ export function UnitPage({
                         style={{ maxHeight: `${Math.round(420 * heroScale)}px`, minHeight: `${Math.round(240 * Math.min(1, heroScale))}px` }}
                       >
                         <img className="lesson-hero-bg" src={src} alt="" aria-hidden="true" style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
-                        <img className="lesson-hero-img" src={src} alt={heroCap} style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
+                        <img className="lesson-hero-img" src={src} alt={plainSlideText(heroCap)} style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
                         <div className="lesson-hero-shade" />
                         <div className="lesson-hero-body">
                           <div className="lesson-hero-eyebrow">Section {si + 1}</div>
-                          <div
+                          <SlideEditableText as="div"
                             className="lesson-hero-title"
                             contentEditable={editable}
-                            suppressContentEditableWarning
                             onClick={(e) => editable && e.stopPropagation()}
-                            onBlur={(e) => editable && editHeading(si, e.currentTarget.textContent ?? "")}
-                          >
-                            {secHeading}
-                          </div>
-                          <div
+                            onSave={(element) => editable && editHeading(si, htmlToMarked(element))}
+                          html={markedToHtml(secHeading)}
+                          />
+                          <SlideEditableText as="div"
                             className="lesson-hero-cap"
                             contentEditable={editable}
-                            suppressContentEditableWarning
                             onClick={(e) => editable && e.stopPropagation()}
-                            onBlur={(e) => editCaption(heroFig.id, e.currentTarget.textContent ?? "")}
-                          >
-                            {heroCap}
-                          </div>
+                            onSave={(element) => editCaption(heroFig.id, htmlToMarked(element))}
+                          html={markedToHtml(heroCap)}
+                          />
                         </div>
                         {!editable && (
                           <span className="lesson-hero-zoom" aria-hidden="true">
@@ -3366,7 +3435,8 @@ export function UnitPage({
                   );
                 })()
               : null;
-            const slideQuiz = sec.slideQuiz ?? [];
+            const slideQuiz = lessonEdits.generatedQuizzes?.[si] ?? sec.slideQuiz ?? [];
+            const generatedQuiz = Boolean(lessonEdits.generatedQuizzes?.[si]);
             const hasSlideQuiz = slideQuiz.length > 0;
             const qAnswers = hasSlideQuiz
               ? (lessonQuizAnswers[si]?.length === slideQuiz.length
@@ -3402,6 +3472,11 @@ export function UnitPage({
                       {showAnswers ? "Hide answers" : "Show answers"}
                     </button>
                   )}
+                  {editMode && isSuperUser && generatedQuiz && (
+                    <button type="button" className="btn ghost lesson-quiz-reveal" onClick={() => editDeleteGeneratedQuiz(si)} title="Delete the entire generated quiz">
+                      <Icon name="trash" size={14} /> Delete quiz
+                    </button>
+                  )}
                 </div>
                 <div className="lesson-quiz-list">
                   {slideQuiz.map((q, qi) => {
@@ -3409,6 +3484,17 @@ export function UnitPage({
                     const correct = picked === q.answer;
                     return (
                       <div key={qi} className="quiz-q">
+                        {editMode && isSuperUser && generatedQuiz && (
+                          <div className="generated-quiz-edit" onClick={(event) => event.stopPropagation()}>
+                            <label>Question <textarea defaultValue={q.q} rows={2} onBlur={(event) => editGeneratedQuizQuestion(si, qi, { ...q, q: event.target.value })} /></label>
+                            <div className="generated-quiz-options">
+                              {q.options.map((option, oi) => <label key={oi}>Option {oi + 1}<input defaultValue={option} onBlur={(event) => editGeneratedQuizQuestion(si, qi, { ...q, options: q.options.map((value, index) => index === oi ? event.target.value : value) })} /></label>)}
+                            </div>
+                            <label>Correct answer <select defaultValue={q.answer} onChange={(event) => editGeneratedQuizQuestion(si, qi, { ...q, answer: Number(event.target.value) })}>{q.options.map((_, oi) => <option key={oi} value={oi}>Option {oi + 1}</option>)}</select></label>
+                            <label>Explanation <textarea defaultValue={q.explain} rows={2} onBlur={(event) => editGeneratedQuizQuestion(si, qi, { ...q, explain: event.target.value })} /></label>
+                            <button type="button" className="btn ghost sm" onClick={() => editRemoveGeneratedQuizQuestion(si, qi)}><Icon name="trash" size={13} /> Remove question</button>
+                          </div>
+                        )}
                         <div className="qt">
                           <span className="qn">{qi + 1}</span>
                           {q.q}
@@ -3477,18 +3563,40 @@ export function UnitPage({
                 </div>
               </div>
             ) : null;
+            const unifiedText = editable || bodyOverride?.richHtml !== undefined;
+            const tableHtml = (table: {headers:string[];rows:string[][]}) => `<table class="data lesson-table"><thead><tr>${table.headers.map(h=>`<th>${markedToHtml(h)}</th>`).join("")}</tr></thead><tbody>${table.rows.map(row=>`<tr>${row.map(c=>`<td>${markedToHtml(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+            const initialBodyHtml = effParagraphs.map((_,pi)=>{ const html=markedToHtml(paraText(pi)); return isRichText(paraText(pi)) && /<(?:p|div|ol|ul|table)\b/i.test(html) ? html : `<p class="lesson-p">${html}</p>`; }).join("")
+              + (effBullets?.length ? `<ol class="lesson-numlist">${effBullets.map((_,bi)=>`<li>${markedToHtml(bulletEditText(bi))}</li>`).join("")}</ol>` : "")
+              + (sec.table ? tableHtml({headers:sec.table.headers.map((h,i)=>cellText("h",i,h)),rows:sec.table.rows.map((r,ri)=>r.map((c,ci)=>cellText(ri,ci,c)))}) : "")
+              + (sec.cards?.length ? `<div class="card-grid lesson-cards">${sec.cards.map((c,ci)=>`<div class="card lesson-card"><div class="t">${markedToHtml(cardText(ci,"t",c.title))}</div><div class="d">${markedToHtml(cardText(ci,"d",c.text))}</div>${c.table?tableHtml(c.table):""}</div>`).join("")}</div>` : "")
+              + [sec.example,...(sec.examples??[])].map((e,xi)=>e?`<div class="lesson-example"><h3>${markedToHtml(exText(xi,"t",e.title))}</h3>${e.lines.map((line,li)=>`<p class="lesson-p">${markedToHtml(exText(xi,String(li),line))}</p>`).join("")}</div>`:"").join("");
+            const unifiedHtml = `<h2 class="section-title">${markedToHtml(secHeading)}</h2>${bodyOverride?.richHtml ?? initialBodyHtml}`;
             const body = (
               <div className="saqa-body lesson-section">
+                {unifiedText ? <SlideEditableText as="div" className="slide-whole-editor" contentEditable={editable}
+                  aria-label="Slide text" html={sanitizeSlideHtml(unifiedHtml)}
+                  onKeyDown={e=>{
+                    if ((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="a") {
+                      e.preventDefault();const selection=window.getSelection();const range=document.createRange();
+                      range.selectNodeContents(e.currentTarget);selection?.removeAllRanges();selection?.addRange(range);
+                    }
+                  }}
+                  onSave={element=>{
+                    const clone=element.cloneNode(true) as HTMLElement;
+                    const heading=clone.querySelector(":scope > h2");
+                    editHeading(si,heading?htmlToMarked(heading as HTMLElement):"");heading?.remove();
+                    editSetSectionBody(si,{paragraphs:[htmlToMarked(clone)],richHtml:sanitizeSlideHtml(clone.innerHTML)});
+                  }}/>:<>
                 {(() => {
                   const els: React.ReactNode[] = [];
                   let i = 0;
-                  while (i < sec.paragraphs.length) {
+                  while (i < effParagraphs.length) {
                     const text = paraText(i);
-                    if (!editable && isShortItemParagraph(text)) {
+                    if (!editable && isShortItemParagraph(text) && !isLineByLineParagraph(text)) {
                       // group consecutive short-item paragraphs into a card grid
                       const group: { idx: number; text: string }[] = [];
                       let j = i;
-                      while (j < sec.paragraphs.length) {
+                      while (j < effParagraphs.length) {
                         const tt = paraText(j);
                         if (!isShortItemParagraph(tt)) break;
                         group.push({ idx: j, text: tt });
@@ -3514,16 +3622,20 @@ export function UnitPage({
                       i = j;
                       continue;
                     }
+                    const paragraphIndex = i;
                     const paraIcon = pickParagraphIcon(text);
                     els.push(
                       editable ? (
-                        <p
+                        <SlideEditableText as="p"
                           key={i}
                           className="lesson-p editable"
                           contentEditable
-                          suppressContentEditableWarning
-                          onBlur={(e) => editParagraph(si, i, htmlToMarked(e.currentTarget))}
-                          dangerouslySetInnerHTML={{ __html: markedToHtml(text) }}
+                          onSave={(element) =>
+                            bodyOverride
+                              ? editSetSectionBodyItem(si, "p", paragraphIndex, htmlToMarked(element))
+                              : editParagraph(si, paragraphIndex, htmlToMarked(element))
+                          }
+                          html={markedToHtml(text)}
                         />
                       ) : (
                         <p key={i} className={paraIcon ? "lesson-p lesson-p-iconed" : "lesson-p"}>
@@ -3540,27 +3652,27 @@ export function UnitPage({
                   }
                   return els;
                 })()}
-                {sec.bullets && (
-                  <ol className="lesson-numlist">
-                    {sec.bullets.map((b, bi) => (
-                      <li key={bi}>
-                        <span className="num">{bi + 1}</span>
-                        {editable ? (
-                          <span
-                            className="editable-inline"
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => editKeyed("bullets", `${si}:${bi}`, htmlToMarked(e.currentTarget))}
-                            dangerouslySetInnerHTML={{ __html: markedToHtml(bulletText(bi)) }}
-                          />
-                        ) : (
-                          <span>
-                            <LessonBullet text={bulletText(bi)} />
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ol>
+                {effBullets && (
+                  editable ? (
+                    <SlideEditableText
+                      as="div"
+                      className="lesson-numlist lesson-numlist-editor"
+                      contentEditable
+                      onSave={(element) => {
+                        const lines = Array.from(element.querySelectorAll<HTMLElement>(":scope > div, :scope > p, :scope > li"));
+                        const values = (lines.length ? lines : [element]).map((line) => htmlToMarked(line).replace(/^\s*\d+[.)]\s*/, "").trim()).filter(Boolean);
+                        if (bodyOverride) editSetSectionBody(si, { paragraphs: bodyOverride.paragraphs, bullets: values });
+                        else values.forEach((value, index) => editKeyed("bullets", `${si}:${index}`, value));
+                      }}
+                      html={effBullets.map((b, bi) => `<div><span class="num">${bi + 1}</span> ${markedToHtml(bulletEditText(bi))}</div>`).join("")}
+                    />
+                  ) : (
+                    <ol className="lesson-numlist">
+                      {effBullets.map((b, bi) => (
+                        <li key={bi}><span className="num">{bi + 1}</span><span><LessonBullet text={bulletText(bi)} /></span></li>
+                      ))}
+                    </ol>
+                  )
                 )}
                 {sec.table && (() => {
                   const isDemo =
@@ -3573,13 +3685,12 @@ export function UnitPage({
                           <tr>
                             {sec.table.headers.map((h, ci) =>
                               editable ? (
-                                <th
+                                <SlideEditableText as="th"
                                   key={ci}
                                   className="editable-inline"
                                   contentEditable
-                                  suppressContentEditableWarning
-                                  onBlur={(e) => editKeyed("tableCells", `${si}:h:${ci}`, htmlToMarked(e.currentTarget))}
-                                  dangerouslySetInnerHTML={{ __html: markedToHtml(cellText("h", ci, h)) }}
+                                  onSave={(element) => editKeyed("tableCells", `${si}:h:${ci}`, htmlToMarked(element))}
+                          html={markedToHtml(cellText("h", ci, h))}
                                 />
                               ) : (
                                 <th key={ci}>
@@ -3597,13 +3708,12 @@ export function UnitPage({
                                 {row.map((cell, ci) => {
                                   const cv = cellText(ri, ci, cell);
                                   return editable ? (
-                                    <td
+                                    <SlideEditableText as="td"
                                       key={ci}
                                       className="editable-inline"
                                       contentEditable
-                                      suppressContentEditableWarning
-                                      onBlur={(e) => editKeyed("tableCells", `${si}:${ri}:${ci}`, htmlToMarked(e.currentTarget))}
-                                      dangerouslySetInnerHTML={{ __html: markedToHtml(cv) }}
+                                      onSave={(element) => editKeyed("tableCells", `${si}:${ri}:${ci}`, htmlToMarked(element))}
+                          html={markedToHtml(cv)}
                                     />
                                   ) : (
                                     <td key={ci}>
@@ -3784,12 +3894,11 @@ export function UnitPage({
                           })()}
                         </div>
                         {editable ? (
-                          <div
+                          <SlideEditableText as="div"
                             className="d editable-inline"
                             contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => editKeyed("cards", `${si}:${ci}:d`, htmlToMarked(e.currentTarget))}
-                            dangerouslySetInnerHTML={{ __html: markedToHtml(cardText(ci, "d", c.text)) }}
+                            onSave={(element) => editKeyed("cards", `${si}:${ci}:d`, htmlToMarked(element))}
+                          html={markedToHtml(cardText(ci, "d", c.text))}
                           />
                         ) : (
                           <div className="d">
@@ -3892,6 +4001,11 @@ export function UnitPage({
                     })()}
                   </div>
                 ))}
+                </>}
+                {unifiedText && sec.cards?.filter(c=>c.figId).map(c=>{
+                  const src=figureImages[c.figId!]?.image ?? FIGURE_DEFAULTS[c.figId!]?.src;
+                  return src?<img key={c.figId} src={src} alt={c.title} style={{maxWidth:"100%"}}/>:null;
+                })}
                 {sec.figures && (
                   <div className="figure-grid">
                     {orderedFigures.filter((f) => f.id !== heroFig?.id).map((f) => {
@@ -4070,7 +4184,7 @@ export function UnitPage({
                     })()}
                     Section {si + 1} of {total}
                   </span>
-                  <span className="lesson-step-title">{secHeading}</span>
+                  <span className="lesson-step-title">{plainSlideText(secHeading)}</span>
                   <button
                     type="button"
                     className="btn ghost sm lesson-present-btn"
@@ -4108,6 +4222,20 @@ export function UnitPage({
                       <Icon name="chevronRight" size={14} />
                     </button>
                   </span>
+                  {isPrivileged && (
+                    <button
+                      type="button"
+                      className="btn ghost sm"
+                      disabled={figUploading}
+                      onClick={() => {
+                        pendingFigId.current = `lesson-added-${si}-${Date.now()}-${crypto.randomUUID()}`;
+                        figFileRef.current?.click();
+                      }}
+                    >
+                      <Icon name="image" size={13} />
+                      {figUploading ? "Saving image..." : "Add image"}
+                    </button>
+                  )}
                   {isSuperUser && (
                     <span className="lesson-edit-toolbar">
                       <button
@@ -4120,14 +4248,41 @@ export function UnitPage({
                         {editMode ? "Done editing" : "Edit content"}
                       </button>
                       {editMode && (
-                        <button
-                          type="button"
-                          className="btn ghost sm"
-                          onClick={() => editResetSection(si, allFigIds)}
-                          title="Discard my edits on this section"
-                        >
-                          Reset section
-                        </button>
+                        <>
+                          <label className="slide-quiz-count" title="Number of questions to generate">
+                            Questions
+                            <Select
+                              ariaLabel="Number of quiz questions"
+                              className="slide-question-select"
+                              value={String(quizQuestionCount)}
+                              disabled={generatingQuiz === si}
+                              options={Array.from({ length: 8 }, (_, i) => i + 3).map((count) => ({ value: String(count), label: String(count) }))}
+                              onChange={(value) => setQuizQuestionCount(Number(value))}
+                            />
+                          </label>
+                          <button type="button" className="btn ghost sm" onClick={() => void generateSlideQuiz(si)} disabled={generatingQuiz === si} title={`Use OpenAI to generate ${quizQuestionCount} questions from this slide`}>
+                            <Icon name="clipboard" size={13} />
+                            {generatingQuiz === si ? "Generating quiz…" : "Generate quiz"}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn ghost sm"
+                            onClick={() => openPasteEditor(si)}
+                            title="Replace this slide's text — paste in paragraphs and they are formatted automatically"
+                          >
+                            <Icon name="pencil" size={13} />
+                            Paste text
+                          </button>
+                          {quizGenerationError && <span className="auth-error" role="alert">{quizGenerationError}</span>}
+                          <button
+                            type="button"
+                            className="btn ghost sm"
+                            onClick={() => editResetSection(si, allFigIds)}
+                            title="Discard my edits on this section"
+                          >
+                            Reset section
+                          </button>
+                        </>
                       )}
                     </span>
                   )}
@@ -4240,22 +4395,20 @@ export function UnitPage({
                   <>
                     {hero}
                     <div className="lesson-flat">
-                      {!hero && (
+                      {!hero && !unifiedText && (
                         <h2 className="section-title">
                           <span className="ico">
                             <Icon name={sec.icon} size={20} />
                           </span>
                           {editable ? (
-                            <span
+                            <SlideEditableText as="span"
                               contentEditable
-                              suppressContentEditableWarning
                               className="editable-inline"
-                              onBlur={(e) => editHeading(si, e.currentTarget.textContent ?? "")}
-                            >
-                              {secHeading}
-                            </span>
+                              onSave={(element) => editHeading(si, htmlToMarked(element))}
+                            html={markedToHtml(secHeading)}
+                            />
                           ) : (
-                            secHeading
+                            <Gloss text={secHeading} />
                           )}
                         </h2>
                       )}
@@ -4279,12 +4432,57 @@ export function UnitPage({
               </div>
             );
           })}
+          {pasteEditor && (
+            <div className="paste-editor-overlay" role="dialog" aria-modal="true" aria-label="Edit slide text">
+              <div className="paste-editor">
+                <h3>
+                  <Icon name="pencil" size={16} />
+                  Edit slide text — section {pasteEditor.si + 1}
+                </h3>
+                <label className="paste-editor-label" htmlFor="paste-heading">
+                  Slide heading
+                </label>
+                <input
+                  id="paste-heading"
+                  className="cal-edit"
+                  value={pasteEditor.heading}
+                  onChange={(e) => setPasteEditor((p) => (p ? { ...p, heading: e.target.value } : p))}
+                />
+                <label className="paste-editor-label" htmlFor="paste-body">
+                  Slide text — type or paste paragraphs
+                </label>
+                <textarea
+                  id="paste-body"
+                  className="paste-editor-text"
+                  value={pasteEditor.text}
+                  onChange={(e) => setPasteEditor((p) => (p ? { ...p, text: e.target.value } : p))}
+                  placeholder={"Paste your paragraphs here.\n\nSeparate paragraphs with a blank line.\nStart a line with - or 1. to make it a numbered point."}
+                  autoFocus
+                />
+                <p className="paste-editor-hint">
+                  A blank line starts a new paragraph · lines starting with “-”, “•” or “1.” become
+                  numbered points — the text is formatted in the lesson’s standard style automatically.
+                  Use **double stars** for bold.
+                </p>
+                <div className="paste-editor-actions">
+                  <button className="btn" onClick={savePasteEditor}>
+                    <Icon name="check" size={15} />
+                    Format &amp; save
+                  </button>
+                  <button className="btn ghost" onClick={() => setPasteEditor(null)}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
 
       {tab === "notes" && (
         <>
           <div style={{ marginTop: 18 }} />
+          {content?.studyNotes?.map((note, index) => <article className="card" key={index}><h3>{note.title}</h3><div style={{ whiteSpace: "pre-wrap" }}><Gloss text={note.text} /></div></article>)}
           {unitId === "114055" && (
             <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
               <a
@@ -4393,7 +4591,7 @@ export function UnitPage({
                     }}
                   />
                   {noteError && <div className="notes-error">{noteError}</div>}
-                  {all.length === 0 && (
+                  {all.length === 0 && !content?.studyNotes?.length && (
                     <div className="muted" style={{ padding: "8px 4px" }}>
                       No notes yet — upload an image to get started.
                     </div>
@@ -4568,7 +4766,7 @@ export function UnitPage({
               of its text.
             </span>
           </div>
-          {(tab === "questions" ? content.questionSessions ?? [] : content.exercises).map((ex) => {
+          {(tab === "questions" ? content.questionSessions ?? [] : builtUnit ? [...content.exercises, ...(content.questionSessions ?? [])] : content.exercises).map((ex) => {
             const exRes = progress.units[u.us]?.exercises?.[ex.id];
             const hasChecks = !!ex.checks && ex.checks.length > 0;
             const exTotalMarks = ex.checks?.reduce((t, c) => t + c.concepts.length * 2, 0) ?? 0;
@@ -4800,7 +4998,7 @@ export function UnitPage({
         </>
       )}
 
-      {tab === "assignments" && content && (
+      {(tab === "assignments" || (builtUnit && tab === "exercises")) && content && (
         <>
           <p className="muted" style={{ marginTop: 14 }}>
             Assessed assignments. Submissions are assessed against the ASD for SAQA ID 48573 and
@@ -5166,7 +5364,8 @@ export function UnitPage({
         );
       })()}
 
-      {tab === "evaluation" && (
+      {tab === "evaluation" && content?.evaluation && <section className="unit-evaluation"><h2>Lesson evaluation</h2><p>{content.evaluation.intro}</p>{content.evaluation.questions.map((question, i) => <label className="field" key={`${builtUnit?.revision}:${i}`}>{question}<textarea rows={3} defaultValue={String(progress.units[u.us]?.logbook?.[`unit-evaluation.${builtUnit?.revision}.${i}`] ?? "")} onBlur={e => setLogbookField(u.us, `unit-evaluation.${builtUnit?.revision}.${i}`, e.target.value)} /></label>)}<p className="muted">Your responses save when you leave each field.</p></section>}
+      {tab === "evaluation" && !content?.evaluation && (
         <>
           <h2 className="section-title">
             <span className="ico">
@@ -5232,6 +5431,7 @@ export function UnitPage({
         </>
       )}
 
+      {tab === "material" && builtUnit && <BuiltUnitDownloads us={unitId} staff={isPrivileged} />}
       {tab === "material" && decks.length > 0 && (
         <>
           <h2 className="section-title">
@@ -5669,9 +5869,9 @@ export function UnitPage({
               </button>
             )}
             <figure className="lightbox-figure" onClick={(e) => e.stopPropagation()}>
-              <img src={cur.src} alt={cur.caption} />
+              <img src={cur.src} alt={plainSlideText(cur.caption)} />
               <figcaption>
-                <span>{cur.caption}</span>
+                <span><Gloss text={cur.caption} /></span>
                 {cur.credit && (
                   <a
                     className="fig-credit"
@@ -5733,10 +5933,10 @@ export function UnitPage({
           <div ref={presenterRef} className="presenter-overlay" role="dialog" aria-modal="true">
             {cur.kind === "image" ? (
               <div className="presenter-body">
-                <img className="presenter-slide" src={cur.src} alt={cur.caption} />
+                <img className="presenter-slide" src={cur.src} alt={plainSlideText(cur.caption)} />
                 {(cur.bullets?.length || cur.note) && (
                   <aside className="presenter-notes">
-                    <h3 className="presenter-notes-title">{cur.caption}</h3>
+                    <h3 className="presenter-notes-title"><Gloss text={cur.caption} /></h3>
                     {cur.bullets && cur.bullets.length > 0 ? (
                       <ol className="presenter-bullets presenter-numbered">
                         {cur.bullets.map((b, i) => (
@@ -5747,7 +5947,7 @@ export function UnitPage({
                       <p className="presenter-note">{cur.note}</p>
                     ) : null}
                     {(() => {
-                      const text = [cur.caption, ...(cur.bullets ?? []), cur.note ?? ""].join(" ");
+                      const text = [cur.caption, ...(cur.bullets ?? []), cur.note ?? ""].map(plainSlideText).join(" ");
                       const auto = findAcronyms(text);
                       const seen = new Set(auto.map((a) => a.term));
                       const extras = (cur.figureId && SLIDE_EXTRA_ACRONYMS[cur.figureId]) || [];
@@ -5853,9 +6053,9 @@ export function UnitPage({
             )}
             <div className="presenter-caption">
               {cur.kind === "image" ? (
-                <span className="presenter-figcap">{cur.caption}</span>
+                <span className="presenter-figcap"><Gloss text={cur.caption} /></span>
               ) : (
-                <span className="presenter-section">{cur.sectionTitle}</span>
+                <span className="presenter-section"><Gloss text={cur.sectionTitle} /></span>
               )}
             </div>
             <div className="presenter-controls">

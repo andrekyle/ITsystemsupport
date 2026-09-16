@@ -14,6 +14,17 @@ function markAnswerDev(env: Record<string, string>): Plugin {
       if (env.OPENAI_API_KEY && !process.env.OPENAI_API_KEY) {
         process.env.OPENAI_API_KEY = env.OPENAI_API_KEY;
       }
+      server.middlewares.use("/api/generate-slide-quiz", (req, res) => {
+        void (async () => {
+          const chunks: Buffer[] = [];
+          for await (const c of req) chunks.push(c as Buffer);
+          const mod = await server.ssrLoadModule("/api/generate-slide-quiz.ts") as { default: (r: Request) => Promise<Response> };
+          const response = await mod.default(new Request("http://localhost/api/generate-slide-quiz", { method: req.method ?? "POST", headers: { "content-type": "application/json" }, body: Buffer.concat(chunks).toString("utf8") }));
+          res.statusCode = response.status;
+          response.headers.forEach((v, k) => res.setHeader(k, v));
+          res.end(await response.text());
+        })().catch(() => { res.statusCode = 500; res.end(JSON.stringify({ error: "Quiz generation failed." })); });
+      });
       server.middlewares.use("/api/mark-answer", (req, res) => {
         void (async () => {
           const chunks: Buffer[] = [];
@@ -47,7 +58,7 @@ function formBuilderDev(env: Record<string, string>): Plugin {
       for (const key of ["OPENAI_API_KEY", "SUPABASE_URL", "SUPABASE_ANON_KEY", "VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"]) {
         if (env[key] && process.env[key] === undefined) process.env[key] = env[key];
       }
-      server.middlewares.use("/api/generate-form", (request, response) => {
+      for (const endpoint of ["generate-form", "enhance-unit-quiz"]) server.middlewares.use(`/api/${endpoint}`, (request, response) => {
         void (async () => {
           const chunks: Buffer[] = [];
           let size = 0;
@@ -62,8 +73,8 @@ function formBuilderDev(env: Record<string, string>): Plugin {
             }
             chunks.push(buffer);
           }
-          const module = await server.ssrLoadModule("/api/generate-form.ts") as { default: (request: Request) => Promise<Response> };
-          const result = await module.default(new Request("http://localhost/api/generate-form", {
+          const module = await server.ssrLoadModule(`/api/${endpoint}.ts`) as { default: (request: Request) => Promise<Response> };
+          const result = await module.default(new Request(`http://localhost/api/${endpoint}`, {
             method: request.method ?? "POST",
             headers: {
               "Content-Type": "application/json",

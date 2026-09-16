@@ -2108,6 +2108,8 @@ export function useMemories() {
 /* ---------- super-user lesson edits (per unit, saved locally) ---------- */
 
 export interface LessonEdits {
+  /** AI-generated quiz questions keyed by lesson section index. */
+  generatedQuizzes?: Record<number, import("./types").QuizQuestion[]>;
   /** section index -> replacement heading */
   headings?: Record<number, string>;
   /** `${sectionIdx}:${paraIdx}` -> replacement paragraph text */
@@ -2121,6 +2123,9 @@ export interface LessonEdits {
   /** `${sectionIdx}:h:${colIdx}` (header) / `${sectionIdx}:${rowIdx}:${colIdx}` -> table cell */
   tableCells?: Record<string, string>;
   activityText?: Record<string, string>;
+  /** section index -> full replacement body (pasted text formatted into
+   *  paragraphs + numbered points; supersedes the indexed paragraph/bullet edits) */
+  sectionBody?: Record<number, { paragraphs: string[]; bullets?: string[]; richHtml?: string }>;
   /** figure id -> replacement caption */
   captions?: Record<string, string>;
   /** section index -> ordered list of figure ids (unknown ids preserved after) */
@@ -2167,6 +2172,26 @@ export function useLessonEdits(us: string) {
       }),
     [apply]
   );
+  const setGeneratedQuiz = useCallback((sIdx: number, questions: import("./types").QuizQuestion[]) =>
+    apply((d) => ({ ...d, generatedQuizzes: { ...(d.generatedQuizzes ?? {}), [sIdx]: questions } })), [apply]);
+  const updateGeneratedQuizQuestion = useCallback((sIdx: number, qIdx: number, question: import("./types").QuizQuestion) =>
+    apply((d) => {
+      const current = (d.generatedQuizzes?.[sIdx] ?? []).slice();
+      if (!current[qIdx]) return d;
+      current[qIdx] = question;
+      return { ...d, generatedQuizzes: { ...(d.generatedQuizzes ?? {}), [sIdx]: current } };
+    }), [apply]);
+  const removeGeneratedQuizQuestion = useCallback((sIdx: number, qIdx: number) =>
+    apply((d) => {
+      const current = (d.generatedQuizzes?.[sIdx] ?? []).filter((_, i) => i !== qIdx);
+      return { ...d, generatedQuizzes: { ...(d.generatedQuizzes ?? {}), [sIdx]: current } };
+    }), [apply]);
+  const deleteGeneratedQuiz = useCallback((sIdx: number) =>
+    apply((d) => {
+      const generatedQuizzes = { ...(d.generatedQuizzes ?? {}) };
+      delete generatedQuizzes[sIdx];
+      return { ...d, generatedQuizzes };
+    }), [apply]);
 
   const setParagraph = useCallback(
     (sIdx: number, pIdx: number, text: string) =>
@@ -2196,6 +2221,45 @@ export function useLessonEdits(us: string) {
         const map = { ...(d[field] ?? {}) };
         if (text.trim()) map[key] = text; else delete map[key];
         return { ...d, [field]: map };
+      }),
+    [apply]
+  );
+
+  /** Replace a section's whole body (pasted paragraphs + points). Passing null reverts to the original. */
+  const setSectionBody = useCallback(
+    (sIdx: number, body: { paragraphs: string[]; bullets?: string[]; richHtml?: string } | null) =>
+      apply((d) => {
+        const sectionBody = { ...(d.sectionBody ?? {}) };
+        if (body) sectionBody[sIdx] = body;
+        else delete sectionBody[sIdx];
+        // indexed edits referred to the replaced text — scrub them for this section
+        const scrub = (map?: Record<string, string>) => {
+          const next = { ...(map ?? {}) };
+          for (const k of Object.keys(next)) if (k.startsWith(`${sIdx}:`)) delete next[k];
+          return next;
+        };
+        return { ...d, sectionBody, paragraphs: scrub(d.paragraphs), bullets: scrub(d.bullets) };
+      }),
+    [apply]
+  );
+
+  /** Inline-edit one paragraph ("p") or numbered point ("b") of a replaced section body. */
+  const setSectionBodyItem = useCallback(
+    (sIdx: number, kind: "p" | "b", idx: number, text: string) =>
+      apply((d) => {
+        const cur = d.sectionBody?.[sIdx];
+        if (!cur) return d;
+        const sectionBody = { ...(d.sectionBody ?? {}) };
+        if (kind === "p") {
+          const paragraphs = cur.paragraphs.slice();
+          paragraphs[idx] = text;
+          sectionBody[sIdx] = { ...cur, paragraphs };
+        } else {
+          const bullets = (cur.bullets ?? []).slice();
+          bullets[idx] = text;
+          sectionBody[sIdx] = { ...cur, bullets };
+        }
+        return { ...d, sectionBody };
       }),
     [apply]
   );
@@ -2267,12 +2331,14 @@ export function useLessonEdits(us: string) {
         }
         const figureOffsetY = { ...(d.figureOffsetY ?? {}) };
         for (const id of figIds) delete figureOffsetY[id];
-        return { ...d, headings, paragraphs, bullets, cards, examples, tableCells, figureOrder, captions, figureScale, figureOffsetY };
+        const sectionBody = { ...(d.sectionBody ?? {}) };
+        delete sectionBody[sIdx];
+        return { ...d, headings, paragraphs, bullets, cards, examples, tableCells, figureOrder, captions, figureScale, figureOffsetY, sectionBody };
       }),
     [apply]
   );
 
-  return { edits, setHeading, setParagraph, setCaption, setKeyed, moveFigure, setScale, setOffsetY, resetSection };
+  return { edits, setHeading, setParagraph, setCaption, setKeyed, setSectionBody, setSectionBodyItem, setGeneratedQuiz, updateGeneratedQuizQuestion, removeGeneratedQuizQuestion, deleteGeneratedQuiz, moveFigure, setScale, setOffsetY, resetSection };
 }
 
 /* ---------- user-uploaded notes (stored separately per profile) ---------- */

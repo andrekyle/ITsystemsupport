@@ -490,6 +490,8 @@ export interface LessonPlan {
 }
 
 export interface UnitContent {
+  studyNotes?: { title: string; text: string }[];
+  evaluation?: { intro: string; questions: string[] };
   lesson: LessonSection[];
   exercises: Exercise[];
   assignments: Assignment[];
