@@ -188,6 +188,47 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
     ).join("");
     return `<div class="lesson-table-scroll"><table class="data lesson-table"><thead><tr>${headers}</tr></thead><tbody>${bodyRows}</tbody></table></div><p><br></p>`;
   };
+  const selectedBlocks = (editor: HTMLElement) => {
+    const selection = window.getSelection();
+    if (!selection?.rangeCount) return [] as HTMLElement[];
+    const range = selection.getRangeAt(0);
+    if (!editor.contains(range.commonAncestorContainer)) return [];
+    const blocks = Array.from(editor.querySelectorAll<HTMLElement>("p,div,li,h2,h3,th,td"))
+      .filter((block) => block.contains(range.startContainer) || block.contains(range.endContainer) || range.intersectsNode(block));
+    const unique = blocks.filter((block, index) => blocks.indexOf(block) === index);
+    return unique.length ? unique : [];
+  };
+  const applyList = (ordered: boolean) => {
+    const restored = restoreSelection();
+    if (!restored) return;
+    const blocks = selectedBlocks(restored.editor).filter((block) => block.tagName !== "LI");
+    if (!blocks.length) {
+      document.execCommand(ordered ? "insertOrderedList" : "insertUnorderedList", false);
+      if (restored.selection?.rangeCount) range.current = restored.selection.getRangeAt(0).cloneRange();
+      restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
+      return;
+    }
+    const list = document.createElement(ordered ? "ol" : "ul");
+    list.className = "lesson-inferred-list";
+    const first = blocks[0];
+    const parent = first.parentNode;
+    if (!parent) return;
+    for (const block of blocks) {
+      const item = document.createElement("li");
+      while (block.firstChild) item.appendChild(block.firstChild);
+      list.appendChild(item);
+    }
+    parent.insertBefore(list, first);
+    for (const block of blocks) block.remove();
+    const caret = document.createRange();
+    caret.selectNodeContents(list.lastElementChild ?? list);
+    caret.collapse(false);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(caret);
+    range.current = caret;
+    restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
+  };
   const insertTable = () => {
     const restored = restoreSelection(true);
     if (!restored) return;
@@ -198,6 +239,11 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
   };
   const run = (command: string, value?: string) => {
     if (command === "undo" || command === "redo") { replay(command); return; }
+    if (command === "insertUnorderedList" || command === "insertOrderedList") {
+      applyList(command === "insertOrderedList");
+      setActive(commands.filter(([cmd]) => document.queryCommandState(cmd)).map(([cmd]) => cmd));
+      return;
+    }
     const restored = restoreSelection();
     if (!restored) return;
     document.execCommand("styleWithCSS", false, "true");
