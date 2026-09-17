@@ -1,4 +1,5 @@
 import type { UnitContent, UnitStandard, QuizQuestion, LessonSection } from "../types";
+import { lessonTableMarkdown, parseLessonTextBlocks } from "./lessonTables";
 
 export const MAX_SOURCE_LENGTH = 120_000;
 export type BuildOptions = { questions: number; minutes: number };
@@ -28,15 +29,36 @@ export function parseUnitSource(source: string): UnitTopic[] {
   // Divide long sections at paragraph/sentence boundaries without dropping source text.
   const result: UnitTopic[] = [];
   for (const topic of topics) {
-    const parts = topic.paragraphs.flatMap(p => p.length > 1800 ? (p.match(/[^.!?]+[.!?]+(?:\s+|$)|[^.!?]+$/g) ?? [p]).map(s => s.trim()) : [p]);
+    const tableAwareParagraphs = parseLessonTextBlocks(topic.paragraphs).map(block =>
+      block.kind === "table" ? lessonTableMarkdown(block) : block.text
+    );
+    const parts = tableAwareParagraphs.flatMap(p => p.length > 1800 && !/^\|[\s\S]+\|\s*$/m.test(p)
+      ? (p.match(/[^.!?]+[.!?]+(?:\s+|$)|[^.!?]+$/g) ?? [p]).map(s => s.trim())
+      : [p]);
     let chunk: string[] = [];
     let part = 0;
-    for (const paragraph of parts) {
-      if (chunk.join("\n").length + paragraph.length > 1800 && chunk.length) {
-        result.push({ heading: `${topic.heading}${part ? ` (continued ${part + 1})` : ""}`, paragraphs: chunk });
-        chunk = []; part++;
-      }
-      chunk.push(paragraph);
+    for (let i = 0; i < parts.length; i++) {
+      const paragraph = parts[i];
+      const nextParagraph = parts[i + 1];
+      // A numbered subheading belongs with the prose it introduces. Treat the
+      // pair as one chunking unit while preserving both paragraph boundaries.
+      // Sentence-like steps and consecutive numbered items remain independent.
+      const keepWithNext = (paragraph.length <= 160
+        && /^\d+(?:\.\d+)*[.)]?\s+\S/.test(paragraph)
+        && !/[.!?]\s*$|\n/.test(paragraph)
+        && nextParagraph !== undefined
+        && !/^\d+(?:\.\d+)*[.)]?\s+\S/.test(nextParagraph))
+        || (/:$/.test(paragraph.trim()) && nextParagraph !== undefined && nextParagraph.length <= 140);
+      const group: string[] = [paragraph];
+      if (/:$/.test(paragraph.trim())) {
+        let k = i + 1;
+        while (k < parts.length && parts[k].length <= 140 && !/^\d+(?:\.\d+)*[.)]?\s+\S/.test(parts[k].trim())) group.push(parts[k++]);
+        if (group.length > 1) i = k - 1;
+      } else if (keepWithNext) group.push(nextParagraph);
+      // Keep the supplied section together on one lesson slide. The lesson
+      // view can scroll; splitting here separates headings and their points.
+      chunk.push(...group);
+      if (keepWithNext && !/:$/.test(paragraph.trim())) i++;
     }
     if (chunk.length) result.push({ heading: `${topic.heading}${part ? ` (continued ${part + 1})` : ""}`, paragraphs: chunk });
   }
@@ -81,6 +103,24 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
     steps: ["Identify the main idea and explain it in your own words.", "Describe a workplace situation where this knowledge is useful.", "Show how you would apply the guidance and explain how you would check the result."],
     modelAnswer: [{ heading: "Source reference for the facilitator", paragraphs: t.paragraphs }],
   }));
+  // US 114059 includes two practical tasks in the supplied source. Keep the
+  // instructions in the Activity tab rather than repeating them on lesson slides.
+  if (unit.us === "114059" && /Prepare a time estimate for an element of work/i.test(source)) {
+    const activityLines = [
+      { title: "Questioning — Prepare a time estimate for an element of work", time: "45 minutes", task: "Prepare a time estimate for an element of work. Explain how the estimate is based on a breakdown of the component into logical parts, including implementation and testing of interfaces to other components where applicable." },
+      { title: "Questioning — Prepare a cost estimate for an element of work", time: "90 minutes", task: "Prepare a cost estimate for an element of work. Use the Japanese construction firm cost-estimation extract as a worked reference; monetary values may differ from South Africa, but the calculation method remains useful." },
+    ];
+    for (const [index, activity] of activityLines.entries()) exercises.push({
+      id: `built-questioning-${index + 1}`,
+      title: activity.title,
+      task: `${activity.task} Time: ${activity.time} · Activity: Self & Group`,
+      scenario: [activity.task],
+      steps: ["Break the work element into logical parts and record the assumptions.", "Include interface implementation and testing where applicable.", "Present the estimate and explain how the figures were calculated."],
+      modelAnswer: [{ heading: "Facilitator reference", paragraphs: [activity.task] }],
+    });
+    const remove = /^(?:Questioning|Prepare a time estimate for an element of work|Prepare a cost estimate for an element of work|Time:\s*\d+\s*minutes\s*Activity:\s*Self\s*&\s*Group|Explain how the time estimate.*|The following is an extract from a Japanese construction firms.*)$/i;
+    for (const section of lesson) section.paragraphs = section.paragraphs.filter(paragraph => !remove.test(paragraph.trim()));
+  }
   return {
     lesson, exercises,
     questionSessions: [{ id: "built-discussion", title: "Knowledge and reflection", task: "Use the unit material to support each answer.", steps: topics.map(t => `What are the key points in “${t.heading}”, and why do they matter at work?`), modelAnswer: topics.map(t => ({ heading: t.heading, paragraphs: t.paragraphs })) }],

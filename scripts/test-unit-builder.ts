@@ -26,6 +26,26 @@ assert.throws(()=>buildUnitContent(unit,"Too short",{questions:5,minutes:180}));
 const invalid=structuredClone(built);invalid.quiz[0].answer=9;
 assert.throws(()=>validateUnitContent(invalid));
 
+// A section boundary must not strand a numbered heading above the next page.
+const precedingParagraph = "Earlier estimating guidance. ".repeat(54).trim();
+const numberedHeading = "2. Outline of the Unit Price Estimation Method";
+const headingParagraph = "The present cost estimation method uses work efficiency to calculate the required materials and labour. ".repeat(5).trim();
+const chunked = parseUnitSource(`# Cost estimation\n\n${precedingParagraph}\n\n${numberedHeading}\n\n${headingParagraph}`);
+assert.equal(chunked.length, 2);
+assert.deepEqual(chunked[0].paragraphs, [precedingParagraph]);
+assert.deepEqual(chunked[1].paragraphs, [numberedHeading, headingParagraph]);
+assert.deepEqual(chunked.flatMap(topic => topic.paragraphs), [precedingParagraph, numberedHeading, headingParagraph]);
+
+const ordinaryStep = "2. Check the estimate against the original specifications.";
+const steps = parseUnitSource(`# Cost estimation\n\n${precedingParagraph}\n\n${ordinaryStep}\n\n${headingParagraph}`);
+assert.deepEqual(steps[0].paragraphs, [precedingParagraph, ordinaryStep]);
+assert.deepEqual(steps[1].paragraphs, [headingParagraph]);
+
+const numberedItems = ["1. Materials", "2. Labour", "3. Equipment"];
+const list = parseUnitSource(`# Cost estimation\n\n${precedingParagraph}\n\n${numberedItems.join("\n\n")}`);
+assert.equal(list.length, 1);
+assert.deepEqual(list[0].paragraphs, [precedingParagraph, ...numberedItems]);
+
 const originalFetch=globalThis.fetch;
 const prior={...process.env};
 process.env.OPENAI_API_KEY="test-only";
@@ -48,4 +68,4 @@ try {
   globalThis.fetch=(async(url)=>String(url).endsWith("is_admin")?Response.json(false):Response.json({})) as typeof fetch;
   assert.equal((await handler(new Request("https://test.invalid",{method:"POST",headers:{Authorization:"Bearer test"},body:JSON.stringify({source,count:5})}))).status,403);
 } finally {globalThis.fetch=originalFetch;for(const k of ["OPENAI_API_KEY","SUPABASE_URL","SUPABASE_ANON_KEY"]) {if(prior[k]===undefined)delete process.env[k];else process.env[k]=prior[k];}}
-console.log("PASS: deterministic content, all tabs, grounded quiz answers, validation, authenticated bounded AI generation");
+console.log("PASS: deterministic content, heading/paragraph chunk boundaries, all tabs, grounded quiz answers, validation, authenticated bounded AI generation");

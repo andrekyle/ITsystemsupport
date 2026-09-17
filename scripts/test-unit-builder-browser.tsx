@@ -1,6 +1,8 @@
 import { createRoot } from "react-dom/client";
 import { UnitPage } from "../src/pages/Course";
 import { readBuiltUnit } from "../src/lib/builtUnits";
+import { saveBuiltUnit } from "../src/lib/useBuiltUnit";
+import { receiveUnitPack } from "../src/lib/unitStorage";
 import JSZip from "jszip";
 
 const source=`# Estimating work
@@ -24,10 +26,29 @@ async function test(){
   let root=createRoot(container);root.render(render());
   await waitFor(()=>!!document.querySelector(".unit-builder"));
   if(sessionStorage.getItem("unit-builder-reload")){
+    await waitFor(()=>!!readBuiltUnit("114059"));await tick();
     assert(readBuiltUnit("114059")?.content.quiz[0].q==="Manually updated question", "Manual changes survive full reload");
     assert(document.querySelectorAll('[role="tab"]').length===10,"All ten tabs survive reload");
+    const saved=readBuiltUnit("114059")!;
+    const transaction=IDBDatabase.prototype.transaction;
+    let rejected=false;
+    IDBDatabase.prototype.transaction=function(){throw new DOMException("Full", "QuotaExceededError");};
+    try { await saveBuiltUnit("114059",{...saved,revision:"must-not-save"}); }
+    catch(error) { rejected=String(error).includes("previous unit is unchanged"); }
+    finally { IDBDatabase.prototype.transaction=transaction; }
+    assert(rejected,"Unavailable device storage reports a failed save");
+    assert(readBuiltUnit("114059")?.revision===saved.revision,"Failed save preserves previous content");
+    receiveUnitPack("itss.unitbuilder.cloud-test.shared",JSON.stringify(saved));
+    assert(readBuiltUnit("cloud-test")?.revision===saved.revision,"Cloud hydration works with full localStorage");
     sessionStorage.removeItem("unit-builder-reload");
-    document.body.dataset.result="passed";document.getElementById("result")!.textContent="PASS: in-app build, all ten tabs, real PDF and PowerPoint, manual question edit, rebuilt exports, version backup and full reload";return;
+    document.body.dataset.result="passed";document.getElementById("result")!.textContent="PASS: full localStorage build, all ten tabs, PDF and PowerPoint, manual edits, version backup, reload, failed-save preservation and cloud hydration";return;
+  }
+  // Reproduce the reported failure: unrelated data already fills localStorage.
+  localStorage.setItem("unrelated-user-data","Keep this data");
+  for(const size of [100000,1000]) {
+    for(let i=0;i<10000;i++){
+      try{localStorage.setItem(`quota-fixture-${size}-${i}`,"x".repeat(size));}catch{break;}
+    }
   }
   click("Build unit standard");await tick();
   const textarea=document.querySelector<HTMLTextAreaElement>(".unit-builder textarea")!;
@@ -38,6 +59,8 @@ async function test(){
   await waitFor(()=>!!readBuiltUnit("114059"));
   await tick();
   const built=readBuiltUnit("114059")!;
+  assert(localStorage.getItem("unrelated-user-data")==="Keep this data","Unrelated data preserved");
+  assert(localStorage.getItem("itss.unitbuilder.114059.shared")===null,"Large pack is not stored in localStorage");
   const labels=Array.from(document.querySelectorAll('[role="tab"]')).map(e=>e.textContent?.trim());
   for(const label of ["Overview","Lesson","Course material","Notes","Activity","Logbook","Quiz","Self assessment","Evaluation","Lesson plan"])assert(labels.includes(label),`Missing tab ${label}`);
   assert(labels.length===10,"One Activity tab includes all exercise types");

@@ -14,9 +14,10 @@ export function SlideEditableText({ as, html, onSave, contentEditable = true, ..
   useLayoutEffect(() => {
     const editor = ref.current;
     if (!editor) return;
-    if (document.activeElement !== editor && editor.innerHTML !== html) editor.innerHTML = html;
+    const editing = contentEditable === true || contentEditable === "true";
+    if ((!editing || document.activeElement !== editor) && editor.innerHTML !== html) editor.innerHTML = html;
     saved.current = sanitizeSlideHtml(html);
-  }, [html]);
+  }, [html, contentEditable]);
 
   const save = () => {
     const editor = ref.current;

@@ -21,6 +21,7 @@ import { SlideTextToolbar } from "../components/SlideTextToolbar";
 import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
 import { UnitBuilder, BuiltUnitDownloads } from "../components/UnitBuilder";
+import { GeneratedQuizEditor } from "../components/GeneratedQuizEditor";
 import { useBuiltUnit } from "../lib/useBuiltUnit";
 import { EditableActivityText } from "../components/EditableActivityText";
 import { fileToImageDataUrl } from "../components/Avatar";
@@ -28,6 +29,7 @@ import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 import { requestSemanticReview } from "../lib/llm";
 import { checkSpelling, type SpellIssue } from "../lib/spellcheck";
 import { autoGrowTextarea } from "../lib/autoGrow";
+import { groupLessonHtml, isLessonListLead, isLessonListPoint, isLessonSubheading } from "../lib/lessonSubsections";
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
 
@@ -251,18 +253,6 @@ function pickBulletIcon(text: string): React.ComponentProps<typeof Icon>["name"]
   return "chevronRight";
 }
 
-/** True when a paragraph looks like a short "list item" written as its own paragraph. */
-function isShortItemParagraph(text: string): boolean {
-  const t = text.trim();
-  return t.length > 0 && t.length <= 70 && !/[.!?]$/.test(t) && !/:$/.test(t);
-}
-
-/** Numbered report-outline lines remain individual paragraphs, even when
- * they happen to be short enough to match the card heuristic. */
-function isLineByLineParagraph(text: string): boolean {
-  return /^\s*\d+\s+\S[\s\S]*?\s[—–-]\s/.test(text);
-}
-
 /** Pick an inline icon for a lesson paragraph, based on its content.
  *  Adds visual variety without moving text. Returns null when no
  *  strong signal is present so the paragraph renders plain. */
@@ -297,19 +287,6 @@ function pickParagraphIcon(text: string): React.ComponentProps<typeof Icon>["nam
   if (/hidden agenda|covert careerism/.test(low)) return "eyeOff";
   // trust / building trust / cards on the table
   if (/build trust|cards on the table|light of day/.test(low)) return "shield";
-  if (isShortItemParagraph(t)) {
-    if (/baby|pregnan/.test(low)) return "person";
-    if (/family/.test(low)) return "people";
-    if (/better job|new job|next job/.test(low)) return "briefcase";
-    if (/school|degree|study|learn/.test(low)) return "gradcap";
-    if (/name for oneself|make a name/.test(low)) return "trend";
-    if (/funded|funding|money/.test(low)) return "database";
-    if (/winners|winning/.test(low)) return "award";
-    if (/dominate|control/.test(low)) return "target";
-    if (/glom|attach|coast/.test(low)) return "layers";
-    if (/executive|championship|patronage|behind a powerful/.test(low)) return "shield";
-    return "checkCircle";
-  }
   // colon-ending intro line ("...often very honourable:")
   if (/:$/.test(t) && t.length < 260) return "clipboard";
   // hypothetical team / Doug / Sarah / Miller / John analysis
@@ -3437,6 +3414,7 @@ export function UnitPage({
               : null;
             const slideQuiz = lessonEdits.generatedQuizzes?.[si] ?? sec.slideQuiz ?? [];
             const generatedQuiz = Boolean(lessonEdits.generatedQuizzes?.[si]);
+            const editingQuiz = editMode && isSuperUser && generatedQuiz;
             const hasSlideQuiz = slideQuiz.length > 0;
             const qAnswers = hasSlideQuiz
               ? (lessonQuizAnswers[si]?.length === slideQuiz.length
@@ -3460,8 +3438,8 @@ export function UnitPage({
               <div className="lesson-slide-quiz">
                 <div className="lesson-slide-quiz-title">
                   <Icon name="checkCircle" size={16} />
-                  {slideQuiz.length === 1 ? "Answer the question to unlock Next" : `Answer all ${slideQuiz.length} to unlock Next`}
-                  {isPrivileged && (
+                  {editingQuiz ? "Edit questions" : slideQuiz.length === 1 ? "Answer the question to unlock Next" : `Answer all ${slideQuiz.length} to unlock Next`}
+                  {isPrivileged && !editingQuiz && (
                     <button
                       type="button"
                       className={`btn ghost lesson-quiz-reveal${showAnswers ? " on" : ""}`}
@@ -3483,18 +3461,10 @@ export function UnitPage({
                     const picked = qAnswers[qi];
                     const correct = picked === q.answer;
                     return (
-                      <div key={qi} className="quiz-q">
-                        {editMode && isSuperUser && generatedQuiz && (
-                          <div className="generated-quiz-edit" onClick={(event) => event.stopPropagation()}>
-                            <label>Question <textarea defaultValue={q.q} rows={2} onBlur={(event) => editGeneratedQuizQuestion(si, qi, { ...q, q: event.target.value })} /></label>
-                            <div className="generated-quiz-options">
-                              {q.options.map((option, oi) => <label key={oi}>Option {oi + 1}<input defaultValue={option} onBlur={(event) => editGeneratedQuizQuestion(si, qi, { ...q, options: q.options.map((value, index) => index === oi ? event.target.value : value) })} /></label>)}
-                            </div>
-                            <label>Correct answer <select defaultValue={q.answer} onChange={(event) => editGeneratedQuizQuestion(si, qi, { ...q, answer: Number(event.target.value) })}>{q.options.map((_, oi) => <option key={oi} value={oi}>Option {oi + 1}</option>)}</select></label>
-                            <label>Explanation <textarea defaultValue={q.explain} rows={2} onBlur={(event) => editGeneratedQuizQuestion(si, qi, { ...q, explain: event.target.value })} /></label>
-                            <button type="button" className="btn ghost sm" onClick={() => editRemoveGeneratedQuizQuestion(si, qi)}><Icon name="trash" size={13} /> Remove question</button>
-                          </div>
-                        )}
+                      <div key={qi} className={`quiz-q${editingQuiz ? " quiz-q-editing" : ""}`}>
+                        {editingQuiz ? <GeneratedQuizEditor question={q} number={qi+1}
+                          onChange={question=>editGeneratedQuizQuestion(si,qi,question)}
+                          onRemove={()=>editRemoveGeneratedQuizQuestion(si,qi)}/>:<>
                         <div className="qt">
                           <span className="qn">{qi + 1}</span>
                           {q.q}
@@ -3541,11 +3511,12 @@ export function UnitPage({
                         {qChecked && !correct && q.explain && (
                           <div className="lesson-quiz-explain"><Gloss text={q.explain} /></div>
                         )}
+                        </>}
                       </div>
                     );
                   })}
                 </div>
-                <div className="lesson-quiz-actions">
+                {!editingQuiz && <div className="lesson-quiz-actions">
                   <button
                     className="btn"
                     disabled={!qAllAnswered}
@@ -3560,17 +3531,18 @@ export function UnitPage({
                         : `${qAnswers.filter((a, i) => a === slideQuiz[i].answer).length} / ${slideQuiz.length} correct — fix the wrong answers and check again.`}
                     </span>
                   )}
-                </div>
+                </div>}
               </div>
             ) : null;
-            const unifiedText = editable || bodyOverride?.richHtml !== undefined;
-            const tableHtml = (table: {headers:string[];rows:string[][]}) => `<table class="data lesson-table"><thead><tr>${table.headers.map(h=>`<th>${markedToHtml(h)}</th>`).join("")}</tr></thead><tbody>${table.rows.map(row=>`<tr>${row.map(c=>`<td>${markedToHtml(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+            const tableHtml = (table: {headers:string[];rows:string[][]}) => `<div class="lesson-table-scroll"><table class="data lesson-table"><thead><tr>${table.headers.map(h=>`<th scope="col">${markedToHtml(h)}</th>`).join("")}</tr></thead><tbody>${table.rows.map(row=>`<tr>${row.map(c=>`<td>${markedToHtml(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
             const initialBodyHtml = effParagraphs.map((_,pi)=>{ const html=markedToHtml(paraText(pi)); return isRichText(paraText(pi)) && /<(?:p|div|ol|ul|table)\b/i.test(html) ? html : `<p class="lesson-p">${html}</p>`; }).join("")
               + (effBullets?.length ? `<ol class="lesson-numlist">${effBullets.map((_,bi)=>`<li>${markedToHtml(bulletEditText(bi))}</li>`).join("")}</ol>` : "")
               + (sec.table ? tableHtml({headers:sec.table.headers.map((h,i)=>cellText("h",i,h)),rows:sec.table.rows.map((r,ri)=>r.map((c,ci)=>cellText(ri,ci,c)))}) : "")
               + (sec.cards?.length ? `<div class="card-grid lesson-cards">${sec.cards.map((c,ci)=>`<div class="card lesson-card"><div class="t">${markedToHtml(cardText(ci,"t",c.title))}</div><div class="d">${markedToHtml(cardText(ci,"d",c.text))}</div>${c.table?tableHtml(c.table):""}</div>`).join("")}</div>` : "")
               + [sec.example,...(sec.examples??[])].map((e,xi)=>e?`<div class="lesson-example"><h3>${markedToHtml(exText(xi,"t",e.title))}</h3>${e.lines.map((line,li)=>`<p class="lesson-p">${markedToHtml(exText(xi,String(li),line))}</p>`).join("")}</div>`:"").join("");
-            const unifiedHtml = `<h2 class="section-title">${markedToHtml(secHeading)}</h2>${bodyOverride?.richHtml ?? initialBodyHtml}`;
+            const groupedBodyHtml = groupLessonHtml(bodyOverride?.richHtml ?? initialBodyHtml, plainSlideText(secHeading));
+            const unifiedText = editable || bodyOverride?.richHtml !== undefined || groupedBodyHtml.includes("lesson-table-scroll");
+            const unifiedHtml = `<h2 class="section-title">${markedToHtml(secHeading)}</h2>${groupedBodyHtml}`;
             const body = (
               <div className="saqa-body lesson-section">
                 {unifiedText ? <SlideEditableText as="div" className="slide-whole-editor" contentEditable={editable}
@@ -3588,37 +3560,42 @@ export function UnitPage({
                     editSetSectionBody(si,{paragraphs:[htmlToMarked(clone)],richHtml:sanitizeSlideHtml(clone.innerHTML)});
                   }}/>:<>
                 {(() => {
+                  const renderParagraphs = (start: number, end: number, heading: string): React.ReactNode[] => {
                   const els: React.ReactNode[] = [];
-                  let i = 0;
-                  while (i < effParagraphs.length) {
+                  const isPoint = (value: string) => isLessonListPoint(plainSlideText(value));
+                  const renderList = (points: string[], key: string) => <ol className="lesson-inferred-list" key={key}>
+                    {points.map((point,index)=><li key={index}><Gloss text={point}/></li>)}
+                  </ol>;
+                  let i = start;
+                  if (isLessonListLead(plainSlideText(heading))) {
+                    const points: string[] = [];
+                    while (i < end && isPoint(paraText(i))) points.push(paraText(i++));
+                    if (points.length) els.push(renderList(points, `heading-points-${start}`));
+                  }
+                  while (i < end) {
                     const text = paraText(i);
-                    if (!editable && isShortItemParagraph(text) && !isLineByLineParagraph(text)) {
-                      // group consecutive short-item paragraphs into a card grid
-                      const group: { idx: number; text: string }[] = [];
-                      let j = i;
-                      while (j < effParagraphs.length) {
-                        const tt = paraText(j);
-                        if (!isShortItemParagraph(tt)) break;
-                        group.push({ idx: j, text: tt });
+                    const visibleText = plainSlideText(text).trim();
+                    if (isLessonListLead(visibleText) && i + 1 < end && isPoint(paraText(i + 1))) {
+                      const points: string[] = [];
+                      let j = i + 1;
+                      while (j < end && isPoint(paraText(j))) { points.push(paraText(j)); j++; }
+                      els.push(<div className="lesson-point-group" key={`points-${i}`}>
+                        <p className="lesson-p lesson-point-lead"><Gloss text={text} /></p>
+                        {renderList(points, `points-list-${i}`)}
+                      </div>);
+                      i = j;
+                      continue;
+                    }
+                    if (isLessonSubheading(plainSlideText(text))) {
+                      // Keep a subheading and its explanatory paragraphs in one reading block.
+                      let j = i + 1;
+                      while (j < end && !isLessonSubheading(plainSlideText(paraText(j)))) {
                         j++;
                       }
-                      els.push(
-                        <div className="card-grid lesson-cards lesson-p-cards" key={`grp-${i}`}>
-                          {group.map((g) => {
-                            const gi = pickParagraphIcon(g.text) ?? "checkCircle";
-                            return (
-                              <div className="card lesson-card" key={g.idx}>
-                                <span className="ico">
-                                  <Icon name={gi} size={22} />
-                                </span>
-                                <div className="t">
-                                  <Gloss text={g.text} />
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
+                      els.push(<div className="lesson-subsection" key={`subsection-${i}`}>
+                        <h3 className="lesson-subheading"><Gloss text={text} /></h3>
+                        {renderParagraphs(i + 1, j, text)}
+                      </div>);
                       i = j;
                       continue;
                     }
@@ -3637,7 +3614,7 @@ export function UnitPage({
                           }
                           html={markedToHtml(text)}
                         />
-                      ) : (
+                    ) : (
                         <p key={i} className={paraIcon ? "lesson-p lesson-p-iconed" : "lesson-p"}>
                           {paraIcon && (
                             <span className="lesson-p-ico">
@@ -3651,6 +3628,8 @@ export function UnitPage({
                     i++;
                   }
                   return els;
+                  };
+                  return renderParagraphs(0, effParagraphs.length, secHeading);
                 })()}
                 {effBullets && (
                   editable ? (

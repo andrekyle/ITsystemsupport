@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { UnitContent, UnitStandard } from "../types";
 import type { LessonEdits } from "../store";
 import { buildUnitContent, validateUnitContent, MAX_SOURCE_LENGTH } from "../lib/unitBuilder";
@@ -38,6 +38,7 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   const [draft,setDraft]=useState<UnitContent|null>(null);
   const [warning,setWarning]=useState("");
   const [fileName,setFileName]=useState("");
+  useEffect(()=>{if(built)setSource(built.source);},[built?.revision]);
 
   const publish=async(next:UnitContent,sourceText:string,aiUsed:boolean)=>{
     validateUnitContent(next);

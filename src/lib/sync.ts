@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { isUnitPackKey, receiveUnitPack, storedUnitPacks, clearUnitPacks } from "./unitStorage";
 
 /**
  * Cloud sync for the app's localStorage state.
@@ -35,6 +36,7 @@ const rawSet = localStorage.setItem.bind(localStorage);
 /** Store a value that was just pulled FROM the cloud without echoing it back
  *  up — an echo could land after someone else's newer save and undo it. */
 export function writeFromCloud(key: string, value: string) {
+  if(isUnitPackKey(key)){receiveUnitPack(key,value);return;}
   rawSet(key, value);
 }
 
@@ -102,6 +104,7 @@ export async function flushKey(key: string): Promise<void> {
 export function installSync() {
   const remove = localStorage.removeItem.bind(localStorage);
   localStorage.setItem = (key: string, value: string) => {
+    if(isUnitPackKey(key)){receiveUnitPack(key,value);if(syncable(key))queue(key,value);return;}
     rawSet(key, value);
     if (syncable(key)) queue(key, value);
   };
@@ -141,6 +144,9 @@ export async function startSync(authUserId: string): Promise<void> {
   hydrating = false;
 
   // push local-only data (e.g. work done before cloud sync was configured)
+  for(const [key,value] of await storedUnitPacks().catch(()=>[] as [string,string][])) {
+    if(!cloudKeys.has(key)) await pushKey(key,value);
+  }
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && syncable(key) && !cloudKeys.has(key)) {
@@ -158,6 +164,7 @@ export function stopSync() {
 
 /** Remove all synced app data from this browser (used on cloud sign-out). */
 export function wipeLocalData() {
+  clearUnitPacks();
   const doomed: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);

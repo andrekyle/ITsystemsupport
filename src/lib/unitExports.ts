@@ -1,5 +1,6 @@
 import type { UnitContent, UnitStandard } from "../types";
 import { plainSlideText } from "./slideRichText";
+import { isLessonListLead } from "./lessonSubsections";
 
 export type ExportPage = { title: string; lines: string[] };
 function wrap(text: string, width = 86): string[] {
@@ -32,9 +33,29 @@ export function unitExportPages(unit: UnitStandard, content: UnitContent): Expor
   if (content.evaluation) blocks.push({ title: "Lesson evaluation", lines: [content.evaluation.intro, ...content.evaluation.questions.map(q => `${q}\nResponse: ________________________________`)] });
   if (content.lessonPlan) blocks.push({ title: content.lessonPlan.title, lines: [...content.lessonPlan.prep, ...content.lessonPlan.sections.flatMap(s => [s.heading ?? "", ...s.rows.flatMap(r => [`${r.time ?? ""} ${r.title}`, ...(r.text ?? []), ...(r.bullets ?? [])])])] });
   return blocks.flatMap(block => {
-    const lines = block.lines.flatMap(line => wrap(line));
+    const grouped: string[][] = [];
+    for (let i = 0; i < block.lines.length; i++) {
+      const lead = block.lines[i];
+      if (isLessonListLead(lead)) {
+        const points: string[] = [];
+        let j = i + 1;
+        while (j < block.lines.length && block.lines[j].trim().length > 0 && block.lines[j].trim().length <= 180 && !/^\d+(?:\.\d+)*[.)]?\s+\S/.test(block.lines[j].trim())) points.push(block.lines[j++]);
+        if (points.length) {
+          grouped.push([lead, ...points.map((point, index) => `${index + 1}. ${point}`)]);
+          i = j - 1;
+          continue;
+        }
+      }
+      grouped.push([lead]);
+    }
     const pages: ExportPage[] = [];
-    for (let i=0; i<lines.length; i+=16) pages.push({ title: block.title + (i ? " (continued)" : ""), lines: lines.slice(i,i+16) });
+    let pageLines: string[] = [];
+    for (const group of grouped) {
+      const lines = group.flatMap(line => wrap(line));
+      if (pageLines.length && pageLines.length + lines.length > 16) { pages.push({ title: block.title + (pages.length ? " (continued)" : ""), lines: pageLines }); pageLines = []; }
+      pageLines.push(...lines);
+    }
+    if (pageLines.length || !pages.length) pages.push({ title: block.title + (pages.length ? " (continued)" : ""), lines: pageLines });
     return pages;
   });
 }
