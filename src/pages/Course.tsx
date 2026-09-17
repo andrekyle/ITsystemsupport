@@ -2942,7 +2942,7 @@ export function UnitPage({
     { id: "lesson", label: "Lesson", icon: "book", show: !!content?.lesson.length },
     { id: "material", label: "Course material", icon: "play", show: decks.length > 0 || !!builtUnit },
     { id: "notes", label: "Notes", icon: "document", show: !!content?.notes?.length || Object.values(userNotes).some((n) => n.us === unitId) || !!content?.lesson.length || unitId === "114055" },
-    { id: "exercises", label: "Activity", icon: "exercise", show: !!content?.exercises.length },
+    { id: "exercises", label: "Activity", icon: "exercise", show: builtUnit ? true : !!content?.exercises.length },
     { id: "questions", label: "Activity", icon: "chat", show: !builtUnit && !!content?.questionSessions?.length },
     { id: "assignments", label: "Activity", icon: "folder", show: !builtUnit && !!content?.assignments.length },
     { id: "logbook", label: "Logbook", icon: "book", show: !!content?.logbook },
