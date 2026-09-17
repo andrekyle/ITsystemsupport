@@ -28,6 +28,8 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
   const [textColour, setTextColour] = useState("#808080");
   const [highlightColour, setHighlightColour] = useState("#fff59d");
   const [size, setSize] = useState("");
+  const [tableRows, setTableRows] = useState("3");
+  const [tableCols, setTableCols] = useState("3");
   const [menu, setMenu] = useState<"text" | "paragraph" | null>(null);
   const [ready, setReady] = useState(false);
   const [active, setActive] = useState<string[]>([]);
@@ -147,10 +149,9 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
     return () => document.removeEventListener("selectionchange", remember);
   }, [enabled]);
   if (!enabled) return null;
-  const run = (command: string, value?: string) => {
-    if (command === "undo" || command === "redo") { replay(command); return; }
+  const restoreSelection = () => {
     const editor = host.current;
-    if (!editor?.isConnected || !range.current) return;
+    if (!editor?.isConnected || !range.current) return null;
     // Saving on blur can replace the editable DOM before a font picker returns.
     // Restore by text offsets so formatting still applies to the selected words.
     const restored = document.createRange();
@@ -175,13 +176,36 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
     const selection = window.getSelection();
     selection?.removeAllRanges();
     selection?.addRange(restored);
+    return { editor, selection };
+  };
+  const insertedTableHtml = () => {
+    const rows = Math.max(1, Math.min(20, Number(tableRows) || 3));
+    const cols = Math.max(1, Math.min(12, Number(tableCols) || 3));
+    const headers = Array.from({ length: cols }, (_, index) => `<th scope="col">Heading ${index + 1}</th>`).join("");
+    const bodyRows = Array.from({ length: Math.max(1, rows - 1) }, (_, rowIndex) =>
+      `<tr>${Array.from({ length: cols }, (_, colIndex) => `<td>Row ${rowIndex + 1}, column ${colIndex + 1}</td>`).join("")}</tr>`
+    ).join("");
+    return `<div class="lesson-table-scroll"><table class="data lesson-table"><thead><tr>${headers}</tr></thead><tbody>${bodyRows}</tbody></table></div><p><br></p>`;
+  };
+  const insertTable = () => {
+    const restored = restoreSelection();
+    if (!restored) return;
+    document.execCommand("insertHTML", false, insertedTableHtml());
+    if (restored.selection?.rangeCount) range.current = restored.selection.getRangeAt(0).cloneRange();
+    restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
+    setActive(commands.filter(([cmd]) => document.queryCommandState(cmd)).map(([cmd]) => cmd));
+  };
+  const run = (command: string, value?: string) => {
+    if (command === "undo" || command === "redo") { replay(command); return; }
+    const restored = restoreSelection();
+    if (!restored) return;
     document.execCommand("styleWithCSS", false, "true");
     if (command === "selectAll") {
-      const all = document.createRange(); all.selectNodeContents(editor);
-      selection?.removeAllRanges(); selection?.addRange(all);
+      const all = document.createRange(); all.selectNodeContents(restored.editor);
+      restored.selection?.removeAllRanges(); restored.selection?.addRange(all);
     } else document.execCommand(command, false, value);
-    if (selection?.rangeCount) range.current = selection.getRangeAt(0).cloneRange();
-    editor.dispatchEvent(new Event("input", { bubbles: true }));
+    if (restored.selection?.rangeCount) range.current = restored.selection.getRangeAt(0).cloneRange();
+    restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
     setActive(commands.filter(([cmd]) => document.queryCommandState(cmd)).map(([cmd]) => cmd));
   };
   const commandButton = (cmd: string, label: string, icon?: ReactNode) => (
@@ -221,7 +245,12 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
         {commandButton("subscript", "Subscript", <span aria-hidden="true">x<sub>2</sub></span>)}
         {commandButton("superscript", "Superscript", <span aria-hidden="true">x<sup>2</sup></span>)}
         {commandButton("removeFormat", "Clear formatting", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h13M11 4l-4 15m5-3 5-5 5 5-5 5h-3l-4-4 2-1Zm1-1 5 5M12 21h10" /></svg>)}
-      </> : commands.filter(([cmd]) => ["justifyRight", "justifyFull", "insertUnorderedList", "indent", "outdent", "selectAll"].includes(cmd)).map(([cmd, label]) => commandButton(cmd, label))}
+      </> : <>
+        {commands.filter(([cmd]) => ["justifyRight", "justifyFull", "insertUnorderedList", "indent", "outdent", "selectAll"].includes(cmd)).map(([cmd, label]) => commandButton(cmd, label))}
+        <div className="slide-tool-field"><span>Rows</span><Select ariaLabel="Table rows" disabled={!ready} value={tableRows} options={Array.from({ length: 10 }, (_, index) => ({ value: String(index + 1), label: String(index + 1) }))} onChange={setTableRows} /></div>
+        <div className="slide-tool-field"><span>Columns</span><Select ariaLabel="Table columns" disabled={!ready} value={tableCols} options={Array.from({ length: 8 }, (_, index) => ({ value: String(index + 1), label: String(index + 1) }))} onChange={setTableCols} /></div>
+        <button type="button" disabled={!ready} onMouseDown={e => e.preventDefault()} onClick={insertTable}>Insert table</button>
+      </>}
       {!ready && <small>Click or select slide text to start formatting.</small>}
     </div>}
   </div>;

@@ -1053,6 +1053,11 @@ table.data.lesson-table td {
   border: 1px solid var(--table-border);
 }
 
+table.data.lesson-table tr:hover td,
+[data-theme="dark"] table.data.lesson-table tr:hover td {
+  background: transparent;
+}
+
 /* Imported tables retain their columns on small screens without widening the slide. */
 .lesson-table-scroll {
   max-width: 100%;
@@ -1085,7 +1090,8 @@ table.data.lesson-table tr.so-row td {
   color: var(--ink);
 }
 
-table.data.lesson-table tr.so-row:hover td {
+table.data.lesson-table tr.so-row:hover td,
+[data-theme="dark"] table.data.lesson-table tr.so-row:hover td {
   background: var(--surface-3);
 }
 
