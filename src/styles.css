@@ -3661,6 +3661,43 @@ table.data.kv tr:last-child td {
   font-size: 12.5px;
 }
 
+.lb-project-checklist {
+  width: 100%;
+  table-layout: fixed;
+  min-width: 0;
+}
+
+.lb-project-checklist .lb-pc-no { width: 4%; }
+.lb-project-checklist .lb-pc-project { width: 21%; }
+.lb-project-checklist .lb-pc-name { width: 15.5%; }
+.lb-project-checklist .lb-pc-date { width: 9.5%; }
+
+.lb-project-checklist th,
+.lb-project-checklist td {
+  overflow-wrap: anywhere;
+}
+
+.lb-project-checklist .lb-fill {
+  min-width: 0;
+}
+
+.lb-project-checklist .dtp.bare {
+  max-width: 100%;
+}
+
+.lb-project-checklist .dtp.bare .dtp-btn {
+  max-width: 100%;
+  min-width: 0;
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+.lb-project-checklist .dtp.bare .dtp-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .lb-comments-label {
   font-weight: 600;
   text-transform: uppercase;

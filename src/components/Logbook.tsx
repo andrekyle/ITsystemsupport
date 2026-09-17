@@ -576,17 +576,27 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
           the following activities to this logbook.
         </p>
         <div className="lb-scroll">
-          <table className="data lb-table lb-compact" style={{ minWidth: 1240 }}>
+          <table className="data lb-table lb-compact lb-project-checklist">
+            <colgroup>
+              <col className="lb-pc-no" />
+              <col className="lb-pc-project" />
+              <col className="lb-pc-name" />
+              <col className="lb-pc-date" />
+              <col className="lb-pc-name" />
+              <col className="lb-pc-date" />
+              <col className="lb-pc-name" />
+              <col className="lb-pc-date" />
+            </colgroup>
             <thead>
               <tr>
-                <th style={{ width: 40 }}>No</th>
-                <th style={{ width: 260 }}>Project name</th>
-                <th style={{ width: 190 }}>Learner</th>
-                <th style={{ width: 104 }}>Date</th>
-                <th style={{ width: 190 }}>Workplace</th>
-                <th style={{ width: 104 }}>Date</th>
-                <th style={{ width: 190 }}>Assessor</th>
-                <th style={{ width: 104 }}>Date</th>
+                <th>No</th>
+                <th>Project name</th>
+                <th>Learner</th>
+                <th>Date</th>
+                <th>Workplace</th>
+                <th>Date</th>
+                <th>Assessor</th>
+                <th>Date</th>
               </tr>
             </thead>
             <tbody>
