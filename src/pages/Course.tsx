@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
 import JSZip from "jszip";
 import { Icon } from "../icons";
-import type { ExerciseCheck, LessonFigure, PoeDoc, ProgressState, Profile, QuizQuestion, Role, Route, UnitActivity, UnitStandard } from "../types";
+import type { Exercise, ExerciseCheck, LessonFigure, PoeDoc, ProgressState, Profile, QuizQuestion, Role, Route, UnitActivity, UnitContent, UnitStandard } from "../types";
 import { UNIT_ACTIVITIES, isStaff } from "../types";
 import { COURSE_BLURB, COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
 import { COURSES, activeCourseId, setActiveCourse } from "../data/courses";
@@ -21,8 +21,9 @@ import { SlideTextToolbar } from "../components/SlideTextToolbar";
 import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
 import { UnitBuilder, BuiltUnitDownloads } from "../components/UnitBuilder";
+import { UnitContentEditor } from "../components/UnitContentEditor";
 import { GeneratedQuizEditor } from "../components/GeneratedQuizEditor";
-import { useBuiltUnit } from "../lib/useBuiltUnit";
+import { saveBuiltUnit, useBuiltUnit } from "../lib/useBuiltUnit";
 import { EditableActivityText } from "../components/EditableActivityText";
 import { fileToImageDataUrl } from "../components/Avatar";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
@@ -2216,6 +2217,8 @@ export function UnitPage({
   const [idealOpen, setIdealOpen] = useState<Record<string, boolean>>({});
   /** bumped per exercise on "Try again" so the answer blocks remount empty */
   const [exReset, setExReset] = useState<Record<string, number>>({});
+  const [activityEditor, setActivityEditor] = useState<{ kind: "exercises" | "questionSessions"; index: number; value: Exercise } | null>(null);
+  const [activityEditError, setActivityEditError] = useState("");
   /** edX-style lesson wizard — index of the section currently on screen */
   const [lessonStep, setLessonStep] = useState<number>(() => loadLessonStep(profile.id, unitId));
   /** lesson-view per-slide quiz answers, keyed by section index — persisted per learner */
@@ -2601,6 +2604,39 @@ export function UnitPage({
   }).length;
   const isPrivileged = isStaff(profile.role);
   const isSuperUser = profile.role === "Super User";
+  const blankBuiltActivity = (): Exercise => ({
+    id: `manual-activity-${crypto.randomUUID()}`,
+    title: "New activity",
+    task: "Time: 45 minutes - Activity: Self & Group",
+    scenario: ["Add the activity instructions here."],
+    steps: ["Add the first learner question."],
+    checks: [{ answer: ["Add the correct answer or model response."], concepts: [["keyword"]], labels: ["Key idea"], min: 1 }],
+    modelAnswer: [{ heading: "Correct answer ? from the lesson", paragraphs: ["Add the facilitator model answer."], bullets: [] }],
+  });
+  const saveBuiltContent = async (nextContent: UnitContent) => {
+    if (!builtUnit) return;
+    await saveBuiltUnit(unitId, { revision: crypto.randomUUID(), createdAt: new Date().toISOString(), source: builtUnit.source, content: nextContent, files: builtUnit.files, aiUsed: builtUnit.aiUsed });
+  };
+  const updateBuiltActivityList = async (kind: "exercises" | "questionSessions", updater: (items: Exercise[]) => Exercise[]) => {
+    if (!builtUnit) return;
+    setActivityEditError("");
+    const nextContent = structuredClone(builtUnit.content) as UnitContent;
+    nextContent[kind] = updater([...(nextContent[kind] ?? [])]);
+    await saveBuiltContent(nextContent);
+  };
+  const addBuiltActivity = async () => {
+    try { await updateBuiltActivityList("exercises", items => [...items, blankBuiltActivity()]); setTab("exercises"); }
+    catch (error) { setActivityEditError(error instanceof Error ? error.message : "The activity could not be added."); }
+  };
+  const removeBuiltActivity = async (kind: "exercises" | "questionSessions", index: number) => {
+    try { await updateBuiltActivityList(kind, items => items.filter((_, i) => i !== index)); if (activityEditor?.kind === kind && activityEditor.index === index) setActivityEditor(null); }
+    catch (error) { setActivityEditError(error instanceof Error ? error.message : "The activity could not be removed."); }
+  };
+  const saveActivityEditor = async () => {
+    if (!activityEditor) return;
+    try { await updateBuiltActivityList(activityEditor.kind, items => items.map((item, i) => i === activityEditor.index ? activityEditor.value : item)); setActivityEditor(null); }
+    catch (error) { setActivityEditError(error instanceof Error ? error.message : "The activity could not be saved."); }
+  };
   const generateSlideQuiz = async (si: number) => {
     if (!content) return;
     setGeneratingQuiz(si); setQuizGenerationError(null);
@@ -4745,7 +4781,9 @@ export function UnitPage({
               of its text.
             </span>
           </div>
-          {(tab === "questions" ? content.questionSessions ?? [] : builtUnit ? [...content.exercises, ...(content.questionSessions ?? [])] : content.exercises).map((ex) => {
+          {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="btn ghost sm" onClick={() => void addBuiltActivity()}><Icon name="plus" size={14} /> Add activity</button>{activityEditError && <span role="alert" className="auth-error">{activityEditError}</span>}</div>}
+          {activityEditor && builtUnit && isSuperUser && <div className="card activity-editor-card"><h3>Edit activity</h3><UnitContentEditor value={activityEditor.value as never} onChange={value => setActivityEditor({ ...activityEditor, value: value as unknown as Exercise })}/><div className="unit-editor-actions"><button type="button" className="btn" onClick={() => void saveActivityEditor()}>Save activity</button><button type="button" className="btn ghost" onClick={() => setActivityEditor(null)}>Cancel</button></div></div>}
+          {(tab === "questions" ? (content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index })) : builtUnit ? [...content.exercises.map((ex, index) => ({ ex, kind: "exercises" as const, index })), ...(content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index }))] : content.exercises.map((ex, index) => ({ ex, kind: "exercises" as const, index }))).map(({ex, kind, index}) => {
             const exRes = progress.units[u.us]?.exercises?.[ex.id];
             const hasChecks = !!ex.checks && ex.checks.length > 0;
             const exTotalMarks = ex.checks?.reduce((t, c) => t + c.concepts.length * 2, 0) ?? 0;
@@ -4785,6 +4823,7 @@ export function UnitPage({
                 </span>
               </summary>
               <div className="saqa-body">
+                {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="btn ghost sm" onClick={() => setActivityEditor({ kind, index, value: structuredClone(ex) })}>Edit activity</button><button type="button" className="btn ghost sm" onClick={() => void removeBuiltActivity(kind, index)}>Remove activity</button></div>}
                 <p className="lesson-p" style={{ marginTop: 10 }}>
                   <Gloss text={ex.task} />
                 </p>
