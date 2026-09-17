@@ -164,6 +164,29 @@ function flattenedTable(lines: Line[], start: number): Match | undefined {
   return { table: { kind: "table", headers: headers.map(header => header.text), rows }, end: cursor };
 }
 
+
+function expandInlineMarkdownTables(source: string): string {
+  return source.split(/\r?\n/).map(line => {
+    if (!/(?<!\\)\|/.test(line) || !/\|\s*:?-{3,}:?\s*\|/.test(line)) return line;
+    const firstPipe = line.indexOf("|");
+    if (firstPipe < 0) return line;
+    const prefix = line.slice(0, firstPipe).trim();
+    const parts = cells(line.slice(firstPipe), "pipe").filter(cell => cell.trim());
+    const sepStart = parts.findIndex((part, index) => /^:?-{3,}:?$/.test(part) && index > 0);
+    if (sepStart < 2) return line;
+    let sepEnd = sepStart;
+    while (sepEnd < parts.length && /^:?-{3,}:?$/.test(parts[sepEnd])) sepEnd++;
+    const width = sepStart;
+    if (sepEnd - sepStart !== width) return line;
+    const headers = parts.slice(0, width);
+    const values = parts.slice(sepEnd);
+    if (!headers.every(Boolean) || values.length < width || values.length % width !== 0) return line;
+    const rows: string[] = [];
+    for (let index = 0; index < values.length; index += width) rows.push(`| ${values.slice(index, index + width).join(" | ")} |`);
+    return [prefix, `| ${headers.join(" | ")} |`, `| ${headers.map(() => "---").join(" | ")} |`, ...rows].filter(Boolean).join("\n");
+  }).join("\n");
+}
+
 /** Reconstruct clearly tabular imports while retaining all unrecognised source text. */
 export function parseLessonTextBlocks(paragraphs: readonly string[]): LessonTextBlock[] {
   const ranges: { text: string; start: number; end: number }[] = [];
@@ -174,6 +197,7 @@ export function parseLessonTextBlocks(paragraphs: readonly string[]): LessonText
     source += text;
   }
   const lines: Line[] = [];
+  source = expandInlineMarkdownTables(source);
   for (const match of source.matchAll(/[^\r\n]+/g)) {
     if (match[0].trim()) lines.push({ text: match[0].trim(), start: match.index!, end: match.index! + match[0].length });
   }
