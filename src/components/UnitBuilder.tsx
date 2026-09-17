@@ -91,7 +91,7 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
     setBusy("Saving the unit and course materials…");
     const prefix=`shared/unitbuilder/${unit.us}`;
     const [pdf,pptx,answers]=await Promise.all([uploadFile(prefix,files.pdf),uploadFile(prefix,files.pptx),uploadFile(prefix,files.answers)]);
-    await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:sourceText,content:next,files:{pdf,pptx,answers},aiUsed});
+    await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:sourceText,content:next,files:{pdf,pptx,answers,material:built?.files.material,materialEditable:built?.files.materialEditable},aiUsed});
     setSource(sourceText);setDraft(null);setMessage("Unit built and saved. All learning tabs and download files are ready.");onSaved();
   };
   const readLogbookImages=async(files: FileList|null)=>{
@@ -179,7 +179,7 @@ export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
   const isPdf=(doc?:PoeDoc)=>!!doc&&(/\.pdf$/i.test(doc.name)||doc.type.includes("pdf"));
   const isEditable=(doc?:PoeDoc)=>!!doc&&(/\.(ppt|pptx)$/i.test(doc.name)||doc.type.includes("presentation"));
   const displayMaterial=isPdf(built?.files.material)?built?.files.material:undefined;
-  const editableMaterial=built?.files.materialEditable??(isEditable(built?.files.material)?built?.files.material:undefined);
+  const editableMaterial=built?.files.materialEditable??(isEditable(built?.files.material)?built?.files.material:built?.files.pptx);
   useEffect(()=>{
     let cancelled=false;
     setMaterialUrl(null);
