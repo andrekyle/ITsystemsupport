@@ -1,4 +1,5 @@
 import type { UnitContent, UnitStandard, LessonSection } from "../types";
+import { getContent } from "../data/content";
 import { lessonTableMarkdown, parseLessonTextBlocks } from "./lessonTables";
 
 export const MAX_SOURCE_LENGTH = 120_000;
@@ -141,14 +142,115 @@ function normalizeLogbookSpec(unit: UnitStandard, logbook: UnitContent["logbook"
   };
 }
 
+function selfAssessmentFromTemplate(items: string[]): UnitContent["selfAssessment"] {
+  const template = getContent("8252")?.selfAssessment;
+  return {
+    intro: [...(template?.intro ?? [
+      "You are now ready to go through a check list. Be honest with yourself.",
+      "Tick the box with either a √ or an X to indicate your response.",
+    ])],
+    items,
+    outro: [...(template?.outro ?? [
+      "You must think about any point you could not tick. Write this down as a goal.",
+      "Decide on a plan of action to achieve these goals. Regularly review these goals.",
+    ])],
+  };
+}
+
+function lessonPlanFromTemplate(unit: UnitStandard, topics: UnitTopic[], minutes: number): UnitContent["lessonPlan"] {
+  const template = getContent("8252")?.lessonPlan;
+  const setupRows = structuredClone(template?.sections?.[0]?.rows ?? [
+    { title: "Room Set Up", text: ["Ensure venue and equipment needed is ready."] },
+    {
+      time: "20 minutes",
+      title: "Meet, Greet & Seat",
+      text: [
+        "Learners to get out their stationery and settle. Allow learners to sign the class register OR check learners against the class register.",
+        "Explain the parking bay to the learners where they can ask questions and it will be parked until the class has been completed, and then attended to.",
+      ],
+      resources: ["Class Register", "LM p1"],
+    },
+  ]);
+  const topicMinutes = Math.max(10, Math.floor((minutes - 120) / Math.max(1, topics.length)));
+  const topicRows = topics.map((topic, index) => ({
+    time: `${topicMinutes} minutes`,
+    title: `${topic.heading} — Facilitator & Class`,
+    bullets: [
+      `Read through the learner material and facilitate discussion on ${topic.heading.toLowerCase()}.`,
+    ],
+    resources: [`LM p${Math.max(4, index + 4)}`],
+  }));
+  return {
+    title: template?.title ?? "Facilitator Preparation",
+    startTime: template?.startTime ?? "09:00",
+    details: structuredClone(template?.details ?? [
+      { icon: "calendar", label: "Date", value: "Friday, 17 July 2026" },
+      { icon: "clock", label: "Time", value: "09:00 – 14:00 · lunch 12:00 – 13:00" },
+      { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
+      { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
+    ]),
+    prep: structuredClone(template?.prep ?? [
+      "Study the notes in this lesson plan carefully to ensure preparation is done before the start of classes.",
+      "Study the learner materials so that you are familiar with the topics that will be covered in this part of the course.",
+    ]),
+    sections: [
+      { rows: setupRows },
+      {
+        heading: `Unit Standard ${unit.us}`,
+        rows: [
+          {
+            time: "25 minutes",
+            title: "Index & Unit Standard Alignment — Facilitator",
+            text: [
+              "Read through the index with the learners, highlighting the areas that will be covered in this manual. Make reference to the Unit Standard Alignment Index to outline the specific outcomes that will be covered.",
+            ],
+            resources: ["LM p3"],
+          },
+          ...topicRows.slice(0, Math.max(1, Math.ceil(topicRows.length / 2))),
+          { time: "10 minutes", title: "Break", break: true },
+          ...topicRows.slice(Math.max(1, Math.ceil(topicRows.length / 2))),
+          { time: "60 minutes", title: "Lunch", break: true },
+          {
+            time: "10 minutes",
+            title: "Self-Assessment — Learners individually",
+            bullets: [
+              "Explain to the learners that they have to judge their own knowledge gained in the unit by ticking the blocks they feel competent with.",
+              "Allow the learners to tick the blocks and take feedback from each learner.",
+              "Identify those learners who have shortcomings and assist them with fulfilling the requirements.",
+            ],
+            resources: ["LM p12"],
+          },
+          {
+            time: "10 minutes",
+            title: "Parking Bay — Facilitator",
+            bullets: [
+              "Take all the questions from the learners and answer them individually.",
+              "Ensure the entire class understands the questions posed by other learners.",
+            ],
+            resources: ["White Board"],
+          },
+          {
+            time: "10 minutes",
+            title: "Closing — Facilitator",
+            bullets: [
+              "Thank the learners for their participation.",
+              "Agree with them when the next facilitation session is scheduled for.",
+            ],
+          },
+        ],
+      },
+    ],
+  };
+}
+
 export function mergeUnitContentEnhancement(base: UnitContent, enhancement: UnitContentEnhancement, unit: UnitStandard): UnitContent {
   const next = structuredClone(base);
   const overview = enhancement.overview ?? enhancement.saqa;
   if (overview?.sections?.length && overview.registration?.length) next.saqa = overview;
   if (enhancement.logbook?.knowledgeQuestions?.length && enhancement.logbook.practicalActivities?.length) next.logbook = normalizeLogbookSpec(unit, enhancement.logbook);
-  if (enhancement.evaluation?.questions?.length && nonemptyString(enhancement.evaluation.intro)) next.evaluation = enhancement.evaluation;
-  if (enhancement.selfAssessment?.items?.length) next.selfAssessment = enhancement.selfAssessment;
-  if (enhancement.lessonPlan?.sections?.length) next.lessonPlan = enhancement.lessonPlan;
+  next.evaluation = undefined;
+  if (enhancement.selfAssessment?.items?.length) next.selfAssessment = selfAssessmentFromTemplate(enhancement.selfAssessment.items);
+  if (enhancement.lessonPlan?.sections?.length) next.lessonPlan = lessonPlanFromTemplate(unit, next.lesson.map(section => ({ heading: section.heading, paragraphs: section.paragraphs })), enhancement.lessonPlan.details?.length ? Number(enhancement.lessonPlan.details.find(detail => /duration/i.test(detail.label))?.value.match(/\d+/)?.[0] ?? 300) : 300);
   next.exercises = [];
   next.questionSessions = [];
   if (nonemptyArray(enhancement.assignments)) next.assignments = enhancement.assignments;
@@ -177,9 +279,8 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
       { heading: "Assessor criteria — evidence required", icon: "checklist", bullets: ["Completed practical activities supported by the supplied learning material.", "Workplace project and supporting evidence.", "Knowledge-check answers, self assessment and a completed workplace logbook."] },
     ] },
     logbook: normalizeLogbookSpec(unit, { assignmentTitle: "Assignment One", programme: "Information Technology - Systems Support", unitLabel: `${unit.us} - ${unit.title}`, detailFields: STANDARD_LOGBOOK_DETAIL_FIELDS, project: { time: "30 minutes", title: "Workplace application", text: "Apply the unit learning in the workplace and record evidence against the activities below.", resource: "Logbook" }, knowledgeQuestions: goals.map(text => ({ text, marks: KNOWLEDGE_MARKS })), practicalActivities: goals.map(text => ({ text, marks: PROJECT_MARKS })), workplaceActivities: goals, workplaceEvidenceNote: "The workplace completes this section after observing the learner having complied to and completed all the activities as mentioned below.", otherActivities: [{ activity: "Workplace application", evidence: "Apply the unit learning in the workplace and record evidence against the activities below." }], otherEvidenceNote: "Learner evidence and experience is recorded here. Make reference to equipment, tools, materials or systems that were used in these processes.", projectChecklist: [{ no: "1", name: unit.us }] }),
-    selfAssessment: { intro: ["Rate your readiness by ticking the skills you can demonstrate."], items: goals.map(g => `I can ${g.charAt(0).toLowerCase()}${g.slice(1)}`), outro: ["Revisit any unticked areas and ask the facilitator for help."] },
-    lessonPlan: { title: "Facilitator Preparation", startTime: "09:00", details: [{ icon: "clock", label: "Planned duration", value: `${options.minutes} minutes` }], prep: ["Read the source material and check that examples fit your learners' workplace.", "Prepare the generated handout and slides before delivery."], sections: [{ rows: [{ title: "Room Set Up", text: ["Prepare the venue, equipment, learner handout and presentation."] }, { time: "10 min", title: "Meet, Greet & Seat", text: ["Welcome learners, check attendance and introduce the learning goals."] }] }, { heading: `Unit Standard ${unit.us}`, rows: [...topics.map(t => ({ time: `${Math.max(5, Math.floor((options.minutes - 30) / topics.length))} min`, title: `${t.heading} - Facilitator & Class`, text: ["Explain the source material, discuss a workplace example, then update the logbook where required."], resources: ["Generated slides", "Learner handout"] })), { time: "20 min", title: "Reflection and evidence", text: ["Discuss the lesson, update the logbook, and submit the lesson evaluation."] }] }] },
-    evaluation: { intro: "Help improve this unit by reflecting on the content and delivery.", questions: ["Which part was most useful for your work?", "Which topic needs more explanation?", "How will you apply what you learned?", "What would improve the activities or training materials?"] },
+    selfAssessment: selfAssessmentFromTemplate(goals.map(g => `I am able to ${g.charAt(0).toLowerCase()}${g.slice(1)}`)),
+    lessonPlan: lessonPlanFromTemplate(unit, topics, options.minutes),
   };
 }
 
@@ -195,7 +296,7 @@ export function validateUnitContent(content: UnitContent): void {
     const ids = list.map(item => item.id);
     if (ids.some(id => !nonempty(id)) || new Set(ids).size !== ids.length) throw new Error("Activities and quizzes must have unique IDs.");
   }
-  if (!content.logbook || !content.lessonPlan?.sections.length || !content.selfAssessment?.items.length || !content.saqa || !content.evaluation?.questions.length) throw new Error("Overview, notes, logbook, lesson plan, self assessment and evaluation must all have content.");
+  if (!content.logbook || !content.lessonPlan?.sections.length || !content.selfAssessment?.items.length || !content.saqa) throw new Error("Overview, notes, logbook, lesson plan and self assessment must all have content.");
 }
 
 
