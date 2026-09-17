@@ -14,7 +14,7 @@ function isLegacyGeneratedActivity(activity: UnitContent["exercises"][number]): 
     && activity.steps[1] === "Describe a workplace situation where this knowledge is useful."
     && activity.steps[2] === "Show how you would apply the guidance and explain how you would check the result.";
   const oldQuestioningActivity = /^built-questioning-\d+$/i.test(activity.id)
-    && /^Questioning -- Prepare a (?:time|cost) estimate for an element of work$/i.test(activity.title)
+    && /^Questioning\s+[-–—]\s+Prepare a (?:time|cost) estimate for an element of work$/i.test(activity.title)
     && /Time: \d+ minutes .* Activity: Self & Group/i.test(activity.task)
     && activity.steps.length === 3
     && activity.steps[0] === "Break the work element into logical parts and record the assumptions."
@@ -26,7 +26,7 @@ function isLegacyGeneratedActivity(activity: UnitContent["exercises"][number]): 
     && Array.isArray(activity.checks)
     && activity.checks.length > 0;
   const placeholderManualActivity = /^manual-activity-\d+$/i.test(activity.id)
-    && activity.title === "Activity 1"
+    && (activity.title === "Activity 1" || activity.title === "New activity")
     && activity.steps?.[0] === "Add the first learner question.";
   return oldLessonActivity || oldQuestioningActivity || generatedMarkedActivity || placeholderManualActivity;
 }
