@@ -142,34 +142,18 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
   // A source topic is a section, not a new lesson with a repeated banner.
   const lesson: LessonSection[] = topics.map(topic => ({ ...topic, icon: "presenter", flat: true }));
   const goals = topics.map(t => `Explain and apply ${t.heading.toLowerCase()}, using examples from the supplied material.`);
-  const exercises = topics.map((t, i) => ({
-    id: `built-activity-${i + 1}`, title: `Activity ${i + 1}: ${t.heading}`,
-    task: `Work from the “${t.heading}” lesson section. Apply its ideas to a realistic workplace example.`,
-    scenario: t.paragraphs.slice(0, 1),
-    steps: ["Identify the main idea and explain it in your own words.", "Describe a workplace situation where this knowledge is useful.", "Show how you would apply the guidance and explain how you would check the result."],
-    modelAnswer: [{ heading: "Source reference for the facilitator", paragraphs: t.paragraphs }],
-  }));
-  // US 114059 includes two practical tasks in the supplied source. Keep the
-  // instructions in the Activity tab rather than repeating them on lesson slides.
-  if (unit.us === "114059" && /Prepare a time estimate for an element of work/i.test(source)) {
-    const activityLines = [
-      { title: "Questioning — Prepare a time estimate for an element of work", time: "45 minutes", task: "Prepare a time estimate for an element of work. Explain how the estimate is based on a breakdown of the component into logical parts, including implementation and testing of interfaces to other components where applicable." },
-      { title: "Questioning — Prepare a cost estimate for an element of work", time: "90 minutes", task: "Prepare a cost estimate for an element of work. Use the Japanese construction firm cost-estimation extract as a worked reference; monetary values may differ from South Africa, but the calculation method remains useful." },
-    ];
-    for (const [index, activity] of activityLines.entries()) exercises.push({
-      id: `built-questioning-${index + 1}`,
-      title: activity.title,
-      task: `${activity.task} Time: ${activity.time} · Activity: Self & Group`,
-      scenario: [activity.task],
-      steps: ["Break the work element into logical parts and record the assumptions.", "Include interface implementation and testing where applicable.", "Present the estimate and explain how the figures were calculated."],
-      modelAnswer: [{ heading: "Facilitator reference", paragraphs: [activity.task] }],
-    });
-    const remove = /^(?:Questioning|Prepare a time estimate for an element of work|Prepare a cost estimate for an element of work|Time:\s*\d+\s*minutes\s*Activity:\s*Self\s*&\s*Group|Explain how the time estimate.*|The following is an extract from a Japanese construction firms.*)$/i;
-    for (const section of lesson) section.paragraphs = section.paragraphs.filter(paragraph => !remove.test(paragraph.trim()));
-  }
+  const exercises = [{
+    id: "manual-activity-1",
+    title: "Activity 1",
+    task: "Time: 45 minutes - Activity: Self & Group",
+    scenario: ["Add the activity instructions on the Activity tab."],
+    steps: ["Add the first learner question."],
+    checks: [{ answer: ["Add the correct answer or model response."], concepts: [["keyword"]], labels: ["Key idea"], min: 1 }],
+    modelAnswer: [{ heading: "Correct answer ? from the lesson", paragraphs: ["Add the facilitator model answer."], bullets: [] }],
+  }];
   return {
     lesson, exercises,
-    questionSessions: [{ id: "built-discussion", title: "Knowledge and reflection", task: "Use the unit material to support each answer.", steps: topics.map(t => `What are the key points in “${t.heading}”, and why do they matter at work?`), modelAnswer: topics.map(t => ({ heading: t.heading, paragraphs: t.paragraphs })) }],
+    questionSessions: [],
     assignments: [{ id: "built-workplace-project", title: `Workplace project: ${unit.title}`, brief: "Choose a realistic unit of work relevant to this learning material. Prepare a practical plan and explain your decisions using the source.", requirements: goals.concat(["Document assumptions, resources, dependencies and delivery risks.", "Submit your plan, supporting evidence and a short reflection on the result."]), evidence: "A completed workplace plan, supporting calculations or records, and a reflection reviewed by your facilitator." }],
     quiz,
     saqa: { notice: "Learning pack assembled from the supplied source. Confirm official outcomes and assessment requirements with the registered unit standard.", registration: [{ label: "SAQA US ID", value: unit.us }, { label: "Unit standard title", value: unit.title }, { label: "NQF level", value: String(unit.nqf) }, { label: "Credits", value: String(unit.credits) }], sections: [
