@@ -966,7 +966,7 @@ a.pill:hover {
   width: 100%;
   max-width: 1200px;
   padding: 14px 16px;
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--border) 42%, transparent);
   border-radius: var(--radius);
   background: var(--surface);
   text-align: left;
@@ -974,7 +974,7 @@ a.pill:hover {
 }
 
 .activity:hover {
-  border-color: var(--azure);
+  border-color: color-mix(in srgb, var(--azure) 35%, transparent);
 }
 
 .activity .box {
@@ -989,13 +989,15 @@ a.pill:hover {
 
 .activity .t {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 16px;
+  line-height: 1.35;
 }
 
 .activity .d {
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--ink-3);
-  margin-top: 2px;
+  line-height: 1.45;
+  margin-top: 4px;
 }
 
 .activity.done .t {
