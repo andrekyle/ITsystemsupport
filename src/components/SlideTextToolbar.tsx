@@ -239,9 +239,14 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
     } else {
       let inlineItem: HTMLLIElement | null = null;
       for (const node of Array.from(fragment.childNodes)) {
-        if (node instanceof HTMLLIElement || (node instanceof HTMLElement && /^(P|DIV)$/.test(node.tagName))) {
+        if (node instanceof HTMLLIElement) {
+          list.appendChild(node);
+          inlineItem = null;
+        } else if (node instanceof HTMLElement && /^(P|DIV)$/.test(node.tagName)) {
           const item = document.createElement("li");
-          while (node.firstChild) item.appendChild(node.firstChild);
+          // Preserve the selected block itself because its class or inline
+          // style may carry the text's existing font family and size.
+          item.appendChild(node);
           list.appendChild(item);
           inlineItem = null;
         } else if (node instanceof HTMLBRElement) {
