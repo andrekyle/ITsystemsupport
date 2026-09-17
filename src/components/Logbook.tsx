@@ -576,11 +576,11 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
           the following activities to this logbook.
         </p>
         <div className="lb-scroll">
-          <table className="data lb-table lb-compact" style={{ minWidth: 980 }}>
+          <table className="data lb-table lb-compact" style={{ minWidth: 1240 }}>
             <thead>
               <tr>
                 <th style={{ width: 40 }}>No</th>
-                <th style={{ width: 70 }}>Project name</th>
+                <th style={{ width: 260 }}>Project name</th>
                 <th style={{ width: 190 }}>Learner</th>
                 <th style={{ width: 104 }}>Date</th>
                 <th style={{ width: 190 }}>Workplace</th>
@@ -619,3 +619,4 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
     </div>
   );
 }
+
