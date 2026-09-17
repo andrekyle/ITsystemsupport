@@ -11,6 +11,7 @@ import { isUnitPackKey, receiveUnitPack, storedUnitPacks, clearUnitPacks } from 
  */
 
 const PREFIX = "itss.";
+const UNIT_BUILDER_SAVE_PROBE = "unitbuilder-save-probe.";
 /** device-local keys that should not follow the account across devices */
 const LOCAL_ONLY = new Set(["itss.session", "itss.route", "itss.theme", "itss.activeCourse"]);
 
@@ -36,12 +37,13 @@ const rawSet = localStorage.setItem.bind(localStorage);
 /** Store a value that was just pulled FROM the cloud without echoing it back
  *  up — an echo could land after someone else's newer save and undo it. */
 export function writeFromCloud(key: string, value: string) {
+  if (key.startsWith(UNIT_BUILDER_SAVE_PROBE)) return;
   if(isUnitPackKey(key)){receiveUnitPack(key,value);return;}
   rawSet(key, value);
 }
 
 function syncable(key: string) {
-  return key.startsWith(PREFIX) && !LOCAL_ONLY.has(key);
+  return key.startsWith(PREFIX) && !LOCAL_ONLY.has(key) && !key.startsWith(UNIT_BUILDER_SAVE_PROBE);
 }
 
 async function pushKey(key: string, value: string | null) {
@@ -103,7 +105,16 @@ export async function flushKey(key: string): Promise<void> {
  */
 export function installSync() {
   const remove = localStorage.removeItem.bind(localStorage);
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(UNIT_BUILDER_SAVE_PROBE)) remove(key);
+    }
+  } catch {
+    /* legacy cleanup is best effort */
+  }
   localStorage.setItem = (key: string, value: string) => {
+    if (key.startsWith(UNIT_BUILDER_SAVE_PROBE)) return;
     if(isUnitPackKey(key)){receiveUnitPack(key,value);if(syncable(key))queue(key,value);return;}
     rawSet(key, value);
     if (syncable(key)) queue(key, value);
