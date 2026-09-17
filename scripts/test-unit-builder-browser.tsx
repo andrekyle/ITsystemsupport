@@ -57,6 +57,7 @@ async function test(){
   (document.querySelector('.unit-builder input[type="checkbox"]') as HTMLInputElement).click();await tick();
   click("Build complete unit standard");
   await waitFor(()=>!!readBuiltUnit("114059"));
+  await waitFor(()=>!document.querySelector(".unit-build-action[aria-busy='true']"));
   await tick();
   const built=readBuiltUnit("114059")!;
   assert(localStorage.getItem("unrelated-user-data")==="Keep this data","Unrelated data preserved");
@@ -78,6 +79,7 @@ async function test(){
   Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(question,"Manually updated question");question.dispatchEvent(new Event("input",{bubbles:true}));await tick();
   click("Save all changes and rebuild files");
   await waitFor(()=>readBuiltUnit("114059")?.content.quiz[0].q==="Manually updated question");
+  await waitFor(()=>!document.querySelector(".unit-build-action[aria-busy='true']"));
   assert(readBuiltUnit("114059")?.previous?.revision===built.revision,"Previous version retained");
   sessionStorage.setItem("unit-builder-reload","true");location.reload();
 }

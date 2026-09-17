@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import type { UnitContent, UnitStandard } from "../types";
 import type { LessonEdits } from "../store";
 import { buildUnitContent, validateUnitContent, MAX_SOURCE_LENGTH } from "../lib/unitBuilder";
@@ -38,7 +38,28 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   const [draft,setDraft]=useState<UnitContent|null>(null);
   const [warning,setWarning]=useState("");
   const [fileName,setFileName]=useState("");
+  const [busyProgress,setBusyProgress]=useState(0);
+  const finishBusy=(after?:()=>void)=>{
+    setBusyProgress(100);
+    window.setTimeout(()=>{setBusy("");after?.();},450);
+  };
   useEffect(()=>{if(built)setSource(built.source);},[built?.revision]);
+  useEffect(()=>{
+    if(!busy){setBusyProgress(0);return;}
+    setBusyProgress(1);
+    const timer=window.setInterval(()=>setBusyProgress(value=>{
+      if(value>=99)return 99;
+      if(value>=85)return value+1;
+      return Math.min(99,value+Math.max(2,Math.ceil((100-value)/14)));
+    }),140);
+    return()=>window.clearInterval(timer);
+  },[busy]);
+  const doneBusy=(after?:()=>void)=>setBusyProgress(value=>{
+    const remaining=Math.max(1,100-value);
+    for(let step=1;step<=remaining;step++) window.setTimeout(()=>setBusyProgress(Math.min(100,value+step)),step*18);
+    window.setTimeout(()=>finishBusy(after),remaining*18+120);
+    return value;
+  });
 
   const publish=async(next:UnitContent,sourceText:string,aiUsed:boolean)=>{
     validateUnitContent(next);
@@ -49,7 +70,7 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
     const prefix=`shared/unitbuilder/${unit.us}`;
     const [pdf,pptx,answers]=await Promise.all([uploadFile(prefix,files.pdf),uploadFile(prefix,files.pptx),uploadFile(prefix,files.answers)]);
     await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:sourceText,content:next,files:{pdf,pptx,answers},aiUsed});
-    setSource(sourceText);setDraft(null);setOpen(false);setMessage("Unit built and saved. All learning tabs and download files are ready.");onSaved();
+    setSource(sourceText);setDraft(null);setMessage("Unit built and saved. All learning tabs and download files are ready.");onSaved();
   };
   const build=async()=>{
     setError("");setMessage("");setWarning("");setBusy("Building lessons, activities and tab content…");
@@ -66,7 +87,8 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
         if(result.usage) void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.prompt_tokens??0,completionTokens:result.usage.completion_tokens??0,totalTokens:result.usage.total_tokens??0});
       }
       await publish(next,source,ai);
-    }catch(e){setError(e instanceof Error?e.message:"The unit could not be built. Your current content is unchanged.");}finally{setBusy("");}
+      doneBusy(()=>setOpen(false));
+    }catch(e){setError(e instanceof Error?e.message:"The unit could not be built. Your current content is unchanged.");setBusy("");}
   };
   return <section className="unit-builder">
     <div className="unit-builder-bar">
@@ -79,7 +101,7 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
     </div>
     {open&&<div className="unit-builder-panel">
       <h2>{draft?"Edit complete unit":"Build"} · US {unit.us}</h2>
-      {draft?<><p>Edit any tab below. Saving also rebuilds the PDF and editable PowerPoint.</p><UnitContentEditor value={draft as never} onChange={v=>setDraft(v as unknown as UnitContent)}/><button type="button" className="btn" disabled={!!busy} onClick={async()=>{setError("");try{await publish(draft,built?.source??source,built?.aiUsed??false);}catch(e){setError(String(e));}finally{setBusy("");}}}>Save all changes and rebuild files</button></>:<>
+      {draft?<><p>Edit any tab below. Saving also rebuilds the PDF and editable PowerPoint.</p><UnitContentEditor value={draft as never} onChange={v=>setDraft(v as unknown as UnitContent)}/><button type="button" className="btn unit-build-action" disabled={!!busy} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={async()=>{setError("");try{await publish(draft,built?.source??source,built?.aiUsed??false);doneBusy(()=>setOpen(false));}catch(e){setError(String(e));setBusy("");}}}><span>{busy?`Creating ${busyProgress}%`:"Save all changes and rebuild files"}</span></button></>:<>
         <p>Paste your teaching material or import a document. Use headings such as “# Estimating effort” with a blank line before the supporting paragraphs.</p>
         {built&&<p className="muted">Building replaces this unit's learning content. The current version is kept for restoration. Learner work is retained.</p>}
         <div className="unit-settings-card">
@@ -95,7 +117,7 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
           <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Improve questions with AI</strong><span>Use OpenAI to refine the quiz questions.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={ai} disabled={!!busy} onChange={e=>setAi(e.target.checked)}/></label>
         </div>
         <p className="muted">Lessons keep your source text. Activities, assignments, notes, logbook, self assessment, evaluation, lesson plan and exports are assembled by built-in code.</p>
-        <button type="button" className="btn" disabled={!!busy||source.trim().length<100} onClick={()=>void build()}>Build complete unit standard</button>
+        <button type="button" className="btn unit-build-action" disabled={!!busy||source.trim().length<100} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>void build()}><span>{busy?`Creating ${busyProgress}%`:"Build complete unit standard"}</span></button>
       </>}
       <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(false);setDraft(null);}}>Close</button>
     </div>}
