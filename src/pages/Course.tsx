@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
 import JSZip from "jszip";
 import { Icon } from "../icons";
-import type { Exercise, ExerciseCheck, LessonFigure, PoeDoc, ProgressState, Profile, QuizQuestion, Role, Route, UnitActivity, UnitContent, UnitStandard } from "../types";
+import type { Exercise, ExerciseCheck, LessonFigure, LessonSection, PoeDoc, ProgressState, Profile, QuizQuestion, Role, Route, UnitActivity, UnitContent, UnitStandard } from "../types";
 import { UNIT_ACTIVITIES, isStaff } from "../types";
 import { COURSE_BLURB, COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
 import { COURSES, activeCourseId, setActiveCourse } from "../data/courses";
@@ -2579,6 +2579,7 @@ export function UnitPage({
   const [generatingQuiz, setGeneratingQuiz] = useState<number | null>(null);
   const [quizQuestionCount, setQuizQuestionCount] = useState(5);
   const [quizGenerationError, setQuizGenerationError] = useState<string | null>(null);
+  const [lessonSplitError, setLessonSplitError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   useEffect(() => { setEditMode(false); }, [unitId, tab]);
   // per-slide "paste text" editor (super user): heading + free-text body
@@ -2616,6 +2617,79 @@ export function UnitPage({
   const saveBuiltContent = async (nextContent: UnitContent) => {
     if (!builtUnit) return;
     await saveBuiltUnit(unitId, { revision: crypto.randomUUID(), createdAt: new Date().toISOString(), source: builtUnit.source, content: nextContent, files: builtUnit.files, aiUsed: builtUnit.aiUsed });
+  };
+  const splitBuiltLessonAtCursor = async (si: number) => {
+    setLessonSplitError(null);
+    if (!builtUnit || !content) {
+      setLessonSplitError("This slide can only be split after the unit has been built.");
+      return;
+    }
+    const editor = document.querySelector<HTMLElement>(`[data-lesson-editor="${si}"]`);
+    const selection = window.getSelection();
+    if (!editor || !selection || selection.rangeCount === 0) {
+      setLessonSplitError("Place your cursor inside the slide text, then click Split slide here.");
+      return;
+    }
+    const caret = selection.getRangeAt(0);
+    if (!editor.contains(caret.startContainer)) {
+      setLessonSplitError("Place your cursor inside the slide text, then click Split slide here.");
+      return;
+    }
+    const beforeRange = document.createRange();
+    beforeRange.selectNodeContents(editor);
+    beforeRange.setEnd(caret.startContainer, caret.startOffset);
+    const afterRange = document.createRange();
+    afterRange.selectNodeContents(editor);
+    afterRange.setStart(caret.startContainer, caret.startOffset);
+    const beforeWrap = document.createElement("div");
+    const afterWrap = document.createElement("div");
+    beforeWrap.appendChild(beforeRange.cloneContents());
+    afterWrap.appendChild(afterRange.cloneContents());
+    const cleanPart = (wrap: HTMLElement) => {
+      const h2 = wrap.querySelector(":scope > h2");
+      const title = h2 ? htmlToMarked(h2 as HTMLElement) : "";
+      h2?.remove();
+      const html = sanitizeSlideHtml(wrap.innerHTML);
+      const probe = document.createElement("div");
+      probe.innerHTML = html;
+      return { title, html, text: (probe.textContent ?? "").trim() };
+    };
+    const before = cleanPart(beforeWrap);
+    const after = cleanPart(afterWrap);
+    if (!before.text || !after.text) {
+      setLessonSplitError("The cursor must leave text on both slides.");
+      return;
+    }
+    const nextContent = structuredClone(builtUnit.content) as UnitContent;
+    const original = nextContent.lesson[si];
+    const baseHeading = plainSlideText(lessonEdits.headings?.[si] ?? original.heading).trim() || original.heading;
+    const current: LessonSection = {
+      ...original,
+      heading: before.title ? plainSlideText(before.title) : baseHeading,
+      paragraphs: [htmlToMarked(beforeWrap)],
+      bullets: undefined,
+      table: undefined,
+      cards: undefined,
+      example: undefined,
+      examples: undefined,
+      slideQuiz: undefined,
+    };
+    const moved: LessonSection = {
+      ...original,
+      heading: `${baseHeading} (continued)`,
+      paragraphs: [htmlToMarked(afterWrap)],
+      bullets: undefined,
+      table: undefined,
+      cards: undefined,
+      example: undefined,
+      examples: undefined,
+      figures: undefined,
+      slideQuiz: original.slideQuiz,
+    };
+    nextContent.lesson.splice(si, 1, current, moved);
+    await saveBuiltContent(nextContent);
+    setLessonStep(si + 1);
+    setEditMode(true);
   };
   const updateBuiltActivityList = async (kind: "exercises" | "questionSessions", updater: (items: Exercise[]) => Exercise[]) => {
     if (!builtUnit) return;
@@ -3592,6 +3666,7 @@ export function UnitPage({
             const body = (
               <div className="saqa-body lesson-section">
                 {unifiedText ? <SlideEditableText as="div" className="slide-whole-editor" contentEditable={editable}
+                  data-lesson-editor={si}
                   aria-label="Slide text" html={sanitizeSlideHtml(unifiedHtml)}
                   onKeyDown={e=>{
                     if ((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="a") {
@@ -4298,7 +4373,20 @@ export function UnitPage({
                             <Icon name="pencil" size={13} />
                             Paste text
                           </button>
+                          {builtUnit && (
+                            <button
+                              type="button"
+                              className="btn ghost sm"
+                              onMouseDown={(event) => event.preventDefault()}
+                              onClick={() => void splitBuiltLessonAtCursor(si)}
+                              title="Place the cursor in this slide's text. Content after the cursor moves to a new next slide."
+                            >
+                              <Icon name="chevronRight" size={13} />
+                              Split slide here
+                            </button>
+                          )}
                           {quizGenerationError && <span className="auth-error" role="alert">{quizGenerationError}</span>}
+                          {lessonSplitError && <span className="auth-error" role="alert">{lessonSplitError}</span>}
                           <button
                             type="button"
                             className="btn ghost sm"
