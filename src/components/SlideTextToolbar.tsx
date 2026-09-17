@@ -204,16 +204,13 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
     const list = document.createElement(ordered ? "ol" : "ul");
     list.className = "lesson-inferred-list";
     const fragment = currentRange.extractContents();
-    const blockChildren = Array.from(fragment.children).filter((node): node is HTMLElement => node instanceof HTMLElement);
-    const sourceNodes = blockChildren.length ? blockChildren : Array.from(fragment.childNodes);
-    if (!sourceNodes.length) return;
-    for (const node of sourceNodes) {
-      const item = document.createElement("li");
-      item.appendChild(node);
-      list.appendChild(item);
-    }
-    const parent = currentRange.startContainer.nodeType === Node.TEXT_NODE ? currentRange.startContainer.parentNode : currentRange.startContainer.parentNode ?? restored.editor;
-    if (!parent) return;
+    if (!fragment.textContent?.trim() && !fragment.querySelector("img, table, br")) return;
+    // Keep the extracted fragment intact. Looking at fragment.children here can
+    // promote an entire paragraph and accidentally include text outside the
+    // user's selection.
+    const item = document.createElement("li");
+    item.appendChild(fragment);
+    list.appendChild(item);
     currentRange.insertNode(list);
     const caret = document.createRange();
     caret.selectNodeContents(list.lastElementChild ?? list);
