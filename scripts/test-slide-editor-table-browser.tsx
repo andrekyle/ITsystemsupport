@@ -15,11 +15,12 @@ function click(label: string) {
   assert(button, `Missing button: ${label}`);
   button.click();
 }
-function placeCaretAtEnd(element: HTMLElement) {
+function selectParagraphText(element: HTMLElement) {
   element.focus();
+  const paragraph = Array.from(element.querySelectorAll("p")).find(node => node.textContent?.includes("Insert a table below this paragraph."));
+  assert(paragraph?.firstChild, "Paragraph text exists for selection");
   const range = document.createRange();
-  range.selectNodeContents(element);
-  range.collapse(false);
+  range.selectNodeContents(paragraph.firstChild);
   const selection = window.getSelection();
   selection?.removeAllRanges();
   selection?.addRange(range);
@@ -28,6 +29,8 @@ function placeCaretAtEnd(element: HTMLElement) {
 function verify(mode: string) {
   const lesson = document.querySelector<HTMLElement>(".lesson-section");
   assert(lesson, `${mode}: lesson section exists`);
+  const preserved = Array.from(lesson.querySelectorAll("p")).find(paragraph => paragraph.textContent?.trim() === "Insert a table below this paragraph.");
+  assert(preserved && !preserved.closest("table"), `${mode}: selected text remains as normal text outside the inserted table`);
   const wrapper = lesson.querySelector<HTMLElement>(".lesson-table-scroll");
   assert(wrapper, `${mode}: inserted table uses the lesson table scroll wrapper`);
   const table = wrapper.querySelector<HTMLTableElement>("table.data.lesson-table");
@@ -69,7 +72,7 @@ async function test() {
     click("Edit content");
     await tick();
     const editor = document.querySelector<HTMLElement>(".slide-whole-editor")!;
-    placeCaretAtEnd(editor);
+    selectParagraphText(editor);
     click("Table");
     await tick();
     assert(document.querySelector('[aria-label="Table options"]'), "Table button opens the row and column picker");

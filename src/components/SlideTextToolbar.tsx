@@ -149,7 +149,7 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
     return () => document.removeEventListener("selectionchange", remember);
   }, [enabled]);
   if (!enabled) return null;
-  const restoreSelection = () => {
+  const restoreSelection = (collapseToEnd = false) => {
     const editor = host.current;
     if (!editor?.isConnected || !range.current) return null;
     // Saving on blur can replace the editable DOM before a font picker returns.
@@ -173,6 +173,7 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       offset += length;
     }
     editor.focus();
+    if (collapseToEnd) restored.collapse(false);
     const selection = window.getSelection();
     selection?.removeAllRanges();
     selection?.addRange(restored);
@@ -188,7 +189,7 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
     return `<div class="lesson-table-scroll"><table class="data lesson-table"><thead><tr>${headers}</tr></thead><tbody>${bodyRows}</tbody></table></div><p><br></p>`;
   };
   const insertTable = () => {
-    const restored = restoreSelection();
+    const restored = restoreSelection(true);
     if (!restored) return;
     document.execCommand("insertHTML", false, insertedTableHtml());
     if (restored.selection?.rangeCount) range.current = restored.selection.getRangeAt(0).cloneRange();
