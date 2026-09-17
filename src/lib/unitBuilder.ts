@@ -96,7 +96,6 @@ export type UnitContentEnhancement = {
   evaluation?: UnitContent["evaluation"];
   selfAssessment?: UnitContent["selfAssessment"];
   lessonPlan?: UnitContent["lessonPlan"];
-  studyNotes?: UnitContent["studyNotes"];
   exercises?: UnitContent["exercises"];
   questionSessions?: UnitContent["questionSessions"];
   assignments?: UnitContent["assignments"];
@@ -125,7 +124,6 @@ export function mergeUnitContentEnhancement(base: UnitContent, enhancement: Unit
   if (enhancement.evaluation?.questions?.length && nonemptyString(enhancement.evaluation.intro)) next.evaluation = enhancement.evaluation;
   if (enhancement.selfAssessment?.items?.length) next.selfAssessment = enhancement.selfAssessment;
   if (enhancement.lessonPlan?.sections?.length) next.lessonPlan = enhancement.lessonPlan;
-  if (nonemptyArray(enhancement.studyNotes)) next.studyNotes = enhancement.studyNotes;
   if (nonemptyArray(enhancement.exercises)) next.exercises = normalizeActivities(enhancement.exercises, "activity")!;
   if (nonemptyArray(enhancement.questionSessions)) next.questionSessions = normalizeActivities(enhancement.questionSessions, "question-session")!;
   if (nonemptyArray(enhancement.assignments)) next.assignments = enhancement.assignments;
@@ -166,7 +164,6 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
     logbook: { assignmentTitle: unit.title, programme: "IT Systems Support", unitLabel: `US ${unit.us}`, detailFields: ["Learner name", "Workplace", "Supervisor", "Date"], project: { time: "Record actual hours", title: "Workplace application", text: "Apply the unit learning in the workplace and record evidence against the activities below.", resource: "Source material, workplace procedures and supervisor feedback" }, knowledgeQuestions: goals.map(text => ({ text, marks: [true, true, false, true, false, false] })), practicalActivities: exercises.map(e => ({ text: e.title, marks: [true, true, true, false, true, true] })), workplaceActivities: goals, workplaceEvidenceNote: "Attach dated evidence and obtain supervisor verification.", otherActivities: [{ activity: "Review and reflection", evidence: "A short reflection and supervisor feedback" }], otherEvidenceNote: "Record any additional relevant learning.", projectChecklist: exercises.map((e, i) => ({ no: String(i + 1), name: e.title })) },
     selfAssessment: { intro: ["Rate your readiness by ticking the skills you can demonstrate."], items: goals.map(g => `I can ${g.charAt(0).toLowerCase()}${g.slice(1)}`), outro: ["Revisit any unticked areas and ask the facilitator for help."] },
     lessonPlan: { title: "Facilitator Preparation", startTime: "09:00", details: [{ icon: "clock", label: "Planned duration", value: `${options.minutes} minutes` }], prep: ["Read the source material and check that examples fit your learners' workplace.", "Prepare the generated handout and slides; review the answer key before delivery."], sections: [{ rows: [{ title: "Room Set Up", text: ["Prepare the venue, equipment, learner handout and presentation."] }, { time: "10 min", title: "Meet, Greet & Seat", text: ["Welcome learners, check attendance and introduce the learning goals."] }] }, { heading: `Unit Standard ${unit.us}`, rows: [...topics.map(t => ({ time: `${Math.max(5, Math.floor((options.minutes - 30) / topics.length))} min`, title: `${t.heading} \u2014 Facilitator & Class`, text: ["Explain the source material, discuss a workplace example, then complete the linked activity."], resources: ["Generated slides", "Learner handout"] })), { time: "20 min", title: "Knowledge check and reflection", text: ["Complete the quiz, discuss answers, update the logbook, and submit the lesson evaluation."] }] }] },
-    studyNotes: topics.map(t => ({ title: t.heading, text: t.paragraphs.join("\n\n") })),
     evaluation: { intro: "Help improve this unit by reflecting on the content and delivery.", questions: ["Which part was most useful for your work?", "Which topic needs more explanation?", "How will you apply what you learned?", "What would improve the activities or training materials?"] },
   };
 }
@@ -183,5 +180,5 @@ export function validateUnitContent(content: UnitContent): void {
     const ids = list.map(item => item.id);
     if (ids.some(id => !nonempty(id)) || new Set(ids).size !== ids.length) throw new Error("Activities and quizzes must have unique IDs.");
   }
-  if (!content.logbook || !content.lessonPlan?.sections.length || !content.selfAssessment?.items.length || !content.saqa || !content.studyNotes?.length || !content.evaluation?.questions.length) throw new Error("Overview, notes, logbook, lesson plan, self assessment and evaluation must all have content.");
+  if (!content.logbook || !content.lessonPlan?.sections.length || !content.selfAssessment?.items.length || !content.saqa || !content.evaluation?.questions.length) throw new Error("Overview, notes, logbook, lesson plan, self assessment and evaluation must all have content.");
 }
