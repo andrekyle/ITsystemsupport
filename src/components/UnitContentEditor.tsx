@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { Select } from "./Select";
 import { plainSlideText } from "../lib/slideRichText";
 
-const names: Record<string,string> = {lesson:"Lesson sections",exercises:"Practical activities",questionSessions:"Knowledge activities",assignments:"Assignments",quiz:"Quiz questions",saqa:"Overview",logbook:"Logbook",selfAssessment:"Self assessment",studyNotes:"Study notes",lessonPlan:"Lesson plan",evaluation:"Evaluation",q:"Question",answer:"Correct answer",explain:"Answer explanation",prep:"Preparation",steps:"Instructions",marks:"Evidence coverage",n:"Lesson number"};
+const names: Record<string,string> = {lesson:"Lesson sections",exercises:"Practical activities",questionSessions:"Knowledge activities",assignments:"Assignments",quiz:"Quiz questions",saqa:"Overview",logbook:"Logbook",selfAssessment:"Self assessment",studyNotes:"Study notes",lessonPlan:"Lesson plan",evaluation:"Evaluation",q:"Question",answer:"Correct answer",explain:"Answer explanation",prep:"Preparation",steps:"Instructions",marks:"Evidence coverage",n:"Lesson number",sections:"Lesson plan sections",rows:"Lesson plan rows",items:"Self-assessment items",questions:"Evaluation questions",scenario:"Scenario paragraphs",requirements:"Requirements",evidence:"Evidence"};
 function label(key:string) { return names[key] ?? key.replace(/([A-Z])/g," $1").replace(/^./,c=>c.toUpperCase()); }
 type Value = string | number | boolean | null | Value[] | { [key:string]: Value };
 function duplicate(value:Value):Value {
@@ -11,10 +11,43 @@ function duplicate(value:Value):Value {
   return value;
 }
 
+
+function blankFor(name: string): Value {
+  const key = name.replace(/\s+\d+$/, "").toLowerCase();
+  if (/practical activities|knowledge activities|exercises|questionsessions/.test(key)) return {
+    id: `manual-${crypto.randomUUID()}`,
+    title: "New activity",
+    task: "Time: 45 minutes - Activity: Self & Group",
+    scenario: ["Add the activity instructions here."],
+    steps: ["Add the first question or instruction."],
+    checks: [{ answer: ["Add the model answer."], concepts: [["keyword"]], labels: ["Key idea"], min: 1 }],
+    modelAnswer: [{ heading: "Facilitator reference", paragraphs: ["Add the facilitator model answer."], bullets: [] }],
+  };
+  if (/assignments/.test(key)) return { id: `manual-${crypto.randomUUID()}`, title: "New assignment", brief: "Add the assignment brief.", requirements: ["Add a requirement."], evidence: "Describe the evidence learners must submit." };
+  if (/quiz questions|quiz/.test(key)) return { q: "New question", options: ["Option 1", "Option 2", "Option 3", "Option 4"], answer: 0, explain: "Explain the correct answer." };
+  if (/lesson plan sections|sections/.test(key)) return { heading: "New section", rows: [blankFor("rows")] };
+  if (/lesson plan rows|rows/.test(key)) return { time: "10 min", title: "New lesson activity", text: ["Describe what the facilitator and learners do."], bullets: [], resources: [] };
+  if (/details/.test(key)) return { icon: "info", label: "Detail", value: "Value" };
+  if (/study notes/.test(key)) return { title: "New note", text: "Add study note text." };
+  if (/registration/.test(key)) return { label: "Label", value: "Value" };
+  if (/projectchecklist/.test(key)) return { no: "1", name: "Checklist item" };
+  if (/knowledgequestions|practicalactivities/.test(key)) return { text: "New checklist item", marks: [true, false, false, true, false, false] };
+  if (/otheractivities/.test(key)) return { activity: "New activity", evidence: "Evidence required" };
+  if (/concepts/.test(key)) return ["keyword"];
+  if (/marks/.test(key)) return false;
+  return "New item";
+}
+
+function addTemplate(name: string, current: Value): Value {
+  const blank = blankFor(name);
+  if (current === "" || current === null || (Array.isArray(current) && current.length === 0)) return blank;
+  return duplicate(current);
+}
+
 /** Field editor for every generated tab; no code or JSON knowledge required. */
 export function UnitContentEditor({value,onChange,name="Unit content"}:{value:Value;onChange:(value:Value)=>void;name?:string}) {
-  const template=useRef<Value>(Array.isArray(value)&&value.length?value[value.length-1]:"");
-  if(Array.isArray(value)&&value.length) template.current=value[value.length-1];
+  const template=useRef<Value>(Array.isArray(value)&&value.length?value[value.length-1]:blankFor(name));
+  if(Array.isArray(value)) template.current=value.length?value[value.length-1]:blankFor(name);
   if(Array.isArray(value)) return <div className="unit-editor-array">
     {value.map((entry,i)=><div className="unit-editor-item" key={i}>
       <UnitContentEditor name={`${label(name)} ${i+1}`} value={entry} onChange={next=>onChange(value.map((v,j)=>j===i?next:v))} />
@@ -23,7 +56,7 @@ export function UnitContentEditor({value,onChange,name="Unit content"}:{value:Va
         <button type="button" className="btn ghost sm" onClick={()=>onChange(value.filter((_,j)=>j!==i))}>Remove</button>
       </div>
     </div>)}
-    <button type="button" className="btn ghost sm" onClick={()=>onChange([...value,duplicate(template.current)])}>Add {label(name).toLowerCase()}</button>
+    <button type="button" className="btn ghost sm" onClick={()=>onChange([...value,addTemplate(name,template.current)])}>Add {label(name).toLowerCase()}</button>
   </div>;
   if(value && typeof value==="object") return <details className="unit-editor-group"><summary>{label(name)}{typeof value.title==="string"?`: ${value.title}`:typeof value.heading==="string"?`: ${value.heading}`:""}</summary>
     {Object.entries(value).filter(([key,item])=>item!==undefined&&!["id","icon","flat","quizGate"].includes(key)).map(([key,item])=><div key={key}>
