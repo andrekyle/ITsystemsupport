@@ -1,8 +1,8 @@
-import type { UnitContent, UnitStandard, QuizQuestion, LessonSection } from "../types";
+import type { UnitContent, UnitStandard, LessonSection } from "../types";
 import { lessonTableMarkdown, parseLessonTextBlocks } from "./lessonTables";
 
 export const MAX_SOURCE_LENGTH = 120_000;
-export type BuildOptions = { questions: number; minutes: number };
+export type BuildOptions = { minutes: number };
 export type UnitTopic = { heading: string; paragraphs: string[] };
 const normal = (text: string) => text.replace(/\r\n?/g, "\n").replace(/\u0000/g, "").trim();
 
@@ -65,29 +65,6 @@ export function parseUnitSource(source: string): UnitTopic[] {
   if (result.length > 80) throw new Error("This source produces more than 80 lesson sections. Split it into smaller units.");
   return result;
 }
-
-/** Deterministic source-completion questions, with answers quoted from the source. */
-export function makeSourceQuiz(topics: UnitTopic[], count: number): QuizQuestion[] {
-  const sentences = topics.flatMap(t => t.paragraphs.flatMap(p => p.match(/[^.!?\n]+[.!?]?/g) ?? [p])).map(s => s.trim()).filter(s => s.length >= 35 && s.length <= 500);
-  const vocabulary = [...new Set(sentences.flatMap(s => s.match(/[A-Za-z][A-Za-z-]{5,}/g) ?? []))];
-  const questions: QuizQuestion[] = [];
-  const used = new Set<string>();
-  for (const sentence of sentences) {
-    const words = (sentence.match(/[A-Za-z][A-Za-z-]{5,}/g) ?? []).sort((a, b) => b.length - a.length);
-    const word = words.find(w => !used.has(w.toLowerCase()));
-    if (!word) continue;
-    const others = vocabulary.filter(w => w.toLowerCase() !== word.toLowerCase() && !sentence.toLowerCase().includes(w.toLowerCase())).slice(0, 3);
-    if (others.length < 3) continue;
-    const answer = questions.length % 4;
-    const options = [...others]; options.splice(answer, 0, word);
-    questions.push({ q: `Complete this statement from the learning material: “${sentence.replace(word, "_____") }”`, options, answer, explain: `Source: ${sentence}` });
-    used.add(word.toLowerCase());
-    if (questions.length === count) break;
-  }
-  if (questions.length < 3) throw new Error("The source needs more explanatory sentences to build at least three meaningful quiz questions. Add more teaching content.");
-  return questions;
-}
-
 
 export type UnitContentEnhancement = {
   overview?: UnitContent["saqa"];
@@ -175,32 +152,23 @@ export function mergeUnitContentEnhancement(base: UnitContent, enhancement: Unit
   if (nonemptyArray(enhancement.exercises)) next.exercises = normalizeActivities(enhancement.exercises, "activity")!;
   if (nonemptyArray(enhancement.questionSessions)) next.questionSessions = normalizeActivities(enhancement.questionSessions, "question-session")!;
   if (nonemptyArray(enhancement.assignments)) next.assignments = enhancement.assignments;
-  if (nonemptyArray(enhancement.quiz)) next.quiz = enhancement.quiz;
+  next.quiz = [];
+  next.quizzes = undefined;
+  next.lesson = next.lesson.map(section => ({ ...section, slideQuiz: undefined, quizGate: undefined }));
   validateUnitContent(next);
   return next;
 }
 export function buildUnitContent(unit: UnitStandard, source: string, options: BuildOptions): UnitContent {
   const topics = parseUnitSource(source);
-  const count = Math.min(10, Math.max(3, options.questions));
-  const quiz = makeSourceQuiz(topics, count);
   // Use the same section-title/lesson-flat layout as the completed report unit.
   // A source topic is a section, not a new lesson with a repeated banner.
   const lesson: LessonSection[] = topics.map(topic => ({ ...topic, icon: "presenter", flat: true }));
   const goals = topics.map(t => `Explain and apply ${t.heading.toLowerCase()}, using examples from the supplied material.`);
-  const exercises = [{
-    id: "manual-activity-1",
-    title: "Activity 1",
-    task: "Time: 45 minutes - Activity: Self & Group",
-    scenario: ["Add the activity instructions on the Activity tab."],
-    steps: ["Add the first learner question."],
-    checks: [{ answer: ["Add the correct answer or model response."], concepts: [["keyword"]], labels: ["Key idea"], min: 1 }],
-    modelAnswer: [{ heading: "Correct answer ? from the lesson", paragraphs: ["Add the facilitator model answer."], bullets: [] }],
-  }];
   return {
-    lesson, exercises,
+    lesson, exercises: [],
     questionSessions: [],
     assignments: [{ id: "built-workplace-project", title: `Workplace project: ${unit.title}`, brief: "Choose a realistic unit of work relevant to this learning material. Prepare a practical plan and explain your decisions using the source.", requirements: goals.concat(["Document assumptions, resources, dependencies and delivery risks.", "Submit your plan, supporting evidence and a short reflection on the result."]), evidence: "A completed workplace plan, supporting calculations or records, and a reflection reviewed by your facilitator." }],
-    quiz,
+    quiz: [],
     saqa: { notice: "Learning pack assembled from the supplied source. Confirm official outcomes and assessment requirements with the registered unit standard.", registration: [{ label: "SAQA US ID", value: unit.us }, { label: "Unit standard title", value: unit.title }, { label: "NQF level", value: String(unit.nqf) }, { label: "Credits", value: String(unit.credits) }], sections: [
       { heading: "Purpose of the unit standard", icon: "target", paragraphs: [topics[0].paragraphs[0]] },
       { heading: "Unit standard range", icon: "folder", bullets: topics.map(t=>t.heading) },
@@ -208,9 +176,9 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
       { heading: "Essential embedded knowledge", icon: "book", bullets: topics.map(t=>`${t.heading}: ${t.paragraphs[0]}`) },
       { heading: "Assessor criteria — evidence required", icon: "checklist", bullets: ["Completed practical activities supported by the supplied learning material.", "Workplace project and supporting evidence.", "Knowledge-check answers, self assessment and a completed workplace logbook."] },
     ] },
-    logbook: normalizeLogbookSpec(unit, { assignmentTitle: "Assignment One", programme: "Information Technology - Systems Support", unitLabel: `${unit.us} - ${unit.title}`, detailFields: STANDARD_LOGBOOK_DETAIL_FIELDS, project: { time: "30 minutes", title: "Workplace application", text: "Apply the unit learning in the workplace and record evidence against the activities below.", resource: "Logbook" }, knowledgeQuestions: goals.map(text => ({ text, marks: KNOWLEDGE_MARKS })), practicalActivities: exercises.map(e => ({ text: e.title, marks: PROJECT_MARKS })), workplaceActivities: goals, workplaceEvidenceNote: "The workplace completes this section after observing the learner having complied to and completed all the activities as mentioned below.", otherActivities: [{ activity: "Workplace application", evidence: "Apply the unit learning in the workplace and record evidence against the activities below." }], otherEvidenceNote: "Learner evidence and experience is recorded here. Make reference to equipment, tools, materials or systems that were used in these processes.", projectChecklist: [{ no: "1", name: unit.us }] }),
+    logbook: normalizeLogbookSpec(unit, { assignmentTitle: "Assignment One", programme: "Information Technology - Systems Support", unitLabel: `${unit.us} - ${unit.title}`, detailFields: STANDARD_LOGBOOK_DETAIL_FIELDS, project: { time: "30 minutes", title: "Workplace application", text: "Apply the unit learning in the workplace and record evidence against the activities below.", resource: "Logbook" }, knowledgeQuestions: goals.map(text => ({ text, marks: KNOWLEDGE_MARKS })), practicalActivities: goals.map(text => ({ text, marks: PROJECT_MARKS })), workplaceActivities: goals, workplaceEvidenceNote: "The workplace completes this section after observing the learner having complied to and completed all the activities as mentioned below.", otherActivities: [{ activity: "Workplace application", evidence: "Apply the unit learning in the workplace and record evidence against the activities below." }], otherEvidenceNote: "Learner evidence and experience is recorded here. Make reference to equipment, tools, materials or systems that were used in these processes.", projectChecklist: [{ no: "1", name: unit.us }] }),
     selfAssessment: { intro: ["Rate your readiness by ticking the skills you can demonstrate."], items: goals.map(g => `I can ${g.charAt(0).toLowerCase()}${g.slice(1)}`), outro: ["Revisit any unticked areas and ask the facilitator for help."] },
-    lessonPlan: { title: "Facilitator Preparation", startTime: "09:00", details: [{ icon: "clock", label: "Planned duration", value: `${options.minutes} minutes` }], prep: ["Read the source material and check that examples fit your learners' workplace.", "Prepare the generated handout and slides; review the answer key before delivery."], sections: [{ rows: [{ title: "Room Set Up", text: ["Prepare the venue, equipment, learner handout and presentation."] }, { time: "10 min", title: "Meet, Greet & Seat", text: ["Welcome learners, check attendance and introduce the learning goals."] }] }, { heading: `Unit Standard ${unit.us}`, rows: [...topics.map(t => ({ time: `${Math.max(5, Math.floor((options.minutes - 30) / topics.length))} min`, title: `${t.heading} \u2014 Facilitator & Class`, text: ["Explain the source material, discuss a workplace example, then complete the linked activity."], resources: ["Generated slides", "Learner handout"] })), { time: "20 min", title: "Knowledge check and reflection", text: ["Complete the quiz, discuss answers, update the logbook, and submit the lesson evaluation."] }] }] },
+    lessonPlan: { title: "Facilitator Preparation", startTime: "09:00", details: [{ icon: "clock", label: "Planned duration", value: `${options.minutes} minutes` }], prep: ["Read the source material and check that examples fit your learners' workplace.", "Prepare the generated handout and slides before delivery."], sections: [{ rows: [{ title: "Room Set Up", text: ["Prepare the venue, equipment, learner handout and presentation."] }, { time: "10 min", title: "Meet, Greet & Seat", text: ["Welcome learners, check attendance and introduce the learning goals."] }] }, { heading: `Unit Standard ${unit.us}`, rows: [...topics.map(t => ({ time: `${Math.max(5, Math.floor((options.minutes - 30) / topics.length))} min`, title: `${t.heading} - Facilitator & Class`, text: ["Explain the source material, discuss a workplace example, then update the logbook where required."], resources: ["Generated slides", "Learner handout"] })), { time: "20 min", title: "Reflection and evidence", text: ["Discuss the lesson, update the logbook, and submit the lesson evaluation."] }] }] },
     evaluation: { intro: "Help improve this unit by reflecting on the content and delivery.", questions: ["Which part was most useful for your work?", "Which topic needs more explanation?", "How will you apply what you learned?", "What would improve the activities or training materials?"] },
   };
 }
@@ -218,7 +186,7 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
 /** Validate the editable pack before replacing any saved content. */
 export function validateUnitContent(content: UnitContent): void {
   const nonempty = (s: unknown) => typeof s === "string" && s.trim().length > 0;
-  if (!content.lesson?.length || !content.exercises?.length || !content.assignments?.length || !content.quiz?.length) throw new Error("Keep at least one lesson, activity, assignment and quiz question.");
+  if (!content.lesson?.length || !content.assignments?.length) throw new Error("Keep at least one lesson and assignment.");
   for (const s of content.lesson) if (!nonempty(s.heading) || !s.paragraphs?.some(nonempty)) throw new Error("Every lesson needs a title and teaching text.");
   for (const q of [...content.quiz, ...content.lesson.flatMap(s => s.slideQuiz ?? []), ...(content.quizzes ?? []).flatMap(q => q.questions)]) {
     if (!nonempty(q.q) || q.options?.length < 2 || !q.options.every(nonempty) || !Number.isInteger(q.answer) || q.answer < 0 || q.answer >= q.options.length || !nonempty(q.explain)) throw new Error("Every quiz question needs text, answer options, a valid correct answer and an explanation.");

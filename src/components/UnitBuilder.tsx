@@ -8,7 +8,6 @@ import { makeUnitExports } from "../lib/unitExports";
 import { downloadDoc, uploadFile } from "../lib/files";
 import { supabase } from "../lib/supabase";
 import { recordTokenUsage } from "../lib/tokens";
-import { Select } from "./Select";
 import { UnitContentEditor } from "./UnitContentEditor";
 import { Icon } from "../icons";
 import "./unit-builder.css";
@@ -50,7 +49,6 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   const [open,setOpen]=useState(false);
   const [source,setSource]=useState(built?.source??"");
   const [ai,setAi]=useState(true);
-  const [count,setCount]=useState("5");
   const [minutes,setMinutes]=useState(300);
   const [activityBlocks,setActivityBlocks]=useState<{heading:string;text:string}[]>([{heading:"",text:""}]);
   const [selfAssessmentContent,setSelfAssessmentContent]=useState("");
@@ -99,7 +97,7 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
     const selected=Array.from(files??[]).filter(file=>file.type.startsWith("image/"));
     if(!selected.length)return;
     if(selected.length>8){setError("Upload up to 8 logbook images at a time.");return;}
-    setError("");setMessage("");setBusy(selected.length===1?"Reading logbook image…":"Reading logbook images…");
+    setError("");setMessage("");setBusy(selected.length===1?"Reading logbook imageï¿½":"Reading logbook imagesï¿½");
     try{
       const images=await Promise.all(selected.map(logbookImageDataUrl));
       const token=(await supabase?.auth.getSession())?.data.session?.access_token;
@@ -115,12 +113,11 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   const build=async()=>{
     setError("");setMessage("");setWarning("");setBusy("Building lessons, activities and tab contentâ€¦");
     try {
-      let next=buildUnitContent(unit,source,{questions:Number(count),minutes});
-      if(next.quiz.length<Number(count)) setWarning(`The source supports ${next.quiz.length} built-in questions. Add more content for ${count}.`);
+      let next=buildUnitContent(unit,source,{minutes});
       if(ai){
         setBusy("Researching the unit standard and creating the tabs with OpenAI...");
         const token=(await supabase?.auth.getSession())?.data.session?.access_token;
-        const response=await fetch("/api/enhance-unit-content",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({unit,source,count:Number(count),minutes,activityContent:activityBlocks.map((block,index)=>`Activity ${index+1} heading:\n${block.heading.trim()||`Activity ${index+1}`}\n\nActivity ${index+1} content:\n${block.text.trim()}`).filter(text=>text.trim()).join("\n\n--- ACTIVITY SEPARATOR ---\n\n"),selfAssessmentContent,logbookContent}),signal:AbortSignal.timeout(85_000)});
+        const response=await fetch("/api/enhance-unit-content",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({unit,source,minutes,activityContent:activityBlocks.map((block,index)=>`Activity ${index+1} heading:\n${block.heading.trim()||`Activity ${index+1}`}\n\nActivity ${index+1} content:\n${block.text.trim()}`).filter(text=>text.trim()).join("\n\n--- ACTIVITY SEPARATOR ---\n\n"),selfAssessmentContent,logbookContent}),signal:AbortSignal.timeout(85_000)});
         const result=await response.json();
         if(!response.ok) throw new Error(result.error??"AI generation failed. Turn it off to build entirely with built-in code.");
         next=mergeUnitContentEnhancement(next,result.content,unit);setWarning("");
@@ -158,11 +155,10 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
         </div>
         <h3 className="unit-settings-heading">Build settings</h3>
         <div className="unit-settings-card">
-          <div className="unit-settings-row"><div className="unit-settings-copy"><strong>Quiz questions</strong><span>Choose between 3 and 10 questions.</span></div><Select ariaLabel="Unit quiz question count" disabled={!!busy} value={count} onChange={setCount} options={Array.from({length:8},(_,i)=>({value:String(i+3),label:String(i+3)}))}/></div>
           <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Session duration</strong><span>Planned teaching time in minutes.</span></span><input aria-label="Session duration in minutes" className="unit-duration" type="number" min={60} max={2400} value={minutes} disabled={!!busy} onChange={e=>setMinutes(Math.min(2400,Math.max(60,Number(e.target.value))))}/></label>
-          <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Build tabs with OpenAI web research</strong><span>Use OpenAI web research to build the overview, logbook, evaluation, activities and quiz.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={ai} disabled={!!busy} onChange={e=>setAi(e.target.checked)}/></label>
+          <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Build tabs with OpenAI web research</strong><span>Use OpenAI web research to build the overview, logbook, evaluation and activities.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={ai} disabled={!!busy} onChange={e=>setAi(e.target.checked)}/></label>
         </div>
-        <p className="muted">Lessons keep your source text. When AI is enabled, OpenAI researches the unit standard online and uses your activity, self-assessment and logbook content to create the matching tabs, overview, evaluation, lesson plan and quiz.</p>
+        <p className="muted">Lessons keep your source text. When AI is enabled, OpenAI researches the unit standard online and uses your activity, self-assessment and logbook content to create the matching tabs, overview, evaluation and lesson plan.</p>
         <button type="button" className="btn unit-build-action" disabled={!!busy||source.trim().length<100||(ai&&(!activityBlocks.some(block=>block.text.trim())||!selfAssessmentContent.trim()||!logbookContent.trim()))} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>void build()}><span>{busy?`Creating ${busyProgress}%`:"Build complete unit standard"}</span></button>
       </>}
       <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(false);setDraft(null);}}>Close</button>
