@@ -1,5 +1,5 @@
-import { useEffect, useState, type CSSProperties } from "react";
-import type { UnitContent, UnitStandard } from "../types";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import type { PoeDoc, UnitContent, UnitStandard } from "../types";
 import type { LessonEdits } from "../store";
 import { buildUnitContent, validateUnitContent, MAX_SOURCE_LENGTH, mergeUnitContentEnhancement } from "../lib/unitBuilder";
 import { useBuiltUnit, saveBuiltUnit } from "../lib/useBuiltUnit";
@@ -169,11 +169,34 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
 
 export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
   const built=useBuiltUnit(us);
+  const fileRef=useRef<HTMLInputElement|null>(null);
   const [error,setError]=useState("");
+  const [busy,setBusy]=useState("");
+  const [uploadPct,setUploadPct]=useState<number|null>(null);
   if(!built)return null;
-  return <div className="unit-builder-downloads"><h3>Generated course materials</h3><p>PDF learner pack and editable PowerPoint generated from this unit's content.</p>
-    <div className="unit-builder-bar">{[built.files.pdf,built.files.pptx,...(staff?[built.files.answers]:[])].map(file=><button type="button" className="btn ghost" key={file.name} onClick={()=>void downloadDoc(file).catch(()=>setError("The file could not be downloaded. Please retry."))}><Icon name="download" size={15}/>{file.name}</button>)}</div>{error&&<p role="alert">{error}</p>}
+  const material=built.files.material;
+  const saveMaterial=async(doc?:PoeDoc)=>{
+    await saveBuiltUnit(us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content:built.content,files:{...built.files,material:doc},aiUsed:built.aiUsed});
+  };
+  const onFile=async(file:File|undefined)=>{
+    if(!file)return;
+    setError("");setBusy("Uploading course material...");setUploadPct(0);
+    try{
+      const doc=await uploadFile(`shared/unitbuilder/${us}/material`,file,setUploadPct);
+      await saveMaterial(doc);
+    }catch(e){setError(e instanceof Error?e.message:"The course material could not be uploaded.");}
+    finally{setBusy("");setUploadPct(null);}
+  };
+  return <div className="unit-builder-downloads"><h3>Course material</h3>
+    {material?<p>Uploaded course material for this unit.</p>:<p className="muted">No course material has been uploaded for this built unit.</p>}
+    <div className="unit-builder-bar">
+      {material&&<button type="button" className="btn ghost" onClick={()=>void downloadDoc(material).catch(()=>setError("The file could not be downloaded. Please retry."))}><Icon name="download" size={15}/>{material.name}</button>}
+      {staff&&<button type="button" className="btn ghost" disabled={!!busy} onClick={()=>fileRef.current?.click()}><Icon name="folder" size={15}/>{material?"Replace course material":"Upload course material"}</button>}
+      {staff&&material&&<button type="button" className="btn ghost" disabled={!!busy} onClick={()=>void saveMaterial(undefined).catch(e=>setError(e instanceof Error?e.message:"The course material could not be removed."))}><Icon name="close" size={14}/>Remove</button>}
+    </div>
+    <input ref={fileRef} type="file" hidden accept=".pdf,.ppt,.pptx,.doc,.docx,.odt,.rtf,.txt,image/*,video/*" onChange={e=>{const file=e.target.files?.[0];e.target.value="";void onFile(file);}}/>
+    {uploadPct!==null&&<div className="upload-progress plan-upload-progress" role="progressbar" aria-valuenow={uploadPct}><div className="track"><div className="fill" style={{width:`${uploadPct}%`}}/></div><span className="pct">Uploading... {uploadPct}%</span></div>}
+    {busy&&<p role="status">{busy}</p>}{error&&<p role="alert" className="auth-error">{error}</p>}
   </div>;
 }
-
 
