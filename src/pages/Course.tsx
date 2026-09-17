@@ -29,7 +29,7 @@ import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 import { requestSemanticReview } from "../lib/llm";
 import { checkSpelling, type SpellIssue } from "../lib/spellcheck";
 import { autoGrowTextarea } from "../lib/autoGrow";
-import { groupLessonHtml, isLessonListLead, isLessonListPoint, isLessonSubheading } from "../lib/lessonSubsections";
+import { groupLessonHtml, isLessonBulletListLead, isLessonListLead, isLessonListPoint, isLessonNumberedListLead, isLessonSubheading } from "../lib/lessonSubsections";
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
 
@@ -3563,14 +3563,14 @@ export function UnitPage({
                   const renderParagraphs = (start: number, end: number, heading: string): React.ReactNode[] => {
                   const els: React.ReactNode[] = [];
                   const isPoint = (value: string) => isLessonListPoint(plainSlideText(value));
-                  const renderList = (points: string[], key: string) => <ol className="lesson-inferred-list" key={key}>
-                    {points.map((point,index)=><li key={index}><Gloss text={point}/></li>)}
-                  </ol>;
+                  const renderList = (points: string[], key: string, ordered: boolean) => ordered
+                    ? <ol className="lesson-inferred-list" key={key}>{points.map((point,index)=><li key={index}><Gloss text={point}/></li>)}</ol>
+                    : <ul className="lesson-inferred-list" key={key}>{points.map((point,index)=><li key={index}><Gloss text={point}/></li>)}</ul>;
                   let i = start;
                   if (isLessonListLead(plainSlideText(heading))) {
                     const points: string[] = [];
                     while (i < end && isPoint(paraText(i))) points.push(paraText(i++));
-                    if (points.length) els.push(renderList(points, `heading-points-${start}`));
+                    if (points.length) els.push(renderList(points, `heading-points-${start}`, isLessonNumberedListLead(plainSlideText(heading))));
                   }
                   while (i < end) {
                     const text = paraText(i);
@@ -3581,7 +3581,7 @@ export function UnitPage({
                       while (j < end && isPoint(paraText(j))) { points.push(paraText(j)); j++; }
                       els.push(<div className="lesson-point-group" key={`points-${i}`}>
                         <p className="lesson-p lesson-point-lead"><Gloss text={text} /></p>
-                        {renderList(points, `points-list-${i}`)}
+                        {renderList(points, `points-list-${i}`, !isLessonBulletListLead(visibleText))}
                       </div>);
                       i = j;
                       continue;

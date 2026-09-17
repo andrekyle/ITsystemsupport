@@ -22,15 +22,30 @@ const overheadPoints = [
   "Interest factor etc.",
   "Licenses, permits, taxes.",
 ];
-const revision = "numbered-list-fixture-2";
+const resourceTitle = "The rate is the cost of resources involved per unit of work. The resources are usually:";
+const resourcePoints = ["Man-hours.", "Materials.", "Tools and plants.", "Overheads.", "Profit margin."];
+const revision = "numbered-list-fixture-3";
 const storageKey = `itss.lessonedits.114059.built-${revision}`;
-const reloadKey = "lesson-lists-reloaded-2";
+const reloadKey = "lesson-lists-reloaded-3";
 const tick = () => new Promise(resolve => setTimeout(resolve, 80));
 function assert(ok: unknown, message: string): asserts ok { if (!ok) throw new Error(message); }
 function click(label: string) {
   const button = Array.from(document.querySelectorAll("button")).find(button => button.textContent?.trim() === label);
   assert(button, `Missing button: ${label}`);
   button.click();
+}
+function verifyBullet(mode: string, expected: string[]) {
+  const lesson = document.querySelector<HTMLElement>(".lesson-section");
+  assert(lesson, `${mode}: lesson is displayed`);
+  const lists = Array.from(lesson.querySelectorAll<HTMLUListElement>("ul.lesson-inferred-list"));
+  assert(lists.length === 1, `${mode}: one bullet list contains the resource group (found ${lists.length})`);
+  assert(lesson.querySelectorAll("ol.lesson-inferred-list").length === 0, `${mode}: resource list is not numbered`);
+  const items = Array.from(lists[0].querySelectorAll<HTMLElement>(":scope > li"));
+  assert(items.length === expected.length, `${mode}: all bullet items remain on this slide`);
+  items.forEach((item, index) => {
+    assert(item.textContent?.trim() === expected[index], `${mode}: bullet item ${index + 1} text preserved`);
+    assert(getComputedStyle(item).listStyleType !== "decimal", `${mode}: bullet item ${index + 1} does not use decimal numbering`);
+  });
 }
 function visible(element: Element) {
   const style = getComputedStyle(element);
@@ -87,7 +102,7 @@ async function verifyEditing(mode: string, expected: string[]) {
   verify(`${mode}: saved`, expected);
 }
 async function test() {
-  const source = `${presentationTitle}\n\n${presentationPoints.join("\n\n")}\n\n${estimateTitle}\n\n${estimateLead}\n\n${estimatePoints.join("\n\n")}\n\n${overheadTitle}\n\n${overheadPoints.join("\n\n")}`;
+  const source = `${presentationTitle}\n\n${presentationPoints.join("\n\n")}\n\n${estimateTitle}\n\n${estimateLead}\n\n${estimatePoints.join("\n\n")}\n\n${overheadTitle}\n\n${overheadPoints.join("\n\n")}\n\n${resourceTitle}\n\n${resourcePoints.join("\n\n")}`;
   const content = buildUnitContent({ us: "114059", title: "Cost estimation", nqf: 5, credits: 5, dates: "", time: "" }, source, { questions: 3, minutes: 60 });
   const file = { name: "Fixture", type: "application/pdf", size: 0, uploadedAt: "2026-09-17" };
   rememberUnitPack("itss.unitbuilder.114059.shared", JSON.stringify({
@@ -97,6 +112,7 @@ async function test() {
       { heading: presentationTitle, paragraphs: presentationPoints },
       { heading: "Brass Tacks", paragraphs: [estimateTitle, estimateLead, ...estimatePoints] },
       { heading: overheadTitle, paragraphs: overheadPoints },
+      { heading: resourceTitle, paragraphs: resourcePoints },
     ] },
   }));
   if (!sessionStorage.getItem(reloadKey)) {
@@ -113,6 +129,8 @@ async function test() {
   await tick();
   const reloaded = Boolean(sessionStorage.getItem(reloadKey));
   if (reloaded) {
+    click("Previous");
+    await tick();
     click("Previous");
     await tick();
     click("Previous");
@@ -137,9 +155,28 @@ async function test() {
   await tick();
   if (reloaded) verify("Reloaded overhead list", overheadPoints);
   else await verifyEditing("Overhead involve list", overheadPoints);
+  click("Next");
+  await tick();
+  if (reloaded) verifyBullet("Reloaded resource bullet list", resourcePoints);
+  else {
+    verifyBullet("Resource bullet list: reading", resourcePoints);
+    click("Edit content");
+    await tick();
+    verifyBullet("Resource bullet list: editing", resourcePoints);
+    const firstItem = document.querySelector<HTMLElement>(".slide-whole-editor ul > li")!;
+    const emphasis = document.createElement("strong");
+    while (firstItem.firstChild) emphasis.append(firstItem.firstChild);
+    firstItem.append(emphasis);
+    document.querySelector<HTMLElement>(".slide-whole-editor")!.dispatchEvent(new Event("input", { bubbles: true }));
+    await tick();
+    click("Done editing");
+    await tick();
+    verifyBullet("Resource bullet list: saved", resourcePoints);
+  }
   if (!reloaded) {
     const stored = JSON.parse(localStorage.getItem(storageKey)!);
     assert([0, 1, 2, 3].every(index => stored.sectionBody?.[index]?.richHtml?.includes("<ol")), "Each edited list is saved as an ordered list");
+    assert(stored.sectionBody?.[4]?.richHtml?.includes("<ul"), "Bullet lead is saved as an unordered list");
     sessionStorage.setItem(reloadKey, "1");
     location.reload();
     return;
@@ -153,10 +190,12 @@ async function test() {
   await tick();
   click("Previous");
   await tick();
+  click("Previous");
+  await tick();
   verify("Final Presentation screenshot", presentationPoints);
   document.querySelector(".lesson-screen")?.scrollIntoView();
   document.body.dataset.result = "passed";
-  document.getElementById("result")!.textContent = "PASS: Presentation, engineering and overhead lists have one number per item in Lesson reading, editing, saved rich text and full reload; all points stay on one slide without stripes or overflow";
+  document.getElementById("result")!.textContent = "PASS: numbered lesson groups stay numbered, resource-style colon groups stay bulleted, and all list points survive read/edit/save/reload";
 }
 
 test().catch(error => {

@@ -1,6 +1,6 @@
 import type { UnitContent, UnitStandard } from "../types";
 import { plainSlideText } from "./slideRichText";
-import { isLessonListLead } from "./lessonSubsections";
+import { isLessonBulletListLead, isLessonListLead } from "./lessonSubsections";
 
 export type ExportPage = { title: string; lines: string[] };
 function wrap(text: string, width = 86): string[] {
@@ -41,7 +41,7 @@ export function unitExportPages(unit: UnitStandard, content: UnitContent): Expor
         let j = i + 1;
         while (j < block.lines.length && block.lines[j].trim().length > 0 && block.lines[j].trim().length <= 180 && !/^\d+(?:\.\d+)*[.)]?\s+\S/.test(block.lines[j].trim())) points.push(block.lines[j++]);
         if (points.length) {
-          grouped.push([lead, ...points.map((point, index) => `${index + 1}. ${point}`)]);
+          grouped.push([lead, ...points.map((point, index) => isLessonBulletListLead(lead) ? `• ${point}` : `${index + 1}. ${point}`)]);
           i = j - 1;
           continue;
         }

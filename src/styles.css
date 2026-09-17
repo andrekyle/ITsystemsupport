@@ -1967,7 +1967,9 @@ textarea:focus {
 
 .lesson-point-group { margin: 0 0 18px; }
 .lesson-point-lead { margin-bottom: 3px !important; }
-.lesson-section .lesson-inferred-list { margin:8px 0 18px; padding:0 0 0 1.65em; list-style:decimal; color:var(--ink-2); font-size:clamp(17px,1.4vw,19px); line-height:1.65; }
+.lesson-section .lesson-inferred-list { margin:8px 0 18px; padding:0 0 0 1.65em; color:var(--ink-2); font-size:clamp(17px,1.4vw,19px); line-height:1.65; }
+.lesson-section ol.lesson-inferred-list { list-style:decimal; }
+.lesson-section ul.lesson-inferred-list { list-style:disc; }
 .lesson-section .lesson-inferred-list > li { display:list-item; padding:3px 0 3px 5px; margin:0; }
 .lesson-section .lesson-inferred-list > li::marker { color:var(--ink-3); font-weight:600; }
 

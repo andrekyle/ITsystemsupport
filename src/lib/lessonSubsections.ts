@@ -6,11 +6,19 @@ export function isLessonSubheading(text: string): boolean {
   return value.length <= 160 && !/[\r\n]/.test(value) && !/[.!?]$/.test(value) && /^\d+(?:\.\d+)*[.)]?\s+\p{L}/u.test(value);
 }
 export function isLessonListLead(text: string): boolean {
+  return isLessonNumberedListLead(text) || isLessonBulletListLead(text);
+}
+
+export function isLessonNumberedListLead(text: string): boolean {
   const value = text.replace(/[\u00a0\s]+$/g, "").trim();
-  return /:$/.test(value)
-    || /\bfollowing items of work$/i.test(value)
-    || /\bas follows$/i.test(value)
+  return /\bfollowing items of work$/i.test(value)
+    || /\bas follows:?$/i.test(value)
     || /\b(?:involves?|includes?|comprises?|consists? of|are|is)$/i.test(value);
+}
+
+export function isLessonBulletListLead(text: string): boolean {
+  const value = text.replace(/[\u00a0\s]+$/g, "").trim();
+  return /:$/.test(value) && !isLessonNumberedListLead(value);
 }
 
 /** A short source paragraph following a list lead, including full sentences. */
@@ -77,14 +85,14 @@ export function groupLessonHtml(html: string, sectionHeading = ""): string {
     && !element.querySelector("div,table,ul,ol,h2,h3")
     && !element.classList.contains("lesson-subsection")
     && isLessonListPoint(element.textContent ?? "");
-  const numberPoints = (first: Element | null) => {
+  const groupPoints = (first: Element | null, ordered: boolean) => {
     const points: Element[] = [];
     let next = first;
     while (next && isPoint(next)) {
       points.push(next); next = next.nextElementSibling;
     }
     if (!points.length) return;
-    const list = document.createElement("ol");
+    const list = document.createElement(ordered ? "ol" : "ul");
     list.className = "lesson-inferred-list";
     points[0].before(list);
     for (const point of points) {
@@ -97,10 +105,10 @@ export function groupLessonHtml(html: string, sectionHeading = ""): string {
   };
   // The source parser promotes colon lead-ins into the section title.
   // Its following paragraphs still form a list in both reading and edit modes.
-  if (isLessonListLead(sectionHeading)) numberPoints(root.firstElementChild);
+  if (isLessonListLead(sectionHeading)) groupPoints(root.firstElementChild, isLessonNumberedListLead(sectionHeading));
   for (const lead of Array.from(root.querySelectorAll("p,div,h2,h3"))) {
     if (lead.closest("li,table,.lesson-card") || lead.querySelector("p,div,table,ul,ol,h2,h3")) continue;
-    if (isLessonListLead(lead.textContent ?? "")) numberPoints(lead.nextElementSibling);
+    if (isLessonListLead(lead.textContent ?? "")) groupPoints(lead.nextElementSibling, isLessonNumberedListLead(lead.textContent ?? ""));
   }
   const heading = (element: Element) =>
     !element.classList.contains("section-title") &&
