@@ -195,6 +195,31 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
     if (!currentSelection?.rangeCount) return;
     const currentRange = currentSelection.getRangeAt(0);
     if (!restored.editor.contains(currentRange.commonAncestorContainer)) return;
+    const listAncestor = (node: Node | null): HTMLOListElement | HTMLUListElement | null => {
+      let current: Node | null = node;
+      while (current && current !== restored.editor) {
+        if (current instanceof HTMLOListElement || current instanceof HTMLUListElement) return current;
+        current = current.parentNode;
+      }
+      return null;
+    };
+    const startList = listAncestor(currentRange.startContainer);
+    const endList = listAncestor(currentRange.endContainer);
+    if (startList && startList === endList) {
+      const replacement = document.createElement(ordered ? "ol" : "ul");
+      for (const attribute of Array.from(startList.attributes)) replacement.setAttribute(attribute.name, attribute.value);
+      replacement.className = startList.className;
+      while (startList.firstChild) replacement.appendChild(startList.firstChild);
+      startList.replaceWith(replacement);
+      const caret = document.createRange();
+      caret.selectNodeContents(replacement);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(caret);
+      range.current = caret;
+      restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
+      return;
+    }
     if (currentRange.collapsed) {
       document.execCommand(ordered ? "insertOrderedList" : "insertUnorderedList", false);
       if (restored.selection?.rangeCount) range.current = restored.selection.getRangeAt(0).cloneRange();
