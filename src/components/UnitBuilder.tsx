@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import type { UnitContent, UnitStandard } from "../types";
 import type { LessonEdits } from "../store";
-import { buildUnitContent, validateUnitContent, MAX_SOURCE_LENGTH } from "../lib/unitBuilder";
+import { buildUnitContent, validateUnitContent, MAX_SOURCE_LENGTH, mergeUnitContentEnhancement } from "../lib/unitBuilder";
 import { useBuiltUnit, saveBuiltUnit } from "../lib/useBuiltUnit";
 import { importUnitSource } from "../lib/unitSourceImport";
 import { makeUnitExports } from "../lib/unitExports";
@@ -75,16 +75,16 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   const build=async()=>{
     setError("");setMessage("");setWarning("");setBusy("Building lessons, activities and tab content…");
     try {
-      const next=buildUnitContent(unit,source,{questions:Number(count),minutes});
+      let next=buildUnitContent(unit,source,{questions:Number(count),minutes});
       if(next.quiz.length<Number(count)) setWarning(`The source supports ${next.quiz.length} built-in questions. Add more content for ${count}.`);
       if(ai){
-        setBusy("Improving the quiz with OpenAI…");
+        setBusy("Researching the unit standard and creating the tabs with OpenAI...");
         const token=(await supabase?.auth.getSession())?.data.session?.access_token;
-        const response=await fetch("/api/enhance-unit-quiz",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({source,count:Number(count)}),signal:AbortSignal.timeout(55_000)});
+        const response=await fetch("/api/enhance-unit-content",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({unit,source,count:Number(count),minutes}),signal:AbortSignal.timeout(85_000)});
         const result=await response.json();
-        if(!response.ok) throw new Error(result.error??"AI enhancement failed. Turn it off to build entirely with built-in code.");
-        next.quiz=result.questions;setWarning("");
-        if(result.usage) void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.prompt_tokens??0,completionTokens:result.usage.completion_tokens??0,totalTokens:result.usage.total_tokens??0});
+        if(!response.ok) throw new Error(result.error??"AI generation failed. Turn it off to build entirely with built-in code.");
+        next=mergeUnitContentEnhancement(next,result.content);setWarning("");
+        if(result.usage) void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.input_tokens??result.usage.prompt_tokens??0,completionTokens:result.usage.output_tokens??result.usage.completion_tokens??0,totalTokens:result.usage.total_tokens??0});
       }
       await publish(next,source,ai);
       doneBusy(()=>setOpen(false));
@@ -114,9 +114,9 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
         <div className="unit-settings-card">
           <div className="unit-settings-row"><div className="unit-settings-copy"><strong>Quiz questions</strong><span>Choose between 3 and 10 questions.</span></div><Select ariaLabel="Unit quiz question count" disabled={!!busy} value={count} onChange={setCount} options={Array.from({length:8},(_,i)=>({value:String(i+3),label:String(i+3)}))}/></div>
           <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Session duration</strong><span>Planned teaching time in minutes.</span></span><input aria-label="Session duration in minutes" className="unit-duration" type="number" min={60} max={2400} value={minutes} disabled={!!busy} onChange={e=>setMinutes(Math.min(2400,Math.max(60,Number(e.target.value))))}/></label>
-          <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Improve questions with AI</strong><span>Use OpenAI to refine the quiz questions.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={ai} disabled={!!busy} onChange={e=>setAi(e.target.checked)}/></label>
+          <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Build tabs with OpenAI web research</strong><span>Use OpenAI web research to build the overview, logbook, evaluation, activities and quiz.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={ai} disabled={!!busy} onChange={e=>setAi(e.target.checked)}/></label>
         </div>
-        <p className="muted">Lessons keep your source text. Activities, assignments, notes, logbook, self assessment, evaluation, lesson plan and exports are assembled by built-in code.</p>
+        <p className="muted">Lessons keep your source text. When AI is enabled, OpenAI researches the unit standard online and creates matching activities, overview, logbook, self assessment, evaluation, lesson plan and quiz content.</p>
         <button type="button" className="btn unit-build-action" disabled={!!busy||source.trim().length<100} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>void build()}><span>{busy?`Creating ${busyProgress}%`:"Build complete unit standard"}</span></button>
       </>}
       <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(false);setDraft(null);}}>Close</button>

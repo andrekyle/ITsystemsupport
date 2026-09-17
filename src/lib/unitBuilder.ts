@@ -88,6 +88,41 @@ export function makeSourceQuiz(topics: UnitTopic[], count: number): QuizQuestion
   return questions;
 }
 
+
+export type UnitContentEnhancement = {
+  overview?: UnitContent["saqa"];
+  saqa?: UnitContent["saqa"];
+  logbook?: UnitContent["logbook"];
+  evaluation?: UnitContent["evaluation"];
+  selfAssessment?: UnitContent["selfAssessment"];
+  lessonPlan?: UnitContent["lessonPlan"];
+  studyNotes?: UnitContent["studyNotes"];
+  exercises?: UnitContent["exercises"];
+  questionSessions?: UnitContent["questionSessions"];
+  assignments?: UnitContent["assignments"];
+  quiz?: UnitContent["quiz"];
+};
+
+const nonemptyString = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
+const nonemptyArray = <T,>(value: unknown): value is T[] => Array.isArray(value) && value.length > 0;
+
+export function mergeUnitContentEnhancement(base: UnitContent, enhancement: UnitContentEnhancement): UnitContent {
+  const next = structuredClone(base);
+  const overview = enhancement.overview ?? enhancement.saqa;
+  if (overview?.sections?.length && overview.registration?.length) next.saqa = overview;
+  if (enhancement.logbook?.knowledgeQuestions?.length && enhancement.logbook.practicalActivities?.length) next.logbook = enhancement.logbook;
+  if (enhancement.evaluation?.questions?.length && nonemptyString(enhancement.evaluation.intro)) next.evaluation = enhancement.evaluation;
+  if (enhancement.selfAssessment?.items?.length) next.selfAssessment = enhancement.selfAssessment;
+  if (enhancement.lessonPlan?.sections?.length) next.lessonPlan = enhancement.lessonPlan;
+  if (nonemptyArray(enhancement.studyNotes)) next.studyNotes = enhancement.studyNotes;
+  if (nonemptyArray(enhancement.exercises)) next.exercises = enhancement.exercises;
+  if (nonemptyArray(enhancement.questionSessions)) next.questionSessions = enhancement.questionSessions;
+  if (nonemptyArray(enhancement.assignments)) next.assignments = enhancement.assignments;
+  if (nonemptyArray(enhancement.quiz)) next.quiz = enhancement.quiz;
+  validateUnitContent(next);
+  return next;
+}
+
 export function buildUnitContent(unit: UnitStandard, source: string, options: BuildOptions): UnitContent {
   const topics = parseUnitSource(source);
   const count = Math.min(10, Math.max(3, options.questions));
