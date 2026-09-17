@@ -30,7 +30,7 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
   const [size, setSize] = useState("");
   const [tableRows, setTableRows] = useState("3");
   const [tableCols, setTableCols] = useState("3");
-  const [menu, setMenu] = useState<"text" | "paragraph" | null>(null);
+  const [menu, setMenu] = useState<"text" | "paragraph" | "table" | null>(null);
   const [ready, setReady] = useState(false);
   const [active, setActive] = useState<string[]>([]);
   const refreshHistory = () => setHistoryCounts({ undo: history.current.undoCount, redo: history.current.redoCount });
@@ -213,7 +213,7 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       onMouseDown={e => e.preventDefault()} onClick={() => run(cmd)}>{icon ?? label}</button>
   );
   const alignmentIcon = (center = false) => <svg viewBox="0 0 24 24" aria-hidden="true"><path d={center ? "M3 5h18M6 11h12M9 17h6" : "M3 5h18M3 11h12M3 17h6"} /></svg>;
-  const menuToggle = (kind: "text" | "paragraph", label: string, symbol: string) => <button type="button" aria-label={label} title={label}
+  const menuToggle = (kind: "text" | "paragraph" | "table", label: string, symbol: string) => <button type="button" aria-label={label} title={label}
     aria-expanded={menu === kind} aria-controls={`slide-${kind}-options`} onMouseDown={e => e.preventDefault()}
     onClick={() => setMenu(menu === kind ? null : kind)}><span>{symbol}</span><span className="slide-tool-dots" aria-hidden="true">&#8942;</span></button>;
   return <div className="slide-text-toolbar" ref={bar} onKeyDown={e => { if (e.key === "Escape") { setMenu(null); host.current?.focus(); } }}>
@@ -227,9 +227,10 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       {commandButton("justifyLeft", "Align left", alignmentIcon())}
       {commandButton("justifyCenter", "Centre", alignmentIcon(true))}
       {commandButton("insertOrderedList", "Numbered list", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h12M9 12h12M9 19h12" /><text x="1" y="7">1</text><text x="1" y="14">2</text><text x="1" y="21">3</text></svg>)}
+      {menuToggle("table", "Table", "Table")}
       {menuToggle("paragraph", "Paragraph and editing options", "\u00b6")}
     </div>
-    {menu && <div id={`slide-${menu}-options`} className="slide-text-options" role="group" aria-label={menu === "text" ? "Font and text options" : "Paragraph and editing options"}>
+    {menu && <div id={`slide-${menu}-options`} className="slide-text-options" role="group" aria-label={menu === "text" ? "Font and text options" : menu === "table" ? "Table options" : "Paragraph and editing options"}>
       {menu === "text" ? <>
         <div className="slide-tool-field"><span>Font</span><Select ariaLabel="Font" disabled={!ready} placeholder="Choose font" value={font} options={["Arial", "Verdana", "Georgia", "Times New Roman", "Courier New", "Tahoma", "Trebuchet MS"].map(value => ({ value, label: value }))} onChange={value => { setFont(value); run("fontName", value); }} /></div>
         <div className="slide-tool-field"><span>Size</span><Select ariaLabel="Font size" disabled={!ready} placeholder="Choose size" value={size} options={[10, 13, 16, 18, 24, 32, 48].map((value, i) => ({ value: String(i + 1), label: `${value} px` }))} onChange={value => { setSize(value); run("fontSize", value); }} /></div>
@@ -245,11 +246,12 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
         {commandButton("subscript", "Subscript", <span aria-hidden="true">x<sub>2</sub></span>)}
         {commandButton("superscript", "Superscript", <span aria-hidden="true">x<sup>2</sup></span>)}
         {commandButton("removeFormat", "Clear formatting", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h13M11 4l-4 15m5-3 5-5 5 5-5 5h-3l-4-4 2-1Zm1-1 5 5M12 21h10" /></svg>)}
-      </> : <>
-        {commands.filter(([cmd]) => ["justifyRight", "justifyFull", "insertUnorderedList", "indent", "outdent", "selectAll"].includes(cmd)).map(([cmd, label]) => commandButton(cmd, label))}
+      </> : menu === "table" ? <>
         <div className="slide-tool-field"><span>Rows</span><Select ariaLabel="Table rows" disabled={!ready} value={tableRows} options={Array.from({ length: 10 }, (_, index) => ({ value: String(index + 1), label: String(index + 1) }))} onChange={setTableRows} /></div>
         <div className="slide-tool-field"><span>Columns</span><Select ariaLabel="Table columns" disabled={!ready} value={tableCols} options={Array.from({ length: 8 }, (_, index) => ({ value: String(index + 1), label: String(index + 1) }))} onChange={setTableCols} /></div>
         <button type="button" disabled={!ready} onMouseDown={e => e.preventDefault()} onClick={insertTable}>Insert table</button>
+      </> : <>
+        {commands.filter(([cmd]) => ["justifyRight", "justifyFull", "insertUnorderedList", "indent", "outdent", "selectAll"].includes(cmd)).map(([cmd, label]) => commandButton(cmd, label))}
       </>}
       {!ready && <small>Click or select slide text to start formatting.</small>}
     </div>}

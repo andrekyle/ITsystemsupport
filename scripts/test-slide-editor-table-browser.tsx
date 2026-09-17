@@ -70,8 +70,9 @@ async function test() {
     await tick();
     const editor = document.querySelector<HTMLElement>(".slide-whole-editor")!;
     placeCaretAtEnd(editor);
-    click("Paragraph and editing options");
+    click("Table");
     await tick();
+    assert(document.querySelector('[aria-label="Table options"]'), "Table button opens the row and column picker");
     click("Insert table");
     await tick();
     verify("editing");
