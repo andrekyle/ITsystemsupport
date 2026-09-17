@@ -33,6 +33,9 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   const [ai,setAi]=useState(true);
   const [count,setCount]=useState("5");
   const [minutes,setMinutes]=useState(300);
+  const [activityContent,setActivityContent]=useState("");
+  const [selfAssessmentContent,setSelfAssessmentContent]=useState("");
+  const [logbookContent,setLogbookContent]=useState("");
   const [busy,setBusy]=useState("");
   const [error,setError]=useState("");
   const [message,setMessage]=useState("");
@@ -80,7 +83,7 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
       if(ai){
         setBusy("Researching the unit standard and creating the tabs with OpenAI...");
         const token=(await supabase?.auth.getSession())?.data.session?.access_token;
-        const response=await fetch("/api/enhance-unit-content",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({unit,source,count:Number(count),minutes}),signal:AbortSignal.timeout(85_000)});
+        const response=await fetch("/api/enhance-unit-content",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({unit,source,count:Number(count),minutes,activityContent,selfAssessmentContent,logbookContent}),signal:AbortSignal.timeout(85_000)});
         const result=await response.json();
         if(!response.ok) throw new Error(result.error??"AI generation failed. Turn it off to build entirely with built-in code.");
         next=mergeUnitContentEnhancement(next,result.content);setWarning("");
@@ -110,14 +113,20 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
           </div>
           <label className="unit-source-field"><strong>Source content</strong><span>Paste the teaching material for this unit.</span><textarea rows={7} value={source} maxLength={MAX_SOURCE_LENGTH} disabled={!!busy} onChange={e=>setSource(e.target.value)} placeholder={`Paste the content for US ${unit.us} here…`}/></label>
         </div>
+        <h3 className="unit-settings-heading">Activity, self-assessment and logbook content</h3>
+        <div className="unit-settings-card">
+          <label className="unit-source-field"><strong>Activity content</strong><span>Paste or describe the activities/question sessions that must appear under the Activity tab.</span><textarea rows={5} value={activityContent} disabled={!!busy} onChange={e=>setActivityContent(e.target.value)} placeholder="Example: Questioning tasks, time allowed, Activity: Self & Group, learner questions, required evidence, model answer guidance..."/></label>
+          <label className="unit-source-field"><strong>Self-assessment content</strong><span>Paste or describe the competence checklist learners must tick after the lesson.</span><textarea rows={4} value={selfAssessmentContent} disabled={!!busy} onChange={e=>setSelfAssessmentContent(e.target.value)} placeholder="Example: I can prepare a time estimate..., I can explain cost components..., revisit areas needing more practice..."/></label>
+          <label className="unit-source-field"><strong>Logbook content</strong><span>Paste or describe the workplace logbook activities, evidence notes and checklist items.</span><textarea rows={5} value={logbookContent} disabled={!!busy} onChange={e=>setLogbookContent(e.target.value)} placeholder="Example: workplace activities, knowledge questions, practical evidence, project checklist, supervisor verification requirements..."/></label>
+        </div>
         <h3 className="unit-settings-heading">Build settings</h3>
         <div className="unit-settings-card">
           <div className="unit-settings-row"><div className="unit-settings-copy"><strong>Quiz questions</strong><span>Choose between 3 and 10 questions.</span></div><Select ariaLabel="Unit quiz question count" disabled={!!busy} value={count} onChange={setCount} options={Array.from({length:8},(_,i)=>({value:String(i+3),label:String(i+3)}))}/></div>
           <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Session duration</strong><span>Planned teaching time in minutes.</span></span><input aria-label="Session duration in minutes" className="unit-duration" type="number" min={60} max={2400} value={minutes} disabled={!!busy} onChange={e=>setMinutes(Math.min(2400,Math.max(60,Number(e.target.value))))}/></label>
           <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Build tabs with OpenAI web research</strong><span>Use OpenAI web research to build the overview, logbook, evaluation, activities and quiz.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={ai} disabled={!!busy} onChange={e=>setAi(e.target.checked)}/></label>
         </div>
-        <p className="muted">Lessons keep your source text. When AI is enabled, OpenAI researches the unit standard online and creates matching activities, overview, logbook, self assessment, evaluation, lesson plan and quiz content.</p>
-        <button type="button" className="btn unit-build-action" disabled={!!busy||source.trim().length<100} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>void build()}><span>{busy?`Creating ${busyProgress}%`:"Build complete unit standard"}</span></button>
+        <p className="muted">Lessons keep your source text. When AI is enabled, OpenAI researches the unit standard online and uses your activity, self-assessment and logbook content to create the matching tabs, overview, evaluation, lesson plan and quiz.</p>
+        <button type="button" className="btn unit-build-action" disabled={!!busy||source.trim().length<100||(ai&&(!activityContent.trim()||!selfAssessmentContent.trim()||!logbookContent.trim()))} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>void build()}><span>{busy?`Creating ${busyProgress}%`:"Build complete unit standard"}</span></button>
       </>}
       <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(false);setDraft(null);}}>Close</button>
     </div>}
