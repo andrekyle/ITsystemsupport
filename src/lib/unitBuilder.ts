@@ -106,6 +106,17 @@ export type UnitContentEnhancement = {
 const nonemptyString = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
 const nonemptyArray = <T,>(value: unknown): value is T[] => Array.isArray(value) && value.length > 0;
 
+
+function stableId(prefix: string, title: string, index: number): string {
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 56);
+  return `${prefix}-${index + 1}-${slug || "activity"}`;
+}
+
+function normalizeActivities<T extends { id: string; title: string; steps?: string[]; checks?: unknown[] }>(items: T[] | undefined, prefix: string): T[] | undefined {
+  if (!items?.length) return items;
+  return items.map((item, index) => ({ ...item, id: stableId(prefix, item.title, index) }));
+}
+
 export function mergeUnitContentEnhancement(base: UnitContent, enhancement: UnitContentEnhancement): UnitContent {
   const next = structuredClone(base);
   const overview = enhancement.overview ?? enhancement.saqa;
@@ -115,8 +126,8 @@ export function mergeUnitContentEnhancement(base: UnitContent, enhancement: Unit
   if (enhancement.selfAssessment?.items?.length) next.selfAssessment = enhancement.selfAssessment;
   if (enhancement.lessonPlan?.sections?.length) next.lessonPlan = enhancement.lessonPlan;
   if (nonemptyArray(enhancement.studyNotes)) next.studyNotes = enhancement.studyNotes;
-  if (nonemptyArray(enhancement.exercises)) next.exercises = enhancement.exercises;
-  if (nonemptyArray(enhancement.questionSessions)) next.questionSessions = enhancement.questionSessions;
+  if (nonemptyArray(enhancement.exercises)) next.exercises = normalizeActivities(enhancement.exercises, "activity")!;
+  if (nonemptyArray(enhancement.questionSessions)) next.questionSessions = normalizeActivities(enhancement.questionSessions, "question-session")!;
   if (nonemptyArray(enhancement.assignments)) next.assignments = enhancement.assignments;
   if (nonemptyArray(enhancement.quiz)) next.quiz = enhancement.quiz;
   validateUnitContent(next);
