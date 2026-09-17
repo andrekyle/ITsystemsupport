@@ -86,7 +86,7 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
         const response=await fetch("/api/enhance-unit-content",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({unit,source,count:Number(count),minutes,activityContent:activityBlocks.map((block,index)=>`Activity ${index+1} heading:\n${block.heading.trim()||`Activity ${index+1}`}\n\nActivity ${index+1} content:\n${block.text.trim()}`).filter(text=>text.trim()).join("\n\n--- ACTIVITY SEPARATOR ---\n\n"),selfAssessmentContent,logbookContent}),signal:AbortSignal.timeout(85_000)});
         const result=await response.json();
         if(!response.ok) throw new Error(result.error??"AI generation failed. Turn it off to build entirely with built-in code.");
-        next=mergeUnitContentEnhancement(next,result.content);setWarning("");
+        next=mergeUnitContentEnhancement(next,result.content,unit);setWarning("");
         if(result.usage) void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.input_tokens??result.usage.prompt_tokens??0,completionTokens:result.usage.output_tokens??result.usage.completion_tokens??0,totalTokens:result.usage.total_tokens??0});
       }
       await publish(next,source,ai);
@@ -142,3 +142,4 @@ export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
     <div className="unit-builder-bar">{[built.files.pdf,built.files.pptx,...(staff?[built.files.answers]:[])].map(file=><button type="button" className="btn ghost" key={file.name} onClick={()=>void downloadDoc(file).catch(()=>setError("The file could not be downloaded. Please retry."))}><Icon name="download" size={15}/>{file.name}</button>)}</div>{error&&<p role="alert">{error}</p>}
   </div>;
 }
+

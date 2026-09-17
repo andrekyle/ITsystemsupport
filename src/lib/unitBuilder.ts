@@ -105,7 +105,6 @@ export type UnitContentEnhancement = {
 const nonemptyString = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
 const nonemptyArray = <T,>(value: unknown): value is T[] => Array.isArray(value) && value.length > 0;
 
-
 function stableId(prefix: string, title: string, index: number): string {
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 56);
   return `${prefix}-${index + 1}-${slug || "activity"}`;
@@ -116,11 +115,60 @@ function normalizeActivities<T extends { id: string; title: string; steps?: stri
   return items.map((item, index) => ({ ...item, id: stableId(prefix, item.title, index) }));
 }
 
-export function mergeUnitContentEnhancement(base: UnitContent, enhancement: UnitContentEnhancement): UnitContent {
+const STANDARD_LOGBOOK_DETAIL_FIELDS = [
+  "Learner Name",
+  "Qualification",
+  "Group / Class",
+  "Workplace Name",
+  "Supervisor / Mentor",
+  "Start & Completion Date",
+];
+const KNOWLEDGE_MARKS = [true, false, false, true, false, false];
+const PRACTICAL_MARKS = [false, true, false, false, true, false];
+const PROJECT_MARKS = [true, true, true, true, true, true];
+
+function normalizeMarks(value: unknown, fallback: boolean[]): boolean[] {
+  const marks = Array.isArray(value) ? value.slice(0, 6).map(Boolean) : [];
+  while (marks.length < 6) marks.push(fallback[marks.length] ?? false);
+  return marks;
+}
+
+function normalizeLogbookSpec(unit: UnitStandard, logbook: UnitContent["logbook"]): UnitContent["logbook"] {
+  if (!logbook) return logbook;
+  const projectName = unit.us || logbook.unitLabel || unit.title;
+  return {
+    ...logbook,
+    assignmentTitle: logbook.assignmentTitle?.trim() || "Assignment One",
+    programme: logbook.programme?.trim() || "Information Technology - Systems Support",
+    unitLabel: logbook.unitLabel?.trim() || `${unit.us} - ${unit.title}`,
+    detailFields: STANDARD_LOGBOOK_DETAIL_FIELDS,
+    project: {
+      time: logbook.project?.time?.trim() || "30 minutes",
+      title: logbook.project?.title?.trim() || "Project",
+      text: logbook.project?.text?.trim() || "Complete the workplace project and attach the evidence to this logbook.",
+      resource: logbook.project?.resource?.trim() || "Logbook",
+    },
+    knowledgeQuestions: (logbook.knowledgeQuestions ?? []).map(row => ({
+      text: row.text,
+      marks: normalizeMarks(row.marks, KNOWLEDGE_MARKS),
+    })),
+    practicalActivities: (logbook.practicalActivities ?? []).map((row, index, rows) => ({
+      text: row.text,
+      marks: normalizeMarks(row.marks, rows.length === 1 ? PROJECT_MARKS : PRACTICAL_MARKS),
+    })),
+    workplaceActivities: logbook.workplaceActivities?.length ? logbook.workplaceActivities : (logbook.practicalActivities ?? []).map(row => row.text),
+    workplaceEvidenceNote: logbook.workplaceEvidenceNote?.trim() || "The workplace completes this section after observing the learner having complied to and completed all the activities as mentioned below.",
+    otherActivities: logbook.otherActivities?.length ? logbook.otherActivities : [{ activity: logbook.project?.title || "Workplace project", evidence: logbook.project?.text || "Attach the completed workplace evidence." }],
+    otherEvidenceNote: logbook.otherEvidenceNote?.trim() || "Learner evidence and experience is recorded here. Make reference to equipment, tools, materials or systems that were used in these processes.",
+    projectChecklist: [{ no: "1", name: projectName }],
+  };
+}
+
+export function mergeUnitContentEnhancement(base: UnitContent, enhancement: UnitContentEnhancement, unit: UnitStandard): UnitContent {
   const next = structuredClone(base);
   const overview = enhancement.overview ?? enhancement.saqa;
   if (overview?.sections?.length && overview.registration?.length) next.saqa = overview;
-  if (enhancement.logbook?.knowledgeQuestions?.length && enhancement.logbook.practicalActivities?.length) next.logbook = enhancement.logbook;
+  if (enhancement.logbook?.knowledgeQuestions?.length && enhancement.logbook.practicalActivities?.length) next.logbook = normalizeLogbookSpec(unit, enhancement.logbook);
   if (enhancement.evaluation?.questions?.length && nonemptyString(enhancement.evaluation.intro)) next.evaluation = enhancement.evaluation;
   if (enhancement.selfAssessment?.items?.length) next.selfAssessment = enhancement.selfAssessment;
   if (enhancement.lessonPlan?.sections?.length) next.lessonPlan = enhancement.lessonPlan;
@@ -131,7 +179,6 @@ export function mergeUnitContentEnhancement(base: UnitContent, enhancement: Unit
   validateUnitContent(next);
   return next;
 }
-
 export function buildUnitContent(unit: UnitStandard, source: string, options: BuildOptions): UnitContent {
   const topics = parseUnitSource(source);
   const count = Math.min(10, Math.max(3, options.questions));
@@ -161,7 +208,7 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
       { heading: "Essential embedded knowledge", icon: "book", bullets: topics.map(t=>`${t.heading}: ${t.paragraphs[0]}`) },
       { heading: "Assessor criteria — evidence required", icon: "checklist", bullets: ["Completed practical activities supported by the supplied learning material.", "Workplace project and supporting evidence.", "Knowledge-check answers, self assessment and a completed workplace logbook."] },
     ] },
-    logbook: { assignmentTitle: unit.title, programme: "IT Systems Support", unitLabel: `US ${unit.us}`, detailFields: ["Learner name", "Workplace", "Supervisor", "Date"], project: { time: "Record actual hours", title: "Workplace application", text: "Apply the unit learning in the workplace and record evidence against the activities below.", resource: "Source material, workplace procedures and supervisor feedback" }, knowledgeQuestions: goals.map(text => ({ text, marks: [true, true, false, true, false, false] })), practicalActivities: exercises.map(e => ({ text: e.title, marks: [true, true, true, false, true, true] })), workplaceActivities: goals, workplaceEvidenceNote: "Attach dated evidence and obtain supervisor verification.", otherActivities: [{ activity: "Review and reflection", evidence: "A short reflection and supervisor feedback" }], otherEvidenceNote: "Record any additional relevant learning.", projectChecklist: exercises.map((e, i) => ({ no: String(i + 1), name: e.title })) },
+    logbook: normalizeLogbookSpec(unit, { assignmentTitle: "Assignment One", programme: "Information Technology - Systems Support", unitLabel: `${unit.us} - ${unit.title}`, detailFields: STANDARD_LOGBOOK_DETAIL_FIELDS, project: { time: "30 minutes", title: "Workplace application", text: "Apply the unit learning in the workplace and record evidence against the activities below.", resource: "Logbook" }, knowledgeQuestions: goals.map(text => ({ text, marks: KNOWLEDGE_MARKS })), practicalActivities: exercises.map(e => ({ text: e.title, marks: PROJECT_MARKS })), workplaceActivities: goals, workplaceEvidenceNote: "The workplace completes this section after observing the learner having complied to and completed all the activities as mentioned below.", otherActivities: [{ activity: "Workplace application", evidence: "Apply the unit learning in the workplace and record evidence against the activities below." }], otherEvidenceNote: "Learner evidence and experience is recorded here. Make reference to equipment, tools, materials or systems that were used in these processes.", projectChecklist: [{ no: "1", name: unit.us }] }),
     selfAssessment: { intro: ["Rate your readiness by ticking the skills you can demonstrate."], items: goals.map(g => `I can ${g.charAt(0).toLowerCase()}${g.slice(1)}`), outro: ["Revisit any unticked areas and ask the facilitator for help."] },
     lessonPlan: { title: "Facilitator Preparation", startTime: "09:00", details: [{ icon: "clock", label: "Planned duration", value: `${options.minutes} minutes` }], prep: ["Read the source material and check that examples fit your learners' workplace.", "Prepare the generated handout and slides; review the answer key before delivery."], sections: [{ rows: [{ title: "Room Set Up", text: ["Prepare the venue, equipment, learner handout and presentation."] }, { time: "10 min", title: "Meet, Greet & Seat", text: ["Welcome learners, check attendance and introduce the learning goals."] }] }, { heading: `Unit Standard ${unit.us}`, rows: [...topics.map(t => ({ time: `${Math.max(5, Math.floor((options.minutes - 30) / topics.length))} min`, title: `${t.heading} \u2014 Facilitator & Class`, text: ["Explain the source material, discuss a workplace example, then complete the linked activity."], resources: ["Generated slides", "Learner handout"] })), { time: "20 min", title: "Knowledge check and reflection", text: ["Complete the quiz, discuss answers, update the logbook, and submit the lesson evaluation."] }] }] },
     evaluation: { intro: "Help improve this unit by reflecting on the content and delivery.", questions: ["Which part was most useful for your work?", "Which topic needs more explanation?", "How will you apply what you learned?", "What would improve the activities or training materials?"] },
@@ -182,3 +229,7 @@ export function validateUnitContent(content: UnitContent): void {
   }
   if (!content.logbook || !content.lessonPlan?.sections.length || !content.selfAssessment?.items.length || !content.saqa || !content.evaluation?.questions.length) throw new Error("Overview, notes, logbook, lesson plan, self assessment and evaluation must all have content.");
 }
+
+
+
+
