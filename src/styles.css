@@ -3655,6 +3655,11 @@ table.data.kv tr:last-child td {
   line-height: 1.45;
 }
 
+.logbook table.data tr:hover td,
+[data-theme="dark"] .logbook table.data tr:hover td {
+  background: transparent;
+}
+
 .lb-compact th,
 .lb-compact td {
   padding: 8px 8px;
