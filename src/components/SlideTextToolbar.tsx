@@ -188,21 +188,14 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
     ).join("");
     return `<div class="lesson-table-scroll"><table class="data lesson-table"><thead><tr>${headers}</tr></thead><tbody>${bodyRows}</tbody></table></div><p><br></p>`;
   };
-  const selectedBlocks = (editor: HTMLElement) => {
-    const selection = window.getSelection();
-    if (!selection?.rangeCount) return [] as HTMLElement[];
-    const range = selection.getRangeAt(0);
-    if (!editor.contains(range.commonAncestorContainer)) return [];
-    const blocks = Array.from(editor.querySelectorAll<HTMLElement>("p,div,li,h2,h3,th,td"))
-      .filter((block) => block.contains(range.startContainer) || block.contains(range.endContainer) || range.intersectsNode(block));
-    const unique = blocks.filter((block, index) => blocks.indexOf(block) === index);
-    return unique.length ? unique : [];
-  };
   const applyList = (ordered: boolean) => {
     const restored = restoreSelection();
     if (!restored) return;
-    const blocks = selectedBlocks(restored.editor).filter((block) => block.tagName !== "LI");
-    if (!blocks.length) {
+    const currentSelection = restored.selection;
+    if (!currentSelection?.rangeCount) return;
+    const currentRange = currentSelection.getRangeAt(0);
+    if (!restored.editor.contains(currentRange.commonAncestorContainer)) return;
+    if (currentRange.collapsed) {
       document.execCommand(ordered ? "insertOrderedList" : "insertUnorderedList", false);
       if (restored.selection?.rangeCount) range.current = restored.selection.getRangeAt(0).cloneRange();
       restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
@@ -210,22 +203,24 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
     }
     const list = document.createElement(ordered ? "ol" : "ul");
     list.className = "lesson-inferred-list";
-    const first = blocks[0];
-    const parent = first.parentNode;
-    if (!parent) return;
-    for (const block of blocks) {
+    const fragment = currentRange.extractContents();
+    const blockChildren = Array.from(fragment.children).filter((node): node is HTMLElement => node instanceof HTMLElement);
+    const sourceNodes = blockChildren.length ? blockChildren : Array.from(fragment.childNodes);
+    if (!sourceNodes.length) return;
+    for (const node of sourceNodes) {
       const item = document.createElement("li");
-      while (block.firstChild) item.appendChild(block.firstChild);
+      item.appendChild(node);
       list.appendChild(item);
     }
-    parent.insertBefore(list, first);
-    for (const block of blocks) block.remove();
+    const parent = currentRange.startContainer.nodeType === Node.TEXT_NODE ? currentRange.startContainer.parentNode : currentRange.startContainer.parentNode ?? restored.editor;
+    if (!parent) return;
+    currentRange.insertNode(list);
     const caret = document.createRange();
     caret.selectNodeContents(list.lastElementChild ?? list);
     caret.collapse(false);
-    const selection = window.getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(caret);
+    const caretSelection = window.getSelection();
+    caretSelection?.removeAllRanges();
+    caretSelection?.addRange(caret);
     range.current = caret;
     restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
   };
