@@ -13,6 +13,25 @@ import { UnitContentEditor } from "./UnitContentEditor";
 import { Icon } from "../icons";
 import "./unit-builder.css";
 
+
+async function logbookImageDataUrl(file: File): Promise<string> {
+  if (!file.type.startsWith("image/")) throw new Error("Upload PNG, JPEG or WebP logbook images.");
+  if (file.size > 12 * 1024 * 1024) throw new Error("Choose logbook images under 12 MB each.");
+  const bitmap = await createImageBitmap(file);
+  try {
+    const max = 1800;
+    const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Could not prepare that image for reading.");
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.86);
+  } finally {
+    bitmap.close();
+  }
+}
 export function effectiveBuiltContent(content:UnitContent, edits:LessonEdits):UnitContent {
   const next=structuredClone(content);
   next.lesson=next.lesson.map((s,si)=>({...s,heading:edits.headings?.[si]??s.heading,
@@ -36,6 +55,7 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   const [activityBlocks,setActivityBlocks]=useState<{heading:string;text:string}[]>([{heading:"",text:""}]);
   const [selfAssessmentContent,setSelfAssessmentContent]=useState("");
   const [logbookContent,setLogbookContent]=useState("");
+  const [logbookImageName,setLogbookImageName]=useState("");
   const [busy,setBusy]=useState("");
   const [error,setError]=useState("");
   const [message,setMessage]=useState("");
@@ -74,6 +94,23 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
     const [pdf,pptx,answers]=await Promise.all([uploadFile(prefix,files.pdf),uploadFile(prefix,files.pptx),uploadFile(prefix,files.answers)]);
     await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:sourceText,content:next,files:{pdf,pptx,answers},aiUsed});
     setSource(sourceText);setDraft(null);setMessage("Unit built and saved. All learning tabs and download files are ready.");onSaved();
+  };
+  const readLogbookImages=async(files: FileList|null)=>{
+    const selected=Array.from(files??[]).filter(file=>file.type.startsWith("image/"));
+    if(!selected.length)return;
+    if(selected.length>8){setError("Upload up to 8 logbook images at a time.");return;}
+    setError("");setMessage("");setBusy(selected.length===1?"Reading logbook image…":"Reading logbook images…");
+    try{
+      const images=await Promise.all(selected.map(logbookImageDataUrl));
+      const token=(await supabase?.auth.getSession())?.data.session?.access_token;
+      const response=await fetch("/api/extract-logbook-image",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({images}),signal:AbortSignal.timeout(85_000)});
+      const result=await response.json();
+      if(!response.ok)throw new Error(result.error??"The logbook image could not be read.");
+      setLogbookContent(current=>[current.trim(),String(result.text??"").trim()].filter(Boolean).join("\n\n"));
+      setLogbookImageName(selected.map(file=>file.name).join(", "));
+      setMessage("Logbook image read. Check the extracted content before building.");
+    }catch(e){setError(e instanceof Error?e.message:"The logbook image could not be read.");}
+    finally{setBusy("");}
   };
   const build=async()=>{
     setError("");setMessage("");setWarning("");setBusy("Building lessons, activities and tab contentâ€¦");
@@ -117,7 +154,7 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
         <div className="unit-settings-card">
           <div className="unit-source-field"><strong>Activity content</strong><span>Add each activity/question session in its own box. Use the separator by clicking Add another activity.</span>{activityBlocks.map((block,index)=><div className="unit-activity-block" key={index}><label>Activity {index+1} heading<input type="text" value={block.heading} disabled={!!busy} onChange={e=>setActivityBlocks(blocks=>blocks.map((item,i)=>i===index?{...item,heading:e.target.value}:item))} placeholder="Example: Question Session 1 -- Prepare a time estimate"/></label><label>Activity {index+1} content<textarea rows={5} value={block.text} disabled={!!busy} onChange={e=>setActivityBlocks(blocks=>blocks.map((item,i)=>i===index?{...item,text:e.target.value}:item))} placeholder="Example: Questioning task, time allowed, Activity: Self & Group, learner questions, required evidence, model answer guidance..."/></label><div className="unit-editor-actions"><button type="button" className="btn ghost sm" disabled={!!busy||index===0} onClick={()=>setActivityBlocks(blocks=>{const next=[...blocks];[next[index-1],next[index]]=[next[index],next[index-1]];return next;})}>Move up</button><button type="button" className="btn ghost sm" disabled={!!busy||activityBlocks.length===1} onClick={()=>setActivityBlocks(blocks=>blocks.filter((_,i)=>i!==index))}>Remove activity</button></div></div>)}<button type="button" className="btn ghost sm" disabled={!!busy} onClick={()=>setActivityBlocks(blocks=>[...blocks,{heading:"",text:""}])}>Add another activity</button></div>
           <label className="unit-source-field"><strong>Self-assessment content</strong><span>Paste or describe the competence checklist learners must tick after the lesson.</span><textarea rows={4} value={selfAssessmentContent} disabled={!!busy} onChange={e=>setSelfAssessmentContent(e.target.value)} placeholder="Example: I can prepare a time estimate..., I can explain cost components..., revisit areas needing more practice..."/></label>
-          <label className="unit-source-field"><strong>Logbook content</strong><span>Paste or describe the workplace logbook activities, evidence notes and checklist items.</span><textarea rows={5} value={logbookContent} disabled={!!busy} onChange={e=>setLogbookContent(e.target.value)} placeholder="Example: workplace activities, knowledge questions, practical evidence, project checklist, supervisor verification requirements..."/></label>
+          <label className="unit-source-field"><strong>Logbook content</strong><span>Paste the logbook content, or upload clear images of the logbook pages and check the extracted text.</span><div className="unit-settings-row unit-logbook-import"><span className="unit-settings-copy"><strong>Read logbook image</strong><span>{logbookImageName || "PNG, JPEG or WebP screenshots/photos"}</span></span><label className="unit-import-button"><span>Upload image</span><input aria-label="Upload logbook image" type="file" accept="image/png,image/jpeg,image/webp" multiple disabled={!!busy} onChange={async e=>{const files=e.target.files;e.target.value="";await readLogbookImages(files);}}/></label></div><textarea rows={7} value={logbookContent} disabled={!!busy} onChange={e=>setLogbookContent(e.target.value)} placeholder="Example: embedded knowledge questions with checklist ticks, practical activities, workplace activities, other activities, project evidence and project checklist..."/></label>
         </div>
         <h3 className="unit-settings-heading">Build settings</h3>
         <div className="unit-settings-card">
@@ -142,4 +179,6 @@ export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
     <div className="unit-builder-bar">{[built.files.pdf,built.files.pptx,...(staff?[built.files.answers]:[])].map(file=><button type="button" className="btn ghost" key={file.name} onClick={()=>void downloadDoc(file).catch(()=>setError("The file could not be downloaded. Please retry."))}><Icon name="download" size={15}/>{file.name}</button>)}</div>{error&&<p role="alert">{error}</p>}
   </div>;
 }
+
+
 
