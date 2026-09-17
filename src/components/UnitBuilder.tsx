@@ -18,7 +18,7 @@ async function logbookImageDataUrl(file: File): Promise<string> {
   if (file.size > 12 * 1024 * 1024) throw new Error("Choose logbook images under 12 MB each.");
   const bitmap = await createImageBitmap(file);
   try {
-    const max = 1800;
+    const max = 1200;
     const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round(bitmap.width * scale));
@@ -26,7 +26,7 @@ async function logbookImageDataUrl(file: File): Promise<string> {
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Could not prepare that image for reading.");
     ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL("image/jpeg", 0.86);
+    return canvas.toDataURL("image/jpeg", 0.72);
   } finally {
     bitmap.close();
   }
@@ -175,6 +175,5 @@ export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
     <div className="unit-builder-bar">{[built.files.pdf,built.files.pptx,...(staff?[built.files.answers]:[])].map(file=><button type="button" className="btn ghost" key={file.name} onClick={()=>void downloadDoc(file).catch(()=>setError("The file could not be downloaded. Please retry."))}><Icon name="download" size={15}/>{file.name}</button>)}</div>{error&&<p role="alert">{error}</p>}
   </div>;
 }
-
 
 

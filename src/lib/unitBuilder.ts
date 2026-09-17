@@ -149,8 +149,8 @@ export function mergeUnitContentEnhancement(base: UnitContent, enhancement: Unit
   if (enhancement.evaluation?.questions?.length && nonemptyString(enhancement.evaluation.intro)) next.evaluation = enhancement.evaluation;
   if (enhancement.selfAssessment?.items?.length) next.selfAssessment = enhancement.selfAssessment;
   if (enhancement.lessonPlan?.sections?.length) next.lessonPlan = enhancement.lessonPlan;
-  if (nonemptyArray(enhancement.exercises)) next.exercises = normalizeActivities(enhancement.exercises, "activity")!;
-  if (nonemptyArray(enhancement.questionSessions)) next.questionSessions = normalizeActivities(enhancement.questionSessions, "question-session")!;
+  next.exercises = [];
+  next.questionSessions = [];
   if (nonemptyArray(enhancement.assignments)) next.assignments = enhancement.assignments;
   next.quiz = [];
   next.quizzes = undefined;

@@ -31,7 +31,7 @@ export default async function handler(request: Request): Promise<Response> {
       model: env.OPENAI_UNIT_MODEL || "gpt-4.1-mini",
       input: [{ role: "user", content: [
         { type: "input_text", text: `Read these logbook form images exactly enough to populate an LMS logbook. Return plain text only, no markdown fences. Preserve these sections when visible: Embedded Knowledge Questions, Practical Activities, Workplace Activities, Other Activities, Feedback Record, Declaration, Project Checklist. For each checklist row include the row number, full row text, and six evidence columns as true/false in this order: Workplace Learner Activity, Workplace Logbook Activity, Workplace Project, Assessor Learner Manual, Assessor Logbook Activity, Assessor Project. Preserve project title, evidence notes, unit standard number and title if visible.` },
-        ...images.map((image: string) => ({ type: "image_url", image_url: { url: image, detail: "high" } }))
+        ...images.map((image: string) => ({ type: "input_image", image_url: image, detail: "high" }))
       ] }]
     }) });
     if (!response.ok) return json({ error: "OpenAI could not read the logbook image. Try a clearer image or fewer pages." }, 502);
