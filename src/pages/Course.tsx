@@ -2637,6 +2637,16 @@ export function UnitPage({
     try { await updateBuiltActivityList(activityEditor.kind, items => items.map((item, i) => i === activityEditor.index ? activityEditor.value : item)); setActivityEditor(null); }
     catch (error) { setActivityEditError(error instanceof Error ? error.message : "The activity could not be saved."); }
   };
+  const isEmptyGeneratedBuiltActivity = (ex: Exercise) =>
+    /^Questioning\s+[-–—]\s+Prepare a (?:time|cost) estimate for an element of work$/i.test(ex.title)
+    || (ex.title === "New activity" && ex.steps?.[0] === "Add the first learner question.")
+    || (ex.title === "Activity 1" && ex.steps?.[0] === "Add the first learner question.");
+  const visibleBuiltActivities = builtUnit && content
+    ? [
+        ...content.exercises.map((ex, index) => ({ ex, kind: "exercises" as const, index })),
+        ...(content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index })),
+      ].filter(({ ex }) => !isEmptyGeneratedBuiltActivity(ex))
+    : [];
   const generateSlideQuiz = async (si: number) => {
     if (!content) return;
     setGeneratingQuiz(si); setQuizGenerationError(null);
@@ -4783,7 +4793,7 @@ export function UnitPage({
           </div>
           {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="btn ghost sm" onClick={() => void addBuiltActivity()}><Icon name="plus" size={14} /> Add activity</button>{activityEditError && <span role="alert" className="auth-error">{activityEditError}</span>}</div>}
           {activityEditor && builtUnit && isSuperUser && <div className="card activity-editor-card"><h3>Edit activity</h3><UnitContentEditor value={activityEditor.value as never} onChange={value => setActivityEditor({ ...activityEditor, value: value as unknown as Exercise })}/><div className="unit-editor-actions"><button type="button" className="btn" onClick={() => void saveActivityEditor()}>Save activity</button><button type="button" className="btn ghost" onClick={() => setActivityEditor(null)}>Cancel</button></div></div>}
-          {(tab === "questions" ? (content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index })) : builtUnit ? [...content.exercises.map((ex, index) => ({ ex, kind: "exercises" as const, index })), ...(content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index }))] : content.exercises.map((ex, index) => ({ ex, kind: "exercises" as const, index }))).map(({ex, kind, index}) => {
+          {(tab === "questions" ? (content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index })) : builtUnit ? visibleBuiltActivities : content.exercises.map((ex, index) => ({ ex, kind: "exercises" as const, index }))).map(({ex, kind, index}) => {
             const exRes = progress.units[u.us]?.exercises?.[ex.id];
             const hasChecks = !!ex.checks && ex.checks.length > 0;
             const exTotalMarks = ex.checks?.reduce((t, c) => t + c.concepts.length * 2, 0) ?? 0;
@@ -5016,7 +5026,7 @@ export function UnitPage({
         </>
       )}
 
-      {(tab === "assignments" || (builtUnit && tab === "exercises")) && content && (
+      {tab === "assignments" && content && (
         <>
           <p className="muted" style={{ marginTop: 14 }}>
             Assessed assignments. Submissions are assessed against the ASD for SAQA ID 48573 and

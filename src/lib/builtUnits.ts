@@ -13,8 +13,7 @@ function isLegacyGeneratedActivity(activity: UnitContent["exercises"][number]): 
     && activity.steps[0] === "Identify the main idea and explain it in your own words."
     && activity.steps[1] === "Describe a workplace situation where this knowledge is useful."
     && activity.steps[2] === "Show how you would apply the guidance and explain how you would check the result.";
-  const oldQuestioningActivity = /^built-questioning-\d+$/i.test(activity.id)
-    && /^Questioning\s+[-–—]\s+Prepare a (?:time|cost) estimate for an element of work$/i.test(activity.title)
+  const oldQuestioningActivity = /^Questioning\s+[-–—]\s+Prepare a (?:time|cost) estimate for an element of work$/i.test(activity.title)
     && /Time: \d+ minutes .* Activity: Self & Group/i.test(activity.task)
     && activity.steps.length === 3
     && activity.steps[0] === "Break the work element into logical parts and record the assumptions."
