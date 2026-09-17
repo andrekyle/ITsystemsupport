@@ -227,15 +227,35 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       return;
     }
     const list = document.createElement(ordered ? "ol" : "ul");
-    list.className = "lesson-inferred-list";
     const fragment = currentRange.extractContents();
     if (!fragment.textContent?.trim() && !fragment.querySelector("img, table, br")) return;
-    // Keep the extracted fragment intact. Looking at fragment.children here can
-    // promote an entire paragraph and accidentally include text outside the
-    // user's selection.
-    const item = document.createElement("li");
-    item.appendChild(fragment);
-    list.appendChild(item);
+    const selectedList = Array.from(fragment.childNodes).find(
+      node => node instanceof HTMLOListElement || node instanceof HTMLUListElement
+    );
+    if (selectedList instanceof HTMLOListElement || selectedList instanceof HTMLUListElement) {
+      for (const selectedItem of Array.from(selectedList.children)) {
+        if (selectedItem instanceof HTMLLIElement) list.appendChild(selectedItem);
+      }
+    } else {
+      let inlineItem: HTMLLIElement | null = null;
+      for (const node of Array.from(fragment.childNodes)) {
+        if (node instanceof HTMLLIElement || (node instanceof HTMLElement && /^(P|DIV)$/.test(node.tagName))) {
+          const item = document.createElement("li");
+          while (node.firstChild) item.appendChild(node.firstChild);
+          list.appendChild(item);
+          inlineItem = null;
+        } else if (node instanceof HTMLBRElement) {
+          inlineItem = null;
+        } else {
+          if (!inlineItem) {
+            inlineItem = document.createElement("li");
+            list.appendChild(inlineItem);
+          }
+          inlineItem.appendChild(node);
+        }
+      }
+    }
+    if (!list.children.length) return;
     currentRange.insertNode(list);
     const caret = document.createRange();
     caret.selectNodeContents(list.lastElementChild ?? list);
