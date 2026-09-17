@@ -35,6 +35,12 @@
 .unit-builder-panel .unit-settings-heading { font-size:16px; font-weight:600; color:inherit; margin:28px 0 16px; }
 .unit-source-field { display:flex; flex-direction:column; gap:5px; padding:18px 0 20px; border-top:1px solid var(--builder-line); }
 .unit-builder-panel .unit-source-field textarea { margin-top:10px; min-height:170px; line-height:1.6; }
+.unit-activity-block { display:flex; flex-direction:column; gap:12px; margin-top:16px; padding:16px; border:1px solid var(--builder-line); border-radius:16px; background:rgba(255,255,255,.02); }
+.unit-activity-block label { display:flex; flex-direction:column; gap:8px; font-size:13px; color:var(--builder-muted); }
+.unit-builder-panel .unit-activity-block input, .unit-builder-panel .unit-activity-block textarea { width:100%; box-sizing:border-box; margin:0; }
+.unit-builder-panel .unit-activity-block textarea { min-height:130px; }
+.unit-activity-block .unit-editor-actions { margin-top:2px; flex-wrap:wrap; }
+
 .unit-builder .unit-builder-panel textarea, .unit-builder .unit-builder-panel input:not([type="checkbox"]):not([type="file"]), .unit-builder .unit-builder-panel .nice-select-btn, .unit-import-button { background:var(--builder-control); border:1px solid var(--builder-line) !important; color:var(--builder-ink); border-radius:12px; box-shadow:none; font-family:inherit; font-size:14px; }
 .unit-builder .unit-builder-panel .nice-select-btn { min-width:92px; min-height:36px; padding:6px 14px; }
 .unit-settings-row .nice-select { flex-shrink:0; }
