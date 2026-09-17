@@ -1,4 +1,5 @@
 import type { UnitContent, UnitStandard } from "../types";
+import { COURSE_META, findUnit } from "../data/course";
 import { plainSlideText } from "./slideRichText";
 import { isLessonBulletListLead, isLessonListLead } from "./lessonSubsections";
 
@@ -63,6 +64,30 @@ export function unitExportPages(unit: UnitStandard, content: UnitContent): Expor
 export async function makeUnitExports(unit: UnitStandard, content: UnitContent): Promise<{ pdf: File; pptx: File; answers: File }> {
   const [{ default: PDFDocument }, { default: PptxGenJS }] = await Promise.all([import("pdfkit/js/pdfkit.standalone.js"), import("pptxgenjs")]);
   const pages = unitExportPages(unit, content);
+  const NAVY = "00285A";
+  const BLUE = "1477C9";
+  const LIGHT_BLUE = "D6E6F7";
+  const GREY = "637083";
+  const LINE = "D5DCE6";
+  const moduleInfo = findUnit(unit.us);
+  const moduleName = moduleInfo?.module.name ?? "Unit Standard";
+  const unitDates = moduleInfo?.unit.dates ?? unit.dates;
+  const unitTime = moduleInfo?.unit.time ?? unit.time;
+  const quality = COURSE_META.qualityAssurance ?? "QCTO / MICT SETA";
+  const coverSubtitle = plainSlideText(content.lesson[0]?.paragraphs[0] ?? content.saqa?.notice ?? "")
+    .replace(/\s+/g, " ")
+    .slice(0, 180);
+  const addPeopleGraphic = (slide: any, x = 11.0, y = 1.25) => {
+    const line = { color: LIGHT_BLUE, width: 4, transparency: 8 };
+    slide.addShape("ellipse", { x, y, w: 0.5, h: 0.5, line, fill: { color: "FFFFFF", transparency: 100 } });
+    slide.addShape("ellipse", { x: x + 0.58, y: y + 0.1, w: 0.38, h: 0.38, line, fill: { color: "FFFFFF", transparency: 100 } });
+    slide.addShape("arc", { x: x - 0.14, y: y + 0.72, w: 1.0, h: 0.8, line, adjustPoint: 0.4, angleRange: [200, 340] });
+    slide.addShape("arc", { x: x + 0.48, y: y + 0.73, w: 0.8, h: 0.7, line, adjustPoint: 0.4, angleRange: [200, 340] });
+  };
+  const addFooter = (slide: any, i?: number) => {
+    slide.addText("ITSS Learn · Investec · Corporate Banking Technology", { x: 0.48, y: 6.92, w: 6.5, h: 0.25, fontFace: "Arial", fontSize: 11, color: GREY, margin: 0 });
+    if (i !== undefined) slide.addText(`${i + 1} / ${pages.length}`, { x: 11.9, y: 6.92, w: 0.9, h: 0.2, fontFace: "Arial", fontSize: 9, color: GREY, align: "right", margin: 0 });
+  };
   const renderPdf = (entries: ExportPage[]): Promise<Blob> => new Promise((resolve, reject) => {
     const doc = new PDFDocument({ autoFirstPage: false, size: "A4", layout: "landscape", margin: 40, info: { Title: `US ${unit.us}: ${unit.title}` } });
     const chunks: Uint8Array[] = [];
@@ -80,10 +105,36 @@ export async function makeUnitExports(unit: UnitStandard, content: UnitContent):
   const pptx = new PptxGenJS(); pptx.layout = "LAYOUT_WIDE"; pptx.title = unit.title; pptx.subject = `US ${unit.us}`; pptx.author = "ITSS Learn";
   pages.forEach((page,i) => {
     const slide = pptx.addSlide();
-    slide.background = { color: "FAFAFA" };
-    slide.addText(page.title, { x:0.55, y:0.3, w:12.2, h:0.7, fontFace:"Arial", fontSize:24, bold:true, color:"202020", breakLine:false, fit:"shrink" });
-    slide.addText(page.lines.join("\n"), { x:0.55, y:1.2, w:12.2, h:5.65, fontFace:"Arial", fontSize:17, color:"303030", margin:0, fit:"shrink", valign:"top" });
-    slide.addText(`US ${unit.us} | ${i+1} / ${pages.length}`, { x:0.55, y:7.05, w:11, h:0.2, fontSize:9, color:"666666" });
+    slide.background = { color: "FFFFFF" };
+    if (i === 0) {
+      slide.addShape("roundRect", { x: 0.48, y: 0.7, w: 6.8, h: 0.55, rectRadius: 0.15, line: { color: BLUE, transparency: 100 }, fill: { color: BLUE } });
+      slide.addText(`US ${unit.us} · SO 1 · NQF LEVEL ${unit.nqf} · ${unit.credits} CREDITS`, { x: 0.85, y: 0.83, w: 5.95, h: 0.18, fontFace: "Arial", fontSize: 11, bold: true, color: "FFFFFF", margin: 0, fit: "shrink" });
+      slide.addText(unit.title, { x: 0.48, y: 1.48, w: 9.6, h: 1.05, fontFace: "Arial", fontSize: 25, bold: true, color: NAVY, margin: 0, breakLine: false, fit: "shrink" });
+      if (coverSubtitle) slide.addText(coverSubtitle, { x: 0.48, y: 3.1, w: 9.5, h: 0.55, fontFace: "Arial", fontSize: 13.5, color: GREY, margin: 0, fit: "shrink" });
+      slide.addShape("line", { x: 0.48, y: 3.88, w: 12.2, h: 0, line: { color: LINE, width: 1 } });
+      const meta = [
+        ["TIME", `${unitDates ? "90-minute lessons · " : ""}Self & Group`],
+        ["SESSION", `${unitDates}${unitTime ? ` · ${unitTime.replace(/\s*-\s*/g, "–")}` : ""}`],
+        ["MODULE", moduleName],
+        ["QUALITY ASSURANCE", quality],
+      ];
+      meta.forEach(([label, value], n) => {
+        const x = 0.48 + n * 3.1;
+        slide.addText(label, { x, y: 4.08, w: 2.75, h: 0.24, fontFace: "Arial", fontSize: 11, bold: true, color: BLUE, margin: 0 });
+        slide.addText(value, { x, y: 4.42, w: 2.75, h: 0.58, fontFace: "Arial", fontSize: 12, color: NAVY, margin: 0, fit: "shrink", breakLine: false });
+      });
+      addPeopleGraphic(slide);
+      addFooter(slide);
+      return;
+    }
+    slide.addShape("roundRect", { x: 0.55, y: 0.42, w: 2.35, h: 0.34, rectRadius: 0.12, line: { color: BLUE, transparency: 100 }, fill: { color: BLUE } });
+    slide.addText(`US ${unit.us}`, { x: 0.8, y: 0.51, w: 1.75, h: 0.12, fontFace: "Arial", fontSize: 8.5, bold: true, color: "FFFFFF", margin: 0 });
+    slide.addText(page.title, { x:0.55, y:0.98, w:10.3, h:0.68, fontFace:"Arial", fontSize:24, bold:true, color:NAVY, breakLine:false, fit:"shrink", margin:0 });
+    slide.addShape("line", { x: 0.55, y: 1.78, w: 11.9, h: 0, line: { color: LINE, width: 1 } });
+    addPeopleGraphic(slide, 11.05, 0.58);
+    const body = page.lines.join("\n");
+    slide.addText(body, { x:0.72, y:2.15, w:11.5, h:4.35, fontFace:"Arial", fontSize:18, color:NAVY, margin:0, fit:"shrink", valign:"top", breakLine:false, paraSpaceAfter: 9 });
+    addFooter(slide, i);
   });
   const answerLines = [...content.quiz, ...(content.quizzes ?? []).flatMap(q => q.questions), ...content.lesson.flatMap(s => s.slideQuiz ?? [])].flatMap((q,i) => [`${i+1}. ${q.q}`, `Correct answer: ${q.options[q.answer]}`, q.explain, ""]);
   for (const e of [...content.exercises,...(content.questionSessions??[])]) answerLines.push(e.title, ...(e.modelAnswer ?? []).flatMap(m => [...(m.paragraphs ?? []), ...(m.bullets ?? [])]));
