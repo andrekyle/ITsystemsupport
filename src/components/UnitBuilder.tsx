@@ -4,6 +4,7 @@ import type { LessonEdits } from "../store";
 import { buildUnitContent, validateUnitContent, MAX_SOURCE_LENGTH } from "../lib/unitBuilder";
 import { useBuiltUnit, saveBuiltUnit } from "../lib/useBuiltUnit";
 import { importUnitSource } from "../lib/unitSourceImport";
+import { makeUnitExports } from "../lib/unitExports";
 import { downloadDoc, uploadFile } from "../lib/files";
 import { supabase } from "../lib/supabase";
 import { recordTokenUsage } from "../lib/tokens";
@@ -64,7 +65,6 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   const publish=async(next:UnitContent,sourceText:string,aiUsed:boolean)=>{
     validateUnitContent(next);
     setBusy("Creating PDF, PowerPoint and answer guide…");
-    const {makeUnitExports}=await import("../lib/unitExports");
     const files=await makeUnitExports(unit,next);
     setBusy("Saving the unit and course materials…");
     const prefix=`shared/unitbuilder/${unit.us}`;
