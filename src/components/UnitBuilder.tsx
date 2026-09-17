@@ -5,10 +5,11 @@ import { buildUnitContent, validateUnitContent, MAX_SOURCE_LENGTH, mergeUnitCont
 import { useBuiltUnit, saveBuiltUnit } from "../lib/useBuiltUnit";
 import { importUnitSource } from "../lib/unitSourceImport";
 import { makeUnitExports } from "../lib/unitExports";
-import { downloadDoc, uploadFile } from "../lib/files";
+import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 import { supabase } from "../lib/supabase";
 import { recordTokenUsage } from "../lib/tokens";
 import { UnitContentEditor } from "./UnitContentEditor";
+import { SlideViewer } from "./SlideViewer";
 import { Icon } from "../icons";
 import "./unit-builder.css";
 
@@ -169,34 +170,64 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
 
 export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
   const built=useBuiltUnit(us);
-  const fileRef=useRef<HTMLInputElement|null>(null);
+  const pdfRef=useRef<HTMLInputElement|null>(null);
+  const editableRef=useRef<HTMLInputElement|null>(null);
   const [error,setError]=useState("");
   const [busy,setBusy]=useState("");
   const [uploadPct,setUploadPct]=useState<number|null>(null);
+  const [materialUrl,setMaterialUrl]=useState<string|null>(null);
+  const isPdf=(doc?:PoeDoc)=>!!doc&&(/\.pdf$/i.test(doc.name)||doc.type.includes("pdf"));
+  const isEditable=(doc?:PoeDoc)=>!!doc&&(/\.(ppt|pptx)$/i.test(doc.name)||doc.type.includes("presentation"));
+  const displayMaterial=isPdf(built?.files.material)?built?.files.material:undefined;
+  const editableMaterial=built?.files.materialEditable??(isEditable(built?.files.material)?built?.files.material:undefined);
+  useEffect(()=>{
+    let cancelled=false;
+    setMaterialUrl(null);
+    if(displayMaterial) void getFileUrl(displayMaterial).then(url=>{ if(!cancelled) setMaterialUrl(url); });
+    return()=>{cancelled=true;};
+  },[displayMaterial?.path,displayMaterial?.data,displayMaterial?.uploadedAt]);
   if(!built)return null;
-  const material=built.files.material;
-  const saveMaterial=async(doc?:PoeDoc)=>{
-    await saveBuiltUnit(us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content:built.content,files:{...built.files,material:doc},aiUsed:built.aiUsed});
+  const saveMaterial=async(next:{material?:PoeDoc;materialEditable?:PoeDoc})=>{
+    await saveBuiltUnit(us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content:built.content,files:{...built.files,...next},aiUsed:built.aiUsed});
   };
-  const onFile=async(file:File|undefined)=>{
+  const onPdf=async(file:File|undefined)=>{
     if(!file)return;
+    if(!/\.pdf$/i.test(file.name)&&!file.type.includes("pdf")){setError("Upload a PDF export for the displayed course material. Upload the editable PowerPoint separately.");return;}
     setError("");setBusy("Uploading course material...");setUploadPct(0);
     try{
       const doc=await uploadFile(`shared/unitbuilder/${us}/material`,file,setUploadPct);
-      await saveMaterial(doc);
+      await saveMaterial({material:doc,materialEditable:editableMaterial});
     }catch(e){setError(e instanceof Error?e.message:"The course material could not be uploaded.");}
     finally{setBusy("");setUploadPct(null);}
   };
-  return <div className="unit-builder-downloads"><h3>Course material</h3>
-    {material?<p>Uploaded course material for this unit.</p>:<p className="muted">No course material has been uploaded for this built unit.</p>}
-    <div className="unit-builder-bar">
-      {material&&<button type="button" className="btn ghost" onClick={()=>void downloadDoc(material).catch(()=>setError("The file could not be downloaded. Please retry."))}><Icon name="download" size={15}/>{material.name}</button>}
-      {staff&&<button type="button" className="btn ghost" disabled={!!busy} onClick={()=>fileRef.current?.click()}><Icon name="folder" size={15}/>{material?"Replace course material":"Upload course material"}</button>}
-      {staff&&material&&<button type="button" className="btn ghost" disabled={!!busy} onClick={()=>void saveMaterial(undefined).catch(e=>setError(e instanceof Error?e.message:"The course material could not be removed."))}><Icon name="close" size={14}/>Remove</button>}
+  const onEditable=async(file:File|undefined)=>{
+    if(!file)return;
+    if(!/\.(ppt|pptx)$/i.test(file.name)&&!file.type.includes("presentation")){setError("Upload the editable slides as a PowerPoint file (.ppt or .pptx).");return;}
+    setError("");setBusy("Uploading editable slides...");setUploadPct(0);
+    try{
+      const doc=await uploadFile(`shared/unitbuilder/${us}/material`,file,setUploadPct);
+      await saveMaterial({material:displayMaterial,materialEditable:doc});
+    }catch(e){setError(e instanceof Error?e.message:"The editable slides could not be uploaded.");}
+    finally{setBusy("");setUploadPct(null);}
+  };
+  return <div className="built-course-material">
+    <h2 className="section-title"><span className="ico"><Icon name="play" size={20}/></span>Course material</h2>
+    <p className="muted" style={{marginTop:-6,marginBottom:14}}>Course material for this unit standard — displayed exactly as designed, like a PowerPoint presentation. Use the full screen button for presentation mode.</p>
+    <div className="deck-chips">
+      <button type="button" className="deck-chip active"><Icon name="presenter" size={15}/><span>{displayMaterial?.name.replace(/\.pdf$/i,"")||editableMaterial?.name.replace(/\.(ppt|pptx)$/i,"")||`US ${us} course material`}</span></button>
     </div>
-    <input ref={fileRef} type="file" hidden accept=".pdf,.ppt,.pptx,.doc,.docx,.odt,.rtf,.txt,image/*,video/*" onChange={e=>{const file=e.target.files?.[0];e.target.value="";void onFile(file);}}/>
+    <div className="unit-builder-bar built-material-actions">
+      {displayMaterial&&<button type="button" className="btn ghost dl-sample plan-ppt" onClick={()=>void downloadDoc(displayMaterial).catch(()=>setError("The file could not be downloaded. Please retry."))}><Icon name="download" size={15}/>Download this file</button>}
+      {editableMaterial&&<button type="button" className="btn ghost dl-sample plan-ppt" onClick={()=>void downloadDoc(editableMaterial).catch(()=>setError("The editable slides could not be downloaded. Please retry."))}><Icon name="download" size={15}/>Editable slides (.pptx)</button>}
+      {staff&&<button type="button" className="btn ghost dl-sample plan-ppt" disabled={!!busy} onClick={()=>pdfRef.current?.click()}><Icon name="presenter" size={15}/>{displayMaterial?"Replace with my version (.pdf)":"Upload course material (.pdf)"}</button>}
+      {staff&&<button type="button" className="btn ghost dl-sample plan-ppt" disabled={!!busy} onClick={()=>editableRef.current?.click()}><Icon name="download" size={15}/>{editableMaterial?"Replace editable slides (.pptx)":"Upload editable slides (.pptx)"}</button>}
+      {staff&&(displayMaterial||editableMaterial)&&<button type="button" className="btn ghost dl-sample plan-ppt" disabled={!!busy} onClick={()=>void saveMaterial({material:undefined,materialEditable:undefined}).catch(e=>setError(e instanceof Error?e.message:"The course material could not be removed."))}><Icon name="close" size={14}/>Remove</button>}
+    </div>
+    <input ref={pdfRef} type="file" hidden accept=".pdf,application/pdf" onChange={e=>{const file=e.target.files?.[0];e.target.value="";void onPdf(file);}}/>
+    <input ref={editableRef} type="file" hidden accept=".ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation" onChange={e=>{const file=e.target.files?.[0];e.target.value="";void onEditable(file);}}/>
     {uploadPct!==null&&<div className="upload-progress plan-upload-progress" role="progressbar" aria-valuenow={uploadPct}><div className="track"><div className="fill" style={{width:`${uploadPct}%`}}/></div><span className="pct">Uploading... {uploadPct}%</span></div>}
+    {!displayMaterial&&<p className="muted built-material-empty">{staff?"Upload the PDF export of your slides to show the presentation here. You can also upload the editable PowerPoint source.":"No course material has been uploaded for this built unit yet."}</p>}
+    {displayMaterial&&(materialUrl?<SlideViewer src={materialUrl} allowDownload={staff}/>:<p className="muted">Loading course material...</p>)}
     {busy&&<p role="status">{busy}</p>}{error&&<p role="alert" className="auth-error">{error}</p>}
   </div>;
 }
-

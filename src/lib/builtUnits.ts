@@ -1,7 +1,7 @@
 import type { PoeDoc, UnitContent } from "../types";
 import { unitPackSnapshot } from "./unitStorage";
 
-export type UnitFiles = { pdf: PoeDoc; pptx: PoeDoc; answers: PoeDoc; material?: PoeDoc };
+export type UnitFiles = { pdf: PoeDoc; pptx: PoeDoc; answers: PoeDoc; material?: PoeDoc; materialEditable?: PoeDoc };
 export type BuiltUnitVersion = { revision: string; source: string; content: UnitContent; files: UnitFiles; createdAt: string; aiUsed: boolean };
 export type BuiltUnit = BuiltUnitVersion & { previous?: BuiltUnitVersion };
 
