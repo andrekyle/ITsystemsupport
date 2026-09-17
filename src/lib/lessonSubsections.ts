@@ -13,6 +13,7 @@ export function isLessonNumberedListLead(text: string): boolean {
   const value = text.replace(/[\u00a0\s]+$/g, "").trim();
   return /\bfollowing items of work$/i.test(value)
     || /\bas follows:?$/i.test(value)
+    || /\busually:?$/i.test(value)
     || /\b(?:involves?|includes?|comprises?|consists? of|are|is)$/i.test(value);
 }
 

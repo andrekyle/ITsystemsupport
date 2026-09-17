@@ -24,9 +24,9 @@ const overheadPoints = [
 ];
 const resourceTitle = "The rate is the cost of resources involved per unit of work. The resources are usually:";
 const resourcePoints = ["Man-hours.", "Materials.", "Tools and plants.", "Overheads.", "Profit margin."];
-const revision = "numbered-list-fixture-3";
+const revision = "numbered-list-fixture-4";
 const storageKey = `itss.lessonedits.114059.built-${revision}`;
-const reloadKey = "lesson-lists-reloaded-3";
+const reloadKey = "lesson-lists-reloaded-4";
 const tick = () => new Promise(resolve => setTimeout(resolve, 80));
 function assert(ok: unknown, message: string): asserts ok { if (!ok) throw new Error(message); }
 function click(label: string) {
@@ -157,13 +157,13 @@ async function test() {
   else await verifyEditing("Overhead involve list", overheadPoints);
   click("Next");
   await tick();
-  if (reloaded) verifyBullet("Reloaded resource bullet list", resourcePoints);
+  if (reloaded) verify("Reloaded resource numbered list", resourcePoints);
   else {
-    verifyBullet("Resource bullet list: reading", resourcePoints);
+    verify("Resource numbered list: reading", resourcePoints);
     click("Edit content");
     await tick();
-    verifyBullet("Resource bullet list: editing", resourcePoints);
-    const firstItem = document.querySelector<HTMLElement>(".slide-whole-editor ul > li")!;
+    verify("Resource numbered list: editing", resourcePoints);
+    const firstItem = document.querySelector<HTMLElement>(".slide-whole-editor ol > li")!;
     const emphasis = document.createElement("strong");
     while (firstItem.firstChild) emphasis.append(firstItem.firstChild);
     firstItem.append(emphasis);
@@ -171,12 +171,11 @@ async function test() {
     await tick();
     click("Done editing");
     await tick();
-    verifyBullet("Resource bullet list: saved", resourcePoints);
+    verify("Resource numbered list: saved", resourcePoints);
   }
   if (!reloaded) {
     const stored = JSON.parse(localStorage.getItem(storageKey)!);
-    assert([0, 1, 2, 3].every(index => stored.sectionBody?.[index]?.richHtml?.includes("<ol")), "Each edited list is saved as an ordered list");
-    assert(stored.sectionBody?.[4]?.richHtml?.includes("<ul"), "Bullet lead is saved as an unordered list");
+    assert([0, 1, 2, 3, 4].every(index => stored.sectionBody?.[index]?.richHtml?.includes("<ol")), "Each edited list is saved as an ordered list");
     sessionStorage.setItem(reloadKey, "1");
     location.reload();
     return;
@@ -195,7 +194,7 @@ async function test() {
   verify("Final Presentation screenshot", presentationPoints);
   document.querySelector(".lesson-screen")?.scrollIntoView();
   document.body.dataset.result = "passed";
-  document.getElementById("result")!.textContent = "PASS: numbered lesson groups stay numbered, resource-style colon groups stay bulleted, and all list points survive read/edit/save/reload";
+  document.getElementById("result")!.textContent = "PASS: numbered lesson groups, including usually/resource groups, keep every point in one ordered list through read/edit/save/reload";
 }
 
 test().catch(error => {
