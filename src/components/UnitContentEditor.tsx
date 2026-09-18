@@ -45,7 +45,7 @@ function addTemplate(name: string, current: Value): Value {
 }
 
 /** Field editor for every generated tab; no code or JSON knowledge required. */
-export function UnitContentEditor({value,onChange,name="Unit content"}:{value:Value;onChange:(value:Value)=>void;name?:string}) {
+export function UnitContentEditor({value,onChange,name="Unit content",defaultOpen=false}:{value:Value;onChange:(value:Value)=>void;name?:string;defaultOpen?:boolean}) {
   const template=useRef<Value>(Array.isArray(value)&&value.length?value[value.length-1]:blankFor(name));
   if(Array.isArray(value)) template.current=value.length?value[value.length-1]:blankFor(name);
   if(Array.isArray(value)) return <div className="unit-editor-array">
@@ -58,7 +58,7 @@ export function UnitContentEditor({value,onChange,name="Unit content"}:{value:Va
     </div>)}
     <button type="button" className="btn ghost sm" onClick={()=>onChange([...value,addTemplate(name,template.current)])}>Add {label(name).toLowerCase()}</button>
   </div>;
-  if(value && typeof value==="object") return <details className="unit-editor-group"><summary>{label(name)}{typeof value.title==="string"?`: ${value.title}`:typeof value.heading==="string"?`: ${value.heading}`:""}</summary>
+  if(value && typeof value==="object") return <details className="unit-editor-group" open={defaultOpen || undefined}><summary>{label(name)}{typeof value.title==="string"?`: ${value.title}`:typeof value.heading==="string"?`: ${value.heading}`:""}</summary>
     {Object.entries(value).filter(([key,item])=>item!==undefined&&!["id","icon","flat","quizGate"].includes(key)).map(([key,item])=><div key={key}>
       {key==="answer" && Array.isArray(value.options) ? <div className="field"><label>Correct answer</label><Select ariaLabel="Correct answer" value={String(item)} options={value.options.map((o,i)=>({value:String(i),label:`${i+1}. ${o}`}))} onChange={v=>onChange({...value,answer:Number(v)})}/></div> : <UnitContentEditor name={key} value={item} onChange={next=>onChange({...value,[key]:next})}/>}
     </div>)}

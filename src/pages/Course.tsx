@@ -2217,7 +2217,8 @@ export function UnitPage({
   const [idealOpen, setIdealOpen] = useState<Record<string, boolean>>({});
   /** bumped per exercise on "Try again" so the answer blocks remount empty */
   const [exReset, setExReset] = useState<Record<string, number>>({});
-  const [activityEditor, setActivityEditor] = useState<{ kind: "exercises" | "questionSessions"; index: number; value: Exercise } | null>(null);
+  const [activityEditor, setActivityEditor] = useState<{ kind: "exercises" | "questionSessions"; index: number | null; value: Exercise } | null>(null);
+  const [activitySaving, setActivitySaving] = useState(false);
   const [activityEditError, setActivityEditError] = useState("");
   /** edX-style lesson wizard — index of the section currently on screen */
   const [lessonStep, setLessonStep] = useState<number>(() => loadLessonStep(profile.id, unitId));
@@ -2698,8 +2699,13 @@ export function UnitPage({
     nextContent[kind] = updater([...(nextContent[kind] ?? [])]);
     await saveBuiltContent(nextContent);
   };
-  const addBuiltActivity = async () => {
-    try { await updateBuiltActivityList("exercises", items => [...items, blankBuiltActivity()]); setTab("exercises"); }
+  const addBuiltActivity = () => {
+    if (!builtUnit) return;
+    try {
+      setActivityEditError("");
+      setActivityEditor({ kind: "exercises", index: null, value: blankBuiltActivity() });
+      setTab("exercises");
+    }
     catch (error) { setActivityEditError(error instanceof Error ? error.message : "The activity could not be added."); }
   };
   const removeBuiltActivity = async (kind: "exercises" | "questionSessions", index: number) => {
@@ -2707,9 +2713,16 @@ export function UnitPage({
     catch (error) { setActivityEditError(error instanceof Error ? error.message : "The activity could not be removed."); }
   };
   const saveActivityEditor = async () => {
-    if (!activityEditor) return;
-    try { await updateBuiltActivityList(activityEditor.kind, items => items.map((item, i) => i === activityEditor.index ? activityEditor.value : item)); setActivityEditor(null); }
+    if (!activityEditor || activitySaving) return;
+    setActivitySaving(true);
+    try {
+      await updateBuiltActivityList(activityEditor.kind, items => activityEditor.index === null
+        ? [...items, activityEditor.value]
+        : items.map(item => item.id === activityEditor.value.id ? activityEditor.value : item));
+      setActivityEditor(null);
+    }
     catch (error) { setActivityEditError(error instanceof Error ? error.message : "The activity could not be saved."); }
+    finally { setActivitySaving(false); }
   };
   const isEmptyGeneratedBuiltActivity = (ex: Exercise) =>
     /^Questioning\s+[-–—]\s+Prepare a (?:time|cost) estimate for an element of work$/i.test(ex.title)
@@ -2719,7 +2732,7 @@ export function UnitPage({
     ? [
         ...content.exercises.map((ex, index) => ({ ex, kind: "exercises" as const, index })),
         ...(content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index })),
-      ].filter(({ ex }) => !isEmptyGeneratedBuiltActivity(ex))
+      ].filter(({ ex }) => ex.id.startsWith("manual-") || !isEmptyGeneratedBuiltActivity(ex))
     : [];
   const generateSlideQuiz = async (si: number) => {
     if (!content) return;
@@ -4879,8 +4892,8 @@ export function UnitPage({
               of its text.
             </span>
           </div>
-          {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="btn ghost sm" onClick={() => void addBuiltActivity()}><Icon name="plus" size={14} /> Add activity</button>{activityEditError && <span role="alert" className="auth-error">{activityEditError}</span>}</div>}
-          {activityEditor && builtUnit && isSuperUser && <div className="card activity-editor-card"><h3>Edit activity</h3><UnitContentEditor value={activityEditor.value as never} onChange={value => setActivityEditor({ ...activityEditor, value: value as unknown as Exercise })}/><div className="unit-editor-actions"><button type="button" className="btn" onClick={() => void saveActivityEditor()}>Save activity</button><button type="button" className="btn ghost" onClick={() => setActivityEditor(null)}>Cancel</button></div></div>}
+          {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="btn ghost sm" disabled={!!activityEditor} onClick={addBuiltActivity}><Icon name="plus" size={14} /> Add activity</button>{activityEditError && <span role="alert" className="auth-error">{activityEditError}</span>}</div>}
+          {activityEditor && builtUnit && isSuperUser && <div className="card activity-editor-card"><h3>{activityEditor.index === null ? "Add activity" : "Edit activity"}</h3><fieldset disabled={activitySaving} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}><UnitContentEditor key={activityEditor.value.id} name="Activity" defaultOpen value={activityEditor.value as never} onChange={value => setActivityEditor({ ...activityEditor, value: value as unknown as Exercise })}/><div className="unit-editor-actions"><button type="button" className="btn" onClick={() => void saveActivityEditor()}>{activitySaving ? "Saving activity…" : "Save activity"}</button><button type="button" className="btn ghost" onClick={() => { setActivityEditor(null); setActivityEditError(""); }}>Cancel</button></div></fieldset></div>}
           {(tab === "questions" ? (content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index })) : builtUnit ? visibleBuiltActivities : content.exercises.map((ex, index) => ({ ex, kind: "exercises" as const, index }))).map(({ex, kind, index}) => {
             const exRes = progress.units[u.us]?.exercises?.[ex.id];
             const hasChecks = !!ex.checks && ex.checks.length > 0;
@@ -4921,7 +4934,7 @@ export function UnitPage({
                 </span>
               </summary>
               <div className="saqa-body">
-                {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="btn ghost sm" onClick={() => setActivityEditor({ kind, index, value: structuredClone(ex) })}>Edit activity</button><button type="button" className="btn ghost sm" onClick={() => void removeBuiltActivity(kind, index)}>Remove activity</button></div>}
+                {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="btn ghost sm" disabled={!!activityEditor} onClick={() => setActivityEditor({ kind, index, value: structuredClone(ex) })}>Edit activity</button><button type="button" className="btn ghost sm" disabled={!!activityEditor} onClick={() => void removeBuiltActivity(kind, index)}>Remove activity</button></div>}
                 <p className="lesson-p" style={{ marginTop: 10 }}>
                   <Gloss text={ex.task} />
                 </p>
