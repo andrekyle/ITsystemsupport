@@ -2,7 +2,7 @@ import type { PoeDoc, UnitContent } from "../types";
 import { unitPackSnapshot } from "./unitStorage";
 
 export type UnitFiles = { pdf: PoeDoc; pptx: PoeDoc; answers: PoeDoc; material?: PoeDoc; materialEditable?: PoeDoc };
-export type BuiltUnitVersion = { revision: string; source: string; content: UnitContent; files: UnitFiles; createdAt: string; aiUsed: boolean };
+export type BuiltUnitVersion = { revision: string; source: string; content: UnitContent; files: UnitFiles; createdAt: string; aiUsed: boolean; planSource?: string };
 export type BuiltUnit = BuiltUnitVersion & { previous?: BuiltUnitVersion; history?: BuiltUnitVersion[] };
 
 /** How many superseded builds stay restorable on the unit. */
@@ -17,7 +17,7 @@ export function unitHistory(unit: BuiltUnit | undefined): BuiltUnitVersion[] {
 
 /** Strip nested versions so archived builds never nest inside each other. */
 export function unitVersionArchive(version: BuiltUnitVersion): BuiltUnitVersion {
-  return { revision: version.revision, source: version.source, content: version.content, files: version.files, createdAt: version.createdAt, aiUsed: version.aiUsed };
+  return { revision: version.revision, source: version.source, content: version.content, files: version.files, createdAt: version.createdAt, aiUsed: version.aiUsed, planSource: version.planSource };
 }
 
 /** Local-only packs embed the export files, so keep the saved row a workable size. */

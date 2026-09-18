@@ -20,7 +20,7 @@ import { SlideEditableText } from "../components/SlideEditableText";
 import { SlideTextToolbar } from "../components/SlideTextToolbar";
 import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
-import { UnitBuilder, BuiltUnitDownloads } from "../components/UnitBuilder";
+import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder } from "../components/UnitBuilder";
 import { ActivityQuestionEditor } from "../components/ActivityQuestionEditor";
 import { UnitContentEditor } from "../components/UnitContentEditor";
 import { supabase } from "../lib/supabase";
@@ -5775,6 +5775,7 @@ export function UnitPage({
             Visible to facilitators, assessors, moderators and the super user only — session-by-session facilitation guide
             for this unit standard.
           </p>
+          {isSuperUser && <LessonPlanBuilder unit={u} content={content} />}
           {canDownloadShared && u.us === "8252" && (
             <a
               className="btn ghost dl-sample plan-ppt"

@@ -4,7 +4,7 @@ import { lessonTableMarkdown, parseLessonTextBlocks } from "./lessonTables";
 
 export const MAX_SOURCE_LENGTH = 120_000;
 export const MAX_LESSON_PLAN_LENGTH = 40_000;
-export type BuildOptions = { minutes: number; lessonPlanContent?: string };
+export type BuildOptions = { minutes: number };
 export type UnitTopic = { heading: string; paragraphs: string[] };
 const normal = (text: string) => text.replace(/\r\n?/g, "\n").replace(/\u0000/g, "").trim();
 
@@ -209,7 +209,7 @@ function planRowFromHeader(line: string): PlanRowDraft | undefined {
  * durations or clock times, "# " starts a new section, "-" lines are bullets and
  * "Resources:" lines list the materials for the activity above.
  */
-export function parseLessonPlanContent(source: string): { title?: string; startTime?: string; details: NonNullable<LessonPlan["details"]>; prep: string[]; sections: PlanSectionDraft[] } {
+function parseLessonPlanContent(source: string): { title?: string; startTime?: string; details: NonNullable<LessonPlan["details"]>; prep: string[]; sections: PlanSectionDraft[] } {
   const text = normal(source);
   const details: NonNullable<LessonPlan["details"]> = [];
   const prep: string[] = [];
@@ -439,16 +439,14 @@ function lessonPlanFromTemplate(unit: UnitStandard, topics: UnitTopic[], minutes
   };
 }
 
-export function mergeUnitContentEnhancement(base: UnitContent, enhancement: UnitContentEnhancement, unit: UnitStandard, options: { lessonPlanContent?: string } = {}): UnitContent {
+export function mergeUnitContentEnhancement(base: UnitContent, enhancement: UnitContentEnhancement, unit: UnitStandard): UnitContent {
   const next = structuredClone(base);
   const overview = enhancement.overview ?? enhancement.saqa;
   if (overview?.sections?.length && overview.registration?.length) next.saqa = overview;
   if (enhancement.logbook?.knowledgeQuestions?.length && enhancement.logbook.practicalActivities?.length) next.logbook = normalizeLogbookSpec(unit, enhancement.logbook);
   next.evaluation = undefined;
   if (enhancement.selfAssessment?.items?.length) next.selfAssessment = selfAssessmentFromTemplate(enhancement.selfAssessment.items);
-  // Administrator-supplied plan content already built the plan on the base content and always wins.
-  const keepSuppliedPlan = Boolean(options.lessonPlanContent?.trim()) && Boolean(next.lessonPlan?.sections.length);
-  if (!keepSuppliedPlan && enhancement.lessonPlan?.sections?.length) {
+  if (enhancement.lessonPlan?.sections?.length) {
     next.lessonPlan = lessonPlanFromEnhancement(enhancement.lessonPlan, unit)
       ?? lessonPlanFromTemplate(unit, next.lesson.map(section => ({ heading: section.heading, paragraphs: section.paragraphs })), enhancement.lessonPlan.details?.length ? Number(enhancement.lessonPlan.details.find(detail => /duration/i.test(detail.label))?.value.match(/\d+/)?.[0] ?? 300) : 300);
   }
@@ -463,10 +461,6 @@ export function mergeUnitContentEnhancement(base: UnitContent, enhancement: Unit
 }
 export function buildUnitContent(unit: UnitStandard, source: string, options: BuildOptions): UnitContent {
   const topics = parseUnitSource(source);
-  const planContent = options.lessonPlanContent?.trim() ?? "";
-  if (planContent.length > MAX_LESSON_PLAN_LENGTH) throw new Error("Shorten the lesson plan content (maximum 40,000 characters).");
-  const suppliedPlan = planContent ? lessonPlanFromSource(unit, planContent) : undefined;
-  if (planContent && !suppliedPlan) throw new Error('No lesson plan activities were found. Start each activity on its own line, for example "20 min | Meet, Greet & Seat".');
   // Use the same section-title/lesson-flat layout as the completed report unit.
   // A source topic is a section, not a new lesson with a repeated banner.
   const lesson: LessonSection[] = topics.map(topic => ({ ...topic, icon: "presenter", flat: true }));
@@ -485,7 +479,7 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
     ] },
     logbook: normalizeLogbookSpec(unit, { assignmentTitle: "Assignment One", programme: "Information Technology - Systems Support", unitLabel: `${unit.us} - ${unit.title}`, detailFields: STANDARD_LOGBOOK_DETAIL_FIELDS, project: { time: "30 minutes", title: "Workplace application", text: "Apply the unit learning in the workplace and record evidence against the activities below.", resource: "Logbook" }, knowledgeQuestions: goals.map(text => ({ text, marks: KNOWLEDGE_MARKS })), practicalActivities: goals.map(text => ({ text, marks: PROJECT_MARKS })), workplaceActivities: goals, workplaceEvidenceNote: "The workplace completes this section after observing the learner having complied to and completed all the activities as mentioned below.", otherActivities: [{ activity: "Workplace application", evidence: "Apply the unit learning in the workplace and record evidence against the activities below." }], otherEvidenceNote: "Learner evidence and experience is recorded here. Make reference to equipment, tools, materials or systems that were used in these processes.", projectChecklist: [{ no: "1", name: unit.us }] }),
     selfAssessment: selfAssessmentFromTemplate(goals.map(g => `I am able to ${g.charAt(0).toLowerCase()}${g.slice(1)}`)),
-    lessonPlan: suppliedPlan ?? lessonPlanFromTemplate(unit, topics, options.minutes),
+    lessonPlan: lessonPlanFromTemplate(unit, topics, options.minutes),
   };
 }
 

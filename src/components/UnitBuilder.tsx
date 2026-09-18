@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { PoeDoc, UnitContent, UnitStandard } from "../types";
 import type { LessonEdits } from "../store";
-import { buildUnitContent, validateUnitContent, MAX_SOURCE_LENGTH, MAX_LESSON_PLAN_LENGTH, mergeUnitContentEnhancement } from "../lib/unitBuilder";
+import { buildUnitContent, validateUnitContent, lessonPlanFromSource, MAX_SOURCE_LENGTH, MAX_LESSON_PLAN_LENGTH, mergeUnitContentEnhancement } from "../lib/unitBuilder";
 import { useBuiltUnit, saveBuiltUnit } from "../lib/useBuiltUnit";
 import { unitHistory, unitVersionArchive, MAX_UNIT_HISTORY, type BuiltUnitVersion } from "../lib/builtUnits";
 import { importUnitSource } from "../lib/unitSourceImport";
@@ -54,7 +54,6 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   const [minutes,setMinutes]=useState(300);
   const [activityBlocks,setActivityBlocks]=useState<{heading:string;text:string}[]>([{heading:"",text:""}]);
   const [selfAssessmentContent,setSelfAssessmentContent]=useState("");
-  const [lessonPlanContent,setLessonPlanContent]=useState("");
   const [logbookContent,setLogbookContent]=useState("");
   const [logbookImageName,setLogbookImageName]=useState("");
   const [busy,setBusy]=useState("");
@@ -99,7 +98,7 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
     setBusy("Saving the unit and course materials…");
     const prefix=`shared/unitbuilder/${unit.us}`;
     const [pdf,pptx,answers]=await Promise.all([uploadFile(prefix,files.pdf),uploadFile(prefix,files.pptx),uploadFile(prefix,files.answers)]);
-    await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:sourceText,content:next,files:{pdf,pptx,answers,material:built?.files.material,materialEditable:built?.files.materialEditable},aiUsed});
+    await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:sourceText,content:next,files:{pdf,pptx,answers,material:built?.files.material,materialEditable:built?.files.materialEditable},aiUsed,planSource:built?.planSource});
     setSource(sourceText);setDraft(null);setMessage("Unit built and saved. All learning tabs and download files are ready.");onSaved();
   };
   const readLogbookImages=async(files: FileList|null)=>{
@@ -122,14 +121,14 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   const build=async()=>{
     setError("");setMessage("");setWarning("");setBusy("Building lessons, activities and tab content…");
     try {
-      let next=buildUnitContent(unit,source,{minutes,lessonPlanContent});
+      let next=buildUnitContent(unit,source,{minutes});
       if(ai){
         setBusy("Researching the unit standard and creating the tabs with OpenAI...");
         const token=(await supabase?.auth.getSession())?.data.session?.access_token;
-        const response=await fetch("/api/enhance-unit-content",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({unit,source,minutes,activityContent:activityBlocks.map((block,index)=>`Activity ${index+1} heading:\n${block.heading.trim()||`Activity ${index+1}`}\n\nActivity ${index+1} content:\n${block.text.trim()}`).filter(text=>text.trim()).join("\n\n--- ACTIVITY SEPARATOR ---\n\n"),selfAssessmentContent,logbookContent,lessonPlanContent}),signal:AbortSignal.timeout(85_000)});
+        const response=await fetch("/api/enhance-unit-content",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({unit,source,minutes,activityContent:activityBlocks.map((block,index)=>`Activity ${index+1} heading:\n${block.heading.trim()||`Activity ${index+1}`}\n\nActivity ${index+1} content:\n${block.text.trim()}`).filter(text=>text.trim()).join("\n\n--- ACTIVITY SEPARATOR ---\n\n"),selfAssessmentContent,logbookContent}),signal:AbortSignal.timeout(85_000)});
         const result=await response.json();
         if(!response.ok) throw new Error(result.error??"AI generation failed. Turn it off to build entirely with built-in code.");
-        next=mergeUnitContentEnhancement(next,result.content,unit,{lessonPlanContent});setWarning("");
+        next=mergeUnitContentEnhancement(next,result.content,unit);setWarning("");
         if(result.usage) void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.input_tokens??result.usage.prompt_tokens??0,completionTokens:result.usage.output_tokens??result.usage.completion_tokens??0,totalTokens:result.usage.total_tokens??0});
       }
       await publish(next,source,ai);
@@ -159,11 +158,10 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
           </div>
           <label className="unit-source-field"><strong>Source content</strong><span>Paste the teaching material for this unit.</span><textarea rows={7} value={source} maxLength={MAX_SOURCE_LENGTH} disabled={!!busy} onChange={e=>setSource(e.target.value)} placeholder={`Paste the content for US ${unit.us} here…`}/></label>
         </div>
-        <h3 className="unit-settings-heading">Activity, self-assessment, lesson plan and logbook content</h3>
+        <h3 className="unit-settings-heading">Activity, self-assessment and logbook content</h3>
         <div className="unit-settings-card">
           <div className="unit-source-field"><strong>Activity content</strong><span>Add each activity/question session in its own box. Use the separator by clicking Add another activity.</span>{activityBlocks.map((block,index)=><div className="unit-activity-block" key={index}><label>Activity {index+1} heading<input type="text" value={block.heading} disabled={!!busy} onChange={e=>setActivityBlocks(blocks=>blocks.map((item,i)=>i===index?{...item,heading:e.target.value}:item))} placeholder="Example: Question Session 1 -- Prepare a time estimate"/></label><label>Activity {index+1} content<textarea rows={5} value={block.text} disabled={!!busy} onChange={e=>setActivityBlocks(blocks=>blocks.map((item,i)=>i===index?{...item,text:e.target.value}:item))} placeholder="Example: Questioning task, time allowed, Activity: Self & Group, learner questions, required evidence, model answer guidance..."/></label><div className="unit-editor-actions"><button type="button" className="btn ghost sm" disabled={!!busy||index===0} onClick={()=>setActivityBlocks(blocks=>{const next=[...blocks];[next[index-1],next[index]]=[next[index],next[index-1]];return next;})}>Move up</button><button type="button" className="btn ghost sm" disabled={!!busy||activityBlocks.length===1} onClick={()=>setActivityBlocks(blocks=>blocks.filter((_,i)=>i!==index))}>Remove activity</button></div></div>)}<button type="button" className="btn ghost sm" disabled={!!busy} onClick={()=>setActivityBlocks(blocks=>[...blocks,{heading:"",text:""}])}>Add another activity</button></div>
           <label className="unit-source-field"><strong>Self-assessment content</strong><span>Paste or describe the competence checklist learners must tick after the lesson.</span><textarea rows={4} value={selfAssessmentContent} disabled={!!busy} onChange={e=>setSelfAssessmentContent(e.target.value)} placeholder="Example: I can prepare a time estimate..., I can explain cost components..., revisit areas needing more practice..."/></label>
-          <label className="unit-source-field"><strong>Lesson plan content</strong><span>Optional. Paste the facilitator schedule. Start each activity on a new line with its time, use “# ” for a section heading, “-” for bullets and “Resources:” for materials. Leave empty to generate the plan from your lesson sections.</span><textarea rows={7} value={lessonPlanContent} maxLength={MAX_LESSON_PLAN_LENGTH} disabled={!!busy} onChange={e=>setLessonPlanContent(e.target.value)} placeholder={"Title: Facilitator Preparation\nDate: Friday, 17 July 2026\nVenue: Investec, Sandton\nFacilitator: Andre Snell\nPrep:\n- Study the notes in this lesson plan before class.\n\n# Unit Standard "+unit.us+"\n09:00 – 09:20 | Meet, Greet & Seat\nLearners sign the class register and settle.\nResources: Class Register, LM p1\n\n45 min | Introduction — Facilitator & Class\n- Read through the learner material and facilitate discussion.\nResources: LM p4\n\n10 min | Break"}/></label>
           <label className="unit-source-field"><strong>Logbook content</strong><span>Paste the logbook content, or upload clear images of the logbook pages and check the extracted text.</span><div className="unit-settings-row unit-logbook-import"><span className="unit-settings-copy"><strong>Read logbook image</strong><span>{logbookImageName || "PNG, JPEG or WebP screenshots/photos"}</span></span><label className="unit-import-button"><span>Upload image</span><input aria-label="Upload logbook image" type="file" accept="image/png,image/jpeg,image/webp" multiple disabled={!!busy} onChange={async e=>{const files=e.target.files;e.target.value="";await readLogbookImages(files);}}/></label></div><textarea rows={7} value={logbookContent} disabled={!!busy} onChange={e=>setLogbookContent(e.target.value)} placeholder="Example: embedded knowledge questions with checklist ticks, practical activities, workplace activities, other activities, project evidence and project checklist..."/></label>
         </div>
         <h3 className="unit-settings-heading">Build settings</h3>
@@ -171,7 +169,7 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
           <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Session duration</strong><span>Planned teaching time in minutes.</span></span><input aria-label="Session duration in minutes" className="unit-duration" type="number" min={60} max={2400} value={minutes} disabled={!!busy} onChange={e=>setMinutes(Math.min(2400,Math.max(60,Number(e.target.value))))}/></label>
           <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Build tabs with OpenAI web research</strong><span>Use OpenAI web research to build the overview, logbook, evaluation and activities.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={ai} disabled={!!busy} onChange={e=>setAi(e.target.checked)}/></label>
         </div>
-        <p className="muted">Lessons keep your source text. Lesson plan content you paste is used exactly as supplied. When AI is enabled, OpenAI researches the unit standard online and uses your activity, self-assessment and logbook content to create the matching tabs, overview, evaluation and — when you leave the lesson plan empty — the lesson plan.</p>
+        <p className="muted">Lessons keep your source text. When AI is enabled, OpenAI researches the unit standard online and uses your activity, self-assessment and logbook content to create the matching tabs, overview, evaluation and lesson plan. The lesson plan can be replaced with your own schedule on the Lesson plan tab.</p>
         {confirmBuild&&!busy&&<p className="unit-confirm" role="alert">Rebuilding replaces every tab of US {unit.us} with the content above. The current version stays restorable for the next {MAX_UNIT_HISTORY} builds.</p>}
         <button type="button" className="btn unit-build-action" disabled={!!busy||source.trim().length<100||(ai&&(!activityBlocks.some(block=>block.text.trim())||!selfAssessmentContent.trim()||!logbookContent.trim()))} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>{if(built&&!confirmBuild){setConfirmBuild(true);setError("");setMessage("");return;}setConfirmBuild(false);void build();}}><span>{busy?`Creating ${busyProgress}%`:!built?"Build complete unit standard":confirmBuild?"Yes, replace the saved unit":"Rebuild complete unit standard"}</span></button>
         {confirmBuild&&!busy&&<button type="button" className="btn ghost" onClick={()=>setConfirmBuild(false)}>Cancel</button>}
@@ -179,6 +177,78 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
       <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(false);setDraft(null);}}>Close</button>
     </div>}
     {busy&&<p role="status">{busy}</p>}{message&&<p role="status">{message}</p>}{warning&&<p role="status">{warning}</p>}{error&&<p role="alert" className="auth-error">{error}</p>}
+  </section>;
+}
+
+/** Replace only the lesson plan of a built unit from pasted facilitator notes. */
+export function LessonPlanBuilder({unit,content}:{unit:UnitStandard;content?:UnitContent}) {
+  const built=useBuiltUnit(unit.us);
+  const [open,setOpen]=useState(false);
+  const [planSource,setPlanSource]=useState("");
+  const [loaded,setLoaded]=useState("");
+  const [busy,setBusy]=useState("");
+  const [error,setError]=useState("");
+  const [message,setMessage]=useState("");
+  const [fileName,setFileName]=useState("");
+  const [preview,setPreview]=useState<UnitContent["lessonPlan"]>(undefined);
+  useEffect(()=>{
+    if(!built||loaded===built.revision)return;
+    setPlanSource(built.planSource??"");
+    setLoaded(built.revision);
+  },[built?.revision,built?.planSource,loaded]);
+  const base=content??built?.content;
+  if(!built||!base)return null;
+  const planStats=(plan:NonNullable<UnitContent["lessonPlan"]>)=>{
+    const rows=plan.sections.flatMap(section=>section.rows);
+    const minutes=rows.reduce((total,row)=>total+(parseInt(row.time??"",10)||0),0);
+    return `${plan.sections.length} section${plan.sections.length===1?"":"s"} · ${rows.length} activities · ${Math.floor(minutes/60)} h ${minutes%60} min`;
+  };
+  const parsePlan=()=>{
+    const text=planSource.trim();
+    if(!text)throw new Error("Paste the lesson plan content first.");
+    if(text.length>MAX_LESSON_PLAN_LENGTH)throw new Error("Shorten the lesson plan content (maximum 40,000 characters).");
+    const plan=lessonPlanFromSource(unit,text);
+    if(!plan)throw new Error('No lesson plan activities were found. Start each activity on its own line, for example "20 min | Meet, Greet & Seat".');
+    return plan;
+  };
+  const save=async()=>{
+    setError("");setMessage("");
+    try{
+      const plan=parsePlan();
+      const next:UnitContent={...structuredClone(base),lessonPlan:plan};
+      validateUnitContent(next);
+      setBusy("Rebuilding the PDF, PowerPoint and answer guide…");
+      const files=await makeUnitExports(unit,next);
+      setBusy("Saving the lesson plan…");
+      const prefix=`shared/unitbuilder/${unit.us}`;
+      const [pdf,pptx,answers]=await Promise.all([uploadFile(prefix,files.pdf),uploadFile(prefix,files.pptx),uploadFile(prefix,files.answers)]);
+      await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content:next,files:{pdf,pptx,answers,material:built.files.material,materialEditable:built.files.materialEditable},aiUsed:built.aiUsed,planSource:planSource.trim()});
+      setPreview(undefined);setMessage(`Lesson plan saved — ${planStats(plan)}. The previous version stays restorable from the builder.`);setOpen(false);
+    }catch(e){setError(e instanceof Error?e.message:"The lesson plan could not be saved. The current plan is unchanged.");}
+    finally{setBusy("");}
+  };
+  return <section className="unit-builder">
+    <div className="unit-builder-bar">
+      <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(!open);setError("");setPreview(undefined);}}><Icon name="presenter" size={16}/>{open?"Close lesson plan builder":"Build lesson plan from notes"}</button>
+    </div>
+    {open&&<div className="unit-builder-panel">
+      <h2>Lesson plan · US {unit.us}</h2>
+      <p>Paste the facilitator schedule for this unit. It replaces the plan below exactly as written — the rest of the unit is untouched.</p>
+      <div className="unit-settings-card">
+        <div className="unit-settings-row"><div className="unit-settings-copy"><strong>Import lesson plan</strong><span>{fileName||"TXT, Markdown, PDF, DOCX or PPTX"}</span></div>
+          <label className="unit-import-button"><span>Choose file</span><input aria-label="Import lesson plan" type="file" accept=".txt,.md,.pdf,.docx,.pptx" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Reading lesson plan document…");setError("");try{setPlanSource(await importUnitSource(file));setFileName(file.name);setPreview(undefined);}catch(err){setError(String(err));}finally{setBusy("");}}}/></label>
+        </div>
+        <label className="unit-source-field"><strong>Lesson plan content</strong><span>Start each activity on a new line with its time (“20 min | Meet, Greet &amp; Seat” or “09:00 – 09:20 Meet, Greet &amp; Seat”). Use “# ” for a section heading, “-” for bullets and “Resources:” for materials.</span><textarea rows={12} value={planSource} maxLength={MAX_LESSON_PLAN_LENGTH} disabled={!!busy} onChange={e=>{setPlanSource(e.target.value);setPreview(undefined);}} placeholder={"Title: Facilitator Preparation\nDate: Friday, 17 July 2026\nVenue: Investec, Sandton\nFacilitator: Andre Snell\nPrep:\n- Study the notes in this lesson plan before class.\n\n# Unit Standard "+unit.us+"\n09:00 – 09:20 | Meet, Greet & Seat\nLearners sign the class register and settle.\nResources: Class Register, LM p1\n\n45 min | Introduction — Facilitator & Class\n- Read through the learner material and facilitate discussion.\nResources: LM p4\n\n10 min | Break"}/></label>
+      </div>
+      {preview&&<div className="unit-confirm">
+        <strong>{preview.title}</strong> — {planStats(preview)}
+        <ul className="plan-preview">{preview.sections.map((section,index)=><li key={index}>{section.heading??"Session set-up"}: {section.rows.map(row=>`${row.time?`${row.time} · `:""}${row.title}`).join(" • ")}</li>)}</ul>
+      </div>}
+      <button type="button" className="btn ghost" disabled={!!busy||!planSource.trim()} onClick={()=>{setError("");setMessage("");try{setPreview(parsePlan());}catch(e){setPreview(undefined);setError(e instanceof Error?e.message:String(e));}}}>Preview plan</button>
+      <button type="button" className="btn unit-build-action" disabled={!!busy||!planSource.trim()} aria-busy={!!busy} onClick={()=>void save()}><span>{busy?"Saving…":"Save lesson plan"}</span></button>
+      <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(false);setPreview(undefined);}}>Close</button>
+    </div>}
+    {busy&&<p role="status">{busy}</p>}{message&&<p role="status">{message}</p>}{error&&<p role="alert" className="auth-error">{error}</p>}
   </section>;
 }
 
@@ -202,7 +272,7 @@ export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
   },[displayMaterial?.path,displayMaterial?.data,displayMaterial?.uploadedAt]);
   if(!built)return null;
   const saveMaterial=async(next:{material?:PoeDoc;materialEditable?:PoeDoc})=>{
-    await saveBuiltUnit(us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content:built.content,files:{...built.files,...next},aiUsed:built.aiUsed});
+    await saveBuiltUnit(us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content:built.content,files:{...built.files,...next},aiUsed:built.aiUsed,planSource:built.planSource});
   };
   const onPdf=async(file:File|undefined)=>{
     if(!file)return;
