@@ -2191,7 +2191,7 @@ textarea:focus {
 .self-assess-item input[type="checkbox"]:checked {
   border-color: var(--green);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23107c10' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 12.6l3.6 3.6 7.4-8.4'/%3E%3C/svg%3E");
-  background-size: 13px;
+  background-size: 17px;
   background-position: center;
   background-repeat: no-repeat;
 }
@@ -6952,6 +6952,9 @@ a.plan-ppt:hover {
 .lesson-edit-toolbar {
   margin-left: 0;
   display: inline-flex;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
   gap: 6px;
   align-items: center;
   align-self: center;
@@ -7209,9 +7212,19 @@ a.plan-ppt:hover {
 }
 .lesson-stepper-top {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 12px;
   margin-bottom: 8px;
+}
+.lesson-toolbar-messages {
+  margin: 0 0 12px;
+}
+.lesson-toolbar-messages .auth-error {
+  margin: 4px 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 .lesson-top-nav {
   display: inline-flex;

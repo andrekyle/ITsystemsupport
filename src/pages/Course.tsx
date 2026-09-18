@@ -4464,8 +4464,6 @@ export function UnitPage({
                               Split slide here
                             </button>
                           )}
-                          {quizGenerationError && <span className="auth-error" role="alert">{quizGenerationError}</span>}
-                          {lessonSplitError && <span className="auth-error" role="alert">{lessonSplitError}</span>}
                           <button
                             type="button"
                             className="btn ghost sm"
@@ -4479,6 +4477,12 @@ export function UnitPage({
                     </span>
                   )}
                 </div>
+                {isSuperUser && editMode && (quizGenerationError || lessonSplitError) && (
+                  <div className="lesson-toolbar-messages">
+                    {quizGenerationError && <p className="auth-error" role="alert">{quizGenerationError}</p>}
+                    {lessonSplitError && <p className="auth-error" role="alert">{lessonSplitError}</p>}
+                  </div>
+                )}
                 <div
                   className="lesson-progress"
                   role="progressbar"
