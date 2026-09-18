@@ -1,9 +1,10 @@
-import type { UnitContent, UnitStandard, LessonSection } from "../types";
+import type { UnitContent, UnitStandard, LessonSection, LessonPlan, LessonPlanRow } from "../types";
 import { getContent } from "../data/content";
 import { lessonTableMarkdown, parseLessonTextBlocks } from "./lessonTables";
 
 export const MAX_SOURCE_LENGTH = 120_000;
-export type BuildOptions = { minutes: number };
+export const MAX_LESSON_PLAN_LENGTH = 40_000;
+export type BuildOptions = { minutes: number; lessonPlanContent?: string };
 export type UnitTopic = { heading: string; paragraphs: string[] };
 const normal = (text: string) => text.replace(/\r\n?/g, "\n").replace(/\u0000/g, "").trim();
 
@@ -157,6 +158,209 @@ function selfAssessmentFromTemplate(items: string[]): UnitContent["selfAssessmen
   };
 }
 
+const DEFAULT_PLAN_TITLE = "Facilitator Preparation";
+const DEFAULT_PLAN_START = "09:00";
+const DEFAULT_PLAN_DETAILS: NonNullable<LessonPlan["details"]> = [
+  { icon: "calendar", label: "Date", value: "Friday, 17 July 2026" },
+  { icon: "clock", label: "Time", value: "09:00 – 14:00 · lunch 12:00 – 13:00" },
+  { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
+  { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
+];
+const DEFAULT_PLAN_PREP = [
+  "Study the notes in this lesson plan carefully to ensure preparation is done before the start of classes.",
+  "Study the learner materials so that you are familiar with the topics that will be covered in this part of the course.",
+];
+const PLAN_DETAIL_ICONS: [RegExp, string][] = [
+  [/date|day/i, "calendar"],
+  [/time|duration/i, "clock"],
+  [/venue|location|room|site/i, "globe"],
+  [/facilitator|trainer|assessor|presenter/i, "presenter"],
+  [/group|class|learner|delegate/i, "people"],
+  [/programme|program|course|module|unit/i, "book"],
+];
+const PLAN_DETAIL_KEYS = /^(date|day|time|session time|venue|location|room|facilitator|trainer|assessor|group|class|learners|duration|programme|program|course|module|unit standard)$/;
+const planDetailIcon = (label: string) => PLAN_DETAIL_ICONS.find(([pattern]) => pattern.test(label))?.[1] ?? "document";
+const isBreakTitle = (title: string) => /^(break|tea|coffee|comfort|lunch|refreshment)/i.test(title.trim());
+const planClock = (minutes: number) => `${String(Math.floor(minutes / 60) % 24).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+
+type PlanRowDraft = LessonPlanRow & { clock?: number };
+type PlanSectionDraft = { heading?: string; startTime?: string; rows: PlanRowDraft[] };
+
+/** Read "20 min | Meet & Greet", "09:00 – 09:20 Meet & Greet" or "09:00 Meet & Greet". */
+function planRowFromHeader(line: string): PlanRowDraft | undefined {
+  const range = line.match(/^(\d{1,2}):(\d{2})\s*(?:[–—-]|to)\s*(\d{1,2}):(\d{2})\s*(?:[|:–—-]\s*)?(.*)$/);
+  if (range) {
+    const start = Number(range[1]) * 60 + Number(range[2]);
+    const minutes = Number(range[3]) * 60 + Number(range[4]) - start;
+    return { clock: start, time: minutes > 0 ? `${minutes} minutes` : undefined, title: range[5].trim() };
+  }
+  const clock = line.match(/^(\d{1,2}):(\d{2})\s*(?:[|:–—-]\s*)?(\S.*)$/);
+  if (clock) return { clock: Number(clock[1]) * 60 + Number(clock[2]), title: clock[3].trim() };
+  const duration = line.match(/^(\d{1,3})\s*(min|mins|minute|minutes|hr|hrs|hour|hours)\b\s*(?:[|:–—-]\s*)?(.*)$/i);
+  if (duration) {
+    const minutes = /^h/i.test(duration[2]) ? Number(duration[1]) * 60 : Number(duration[1]);
+    return { time: `${minutes} minutes`, title: duration[3].trim() };
+  }
+  return undefined;
+}
+
+/**
+ * Turn pasted facilitator notes into lesson plan sections. Times may be given as
+ * durations or clock times, "# " starts a new section, "-" lines are bullets and
+ * "Resources:" lines list the materials for the activity above.
+ */
+export function parseLessonPlanContent(source: string): { title?: string; startTime?: string; details: NonNullable<LessonPlan["details"]>; prep: string[]; sections: PlanSectionDraft[] } {
+  const text = normal(source);
+  const details: NonNullable<LessonPlan["details"]> = [];
+  const prep: string[] = [];
+  const sections: PlanSectionDraft[] = [];
+  let title: string | undefined;
+  let startTime: string | undefined;
+  let section: PlanSectionDraft | undefined;
+  let row: PlanRowDraft | undefined;
+  let prepMode = false;
+  let blankBefore = false;
+  const openSection = (heading?: string, sectionStart?: string) => {
+    section = { heading, startTime: sectionStart, rows: [] };
+    sections.push(section);
+    row = undefined;
+    prepMode = false;
+  };
+  const openRow = (draft: PlanRowDraft) => {
+    if (!section) openSection();
+    row = draft;
+    section!.rows.push(row);
+    prepMode = false;
+  };
+
+  for (const rawLine of text.split("\n")) {
+    const line = rawLine.trim();
+    if (!line) { blankBefore = true; continue; }
+    const afterBlank = blankBefore;
+    blankBefore = false;
+
+    const heading = line.match(/^#{1,6}\s*(.+)$/);
+    if (heading) {
+      const value = heading[1].trim();
+      const clock = value.match(/[(@]\s*(\d{1,2}:\d{2})\s*\)?$/);
+      openSection(value.replace(/[(@]\s*\d{1,2}:\d{2}\s*\)?$/, "").replace(/[-–—\s]+$/, "").trim() || undefined, clock?.[1]);
+      continue;
+    }
+
+    const meta = !sections.length && line.match(/^([A-Za-z][A-Za-z /&]{1,28}):\s*(.*)$/);
+    if (meta) {
+      const key = meta[1].trim().toLowerCase();
+      const value = meta[2].trim();
+      if (/^(prep|preparation|facilitator preparation|before the session)$/.test(key)) { prepMode = true; if (value) prep.push(value); continue; }
+      if (/^(title|plan title|lesson plan)$/.test(key)) { if (value) title = value; continue; }
+      if (/^start(\s*time)?$/.test(key)) { startTime = value.match(/\d{1,2}:\d{2}/)?.[0] ?? startTime; continue; }
+      if (PLAN_DETAIL_KEYS.test(key) && value) { details.push({ icon: planDetailIcon(key), label: meta[1].trim(), value }); prepMode = false; continue; }
+    }
+
+    const bullet = line.match(/^[-*•·]\s+(.+)$/);
+    const body = bullet ? bullet[1].trim() : line;
+    if (bullet) {
+      if (prepMode && !sections.length) { prep.push(body); continue; }
+      if (row) { row.bullets = [...(row.bullets ?? []), body]; continue; }
+    }
+
+    const resources = body.match(/^(?:resources?|materials?|training aids?)\s*:\s*(.+)$/i);
+    if (resources && row) {
+      row.resources = [...(row.resources ?? []), ...resources[1].split(/[;,]/).map(item => item.trim()).filter(Boolean)];
+      continue;
+    }
+
+    const header = planRowFromHeader(body);
+    if (header) { openRow(header); continue; }
+    if (prepMode && !sections.length) { prep.push(body); continue; }
+    if (!row || (afterBlank && (row.text?.length || row.bullets?.length || row.resources?.length))) { openRow({ title: body }); continue; }
+    if (!row.title) row.title = body;
+    else row.text = [...(row.text ?? []), body];
+  }
+
+  const cleaned: PlanSectionDraft[] = [];
+  for (const [index, draft] of sections.entries()) {
+    const rows = draft.rows.filter(item => item.title.trim() || item.text?.length || item.bullets?.length);
+    if (!rows.length) continue;
+    rows.forEach((item, position) => {
+      const next = rows[position + 1];
+      if (!item.time && item.clock !== undefined && next?.clock !== undefined && next.clock > item.clock) item.time = `${next.clock - item.clock} minutes`;
+    });
+    if (rows[0].clock !== undefined) {
+      const value = planClock(rows[0].clock);
+      if (!index) startTime ??= value;
+      else draft.startTime ??= value;
+    }
+    cleaned.push({
+      heading: draft.heading,
+      startTime: draft.startTime,
+      rows: rows.map(({ clock: _clock, ...item }) => ({
+        ...item,
+        title: item.title.trim() || "Facilitated activity",
+        ...(item.break || isBreakTitle(item.title) ? { break: true } : {}),
+      })),
+    });
+  }
+  return { title, startTime, details, prep, sections: cleaned };
+}
+
+/** Build the lesson plan tab from administrator-supplied facilitator notes. */
+export function lessonPlanFromSource(unit: UnitStandard, source: string): LessonPlan | undefined {
+  const parsed = parseLessonPlanContent(source);
+  if (!parsed.sections.length) return undefined;
+  const template = getContent("8252")?.lessonPlan;
+  return {
+    title: parsed.title ?? template?.title ?? DEFAULT_PLAN_TITLE,
+    startTime: parsed.startTime ?? template?.startTime ?? DEFAULT_PLAN_START,
+    details: parsed.details.length ? parsed.details : structuredClone(template?.details ?? DEFAULT_PLAN_DETAILS),
+    prep: parsed.prep.length ? parsed.prep : structuredClone(template?.prep ?? DEFAULT_PLAN_PREP),
+    sections: parsed.sections.map(section => ({
+      ...section,
+      heading: section.heading ?? (parsed.sections.length === 1 ? `Unit Standard ${unit.us}` : undefined),
+    })),
+  };
+}
+
+/** Keep an AI-written lesson plan when it has usable rows, otherwise fall back to the template. */
+function lessonPlanFromEnhancement(plan: UnitContent["lessonPlan"], unit: UnitStandard): LessonPlan | undefined {
+  const sections = (plan?.sections ?? [])
+    .filter(section => Array.isArray(section?.rows))
+    .map(section => ({
+      heading: nonemptyString(section.heading) ? section.heading.trim() : undefined,
+      startTime: nonemptyString(section.startTime) && /^\d{1,2}:\d{2}$/.test(section.startTime.trim()) ? section.startTime.trim() : undefined,
+      rows: section.rows.filter(row => nonemptyString(row?.title)).map(row => {
+        const text = (row.text ?? []).filter(nonemptyString).map(item => item.trim());
+        const bullets = (row.bullets ?? []).filter(nonemptyString).map(item => item.trim());
+        const resources = (row.resources ?? []).filter(nonemptyString).map(item => item.trim());
+        return {
+          ...(nonemptyString(row.time) ? { time: row.time.trim() } : {}),
+          title: row.title.trim(),
+          ...(row.break === true || isBreakTitle(row.title) ? { break: true } : {}),
+          ...(text.length ? { text } : {}),
+          ...(bullets.length ? { bullets } : {}),
+          ...(resources.length ? { resources } : {}),
+        };
+      }),
+    }))
+    .filter(section => section.rows.length);
+  if (sections.reduce((count, section) => count + section.rows.length, 0) < 3) return undefined;
+  const template = getContent("8252")?.lessonPlan;
+  const details = (plan?.details ?? [])
+    .filter(detail => nonemptyString(detail?.label) && nonemptyString(detail?.value))
+    .map(detail => ({ icon: planDetailIcon(detail.label), label: detail.label.trim(), value: detail.value.trim() }));
+  const prep = (plan?.prep ?? []).filter(nonemptyString).map(item => item.trim());
+  return {
+    title: nonemptyString(plan?.title) ? plan!.title.trim() : template?.title ?? DEFAULT_PLAN_TITLE,
+    startTime: nonemptyString(plan?.startTime) && /^\d{1,2}:\d{2}$/.test(plan!.startTime!.trim()) ? plan!.startTime!.trim() : template?.startTime ?? DEFAULT_PLAN_START,
+    details: details.length ? details : structuredClone(template?.details ?? DEFAULT_PLAN_DETAILS),
+    prep: prep.length ? prep : structuredClone(template?.prep ?? DEFAULT_PLAN_PREP),
+    sections: sections.map((section, index) => ({
+      ...section,
+      heading: section.heading ?? (index === sections.length - 1 && sections.length > 1 ? `Unit Standard ${unit.us}` : undefined),
+    })),
+  };
+}
+
 function lessonPlanFromTemplate(unit: UnitStandard, topics: UnitTopic[], minutes: number): UnitContent["lessonPlan"] {
   const template = getContent("8252")?.lessonPlan;
   const setupRows = structuredClone(template?.sections?.[0]?.rows ?? [
@@ -181,18 +385,10 @@ function lessonPlanFromTemplate(unit: UnitStandard, topics: UnitTopic[], minutes
     resources: [`LM p${Math.max(4, index + 4)}`],
   }));
   return {
-    title: template?.title ?? "Facilitator Preparation",
-    startTime: template?.startTime ?? "09:00",
-    details: structuredClone(template?.details ?? [
-      { icon: "calendar", label: "Date", value: "Friday, 17 July 2026" },
-      { icon: "clock", label: "Time", value: "09:00 – 14:00 · lunch 12:00 – 13:00" },
-      { icon: "globe", label: "Venue", value: "Investec, Sandton, Johannesburg" },
-      { icon: "presenter", label: "Facilitator", value: "Andre Snell" },
-    ]),
-    prep: structuredClone(template?.prep ?? [
-      "Study the notes in this lesson plan carefully to ensure preparation is done before the start of classes.",
-      "Study the learner materials so that you are familiar with the topics that will be covered in this part of the course.",
-    ]),
+    title: template?.title ?? DEFAULT_PLAN_TITLE,
+    startTime: template?.startTime ?? DEFAULT_PLAN_START,
+    details: structuredClone(template?.details ?? DEFAULT_PLAN_DETAILS),
+    prep: structuredClone(template?.prep ?? DEFAULT_PLAN_PREP),
     sections: [
       { rows: setupRows },
       {
@@ -243,14 +439,19 @@ function lessonPlanFromTemplate(unit: UnitStandard, topics: UnitTopic[], minutes
   };
 }
 
-export function mergeUnitContentEnhancement(base: UnitContent, enhancement: UnitContentEnhancement, unit: UnitStandard): UnitContent {
+export function mergeUnitContentEnhancement(base: UnitContent, enhancement: UnitContentEnhancement, unit: UnitStandard, options: { lessonPlanContent?: string } = {}): UnitContent {
   const next = structuredClone(base);
   const overview = enhancement.overview ?? enhancement.saqa;
   if (overview?.sections?.length && overview.registration?.length) next.saqa = overview;
   if (enhancement.logbook?.knowledgeQuestions?.length && enhancement.logbook.practicalActivities?.length) next.logbook = normalizeLogbookSpec(unit, enhancement.logbook);
   next.evaluation = undefined;
   if (enhancement.selfAssessment?.items?.length) next.selfAssessment = selfAssessmentFromTemplate(enhancement.selfAssessment.items);
-  if (enhancement.lessonPlan?.sections?.length) next.lessonPlan = lessonPlanFromTemplate(unit, next.lesson.map(section => ({ heading: section.heading, paragraphs: section.paragraphs })), enhancement.lessonPlan.details?.length ? Number(enhancement.lessonPlan.details.find(detail => /duration/i.test(detail.label))?.value.match(/\d+/)?.[0] ?? 300) : 300);
+  // Administrator-supplied plan content already built the plan on the base content and always wins.
+  const keepSuppliedPlan = Boolean(options.lessonPlanContent?.trim()) && Boolean(next.lessonPlan?.sections.length);
+  if (!keepSuppliedPlan && enhancement.lessonPlan?.sections?.length) {
+    next.lessonPlan = lessonPlanFromEnhancement(enhancement.lessonPlan, unit)
+      ?? lessonPlanFromTemplate(unit, next.lesson.map(section => ({ heading: section.heading, paragraphs: section.paragraphs })), enhancement.lessonPlan.details?.length ? Number(enhancement.lessonPlan.details.find(detail => /duration/i.test(detail.label))?.value.match(/\d+/)?.[0] ?? 300) : 300);
+  }
   next.exercises = [];
   next.questionSessions = [];
   if (nonemptyArray(enhancement.assignments)) next.assignments = enhancement.assignments;
@@ -262,6 +463,10 @@ export function mergeUnitContentEnhancement(base: UnitContent, enhancement: Unit
 }
 export function buildUnitContent(unit: UnitStandard, source: string, options: BuildOptions): UnitContent {
   const topics = parseUnitSource(source);
+  const planContent = options.lessonPlanContent?.trim() ?? "";
+  if (planContent.length > MAX_LESSON_PLAN_LENGTH) throw new Error("Shorten the lesson plan content (maximum 40,000 characters).");
+  const suppliedPlan = planContent ? lessonPlanFromSource(unit, planContent) : undefined;
+  if (planContent && !suppliedPlan) throw new Error('No lesson plan activities were found. Start each activity on its own line, for example "20 min | Meet, Greet & Seat".');
   // Use the same section-title/lesson-flat layout as the completed report unit.
   // A source topic is a section, not a new lesson with a repeated banner.
   const lesson: LessonSection[] = topics.map(topic => ({ ...topic, icon: "presenter", flat: true }));
@@ -280,7 +485,7 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
     ] },
     logbook: normalizeLogbookSpec(unit, { assignmentTitle: "Assignment One", programme: "Information Technology - Systems Support", unitLabel: `${unit.us} - ${unit.title}`, detailFields: STANDARD_LOGBOOK_DETAIL_FIELDS, project: { time: "30 minutes", title: "Workplace application", text: "Apply the unit learning in the workplace and record evidence against the activities below.", resource: "Logbook" }, knowledgeQuestions: goals.map(text => ({ text, marks: KNOWLEDGE_MARKS })), practicalActivities: goals.map(text => ({ text, marks: PROJECT_MARKS })), workplaceActivities: goals, workplaceEvidenceNote: "The workplace completes this section after observing the learner having complied to and completed all the activities as mentioned below.", otherActivities: [{ activity: "Workplace application", evidence: "Apply the unit learning in the workplace and record evidence against the activities below." }], otherEvidenceNote: "Learner evidence and experience is recorded here. Make reference to equipment, tools, materials or systems that were used in these processes.", projectChecklist: [{ no: "1", name: unit.us }] }),
     selfAssessment: selfAssessmentFromTemplate(goals.map(g => `I am able to ${g.charAt(0).toLowerCase()}${g.slice(1)}`)),
-    lessonPlan: lessonPlanFromTemplate(unit, topics, options.minutes),
+    lessonPlan: suppliedPlan ?? lessonPlanFromTemplate(unit, topics, options.minutes),
   };
 }
 
