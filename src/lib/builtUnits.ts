@@ -3,7 +3,39 @@ import { unitPackSnapshot } from "./unitStorage";
 
 export type UnitFiles = { pdf: PoeDoc; pptx: PoeDoc; answers: PoeDoc; material?: PoeDoc; materialEditable?: PoeDoc };
 export type BuiltUnitVersion = { revision: string; source: string; content: UnitContent; files: UnitFiles; createdAt: string; aiUsed: boolean };
-export type BuiltUnit = BuiltUnitVersion & { previous?: BuiltUnitVersion };
+export type BuiltUnit = BuiltUnitVersion & { previous?: BuiltUnitVersion; history?: BuiltUnitVersion[] };
+
+/** How many superseded builds stay restorable on the unit. */
+export const MAX_UNIT_HISTORY = 3;
+
+/** Restorable versions, newest first. Packs saved before history existed only carry `previous`. */
+export function unitHistory(unit: BuiltUnit | undefined): BuiltUnitVersion[] {
+  if (!unit) return [];
+  if (unit.history?.length) return unit.history;
+  return unit.previous ? [unit.previous] : [];
+}
+
+/** Strip nested versions so archived builds never nest inside each other. */
+export function unitVersionArchive(version: BuiltUnitVersion): BuiltUnitVersion {
+  return { revision: version.revision, source: version.source, content: version.content, files: version.files, createdAt: version.createdAt, aiUsed: version.aiUsed };
+}
+
+/** Local-only packs embed the export files, so keep the saved row a workable size. */
+export const MAX_UNIT_PACK_BYTES = 5_000_000;
+
+/** Serialise the pack that replaces `old`, keeping the superseded builds restorable. */
+export function unitPackValue(old: BuiltUnit | undefined, next: BuiltUnitVersion): string {
+  // Newest first: the build being replaced, then the versions it already kept.
+  const history = (old ? [unitVersionArchive(old), ...unitHistory(old).map(unitVersionArchive)] : [])
+    .filter(version => version.revision !== next.revision)
+    .slice(0, MAX_UNIT_HISTORY);
+  // `previous` is derived on read: storing it as well would duplicate the newest archive.
+  const pack = (): string => JSON.stringify({ ...unitVersionArchive(next), history: history.length ? history : undefined } as BuiltUnit);
+  let value = pack();
+  // Drop the oldest restorable versions rather than fail the save on an oversized row.
+  while (value.length > MAX_UNIT_PACK_BYTES && history.length > 1) { history.pop(); value = pack(); }
+  return value;
+}
 
 const SELF_ASSESSMENT_INTRO = [
   "You are now ready to go through a check list. Be honest with yourself.",
@@ -149,7 +181,17 @@ function cleanLegacyGeneratedContent<T extends BuiltUnit | BuiltUnitVersion>(uni
     questionSessions: (content.questionSessions ?? []).filter(activity => !isLegacyGeneratedQuestionSession(activity)),
     studyNotes: undefined,
   };
-  return { ...unit, content: cleaned, previous: "previous" in unit && unit.previous ? cleanLegacyGeneratedContent(unit.previous, us) : undefined } as T;
+  return { ...unit, content: cleaned, ...restorableVersions(unit, us) } as T;
+}
+
+/** Clean every restorable version, upgrading legacy single-`previous` packs to a history list. */
+function restorableVersions(unit: BuiltUnit | BuiltUnitVersion, us: string): { previous?: BuiltUnitVersion; history?: BuiltUnitVersion[] } {
+  const stored = "history" in unit && unit.history?.length
+    ? unit.history
+    : "previous" in unit && unit.previous ? [unit.previous] : [];
+  if (!stored.length) return { previous: undefined, history: undefined };
+  const history = stored.slice(0, MAX_UNIT_HISTORY).map(version => unitVersionArchive(cleanLegacyGeneratedContent(version, us)));
+  return { previous: history[0], history };
 }
 
 export const builtUnitKey = (us: string) => `itss.unitbuilder.${us}.shared`;

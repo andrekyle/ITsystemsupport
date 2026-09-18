@@ -1,5 +1,5 @@
 import { useMemo, useSyncExternalStore } from "react";
-import { builtUnitKey, readBuiltUnit, type BuiltUnit, type BuiltUnitVersion } from "./builtUnits";
+import { builtUnitKey, readBuiltUnit, unitPackValue, type BuiltUnitVersion } from "./builtUnits";
 import { supabase } from "./supabase";
 import { loadUnitPack, persistUnitPack, rememberUnitPack, unitPackSnapshot } from "./unitStorage";
 
@@ -14,10 +14,8 @@ export function useBuiltUnit(us: string) {
 }
 export async function saveBuiltUnit(us: string, next: BuiltUnitVersion): Promise<void> {
   await loadUnitPack(builtUnitKey(us)).catch(()=>{});
-  const old = readBuiltUnit(us);
-  const payload: BuiltUnit = { ...next, previous: old ? { revision: old.revision, source: old.source, content: old.content, files: old.files, createdAt: old.createdAt, aiUsed: old.aiUsed } : undefined };
   const key = builtUnitKey(us);
-  const value = JSON.stringify(payload);
+  const value = unitPackValue(readBuiltUnit(us), next);
   if (supabase) {
     const { error } = await supabase.from("shared_state").upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: "key" });
     if (error) throw new Error(`The unit could not be saved to the shared course: ${error.message}`);

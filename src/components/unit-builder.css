@@ -1,5 +1,8 @@
 .unit-builder { margin: 16px 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 .unit-builder-bar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.unit-restore { display:flex; align-items:center; gap:8px; }
+.unit-restore .unit-version-select { min-width:190px; }
+.unit-confirm { margin:16px 0 12px; padding:12px 14px; border:1px solid var(--border); border-radius:12px; font-size:13px; line-height:1.6; }
 .unit-builder-panel { margin-top:12px; padding:20px; border:1px solid var(--border); border-radius:14px; background:var(--surface); max-width:1050px; }
 .unit-builder-panel h2 { margin-top:0; }
 .unit-builder-panel .field { display:flex; flex-direction:column; gap:6px; margin:12px 0; }

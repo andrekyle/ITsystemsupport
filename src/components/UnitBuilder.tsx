@@ -3,12 +3,14 @@ import type { PoeDoc, UnitContent, UnitStandard } from "../types";
 import type { LessonEdits } from "../store";
 import { buildUnitContent, validateUnitContent, MAX_SOURCE_LENGTH, MAX_LESSON_PLAN_LENGTH, mergeUnitContentEnhancement } from "../lib/unitBuilder";
 import { useBuiltUnit, saveBuiltUnit } from "../lib/useBuiltUnit";
+import { unitHistory, unitVersionArchive, MAX_UNIT_HISTORY, type BuiltUnitVersion } from "../lib/builtUnits";
 import { importUnitSource } from "../lib/unitSourceImport";
 import { makeUnitExports } from "../lib/unitExports";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 import { supabase } from "../lib/supabase";
 import { recordTokenUsage } from "../lib/tokens";
 import { UnitContentEditor } from "./UnitContentEditor";
+import { Select } from "./Select";
 import { SlideViewer } from "./SlideViewer";
 import { Icon } from "../icons";
 import "./unit-builder.css";
@@ -47,8 +49,7 @@ export function effectiveBuiltContent(content:UnitContent, edits:LessonEdits):Un
 
 export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;content?:UnitContent;edits:LessonEdits;onSaved:()=>void}) {
   const built=useBuiltUnit(unit.us);
-  const [open,setOpen]=useState(false);
-  const [source,setSource]=useState(built?.source??"");
+  const [open,setOpen]=useState(false);  const [source,setSource]=useState(built?.source??"");
   const [ai,setAi]=useState(true);
   const [minutes,setMinutes]=useState(300);
   const [activityBlocks,setActivityBlocks]=useState<{heading:string;text:string}[]>([{heading:"",text:""}]);
@@ -62,6 +63,12 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   const [draft,setDraft]=useState<UnitContent|null>(null);
   const [warning,setWarning]=useState("");
   const [fileName,setFileName]=useState("");
+  const [confirmBuild,setConfirmBuild]=useState(false);
+  const [restoreRevision,setRestoreRevision]=useState("");
+  const versions=unitHistory(built);
+  const selectedVersion=versions.find(version=>version.revision===restoreRevision)??versions[0];
+  const versionLabel=(version:BuiltUnitVersion)=>new Date(version.createdAt).toLocaleString("en-ZA",{dateStyle:"medium",timeStyle:"short"});
+  const versionHint=(version:BuiltUnitVersion)=>`${version.content.lesson.length} lesson${version.content.lesson.length===1?"":"s"} · ${version.aiUsed?"AI build":"built-in build"}`;
   const [busyProgress,setBusyProgress]=useState(0);
   const finishBusy=(after?:()=>void)=>{
     setBusyProgress(100);
@@ -131,18 +138,21 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   };
   return <section className="unit-builder">
     <div className="unit-builder-bar">
-      <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(!open);setDraft(null);setError("");}}><Icon name="document" size={16}/>{built?"Rebuild unit standard":"Build unit standard"}</button>
+      <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(!open);setDraft(null);setError("");setConfirmBuild(false);}}><Icon name="document" size={16}/>{built?"Rebuild unit standard":"Build unit standard"}</button>
       {built&&<>
         <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setDraft(effectiveBuiltContent(content??built.content,edits));setOpen(true);setError("");}}>Edit all unit content</button>
         <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(content??built.content,edits),built.source,built.aiUsed);}catch(e){setError(String(e));}finally{setBusy("");}}}>Update PDF and PowerPoint</button>
-        {built.previous&&<button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setBusy("Restoring previous version…");try{await saveBuiltUnit(unit.us,built.previous!);onSaved();setMessage("Previous unit version restored.");}catch(e){setError(String(e));}finally{setBusy("");}}}>Restore previous version</button>}
+        {selectedVersion&&<span className="unit-restore">
+          <Select className="unit-version-select" ariaLabel="Saved unit versions" disabled={!!busy} value={selectedVersion.revision} onChange={setRestoreRevision} options={versions.map(version=>({value:version.revision,label:versionLabel(version),hint:versionHint(version)}))}/>
+          <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");setMessage("");setBusy("Restoring saved version…");try{await saveBuiltUnit(unit.us,unitVersionArchive(selectedVersion));setRestoreRevision("");onSaved();setMessage(`The version saved on ${versionLabel(selectedVersion)} is now live. The version it replaced is still restorable.`);}catch(e){setError(String(e));}finally{setBusy("");}}}>Restore version</button>
+        </span>}
       </>}
     </div>
     {open&&<div className="unit-builder-panel">
       <h2>{draft?"Edit complete unit":"Build"} · US {unit.us}</h2>
       {draft?<><p>Edit any tab below. Saving also rebuilds the PDF and editable PowerPoint.</p><UnitContentEditor value={draft as never} onChange={v=>setDraft(v as unknown as UnitContent)}/><button type="button" className="btn unit-build-action" disabled={!!busy} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={async()=>{setError("");try{await publish(draft,built?.source??source,built?.aiUsed??false);doneBusy(()=>setOpen(false));}catch(e){setError(String(e));setBusy("");}}}><span>{busy?`Creating ${busyProgress}%`:"Save all changes and rebuild files"}</span></button></>:<>
         <p>Paste your teaching material or import a document. Use headings such as “# Estimating effort” with a blank line before the supporting paragraphs.</p>
-        {built&&<p className="muted">Building replaces this unit's learning content. The current version is kept for restoration. Learner work is retained.</p>}
+        {built&&<p className="muted">Building replaces this unit's learning content. The last {MAX_UNIT_HISTORY} versions stay restorable from the version list above. Learner work is retained.</p>}
         <div className="unit-settings-card">
           <div className="unit-settings-row"><div className="unit-settings-copy"><strong>Import content</strong><span>{fileName || "TXT, Markdown, PDF, DOCX or PPTX"}</span></div>
             <label className="unit-import-button"><span>Choose file</span><input aria-label="Import teaching content" type="file" accept=".txt,.md,.pdf,.docx,.pptx" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Reading source document…");setError("");try{setSource(await importUnitSource(file));setFileName(file.name);}catch(err){setError(String(err));}finally{setBusy("");}}}/></label>
@@ -162,7 +172,9 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
           <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Build tabs with OpenAI web research</strong><span>Use OpenAI web research to build the overview, logbook, evaluation and activities.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={ai} disabled={!!busy} onChange={e=>setAi(e.target.checked)}/></label>
         </div>
         <p className="muted">Lessons keep your source text. Lesson plan content you paste is used exactly as supplied. When AI is enabled, OpenAI researches the unit standard online and uses your activity, self-assessment and logbook content to create the matching tabs, overview, evaluation and — when you leave the lesson plan empty — the lesson plan.</p>
-        <button type="button" className="btn unit-build-action" disabled={!!busy||source.trim().length<100||(ai&&(!activityBlocks.some(block=>block.text.trim())||!selfAssessmentContent.trim()||!logbookContent.trim()))} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>void build()}><span>{busy?`Creating ${busyProgress}%`:"Build complete unit standard"}</span></button>
+        {confirmBuild&&!busy&&<p className="unit-confirm" role="alert">Rebuilding replaces every tab of US {unit.us} with the content above. The current version stays restorable for the next {MAX_UNIT_HISTORY} builds.</p>}
+        <button type="button" className="btn unit-build-action" disabled={!!busy||source.trim().length<100||(ai&&(!activityBlocks.some(block=>block.text.trim())||!selfAssessmentContent.trim()||!logbookContent.trim()))} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>{if(built&&!confirmBuild){setConfirmBuild(true);setError("");setMessage("");return;}setConfirmBuild(false);void build();}}><span>{busy?`Creating ${busyProgress}%`:!built?"Build complete unit standard":confirmBuild?"Yes, replace the saved unit":"Rebuild complete unit standard"}</span></button>
+        {confirmBuild&&!busy&&<button type="button" className="btn ghost" onClick={()=>setConfirmBuild(false)}>Cancel</button>}
       </>}
       <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(false);setDraft(null);}}>Close</button>
     </div>}
