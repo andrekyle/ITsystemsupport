@@ -142,8 +142,8 @@ function cleanLegacyGeneratedContent<T extends BuiltUnit | BuiltUnitVersion>(uni
     lessonPlan: lessonPlanTemplate(us, content),
     selfAssessment: content.selfAssessment ? {
       ...content.selfAssessment,
-      intro: SELF_ASSESSMENT_INTRO,
-      outro: SELF_ASSESSMENT_OUTRO,
+      intro: content.selfAssessment.intro ?? SELF_ASSESSMENT_INTRO,
+      outro: content.selfAssessment.outro ?? SELF_ASSESSMENT_OUTRO,
     } : content.selfAssessment,
     exercises: content.exercises.filter(activity => !isLegacyGeneratedActivity(activity)),
     questionSessions: (content.questionSessions ?? []).filter(activity => !isLegacyGeneratedQuestionSession(activity)),

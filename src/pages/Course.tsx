@@ -22,6 +22,7 @@ import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHt
 import { SlideViewer } from "../components/SlideViewer";
 import { UnitBuilder, BuiltUnitDownloads } from "../components/UnitBuilder";
 import { ActivityQuestionEditor } from "../components/ActivityQuestionEditor";
+import { UnitContentEditor } from "../components/UnitContentEditor";
 import { supabase } from "../lib/supabase";
 import { GeneratedQuizEditor } from "../components/GeneratedQuizEditor";
 import { saveBuiltUnit, useBuiltUnit } from "../lib/useBuiltUnit";
@@ -2222,6 +2223,10 @@ export function UnitPage({
   const [exReset, setExReset] = useState<Record<string, number>>({});
   const [activityEditor, setActivityEditor] = useState<{ kind: "exercises" | "questionSessions"; index: number | null; value: Exercise } | null>(null);
   const [activitySaving, setActivitySaving] = useState(false);
+  const [selfAssessmentDraft, setSelfAssessmentDraft] = useState<UnitContent["selfAssessment"]>();
+  const [selfAssessmentSaving, setSelfAssessmentSaving] = useState(false);
+  const [selfAssessmentError, setSelfAssessmentError] = useState("");
+  useEffect(() => { setSelfAssessmentDraft(undefined); setSelfAssessmentError(""); }, [unitId]);
   const [markingActivity, setMarkingActivity] = useState<string | null>(null);
   const markingActivityRef = useRef(false);
   const [activityMarkError, setActivityMarkError] = useState<Record<string, string>>({});
@@ -2622,6 +2627,22 @@ export function UnitPage({
   const saveBuiltContent = async (nextContent: UnitContent) => {
     if (!builtUnit) return;
     await saveBuiltUnit(unitId, { revision: crypto.randomUUID(), createdAt: new Date().toISOString(), source: builtUnit.source, content: nextContent, files: builtUnit.files, aiUsed: builtUnit.aiUsed });
+  };
+  const saveSelfAssessment = async () => {
+    if (!builtUnit || !isSuperUser || !selfAssessmentDraft || selfAssessmentSaving) return;
+    setSelfAssessmentSaving(true);
+    setSelfAssessmentError("");
+    try {
+      if (!selfAssessmentDraft.items.length || selfAssessmentDraft.items.some(item => !item.trim())) {
+        throw new Error("Enter at least one checklist item and fill in any empty items.");
+      }
+      await saveBuiltContent({ ...structuredClone(builtUnit.content), selfAssessment: structuredClone(selfAssessmentDraft) });
+      setSelfAssessmentDraft(undefined);
+    } catch (error) {
+      setSelfAssessmentError(error instanceof Error ? error.message : "The self assessment could not be saved.");
+    } finally {
+      setSelfAssessmentSaving(false);
+    }
   };
   const splitBuiltLessonAtCursor = async (si: number) => {
     setLessonSplitError(null);
@@ -5404,6 +5425,22 @@ export function UnitPage({
               </span>
               Self assessment
             </h2>
+            {builtUnit && isSuperUser && <div className="activity-edit-bar">
+              <button type="button" className="btn ghost sm" disabled={!!selfAssessmentDraft} onClick={() => { setSelfAssessmentDraft(structuredClone(sa)); setSelfAssessmentError(""); }}>Edit self assessment</button>
+            </div>}
+            {builtUnit && isSuperUser && selfAssessmentDraft && <div className="card self-assessment-editor">
+              <h3>Edit self assessment</h3>
+              <fieldset disabled={selfAssessmentSaving} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+                <UnitContentEditor name="Introduction" value={selfAssessmentDraft.intro} onChange={value => setSelfAssessmentDraft({ ...selfAssessmentDraft, intro: value as string[] })} />
+                <UnitContentEditor name="Checklist items" value={selfAssessmentDraft.items} onChange={value => setSelfAssessmentDraft({ ...selfAssessmentDraft, items: value as string[] })} />
+                <UnitContentEditor name="Closing instructions" value={selfAssessmentDraft.outro ?? []} onChange={value => setSelfAssessmentDraft({ ...selfAssessmentDraft, outro: value as string[] })} />
+                {selfAssessmentError && <p className="auth-error" role="alert">{selfAssessmentError}</p>}
+                <div className="unit-editor-actions">
+                  <button type="button" className="btn" onClick={() => void saveSelfAssessment()}>{selfAssessmentSaving ? "Saving..." : "Save changes"}</button>
+                  <button type="button" className="btn ghost" onClick={() => { setSelfAssessmentDraft(undefined); setSelfAssessmentError(""); }}>Cancel</button>
+                </div>
+              </fieldset>
+            </div>}
             {sa.intro.map((p) => (
               <p key={p} className="lesson-p" style={{ maxWidth: 720 }}>
                 <Gloss text={p} />
