@@ -16,13 +16,13 @@ export interface ConceptForReview {
 export interface SemanticReview {
   credited: string[];
   reason: string;
-  /** true when the endpoint replied at all (deployed + reachable) */
+  /** true only when the endpoint returned a successful marking verdict */
   ran: boolean;
   /** Groq/config/timeout error name if the endpoint returned one */
   error?: string;
 }
 
-const REVIEW_TIMEOUT_MS = 7000;
+const REVIEW_TIMEOUT_MS = 45_000;
 
 export async function requestSemanticReview(
   answer: string,
@@ -71,7 +71,7 @@ export async function requestSemanticReview(
         ? data.credited.filter((v) => typeof v === "string")
         : [],
       reason: typeof data.reason === "string" ? data.reason : "",
-      ran: true,
+      ran: !data.error && Array.isArray(data.credited),
       error: typeof data.error === "string" ? data.error : undefined,
     };
   } catch {

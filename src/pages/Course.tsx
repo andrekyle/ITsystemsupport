@@ -21,7 +21,8 @@ import { SlideTextToolbar } from "../components/SlideTextToolbar";
 import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
 import { UnitBuilder, BuiltUnitDownloads } from "../components/UnitBuilder";
-import { UnitContentEditor } from "../components/UnitContentEditor";
+import { ActivityQuestionEditor } from "../components/ActivityQuestionEditor";
+import { supabase } from "../lib/supabase";
 import { GeneratedQuizEditor } from "../components/GeneratedQuizEditor";
 import { saveBuiltUnit, useBuiltUnit } from "../lib/useBuiltUnit";
 import { EditableActivityText } from "../components/EditableActivityText";
@@ -1383,7 +1384,9 @@ export function ExerciseQuestion({
                   onInput={(e) => autoGrowTextarea(e.currentTarget)}
                   onChange={(e) => {
                     const next = e.target.value;
-                    setParts((prev) => prev.map((q, j) => (j === i ? next : q)));
+                    const nextParts = parts.map((q, j) => j === i ? next : q);
+                    setParts(nextParts);
+                    onSave(joinParts(nextParts), false);
                     if (result) setResult(null);
                     if (extras.size) setExtras(new Set());
                     if (reviewedText) setReviewedText(null);
@@ -2219,6 +2222,9 @@ export function UnitPage({
   const [exReset, setExReset] = useState<Record<string, number>>({});
   const [activityEditor, setActivityEditor] = useState<{ kind: "exercises" | "questionSessions"; index: number | null; value: Exercise } | null>(null);
   const [activitySaving, setActivitySaving] = useState(false);
+  const [markingActivity, setMarkingActivity] = useState<string | null>(null);
+  const markingActivityRef = useRef(false);
+  const [activityMarkError, setActivityMarkError] = useState<Record<string, string>>({});
   const [activityEditError, setActivityEditError] = useState("");
   /** edX-style lesson wizard — index of the section currently on screen */
   const [lessonStep, setLessonStep] = useState<number>(() => loadLessonStep(profile.id, unitId));
@@ -2610,10 +2616,8 @@ export function UnitPage({
     id: `manual-activity-${crypto.randomUUID()}`,
     title: "New activity",
     task: "Time: 45 minutes - Activity: Self & Group",
-    scenario: ["Add the activity instructions here."],
-    steps: ["Add the first learner question."],
-    checks: [{ answer: ["Add the correct answer or model response."], concepts: [["keyword"]], labels: ["Key idea"], min: 1 }],
-    modelAnswer: [{ heading: "Correct answer ? from the lesson", paragraphs: ["Add the facilitator model answer."], bullets: [] }],
+    scenario: [],
+    steps: [""],
   });
   const saveBuiltContent = async (nextContent: UnitContent) => {
     if (!builtUnit) return;
@@ -2716,13 +2720,54 @@ export function UnitPage({
     if (!activityEditor || activitySaving) return;
     setActivitySaving(true);
     try {
+      setActivityEditError("");
+      const value = { ...activityEditor.value, steps: activityEditor.value.steps.map(q => q.trim()) };
+      if (!value.title.trim() || !value.steps.length || value.steps.some(q => !q)) throw new Error("Enter a heading and fill in each question.");
+      const token = (await supabase?.auth.getSession())?.data.session?.access_token;
+      const response = await fetch("/api/generate-activity-answers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ title: value.title, questions: value.steps, source: plainSlideText([...(value.scenario ?? []), JSON.stringify(content?.lesson ?? [])].join("\n")).slice(0, 60_000) }),
+        signal: AbortSignal.timeout(55_000),
+      });
+      const generated = await response.json();
+      if (!response.ok) throw new Error(generated.error || "Model answers could not be generated. Please retry.");
+      if (!Array.isArray(generated.checks) || generated.checks.length !== value.steps.length) throw new Error("Incomplete model answers received. Please retry.");
+      value.checks = generated.checks;
+      value.task = generated.task || value.task;
+      value.modelAnswer = value.checks!.map((check, i) => ({ heading: value.steps[i], bullets: check.answer }));
       await updateBuiltActivityList(activityEditor.kind, items => activityEditor.index === null
-        ? [...items, activityEditor.value]
-        : items.map(item => item.id === activityEditor.value.id ? activityEditor.value : item));
+        ? [...items, value]
+        : items.map(item => item.id === value.id ? value : item));
       setActivityEditor(null);
     }
     catch (error) { setActivityEditError(error instanceof Error ? error.message : "The activity could not be saved."); }
     finally { setActivitySaving(false); }
+  };
+  const submitActivityAnswers = async (ex: Exercise) => {
+    if (markingActivityRef.current || !ex.checks?.length) return;
+    markingActivityRef.current = true;
+    setMarkingActivity(ex.id);
+    setActivityMarkError(previous => ({ ...previous, [ex.id]: "" }));
+    try {
+      const answers = ex.checks.map((_, i) => String(progress.units[u.us]?.logbook?.[`exq.${ex.id}.${i}`] ?? ""));
+      if (answers.some(answer => !answer.trim())) throw new Error("Answer each question before submitting.");
+      if (answers.some(answer => answer.length > 4000)) throw new Error("Keep each question's answer under 4,000 characters before submitting.");
+      let score = 0;
+      for (let i = 0; i < ex.checks.length; i++) {
+        const check = ex.checks[i];
+        const concepts = check.concepts.map((group, gi) => ({ id: `c${gi}`, label: check.labels?.[gi] ?? group[0], lessonLine: lessonLineFor(check, gi) ?? check.answer.join("\n") }));
+        const result = await requestSemanticReview(answers[i], concepts, [], u.us);
+        if (!result.ran || result.error) throw new Error("AI marking is unavailable. Your answers are kept; please submit again. No attempt was used.");
+        score += new Set(result.credited.filter(id => concepts.some(c => c.id === id))).size * 2;
+      }
+      saveExerciseResult(u.us, ex.id, score, ex.checks.reduce((total, check) => total + check.concepts.length * 2, 0));
+    } catch (error) {
+      setActivityMarkError(previous => ({ ...previous, [ex.id]: error instanceof Error ? error.message : "Could not mark answers. Please retry." }));
+    } finally {
+      markingActivityRef.current = false;
+      setMarkingActivity(null);
+    }
   };
   const isEmptyGeneratedBuiltActivity = (ex: Exercise) =>
     /^Questioning\s+[-–—]\s+Prepare a (?:time|cost) estimate for an element of work$/i.test(ex.title)
@@ -4893,7 +4938,7 @@ export function UnitPage({
             </span>
           </div>
           {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="btn ghost sm" disabled={!!activityEditor} onClick={addBuiltActivity}><Icon name="plus" size={14} /> Add activity</button>{activityEditError && <span role="alert" className="auth-error">{activityEditError}</span>}</div>}
-          {activityEditor && builtUnit && isSuperUser && <div className="card activity-editor-card"><h3>{activityEditor.index === null ? "Add activity" : "Edit activity"}</h3><fieldset disabled={activitySaving} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}><UnitContentEditor key={activityEditor.value.id} name="Activity" defaultOpen value={activityEditor.value as never} onChange={value => setActivityEditor({ ...activityEditor, value: value as unknown as Exercise })}/><div className="unit-editor-actions"><button type="button" className="btn" onClick={() => void saveActivityEditor()}>{activitySaving ? "Saving activity…" : "Save activity"}</button><button type="button" className="btn ghost" onClick={() => { setActivityEditor(null); setActivityEditError(""); }}>Cancel</button></div></fieldset></div>}
+          {activityEditor && builtUnit && isSuperUser && <div className="card activity-editor-card"><h3>{activityEditor.index === null ? "Add activity" : "Edit activity"}</h3><fieldset disabled={activitySaving} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}><ActivityQuestionEditor key={activityEditor.value.id} value={activityEditor.value} onChange={value => setActivityEditor({ ...activityEditor, value })}/><div className="unit-editor-actions"><button type="button" className="btn" onClick={() => void saveActivityEditor()}>{activitySaving ? "Generating model answers…" : "Save activity"}</button><button type="button" className="btn ghost" onClick={() => { setActivityEditor(null); setActivityEditError(""); }}>Cancel</button></div></fieldset></div>}
           {(tab === "questions" ? (content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index })) : builtUnit ? visibleBuiltActivities : content.exercises.map((ex, index) => ({ ex, kind: "exercises" as const, index }))).map(({ex, kind, index}) => {
             const exRes = progress.units[u.us]?.exercises?.[ex.id];
             const hasChecks = !!ex.checks && ex.checks.length > 0;
@@ -4977,7 +5022,7 @@ export function UnitPage({
                         >
                           <StepText text={activityText(`step:${i}`, s)} />
                         </EditableActivityText>
-                        {check && (
+                        {check && (<fieldset disabled={markingActivity !== null} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
                           <ExerciseQuestion
                             key={`${u.us}.${ex.id}.${i}.${exReset[ex.id] ?? 0}`}
                             check={check}
@@ -4994,7 +5039,7 @@ export function UnitPage({
                               setLogbookField(u.us, `exq.${ex.id}.${i}.tries`, String(n));
                             }}
                           />
-                        )}
+                        </fieldset>)}
                       </li>
                     );
                   })}
@@ -5048,28 +5093,23 @@ export function UnitPage({
                   const res = progress.units[u.us]?.exercises?.[ex.id];
                   const attempts = res?.attempts ?? 0;
                   const total = checks.reduce((t, c) => t + c.concepts.length * 2, 0);
-                  const lb = progress.units[u.us]?.logbook ?? {};
                   return (
                     <div className="exq-submit">
+                      {activityMarkError[ex.id] && <p role="alert" className="auth-error">{activityMarkError[ex.id]}</p>}
                       {attempts < EX_MAX_ATTEMPTS && (
                         <button
                           className="btn"
-                          onClick={() => {
-                            const score = checks.reduce(
-                              (t, c, i) =>
-                                t + scoreAnswer(String(lb[`exq.${ex.id}.${i}`] ?? ""), c).marks,
-                              0
-                            );
-                            saveExerciseResult(u.us, ex.id, score, total);
-                          }}
+                          disabled={markingActivity !== null}
+                          onClick={() => void submitActivityAnswers(ex)}
                         >
                           <Icon name="clipboard" size={15} />
-                          Submit answers for marking
+                          {markingActivity === ex.id ? "Marking answers..." : "Submit answers for marking"}
                         </button>
                       )}
                       {res && attempts < EX_MAX_ATTEMPTS && (
                         <button
                           className="btn ghost"
+                          disabled={markingActivity !== null}
                           onClick={() => {
                             checks.forEach((_, i) => {
                               setLogbookField(u.us, `exq.${ex.id}.${i}`, "");

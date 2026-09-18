@@ -100,7 +100,7 @@ Reply with STRICT JSON only, no prose:
 
 const MAX_ANSWER_LEN = 4000;
 const MAX_CONCEPTS = 12;
-const LLM_TIMEOUT_MS = 6000;
+const LLM_TIMEOUT_MS = 40_000;
 const BUILD = "20260906-1";
 
 /* ---- token savers ----
