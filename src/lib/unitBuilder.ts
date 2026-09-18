@@ -204,13 +204,35 @@ function planRowFromHeader(line: string): PlanRowDraft | undefined {
   return undefined;
 }
 
+const PLAN_RESOURCE_HINT = /^(?:lm|lg|learner manual|learner guide|facilitator guide|white ?board|flip ?chart|class register|register|logbook|log book|projector|data ?projector|laptop|handouts?|slides?|deck|training aids?|pp?t)\b/i;
+/** Word tables put the resource cell on its own short line ("LM p4-6", "White Board"). */
+const looksLikeResource = (line: string) => line.length <= 60 && (PLAN_RESOURCE_HINT.test(line) || /^p+\.?\s*\d/i.test(line));
+const looksLikeTitle = (line: string) => line.length <= 90 && !/[.!?;:,]$/.test(line);
+
+/**
+ * Word and PDF lesson plans wrap inside table cells and mark cells bold. Re-join
+ * lines with an unclosed bold marker ("**20" + "minutes**", or a wrapped title)
+ * and drop the emphasis markers, keeping single "*" bullets intact.
+ */
+function normalizePlanLines(source: string): string[] {
+  const merged: string[] = [];
+  for (const raw of normal(source).replace(/\u00a0/g, " ").split("\n")) {
+    const line = raw.trim();
+    const previous = merged[merged.length - 1];
+    const unclosed = previous !== undefined && ((previous.match(/\*\*/g)?.length ?? 0) % 2 === 1);
+    if (unclosed && line) merged[merged.length - 1] = `${previous} ${line}`;
+    else merged.push(line);
+  }
+  return merged.map(line => line.replace(/\*\*+/g, "").replace(/__/g, "").replace(/\s+/g, " ").trim());
+}
+
 /**
  * Turn pasted facilitator notes into lesson plan sections. Times may be given as
- * durations or clock times, "# " starts a new section, "-" lines are bullets and
- * "Resources:" lines list the materials for the activity above.
+ * durations or clock times, "# " starts a new section, "-", "*" and "·" lines are
+ * bullets, and short trailing lines such as "Resources: LM p4" or "LM p4-6" list
+ * the materials for the activity above. Hard-wrapped lines rejoin the entry above.
  */
 function parseLessonPlanContent(source: string): { title?: string; startTime?: string; details: NonNullable<LessonPlan["details"]>; prep: string[]; sections: PlanSectionDraft[] } {
-  const text = normal(source);
   const details: NonNullable<LessonPlan["details"]> = [];
   const prep: string[] = [];
   const sections: PlanSectionDraft[] = [];
@@ -220,6 +242,7 @@ function parseLessonPlanContent(source: string): { title?: string; startTime?: s
   let row: PlanRowDraft | undefined;
   let prepMode = false;
   let blankBefore = false;
+  let lastKind: "title" | "text" | "bullet" | "resource" | undefined;
   const openSection = (heading?: string, sectionStart?: string) => {
     section = { heading, startTime: sectionStart, rows: [] };
     sections.push(section);
@@ -231,10 +254,10 @@ function parseLessonPlanContent(source: string): { title?: string; startTime?: s
     row = draft;
     section!.rows.push(row);
     prepMode = false;
+    lastKind = draft.title ? "title" : undefined;
   };
 
-  for (const rawLine of text.split("\n")) {
-    const line = rawLine.trim();
+  for (const line of normalizePlanLines(source)) {
     if (!line) { blankBefore = true; continue; }
     const afterBlank = blankBefore;
     blankBefore = false;
@@ -257,29 +280,52 @@ function parseLessonPlanContent(source: string): { title?: string; startTime?: s
       if (PLAN_DETAIL_KEYS.test(key) && value) { details.push({ icon: planDetailIcon(key), label: meta[1].trim(), value }); prepMode = false; continue; }
     }
 
-    const bullet = line.match(/^[-*•·]\s+(.+)$/);
+    const bullet = line.match(/^[-*•·]\s*(.*)$/);
     const body = bullet ? bullet[1].trim() : line;
     if (bullet) {
-      if (prepMode && !sections.length) { prep.push(body); continue; }
-      if (row) { row.bullets = [...(row.bullets ?? []), body]; continue; }
+      if (prepMode && !sections.length) { if (body) prep.push(body); lastKind = "bullet"; continue; }
+      if (row) { row.bullets = [...(row.bullets ?? []), body]; lastKind = "bullet"; continue; }
+      if (!body) { lastKind = undefined; continue; }
     }
 
-    const resources = body.match(/^(?:resources?|materials?|training aids?)\s*:\s*(.+)$/i);
-    if (resources && row) {
-      row.resources = [...(row.resources ?? []), ...resources[1].split(/[;,]/).map(item => item.trim()).filter(Boolean)];
+    const listed = body.match(/^(?:resources?|materials?|training aids?)\s*:\s*(.+)$/i);
+    if (listed && row) {
+      row.resources = [...(row.resources ?? []), ...listed[1].split(/[;,]/).map(item => item.trim()).filter(Boolean)];
+      lastKind = "resource";
       continue;
     }
 
     const header = planRowFromHeader(body);
     if (header) { openRow(header); continue; }
-    if (prepMode && !sections.length) { prep.push(body); continue; }
-    if (!row || (afterBlank && (row.text?.length || row.bullets?.length || row.resources?.length))) { openRow({ title: body }); continue; }
-    if (!row.title) row.title = body;
-    else row.text = [...(row.text ?? []), body];
+    if (prepMode && !sections.length) { prep.push(body); lastKind = "text"; continue; }
+    if (!row) { openRow({ title: body }); continue; }
+
+    // A line that is not separated by a blank continues the entry it follows.
+    if (!afterBlank && lastKind === "bullet" && row.bullets?.length) {
+      row.bullets[row.bullets.length - 1] = `${row.bullets[row.bullets.length - 1]} ${body}`.trim();
+      continue;
+    }
+    if (!afterBlank && lastKind === "text" && row.text?.length) {
+      row.text[row.text.length - 1] = `${row.text[row.text.length - 1]} ${body}`.trim();
+      continue;
+    }
+    if (!row.title) { row.title = body; lastKind = "title"; continue; }
+    if (afterBlank && looksLikeResource(body)) { row.resources = [...(row.resources ?? []), body]; lastKind = "resource"; continue; }
+    if (afterBlank && (row.text?.length || row.bullets?.length || row.resources?.length) && looksLikeTitle(body)) { openRow({ title: body }); continue; }
+    row.text = [...(row.text ?? []), body];
+    lastKind = "text";
   }
 
   const cleaned: PlanSectionDraft[] = [];
   for (const [index, draft] of sections.entries()) {
+    // Word bullets arrive as a marker line followed by the wrapped text, so an
+    // empty bullet only survives when the cell itself was empty.
+    for (const item of draft.rows) {
+      item.bullets = item.bullets?.map(entry => entry.trim()).filter(Boolean);
+      item.text = item.text?.map(entry => entry.trim()).filter(Boolean);
+      if (!item.bullets?.length) delete item.bullets;
+      if (!item.text?.length) delete item.text;
+    }
     const rows = draft.rows.filter(item => item.title.trim() || item.text?.length || item.bullets?.length);
     if (!rows.length) continue;
     rows.forEach((item, position) => {
