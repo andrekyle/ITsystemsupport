@@ -24,6 +24,7 @@ import { UnitBuilder, BuiltUnitDownloads } from "../components/UnitBuilder";
 import { ActivityQuestionEditor } from "../components/ActivityQuestionEditor";
 import { UnitContentEditor } from "../components/UnitContentEditor";
 import { supabase } from "../lib/supabase";
+import { flushKey } from "../lib/sync";
 import { GeneratedQuizEditor } from "../components/GeneratedQuizEditor";
 import { saveBuiltUnit, useBuiltUnit } from "../lib/useBuiltUnit";
 import { EditableActivityText } from "../components/EditableActivityText";
@@ -2593,6 +2594,26 @@ export function UnitPage({
   const [quizGenerationError, setQuizGenerationError] = useState<string | null>(null);
   const [lessonSplitError, setLessonSplitError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [savingLesson, setSavingLesson] = useState(false);
+  const [lessonSaveStatus, setLessonSaveStatus] = useState<"" | "saved" | "error">("");
+  const [lessonSaveError, setLessonSaveError] = useState("");
+  useEffect(() => { setLessonSaveStatus(""); setLessonSaveError(""); }, [unitId, lessonEdits]);
+  const saveLessonToCloud = async () => {
+    if (savingLesson) return;
+    setSavingLesson(true);
+    setLessonSaveStatus("");
+    try {
+      const editId = builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId;
+      await flushKey(`itss.lessonedits.${editId}`, true);
+      setLessonSaveStatus("saved");
+      setEditMode(false);
+    } catch (error) {
+      setLessonSaveStatus("error");
+      setLessonSaveError(error instanceof Error ? error.message : "Cloud save failed. Please retry.");
+    } finally {
+      setSavingLesson(false);
+    }
+  };
   useEffect(() => { setEditMode(false); }, [unitId, tab]);
   // per-slide "paste text" editor (super user): heading + free-text body
   const [pasteEditor, setPasteEditor] = useState<{ si: number; heading: string; text: string } | null>(null);
@@ -4420,11 +4441,12 @@ export function UnitPage({
                       <button
                         type="button"
                         className={`btn ghost sm${editMode ? " active" : ""}`}
-                        onClick={() => setEditMode((v) => !v)}
+                        disabled={savingLesson}
+                        onClick={() => { if (editMode) void saveLessonToCloud(); else { setLessonSaveStatus(""); setEditMode(true); } }}
                         title="Toggle edit mode (super user)"
                       >
                         <Icon name="shield" size={13} />
-                        {editMode ? "Done editing" : "Edit content"}
+                        {savingLesson ? "Saving to cloud..." : editMode ? "Save to cloud" : "Edit content"}
                       </button>
                       {editMode && (
                         <>
@@ -4477,6 +4499,8 @@ export function UnitPage({
                     </span>
                   )}
                 </div>
+                {isSuperUser && lessonSaveStatus === "saved" && <p role="status">Saved to cloud.</p>}
+                {isSuperUser && lessonSaveStatus === "error" && <div className="lesson-toolbar-messages"><p className="auth-error" role="alert">{lessonSaveError}</p></div>}
                 {isSuperUser && editMode && (quizGenerationError || lessonSplitError) && (
                   <div className="lesson-toolbar-messages">
                     {quizGenerationError && <p className="auth-error" role="alert">{quizGenerationError}</p>}
