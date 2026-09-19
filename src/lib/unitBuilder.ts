@@ -303,6 +303,7 @@ function expandPlanTables(source: string): string {
     index = end;
     // Only rows of a table that carries times are a schedule.
     if (!isSchedule(block)) continue;
+    const roles = planColumnRoles(block);
     for (const cells of block) {
       const filled = cells.filter(Boolean);
       if (!filled.length) continue;
@@ -311,15 +312,24 @@ function expandPlanTables(source: string): string {
         out.push("", `# ${filled[0]}`, "");
         continue;
       }
-      const timeIndex = cells.findIndex(isPlanTime);
+      // Column position decides the role; content only fills gaps (a row whose
+      // time sits in another cell, or a table without a resources column).
+      const timeIndex = roles.time >= 0 && isPlanTime(cells[roles.time] ?? "") ? roles.time : cells.findIndex(isPlanTime);
       const time = timeIndex >= 0 ? cells[timeIndex].replace(/\s+/g, " ").trim() : undefined;
       const rest = cells.map((cell, position) => ({ cell, position })).filter(item => item.cell && item.position !== timeIndex);
-      const resources = rest.filter(item => isPlanResourceCell(item.cell) && item.cell.length <= 120);
+      const resources = rest.filter(item => roles.resources.includes(item.position)
+        || (!roles.resources.length && isPlanResourceCell(item.cell) && item.cell.length <= 120));
       const bodies = rest.filter(item => !resources.includes(item));
-      // The widest remaining cell is the activity; any other cell adds its lines below.
-      const activity = bodies.length ? bodies.reduce((best, item) => item.cell.length > best.cell.length ? item : best) : undefined;
+      const activity = bodies.find(item => item.position === roles.activity)
+        ?? (bodies.length ? bodies.reduce((best, item) => item.cell.length > best.cell.length ? item : best) : undefined);
       const activityLines = (activity?.cell ?? "").split("\n").map(text => text.trim()).filter(Boolean);
-      const extraLines = bodies.filter(item => item !== activity).flatMap(item => item.cell.split("\n").map(text => text.trim()).filter(Boolean));
+      // Other columns ("Method", "Notes") join the activity as labelled bullets so a
+      // short value such as "Discussion" is never mistaken for a new activity title.
+      const extraLines = bodies.filter(item => item !== activity).flatMap(item => item.cell.split("\n").map(text => text.trim()).filter(Boolean)
+        .map(text => `- ${roles.labels[item.position] ? `${roles.labels[item.position]}: ` : ""}${text.replace(/^[-*•·]\s*/, "")}`));
+      const resourceItems = resources.flatMap(item => item.cell.split("\n").map(text => text.trim()).filter(Boolean));
+      // Two-column schedules put the resource as the last line of the activity cell.
+      while (!resources.length && activityLines.length > 1 && looksLikeResource(activityLines[activityLines.length - 1])) resourceItems.unshift(activityLines.pop()!);
       const [title = "Facilitated activity", ...body] = activityLines;
       out.push("", time ? `${time} | ${title}` : title);
       [...body, ...extraLines].forEach((text, position) => {
@@ -329,12 +339,64 @@ function expandPlanTables(source: string): string {
         if (position > 0 && !/^[-*•·]\s/.test(text)) out.push("");
         out.push(text);
       });
-      const resourceItems = resources.flatMap(item => item.cell.split("\n").map(text => text.trim()).filter(Boolean));
       if (resourceItems.length) out.push(`Resources: ${resourceItems.join("; ")}`);
       out.push("");
     }
   }
   return out.join("\n");
+}
+
+/**
+ * Which column of an imported schedule table holds the time, the activity and the
+ * resources. A header row ("Time | Activity | Resources") decides when present;
+ * otherwise the column that mostly holds durations is the time, the column that
+ * mostly holds materials ("LM p4-6", "White Board") — or, failing that, the last
+ * column — is the resources, and the widest remaining column is the activity.
+ */
+function planColumnRoles(block: string[][]): { time: number; activity: number; resources: number[]; labels: Record<number, string> } {
+  const width = Math.max(...block.map(cells => cells.length));
+  const columns = Array.from({ length: width }, (_, column) => block.map(cells => (cells[column] ?? "").trim()));
+  const header = block.find(cells => {
+    const filled = cells.filter(Boolean);
+    return filled.length >= 2 && filled.every(cell => PLAN_TABLE_HEADER.test(cell.replace(/\s+/g, " ")));
+  });
+  let time = -1;
+  let resources: number[] = [];
+  let activity = -1;
+  const labels: Record<number, string> = {};
+  if (header) {
+    header.forEach((cell, column) => {
+      const name = cell.replace(/\s+/g, " ").trim();
+      if (!name) return;
+      labels[column] = name;
+      if (/^(?:time|times|timing|duration|minutes|mins)$/i.test(name)) time = column;
+      else if (/^(?:resources?|materials?|training aids?|learning materials?|lm)$/i.test(name)) resources.push(column);
+      else if (/^(?:activity|activities|content|activity\s*\/\s*content|activity\s*&\s*content|method|methodology|facilitation)$/i.test(name) && activity < 0) activity = column;
+    });
+  }
+  const count = (column: number, test: (cell: string) => boolean) => columns[column].filter(cell => cell && test(cell)).length;
+  if (time < 0) {
+    const scores = columns.map((_, column) => count(column, isPlanTime));
+    const best = Math.max(...scores);
+    if (best > 0) time = scores.indexOf(best);
+  }
+  // Rows spanning the table (section headings) leave trailing empty cells, so only
+  // count columns that actually carry text somewhere.
+  const textual = columns.map((_, column) => column !== time && columns[column].some(Boolean));
+  if (!resources.length) {
+    const scores = columns.map((_, column) => textual[column] ? count(column, cell => isPlanResourceCell(cell) && cell.length <= 120) : 0);
+    const best = Math.max(...scores);
+    if (best > 0) resources = [scores.indexOf(best)];
+    else {
+      const candidates = columns.map((_, column) => column).filter(column => textual[column]);
+      if (candidates.length >= 2) resources = [candidates[candidates.length - 1]];
+    }
+  }
+  if (activity < 0) {
+    const scores = columns.map((_, column) => textual[column] && !resources.includes(column) ? columns[column].reduce((total, cell) => total + cell.length, 0) : -1);
+    activity = scores.indexOf(Math.max(...scores));
+  }
+  return { time, activity, resources, labels };
 }
 
 /**
