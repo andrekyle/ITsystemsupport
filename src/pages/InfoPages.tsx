@@ -203,9 +203,28 @@ export function CalendarPage({
   const [draft, setDraft] = useState<CalendarDraft>(makeCalendarDraft);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState("");
+  const [focusedModuleId, setFocusedModuleId] = useState<string | null>(null);
 
-  const startEditing = () => {
+  const startEditing = (moduleId: string | null = null) => {
     setDraft(makeCalendarDraft());
+    setSaveState("idle");
+    setFocusedModuleId(moduleId);
+    setEditing(true);
+  };
+
+  const addModule = () => {
+    const id = `module-${crypto.randomUUID()}`;
+    setDraft((current) => {
+      const base = editing ? current : makeCalendarDraft();
+      return {
+        ...base,
+        modules: [...base.modules, {
+          id, name: "", icon: "book", activities: 0,
+          units: [{ us: "", title: "", nqf: 5, credits: 0, dates: "", time: "09h00 - 14h00" }],
+        }],
+      };
+    });
+    setFocusedModuleId(id);
     setSaveState("idle");
     setEditing(true);
   };
@@ -281,9 +300,13 @@ export function CalendarPage({
     setSaveState("saving");
     setSaveError("");
     try {
+      if (draft.modules.some((m) => !m.name.trim())) {
+        throw new Error("Enter a name for every module before saving.");
+      }
       // drop rows that were added but left completely empty
       const modules = draft.modules.map((m) => ({
         ...m,
+        name: m.name.trim(),
         units: m.units.filter((u) => `${u.us}${u.title}${u.dates}`.trim() !== ""),
       }));
       const milestones = draft.milestones.filter((ms) => `${ms.name}${ms.dates}`.trim() !== "");
@@ -335,8 +358,13 @@ export function CalendarPage({
           <Icon name="download" size={15} /> Add all sessions to my calendar (.ics)
         </button>
         {import.meta.env.DEV && !editing && (
-          <button className="btn ghost sm" onClick={startEditing} title="Edit the training calendar in place, then save">
+          <button className="btn ghost sm" onClick={() => startEditing()} title="Edit the training calendar in place, then save">
             <Icon name="pencil" size={15} /> Edit calendar
+          </button>
+        )}
+        {import.meta.env.DEV && (
+          <button className="btn ghost sm" onClick={addModule} disabled={saveState === "saving"}>
+            <Icon name="plus" size={15} /> Add module
           </button>
         )}
         {editing && (
@@ -369,6 +397,9 @@ export function CalendarPage({
                 <input
                   className="cal-edit cal-edit-name"
                   value={m.name}
+                  autoFocus={m.id === focusedModuleId}
+                  placeholder="Module name"
+                  disabled={saveState === "saving"}
                   onChange={(e) => setModuleName(i, e.target.value)}
                   aria-label={`Module ${i + 1} name`}
                 />
@@ -376,6 +407,15 @@ export function CalendarPage({
             ) : (
               <>
                 Module {i + 1}: {m.name}
+                {import.meta.env.DEV && (
+                  <button
+                    className="btn ghost sm"
+                    onClick={() => startEditing(m.id)}
+                    aria-label={`Edit module ${i + 1} name`}
+                  >
+                    <Icon name="pencil" size={15} /> Edit module
+                  </button>
+                )}
               </>
             )}
           </h2>
