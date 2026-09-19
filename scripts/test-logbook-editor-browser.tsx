@@ -156,8 +156,10 @@ async function test() {
   await tick();
   assert(!document.querySelector(".plan-edit"), "Reading mode again has no editable cells");
   assert(rowTexts()[0] === "Explain what a cost/benefit analysis is for.", "Edited text stays after leaving edit mode");
-  window.confirm = () => true;
+  window.confirm = () => { throw new Error("Native confirmation must not be used"); };
   click("Reset to original");
+  await tick();
+  click("Reset logbook");
   await tick();
   assert(rowTexts()[0] === originalRows[0], `Reset restores the original logbook (${rowTexts()[0]})`);
 

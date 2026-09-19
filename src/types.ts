@@ -460,6 +460,8 @@ export interface UnitNote {
 }
 
 export interface LessonPlanRow {
+  /** Day boundary that automatically copied this activity. */
+  addedForDay?: string;
   time?: string;
   title: string;
   /** renders as a highlighted break row */
@@ -472,6 +474,9 @@ export interface LessonPlanRow {
 }
 
 export interface LessonPlanSection {
+  addedDayId?: string;
+  /** This section was split from the preceding section when adding a day. */
+  splitForDay?: boolean;
   heading?: string;
   /** restarts the schedule clock at this time, e.g. "09:00" — use for day 2 of a multi-day plan */
   startTime?: string;

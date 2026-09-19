@@ -93,6 +93,14 @@ async function test() {
   assert(normalize(planRows()[2].querySelector(".plan-title")?.textContent) === "New activity", "Inserted row appears directly below");
   clickTitled("Delete row", 2);
   await tick();
+  assert(document.querySelector('[role="dialog"][aria-label="Delete row?"]'), "Row deletion uses an app dialog");
+  click("Cancel");
+  await tick();
+  assert(planRows().length === originalRows + 1, "Cancel preserves the row");
+  clickTitled("Delete row", 2);
+  await tick();
+  click("Delete row");
+  await tick();
   assert(planRows().length === originalRows, `Delete row removes it (${planRows().length})`);
 
   // 5. Add a bullet + resource to a row, then remove the bullet
@@ -108,15 +116,17 @@ async function test() {
   await tick();
   assert(planRows()[1].querySelectorAll(".plan-bullets li").length === bulletsBefore, "Bullet removed again");
 
-  // 6. Add a section and delete it (confirm dialogs auto-accept)
+  // 6. Add a section and delete it through the app dialog
   const sectionsBefore = document.querySelectorAll(".plan-table tr.plan-sec").length;
   click("Add section");
   await tick();
   assert(document.querySelectorAll(".plan-table tr.plan-sec").length === sectionsBefore + 1, "Add section appends a section heading row");
-  window.confirm = () => true;
+  window.confirm = () => { throw new Error("Native confirmation must not be used"); };
   const deleteSection = Array.from(document.querySelectorAll<HTMLButtonElement>('button[title="Delete this section and all its rows"]')).pop();
   assert(deleteSection, "Delete section control exists");
   deleteSection.click();
+  await tick();
+  click("Delete section");
   await tick();
   assert(document.querySelectorAll(".plan-table tr.plan-sec").length === sectionsBefore, "Delete section removes it");
 
@@ -134,6 +144,8 @@ async function test() {
 
   // 9. Reset restores the original
   click("Reset to original");
+  await tick();
+  click("Reset lesson plan");
   await tick();
   assert(normalize(planRows()[1].querySelector(".plan-title")?.textContent) === originalTitle, "Reset restores the original plan");
 

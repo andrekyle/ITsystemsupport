@@ -34,6 +34,7 @@ import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 import { requestSemanticReview } from "../lib/llm";
 import { checkSpelling, type SpellIssue } from "../lib/spellcheck";
 import { autoGrowTextarea } from "../lib/autoGrow";
+import { insertLessonPlanDay, lessonPlanDayCount, removeLessonPlanDay, startLessonPlanDay } from "../lib/lessonPlanDays";
 import { groupLessonHtml, isLessonBulletListLead, isLessonListLead, isLessonListPoint, isLessonNumberedListLead, isLessonSubheading } from "../lib/lessonSubsections";
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
@@ -2600,6 +2601,13 @@ export function UnitPage({
   const [quizGenerationError, setQuizGenerationError] = useState<string | null>(null);
   const [lessonSplitError, setLessonSplitError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [tableConfirm, setTableConfirm] = useState<{
+    title: string;
+    message: string;
+    confirmLabel: string;
+    action: () => void;
+  } | null>(null);
+  useEffect(() => { setTableConfirm(null); }, [unitId]);
   const [savingLesson, setSavingLesson] = useState(false);
   const [lessonSaveStatus, setLessonSaveStatus] = useState<"" | "saved" | "error">("");
   const [lessonSaveError, setLessonSaveError] = useState("");
@@ -5311,7 +5319,7 @@ export function UnitPage({
                   className="btn ghost sm"
                   disabled={savingLesson}
                   title="Discard all inline logbook edits and show the original structure"
-                  onClick={() => { if (window.confirm("Discard every inline edit to this logbook and restore the original structure?")) editSetLogbook(null); }}
+                  onClick={() => setTableConfirm({ title: "Reset logbook?", message: "Discard every inline edit to this logbook and restore the original structure?", confirmLabel: "Reset logbook", action: () => editSetLogbook(null) })}
                 >
                   <Icon name="refresh" size={14} />
                   Reset to original
@@ -5855,7 +5863,7 @@ export function UnitPage({
                   className="btn ghost sm"
                   disabled={savingLesson}
                   title="Discard all inline table edits and show the original plan"
-                  onClick={() => { if (window.confirm("Discard every inline edit to this lesson plan table and restore the original?")) editSetLessonPlan(null); }}
+                  onClick={() => setTableConfirm({ title: "Reset lesson plan?", message: "Discard every inline edit to this lesson plan table and restore the original?", confirmLabel: "Reset lesson plan", action: () => editSetLessonPlan(null) })}
                 >
                   <Icon name="refresh" size={14} />
                   Reset to original
@@ -5863,7 +5871,7 @@ export function UnitPage({
               )}
               {editMode && (
                 <span className="muted plan-edit-hint">
-                  Click any cell to type. Enter saves a cell, Escape cancels. Use the row buttons to add, move or delete rows and sections.
+                  Click any cell to type. Enter saves a cell, Escape cancels. Use “Add day here” between activities to start a new day with Day 1’s introduction and closing activities, then adjust its day start time.
                 </span>
               )}
               {lessonSaveStatus === "saved" && <span className="muted">Saved to cloud — everyone now sees this version.</span>}
@@ -6062,6 +6070,7 @@ export function UnitPage({
                   const cols = pe ? 4 : 3;
                   const [sh, sm] = (lp.startTime ?? "09:00").split(":").map(Number);
                   let clock = sh * 60 + sm;
+                  let day = 1;
                   const fmt = (t: number) =>
                     `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
                   const rowCtls = (si: number, ri: number, r: LessonPlanRow) => pe ? (
@@ -6070,20 +6079,22 @@ export function UnitPage({
                       <PlanIconBtn title="Move row down" icon="chevronDown" onClick={() => updatePlan((x) => { const rows = x.sections[si].rows; if (ri < rows.length - 1) [rows[ri + 1], rows[ri]] = [rows[ri], rows[ri + 1]]; })} />
                       <PlanIconBtn title="Insert row below" icon="plus" onClick={() => updatePlan((x) => { x.sections[si].rows.splice(ri + 1, 0, newPlanRow()); })} />
                       <PlanIconBtn title={r.break ? "Change to a normal activity row" : "Change to a break row"} icon="halfCircle" onClick={() => updatePlan((x) => { const row = x.sections[si].rows[ri]; row.break = !row.break; if (row.break) { delete row.text; delete row.bullets; delete row.resources; } })} />
-                      <PlanIconBtn title="Delete row" icon="trash" danger onClick={() => updatePlan((x) => { x.sections[si].rows.splice(ri, 1); })} />
+                      <PlanIconBtn title="Delete row" icon="trash" danger onClick={() => setTableConfirm({ title: "Delete row?", message: `Delete “${r.title}” from the lesson plan?`, confirmLabel: "Delete row", action: () => updatePlan((x) => { x.sections[si].rows.splice(ri, 1); }) })} />
                     </td>
                   ) : null;
                   return lp.sections.map((sec, si) => {
+                    if (si > 0 && sec.startTime) day++;
                     if (sec.startTime) {
                       const [h, m] = sec.startTime.split(":").map(Number);
                       clock = h * 60 + m;
                     }
                     return (
                     <React.Fragment key={si}>
-                      {(sec.heading || pe) && (
+                      {(sec.heading || sec.startTime || si === 0 || pe) && (
                         <tr className="plan-sec">
                           <td colSpan={cols}>
                             <span className="plan-sec-ico"><Icon name="calendar" size={14} /></span>
+                            {(si === 0 || sec.startTime) && <strong>Day {day} · {sec.startTime ?? lp.startTime ?? "09:00"} </strong>}
                             <PlanText value={sec.heading ?? ""} editable={pe} placeholder="Section heading (optional)" onSave={(t) => updatePlan((x) => { x.sections[si].heading = t || undefined; })} />
                             {pe && (
                               <span className="plan-sec-ctls">
@@ -6091,17 +6102,40 @@ export function UnitPage({
                                   Day start
                                   <PlanText value={sec.startTime ?? ""} editable placeholder="HH:MM" onSave={(t) => updatePlan((x) => { x.sections[si].startTime = /^\d{1,2}:\d{2}$/.test(t) ? t : undefined; })} />
                                 </span>
+                                {si > 0 && sec.startTime && (
+                                  <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => removeLessonPlanDay(x, si))}>
+                                    Continue previous day
+                                  </button>
+                                )}
                                 <PlanIconBtn title="Move section up" icon="chevronUp" onClick={() => updatePlan((x) => { if (si > 0) [x.sections[si - 1], x.sections[si]] = [x.sections[si], x.sections[si - 1]]; })} />
                                 <PlanIconBtn title="Move section down" icon="chevronDown" onClick={() => updatePlan((x) => { if (si < x.sections.length - 1) [x.sections[si + 1], x.sections[si]] = [x.sections[si], x.sections[si + 1]]; })} />
                                 <PlanIconBtn title="Add row at top of this section" icon="plus" onClick={() => updatePlan((x) => { x.sections[si].rows.unshift(newPlanRow()); })} />
                                 <PlanIconBtn title="Add a new section below" icon="layers" onClick={() => updatePlan((x) => { x.sections.splice(si + 1, 0, { heading: "New section", rows: [newPlanRow()] }); })} />
-                                <PlanIconBtn title="Delete this section and all its rows" icon="trash" danger onClick={() => { if (window.confirm("Delete this whole section and all of its rows?")) updatePlan((x) => { x.sections.splice(si, 1); }); }} />
+                                {si > 0 && sec.startTime ? (
+                                  <PlanIconBtn title="Remove day and keep activities" icon="trash" danger onClick={() => setTableConfirm({ title: "Remove day?", message: "Continue these activities on the previous day. Only introduction and closing rows automatically copied for this day will be removed.", confirmLabel: "Remove day", action: () => updatePlan((x) => removeLessonPlanDay(x, si)) })} />
+                                ) : (
+                                  <PlanIconBtn title="Delete this section and all its rows" icon="trash" danger onClick={() => setTableConfirm({ title: "Delete section?", message: "Delete this whole section and all of its rows?", confirmLabel: "Delete section", action: () => updatePlan((x) => { x.sections.splice(si, 1); }) })} />
+                                )}
                               </span>
                             )}
                           </td>
                         </tr>
                       )}
                       {sec.rows.map((r, ri) => {
+                        const dayInsert = pe && (ri > 0 || (si > 0 && !sec.startTime)) ? (
+                          <tr className="plan-add-row">
+                            <td colSpan={cols}>
+                              <button
+                                type="button"
+                                className="btn ghost sm plan-add"
+                                title={`Start a new day before ${r.title}`}
+                                onClick={() => updatePlan((x) => startLessonPlanDay(x, si, ri))}
+                              >
+                                <Icon name="calendar" size={13} /> Add day here
+                              </button>
+                            </td>
+                          </tr>
+                        ) : null;
                         const mins = parseInt(r.time ?? "", 10) || 0;
                         const range = mins ? `${fmt(clock)} – ${fmt(clock + mins)}` : "";
                         clock += mins;
@@ -6115,7 +6149,9 @@ export function UnitPage({
                         );
                         if (r.break)
                           return (
-                            <tr key={ri} className="plan-break">
+                            <React.Fragment key={ri}>
+                            {dayInsert}
+                            <tr className="plan-break">
                               {timeCell}
                               <td colSpan={2}>
                                 <span className="plan-title-ico"><Icon name="halfCircle" size={13} /></span>
@@ -6123,6 +6159,7 @@ export function UnitPage({
                               </td>
                               {rowCtls(si, ri, r)}
                             </tr>
+                            </React.Fragment>
                           );
                         // pick a contextual icon based on the activity title
                         const pickActivityIcon = (title: string): React.ComponentProps<typeof Icon>["name"] => {
@@ -6145,7 +6182,9 @@ export function UnitPage({
                         };
                         const actIcon = pickActivityIcon(r.title);
                         return (
-                          <tr key={ri}>
+                          <React.Fragment key={ri}>
+                          {dayInsert}
+                          <tr>
                             {timeCell}
                             <td>
                               <div className="plan-title">
@@ -6201,6 +6240,7 @@ export function UnitPage({
                             </td>
                             {rowCtls(si, ri, r)}
                           </tr>
+                          </React.Fragment>
                         );
                       })}
                       {pe && (
@@ -6208,6 +6248,11 @@ export function UnitPage({
                           <td colSpan={cols}>
                             <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { x.sections[si].rows.push(newPlanRow()); })}>
                               <Icon name="plus" size={13} /> Add row{sec.heading ? ` to “${sec.heading}”` : ""}
+                            </button>
+                            <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => {
+                              insertLessonPlanDay(x, si + 1, newPlanRow());
+                            })}>
+                              <Icon name="calendar" size={13} /> Add day here
                             </button>
                           </td>
                         </tr>
@@ -6222,6 +6267,9 @@ export function UnitPage({
                       <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { x.sections.push({ heading: "New section", rows: [newPlanRow()] }); })}>
                         <Icon name="layers" size={13} /> Add section
                       </button>
+                      <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => insertLessonPlanDay(x, x.sections.length, newPlanRow()))}>
+                        <Icon name="calendar" size={13} /> Add next day
+                      </button>
                     </td>
                   </tr>
                 )}
@@ -6229,7 +6277,7 @@ export function UnitPage({
               <tfoot>
                 {(() => {
                   const rows = planData.sections.flatMap((s) => s.rows);
-                  const days = planData.sections.filter((s) => s.startTime).length || 1;
+                  const days = lessonPlanDayCount(planData);
                   const mins = rows.reduce((sum, r) => sum + (parseInt(r.time ?? "", 10) || 0), 0);
                   const brk = rows
                     .filter((r) => r.break)
@@ -6250,6 +6298,20 @@ export function UnitPage({
             </table>
           </div>
         </>
+      )}
+
+      {tableConfirm && (
+        <ConfirmModal
+          title={tableConfirm.title}
+          message={tableConfirm.message}
+          confirmLabel={tableConfirm.confirmLabel}
+          danger
+          onCancel={() => setTableConfirm(null)}
+          onConfirm={() => {
+            tableConfirm.action();
+            setTableConfirm(null);
+          }}
+        />
       )}
 
       {lightbox && (() => {
