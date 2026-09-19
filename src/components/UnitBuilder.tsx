@@ -191,8 +191,6 @@ export function LessonPlanBuilder({unit,content}:{unit:UnitStandard;content?:Uni
   const [message,setMessage]=useState("");
   const [fileName,setFileName]=useState("");
   const [preview,setPreview]=useState<UnitContent["lessonPlan"]>(undefined);
-  const [editOpen,setEditOpen]=useState(false);
-  const [editDraft,setEditDraft]=useState<UnitContent["lessonPlan"]|null>(null);
   useEffect(()=>{
     if(!built||loaded===built.revision)return;
     setPlanSource(built.planSource??"");
@@ -229,34 +227,10 @@ export function LessonPlanBuilder({unit,content}:{unit:UnitStandard;content?:Uni
     }catch(e){setError(e instanceof Error?e.message:"The lesson plan could not be saved. The current plan is unchanged.");}
     finally{setBusy("");}
   };
-  const saveEdit=async()=>{
-    if(!editDraft)return;
-    setError("");setMessage("");
-    try{
-      const next:UnitContent={...structuredClone(base),lessonPlan:editDraft};
-      validateUnitContent(next);
-      setBusy("Rebuilding the PDF, PowerPoint and answer guide…");
-      const files=await makeUnitExports(unit,next);
-      setBusy("Saving the lesson plan…");
-      const prefix=`shared/unitbuilder/${unit.us}`;
-      const [pdf,pptx,answers]=await Promise.all([uploadFile(prefix,files.pdf),uploadFile(prefix,files.pptx),uploadFile(prefix,files.answers)]);
-      await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content:next,files:{pdf,pptx,answers,material:built.files.material,materialEditable:built.files.materialEditable},aiUsed:built.aiUsed,planSource:built.planSource});
-      setMessage(`Lesson plan saved — ${planStats(editDraft)}. The previous version stays restorable from the builder.`);setEditOpen(false);setEditDraft(null);
-    }catch(e){setError(e instanceof Error?e.message:"The lesson plan could not be saved. The current plan is unchanged.");}
-    finally{setBusy("");}
-  };
   return <section className="unit-builder">
     <div className="unit-builder-bar">
-      <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(!open);setError("");setMessage("");setPreview(undefined);setEditOpen(false);setEditDraft(null);}}><Icon name="presenter" size={16}/>{open?"Close lesson plan builder":"Build lesson plan from notes"}</button>
-      {base.lessonPlan&&<button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{const next=!editOpen;setEditOpen(next);setEditDraft(next?structuredClone(base.lessonPlan!):null);setError("");setMessage("");setOpen(false);}}><Icon name="pencil" size={16}/>{editOpen?"Close lesson plan editor":"Edit lesson plan"}</button>}
+      <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(!open);setError("");setPreview(undefined);}}><Icon name="presenter" size={16}/>{open?"Close lesson plan builder":"Build lesson plan from notes"}</button>
     </div>
-    {editOpen&&editDraft&&<div className="unit-builder-panel">
-      <h2>Edit lesson plan · US {unit.us}</h2>
-      <p>Edit any field directly — every time, title, paragraph, bullet and resource is editable. Use “Add lesson plan sections” or “Add lesson plan rows” to insert a new section or activity, and “Remove” to delete one.</p>
-      <UnitContentEditor name="Lesson plan" value={editDraft as never} onChange={v=>setEditDraft(v as unknown as UnitContent["lessonPlan"])} defaultOpen/>
-      <button type="button" className="btn unit-build-action" disabled={!!busy} aria-busy={!!busy} onClick={()=>void saveEdit()}><span>{busy?"Saving…":"Save lesson plan"}</span></button>
-      <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setEditOpen(false);setEditDraft(null);}}>Close</button>
-    </div>}
     {open&&<div className="unit-builder-panel">
       <h2>Lesson plan · US {unit.us}</h2>
       <p>Paste the facilitator schedule for this unit. It replaces the plan below exactly as written — the rest of the unit is untouched.</p>
