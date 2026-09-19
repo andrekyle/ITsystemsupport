@@ -2136,6 +2136,8 @@ export interface LessonEdits {
   figureOffsetY?: Record<string, number>;
   /** full replacement lesson plan edited inline on the Lesson plan tab */
   lessonPlan?: import("./types").LessonPlan;
+  /** full replacement logbook structure edited inline on the Logbook tab */
+  logbook?: import("./types").LogbookSpec;
 }
 
 const lessonEditsKey = (us: string) => `itss.lessonedits.${us}`;
@@ -2351,7 +2353,18 @@ export function useLessonEdits(us: string) {
     [apply]
   );
 
-  return { edits, setHeading, setParagraph, setCaption, setKeyed, setSectionBody, setSectionBodyItem, setGeneratedQuiz, updateGeneratedQuizQuestion, removeGeneratedQuizQuestion, deleteGeneratedQuiz, moveFigure, setScale, setOffsetY, resetSection, setLessonPlan };
+  /** Replace the whole logbook structure (inline edits). Passing null reverts to the original. */
+  const setLogbook = useCallback(
+    (spec: import("./types").LogbookSpec | null) =>
+      apply((d) => {
+        const next = { ...d };
+        if (spec) next.logbook = spec; else delete next.logbook;
+        return next;
+      }),
+    [apply]
+  );
+
+  return { edits, setHeading, setParagraph, setCaption, setKeyed, setSectionBody, setSectionBodyItem, setGeneratedQuiz, updateGeneratedQuizQuestion, removeGeneratedQuizQuestion, deleteGeneratedQuiz, moveFigure, setScale, setOffsetY, resetSection, setLessonPlan, setLogbook };
 }
 
 /* ---------- user-uploaded notes (stored separately per profile) ---------- */

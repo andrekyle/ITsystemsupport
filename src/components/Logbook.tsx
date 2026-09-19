@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Icon } from "../icons";
 import { DateTimePicker } from "./DateTimePicker";
+import { InlineText, InlineIconBtn } from "./InlineText";
 import type { LogbookChecklistRow, LogbookSpec, PoeDoc } from "../types";
 import { deleteFile, downloadDoc, uploadFile, userPrefix } from "../lib/files";
 import { autoGrowTextarea } from "../lib/autoGrow";
@@ -12,35 +13,56 @@ function fmtSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+type RowListKey = "knowledgeQuestions" | "practicalActivities";
+
 function ChecklistRows({
   rows,
   startNo,
   values,
   onChange,
+  editable,
+  onEdit,
 }: {
   rows: LogbookChecklistRow[];
   startNo: number;
   values: Record<string, string | boolean>;
   onChange: (key: string, value: string | boolean) => void;
+  editable?: boolean;
+  /** edit-mode mutations of the row list itself */
+  onEdit?: (mutate: (list: LogbookChecklistRow[]) => void) => void;
 }) {
   return (
     <>
       {rows.map((row, i) => (
-        <tr key={row.text}>
+        <tr key={i}>
           <td className="lb-no">{startNo + i}</td>
-          <td>{row.text}</td>
+          <td>
+            {editable && onEdit ? (
+              <div className="lb-edit-row">
+                <InlineText value={row.text} editable multiline placeholder="Checklist item" onSave={(text) => onEdit((list) => { list[i].text = text; })} />
+                <span className="lb-edit-ctls">
+                  <InlineIconBtn title="Move up" icon="chevronUp" onClick={() => onEdit((list) => { if (i > 0) [list[i - 1], list[i]] = [list[i], list[i - 1]]; })} />
+                  <InlineIconBtn title="Move down" icon="chevronDown" onClick={() => onEdit((list) => { if (i < list.length - 1) [list[i + 1], list[i]] = [list[i], list[i + 1]]; })} />
+                  <InlineIconBtn title="Insert row below" icon="plus" onClick={() => onEdit((list) => { list.splice(i + 1, 0, { text: "New checklist item", marks: list[i].marks.slice() }); })} />
+                  <InlineIconBtn title="Delete row" icon="trash" danger onClick={() => onEdit((list) => { list.splice(i, 1); })} />
+                </span>
+              </div>
+            ) : (
+              row.text
+            )}
+          </td>
           {row.marks.map((def, ci) => {
             const key = `ec:${startNo + i}:${ci}`;
             const stored = values[key];
-            const on = typeof stored === "boolean" ? stored : def;
+            const on = editable ? def : typeof stored === "boolean" ? stored : def;
             return (
               <td key={ci} className="lb-mark">
                 <button
                   type="button"
                   className={`lb-markbtn${on ? " on" : ""}`}
-                  onClick={() => onChange(key, !on)}
+                  onClick={() => (editable && onEdit ? onEdit((list) => { list[i].marks[ci] = !def; }) : onChange(key, !on))}
                   aria-pressed={on}
-                  title={on ? "Remove mark" : "Mark"}
+                  title={editable ? (on ? "Default: marked — click to clear" : "Default: not marked — click to mark") : on ? "Remove mark" : "Mark"}
                 >
                   <Icon name={on ? "checkCircle" : "circle"} size={15} />
                 </button>
@@ -93,15 +115,32 @@ interface LogbookProps {
   spec: LogbookSpec;
   values: LogbookValues;
   onChange: (key: string, value: string | boolean) => void;
+  /** super-user edit mode: every heading, row and default mark of the structure is editable in place */
+  editable?: boolean;
+  onSpecChange?: (spec: LogbookSpec) => void;
 }
 
-export function Logbook({ spec, values, onChange }: LogbookProps) {
+export function Logbook({ spec, values, onChange, editable = false, onSpecChange }: LogbookProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState(false);
   /** file chosen but not yet saved — committed by the Save report button */
   const [pending, setPending] = useState<File | null>(null);
+  const editing = editable && !!onSpecChange;
+  const update = (mutate: (draft: LogbookSpec) => void) => {
+    if (!onSpecChange) return;
+    const draft = structuredClone(spec);
+    mutate(draft);
+    onSpecChange(draft);
+  };
+  const editRows = (key: RowListKey) => (mutate: (list: LogbookChecklistRow[]) => void) => update((draft) => mutate(draft[key]));
+  const text = (value: string, onSave: (text: string) => void, options: { as?: "span" | "div" | "p" | "strong"; className?: string; placeholder?: string; multiline?: boolean } = {}) => (
+    <InlineText value={value} editable={editing} onSave={onSave} as={options.as} className={options.className} placeholder={options.placeholder} multiline={options.multiline} />
+  );
+  const addButton = (label: string, onClick: () => void) => (
+    <button type="button" className="btn ghost sm plan-add" onClick={onClick}><Icon name="plus" size={13} /> {label}</button>
+  );
   const projectDoc: PoeDoc | null = (() => {
     const raw = values["project.upload"];
     if (typeof raw !== "string" || !raw) return null;
@@ -205,15 +244,15 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
   );
 
   return (
-    <div className="logbook">
+    <div className={`logbook${editing ? " lb-editing" : ""}`}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="book" size={20} />
         </span>
-        Learner Logbook — {spec.assignmentTitle}
+        Learner Logbook — {text(spec.assignmentTitle, (v) => update((d) => { d.assignmentTitle = v || "Assignment One"; }), { placeholder: "Assignment title" })}
       </h2>
       <p className="muted" style={{ marginTop: -6 }}>
-        {spec.programme} · {spec.unitLabel} · All fields are editable and saved to your profile.
+        {text(spec.programme, (v) => update((d) => { d.programme = v; }), { placeholder: "Programme" })} · {text(spec.unitLabel, (v) => update((d) => { d.unitLabel = v; }), { placeholder: "Unit standard" })} · All fields are editable and saved to your profile.
       </p>
 
       {/* Learner details */}
@@ -221,9 +260,20 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
         <div className="task-label" style={{ marginTop: 0 }}>Learner details</div>
         <table className="data kv lb-details">
           <tbody>
-            {spec.detailFields.map((f) => (
-              <tr key={f}>
-                <td className="k">{f}</td>
+            {spec.detailFields.map((f, fi) => (
+              <tr key={fi}>
+                <td className="k">
+                  {editing ? (
+                    <span className="lb-edit-row">
+                      {text(f, (v) => update((d) => { d.detailFields[fi] = v; }), { placeholder: "Field label" })}
+                      <span className="lb-edit-ctls">
+                        <InlineIconBtn title="Move up" icon="chevronUp" onClick={() => update((d) => { if (fi > 0) [d.detailFields[fi - 1], d.detailFields[fi]] = [d.detailFields[fi], d.detailFields[fi - 1]]; })} />
+                        <InlineIconBtn title="Move down" icon="chevronDown" onClick={() => update((d) => { if (fi < d.detailFields.length - 1) [d.detailFields[fi + 1], d.detailFields[fi]] = [d.detailFields[fi], d.detailFields[fi + 1]]; })} />
+                        <InlineIconBtn title="Remove field" icon="trash" danger onClick={() => update((d) => { d.detailFields.splice(fi, 1); })} />
+                      </span>
+                    </span>
+                  ) : f}
+                </td>
                 <td className="lb-fill">
                   {f === "Start & Completion Date" ? (
                     <span className="lb-daterange">
@@ -237,6 +287,11 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
                 </td>
               </tr>
             ))}
+            {editing && (
+              <tr>
+                <td colSpan={2}>{addButton("Add detail field", () => update((d) => { d.detailFields.push("New field"); }))}</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -254,11 +309,11 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
           </thead>
           <tbody>
             <tr>
-              <td>{spec.project.time}</td>
+              <td>{text(spec.project.time, (v) => update((d) => { d.project.time = v; }), { placeholder: "e.g. 30 minutes" })}</td>
               <td>
-                <strong>{spec.project.title}</strong>
+                {text(spec.project.title, (v) => update((d) => { d.project.title = v; }), { as: "strong", placeholder: "Project title" })}
                 <br />
-                {spec.project.text}
+                {text(spec.project.text, (v) => update((d) => { d.project.text = v; }), { placeholder: "Project instructions", multiline: true })}
                 <div className="lb-upload">
                   {pending ? (
                     <>
@@ -363,7 +418,7 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
                   />
                 )}
               </td>
-              <td>{spec.project.resource}</td>
+              <td>{text(spec.project.resource, (v) => update((d) => { d.project.resource = v; }), { placeholder: "e.g. Logbook" })}</td>
             </tr>
           </tbody>
         </table>
@@ -374,6 +429,11 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
         <div className="task-label" style={{ marginTop: 0 }}>
           Evidence checklist
         </div>
+        {editing && (
+          <p className="muted lb-edit-hint">
+            Click a row to edit its text. Clicking a mark sets the default evidence mark for that row; learners can still adjust their own marks.
+          </p>
+        )}
         <div className="lb-scroll">
           <table className="data lb-matrix">
             <tbody>
@@ -386,14 +446,28 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
                 startNo={1}
                 values={values}
                 onChange={onChange}
+                editable={editing}
+                onEdit={editRows("knowledgeQuestions")}
               />
+              {editing && (
+                <tr className="lb-add-row">
+                  <td colSpan={8}>{addButton("Add knowledge question", () => update((d) => { d.knowledgeQuestions.push({ text: "New knowledge question", marks: [true, false, false, true, false, false] }); }))}</td>
+                </tr>
+              )}
               <HeaderRows title="Practical activities" />
               <ChecklistRows
                 rows={spec.practicalActivities}
                 startNo={spec.knowledgeQuestions.length + 1}
                 values={values}
                 onChange={onChange}
+                editable={editing}
+                onEdit={editRows("practicalActivities")}
               />
+              {editing && (
+                <tr className="lb-add-row">
+                  <td colSpan={8}>{addButton("Add practical activity", () => update((d) => { d.practicalActivities.push({ text: "New practical activity", marks: [false, true, false, false, true, false] }); }))}</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -413,7 +487,7 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
               </th>
               <th>
                 Evidence
-                <span className="sub">{spec.workplaceEvidenceNote}</span>
+                <span className="sub">{text(spec.workplaceEvidenceNote, (v) => update((d) => { d.workplaceEvidenceNote = v; }), { placeholder: "Evidence note", multiline: true })}</span>
               </th>
               <th style={{ width: 100 }}>Workplace</th>
               <th style={{ width: 90 }}>Learner</th>
@@ -421,13 +495,29 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
           </thead>
           <tbody>
             {spec.workplaceActivities.map((a, i) => (
-              <tr key={a}>
-                <td>{a}</td>
+              <tr key={i}>
+                <td>
+                  {editing ? (
+                    <div className="lb-edit-row">
+                      {text(a, (v) => update((d) => { d.workplaceActivities[i] = v; }), { placeholder: "Workplace activity", multiline: true })}
+                      <span className="lb-edit-ctls">
+                        <InlineIconBtn title="Move up" icon="chevronUp" onClick={() => update((d) => { if (i > 0) [d.workplaceActivities[i - 1], d.workplaceActivities[i]] = [d.workplaceActivities[i], d.workplaceActivities[i - 1]]; })} />
+                        <InlineIconBtn title="Move down" icon="chevronDown" onClick={() => update((d) => { if (i < d.workplaceActivities.length - 1) [d.workplaceActivities[i + 1], d.workplaceActivities[i]] = [d.workplaceActivities[i], d.workplaceActivities[i + 1]]; })} />
+                        <InlineIconBtn title="Delete activity" icon="trash" danger onClick={() => update((d) => { d.workplaceActivities.splice(i, 1); })} />
+                      </span>
+                    </div>
+                  ) : a}
+                </td>
                 <td className="lb-fill">{multiline(`wpa:${i}:evidence`)}</td>
                 <td className="lb-fill">{field(`wpa:${i}:workplace`)}</td>
                 <td className="lb-fill">{field(`wpa:${i}:learner`)}</td>
               </tr>
             ))}
+            {editing && (
+              <tr className="lb-add-row">
+                <td colSpan={4}>{addButton("Add workplace activity", () => update((d) => { d.workplaceActivities.push("New workplace activity"); }))}</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -444,7 +534,7 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
               </th>
               <th>
                 Evidence
-                <span className="sub">{spec.otherEvidenceNote}</span>
+                <span className="sub">{text(spec.otherEvidenceNote, (v) => update((d) => { d.otherEvidenceNote = v; }), { placeholder: "Evidence note", multiline: true })}</span>
               </th>
               <th style={{ width: 100 }}>Assessor</th>
               <th style={{ width: 90 }}>Learner</th>
@@ -452,15 +542,31 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
           </thead>
           <tbody>
             {spec.otherActivities.map((a, i) => (
-              <tr key={a.activity}>
+              <tr key={i}>
                 <td>
-                  <strong>{a.activity}</strong>
+                  {editing ? (
+                    <div className="lb-edit-row">
+                      {text(a.activity, (v) => update((d) => { d.otherActivities[i].activity = v; }), { as: "strong", placeholder: "Activity" })}
+                      <span className="lb-edit-ctls">
+                        <InlineIconBtn title="Move up" icon="chevronUp" onClick={() => update((d) => { if (i > 0) [d.otherActivities[i - 1], d.otherActivities[i]] = [d.otherActivities[i], d.otherActivities[i - 1]]; })} />
+                        <InlineIconBtn title="Move down" icon="chevronDown" onClick={() => update((d) => { if (i < d.otherActivities.length - 1) [d.otherActivities[i + 1], d.otherActivities[i]] = [d.otherActivities[i], d.otherActivities[i + 1]]; })} />
+                        <InlineIconBtn title="Delete activity" icon="trash" danger onClick={() => update((d) => { d.otherActivities.splice(i, 1); })} />
+                      </span>
+                    </div>
+                  ) : (
+                    <strong>{a.activity}</strong>
+                  )}
                 </td>
-                <td>{a.evidence}</td>
+                <td>{text(a.evidence, (v) => update((d) => { d.otherActivities[i].evidence = v; }), { placeholder: "Evidence required", multiline: true })}</td>
                 <td className="lb-fill">{field(`oa:${i}:assessor`)}</td>
                 <td className="lb-fill">{field(`oa:${i}:learner`)}</td>
               </tr>
             ))}
+            {editing && (
+              <tr className="lb-add-row">
+                <td colSpan={4}>{addButton("Add other activity", () => update((d) => { d.otherActivities.push({ activity: "New activity", evidence: "Evidence required" }); }))}</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -600,11 +706,22 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
               </tr>
             </thead>
             <tbody>
-              {spec.projectChecklist.map((p) => (
-                <React.Fragment key={p.no}>
+              {spec.projectChecklist.map((p, pi) => (
+                <React.Fragment key={pi}>
                   <tr>
-                    <td>{p.no}</td>
-                    <td>{p.name}</td>
+                    <td>{text(p.no, (v) => update((d) => { d.projectChecklist[pi].no = v || String(pi + 1); }), { placeholder: "No" })}</td>
+                    <td>
+                      {editing ? (
+                        <div className="lb-edit-row">
+                          {text(p.name, (v) => update((d) => { d.projectChecklist[pi].name = v; }), { placeholder: "Project name" })}
+                          <span className="lb-edit-ctls">
+                            <InlineIconBtn title="Move up" icon="chevronUp" onClick={() => update((d) => { if (pi > 0) [d.projectChecklist[pi - 1], d.projectChecklist[pi]] = [d.projectChecklist[pi], d.projectChecklist[pi - 1]]; })} />
+                            <InlineIconBtn title="Move down" icon="chevronDown" onClick={() => update((d) => { if (pi < d.projectChecklist.length - 1) [d.projectChecklist[pi + 1], d.projectChecklist[pi]] = [d.projectChecklist[pi], d.projectChecklist[pi + 1]]; })} />
+                            <InlineIconBtn title="Delete project" icon="trash" danger onClick={() => update((d) => { d.projectChecklist.splice(pi, 1); })} />
+                          </span>
+                        </div>
+                      ) : p.name}
+                    </td>
                     <td className="lb-fill">{field(`pc:${p.no}:learner`)}</td>
                     <td className="lb-fill">{dateField(`pc:${p.no}:ldate`)}</td>
                     <td className="lb-fill">{field(`pc:${p.no}:workplace`)}</td>
@@ -622,6 +739,11 @@ export function Logbook({ spec, values, onChange }: LogbookProps) {
                   </tr>
                 </React.Fragment>
               ))}
+              {editing && (
+                <tr className="lb-add-row">
+                  <td colSpan={8}>{addButton("Add project", () => update((d) => { d.projectChecklist.push({ no: String(d.projectChecklist.length + 1), name: "New project" }); }))}</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

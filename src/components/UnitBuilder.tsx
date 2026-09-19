@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import type { PoeDoc, UnitContent, UnitStandard } from "../types";
+import type { LogbookSpec, PoeDoc, UnitContent, UnitStandard } from "../types";
 import type { LessonEdits } from "../store";
 import { buildUnitContent, validateUnitContent, lessonPlanFromSource, MAX_SOURCE_LENGTH, MAX_LESSON_PLAN_LENGTH, mergeUnitContentEnhancement } from "../lib/unitBuilder";
+import { logbookFromSource, logbookStats, MAX_LOGBOOK_SOURCE_LENGTH } from "../lib/logbookBuilder";
 import { useBuiltUnit, saveBuiltUnit } from "../lib/useBuiltUnit";
 import { unitHistory, unitVersionArchive, MAX_UNIT_HISTORY, type BuiltUnitVersion } from "../lib/builtUnits";
 import { importUnitSource } from "../lib/unitSourceImport";
@@ -45,6 +46,7 @@ export function effectiveBuiltContent(content:UnitContent, edits:LessonEdits):Un
   }));
   next.lesson=next.lesson.map((s,si)=>edits.sectionBody?.[si]?.richHtml!==undefined?{...s,bullets:undefined,table:undefined,cards:undefined,example:undefined,examples:undefined}:s);
   if(edits.lessonPlan) next.lessonPlan=structuredClone(edits.lessonPlan);
+  if(edits.logbook) next.logbook=structuredClone(edits.logbook);
   return next;
 }
 
@@ -123,6 +125,9 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
     setError("");setMessage("");setWarning("");setBusy("Building lessons, activities and tab content…");
     try {
       let next=buildUnitContent(unit,source,{minutes});
+      // Pasted or photographed logbook content builds the logbook directly; AI output (when on) may refine it.
+      const pastedLogbook=logbookContent.trim()?logbookFromSource(unit,logbookContent):undefined;
+      if(pastedLogbook)next.logbook=pastedLogbook;
       if(ai){
         setBusy("Researching the unit standard and creating the tabs with OpenAI...");
         const token=(await supabase?.auth.getSession())?.data.session?.access_token;
@@ -181,6 +186,17 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   </section>;
 }
 
+/** Save one replaced part of a built unit (lesson plan, logbook), rebuilding the exported files. */
+async function publishUnitPart(unit:UnitStandard,built:BuiltUnitVersion,next:UnitContent,setBusy:(text:string)=>void,extra:{planSource?:string}={}):Promise<void>{
+  validateUnitContent(next);
+  setBusy("Rebuilding the PDF, PowerPoint and answer guide…");
+  const files=await makeUnitExports(unit,next);
+  setBusy("Saving…");
+  const prefix=`shared/unitbuilder/${unit.us}`;
+  const [pdf,pptx,answers]=await Promise.all([uploadFile(prefix,files.pdf),uploadFile(prefix,files.pptx),uploadFile(prefix,files.answers)]);
+  await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content:next,files:{pdf,pptx,answers,material:built.files.material,materialEditable:built.files.materialEditable},aiUsed:built.aiUsed,planSource:extra.planSource??built.planSource});
+}
+
 /** Replace only the lesson plan of a built unit from pasted facilitator notes. */
 export function LessonPlanBuilder({unit,content}:{unit:UnitStandard;content?:UnitContent}) {
   const built=useBuiltUnit(unit.us);
@@ -216,14 +232,7 @@ export function LessonPlanBuilder({unit,content}:{unit:UnitStandard;content?:Uni
     setError("");setMessage("");
     try{
       const plan=parsePlan();
-      const next:UnitContent={...structuredClone(base),lessonPlan:plan};
-      validateUnitContent(next);
-      setBusy("Rebuilding the PDF, PowerPoint and answer guide…");
-      const files=await makeUnitExports(unit,next);
-      setBusy("Saving the lesson plan…");
-      const prefix=`shared/unitbuilder/${unit.us}`;
-      const [pdf,pptx,answers]=await Promise.all([uploadFile(prefix,files.pdf),uploadFile(prefix,files.pptx),uploadFile(prefix,files.answers)]);
-      await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content:next,files:{pdf,pptx,answers,material:built.files.material,materialEditable:built.files.materialEditable},aiUsed:built.aiUsed,planSource:planSource.trim()});
+      await publishUnitPart(unit,built,{...structuredClone(base),lessonPlan:plan},setBusy,{planSource:planSource.trim()});
       setPreview(undefined);setMessage(`Lesson plan saved — ${planStats(plan)}. The previous version stays restorable from the builder.`);setOpen(false);
     }catch(e){setError(e instanceof Error?e.message:"The lesson plan could not be saved. The current plan is unchanged.");}
     finally{setBusy("");}
@@ -247,6 +256,85 @@ export function LessonPlanBuilder({unit,content}:{unit:UnitStandard;content?:Uni
       </div>}
       <button type="button" className="btn ghost" disabled={!!busy||!planSource.trim()} onClick={()=>{setError("");setMessage("");try{setPreview(parsePlan());}catch(e){setPreview(undefined);setError(e instanceof Error?e.message:String(e));}}}>Preview plan</button>
       <button type="button" className="btn unit-build-action" disabled={!!busy||!planSource.trim()} aria-busy={!!busy} onClick={()=>void save()}><span>{busy?"Saving…":"Save lesson plan"}</span></button>
+      <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(false);setPreview(undefined);}}>Close</button>
+    </div>}
+    {busy&&<p role="status">{busy}</p>}{message&&<p role="status">{message}</p>}{error&&<p role="alert" className="auth-error">{error}</p>}
+  </section>;
+}
+
+/** Replace only the logbook of a built unit from a pasted, imported or photographed logbook form. */
+export function LogbookBuilder({unit,content}:{unit:UnitStandard;content?:UnitContent}) {
+  const built=useBuiltUnit(unit.us);
+  const [open,setOpen]=useState(false);
+  const [source,setSource]=useState("");
+  const [busy,setBusy]=useState("");
+  const [error,setError]=useState("");
+  const [message,setMessage]=useState("");
+  const [fileName,setFileName]=useState("");
+  const [preview,setPreview]=useState<LogbookSpec|undefined>(undefined);
+  const base=content??built?.content;
+  if(!built||!base)return null;
+  const parse=()=>{
+    const text=source.trim();
+    if(!text)throw new Error("Paste or import the logbook content first.");
+    if(text.length>MAX_LOGBOOK_SOURCE_LENGTH)throw new Error("Shorten the logbook content (maximum 40,000 characters).");
+    const spec=logbookFromSource(unit,text);
+    if(!spec)throw new Error('No logbook checklist rows were found. Add an "Embedded knowledge questions" or "Practical activities" heading followed by one numbered row per line, for example "1. Explain the purpose of a cost/benefit analysis."');
+    return spec;
+  };
+  const readImages=async(files:FileList|null)=>{
+    const selected=Array.from(files??[]).filter(file=>file.type.startsWith("image/"));
+    if(!selected.length)return;
+    if(selected.length>8){setError("Upload up to 8 logbook images at a time.");return;}
+    setError("");setMessage("");setBusy(selected.length===1?"Reading logbook image…":"Reading logbook images…");
+    try{
+      const images=await Promise.all(selected.map(logbookImageDataUrl));
+      const token=(await supabase?.auth.getSession())?.data.session?.access_token;
+      const response=await fetch("/api/extract-logbook-image",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({images})});
+      const result=await response.json();
+      if(!response.ok)throw new Error(result.error??"The logbook image could not be read.");
+      setSource(current=>[current.trim(),String(result.text??"").trim()].filter(Boolean).join("\n\n"));
+      setFileName(selected.map(file=>file.name).join(", "));setPreview(undefined);
+      setMessage("Logbook image read. Check the extracted content, then preview or save.");
+    }catch(e){setError(e instanceof Error?e.message:"The logbook image could not be read.");}
+    finally{setBusy("");}
+  };
+  const save=async()=>{
+    setError("");setMessage("");
+    try{
+      const spec=parse();
+      await publishUnitPart(unit,built,{...structuredClone(base),logbook:spec},setBusy);
+      setPreview(undefined);setMessage(`Logbook saved — ${logbookStats(spec)}. The previous version stays restorable from the builder.`);setOpen(false);
+    }catch(e){setError(e instanceof Error?e.message:"The logbook could not be saved. The current logbook is unchanged.");}
+    finally{setBusy("");}
+  };
+  return <section className="unit-builder">
+    <div className="unit-builder-bar">
+      <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(!open);setError("");setMessage("");setPreview(undefined);}}><Icon name="book" size={16}/>{open?"Close logbook builder":"Build logbook from notes"}</button>
+    </div>
+    {open&&<div className="unit-builder-panel">
+      <h2>Logbook · US {unit.us}</h2>
+      <p>Import or paste the logbook form for this unit. It replaces the logbook structure below exactly as written — learners' saved entries and the rest of the unit are untouched.</p>
+      <div className="unit-settings-card">
+        <div className="unit-settings-row"><div className="unit-settings-copy"><strong>Import logbook</strong><span>{fileName||"DOCX, PDF, PPTX, TXT — or photos/scans of the logbook pages"}</span></div>
+          <label className="unit-import-button"><span>Choose file</span><input aria-label="Import logbook" type="file" accept=".txt,.md,.pdf,.docx,.pptx" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Reading logbook document…");setError("");setMessage("");try{setSource(await importUnitSource(file));setFileName(file.name);setPreview(undefined);}catch(err){setError(String(err));}finally{setBusy("");}}}/></label>
+          <label className="unit-import-button"><span>Read images</span><input aria-label="Read logbook images" type="file" accept="image/*" multiple disabled={!!busy} onChange={e=>{const files=e.target.files;void readImages(files).finally(()=>{e.target.value="";});}}/></label>
+        </div>
+        <label className="unit-source-field"><strong>Logbook content</strong><span>Use the section headings “Learner details”, “Project”, “Embedded knowledge questions”, “Practical activities”, “Workplace activities”, “Other activities” and “Project checklist”. Word tables are read row by row — “No | Text | ✓ | | | ✓ | |” keeps the six evidence marks (Workplace: Learner Activity, Logbook Activity, Project · Assessor: Learner Manual, Logbook Activity, Project). Typed rows work too: “1. Explain the purpose of a cost/benefit analysis. ✓ - - ✓ - -”. Lines such as “Assignment: Assignment One”, “Programme: …” and “Unit standard: …” set the headings.</span><textarea rows={12} value={source} maxLength={MAX_LOGBOOK_SOURCE_LENGTH} disabled={!!busy} onChange={e=>{setSource(e.target.value);setPreview(undefined);}} placeholder={"Assignment: Assignment One\nProgramme: Information Technology - Systems Support\nUnit standard: "+unit.us+" - "+unit.title+"\n\nProject\nTime: 30 minutes\nWorkplace project\nApply the unit learning in the workplace and attach the evidence.\nResources: Logbook\n\nEmbedded knowledge questions\n1. Explain the purpose of a cost/benefit analysis. ✓ - - ✓ - -\n2. Describe how to prepare a time estimate.\n\nPractical activities\n3. Prepare a cost estimate for an element of work.\n\nWorkplace activities\n- Estimate a real unit of work at the workplace.\n\nOther activities\nWorkplace project — Attach the completed estimate.\n\nProject checklist\n1. "+unit.us}/></label>
+      </div>
+      {preview&&<div className="unit-confirm">
+        <strong>{preview.assignmentTitle}</strong> — {logbookStats(preview)}
+        <ul className="plan-preview">
+          <li>Project: {preview.project.time?`${preview.project.time} · `:""}{preview.project.title}{preview.project.resource?` · ${preview.project.resource}`:""}</li>
+          <li>Knowledge questions: {preview.knowledgeQuestions.map((row,index)=>`${index+1}. ${row.text}`).join(" • ")}</li>
+          <li>Practical activities: {preview.practicalActivities.map((row,index)=>`${preview.knowledgeQuestions.length+index+1}. ${row.text}`).join(" • ")||"—"}</li>
+          <li>Workplace activities: {preview.workplaceActivities.join(" • ")||"—"}</li>
+          <li>Other activities: {preview.otherActivities.map(item=>item.activity).join(" • ")||"—"}</li>
+          <li>Project checklist: {preview.projectChecklist.map(item=>`${item.no}. ${item.name}`).join(" • ")}</li>
+        </ul>
+      </div>}
+      <button type="button" className="btn ghost" disabled={!!busy||!source.trim()} onClick={()=>{setError("");setMessage("");try{setPreview(parse());}catch(e){setPreview(undefined);setError(e instanceof Error?e.message:String(e));}}}>Preview logbook</button>
+      <button type="button" className="btn unit-build-action" disabled={!!busy||!source.trim()} aria-busy={!!busy} onClick={()=>void save()}><span>{busy?"Saving…":"Save logbook"}</span></button>
       <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(false);setPreview(undefined);}}>Close</button>
     </div>}
     {busy&&<p role="status">{busy}</p>}{message&&<p role="status">{message}</p>}{error&&<p role="alert" className="auth-error">{error}</p>}

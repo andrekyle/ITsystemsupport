@@ -4527,6 +4527,37 @@ p.plan-edit {
   font-weight: 600;
 }
 
+/* ---- Logbook: inline structure editing (super user) ---- */
+.lb-editing .lb-edit-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.lb-editing .lb-edit-row .plan-edit {
+  flex: 1 1 auto;
+}
+.lb-editing .lb-edit-ctls {
+  display: inline-flex;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+.lb-editing .lb-edit-hint {
+  margin: -4px 0 10px;
+  font-size: 12.5px;
+}
+.lb-editing tr.lb-add-row td {
+  background: color-mix(in srgb, var(--azure) 5%, transparent);
+  padding: 6px 12px;
+  text-align: left;
+}
+.lb-editing th .sub .plan-edit {
+  font-weight: 400;
+  text-transform: none;
+}
+.lb-editing .section-title .plan-edit {
+  font: inherit;
+}
+
 /* Ways to Demonstrate / Development Activities — icon grid */
 .demo-grid {
   display: flex;

@@ -94,7 +94,7 @@ function normalizeActivities<T extends { id: string; title: string; steps?: stri
   return items.map((item, index) => ({ ...item, id: stableId(prefix, item.title, index) }));
 }
 
-const STANDARD_LOGBOOK_DETAIL_FIELDS = [
+export const STANDARD_LOGBOOK_DETAIL_FIELDS = [
   "Learner Name",
   "Qualification",
   "Group / Class",
@@ -102,9 +102,9 @@ const STANDARD_LOGBOOK_DETAIL_FIELDS = [
   "Supervisor / Mentor",
   "Start & Completion Date",
 ];
-const KNOWLEDGE_MARKS = [true, false, false, true, false, false];
-const PRACTICAL_MARKS = [false, true, false, false, true, false];
-const PROJECT_MARKS = [true, true, true, true, true, true];
+export const KNOWLEDGE_MARKS = [true, false, false, true, false, false];
+export const PRACTICAL_MARKS = [false, true, false, false, true, false];
+export const PROJECT_MARKS = [true, true, true, true, true, true];
 
 function normalizeMarks(value: unknown, fallback: boolean[]): boolean[] {
   const marks = Array.isArray(value) ? value.slice(0, 6).map(Boolean) : [];
@@ -112,15 +112,18 @@ function normalizeMarks(value: unknown, fallback: boolean[]): boolean[] {
   return marks;
 }
 
-function normalizeLogbookSpec(unit: UnitStandard, logbook: UnitContent["logbook"]): UnitContent["logbook"] {
+export function normalizeLogbookSpec(unit: UnitStandard, logbook: UnitContent["logbook"], options: { keepStructure?: boolean } = {}): UnitContent["logbook"] {
   if (!logbook) return logbook;
   const projectName = unit.us || logbook.unitLabel || unit.title;
+  // A logbook read from the facilitator's own form keeps its detail fields and
+  // project checklist; AI output is normalised to the standard layout.
+  const keep = options.keepStructure === true;
   return {
     ...logbook,
     assignmentTitle: logbook.assignmentTitle?.trim() || "Assignment One",
     programme: logbook.programme?.trim() || "Information Technology - Systems Support",
     unitLabel: logbook.unitLabel?.trim() || `${unit.us} - ${unit.title}`,
-    detailFields: STANDARD_LOGBOOK_DETAIL_FIELDS,
+    detailFields: keep && logbook.detailFields?.length ? logbook.detailFields : STANDARD_LOGBOOK_DETAIL_FIELDS,
     project: {
       time: logbook.project?.time?.trim() || "30 minutes",
       title: logbook.project?.title?.trim() || "Project",
@@ -139,7 +142,7 @@ function normalizeLogbookSpec(unit: UnitStandard, logbook: UnitContent["logbook"
     workplaceEvidenceNote: logbook.workplaceEvidenceNote?.trim() || "The workplace completes this section after observing the learner having complied to and completed all the activities as mentioned below.",
     otherActivities: logbook.otherActivities?.length ? logbook.otherActivities : [{ activity: logbook.project?.title || "Workplace project", evidence: logbook.project?.text || "Attach the completed workplace evidence." }],
     otherEvidenceNote: logbook.otherEvidenceNote?.trim() || "Learner evidence and experience is recorded here. Make reference to equipment, tools, materials or systems that were used in these processes.",
-    projectChecklist: [{ no: "1", name: projectName }],
+    projectChecklist: keep && logbook.projectChecklist?.length ? logbook.projectChecklist : [{ no: "1", name: projectName }],
   };
 }
 
@@ -227,7 +230,7 @@ function normalizePlanLines(source: string): string[] {
 }
 
 /** Split one Markdown pipe-table row into cells, unescaping `\|` and turning `<br>` into newlines. */
-function pipeRowCells(line: string): string[] {
+export function pipeRowCells(line: string): string[] {
   const value = line.trim();
   const result: string[] = [];
   let cell = "";
@@ -246,7 +249,7 @@ function pipeRowCells(line: string): string[] {
 const PLAN_TABLE_HEADER = /^(?:time|times|timing|duration|minutes|mins|activity|activities|content|activity\s*\/\s*content|activity\s*&\s*content|method|methodology|facilitation|resources?|materials?|training aids?|learning materials?|notes?|lm|comments?)$/i;
 /** The document's own title line ("Facilitator Preparation", "Lesson plan") names the plan. */
 const PLAN_TITLE_LINE = /^(?:facilitator (?:preparation|guide|notes)|lesson plan|facilitation plan|session plan)\b/i;
-const isPlanTime = (cell: string) => {
+export const isPlanTime = (cell: string) => {
   const flat = cell.replace(/\s+/g, " ").trim();
   return flat.length <= 40 && (/^\d{1,3}\s*(?:min|mins|minute|minutes|hr|hrs|hour|hours)\.?$/i.test(flat) || /^\d{1,2}:\d{2}(?:\s*(?:[–—-]|to)\s*\d{1,2}:\d{2})?$/.test(flat));
 };

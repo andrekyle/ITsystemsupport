@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
 import JSZip from "jszip";
 import { Icon } from "../icons";
-import type { Exercise, ExerciseCheck, LessonFigure, LessonPlan, LessonPlanRow, LessonSection, PoeDoc, ProgressState, Profile, QuizQuestion, Role, Route, UnitActivity, UnitContent, UnitStandard } from "../types";
+import type { Exercise, ExerciseCheck, LessonFigure, LessonPlan, LessonPlanRow, LessonSection, LogbookSpec, PoeDoc, ProgressState, Profile, QuizQuestion, Role, Route, UnitActivity, UnitContent, UnitStandard } from "../types";
 import { UNIT_ACTIVITIES, isStaff } from "../types";
 import { COURSE_BLURB, COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
 import { COURSES, activeCourseId, setActiveCourse } from "../data/courses";
@@ -20,7 +20,8 @@ import { SlideEditableText } from "../components/SlideEditableText";
 import { SlideTextToolbar } from "../components/SlideTextToolbar";
 import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
-import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder } from "../components/UnitBuilder";
+import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder } from "../components/UnitBuilder";
+import { InlineText, InlineIconBtn } from "../components/InlineText";
 import { ActivityQuestionEditor } from "../components/ActivityQuestionEditor";
 import { UnitContentEditor } from "../components/UnitContentEditor";
 import { supabase } from "../lib/supabase";
@@ -37,66 +38,8 @@ import { groupLessonHtml, isLessonBulletListLead, isLessonListLead, isLessonList
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
 
-/** Plain-text cell of the lesson plan table. Click to edit; saves on blur (Enter also saves). */
-function PlanText({
-  value,
-  editable,
-  onSave,
-  as: Tag = "span",
-  className,
-  placeholder,
-  multiline = false,
-}: {
-  value: string;
-  editable: boolean;
-  onSave: (text: string) => void;
-  as?: "span" | "div" | "p";
-  className?: string;
-  placeholder?: string;
-  multiline?: boolean;
-}) {
-  const ref = useRef<HTMLElement | null>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (el && document.activeElement !== el && el.textContent !== value) el.textContent = value;
-  }, [value]);
-  if (!editable) return <Tag className={className}>{value}</Tag>;
-  return (
-    <Tag
-      ref={ref as React.Ref<never>}
-      className={`plan-edit${className ? ` ${className}` : ""}`}
-      contentEditable
-      suppressContentEditableWarning
-      spellCheck
-      data-placeholder={placeholder}
-      onClick={(e: React.MouseEvent) => e.stopPropagation()}
-      onBlur={(e: React.FocusEvent<HTMLElement>) => {
-        const text = (e.currentTarget.textContent ?? "").replace(/\u00a0/g, " ").trim();
-        if (text !== value) onSave(text);
-      }}
-      onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
-        if (e.key === "Enter" && !multiline && !e.shiftKey) {
-          e.preventDefault();
-          (e.currentTarget as HTMLElement).blur();
-        }
-        if (e.key === "Escape") {
-          e.currentTarget.textContent = value;
-          (e.currentTarget as HTMLElement).blur();
-        }
-      }}
-    >
-      {value}
-    </Tag>
-  );
-}
-
-function PlanIconBtn({ title, icon, onClick, danger }: { title: string; icon: React.ComponentProps<typeof Icon>["name"]; onClick: () => void; danger?: boolean }) {
-  return (
-    <button type="button" className={`plan-ctl${danger ? " danger" : ""}`} title={title} aria-label={title} onClick={(e) => { e.stopPropagation(); onClick(); }}>
-      <Icon name={icon} size={13} />
-    </button>
-  );
-}
+const PlanText = InlineText;
+const PlanIconBtn = InlineIconBtn;
 
 const newPlanRow = (): LessonPlanRow => ({ time: "10 minutes", title: "New activity", text: [""], resources: [] });
 
@@ -2651,7 +2594,7 @@ export function UnitPage({
   const [deckReplacePct, setDeckReplacePct] = useState<number | null>(null);
   const [deckReplaceError, setDeckReplaceError] = useState<string | null>(null);
   const { figures: figureImages, setFigure, removeFigure } = useLessonFigures(unitId);
-  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection, setLessonPlan: editSetLessonPlan } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId);
+  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection, setLessonPlan: editSetLessonPlan, setLogbook: editSetLogbook } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId);
   const [generatingQuiz, setGeneratingQuiz] = useState<number | null>(null);
   const [quizQuestionCount, setQuizQuestionCount] = useState(5);
   const [quizGenerationError, setQuizGenerationError] = useState<string | null>(null);
@@ -2700,6 +2643,8 @@ export function UnitPage({
     mutate(draft);
     editSetLessonPlan(draft);
   };
+  // The logbook shown on the tab: inline structure edits (shared, cloud-synced) win over the generated logbook.
+  const logbookData: LogbookSpec | undefined = content?.logbook ? (lessonEdits.logbook ?? content.logbook) : undefined;
   const quizResult = progress.units[u.us]?.quiz;
   const namedQuizzes = content?.quizzes ?? [];
   const namedQuizResults = progress.units[u.us]?.quizzes ?? {};
@@ -5342,12 +5287,54 @@ export function UnitPage({
         </>
       )}
 
-      {tab === "logbook" && content?.logbook && (
-        <Logbook
-          spec={content.logbook}
-          values={progress.units[u.us]?.logbook ?? {}}
-          onChange={(key, value) => setLogbookField(u.us, key, value)}
-        />
+      {tab === "logbook" && content?.logbook && logbookData && (
+        <>
+          {isSuperUser && (
+            <div className="plan-edit-bar">
+              <button
+                type="button"
+                className={`btn ghost sm${editMode ? " active" : ""}`}
+                disabled={savingLesson}
+                onClick={() => { if (editMode) void saveLessonToCloud(); else { setLessonSaveStatus(""); setEditMode(true); } }}
+              >
+                <Icon name={editMode ? "checkCircle" : "pencil"} size={14} />
+                {savingLesson ? "Saving to cloud..." : editMode ? "Save logbook to cloud" : "Edit logbook"}
+              </button>
+              {editMode && (
+                <button type="button" className="btn ghost sm" disabled={savingLesson} onClick={() => setEditMode(false)}>
+                  Done
+                </button>
+              )}
+              {lessonEdits.logbook && (
+                <button
+                  type="button"
+                  className="btn ghost sm"
+                  disabled={savingLesson}
+                  title="Discard all inline logbook edits and show the original structure"
+                  onClick={() => { if (window.confirm("Discard every inline edit to this logbook and restore the original structure?")) editSetLogbook(null); }}
+                >
+                  <Icon name="refresh" size={14} />
+                  Reset to original
+                </button>
+              )}
+              {editMode && (
+                <span className="muted plan-edit-hint">
+                  Click any heading, row or note to type. Enter saves, Escape cancels. Use the row buttons to add, move or delete rows; click a mark to set its default.
+                </span>
+              )}
+              {lessonSaveStatus === "saved" && <span className="muted">Saved to cloud — everyone now sees this version.</span>}
+              {lessonSaveStatus === "error" && <span className="auth-error">{lessonSaveError}</span>}
+            </div>
+          )}
+          {isSuperUser && <LogbookBuilder unit={u} content={content} />}
+          <Logbook
+            spec={logbookData}
+            values={progress.units[u.us]?.logbook ?? {}}
+            onChange={(key, value) => setLogbookField(u.us, key, value)}
+            editable={isSuperUser && editMode}
+            onSpecChange={(spec) => editSetLogbook(spec)}
+          />
+        </>
       )}
 
       {tab === "quiz" && content && content.quizzes && content.quizzes.length > 0 && (() => {

@@ -25,8 +25,7 @@ const modules: CourseModule[] = [
       { us: "114055", title: "Demonstrate an awareness of ethics and professionalism for the computer industry in South Africa", nqf: 5, credits: 3, dates: "7 Aug 2026", time: "09h00 - 14h00" },
       { us: "114050", title: "Explain the principles of business and the role of information technology", nqf: 5, credits: 4, dates: "21, 28 Aug 2026", time: "09h00 - 14h00" },
       { us: "114051", title: "Conduct a technical practitioners meeting", nqf: 5, credits: 4, dates: "3, 4 Sep 2026", time: "09h00 - 14h00" },
-      { us: "114046", title: "Demonstrate an understanding of issues affecting the management of a local area computer network (LAN)", nqf: 5, credits: 4, dates: "25 Sep, 2 Oct 2026", time: "09h00 - 14h00" },
-      { us: "114183", title: "Apply the principles of resolving problems for single-user and multi-user computer operating systems", nqf: 5, credits: 7, dates: "6, 13 Nov 2026", time: "09h00 - 14h00" },
+      { us: "114059", title: "Demonstrate an understanding of estimating a unit of work and the implications of late delivery", nqf: 5, credits: 0, dates: "11, 18 Sep 2026", time: "09h00 - 14h00" },
     ],
   },
   {
@@ -36,8 +35,9 @@ const modules: CourseModule[] = [
     image: "/figures/module-it-m2.jpg",
     activities: 4,
     units: [
-      { us: "114059", title: "Demonstrate an understanding of estimating a unit of work and the implications of late delivery", nqf: 5, credits: 5, dates: "11, 18 Sep 2026", time: "09h00 - 14h00" },
+      { us: "114046", title: "Demonstrate an understanding of issues affecting the management of a local area computer network (LAN)", nqf: 5, credits: 0, dates: "25 Sep, 2 Oct 2026", time: "09h00 - 14h00" },
       { us: "114076", title: "Use computer technology to research a computer topic", nqf: 4, credits: 3, dates: "23 Oct 2026", time: "09h00 - 14h00" },
+      { us: "114183", title: "Apply the principles of resolving problems for single-user and multi-user computer operating systems", nqf: 5, credits: 0, dates: "6, 13 Nov 2026", time: "09h00 - 14h00" },
       { us: "114058", title: "Demonstrate an understanding of the concepts of Multi-User computer Operating systems", nqf: 5, credits: 7, dates: "20, 27 Nov 2026", time: "09h00 - 14h00" },
     ],
   },
