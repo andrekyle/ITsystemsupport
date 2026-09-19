@@ -12,6 +12,12 @@ function paragraphText(element: Element): string {
   return pieces.join("").trim();
 }
 
+/** Word list items carry `w:pPr/w:numPr`; the bullet glyph itself is not in the text. */
+function isListParagraph(paragraph: Element): boolean {
+  const properties = Array.from(paragraph.children).find(child => child.localName === "pPr");
+  return !!properties && Array.from(properties.children).some(child => child.localName === "numPr");
+}
+
 function tableMarkdown(table: Element): string {
   // Stop at the requested element so nested tables cannot duplicate outer rows
   // or cells. Nested cell content still contributes its text to that cell.
@@ -23,9 +29,16 @@ function tableMarkdown(table: Element): string {
     });
   }
   const rows = descendants(table, "tr").map(row => descendants(row, "tc").flatMap(cell => {
+    // Keep each cell paragraph on its own line (`<br>`, which the table reader
+    // turns back into a newline) and mark list items, so a schedule cell such as
+    // "Title / • step / • step" survives the round trip.
     const text = Array.from(cell.getElementsByTagNameNS("*", "p"))
-      .map(paragraphText).filter(Boolean).join(" ")
-      .replace(/\s+/g, " ").replace(/\\/g, "\\\\").replace(/\|/g, "\\|");
+      .map(paragraph => {
+        const value = paragraphText(paragraph).replace(/\s+/g, " ");
+        return value ? (isListParagraph(paragraph) ? `- ${value}` : value) : "";
+      })
+      .filter(Boolean).join("<br>")
+      .replace(/\\/g, "\\\\").replace(/\|/g, "\\|");
     const properties = Array.from(cell.children).find(child => child.localName === "tcPr");
     const spanElement = properties && Array.from(properties.children).find(child => child.localName === "gridSpan");
     // Word omits cells covered by gridSpan. PowerPoint keeps those cells with

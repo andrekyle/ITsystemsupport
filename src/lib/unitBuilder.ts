@@ -226,6 +226,117 @@ function normalizePlanLines(source: string): string[] {
   return merged.map(line => line.replace(/\*\*+/g, "").replace(/__/g, "").replace(/\s+/g, " ").trim());
 }
 
+/** Split one Markdown pipe-table row into cells, unescaping `\|` and turning `<br>` into newlines. */
+function pipeRowCells(line: string): string[] {
+  const value = line.trim();
+  const result: string[] = [];
+  let cell = "";
+  for (let index = 0; index < value.length; index++) {
+    const character = value[index];
+    if (character === "\\" && /[\\|]/.test(value[index + 1] ?? "")) cell += value[++index];
+    else if (character === "|") { result.push(cell); cell = ""; }
+    else cell += character;
+  }
+  result.push(cell);
+  if (value.startsWith("|")) result.shift();
+  if (value.endsWith("|")) result.pop();
+  return result.map(text => text.replace(/\s*<br\s*\/?>\s*/gi, "\n").replace(/\*\*+/g, "").replace(/__/g, "").trim());
+}
+
+const PLAN_TABLE_HEADER = /^(?:time|times|timing|duration|minutes|mins|activity|activities|content|activity\s*\/\s*content|activity\s*&\s*content|method|methodology|facilitation|resources?|materials?|training aids?|learning materials?|notes?|lm|comments?)$/i;
+/** The document's own title line ("Facilitator Preparation", "Lesson plan") names the plan. */
+const PLAN_TITLE_LINE = /^(?:facilitator (?:preparation|guide|notes)|lesson plan|facilitation plan|session plan)\b/i;
+const isPlanTime = (cell: string) => {
+  const flat = cell.replace(/\s+/g, " ").trim();
+  return flat.length <= 40 && (/^\d{1,3}\s*(?:min|mins|minute|minutes|hr|hrs|hour|hours)\.?$/i.test(flat) || /^\d{1,2}:\d{2}(?:\s*(?:[–—-]|to)\s*\d{1,2}:\d{2})?$/.test(flat));
+};
+const isPlanResourceCell = (cell: string) => {
+  const lines = cell.split("\n").map(line => line.trim()).filter(Boolean);
+  return lines.length > 0 && lines.every(looksLikeResource);
+};
+
+/**
+ * Imported Word/PowerPoint schedules arrive as Markdown pipe tables (one line per
+ * row, `<br>` between cell paragraphs). Expand every schedule row back into the
+ * line format the parser reads: "time | title", body lines, "Resources: …".
+ * Rows spanning the table become "# " section headings; header rows are dropped.
+ */
+function expandPlanTables(source: string): string {
+  const lines = normal(source).split("\n");
+  const isTableRow = (line: string) => /^\|.*\|$/.test(line.trim());
+  const isSchedule = (block: string[][]) => block.some(cells => cells.some(isPlanTime));
+  const parseBlock = (start: number): { block: string[][]; end: number } => {
+    const block: string[][] = [];
+    let end = start;
+    while (end < lines.length && isTableRow(lines[end])) {
+      const cells = pipeRowCells(lines[end]);
+      if (!cells.every(cell => !cell || /^:?-{2,}:?$/.test(cell))) block.push(cells);
+      end++;
+    }
+    return { block, end };
+  };
+  // A Word facilitator guide carries its schedule in tables; the prose around them
+  // (cover page, headers) is not part of the plan. Keep only labelled lines then.
+  let hasScheduleTable = false;
+  for (let index = 0; index < lines.length;) {
+    if (!isTableRow(lines[index])) { index++; continue; }
+    const { block, end } = parseBlock(index);
+    if (isSchedule(block)) { hasScheduleTable = true; break; }
+    index = end;
+  }
+  const keepProse = (line: string) => !hasScheduleTable
+    || !line
+    || /^#{1,6}\s*\S/.test(line)
+    || /^[-*•·]\s/.test(line)
+    || /^[A-Za-z][A-Za-z /&]{1,28}:\s*\S/.test(line)
+    || (PLAN_TITLE_LINE.test(line) && line.length <= 60);
+  const out: string[] = [];
+  let index = 0;
+  while (index < lines.length) {
+    if (!isTableRow(lines[index])) {
+      const line = lines[index].replace(/\*\*+/g, "").replace(/__/g, "").trim();
+      if (keepProse(line)) out.push(lines[index]);
+      index++;
+      continue;
+    }
+    const { block, end } = parseBlock(index);
+    index = end;
+    // Only rows of a table that carries times are a schedule.
+    if (!isSchedule(block)) continue;
+    for (const cells of block) {
+      const filled = cells.filter(Boolean);
+      if (!filled.length) continue;
+      if (filled.every(cell => PLAN_TABLE_HEADER.test(cell.replace(/\s+/g, " ")))) continue;
+      if (filled.length === 1 && !filled[0].includes("\n") && filled[0].length <= 90 && !isPlanTime(filled[0])) {
+        out.push("", `# ${filled[0]}`, "");
+        continue;
+      }
+      const timeIndex = cells.findIndex(isPlanTime);
+      const time = timeIndex >= 0 ? cells[timeIndex].replace(/\s+/g, " ").trim() : undefined;
+      const rest = cells.map((cell, position) => ({ cell, position })).filter(item => item.cell && item.position !== timeIndex);
+      const resources = rest.filter(item => isPlanResourceCell(item.cell) && item.cell.length <= 120);
+      const bodies = rest.filter(item => !resources.includes(item));
+      // The widest remaining cell is the activity; any other cell adds its lines below.
+      const activity = bodies.length ? bodies.reduce((best, item) => item.cell.length > best.cell.length ? item : best) : undefined;
+      const activityLines = (activity?.cell ?? "").split("\n").map(text => text.trim()).filter(Boolean);
+      const extraLines = bodies.filter(item => item !== activity).flatMap(item => item.cell.split("\n").map(text => text.trim()).filter(Boolean));
+      const [title = "Facilitated activity", ...body] = activityLines;
+      out.push("", time ? `${time} | ${title}` : title);
+      [...body, ...extraLines].forEach((text, position) => {
+        // Bullets attach directly; every later plain paragraph is separated by a
+        // blank line so the parser keeps it as its own paragraph instead of
+        // re-joining it to the line above.
+        if (position > 0 && !/^[-*•·]\s/.test(text)) out.push("");
+        out.push(text);
+      });
+      const resourceItems = resources.flatMap(item => item.cell.split("\n").map(text => text.trim()).filter(Boolean));
+      if (resourceItems.length) out.push(`Resources: ${resourceItems.join("; ")}`);
+      out.push("");
+    }
+  }
+  return out.join("\n");
+}
+
 /**
  * Turn pasted facilitator notes into lesson plan sections. Times may be given as
  * durations or clock times, "# " starts a new section, "-", "*" and "·" lines are
@@ -257,7 +368,7 @@ function parseLessonPlanContent(source: string): { title?: string; startTime?: s
     lastKind = draft.title ? "title" : undefined;
   };
 
-  for (const line of normalizePlanLines(source)) {
+  for (const line of normalizePlanLines(expandPlanTables(source))) {
     if (!line) { blankBefore = true; continue; }
     const afterBlank = blankBefore;
     blankBefore = false;
@@ -299,6 +410,9 @@ function parseLessonPlanContent(source: string): { title?: string; startTime?: s
     // cover heading (Word exports it bold on its own row); the section already gets this
     // heading automatically, so drop the line instead of turning it into a spurious row.
     if (!row && !sections.length && /^unit standard\s+\S/i.test(body)) { continue; }
+    // The document's own title line ("Facilitator Preparation", "Lesson plan") names the plan;
+    // further cover lines of that kind are dropped rather than becoming activities.
+    if (!row && !sections.length && PLAN_TITLE_LINE.test(body) && body.length <= 60) { title ??= body; continue; }
 
     const header = planRowFromHeader(body);
     if (header) { openRow(header); continue; }
