@@ -4368,6 +4368,165 @@ table.data.kv tr:last-child td {
   vertical-align: -1px;
 }
 
+/* ---- Lesson plan: inline table editing (super user) ---- */
+.plan-edit-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin: 0 0 12px;
+}
+.plan-edit-bar .btn.active {
+  border-color: var(--azure);
+  color: var(--azure);
+}
+.plan-edit-bar .plan-edit-hint {
+  font-size: 12.5px;
+}
+.plan-edit {
+  display: inline-block;
+  min-width: 2ch;
+  padding: 1px 4px;
+  margin: -1px -4px;
+  border-radius: 4px;
+  outline: 1px dashed color-mix(in srgb, var(--azure) 55%, transparent);
+  outline-offset: 1px;
+  cursor: text;
+  white-space: pre-wrap;
+}
+div.plan-edit,
+p.plan-edit {
+  display: block;
+}
+.plan-edit:hover {
+  background: color-mix(in srgb, var(--azure) 8%, transparent);
+}
+.plan-edit:focus {
+  outline: 2px solid var(--azure);
+  background: var(--surface);
+}
+.plan-edit:empty::before {
+  content: attr(data-placeholder);
+  color: var(--ink-3);
+  font-style: italic;
+  font-weight: 400;
+}
+.plan-editing .plan-sec td,
+.plan-editing .plan-break td {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.plan-editing .plan-p,
+.plan-editing .plan-bullets li,
+.plan-editing .plan-res-item,
+.plan-editing .plan-prep li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.plan-editing .plan-p .plan-edit,
+.plan-editing .plan-bullets li .plan-edit,
+.plan-editing .plan-res-item .plan-edit,
+.plan-editing .plan-prep li .plan-edit {
+  flex: 1 1 auto;
+}
+.plan-editing .plan-meta-item {
+  position: relative;
+  padding-right: 26px;
+}
+.plan-editing .plan-meta-item .plan-ctl {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+}
+.plan-ctl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.plan-ctl:hover {
+  border-color: var(--azure);
+  color: var(--azure);
+}
+.plan-ctl.danger:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+.plan-table th.plan-ctls-h,
+.plan-table td.plan-ctls {
+  width: 34px;
+  padding: 8px 6px;
+  vertical-align: top;
+  text-align: center;
+}
+.plan-table td.plan-ctls {
+  display: table-cell;
+}
+.plan-table td.plan-ctls .plan-ctl + .plan-ctl {
+  margin-top: 4px;
+}
+.plan-sec-ctls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 12px;
+  vertical-align: middle;
+}
+.plan-sec-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink-3);
+  margin-right: 6px;
+}
+.plan-sec-start .plan-edit {
+  min-width: 5ch;
+}
+.plan-add {
+  gap: 4px;
+  font-size: 12px;
+  padding: 3px 8px;
+}
+.plan-cell-adds {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.plan-res .plan-add {
+  margin-top: 6px;
+}
+.plan-table tr.plan-add-row td {
+  background: color-mix(in srgb, var(--azure) 5%, transparent);
+  padding: 6px 14px;
+  text-align: left;
+}
+.plan-table tr.plan-add-section td {
+  text-align: center;
+}
+.plan-start {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-2);
+  margin: 6px 0 10px;
+}
+.plan-start .plan-edit {
+  min-width: 5ch;
+  font-weight: 600;
+}
+
 /* Ways to Demonstrate / Development Activities — icon grid */
 .demo-grid {
   display: flex;

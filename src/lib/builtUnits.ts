@@ -47,13 +47,17 @@ const SELF_ASSESSMENT_OUTRO = [
 ];
 
 function lessonPlanTemplate(us: string, content: UnitContent): UnitContent["lessonPlan"] {
-  const topics = content.lesson.map(section => section.heading).filter(Boolean);
-  const topicRows = topics.map((heading, index) => ({
-    time: "25 minutes",
-    title: `${heading} — Facilitator & Class`,
-    bullets: [`Read through the learner material and facilitate discussion on ${heading.toLowerCase()}.`],
-    resources: [`LM p${Math.max(4, index + 4)}`],
-  }));
+  const topics = content.lesson.filter(section => section.heading);
+  const topicRows = topics.map((section, index) => {
+    const detail = (section.paragraphs ?? []).map(p => p.trim()).filter(Boolean);
+    return {
+      time: "25 minutes",
+      title: `${section.heading} — Facilitator & Class`,
+      bullets: [`Read through the learner material and facilitate discussion on ${section.heading.toLowerCase()}.`],
+      ...(detail.length ? { text: detail } : {}),
+      resources: [`LM p${Math.max(4, index + 4)}`],
+    };
+  });
   return {
     title: "Facilitator Preparation",
     startTime: "09:00",
@@ -165,13 +169,30 @@ function isLegacyGeneratedQuestionSession(activity: UnitContent["exercises"][num
   return oldDiscussion || generatedQuestionSession;
 }
 
+/**
+ * Old builds shipped a lesson plan whose topic rows were nothing but the
+ * boilerplate "Read through the learner material…" bullet. Only those are
+ * regenerated; a plan pasted by the facilitator or built with real topic text
+ * must be shown exactly as saved.
+ */
+function isLegacyGeneratedLessonPlan(plan: UnitContent["lessonPlan"], planSource?: string): boolean {
+  if (!plan?.sections?.length || !plan.sections.some(section => section.rows?.length)) return true;
+  if (planSource?.trim()) return false;
+  const topicRows = plan.sections.flatMap(section => section.rows).filter(row => /—\s*Facilitator & Class$/.test(row.title ?? ""));
+  if (!topicRows.length) return false;
+  return topicRows.every(row =>
+    !row.text?.length
+    && row.bullets?.length === 1
+    && /^Read through the learner material and facilitate discussion on /.test(row.bullets[0]));
+}
+
 function cleanLegacyGeneratedContent<T extends BuiltUnit | BuiltUnitVersion>(unit: T, us: string): T {
   const content = unit.content;
   if (!content) return unit;
   const cleaned: UnitContent = {
     ...content,
     evaluation: undefined,
-    lessonPlan: lessonPlanTemplate(us, content),
+    lessonPlan: isLegacyGeneratedLessonPlan(content.lessonPlan, unit.planSource) ? lessonPlanTemplate(us, content) : content.lessonPlan,
     selfAssessment: content.selfAssessment ? {
       ...content.selfAssessment,
       intro: content.selfAssessment.intro ?? SELF_ASSESSMENT_INTRO,

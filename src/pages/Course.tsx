@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
 import JSZip from "jszip";
 import { Icon } from "../icons";
-import type { Exercise, ExerciseCheck, LessonFigure, LessonSection, PoeDoc, ProgressState, Profile, QuizQuestion, Role, Route, UnitActivity, UnitContent, UnitStandard } from "../types";
+import type { Exercise, ExerciseCheck, LessonFigure, LessonPlan, LessonPlanRow, LessonSection, PoeDoc, ProgressState, Profile, QuizQuestion, Role, Route, UnitActivity, UnitContent, UnitStandard } from "../types";
 import { UNIT_ACTIVITIES, isStaff } from "../types";
 import { COURSE_BLURB, COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
 import { COURSES, activeCourseId, setActiveCourse } from "../data/courses";
@@ -36,6 +36,69 @@ import { autoGrowTextarea } from "../lib/autoGrow";
 import { groupLessonHtml, isLessonBulletListLead, isLessonListLead, isLessonListPoint, isLessonNumberedListLead, isLessonSubheading } from "../lib/lessonSubsections";
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
+
+/** Plain-text cell of the lesson plan table. Click to edit; saves on blur (Enter also saves). */
+function PlanText({
+  value,
+  editable,
+  onSave,
+  as: Tag = "span",
+  className,
+  placeholder,
+  multiline = false,
+}: {
+  value: string;
+  editable: boolean;
+  onSave: (text: string) => void;
+  as?: "span" | "div" | "p";
+  className?: string;
+  placeholder?: string;
+  multiline?: boolean;
+}) {
+  const ref = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (el && document.activeElement !== el && el.textContent !== value) el.textContent = value;
+  }, [value]);
+  if (!editable) return <Tag className={className}>{value}</Tag>;
+  return (
+    <Tag
+      ref={ref as React.Ref<never>}
+      className={`plan-edit${className ? ` ${className}` : ""}`}
+      contentEditable
+      suppressContentEditableWarning
+      spellCheck
+      data-placeholder={placeholder}
+      onClick={(e: React.MouseEvent) => e.stopPropagation()}
+      onBlur={(e: React.FocusEvent<HTMLElement>) => {
+        const text = (e.currentTarget.textContent ?? "").replace(/\u00a0/g, " ").trim();
+        if (text !== value) onSave(text);
+      }}
+      onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
+        if (e.key === "Enter" && !multiline && !e.shiftKey) {
+          e.preventDefault();
+          (e.currentTarget as HTMLElement).blur();
+        }
+        if (e.key === "Escape") {
+          e.currentTarget.textContent = value;
+          (e.currentTarget as HTMLElement).blur();
+        }
+      }}
+    >
+      {value}
+    </Tag>
+  );
+}
+
+function PlanIconBtn({ title, icon, onClick, danger }: { title: string; icon: React.ComponentProps<typeof Icon>["name"]; onClick: () => void; danger?: boolean }) {
+  return (
+    <button type="button" className={`plan-ctl${danger ? " danger" : ""}`} title={title} aria-label={title} onClick={(e) => { e.stopPropagation(); onClick(); }}>
+      <Icon name={icon} size={13} />
+    </button>
+  );
+}
+
+const newPlanRow = (): LessonPlanRow => ({ time: "10 minutes", title: "New activity", text: [""], resources: [] });
 
 /** Safe file name for a downloaded note, keeping the image's own extension
  *  (data-URL mime type or the path's suffix). */
@@ -2588,7 +2651,7 @@ export function UnitPage({
   const [deckReplacePct, setDeckReplacePct] = useState<number | null>(null);
   const [deckReplaceError, setDeckReplaceError] = useState<string | null>(null);
   const { figures: figureImages, setFigure, removeFigure } = useLessonFigures(unitId);
-  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId);
+  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection, setLessonPlan: editSetLessonPlan } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId);
   const [generatingQuiz, setGeneratingQuiz] = useState<number | null>(null);
   const [quizQuestionCount, setQuizQuestionCount] = useState(5);
   const [quizGenerationError, setQuizGenerationError] = useState<string | null>(null);
@@ -2629,6 +2692,14 @@ export function UnitPage({
   const uc = unitCompletion(progress, u.us);
   const acts = progress.units[u.us]?.activities ?? {};
   const content = builtUnit?.content ?? getContent(u.us);
+  // The lesson plan shown on the tab: inline table edits (shared, cloud-synced) win over the generated plan.
+  const planData: LessonPlan | undefined = content?.lessonPlan ? (lessonEdits.lessonPlan ?? content.lessonPlan) : undefined;
+  const updatePlan = (mutate: (draft: LessonPlan) => void) => {
+    if (!planData) return;
+    const draft = structuredClone(planData);
+    mutate(draft);
+    editSetLessonPlan(draft);
+  };
   const quizResult = progress.units[u.us]?.quiz;
   const namedQuizzes = content?.quizzes ?? [];
   const namedQuizResults = progress.units[u.us]?.quizzes ?? {};
@@ -5763,18 +5834,55 @@ export function UnitPage({
         </>
       )}
 
-      {tab === "plan" && content?.lessonPlan && (
+      {tab === "plan" && content?.lessonPlan && planData && (
         <>
           <h2 className="section-title">
             <span className="ico">
               <Icon name="presenter" size={20} />
             </span>
-            {content.lessonPlan.title}
+            <PlanText value={planData.title} editable={isSuperUser && editMode} placeholder="Lesson plan title" onSave={(t) => updatePlan((d) => { d.title = t || "Facilitator Preparation"; })} />
           </h2>
           <p className="muted" style={{ marginTop: -6, marginBottom: 14 }}>
             Visible to facilitators, assessors, moderators and the super user only — session-by-session facilitation guide
             for this unit standard.
           </p>
+          {isSuperUser && (
+            <div className="plan-edit-bar">
+              <button
+                type="button"
+                className={`btn ghost sm${editMode ? " active" : ""}`}
+                disabled={savingLesson}
+                onClick={() => { if (editMode) void saveLessonToCloud(); else { setLessonSaveStatus(""); setEditMode(true); } }}
+              >
+                <Icon name={editMode ? "checkCircle" : "pencil"} size={14} />
+                {savingLesson ? "Saving to cloud..." : editMode ? "Save table to cloud" : "Edit table"}
+              </button>
+              {editMode && (
+                <button type="button" className="btn ghost sm" disabled={savingLesson} onClick={() => setEditMode(false)}>
+                  Done
+                </button>
+              )}
+              {lessonEdits.lessonPlan && (
+                <button
+                  type="button"
+                  className="btn ghost sm"
+                  disabled={savingLesson}
+                  title="Discard all inline table edits and show the original plan"
+                  onClick={() => { if (window.confirm("Discard every inline edit to this lesson plan table and restore the original?")) editSetLessonPlan(null); }}
+                >
+                  <Icon name="refresh" size={14} />
+                  Reset to original
+                </button>
+              )}
+              {editMode && (
+                <span className="muted plan-edit-hint">
+                  Click any cell to type. Enter saves a cell, Escape cancels. Use the row buttons to add, move or delete rows and sections.
+                </span>
+              )}
+              {lessonSaveStatus === "saved" && <span className="muted">Saved to cloud — everyone now sees this version.</span>}
+              {lessonSaveStatus === "error" && <span className="auth-error">{lessonSaveError}</span>}
+            </div>
+          )}
           {isSuperUser && <LessonPlanBuilder unit={u} content={content} />}
           {canDownloadShared && u.us === "8252" && (
             <a
@@ -5898,45 +6006,86 @@ export function UnitPage({
               ))}
             </div>
           )}
-          <div className="card plan-card">
-            {content.lessonPlan.details && (
-              <div className="plan-meta">
-                {content.lessonPlan.details.map((d) => (
-                  <div className="plan-meta-item" key={d.label}>
-                    <Icon name={d.icon} size={17} />
-                    <div>
-                      <div className="k">{d.label}</div>
-                      <div className="v">{d.value}</div>
+          <div className={`card plan-card${isSuperUser && editMode ? " plan-editing" : ""}`}>
+            {(() => {
+              const pe = isSuperUser && editMode;
+              return (
+                <>
+                  {(planData.details?.length || pe) && (
+                    <div className="plan-meta">
+                      {(planData.details ?? []).map((d, di) => (
+                        <div className="plan-meta-item" key={di}>
+                          <Icon name={d.icon} size={17} />
+                          <div>
+                            <PlanText as="div" className="k" value={d.label} editable={pe} placeholder="Label" onSave={(t) => updatePlan((x) => { x.details![di].label = t; })} />
+                            <PlanText as="div" className="v" value={d.value} editable={pe} placeholder="Value" onSave={(t) => updatePlan((x) => { x.details![di].value = t; })} />
+                          </div>
+                          {pe && <PlanIconBtn title="Remove detail" icon="close" danger onClick={() => updatePlan((x) => { x.details!.splice(di, 1); })} />}
+                        </div>
+                      ))}
+                      {pe && (
+                        <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { (x.details ??= []).push({ icon: "info", label: "Detail", value: "Value" }); })}>
+                          <Icon name="plus" size={13} /> Add detail
+                        </button>
+                      )}
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            <ul className="duty-list plan-prep">
-              {content.lessonPlan.prep.map((p) => (
-                <li key={p}>
-                  <span className="ico">
-                    <Icon name="checkCircle" size={16} />
-                  </span>
-                  <span>{p}</span>
-                </li>
-              ))}
-            </ul>
+                  )}
+                  {pe && (
+                    <div className="plan-start">
+                      <Icon name="clock" size={15} />
+                      <span>Session starts at</span>
+                      <PlanText value={planData.startTime ?? "09:00"} editable placeholder="09:00" onSave={(t) => updatePlan((x) => { x.startTime = /^\d{1,2}:\d{2}$/.test(t) ? t : x.startTime; })} />
+                      <span className="muted">(HH:MM — drives the clock column)</span>
+                    </div>
+                  )}
+                  <ul className="duty-list plan-prep">
+                    {planData.prep.map((p, pi) => (
+                      <li key={pi}>
+                        <span className="ico">
+                          <Icon name="checkCircle" size={16} />
+                        </span>
+                        <PlanText value={p} editable={pe} multiline placeholder="Preparation note" onSave={(t) => updatePlan((x) => { x.prep[pi] = t; })} />
+                        {pe && <PlanIconBtn title="Remove preparation note" icon="close" danger onClick={() => updatePlan((x) => { x.prep.splice(pi, 1); })} />}
+                      </li>
+                    ))}
+                    {pe && (
+                      <li>
+                        <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { x.prep.push("New preparation note"); })}>
+                          <Icon name="plus" size={13} /> Add preparation note
+                        </button>
+                      </li>
+                    )}
+                  </ul>
+                </>
+              );
+            })()}
             <table className="data plan-table">
               <thead>
                 <tr>
                   <th className="plan-time"><span className="th-ico"><Icon name="clock" size={14} /></span>Time</th>
                   <th><span className="th-ico"><Icon name="clipboard" size={14} /></span>Activity</th>
                   <th className="plan-res"><span className="th-ico"><Icon name="folder" size={14} /></span>Resources</th>
+                  {isSuperUser && editMode && <th className="plan-ctls-h" aria-label="Row actions" />}
                 </tr>
               </thead>
               <tbody>
                 {(() => {
-                  const lp = content.lessonPlan!;
+                  const lp = planData;
+                  const pe = isSuperUser && editMode;
+                  const cols = pe ? 4 : 3;
                   const [sh, sm] = (lp.startTime ?? "09:00").split(":").map(Number);
                   let clock = sh * 60 + sm;
                   const fmt = (t: number) =>
                     `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+                  const rowCtls = (si: number, ri: number, r: LessonPlanRow) => pe ? (
+                    <td className="plan-ctls">
+                      <PlanIconBtn title="Move row up" icon="chevronUp" onClick={() => updatePlan((x) => { const rows = x.sections[si].rows; if (ri > 0) [rows[ri - 1], rows[ri]] = [rows[ri], rows[ri - 1]]; })} />
+                      <PlanIconBtn title="Move row down" icon="chevronDown" onClick={() => updatePlan((x) => { const rows = x.sections[si].rows; if (ri < rows.length - 1) [rows[ri + 1], rows[ri]] = [rows[ri], rows[ri + 1]]; })} />
+                      <PlanIconBtn title="Insert row below" icon="plus" onClick={() => updatePlan((x) => { x.sections[si].rows.splice(ri + 1, 0, newPlanRow()); })} />
+                      <PlanIconBtn title={r.break ? "Change to a normal activity row" : "Change to a break row"} icon="halfCircle" onClick={() => updatePlan((x) => { const row = x.sections[si].rows[ri]; row.break = !row.break; if (row.break) { delete row.text; delete row.bullets; delete row.resources; } })} />
+                      <PlanIconBtn title="Delete row" icon="trash" danger onClick={() => updatePlan((x) => { x.sections[si].rows.splice(ri, 1); })} />
+                    </td>
+                  ) : null;
                   return lp.sections.map((sec, si) => {
                     if (sec.startTime) {
                       const [h, m] = sec.startTime.split(":").map(Number);
@@ -5944,11 +6093,24 @@ export function UnitPage({
                     }
                     return (
                     <React.Fragment key={si}>
-                      {sec.heading && (
+                      {(sec.heading || pe) && (
                         <tr className="plan-sec">
-                          <td colSpan={3}>
+                          <td colSpan={cols}>
                             <span className="plan-sec-ico"><Icon name="calendar" size={14} /></span>
-                            {sec.heading}
+                            <PlanText value={sec.heading ?? ""} editable={pe} placeholder="Section heading (optional)" onSave={(t) => updatePlan((x) => { x.sections[si].heading = t || undefined; })} />
+                            {pe && (
+                              <span className="plan-sec-ctls">
+                                <span className="plan-sec-start">
+                                  Day start
+                                  <PlanText value={sec.startTime ?? ""} editable placeholder="HH:MM" onSave={(t) => updatePlan((x) => { x.sections[si].startTime = /^\d{1,2}:\d{2}$/.test(t) ? t : undefined; })} />
+                                </span>
+                                <PlanIconBtn title="Move section up" icon="chevronUp" onClick={() => updatePlan((x) => { if (si > 0) [x.sections[si - 1], x.sections[si]] = [x.sections[si], x.sections[si - 1]]; })} />
+                                <PlanIconBtn title="Move section down" icon="chevronDown" onClick={() => updatePlan((x) => { if (si < x.sections.length - 1) [x.sections[si + 1], x.sections[si]] = [x.sections[si], x.sections[si + 1]]; })} />
+                                <PlanIconBtn title="Add row at top of this section" icon="plus" onClick={() => updatePlan((x) => { x.sections[si].rows.unshift(newPlanRow()); })} />
+                                <PlanIconBtn title="Add a new section below" icon="layers" onClick={() => updatePlan((x) => { x.sections.splice(si + 1, 0, { heading: "New section", rows: [newPlanRow()] }); })} />
+                                <PlanIconBtn title="Delete this section and all its rows" icon="trash" danger onClick={() => { if (window.confirm("Delete this whole section and all of its rows?")) updatePlan((x) => { x.sections.splice(si, 1); }); }} />
+                              </span>
+                            )}
                           </td>
                         </tr>
                       )}
@@ -5959,7 +6121,9 @@ export function UnitPage({
                         const timeCell = (
                           <td className="plan-time">
                             {range && <div className="plan-clock">{range}</div>}
-                            {r.time && <div className="plan-mins">{r.time}</div>}
+                            {(r.time || pe) && (
+                              <PlanText as="div" className="plan-mins" value={r.time ?? ""} editable={pe} placeholder="e.g. 20 minutes" onSave={(t) => updatePlan((x) => { x.sections[si].rows[ri].time = t || undefined; })} />
+                            )}
                           </td>
                         );
                         if (r.break)
@@ -5968,8 +6132,9 @@ export function UnitPage({
                               {timeCell}
                               <td colSpan={2}>
                                 <span className="plan-title-ico"><Icon name="halfCircle" size={13} /></span>
-                                {r.title}
+                                <PlanText value={r.title} editable={pe} placeholder="Break" onSave={(t) => updatePlan((x) => { x.sections[si].rows[ri].title = t || "Break"; })} />
                               </td>
+                              {rowCtls(si, ri, r)}
                             </tr>
                           );
                         // pick a contextual icon based on the activity title
@@ -5998,43 +6163,86 @@ export function UnitPage({
                             <td>
                               <div className="plan-title">
                                 <span className="plan-title-ico"><Icon name={actIcon} size={14} /></span>
-                                {r.title}
+                                <PlanText value={r.title} editable={pe} placeholder="Activity title" onSave={(t) => updatePlan((x) => { x.sections[si].rows[ri].title = t || "Facilitated activity"; })} />
                               </div>
                               {r.text?.map((t, ti) => (
                                 <p key={ti} className="plan-p">
-                                  <Gloss text={t} />
+                                  {pe ? (
+                                    <>
+                                      <PlanText value={t} editable multiline placeholder="Paragraph" onSave={(v) => updatePlan((x) => { x.sections[si].rows[ri].text![ti] = v; })} />
+                                      <PlanIconBtn title="Remove paragraph" icon="close" danger onClick={() => updatePlan((x) => { const row = x.sections[si].rows[ri]; row.text!.splice(ti, 1); if (!row.text!.length) delete row.text; })} />
+                                    </>
+                                  ) : (
+                                    <Gloss text={t} />
+                                  )}
                                 </p>
                               ))}
-                              {r.bullets && (
+                              {(r.bullets?.length || 0) > 0 && (
                                 <ul className="plan-bullets">
-                                  {r.bullets.map((b, bi) => (
+                                  {r.bullets!.map((b, bi) => (
                                     <li key={bi}>
-                                      <span><Gloss text={b} /></span>
+                                      {pe ? (
+                                        <>
+                                          <PlanText value={b} editable multiline placeholder="Bullet point" onSave={(v) => updatePlan((x) => { x.sections[si].rows[ri].bullets![bi] = v; })} />
+                                          <PlanIconBtn title="Remove bullet" icon="close" danger onClick={() => updatePlan((x) => { const row = x.sections[si].rows[ri]; row.bullets!.splice(bi, 1); if (!row.bullets!.length) delete row.bullets; })} />
+                                        </>
+                                      ) : (
+                                        <span><Gloss text={b} /></span>
+                                      )}
                                     </li>
                                   ))}
                                 </ul>
                               )}
+                              {pe && (
+                                <div className="plan-cell-adds">
+                                  <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { (x.sections[si].rows[ri].text ??= []).push("New paragraph"); })}><Icon name="plus" size={12} /> Paragraph</button>
+                                  <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { (x.sections[si].rows[ri].bullets ??= []).push("New bullet point"); })}><Icon name="plus" size={12} /> Bullet</button>
+                                </div>
+                              )}
                             </td>
                             <td className="plan-res">
-                              {r.resources?.map((x) => (
-                                <div key={x}>
+                              {r.resources?.map((x, xi) => (
+                                <div key={xi} className="plan-res-item">
                                   <span className="plan-res-ico"><Icon name="folder" size={12} /></span>
-                                  {x}
+                                  <PlanText value={x} editable={pe} placeholder="e.g. LM p4" onSave={(v) => updatePlan((d) => { d.sections[si].rows[ri].resources![xi] = v; })} />
+                                  {pe && <PlanIconBtn title="Remove resource" icon="close" danger onClick={() => updatePlan((d) => { const row = d.sections[si].rows[ri]; row.resources!.splice(xi, 1); if (!row.resources!.length) delete row.resources; })} />}
                                 </div>
                               ))}
+                              {pe && (
+                                <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((d) => { (d.sections[si].rows[ri].resources ??= []).push("LM p"); })}><Icon name="plus" size={12} /> Resource</button>
+                              )}
                             </td>
+                            {rowCtls(si, ri, r)}
                           </tr>
                         );
                       })}
+                      {pe && (
+                        <tr className="plan-add-row">
+                          <td colSpan={cols}>
+                            <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { x.sections[si].rows.push(newPlanRow()); })}>
+                              <Icon name="plus" size={13} /> Add row{sec.heading ? ` to “${sec.heading}”` : ""}
+                            </button>
+                          </td>
+                        </tr>
+                      )}
                     </React.Fragment>
                     );
                   });
                 })()}
+                {isSuperUser && editMode && (
+                  <tr className="plan-add-row plan-add-section">
+                    <td colSpan={4}>
+                      <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { x.sections.push({ heading: "New section", rows: [newPlanRow()] }); })}>
+                        <Icon name="layers" size={13} /> Add section
+                      </button>
+                    </td>
+                  </tr>
+                )}
               </tbody>
               <tfoot>
                 {(() => {
-                  const rows = content.lessonPlan!.sections.flatMap((s) => s.rows);
-                  const days = content.lessonPlan!.sections.filter((s) => s.startTime).length || 1;
+                  const rows = planData.sections.flatMap((s) => s.rows);
+                  const days = planData.sections.filter((s) => s.startTime).length || 1;
                   const mins = rows.reduce((sum, r) => sum + (parseInt(r.time ?? "", 10) || 0), 0);
                   const brk = rows
                     .filter((r) => r.break)
@@ -6044,7 +6252,7 @@ export function UnitPage({
                   return (
                     <tr className="plan-total">
                       <td className="plan-time">{mins} minutes</td>
-                      <td colSpan={2}>
+                      <td colSpan={isSuperUser && editMode ? 3 : 2}>
                         Total {days > 1 ? `facilitation time over ${days} days` : "session time"} — {h} h{m ? ` ${m} min` : ""}
                         {brk ? ` (incl. ${brk} min break)` : ""}
                       </td>

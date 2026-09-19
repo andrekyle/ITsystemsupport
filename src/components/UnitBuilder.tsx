@@ -44,6 +44,7 @@ export function effectiveBuiltContent(content:UnitContent, edits:LessonEdits):Un
     table:s.table?{headers:s.table.headers.map((h,ci)=>edits.tableCells?.[`${si}:h:${ci}`]??h),rows:s.table.rows.map((r,ri)=>r.map((v,ci)=>edits.tableCells?.[`${si}:${ri}:${ci}`]??v))}:undefined,
   }));
   next.lesson=next.lesson.map((s,si)=>edits.sectionBody?.[si]?.richHtml!==undefined?{...s,bullets:undefined,table:undefined,cards:undefined,example:undefined,examples:undefined}:s);
+  if(edits.lessonPlan) next.lessonPlan=structuredClone(edits.lessonPlan);
   return next;
 }
 

@@ -2134,6 +2134,8 @@ export interface LessonEdits {
   figureScale?: Record<string, number>;
   /** figure id -> vertical crop position 0..100 (percent, 50 = centre) */
   figureOffsetY?: Record<string, number>;
+  /** full replacement lesson plan edited inline on the Lesson plan tab */
+  lessonPlan?: import("./types").LessonPlan;
 }
 
 const lessonEditsKey = (us: string) => `itss.lessonedits.${us}`;
@@ -2338,7 +2340,18 @@ export function useLessonEdits(us: string) {
     [apply]
   );
 
-  return { edits, setHeading, setParagraph, setCaption, setKeyed, setSectionBody, setSectionBodyItem, setGeneratedQuiz, updateGeneratedQuizQuestion, removeGeneratedQuizQuestion, deleteGeneratedQuiz, moveFigure, setScale, setOffsetY, resetSection };
+  /** Replace the whole lesson plan (inline table edits). Passing null reverts to the original. */
+  const setLessonPlan = useCallback(
+    (plan: import("./types").LessonPlan | null) =>
+      apply((d) => {
+        const next = { ...d };
+        if (plan) next.lessonPlan = plan; else delete next.lessonPlan;
+        return next;
+      }),
+    [apply]
+  );
+
+  return { edits, setHeading, setParagraph, setCaption, setKeyed, setSectionBody, setSectionBodyItem, setGeneratedQuiz, updateGeneratedQuizQuestion, removeGeneratedQuizQuestion, deleteGeneratedQuiz, moveFigure, setScale, setOffsetY, resetSection, setLessonPlan };
 }
 
 /* ---------- user-uploaded notes (stored separately per profile) ---------- */
