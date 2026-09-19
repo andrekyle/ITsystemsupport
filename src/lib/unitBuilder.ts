@@ -295,6 +295,11 @@ function parseLessonPlanContent(source: string): { title?: string; startTime?: s
       continue;
     }
 
+    // A standalone "Unit Standard 1234" line before any activity is the document's own
+    // cover heading (Word exports it bold on its own row); the section already gets this
+    // heading automatically, so drop the line instead of turning it into a spurious row.
+    if (!row && !sections.length && /^unit standard\s+\S/i.test(body)) { continue; }
+
     const header = planRowFromHeader(body);
     if (header) { openRow(header); continue; }
     if (prepMode && !sections.length) { prep.push(body); lastKind = "text"; continue; }
@@ -422,14 +427,18 @@ function lessonPlanFromTemplate(unit: UnitStandard, topics: UnitTopic[], minutes
     },
   ]);
   const topicMinutes = Math.max(10, Math.floor((minutes - 120) / Math.max(1, topics.length)));
-  const topicRows = topics.map((topic, index) => ({
-    time: `${topicMinutes} minutes`,
-    title: `${topic.heading} — Facilitator & Class`,
-    bullets: [
-      `Read through the learner material and facilitate discussion on ${topic.heading.toLowerCase()}.`,
-    ],
-    resources: [`LM p${Math.max(4, index + 4)}`],
-  }));
+  const topicRows = topics.map((topic, index) => {
+    // Show the facilitator the actual supplied material for this topic instead of a
+    // generic placeholder sentence, so the plan reflects what was pasted.
+    const detail = topic.paragraphs.map(p => p.trim()).filter(Boolean);
+    return {
+      time: `${topicMinutes} minutes`,
+      title: `${topic.heading} — Facilitator & Class`,
+      bullets: [`Read through the learner material and facilitate discussion on ${topic.heading.toLowerCase()}.`],
+      text: detail.length ? detail : undefined,
+      resources: [`LM p${Math.max(4, index + 4)}`],
+    };
+  });
   return {
     title: template?.title ?? DEFAULT_PLAN_TITLE,
     startTime: template?.startTime ?? DEFAULT_PLAN_START,
