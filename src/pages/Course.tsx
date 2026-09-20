@@ -1754,7 +1754,7 @@ export function CoursePage({
           options={getCourses().map((c) => ({ value: c.id, label: c.label }))}
           onChange={setActiveCourse}
         />
-        {profile.role === "Super User" && <button className="btn primary sm" onClick={() => setCreatingCourse(true)}><Icon name="plus" size={15} /> Add course</button>}
+        {profile.role === "Super User" && <button className="btn ghost sm" onClick={() => setCreatingCourse(true)}><Icon name="plus" size={15} /> Add course</button>}
       </div>
       {creatingCourse && <CourseCreator onClose={() => setCreatingCourse(false)} />}
       <div className="meta-row">
