@@ -673,6 +673,7 @@ h2.section-title .ico {
 
 .course-switch {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   margin: 12px 0 2px;

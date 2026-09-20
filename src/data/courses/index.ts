@@ -23,7 +23,16 @@ export function getCourses(): CourseData[] {
 
 export function saveCustomCourse(course: CourseData) {
   if (!course.id.startsWith("custom-")) throw new Error("Only custom courses can be saved here.");
+  const stored = localStorage.getItem(courseStorageKey(course.id));
+  if (stored && JSON.parse(stored).deleted === true) throw new Error("This course has been deleted.");
   localStorage.setItem(courseStorageKey(course.id), JSON.stringify(course));
+}
+
+export function deleteCustomCourse(id: string) {
+  if (!id.startsWith("custom-")) throw new Error("Built-in courses cannot be deleted.");
+  // Retain a shared deletion marker so another device's cached course is
+  // replaced during sync instead of being uploaded again as local-only data.
+  localStorage.setItem(courseStorageKey(id), JSON.stringify({ id, deleted: true }));
 }
 
 export function createCourse(details: { title: string; saqaId: string; nqfLevel: number; credits: number; description: string; moduleName: string }): CourseData {

@@ -5,7 +5,7 @@ import { Icon } from "../icons";
 import type { Exercise, ExerciseCheck, LessonFigure, LessonPlan, LessonPlanRow, LessonSection, LogbookSpec, PoeDoc, ProgressState, Profile, QuizQuestion, Role, Route, UnitActivity, UnitContent, UnitStandard } from "../types";
 import { UNIT_ACTIVITIES, isStaff } from "../types";
 import { COURSE_BLURB, COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
-import { getCourses, activeCourseId, setActiveCourse } from "../data/courses";
+import { getCourses, activeCourseId, courseStorageKey, deleteCustomCourse, setActiveCourse } from "../data/courses";
 import { CourseCreator } from "../components/CourseCreator";
 import { Select } from "../components/Select";
 import { GLOSSARY, getContent } from "../data/content";
@@ -1739,6 +1739,25 @@ export function CoursePage({
   profile: Profile;
 }) {
   const [creatingCourse, setCreatingCourse] = useState(false);
+  const [deletingCourse, setDeletingCourse] = useState(false);
+  const [selectedCourseId] = useState(activeCourseId);
+  const [courseDeleteBusy, setCourseDeleteBusy] = useState(false);
+  const [courseDeleteError, setCourseDeleteError] = useState("");
+  const canDeleteCourse = profile.role === "Super User" && selectedCourseId.startsWith("custom-");
+  const removeCourse = async () => {
+    if (!canDeleteCourse || courseDeleteBusy) return;
+    setCourseDeleteBusy(true);
+    setCourseDeleteError("");
+    try {
+      deleteCustomCourse(selectedCourseId);
+      await flushKey(courseStorageKey(selectedCourseId), !!supabase);
+      localStorage.setItem("itss.activeCourse", "itss");
+      location.reload();
+    } catch (error) {
+      setCourseDeleteError(error instanceof Error ? error.message : "Could not delete the course. Please try again.");
+      setCourseDeleteBusy(false);
+    }
+  };
   return (
     <>
       <div className="eyebrow">
@@ -1755,8 +1774,21 @@ export function CoursePage({
           onChange={setActiveCourse}
         />
         {profile.role === "Super User" && <button className="btn ghost sm" onClick={() => setCreatingCourse(true)}><Icon name="plus" size={15} /> Add course</button>}
+        {canDeleteCourse && <button className="btn ghost sm danger-text" onClick={() => setDeletingCourse(true)}><Icon name="trash" size={15} /> Delete course</button>}
       </div>
       {creatingCourse && <CourseCreator onClose={() => setCreatingCourse(false)} />}
+      {deletingCourse && <ConfirmModal
+        title="Delete course?"
+        message={<>
+          <p>Delete “{COURSE_META.title}”? This removes the custom course from the shared course list for everyone. Existing learner records and uploaded files are kept.</p>
+          {courseDeleteError && <p role="alert" className="auth-error">{courseDeleteError}</p>}
+        </>}
+        confirmLabel={courseDeleteBusy ? "Deleting…" : "Delete course"}
+        busy={courseDeleteBusy}
+        danger
+        onCancel={() => setDeletingCourse(false)}
+        onConfirm={() => void removeCourse()}
+      />}
       <div className="meta-row">
         <a
           className="pill"

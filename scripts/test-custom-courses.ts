@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { activeCourse, createCourse, courseStorageKey, getCourses, saveCustomCourse } from "../src/data/courses";
+import { activeCourse, createCourse, courseStorageKey, deleteCustomCourse, getCourses, saveCustomCourse } from "../src/data/courses";
 
 const data = new Map<string, string>();
 Object.defineProperty(globalThis, "localStorage", { value: {
@@ -34,4 +34,17 @@ assert.equal(getCourses().length, 4);
 assert.throws(() => createCourse({ ...details, title: " " }));
 assert.throws(() => createCourse({ ...details, nqfLevel: 11 }));
 assert.throws(() => createCourse({ ...details, credits: -1 }));
+const unrelatedKey = "itss.lessonedits.8252";
+localStorage.setItem(unrelatedKey, "preserve learner content");
+deleteCustomCourse(course.id);
+assert.equal(getCourses().length, 3);
+assert.equal(activeCourse().id, "itss", "Deleting the selected course falls back to a built-in course");
+assert.equal(getCourses().find(item => item.id === another.id)?.meta.title, details.title);
+assert.equal(localStorage.getItem(unrelatedKey), "preserve learner content");
+assert.equal(JSON.parse(localStorage.getItem(courseStorageKey(course.id))!).deleted, true);
+assert.throws(() => saveCustomCourse(course), /deleted/);
+assert.throws(() => deleteCustomCourse("itss"), /Built-in/);
+assert.throws(() => deleteCustomCourse("genman"), /Built-in/);
+deleteCustomCourse(course.id);
+assert.equal(getCourses().length, 3, "Retrying deletion is safe");
 console.log("Custom course tests passed.");

@@ -47,6 +47,7 @@ export function ConfirmModal({
   confirmLabel = "OK",
   cancelLabel = "Cancel",
   danger,
+  busy = false,
   onConfirm,
   onCancel,
 }: {
@@ -55,19 +56,20 @@ export function ConfirmModal({
   confirmLabel?: string;
   cancelLabel?: string;
   danger?: boolean;
+  busy?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
   return (
     <Modal
       title={title}
-      onClose={onCancel}
+      onClose={() => { if (!busy) onCancel(); }}
       actions={
         <>
-          <button className="btn ghost" onClick={onCancel}>
+          <button className="btn ghost" disabled={busy} onClick={onCancel}>
             {cancelLabel}
           </button>
-          <button className={`btn ${danger ? "danger" : "solid"}`} onClick={onConfirm}>
+          <button className={`btn ${danger ? "danger" : "solid"}`} disabled={busy} onClick={onConfirm}>
             {confirmLabel}
           </button>
         </>
