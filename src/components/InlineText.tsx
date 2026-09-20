@@ -29,16 +29,21 @@ export function InlineText({
     <Tag
       ref={ref as React.Ref<never>}
       className={`plan-edit${className ? ` ${className}` : ""}`}
-      contentEditable
+      contentEditable="plaintext-only"
+      role="textbox"
+      tabIndex={0}
+      aria-label={placeholder || "Edit text"}
+      aria-multiline={multiline}
       suppressContentEditableWarning
       spellCheck
       data-placeholder={placeholder}
       onClick={(e: React.MouseEvent) => e.stopPropagation()}
       onBlur={(e: React.FocusEvent<HTMLElement>) => {
-        const text = (e.currentTarget.textContent ?? "").replace(/\u00a0/g, " ").trim();
+        const text = (multiline ? e.currentTarget.innerText : e.currentTarget.textContent ?? "").replace(/\u00a0/g, " ").trim();
         if (text !== value) onSave(text);
       }}
       onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
+        e.stopPropagation();
         if (e.key === "Enter" && !multiline && !e.shiftKey) {
           e.preventDefault();
           (e.currentTarget as HTMLElement).blur();

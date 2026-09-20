@@ -1,0 +1,14 @@
+import { build } from "esbuild";
+import { mkdtempSync, writeFileSync, existsSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+import { spawnSync } from "node:child_process";
+const dir=mkdtempSync(join(tmpdir(),"inline-content-test-"));
+await build({entryPoints:[resolve("scripts/test-inline-content-browser.tsx")],bundle:true,outfile:join(dir,"test.js"),jsx:"automatic",define:{"import.meta.env":"{}"},plugins:[{name:"worker-url",setup(b){b.onResolve({filter:/\?url$/},args=>({path:args.path,namespace:"test-url"}));b.onLoad({filter:/.*/,namespace:"test-url"},()=>({contents:'export default "unused-test-worker";',loader:"js"}));}}]});
+writeFileSync(join(dir,"index.html"),'<!doctype html><html data-theme="dark"><head><link rel="stylesheet" href="test.css"></head><body><div id="fixture"></div><pre id="result">Running</pre><script>window.onerror=function(message,source,line){document.getElementById("result").textContent=message+" at "+line;};window.onunhandledrejection=function(event){document.getElementById("result").textContent=String(event.reason);};</script><script src="test.js"></script></body></html>');
+const browser=[process.env.CHROME_PATH,"C:/Program Files/Google/Chrome/Application/chrome.exe","C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"].find(p=>p&&existsSync(p));
+if(!browser)throw new Error("Set CHROME_PATH to Chromium.");
+const result=spawnSync(browser,["--headless","--disable-gpu","--no-first-run","--no-default-browser-check",`--user-data-dir=${join(dir,"profile")}`,"--virtual-time-budget=40000","--dump-dom",pathToFileURL(join(dir,"index.html")).href],{encoding:"utf8",windowsHide:true,timeout:60000,maxBuffer:8*1024*1024});
+console.log(result.stdout?.match(/<pre id="result">([\s\S]*?)<\/pre>/)?.[1]??result.error??result.stderr);
+if(!result.stdout?.includes('data-result="passed"'))process.exitCode=1;

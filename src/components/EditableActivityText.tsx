@@ -1,5 +1,6 @@
 import { useId, useState, type ReactNode } from "react";
 import { Icon } from "../icons";
+import { InlineText } from "./InlineText";
 
 export function EditableActivityText({
   text,
@@ -8,6 +9,7 @@ export function EditableActivityText({
   editable,
   onSave,
   children,
+  inline = false,
 }: {
   text: string;
   original: string;
@@ -15,12 +17,14 @@ export function EditableActivityText({
   editable: boolean;
   onSave: (text: string) => void;
   children: ReactNode;
+  inline?: boolean;
 }) {
   const inputId = useId();
   const [draft, setDraft] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   if (!editable) return <>{children}</>;
+  if (inline) return <InlineText as="div" value={text} editable multiline placeholder={label} onSave={onSave} />;
 
   const cancel = () => {
     setDraft(null);

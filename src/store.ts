@@ -2145,29 +2145,33 @@ export interface LessonEdits {
 
 const lessonEditsKey = (us: string) => `itss.lessonedits.${courseScopedUnit(us)}`;
 
-export function useLessonEdits(us: string) {
+export function useLessonEdits(us: string, temporary = false) {
   const [edits, setEditsState] = useState<LessonEdits>(() => read<LessonEdits>(lessonEditsKey(us), {}));
 
   useEffect(() => {
     setEditsState(read<LessonEdits>(lessonEditsKey(us), {}));
-  }, [us]);
+  }, [us, temporary]);
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === lessonEditsKey(us)) setEditsState(read<LessonEdits>(lessonEditsKey(us), {}));
+      if (!temporary && e.key === lessonEditsKey(us)) setEditsState(read<LessonEdits>(lessonEditsKey(us), {}));
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, [us]);
+  }, [us, temporary]);
 
   const apply = useCallback(
     (mutate: (draft: LessonEdits) => LessonEdits) => {
+      if (temporary) {
+        setEditsState(current => mutate({ ...current }));
+        return;
+      }
       const fresh = read<LessonEdits>(lessonEditsKey(us), {});
       const next = mutate({ ...fresh });
       write(lessonEditsKey(us), next);
       setEditsState(next);
     },
-    [us]
+    [us, temporary]
   );
 
   const setHeading = useCallback(

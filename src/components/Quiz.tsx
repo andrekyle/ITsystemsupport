@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { InlineText } from "./InlineText";
 import { Icon } from "../icons";
 import type { QuizQuestion, QuizResult } from "../types";
 
@@ -27,8 +28,10 @@ export function Quiz({
   onSubmit,
   showAnswers = false,
   numberPrefix,
+  onEdit,
 }: {
   questions: QuizQuestion[];
+  onEdit?: (questions: QuizQuestion[]) => void;
   previous?: QuizResult;
   /** `attempt` is a JSON-serialisable per-question snapshot of what the
    *  learner picked, so staff can review individual answers later. */
@@ -185,6 +188,22 @@ export function Quiz({
       delete picks[leftIdx];
       return { ...prev, [qi]: { kind: "match", picks } };
     });
+  }
+
+  if (onEdit) {
+    const change = (qi: number, update: (q: QuizQuestion) => void) => {
+      const next = structuredClone(questions); update(next[qi]); onEdit(next);
+    };
+    return <div className="quiz">{questions.map((q, qi) => <div className="quiz-q" key={qi}>
+      <div className="qt"><span className="qn">{qi + 1}</span><InlineText value={q.q} editable multiline placeholder="Question" onSave={v => change(qi, q => { q.q = v; })} /></div>
+      {(!q.kind || q.kind === "choice") && q.options.map((option, oi) => <div className="opt" key={oi}>
+        <input type={q.answers ? "checkbox" : "radio"} name={`answer-${qi}`} aria-label={`Correct answer ${oi + 1}`} checked={(q.answers ?? [q.answer]).includes(oi)} onChange={e => change(qi, q => { if (q.answers) q.answers = e.target.checked ? [...q.answers, oi] : q.answers.filter(i => i !== oi); else q.answer = oi; })} />
+        <InlineText value={option} editable multiline placeholder={`Option ${oi + 1}`} onSave={v => change(qi, q => { q.options[oi] = v; })} />
+      </div>)}
+      {q.kind === "order" && q.items?.map((item, i) => <div className="opt" key={i}>{i + 1}. <InlineText value={item} editable placeholder="Item in correct order" onSave={v => change(qi, q => { q.items![i] = v; })} /></div>)}
+      {q.kind === "match" && q.pairs?.map((pair, i) => <div className="opt" key={i}><InlineText value={pair.left} editable placeholder="Left item" onSave={v => change(qi, q => { q.pairs![i].left = v; })} /> ? <InlineText value={pair.right} editable placeholder="Matching item" onSave={v => change(qi, q => { q.pairs![i].right = v; })} /></div>)}
+      <div className="explain"><InlineText value={q.explain} editable multiline placeholder="Answer explanation" onSave={v => change(qi, q => { q.explain = v; })} /></div>
+    </div>)}</div>;
   }
 
   return (

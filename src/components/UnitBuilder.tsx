@@ -16,6 +16,7 @@ import { SlideViewer } from "./SlideViewer";
 import { Icon } from "../icons";
 import "./unit-builder.css";
 import { courseScopedUnit } from "../lib/courseScope";
+import { flushKey } from "../lib/sync";
 
 
 async function logbookImageDataUrl(file: File): Promise<string> {
@@ -43,6 +44,9 @@ export function effectiveBuiltContent(content:UnitContent, edits:LessonEdits):Un
     bullets:edits.sectionBody?.[si]?.bullets??s.bullets?.map((p,pi)=>edits.bullets?.[`${si}:${pi}`]??p),
     slideQuiz:edits.generatedQuizzes?.[si]??s.slideQuiz,
     cards:s.cards?.map((c,ci)=>({...c,title:edits.cards?.[`${si}:${ci}:t`]??c.title,text:edits.cards?.[`${si}:${ci}:d`]??c.text})),
+    example:s.example?{...s.example,title:edits.examples?.[`${si}:0:t`]??s.example.title,lines:s.example.lines.map((line,i)=>edits.examples?.[`${si}:0:${i}`]??line)}:undefined,
+    examples:s.examples?.map((ex,xi)=>({...ex,title:edits.examples?.[`${si}:${xi+1}:t`]??ex.title,lines:ex.lines.map((line,i)=>edits.examples?.[`${si}:${xi+1}:${i}`]??line)})),
+    figures:s.figures?.map(f=>({...f,caption:edits.captions?.[f.id]??f.caption})),
     table:s.table?{headers:s.table.headers.map((h,ci)=>edits.tableCells?.[`${si}:h:${ci}`]??h),rows:s.table.rows.map((r,ri)=>r.map((v,ci)=>edits.tableCells?.[`${si}:${ri}:${ci}`]??v))}:undefined,
   }));
   next.lesson=next.lesson.map((s,si)=>edits.sectionBody?.[si]?.richHtml!==undefined?{...s,bullets:undefined,table:undefined,cards:undefined,example:undefined,examples:undefined}:s);
@@ -51,7 +55,7 @@ export function effectiveBuiltContent(content:UnitContent, edits:LessonEdits):Un
   return next;
 }
 
-export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;content?:UnitContent;edits:LessonEdits;onSaved:()=>void}) {
+export function UnitBuilder({unit,content,edits,onSaved,onEditInline,inlineDraft,onCancelInline}:{unit:UnitStandard;content?:UnitContent;edits:LessonEdits;onSaved:()=>void;onEditInline:()=>void;inlineDraft?:UnitContent;onCancelInline:()=>void}) {
   const built=useBuiltUnit(unit.us);
   const [open,setOpen]=useState(false);  const [source,setSource]=useState(built?.source??"");
   const [ai,setAi]=useState(true);
@@ -107,13 +111,21 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   });
 
   const publish=async(next:UnitContent,sourceText:string,aiUsed:boolean)=>{
-    validateUnitContent(next, !draft);
+    validateUnitContent(next, !draft && !inlineDraft);
     setBusy("Creating PDF, PowerPoint and answer guide…");
     const files=await makeUnitExports(unit,next);
     setBusy("Saving the unit and course materials…");
     const prefix=`shared/unitbuilder/${courseScopedUnit(unit.us)}`;
     const [pdf,pptx,answers]=await Promise.all([uploadFile(prefix,files.pdf),uploadFile(prefix,files.pptx),uploadFile(prefix,files.answers)]);
-    await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:sourceText,content:next,files:{pdf,pptx,answers,material:built?.files.material,materialEditable:built?.files.materialEditable},aiUsed,planSource:built?.planSource});
+    const revision=crypto.randomUUID();
+    if(inlineDraft){
+      // Keep rich text and figure layout attached to the new revision. The
+      // old published revision remains untouched if either save fails.
+      const key=`itss.lessonedits.${courseScopedUnit(`${unit.us}.built-${revision}`)}`;
+      localStorage.setItem(key,JSON.stringify(edits));
+      await flushKey(key,!!supabase);
+    }
+    await saveBuiltUnit(unit.us,{revision,createdAt:new Date().toISOString(),source:sourceText,content:next,files:{pdf,pptx,answers,material:built?.files.material,materialEditable:built?.files.materialEditable},aiUsed,planSource:built?.planSource});
     setSource(sourceText);setDraft(null);setMessage("Unit built and saved. All learning tabs and download files are ready.");onSaved();
   };
   const readLogbookImages=async(files: FileList|null)=>{
@@ -155,10 +167,13 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   };
   return <section className="unit-builder">
     <div className="unit-builder-bar">
-      <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(!open);setDraft(null);setError("");setConfirmBuild(false);}}><Icon name="document" size={16}/>{built?"Rebuild unit standard":"Build unit standard"}</button>
-      {!built && <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setDraft(effectiveBuiltContent(content ?? { lesson: [], exercises: [], assignments: [], quiz: [] },edits));setOpen(true);setError("");}}>Edit all unit content</button>}
-      {built&&<>
-        <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setDraft(effectiveBuiltContent(content??built.content,edits));setOpen(true);setError("");}}>Edit all unit content</button>
+      <button type="button" className="btn ghost" disabled={!!busy || !!inlineDraft} onClick={()=>{setOpen(!open);setDraft(null);setError("");setConfirmBuild(false);}}><Icon name="document" size={16}/>{built?"Rebuild unit standard":"Build unit standard"}</button>
+      {inlineDraft ? <>
+        <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(inlineDraft,edits),built?.source??source,built?.aiUsed??false);}catch(e){setError(String(e));}finally{setBusy("");}}}>{busy || "Save inline changes and update files"}</button>
+        <button type="button" className="btn ghost" disabled={!!busy} onClick={onCancelInline}>Cancel inline changes</button>
+      </> : <button type="button" className="btn ghost" disabled={!!busy} onClick={onEditInline}>Edit content inline</button>}
+      {!inlineDraft && <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setDraft(effectiveBuiltContent(content ?? { lesson: [], exercises: [], assignments: [], quiz: [] },edits));setOpen(true);setError("");}}>Manage tabs and structure</button>}
+      {built&&!inlineDraft&&<>
         <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(content??built.content,edits),built.source,built.aiUsed);}catch(e){setError(String(e));}finally{setBusy("");}}}>Update PDF and PowerPoint</button>
         {selectedVersion&&<span className="unit-restore">
           <Select className="unit-version-select" ariaLabel="Saved unit versions" disabled={!!busy} value={selectedVersion.revision} onChange={setRestoreRevision} options={versions.map(version=>({value:version.revision,label:versionLabel(version),hint:versionHint(version)}))}/>

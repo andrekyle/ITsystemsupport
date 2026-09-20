@@ -7,7 +7,7 @@ import { UNIT_ACTIVITIES, isStaff } from "../types";
 import { COURSE_BLURB, COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
 import { getCourses, activeCourseId, courseStorageKey, deleteCustomCourse, setActiveCourse } from "../data/courses";
 import { CourseCreator } from "../components/CourseCreator";
-import { CourseEditor } from "../components/CourseEditor";
+import { useInlineCourse } from "../components/useInlineCourse";
 import { courseScopedUnit } from "../lib/courseScope";
 import { Select } from "../components/Select";
 import { GLOSSARY, getContent } from "../data/content";
@@ -1741,7 +1741,8 @@ export function CoursePage({
   profile: Profile;
 }) {
   const [creatingCourse, setCreatingCourse] = useState(false);
-  const [editingCourse, setEditingCourse] = useState(false);
+  const inline = useInlineCourse(profile.role === "Super User");
+  const { meta: COURSE_META, blurb: COURSE_BLURB, modules: MODULES, moduleFlow: MODULE_FLOW, programmeAbout: PROGRAMME_ABOUT, programmePurpose: PROGRAMME_PURPOSE, whatYoullLearn: WHAT_YOULL_LEARN } = inline.course;
   const [deletingCourse, setDeletingCourse] = useState(false);
   const [selectedCourseId] = useState(activeCourseId);
   const [courseDeleteBusy, setCourseDeleteBusy] = useState(false);
@@ -1767,8 +1768,8 @@ export function CoursePage({
         <Icon name="book" size={15} />
         Course
       </div>
-      <h1 className="page-title">{COURSE_META.title}</h1>
-      <p className="page-sub">{COURSE_BLURB}</p>
+      <h1 className="page-title">{inline.text(COURSE_META.title, (d, v) => { d.meta.title = v; }, "title")}</h1>
+      <p className="page-sub">{inline.text(COURSE_BLURB, (d, v) => { d.blurb = v; }, "blurb")}</p>
       <div className="course-switch">
         <Select
           ariaLabel="Switch course"
@@ -1777,15 +1778,14 @@ export function CoursePage({
           onChange={setActiveCourse}
         />
         {profile.role === "Super User" && <button className="btn ghost sm" onClick={() => setCreatingCourse(true)}><Icon name="plus" size={15} /> Add course</button>}
-        {profile.role === "Super User" && selectedCourseId.startsWith("custom-") && <button className="btn ghost sm" onClick={() => setEditingCourse(true)}>Edit course and modules</button>}
+        {inline.controls}
         {canDeleteCourse && <button className="btn ghost sm danger-text" onClick={() => setDeletingCourse(true)}><Icon name="trash" size={15} /> Delete course</button>}
       </div>
       {creatingCourse && <CourseCreator onClose={() => setCreatingCourse(false)} />}
-      {editingCourse && <CourseEditor onClose={() => setEditingCourse(false)} />}
       {deletingCourse && <ConfirmModal
         title="Delete course?"
         message={<>
-          <p>Delete “{COURSE_META.title}”? This removes the custom course from the shared course list for everyone. Existing learner records and uploaded files are kept.</p>
+          <p>Delete “{inline.text(COURSE_META.title, (d, v) => { d.meta.title = v; }, "title")}”? This removes the custom course from the shared course list for everyone. Existing learner records and uploaded files are kept.</p>
           {courseDeleteError && <p role="alert" className="auth-error">{courseDeleteError}</p>}
         </>}
         confirmLabel={courseDeleteBusy ? "Deleting…" : "Delete course"}
@@ -1805,19 +1805,19 @@ export function CoursePage({
           <span className="ico">
             <Icon name="certificate" size={15} />
           </span>
-          SAQA ID {COURSE_META.saqaId}
+          SAQA ID {inline.text(COURSE_META.saqaId, (d, v) => { d.meta.saqaId = v; }, "saqaId")}
         </a>
         <span className="pill">
           <span className="ico">
             <Icon name="trend" size={15} />
           </span>
-          NQF Level {COURSE_META.nqfLevel}
+          NQF Level {inline.text(COURSE_META.nqfLevel, (d, v) => { d.meta.nqfLevel = Number(v); }, "nqfLevel")}
         </span>
         <span className="pill">
           <span className="ico">
             <Icon name="award" size={15} />
           </span>
-          {COURSE_META.credits} Credits
+          {inline.text(COURSE_META.credits, (d, v) => { d.meta.credits = Number(v); }, "credits")} Credits
         </span>
         <span className="pill">
           <span className="ico">
@@ -1829,13 +1829,13 @@ export function CoursePage({
           <span className="ico">
             <Icon name="clock" size={15} />
           </span>
-          {COURSE_META.time}
+          {inline.text(COURSE_META.time, (d, v) => { d.meta.time = v; }, "time")}
         </span>
         <span className="pill">
           <span className="ico">
             <Icon name="shield" size={15} />
           </span>
-          <Gloss text={COURSE_META.qualityAssurance} />
+          {inline.text(COURSE_META.qualityAssurance, (d, v) => { d.meta.qualityAssurance = v; }, "Text")}
         </span>
       </div>
 
@@ -1850,23 +1850,27 @@ export function CoursePage({
           const c = moduleCompletion(progress, m.id);
           const credits = m.units.reduce((n, u) => n + u.credits, 0);
           return (
-            <button
+            <div
               key={m.id}
               className="card clickable module-card"
-              onClick={() => navigate({ page: "module", moduleId: m.id })}
+              role={inline.editing ? undefined : "button"}
+              tabIndex={inline.editing ? undefined : 0}
+              onKeyDown={e => { if (!inline.editing && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); navigate({ page: "module", moduleId: m.id }); } }}
+              onClick={() => { if (!inline.editing) navigate({ page: "module", moduleId: m.id }); }}
             >
               {m.image && (
                 <span className="module-hero">
                   <img src={m.image} alt="" loading="lazy" />
                 </span>
               )}
+              {inline.editing && <label className="field">Module image<input type="file" accept="image/png,image/jpeg,image/webp" disabled={inline.busy} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { const image = await fileToImageDataUrl(file); inline.change(d => { d.modules[i].image = image; }); } catch { e.target.setCustomValidity("Could not read image. Choose another file."); e.target.reportValidity(); } }} /></label>}
               <div className="head">
                 <span className="ico">
                   <Icon name={m.icon} size={22} />
                 </span>
                 <div>
                   <h3>
-                    Module {i + 1}: {m.name}
+                    Module {i + 1}: {inline.text(m.name, (d, v) => { d.modules[i].name = v; }, "Module name")}
                   </h3>
                 </div>
               </div>
@@ -1877,7 +1881,8 @@ export function CoursePage({
                 <Bar value={c} green={c === 1} />
                 <span className="pct">{Math.round(c * 100)}%</span>
               </div>
-            </button>
+
+            </div>
           );
         })}
       </div>
@@ -1891,13 +1896,13 @@ export function CoursePage({
       <div className="card about-card module-flow-block">
         <div className="flow-steps">
           {MODULE_FLOW.steps.map((s, i) => (
-            <div className="flow-step" key={s.name}>
+            <div className="flow-step" key={i}>
               <span className={`num${i === MODULE_FLOW.steps.length - 1 ? " last" : ""}`}>
                 {i + 1}
               </span>
-              <span className="nm">{s.name}</span>
+              <span className="nm">{inline.text(s.name!, (d, v) => { d.moduleFlow.steps[i].name = v; }, "name")}</span>
               <span className="ds">
-                <Gloss text={s.desc} />
+                {inline.text(s.desc!, (d, v) => { d.moduleFlow.steps[i].desc = v; }, "desc")}
               </span>
             </div>
           ))}
@@ -1909,7 +1914,7 @@ export function CoursePage({
             <strong>
               <Gloss text="FISA" />
             </strong>{" "}
-            → <strong>Logbook sign-off</strong> → Certification ({COURSE_META.credits} credits)
+            → <strong>Logbook sign-off</strong> → Certification ({inline.text(COURSE_META.credits, (d, v) => { d.meta.credits = Number(v); }, "credits")} credits)
           </span>
         </div>
       </div>
@@ -1921,13 +1926,13 @@ export function CoursePage({
         About this programme
       </h2>
       <div className="card about-card">
-        <p className="about-intro">{PROGRAMME_ABOUT.intro}</p>
-        <p className="lesson-p">{PROGRAMME_ABOUT.lead}</p>
+        <p className="about-intro">{inline.text(PROGRAMME_ABOUT.intro, (d, v) => { d.programmeAbout.intro = v; }, "intro")}</p>
+        <p className="lesson-p">{inline.text(PROGRAMME_ABOUT.lead, (d, v) => { d.programmeAbout.lead = v; }, "lead")}</p>
         <div className="about-grid">
-          {PROGRAMME_ABOUT.outcomes.map((o) => (
-            <div className="about-item" key={o.text}>
+          {PROGRAMME_ABOUT.outcomes.map((o, i) => (
+            <div className="about-item" key={i}>
               <Icon name={o.icon} size={22} />
-              <span>{o.text}</span>
+              <span>{inline.text(o.text!, (d, v) => { d.programmeAbout.outcomes[i].text = v; }, "text")}</span>
             </div>
           ))}
         </div>
@@ -1948,12 +1953,12 @@ export function CoursePage({
         Purpose and rationale of the qualification
       </h2>
       <div className="card about-card">
-        <p className="about-intro">{PROGRAMME_PURPOSE.intro}</p>
+        <p className="about-intro">{inline.text(PROGRAMME_PURPOSE.intro, (d, v) => { d.programmePurpose.intro = v; }, "intro")}</p>
 
         <div className="about-label">Your qualification pathway</div>
         <div className="path-row">
           {PROGRAMME_PURPOSE.pathway.map((p, i) => (
-            <React.Fragment key={p.title}>
+            <React.Fragment key={i}>
               {i > 0 && (
                 <span className="path-arrow">
                   <Icon name="chevronRight" size={18} />
@@ -1961,23 +1966,23 @@ export function CoursePage({
               )}
               <div className={`path-card${p.current ? " current" : ""}`}>
                 <Icon name={p.icon} size={26} />
-                <div className="t">{p.title}</div>
+                <div className="t">{inline.text(p.title!, (d, v) => { d.programmePurpose.pathway[i].title = v; }, "title")}</div>
                 <div className="d">
-                  <Gloss text={p.desc} />
+                  {inline.text(p.desc!, (d, v) => { d.programmePurpose.pathway[i].desc = v; }, "desc")}
                 </div>
               </div>
             </React.Fragment>
           ))}
         </div>
-        <p className="lesson-p">{PROGRAMME_PURPOSE.pathwayNote}</p>
+        <p className="lesson-p">{inline.text(PROGRAMME_PURPOSE.pathwayNote, (d, v) => { d.programmePurpose.pathwayNote = v; }, "pathwayNote")}</p>
 
         <div className="about-label">The qualification is designed to</div>
         <div className="about-grid four">
-          {PROGRAMME_PURPOSE.designedTo.map((o) => (
-            <div className="about-item" key={o.text}>
+          {PROGRAMME_PURPOSE.designedTo.map((o, i) => (
+            <div className="about-item" key={i}>
               <Icon name={o.icon} size={22} />
               <span>
-                <Gloss text={o.text} />
+                {inline.text(o.text!, (d, v) => { d.programmePurpose.designedTo[i].text = v; }, "text")}
               </span>
             </div>
           ))}
@@ -1985,23 +1990,23 @@ export function CoursePage({
 
         <div className="about-label">To qualify, you must demonstrate competence in 13 areas</div>
         <div className="about-grid">
-          {PROGRAMME_PURPOSE.competencies.map((o) => (
-            <div className="about-item" key={o.text}>
+          {PROGRAMME_PURPOSE.competencies.map((o, i) => (
+            <div className="about-item" key={i}>
               <Icon name={o.icon} size={22} />
-              <span>{o.text}</span>
+              <span>{inline.text(o.text!, (d, v) => { d.programmePurpose.competencies[i].text = v; }, "text")}</span>
             </div>
           ))}
         </div>
         <p className="lesson-p">
-          <strong>NB:</strong> <Gloss text={PROGRAMME_PURPOSE.nb} />
+          <strong>NB:</strong> {inline.text(PROGRAMME_PURPOSE.nb, (d, v) => { d.programmePurpose.nb = v; }, "Text")}
         </p>
 
         <div className="about-label">Rationale</div>
         <p className="lesson-p" style={{ marginBottom: 2 }}>
           <span className="rationale-p">
-            <Gloss text={PROGRAMME_PURPOSE.rationaleLead} />
+            {inline.text(PROGRAMME_PURPOSE.rationaleLead, (d, v) => { d.programmePurpose.rationaleLead = v; }, "Text")}
           </span>{" "}
-          <Gloss text={PROGRAMME_PURPOSE.rationale} />
+          {inline.text(PROGRAMME_PURPOSE.rationale, (d, v) => { d.programmePurpose.rationale = v; }, "Text")}
         </p>
       </div>
 
@@ -2012,23 +2017,23 @@ export function CoursePage({
         What you'll learn
       </h2>
       <div className="about-grid four" style={{ maxWidth: 1200 }}>
-        {WHAT_YOULL_LEARN.areas.map((a) => (
-          <div className="about-item" key={a.text}>
+        {WHAT_YOULL_LEARN.areas.map((a, i) => (
+          <div className="about-item" key={i}>
             <Icon name={a.icon} size={22} />
             <span className="area-body">
-              <span className="area-t">{a.text}</span>
-              <span className="area-d">{a.desc}</span>
+              <span className="area-t">{inline.text(a.text!, (d, v) => { d.whatYoullLearn.areas[i].text = v; }, "text")}</span>
+              <span className="area-d">{inline.text(a.desc!, (d, v) => { d.whatYoullLearn.areas[i].desc = v; }, "desc")}</span>
             </span>
           </div>
         ))}
       </div>
       <div className="fact-grid">
-        {WHAT_YOULL_LEARN.facts.map((f) => (
-          <div className="fact-card" key={f.label}>
+        {WHAT_YOULL_LEARN.facts.map((f, i) => (
+          <div className="fact-card" key={i}>
             <Icon name={f.icon} size={28} />
-            <div className="lbl">{f.label}</div>
-            {f.value && <div className="val">{f.value}</div>}
-            {f.detail && <div className="det">{f.detail}</div>}
+            <div className="lbl">{inline.text(f.label!, (d, v) => { d.whatYoullLearn.facts[i].label = v; }, "label")}</div>
+            {f.value && <div className="val">{inline.text(f.value!, (d, v) => { d.whatYoullLearn.facts[i].value = v; }, "value")}</div>}
+            {f.detail && <div className="det">{inline.text(f.detail!, (d, v) => { d.whatYoullLearn.facts[i].detail = v; }, "detail")}</div>}
             {f.pills && (
               <div className="fact-pills">
                 {f.pills.map((p) => (
@@ -2056,9 +2061,10 @@ export function ModulePage({
   progress: ProgressState;
   navigate: (r: Route) => void;
 }) {
-  const mod = findModule(moduleId);
+  const inline = useInlineCourse(profile.role === "Super User");
+  const mod = inline.course.modules.find(m => m.id === moduleId);
   if (!mod) return <p>Module not found.</p>;
-  const idx = MODULES.indexOf(mod);
+  const idx = inline.course.modules.indexOf(mod);
   const credits = mod.units.reduce((n, u) => n + u.credits, 0);
   const c = moduleCompletion(progress, mod.id);
 
@@ -2073,7 +2079,8 @@ export function ModulePage({
         <Icon name={mod.icon} size={15} />
         Module {idx + 1} of {MODULES.length}
       </div>
-      <h1 className="page-title">{mod.name}</h1>
+      <h1 className="page-title">{inline.text(mod.name, (d, v) => { d.modules[idx].name = v; }, "Module name")}</h1>
+      {inline.controls}
       <div className="meta-row">
         <span className="pill">
           <span className="ico">
@@ -2104,17 +2111,19 @@ export function ModulePage({
         <Bar value={c} green={c === 1} />
       </div>
 
-      {mod.units.map((u) => {
+      {mod.units.map((u, ui) => {
         const st = unitStatus(progress, u.us);
         const uc = unitCompletion(progress, u.us);
         const locked = unitLocked(u, profile.role);
         const unlockAt = unitUnlockTime(u);
         return (
-          <button
+          <div
             key={u.us}
             className={`unit-row${locked ? " locked" : ""}`}
-            disabled={locked}
-            onClick={() => !locked && navigate({ page: "unit", moduleId: mod.id, unitId: u.us })}
+            role={inline.editing ? undefined : "button"}
+            tabIndex={locked || inline.editing ? undefined : 0}
+            onKeyDown={e => { if (!locked && !inline.editing && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); navigate({ page: "unit", moduleId: mod.id, unitId: u.us }); } }}
+            onClick={() => !locked && !inline.editing && navigate({ page: "unit", moduleId: mod.id, unitId: u.us })}
           >
             <span
               className={`status ${st === "completed" ? "done" : st === "in-progress" ? "progress" : "none"}`}
@@ -2126,22 +2135,22 @@ export function ModulePage({
             </span>
             <span className="main">
               <span className="t">
-                {usLabel(u.us)} — {u.title}
+                {usLabel(u.us)} — {inline.text(u.title, (d, v) => { d.modules[idx].units[ui].title = v; }, "title")}
               </span>
               <span className="m">
                 <span>
-                  <Icon name="trend" size={13} /> NQF {u.nqf}
+                  <Icon name="trend" size={13} /> NQF {inline.text(u.nqf, (d, v) => { d.modules[idx].units[ui].nqf = Number(v); }, "nqf")}
                 </span>
-                {u.credits > 0 && (
+                {(inline.editing || u.credits > 0) && (
                   <span>
-                    <Icon name="award" size={13} /> {u.credits} credits
+                    <Icon name="award" size={13} /> {inline.text(u.credits, (d, v) => { d.modules[idx].units[ui].credits = Number(v); }, "credits")} credits
                   </span>
                 )}
                 <span>
-                  <Icon name="calendar" size={13} /> {u.dates}
+                  <Icon name="calendar" size={13} /> {inline.text(u.dates, (d, v) => { d.modules[idx].units[ui].dates = v; }, "dates")}
                 </span>
                 <span>
-                  <Icon name="clock" size={13} /> {u.time}
+                  <Icon name="clock" size={13} /> {inline.text(u.time, (d, v) => { d.modules[idx].units[ui].time = v; }, "time")}
                 </span>
                 {locked && unlockAt && (
                   <span className="unlock-note">
@@ -2158,7 +2167,7 @@ export function ModulePage({
             <span className="chev">
               <Icon name={locked ? "lock" : "chevronRight"} size={17} />
             </span>
-          </button>
+          </div>
         );
       })}
     </>
@@ -2258,6 +2267,8 @@ export function UnitPage({
 }) {
   const [tab, setTab] = useState<UnitTab>(() => loadUnitTab(unitId));
   const builtUnit = useBuiltUnit(unitId);
+  const [inlineUnit, setInlineUnit] = useState<UnitContent>();
+  useEffect(() => { setInlineUnit(undefined); }, [unitId]);
   // keep the active tab visible inside the horizontally scrollable tab bar
   const tabsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -2638,7 +2649,7 @@ export function UnitPage({
   const [deckReplacePct, setDeckReplacePct] = useState<number | null>(null);
   const [deckReplaceError, setDeckReplaceError] = useState<string | null>(null);
   const { figures: figureImages, setFigure, removeFigure } = useLessonFigures(unitId);
-  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection, setLessonPlan: editSetLessonPlan, setLogbook: editSetLogbook } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId);
+  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection, setLessonPlan: editSetLessonPlan, setLogbook: editSetLogbook } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId, !!inlineUnit);
   const [generatingQuiz, setGeneratingQuiz] = useState<number | null>(null);
   const [quizQuestionCount, setQuizQuestionCount] = useState(5);
   const [quizGenerationError, setQuizGenerationError] = useState<string | null>(null);
@@ -2657,6 +2668,7 @@ export function UnitPage({
   useEffect(() => { setLessonSaveStatus(""); setLessonSaveError(""); }, [unitId, lessonEdits]);
   const saveLessonToCloud = async () => {
     if (savingLesson) return;
+    if (inlineUnit) { setLessonSaveError("Use Save inline changes and update files above to save this unit."); setLessonSaveStatus("error"); return; }
     setSavingLesson(true);
     setLessonSaveStatus("");
     try {
@@ -2671,7 +2683,7 @@ export function UnitPage({
       setSavingLesson(false);
     }
   };
-  useEffect(() => { setEditMode(false); }, [unitId, tab]);
+  useEffect(() => { setEditMode(!!inlineUnit); }, [unitId, tab, !!inlineUnit]);
   // per-slide "paste text" editor (super user): heading + free-text body
   const [pasteEditor, setPasteEditor] = useState<{ si: number; heading: string; text: string } | null>(null);
   const figFileRef = useRef<HTMLInputElement>(null);
@@ -2685,7 +2697,7 @@ export function UnitPage({
   const idx = MODULES.indexOf(mod);
   const uc = unitCompletion(progress, u.us);
   const acts = progress.units[u.us]?.activities ?? {};
-  const content = builtUnit?.content ?? getContent(u.us);
+  const content = inlineUnit ?? builtUnit?.content ?? getContent(u.us);
   // The lesson plan shown on the tab: inline table edits (shared, cloud-synced) win over the generated plan.
   const planData: LessonPlan | undefined = content?.lessonPlan ? (lessonEdits.lessonPlan ?? content.lessonPlan) : undefined;
   const updatePlan = (mutate: (draft: LessonPlan) => void) => {
@@ -2705,6 +2717,8 @@ export function UnitPage({
   }).length;
   const isPrivileged = isStaff(profile.role);
   const isSuperUser = profile.role === "Super User";
+  const unitText = (value: string, update: (draft: UnitContent, text: string) => void, label = "Content") => <InlineText value={value} editable={isSuperUser && !!inlineUnit} multiline placeholder={label} onSave={text => setInlineUnit(current => { if (!current) return current; const next = structuredClone(current); update(next, text); return next; })} />;
+
   const blankBuiltActivity = (): Exercise => ({
     id: `manual-activity-${crypto.randomUUID()}`,
     title: "New activity",
@@ -3221,7 +3235,7 @@ export function UnitPage({
         {isSaqaUnit(u.us) ? `Unit standard ${u.us}` : "Internal lesson"}
       </div>
       <h1 className="page-title">{u.title}</h1>
-      {isSuperUser && <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} onSaved={() => { setTab("overview"); setLessonStep(0); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); }} />}
+      {isSuperUser && <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} onEditInline={() => { if (content) { setInlineUnit(structuredClone(content)); setEditMode(true); } }} onCancelInline={() => { setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { setInlineUnit(undefined); setLessonStep(0); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); }} />}
       <div className="meta-row">
         <span className="pill">
           <span className="ico">
@@ -3358,7 +3372,7 @@ export function UnitPage({
                 <span className="ico">
                   <Icon name="info" size={19} />
                 </span>
-                <span>{content.saqa.notice}</span>
+                <span>{unitText(content.saqa.notice, (d, v) => { d.saqa!.notice = v; })}</span>
               </div>
 
               <details className="saqa-details">
@@ -3371,11 +3385,11 @@ export function UnitPage({
                 </summary>
                 <table className="data kv">
                   <tbody>
-                    {content.saqa.registration.map((r) => (
-                      <tr key={r.label}>
-                        <td className="k">{r.label}</td>
+                    {content.saqa.registration.map((r, ri) => (
+                      <tr key={ri}>
+                        <td className="k">{unitText(r.label, (d, v) => { d.saqa!.registration[ri].label = v; })}</td>
                         <td>
-                          <Gloss text={r.value} />
+                          {inlineUnit ? unitText(r.value, (d, v) => { d.saqa!.registration[ri].value = v; }) : <Gloss text={r.value} />}
                         </td>
                       </tr>
                     ))}
@@ -3383,11 +3397,11 @@ export function UnitPage({
                 </table>
               </details>
 
-              {content.saqa.sections.map((sec) => (
-                <details className="saqa-details" key={sec.heading}>
+              {content.saqa.sections.map((sec, si) => (
+                <details className="saqa-details" key={si}>
                   <summary>
                     <Icon name={sec.icon} size={17} />
-                    {sec.heading}
+                    {unitText(sec.heading, (d, v) => { d.saqa!.sections[si].heading = v; })}
                     <span className="chev">
                       <Icon name="chevronDown" size={15} />
                     </span>
@@ -3395,18 +3409,18 @@ export function UnitPage({
                   <div className="saqa-body">
                     {sec.paragraphs?.map((p, i) => (
                       <p key={i} className="lesson-p">
-                        {p}
+                        {unitText(p, (d, v) => { d.saqa!.sections[si].paragraphs![i] = v; })}
                       </p>
                     ))}
                     {sec.bullets && (
                       <ul className="duty-list">
-                        {sec.bullets.map((b) => (
+                        {sec.bullets.map((b, bi) => (
                           <li key={b}>
                             <span className="ico">
                               <Icon name="chevronRight" size={14} />
                             </span>
                             <span>
-                              <LessonBullet text={b} />
+                              {inlineUnit ? unitText(b, (d, v) => { d.saqa!.sections[si].bullets![bi] = v; }) : <LessonBullet text={b} />}
                             </span>
                           </li>
                         ))}
@@ -3416,8 +3430,8 @@ export function UnitPage({
                       <table className="data" style={{ marginTop: 10 }}>
                         <thead>
                           <tr>
-                            {sec.table.headers.map((h) => (
-                              <th key={h}>{h}</th>
+                            {sec.table.headers.map((h, hi) => (
+                              <th key={hi}>{unitText(h, (d, v) => { d.saqa!.sections[si].table!.headers[hi] = v; })}</th>
                             ))}
                           </tr>
                         </thead>
@@ -3425,7 +3439,7 @@ export function UnitPage({
                           {sec.table.rows.map((row, ri) => (
                             <tr key={ri}>
                               {row.map((cell, ci) => (
-                                <td key={ci}>{ci <= 1 ? <strong>{cell}</strong> : cell}</td>
+                                <td key={ci}>{inlineUnit ? unitText(cell, (d, v) => { d.saqa!.sections[si].table!.rows[ri][ci] = v; }) : ci <= 1 ? <strong>{cell}</strong> : cell}</td>
                               ))}
                             </tr>
                           ))}
@@ -5060,16 +5074,18 @@ export function UnitPage({
             const exRes = progress.units[u.us]?.exercises?.[ex.id];
             const hasChecks = !!ex.checks && ex.checks.length > 0;
             const exTotalMarks = ex.checks?.reduce((t, c) => t + c.concepts.length * 2, 0) ?? 0;
-            const canEditScript = isSuperUser && ex.id === "rp114051";
+            const canEditScript = isSuperUser && (!!inlineUnit || ex.id === "rp114051");
             const activityText = (part: string, original: string) =>
-              lessonEdits.activityText?.[`${ex.id}:${part}`] ?? original;
-            const saveActivityText = (part: string, original: string, text: string) =>
-              editKeyed("activityText", `${ex.id}:${part}`, text === original ? "" : text);
+              inlineUnit ? original : lessonEdits.activityText?.[`${ex.id}:${part}`] ?? original;
+            const saveActivityText = (part: string, original: string, text: string) => {
+              if (inlineUnit) setInlineUnit(current => { if (!current) return current; const next = structuredClone(current); const [field, number] = part.split(":"); const activity = next[kind]![index]; if (field === "scenario") activity.scenario![Number(number)] = text; else activity.steps[Number(number)] = text; return next; });
+              else editKeyed("activityText", `${ex.id}:${part}`, text === original ? "" : text);
+            };
             return (
             <details key={ex.id} className="saqa-details lesson-acc">
               <summary>
                 <Icon name="exercise" size={17} />
-                <span className="ex-title">{ex.title}</span>
+                <span className="ex-title">{unitText(ex.title, (d, v) => { d[kind]![index].title = v; }, "Activity title")}</span>
                 <span className="ex-meta">
                   {hasChecks && (
                     <span className="ex-marks-inline" title={`${exTotalMarks} marks available in total`}>
@@ -5096,9 +5112,9 @@ export function UnitPage({
                 </span>
               </summary>
               <div className="saqa-body">
-                {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="btn ghost sm" disabled={!!activityEditor} onClick={() => setActivityEditor({ kind, index, value: structuredClone(ex) })}>Edit activity</button><button type="button" className="btn ghost sm" disabled={!!activityEditor} onClick={() => void removeBuiltActivity(kind, index)}>Remove activity</button></div>}
+                {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="btn ghost sm" disabled={!!activityEditor || !!inlineUnit} onClick={() => { setInlineUnit(structuredClone(content)); setEditMode(true); }}>Edit activity inline</button><button type="button" className="btn ghost sm" disabled={!!activityEditor} onClick={() => void removeBuiltActivity(kind, index)}>Remove activity</button></div>}
                 <p className="lesson-p" style={{ marginTop: 10 }}>
-                  <Gloss text={ex.task} />
+                  {inlineUnit ? unitText(ex.task, (d, v) => { d[kind]![index].task = v; }, "Activity instructions") : <Gloss text={ex.task} />}
                 </p>
                 {hasChecks && (
                   <p className="ex-marks-total">
@@ -5117,6 +5133,7 @@ export function UnitPage({
                     text={activityText(`scenario:${si}`, s)}
                     original={s}
                     editable={canEditScript}
+                    inline={!!inlineUnit}
                     onSave={(text) => saveActivityText(`scenario:${si}`, s, text)}
                   >
                     <p className="lesson-p">
@@ -5135,6 +5152,7 @@ export function UnitPage({
                           text={activityText(`step:${i}`, s)}
                           original={s}
                           editable={canEditScript}
+                    inline={!!inlineUnit}
                           onSave={(text) => saveActivityText(`step:${i}`, s, text)}
                         >
                           <StepText text={activityText(`step:${i}`, s)} />
@@ -5303,35 +5321,35 @@ export function UnitPage({
               of its text.
             </span>
           </div>
-          {content.assignments.map((as) => (
+          {content.assignments.map((as, ai) => (
             <details key={as.id} className="saqa-details lesson-acc">
               <summary>
                 <Icon name="folder" size={17} />
-                {as.title}
+                {unitText(as.title, (d, v) => { d.assignments[ai].title = v; })}
                 <span className="chev">
                   <Icon name="chevronDown" size={15} />
                 </span>
               </summary>
               <div className="saqa-body">
                 <p className="lesson-p" style={{ marginTop: 10 }}>
-                  <Gloss text={as.brief} />
+                  {inlineUnit ? unitText(as.brief, (d, v) => { d.assignments[ai].brief = v; }) : <Gloss text={as.brief} />}
                 </p>
                 <div className="task-label">Requirements</div>
                 <ul className="duty-list">
-                  {as.requirements.map((r) => (
+                  {as.requirements.map((r, ri) => (
                     <li key={r}>
                       <span className="ico">
                         <Icon name="checkCircle" size={16} />
                       </span>
                       <span>
-                        <Gloss text={r} />
+                        {inlineUnit ? unitText(r, (d, v) => { d.assignments[ai].requirements[ri] = v; }) : <Gloss text={r} />}
                       </span>
                     </li>
                   ))}
                 </ul>
                 <div className="task-label">Evidence & submission</div>
                 <p className="lesson-p" style={{ marginBottom: 10 }}>
-                  <Gloss text={as.evidence} />
+                  {inlineUnit ? unitText(as.evidence, (d, v) => { d.assignments[ai].evidence = v; }) : <Gloss text={as.evidence} />}
                 </p>
               </div>
             </details>
@@ -5496,6 +5514,7 @@ export function UnitPage({
             <Quiz
               key={active.id}
               questions={active.questions}
+              onEdit={inlineUnit ? questions => setInlineUnit(current => current ? { ...current, quizzes: current.quizzes?.map(q => q.id === active.id ? { ...q, questions } : q) } : current) : undefined}
               previous={results[active.id]}
               onSubmit={(score, total, attempt) => saveQuizResult(u.us, score, total, active.id, attempt)}
               showAnswers={isPrivileged}
@@ -5521,6 +5540,7 @@ export function UnitPage({
           </div>
           <Quiz
             questions={content.quiz}
+            onEdit={inlineUnit ? quiz => setInlineUnit(current => current ? { ...current, quiz } : current) : undefined}
             previous={quizResult}
             onSubmit={(score, total, attempt) => saveQuizResult(u.us, score, total, undefined, attempt)}
             showAnswers={isPrivileged}
@@ -5564,7 +5584,7 @@ export function UnitPage({
               Self assessment
             </h2>
             {builtUnit && isSuperUser && <div className="activity-edit-bar">
-              <button type="button" className="btn ghost sm" disabled={!!selfAssessmentDraft} onClick={() => { setSelfAssessmentDraft(structuredClone(sa)); setSelfAssessmentError(""); }}>Edit self assessment</button>
+              <button type="button" className="btn ghost sm" disabled={!!selfAssessmentDraft || !!inlineUnit} onClick={() => { setInlineUnit(structuredClone(content)); setEditMode(true); }}>Edit self assessment inline</button>
             </div>}
             {builtUnit && isSuperUser && selfAssessmentDraft && <div className="card self-assessment-editor">
               <h3>Edit self assessment</h3>
@@ -5579,9 +5599,9 @@ export function UnitPage({
                 </div>
               </fieldset>
             </div>}
-            {sa.intro.map((p) => (
+            {sa.intro.map((p, pi) => (
               <p key={p} className="lesson-p" style={{ maxWidth: 720 }}>
-                <Gloss text={p} />
+                {inlineUnit ? unitText(p, (d, v) => { d.selfAssessment!.intro[pi] = v; }) : <Gloss text={p} />}
               </p>
             ))}
             {locked && (
@@ -5619,7 +5639,7 @@ export function UnitPage({
                       }}
                     />
                     <span>
-                      <Gloss text={item} />
+                      {inlineUnit ? unitText(item, (d, v) => { d.selfAssessment!.items[i] = v; }) : <Gloss text={item} />}
                     </span>
                   </label>
                 );
@@ -5671,9 +5691,9 @@ export function UnitPage({
                 </button>
               )}
             </div>
-            {sa.outro.map((p) => (
+            {sa.outro.map((p, pi) => (
               <p key={p} className="lesson-p muted" style={{ maxWidth: 720 }}>
-                <Gloss text={p} />
+                {inlineUnit ? unitText(p, (d, v) => { d.selfAssessment!.outro[pi] = v; }) : <Gloss text={p} />}
               </p>
             ))}
             {saConfirm === "save" && (
@@ -5708,8 +5728,8 @@ export function UnitPage({
         );
       })()}
 
-      {content?.customTabs?.filter(item => item.id === tab).map(item => <section className="card" key={item.id}><h2>{item.title}</h2><div style={{ whiteSpace: "pre-wrap" }}>{item.text}</div></section>)}
-      {tab === "evaluation" && content?.evaluation && <section className="unit-evaluation"><h2>Lesson evaluation</h2><p>{content.evaluation.intro}</p>{content.evaluation.questions.map((question, i) => <label className="field" key={`${builtUnit?.revision}:${i}`}>{question}<textarea rows={3} defaultValue={String(progress.units[u.us]?.logbook?.[`unit-evaluation.${builtUnit?.revision}.${i}`] ?? "")} onBlur={e => setLogbookField(u.us, `unit-evaluation.${builtUnit?.revision}.${i}`, e.target.value)} /></label>)}<p className="muted">Your responses save when you leave each field.</p></section>}
+      {content?.customTabs?.filter(item => item.id === tab).map(item => <section className="card" key={item.id}><h2>{unitText(item.title, (d, v) => { d.customTabs!.find(t => t.id === item.id)!.title = v; })}</h2><div style={{ whiteSpace: "pre-wrap" }}>{unitText(item.text, (d, v) => { d.customTabs!.find(t => t.id === item.id)!.text = v; })}</div></section>)}
+      {tab === "evaluation" && content?.evaluation && <section className="unit-evaluation"><h2>Lesson evaluation</h2><p>{unitText(content.evaluation.intro, (d, v) => { d.evaluation!.intro = v; })}</p>{content.evaluation.questions.map((question, i) => <label className="field" key={`${builtUnit?.revision}:${i}`}>{unitText(question, (d, v) => { d.evaluation!.questions[i] = v; })}<textarea rows={3} defaultValue={String(progress.units[u.us]?.logbook?.[`unit-evaluation.${builtUnit?.revision}.${i}`] ?? "")} onBlur={e => setLogbookField(u.us, `unit-evaluation.${builtUnit?.revision}.${i}`, e.target.value)} /></label>)}<p className="muted">Your responses save when you leave each field.</p></section>}
       {tab === "evaluation" && !content?.evaluation && (
         <>
           <h2 className="section-title">
