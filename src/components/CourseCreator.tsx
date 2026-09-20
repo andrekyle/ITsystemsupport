@@ -21,7 +21,7 @@ export function CourseCreator({ onClose }: { onClose: () => void }) {
   }
   return <Modal className="course-creator-modal" title="Add course" onClose={() => { if (!saving) onClose(); }} actions={<>
     <button className="btn ghost" disabled={saving} onClick={onClose}>Cancel</button>
-    <button className="btn primary" disabled={saving} onClick={() => void save()}>{saving ? "Saving…" : pending ? "Retry save" : "Create course"}</button>
+    <button className="btn ghost" disabled={saving} onClick={() => void save()}>{saving ? "Saving…" : pending ? "Retry save" : "Create course"}</button>
   </>}>
     <p>Add your course details. You can add more modules and unit standards in the Training Calendar.</p>
     {([['title', 'Course name'], ['saqaId', 'SAQA ID'], ['nqfLevel', 'NQF level'], ['credits', 'Credits'], ['description', 'Description'], ['moduleName', 'First module name']] as const).map(([key, label]) => <label className="field" key={key}>
