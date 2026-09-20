@@ -35,6 +35,7 @@ const modules: CourseModule[] = [
     image: "/figures/module-it-m2.jpg",
     activities: 4,
     units: [
+      { us: "114074", title: "Demonstrate an understanding of different computer network architectures and standards", nqf: 5, credits: 0, dates: "9, 16 Oct 2026", time: "09h00 - 14h00" },
       { us: "114046", title: "Demonstrate an understanding of issues affecting the management of a local area computer network (LAN)", nqf: 5, credits: 0, dates: "25 Sep, 2 Oct 2026", time: "09h00 - 14h00" },
       { us: "114076", title: "Use computer technology to research a computer topic", nqf: 4, credits: 3, dates: "23 Oct 2026", time: "09h00 - 14h00" },
       { us: "114183", title: "Apply the principles of resolving problems for single-user and multi-user computer operating systems", nqf: 5, credits: 0, dates: "6, 13 Nov 2026", time: "09h00 - 14h00" },
@@ -48,7 +49,6 @@ const modules: CourseModule[] = [
     image: "/figures/module-it-m3.jpg",
     activities: 5,
     units: [
-      { us: "114074", title: "Demonstrate an understanding of different computer network architectures and standards", nqf: 5, credits: 5, dates: "9, 16 Oct 2026", time: "09h00 - 14h00" },
       { us: "114061", title: "Demonstrate an understanding of Wide Area Computer Networks (WANs), comparing them with Local Area Networks (LANs)", nqf: 5, credits: 5, dates: "4 Dec 2026", time: "09h00 - 14h00" },
       { us: "114072", title: "Install and commission a local area computer network", nqf: 5, credits: 9, dates: "29 Jan, 5 Feb 2027", time: "09h00 - 14h00" },
       { us: "114060", title: "Demonstrate an understanding of local area computer networks, by installing a networked workstation", nqf: 5, credits: 5, dates: "12 Feb 2027", time: "09h00 - 14h00" },
