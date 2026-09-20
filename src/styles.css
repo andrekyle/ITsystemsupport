@@ -7817,6 +7817,45 @@ table.data tr.done-row .text-link {
   margin-top: 18px;
 }
 
+.course-creator-modal {
+  width: min(560px, 100%);
+  padding: 24px 26px 20px;
+}
+
+.course-creator-modal .modal-title {
+  font-size: 18px;
+  margin-bottom: 14px;
+}
+
+.course-creator-modal .modal-body > p {
+  margin: 0 0 22px;
+  color: var(--ink-2);
+}
+
+.course-creator-modal .field {
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.course-creator-modal .field input {
+  min-height: 42px;
+  padding: 9px 11px;
+}
+
+.course-creator-modal .modal-actions {
+  margin-top: 24px;
+  padding-top: 4px;
+}
+
+.course-creator-modal .modal-actions .btn {
+  min-width: 104px;
+  height: 38px;
+}
+
+[data-theme="dark"] .course-switch .nice-select-opt.selected {
+  color: #d7d7d7;
+}
+
 /* ---------- Attendance Register (Eruditio form replica) ---------- */
 
 /* PDF-style fit-to-width: the fixed-width paper sheet scales down to the screen */

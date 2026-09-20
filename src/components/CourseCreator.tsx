@@ -19,7 +19,7 @@ export function CourseCreator({ onClose }: { onClose: () => void }) {
       setActiveCourse(course.id);
     } catch (e) { setError(e instanceof Error ? e.message : "Could not save the course."); setSaving(false); }
   }
-  return <Modal title="Add course" onClose={() => { if (!saving) onClose(); }} actions={<>
+  return <Modal className="course-creator-modal" title="Add course" onClose={() => { if (!saving) onClose(); }} actions={<>
     <button className="btn ghost" disabled={saving} onClick={onClose}>Cancel</button>
     <button className="btn primary" disabled={saving} onClick={() => void save()}>{saving ? "Saving…" : pending ? "Retry save" : "Create course"}</button>
   </>}>

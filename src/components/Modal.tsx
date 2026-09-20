@@ -7,11 +7,13 @@ export function Modal({
   children,
   actions,
   onClose,
+  className,
 }: {
   title: string;
   children: ReactNode;
   actions: ReactNode;
   onClose: () => void;
+  className?: string;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -24,7 +26,7 @@ export function Modal({
   return (
     <div className="modal-overlay no-print" onClick={onClose}>
       <div
-        className="modal-card"
+        className={`modal-card${className ? ` ${className}` : ""}`}
         role="dialog"
         aria-modal="true"
         aria-label={title}
