@@ -14,6 +14,11 @@ function duplicate(value:Value):Value {
 
 function blankFor(name: string): Value {
   const key = name.replace(/\s+\d+$/, "").toLowerCase();
+  if (/^modules$/.test(key)) return { id: `module-${crypto.randomUUID()}`, name: "New module", icon: "book", activities: 0, units: [] };
+  if (/^units$/.test(key)) return { us: `unit-${crypto.randomUUID().slice(0, 8)}`, title: "New unit", nqf: 5, credits: 0, dates: "", time: "09h00 - 14h00" };
+  if (/customtabs/.test(key)) return { id: `custom-${crypto.randomUUID()}`, title: "New tab", text: "Add content here." };
+  if (/^quizzes$/.test(key)) return { id: `quiz-${crypto.randomUUID()}`, title: "New quiz", questions: [blankFor("quiz")] };
+  if (/^lesson$|lesson sections/.test(key)) return { heading: "New lesson", paragraphs: ["Add lesson content here."] };
   if (/practical activities|knowledge activities|exercises|questionsessions/.test(key)) return {
     id: `manual-${crypto.randomUUID()}`,
     title: "New activity",
@@ -39,6 +44,7 @@ function blankFor(name: string): Value {
 }
 
 function addTemplate(name: string, current: Value): Value {
+  if (/^(modules|units|customTabs)$/i.test(name)) return blankFor(name);
   const blank = blankFor(name);
   if (current === "" || current === null || (Array.isArray(current) && current.length === 0)) return blank;
   return duplicate(current);

@@ -30,6 +30,7 @@ export function unitExportPages(unit: UnitStandard, content: UnitContent): Expor
     blocks.push({ title: "Logbook", lines: [l.assignmentTitle, ...l.detailFields.map(f => `${f}: __________________`), l.project.text, ...l.knowledgeQuestions.map(r => `[ ] ${r.text}`), ...l.practicalActivities.map(r => `[ ] ${r.text}`), ...l.workplaceActivities, l.workplaceEvidenceNote, ...l.projectChecklist.map(r => `[ ] ${r.no}. ${r.name}`)] });
   }
   for (const n of content.studyNotes ?? []) blocks.push({ title: `Notes: ${n.title}`, lines: [n.text] });
+  for (const tab of content.customTabs ?? []) blocks.push({ title: tab.title, lines: [tab.text] });
   if (content.selfAssessment) blocks.push({ title: "Self assessment", lines: [...content.selfAssessment.intro, ...content.selfAssessment.items.map(i => `[ ] ${i}`), ...content.selfAssessment.outro] });
   if (content.evaluation) blocks.push({ title: "Lesson evaluation", lines: [content.evaluation.intro, ...content.evaluation.questions.map(q => `${q}\nResponse: ________________________________`)] });
   if (content.lessonPlan) blocks.push({ title: content.lessonPlan.title, lines: [...content.lessonPlan.prep, ...content.lessonPlan.sections.flatMap(s => [s.heading ?? "", ...s.rows.flatMap(r => [`${r.time ?? ""} ${r.title}`, ...(r.text ?? []), ...(r.bullets ?? [])])])] });

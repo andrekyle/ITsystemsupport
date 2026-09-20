@@ -3,7 +3,7 @@ const cache = new Map<string, string>();
 const pending = new Set<string>();
 const loads = new Map<string, Promise<void>>();
 let generation=0;
-export const isUnitPackKey = (key:string) => /^itss\.unitbuilder\.[^.]+\.shared$/.test(key);
+export const isUnitPackKey = (key:string) => /^itss\.unitbuilder\.(?:custom-[^.]+\.)?[^.]+\.shared$/.test(key);
 let database: Promise<IDBDatabase> | undefined;
 function db() {
   return database ??= new Promise<IDBDatabase>((resolve,reject)=>{

@@ -15,6 +15,7 @@ import { Select } from "./Select";
 import { SlideViewer } from "./SlideViewer";
 import { Icon } from "../icons";
 import "./unit-builder.css";
+import { courseScopedUnit } from "../lib/courseScope";
 
 
 async function logbookImageDataUrl(file: File): Promise<string> {
@@ -63,6 +64,17 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   const [error,setError]=useState("");
   const [message,setMessage]=useState("");
   const [draft,setDraft]=useState<UnitContent|null>(null);
+  const [newTabKind, setNewTabKind] = useState("customTabs");
+  const addTab = () => {
+    if (!draft) return;
+    if (newTabKind === "customTabs") {
+      setDraft({ ...draft, customTabs: [...(draft.customTabs ?? []), { id: `custom-${crypto.randomUUID()}`, title: "New tab", text: "Add your content here." }] });
+      return;
+    }
+    const defaults = buildUnitContent(unit, "# New lesson\n\nAdd the learning objectives, teaching notes and practical examples for this unit. Explain each topic in detail and include instructions for the learners to follow.", { minutes: 300 });
+    const key = newTabKind as keyof UnitContent;
+    setDraft({ ...draft, [key]: draft[key] ?? defaults[key] ?? (key === "evaluation" ? { intro: "Evaluate this unit", questions: ["What did you learn?"] } : []) });
+  };
   const [warning,setWarning]=useState("");
   const [fileName,setFileName]=useState("");
   const [confirmBuild,setConfirmBuild]=useState(false);
@@ -95,11 +107,11 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   });
 
   const publish=async(next:UnitContent,sourceText:string,aiUsed:boolean)=>{
-    validateUnitContent(next);
+    validateUnitContent(next, !draft);
     setBusy("Creating PDF, PowerPoint and answer guide…");
     const files=await makeUnitExports(unit,next);
     setBusy("Saving the unit and course materials…");
-    const prefix=`shared/unitbuilder/${unit.us}`;
+    const prefix=`shared/unitbuilder/${courseScopedUnit(unit.us)}`;
     const [pdf,pptx,answers]=await Promise.all([uploadFile(prefix,files.pdf),uploadFile(prefix,files.pptx),uploadFile(prefix,files.answers)]);
     await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:sourceText,content:next,files:{pdf,pptx,answers,material:built?.files.material,materialEditable:built?.files.materialEditable},aiUsed,planSource:built?.planSource});
     setSource(sourceText);setDraft(null);setMessage("Unit built and saved. All learning tabs and download files are ready.");onSaved();
@@ -144,6 +156,7 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
   return <section className="unit-builder">
     <div className="unit-builder-bar">
       <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(!open);setDraft(null);setError("");setConfirmBuild(false);}}><Icon name="document" size={16}/>{built?"Rebuild unit standard":"Build unit standard"}</button>
+      {!built && <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setDraft(effectiveBuiltContent(content ?? { lesson: [], exercises: [], assignments: [], quiz: [] },edits));setOpen(true);setError("");}}>Edit all unit content</button>}
       {built&&<>
         <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setDraft(effectiveBuiltContent(content??built.content,edits));setOpen(true);setError("");}}>Edit all unit content</button>
         <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(content??built.content,edits),built.source,built.aiUsed);}catch(e){setError(String(e));}finally{setBusy("");}}}>Update PDF and PowerPoint</button>
@@ -155,6 +168,14 @@ export function UnitBuilder({unit,content,edits,onSaved}:{unit:UnitStandard;cont
     </div>
     {open&&<div className="unit-builder-panel">
       <h2>{draft?"Edit complete unit":"Build"} · US {unit.us}</h2>
+      {draft && <div className="unit-editor-actions">
+        <Select ariaLabel="Tab to add" value={newTabKind} onChange={setNewTabKind} options={[
+          { value: "customTabs", label: "Custom content tab" }, { value: "saqa", label: "Overview" }, { value: "lessonPlan", label: "Lesson plan" },
+          { value: "logbook", label: "Logbook" }, { value: "selfAssessment", label: "Self assessment" },
+          { value: "evaluation", label: "Evaluation" }, { value: "quizzes", label: "Additional quizzes" },
+        ]} />
+        <button type="button" className="btn ghost sm" disabled={!!busy} onClick={addTab}>Add tab</button>
+      </div>}
       {draft?<><p>Edit any tab below. Saving also rebuilds the PDF and editable PowerPoint.</p><UnitContentEditor value={draft as never} onChange={v=>setDraft(v as unknown as UnitContent)}/><button type="button" className="btn unit-build-action" disabled={!!busy} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={async()=>{setError("");try{await publish(draft,built?.source??source,built?.aiUsed??false);doneBusy(()=>setOpen(false));}catch(e){setError(String(e));setBusy("");}}}><span>{busy?`Creating ${busyProgress}%`:"Save all changes and rebuild files"}</span></button></>:<>
         <p>Paste your teaching material or import a document. Use headings such as “# Estimating effort” with a blank line before the supporting paragraphs.</p>
         {built&&<p className="muted">Building replaces this unit's learning content. The last {MAX_UNIT_HISTORY} versions stay restorable from the version list above. Learner work is retained.</p>}
@@ -192,7 +213,7 @@ async function publishUnitPart(unit:UnitStandard,built:BuiltUnitVersion,next:Uni
   setBusy("Rebuilding the PDF, PowerPoint and answer guide…");
   const files=await makeUnitExports(unit,next);
   setBusy("Saving…");
-  const prefix=`shared/unitbuilder/${unit.us}`;
+  const prefix=`shared/unitbuilder/${courseScopedUnit(unit.us)}`;
   const [pdf,pptx,answers]=await Promise.all([uploadFile(prefix,files.pdf),uploadFile(prefix,files.pptx),uploadFile(prefix,files.answers)]);
   await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content:next,files:{pdf,pptx,answers,material:built.files.material,materialEditable:built.files.materialEditable},aiUsed:built.aiUsed,planSource:extra.planSource??built.planSource});
 }
@@ -368,7 +389,7 @@ export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
     if(!/\.pdf$/i.test(file.name)&&!file.type.includes("pdf")){setError("Upload a PDF export for the displayed course material. Upload the editable PowerPoint separately.");return;}
     setError("");setBusy("Uploading course material...");setUploadPct(0);
     try{
-      const doc=await uploadFile(`shared/unitbuilder/${us}/material`,file,setUploadPct);
+      const doc=await uploadFile(`shared/unitbuilder/${courseScopedUnit(us)}/material`,file,setUploadPct);
       await saveMaterial({material:doc,materialEditable:editableMaterial});
     }catch(e){setError(e instanceof Error?e.message:"The course material could not be uploaded.");}
     finally{setBusy("");setUploadPct(null);}
@@ -378,7 +399,7 @@ export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
     if(!/\.(ppt|pptx)$/i.test(file.name)&&!file.type.includes("presentation")){setError("Upload the editable slides as a PowerPoint file (.ppt or .pptx).");return;}
     setError("");setBusy("Uploading editable slides...");setUploadPct(0);
     try{
-      const doc=await uploadFile(`shared/unitbuilder/${us}/material`,file,setUploadPct);
+      const doc=await uploadFile(`shared/unitbuilder/${courseScopedUnit(us)}/material`,file,setUploadPct);
       await saveMaterial({material:displayMaterial,materialEditable:doc});
     }catch(e){setError(e instanceof Error?e.message:"The editable slides could not be uploaded.");}
     finally{setBusy("");setUploadPct(null);}

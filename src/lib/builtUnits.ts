@@ -1,5 +1,6 @@
 import type { PoeDoc, UnitContent } from "../types";
 import { unitPackSnapshot } from "./unitStorage";
+import { courseScopedUnit } from "./courseScope";
 
 export type UnitFiles = { pdf: PoeDoc; pptx: PoeDoc; answers: PoeDoc; material?: PoeDoc; materialEditable?: PoeDoc };
 export type BuiltUnitVersion = { revision: string; source: string; content: UnitContent; files: UnitFiles; createdAt: string; aiUsed: boolean; planSource?: string };
@@ -191,7 +192,7 @@ function cleanLegacyGeneratedContent<T extends BuiltUnit | BuiltUnitVersion>(uni
   if (!content) return unit;
   const cleaned: UnitContent = {
     ...content,
-    evaluation: undefined,
+    evaluation: content.evaluation,
     lessonPlan: isLegacyGeneratedLessonPlan(content.lessonPlan, unit.planSource) ? lessonPlanTemplate(us, content) : content.lessonPlan,
     selfAssessment: content.selfAssessment ? {
       ...content.selfAssessment,
@@ -200,7 +201,7 @@ function cleanLegacyGeneratedContent<T extends BuiltUnit | BuiltUnitVersion>(uni
     } : content.selfAssessment,
     exercises: content.exercises.filter(activity => !isLegacyGeneratedActivity(activity)),
     questionSessions: (content.questionSessions ?? []).filter(activity => !isLegacyGeneratedQuestionSession(activity)),
-    studyNotes: undefined,
+    studyNotes: content.studyNotes,
   };
   return { ...unit, content: cleaned, ...restorableVersions(unit, us) } as T;
 }
@@ -215,7 +216,7 @@ function restorableVersions(unit: BuiltUnit | BuiltUnitVersion, us: string): { p
   return { previous: history[0], history };
 }
 
-export const builtUnitKey = (us: string) => `itss.unitbuilder.${us}.shared`;
+export const builtUnitKey = (us: string) => `itss.unitbuilder.${courseScopedUnit(us)}.shared`;
 export function readBuiltUnit(us: string): BuiltUnit | undefined {
   try {
     if (typeof localStorage === "undefined") return;

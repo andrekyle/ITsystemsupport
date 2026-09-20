@@ -7,6 +7,8 @@ import { UNIT_ACTIVITIES, isStaff } from "../types";
 import { COURSE_BLURB, COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
 import { getCourses, activeCourseId, courseStorageKey, deleteCustomCourse, setActiveCourse } from "../data/courses";
 import { CourseCreator } from "../components/CourseCreator";
+import { CourseEditor } from "../components/CourseEditor";
+import { courseScopedUnit } from "../lib/courseScope";
 import { Select } from "../components/Select";
 import { GLOSSARY, getContent } from "../data/content";
 import { FIGURE_DEFAULTS as BASE_FIGURE_DEFAULTS } from "../data/figureDefaults";
@@ -1739,6 +1741,7 @@ export function CoursePage({
   profile: Profile;
 }) {
   const [creatingCourse, setCreatingCourse] = useState(false);
+  const [editingCourse, setEditingCourse] = useState(false);
   const [deletingCourse, setDeletingCourse] = useState(false);
   const [selectedCourseId] = useState(activeCourseId);
   const [courseDeleteBusy, setCourseDeleteBusy] = useState(false);
@@ -1774,9 +1777,11 @@ export function CoursePage({
           onChange={setActiveCourse}
         />
         {profile.role === "Super User" && <button className="btn ghost sm" onClick={() => setCreatingCourse(true)}><Icon name="plus" size={15} /> Add course</button>}
+        {profile.role === "Super User" && selectedCourseId.startsWith("custom-") && <button className="btn ghost sm" onClick={() => setEditingCourse(true)}>Edit course and modules</button>}
         {canDeleteCourse && <button className="btn ghost sm danger-text" onClick={() => setDeletingCourse(true)}><Icon name="trash" size={15} /> Delete course</button>}
       </div>
       {creatingCourse && <CourseCreator onClose={() => setCreatingCourse(false)} />}
+      {editingCourse && <CourseEditor onClose={() => setEditingCourse(false)} />}
       {deletingCourse && <ConfirmModal
         title="Delete course?"
         message={<>
@@ -2168,7 +2173,7 @@ function fmtSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "questions" | "assignments" | "logbook" | "quiz" | "selfassessment" | "evaluation" | "plan";
+type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "questions" | "assignments" | "logbook" | "quiz" | "selfassessment" | "evaluation" | "plan" | `custom-${string}`;
 
 /** Built-in lesson decks shipped with the app (public/downloads), per unit
  *  standard — always shown on the Course material tab ahead of uploads. */
@@ -2656,7 +2661,7 @@ export function UnitPage({
     setLessonSaveStatus("");
     try {
       const editId = builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId;
-      await flushKey(`itss.lessonedits.${editId}`, true);
+      await flushKey(`itss.lessonedits.${courseScopedUnit(editId)}`, true);
       setLessonSaveStatus("saved");
       setEditMode(false);
     } catch (error) {
@@ -3196,6 +3201,7 @@ export function UnitPage({
     { id: "selfassessment", label: "Self assessment", icon: "checkCircle", show: !!content?.selfAssessment },
     { id: "evaluation", label: "Evaluation", icon: "chat", show: true },
     { id: "plan", label: "Lesson plan", icon: "presenter", show: !!content?.lessonPlan && isPrivileged },
+    ...(content?.customTabs ?? []).map(item => ({ id: item.id as UnitTab, label: item.title, icon: "document", show: true })),
   ];
 
   return (
@@ -5702,6 +5708,7 @@ export function UnitPage({
         );
       })()}
 
+      {content?.customTabs?.filter(item => item.id === tab).map(item => <section className="card" key={item.id}><h2>{item.title}</h2><div style={{ whiteSpace: "pre-wrap" }}>{item.text}</div></section>)}
       {tab === "evaluation" && content?.evaluation && <section className="unit-evaluation"><h2>Lesson evaluation</h2><p>{content.evaluation.intro}</p>{content.evaluation.questions.map((question, i) => <label className="field" key={`${builtUnit?.revision}:${i}`}>{question}<textarea rows={3} defaultValue={String(progress.units[u.us]?.logbook?.[`unit-evaluation.${builtUnit?.revision}.${i}`] ?? "")} onBlur={e => setLogbookField(u.us, `unit-evaluation.${builtUnit?.revision}.${i}`, e.target.value)} /></label>)}<p className="muted">Your responses save when you leave each field.</p></section>}
       {tab === "evaluation" && !content?.evaluation && (
         <>

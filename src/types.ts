@@ -495,6 +495,7 @@ export interface LessonPlan {
 }
 
 export interface UnitContent {
+  customTabs?: { id: string; title: string; text: string }[];
   studyNotes?: { title: string; text: string }[];
   evaluation?: { intro: string; questions: string[] };
   lesson: LessonSection[];

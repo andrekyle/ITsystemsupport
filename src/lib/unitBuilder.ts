@@ -718,9 +718,9 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
 }
 
 /** Validate the editable pack before replacing any saved content. */
-export function validateUnitContent(content: UnitContent): void {
+export function validateUnitContent(content: UnitContent, requireComplete = true): void {
   const nonempty = (s: unknown) => typeof s === "string" && s.trim().length > 0;
-  if (!content.lesson?.length || !content.assignments?.length) throw new Error("Keep at least one lesson and assignment.");
+  if (requireComplete && (!content.lesson?.length || !content.assignments?.length)) throw new Error("Keep at least one lesson and assignment.");
   for (const s of content.lesson) if (!nonempty(s.heading) || !s.paragraphs?.some(nonempty)) throw new Error("Every lesson needs a title and teaching text.");
   for (const q of [...content.quiz, ...content.lesson.flatMap(s => s.slideQuiz ?? []), ...(content.quizzes ?? []).flatMap(q => q.questions)]) {
     if (!nonempty(q.q) || q.options?.length < 2 || !q.options.every(nonempty) || !Number.isInteger(q.answer) || q.answer < 0 || q.answer >= q.options.length || !nonempty(q.explain)) throw new Error("Every quiz question needs text, answer options, a valid correct answer and an explanation.");
@@ -729,7 +729,9 @@ export function validateUnitContent(content: UnitContent): void {
     const ids = list.map(item => item.id);
     if (ids.some(id => !nonempty(id)) || new Set(ids).size !== ids.length) throw new Error("Activities and quizzes must have unique IDs.");
   }
-  if (!content.logbook || !content.lessonPlan?.sections.length || !content.selfAssessment?.items.length || !content.saqa) throw new Error("Overview, notes, logbook, lesson plan and self assessment must all have content.");
+  if (requireComplete && (!content.logbook || !content.lessonPlan?.sections.length || !content.selfAssessment?.items.length || !content.saqa)) throw new Error("Overview, notes, logbook, lesson plan and self assessment must all have content.");
+  const customTabs = content.customTabs ?? [];
+  if (customTabs.some(tab => !nonempty(tab.id) || !nonempty(tab.title)) || new Set(customTabs.map(tab => tab.id)).size !== customTabs.length) throw new Error("Each custom tab needs a title and a unique ID.");
 }
 
 

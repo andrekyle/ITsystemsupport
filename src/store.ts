@@ -5,6 +5,7 @@ import { MODULES, POE_SECTIONS } from "./data/course";
 import { cloudEnabled, supabase } from "./lib/supabase";
 import { flushKey, writeFromCloud } from "./lib/sync";
 import { logAudit } from "./lib/audit";
+import { courseScopedUnit } from "./lib/courseScope";
 
 const PROFILES_KEY = "itss.profiles";
 const SESSION_KEY = "itss.session";
@@ -1710,7 +1711,7 @@ export function usePoe(profileId: string) {
 
 /* ---------- facilitator-uploaded lesson-plan slides (shared per unit standard) ---------- */
 
-const planSlidesKey = (us: string) => `itss.planslides.${us}`;
+const planSlidesKey = (us: string) => `itss.planslides.${courseScopedUnit(us)}`;
 
 export function usePlanSlides(us: string) {
   const [slides, setSlides] = useState<PoeDoc[]>(() => read<PoeDoc[]>(planSlidesKey(us), []));
@@ -1759,6 +1760,8 @@ export function readCourseWideSlides(exceptUs?: string): PoeDoc[] {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (!key || !key.startsWith("itss.planslides.")) continue;
+      const scopedPrefix = `itss.planslides.${courseScopedUnit("")}`;
+      if (courseScopedUnit("") ? !key.startsWith(scopedPrefix) : key.startsWith("itss.planslides.custom-")) continue;
       if (exceptUs && key === planSlidesKey(exceptUs)) continue;
       for (const doc of read<PoeDoc[]>(key, [])) {
         if (!doc || !doc.name) continue;
@@ -1776,7 +1779,7 @@ export function readCourseWideSlides(exceptUs?: string): PoeDoc[] {
 
 /* ---------- staff replacements for built-in lesson decks (shared) ---------- */
 
-const deckOverridesKey = (us: string) => `itss.deckoverrides.${us}`;
+const deckOverridesKey = (us: string) => `itss.deckoverrides.${courseScopedUnit(us)}`;
 
 /** Staff-uploaded replacements for the app's built-in slide decks, keyed by
  *  the built-in deck's static URL. Shared with every account. */
@@ -1829,7 +1832,7 @@ export interface LessonFigureImage {
   uploadedAt: string;
 }
 
-const lessonFigsKey = (us: string) => `itss.lessonfigs.${us}`;
+const lessonFigsKey = (us: string) => `itss.lessonfigs.${courseScopedUnit(us)}`;
 
 /** signed-URL cache so figure images resolve once per path per session */
 const figUrlCache = new Map<string, { url: string; exp: number }>();
@@ -2140,7 +2143,7 @@ export interface LessonEdits {
   logbook?: import("./types").LogbookSpec;
 }
 
-const lessonEditsKey = (us: string) => `itss.lessonedits.${us}`;
+const lessonEditsKey = (us: string) => `itss.lessonedits.${courseScopedUnit(us)}`;
 
 export function useLessonEdits(us: string) {
   const [edits, setEditsState] = useState<LessonEdits>(() => read<LessonEdits>(lessonEditsKey(us), {}));
