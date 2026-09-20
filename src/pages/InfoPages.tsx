@@ -6,7 +6,9 @@ import { Gloss } from "./Course";
 import { unitStatus } from "../store";
 import { downloadIcs, parseSessionDates } from "../lib/integrations";
 import type { IcsEvent } from "../lib/integrations";
-import { activeCourseId } from "../data/courses";
+import { activeCourse, activeCourseId, courseStorageKey, saveCustomCourse } from "../data/courses";
+import { flushKey } from "../lib/sync";
+import { supabase } from "../lib/supabase";
 import {
   ASSESSMENT_FRAMEWORK,
   DELIVERABLES,
@@ -193,10 +195,14 @@ const makeCalendarDraft = (): CalendarDraft => ({
 export function CalendarPage({
   navigate,
   progress,
+  profile,
 }: {
   navigate?: (r: Route) => void;
   progress?: ProgressState;
+  profile?: Profile;
 }) {
+  const customCourse = activeCourseId().startsWith("custom-");
+  const canEdit = customCourse ? profile?.role === "Super User" : import.meta.env.DEV;
   // In-place editing of the calendar (dev only — saving writes the edits
   // straight back into the course data file through /api/save-calendar).
   const [editing, setEditing] = useState(false);
@@ -310,6 +316,13 @@ export function CalendarPage({
         units: m.units.filter((u) => `${u.us}${u.title}${u.dates}`.trim() !== ""),
       }));
       const milestones = draft.milestones.filter((ms) => `${ms.name}${ms.dates}`.trim() !== "");
+      if (customCourse) {
+        const course = { ...activeCourse(), modules, programmeMilestones: milestones };
+        saveCustomCourse(course);
+        await flushKey(courseStorageKey(course.id), !!supabase);
+        location.reload();
+        return;
+      }
       const res = await fetch("/api/save-calendar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -350,19 +363,19 @@ export function CalendarPage({
       </div>
       <h1 className="page-title">Training dates</h1>
       <p className="page-sub">
-        All sessions run 09h00 – 14h00 as per the QCTO-approved training schedule (Jul 2026 – Jul 2027).
+        {customCourse ? "Add modules, unit standards and training dates for this course." : "All sessions run 09h00 – 14h00 as per the QCTO-approved training schedule (Jul 2026 – Jul 2027)."}
       </p>
 
       <p className="cal-toolbar">
         <button className="btn ghost sm" onClick={exportIcs} title="Import into Outlook, Teams or Google Calendar">
           <Icon name="download" size={15} /> Add all sessions to my calendar (.ics)
         </button>
-        {import.meta.env.DEV && !editing && (
+        {canEdit && !editing && (
           <button className="btn ghost sm" onClick={() => startEditing()} title="Edit the training calendar in place, then save">
             <Icon name="pencil" size={15} /> Edit calendar
           </button>
         )}
-        {import.meta.env.DEV && (
+        {canEdit && (
           <button className="btn ghost sm" onClick={addModule} disabled={saveState === "saving"}>
             <Icon name="plus" size={15} /> Add module
           </button>
@@ -407,7 +420,7 @@ export function CalendarPage({
             ) : (
               <>
                 Module {i + 1}: {m.name}
-                {import.meta.env.DEV && (
+                {canEdit && (
                   <button
                     className="btn ghost sm"
                     onClick={() => startEditing(m.id)}

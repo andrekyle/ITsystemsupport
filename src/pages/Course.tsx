@@ -5,7 +5,8 @@ import { Icon } from "../icons";
 import type { Exercise, ExerciseCheck, LessonFigure, LessonPlan, LessonPlanRow, LessonSection, LogbookSpec, PoeDoc, ProgressState, Profile, QuizQuestion, Role, Route, UnitActivity, UnitContent, UnitStandard } from "../types";
 import { UNIT_ACTIVITIES, isStaff } from "../types";
 import { COURSE_BLURB, COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
-import { COURSES, activeCourseId, setActiveCourse } from "../data/courses";
+import { getCourses, activeCourseId, setActiveCourse } from "../data/courses";
+import { CourseCreator } from "../components/CourseCreator";
 import { Select } from "../components/Select";
 import { GLOSSARY, getContent } from "../data/content";
 import { FIGURE_DEFAULTS as BASE_FIGURE_DEFAULTS } from "../data/figureDefaults";
@@ -1731,10 +1732,13 @@ const ACTIVITY_INFO: Record<UnitActivity, { icon: string; desc: string }> = {
 export function CoursePage({
   progress,
   navigate,
+  profile,
 }: {
   progress: ProgressState;
   navigate: (r: Route) => void;
+  profile: Profile;
 }) {
+  const [creatingCourse, setCreatingCourse] = useState(false);
   return (
     <>
       <div className="eyebrow">
@@ -1747,10 +1751,12 @@ export function CoursePage({
         <Select
           ariaLabel="Switch course"
           value={activeCourseId()}
-          options={COURSES.map((c) => ({ value: c.id, label: c.label }))}
+          options={getCourses().map((c) => ({ value: c.id, label: c.label }))}
           onChange={setActiveCourse}
         />
+        {profile.role === "Super User" && <button className="btn primary sm" onClick={() => setCreatingCourse(true)}><Icon name="plus" size={15} /> Add course</button>}
       </div>
+      {creatingCourse && <CourseCreator onClose={() => setCreatingCourse(false)} />}
       <div className="meta-row">
         <a
           className="pill"
@@ -1862,7 +1868,7 @@ export function CoursePage({
         <div className="flow-after">
           <Icon name="award" size={22} />
           <span>
-            After all six modules: <strong>Remedials</strong> (if needed) →{" "}
+            After all modules: <strong>Remedials</strong> (if needed) →{" "}
             <strong>
               <Gloss text="FISA" />
             </strong>{" "}

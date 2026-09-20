@@ -151,7 +151,7 @@ function Shell({
             {route.page === "dashboard" && (
               <Dashboard profile={profile} progress={state} navigate={navigate} />
             )}
-            {route.page === "course" && <CoursePage progress={state} navigate={navigate} />}
+            {route.page === "course" && <CoursePage progress={state} navigate={navigate} profile={profile} />}
             {route.page === "module" && route.moduleId && (
               <ModulePage moduleId={route.moduleId} profile={profile} progress={state} navigate={navigate} />
             )}
@@ -179,7 +179,7 @@ function Shell({
             )}
             {route.page === "assessments" && <AssessmentsPage profile={profile} />}
             {route.page === "deliverables" && <DeliverablesPage />}
-            {route.page === "calendar" && <CalendarPage navigate={navigate} progress={state} />}
+            {route.page === "calendar" && <CalendarPage navigate={navigate} progress={state} profile={profile} />}
             {route.page === "attendance" && (
               <AttendancePage profile={profile} onUpdateProfile={onUpdateProfile} />
             )}
@@ -258,7 +258,14 @@ export default function App() {
               ({ data }) => setAccountAdmin(!!data),
               () => setAccountAdmin(false)
             );
+          const selectedCourse = localStorage.getItem("itss.activeCourse");
+          const selectedCourseKey = selectedCourse?.startsWith("custom-") ? `itss.course.${selectedCourse}.shared` : null;
+          const previousCourse = selectedCourseKey ? localStorage.getItem(selectedCourseKey) : null;
           void Promise.all([startSync(session.user.id), adminCheck]).then(() => {
+            if (selectedCourseKey && previousCourse !== localStorage.getItem(selectedCourseKey)) {
+              location.reload();
+              return;
+            }
             syncReady.current = true;
             if (!recovering.current) setCloudState("ready");
           });
