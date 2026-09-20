@@ -30,16 +30,20 @@ export function createCourse(details: { title: string; saqaId: string; nqfLevel:
   if (!details.title.trim() || !details.moduleName.trim()) throw new Error("Enter the course name and first module name.");
   if (!/^\d+$/.test(details.saqaId.trim())) throw new Error("Enter a numeric SAQA ID.");
   if (!Number.isInteger(details.nqfLevel) || details.nqfLevel < 1 || details.nqfLevel > 10 || !Number.isInteger(details.credits) || details.credits < 0) throw new Error("Enter a valid NQF level (1–10) and credits.");
-  // Retain the shared course shape without copying another qualification's content.
-  const blank = (value: unknown): unknown => Array.isArray(value) ? [] : value && typeof value === "object"
-    ? Object.fromEntries(Object.entries(value).map(([key, item]) => [key, blank(item)]))
-    : typeof value === "number" ? 0 : typeof value === "boolean" ? false : "";
-  const course = blank(IT_SYSTEMS_SUPPORT) as CourseData;
-  course.id = `custom-${crypto.randomUUID()}`;
+  // Start with a complete working course so every tab, activity and lesson
+  // feature is available immediately. The copied data remains editable via
+  // the course calendar and the existing inline editors.
+  const course = structuredClone(IT_SYSTEMS_SUPPORT) as CourseData;
+  const courseId = `custom-${crypto.randomUUID()}`;
+  course.id = courseId;
   course.label = `${details.title.trim()} (${details.saqaId.trim()})`;
   course.blurb = details.description.trim();
   course.meta = { title: details.title.trim(), saqaId: details.saqaId.trim(), nqfLevel: details.nqfLevel, credits: details.credits, time: "09h00 - 14h00", sponsor: "", qualityAssurance: "" };
-  course.modules = [{ id: `${course.id}-m1`, name: details.moduleName.trim(), icon: "book", activities: 0, units: [] }];
+  course.modules = course.modules.map((module, index) => ({
+    ...module,
+    id: `${courseId}-m${index + 1}`,
+    name: index === 0 ? details.moduleName.trim() : module.name,
+  }));
   course.programmeAbout.intro = course.blurb;
   course.programmeAbout.saqaLink = { label: "View qualification on SAQA", url: `https://allqs.saqa.org.za/showQualification.php?id=${course.meta.saqaId}` };
   return course;
