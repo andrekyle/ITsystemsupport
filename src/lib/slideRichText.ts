@@ -21,7 +21,7 @@ export function sanitizeSlideHtml(html: string): string {
         const src = node.getAttribute("src") ?? "";
         out.setAttribute("src", src);
         out.setAttribute("alt", node.getAttribute("alt")?.slice(0, 300) ?? "Lesson image");
-        out.setAttribute("draggable", "true");
+        out.setAttribute("draggable", "false");
         if (node.dataset.cropped === "true") out.dataset.cropped = "true";
       }
       if (node.tagName === "TD" || node.tagName === "TH") {

@@ -14137,7 +14137,7 @@ body.moving-slide-image, body.moving-slide-image * { cursor:grabbing !important;
 [data-slide-rich] ul { list-style:disc outside; }
 [data-slide-rich] ol { list-style:decimal outside; }
 [data-slide-rich] li { display:list-item; margin:0.25em 0; padding-left:0.25em; }
-[data-slide-rich] img { max-width:100%; cursor:move; user-select:none; -webkit-user-drag:element; }
+[data-slide-rich] img { max-width:100%; cursor:move; user-select:none; touch-action:none; -webkit-user-drag:none; }
 [data-slide-rich] img:active { cursor:grabbing; }
 [data-slide-rich] img.is-being-moved { opacity:.28; outline:2px dashed var(--azure); outline-offset:3px; }
 [data-slide-rich][contenteditable="true"] img:hover { outline:2px solid var(--azure); outline-offset:3px; }

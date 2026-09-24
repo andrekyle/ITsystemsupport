@@ -185,6 +185,8 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       const editor = target.closest<HTMLElement>(EDITOR_SELECTOR);
       if (!editor || event.button !== 0) return;
       event.preventDefault();
+      target.draggable = false;
+      target.setPointerCapture?.(event.pointerId);
       setSelectedImage(target);
       setImageWidth(Math.round(parseFloat(target.style.width) || target.getBoundingClientRect().width / Math.max(1, editor.getBoundingClientRect().width) * 100));
       setImageHeight(Math.round(parseFloat(target.style.height) || target.getBoundingClientRect().height || 260));
@@ -379,7 +381,7 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
     const img = document.createElement("img");
     img.src = await imageData(file);
     img.alt = file.name.replace(/\.[^.]+$/, "") || "Lesson image";
-    img.draggable = true;
+    img.draggable = false;
     img.style.width = "60%";
     img.style.height = "auto";
     img.style.maxWidth = "100%";
