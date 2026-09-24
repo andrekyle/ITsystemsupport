@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 
 import { Select } from "./Select";
 import { SlideEditHistory } from "../lib/slideEditHistory";
@@ -32,6 +32,7 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
   const [tableCols, setTableCols] = useState("3");
   const [menu, setMenu] = useState<"text" | "paragraph" | "table" | "image" | null>(null);
   const [selectedImage, setSelectedImage] = useState<HTMLImageElement | null>(null);
+  const [imageRect, setImageRect] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const [selectedCell, setSelectedCell] = useState<HTMLTableCellElement | null>(null);
   const [imageWidth, setImageWidth] = useState(60);
   const [imageHeight, setImageHeight] = useState(260);
@@ -127,6 +128,24 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
     };
   }, [enabled]);
   useEffect(() => {
+    if (!selectedImage?.isConnected) { setImageRect(null); return; }
+    const measure = () => {
+      if (!selectedImage.isConnected) { setImageRect(null); return; }
+      const rect = selectedImage.getBoundingClientRect();
+      setImageRect({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(selectedImage);
+    window.addEventListener("resize", measure);
+    document.addEventListener("scroll", measure, true);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+      document.removeEventListener("scroll", measure, true);
+    };
+  }, [selectedImage]);
+  useEffect(() => {
     if (!enabled) return;
     let draggedImage: HTMLImageElement | null = null;
     const inspect = (event: MouseEvent) => {
@@ -173,18 +192,23 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
         if (position) { targetRange = document.createRange(); targetRange.setStart(position.offsetNode, position.offset); targetRange.collapse(true); }
       }
       if (targetRange && editor.contains(targetRange.startContainer)) targetRange.insertNode(draggedImage);
+      const rect = draggedImage.getBoundingClientRect();
+      setImageRect({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
       notifyEditor(editor);
       draggedImage = null;
     };
+    const dragEnd = () => { draggedImage = null; };
     document.addEventListener("click", inspect);
     document.addEventListener("dragstart", dragStart);
     document.addEventListener("dragover", dragOver);
     document.addEventListener("drop", drop);
+    document.addEventListener("dragend", dragEnd);
     return () => {
       document.removeEventListener("click", inspect);
       document.removeEventListener("dragstart", dragStart);
       document.removeEventListener("dragover", dragOver);
       document.removeEventListener("drop", drop);
+      document.removeEventListener("dragend", dragEnd);
     };
   }, [enabled]);
   useEffect(() => {
@@ -335,7 +359,55 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
   const updateImage = (update: (image: HTMLImageElement) => void) => {
     if (!selectedImage?.isConnected) return;
     update(selectedImage);
+    const rect = selectedImage.getBoundingClientRect();
+    setImageRect({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
     notifyEditor(selectedImage.closest<HTMLElement>(EDITOR_SELECTOR));
+  };
+  const beginImageResize = (corner: "nw" | "ne" | "sw" | "se") => (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const image = selectedImage;
+    const editor = image?.closest<HTMLElement>(EDITOR_SELECTOR);
+    if (!image || !editor) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const start = image.getBoundingClientRect();
+    const editorWidth = Math.max(1, editor.getBoundingClientRect().width);
+    const horizontalDirection = corner.endsWith("e") ? 1 : -1;
+    const verticalDirection = corner.startsWith("s") ? 1 : -1;
+    const aspect = start.width / Math.max(1, start.height);
+    document.body.classList.add("resizing-slide-image");
+    const move = (pointer: PointerEvent) => {
+      const nextWidthPx = Math.max(80, Math.min(editorWidth, start.width + (pointer.clientX - startX) * horizontalDirection));
+      const nextWidth = Math.max(10, Math.min(100, nextWidthPx / editorWidth * 100));
+      image.style.width = `${nextWidth}%`;
+      image.style.maxWidth = "100%";
+      setImageWidth(Math.round(nextWidth));
+      if (cropImage) {
+        const nextHeight = Math.max(80, Math.min(900, start.height + (pointer.clientY - startY) * verticalDirection));
+        image.style.height = `${nextHeight}px`;
+        image.style.objectFit = "cover";
+        image.dataset.cropped = "true";
+        setImageHeight(Math.round(nextHeight));
+      } else {
+        image.style.height = "auto";
+        const measuredWidth = nextWidth / 100 * editorWidth;
+        const measuredHeight = measuredWidth / aspect;
+        setImageHeight(Math.round(measuredHeight));
+      }
+      const rect = image.getBoundingClientRect();
+      setImageRect({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
+    };
+    const end = () => {
+      document.body.classList.remove("resizing-slide-image");
+      document.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerup", end);
+      document.removeEventListener("pointercancel", end);
+      notifyEditor(editor);
+    };
+    document.addEventListener("pointermove", move);
+    document.addEventListener("pointerup", end);
+    document.addEventListener("pointercancel", end);
   };
   const updateColumnWidth = (width: number) => {
     const activeCell = selectedCell;
@@ -439,9 +511,10 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
         <label className="slide-tool-range">Height <input type="range" min="100" max="650" step="5" value={imageHeight} disabled={!cropImage} onChange={e => { const value = Number(e.target.value); setImageHeight(value); updateImage(image => { image.style.height = `${value}px`; }); }} /> {cropImage ? `${imageHeight}px` : "auto"}</label>
         <label><input type="checkbox" checked={cropImage} onChange={e => { const checked = e.target.checked; setCropImage(checked); updateImage(image => { image.dataset.cropped = String(checked); image.style.height = checked ? `${imageHeight}px` : "auto"; image.style.objectFit = checked ? "cover" : "contain"; }); }} /> Crop to frame</label>
         {cropImage && <><label className="slide-tool-range">Crop left/right <input type="range" min="0" max="100" value={cropX} onChange={e => { const value = Number(e.target.value); setCropX(value); updateImage(image => { image.style.objectPosition = `${value}% ${cropY}%`; }); }} /></label><label className="slide-tool-range">Crop up/down <input type="range" min="0" max="100" value={cropY} onChange={e => { const value = Number(e.target.value); setCropY(value); updateImage(image => { image.style.objectPosition = `${cropX}% ${value}%`; }); }} /></label></>}
-        <button type="button" onClick={() => updateImage(image => { image.style.float = "left"; image.style.display = "inline"; image.style.margin = "8px 16px 8px 0"; })}>Wrap left</button>
-        <button type="button" onClick={() => updateImage(image => { image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px auto"; })}>Centre</button>
-        <button type="button" onClick={() => updateImage(image => { image.style.float = "right"; image.style.display = "inline"; image.style.margin = "8px 0 8px 16px"; })}>Wrap right</button>
+        <strong className="slide-image-wrap-label">Text wrapping</strong>
+        <button type="button" onClick={() => updateImage(image => { image.style.float = "left"; image.style.display = "inline"; image.style.margin = "8px 16px 8px 0"; })}>Wrap text right</button>
+        <button type="button" onClick={() => updateImage(image => { image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px auto"; })}>No wrap · centre</button>
+        <button type="button" onClick={() => updateImage(image => { image.style.float = "right"; image.style.display = "inline"; image.style.margin = "8px 0 8px 16px"; })}>Wrap text left</button>
         <button type="button" className="danger" onClick={() => { if (!selectedImage) return; const editor = selectedImage.closest<HTMLElement>(EDITOR_SELECTOR); selectedImage.remove(); setSelectedImage(null); setMenu(null); notifyEditor(editor); }}>Remove image</button>
         <small>Drag the image inside the lesson to move it to another insertion point.</small>
       </> : <>
@@ -449,6 +522,9 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
         {commands.filter(([cmd]) => ["justifyRight", "justifyFull", "insertUnorderedList", "indent", "outdent", "selectAll"].includes(cmd)).map(([cmd, label]) => commandButton(cmd, label))}
       </>}
       {!ready && <small>Click or select slide text to start formatting.</small>}
+    </div>}
+    {selectedImage && imageRect && <div className="slide-image-selection" aria-label="Selected image resize frame" style={{ left: imageRect.left, top: imageRect.top, width: imageRect.width, height: imageRect.height }}>
+      {(["nw", "ne", "sw", "se"] as const).map(corner => <button key={corner} type="button" className={`slide-image-handle ${corner}`} aria-label={`Resize image from ${corner} corner`} onPointerDown={beginImageResize(corner)} />)}
     </div>}
   </div>;
 }

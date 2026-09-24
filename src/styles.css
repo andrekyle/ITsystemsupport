@@ -14097,6 +14097,14 @@ td.cal-row-actions {
 .slide-tool-range { display:inline-flex; align-items:center; gap:6px; }
 .slide-tool-range input[type="range"] { width:130px; accent-color:var(--azure); }
 .slide-tool-range input[type="number"] { width:74px; min-height:30px; padding:4px 7px; border:1px solid var(--tool-border); border-radius:5px; background:var(--tool-bg); color:var(--tool-ink); }
+.slide-image-wrap-label { font-size:12px; font-weight:600; color:var(--tool-ink); }
+.slide-image-selection { position:fixed; z-index:120; box-sizing:border-box; border:2px solid var(--azure); pointer-events:none; }
+.slide-image-handle { position:absolute; width:13px !important; min-width:13px !important; height:13px !important; padding:0 !important; border:2px solid #fff !important; border-radius:2px !important; background:var(--azure) !important; box-shadow:0 1px 4px #0008 !important; pointer-events:auto; touch-action:none; }
+.slide-image-handle.nw { left:-8px; top:-8px; cursor:nwse-resize; }
+.slide-image-handle.ne { right:-8px; top:-8px; cursor:nesw-resize; }
+.slide-image-handle.sw { left:-8px; bottom:-8px; cursor:nesw-resize; }
+.slide-image-handle.se { right:-8px; bottom:-8px; cursor:nwse-resize; }
+body.resizing-slide-image { cursor:nwse-resize !important; user-select:none !important; }
 .slide-text-options small { flex-basis: 100%; }
 .slide-text-options .slide-tool-icon,
 .slide-text-options .slide-tool-colour { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 32px; width: 32px; height: 32px; padding: 4px; box-sizing: border-box; border: 0; border-radius: 4px; background: transparent; color: var(--tool-ink); font: 20px Arial, sans-serif; cursor: pointer; }
@@ -14128,7 +14136,7 @@ td.cal-row-actions {
 [data-slide-rich] ul { list-style:disc outside; }
 [data-slide-rich] ol { list-style:decimal outside; }
 [data-slide-rich] li { display:list-item; margin:0.25em 0; padding-left:0.25em; }
-[data-slide-rich] img { max-width:100%; cursor:grab; user-select:none; }
+[data-slide-rich] img { max-width:100%; cursor:move; user-select:none; -webkit-user-drag:element; }
 [data-slide-rich] img:active { cursor:grabbing; }
 [data-slide-rich][contenteditable="true"] img:hover { outline:2px solid var(--azure); outline-offset:3px; }
 [data-slide-rich]::after { display:block; clear:both; content:""; }
