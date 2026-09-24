@@ -304,9 +304,9 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
   const alignmentIcon = (center = false) => <svg viewBox="0 0 24 24" aria-hidden="true"><path d={center ? "M3 5h18M6 11h12M9 17h6" : "M3 5h18M3 11h12M3 17h6"} /></svg>;
   const menuToggle = (kind: "text" | "paragraph" | "table", label: string, symbol: ReactNode) => <button type="button" className={`slide-tool-menu slide-tool-menu-${kind}`} aria-label={label} title={label}
     aria-expanded={menu === kind} aria-controls={`slide-${kind}-options`} onMouseDown={e => e.preventDefault()}
-    onClick={() => setMenu(menu === kind ? null : kind)}><span className="slide-tool-menu-label">{symbol}</span><span className="slide-tool-chevron" aria-hidden="true">⌄</span></button>;
-  const tableIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="1" /><path d="M3.5 9h17M3.5 14h17M9 4v16M15 4v16" /></svg>;
-  const paragraphIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h10M5 11h14M7 16h10" /><path d="m3 5-1.5 2L3 9M21 5l1.5 2L21 9" /></svg>;
+    onClick={() => setMenu(menu === kind ? null : kind)}><span className="slide-tool-menu-label">{symbol}</span>{kind === "text" && <span className="slide-tool-chevron" aria-hidden="true">⌄</span>}</button>;
+  const tableIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5" /><path d="M12 4v16M4 12h16" /></svg>;
+  const paragraphIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h11M9 12h8M9 19h11" /><path d="M4 5v14m0-14L2 7m2-2 2 2m-2 12-2-2m2 2 2-2" /></svg>;
   return <div className="slide-text-toolbar" ref={bar} onKeyDown={e => { if (e.key === "Escape") { setMenu(null); host.current?.focus(); } }}>
     <div className="slide-text-controls" role="group" aria-label="Slide text formatting">
       <span className="slide-tool-group">

@@ -14045,12 +14045,14 @@ td.cal-row-actions {
 .slide-text-controls u { text-underline-offset: 5px; }
 .slide-text-controls svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.55; stroke-linecap: square; stroke-linejoin: miter; }
 .slide-text-controls svg text { fill: currentColor; stroke: none; font: 7px Arial, sans-serif; }
-.slide-text-controls .slide-tool-menu { flex: 0 0 auto; width: auto; min-width: 42px; gap: 4px; padding: 5px 6px; font: 500 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-.slide-text-controls .slide-tool-menu-table { min-width: 46px; }
+.slide-text-controls .slide-tool-menu { flex: 0 0 auto; width: auto; min-width: 30px; gap: 4px; padding: 5px; font: 500 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.slide-text-controls .slide-tool-menu-text { min-width: 42px; }
+.slide-text-controls .slide-tool-menu-table { min-width: 30px; }
 .slide-text-controls .slide-tool-menu-label { display: inline-flex; align-items: center; }
 .slide-text-controls .slide-tool-chevron { position: relative; top: -2px; font-size: 12px; line-height: 1; color: color-mix(in srgb, var(--tool-ink) 72%, transparent); }
 .slide-text-controls .slide-tool-menu:hover:not(:disabled),
 .slide-text-controls .slide-tool-menu[aria-expanded="true"] { background: var(--tool-hover); }
+.slide-text-controls .slide-tool-menu[aria-expanded="true"] { color: var(--azure); }
 .slide-text-toolbar button:hover:not(:disabled), .slide-text-toolbar button[aria-pressed="true"], .slide-text-toolbar button[aria-expanded="true"] { background: var(--tool-hover); color: var(--tool-ink); box-shadow: none; }
 .slide-text-toolbar :disabled { opacity: .45; cursor: not-allowed; }
 .slide-text-toolbar button:focus, .slide-text-toolbar select:focus, .slide-text-toolbar input:focus { outline: none; box-shadow: none; }
@@ -14120,7 +14122,7 @@ td.cal-row-actions {
 }
 .slide-quiz-count { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ink-2); }
 .slide-quiz-count .nice-select-btn { min-height: 32px; padding: 5px 9px; border-radius: 11px; }
-@media (max-width: 640px) { .slide-text-toolbar { position: static; padding: 5px; } .slide-tool-group { padding: 0 3px; } .slide-text-controls button { flex-basis: 29px; height: 30px; padding: 4px; font-size: 18px; min-width: 27px; } .slide-text-controls .slide-tool-menu { flex-basis: auto; padding: 4px 5px; font-size: 12px; } .slide-text-controls .slide-tool-menu-table { min-width: 43px; } .slide-text-controls svg { width: 18px; height: 18px; } }
+@media (max-width: 640px) { .slide-text-toolbar { position: static; padding: 5px; } .slide-tool-group { padding: 0 3px; } .slide-text-controls button { flex-basis: 29px; height: 30px; padding: 4px; font-size: 18px; min-width: 27px; } .slide-text-controls .slide-tool-menu { flex-basis: auto; min-width: 29px; padding: 4px; font-size: 12px; } .slide-text-controls .slide-tool-menu-text { min-width: 40px; } .slide-text-controls svg { width: 18px; height: 18px; } }
 
 /* Shared compact dropdown pill used throughout the application. */
 .nice-select { min-width: 114px; }
