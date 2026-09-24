@@ -7176,19 +7176,19 @@ a.plan-ppt:hover {
 }
 .btn.ghost.sm.save-cloud-action.active {
   border: 0;
-  background: #f52236;
-  color: #fff;
-  font-weight: 500;
-  box-shadow: 0 5px 14px rgba(245, 34, 54, 0.24);
+  background: #c51f32;
+  color: rgba(255, 255, 255, 0.84);
+  font-weight: 400;
+  box-shadow: 0 5px 14px rgba(145, 17, 35, 0.22);
 }
 .btn.ghost.sm.save-cloud-action.active:hover:not(:disabled) {
   border: 0;
-  background: #dc1529;
-  color: #fff;
-  box-shadow: 0 6px 18px rgba(245, 34, 54, 0.32);
+  background: #ae192a;
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 18px rgba(145, 17, 35, 0.3);
 }
 .btn.ghost.sm.save-cloud-action.active:focus-visible {
-  outline: 2px solid rgba(245, 34, 54, 0.35);
+  outline: 2px solid rgba(197, 31, 50, 0.35);
   outline-offset: 2px;
 }
 .lesson-p.editable,
