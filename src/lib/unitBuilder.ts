@@ -572,6 +572,19 @@ function lessonPlanFromEnhancement(plan: UnitContent["lessonPlan"], unit: UnitSt
     }))
     .filter(section => section.rows.length);
   if (sections.reduce((count, section) => count + section.rows.length, 0) < 3) return undefined;
+  // A lesson plan is a concise facilitation schedule, not a second copy of the
+  // learner manual. Reject verbose AI plans so the compact local template is
+  // used instead of pouring lesson paragraphs into schedule cells.
+  const instructionalRows = sections.flatMap(section => section.rows).filter(row => !row.break);
+  const isVerbose = instructionalRows.some(row => {
+    const items = [...(row.text ?? []), ...(row.bullets ?? [])];
+    const administrative = /room set|meet|greet|alignment|register|welcome/i.test(row.title);
+    return (!administrative && (row.text?.length ?? 0) > 0)
+      || items.length > 3
+      || items.some(item => item.length > 280)
+      || items.join(" ").length > 500;
+  });
+  if (isVerbose) return undefined;
   const template = getContent("8252")?.lessonPlan;
   const details = (plan?.details ?? [])
     .filter(detail => nonemptyString(detail?.label) && nonemptyString(detail?.value))
@@ -605,15 +618,14 @@ function lessonPlanFromTemplate(unit: UnitStandard, topics: UnitTopic[], minutes
   ]);
   const topicMinutes = Math.max(10, Math.floor((minutes - 120) / Math.max(1, topics.length)));
   const topicRows = topics.map((topic, index) => {
-    // Show the facilitator the actual supplied material for this topic instead of a
-    // generic placeholder sentence, so the plan reflects what was pasted.
-    const detail = topic.paragraphs.map(p => p.trim()).filter(Boolean);
     return {
       time: `${topicMinutes} minutes`,
       title: `${topic.heading} — Facilitator & Class`,
-      bullets: [`Read through the learner material and facilitate discussion on ${topic.heading.toLowerCase()}.`],
-      text: detail.length ? detail : undefined,
-      resources: [`LM p${Math.max(4, index + 4)}`],
+      bullets: [
+        `Guide learners through the section on ${topic.heading.toLowerCase()} and explain its key ideas.`,
+        "Use a relevant workplace example, invite questions and check understanding before continuing.",
+      ],
+      resources: [`Learner manual — section ${index + 1}`],
     };
   });
   return {
