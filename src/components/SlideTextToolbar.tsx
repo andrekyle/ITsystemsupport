@@ -36,8 +36,6 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
   const [selectedCell, setSelectedCell] = useState<HTMLTableCellElement | null>(null);
   const [imageHeight, setImageHeight] = useState(260);
   const [cropImage, setCropImage] = useState(false);
-  const [cropX, setCropX] = useState(50);
-  const [cropY, setCropY] = useState(50);
   const [columnWidth, setColumnWidth] = useState(180);
   const [rowHeight, setRowHeight] = useState(56);
   const imageInput = useRef<HTMLInputElement>(null);
@@ -146,7 +144,7 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
   }, [selectedImage]);
   useEffect(() => {
     if (!enabled) return;
-    let drag: { image: HTMLImageElement; editor: HTMLElement; startX: number; startY: number; moved: boolean; ghost: HTMLImageElement | null; dropRange: Range | null } | null = null;
+    let drag: { image: HTMLImageElement; editor: HTMLElement; startX: number; startY: number; grabX: number; grabY: number; moved: boolean; ghost: HTMLImageElement | null; marker: HTMLDivElement | null; dropRange: Range | null; frame: number; x: number; y: number } | null = null;
     const inspect = (event: MouseEvent) => {
       const target = event.target;
       if (!(target instanceof Element)) return;
@@ -159,9 +157,6 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       if (image instanceof HTMLImageElement) {
         setImageHeight(Math.round(parseFloat(image.style.height) || image.getBoundingClientRect().height || 260));
         setCropImage(image.dataset.cropped === "true");
-        const position = image.style.objectPosition.match(/([\d.]+)%\s+([\d.]+)%/);
-        setCropX(Number(position?.[1] ?? 50));
-        setCropY(Number(position?.[2] ?? 50));
         setMenu("image");
       } else if (cell instanceof HTMLTableCellElement) {
         setColumnWidth(Math.round(cell.getBoundingClientRect().width));
@@ -177,6 +172,32 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       }
       return result;
     };
+    const caretBox = (range: Range): { x: number; y: number; height: number } | null => {
+      let rect = range.getBoundingClientRect();
+      let x = rect.left;
+      if (rect.height < 2 && range.startContainer.nodeType === Node.TEXT_NODE) {
+        const text = range.startContainer.textContent ?? "";
+        const probe = document.createRange();
+        if (range.startOffset < text.length) {
+          probe.setStart(range.startContainer, range.startOffset);
+          probe.setEnd(range.startContainer, range.startOffset + 1);
+          rect = probe.getBoundingClientRect();
+          x = rect.left;
+        } else if (range.startOffset > 0) {
+          probe.setStart(range.startContainer, range.startOffset - 1);
+          probe.setEnd(range.startContainer, range.startOffset);
+          rect = probe.getBoundingClientRect();
+          x = rect.right;
+        }
+      }
+      if (rect.height < 2) {
+        const parent = range.startContainer instanceof HTMLElement ? range.startContainer : range.startContainer.parentElement;
+        const parentRect = parent?.getBoundingClientRect();
+        if (!parentRect) return null;
+        return { x: parentRect.left, y: parentRect.top, height: Math.max(20, parentRect.height) };
+      }
+      return { x, y: rect.top, height: rect.height };
+    };
     const pointerDown = (event: PointerEvent) => {
       const target = event.target;
       if (!(target instanceof HTMLImageElement) || !target.closest(EDITOR_SELECTOR)) return;
@@ -188,11 +209,9 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       setSelectedImage(target);
       setImageHeight(Math.round(parseFloat(target.style.height) || target.getBoundingClientRect().height || 260));
       setCropImage(target.dataset.cropped === "true");
-      const position = target.style.objectPosition.match(/([\d.]+)%\s+([\d.]+)%/);
-      setCropX(Number(position?.[1] ?? 50));
-      setCropY(Number(position?.[2] ?? 50));
       setMenu("image");
-      drag = { image: target, editor, startX: event.clientX, startY: event.clientY, moved: false, ghost: null, dropRange: null };
+      const rect = target.getBoundingClientRect();
+      drag = { image: target, editor, startX: event.clientX, startY: event.clientY, grabX: event.clientX - rect.left, grabY: event.clientY - rect.top, moved: false, ghost: null, marker: null, dropRange: null, frame: 0, x: event.clientX, y: event.clientY };
     };
     const pointerMove = (event: PointerEvent) => {
       if (!drag) return;
@@ -201,27 +220,42 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       if (!drag.ghost) {
         const rect = drag.image.getBoundingClientRect();
         drag.ghost = drag.image.cloneNode(true) as HTMLImageElement;
-        Object.assign(drag.ghost.style, { position: "fixed", zIndex: "200", width: `${rect.width}px`, height: `${rect.height}px`, maxWidth: "none", margin: "0", opacity: "0.68", pointerEvents: "none", boxShadow: "0 10px 30px #0008" });
+        Object.assign(drag.ghost.style, { position: "fixed", left: "0", top: "0", zIndex: "200", width: `${rect.width}px`, height: `${rect.height}px`, maxWidth: "none", margin: "0", opacity: "0.68", pointerEvents: "none", boxShadow: "0 10px 30px #0008" });
         document.body.appendChild(drag.ghost);
+        drag.marker = document.createElement("div");
+        drag.marker.className = "slide-image-drop-marker";
+        document.body.appendChild(drag.marker);
         drag.image.classList.add("is-being-moved");
         document.body.classList.add("moving-slide-image");
       }
       drag.moved = true;
-      drag.ghost.style.left = `${event.clientX + 12}px`;
-      drag.ghost.style.top = `${event.clientY + 12}px`;
-      const candidate = rangeAtPoint(event.clientX, event.clientY);
-      drag.dropRange = candidate && drag.editor.contains(candidate.startContainer) ? candidate : null;
-      if (drag.dropRange) {
-        const selection = window.getSelection();
-        selection?.removeAllRanges();
-        selection?.addRange(drag.dropRange);
-      }
+      drag.x = event.clientX;
+      drag.y = event.clientY;
+      if (drag.frame) return;
+      drag.frame = requestAnimationFrame(() => {
+        if (!drag) return;
+        drag.frame = 0;
+        drag.ghost!.style.transform = `translate3d(${drag.x - drag.grabX}px, ${drag.y - drag.grabY}px, 0)`;
+        const edge = 70;
+        const speed = drag.y < edge ? -Math.ceil((edge - drag.y) / 5) : drag.y > innerHeight - edge ? Math.ceil((drag.y - (innerHeight - edge)) / 5) : 0;
+        if (speed) window.scrollBy(0, speed);
+        const candidate = rangeAtPoint(drag.x, drag.y);
+        drag.dropRange = candidate && drag.editor.contains(candidate.startContainer) ? candidate : null;
+        const box = drag.dropRange ? caretBox(drag.dropRange) : null;
+        if (drag.marker) {
+          drag.marker.style.display = box ? "block" : "none";
+          if (box) Object.assign(drag.marker.style, { left: `${box.x - 1}px`, top: `${box.y}px`, height: `${Math.max(18, box.height)}px` });
+        }
+      });
     };
-    const finishDrag = () => {
+    const finishDrag = (event: PointerEvent) => {
       if (!drag) return;
       const current = drag;
-      if (current.moved && current.dropRange) {
-        current.dropRange.insertNode(current.image);
+      if (current.frame) cancelAnimationFrame(current.frame);
+      const exactRange = event.type === "pointercancel" ? null : rangeAtPoint(event.clientX, event.clientY);
+      const finalRange = exactRange && current.editor.contains(exactRange.startContainer) ? exactRange : current.dropRange;
+      if (current.moved && finalRange && event.type !== "pointercancel") {
+        finalRange.insertNode(current.image);
         const caret = document.createRange();
         caret.setStartAfter(current.image);
         caret.collapse(true);
@@ -231,6 +265,7 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
         notifyEditor(current.editor);
       }
       current.ghost?.remove();
+      current.marker?.remove();
       current.image.classList.remove("is-being-moved");
       document.body.classList.remove("moving-slide-image");
       const rect = current.image.getBoundingClientRect();
@@ -253,7 +288,9 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       document.removeEventListener("pointerup", finishDrag);
       document.removeEventListener("pointercancel", finishDrag);
       document.removeEventListener("dragstart", blockNativeDrag);
+      if (drag?.frame) cancelAnimationFrame(drag.frame);
       drag?.ghost?.remove();
+      drag?.marker?.remove();
       document.body.classList.remove("moving-slide-image");
     };
   }, [enabled]);
@@ -552,7 +589,6 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
         {selectedCell && <small>Sizes apply to the selected cell’s complete column or row.</small>}
       </> : menu === "image" ? <>
         <label><input type="checkbox" checked={cropImage} onChange={e => { const checked = e.target.checked; setCropImage(checked); updateImage(image => { image.dataset.cropped = String(checked); image.style.height = checked ? `${imageHeight}px` : "auto"; image.style.objectFit = checked ? "cover" : "contain"; }); }} /> Crop to frame</label>
-        {cropImage && <><label className="slide-tool-range">Crop left/right <input type="range" min="0" max="100" value={cropX} onChange={e => { const value = Number(e.target.value); setCropX(value); updateImage(image => { image.style.objectPosition = `${value}% ${cropY}%`; }); }} /></label><label className="slide-tool-range">Crop up/down <input type="range" min="0" max="100" value={cropY} onChange={e => { const value = Number(e.target.value); setCropY(value); updateImage(image => { image.style.objectPosition = `${cropX}% ${value}%`; }); }} /></label></>}
         <strong className="slide-image-wrap-label">Text wrapping</strong>
         <button type="button" onClick={() => updateImage(image => { image.style.float = "left"; image.style.display = "inline"; image.style.margin = "8px 16px 8px 0"; })}>Wrap text right</button>
         <button type="button" onClick={() => updateImage(image => { image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px auto"; })}>No wrap · centre</button>

@@ -14106,6 +14106,7 @@ td.cal-row-actions {
 .slide-image-handle.se { right:-8px; bottom:-8px; cursor:nwse-resize; }
 body.resizing-slide-image { cursor:nwse-resize !important; user-select:none !important; }
 body.moving-slide-image, body.moving-slide-image * { cursor:grabbing !important; user-select:none !important; }
+.slide-image-drop-marker { position:fixed; z-index:210; width:3px; min-height:18px; border-radius:2px; background:var(--azure); box-shadow:0 0 0 1px #fff, 0 0 8px color-mix(in srgb, var(--azure) 75%, transparent); pointer-events:none; }
 .slide-text-options small { flex-basis: 100%; }
 .slide-text-options .slide-tool-icon,
 .slide-text-options .slide-tool-colour { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 32px; width: 32px; height: 32px; padding: 4px; box-sizing: border-box; border: 0; border-radius: 4px; background: transparent; color: var(--tool-ink); font: 20px Arial, sans-serif; cursor: pointer; }
