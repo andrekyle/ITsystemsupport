@@ -147,7 +147,7 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
   }, [selectedImage]);
   useEffect(() => {
     if (!enabled) return;
-    let draggedImage: HTMLImageElement | null = null;
+    let drag: { image: HTMLImageElement; editor: HTMLElement; startX: number; startY: number; moved: boolean; ghost: HTMLImageElement | null; dropRange: Range | null } | null = null;
     const inspect = (event: MouseEvent) => {
       const target = event.target;
       if (!(target instanceof Element)) return;
@@ -170,45 +170,92 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
         setRowHeight(Math.round(cell.parentElement?.getBoundingClientRect().height ?? 56));
       }
     };
-    const dragStart = (event: DragEvent) => {
+    const rangeAtPoint = (x: number, y: number) => {
+      const doc = document as Document & { caretRangeFromPoint?: (x: number, y: number) => Range | null; caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null };
+      let result = doc.caretRangeFromPoint?.(x, y) ?? null;
+      if (!result) {
+        const position = doc.caretPositionFromPoint?.(x, y);
+        if (position) { result = document.createRange(); result.setStart(position.offsetNode, position.offset); result.collapse(true); }
+      }
+      return result;
+    };
+    const pointerDown = (event: PointerEvent) => {
       const target = event.target;
       if (!(target instanceof HTMLImageElement) || !target.closest(EDITOR_SELECTOR)) return;
-      draggedImage = target;
-      event.dataTransfer?.setData("text/plain", "lesson-image");
-      if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
-    };
-    const dragOver = (event: DragEvent) => {
-      if (draggedImage && event.target instanceof Element && event.target.closest(EDITOR_SELECTOR)) event.preventDefault();
-    };
-    const drop = (event: DragEvent) => {
-      if (!draggedImage || !(event.target instanceof Element)) return;
-      const editor = event.target.closest<HTMLElement>(EDITOR_SELECTOR);
-      if (!editor) return;
+      const editor = target.closest<HTMLElement>(EDITOR_SELECTOR);
+      if (!editor || event.button !== 0) return;
       event.preventDefault();
-      const doc = document as Document & { caretRangeFromPoint?: (x: number, y: number) => Range | null; caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null };
-      let targetRange = doc.caretRangeFromPoint?.(event.clientX, event.clientY) ?? null;
-      if (!targetRange) {
-        const position = doc.caretPositionFromPoint?.(event.clientX, event.clientY);
-        if (position) { targetRange = document.createRange(); targetRange.setStart(position.offsetNode, position.offset); targetRange.collapse(true); }
-      }
-      if (targetRange && editor.contains(targetRange.startContainer)) targetRange.insertNode(draggedImage);
-      const rect = draggedImage.getBoundingClientRect();
-      setImageRect({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
-      notifyEditor(editor);
-      draggedImage = null;
+      setSelectedImage(target);
+      setImageWidth(Math.round(parseFloat(target.style.width) || target.getBoundingClientRect().width / Math.max(1, editor.getBoundingClientRect().width) * 100));
+      setImageHeight(Math.round(parseFloat(target.style.height) || target.getBoundingClientRect().height || 260));
+      setCropImage(target.dataset.cropped === "true");
+      const position = target.style.objectPosition.match(/([\d.]+)%\s+([\d.]+)%/);
+      setCropX(Number(position?.[1] ?? 50));
+      setCropY(Number(position?.[2] ?? 50));
+      setMenu("image");
+      drag = { image: target, editor, startX: event.clientX, startY: event.clientY, moved: false, ghost: null, dropRange: null };
     };
-    const dragEnd = () => { draggedImage = null; };
+    const pointerMove = (event: PointerEvent) => {
+      if (!drag) return;
+      if (!drag.moved && Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 5) return;
+      event.preventDefault();
+      if (!drag.ghost) {
+        const rect = drag.image.getBoundingClientRect();
+        drag.ghost = drag.image.cloneNode(true) as HTMLImageElement;
+        Object.assign(drag.ghost.style, { position: "fixed", zIndex: "200", width: `${rect.width}px`, height: `${rect.height}px`, maxWidth: "none", margin: "0", opacity: "0.68", pointerEvents: "none", boxShadow: "0 10px 30px #0008" });
+        document.body.appendChild(drag.ghost);
+        drag.image.classList.add("is-being-moved");
+        document.body.classList.add("moving-slide-image");
+      }
+      drag.moved = true;
+      drag.ghost.style.left = `${event.clientX + 12}px`;
+      drag.ghost.style.top = `${event.clientY + 12}px`;
+      const candidate = rangeAtPoint(event.clientX, event.clientY);
+      drag.dropRange = candidate && drag.editor.contains(candidate.startContainer) ? candidate : null;
+      if (drag.dropRange) {
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(drag.dropRange);
+      }
+    };
+    const finishDrag = () => {
+      if (!drag) return;
+      const current = drag;
+      if (current.moved && current.dropRange) {
+        current.dropRange.insertNode(current.image);
+        const caret = document.createRange();
+        caret.setStartAfter(current.image);
+        caret.collapse(true);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(caret);
+        notifyEditor(current.editor);
+      }
+      current.ghost?.remove();
+      current.image.classList.remove("is-being-moved");
+      document.body.classList.remove("moving-slide-image");
+      const rect = current.image.getBoundingClientRect();
+      setImageRect({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
+      drag = null;
+    };
+    const blockNativeDrag = (event: DragEvent) => {
+      if (event.target instanceof HTMLImageElement && event.target.closest(EDITOR_SELECTOR)) event.preventDefault();
+    };
     document.addEventListener("click", inspect);
-    document.addEventListener("dragstart", dragStart);
-    document.addEventListener("dragover", dragOver);
-    document.addEventListener("drop", drop);
-    document.addEventListener("dragend", dragEnd);
+    document.addEventListener("pointerdown", pointerDown);
+    document.addEventListener("pointermove", pointerMove);
+    document.addEventListener("pointerup", finishDrag);
+    document.addEventListener("pointercancel", finishDrag);
+    document.addEventListener("dragstart", blockNativeDrag);
     return () => {
       document.removeEventListener("click", inspect);
-      document.removeEventListener("dragstart", dragStart);
-      document.removeEventListener("dragover", dragOver);
-      document.removeEventListener("drop", drop);
-      document.removeEventListener("dragend", dragEnd);
+      document.removeEventListener("pointerdown", pointerDown);
+      document.removeEventListener("pointermove", pointerMove);
+      document.removeEventListener("pointerup", finishDrag);
+      document.removeEventListener("pointercancel", finishDrag);
+      document.removeEventListener("dragstart", blockNativeDrag);
+      drag?.ghost?.remove();
+      document.body.classList.remove("moving-slide-image");
     };
   }, [enabled]);
   useEffect(() => {
