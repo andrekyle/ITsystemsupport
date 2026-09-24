@@ -302,22 +302,32 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       onMouseDown={e => e.preventDefault()} onClick={() => run(cmd)}>{icon ?? label}</button>
   );
   const alignmentIcon = (center = false) => <svg viewBox="0 0 24 24" aria-hidden="true"><path d={center ? "M3 5h18M6 11h12M9 17h6" : "M3 5h18M3 11h12M3 17h6"} /></svg>;
-  const menuToggle = (kind: "text" | "paragraph" | "table", label: string, symbol: string) => <button type="button" className={`slide-tool-menu slide-tool-menu-${kind}`} aria-label={label} title={label}
+  const menuToggle = (kind: "text" | "paragraph" | "table", label: string, symbol: ReactNode) => <button type="button" className={`slide-tool-menu slide-tool-menu-${kind}`} aria-label={label} title={label}
     aria-expanded={menu === kind} aria-controls={`slide-${kind}-options`} onMouseDown={e => e.preventDefault()}
     onClick={() => setMenu(menu === kind ? null : kind)}><span className="slide-tool-menu-label">{symbol}</span><span className="slide-tool-chevron" aria-hidden="true">⌄</span></button>;
+  const tableIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="1" /><path d="M3.5 9h17M3.5 14h17M9 4v16M15 4v16" /></svg>;
+  const paragraphIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h10M5 11h14M7 16h10" /><path d="m3 5-1.5 2L3 9M21 5l1.5 2L21 9" /></svg>;
   return <div className="slide-text-toolbar" ref={bar} onKeyDown={e => { if (e.key === "Escape") { setMenu(null); host.current?.focus(); } }}>
     <div className="slide-text-controls" role="group" aria-label="Slide text formatting">
-      {commandButton("undo", "Undo", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 4 10l5 5M4 10h10a6 6 0 0 1 0 12" transform="translate(0 -2)" /></svg>)}
-      {commandButton("redo", "Redo", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5 5 5-5 5m5-5H10a6 6 0 0 0 0 12" transform="translate(0 -2)" /></svg>)}
-      {commandButton("bold", "Bold", <strong aria-hidden="true">B</strong>)}
-      {commandButton("italic", "Italic", <i aria-hidden="true">i</i>)}
-      {commandButton("underline", "Underline", <u aria-hidden="true">U</u>)}
-      {menuToggle("text", "Font and text options", "A")}
-      {commandButton("justifyLeft", "Align left", alignmentIcon())}
-      {commandButton("justifyCenter", "Centre", alignmentIcon(true))}
-      {commandButton("insertOrderedList", "Numbered list", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h12M9 12h12M9 19h12" /><text x="1" y="7">1</text><text x="1" y="14">2</text><text x="1" y="21">3</text></svg>)}
-      {menuToggle("table", "Table", "Table")}
-      {menuToggle("paragraph", "Paragraph and editing options", "\u00b6")}
+      <span className="slide-tool-group">
+        {commandButton("undo", "Undo", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 4 10l5 5M4 10h10a6 6 0 0 1 0 12" transform="translate(0 -2)" /></svg>)}
+        {commandButton("redo", "Redo", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5 5 5-5 5m5-5H10a6 6 0 0 0 0 12" transform="translate(0 -2)" /></svg>)}
+      </span>
+      <span className="slide-tool-group">
+        {commandButton("bold", "Bold", <strong aria-hidden="true">B</strong>)}
+        {commandButton("italic", "Italic", <i aria-hidden="true">i</i>)}
+        {commandButton("underline", "Underline", <u aria-hidden="true">U</u>)}
+        {menuToggle("text", "Font and text options", "A")}
+      </span>
+      <span className="slide-tool-group">
+        {commandButton("justifyLeft", "Align left", alignmentIcon())}
+        {commandButton("justifyCenter", "Centre", alignmentIcon(true))}
+        {commandButton("insertOrderedList", "Numbered list", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h12M9 12h12M9 19h12" /><text x="1" y="7">1</text><text x="1" y="14">2</text><text x="1" y="21">3</text></svg>)}
+      </span>
+      <span className="slide-tool-group">
+        {menuToggle("paragraph", "Paragraph and editing options", paragraphIcon)}
+        {menuToggle("table", "Insert table", tableIcon)}
+      </span>
     </div>
     {menu && <div id={`slide-${menu}-options`} className="slide-text-options" role="group" aria-label={menu === "text" ? "Font and text options" : menu === "table" ? "Table options" : "Paragraph and editing options"}>
       {menu === "text" ? <>
