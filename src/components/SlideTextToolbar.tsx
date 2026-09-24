@@ -34,7 +34,6 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
   const [selectedImage, setSelectedImage] = useState<HTMLImageElement | null>(null);
   const [imageRect, setImageRect] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const [selectedCell, setSelectedCell] = useState<HTMLTableCellElement | null>(null);
-  const [imageWidth, setImageWidth] = useState(60);
   const [imageHeight, setImageHeight] = useState(260);
   const [cropImage, setCropImage] = useState(false);
   const [cropX, setCropX] = useState(50);
@@ -158,7 +157,6 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       setSelectedImage(image instanceof HTMLImageElement ? image : null);
       setSelectedCell(cell instanceof HTMLTableCellElement ? cell : null);
       if (image instanceof HTMLImageElement) {
-        setImageWidth(Math.round(parseFloat(image.style.width) || image.getBoundingClientRect().width / Math.max(1, editor.getBoundingClientRect().width) * 100));
         setImageHeight(Math.round(parseFloat(image.style.height) || image.getBoundingClientRect().height || 260));
         setCropImage(image.dataset.cropped === "true");
         const position = image.style.objectPosition.match(/([\d.]+)%\s+([\d.]+)%/);
@@ -188,7 +186,6 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       target.draggable = false;
       target.setPointerCapture?.(event.pointerId);
       setSelectedImage(target);
-      setImageWidth(Math.round(parseFloat(target.style.width) || target.getBoundingClientRect().width / Math.max(1, editor.getBoundingClientRect().width) * 100));
       setImageHeight(Math.round(parseFloat(target.style.height) || target.getBoundingClientRect().height || 260));
       setCropImage(target.dataset.cropped === "true");
       const position = target.style.objectPosition.match(/([\d.]+)%\s+([\d.]+)%/);
@@ -399,7 +396,6 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
     restored.selection.addRange(caret);
     range.current = caret;
     setSelectedImage(img);
-    setImageWidth(60);
     setImageHeight(260);
     setCropImage(false);
     setMenu("image");
@@ -431,7 +427,6 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       const nextWidth = Math.max(10, Math.min(100, nextWidthPx / editorWidth * 100));
       image.style.width = `${nextWidth}%`;
       image.style.maxWidth = "100%";
-      setImageWidth(Math.round(nextWidth));
       if (cropImage) {
         const nextHeight = Math.max(80, Math.min(900, start.height + (pointer.clientY - startY) * verticalDirection));
         image.style.height = `${nextHeight}px`;
@@ -556,8 +551,6 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
         <label className="slide-tool-range">Row height <input type="number" min="28" max="600" step="1" disabled={!selectedCell} value={rowHeight} onChange={e => updateRowHeight(Math.max(28, Number(e.target.value) || 28))} /> px</label>
         {selectedCell && <small>Sizes apply to the selected cell’s complete column or row.</small>}
       </> : menu === "image" ? <>
-        <label className="slide-tool-range">Width <input type="range" min="20" max="100" step="1" value={imageWidth} onChange={e => { const value = Number(e.target.value); setImageWidth(value); updateImage(image => { image.style.width = `${value}%`; image.style.maxWidth = "100%"; }); }} /> {imageWidth}%</label>
-        <label className="slide-tool-range">Height <input type="range" min="100" max="650" step="5" value={imageHeight} disabled={!cropImage} onChange={e => { const value = Number(e.target.value); setImageHeight(value); updateImage(image => { image.style.height = `${value}px`; }); }} /> {cropImage ? `${imageHeight}px` : "auto"}</label>
         <label><input type="checkbox" checked={cropImage} onChange={e => { const checked = e.target.checked; setCropImage(checked); updateImage(image => { image.dataset.cropped = String(checked); image.style.height = checked ? `${imageHeight}px` : "auto"; image.style.objectFit = checked ? "cover" : "contain"; }); }} /> Crop to frame</label>
         {cropImage && <><label className="slide-tool-range">Crop left/right <input type="range" min="0" max="100" value={cropX} onChange={e => { const value = Number(e.target.value); setCropX(value); updateImage(image => { image.style.objectPosition = `${value}% ${cropY}%`; }); }} /></label><label className="slide-tool-range">Crop up/down <input type="range" min="0" max="100" value={cropY} onChange={e => { const value = Number(e.target.value); setCropY(value); updateImage(image => { image.style.objectPosition = `${cropX}% ${value}%`; }); }} /></label></>}
         <strong className="slide-image-wrap-label">Text wrapping</strong>
