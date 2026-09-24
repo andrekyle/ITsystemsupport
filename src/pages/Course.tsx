@@ -3275,7 +3275,7 @@ export function UnitPage({
         {isSaqaUnit(u.us) ? `Unit standard ${u.us}` : "Internal lesson"}
       </div>
       <h1 className="page-title">{u.title}</h1>
-      {isSuperUser && <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} onEditInline={() => { if (content) { setInlineUnit(structuredClone(content)); setEditMode(true); } }} onCancelInline={() => { setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { setInlineUnit(undefined); setLessonStep(0); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />}
+      {isSuperUser && <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} onCancelInline={() => { setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { setInlineUnit(undefined); setLessonStep(0); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />}
       <div className="meta-row">
         <span className="pill">
           <span className="ico">
@@ -4576,6 +4576,17 @@ export function UnitPage({
                     >
                       <Icon name="image" size={13} />
                       {figUploading ? "Saving image..." : "Add image"}
+                    </button>
+                  )}
+                  {builtUnit && isSuperUser && !inlineUnit && (
+                    <button
+                      type="button"
+                      className="btn ghost sm lesson-inline-edit-btn"
+                      aria-label="Edit content inline"
+                      title="Edit content inline"
+                      onClick={() => { if (content) { setInlineUnit(structuredClone(content)); setEditMode(true); } }}
+                    >
+                      <Icon name="pencil" size={14} />
                     </button>
                   )}
                   {isSuperUser && (

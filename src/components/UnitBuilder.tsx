@@ -56,7 +56,7 @@ export function effectiveBuiltContent(content:UnitContent, edits:LessonEdits):Un
   return next;
 }
 
-export function UnitBuilder({unit,content,edits,onSaved,onEditInline,inlineDraft,onCancelInline}:{unit:UnitStandard;content?:UnitContent;edits:LessonEdits;onSaved:()=>void;onEditInline:()=>void;inlineDraft?:UnitContent;onCancelInline:()=>void}) {
+export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInline}:{unit:UnitStandard;content?:UnitContent;edits:LessonEdits;onSaved:()=>void;inlineDraft?:UnitContent;onCancelInline:()=>void}) {
   const built=useBuiltUnit(unit.us);
   const [open,setOpen]=useState(false);  const [source,setSource]=useState(built?.source??"");
   const [ai,setAi]=useState(true);
@@ -173,7 +173,7 @@ export function UnitBuilder({unit,content,edits,onSaved,onEditInline,inlineDraft
       {inlineDraft ? <>
         <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(inlineDraft,edits),built?.source??source,built?.aiUsed??false);}catch(e){setError(String(e));}finally{setBusy("");}}}>{busy || "Save inline changes and update files"}</button>
         <button type="button" className="btn ghost" disabled={!!busy} onClick={onCancelInline}>Cancel inline changes</button>
-      </> : <button type="button" className="btn ghost" disabled={!!busy} onClick={onEditInline}>Edit content inline</button>}
+      </> : null}
       {!inlineDraft && <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setDraft(effectiveBuiltContent(content ?? { lesson: [], exercises: [], assignments: [], quiz: [] },edits));setOpen(true);setError("");}}>Manage tabs and structure</button>}
       {built&&!inlineDraft&&<>
         <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(content??built.content,edits),built.source,built.aiUsed);}catch(e){setError(String(e));}finally{setBusy("");}}}>Update PDF and PowerPoint</button>
