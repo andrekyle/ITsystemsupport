@@ -104,6 +104,52 @@ export const KNOWLEDGE_MARKS = [true, false, false, true, false, false];
 export const PRACTICAL_MARKS = [false, true, false, false, true, false];
 export const PROJECT_MARKS = [true, true, true, true, true, true];
 
+function evenlySpaced<T>(items: T[], limit: number): T[] {
+  if (items.length <= limit) return items;
+  if (limit <= 1) return items.slice(0, limit);
+  return Array.from({ length: limit }, (_, index) => items[Math.round(index * (items.length - 1) / (limit - 1))]);
+}
+
+/** Build the same evidence-led logbook structure used by the authored Module 1 units. */
+function logbookFromTopics(unit: UnitStandard, topics: UnitTopic[]): NonNullable<UnitContent["logbook"]> {
+  const headings = [...new Set(topics.map(topic => topic.heading.trim()).filter(Boolean))];
+  const knowledge = evenlySpaced(headings, 12).map(heading => ({
+    text: `The learner explains ${heading.toLowerCase()} and its relevance to the unit standard.`,
+    marks: KNOWLEDGE_MARKS.slice(),
+  }));
+  const practical = evenlySpaced(headings, Math.min(6, Math.max(1, Math.ceil(headings.length / 2)))).map(heading => ({
+    text: `Apply ${heading.toLowerCase()} in a realistic workplace task and produce evidence of the completed work.`,
+    marks: PRACTICAL_MARKS.slice(),
+  }));
+  const workplaceActivities = practical.map(row => row.text.replace(/ and produce evidence of the completed work\.$/, "."));
+  const projectTitle = "Project — Workplace evidence portfolio";
+  const projectText = `Complete a workplace project that demonstrates ${unit.title.toLowerCase()}. Include the work product, supporting records and a short explanation of how the requirements were met. Attach the portfolio here and mark it ${unit.us}.`;
+  return normalizeLogbookSpec(unit, {
+    assignmentTitle: "Assignment One",
+    programme: "Information Technology — Systems Support",
+    unitLabel: `${unit.us} — ${unit.title}`,
+    detailFields: STANDARD_LOGBOOK_DETAIL_FIELDS,
+    project: { time: "Own time", title: projectTitle, text: projectText, resource: "Logbook" },
+    knowledgeQuestions: knowledge,
+    practicalActivities: practical,
+    workplaceActivities,
+    workplaceEvidenceNote: "The workplace completes this section after observing the learner having complied with and completed the activities listed below.",
+    otherActivities: [{ activity: workplaceActivities[0] ?? `Apply ${unit.title.toLowerCase()} in the workplace.`, evidence: `${projectTitle}: ${projectText}` }],
+    otherEvidenceNote: "Learner evidence and experience is recorded here. Make reference to the equipment, tools, materials or systems used in these processes.",
+    projectChecklist: [{ no: "1", name: unit.us }],
+  })!;
+}
+
+function generatedLogbookIsUsable(logbook: UnitContent["logbook"], lesson: LessonSection[]): boolean {
+  if (!logbook || !logbook.knowledgeQuestions?.length || !logbook.workplaceActivities?.length || !logbook.otherActivities?.length) return false;
+  const rows = [...logbook.knowledgeQuestions, ...(logbook.practicalActivities ?? [])];
+  if (rows.length > 36 || rows.some(row => !nonemptyString(row.text) || row.text.length > 360)) return false;
+  if (!nonemptyString(logbook.project?.text) || logbook.project.text.length > 900) return false;
+  const lessonParagraphs = lesson.flatMap(section => section.paragraphs).map(text => text.replace(/\s+/g, " ").trim()).filter(text => text.length > 180);
+  const generatedText = [logbook.project.text, ...rows.map(row => row.text), ...logbook.workplaceActivities].map(text => text.replace(/\s+/g, " ").trim());
+  return !generatedText.some(text => lessonParagraphs.some(paragraph => text.includes(paragraph) || paragraph.includes(text) && text.length > 180));
+}
+
 function normalizeMarks(value: unknown, fallback: boolean[]): boolean[] {
   const marks = Array.isArray(value) ? value.slice(0, 6).map(Boolean) : [];
   while (marks.length < 6) marks.push(fallback[marks.length] ?? false);
@@ -685,7 +731,7 @@ function lessonPlanFromTemplate(unit: UnitStandard, topics: UnitTopic[], minutes
 
 export function mergeUnitContentEnhancement(base: UnitContent, enhancement: UnitContentEnhancement, unit: UnitStandard): UnitContent {
   const next = structuredClone(base);
-  if (enhancement.logbook?.knowledgeQuestions?.length && enhancement.logbook.practicalActivities?.length) next.logbook = normalizeLogbookSpec(unit, enhancement.logbook);
+  if (generatedLogbookIsUsable(enhancement.logbook, next.lesson)) next.logbook = normalizeLogbookSpec(unit, enhancement.logbook);
   next.evaluation = undefined;
   if (enhancement.selfAssessment?.items?.length) next.selfAssessment = selfAssessmentFromTemplate(enhancement.selfAssessment.items);
   if (enhancement.lessonPlan?.sections?.length) {
@@ -712,7 +758,7 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
     questionSessions: [],
     assignments: [{ id: "built-workplace-project", title: `Workplace project: ${unit.title}`, brief: "Choose a realistic unit of work relevant to this learning material. Prepare a practical plan and explain your decisions using the source.", requirements: goals.concat(["Document assumptions, resources, dependencies and delivery risks.", "Submit your plan, supporting evidence and a short reflection on the result."]), evidence: "A completed workplace plan, supporting calculations or records, and a reflection reviewed by your facilitator." }],
     quiz: [],
-    logbook: normalizeLogbookSpec(unit, { assignmentTitle: "Assignment One", programme: "Information Technology - Systems Support", unitLabel: `${unit.us} - ${unit.title}`, detailFields: STANDARD_LOGBOOK_DETAIL_FIELDS, project: { time: "30 minutes", title: "Workplace application", text: "Apply the unit learning in the workplace and record evidence against the activities below.", resource: "Logbook" }, knowledgeQuestions: goals.map(text => ({ text, marks: KNOWLEDGE_MARKS })), practicalActivities: goals.map(text => ({ text, marks: PROJECT_MARKS })), workplaceActivities: goals, workplaceEvidenceNote: "The workplace completes this section after observing the learner having complied to and completed all the activities as mentioned below.", otherActivities: [{ activity: "Workplace application", evidence: "Apply the unit learning in the workplace and record evidence against the activities below." }], otherEvidenceNote: "Learner evidence and experience is recorded here. Make reference to equipment, tools, materials or systems that were used in these processes.", projectChecklist: [{ no: "1", name: unit.us }] }),
+    logbook: logbookFromTopics(unit, topics),
     selfAssessment: selfAssessmentFromTemplate(goals.map(g => `I am able to ${g.charAt(0).toLowerCase()}${g.slice(1)}`)),
     lessonPlan: lessonPlanFromTemplate(unit, topics, options.minutes),
   };

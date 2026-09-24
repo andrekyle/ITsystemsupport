@@ -43,7 +43,7 @@ export function effectiveBuiltContent(content:UnitContent, edits:LessonEdits):Un
     paragraphs:edits.sectionBody?.[si]?.paragraphs??s.paragraphs.map((p,pi)=>edits.paragraphs?.[`${si}:${pi}`]??p),
     bullets:edits.sectionBody?.[si]?.bullets??s.bullets?.map((p,pi)=>edits.bullets?.[`${si}:${pi}`]??p),
     slideQuiz:edits.generatedQuizzes?.[si]??s.slideQuiz,
-    quizRetries:edits.quizRetries && Object.prototype.hasOwnProperty.call(edits.quizRetries,si) ? (edits.quizRetries[si] ?? undefined) : s.quizRetries,
+    quizRetries:Object.prototype.hasOwnProperty.call(edits,"quizRetriesAll") ? (edits.quizRetriesAll ?? undefined) : edits.quizRetries && Object.prototype.hasOwnProperty.call(edits.quizRetries,si) ? (edits.quizRetries[si] ?? undefined) : s.quizRetries,
     cards:s.cards?.map((c,ci)=>({...c,title:edits.cards?.[`${si}:${ci}:t`]??c.title,text:edits.cards?.[`${si}:${ci}:d`]??c.text})),
     example:s.example?{...s.example,title:edits.examples?.[`${si}:0:t`]??s.example.title,lines:s.example.lines.map((line,i)=>edits.examples?.[`${si}:0:${i}`]??line)}:undefined,
     examples:s.examples?.map((ex,xi)=>({...ex,title:edits.examples?.[`${si}:${xi+1}:t`]??ex.title,lines:ex.lines.map((line,i)=>edits.examples?.[`${si}:${xi+1}:${i}`]??line)})),

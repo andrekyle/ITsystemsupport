@@ -2115,6 +2115,8 @@ export interface LessonEdits {
   generatedQuizzes?: Record<number, import("./types").QuizQuestion[]>;
   /** section index -> retries allowed after the first check; null means unlimited */
   quizRetries?: Record<number, number | null>;
+  /** unit-wide retry setting applied to every slide quiz; null means unlimited */
+  quizRetriesAll?: number | null;
   /** section index -> replacement heading */
   headings?: Record<number, string>;
   /** `${sectionIdx}:${paraIdx}` -> replacement paragraph text */
@@ -2189,6 +2191,8 @@ export function useLessonEdits(us: string, temporary = false) {
     apply((d) => ({ ...d, generatedQuizzes: { ...(d.generatedQuizzes ?? {}), [sIdx]: questions } })), [apply]);
   const setQuizRetries = useCallback((sIdx: number, retries: number | null) =>
     apply((d) => ({ ...d, quizRetries: { ...(d.quizRetries ?? {}), [sIdx]: retries } })), [apply]);
+  const setAllQuizRetries = useCallback((retries: number | null) =>
+    apply((d) => ({ ...d, quizRetriesAll: retries })), [apply]);
   const updateGeneratedQuizQuestion = useCallback((sIdx: number, qIdx: number, question: import("./types").QuizQuestion) =>
     apply((d) => {
       const current = (d.generatedQuizzes?.[sIdx] ?? []).slice();
@@ -2375,7 +2379,7 @@ export function useLessonEdits(us: string, temporary = false) {
     [apply]
   );
 
-  return { edits, setHeading, setParagraph, setCaption, setKeyed, setSectionBody, setSectionBodyItem, setGeneratedQuiz, setQuizRetries, updateGeneratedQuizQuestion, removeGeneratedQuizQuestion, deleteGeneratedQuiz, moveFigure, setScale, setOffsetY, resetSection, setLessonPlan, setLogbook };
+  return { edits, setHeading, setParagraph, setCaption, setKeyed, setSectionBody, setSectionBodyItem, setGeneratedQuiz, setQuizRetries, setAllQuizRetries, updateGeneratedQuizQuestion, removeGeneratedQuizQuestion, deleteGeneratedQuiz, moveFigure, setScale, setOffsetY, resetSection, setLessonPlan, setLogbook };
 }
 
 /* ---------- user-uploaded notes (stored separately per profile) ---------- */

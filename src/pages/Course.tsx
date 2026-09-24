@@ -2654,7 +2654,7 @@ export function UnitPage({
   const [deckReplacePct, setDeckReplacePct] = useState<number | null>(null);
   const [deckReplaceError, setDeckReplaceError] = useState<string | null>(null);
   const { figures: figureImages, setFigure, removeFigure } = useLessonFigures(unitId);
-  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, setQuizRetries: editQuizRetries, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection, setLessonPlan: editSetLessonPlan, setLogbook: editSetLogbook } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId, !!inlineUnit);
+  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, setAllQuizRetries: editAllQuizRetries, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection, setLessonPlan: editSetLessonPlan, setLogbook: editSetLogbook } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId, !!inlineUnit);
   const [generatingQuiz, setGeneratingQuiz] = useState<number | null>(null);
   const [quizQuestionCount, setQuizQuestionCount] = useState(5);
   const [quizGenerationError, setQuizGenerationError] = useState<string | null>(null);
@@ -3755,7 +3755,9 @@ export function UnitPage({
                 })()
               : null;
             const slideQuiz = lessonEdits.generatedQuizzes?.[si] ?? sec.slideQuiz ?? [];
-            const configuredRetries = lessonEdits.quizRetries && Object.prototype.hasOwnProperty.call(lessonEdits.quizRetries, si)
+            const configuredRetries = Object.prototype.hasOwnProperty.call(lessonEdits, "quizRetriesAll")
+              ? lessonEdits.quizRetriesAll
+              : lessonEdits.quizRetries && Object.prototype.hasOwnProperty.call(lessonEdits.quizRetries, si)
               ? lessonEdits.quizRetries[si]
               : sec.quizRetries;
             const maxQuizAttempts = configuredRetries == null ? null : configuredRetries + 1;
@@ -4595,14 +4597,14 @@ export function UnitPage({
                               onChange={(value) => setQuizQuestionCount(Number(value))}
                             />
                           </label>
-                          <label className="slide-quiz-count" title="How many times a learner may redo this slide quiz after the first check">
-                            Retakes
+                          <label className="slide-quiz-count" title="How many times a learner may redo every slide quiz in this unit after the first check">
+                            Retakes (all quizzes)
                             <Select
-                              ariaLabel="Allowed slide quiz retakes"
+                              ariaLabel="Allowed retakes for all slide quizzes"
                               className="slide-question-select"
-                              value={String(lessonEdits.quizRetries && Object.prototype.hasOwnProperty.call(lessonEdits.quizRetries, si) ? (lessonEdits.quizRetries[si] ?? "unlimited") : (sec.quizRetries ?? "unlimited"))}
+                              value={String(Object.prototype.hasOwnProperty.call(lessonEdits, "quizRetriesAll") ? (lessonEdits.quizRetriesAll ?? "unlimited") : (sec.quizRetries ?? "unlimited"))}
                               options={[{ value: "unlimited", label: "Unlimited" }, ...Array.from({ length: 11 }, (_, count) => ({ value: String(count), label: String(count) }))]}
-                              onChange={(value) => editQuizRetries(si, value === "unlimited" ? null : Number(value))}
+                              onChange={(value) => editAllQuizRetries(value === "unlimited" ? null : Number(value))}
                             />
                           </label>
                           <button type="button" className="btn ghost sm" onClick={() => void generateSlideQuiz(si)} disabled={generatingQuiz === si} title={`Use OpenAI to generate ${quizQuestionCount} questions from this slide`}>
