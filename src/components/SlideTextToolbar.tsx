@@ -302,9 +302,9 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       onMouseDown={e => e.preventDefault()} onClick={() => run(cmd)}>{icon ?? label}</button>
   );
   const alignmentIcon = (center = false) => <svg viewBox="0 0 24 24" aria-hidden="true"><path d={center ? "M3 5h18M6 11h12M9 17h6" : "M3 5h18M3 11h12M3 17h6"} /></svg>;
-  const menuToggle = (kind: "text" | "paragraph" | "table", label: string, symbol: string) => <button type="button" aria-label={label} title={label}
+  const menuToggle = (kind: "text" | "paragraph" | "table", label: string, symbol: string) => <button type="button" className={`slide-tool-menu slide-tool-menu-${kind}`} aria-label={label} title={label}
     aria-expanded={menu === kind} aria-controls={`slide-${kind}-options`} onMouseDown={e => e.preventDefault()}
-    onClick={() => setMenu(menu === kind ? null : kind)}><span>{symbol}</span><span className="slide-tool-dots" aria-hidden="true">&#8942;</span></button>;
+    onClick={() => setMenu(menu === kind ? null : kind)}><span className="slide-tool-menu-label">{symbol}</span><span className="slide-tool-chevron" aria-hidden="true">⌄</span></button>;
   return <div className="slide-text-toolbar" ref={bar} onKeyDown={e => { if (e.key === "Escape") { setMenu(null); host.current?.focus(); } }}>
     <div className="slide-text-controls" role="group" aria-label="Slide text formatting">
       {commandButton("undo", "Undo", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 4 10l5 5M4 10h10a6 6 0 0 1 0 12" transform="translate(0 -2)" /></svg>)}

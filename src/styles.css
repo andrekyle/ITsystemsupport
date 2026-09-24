@@ -14042,7 +14042,12 @@ td.cal-row-actions {
 .slide-text-controls u { text-underline-offset: 5px; }
 .slide-text-controls svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.5; }
 .slide-text-controls svg text { fill: currentColor; stroke: none; font: 7px Arial, sans-serif; }
-.slide-tool-dots { font-size: 18px; margin-left: 1px; }
+.slide-text-controls .slide-tool-menu { flex: 0 0 auto; width: auto; min-width: 42px; gap: 6px; padding: 5px 9px; font: 500 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.slide-text-controls .slide-tool-menu-table { min-width: 72px; }
+.slide-text-controls .slide-tool-menu-paragraph .slide-tool-menu-label { font: 400 22px/1 Georgia, serif; }
+.slide-text-controls .slide-tool-chevron { position: relative; top: -1px; font-size: 14px; line-height: 1; color: color-mix(in srgb, var(--tool-ink) 68%, transparent); }
+.slide-text-controls .slide-tool-menu:hover:not(:disabled),
+.slide-text-controls .slide-tool-menu[aria-expanded="true"] { background: var(--tool-hover); }
 .slide-text-toolbar button:hover:not(:disabled), .slide-text-toolbar button[aria-pressed="true"], .slide-text-toolbar button[aria-expanded="true"] { background: transparent; color: var(--tool-ink); box-shadow: none; }
 .slide-text-toolbar :disabled { opacity: .45; cursor: not-allowed; }
 .slide-text-toolbar button:focus, .slide-text-toolbar select:focus, .slide-text-toolbar input:focus { outline: none; box-shadow: none; }
@@ -14112,7 +14117,7 @@ td.cal-row-actions {
 }
 .slide-quiz-count { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ink-2); }
 .slide-quiz-count .nice-select-btn { min-height: 32px; padding: 5px 9px; border-radius: 11px; }
-@media (max-width: 640px) { .slide-text-toolbar { position: static; padding: 8px; } .slide-text-controls { gap: 0; } .slide-text-controls button { flex-basis: 34px; height: 32px; padding: 4px; font-size: 20px; min-width: 28px; } .slide-text-controls svg { width: 21px; height: 21px; } .slide-tool-dots { font-size: 17px; } }
+@media (max-width: 640px) { .slide-text-toolbar { position: static; padding: 8px; } .slide-text-controls { gap: 2px; } .slide-text-controls button { flex-basis: 34px; height: 32px; padding: 4px; font-size: 20px; min-width: 28px; } .slide-text-controls .slide-tool-menu { flex-basis: auto; padding: 4px 7px; font-size: 12px; } .slide-text-controls .slide-tool-menu-table { min-width: 64px; } .slide-text-controls svg { width: 21px; height: 21px; } }
 
 /* Shared compact dropdown pill used throughout the application. */
 .nice-select { min-width: 114px; }
