@@ -7195,6 +7195,26 @@ a.plan-ppt:hover {
   outline: 2px solid rgba(197, 31, 50, 0.35);
   outline-offset: 2px;
 }
+.activity-edit-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.activity-edit-bar .btn.ghost.sm:is(.activity-inline-edit, .activity-remove) {
+  min-height: 28px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 5px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+}
+.activity-edit-bar .btn.ghost.sm.activity-inline-edit { background: #238636; }
+.activity-edit-bar .btn.ghost.sm.activity-inline-edit:hover:not(:disabled) { background: #1a6f2c; color: #fff; }
+.activity-edit-bar .btn.ghost.sm.activity-remove { background: #c43b3b; }
+.activity-edit-bar .btn.ghost.sm.activity-remove:hover:not(:disabled) { background: #a92f2f; color: #fff; }
 .lesson-p.editable,
 .editable-inline {
   outline: 1px dashed transparent;
