@@ -1,4 +1,4 @@
-import { createElement, useLayoutEffect, useRef, type HTMLAttributes } from "react";
+import { createElement, useLayoutEffect, useRef, type ClipboardEvent, type HTMLAttributes } from "react";
 import { sanitizeSlideHtml } from "../lib/slideRichText";
 
 type Props = Omit<HTMLAttributes<HTMLElement>, "children" | "dangerouslySetInnerHTML" | "onInput" | "onBlur"> & {
@@ -28,12 +28,23 @@ export function SlideEditableText({ as, html, onSave, contentEditable = true, ..
     saved.current = next;
   };
 
+  const paste = (event: ClipboardEvent<HTMLElement>) => {
+    if (!(contentEditable === true || contentEditable === "true")) return;
+    event.preventDefault();
+    // Insert plain text through the browser's active editing context. It then
+    // inherits the caret's current font, size, weight, colour and block/list
+    // style instead of importing inconsistent formatting from Word or a site.
+    document.execCommand("insertText", false, event.clipboardData.getData("text/plain"));
+    save();
+  };
+
   return createElement(as, {
     ...props,
     ref,
     contentEditable,
     suppressContentEditableWarning: true,
     "data-slide-rich": "true",
+    onPaste: paste,
     onInput: save,
     onBlur: save,
   });

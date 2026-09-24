@@ -14093,6 +14093,10 @@ td.cal-row-actions {
 .slide-text-options label, .slide-tool-field { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--tool-ink); }
 .slide-text-options button, .slide-text-options select { border: 1px solid var(--tool-border); border-radius: 6px; padding: 5px 8px; font: inherit; font-size: 13px; background: var(--tool-bg); color: var(--tool-ink); }
 .slide-text-options input[type="color"] { width: 32px; height: 30px; border: 1px solid var(--tool-border); border-radius: 4px; background: var(--tool-bg); padding: 2px; }
+.slide-image-input { display:none; }
+.slide-tool-range { display:inline-flex; align-items:center; gap:6px; }
+.slide-tool-range input[type="range"] { width:130px; accent-color:var(--azure); }
+.slide-tool-range input[type="number"] { width:74px; min-height:30px; padding:4px 7px; border:1px solid var(--tool-border); border-radius:5px; background:var(--tool-bg); color:var(--tool-ink); }
 .slide-text-options small { flex-basis: 100%; }
 .slide-text-options .slide-tool-icon,
 .slide-text-options .slide-tool-colour { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 32px; width: 32px; height: 32px; padding: 4px; box-sizing: border-box; border: 0; border-radius: 4px; background: transparent; color: var(--tool-ink); font: 20px Arial, sans-serif; cursor: pointer; }
@@ -14120,7 +14124,16 @@ td.cal-row-actions {
 .slide-quiz-count { padding: 0 2px; }
 .slide-quiz-count .slide-question-select { min-width: 58px; }
 .slide-rich-text { white-space: pre-wrap; }
-.slide-rich-text ul, .slide-rich-text ol, [data-slide-rich] ul, [data-slide-rich] ol { padding-left: 1.5em; }
+.slide-rich-text ul, .slide-rich-text ol, [data-slide-rich] ul, [data-slide-rich] ol { display:block; margin:0.65em 0; padding-left:1.75em; }
+[data-slide-rich] ul { list-style:disc outside; }
+[data-slide-rich] ol { list-style:decimal outside; }
+[data-slide-rich] li { display:list-item; margin:0.25em 0; padding-left:0.25em; }
+[data-slide-rich] img { max-width:100%; cursor:grab; user-select:none; }
+[data-slide-rich] img:active { cursor:grabbing; }
+[data-slide-rich][contenteditable="true"] img:hover { outline:2px solid var(--azure); outline-offset:3px; }
+[data-slide-rich]::after { display:block; clear:both; content:""; }
+[data-slide-rich] table { border-collapse:collapse; }
+[data-slide-rich] td, [data-slide-rich] th { box-sizing:border-box; }
 .lesson-quiz-list .quiz-q.quiz-q-editing { padding:14px 16px; max-width:880px; border:0; border-radius:8px; background:var(--surface); }
 .generated-quiz-edit { display:grid; gap:10px; min-width:0; color:var(--ink); }
 .generated-quiz-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
@@ -14214,6 +14227,10 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 [data-theme="dark"] select:hover, [data-theme="dark"] select:focus { border-color: #3a3a3a !important; background: #242424; }
 .slide-whole-editor { outline:none; min-height:1.5em; }
 .slide-whole-editor[contenteditable="true"] { cursor:text; }
+.slide-whole-editor h1 { font-size:2em; line-height:1.15; }
+.slide-whole-editor h2 { font-size:1.55em; line-height:1.2; }
+.slide-whole-editor h3 { font-size:1.3em; line-height:1.25; }
+.slide-whole-editor h4 { font-size:1.12em; line-height:1.3; }
 .slide-whole-editor ol.lesson-numlist { display:block; padding-left:28px; list-style:decimal; }
 .slide-whole-editor ol.lesson-numlist > li { display:list-item; padding-left:8px; margin-bottom:20px; }
 .slide-whole-editor ol.lesson-numlist > li::marker { color:var(--muted); font-weight:600; }

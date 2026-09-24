@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 
 import { Select } from "./Select";
 import { SlideEditHistory } from "../lib/slideEditHistory";
@@ -30,7 +30,17 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
   const [size, setSize] = useState("");
   const [tableRows, setTableRows] = useState("3");
   const [tableCols, setTableCols] = useState("3");
-  const [menu, setMenu] = useState<"text" | "paragraph" | "table" | null>(null);
+  const [menu, setMenu] = useState<"text" | "paragraph" | "table" | "image" | null>(null);
+  const [selectedImage, setSelectedImage] = useState<HTMLImageElement | null>(null);
+  const [selectedCell, setSelectedCell] = useState<HTMLTableCellElement | null>(null);
+  const [imageWidth, setImageWidth] = useState(60);
+  const [imageHeight, setImageHeight] = useState(260);
+  const [cropImage, setCropImage] = useState(false);
+  const [cropX, setCropX] = useState(50);
+  const [cropY, setCropY] = useState(50);
+  const [columnWidth, setColumnWidth] = useState(180);
+  const [rowHeight, setRowHeight] = useState(56);
+  const imageInput = useRef<HTMLInputElement>(null);
   const [ready, setReady] = useState(false);
   const [active, setActive] = useState<string[]>([]);
   const refreshHistory = () => setHistoryCounts({ undo: history.current.undoCount, redo: history.current.redoCount });
@@ -117,6 +127,67 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
     };
   }, [enabled]);
   useEffect(() => {
+    if (!enabled) return;
+    let draggedImage: HTMLImageElement | null = null;
+    const inspect = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const editor = target.closest<HTMLElement>(EDITOR_SELECTOR);
+      if (!editor) return;
+      const image = target.closest("img");
+      const cell = target.closest("td,th");
+      setSelectedImage(image instanceof HTMLImageElement ? image : null);
+      setSelectedCell(cell instanceof HTMLTableCellElement ? cell : null);
+      if (image instanceof HTMLImageElement) {
+        setImageWidth(Math.round(parseFloat(image.style.width) || image.getBoundingClientRect().width / Math.max(1, editor.getBoundingClientRect().width) * 100));
+        setImageHeight(Math.round(parseFloat(image.style.height) || image.getBoundingClientRect().height || 260));
+        setCropImage(image.dataset.cropped === "true");
+        const position = image.style.objectPosition.match(/([\d.]+)%\s+([\d.]+)%/);
+        setCropX(Number(position?.[1] ?? 50));
+        setCropY(Number(position?.[2] ?? 50));
+        setMenu("image");
+      } else if (cell instanceof HTMLTableCellElement) {
+        setColumnWidth(Math.round(cell.getBoundingClientRect().width));
+        setRowHeight(Math.round(cell.parentElement?.getBoundingClientRect().height ?? 56));
+      }
+    };
+    const dragStart = (event: DragEvent) => {
+      const target = event.target;
+      if (!(target instanceof HTMLImageElement) || !target.closest(EDITOR_SELECTOR)) return;
+      draggedImage = target;
+      event.dataTransfer?.setData("text/plain", "lesson-image");
+      if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+    };
+    const dragOver = (event: DragEvent) => {
+      if (draggedImage && event.target instanceof Element && event.target.closest(EDITOR_SELECTOR)) event.preventDefault();
+    };
+    const drop = (event: DragEvent) => {
+      if (!draggedImage || !(event.target instanceof Element)) return;
+      const editor = event.target.closest<HTMLElement>(EDITOR_SELECTOR);
+      if (!editor) return;
+      event.preventDefault();
+      const doc = document as Document & { caretRangeFromPoint?: (x: number, y: number) => Range | null; caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null };
+      let targetRange = doc.caretRangeFromPoint?.(event.clientX, event.clientY) ?? null;
+      if (!targetRange) {
+        const position = doc.caretPositionFromPoint?.(event.clientX, event.clientY);
+        if (position) { targetRange = document.createRange(); targetRange.setStart(position.offsetNode, position.offset); targetRange.collapse(true); }
+      }
+      if (targetRange && editor.contains(targetRange.startContainer)) targetRange.insertNode(draggedImage);
+      notifyEditor(editor);
+      draggedImage = null;
+    };
+    document.addEventListener("click", inspect);
+    document.addEventListener("dragstart", dragStart);
+    document.addEventListener("dragover", dragOver);
+    document.addEventListener("drop", drop);
+    return () => {
+      document.removeEventListener("click", inspect);
+      document.removeEventListener("dragstart", dragStart);
+      document.removeEventListener("dragover", dragOver);
+      document.removeEventListener("drop", drop);
+    };
+  }, [enabled]);
+  useEffect(() => {
     if (!enabled) {
       setMenu(null);
       setReady(false);
@@ -191,84 +262,13 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
   const applyList = (ordered: boolean) => {
     const restored = restoreSelection();
     if (!restored) return;
-    const currentSelection = restored.selection;
-    if (!currentSelection?.rangeCount) return;
-    const currentRange = currentSelection.getRangeAt(0);
-    if (!restored.editor.contains(currentRange.commonAncestorContainer)) return;
-    const listAncestor = (node: Node | null): HTMLOListElement | HTMLUListElement | null => {
-      let current: Node | null = node;
-      while (current && current !== restored.editor) {
-        if (current instanceof HTMLOListElement || current instanceof HTMLUListElement) return current;
-        current = current.parentNode;
-      }
-      return null;
-    };
-    const startList = listAncestor(currentRange.startContainer);
-    const endList = listAncestor(currentRange.endContainer);
-    if (startList && startList === endList) {
-      const replacement = document.createElement(ordered ? "ol" : "ul");
-      for (const attribute of Array.from(startList.attributes)) replacement.setAttribute(attribute.name, attribute.value);
-      replacement.className = startList.className;
-      while (startList.firstChild) replacement.appendChild(startList.firstChild);
-      startList.replaceWith(replacement);
-      const caret = document.createRange();
-      caret.selectNodeContents(replacement);
-      const selection = window.getSelection();
-      selection?.removeAllRanges();
-      selection?.addRange(caret);
-      range.current = caret;
-      restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
-      return;
-    }
-    if (currentRange.collapsed) {
-      document.execCommand(ordered ? "insertOrderedList" : "insertUnorderedList", false);
-      if (restored.selection?.rangeCount) range.current = restored.selection.getRangeAt(0).cloneRange();
-      restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
-      return;
-    }
-    const list = document.createElement(ordered ? "ol" : "ul");
-    const fragment = currentRange.extractContents();
-    if (!fragment.textContent?.trim() && !fragment.querySelector("img, table, br")) return;
-    const selectedList = Array.from(fragment.childNodes).find(
-      node => node instanceof HTMLOListElement || node instanceof HTMLUListElement
-    );
-    if (selectedList instanceof HTMLOListElement || selectedList instanceof HTMLUListElement) {
-      for (const selectedItem of Array.from(selectedList.children)) {
-        if (selectedItem instanceof HTMLLIElement) list.appendChild(selectedItem);
-      }
-    } else {
-      let inlineItem: HTMLLIElement | null = null;
-      for (const node of Array.from(fragment.childNodes)) {
-        if (node instanceof HTMLLIElement) {
-          list.appendChild(node);
-          inlineItem = null;
-        } else if (node instanceof HTMLElement && /^(P|DIV)$/.test(node.tagName)) {
-          const item = document.createElement("li");
-          // Preserve the selected block itself because its class or inline
-          // style may carry the text's existing font family and size.
-          item.appendChild(node);
-          list.appendChild(item);
-          inlineItem = null;
-        } else if (node instanceof HTMLBRElement) {
-          inlineItem = null;
-        } else {
-          if (!inlineItem) {
-            inlineItem = document.createElement("li");
-            list.appendChild(inlineItem);
-          }
-          inlineItem.appendChild(node);
-        }
-      }
-    }
-    if (!list.children.length) return;
-    currentRange.insertNode(list);
-    const caret = document.createRange();
-    caret.selectNodeContents(list.lastElementChild ?? list);
-    caret.collapse(false);
-    const caretSelection = window.getSelection();
-    caretSelection?.removeAllRanges();
-    caretSelection?.addRange(caret);
-    range.current = caret;
+    document.execCommand("styleWithCSS", false, "false");
+    document.execCommand(ordered ? "insertOrderedList" : "insertUnorderedList", false);
+    restored.editor.querySelectorAll("ol,ul").forEach(list => {
+      list.classList.remove("lesson-numlist", "lesson-inferred-list");
+      list.querySelectorAll(":scope > li > p:only-child, :scope > li > div:only-child").forEach(block => block.replaceWith(...Array.from(block.childNodes)));
+    });
+    if (restored.selection?.rangeCount) range.current = restored.selection.getRangeAt(0).cloneRange();
     restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
   };
   const insertTable = () => {
@@ -278,6 +278,84 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
     if (restored.selection?.rangeCount) range.current = restored.selection.getRangeAt(0).cloneRange();
     restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
     setActive(commands.filter(([cmd]) => document.queryCommandState(cmd)).map(([cmd]) => cmd));
+  };
+  const notifyEditor = (editor: HTMLElement | null = host.current) => editor?.dispatchEvent(new Event("input", { bubbles: true }));
+  const imageData = (file: File): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("The image could not be read."));
+    reader.onload = () => {
+      const source = new Image();
+      source.onerror = () => reject(new Error("The image format is not supported."));
+      source.onload = () => {
+        const max = 1400;
+        const scale = Math.min(1, max / Math.max(source.naturalWidth, source.naturalHeight));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(source.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(source.naturalHeight * scale));
+        canvas.getContext("2d")?.drawImage(source, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      source.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
+  const insertImage = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    const restored = restoreSelection(true);
+    if (!restored?.selection?.rangeCount) return;
+    const img = document.createElement("img");
+    img.src = await imageData(file);
+    img.alt = file.name.replace(/\.[^.]+$/, "") || "Lesson image";
+    img.draggable = true;
+    img.style.width = "60%";
+    img.style.height = "auto";
+    img.style.maxWidth = "100%";
+    img.style.display = "block";
+    img.style.margin = "12px auto";
+    const selectionRange = restored.selection.getRangeAt(0);
+    selectionRange.insertNode(img);
+    const paragraph = document.createElement("p");
+    paragraph.innerHTML = "<br>";
+    img.after(paragraph);
+    const caret = document.createRange();
+    caret.selectNodeContents(paragraph);
+    caret.collapse(true);
+    restored.selection.removeAllRanges();
+    restored.selection.addRange(caret);
+    range.current = caret;
+    setSelectedImage(img);
+    setImageWidth(60);
+    setImageHeight(260);
+    setCropImage(false);
+    setMenu("image");
+    notifyEditor(restored.editor);
+  };
+  const updateImage = (update: (image: HTMLImageElement) => void) => {
+    if (!selectedImage?.isConnected) return;
+    update(selectedImage);
+    notifyEditor(selectedImage.closest<HTMLElement>(EDITOR_SELECTOR));
+  };
+  const updateColumnWidth = (width: number) => {
+    const activeCell = selectedCell;
+    if (!activeCell?.isConnected) return;
+    const index = activeCell.cellIndex;
+    activeCell.closest("table")?.querySelectorAll<HTMLTableRowElement>("tr").forEach(row => {
+      const cell = row.cells[index];
+      if (cell) { cell.style.width = `${width}px`; cell.style.minWidth = `${width}px`; }
+    });
+    setColumnWidth(width);
+    notifyEditor(activeCell.closest<HTMLElement>(EDITOR_SELECTOR));
+  };
+  const updateRowHeight = (height: number) => {
+    const activeCell = selectedCell;
+    const row = activeCell?.parentElement;
+    if (!(row instanceof HTMLTableRowElement)) return;
+    row.style.height = `${height}px`;
+    row.style.minHeight = `${height}px`;
+    setRowHeight(height);
+    notifyEditor(row.closest<HTMLElement>(EDITOR_SELECTOR));
   };
   const run = (command: string, value?: string) => {
     if (command === "undo" || command === "redo") { replay(command); return; }
@@ -302,10 +380,11 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       onMouseDown={e => e.preventDefault()} onClick={() => run(cmd)}>{icon ?? label}</button>
   );
   const alignmentIcon = (center = false) => <svg viewBox="0 0 24 24" aria-hidden="true"><path d={center ? "M3 5h18M6 11h12M9 17h6" : "M3 5h18M3 11h12M3 17h6"} /></svg>;
-  const menuToggle = (kind: "text" | "paragraph" | "table", label: string, symbol: ReactNode) => <button type="button" className={`slide-tool-menu slide-tool-menu-${kind}`} aria-label={label} title={label}
+  const menuToggle = (kind: "text" | "paragraph" | "table" | "image", label: string, symbol: ReactNode) => <button type="button" className={`slide-tool-menu slide-tool-menu-${kind}`} aria-label={label} title={label}
     aria-expanded={menu === kind} aria-controls={`slide-${kind}-options`} onMouseDown={e => e.preventDefault()}
     onClick={() => setMenu(menu === kind ? null : kind)}><span className="slide-tool-menu-label">{symbol}</span>{kind === "text" && <span className="slide-tool-chevron" aria-hidden="true">⌄</span>}</button>;
   const tableIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5" /><path d="M12 4v16M4 12h16" /></svg>;
+  const imageIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 18 5-5 3 3 3-4 5 6"/></svg>;
   const paragraphIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h11M9 12h8M9 19h11" /><path d="M4 5v14m0-14L2 7m2-2 2 2m-2 12-2-2m2 2 2-2" /></svg>;
   return <div className="slide-text-toolbar" ref={bar} onKeyDown={e => { if (e.key === "Escape") { setMenu(null); host.current?.focus(); } }}>
     <div className="slide-text-controls" role="group" aria-label="Slide text formatting">
@@ -327,9 +406,12 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       <span className="slide-tool-group">
         {menuToggle("paragraph", "Paragraph and editing options", paragraphIcon)}
         {menuToggle("table", "Insert table", tableIcon)}
+        <button type="button" className="slide-tool-icon" disabled={!ready} aria-label="Insert image at cursor" title="Insert image at cursor" onMouseDown={e => e.preventDefault()} onClick={() => imageInput.current?.click()}>{imageIcon}</button>
+        {selectedImage && menuToggle("image", "Resize and crop selected image", imageIcon)}
       </span>
     </div>
-    {menu && <div id={`slide-${menu}-options`} className="slide-text-options" role="group" aria-label={menu === "text" ? "Font and text options" : menu === "table" ? "Table options" : "Paragraph and editing options"}>
+    <input ref={imageInput} className="slide-image-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={event => void insertImage(event)} />
+    {menu && <div id={`slide-${menu}-options`} className="slide-text-options" role="group" aria-label={menu === "text" ? "Font and text options" : menu === "table" ? "Table options" : menu === "image" ? "Image options" : "Paragraph and editing options"}>
       {menu === "text" ? <>
         <div className="slide-tool-field"><span>Font</span><Select ariaLabel="Font" disabled={!ready} placeholder="Choose font" value={font} options={["Arial", "Verdana", "Georgia", "Times New Roman", "Courier New", "Tahoma", "Trebuchet MS"].map(value => ({ value, label: value }))} onChange={value => { setFont(value); run("fontName", value); }} /></div>
         <div className="slide-tool-field"><span>Size</span><Select ariaLabel="Font size" disabled={!ready} placeholder="Choose size" value={size} options={[10, 13, 16, 18, 24, 32, 48].map((value, i) => ({ value: String(i + 1), label: `${value} px` }))} onChange={value => { setSize(value); run("fontSize", value); }} /></div>
@@ -349,7 +431,21 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
         <div className="slide-tool-field"><span>Rows</span><Select ariaLabel="Table rows" disabled={!ready} value={tableRows} options={Array.from({ length: 10 }, (_, index) => ({ value: String(index + 1), label: String(index + 1) }))} onChange={setTableRows} /></div>
         <div className="slide-tool-field"><span>Columns</span><Select ariaLabel="Table columns" disabled={!ready} value={tableCols} options={Array.from({ length: 8 }, (_, index) => ({ value: String(index + 1), label: String(index + 1) }))} onChange={setTableCols} /></div>
         <button type="button" disabled={!ready} onMouseDown={e => e.preventDefault()} onClick={insertTable}>Insert table</button>
+        <label className="slide-tool-range">Column width <input type="number" min="48" max="900" step="1" disabled={!selectedCell} value={columnWidth} onChange={e => updateColumnWidth(Math.max(48, Number(e.target.value) || 48))} /> px</label>
+        <label className="slide-tool-range">Row height <input type="number" min="28" max="600" step="1" disabled={!selectedCell} value={rowHeight} onChange={e => updateRowHeight(Math.max(28, Number(e.target.value) || 28))} /> px</label>
+        {selectedCell && <small>Sizes apply to the selected cell’s complete column or row.</small>}
+      </> : menu === "image" ? <>
+        <label className="slide-tool-range">Width <input type="range" min="20" max="100" step="1" value={imageWidth} onChange={e => { const value = Number(e.target.value); setImageWidth(value); updateImage(image => { image.style.width = `${value}%`; image.style.maxWidth = "100%"; }); }} /> {imageWidth}%</label>
+        <label className="slide-tool-range">Height <input type="range" min="100" max="650" step="5" value={imageHeight} disabled={!cropImage} onChange={e => { const value = Number(e.target.value); setImageHeight(value); updateImage(image => { image.style.height = `${value}px`; }); }} /> {cropImage ? `${imageHeight}px` : "auto"}</label>
+        <label><input type="checkbox" checked={cropImage} onChange={e => { const checked = e.target.checked; setCropImage(checked); updateImage(image => { image.dataset.cropped = String(checked); image.style.height = checked ? `${imageHeight}px` : "auto"; image.style.objectFit = checked ? "cover" : "contain"; }); }} /> Crop to frame</label>
+        {cropImage && <><label className="slide-tool-range">Crop left/right <input type="range" min="0" max="100" value={cropX} onChange={e => { const value = Number(e.target.value); setCropX(value); updateImage(image => { image.style.objectPosition = `${value}% ${cropY}%`; }); }} /></label><label className="slide-tool-range">Crop up/down <input type="range" min="0" max="100" value={cropY} onChange={e => { const value = Number(e.target.value); setCropY(value); updateImage(image => { image.style.objectPosition = `${cropX}% ${value}%`; }); }} /></label></>}
+        <button type="button" onClick={() => updateImage(image => { image.style.float = "left"; image.style.display = "inline"; image.style.margin = "8px 16px 8px 0"; })}>Wrap left</button>
+        <button type="button" onClick={() => updateImage(image => { image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px auto"; })}>Centre</button>
+        <button type="button" onClick={() => updateImage(image => { image.style.float = "right"; image.style.display = "inline"; image.style.margin = "8px 0 8px 16px"; })}>Wrap right</button>
+        <button type="button" className="danger" onClick={() => { if (!selectedImage) return; const editor = selectedImage.closest<HTMLElement>(EDITOR_SELECTOR); selectedImage.remove(); setSelectedImage(null); setMenu(null); notifyEditor(editor); }}>Remove image</button>
+        <small>Drag the image inside the lesson to move it to another insertion point.</small>
       </> : <>
+        <div className="slide-tool-field"><span>Style</span><Select ariaLabel="Paragraph style" disabled={!ready} value="" placeholder="Paragraph style" options={[{value:"p",label:"Normal text"},{value:"h1",label:"Heading 1"},{value:"h2",label:"Heading 2"},{value:"h3",label:"Heading 3"},{value:"h4",label:"Heading 4"}]} onChange={value => run("formatBlock", value)} /></div>
         {commands.filter(([cmd]) => ["justifyRight", "justifyFull", "insertUnorderedList", "indent", "outdent", "selectAll"].includes(cmd)).map(([cmd, label]) => commandButton(cmd, label))}
       </>}
       {!ready && <small>Click or select slide text to start formatting.</small>}
