@@ -6,20 +6,22 @@ export function sanitizeSlideHtml(html: string): string {
   const source = document.createElement("template");
   source.innerHTML = html;
   const allowed = new Set(["SPAN", "B", "STRONG", "I", "EM", "U", "S", "STRIKE", "SUB", "SUP", "BR", "P", "DIV", "UL", "OL", "LI", "BLOCKQUOTE", "FONT", "H1", "H2", "H3", "H4", "TABLE", "COLGROUP", "COL", "THEAD", "TBODY", "TR", "TH", "TD", "IMG"]);
-  const styles = ["font-family", "font-size", "font-weight", "font-style", "text-decoration", "color", "background-color", "text-align", "line-height", "letter-spacing", "margin-left", "margin-right", "margin-top", "margin-bottom", "vertical-align", "width", "min-width", "max-width", "height", "min-height", "object-fit", "object-position", "float", "display"];
+  const styles = ["font-family", "font-size", "font-weight", "font-style", "text-decoration", "color", "background-color", "text-align", "line-height", "letter-spacing", "margin-left", "margin-right", "margin-top", "margin-bottom", "vertical-align", "width", "min-width", "max-width", "height", "min-height", "object-fit", "object-position", "float", "display", "transform", "transform-origin"];
   function clean(node: Node): Node {
     if (node.nodeType === Node.TEXT_NODE) return document.createTextNode(node.textContent ?? "");
     const fragment = document.createDocumentFragment();
     if (!(node instanceof HTMLElement) || ["SCRIPT", "STYLE", "IFRAME", "OBJECT"].includes(node.tagName)) return fragment;
-    if (node.tagName === "IMG" && !/^data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(node.getAttribute("src") ?? "")) return fragment;
+    const figureId = node.tagName === "IMG" ? node.getAttribute("data-figure-id") ?? "" : "";
+    const imageSrc = node.tagName === "IMG" ? node.getAttribute("src") ?? "" : "";
+    if (node.tagName === "IMG" && !/^[\w.-]{1,180}$/.test(figureId) && !/^data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(imageSrc)) return fragment;
     const out = allowed.has(node.tagName) ? document.createElement(node.tagName === "FONT" ? "span" : node.tagName.toLowerCase()) : fragment;
     if (out instanceof HTMLElement) {
       const classes = Array.from(node.classList).filter(c => ["section-title", "lesson-p", "lesson-subsection", "lesson-subheading", "lesson-point-group", "lesson-point-lead", "lesson-inferred-list", "lesson-numlist", "num", "data", "lesson-table", "lesson-table-scroll", "card-grid", "lesson-cards", "card", "lesson-card", "t", "d", "lesson-example"].includes(c));
       if (classes.length) out.className = classes.join(" ");
       if (node.tagName === "TH" && ["col", "row"].includes(node.getAttribute("scope") ?? "")) out.setAttribute("scope", node.getAttribute("scope")!);
       if (node.tagName === "IMG") {
-        const src = node.getAttribute("src") ?? "";
-        out.setAttribute("src", src);
+        if (figureId) out.setAttribute("data-figure-id", figureId);
+        if (/^(?:data:image\/(?:png|jpe?g|webp|gif);base64,|https:\/\/)/i.test(imageSrc)) out.setAttribute("src", imageSrc);
         out.setAttribute("alt", node.getAttribute("alt")?.slice(0, 300) ?? "Lesson image");
         out.setAttribute("draggable", "false");
         if (node.dataset.cropped === "true") out.dataset.cropped = "true";
@@ -53,6 +55,17 @@ export function richTextHtml(text: string): string {
 }
 export function saveRichText(el: HTMLElement): string {
   return PREFIX + sanitizeSlideHtml(el.innerHTML);
+}
+
+/** Replace compact inline-image ids with their current local or signed URLs. */
+export function hydrateSlideImages(html: string, sources: Record<string, string | undefined>): string {
+  const template = document.createElement("template");
+  template.innerHTML = html;
+  template.content.querySelectorAll<HTMLImageElement>("img[data-figure-id]").forEach(image => {
+    const source = sources[image.dataset.figureId ?? ""];
+    if (source) image.src = source;
+  });
+  return template.innerHTML;
 }
 
 export function plainSlideText(text: string): string {

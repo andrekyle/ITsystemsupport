@@ -35,6 +35,12 @@ export const PATHS: Record<string, React.ReactNode> = {
       <path d="M14.6 6.5l2.9 2.9" />
     </>
   ),
+  editSquare: (
+    <>
+      <path d="M9 4H5.5A2.5 2.5 0 0 0 3 6.5v12A2.5 2.5 0 0 0 5.5 21h12a2.5 2.5 0 0 0 2.5-2.5V15" />
+      <path d="m8 16 1-4L17.2 3.8a2.05 2.05 0 0 1 2.9 2.9L11.9 15zM16 5l2.9 2.9" />
+    </>
+  ),
   smile: (
     <>
       <circle cx="12" cy="12" r="8.5" />

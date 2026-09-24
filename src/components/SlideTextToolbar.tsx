@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type PointerEvent as Rea
 import { Select } from "./Select";
 import { SlideEditHistory } from "../lib/slideEditHistory";
 import { sanitizeSlideHtml } from "../lib/slideRichText";
+import { draggedImageOrigin, resizeImageRect, type ResizeCorner } from "../lib/imageGeometry";
 
 const EDITOR_SELECTOR = '[data-slide-rich="true"][contenteditable="true"]';
 
@@ -15,7 +16,7 @@ const commands = [
   ["undo", "Undo"], ["redo", "Redo"], ["selectAll", "Select all"],
 ];
 
-export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
+export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; onStoreImage?: (dataUrl: string) => Promise<{ id: string; src: string } | null> }) {
   const range = useRef<Range | null>(null);
   const host = useRef<HTMLElement | null>(null);
   const bookmark = useRef({ start: 0, end: 0 });
@@ -255,7 +256,14 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
       const exactRange = event.type === "pointercancel" ? null : rangeAtPoint(event.clientX, event.clientY);
       const finalRange = exactRange && current.editor.contains(exactRange.startContainer) ? exactRange : current.dropRange;
       if (current.moved && finalRange && event.type !== "pointercancel") {
+        const desired = draggedImageOrigin(event.clientX, event.clientY, current.grabX, current.grabY);
+        // Insert at the exact text caret, then compensate for the browser's
+        // block/float reflow so the grabbed point remains under the pointer.
+        current.image.style.transform = "none";
+        current.image.style.transformOrigin = "top left";
         finalRange.insertNode(current.image);
+        const flowed = current.image.getBoundingClientRect();
+        current.image.style.transform = `translate3d(${desired.left - flowed.left}px, ${desired.top - flowed.top}px, 0)`;
         const caret = document.createRange();
         caret.setStartAfter(current.image);
         caret.collapse(true);
@@ -413,7 +421,11 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
     const restored = restoreSelection(true);
     if (!restored?.selection?.rangeCount) return;
     const img = document.createElement("img");
-    img.src = await imageData(file);
+    const dataUrl = await imageData(file);
+    const stored = onStoreImage ? await onStoreImage(dataUrl) : { id: "", src: dataUrl };
+    if (!stored) return;
+    img.src = stored.src;
+    if (stored.id) img.dataset.figureId = stored.id;
     img.alt = file.name.replace(/\.[^.]+$/, "") || "Lesson image";
     img.draggable = false;
     img.style.width = "60%";
@@ -445,46 +457,56 @@ export function SlideTextToolbar({ enabled }: { enabled: boolean }) {
     setImageRect({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
     notifyEditor(selectedImage.closest<HTMLElement>(EDITOR_SELECTOR));
   };
-  const beginImageResize = (corner: "nw" | "ne" | "sw" | "se") => (event: ReactPointerEvent<HTMLButtonElement>) => {
+  const beginImageResize = (corner: ResizeCorner) => (event: ReactPointerEvent<HTMLButtonElement>) => {
     const image = selectedImage;
     const editor = image?.closest<HTMLElement>(EDITOR_SELECTOR);
     if (!image || !editor) return;
     event.preventDefault();
     event.stopPropagation();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
     const startX = event.clientX;
     const startY = event.clientY;
     const start = image.getBoundingClientRect();
     const editorWidth = Math.max(1, editor.getBoundingClientRect().width);
-    const horizontalDirection = corner.endsWith("e") ? 1 : -1;
-    const verticalDirection = corner.startsWith("s") ? 1 : -1;
-    const aspect = start.width / Math.max(1, start.height);
+    const computed = new DOMMatrixReadOnly(getComputedStyle(image).transform === "none" ? undefined : getComputedStyle(image).transform);
+    let frame = 0;
+    let latestX = startX;
+    let latestY = startY;
+    let changed = false;
     document.body.classList.add("resizing-slide-image");
     const move = (pointer: PointerEvent) => {
-      const nextWidthPx = Math.max(80, Math.min(editorWidth, start.width + (pointer.clientX - startX) * horizontalDirection));
-      const nextWidth = Math.max(10, Math.min(100, nextWidthPx / editorWidth * 100));
-      image.style.width = `${nextWidth}%`;
-      image.style.maxWidth = "100%";
-      if (cropImage) {
-        const nextHeight = Math.max(80, Math.min(900, start.height + (pointer.clientY - startY) * verticalDirection));
-        image.style.height = `${nextHeight}px`;
-        image.style.objectFit = "cover";
-        image.dataset.cropped = "true";
-        setImageHeight(Math.round(nextHeight));
-      } else {
-        image.style.height = "auto";
-        const measuredWidth = nextWidth / 100 * editorWidth;
-        const measuredHeight = measuredWidth / aspect;
-        setImageHeight(Math.round(measuredHeight));
-      }
-      const rect = image.getBoundingClientRect();
-      setImageRect({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
+      pointer.preventDefault();
+      latestX = pointer.clientX;
+      latestY = pointer.clientY;
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const next = resizeImageRect(start, latestX - startX, latestY - startY, corner, cropImage, editorWidth);
+        if (cropImage) {
+          image.style.objectFit = "cover";
+          image.dataset.cropped = "true";
+        }
+        image.style.width = `${next.width}px`;
+        image.style.height = `${next.height}px`;
+        image.style.maxWidth = "100%";
+        image.style.transformOrigin = "top left";
+        image.style.transform = `matrix(${computed.a}, ${computed.b}, ${computed.c}, ${computed.d}, ${computed.e}, ${computed.f})`;
+        const flowed = image.getBoundingClientRect();
+        image.style.transform = `matrix(${computed.a}, ${computed.b}, ${computed.c}, ${computed.d}, ${computed.e + next.left - flowed.left}, ${computed.f + next.top - flowed.top})`;
+        setImageHeight(Math.round(next.height));
+        const rect = image.getBoundingClientRect();
+        setImageRect({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
+        changed = true;
+      });
     };
     const end = () => {
+      const pendingFrame = frame !== 0;
       document.body.classList.remove("resizing-slide-image");
       document.removeEventListener("pointermove", move);
       document.removeEventListener("pointerup", end);
       document.removeEventListener("pointercancel", end);
-      notifyEditor(editor);
+      if (pendingFrame) requestAnimationFrame(() => notifyEditor(editor));
+      else if (changed) notifyEditor(editor);
     };
     document.addEventListener("pointermove", move);
     document.addEventListener("pointerup", end);

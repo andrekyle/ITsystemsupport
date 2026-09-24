@@ -21,7 +21,7 @@ import { Logbook } from "../components/Logbook";
 import { ConfirmModal } from "../components/Modal";
 import { SlideEditableText } from "../components/SlideEditableText";
 import { SlideTextToolbar } from "../components/SlideTextToolbar";
-import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml } from "../lib/slideRichText";
+import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml, hydrateSlideImages } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
 import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, effectiveBuiltContent } from "../components/UnitBuilder";
 import { InlineText, InlineIconBtn } from "../components/InlineText";
@@ -2655,6 +2655,35 @@ export function UnitPage({
   const [deckReplaceError, setDeckReplaceError] = useState<string | null>(null);
   const { figures: figureImages, setFigure, removeFigure } = useLessonFigures(unitId);
   const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, setAllQuizRetries: editAllQuizRetries, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection, setLessonPlan: editSetLessonPlan, setLogbook: editSetLogbook } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId, !!inlineUnit);
+  const migratingInlineImages = useRef(new Set<string>());
+  useEffect(() => {
+    if (inlineUnit || profile.role !== "Super User") return;
+    const candidates = Object.entries(lessonEdits.sectionBody ?? {}).filter(([, body]) => /<img\b[^>]*src=["']data:image\//i.test(body.richHtml ?? ""));
+    if (!candidates.length) return;
+    void (async () => {
+      for (const [sectionKey, body] of candidates) {
+        const migrationKey = `${unitId}:${sectionKey}:${body.richHtml?.length ?? 0}`;
+        if (migratingInlineImages.current.has(migrationKey)) continue;
+        migratingInlineImages.current.add(migrationKey);
+        const root = document.createElement("div");
+        root.innerHTML = body.richHtml ?? "";
+        let changed = false;
+        for (const image of Array.from(root.querySelectorAll<HTMLImageElement>('img[src^="data:image/"]:not([data-figure-id])'))) {
+          const id = `lesson-inline-${sectionKey}-${crypto.randomUUID()}`;
+          if (!(await setFigure(id, image.src))) continue;
+          image.dataset.figureId = id;
+          image.removeAttribute("src");
+          changed = true;
+        }
+        if (changed) {
+          const compact = sanitizeSlideHtml(root.innerHTML);
+          const compactRoot = document.createElement("div");
+          compactRoot.innerHTML = compact;
+          editSetSectionBody(Number(sectionKey), { ...body, paragraphs: [saveRichText(compactRoot)], richHtml: compact });
+        }
+      }
+    })();
+  }, [editSetSectionBody, inlineUnit, lessonEdits.sectionBody, profile.role, setFigure, unitId]);
   const [generatingQuiz, setGeneratingQuiz] = useState<number | null>(null);
   const [quizQuestionCount, setQuizQuestionCount] = useState(5);
   const [quizGenerationError, setQuizGenerationError] = useState<string | null>(null);
@@ -3908,7 +3937,7 @@ export function UnitPage({
               <div className="saqa-body lesson-section">
                 {unifiedText ? <SlideEditableText as="div" className="slide-whole-editor" contentEditable={editable}
                   data-lesson-editor={si}
-                  aria-label="Slide text" html={sanitizeSlideHtml(unifiedHtml)}
+                  aria-label="Slide text" html={sanitizeSlideHtml(hydrateSlideImages(unifiedHtml, Object.fromEntries(Object.entries(figureImages).map(([id, figure]) => [id, figure.image]))))}
                   onKeyDown={e=>{
                     if ((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="a") {
                       e.preventDefault();const selection=window.getSelection();const range=document.createRange();
@@ -3917,6 +3946,10 @@ export function UnitPage({
                   }}
                   onSave={element=>{
                     const clone=element.cloneNode(true) as HTMLElement;
+                    // Inline pictures live in the lesson-figure store. Keep
+                    // only their compact ids in lesson edits so Base64 image
+                    // data can never exhaust localStorage.
+                    clone.querySelectorAll<HTMLImageElement>("img[data-figure-id]").forEach(image => image.removeAttribute("src"));
                     const heading=clone.querySelector(":scope > h2");
                     editHeading(si,heading?htmlToMarked(heading as HTMLElement):"");heading?.remove();
                     editSetSectionBody(si,{paragraphs:[htmlToMarked(clone)],richHtml:sanitizeSlideHtml(clone.innerHTML)});
@@ -4509,7 +4542,20 @@ export function UnitPage({
             );
             const stepper = (
               <div className="lesson-stepper">
-                {editMode && isSuperUser && <SlideTextToolbar key={`${unitId}:${lessonStep}`} enabled />}
+                {editMode && isSuperUser && <SlideTextToolbar key={`${unitId}:${lessonStep}`} enabled onStoreImage={async dataUrl => {
+                  const id = `lesson-inline-${si}-${crypto.randomUUID()}`;
+                  setFigError(null);
+                  setFigUploading(true);
+                  try {
+                    if (!(await setFigure(id, dataUrl))) {
+                      setFigError("The picture could not be saved — check your connection and try again.");
+                      return null;
+                    }
+                    return { id, src: dataUrl };
+                  } finally {
+                    setFigUploading(false);
+                  }
+                }} />}
                 <div className="lesson-stepper-top">
                   <span className="lesson-step-count">
                     {(() => {
@@ -4586,7 +4632,7 @@ export function UnitPage({
                       title="Edit content inline"
                       onClick={() => { if (content) { setInlineUnit(structuredClone(content)); setEditMode(true); } }}
                     >
-                      <Icon name="pencil" size={14} />
+                      <Icon name="editSquare" size={19} strokeWidth={1.7} />
                     </button>
                   )}
                   {isSuperUser && (
