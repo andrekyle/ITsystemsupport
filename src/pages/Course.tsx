@@ -3251,7 +3251,7 @@ export function UnitPage({
     { id: "questions", label: "Activity", icon: "chat", show: !builtUnit && !!content?.questionSessions?.length },
     { id: "assignments", label: "Activity", icon: "folder", show: !builtUnit && !!content?.assignments.length },
     { id: "logbook", label: "Logbook", icon: "book", show: !!content?.logbook },
-    { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content?.quiz.length || !!content?.quizzes?.length },
+    { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content?.quiz.length || !!content?.quizzes?.length || (!!builtUnit && isSuperUser) },
     { id: "selfassessment", label: "Self assessment", icon: "checkCircle", show: !!content?.selfAssessment },
     { id: "evaluation", label: "Evaluation", icon: "chat", show: true },
     { id: "plan", label: "Lesson plan", icon: "presenter", show: !!content?.lessonPlan && isPrivileged },
@@ -5598,7 +5598,7 @@ export function UnitPage({
         );
       })()}
 
-      {tab === "quiz" && content && !content.quizzes?.length && (
+      {tab === "quiz" && content && !content.quizzes?.length && content.quiz.length > 0 && (
         <>
           <h2 className="section-title">
             <span className="ico">
@@ -5621,6 +5621,14 @@ export function UnitPage({
             showAnswers={isPrivileged}
           />
         </>
+      )}
+
+      {tab === "quiz" && content && !content.quizzes?.length && content.quiz.length === 0 && (
+        <section className="card">
+          <Icon name="clipboard" size={28} />
+          <h2>No unit quiz yet</h2>
+          <p>{isSuperUser && builtUnit ? "Choose the number of questions above, then generate a quiz from all lesson content with AI." : "A unit quiz has not been added yet."}</p>
+        </section>
       )}
 
       {tab === "selfassessment" && content?.selfAssessment && (() => {
