@@ -69,8 +69,6 @@ export function parseUnitSource(source: string): UnitTopic[] {
 }
 
 export type UnitContentEnhancement = {
-  overview?: UnitContent["saqa"];
-  saqa?: UnitContent["saqa"];
   logbook?: UnitContent["logbook"];
   evaluation?: UnitContent["evaluation"];
   selfAssessment?: UnitContent["selfAssessment"];
@@ -675,8 +673,6 @@ function lessonPlanFromTemplate(unit: UnitStandard, topics: UnitTopic[], minutes
 
 export function mergeUnitContentEnhancement(base: UnitContent, enhancement: UnitContentEnhancement, unit: UnitStandard): UnitContent {
   const next = structuredClone(base);
-  const overview = enhancement.overview ?? enhancement.saqa;
-  if (overview?.sections?.length && overview.registration?.length) next.saqa = overview;
   if (enhancement.logbook?.knowledgeQuestions?.length && enhancement.logbook.practicalActivities?.length) next.logbook = normalizeLogbookSpec(unit, enhancement.logbook);
   next.evaluation = undefined;
   if (enhancement.selfAssessment?.items?.length) next.selfAssessment = selfAssessmentFromTemplate(enhancement.selfAssessment.items);
@@ -704,13 +700,6 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
     questionSessions: [],
     assignments: [{ id: "built-workplace-project", title: `Workplace project: ${unit.title}`, brief: "Choose a realistic unit of work relevant to this learning material. Prepare a practical plan and explain your decisions using the source.", requirements: goals.concat(["Document assumptions, resources, dependencies and delivery risks.", "Submit your plan, supporting evidence and a short reflection on the result."]), evidence: "A completed workplace plan, supporting calculations or records, and a reflection reviewed by your facilitator." }],
     quiz: [],
-    saqa: { notice: "Learning pack assembled from the supplied source. Confirm official outcomes and assessment requirements with the registered unit standard.", registration: [{ label: "SAQA US ID", value: unit.us }, { label: "Unit standard title", value: unit.title }, { label: "NQF level", value: String(unit.nqf) }, { label: "Credits", value: String(unit.credits) }], sections: [
-      { heading: "Purpose of the unit standard", icon: "target", paragraphs: [topics[0].paragraphs[0]] },
-      { heading: "Unit standard range", icon: "folder", bullets: topics.map(t=>t.heading) },
-      { heading: "Learning outcomes", icon: "checklist", bullets: goals },
-      { heading: "Essential embedded knowledge", icon: "book", bullets: topics.map(t=>`${t.heading}: ${t.paragraphs[0]}`) },
-      { heading: "Assessor criteria — evidence required", icon: "checklist", bullets: ["Completed practical activities supported by the supplied learning material.", "Workplace project and supporting evidence.", "Knowledge-check answers, self assessment and a completed workplace logbook."] },
-    ] },
     logbook: normalizeLogbookSpec(unit, { assignmentTitle: "Assignment One", programme: "Information Technology - Systems Support", unitLabel: `${unit.us} - ${unit.title}`, detailFields: STANDARD_LOGBOOK_DETAIL_FIELDS, project: { time: "30 minutes", title: "Workplace application", text: "Apply the unit learning in the workplace and record evidence against the activities below.", resource: "Logbook" }, knowledgeQuestions: goals.map(text => ({ text, marks: KNOWLEDGE_MARKS })), practicalActivities: goals.map(text => ({ text, marks: PROJECT_MARKS })), workplaceActivities: goals, workplaceEvidenceNote: "The workplace completes this section after observing the learner having complied to and completed all the activities as mentioned below.", otherActivities: [{ activity: "Workplace application", evidence: "Apply the unit learning in the workplace and record evidence against the activities below." }], otherEvidenceNote: "Learner evidence and experience is recorded here. Make reference to equipment, tools, materials or systems that were used in these processes.", projectChecklist: [{ no: "1", name: unit.us }] }),
     selfAssessment: selfAssessmentFromTemplate(goals.map(g => `I am able to ${g.charAt(0).toLowerCase()}${g.slice(1)}`)),
     lessonPlan: lessonPlanFromTemplate(unit, topics, options.minutes),
@@ -729,7 +718,7 @@ export function validateUnitContent(content: UnitContent, requireComplete = true
     const ids = list.map(item => item.id);
     if (ids.some(id => !nonempty(id)) || new Set(ids).size !== ids.length) throw new Error("Activities and quizzes must have unique IDs.");
   }
-  if (requireComplete && (!content.logbook || !content.lessonPlan?.sections.length || !content.selfAssessment?.items.length || !content.saqa)) throw new Error("Overview, notes, logbook, lesson plan and self assessment must all have content.");
+  if (requireComplete && (!content.logbook || !content.lessonPlan?.sections.length || !content.selfAssessment?.items.length)) throw new Error("Logbook, lesson plan and self assessment must all have content.");
   const customTabs = content.customTabs ?? [];
   if (customTabs.some(tab => !nonempty(tab.id) || !nonempty(tab.title)) || new Set(customTabs.map(tab => tab.id)).size !== customTabs.length) throw new Error("Each custom tab needs a title and a unique ID.");
 }

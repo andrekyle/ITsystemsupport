@@ -2,6 +2,7 @@ import { useMemo, useSyncExternalStore } from "react";
 import { builtUnitKey, readBuiltUnit, unitPackValue, type BuiltUnitVersion } from "./builtUnits";
 import { supabase } from "./supabase";
 import { loadUnitPack, persistUnitPack, rememberUnitPack, unitPackSnapshot } from "./unitStorage";
+import { courseScopedUnit } from "./courseScope";
 
 const subscribe = (listener: () => void) => {
   window.addEventListener("storage", listener);
@@ -31,4 +32,31 @@ export async function saveBuiltUnit(us: string, next: BuiltUnitVersion): Promise
     Storage.prototype.removeItem.call(localStorage,key);
     Storage.prototype.removeItem.call(localStorage,`unitbuilder-save-probe.${us}`);
   } catch { /* The pack is already saved; optional cleanup cannot undo it. */ }
+}
+
+export async function deleteBuiltUnit(us: string): Promise<void> {
+  const key = builtUnitKey(us);
+  if (supabase) {
+    const { error } = await supabase.from("shared_state").delete().eq("key", key);
+    if (error) throw new Error(`The unit could not be deleted from the shared course: ${error.message}`);
+  }
+  // Delete from IndexedDB
+  const database = await new Promise<IDBDatabase>((resolve, reject) => {
+    const request = indexedDB.open("itss-unit-packs", 1);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+  });
+  await new Promise<void>((resolve, reject) => {
+    const tx = database.transaction("packs", "readwrite");
+    tx.objectStore("packs").delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  // Delete from localStorage
+  try {
+    Storage.prototype.removeItem.call(localStorage, key);
+    Storage.prototype.removeItem.call(localStorage, `unitbuilder-save-probe.${us}`);
+  } catch { /* optional cleanup */ }
+  // Notify listeners
+  window.dispatchEvent(new Event("unit-built"));
 }

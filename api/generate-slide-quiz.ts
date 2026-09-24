@@ -8,7 +8,7 @@ export default async function handler(req: Request): Promise<Response> {
   if (!key) return Response.json({ error: "OpenAI is not configured." }, { status: 503 });
   const body = await req.json() as { slideText?: string; count?: number };
   const count = Math.min(10, Math.max(3, Math.round(Number(body.count) || 5)));
-  const text = (body.slideText ?? "").trim().slice(0, 12000);
+  const text = (body.slideText ?? "").trim().slice(0, 50000);
   if (!text) return Response.json({ error: "This slide has no text to use." }, { status: 400 });
   const response = await fetch("https://api.openai.com/v1/chat/completions", { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" }, body: JSON.stringify({ model: "gpt-4.1-mini", temperature: 0.2, response_format: { type: "json_object" }, messages: [{ role: "system", content: `Create exactly ${count} useful multiple-choice quiz questions from the supplied slide. Return JSON only: {"questions":[{"q":string,"options":string[4],"answer":number,"explain":string}]}. answer is the zero-based correct option index. Do not invent facts outside the slide.` }, { role: "user", content: text }] }) });
   if (!response.ok) return Response.json({ error: `OpenAI request failed (${response.status}).` }, { status: 502 });

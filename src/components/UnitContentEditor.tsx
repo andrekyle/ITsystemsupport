@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { Select } from "./Select";
 import { plainSlideText } from "../lib/slideRichText";
 
-const names: Record<string,string> = {lesson:"Lesson sections",exercises:"Practical activities",questionSessions:"Knowledge activities",assignments:"Assignments",quiz:"Quiz questions",saqa:"Overview",logbook:"Logbook",selfAssessment:"Self assessment",studyNotes:"Study notes",lessonPlan:"Lesson plan",evaluation:"Evaluation",q:"Question",answer:"Correct answer",explain:"Answer explanation",prep:"Preparation",steps:"Instructions",marks:"Evidence coverage",n:"Lesson number",sections:"Lesson plan sections",rows:"Lesson plan rows",items:"Self-assessment items",questions:"Evaluation questions",scenario:"Scenario paragraphs",requirements:"Requirements",evidence:"Evidence"};
+const names: Record<string,string> = {lesson:"Lesson sections",exercises:"Practical activities",questionSessions:"Knowledge activities",assignments:"Assignments",quiz:"Quiz questions",logbook:"Logbook",selfAssessment:"Self assessment",studyNotes:"Study notes",lessonPlan:"Lesson plan",evaluation:"Evaluation",q:"Question",answer:"Correct answer",explain:"Answer explanation",prep:"Preparation",steps:"Instructions",marks:"Evidence coverage",n:"Lesson number",sections:"Lesson plan sections",rows:"Lesson plan rows",items:"Self-assessment items",questions:"Evaluation questions",scenario:"Scenario paragraphs",requirements:"Requirements",evidence:"Evidence"};
 function label(key:string) { return names[key] ?? key.replace(/([A-Z])/g," $1").replace(/^./,c=>c.toUpperCase()); }
 type Value = string | number | boolean | null | Value[] | { [key:string]: Value };
 function duplicate(value:Value):Value {

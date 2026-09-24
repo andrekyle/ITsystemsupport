@@ -23,7 +23,7 @@ import { SlideEditableText } from "../components/SlideEditableText";
 import { SlideTextToolbar } from "../components/SlideTextToolbar";
 import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
-import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder } from "../components/UnitBuilder";
+import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, effectiveBuiltContent } from "../components/UnitBuilder";
 import { InlineText, InlineIconBtn } from "../components/InlineText";
 import { ActivityQuestionEditor } from "../components/ActivityQuestionEditor";
 import { UnitContentEditor } from "../components/UnitContentEditor";
@@ -2231,6 +2231,7 @@ function loadLessonStep(profileId: string, unitId: string): number {
 interface LessonQuizState {
   answers: Record<number, number[]>;
   checked: Record<number, boolean>;
+  attempts: Record<number, number>;
 }
 
 function loadLessonQuizState(profileId: string, unitId: string): LessonQuizState {
@@ -2238,12 +2239,12 @@ function loadLessonQuizState(profileId: string, unitId: string): LessonQuizState
     const raw = localStorage.getItem(lessonQuizKey(profileId, unitId));
     if (raw) {
       const p = JSON.parse(raw) as Partial<LessonQuizState>;
-      return { answers: p.answers ?? {}, checked: p.checked ?? {} };
+      return { answers: p.answers ?? {}, checked: p.checked ?? {}, attempts: p.attempts ?? {} };
     }
   } catch {
     // malformed state — start fresh
   }
-  return { answers: {}, checked: {} };
+  return { answers: {}, checked: {}, attempts: {} };
 }
 
 export function UnitPage({
@@ -2302,6 +2303,9 @@ export function UnitPage({
   /** lesson-view per-slide quiz: has the learner clicked "Check answers" for this section */
   const [lessonQuizChecked, setLessonQuizChecked] = useState<Record<number, boolean>>(
     () => loadLessonQuizState(profile.id, unitId).checked
+  );
+  const [lessonQuizAttempts, setLessonQuizAttempts] = useState<Record<number, number>>(
+    () => loadLessonQuizState(profile.id, unitId).attempts
   );
   /** staff-only toggle: reveal correct answer on every slide quiz */
   const [showAnswers, setShowAnswers] = useState(false);
@@ -2617,6 +2621,7 @@ export function UnitPage({
     const savedQuiz = loadLessonQuizState(profile.id, unitId);
     setLessonQuizAnswers(savedQuiz.answers);
     setLessonQuizChecked(savedQuiz.checked);
+    setLessonQuizAttempts(savedQuiz.attempts);
   }, [unitId, profile.id]);
 
   useEffect(() => {
@@ -2629,9 +2634,9 @@ export function UnitPage({
   useEffect(() => {
     localStorage.setItem(
       lessonQuizKey(profile.id, unitId),
-      JSON.stringify({ answers: lessonQuizAnswers, checked: lessonQuizChecked })
+      JSON.stringify({ answers: lessonQuizAnswers, checked: lessonQuizChecked, attempts: lessonQuizAttempts })
     );
-  }, [lessonQuizAnswers, lessonQuizChecked, unitId, profile.id]);
+  }, [lessonQuizAnswers, lessonQuizChecked, lessonQuizAttempts, unitId, profile.id]);
   const [noteError, setNoteError] = useState<string | null>(null);
   const [zipping, setZipping] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -2649,10 +2654,12 @@ export function UnitPage({
   const [deckReplacePct, setDeckReplacePct] = useState<number | null>(null);
   const [deckReplaceError, setDeckReplaceError] = useState<string | null>(null);
   const { figures: figureImages, setFigure, removeFigure } = useLessonFigures(unitId);
-  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection, setLessonPlan: editSetLessonPlan, setLogbook: editSetLogbook } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId, !!inlineUnit);
+  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, setQuizRetries: editQuizRetries, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection, setLessonPlan: editSetLessonPlan, setLogbook: editSetLogbook } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId, !!inlineUnit);
   const [generatingQuiz, setGeneratingQuiz] = useState<number | null>(null);
   const [quizQuestionCount, setQuizQuestionCount] = useState(5);
   const [quizGenerationError, setQuizGenerationError] = useState<string | null>(null);
+  const [generatingUnitQuiz, setGeneratingUnitQuiz] = useState(false);
+  const [unitQuizCount, setUnitQuizCount] = useState(10);
   const [lessonSplitError, setLessonSplitError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [tableConfirm, setTableConfirm] = useState<{
@@ -2728,7 +2735,9 @@ export function UnitPage({
   });
   const saveBuiltContent = async (nextContent: UnitContent) => {
     if (!builtUnit) return;
-    await saveBuiltUnit(unitId, { revision: crypto.randomUUID(), createdAt: new Date().toISOString(), source: builtUnit.source, content: nextContent, files: builtUnit.files, aiUsed: builtUnit.aiUsed });
+    // Keep the revision stable so lesson edits remain attached when an
+    // activity or quiz changes.
+    await saveBuiltUnit(unitId, { revision: builtUnit.revision, createdAt: new Date().toISOString(), source: builtUnit.source, content: nextContent, files: builtUnit.files, aiUsed: builtUnit.aiUsed, planSource: builtUnit.planSource });
   };
   const saveSelfAssessment = async () => {
     if (!builtUnit || !isSuperUser || !selfAssessmentDraft || selfAssessmentSaving) return;
@@ -2914,6 +2923,38 @@ export function UnitPage({
       editGeneratedQuiz(si, data.questions);
     } catch (error) { setQuizGenerationError(error instanceof Error ? error.message : "Quiz generation failed."); }
     finally { setGeneratingQuiz(null); }
+  };
+
+  const generateUnitQuiz = async () => {
+    if (!content || !builtUnit || generatingUnitQuiz) return;
+    setGeneratingUnitQuiz(true);
+    setQuizGenerationError(null);
+    const source = effectiveBuiltContent(content, lessonEdits).lesson.map((section, index) => [
+      `Lesson ${index + 1}: ${plainSlideText(section.heading)}`,
+      ...section.paragraphs,
+      ...(section.bullets ?? []),
+      ...(section.cards ?? []).flatMap(card => [card.title, card.text, ...(card.table?.rows.flat() ?? [])]),
+      ...(section.table?.rows.flat() ?? []),
+      ...(section.example ? [section.example.title, ...section.example.lines] : []),
+      ...(section.examples ?? []).flatMap(example => [example.title, ...example.lines]),
+    ].join("\n")).join("\n\n");
+    try {
+      const response = await fetch("/api/generate-slide-quiz", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slideText: source, count: unitQuizCount }) });
+      const data = await response.json() as { questions?: QuizQuestion[]; error?: string };
+      if (!response.ok || !data.questions?.length) throw new Error(data.error ?? "No questions were returned.");
+      const existing = content.quizzes?.length
+        ? content.quizzes
+        : (content.quiz.length ? [{ id: "knowledge-check", title: "Knowledge check", questions: content.quiz }] : []);
+      const next = structuredClone(content);
+      const generated = { id: `unit-quiz-${crypto.randomUUID()}`, title: `Whole unit quiz ${existing.length + 1}`, questions: data.questions };
+      next.quizzes = [...existing, generated];
+      await saveBuiltContent(next);
+      setQuizId(generated.id);
+    } catch (error) {
+      setQuizGenerationError(error instanceof Error ? error.message : "Quiz generation failed.");
+    } finally {
+      setGeneratingUnitQuiz(false);
+    }
   };
 
   // Reaching the final lesson slide with its gate passed IS the evidence of
@@ -3203,7 +3244,6 @@ export function UnitPage({
   }
 
   const tabs: { id: UnitTab; label: string; icon: string; show: boolean }[] = [
-    { id: "overview", label: "Overview", icon: "dashboard", show: true },
     { id: "lesson", label: "Lesson", icon: "book", show: !!content?.lesson.length },
     { id: "material", label: "Course material", icon: "play", show: decks.length > 0 || !!builtUnit },
     { id: "notes", label: "Notes", icon: "document", show: !!content?.notes?.length || Object.values(userNotes).some((n) => n.us === unitId) || !!content?.lesson.length || unitId === "114055" },
@@ -3235,7 +3275,7 @@ export function UnitPage({
         {isSaqaUnit(u.us) ? `Unit standard ${u.us}` : "Internal lesson"}
       </div>
       <h1 className="page-title">{u.title}</h1>
-      {isSuperUser && <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} onEditInline={() => { if (content) { setInlineUnit(structuredClone(content)); setEditMode(true); } }} onCancelInline={() => { setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { setInlineUnit(undefined); setLessonStep(0); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); }} />}
+      {isSuperUser && <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} onEditInline={() => { if (content) { setInlineUnit(structuredClone(content)); setEditMode(true); } }} onCancelInline={() => { setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { setInlineUnit(undefined); setLessonStep(0); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />}
       <div className="meta-row">
         <span className="pill">
           <span className="ico">
@@ -3715,6 +3755,11 @@ export function UnitPage({
                 })()
               : null;
             const slideQuiz = lessonEdits.generatedQuizzes?.[si] ?? sec.slideQuiz ?? [];
+            const configuredRetries = lessonEdits.quizRetries && Object.prototype.hasOwnProperty.call(lessonEdits.quizRetries, si)
+              ? lessonEdits.quizRetries[si]
+              : sec.quizRetries;
+            const maxQuizAttempts = configuredRetries == null ? null : configuredRetries + 1;
+            const quizAttempts = lessonQuizAttempts[si] ?? 0;
             const generatedQuiz = Boolean(lessonEdits.generatedQuizzes?.[si]);
             const editingQuiz = editMode && isSuperUser && generatedQuiz;
             const hasSlideQuiz = slideQuiz.length > 0;
@@ -3727,6 +3772,7 @@ export function UnitPage({
             const qAllAnswered = hasSlideQuiz && qAnswers.every((a) => a >= 0);
             const qAllCorrect =
               hasSlideQuiz && qAllAnswered && qAnswers.every((a, i) => a === slideQuiz[i].answer);
+            const quizAttemptsExhausted = maxQuizAttempts !== null && quizAttempts >= maxQuizAttempts && !qAllCorrect;
             const quizPassed = !hasSlideQuiz || qAllCorrect || isPrivileged;
             const setAnswer = (qi: number, oi: number) => {
               setLessonQuizAnswers((prev) => {
@@ -3787,6 +3833,7 @@ export function UnitPage({
                                 type="button"
                                 key={oi}
                                 className={cls}
+                                disabled={quizAttemptsExhausted}
                                 onClick={() => setAnswer(qi, oi)}
                               >
                                 <span className="mark">
@@ -3821,11 +3868,15 @@ export function UnitPage({
                 {!editingQuiz && <div className="lesson-quiz-actions">
                   <button
                     className="btn"
-                    disabled={!qAllAnswered}
-                    onClick={() => setLessonQuizChecked((prev) => ({ ...prev, [si]: true }))}
+                    disabled={!qAllAnswered || quizAttemptsExhausted}
+                    onClick={() => {
+                      setLessonQuizChecked((prev) => ({ ...prev, [si]: true }));
+                      setLessonQuizAttempts((prev) => ({ ...prev, [si]: (prev[si] ?? 0) + 1 }));
+                    }}
                   >
                     Check answers
                   </button>
+                  {maxQuizAttempts !== null && <span className="muted">Attempt {Math.min(quizAttempts + (qChecked ? 0 : 1), maxQuizAttempts)} of {maxQuizAttempts}</span>}
                   {qChecked && (
                     <span className={`lesson-quiz-status${qAllCorrect ? " ok" : " bad"}`}>
                       {qAllCorrect
@@ -3833,6 +3884,7 @@ export function UnitPage({
                         : `${qAnswers.filter((a, i) => a === slideQuiz[i].answer).length} / ${slideQuiz.length} correct — fix the wrong answers and check again.`}
                     </span>
                   )}
+                  {quizAttemptsExhausted && <span className="lesson-quiz-status bad">No retries remaining.</span>}
                 </div>}
               </div>
             ) : null;
@@ -4541,6 +4593,16 @@ export function UnitPage({
                               disabled={generatingQuiz === si}
                               options={Array.from({ length: 8 }, (_, i) => i + 3).map((count) => ({ value: String(count), label: String(count) }))}
                               onChange={(value) => setQuizQuestionCount(Number(value))}
+                            />
+                          </label>
+                          <label className="slide-quiz-count" title="How many times a learner may redo this slide quiz after the first check">
+                            Retakes
+                            <Select
+                              ariaLabel="Allowed slide quiz retakes"
+                              className="slide-question-select"
+                              value={String(lessonEdits.quizRetries && Object.prototype.hasOwnProperty.call(lessonEdits.quizRetries, si) ? (lessonEdits.quizRetries[si] ?? "unlimited") : (sec.quizRetries ?? "unlimited"))}
+                              options={[{ value: "unlimited", label: "Unlimited" }, ...Array.from({ length: 11 }, (_, count) => ({ value: String(count), label: String(count) }))]}
+                              onChange={(value) => editQuizRetries(si, value === "unlimited" ? null : Number(value))}
                             />
                           </label>
                           <button type="button" className="btn ghost sm" onClick={() => void generateSlideQuiz(si)} disabled={generatingQuiz === si} title={`Use OpenAI to generate ${quizQuestionCount} questions from this slide`}>
@@ -5405,6 +5467,19 @@ export function UnitPage({
             onSpecChange={(spec) => editSetLogbook(spec)}
           />
         </>
+      )}
+
+      {tab === "quiz" && content && builtUnit && isSuperUser && (
+        <div className="activity-edit-bar">
+          <label className="slide-quiz-count">
+            Whole-unit questions
+            <Select ariaLabel="Number of whole-unit quiz questions" className="slide-question-select" value={String(unitQuizCount)} disabled={generatingUnitQuiz} options={Array.from({ length: 8 }, (_, i) => i + 3).map(count => ({ value: String(count), label: String(count) }))} onChange={value => setUnitQuizCount(Number(value))} />
+          </label>
+          <button type="button" className="btn ghost sm" disabled={generatingUnitQuiz} onClick={() => void generateUnitQuiz()}>
+            <Icon name="clipboard" size={14} /> {generatingUnitQuiz ? "Generating whole-unit quiz…" : "Generate whole-unit quiz"}
+          </button>
+          {quizGenerationError && <span role="alert" className="auth-error">{quizGenerationError}</span>}
+        </div>
       )}
 
       {tab === "quiz" && content && content.quizzes && content.quizzes.length > 0 && (() => {

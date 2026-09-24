@@ -328,6 +328,8 @@ export interface LessonSection {
   quizGate?: boolean;
   /** per-slide gate quiz — learner must answer every question correctly before Next is unlocked */
   slideQuiz?: QuizQuestion[];
+  /** retries allowed after the first slide-quiz check; omitted means unlimited */
+  quizRetries?: number;
   /** marks this section as the start of a numbered lesson within the unit —
    *  renders a lesson banner above the section and a divider in the navigation */
   lessonStart?: { n: number; title: string };

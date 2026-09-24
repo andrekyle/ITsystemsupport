@@ -3,7 +3,7 @@ import type { LogbookSpec, PoeDoc, UnitContent, UnitStandard } from "../types";
 import type { LessonEdits } from "../store";
 import { buildUnitContent, validateUnitContent, lessonPlanFromSource, MAX_SOURCE_LENGTH, MAX_LESSON_PLAN_LENGTH, mergeUnitContentEnhancement } from "../lib/unitBuilder";
 import { logbookFromSource, logbookStats, MAX_LOGBOOK_SOURCE_LENGTH } from "../lib/logbookBuilder";
-import { useBuiltUnit, saveBuiltUnit } from "../lib/useBuiltUnit";
+import { useBuiltUnit, saveBuiltUnit, deleteBuiltUnit } from "../lib/useBuiltUnit";
 import { unitHistory, unitVersionArchive, MAX_UNIT_HISTORY, type BuiltUnitVersion } from "../lib/builtUnits";
 import { importUnitSource } from "../lib/unitSourceImport";
 import { makeUnitExports } from "../lib/unitExports";
@@ -43,6 +43,7 @@ export function effectiveBuiltContent(content:UnitContent, edits:LessonEdits):Un
     paragraphs:edits.sectionBody?.[si]?.paragraphs??s.paragraphs.map((p,pi)=>edits.paragraphs?.[`${si}:${pi}`]??p),
     bullets:edits.sectionBody?.[si]?.bullets??s.bullets?.map((p,pi)=>edits.bullets?.[`${si}:${pi}`]??p),
     slideQuiz:edits.generatedQuizzes?.[si]??s.slideQuiz,
+    quizRetries:edits.quizRetries && Object.prototype.hasOwnProperty.call(edits.quizRetries,si) ? (edits.quizRetries[si] ?? undefined) : s.quizRetries,
     cards:s.cards?.map((c,ci)=>({...c,title:edits.cards?.[`${si}:${ci}:t`]??c.title,text:edits.cards?.[`${si}:${ci}:d`]??c.text})),
     example:s.example?{...s.example,title:edits.examples?.[`${si}:0:t`]??s.example.title,lines:s.example.lines.map((line,i)=>edits.examples?.[`${si}:0:${i}`]??line)}:undefined,
     examples:s.examples?.map((ex,xi)=>({...ex,title:edits.examples?.[`${si}:${xi+1}:t`]??ex.title,lines:ex.lines.map((line,i)=>edits.examples?.[`${si}:${xi+1}:${i}`]??line)})),
@@ -69,6 +70,7 @@ export function UnitBuilder({unit,content,edits,onSaved,onEditInline,inlineDraft
   const [message,setMessage]=useState("");
   const [draft,setDraft]=useState<UnitContent|null>(null);
   const [newTabKind, setNewTabKind] = useState("customTabs");
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const addTab = () => {
     if (!draft) return;
     if (newTabKind === "customTabs") {
@@ -179,13 +181,15 @@ export function UnitBuilder({unit,content,edits,onSaved,onEditInline,inlineDraft
           <Select className="unit-version-select" ariaLabel="Saved unit versions" disabled={!!busy} value={selectedVersion.revision} onChange={setRestoreRevision} options={versions.map(version=>({value:version.revision,label:versionLabel(version),hint:versionHint(version)}))}/>
           <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");setMessage("");setBusy("Restoring saved version…");try{await saveBuiltUnit(unit.us,unitVersionArchive(selectedVersion));setRestoreRevision("");onSaved();setMessage(`The version saved on ${versionLabel(selectedVersion)} is now live. The version it replaced is still restorable.`);}catch(e){setError(String(e));}finally{setBusy("");}}}>Restore version</button>
         </span>}
+        <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{if(!confirmDelete){setConfirmDelete(true);setError("");setMessage("");return;}setConfirmDelete(false);setBusy("Deleting unit…");void deleteBuiltUnit(unit.us).then(()=>{setMessage("Unit deleted. You can rebuild it anytime.");onSaved();setBusy("");}).catch(e=>{setError(e instanceof Error?e.message:"The unit could not be deleted.");setBusy("");});}}>{confirmDelete?"Yes, delete unit":"Delete unit"}</button>
+        {confirmDelete&&!busy&&<button type="button" className="btn ghost" onClick={()=>setConfirmDelete(false)}>Cancel</button>}
       </>}
     </div>
     {open&&<div className="unit-builder-panel">
       <h2>{draft?"Edit complete unit":"Build"} · US {unit.us}</h2>
       {draft && <div className="unit-editor-actions">
         <Select ariaLabel="Tab to add" value={newTabKind} onChange={setNewTabKind} options={[
-          { value: "customTabs", label: "Custom content tab" }, { value: "saqa", label: "Overview" }, { value: "lessonPlan", label: "Lesson plan" },
+          { value: "customTabs", label: "Custom content tab" }, { value: "lessonPlan", label: "Lesson plan" },
           { value: "logbook", label: "Logbook" }, { value: "selfAssessment", label: "Self assessment" },
           { value: "evaluation", label: "Evaluation" }, { value: "quizzes", label: "Additional quizzes" },
         ]} />
@@ -209,9 +213,9 @@ export function UnitBuilder({unit,content,edits,onSaved,onEditInline,inlineDraft
         <h3 className="unit-settings-heading">Build settings</h3>
         <div className="unit-settings-card">
           <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Session duration</strong><span>Planned teaching time in minutes.</span></span><input aria-label="Session duration in minutes" className="unit-duration" type="number" min={60} max={2400} value={minutes} disabled={!!busy} onChange={e=>setMinutes(Math.min(2400,Math.max(60,Number(e.target.value))))}/></label>
-          <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Build tabs with OpenAI web research</strong><span>Use OpenAI web research to build the overview, logbook, evaluation and activities.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={ai} disabled={!!busy} onChange={e=>setAi(e.target.checked)}/></label>
+          <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Build tabs with OpenAI web research</strong><span>Use OpenAI web research to build the logbook, evaluation and activities.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={ai} disabled={!!busy} onChange={e=>setAi(e.target.checked)}/></label>
         </div>
-        <p className="muted">Lessons keep your source text. When AI is enabled, OpenAI researches the unit standard online and uses your activity, self-assessment and logbook content to create the matching tabs, overview, evaluation and lesson plan. The lesson plan can be replaced with your own schedule on the Lesson plan tab.</p>
+        <p className="muted">Lessons keep your source text. When AI is enabled, OpenAI researches the unit standard online and uses your activity, self-assessment and logbook content to create the matching tabs, evaluation and lesson plan. The lesson plan can be replaced with your own schedule on the Lesson plan tab.</p>
         {confirmBuild&&!busy&&<p className="unit-confirm" role="alert">Rebuilding replaces every tab of US {unit.us} with the content above. The current version stays restorable for the next {MAX_UNIT_HISTORY} builds.</p>}
         <button type="button" className="btn unit-build-action" disabled={!!busy||source.trim().length<100||(ai&&(!activityBlocks.some(block=>block.text.trim())||!selfAssessmentContent.trim()||!logbookContent.trim()))} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>{if(built&&!confirmBuild){setConfirmBuild(true);setError("");setMessage("");return;}setConfirmBuild(false);void build();}}><span>{busy?`Creating ${busyProgress}%`:!built?"Build complete unit standard":confirmBuild?"Yes, replace the saved unit":"Rebuild complete unit standard"}</span></button>
         {confirmBuild&&!busy&&<button type="button" className="btn ghost" onClick={()=>setConfirmBuild(false)}>Cancel</button>}

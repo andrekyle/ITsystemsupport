@@ -2113,6 +2113,8 @@ export function useMemories() {
 export interface LessonEdits {
   /** AI-generated quiz questions keyed by lesson section index. */
   generatedQuizzes?: Record<number, import("./types").QuizQuestion[]>;
+  /** section index -> retries allowed after the first check; null means unlimited */
+  quizRetries?: Record<number, number | null>;
   /** section index -> replacement heading */
   headings?: Record<number, string>;
   /** `${sectionIdx}:${paraIdx}` -> replacement paragraph text */
@@ -2185,6 +2187,8 @@ export function useLessonEdits(us: string, temporary = false) {
   );
   const setGeneratedQuiz = useCallback((sIdx: number, questions: import("./types").QuizQuestion[]) =>
     apply((d) => ({ ...d, generatedQuizzes: { ...(d.generatedQuizzes ?? {}), [sIdx]: questions } })), [apply]);
+  const setQuizRetries = useCallback((sIdx: number, retries: number | null) =>
+    apply((d) => ({ ...d, quizRetries: { ...(d.quizRetries ?? {}), [sIdx]: retries } })), [apply]);
   const updateGeneratedQuizQuestion = useCallback((sIdx: number, qIdx: number, question: import("./types").QuizQuestion) =>
     apply((d) => {
       const current = (d.generatedQuizzes?.[sIdx] ?? []).slice();
@@ -2371,7 +2375,7 @@ export function useLessonEdits(us: string, temporary = false) {
     [apply]
   );
 
-  return { edits, setHeading, setParagraph, setCaption, setKeyed, setSectionBody, setSectionBodyItem, setGeneratedQuiz, updateGeneratedQuizQuestion, removeGeneratedQuizQuestion, deleteGeneratedQuiz, moveFigure, setScale, setOffsetY, resetSection, setLessonPlan, setLogbook };
+  return { edits, setHeading, setParagraph, setCaption, setKeyed, setSectionBody, setSectionBodyItem, setGeneratedQuiz, setQuizRetries, updateGeneratedQuizQuestion, removeGeneratedQuizQuestion, deleteGeneratedQuiz, moveFigure, setScale, setOffsetY, resetSection, setLessonPlan, setLogbook };
 }
 
 /* ---------- user-uploaded notes (stored separately per profile) ---------- */
