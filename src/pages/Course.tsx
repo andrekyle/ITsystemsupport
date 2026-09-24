@@ -3506,7 +3506,6 @@ export function UnitPage({
       {tab === "lesson" && content && (
         <>
           <div style={{ marginTop: 18 }} />
-          {editMode && isSuperUser && <SlideTextToolbar key={`${unitId}:${lessonStep}`} enabled />}
           {unitId === "HWSW2" && (
             <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
               <a
@@ -4510,6 +4509,7 @@ export function UnitPage({
             );
             const stepper = (
               <div className="lesson-stepper">
+                {editMode && isSuperUser && <SlideTextToolbar key={`${unitId}:${lessonStep}`} enabled />}
                 <div className="lesson-stepper-top">
                   <span className="lesson-step-count">
                     {(() => {
