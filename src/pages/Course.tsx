@@ -5182,7 +5182,7 @@ export function UnitPage({
                 </span>
               </summary>
               <div className="saqa-body">
-                {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="btn ghost sm activity-inline-edit" disabled={!!activityEditor || !!inlineUnit} onClick={() => { setInlineUnit(structuredClone(content)); setEditMode(true); }}>Edit activity inline</button><button type="button" className="btn ghost sm activity-remove" disabled={!!activityEditor} onClick={() => void removeBuiltActivity(kind, index)}>Remove activity</button></div>}
+                {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="activity-remove-icon" aria-label="Remove activity" title="Remove activity" disabled={!!activityEditor} onClick={() => void removeBuiltActivity(kind, index)}><Icon name="trash" size={15} /></button></div>}
                 <p className="lesson-p" style={{ marginTop: 10 }}>
                   {inlineUnit ? unitText(ex.task, (d, v) => { d[kind]![index].task = v; }, "Activity instructions") : <Gloss text={ex.task} />}
                 </p>

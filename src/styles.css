@@ -7198,24 +7198,25 @@ a.plan-ppt:hover {
 .activity-edit-bar {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 7px;
+  justify-content: flex-end;
+  width: 100%;
 }
-.activity-edit-bar .btn.ghost.sm:is(.activity-inline-edit, .activity-remove) {
-  min-height: 24px;
-  padding: 3px 8px;
-  border: 0 !important;
-  border-radius: 4px;
-  color: rgba(255, 255, 255, 0.84);
-  font-size: 11.5px;
-  font-weight: 400;
-  line-height: 1;
-  box-shadow: none;
+.activity-remove-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #d84a4a;
+  cursor: pointer;
 }
-.activity-edit-bar .btn.ghost.sm.activity-inline-edit { background: #238636; }
-.activity-edit-bar .btn.ghost.sm.activity-inline-edit:hover:not(:disabled) { background: #1a6f2c; color: #fff; }
-.activity-edit-bar .btn.ghost.sm.activity-remove { background: #c43b3b; }
-.activity-edit-bar .btn.ghost.sm.activity-remove:hover:not(:disabled) { background: #a92f2f; color: #fff; }
+.activity-remove-icon:hover:not(:disabled) { background: rgba(216, 74, 74, 0.13); color: #f06060; }
+.activity-remove-icon:focus-visible { outline: 2px solid rgba(216, 74, 74, 0.38); outline-offset: 2px; }
+.activity-remove-icon:disabled { opacity: 0.4; cursor: not-allowed; }
 .lesson-p.editable,
 .editable-inline {
   outline: 1px dashed transparent;
