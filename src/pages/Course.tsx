@@ -3878,7 +3878,13 @@ export function UnitPage({
                   >
                     Check answers
                   </button>
-                  {maxQuizAttempts !== null && <span className="muted">Attempt {Math.min(quizAttempts + (qChecked ? 0 : 1), maxQuizAttempts)} of {maxQuizAttempts}</span>}
+                  <span className="muted lesson-quiz-attempts">
+                    {maxQuizAttempts === null
+                      ? `${quizAttempts} attempt${quizAttempts === 1 ? "" : "s"} used · unlimited retries`
+                      : quizAttempts === 0
+                        ? `${maxQuizAttempts} attempt${maxQuizAttempts === 1 ? "" : "s"} available`
+                        : `${quizAttempts} of ${maxQuizAttempts} attempts used · ${Math.max(0, maxQuizAttempts - quizAttempts)} remaining`}
+                  </span>
                   {qChecked && (
                     <span className={`lesson-quiz-status${qAllCorrect ? " ok" : " bad"}`}>
                       {qAllCorrect
