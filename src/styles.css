@@ -7174,6 +7174,23 @@ a.plan-ppt:hover {
   border-color: transparent;
   font-weight: 600;
 }
+.btn.ghost.sm.save-cloud-action.active {
+  border: 0;
+  background: #f52236;
+  color: #fff;
+  font-weight: 500;
+  box-shadow: 0 5px 14px rgba(245, 34, 54, 0.24);
+}
+.btn.ghost.sm.save-cloud-action.active:hover:not(:disabled) {
+  border: 0;
+  background: #dc1529;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(245, 34, 54, 0.32);
+}
+.btn.ghost.sm.save-cloud-action.active:focus-visible {
+  outline: 2px solid rgba(245, 34, 54, 0.35);
+  outline-offset: 2px;
+}
 .lesson-p.editable,
 .editable-inline {
   outline: 1px dashed transparent;

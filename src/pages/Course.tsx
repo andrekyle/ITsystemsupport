@@ -4576,7 +4576,7 @@ export function UnitPage({
                     <span className="lesson-edit-toolbar">
                       <button
                         type="button"
-                        className={`btn ghost sm${editMode ? " active" : ""}`}
+                        className={`btn ghost sm save-cloud-action${editMode ? " active" : ""}`}
                         disabled={savingLesson}
                         onClick={() => { if (editMode) void saveLessonToCloud(); else { setLessonSaveStatus(""); setEditMode(true); } }}
                         title="Toggle edit mode (super user)"
