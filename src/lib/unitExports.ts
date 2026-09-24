@@ -4,6 +4,103 @@ import { plainSlideText } from "./slideRichText";
 import { isLessonBulletListLead, isLessonListLead } from "./lessonSubsections";
 
 export type ExportPage = { title: string; lines: string[] };
+export const PPT_MIN_FONT_SIZE = 18;
+const PPT_BODY_WIDTH = 11.55;
+const PPT_BODY_HEIGHT = 4.72;
+
+export type PresentationPage = {
+  kind: "overview" | "divider" | "content" | "cards";
+  eyebrow: string;
+  title: string;
+  items?: string[];
+  cards?: { title: string; text: string }[];
+};
+
+const cleanPresentationText = (text: string) => plainSlideText(text)
+  .replace(/\*\*/g, "")
+  .replace(/\s+/g, " ")
+  .trim();
+
+/** Presentation slides are prompts and explanations, not a duplicate learner manual. */
+function presentationSummary(text: string, limit = 240): string {
+  const clean = cleanPresentationText(text);
+  if (clean.length <= limit) return clean;
+  const sentences = clean.match(/[^.!?]+[.!?]+/g) ?? [];
+  let summary = "";
+  for (const sentence of sentences) {
+    if ((summary + " " + sentence).trim().length > limit) break;
+    summary = (summary + " " + sentence).trim();
+    if (summary.length >= limit * 0.55) break;
+  }
+  if (summary) return summary;
+  const clipped = clean.slice(0, limit + 1);
+  const wordEnd = clipped.lastIndexOf(" ");
+  return `${clipped.slice(0, Math.max(1, wordEnd)).trim()}…`;
+}
+
+function estimatedTextHeight(text: string, fontSize: number, width: number, lineMultiple = 1.2): number {
+  const charsPerLine = Math.max(8, Math.floor((width * 72) / (fontSize * 0.58)));
+  let lines = 1;
+  let used = 0;
+  for (const word of cleanPresentationText(text).split(/\s+/)) {
+    if (used && used + word.length + 1 > charsPerLine) { lines += 1; used = word.length; }
+    else used += word.length + (used ? 1 : 0);
+  }
+  return (lines * fontSize * lineMultiple) / 72;
+}
+
+function paginatePresentationItems(title: string, eyebrow: string, items: string[]): PresentationPage[] {
+  const pages: PresentationPage[] = [];
+  let current: string[] = [];
+  let used = 0;
+  for (const raw of items.map(item => presentationSummary(item)).filter(Boolean)) {
+    const height = Math.max(0.38, estimatedTextHeight(raw, PPT_MIN_FONT_SIZE, PPT_BODY_WIDTH - 0.5)) + 0.14;
+    if (current.length && used + height > PPT_BODY_HEIGHT) {
+      pages.push({ kind: "content", eyebrow, title: presentationSummary(pages.length ? `${title} (continued)` : title, 100), items: current });
+      current = [];
+      used = 0;
+    }
+    current.push(raw);
+    used += height;
+  }
+  if (current.length || !pages.length) pages.push({ kind: "content", eyebrow, title: presentationSummary(pages.length ? `${title} (continued)` : title, 100), items: current });
+  return pages;
+}
+
+/** Builds the concise, layout-aware slide plan used by the editable PPT export. */
+export function unitPresentationPages(unit: UnitStandard, content: UnitContent): PresentationPage[] {
+  const pages: PresentationPage[] = [];
+  const lessonStarts = content.lesson.filter(section => section.lessonStart).map(section => section.lessonStart!);
+  if (lessonStarts.length) {
+    for (let i = 0; i < lessonStarts.length; i += 4) {
+      pages.push({ kind: "overview", eyebrow: `US ${unit.us}`, title: i ? "What you will learn (continued)" : "What you will learn", cards: lessonStarts.slice(i, i + 4).map(lesson => ({ title: `Lesson ${lesson.n}`, text: presentationSummary(lesson.title, 100) })) });
+    }
+  }
+  const lessonGroups: { n: number; title: string; sections: typeof content.lesson }[] = [];
+  for (const section of content.lesson) {
+    if (section.lessonStart || !lessonGroups.length) lessonGroups.push({ n: section.lessonStart?.n ?? lessonGroups.length + 1, title: section.lessonStart?.title ?? unit.title, sections: [] });
+    lessonGroups.at(-1)!.sections.push(section);
+  }
+  for (const lesson of lessonGroups) {
+    const eyebrow = `Lesson ${lesson.n}`;
+    pages.push({ kind: "divider", eyebrow, title: presentationSummary(lesson.title, 150) });
+    const sectionSummaries = lesson.sections.map(section => {
+      const detail = section.paragraphs?.[0] ?? section.bullets?.[0] ?? section.cards?.[0]?.text ?? "";
+      return detail ? `${section.heading} — ${presentationSummary(detail, 155)}` : section.heading;
+    });
+    pages.push(...paginatePresentationItems(lesson.title, eyebrow, sectionSummaries));
+
+    const lessonCards = lesson.sections.flatMap(section => (section.cards ?? []).map(card => ({
+      title: presentationSummary(card.title, 50),
+      text: presentationSummary(card.text, 100),
+    })));
+    for (let i = 0; i < lessonCards.length; i += 4) {
+      pages.push({ kind: "cards", eyebrow, title: "Key concepts", cards: lessonCards.slice(i, i + 4) });
+    }
+
+  }
+  return pages;
+}
 function wrap(text: string, width = 86): string[] {
   const lines: string[] = [];
   for (const paragraph of plainSlideText(text).replace(/\*\*/g, "").split("\n")) {
@@ -65,6 +162,7 @@ export function unitExportPages(unit: UnitStandard, content: UnitContent): Expor
 export async function makeUnitExports(unit: UnitStandard, content: UnitContent): Promise<{ pdf: File; pptx: File; answers: File }> {
   const [{ default: PDFDocument }, { default: PptxGenJS }] = await Promise.all([import("pdfkit/js/pdfkit.standalone.js"), import("pptxgenjs")]);
   const pages = unitExportPages(unit, content);
+  const presentationPages = unitPresentationPages(unit, content);
   const NAVY = "00285A";
   const BLUE = "1477C9";
   const LIGHT_BLUE = "D6E6F7";
@@ -86,8 +184,8 @@ export async function makeUnitExports(unit: UnitStandard, content: UnitContent):
     slide.addShape("arc", { x: x + 0.48, y: y + 0.73, w: 0.8, h: 0.7, line, adjustPoint: 0.4, angleRange: [200, 340] });
   };
   const addFooter = (slide: any, i?: number) => {
-    slide.addText("ITSS Learn · Investec · Corporate Banking Technology", { x: 0.48, y: 6.92, w: 6.5, h: 0.25, fontFace: "Arial", fontSize: 11, color: GREY, margin: 0 });
-    if (i !== undefined) slide.addText(`${i + 1} / ${pages.length}`, { x: 11.9, y: 6.92, w: 0.9, h: 0.2, fontFace: "Arial", fontSize: 9, color: GREY, align: "right", margin: 0 });
+    slide.addText(`US ${unit.us} · ITSS Learn`, { x: 0.55, y: 7.02, w: 5.5, h: 0.28, fontFace: "Aptos", fontSize: PPT_MIN_FONT_SIZE, color: GREY, margin: 0, fit: "none" });
+    if (i !== undefined) slide.addText(`${i + 1} / ${presentationPages.length + 1}`, { x: 11.75, y: 7.02, w: 1.0, h: 0.28, fontFace: "Aptos", fontSize: PPT_MIN_FONT_SIZE, color: GREY, align: "right", margin: 0, fit: "none" });
   };
   const renderPdf = (entries: ExportPage[]): Promise<Blob> => new Promise((resolve, reject) => {
     const doc = new PDFDocument({ autoFirstPage: false, size: "A4", layout: "landscape", margin: 40, info: { Title: `US ${unit.us}: ${unit.title}` } });
@@ -104,15 +202,31 @@ export async function makeUnitExports(unit: UnitStandard, content: UnitContent):
     doc.end();
   });
   const pptx = new PptxGenJS(); pptx.layout = "LAYOUT_WIDE"; pptx.title = unit.title; pptx.subject = `US ${unit.us}`; pptx.author = "ITSS Learn";
-  pages.forEach((page,i) => {
-    const slide = pptx.addSlide();
+  const addContentChrome = (slide: any, page: PresentationPage, i: number) => {
     slide.background = { color: "FFFFFF" };
-    if (i === 0) {
-      slide.addShape("roundRect", { x: 0.48, y: 0.7, w: 6.8, h: 0.55, rectRadius: 0.15, line: { color: BLUE, transparency: 100 }, fill: { color: BLUE } });
-      slide.addText(`US ${unit.us} · SO 1 · NQF LEVEL ${unit.nqf} · ${unit.credits} CREDITS`, { x: 0.85, y: 0.83, w: 5.95, h: 0.18, fontFace: "Arial", fontSize: 11, bold: true, color: "FFFFFF", margin: 0, fit: "shrink" });
-      slide.addText(unit.title, { x: 0.48, y: 1.48, w: 9.6, h: 1.05, fontFace: "Arial", fontSize: 25, bold: true, color: NAVY, margin: 0, breakLine: false, fit: "shrink" });
-      if (coverSubtitle) slide.addText(coverSubtitle, { x: 0.48, y: 3.1, w: 9.5, h: 0.55, fontFace: "Arial", fontSize: 13.5, color: GREY, margin: 0, fit: "shrink" });
-      slide.addShape("line", { x: 0.48, y: 3.88, w: 12.2, h: 0, line: { color: LINE, width: 1 } });
+    slide.addShape("rect", { x: 0, y: 0, w: 13.333, h: 0.09, line: { color: BLUE, transparency: 100 }, fill: { color: BLUE } });
+    slide.addText(page.eyebrow.toUpperCase(), { x: 0.55, y: 0.28, w: 9.8, h: 0.3, fontFace: "Aptos", fontSize: PPT_MIN_FONT_SIZE, bold: true, color: BLUE, charSpacing: 1.4, margin: 0, fit: "none" });
+    slide.addText(page.title, { x: 0.55, y: 0.72, w: 10.9, h: 0.76, fontFace: "Aptos Display", fontSize: 28, bold: true, color: NAVY, margin: 0, fit: "none", valign: "top" });
+    slide.addShape("line", { x: 0.55, y: 1.58, w: 12.15, h: 0, line: { color: LINE, width: 1 } });
+    addPeopleGraphic(slide, 11.62, 0.34);
+    addFooter(slide, i);
+  };
+  const addCard = (slide: any, card: { title: string; text: string }, x: number, y: number, w: number, h: number) => {
+    slide.addShape("roundRect", { x, y, w, h, rectRadius: 0.08, line: { color: LINE, width: 1 }, fill: { color: "F7FAFD" } });
+    slide.addText(card.title, { x: x + 0.22, y: y + 0.18, w: w - 0.44, h: 0.42, fontFace: "Aptos Display", fontSize: PPT_MIN_FONT_SIZE, bold: true, color: BLUE, margin: 0, fit: "none" });
+    slide.addText(card.text, { x: x + 0.22, y: y + 0.72, w: w - 0.44, h: h - 0.9, fontFace: "Aptos", fontSize: PPT_MIN_FONT_SIZE, color: NAVY, margin: 0, fit: "none", valign: "top", lineSpacingMultiple: 1.05 });
+  };
+  const slideEntries: (PresentationPage | { kind: "cover" })[] = [{ kind: "cover" }, ...presentationPages];
+  slideEntries.forEach((entry, i) => {
+    const slide = pptx.addSlide();
+    if (entry.kind === "cover") {
+      slide.background = { color: "FFFFFF" };
+      slide.addShape("rect", { x: 0, y: 0, w: 13.333, h: 0.12, line: { color: BLUE, transparency: 100 }, fill: { color: BLUE } });
+      slide.addShape("roundRect", { x: 0.55, y: 0.92, w: 7.9, h: 0.58, rectRadius: 0.15, line: { color: BLUE, transparency: 100 }, fill: { color: BLUE } });
+      slide.addText(`US ${unit.us} · NQF LEVEL ${unit.nqf} · ${unit.credits} CREDITS`, { x: 0.78, y: 1.02, w: 7.42, h: 0.34, fontFace: "Aptos", fontSize: PPT_MIN_FONT_SIZE, bold: true, color: "FFFFFF", margin: 0, fit: "none", align: "center" });
+      slide.addText(unit.title, { x: 0.55, y: 1.76, w: 10.35, h: 1.22, fontFace: "Aptos Display", fontSize: 32, bold: true, color: NAVY, margin: 0, fit: "none", valign: "top" });
+      if (coverSubtitle) slide.addText(presentationSummary(coverSubtitle, 175), { x: 0.55, y: 3.18, w: 10.2, h: 0.66, fontFace: "Aptos", fontSize: PPT_MIN_FONT_SIZE, color: GREY, margin: 0, fit: "none", valign: "top" });
+      slide.addShape("line", { x: 0.55, y: 4.02, w: 12.15, h: 0, line: { color: LINE, width: 1 } });
       const meta = [
         ["TIME", `${unitDates ? "90-minute lessons · " : ""}Self & Group`],
         ["SESSION", `${unitDates}${unitTime ? ` · ${unitTime.replace(/\s*-\s*/g, "–")}` : ""}`],
@@ -120,22 +234,36 @@ export async function makeUnitExports(unit: UnitStandard, content: UnitContent):
         ["QUALITY ASSURANCE", quality],
       ];
       meta.forEach(([label, value], n) => {
-        const x = 0.48 + n * 3.1;
-        slide.addText(label, { x, y: 4.08, w: 2.75, h: 0.24, fontFace: "Arial", fontSize: 11, bold: true, color: BLUE, margin: 0 });
-        slide.addText(value, { x, y: 4.42, w: 2.75, h: 0.58, fontFace: "Arial", fontSize: 12, color: NAVY, margin: 0, fit: "shrink", breakLine: false });
+        const x = 0.55 + n * 3.06;
+        slide.addText(label, { x, y: 4.22, w: 2.82, h: 0.3, fontFace: "Aptos", fontSize: PPT_MIN_FONT_SIZE, bold: true, color: BLUE, margin: 0, fit: "none" });
+        slide.addText(value, { x, y: 4.72, w: 2.82, h: 1.05, fontFace: "Aptos", fontSize: PPT_MIN_FONT_SIZE, color: NAVY, margin: 0, fit: "none", valign: "top" });
       });
       addPeopleGraphic(slide);
       addFooter(slide);
       return;
     }
-    slide.addShape("roundRect", { x: 0.55, y: 0.42, w: 2.35, h: 0.34, rectRadius: 0.12, line: { color: BLUE, transparency: 100 }, fill: { color: BLUE } });
-    slide.addText(`US ${unit.us}`, { x: 0.8, y: 0.51, w: 1.75, h: 0.12, fontFace: "Arial", fontSize: 8.5, bold: true, color: "FFFFFF", margin: 0 });
-    slide.addText(page.title, { x:0.55, y:0.98, w:10.3, h:0.68, fontFace:"Arial", fontSize:24, bold:true, color:NAVY, breakLine:false, fit:"shrink", margin:0 });
-    slide.addShape("line", { x: 0.55, y: 1.78, w: 11.9, h: 0, line: { color: LINE, width: 1 } });
-    addPeopleGraphic(slide, 11.05, 0.58);
-    const body = page.lines.join("\n");
-    slide.addText(body, { x:0.72, y:2.15, w:11.5, h:4.35, fontFace:"Arial", fontSize:18, color:NAVY, margin:0, fit:"shrink", valign:"top", breakLine:false, paraSpaceAfter: 9 });
-    addFooter(slide, i);
+    const page = entry as PresentationPage;
+    if (page.kind === "divider") {
+      slide.background = { color: NAVY };
+      slide.addShape("rect", { x: 0, y: 0, w: 13.333, h: 0.12, line: { color: BLUE, transparency: 100 }, fill: { color: BLUE } });
+      slide.addText(page.eyebrow.toUpperCase(), { x: 0.7, y: 2.05, w: 11.8, h: 0.38, fontFace: "Aptos", fontSize: 20, bold: true, color: "8CC2F0", charSpacing: 2.5, margin: 0, fit: "none" });
+      slide.addText(page.title, { x: 0.7, y: 2.68, w: 11.4, h: 1.65, fontFace: "Aptos Display", fontSize: 38, bold: true, color: "FFFFFF", margin: 0, fit: "none", valign: "top" });
+      slide.addText(`US ${unit.us} · ITSS Learn`, { x: 0.7, y: 6.94, w: 5.5, h: 0.3, fontFace: "Aptos", fontSize: PPT_MIN_FONT_SIZE, color: "8CC2F0", margin: 0, fit: "none" });
+      return;
+    }
+    addContentChrome(slide, page, i - 1);
+    if (page.kind === "cards" || page.kind === "overview") {
+      const cards = page.cards ?? [];
+      cards.forEach((card, cardIndex) => addCard(slide, card, 0.65 + (cardIndex % 2) * 6.05, 1.84 + Math.floor(cardIndex / 2) * 2.25, 5.82, 2.02));
+      return;
+    }
+    let y = 1.86;
+    for (const item of page.items ?? []) {
+      const h = Math.max(0.38, estimatedTextHeight(item, PPT_MIN_FONT_SIZE, PPT_BODY_WIDTH - 0.5)) + 0.06;
+      slide.addShape("ellipse", { x: 0.72, y: y + 0.12, w: 0.1, h: 0.1, line: { color: BLUE, transparency: 100 }, fill: { color: BLUE } });
+      slide.addText(item, { x: 1.0, y, w: PPT_BODY_WIDTH - 0.4, h, fontFace: "Aptos", fontSize: PPT_MIN_FONT_SIZE, color: NAVY, margin: 0, fit: "none", valign: "top", lineSpacingMultiple: 1.08 });
+      y += h + 0.12;
+    }
   });
   const answerLines = [...content.quiz, ...(content.quizzes ?? []).flatMap(q => q.questions), ...content.lesson.flatMap(s => s.slideQuiz ?? [])].flatMap((q,i) => [`${i+1}. ${q.q}`, `Correct answer: ${q.options[q.answer]}`, q.explain, ""]);
   for (const e of [...content.exercises,...(content.questionSessions??[])]) answerLines.push(e.title, ...(e.modelAnswer ?? []).flatMap(m => [...(m.paragraphs ?? []), ...(m.bullets ?? [])]));

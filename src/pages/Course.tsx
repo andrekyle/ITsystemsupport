@@ -2664,7 +2664,7 @@ export function UnitPage({
   const [editMode, setEditMode] = useState(false);
   const [tableConfirm, setTableConfirm] = useState<{
     title: string;
-    message: string;
+    message: React.ReactNode;
     confirmLabel: string;
     action: () => void;
   } | null>(null);
@@ -5182,7 +5182,7 @@ export function UnitPage({
                 </span>
               </summary>
               <div className="saqa-body">
-                {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="activity-remove-icon" aria-label="Remove activity" title="Remove activity" disabled={!!activityEditor} onClick={() => void removeBuiltActivity(kind, index)}><Icon name="trash" size={15} /></button></div>}
+                {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="activity-remove-icon" aria-label="Remove activity" title="Remove activity" disabled={!!activityEditor} onClick={() => setTableConfirm({ title: "Remove activity?", message: <>Remove <strong>“{ex.title}”</strong>? This cannot be undone.</>, confirmLabel: "Remove activity", action: () => void removeBuiltActivity(kind, index) })}><Icon name="trash" size={15} /></button></div>}
                 <p className="lesson-p" style={{ marginTop: 10 }}>
                   {inlineUnit ? unitText(ex.task, (d, v) => { d[kind]![index].task = v; }, "Activity instructions") : <Gloss text={ex.task} />}
                 </p>
