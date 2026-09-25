@@ -299,7 +299,27 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         // would leave the float exclusion box behind and let text run under it.
         current.image.style.transform = "none";
         current.image.style.transformOrigin = "top left";
-        finalRange.insertNode(current.image);
+        const dropNode = finalRange.startContainer;
+        const dropElement = dropNode instanceof Element ? dropNode : dropNode.parentElement;
+        const dropBlock = dropElement?.closest<HTMLElement>("p,li,blockquote,h1,h2,h3,h4,div");
+        // A float only affects content that follows it in document order. If
+        // it is inserted at the pointer's character offset, text earlier on
+        // that same first line is laid out before the float and paints across
+        // the image. Anchor it at the start of the dropped text block instead
+        // so the browser wraps the entire line around the image.
+        if (dropBlock && dropBlock !== current.editor && current.editor.contains(dropBlock)) {
+          dropBlock.insertBefore(current.image, dropBlock.firstChild);
+        } else {
+          let topLevel: Node = dropNode;
+          while (topLevel.parentNode && topLevel.parentNode !== current.editor) {
+            topLevel = topLevel.parentNode;
+          }
+          if (topLevel.parentNode === current.editor) {
+            current.editor.insertBefore(current.image, topLevel);
+          } else {
+            finalRange.insertNode(current.image);
+          }
+        }
         const editorRect = current.editor.getBoundingClientRect();
         const imageRect = current.image.getBoundingClientRect();
         const desiredLeft = Math.max(
