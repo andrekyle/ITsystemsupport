@@ -474,6 +474,16 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     ).join("");
     return `<div class="lesson-table-scroll"><table class="data lesson-table">${colgroup}<thead><tr>${headers}</tr></thead><tbody>${bodyRows}</tbody></table></div><p><br></p>`;
   };
+  const insertedLayoutHtml = () => {
+    const rows = Math.max(1, Math.min(10, Number(tableRows) || 2));
+    const cols = Math.max(1, Math.min(8, Number(tableCols) || 2));
+    const colgroup = `<colgroup>${Array.from({ length: cols }, () => "<col>").join("")}</colgroup>`;
+    const body = Array.from(
+      { length: rows },
+      () => `<tr style="height:120px">${Array.from({ length: cols }, () => "<td><p><br></p></td>").join("")}</tr>`
+    ).join("");
+    return `<table class="slide-layout-grid">${colgroup}<tbody>${body}</tbody></table><p><br></p>`;
+  };
   const applyList = (ordered: boolean) => {
     const restored = restoreSelection();
     const selection = restored?.selection;
@@ -578,6 +588,14 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     const restored = restoreSelection(true);
     if (!restored) return;
     document.execCommand("insertHTML", false, insertedTableHtml());
+    if (restored.selection?.rangeCount) range.current = restored.selection.getRangeAt(0).cloneRange();
+    restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
+    setActive(commands.filter(([cmd]) => document.queryCommandState(cmd)).map(([cmd]) => cmd));
+  };
+  const insertLayout = () => {
+    const restored = restoreSelection(true);
+    if (!restored) return;
+    document.execCommand("insertHTML", false, insertedLayoutHtml());
     if (restored.selection?.rangeCount) range.current = restored.selection.getRangeAt(0).cloneRange();
     restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
     setActive(commands.filter(([cmd]) => document.queryCommandState(cmd)).map(([cmd]) => cmd));
@@ -805,7 +823,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       </span>
       <span className="slide-tool-group">
         {menuToggle("paragraph", "Paragraph and editing options", paragraphIcon)}
-        {menuToggle("table", "Insert table", tableIcon)}
+        {menuToggle("table", "Insert table or screen layout", tableIcon)}
         <button type="button" className="slide-tool-icon" disabled={!ready} aria-label="Insert image at cursor" title="Insert image at cursor" onMouseDown={e => e.preventDefault()} onClick={() => imageInput.current?.click()}>{imageIcon}</button>
         {selectedImage && menuToggle("image", "Resize and crop selected image", imageIcon)}
       </span>
@@ -831,6 +849,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         <div className="slide-tool-field"><span>Rows</span><Select ariaLabel="Table rows" disabled={!ready} value={tableRows} options={Array.from({ length: 10 }, (_, index) => ({ value: String(index + 1), label: String(index + 1) }))} onChange={setTableRows} /></div>
         <div className="slide-tool-field"><span>Columns</span><Select ariaLabel="Table columns" disabled={!ready} value={tableCols} options={Array.from({ length: 8 }, (_, index) => ({ value: String(index + 1), label: String(index + 1) }))} onChange={setTableCols} /></div>
         <button type="button" disabled={!ready} onMouseDown={e => e.preventDefault()} onClick={insertTable}>Insert table</button>
+        <button type="button" disabled={!ready} onMouseDown={e => e.preventDefault()} onClick={insertLayout}>Split screen</button>
         <label className="slide-tool-range">Column width <input type="number" min="48" max="900" step="1" disabled={!selectedCell} value={columnWidth} onChange={e => updateColumnWidth(Math.max(48, Number(e.target.value) || 48))} /> px</label>
         <label className="slide-tool-range">Row height <input type="number" min="28" max="600" step="1" disabled={!selectedCell} value={rowHeight} onChange={e => updateRowHeight(Math.max(28, Number(e.target.value) || 28))} /> px</label>
         {selectedCell && <small>Sizes apply to the selected cell’s complete column or row.</small>}

@@ -14146,6 +14146,11 @@ body.moving-slide-image [data-slide-rich] img:hover { outline:none; }
 [data-slide-rich]::after { display:block; clear:both; content:""; }
 [data-slide-rich] table { border-collapse:collapse; }
 [data-slide-rich] td, [data-slide-rich] th { box-sizing:border-box; }
+[data-slide-rich] .slide-layout-grid { width:100%; table-layout:fixed; margin:12px 0; border-collapse:collapse; }
+[data-slide-rich] .slide-layout-grid td { min-width:0; min-height:80px; padding:14px; vertical-align:top; border:1px solid color-mix(in srgb, var(--ink) 22%, transparent); }
+[data-slide-rich] .slide-layout-grid td > :first-child { margin-top:0; }
+[data-slide-rich] .slide-layout-grid td > :last-child { margin-bottom:0; }
+[data-slide-rich][contenteditable="true"] .slide-layout-grid td { outline:1px dashed color-mix(in srgb, var(--azure) 30%, transparent); outline-offset:-4px; }
 [data-slide-rich][contenteditable="true"] td,
 [data-slide-rich][contenteditable="true"] th { position:relative; }
 [data-slide-rich][contenteditable="true"] td::after,
