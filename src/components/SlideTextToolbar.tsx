@@ -416,53 +416,104 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   };
   const applyList = (ordered: boolean) => {
     const restored = restoreSelection();
-    if (!restored) return;
-    const anchorNode = restored.selection?.anchorNode;
+    const selection = restored?.selection;
+    if (!restored || !selection?.rangeCount) return;
+    const selectedRange = selection.getRangeAt(0).cloneRange();
+    const anchorNode = selection.anchorNode;
     const anchorElement = anchorNode instanceof Element ? anchorNode : anchorNode?.parentElement;
-    const sourceStyle = getComputedStyle(anchorElement ?? restored.editor);
-    const typography = {
-      fontFamily: sourceStyle.fontFamily,
-      fontSize: sourceStyle.fontSize,
-      fontWeight: sourceStyle.fontWeight,
-      lineHeight: sourceStyle.lineHeight,
+    const intersectsText = (element: Element) => {
+      if (selectedRange.collapsed) return element.contains(anchorNode);
+      const contents = document.createRange();
+      contents.selectNodeContents(element);
+      return selectedRange.compareBoundaryPoints(Range.END_TO_START, contents) > 0
+        && selectedRange.compareBoundaryPoints(Range.START_TO_END, contents) < 0;
     };
-    document.execCommand("styleWithCSS", false, "false");
-    document.execCommand(ordered ? "insertOrderedList" : "insertUnorderedList", false);
-    const currentRange = restored.selection?.rangeCount ? restored.selection.getRangeAt(0) : null;
-    const allLists = Array.from(restored.editor.querySelectorAll<HTMLOListElement | HTMLUListElement>("ol,ul"));
-    let affectedLists = currentRange ? allLists.filter(list => currentRange.intersectsNode(list)) : [];
-    if (!affectedLists.length) {
-      const currentNode = restored.selection?.anchorNode;
-      const currentElement = currentNode instanceof Element ? currentNode : currentNode?.parentElement;
-      const closest = currentElement?.closest<HTMLOListElement | HTMLUListElement>("ol,ul");
-      if (closest && restored.editor.contains(closest)) affectedLists = [closest];
+    const candidates = Array.from(restored.editor.querySelectorAll<HTMLElement>("p,h1,h2,h3,h4,li"));
+    const selectedBlocks = Array.from(new Set(candidates.filter(intersectsText).map(element => element.closest<HTMLElement>("li") ?? element)))
+      .filter(element => restored.editor.contains(element));
+    if (!selectedBlocks.length && anchorElement) {
+      const closest = anchorElement.closest<HTMLElement>("li,p,h1,h2,h3,h4");
+      if (closest && restored.editor.contains(closest)) selectedBlocks.push(closest);
     }
-    affectedLists.forEach(list => {
-      list.classList.remove("lesson-numlist", "lesson-inferred-list");
-      list.classList.add("slide-editor-list");
-      // Browsers often keep the selected H1/H2/P wrapper inside each LI.
-      // That makes individual list items retain unrelated heading sizes and
-      // fonts. A toolbar-created list is plain lesson body text, so flatten
-      // those wrappers and clear only typography that can change its default.
-      list.querySelectorAll(":scope > li > p:only-child, :scope > li > div:only-child, :scope > li > h1:only-child, :scope > li > h2:only-child, :scope > li > h3:only-child, :scope > li > h4:only-child").forEach(block => block.replaceWith(...Array.from(block.childNodes)));
-      list.removeAttribute("face");
-      list.style.removeProperty("font-family");
-      list.style.removeProperty("font-size");
-      list.style.removeProperty("line-height");
-      list.querySelectorAll<HTMLElement>("[style],font").forEach(element => {
-        element.removeAttribute("face");
-        element.removeAttribute("size");
-        element.style.removeProperty("font-family");
-        element.style.removeProperty("font-size");
-        element.style.removeProperty("line-height");
-        if (!element.getAttribute("style")?.trim()) element.removeAttribute("style");
+    if (!selectedBlocks.length) return;
+
+    const selectedLists = Array.from(new Set(selectedBlocks.map(block => block.closest<HTMLOListElement | HTMLUListElement>("ol,ul")).filter((list): list is HTMLOListElement | HTMLUListElement => Boolean(list))));
+    const requestedTag = ordered ? "OL" : "UL";
+    let firstResult: HTMLElement | null = null;
+    let lastResult: HTMLElement | null = null;
+    if (selectedLists.length && selectedBlocks.every(block => block.tagName === "LI")) {
+      const selectedItems = new Set(selectedBlocks as HTMLLIElement[]);
+      selectedLists.forEach(list => {
+        const fragment = document.createDocumentFragment();
+        let run: HTMLOListElement | HTMLUListElement | null = null;
+        const appendRun = (tag: "ol" | "ul") => {
+          const next = document.createElement(tag);
+          next.className = "slide-editor-list";
+          next.setAttribute("style", list.getAttribute("style") ?? "");
+          fragment.appendChild(next);
+          run = next;
+          firstResult ??= next;
+          lastResult = next;
+        };
+        Array.from(list.children).forEach(child => {
+          if (!(child instanceof HTMLLIElement)) return;
+          const selected = selectedItems.has(child);
+          if (selected && list.tagName === requestedTag) {
+            const paragraph = document.createElement("p");
+            paragraph.className = "lesson-p";
+            paragraph.append(...Array.from(child.childNodes));
+            fragment.appendChild(paragraph);
+            firstResult ??= paragraph;
+            lastResult = paragraph;
+            run = null;
+            return;
+          }
+          const targetTag = selected ? (ordered ? "ol" : "ul") : list.tagName.toLowerCase() as "ol" | "ul";
+          if (!run || run.tagName.toLowerCase() !== targetTag) appendRun(targetTag);
+          run!.appendChild(child);
+        });
+        list.replaceWith(fragment);
       });
-      list.style.fontFamily = typography.fontFamily;
-      list.style.fontSize = typography.fontSize;
-      list.style.fontWeight = typography.fontWeight;
-      list.style.lineHeight = typography.lineHeight;
-    });
-    if (restored.selection?.rangeCount) range.current = restored.selection.getRangeAt(0).cloneRange();
+    } else {
+      let index = 0;
+      while (index < selectedBlocks.length) {
+        const first = selectedBlocks[index];
+        const parent = first.parentNode;
+        const group = [first];
+        while (index + group.length < selectedBlocks.length) {
+          const next = selectedBlocks[index + group.length];
+          let sibling = group[group.length - 1].nextSibling;
+          while (sibling?.nodeType === Node.TEXT_NODE && !sibling.textContent?.trim()) sibling = sibling.nextSibling;
+          if (next.parentNode !== parent || sibling !== next) break;
+          group.push(next);
+        }
+        const sourceStyle = getComputedStyle(first);
+        const list = document.createElement(ordered ? "ol" : "ul");
+        list.className = "slide-editor-list";
+        list.style.fontFamily = sourceStyle.fontFamily;
+        list.style.fontSize = sourceStyle.fontSize;
+        list.style.fontWeight = sourceStyle.fontWeight;
+        list.style.lineHeight = sourceStyle.lineHeight;
+        parent?.insertBefore(list, first);
+        group.forEach(block => {
+          const item = document.createElement("li");
+          item.append(...Array.from(block.childNodes));
+          list.appendChild(item);
+          block.remove();
+        });
+        firstResult ??= list;
+        lastResult = list;
+        index += group.length;
+      }
+    }
+    if (firstResult && lastResult) {
+      const resultRange = document.createRange();
+      resultRange.setStartBefore(firstResult);
+      resultRange.setEndAfter(lastResult);
+      selection.removeAllRanges();
+      selection.addRange(resultRange);
+      range.current = resultRange.cloneRange();
+    }
     restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
   };
   const insertTable = () => {
