@@ -417,9 +417,27 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   const applyList = (ordered: boolean) => {
     const restored = restoreSelection();
     if (!restored) return;
+    const anchorNode = restored.selection?.anchorNode;
+    const anchorElement = anchorNode instanceof Element ? anchorNode : anchorNode?.parentElement;
+    const sourceStyle = getComputedStyle(anchorElement ?? restored.editor);
+    const typography = {
+      fontFamily: sourceStyle.fontFamily,
+      fontSize: sourceStyle.fontSize,
+      fontWeight: sourceStyle.fontWeight,
+      lineHeight: sourceStyle.lineHeight,
+    };
     document.execCommand("styleWithCSS", false, "false");
     document.execCommand(ordered ? "insertOrderedList" : "insertUnorderedList", false);
-    restored.editor.querySelectorAll<HTMLOListElement | HTMLUListElement>("ol,ul").forEach(list => {
+    const currentRange = restored.selection?.rangeCount ? restored.selection.getRangeAt(0) : null;
+    const allLists = Array.from(restored.editor.querySelectorAll<HTMLOListElement | HTMLUListElement>("ol,ul"));
+    let affectedLists = currentRange ? allLists.filter(list => currentRange.intersectsNode(list)) : [];
+    if (!affectedLists.length) {
+      const currentNode = restored.selection?.anchorNode;
+      const currentElement = currentNode instanceof Element ? currentNode : currentNode?.parentElement;
+      const closest = currentElement?.closest<HTMLOListElement | HTMLUListElement>("ol,ul");
+      if (closest && restored.editor.contains(closest)) affectedLists = [closest];
+    }
+    affectedLists.forEach(list => {
       list.classList.remove("lesson-numlist", "lesson-inferred-list");
       list.classList.add("slide-editor-list");
       // Browsers often keep the selected H1/H2/P wrapper inside each LI.
@@ -439,6 +457,10 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         element.style.removeProperty("line-height");
         if (!element.getAttribute("style")?.trim()) element.removeAttribute("style");
       });
+      list.style.fontFamily = typography.fontFamily;
+      list.style.fontSize = typography.fontSize;
+      list.style.fontWeight = typography.fontWeight;
+      list.style.lineHeight = typography.lineHeight;
     });
     if (restored.selection?.rangeCount) range.current = restored.selection.getRangeAt(0).cloneRange();
     restored.editor.dispatchEvent(new Event("input", { bubbles: true }));

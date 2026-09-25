@@ -14247,10 +14247,10 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .slide-whole-editor[contenteditable="true"] { cursor:text; }
 .slide-whole-editor .slide-editor-list,
 .slide-whole-editor ol:not(.lesson-numlist):not(.lesson-inferred-list),
-.slide-whole-editor ul:not(.lesson-inferred-list) { font-family:inherit !important; font-size:17px !important; font-weight:350; line-height:1.7 !important; color:var(--ink-2); }
+.slide-whole-editor ul:not(.lesson-inferred-list) { font-family:inherit; font-size:inherit; font-weight:inherit; line-height:inherit; color:var(--ink-2); }
 .slide-whole-editor .slide-editor-list li,
 .slide-whole-editor ol:not(.lesson-numlist):not(.lesson-inferred-list) li,
-.slide-whole-editor ul:not(.lesson-inferred-list) li { font-family:inherit !important; font-size:17px !important; line-height:1.7 !important; }
+.slide-whole-editor ul:not(.lesson-inferred-list) li { font-family:inherit; font-size:inherit; font-weight:inherit; line-height:inherit; }
 .slide-whole-editor h1 { font-size:2em; line-height:1.15; }
 .slide-whole-editor h2 { font-size:1.55em; line-height:1.2; }
 .slide-whole-editor h3 { font-size:1.3em; line-height:1.25; }
