@@ -421,6 +421,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     document.execCommand(ordered ? "insertOrderedList" : "insertUnorderedList", false);
     restored.editor.querySelectorAll<HTMLOListElement | HTMLUListElement>("ol,ul").forEach(list => {
       list.classList.remove("lesson-numlist", "lesson-inferred-list");
+      list.classList.add("slide-editor-list");
       // Browsers often keep the selected H1/H2/P wrapper inside each LI.
       // That makes individual list items retain unrelated heading sizes and
       // fonts. A toolbar-created list is plain lesson body text, so flatten
