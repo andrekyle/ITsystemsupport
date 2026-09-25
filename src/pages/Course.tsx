@@ -3304,7 +3304,7 @@ export function UnitPage({
         {isSaqaUnit(u.us) ? `Unit standard ${u.us}` : "Internal lesson"}
       </div>
       <h1 className="page-title">{u.title}</h1>
-      {isSuperUser && <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} onCancelInline={() => { setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { setInlineUnit(undefined); setLessonStep(0); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />}
+      {isSuperUser && <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} onCancelInline={() => { setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { setInlineUnit(undefined); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />}
       <div className="meta-row">
         <span className="pill">
           <span className="ico">
