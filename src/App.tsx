@@ -251,26 +251,53 @@ export default function App() {
         syncedEmail.current = session.user.email?.trim().toLowerCase() ?? null;
         if (syncedUser.current !== session.user.id) {
           syncedUser.current = session.user.id;
-          const adminCheck = sb
-            .from("admins")
-            .select("user_id")
-            .eq("user_id", session.user.id)
-            .maybeSingle()
-            .then(
-              ({ data }) => setAccountAdmin(!!data),
-              () => setAccountAdmin(false)
-            );
-          const selectedCourse = localStorage.getItem("itss.activeCourse");
-          const selectedCourseKey = selectedCourse?.startsWith("custom-") ? `itss.course.${selectedCourse}.shared` : null;
-          const previousCourse = selectedCourseKey ? localStorage.getItem(selectedCourseKey) : null;
-          void Promise.all([startSync(session.user.id), adminCheck]).then(() => {
-            if (selectedCourseKey && previousCourse !== localStorage.getItem(selectedCourseKey)) {
-              location.reload();
-              return;
-            }
-            syncReady.current = true;
-            if (!recovering.current) setCloudState("ready");
-          });
+          const authUserId = session.user.id;
+          // Supabase warns against starting further client operations directly
+          // inside onAuthStateChange: they may wait on the auth callback's lock
+          // and leave the app on "Loading your data..." forever. Defer cloud
+          // initialization until after the callback has returned.
+          window.setTimeout(() => {
+            if (syncedUser.current !== authUserId) return;
+            const adminCheck = sb
+              .from("admins")
+              .select("user_id")
+              .eq("user_id", authUserId)
+              .maybeSingle()
+              .then(
+                ({ data }) => setAccountAdmin(!!data),
+                () => setAccountAdmin(false)
+              );
+            const selectedCourse = localStorage.getItem("itss.activeCourse");
+            const selectedCourseKey = selectedCourse?.startsWith("custom-")
+              ? `itss.course.${selectedCourse}.shared`
+              : null;
+            const previousCourse = selectedCourseKey
+              ? localStorage.getItem(selectedCourseKey)
+              : null;
+            let finished = false;
+            const showApp = () => {
+              if (finished || syncedUser.current !== authUserId) return;
+              finished = true;
+              syncReady.current = true;
+              if (!recovering.current) setCloudState("ready");
+            };
+            // Cloud data normally loads immediately. If the network or a
+            // database request stalls, open the app with cached/local data;
+            // SignIn continues watching for the cloud profile to arrive.
+            const fallback = window.setTimeout(showApp, 8_000);
+            void Promise.allSettled([startSync(authUserId), adminCheck]).then(() => {
+              window.clearTimeout(fallback);
+              if (syncedUser.current !== authUserId) return;
+              if (
+                selectedCourseKey &&
+                previousCourse !== localStorage.getItem(selectedCourseKey)
+              ) {
+                location.reload();
+                return;
+              }
+              showApp();
+            });
+          }, 0);
         }
       } else {
         setAccountEmail(null);
