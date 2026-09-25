@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type PointerEvent as Rea
 import { Select } from "./Select";
 import { SlideEditHistory } from "../lib/slideEditHistory";
 import { sanitizeSlideHtml } from "../lib/slideRichText";
-import { draggedImageOrigin, resizeImageRect, type ResizeCorner } from "../lib/imageGeometry";
+import { resizeImageRect, type ResizeCorner } from "../lib/imageGeometry";
 
 const EDITOR_SELECTOR = '[data-slide-rich="true"][contenteditable="true"]';
 
@@ -145,7 +145,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   }, [selectedImage]);
   useEffect(() => {
     if (!enabled) return;
-    let drag: { image: HTMLImageElement; editor: HTMLElement; startX: number; startY: number; grabX: number; grabY: number; moved: boolean; ghost: HTMLImageElement | null; marker: HTMLDivElement | null; dropRange: Range | null; frame: number; x: number; y: number } | null = null;
+    let drag: { image: HTMLImageElement; editor: HTMLElement; startX: number; startY: number; grabX: number; grabY: number; moved: boolean; ghost: HTMLImageElement | null; dropRange: Range | null; frame: number; x: number; y: number } | null = null;
     const inspect = (event: MouseEvent) => {
       const target = event.target;
       if (!(target instanceof Element)) return;
@@ -173,32 +173,6 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       }
       return result;
     };
-    const caretBox = (range: Range): { x: number; y: number; height: number } | null => {
-      let rect = range.getBoundingClientRect();
-      let x = rect.left;
-      if (rect.height < 2 && range.startContainer.nodeType === Node.TEXT_NODE) {
-        const text = range.startContainer.textContent ?? "";
-        const probe = document.createRange();
-        if (range.startOffset < text.length) {
-          probe.setStart(range.startContainer, range.startOffset);
-          probe.setEnd(range.startContainer, range.startOffset + 1);
-          rect = probe.getBoundingClientRect();
-          x = rect.left;
-        } else if (range.startOffset > 0) {
-          probe.setStart(range.startContainer, range.startOffset - 1);
-          probe.setEnd(range.startContainer, range.startOffset);
-          rect = probe.getBoundingClientRect();
-          x = rect.right;
-        }
-      }
-      if (rect.height < 2) {
-        const parent = range.startContainer instanceof HTMLElement ? range.startContainer : range.startContainer.parentElement;
-        const parentRect = parent?.getBoundingClientRect();
-        if (!parentRect) return null;
-        return { x: parentRect.left, y: parentRect.top, height: Math.max(20, parentRect.height) };
-      }
-      return { x, y: rect.top, height: rect.height };
-    };
     const pointerDown = (event: PointerEvent) => {
       const target = event.target;
       if (!(target instanceof HTMLImageElement) || !target.closest(EDITOR_SELECTOR)) return;
@@ -212,7 +186,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       setCropImage(target.dataset.cropped === "true");
       setMenu("image");
       const rect = target.getBoundingClientRect();
-      drag = { image: target, editor, startX: event.clientX, startY: event.clientY, grabX: event.clientX - rect.left, grabY: event.clientY - rect.top, moved: false, ghost: null, marker: null, dropRange: null, frame: 0, x: event.clientX, y: event.clientY };
+      drag = { image: target, editor, startX: event.clientX, startY: event.clientY, grabX: event.clientX - rect.left, grabY: event.clientY - rect.top, moved: false, ghost: null, dropRange: null, frame: 0, x: event.clientX, y: event.clientY };
     };
     const pointerMove = (event: PointerEvent) => {
       if (!drag) return;
@@ -223,9 +197,6 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         drag.ghost = drag.image.cloneNode(true) as HTMLImageElement;
         Object.assign(drag.ghost.style, { position: "fixed", left: "0", top: "0", zIndex: "200", width: `${rect.width}px`, height: `${rect.height}px`, maxWidth: "none", margin: "0", opacity: "0.68", pointerEvents: "none", boxShadow: "0 10px 30px #0008" });
         document.body.appendChild(drag.ghost);
-        drag.marker = document.createElement("div");
-        drag.marker.className = "slide-image-drop-marker";
-        document.body.appendChild(drag.marker);
         drag.image.classList.add("is-being-moved");
         document.body.classList.add("moving-slide-image");
       }
@@ -242,11 +213,6 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         if (speed) window.scrollBy(0, speed);
         const candidate = rangeAtPoint(drag.x, drag.y);
         drag.dropRange = candidate && drag.editor.contains(candidate.startContainer) ? candidate : null;
-        const box = drag.dropRange ? caretBox(drag.dropRange) : null;
-        if (drag.marker) {
-          drag.marker.style.display = box ? "block" : "none";
-          if (box) Object.assign(drag.marker.style, { left: `${box.x - 1}px`, top: `${box.y}px`, height: `${Math.max(18, box.height)}px` });
-        }
       });
     };
     const finishDrag = (event: PointerEvent) => {
@@ -256,14 +222,16 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       const exactRange = event.type === "pointercancel" ? null : rangeAtPoint(event.clientX, event.clientY);
       const finalRange = exactRange && current.editor.contains(exactRange.startContainer) ? exactRange : current.dropRange;
       if (current.moved && finalRange && event.type !== "pointercancel") {
-        const desired = draggedImageOrigin(event.clientX, event.clientY, current.grabX, current.grabY);
-        // Insert at the exact text caret, then compensate for the browser's
-        // block/float reflow so the grabbed point remains under the pointer.
+        // Move the actual flow anchor, not only the painted image. A transform
+        // would leave the float exclusion box behind and let text run under it.
         current.image.style.transform = "none";
         current.image.style.transformOrigin = "top left";
         finalRange.insertNode(current.image);
-        const flowed = current.image.getBoundingClientRect();
-        current.image.style.transform = `translate3d(${desired.left - flowed.left}px, ${desired.top - flowed.top}px, 0)`;
+        const editorRect = current.editor.getBoundingClientRect();
+        const placeLeft = event.clientX <= editorRect.left + editorRect.width / 2;
+        current.image.style.float = placeLeft ? "left" : "right";
+        current.image.style.display = "inline";
+        current.image.style.margin = placeLeft ? "8px 16px 8px 0" : "8px 0 8px 16px";
         const caret = document.createRange();
         caret.setStartAfter(current.image);
         caret.collapse(true);
@@ -273,7 +241,6 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         notifyEditor(current.editor);
       }
       current.ghost?.remove();
-      current.marker?.remove();
       current.image.classList.remove("is-being-moved");
       document.body.classList.remove("moving-slide-image");
       const rect = current.image.getBoundingClientRect();
@@ -298,7 +265,6 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       document.removeEventListener("dragstart", blockNativeDrag);
       if (drag?.frame) cancelAnimationFrame(drag.frame);
       drag?.ghost?.remove();
-      drag?.marker?.remove();
       document.body.classList.remove("moving-slide-image");
     };
   }, [enabled]);
@@ -431,8 +397,9 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     img.style.width = "60%";
     img.style.height = "auto";
     img.style.maxWidth = "100%";
-    img.style.display = "block";
-    img.style.margin = "12px auto";
+    img.style.display = "inline";
+    img.style.float = "left";
+    img.style.margin = "8px 16px 8px 0";
     const selectionRange = restored.selection.getRangeAt(0);
     selectionRange.insertNode(img);
     const paragraph = document.createElement("p");
@@ -468,7 +435,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     const startY = event.clientY;
     const start = image.getBoundingClientRect();
     const editorWidth = Math.max(1, editor.getBoundingClientRect().width);
-    const computed = new DOMMatrixReadOnly(getComputedStyle(image).transform === "none" ? undefined : getComputedStyle(image).transform);
+    const startMarginTop = Number.parseFloat(getComputedStyle(image).marginTop) || 0;
     let frame = 0;
     let latestX = startX;
     let latestY = startY;
@@ -490,9 +457,21 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         image.style.height = `${next.height}px`;
         image.style.maxWidth = "100%";
         image.style.transformOrigin = "top left";
-        image.style.transform = `matrix(${computed.a}, ${computed.b}, ${computed.c}, ${computed.d}, ${computed.e}, ${computed.f})`;
-        const flowed = image.getBoundingClientRect();
-        image.style.transform = `matrix(${computed.a}, ${computed.b}, ${computed.c}, ${computed.d}, ${computed.e + next.left - flowed.left}, ${computed.f + next.top - flowed.top})`;
+        image.style.transform = "none";
+        // Use real float/margin geometry so the text exclusion area moves and
+        // resizes with the picture. West handles anchor the right edge; east
+        // handles anchor the left edge.
+        if (corner.endsWith("e")) {
+          image.style.float = "left";
+          image.style.marginLeft = "0";
+          image.style.marginRight = "16px";
+        } else {
+          image.style.float = "right";
+          image.style.marginLeft = "16px";
+          image.style.marginRight = "0";
+        }
+        image.style.marginTop = `${corner.startsWith("n") ? startMarginTop + start.height - next.height : startMarginTop}px`;
+        image.style.marginBottom = "8px";
         setImageHeight(Math.round(next.height));
         const rect = image.getBoundingClientRect();
         setImageRect({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
@@ -612,9 +591,9 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       </> : menu === "image" ? <>
         <label><input type="checkbox" checked={cropImage} onChange={e => { const checked = e.target.checked; setCropImage(checked); updateImage(image => { image.dataset.cropped = String(checked); image.style.height = checked ? `${imageHeight}px` : "auto"; image.style.objectFit = checked ? "cover" : "contain"; }); }} /> Crop to frame</label>
         <strong className="slide-image-wrap-label">Text wrapping</strong>
-        <button type="button" onClick={() => updateImage(image => { image.style.float = "left"; image.style.display = "inline"; image.style.margin = "8px 16px 8px 0"; })}>Wrap text right</button>
-        <button type="button" onClick={() => updateImage(image => { image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px auto"; })}>No wrap · centre</button>
-        <button type="button" onClick={() => updateImage(image => { image.style.float = "right"; image.style.display = "inline"; image.style.margin = "8px 0 8px 16px"; })}>Wrap text left</button>
+        <button type="button" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "left"; image.style.display = "inline"; image.style.margin = "8px 16px 8px 0"; })}>Wrap text right</button>
+        <button type="button" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px auto"; })}>No wrap · centre</button>
+        <button type="button" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "right"; image.style.display = "inline"; image.style.margin = "8px 0 8px 16px"; })}>Wrap text left</button>
         <button type="button" className="danger" onClick={() => { if (!selectedImage) return; const editor = selectedImage.closest<HTMLElement>(EDITOR_SELECTOR); selectedImage.remove(); setSelectedImage(null); setMenu(null); notifyEditor(editor); }}>Remove image</button>
         <small>Drag the image inside the lesson to move it to another insertion point.</small>
       </> : <>

@@ -64,6 +64,9 @@ export function hydrateSlideImages(html: string, sources: Record<string, string 
   template.content.querySelectorAll<HTMLImageElement>("img[data-figure-id]").forEach(image => {
     const source = sources[image.dataset.figureId ?? ""];
     if (source) image.src = source;
+    // Transforms move only the painted pixels, not the float exclusion box.
+    // Wrapped images must use actual flow geometry so text cannot sit below.
+    if (image.style.float === "left" || image.style.float === "right") image.style.transform = "none";
   });
   return template.innerHTML;
 }
