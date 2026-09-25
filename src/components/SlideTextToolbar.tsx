@@ -421,15 +421,13 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     const selectedRange = selection.getRangeAt(0).cloneRange();
     const anchorNode = selection.anchorNode;
     const anchorElement = anchorNode instanceof Element ? anchorNode : anchorNode?.parentElement;
-    const intersectsText = (element: Element) => {
-      if (selectedRange.collapsed) return element.contains(anchorNode);
-      const contents = document.createRange();
-      contents.selectNodeContents(element);
-      return selectedRange.compareBoundaryPoints(Range.END_TO_START, contents) > 0
-        && selectedRange.compareBoundaryPoints(Range.START_TO_END, contents) < 0;
-    };
     const candidates = Array.from(restored.editor.querySelectorAll<HTMLElement>("p,h1,h2,h3,h4,li"));
-    const selectedBlocks = Array.from(new Set(candidates.filter(intersectsText).map(element => element.closest<HTMLElement>("li") ?? element)))
+    // Selection.containsNode(partial=true) follows the browser's actual
+    // highlighted range. The former manual boundary comparison had its
+    // source/target points reversed and selected the surrounding blocks.
+    const selectedBlocks = Array.from(new Set(candidates.filter(element => selectedRange.collapsed
+      ? element.contains(anchorNode)
+      : selection.containsNode(element, true)).map(element => element.closest<HTMLElement>("li") ?? element)))
       .filter(element => restored.editor.contains(element));
     if (!selectedBlocks.length && anchorElement) {
       const closest = anchorElement.closest<HTMLElement>("li,p,h1,h2,h3,h4");
