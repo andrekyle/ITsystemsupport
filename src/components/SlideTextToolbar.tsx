@@ -301,10 +301,33 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         current.image.style.transformOrigin = "top left";
         finalRange.insertNode(current.image);
         const editorRect = current.editor.getBoundingClientRect();
-        const placeLeft = event.clientX <= editorRect.left + editorRect.width / 2;
+        const imageRect = current.image.getBoundingClientRect();
+        const desiredLeft = Math.max(
+          0,
+          Math.min(
+            Math.max(0, editorRect.width - imageRect.width),
+            event.clientX - current.grabX - editorRect.left
+          )
+        );
+        const placeLeft = desiredLeft + imageRect.width / 2 <= editorRect.width / 2;
+        // Keep the vertical text-flow anchor chosen by the caret range, but
+        // preserve the pointer's exact horizontal drop position. Previously
+        // every drop was reduced to a binary left/right float, which made the
+        // image jump to one of two apparent snap points on release. Percentage
+        // spacing also keeps the chosen position proportional on narrower
+        // screens.
+        const outerSpace = placeLeft
+          ? desiredLeft
+          : Math.max(0, editorRect.width - desiredLeft - imageRect.width);
+        const outerPercent = editorRect.width > 0
+          ? Math.min(100, Math.max(0, outerSpace / editorRect.width * 100))
+          : 0;
         current.image.style.float = placeLeft ? "left" : "right";
         current.image.style.display = "inline";
-        current.image.style.margin = placeLeft ? "8px 16px 8px 0" : "8px 0 8px 16px";
+        current.image.style.marginTop = "8px";
+        current.image.style.marginBottom = "8px";
+        current.image.style.marginLeft = placeLeft ? `${outerPercent}%` : "16px";
+        current.image.style.marginRight = placeLeft ? "16px" : `${outerPercent}%`;
         const caret = document.createRange();
         caret.setStartAfter(current.image);
         caret.collapse(true);
