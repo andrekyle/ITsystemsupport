@@ -1938,6 +1938,10 @@ export function useLessonFigures(us: string) {
             }
           }
           write(lessonFigsKey(us), next);
+          // Keep a usable bitmap during the render between storing the path
+          // and resolving its signed URL. Without this, rich-text hydration
+          // temporarily emits an img with no src (a dark empty rectangle).
+          setFigUrls((urls) => ({ ...urls, [id]: image }));
           setFigures(next);
           return true;
         } catch {
@@ -1967,6 +1971,12 @@ export function useLessonFigures(us: string) {
       const next = { ...fresh };
       delete next[id];
       write(lessonFigsKey(us), next);
+      setFigUrls((urls) => {
+        if (!(id in urls)) return urls;
+        const updated = { ...urls };
+        delete updated[id];
+        return updated;
+      });
       setFigures(next);
     },
     [us]

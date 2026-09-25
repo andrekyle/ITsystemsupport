@@ -6,7 +6,7 @@ export function sanitizeSlideHtml(html: string): string {
   const source = document.createElement("template");
   source.innerHTML = html;
   const allowed = new Set(["SPAN", "B", "STRONG", "I", "EM", "U", "S", "STRIKE", "SUB", "SUP", "BR", "P", "DIV", "UL", "OL", "LI", "BLOCKQUOTE", "FONT", "H1", "H2", "H3", "H4", "TABLE", "COLGROUP", "COL", "THEAD", "TBODY", "TR", "TH", "TD", "IMG"]);
-  const styles = ["font-family", "font-size", "font-weight", "font-style", "text-decoration", "color", "background-color", "text-align", "line-height", "letter-spacing", "margin-left", "margin-right", "margin-top", "margin-bottom", "vertical-align", "width", "min-width", "max-width", "height", "min-height", "object-fit", "object-position", "float", "display", "transform", "transform-origin"];
+  const styles = ["font-family", "font-size", "font-weight", "font-style", "text-decoration", "color", "background-color", "text-align", "line-height", "letter-spacing", "margin-left", "margin-right", "margin-top", "margin-bottom", "vertical-align", "width", "min-width", "max-width", "height", "min-height", "table-layout", "object-fit", "object-position", "float", "display", "transform", "transform-origin"];
   function clean(node: Node): Node {
     if (node.nodeType === Node.TEXT_NODE) return document.createTextNode(node.textContent ?? "");
     const fragment = document.createDocumentFragment();

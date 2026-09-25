@@ -126,6 +126,79 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     };
   }, [enabled]);
   useEffect(() => {
+    if (!enabled) return;
+    let resize: { cell: HTMLTableCellElement; editor: HTMLElement; table: HTMLTableElement; col: HTMLTableColElement; startX: number; startWidth: number; otherWidth: number } | null = null;
+    const pointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) return;
+      const target = event.target instanceof Element ? event.target : null;
+      const cell = target?.closest<HTMLTableCellElement>(`${EDITOR_SELECTOR} td, ${EDITOR_SELECTOR} th`);
+      if (!cell) return;
+      const rect = cell.getBoundingClientRect();
+      if (Math.abs(event.clientX - rect.right) > 7) return;
+      const editor = cell.closest<HTMLElement>(EDITOR_SELECTOR);
+      const table = cell.closest<HTMLTableElement>("table");
+      if (!editor || !table) return;
+      event.preventDefault();
+      event.stopPropagation();
+      setSelectedCell(cell);
+
+      let colgroup = table.querySelector<HTMLTableColElement>("colgroup");
+      if (!colgroup) {
+        colgroup = document.createElement("colgroup");
+        const firstRow = table.rows[0];
+        Array.from(firstRow?.cells ?? []).forEach(sourceCell => {
+          const col = document.createElement("col");
+          col.style.width = `${sourceCell.getBoundingClientRect().width}px`;
+          colgroup!.appendChild(col);
+        });
+        table.prepend(colgroup);
+      }
+      const columns = Array.from(colgroup.children) as HTMLTableColElement[];
+      const col = columns[cell.cellIndex];
+      if (!col) return;
+      const widths = Array.from(table.rows[0]?.cells ?? []).map(item => item.getBoundingClientRect().width);
+      table.style.tableLayout = "fixed";
+      table.style.width = `${widths.reduce((sum, value) => sum + value, 0)}px`;
+      resize = {
+        cell,
+        editor,
+        table,
+        col,
+        startX: event.clientX,
+        startWidth: rect.width,
+        otherWidth: widths.reduce((sum, value, index) => sum + (index === cell.cellIndex ? 0 : value), 0),
+      };
+      document.body.classList.add("resizing-slide-table-column");
+    };
+    const pointerMove = (event: PointerEvent) => {
+      if (!resize) return;
+      event.preventDefault();
+      const width = Math.max(48, Math.round(resize.startWidth + event.clientX - resize.startX));
+      resize.col.style.width = `${width}px`;
+      resize.col.style.minWidth = `${width}px`;
+      resize.table.style.width = `${resize.otherWidth + width}px`;
+      setColumnWidth(width);
+    };
+    const finish = () => {
+      if (!resize) return;
+      const editor = resize.editor;
+      resize = null;
+      document.body.classList.remove("resizing-slide-table-column");
+      editor.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    document.addEventListener("pointerdown", pointerDown, true);
+    document.addEventListener("pointermove", pointerMove, { passive: false });
+    document.addEventListener("pointerup", finish);
+    document.addEventListener("pointercancel", finish);
+    return () => {
+      document.removeEventListener("pointerdown", pointerDown, true);
+      document.removeEventListener("pointermove", pointerMove);
+      document.removeEventListener("pointerup", finish);
+      document.removeEventListener("pointercancel", finish);
+      document.body.classList.remove("resizing-slide-table-column");
+    };
+  }, [enabled]);
+  useEffect(() => {
     if (!selectedImage?.isConnected) { setImageRect(null); return; }
     const measure = () => {
       if (!selectedImage.isConnected) { setImageRect(null); return; }
@@ -334,11 +407,12 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   const insertedTableHtml = () => {
     const rows = Math.max(1, Math.min(20, Number(tableRows) || 3));
     const cols = Math.max(1, Math.min(12, Number(tableCols) || 3));
-    const headers = Array.from({ length: cols }, (_, index) => `<th scope="col">Heading ${index + 1}</th>`).join("");
-    const bodyRows = Array.from({ length: Math.max(1, rows - 1) }, (_, rowIndex) =>
-      `<tr>${Array.from({ length: cols }, (_, colIndex) => `<td>Row ${rowIndex + 1}, column ${colIndex + 1}</td>`).join("")}</tr>`
+    const colgroup = `<colgroup>${Array.from({ length: cols }, () => "<col>").join("")}</colgroup>`;
+    const headers = Array.from({ length: cols }, () => `<th scope="col"><br></th>`).join("");
+    const bodyRows = Array.from({ length: Math.max(1, rows - 1) }, () =>
+      `<tr>${Array.from({ length: cols }, () => `<td><br></td>`).join("")}</tr>`
     ).join("");
-    return `<div class="lesson-table-scroll"><table class="data lesson-table"><thead><tr>${headers}</tr></thead><tbody>${bodyRows}</tbody></table></div><p><br></p>`;
+    return `<div class="lesson-table-scroll"><table class="data lesson-table">${colgroup}<thead><tr>${headers}</tr></thead><tbody>${bodyRows}</tbody></table></div><p><br></p>`;
   };
   const applyList = (ordered: boolean) => {
     const restored = restoreSelection();
@@ -373,8 +447,17 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         const canvas = document.createElement("canvas");
         canvas.width = Math.max(1, Math.round(source.naturalWidth * scale));
         canvas.height = Math.max(1, Math.round(source.naturalHeight * scale));
-        canvas.getContext("2d")?.drawImage(source, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.82));
+        const context = canvas.getContext("2d");
+        if (!context) {
+          reject(new Error("The image could not be prepared."));
+          return;
+        }
+        context.drawImage(source, 0, 0, canvas.width, canvas.height);
+        // JPEG has no alpha channel and turns transparent pixels black in
+        // some browsers. Keep alpha-capable uploads transparent; JPEG photos
+        // still use the smaller compressed representation.
+        const preserveAlpha = /^(?:image\/png|image\/webp|image\/gif)$/i.test(file.type);
+        resolve(preserveAlpha ? canvas.toDataURL("image/png") : canvas.toDataURL("image/jpeg", 0.82));
       };
       source.src = String(reader.result);
     };
@@ -495,10 +578,25 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     const activeCell = selectedCell;
     if (!activeCell?.isConnected) return;
     const index = activeCell.cellIndex;
-    activeCell.closest("table")?.querySelectorAll<HTMLTableRowElement>("tr").forEach(row => {
-      const cell = row.cells[index];
-      if (cell) { cell.style.width = `${width}px`; cell.style.minWidth = `${width}px`; }
-    });
+    const table = activeCell.closest("table");
+    if (!table) return;
+    let colgroup = table.querySelector("colgroup");
+    if (!colgroup) {
+      colgroup = document.createElement("colgroup");
+      const count = Math.max(...Array.from(table.rows).map(row => row.cells.length));
+      Array.from({ length: count }, () => colgroup!.appendChild(document.createElement("col")));
+      table.prepend(colgroup);
+    }
+    const columns = Array.from(colgroup.children) as HTMLTableColElement[];
+    while (columns.length <= index) {
+      const col = document.createElement("col");
+      colgroup.appendChild(col);
+      columns.push(col);
+    }
+    columns[index].style.width = `${width}px`;
+    columns[index].style.minWidth = `${width}px`;
+    table.style.tableLayout = "fixed";
+    table.style.width = `${Array.from(table.rows[0]?.cells ?? []).reduce((sum, cell, cellIndex) => sum + (cellIndex === index ? width : cell.getBoundingClientRect().width), 0)}px`;
     setColumnWidth(width);
     notifyEditor(activeCell.closest<HTMLElement>(EDITOR_SELECTOR));
   };

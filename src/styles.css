@@ -14146,6 +14146,12 @@ body.moving-slide-image [data-slide-rich] img:hover { outline:none; }
 [data-slide-rich]::after { display:block; clear:both; content:""; }
 [data-slide-rich] table { border-collapse:collapse; }
 [data-slide-rich] td, [data-slide-rich] th { box-sizing:border-box; }
+[data-slide-rich][contenteditable="true"] td,
+[data-slide-rich][contenteditable="true"] th { position:relative; }
+[data-slide-rich][contenteditable="true"] td::after,
+[data-slide-rich][contenteditable="true"] th::after { position:absolute; z-index:2; top:0; right:-5px; bottom:0; width:10px; content:""; cursor:col-resize; }
+body.resizing-slide-table-column,
+body.resizing-slide-table-column * { cursor:col-resize !important; user-select:none !important; }
 .lesson-quiz-list .quiz-q.quiz-q-editing { padding:14px 16px; max-width:880px; border:0; border-radius:8px; background:var(--surface); }
 .generated-quiz-edit { display:grid; gap:10px; min-width:0; color:var(--ink); }
 .generated-quiz-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
