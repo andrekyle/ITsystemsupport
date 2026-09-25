@@ -231,6 +231,7 @@ export default function App() {
     cloudEnabled ? "loading" : "ready"
   );
   const syncedUser = useRef<string | null>(null);
+  const syncedEmail = useRef<string | null>(null);
   const recovering = useRef(false);
   const syncReady = useRef(false);
 
@@ -247,6 +248,7 @@ export default function App() {
       }
       if (session?.user) {
         setAccountEmail(session.user.email);
+        syncedEmail.current = session.user.email?.trim().toLowerCase() ?? null;
         if (syncedUser.current !== session.user.id) {
           syncedUser.current = session.user.id;
           const adminCheck = sb
@@ -279,6 +281,7 @@ export default function App() {
           wipeLocalData();
         }
         syncedUser.current = null;
+        syncedEmail.current = null;
         syncReady.current = false;
         recovering.current = false;
         setCloudState("signedout");
@@ -306,10 +309,23 @@ export default function App() {
         }}
       />
     );
-  return <LocalApp key={syncedUser.current ?? "local"} />;
+  return (
+    <LocalApp
+      key={syncedUser.current ?? "local"}
+      cloudIdentity={
+        syncedUser.current
+          ? { userId: syncedUser.current, email: syncedEmail.current }
+          : null
+      }
+    />
+  );
 }
 
-function LocalApp() {
+function LocalApp({
+  cloudIdentity,
+}: {
+  cloudIdentity: { userId: string; email: string | null } | null;
+}) {
   const [profile, setProfile] = useState<Profile | null>(() => {
     const id = getSession();
     return id ? loadProfiles().find((p) => p.id === id) ?? null : null;
@@ -350,6 +366,7 @@ function LocalApp() {
   if (!profile) {
     return (
       <SignIn
+        cloudIdentity={cloudIdentity}
         onSignIn={async (p) => {
           setSession(p.id);
           // Stamp our Supabase auth uid onto this profile so others can address

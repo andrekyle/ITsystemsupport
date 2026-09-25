@@ -25,7 +25,15 @@ import { cloudEnabled, supabase } from "../lib/supabase";
 import { fetchCloudDirectory } from "../lib/directory";
 import { ConfirmModal } from "./Modal";
 
-export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
+type CloudIdentity = { userId: string; email: string | null };
+
+export function SignIn({
+  onSignIn,
+  cloudIdentity,
+}: {
+  onSignIn: (p: Profile) => void;
+  cloudIdentity?: CloudIdentity | null;
+}) {
   const [profiles, setProfiles] = useState<Profile[]>(loadProfiles());
   const [creating, setCreating] = useState(profiles.length === 0);
 
@@ -120,7 +128,27 @@ export function SignIn({ onSignIn }: { onSignIn: (p: Profile) => void }) {
     setProfiles(loadProfiles());
   }
 
+  function profileBelongsToCloudAccount(p: Profile): boolean {
+    if (!cloudIdentity) return false;
+    if (p.cloudUserId === cloudIdentity.userId) return true;
+    const email = cloudIdentity.email?.trim().toLowerCase();
+    if (!email) return false;
+    if (p.enrolment?.email?.trim().toLowerCase() === email) return true;
+    // Legacy super-user profiles pre-date cloudUserId and may not have an
+    // enrolment email. loadProfiles() only grants this role to the designated
+    // cloud account, so it is safe to treat that promoted profile as its own.
+    return p.role === "Super User" && isDesignatedSuperUser(p.name);
+  }
+
   function pickProfile(p: Profile) {
+    // Supabase has already verified the account password. Requiring the old
+    // device-local profile password as well can lock the account owner out
+    // after a cloud password reset, even though authentication succeeded.
+    if (profileBelongsToCloudAccount(p)) {
+      logAudit(p, "auth.signin", "Signed in with cloud account");
+      onSignIn(p);
+      return;
+    }
     if (p.passwordHash) {
       setAuthFor(p);
       setAuthPw("");
