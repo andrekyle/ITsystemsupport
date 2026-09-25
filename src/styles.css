@@ -14142,7 +14142,7 @@ body.moving-slide-image .slide-image-selection { display:none; }
 [data-slide-rich] img:active { cursor:grabbing; }
 [data-slide-rich] img.is-being-moved { opacity:.28; outline:none; }
 body.moving-slide-image [data-slide-rich] img:hover { outline:none; }
-[data-slide-rich][contenteditable="true"] img:hover { outline:2px solid var(--azure); outline-offset:3px; }
+[data-slide-rich][contenteditable="true"] img:hover { outline:none; }
 [data-slide-rich]::after { display:block; clear:both; content:""; }
 [data-slide-rich] table { border-collapse:collapse; }
 [data-slide-rich] td, [data-slide-rich] th { box-sizing:border-box; }
