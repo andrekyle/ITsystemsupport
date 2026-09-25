@@ -419,9 +419,25 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     if (!restored) return;
     document.execCommand("styleWithCSS", false, "false");
     document.execCommand(ordered ? "insertOrderedList" : "insertUnorderedList", false);
-    restored.editor.querySelectorAll("ol,ul").forEach(list => {
+    restored.editor.querySelectorAll<HTMLOListElement | HTMLUListElement>("ol,ul").forEach(list => {
       list.classList.remove("lesson-numlist", "lesson-inferred-list");
-      list.querySelectorAll(":scope > li > p:only-child, :scope > li > div:only-child").forEach(block => block.replaceWith(...Array.from(block.childNodes)));
+      // Browsers often keep the selected H1/H2/P wrapper inside each LI.
+      // That makes individual list items retain unrelated heading sizes and
+      // fonts. A toolbar-created list is plain lesson body text, so flatten
+      // those wrappers and clear only typography that can change its default.
+      list.querySelectorAll(":scope > li > p:only-child, :scope > li > div:only-child, :scope > li > h1:only-child, :scope > li > h2:only-child, :scope > li > h3:only-child, :scope > li > h4:only-child").forEach(block => block.replaceWith(...Array.from(block.childNodes)));
+      list.removeAttribute("face");
+      list.style.removeProperty("font-family");
+      list.style.removeProperty("font-size");
+      list.style.removeProperty("line-height");
+      list.querySelectorAll<HTMLElement>("[style],font").forEach(element => {
+        element.removeAttribute("face");
+        element.removeAttribute("size");
+        element.style.removeProperty("font-family");
+        element.style.removeProperty("font-size");
+        element.style.removeProperty("line-height");
+        if (!element.getAttribute("style")?.trim()) element.removeAttribute("style");
+      });
     });
     if (restored.selection?.rangeCount) range.current = restored.selection.getRangeAt(0).cloneRange();
     restored.editor.dispatchEvent(new Event("input", { bubbles: true }));

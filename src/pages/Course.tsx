@@ -3939,6 +3939,27 @@ export function UnitPage({
                   data-lesson-editor={si}
                   aria-label="Slide text" html={sanitizeSlideHtml(hydrateSlideImages(unifiedHtml, Object.fromEntries(Object.entries(figureImages).map(([id, figure]) => [id, figure.image]))))}
                   onKeyDown={e=>{
+                    if (e.key === "Tab") {
+                      const selection = window.getSelection();
+                      const anchor = selection?.anchorNode;
+                      const anchorElement = anchor instanceof Element ? anchor : anchor?.parentElement;
+                      const cell = anchorElement?.closest<HTMLTableCellElement>("td,th");
+                      if (cell && e.currentTarget.contains(cell)) {
+                        const table = cell.closest("table");
+                        const cells = table ? Array.from(table.querySelectorAll<HTMLTableCellElement>("th,td")) : [];
+                        const index = cells.indexOf(cell);
+                        const target = cells[index + (e.shiftKey ? -1 : 1)];
+                        if (target) {
+                          e.preventDefault();
+                          const caret = document.createRange();
+                          caret.selectNodeContents(target);
+                          caret.collapse(!e.shiftKey);
+                          selection?.removeAllRanges();
+                          selection?.addRange(caret);
+                        }
+                        return;
+                      }
+                    }
                     if ((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="a") {
                       e.preventDefault();const selection=window.getSelection();const range=document.createRange();
                       range.selectNodeContents(e.currentTarget);selection?.removeAllRanges();selection?.addRange(range);

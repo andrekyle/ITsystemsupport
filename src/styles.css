@@ -14245,6 +14245,10 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 [data-theme="dark"] select:hover, [data-theme="dark"] select:focus { border-color: #3a3a3a !important; background: #242424; }
 .slide-whole-editor { outline:none; min-height:1.5em; }
 .slide-whole-editor[contenteditable="true"] { cursor:text; }
+.slide-whole-editor > ol:not(.lesson-numlist):not(.lesson-inferred-list),
+.slide-whole-editor > ul:not(.lesson-inferred-list) { font-family:inherit; font-size:17px; font-weight:350; line-height:1.7; color:var(--ink-2); }
+.slide-whole-editor > ol:not(.lesson-numlist):not(.lesson-inferred-list) li,
+.slide-whole-editor > ul:not(.lesson-inferred-list) li { font-family:inherit; font-size:inherit; line-height:inherit; }
 .slide-whole-editor h1 { font-size:2em; line-height:1.15; }
 .slide-whole-editor h2 { font-size:1.55em; line-height:1.2; }
 .slide-whole-editor h3 { font-size:1.3em; line-height:1.25; }
