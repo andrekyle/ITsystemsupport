@@ -377,25 +377,42 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   const restoreSelection = (collapseToEnd = false) => {
     const editor = host.current;
     if (!editor?.isConnected || !range.current) return null;
-    // Saving on blur can replace the editable DOM before a font picker returns.
-    // Restore by text offsets so formatting still applies to the selected words.
-    const restored = document.createRange();
-    restored.selectNodeContents(editor);
-    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
-    let offset = 0;
-    let started = false;
-    while (walker.nextNode()) {
-      const node = walker.currentNode;
-      const length = node.textContent?.length ?? 0;
-      if (!started && bookmark.current.start <= offset + length) {
-        restored.setStart(node, Math.max(0, bookmark.current.start - offset));
-        started = true;
+    const saved = range.current;
+    const insideEditor = (node: Node) => node === editor || editor.contains(node);
+    let restored: Range;
+    // Toolbar pointer-down normally leaves the editable DOM untouched. Keep
+    // the exact browser range in that case: rebuilding it from text lengths
+    // loses the invisible paragraph separators represented by block elements,
+    // which shifts a multi-paragraph selection backwards onto the heading and
+    // blank line above it.
+    if (
+      saved.startContainer.isConnected &&
+      saved.endContainer.isConnected &&
+      insideEditor(saved.startContainer) &&
+      insideEditor(saved.endContainer)
+    ) {
+      restored = saved.cloneRange();
+    } else {
+      // Saving on blur can replace the editable DOM before a font picker
+      // returns. Only then fall back to the text-offset bookmark.
+      restored = document.createRange();
+      restored.selectNodeContents(editor);
+      const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+      let offset = 0;
+      let started = false;
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        const length = node.textContent?.length ?? 0;
+        if (!started && bookmark.current.start <= offset + length) {
+          restored.setStart(node, Math.max(0, bookmark.current.start - offset));
+          started = true;
+        }
+        if (bookmark.current.end <= offset + length) {
+          restored.setEnd(node, Math.max(0, bookmark.current.end - offset));
+          break;
+        }
+        offset += length;
       }
-      if (bookmark.current.end <= offset + length) {
-        restored.setEnd(node, Math.max(0, bookmark.current.end - offset));
-        break;
-      }
-      offset += length;
     }
     editor.focus();
     if (collapseToEnd) restored.collapse(false);
