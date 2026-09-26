@@ -1,4 +1,4 @@
-import { createElement, useLayoutEffect, useRef, type ClipboardEvent, type HTMLAttributes } from "react";
+import { createElement, useLayoutEffect, useRef, type ClipboardEvent, type HTMLAttributes, type KeyboardEvent } from "react";
 import { sanitizeSlideHtml } from "../lib/slideRichText";
 
 type Props = Omit<HTMLAttributes<HTMLElement>, "children" | "dangerouslySetInnerHTML" | "onInput" | "onBlur"> & {
@@ -8,7 +8,7 @@ type Props = Omit<HTMLAttributes<HTMLElement>, "children" | "dangerouslySetInner
 };
 
 /** Save each input without letting React replace the focused editor's DOM/caret. */
-export function SlideEditableText({ as, html, onSave, contentEditable = true, ...props }: Props) {
+export function SlideEditableText({ as, html, onSave, contentEditable = true, onKeyDown, ...props }: Props) {
   const ref = useRef<HTMLElement>(null);
   const saved = useRef("");
   useLayoutEffect(() => {
@@ -38,12 +38,27 @@ export function SlideEditableText({ as, html, onSave, contentEditable = true, ..
     save();
   };
 
+  const keyDown = (event: KeyboardEvent<HTMLElement>) => {
+    onKeyDown?.(event);
+    if (event.defaultPrevented || event.key !== "Tab" || !(contentEditable === true || contentEditable === "true")) return;
+    event.preventDefault();
+    if (event.shiftKey) {
+      document.execCommand("outdent");
+    } else {
+      // A run of non-breaking spaces behaves like a word-processor tab stop
+      // and survives HTML sanitising and browser whitespace collapsing.
+      document.execCommand("insertText", false, "\u00a0\u00a0\u00a0\u00a0");
+    }
+    save();
+  };
+
   return createElement(as, {
     ...props,
     ref,
     contentEditable,
     suppressContentEditableWarning: true,
     "data-slide-rich": "true",
+    onKeyDown: keyDown,
     onPaste: paste,
     onInput: save,
     onBlur: save,
