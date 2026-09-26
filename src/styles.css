@@ -8507,6 +8507,7 @@ input.att-sig {
 .lesson-quiz-list { display: grid; gap: 10px; margin: 10px 0; }
 /* quick-check questions reuse the main quiz card look (.quiz-q / .opt) */
 .lesson-quiz-list .quiz-q { margin-bottom: 0; max-width: none; }
+.lesson-quiz-list .quiz-q:not(.quiz-q-editing) { border:0; background:color-mix(in srgb, var(--surface) 75%, var(--surface-2)); }
 .lesson-quiz-options { display: grid; }
 .lesson-quiz-explain { margin-top: 6px; font-size: 0.85em; color: var(--ink-3); line-height: 1.4; }
 .lesson-quiz-actions { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
