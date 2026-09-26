@@ -731,7 +731,7 @@ function chunks<T>(arr: T[], n: number): T[][] {
 function EruditioMasthead() {
   return (
     <div className="srf-masthead">
-      <img src="/logos/eruditio.png" alt="Eruditio" className="srf-eruditio-logo" />
+      <img src="/logos/eruditio.svg" alt="Eruditio" className="srf-eruditio-logo" />
     </div>
   );
 }
