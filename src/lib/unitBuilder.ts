@@ -80,34 +80,51 @@ export type UnitContentEnhancement = {
   quiz?: UnitContent["quiz"];
 };
 
-const cleanSlideText = (value: unknown, max: number): string => typeof value === "string"
-  ? value.replace(/\s+/g, " ").replace(/^\s*\d+(?:\.\d+)*[.)]\s+/, "").trim().slice(0, max)
+const cleanSlideText = (value: unknown): string => typeof value === "string"
+  ? value.replace(/\s+/g, " ").trim()
   : "";
 
+const lessonWords = (slides: LessonSection[]): string[] => slides.flatMap(slide => [
+  slide.heading,
+  ...slide.paragraphs,
+  ...(slide.bullets ?? []),
+  ...(slide.table?.headers ?? []),
+  ...(slide.table?.rows.flat() ?? []),
+]).flatMap(text => text.toLocaleLowerCase("en-ZA").match(/[\p{L}\p{N}]+/gu) ?? []);
+
+/** Reject an AI layout if even one supplied source word was omitted. */
+function coversAllLessonText(source: LessonSection[], generated: LessonSection[]): boolean {
+  const available = new Map<string, number>();
+  for (const word of lessonWords(generated)) available.set(word, (available.get(word) ?? 0) + 1);
+  for (const word of lessonWords(source)) {
+    const count = available.get(word) ?? 0;
+    if (!count) return false;
+    available.set(word, count - 1);
+  }
+  return true;
+}
+
 /** Accept AI slide structure only after removing common import/generation debris. */
-function normalizeGeneratedLessons(value: UnitContent["lesson"] | undefined): LessonSection[] | undefined {
+function normalizeGeneratedLessons(value: UnitContent["lesson"] | undefined, source: LessonSection[]): LessonSection[] | undefined {
   if (!Array.isArray(value)) return undefined;
-  const slides = value.slice(0, 60).flatMap((raw): LessonSection[] => {
+  const slides = value.slice(0, 200).flatMap((raw): LessonSection[] => {
     if (!raw || typeof raw !== "object") return [];
-    const heading = cleanSlideText(raw.heading, 100);
-    const unique = (items: unknown, maxItems: number, maxLength: number) => {
+    const heading = cleanSlideText(raw.heading);
+    const textItems = (items: unknown, maxItems: number) => {
       if (!Array.isArray(items)) return [];
-      const seen = new Set<string>();
       return items.flatMap(item => {
-        const text = cleanSlideText(item, maxLength);
-        const key = text.toLowerCase();
-        if (!text || /^\d+(?:\.\d+)*[.)]?$/.test(text) || seen.has(key)) return [];
-        seen.add(key);
+        const text = cleanSlideText(item);
+        if (!text) return [];
         return [text];
       }).slice(0, maxItems);
     };
-    const paragraphs = unique(raw.paragraphs, 4, 520);
-    const bullets = unique(raw.bullets, 6, 180);
+    const paragraphs = textItems(raw.paragraphs, 10);
+    const bullets = textItems(raw.bullets, 10);
     const sourceTable = raw.table;
-    const headers = unique(sourceTable?.headers, 5, 80);
+    const headers = textItems(sourceTable?.headers, 8);
     const rows = Array.isArray(sourceTable?.rows)
       ? sourceTable.rows.filter(row => Array.isArray(row) && row.length === headers.length)
-        .map(row => row.map(cell => cleanSlideText(cell, 220))).filter(row => row.every(Boolean)).slice(0, 8)
+        .map(row => row.map(cell => cleanSlideText(cell))).filter(row => row.every(Boolean)).slice(0, 20)
       : [];
     const table = headers.length >= 2 && rows.length && !rows.every(row => /^[â€¢·*-]?$/.test(row[0]) || /^\d+[.)]?$/.test(row[0]))
       ? { headers, rows }
@@ -115,7 +132,7 @@ function normalizeGeneratedLessons(value: UnitContent["lesson"] | undefined): Le
     if (!heading || (!paragraphs.length && !bullets.length && !table)) return [];
     return [{ heading, icon: "presenter", paragraphs, ...(bullets.length ? { bullets } : {}), ...(table ? { table } : {}), flat: true }];
   });
-  return slides.length ? slides : undefined;
+  return slides.length && coversAllLessonText(source, slides) ? slides : undefined;
 }
 
 const nonemptyString = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
@@ -770,7 +787,7 @@ function lessonPlanFromTemplate(unit: UnitStandard, topics: UnitTopic[], minutes
 
 export function mergeUnitContentEnhancement(base: UnitContent, enhancement: UnitContentEnhancement, unit: UnitStandard): UnitContent {
   const next = structuredClone(base);
-  const generatedLessons = normalizeGeneratedLessons(enhancement.lesson);
+  const generatedLessons = normalizeGeneratedLessons(enhancement.lesson, next.lesson);
   if (generatedLessons) next.lesson = generatedLessons;
   if (generatedLogbookIsUsable(enhancement.logbook, next.lesson)) next.logbook = normalizeLogbookSpec(unit, enhancement.logbook);
   next.evaluation = undefined;
