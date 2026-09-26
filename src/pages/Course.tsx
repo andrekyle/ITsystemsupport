@@ -38,7 +38,7 @@ import { requestSemanticReview } from "../lib/llm";
 import { checkSpelling, type SpellIssue } from "../lib/spellcheck";
 import { autoGrowTextarea } from "../lib/autoGrow";
 import { insertLessonPlanDay, lessonPlanDayCount, removeLessonPlanDay, startLessonPlanDay } from "../lib/lessonPlanDays";
-import { groupLessonHtml, isLessonBulletListLead, isLessonListLead, isLessonListPoint, isLessonNumberedListLead, isLessonSubheading } from "../lib/lessonSubsections";
+import { groupLessonHtml, isLessonBulletListLead, isLessonListLead, isLessonListPoint, isLessonNumberedListLead, isLessonSubheading, lessonListItemText } from "../lib/lessonSubsections";
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
 
@@ -3979,9 +3979,12 @@ export function UnitPage({
                   const renderParagraphs = (start: number, end: number, heading: string): React.ReactNode[] => {
                   const els: React.ReactNode[] = [];
                   const isPoint = (value: string) => isLessonListPoint(plainSlideText(value));
-                  const renderList = (points: string[], key: string, ordered: boolean) => ordered
-                    ? <ol className="lesson-inferred-list" key={key}>{points.map((point,index)=><li key={index}><Gloss text={point}/></li>)}</ol>
-                    : <ul className="lesson-inferred-list" key={key}>{points.map((point,index)=><li key={index}><Gloss text={point}/></li>)}</ul>;
+                  const renderList = (points: string[], key: string, ordered: boolean) => {
+                    const items = points.map(lessonListItemText).filter(text => text.trim());
+                    return ordered
+                      ? <ol className="lesson-inferred-list" key={key}>{items.map((point,index)=><li key={index}><Gloss text={point}/></li>)}</ol>
+                      : <ul className="lesson-inferred-list" key={key}>{items.map((point,index)=><li key={index}><Gloss text={point}/></li>)}</ul>;
+                  };
                   let i = start;
                   if (isLessonListLead(plainSlideText(heading))) {
                     const points: string[] = [];

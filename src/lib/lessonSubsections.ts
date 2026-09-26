@@ -28,6 +28,17 @@ export function isLessonListPoint(text: string): boolean {
   return value.length > 0 && value.length <= 180 && !isLessonSubheading(value) && !isLessonListLead(value);
 }
 
+/** Remove a source marker only when the renderer is already supplying the list marker. */
+export function lessonListItemText(text: string): string {
+  return text.replace(/^(\s*)(?:\d+(?:\.\d+)*[.)]|[\u2022\u00b7*-])(?:\s+|$)/, "$1");
+}
+
+function removeFirstHtmlListMarker(element: Element): void {
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  const first = walker.nextNode();
+  if (first) first.textContent = lessonListItemText(first.textContent ?? "");
+}
+
 function tableElement(html: string): Element {
   const template = document.createElement("template");
   template.innerHTML = html.trim();
@@ -90,7 +101,10 @@ export function groupLessonHtml(html: string, sectionHeading = ""): string {
     const points: Element[] = [];
     let next = first;
     while (next && isPoint(next)) {
-      points.push(next); next = next.nextElementSibling;
+      const current = next;
+      next = next.nextElementSibling;
+      if (!lessonListItemText(current.textContent ?? "").trim()) { current.remove(); continue; }
+      points.push(current);
     }
     if (!points.length) return;
     const list = document.createElement(ordered ? "ol" : "ul");
@@ -101,6 +115,7 @@ export function groupLessonHtml(html: string, sectionHeading = ""): string {
       // Preserve inline formatting without carrying paragraph/blockquote layout.
       const onlyChild = point.children.length === 1 && point.firstElementChild?.tagName === "P" ? point.firstElementChild : point;
       item.innerHTML = onlyChild!.innerHTML;
+      removeFirstHtmlListMarker(item);
       list.append(item); point.remove();
     }
   };
