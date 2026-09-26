@@ -55,7 +55,6 @@ export default async function handler(request: Request): Promise<Response> {
     const activityContent = typeof body.activityContent === "string" ? body.activityContent.trim() : "";
     const selfAssessmentContent = typeof body.selfAssessmentContent === "string" ? body.selfAssessmentContent.trim() : "";
     const logbookContent = typeof body.logbookContent === "string" ? body.logbookContent.trim() : "";
-    if(!activityContent || !selfAssessmentContent || !logbookContent) return json({error:"Add Activity, Self assessment and Logbook content before using AI generation."},400);
     const unit = body.unit ?? {};
     if(typeof unit.us!=="string" || !unit.us.trim() || typeof unit.title!=="string" || !unit.title.trim()) return json({error:"Unit details are missing."},400);
     const minutes = Number(body.minutes ?? 300);
@@ -80,13 +79,13 @@ Supplied teaching material:
 ${body.source}
 
 Administrator-supplied Activity content:
-${activityContent}
+${activityContent || "Not supplied. Do not invent a separate learner activity."}
 
 Administrator-supplied Self assessment content:
-${selfAssessmentContent}
+${selfAssessmentContent || "Not supplied. Derive a concise competence checklist from the official unit standard and lesson slides."}
 
 Administrator-supplied Logbook content:
-${logbookContent}`}]} 
+${logbookContent || "Not supplied. Build the evidence-led logbook from the official assessment criteria and supplied teaching material."}`}]} 
       ]
     })});
     if(!response.ok) return json({error:"OpenAI could not research and generate the unit content. You can retry or build without AI."},502);
