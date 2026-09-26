@@ -3925,13 +3925,31 @@ export function UnitPage({
               </div>
             ) : null;
             const tableHtml = (table: {headers:string[];rows:string[][]}) => `<div class="lesson-table-scroll"><table class="data lesson-table"><thead><tr>${table.headers.map(h=>`<th scope="col">${markedToHtml(h)}</th>`).join("")}</tr></thead><tbody>${table.rows.map(row=>`<tr>${row.map(c=>`<td>${markedToHtml(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
-            const initialBodyHtml = effParagraphs.map((_,pi)=>{ const html=markedToHtml(paraText(pi)); return isRichText(paraText(pi)) && /<(?:p|div|ol|ul|table)\b/i.test(html) ? html : `<p class="lesson-p">${html}</p>`; }).join("")
+            const paragraphBodyHtml = (() => {
+              if (!sec.paragraphFormats || sec.paragraphFormats.length !== effParagraphs.length) return effParagraphs.map((_,pi)=>{ const html=markedToHtml(paraText(pi)); return isRichText(paraText(pi)) && /<(?:p|div|ol|ul|table)\b/i.test(html) ? html : `<p class="lesson-p">${html}</p>`; }).join("");
+              const html: string[] = [];
+              for (let pi = 0; pi < effParagraphs.length;) {
+                const format = sec.paragraphFormats[pi];
+                if (format === "numbered" || format === "bullet") {
+                  const tag = format === "numbered" ? "ol" : "ul";
+                  const items: string[] = [];
+                  while (pi < effParagraphs.length && sec.paragraphFormats[pi] === format) items.push(`<li>${markedToHtml(lessonListItemText(paraText(pi++)))}</li>`);
+                  html.push(`<${tag} class="lesson-inferred-list">${items.join("")}</${tag}>`);
+                } else if (format === "subheading") {
+                  html.push(`<h3 class="lesson-subheading">${markedToHtml(paraText(pi++))}</h3>`);
+                } else {
+                  html.push(`<p class="lesson-p">${markedToHtml(paraText(pi++))}</p>`);
+                }
+              }
+              return html.join("");
+            })();
+            const initialBodyHtml = paragraphBodyHtml
               + (effBullets?.length ? `<ol class="lesson-numlist">${effBullets.map((_,bi)=>`<li>${markedToHtml(bulletEditText(bi))}</li>`).join("")}</ol>` : "")
               + (sec.table ? tableHtml({headers:sec.table.headers.map((h,i)=>cellText("h",i,h)),rows:sec.table.rows.map((r,ri)=>r.map((c,ci)=>cellText(ri,ci,c)))}) : "")
               + (sec.cards?.length ? `<div class="card-grid lesson-cards">${sec.cards.map((c,ci)=>`<div class="card lesson-card"><div class="t">${markedToHtml(cardText(ci,"t",c.title))}</div><div class="d">${markedToHtml(cardText(ci,"d",c.text))}</div>${c.table?tableHtml(c.table):""}</div>`).join("")}</div>` : "")
               + [sec.example,...(sec.examples??[])].map((e,xi)=>e?`<div class="lesson-example"><h3>${markedToHtml(exText(xi,"t",e.title))}</h3>${e.lines.map((line,li)=>`<p class="lesson-p">${markedToHtml(exText(xi,String(li),line))}</p>`).join("")}</div>`:"").join("");
             const groupedBodyHtml = groupLessonHtml(bodyOverride?.richHtml ?? initialBodyHtml, plainSlideText(secHeading));
-            const unifiedText = editable || bodyOverride?.richHtml !== undefined || groupedBodyHtml.includes("lesson-table-scroll");
+            const unifiedText = editable || bodyOverride?.richHtml !== undefined || Boolean(sec.paragraphFormats?.length) || groupedBodyHtml.includes("lesson-table-scroll");
             const unifiedHtml = `<h2 class="section-title">${markedToHtml(secHeading)}</h2>${groupedBodyHtml}`;
             const body = (
               <div className="saqa-body lesson-section">

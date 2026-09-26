@@ -90,7 +90,7 @@ export function parseUnitSource(source: string): UnitTopic[] {
 }
 
 export type UnitContentEnhancement = {
-  lessonLayout?: { sectionIndex: number; paragraphStart: number; paragraphEnd: number }[];
+  lessonLayout?: { sectionIndex: number; paragraphStart: number; paragraphEnd: number; paragraphFormats?: ("paragraph" | "subheading" | "numbered" | "bullet")[] }[];
   logbook?: UnitContent["logbook"];
   evaluation?: UnitContent["evaluation"];
   selfAssessment?: UnitContent["selfAssessment"];
@@ -117,6 +117,9 @@ function lessonsFromLayout(source: LessonSection[], layout: UnitContentEnhanceme
       ...section,
       heading: part ? `${section.heading} (continued ${part + 1})` : section.heading,
       paragraphs: section.paragraphs.slice(item.paragraphStart, item.paragraphEnd),
+      paragraphFormats: Array.isArray(item.paragraphFormats) && item.paragraphFormats.length === item.paragraphEnd - item.paragraphStart
+        ? item.paragraphFormats
+        : undefined,
       flat: true,
     });
     nextParagraph[item.sectionIndex] = item.paragraphEnd;

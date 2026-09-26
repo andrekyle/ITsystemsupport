@@ -302,6 +302,8 @@ export interface LessonSection {
   heading: string;
   icon: string;
   paragraphs: string[];
+  /** AI/import layout classification aligned with paragraphs; wording stays untouched. */
+  paragraphFormats?: ("paragraph" | "subheading" | "numbered" | "bullet")[];
   bullets?: string[];
   /** data table rendered after the bullets (first column bolded) */
   table?: { headers: string[]; rows: string[][] };
