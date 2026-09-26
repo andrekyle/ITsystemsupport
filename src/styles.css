@@ -14101,7 +14101,7 @@ td.cal-row-actions {
 .slide-text-toolbar button:focus, .slide-text-toolbar select:focus, .slide-text-toolbar input:focus { outline: none; box-shadow: none; }
 .slide-text-toolbar select:focus, .slide-text-toolbar input:focus { border-color: var(--tool-border) !important; }
 .slide-text-toolbar button:focus-visible { text-decoration: underline; text-underline-offset: 4px; }
-.slide-indent-ruler { position:relative; display:grid; grid-template-columns:minmax(240px,1fr); align-items:center; height:34px; margin-top:3px; border-top:1px solid var(--tool-border); color:var(--tool-ink); }
+.slide-indent-ruler { position:relative; display:grid; grid-template-columns:minmax(240px,1fr); align-items:center; height:34px; margin:3px -6px 0; border-top:1px solid var(--tool-border); color:var(--tool-ink); }
 .slide-indent-ruler.is-disabled { opacity:.45; }
 .slide-ruler-track { position:relative; height:18px; border:1px solid var(--tool-border); border-radius:2px; background:color-mix(in srgb, var(--tool-bg) 75%, var(--tool-hover)); }
 .slide-ruler-track i { position:absolute; top:0; bottom:0; width:1px; background:var(--tool-border); font-style:normal; }

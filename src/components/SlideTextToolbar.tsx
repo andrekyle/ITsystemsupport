@@ -629,7 +629,8 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     notifyEditor(editor);
   };
   const setRulerIndent = (kind: "first" | "left", value: number) => {
-    const next = Math.max(0, Math.min(240, Math.round(value)));
+    const max = Math.max(0, (rulerTrack.current?.clientWidth ?? 1200) - 1);
+    const next = Math.max(0, Math.min(max, Math.round(value)));
     updateParagraphIndent(kind === "left" ? next : leftIndent, kind === "first" ? next : firstLineIndent);
   };
   const beginRulerDrag = (kind: "first" | "left") => (event: ReactPointerEvent<HTMLButtonElement>) => {
@@ -638,7 +639,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     event.preventDefault();
     event.stopPropagation();
     const rect = track.getBoundingClientRect();
-    const update = (clientX: number) => setRulerIndent(kind, ((clientX - rect.left) / rect.width) * 240);
+    const update = (clientX: number) => setRulerIndent(kind, clientX - rect.left);
     update(event.clientX);
     const move = (moveEvent: PointerEvent) => {
       moveEvent.preventDefault();
@@ -888,11 +889,11 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     </div>
     <div className={`slide-indent-ruler${ready ? "" : " is-disabled"}`} aria-label="Paragraph indentation ruler">
       <div className="slide-ruler-track" ref={rulerTrack}>
-        {Array.from({ length: 13 }, (_, index) => <i key={index} style={{ left: `${index * (100 / 12)}%` }}><span>{index}</span></i>)}
-        <button type="button" className="slide-ruler-marker first" disabled={!ready} style={{ left: `${(firstLineIndent / 240) * 100}%` }}
+        {Array.from({ length: 31 }, (_, index) => <i key={index} style={{ left: `${index * 40}px` }}><span>{index}</span></i>)}
+        <button type="button" className="slide-ruler-marker first" disabled={!ready} style={{ left: `${firstLineIndent}px` }}
           aria-label={`First line indent ${firstLineIndent} pixels`} title={`First line: ${firstLineIndent}px`}
           onPointerDown={beginRulerDrag("first")} onKeyDown={rulerKey("first", firstLineIndent)}><span>{firstLineIndent}</span></button>
-        <button type="button" className="slide-ruler-marker left" disabled={!ready} style={{ left: `${(leftIndent / 240) * 100}%` }}
+        <button type="button" className="slide-ruler-marker left" disabled={!ready} style={{ left: `${leftIndent}px` }}
           aria-label={`Paragraph indent ${leftIndent} pixels`} title={`Paragraph: ${leftIndent}px`}
           onPointerDown={beginRulerDrag("left")} onKeyDown={rulerKey("left", leftIndent)}><span>{leftIndent}</span></button>
       </div>
