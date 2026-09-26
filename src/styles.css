@@ -2797,8 +2797,11 @@ textarea:focus {
 
 /* Masthead */
 .srf-masthead {
+  position: relative;
   display: flex;
-  justify-content: center;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 80px;
   padding: 4px 0 8px;
 }
 .srf-eruditio-logo {
@@ -2813,6 +2816,14 @@ textarea:focus {
   font-size: 20px;
   font-weight: 700;
   margin: 6px 0 12px;
+}
+.srf-masthead .srf-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: -2px 0 0;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
 }
 
 /* Section headings */

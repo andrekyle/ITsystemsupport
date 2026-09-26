@@ -230,7 +230,6 @@ function StudentRegistrationForm({
       <FitSheet width={1000}>
       <div className="srf-page">
         <EruditioMasthead />
-        <h2 className="srf-title">Student Registration Form</h2>
 
         <div className="srf-section-title">Student Information: <em>(Please print)</em></div>
         <table className="srf-table srf-p2">
@@ -732,6 +731,7 @@ function EruditioMasthead() {
   return (
     <div className="srf-masthead">
       <img src="/logos/eruditio.svg" alt="Eruditio" className="srf-eruditio-logo" />
+      <h2 className="srf-title">Student Registration Form</h2>
     </div>
   );
 }
