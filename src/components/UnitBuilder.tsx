@@ -18,6 +18,15 @@ import "./unit-builder.css";
 import { courseScopedUnit } from "../lib/courseScope";
 import { flushKey } from "../lib/sync";
 
+async function readApiJson(response: Response, service: string): Promise<any> {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    if (!response.ok) throw new Error(`${service} is temporarily unavailable (HTTP ${response.status}). Please retry in a moment.`);
+    throw new Error(`${service} returned an unreadable response. Please retry.`);
+  }
+}
 
 async function logbookImageDataUrl(file: File): Promise<string> {
   if (!file.type.startsWith("image/")) throw new Error("Upload PNG, JPEG or WebP logbook images.");
@@ -139,7 +148,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       const images=await Promise.all(selected.map(logbookImageDataUrl));
       const token=(await supabase?.auth.getSession())?.data.session?.access_token;
       const response=await fetch("/api/extract-logbook-image",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({images}),signal:AbortSignal.timeout(85_000)});
-      const result=await response.json();
+      const result=await readApiJson(response,"The logbook reading service");
       if(!response.ok)throw new Error(result.error??"The logbook image could not be read.");
       setLogbookContent(current=>[current.trim(),String(result.text??"").trim()].filter(Boolean).join("\n\n"));
       setLogbookImageName(selected.map(file=>file.name).join(", "));
@@ -158,11 +167,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
         setBusy("Researching the unit standard and creating the tabs with OpenAI...");
         const token=(await supabase?.auth.getSession())?.data.session?.access_token;
         const response=await fetch("/api/enhance-unit-content",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({unit,source,minutes,lessonStructure:next.lesson.map(section=>({heading:section.heading,paragraphs:section.paragraphs})),activityContent:activityBlocks.map((block,index)=>`Activity ${index+1} heading:\n${block.heading.trim()||`Activity ${index+1}`}\n\nActivity ${index+1} content:\n${block.text.trim()}`).filter(text=>text.trim()).join("\n\n--- ACTIVITY SEPARATOR ---\n\n"),selfAssessmentContent,logbookContent}),signal:AbortSignal.timeout(85_000)});
-        const responseText=await response.text();
-        let result:any;
-        try{result=JSON.parse(responseText);}catch{
-          throw new Error(response.ok?"OpenAI returned an unreadable response. Please retry.":"The AI build service timed out or became unavailable. Please retry in a moment.");
-        }
+        const result=await readApiJson(response,"The AI build service");
         if(!response.ok) throw new Error(result.error??"AI generation failed. Turn it off to build entirely with built-in code.");
         next=mergeUnitContentEnhancement(next,result.content,unit);setWarning("");
         if(result.usage) void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.input_tokens??result.usage.prompt_tokens??0,completionTokens:result.usage.output_tokens??result.usage.completion_tokens??0,totalTokens:result.usage.total_tokens??0});
@@ -335,7 +340,7 @@ export function LogbookBuilder({unit,content}:{unit:UnitStandard;content?:UnitCo
       const images=await Promise.all(selected.map(logbookImageDataUrl));
       const token=(await supabase?.auth.getSession())?.data.session?.access_token;
       const response=await fetch("/api/extract-logbook-image",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({images})});
-      const result=await response.json();
+      const result=await readApiJson(response,"The logbook reading service");
       if(!response.ok)throw new Error(result.error??"The logbook image could not be read.");
       setSource(current=>[current.trim(),String(result.text??"").trim()].filter(Boolean).join("\n\n"));
       setFileName(selected.map(file=>file.name).join(", "));setPreview(undefined);
