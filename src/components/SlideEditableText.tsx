@@ -40,7 +40,34 @@ export function SlideEditableText({ as, html, onSave, contentEditable = true, on
 
   const keyDown = (event: KeyboardEvent<HTMLElement>) => {
     onKeyDown?.(event);
-    if (event.defaultPrevented || event.key !== "Tab" || !(contentEditable === true || contentEditable === "true")) return;
+    if (event.defaultPrevented || !(contentEditable === true || contentEditable === "true")) return;
+    if (event.key === "Backspace") {
+      const selection = window.getSelection();
+      if (!selection?.isCollapsed || !selection.rangeCount) return;
+      const caret = selection.getRangeAt(0);
+      const node = caret.startContainer;
+      const element = node instanceof Element ? node : node.parentElement;
+      const block = element?.closest<HTMLElement>("p,li,blockquote,h1,h2,h3,h4,div");
+      if (!block || block === event.currentTarget || !event.currentTarget.contains(block)) return;
+      const before = document.createRange();
+      before.selectNodeContents(block);
+      before.setEnd(caret.startContainer, caret.startOffset);
+      if (before.toString().length > 0) return;
+      const indentWrapper = block.closest<HTMLElement>("blockquote");
+      const hasManualIndent = Boolean(block.style.marginLeft || block.style.textIndent);
+      if (!indentWrapper && !hasManualIndent) return;
+      event.preventDefault();
+      if (hasManualIndent) {
+        block.style.marginLeft = "";
+        block.style.textIndent = "";
+        block.dispatchEvent(new Event("input", { bubbles: true }));
+      } else {
+        document.execCommand("outdent");
+      }
+      save();
+      return;
+    }
+    if (event.key !== "Tab") return;
     event.preventDefault();
     if (event.shiftKey) {
       document.execCommand("outdent");
