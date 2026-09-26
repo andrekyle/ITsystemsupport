@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 
 import { Select } from "./Select";
 import { SlideEditHistory } from "../lib/slideEditHistory";
@@ -21,6 +21,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   const host = useRef<HTMLElement | null>(null);
   const bookmark = useRef({ start: 0, end: 0 });
   const bar = useRef<HTMLDivElement>(null);
+  const rulerTrack = useRef<HTMLDivElement>(null);
   const history = useRef(new SlideEditHistory());
   const baselines = useRef(new Map<number, string>());
   const replaying = useRef(false);
@@ -627,6 +628,37 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     setFirstLineIndent(nextFirst);
     notifyEditor(editor);
   };
+  const setRulerIndent = (kind: "first" | "left", value: number) => {
+    const next = Math.max(0, Math.min(240, Math.round(value)));
+    updateParagraphIndent(kind === "left" ? next : leftIndent, kind === "first" ? next : firstLineIndent);
+  };
+  const beginRulerDrag = (kind: "first" | "left") => (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const track = rulerTrack.current;
+    if (!track || !ready) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = track.getBoundingClientRect();
+    const update = (clientX: number) => setRulerIndent(kind, ((clientX - rect.left) / rect.width) * 240);
+    update(event.clientX);
+    const move = (moveEvent: PointerEvent) => {
+      moveEvent.preventDefault();
+      update(moveEvent.clientX);
+    };
+    const finish = () => {
+      document.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerup", finish);
+      document.removeEventListener("pointercancel", finish);
+    };
+    document.addEventListener("pointermove", move, { passive: false });
+    document.addEventListener("pointerup", finish);
+    document.addEventListener("pointercancel", finish);
+  };
+  const rulerKey = (kind: "first" | "left", value: number) => (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+    const direction = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
+    if (!direction) return;
+    event.preventDefault();
+    setRulerIndent(kind, value + direction * (event.shiftKey ? 5 : 1));
+  };
   const imageData = (file: File): Promise<string> => new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("The image could not be read."));
@@ -855,13 +887,15 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       </span>
     </div>
     <div className={`slide-indent-ruler${ready ? "" : " is-disabled"}`} aria-label="Paragraph indentation ruler">
-      <div className="slide-ruler-track" aria-hidden="true">
+      <div className="slide-ruler-track" ref={rulerTrack}>
         {Array.from({ length: 13 }, (_, index) => <i key={index} style={{ left: `${index * (100 / 12)}%` }}><span>{index}</span></i>)}
+        <button type="button" className="slide-ruler-marker first" disabled={!ready} style={{ left: `${(firstLineIndent / 240) * 100}%` }}
+          aria-label={`First line indent ${firstLineIndent} pixels`} title={`First line: ${firstLineIndent}px`}
+          onPointerDown={beginRulerDrag("first")} onKeyDown={rulerKey("first", firstLineIndent)}><span>{firstLineIndent}</span></button>
+        <button type="button" className="slide-ruler-marker left" disabled={!ready} style={{ left: `${(leftIndent / 240) * 100}%` }}
+          aria-label={`Paragraph indent ${leftIndent} pixels`} title={`Paragraph: ${leftIndent}px`}
+          onPointerDown={beginRulerDrag("left")} onKeyDown={rulerKey("left", leftIndent)}><span>{leftIndent}</span></button>
       </div>
-      <input className="slide-ruler-first" aria-label="First line indent" title="First-line indent" type="range" min="0" max="240" step="8" disabled={!ready} value={firstLineIndent}
-        onChange={event => updateParagraphIndent(leftIndent, Number(event.target.value))} />
-      <input className="slide-ruler-left" aria-label="Left paragraph indent" title="Left indent (moves wrapped lines)" type="range" min="0" max="240" step="8" disabled={!ready} value={leftIndent}
-        onChange={event => updateParagraphIndent(Number(event.target.value), firstLineIndent)} />
     </div>
     <input ref={imageInput} className="slide-image-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={event => void insertImage(event)} />
     {menu && <div id={`slide-${menu}-options`} className="slide-text-options" role="group" aria-label={menu === "text" ? "Font and text options" : menu === "table" ? "Table options" : menu === "image" ? "Image options" : "Paragraph and editing options"}>
