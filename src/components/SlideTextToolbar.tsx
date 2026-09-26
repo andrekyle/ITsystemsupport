@@ -855,7 +855,6 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       </span>
     </div>
     <div className={`slide-indent-ruler${ready ? "" : " is-disabled"}`} aria-label="Paragraph indentation ruler">
-      <span className="slide-ruler-label">Indent</span>
       <div className="slide-ruler-track" aria-hidden="true">
         {Array.from({ length: 13 }, (_, index) => <i key={index} style={{ left: `${index * (100 / 12)}%` }}><span>{index}</span></i>)}
       </div>
@@ -863,7 +862,6 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         onChange={event => updateParagraphIndent(leftIndent, Number(event.target.value))} />
       <input className="slide-ruler-left" aria-label="Left paragraph indent" title="Left indent (moves wrapped lines)" type="range" min="0" max="240" step="8" disabled={!ready} value={leftIndent}
         onChange={event => updateParagraphIndent(Number(event.target.value), firstLineIndent)} />
-      <span className="slide-ruler-help">▲ first line · ▼ paragraph</span>
     </div>
     <input ref={imageInput} className="slide-image-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={event => void insertImage(event)} />
     {menu && <div id={`slide-${menu}-options`} className="slide-text-options" role="group" aria-label={menu === "text" ? "Font and text options" : menu === "table" ? "Table options" : menu === "image" ? "Image options" : "Paragraph and editing options"}>

@@ -14101,14 +14101,12 @@ td.cal-row-actions {
 .slide-text-toolbar button:focus, .slide-text-toolbar select:focus, .slide-text-toolbar input:focus { outline: none; box-shadow: none; }
 .slide-text-toolbar select:focus, .slide-text-toolbar input:focus { border-color: var(--tool-border) !important; }
 .slide-text-toolbar button:focus-visible { text-decoration: underline; text-underline-offset: 4px; }
-.slide-indent-ruler { position:relative; display:grid; grid-template-columns:44px minmax(240px,1fr) 148px; align-items:center; height:34px; margin-top:3px; border-top:1px solid var(--tool-border); color:var(--tool-ink); }
+.slide-indent-ruler { position:relative; display:grid; grid-template-columns:minmax(240px,1fr); align-items:center; height:34px; margin-top:3px; border-top:1px solid var(--tool-border); color:var(--tool-ink); }
 .slide-indent-ruler.is-disabled { opacity:.45; }
-.slide-ruler-label, .slide-ruler-help { z-index:3; font-size:10px; white-space:nowrap; }
-.slide-ruler-help { padding-left:8px; color:color-mix(in srgb, var(--tool-ink) 70%, transparent); }
 .slide-ruler-track { position:relative; height:18px; border:1px solid var(--tool-border); border-radius:2px; background:color-mix(in srgb, var(--tool-bg) 75%, var(--tool-hover)); }
 .slide-ruler-track i { position:absolute; top:0; bottom:0; width:1px; background:var(--tool-border); font-style:normal; }
 .slide-ruler-track i span { position:absolute; top:2px; left:3px; font-size:8px; line-height:1; color:color-mix(in srgb, var(--tool-ink) 62%, transparent); }
-.slide-indent-ruler input[type="range"] { position:absolute; z-index:2; left:44px; right:148px; width:auto; height:18px; margin:0; appearance:none; background:transparent; pointer-events:none; }
+.slide-indent-ruler input[type="range"] { position:absolute; z-index:2; left:0; right:0; width:100%; height:18px; margin:0; appearance:none; background:transparent; pointer-events:none; }
 .slide-indent-ruler input[type="range"]::-webkit-slider-runnable-track { height:1px; background:transparent; }
 .slide-indent-ruler input[type="range"]::-webkit-slider-thumb { width:13px; height:11px; margin-top:-5px; border:0; border-radius:2px; appearance:none; background:var(--azure); cursor:ew-resize; pointer-events:auto; clip-path:polygon(50% 100%,0 0,100% 0); }
 .slide-indent-ruler input.slide-ruler-first { top:4px; }
