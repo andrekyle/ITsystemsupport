@@ -3,7 +3,19 @@ declare const process: { env?: Record<string, string | undefined> };
 const json = (value: unknown, status=200) => Response.json(value,{status});
 
 const smallString = {type:"string",minLength:1,maxLength:1200} as const;
-const contentSchema = {type:"object",additionalProperties:false,required:["logbook","evaluation","selfAssessment","lessonPlan","exercises","questionSessions","quiz","sources"],properties:{
+const slideString = {type:"string",minLength:1,maxLength:600} as const;
+const slideTable = {type:"object",additionalProperties:false,required:["headers","rows"],properties:{
+  headers:{type:"array",minItems:2,maxItems:5,items:{type:"string",minLength:1,maxLength:80}},
+  rows:{type:"array",minItems:1,maxItems:8,items:{type:"array",minItems:2,maxItems:5,items:{type:"string",minLength:1,maxLength:220}}}
+}} as const;
+const slide = {type:"object",additionalProperties:false,required:["heading","paragraphs","bullets"],properties:{
+  heading:{type:"string",minLength:1,maxLength:100},
+  paragraphs:{type:"array",minItems:0,maxItems:4,items:slideString},
+  bullets:{type:"array",minItems:0,maxItems:6,items:{type:"string",minLength:1,maxLength:180}},
+  table:slideTable
+}} as const;
+const contentSchema = {type:"object",additionalProperties:false,required:["lesson","logbook","evaluation","selfAssessment","lessonPlan","exercises","questionSessions","quiz","sources"],properties:{
+  lesson:{type:"array",minItems:1,maxItems:60,items:slide},
   logbook:{type:"object",additionalProperties:true},
   evaluation:{type:"object",additionalProperties:true},
   selfAssessment:{type:"object",additionalProperties:true},
@@ -60,6 +72,9 @@ Title: ${unit.title}
 NQF: ${unit.nqf ?? ""}
 Credits: ${unit.credits ?? ""}
 Planned minutes: ${Number.isFinite(minutes)?minutes:300}
+
+Slide-deck requirements:
+Create the lesson array as a polished, corporate-ready presentation rather than a source-text dump. Preserve the source meaning and coverage, but organise it for clear teaching. Use one key idea per slide and split dense topics across sensibly titled slides. Use a concise title, no more than two short explanatory paragraphs, and/or three to six parallel bullets. Use South African English and a consistent professional hierarchy. Do not put manual numbering such as "1.", "2." or "1.5" at the start of paragraphs or bullets; the LMS handles lists. Never output a paragraph containing only a number or duplicate numbering. Do not turn ordinary prose, types, agenda items or sequential notes into tables. Use a table only for a genuine comparison or labelled data relationship with meaningful headers, never an empty bullet/index column. Limit tables to five columns and eight rows. Move overflow to another slide instead of overcrowding. Do not repeat the same sentence on multiple slides or invent facts outside the source or official unit standard.
 
 Supplied teaching material:
 ${body.source}

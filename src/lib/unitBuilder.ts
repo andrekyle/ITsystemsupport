@@ -69,6 +69,7 @@ export function parseUnitSource(source: string): UnitTopic[] {
 }
 
 export type UnitContentEnhancement = {
+  lesson?: UnitContent["lesson"];
   logbook?: UnitContent["logbook"];
   evaluation?: UnitContent["evaluation"];
   selfAssessment?: UnitContent["selfAssessment"];
@@ -78,6 +79,44 @@ export type UnitContentEnhancement = {
   assignments?: UnitContent["assignments"];
   quiz?: UnitContent["quiz"];
 };
+
+const cleanSlideText = (value: unknown, max: number): string => typeof value === "string"
+  ? value.replace(/\s+/g, " ").replace(/^\s*\d+(?:\.\d+)*[.)]\s+/, "").trim().slice(0, max)
+  : "";
+
+/** Accept AI slide structure only after removing common import/generation debris. */
+function normalizeGeneratedLessons(value: UnitContent["lesson"] | undefined): LessonSection[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const slides = value.slice(0, 60).flatMap((raw): LessonSection[] => {
+    if (!raw || typeof raw !== "object") return [];
+    const heading = cleanSlideText(raw.heading, 100);
+    const unique = (items: unknown, maxItems: number, maxLength: number) => {
+      if (!Array.isArray(items)) return [];
+      const seen = new Set<string>();
+      return items.flatMap(item => {
+        const text = cleanSlideText(item, maxLength);
+        const key = text.toLowerCase();
+        if (!text || /^\d+(?:\.\d+)*[.)]?$/.test(text) || seen.has(key)) return [];
+        seen.add(key);
+        return [text];
+      }).slice(0, maxItems);
+    };
+    const paragraphs = unique(raw.paragraphs, 4, 520);
+    const bullets = unique(raw.bullets, 6, 180);
+    const sourceTable = raw.table;
+    const headers = unique(sourceTable?.headers, 5, 80);
+    const rows = Array.isArray(sourceTable?.rows)
+      ? sourceTable.rows.filter(row => Array.isArray(row) && row.length === headers.length)
+        .map(row => row.map(cell => cleanSlideText(cell, 220))).filter(row => row.every(Boolean)).slice(0, 8)
+      : [];
+    const table = headers.length >= 2 && rows.length && !rows.every(row => /^[â€¢·*-]?$/.test(row[0]) || /^\d+[.)]?$/.test(row[0]))
+      ? { headers, rows }
+      : undefined;
+    if (!heading || (!paragraphs.length && !bullets.length && !table)) return [];
+    return [{ heading, icon: "presenter", paragraphs, ...(bullets.length ? { bullets } : {}), ...(table ? { table } : {}), flat: true }];
+  });
+  return slides.length ? slides : undefined;
+}
 
 const nonemptyString = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
 const nonemptyArray = <T,>(value: unknown): value is T[] => Array.isArray(value) && value.length > 0;
@@ -731,6 +770,8 @@ function lessonPlanFromTemplate(unit: UnitStandard, topics: UnitTopic[], minutes
 
 export function mergeUnitContentEnhancement(base: UnitContent, enhancement: UnitContentEnhancement, unit: UnitStandard): UnitContent {
   const next = structuredClone(base);
+  const generatedLessons = normalizeGeneratedLessons(enhancement.lesson);
+  if (generatedLessons) next.lesson = generatedLessons;
   if (generatedLogbookIsUsable(enhancement.logbook, next.lesson)) next.logbook = normalizeLogbookSpec(unit, enhancement.logbook);
   next.evaluation = undefined;
   if (enhancement.selfAssessment?.items?.length) next.selfAssessment = selfAssessmentFromTemplate(enhancement.selfAssessment.items);
