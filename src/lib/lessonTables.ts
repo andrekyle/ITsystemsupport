@@ -173,7 +173,7 @@ function expandInlineMarkdownTables(source: string): string {
     const prefix = line.slice(0, firstPipe).trim();
     const parts = cells(line.slice(firstPipe), "pipe").filter(cell => cell.trim());
     const sepStart = parts.findIndex((part, index) => /^:?-{3,}:?$/.test(part) && index > 0);
-    if (sepStart < 2) return line;
+    if (sepStart < 1) return line;
     let sepEnd = sepStart;
     while (sepEnd < parts.length && /^:?-{3,}:?$/.test(parts[sepEnd])) sepEnd++;
     const width = sepStart;
@@ -181,6 +181,12 @@ function expandInlineMarkdownTables(source: string): string {
     const headers = parts.slice(0, width);
     const values = parts.slice(sepEnd);
     if (!headers.every(Boolean)) return line;
+    // A flattened single-cell example/letter is content, not a table:
+    // | Dear John,<br>I am writing ... | | --- |
+    if (values.length === 0 && width === 1) {
+      const content = headers[0].replace(/\s*<br\s*\/?>\s*/gi, "\n").trim();
+      return [prefix, content].filter(Boolean).join("\n\n");
+    }
     // PDF/DOCX extraction sometimes flattens a two-cell definition row and
     // its Markdown separator onto one line, with no body row after it:
     // | Definition:<br> Communication | definition text | | --- | --- |
@@ -199,15 +205,20 @@ function expandInlineMarkdownTables(source: string): string {
 
 /** Reconstruct clearly tabular imports while retaining all unrecognised source text. */
 export function parseLessonTextBlocks(paragraphs: readonly string[]): LessonTextBlock[] {
+  // Clean each imported paragraph before recording offsets. This keeps the
+  // source ranges accurate when flattened Markdown grows into multiple lines,
+  // and prevents document-export <br> tags from reaching the slide as text.
+  const normalizedParagraphs = paragraphs.map(paragraph =>
+    expandInlineMarkdownTables(paragraph).replace(/\s*<br\s*\/?>\s*/gi, "\n").trim(),
+  );
   const ranges: { text: string; start: number; end: number }[] = [];
   let source = "";
-  for (const text of paragraphs) {
+  for (const text of normalizedParagraphs) {
     if (ranges.length) source += "\n\n";
     ranges.push({ text, start: source.length, end: source.length + text.length });
     source += text;
   }
   const lines: Line[] = [];
-  source = expandInlineMarkdownTables(source);
   for (const match of source.matchAll(/[^\r\n]+/g)) {
     if (match[0].trim()) lines.push({ text: match[0].trim(), start: match.index!, end: match.index! + match[0].length });
   }

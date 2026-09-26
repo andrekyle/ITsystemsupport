@@ -51,7 +51,14 @@ export function sanitizeSlideHtml(html: string): string {
   return result.innerHTML;
 }
 export function richTextHtml(text: string): string {
-  return isRichText(text) ? sanitizeSlideHtml(text.slice(PREFIX.length)) : text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+  if (isRichText(text)) return sanitizeSlideHtml(text.slice(PREFIX.length));
+  let plain = text.trim();
+  // Repair legacy one-cell Markdown tables that were saved as visible text.
+  // Example: | Dear John,<br>I am writing ... | | --- |
+  const flattenedContent = plain.match(/^\|\s*([\s\S]*?)\s*\|\s*\|\s*:?-{3,}:?\s*\|$/);
+  if (flattenedContent) plain = flattenedContent[1].trim();
+  plain = plain.replace(/\s*<br\s*\/?>\s*/gi, "\n");
+  return plain.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/\r?\n/g, "<br>");
 }
 export function saveRichText(el: HTMLElement): string {
   return PREFIX + sanitizeSlideHtml(el.innerHTML);
