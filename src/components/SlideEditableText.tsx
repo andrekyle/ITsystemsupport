@@ -45,9 +45,9 @@ export function SlideEditableText({ as, html, onSave, contentEditable = true, on
     if (event.shiftKey) {
       document.execCommand("outdent");
     } else {
-      // A run of non-breaking spaces behaves like a word-processor tab stop
-      // and survives HTML sanitising and browser whitespace collapsing.
-      document.execCommand("insertText", false, "\u00a0\u00a0\u00a0\u00a0");
+      // Indent the containing paragraph so wrapped lines share the same left
+      // edge, matching a word processor rather than padding only line one.
+      document.execCommand("indent");
     }
     save();
   };
