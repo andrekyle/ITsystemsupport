@@ -74,7 +74,7 @@ Credits: ${unit.credits ?? ""}
 Planned minutes: ${Number.isFinite(minutes)?minutes:300}
 
 Slide-deck requirements:
-Act as a professional textbook layout editor. Return lessonLayout ranges only; do not return lesson text. Each range is {sectionIndex, paragraphStart, paragraphEnd}, where paragraphStart is inclusive and paragraphEnd is exclusive. Cover every supplied paragraph exactly once and preserve order. Group adjacent paragraphs into balanced slides of roughly 120-300 words, with about 450 words maximum. Keep related paragraphs together and use another range when a section is too dense. Never combine paragraphs from different sections in one range.
+Act as a professional textbook layout editor. Return lessonLayout ranges only; do not return lesson text. Each range is {sectionIndex, paragraphStart, paragraphEnd}, where paragraphStart is inclusive and paragraphEnd is exclusive. Cover every supplied paragraph exactly once and preserve its logical order. Group adjacent paragraphs into balanced slides of roughly 120-300 words, with about 450 words maximum. Keep each heading or lead-in with the paragraphs, numbered items or bullets it introduces. Never leave a numbering marker, single character, short heading, colon-ended lead-in, table header or table row orphaned on its own slide. Keep complete numbered sequences together unless their length requires a clean continuation slide. Keep Markdown tables and clearly tabular paragraph runs intact so the LMS table parser can render them as one table. Do not group ordinary prose into a table. Avoid one-line slides, unnecessary fragmentation and empty ranges. Never combine paragraphs from different sections in one range.
 
 Indexed lesson structure:
 ${JSON.stringify(lessonStructure)}

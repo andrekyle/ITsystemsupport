@@ -8,6 +8,27 @@ export type BuildOptions = { minutes: number };
 export type UnitTopic = { heading: string; paragraphs: string[] };
 const normal = (text: string) => text.replace(/\r\n?/g, "\n").replace(/\u0000/g, "").trim();
 
+/** Join extraction artifacts such as a standalone "2." or "a)" to its text. */
+function repairOrphanedParagraphs(paragraphs: string[]): string[] {
+  const repaired: string[] = [];
+  for (let index = 0; index < paragraphs.length; index++) {
+    const text = paragraphs[index].trim();
+    if (!text) continue;
+    const markerOnly = /^(?:\d+(?:\.\d+)*[.)]?|[A-Za-z][.)]|[\u2022\u00b7*-])$/.test(text);
+    const next = paragraphs[index + 1]?.trim();
+    if (markerOnly && next) {
+      repaired.push(`${text} ${next}`);
+      index++;
+      continue;
+    }
+    // PDF extraction can strand punctuation on its own line. Keep it with the
+    // preceding paragraph without changing any substantive wording.
+    if (/^[,;:!?)]$/.test(text) && repaired.length) repaired[repaired.length - 1] += text;
+    else repaired.push(text);
+  }
+  return repaired;
+}
+
 /** Preserve the supplied words. Headings and paragraph boundaries drive structure. */
 export function parseUnitSource(source: string): UnitTopic[] {
   const text = normal(source);
@@ -62,7 +83,7 @@ export function parseUnitSource(source: string): UnitTopic[] {
       chunk.push(...group);
       if (keepWithNext && !/:$/.test(paragraph.trim())) i++;
     }
-    if (chunk.length) result.push({ heading: `${topic.heading}${part ? ` (continued ${part + 1})` : ""}`, paragraphs: chunk });
+    if (chunk.length) result.push({ heading: `${topic.heading}${part ? ` (continued ${part + 1})` : ""}`, paragraphs: repairOrphanedParagraphs(chunk) });
   }
   if (result.length > 80) throw new Error("This source produces more than 80 lesson sections. Split it into smaller units.");
   return result;
