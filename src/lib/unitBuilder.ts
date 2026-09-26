@@ -69,7 +69,7 @@ export function parseUnitSource(source: string): UnitTopic[] {
 }
 
 export type UnitContentEnhancement = {
-  lesson?: UnitContent["lesson"];
+  lessonLayout?: { sectionIndex: number; paragraphStart: number; paragraphEnd: number }[];
   logbook?: UnitContent["logbook"];
   evaluation?: UnitContent["evaluation"];
   selfAssessment?: UnitContent["selfAssessment"];
@@ -80,59 +80,29 @@ export type UnitContentEnhancement = {
   quiz?: UnitContent["quiz"];
 };
 
-const cleanSlideText = (value: unknown): string => typeof value === "string"
-  ? value.replace(/\s+/g, " ").trim()
-  : "";
-
-const lessonWords = (slides: LessonSection[]): string[] => slides.flatMap(slide => [
-  slide.heading,
-  ...slide.paragraphs,
-  ...(slide.bullets ?? []),
-  ...(slide.table?.headers ?? []),
-  ...(slide.table?.rows.flat() ?? []),
-]).flatMap(text => text.toLocaleLowerCase("en-ZA").match(/[\p{L}\p{N}]+/gu) ?? []);
-
-/** Reject an AI layout if even one supplied source word was omitted. */
-function coversAllLessonText(source: LessonSection[], generated: LessonSection[]): boolean {
-  const available = new Map<string, number>();
-  for (const word of lessonWords(generated)) available.set(word, (available.get(word) ?? 0) + 1);
-  for (const word of lessonWords(source)) {
-    const count = available.get(word) ?? 0;
-    if (!count) return false;
-    available.set(word, count - 1);
+/** Apply a compact AI layout plan while copying every original paragraph verbatim. */
+function lessonsFromLayout(source: LessonSection[], layout: UnitContentEnhancement["lessonLayout"]): LessonSection[] | undefined {
+  if (!Array.isArray(layout) || !layout.length) return undefined;
+  const slides: LessonSection[] = [];
+  const nextParagraph = source.map(() => 0);
+  const continuation = source.map(() => 0);
+  let previousSection = -1;
+  for (const item of layout) {
+    if (!item || !Number.isInteger(item.sectionIndex) || !Number.isInteger(item.paragraphStart) || !Number.isInteger(item.paragraphEnd)) return undefined;
+    const section = source[item.sectionIndex];
+    if (!section || item.sectionIndex < previousSection || item.paragraphStart !== nextParagraph[item.sectionIndex] || item.paragraphEnd <= item.paragraphStart || item.paragraphEnd > section.paragraphs.length) return undefined;
+    const part = continuation[item.sectionIndex]++;
+    slides.push({
+      ...section,
+      heading: part ? `${section.heading} (continued ${part + 1})` : section.heading,
+      paragraphs: section.paragraphs.slice(item.paragraphStart, item.paragraphEnd),
+      flat: true,
+    });
+    nextParagraph[item.sectionIndex] = item.paragraphEnd;
+    previousSection = item.sectionIndex;
   }
-  return true;
-}
-
-/** Accept AI slide structure only after removing common import/generation debris. */
-function normalizeGeneratedLessons(value: UnitContent["lesson"] | undefined, source: LessonSection[]): LessonSection[] | undefined {
-  if (!Array.isArray(value)) return undefined;
-  const slides = value.slice(0, 200).flatMap((raw): LessonSection[] => {
-    if (!raw || typeof raw !== "object") return [];
-    const heading = cleanSlideText(raw.heading);
-    const textItems = (items: unknown, maxItems: number) => {
-      if (!Array.isArray(items)) return [];
-      return items.flatMap(item => {
-        const text = cleanSlideText(item);
-        if (!text) return [];
-        return [text];
-      }).slice(0, maxItems);
-    };
-    const paragraphs = textItems(raw.paragraphs, 10);
-    const bullets = textItems(raw.bullets, 10);
-    const sourceTable = raw.table;
-    const headers = textItems(sourceTable?.headers, 8);
-    const rows = Array.isArray(sourceTable?.rows)
-      ? sourceTable.rows.filter(row => Array.isArray(row) && row.length === headers.length)
-        .map(row => row.map(cell => cleanSlideText(cell))).filter(row => row.every(Boolean)).slice(0, 20)
-      : [];
-    const table = headers.length >= 2 && rows.length && !rows.every(row => /^[â€¢·*-]?$/.test(row[0]) || /^\d+[.)]?$/.test(row[0]))
-      ? { headers, rows }
-      : undefined;
-    if (!heading || (!paragraphs.length && !bullets.length && !table)) return [];
-    return [{ heading, icon: "presenter", paragraphs, ...(bullets.length ? { bullets } : {}), ...(table ? { table } : {}), flat: true }];
-  });
-  return slides.length && coversAllLessonText(source, slides) ? slides : undefined;
+  if (source.some((section, index) => nextParagraph[index] !== section.paragraphs.length)) return undefined;
+  return slides;
 }
 
 const nonemptyString = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
@@ -787,7 +757,7 @@ function lessonPlanFromTemplate(unit: UnitStandard, topics: UnitTopic[], minutes
 
 export function mergeUnitContentEnhancement(base: UnitContent, enhancement: UnitContentEnhancement, unit: UnitStandard): UnitContent {
   const next = structuredClone(base);
-  const generatedLessons = normalizeGeneratedLessons(enhancement.lesson, next.lesson);
+  const generatedLessons = lessonsFromLayout(next.lesson, enhancement.lessonLayout);
   if (generatedLessons) next.lesson = generatedLessons;
   if (generatedLogbookIsUsable(enhancement.logbook, next.lesson)) next.logbook = normalizeLogbookSpec(unit, enhancement.logbook);
   next.evaluation = undefined;
