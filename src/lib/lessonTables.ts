@@ -180,7 +180,17 @@ function expandInlineMarkdownTables(source: string): string {
     if (sepEnd - sepStart !== width) return line;
     const headers = parts.slice(0, width);
     const values = parts.slice(sepEnd);
-    if (!headers.every(Boolean) || values.length < width || values.length % width !== 0) return line;
+    if (!headers.every(Boolean)) return line;
+    // PDF/DOCX extraction sometimes flattens a two-cell definition row and
+    // its Markdown separator onto one line, with no body row after it:
+    // | Definition:<br> Communication | definition text | | --- | --- |
+    // This is not a real table. Restore it as a clean heading + paragraph.
+    if (values.length === 0 && width === 2) {
+      const heading = headers[0].replace(/\s*<br\s*\/?>\s*/gi, " ").replace(/\s+/g, " ").trim();
+      const paragraph = headers[1].replace(/\s*<br\s*\/?>\s*/gi, " ").replace(/\s+/g, " ").trim();
+      return [prefix, `**${heading}**`, paragraph].filter(Boolean).join("\n\n");
+    }
+    if (values.length < width || values.length % width !== 0) return line;
     const rows: string[] = [];
     for (let index = 0; index < values.length; index += width) rows.push(`| ${values.slice(index, index + width).join(" | ")} |`);
     return [prefix, `| ${headers.join(" | ")} |`, `| ${headers.map(() => "---").join(" | ")} |`, ...rows].filter(Boolean).join("\n");

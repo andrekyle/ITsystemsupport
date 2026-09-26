@@ -11,20 +11,29 @@ const normal = (text: string) => text.replace(/\r\n?/g, "\n").replace(/\u0000/g,
 /** Join extraction artifacts such as a standalone "2." or "a)" to its text. */
 function repairOrphanedParagraphs(paragraphs: string[]): string[] {
   const repaired: string[] = [];
+  const append = (text: string) => {
+    // Imported manuals commonly encode a definition heading and its body as
+    // one long paragraph: "Medium - Medium is a means ...". Preserve both
+    // text parts while turning the separator into real document structure.
+    const definition = text.match(/^([^\n.!?]{2,100}?)\s+[-\u2013\u2014]\s+(.{30,})$/s);
+    if (definition && /\b(?:is|are|means|refers? to|describes?)\b/i.test(definition[2].slice(0, 140))) {
+      repaired.push(definition[1].trim(), definition[2].trim());
+    } else repaired.push(text);
+  };
   for (let index = 0; index < paragraphs.length; index++) {
     const text = paragraphs[index].trim();
     if (!text) continue;
     const markerOnly = /^(?:\d+(?:\.\d+)*[.)]?|[A-Za-z][.)]|[\u2022\u00b7*-])$/.test(text);
     const next = paragraphs[index + 1]?.trim();
     if (markerOnly && next) {
-      repaired.push(`${text} ${next}`);
+      append(`${text} ${next}`);
       index++;
       continue;
     }
     // PDF extraction can strand punctuation on its own line. Keep it with the
     // preceding paragraph without changing any substantive wording.
     if (/^[,;:!?)]$/.test(text) && repaired.length) repaired[repaired.length - 1] += text;
-    else repaired.push(text);
+    else append(text);
   }
   return repaired;
 }
