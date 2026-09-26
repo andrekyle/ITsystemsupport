@@ -39,6 +39,8 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   const [cropImage, setCropImage] = useState(false);
   const [columnWidth, setColumnWidth] = useState(180);
   const [rowHeight, setRowHeight] = useState(56);
+  const [leftIndent, setLeftIndent] = useState(0);
+  const [firstLineIndent, setFirstLineIndent] = useState(0);
   const imageInput = useRef<HTMLInputElement>(null);
   const [ready, setReady] = useState(false);
   const [active, setActive] = useState<string[]>([]);
@@ -406,6 +408,16 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         before.setEnd(range.current.startContainer, range.current.startOffset);
         bookmark.current = { start: before.toString().length, end: before.toString().length + range.current.toString().length };
         setReady(true);
+        const selectionElement = node instanceof Element ? node : node?.parentElement;
+        const paragraph = selectionElement?.closest<HTMLElement>("p,li,blockquote,h1,h2,h3,h4,div");
+        if (paragraph && paragraph !== editor && editor.contains(paragraph)) {
+          const left = parseFloat(paragraph.style.marginLeft) || 0;
+          setLeftIndent(left);
+          setFirstLineIndent(Math.max(0, left + (parseFloat(paragraph.style.textIndent) || 0)));
+        } else {
+          setLeftIndent(0);
+          setFirstLineIndent(0);
+        }
         setActive(commands.filter(([cmd]) => document.queryCommandState(cmd)).map(([cmd]) => cmd));
       } else if (!bar.current?.contains(document.activeElement)) {
         host.current = null;
@@ -601,6 +613,20 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     setActive(commands.filter(([cmd]) => document.queryCommandState(cmd)).map(([cmd]) => cmd));
   };
   const notifyEditor = (editor: HTMLElement | null = host.current) => editor?.dispatchEvent(new Event("input", { bubbles: true }));
+  const updateParagraphIndent = (nextLeft: number, nextFirst: number) => {
+    const editor = host.current;
+    if (!editor?.isConnected || !range.current?.startContainer.isConnected) return;
+    const node = range.current.startContainer;
+    const element = node instanceof Element ? node : node.parentElement;
+    const paragraph = element?.closest<HTMLElement>("p,li,blockquote,h1,h2,h3,h4,div");
+    if (!paragraph || paragraph === editor || !editor.contains(paragraph)) return;
+    paragraph.style.marginLeft = nextLeft ? `${nextLeft}px` : "";
+    const textIndent = nextFirst - nextLeft;
+    paragraph.style.textIndent = textIndent ? `${textIndent}px` : "";
+    setLeftIndent(nextLeft);
+    setFirstLineIndent(nextFirst);
+    notifyEditor(editor);
+  };
   const imageData = (file: File): Promise<string> => new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("The image could not be read."));
@@ -827,6 +853,17 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         <button type="button" className="slide-tool-icon" disabled={!ready} aria-label="Insert image at cursor" title="Insert image at cursor" onMouseDown={e => e.preventDefault()} onClick={() => imageInput.current?.click()}>{imageIcon}</button>
         {selectedImage && menuToggle("image", "Resize and crop selected image", imageIcon)}
       </span>
+    </div>
+    <div className={`slide-indent-ruler${ready ? "" : " is-disabled"}`} aria-label="Paragraph indentation ruler">
+      <span className="slide-ruler-label">Indent</span>
+      <div className="slide-ruler-track" aria-hidden="true">
+        {Array.from({ length: 13 }, (_, index) => <i key={index} style={{ left: `${index * (100 / 12)}%` }}><span>{index}</span></i>)}
+      </div>
+      <input className="slide-ruler-first" aria-label="First line indent" title="First-line indent" type="range" min="0" max="240" step="8" disabled={!ready} value={firstLineIndent}
+        onChange={event => updateParagraphIndent(leftIndent, Number(event.target.value))} />
+      <input className="slide-ruler-left" aria-label="Left paragraph indent" title="Left indent (moves wrapped lines)" type="range" min="0" max="240" step="8" disabled={!ready} value={leftIndent}
+        onChange={event => updateParagraphIndent(Number(event.target.value), firstLineIndent)} />
+      <span className="slide-ruler-help">▲ first line · ▼ paragraph</span>
     </div>
     <input ref={imageInput} className="slide-image-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={event => void insertImage(event)} />
     {menu && <div id={`slide-${menu}-options`} className="slide-text-options" role="group" aria-label={menu === "text" ? "Font and text options" : menu === "table" ? "Table options" : menu === "image" ? "Image options" : "Paragraph and editing options"}>
