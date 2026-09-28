@@ -89,6 +89,7 @@ SLIDE LAYOUTS (use exactly these field names):
 COMPOSITION:
 - Default order (use it for progress/executive/monthly reports): kpi, sessions, table (curriculum delivery), measures (assessment results), table (evidence & submission readiness), cards (cohort position), recommendations.
 - Other kinds keep the SAME visual language but weight the slides to the kind: attendance → kpi, sessions, per-learner table(s) (Learner | Signed | Expected | Rate | Last seen), cards, recommendations; risk → kpi, table of flagged learners with reasons, cards, recommendations; outcomes → kpi, table(s) per unit standard (Competent / NYC / No decision), measures, recommendations. A question-driven report weights the slides to the question and the kpi callout must answer it directly.
+- ALL-LEARNER COVERAGE — HARD RULE: if the facilitator asks for all learners, every learner, each learner, the whole cohort, or a summary/profile/comment for each learner, include EVERY learner in data.learners exactly once by full name. Never select only four representative learners. Use as many consecutive table slides (up to 6 learner rows each) or repeated cards slides (4 learners each) as required; suffix continuation headlines with " — continued". Before replying, count the distinct learner names in the slides and confirm that count equals data.cohort.learners. Omission of even one learner is an invalid report.
 - Every slide headline ≤70 chars, stated as a finding with a figure. kicker/tag strings are UPPERCASE. tone: green for on-track, orange for attention, yellow for neutral counts.
 - The last slide is ALWAYS "recommendations": concrete facilitator/management actions from the data. If the data justifies no intervention, the items are monitoring/maintenance actions — never invented problems.`;
 
@@ -278,6 +279,19 @@ export default async function handler(req: Request): Promise<Response> {
         if (slides.length === 0) {
           lastError = "empty_report";
           continue;
+        }
+        const wantsAllLearners = /\b(all|every|each)\s+(?:of\s+the\s+)?learners?\b|\bwhole\s+cohort\b|\b(?:summary|profile|comment)\s+(?:on|for)\s+each\b/i.test(question);
+        const reference = body?.data as { learners?: { name?: unknown }[] } | undefined;
+        const learnerNames = Array.isArray(reference?.learners)
+          ? reference.learners.map((learner) => str(learner?.name)).filter(Boolean)
+          : [];
+        if (wantsAllLearners && learnerNames.length) {
+          const rendered = JSON.stringify(slides).toLowerCase();
+          const missing = learnerNames.filter((name) => !rendered.includes(name.toLowerCase()));
+          if (missing.length) {
+            lastError = "incomplete_all_learners";
+            continue;
+          }
         }
         return json(
           {

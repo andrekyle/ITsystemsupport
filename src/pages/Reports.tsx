@@ -26,6 +26,7 @@ const ERROR_TEXT: Record<string, string> = {
   not_configured: "The AI service is not configured on this deployment (missing API key).",
   network: "Could not reach the AI service — check your connection and try again.",
   timeout: "The AI took too long to answer. Try again in a moment.",
+  incomplete_all_learners: "The AI omitted one or more learners, so the incomplete report was not opened. Please retry.",
 };
 
 /** Overlay narration per report kind — spoken to the user by name. */
