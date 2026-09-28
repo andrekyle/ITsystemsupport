@@ -11,6 +11,8 @@ const EDITOR_STYLES = `
   .tracker-column-controls { display:none; gap:6px; align-items:center; }
   body.editing .tracker-column-controls, body[contenteditable="true"] .tracker-column-controls { display:flex; }
   .tracker-column-controls button { padding:9px 12px; }
+  .tracker-colour-label { display:inline-flex; align-items:center; gap:6px; padding:7px 10px; border:1px solid #d4d4d8; border-radius:999px; background:#fff; color:#18181b; font:600 13px/1 Calibri,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.10); }
+  .tracker-colour-label input { width:24px; height:24px; padding:0; border:0; background:transparent; cursor:pointer; }
 `;
 
 const EDITOR_SCRIPT = String.raw`
@@ -26,6 +28,7 @@ const EDITOR_SCRIPT = String.raw`
   var selected = null;
   var fillSource = null;
   var fillTarget = null;
+  var fillTargets = [];
   var history = [];
   var recordingTimer = 0;
   var restoring = false;
@@ -35,6 +38,8 @@ const EDITOR_SCRIPT = String.raw`
   controls.innerHTML = '<button type="button" data-col="left" title="Add a column to the left">+ Column left</button>' +
     '<button type="button" data-col="right" title="Add a column to the right">+ Column right</button>' +
     '<button type="button" data-col="delete" title="Delete the selected column">Delete column</button>' +
+    '<label class="tracker-colour-label" title="Choose a background colour for the selected cell">Cell fill <input type="color" data-fill="colour" value="#ffff00"></label>' +
+    '<button type="button" data-fill="clear" title="Remove the selected cell background colour">Clear fill</button>' +
     '<button type="button" data-col="undo" title="Undo the last tracker change (Ctrl+Z)">Undo</button>';
   toolbar.insertBefore(controls, toolbar.firstChild);
 
@@ -158,9 +163,60 @@ const EDITOR_SCRIPT = String.raw`
     Array.prototype.forEach.call(clone.querySelectorAll('.tracker-fill-handle'), function (node) { node.remove(); });
     return clone.innerHTML;
   }
-  function copyCell(source, target) {
+  function cellsInFillRange(source, target) {
+    if (!source || !target) return [];
+    var fromRow = source.parentElement.rowIndex;
+    var toRow = target.parentElement.rowIndex;
+    var fromCol = startColumn(source);
+    var toCol = startColumn(target);
+    var rowDistance = Math.abs(toRow - fromRow);
+    var colDistance = Math.abs(toCol - fromCol);
+    var result = [];
+    var seen = [];
+
+    // Like Excel's fill handle, follow the dominant drag direction. This
+    // avoids unexpectedly overwriting a rectangle when the pointer wobbles.
+    if (rowDistance >= colDistance) {
+      var firstRow = Math.min(fromRow, toRow);
+      var lastRow = Math.max(fromRow, toRow);
+      for (var r = firstRow; r <= lastRow; r++) {
+        var vertical = table.rows[r] && coveringCell(table.rows[r], fromCol);
+        if (vertical && vertical.cell !== source && seen.indexOf(vertical.cell) < 0) {
+          seen.push(vertical.cell);
+          result.push(vertical.cell);
+        }
+      }
+    } else {
+      var firstCol = Math.min(fromCol, toCol);
+      var lastCol = Math.max(fromCol, toCol);
+      for (var c = firstCol; c <= lastCol; c++) {
+        var horizontal = coveringCell(source.parentElement, c);
+        if (horizontal && horizontal.cell !== source && seen.indexOf(horizontal.cell) < 0) {
+          seen.push(horizontal.cell);
+          result.push(horizontal.cell);
+        }
+      }
+    }
+    return result;
+  }
+  function showFillRange(source, target) {
+    fillTargets.forEach(function (cell) { cell.classList.remove('tracker-fill-target'); });
+    fillTargets = cellsInFillRange(source, target);
+    fillTargets.forEach(function (cell) { cell.classList.add('tracker-fill-target'); });
+  }
+  function copyFillRange(source, target) {
     if (!source || !target || source === target) return;
-    target.innerHTML = cleanHtml(source);
+    var value = cleanHtml(source);
+    var sourceStyle = window.getComputedStyle(source);
+    var sourceBackground = sourceStyle.backgroundColor;
+    var sourceColour = sourceStyle.color;
+    var targets = cellsInFillRange(source, target);
+    if (!targets.length) return;
+    targets.forEach(function (cell) {
+      cell.innerHTML = value;
+      cell.style.backgroundColor = sourceBackground;
+      cell.style.color = sourceColour;
+    });
     markDirty();
     record();
     selectCell(target);
@@ -178,30 +234,46 @@ const EDITOR_SCRIPT = String.raw`
     event.preventDefault();
     fillSource = event.target.parentElement;
     fillTarget = null;
+    fillTargets = [];
     document.body.classList.add('tracker-filling');
   });
   document.addEventListener('pointermove', function (event) {
     if (!fillSource) return;
     var underPointer = document.elementFromPoint(event.clientX, event.clientY);
     var target = underPointer && underPointer.closest('td,th');
-    if (!target || target === fillSource) return;
+    if (!target) return;
     if (!table.contains(target)) return;
-    if (fillTarget) fillTarget.classList.remove('tracker-fill-target');
     fillTarget = target;
-    fillTarget.classList.add('tracker-fill-target');
+    showFillRange(fillSource, fillTarget);
   });
   document.addEventListener('pointerup', function () {
     if (!fillSource) return;
-    if (fillTarget) fillTarget.classList.remove('tracker-fill-target');
-    copyCell(fillSource, fillTarget);
+    fillTargets.forEach(function (cell) { cell.classList.remove('tracker-fill-target'); });
+    copyFillRange(fillSource, fillTarget);
     fillSource = fillTarget = null;
+    fillTargets = [];
     document.body.classList.remove('tracker-filling');
   });
   controls.addEventListener('click', function (event) {
     var action = event.target.getAttribute('data-col');
+    var fillAction = event.target.getAttribute('data-fill');
     if (action === 'undo') undo();
     if (action === 'delete') deleteColumn();
     if (action === 'left' || action === 'right') addColumn(action);
+    if (fillAction === 'clear') {
+      if (!selected) { alert('Select a table cell first.'); return; }
+      selected.style.removeProperty('background-color');
+      selected.style.removeProperty('color');
+      markDirty();
+      record();
+    }
+  });
+  controls.addEventListener('input', function (event) {
+    if (event.target.getAttribute('data-fill') !== 'colour') return;
+    if (!selected) { alert('Select a table cell first.'); return; }
+    selected.style.backgroundColor = event.target.value;
+    markDirty();
+    record();
   });
 
   sheet.addEventListener('paste', function (event) {
