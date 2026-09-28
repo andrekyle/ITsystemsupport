@@ -26,11 +26,16 @@ const EDITOR_SCRIPT = String.raw`
   var selected = null;
   var fillSource = null;
   var fillTarget = null;
+  var history = [];
+  var recordingTimer = 0;
+  var restoring = false;
   var controls = document.createElement('span');
   controls.className = 'tracker-column-controls';
+  controls.setAttribute('contenteditable', 'false');
   controls.innerHTML = '<button type="button" data-col="left" title="Add a column to the left">+ Column left</button>' +
     '<button type="button" data-col="right" title="Add a column to the right">+ Column right</button>' +
-    '<button type="button" data-col="delete" title="Delete the selected column">Delete column</button>';
+    '<button type="button" data-col="delete" title="Delete the selected column">Delete column</button>' +
+    '<button type="button" data-col="undo" title="Undo the last tracker change (Ctrl+Z)">Undo</button>';
   toolbar.insertBefore(controls, toolbar.firstChild);
 
   function isEditing() {
@@ -59,6 +64,35 @@ const EDITOR_SCRIPT = String.raw`
   }
   function markDirty() {
     sheet.dispatchEvent(new Event('input', { bubbles:true }));
+  }
+  function snapshot() {
+    var clone = table.cloneNode(true);
+    Array.prototype.forEach.call(clone.querySelectorAll('.tracker-fill-handle'), function (node) { node.remove(); });
+    Array.prototype.forEach.call(clone.querySelectorAll('.tracker-selected,.tracker-fill-target'), function (node) {
+      node.classList.remove('tracker-selected', 'tracker-fill-target');
+    });
+    return clone.innerHTML;
+  }
+  function record() {
+    if (restoring) return;
+    var state = snapshot();
+    if (history[history.length - 1] !== state) history.push(state);
+    if (history.length > 60) history.shift();
+  }
+  function recordSoon() {
+    clearTimeout(recordingTimer);
+    recordingTimer = setTimeout(record, 350);
+  }
+  function undo() {
+    clearTimeout(recordingTimer);
+    record();
+    if (history.length < 2) return;
+    history.pop();
+    restoring = true;
+    table.innerHTML = history[history.length - 1];
+    restoring = false;
+    selected = null;
+    markDirty();
   }
   function selectCell(cell) {
     if (!cell || !table.contains(cell)) return;
@@ -104,6 +138,7 @@ const EDITOR_SCRIPT = String.raw`
       row.insertBefore(newCellLike(sample), before);
     });
     markDirty();
+    record();
   }
   function deleteColumn() {
     if (!selected) { alert('Select a table cell first.'); return; }
@@ -116,6 +151,7 @@ const EDITOR_SCRIPT = String.raw`
     });
     selected = null;
     markDirty();
+    record();
   }
   function cleanHtml(cell) {
     var clone = cell.cloneNode(true);
@@ -126,8 +162,11 @@ const EDITOR_SCRIPT = String.raw`
     if (!source || !target || source === target) return;
     target.innerHTML = cleanHtml(source);
     markDirty();
+    record();
     selectCell(target);
   }
+
+  history.push(snapshot());
 
   table.addEventListener('click', function (event) {
     if (!isEditing()) return;
@@ -140,12 +179,13 @@ const EDITOR_SCRIPT = String.raw`
     fillSource = event.target.parentElement;
     fillTarget = null;
     document.body.classList.add('tracker-filling');
-    if (event.target.setPointerCapture) event.target.setPointerCapture(event.pointerId);
   });
-  table.addEventListener('pointerover', function (event) {
+  document.addEventListener('pointermove', function (event) {
     if (!fillSource) return;
-    var target = event.target.closest('td,th');
+    var underPointer = document.elementFromPoint(event.clientX, event.clientY);
+    var target = underPointer && underPointer.closest('td,th');
     if (!target || target === fillSource) return;
+    if (!table.contains(target)) return;
     if (fillTarget) fillTarget.classList.remove('tracker-fill-target');
     fillTarget = target;
     fillTarget.classList.add('tracker-fill-target');
@@ -159,6 +199,7 @@ const EDITOR_SCRIPT = String.raw`
   });
   controls.addEventListener('click', function (event) {
     var action = event.target.getAttribute('data-col');
+    if (action === 'undo') undo();
     if (action === 'delete') deleteColumn();
     if (action === 'left' || action === 'right') addColumn(action);
   });
@@ -183,10 +224,22 @@ const EDITOR_SCRIPT = String.raw`
         });
       });
       markDirty();
+      record();
       return;
     }
     document.execCommand('insertText', false, text);
+    recordSoon();
   });
+  table.addEventListener('input', recordSoon);
+  document.addEventListener('keydown', function (event) {
+    if (!isEditing() || !(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'z') return;
+    var selection = window.getSelection();
+    var anchor = selection && selection.anchorNode;
+    var anchorElement = anchor && (anchor.nodeType === 1 ? anchor : anchor.parentElement);
+    if (!anchorElement || !table.contains(anchorElement)) return;
+    event.preventDefault();
+    undo();
+  }, true);
 })();
 `;
 
