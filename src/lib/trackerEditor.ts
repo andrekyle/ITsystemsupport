@@ -3,6 +3,8 @@ const EDITOR_STYLES = `
   body[contenteditable="true"] :is(table.trk,table.tracker) td, body[contenteditable="true"] :is(table.trk,table.tracker) th { position: relative; }
   body.editing :is(table.trk,table.tracker) .tracker-selected,
   body[contenteditable="true"] :is(table.trk,table.tracker) .tracker-selected { outline: 3px solid #4f46e5 !important; outline-offset: -3px; }
+  body.editing :is(table.trk,table.tracker) .tracker-group-selected,
+  body[contenteditable="true"] :is(table.trk,table.tracker) .tracker-group-selected { box-shadow:inset 0 0 0 2px #4f46e5; }
   .tracker-fill-handle { display:none; position:absolute; width:11px; height:11px; right:-5px; bottom:-5px; z-index:20; border:2px solid #fff; background:#4f46e5; cursor:crosshair; box-shadow:0 0 0 1px #4f46e5; }
   body.editing .tracker-selected > .tracker-fill-handle,
   body[contenteditable="true"] .tracker-selected > .tracker-fill-handle { display:block; }
@@ -26,6 +28,8 @@ const EDITOR_SCRIPT = String.raw`
   if (!table || !toolbar || !sheet) return;
 
   var selected = null;
+  var selectedCells = [];
+  var selectionMode = 'cell';
   var fillSource = null;
   var fillTarget = null;
   var fillTargets = [];
@@ -37,6 +41,9 @@ const EDITOR_SCRIPT = String.raw`
   controls.setAttribute('contenteditable', 'false');
   controls.innerHTML = '<button type="button" data-col="left" title="Add a column to the left">+ Column left</button>' +
     '<button type="button" data-col="right" title="Add a column to the right">+ Column right</button>' +
+    '<button type="button" data-select="row" title="Select the whole data row">Select row</button>' +
+    '<button type="button" data-select="column" title="Select the whole data column">Select column</button>' +
+    '<button type="button" data-row="delete" title="Delete the selected row">Delete row</button>' +
     '<button type="button" data-col="delete" title="Delete the selected column">Delete column</button>' +
     '<label class="tracker-colour-label" title="Choose a background colour for the selected cell">Cell fill <input type="color" data-fill="colour" value="#ffff00"></label>' +
     '<button type="button" data-fill="clear" title="Remove the selected cell background colour">Clear fill</button>' +
@@ -73,8 +80,8 @@ const EDITOR_SCRIPT = String.raw`
   function snapshot() {
     var clone = table.cloneNode(true);
     Array.prototype.forEach.call(clone.querySelectorAll('.tracker-fill-handle'), function (node) { node.remove(); });
-    Array.prototype.forEach.call(clone.querySelectorAll('.tracker-selected,.tracker-fill-target'), function (node) {
-      node.classList.remove('tracker-selected', 'tracker-fill-target');
+    Array.prototype.forEach.call(clone.querySelectorAll('.tracker-selected,.tracker-group-selected,.tracker-fill-target'), function (node) {
+      node.classList.remove('tracker-selected', 'tracker-group-selected', 'tracker-fill-target');
     });
     return clone.innerHTML;
   }
@@ -97,27 +104,69 @@ const EDITOR_SCRIPT = String.raw`
     table.innerHTML = history[history.length - 1];
     restoring = false;
     selected = null;
+    selectedCells = [];
+    selectionMode = 'cell';
     markDirty();
+  }
+  function dataRows() {
+    return Array.prototype.filter.call(table.rows, function (row) {
+      return row.cells.length && row.cells[0].tagName === 'TD' && !row.classList.contains('flt');
+    });
+  }
+  function clearSelection() {
+    Array.prototype.forEach.call(table.querySelectorAll('.tracker-selected,.tracker-group-selected'), function (cell) {
+      cell.classList.remove('tracker-selected', 'tracker-group-selected');
+    });
+    Array.prototype.forEach.call(table.querySelectorAll('.tracker-fill-handle'), function (handle) { handle.remove(); });
+    selectedCells = [];
+  }
+  function attachHandle(cell, title) {
+    if (!cell) return;
+    cell.classList.add('tracker-selected');
+    var handle = document.createElement('span');
+    handle.className = 'tracker-fill-handle';
+    handle.setAttribute('contenteditable', 'false');
+    handle.title = title;
+    cell.appendChild(handle);
   }
   function selectCell(cell) {
     if (!cell || !table.contains(cell)) return;
-    if (selected) selected.classList.remove('tracker-selected');
+    clearSelection();
     selected = cell;
-    selected.classList.add('tracker-selected');
-    var handle = selected.querySelector(':scope > .tracker-fill-handle');
-    if (!handle) {
-      handle = document.createElement('span');
-      handle.className = 'tracker-fill-handle';
-      handle.setAttribute('contenteditable', 'false');
-      handle.title = 'Drag to copy this cell';
-      selected.appendChild(handle);
-    }
+    selectedCells = [cell];
+    selectionMode = 'cell';
+    attachHandle(cell, 'Drag to fill-copy this cell');
+  }
+  function selectWholeRow() {
+    if (!selected || selected.tagName !== 'TD') { alert('Select a cell in a learner row first.'); return; }
+    var anchor = selected;
+    clearSelection();
+    selected = anchor;
+    selectionMode = 'row';
+    selectedCells = cells(anchor.parentElement);
+    selectedCells.forEach(function (cell) { cell.classList.add('tracker-group-selected'); });
+    attachHandle(selectedCells[selectedCells.length - 1], 'Drag to copy this whole row');
+  }
+  function selectWholeColumn() {
+    if (!selected) { alert('Select a table cell first.'); return; }
+    var anchor = selected;
+    var column = startColumn(anchor);
+    clearSelection();
+    selected = anchor;
+    selectionMode = 'column';
+    selectedCells = [];
+    dataRows().forEach(function (row) {
+      var hit = coveringCell(row, column);
+      if (hit && selectedCells.indexOf(hit.cell) < 0) selectedCells.push(hit.cell);
+    });
+    selectedCells.forEach(function (cell) { cell.classList.add('tracker-group-selected'); });
+    attachHandle(selectedCells[selectedCells.length - 1], 'Drag to copy this whole column');
   }
   function newCellLike(sample) {
     var tag = sample && sample.tagName === 'TH' ? 'th' : 'td';
     var cell = document.createElement(tag);
     if (sample) {
-      cell.className = sample.className.replace(/(?:^|\s)tracker-selected|(?:^|\s)tracker-fill-target/g, '').trim();
+      cell.className = sample.className.replace(/(?:^|\s)tracker-selected|(?:^|\s)tracker-group-selected|(?:^|\s)tracker-fill-target/g, '').trim();
       cell.style.cssText = sample.style.cssText;
     }
     cell.innerHTML = '&nbsp;';
@@ -155,6 +204,16 @@ const EDITOR_SCRIPT = String.raw`
       else hit.cell.remove();
     });
     selected = null;
+    selectedCells = [];
+    markDirty();
+    record();
+  }
+  function deleteRow() {
+    if (!selected || selected.tagName !== 'TD') { alert('Select a cell in the row you want to delete.'); return; }
+    selected.parentElement.remove();
+    selected = null;
+    selectedCells = [];
+    selectionMode = 'cell';
     markDirty();
     record();
   }
@@ -173,6 +232,30 @@ const EDITOR_SCRIPT = String.raw`
     var colDistance = Math.abs(toCol - fromCol);
     var result = [];
     var seen = [];
+
+    if (selectionMode === 'row') {
+      var rowStart = Math.min(selected.parentElement.rowIndex, target.parentElement.rowIndex);
+      var rowEnd = Math.max(selected.parentElement.rowIndex, target.parentElement.rowIndex);
+      dataRows().forEach(function (row) {
+        if (row.rowIndex < rowStart || row.rowIndex > rowEnd || row === selected.parentElement) return;
+        cells(row).forEach(function (cell) { result.push(cell); });
+      });
+      return result;
+    }
+    if (selectionMode === 'column') {
+      var sourceColumn = startColumn(selected);
+      var targetColumn = startColumn(target);
+      var colStart = Math.min(sourceColumn, targetColumn);
+      var colEnd = Math.max(sourceColumn, targetColumn);
+      dataRows().forEach(function (row) {
+        for (var groupCol = colStart; groupCol <= colEnd; groupCol++) {
+          if (groupCol === sourceColumn) continue;
+          var groupHit = coveringCell(row, groupCol);
+          if (groupHit && seen.indexOf(groupHit.cell) < 0) { seen.push(groupHit.cell); result.push(groupHit.cell); }
+        }
+      });
+      return result;
+    }
 
     // Like Excel's fill handle, follow the dominant drag direction. This
     // avoids unexpectedly overwriting a rectangle when the pointer wobbles.
@@ -206,17 +289,42 @@ const EDITOR_SCRIPT = String.raw`
   }
   function copyFillRange(source, target) {
     if (!source || !target || source === target) return;
-    var value = cleanHtml(source);
-    var sourceStyle = window.getComputedStyle(source);
-    var sourceBackground = sourceStyle.backgroundColor;
-    var sourceColour = sourceStyle.color;
     var targets = cellsInFillRange(source, target);
     if (!targets.length) return;
-    targets.forEach(function (cell) {
-      cell.innerHTML = value;
-      cell.style.backgroundColor = sourceBackground;
-      cell.style.color = sourceColour;
-    });
+    function copyCellAppearance(from, to) {
+      var sourceStyle = window.getComputedStyle(from);
+      to.innerHTML = cleanHtml(from);
+      to.style.backgroundColor = sourceStyle.backgroundColor;
+      to.style.color = sourceStyle.color;
+    }
+    if (selectionMode === 'row') {
+      var sourceRowCells = cells(selected.parentElement);
+      var targetRows = [];
+      targets.forEach(function (cell) {
+        if (targetRows.indexOf(cell.parentElement) < 0) targetRows.push(cell.parentElement);
+      });
+      targetRows.forEach(function (row) {
+        cells(row).forEach(function (cell, index) {
+          if (sourceRowCells[index]) copyCellAppearance(sourceRowCells[index], cell);
+        });
+      });
+    } else if (selectionMode === 'column') {
+      var sourceColumn = startColumn(selected);
+      var targetColumn = startColumn(target);
+      var colStart = Math.min(sourceColumn, targetColumn);
+      var colEnd = Math.max(sourceColumn, targetColumn);
+      dataRows().forEach(function (row) {
+        var sourceHit = coveringCell(row, sourceColumn);
+        if (!sourceHit) return;
+        for (var c = colStart; c <= colEnd; c++) {
+          if (c === sourceColumn) continue;
+          var destinationHit = coveringCell(row, c);
+          if (destinationHit) copyCellAppearance(sourceHit.cell, destinationHit.cell);
+        }
+      });
+    } else {
+      targets.forEach(function (cell) { copyCellAppearance(source, cell); });
+    }
     markDirty();
     record();
     selectCell(target);
@@ -232,7 +340,7 @@ const EDITOR_SCRIPT = String.raw`
   table.addEventListener('pointerdown', function (event) {
     if (!isEditing() || !event.target.classList.contains('tracker-fill-handle')) return;
     event.preventDefault();
-    fillSource = event.target.parentElement;
+    fillSource = selectionMode === 'cell' ? event.target.parentElement : selected;
     fillTarget = null;
     fillTargets = [];
     document.body.classList.add('tracker-filling');
@@ -256,14 +364,21 @@ const EDITOR_SCRIPT = String.raw`
   });
   controls.addEventListener('click', function (event) {
     var action = event.target.getAttribute('data-col');
+    var selectAction = event.target.getAttribute('data-select');
+    var rowAction = event.target.getAttribute('data-row');
     var fillAction = event.target.getAttribute('data-fill');
     if (action === 'undo') undo();
     if (action === 'delete') deleteColumn();
     if (action === 'left' || action === 'right') addColumn(action);
+    if (selectAction === 'row') selectWholeRow();
+    if (selectAction === 'column') selectWholeColumn();
+    if (rowAction === 'delete') deleteRow();
     if (fillAction === 'clear') {
       if (!selected) { alert('Select a table cell first.'); return; }
-      selected.style.removeProperty('background-color');
-      selected.style.removeProperty('color');
+      (selectedCells.length ? selectedCells : [selected]).forEach(function (cell) {
+        cell.style.removeProperty('background-color');
+        cell.style.removeProperty('color');
+      });
       markDirty();
       record();
     }
@@ -271,7 +386,9 @@ const EDITOR_SCRIPT = String.raw`
   controls.addEventListener('input', function (event) {
     if (event.target.getAttribute('data-fill') !== 'colour') return;
     if (!selected) { alert('Select a table cell first.'); return; }
-    selected.style.backgroundColor = event.target.value;
+    (selectedCells.length ? selectedCells : [selected]).forEach(function (cell) {
+      cell.style.backgroundColor = event.target.value;
+    });
     markDirty();
     record();
   });
