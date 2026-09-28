@@ -6,9 +6,15 @@ const EDITOR_STYLES = `
   body.editing :is(table.trk,table.tracker) .tracker-group-selected,
   body[contenteditable="true"] :is(table.trk,table.tracker) .tracker-group-selected { box-shadow:inset 0 0 0 2px #4f46e5; }
   .tracker-fill-handle { display:none; position:absolute; width:11px; height:11px; right:-5px; bottom:-5px; z-index:20; border:2px solid #fff; background:#4f46e5; cursor:crosshair; box-shadow:0 0 0 1px #4f46e5; }
+  .tracker-col-resize, .tracker-row-resize { display:none; position:absolute; z-index:19; background:transparent; }
+  .tracker-col-resize { top:0; right:-4px; width:8px; height:calc(100% - 10px); cursor:col-resize; }
+  .tracker-row-resize { left:0; bottom:-4px; width:calc(100% - 10px); height:8px; cursor:row-resize; }
   body.editing .tracker-selected > .tracker-fill-handle,
   body[contenteditable="true"] .tracker-selected > .tracker-fill-handle { display:block; }
+  body.editing .tracker-selected > :is(.tracker-col-resize,.tracker-row-resize),
+  body[contenteditable="true"] .tracker-selected > :is(.tracker-col-resize,.tracker-row-resize) { display:block; }
   body.tracker-filling :is(table.trk,table.tracker) td, body.tracker-filling :is(table.trk,table.tracker) th { cursor:crosshair; user-select:none; }
+  body.tracker-resizing, body.tracker-resizing * { user-select:none !important; }
   body.tracker-filling .tracker-fill-target { box-shadow:inset 0 0 0 3px #16a34a; }
   .tracker-column-controls { display:none; gap:6px; align-items:center; }
   body.editing .tracker-column-controls, body[contenteditable="true"] .tracker-column-controls { display:flex; }
@@ -33,6 +39,7 @@ const EDITOR_SCRIPT = String.raw`
   var fillSource = null;
   var fillTarget = null;
   var fillTargets = [];
+  var resizing = null;
   var history = [];
   var recordingTimer = 0;
   var restoring = false;
@@ -92,7 +99,7 @@ const EDITOR_SCRIPT = String.raw`
   }
   function snapshot() {
     var clone = table.cloneNode(true);
-    Array.prototype.forEach.call(clone.querySelectorAll('.tracker-fill-handle'), function (node) { node.remove(); });
+    Array.prototype.forEach.call(clone.querySelectorAll('.tracker-fill-handle,.tracker-col-resize,.tracker-row-resize'), function (node) { node.remove(); });
     Array.prototype.forEach.call(clone.querySelectorAll('.tracker-selected,.tracker-group-selected,.tracker-fill-target'), function (node) {
       node.classList.remove('tracker-selected', 'tracker-group-selected', 'tracker-fill-target');
     });
@@ -108,6 +115,19 @@ const EDITOR_SCRIPT = String.raw`
     clearTimeout(recordingTimer);
     recordingTimer = setTimeout(record, 350);
   }
+  function restoreTableSizing() {
+    var group = table.querySelector(':scope > colgroup[data-tracker-sizes]');
+    if (!group) {
+      table.style.removeProperty('table-layout');
+      table.style.removeProperty('width');
+      return;
+    }
+    var total = Array.prototype.reduce.call(group.children, function (sum, col) {
+      return sum + (parseFloat(col.style.width) || 0);
+    }, 0);
+    table.style.tableLayout = 'fixed';
+    table.style.width = Math.round(total) + 'px';
+  }
   function undo() {
     clearTimeout(recordingTimer);
     record();
@@ -115,6 +135,7 @@ const EDITOR_SCRIPT = String.raw`
     history.pop();
     restoring = true;
     table.innerHTML = history[history.length - 1];
+    restoreTableSizing();
     restoring = false;
     selected = null;
     selectedCells = [];
@@ -130,7 +151,7 @@ const EDITOR_SCRIPT = String.raw`
     Array.prototype.forEach.call(table.querySelectorAll('.tracker-selected,.tracker-group-selected'), function (cell) {
       cell.classList.remove('tracker-selected', 'tracker-group-selected');
     });
-    Array.prototype.forEach.call(table.querySelectorAll('.tracker-fill-handle'), function (handle) { handle.remove(); });
+    Array.prototype.forEach.call(table.querySelectorAll('.tracker-fill-handle,.tracker-col-resize,.tracker-row-resize'), function (handle) { handle.remove(); });
     selectedCells = [];
   }
   function attachHandle(cell, title) {
@@ -141,6 +162,16 @@ const EDITOR_SCRIPT = String.raw`
     handle.setAttribute('contenteditable', 'false');
     handle.title = title;
     cell.appendChild(handle);
+    var colResize = document.createElement('span');
+    colResize.className = 'tracker-col-resize';
+    colResize.setAttribute('contenteditable', 'false');
+    colResize.title = 'Drag to resize this column';
+    cell.appendChild(colResize);
+    var rowResize = document.createElement('span');
+    rowResize.className = 'tracker-row-resize';
+    rowResize.setAttribute('contenteditable', 'false');
+    rowResize.title = 'Drag to resize this row';
+    cell.appendChild(rowResize);
   }
   function selectCell(cell) {
     if (!cell || !table.contains(cell)) return;
@@ -240,8 +271,51 @@ const EDITOR_SCRIPT = String.raw`
   }
   function cleanHtml(cell) {
     var clone = cell.cloneNode(true);
-    Array.prototype.forEach.call(clone.querySelectorAll('.tracker-fill-handle'), function (node) { node.remove(); });
+    Array.prototype.forEach.call(clone.querySelectorAll('.tracker-fill-handle,.tracker-col-resize,.tracker-row-resize'), function (node) { node.remove(); });
     return clone.innerHTML;
+  }
+  function ensureColumnSizes() {
+    var existing = table.querySelector(':scope > colgroup[data-tracker-sizes]');
+    if (existing) return existing;
+    var map = gridMap();
+    var count = map.grid.reduce(function (max, row) { return Math.max(max, row.length); }, 0);
+    var widths = [];
+    for (var column = 0; column < count; column++) {
+      var sample = null;
+      dataRows().some(function (row) {
+        var hit = coveringCell(row, column);
+        if (hit) { sample = hit.cell; return true; }
+        return false;
+      });
+      widths[column] = sample ? Math.max(48, sample.getBoundingClientRect().width / span(sample)) : 90;
+    }
+    var group = document.createElement('colgroup');
+    group.setAttribute('data-tracker-sizes', 'true');
+    widths.forEach(function (width) {
+      var col = document.createElement('col');
+      col.style.width = Math.round(width) + 'px';
+      group.appendChild(col);
+    });
+    table.insertBefore(group, table.firstChild);
+    table.style.tableLayout = 'fixed';
+    table.style.width = Math.round(widths.reduce(function (sum, width) { return sum + width; }, 0)) + 'px';
+    return group;
+  }
+  function beginResize(event, type) {
+    if (!selected) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (type === 'column') {
+      var group = ensureColumnSizes();
+      var column = startColumn(selected);
+      var col = group.children[column];
+      if (!col) return;
+      resizing = { type:type, start:event.clientX, initial:parseFloat(col.style.width) || 90, col:col };
+    } else {
+      var row = selected.parentElement;
+      resizing = { type:type, start:event.clientY, initial:row.getBoundingClientRect().height, row:row };
+    }
+    document.body.classList.add('tracker-resizing');
   }
   function cellsInFillRange(source, target) {
     if (!source || !target) return [];
@@ -359,6 +433,8 @@ const EDITOR_SCRIPT = String.raw`
     if (cell && table.contains(cell)) selectCell(cell);
   });
   table.addEventListener('pointerdown', function (event) {
+    if (isEditing() && event.target.classList.contains('tracker-col-resize')) { beginResize(event, 'column'); return; }
+    if (isEditing() && event.target.classList.contains('tracker-row-resize')) { beginResize(event, 'row'); return; }
     if (!isEditing() || !event.target.classList.contains('tracker-fill-handle')) return;
     event.preventDefault();
     fillSource = selectionMode === 'cell' ? event.target.parentElement : selected;
@@ -367,6 +443,19 @@ const EDITOR_SCRIPT = String.raw`
     document.body.classList.add('tracker-filling');
   });
   document.addEventListener('pointermove', function (event) {
+    if (resizing) {
+      if (resizing.type === 'column') {
+        var width = Math.max(42, resizing.initial + event.clientX - resizing.start);
+        resizing.col.style.width = Math.round(width) + 'px';
+        var total = Array.prototype.reduce.call(resizing.col.parentElement.children, function (sum, col) {
+          return sum + (parseFloat(col.style.width) || 0);
+        }, 0);
+        table.style.width = Math.round(total) + 'px';
+      } else {
+        resizing.row.style.height = Math.max(24, Math.round(resizing.initial + event.clientY - resizing.start)) + 'px';
+      }
+      return;
+    }
     if (!fillSource) return;
     var underPointer = document.elementFromPoint(event.clientX, event.clientY);
     var target = underPointer && underPointer.closest('td,th');
@@ -376,6 +465,13 @@ const EDITOR_SCRIPT = String.raw`
     showFillRange(fillSource, fillTarget);
   });
   document.addEventListener('pointerup', function () {
+    if (resizing) {
+      resizing = null;
+      document.body.classList.remove('tracker-resizing');
+      markDirty();
+      record();
+      return;
+    }
     if (!fillSource) return;
     fillTargets.forEach(function (cell) { cell.classList.remove('tracker-fill-target'); });
     copyFillRange(fillSource, fillTarget);
