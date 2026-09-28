@@ -231,6 +231,15 @@ interface SavedChat {
 
 const CHAT_STORE_KEY = "itss.aiAssistant.v1";
 
+/** Route explicit natural-language tracker requests to the tracker renderer. */
+function kindForPrompt(prompt: string): ReportKind {
+  const text = prompt.toLowerCase();
+  const asksForTracker =
+    /\b(learner|student|submission|attendance)\s+tracker\b/.test(text) ||
+    /\btracker\s+report\b/.test(text);
+  return asksForTracker ? REPORT_KINDS.find((kind) => kind.id === "tracker") ?? CUSTOM_KIND : CUSTOM_KIND;
+}
+
 /** The conversation survives page switches (and reloads) within the session. */
 function loadSavedChat(): SavedChat | null {
   try {
@@ -335,7 +344,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     opts?: { skipAppend?: boolean; history?: { role: "user" | "assistant"; text: string }[]; forceAnswer?: boolean }
   ) {
     if (busy) return;
-    const makingReport = source === "kind" || (wantReport && !opts?.forceAnswer);
+    const makingReport = source === "kind" || k.id === "tracker" || (wantReport && !opts?.forceAnswer);
     const history = opts?.history ?? msgs.slice(-12);
     if (source === "ask" && q && !opts?.skipAppend) {
       setMsgs((m) => [...m, { role: "user", text: q }]);
@@ -454,7 +463,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             if (question.trim() && !busy && rows.length > 0)
-              void generate(CUSTOM_KIND, question, "ask");
+              void generate(kindForPrompt(question), question, "ask");
             return;
           }
           // shell-style recall of the last 6 prompts
@@ -539,7 +548,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         className="reports-gpt-send"
         disabled={!!busy || rows.length === 0}
         onClick={() => {
-          if (question.trim()) void generate(CUSTOM_KIND, question, "ask");
+          if (question.trim()) void generate(kindForPrompt(question), question, "ask");
         }}
         title="Ask the AI"
         aria-label="Ask the AI"

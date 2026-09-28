@@ -94,6 +94,8 @@ COMPOSITION:
 
 const TRACKER_RULES = `report_kind "tracker": output ONE section PER LEARNER. Each section's "heading" must be exactly the learner's full name as given in the data, with a single paragraph of 2-3 sentences: a professional facilitator comment on that learner's submissions, attendance and progress (like a report card comment). Use that learner's "pronouns" field exactly. No bullets. Keep the intro to 1-2 sentences about the cohort overall.
 
+If THE FACILITATOR'S QUESTION is present, treat it as instructions for this Learner Tracker Report. Follow requested emphasis, tone, ordering and comment detail wherever the reference data supports it. Do not change to another report type, do not ignore the request, and never invent a field or fact that is absent from the reference data. The fixed tracker grid supplies learner identity, unit status and attendance columns; your sections supply the customised comment for each learner.
+
 Reply with STRICT JSON only, no prose outside JSON:
 {
   "intro": "1-2 sentence cohort overview",

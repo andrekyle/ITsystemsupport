@@ -5,6 +5,7 @@ import { docToolbar } from "./certificates";
 import { attendanceFilledRegisterDates } from "./gamification";
 import { loadMarkingModel, recordTokenUsage } from "./tokens";
 import type { LearnerRow } from "../pages/Analytics";
+import { enhanceTrackerHtml } from "./trackerEditor";
 
 /**
  * AI report generation (super user only): builds a compact statistics bundle
@@ -756,7 +757,9 @@ export function openReportDocument(
       win.close();
       return;
     }
-    win.document.write(html);
+    // AI-generated trackers receive the same spreadsheet editing controls as
+    // the dedicated Learner Tracker page, including column and drag-fill tools.
+    win.document.write(kind.id === "tracker" ? enhanceTrackerHtml(html) : html);
     win.document.close();
   })();
 }

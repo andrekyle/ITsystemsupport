@@ -3,6 +3,7 @@ import { Icon } from "../icons";
 import type { Profile } from "../types";
 import { supabase } from "../lib/supabase";
 import { FILES_BUCKET } from "../lib/files";
+import { enhanceTrackerHtml } from "../lib/trackerEditor";
 
 /**
  * Learner Tracker Report — Super User only.
@@ -44,8 +45,10 @@ export function TrackerReportPage({ profile }: { profile: Profile }) {
       setStatus("missing");
       return;
     }
+    // Add spreadsheet editing controls to both legacy and newly uploaded copies.
+    const html = enhanceTrackerHtml(await data.text());
     // Force the HTML type so the browser always renders it (not download it).
-    const blob = new Blob([data], { type: "text/html" });
+    const blob = new Blob([html], { type: "text/html" });
     setBlobUrl(URL.createObjectURL(blob));
     setStatus("ready");
   }
