@@ -55,24 +55,37 @@ const EDITOR_SCRIPT = String.raw`
   }
   function cells(row) { return Array.prototype.slice.call(row.cells); }
   function span(cell) { return Math.max(1, parseInt(cell.getAttribute('colspan') || '1', 10)); }
-  function startColumn(cell) {
-    var n = 0;
-    cells(cell.parentElement).some(function (item) {
-      if (item === cell) return true;
-      n += span(item);
-      return false;
+  function rowSpan(cell) { return Math.max(1, parseInt(cell.getAttribute('rowspan') || '1', 10)); }
+  function gridMap() {
+    var grid = [];
+    var positions = new Map();
+    Array.prototype.forEach.call(table.rows, function (row, rowIndex) {
+      if (!grid[rowIndex]) grid[rowIndex] = [];
+      var column = 0;
+      cells(row).forEach(function (cell) {
+        while (grid[rowIndex][column]) column++;
+        var width = span(cell);
+        var height = rowSpan(cell);
+        positions.set(cell, { row:rowIndex, column:column, width:width, height:height });
+        for (var r = rowIndex; r < rowIndex + height; r++) {
+          if (!grid[r]) grid[r] = [];
+          for (var c = column; c < column + width; c++) grid[r][c] = cell;
+        }
+        column += width;
+      });
     });
-    return n;
+    return { grid:grid, positions:positions };
+  }
+  function startColumn(cell) {
+    var position = gridMap().positions.get(cell);
+    return position ? position.column : 0;
   }
   function coveringCell(row, column) {
-    var pos = 0;
-    var list = cells(row);
-    for (var i = 0; i < list.length; i++) {
-      var end = pos + span(list[i]);
-      if (column >= pos && column < end) return { cell:list[i], start:pos, end:end };
-      pos = end;
-    }
-    return null;
+    var map = gridMap();
+    var cell = map.grid[row.rowIndex] && map.grid[row.rowIndex][column];
+    if (!cell) return null;
+    var position = map.positions.get(cell);
+    return position ? { cell:cell, start:position.column, end:position.column + position.width } : null;
   }
   function markDirty() {
     sheet.dispatchEvent(new Event('input', { bubbles:true }));
@@ -175,10 +188,14 @@ const EDITOR_SCRIPT = String.raw`
   function addColumn(side) {
     if (!selected) { alert('Select a table cell first.'); return; }
     var boundary = startColumn(selected) + (side === 'right' ? span(selected) : 0);
+    var adjusted = [];
     Array.prototype.forEach.call(table.rows, function (row) {
       var hit = coveringCell(row, Math.max(0, boundary - (side === 'right' ? 1 : 0)));
       if (hit && boundary > hit.start && boundary < hit.end) {
-        hit.cell.colSpan = span(hit.cell) + 1;
+        if (adjusted.indexOf(hit.cell) < 0) {
+          hit.cell.colSpan = span(hit.cell) + 1;
+          adjusted.push(hit.cell);
+        }
         return;
       }
       var before = null;
@@ -197,11 +214,15 @@ const EDITOR_SCRIPT = String.raw`
   function deleteColumn() {
     if (!selected) { alert('Select a table cell first.'); return; }
     var column = startColumn(selected);
+    var map = gridMap();
+    var adjusted = [];
     Array.prototype.forEach.call(table.rows, function (row) {
-      var hit = coveringCell(row, column);
-      if (!hit) return;
-      if (span(hit.cell) > 1) hit.cell.colSpan = span(hit.cell) - 1;
-      else hit.cell.remove();
+      var cell = map.grid[row.rowIndex] && map.grid[row.rowIndex][column];
+      if (cell && adjusted.indexOf(cell) < 0) adjusted.push(cell);
+    });
+    adjusted.forEach(function (cell) {
+      if (span(cell) > 1) cell.colSpan = span(cell) - 1;
+      else cell.remove();
     });
     selected = null;
     selectedCells = [];
