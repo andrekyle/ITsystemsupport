@@ -300,8 +300,9 @@ export default async function handler(req: Request): Promise<Response> {
           ? reference.learners.map((learner) => str(learner?.name)).filter(Boolean)
           : [];
         const subsetOnly = /\b(?:top|best|highest[- ]performing|at[- ]risk)\s+learners?\s+only\b|\bonly\s+(?:the\s+)?(?:top|best|highest[- ]performing|at[- ]risk)\s+learners?\b/i.test(question);
+        const clientNormalisesManagementPages = kind === "executive" || kind === "progress";
         const rendered = JSON.stringify(slides).toLowerCase();
-        if (!subsetOnly && learnerNames.length) {
+        if (!clientNormalisesManagementPages && !subsetOnly && learnerNames.length) {
           const learnerListings = slides.flatMap((slide) => {
             const cards = Array.isArray(slide.cards)
               ? slide.cards.map((card) => str((card as { title?: unknown })?.title))
@@ -327,7 +328,7 @@ export default async function handler(req: Request): Promise<Response> {
                 return !Number.isNaN(parsed.getTime()) && parsed.getUTCFullYear() === today.getFullYear() && parsed.getUTCMonth() === today.getMonth();
               })
           : [];
-        if (monthSessions.length) {
+        if (!clientNormalisesManagementPages && monthSessions.length) {
           const missingDates = monthSessions.filter((date) => {
             const parsed = new Date(`${date}T12:00:00Z`);
             const day = parsed.getUTCDate();

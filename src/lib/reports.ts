@@ -377,8 +377,136 @@ export interface DeckSlide {
   measures?: { measure?: string; indicator?: string; value?: string }[];
   strip?: { text?: string; value?: string };
   cards?: { title?: string; text?: string }[];
+  cardStart?: number;
   items?: { title?: string; text?: string }[];
   note?: string;
+}
+
+function learnerDeckSummary(row: LearnerRow): string {
+  const attendance = pctStr(row.attendanceRate);
+  const quiz = pctStr(row.quizAvg);
+  const exercise = pctStr(row.exerciseAvg);
+  const facts = [
+    attendance === null ? "attendance is not yet recorded" : `attendance is ${attendance}%`,
+    quiz === null ? "no quiz result is recorded" : `the quiz average is ${quiz}%`,
+    exercise === null ? "no exercise result is recorded" : `the exercise average is ${exercise}%`,
+    `${row.unitsCompleted} unit${row.unitsCompleted === 1 ? "" : "s"} completed`,
+  ];
+  const action = row.atRisk
+    ? `Targeted support is required for ${row.riskReasons.join(", ") || "the recorded risk indicators"}.`
+    : "Continue monitoring progress and submission readiness.";
+  return `${facts.join(", ")}. ${action}`;
+}
+
+/** Critical report furniture is assembled from live data instead of left to
+ * model discretion. This guarantees all monthly dates and learner rows. */
+function normaliseManagementDeck(
+  kind: ReportKind,
+  deck: AiDeck,
+  rows: LearnerRow[],
+  question?: string
+): AiDeck {
+  if (kind.id !== "executive" && kind.id !== "progress") return deck;
+  const monthly = /\bthis month\b|\bmonthly\b|\bmonth only\b/i.test(question ?? "");
+  const topOnly = /\b(?:top|best|highest[- ]performing)\s+learners?\s+only\b|\bonly\s+(?:the\s+)?(?:top|best|highest[- ]performing)\s+learners?\b/i.test(question ?? "");
+  const atRiskOnly = /\bat[- ]risk\s+learners?\s+only\b|\bonly\s+(?:the\s+)?at[- ]risk\s+learners?\b/i.test(question ?? "");
+  const reportRows = topOnly
+    ? [...rows].sort((a, b) => b.completion - a.completion || (b.quizAvg ?? -1) - (a.quizAvg ?? -1)).slice(0, 4)
+    : atRiskOnly
+      ? rows.filter((row) => row.atRisk)
+      : rows;
+  const now = new Date();
+  const sessions = scheduledSessions(rows).filter((session) => {
+    const date = new Date(`${session.date}T12:00:00`);
+    return !monthly || (date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth());
+  });
+  const recorded = sessions.filter((session) => session.registerStatus === "recorded");
+  const signed = recorded.reduce((sum, session) => sum + (session.signed ?? 0), 0);
+  const expected = recorded.reduce((sum, session) => sum + (session.expected ?? 0), 0);
+  const recordedRate = expected ? Math.round((signed / expected) * 100) : null;
+  const sessionSlide: DeckSlide = {
+    layout: "sessions",
+    headline: `${sessions.length} scheduled session date${sessions.length === 1 ? "" : "s"} in ${now.toLocaleString("en-GB", { month: "long" })}`,
+    kicker: "SCHEDULED CONTACT SESSIONS AND REGISTER STATUS",
+    rows: sessions.map((session) => ({
+      label: fmtRegDate(session.date),
+      value: session.registerStatus === "recorded" ? `${session.signed} / ${session.expected}` : "Not recorded",
+      ratio: session.registerStatus === "recorded" && session.expected ? (session.signed ?? 0) / session.expected : 0,
+    })),
+    panel: {
+      stat: recordedRate === null ? "—" : `${recordedRate}%`,
+      statLabel: "recorded attendance",
+      tag: "Signed registers",
+      note: `${recorded.length} of ${sessions.length} recorded`,
+    },
+    note: sessions.some((session) => session.registerStatus !== "recorded")
+      ? "Dates marked Not recorded are scheduled sessions with no completed attendance register; no attendance rate has been inferred for them."
+      : "All scheduled dates shown have completed attendance registers.",
+  };
+
+  const learnerSlides: DeckSlide[] = [];
+  if (kind.id === "executive") {
+    for (let start = 0; start < reportRows.length; start += 4) {
+      learnerSlides.push({
+        layout: "cards",
+        headline: start ? "Learner Progress Overview — continued" : "Learner Progress Overview",
+        cardStart: start + 1,
+        cards: reportRows.slice(start, start + 4).map((row) => ({
+          title: row.profile.name,
+          text: learnerDeckSummary(row),
+        })),
+        strip: { text: "COHORT POSITION: COMPLETE LEARNER-BY-LEARNER REVIEW" },
+      });
+    }
+  } else {
+    for (let start = 0; start < reportRows.length; start += 6) {
+      learnerSlides.push({
+        layout: "table",
+        headline: start ? "Learner Performance Summary — continued" : "Learner Performance Summary",
+        kicker: "COMPLETE COHORT PERFORMANCE",
+        columns: ["Learner", "Attendance", "Quiz avg", "Exercise avg", "At risk"],
+        cells: reportRows.slice(start, start + 6).map((row) => [
+          row.profile.name,
+          pctStr(row.attendanceRate) === null ? "Not recorded" : `${pctStr(row.attendanceRate)}%`,
+          pctStr(row.quizAvg) === null ? "Not recorded" : `${pctStr(row.quizAvg)}%`,
+          pctStr(row.exerciseAvg) === null ? "Not recorded" : `${pctStr(row.exerciseAvg)}%`,
+          row.atRisk ? "Yes" : "No",
+        ]),
+        note: `${Math.min(start + 6, reportRows.length)} of ${reportRows.length} learners shown.`,
+      });
+    }
+  }
+
+  const learnerNames = reportRows.map((row) => row.profile.name.toLowerCase());
+  const isLearnerSlide = (slide: DeckSlide) => {
+    if (/learner (?:performance|progress)/i.test(slide.headline)) return true;
+    const content = JSON.stringify([slide.cards, slide.cells]).toLowerCase();
+    return learnerNames.some((name) => content.includes(name));
+  };
+  const recommendation = deck.slides.find((slide) => slide.layout.toLowerCase() === "recommendations") ?? {
+    layout: "recommendations",
+    headline: "Recommendations for Improvement",
+    items: [
+      { title: "Complete attendance records", text: "Finalise every outstanding register before reporting attendance rates." },
+      { title: "Review learner progress", text: "Review each learner's results and submission status at least weekly." },
+      { title: "Provide targeted support", text: "Prioritise learners whose recorded indicators show a support need." },
+      { title: "Confirm assessment readiness", text: "Check evidence completeness before submitting portfolios for assessment." },
+    ],
+    panel: { tag: "PROPOSED SUPPORT MODEL", stats: [{ value: "4", label: "management actions" }] },
+    strip: { text: "Recommendation: maintain complete records and act on verified learner data." },
+  } satisfies DeckSlide;
+  const retained = deck.slides.filter((slide) =>
+    slide.layout.toLowerCase() !== "sessions" &&
+    slide.layout.toLowerCase() !== "recommendations" &&
+    !isLearnerSlide(slide)
+  );
+  const kpiIndex = retained.findIndex((slide) => slide.layout.toLowerCase() === "kpi");
+  const beforeSessions = kpiIndex >= 0 ? retained.slice(0, kpiIndex + 1) : retained.slice(0, 1);
+  const afterSessions = kpiIndex >= 0 ? retained.slice(kpiIndex + 1) : retained.slice(1);
+  return {
+    cover: deck.cover,
+    slides: [...beforeSessions, sessionSlide, ...afterSessions, ...learnerSlides, recommendation].slice(0, 12),
+  };
 }
 export interface AiDeck {
   cover: {
@@ -843,7 +971,7 @@ export function openReportDocument(
   void (async () => {
     let html = "";
     if (result.deck) {
-      html = deckDocumentHtml(kind, result.deck, rows, author, await eruditioLogoDataUrl());
+      html = deckDocumentHtml(kind, normaliseManagementDeck(kind, result.deck, rows, question), rows, author, await eruditioLogoDataUrl());
     } else if (result.report) {
       html = reportDocumentHtml(kind, result.report, rows, registers, author, question, scope);
     } else {
@@ -993,7 +1121,7 @@ function deckSlideBody(s: DeckSlide): string {
     return `${s.kicker ? `<div class="kicker">${esc(s.kicker)}</div>` : ""}<div class="cgrid">${cards
       .map((c, i) => {
         const acc = ACC_CYCLE[i % 4];
-        return `<div class="ccard"><span class="chip${acc === DECK.y ? " dk" : ""}" style="--acc:${acc}">${String(i + 1).padStart(2, "0")}</span><div><div class="cc-t">${esc(c.title ?? "")}</div><div class="cc-b">${esc(c.text ?? "")}</div></div></div>`;
+        return `<div class="ccard"><span class="chip${acc === DECK.y ? " dk" : ""}" style="--acc:${acc}">${String((s.cardStart ?? 1) + i).padStart(2, "0")}</span><div><div class="cc-t">${esc(c.title ?? "")}</div><div class="cc-b">${esc(c.text ?? "")}</div></div></div>`;
       })
       .join("")}</div>${s.strip?.text ? `<div class="ban-g"><span class="tx">${esc(s.strip.text)}</span></div>` : ""}`;
   }
