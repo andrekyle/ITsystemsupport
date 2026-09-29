@@ -235,10 +235,14 @@ const CHAT_STORE_KEY = "itss.aiAssistant.v1";
 /** Route explicit natural-language tracker requests to the tracker renderer. */
 function kindForPrompt(prompt: string): ReportKind {
   const text = prompt.toLowerCase();
+  const byId = (id: string) => REPORT_KINDS.find((kind) => kind.id === id) ?? CUSTOM_KIND;
   const asksForTracker =
     /\b(learner|student|submission|attendance)\s+tracker\b/.test(text) ||
     /\btracker\s+report\b/.test(text);
-  return asksForTracker ? REPORT_KINDS.find((kind) => kind.id === "tracker") ?? CUSTOM_KIND : CUSTOM_KIND;
+  if (asksForTracker) return byId("tracker");
+  if (/\bexecutive\s+(summary|report)\b/.test(text)) return byId("executive");
+  if (/\b(learnership|learner)\s+progress\s+report\b|\bprogress\s+report\b/.test(text)) return byId("progress");
+  return CUSTOM_KIND;
 }
 
 /** The conversation survives page switches (and reloads) within the session. */
@@ -285,6 +289,44 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   const [promptHist, setPromptHist] = useState<string[]>(saved?.promptHist ?? []);
   const [histIdx, setHistIdx] = useState<number | null>(null);
   const draftRef = useRef("");
+  const [briefKind, setBriefKind] = useState<ReportKind | null>(null);
+  const [briefRange, setBriefRange] = useState<"full" | "month" | "custom">("month");
+  const [briefText, setBriefText] = useState("");
+
+  function needsBrief(kind: ReportKind) {
+    return kind.id === "tracker" || kind.id === "executive" || kind.id === "progress";
+  }
+
+  function openReportBrief(kind: ReportKind, initialText = "") {
+    setBriefKind(kind);
+    setBriefRange("month");
+    setBriefText(initialText);
+  }
+
+  function submitAssistantPrompt() {
+    if (!question.trim()) return;
+    const kind = kindForPrompt(question);
+    if (needsBrief(kind)) {
+      openReportBrief(kind, question);
+      return;
+    }
+    void generate(kind, question, "ask");
+  }
+
+  function generateFromBrief() {
+    if (!briefKind) return;
+    const range = briefRange === "full"
+      ? "Cover the full programme and all available records."
+      : briefRange === "month"
+        ? "Cover this month only."
+        : "Use the scope described in my instructions.";
+    const instructions = briefText.trim() || "Use the standard approved content for this report type.";
+    const prompt = `${range}\nSpecific report requirements: ${instructions}\nKeep the approved ${briefKind.name} layout and include every relevant learner.`;
+    const kind = briefKind;
+    setBriefKind(null);
+    setQuestion("");
+    void generate(kind, prompt, "ask");
+  }
 
   useEffect(() => {
     try {
@@ -464,7 +506,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             if (question.trim() && !busy && rows.length > 0)
-              void generate(kindForPrompt(question), question, "ask");
+              submitAssistantPrompt();
             return;
           }
           // shell-style recall of the last 6 prompts
@@ -549,7 +591,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         className="reports-gpt-send"
         disabled={!!busy || rows.length === 0}
         onClick={() => {
-          if (question.trim()) void generate(kindForPrompt(question), question, "ask");
+          submitAssistantPrompt();
         }}
         title="Ask the AI"
         aria-label="Ask the AI"
@@ -667,7 +709,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
                   className="reports-list-btn"
                   disabled={!!busy || rows.length === 0}
                   title={k.desc}
-                  onClick={() => generate(k, undefined, "kind")}
+                  onClick={() => needsBrief(k) ? openReportBrief(k) : generate(k, undefined, "kind")}
                 >
                   <Icon name={k.icon} size={18} />
                   {k.name}
@@ -696,6 +738,33 @@ export function ReportsPage({ profile }: { profile: Profile }) {
               on the dashboard. Reports open print-ready in a new tab; nothing is stored.
             </p>
           )}
+        </div>
+      )}
+      {briefKind && (
+        <div className="report-brief-backdrop" role="presentation" onMouseDown={() => setBriefKind(null)}>
+          <div className="report-brief" role="dialog" aria-modal="true" aria-labelledby="report-brief-title" onMouseDown={(e) => e.stopPropagation()}>
+            <h2 id="report-brief-title">What should be in your {briefKind.name}?</h2>
+            <p>The approved report design will stay the same. Choose the reporting scope and tell the assistant what to emphasise.</p>
+            <div className="report-brief-options">
+              {(["month", "full", "custom"] as const).map((value) => (
+                <button key={value} type="button" className={briefRange === value ? "selected" : ""} onClick={() => setBriefRange(value)}>
+                  {value === "month" ? "This month" : value === "full" ? "Full report" : "Custom scope"}
+                </button>
+              ))}
+            </div>
+            <label htmlFor="report-brief-text">Anything specific you want included?</label>
+            <textarea
+              id="report-brief-text"
+              rows={5}
+              value={briefText}
+              placeholder="For example: include every learner, summarise each learner, focus on attendance, and add recommendations."
+              onChange={(e) => setBriefText(e.target.value)}
+            />
+            <div className="report-brief-actions">
+              <button type="button" className="btn ghost" onClick={() => setBriefKind(null)}>Cancel</button>
+              <button type="button" className="btn primary" onClick={generateFromBrief}>Generate report</button>
+            </div>
+          </div>
         </div>
       )}
     </>

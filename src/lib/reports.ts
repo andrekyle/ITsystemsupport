@@ -649,8 +649,8 @@ export function reportDocumentHtml(
     ${esc(report.intro)}
     <span class="small">${scope === "all" ? "Covers the whole programme." : "Covers only the unit standards worked on so far."} Written by the ITSS Learn AI reporting assistant from live platform data; reviewed by ${esc(author.name)}.</span>
   </div>
-  ${sections}
-  ${recs}
+  <section class="report-section">${sections}</section>
+  ${recs ? `<section class="report-section">${recs}</section>` : ""}
 ${tracker ? "" : `
   <h2>Appendix · Data snapshot</h2>
   <p class="small">Figures as recorded on ITSS Learn at the time of generation (${esc(today)}).</p>
@@ -673,22 +673,54 @@ ${tracker ? "" : `
     .edit-toolbar button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border: 1px solid #c9d4e4; border-radius: 8px; background: #ffffff; color: #1f2b3d; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(15, 35, 70, 0.14); }
     .edit-toolbar button:hover { background: #f0f5fb; }
     .edit-toolbar button.on { border-color: #0F6CBD; color: #0F6CBD; }
+    .section-control { display: none !important; }
+    body[contenteditable="true"] .section-control { display: inline-flex !important; }
+    body[contenteditable="true"] .report-section { position: relative; }
+    body[contenteditable="true"] .report-section:hover { outline: 2px dashed #0F6CBD; outline-offset: 5px; }
+    body[contenteditable="true"] .report-section.section-selected { outline: 3px solid #0F6CBD; outline-offset: 5px; }
     body[contenteditable="true"] { caret-color: #0F6CBD; }
     body[contenteditable="true"]:focus { outline: none; }
     @media print { .edit-toolbar { display: none !important; } }
   </style>
-  <div class="edit-toolbar">
+  <div class="edit-toolbar" contenteditable="false">
+    <button type="button" class="section-control" onclick="__addSection()">+ Add section</button>
+    <button type="button" class="section-control" onclick="__removeSection()">− Remove section</button>
     <button type="button" id="__editBtn" onclick="__toggleEdit()" title="Click any text to change it before printing or downloading">✎ Editing: off</button>
   </div>
   <script>
     // toggle whole-document editing — every character becomes editable
     var __editing = false;
+    var __selectedSection = null;
     function __toggleEdit() {
       __editing = !__editing;
       document.body.contentEditable = __editing ? "true" : "false";
       var b = document.getElementById("__editBtn");
       b.textContent = "\\u270E Editing: " + (__editing ? "on" : "off");
       b.className = __editing ? "on" : "";
+    }
+    document.addEventListener("click", function (event) {
+      if (!__editing) return;
+      var section = event.target.closest(".report-section");
+      if (!section) return;
+      document.querySelectorAll(".report-section.section-selected").forEach(function (el) { el.classList.remove("section-selected"); });
+      __selectedSection = section;
+      section.classList.add("section-selected");
+    });
+    function __addSection() {
+      var section = document.createElement("section");
+      section.className = "report-section section-selected";
+      section.innerHTML = '<h2>New section</h2><p>Click here and type the section content.</p>';
+      document.querySelectorAll(".report-section.section-selected").forEach(function (el) { el.classList.remove("section-selected"); });
+      var anchor = __selectedSection || document.querySelector(".report-section:last-of-type");
+      if (anchor) anchor.insertAdjacentElement("afterend", section); else document.body.insertBefore(section, document.querySelector(".sign"));
+      __selectedSection = section;
+      section.scrollIntoView({ behavior:"smooth", block:"center" });
+    }
+    function __removeSection() {
+      if (!__selectedSection) { alert("Select a report section first."); return; }
+      var next = __selectedSection.nextElementSibling || __selectedSection.previousElementSibling;
+      __selectedSection.remove();
+      __selectedSection = next && next.classList.contains("report-section") ? next : null;
     }
     // per-column filters on the tracker grid
     (function () {
@@ -1119,21 +1151,64 @@ export function deckDocumentHtml(
     .edit-toolbar button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border: 1px solid #c9d4e4; border-radius: 8px; background: #ffffff; color: #1f2b3d; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(15, 35, 70, 0.14); }
     .edit-toolbar button:hover { background: #f0f5fb; }
     .edit-toolbar button.on { border-color: #0F6CBD; color: #0F6CBD; }
+    .section-control { display:none !important; }
+    body[contenteditable="true"] .section-control { display:inline-flex !important; }
+    body[contenteditable="true"] .slide:hover { outline:3px dashed #0F6CBD; outline-offset:4px; }
+    body[contenteditable="true"] .slide.section-selected { outline:5px solid #0F6CBD; outline-offset:4px; }
     body[contenteditable="true"] { caret-color: #0F6CBD; }
     body[contenteditable="true"]:focus { outline: none; }
     @media print { .edit-toolbar { display: none !important; } }
   </style>
-  <div class="edit-toolbar">
+  <div class="edit-toolbar" contenteditable="false">
+    <button type="button" class="section-control" onclick="__addSection()">+ Add section</button>
+    <button type="button" class="section-control" onclick="__removeSection()">− Remove section</button>
     <button type="button" id="__editBtn" onclick="__toggleEdit()" title="Click any text to change it before printing or downloading">✎ Editing: off</button>
   </div>
   <script>
     var __editing = false;
+    var __selectedSection = null;
     function __toggleEdit() {
       __editing = !__editing;
       document.body.contentEditable = __editing ? "true" : "false";
       var b = document.getElementById("__editBtn");
       b.textContent = "\\u270E Editing: " + (__editing ? "on" : "off");
       b.className = __editing ? "on" : "";
+    }
+    document.addEventListener("click", function (event) {
+      if (!__editing) return;
+      var section = event.target.closest(".slide");
+      if (!section) return;
+      document.querySelectorAll(".slide.section-selected").forEach(function (el) { el.classList.remove("section-selected"); });
+      __selectedSection = section;
+      section.classList.add("section-selected");
+    });
+    function __renumberSections() {
+      document.querySelectorAll(".slide .fpage").forEach(function (page, index) { page.textContent = String(index + 1).padStart(2, "0"); });
+    }
+    function __addSection() {
+      var anchor = __selectedSection || document.querySelector(".slide:last-of-type");
+      if (!anchor) return;
+      var section = anchor.cloneNode(true);
+      section.classList.remove("cover");
+      section.classList.add("section-selected");
+      var heading = section.querySelector(".hline");
+      var content = section.querySelector(".content");
+      if (heading) heading.textContent = "New report section";
+      if (content) content.innerHTML = '<div style="font-size:14pt;line-height:1.5">Click here and type the section content.</div>';
+      document.querySelectorAll(".slide.section-selected").forEach(function (el) { el.classList.remove("section-selected"); });
+      anchor.insertAdjacentElement("afterend", section);
+      __selectedSection = section;
+      __renumberSections();
+      section.scrollIntoView({ behavior:"smooth", block:"center" });
+    }
+    function __removeSection() {
+      if (!__selectedSection) { alert("Select a report section first."); return; }
+      var slides = document.querySelectorAll(".slide");
+      if (slides.length <= 1) return;
+      var next = __selectedSection.nextElementSibling || __selectedSection.previousElementSibling;
+      __selectedSection.remove();
+      __selectedSection = next && next.classList.contains("slide") ? next : null;
+      __renumberSections();
     }
     function __downloadDoc() {
       var clone = document.documentElement.cloneNode(true);
