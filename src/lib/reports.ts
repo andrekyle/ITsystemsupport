@@ -125,6 +125,63 @@ function cohort(rows: LearnerRow[], registers: number) {
   };
 }
 
+const REPORT_MONTHS: Record<string, number> = {
+  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+};
+
+/** Expand compact timetable strings such as "3, 4 Sep 2026" and
+ * "25 Sep, 2 Oct 2026" into ISO dates for monthly report coverage. */
+function scheduledDates(value: string): string[] {
+  const yearMatch = value.match(/\b(20\d{2})\b/g);
+  const fallbackYear = yearMatch ? Number(yearMatch[yearMatch.length - 1]) : NaN;
+  if (!Number.isFinite(fallbackYear)) return [];
+  const result: string[] = [];
+  let pendingDays: number[] = [];
+  for (const raw of value.split(",")) {
+    const token = raw.trim();
+    if (/^\d{1,2}$/.test(token)) {
+      pendingDays.push(Number(token));
+      continue;
+    }
+    const match = token.match(/^(\d{1,2})\s+([A-Za-z]{3,9})(?:\s+(20\d{2}))?$/);
+    if (!match) continue;
+    const month = REPORT_MONTHS[match[2].slice(0, 3).toLowerCase()];
+    const year = Number(match[3] ?? fallbackYear);
+    if (month === undefined) continue;
+    const days = [...pendingDays, Number(match[1])];
+    pendingDays = [];
+    for (const day of days) {
+      const date = new Date(Date.UTC(year, month, day));
+      if (date.getUTCFullYear() === year && date.getUTCMonth() === month && date.getUTCDate() === day)
+        result.push(date.toISOString().slice(0, 10));
+    }
+  }
+  return result;
+}
+
+function scheduledSessions(rows: LearnerRow[]) {
+  const filled = new Set(attendanceFilledRegisterDates());
+  const sessions = new Map<string, { date: string; unitStandards: string[]; titles: string[]; times: string[] }>();
+  for (const unit of MODULES.flatMap((module) => module.units)) {
+    for (const date of scheduledDates(unit.dates)) {
+      const session = sessions.get(date) ?? { date, unitStandards: [], titles: [], times: [] };
+      if (!session.unitStandards.includes(unit.us)) session.unitStandards.push(unit.us);
+      if (!session.titles.includes(unit.title)) session.titles.push(unit.title);
+      if (!session.times.includes(unit.time)) session.times.push(unit.time);
+      sessions.set(date, session);
+    }
+  }
+  return [...sessions.values()].sort((a, b) => a.date.localeCompare(b.date)).map((session) => ({
+    ...session,
+    registerStatus: filled.has(session.date) ? "recorded" : "not recorded",
+    signed: filled.has(session.date) ? rows.filter((row) => row.signedDates.includes(session.date)).length : null,
+    expected: filled.has(session.date)
+      ? rows.filter((row) => !row.signedDates[0] || row.signedDates[0] <= session.date).length
+      : null,
+  }));
+}
+
 /** Report scope: only unit standards the cohort has worked on (default), or
  *  every unit in the qualification. */
 export type ReportScope = "worked" | "all";
@@ -189,6 +246,7 @@ export function buildReportData(
     ),
     scheduleNote:
       "schedule is the full programme timetable, one line per unit: 'US code | title | module | sessions: dates | time'. Compare the session dates with today to answer what has been trained, what is next or what happens on a given date.",
+    scheduledSessions: scheduledSessions(rows),
     cohort: cohort(rows, registers),
     // per-register signed counts so session-by-session slides carry real figures
     sessionAttendance: attendanceFilledRegisterDates().map((d) => ({
@@ -984,7 +1042,9 @@ export function deckDocumentHtml(
   const title = cover.title?.trim() || `${month} ${kind.name}`;
   const subtitle = cover.subtitle?.trim() || `${COURSE_META.title} • ${month} ${now.getFullYear()}`;
   const card = cover.card ?? {};
-  const slides = deck.slides.slice(0, 7);
+  // Continuation slides are required when a complete cohort cannot fit on a
+  // single learner table/card slide. Keep all validated AI slides available.
+  const slides = deck.slides.slice(0, 12);
   const slug = kind.name.replace(/\s+/g, "-").toLowerCase();
   const filename = `${slug}-${now.toISOString().slice(0, 10)}.html`;
   const logoCss = logo

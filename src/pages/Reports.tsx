@@ -27,6 +27,7 @@ const ERROR_TEXT: Record<string, string> = {
   network: "Could not reach the AI service — check your connection and try again.",
   timeout: "The AI took too long to answer. Try again in a moment.",
   incomplete_all_learners: "The AI omitted one or more learners, so the incomplete report was not opened. Please retry.",
+  incomplete_month_dates: "The AI omitted one or more scheduled dates for the selected month, so the incomplete report was not opened. Please retry.",
 };
 
 /** Overlay narration per report kind — spoken to the user by name. */
@@ -786,36 +787,49 @@ export function ReportsPage({ profile }: { profile: Profile }) {
             </div>
             <label htmlFor="report-brief-text">Anything specific you want included?</label>
             <div className="report-brief-pickers">
-              <label>
-                Suggested items
-                <select
-                  defaultValue=""
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value) setBriefText((current) => current.trim() ? `${current.trim()}\n${value}.` : `${value}.`);
-                    e.currentTarget.value = "";
-                  }}
-                >
-                  <option value="">Choose from 15 suggestions…</option>
-                  {REPORT_BRIEF_SUGGESTIONS.map((item) => <option key={item} value={item}>{item}</option>)}
-                </select>
-              </label>
-              <label>
-                Last 10 requests
-                <select
-                  value=""
-                  disabled={briefHistory.length === 0}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (!value) return;
-                    const separator = value.indexOf(": ");
-                    setBriefText(separator >= 0 ? value.slice(separator + 2) : value);
-                  }}
-                >
-                  <option value="">{briefHistory.length ? "Reuse a previous request…" : "No previous requests yet"}</option>
-                  {briefHistory.map((item, index) => <option key={`${item}-${index}`} value={item}>{item}</option>)}
-                </select>
-              </label>
+              <div className="report-brief-picker">
+                <span>Suggested items</span>
+                <details className="report-brief-dropdown">
+                  <summary>Choose from 15 suggestions…</summary>
+                  <div className="report-brief-dropdown-menu">
+                    {REPORT_BRIEF_SUGGESTIONS.map((item) => (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={(e) => {
+                          setBriefText((current) => current.trim() ? `${current.trim()}\n${item}.` : `${item}.`);
+                          e.currentTarget.closest("details")?.removeAttribute("open");
+                        }}
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                </details>
+              </div>
+              <div className="report-brief-picker">
+                <span>Last 10 requests</span>
+                <details className={`report-brief-dropdown${briefHistory.length ? "" : " disabled"}`}>
+                  <summary>{briefHistory.length ? "Reuse a previous request…" : "No previous requests yet"}</summary>
+                  {briefHistory.length > 0 && (
+                    <div className="report-brief-dropdown-menu">
+                      {briefHistory.map((item, index) => (
+                        <button
+                          key={`${item}-${index}`}
+                          type="button"
+                          onClick={(e) => {
+                            const separator = item.indexOf(": ");
+                            setBriefText(separator >= 0 ? item.slice(separator + 2) : item);
+                            e.currentTarget.closest("details")?.removeAttribute("open");
+                          }}
+                        >
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </details>
+              </div>
             </div>
             <textarea
               id="report-brief-text"

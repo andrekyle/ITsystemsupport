@@ -75,7 +75,7 @@ const DECK_RULES = `You write the report as a fixed slide-deck template (the cli
     "subtitle": "one factual line: qualification name + the period's month and year",
     "card": { "tag": "HR MANAGEMENT VIEW", "heading": "6-10 word statement of what the report covers", "body": "one clinical sentence on what the reader can verify from it" }
   },
-  "slides": [ ... 5 to 7 slide objects, each one of the layouts below ... ]
+  "slides": [ ... 5 to 12 slide objects, each one of the layouts below ... ]
 }
 
 SLIDE LAYOUTS (use exactly these field names):
@@ -90,6 +90,8 @@ COMPOSITION:
 - Default order (use it for progress/executive/monthly reports): kpi, sessions, table (curriculum delivery), measures (assessment results), table (evidence & submission readiness), cards (cohort position), recommendations.
 - Other kinds keep the SAME visual language but weight the slides to the kind: attendance → kpi, sessions, per-learner table(s) (Learner | Signed | Expected | Rate | Last seen), cards, recommendations; risk → kpi, table of flagged learners with reasons, cards, recommendations; outcomes → kpi, table(s) per unit standard (Competent / NYC / No decision), measures, recommendations. A question-driven report weights the slides to the question and the kpi callout must answer it directly.
 - ALL-LEARNER COVERAGE — HARD RULE: if the facilitator asks for all learners, every learner, each learner, the whole cohort, or a summary/profile/comment for each learner, include EVERY learner in data.learners exactly once by full name. Never select only four representative learners. Use as many consecutive table slides (up to 6 learner rows each) or repeated cards slides (4 learners each) as required; suffix continuation headlines with " — continued". Before replying, count the distinct learner names in the slides and confirm that count equals data.cohort.learners. Omission of even one learner is an invalid report.
+- COMPLETE COHORT IS THE DEFAULT — whenever data.learners exists, include every learner by full name even if the facilitator did not explicitly say "all". The ONLY exceptions are requests that explicitly say "top learners only" or "at-risk learners only". A generic request for learner performance, a monthly report, an executive report or a progress report always covers the whole cohort.
+- MONTHLY DATE COVERAGE — when the facilitator selects or asks for "this month", use data.scheduledSessions and include EVERY scheduled date in the current reporting month on the sessions/attendance slide, in chronological order. A date with registerStatus "not recorded" must still appear and must be labelled "register not recorded"; never turn it into 100% attendance or omit it. Use the filled-register signed/expected figures only where registerStatus is "recorded".
 - Every slide headline ≤70 chars, stated as a finding with a figure. kicker/tag strings are UPPERCASE. tone: green for on-track, orange for attention, yellow for neutral counts.
 - The last slide is ALWAYS "recommendations": concrete facilitator/management actions from the data. If the data justifies no intervention, the items are monitoring/maintenance actions — never invented problems.`;
 
@@ -289,16 +291,54 @@ export default async function handler(req: Request): Promise<Response> {
           lastError = "empty_report";
           continue;
         }
-        const wantsAllLearners = /\b(all|every|each)\s+(?:of\s+the\s+)?learners?\b|\bwhole\s+cohort\b|\b(?:summary|profile|comment)\s+(?:on|for)\s+each\b/i.test(question);
-        const reference = body?.data as { learners?: { name?: unknown }[] } | undefined;
+        const reference = body?.data as {
+          today?: unknown;
+          learners?: { name?: unknown }[];
+          scheduledSessions?: { date?: unknown }[];
+        } | undefined;
         const learnerNames = Array.isArray(reference?.learners)
           ? reference.learners.map((learner) => str(learner?.name)).filter(Boolean)
           : [];
-        if (wantsAllLearners && learnerNames.length) {
-          const rendered = JSON.stringify(slides).toLowerCase();
-          const missing = learnerNames.filter((name) => !rendered.includes(name.toLowerCase()));
+        const subsetOnly = /\b(?:top|best|highest[- ]performing|at[- ]risk)\s+learners?\s+only\b|\bonly\s+(?:the\s+)?(?:top|best|highest[- ]performing|at[- ]risk)\s+learners?\b/i.test(question);
+        const rendered = JSON.stringify(slides).toLowerCase();
+        if (!subsetOnly && learnerNames.length) {
+          const learnerListings = slides.flatMap((slide) => {
+            const cards = Array.isArray(slide.cards)
+              ? slide.cards.map((card) => str((card as { title?: unknown })?.title))
+              : [];
+            const cells = Array.isArray(slide.cells)
+              ? slide.cells.flatMap((row) => Array.isArray(row) ? row.map((cell) => str(cell)) : [])
+              : [];
+            return [...cards, ...cells];
+          }).join(" | ").toLowerCase();
+          const missing = learnerNames.filter((name) => !learnerListings.includes(name.toLowerCase()));
           if (missing.length) {
             lastError = "incomplete_all_learners";
+            continue;
+          }
+        }
+        const monthly = /\bthis month\b|\bmonthly\b|\bmonth only\b/i.test(question);
+        const today = new Date(str(reference?.today));
+        const monthSessions = monthly && !Number.isNaN(today.getTime()) && Array.isArray(reference?.scheduledSessions)
+          ? reference.scheduledSessions
+              .map((session) => str(session?.date))
+              .filter((date) => {
+                const parsed = new Date(`${date}T12:00:00Z`);
+                return !Number.isNaN(parsed.getTime()) && parsed.getUTCFullYear() === today.getFullYear() && parsed.getUTCMonth() === today.getMonth();
+              })
+          : [];
+        if (monthSessions.length) {
+          const missingDates = monthSessions.filter((date) => {
+            const parsed = new Date(`${date}T12:00:00Z`);
+            const day = parsed.getUTCDate();
+            const longMonth = parsed.toLocaleString("en-GB", { month: "long", timeZone: "UTC" }).toLowerCase();
+            const shortMonth = parsed.toLocaleString("en-GB", { month: "short", timeZone: "UTC" }).toLowerCase();
+            return !rendered.includes(date.toLowerCase()) &&
+              !rendered.includes(`${day} ${longMonth}`) &&
+              !rendered.includes(`${day} ${shortMonth}`);
+          });
+          if (missingDates.length) {
+            lastError = "incomplete_month_dates";
             continue;
           }
         }
