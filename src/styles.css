@@ -3133,6 +3133,16 @@ textarea:focus {
 .report-brief-field { margin: 0; }
 .report-brief-field textarea { min-height: 118px; resize: vertical; }
 .report-brief-modal .modal-actions .btn { min-width: 92px; min-height: 34px; }
+.report-brief-modal .report-brief-generate {
+  border-color: var(--border-2);
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.report-brief-modal .report-brief-generate:hover:not(:disabled) {
+  border-color: var(--border-2);
+  background: var(--surface-3);
+  color: var(--ink);
+}
 @media (max-width: 620px) {
   .report-brief-modal { padding: 18px; }
   .report-brief-pickers { grid-template-columns: 1fr; }

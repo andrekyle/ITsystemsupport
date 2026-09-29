@@ -785,7 +785,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
           actions={
             <>
               <button type="button" className="btn ghost" onClick={() => setBriefKind(null)}>Cancel</button>
-              <button type="button" className="btn primary" onClick={generateFromBrief}>Generate report</button>
+              <button type="button" className="btn report-brief-generate" onClick={generateFromBrief}>Generate report</button>
             </>
           }
         >
