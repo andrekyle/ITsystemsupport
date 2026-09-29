@@ -105,10 +105,19 @@ Reply with STRICT JSON only, no prose outside JSON:
 }
 One section per learner, 3-6 recommendations. No markdown syntax anywhere.`;
 
+const EXECUTIVE_REFERENCE_RULES = `EXECUTIVE REPORT APPROVED STRUCTURE — HARD RULE:
+- Reproduce the approved Eruditio/Investec September Report structure and visual content sequence. The client renderer supplies the exact orange/green Eruditio styling.
+- Return exactly: (1) one KPI slide with exactly four KPIs and an executive-position callout; (2) enough consecutive cards slides titled "Learner Progress Overview" to include EVERY learner in data.learners, exactly four learner cards per slide except the last when the cohort is not divisible by four; (3) one recommendations slide with exactly four actions and the support-model panel.
+- Each learner card title is the learner's exact full name. Its text is an individual factual progress summary using that learner's attendance, quiz, completion, submissions/activity and risk data where recorded, followed by constructive guidance. Never substitute a cohort topic card for a learner.
+- For a 12-learner cohort there must be three Learner Progress Overview cards slides containing 12 distinct named cards. Count them before replying.
+- Do not add sessions, table or measures slides to the Executive Report unless the facilitator explicitly requests extra sections. Never replace or remove the learner overview slides.
+- Keep the cover title concise in the form "<Month> Report", with the qualification and month in the subtitle.`;
+
 /** Answer-mode questions skip the report spec; kind runs skip the question ladder. Same rules, fewer tokens. */
 function buildSystemPrompt(hasQuestion: boolean, mode: string, kind: string): string {
   if (hasQuestion && mode === "answer") return [CORE_PROMPT, SCOPE_DIRECT_RULES, ANSWER_TAIL].join("\n\n");
   if (kind === "tracker") return [CORE_PROMPT, CLINICAL_RULES, TRACKER_RULES].join("\n\n");
+  if (kind === "executive") return [CORE_PROMPT, CLINICAL_RULES, DECK_RULES, EXECUTIVE_REFERENCE_RULES].join("\n\n");
   if (hasQuestion) return [CORE_PROMPT, SCOPE_DIRECT_RULES, CLINICAL_RULES, DECK_RULES].join("\n\n");
   return [CORE_PROMPT, CLINICAL_RULES, DECK_RULES].join("\n\n");
 }

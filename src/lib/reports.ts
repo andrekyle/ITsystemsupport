@@ -259,6 +259,9 @@ export function buildReportData(
     case "executive":
       return {
         ...base,
+        // The approved executive deck contains one summary card per learner.
+        // Keep the full cohort available; top/at-risk subsets are supplemental.
+        learners: rows.map(learnerStat),
         topLearners: [...rows]
           .sort((a, b) => b.completion - a.completion)
           .slice(0, 3)

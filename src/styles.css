@@ -3122,15 +3122,36 @@ textarea:focus {
 .report-brief p { margin: 0 0 18px; color: var(--ink-3); }
 .report-brief-options { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
 .report-brief-options button {
-  padding: 9px 14px;
-  border: 1px solid var(--line);
+  min-height: 38px;
+  padding: 9px 15px;
+  border: 1px solid var(--border-2);
   border-radius: 999px;
-  background: transparent;
-  color: inherit;
+  background: var(--surface-2);
+  color: var(--ink-2);
   cursor: pointer;
 }
-.report-brief-options button.selected { background: var(--ink, #18181b); color: #fff; border-color: var(--ink, #18181b); }
+.report-brief-options button:hover { background: var(--surface-3); color: var(--ink); border-color: var(--ink-3); }
+.report-brief-options button.selected { background: var(--ink) !important; color: var(--surface) !important; border-color: var(--ink) !important; }
 .report-brief label { display: block; margin-bottom: 7px; font-weight: 650; }
+.report-brief-pickers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.report-brief-pickers label { margin: 0; font-size: 13px; color: var(--ink-3); }
+.report-brief-pickers select {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 34px 10px 11px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+}
+.report-brief-pickers select:hover { border-color: var(--ink-3); background: var(--surface-3); }
 .report-brief textarea {
   width: 100%;
   resize: vertical;
@@ -3142,6 +3163,16 @@ textarea:focus {
   font: inherit;
 }
 .report-brief-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 18px; }
+.report-brief-actions .btn.primary {
+  background: var(--ink);
+  color: var(--surface);
+  border-color: var(--ink);
+}
+.report-brief-actions .btn.primary:hover:not(:disabled) { background: var(--ink-2); color: var(--surface); }
+.report-brief select:focus, .report-brief textarea:focus { border-color: var(--ink-3) !important; box-shadow: none; }
+[data-theme="dark"] .report-brief-options button.selected,
+[data-theme="dark"] .report-brief-actions .btn.primary { background: #3a3a3a !important; color: #fff !important; border-color: #666 !important; }
+@media (max-width: 620px) { .report-brief-pickers { grid-template-columns: 1fr; } }
 
 .report-toolbar {
   display: flex;

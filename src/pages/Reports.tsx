@@ -231,6 +231,33 @@ interface SavedChat {
 }
 
 const CHAT_STORE_KEY = "itss.aiAssistant.v1";
+const REPORT_BRIEF_HISTORY_KEY = "itss.reportBriefHistory.v1";
+const REPORT_BRIEF_SUGGESTIONS = [
+  "Include every learner by full name",
+  "Add an individual summary for every learner",
+  "Focus on attendance and missed sessions",
+  "Show submission status for each unit standard",
+  "Highlight learners who need intervention",
+  "Highlight learners who are performing well",
+  "Include quiz and exercise performance",
+  "Include POE and evidence readiness",
+  "Show credits earned and progress towards completion",
+  "Compare current results with the previous month",
+  "Summarise assessor outcomes and pending decisions",
+  "Add practical recommendations for the facilitator",
+  "Add management actions with responsible persons",
+  "Use concise, formal comments for each learner",
+  "Include an executive summary and key risks",
+] as const;
+
+function loadReportBriefHistory(): string[] {
+  try {
+    const value = JSON.parse(localStorage.getItem(REPORT_BRIEF_HISTORY_KEY) ?? "[]");
+    return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string").slice(0, 10) : [];
+  } catch {
+    return [];
+  }
+}
 
 /** Route explicit natural-language tracker requests to the tracker renderer. */
 function kindForPrompt(prompt: string): ReportKind {
@@ -292,6 +319,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   const [briefKind, setBriefKind] = useState<ReportKind | null>(null);
   const [briefRange, setBriefRange] = useState<"full" | "month" | "custom">("month");
   const [briefText, setBriefText] = useState("");
+  const [briefHistory, setBriefHistory] = useState<string[]>(loadReportBriefHistory);
 
   function needsBrief(kind: ReportKind) {
     return kind.id === "tracker" || kind.id === "executive" || kind.id === "progress";
@@ -321,11 +349,15 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         ? "Cover this month only."
         : "Use the scope described in my instructions.";
     const instructions = briefText.trim() || "Use the standard approved content for this report type.";
-    const prompt = `${range}\nSpecific report requirements: ${instructions}\nKeep the approved ${briefKind.name} layout and include every relevant learner.`;
+    const prompt = `${range}\nSpecific report requirements: ${instructions}\nKeep the approved ${briefKind.name} layout. Include all learners by full name; do not omit anyone.`;
+    const historyEntry = `${briefKind.name}: ${range} ${instructions}`;
+    const nextHistory = [historyEntry, ...briefHistory.filter((item) => item !== historyEntry)].slice(0, 10);
+    setBriefHistory(nextHistory);
+    try { localStorage.setItem(REPORT_BRIEF_HISTORY_KEY, JSON.stringify(nextHistory)); } catch { /* optional history */ }
     const kind = briefKind;
     setBriefKind(null);
     setQuestion("");
-    void generate(kind, prompt, "ask");
+    void generate(kind, prompt, "kind");
   }
 
   useEffect(() => {
@@ -747,12 +779,44 @@ export function ReportsPage({ profile }: { profile: Profile }) {
             <p>The approved report design will stay the same. Choose the reporting scope and tell the assistant what to emphasise.</p>
             <div className="report-brief-options">
               {(["month", "full", "custom"] as const).map((value) => (
-                <button key={value} type="button" className={briefRange === value ? "selected" : ""} onClick={() => setBriefRange(value)}>
+                <button key={value} type="button" className={`btn ghost${briefRange === value ? " selected" : ""}`} onClick={() => setBriefRange(value)}>
                   {value === "month" ? "This month" : value === "full" ? "Full report" : "Custom scope"}
                 </button>
               ))}
             </div>
             <label htmlFor="report-brief-text">Anything specific you want included?</label>
+            <div className="report-brief-pickers">
+              <label>
+                Suggested items
+                <select
+                  defaultValue=""
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value) setBriefText((current) => current.trim() ? `${current.trim()}\n${value}.` : `${value}.`);
+                    e.currentTarget.value = "";
+                  }}
+                >
+                  <option value="">Choose from 15 suggestions…</option>
+                  {REPORT_BRIEF_SUGGESTIONS.map((item) => <option key={item} value={item}>{item}</option>)}
+                </select>
+              </label>
+              <label>
+                Last 10 requests
+                <select
+                  value=""
+                  disabled={briefHistory.length === 0}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!value) return;
+                    const separator = value.indexOf(": ");
+                    setBriefText(separator >= 0 ? value.slice(separator + 2) : value);
+                  }}
+                >
+                  <option value="">{briefHistory.length ? "Reuse a previous request…" : "No previous requests yet"}</option>
+                  {briefHistory.map((item, index) => <option key={`${item}-${index}`} value={item}>{item}</option>)}
+                </select>
+              </label>
+            </div>
             <textarea
               id="report-brief-text"
               rows={5}
