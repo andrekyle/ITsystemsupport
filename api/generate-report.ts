@@ -91,7 +91,7 @@ COMPOSITION:
 - Other kinds keep the SAME visual language but weight the slides to the kind: attendance → kpi, sessions, per-learner table(s) (Learner | Signed | Expected | Rate | Last seen), cards, recommendations; risk → kpi, table of flagged learners with reasons, cards, recommendations; outcomes → kpi, table(s) per unit standard (Competent / NYC / No decision), measures, recommendations. A question-driven report weights the slides to the question and the kpi callout must answer it directly.
 - ALL-LEARNER COVERAGE — HARD RULE: if the facilitator asks for all learners, every learner, each learner, the whole cohort, or a summary/profile/comment for each learner, include EVERY learner in data.learners exactly once by full name. Never select only four representative learners. Use as many consecutive table slides (up to 6 learner rows each) or repeated cards slides (4 learners each) as required; suffix continuation headlines with " — continued". Before replying, count the distinct learner names in the slides and confirm that count equals data.cohort.learners. Omission of even one learner is an invalid report.
 - COMPLETE COHORT IS THE DEFAULT — whenever data.learners exists, include every learner by full name even if the facilitator did not explicitly say "all". The ONLY exceptions are requests that explicitly say "top learners only" or "at-risk learners only". A generic request for learner performance, a monthly report, an executive report or a progress report always covers the whole cohort.
-- MONTHLY DATE COVERAGE — when the facilitator selects or asks for "this month", use data.scheduledSessions and include EVERY scheduled date in the current reporting month on the sessions/attendance slide, in chronological order. A date with registerStatus "not recorded" must still appear and must be labelled "register not recorded"; never turn it into 100% attendance or omit it. Use the filled-register signed/expected figures only where registerStatus is "recorded".
+- MONTHLY DATE COVERAGE — when the facilitator selects or asks for "this month", use data.registeredSessions and include EVERY filled attendance-register date in the current reporting month on the sessions/attendance slide, in chronological order. Attendance reports are register-led: never substitute a timetable date that has no register.
 - Every slide headline ≤70 chars, stated as a finding with a figure. kicker/tag strings are UPPERCASE. tone: green for on-track, orange for attention, yellow for neutral counts.
 - The last slide is ALWAYS "recommendations": concrete facilitator/management actions from the data. If the data justifies no intervention, the items are monitoring/maintenance actions — never invented problems.`;
 
@@ -294,7 +294,7 @@ export default async function handler(req: Request): Promise<Response> {
         const reference = body?.data as {
           today?: unknown;
           learners?: { name?: unknown }[];
-          scheduledSessions?: { date?: unknown }[];
+          registeredSessions?: { date?: unknown }[];
         } | undefined;
         const learnerNames = Array.isArray(reference?.learners)
           ? reference.learners.map((learner) => str(learner?.name)).filter(Boolean)
@@ -320,8 +320,8 @@ export default async function handler(req: Request): Promise<Response> {
         }
         const monthly = /\bthis month\b|\bmonthly\b|\bmonth only\b/i.test(question);
         const today = new Date(str(reference?.today));
-        const monthSessions = monthly && !Number.isNaN(today.getTime()) && Array.isArray(reference?.scheduledSessions)
-          ? reference.scheduledSessions
+        const monthSessions = monthly && !Number.isNaN(today.getTime()) && Array.isArray(reference?.registeredSessions)
+          ? reference.registeredSessions
               .map((session) => str(session?.date))
               .filter((date) => {
                 const parsed = new Date(`${date}T12:00:00Z`);

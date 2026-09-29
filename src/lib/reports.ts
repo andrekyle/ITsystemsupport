@@ -6,6 +6,7 @@ import { attendanceFilledRegisterDates } from "./gamification";
 import { loadMarkingModel, recordTokenUsage } from "./tokens";
 import type { LearnerRow } from "../pages/Analytics";
 import { enhanceTrackerHtml } from "./trackerEditor";
+import { supabase } from "./supabase";
 
 /**
  * AI report generation (super user only): builds a compact statistics bundle
@@ -125,60 +126,58 @@ function cohort(rows: LearnerRow[], registers: number) {
   };
 }
 
-const REPORT_MONTHS: Record<string, number> = {
-  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
-  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
-};
-
-/** Expand compact timetable strings such as "3, 4 Sep 2026" and
- * "25 Sep, 2 Oct 2026" into ISO dates for monthly report coverage. */
-function scheduledDates(value: string): string[] {
-  const yearMatch = value.match(/\b(20\d{2})\b/g);
-  const fallbackYear = yearMatch ? Number(yearMatch[yearMatch.length - 1]) : NaN;
-  if (!Number.isFinite(fallbackYear)) return [];
-  const result: string[] = [];
-  let pendingDays: number[] = [];
-  for (const raw of value.split(",")) {
-    const token = raw.trim();
-    if (/^\d{1,2}$/.test(token)) {
-      pendingDays.push(Number(token));
-      continue;
-    }
-    const match = token.match(/^(\d{1,2})\s+([A-Za-z]{3,9})(?:\s+(20\d{2}))?$/);
-    if (!match) continue;
-    const month = REPORT_MONTHS[match[2].slice(0, 3).toLowerCase()];
-    const year = Number(match[3] ?? fallbackYear);
-    if (month === undefined) continue;
-    const days = [...pendingDays, Number(match[1])];
-    pendingDays = [];
-    for (const day of days) {
-      const date = new Date(Date.UTC(year, month, day));
-      if (date.getUTCFullYear() === year && date.getUTCMonth() === month && date.getUTCDate() === day)
-        result.push(date.toISOString().slice(0, 10));
-    }
-  }
-  return result;
+export interface ReportRegisterSession {
+  date: string;
+  signed: number;
+  expected: number;
 }
 
-function scheduledSessions(rows: LearnerRow[]) {
-  const filled = new Set(attendanceFilledRegisterDates());
-  const sessions = new Map<string, { date: string; unitStandards: string[]; titles: string[]; times: string[] }>();
-  for (const unit of MODULES.flatMap((module) => module.units)) {
-    for (const date of scheduledDates(unit.dates)) {
-      const session = sessions.get(date) ?? { date, unitStandards: [], titles: [], times: [] };
-      if (!session.unitStandards.includes(unit.us)) session.unitStandards.push(unit.us);
-      if (!session.titles.includes(unit.title)) session.titles.push(unit.title);
-      if (!session.times.includes(unit.time)) session.times.push(unit.time);
-      sessions.set(date, session);
+/** Load the same local + shared-cloud register set used by Attendance. */
+export async function fetchReportRegisterSessions(rows: LearnerRow[]): Promise<ReportRegisterSession[]> {
+  const values = new Map<string, string>();
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key?.startsWith("itss.attendance.")) {
+      const value = localStorage.getItem(key);
+      if (value) values.set(key, value);
     }
   }
-  return [...sessions.values()].sort((a, b) => a.date.localeCompare(b.date)).map((session) => ({
-    ...session,
-    registerStatus: filled.has(session.date) ? "recorded" : "not recorded",
-    signed: filled.has(session.date) ? rows.filter((row) => row.signedDates.includes(session.date)).length : null,
-    expected: filled.has(session.date)
-      ? rows.filter((row) => !row.signedDates[0] || row.signedDates[0] <= session.date).length
-      : null,
+  if (supabase) {
+    try {
+      const { data } = await supabase.from("shared_state").select("key,value").like("key", "itss.attendance.%");
+      for (const item of data ?? []) if (typeof item.value === "string") values.set(item.key, item.value);
+    } catch {
+      /* offline: retain local register copies */
+    }
+  }
+  const sessions: ReportRegisterSession[] = [];
+  for (const [key, value] of values) {
+    try {
+      const parsed = JSON.parse(value) as { rows?: Record<string, unknown> };
+      const signed = parsed.rows ? Object.keys(parsed.rows).length : 0;
+      if (signed > 0) sessions.push({
+        date: key.slice("itss.attendance.".length),
+        signed,
+        expected: rows.length,
+      });
+    } catch {
+      /* malformed register: ignore */
+    }
+  }
+  return sessions.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function scheduledSessions(rows: LearnerRow[], sharedRegisters: ReportRegisterSession[] = []) {
+  const registerMap = new Map(sharedRegisters.map((session) => [session.date, session]));
+  const dates = new Set([...attendanceFilledRegisterDates(), ...sharedRegisters.map((session) => session.date)]);
+  return [...dates].sort().map((date) => ({
+    date,
+    unitStandards: [] as string[],
+    titles: ["Filled attendance register"],
+    times: [] as string[],
+    registerStatus: "recorded",
+    signed: registerMap.get(date)?.signed ?? rows.filter((row) => row.signedDates.includes(date)).length,
+    expected: registerMap.get(date)?.expected ?? rows.filter((row) => !row.signedDates[0] || row.signedDates[0] <= date).length,
   }));
 }
 
@@ -229,7 +228,8 @@ export function buildReportData(
   kind: string,
   rows: LearnerRow[],
   registers: number,
-  scope: ReportScope = "worked"
+  scope: ReportScope = "worked",
+  sharedRegisters: ReportRegisterSession[] = []
 ): unknown {
   const workedCount = workedUnitCodes(rows).size;
   const base = {
@@ -246,13 +246,13 @@ export function buildReportData(
     ),
     scheduleNote:
       "schedule is the full programme timetable, one line per unit: 'US code | title | module | sessions: dates | time'. Compare the session dates with today to answer what has been trained, what is next or what happens on a given date.",
-    scheduledSessions: scheduledSessions(rows),
+    registeredSessions: scheduledSessions(rows, sharedRegisters),
     cohort: cohort(rows, registers),
     // per-register signed counts so session-by-session slides carry real figures
-    sessionAttendance: attendanceFilledRegisterDates().map((d) => ({
-      date: d,
-      signed: rows.filter((r) => r.signedDates.includes(d)).length,
-      expected: rows.filter((r) => !r.signedDates[0] || r.signedDates[0] <= d).length,
+    sessionAttendance: scheduledSessions(rows, sharedRegisters).map((session) => ({
+      date: session.date,
+      signed: session.signed,
+      expected: session.expected,
     })),
   };
   switch (kind) {
@@ -404,7 +404,8 @@ function normaliseManagementDeck(
   kind: ReportKind,
   deck: AiDeck,
   rows: LearnerRow[],
-  question?: string
+  question?: string,
+  sharedRegisters: ReportRegisterSession[] = []
 ): AiDeck {
   if (kind.id !== "executive" && kind.id !== "progress") return deck;
   const monthly = /\bthis month\b|\bmonthly\b|\bmonth only\b/i.test(question ?? "");
@@ -416,7 +417,8 @@ function normaliseManagementDeck(
       ? rows.filter((row) => row.atRisk)
       : rows;
   const now = new Date();
-  const sessions = scheduledSessions(rows).filter((session) => {
+  const allSessions = scheduledSessions(rows, sharedRegisters);
+  const sessions = allSessions.filter((session) => {
     const date = new Date(`${session.date}T12:00:00`);
     return !monthly || (date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth());
   });
@@ -426,8 +428,8 @@ function normaliseManagementDeck(
   const recordedRate = expected ? Math.round((signed / expected) * 100) : null;
   const sessionSlide: DeckSlide = {
     layout: "sessions",
-    headline: `${sessions.length} scheduled session date${sessions.length === 1 ? "" : "s"} in ${now.toLocaleString("en-GB", { month: "long" })}`,
-    kicker: "SCHEDULED CONTACT SESSIONS AND REGISTER STATUS",
+    headline: `${sessions.length} registered class date${sessions.length === 1 ? "" : "s"} in ${now.toLocaleString("en-GB", { month: "long" })}`,
+    kicker: "FILLED ATTENDANCE REGISTER DATES",
     rows: sessions.map((session) => ({
       label: fmtRegDate(session.date),
       value: session.registerStatus === "recorded" ? `${session.signed} / ${session.expected}` : "Not recorded",
@@ -439,9 +441,9 @@ function normaliseManagementDeck(
       tag: "Signed registers",
       note: `${recorded.length} of ${sessions.length} recorded`,
     },
-    note: sessions.some((session) => session.registerStatus !== "recorded")
-      ? "Dates marked Not recorded are scheduled sessions with no completed attendance register; no attendance rate has been inferred for them."
-      : "All scheduled dates shown have completed attendance registers.",
+    note: sessions.length
+      ? "Every date shown comes from a filled attendance register; timetable-only dates are excluded."
+      : "No filled attendance registers were found for this reporting period.",
   };
 
   const learnerSlides: DeckSlide[] = [];
@@ -964,14 +966,15 @@ export function openReportDocument(
   registers: number,
   author: Profile,
   question?: string,
-  scope: ReportScope = "worked"
+  scope: ReportScope = "worked",
+  sharedRegisters: ReportRegisterSession[] = []
 ) {
   const win = window.open("", "_blank");
   if (!win) return;
   void (async () => {
     let html = "";
     if (result.deck) {
-      html = deckDocumentHtml(kind, normaliseManagementDeck(kind, result.deck, rows, question), rows, author, await eruditioLogoDataUrl());
+      html = deckDocumentHtml(kind, normaliseManagementDeck(kind, result.deck, rows, question, sharedRegisters), rows, author, await eruditioLogoDataUrl());
     } else if (result.report) {
       html = reportDocumentHtml(kind, result.report, rows, registers, author, question, scope);
     } else {

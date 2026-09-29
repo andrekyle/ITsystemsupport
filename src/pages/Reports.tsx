@@ -16,6 +16,7 @@ import {
   CUSTOM_KIND,
   REPORT_KINDS,
   buildReportData,
+  fetchReportRegisterSessions,
   openReportDocument,
   requestReport,
   type ReportKind,
@@ -433,9 +434,10 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     setBusy(source);
     setError(null);
     setDone(null);
+    const sharedRegisters = await fetchReportRegisterSessions(rows);
     const result = await requestReport(
       k,
-      buildReportData(k.id, rows, registers, scope),
+      buildReportData(k.id, rows, registers, scope, sharedRegisters),
       q,
       makingReport ? "report" : "answer",
       history
@@ -467,7 +469,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     } else {
       setDone(k.name);
     }
-    openReportDocument(k, result, rows, registers, profile, q, scope);
+    openReportDocument(k, result, rows, registers, profile, q, scope, sharedRegisters);
   }
 
   const [copied, setCopied] = useState<number | null>(null);
