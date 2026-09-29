@@ -3099,146 +3099,46 @@ textarea:focus {
   }
 }
 
-/* ============ Learner Tracker Report (Super User) ============ */
-.report-brief-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  display: grid;
-  place-items: center;
-  padding: 20px;
-  background: rgba(9, 15, 28, 0.58);
-  backdrop-filter: blur(5px);
-}
-.report-brief {
-  width: min(620px, 100%);
-  padding: 26px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--surface, #fff);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
-}
-.report-brief h2 { margin: 0 0 8px; font-size: 22px; }
-.report-brief p { margin: 0 0 18px; color: var(--ink-3); }
-.report-brief-options { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
-.report-brief-options button {
-  min-height: 38px;
-  padding: 9px 15px;
-  border: 1px solid var(--border-2);
-  border-radius: 999px;
-  background: var(--surface-2);
+/* ============ AI report brief — uses shared Modal + Select primitives ============ */
+.report-brief-modal { width: min(680px, 100%); }
+.report-brief-modal .modal-title { font-size: 18px; margin-bottom: 6px; }
+.report-brief-modal .modal-body { overflow: visible; }
+.report-brief-intro { margin: 0 0 16px; color: var(--ink-3); }
+.report-brief-options { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 18px; }
+.report-brief-options .btn {
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
   color: var(--ink-2);
-  cursor: pointer;
 }
-.report-brief-options button:hover { background: var(--surface-3); color: var(--ink); border-color: var(--ink-3); }
-.report-brief-options button.selected { background: #e4e4e7 !important; color: #18181b !important; border-color: #a1a1aa !important; box-shadow: inset 0 0 0 1px #a1a1aa; }
-.report-brief-options button.selected::before { content: "✓"; margin-right: 2px; }
-.report-brief label { display: block; margin-bottom: 7px; font-weight: 650; }
+.report-brief-options .btn:hover { background: var(--surface-2); color: var(--ink); }
+.report-brief-options .btn.selected { background: var(--surface-2); border-color: var(--border-2); color: var(--ink); font-weight: 500; }
+.report-brief-options .btn.selected svg { color: var(--ink-2); }
+.report-brief label { display: block; margin-bottom: 7px; color: var(--ink); font-weight: 500; }
 .report-brief-pickers {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
-.report-brief-picker { min-width: 0; font-size: 13px; color: var(--ink-3); font-weight: 650; }
-.report-brief-dropdown {
-  position: relative;
-  margin-top: 6px;
-  color: var(--ink);
-  font-weight: 500;
+.report-brief-picker { min-width: 0; color: var(--ink-3); font-size: 12.5px; font-weight: 500; }
+.report-brief-picker > span { display: block; margin-bottom: 5px; }
+.report-brief-select { width: 100%; }
+.report-brief-select .nice-select-btn { width: 100%; min-height: 38px; justify-content: space-between; }
+.report-brief-select .nice-select-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.report-brief-select .nice-select-panel { width: 100%; min-width: 280px; max-height: 280px; }
+.report-brief-select .nice-select-opt { align-items: flex-start; white-space: normal; line-height: 1.35; }
+.report-brief-field { margin: 0; }
+.report-brief-field textarea { min-height: 118px; resize: vertical; }
+.report-brief-modal .modal-actions .btn { min-width: 92px; min-height: 34px; }
+@media (max-width: 620px) {
+  .report-brief-modal { padding: 18px; }
+  .report-brief-pickers { grid-template-columns: 1fr; }
 }
-.report-brief-dropdown summary {
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-height: 42px;
-  padding: 10px 38px 10px 12px;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius);
-  background: var(--surface-2);
-  color: var(--ink);
-  cursor: pointer;
-  list-style: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.report-brief-dropdown summary::-webkit-details-marker { display: none; }
-.report-brief-dropdown summary::after {
-  content: "⌄";
-  position: absolute;
-  right: 13px;
-  top: 50%;
-  translate: 0 -55%;
-  color: var(--ink-3);
-  font-size: 18px;
-}
-.report-brief-dropdown[open] summary { border-color: var(--ink-3); border-radius: var(--radius) var(--radius) 0 0; background: var(--surface-3); }
-.report-brief-dropdown[open] summary::after { content: "⌃"; }
-.report-brief-dropdown.disabled { opacity: .52; pointer-events: none; }
-.report-brief-dropdown-menu {
-  position: absolute;
-  z-index: 10;
-  top: calc(100% - 1px);
-  left: 0;
-  right: 0;
-  max-height: 310px;
-  overflow-y: auto;
-  padding: 6px;
-  border: 1px solid var(--ink-3);
-  border-radius: 0 0 var(--radius) var(--radius);
-  background: var(--surface-2);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, .38);
-}
-.report-brief-dropdown-menu button {
-  display: block;
-  width: 100%;
-  padding: 10px 11px;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--ink-2);
-  font: inherit;
-  font-weight: 500;
-  line-height: 1.3;
-  text-align: left;
-  cursor: pointer;
-}
-.report-brief-dropdown-menu button:hover,
-.report-brief-dropdown-menu button:focus-visible { background: var(--surface-3); color: var(--ink); outline: none; }
-.report-brief textarea {
-  width: 100%;
-  resize: vertical;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--surface, #fff);
-  color: inherit;
-  font: inherit;
-}
-.report-brief-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 18px; }
-.report-brief-actions .btn {
-  min-height: 42px;
-  padding-inline: 17px;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius);
-  background: var(--surface-2);
-  color: var(--ink-2);
-  font-weight: 600;
-}
-.report-brief-actions .btn:hover:not(:disabled) { background: var(--surface-3); color: var(--ink); border-color: var(--ink-3); }
-.report-brief-actions .btn.primary {
-  background: #e4e4e7;
-  color: #18181b;
-  border-color: #a1a1aa;
-}
-.report-brief-actions .btn.primary:hover:not(:disabled) { background: #f4f4f5; color: #09090b; border-color: #d4d4d8; }
-.report-brief textarea:focus { border-color: var(--ink-3) !important; box-shadow: none; }
-[data-theme="dark"] .report-brief-options button.selected,
-[data-theme="dark"] .report-brief-actions .btn.primary { background: #3f3f46 !important; color: #fafafa !important; border-color: #71717a !important; }
-[data-theme="dark"] .report-brief-options button.selected:hover,
-[data-theme="dark"] .report-brief-actions .btn.primary:hover:not(:disabled) { background: #52525b !important; border-color: #a1a1aa !important; }
-@media (max-width: 620px) { .report-brief-pickers { grid-template-columns: 1fr; } }
+
+/* ============ Learner Tracker Report (Super User) ============ */
 
 .report-toolbar {
   display: flex;

@@ -4,6 +4,8 @@ import type { Profile } from "../types";
 import { loadProfiles } from "../store";
 import { attendanceFilledRegisterDates } from "../lib/gamification";
 import { autoGrowTextarea } from "../lib/autoGrow";
+import { Modal } from "../components/Modal";
+import { Select } from "../components/Select";
 import {
   dedupeProfiles,
   fetchCloudLearnerData,
@@ -776,13 +778,23 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         </div>
       )}
       {briefKind && (
-        <div className="report-brief-backdrop" role="presentation" onMouseDown={() => setBriefKind(null)}>
-          <div className="report-brief" role="dialog" aria-modal="true" aria-labelledby="report-brief-title" onMouseDown={(e) => e.stopPropagation()}>
-            <h2 id="report-brief-title">What should be in your {briefKind.name}?</h2>
-            <p>The approved report design will stay the same. Choose the reporting scope and tell the assistant what to emphasise.</p>
+        <Modal
+          title={`What should be in your ${briefKind.name}?`}
+          className="report-brief-modal"
+          onClose={() => setBriefKind(null)}
+          actions={
+            <>
+              <button type="button" className="btn ghost" onClick={() => setBriefKind(null)}>Cancel</button>
+              <button type="button" className="btn primary" onClick={generateFromBrief}>Generate report</button>
+            </>
+          }
+        >
+          <div className="report-brief">
+            <p className="report-brief-intro">The approved report design will stay the same. Choose the reporting scope and tell the assistant what to emphasise.</p>
             <div className="report-brief-options">
               {(["month", "full", "custom"] as const).map((value) => (
                 <button key={value} type="button" className={`btn ghost${briefRange === value ? " selected" : ""}`} onClick={() => setBriefRange(value)}>
+                  {briefRange === value && <Icon name="check" size={14} />}
                   {value === "month" ? "This month" : value === "full" ? "Full report" : "Custom scope"}
                 </button>
               ))}
@@ -791,61 +803,44 @@ export function ReportsPage({ profile }: { profile: Profile }) {
             <div className="report-brief-pickers">
               <div className="report-brief-picker">
                 <span>Suggested items</span>
-                <details className="report-brief-dropdown">
-                  <summary>Choose from 15 suggestions…</summary>
-                  <div className="report-brief-dropdown-menu">
-                    {REPORT_BRIEF_SUGGESTIONS.map((item) => (
-                      <button
-                        key={item}
-                        type="button"
-                        onClick={(e) => {
-                          setBriefText((current) => current.trim() ? `${current.trim()}\n${item}.` : `${item}.`);
-                          e.currentTarget.closest("details")?.removeAttribute("open");
-                        }}
-                      >
-                        {item}
-                      </button>
-                    ))}
-                  </div>
-                </details>
+                <Select
+                  value=""
+                  ariaLabel="Suggested report items"
+                  placeholder="Choose from 15 suggestions…"
+                  className="report-brief-select"
+                  options={REPORT_BRIEF_SUGGESTIONS.map((item) => ({ value: item, label: item }))}
+                  onChange={(item) => setBriefText((current) => current.trim() ? `${current.trim()}\n${item}.` : `${item}.`)}
+                />
               </div>
               <div className="report-brief-picker">
                 <span>Last 10 requests</span>
-                <details className={`report-brief-dropdown${briefHistory.length ? "" : " disabled"}`}>
-                  <summary>{briefHistory.length ? "Reuse a previous request…" : "No previous requests yet"}</summary>
-                  {briefHistory.length > 0 && (
-                    <div className="report-brief-dropdown-menu">
-                      {briefHistory.map((item, index) => (
-                        <button
-                          key={`${item}-${index}`}
-                          type="button"
-                          onClick={(e) => {
-                            const separator = item.indexOf(": ");
-                            setBriefText(separator >= 0 ? item.slice(separator + 2) : item);
-                            e.currentTarget.closest("details")?.removeAttribute("open");
-                          }}
-                        >
-                          {item}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </details>
+                <Select
+                  value=""
+                  ariaLabel="Previous report requests"
+                  placeholder={briefHistory.length ? "Reuse a previous request…" : "No previous requests yet"}
+                  disabled={briefHistory.length === 0}
+                  className="report-brief-select"
+                  options={briefHistory.map((item, index) => ({ value: `${index}`, label: item }))}
+                  onChange={(index) => {
+                    const item = briefHistory[Number(index)];
+                    if (!item) return;
+                    const separator = item.indexOf(": ");
+                    setBriefText(separator >= 0 ? item.slice(separator + 2) : item);
+                  }}
+                />
               </div>
             </div>
-            <textarea
-              id="report-brief-text"
-              rows={5}
-              value={briefText}
-              placeholder="For example: include every learner, summarise each learner, focus on attendance, and add recommendations."
-              onChange={(e) => setBriefText(e.target.value)}
-            />
-            <div className="report-brief-actions">
-              <button type="button" className="btn ghost" onClick={() => setBriefKind(null)}>Cancel</button>
-              <button type="button" className="btn primary" onClick={generateFromBrief}>Generate report</button>
+            <div className="field report-brief-field">
+              <textarea
+                id="report-brief-text"
+                rows={5}
+                value={briefText}
+                placeholder="For example: include every learner, summarise each learner, focus on attendance, and add recommendations."
+                onChange={(e) => setBriefText(e.target.value)}
+              />
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </>
   );
