@@ -12872,6 +12872,53 @@ h2.section-title.howto-heading {
   }
 }
 
+/* Built course material: keep staff file actions compact on phones. The
+   generic lesson-plan rule above makes each control a widely spaced row. */
+@media (max-width: 640px) {
+  .built-course-material .deck-chips {
+    margin-bottom: 10px;
+  }
+
+  .built-course-material .deck-chip {
+    max-width: 100%;
+  }
+
+  .built-course-material .deck-chip span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .built-course-material .built-material-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    margin: 0 0 12px;
+    padding: 4px 0;
+  }
+
+  .built-course-material .built-material-actions .dl-sample.plan-ppt {
+    width: 100%;
+    min-height: 42px;
+    margin: 0;
+    padding: 8px 10px;
+    justify-content: flex-start;
+    text-align: left;
+    line-height: 1.3;
+  }
+
+  .built-course-material .slide-toolbar {
+    justify-content: stretch;
+    margin: 0 0 8px;
+  }
+
+  .built-course-material .slide-toolbar .slide-fs {
+    width: 100%;
+    min-height: 42px;
+  }
+}
+
 /* ============ My Course about-cards on phones (<=640px) ============ */
 
 @media (max-width: 640px) {

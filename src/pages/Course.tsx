@@ -6687,11 +6687,11 @@ export function UnitPage({
                     {cur.bullets && cur.bullets.length > 0 ? (
                       <ol className="presenter-bullets presenter-numbered">
                         {cur.bullets.map((b, i) => (
-                          <li key={i}>{b}</li>
+                          <li key={i}><Gloss text={b} /></li>
                         ))}
                       </ol>
                     ) : cur.note ? (
-                      <p className="presenter-note">{cur.note}</p>
+                      <p className="presenter-note"><Gloss text={cur.note} /></p>
                     ) : null}
                     {(() => {
                       const text = [cur.caption, ...(cur.bullets ?? []), cur.note ?? ""].map(plainSlideText).join(" ");
@@ -6743,7 +6743,7 @@ export function UnitPage({
                       <li key={qi} className={`presenter-quiz-q${isCorrect ? " ok" : ""}${isWrong ? " bad" : ""}`}>
                         <div className="presenter-quiz-question">
                           <span className="pq-num">{qi + 1}</span>
-                          {q.q}
+                          <Gloss text={q.q} />
                         </div>
                         <div className="presenter-quiz-options">
                           {seededShuffle(q.options.map((_, i) => i), qi * 419 + q.q.length * 11 + 5).map((oi, displayPos) => {
@@ -6763,13 +6763,13 @@ export function UnitPage({
                                   <Icon name={chosen === oi ? "checkCircle" : "circle"} size={17} />
                                 </span>
                                 <span className="opt-letter">{String.fromCharCode(65 + displayPos)}</span>
-                                {opt}
+                                <Gloss text={opt} />
                               </button>
                             );
                           })}
                         </div>
                         {presenterChecked && isWrong && q.explain && (
-                          <div className="presenter-quiz-explain">{q.explain}</div>
+                          <div className="presenter-quiz-explain"><Gloss text={q.explain} /></div>
                         )}
                       </li>
                     );
