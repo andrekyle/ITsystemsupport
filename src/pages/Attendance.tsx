@@ -13,6 +13,7 @@ import { Icon } from "../icons";
 import { ConfirmModal } from "../components/Modal";
 import { FitSheet } from "../components/FitSheet";
 import { DateTimePicker } from "../components/DateTimePicker";
+import { flushKey } from "../lib/sync";
 
 /**
  * Attendance Register — exact replica of the Eruditio paper form.
@@ -327,17 +328,37 @@ export function AttendancePage({
   /** bulk-print chooser: every signed register, so staff can pick which session dates to print */
   const [pickRegs, setPickRegs] = useState<{ date: string; data: AttData }[] | null>(null);
   const [pickedDates, setPickedDates] = useState<Set<string>>(new Set());
+  const [refreshing, setRefreshing] = useState(false);
+  const [signing, setSigning] = useState(false);
+  const [attendanceNote, setAttendanceNote] = useState("");
   const storageKey = attKey(dateIso);
 
   const refresh = useCallback(async () => {
-    const latest = await pullLatest(storageKey);
-    if (latest) {
-      localStorage.setItem(storageKey, JSON.stringify(latest));
-      setReg(latest);
-    } else {
-      setReg(readReg(storageKey));
+    setRefreshing(true);
+    try {
+      const local = readReg(storageKey);
+      const latest = await pullLatest(storageKey);
+      if (latest) {
+        // Keep a newly signed local row while its cloud write is still queued.
+        const myLocalRow = local.rows[profile.id];
+        const next = myLocalRow && !latest.rows[profile.id]
+          ? {
+              ...latest,
+              rows: { ...latest.rows, [profile.id]: myLocalRow },
+              order: latest.order.includes(profile.id)
+                ? latest.order
+                : [...latest.order, profile.id],
+            }
+          : latest;
+        localStorage.setItem(storageKey, JSON.stringify(next));
+        setReg(next);
+      } else {
+        setReg(local);
+      }
+    } finally {
+      setRefreshing(false);
     }
-  }, [storageKey]);
+  }, [profile.id, storageKey]);
 
   // load the selected day's register and keep it fresh while class is on
   useEffect(() => {
@@ -375,32 +396,55 @@ export function AttendancePage({
 
   /** Sign the register: my details from my enrolment form + arrival time now. */
   const signNow = async (signatureImage?: string) => {
+    if (signing) return;
+    setSigning(true);
+    setAttendanceNote("");
     // merge with the latest shared copy so classmates' rows are not lost
-    const base = (await pullLatest(storageKey)) ?? readReg(storageKey);
-    if (base.rows[profile.id]) {
-      save(base);
-      return;
+    try {
+      const local = readReg(storageKey);
+      const remote = await pullLatest(storageKey);
+      const base = remote
+        ? {
+            ...remote,
+            rows: { ...remote.rows, ...local.rows },
+            order: [...remote.order, ...local.order.filter((id) => !remote.order.includes(id))],
+          }
+        : local;
+      if (base.rows[profile.id]) {
+        save(base);
+        await flushKey(storageKey);
+        setAttendanceNote("Your signature is saved on this register.");
+        return;
+      }
+      const e = profile.enrolment;
+      const parts = profile.name.trim().split(/\s+/);
+      const now = new Date();
+      const sig = signatureImage ?? profile.signatureImage;
+      const row: AttRow = {
+        name: capWords(e?.firstNames || parts.slice(0, -1).join(" ") || profile.name),
+        surname: capWords(e?.surname || (parts.length > 1 ? parts[parts.length - 1] : "")),
+        idNumber: e?.idNumber || "",
+        race: e?.equityGroup || "",
+        gender: e?.gender || "",
+        arrival: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
+        signature: e?.signature || profile.name,
+        ...(sig ? { signatureImage: sig } : {}),
+      };
+      save({
+        header: { ...base.header, ...reg.header },
+        rows: { ...base.rows, [profile.id]: row },
+        order: base.order.includes(profile.id) ? base.order : [...base.order, profile.id],
+      });
+      // Push immediately so Refresh cannot retrieve an older unsigned copy.
+      await flushKey(storageKey);
+      setAttendanceNote("Signed successfully.");
+      logAudit(profile, "attendance.sign", `Signed the ${dateIso} attendance register at ${row.arrival}`);
+    } catch {
+      // The local write remains queued and will sync when the connection returns.
+      setAttendanceNote("Signed on this device — cloud sync will retry when you are online.");
+    } finally {
+      setSigning(false);
     }
-    const e = profile.enrolment;
-    const parts = profile.name.trim().split(/\s+/);
-    const now = new Date();
-    const sig = signatureImage ?? profile.signatureImage;
-    const row: AttRow = {
-      name: capWords(e?.firstNames || parts.slice(0, -1).join(" ") || profile.name),
-      surname: capWords(e?.surname || (parts.length > 1 ? parts[parts.length - 1] : "")),
-      idNumber: e?.idNumber || "",
-      race: e?.equityGroup || "",
-      gender: e?.gender || "",
-      arrival: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
-      signature: e?.signature || profile.name,
-      ...(sig ? { signatureImage: sig } : {}),
-    };
-    save({
-      header: { ...base.header, ...reg.header },
-      rows: { ...base.rows, [profile.id]: row },
-      order: base.order.includes(profile.id) ? base.order : [...base.order, profile.id],
-    });
-    logAudit(profile, "attendance.sign", `Signed the ${dateIso} attendance register at ${row.arrival}`);
   };
 
   /** First click: ask (only once, ever) for a photo of the handwritten signature. */
@@ -615,11 +659,11 @@ export function AttendancePage({
           value={dateIso}
           onChange={(v) => v && setDateIso(v)}
         />
-        <button className="btn ghost sm" onClick={() => void refresh()}>
-          <Icon name="trend" size={15} /> Refresh
+        <button className="btn ghost sm" disabled={refreshing || signing} onClick={() => void refresh()}>
+          <Icon name="trend" size={15} /> {refreshing ? "Refreshing…" : "Refresh"}
         </button>
-        <button className="btn ghost sm" disabled={!canSign} onClick={onSignClick}>
-          <Icon name="check" size={15} /> {signed ? "Signed" : "Sign the register — I'm here"}
+        <button className="btn ghost sm" disabled={!canSign || signing} onClick={onSignClick}>
+          <Icon name="check" size={15} /> {signing ? "Signing…" : signed ? "Signed" : "Sign the register — I'm here"}
         </button>
         {staff && (
           <button className="btn ghost sm" onClick={printLandscape}>
@@ -637,6 +681,7 @@ export function AttendancePage({
           </button>
         )}
         {fixNote && <span className="att-note">{fixNote}</span>}
+        {attendanceNote && <span className="att-note">{attendanceNote}</span>}
         {profile.role === "Super User" && (
           <button className="btn ghost sm danger" onClick={() => setConfirming({ kind: "register" })}>
             Clear register

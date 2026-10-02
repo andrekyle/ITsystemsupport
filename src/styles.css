@@ -8429,11 +8429,16 @@ input.att-sig {
   body:has(.att-all) {
     overflow: visible;
   }
+  /* The printable sheets are portalled directly into body. Remove the app
+     tree so fixed UI such as the mobile navigation scrim cannot cover page 1. */
+  body:has(.att-all) > #root {
+    display: none !important;
+  }
   body:has(.att-all) .att-sheet:not(.att-sheet-static) {
     display: none;
   }
   .att-all {
-    position: absolute;
+    position: static;
     left: 0;
     top: 0;
     width: 100%;

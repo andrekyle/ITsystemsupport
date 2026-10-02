@@ -4,11 +4,18 @@ import { supabase } from "../lib/supabase";
 import { COURSE_META } from "../data/course";
 import { PasswordInput } from "./PasswordInput";
 
+function savedAuthMode(): "signin" | "signup" {
+  try {
+    return sessionStorage.getItem("itss.auth-mode") === "signup" ? "signup" : "signin";
+  } catch {
+    // Storage may be blocked in privacy-focused browsers or embedded webviews.
+    return "signin";
+  }
+}
+
 /** Email/password gate shown before the app when cloud sync is configured. */
 export function CloudAuth() {
-  const [mode, setMode] = useState<"signin" | "signup">(() =>
-    sessionStorage.getItem("itss.auth-mode") === "signup" ? "signup" : "signin"
-  );
+  const [mode, setMode] = useState<"signin" | "signup">(savedAuthMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -19,7 +26,11 @@ export function CloudAuth() {
   // example after an accidental pull-to-refresh on mobile). Credentials stay
   // in component state and are deliberately not persisted.
   useEffect(() => {
-    sessionStorage.setItem("itss.auth-mode", mode);
+    try {
+      sessionStorage.setItem("itss.auth-mode", mode);
+    } catch {
+      // The screen still works when browser storage is unavailable.
+    }
   }, [mode]);
 
   /** Translate Supabase auth errors into clear, actionable messages. */
