@@ -2,7 +2,7 @@ import type { ProgressState, Profile } from "../types";
 import { UNIT_ACTIVITIES } from "../types";
 import { MODULES } from "../data/course";
 import { loadPoeDocs, loadProgress, poeItemCount } from "../store";
-import { bestPoeDocs, bestProgress, type CloudLearnerData } from "./directory";
+import { bestPoeDocs, bestProgress, identityKeys, type CloudLearnerData } from "./directory";
 
 /**
  * Gamification layer: XP, levels and badges are computed deterministically
@@ -324,8 +324,24 @@ export function leaderboard(profiles: Profile[]): LeaderboardRow[] {
  * (local snapshot or cloud sync) holds more evidence wins — so the
  * leaderboard and Analytics can never disagree about a learner's XP.
  */
-export function cloudLeaderboard(cloud: CloudLearnerData): LeaderboardRow[] {
-  return cloud.profiles
+export function cloudLeaderboard(cloud: CloudLearnerData, currentProfile?: Profile): LeaderboardRow[] {
+  let profiles = cloud.profiles;
+
+  // fetchCloudDirectory deliberately excludes the signed-in account's own
+  // profile row. Add the viewer back when they are a learner, replacing any
+  // independently seeded copy of the same person so the row is highlighted
+  // with the viewer's real profile id instead of appearing missing/duplicated.
+  if (currentProfile?.role === "Learner") {
+    const mine = new Set(identityKeys(currentProfile));
+    profiles = [
+      currentProfile,
+      ...profiles.filter(
+        (p) => p.id !== currentProfile.id && !identityKeys(p).some((key) => mine.has(key))
+      ),
+    ];
+  }
+
+  return profiles
     .filter((p) => p.role === "Learner")
     .map((p) => {
       const progress = bestProgress(p, cloud);

@@ -648,7 +648,7 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
   // local-only ranking when the app is offline or cloud sync is
   // unavailable (dev / signed-out use).
   const rows: LeaderboardRow[] = cloud
-    ? cloudLeaderboard(cloud)
+    ? cloudLeaderboard(cloud, profile)
     : cloudEnabled
     ? [] // still loading — keep the spinner-less empty state until cloud lands
     : leaderboard(loadProfiles());
