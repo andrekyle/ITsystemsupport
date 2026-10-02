@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "../icons";
 import { supabase } from "../lib/supabase";
 import { COURSE_META } from "../data/course";
@@ -6,12 +6,21 @@ import { PasswordInput } from "./PasswordInput";
 
 /** Email/password gate shown before the app when cloud sync is configured. */
 export function CloudAuth() {
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">(() =>
+    sessionStorage.getItem("itss.auth-mode") === "signup" ? "signup" : "signin"
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  // Keep the user on the registration screen if the page is refreshed (for
+  // example after an accidental pull-to-refresh on mobile). Credentials stay
+  // in component state and are deliberately not persisted.
+  useEffect(() => {
+    sessionStorage.setItem("itss.auth-mode", mode);
+  }, [mode]);
 
   /** Translate Supabase auth errors into clear, actionable messages. */
   function friendlyError(message: string, current: "signin" | "signup"): string {
