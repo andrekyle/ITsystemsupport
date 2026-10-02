@@ -59,6 +59,9 @@ interface AttData {
 const EMPTY: AttData = { header: {}, rows: {}, order: [] };
 
 const attKey = (dateIso: string) => `itss.attendance.${dateIso}`;
+const attRowKey = (dateIso: string, profileId: string) =>
+  `itss.attendance.${dateIso}.row.${profileId}`;
+const registerKeyPattern = /^itss\.attendance\.\d{4}-\d{2}-\d{2}$/;
 
 /** Names on the register always start with a capital letter (per word). */
 function capWords(s: string): string {
@@ -87,12 +90,32 @@ function readReg(key: string): AttData {
 async function pullLatest(key: string): Promise<AttData | null> {
   if (!supabase) return null;
   try {
-    const { data } = await supabase
-      .from("shared_state")
-      .select("value")
-      .eq("key", key)
-      .maybeSingle();
-    if (data?.value) return normalizeReg({ ...EMPTY, ...(JSON.parse(data.value) as Partial<AttData>) });
+    const dateIso = key.slice("itss.attendance.".length);
+    const [registerResult, rowResult] = await Promise.all([
+      supabase.from("shared_state").select("value").eq("key", key).maybeSingle(),
+      supabase
+        .from("shared_state")
+        .select("key,value")
+        .like("key", `itss.attendance.${dateIso}.row.%`),
+    ]);
+    let merged: AttData = registerResult.data?.value
+      ? normalizeReg({ ...EMPTY, ...(JSON.parse(registerResult.data.value) as Partial<AttData>) })
+      : { header: {}, rows: {}, order: [] };
+    for (const saved of rowResult.data ?? []) {
+      const profileId = saved.key.slice(`itss.attendance.${dateIso}.row.`.length);
+      if (!profileId) continue;
+      try {
+        const row = JSON.parse(saved.value) as AttRow;
+        merged = {
+          ...merged,
+          rows: { ...merged.rows, [profileId]: row },
+          order: merged.order.includes(profileId) ? merged.order : [...merged.order, profileId],
+        };
+      } catch {
+        /* ignore one malformed row without hiding the rest of the class */
+      }
+    }
+    if (registerResult.data?.value || Object.keys(merged.rows).length) return normalizeReg(merged);
   } catch {
     /* offline — use local copy */
   }
@@ -104,7 +127,7 @@ async function allRegisterKeys(): Promise<string[]> {
   const keys = new Set<string>();
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
-    if (k && k.startsWith("itss.attendance.")) keys.add(k);
+    if (k && registerKeyPattern.test(k)) keys.add(k);
   }
   if (supabase) {
     try {
@@ -112,7 +135,7 @@ async function allRegisterKeys(): Promise<string[]> {
         .from("shared_state")
         .select("key")
         .like("key", "itss.attendance.%");
-      for (const r of data ?? []) keys.add(r.key);
+      for (const r of data ?? []) if (registerKeyPattern.test(r.key)) keys.add(r.key);
     } catch {
       /* offline — local keys only */
     }
@@ -132,6 +155,8 @@ export async function updateRegisterSignatures(
     if (!row || row.signatureImage === signatureImage) continue;
     const next = { ...data, rows: { ...data.rows, [profileId]: { ...row, signatureImage } } };
     localStorage.setItem(key, JSON.stringify(next)); // also syncs to the shared cloud copy
+    const dateIso = key.slice("itss.attendance.".length);
+    localStorage.setItem(attRowKey(dateIso, profileId), JSON.stringify(next.rows[profileId]));
   }
 }
 
@@ -337,6 +362,14 @@ export function AttendancePage({
     setRefreshing(true);
     try {
       const local = readReg(storageKey);
+      // Migrate an existing signature from the legacy whole-register record
+      // into its collision-free per-learner record the first time this learner
+      // opens or refreshes the register after the upgrade.
+      const ownRowKey = attRowKey(dateIso, profile.id);
+      if (local.rows[profile.id] && !localStorage.getItem(ownRowKey)) {
+        localStorage.setItem(ownRowKey, JSON.stringify(local.rows[profile.id]));
+        await flushKey(ownRowKey);
+      }
       const latest = await pullLatest(storageKey);
       if (latest) {
         // Keep a newly signed local row while its cloud write is still queued.
@@ -358,7 +391,7 @@ export function AttendancePage({
     } finally {
       setRefreshing(false);
     }
-  }, [profile.id, storageKey]);
+  }, [dateIso, profile.id, storageKey]);
 
   // load the selected day's register and keep it fresh while class is on
   useEffect(() => {
@@ -412,7 +445,9 @@ export function AttendancePage({
         : local;
       if (base.rows[profile.id]) {
         save(base);
-        await flushKey(storageKey);
+        const ownRowKey = attRowKey(dateIso, profile.id);
+        localStorage.setItem(ownRowKey, JSON.stringify(base.rows[profile.id]));
+        await Promise.all([flushKey(ownRowKey), flushKey(storageKey)]);
         setAttendanceNote("Your signature is saved on this register.");
         return;
       }
@@ -435,8 +470,10 @@ export function AttendancePage({
         rows: { ...base.rows, [profile.id]: row },
         order: base.order.includes(profile.id) ? base.order : [...base.order, profile.id],
       });
-      // Push immediately so Refresh cannot retrieve an older unsigned copy.
-      await flushKey(storageKey);
+      const ownRowKey = attRowKey(dateIso, profile.id);
+      localStorage.setItem(ownRowKey, JSON.stringify(row));
+      // The independent learner row is the authoritative signature record.
+      await Promise.all([flushKey(ownRowKey), flushKey(storageKey)]);
       setAttendanceNote("Signed successfully.");
       logAudit(profile, "attendance.sign", `Signed the ${dateIso} attendance register at ${row.arrival}`);
     } catch {
@@ -545,17 +582,25 @@ export function AttendancePage({
 
   const setCell = (pid: string, field: keyof AttRow, value: string) => {
     const v = field === "name" || field === "surname" ? capWords(value) : value;
-    save({ ...reg, rows: { ...reg.rows, [pid]: { ...reg.rows[pid], [field]: v } } });
+    const row = { ...reg.rows[pid], [field]: v };
+    save({ ...reg, rows: { ...reg.rows, [pid]: row } });
+    localStorage.setItem(attRowKey(dateIso, pid), JSON.stringify(row));
   };
 
   const clearRow = (pid: string) => {
     const rows = { ...reg.rows };
     delete rows[pid];
     save({ ...reg, rows, order: reg.order.filter((id) => id !== pid) });
+    localStorage.removeItem(attRowKey(dateIso, pid));
   };
 
   /** Super user only: wipe the whole register for the selected date. */
-  const clearRegister = () => save(EMPTY);
+  const clearRegister = () => {
+    for (const pid of Object.keys(reg.rows)) {
+      localStorage.removeItem(attRowKey(dateIso, pid));
+    }
+    save(EMPTY);
+  };
 
   /** Print with a landscape @page rule injected for the duration of the dialog.
       (The rule can't live in styles.css — @page is global and would flip every
