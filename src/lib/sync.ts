@@ -12,6 +12,8 @@ import { isUnitPackKey, receiveUnitPack, storedUnitPacks, clearUnitPacks } from 
 
 const PREFIX = "itss.";
 const UNIT_BUILDER_SAVE_PROBE = "unitbuilder-save-probe.";
+const ATTENDANCE_REGISTER_RE = /^itss\.attendance\.(\d{4}-\d{2}-\d{2})$/;
+const attendanceMigrationKey = (date: string) => `itssDevice.attendanceMigrated.${date}`;
 /** device-local keys that should not follow the account across devices */
 const PENDING_KEY = "itss.syncPending";
 const LOCAL_ONLY = new Set(["itss.session", "itss.route", "itss.theme", "itss.activeCourse", PENDING_KEY]);
@@ -56,6 +58,36 @@ export function writeFromCloud(key: string, value: string) {
   if (key.startsWith(UNIT_BUILDER_SAVE_PROBE)) return;
   if (pendingFor(key)) return;
   if(isUnitPackKey(key)){receiveUnitPack(key,value);return;}
+  const attendanceMatch = key.match(ATTENDANCE_REGISTER_RE);
+  if (attendanceMatch && !localStorage.getItem(attendanceMigrationKey(attendanceMatch[1]))) {
+    // One-time recovery for legacy registers: different devices may hold
+    // rows that were lost when the old whole-register cloud blob was last
+    // overwritten. Preserve the union until AttendancePage has uploaded each
+    // row into its new collision-free record.
+    try {
+      const localValue = localStorage.getItem(key);
+      if (localValue) {
+        const local = JSON.parse(localValue) as {
+          header?: Record<string, string>;
+          rows?: Record<string, unknown>;
+          order?: string[];
+        };
+        const cloud = JSON.parse(value) as typeof local;
+        const localRows = local.rows ?? {};
+        const cloudRows = cloud.rows ?? {};
+        const cloudOrder = cloud.order ?? [];
+        const localOrder = local.order ?? [];
+        value = JSON.stringify({
+          ...cloud,
+          header: { ...(cloud.header ?? {}), ...(local.header ?? {}) },
+          rows: { ...cloudRows, ...localRows },
+          order: [...cloudOrder, ...localOrder.filter((id) => !cloudOrder.includes(id))],
+        });
+      }
+    } catch {
+      /* malformed legacy data falls back to the valid cloud value */
+    }
+  }
   rawSet(key, value);
 }
 

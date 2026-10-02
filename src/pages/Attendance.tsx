@@ -62,6 +62,8 @@ const attKey = (dateIso: string) => `itss.attendance.${dateIso}`;
 const attRowKey = (dateIso: string, profileId: string) =>
   `itss.attendance.${dateIso}.row.${profileId}`;
 const registerKeyPattern = /^itss\.attendance\.\d{4}-\d{2}-\d{2}$/;
+const attendanceMigrationKey = (dateIso: string) =>
+  `itssDevice.attendanceMigrated.${dateIso}`;
 
 /** Names on the register always start with a capital letter (per word). */
 function capWords(s: string): string {
@@ -362,13 +364,24 @@ export function AttendancePage({
     setRefreshing(true);
     try {
       const local = readReg(storageKey);
-      // Migrate an existing signature from the legacy whole-register record
-      // into its collision-free per-learner record the first time this learner
-      // opens or refreshes the register after the upgrade.
-      const ownRowKey = attRowKey(dateIso, profile.id);
-      if (local.rows[profile.id] && !localStorage.getItem(ownRowKey)) {
-        localStorage.setItem(ownRowKey, JSON.stringify(local.rows[profile.id]));
-        await flushKey(ownRowKey);
+      // Migrate every row available on this device, not only the current
+      // learner. A phone may hold the fuller legacy copy and can therefore
+      // restore rows that another device no longer has.
+      if (!localStorage.getItem(attendanceMigrationKey(dateIso))) {
+        try {
+          const migrations: Promise<void>[] = [];
+          for (const [profileId, row] of Object.entries(local.rows)) {
+            const rowKey = attRowKey(dateIso, profileId);
+            localStorage.setItem(rowKey, JSON.stringify(row));
+            migrations.push(flushKey(rowKey, !!supabase));
+          }
+          await Promise.all(migrations);
+          localStorage.setItem(attendanceMigrationKey(dateIso), "1");
+        } catch {
+          setAttendanceNote("Some saved signatures are waiting to sync — try Refresh again online.");
+          setReg(local);
+          return;
+        }
       }
       const latest = await pullLatest(storageKey);
       if (latest) {
