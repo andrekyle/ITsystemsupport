@@ -1,5 +1,5 @@
 import { strict as assert } from "node:assert";
-import { createLessonBlocks, paginateLesson, validateLessonPages } from "../src/lib/lessonLayout";
+import { createLessonBlocks, layoutLessonSections, paginateLesson, validateLessonPages } from "../src/lib/lessonLayout";
 
 const sentences = Array.from({ length: 22 }, (_, index) => `Sentence ${index + 1} explains an important technical idea clearly enough for a presentation audience.`).join(" ");
 const rows = Array.from({ length: 18 }, (_, index) => [`${index + 1}`, `Device ${index + 1}`, "A longer description that must wrap safely inside its own table cell without splitting the row."]);
@@ -28,5 +28,10 @@ assert(pages.slice(1).every(page => page.heading === "Infrastructure — Continu
 assert.equal(validateLessonPages(pages).length, 0, validateLessonPages(pages).join("\n"));
 assert.equal(pages.flatMap(page => page.paragraphs).filter(paragraph => paragraph.includes("| No | Device")).length >= 2, true, "table headers repeat on continuation slides");
 assert.equal(pages.flatMap(page => page.paragraphs).join(" ").includes("Sentence 22"), true, "long paragraph content is retained");
+
+const saved = layoutLessonSections([{ heading: "Saved lesson", icon: "presenter", flat: true, paragraphs: source, slideQuiz: [{ q: "Check?", options: ["Yes", "No"], answer: 0, explain: "Yes." }] }]);
+assert(saved.length >= 3, "existing saved lessons are repaginated at load time");
+assert(saved.slice(0, -1).every(section => !section.slideQuiz), "the slide quiz is not duplicated across continuations");
+assert.equal(saved.at(-1)?.slideQuiz?.length, 1, "the slide quiz remains on the final continuation");
 
 console.log(`PASS: ${blocks.length} semantic blocks paginated into ${pages.length} validated slides`);
