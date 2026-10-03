@@ -16,7 +16,7 @@ import { SlideViewer } from "./SlideViewer";
 import { Icon } from "../icons";
 import "./unit-builder.css";
 import { courseScopedUnit } from "../lib/courseScope";
-import { flushKey } from "../lib/sync";
+import { flushLessonEdits } from "../lib/lessonEditStore";
 
 async function readApiJson(response: Response, service: string): Promise<any> {
   const text = await response.text();
@@ -133,8 +133,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       // Keep rich text and figure layout attached to the new revision. The
       // old published revision remains untouched if either save fails.
       const key=`itss.lessonedits.${courseScopedUnit(`${unit.us}.built-${revision}`)}`;
-      localStorage.setItem(key,JSON.stringify(edits));
-      await flushKey(key,!!supabase);
+      await flushLessonEdits(key,edits);
     }
     await saveBuiltUnit(unit.us,{revision,createdAt:new Date().toISOString(),source:sourceText,content:next,files:{pdf,pptx,answers,material:built?.files.material,materialEditable:built?.files.materialEditable},aiUsed,planSource:built?.planSource});
     setSource(sourceText);setDraft(null);setMessage("Unit built and saved. All learning tabs and download files are ready.");onSaved();

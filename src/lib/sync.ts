@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { isUnitPackKey, receiveUnitPack, storedUnitPacks, clearUnitPacks } from "./unitStorage";
+import { receiveLessonEdits } from "./lessonEditStore";
 
 /**
  * Cloud sync for the app's localStorage state.
@@ -58,6 +59,7 @@ export function writeFromCloud(key: string, value: string) {
   if (key.startsWith(UNIT_BUILDER_SAVE_PROBE)) return;
   if (pendingFor(key)) return;
   if(isUnitPackKey(key)){receiveUnitPack(key,value);return;}
+  if(key.startsWith("itss.lessonedits.")){receiveLessonEdits(key,value);return;}
   const attendanceMatch = key.match(ATTENDANCE_REGISTER_RE);
   if (attendanceMatch && !localStorage.getItem(attendanceMigrationKey(attendanceMatch[1]))) {
     // One-time recovery for legacy registers: different devices may hold

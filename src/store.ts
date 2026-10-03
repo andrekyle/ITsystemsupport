@@ -6,6 +6,7 @@ import { cloudEnabled, supabase } from "./lib/supabase";
 import { flushKey, writeFromCloud } from "./lib/sync";
 import { logAudit } from "./lib/audit";
 import { courseScopedUnit } from "./lib/courseScope";
+import { cachedLessonEdits, loadLessonEdits, queueLessonEdits, subscribeLessonEdits } from "./lib/lessonEditStore";
 
 const PROFILES_KEY = "itss.profiles";
 const SESSION_KEY = "itss.session";
@@ -2160,19 +2161,21 @@ export interface LessonEdits {
 const lessonEditsKey = (us: string) => `itss.lessonedits.${courseScopedUnit(us)}`;
 
 export function useLessonEdits(us: string, temporary = false) {
-  const [edits, setEditsState] = useState<LessonEdits>(() => read<LessonEdits>(lessonEditsKey(us), {}));
+  const key = lessonEditsKey(us);
+  const [edits, setEditsState] = useState<LessonEdits>(() => cachedLessonEdits<LessonEdits>(key, {}));
 
   useEffect(() => {
-    setEditsState(read<LessonEdits>(lessonEditsKey(us), {}));
-  }, [us, temporary]);
+    if (temporary) { setEditsState({}); return; }
+    setEditsState(cachedLessonEdits<LessonEdits>(key, {}));
+    void loadLessonEdits<LessonEdits>(key, {}).then(setEditsState);
+  }, [key, temporary]);
 
   useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (!temporary && e.key === lessonEditsKey(us)) setEditsState(read<LessonEdits>(lessonEditsKey(us), {}));
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, [us, temporary]);
+    if (temporary) return;
+    return subscribeLessonEdits(key, value => {
+      try { setEditsState(JSON.parse(value) as LessonEdits); } catch { /* retain valid state */ }
+    });
+  }, [key, temporary]);
 
   const apply = useCallback(
     (mutate: (draft: LessonEdits) => LessonEdits) => {
@@ -2180,12 +2183,13 @@ export function useLessonEdits(us: string, temporary = false) {
         setEditsState(current => mutate({ ...current }));
         return;
       }
-      const fresh = read<LessonEdits>(lessonEditsKey(us), {});
-      const next = mutate({ ...fresh });
-      write(lessonEditsKey(us), next);
-      setEditsState(next);
+      setEditsState(current => {
+        const next = mutate({ ...current });
+        queueLessonEdits(key, next);
+        return next;
+      });
     },
-    [us, temporary]
+    [key, temporary]
   );
 
   const setHeading = useCallback(
