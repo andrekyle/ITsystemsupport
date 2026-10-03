@@ -11836,7 +11836,7 @@ h2.section-title.howto-heading {
   font-size: 15px;
 }
 
-/* editorial rows: huge outlined number, flat dividers, no boxes */
+/* Compact filled step markers keep the instructions easy to scan. */
 .howto-list {
   list-style: none;
   margin: 0 0 26px;
@@ -11846,8 +11846,8 @@ h2.section-title.howto-heading {
 
 .howto-row {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  gap: 0 20px;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 0 18px;
   padding: 28px 0;
   border-bottom: 1px solid var(--border);
   align-items: start;
@@ -11858,13 +11858,17 @@ h2.section-title.howto-heading {
 }
 
 .howto-bignum {
-  font-size: 58px;
-  font-weight: 800;
-  line-height: 0.95;
-  letter-spacing: -0.02em;
-  color: transparent;
-  -webkit-text-stroke: 1.5px var(--azure);
-  opacity: 0.75;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--azure) 14%, var(--surface));
+  color: var(--azure);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
@@ -11920,12 +11924,12 @@ h2.section-title.howto-heading {
 
 @media (max-width: 640px) {
   .howto-row {
-    grid-template-columns: 1fr;
-    gap: 6px;
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 0 12px;
     padding: 22px 0;
   }
-  .howto-bignum {
-    font-size: 40px;
+  .howto-row-body {
+    min-width: 0;
   }
 }
 
