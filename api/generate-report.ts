@@ -8,6 +8,8 @@
  *
  * Runs on Vercel's Edge runtime. Requires the `OPENAI_API_KEY` env var.
  */
+import { MARKING_MODELS } from "../src/lib/aiModels";
+
 export const config = { runtime: "edge" };
 
 declare const process: { env?: Record<string, string | undefined> } | undefined;
@@ -128,7 +130,7 @@ const MAX_DATA_LEN = 60_000;
 const LLM_TIMEOUT_MS = 45_000;
 const BUILD = "20260914-1";
 
-const MODEL_CANDIDATES = ["gpt-4.1-mini", "gpt-5.6-luna", "gpt-4o-mini", "gpt-4o"];
+const MODEL_CANDIDATES = MARKING_MODELS.map((model) => model.id);
 
 function paramsFor(model: string, hasQuestion: boolean, mode: string): Record<string, unknown> {
   if (model.startsWith("gpt-5")) {

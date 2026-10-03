@@ -8,6 +8,8 @@
  * Runs on Vercel's Edge runtime — no cold-start hit for common paths.
  * Requires the `OPENAI_API_KEY` env var (used ONLY for marking answers).
  */
+import { MARKING_MODELS } from "../src/lib/aiModels";
+
 export const config = { runtime: "edge" };
 
 // api/ is outside tsconfig's include; declare the Edge-runtime process global
@@ -146,12 +148,7 @@ function memoKey(s: string): string {
  *  The super user may pick a specific model on the dashboard; the request's
  *  `model` is honoured when it is on this allowlist and the rest of the
  *  chain stays as fallback. */
-const MODEL_CANDIDATES = [
-  "gpt-4.1-mini",
-  "gpt-5.6-luna",
-  "gpt-4o-mini",
-  "gpt-4o",
-];
+const MODEL_CANDIDATES = MARKING_MODELS.map((model) => model.id);
 
 /** Model-specific request parameters. The gpt-5 family rejects `max_tokens`
  *  (wants `max_completion_tokens`) and only supports the default temperature,

@@ -7,9 +7,11 @@ import { useBuiltUnit, saveBuiltUnit, deleteBuiltUnit } from "../lib/useBuiltUni
 import { unitHistory, unitVersionArchive, MAX_UNIT_HISTORY, type BuiltUnitVersion } from "../lib/builtUnits";
 import { importUnitSource } from "../lib/unitSourceImport";
 import { makeUnitExports } from "../lib/unitExports";
+import { createAiPresentation, type AiPresentationSlide } from "../lib/aiPresentation";
+import { plainSlideText } from "../lib/slideRichText";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 import { supabase } from "../lib/supabase";
-import { recordTokenUsage } from "../lib/tokens";
+import { loadContentModel, loadPresentationModel, recordTokenUsage } from "../lib/tokens";
 import { UnitContentEditor } from "./UnitContentEditor";
 import { Select } from "./Select";
 import { SlideViewer } from "./SlideViewer";
@@ -146,7 +148,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     try{
       const images=await Promise.all(selected.map(logbookImageDataUrl));
       const token=(await supabase?.auth.getSession())?.data.session?.access_token;
-      const response=await fetch("/api/extract-logbook-image",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({images}),signal:AbortSignal.timeout(85_000)});
+      const response=await fetch("/api/extract-logbook-image",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({images,model:loadContentModel()}),signal:AbortSignal.timeout(85_000)});
       const result=await readApiJson(response,"The logbook reading service");
       if(!response.ok)throw new Error(result.error??"The logbook image could not be read.");
       setLogbookContent(current=>[current.trim(),String(result.text??"").trim()].filter(Boolean).join("\n\n"));
@@ -165,7 +167,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       if(ai){
         setBusy("Researching the unit standard and creating the tabs with OpenAI...");
         const token=(await supabase?.auth.getSession())?.data.session?.access_token;
-        const response=await fetch("/api/enhance-unit-content",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({unit,source,minutes,lessonStructure:next.lesson.map(section=>({heading:section.heading,paragraphs:section.paragraphs})),activityContent:activityBlocks.map((block,index)=>`Activity ${index+1} heading:\n${block.heading.trim()||`Activity ${index+1}`}\n\nActivity ${index+1} content:\n${block.text.trim()}`).filter(text=>text.trim()).join("\n\n--- ACTIVITY SEPARATOR ---\n\n"),selfAssessmentContent,logbookContent}),signal:AbortSignal.timeout(85_000)});
+        const response=await fetch("/api/enhance-unit-content",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({unit,source,minutes,model:loadContentModel(),presentationModel:loadPresentationModel(),lessonStructure:next.lesson.map(section=>({heading:section.heading,paragraphs:section.paragraphs})),activityContent:activityBlocks.map((block,index)=>`Activity ${index+1} heading:\n${block.heading.trim()||`Activity ${index+1}`}\n\nActivity ${index+1} content:\n${block.text.trim()}`).filter(text=>text.trim()).join("\n\n--- ACTIVITY SEPARATOR ---\n\n"),selfAssessmentContent,logbookContent}),signal:AbortSignal.timeout(85_000)});
         const result=await readApiJson(response,"The AI build service");
         if(!response.ok) throw new Error(result.error??"AI generation failed. Turn it off to build entirely with built-in code.");
         next=mergeUnitContentEnhancement(next,result.content,unit);setWarning("");
@@ -174,6 +176,46 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       await publish(next,source,ai);
       doneBusy(()=>setOpen(false));
     }catch(e){setError(e instanceof Error?e.message:"The unit could not be built. Your current content is unchanged.");setBusy("");}
+  };
+  const createAiDeck=async()=>{
+    if(!built||!content)return;
+    setError("");setMessage("");setBusy("Creating AI PowerPoint slide content…");
+    try{
+      const current=effectiveBuiltContent(content,edits);
+      const deckSource=current.lesson.map((section,index)=>[
+        `Lesson ${index+1}: ${plainSlideText(section.heading)}`,
+        ...section.paragraphs.map(plainSlideText),
+        ...(section.bullets??[]).map(plainSlideText),
+        ...(section.cards??[]).flatMap(card=>[plainSlideText(card.title),plainSlideText(card.text)]),
+        ...(section.table?[section.table.headers.map(plainSlideText).join(" | "),...section.table.rows.map(row=>row.map(plainSlideText).join(" | "))]:[]),
+        ...(section.example?[plainSlideText(section.example.title),...section.example.lines.map(plainSlideText)]:[]),
+        ...(section.examples??[]).flatMap(example=>[plainSlideText(example.title),...example.lines.map(plainSlideText)]),
+      ].filter(Boolean).join("\n")).join("\n\n");
+      if(deckSource.length<100)throw new Error("Add lesson content before creating an AI PowerPoint.");
+      if(deckSource.length>100_000)throw new Error("This unit has more than 100,000 characters of lesson content. Shorten the lesson content before creating an AI PowerPoint.");
+      setBusy("Generating an AI PowerPoint from this unit’s lessons…");
+      const token=(await supabase?.auth.getSession())?.data.session?.access_token;
+      const response=await fetch("/api/generate-ai-presentation",{
+        method:"POST",
+        headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},
+        body:JSON.stringify({us:unit.us,title:unit.title,source:deckSource,model:loadPresentationModel()}),
+        signal:AbortSignal.timeout(75_000),
+      });
+      const result=await readApiJson(response,"The AI PowerPoint service");
+      if(!response.ok)throw new Error(result.error??"The AI PowerPoint could not be generated. Please retry.");
+      if(!Array.isArray(result.slides)||result.slides.length<4)throw new Error("The AI returned an incomplete presentation. Please retry.");
+      const file=await createAiPresentation(unit,result.slides as AiPresentationSlide[]);
+      const url=URL.createObjectURL(file);
+      const link=document.createElement("a");
+      link.href=url;
+      link.download=file.name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+      setMessage(`Downloaded ${file.name}${result.model?` · ${result.model}`:""}. The saved unit files were not changed.`);
+    }catch(error){setError(error instanceof Error?error.message:"The AI PowerPoint could not be created. The current unit is unchanged.");}
+    finally{setBusy("");}
   };
   return <section className="unit-builder">
     <div className="unit-builder-bar">
@@ -185,6 +227,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       {!inlineDraft && <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setDraft(effectiveBuiltContent(content ?? { lesson: [], exercises: [], assignments: [], quiz: [] },edits));setOpen(true);setError("");}}>Manage tabs and structure</button>}
       {built&&!inlineDraft&&<>
         <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(content??built.content,edits),built.source,built.aiUsed);}catch(e){setError(String(e));}finally{setBusy("");}}}>Update PDF and PowerPoint</button>
+        {content&&<button type="button" className="btn ghost" disabled={!!busy} onClick={()=>void createAiDeck()}><Icon name="presenter" size={15}/>{busy?"Creating AI PowerPoint…":"Create AI PowerPoint"}</button>}
         {selectedVersion&&<span className="unit-restore">
           <Select className="unit-version-select" ariaLabel="Saved unit versions" disabled={!!busy} value={selectedVersion.revision} onChange={setRestoreRevision} options={versions.map(version=>({value:version.revision,label:versionLabel(version),hint:versionHint(version)}))}/>
           <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");setMessage("");setBusy("Restoring saved version…");try{await saveBuiltUnit(unit.us,unitVersionArchive(selectedVersion));setRestoreRevision("");onSaved();setMessage(`The version saved on ${versionLabel(selectedVersion)} is now live. The version it replaced is still restorable.`);}catch(e){setError(String(e));}finally{setBusy("");}}}>Restore version</button>
@@ -338,7 +381,7 @@ export function LogbookBuilder({unit,content}:{unit:UnitStandard;content?:UnitCo
     try{
       const images=await Promise.all(selected.map(logbookImageDataUrl));
       const token=(await supabase?.auth.getSession())?.data.session?.access_token;
-      const response=await fetch("/api/extract-logbook-image",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({images})});
+      const response=await fetch("/api/extract-logbook-image",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({images,model:loadContentModel()})});
       const result=await readApiJson(response,"The logbook reading service");
       if(!response.ok)throw new Error(result.error??"The logbook image could not be read.");
       setSource(current=>[current.trim(),String(result.text??"").trim()].filter(Boolean).join("\n\n"));

@@ -1,5 +1,13 @@
 import { supabase } from "./supabase";
 import { COURSE_META, findUnit } from "../data/course";
+import {
+  CONTENT_MODELS,
+  MARKING_MODELS,
+  PRESENTATION_MODELS,
+  type AiModelInfo,
+} from "./aiModels";
+
+export { CONTENT_MODELS, MARKING_MODELS, PRESENTATION_MODELS };
 
 /**
  * AI-marking token accounting.
@@ -149,78 +157,47 @@ export async function fetchTokenRecords(from: Date, to: Date): Promise<TokenReco
  *  the marking endpoint may use. Unknown models fall back to gpt-4o-mini. */
 const PRICES_PER_MTOK: Record<string, { in: number; out: number }> = {
   "gpt-4o-mini": { in: 0.15, out: 0.6 },
+  "gpt-4.1-nano": { in: 0.1, out: 0.4 },
   "gpt-4.1-mini": { in: 0.4, out: 1.6 },
+  "gpt-4.1": { in: 2, out: 8 },
   "gpt-4o": { in: 2.5, out: 10 },
   "gpt-5.6-luna": { in: 0.2, out: 1.2 },
 };
 
 /* ---------- super-user marking-model setting ---------- */
 
-export interface MarkingModelInfo {
-  id: string;
-  name: string;
-  desc: string;
-  /** USD per 1M input / output tokens (OpenAI list prices) */
-  inPerM: number;
-  outPerM: number;
-  recommended?: boolean;
-}
-
-/** Models the super user may choose for AI marking. Must stay in step with
- *  the MODEL_CANDIDATES allowlist in api/mark-answer.ts. */
-export const MARKING_MODELS: MarkingModelInfo[] = [
-  {
-    id: "gpt-4.1-mini",
-    name: "GPT-4.1 mini",
-    desc: "Best marking judgement — credits genuine paraphrases correctly",
-    inPerM: 0.4,
-    outPerM: 1.6,
-    recommended: true,
-  },
-  {
-    id: "gpt-5.6-luna",
-    name: "GPT-5.6 Luna",
-    desc: "Newest GPT-5 tier — 3 AI markers vote on every answer, majority decides (uses ±3× tokens per check)",
-    inPerM: 0.2,
-    outPerM: 1.2,
-  },
-  {
-    id: "gpt-4o-mini",
-    name: "GPT-4o mini",
-    desc: "Cheapest — marks with guided reasoning steps; may still miss unusual paraphrases",
-    inPerM: 0.15,
-    outPerM: 0.6,
-  },
-  {
-    id: "gpt-4o",
-    name: "GPT-4o",
-    desc: "Largest and most expensive — for comparison testing",
-    inPerM: 2.5,
-    outPerM: 10,
-  },
-];
+export type MarkingModelInfo = AiModelInfo;
 
 export const DEFAULT_MARKING_MODEL = "gpt-4.1-mini";
+export const DEFAULT_CONTENT_MODEL = "gpt-4.1-mini";
+export const DEFAULT_PRESENTATION_MODEL = "gpt-4.1-mini";
 
 /** Shared key (`.shared` suffix → synced via shared_state to every account)
  *  so all learners' marking calls use the model the super user picked. */
 const MODEL_KEY = "itss.aimodel.shared";
+const CONTENT_MODEL_KEY = "itss.aicontentmodel.shared";
+const PRESENTATION_MODEL_KEY = "itss.aipresentationmodel.shared";
 
-export function loadMarkingModel(): string {
+function loadModel(key: string, models: readonly AiModelInfo[], defaultModel: string): string {
   try {
-    const v = JSON.parse(localStorage.getItem(MODEL_KEY) ?? "null");
-    if (typeof v === "string" && MARKING_MODELS.some((m) => m.id === v)) return v;
+    const value = JSON.parse(localStorage.getItem(key) ?? "null");
+    if (typeof value === "string" && models.some((model) => model.id === value)) return value;
   } catch {
     /* fall through to default */
   }
-  return DEFAULT_MARKING_MODEL;
+  return defaultModel;
 }
 
-export function saveMarkingModel(id: string): void {
-  if (MARKING_MODELS.some((m) => m.id === id)) {
-    localStorage.setItem(MODEL_KEY, JSON.stringify(id));
-  }
+function saveModel(key: string, id: string, models: readonly AiModelInfo[]): void {
+  if (models.some((model) => model.id === id)) localStorage.setItem(key, JSON.stringify(id));
 }
+
+export const loadMarkingModel = () => loadModel(MODEL_KEY, MARKING_MODELS, DEFAULT_MARKING_MODEL);
+export const saveMarkingModel = (id: string) => saveModel(MODEL_KEY, id, MARKING_MODELS);
+export const loadContentModel = () => loadModel(CONTENT_MODEL_KEY, CONTENT_MODELS, DEFAULT_CONTENT_MODEL);
+export const saveContentModel = (id: string) => saveModel(CONTENT_MODEL_KEY, id, CONTENT_MODELS);
+export const loadPresentationModel = () => loadModel(PRESENTATION_MODEL_KEY, PRESENTATION_MODELS, DEFAULT_PRESENTATION_MODEL);
+export const savePresentationModel = (id: string) => saveModel(PRESENTATION_MODEL_KEY, id, PRESENTATION_MODELS);
 
 function priceFor(model: string): { in: number; out: number } {
   const hit = Object.keys(PRICES_PER_MTOK).find((k) => model.startsWith(k));

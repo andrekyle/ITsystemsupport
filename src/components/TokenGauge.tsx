@@ -6,9 +6,15 @@ import {
   fetchTokenRecords,
   fetchTokenSummary,
   fmtTokens,
+  CONTENT_MODELS,
   loadMarkingModel,
+  loadContentModel,
+  loadPresentationModel,
   MARKING_MODELS,
+  PRESENTATION_MODELS,
+  saveContentModel,
   saveMarkingModel,
+  savePresentationModel,
   type TokenRecord,
   type TokenRecordsResult,
   type TokenSummaryResult,
@@ -268,6 +274,8 @@ export function TokenGauge() {
   const [editBudget, setEditBudget] = useState(false);
   const [closedMods, setClosedMods] = useState<Set<string>>(new Set());
   const [markingModel, setMarkingModel] = useState<string>(loadMarkingModel);
+  const [contentModel, setContentModel] = useState<string>(loadContentModel);
+  const [presentationModel, setPresentationModel] = useState<string>(loadPresentationModel);
 
   const now = new Date();
   const from = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
@@ -714,6 +722,80 @@ export function TokenGauge() {
                 Applies to every learner's marking calls (each device picks it up on its next
                 sign-in or page load). If the chosen model is unavailable, marking falls back to
                 the next one automatically.
+              </p>
+            </div>
+
+            <div className="oa-models">
+              <div className="oa-sec-lbl">AI content generation model</div>
+              <div className="oa-models-list" role="radiogroup" aria-label="AI content generation model">
+                {CONTENT_MODELS.map((model) => {
+                  const active = contentModel === model.id;
+                  return (
+                    <button
+                      key={model.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      className={`oa-model-row${active ? " active" : ""}`}
+                      onClick={() => {
+                        saveContentModel(model.id);
+                        setContentModel(model.id);
+                      }}
+                      title={`Generate course content with ${model.name}`}
+                    >
+                      <span className={`oa-radio${active ? " on" : ""}`} aria-hidden="true" />
+                      <span className="oa-model-name">
+                        {model.name}
+                        {model.recommended && <span className="oa-model-tag">Recommended</span>}
+                        {active && <span className="oa-model-tag on">In use</span>}
+                      </span>
+                      <span className="oa-model-desc">{model.desc}</span>
+                      <span className="oa-model-price">
+                        ${model.inPerM.toFixed(2)} in / ${model.outPerM.toFixed(2)} out per 1M
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mini-note" style={{ margin: "6px 0 0" }}>
+                Used for AI unit builds, activity answers, slide quizzes and logbook image reading.
+              </p>
+            </div>
+
+            <div className="oa-models">
+              <div className="oa-sec-lbl">AI PowerPoint model</div>
+              <div className="oa-models-list" role="radiogroup" aria-label="AI PowerPoint model">
+                {PRESENTATION_MODELS.map((model) => {
+                  const active = presentationModel === model.id;
+                  return (
+                    <button
+                      key={model.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      className={`oa-model-row${active ? " active" : ""}`}
+                      onClick={() => {
+                        savePresentationModel(model.id);
+                        setPresentationModel(model.id);
+                      }}
+                      title={`Build AI PowerPoint decks with ${model.name}`}
+                    >
+                      <span className={`oa-radio${active ? " on" : ""}`} aria-hidden="true" />
+                      <span className="oa-model-name">
+                        {model.name}
+                        {model.recommended && <span className="oa-model-tag">Recommended</span>}
+                        {active && <span className="oa-model-tag on">In use</span>}
+                      </span>
+                      <span className="oa-model-desc">{model.desc}</span>
+                      <span className="oa-model-price">
+                        ${model.inPerM.toFixed(2)} in / ${model.outPerM.toFixed(2)} out per 1M
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mini-note" style={{ margin: "6px 0 0" }}>
+                Used for AI lesson-slide layout during unit builds and the separate AI PowerPoint workflow. The standard export remains local.
               </p>
             </div>
 

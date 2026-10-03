@@ -36,6 +36,7 @@ import { EditableActivityText } from "../components/EditableActivityText";
 import { fileToImageDataUrl } from "../components/Avatar";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 import { requestSemanticReview } from "../lib/llm";
+import { loadContentModel } from "../lib/tokens";
 import { checkSpelling, type SpellIssue } from "../lib/spellcheck";
 import { autoGrowTextarea } from "../lib/autoGrow";
 import { insertLessonPlanDay, lessonPlanDayCount, removeLessonPlanDay, startLessonPlanDay } from "../lib/lessonPlanDays";
@@ -2917,7 +2918,7 @@ export function UnitPage({
       const response = await fetch("/api/generate-activity-answers", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ title: value.title, questions: value.steps, source: plainSlideText([...(value.scenario ?? []), JSON.stringify(content?.lesson ?? [])].join("\n")).slice(0, 60_000) }),
+        body: JSON.stringify({ title: value.title, questions: value.steps, model: loadContentModel(), source: plainSlideText([...(value.scenario ?? []), JSON.stringify(content?.lesson ?? [])].join("\n")).slice(0, 60_000) }),
         signal: AbortSignal.timeout(55_000),
       });
       const generated = await response.json();
@@ -2975,7 +2976,7 @@ export function UnitPage({
     const section = content.lesson[si];
     const source = [section.heading, ...section.paragraphs, ...(section.bullets ?? [])].join("\n");
     try {
-      const response = await fetch("/api/generate-slide-quiz", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slideText: source, count: quizQuestionCount }) });
+      const response = await fetch("/api/generate-slide-quiz", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slideText: source, count: quizQuestionCount, model: loadContentModel() }) });
       const data = await response.json() as { questions?: QuizQuestion[]; error?: string };
       if (!response.ok || !data.questions?.length) throw new Error(data.error ?? "No questions were returned.");
       editGeneratedQuiz(si, data.questions);
@@ -2997,7 +2998,7 @@ export function UnitPage({
       ...(section.examples ?? []).flatMap(example => [example.title, ...example.lines]),
     ].join("\n")).join("\n\n");
     try {
-      const response = await fetch("/api/generate-slide-quiz", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slideText: source, count: unitQuizCount }) });
+      const response = await fetch("/api/generate-slide-quiz", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slideText: source, count: unitQuizCount, model: loadContentModel() }) });
       const data = await response.json() as { questions?: QuizQuestion[]; error?: string };
       if (!response.ok || !data.questions?.length) throw new Error(data.error ?? "No questions were returned.");
       const existing = content.quizzes?.length

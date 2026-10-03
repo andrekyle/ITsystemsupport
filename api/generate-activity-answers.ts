@@ -1,3 +1,5 @@
+import { CONTENT_MODELS, selectAiModel } from "../src/lib/aiModels";
+
 export const config = { runtime: "edge" };
 declare const process: { env?: Record<string, string | undefined> };
 const json = (value: unknown, status = 200) => Response.json(value, { status });
@@ -84,7 +86,9 @@ export default async function handler(request: Request): Promise<Response> {
     }
     const raw = await request.text();
     if (raw.length > 120_000) return json({ error: "Source is too large." }, 413);
-    const body = JSON.parse(raw) as { title?: unknown; questions?: unknown; source?: unknown };
+    const body = JSON.parse(raw) as { title?: unknown; questions?: unknown; source?: unknown; model?: unknown };
+    const model = selectAiModel(body.model, CONTENT_MODELS, env.OPENAI_UNIT_MODEL || "gpt-4.1-mini");
+    if (!model) return json({ error: body.model === undefined ? "The configured content model is not available in the model selector." : "Choose a supported AI content model." }, body.model === undefined ? 503 : 400);
     const title = clean(body.title, 200);
     const questions = Array.isArray(body.questions) ? body.questions.map(q => clean(q, 600)).filter(Boolean) : [];
     if (!title || !questions.length) return json({ error: "Add a heading and at least one question first." }, 400);
@@ -96,7 +100,7 @@ export default async function handler(request: Request): Promise<Response> {
       headers: { Authorization: `Bearer ${env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
       signal: AbortSignal.timeout(40_000),
       body: JSON.stringify({
-        model: env.OPENAI_UNIT_MODEL || "gpt-4.1-mini",
+        model,
         temperature: 0.2,
         max_tokens: 6000,
         response_format: { type: "json_schema", json_schema: { name: "activity_answer_key", strict: true, schema } },
