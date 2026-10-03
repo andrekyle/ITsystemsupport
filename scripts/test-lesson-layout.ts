@@ -34,4 +34,16 @@ assert(saved.length >= 3, "existing saved lessons are repaginated at load time")
 assert(saved.slice(0, -1).every(section => !section.slideQuiz), "the slide quiz is not duplicated across continuations");
 assert.equal(saved.at(-1)?.slideQuiz?.length, 1, "the slide quiz remains on the final continuation");
 
+const malformedStages = [
+  "Stage 1 | The sender decides what information is going to be transmitted. |", "---",
+  "Stage 2 | The sender encodes this information. |", "---",
+  "Stage 3 | The sender transmits the message. |", "---",
+  "Stage 4 | The receiver takes in the message. |",
+  "Stage 5 | The receiver decodes the message. |",
+];
+const stageBlocks = createLessonBlocks(malformedStages);
+assert.equal(stageBlocks.length, 1, "malformed Word table separators do not render as paragraphs");
+assert.equal(stageBlocks[0].type, "numbered", "communication stages use a semantic numbered list");
+assert.equal(stageBlocks[0].items?.length, 5, "every stage remains in the same ordered sequence");
+
 console.log(`PASS: ${blocks.length} semantic blocks paginated into ${pages.length} validated slides`);

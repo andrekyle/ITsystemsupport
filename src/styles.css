@@ -6556,6 +6556,17 @@ a.plan-ppt:hover {
   padding-inline-start: .35em;
   break-inside: avoid;
 }
+.lesson-screen .lesson-stage-list {
+  display: grid;
+  gap: 8px;
+  padding-inline-start: 2.4em;
+  counter-reset: lesson-stage;
+}
+.lesson-screen .lesson-stage-list > li {
+  padding: 8px 12px;
+  border-left: 3px solid var(--azure-light);
+  background: color-mix(in srgb, var(--surface) 88%, var(--azure-light));
+}
 .lesson-screen .lesson-subsection,
 .lesson-screen .lesson-point-group,
 .lesson-screen .lesson-table-scroll,
