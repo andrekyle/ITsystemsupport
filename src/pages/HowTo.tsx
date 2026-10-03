@@ -72,7 +72,7 @@ const STEPS: Step[] = [
 
 export function HowToPage({ navigate }: { navigate: (r: Route) => void }) {
   return (
-    <>
+    <div className="howto-page">
       <h2 className="section-title howto-heading">
         <span className="ico">
           <Icon name="target" size={26} />
@@ -128,6 +128,6 @@ export function HowToPage({ navigate }: { navigate: (r: Route) => void }) {
           session dates and deadlines.
         </div>
       </div>
-    </>
+    </div>
   );
 }

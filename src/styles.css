@@ -11805,6 +11805,27 @@ h2.section-title.howto-heading {
   font-weight: 650;
 }
 
+.howto-page {
+  position: relative;
+  isolation: isolate;
+}
+
+.howto-page::before {
+  position: absolute;
+  z-index: -1;
+  inset: -16px;
+  background: url("/chat-wallpaper-light.svg") repeat;
+  background-size: 420px 420px;
+  content: "";
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+[data-theme="dark"] .howto-page::before {
+  background-image: url("/chat-wallpaper-dark.svg");
+  opacity: 0.22;
+}
+
 .howto-intro {
   margin: -6px 0 16px;
   font-size: 17px;
