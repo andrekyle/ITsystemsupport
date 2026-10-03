@@ -1,11 +1,12 @@
 import type { UnitContent, UnitStandard, LessonSection, LessonPlan, LessonPlanRow } from "../types";
 import { getContent } from "../data/content";
 import { lessonTableMarkdown, parseLessonTextBlocks } from "./lessonTables";
+import { normalizeLessonParagraphs, paginateLesson } from "./lessonLayout";
 
 export const MAX_SOURCE_LENGTH = 120_000;
 export const MAX_LESSON_PLAN_LENGTH = 40_000;
 export type BuildOptions = { minutes: number };
-export type UnitTopic = { heading: string; paragraphs: string[] };
+export type UnitTopic = { heading: string; paragraphs: string[]; paragraphFormats?: ("paragraph" | "subheading" | "numbered" | "bullet")[] };
 const normal = (text: string) => text.replace(/\r\n?/g, "\n").replace(/\u0000/g, "").trim();
 
 /** Join extraction artifacts such as a standalone "2." or "a)" to its text. */
@@ -58,41 +59,14 @@ export function parseUnitSource(source: string): UnitTopic[] {
   }
   flush();
   if (!topics.length) throw new Error("No teaching paragraphs were found. Include text below each heading.");
-  // Divide long sections at paragraph/sentence boundaries without dropping source text.
+  // Normalize, classify, measure and paginate before the renderer sees content.
   const result: UnitTopic[] = [];
   for (const topic of topics) {
     const tableAwareParagraphs = parseLessonTextBlocks(topic.paragraphs).map(block =>
       block.kind === "table" ? lessonTableMarkdown(block) : block.text
     );
-    const parts = tableAwareParagraphs.flatMap(p => p.length > 1800 && !/^\|[\s\S]+\|\s*$/m.test(p)
-      ? (p.match(/[^.!?]+[.!?]+(?:\s+|$)|[^.!?]+$/g) ?? [p]).map(s => s.trim())
-      : [p]);
-    let chunk: string[] = [];
-    let part = 0;
-    for (let i = 0; i < parts.length; i++) {
-      const paragraph = parts[i];
-      const nextParagraph = parts[i + 1];
-      // A numbered subheading belongs with the prose it introduces. Treat the
-      // pair as one chunking unit while preserving both paragraph boundaries.
-      // Sentence-like steps and consecutive numbered items remain independent.
-      const keepWithNext = (paragraph.length <= 160
-        && /^\d+(?:\.\d+)*[.)]?\s+\S/.test(paragraph)
-        && !/[.!?]\s*$|\n/.test(paragraph)
-        && nextParagraph !== undefined
-        && !/^\d+(?:\.\d+)*[.)]?\s+\S/.test(nextParagraph))
-        || (/:$/.test(paragraph.trim()) && nextParagraph !== undefined && nextParagraph.length <= 140);
-      const group: string[] = [paragraph];
-      if (/:$/.test(paragraph.trim())) {
-        let k = i + 1;
-        while (k < parts.length && parts[k].length <= 140 && !/^\d+(?:\.\d+)*[.)]?\s+\S/.test(parts[k].trim())) group.push(parts[k++]);
-        if (group.length > 1) i = k - 1;
-      } else if (keepWithNext) group.push(nextParagraph);
-      // Keep the supplied section together on one lesson slide. The lesson
-      // view can scroll; splitting here separates headings and their points.
-      chunk.push(...group);
-      if (keepWithNext && !/:$/.test(paragraph.trim())) i++;
-    }
-    if (chunk.length) result.push({ heading: `${topic.heading}${part ? ` (continued ${part + 1})` : ""}`, paragraphs: repairOrphanedParagraphs(chunk) });
+    const parts = repairOrphanedParagraphs(normalizeLessonParagraphs(tableAwareParagraphs));
+    result.push(...paginateLesson(topic.heading, parts));
   }
   if (result.length > 80) throw new Error("This source produces more than 80 lesson sections. Split it into smaller units.");
   return result;

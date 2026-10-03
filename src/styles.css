@@ -6499,6 +6499,16 @@ a.plan-ppt:hover {
   max-width: 1200px;
   animation: lesson-fade 0.25s ease;
 }
+.lesson-screen .lesson-section {
+  --lesson-body-size: 19px;
+  --lesson-body-leading: 1.63;
+  max-width: 1200px;
+  overflow-wrap: anywhere;
+}
+.lesson-screen .lesson-section > .slide-whole-editor,
+.lesson-screen .lesson-section > :not(.lesson-quiz-card) {
+  min-width: 0;
+}
 @keyframes lesson-fade {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -6532,8 +6542,44 @@ a.plan-ppt:hover {
 
 /* ---- Follow-on paragraphs a bit larger too ---- */
 .lesson-screen .lesson-section > .lesson-p {
-  font-size: 19px;
-  line-height: 1.75;
+  font-size: var(--lesson-body-size);
+  line-height: var(--lesson-body-leading);
+}
+
+/* Imported formatting never controls slide typography. Lists use native
+   markers and hanging indentation so wrapped lines align with their text. */
+.lesson-screen .lesson-inferred-list {
+  padding-inline-start: 2.1em;
+  margin: 8px 0 18px;
+}
+.lesson-screen .lesson-inferred-list > li {
+  padding-inline-start: .35em;
+  break-inside: avoid;
+}
+.lesson-screen .lesson-subsection,
+.lesson-screen .lesson-point-group,
+.lesson-screen .lesson-table-scroll,
+.lesson-screen figure {
+  break-inside: avoid;
+}
+.lesson-screen .lesson-subheading { break-after: avoid; }
+.lesson-screen .lesson-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 14px 0 18px;
+}
+.lesson-screen table.data.lesson-table {
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+}
+.lesson-screen table.data.lesson-table th,
+.lesson-screen table.data.lesson-table td {
+  min-width: 7.5em;
+  padding: 10px 12px;
+  line-height: 1.45;
+  vertical-align: top;
+  overflow-wrap: anywhere;
 }
 
 /* ---- Every other slide text element follows the bigger reading size ---- */
