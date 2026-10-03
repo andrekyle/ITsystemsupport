@@ -523,6 +523,9 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
 
     const selectedLists = Array.from(new Set(selectedBlocks.map(block => block.closest<HTMLOListElement | HTMLUListElement>("ol,ul")).filter((list): list is HTMLOListElement | HTMLUListElement => Boolean(list))));
     const requestedTag = ordered ? "OL" : "UL";
+    const toggleOff = selectedBlocks.every(block =>
+      block.tagName === "LI" && block.closest("ol,ul")?.tagName === requestedTag
+    );
     let firstResult: HTMLElement | null = null;
     let lastResult: HTMLElement | null = null;
     if (selectedLists.length && selectedBlocks.every(block => block.tagName === "LI")) {
@@ -542,7 +545,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         Array.from(list.children).forEach(child => {
           if (!(child instanceof HTMLLIElement)) return;
           const selected = selectedItems.has(child);
-          if (selected && list.tagName === requestedTag) {
+          if (selected && toggleOff) {
             const paragraph = document.createElement("p");
             paragraph.className = "lesson-p";
             paragraph.append(...Array.from(child.childNodes));
