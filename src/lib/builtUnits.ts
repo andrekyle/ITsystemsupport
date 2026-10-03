@@ -1,6 +1,7 @@
 import type { PoeDoc, UnitContent } from "../types";
 import { unitPackSnapshot } from "./unitStorage";
 import { courseScopedUnit } from "./courseScope";
+import { layoutLessonSections } from "./lessonLayout";
 
 export type UnitFiles = { pdf: PoeDoc; pptx: PoeDoc; answers: PoeDoc; material?: PoeDoc; materialEditable?: PoeDoc };
 export type BuiltUnitVersion = { revision: string; source: string; content: UnitContent; files: UnitFiles; createdAt: string; aiUsed: boolean; planSource?: string };
@@ -192,6 +193,7 @@ function cleanLegacyGeneratedContent<T extends BuiltUnit | BuiltUnitVersion>(uni
   if (!content) return unit;
   const cleaned: UnitContent = {
     ...content,
+    lesson: layoutLessonSections(content.lesson),
     evaluation: content.evaluation,
     lessonPlan: isLegacyGeneratedLessonPlan(content.lessonPlan, unit.planSource) ? lessonPlanTemplate(us, content) : content.lessonPlan,
     selfAssessment: content.selfAssessment ? {

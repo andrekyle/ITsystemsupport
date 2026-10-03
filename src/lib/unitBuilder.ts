@@ -1,7 +1,7 @@
 import type { UnitContent, UnitStandard, LessonSection, LessonPlan, LessonPlanRow } from "../types";
 import { getContent } from "../data/content";
 import { lessonTableMarkdown, parseLessonTextBlocks } from "./lessonTables";
-import { normalizeLessonParagraphs, paginateLesson } from "./lessonLayout";
+import { layoutLessonSections, normalizeLessonParagraphs, paginateLesson } from "./lessonLayout";
 
 export const MAX_SOURCE_LENGTH = 120_000;
 export const MAX_LESSON_PLAN_LENGTH = 40_000;
@@ -765,7 +765,7 @@ function lessonPlanFromTemplate(unit: UnitStandard, topics: UnitTopic[], minutes
 export function mergeUnitContentEnhancement(base: UnitContent, enhancement: UnitContentEnhancement, unit: UnitStandard): UnitContent {
   const next = structuredClone(base);
   const generatedLessons = lessonsFromLayout(next.lesson, enhancement.lessonLayout);
-  if (generatedLessons) next.lesson = generatedLessons;
+  if (generatedLessons) next.lesson = layoutLessonSections(generatedLessons);
   if (generatedLogbookIsUsable(enhancement.logbook, next.lesson)) next.logbook = normalizeLogbookSpec(unit, enhancement.logbook);
   next.evaluation = undefined;
   if (enhancement.selfAssessment?.items?.length) next.selfAssessment = selfAssessmentFromTemplate(enhancement.selfAssessment.items);

@@ -1,4 +1,5 @@
 import { lessonTableMarkdown, parseLessonTextBlocks, type LessonTableBlock } from "./lessonTables";
+import type { LessonSection } from "../types";
 
 export type LessonBlockType = "paragraph" | "subheading" | "bullet" | "numbered" | "table";
 export type LessonBlock = {
@@ -230,4 +231,35 @@ export function validateLessonPages(pages: readonly PaginatedLesson[]): string[]
     for (const block of blocks) if ((block.type === "bullet" || block.type === "numbered") && block.items?.length === 1 && pages.length > 1) issues.push(`Slide ${index + 1} has an isolated list item.`);
   });
   return issues;
+}
+
+/** Upgrade saved/generated lesson sections that predate semantic pagination.
+ * Rich media sections retain their authored layout; text-first sections are
+ * safely repaginated and keep quizzes/figures on the final continuation. */
+export function layoutLessonSections(sections: readonly LessonSection[]): LessonSection[] {
+  return sections.flatMap(section => {
+    if (!section.paragraphs?.length) return [section];
+    const hasAuthoredLayout = Boolean(section.cards?.length || section.table || section.example || section.examples?.length || section.bullets?.length || section.modelAnswer?.length);
+    if (hasAuthoredLayout) return [section];
+    const source = section.paragraphs.map((paragraph, index) => {
+      const format = section.paragraphFormats?.[index];
+      if (format === "numbered" && !marker(paragraph)) return `1. ${paragraph}`;
+      if (format === "bullet" && !marker(paragraph)) return `• ${paragraph}`;
+      if (format === "subheading" && !isSubheading(paragraph)) return `**${paragraph}**`;
+      return paragraph;
+    });
+    const baseHeading = section.heading.replace(/\s*(?:—|\(|-)\s*continued(?:\s+\d+)?\)?$/i, "").trim();
+    const pages = paginateLesson(baseHeading, source);
+    if (pages.length === 1 && pages[0].heading === section.heading && pages[0].paragraphs.join("\u0000") === section.paragraphs.join("\u0000")) return [section];
+    return pages.map((page, index) => ({
+      ...section,
+      heading: page.heading,
+      paragraphs: page.paragraphs,
+      paragraphFormats: page.paragraphFormats,
+      lessonStart: index === 0 ? section.lessonStart : undefined,
+      figures: index === pages.length - 1 ? section.figures : undefined,
+      slideQuiz: index === pages.length - 1 ? section.slideQuiz : undefined,
+      quizGate: index === pages.length - 1 ? section.quizGate : undefined,
+    }));
+  });
 }
