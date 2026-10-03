@@ -31,6 +31,7 @@ import { supabase } from "../lib/supabase";
 import { flushKey } from "../lib/sync";
 import { GeneratedQuizEditor } from "../components/GeneratedQuizEditor";
 import { saveBuiltUnit, useBuiltUnit } from "../lib/useBuiltUnit";
+import { flushLessonEdits } from "../lib/lessonEditStore";
 import { EditableActivityText } from "../components/EditableActivityText";
 import { fileToImageDataUrl } from "../components/Avatar";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
@@ -2709,7 +2710,7 @@ export function UnitPage({
     setLessonSaveStatus("");
     try {
       const editId = builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId;
-      await flushKey(`itss.lessonedits.${courseScopedUnit(editId)}`, true);
+      await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(editId)}`, lessonEdits);
       setLessonSaveStatus("saved");
       setEditMode(false);
     } catch (error) {
