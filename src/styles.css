@@ -11843,6 +11843,26 @@ table.data th.sortable.sorted { color: var(--ink); }
   transition: transform 0.15s, filter 0.15s;
 }
 
+.ai-assistant-icon {
+  display: block;
+  object-fit: contain;
+}
+
+.ai-assistant-fab-icon {
+  width: 54px;
+  height: 54px;
+}
+
+.ai-assistant-nav-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.ai-assistant-heading-icon {
+  width: 28px;
+  height: 28px;
+}
+
 .ai-fab:hover {
   filter: drop-shadow(0 6px 14px rgba(15, 108, 189, 0.5)) brightness(1.1);
   transform: translateY(-2px);
