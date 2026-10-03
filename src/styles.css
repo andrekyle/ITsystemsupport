@@ -11817,13 +11817,14 @@ h2.section-title.howto-heading {
   background: url("/chat-wallpaper-light.svg") repeat;
   background-size: 420px 420px;
   content: "";
-  opacity: 0.08;
+  opacity: 0.2;
   pointer-events: none;
 }
 
 [data-theme="dark"] .howto-page::before {
   background-image: url("/chat-wallpaper-dark.svg");
-  opacity: 0.22;
+  filter: brightness(2.4);
+  opacity: 0.18;
 }
 
 .howto-intro {
