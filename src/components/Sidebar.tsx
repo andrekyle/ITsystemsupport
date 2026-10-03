@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, Route } from "../types";
 import { isStaff } from "../types";
-import { MODULES } from "../data/course";
 import type { ProgressState } from "../types";
-import { moduleCompletion } from "../store";
 import { isInstalled, installHelpMessage, onInstallChange, promptInstall } from "../lib/install";
 import { AlertModal } from "./Modal";
 
@@ -39,7 +37,7 @@ interface Props {
   navigate: (r: Route) => void;
 }
 
-export function Sidebar({ collapsed, route, progress, profile, navigate }: Props) {
+export function Sidebar({ collapsed, route, profile, navigate }: Props) {
   const isPrivileged = isStaff(profile.role);
   const [installed, setInstalled] = useState(isInstalled);
   const [installMsg, setInstallMsg] = useState<string | null>(null);
@@ -114,30 +112,6 @@ export function Sidebar({ collapsed, route, progress, profile, navigate }: Props
           ))}
         </div>
 
-        {!collapsed && <div className="side-label">Modules · SAQA 48573</div>}
-        <div className="side-section">
-          {MODULES.map((m, i) => {
-            const c = moduleCompletion(progress, m.id);
-            const active = route.moduleId === m.id;
-            return (
-              <button
-                key={m.id}
-                className={`side-item mod${active ? " active" : ""}`}
-                onClick={() => navigate({ page: "module", moduleId: m.id })}
-                title={`Module ${i + 1}: ${m.name}${c ? ` — ${Math.round(c * 100)}%` : ""}`}
-              >
-                <span className="ico">
-                  <Icon name={m.icon} />
-                </span>
-                {!collapsed && (
-                  <span className="txt">
-                    {i + 1}. {toSentenceCase(m.name)}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       <div className="sidebar-footer">
