@@ -30,6 +30,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   const [textColour, setTextColour] = useState("#808080");
   const [highlightColour, setHighlightColour] = useState("#fff59d");
   const [size, setSize] = useState("");
+  const [blockStyle, setBlockStyle] = useState("p");
   const [tableRows, setTableRows] = useState("3");
   const [tableCols, setTableCols] = useState("3");
   const [menu, setMenu] = useState<"text" | "paragraph" | "table" | "image" | null>(null);
@@ -75,6 +76,8 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       bookmark.current = { start: length, end: length };
       setReady(true);
       setActive(commands.filter(([cmd]) => document.queryCommandState(cmd)).map(([cmd]) => cmd));
+      const block = (document.queryCommandValue("formatBlock") || "p").toString().replace(/[<>]/g, "").toLowerCase();
+      setBlockStyle(["h1", "h2", "h3", "h4", "p"].includes(block) ? block : "p");
     } finally {
       replaying.current = false;
       refreshHistory();
@@ -864,10 +867,13 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   const imageIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 18 5-5 3 3 3-4 5 6"/></svg>;
   const paragraphIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h11M9 12h8M9 19h11" /><path d="M4 5v14m0-14L2 7m2-2 2 2m-2 12-2-2m2 2 2-2" /></svg>;
   return <div className="slide-text-toolbar" ref={bar} onKeyDown={e => { if (e.key === "Escape") { setMenu(null); host.current?.focus(); } }}>
-    <div className="slide-text-controls" role="group" aria-label="Slide text formatting">
+    <div className="slide-text-controls" role="toolbar" aria-label="Lesson rich text editor" aria-disabled={!ready}>
       <span className="slide-tool-group">
         {commandButton("undo", "Undo", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 4 10l5 5M4 10h10a6 6 0 0 1 0 12" transform="translate(0 -2)" /></svg>)}
         {commandButton("redo", "Redo", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5 5 5-5 5m5-5H10a6 6 0 0 0 0 12" transform="translate(0 -2)" /></svg>)}
+      </span>
+      <span className="slide-tool-group slide-tool-style-group">
+        <Select ariaLabel="Paragraph style" disabled={!ready} value={blockStyle} options={[{value:"p",label:"Body text"},{value:"h2",label:"Section heading"},{value:"h3",label:"Subheading"},{value:"h4",label:"Small heading"}]} onChange={value => { setBlockStyle(value); run("formatBlock", value); }} />
       </span>
       <span className="slide-tool-group">
         {commandButton("bold", "Bold", <strong aria-hidden="true">B</strong>)}
@@ -878,7 +884,11 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       <span className="slide-tool-group">
         {commandButton("justifyLeft", "Align left", alignmentIcon())}
         {commandButton("justifyCenter", "Centre", alignmentIcon(true))}
+        {commandButton("justifyRight", "Align right", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18M9 11h12M13 17h8" /></svg>)}
+        {commandButton("insertUnorderedList", "Bullet list", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h12M9 12h12M9 19h12"/><circle cx="4" cy="5" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="19" r="1"/></svg>)}
         {commandButton("insertOrderedList", "Numbered list", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h12M9 12h12M9 19h12" /><text x="1" y="7">1</text><text x="1" y="14">2</text><text x="1" y="21">3</text></svg>)}
+        {commandButton("outdent", "Decrease indent", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5h11M10 12h11M10 19h11M7 8l-4 4 4 4"/></svg>)}
+        {commandButton("indent", "Increase indent", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5h11M10 12h11M10 19h11M3 8l4 4-4 4"/></svg>)}
       </span>
       <span className="slide-tool-group">
         {menuToggle("paragraph", "Paragraph and editing options", paragraphIcon)}
@@ -887,17 +897,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         {selectedImage && menuToggle("image", "Resize and crop selected image", imageIcon)}
       </span>
     </div>
-    <div className={`slide-indent-ruler${ready ? "" : " is-disabled"}`} aria-label="Paragraph indentation ruler">
-      <div className="slide-ruler-track" ref={rulerTrack}>
-        {Array.from({ length: 31 }, (_, index) => <i key={index} style={{ left: `${index * 40}px` }}><span>{index}</span></i>)}
-        <button type="button" className="slide-ruler-marker first" disabled={!ready} style={{ left: `${firstLineIndent}px` }}
-          aria-label={`First line indent ${firstLineIndent} pixels`} title={`First line: ${firstLineIndent}px`}
-          onPointerDown={beginRulerDrag("first")} onKeyDown={rulerKey("first", firstLineIndent)}><span>{firstLineIndent}</span></button>
-        <button type="button" className="slide-ruler-marker left" disabled={!ready} style={{ left: `${leftIndent}px` }}
-          aria-label={`Paragraph indent ${leftIndent} pixels`} title={`Paragraph: ${leftIndent}px`}
-          onPointerDown={beginRulerDrag("left")} onKeyDown={rulerKey("left", leftIndent)}><span>{leftIndent}</span></button>
-      </div>
-    </div>
+    <div className="slide-editor-status" aria-live="polite">{ready ? "Formatting applies to the current selection" : "Select lesson text to begin formatting"}</div>
     <input ref={imageInput} className="slide-image-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={event => void insertImage(event)} />
     {menu && <div id={`slide-${menu}-options`} className="slide-text-options" role="group" aria-label={menu === "text" ? "Font and text options" : menu === "table" ? "Table options" : menu === "image" ? "Image options" : "Paragraph and editing options"}>
       {menu === "text" ? <>
@@ -932,8 +932,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         <button type="button" className="danger" onClick={() => { if (!selectedImage) return; const editor = selectedImage.closest<HTMLElement>(EDITOR_SELECTOR); selectedImage.remove(); setSelectedImage(null); setMenu(null); notifyEditor(editor); }}>Remove image</button>
         <small>Drag the image inside the lesson to move it to another insertion point.</small>
       </> : <>
-        <div className="slide-tool-field"><span>Style</span><Select ariaLabel="Paragraph style" disabled={!ready} value="" placeholder="Paragraph style" options={[{value:"p",label:"Normal text"},{value:"h1",label:"Heading 1"},{value:"h2",label:"Heading 2"},{value:"h3",label:"Heading 3"},{value:"h4",label:"Heading 4"}]} onChange={value => run("formatBlock", value)} /></div>
-        {commands.filter(([cmd]) => ["justifyRight", "justifyFull", "insertUnorderedList", "indent", "outdent", "selectAll"].includes(cmd)).map(([cmd, label]) => commandButton(cmd, label))}
+        {commands.filter(([cmd]) => ["justifyFull", "selectAll"].includes(cmd)).map(([cmd, label]) => commandButton(cmd, label))}
       </>}
       {!ready && <small>Click or select slide text to start formatting.</small>}
     </div>}
