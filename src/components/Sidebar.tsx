@@ -105,11 +105,7 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
               title={n.label}
             >
               <span className="ico">
-                {n.page === "reports" ? (
-                  <img className="ai-assistant-icon ai-assistant-nav-icon" src="/logos/aiassisst.png" alt="" />
-                ) : (
-                  <Icon name={n.icon} />
-                )}
+                <Icon name={n.icon} />
               </span>
               {!collapsed && <span className="txt">{n.label}</span>}
             </button>
