@@ -5407,23 +5407,28 @@ a.plan-ppt:hover {
 
 .checklist-table {
   margin-top: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .checklist-table th,
 .checklist-table td {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .checklist-table th + th,
 .checklist-table td + td {
-  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  border-left: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 [data-theme="dark"] .checklist-table th,
 [data-theme="dark"] .checklist-table td,
 [data-theme="dark"] .checklist-table th + th,
 [data-theme="dark"] .checklist-table td + td {
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .checklist-table {
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .checklist-table th.no,
