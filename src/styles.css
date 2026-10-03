@@ -14256,7 +14256,9 @@ td.cal-row-actions {
 .slide-text-controls .slide-tool-menu-text { min-width: 42px; }
 .slide-text-controls .slide-tool-menu-table { min-width: 30px; }
 .slide-text-controls .slide-tool-menu-label { display: inline-flex; align-items: center; }
-.slide-text-controls .slide-tool-chevron { position: relative; top: -2px; font-size: 12px; line-height: 1; color: color-mix(in srgb, var(--tool-ink) 72%, transparent); }
+.slide-text-controls .slide-tool-chevron { display: inline-flex; align-items: center; color: color-mix(in srgb, var(--tool-ink) 72%, transparent); }
+.slide-text-controls .slide-tool-chevron svg,
+.slide-text-toolbar .nice-select-chev svg { width: 12px; height: 12px; }
 .slide-text-controls .slide-tool-menu:hover:not(:disabled),
 .slide-text-controls .slide-tool-menu[aria-expanded="true"] { background: var(--tool-hover); }
 .slide-text-controls .slide-tool-menu[aria-expanded="true"] { color: var(--azure); }
