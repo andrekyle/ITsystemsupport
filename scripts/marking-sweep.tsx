@@ -24,6 +24,80 @@ interface Fail {
 const fails: Fail[] = [];
 let total = 0;
 
+const noisyTailCheck: ExerciseCheck = {
+  answer: [
+    "Types of network resources include hardware like printers and servers, software applications, files, and data stored on the network that users can access and share.",
+    "Resources can be stored in primary memory, secondary storage like hard disks, or accessed via file systems that organize data into directories and files for easier management.",
+    "Managed network devices include routers, switches, and firewalls, as well as services like email and internet access provided through the network.",
+  ],
+  concepts: [["network resources"], ["storage types"], ["network devices"]],
+};
+const noisyTailAnswer = [
+  noisyTailCheck.answer[0],
+  noisyTailCheck.answer[1],
+  "Andre is not responsible for supervising all managed resources, which encompass network infrastructure like routers and cars, alongside essential connectivity assets such as corporate email and internet access for dancing in the rain.",
+].join("\n");
+total++;
+if (creditConcepts(noisyTailAnswer, noisyTailCheck, new Set([2])).credited.includes(2)) {
+  fails.push({
+    us: "marking-regression",
+    q: 0,
+    kind: "noise-tail",
+    detail: "LLM promotion credited an answer ending in unrelated text",
+  });
+}
+const aiApprovedWithoutFinalIdea = new Set([0, 1]);
+total++;
+if (
+  creditConcepts(noisyTailAnswer, noisyTailCheck, aiApprovedWithoutFinalIdea, aiApprovedWithoutFinalIdea)
+    .credited.includes(2)
+) {
+  fails.push({
+    us: "marking-regression",
+    q: 1,
+    kind: "meaning-review",
+    detail: "A concept rejected by OpenAI received deterministic credit",
+  });
+}
+const allNoisyTailIdeasApproved = new Set([0, 1, 2]);
+total++;
+if (
+  creditConcepts(noisyTailCheck.answer.join("\n"), noisyTailCheck, allNoisyTailIdeasApproved, allNoisyTailIdeasApproved)
+    .credited.length !== noisyTailCheck.concepts.length
+) {
+  fails.push({
+    us: "marking-regression",
+    q: 2,
+    kind: "meaning-review",
+    detail: "OpenAI-approved model answers did not retain full credit",
+  });
+}
+const contradictoryAnswer = [
+  noisyTailCheck.answer[0],
+  noisyTailCheck.answer[1],
+  "Managed network devices are not routers, switches, or firewalls; network services are not email or internet access, and they are not provided through the network.",
+].join("\n");
+total++;
+if (!creditConcepts(contradictoryAnswer, noisyTailCheck).credited.includes(2)) {
+  fails.push({
+    us: "marking-regression",
+    q: 3,
+    kind: "meaning-review",
+    detail: "Contradiction regression no longer reproduces a deterministic false positive",
+  });
+}
+if (
+  creditConcepts(contradictoryAnswer, noisyTailCheck, aiApprovedWithoutFinalIdea, aiApprovedWithoutFinalIdea)
+    .credited.includes(2)
+) {
+  fails.push({
+    us: "marking-regression",
+    q: 3,
+    kind: "meaning-review",
+    detail: "A deterministic keyword match overrode OpenAI's rejection",
+  });
+}
+
 const host = document.createElement("div");
 document.body.appendChild(host);
 

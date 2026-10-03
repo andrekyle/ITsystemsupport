@@ -1,7 +1,7 @@
 /**
- * Client wrapper for /api/mark-answer — the LLM semantic-meaning fallback.
- * Never throws; falls back to an empty result whenever anything goes wrong
- * so the deterministic marker's verdict stands on any failure.
+ * Client wrapper for /api/mark-answer — the required semantic-meaning check.
+ * Never throws; unavailable reviews return no approvals, so deterministic
+ * keyword matches cannot award marks without OpenAI confirmation.
  */
 
 import { loadMarkingModel, recordTokenUsage } from "./tokens";

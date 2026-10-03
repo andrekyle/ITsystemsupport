@@ -763,11 +763,13 @@ export const __markingInternals = {
 /**
  * Core credit engine — BOX RULE: the marking unit is the LINE (one answer box
  * = one line of the answer text). A line earns AT MOST one key idea — one ✓✓
- * pair or nothing — and each key idea is earned by at most one line. Returns
+ * pair or nothing — and each key idea is earned by at most one line. When
+ * `semanticReview` is provided, it is the authoritative set of concepts
+ * approved by OpenAI. Returns
  * the credited concept indexes AND, for every credited concept, the exact
  * line that earned it (`earnedBy`, trimmed) plus its line index
- * (`earnedLine`) — so tick placement mirrors the scoring exactly. Concepts
- * promoted by `extras` (LLM review) are pinned to a FREE line with the
+ * (`earnedLine`) — so tick placement mirrors the scoring exactly. Approved
+ * concepts in `extras` are pinned to a FREE line with the
  * strongest distinctive-stem overlap; when every line has already earned an
  * idea the promotion is dropped — a box strictly never carries two pairs.
  * Exported for the marking test harnesses.
@@ -775,7 +777,8 @@ export const __markingInternals = {
 export function creditConcepts(
   text: string,
   check: ExerciseCheck,
-  extras?: ReadonlySet<number>
+  extras?: ReadonlySet<number>,
+  semanticReview?: ReadonlySet<number>
 ): { credited: number[]; earnedBy: Map<number, string>; earnedLine: Map<number, number> } {
   const earnedBy = new Map<number, string>();
   const earnedLine = new Map<number, number>();
@@ -855,6 +858,7 @@ export function creditConcepts(
   // IS the model line outranks one that merely shares a keyword.
   const candidates: { gi: number; si: number; score: number }[] = [];
   for (let gi = 0; gi < check.concepts.length; gi++) {
+    if (semanticReview && !semanticReview.has(gi)) continue;
     const group = check.concepts[gi];
     const { keywordStems, fullTarget, explanationTarget } = conceptData[gi];
     const lessonLine = lessonLineFor(check, gi);
@@ -936,13 +940,14 @@ export function creditConcepts(
     earnedLine.set(c.gi, c.si);
   }
 
-  // LLM promotions obey the same rule: each promoted idea is pinned to the
+  // OpenAI-approved ideas without a deterministic match are pinned to the
   // FREE line with the strongest overlap on the idea's DISTINCTIVE
   // vocabulary (stems shared with other key ideas are ignored, so a line
   // about another idea can't attract the pair). No free line — no credit.
   if (extras && extras.size > 0) {
     for (const gi of [...extras].sort((a, b) => a - b)) {
       if (gi < 0 || gi >= check.concepts.length || credited.has(gi)) continue;
+      if (semanticReview && !semanticReview.has(gi)) continue;
       const group = check.concepts[gi];
       const lessonLine = lessonLineFor(check, gi);
       const otherStems = new Set<string>();
@@ -959,6 +964,7 @@ export function creditConcepts(
       let bestOverlap = -1;
       for (let li = 0; li < sentences.length; li++) {
         if (usedSentence.has(li)) continue;
+        if (hasTrailingNoise(sentences[li], checkWideTarget)) continue;
         const overlap = stemOverlap(sentenceStems[li], target);
         if (overlap > bestOverlap) {
           bestOverlap = overlap;
@@ -981,11 +987,15 @@ export function creditConcepts(
  *  Each key idea (concept group) is worth 2 marks. A key idea only earns
  *  its 2 marks when the learner has written at least
  *  {@link MIN_EXPLANATION_WORDS} words explaining it — the keyword alone
- *  is not enough. `extras` promotes additional concept indexes to credited
- *  (used by the LLM semantic-review fallback). */
-function scoreAnswer(text: string, check: ExerciseCheck, extras?: ReadonlySet<number>) {
+ *  is not enough. `extras` contains concepts approved by OpenAI. */
+function scoreAnswer(
+  text: string,
+  check: ExerciseCheck,
+  extras?: ReadonlySet<number>,
+  semanticReview?: ReadonlySet<number>
+) {
   const tokens = answerTokens(text);
-  const credited = creditedConceptIndexes(text, check, extras);
+  const credited = creditConcepts(text, check, extras, semanticReview).credited;
   const need = check.min ?? Math.ceil(check.concepts.length / 2);
   const short = tokens.length < MIN_ANSWER_WORDS;
   const matched = credited.length;
@@ -1022,18 +1032,19 @@ interface IdeaFeedback {
  *  (stem-overlap similarity) and shows what was missing. BOX RULE: when the
  *  idea is actually named inside a box that already earned a different
  *  idea, the feedback says so — the learner must give the idea its own box.
- *  `extras` lists concept indexes promoted by the LLM semantic-review
- *  fallback so the feedback stays in sync with the score. */
+ *  `semanticReview` is the OpenAI-approved concept set, keeping feedback in
+ *  sync with the score. */
 function explainCheck(
   text: string,
   check: ExerciseCheck,
-  extras?: ReadonlySet<number>
+  extras?: ReadonlySet<number>,
+  semanticReview?: ReadonlySet<number>
 ): IdeaFeedback[] {
   const lines = splitLines(text);
   // Which concept groups actually earned their 2 marks under the box rule.
   // Feedback must line up with what the score says — otherwise learners see
   // contradictory guidance.
-  const { credited: creditedList, earnedBy } = creditConcepts(text, check, extras);
+  const { credited: creditedList, earnedBy } = creditConcepts(text, check, extras, semanticReview);
   const credited = new Set(creditedList);
   // lines that already earned ticks are never quoted as "wrong"…
   const earningLines = new Set(earnedBy.values());
@@ -1091,27 +1102,38 @@ function splitTail(seg: string): { head: string; tail: string } {
 /** The learner's own answer rendered with two green ticks inserted after each
  *  line (box) that earned a key idea's 2 marks. BOX RULE: a line shows
  *  exactly ONE ✓✓ pair — at the very end of its text — or none at all.
- *  `extras` promotes additional concept indexes to credited (LLM
- *  semantic-review fallback); the engine pins those to free lines too. */
+ *  `semanticReview` limits credit to concepts approved by OpenAI; approved
+ *  concepts are assigned to free answer lines by the credit engine. */
 export function MarkedAnswer({
   text,
   check,
   ok,
   extras,
+  semanticReview,
+  pending = false,
 }: {
   text: string;
   check: ExerciseCheck;
   ok: boolean;
   extras?: ReadonlySet<number>;
+  semanticReview?: ReadonlySet<number>;
+  pending?: boolean;
 }) {
+  const segments = (text.match(/[^\n]+\n*/g) ?? [text]).filter((s) => s.trim());
+  if (pending) {
+    return (
+      <div className="exq-marked">
+        {segments.map((seg, i) => <span key={i} className="exq-seg">{seg}</span>)}
+      </div>
+    );
+  }
   // Use the same credit engine as the scorer so ticks always match the score
   // at the bottom of the box — including WHICH line earned each concept.
-  const { credited: creditedIdx, earnedLine } = creditConcepts(text, check, extras);
+  const { credited: creditedIdx, earnedLine } = creditConcepts(text, check, extras, semanticReview);
   // every key idea earned: nothing is missing, so per-line crosses would only mislead
   const fullCoverage = creditedIdx.length >= check.concepts.length;
   // BOX RULE: segments are the answer's lines — exactly the learner's boxes —
   // with trailing whitespace kept so the answer renders byte-for-byte.
-  const segments = (text.match(/[^\n]+\n*/g) ?? [text]).filter((s) => s.trim());
   // Map segment index -> credited concept (at most one, engine-guaranteed).
   // The engine indexes lines after trimming/blank-filtering in the same
   // order, so the i-th non-blank segment is the engine's line i.
@@ -1227,7 +1249,9 @@ export function ExerciseQuestion({
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
-  const [result, setResult] = useState<ReturnType<typeof scoreAnswer> | null>(null);
+  const [result, setResult] = useState<ReturnType<typeof scoreAnswer> | null>(
+    () => savedOk || savedTries >= EXQ_MAX_CHECKS ? scoreAnswer(saved, check) : null
+  );
   const [revealed, setRevealed] = useState(false);
   // which box the learner is typing in (Word-style: its trailing in-progress
   // word is not spell-reviewed until they leave the field)
@@ -1237,45 +1261,42 @@ export function ExerciseQuestion({
   // marked answer is shown and the recorded marks stand.
   const [tries, setTries] = useState(savedTries);
   const checksLeft = Math.max(0, EXQ_MAX_CHECKS - tries);
-  // LLM semantic-review state: concept indexes the model promoted to credited
-  // after the deterministic check said they were not credited.
+  // OpenAI's meaning review is authoritative for every concept. `extras`
+  // contains only concepts it approved for this exact answer.
   const [extras, setExtras] = useState<Set<number>>(new Set());
   const [reviewing, setReviewing] = useState(false);
   const [reviewedText, setReviewedText] = useState<string | null>(null);
+  const [reviewAttempt, setReviewAttempt] = useState(0);
   const [reviewStatus, setReviewStatus] = useState<
     | { kind: "idle" }
-    | { kind: "ran"; promoted: number; reason: string }
+    | { kind: "ran"; approved: number; reason: string }
     | { kind: "unavailable"; error?: string }
   >({ kind: "idle" });
 
-  // Recompute the effective score/feedback using both the deterministic
-  // marker and any LLM promotions. The `ok` flag reflects the merged view.
-  const effectiveResult = result ? scoreAnswer(val, check, extras) : null;
-  const ok = savedOk || (effectiveResult?.ok ?? false);
+  const meaningVerified = reviewStatus.kind === "ran" && reviewedText === val;
+  const reviewPending =
+    !!result && !result.short && !meaningVerified && reviewStatus.kind !== "unavailable";
+  // Deterministic keyword matches are provisional only. Marks and correctness
+  // are shown only after OpenAI has reviewed this exact answer.
+  const effectiveResult = result
+    ? scoreAnswer(val, check, extras, meaningVerified ? extras : new Set())
+    : null;
+  const ok = meaningVerified && (effectiveResult?.ok ?? false);
   // no checks left and still not correct: the answer locks with its marks
-  const locked = !canReveal && !ok && tries >= EXQ_MAX_CHECKS;
+  const locked = !canReveal && !ok && tries >= EXQ_MAX_CHECKS && !reviewPending;
   const feedback =
-    ok || result || locked ? explainCheck(val, check, extras) : null;
+    meaningVerified && (ok || result || locked)
+      ? explainCheck(val, check, extras, extras)
+      : null;
   const missed = feedback?.filter((f) => !f.awarded) ?? [];
 
-  // Kick off the LLM semantic review after the deterministic check has run
-  // and there are still uncredited concepts — even when the answer already
-  // passes, so paraphrased extra ideas still earn their marks. Fire-and-forget;
-  // the marker's verdict stands unchanged if the review fails, times out, or is
-  // unavailable (env var not set). We key by the exact text so we don't
-  // re-fire when the learner just re-clicks Check.
+  // OpenAI reviews every concept, including deterministic matches, before any
+  // marks can be awarded. This prevents keywords in an incoherent answer from
+  // earning credit. Saved correct answers are rechecked under this standard.
   useEffect(() => {
-    if (!result || result.short) return;
+    if (!result || result.short || reviewing) return;
     if (reviewedText === val) return; // already reviewed this exact text
-    const { credited: detCreditedList, earnedBy } = creditConcepts(val, check);
-    const detCredited = new Set(detCreditedList);
-    const uncredited = check.concepts
-      .map((g, gi) => ({ gi, g }))
-      .filter(({ gi }) => !extras.has(gi))
-      .filter(({ gi }) => !detCredited.has(gi));
-    if (uncredited.length === 0) return;
-
-    const concepts = uncredited.map(({ gi, g }) => {
+    const concepts = check.concepts.map((g, gi) => {
       const label = check.labels?.[gi] ?? g[0];
       const lessonLine = lessonLineFor(check, gi);
       return {
@@ -1285,45 +1306,32 @@ export function ExerciseQuestion({
       };
     });
 
-    // Labels of concepts ALREADY credited — deterministically or by an earlier
-    // review — plus the exact sentences that earned them, so the LLM judges
-    // the remaining concepts against the learner's FREE sentences only.
-    const alreadyCredited = [...new Set([...detCredited, ...extras])].map(
-      (gi) => check.labels?.[gi] ?? check.concepts[gi][0]
-    );
-    const spentSentences = [...new Set(earnedBy.values())];
-
     setReviewing(true);
     let alive = true;
-    void requestSemanticReview(val, concepts, alreadyCredited, unitUs, spentSentences).then((res) => {
+    void requestSemanticReview(val, concepts, [], unitUs, []).then((res) => {
       if (!alive) return;
       setReviewing(false);
-      setReviewedText(val);
       if (!res.ran) {
+        setReviewedText(val);
         setReviewStatus({ kind: "unavailable", error: res.error });
         return;
       }
-      const promoted = new Set<number>(extras);
-      let gained = 0;
+      const approved = new Set<number>();
       for (const id of res.credited) {
         const gi = Number(id.replace(/^c/, ""));
-        if (!Number.isNaN(gi) && !promoted.has(gi)) {
-          promoted.add(gi);
-          gained++;
-        }
+        if (Number.isInteger(gi) && gi >= 0 && gi < check.concepts.length) approved.add(gi);
       }
-      setReviewStatus({ kind: "ran", promoted: gained, reason: res.reason });
-      if (gained > 0) {
-        setExtras(promoted);
-        const rNow = scoreAnswer(val, check, promoted);
-        if (rNow.ok) onSave(val, true);
-      }
+      setExtras(approved);
+      setReviewedText(val);
+      setReviewStatus({ kind: "ran", approved: approved.size, reason: res.reason });
+      const rNow = scoreAnswer(val, check, approved, approved);
+      onSave(val, rNow.ok);
     });
     return () => {
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result, val]);
+  }, [result, val, reviewAttempt, reviewedText]);
 
   // Words drawn from the lesson's answer key so lesson‑specific vocabulary is
   // never flagged as a spelling mistake by the built‑in checker. Learners can
@@ -1362,7 +1370,14 @@ export function ExerciseQuestion({
         </span>
       </div>
       {ok || result || locked ? (
-        <MarkedAnswer text={val} check={check} ok={ok} extras={extras} />
+        <MarkedAnswer
+          text={val}
+          check={check}
+          ok={ok}
+          extras={extras}
+          semanticReview={meaningVerified ? extras : new Set()}
+          pending={reviewPending}
+        />
       ) : (
         <>
           <div className="exq-parts" role="group" aria-label="Answer boxes — one key idea per box">
@@ -1401,6 +1416,7 @@ export function ExerciseQuestion({
                     setParts(nextParts);
                     onSave(joinParts(nextParts), false);
                     if (result) setResult(null);
+                    if (reviewing) setReviewing(false);
                     if (extras.size) setExtras(new Set());
                     if (reviewedText) setReviewedText(null);
                     if (reviewStatus.kind !== "idle") setReviewStatus({ kind: "idle" });
@@ -1458,7 +1474,11 @@ export function ExerciseQuestion({
                                       ? s[0].toUpperCase() + s.slice(1)
                                       : s;
                                   setParts((prev) => prev.map((p) => p.replace(re, replacement)));
-                                  if (result) setResult(null);
+                                  setResult(null);
+                                  if (reviewing) setReviewing(false);
+                                  setExtras(new Set());
+                                  setReviewedText(null);
+                                  setReviewStatus({ kind: "idle" });
                                 }}
                               >
                                 {s}
@@ -1488,8 +1508,8 @@ export function ExerciseQuestion({
           {locked && !result ? (
             <span className="exq-status wrong">
               No checks left — you have used your {EXQ_MAX_CHECKS} checks for this question, so
-              this answer is final: {scoreAnswer(val, check, extras).marks} of{" "}
-              {scoreAnswer(val, check, extras).maxMarks} marks. Submitting the activity records
+              this answer is final: {effectiveResult?.marks ?? 0} of{" "}
+              {effectiveResult?.maxMarks ?? check.concepts.length * 2} marks. Submitting the activity records
               your marks; “Try again” starts a fresh attempt with new checks.
             </span>
           ) : result && !locked ? (
@@ -1497,6 +1517,7 @@ export function ExerciseQuestion({
               className="btn ghost"
               onClick={() => {
                 setResult(null);
+                setReviewing(false);
                 setExtras(new Set());
                 setReviewedText(null);
                 setReviewStatus({ kind: "idle" });
@@ -1519,10 +1540,11 @@ export function ExerciseQuestion({
                     onTries(next);
                   }
                   setResult(r);
+                  setReviewing(false);
                   setExtras(new Set());
                   setReviewedText(null);
                   setReviewStatus({ kind: "idle" });
-                  onSave(val, r.ok);
+                  onSave(val, false);
                 }}
               >
                 <Icon name="checkCircle" size={15} />
@@ -1546,7 +1568,13 @@ export function ExerciseQuestion({
               {revealed ? "Hide answer" : "Show answer — super user"}
             </button>
           )}
-          {effectiveResult && !effectiveResult.ok && (
+          {reviewPending && (
+            <span className="exq-status reviewing" role="status">
+              <span className="exq-spinner" aria-hidden="true" />
+              OpenAI is checking your answer for meaning…
+            </span>
+          )}
+          {effectiveResult && !effectiveResult.ok && (meaningVerified || effectiveResult.short) && (
             <span className={`exq-status ${effectiveResult.short ? "short" : "wrong"}`}>
               {effectiveResult.short
                 ? `Answer too short — you wrote ${effectiveResult.words} word${effectiveResult.words === 1 ? "" : "s"}. Please explain your answer in your own words — a minimum of ${effectiveResult.minWords} words is required before any marks can be awarded.`
@@ -1555,18 +1583,27 @@ export function ExerciseQuestion({
                 (checksLeft > 0
                   ? ` You have ${checksLeft} check${checksLeft === 1 ? "" : "s"} left.`
                   : ` You have used your ${EXQ_MAX_CHECKS} checks — this result is final.`)}
-              {reviewing && (
-                <span className="exq-reviewed reviewing" role="status">
-                  <span className="exq-spinner" aria-hidden="true" />
-                  Checking your wording for meaning…
-                </span>
+              {reviewStatus.kind === "ran" && (
+                <> (OpenAI checked meaning and approved {reviewStatus.approved} of {check.concepts.length} key ideas.)</>
               )}
-              {!reviewing && reviewStatus.kind === "ran" && reviewStatus.promoted === 0 && (
-                <> (Meaning check ran — no additional marks awarded.)</>
-              )}
-              {!reviewing && reviewStatus.kind === "unavailable" && (
-                <> (Meaning check unavailable{reviewStatus.error ? ` — ${reviewStatus.error}` : ""}.)</>
-              )}
+            </span>
+          )}
+          {reviewStatus.kind === "unavailable" && (
+            <span className="exq-status wrong" role="alert">
+              OpenAI could not check this answer for meaning
+              {reviewStatus.error ? ` (${reviewStatus.error})` : ""}. No marks are awarded until
+              the meaning check succeeds.
+              <button
+                type="button"
+                className="btn ghost sm"
+                onClick={() => {
+                  setReviewedText(null);
+                  setReviewStatus({ kind: "idle" });
+                  setReviewAttempt((attempt) => attempt + 1);
+                }}
+              >
+                Retry meaning check
+              </button>
             </span>
           )}
         </div>
@@ -1575,23 +1612,12 @@ export function ExerciseQuestion({
         <div className="exq-status ok">
           <Icon name="checkCircle" size={15} />
           <span className="exq-ok-text">
-            Correct — {scoreAnswer(val, check, extras).marks} of {scoreAnswer(val, check, extras).maxMarks} marks (2
+            Correct — {effectiveResult?.marks ?? 0} of {effectiveResult?.maxMarks ?? check.concepts.length * 2} marks (2
             marks per point).
             <DoubleTick />
-            {reviewing ? (
-              <span
-                className="exq-reviewed reviewing"
-                role="status"
-                title="Your wording is being reviewed for meaning — extra marks may still be awarded"
-              >
-                <span className="exq-spinner" aria-hidden="true" />
-                Checking your wording for meaning…
-              </span>
-            ) : extras.size > 0 ? (
-              <span className="exq-reviewed" title="Some marks were confirmed by a semantic review of your wording">
-                · Reviewed for meaning
-              </span>
-            ) : null}
+            <span className="exq-reviewed" title="OpenAI reviewed each key idea for meaning">
+              · Meaning checked by OpenAI
+            </span>
           </span>
           {(canReveal || checksLeft > 0) && (
             <button
@@ -1601,6 +1627,7 @@ export function ExerciseQuestion({
               title="Improve your answer to earn more marks"
               onClick={() => {
                 setResult(null);
+                setReviewing(false);
                 setExtras(new Set());
                 setReviewedText(null);
                 setReviewStatus({ kind: "idle" });

@@ -3451,6 +3451,16 @@ textarea:focus {
   border-top: 1px solid var(--border);
 }
 
+.saqa-details.lesson-acc {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.saqa-details.lesson-acc .saqa-body {
+  border-top: 0;
+}
+
 .saqa-details .saqa-body .lesson-p:first-child {
   margin-top: 10px;
 }
@@ -8957,6 +8967,26 @@ table.data.outcome-table td:last-child,
 table.data.training-table th:last-child,
 table.data.training-table td:last-child {
   border-right: none;
+}
+
+table.data.training-table {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+table.data.training-table th,
+table.data.training-table td {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+  border-right-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="dark"] table.data.training-table {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] table.data.training-table th,
+[data-theme="dark"] table.data.training-table td {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  border-right-color: rgba(255, 255, 255, 0.08);
 }
 
 /* --- borderless inline icon link inside tables (e.g. Outlook calendar) --- */
