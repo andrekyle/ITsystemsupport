@@ -2654,7 +2654,8 @@ export function UnitPage({
   const deckReplaceRef = useRef<HTMLInputElement>(null);
   const [deckReplacePct, setDeckReplacePct] = useState<number | null>(null);
   const [deckReplaceError, setDeckReplaceError] = useState<string | null>(null);
-  const { figures: figureImages, setFigure, removeFigure } = useLessonFigures(unitId);
+  const { figures: figureImages, setFigure, removeFigure, refreshFigureUrl } = useLessonFigures(unitId);
+  const failedFigureRefreshes = useRef(new Set<string>());
   const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, setAllQuizRetries: editAllQuizRetries, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection, setLessonPlan: editSetLessonPlan, setLogbook: editSetLogbook } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId, !!inlineUnit);
   const migratingInlineImages = useRef(new Set<string>());
   useEffect(() => {
@@ -3957,6 +3958,24 @@ export function UnitPage({
                 {unifiedText ? <SlideEditableText as="div" className="slide-whole-editor" contentEditable={editable}
                   data-lesson-editor={si}
                   aria-label="Slide text" html={sanitizeSlideHtml(hydrateSlideImages(unifiedHtml, Object.fromEntries(Object.entries(figureImages).map(([id, figure]) => [id, figure.image]))))}
+                  onErrorCapture={event => {
+                    const image = event.target;
+                    if (!(image instanceof HTMLImageElement) || !image.dataset.figureId) return;
+                    const imageElement = image;
+                    const id = image.dataset.figureId;
+                    if (failedFigureRefreshes.current.has(id)) return;
+                    failedFigureRefreshes.current.add(id);
+                    void refreshFigureUrl(id).then(url => {
+                      if (url) imageElement.src = url;
+                      else setFigError("A lesson image could not be loaded. Check your connection and try again.");
+                    }).catch(() => {
+                      setFigError("A lesson image could not be loaded. Check your connection and try again.");
+                    });
+                  }}
+                  onLoadCapture={event => {
+                    const image = event.target;
+                    if (image instanceof HTMLImageElement && image.dataset.figureId) failedFigureRefreshes.current.delete(image.dataset.figureId);
+                  }}
                   onKeyDown={e=>{
                     if (e.key === "Tab") {
                       const selection = window.getSelection();

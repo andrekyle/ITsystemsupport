@@ -1983,7 +1983,17 @@ export function useLessonFigures(us: string) {
     [us]
   );
 
-  return { figures: merged, setFigure, removeFigure };
+  const refreshFigureUrl = useCallback(async (id: string): Promise<string | null> => {
+    const path = figures[id]?.path;
+    if (!path) return null;
+    figUrlCache.delete(path);
+    const url = await signedFigUrl(path);
+    if (!url) return null;
+    setFigUrls((urls) => ({ ...urls, [id]: url }));
+    return url;
+  }, [figures]);
+
+  return { figures: merged, setFigure, removeFigure, refreshFigureUrl };
 }
 
 /* ---------- class memories photo wall (shared with everyone) ---------- */
