@@ -193,9 +193,86 @@ function saveCalendarDev(): Plugin {
   };
 }
 
+/** Generic dev bridge for the remaining Vercel API functions so they work on
+ *  localhost exactly as in production. Each `/api/<name>` request is forwarded
+ *  to `api/<name>.ts`'s default export. Without this the pages calling these
+ *  endpoints (e.g. the AI report writer) return http_404 in local dev. */
+function apiDev(env: Record<string, string>): Plugin {
+  const endpoints = [
+    "generate-report",
+    "generate-activity-answers",
+    "extract-logbook-image",
+    "enhance-unit-content",
+  ];
+  return {
+    name: "api-dev",
+    configureServer(server: ViteDevServer) {
+      for (const key of ["OPENAI_API_KEY", "SUPABASE_URL", "SUPABASE_ANON_KEY", "VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"]) {
+        if (env[key] && process.env[key] === undefined) process.env[key] = env[key];
+      }
+      for (const endpoint of endpoints) {
+        server.middlewares.use(`/api/${endpoint}`, (request, response) => {
+          void (async () => {
+            const chunks: Buffer[] = [];
+            let size = 0;
+            for await (const chunk of request) {
+              const buffer = Buffer.from(chunk);
+              size += buffer.length;
+              if (size > 15_000_000) {
+                response.statusCode = 413;
+                response.setHeader("Content-Type", "application/json");
+                response.end(JSON.stringify({ error: "Request body too large." }));
+                return;
+              }
+              chunks.push(buffer);
+            }
+            const module = (await server.ssrLoadModule(`/api/${endpoint}.ts`)) as {
+              default: (request: Request) => Promise<Response>;
+            };
+            const result = await module.default(
+              new Request(`http://localhost/api/${endpoint}`, {
+                method: request.method ?? "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: request.headers.authorization ?? "",
+                  "Content-Length": String(size),
+                },
+                body: chunks.length ? Buffer.concat(chunks) : undefined,
+              })
+            );
+            response.statusCode = result.status;
+            result.headers.forEach((value, key) => response.setHeader(key, value));
+            response.end(await result.text());
+          })().catch((e) => {
+            response.statusCode = 500;
+            response.setHeader("Content-Type", "application/json");
+            response.end(JSON.stringify({ error: `dev_middleware: ${String(e)}` }));
+          });
+        });
+      }
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   return {
-    plugins: [react(), markAnswerDev(env), formBuilderDev(env), saveCalendarDev()],
+    plugins: [react(), markAnswerDev(env), formBuilderDev(env), saveCalendarDev(), apiDev(env)],
+    server: {
+      watch: {
+        // These document/binary files sit in the project root and are not part
+        // of the app build. Watching them can crash the dev server with EBUSY
+        // when another program (Office, a PDF viewer) holds the file open.
+        ignored: [
+          "**/*.pdf",
+          "**/*.doc",
+          "**/*.docx",
+          "**/*.xls",
+          "**/*.xlsx",
+          "**/*.csv",
+          "**/supabase-export/**",
+        ],
+      },
+    },
   };
 });
