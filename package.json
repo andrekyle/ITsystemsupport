@@ -14,6 +14,10 @@
     "make:pitch-ppt": "node scripts/make-platform-pitch-ppt.mjs",
     "make:music-piracy-pdf": "tsx scripts/make-music-piracy-pdf.ts"
   },
+  "allowScripts": {
+    "esbuild@0.21.5": true,
+    "esbuild@0.28.1": true
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.6",
     "jszip": "^3.10.1",
