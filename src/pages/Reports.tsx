@@ -661,7 +661,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
       )}
       <h2 className="section-title">
         <span className="ico">
-          <img className="ai-assistant-icon ai-assistant-heading-icon" src="/logos/aiassisst.png" alt="" />
+          <Icon name="robot" size={20} />
         </span>
         AI Assistant
       </h2>
