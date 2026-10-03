@@ -890,7 +890,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         {commandButton("redo", "Redo", <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5 5 5-5 5m5-5H10a6 6 0 0 0 0 12" transform="translate(0 -2)" /></svg>)}
       </span>
       <span className="slide-tool-group slide-tool-style-group">
-        <Select ariaLabel="Paragraph style" disabled={!ready} value={blockStyle} options={[{value:"p",label:"Body text"},{value:"h2",label:"Section heading"},{value:"h3",label:"Subheading"},{value:"h4",label:"Small heading"}]} onChange={value => { setBlockStyle(value); run("formatBlock", value); }} />
+        <Select ariaLabel="Paragraph style" buttonLabel="Style" disabled={!ready} value={blockStyle} options={[{value:"p",label:"Body text"},{value:"h2",label:"Section heading"},{value:"h3",label:"Subheading"},{value:"h4",label:"Small heading"}]} onChange={value => { setBlockStyle(value); run("formatBlock", value); }} />
       </span>
       <span className="slide-tool-group">
         {commandButton("bold", "Bold", <strong aria-hidden="true">B</strong>)}

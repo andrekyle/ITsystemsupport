@@ -16,6 +16,7 @@ export function Select({
   ariaLabel,
   disabled = false,
   placeholder = "",
+  buttonLabel,
 }: {
   value: string;
   options: SelectOption[];
@@ -24,6 +25,7 @@ export function Select({
   ariaLabel?: string;
   disabled?: boolean;
   placeholder?: string;
+  buttonLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
@@ -104,7 +106,7 @@ export function Select({
         onClick={() => (open ? setOpen(false) : openPanel())}
         onKeyDown={onKeyDown}
       >
-        <span className="nice-select-value">{selected?.label ?? placeholder}</span>
+        <span className="nice-select-value">{buttonLabel ?? selected?.label ?? placeholder}</span>
         <span className="nice-select-chev" aria-hidden="true">
           <Icon name="chevronDown" size={14} />
         </span>
