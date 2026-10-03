@@ -80,6 +80,12 @@ export function createLessonBlocks(paragraphs: readonly string[]): LessonBlock[]
   for (let index = 0; index < parsed.length; index++) {
     const block = parsed[index];
     if (block.kind === "table") {
+      const stageRows = [block.headers, ...block.rows];
+      if (stageRows.length >= 2 && stageRows.every(row => row.length === 2 && /^stage\s+\d+\b/i.test(plain(row[0])))) {
+        const items = stageRows.map(row => row[1].trim()).filter(Boolean);
+        blocks.push({ type: "numbered", items, estimatedHeight: items.reduce((height, item) => height + paragraphHeight(item) + LESSON_LAYOUT.listItemGap, 8), keepTogether: true, keepWithNext: false, canSplit: true });
+        continue;
+      }
       blocks.push({ type: "table", table: block, estimatedHeight: tableHeight(block), keepTogether: true, keepWithNext: false, canSplit: true });
       continue;
     }

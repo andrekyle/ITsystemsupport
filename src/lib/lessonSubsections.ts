@@ -93,6 +93,23 @@ export function groupLessonHtml(html: string, sectionHeading = ""): string {
   const root = document.createElement("div");
   root.innerHTML = html;
   normalizeLessonTables(root);
+  // Process/stage tables are ordered sequences, not data grids. Imported Word
+  // content frequently saves these as a headerless two-column table. Convert
+  // them to a real ordered list in both read and whole-slide editing modes.
+  for (const table of Array.from(root.querySelectorAll<HTMLTableElement>("table.lesson-table, table"))) {
+    const rows = Array.from(table.querySelectorAll("tr"));
+    const values = rows.map(row => Array.from(row.querySelectorAll("th,td")));
+    if (values.length < 2 || !values.every(cells => cells.length === 2 && /^stage\s+\d+\b/i.test(cells[0].textContent?.trim() ?? ""))) continue;
+    const list = document.createElement("ol");
+    list.className = "lesson-inferred-list lesson-stage-list";
+    for (const cells of values) {
+      const item = document.createElement("li");
+      item.innerHTML = cells[1].innerHTML;
+      list.append(item);
+    }
+    const wrapper = table.closest(".lesson-table-scroll");
+    (wrapper ?? table).replaceWith(list);
+  }
   const isPoint = (element: Element) => /^(P|DIV|BLOCKQUOTE)$/.test(element.tagName)
     && !element.querySelector("div,table,ul,ol,h2,h3")
     && !element.classList.contains("lesson-subsection")

@@ -88,13 +88,18 @@ function delimitedTable(lines: Line[], start: number): Match | undefined {
   let markdown = false;
   if (cursor < lines.length && delimiter === "pipe") {
     const separator = cells(lines[cursor].text, delimiter);
-    if (separator.length === headers.length && separator.every(cell => /^:?-{3,}:?$/.test(cell))) {
+    // Word/PDF conversion sometimes emits one plain `---` paragraph after
+    // every pipe row instead of a full Markdown separator with one cell per
+    // column. Accept that malformed but unambiguous form and skip later copies.
+    if ((separator.length === headers.length && separator.every(cell => /^:?-{3,}:?$/.test(cell)))
+      || (separator.length === 1 && /^:?-{3,}:?$/.test(separator[0]))) {
       markdown = true;
       cursor++;
     }
   }
   const rows: string[][] = [];
   while (cursor < lines.length) {
+    if (delimiter === "pipe" && /^\s*:?-{3,}:?\s*$/.test(lines[cursor].text)) { cursor++; continue; }
     const row = cells(lines[cursor].text, delimiter);
     if (row.length === 1) break;
     // A visibly tabular but broken row should not be silently assigned columns.
