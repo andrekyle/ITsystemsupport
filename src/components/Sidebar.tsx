@@ -85,7 +85,6 @@ export function Sidebar({ collapsed, route, progress, profile, navigate }: Props
       ? [
           { page: "trackerReport" as const, icon: "chart", label: "Learner Tracker Report" },
           { page: "reports" as const, icon: "robot", label: "AI Assistant" },
-          { page: "learnflow" as const, icon: "layers", label: "LearnFlow" },
         ]
       : []),
     { page: "calendar" as const, icon: "calendar", label: "Training Calendar" },

@@ -21,7 +21,6 @@ import { MemoriesPage } from "./pages/Memories";
 import { ChatPage } from "./pages/Chat";
 import { FormsPage } from "./pages/Forms";
 import { TrackerReportPage } from "./pages/TrackerReport";
-import { LearnFlowPage } from "./pages/LearnFlow";
 import { ReportsPage } from "./pages/Reports";
 import { HowToPage } from "./pages/HowTo";
 import { VotingPage } from "./pages/Voting";
@@ -58,7 +57,6 @@ const VALID_PAGES = new Set([
   "chat",
   "forms",
   "trackerReport",
-  "learnflow",
   "reports",
   "howto",
 ]);
@@ -202,7 +200,6 @@ function Shell({
               />
             )}
             {route.page === "trackerReport" && <TrackerReportPage profile={profile} />}
-            {route.page === "learnflow" && profile.role === "Super User" && <LearnFlowPage />}
             {route.page === "reports" && profile.role === "Super User" && (
               <ReportsPage profile={profile} />
             )}

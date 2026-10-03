@@ -577,7 +577,6 @@ export type PageId =
   | "memories"
   | "forms"
   | "trackerReport"
-  | "learnflow"
   | "reports"
   | "howto"
   | "voting";
