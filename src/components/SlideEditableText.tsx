@@ -1,5 +1,5 @@
 import { createElement, useLayoutEffect, useRef, type ClipboardEvent, type HTMLAttributes, type KeyboardEvent } from "react";
-import { sanitizeSlideHtml } from "../lib/slideRichText";
+import { plainTextToSlideHtml, sanitizeSlideHtml } from "../lib/slideRichText";
 
 type Props = Omit<HTMLAttributes<HTMLElement>, "children" | "dangerouslySetInnerHTML" | "onInput" | "onBlur"> & {
   as: "div" | "span" | "p" | "th" | "td";
@@ -34,13 +34,28 @@ export function SlideEditableText({ as, html, onSave, contentEditable = true, on
     // Insert plain text through the browser's active editing context. It then
     // inherits the caret's current font, size, weight, colour and block/list
     // style instead of importing inconsistent formatting from Word or a site.
-    document.execCommand("insertText", false, event.clipboardData.getData("text/plain"));
+    const text = event.clipboardData.getData("text/plain");
+    if (/\r?\n/.test(text)) document.execCommand("insertHTML", false, plainTextToSlideHtml(text));
+    else document.execCommand("insertText", false, text);
     save();
   };
 
   const keyDown = (event: KeyboardEvent<HTMLElement>) => {
     onKeyDown?.(event);
     if (event.defaultPrevented || !(contentEditable === true || contentEditable === "true")) return;
+    if (event.key === "Enter" && !event.shiftKey) {
+      const selection = window.getSelection();
+      const node = selection?.anchorNode;
+      const element = node instanceof Element ? node : node?.parentElement;
+      const heading = element?.closest<HTMLElement>("h1,h2,h3,h4");
+      if (heading && event.currentTarget.contains(heading)) {
+        event.preventDefault();
+        document.execCommand("insertParagraph");
+        document.execCommand("formatBlock", false, "p");
+        save();
+        return;
+      }
+    }
     if (event.key === "Backspace") {
       const selection = window.getSelection();
       if (!selection?.isCollapsed || !selection.rangeCount) return;

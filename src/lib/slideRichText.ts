@@ -1,6 +1,46 @@
 const PREFIX = "<!--slide-rich-->";
 export const isRichText = (text: string) => text.startsWith(PREFIX);
 
+const escapeText = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/** Convert plain Word/web clipboard text into predictable semantic blocks.
+ * Source fonts and spacing are deliberately discarded. */
+export function plainTextToSlideHtml(text: string): string {
+  const lines = text.replace(/\r\n?/g, "\n").replace(/\u00a0/g, " ").split("\n");
+  const html: string[] = [];
+  let listTag: "ol" | "ul" | "" = "";
+  let listItems: string[] = [];
+  const flushList = () => {
+    if (!listTag) return;
+    html.push(`<${listTag} class="slide-editor-list">${listItems.map(item => `<li>${escapeText(item)}</li>`).join("")}</${listTag}>`);
+    listTag = "";
+    listItems = [];
+  };
+  let paragraph: string[] = [];
+  const flushParagraph = () => {
+    if (!paragraph.length) return;
+    html.push(`<p class="lesson-p">${escapeText(paragraph.join(" ").replace(/\s+/g, " ").trim())}</p>`);
+    paragraph = [];
+  };
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) { flushParagraph(); flushList(); continue; }
+    const numbered = line.match(/^\d+(?:\.\d+)*[.)]\s+(.+)$/);
+    const bullet = line.match(/^[•·*+-]\s+(.+)$/);
+    if (numbered || bullet) {
+      flushParagraph();
+      const tag = numbered ? "ol" : "ul";
+      if (listTag !== tag) { flushList(); listTag = tag; }
+      listItems.push((numbered?.[1] ?? bullet?.[1] ?? "").trim());
+      continue;
+    }
+    flushList();
+    paragraph.push(line);
+  }
+  flushParagraph(); flushList();
+  return html.join("");
+}
+
 /** Only retain formatting markup; never persist pasted scripts, handlers or URLs. */
 export function sanitizeSlideHtml(html: string): string {
   const source = document.createElement("template");
