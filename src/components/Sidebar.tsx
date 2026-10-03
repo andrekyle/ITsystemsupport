@@ -35,9 +35,10 @@ interface Props {
   progress: ProgressState;
   profile: Profile;
   navigate: (r: Route) => void;
+  adminMode: boolean;
 }
 
-export function Sidebar({ collapsed, route, profile, navigate }: Props) {
+export function Sidebar({ collapsed, route, profile, navigate, adminMode }: Props) {
   const isPrivileged = isStaff(profile.role);
   const [installed, setInstalled] = useState(isInstalled);
   const [installMsg, setInstallMsg] = useState<string | null>(null);
@@ -48,7 +49,7 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
     setInstallMsg(installHelpMessage());
   }
 
-  const nav = [
+  const learningNav = [
     { page: "dashboard" as const, icon: "dashboard", label: "Dashboard" },
     { page: "course" as const, icon: "book", label: "My Course" },
     { page: "progress" as const, icon: "trend", label: "Progress" },
@@ -92,6 +93,22 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
     { page: "deliverables" as const, icon: "checklist", label: "Deliverables" },
     { page: "resources" as const, icon: "globe", label: "Resources" },
   ];
+  const adminNav = [
+    { page: "dashboard" as const, icon: "dashboard", label: "Admin Dashboard" },
+    { page: "students" as const, icon: "people", label: "Users & Students" },
+    { page: "analytics" as const, icon: "chart", label: "Learning Analytics" },
+    { page: "trackerReport" as const, icon: "chart", label: "Learner Tracker Report" },
+    { page: "attendance" as const, icon: "clipboard", label: "Attendance Register" },
+    { page: "assessments" as const, icon: "clipboard", label: "Assessments" },
+    { page: "course" as const, icon: "book", label: "Course Content" },
+    { page: "forms" as const, icon: "document", label: "Forms" },
+    { page: "compliance" as const, icon: "shield", label: "Compliance" },
+    { page: "calendar" as const, icon: "calendar", label: "Training Calendar" },
+    { page: "deliverables" as const, icon: "checklist", label: "Deliverables" },
+    { page: "reports" as const, icon: "robot", label: "AI Assistant" },
+    { page: "chat" as const, icon: "chat", label: "Messages" },
+  ];
+  const nav = profile.role === "Super User" && adminMode ? adminNav : learningNav;
 
   return (
     <nav className={`sidebar${collapsed ? " collapsed" : ""}`} aria-label="Main navigation">

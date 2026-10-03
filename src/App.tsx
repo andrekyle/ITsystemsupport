@@ -89,6 +89,8 @@ function Shell({
   const MOBILE_BP = 860;
   const [collapsed, setCollapsed] = useState(() => window.innerWidth < MOBILE_BP);
   const [route, setRoute] = useState<Route>(loadRoute);
+  const modeKey = `itss.superuserMode.${profile.id}`;
+  const [adminMode, setAdminMode] = useState(() => profile.role === "Super User" && localStorage.getItem(modeKey) === "admin");
   const { state, toggleActivity, saveQuizResult, setLogbookField, saveExerciseResult } = useProgress(profile.id);
 
   // in-app navigation pushes a browser history entry so back/forward work;
@@ -98,6 +100,11 @@ function Shell({
     setRoute(r);
     if (window.innerWidth < MOBILE_BP) setCollapsed(true);
   }, []);
+  const changeMode = useCallback((admin: boolean) => {
+    setAdminMode(admin);
+    localStorage.setItem(modeKey, admin ? "admin" : "learning");
+    navigate({ page: "dashboard" });
+  }, [modeKey, navigate]);
 
   useEffect(() => {
     // seed the current history entry with the initial route
@@ -128,6 +135,8 @@ function Shell({
         onOpenProfile={() => navigate({ page: "profile" })}
         onOpenUnit={(us) => navigate({ page: "unit", unitId: us })}
         navigate={navigate}
+        adminMode={adminMode}
+        onChangeMode={changeMode}
       />
       <div className="body">
         <Sidebar
@@ -136,6 +145,7 @@ function Shell({
           progress={state}
           profile={profile}
           navigate={navigate}
+          adminMode={adminMode}
         />
         {!collapsed && (
           <button
@@ -147,7 +157,7 @@ function Shell({
         <main className="content">
           <div className="content-inner">
             {route.page === "dashboard" && (
-              <Dashboard profile={profile} progress={state} navigate={navigate} />
+              <Dashboard profile={profile} progress={state} navigate={navigate} adminMode={adminMode} />
             )}
             {route.page === "course" && <CoursePage progress={state} navigate={navigate} profile={profile} />}
             {route.page === "module" && route.moduleId && (

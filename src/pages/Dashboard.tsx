@@ -10,7 +10,7 @@ import {
   isSaqaUnit,
   usLabel,
 } from "../data/course";
-import { loadAnnouncements, moduleCompletion, overallStats, unitStatus, useOutcomes, usePoe } from "../store";
+import { loadAnnouncements, loadProfiles, moduleCompletion, overallStats, unitStatus, useOutcomes, usePoe } from "../store";
 import { attendanceSignedCount, computeGamification } from "../lib/gamification";
 import { Bar, Ring } from "../components/Ring";
 import { TokenGauge } from "../components/TokenGauge";
@@ -19,10 +19,12 @@ export function Dashboard({
   profile,
   progress,
   navigate,
+  adminMode = false,
 }: {
   profile: Profile;
   progress: ProgressState;
   navigate: (r: Route) => void;
+  adminMode?: boolean;
 }) {
   const { docs: poeDocs } = usePoe(profile.id);
   const { outcomes } = useOutcomes();
@@ -30,6 +32,37 @@ export function Dashboard({
   const poeDone = Object.keys(poeDocs).length;
   const game = computeGamification(progress, poeDone, attendanceSignedCount(profile.id));
   const announcements = loadAnnouncements().slice(0, 2);
+
+  if (profile.role === "Super User" && adminMode) {
+    const users = loadProfiles();
+    const learners = users.filter(user => user.role === "Learner").length;
+    const staff = users.length - learners;
+    const actions: { page: Route["page"]; icon: string; title: string; detail: string; value?: string }[] = [
+      { page: "students", icon: "people", title: "Users & students", detail: "Manage accounts, roles, learner records and access.", value: String(users.length) },
+      { page: "analytics", icon: "chart", title: "Learning analytics", detail: "Review engagement, completion and assessment performance." },
+      { page: "trackerReport", icon: "trend", title: "Learner tracker", detail: "Monitor individual and cohort progress in one report.", value: String(learners) },
+      { page: "attendance", icon: "clipboard", title: "Attendance", detail: "Capture registers and verify participation records." },
+      { page: "course", icon: "book", title: "Course content", detail: "Build units, edit lessons and manage learning materials." },
+      { page: "forms", icon: "document", title: "Forms", detail: "Create and maintain operational and learner forms." },
+    ];
+    return <section className="admin-dashboard">
+      <div className="eyebrow"><Icon name="shield" size={15}/> Administration</div>
+      <div className="admin-dashboard-head"><div><h1 className="page-title">Admin workspace</h1><p className="page-sub">Manage the platform, learners and programme delivery without learner progress distractions.</p></div><span className="admin-mode-badge"><Icon name="shield" size={15}/> Admin mode</span></div>
+      <div className="admin-summary" aria-label="User summary">
+        <span><strong>{users.length}</strong> total users</span><span><strong>{learners}</strong> learners</span><span><strong>{staff}</strong> staff</span>
+      </div>
+      <h2 className="section-title"><span className="ico"><Icon name="dashboard" size={20}/></span>Management tools</h2>
+      <div className="admin-action-grid">{actions.map(action => <button key={action.page} className="card admin-action-card" onClick={() => navigate({ page: action.page })}>
+        <span className="admin-action-icon"><Icon name={action.icon} size={22}/></span><span className="admin-action-copy"><strong>{action.title}</strong><small>{action.detail}</small></span>{action.value && <span className="admin-action-value">{action.value}</span>}<Icon name="chevronRight" size={18}/>
+      </button>)}</div>
+      <h2 className="section-title"><span className="ico"><Icon name="target" size={20}/></span>Operations</h2>
+      <div className="admin-operations">
+        <button className="card clickable" onClick={() => navigate({page:"compliance"})}><Icon name="shield" size={20}/><span><strong>Compliance</strong><small>Review programme requirements and evidence.</small></span></button>
+        <button className="card clickable" onClick={() => navigate({page:"calendar"})}><Icon name="calendar" size={20}/><span><strong>Training calendar</strong><small>Manage sessions and delivery dates.</small></span></button>
+        <button className="card clickable" onClick={() => navigate({page:"reports"})}><Icon name="robot" size={20}/><span><strong>AI Assistant</strong><small>Create reports and administrative outputs.</small></span></button>
+      </div>
+    </section>;
+  }
 
   // next unit not yet completed
   const next = (() => {
