@@ -13,6 +13,7 @@ import { Icon } from "../icons";
 import { ConfirmModal } from "../components/Modal";
 import { FitSheet } from "../components/FitSheet";
 import { DateTimePicker } from "../components/DateTimePicker";
+import { flushKey } from "../lib/sync";
 
 /**
  * Attendance Register — exact replica of the Eruditio paper form.
@@ -58,6 +59,11 @@ interface AttData {
 const EMPTY: AttData = { header: {}, rows: {}, order: [] };
 
 const attKey = (dateIso: string) => `itss.attendance.${dateIso}`;
+const attRowKey = (dateIso: string, profileId: string) =>
+  `itss.attendance.${dateIso}.row.${profileId}`;
+const registerKeyPattern = /^itss\.attendance\.\d{4}-\d{2}-\d{2}$/;
+const attendanceMigrationKey = (dateIso: string) =>
+  `itssDevice.attendanceMigrated.${dateIso}`;
 
 /** Names on the register always start with a capital letter (per word). */
 function capWords(s: string): string {
@@ -86,12 +92,32 @@ function readReg(key: string): AttData {
 async function pullLatest(key: string): Promise<AttData | null> {
   if (!supabase) return null;
   try {
-    const { data } = await supabase
-      .from("shared_state")
-      .select("value")
-      .eq("key", key)
-      .maybeSingle();
-    if (data?.value) return normalizeReg({ ...EMPTY, ...(JSON.parse(data.value) as Partial<AttData>) });
+    const dateIso = key.slice("itss.attendance.".length);
+    const [registerResult, rowResult] = await Promise.all([
+      supabase.from("shared_state").select("value").eq("key", key).maybeSingle(),
+      supabase
+        .from("shared_state")
+        .select("key,value")
+        .like("key", `itss.attendance.${dateIso}.row.%`),
+    ]);
+    let merged: AttData = registerResult.data?.value
+      ? normalizeReg({ ...EMPTY, ...(JSON.parse(registerResult.data.value) as Partial<AttData>) })
+      : { header: {}, rows: {}, order: [] };
+    for (const saved of rowResult.data ?? []) {
+      const profileId = saved.key.slice(`itss.attendance.${dateIso}.row.`.length);
+      if (!profileId) continue;
+      try {
+        const row = JSON.parse(saved.value) as AttRow;
+        merged = {
+          ...merged,
+          rows: { ...merged.rows, [profileId]: row },
+          order: merged.order.includes(profileId) ? merged.order : [...merged.order, profileId],
+        };
+      } catch {
+        /* ignore one malformed row without hiding the rest of the class */
+      }
+    }
+    if (registerResult.data?.value || Object.keys(merged.rows).length) return normalizeReg(merged);
   } catch {
     /* offline — use local copy */
   }
@@ -103,7 +129,7 @@ async function allRegisterKeys(): Promise<string[]> {
   const keys = new Set<string>();
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
-    if (k && k.startsWith("itss.attendance.")) keys.add(k);
+    if (k && registerKeyPattern.test(k)) keys.add(k);
   }
   if (supabase) {
     try {
@@ -111,7 +137,7 @@ async function allRegisterKeys(): Promise<string[]> {
         .from("shared_state")
         .select("key")
         .like("key", "itss.attendance.%");
-      for (const r of data ?? []) keys.add(r.key);
+      for (const r of data ?? []) if (registerKeyPattern.test(r.key)) keys.add(r.key);
     } catch {
       /* offline — local keys only */
     }
@@ -131,6 +157,8 @@ export async function updateRegisterSignatures(
     if (!row || row.signatureImage === signatureImage) continue;
     const next = { ...data, rows: { ...data.rows, [profileId]: { ...row, signatureImage } } };
     localStorage.setItem(key, JSON.stringify(next)); // also syncs to the shared cloud copy
+    const dateIso = key.slice("itss.attendance.".length);
+    localStorage.setItem(attRowKey(dateIso, profileId), JSON.stringify(next.rows[profileId]));
   }
 }
 
@@ -327,17 +355,56 @@ export function AttendancePage({
   /** bulk-print chooser: every signed register, so staff can pick which session dates to print */
   const [pickRegs, setPickRegs] = useState<{ date: string; data: AttData }[] | null>(null);
   const [pickedDates, setPickedDates] = useState<Set<string>>(new Set());
+  const [refreshing, setRefreshing] = useState(false);
+  const [signing, setSigning] = useState(false);
+  const [attendanceNote, setAttendanceNote] = useState("");
   const storageKey = attKey(dateIso);
 
   const refresh = useCallback(async () => {
-    const latest = await pullLatest(storageKey);
-    if (latest) {
-      localStorage.setItem(storageKey, JSON.stringify(latest));
-      setReg(latest);
-    } else {
-      setReg(readReg(storageKey));
+    setRefreshing(true);
+    try {
+      const local = readReg(storageKey);
+      // Migrate every row available on this device, not only the current
+      // learner. A phone may hold the fuller legacy copy and can therefore
+      // restore rows that another device no longer has.
+      if (!localStorage.getItem(attendanceMigrationKey(dateIso))) {
+        try {
+          const migrations: Promise<void>[] = [];
+          for (const [profileId, row] of Object.entries(local.rows)) {
+            const rowKey = attRowKey(dateIso, profileId);
+            localStorage.setItem(rowKey, JSON.stringify(row));
+            migrations.push(flushKey(rowKey, !!supabase));
+          }
+          await Promise.all(migrations);
+          localStorage.setItem(attendanceMigrationKey(dateIso), "1");
+        } catch {
+          setAttendanceNote("Some saved signatures are waiting to sync — try Refresh again online.");
+          setReg(local);
+          return;
+        }
+      }
+      const latest = await pullLatest(storageKey);
+      if (latest) {
+        // Keep a newly signed local row while its cloud write is still queued.
+        const myLocalRow = local.rows[profile.id];
+        const next = myLocalRow && !latest.rows[profile.id]
+          ? {
+              ...latest,
+              rows: { ...latest.rows, [profile.id]: myLocalRow },
+              order: latest.order.includes(profile.id)
+                ? latest.order
+                : [...latest.order, profile.id],
+            }
+          : latest;
+        localStorage.setItem(storageKey, JSON.stringify(next));
+        setReg(next);
+      } else {
+        setReg(local);
+      }
+    } finally {
+      setRefreshing(false);
     }
-  }, [storageKey]);
+  }, [dateIso, profile.id, storageKey]);
 
   // load the selected day's register and keep it fresh while class is on
   useEffect(() => {
@@ -375,32 +442,59 @@ export function AttendancePage({
 
   /** Sign the register: my details from my enrolment form + arrival time now. */
   const signNow = async (signatureImage?: string) => {
+    if (signing) return;
+    setSigning(true);
+    setAttendanceNote("");
     // merge with the latest shared copy so classmates' rows are not lost
-    const base = (await pullLatest(storageKey)) ?? readReg(storageKey);
-    if (base.rows[profile.id]) {
-      save(base);
-      return;
+    try {
+      const local = readReg(storageKey);
+      const remote = await pullLatest(storageKey);
+      const base = remote
+        ? {
+            ...remote,
+            rows: { ...remote.rows, ...local.rows },
+            order: [...remote.order, ...local.order.filter((id) => !remote.order.includes(id))],
+          }
+        : local;
+      if (base.rows[profile.id]) {
+        save(base);
+        const ownRowKey = attRowKey(dateIso, profile.id);
+        localStorage.setItem(ownRowKey, JSON.stringify(base.rows[profile.id]));
+        await Promise.all([flushKey(ownRowKey), flushKey(storageKey)]);
+        setAttendanceNote("Your signature is saved on this register.");
+        return;
+      }
+      const e = profile.enrolment;
+      const parts = profile.name.trim().split(/\s+/);
+      const now = new Date();
+      const sig = signatureImage ?? profile.signatureImage;
+      const row: AttRow = {
+        name: capWords(e?.firstNames || parts.slice(0, -1).join(" ") || profile.name),
+        surname: capWords(e?.surname || (parts.length > 1 ? parts[parts.length - 1] : "")),
+        idNumber: e?.idNumber || "",
+        race: e?.equityGroup || "",
+        gender: e?.gender || "",
+        arrival: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
+        signature: e?.signature || profile.name,
+        ...(sig ? { signatureImage: sig } : {}),
+      };
+      save({
+        header: { ...base.header, ...reg.header },
+        rows: { ...base.rows, [profile.id]: row },
+        order: base.order.includes(profile.id) ? base.order : [...base.order, profile.id],
+      });
+      const ownRowKey = attRowKey(dateIso, profile.id);
+      localStorage.setItem(ownRowKey, JSON.stringify(row));
+      // The independent learner row is the authoritative signature record.
+      await Promise.all([flushKey(ownRowKey), flushKey(storageKey)]);
+      setAttendanceNote("Signed successfully.");
+      logAudit(profile, "attendance.sign", `Signed the ${dateIso} attendance register at ${row.arrival}`);
+    } catch {
+      // The local write remains queued and will sync when the connection returns.
+      setAttendanceNote("Signed on this device — cloud sync will retry when you are online.");
+    } finally {
+      setSigning(false);
     }
-    const e = profile.enrolment;
-    const parts = profile.name.trim().split(/\s+/);
-    const now = new Date();
-    const sig = signatureImage ?? profile.signatureImage;
-    const row: AttRow = {
-      name: capWords(e?.firstNames || parts.slice(0, -1).join(" ") || profile.name),
-      surname: capWords(e?.surname || (parts.length > 1 ? parts[parts.length - 1] : "")),
-      idNumber: e?.idNumber || "",
-      race: e?.equityGroup || "",
-      gender: e?.gender || "",
-      arrival: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
-      signature: e?.signature || profile.name,
-      ...(sig ? { signatureImage: sig } : {}),
-    };
-    save({
-      header: { ...base.header, ...reg.header },
-      rows: { ...base.rows, [profile.id]: row },
-      order: base.order.includes(profile.id) ? base.order : [...base.order, profile.id],
-    });
-    logAudit(profile, "attendance.sign", `Signed the ${dateIso} attendance register at ${row.arrival}`);
   };
 
   /** First click: ask (only once, ever) for a photo of the handwritten signature. */
@@ -501,17 +595,25 @@ export function AttendancePage({
 
   const setCell = (pid: string, field: keyof AttRow, value: string) => {
     const v = field === "name" || field === "surname" ? capWords(value) : value;
-    save({ ...reg, rows: { ...reg.rows, [pid]: { ...reg.rows[pid], [field]: v } } });
+    const row = { ...reg.rows[pid], [field]: v };
+    save({ ...reg, rows: { ...reg.rows, [pid]: row } });
+    localStorage.setItem(attRowKey(dateIso, pid), JSON.stringify(row));
   };
 
   const clearRow = (pid: string) => {
     const rows = { ...reg.rows };
     delete rows[pid];
     save({ ...reg, rows, order: reg.order.filter((id) => id !== pid) });
+    localStorage.removeItem(attRowKey(dateIso, pid));
   };
 
   /** Super user only: wipe the whole register for the selected date. */
-  const clearRegister = () => save(EMPTY);
+  const clearRegister = () => {
+    for (const pid of Object.keys(reg.rows)) {
+      localStorage.removeItem(attRowKey(dateIso, pid));
+    }
+    save(EMPTY);
+  };
 
   /** Print with a landscape @page rule injected for the duration of the dialog.
       (The rule can't live in styles.css — @page is global and would flip every
@@ -615,11 +717,11 @@ export function AttendancePage({
           value={dateIso}
           onChange={(v) => v && setDateIso(v)}
         />
-        <button className="btn ghost sm" onClick={() => void refresh()}>
-          <Icon name="trend" size={15} /> Refresh
+        <button className="btn ghost sm" disabled={refreshing || signing} onClick={() => void refresh()}>
+          <Icon name="trend" size={15} /> {refreshing ? "Refreshing…" : "Refresh"}
         </button>
-        <button className="btn ghost sm" disabled={!canSign} onClick={onSignClick}>
-          <Icon name="check" size={15} /> {signed ? "Signed" : "Sign the register — I'm here"}
+        <button className="btn ghost sm" disabled={!canSign || signing} onClick={onSignClick}>
+          <Icon name="check" size={15} /> {signing ? "Signing…" : signed ? "Signed" : "Sign the register — I'm here"}
         </button>
         {staff && (
           <button className="btn ghost sm" onClick={printLandscape}>
@@ -637,6 +739,7 @@ export function AttendancePage({
           </button>
         )}
         {fixNote && <span className="att-note">{fixNote}</span>}
+        {attendanceNote && <span className="att-note">{attendanceNote}</span>}
         {profile.role === "Super User" && (
           <button className="btn ghost sm danger" onClick={() => setConfirming({ kind: "register" })}>
             Clear register
