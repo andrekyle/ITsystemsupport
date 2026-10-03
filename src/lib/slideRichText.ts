@@ -59,6 +59,7 @@ export function sanitizeSlideHtml(html: string): string {
       const classes = Array.from(node.classList).filter(c => ["section-title", "lesson-p", "lesson-subsection", "lesson-subheading", "lesson-point-group", "lesson-point-lead", "lesson-inferred-list", "lesson-numlist", "slide-editor-list", "slide-layout-grid", "num", "data", "lesson-table", "lesson-table-scroll", "card-grid", "lesson-cards", "card", "lesson-card", "t", "d", "lesson-example"].includes(c));
       if (classes.length) out.className = classes.join(" ");
       if (node.tagName === "TH" && ["col", "row"].includes(node.getAttribute("scope") ?? "")) out.setAttribute("scope", node.getAttribute("scope")!);
+      if (node.dataset.userColor === "true") out.dataset.userColor = "true";
       if (node.tagName === "IMG") {
         if (figureId) out.setAttribute("data-figure-id", figureId);
         if (/^(?:data:image\/(?:png|jpe?g|webp|gif);base64,|https:\/\/)/i.test(imageSrc)) out.setAttribute("src", imageSrc);
@@ -74,6 +75,9 @@ export function sanitizeSlideHtml(html: string): string {
       }
       for (const prop of styles) {
         const value = node.style.getPropertyValue(prop);
+        // Text colour is inherited from the lesson theme unless the author
+        // deliberately chose it with the editor's colour picker.
+        if (prop === "color" && node.dataset.userColor !== "true") continue;
         if (value && !/url\s*\(|expression|var\s*\(/i.test(value)) out.style.setProperty(prop, value);
       }
       if (node.tagName === "FONT") {

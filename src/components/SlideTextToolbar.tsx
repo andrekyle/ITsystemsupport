@@ -850,7 +850,20 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     if (command === "selectAll") {
       const all = document.createRange(); all.selectNodeContents(restored.editor);
       restored.selection?.removeAllRanges(); restored.selection?.addRange(all);
-    } else document.execCommand(command, false, value);
+    } else {
+      document.execCommand(command, false, value);
+      if (command === "foreColor" && value) {
+        // execCommand creates browser-specific spans. Mark only the explicit
+        // colour-picker result so sanitisation can distinguish it from white
+        // or black formatting accidentally imported from another theme.
+        const probe = document.createElement("span");
+        probe.style.color = value;
+        const selectedColour = probe.style.color;
+        restored.editor.querySelectorAll<HTMLElement>("[style*='color']").forEach(element => {
+          if (element.style.color === selectedColour || element.style.color.toLowerCase() === value.toLowerCase()) element.dataset.userColor = "true";
+        });
+      }
+    }
     if (restored.selection?.rangeCount) range.current = restored.selection.getRangeAt(0).cloneRange();
     restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
     setActive(commands.filter(([cmd]) => document.queryCommandState(cmd)).map(([cmd]) => cmd));
