@@ -246,8 +246,9 @@ a:hover {
 .admin-action-card:hover { border-color:#fff; background:#fffdfb; box-shadow:0 16px 34px rgba(75,55,42,.14); transform:translateY(-2px); }
 .admin-action-card:focus-visible { outline:2px solid var(--azure); outline-offset:3px; }
 .admin-action-icon { display:block; grid-column:1; grid-row:1 / span 2; width:100%; height:148px; overflow:hidden; border:0; border-radius:24px; background:var(--surface-2); }
-.admin-action-icon img { display:block; width:100%; height:100%; object-fit:cover; transition:transform .18s ease; }
+.admin-action-icon img { display:block; width:100%; height:100%; object-fit:cover; transition:transform .18s ease,filter .18s ease; }
 .admin-action-card:hover .admin-action-icon img { transform:scale(1.04); }
+[data-theme="dark"] .admin-action-icon img { filter:brightness(.68) contrast(1.08) saturate(.82); }
 .admin-action-copy { display:grid; grid-column:2; grid-row:1; align-self:center; gap:8px; min-width:0; }
 .admin-action-copy strong { color:var(--admin-action-text); font-size:19px; font-weight:650; line-height:1.25; }
 .admin-action-copy small { color:var(--ink-3); font-size:14px; line-height:1.45; }
