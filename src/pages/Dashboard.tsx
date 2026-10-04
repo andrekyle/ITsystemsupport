@@ -53,7 +53,7 @@ export function Dashboard({
       </div>
       <h2 className="section-title"><span className="ico"><Icon name="dashboard" size={20}/></span>Management tools</h2>
       <div className="admin-action-grid">{actions.map(action => <button key={action.page} className="card admin-action-card" onClick={() => navigate({ page: action.page })}>
-        <span className="admin-action-icon"><img src={action.image} alt="" aria-hidden="true" /></span><span className="admin-action-copy"><strong>{action.title}</strong><small>{action.detail}</small></span>{action.value && <span className="admin-action-value">{action.value}</span>}<Icon name="chevronRight" size={18}/>
+        <span className="admin-action-icon"><img src={action.image} alt="" aria-hidden="true" /></span><span className="admin-action-copy"><strong>{action.title}</strong><small>{action.detail}</small></span>{action.value && <span className="admin-action-value" aria-label={`${action.value} records`}>{action.value}</span>}<span className="admin-action-arrow"><Icon name="chevronRight" size={17}/></span>
       </button>)}</div>
       <h2 className="section-title"><span className="ico"><Icon name="target" size={20}/></span>Operations</h2>
       <div className="admin-operations">
