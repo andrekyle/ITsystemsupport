@@ -9,14 +9,14 @@ const WATER_ANALOGY_SVG = `
 <svg viewBox="0 0 960 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The water supply analogy: river, treatment plant, pipes, city network, buildings">
   <defs>
     <marker id="wa-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0 0L10 5L0 10z" fill="#1f6feb"/>
+      <path d="M0 0L10 5L0 10z" fill="#479ef5"/>
     </marker>
     <style>
-      .wa-lbl { font: 600 12px system-ui, -apple-system, Segoe UI, sans-serif; fill:#0b3a7a; text-anchor:middle; }
-      .wa-hd  { font: 700 12px system-ui, -apple-system, Segoe UI, sans-serif; fill:#0b3a7a; text-anchor:middle; letter-spacing:.06em; text-transform:uppercase; }
+      .wa-lbl { font: 600 12px system-ui, -apple-system, Segoe UI, sans-serif; fill:#479ef5; text-anchor:middle; }
+      .wa-hd  { font: 700 12px system-ui, -apple-system, Segoe UI, sans-serif; fill:#479ef5; text-anchor:middle; letter-spacing:.06em; text-transform:uppercase; }
       .wa-box { fill:#eaf3ff; stroke:#8fb6ff; stroke-width:1.4; }
-      .wa-arrow { stroke:#1f6feb; stroke-width:2.2; fill:none; marker-end:url(#wa-arr); }
-      .wa-ico { fill:none; stroke:#0b3a7a; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+      .wa-arrow { stroke:#479ef5; stroke-width:2.2; fill:none; marker-end:url(#wa-arr); }
+      .wa-ico { fill:none; stroke:#479ef5; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
       .wa-fill { fill:#8fb6ff; }
     </style>
   </defs>

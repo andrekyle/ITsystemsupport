@@ -163,8 +163,8 @@ export async function makeUnitExports(unit: UnitStandard, content: UnitContent):
   const [{ default: PDFDocument }, { default: PptxGenJS }] = await Promise.all([import("pdfkit/js/pdfkit.standalone.js"), import("pptxgenjs")]);
   const pages = unitExportPages(unit, content);
   const presentationPages = unitPresentationPages(unit, content);
-  const NAVY = "00285A";
-  const BLUE = "1477C9";
+  const NAVY = "479EF5";
+  const BLUE = "479EF5";
   const LIGHT_BLUE = "D6E6F7";
   const GREY = "637083";
   const LINE = "D5DCE6";

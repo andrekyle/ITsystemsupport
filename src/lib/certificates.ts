@@ -17,7 +17,7 @@ export function docToolbar(filename: string): string {
   return `
   <style>
     .doc-toolbar { position: fixed; top: 12px; right: 12px; display: flex; gap: 8px; z-index: 999; font-family: "Segoe UI", system-ui, sans-serif; }
-    .doc-toolbar button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border: 1px solid #c9d4e4; border-radius: 8px; background: #ffffff; color: #1f2b3d; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(15, 35, 70, 0.14); }
+    .doc-toolbar button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border: 1px solid #c9d4e4; border-radius: 8px; background: #ffffff; color: #444; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14); }
     .doc-toolbar button:hover { background: #f0f5fb; }
     .doc-toolbar svg { flex: none; }
     @media print { .doc-toolbar { display: none !important; } }
@@ -50,9 +50,9 @@ export function docToolbar(filename: string): string {
 
 const BASE_STYLE = `
   * { box-sizing: border-box; }
-  body { font: 14px/1.5 "Segoe UI", system-ui, sans-serif; color: #17233b; margin: 0; padding: 34px 44px; }
-  h1 { font-size: 25px; margin: 0 0 2px; color: #0b3f8a; }
-  .sub { color: #5a6b8c; margin: 0 0 16px; }
+  body { font: 14px/1.5 "Segoe UI", system-ui, sans-serif; color: #444; margin: 0; padding: 34px 44px; }
+  h1 { font-size: 25px; margin: 0 0 2px; color: #479ef5; }
+  .sub { color: #5f6368; margin: 0 0 16px; }
   table { border-collapse: collapse; width: 100%; margin: 10px 0; }
   th, td { border: 1px solid #e9eef7; padding: 6px 9px; text-align: left; font-size: 12.5px; }
   th { background: #f2f6fd; }
@@ -61,10 +61,10 @@ const BASE_STYLE = `
   .chip { display: inline-block; font-size: 11.5px; font-weight: 600; }
   .chip.ok { color: #157347; }
   .chip.nyc { color: #b02a37; }
-  .chip.pend { color: #5a6b8c; }
+  .chip.pend { color: #5f6368; }
   .sign { display: flex; gap: 60px; margin-top: 42px; }
-  .sign div { flex: 1; border-top: 1.5px solid #17233b; padding-top: 5px; font-size: 12.5px; color: #444; }
-  .small { color: #5a6b8c; font-size: 12px; }
+  .sign div { flex: 1; border-top: 1.5px solid #999; padding-top: 5px; font-size: 12.5px; color: #444; }
+  .small { color: #5f6368; font-size: 12px; }
   @media print { body { padding: 10mm 12mm; } tr { break-inside: avoid; } }
 `;
 
@@ -201,21 +201,21 @@ export function openCertificate(profile: Profile, creditsEarned: number) {
 <title>Certificate — ${esc(profile.name)}</title>
 <style>
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: Georgia, "Times New Roman", serif; color: #1c2437; background: #eceff4; }
+  body { margin: 0; font-family: Georgia, "Times New Roman", serif; color: #444; background: #eceff4; }
   .page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 26px; }
   .sheet {
     position: relative;
     width: 1020px;
     background: #fdfcf7;
     padding: 14px;
-    box-shadow: 0 2px 18px rgba(15, 30, 70, 0.18);
+    box-shadow: 0 2px 18px rgba(0, 0, 0, 0.18);
   }
   /* layered formal frame */
   .frame {
     position: relative;
     overflow: hidden;
-    border: 3px solid #123a75;
-    outline: 1px solid #123a75;
+    border: 3px solid #479ef5;
+    outline: 1px solid #479ef5;
     outline-offset: -9px;
     padding: 46px 64px 40px;
     background:
@@ -233,33 +233,33 @@ export function openCertificate(profile: Profile, creditsEarned: number) {
   .frame::before { top: 12px; left: 12px; border-right: none; border-bottom: none; }
   .frame::after { bottom: 12px; right: 12px; border-left: none; border-top: none; }
 
-  .rep { text-align: center; font-size: 12px; letter-spacing: 4px; color: #4d5a75; text-transform: uppercase; }
-  .provider { text-align: center; font-size: 15px; letter-spacing: 2.5px; color: #123a75; text-transform: uppercase; margin-top: 8px; font-weight: 700; }
-  .accred { text-align: center; font-size: 11px; color: #6a7690; margin-top: 3px; }
+  .rep { text-align: center; font-size: 12px; letter-spacing: 4px; color: #555; text-transform: uppercase; }
+  .provider { text-align: center; font-size: 15px; letter-spacing: 2.5px; color: #479ef5; text-transform: uppercase; margin-top: 8px; font-weight: 700; }
+  .accred { text-align: center; font-size: 11px; color: #666; margin-top: 3px; }
   .rule { width: 200px; height: 1px; background: #b98a2e; margin: 18px auto; }
-  h1 { text-align: center; font-size: 42px; font-weight: 400; letter-spacing: 1px; margin: 6px 0 0; color: #123a75; font-variant: small-caps; }
-  .subtitle { text-align: center; font-size: 13px; color: #4d5a75; margin-top: 4px; letter-spacing: 1px; }
+  h1 { text-align: center; font-size: 42px; font-weight: 400; letter-spacing: 1px; margin: 6px 0 0; color: #479ef5; font-variant: small-caps; }
+  .subtitle { text-align: center; font-size: 13px; color: #555; margin-top: 4px; letter-spacing: 1px; }
 
-  .certify { text-align: center; font-size: 14.5px; color: #333c52; margin-top: 30px; }
-  .name { text-align: center; font-size: 34px; margin: 10px auto 2px; padding: 0 40px 8px; border-bottom: 1px solid #1c2437; display: table; }
-  .idline { text-align: center; font-size: 12.5px; color: #4d5a75; margin-top: 6px; }
+  .certify { text-align: center; font-size: 14.5px; color: #444; margin-top: 30px; }
+  .name { text-align: center; font-size: 34px; margin: 10px auto 2px; padding: 0 40px 8px; border-bottom: 1px solid #999; display: table; }
+  .idline { text-align: center; font-size: 12.5px; color: #555; margin-top: 6px; }
   .body { text-align: center; font-size: 15px; line-height: 1.7; margin: 26px auto 0; max-width: 720px; }
-  .body .qual { font-size: 19px; font-weight: 700; color: #123a75; }
+  .body .qual { font-size: 19px; font-weight: 700; color: #479ef5; }
   .detail-table { width: 640px; margin: 26px auto 0; border-collapse: collapse; font-size: 12.5px; }
   .detail-table td { border: 1px solid #cfd6e4; padding: 6px 12px; }
-  .detail-table td:first-child { background: #f2f4f9; color: #4d5a75; width: 220px; }
+  .detail-table td:first-child { background: #f2f4f9; color: #555; width: 220px; }
 
   .footer { display: flex; align-items: flex-end; gap: 30px; margin-top: 46px; }
-  .sign { flex: 1; text-align: center; font-size: 12px; color: #333c52; }
-  .sign .line { border-top: 1px solid #1c2437; margin-bottom: 5px; padding-top: 5px; }
-  .sign .role { font-size: 11px; color: #6a7690; letter-spacing: 0.6px; text-transform: uppercase; }
+  .sign { flex: 1; text-align: center; font-size: 12px; color: #444; }
+  .sign .line { border-top: 1px solid #999; margin-bottom: 5px; padding-top: 5px; }
+  .sign .role { font-size: 11px; color: #666; letter-spacing: 0.6px; text-transform: uppercase; }
 
   /* rosette seal with ribbon */
   .seal { flex: 0 0 150px; width: 150px; height: 196px; }
   .seal svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 1px 4px rgba(0,0,0,0.25)); }
 
-  .fineprint { margin-top: 30px; padding-top: 12px; border-top: 1px solid #d8dde8; font-size: 10.5px; color: #6a7690; line-height: 1.65; text-align: justify; }
-  .serials { display: flex; justify-content: space-between; font-size: 11px; color: #4d5a75; margin-top: 10px; letter-spacing: 0.5px; }
+  .fineprint { margin-top: 30px; padding-top: 12px; border-top: 1px solid #d8dde8; font-size: 10.5px; color: #666; line-height: 1.65; text-align: justify; }
+  .serials { display: flex; justify-content: space-between; font-size: 11px; color: #555; margin-top: 10px; letter-spacing: 0.5px; }
 
   @media print {
     @page { size: A4 landscape; margin: 6mm; }

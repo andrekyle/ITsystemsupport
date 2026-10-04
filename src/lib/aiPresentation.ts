@@ -19,8 +19,8 @@ export async function createAiPresentation(
     bodyFontFace: "Aptos",
   };
 
-  const navy = "00285A";
-  const blue = "1477C9";
+  const navy = "479EF5";
+  const blue = "479EF5";
   const grey = "637083";
   const line = "D5DCE6";
 

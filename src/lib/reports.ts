@@ -786,13 +786,13 @@ export function reportDocumentHtml(
 <title>${esc(kind.name)} — ${esc(COURSE_META.title)}</title>
 <style>
   * { box-sizing: border-box; }
-  body { font: 15px/1.7 "Segoe UI", "Helvetica Neue", Helvetica, "Lucida Grande", Arial, Ubuntu, Cantarell, "Fira Sans", sans-serif; color: #24324d; margin: 0; padding: 34px 44px; }
-  h1 { font-size: 26px; margin: 0 0 3px; color: #0b3f8a; letter-spacing: -0.01em; }
-  h2 { display: flex; align-items: center; gap: 12px; font-size: 17.5px; font-weight: 650; margin: 36px 0 12px; color: #0b3f8a; }
+  body { font: 15px/1.7 "Segoe UI", "Helvetica Neue", Helvetica, "Lucida Grande", Arial, Ubuntu, Cantarell, "Fira Sans", sans-serif; color: #444; margin: 0; padding: 34px 44px; }
+  h1 { font-size: 26px; margin: 0 0 3px; color: #479ef5; letter-spacing: -0.01em; }
+  h2 { display: flex; align-items: center; gap: 12px; font-size: 17.5px; font-weight: 650; margin: 36px 0 12px; color: #479ef5; }
   h2::after { content: ""; flex: 1; border-top: 1px solid #e1e9f6; }
   h2 .sec-num { color: inherit; }
   p { margin: 0 0 12px; }
-  .sub { color: #5a6b8c; margin: 0 0 18px; }
+  .sub { color: #5f6368; margin: 0 0 18px; }
   .banner { background: #eef4ff; border: 1px solid #c9dbf7; border-radius: 10px; padding: 14px 18px; margin: 18px 0; }
   table { border-collapse: collapse; width: 100%; margin: 8px 0 4px; }
   th, td { border: 1px solid #ccd7ea; padding: 6px 9px; text-align: left; vertical-align: top; font-size: 13.5px; }
@@ -801,15 +801,15 @@ export function reportDocumentHtml(
   .sign { display: flex; gap: 60px; margin-top: 36px; align-items: flex-end; }
   .sign div { flex: 1; padding-top: 0; font-size: 12.5px; color: #444; }
   .sign .sign-img { display: block; max-height: 58px; max-width: 220px; margin-bottom: 2px; }
-  .sign .sign-line { display: block; border-top: 1.5px solid #17233b; margin-bottom: 5px; }
+  .sign .sign-line { display: block; border-top: 1.5px solid #999; margin-bottom: 5px; }
   .sign .sign-line-tall { margin-top: 60px; }
-  .small { color: #5a6b8c; font-size: 12px; }
+  .small { color: #5f6368; font-size: 12px; }
   /* tracker grid — same table styling as the data-snapshot appendix */
   .legend { display: flex; flex-wrap: wrap; gap: 10px 26px; margin: 4px 0 18px; }
-  .legend .item { display: inline-flex; align-items: center; gap: 9px; font-size: 14px; color: #17233b; }
+  .legend .item { display: inline-flex; align-items: center; gap: 9px; font-size: 14px; color: #444; }
   .legend .sw { width: 16px; height: 16px; border-radius: 4px; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08); }
-  .tracker .flt input { width: 100%; min-width: 46px; padding: 3px 5px; border: 1px solid #ccd7ea; border-radius: 4px; font: inherit; font-size: 11.5px; color: #17233b; background: #fff; }
-  .tracker .flt input:focus { outline: none; border-color: #0F6CBD; }
+  .tracker .flt input { width: 100%; min-width: 46px; padding: 3px 5px; border: 1px solid #ccd7ea; border-radius: 4px; font: inherit; font-size: 11.5px; color: #444; background: #fff; }
+  .tracker .flt input:focus { outline: none; border-color: #479ef5; }
   .tracker .flt th { padding: 4px; }
   @media print { .tracker .flt { display: none !important; } }
   .tracker th, .tracker td { font-size: 13.5px; padding: 6px 9px; border: 0.5px solid rgba(0, 0, 0, 0.94); }
@@ -861,15 +861,15 @@ ${tracker ? "" : `
 
   <style>
     .edit-toolbar { position: fixed; bottom: 14px; right: 12px; z-index: 999; font-family: "Segoe UI", system-ui, sans-serif; }
-    .edit-toolbar button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border: 1px solid #c9d4e4; border-radius: 8px; background: #ffffff; color: #1f2b3d; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(15, 35, 70, 0.14); }
+    .edit-toolbar button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border: 1px solid #c9d4e4; border-radius: 8px; background: #ffffff; color: #444; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14); }
     .edit-toolbar button:hover { background: #f0f5fb; }
-    .edit-toolbar button.on { border-color: #0F6CBD; color: #0F6CBD; }
+    .edit-toolbar button.on { border-color: #479ef5; color: #479ef5; }
     .section-control { display: none !important; }
     body[contenteditable="true"] .section-control { display: inline-flex !important; }
     body[contenteditable="true"] .report-section { position: relative; }
-    body[contenteditable="true"] .report-section:hover { outline: 2px dashed #0F6CBD; outline-offset: 5px; }
-    body[contenteditable="true"] .report-section.section-selected { outline: 3px solid #0F6CBD; outline-offset: 5px; }
-    body[contenteditable="true"] { caret-color: #0F6CBD; }
+    body[contenteditable="true"] .report-section:hover { outline: 2px dashed #479ef5; outline-offset: 5px; }
+    body[contenteditable="true"] .report-section.section-selected { outline: 3px solid #479ef5; outline-offset: 5px; }
+    body[contenteditable="true"] { caret-color: #479ef5; }
     body[contenteditable="true"]:focus { outline: none; }
     @media print { .edit-toolbar { display: none !important; } }
   </style>
@@ -1342,14 +1342,14 @@ export function deckDocumentHtml(
   ${slideHtml}
   <style>
     .edit-toolbar { position: fixed; bottom: 14px; right: 12px; z-index: 999; font-family: "Segoe UI", system-ui, sans-serif; }
-    .edit-toolbar button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border: 1px solid #c9d4e4; border-radius: 8px; background: #ffffff; color: #1f2b3d; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(15, 35, 70, 0.14); }
+    .edit-toolbar button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border: 1px solid #c9d4e4; border-radius: 8px; background: #ffffff; color: #444; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14); }
     .edit-toolbar button:hover { background: #f0f5fb; }
-    .edit-toolbar button.on { border-color: #0F6CBD; color: #0F6CBD; }
+    .edit-toolbar button.on { border-color: #479ef5; color: #479ef5; }
     .section-control { display:none !important; }
     body[contenteditable="true"] .section-control { display:inline-flex !important; }
-    body[contenteditable="true"] .slide:hover { outline:3px dashed #0F6CBD; outline-offset:4px; }
-    body[contenteditable="true"] .slide.section-selected { outline:5px solid #0F6CBD; outline-offset:4px; }
-    body[contenteditable="true"] { caret-color: #0F6CBD; }
+    body[contenteditable="true"] .slide:hover { outline:3px dashed #479ef5; outline-offset:4px; }
+    body[contenteditable="true"] .slide.section-selected { outline:5px solid #479ef5; outline-offset:4px; }
+    body[contenteditable="true"] { caret-color: #479ef5; }
     body[contenteditable="true"]:focus { outline: none; }
     @media print { .edit-toolbar { display: none !important; } }
   </style>

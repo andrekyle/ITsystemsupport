@@ -975,17 +975,17 @@ const escHtml = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 const ASSIGNMENT_DOC_CSS = `
-  body{font-family:Segoe UI,Arial,sans-serif;max-width:820px;margin:32px auto;padding:0 20px;color:#1c2430}
-  h1{margin-bottom:2px} .sub{color:#5c6774;margin-top:0}
+  body{font-family:Segoe UI,Arial,sans-serif;max-width:820px;margin:32px auto;padding:0 20px;color:#444}
+  h1{margin-bottom:2px} .sub{color:#5f6368;margin-top:0}
   section{margin-top:30px;border-top:2px solid #d8dee6;padding-top:12px}
   h2{font-size:17px} h3{margin:18px 0 2px;font-size:15px}
-  .marks{color:#5c6774;margin:2px 0 10px;font-size:13px}
+  .marks{color:#5f6368;margin:2px 0 10px;font-size:13px}
   .q{margin:0 0 12px}
-  .q-head{font-size:12px;color:#5c6774;text-transform:uppercase;letter-spacing:.4px}
+  .q-head{font-size:12px;color:#5f6368;text-transform:uppercase;letter-spacing:.4px}
   .q-text{font-weight:600;margin:2px 0 4px}
   .answer{white-space:pre-wrap;background:#f4f6f8;padding:8px 12px;border-radius:4px}
   .answer.ok{background:#f0f8f2}
-  .learner-head{margin-top:48px;padding-top:20px;border-top:3px solid #1c2430}
+  .learner-head{margin-top:48px;padding-top:20px;border-top:3px solid #999}
   .learner-head h1{font-size:22px}
   .learner-head:first-of-type{margin-top:20px;padding-top:0;border-top:none}
   @media print{
@@ -999,8 +999,8 @@ const ASSIGNMENT_DOC_CSS = `
 const ASSIGNMENT_NAV_CSS = `
   body{padding-left:210px}
   .learner-nav{position:fixed;left:0;top:0;bottom:0;width:200px;background:#fafafa;border-right:1px solid #d8dee6;padding:16px 10px 16px 14px;overflow-y:auto}
-  .learner-nav .nav-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5c6774;margin:0 0 10px 6px}
-  .learner-nav a{display:block;font-size:12.5px;font-weight:600;color:#1c2430;text-decoration:none;border-radius:6px;padding:7px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .learner-nav .nav-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f6368;margin:0 0 10px 6px}
+  .learner-nav a{display:block;font-size:12.5px;font-weight:600;color:#479ef5;text-decoration:none;border-radius:6px;padding:7px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .learner-nav a:hover{background:#eef1f4}
   .learner-nav a.empty{color:#9aa5b1;font-weight:500}
   .learner-head{scroll-margin-top:16px}

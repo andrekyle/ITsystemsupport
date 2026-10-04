@@ -183,7 +183,7 @@ function Mark({ item, ratio, pageRef, selected, onSelect, onChange, onRemove, re
       ) : item.kind === "signature" ? (
         <div className="fill-signature" {...dragProps}>
           {item.path ? (
-            <svg viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="Signature"><path d={item.path} fill="none" stroke="#1a237e" strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <svg viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="Signature"><path d={item.path} fill="none" stroke="#479ef5" strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" /></svg>
           ) : <span className="fill-signature-text">{item.text}</span>}
         </div>
       ) : (
@@ -241,7 +241,7 @@ export function SignatureDialog({ onApply, onCancel }: { onApply: (signature: { 
           onPointerUp={() => { drawing.current = false; }}
           onPointerCancel={() => { drawing.current = false; }}
         >
-          <svg viewBox="0 0 1 1" preserveAspectRatio="none"><path d={path} fill="none" stroke="#1a237e" strokeWidth={2.5} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          <svg viewBox="0 0 1 1" preserveAspectRatio="none"><path d={path} fill="none" stroke="#479ef5" strokeWidth={2.5} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" /></svg>
           {!strokes.length && <span className="fill-pad-hint">Sign here with your mouse, pen or finger</span>}
         </div>
       ) : (

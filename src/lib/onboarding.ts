@@ -67,10 +67,10 @@ export function onboardingPackHtml(profile: Profile, contacts: OnboardingContact
 <title>Onboarding Pack — ${esc(profile.name)}</title>
 <style>
   * { box-sizing: border-box; }
-  body { font: 14px/1.55 "Segoe UI", system-ui, sans-serif; color: #17233b; margin: 0; padding: 34px 44px; }
-  h1 { font-size: 27px; margin: 0 0 2px; color: #0b3f8a; }
-  h2 { font-size: 18px; margin: 30px 0 8px; color: #0b3f8a; border-bottom: 2px solid #dbe6f7; padding-bottom: 5px; }
-  .sub { color: #5a6b8c; margin: 0 0 18px; }
+  body { font: 14px/1.55 "Segoe UI", system-ui, sans-serif; color: #444; margin: 0; padding: 34px 44px; }
+  h1 { font-size: 27px; margin: 0 0 2px; color: #479ef5; }
+  h2 { font-size: 18px; margin: 30px 0 8px; color: #479ef5; border-bottom: 2px solid #dbe6f7; padding-bottom: 5px; }
+  .sub { color: #5f6368; margin: 0 0 18px; }
   .banner { background: #eef4ff; border: 1px solid #c9dbf7; border-radius: 10px; padding: 14px 18px; margin: 18px 0; }
   table { border-collapse: collapse; width: 100%; margin: 8px 0 4px; }
   th, td { border: 1px solid #ccd7ea; padding: 6px 9px; text-align: left; vertical-align: top; font-size: 12.5px; }
@@ -80,8 +80,8 @@ export function onboardingPackHtml(profile: Profile, contacts: OnboardingContact
   .module-row td { background: #f2f6fd; }
   ol li, ul li { margin: 4px 0; }
   .sign { display: flex; gap: 60px; margin-top: 36px; }
-  .sign div { flex: 1; border-top: 1.5px solid #17233b; padding-top: 5px; font-size: 12.5px; color: #444; }
-  .small { color: #5a6b8c; font-size: 12px; }
+  .sign div { flex: 1; border-top: 1.5px solid #999; padding-top: 5px; font-size: 12.5px; color: #444; }
+  .small { color: #5f6368; font-size: 12px; }
   @media print { body { padding: 10mm 12mm; } h2 { break-after: avoid; } tr { break-inside: avoid; } }
 </style>
 </head>

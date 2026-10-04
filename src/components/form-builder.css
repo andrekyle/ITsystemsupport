@@ -271,7 +271,7 @@
 .fill-hint { flex: 1 1 100%; font-size: 12.5px; color: var(--ink-2); }
 @media (min-width: 900px) { .fill-hint { flex: 1 1 auto; margin-left: 8px; } }
 .replica-placing .replica-page { cursor: crosshair; }
-.fill-mark { position: absolute; box-sizing: border-box; color: #1a237e; line-height: 1; }
+.fill-mark { position: absolute; box-sizing: border-box; color: #479ef5; line-height: 1; }
 .fill-mark:not(.readonly) { cursor: move; }
 .fill-mark.selected { outline: 1px dashed var(--azure); outline-offset: 2px; }
 .fill-mark-text { display: flex; align-items: center; width: auto !important; height: auto !important; min-height: 1.4em; cursor: default; }
@@ -279,14 +279,14 @@
 .fill-mark-text:hover .fill-grip, .fill-mark-text.selected .fill-grip { opacity: 1; }
 .fill-text { border: 0; border-bottom: 1px dashed transparent; background: transparent; padding: 0 0.15em; margin: 0; font: inherit; color: inherit; outline: none; min-width: 3ch; }
 .fill-text:focus, .fill-mark-text.selected .fill-text { border-bottom-color: rgba(43, 108, 176, 0.5); background: rgba(255, 248, 216, 0.85); }
-.fill-text::placeholder { color: rgba(26, 35, 126, 0.45); }
+.fill-text::placeholder { color: rgba(71, 158, 245, 0.45); }
 .fill-symbol { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: 700; user-select: none; }
-.fill-symbol-line { border-top: 2px solid #1a237e; height: 0 !important; margin-top: 0; }
+.fill-symbol-line { border-top: 2px solid #479ef5; height: 0 !important; margin-top: 0; }
 .fill-mark-line { display: flex; align-items: center; min-height: 6px; }
 .fill-mark-line .fill-symbol-line { width: 100%; }
 .fill-signature { width: 100%; height: 100%; display: flex; align-items: flex-end; }
 .fill-signature svg { width: 100%; height: 100%; display: block; }
-.fill-signature-text { font-family: "Segoe Script", "Brush Script MT", "Lucida Handwriting", cursive; font-size: 100cqh; line-height: 1; white-space: nowrap; color: #1a237e; }
+.fill-signature-text { font-family: "Segoe Script", "Brush Script MT", "Lucida Handwriting", cursive; font-size: 100cqh; line-height: 1; white-space: nowrap; color: #479ef5; }
 .fill-signature .fill-signature-text { font-size: 85cqh; }
 .fill-signature-preview { margin-top: 10px; font-size: 32px; min-height: 40px; }
 .fill-remove { position: absolute; top: -12px; right: -12px; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border-2); background: #fff; color: var(--red); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }

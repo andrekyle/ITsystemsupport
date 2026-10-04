@@ -2,10 +2,10 @@ const EDITOR_STYLES = `
   body.editing :is(table.trk,table.tracker) td, body.editing :is(table.trk,table.tracker) th,
   body[contenteditable="true"] :is(table.trk,table.tracker) td, body[contenteditable="true"] :is(table.trk,table.tracker) th { position: relative; }
   body.editing :is(table.trk,table.tracker) .tracker-selected,
-  body[contenteditable="true"] :is(table.trk,table.tracker) .tracker-selected { outline: 3px solid #4f46e5 !important; outline-offset: -3px; }
+  body[contenteditable="true"] :is(table.trk,table.tracker) .tracker-selected { outline: 3px solid #79c0ff !important; outline-offset: -3px; }
   body.editing :is(table.trk,table.tracker) .tracker-group-selected,
-  body[contenteditable="true"] :is(table.trk,table.tracker) .tracker-group-selected { box-shadow:inset 0 0 0 2px #4f46e5; }
-  .tracker-fill-handle { display:none; position:absolute; width:11px; height:11px; right:-5px; bottom:-5px; z-index:20; border:2px solid #fff; background:#4f46e5; cursor:crosshair; box-shadow:0 0 0 1px #4f46e5; }
+  body[contenteditable="true"] :is(table.trk,table.tracker) .tracker-group-selected { box-shadow:inset 0 0 0 2px #79c0ff; }
+  .tracker-fill-handle { display:none; position:absolute; width:11px; height:11px; right:-5px; bottom:-5px; z-index:20; border:2px solid #fff; background:#79c0ff; cursor:crosshair; box-shadow:0 0 0 1px #79c0ff; }
   .tracker-col-resize, .tracker-row-resize { display:none; position:absolute; z-index:19; background:transparent; }
   .tracker-col-resize { top:0; right:-4px; width:8px; height:calc(100% - 10px); cursor:col-resize; }
   .tracker-row-resize { left:0; bottom:-4px; width:calc(100% - 10px); height:8px; cursor:row-resize; }
