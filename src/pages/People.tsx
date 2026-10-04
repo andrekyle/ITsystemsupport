@@ -140,7 +140,7 @@ function OnlineNow({ people, viewer }: { people: Profile[]; viewer: Profile }) {
   );
 }
 
-function ProfileHead({ profile }: { profile: Profile }) {
+function ProfileHead({ profile, hasOwnCloudAccount, passwordSet = !!profile.passwordHash }: { profile: Profile; hasOwnCloudAccount?: boolean; passwordSet?: boolean }) {
   return (
     <div className="card profile-head">
       <Avatar profile={profile} size={96} />
@@ -149,6 +149,8 @@ function ProfileHead({ profile }: { profile: Profile }) {
         <div className="rl">
           {profile.role === "Super User" && <Icon name="shield" size={14} />}
           {profile.role} · joined {fmtDate(profile.createdAt)}
+          {hasOwnCloudAccount ? " · own sign-in account" : ""}
+          {passwordSet ? " · password set" : ""}
         </div>
       </div>
     </div>
@@ -556,6 +558,7 @@ export function StudentsPage({
         onChanged={refresh}
         remote={isRemote}
         owner={link?.owner ?? cloud?.owners[student.id]}
+        passwordSet={!!mergeProfileWithCloud(student, cloud).passwordHash}
         cloudProfileId={cloudProfileId}
         cloudDocs={cloud?.poe[cloudProfileId]}
       />
@@ -614,7 +617,6 @@ export function StudentsPage({
         const cloudCount = poeItemCount(cloud?.poe[cloudId] ?? {});
         const docs = isRemote ? cloudCount : localCount || cloudCount;
         const online = lastOnlineState(displayed.lastLogin);
-        const hasOwnCloudAccount = !!link || isRemote;
         return (
           <button
             key={s.id}
@@ -630,11 +632,7 @@ export function StudentsPage({
                 {" · last online "}
                 <span className={`chip ${online.tone}`}>{online.label}</span>
                 {displayed.lastLogin ? ` (${fmtDateTime(displayed.lastLogin)})` : ""}
-              {" · joined "}
-              {fmtDate(displayed.createdAt)}
-              {isPrivileged && hasOwnCloudAccount ? " · own sign-in account" : ""}
               {isPrivileged && displayed.role === "Learner" && !displayed.enrolment ? " · enrolment form outstanding" : ""}
-              {isPrivileged && displayed.passwordHash ? " · password set" : ""}
               </span>
             </span>
             <span className="rl docs">
@@ -2190,6 +2188,7 @@ function StudentDetail({
   onChanged,
   remote,
   owner,
+  passwordSet,
   cloudProfileId,
   cloudDocs,
 }: {
@@ -2200,6 +2199,7 @@ function StudentDetail({
   /** profile belongs to another sign-in account — edits are written to their cloud rows */
   remote?: boolean;
   owner?: string;
+  passwordSet?: boolean;
   /** identity-matched profile id in the owner's cloud account (may differ from student.id) */
   cloudProfileId?: string;
   cloudDocs?: Record<string, PoeDoc>;
@@ -2412,7 +2412,7 @@ function StudentDetail({
         {student.role} profile · System Support NQF Level 5 Learnership
       </p>
 
-      <ProfileHead profile={student} />
+      <ProfileHead profile={student} hasOwnCloudAccount={!!owner || remote} passwordSet={passwordSet} />
 
       {staffViewer && (
         <div className="contact-row">

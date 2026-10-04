@@ -38,12 +38,12 @@ export function Dashboard({
     const learners = users.filter(user => user.role === "Learner").length;
     const staff = users.length - learners;
     const actions: { page: Route["page"]; image: string; title: string; detail: string; value?: string }[] = [
-      { page: "students", image: "/emoji/1f91d.svg", title: "Users & students", detail: "Manage accounts, roles, learner records and access.", value: String(users.length) },
-      { page: "analytics", image: "/emoji/1f4bb.svg", title: "Learning analytics", detail: "Review engagement, completion and assessment performance." },
-      { page: "trackerReport", image: "/emoji/2b50.svg", title: "Learner tracker", detail: "Monitor individual and cohort progress in one report.", value: String(learners) },
-      { page: "attendance", image: "/emoji/2705.svg", title: "Attendance", detail: "Capture registers and verify participation records." },
-      { page: "course", image: "/emoji/1f4da.svg", title: "Course content", detail: "Build units, edit lessons and manage learning materials." },
-      { page: "forms", image: "/admin-icons/forms.svg", title: "Forms", detail: "Create and maintain operational and learner forms." },
+      { page: "students", image: "/admin-images/users.webp", title: "Users & students", detail: "Manage accounts, roles, learner records and access.", value: String(users.length) },
+      { page: "analytics", image: "/admin-images/analytics.webp", title: "Learning analytics", detail: "Review engagement, completion and assessment performance." },
+      { page: "trackerReport", image: "/admin-images/tracker.webp", title: "Learner tracker", detail: "Monitor individual and cohort progress in one report.", value: String(learners) },
+      { page: "attendance", image: "/admin-images/attendance.webp", title: "Attendance", detail: "Capture registers and verify participation records." },
+      { page: "course", image: "/admin-images/course.webp", title: "Course content", detail: "Build units, edit lessons and manage learning materials." },
+      { page: "forms", image: "/admin-images/forms.webp", title: "Forms", detail: "Create and maintain operational and learner forms." },
     ];
     return <section className="admin-dashboard">
       <div className="eyebrow"><Icon name="shield" size={15}/> Administration</div>
