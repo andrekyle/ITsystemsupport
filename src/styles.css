@@ -240,7 +240,9 @@ a:hover {
 .admin-action-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-bottom:30px; }
 .admin-action-card { display:grid; grid-template-columns:auto 1fr auto auto; align-items:center; gap:14px; width:100%; padding:18px; text-align:left; }
 .admin-action-card:hover { border-color:color-mix(in srgb,var(--azure) 42%,var(--border)); background:var(--surface-2); }
-.admin-action-icon { display:grid; place-items:center; width:42px; height:42px; border-radius:9px; color:var(--azure); background:color-mix(in srgb,var(--azure) 10%,var(--surface)); }
+.admin-action-icon { display:grid; place-items:center; width:52px; height:52px; overflow:hidden; border:1px solid color-mix(in srgb,var(--azure) 24%,var(--border)); border-radius:12px; background:linear-gradient(145deg,color-mix(in srgb,var(--azure) 15%,var(--surface)),color-mix(in srgb,var(--azure) 5%,var(--surface))); }
+.admin-action-icon img { display:block; width:31px; height:31px; object-fit:contain; filter:drop-shadow(0 2px 3px rgba(0,0,0,.2)); transition:transform .18s ease; }
+.admin-action-card:hover .admin-action-icon img { transform:scale(1.08); }
 .admin-action-copy { display:grid; gap:4px; }
 .admin-action-copy strong { color:var(--ink); font-size:15px; }
 .admin-action-copy small { color:var(--ink-3); font-size:12.5px; line-height:1.4; }

@@ -37,13 +37,13 @@ export function Dashboard({
     const users = loadProfiles();
     const learners = users.filter(user => user.role === "Learner").length;
     const staff = users.length - learners;
-    const actions: { page: Route["page"]; icon: string; title: string; detail: string; value?: string }[] = [
-      { page: "students", icon: "people", title: "Users & students", detail: "Manage accounts, roles, learner records and access.", value: String(users.length) },
-      { page: "analytics", icon: "chart", title: "Learning analytics", detail: "Review engagement, completion and assessment performance." },
-      { page: "trackerReport", icon: "trend", title: "Learner tracker", detail: "Monitor individual and cohort progress in one report.", value: String(learners) },
-      { page: "attendance", icon: "clipboard", title: "Attendance", detail: "Capture registers and verify participation records." },
-      { page: "course", icon: "book", title: "Course content", detail: "Build units, edit lessons and manage learning materials." },
-      { page: "forms", icon: "document", title: "Forms", detail: "Create and maintain operational and learner forms." },
+    const actions: { page: Route["page"]; image: string; title: string; detail: string; value?: string }[] = [
+      { page: "students", image: "/emoji/1f91d.svg", title: "Users & students", detail: "Manage accounts, roles, learner records and access.", value: String(users.length) },
+      { page: "analytics", image: "/emoji/1f4bb.svg", title: "Learning analytics", detail: "Review engagement, completion and assessment performance." },
+      { page: "trackerReport", image: "/emoji/2b50.svg", title: "Learner tracker", detail: "Monitor individual and cohort progress in one report.", value: String(learners) },
+      { page: "attendance", image: "/emoji/2705.svg", title: "Attendance", detail: "Capture registers and verify participation records." },
+      { page: "course", image: "/emoji/1f4da.svg", title: "Course content", detail: "Build units, edit lessons and manage learning materials." },
+      { page: "forms", image: "/admin-icons/forms.svg", title: "Forms", detail: "Create and maintain operational and learner forms." },
     ];
     return <section className="admin-dashboard">
       <div className="eyebrow"><Icon name="shield" size={15}/> Administration</div>
@@ -53,7 +53,7 @@ export function Dashboard({
       </div>
       <h2 className="section-title"><span className="ico"><Icon name="dashboard" size={20}/></span>Management tools</h2>
       <div className="admin-action-grid">{actions.map(action => <button key={action.page} className="card admin-action-card" onClick={() => navigate({ page: action.page })}>
-        <span className="admin-action-icon"><Icon name={action.icon} size={22}/></span><span className="admin-action-copy"><strong>{action.title}</strong><small>{action.detail}</small></span>{action.value && <span className="admin-action-value">{action.value}</span>}<Icon name="chevronRight" size={18}/>
+        <span className="admin-action-icon"><img src={action.image} alt="" aria-hidden="true" /></span><span className="admin-action-copy"><strong>{action.title}</strong><small>{action.detail}</small></span>{action.value && <span className="admin-action-value">{action.value}</span>}<Icon name="chevronRight" size={18}/>
       </button>)}</div>
       <h2 className="section-title"><span className="ico"><Icon name="target" size={20}/></span>Operations</h2>
       <div className="admin-operations">
