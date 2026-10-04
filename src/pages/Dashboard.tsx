@@ -59,6 +59,7 @@ export function Dashboard({
       <div className="admin-operations">
         <button className="card clickable" onClick={() => navigate({page:"compliance"})}><Icon name="shield" size={20}/><span><strong>Compliance</strong><small>Review programme requirements and evidence.</small></span></button>
         <button className="card clickable" onClick={() => navigate({page:"calendar"})}><Icon name="calendar" size={20}/><span><strong>Training calendar</strong><small>Manage sessions and delivery dates.</small></span></button>
+        <button className="card clickable" onClick={() => navigate({page:"onboarding"})}><Icon name="folder" size={20}/><span><strong>Onboarding packs</strong><small>Publish induction material for learners.</small></span></button>
         <button className="card clickable" onClick={() => navigate({page:"reports"})}><Icon name="robot" size={20}/><span><strong>AI Assistant</strong><small>Create reports and administrative outputs.</small></span></button>
       </div>
     </section>;

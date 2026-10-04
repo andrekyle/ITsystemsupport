@@ -26,7 +26,12 @@ export type AuditType =
   | "attendance.sign"
   | "announce.post"
   | "qa.post"
-  | "qa.delete";
+  | "qa.delete"
+  | "onboarding.download"
+  | "onboarding.upload"
+  | "onboarding.pack.create"
+  | "onboarding.pack.delete"
+  | "onboarding.file.delete";
 
 export interface AuditEvent {
   id: string;

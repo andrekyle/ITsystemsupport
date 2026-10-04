@@ -2129,6 +2129,161 @@ export function useMemories() {
   return { photos, urls, addPhotos, removePhoto };
 }
 
+/* ---------- student onboarding packs (admin/facilitator uploads) ---------- */
+
+const ONBOARDING_KEY = "itss.onboarding.shared";
+
+/** A single file inside an onboarding pack. */
+export interface OnboardingFile {
+  id: string;
+  name: string;
+  /** MIME type reported by the browser at upload time */
+  type: string;
+  size: number;
+  /** data-URL of the file (local-only mode) */
+  data?: string;
+  /** Supabase Storage path (cloud mode) */
+  path?: string;
+  uploadedAt: string;
+  by: string;
+  byId: string;
+}
+
+/** A named folder of onboarding material shared with the whole cohort. */
+export interface OnboardingPack {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  by: string;
+  byId: string;
+  files: OnboardingFile[];
+}
+
+/** Fetch the freshest shared pack list from the cloud (null when offline/local). */
+async function pullOnboarding(): Promise<OnboardingPack[] | null> {
+  if (!supabase) return null;
+  try {
+    const { data } = await supabase
+      .from("shared_state")
+      .select("value")
+      .eq("key", ONBOARDING_KEY)
+      .maybeSingle();
+    if (data?.value) {
+      const list = JSON.parse(data.value) as OnboardingPack[];
+      return Array.isArray(list) ? list.map((p) => ({ ...p, files: p.files ?? [] })) : [];
+    }
+    return [];
+  } catch {
+    return null; // offline — caller falls back to the local copy
+  }
+}
+
+const readPacks = () =>
+  read<OnboardingPack[]>(ONBOARDING_KEY, []).map((p) => ({ ...p, files: p.files ?? [] }));
+
+export function useOnboardingPacks() {
+  const [packs, setPacks] = useState<OnboardingPack[]>(readPacks);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === ONBOARDING_KEY) setPacks(readPacks());
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  // freshen from the cloud on mount so packs uploaded elsewhere appear immediately
+  useEffect(() => {
+    void (async () => {
+      const cloud = await pullOnboarding();
+      if (cloud) {
+        write(ONBOARDING_KEY, cloud);
+        setPacks(cloud);
+      }
+    })();
+  }, []);
+
+  /** Merge a change into the freshest shared list so concurrent edits survive. */
+  const commit = useCallback(async (mutate: (fresh: OnboardingPack[]) => OnboardingPack[]) => {
+    const base = (await pullOnboarding()) ?? readPacks();
+    const next = mutate(base);
+    write(ONBOARDING_KEY, next);
+    setPacks(next);
+    void flushKey(ONBOARDING_KEY);
+    return next;
+  }, []);
+
+  const createPack = useCallback(
+    async (who: Pick<Profile, "id" | "name">, name: string, description?: string) => {
+      const pack: OnboardingPack = {
+        id: newId(),
+        name: name.trim() || "Untitled pack",
+        description: description?.trim() || undefined,
+        createdAt: new Date().toISOString(),
+        by: who.name,
+        byId: who.id,
+        files: [],
+      };
+      await commit((fresh) => [pack, ...fresh]);
+      return pack;
+    },
+    [commit]
+  );
+
+  const renamePack = useCallback(
+    (packId: string, name: string, description?: string) =>
+      commit((fresh) =>
+        fresh.map((p) =>
+          p.id === packId
+            ? { ...p, name: name.trim() || p.name, description: description?.trim() || undefined }
+            : p
+        )
+      ),
+    [commit]
+  );
+
+  const removePack = useCallback(
+    async (packId: string) => {
+      const doomed = readPacks().find((p) => p.id === packId);
+      const paths = (doomed?.files ?? []).map((f) => f.path).filter((p): p is string => !!p);
+      if (paths.length && supabase) {
+        void supabase.storage.from("files").remove(paths).catch(() => {});
+      }
+      await commit((fresh) => fresh.filter((p) => p.id !== packId));
+    },
+    [commit]
+  );
+
+  /** Attach already-uploaded files to a pack. */
+  const addFiles = useCallback(
+    (packId: string, files: OnboardingFile[]) =>
+      commit((fresh) =>
+        fresh.map((p) => (p.id === packId ? { ...p, files: [...(p.files ?? []), ...files] } : p))
+      ),
+    [commit]
+  );
+
+  const removeFile = useCallback(
+    async (packId: string, fileId: string) => {
+      const doomed = readPacks()
+        .find((p) => p.id === packId)
+        ?.files.find((f) => f.id === fileId);
+      if (doomed?.path && supabase) {
+        void supabase.storage.from("files").remove([doomed.path]).catch(() => {});
+      }
+      await commit((fresh) =>
+        fresh.map((p) =>
+          p.id === packId ? { ...p, files: p.files.filter((f) => f.id !== fileId) } : p
+        )
+      );
+    },
+    [commit]
+  );
+
+  return { packs, createPack, renamePack, removePack, addFiles, removeFile };
+}
+
 /* ---------- super-user lesson edits (per unit, saved locally) ---------- */
 
 export interface LessonEdits {

@@ -579,6 +579,7 @@ export type PageId =
   | "trackerReport"
   | "reports"
   | "howto"
+  | "onboarding"
   | "voting";
 
 export interface Route {
@@ -587,4 +588,6 @@ export interface Route {
   unitId?: string;
   /** profile id of the student being viewed on the students page */
   studentId?: string;
+  /** onboarding pack (folder) opened in the explorer view */
+  packId?: string;
 }
