@@ -255,6 +255,49 @@ a:hover {
 .admin-action-value { grid-column:2; grid-row:2; justify-self:start; padding:5px 12px; border:1px solid rgba(50,40,35,.06); border-radius:999px; color:var(--ink); background:rgba(245,240,237,.8); font-size:20px; font-weight:650; line-height:1.2; }
 .admin-action-card > svg { grid-column:3; grid-row:1 / span 2; justify-self:center; width:48px; height:48px; padding:14px; border-radius:50%; color:var(--ink-2); background:rgba(245,240,237,.82); transition:transform .16s ease,background .16s ease; }
 .admin-action-card:hover > svg { transform:translateX(2px); background:#eee8e4; }
+[data-theme="dark"] .card.admin-action-card {
+  border-color: #414141;
+  background: #292929;
+  box-shadow: 0 12px 28px rgba(0,0,0,.28);
+}
+[data-theme="dark"] .admin-action-card:hover {
+  border-color: #555;
+  background: #303030;
+  box-shadow: 0 16px 34px rgba(0,0,0,.38);
+}
+[data-theme="dark"] .admin-action-icon {
+  position: relative;
+  background: #202020;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+}
+[data-theme="dark"] .admin-action-icon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(30,30,30,.38);
+  mix-blend-mode: multiply;
+}
+[data-theme="dark"] .admin-action-icon img {
+  filter: grayscale(.42) brightness(.58) contrast(1.16) saturate(.65);
+}
+[data-theme="dark"] .admin-action-card:hover .admin-action-icon img {
+  filter: grayscale(.25) brightness(.68) contrast(1.12) saturate(.78);
+}
+[data-theme="dark"] .admin-action-value {
+  border-color: #484848;
+  color: var(--ink-2);
+  background: #222;
+}
+[data-theme="dark"] .admin-action-card > svg {
+  color: #b9b9b9;
+  background: #222;
+  box-shadow: inset 0 0 0 1px #414141;
+}
+[data-theme="dark"] .admin-action-card:hover > svg {
+  color: #fff;
+  background: #3a3a3a;
+}
 .admin-operations { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
 .admin-operations button { display:flex; align-items:flex-start; gap:12px; text-align:left; }
 .admin-operations button > svg { flex:none; color:var(--azure); }
@@ -7709,6 +7752,15 @@ a.plan-ppt:hover {
   gap: 7px;
   padding: 0 14px;
 }
+.lesson-nav-count {
+  flex: 0 0 100%;
+  margin-bottom: 2px;
+  color: var(--ink-3);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+}
 .lesson-dot {
   width: 7px;
   height: 7px;
@@ -14856,7 +14908,11 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   cursor: pointer;
   white-space: nowrap;
 }
-.ob-folder-nav svg, .ob-folder-row svg { color: #c69a35; flex-shrink: 0; }
+.ob-folder-nav svg, .ob-folder-row svg { flex-shrink: 0; }
+.ob-folder-nav .ob-folder-icon, .ob-folder-row svg { color: #c69a35; }
+.ob-folder-disclosure { color: var(--ink-3); transition: transform .14s ease; }
+.ob-folder-disclosure.open { transform: rotate(90deg); }
+.ob-folder-disclosure-placeholder { width: 13px; flex: 0 0 13px; }
 .ob-folder-nav button:hover, .ob-details tbody tr:hover { background: var(--surface-2); }
 .ob-folder-nav button.active { background: color-mix(in srgb, var(--azure) 12%, var(--surface)); color: var(--azure); }
 .ob-details-scroll { overflow: auto; }

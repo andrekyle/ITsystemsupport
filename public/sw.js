@@ -5,7 +5,7 @@
  *  - static assets (js/css/fonts/images/pdf): stale-while-revalidate
  *  - never caches Supabase or other cross-origin API calls
  */
-const VERSION = "itss-v6";
+const VERSION = "itss-v7";
 const SHELL = "/";
 
 self.addEventListener("install", (event) => {
@@ -69,4 +69,4 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
-// deploy trigger: 2026-09-17 - v6: recover cleanly when a deploy replaces split JS chunks
+// v7 refreshes open tabs onto the chunk-recovery build.

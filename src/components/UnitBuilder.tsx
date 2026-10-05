@@ -19,6 +19,8 @@ import { Icon } from "../icons";
 import "./unit-builder.css";
 import { courseScopedUnit } from "../lib/courseScope";
 import { flushLessonEdits } from "../lib/lessonEditStore";
+import { isStaleChunkError, recoverFromStaleChunk } from "../lib/chunkRecovery";
+import { saveInlineDraft } from "../lib/inlineDraftStorage";
 
 async function readApiJson(response: Response, service: string): Promise<any> {
   const text = await response.text();
@@ -67,7 +69,16 @@ export function effectiveBuiltContent(content:UnitContent, edits:LessonEdits):Un
   return next;
 }
 
-export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInline}:{unit:UnitStandard;content?:UnitContent;edits:LessonEdits;onSaved:()=>void;inlineDraft?:UnitContent;onCancelInline:()=>void}) {
+function unitBuilderError(error: unknown, fallback: string): string {
+  if (isStaleChunkError(error)) {
+    return recoverFromStaleChunk(error)
+      ? "The app was updated while it was open. Reloading the latest version…"
+      : "The latest app version is not loaded yet. Refresh this page and try again.";
+  }
+  return error instanceof Error ? error.message : fallback;
+}
+
+export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInline,profileId}:{unit:UnitStandard;content?:UnitContent;edits:LessonEdits;onSaved:()=>void;inlineDraft?:UnitContent;onCancelInline:()=>void;profileId:string}) {
   const built=useBuiltUnit(unit.us);
   const [open,setOpen]=useState(false);  const [source,setSource]=useState(built?.source??"");
   const [ai,setAi]=useState(true);
@@ -101,6 +112,13 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   const versionLabel=(version:BuiltUnitVersion)=>new Date(version.createdAt).toLocaleString("en-ZA",{dateStyle:"medium",timeStyle:"short"});
   const versionHint=(version:BuiltUnitVersion)=>`${version.content.lesson.length} lesson${version.content.lesson.length===1?"":"s"} · ${version.aiUsed?"AI build":"built-in build"}`;
   const [busyProgress,setBusyProgress]=useState(0);
+  const inlineSaveError=(error:unknown)=>{
+    if(!isStaleChunkError(error))return error instanceof Error?error.message:"The inline changes could not be saved. Your current content is unchanged.";
+    if(!inlineDraft||!saveInlineDraft(profileId,unit.us,inlineDraft))return "The app was updated, but this browser could not preserve the inline draft for a reload. Keep this page open and copy your changes before refreshing.";
+    return recoverFromStaleChunk(error)
+      ? "The app was updated. Your inline draft is preserved and the latest version is loading…"
+      : "Your inline draft is preserved. Refresh this page, then save it again.";
+  };
   const finishBusy=(after?:()=>void)=>{
     setBusyProgress(100);
     window.setTimeout(()=>{setBusy("");after?.();},450);
@@ -175,7 +193,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       }
       await publish(next,source,ai);
       doneBusy(()=>setOpen(false));
-    }catch(e){setError(e instanceof Error?e.message:"The unit could not be built. Your current content is unchanged.");setBusy("");}
+    }catch(e){setError(unitBuilderError(e,"The unit could not be built. Your current content is unchanged."));setBusy("");}
   };
   const createAiDeck=async()=>{
     if(!built||!content)return;
@@ -214,19 +232,19 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       link.remove();
       window.setTimeout(()=>URL.revokeObjectURL(url),1000);
       setMessage(`Downloaded ${file.name}${result.model?` · ${result.model}`:""}. The saved unit files were not changed.`);
-    }catch(error){setError(error instanceof Error?error.message:"The AI PowerPoint could not be created. The current unit is unchanged.");}
+    }catch(error){setError(unitBuilderError(error,"The AI PowerPoint could not be created. The current unit is unchanged."));}
     finally{setBusy("");}
   };
   return <section className="unit-builder">
     <div className="unit-builder-bar">
       <button type="button" className="btn ghost" disabled={!!busy || !!inlineDraft} onClick={()=>{setOpen(!open);setDraft(null);setError("");setConfirmBuild(false);}}><Icon name="document" size={16}/>{built?"Rebuild unit standard":"Build unit standard"}</button>
       {inlineDraft ? <>
-        <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(inlineDraft,edits),built?.source??source,built?.aiUsed??false);}catch(e){setError(String(e));}finally{setBusy("");}}}>{busy || "Save inline changes and update files"}</button>
+        <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(inlineDraft,edits),built?.source??source,built?.aiUsed??false);}catch(e){setError(inlineSaveError(e));}finally{setBusy("");}}}>{busy || "Save inline changes and update files"}</button>
         <button type="button" className="btn ghost" disabled={!!busy} onClick={onCancelInline}>Cancel inline changes</button>
       </> : null}
       {!inlineDraft && <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setDraft(effectiveBuiltContent(content ?? { lesson: [], exercises: [], assignments: [], quiz: [] },edits));setOpen(true);setError("");}}>Manage tabs and structure</button>}
       {built&&!inlineDraft&&<>
-        <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(content??built.content,edits),built.source,built.aiUsed);}catch(e){setError(String(e));}finally{setBusy("");}}}>Update PDF and PowerPoint</button>
+        <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(content??built.content,edits),built.source,built.aiUsed);}catch(e){setError(unitBuilderError(e,"The PDF and PowerPoint could not be updated."));}finally{setBusy("");}}}>Update PDF and PowerPoint</button>
         {content&&<button type="button" className="btn ghost" disabled={!!busy} onClick={()=>void createAiDeck()}><Icon name="presenter" size={15}/>{busy?"Creating AI PowerPoint…":"Create AI PowerPoint"}</button>}
         {selectedVersion&&<span className="unit-restore">
           <Select className="unit-version-select" ariaLabel="Saved unit versions" disabled={!!busy} value={selectedVersion.revision} onChange={setRestoreRevision} options={versions.map(version=>({value:version.revision,label:versionLabel(version),hint:versionHint(version)}))}/>
@@ -246,7 +264,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
         ]} />
         <button type="button" className="btn ghost sm" disabled={!!busy} onClick={addTab}>Add tab</button>
       </div>}
-      {draft?<><p>Edit any tab below. Saving also rebuilds the PDF and editable PowerPoint.</p><UnitContentEditor value={draft as never} onChange={v=>setDraft(v as unknown as UnitContent)}/><button type="button" className="btn unit-build-action" disabled={!!busy} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={async()=>{setError("");try{await publish(draft,built?.source??source,built?.aiUsed??false);doneBusy(()=>setOpen(false));}catch(e){setError(String(e));setBusy("");}}}><span>{busy?`Creating ${busyProgress}%`:"Save all changes and rebuild files"}</span></button></>:<>
+      {draft?<><p>Edit any tab below. Saving also rebuilds the PDF and editable PowerPoint.</p><UnitContentEditor value={draft as never} onChange={v=>setDraft(v as unknown as UnitContent)}/><button type="button" className="btn unit-build-action" disabled={!!busy} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={async()=>{setError("");try{await publish(draft,built?.source??source,built?.aiUsed??false);doneBusy(()=>setOpen(false));}catch(e){setError(unitBuilderError(e,"The unit changes could not be saved."));setBusy("");}}}><span>{busy?`Creating ${busyProgress}%`:"Save all changes and rebuild files"}</span></button></>:<>
         <p>Paste your teaching material or import a document. Use headings such as “# Estimating effort” with a blank line before the supporting paragraphs.</p>
         {built&&<p className="muted">Building replaces this unit's learning content. The last {MAX_UNIT_HISTORY} versions stay restorable from the version list above. Learner work is retained.</p>}
         <div className="unit-settings-card">
@@ -325,7 +343,7 @@ export function LessonPlanBuilder({unit,content}:{unit:UnitStandard;content?:Uni
       const plan=parsePlan();
       await publishUnitPart(unit,built,{...structuredClone(base),lessonPlan:plan},setBusy,{planSource:planSource.trim()});
       setPreview(undefined);setMessage(`Lesson plan saved — ${planStats(plan)}. The previous version stays restorable from the builder.`);setOpen(false);
-    }catch(e){setError(e instanceof Error?e.message:"The lesson plan could not be saved. The current plan is unchanged.");}
+    }catch(e){setError(unitBuilderError(e,"The lesson plan could not be saved. The current plan is unchanged."));}
     finally{setBusy("");}
   };
   return <section className="unit-builder">
@@ -396,7 +414,7 @@ export function LogbookBuilder({unit,content}:{unit:UnitStandard;content?:UnitCo
       const spec=parse();
       await publishUnitPart(unit,built,{...structuredClone(base),logbook:spec},setBusy);
       setPreview(undefined);setMessage(`Logbook saved — ${logbookStats(spec)}. The previous version stays restorable from the builder.`);setOpen(false);
-    }catch(e){setError(e instanceof Error?e.message:"The logbook could not be saved. The current logbook is unchanged.");}
+    }catch(e){setError(unitBuilderError(e,"The logbook could not be saved. The current logbook is unchanged."));}
     finally{setBusy("");}
   };
   return <section className="unit-builder">

@@ -361,6 +361,7 @@ export function PackExplorer({
   const folderRef = useRef<HTMLInputElement | null>(null);
   const [query, setQuery] = useState("");
   const [folder, setFolder] = useState("");
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => new Set());
   const [sort, setSort] = useState<{ column: "name" | "modified" | "type" | "size"; descending: boolean }>({
     column: "name", descending: false,
   });
@@ -400,6 +401,17 @@ export function PackExplorer({
     setFolder(path);
     setQuery("");
     setError(null);
+  }
+
+  function selectFolder(path: string, hasChildren: boolean) {
+    navigateFolder(path);
+    if (!hasChildren) return;
+    setExpandedFolders(current => {
+      const next = new Set(current);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
   }
 
   function addSelection(files: File[], isFolder = false) {
@@ -549,16 +561,30 @@ export function PackExplorer({
       <div className="ob-explorer">
         <nav className="ob-folder-nav" aria-label="Pack folders">
           <button className={!currentFolder ? "active" : ""} aria-current={!currentFolder ? "location" : undefined}
-            onClick={() => navigateFolder("")}><Icon name="folder" size={16} />{pack.name}</button>
-          {folders.map(path => (
-            <button key={path} title={path} aria-label={`Go to folder ${path}`}
+            aria-expanded={folders.length ? expandedFolders.has("") : undefined}
+            onClick={() => selectFolder("", folders.length > 0)}>
+            {folders.length > 0 && <Icon name="chevronRight" size={13} className={`ob-folder-disclosure${expandedFolders.has("") ? " open" : ""}`} />}
+            <Icon name="folder" size={16} className="ob-folder-icon" />{pack.name}
+          </button>
+          {folders.filter(path => {
+            if (!expandedFolders.has("")) return false;
+            const parts = path.split("/");
+            return parts.slice(0, -1).every((_, index) => expandedFolders.has(parts.slice(0, index + 1).join("/")));
+          }).map(path => {
+            const hasChildren = folders.some(candidate => parentFolder(candidate) === path);
+            const isExpanded = expandedFolders.has(path);
+            return <button key={path} title={path} aria-label={`Go to folder ${path}`}
               className={currentFolder === path ? "active" : ""}
               aria-current={currentFolder === path ? "location" : undefined}
+              aria-expanded={hasChildren ? isExpanded : undefined}
               style={{ paddingLeft: 12 + path.split("/").length * 14 }}
-              onClick={() => navigateFolder(path)}>
-              <Icon name="folder" size={16} />{path.split("/").pop()}
-            </button>
-          ))}
+              onClick={() => selectFolder(path, hasChildren)}>
+              {hasChildren
+                ? <Icon name="chevronRight" size={13} className={`ob-folder-disclosure${isExpanded ? " open" : ""}`} />
+                : <span className="ob-folder-disclosure-placeholder" />}
+              <Icon name="folder" size={16} className="ob-folder-icon" />{path.split("/").pop()}
+            </button>;
+          })}
         </nav>
         <div className="ob-details-scroll">
           <table className="ob-details" aria-label={`Files in ${currentFolder || pack.name}`}>

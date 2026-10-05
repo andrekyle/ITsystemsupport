@@ -2,25 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
+import { recoverFromStaleChunk } from "./lib/chunkRecovery";
 import "./styles.css";
 import "./lib/install"; // capture the PWA install prompt before React mounts
-
-const recoverFromStaleChunk = (reason: unknown) => {
-  const message = reason instanceof Error ? reason.message : String(reason ?? "");
-  if (!/Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk|ChunkLoadError/i.test(message)) return;
-  const key = "itss.chunk-reload";
-  const now = Date.now();
-  const last = Number(sessionStorage.getItem(key) ?? 0);
-  if (now - last < 30_000) return;
-  sessionStorage.setItem(key, String(now));
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.getRegistrations().then((registrations) =>
-      Promise.all(registrations.map((registration) => registration.update().catch(() => undefined)))
-    ).finally(() => window.location.reload());
-  } else {
-    window.location.reload();
-  }
-};
 
 window.addEventListener("unhandledrejection", (event) => recoverFromStaleChunk(event.reason));
 window.addEventListener("error", (event) => recoverFromStaleChunk(event.error ?? event.message));

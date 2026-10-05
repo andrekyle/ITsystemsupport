@@ -41,6 +41,7 @@ import { checkSpelling, type SpellIssue } from "../lib/spellcheck";
 import { autoGrowTextarea } from "../lib/autoGrow";
 import { insertLessonPlanDay, lessonPlanDayCount, removeLessonPlanDay, startLessonPlanDay } from "../lib/lessonPlanDays";
 import { groupLessonHtml, isLessonBulletListLead, isLessonListLead, isLessonListPoint, isLessonNumberedListLead, isLessonSubheading, lessonListItemText } from "../lib/lessonSubsections";
+import { clearInlineDraft, loadInlineDraft, saveInlineDraft } from "../lib/inlineDraftStorage";
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
 
@@ -2297,8 +2298,19 @@ export function UnitPage({
 }) {
   const [tab, setTab] = useState<UnitTab>(() => loadUnitTab(unitId));
   const builtUnit = useBuiltUnit(unitId);
-  const [inlineUnit, setInlineUnit] = useState<UnitContent>();
-  useEffect(() => { setInlineUnit(undefined); }, [unitId]);
+  const [inlineUnit, setInlineUnit] = useState<UnitContent | undefined>(() => loadInlineDraft(profile.id, unitId));
+  const inlineDraftOwner = `${profile.id}:${unitId}`;
+  const inlineDraftOwnerRef = useRef(inlineDraftOwner);
+  useEffect(() => {
+    if (inlineDraftOwnerRef.current !== inlineDraftOwner) return;
+    if (inlineUnit) saveInlineDraft(profile.id, unitId, inlineUnit);
+    else clearInlineDraft(profile.id, unitId);
+  }, [inlineDraftOwner, inlineUnit, profile.id, unitId]);
+  useEffect(() => {
+    if (inlineDraftOwnerRef.current === inlineDraftOwner) return;
+    inlineDraftOwnerRef.current = inlineDraftOwner;
+    setInlineUnit(loadInlineDraft(profile.id, unitId));
+  }, [inlineDraftOwner, profile.id, unitId]);
   // keep the active tab visible inside the horizontally scrollable tab bar
   const tabsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -3334,7 +3346,7 @@ export function UnitPage({
         {isSaqaUnit(u.us) ? `Unit standard ${u.us}` : "Internal lesson"}
       </div>
       <h1 className="page-title">{u.title}</h1>
-      {isSuperUser && <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} onCancelInline={() => { setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { setInlineUnit(undefined); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />}
+      {isSuperUser && <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} profileId={profile.id} onCancelInline={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />}
       <div className="meta-row">
         <span className="pill">
           <span className="ico">
@@ -4828,6 +4840,9 @@ export function UnitPage({
                   Previous
                 </button>
                 <span className="lesson-nav-dots">
+                  <span className="lesson-nav-count">
+                    Slide {si + 1} of {total}
+                  </span>
                   {content.lesson.map((s, i) => (
                     <button
                       key={i}
