@@ -165,6 +165,32 @@ function PackDialog({
   );
 }
 
+function FileTypeIcon({ name }: { name: string }) {
+  const ext = extOf(name);
+  let kind = "file";
+  let label = ext.slice(0, 3).toUpperCase() || "FILE";
+  if (["doc", "docx", "rtf", "odt"].includes(ext)) { kind = "word"; label = "W"; }
+  else if (ext === "pdf") { kind = "pdf"; label = "PDF"; }
+  else if (["xls", "xlsx", "csv", "ods"].includes(ext)) { kind = "excel"; label = "X"; }
+  else if (["ppt", "pptx", "odp"].includes(ext)) { kind = "powerpoint"; label = "P"; }
+  else if (["html", "htm"].includes(ext)) { kind = "html"; label = "</>"; }
+  else if (["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp"].includes(ext)) { kind = "image"; label = "IMG"; }
+  else if (["zip", "rar", "7z"].includes(ext)) { kind = "archive"; label = "ZIP"; }
+  else if (ext === "txt") { kind = "text"; label = "TXT"; }
+
+  return (
+    <span className={`ob-type-icon ob-type-${kind}`} aria-hidden="true">
+      <svg viewBox="0 0 38 44">
+        <path className="ob-type-sheet" d="M7 1.5h16l8 8V42H7z" />
+        <path className="ob-type-fold" d="M23 1.5v8h8" />
+        {kind === "image" && <><circle cx="18" cy="19" r="2.2" /><path d="m11 31 7-7 4 4 3-3 5 5" /></>}
+        {kind === "archive" && <path d="M20 8v4h-3v4h3v4h-3v4h3v4h-3v5h4" />}
+      </svg>
+      {kind !== "image" && kind !== "archive" && <span>{label}</span>}
+    </span>
+  );
+}
+
 /** In-app replacement for the browser's unstyleable folder-upload prompt. */
 function UploadPackDialog({
   busy,
@@ -493,21 +519,22 @@ function PackExplorer({
               {group.label}
               <span className="ob-group-count">{files.length}</span>
             </h2>
+            <div className="ob-file-list-head" aria-hidden="true">
+              <span>Name</span><span>Type</span><span>Size</span><span>Modified</span><span />
+            </div>
             <div className="ob-file-grid">
               {files.map((file) => {
                 const ext = extOf(file.name);
                 return (
-                  <div key={file.id} className="ob-file card">
-                    <span className={`ob-file-ico ob-ext-${group.id}`}>
-                      <Icon name={group.icon} size={20} />
-                    </span>
+                  <div key={file.id} className="ob-file">
+                    <FileTypeIcon name={file.name} />
                     <div className="ob-file-copy">
                       <strong title={file.name}>{file.name}</strong>
-                      <small>
-                        {ext ? `${ext.toUpperCase()} · ` : ""}
-                        {fmtSize(file.size)} · {fmtDate(file.uploadedAt)}
-                      </small>
+                      <small>{ext ? `${ext.toUpperCase()} file` : "File"}</small>
                     </div>
+                    <span className="ob-file-detail ob-file-type">{ext ? ext.toUpperCase() : "File"}</span>
+                    <span className="ob-file-detail">{fmtSize(file.size)}</span>
+                    <span className="ob-file-detail">{fmtDate(file.uploadedAt)}</span>
                     <div className="ob-file-actions">
                       {VIEWABLE.has(ext) && (
                         <button
