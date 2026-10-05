@@ -624,15 +624,14 @@ export function StudentsPage({
             onClick={() => navigate({ page: "students", studentId: s.id })}
           >
             <Avatar profile={displayed} />
-            <span>
+            <span className="profile-info">
               <span className="nm">{displayed.name}</span>
-              <br />
               <span className="rl">
                 {displayed.role}
                 {" · last online "}
                 <span className={`chip ${online.tone}`}>{online.label}</span>
                 {displayed.lastLogin ? ` (${fmtDateTime(displayed.lastLogin)})` : ""}
-              {isPrivileged && displayed.role === "Learner" && !displayed.enrolment ? " · enrolment form outstanding" : ""}
+                {isPrivileged && displayed.role === "Learner" && !displayed.enrolment ? " · enrolment form outstanding" : ""}
               </span>
             </span>
             <span className="rl docs">

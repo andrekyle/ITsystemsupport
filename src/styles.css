@@ -1746,6 +1746,13 @@ td .with-ico .ico {
   font-size: 16.5px;
 }
 
+.profile-row .profile-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
 .profile-row .rl {
   font-size: 14.5px;
   color: var(--ink-3);
