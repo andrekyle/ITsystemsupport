@@ -620,23 +620,33 @@ export function StudentsPage({
         return (
           <button
             key={s.id}
-            className="profile-row"
+            className={`profile-row people-directory-row${isPrivileged ? " has-docs-column" : ""}`}
             onClick={() => navigate({ page: "students", studentId: s.id })}
           >
-            <Avatar profile={displayed} />
-            <span className="profile-info">
-              <span className="nm">{displayed.name}</span>
-              <span className="rl">
-                {displayed.role}
-                {" · last online "}
-                <span className={`chip ${online.tone}`}>{online.label}</span>
-                {displayed.lastLogin ? ` (${fmtDateTime(displayed.lastLogin)})` : ""}
-                {isPrivileged && displayed.role === "Learner" && !displayed.enrolment ? " · enrolment form outstanding" : ""}
+            <span className="directory-identity">
+              <Avatar profile={displayed} />
+              <span className="profile-info">
+                <span className="nm">{displayed.name}</span>
+                <span className="rl">
+                  {displayed.role}
+                  {isPrivileged && displayed.role === "Learner" && !displayed.enrolment ? " · enrolment form outstanding" : ""}
+                </span>
               </span>
             </span>
-            <span className="rl docs">
-              {isPrivileged && displayed.role === "Learner" ? `${docs} / ${POE_TOTAL} documents` : ""}
+            <span className="directory-cell directory-activity">
+              <span className={`chip ${online.tone}`}>{online.label}</span>
+              <span className="directory-caption">
+                {displayed.lastLogin ? fmtDateTime(displayed.lastLogin) : "No sign-in recorded"}
+              </span>
             </span>
+            {isPrivileged && (
+              <span className="directory-cell directory-docs">
+                <span className="directory-value">
+                  {displayed.role === "Learner" ? `${docs} / ${POE_TOTAL}` : "—"}
+                </span>
+                <span className="directory-caption">POE documents</span>
+              </span>
+            )}
             <span className="chev">
               <Icon name="chevronRight" size={16} />
             </span>

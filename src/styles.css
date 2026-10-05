@@ -1773,6 +1773,92 @@ td .with-ico .ico {
   margin-left: 0;
 }
 
+.profile-row.people-directory-row {
+  display: grid;
+  grid-template-columns: minmax(250px, 1.5fr) minmax(220px, 1fr) minmax(150px, 0.7fr) 18px;
+  gap: 12px 22px;
+  align-items: center;
+  padding: 14px 18px;
+  margin-bottom: 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.profile-row.people-directory-row:not(.has-docs-column) {
+  grid-template-columns: minmax(250px, 1.5fr) minmax(220px, 1fr) 18px;
+}
+
+.people-directory-row:hover {
+  border-color: var(--border);
+  background: var(--surface-2);
+}
+
+.directory-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.directory-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.directory-cell .chip {
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.directory-value {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.directory-caption {
+  color: var(--ink-3);
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+.people-directory-row .chev {
+  margin-left: 0;
+}
+
+@media (max-width: 960px) {
+  .profile-row.people-directory-row,
+  .profile-row.people-directory-row:not(.has-docs-column) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 12px;
+    padding: 12px;
+  }
+
+  .people-directory-row .directory-identity,
+  .people-directory-row .directory-activity,
+  .people-directory-row .directory-docs {
+    grid-column: 1;
+  }
+
+  .people-directory-row .directory-activity {
+    padding-left: 46px;
+  }
+
+  .people-directory-row .directory-docs {
+    padding-left: 46px;
+  }
+
+  .people-directory-row .chev {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: center;
+  }
+}
+
 .field {
   margin-bottom: 14px;
 }
