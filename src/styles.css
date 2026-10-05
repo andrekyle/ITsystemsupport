@@ -14887,7 +14887,7 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .ob-crumb-part { display: inline-flex; align-items: center; gap: 8px; }
 .ob-explorer {
   display: grid;
-  grid-template-columns: minmax(290px, 34%) minmax(0, 1fr);
+  grid-template-columns: var(--ob-folder-pane, 260px) 5px minmax(0, 1fr);
   min-height: 320px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -14896,7 +14896,6 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 }
 .ob-folder-nav {
   padding: 8px 0;
-  border-right: 1px solid var(--border);
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -14915,8 +14914,8 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   cursor: pointer;
   min-width: 0;
   min-height: 34px;
-  height: auto;
-  white-space: normal;
+  height: 34px;
+  white-space: nowrap;
 }
 .ob-folder-nav svg, .ob-folder-row svg { flex-shrink: 0; }
 .ob-folder-nav .ob-folder-icon, .ob-folder-row svg { color: #c69a35; }
@@ -14925,26 +14924,45 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .ob-folder-disclosure-placeholder { width: 13px; flex: 0 0 13px; }
 .ob-folder-label {
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   line-height: 1.35;
+}
+.ob-folder-resizer {
+  position: relative;
+  width: 5px;
+  border-left: 1px solid var(--border);
+  cursor: col-resize;
+  touch-action: none;
+}
+.ob-folder-resizer::after {
+  content: "";
+  position: absolute;
+  inset: 0 -2px;
+}
+.ob-folder-resizer:hover, .ob-folder-resizer:focus-visible {
+  border-left-color: var(--azure);
+  background: color-mix(in srgb, var(--azure) 16%, transparent);
+  outline: none;
 }
 .ob-folder-nav button:hover, .ob-details tbody tr:hover { background: var(--surface-2); }
 .ob-folder-nav button.active { background: color-mix(in srgb, var(--azure) 12%, var(--surface)); color: var(--azure); }
 .ob-details-scroll { overflow: auto; }
 .ob-details {
   width: 100%;
-  min-width: 760px;
+  min-width: 900px;
   table-layout: fixed;
   border-collapse: collapse;
   font-size: 13px;
   color: var(--ink-2);
 }
 .ob-details th { padding: 0; border-bottom: 1px solid var(--border); text-align: left; font-weight: 500; }
-.ob-details th:first-child { width: 34%; }
-.ob-details th:nth-child(2) { width: 21%; }
-.ob-details th:nth-child(3) { width: 23%; }
-.ob-details th:nth-child(4) { width: 9%; }
-.ob-details th:nth-child(5) { width: 112px; }
+.ob-details th:first-child { width: 46%; }
+.ob-details th:nth-child(2) { width: 20%; }
+.ob-details th:nth-child(3) { width: 17%; }
+.ob-details th:nth-child(4) { width: 8%; }
+.ob-details th:nth-child(5) { width: 80px; }
 .ob-details th button {
   width: 100%;
   padding: 10px;
@@ -14993,7 +15011,7 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 
 @media (max-width: 800px) {
   .ob-explorer { grid-template-columns: minmax(0, 1fr); }
-  .ob-folder-nav { display: none; }
+  .ob-folder-nav, .ob-folder-resizer { display: none; }
 }
 
 .ob-group {

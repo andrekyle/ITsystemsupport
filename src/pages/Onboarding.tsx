@@ -360,9 +360,14 @@ export function PackExplorer({
 }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const folderRef = useRef<HTMLInputElement | null>(null);
+  const explorerRef = useRef<HTMLDivElement | null>(null);
   const [query, setQuery] = useState("");
   const [folder, setFolder] = useState("");
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => new Set());
+  const [folderPaneWidth, setFolderPaneWidth] = useState(() => {
+    const saved = Number(localStorage.getItem("itss.onboarding.folderPaneWidth"));
+    return Number.isFinite(saved) && saved >= 190 ? saved : 260;
+  });
   const [sort, setSort] = useState<{ column: "name" | "modified" | "type" | "size"; descending: boolean }>({
     column: "name", descending: false,
   });
@@ -413,6 +418,30 @@ export function PackExplorer({
       else next.add(path);
       return next;
     });
+  }
+
+  function beginFolderPaneResize(event: React.PointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const handle = event.currentTarget;
+    const startX = event.clientX;
+    const startWidth = folderPaneWidth;
+    handle.setPointerCapture(event.pointerId);
+    const move = (next: PointerEvent) => {
+      const available = explorerRef.current?.clientWidth ?? 900;
+      setFolderPaneWidth(Math.min(Math.max(startWidth + next.clientX - startX, 190), Math.max(190, available - 380)));
+    };
+    const stop = () => {
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", stop);
+      handle.removeEventListener("pointercancel", stop);
+      setFolderPaneWidth(width => {
+        localStorage.setItem("itss.onboarding.folderPaneWidth", String(width));
+        return width;
+      });
+    };
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", stop);
+    handle.addEventListener("pointercancel", stop);
   }
 
   function addSelection(files: File[], isFolder = false) {
@@ -559,7 +588,7 @@ export function PackExplorer({
       </div>
 
       {error && <div className="ob-error" role="alert">{error}</div>}
-      <div className="ob-explorer">
+      <div className="ob-explorer" ref={explorerRef} style={{ "--ob-folder-pane": `${folderPaneWidth}px` } as React.CSSProperties}>
         <nav className="ob-folder-nav" aria-label="Pack folders">
           <Button appearance="subtle" className={!currentFolder ? "active" : ""} aria-current={!currentFolder ? "location" : undefined}
             aria-expanded={folders.length ? expandedFolders.has("") : undefined}
@@ -587,6 +616,26 @@ export function PackExplorer({
             </Button>;
           })}
         </nav>
+        <div
+          className="ob-folder-resizer"
+          role="separator"
+          aria-label="Resize folder navigation"
+          aria-orientation="vertical"
+          aria-valuemin={190}
+          aria-valuemax={600}
+          aria-valuenow={Math.round(folderPaneWidth)}
+          tabIndex={0}
+          onPointerDown={beginFolderPaneResize}
+          onKeyDown={event => {
+            if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+            event.preventDefault();
+            setFolderPaneWidth(width => {
+              const next = Math.min(600, Math.max(190, width + (event.key === "ArrowRight" ? 16 : -16)));
+              localStorage.setItem("itss.onboarding.folderPaneWidth", String(next));
+              return next;
+            });
+          }}
+        />
         <div className="ob-details-scroll">
           <table className="ob-details" aria-label={`Files in ${currentFolder || pack.name}`}>
             <thead><tr>
@@ -606,7 +655,10 @@ export function PackExplorer({
                   <td><button className="ob-entry-name" onClick={() => navigateFolder(path)} title={path}>
                     <Icon name="folder" size={20} /><span>{path.split("/").pop()}</span>
                   </button></td>
-                  <td />
+                  <td>{new Date(Math.max(...pack.files
+                    .filter(file => onboardingFilePath(file).startsWith(`${path}/`))
+                    .map(file => new Date(file.modifiedAt ?? file.uploadedAt).getTime())))
+                    .toLocaleString(undefined, { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" })}</td>
                   <td>File folder</td>
                   <td />
                   <td />
