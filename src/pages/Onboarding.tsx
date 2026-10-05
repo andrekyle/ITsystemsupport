@@ -9,6 +9,7 @@ import {
 } from "../store";
 import { downloadDoc, getFileBlob, getFileUrl, uploadFile } from "../lib/files";
 import { ConfirmModal, Modal } from "../components/Modal";
+import { Select } from "../components/Select";
 import { logAudit } from "../lib/audit";
 
 /** Largest onboarding folder/batch accepted, in megabytes. */
@@ -110,6 +111,7 @@ function PackDialog({
   return (
     <Modal
       title={pack ? "Rename pack" : "New onboarding pack"}
+      className="ob-pack-modal"
       onClose={() => {
         if (!busy) onCancel();
       }}
@@ -148,11 +150,16 @@ function PackDialog({
         />
       </div>
       <div className="field" style={{ marginBottom: 0 }}>
-        <label htmlFor="pack-audience">Who can access this pack?</label>
-        <select id="pack-audience" value={audience} onChange={(e) => setAudience(e.target.value as "learners" | "staff")}>
-          <option value="learners">Students and staff</option>
-          <option value="staff">Facilitators and administrators only</option>
-        </select>
+        <label>Who can access this pack?</label>
+        <Select
+          value={audience}
+          ariaLabel="Who can access this pack?"
+          options={[
+            { value: "learners", label: "Students and staff" },
+            { value: "staff", label: "Facilitators and administrators only" },
+          ]}
+          onChange={(value) => setAudience(value as "learners" | "staff")}
+        />
       </div>
     </Modal>
   );
@@ -261,11 +268,16 @@ function UploadPackDialog({
         <input id="upload-pack-desc" value={description} placeholder="What learners will find inside" onChange={(e) => setDescription(e.target.value)} />
       </div>
       <div className="field">
-        <label htmlFor="upload-pack-audience">Who can access this pack?</label>
-        <select id="upload-pack-audience" value={audience} onChange={(e) => setAudience(e.target.value as "learners" | "staff")}>
-          <option value="learners">Students and staff</option>
-          <option value="staff">Facilitators and administrators only</option>
-        </select>
+        <label>Who can access this pack?</label>
+        <Select
+          value={audience}
+          ariaLabel="Who can access this pack?"
+          options={[
+            { value: "learners", label: "Students and staff" },
+            { value: "staff", label: "Facilitators and administrators only" },
+          ]}
+          onChange={(value) => setAudience(value as "learners" | "staff")}
+        />
       </div>
       <div
         className={`ob-file-picker${isOverLimit ? " invalid" : ""}`}
