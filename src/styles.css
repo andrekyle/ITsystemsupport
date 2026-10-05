@@ -12032,12 +12032,7 @@ h2.section-title.howto-heading {
   grid-template-columns: 44px minmax(0, 1fr);
   gap: 0 18px;
   padding: 28px 0;
-  border-bottom: 1px solid var(--border);
   align-items: start;
-}
-
-.howto-row:last-child {
-  border-bottom: 0;
 }
 
 .howto-bignum {
