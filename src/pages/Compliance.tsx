@@ -341,7 +341,6 @@ export function CompliancePage({
               <tr key={d.name}>
                 <td>
                   <strong>{d.name}</strong>
-                  <div className="mini-note">{d.detail}</div>
                 </td>
                 <td>{fmtDate(d.date)}</td>
                 <td>{fmtDate(d.end)}</td>
