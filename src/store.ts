@@ -2221,7 +2221,8 @@ export function useOnboardingPacks() {
       who: Pick<Profile, "id" | "name">,
       name: string,
       description?: string,
-      audience: "learners" | "staff" = "learners"
+      audience: "learners" | "staff" = "learners",
+      files: OnboardingFile[] = []
     ) => {
       const pack: OnboardingPack = {
         id: newId(),
@@ -2231,7 +2232,7 @@ export function useOnboardingPacks() {
         by: who.name,
         byId: who.id,
         audience,
-        files: [],
+        files,
       };
       await commit((fresh) => [pack, ...fresh]);
       return pack;

@@ -7,7 +7,7 @@ import {
   type OnboardingFile,
   type OnboardingPack,
 } from "../store";
-import { downloadDoc, getFileBlob, getFileUrl, uploadFile } from "../lib/files";
+import { deleteFile, downloadDoc, getFileBlob, getFileUrl, uploadFile } from "../lib/files";
 import { ConfirmModal, Modal } from "../components/Modal";
 import { Select } from "../components/Select";
 import { logAudit } from "../lib/audit";
@@ -258,7 +258,7 @@ function UploadPackDialog({
       }
     >
       <p className="page-sub ob-upload-help">
-        Select the Word documents, PDFs, presentations, HTML files and other resources that belong in this pack.
+        Select Word documents, PDFs, presentations, spreadsheets, images, HTML files and other resources for this pack.
       </p>
       <div className="field">
         <label htmlFor="upload-pack-name">Pack name</label>
@@ -584,20 +584,19 @@ export function OnboardingPage({
   );
   const open = route.packId ? visiblePacks.find((p) => p.id === route.packId) ?? null : null;
 
-  async function handleUpload(packId: string, files: File[]) {
+  async function uploadDocuments(packId: string, files: File[]): Promise<OnboardingFile[]> {
     setError(null);
     const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
     if (totalBytes > MAX_PACK_MB * 1024 * 1024) {
-      setError(`This upload is ${fmtSize(totalBytes)}. Onboarding folders may be up to ${MAX_PACK_MB} MB.`);
-      return;
+      throw new Error(`This upload is ${fmtSize(totalBytes)}. Onboarding folders may be up to ${MAX_PACK_MB} MB.`);
     }
-    const ok = files;
-    if (!ok.length) return;
+    if (!files.length) return [];
 
     const uploaded: OnboardingFile[] = [];
-    for (let i = 0; i < ok.length; i++) {
-      const file = ok[i];
-      setBusy(`Uploading ${i + 1} of ${ok.length} — ${file.name}`);
+    const failures: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      setBusy(`Uploading ${i + 1} of ${files.length} — ${file.name}`);
       try {
         const doc = await uploadFile(`shared/onboarding/${packId}`, file);
         uploaded.push({
@@ -606,24 +605,30 @@ export function OnboardingPage({
           by: profile.name,
           byId: profile.id,
         });
-      } catch {
-        // skip this file — the summary below reports the shortfall
+      } catch (uploadError) {
+        failures.push(uploadError instanceof Error ? uploadError.message : `Could not upload ${file.name}`);
       }
     }
     setBusy(null);
 
-    if (uploaded.length) {
-      await addFiles(packId, uploaded);
-      logAudit(
-        profile,
-        "onboarding.upload",
-        `Uploaded ${uploaded.length} file(s) to onboarding pack ${packId}`
-      );
+    if (!uploaded.length) {
+      throw new Error(failures[0] || "None of the selected files could be uploaded.");
     }
-    if (uploaded.length < ok.length) {
-      setError(
-        `${ok.length - uploaded.length} of ${ok.length} files could not be uploaded — check your connection and try again.`
-      );
+    if (failures.length) {
+      setError(`${failures.length} of ${files.length} files could not be uploaded. ${failures[0]}`);
+    }
+    return uploaded;
+  }
+
+  async function handleUpload(packId: string, files: File[]) {
+    try {
+      const uploaded = await uploadDocuments(packId, files);
+      if (!uploaded.length) return;
+      await addFiles(packId, uploaded);
+      logAudit(profile, "onboarding.upload", `Uploaded ${uploaded.length} file(s) to onboarding pack ${packId}`);
+    } catch (uploadError) {
+      setBusy(null);
+      setError(uploadError instanceof Error ? uploadError.message : "The files could not be uploaded.");
     }
   }
 
@@ -635,14 +640,19 @@ export function OnboardingPage({
   ) {
     if (!files.length || !name.trim()) return;
     setDialogBusy(true);
+    const uploadId = `pack_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    let uploaded: OnboardingFile[] = [];
     try {
-      const pack = await createPack(profile, name, description, audience);
+      uploaded = await uploadDocuments(uploadId, files);
+      const pack = await createPack(profile, name, description, audience, uploaded);
       logAudit(profile, "onboarding.pack.create", `Created onboarding pack "${pack.name}"`);
-      await handleUpload(pack.id, files);
+      logAudit(profile, "onboarding.upload", `Uploaded ${uploaded.length} file(s) to onboarding pack ${pack.id}`);
       setUploadDialog(false);
       navigate({ page: "onboarding", packId: pack.id });
-    } catch {
-      setError("The pack could not be uploaded — check your connection and try again.");
+    } catch (uploadError) {
+      await Promise.all(uploaded.map((file) => deleteFile(file.path)));
+      setBusy(null);
+      setError(uploadError instanceof Error ? uploadError.message : "The pack could not be uploaded.");
     } finally {
       setDialogBusy(false);
     }
@@ -675,8 +685,8 @@ export function OnboardingPage({
           <h1 className="page-title">Student onboarding packs</h1>
           <p className="page-sub">
             {canManage
-              ? "Create packs of induction material — Word documents, PDFs, presentations and web pages. Everything you add here is available to every learner."
-              : "Download your induction material. Open a pack to browse its documents, PDFs, presentations and web pages."}
+              ? "Create packs of induction material — documents, PDFs, presentations, spreadsheets, images and web pages."
+              : "Download your induction material. Open a pack to browse documents, PDFs, presentations, spreadsheets and images."}
           </p>
 
           <div className="ob-toolbar">
