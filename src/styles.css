@@ -14902,6 +14902,7 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .ob-folder-nav button {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 7px;
   width: 100%;
   padding: 7px 12px;
@@ -14915,6 +14916,7 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   min-width: 0;
   min-height: 34px;
   height: 34px;
+  border-radius: 0;
   white-space: nowrap;
 }
 .ob-folder-nav svg, .ob-folder-row svg { flex-shrink: 0; }
@@ -14948,6 +14950,11 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 }
 .ob-folder-nav button:hover, .ob-details tbody tr:hover { background: var(--surface-2); }
 .ob-folder-nav button.active { background: color-mix(in srgb, var(--azure) 12%, var(--surface)); color: var(--azure); }
+[data-theme="dark"] .ob-folder-nav button.active {
+  background: #343434;
+  color: var(--ink);
+}
+[data-theme="dark"] .ob-folder-nav button.active:hover { background: #3b3b3b; }
 .ob-details-scroll { overflow: auto; }
 .ob-details {
   width: 100%;
