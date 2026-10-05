@@ -14817,10 +14817,11 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 
 .ob-pack-actions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px 10px 10px 0;
+  padding: 0 14px 0 0;
 }
 
 /* ---- grouped file explorer ---- */

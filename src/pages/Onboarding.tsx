@@ -767,7 +767,7 @@ export function OnboardingPage({
                           {types.size > 0 && ` · ${[...types].join(", ")}`}
                         </span>
                       </span>
-                      <Icon name="chevronRight" size={18} />
+                      {!canManage && <Icon name="chevronRight" size={18} />}
                     </button>
                     {canManage && (
                       <div className="ob-pack-actions">
