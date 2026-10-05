@@ -14612,6 +14612,43 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   font-size: 12.5px;
 }
 
+.ob-explorer-toolbar {
+  gap: 8px;
+  margin: 14px 0 18px;
+}
+
+.ob-explorer-toolbar .btn.sm {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+}
+
+.ob-explorer-toolbar > .btn.ghost.sm:first-child {
+  padding: 0 8px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink-3);
+}
+
+.ob-explorer-toolbar > .btn.ghost.sm:first-child:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.ob-explorer-toolbar .ob-search {
+  flex: 1 1 320px;
+  max-width: 475px;
+  height: 42px;
+  border-radius: 9px;
+}
+
+.ob-explorer-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .ob-count {
   color: var(--ink-3);
   font-size: 12.5px;

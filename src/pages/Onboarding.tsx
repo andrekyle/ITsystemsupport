@@ -538,7 +538,7 @@ export function PackExplorer({
         {fmtDate(pack.createdAt)}
       </p>
 
-      <div className="ob-toolbar">
+      <div className="ob-toolbar ob-explorer-toolbar">
         <button className="btn ghost sm" disabled={!currentFolder} onClick={() => navigateFolder(parentFolder(currentFolder))}>
           <Icon name="arrowLeft" size={14} /> Up
         </button>
@@ -552,14 +552,14 @@ export function PackExplorer({
           />
         </div>
         {canManage && (
-          <>
+          <div className="ob-explorer-actions">
             <button className="btn solid sm" onClick={() => fileRef.current?.click()}>
               <Icon name="plus" size={14} /> Add files
             </button>
             <button className="btn ghost sm" onClick={() => folderRef.current?.click()}>
               <Icon name="folder" size={14} /> Add folder
             </button>
-          </>
+          </div>
         )}
         <button
           className="btn ghost sm"
