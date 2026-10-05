@@ -19,6 +19,8 @@
     "esbuild@0.28.1": true
   },
   "dependencies": {
+    "@fluentui/react-components": "^9.74.9",
+    "@fluentui/react-icons": "^2.0.343",
     "@supabase/supabase-js": "^2.110.6",
     "jszip": "^3.10.1",
     "pdfjs-dist": "^6.1.200",

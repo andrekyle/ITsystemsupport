@@ -10,6 +10,7 @@ import {
 import { getFileBlob, getFileUrl, uploadFile } from "../lib/files";
 import { ConfirmModal, Modal } from "../components/Modal";
 import { Select } from "../components/Select";
+import { Button } from "@fluentui/react-components";
 import { logAudit } from "../lib/audit";
 import {
   archiveFilePaths, fileTypeLabel, filesFromDirectoryHandle, filesFromDroppedEntry,
@@ -560,12 +561,12 @@ export function PackExplorer({
       {error && <div className="ob-error" role="alert">{error}</div>}
       <div className="ob-explorer">
         <nav className="ob-folder-nav" aria-label="Pack folders">
-          <button className={!currentFolder ? "active" : ""} aria-current={!currentFolder ? "location" : undefined}
+          <Button appearance="subtle" className={!currentFolder ? "active" : ""} aria-current={!currentFolder ? "location" : undefined}
             aria-expanded={folders.length ? expandedFolders.has("") : undefined}
             onClick={() => selectFolder("", folders.length > 0)}>
             {folders.length > 0 && <Icon name="chevronRight" size={13} className={`ob-folder-disclosure${expandedFolders.has("") ? " open" : ""}`} />}
             <Icon name="folder" size={16} className="ob-folder-icon" />{pack.name}
-          </button>
+          </Button>
           {folders.filter(path => {
             if (!expandedFolders.has("")) return false;
             const parts = path.split("/");
@@ -573,7 +574,7 @@ export function PackExplorer({
           }).map(path => {
             const hasChildren = folders.some(candidate => parentFolder(candidate) === path);
             const isExpanded = expandedFolders.has(path);
-            return <button key={path} title={path} aria-label={`Go to folder ${path}`}
+            return <Button appearance="subtle" key={path} title={path} aria-label={`Go to folder ${path}`}
               className={currentFolder === path ? "active" : ""}
               aria-current={currentFolder === path ? "location" : undefined}
               aria-expanded={hasChildren ? isExpanded : undefined}
@@ -583,7 +584,7 @@ export function PackExplorer({
                 ? <Icon name="chevronRight" size={13} className={`ob-folder-disclosure${isExpanded ? " open" : ""}`} />
                 : <span className="ob-folder-disclosure-placeholder" />}
               <Icon name="folder" size={16} className="ob-folder-icon" />{path.split("/").pop()}
-            </button>;
+            </Button>;
           })}
         </nav>
         <div className="ob-details-scroll">

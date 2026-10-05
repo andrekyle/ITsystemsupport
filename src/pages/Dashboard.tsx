@@ -14,6 +14,7 @@ import { loadAnnouncements, loadProfiles, moduleCompletion, overallStats, unitSt
 import { attendanceSignedCount, computeGamification } from "../lib/gamification";
 import { Bar, Ring } from "../components/Ring";
 import { TokenGauge } from "../components/TokenGauge";
+import { Button } from "@fluentui/react-components";
 
 export function Dashboard({
   profile,
@@ -52,9 +53,9 @@ export function Dashboard({
         <span><strong>{users.length}</strong> total users</span><span><strong>{learners}</strong> learners</span><span><strong>{staff}</strong> staff</span>
       </div>
       <h2 className="section-title"><span className="ico"><Icon name="dashboard" size={20}/></span>Management tools</h2>
-      <div className="admin-action-grid">{actions.map(action => <button key={action.page} className="card admin-action-card" onClick={() => navigate({ page: action.page })}>
+      <div className="admin-action-grid">{actions.map(action => <Button appearance="subtle" key={action.page} className="card admin-action-card" onClick={() => navigate({ page: action.page })}>
         <span className="admin-action-icon"><img src={action.image} alt="" aria-hidden="true" /></span><span className="admin-action-copy"><strong>{action.title}</strong><small>{action.detail}</small></span>{action.value && <span className="admin-action-value">{action.value}</span>}<Icon name="chevronRight" size={18}/>
-      </button>)}</div>
+      </Button>)}</div>
       <h2 className="section-title"><span className="ico"><Icon name="target" size={20}/></span>Operations</h2>
       <div className="admin-operations">
         <button className="card clickable" onClick={() => navigate({page:"compliance"})}><Icon name="shield" size={20}/><span><strong>Compliance</strong><small>Review programme requirements and evidence.</small></span></button>

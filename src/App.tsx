@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { FluentProvider, webDarkTheme, webLightTheme } from "@fluentui/react-components";
 import type { Profile, Route } from "./types";
 import type { Theme } from "./store";
 import { getSession, getTheme, loadProfiles, setAccountAdmin, setAccountEmail, setSession, setTheme, touchLastOnline, updateProfile, useProgress } from "./store";
@@ -370,6 +371,7 @@ function LocalApp({
     return id ? loadProfiles().find((p) => p.id === id) ?? null : null;
   });
   const [theme, setThemeState] = useState<Theme>(getTheme);
+  const fluentTheme = theme === "dark" ? webDarkTheme : webLightTheme;
 
   useEffect(() => {
     setTheme(theme);
@@ -431,6 +433,7 @@ function LocalApp({
   }
 
   return (
+    <FluentProvider theme={fluentTheme} className="itss-fluent-provider">
     <Shell
       profile={profile}
       theme={theme}
@@ -445,5 +448,6 @@ function LocalApp({
         if (updated) setProfile(updated);
       }}
     />
+    </FluentProvider>
   );
 }
