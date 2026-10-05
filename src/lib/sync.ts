@@ -1,6 +1,12 @@
 import { supabase } from "./supabase";
 import { isUnitPackKey, receiveUnitPack, storedUnitPacks, clearUnitPacks } from "./unitStorage";
 import { receiveLessonEdits } from "./lessonEditStore";
+import {
+  clearOnboardingPacks,
+  ONBOARDING_KEY,
+  receiveOnboardingPacks,
+  storedOnboardingPacks,
+} from "./onboardingStorage";
 
 /**
  * Cloud sync for the app's localStorage state.
@@ -58,6 +64,10 @@ const pushes = new Map<string, Promise<boolean>>();
 export function writeFromCloud(key: string, value: string) {
   if (key.startsWith(UNIT_BUILDER_SAVE_PROBE)) return;
   if (pendingFor(key)) return;
+  if (key === ONBOARDING_KEY) {
+    receiveOnboardingPacks(value);
+    return;
+  }
   if(isUnitPackKey(key)){receiveUnitPack(key,value);return;}
   if(key.startsWith("itss.lessonedits.")){receiveLessonEdits(key,value);return;}
   const attendanceMatch = key.match(ATTENDANCE_REGISTER_RE);
@@ -158,6 +168,15 @@ function queue(key: string, value: string | null) {
  *  bypassing the debounce — for destructive actions (e.g. removing a
  *  profile) that must not lose the race against navigation/tab close. */
 export async function flushKey(key: string, requireCloud = false): Promise<void> {
+  return flushValue(key, localStorage.getItem(key), requireCloud);
+}
+
+/** Immediately push an explicit value that is stored outside localStorage. */
+export async function flushValue(
+  key: string,
+  value: string | null,
+  requireCloud = false
+): Promise<void> {
   if (requireCloud && (!supabase || !userId)) {
     throw new Error("Cloud saving requires a connection and a signed-in account. Your edits have not been saved to the cloud.");
   }
@@ -166,8 +185,8 @@ export async function flushKey(key: string, requireCloud = false): Promise<void>
     clearTimeout(t);
     timers.delete(key);
   }
-  if (requireCloud) rememberPending(key, localStorage.getItem(key));
-  const saved = await pushKey(key, localStorage.getItem(key));
+  if (requireCloud) rememberPending(key, value);
+  const saved = await pushKey(key, value);
   if (requireCloud && !saved) throw new Error("Cloud save failed. Check your connection and try Save to cloud again. Your edits are still on this device.");
   if (requireCloud && pendingFor(key)) throw new Error("More edits were made while saving. Click Save to cloud again to save the latest changes.");
 }
@@ -241,6 +260,10 @@ export async function startSync(authUserId: string): Promise<void> {
   for(const [key,value] of await storedUnitPacks().catch(()=>[] as [string,string][])) {
     if(!cloudKeys.has(key)) await pushKey(key,value);
   }
+  if (!cloudKeys.has(ONBOARDING_KEY)) {
+    const value = await storedOnboardingPacks().catch(() => null);
+    if (value !== null) await pushKey(ONBOARDING_KEY, value);
+  }
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && syncable(key) && !cloudKeys.has(key)) {
@@ -259,6 +282,7 @@ export function stopSync() {
 /** Remove all synced app data from this browser (used on cloud sign-out). */
 export function wipeLocalData() {
   clearUnitPacks();
+  void clearOnboardingPacks();
   const doomed: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);

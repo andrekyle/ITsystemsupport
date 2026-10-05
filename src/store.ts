@@ -3,10 +3,16 @@ import type { EnrolmentInfo, PoeDoc, Profile, ProgressState, Role, UnitActivity,
 import { UNIT_ACTIVITIES } from "./types";
 import { MODULES, POE_SECTIONS } from "./data/course";
 import { cloudEnabled, supabase } from "./lib/supabase";
-import { flushKey, writeFromCloud } from "./lib/sync";
+import { flushKey, flushValue, writeFromCloud } from "./lib/sync";
 import { logAudit } from "./lib/audit";
 import { courseScopedUnit } from "./lib/courseScope";
 import { cachedLessonEdits, loadLessonEdits, queueLessonEdits, subscribeLessonEdits } from "./lib/lessonEditStore";
+import {
+  loadOnboardingPacks,
+  loadOnboardingPacksForUpdate,
+  ONBOARDING_KEY,
+  persistOnboardingPacks,
+} from "./lib/onboardingStorage";
 
 const PROFILES_KEY = "itss.profiles";
 const SESSION_KEY = "itss.session";
@@ -2131,8 +2137,6 @@ export function useMemories() {
 
 /* ---------- student onboarding packs (admin/facilitator uploads) ---------- */
 
-const ONBOARDING_KEY = "itss.onboarding.shared";
-
 /** A single file inside an onboarding pack. */
 export interface OnboardingFile {
   id: string;
@@ -2189,18 +2193,30 @@ export function useOnboardingPacks() {
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
-      if (!e.key || e.key === ONBOARDING_KEY) setPacks(readPacks());
+      if (!e.key || e.key === ONBOARDING_KEY) {
+        void loadOnboardingPacks(readPacks()).then(setPacks);
+      }
+    };
+    const onIndexedDb = () => {
+      void loadOnboardingPacks(readPacks()).then(setPacks);
     };
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    window.addEventListener("onboarding-packs-updated", onIndexedDb);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("onboarding-packs-updated", onIndexedDb);
+    };
   }, []);
 
-  // freshen from the cloud on mount so packs uploaded elsewhere appear immediately
+  // Load the quota-safe local copy, then freshen from the cloud so packs
+  // uploaded elsewhere appear immediately.
   useEffect(() => {
     void (async () => {
+      const local = await loadOnboardingPacks(readPacks());
+      setPacks(local);
       const cloud = await pullOnboarding();
       if (cloud) {
-        write(ONBOARDING_KEY, cloud);
+        await persistOnboardingPacks(cloud);
         setPacks(cloud);
       }
     })();
@@ -2208,11 +2224,20 @@ export function useOnboardingPacks() {
 
   /** Merge a change into the freshest shared list so concurrent edits survive. */
   const commit = useCallback(async (mutate: (fresh: OnboardingPack[]) => OnboardingPack[]) => {
-    const base = (await pullOnboarding()) ?? readPacks();
+    const base = (await pullOnboarding()) ?? (await loadOnboardingPacksForUpdate(readPacks()));
     const next = mutate(base);
-    write(ONBOARDING_KEY, next);
+    let localError: unknown;
+    try {
+      await persistOnboardingPacks(next);
+    } catch (error) {
+      localError = error;
+    }
     setPacks(next);
-    void flushKey(ONBOARDING_KEY);
+    if (supabase) {
+      await flushValue(ONBOARDING_KEY, JSON.stringify(next), true);
+    } else if (localError) {
+      throw new Error("This browser could not store the onboarding pack. Check that browser storage is enabled and try again.");
+    }
     return next;
   }, []);
 
@@ -2259,7 +2284,7 @@ export function useOnboardingPacks() {
 
   const removePack = useCallback(
     async (packId: string) => {
-      const doomed = readPacks().find((p) => p.id === packId);
+      const doomed = (await loadOnboardingPacks(readPacks())).find((p) => p.id === packId);
       const paths = (doomed?.files ?? []).map((f) => f.path).filter((p): p is string => !!p);
       if (paths.length && supabase) {
         void supabase.storage.from("files").remove(paths).catch(() => {});
@@ -2280,7 +2305,7 @@ export function useOnboardingPacks() {
 
   const removeFile = useCallback(
     async (packId: string, fileId: string) => {
-      const doomed = readPacks()
+      const doomed = (await loadOnboardingPacks(readPacks()))
         .find((p) => p.id === packId)
         ?.files.find((f) => f.id === fileId);
       if (doomed?.path && supabase) {
