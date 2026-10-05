@@ -2141,6 +2141,10 @@ export function useMemories() {
 export interface OnboardingFile {
   id: string;
   name: string;
+  /** Original location within the pack, independent of the cloud object path. */
+  relativePath?: string;
+  /** Original file modification time; older uploads use uploadedAt. */
+  modifiedAt?: string;
   /** MIME type reported by the browser at upload time */
   type: string;
   size: number;

@@ -7,51 +7,19 @@ import {
   type OnboardingFile,
   type OnboardingPack,
 } from "../store";
-import { deleteFile, downloadDoc, getFileBlob, getFileUrl, uploadFile } from "../lib/files";
+import { getFileBlob, getFileUrl, uploadFile } from "../lib/files";
 import { ConfirmModal, Modal } from "../components/Modal";
 import { Select } from "../components/Select";
 import { logAudit } from "../lib/audit";
+import {
+  archiveFilePaths, fileTypeLabel, filesFromDirectoryHandle, filesFromDroppedEntry,
+  onboardingFilePath, onboardingFolders, parentFolder, selectedFiles, withoutUploadRoot,
+  type DirectoryHandleLike, type DroppedEntry, type UploadSelection,
+} from "../lib/onboardingFiles";
 
 /** Largest onboarding folder/batch accepted, in megabytes. */
 const MAX_PACK_MB = 500;
 
-interface DroppedEntry {
-  isFile: boolean;
-  isDirectory: boolean;
-  name: string;
-  file?: (success: (file: File) => void, failure?: () => void) => void;
-  createReader?: () => { readEntries: (success: (entries: DroppedEntry[]) => void, failure?: () => void) => void };
-}
-
-interface DirectoryHandleLike {
-  kind: "directory";
-  name: string;
-  values: () => AsyncIterableIterator<DirectoryHandleLike | { kind: "file"; name: string; getFile: () => Promise<File> }>;
-}
-
-async function filesFromDroppedEntry(entry: DroppedEntry): Promise<File[]> {
-  if (entry.isFile && entry.file) {
-    return new Promise((resolve) => entry.file?.((file) => resolve([file]), () => resolve([])));
-  }
-  if (!entry.isDirectory || !entry.createReader) return [];
-  const reader = entry.createReader();
-  const children: DroppedEntry[] = [];
-  while (true) {
-    const batch = await new Promise<DroppedEntry[]>((resolve) => reader.readEntries(resolve, () => resolve([])));
-    if (!batch.length) break;
-    children.push(...batch);
-  }
-  return (await Promise.all(children.map(filesFromDroppedEntry))).flat();
-}
-
-async function filesFromDirectoryHandle(directory: DirectoryHandleLike): Promise<File[]> {
-  const files: File[] = [];
-  for await (const entry of directory.values()) {
-    if (entry.kind === "file") files.push(await entry.getFile());
-    else files.push(...await filesFromDirectoryHandle(entry));
-  }
-  return files;
-}
 
 interface FileGroup {
   id: string;
@@ -60,7 +28,7 @@ interface FileGroup {
   extensions: string[];
 }
 
-/** Explorer groupings — files are bucketed by extension, in this order. */
+/** File-type summaries for pack cards and upload selections. */
 const FILE_GROUPS: FileGroup[] = [
   { id: "documents", label: "Documents", icon: "document", extensions: ["doc", "docx", "rtf", "odt", "txt"] },
   { id: "pdfs", label: "PDFs", icon: "clipboard", extensions: ["pdf"] },
@@ -198,7 +166,7 @@ function UploadPackDialog({
   onCancel,
 }: {
   busy: boolean;
-  onUpload: (name: string, description: string, audience: "learners" | "staff", files: File[]) => void;
+  onUpload: (name: string, description: string, audience: "learners" | "staff", files: UploadSelection[]) => void;
   onCancel: () => void;
 }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -207,15 +175,15 @@ function UploadPackDialog({
   const [description, setDescription] = useState("");
   const [audience, setAudience] = useState<"learners" | "staff">("learners");
   const [folderMode, setFolderMode] = useState(true);
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<UploadSelection[]>([]);
   const [selectionError, setSelectionError] = useState<string | null>(null);
-  const totalBytes = useMemo(() => files.reduce((sum, file) => sum + file.size, 0), [files]);
+  const totalBytes = useMemo(() => files.reduce((sum, item) => sum + item.file.size, 0), [files]);
   const isOverLimit = totalBytes > MAX_PACK_MB * 1024 * 1024;
 
-  function acceptFiles(next: File[], suggestedName?: string) {
+  function acceptFiles(next: UploadSelection[], suggestedName?: string) {
     setFiles(next);
     setSelectionError(
-      next.reduce((sum, file) => sum + file.size, 0) > MAX_PACK_MB * 1024 * 1024
+      next.reduce((sum, item) => sum + item.file.size, 0) > MAX_PACK_MB * 1024 * 1024
         ? `This folder is larger than ${MAX_PACK_MB} MB. Remove files or choose a smaller folder.`
         : null
     );
@@ -223,7 +191,7 @@ function UploadPackDialog({
   }
 
   async function chooseFolder() {
-    const picker = (window as unknown as {
+    const picker = (window as Window & {
       showDirectoryPicker?: () => Promise<DirectoryHandleLike>;
     }).showDirectoryPicker;
     if (!picker) {
@@ -232,9 +200,10 @@ function UploadPackDialog({
     }
     try {
       const directory = await picker.call(window);
-      acceptFiles(await filesFromDirectoryHandle(directory), directory.name);
-    } catch {
-      // Closing the operating-system picker is not an upload error.
+      acceptFiles(withoutUploadRoot(await filesFromDirectoryHandle(directory)), directory.name);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setSelectionError(error instanceof Error ? error.message : "The folder could not be read.");
     }
   }
 
@@ -247,16 +216,20 @@ function UploadPackDialog({
         return getter?.call(item) ?? null;
       })
       .filter((entry): entry is DroppedEntry => entry !== null);
-    const dropped = entries.length
-      ? (await Promise.all(entries.map(filesFromDroppedEntry))).flat()
-      : Array.from(event.dataTransfer.files);
-    const folderName = entries.length === 1 && entries[0].isDirectory ? entries[0].name : undefined;
-    acceptFiles(dropped, folderName);
+    try {
+      const dropped = entries.length
+        ? (await Promise.all(entries.map(entry => filesFromDroppedEntry(entry)))).flat()
+        : selectedFiles(Array.from(event.dataTransfer.files));
+      const folderName = entries.length === 1 && entries[0].isDirectory ? entries[0].name : undefined;
+      acceptFiles(folderName ? withoutUploadRoot(dropped) : dropped, folderName);
+    } catch (error) {
+      setSelectionError(error instanceof Error ? error.message : "The dropped folder could not be read.");
+    }
   }
 
   const groups = useMemo(() => {
     const counts = new Map<string, number>();
-    files.forEach((file) => {
+    files.forEach(({ file }) => {
       const group = FILE_GROUPS.find((item) => item.extensions.includes(extOf(file.name))) ?? OTHER_GROUP;
       counts.set(group.label, (counts.get(group.label) ?? 0) + 1);
     });
@@ -284,7 +257,7 @@ function UploadPackDialog({
       }
     >
       <p className="page-sub ob-upload-help">
-        Select Word documents, PDFs, presentations, spreadsheets, images, HTML files and other resources for this pack.
+        Select documents and other resources for this pack. Folder uploads keep their subfolders and original file locations.
       </p>
       <div className="field">
         <label htmlFor="upload-pack-name">Pack name</label>
@@ -341,7 +314,7 @@ function UploadPackDialog({
         multiple
         hidden
         onChange={(e) => {
-          acceptFiles(Array.from(e.target.files ?? []));
+          acceptFiles(selectedFiles(Array.from(e.target.files ?? [])));
           e.target.value = "";
         }}
       />
@@ -354,7 +327,7 @@ function UploadPackDialog({
         onChange={(e) => {
           const selected = Array.from(e.target.files ?? []);
           const folderName = selected[0]?.webkitRelativePath.split("/")[0];
-          acceptFiles(selected, folderName);
+          acceptFiles(selectedFiles(selected, true), folderName);
           e.target.value = "";
         }}
       />
@@ -368,8 +341,8 @@ function UploadPackDialog({
   );
 }
 
-/** Explorer view of one pack: files grouped by type. */
-function PackExplorer({
+/** Details view with pack-relative folders, never extension-based regrouping. */
+export function PackExplorer({
   pack,
   canManage,
   profile,
@@ -381,53 +354,109 @@ function PackExplorer({
   canManage: boolean;
   profile: Profile;
   onBack: () => void;
-  onUpload: (files: File[]) => void;
+  onUpload: (files: UploadSelection[]) => void;
   onRemoveFile: (file: OnboardingFile) => void;
 }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const folderRef = useRef<HTMLInputElement | null>(null);
   const [query, setQuery] = useState("");
+  const [folder, setFolder] = useState("");
+  const [sort, setSort] = useState<{ column: "name" | "modified" | "type" | "size"; descending: boolean }>({
+    column: "name", descending: false,
+  });
   const [opening, setOpening] = useState<string | null>(null);
   const [downloadingPack, setDownloadingPack] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const folders = useMemo(() => onboardingFolders(pack.files), [pack.files]);
+  const currentFolder = folders.includes(folder) ? folder : "";
+  const search = query.trim().toLowerCase();
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return q ? pack.files.filter((f) => f.name.toLowerCase().includes(q)) : pack.files;
-  }, [pack.files, query]);
+    const matches = pack.files.filter(file => {
+      const path = onboardingFilePath(file);
+      return search
+        ? (!currentFolder || path.startsWith(`${currentFolder}/`)) && path.toLowerCase().includes(search)
+        : parentFolder(path) === currentFolder;
+    });
+    return matches.sort((a, b) => {
+      let result = 0;
+      if (sort.column === "size") result = a.size - b.size;
+      else if (sort.column === "modified") {
+        result = new Date(a.modifiedAt ?? a.uploadedAt).getTime() - new Date(b.modifiedAt ?? b.uploadedAt).getTime();
+      } else {
+        const aValue = sort.column === "type" ? fileTypeLabel(a.name) : a.name;
+        const bValue = sort.column === "type" ? fileTypeLabel(b.name) : b.name;
+        result = aValue.localeCompare(bValue, undefined, { numeric: true });
+      }
+      return (sort.descending ? -result : result) || onboardingFilePath(a).localeCompare(onboardingFilePath(b));
+    });
+  }, [pack.files, currentFolder, search, sort]);
+  const childFolders = folders.filter(path => parentFolder(path) === currentFolder &&
+    (!search || path.toLowerCase().includes(search) ||
+      filtered.some(file => onboardingFilePath(file).startsWith(`${path}/`))))
+    .sort((a, b) => (sort.column === "name" && sort.descending ? -1 : 1) * a.localeCompare(b, undefined, { numeric: true }));
 
-  // keep the configured group order, dropping groups with no matching files
-  const grouped = useMemo(() => {
-    const buckets = new Map<string, { group: FileGroup; files: OnboardingFile[] }>();
-    for (const file of filtered) {
-      const group = groupOf(file);
-      const bucket = buckets.get(group.id) ?? { group, files: [] };
-      bucket.files.push(file);
-      buckets.set(group.id, bucket);
-    }
-    const order = [...FILE_GROUPS, OTHER_GROUP];
-    return order
-      .map((g) => buckets.get(g.id))
-      .filter((b): b is { group: FileGroup; files: OnboardingFile[] } => !!b)
-      .map((b) => ({
-        ...b,
-        files: [...b.files].sort((a, z) => a.name.localeCompare(z.name)),
+  function navigateFolder(path: string) {
+    setFolder(path);
+    setQuery("");
+    setError(null);
+  }
+
+  function addSelection(files: File[], isFolder = false) {
+    try {
+      const selections = selectedFiles(files).map(item => ({
+        ...item,
+        relativePath: currentFolder ? `${currentFolder}/${item.relativePath}` : item.relativePath,
       }));
-  }, [filtered]);
+      if (selections.length) onUpload(selections);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : `The selected ${isFolder ? "folder" : "files"} could not be read.`);
+    }
+  }
+
+  async function downloadFile(file: OnboardingFile) {
+    setError(null);
+    try {
+      const blob = await getFileBlob(file);
+      if (!blob) throw new Error(`"${file.name}" could not be downloaded. Check your connection and try again.`);
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = file.name;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      logAudit(profile, "onboarding.download", `Downloaded "${onboardingFilePath(file)}"`);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "The file could not be downloaded.");
+    }
+  }
 
   async function openFile(file: OnboardingFile) {
+    setError(null);
+    if (!VIEWABLE.has(extOf(file.name))) {
+      await downloadFile(file);
+      return;
+    }
     setOpening(file.id);
-    const url = await getFileUrl(file);
-    setOpening(null);
-    if (url) window.open(url, "_blank", "noopener,noreferrer");
+    try {
+      const url = await getFileUrl(file);
+      if (!url) throw new Error(`"${file.name}" could not be opened. Check your connection and try again.`);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "The file could not be opened.");
+    } finally { setOpening(null); }
   }
 
   async function downloadPack() {
     if (!pack.files.length || downloadingPack) return;
     setDownloadingPack(true);
+    setError(null);
     try {
       const zip = new JSZip();
-      for (const file of pack.files) {
+      const paths = archiveFilePaths(pack.files);
+      for (const [index, file] of pack.files.entries()) {
         const blob = await getFileBlob(file);
-        if (blob) zip.file(file.name, blob);
+        if (!blob) throw new Error(`"${file.name}" could not be downloaded. No ZIP was created; check your connection and try again.`);
+        zip.file(paths[index], blob, { date: new Date(file.modifiedAt ?? file.uploadedAt) });
       }
       const archive = await zip.generateAsync({ type: "blob" });
       const link = document.createElement("a");
@@ -436,6 +465,8 @@ function PackExplorer({
       link.click();
       URL.revokeObjectURL(link.href);
       logAudit(profile, "onboarding.download", `Downloaded onboarding pack "${pack.name}"`);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "The pack could not be downloaded.");
     } finally {
       setDownloadingPack(false);
     }
@@ -449,7 +480,13 @@ function PackExplorer({
           All packs
         </button>
         <Icon name="chevronRight" size={14} />
-        <span className="ob-crumb-current">{pack.name}</span>
+        <button className="ob-crumb-link" onClick={() => navigateFolder("")}>{pack.name}</button>
+        {currentFolder.split("/").filter(Boolean).map((part, index, parts) => (
+          <span className="ob-crumb-part" key={parts.slice(0, index + 1).join("/")}>
+            <Icon name="chevronRight" size={14} />
+            <button className="ob-crumb-link" onClick={() => navigateFolder(parts.slice(0, index + 1).join("/"))}>{part}</button>
+          </span>
+        ))}
       </div>
 
       <h1 className="page-title">{pack.name}</h1>
@@ -460,20 +497,27 @@ function PackExplorer({
       </p>
 
       <div className="ob-toolbar">
+        <button className="btn ghost sm" disabled={!currentFolder} onClick={() => navigateFolder(parentFolder(currentFolder))}>
+          <Icon name="arrowLeft" size={14} /> Up
+        </button>
         <div className="ob-search">
           <Icon name="search" size={15} />
           <input
             value={query}
-            placeholder="Search files in this pack…"
-            aria-label="Search files in this pack"
+            placeholder="Search this folder…"
+            aria-label="Search this folder"
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
         {canManage && (
-          <button className="btn solid sm" onClick={() => fileRef.current?.click()}>
-            <Icon name="plus" size={14} />
-            Add files
-          </button>
+          <>
+            <button className="btn solid sm" onClick={() => fileRef.current?.click()}>
+              <Icon name="plus" size={14} /> Add files
+            </button>
+            <button className="btn ghost sm" onClick={() => folderRef.current?.click()}>
+              <Icon name="folder" size={14} /> Add folder
+            </button>
+          </>
         )}
         <button
           className="btn ghost sm"
@@ -489,53 +533,79 @@ function PackExplorer({
           multiple
           hidden
           onChange={(e) => {
-            if (e.target.files?.length) onUpload(Array.from(e.target.files));
+            if (e.target.files?.length) addSelection(Array.from(e.target.files));
             e.target.value = "";
           }}
         />
+        <input ref={folderRef} type="file" multiple hidden aria-label="Add folder"
+          {...({ webkitdirectory: "", directory: "" } as React.InputHTMLAttributes<HTMLInputElement>)}
+          onChange={e => {
+            addSelection(Array.from(e.target.files ?? []), true);
+            e.target.value = "";
+          }} />
       </div>
 
-      {!pack.files.length ? (
-        <div className="ob-empty card">
-          <Icon name="folder" size={30} />
-          <strong>This pack is empty</strong>
-          <span>
-            {canManage
-              ? "Add Word documents, PDFs, presentations or web pages so learners can download them."
-              : "Your facilitator has not added any files to this pack yet."}
-          </span>
-        </div>
-      ) : !filtered.length ? (
-        <div className="ob-empty card">
-          <Icon name="search" size={30} />
-          <strong>No files match “{query}”</strong>
-          <span>Try a different search term.</span>
-        </div>
-      ) : (
-        grouped.map(({ group, files }) => (
-          <section key={group.id} className="ob-group">
-            <h2 className="ob-group-title">
-              <Icon name={group.icon} size={16} />
-              {group.label}
-              <span className="ob-group-count">{files.length}</span>
-            </h2>
-            <div className="ob-file-list-head" aria-hidden="true">
-              <span>Name</span><span>Type</span><span>Size</span><span>Modified</span><span />
-            </div>
-            <div className="ob-file-grid">
-              {files.map((file) => {
+      {error && <div className="ob-error" role="alert">{error}</div>}
+      <div className="ob-explorer">
+        <nav className="ob-folder-nav" aria-label="Pack folders">
+          <button className={!currentFolder ? "active" : ""} aria-current={!currentFolder ? "location" : undefined}
+            onClick={() => navigateFolder("")}><Icon name="folder" size={16} />{pack.name}</button>
+          {folders.map(path => (
+            <button key={path} title={path} aria-label={`Go to folder ${path}`}
+              className={currentFolder === path ? "active" : ""}
+              aria-current={currentFolder === path ? "location" : undefined}
+              style={{ paddingLeft: 12 + path.split("/").length * 14 }}
+              onClick={() => navigateFolder(path)}>
+              <Icon name="folder" size={16} />{path.split("/").pop()}
+            </button>
+          ))}
+        </nav>
+        <div className="ob-details-scroll">
+          <table className="ob-details" aria-label={`Files in ${currentFolder || pack.name}`}>
+            <thead><tr>
+              {(["name", "modified", "type", "size"] as const).map(column => (
+                <th key={column} scope="col" aria-sort={sort.column === column ? (sort.descending ? "descending" : "ascending") : "none"}>
+                  <button onClick={() => setSort({ column, descending: sort.column === column && !sort.descending })}>
+                    {{ name: "Name", modified: "Date modified", type: "Type", size: "Size" }[column]}
+                    {sort.column === column && <span aria-hidden="true">{sort.descending ? " ↓" : " ↑"}</span>}
+                  </button>
+                </th>
+              ))}
+              <th scope="col"><span className="ob-actions-label">Actions</span></th>
+            </tr></thead>
+            <tbody>
+              {childFolders.map(path => (
+                <tr key={path} className="ob-folder-row">
+                  <td><button className="ob-entry-name" onClick={() => navigateFolder(path)} title={path}>
+                    <Icon name="folder" size={20} /><span>{path.split("/").pop()}</span>
+                  </button></td>
+                  <td />
+                  <td>File folder</td>
+                  <td />
+                  <td />
+                </tr>
+              ))}
+              {filtered.map((file) => {
                 const ext = extOf(file.name);
                 return (
-                  <div key={file.id} className="ob-file">
-                    <FileTypeIcon name={file.name} />
-                    <div className="ob-file-copy">
-                      <strong title={file.name}>{file.name}</strong>
-                      <small>{ext ? `${ext.toUpperCase()} file` : "File"}</small>
-                    </div>
-                    <span className="ob-file-detail ob-file-type">{ext ? ext.toUpperCase() : "File"}</span>
-                    <span className="ob-file-detail">{fmtSize(file.size)}</span>
-                    <span className="ob-file-detail">{fmtDate(file.uploadedAt)}</span>
-                    <div className="ob-file-actions">
+                  <tr key={file.id} data-file-id={file.id}>
+                    <td><button className="ob-entry-name" title={onboardingFilePath(file)}
+                      disabled={opening === file.id} onClick={() => void openFile(file)}>
+                      <FileTypeIcon name={file.name} /><span>{file.name}</span>
+                    </button>
+                      {search && parentFolder(onboardingFilePath(file)) !== currentFolder &&
+                        <button className="ob-search-location" onClick={() => navigateFolder(parentFolder(onboardingFilePath(file)))}>
+                          {parentFolder(onboardingFilePath(file)) || pack.name}
+                        </button>}
+                    </td>
+                    <td title={file.modifiedAt ?? file.uploadedAt}>
+                      {new Date(file.modifiedAt ?? file.uploadedAt).toLocaleString(undefined, {
+                        year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit",
+                      })}
+                    </td>
+                    <td title={fileTypeLabel(file.name)}>{fileTypeLabel(file.name)}</td>
+                    <td className="ob-details-size">{fmtSize(file.size)}</td>
+                    <td><div className="ob-file-actions">
                       {VIEWABLE.has(ext) && (
                         <button
                           className="ob-icon-btn"
@@ -551,10 +621,7 @@ function PackExplorer({
                         className="ob-icon-btn"
                         title={`Download ${file.name}`}
                         aria-label={`Download ${file.name}`}
-                        onClick={() => {
-                          void downloadDoc(file);
-                          logAudit(profile, "onboarding.download", `Downloaded "${file.name}"`);
-                        }}
+                        onClick={() => void downloadFile(file)}
                       >
                         <Icon name="download" size={15} />
                       </button>
@@ -568,14 +635,18 @@ function PackExplorer({
                           <Icon name="trash" size={15} />
                         </button>
                       )}
-                    </div>
-                  </div>
+                    </div></td>
+                  </tr>
                 );
               })}
-            </div>
-          </section>
-        ))
-      )}
+              {!filtered.length && !childFolders.length && <tr><td colSpan={5} className="ob-details-empty">
+                {search ? `No files match “${query}” in this folder.` : "This folder is empty."}
+              </td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p className="ob-count ob-explorer-count">{childFolders.length} folders · {filtered.length} files{search ? " found" : ""}</p>
     </>
   );
 }
@@ -611,9 +682,9 @@ export function OnboardingPage({
   );
   const open = route.packId ? visiblePacks.find((p) => p.id === route.packId) ?? null : null;
 
-  async function uploadDocuments(packId: string, files: File[]): Promise<OnboardingFile[]> {
+  async function uploadDocuments(packId: string, files: UploadSelection[]): Promise<OnboardingFile[]> {
     setError(null);
-    const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+    const totalBytes = files.reduce((sum, item) => sum + item.file.size, 0);
     if (totalBytes > MAX_PACK_MB * 1024 * 1024) {
       throw new Error(`This upload is ${fmtSize(totalBytes)}. Onboarding folders may be up to ${MAX_PACK_MB} MB.`);
     }
@@ -622,12 +693,14 @@ export function OnboardingPage({
     const uploaded: OnboardingFile[] = [];
     const failures: string[] = [];
     for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+      const { file, relativePath } = files[i];
       setBusy(`Uploading ${i + 1} of ${files.length} — ${file.name}`);
       try {
-        const doc = await uploadFile(`shared/onboarding/${packId}`, file);
+        const doc = await uploadFile(`shared/onboarding/${packId}/${crypto.randomUUID()}`, file);
         uploaded.push({
           ...doc,
+          relativePath,
+          modifiedAt: new Date(file.lastModified).toISOString(),
           id: `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
           by: profile.name,
           byId: profile.id,
@@ -647,7 +720,7 @@ export function OnboardingPage({
     return uploaded;
   }
 
-  async function handleUpload(packId: string, files: File[]) {
+  async function handleUpload(packId: string, files: UploadSelection[]) {
     try {
       const uploaded = await uploadDocuments(packId, files);
       if (!uploaded.length) return;
@@ -663,21 +736,21 @@ export function OnboardingPage({
     name: string,
     description: string,
     audience: "learners" | "staff",
-    files: File[]
+    files: UploadSelection[]
   ) {
     if (!files.length || !name.trim()) return;
     setDialogBusy(true);
     const uploadId = `pack_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-    let uploaded: OnboardingFile[] = [];
     try {
-      uploaded = await uploadDocuments(uploadId, files);
+      const uploaded = await uploadDocuments(uploadId, files);
       const pack = await createPack(profile, name, description, audience, uploaded);
       logAudit(profile, "onboarding.pack.create", `Created onboarding pack "${pack.name}"`);
       logAudit(profile, "onboarding.upload", `Uploaded ${uploaded.length} file(s) to onboarding pack ${pack.id}`);
       setUploadDialog(false);
       navigate({ page: "onboarding", packId: pack.id });
     } catch (uploadError) {
-      await Promise.all(uploaded.map((file) => deleteFile(file.path)));
+      // A failed cloud save can still have a durable pending pack referencing
+      // these objects. Keep them available for the next sync retry.
       setBusy(null);
       setError(uploadError instanceof Error ? uploadError.message : "The pack could not be uploaded.");
     } finally {
@@ -799,6 +872,7 @@ export function OnboardingPage({
 
       {open && (
         <PackExplorer
+          key={open.id}
           pack={open}
           canManage={canManage}
           profile={profile}
