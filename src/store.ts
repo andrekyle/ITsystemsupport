@@ -2157,6 +2157,8 @@ export interface OnboardingPack {
   createdAt: string;
   by: string;
   byId: string;
+  /** Learner packs are public to the cohort; staff packs are hidden from learners. */
+  audience?: "learners" | "staff";
   files: OnboardingFile[];
 }
 
@@ -2215,7 +2217,12 @@ export function useOnboardingPacks() {
   }, []);
 
   const createPack = useCallback(
-    async (who: Pick<Profile, "id" | "name">, name: string, description?: string) => {
+    async (
+      who: Pick<Profile, "id" | "name">,
+      name: string,
+      description?: string,
+      audience: "learners" | "staff" = "learners"
+    ) => {
       const pack: OnboardingPack = {
         id: newId(),
         name: name.trim() || "Untitled pack",
@@ -2223,6 +2230,7 @@ export function useOnboardingPacks() {
         createdAt: new Date().toISOString(),
         by: who.name,
         byId: who.id,
+        audience,
         files: [],
       };
       await commit((fresh) => [pack, ...fresh]);
@@ -2232,11 +2240,16 @@ export function useOnboardingPacks() {
   );
 
   const renamePack = useCallback(
-    (packId: string, name: string, description?: string) =>
+    (packId: string, name: string, description?: string, audience?: "learners" | "staff") =>
       commit((fresh) =>
         fresh.map((p) =>
           p.id === packId
-            ? { ...p, name: name.trim() || p.name, description: description?.trim() || undefined }
+            ? {
+                ...p,
+                name: name.trim() || p.name,
+                description: description?.trim() || undefined,
+                audience: audience ?? p.audience ?? "learners",
+              }
             : p
         )
       ),

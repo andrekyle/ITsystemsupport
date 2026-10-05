@@ -62,11 +62,12 @@ function PackDialog({
 }: {
   pack: OnboardingPack | null;
   busy: boolean;
-  onSave: (name: string, description: string) => void;
+  onSave: (name: string, description: string, audience: "learners" | "staff") => void;
   onCancel: () => void;
 }) {
   const [name, setName] = useState(pack?.name ?? "");
   const [description, setDescription] = useState(pack?.description ?? "");
+  const [audience, setAudience] = useState<"learners" | "staff">(pack?.audience ?? "learners");
   const valid = name.trim().length > 0;
   return (
     <Modal
@@ -82,7 +83,7 @@ function PackDialog({
           <button
             className="btn solid"
             disabled={busy || !valid}
-            onClick={() => onSave(name, description)}
+            onClick={() => onSave(name, description, audience)}
           >
             {pack ? "Save changes" : "Create pack"}
           </button>
@@ -108,6 +109,101 @@ function PackDialog({
           onChange={(e) => setDescription(e.target.value)}
         />
       </div>
+      <div className="field" style={{ marginBottom: 0 }}>
+        <label htmlFor="pack-audience">Who can access this pack?</label>
+        <select id="pack-audience" value={audience} onChange={(e) => setAudience(e.target.value as "learners" | "staff")}>
+          <option value="learners">Students and staff</option>
+          <option value="staff">Facilitators and administrators only</option>
+        </select>
+      </div>
+    </Modal>
+  );
+}
+
+/** In-app replacement for the browser's unstyleable folder-upload prompt. */
+function UploadPackDialog({
+  busy,
+  onUpload,
+  onCancel,
+}: {
+  busy: boolean;
+  onUpload: (name: string, description: string, audience: "learners" | "staff", files: File[]) => void;
+  onCancel: () => void;
+}) {
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [audience, setAudience] = useState<"learners" | "staff">("learners");
+  const [files, setFiles] = useState<File[]>([]);
+
+  const groups = useMemo(() => {
+    const counts = new Map<string, number>();
+    files.forEach((file) => {
+      const group = FILE_GROUPS.find((item) => item.extensions.includes(extOf(file.name))) ?? OTHER_GROUP;
+      counts.set(group.label, (counts.get(group.label) ?? 0) + 1);
+    });
+    return [...counts.entries()];
+  }, [files]);
+
+  return (
+    <Modal
+      title="Upload onboarding pack"
+      onClose={() => {
+        if (!busy) onCancel();
+      }}
+      actions={
+        <>
+          <button className="btn ghost" disabled={busy} onClick={onCancel}>Cancel</button>
+          <button
+            className="btn solid"
+            disabled={busy || !name.trim() || !files.length}
+            onClick={() => onUpload(name, description, audience, files)}
+          >
+            {busy ? "Uploading…" : `Upload ${files.length || ""} file${files.length === 1 ? "" : "s"}`}
+          </button>
+        </>
+      }
+    >
+      <p className="page-sub ob-upload-help">
+        Select the Word documents, PDFs, presentations, HTML files and other resources that belong in this pack.
+      </p>
+      <div className="field">
+        <label htmlFor="upload-pack-name">Pack name</label>
+        <input id="upload-pack-name" autoFocus value={name} placeholder="e.g. System Support Material" onChange={(e) => setName(e.target.value)} />
+      </div>
+      <div className="field">
+        <label htmlFor="upload-pack-desc">Description (optional)</label>
+        <input id="upload-pack-desc" value={description} placeholder="What learners will find inside" onChange={(e) => setDescription(e.target.value)} />
+      </div>
+      <div className="field">
+        <label htmlFor="upload-pack-audience">Who can access this pack?</label>
+        <select id="upload-pack-audience" value={audience} onChange={(e) => setAudience(e.target.value as "learners" | "staff")}>
+          <option value="learners">Students and staff</option>
+          <option value="staff">Facilitators and administrators only</option>
+        </select>
+      </div>
+      <button className="ob-file-picker" disabled={busy} onClick={() => fileRef.current?.click()}>
+        <Icon name="folder" size={24} />
+        <span>
+          <strong>{files.length ? `${files.length} files selected` : "Choose files"}</strong>
+          <small>Select multiple files from the folder in one go</small>
+        </span>
+      </button>
+      <input
+        ref={fileRef}
+        type="file"
+        multiple
+        hidden
+        onChange={(e) => {
+          setFiles(Array.from(e.target.files ?? []));
+          e.target.value = "";
+        }}
+      />
+      {!!groups.length && (
+        <div className="ob-selected-groups" aria-label="Selected file types">
+          {groups.map(([label, count]) => <span key={label}>{label} · {count}</span>)}
+        </div>
+      )}
     </Modal>
   );
 }
@@ -338,16 +434,21 @@ export function OnboardingPage({
 }) {
   const canManage = profile.role === "Super User" || profile.role === "Facilitator";
   const { packs, createPack, renamePack, removePack, addFiles, removeFile } = useOnboardingPacks();
-  const folderRef = useRef<HTMLInputElement | null>(null);
 
   const [dialog, setDialog] = useState<{ pack: OnboardingPack | null } | null>(null);
+  const [uploadDialog, setUploadDialog] = useState(false);
   const [dialogBusy, setDialogBusy] = useState(false);
   const [confirmPack, setConfirmPack] = useState<OnboardingPack | null>(null);
   const [confirmFile, setConfirmFile] = useState<OnboardingFile | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const open = route.packId ? packs.find((p) => p.id === route.packId) ?? null : null;
+  const canAccessStaffPacks = profile.role === "Super User" || profile.role === "Facilitator";
+  const visiblePacks = useMemo(
+    () => packs.filter((pack) => pack.audience !== "staff" || canAccessStaffPacks),
+    [packs, canAccessStaffPacks]
+  );
+  const open = route.packId ? visiblePacks.find((p) => p.id === route.packId) ?? null : null;
 
   async function handleUpload(packId: string, files: File[]) {
     setError(null);
@@ -393,31 +494,34 @@ export function OnboardingPage({
     }
   }
 
-  async function handleFolderUpload(list: FileList) {
-    const files = Array.from(list);
-    if (!files.length) return;
-    const firstPath = files[0].webkitRelativePath;
-    const folderName = firstPath.split("/")[0] || "Onboarding pack";
+  async function handlePackUpload(
+    name: string,
+    description: string,
+    audience: "learners" | "staff",
+    files: File[]
+  ) {
+    if (!files.length || !name.trim()) return;
     setDialogBusy(true);
     try {
-      const pack = await createPack(profile, folderName, "Uploaded onboarding folder");
+      const pack = await createPack(profile, name, description, audience);
       logAudit(profile, "onboarding.pack.create", `Created onboarding pack "${pack.name}"`);
       await handleUpload(pack.id, files);
+      setUploadDialog(false);
       navigate({ page: "onboarding", packId: pack.id });
     } catch {
-      setError("The folder could not be uploaded — check your connection and try again.");
+      setError("The pack could not be uploaded — check your connection and try again.");
     } finally {
       setDialogBusy(false);
     }
   }
 
-  async function saveDialog(name: string, description: string) {
+  async function saveDialog(name: string, description: string, audience: "learners" | "staff") {
     setDialogBusy(true);
     try {
       if (dialog?.pack) {
-        await renamePack(dialog.pack.id, name, description);
+        await renamePack(dialog.pack.id, name, description, audience);
       } else {
-        const pack = await createPack(profile, name, description);
+        const pack = await createPack(profile, name, description, audience);
         logAudit(profile, "onboarding.pack.create", `Created onboarding pack "${pack.name}"`);
       }
       setDialog(null);
@@ -438,40 +542,29 @@ export function OnboardingPage({
           <h1 className="page-title">Student onboarding packs</h1>
           <p className="page-sub">
             {canManage
-              ? "Upload folders of induction material — Word documents, PDFs, presentations and web pages. Everything you add here is available to every learner."
+              ? "Create packs of induction material — Word documents, PDFs, presentations and web pages. Everything you add here is available to every learner."
               : "Download your induction material. Open a pack to browse its documents, PDFs, presentations and web pages."}
           </p>
 
           <div className="ob-toolbar">
             {canManage && (
               <>
-                <button className="btn solid sm" onClick={() => folderRef.current?.click()}>
+                <button className="btn solid sm" onClick={() => setUploadDialog(true)}>
                   <Icon name="folder" size={14} />
-                  Upload folder
+                  Upload pack
                 </button>
                 <button className="btn ghost sm" onClick={() => setDialog({ pack: null })}>
                   <Icon name="plus" size={14} />
                   New empty pack
                 </button>
-                <input
-                  ref={folderRef}
-                  type="file"
-                  multiple
-                  hidden
-                  {...({ webkitdirectory: "", directory: "" } as React.InputHTMLAttributes<HTMLInputElement>)}
-                  onChange={(e) => {
-                    if (e.target.files?.length) void handleFolderUpload(e.target.files);
-                    e.target.value = "";
-                  }}
-                />
               </>
             )}
             <span className="ob-count">
-              {packs.length} {packs.length === 1 ? "pack" : "packs"} available
+              {visiblePacks.length} {visiblePacks.length === 1 ? "pack" : "packs"} available
             </span>
           </div>
 
-          {!packs.length ? (
+          {!visiblePacks.length ? (
             <div className="ob-empty card">
               <Icon name="folder" size={30} />
               <strong>No onboarding packs yet</strong>
@@ -483,7 +576,7 @@ export function OnboardingPage({
             </div>
           ) : (
             <div className="ob-pack-grid">
-              {packs.map((pack) => {
+              {visiblePacks.map((pack) => {
                 const types = new Set(pack.files.map((f) => groupOf(f).label));
                 return (
                   <div key={pack.id} className="ob-pack card">
@@ -497,6 +590,7 @@ export function OnboardingPage({
                       </span>
                       <span className="ob-pack-copy">
                         <strong>{pack.name}</strong>
+                        {pack.audience === "staff" && <span className="ob-staff-badge">Staff only</span>}
                         {pack.description && <small>{pack.description}</small>}
                         <span className="ob-pack-meta">
                           {pack.files.length} {pack.files.length === 1 ? "file" : "files"}
@@ -566,8 +660,16 @@ export function OnboardingPage({
         <PackDialog
           pack={dialog.pack}
           busy={dialogBusy}
-          onSave={(name, description) => void saveDialog(name, description)}
+          onSave={(name, description, audience) => void saveDialog(name, description, audience)}
           onCancel={() => setDialog(null)}
+        />
+      )}
+
+      {uploadDialog && (
+        <UploadPackDialog
+          busy={dialogBusy}
+          onUpload={(name, description, audience, files) => void handlePackUpload(name, description, audience, files)}
+          onCancel={() => setUploadDialog(false)}
         />
       )}
 

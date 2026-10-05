@@ -14467,6 +14467,45 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   font-size: 14px;
 }
 
+.ob-upload-help { margin-top: 0; }
+
+.ob-file-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 82px;
+  padding: 16px;
+  border: 1.5px dashed var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--azure);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ob-file-picker:hover { border-color: var(--azure); }
+.ob-file-picker:disabled { opacity: .6; cursor: default; }
+.ob-file-picker span { display: grid; gap: 3px; }
+.ob-file-picker strong { color: var(--ink); font-size: 14px; }
+.ob-file-picker small { color: var(--ink-3); font-size: 12.5px; }
+
+.ob-selected-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.ob-selected-groups span {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
 .ob-crumbs {
   display: flex;
   align-items: center;
@@ -14555,6 +14594,19 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.ob-staff-badge {
+  justify-self: start;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--azure) 13%, transparent);
+  color: var(--azure);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: .035em;
 }
 
 .ob-pack-copy small,
