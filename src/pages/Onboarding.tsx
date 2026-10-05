@@ -565,7 +565,7 @@ export function PackExplorer({
             aria-expanded={folders.length ? expandedFolders.has("") : undefined}
             onClick={() => selectFolder("", folders.length > 0)}>
             {folders.length > 0 && <Icon name="chevronRight" size={13} className={`ob-folder-disclosure${expandedFolders.has("") ? " open" : ""}`} />}
-            <Icon name="folder" size={16} className="ob-folder-icon" />{pack.name}
+            <Icon name="folder" size={16} className="ob-folder-icon" /><span className="ob-folder-label">{pack.name}</span>
           </Button>
           {folders.filter(path => {
             if (!expandedFolders.has("")) return false;
@@ -583,7 +583,7 @@ export function PackExplorer({
               {hasChildren
                 ? <Icon name="chevronRight" size={13} className={`ob-folder-disclosure${isExpanded ? " open" : ""}`} />
                 : <span className="ob-folder-disclosure-placeholder" />}
-              <Icon name="folder" size={16} className="ob-folder-icon" />{path.split("/").pop()}
+              <Icon name="folder" size={16} className="ob-folder-icon" /><span className="ob-folder-label">{path.split("/").pop()}</span>
             </Button>;
           })}
         </nav>

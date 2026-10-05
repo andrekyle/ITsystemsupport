@@ -14887,7 +14887,7 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .ob-crumb-part { display: inline-flex; align-items: center; gap: 8px; }
 .ob-explorer {
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr);
+  grid-template-columns: minmax(290px, 34%) minmax(0, 1fr);
   min-height: 320px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -14897,7 +14897,8 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .ob-folder-nav {
   padding: 8px 0;
   border-right: 1px solid var(--border);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 .ob-folder-nav button {
   display: flex;
@@ -14912,13 +14913,21 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   font-size: 13px;
   text-align: left;
   cursor: pointer;
-  white-space: nowrap;
+  min-width: 0;
+  min-height: 34px;
+  height: auto;
+  white-space: normal;
 }
 .ob-folder-nav svg, .ob-folder-row svg { flex-shrink: 0; }
 .ob-folder-nav .ob-folder-icon, .ob-folder-row svg { color: #c69a35; }
 .ob-folder-disclosure { color: var(--ink-3); transition: transform .14s ease; }
 .ob-folder-disclosure.open { transform: rotate(90deg); }
 .ob-folder-disclosure-placeholder { width: 13px; flex: 0 0 13px; }
+.ob-folder-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
 .ob-folder-nav button:hover, .ob-details tbody tr:hover { background: var(--surface-2); }
 .ob-folder-nav button.active { background: color-mix(in srgb, var(--azure) 12%, var(--surface)); color: var(--azure); }
 .ob-details-scroll { overflow: auto; }
