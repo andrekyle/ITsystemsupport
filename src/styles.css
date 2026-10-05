@@ -14595,13 +14595,26 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  margin: 18px 0 20px;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.ob-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ob-toolbar-actions .btn.sm {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
 }
 
 .ob-count {
   color: var(--ink-3);
-  font-size: 13px;
+  font-size: 12.5px;
 }
 
 .ob-search {
@@ -14901,24 +14914,25 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .ob-pack-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 14px;
+  gap: 10px;
 }
 
 .ob-pack {
   display: flex;
   align-items: stretch;
-  gap: 6px;
+  gap: 0;
   padding: 0;
   overflow: hidden;
+  border-radius: 12px;
 }
 
 .ob-pack-open {
   display: flex;
   flex: 1;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
-  padding: 16px;
+  padding: 12px 14px;
   border: 0;
   background: none;
   color: inherit;
@@ -14932,23 +14946,30 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   background: var(--surface-2);
   color: var(--azure);
 }
 
 .ob-pack-copy {
   display: grid;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
   flex: 1;
 }
 
+.ob-pack-heading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
 .ob-pack-copy strong {
   color: var(--ink);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 650;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -14957,11 +14978,12 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 
 .ob-staff-badge {
   justify-self: start;
-  padding: 2px 7px;
+  flex: none;
+  padding: 1px 6px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--azure) 13%, transparent);
   color: var(--azure);
-  font-size: 11px;
+  font-size: 9.5px;
   font-weight: 700;
   line-height: 1.4;
   text-transform: uppercase;
@@ -14971,7 +14993,7 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .ob-pack-copy small,
 .ob-pack-meta {
   color: var(--ink-3);
-  font-size: 12.5px;
+  font-size: 11.5px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -14982,8 +15004,16 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 0 14px 0 0;
+  gap: 2px;
+  padding: 0 10px 0 0;
+}
+
+.ob-pack-actions .ob-icon-btn {
+  width: 28px;
+  height: 28px;
+  border-color: transparent;
+  border-radius: 6px;
+  background: transparent;
 }
 
 /* ---- folder details explorer ---- */

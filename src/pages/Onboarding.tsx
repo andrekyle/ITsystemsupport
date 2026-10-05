@@ -870,16 +870,16 @@ export function OnboardingPage({
 
           <div className="ob-toolbar">
             {canManage && (
-              <>
+              <div className="ob-toolbar-actions">
                 <button className="btn solid sm" onClick={() => setUploadDialog(true)}>
                   <Icon name="folder" size={14} />
                   Upload pack
                 </button>
                 <button className="btn ghost sm" onClick={() => setDialog({ pack: null })}>
                   <Icon name="plus" size={14} />
-                  New empty pack
+                  New pack
                 </button>
-              </>
+              </div>
             )}
             <span className="ob-count">
               {visiblePacks.length} {visiblePacks.length === 1 ? "pack" : "packs"} available
@@ -911,8 +911,10 @@ export function OnboardingPage({
                         <Icon name="folder" size={26} />
                       </span>
                       <span className="ob-pack-copy">
-                        <strong>{pack.name}</strong>
-                        {pack.audience === "staff" && <span className="ob-staff-badge">Staff only</span>}
+                        <span className="ob-pack-heading">
+                          <strong>{pack.name}</strong>
+                          {pack.audience === "staff" && <span className="ob-staff-badge">Staff only</span>}
+                        </span>
                         {pack.description && <small>{pack.description}</small>}
                         <span className="ob-pack-meta">
                           {pack.files.length} {pack.files.length === 1 ? "file" : "files"}
