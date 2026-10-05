@@ -11,8 +11,46 @@ import { downloadDoc, getFileBlob, getFileUrl, uploadFile } from "../lib/files";
 import { ConfirmModal, Modal } from "../components/Modal";
 import { logAudit } from "../lib/audit";
 
-/** Largest single onboarding file accepted, in megabytes. */
-const MAX_FILE_MB = 50;
+/** Largest onboarding folder/batch accepted, in megabytes. */
+const MAX_PACK_MB = 500;
+
+interface DroppedEntry {
+  isFile: boolean;
+  isDirectory: boolean;
+  name: string;
+  file?: (success: (file: File) => void, failure?: () => void) => void;
+  createReader?: () => { readEntries: (success: (entries: DroppedEntry[]) => void, failure?: () => void) => void };
+}
+
+interface DirectoryHandleLike {
+  kind: "directory";
+  name: string;
+  values: () => AsyncIterableIterator<DirectoryHandleLike | { kind: "file"; name: string; getFile: () => Promise<File> }>;
+}
+
+async function filesFromDroppedEntry(entry: DroppedEntry): Promise<File[]> {
+  if (entry.isFile && entry.file) {
+    return new Promise((resolve) => entry.file?.((file) => resolve([file]), () => resolve([])));
+  }
+  if (!entry.isDirectory || !entry.createReader) return [];
+  const reader = entry.createReader();
+  const children: DroppedEntry[] = [];
+  while (true) {
+    const batch = await new Promise<DroppedEntry[]>((resolve) => reader.readEntries(resolve, () => resolve([])));
+    if (!batch.length) break;
+    children.push(...batch);
+  }
+  return (await Promise.all(children.map(filesFromDroppedEntry))).flat();
+}
+
+async function filesFromDirectoryHandle(directory: DirectoryHandleLike): Promise<File[]> {
+  const files: File[] = [];
+  for await (const entry of directory.values()) {
+    if (entry.kind === "file") files.push(await entry.getFile());
+    else files.push(...await filesFromDirectoryHandle(entry));
+  }
+  return files;
+}
 
 interface FileGroup {
   id: string;
@@ -131,10 +169,56 @@ function UploadPackDialog({
   onCancel: () => void;
 }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const folderRef = useRef<HTMLInputElement | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [audience, setAudience] = useState<"learners" | "staff">("learners");
   const [files, setFiles] = useState<File[]>([]);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
+  const totalBytes = useMemo(() => files.reduce((sum, file) => sum + file.size, 0), [files]);
+  const isOverLimit = totalBytes > MAX_PACK_MB * 1024 * 1024;
+
+  function acceptFiles(next: File[], suggestedName?: string) {
+    setFiles(next);
+    setSelectionError(
+      next.reduce((sum, file) => sum + file.size, 0) > MAX_PACK_MB * 1024 * 1024
+        ? `This folder is larger than ${MAX_PACK_MB} MB. Remove files or choose a smaller folder.`
+        : null
+    );
+    if (!name.trim() && suggestedName) setName(suggestedName);
+  }
+
+  async function chooseFolder() {
+    const picker = (window as unknown as {
+      showDirectoryPicker?: () => Promise<DirectoryHandleLike>;
+    }).showDirectoryPicker;
+    if (!picker) {
+      folderRef.current?.click();
+      return;
+    }
+    try {
+      const directory = await picker.call(window);
+      acceptFiles(await filesFromDirectoryHandle(directory), directory.name);
+    } catch {
+      // Closing the operating-system picker is not an upload error.
+    }
+  }
+
+  async function handleDrop(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    if (busy) return;
+    const entries: DroppedEntry[] = Array.from(event.dataTransfer.items)
+      .map((item): DroppedEntry | null => {
+        const getter = (item as unknown as { webkitGetAsEntry?: () => DroppedEntry | null }).webkitGetAsEntry;
+        return getter?.call(item) ?? null;
+      })
+      .filter((entry): entry is DroppedEntry => entry !== null);
+    const dropped = entries.length
+      ? (await Promise.all(entries.map(filesFromDroppedEntry))).flat()
+      : Array.from(event.dataTransfer.files);
+    const folderName = entries.length === 1 && entries[0].isDirectory ? entries[0].name : undefined;
+    acceptFiles(dropped, folderName);
+  }
 
   const groups = useMemo(() => {
     const counts = new Map<string, number>();
@@ -148,6 +232,7 @@ function UploadPackDialog({
   return (
     <Modal
       title="Upload onboarding pack"
+      className="ob-upload-modal"
       onClose={() => {
         if (!busy) onCancel();
       }}
@@ -156,7 +241,7 @@ function UploadPackDialog({
           <button className="btn ghost" disabled={busy} onClick={onCancel}>Cancel</button>
           <button
             className="btn solid"
-            disabled={busy || !name.trim() || !files.length}
+            disabled={busy || !name.trim() || !files.length || isOverLimit}
             onClick={() => onUpload(name, description, audience, files)}
           >
             {busy ? "Uploading…" : `Upload ${files.length || ""} file${files.length === 1 ? "" : "s"}`}
@@ -182,23 +267,45 @@ function UploadPackDialog({
           <option value="staff">Facilitators and administrators only</option>
         </select>
       </div>
-      <button className="ob-file-picker" disabled={busy} onClick={() => fileRef.current?.click()}>
+      <div
+        className={`ob-file-picker${isOverLimit ? " invalid" : ""}`}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => void handleDrop(e)}
+      >
         <Icon name="folder" size={24} />
         <span>
-          <strong>{files.length ? `${files.length} files selected` : "Choose files"}</strong>
-          <small>Select multiple files from the folder in one go</small>
+          <strong>{files.length ? `${files.length} files · ${fmtSize(totalBytes)}` : "Drop a folder here"}</strong>
+          <small>Folders may contain up to {MAX_PACK_MB} MB</small>
         </span>
-      </button>
+        <span className="ob-picker-actions">
+          <button type="button" className="btn ghost sm" disabled={busy} onClick={() => void chooseFolder()}>Choose folder</button>
+          <button type="button" className="btn ghost sm" disabled={busy} onClick={() => fileRef.current?.click()}>Choose files</button>
+        </span>
+      </div>
       <input
         ref={fileRef}
         type="file"
         multiple
         hidden
         onChange={(e) => {
-          setFiles(Array.from(e.target.files ?? []));
+          acceptFiles(Array.from(e.target.files ?? []));
           e.target.value = "";
         }}
       />
+      <input
+        ref={folderRef}
+        type="file"
+        multiple
+        hidden
+        {...({ webkitdirectory: "", directory: "" } as React.InputHTMLAttributes<HTMLInputElement>)}
+        onChange={(e) => {
+          const selected = Array.from(e.target.files ?? []);
+          const folderName = selected[0]?.webkitRelativePath.split("/")[0];
+          acceptFiles(selected, folderName);
+          e.target.value = "";
+        }}
+      />
+      {selectionError && <div className="ob-selection-error" role="alert">{selectionError}</div>}
       {!!groups.length && (
         <div className="ob-selected-groups" aria-label="Selected file types">
           {groups.map(([label, count]) => <span key={label}>{label} · {count}</span>)}
@@ -452,13 +559,12 @@ export function OnboardingPage({
 
   async function handleUpload(packId: string, files: File[]) {
     setError(null);
-    const tooBig = files.filter((f) => f.size > MAX_FILE_MB * 1024 * 1024);
-    const ok = files.filter((f) => f.size <= MAX_FILE_MB * 1024 * 1024);
-    if (tooBig.length) {
-      setError(
-        `${tooBig.length === 1 ? `"${tooBig[0].name}" is` : `${tooBig.length} files are`} larger than ${MAX_FILE_MB} MB and ${tooBig.length === 1 ? "was" : "were"} skipped.`
-      );
+    const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+    if (totalBytes > MAX_PACK_MB * 1024 * 1024) {
+      setError(`This upload is ${fmtSize(totalBytes)}. Onboarding folders may be up to ${MAX_PACK_MB} MB.`);
+      return;
     }
+    const ok = files;
     if (!ok.length) return;
 
     const uploaded: OnboardingFile[] = [];

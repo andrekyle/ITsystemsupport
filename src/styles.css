@@ -14482,14 +14482,26 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   color: var(--azure);
   font: inherit;
   text-align: left;
-  cursor: pointer;
+  cursor: default;
 }
 
 .ob-file-picker:hover { border-color: var(--azure); }
-.ob-file-picker:disabled { opacity: .6; cursor: default; }
-.ob-file-picker span { display: grid; gap: 3px; }
+.ob-file-picker > span:not(.ob-picker-actions) { display: grid; flex: 1; gap: 3px; min-width: 0; }
 .ob-file-picker strong { color: var(--ink); font-size: 14px; }
 .ob-file-picker small { color: var(--ink-3); font-size: 12.5px; }
+.ob-file-picker.invalid { border-color: var(--red); }
+
+.ob-picker-actions {
+  display: flex;
+  flex: none;
+  gap: 6px;
+}
+
+.ob-selection-error {
+  margin-top: 8px;
+  color: var(--red);
+  font-size: 12.5px;
+}
 
 .ob-selected-groups {
   display: flex;
@@ -14504,6 +14516,86 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   background: var(--surface-2);
   color: var(--ink-2);
   font-size: 12px;
+}
+
+/* Keep every control in the pack uploader consistent with the dark app shell. */
+[data-theme="dark"] .ob-upload-modal .field select,
+[data-theme="dark"] .ob-upload-modal .field input {
+  border-color: #3b3b3b;
+  background-color: #242424;
+  color: #f2f2f2;
+  color-scheme: dark;
+}
+
+[data-theme="dark"] .ob-upload-modal .field select:hover,
+[data-theme="dark"] .ob-upload-modal .field input:hover {
+  border-color: #505050;
+}
+
+[data-theme="dark"] .ob-upload-modal .field select:focus,
+[data-theme="dark"] .ob-upload-modal .field input:focus {
+  border-color: #626262 !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .06);
+}
+
+[data-theme="dark"] .ob-upload-modal select option {
+  background: #242424;
+  color: #f2f2f2;
+}
+
+[data-theme="dark"] .ob-upload-modal .ob-file-picker {
+  border-color: #3b3b3b;
+  background: #2b2b2b;
+  color: #62abf5;
+}
+
+[data-theme="dark"] .ob-upload-modal .ob-file-picker:hover:not(:disabled) {
+  border-color: #5a5a5a;
+  background: #303030;
+}
+
+[data-theme="dark"] .ob-upload-modal .ob-picker-actions .btn {
+  border-color: #464646;
+  background: #242424;
+  color: #e5e5e5;
+}
+
+[data-theme="dark"] .ob-upload-modal .ob-picker-actions .btn:hover:not(:disabled) {
+  border-color: #5a5a5a;
+  background: #383838;
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  .ob-file-picker { align-items: flex-start; flex-wrap: wrap; }
+  .ob-picker-actions { width: 100%; padding-left: 36px; }
+}
+
+[data-theme="dark"] .ob-upload-modal .modal-actions .btn {
+  min-width: 94px;
+  border-color: #3b3b3b;
+  background: #292929;
+  color: #e5e5e5;
+}
+
+[data-theme="dark"] .ob-upload-modal .modal-actions .btn:hover:not(:disabled) {
+  border-color: #555;
+  background: #343434;
+  color: #fff;
+  filter: none;
+}
+
+[data-theme="dark"] .ob-upload-modal .modal-actions .btn.solid {
+  border-color: #4a4a4a;
+  background: #383838;
+  color: #fff;
+}
+
+[data-theme="dark"] .ob-upload-modal .modal-actions .btn:disabled {
+  border-color: #343434;
+  background: #292929;
+  color: #777;
+  opacity: 1;
 }
 
 .ob-crumbs {
