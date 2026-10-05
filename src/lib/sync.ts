@@ -2,6 +2,14 @@ import { supabase } from "./supabase";
 import { isUnitPackKey, receiveUnitPack, storedUnitPacks, clearUnitPacks } from "./unitStorage";
 import { receiveLessonEdits } from "./lessonEditStore";
 import {
+  PENDING_KEY,
+  pendingWrites,
+  loadPendingWrites,
+  rememberPendingWrite,
+  forgetPendingWrite,
+  waitForPendingWrites,
+} from "./syncPendingStorage";
+import {
   clearOnboardingPacks,
   ONBOARDING_KEY,
   receiveOnboardingPacks,
@@ -15,6 +23,8 @@ import {
  * `app_state` table in Supabase, one row per key, scoped to the signed-in
  * auth user. On login the cloud snapshot is written into localStorage before
  * the app renders, so every existing hook keeps working unchanged.
+ * Pending payloads live in IndexedDB, including legacy syncPending migration,
+ * so file data is never duplicated into quota-limited localStorage.
  */
 
 const PREFIX = "itss.";
@@ -22,7 +32,6 @@ const UNIT_BUILDER_SAVE_PROBE = "unitbuilder-save-probe.";
 const ATTENDANCE_REGISTER_RE = /^itss\.attendance\.(\d{4}-\d{2}-\d{2})$/;
 const attendanceMigrationKey = (date: string) => `itssDevice.attendanceMigrated.${date}`;
 /** device-local keys that should not follow the account across devices */
-const PENDING_KEY = "itss.syncPending";
 const LOCAL_ONLY = new Set(["itss.session", "itss.route", "itss.theme", "itss.activeCourse", PENDING_KEY]);
 
 /** keys whose content is shared with every account (facilitator uploads,
@@ -43,16 +52,9 @@ let hydrating = false;
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
 // the untouched setter, captured before installSync() wraps it
 const rawSet = localStorage.setItem.bind(localStorage);
-type PendingWrite = { userId: string; key: string; value: string | null; revision: string };
-function pendingWrites(): PendingWrite[] {
-  try { return JSON.parse(localStorage.getItem(PENDING_KEY) ?? "[]"); }
-  catch { return []; }
-}
 function rememberPending(key: string, value: string | null) {
-  if (!userId) return;
-  const writes = pendingWrites().filter(write => write.userId !== userId || write.key !== key);
-  writes.push({ userId, key, value, revision: crypto.randomUUID() });
-  rawSet(PENDING_KEY, JSON.stringify(writes));
+  if (!userId) return Promise.resolve();
+  return rememberPendingWrite({ userId, key, value, revision: crypto.randomUUID() });
 }
 function pendingFor(key: string) {
   return pendingWrites().find(write => write.userId === userId && write.key === key);
@@ -113,6 +115,7 @@ async function pushKey(key: string, value: string | null) {
   const previous = pushes.get(key);
   const pushing = (async () => {
     await previous;
+    await waitForPendingWrites();
     if (userId !== owner) return false;
     const pending = pendingFor(key);
     if (pending) value = pending.value;
@@ -137,7 +140,7 @@ async function pushKey(key: string, value: string | null) {
           );
       }
       if (result.error) return false;
-      if (pending) rawSet(PENDING_KEY, JSON.stringify(pendingWrites().filter(write => write.revision !== pending.revision)));
+      if (pending) await forgetPendingWrite(pending);
       return true;
     } catch {
       // Keep the durable pending write for the next connection or reload.
@@ -152,14 +155,16 @@ async function pushKey(key: string, value: string | null) {
 
 function queue(key: string, value: string | null) {
   if (hydrating) return;
-  rememberPending(key, value);
+  const persisted = rememberPending(key, value);
+  void persisted.catch(error => console.error("Could not persist pending cloud save:", error));
   const existing = timers.get(key);
   if (existing) clearTimeout(existing);
   timers.set(
     key,
     setTimeout(() => {
       timers.delete(key);
-      void pushKey(key, value);
+      void persisted.then(() => pushKey(key, value)).catch(error =>
+        console.error("Could not queue cloud save:", error));
     }, 600)
   );
 }
@@ -185,7 +190,14 @@ export async function flushValue(
     clearTimeout(t);
     timers.delete(key);
   }
-  if (requireCloud) rememberPending(key, value);
+  if (requireCloud) {
+    try {
+      await rememberPending(key, value);
+    } catch (error) {
+      console.error("Could not persist pending cloud save:", error);
+      throw new Error("This browser could not store the pending cloud save. Check browser storage permissions and available disk space, then try again.");
+    }
+  }
   const saved = await pushKey(key, value);
   if (requireCloud && !saved) throw new Error("Cloud save failed. Check your connection and try Save to cloud again. Your edits are still on this device.");
   if (requireCloud && pendingFor(key)) throw new Error("More edits were made while saving. Click Save to cloud again to save the latest changes.");
@@ -231,6 +243,12 @@ export function installSync() {
 export async function startSync(authUserId: string): Promise<void> {
   userId = authUserId;
   if (!supabase) return;
+  try {
+    await loadPendingWrites();
+  } catch (error) {
+    console.error("Could not load pending cloud saves; cloud hydration was skipped to protect local edits:", error);
+    return;
+  }
   const dirtyAtStart = new Set(pendingWrites().filter(write => write.userId === authUserId).map(write => write.key));
 
   const [own, shared] = await Promise.all([

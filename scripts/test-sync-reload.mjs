@@ -1,74 +1,104 @@
-import assert from "node:assert/strict";
 import { build } from "esbuild";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, writeFileSync, existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { spawn } from "node:child_process";
 
-const file = join(mkdtempSync(join(tmpdir(), "sync-reload-")), "sync.mjs");
-await build({ entryPoints: [resolve("src/lib/sync.ts")], bundle: true, platform: "node", format: "esm", outfile: file,
-  plugins: [{ name: "mock-cloud", setup(b) {
-    b.onResolve({ filter: /^\.\/supabase$/ }, () => ({ path: "cloud", namespace: "fixture" }));
-    b.onResolve({ filter: /^\.\/unitStorage$/ }, () => ({ path: "packs", namespace: "fixture" }));
-    b.onLoad({ filter: /.*/, namespace: "fixture" }, args => ({ contents: args.path === "cloud"
-      ? "export const supabase = globalThis.testCloud;"
-      : "export const isUnitPackKey = () => false; export const receiveUnitPack = () => {}; export const storedUnitPacks = async () => []; export const clearUnitPacks = () => {};" }));
-  } }] });
-
-const key = "itss.lessonedits.114059.built-version1";
-globalThis.window = new EventTarget();
-const cloud = new Map([[key, "old text"]]);
-let failure = false;
-globalThis.testCloud = { from(table) {
-  return {
-    select() { const result = Promise.resolve({ data: table === "shared_state" ? [...cloud].map(([key, value]) => ({ key, value })) : [], error: null }); result.eq = () => result; return result; },
-    async upsert(row) { if (failure) return { error: { message: "Offline" } }; cloud.set(row.key, row.value); return { error: null }; },
-    delete() { return { async eq(_column, key) { if (failure) return { error: { message: "Offline" } }; cloud.delete(key); return { error: null }; } }; },
-  };
-} };
-function storage(entries = []) {
-  const data = new Map(entries);
-  return { get length() { return data.size; }, key(i) { return [...data.keys()][i] ?? null; }, getItem(key) { return data.get(key) ?? null; }, setItem(key, value) { data.set(key, value); }, removeItem(key) { data.delete(key); }, snapshot() { return [...data]; } };
+const dir = mkdtempSync(join(tmpdir(), "sync-reload-"));
+let browserSocket;
+let browserProcess;
+let requestId = 0;
+function connect(url) {
+  return new Promise((resolve, reject) => {
+    const socket = new WebSocket(url);
+    socket.addEventListener("open", () => resolve(socket), { once: true });
+    socket.addEventListener("error", reject, { once: true });
+  });
 }
-let sequence = 0;
-async function boot(entries = []) {
-  globalThis.localStorage = storage(entries);
-  const sync = await import(`${pathToFileURL(file).href}?boot=${sequence++}`);
-  sync.installSync();
-  await sync.startSync("user-a");
-  return sync;
+function command(socket, method, params = {}) {
+  return new Promise((resolve, reject) => {
+    const id = ++requestId;
+    const timeout = setTimeout(() => {
+      socket.removeEventListener("message", receive);
+      reject(new Error(`Browser command timed out: ${method}`));
+    }, 60000);
+    function receive(event) {
+      const message = JSON.parse(event.data);
+      if (message.id !== id) return;
+      clearTimeout(timeout);
+      socket.removeEventListener("message", receive);
+      if (message.error) reject(new Error(message.error.message));
+      else resolve(message.result);
+    }
+    socket.addEventListener("message", receive);
+    socket.send(JSON.stringify({ id, method, params }));
+  });
 }
-let sync = await boot();
-localStorage.setItem(key, "new text before debounce");
-sync.stopSync(); // reload before the delayed network write starts
-sync = await boot(localStorage.snapshot());
-assert.equal(localStorage.getItem(key), "new text before debounce", "reload must not overwrite pending edits");
-assert.equal(cloud.get(key), "new text before debounce", "reload retries the pending write");
-
-failure = true;
-localStorage.setItem(key, "offline text");
-await assert.rejects(sync.flushKey(key, true), /Cloud save failed/, "explicit save must report cloud errors");
-sync.stopSync();
-sync = await boot(localStorage.snapshot());
-assert.equal(localStorage.getItem(key), "offline text", "returned API errors preserve local edits");
-sync.writeFromCloud(key, "stale background refresh");
-assert.equal(localStorage.getItem(key), "offline text", "background refresh must preserve pending edits");
-failure = false;
-await sync.startSync("user-a");
-assert.equal(cloud.get(key), "offline text");
-assert.deepEqual(JSON.parse(localStorage.getItem("itss.syncPending")), [], "successful writes clear the queue");
-localStorage.setItem(key, "explicit cloud save");
-await sync.flushKey(key, true);
-assert.equal(cloud.get(key), "explicit cloud save", "explicit save waits for cloud persistence");
-
-failure = true;
-localStorage.removeItem(key);
-sync.stopSync();
-sync = await boot(localStorage.snapshot());
-assert.equal(localStorage.getItem(key), null, "reload must not restore an unsynced deletion");
-failure = false;
-await sync.startSync("user-a");
-assert.equal(cloud.has(key), false, "deleted values are retried as deletions");
-sync.stopSync();
-await assert.rejects(sync.flushKey(key, true), /signed-in account/, "signed-out save cannot report success");
-console.log("PASS: reload, API failure, stale refresh, retry, deletion, confirmed cloud save, signed-out rejection");
+try {
+  await build({
+    entryPoints: [resolve("src/lib/sync.ts")], bundle: true, format: "esm",
+    outfile: join(dir, "sync.mjs"),
+    plugins: [{ name: "mock-cloud", setup(b) {
+      b.onResolve({ filter: /^\.\/supabase$/ }, () => ({ path: "cloud", namespace: "fixture" }));
+      b.onResolve({ filter: /^\.\/unitStorage$/ }, () => ({ path: "packs", namespace: "fixture" }));
+      b.onLoad({ filter: /.*/, namespace: "fixture" }, args => ({ contents: args.path === "cloud"
+        ? "export const supabase = globalThis.testCloud;"
+        : "export const isUnitPackKey = () => false; export const receiveUnitPack = () => {}; export const storedUnitPacks = async () => []; export const clearUnitPacks = () => {};" }));
+    } }],
+  });
+  await build({
+    entryPoints: [resolve("scripts/test-sync-reload-browser.ts")], bundle: true,
+    outfile: join(dir, "test.js"),
+  });
+  writeFileSync(join(dir, "index.html"), '<!doctype html><html><body><pre id="result">Running</pre><script src="test.js"></script></body></html>');
+  const browser = [process.env.CHROME_PATH, "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"].find(path => path && existsSync(path));
+  if (!browser) throw new Error("Set CHROME_PATH to a Chromium browser executable.");
+  browserProcess = spawn(browser, ["--headless", "--disable-gpu", "--no-first-run",
+    "--no-default-browser-check", "--allow-file-access-from-files",
+    `--user-data-dir=${join(dir, "profile")}`, "--remote-debugging-port=0", "about:blank"],
+  { windowsHide: true });
+  const address = await new Promise((resolve, reject) => {
+    let output = "";
+    const timeout = setTimeout(() => reject(new Error("Browser startup timed out")), 15000);
+    browserProcess.once("error", error => { clearTimeout(timeout); reject(error); });
+    browserProcess.stderr.on("data", data => {
+      output += data;
+      const match = output.match(/DevTools listening on (ws:\/\/[^\s]+)/);
+      if (match) { clearTimeout(timeout); resolve(match[1]); }
+    });
+  });
+  browserSocket = await connect(address);
+  const endpoint = new URL(address);
+  const pages = await (await fetch(`http://${endpoint.host}/json/list`)).json();
+  const page = await connect(pages.find(page => page.type === "page").webSocketDebuggerUrl);
+  try {
+    await command(page, "Page.navigate", { url: pathToFileURL(join(dir, "index.html")).href });
+    await new Promise(resolve => setTimeout(resolve, 200));
+    const result = await command(page, "Runtime.evaluate", {
+      expression: `new Promise(resolve => {
+        const check = () => {
+          if (document.body?.dataset.result) resolve({
+            status: document.body.dataset.result,
+            message: document.getElementById("result").textContent
+          });
+          else setTimeout(check, 20);
+        };
+        check();
+      })`,
+      awaitPromise: true, returnByValue: true,
+    });
+    if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails));
+    console.log(result.result.value.message);
+    if (result.result.value.status !== "passed") process.exitCode = 1;
+  } finally { page.close(); }
+} finally {
+  if (browserSocket) {
+    const exited = new Promise(resolve => browserProcess.once("exit", resolve));
+    await command(browserSocket, "Browser.close");
+    browserSocket.close();
+    await exited;
+  } else if (browserProcess) browserProcess.kill();
+  rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+}
