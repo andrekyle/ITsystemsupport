@@ -340,7 +340,13 @@ export function CompliancePage({
             {visibleDeadlines.map((d) => (
               <tr key={d.name}>
                 <td>
-                  <strong>{d.name}</strong>
+                  {d.us ? (
+                    <span className="deadline-item-title">
+                      <span>US {d.us}</span>
+                      <span className="deadline-item-dash" aria-hidden="true">&mdash;</span>
+                      <span>{d.name.replace(/^US\s+\S+\s+[—–-]\s+/, "")}</span>
+                    </span>
+                  ) : <span className="deadline-item-title plain">{d.name}</span>}
                 </td>
                 <td>{fmtDate(d.date)}</td>
                 <td>{fmtDate(d.end)}</td>
