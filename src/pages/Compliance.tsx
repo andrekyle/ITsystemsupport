@@ -343,8 +343,7 @@ export function CompliancePage({
                   {d.us ? (
                     <span className="deadline-item-title">
                       <span>US {d.us}</span>
-                      <span className="deadline-item-dash" aria-hidden="true">&mdash;</span>
-                      <span>{d.name.replace(/^US\s+\S+\s+[—–-]\s+/, "")}</span>
+                      <span className="deadline-item-name">{d.name.replace(/^US\s+\S+\s+[—–-]\s+/, "")}</span>
                     </span>
                   ) : <span className="deadline-item-title plain">{d.name}</span>}
                 </td>

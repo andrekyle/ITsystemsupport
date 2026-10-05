@@ -9030,7 +9030,7 @@ table.data.training-table td {
 
 .deadline-item-title {
   display: grid;
-  grid-template-columns: 82px 18px minmax(0, 1fr);
+  grid-template-columns: 82px minmax(0, 1fr);
   align-items: baseline;
   color: var(--ink);
   font-weight: 400;
@@ -9038,10 +9038,10 @@ table.data.training-table td {
 }
 .deadline-item-title.plain { display: block; }
 .deadline-item-title > span:first-child { font-variant-numeric: tabular-nums; }
-.deadline-item-dash {
-  display: inline-block;
-  width: 18px;
-  text-align: center;
+.deadline-item-name {
+  min-width: 0;
+  padding-left: 14px;
+  border-left: 1px solid var(--table-line);
 }
 
 /* non-SAQA unit codes (HWSW etc.) share the US-link colour without being links */
