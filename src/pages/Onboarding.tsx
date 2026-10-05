@@ -180,6 +180,7 @@ function UploadPackDialog({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [audience, setAudience] = useState<"learners" | "staff">("learners");
+  const [folderMode, setFolderMode] = useState(true);
   const [files, setFiles] = useState<File[]>([]);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const totalBytes = useMemo(() => files.reduce((sum, file) => sum + file.size, 0), [files]);
@@ -283,15 +284,29 @@ function UploadPackDialog({
         className={`ob-file-picker${isOverLimit ? " invalid" : ""}`}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => void handleDrop(e)}
+        onClick={() => {
+          if (!busy) folderMode ? void chooseFolder() : fileRef.current?.click();
+        }}
       >
-        <Icon name="folder" size={24} />
+        <Icon name={folderMode ? "folder" : "document"} size={24} />
         <span>
-          <strong>{files.length ? `${files.length} files · ${fmtSize(totalBytes)}` : "Drop a folder here"}</strong>
-          <small>Folders may contain up to {MAX_PACK_MB} MB</small>
+          <strong>{files.length ? `${files.length} files · ${fmtSize(totalBytes)}` : `Drop or choose ${folderMode ? "a folder" : "files"}`}</strong>
+          <small>Uploads may contain up to {MAX_PACK_MB} MB</small>
         </span>
-        <span className="ob-picker-actions">
-          <button type="button" className="btn ghost sm" disabled={busy} onClick={() => void chooseFolder()}>Choose folder</button>
-          <button type="button" className="btn ghost sm" disabled={busy} onClick={() => fileRef.current?.click()}>Choose files</button>
+        <span className="ob-upload-mode" onClick={(e) => e.stopPropagation()}>
+          <span className={!folderMode ? "active" : ""}>Files</span>
+          <button
+            type="button"
+            className="ob-mode-toggle"
+            role="switch"
+            aria-checked={folderMode}
+            aria-label="Upload a folder instead of individual files"
+            disabled={busy}
+            onClick={() => setFolderMode((current) => !current)}
+          >
+            <span className="ob-mode-knob" />
+          </button>
+          <span className={folderMode ? "active" : ""}>Folder</span>
         </span>
       </div>
       <input

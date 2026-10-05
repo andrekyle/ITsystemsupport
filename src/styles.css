@@ -14482,19 +14482,60 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   color: var(--azure);
   font: inherit;
   text-align: left;
-  cursor: default;
+  cursor: pointer;
 }
 
 .ob-file-picker:hover { border-color: var(--azure); }
-.ob-file-picker > span:not(.ob-picker-actions) { display: grid; flex: 1; gap: 3px; min-width: 0; }
+.ob-file-picker > span:not(.ob-upload-mode) { display: grid; flex: 1; gap: 3px; min-width: 0; }
 .ob-file-picker strong { color: var(--ink); font-size: 14px; }
 .ob-file-picker small { color: var(--ink-3); font-size: 12.5px; }
 .ob-file-picker.invalid { border-color: var(--red); }
 
-.ob-picker-actions {
+.ob-upload-mode {
   display: flex;
+  align-items: center;
   flex: none;
-  gap: 6px;
+  gap: 7px;
+  color: var(--ink-3);
+  font-size: 11.5px;
+}
+
+.ob-upload-mode > span.active {
+  color: var(--ink);
+}
+
+.ob-mode-toggle {
+  position: relative;
+  width: 42px;
+  height: 23px;
+  padding: 0;
+  border: 1px solid var(--border-2);
+  border-radius: 999px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: background .16s ease, border-color .16s ease;
+}
+
+.ob-mode-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .45);
+  transition: transform .18s ease, background .16s ease;
+}
+
+.ob-mode-toggle[aria-checked="true"] .ob-mode-knob {
+  transform: translateX(19px);
+  background: var(--ink-2);
+}
+
+.ob-mode-toggle:focus-visible {
+  outline: 2px solid var(--azure);
+  outline-offset: 2px;
 }
 
 .ob-selection-error {
@@ -14612,21 +14653,27 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   background: #303030;
 }
 
-[data-theme="dark"] .ob-upload-modal .ob-picker-actions .btn {
-  border-color: #464646;
-  background: #242424;
-  color: #e5e5e5;
+[data-theme="dark"] .ob-upload-modal .ob-mode-toggle {
+  border-color: #3c3c3c;
+  background: #1d1d1d;
 }
 
-[data-theme="dark"] .ob-upload-modal .ob-picker-actions .btn:hover:not(:disabled) {
-  border-color: #5a5a5a;
-  background: #383838;
-  color: #fff;
+[data-theme="dark"] .ob-upload-modal .ob-mode-toggle[aria-checked="true"] {
+  border-color: #4a4a4a;
+  background: #333;
+}
+
+[data-theme="dark"] .ob-upload-modal .ob-mode-knob {
+  background: #777;
+}
+
+[data-theme="dark"] .ob-upload-modal .ob-mode-toggle[aria-checked="true"] .ob-mode-knob {
+  background: #d0d0d0;
 }
 
 @media (max-width: 600px) {
   .ob-file-picker { align-items: flex-start; flex-wrap: wrap; }
-  .ob-picker-actions { width: 100%; padding-left: 36px; }
+  .ob-upload-mode { width: 100%; padding-left: 36px; }
 }
 
 [data-theme="dark"] .ob-upload-modal .modal-actions .btn {
