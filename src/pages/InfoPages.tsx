@@ -22,7 +22,7 @@ import {
 
 export function AssessmentsPage({ profile }: { profile: Profile }) {
   return (
-    <>
+    <section className="assessments-page">
       <div className="eyebrow">
         <Icon name="clipboard" size={15} />
         Assessments
@@ -102,7 +102,7 @@ export function AssessmentsPage({ profile }: { profile: Profile }) {
           institutional appeals process.
         </span>
       </div>
-    </>
+    </section>
   );
 }
 
@@ -118,21 +118,36 @@ export function DeliverablesPage() {
         Standards and submission timelines for programme deliverables across the training calendar.
       </p>
 
-      <div className="deliv-grid">
-        {DELIVERABLES.map((d) => (
-          <div className="card deliv-card" key={d.deliverable}>
-            <span className="deliv-ico">
-              <Icon name={d.icon} size={20} />
-            </span>
-            <strong className="deliv-name">{d.deliverable}</strong>
-            <p className="deliv-standard">{d.standard}</p>
-            <span className="deliv-due">
-              <Icon name="clock" size={14} />
-              {d.due}
-            </span>
+      <section className="deliv-board" aria-label="Programme deliverables">
+        <div className="deliv-board-head">
+          <div>
+            <span className="deliv-kicker">Programme evidence</span>
+            <h2>Submission standards</h2>
+            <p>These deliverables must be completed and submitted as per the programme requirements.</p>
           </div>
-        ))}
-      </div>
+          <span className="deliv-total"><Icon name="layers" size={22} /> {DELIVERABLES.length} deliverables</span>
+        </div>
+
+        <div className="deliv-list">
+          {DELIVERABLES.map((d, index) => (
+            <article className={`deliv-row tone-${index % 5}`} key={d.deliverable}>
+              <span className="deliv-row-num">{String(index + 1).padStart(2, "0")}</span>
+              <span className="deliv-ico" aria-hidden="true"><Icon name={d.icon} size={28} /></span>
+              <div className="deliv-copy">
+                <strong className="deliv-name">{d.deliverable}</strong>
+                <span className="deliv-standard">{d.standard}</span>
+              </div>
+              <span className="deliv-due">
+                <span className="deliv-due-value">
+                  <Icon name={index === 1 || index === 3 ? "calendar" : "clock"} size={25} />
+                  {d.due}
+                </span>
+              </span>
+              <Icon name="chevronRight" size={20} />
+            </article>
+          ))}
+        </div>
+      </section>
 
       <div className="callout">
         <span className="ico">
@@ -157,20 +172,36 @@ export function ResourcesPage() {
       <h1 className="page-title">Resources</h1>
       <p className="page-sub">System Support NQF Level 5 Learnership · Investec Group</p>
 
-      {RESOURCES.map((r) => (
-        <a
-          className="res-card"
-          key={r.title}
-          href={r.url}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <span className="t">
-            {r.title} ↗
-          </span>
-          <span className="d">{r.desc}</span>
-        </a>
-      ))}
+      <section className="res-board" aria-label="Learning resources">
+        <div className="res-board-head">
+          <div>
+            <span className="res-kicker">Reference library</span>
+            <h2>Useful links</h2>
+            <p>Trusted learning, qualification and compliance resources for this programme.</p>
+          </div>
+          <span className="res-total"><Icon name="layers" size={20} /> {RESOURCES.length} resources</span>
+        </div>
+        <div className="res-list">
+          {RESOURCES.map((r, index) => (
+            <a
+              className={`res-card tone-${index % 5}`}
+              key={r.title}
+              href={r.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="res-index">{String(index + 1).padStart(2, "0")}</span>
+              <span className="res-icon" aria-hidden="true"><Icon name="globe" size={23} /></span>
+              <span className="res-copy">
+                <strong className="t">{r.title}</strong>
+                <span className="d">{r.desc}</span>
+              </span>
+              <span className="res-action">Open resource <Icon name="chevronRight" size={14} /></span>
+              <Icon name="chevronRight" size={20} />
+            </a>
+          ))}
+        </div>
+      </section>
     </>
   );
 }

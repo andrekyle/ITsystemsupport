@@ -158,8 +158,6 @@ interface Props {
   onOpenProfile: () => void;
   onOpenUnit?: (us: string) => void;
   navigate?: (r: Route) => void;
-  adminMode: boolean;
-  onChangeMode: (admin: boolean) => void;
 }
 
 export function Header({
@@ -172,8 +170,6 @@ export function Header({
   onOpenProfile,
   onOpenUnit,
   navigate,
-  adminMode,
-  onChangeMode,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -270,10 +266,6 @@ export function Header({
       </div>
       <SessionClock onOpenUnit={onOpenUnit} />
       <div className="header-right">
-        {profile.role === "Super User" && <div className="super-mode-switch" role="group" aria-label="Super User workspace mode">
-          <button type="button" className={!adminMode ? "active" : ""} aria-pressed={!adminMode} onClick={() => onChangeMode(false)}><Icon name="book" size={15}/> Learning</button>
-          <button type="button" className={adminMode ? "active" : ""} aria-pressed={adminMode} onClick={() => onChangeMode(true)}><Icon name="shield" size={15}/> Admin</button>
-        </div>}
         <div className="notif-wrap" ref={notifRef}>
           <button
             className={`icon-btn${unreadCount > 0 ? " has-unread" : ""}`}

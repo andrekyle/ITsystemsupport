@@ -20,12 +20,10 @@ export function Dashboard({
   profile,
   progress,
   navigate,
-  adminMode = false,
 }: {
   profile: Profile;
   progress: ProgressState;
   navigate: (r: Route) => void;
-  adminMode?: boolean;
 }) {
   const { docs: poeDocs } = usePoe(profile.id);
   const { outcomes } = useOutcomes();
@@ -33,65 +31,6 @@ export function Dashboard({
   const poeDone = Object.keys(poeDocs).length;
   const game = computeGamification(progress, poeDone, attendanceSignedCount(profile.id));
   const announcements = loadAnnouncements().slice(0, 2);
-
-  if (profile.role === "Super User" && adminMode) {
-    const users = loadProfiles();
-    const learners = users.filter(user => user.role === "Learner").length;
-    const staff = users.length - learners;
-    const actions: {
-      page: Route["page"];
-      image: string;
-      title: string;
-      detail: string;
-      icon: string;
-      eyebrow: string;
-      metric?: string;
-      metricLabel?: string;
-      tone: string;
-    }[] = [
-      { page: "students", image: "/admin-images/users-reference.png", title: "Users & students", detail: "Manage accounts, roles, learner records and access.", icon: "people", eyebrow: "Identity & access", metric: String(users.length), metricLabel: "total users", tone: "azure" },
-      { page: "analytics", image: "/admin-images/analytics-reference.png", title: "Learning analytics", detail: "Review engagement, completion and assessment performance.", icon: "chart", eyebrow: "Performance", metricLabel: "live insights", tone: "emerald" },
-      { page: "trackerReport", image: "/admin-images/tracker-reference.png", title: "Learner tracker", detail: "Monitor individual and cohort progress in one report.", icon: "target", eyebrow: "Progress oversight", metric: String(learners), metricLabel: "learners tracked", tone: "violet" },
-      { page: "attendance", image: "/admin-images/attendance-reference.png", title: "Attendance", detail: "Capture registers and verify participation records.", icon: "calendar", eyebrow: "Session control", metricLabel: "daily registers", tone: "amber" },
-      { page: "course", image: "/admin-images/course-reference.png", title: "Course content", detail: "Build units, edit lessons and manage learning materials.", icon: "book", eyebrow: "Curriculum", metricLabel: "author lessons", tone: "cyan" },
-      { page: "forms", image: "/admin-images/forms-reference.png", title: "Forms", detail: "Create and maintain operational and learner forms.", icon: "document", eyebrow: "Documentation", metricLabel: "digital workflows", tone: "rose" },
-    ];
-    const operations: { page: Route["page"]; icon: string; title: string; detail: string; eyebrow: string }[] = [
-      { page: "compliance", icon: "shield", title: "Compliance", detail: "Review programme requirements, evidence and risk areas.", eyebrow: "Governance" },
-      { page: "calendar", icon: "calendar", title: "Training calendar", detail: "Plan sessions, delivery dates and upcoming activity.", eyebrow: "Scheduling" },
-      { page: "onboarding", icon: "folder", title: "Onboarding packs", detail: "Publish induction material and starter resources.", eyebrow: "Setup" },
-      { page: "reports", icon: "robot", title: "AI Assistant", detail: "Generate reports and operational outputs faster.", eyebrow: "Automation" },
-    ];
-    return <section className="admin-dashboard">
-      <div className="eyebrow"><Icon name="shield" size={15}/> Administration</div>
-      <div className="admin-hero card">
-        <div className="admin-dashboard-head"><div><h1 className="page-title">Admin workspace</h1><p className="page-sub">Run delivery, people, reporting and compliance from one cleaner control surface.</p></div><span className="admin-mode-badge"><Icon name="shield" size={15}/> Admin mode</span></div>
-        <div className="admin-summary" aria-label="User summary">
-          <div className="admin-summary-card"><span className="admin-summary-label">Platform users</span><strong>{users.length}</strong><small>All active accounts across the workspace</small></div>
-          <div className="admin-summary-card"><span className="admin-summary-label">Learners</span><strong>{learners}</strong><small>Tracked for progress, attendance and outcomes</small></div>
-          <div className="admin-summary-card"><span className="admin-summary-label">Staff</span><strong>{staff}</strong><small>Facilitators, assessors, moderators and admins</small></div>
-        </div>
-      </div>
-      <h2 className="section-title"><span className="ico"><Icon name="dashboard" size={20}/></span>Management tools</h2>
-      <div className="admin-action-grid">{actions.map(action => <button type="button" key={action.page} className={`card admin-action-card tone-${action.tone}`} onClick={() => navigate({ page: action.page })}>
-        <span className="admin-action-media"><img src={action.image} alt="" aria-hidden="true" /></span>
-        <span className="admin-action-body">
-          <span className="admin-action-topline">{action.eyebrow}</span>
-          <span className="admin-action-copy"><strong>{action.title}</strong><small>{action.detail}</small></span>
-          <span className="admin-action-footer">{action.metric ? <span className="admin-action-metric"><strong>{action.metric}</strong> {action.metricLabel}</span> : <span className="admin-action-metric admin-action-metric-muted">{action.metricLabel}</span>}<span className="admin-action-cta">Open workspace <Icon name="chevronRight" size={15}/></span></span>
-        </span>
-        <span className="admin-action-badge"><Icon name={action.icon} size={18}/></span>
-      </button>)}</div>
-      <h2 className="section-title"><span className="ico"><Icon name="target" size={20}/></span>Operations</h2>
-      <div className="admin-operations">
-        {operations.map(item => <button type="button" key={item.page} className="card clickable admin-operation-card" onClick={() => navigate({page:item.page})}>
-          <span className="admin-operation-icon"><Icon name={item.icon} size={20}/></span>
-          <span className="admin-operation-copy"><em>{item.eyebrow}</em><strong>{item.title}</strong><small>{item.detail}</small></span>
-          <Icon name="chevronRight" size={18}/>
-        </button>)}
-      </div>
-    </section>;
-  }
 
   // next unit not yet completed
   const next = (() => {
