@@ -2244,12 +2244,13 @@ function StudentDetail({
     )
   );
 
-  /** Bundle every uploaded POE document into a single ZIP, foldered by section. */
+  /** Bundle every uploaded POE document into a learner folder, then by section. */
   async function downloadPortfolio() {
     setZipping(true);
     try {
       const zip = new JSZip();
       const clean = (s: string) => s.replace(/[\\/:*?"<>|]/g, "-").trim();
+      const learnerFolder = clean(student.name) || "Learner";
       const perItem = new Map<string, number>();
       let added = 0;
       for (const { sec, item, doc } of uploaded) {
@@ -2259,7 +2260,7 @@ function StudentDetail({
         perItem.set(item.id, n);
         const suffix = n > 1 ? ` (${n})` : "";
         zip.file(
-          `${clean(sec.heading)}/${clean(item.label).slice(0, 80)}${suffix} — ${clean(doc.name)}`,
+          `${learnerFolder}/${clean(sec.heading)}/${clean(item.label).slice(0, 80)}${suffix} — ${clean(doc.name)}`,
           blob
         );
         added++;

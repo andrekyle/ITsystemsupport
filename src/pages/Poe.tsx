@@ -106,6 +106,7 @@ export function PoePage({ profile }: { profile: Profile }) {
   async function downloadAll() {
     const zip = new JSZip();
     const clean = (s: string) => s.replace(/[\\/:*?"<>|]/g, "-").trim();
+    const learnerFolder = clean(viewing.name) || "Learner";
     for (const sec of POE_SECTIONS) {
       for (const item of sec.items) {
         const files = filesFor(item.id);
@@ -116,7 +117,7 @@ export function PoePage({ profile }: { profile: Profile }) {
           if (!blob) continue;
           const folder = clean(sec.heading);
           const suffix = files.length > 1 ? ` (${i})` : "";
-          zip.file(`${folder}/${clean(item.label).slice(0, 80)}${suffix} — ${clean(doc.name)}`, blob);
+          zip.file(`${learnerFolder}/${folder}/${clean(item.label).slice(0, 80)}${suffix} — ${clean(doc.name)}`, blob);
         }
       }
     }
