@@ -23,6 +23,17 @@ const PAGE_FORM_FIELDS: Record<number, { id: string; label: string; left: number
   ],
 };
 
+const PURPOSE_PAGE_WRAPPED_LINES = new Set(["Communications & Networking.", "(LAN)", "learning in this area."]);
+const PURPOSE_PAGE_BULLET_TEXT_OFFSET = 9;
+const INTRODUCTION_ROW_LABELS: Record<number, string> = {
+  15: "Purpose",
+  17: "Outcomes",
+  30: "To qualify",
+  33: "Range of Learning",
+  35: "Responsibility",
+};
+const INTRODUCTION_VALUE_X = 168.24;
+
 function htmlFont(pdfFont: string): string {
   if (/courier/i.test(pdfFont)) return 'Consolas, "Courier New", monospace';
   if (/times|serif/i.test(pdfFont)) return 'Georgia, "Times New Roman", serif';
@@ -43,12 +54,25 @@ function GuidePage({ page, pageNumber, editMode, values, onChange }: { page: Lay
     <div className="learner-guide-html-text">
       {page.items.map(item => {
         const key = `learner-guide-v2.page-${pageNumber}.text-${item.id}`;
+        const x = pageNumber === 7 && PURPOSE_PAGE_WRAPPED_LINES.has(item.text) ? item.x - PURPOSE_PAGE_BULLET_TEXT_OFFSET : item.x;
         const isAnswerLine = /^[_\.]{8,}$/.test(item.text.replace(/\s/g,""));
         if (isAnswerLine) {
           const fieldKey = `learner-guide-v2.page-${pageNumber}.answer-${item.id}`;
           return <input className="learner-guide-answer-line" key={item.id} aria-label={`Page ${pageNumber} answer line`} defaultValue={String(values[fieldKey] ?? "")} onBlur={event => onChange(fieldKey,event.target.value)} style={{ left:`${item.x/page.width*100}%`, top:`${item.y/page.height*100}%`, width:`${Math.max(item.w,40)/page.width*100}%`, height:`${Math.max(item.h,12)/page.height*100}%`, fontSize:`${item.size/page.width*980}px` }} />;
         }
-        return <span key={item.id} contentEditable={editMode} suppressContentEditableWarning spellCheck={editMode} tabIndex={editMode ? 0 : -1} onBlur={event => onChange(key, event.currentTarget.textContent ?? "")} style={{ left:`${item.x/page.width*100}%`, top:`${item.y/page.height*100}%`, width:`${Math.max(item.w,3)/page.width*100}%`, minHeight:`${item.h/page.height*100}%`, fontFamily:htmlFont(item.font), fontSize:`${item.size/page.width*980}px`, fontWeight:item.bold?700:400, fontStyle:item.italic?"italic":"normal", color:item.color }}>{String(values[key] ?? item.text)}</span>;
+        const rowLabel = pageNumber === 5 ? INTRODUCTION_ROW_LABELS[item.id] : undefined;
+        if (rowLabel) {
+          const savedText = String(values[key] ?? item.text);
+          const bodyDefault = savedText.startsWith(`${rowLabel} `) ? savedText.slice(rowLabel.length).trimStart() : savedText;
+          const labelKey = `${key}.label`;
+          const bodyKey = `${key}.body`;
+          const baseStyle = { top:`${item.y/page.height*100}%`, minHeight:`${item.h/page.height*100}%`, fontFamily:htmlFont(item.font), fontSize:`${item.size/page.width*980}px`, fontWeight:item.bold?700:400, fontStyle:item.italic?"italic":"normal", color:item.color };
+          return [
+            <span key={`${item.id}-label`} contentEditable={editMode} suppressContentEditableWarning spellCheck={editMode} tabIndex={editMode ? 0 : -1} onBlur={event => onChange(labelKey, event.currentTarget.textContent ?? "")} style={{ ...baseStyle, left:`${item.x/page.width*100}%`, width:`${110/page.width*100}%` }}>{String(values[labelKey] ?? rowLabel)}</span>,
+            <span key={`${item.id}-body`} contentEditable={editMode} suppressContentEditableWarning spellCheck={editMode} tabIndex={editMode ? 0 : -1} onBlur={event => onChange(bodyKey, event.currentTarget.textContent ?? "")} style={{ ...baseStyle, left:`${INTRODUCTION_VALUE_X/page.width*100}%`, width:`${Math.max(item.w,3)/page.width*100}%` }}>{String(values[bodyKey] ?? bodyDefault)}</span>,
+          ];
+        }
+        return <span key={item.id} contentEditable={editMode} suppressContentEditableWarning spellCheck={editMode} tabIndex={editMode ? 0 : -1} onBlur={event => onChange(key, event.currentTarget.textContent ?? "")} style={{ left:`${x/page.width*100}%`, top:`${item.y/page.height*100}%`, width:`${Math.max(item.w,3)/page.width*100}%`, minHeight:`${item.h/page.height*100}%`, fontFamily:htmlFont(item.font), fontSize:`${item.size/page.width*980}px`, fontWeight:item.bold?700:400, fontStyle:item.italic?"italic":"normal", color:item.color }}>{String(values[key] ?? item.text)}</span>;
       })}
     </div>
     {PAGE_FORM_FIELDS[pageNumber]?.length ? <div className="learner-guide-form-layer" aria-label={`Form fields for page ${pageNumber}`}>{PAGE_FORM_FIELDS[pageNumber].map(field => { const key=`learner-guide.page-${pageNumber}.form-${field.id}`; return <input key={field.id} type={field.type??"text"} aria-label={field.label} defaultValue={String(values[key]??"")} onBlur={event=>onChange(key,event.target.value)} style={{left:`${field.left}%`,top:`${field.top}%`,width:`${field.width}%`,height:`${field.height}%`}}/>; })}</div> : null}
