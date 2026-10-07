@@ -2,6 +2,8 @@ import { useRef, useState } from "react";
 import { Icon } from "../icons";
 import { fileToSignature } from "../lib/signature";
 
+const REMOVED_SIGNATURE = "__signature_removed__";
+
 export function DocumentSignature({
   value,
   savedSignature,
@@ -20,8 +22,9 @@ export function DocumentSignature({
   const [error, setError] = useState("");
   // A signature saved on the user's profile is the default for an empty
   // signature line, so it is visible in the document and its PDF immediately.
+  const removed = value === REMOVED_SIGNATURE;
   const storedImage = value?.startsWith("data:image/") ? value : "";
-  const image = storedImage || (!value ? savedSignature ?? "" : "");
+  const image = storedImage || (!value && !removed ? savedSignature ?? "" : "");
 
   const chooseFile = () => inputRef.current?.click();
   const upload = async (file?: File) => {
@@ -41,10 +44,10 @@ export function DocumentSignature({
     <div className={`document-signature ${className}`.trim()}>
       {image ? (
         <img src={image} alt={label} />
-      ) : value ? (
+      ) : value && !removed ? (
         <span className="document-signature-text">{value}</span>
       ) : (
-        <span className="document-signature-empty">Signature</span>
+        <span className="document-signature-empty">{removed ? "" : "Signature"}</span>
       )}
       <div className="document-signature-actions">
         {savedSignature && savedSignature !== image && (
@@ -52,10 +55,10 @@ export function DocumentSignature({
             <Icon name="checkCircle" size={12} />
           </button>
         )}
-        <button type="button" onClick={chooseFile} disabled={busy} title={image || value ? `Edit ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`} aria-label={image || value ? `Edit ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`}>
-          <Icon name={image || value ? "pencil" : "upload"} size={12} />
+        <button type="button" onClick={chooseFile} disabled={busy} title={image || (value && !removed) ? `Edit ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`} aria-label={image || (value && !removed) ? `Edit ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`}>
+          <Icon name={image || (value && !removed) ? "pencil" : "upload"} size={12} />
         </button>
-        {value && <button type="button" onClick={() => onChange("")} title={`Remove ${label.toLowerCase()}`} aria-label={`Remove ${label.toLowerCase()}`}><Icon name="close" size={12} /></button>}
+        {(image || (value && !removed)) && <button type="button" onClick={() => onChange(REMOVED_SIGNATURE)} title={`Remove ${label.toLowerCase()}`} aria-label={`Remove ${label.toLowerCase()}`}><Icon name="close" size={12} /></button>}
       </div>
       <input
         ref={inputRef}

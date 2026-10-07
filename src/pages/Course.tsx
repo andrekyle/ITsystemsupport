@@ -5822,7 +5822,9 @@ export function UnitPage({
         const ticked = sa.items.reduce((n, _, i) => n + (values[`selfassess-${i}`] === true ? 1 : 0), 0);
         const savedAtRaw = values["selfassess.savedAt"];
         const savedAt = typeof savedAtRaw === "string" ? savedAtRaw : null;
-        const locked = !!savedAt;
+        // Saving records progress without freezing the checklist. Learners can
+        // return later and tick outcomes as their competence develops.
+        const locked = false;
         const justSaved = saJustSaved === u.us;
         const confirmSave = () => {
           if (locked) return;
@@ -5932,18 +5934,17 @@ export function UnitPage({
                   </span>
                 ) : savedAt ? (
                   <span className="muted">
-                    Saved{" "}
+                    Last saved{" "}
                     {new Date(savedAt).toLocaleString(undefined, {
                       dateStyle: "medium",
                       timeStyle: "short",
                     })}
                     {" · "}
-                    {ticked} of {total} ticked · read only
+                    {ticked} of {total} ticked · you can continue editing
                   </span>
                 ) : (
                   <span className="muted">
-                    Not saved yet — {ticked} of {total} ticked. Once saved the form cannot be
-                    changed.
+                    Not saved yet — {ticked} of {total} ticked.
                   </span>
                 )}
               </span>
@@ -5972,7 +5973,7 @@ export function UnitPage({
                       <strong>{ticked} of {total}</strong> items ticked.
                     </p>
                     <p style={{ margin: 0 }}>
-                      Once saved you will not be able to change your answers.
+                      You can return later and update these answers.
                     </p>
                   </>
                 }

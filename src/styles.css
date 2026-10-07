@@ -197,6 +197,12 @@
   .res-copy { padding-right: 40px; }
 }
 
+[data-theme="light"] {
+  --azure: #007fff;
+  --azure-dark: #007fff;
+  --azure-darker: #007fff;
+}
+
 [data-theme="dark"] {
   --app-canvas: #1e1e1e;
   --azure: #479ef5;
@@ -2765,8 +2771,8 @@ textarea:focus {
 
 /* US 114046 practical task: editable, page-for-page PDF replica */
 .pt-pdf-document { display: grid; gap: 28px; max-width: 980px; margin: 0 auto; padding-top: 28px; color: #111; font-family: inherit; }
-.document-signature { position:relative; min-width:120px; min-height:48px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:3px 25px 3px 3px; background:#fff; }
-.document-signature img { display:block; width:auto; max-width:100%; height:40px; object-fit:contain; }
+.document-signature { position:relative; box-sizing:border-box; width:100%; min-width:0; min-height:48px; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:3px 25px 3px 3px; background:#fff; }
+.document-signature img { display:block; width:auto; max-width:calc(100% - 2px); height:40px; object-fit:contain; }
 .document-signature-empty { color:#8b8b8b; font-size:11px; font-style:italic; }
 .document-signature-text { font-family:cursive; font-size:18px; line-height:1.1; }
 .document-signature-actions { position:absolute; top:2px; right:2px; display:flex; flex-direction:column; gap:2px; }
@@ -8821,6 +8827,7 @@ a.plan-ppt:hover {
   align-items: center;
   gap: 12px;
   margin-bottom: 8px;
+  padding: 12px 18px 0;
 }
 .lesson-toolbar-messages {
   margin: 0 0 12px;
