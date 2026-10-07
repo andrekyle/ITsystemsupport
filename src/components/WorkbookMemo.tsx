@@ -52,7 +52,12 @@ export function WorkbookMemo({ unitId, blueprint, memo, onChange }: { unitId: st
       if (!parsed.items?.length) throw new Error(parsed.error || "The memo took too long to process. Please try again.");
       setProgress(90);
       if (memo.file?.path && memo.file.path !== stored.path) void deleteFile(memo.file.path);
-      onChange({ file: stored, items: parsed.items, model: parsed.model, updatedAt: new Date().toISOString() });
+      // In local-only mode uploadFile returns the PDF as a large data URL.
+      // It is needed for extraction, but must never be copied into localStorage.
+      const persistedFile = stored.path
+        ? stored
+        : { name: stored.name, type: stored.type, size: stored.size, uploadedAt: stored.uploadedAt };
+      onChange({ file: persistedFile, items: parsed.items, model: parsed.model, updatedAt: new Date().toISOString() });
       setProgress(100);
     } catch (reason) {
       if (stored?.path && stored.path !== memo.file?.path) void deleteFile(stored.path);
@@ -66,7 +71,7 @@ export function WorkbookMemo({ unitId, blueprint, memo, onChange }: { unitId: st
     <div className="workbook-memo-upload">
       <input ref={input} hidden type="file" accept="application/pdf,.pdf" onChange={event => { const file=event.target.files?.[0]; event.target.value=""; void pick(file); }}/>
       <button className="btn" type="button" disabled={busy} onClick={()=>input.current?.click()}><Icon name="upload" size={16}/> {busy ? `Reading memo… ${progress}%` : memo.file ? "Replace memo PDF" : "Upload memo PDF"}</button>
-      {memo.file && <><button className="btn ghost" type="button" onClick={()=>void downloadDoc(memo.file!)}><Icon name="download" size={16}/> Download memo</button><span className="muted">{memo.file.name}</span></>}
+      {memo.file && <>{(memo.file.path || memo.file.data) && <button className="btn ghost" type="button" onClick={()=>void downloadDoc(memo.file!)}><Icon name="download" size={16}/> Download memo</button>}<span className="muted">{memo.file.name}</span></>}
     </div>
     {error && <p className="auth-error" role="alert">{error}</p>}
     {!!memo.items.length && <div className="workbook-memo-ready"><Icon name="checkCircle" size={18}/><div><strong>Memo ready for marking</strong><span>{memo.items.length} activities · {memo.items.reduce((sum,item)=>sum+item.criteria.length,0)} marking criteria{memo.updatedAt ? ` · updated ${new Date(memo.updatedAt).toLocaleString()}` : ""}</span></div></div>}
