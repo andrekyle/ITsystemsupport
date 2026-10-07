@@ -48,14 +48,14 @@ export function DocumentSignature({
       )}
       <div className="document-signature-actions">
         {savedSignature && savedSignature !== image && (
-          <button type="button" onClick={() => onChange(savedSignature)} title={`Add ${label.toLowerCase()}`}>
-            <Icon name="checkCircle" size={13} /> Use my signature
+          <button type="button" onClick={() => onChange(savedSignature)} title={`Use saved ${label.toLowerCase()}`} aria-label={`Use saved ${label.toLowerCase()}`}>
+            <Icon name="checkCircle" size={12} />
           </button>
         )}
-        <button type="button" onClick={chooseFile} disabled={busy}>
-          <Icon name="upload" size={13} /> {busy ? "Reading…" : image || value ? "Replace" : "Upload"}
+        <button type="button" onClick={chooseFile} disabled={busy} title={image || value ? `Edit ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`} aria-label={image || value ? `Edit ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`}>
+          <Icon name={image || value ? "pencil" : "upload"} size={12} />
         </button>
-        {value && <button type="button" onClick={() => onChange("")} aria-label={`Remove ${label.toLowerCase()}`}><Icon name="close" size={13} /></button>}
+        {value && <button type="button" onClick={() => onChange("")} title={`Remove ${label.toLowerCase()}`} aria-label={`Remove ${label.toLowerCase()}`}><Icon name="close" size={12} /></button>}
       </div>
       <input
         ref={inputRef}

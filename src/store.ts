@@ -598,6 +598,24 @@ export function useSharedSettings(): [SharedSettings, (patch: Partial<SharedSett
   return [settings, update];
 }
 
+export interface WorkbookMemoCriterion { id: string; taskId?: string; text: string; marks: number }
+export interface WorkbookMemoTask { id: string; task: number; text: string; marks: number; modelAnswer?: string }
+export interface WorkbookMemoItem { id: string; question: string; maxMarks: number; tasks?: WorkbookMemoTask[]; criteria: WorkbookMemoCriterion[] }
+export interface WorkbookMemoState {
+  file?: PoeDoc;
+  items: WorkbookMemoItem[];
+  updatedAt?: string;
+  model?: string;
+}
+
+/** Shared, facilitator-managed marking memo for one unit standard. */
+export function useWorkbookMemo(us: string) {
+  return useSharedState<WorkbookMemoState>(
+    `itss.workbookmemo.${courseScopedUnit(us)}.shared`,
+    { items: [] }
+  );
+}
+
 /* ---------- generic shared-state hook (synced to every account) ---------- */
 
 /** Subscribe to a shared `itss.*.shared` JSON key. Mutations re-read fresh

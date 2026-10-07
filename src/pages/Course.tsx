@@ -14,7 +14,7 @@ import { GLOSSARY, getContent } from "../data/content";
 import { FIGURE_DEFAULTS as BASE_FIGURE_DEFAULTS } from "../data/figureDefaults";
 import { HWSW_SLIDE_FIGURES } from "../data/hwswSlideFigures";
 const FIGURE_DEFAULTS = { ...BASE_FIGURE_DEFAULTS, ...HWSW_SLIDE_FIGURES };
-import { moduleCompletion, unitCompletion, unitStatus, readCourseWideSlides, useDeckOverrides, useLessonEdits, useLessonFigures, useNotes, usePlanSlides, useSharedSettings } from "../store";
+import { moduleCompletion, unitCompletion, unitStatus, readCourseWideSlides, useDeckOverrides, useLessonEdits, useLessonFigures, useNotes, usePlanSlides, useSharedSettings, useWorkbookMemo } from "../store";
 import { Bar } from "../components/Ring";
 import { Quiz, seededShuffle } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
@@ -28,8 +28,10 @@ import { InlineText, InlineIconBtn } from "../components/InlineText";
 import { ActivityQuestionEditor } from "../components/ActivityQuestionEditor";
 import { UnitContentEditor } from "../components/UnitContentEditor";
 import { PracticalTask } from "../components/PracticalTask";
-import { LearnerWorkbook } from "../components/LearnerWorkbook";
+import { LearnerWorkbook, WORKBOOK_114046_BLUEPRINT } from "../components/LearnerWorkbook";
+import { GeneratedWorkbook } from "../components/GeneratedWorkbook";
 import { LearnerGuide } from "../components/LearnerGuide";
+import { WorkbookMemo } from "../components/WorkbookMemo";
 import { practicalTaskForUnit } from "../data/practicalTasks";
 import { supabase } from "../lib/supabase";
 import { flushKey } from "../lib/sync";
@@ -2216,7 +2218,7 @@ function fmtSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "questions" | "assignments" | "practical" | "workbook" | "guide" | "logbook" | "quiz" | "selfassessment" | "evaluation" | "plan" | `custom-${string}` | `pdf-${string}`;
+type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "questions" | "assignments" | "practical" | "workbook" | "memo" | "guide" | "logbook" | "quiz" | "selfassessment" | "evaluation" | "plan" | `custom-${string}` | `pdf-${string}`;
 
 /** Built-in lesson decks shipped with the app (public/downloads), per unit
  *  standard — always shown on the Course material tab ahead of uploads. */
@@ -2240,7 +2242,7 @@ const BUILTIN_DECKS: Record<string, { name: string; url: string }[]> = {
 
 const UNIT_TAB_KEY = "itss.unittab";
 const UNIT_TAB_US_KEY = "itss.unittab.us";
-const UNIT_TABS: UnitTab[] = ["overview", "lesson", "material", "notes", "exercises", "questions", "assignments", "practical", "workbook", "guide", "logbook", "quiz", "selfassessment", "evaluation", "plan"];
+const UNIT_TABS: UnitTab[] = ["overview", "lesson", "material", "notes", "exercises", "questions", "assignments", "practical", "workbook", "memo", "guide", "logbook", "quiz", "selfassessment", "evaluation", "plan"];
 
 /** Restore the saved tab only for the same unit standard — opening another US always starts on Overview. */
 function loadUnitTab(unitId: string): UnitTab {
@@ -3151,6 +3153,7 @@ export function UnitPage({
   };
 
   const [sharedSettings, updateSharedSettings] = useSharedSettings();
+  const [workbookMemo, setWorkbookMemo] = useWorkbookMemo(unitId);
   /** super user's draft of the evaluation form link */
   const [evalDraft, setEvalDraft] = useState<string | null>(null);
   /** transient "Saved" flash on the Self assessment tab, keyed by unit id */
@@ -3327,7 +3330,8 @@ export function UnitPage({
     { id: "questions", label: "Activity", icon: "chat", show: !builtUnit && !!content?.questionSessions?.length },
     { id: "assignments", label: "Activity", icon: "folder", show: !builtUnit && !!content?.assignments.length },
     { id: "practical", label: "Practical Task", icon: "checklist", show: !!practicalTask },
-    { id: "workbook", label: "Learner Workbook", icon: "document", show: unitId === "114046" },
+    { id: "workbook", label: "Learner Workbook", icon: "document", show: unitId === "114046" || !!content?.workbook },
+    { id: "memo", label: "Memo", icon: "clipboard", show: (unitId === "114046" || !!content?.workbook) && isSuperUser },
     { id: "guide", label: "Learner Guide", icon: "book", show: unitId === "114046" },
     { id: "logbook", label: "Logbook", icon: "book", show: !!content?.logbook },
     { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content?.quiz.length || !!content?.quizzes?.length || (!!builtUnit && isSuperUser) },
@@ -5993,7 +5997,9 @@ export function UnitPage({
 
       {content?.customTabs?.filter(item => item.id === tab).map(item => <section className="card" key={item.id}><h2>{unitText(item.title, (d, v) => { d.customTabs!.find(t => t.id === item.id)!.title = v; })}</h2><div style={{ whiteSpace: "pre-wrap" }}>{unitText(item.text, (d, v) => { d.customTabs!.find(t => t.id === item.id)!.text = v; })}</div></section>)}
       {tab === "practical" && practicalTask && <PracticalTask document={practicalTask} unitId={u.us} profile={profile} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} />}
-      {tab === "workbook" && unitId === "114046" && <LearnerWorkbook profile={profile} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} />}
+      {tab === "workbook" && unitId === "114046" && <LearnerWorkbook profile={profile} memoItems={workbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} />}
+      {tab === "workbook" && unitId !== "114046" && content?.workbook && <GeneratedWorkbook workbook={content.workbook} memoItems={workbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} />}
+      {tab === "memo" && isSuperUser && (unitId === "114046" || content?.workbook) && <WorkbookMemo unitId={unitId} blueprint={unitId === "114046" ? WORKBOOK_114046_BLUEPRINT : content!.workbook!.outcomes.map(outcome => ({ id: outcome.id, question: outcome.title, maxMarks: outcome.questions.reduce((total, question) => total + question.marks, 0), tasks: outcome.questions.map(question => ({ task: question.task, text: question.text, marks: question.marks })) }))} memo={workbookMemo} onChange={next=>setWorkbookMemo(()=>next)} />}
       {tab === "guide" && unitId === "114046" && <LearnerGuide values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} />}
       {content?.editableDocuments?.filter(item => `pdf-${item.id}` === tab).map(item => <PracticalTask key={item.id} document={item.document} unitId={`${u.us}.${item.id}`} profile={profile} values={progress.units[u.us]?.logbook ?? {}} onChange={(key,value)=>setLogbookField(u.us,`editable-document.${item.id}.${key}`,value)} />)}
       {tab === "evaluation" && content?.evaluation && <section className="unit-evaluation"><h2>Lesson evaluation</h2><p>{unitText(content.evaluation.intro, (d, v) => { d.evaluation!.intro = v; })}</p>{content.evaluation.questions.map((question, i) => <label className="field" key={`${builtUnit?.revision}:${i}`}>{unitText(question, (d, v) => { d.evaluation!.questions[i] = v; })}<textarea rows={3} defaultValue={String(progress.units[u.us]?.logbook?.[`unit-evaluation.${builtUnit?.revision}.${i}`] ?? "")} onBlur={e => setLogbookField(u.us, `unit-evaluation.${builtUnit?.revision}.${i}`, e.target.value)} /></label>)}<p className="muted">Your responses save when you leave each field.</p></section>}

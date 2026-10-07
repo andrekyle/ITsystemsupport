@@ -498,6 +498,26 @@ export interface LessonPlan {
   sections: LessonPlanSection[];
 }
 
+export interface WorkbookQuestion {
+  id: string;
+  task: number;
+  text: string;
+  marks: number;
+}
+
+export interface WorkbookOutcome {
+  id: string;
+  specificOutcome: number;
+  title: string;
+  learningOutcomes: string[];
+  questions: WorkbookQuestion[];
+}
+
+export interface WorkbookSpec {
+  title: string;
+  outcomes: WorkbookOutcome[];
+}
+
 export interface UnitContent {
   /** Editable learner practical converted from an uploaded assessment PDF. */
   practicalTask?: PracticalTaskDocument;
@@ -520,6 +540,8 @@ export interface UnitContent {
   questionSessions?: Exercise[];
   /** end-of-unit self assessment checklist — rendered on its own tab with tickable boxes */
   selfAssessment?: SelfAssessment;
+  /** Memo-aligned learner workbook with one answer box per marked task. */
+  workbook?: WorkbookSpec;
 }
 
 export interface EditableUnitDocument {

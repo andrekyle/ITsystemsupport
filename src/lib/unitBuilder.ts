@@ -82,6 +82,7 @@ export type UnitContentEnhancement = {
   questionSessions?: UnitContent["questionSessions"];
   assignments?: UnitContent["assignments"];
   quiz?: UnitContent["quiz"];
+  workbook?: UnitContent["workbook"];
 };
 
 /** Apply a compact AI layout plan while copying every original paragraph verbatim. */
@@ -778,6 +779,7 @@ export function mergeUnitContentEnhancement(base: UnitContent, enhancement: Unit
   if (nonemptyArray(enhancement.assignments)) next.assignments = enhancement.assignments;
   next.quiz = [];
   next.quizzes = undefined;
+  if (enhancement.workbook?.outcomes?.length) next.workbook = enhancement.workbook;
   next.lesson = next.lesson.map(section => ({ ...section, slideQuiz: undefined, quizGate: undefined }));
   validateUnitContent(next);
   return next;
@@ -788,6 +790,18 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
   // A source topic is a section, not a new lesson with a repeated banner.
   const lesson: LessonSection[] = topics.map(topic => ({ ...topic, icon: "presenter", flat: true }));
   const goals = topics.map(t => `Explain and apply ${t.heading.toLowerCase()}, using examples from the supplied material.`);
+  const workbookOutcomes = topics.slice(0, 8).map((topic, index) => ({
+    id: `outcome-${index + 1}`,
+    specificOutcome: index + 1,
+    title: topic.heading,
+    learningOutcomes: [`Explain and apply ${topic.heading.toLowerCase()}.`],
+    questions: [{
+      id: `task-${index + 1}`,
+      task: index + 1,
+      text: `Explain and apply ${topic.heading.toLowerCase()} using the supplied learning material.`,
+      marks: 5,
+    }],
+  }));
   return {
     lesson, exercises: [],
     questionSessions: [],
@@ -796,6 +810,7 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
     logbook: logbookFromTopics(unit, topics),
     selfAssessment: selfAssessmentFromTemplate(goals.map(g => `I am able to ${g.charAt(0).toLowerCase()}${g.slice(1)}`)),
     lessonPlan: lessonPlanFromTemplate(unit, topics, options.minutes),
+    workbook: { title: "Learner Workbook", outcomes: workbookOutcomes },
   };
 }
 
@@ -812,6 +827,21 @@ export function validateUnitContent(content: UnitContent, requireComplete = true
     if (ids.some(id => !nonempty(id)) || new Set(ids).size !== ids.length) throw new Error("Activities and quizzes must have unique IDs.");
   }
   if (requireComplete && (!content.logbook || !content.lessonPlan?.sections.length || !content.selfAssessment?.items.length)) throw new Error("Logbook, lesson plan and self assessment must all have content.");
+  if (content.workbook) {
+    if (!nonempty(content.workbook.title) || !content.workbook.outcomes.length) throw new Error("The learner workbook needs a title and at least one specific outcome.");
+    const outcomeIds = content.workbook.outcomes.map(outcome => outcome.id);
+    if (outcomeIds.some(id => !nonempty(id)) || new Set(outcomeIds).size !== outcomeIds.length) throw new Error("Workbook outcomes need unique IDs.");
+    const taskNumbers = content.workbook.outcomes.flatMap(outcome => outcome.questions.map(question => question.task));
+    if (new Set(taskNumbers).size !== taskNumbers.length) throw new Error("Workbook task numbers must be unique.");
+    for (const outcome of content.workbook.outcomes) {
+      if (!Number.isInteger(outcome.specificOutcome) || outcome.specificOutcome < 1 || !nonempty(outcome.title) || !outcome.questions.length) throw new Error("Every workbook outcome needs a number, title and question.");
+      const questionIds = outcome.questions.map(question => question.id);
+      if (questionIds.some(id => !nonempty(id)) || new Set(questionIds).size !== questionIds.length) throw new Error("Workbook questions need unique IDs within each outcome.");
+      for (const question of outcome.questions) {
+        if (!Number.isInteger(question.task) || question.task < 1 || !nonempty(question.text) || !Number.isFinite(question.marks) || question.marks <= 0) throw new Error("Every workbook question needs a task number, text and positive mark.");
+      }
+    }
+  }
   const customTabs = content.customTabs ?? [];
   if (customTabs.some(tab => !nonempty(tab.id) || !nonempty(tab.title)) || new Set(customTabs.map(tab => tab.id)).size !== customTabs.length) throw new Error("Each custom tab needs a title and a unique ID.");
   if (content.practicalTask) {
@@ -831,7 +861,6 @@ export function validateUnitContent(content: UnitContent, requireComplete = true
     if (!editable.document?.sections?.length) throw new Error(`The editable ${editable.title} tab needs at least one section.`);
   }
 }
-
 
 
 

@@ -21,6 +21,13 @@ function Svg({ size = 20, children, ...rest }: P & { children: React.ReactNode }
 }
 
 export const PATHS: Record<string, React.ReactNode> = {
+  save: (
+    <>
+      <path d="M4.5 3.5h12l3 3v14h-15z" />
+      <path d="M8 3.5v6h8v-6M8 20.5v-7h8v7" />
+      <path d="M14 6.5h1" />
+    </>
+  ),
   image: (
     <>
       <rect x="3.5" y="4.5" width="17" height="15" rx="1.5" />

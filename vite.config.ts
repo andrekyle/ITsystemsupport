@@ -203,6 +203,7 @@ function apiDev(env: Record<string, string>): Plugin {
     "generate-activity-answers",
     "extract-logbook-image",
     "enhance-unit-content",
+    "workbook-memo",
   ];
   return {
     name: "api-dev",
