@@ -10,6 +10,20 @@ export interface WorkbookMemoBlueprint {
   tasks: { task: number; text: string; marks: number }[];
 }
 
+type MemoApiResponse = { jobId?: string; status?: string; items?: WorkbookMemoState["items"]; model?: string; error?: string };
+
+async function memoRequest(body: Record<string, unknown>) {
+  const response = await fetch("/api/workbook-memo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const raw = await response.text();
+  let parsed: MemoApiResponse;
+  try { parsed = JSON.parse(raw) as MemoApiResponse; }
+  catch { throw new Error(response.ok ? "The memo service returned an invalid response." : `The memo could not be processed (${response.status}). Please try again.`); }
+  if (!response.ok && response.status !== 202) throw new Error(parsed.error || `The memo could not be processed (${response.status}). Please try again.`);
+  return parsed;
+}
+
+const pause = (milliseconds: number) => new Promise(resolve => setTimeout(resolve, milliseconds));
+
 export function WorkbookMemo({ unitId, blueprint, memo, onChange }: { unitId: string; blueprint: WorkbookMemoBlueprint[]; memo: WorkbookMemoState; onChange: (next: WorkbookMemoState) => void }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -29,12 +43,13 @@ export function WorkbookMemo({ unitId, blueprint, memo, onChange }: { unitId: st
       // body limit. Local-only mode falls back to the data URL.
       const fileData = fileUrl?.startsWith("data:") ? fileUrl : undefined;
       setProgress(45);
-      const response = await fetch("/api/workbook-memo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "extract", unitId, blueprint, filename: file.name, fileUrl: fileData ? undefined : fileUrl, fileData }) });
-      const raw = await response.text();
-      let parsed: { items?: WorkbookMemoState["items"]; model?: string; error?: string } = {};
-      try { parsed = JSON.parse(raw) as typeof parsed; }
-      catch { throw new Error(response.ok ? "The memo service returned an invalid response." : `The memo could not be processed (${response.status}). Please try again.`); }
-      if (!response.ok || !parsed.items?.length) throw new Error(parsed.error || "OpenAI could not read the memo.");
+      let parsed = await memoRequest({ mode: "extract", unitId, blueprint, filename: file.name, fileUrl: fileData ? undefined : fileUrl, fileData });
+      for (let attempt = 0; !parsed.items?.length && parsed.jobId && attempt < 120; attempt += 1) {
+        await pause(2_000);
+        setProgress(Math.min(89, 46 + Math.floor(attempt / 3)));
+        parsed = await memoRequest({ mode: "extract-status", jobId: parsed.jobId, blueprint });
+      }
+      if (!parsed.items?.length) throw new Error(parsed.error || "The memo took too long to process. Please try again.");
       setProgress(90);
       if (memo.file?.path && memo.file.path !== stored.path) void deleteFile(memo.file.path);
       onChange({ file: stored, items: parsed.items, model: parsed.model, updatedAt: new Date().toISOString() });
