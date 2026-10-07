@@ -6,6 +6,7 @@ import { logbookFromSource, logbookStats, MAX_LOGBOOK_SOURCE_LENGTH } from "../l
 import { useBuiltUnit, saveBuiltUnit, deleteBuiltUnit } from "../lib/useBuiltUnit";
 import { unitHistory, unitVersionArchive, MAX_UNIT_HISTORY, type BuiltUnitVersion } from "../lib/builtUnits";
 import { importUnitSource } from "../lib/unitSourceImport";
+import { importPracticalTask } from "../lib/practicalTaskImport";
 import { makeUnitExports } from "../lib/unitExports";
 import { createAiPresentation, type AiPresentationSlide } from "../lib/aiPresentation";
 import { plainSlideText } from "../lib/slideRichText";
@@ -87,6 +88,9 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   const [selfAssessmentContent,setSelfAssessmentContent]=useState("");
   const [logbookContent,setLogbookContent]=useState("");
   const [logbookImageName,setLogbookImageName]=useState("");
+  const [practicalTask,setPracticalTask]=useState<UnitContent["practicalTask"]>();
+  const [practicalTaskFileName,setPracticalTaskFileName]=useState("");
+  const [editableDocuments,setEditableDocuments]=useState<NonNullable<UnitContent["editableDocuments"]>>(content?.editableDocuments ?? []);
   const [busy,setBusy]=useState("");
   const [error,setError]=useState("");
   const [message,setMessage]=useState("");
@@ -101,6 +105,10 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     }
     const defaults = buildUnitContent(unit, "# New lesson\n\nAdd the learning objectives, teaching notes and practical examples for this unit. Explain each topic in detail and include instructions for the learners to follow.", { minutes: 300 });
     const key = newTabKind as keyof UnitContent;
+    if (key === "practicalTask") {
+      setDraft({ ...draft, practicalTask: draft.practicalTask ?? { title: "Practical Task", subtitle: unit.title, notice: "Complete each section and provide the required evidence.", sections: [{ id: "task-1", title: "Practical activity", items: [{ id: "response-1", text: "Describe and complete the practical activity.", responseLabel: "Learner response and evidence" }] }] } });
+      return;
+    }
     setDraft({ ...draft, [key]: draft[key] ?? defaults[key] ?? (key === "evaluation" ? { intro: "Evaluate this unit", questions: ["What did you learn?"] } : []) });
   };
   const [warning,setWarning]=useState("");
@@ -179,6 +187,8 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     setError("");setMessage("");setWarning("");setBusy("Building lessons, activities and tab content…");
     try {
       let next=buildUnitContent(unit,source,{minutes});
+      if(practicalTask)next.practicalTask=practicalTask;
+      if(editableDocuments.length)next.editableDocuments=editableDocuments;
       // Pasted or photographed logbook content builds the logbook directly; AI output (when on) may refine it.
       const pastedLogbook=logbookContent.trim()?logbookFromSource(unit,logbookContent):undefined;
       if(pastedLogbook)next.logbook=pastedLogbook;
@@ -189,6 +199,8 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
         const result=await readApiJson(response,"The AI build service");
         if(!response.ok) throw new Error(result.error??"AI generation failed. Turn it off to build entirely with built-in code.");
         next=mergeUnitContentEnhancement(next,result.content,unit);setWarning("");
+        if(practicalTask)next.practicalTask=practicalTask;
+        if(editableDocuments.length)next.editableDocuments=editableDocuments;
         if(result.usage) void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.input_tokens??result.usage.prompt_tokens??0,completionTokens:result.usage.output_tokens??result.usage.completion_tokens??0,totalTokens:result.usage.total_tokens??0});
       }
       await publish(next,source,ai);
@@ -259,7 +271,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       {draft && <div className="unit-editor-actions">
         <Select ariaLabel="Tab to add" value={newTabKind} onChange={setNewTabKind} options={[
           { value: "customTabs", label: "Custom content tab" }, { value: "lessonPlan", label: "Lesson plan" },
-          { value: "logbook", label: "Logbook" }, { value: "selfAssessment", label: "Self assessment" },
+          { value: "logbook", label: "Logbook" }, { value: "practicalTask", label: "Practical task" }, { value: "selfAssessment", label: "Self assessment" },
           { value: "evaluation", label: "Evaluation" }, { value: "quizzes", label: "Additional quizzes" },
         ]} />
         <button type="button" className="btn ghost sm" disabled={!!busy} onClick={addTab}>Add tab</button>
@@ -278,6 +290,8 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
           <div className="unit-source-field"><strong>Activity content</strong><span>Add each activity/question session in its own box. Use the separator by clicking Add another activity.</span>{activityBlocks.map((block,index)=><div className="unit-activity-block" key={index}><label>Activity {index+1} heading<input type="text" value={block.heading} disabled={!!busy} onChange={e=>setActivityBlocks(blocks=>blocks.map((item,i)=>i===index?{...item,heading:e.target.value}:item))} placeholder="Example: Question Session 1 -- Prepare a time estimate"/></label><label>Activity {index+1} content<textarea rows={5} value={block.text} disabled={!!busy} onChange={e=>setActivityBlocks(blocks=>blocks.map((item,i)=>i===index?{...item,text:e.target.value}:item))} placeholder="Example: Questioning task, time allowed, Activity: Self & Group, learner questions, required evidence, model answer guidance..."/></label><div className="unit-editor-actions"><button type="button" className="btn ghost sm" disabled={!!busy||index===0} onClick={()=>setActivityBlocks(blocks=>{const next=[...blocks];[next[index-1],next[index]]=[next[index],next[index-1]];return next;})}>Move up</button><button type="button" className="btn ghost sm" disabled={!!busy||activityBlocks.length===1} onClick={()=>setActivityBlocks(blocks=>blocks.filter((_,i)=>i!==index))}>Remove activity</button></div></div>)}<button type="button" className="btn ghost sm" disabled={!!busy} onClick={()=>setActivityBlocks(blocks=>[...blocks,{heading:"",text:""}])}>Add another activity</button></div>
           <label className="unit-source-field"><strong>Self-assessment content</strong><span>Paste or describe the competence checklist learners must tick after the lesson.</span><textarea rows={4} value={selfAssessmentContent} disabled={!!busy} onChange={e=>setSelfAssessmentContent(e.target.value)} placeholder="Example: I can prepare a time estimate..., I can explain cost components..., revisit areas needing more practice..."/></label>
           <label className="unit-source-field"><strong>Logbook content</strong><span>Paste the logbook content, or upload clear images of the logbook pages and check the extracted text.</span><div className="unit-settings-row unit-logbook-import"><span className="unit-settings-copy"><strong>Read logbook image</strong><span>{logbookImageName || "PNG, JPEG or WebP screenshots/photos"}</span></span><label className="unit-import-button"><span>Upload image</span><input aria-label="Upload logbook image" type="file" accept="image/png,image/jpeg,image/webp" multiple disabled={!!busy} onChange={async e=>{const files=e.target.files;e.target.value="";await readLogbookImages(files);}}/></label></div><textarea rows={7} value={logbookContent} disabled={!!busy} onChange={e=>setLogbookContent(e.target.value)} placeholder="Example: embedded knowledge questions with checklist ticks, practical activities, workplace activities, other activities, project evidence and project checklist..."/></label>
+          <div className="unit-source-field"><strong>Practical task</strong><span>Upload a text-based PDF. The app converts its headings, fields and questions into an editable learner HTML form.</span><div className="unit-settings-row"><span className="unit-settings-copy"><strong>Convert practical-task PDF</strong><span>{practicalTaskFileName || "PDF up to 20 MB"}</span></span><label className="unit-import-button"><span>Choose PDF</span><input aria-label="Upload practical task PDF" type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Converting practical task PDF...");setError("");try{const converted=await importPracticalTask(file,unit.title);setPracticalTask(converted);setPracticalTaskFileName(file.name);setMessage(`Converted ${file.name} into ${converted.sections.length} editable sections.`);}catch(err){setError(err instanceof Error?err.message:String(err));}finally{setBusy("");}}}/></label></div>{practicalTask&&<span className="muted">Ready: {practicalTask.sections.length} editable sections will be published under the Practical Task tab.</span>}</div>
+          <div className="unit-source-field"><strong>Additional editable PDF tabs</strong><span>Upload learner workbooks, learner guides, assessments or other unit documents. Each PDF becomes its own editable HTML tab.</span><div className="unit-settings-row"><span className="unit-settings-copy"><strong>Convert another PDF</strong><span>PDF up to 20 MB · multiple documents supported</span></span><label className="unit-import-button"><span>Choose PDF</span><input aria-label="Upload an additional editable PDF" type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Converting PDF into editable HTML...");setError("");try{const document=await importPracticalTask(file,unit.title);const base=file.name.replace(/\.pdf$/i,"").replace(/^SAQA\s*-?\s*\d+\s*-?\s*/i,"").trim()||"Document";const title=/learner\s*workbook/i.test(base)?"Learner Workbook":/learner\s*guide/i.test(base)?"Learner Guide":/practical/i.test(base)?"Practical Task":base;const entry={id:crypto.randomUUID(),title,sourceName:file.name,document:{...document,title}};setEditableDocuments(current=>[...current,entry]);setMessage(`Created the editable ${title} tab from ${file.name}.`);}catch(err){setError(err instanceof Error?err.message:String(err));}finally{setBusy("");}}}/></label></div>{editableDocuments.map(item=><div className="unit-settings-row" key={item.id}><span className="unit-settings-copy"><strong>{item.title}</strong><span>{item.sourceName} · {item.document.sections.length} sections</span></span><button type="button" className="btn ghost sm" onClick={()=>setEditableDocuments(current=>current.filter(document=>document.id!==item.id))}>Remove</button></div>)}</div>
         </div>
         <h3 className="unit-settings-heading">Build settings</h3>
         <div className="unit-settings-card">

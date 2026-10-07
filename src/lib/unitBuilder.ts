@@ -814,6 +814,22 @@ export function validateUnitContent(content: UnitContent, requireComplete = true
   if (requireComplete && (!content.logbook || !content.lessonPlan?.sections.length || !content.selfAssessment?.items.length)) throw new Error("Logbook, lesson plan and self assessment must all have content.");
   const customTabs = content.customTabs ?? [];
   if (customTabs.some(tab => !nonempty(tab.id) || !nonempty(tab.title)) || new Set(customTabs.map(tab => tab.id)).size !== customTabs.length) throw new Error("Each custom tab needs a title and a unique ID.");
+  if (content.practicalTask) {
+    if (!nonempty(content.practicalTask.title) || !content.practicalTask.sections?.length) throw new Error("The practical task needs a title and at least one section.");
+    const sectionIds = content.practicalTask.sections.map(section => section.id);
+    if (sectionIds.some(id => !nonempty(id)) || new Set(sectionIds).size !== sectionIds.length) throw new Error("Practical-task sections need unique IDs.");
+    for (const section of content.practicalTask.sections) {
+      if (!nonempty(section.title)) throw new Error("Every practical-task section needs a title.");
+      const ids = [...(section.fields ?? []), ...(section.items ?? [])].map(item => item.id);
+      if (ids.some(id => !nonempty(id)) || new Set(ids).size !== ids.length) throw new Error("Practical-task fields need unique IDs within each section.");
+    }
+  }
+  const editableDocuments = content.editableDocuments ?? [];
+  if (new Set(editableDocuments.map(document => document.id)).size !== editableDocuments.length) throw new Error("Editable PDF tabs need unique IDs.");
+  for (const editable of editableDocuments) {
+    if (!nonempty(editable.id) || !nonempty(editable.title) || !nonempty(editable.sourceName)) throw new Error("Every editable PDF tab needs a title and source file name.");
+    if (!editable.document?.sections?.length) throw new Error(`The editable ${editable.title} tab needs at least one section.`);
+  }
 }
 
 

@@ -499,6 +499,10 @@ export interface LessonPlan {
 }
 
 export interface UnitContent {
+  /** Editable learner practical converted from an uploaded assessment PDF. */
+  practicalTask?: PracticalTaskDocument;
+  /** Additional PDFs converted into editable HTML tabs during unit creation. */
+  editableDocuments?: EditableUnitDocument[];
   customTabs?: { id: string; title: string; text: string }[];
   studyNotes?: { title: string; text: string }[];
   evaluation?: { intro: string; questions: string[] };
@@ -516,6 +520,44 @@ export interface UnitContent {
   questionSessions?: Exercise[];
   /** end-of-unit self assessment checklist — rendered on its own tab with tickable boxes */
   selfAssessment?: SelfAssessment;
+}
+
+export interface EditableUnitDocument {
+  id: string;
+  title: string;
+  sourceName: string;
+  document: PracticalTaskDocument;
+}
+
+export interface PracticalTaskField {
+  id: string;
+  label: string;
+  type?: "text" | "textarea" | "date" | "email" | "tel" | "select" | "checkbox";
+  options?: string[];
+  placeholder?: string;
+}
+
+export interface PracticalTaskItem {
+  id: string;
+  text: string;
+  guidance?: string;
+  responseLabel?: string;
+}
+
+export interface PracticalTaskSection {
+  id: string;
+  title: string;
+  description?: string;
+  fields?: PracticalTaskField[];
+  items?: PracticalTaskItem[];
+}
+
+export interface PracticalTaskDocument {
+  title: string;
+  subtitle?: string;
+  sourceName?: string;
+  notice?: string;
+  sections: PracticalTaskSection[];
 }
 
 /** End-of-unit self assessment: learner ticks each statement they feel competent in. */

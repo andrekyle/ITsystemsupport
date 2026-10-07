@@ -27,6 +27,10 @@ import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, eff
 import { InlineText, InlineIconBtn } from "../components/InlineText";
 import { ActivityQuestionEditor } from "../components/ActivityQuestionEditor";
 import { UnitContentEditor } from "../components/UnitContentEditor";
+import { PracticalTask } from "../components/PracticalTask";
+import { LearnerWorkbook } from "../components/LearnerWorkbook";
+import { LearnerGuide } from "../components/LearnerGuide";
+import { practicalTaskForUnit } from "../data/practicalTasks";
 import { supabase } from "../lib/supabase";
 import { flushKey } from "../lib/sync";
 import { GeneratedQuizEditor } from "../components/GeneratedQuizEditor";
@@ -2212,7 +2216,7 @@ function fmtSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "questions" | "assignments" | "logbook" | "quiz" | "selfassessment" | "evaluation" | "plan" | `custom-${string}`;
+type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "questions" | "assignments" | "practical" | "workbook" | "guide" | "logbook" | "quiz" | "selfassessment" | "evaluation" | "plan" | `custom-${string}` | `pdf-${string}`;
 
 /** Built-in lesson decks shipped with the app (public/downloads), per unit
  *  standard — always shown on the Course material tab ahead of uploads. */
@@ -2236,7 +2240,7 @@ const BUILTIN_DECKS: Record<string, { name: string; url: string }[]> = {
 
 const UNIT_TAB_KEY = "itss.unittab";
 const UNIT_TAB_US_KEY = "itss.unittab.us";
-const UNIT_TABS: UnitTab[] = ["overview", "lesson", "material", "notes", "exercises", "questions", "assignments", "logbook", "quiz", "selfassessment", "evaluation", "plan"];
+const UNIT_TABS: UnitTab[] = ["overview", "lesson", "material", "notes", "exercises", "questions", "assignments", "practical", "workbook", "guide", "logbook", "quiz", "selfassessment", "evaluation", "plan"];
 
 /** Restore the saved tab only for the same unit standard — opening another US always starts on Overview. */
 function loadUnitTab(unitId: string): UnitTab {
@@ -2776,6 +2780,7 @@ export function UnitPage({
   const uc = unitCompletion(progress, u.us);
   const acts = progress.units[u.us]?.activities ?? {};
   const content = inlineUnit ?? builtUnit?.content ?? getContent(u.us);
+  const practicalTask = content?.practicalTask ?? practicalTaskForUnit(u.us);
   // The lesson plan shown on the tab: inline table edits (shared, cloud-synced) win over the generated plan.
   const planData: LessonPlan | undefined = content?.lessonPlan ? (lessonEdits.lessonPlan ?? content.lessonPlan) : undefined;
   const updatePlan = (mutate: (draft: LessonPlan) => void) => {
@@ -3321,11 +3326,15 @@ export function UnitPage({
     { id: "exercises", label: "Activity", icon: "exercise", show: builtUnit ? true : !!content?.exercises.length },
     { id: "questions", label: "Activity", icon: "chat", show: !builtUnit && !!content?.questionSessions?.length },
     { id: "assignments", label: "Activity", icon: "folder", show: !builtUnit && !!content?.assignments.length },
+    { id: "practical", label: "Practical Task", icon: "checklist", show: !!practicalTask },
+    { id: "workbook", label: "Learner Workbook", icon: "document", show: unitId === "114046" },
+    { id: "guide", label: "Learner Guide", icon: "book", show: unitId === "114046" },
     { id: "logbook", label: "Logbook", icon: "book", show: !!content?.logbook },
     { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content?.quiz.length || !!content?.quizzes?.length || (!!builtUnit && isSuperUser) },
     { id: "selfassessment", label: "Self assessment", icon: "checkCircle", show: !!content?.selfAssessment },
     { id: "evaluation", label: "Evaluation", icon: "chat", show: true },
     { id: "plan", label: "Lesson plan", icon: "presenter", show: !!content?.lessonPlan && isPrivileged },
+    ...(content?.editableDocuments ?? []).map(item => ({ id: `pdf-${item.id}` as UnitTab, label: item.title, icon: "document", show: true })),
     ...(content?.customTabs ?? []).map(item => ({ id: item.id as UnitTab, label: item.title, icon: "document", show: true })),
   ];
 
@@ -5982,6 +5991,10 @@ export function UnitPage({
       })()}
 
       {content?.customTabs?.filter(item => item.id === tab).map(item => <section className="card" key={item.id}><h2>{unitText(item.title, (d, v) => { d.customTabs!.find(t => t.id === item.id)!.title = v; })}</h2><div style={{ whiteSpace: "pre-wrap" }}>{unitText(item.text, (d, v) => { d.customTabs!.find(t => t.id === item.id)!.text = v; })}</div></section>)}
+      {tab === "practical" && practicalTask && <PracticalTask document={practicalTask} unitId={u.us} profile={profile} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} />}
+      {tab === "workbook" && unitId === "114046" && <LearnerWorkbook values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} />}
+      {tab === "guide" && unitId === "114046" && <LearnerGuide values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} />}
+      {content?.editableDocuments?.filter(item => `pdf-${item.id}` === tab).map(item => <PracticalTask key={item.id} document={item.document} unitId={`${u.us}.${item.id}`} profile={profile} values={progress.units[u.us]?.logbook ?? {}} onChange={(key,value)=>setLogbookField(u.us,`editable-document.${item.id}.${key}`,value)} />)}
       {tab === "evaluation" && content?.evaluation && <section className="unit-evaluation"><h2>Lesson evaluation</h2><p>{unitText(content.evaluation.intro, (d, v) => { d.evaluation!.intro = v; })}</p>{content.evaluation.questions.map((question, i) => <label className="field" key={`${builtUnit?.revision}:${i}`}>{unitText(question, (d, v) => { d.evaluation!.questions[i] = v; })}<textarea rows={3} defaultValue={String(progress.units[u.us]?.logbook?.[`unit-evaluation.${builtUnit?.revision}.${i}`] ?? "")} onBlur={e => setLogbookField(u.us, `unit-evaluation.${builtUnit?.revision}.${i}`, e.target.value)} /></label>)}<p className="muted">Your responses save when you leave each field.</p></section>}
       {tab === "evaluation" && !content?.evaluation && (
         <>
