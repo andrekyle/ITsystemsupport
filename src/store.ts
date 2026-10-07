@@ -361,6 +361,30 @@ export function touchLastOnline(profileId: string) {
 
 const EMPTY: ProgressState = { units: {} };
 
+function compactWorkbookMarks(state: ProgressState): ProgressState {
+  let changed = false;
+  const units = Object.fromEntries(Object.entries(state.units).map(([us, unit]) => {
+    if (!unit.logbook) return [us, unit];
+    const logbook = { ...unit.logbook };
+    for (const [key, value] of Object.entries(logbook)) {
+      if (!key.includes(".task-mark.") || typeof value !== "string") continue;
+      try {
+        const mark = JSON.parse(value) as Record<string, unknown>;
+        if (!("correctSegments" in mark) && !("matchedCriteria" in mark) && !("id" in mark)) continue;
+        delete mark.correctSegments;
+        delete mark.matchedCriteria;
+        delete mark.id;
+        logbook[key] = JSON.stringify(mark);
+        changed = true;
+      } catch {
+        // Leave malformed legacy values untouched; the workbook already ignores them.
+      }
+    }
+    return [us, changed ? { ...unit, logbook } : unit];
+  }));
+  return changed ? { ...state, units } : state;
+}
+
 /** Read a profile's saved progress without subscribing (staff/super-user views). */
 export function loadProgress(profileId: string): ProgressState {
   return read<ProgressState>(progressKey(profileId), EMPTY);
@@ -496,12 +520,25 @@ export function useProgress(profileId: string) {
   const setLogbookField = useCallback(
     (us: string, key: string, value: string | boolean) => {
       update((prev) => {
-        const unit: UnitProgress = prev.units[us] ?? { activities: {} };
+        const compacted = compactWorkbookMarks(prev);
+        const unit: UnitProgress = compacted.units[us] ?? { activities: {} };
+        let nextValue = value;
+        if (key.includes(".task-mark.") && typeof value === "string") {
+          try {
+            const mark = JSON.parse(value) as Record<string, unknown>;
+            delete mark.correctSegments;
+            delete mark.matchedCriteria;
+            delete mark.id;
+            nextValue = JSON.stringify(mark);
+          } catch {
+            // Preserve the original value so existing validation remains authoritative.
+          }
+        }
         return {
-          ...prev,
+          ...compacted,
           units: {
-            ...prev.units,
-            [us]: { ...unit, logbook: { ...unit.logbook, [key]: value } },
+            ...compacted.units,
+            [us]: { ...unit, logbook: { ...unit.logbook, [key]: nextValue } },
           },
         };
       });
