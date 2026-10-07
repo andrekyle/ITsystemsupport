@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { WorkbookMemoState } from "../store";
-import { deleteFile, downloadDoc, readAsDataURL, uploadFile } from "../lib/files";
+import { deleteFile, downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 
 export interface WorkbookMemoBlueprint {
   id: string;
@@ -21,18 +21,28 @@ export function WorkbookMemo({ unitId, blueprint, memo, onChange }: { unitId: st
     if (file.type !== "application/pdf" && !/\.pdf$/i.test(file.name)) { setError("Choose a PDF memo."); return; }
     if (file.size > 10 * 1024 * 1024) { setError("The memo must be 10 MB or smaller."); return; }
     setBusy(true); setError(""); setProgress(5);
+    let stored: Awaited<ReturnType<typeof uploadFile>> | undefined;
     try {
-      const fileData = await readAsDataURL(file);
-      setProgress(25);
-      const response = await fetch("/api/workbook-memo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "extract", unitId, blueprint, filename: file.name, fileData }) });
-      const parsed = await response.json() as { items?: WorkbookMemoState["items"]; model?: string; error?: string };
+      stored = await uploadFile(`shared/workbook-memos/${unitId}`, file, pct => setProgress(5 + Math.round(pct * .35)));
+      const fileUrl = await getFileUrl(stored);
+      // Cloud uploads use a short-lived signed URL, avoiding Vercel's request
+      // body limit. Local-only mode falls back to the data URL.
+      const fileData = fileUrl?.startsWith("data:") ? fileUrl : undefined;
+      setProgress(45);
+      const response = await fetch("/api/workbook-memo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "extract", unitId, blueprint, filename: file.name, fileUrl: fileData ? undefined : fileUrl, fileData }) });
+      const raw = await response.text();
+      let parsed: { items?: WorkbookMemoState["items"]; model?: string; error?: string } = {};
+      try { parsed = JSON.parse(raw) as typeof parsed; }
+      catch { throw new Error(response.ok ? "The memo service returned an invalid response." : `The memo could not be processed (${response.status}). Please try again.`); }
       if (!response.ok || !parsed.items?.length) throw new Error(parsed.error || "OpenAI could not read the memo.");
-      setProgress(70);
-      const stored = await uploadFile(`shared/workbook-memos/${unitId}`, file, pct => setProgress(70 + Math.round(pct * .3)));
+      setProgress(90);
       if (memo.file?.path && memo.file.path !== stored.path) void deleteFile(memo.file.path);
       onChange({ file: stored, items: parsed.items, model: parsed.model, updatedAt: new Date().toISOString() });
       setProgress(100);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "The memo could not be saved."); }
+    } catch (reason) {
+      if (stored?.path && stored.path !== memo.file?.path) void deleteFile(stored.path);
+      setError(reason instanceof Error ? reason.message : "The memo could not be saved.");
+    }
     finally { setBusy(false); }
   };
 
