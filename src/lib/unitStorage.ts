@@ -43,7 +43,11 @@ export async function loadUnitPack(key:string):Promise<void> {
 export function unitPackSnapshot(key:string):string|null {
   if(cache.has(key))return cache.get(key)!;
   const legacy=localStorage.getItem(key);
-  if(legacy) return legacy;
+  if(legacy) {
+    rememberUnitPack(key,legacy);
+    void persistUnitPack(key,legacy).catch(()=>{});
+    return legacy;
+  }
   if(!pending.has(key)){
     pending.add(key);
     void loadUnitPack(key).catch(()=>{pending.delete(key);});

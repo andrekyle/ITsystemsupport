@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
-import { fileToSignature } from "../lib/signature";
+import { fileToSignature, SAVED_SIGNATURE_REFERENCE } from "../lib/signature";
 
 const REMOVED_SIGNATURE = "__signature_removed__";
 
@@ -31,8 +31,9 @@ export function DocumentSignature({
   // A signature saved on the user's profile is the default for an empty
   // signature line, so it is visible in the document and its PDF immediately.
   const removed = localValue === REMOVED_SIGNATURE;
+  const usesSavedSignature = localValue === SAVED_SIGNATURE_REFERENCE;
   const storedImage = localValue.startsWith("data:image/") ? localValue : "";
-  const image = storedImage || (!localValue && !removed ? savedSignature ?? "" : "");
+  const image = storedImage || ((usesSavedSignature || (!localValue && !removed)) ? savedSignature ?? "" : "");
 
   const chooseFile = () => inputRef.current?.click();
   const upload = async (file?: File) => {
@@ -68,7 +69,7 @@ export function DocumentSignature({
       )}
       <div className="document-signature-actions">
         {savedSignature && savedSignature !== image && (
-          <button type="button" onClick={(event) => { event.stopPropagation(); applyValue(savedSignature); }} title={`Use saved ${label.toLowerCase()}`} aria-label={`Use saved ${label.toLowerCase()}`}>
+          <button type="button" onClick={(event) => { event.stopPropagation(); applyValue(SAVED_SIGNATURE_REFERENCE); }} title={`Use saved ${label.toLowerCase()}`} aria-label={`Use saved ${label.toLowerCase()}`}>
             <Icon name="checkCircle" size={12} />
           </button>
         )}

@@ -8,6 +8,7 @@ import { logAudit } from "./lib/audit";
 import { courseScopedUnit } from "./lib/courseScope";
 import { cachedLessonEdits, loadLessonEdits, queueLessonEdits, subscribeLessonEdits } from "./lib/lessonEditStore";
 import { unitPackSnapshot } from "./lib/unitStorage";
+import { SAVED_SIGNATURE_REFERENCE } from "./lib/signature";
 import {
   loadOnboardingPacks,
   loadOnboardingPacksForUpdate,
@@ -361,12 +362,17 @@ export function touchLastOnline(profileId: string) {
 
 const EMPTY: ProgressState = { units: {} };
 
-function compactWorkbookMarks(state: ProgressState): ProgressState {
+function compactProgressStorage(state: ProgressState, savedSignature?: string): ProgressState {
   let changed = false;
   const units = Object.fromEntries(Object.entries(state.units).map(([us, unit]) => {
     if (!unit.logbook) return [us, unit];
     const logbook = { ...unit.logbook };
     for (const [key, value] of Object.entries(logbook)) {
+      if (savedSignature && /signature/i.test(key) && value === savedSignature) {
+        logbook[key] = SAVED_SIGNATURE_REFERENCE;
+        changed = true;
+        continue;
+      }
       if (!key.includes(".task-mark.") || typeof value !== "string") continue;
       try {
         const mark = JSON.parse(value) as Record<string, unknown>;
@@ -520,7 +526,8 @@ export function useProgress(profileId: string) {
   const setLogbookField = useCallback(
     (us: string, key: string, value: string | boolean) => {
       update((prev) => {
-        const compacted = compactWorkbookMarks(prev);
+        const savedSignature = read<Profile[]>(PROFILES_KEY, []).find(profile => profile.id === profileId)?.signatureImage;
+        const compacted = compactProgressStorage(prev, savedSignature);
         const unit: UnitProgress = compacted.units[us] ?? { activities: {} };
         let nextValue = value;
         if (key.includes(".task-mark.") && typeof value === "string") {
@@ -543,7 +550,7 @@ export function useProgress(profileId: string) {
         };
       });
     },
-    [update]
+    [profileId, update]
   );
 
   const saveExerciseResult = useCallback(

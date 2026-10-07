@@ -59,6 +59,15 @@ export function WorkbookTaskAnswer({ outcomeId, task, memoItem, valueKey, markKe
     result = undefined;
   }
   const criteria = memoItem?.criteria.filter(criterion => criterion.taskId === task.id) ?? [];
+  const updateAnswer = (next: string) => {
+    setAnswer(next);
+    try {
+      onChange(valueKey, next);
+      if (error === "This answer could not be saved. Free some browser storage and try again.") setError("");
+    } catch {
+      setError("This answer could not be saved. Free some browser storage and try again.");
+    }
+  };
   const mark = async () => {
     if (marking) return;
     if (!answer.trim()) { setError("Enter an answer before marking."); return; }
@@ -92,8 +101,8 @@ export function WorkbookTaskAnswer({ outcomeId, task, memoItem, valueKey, markKe
       : <textarea
           aria-label={`Task ${task.task}: ${task.text}`}
           value={answer}
-          onChange={event => setAnswer(event.target.value)}
-          onBlur={() => onChange(valueKey, answer)}
+          onChange={event => updateAnswer(event.target.value)}
+          onBlur={() => updateAnswer(answer)}
         />}
     <div className="workbook-task-mark-row">
       <span
