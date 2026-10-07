@@ -1,10 +1,13 @@
 import { useRef } from "react";
+import type { Profile } from "../types";
+import { DocumentSignature } from "./DocumentSignature";
 
 type Values = Record<string, string | boolean>;
 type Save = (key: string, value: string | boolean) => void;
 
-function Field({ id, label, values, onChange, type = "text" }: { id: string; label: string; values: Values; onChange: Save; type?: string }) {
+function Field({ id, label, values, onChange, type = "text", signature }: { id: string; label: string; values: Values; onChange: Save; type?: string; signature?: string }) {
   const key = `learner-workbook.${id}`;
+  if (/signature/i.test(label)) return <DocumentSignature value={String(values[key] ?? "")} savedSignature={signature} label={label} onChange={value => onChange(key, value)} />;
   return <input type={type} aria-label={label} defaultValue={String(values[key] ?? "")} onBlur={event => onChange(key, event.target.value)} />;
 }
 
@@ -36,8 +39,8 @@ function OutcomeHeader({ outcome }: { outcome: typeof outcomes[number] }) {
   return <><div className="lw-outcome-head"><strong>SPECIFIC OUTCOME {outcome.no}.</strong><b>{outcome.title}</b><span>Learning Outcomes</span><ol>{outcome.points.map(point => <li key={point}>{point}</li>)}</ol></div><table className="lw-table lw-question"><thead><tr><th>Activity</th><th>Questions Description</th><th>Mark</th></tr></thead><tbody><tr><td>{outcome.no}</td><td>{outcome.question}</td><td>{outcome.mark}</td></tr></tbody></table></>;
 }
 
-export function LearnerWorkbook({ values, onChange }: { values: Values; onChange: Save }) {
-  const field = (id: string, label: string, type?: string) => <Field id={id} label={label} type={type} values={values} onChange={onChange} />;
+export function LearnerWorkbook({ values, onChange, profile }: { values: Values; onChange: Save; profile: Profile }) {
+  const field = (id: string, label: string, type?: string) => <Field id={id} label={label} type={type} values={values} onChange={onChange} signature={profile.signatureImage} />;
   const inlineField = (id: string, label: string, type?: string) => <span className="lw-inline-field">{field(id, label, type)}</span>;
   return <div className="lw-document">
     <Page number={1} className="lw-cover"><div className="lw-cover-main"><img src="/logos/eruditio.svg" alt="Eruditio" /><div className="lw-cover-panel"><h1>DEMONSTRATE AN UNDERSTANDING OF ISSUES AFFECTING THE MANAGEMENT OF A LOCAL AREA COMPUTER NETWORK (LAN)</h1><div className="lw-cover-meta"><b>UNIT STANDARD 114046</b><b>NQF LEVEL: 5</b><b>CREDITS: 4</b><b>NOTIONAL HOURS: 40</b></div><table className="lw-table lw-cover-table"><thead><tr><th colSpan={2}>LEARNER INFORMATION</th></tr></thead><tbody>{[["cover-name","Name"],["cover-surname","Surname"],["cover-id","ID Number"],["cover-contact","Contact"]].map(([id,label])=><tr key={id}><th>{label}</th><td>{field(id,label)}</td></tr>)}</tbody></table></div></div><aside>LEARNER WORKBOOK</aside></Page>

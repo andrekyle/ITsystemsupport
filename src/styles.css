@@ -2645,6 +2645,18 @@ textarea:focus {
 
 /* US 114046 practical task: editable, page-for-page PDF replica */
 .pt-pdf-document { display: grid; gap: 28px; max-width: 980px; margin: 0 auto; padding-top: 28px; color: #111; font-family: inherit; }
+.document-signature { min-width:120px; min-height:48px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:3px; background:#fff; }
+.document-signature img { display:block; width:auto; max-width:100%; height:34px; object-fit:contain; }
+.document-signature-empty { color:#8b8b8b; font-size:11px; font-style:italic; }
+.document-signature-text { font-family:cursive; font-size:18px; line-height:1.1; }
+.document-signature-actions { display:flex; flex-wrap:wrap; justify-content:center; gap:3px; }
+.document-signature-actions button { display:inline-flex; align-items:center; gap:3px; border:1px solid #d6d6d6; border-radius:4px; padding:2px 5px; background:#fff; color:#333; font:600 10px/1.2 inherit; cursor:pointer; }
+.document-signature-actions button:hover { background:#f4f4f4; }
+.document-signature-actions button:disabled { opacity:.6; cursor:wait; }
+.document-signature-file { display:none !important; }
+.document-signature small { color:#b42318; font-size:10px; }
+.lb-document-signature { width:100%; }
+@media print { .document-signature-actions,.document-signature small { display:none !important; } .document-signature { min-height:34px; padding:0; } }
 .pt-page { position: relative; box-sizing: border-box; width: 100%; min-height: 1268px; padding: 58px 62px; overflow: hidden; background: #fff; box-shadow: 0 8px 28px rgba(0,0,0,.14); }
 .pt-table { width: 100%; border-collapse: collapse; table-layout: fixed; color: #111; font-size: 15px; }
 .pt-table th, .pt-table td { border: 1px solid #333; padding: 5px 9px; vertical-align: middle; }

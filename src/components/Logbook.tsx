@@ -2,10 +2,11 @@ import React, { useRef, useState } from "react";
 import { Icon } from "../icons";
 import { DateTimePicker } from "./DateTimePicker";
 import { InlineText, InlineIconBtn } from "./InlineText";
-import type { LogbookChecklistRow, LogbookSpec, PoeDoc } from "../types";
+import type { LogbookChecklistRow, LogbookSpec, PoeDoc, Profile } from "../types";
 import { deleteFile, downloadDoc, uploadFile, userPrefix } from "../lib/files";
 import { autoGrowTextarea } from "../lib/autoGrow";
 import { ConfirmModal } from "./Modal";
+import { DocumentSignature } from "./DocumentSignature";
 
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -118,9 +119,10 @@ interface LogbookProps {
   /** super-user edit mode: every heading, row and default mark of the structure is editable in place */
   editable?: boolean;
   onSpecChange?: (spec: LogbookSpec) => void;
+  profile: Profile;
 }
 
-export function Logbook({ spec, values, onChange, editable = false, onSpecChange }: LogbookProps) {
+export function Logbook({ spec, values, onChange, editable = false, onSpecChange, profile }: LogbookProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -191,7 +193,9 @@ export function Logbook({ spec, values, onChange, editable = false, onSpecChange
     setUploadError(null);
   }
 
-  const field = (k: string, placeholder = "") => (
+  const field = (k: string, placeholder = "") => /signature|:sign$/i.test(k) ? (
+    <DocumentSignature value={String(values[k] ?? "")} savedSignature={profile.signatureImage} label="Signature" onChange={value => onChange(k, value)} className="lb-document-signature" />
+  ) : (
     <input
       className="lb-input"
       type="text"
