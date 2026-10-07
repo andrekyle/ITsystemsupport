@@ -2656,7 +2656,11 @@ textarea:focus {
 .document-signature-file { display:none !important; }
 .document-signature small { color:#b42318; font-size:10px; }
 .lb-document-signature { width:100%; }
-@media print { .document-signature-actions,.document-signature small { display:none !important; } .document-signature { min-height:34px; padding:0; } }
+.document-actions { position:sticky; top:8px; z-index:20; width:max-content; margin:8px 0 8px auto; display:flex; align-items:center; gap:5px; padding:5px; border:1px solid var(--border); border-radius:10px; background:var(--surface); box-shadow:0 4px 14px rgba(0,0,0,.12); }
+.document-actions button { width:34px; height:34px; display:grid; place-items:center; padding:0; border:1px solid var(--border); border-radius:7px; background:var(--surface-2); color:var(--text); cursor:pointer; }
+.document-actions button:hover,.document-actions button.is-saved { color:var(--accent); border-color:var(--accent); }
+.document-actions span { padding:0 5px; color:var(--success,#16803c); font-size:12px; font-weight:700; }
+@media print { .document-signature-actions,.document-signature small,.document-actions { display:none !important; } .document-signature { min-height:34px; padding:0; } body:has(.document-print-target) * { visibility:hidden; } body:has(.document-print-target) .document-print-target,body:has(.document-print-target) .document-print-target * { visibility:visible; } body:has(.document-print-target) .document-print-target { position:absolute; inset:0; width:100%; } }
 .pt-page { position: relative; box-sizing: border-box; width: 100%; min-height: 1268px; padding: 58px 62px; overflow: hidden; background: #fff; box-shadow: 0 8px 28px rgba(0,0,0,.14); }
 .pt-table { width: 100%; border-collapse: collapse; table-layout: fixed; color: #111; font-size: 15px; }
 .pt-table th, .pt-table td { border: 1px solid #333; padding: 5px 9px; vertical-align: middle; }
@@ -2783,7 +2787,7 @@ textarea:focus {
   .pt-page { width: 900px; flex: 0 0 900px; }
 }
 @media print {
-  body * { visibility: hidden; }
+  body:has(.pt-pdf-document) * { visibility: hidden; }
   .pt-pdf-document, .pt-pdf-document * { visibility: visible; }
   .pt-pdf-document { position: absolute; inset: 0; display: block; max-width: none; padding-top: 0; }
   .pt-page { min-height: 297mm; margin: 0; box-shadow: none; break-after: page; }

@@ -18,7 +18,10 @@ export function DocumentSignature({
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const image = value?.startsWith("data:image/") ? value : "";
+  // A signature saved on the user's profile is the default for an empty
+  // signature line, so it is visible in the document and its PDF immediately.
+  const storedImage = value?.startsWith("data:image/") ? value : "";
+  const image = storedImage || (!value ? savedSignature ?? "" : "");
 
   const chooseFile = () => inputRef.current?.click();
   const upload = async (file?: File) => {
@@ -52,7 +55,7 @@ export function DocumentSignature({
         <button type="button" onClick={chooseFile} disabled={busy}>
           <Icon name="upload" size={13} /> {busy ? "Reading…" : image || value ? "Replace" : "Upload"}
         </button>
-        {(image || value) && <button type="button" onClick={() => onChange("")} aria-label={`Remove ${label.toLowerCase()}`}><Icon name="close" size={13} /></button>}
+        {value && <button type="button" onClick={() => onChange("")} aria-label={`Remove ${label.toLowerCase()}`}><Icon name="close" size={13} /></button>}
       </div>
       <input
         ref={inputRef}

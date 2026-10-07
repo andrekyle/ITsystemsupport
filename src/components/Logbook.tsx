@@ -7,6 +7,7 @@ import { deleteFile, downloadDoc, uploadFile, userPrefix } from "../lib/files";
 import { autoGrowTextarea } from "../lib/autoGrow";
 import { ConfirmModal } from "./Modal";
 import { DocumentSignature } from "./DocumentSignature";
+import { DocumentActions } from "./DocumentActions";
 
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -248,7 +249,7 @@ export function Logbook({ spec, values, onChange, editable = false, onSpecChange
   );
 
   return (
-    <div className={`logbook${editing ? " lb-editing" : ""}`}>
+    <><DocumentActions name="Learner Logbook" /><div className={`logbook document-print-target${editing ? " lb-editing" : ""}`}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="book" size={20} />
@@ -752,7 +753,7 @@ export function Logbook({ spec, values, onChange, editable = false, onSpecChange
           </table>
         </div>
       </div>
-    </div>
+    </div></>
   );
 }
 

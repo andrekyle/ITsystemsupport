@@ -2,6 +2,7 @@ import type { PracticalTaskDocument, Profile } from "../types";
 import { Icon } from "../icons";
 import { useRef } from "react";
 import { DocumentSignature } from "./DocumentSignature";
+import { DocumentActions } from "./DocumentActions";
 
 type SavedValues = Record<string, string | boolean>;
 type SaveField = (key: string, value: string | boolean) => void;
@@ -56,7 +57,7 @@ function TheoryTable({ id, values, onChange }: { id: string; values: SavedValues
 
 function PracticalTask114046({ values, onChange, signature }: { values: SavedValues; onChange: SaveField; signature?: string }) {
   const cell = (id: string, label: string, type = "text") => <PdfInput id={id} ariaLabel={label} type={type} values={values} onChange={onChange} signature={signature} />;
-  return <div className="pt-pdf-document">
+  return <><DocumentActions name="Practical Task" /><div className="pt-pdf-document document-print-target">
     <section className="pt-page pt-cover">
       <div className="pt-cover-main"><img src="/logos/eruditio.svg" alt="Eruditio" /><div className="pt-cover-panel"><h1>DEMONSTRATE AN UNDERSTANDING OF ISSUES AFFECTING THE MANAGEMENT OF A LOCAL AREA COMPUTER NETWORK (LAN)</h1><div className="pt-cover-meta"><strong>UNIT STANDARD 114046</strong><strong>NQF LEVEL: 5</strong><strong>CREDITS: 4</strong><strong>NOTIONAL HOURS: 40</strong></div><table className="pt-table pt-cover-info"><thead><tr><th colSpan={2}>LEARNER INFORMATION</th></tr></thead><tbody>{[["name","Name"],["surname","Surname"],["id-number","ID Number"],["contact","Contact"]].map(([id,label])=><tr key={id}><th>{label}</th><td>{cell(id,label)}</td></tr>)}</tbody></table></div></div><aside>PRACTICAL TASK</aside>
     </section>
@@ -84,7 +85,7 @@ function PracticalTask114046({ values, onChange, signature }: { values: SavedVal
       <tr className="pt-grey pt-left"><th colSpan={4}>Moderator Acknowledgement</th></tr><tr><td>Date:</td><td>{cell("moderator-date","Moderator date","date")}</td><td>Moderator Signature</td><td>{cell("moderator-signature","Moderator signature")}</td></tr></tbody></table></section>
 
     <section className="pt-page pt-page-five"><TheoryTable id="witness.theory" values={values} onChange={onChange} /><table className="pt-table pt-outcome"><tbody><tr><td>Overall performance of the learner</td><td><label>Meet SOP<input type="checkbox" onChange={event=>onChange("practical.pdf.meet-sop",event.target.checked)} defaultChecked={values["practical.pdf.meet-sop"]===true}/></label></td><td colSpan={2}><label>Do not meet SOP<input type="checkbox" onChange={event=>onChange("practical.pdf.not-meet-sop",event.target.checked)} defaultChecked={values["practical.pdf.not-meet-sop"]===true}/></label></td></tr><tr><td>Overall outcomes of the integrated assessment (theory &amp; practical)</td><td><label>C<input type="checkbox" onChange={event=>onChange("practical.pdf.competent",event.target.checked)} defaultChecked={values["practical.pdf.competent"]===true}/></label></td><td colSpan={2}><label>NYC<input type="checkbox" onChange={event=>onChange("practical.pdf.nyc",event.target.checked)} defaultChecked={values["practical.pdf.nyc"]===true}/></label></td></tr><tr><th className="pt-grey">Assessor signature</th><td>{cell("final-assessor-signature","Assessor signature")}</td><th className="pt-grey">Learner signature</th><td>{cell("final-learner-signature","Learner signature")}</td></tr><tr><th className="pt-grey">Date:</th><td>{cell("final-assessor-date","Assessor date","date")}</td><th className="pt-grey">Date:</th><td>{cell("final-learner-date","Learner date","date")}</td></tr></tbody></table></section>
-  </div>;
+  </div></>;
 }
 
 export function PracticalTask({ document, unitId, profile, values, onChange }: {
@@ -101,7 +102,7 @@ export function PracticalTask({ document, unitId, profile, values, onChange }: {
     + (section.items ?? []).filter(item => String(values[key(section.id, item.id)] ?? "").trim()).length, 0);
   const total = document.sections.reduce((sum, section) => sum + (section.fields?.length ?? 0) + (section.items?.length ?? 0), 0);
 
-  return <section className="practical-task">
+  return <><DocumentActions name="Practical Task" /><section className="practical-task document-print-target">
     <header className="practical-hero">
       <div className="practical-hero-icon"><Icon name="checklist" size={28} /></div>
       <div><span className="practical-kicker">Unit standard {unitId}</span><h2>{document.title}</h2><p>{document.subtitle}</p></div>
@@ -131,5 +132,5 @@ export function PracticalTask({ document, unitId, profile, values, onChange }: {
         })}</div>}
       </article>)}
     </div>
-  </section>;
+  </section></>;
 }
