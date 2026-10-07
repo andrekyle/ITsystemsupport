@@ -859,9 +859,9 @@ export function OnboardingPage({
         <>
           <div className="eyebrow">
             <Icon name="folder" size={15} />
-            Onboarding
+            Qualification Packs
           </div>
-          <h1 className="page-title">Student onboarding packs</h1>
+          <h1 className="page-title">Qualification Packs</h1>
           <p className="page-sub">
             {canManage
               ? "Create packs of induction material — documents, PDFs, presentations, spreadsheets, images and web pages."
@@ -889,11 +889,11 @@ export function OnboardingPage({
           {!visiblePacks.length ? (
             <div className="ob-empty card">
               <Icon name="folder" size={30} />
-              <strong>No onboarding packs yet</strong>
+              <strong>No qualification packs yet</strong>
               <span>
                 {canManage
                   ? "Create a pack to group the induction documents your learners need."
-                  : "Your facilitator has not published any onboarding packs yet."}
+                  : "Your facilitator has not published any qualification packs yet."}
               </span>
             </div>
           ) : (

@@ -57,7 +57,7 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
     { page: "chat" as const, icon: "chat", label: "Chat" },
     { page: "memories" as const, icon: "image", label: "Gallery" },
     { page: "poe" as const, icon: "folder", label: "Portfolio of Evidence" },
-    { page: "onboarding" as const, icon: "folder", label: "Onboarding Packs" },
+    { page: "onboarding" as const, icon: "folder", label: "Qualification Packs" },
     { page: "checklist" as const, icon: "checklist", label: "Appendix C Checklist" },
     { page: "sectiond" as const, icon: "document", label: "Section D Declaration" },
     { page: "forms" as const, icon: "clipboard", label: "Forms" },
