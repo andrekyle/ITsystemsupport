@@ -7,6 +7,7 @@ import { flushKey, flushValue, writeFromCloud } from "./lib/sync";
 import { logAudit } from "./lib/audit";
 import { courseScopedUnit } from "./lib/courseScope";
 import { cachedLessonEdits, loadLessonEdits, queueLessonEdits, subscribeLessonEdits } from "./lib/lessonEditStore";
+import { unitPackSnapshot } from "./lib/unitStorage";
 import {
   loadOnboardingPacks,
   loadOnboardingPacksForUpdate,
@@ -610,10 +611,31 @@ export interface WorkbookMemoState {
 
 /** Shared, facilitator-managed marking memo for one unit standard. */
 export function useWorkbookMemo(us: string) {
-  return useSharedState<WorkbookMemoState>(
-    `itss.workbookmemo.${courseScopedUnit(us)}.shared`,
-    { items: [] }
-  );
+  const key = `itss.workbookmemo.${courseScopedUnit(us)}.shared`;
+  const empty: WorkbookMemoState = { items: [] };
+  const snapshot = useCallback(() => {
+    try {
+      const encoded = unitPackSnapshot(key);
+      return encoded ? JSON.parse(encoded) as WorkbookMemoState : empty;
+    } catch { return empty; }
+  }, [key]);
+  const [value, setValue] = useState<WorkbookMemoState>(snapshot);
+
+  useEffect(() => {
+    const refresh = () => setValue(snapshot());
+    window.addEventListener("unit-built", refresh);
+    return () => window.removeEventListener("unit-built", refresh);
+  }, [snapshot]);
+
+  const update = useCallback((updater: (fresh: WorkbookMemoState) => WorkbookMemoState) => {
+    const next = updater(snapshot());
+    // installSync intercepts this key and routes it to IndexedDB + cloud sync.
+    localStorage.setItem(key, JSON.stringify(next));
+    setValue(next);
+    return next;
+  }, [key, snapshot]);
+
+  return [value, update] as const;
 }
 
 /* ---------- generic shared-state hook (synced to every account) ---------- */
