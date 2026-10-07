@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import JSZip from "jszip";
 import { Icon } from "../icons";
 import type { Profile, Route } from "../types";
@@ -342,7 +342,7 @@ function UploadPackDialog({
   );
 }
 
-/** Details view with pack-relative folders, never extension-based regrouping. */
+/** Details view with pack-relative folders and files grouped by type. */
 export function PackExplorer({
   pack,
   canManage,
@@ -369,7 +369,7 @@ export function PackExplorer({
     return Number.isFinite(saved) && saved >= 190 ? saved : 260;
   });
   const [sort, setSort] = useState<{ column: "name" | "modified" | "type" | "size"; descending: boolean }>({
-    column: "name", descending: false,
+    column: "type", descending: false,
   });
   const [opening, setOpening] = useState<string | null>(null);
   const [downloadingPack, setDownloadingPack] = useState(false);
@@ -402,6 +402,9 @@ export function PackExplorer({
     (!search || path.toLowerCase().includes(search) ||
       filtered.some(file => onboardingFilePath(file).startsWith(`${path}/`))))
     .sort((a, b) => (sort.column === "name" && sort.descending ? -1 : 1) * a.localeCompare(b, undefined, { numeric: true }));
+  const fileGroups = [...FILE_GROUPS, OTHER_GROUP]
+    .map(group => ({ group, files: filtered.filter(file => groupOf(file).id === group.id) }))
+    .filter(({ files }) => files.length > 0);
 
   function navigateFolder(path: string) {
     setFolder(path);
@@ -664,10 +667,18 @@ export function PackExplorer({
                   <td />
                 </tr>
               ))}
-              {filtered.map((file) => {
-                const ext = extOf(file.name);
-                return (
-                  <tr key={file.id} data-file-id={file.id}>
+              {fileGroups.map(({ group, files }) => (
+                <Fragment key={group.id}>
+                  <tr className="ob-file-group-row">
+                    <th colSpan={5} scope="rowgroup">
+                      <Icon name={group.icon} size={15} />
+                      <span>{group.label}</span>
+                      <span className="ob-file-group-count">{files.length}</span>
+                    </th>
+                  </tr>
+                  {files.map((file) => {
+                    const ext = extOf(file.name);
+                    return <tr key={file.id} data-file-id={file.id}>
                     <td><button className="ob-entry-name" title={onboardingFilePath(file)}
                       disabled={opening === file.id} onClick={() => void openFile(file)}>
                       <FileTypeIcon name={file.name} /><span>{file.name}</span>
@@ -715,9 +726,10 @@ export function PackExplorer({
                         </button>
                       )}
                     </div></td>
-                  </tr>
-                );
-              })}
+                  </tr>;
+                  })}
+                </Fragment>
+              ))}
               {!filtered.length && !childFolders.length && <tr><td colSpan={5} className="ob-details-empty">
                 {search ? `No files match “${query}” in this folder.` : "This folder is empty."}
               </td></tr>}

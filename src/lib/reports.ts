@@ -507,7 +507,7 @@ function normaliseManagementDeck(
   const afterSessions = kpiIndex >= 0 ? retained.slice(kpiIndex + 1) : retained.slice(1);
   return {
     cover: deck.cover,
-    slides: [...beforeSessions, sessionSlide, ...afterSessions, ...learnerSlides, recommendation].slice(0, 12),
+    slides: [...beforeSessions, sessionSlide, ...afterSessions, ...learnerSlides, recommendation],
   };
 }
 export interface AiDeck {
@@ -1149,6 +1149,50 @@ function deckSlideBody(s: DeckSlide): string {
   }</div></div>`;
 }
 
+function paginateDeckSlides(slides: DeckSlide[]): DeckSlide[] {
+  const chunks = <T,>(items: T[], size: number) =>
+    Array.from({ length: Math.ceil(items.length / size) }, (_, index) => items.slice(index * size, (index + 1) * size));
+  const headline = (value: string, page: number, total: number) =>
+    page === 0 ? value : `${value.replace(/\s+—\s+continued(?:\s+\(\d+\/\d+\))?$/i, "")} — continued (${page + 1}/${total})`;
+
+  return slides.flatMap((slide) => {
+    const layout = slide.layout.trim().toLowerCase();
+    if (layout === "sessions" && (slide.rows?.length ?? 0) > 6) {
+      const pages = chunks(slide.rows ?? [], 6);
+      return pages.map((rows, page) => ({ ...slide, headline: headline(slide.headline, page, pages.length), rows }));
+    }
+    if (layout === "table" && (slide.cells?.length ?? 0) > 6) {
+      const pages = chunks(slide.cells ?? [], 6);
+      const highlightedRow = Number(slide.highlight?.row);
+      return pages.map((cells, page) => {
+        const start = page * 6;
+        const highlight = Number.isInteger(highlightedRow) && highlightedRow >= start && highlightedRow < start + cells.length
+          ? { ...slide.highlight, row: highlightedRow - start }
+          : undefined;
+        return { ...slide, headline: headline(slide.headline, page, pages.length), cells, highlight };
+      });
+    }
+    if (layout === "cards" && (slide.cards?.length ?? 0) > 4) {
+      const pages = chunks(slide.cards ?? [], 4);
+      return pages.map((cards, page) => ({
+        ...slide,
+        headline: headline(slide.headline, page, pages.length),
+        cards,
+        cardStart: (slide.cardStart ?? 1) + page * 4,
+      }));
+    }
+    if (layout === "measures" && (slide.measures?.length ?? 0) > 12) {
+      const pages = chunks(slide.measures ?? [], 12);
+      return pages.map((measures, page) => ({ ...slide, headline: headline(slide.headline, page, pages.length), measures }));
+    }
+    if (layout === "recommendations" && (slide.items?.length ?? 0) > 4) {
+      const pages = chunks(slide.items ?? [], 4);
+      return pages.map((items, page) => ({ ...slide, headline: headline(slide.headline, page, pages.length), items }));
+    }
+    return [slide];
+  });
+}
+
 /** Printable deck document — pixel replica of the approved PPTX template. */
 export function deckDocumentHtml(
   kind: ReportKind,
@@ -1173,9 +1217,7 @@ export function deckDocumentHtml(
   const title = cover.title?.trim() || `${month} ${kind.name}`;
   const subtitle = cover.subtitle?.trim() || `${COURSE_META.title} • ${month} ${now.getFullYear()}`;
   const card = cover.card ?? {};
-  // Continuation slides are required when a complete cohort cannot fit on a
-  // single learner table/card slide. Keep all validated AI slides available.
-  const slides = deck.slides.slice(0, 12);
+  const slides = paginateDeckSlides(deck.slides);
   const slug = kind.name.replace(/\s+/g, "-").toLowerCase();
   const filename = `${slug}-${now.toISOString().slice(0, 10)}.html`;
   const logoCss = logo
