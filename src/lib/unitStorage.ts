@@ -5,7 +5,7 @@ const loads = new Map<string, Promise<void>>();
 let generation=0;
 export const isUnitPackKey = (key:string) => /^itss\.unitbuilder\.(?:custom-[^.]+\.)?[^.]+\.shared$/.test(key);
 /** Large shared records that must bypass quota-limited localStorage. */
-export const isLargeSharedKey = (key:string) => isUnitPackKey(key) || /^itss\.workbookmemo\..+\.shared$/.test(key);
+export const isLargeStateKey = (key:string) => isUnitPackKey(key) || /^itss\.workbookmemo\..+\.shared$/.test(key) || /^itss\.progress\..+$/.test(key);
 let database: Promise<IDBDatabase> | undefined;
 function db() {
   return database ??= new Promise<IDBDatabase>((resolve,reject)=>{

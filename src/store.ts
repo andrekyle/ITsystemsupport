@@ -362,6 +362,13 @@ export function touchLastOnline(profileId: string) {
 
 const EMPTY: ProgressState = { units: {} };
 
+function readProgress(profileId: string): ProgressState {
+  try {
+    const encoded = unitPackSnapshot(progressKey(profileId));
+    return encoded ? JSON.parse(encoded) as ProgressState : EMPTY;
+  } catch { return EMPTY; }
+}
+
 function compactProgressStorage(state: ProgressState, savedSignature?: string): ProgressState {
   let changed = false;
   const units = Object.fromEntries(Object.entries(state.units).map(([us, unit]) => {
@@ -393,16 +400,14 @@ function compactProgressStorage(state: ProgressState, savedSignature?: string): 
 
 /** Read a profile's saved progress without subscribing (staff/super-user views). */
 export function loadProgress(profileId: string): ProgressState {
-  return read<ProgressState>(progressKey(profileId), EMPTY);
+  return readProgress(profileId);
 }
 
 export function useProgress(profileId: string) {
-  const [state, setState] = useState<ProgressState>(() =>
-    read<ProgressState>(progressKey(profileId), EMPTY)
-  );
+  const [state, setState] = useState<ProgressState>(() => readProgress(profileId));
 
   useEffect(() => {
-    setState(read<ProgressState>(progressKey(profileId), EMPTY));
+    setState(readProgress(profileId));
   }, [profileId]);
 
   // One-time backfill per load: credit evidence-backed activities that were
@@ -411,7 +416,7 @@ export function useProgress(profileId: string) {
   // Quizzes and marked exercises are both FORMATIVE assessment evidence.
   useEffect(() => {
     const key = progressKey(profileId);
-    const cur = read<ProgressState>(key, EMPTY);
+    const cur = readProgress(profileId);
     let changed = false;
     const units = { ...cur.units };
     for (const [us, unit] of Object.entries(cur.units)) {
@@ -438,25 +443,26 @@ export function useProgress(profileId: string) {
     }
     if (changed) {
       write(key, { ...cur, units });
-      setState(read<ProgressState>(key, EMPTY));
+      setState(readProgress(profileId));
     }
   }, [profileId]);
 
   // live-sync when another tab writes this profile's progress
   useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === progressKey(profileId)) {
-        setState(read<ProgressState>(progressKey(profileId), EMPTY));
-      }
-    };
+    const refresh = () => setState(readProgress(profileId));
+    const onStorage = (e: StorageEvent) => { if (e.key === progressKey(profileId)) refresh(); };
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    window.addEventListener("unit-built", refresh);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("unit-built", refresh);
+    };
   }, [profileId]);
 
   const update = useCallback(
     (fn: (prev: ProgressState) => ProgressState) => {
       // base updates on fresh storage so concurrent tabs never clobber each other
-      const fresh = read<ProgressState>(progressKey(profileId), EMPTY);
+      const fresh = readProgress(profileId);
       const next = fn(fresh);
       write(progressKey(profileId), next);
       setState(next);
@@ -1730,7 +1736,7 @@ export function poeDocUnits(docKey: string): string[] {
  *  the flag is already set. */
 function creditActivityEvidence(profileId: string, us: string, activity: UnitActivity) {
   const key = progressKey(profileId);
-  const prev = read<ProgressState>(key, EMPTY);
+  const prev = readProgress(profileId);
   const unit: UnitProgress = prev.units[us] ?? { activities: {} };
   if (unit.activities[activity]) return;
   const next: ProgressState = {
