@@ -383,6 +383,9 @@ export const PATHS: Record<string, React.ReactNode> = {
       <path d="M8 9.5h8M8 12.5h5" />
     </>
   ),
+  message: (
+    <path d="M5.5 4.5h13A2.5 2.5 0 0 1 21 7v7a2.5 2.5 0 0 1-2.5 2.5H11L6 20v-3.5h-.5A2.5 2.5 0 0 1 3 14V7a2.5 2.5 0 0 1 2.5-2.5z" />
+  ),
   chip: (
     <>
       <rect x="7" y="7" width="10" height="10" rx="1.2" />
@@ -414,6 +417,12 @@ export const PATHS: Record<string, React.ReactNode> = {
     <>
       <path d="M12 3.5v11M7.5 10.5 12 15l4.5-4.5" />
       <path d="M4 16.5v2.5A1.5 1.5 0 0 0 5.5 20.5h13a1.5 1.5 0 0 0 1.5-1.5v-2.5" />
+    </>
+  ),
+  cloudDownload: (
+    <>
+      <path d="M7.5 18.5H6a4 4 0 0 1-.5-8A6.5 6.5 0 0 1 18 9.5h.5a3.5 3.5 0 0 1 .5 7" />
+      <path d="M12 11.5v9M8.5 17l3.5 3.5 3.5-3.5" />
     </>
   ),
   eye: (
