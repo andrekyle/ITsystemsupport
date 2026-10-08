@@ -13204,7 +13204,13 @@ h2.section-title.howto-heading {
   pointer-events: none;
 }
 
+:root:not([data-theme="dark"]) .howto-page::before {
+  background-color: #efeae2;
+  opacity: 1;
+}
+
 [data-theme="dark"] .howto-page::before {
+  background-color: #111;
   background-image: url("/chat-wallpaper-dark.svg");
   filter: brightness(2.4);
   opacity: 0.18;
