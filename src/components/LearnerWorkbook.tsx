@@ -6,13 +6,17 @@ import { DocumentActions } from "./DocumentActions";
 import { Icon } from "../icons";
 import type { WorkbookMemoBlueprint } from "./WorkbookMemo";
 import { WorkbookTaskAnswer } from "./WorkbookTaskAnswer";
+import { canSignDocumentField } from "../lib/documentSignatures";
 
 type Values = Record<string, string | boolean>;
 type Save = (key: string, value: string | boolean) => void;
 
-function Field({ id, label, values, onChange, type = "text", signature }: { id: string; label: string; values: Values; onChange: Save; type?: string; signature?: string }) {
+function Field({ id, label, values, onChange, type = "text", profile }: { id: string; label: string; values: Values; onChange: Save; type?: string; profile: Profile }) {
   const key = `learner-workbook.${id}`;
-  if (/signature/i.test(label)) return <DocumentSignature value={String(values[key] ?? "")} savedSignature={signature} label={label} onChange={value => onChange(key, value)} />;
+  if (/signature/i.test(label)) {
+    const editable = canSignDocumentField(profile.role, label);
+    return <DocumentSignature value={String(values[key] ?? "")} savedSignature={editable ? profile.signatureImage : undefined} label={label} editable={editable} onChange={value => onChange(key, value)} />;
+  }
   return <input type={type} aria-label={label} defaultValue={String(values[key] ?? "")} onBlur={event => onChange(key, event.target.value)} />;
 }
 
@@ -126,7 +130,7 @@ export function LearnerWorkbook({ values, onChange, profile, memoItems }: { valu
     } catch (reason) { setMarkError(reason instanceof Error ? reason.message : "The workbook could not be marked."); }
     finally { setMarking(false); }
   };
-  const field = (id: string, label: string, type?: string) => <Field id={id} label={label} type={type} values={values} onChange={onChange} signature={profile.signatureImage} />;
+  const field = (id: string, label: string, type?: string) => <Field id={id} label={label} type={type} values={values} onChange={onChange} profile={profile} />;
   const inlineField = (id: string, label: string, type?: string) => <span className="lw-inline-field">{field(id, label, type)}</span>;
   return <><div className="lw-workbook-actions no-print"><div className="lw-workbook-actions-copy"><strong>Workbook tools</strong><span>Save, export or mark the learner’s answers.</span></div><div className="lw-workbook-actions-controls"><DocumentActions name="Learner Workbook" labelled /><button type="button" className="btn lw-mark-workbook" disabled={marking || !memoItems.length} onClick={()=>void markWorkbook()}><Icon name="robot" size={17}/>{marking?"Marking answers…":memoItems.length?"Mark workbook":"Upload memo to mark"}</button></div>{markError&&<span className="auth-error" role="alert">{markError}</span>}</div><div className="lw-document document-print-target">
     <Page number={1} className="lw-cover"><div className="lw-cover-main"><img src="/logos/eruditio.svg" alt="Eruditio" /><div className="lw-cover-panel"><h1>DEMONSTRATE AN UNDERSTANDING OF ISSUES AFFECTING THE MANAGEMENT OF A LOCAL AREA COMPUTER NETWORK (LAN)</h1><div className="lw-cover-meta"><b>UNIT STANDARD 114046</b><b>NQF LEVEL: 5</b><b>CREDITS: 4</b><b>NOTIONAL HOURS: 40</b></div><table className="lw-table lw-cover-table"><thead><tr><th colSpan={2}>LEARNER INFORMATION</th></tr></thead><tbody>{[["cover-name","Name"],["cover-surname","Surname"],["cover-id","ID Number"],["cover-contact","Contact"]].map(([id,label])=><tr key={id}><th>{label}</th><td>{field(id,label)}</td></tr>)}</tbody></table></div></div><aside>LEARNER WORKBOOK</aside></Page>

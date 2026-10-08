@@ -3,13 +3,17 @@ import { Icon } from "../icons";
 import { useRef } from "react";
 import { DocumentSignature } from "./DocumentSignature";
 import { DocumentActions } from "./DocumentActions";
+import { canSignDocumentField } from "../lib/documentSignatures";
 
 type SavedValues = Record<string, string | boolean>;
 type SaveField = (key: string, value: string | boolean) => void;
 
-function PdfInput({ id, values, onChange, area = false, type = "text", ariaLabel, signature }: { id: string; values: SavedValues; onChange: SaveField; area?: boolean; type?: string; ariaLabel: string; signature?: string }) {
+function PdfInput({ id, values, onChange, area = false, type = "text", ariaLabel, profile }: { id: string; values: SavedValues; onChange: SaveField; area?: boolean; type?: string; ariaLabel: string; profile?: Profile }) {
   const key = `practical.pdf.${id}`;
-  if (/signature/i.test(ariaLabel)) return <DocumentSignature value={String(values[key] ?? "")} savedSignature={signature} label={ariaLabel} onChange={value => onChange(key, value)} />;
+  if (/signature/i.test(ariaLabel)) {
+    const editable = !!profile && canSignDocumentField(profile.role, ariaLabel);
+    return <DocumentSignature value={String(values[key] ?? "")} savedSignature={editable ? profile.signatureImage : undefined} label={ariaLabel} editable={editable} onChange={value => onChange(key, value)} />;
+  }
   return area
     ? <textarea aria-label={ariaLabel} defaultValue={String(values[key] ?? "")} onBlur={event => onChange(key, event.target.value)} />
     : <input aria-label={ariaLabel} type={type} defaultValue={String(values[key] ?? "")} onBlur={event => onChange(key, event.target.value)} />;
@@ -55,8 +59,8 @@ function TheoryTable({ id, values, onChange }: { id: string; values: SavedValues
   return <table className="pt-table pt-theory"><thead><tr><th colSpan={2}>Integrated theory</th></tr></thead><tbody><tr><td>Question:</td><td><LinedInputs id={id} lines={4} label="Integrated theory question and answer" values={values} onChange={onChange} /></td></tr></tbody></table>;
 }
 
-function PracticalTask114046({ values, onChange, signature }: { values: SavedValues; onChange: SaveField; signature?: string }) {
-  const cell = (id: string, label: string, type = "text") => <PdfInput id={id} ariaLabel={label} type={type} values={values} onChange={onChange} signature={signature} />;
+function PracticalTask114046({ values, onChange, profile }: { values: SavedValues; onChange: SaveField; profile: Profile }) {
+  const cell = (id: string, label: string, type = "text") => <PdfInput id={id} ariaLabel={label} type={type} values={values} onChange={onChange} profile={profile} />;
   return <><DocumentActions name="Practical Task" /><div className="pt-pdf-document document-print-target">
     <section className="pt-page pt-cover">
       <div className="pt-cover-main"><img src="/logos/eruditio.svg" alt="Eruditio" /><div className="pt-cover-panel"><h1>DEMONSTRATE AN UNDERSTANDING OF ISSUES AFFECTING THE MANAGEMENT OF A LOCAL AREA COMPUTER NETWORK (LAN)</h1><div className="pt-cover-meta"><strong>UNIT STANDARD 114046</strong><strong>NQF LEVEL: 5</strong><strong>CREDITS: 4</strong><strong>NOTIONAL HOURS: 40</strong></div><table className="pt-table pt-cover-info"><thead><tr><th colSpan={2}>LEARNER INFORMATION</th></tr></thead><tbody>{[["name","Name"],["surname","Surname"],["id-number","ID Number"],["contact","Contact"]].map(([id,label])=><tr key={id}><th>{label}</th><td>{cell(id,label)}</td></tr>)}</tbody></table></div></div><aside>PRACTICAL TASK</aside>
@@ -95,7 +99,7 @@ export function PracticalTask({ document, unitId, profile, values, onChange }: {
   values: Record<string, string | boolean>;
   onChange: (key: string, value: string | boolean) => void;
 }) {
-  if (unitId === "114046") return <PracticalTask114046 values={values} onChange={onChange} signature={profile.signatureImage} />;
+  if (unitId === "114046") return <PracticalTask114046 values={values} onChange={onChange} profile={profile} />;
   const key = (section: string, field: string) => `practical.${section}.${field}`;
   const savedCount = document.sections.reduce((total, section) => total
     + (section.fields ?? []).filter(field => String(values[key(section.id, field.id)] ?? "").trim()).length
@@ -118,7 +122,7 @@ export function PracticalTask({ document, unitId, profile, values, onChange }: {
             const storageKey = key(section.id, field.id);
             const current = values[storageKey];
             return <label className={`field practical-field${field.type === "textarea" ? " wide" : ""}`} key={field.id}><span>{field.label}</span>
-              {/signature/i.test(`${field.id} ${field.label}`) ? <DocumentSignature value={String(current ?? "")} savedSignature={profile.signatureImage} label={field.label} onChange={value => onChange(storageKey, value)} />
+              {/signature/i.test(`${field.id} ${field.label}`) ? <DocumentSignature value={String(current ?? "")} savedSignature={canSignDocumentField(profile.role, field.label) ? profile.signatureImage : undefined} label={field.label} editable={canSignDocumentField(profile.role, field.label)} onChange={value => onChange(storageKey, value)} />
                 : field.type === "textarea" ? <textarea rows={4} defaultValue={String(current ?? "")} placeholder={field.placeholder} onBlur={event => onChange(storageKey, event.target.value)} />
                 : field.type === "select" ? <select defaultValue={String(current ?? "")} onChange={event => onChange(storageKey, event.target.value)}>{(field.options ?? []).map(option => <option key={option} value={option}>{option || "Select an outcome"}</option>)}</select>
                 : field.type === "checkbox" ? <input type="checkbox" defaultChecked={current === true} onChange={event => onChange(storageKey, event.target.checked)} />

@@ -8,6 +8,7 @@ import { autoGrowTextarea } from "../lib/autoGrow";
 import { ConfirmModal } from "./Modal";
 import { DocumentSignature } from "./DocumentSignature";
 import { DocumentActions } from "./DocumentActions";
+import { canSignDocumentField } from "../lib/documentSignatures";
 
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -194,9 +195,16 @@ export function Logbook({ spec, values, onChange, editable = false, onSpecChange
     setUploadError(null);
   }
 
-  const field = (k: string, placeholder = "") => /signature|:sign$/i.test(k) ? (
-    <DocumentSignature value={String(values[k] ?? "")} savedSignature={profile.signatureImage} label="Signature" onChange={value => onChange(k, value)} className="lb-document-signature" />
-  ) : (
+  const signatureLabel = (key: string) => {
+    if (/^fc:/i.test(key)) return "Assessor signature";
+    const owner = key.match(/^(?:sign|decl):([^:]+)/i)?.[1];
+    return owner ? `${owner} signature` : "Learner signature";
+  };
+  const field = (k: string, placeholder = "") => /signature|:sign$/i.test(k) ? (() => {
+    const label = signatureLabel(k);
+    const editable = canSignDocumentField(profile.role, label);
+    return <DocumentSignature value={String(values[k] ?? "")} savedSignature={editable ? profile.signatureImage : undefined} label={label} editable={editable} onChange={value => onChange(k, value)} className="lb-document-signature" />;
+  })() : (
     <input
       className="lb-input"
       type="text"

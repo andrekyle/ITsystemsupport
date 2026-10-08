@@ -10,12 +10,15 @@ export function DocumentSignature({
   label,
   onChange,
   className = "",
+  editable = true,
 }: {
   value?: string;
   savedSignature?: string;
   label: string;
   onChange: (value: string) => void;
   className?: string;
+  /** False keeps another role's signature visible but prevents replacing it. */
+  editable?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -28,12 +31,12 @@ export function DocumentSignature({
     try { onChange(next); }
     catch { setError("The signature change could not be saved. Please try again."); }
   };
-  // A signature saved on the user's profile is the default for an empty
-  // signature line, so it is visible in the document and its PDF immediately.
   const removed = localValue === REMOVED_SIGNATURE;
   const usesSavedSignature = localValue === SAVED_SIGNATURE_REFERENCE;
   const storedImage = localValue.startsWith("data:image/") ? localValue : "";
-  const image = storedImage || ((usesSavedSignature || (!localValue && !removed)) ? savedSignature ?? "" : "");
+  // Do not insert the profile signature implicitly. The user deliberately
+  // chooses either their saved signature or an image from this device.
+  const image = storedImage || (usesSavedSignature ? savedSignature ?? "" : "");
 
   const chooseFile = () => inputRef.current?.click();
   const upload = async (file?: File) => {
@@ -67,9 +70,9 @@ export function DocumentSignature({
       ) : (
         <span className="document-signature-empty">{removed ? "" : "Signature"}</span>
       )}
-      <div className="document-signature-actions">
+      {editable && <div className="document-signature-actions">
         {savedSignature && savedSignature !== image && (
-          <button type="button" onClick={(event) => { event.stopPropagation(); applyValue(SAVED_SIGNATURE_REFERENCE); }} title={`Use saved ${label.toLowerCase()}`} aria-label={`Use saved ${label.toLowerCase()}`}>
+          <button type="button" onClick={(event) => { event.stopPropagation(); applyValue(savedSignature); }} title={`Use saved ${label.toLowerCase()}`} aria-label={`Use saved ${label.toLowerCase()}`}>
             <Icon name="checkCircle" size={12} />
           </button>
         )}
@@ -77,15 +80,15 @@ export function DocumentSignature({
           <Icon name={image || (localValue && !removed) ? "pencil" : "upload"} size={12} />
         </button>
         {(image || (localValue && !removed)) && <button type="button" onPointerDown={event => event.stopPropagation()} onClick={remove} title={`Remove ${label.toLowerCase()}`} aria-label={`Remove ${label.toLowerCase()}`}><Icon name="close" size={12} /></button>}
-      </div>
-      <input
+      </div>}
+      {editable && <input
         ref={inputRef}
         className="document-signature-file"
         type="file"
         accept="image/png,image/jpeg,image/webp"
         onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; void upload(file); }}
         aria-label={`Upload ${label.toLowerCase()}`}
-      />
+      />}
       {error && <small role="alert">{error}</small>}
     </div>
   );
