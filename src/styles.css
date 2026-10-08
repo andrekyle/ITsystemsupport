@@ -1,5 +1,5 @@
 :root {
-  --app-canvas: #f7f3f0;
+  --app-canvas: #fffdfb;
   --azure: #479ef5;
   --azure-dark: #62abf5;
   --azure-darker: #202124;
@@ -13,7 +13,7 @@
   --border-2: #e4ddd8;
   --table-border: rgba(50, 40, 35, 0.05);
   --table-line: rgba(50, 40, 35, 0.08);
-  --surface: #fffdfb;
+  --surface: #f7f3f0;
   --surface-2: #f5f0ed;
   --surface-3: #fbf8f5;
   --green: #107c10;
