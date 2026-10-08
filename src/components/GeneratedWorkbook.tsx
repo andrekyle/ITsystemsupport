@@ -76,7 +76,7 @@ export function GeneratedWorkbook({ workbook, memoItems, values, onChange }: {
 
   return <section className="generated-workbook">
     <div className="lw-workbook-actions no-print">
-      <div className="lw-workbook-actions-copy"><strong>Workbook tools</strong><span>Save, export or mark the learner’s answers.</span></div>
+      <div className="lw-workbook-actions-copy"><strong>Workbook tools</strong><span>Answers save automatically. You can also use Save before leaving the workbook, export it, or mark it with AI.</span></div>
       <div className="lw-workbook-actions-controls">
         <DocumentActions name={workbook.title} labelled />
         <button type="button" className="btn lw-mark-workbook" disabled={marking || !memoItems.length} onClick={() => void mark()}>

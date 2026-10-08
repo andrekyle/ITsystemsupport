@@ -2802,6 +2802,12 @@ export function UnitPage({
   }).length;
   const isPrivileged = isStaff(profile.role);
   const isSuperUser = profile.role === "Super User";
+  // A remembered staff-only tab must never remain open after switching to a
+  // learner profile. Learners return to their workbook, while AI marking in
+  // the workbook remains available without exposing the memo screen.
+  useEffect(() => {
+    if (!isSuperUser && tab === "memo") setTab("workbook");
+  }, [isSuperUser, tab]);
   const unitText = (value: string, update: (draft: UnitContent, text: string) => void, label = "Content") => <InlineText value={value} editable={isSuperUser && !!inlineUnit} multiline placeholder={label} onSave={text => setInlineUnit(current => { if (!current) return current; const next = structuredClone(current); update(next, text); return next; })} />;
 
   const blankBuiltActivity = (): Exercise => ({
