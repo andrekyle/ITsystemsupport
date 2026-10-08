@@ -12442,6 +12442,21 @@ table.data th.sortable.sorted { color: var(--ink); }
   color: #10a37f;
 }
 
+[data-theme="light"] .token-gauge .oa-legend-item,
+[data-theme="light"] .token-gauge .oa-metric-lbl,
+[data-theme="light"] .token-gauge .oa-sec-lbl,
+[data-theme="light"] .token-gauge .oa-model-desc,
+[data-theme="light"] .token-gauge .oa-model-price,
+[data-theme="light"] .token-gauge .oa-model-tag:not(.on),
+[data-theme="light"] .token-gauge .oa-model-row:not(.active) .oa-model-cap,
+[data-theme="light"] .token-gauge .mini-note {
+  color: #000;
+}
+
+[data-theme="light"] .token-gauge .oa-axis {
+  fill: #000;
+}
+
 /* ---- what the budget buys ---- */
 .oa-capacity {
   border-top: 1px solid var(--border);
