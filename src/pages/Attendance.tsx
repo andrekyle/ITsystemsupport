@@ -427,16 +427,8 @@ export function AttendancePage({
   const setHdr = (field: string, value: string) =>
     save({ ...reg, header: { ...reg.header, [field]: value } });
 
-  // live clock so the sign button opens by itself at the scheduled time without a reload
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 30_000);
-    return () => clearInterval(t);
-  }, []);
-
-  const today = isoDate(now);
-  const isToday = dateIso === today;
-  // learners may sign any register on any day, at any time
+  // A learner can sign whichever dated register they select. The only
+  // restriction is that the same learner cannot sign the same register twice.
   const signed = !!reg.rows[profile.id];
   const canSign = !signed;
 
@@ -702,7 +694,7 @@ export function AttendancePage({
     <div className="attendance-page">
       <h1 className="page-title no-print">Attendance Register</h1>
       <p className="page-sub no-print">
-        Sign the register every Friday during class — your details fill in from your enrolment
+        Select any session date and sign its register — your details fill in from your enrolment
         form. {staff ? "Staff can edit any field, view past registers and download the PDF." : ""}
       </p>
 
