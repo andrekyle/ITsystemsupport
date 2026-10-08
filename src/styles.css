@@ -2586,7 +2586,7 @@ textarea:focus {
 .lw-workbook-actions .document-actions { position:static; margin:0; }
 .lw-workbook-actions .auth-error { grid-column:1/-1; margin:0; }
 .lw-mark-workbook { min-height:36px; padding:0 10px; border:0; border-radius:6px; color:#737373 !important; background:transparent; font-size:13.5px; font-weight:600; box-shadow:none; }
-@media(max-width:700px){.lw-workbook-actions{grid-template-columns:1fr}.lw-workbook-actions-controls{justify-content:flex-start}.lw-workbook-actions .document-actions{width:100%}.lw-workbook-actions .document-actions button{flex:1}}
+@media(max-width:700px){.lw-workbook-actions{grid-template-columns:1fr}.lw-workbook-actions-controls{justify-content:flex-start}}
 .lw-ai-result { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:5px 8px; padding:11px 14px; border:.5px solid #888; border-top:0; font-size:14px; line-height:1.55; }
 .lw-ai-result strong { font-size:18px; line-height:1.25; }
 .lw-ai-result span { grid-column:1 / -1; color:#111; }

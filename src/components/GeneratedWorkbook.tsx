@@ -78,7 +78,7 @@ export function GeneratedWorkbook({ workbook, memoItems, values, onChange }: {
     <div className="lw-workbook-actions no-print">
       <div className="lw-workbook-actions-copy"><strong>Workbook tools</strong><span>Answers save automatically. You can also use Save before leaving the workbook, export it, or mark it with AI.</span></div>
       <div className="lw-workbook-actions-controls">
-        <DocumentActions name={workbook.title} labelled />
+        <DocumentActions name={workbook.title} />
         <button type="button" className="btn lw-mark-workbook" disabled={marking || !memoItems.length} onClick={() => void mark()}>
           <Icon name="robot" size={17} />
           {marking ? "Marking answers…" : memoItems.length ? "Mark workbook" : "Upload memo to mark"}
