@@ -16332,6 +16332,7 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .ob-details .ob-icon-btn { width: 25px; height: 25px; border-color: transparent; background: transparent; border-radius: 3px; }
 .ob-details .ob-details-empty { padding: 32px 12px; text-align: center; color: var(--ink-3); }
 .ob-search-location { display: block; padding: 2px 0 0 25px; border: 0; background: transparent; color: var(--azure); font: inherit; font-size: 11px; cursor: pointer; }
+.ob-mobile-file-meta { display: none; }
 .ob-actions-label { padding: 10px; display: block; color: var(--ink-3); }
 .ob-explorer-count { margin: 8px 0 0; }
 .ob-explorer button:focus-visible { outline: 2px solid var(--azure); outline-offset: -2px; }
@@ -16339,6 +16340,43 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 @media (max-width: 800px) {
   .ob-explorer { grid-template-columns: minmax(0, 1fr); }
   .ob-folder-nav, .ob-folder-resizer { display: none; }
+}
+
+@media (max-width: 640px) {
+  .ob-details-scroll { overflow-x: hidden; }
+  .ob-details { display: block; min-width: 0; table-layout: auto; }
+  .ob-details thead { display: none; }
+  .ob-details tbody { display: block; }
+  .ob-details tr { width: 100%; }
+  .ob-details .ob-file-group-row { display: block; }
+  .ob-details .ob-file-group-row th { display: block; width: 100%; padding: 8px 12px; }
+  .ob-details .ob-details-file-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    min-height: 68px;
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ob-details .ob-details-file-row > td { display: none; width: auto; height: auto; padding: 0; }
+  .ob-details .ob-details-file-row > td:first-child,
+  .ob-details .ob-details-file-row > td:last-child { display: block; min-width: 0; }
+  .ob-details .ob-entry-name { align-items: flex-start; gap: 10px; }
+  .ob-details .ob-entry-name > span:not(.ob-type-icon) {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+  }
+  .ob-details .ob-type-icon { flex: 0 0 18px; margin-top: 1px; }
+  .ob-mobile-file-meta { display: block; margin: 3px 0 0 28px; color: var(--ink-3); font-size: 11.5px; white-space: nowrap; }
+  .ob-details .ob-file-actions { gap: 1px; }
+  .ob-details .ob-icon-btn { width: 27px; height: 27px; }
+  .ob-details .ob-folder-row { display: grid; grid-template-columns: minmax(0, 1fr); padding: 9px 10px; border-bottom: 1px solid var(--border); }
+  .ob-details .ob-folder-row td { display: none; width: auto; height: auto; padding: 0; }
+  .ob-details .ob-folder-row td:first-child { display: block; }
 }
 
 .ob-group {

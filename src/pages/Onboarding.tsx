@@ -678,11 +678,12 @@ export function PackExplorer({
                   </tr>
                   {files.map((file) => {
                     const ext = extOf(file.name);
-                    return <tr key={file.id} data-file-id={file.id}>
+                    return <tr key={file.id} className="ob-details-file-row" data-file-id={file.id}>
                     <td><button className="ob-entry-name" title={onboardingFilePath(file)}
                       disabled={opening === file.id} onClick={() => void openFile(file)}>
                       <FileTypeIcon name={file.name} /><span>{file.name}</span>
                     </button>
+                      <span className="ob-mobile-file-meta">{fmtSize(file.size)} · {fmtDate(file.modifiedAt ?? file.uploadedAt)}</span>
                       {search && parentFolder(onboardingFilePath(file)) !== currentFolder &&
                         <button className="ob-search-location" onClick={() => navigateFolder(parentFolder(onboardingFilePath(file)))}>
                           {parentFolder(onboardingFilePath(file)) || pack.name}
