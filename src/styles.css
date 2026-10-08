@@ -198,9 +198,9 @@
 }
 
 [data-theme="light"] {
-  --azure: #007fff;
-  --azure-dark: #007fff;
-  --azure-darker: #007fff;
+  --azure: #002147;
+  --azure-dark: #002147;
+  --azure-darker: #002147;
 }
 
 [data-theme="dark"] {
