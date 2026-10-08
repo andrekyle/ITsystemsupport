@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Icon } from "../icons";
 
-export function DocumentActions({ name, labelled = false }: { name: string; labelled?: boolean }) {
+export function DocumentActions({ name, labelled = true }: { name: string; labelled?: boolean }) {
   const [saved, setSaved] = useState(false);
 
   const save = () => {

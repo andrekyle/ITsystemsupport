@@ -2585,7 +2585,7 @@ textarea:focus {
 .lw-workbook-actions-controls { display:flex; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:10px; }
 .lw-workbook-actions .document-actions { position:static; margin:0; }
 .lw-workbook-actions .auth-error { grid-column:1/-1; margin:0; }
-.lw-mark-workbook { min-height:30px; padding:0 10px; border:0; border-radius:6px; color:#858585 !important; font-size:12px; font-weight:500; box-shadow:none; }
+.lw-mark-workbook { min-height:36px; padding:0 10px; border:0; border-radius:6px; color:#737373 !important; background:transparent; font-size:13.5px; font-weight:600; box-shadow:none; }
 @media(max-width:700px){.lw-workbook-actions{grid-template-columns:1fr}.lw-workbook-actions-controls{justify-content:flex-start}.lw-workbook-actions .document-actions{width:100%}.lw-workbook-actions .document-actions button{flex:1}}
 .lw-ai-result { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:5px 8px; padding:11px 14px; border:.5px solid #888; border-top:0; font-size:14px; line-height:1.55; }
 .lw-ai-result strong { font-size:18px; line-height:1.25; }
@@ -2819,12 +2819,12 @@ textarea:focus {
 .document-actions button { width:34px; height:34px; display:grid; place-items:center; padding:0; border:1px solid var(--border); border-radius:7px; background:var(--surface-2); color:var(--text); cursor:pointer; }
 .document-actions button:hover,.document-actions button.is-saved { color:var(--accent); border-color:var(--accent); }
 .document-actions span { padding:0 5px; color:var(--success,#16803c); font-size:12px; font-weight:700; }
-.document-actions.is-labelled { gap:2px; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
-.document-actions.is-labelled button { position:relative; display:flex; width:auto; min-width:55px; height:30px; padding:0 8px; gap:5px; border:0; background:transparent; }
-.document-actions.is-labelled button+button::before { content:""; position:absolute; left:-1px; width:1px; height:14px; background:color-mix(in srgb,var(--text) 14%,transparent); }
+.document-actions.is-labelled { gap:6px; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
+.document-actions.is-labelled button { position:relative; display:flex; width:auto; min-width:0; height:36px; padding:0 8px; gap:7px; border:0; background:transparent; }
+.document-actions.is-labelled button+button::before { content:none; }
 .document-actions.is-labelled button:hover,.document-actions.is-labelled button.is-saved { border:0; background:color-mix(in srgb,var(--text) 6%,transparent); }
-.document-actions.is-labelled button { color:#858585; }
-.document-actions.is-labelled button span { padding:0; color:#858585 !important; font-size:11px; font-weight:400; letter-spacing:.01em; }
+.document-actions.is-labelled button { color:#737373; }
+.document-actions.is-labelled button span { padding:0; color:#737373 !important; font-size:13.5px; font-weight:400; letter-spacing:.01em; }
 .document-actions.is-labelled .document-action-pdf svg { color:#c83b3b; }
 .document-actions.is-labelled .document-action-html svg { color:#6d63d8; }
 .document-print-value { box-sizing:border-box; display:block; width:100%; min-height:1.35em; padding:3px 6px; color:#111; background:#fff; font:inherit; line-height:1.35; white-space:pre-wrap; }
@@ -6730,7 +6730,7 @@ a.plan-ppt:hover {
 }
 .checklist-table input[type="checkbox"]:checked {
   border-color: color-mix(in srgb, var(--azure) 62%, transparent);
-  background: color-mix(in srgb, var(--azure) 14%, transparent);
+  background: transparent;
 }
 .checklist-table input[type="checkbox"]:checked::before {
   transform: translateY(-1px) rotate(45deg) scale(1);
