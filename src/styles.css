@@ -755,6 +755,36 @@ a:hover {
   color: var(--azure);
 }
 
+/* Light mode navigation: Oxford blue with clean, high-contrast controls. */
+[data-theme="light"] .sidebar {
+  border-right-color: #17395d;
+  background: #002147;
+  color: #fff;
+}
+[data-theme="light"] .sidebar .side-item,
+[data-theme="light"] .sidebar .side-item .ico,
+[data-theme="light"] .sidebar .side-item.install-app,
+[data-theme="light"] .sidebar .side-item.install-app .ico {
+  color: #fff;
+}
+[data-theme="light"] .sidebar .side-item:hover,
+[data-theme="light"] .sidebar .side-item.active,
+[data-theme="light"] .sidebar .side-item.active:hover {
+  background: rgba(255,255,255,.13);
+  color: #fff;
+}
+[data-theme="light"] .sidebar .side-item.active::before {
+  background: #fff;
+}
+[data-theme="light"] .sidebar .side-item .badge {
+  border-color: rgba(255,255,255,.42);
+  background: rgba(255,255,255,.12);
+  color: #fff;
+}
+[data-theme="light"] .sidebar-footer {
+  border-top-color: rgba(255,255,255,.24);
+}
+
 /* ============ Breadcrumb ============ */
 
 .crumbs {
