@@ -13,7 +13,7 @@ import { Icon } from "../icons";
 import { ConfirmModal } from "../components/Modal";
 import { FitSheet } from "../components/FitSheet";
 import { DateTimePicker } from "../components/DateTimePicker";
-import { flushKey } from "../lib/sync";
+import { flushKey, hasPendingCloudWrite } from "../lib/sync";
 
 /**
  * Attendance Register — exact replica of the Eruditio paper form.
@@ -76,7 +76,14 @@ function normalizeReg(data: AttData): AttData {
   for (const [pid, row] of Object.entries(data.rows)) {
     rows[pid] = { ...row, name: capWords(row.name ?? ""), surname: capWords(row.surname ?? "") };
   }
-  return { ...data, rows };
+  // Legacy whole-register writes could leave a valid row out of `order`,
+  // which made that signer invisible even though their signature was saved.
+  const existingOrder = Array.isArray(data.order) ? data.order : [];
+  const order = [
+    ...existingOrder.filter((pid, index) => !!rows[pid] && existingOrder.indexOf(pid) === index),
+    ...Object.keys(rows).filter((pid) => !existingOrder.includes(pid)),
+  ];
+  return { ...data, rows, order };
 }
 
 function readReg(key: string): AttData {
@@ -280,7 +287,7 @@ function StaticSheet({ dateIso, data }: { dateIso: string; data: AttData }) {
             </tr>
           </thead>
           <tbody>
-            {Array.from({ length: ROW_COUNT }, (_, i) => {
+            {Array.from({ length: Math.max(ROW_COUNT, data.order.length) }, (_, i) => {
               const pid = data.order[i];
               const row = pid ? data.rows[pid] : undefined;
               return (
@@ -401,6 +408,15 @@ export function AttendancePage({
       } else {
         setReg(local);
       }
+      const ownRowKey = attRowKey(dateIso, profile.id);
+      if (hasPendingCloudWrite(ownRowKey)) {
+        try {
+          await flushKey(ownRowKey, true);
+          setAttendanceNote("Your signature is saved and synced.");
+        } catch {
+          setAttendanceNote("Signature saved. Cloud sync is pending — tap Refresh to retry.");
+        }
+      }
     } finally {
       setRefreshing(false);
     }
@@ -427,8 +443,8 @@ export function AttendancePage({
   const setHdr = (field: string, value: string) =>
     save({ ...reg, header: { ...reg.header, [field]: value } });
 
-  // A learner can sign whichever dated register they select. The only
-  // restriction is that the same learner cannot sign the same register twice.
+  // Every signed-in role, including the Super User, may sign the selected
+  // register. The only restriction is one row per profile on that register.
   const signed = !!reg.rows[profile.id];
   const canSign = !signed;
 
@@ -437,6 +453,7 @@ export function AttendancePage({
     if (signing) return;
     setSigning(true);
     setAttendanceNote("");
+    let savedOnDevice = false;
     // merge with the latest shared copy so classmates' rows are not lost
     try {
       const local = readReg(storageKey);
@@ -452,7 +469,8 @@ export function AttendancePage({
         save(base);
         const ownRowKey = attRowKey(dateIso, profile.id);
         localStorage.setItem(ownRowKey, JSON.stringify(base.rows[profile.id]));
-        await Promise.all([flushKey(ownRowKey), flushKey(storageKey)]);
+        savedOnDevice = true;
+        await Promise.all([flushKey(ownRowKey, true), flushKey(storageKey)]);
         setAttendanceNote("Your signature is saved on this register.");
         return;
       }
@@ -477,13 +495,16 @@ export function AttendancePage({
       });
       const ownRowKey = attRowKey(dateIso, profile.id);
       localStorage.setItem(ownRowKey, JSON.stringify(row));
+      savedOnDevice = true;
       // The independent learner row is the authoritative signature record.
-      await Promise.all([flushKey(ownRowKey), flushKey(storageKey)]);
+      await Promise.all([flushKey(ownRowKey, true), flushKey(storageKey)]);
       setAttendanceNote("Signed successfully.");
       logAudit(profile, "attendance.sign", `Signed the ${dateIso} attendance register at ${row.arrival}`);
-    } catch {
-      // The local write remains queued and will sync when the connection returns.
-      setAttendanceNote("Signed on this device — cloud sync will retry when you are online.");
+    } catch (error) {
+      console.error("Attendance signature save failed:", error);
+      setAttendanceNote(savedOnDevice
+        ? "Signature saved. Cloud sync is pending — tap Refresh to retry."
+        : "The signature could not be saved on this device. Check browser storage and try again.");
     } finally {
       setSigning(false);
     }
@@ -911,7 +932,7 @@ export function AttendancePage({
               </tr>
             </thead>
             <tbody>
-              {Array.from({ length: ROW_COUNT }, (_, i) => {
+              {Array.from({ length: Math.max(ROW_COUNT, reg.order.length) }, (_, i) => {
                 const pid = reg.order[i];
                 return (
                   <tr key={i}>

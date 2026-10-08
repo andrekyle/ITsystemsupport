@@ -59,6 +59,11 @@ function rememberPending(key: string, value: string | null) {
 function pendingFor(key: string) {
   return pendingWrites().find(write => write.userId === userId && write.key === key);
 }
+
+/** Whether the current account still has an unsent value for this key. */
+export function hasPendingCloudWrite(key: string): boolean {
+  return !!pendingFor(key);
+}
 const pushes = new Map<string, Promise<boolean>>();
 
 /** Store a value that was just pulled FROM the cloud without echoing it back
