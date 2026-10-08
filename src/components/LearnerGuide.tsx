@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../icons";
+import { DocumentActions } from "./DocumentActions";
 
 type SavedValues = Record<string, string | boolean>;
 type SaveField = (key: string, value: string | boolean) => void;
@@ -91,5 +92,5 @@ export function LearnerGuide({ values, onChange }: { values: SavedValues; onChan
   }, []);
   if (error) return <div className="callout"><span className="ico"><Icon name="info" size={18}/></span><span>{error}</span></div>;
   if (!pages.length) return <div className="learner-guide-loading"><Icon name="document" size={22}/><span>Opening the editable Learner Guide…</span></div>;
-  return <div className={`learner-guide-document${editMode?" is-editing":" is-viewing"}`}><div className="learner-guide-mode" role="group" aria-label="Learner Guide mode"><button type="button" className={!editMode?"active":""} aria-pressed={!editMode} onClick={()=>setEditMode(false)}><Icon name="book" size={15}/> View</button><button type="button" className={editMode?"active":""} aria-pressed={editMode} onClick={()=>setEditMode(true)}><Icon name="pencil" size={15}/> Edit</button><span>{editMode?"Every text element is editable HTML. Changes save when you leave it.":"Viewing the reconstructed HTML document."}</span></div>{pages.map((page,index)=><GuidePage key={index+1} page={page} pageNumber={index+1} editMode={editMode} values={values} onChange={onChange}/>)}</div>;
+  return <><DocumentActions name="Learner Guide" labelled/><div className={`learner-guide-document document-print-target${editMode?" is-editing":" is-viewing"}`}><div className="learner-guide-mode no-print" role="group" aria-label="Learner Guide mode"><button type="button" className={!editMode?"active":""} aria-pressed={!editMode} onClick={()=>setEditMode(false)}><Icon name="book" size={15}/> View</button><button type="button" className={editMode?"active":""} aria-pressed={editMode} onClick={()=>setEditMode(true)}><Icon name="pencil" size={15}/> Edit</button><span>{editMode?"Every text element is editable HTML. Changes save when you leave it.":"Viewing the reconstructed HTML document."}</span></div>{pages.map((page,index)=><GuidePage key={index+1} page={page} pageNumber={index+1} editMode={editMode} values={values} onChange={onChange}/>)}</div></>;
 }
