@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { WorkbookMemoItem, WorkbookMemoTask } from "../store";
 import { Icon } from "../icons";
 
@@ -49,9 +49,14 @@ export function WorkbookTaskAnswer({ outcomeId, task, memoItem, valueKey, markKe
   onChange: Save;
   legacyAnswer?: string;
 }) {
-  const [answer, setAnswer] = useState(String(values[valueKey] ?? legacyAnswer));
+  const savedAnswer = String(values[valueKey] ?? legacyAnswer);
+  const [answer, setAnswer] = useState(savedAnswer);
   const [marking, setMarking] = useState(false);
   const [error, setError] = useState("");
+  // Progress is hydrated from IndexedDB/cloud after the workbook first
+  // renders. Reflect that late-arriving value instead of leaving the input at
+  // the empty snapshot it saw on mount.
+  useEffect(() => setAnswer(savedAnswer), [savedAnswer]);
   let result: TaskMark | undefined;
   try {
     result = JSON.parse(String(values[markKey] ?? "")) as TaskMark;
