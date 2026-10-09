@@ -53,6 +53,17 @@ as $$
   select exists (select 1 from public.admins a where a.user_id = auth.uid());
 $$;
 
+-- Resolve the signed-in account's company. Legacy accounts default to
+-- Investec until the app assigns their tenant during sign-in.
+create or replace function public.current_tenant()
+returns text language sql stable as $$
+  select coalesce(
+    nullif(auth.jwt() -> 'app_metadata' ->> 'tenant_id', ''),
+    nullif(auth.jwt() -> 'user_metadata' ->> 'tenant_id', ''),
+    'investec'
+  );
+$$;
+
 -- Signed-in users can read every account's rows (needed so facilitators and the
 -- super user can see learners who sign in with their own email accounts).
 -- Writes: each user's own rows, or any row for admins.
@@ -166,6 +177,7 @@ create policy "delete app files"
 -- cannot see the row at all, even by querying Supabase directly.
 create table if not exists public.chat_messages (
   id                   uuid        primary key default gen_random_uuid(),
+  tenant_id            text        not null default 'investec',
   sender_user_id       uuid        not null references auth.users (id) on delete cascade,
   recipient_user_id    uuid        not null references auth.users (id) on delete cascade,
   -- App-side profile ids (may differ from auth ids on this device — the client
@@ -188,6 +200,10 @@ alter table public.chat_messages add column if not exists reaction text;
 -- Broadcasts ("message all learners"): every per-recipient copy of one send
 -- shares this id so the sender can edit all copies in one statement.
 alter table public.chat_messages add column if not exists broadcast_id uuid;
+alter table public.chat_messages add column if not exists tenant_id text not null default 'investec';
+
+create index if not exists chat_messages_tenant_idx
+  on public.chat_messages (tenant_id, sent_at);
 
 create index if not exists chat_messages_broadcast_idx
   on public.chat_messages (broadcast_id) where broadcast_id is not null;
@@ -207,8 +223,8 @@ create policy "read chat messages"
   for select
   to authenticated
   using (
-    auth.uid() in (sender_user_id, recipient_user_id)
-    or public.is_admin()
+    tenant_id = public.current_tenant()
+    and (auth.uid() in (sender_user_id, recipient_user_id) or public.is_admin())
   );
 
 drop policy if exists "send chat messages" on public.chat_messages;
@@ -217,8 +233,8 @@ create policy "send chat messages"
   for insert
   to authenticated
   with check (
-    auth.uid() = sender_user_id
-    or public.is_admin()
+    tenant_id = public.current_tenant()
+    and (auth.uid() = sender_user_id or public.is_admin())
   );
 
 drop policy if exists "update chat messages" on public.chat_messages;
@@ -227,12 +243,12 @@ create policy "update chat messages"
   for update
   to authenticated
   using (
-    auth.uid() in (sender_user_id, recipient_user_id)
-    or public.is_admin()
+    tenant_id = public.current_tenant()
+    and (auth.uid() in (sender_user_id, recipient_user_id) or public.is_admin())
   )
   with check (
-    auth.uid() in (sender_user_id, recipient_user_id)
-    or public.is_admin()
+    tenant_id = public.current_tenant()
+    and (auth.uid() in (sender_user_id, recipient_user_id) or public.is_admin())
   );
 
 drop policy if exists "delete chat messages" on public.chat_messages;
@@ -241,8 +257,8 @@ create policy "delete chat messages"
   for delete
   to authenticated
   using (
-    auth.uid() = sender_user_id
-    or public.is_admin()
+    tenant_id = public.current_tenant()
+    and (auth.uid() = sender_user_id or public.is_admin())
   );
 
 

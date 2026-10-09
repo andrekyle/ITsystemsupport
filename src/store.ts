@@ -1215,6 +1215,7 @@ export interface ChatMessage {
 /** Wire representation of a message row in Supabase. */
 interface DbChatRow {
   id: string;
+  tenant_id: string;
   sender_user_id: string;
   recipient_user_id: string;
   sender_profile_id: string;
@@ -1289,6 +1290,7 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
       const { data, error } = await supabase
         .from("chat_messages")
         .select("*")
+        .eq("tenant_id", TENANT_ID)
         .or(
           `and(sender_user_id.eq.${myAuthId},recipient_user_id.eq.${otherAuthId}),and(sender_user_id.eq.${otherAuthId},recipient_user_id.eq.${myAuthId})`
         )
@@ -1343,6 +1345,7 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
     await supabase
       .from("chat_messages")
       .update({ read_at: new Date().toISOString() })
+      .eq("tenant_id", TENANT_ID)
       .eq("recipient_user_id", myAuthId)
       .eq("sender_user_id", otherAuthId)
       .is("read_at", null);
@@ -1374,6 +1377,7 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
         const { data, error } = await supabase
           .from("chat_messages")
           .update(patch)
+          .eq("tenant_id", TENANT_ID)
           .eq("broadcast_id", broadcastId)
           .eq("sender_user_id", myAuthId)
           .select("id");
@@ -1383,6 +1387,7 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
           const res = await supabase
             .from("chat_messages")
             .update(patch)
+            .eq("tenant_id", TENANT_ID)
             .eq("id", msgId)
             .eq("sender_user_id", myAuthId)
             .select("id");
@@ -1392,6 +1397,7 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
         const { data, error } = await supabase
           .from("chat_messages")
           .update(patch)
+          .eq("tenant_id", TENANT_ID)
           .eq("id", msgId)
           .eq("sender_user_id", myAuthId)
           .select("id");
@@ -1426,6 +1432,7 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
       const { data, error } = await supabase
         .from("chat_messages")
         .update({ reaction })
+        .eq("tenant_id", TENANT_ID)
         .eq("id", msgId)
         .eq("recipient_user_id", myAuthId)
         .select("id");
@@ -1447,7 +1454,11 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
  *  own individual messages. Returns true on success. */
 export async function deleteChatThread(messageIds: string[]): Promise<boolean> {
   if (!supabase || messageIds.length === 0) return true;
-  const { error } = await supabase.from("chat_messages").delete().in("id", messageIds);
+  const { error } = await supabase
+    .from("chat_messages")
+    .delete()
+    .eq("tenant_id", TENANT_ID)
+    .in("id", messageIds);
   return !error;
 }
 
@@ -1521,11 +1532,15 @@ export function useChatThreads(): ChatThreadInfo[] {
       const { data, error } = await supabase
         .from("chat_messages")
         .select("*")
+        .eq("tenant_id", TENANT_ID)
         .order("sent_at", { ascending: true });
       if (!alive || error || !data) return;
       const grouped = new Map<string, ChatMessage[]>();
       const pair = new Map<string, { aId: string; bId: string }>();
       for (const row of data as DbChatRow[]) {
+        // Defence in depth: never render a row returned for another tenant,
+        // even if a production RLS policy is temporarily misconfigured.
+        if (row.tenant_id !== TENANT_ID) continue;
         const [aId, bId] =
           row.sender_profile_id < row.recipient_profile_id
             ? [row.sender_profile_id, row.recipient_profile_id]
