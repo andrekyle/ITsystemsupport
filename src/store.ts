@@ -8,7 +8,7 @@ import { logAudit } from "./lib/audit";
 import { courseScopedUnit } from "./lib/courseScope";
 import { TENANT, TENANT_ID } from "./lib/tenant";
 import { cachedLessonEdits, loadLessonEdits, queueLessonEdits, subscribeLessonEdits } from "./lib/lessonEditStore";
-import { unitPackSnapshot } from "./lib/unitStorage";
+import { flushUnitPack, unitPackSnapshot } from "./lib/unitStorage";
 import { SAVED_SIGNATURE_REFERENCE } from "./lib/signature";
 import {
   loadOnboardingPacks,
@@ -442,6 +442,13 @@ function compactProgressStorage(state: ProgressState, savedSignature?: string): 
 /** Read a profile's saved progress without subscribing (staff/super-user views). */
 export function loadProgress(profileId: string): ProgressState {
   return readProgress(profileId);
+}
+
+/** Persist and verify the latest learner progress locally and in the cloud. */
+export async function flushProgress(profileId: string): Promise<void> {
+  const key = progressKey(profileId);
+  const value = await flushUnitPack(key);
+  await flushValue(key, value, cloudEnabled);
 }
 
 export function useProgress(profileId: string) {

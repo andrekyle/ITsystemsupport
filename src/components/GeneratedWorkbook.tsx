@@ -14,11 +14,12 @@ interface MarkResult {
   feedback: string;
 }
 
-export function GeneratedWorkbook({ workbook, memoItems, values, onChange }: {
+export function GeneratedWorkbook({ workbook, memoItems, values, onChange, onSave }: {
   workbook: WorkbookSpec;
   memoItems: WorkbookMemoItem[];
   values: Values;
   onChange: Save;
+  onSave: () => Promise<void>;
 }) {
   const [marking, setMarking] = useState(false);
   const [error, setError] = useState("");
@@ -76,9 +77,9 @@ export function GeneratedWorkbook({ workbook, memoItems, values, onChange }: {
 
   return <section className="generated-workbook">
     <div className="lw-workbook-actions no-print">
-      <div className="lw-workbook-actions-copy"><strong>Workbook tools</strong><span>Answers save automatically. You can also use Save before leaving the workbook, export it, or mark it with AI.</span></div>
+      <div className="lw-workbook-actions-copy"><strong>Workbook tools</strong><span>Answers save automatically. Save verifies the latest content on this device and in the cloud before you leave.</span></div>
       <div className="lw-workbook-actions-controls">
-        <DocumentActions name={workbook.title} />
+        <DocumentActions name={workbook.title} onSave={onSave} />
         <button type="button" className="btn lw-mark-workbook" disabled={marking || !memoItems.length} onClick={() => void mark()}>
           <Icon name="robot" size={17} />
           {marking ? "Marking answers…" : memoItems.length ? "Mark workbook" : "Upload memo to mark"}

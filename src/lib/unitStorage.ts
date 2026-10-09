@@ -27,6 +27,13 @@ export async function persistUnitPack(key:string,value:string){
   // Bypass sync's removeItem wrapper: migration is not a shared deletion.
   try { Storage.prototype.removeItem.call(localStorage,key); } catch { /* cache cleanup is best effort */ }
 }
+/** Make the latest cached value durable before a user leaves an editor. */
+export async function flushUnitPack(key:string):Promise<string> {
+  const value=unitPackSnapshot(key);
+  if(value===null)throw new Error("The latest saved content is not available yet. Wait a moment and try again.");
+  await persistUnitPack(key,value);
+  return value;
+}
 export async function loadUnitPack(key:string):Promise<void> {
   if(cache.has(key))return;
   const existing=loads.get(key);

@@ -14,7 +14,7 @@ import { Icon } from "../icons";
 import { ConfirmModal } from "../components/Modal";
 import { FitSheet } from "../components/FitSheet";
 import { DateTimePicker } from "../components/DateTimePicker";
-import { flushKey, hasPendingCloudWrite } from "../lib/sync";
+import { flushKey, hasPendingCloudWrite, writeFromCloud } from "../lib/sync";
 
 /**
  * Attendance Register — exact replica of the Eruditio paper form.
@@ -132,7 +132,7 @@ function readReg(key: string): AttData {
   return normalizeReg({ ...data, rows, order });
 }
 
-async function pullLatest(key: string): Promise<AttData | null> {
+async function pullLatest(key: string, strict = false): Promise<AttData | null> {
   if (!supabase) return null;
   try {
     const dateIso = key.slice("itss.attendance.".length);
@@ -144,6 +144,8 @@ async function pullLatest(key: string): Promise<AttData | null> {
         .eq("tenant_id", TENANT_ID)
         .like("key", `itss.attendance.${dateIso}.row.%`),
     ]);
+    if (registerResult.error) throw registerResult.error;
+    if (rowResult.error) throw rowResult.error;
     let merged: AttData = registerResult.data?.value
       ? normalizeReg({ ...EMPTY, ...(JSON.parse(registerResult.data.value) as Partial<AttData>) })
       : { header: {}, rows: {}, order: [] };
@@ -162,10 +164,20 @@ async function pullLatest(key: string): Promise<AttData | null> {
       }
     }
     if (registerResult.data?.value || Object.keys(merged.rows).length) return normalizeReg(merged);
-  } catch {
+  } catch (error) {
+    if (strict) throw error;
     /* offline — use local copy */
   }
   return null;
+}
+
+/** Cache a successful cloud refresh without echoing the downloaded snapshot
+ * back as a new write, which could race with a learner signing. */
+function cachePulledRegister(dateIso: string, data: AttData): void {
+  writeFromCloud(attKey(dateIso), JSON.stringify(compactReg(data)));
+  for (const [profileId, row] of Object.entries(data.rows)) {
+    writeFromCloud(attRowKey(dateIso, profileId), JSON.stringify(row));
+  }
 }
 
 /** Every register key: those on this device plus any others in the cloud. */
@@ -431,7 +443,7 @@ export function AttendancePage({
           // and are merged back into the downloaded register below.
         }
       }
-      const latest = await pullLatest(storageKey);
+      const latest = await pullLatest(storageKey, !!supabase);
       if (latest) {
         // Keep a newly signed local row while its cloud write is still queued.
         const myLocalRow = local.rows[profile.id];
@@ -444,7 +456,7 @@ export function AttendancePage({
                 : [...latest.order, profile.id],
             }
           : latest;
-        writeReg(storageKey, next);
+        cachePulledRegister(dateIso, next);
         setReg(next);
       } else {
         setReg(local);
@@ -457,7 +469,18 @@ export function AttendancePage({
         } catch {
           setAttendanceNote("Signature saved. Cloud sync is pending — tap Refresh to retry.");
         }
+      } else if (supabase) {
+        const count = Object.keys((latest ?? local).rows).length;
+        setAttendanceNote(`Register refreshed — ${count} learner${count === 1 ? "" : "s"} signed.`);
       }
+    } catch (error) {
+      console.error("Attendance refresh failed:", error);
+      setReg(readReg(storageKey));
+      const detail = error && typeof error === "object" && "message" in error ? String(error.message) : "";
+      const setupProblem = /tenant_id|current_tenant|schema cache|column/i.test(detail);
+      setAttendanceNote(setupProblem
+        ? "Refresh failed — the production database migration has not been applied. Run the latest Supabase migration, then retry."
+        : "Refresh failed — the cloud register could not be loaded. Check the connection and try again.");
     } finally {
       setRefreshing(false);
     }

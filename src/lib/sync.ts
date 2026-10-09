@@ -66,6 +66,7 @@ export function hasPendingCloudWrite(key: string): boolean {
   return !!pendingFor(key);
 }
 const pushes = new Map<string, Promise<boolean>>();
+const pushErrors = new Map<string, string>();
 
 /** Store a value that was just pulled FROM the cloud without echoing it back
  *  up — an echo could land after someone else's newer save and undo it. */
@@ -145,10 +146,15 @@ async function pushKey(key: string, value: string | null) {
             { onConflict: "user_id,key" }
           );
       }
-      if (result.error) return false;
+      if (result.error) {
+        pushErrors.set(key, result.error.message || "The database rejected the save.");
+        return false;
+      }
       if (pending) await forgetPendingWrite(pending);
+      pushErrors.delete(key);
       return true;
-    } catch {
+    } catch (error) {
+      pushErrors.set(key, error instanceof Error ? error.message : "The cloud request failed.");
       // Keep the durable pending write for the next connection or reload.
       return false;
     }
@@ -205,7 +211,12 @@ export async function flushValue(
     }
   }
   const saved = await pushKey(key, value);
-  if (requireCloud && !saved) throw new Error("Cloud save failed. Check your connection and try Save to cloud again. Your edits are still on this device.");
+  if (requireCloud && !saved) {
+    const detail = pushErrors.get(key);
+    throw new Error(detail
+      ? `Cloud save failed: ${detail}. Your edits are still on this device.`
+      : "Cloud save failed. Check your connection and try Save to cloud again. Your edits are still on this device.");
+  }
   if (requireCloud && pendingFor(key)) throw new Error("More edits were made while saving. Click Save to cloud again to save the latest changes.");
 }
 
