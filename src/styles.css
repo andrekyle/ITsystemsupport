@@ -2039,28 +2039,31 @@ td .with-ico .ico {
 .tenant-location { margin:-4px 0 18px; color:var(--ink-3); font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; }
 .header-tenant-logo { width:auto; height:30px; max-width:156px; object-fit:contain; }
 
-/* Discovery white-label auth: inspired by Discovery's high-contrast product
-   presentation while keeping the learning sign-in simple and accessible. */
+/* Discovery white-label auth: spacious, product-led landing page. */
 .discovery-gate {
   position: relative;
   overflow: hidden;
   justify-content: flex-end;
   min-height: 100vh;
-  padding: 56px clamp(32px, 8vw, 150px);
-  color: #fff;
+  padding: 64px clamp(32px, 8vw, 150px);
+  color: #161617;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
   background:
-    radial-gradient(circle at 18% 18%, rgba(242, 0, 100, .13), transparent 30%),
-    linear-gradient(135deg, #202224 0%, #292b2d 52%, #202224 100%);
+    radial-gradient(circle at 10% 8%, rgba(245, 0, 100, .12), transparent 27%),
+    radial-gradient(circle at 72% 90%, rgba(63, 110, 255, .11), transparent 32%),
+    linear-gradient(145deg, #fafafa 0%, #f2f2f4 52%, #e9eaed 100%);
 }
 
 .discovery-gate::before {
   content: "";
   position: absolute;
-  inset: 0;
-  opacity: .2;
-  background-image: radial-gradient(rgba(255,255,255,.25) .7px, transparent .7px);
-  background-size: 18px 18px;
-  mask-image: linear-gradient(90deg, #000, transparent 64%);
+  width: 520px;
+  height: 520px;
+  left: 25%;
+  bottom: -330px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(245,0,100,.18), rgba(125,79,255,.12));
+  filter: blur(10px);
   pointer-events: none;
 }
 
@@ -2068,12 +2071,13 @@ td .with-ico .ico {
   position: relative;
   z-index: 2;
   width: 460px;
-  padding: 44px 46px;
+  padding: 46px 48px;
   color: #17181a;
-  background: rgba(255,255,255,.98);
-  border: 0;
-  border-radius: 2px;
-  box-shadow: 0 28px 80px rgba(0,0,0,.34);
+  background: rgba(255,255,255,.72);
+  border: 1px solid rgba(255,255,255,.9);
+  border-radius: 28px;
+  box-shadow: 0 30px 80px rgba(36,38,44,.14), inset 0 1px 0 rgba(255,255,255,.92);
+  backdrop-filter: blur(28px) saturate(140%);
 }
 
 .discovery-gate .gate-card::before {
@@ -2082,21 +2086,22 @@ td .with-ico .ico {
   top: 0;
   left: 0;
   width: 100%;
-  height: 6px;
-  background: #f50064;
+  height: 4px;
+  border-radius: 28px 28px 0 0;
+  background: linear-gradient(90deg, #f50064, #ff4e98);
 }
 
 .discovery-gate .gate-card .logo { margin-bottom: 14px; }
 .discovery-gate .tenant-logo { max-width: 238px; max-height: 68px; }
-.discovery-gate .tenant-location { margin: 0 0 28px; color: #686b70; letter-spacing: .14em; }
-.discovery-gate .gate-card h1 { font-size: 30px; font-weight: 750; letter-spacing: -.025em; }
+.discovery-gate .tenant-location { margin: 0 0 30px; color: #707075; letter-spacing: .12em; }
+.discovery-gate .gate-card h1 { font-size: 32px; font-weight: 700; letter-spacing: -.035em; }
 .discovery-gate .gate-card .sub { color: #5a5d62; }
-.discovery-gate .field label { color: #25272a; font-weight: 700; }
-.discovery-gate .field input { min-height: 48px; border-color: #c8c9cb; border-radius: 2px; background: #fff; }
-.discovery-gate .field input:focus { border-color: #f50064; box-shadow: 0 0 0 2px rgba(245,0,100,.13); }
-.discovery-gate .btn:not(.ghost) { min-height: 50px; border-color: #f50064; border-radius: 2px; color: #fff; background: #f50064; font-weight: 750; letter-spacing: .035em; }
-.discovery-gate .btn:not(.ghost):hover { border-color: #d80058; background: #d80058; }
-.discovery-gate .btn.ghost { color: #242629; border-color: #bfc1c4; border-radius: 2px; }
+.discovery-gate .field label { color: #25272a; font-weight: 650; }
+.discovery-gate .field input { min-height: 50px; border-color: #d2d2d7; border-radius: 12px; background: rgba(255,255,255,.88); }
+.discovery-gate .field input:focus { border-color: #f50064; box-shadow: 0 0 0 4px rgba(245,0,100,.1); }
+.discovery-gate .btn:not(.ghost) { min-height: 50px; border-color: #f50064; border-radius: 999px; color: #fff; background: #f50064; font-weight: 700; letter-spacing: .01em; box-shadow:0 8px 22px rgba(245,0,100,.2); }
+.discovery-gate .btn:not(.ghost):hover { border-color: #d80058; background: #d80058; transform:translateY(-1px); }
+.discovery-gate .btn.ghost { color: #242629; border-color: #d2d2d7; border-radius: 999px; background:rgba(255,255,255,.4); }
 .discovery-gate .divider { color: #777a7f; }
 .discovery-gate .auth-error { color: #bd004e; }
 
@@ -2111,11 +2116,11 @@ td .with-ico .ico {
   flex-direction: column;
   justify-content: center;
 }
-.discovery-hero-logo { position:absolute; top:54px; left:0; width:min(280px,32vw); height:82px; object-fit:contain; object-position:left center; filter:brightness(0) invert(1); }
-.discovery-auth-showcase > p { margin: 0 0 10px; color: #ff1b78; font-size: 13px; font-weight: 800; letter-spacing: .22em; }
-.discovery-auth-showcase h2 { max-width: 650px; margin: 0 0 34px; color: #fff; font-size: clamp(48px, 5.5vw, 82px); line-height: .96; letter-spacing: -.05em; }
-.discovery-hero-rule { width:84px; height:7px; margin-bottom:24px; background:#f50064; }
-.discovery-auth-showcase .discovery-hero-copy { margin:0; color:#d4d5d6; font-size:clamp(16px,1.4vw,21px); font-weight:500; letter-spacing:.01em; }
+.discovery-hero-logo { position:absolute; top:52px; left:0; width:min(280px,32vw); height:82px; object-fit:contain; object-position:left center; }
+.discovery-auth-showcase > p { margin: 0 0 14px; color: #f50064; font-size: 12px; font-weight: 750; letter-spacing: .2em; }
+.discovery-auth-showcase h2 { max-width: 690px; margin: 0 0 34px; color: #161617; font-size: clamp(58px, 6.4vw, 96px); font-weight:750; line-height: .94; letter-spacing: -.065em; }
+.discovery-hero-rule { width:72px; height:5px; margin-bottom:24px; border-radius:999px; background:#f50064; }
+.discovery-auth-showcase .discovery-hero-copy { margin:0; color:#6e6e73; font-size:clamp(17px,1.5vw,22px); font-weight:500; letter-spacing:-.015em; }
 
 @media (max-width: 980px) {
   .discovery-gate { justify-content:center; padding:32px 20px; }
