@@ -5779,6 +5779,7 @@ export function UnitPage({
             <Quiz
               key={active.id}
               questions={active.questions}
+              draftKey={isPrivileged ? undefined : `itss.quizdraft.${profile.id}.${courseScopedUnit(u.us)}.${active.id}`}
               onEdit={inlineUnit ? questions => setInlineUnit(current => current ? { ...current, quizzes: current.quizzes?.map(q => q.id === active.id ? { ...q, questions } : q) } : current) : undefined}
               previous={results[active.id]}
               onSubmit={(score, total, attempt) => saveQuizResult(u.us, score, total, active.id, attempt)}
@@ -5804,7 +5805,9 @@ export function UnitPage({
             </p>
           </div>
           <Quiz
+            key={`${courseScopedUnit(u.us)}-knowledge-check`}
             questions={content.quiz}
+            draftKey={isPrivileged ? undefined : `itss.quizdraft.${profile.id}.${courseScopedUnit(u.us)}.knowledge-check`}
             onEdit={inlineUnit ? quiz => setInlineUnit(current => current ? { ...current, quiz } : current) : undefined}
             previous={quizResult}
             onSubmit={(score, total, attempt) => saveQuizResult(u.us, score, total, undefined, attempt)}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { InlineText } from "./InlineText";
 import { Icon } from "../icons";
 import type { QuizQuestion, QuizResult } from "../types";
@@ -22,6 +22,20 @@ type MatchAns = { kind: "match"; picks: Record<number, number> }; // leftIdx -> 
 export type Ans = ChoiceAns | OrderAns | MatchAns;
 export type QuizAttemptAnswers = Record<number, Ans>;
 
+function questionFingerprint(questions: QuizQuestion[]): string {
+  return JSON.stringify(questions.map(q => [q.kind ?? "choice", q.q, q.options?.length, q.items?.length, q.pairs?.length]));
+}
+
+function readDraft(key: string | undefined, fingerprint: string): Record<number, Ans> {
+  if (!key) return {};
+  try {
+    const saved = JSON.parse(localStorage.getItem(key) ?? "null") as { fingerprint?: string; answers?: Record<number, Ans> } | null;
+    return saved?.fingerprint === fingerprint && saved.answers ? saved.answers : {};
+  } catch {
+    return {};
+  }
+}
+
 export function Quiz({
   questions,
   previous,
@@ -29,6 +43,7 @@ export function Quiz({
   showAnswers = false,
   numberPrefix,
   onEdit,
+  draftKey,
 }: {
   questions: QuizQuestion[];
   onEdit?: (questions: QuizQuestion[]) => void;
@@ -40,12 +55,28 @@ export function Quiz({
   showAnswers?: boolean;
   /** Exam-paper numbering, e.g. "1.1" renders question numbers 1.1.1, 1.1.2, … */
   numberPrefix?: string;
+  /** Private per-learner key used to retain an unfinished attempt. */
+  draftKey?: string;
 }) {
-  const [answers, setAnswers] = useState<Record<number, Ans>>({});
+  const fingerprint = useMemo(() => questionFingerprint(questions), [questions]);
+  const [answers, setAnswers] = useState<Record<number, Ans>>(() => readDraft(draftKey, fingerprint));
   const [submitted, setSubmitted] = useState(false);
   const [dragFrom, setDragFrom] = useState<{ qi: number; idx: number } | null>(null);
   const [matchSel, setMatchSel] = useState<{ qi: number; leftIdx: number } | null>(null);
   const [showKey, setShowKey] = useState(false);
+
+  useEffect(() => {
+    if (!draftKey || submitted) return;
+    try {
+      if (Object.keys(answers).length) {
+        localStorage.setItem(draftKey, JSON.stringify({ fingerprint, answers }));
+      } else {
+        localStorage.removeItem(draftKey);
+      }
+    } catch (error) {
+      console.error("Quiz draft could not be saved:", error);
+    }
+  }, [answers, draftKey, fingerprint, submitted]);
 
   // Precompute the shuffled display orders (stable across renders using question index seeds).
   // A fresh mount seed each attempt stops the answer from always sitting in the same slot.
@@ -113,6 +144,7 @@ export function Quiz({
   const pct = Math.round((score / questions.length) * 100);
 
   function submit() {
+    if (draftKey) localStorage.removeItem(draftKey);
     setSubmitted(true);
     // stamp each choice answer with its display order so reviews can mirror
     // exactly what the learner saw on screen
@@ -129,6 +161,7 @@ export function Quiz({
   }
 
   function retake() {
+    if (draftKey) localStorage.removeItem(draftKey);
     setAnswers({});
     setSubmitted(false);
     setDragFrom(null);
