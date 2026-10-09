@@ -2039,6 +2039,97 @@ td .with-ico .ico {
 .tenant-location { margin:-4px 0 18px; color:var(--ink-3); font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; }
 .header-tenant-logo { width:auto; height:30px; max-width:156px; object-fit:contain; }
 
+/* Discovery white-label auth: inspired by Discovery's high-contrast product
+   presentation while keeping the learning sign-in simple and accessible. */
+.discovery-gate {
+  position: relative;
+  overflow: hidden;
+  justify-content: flex-end;
+  min-height: 100vh;
+  padding: 56px clamp(32px, 8vw, 150px);
+  color: #fff;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(242, 0, 100, .13), transparent 30%),
+    linear-gradient(135deg, #202224 0%, #292b2d 52%, #202224 100%);
+}
+
+.discovery-gate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: .2;
+  background-image: radial-gradient(rgba(255,255,255,.25) .7px, transparent .7px);
+  background-size: 18px 18px;
+  mask-image: linear-gradient(90deg, #000, transparent 64%);
+  pointer-events: none;
+}
+
+.discovery-gate .gate-card {
+  position: relative;
+  z-index: 2;
+  width: 460px;
+  padding: 44px 46px;
+  color: #17181a;
+  background: rgba(255,255,255,.98);
+  border: 0;
+  border-radius: 2px;
+  box-shadow: 0 28px 80px rgba(0,0,0,.34);
+}
+
+.discovery-gate .gate-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  background: #f50064;
+}
+
+.discovery-gate .gate-card .logo { margin-bottom: 14px; }
+.discovery-gate .tenant-logo { max-width: 238px; max-height: 68px; }
+.discovery-gate .tenant-location { margin: 0 0 28px; color: #686b70; letter-spacing: .14em; }
+.discovery-gate .gate-card h1 { font-size: 30px; font-weight: 750; letter-spacing: -.025em; }
+.discovery-gate .gate-card .sub { color: #5a5d62; }
+.discovery-gate .field label { color: #25272a; font-weight: 700; }
+.discovery-gate .field input { min-height: 48px; border-color: #c8c9cb; border-radius: 2px; background: #fff; }
+.discovery-gate .field input:focus { border-color: #f50064; box-shadow: 0 0 0 2px rgba(245,0,100,.13); }
+.discovery-gate .btn:not(.ghost) { min-height: 50px; border-color: #f50064; border-radius: 2px; color: #fff; background: #f50064; font-weight: 750; letter-spacing: .035em; }
+.discovery-gate .btn:not(.ghost):hover { border-color: #d80058; background: #d80058; }
+.discovery-gate .btn.ghost { color: #242629; border-color: #bfc1c4; border-radius: 2px; }
+.discovery-gate .divider { color: #777a7f; }
+.discovery-gate .auth-error { color: #bd004e; }
+
+.discovery-auth-showcase {
+  position: absolute;
+  z-index: 1;
+  left: clamp(36px, 8vw, 150px);
+  top: 50%;
+  width: min(52vw, 720px);
+  transform: translateY(-50%);
+}
+.discovery-auth-showcase > p { margin: 0 0 10px; color: #ff1b78; font-size: 13px; font-weight: 800; letter-spacing: .22em; }
+.discovery-auth-showcase h2 { max-width: 650px; margin: 0 0 44px; color: #fff; font-size: clamp(42px, 5vw, 72px); line-height: .98; letter-spacing: -.045em; }
+.discovery-product-cards { display: flex; align-items: flex-end; gap: clamp(12px, 1.6vw, 24px); }
+.discovery-product-card { position: relative; display: block; width: clamp(92px, 10vw, 146px); aspect-ratio: .64; overflow: hidden; border-radius: 12px; box-shadow: 0 20px 36px rgba(0,0,0,.28); transform: rotate(-2deg); }
+.discovery-product-card::before { content: "Discovery\A LEARN"; position: absolute; top: 16px; left: 14px; color: currentColor; font-size: clamp(8px, .72vw, 11px); font-weight: 750; line-height: 1.25; white-space: pre; }
+.discovery-product-card::after { content: ""; position: absolute; left: 50%; top: 49%; width: 34%; aspect-ratio: 1; border: 5px double currentColor; transform: translate(-50%,-50%) rotate(45deg); opacity: .62; }
+.discovery-product-card i { position: absolute; right: 13px; bottom: 13px; width: 38%; height: 8px; border-radius: 999px; background: currentColor; opacity: .7; }
+.discovery-product-card.gold { color:#a47b37; background:linear-gradient(145deg,#fff,#eee7db); }
+.discovery-product-card.silver { color:#f4f4f4; background:linear-gradient(145deg,#9a9b9e,#64666a); transform:translateY(10px) rotate(1deg); }
+.discovery-product-card.midnight { color:#f2f0f8; background:linear-gradient(145deg,#24243a,#11121c); transform:rotate(-1deg); }
+.discovery-product-card.magenta { color:#fff; background:linear-gradient(145deg,#b12a8f,#74126a); transform:translateY(8px) rotate(2deg); }
+
+@media (max-width: 980px) {
+  .discovery-gate { justify-content:center; padding:32px 20px; }
+  .discovery-auth-showcase { display:none; }
+}
+
+@media (max-width: 520px) {
+  .discovery-gate { padding:0; background:#fff; }
+  .discovery-gate .gate-card { width:100%; min-height:100vh; padding:38px 26px; box-shadow:none; }
+}
+
 .gate-card h1 {
   font-size: 23px;
   font-weight: 600;

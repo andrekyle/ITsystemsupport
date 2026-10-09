@@ -127,7 +127,19 @@ export function CloudAuth() {
   }
 
   return (
-    <div className="gate">
+    <div className={`gate${TENANT_ID === "discovery" ? " discovery-gate" : ""}`}>
+      {TENANT_ID === "discovery" && (
+        <div className="discovery-auth-showcase" aria-hidden="true">
+          <p>LEARN. GROW. LEAD.</p>
+          <h2>Build what comes next.</h2>
+          <div className="discovery-product-cards">
+            <span className="discovery-product-card gold"><i /></span>
+            <span className="discovery-product-card silver"><i /></span>
+            <span className="discovery-product-card midnight"><i /></span>
+            <span className="discovery-product-card magenta"><i /></span>
+          </div>
+        </div>
+      )}
       <div className="gate-card">
         <div className="logo">
           <TenantLogo />
@@ -221,7 +233,7 @@ export function ResetPassword({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <div className="gate">
+    <div className={`gate${TENANT_ID === "discovery" ? " discovery-gate" : ""}`}>
       <div className="gate-card">
         <div className="logo">
           <TenantLogo />
