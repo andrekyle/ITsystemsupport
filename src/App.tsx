@@ -30,6 +30,7 @@ import { cloudEnabled, supabase } from "./lib/supabase";
 import { installSync, startSync, stopSync, wipeLocalData } from "./lib/sync";
 import { logAudit } from "./lib/audit";
 import { Icon } from "./icons";
+import { authTenant, TENANT_ID } from "./lib/tenant";
 
 // mirror every itss.* localStorage write to the cloud (no-op until signed in)
 installSync();
@@ -249,6 +250,11 @@ export default function App() {
         return;
       }
       if (session?.user) {
+        const accountTenant = authTenant(session.user) ?? "investec";
+        if (accountTenant !== TENANT_ID) {
+          void sb.auth.signOut();
+          return;
+        }
         setAccountEmail(session.user.email);
         syncedEmail.current = session.user.email?.trim().toLowerCase() ?? null;
         if (syncedUser.current !== session.user.id) {

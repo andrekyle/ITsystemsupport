@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import type { EnrolmentInfo, PoeDoc, Profile, ProgressState } from "../types";
 import { loadChecklistTicks, loadPoeDocs, loadProgress } from "../store";
+import { TENANT_ID } from "./tenant";
 
 export interface CloudDirectory {
   /** profiles synced by other signed-in accounts (this account's own rows excluded) */
@@ -117,8 +118,8 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
   const me = auth.user?.id;
 
   const [profRes, poeRes] = await Promise.all([
-    supabase.from("app_state").select("user_id,value").eq("key", "itss.profiles"),
-    supabase.from("app_state").select("user_id,key,value").like("key", "itss.poe.%"),
+    supabase.from("app_state").select("user_id,value").eq("tenant_id", TENANT_ID).eq("key", "itss.profiles"),
+    supabase.from("app_state").select("user_id,key,value").eq("tenant_id", TENANT_ID).like("key", "itss.poe.%"),
   ]);
   if (profRes.error || poeRes.error) return null;
 
@@ -208,6 +209,7 @@ export async function purgeOwnProfileCopy(profileId: string): Promise<string | n
     .from("app_state")
     .select("value")
     .eq("user_id", me)
+    .eq("tenant_id", TENANT_ID)
     .eq("key", "itss.profiles")
     .maybeSingle();
   if (readErr) return `Could not read cloud profiles: ${readErr.message}`;
@@ -222,6 +224,7 @@ export async function purgeOwnProfileCopy(profileId: string): Promise<string | n
     const { error: writeErr } = await supabase.from("app_state").upsert(
       {
         user_id: me,
+        tenant_id: TENANT_ID,
         key: "itss.profiles",
         value: JSON.stringify(list),
         updated_at: new Date().toISOString(),
@@ -244,6 +247,7 @@ export async function purgeOwnProfileCopy(profileId: string): Promise<string | n
     .from("app_state")
     .delete()
     .eq("user_id", me)
+    .eq("tenant_id", TENANT_ID)
     .in("key", dataKeys);
   if (delErr) return `Could not delete cloud data rows: ${delErr.message}`;
   return null;
@@ -265,8 +269,8 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
   if (!supabase) return null;
   const [dir, progRes, checkRes] = await Promise.all([
     fetchCloudDirectory(),
-    supabase.from("app_state").select("user_id,key,value").like("key", "itss.progress.%"),
-    supabase.from("app_state").select("user_id,key,value").like("key", "itss.checklist.%"),
+    supabase.from("app_state").select("user_id,key,value").eq("tenant_id", TENANT_ID).like("key", "itss.progress.%"),
+    supabase.from("app_state").select("user_id,key,value").eq("tenant_id", TENANT_ID).like("key", "itss.checklist.%"),
   ]);
   if (!dir) return null;
 
@@ -309,6 +313,7 @@ export async function fetchCloudProgress(
     .from("app_state")
     .select("value")
     .eq("user_id", owner)
+    .eq("tenant_id", TENANT_ID)
     .eq("key", `itss.progress.${profileId}`)
     .maybeSingle();
   if (error || !data) return null;
@@ -443,6 +448,7 @@ async function readOwnerProfiles(owner: string): Promise<Profile[] | null> {
     .from("app_state")
     .select("value")
     .eq("user_id", owner)
+    .eq("tenant_id", TENANT_ID)
     .eq("key", "itss.profiles")
     .maybeSingle();
   if (error || !data) return null;
@@ -458,6 +464,7 @@ async function writeOwnerProfiles(owner: string, profiles: Profile[]): Promise<s
   const { error } = await supabase.from("app_state").upsert(
     {
       user_id: owner,
+      tenant_id: TENANT_ID,
       key: "itss.profiles",
       value: JSON.stringify(profiles),
       updated_at: new Date().toISOString(),
@@ -501,6 +508,6 @@ export async function deleteCloudProfile(owner: string, profileId: string): Prom
     `itss.checklist.${profileId}`,
     `itss.sectiond.${profileId}`,
   ];
-  await supabase.from("app_state").delete().eq("user_id", owner).in("key", dataKeys);
+  await supabase.from("app_state").delete().eq("user_id", owner).eq("tenant_id", TENANT_ID).in("key", dataKeys);
   return null;
 }

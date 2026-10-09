@@ -1,5 +1,6 @@
 import type { Profile } from "../types";
 import { COURSE_META, MODULES } from "../data/course";
+import { TENANT_ID } from "./tenant";
 import { loadOutcomes } from "../store";
 import { docToolbar } from "./certificates";
 import { attendanceFilledRegisterDates } from "./gamification";
@@ -144,7 +145,7 @@ export async function fetchReportRegisterSessions(rows: LearnerRow[]): Promise<R
   }
   if (supabase) {
     try {
-      const { data } = await supabase.from("shared_state").select("key,value").like("key", "itss.attendance.%");
+      const { data } = await supabase.from("shared_state").select("key,value").eq("tenant_id", TENANT_ID).like("key", "itss.attendance.%");
       for (const item of data ?? []) if (typeof item.value === "string") values.set(item.key, item.value);
     } catch {
       /* offline: retain local register copies */

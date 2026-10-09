@@ -2035,6 +2035,10 @@ td .with-ico .ico {
   margin-bottom: 22px;
 }
 
+.tenant-logo { display:block; max-width:220px; max-height:58px; object-fit:contain; }
+.tenant-location { margin:-4px 0 18px; color:var(--ink-3); font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; }
+.header-tenant-logo { width:auto; height:30px; max-width:118px; object-fit:contain; }
+
 .gate-card h1 {
   font-size: 23px;
   font-weight: 600;

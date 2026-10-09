@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import { parseFormDefinition, type FormAnswers, type FormDefinition, type FormPage } from "./formSchema";
+import { TENANT_ID } from "./tenant";
 
 export interface SavedForm {
   id: string;
@@ -49,7 +50,7 @@ function databaseError(error: { message: string; code?: string }): Error {
 
 export async function listForms(): Promise<SavedForm[]> {
   if (!supabase) return readLocal<SavedForm[]>(LOCAL_FORMS_KEY, []);
-  const { data, error } = await supabase.from("forms").select(FORM_COLUMNS).order("created_at", { ascending: false });
+  const { data, error } = await supabase.from("forms").select(FORM_COLUMNS).eq("tenant_id", TENANT_ID).order("created_at", { ascending: false });
   if (error) throw databaseError(error);
   return (data ?? []).map(row => ({ ...row, definition: parseFormDefinition(row.definition) })) as SavedForm[];
 }
@@ -84,7 +85,7 @@ export async function saveFormTemplate(definition: FormDefinition, source: File 
     source_name: source?.name ?? "", source_type: source?.type ?? "", source_size: source?.size ?? 0, source_path: sourcePath,
   };
   if (supabase) {
-    const { data, error } = await supabase.from("forms").insert(template).select(FORM_COLUMNS).single();
+    const { data, error } = await supabase.from("forms").insert({ ...template, tenant_id: TENANT_ID }).select(FORM_COLUMNS).single();
     if (error || !data) {
       await discardStorage(sourcePath, uploaded);
       throw databaseError(error ?? { message: "The form was not saved." });
@@ -171,7 +172,7 @@ export async function saveFormResponse(formId: string, profileId: string, answer
     if (error || !data.user) throw new Error("Sign in to save your answers.");
     userId = data.user.id;
   }
-  const response: FormResponse = { form_id: formId, user_id: userId, profile_id: profileId, answers, updated_at: updatedAt };
+  const response: FormResponse & { tenant_id?: string } = { form_id: formId, user_id: userId, profile_id: profileId, answers, updated_at: updatedAt, ...(supabase ? { tenant_id: TENANT_ID } : {}) };
   if (supabase) {
     const { data, error } = await supabase.from("form_responses").upsert(response, { onConflict: "form_id,user_id,profile_id" }).select("form_id,user_id,profile_id,answers,updated_at").single();
     if (error || !data) throw databaseError(error ?? { message: "Your answers were not saved." });

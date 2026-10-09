@@ -4,6 +4,7 @@ import type { Profile, UnitStandard } from "../types";
 import { isStaff } from "../types";
 import { COURSE_META, MODULES, usLabel } from "../data/course";
 import { supabase } from "../lib/supabase";
+import { TENANT_ID } from "../lib/tenant";
 import { fileToSignature, reprocessSignature } from "../lib/signature";
 import { fetchCloudDirectory, updateCloudProfile } from "../lib/directory";
 import { loadProfiles, updateProfile } from "../store";
@@ -101,10 +102,11 @@ async function pullLatest(key: string): Promise<AttData | null> {
   try {
     const dateIso = key.slice("itss.attendance.".length);
     const [registerResult, rowResult] = await Promise.all([
-      supabase.from("shared_state").select("value").eq("key", key).maybeSingle(),
+      supabase.from("shared_state").select("value").eq("tenant_id", TENANT_ID).eq("key", key).maybeSingle(),
       supabase
         .from("shared_state")
         .select("key,value")
+        .eq("tenant_id", TENANT_ID)
         .like("key", `itss.attendance.${dateIso}.row.%`),
     ]);
     let merged: AttData = registerResult.data?.value
@@ -143,6 +145,7 @@ async function allRegisterKeys(): Promise<string[]> {
       const { data } = await supabase
         .from("shared_state")
         .select("key")
+        .eq("tenant_id", TENANT_ID)
         .like("key", "itss.attendance.%");
       for (const r of data ?? []) if (registerKeyPattern.test(r.key)) keys.add(r.key);
     } catch {

@@ -3,6 +3,7 @@ import { builtUnitKey, readBuiltUnit, unitPackValue, type BuiltUnitVersion } fro
 import { supabase } from "./supabase";
 import { loadUnitPack, persistUnitPack, rememberUnitPack, unitPackSnapshot } from "./unitStorage";
 import { courseScopedUnit } from "./courseScope";
+import { TENANT_ID } from "./tenant";
 
 const subscribe = (listener: () => void) => {
   window.addEventListener("storage", listener);
@@ -18,7 +19,7 @@ export async function saveBuiltUnit(us: string, next: BuiltUnitVersion): Promise
   const key = builtUnitKey(us);
   const value = unitPackValue(readBuiltUnit(us), next);
   if (supabase) {
-    const { error } = await supabase.from("shared_state").upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: "key" });
+    const { error } = await supabase.from("shared_state").upsert({ tenant_id: TENANT_ID, key, value, updated_at: new Date().toISOString() }, { onConflict: "tenant_id,key" });
     if (error) throw new Error(`The unit could not be saved to the shared course: ${error.message}`);
     // A full local cache must not turn a successful shared save into an error.
     await persistUnitPack(key,value).catch(()=>{});
@@ -37,7 +38,7 @@ export async function saveBuiltUnit(us: string, next: BuiltUnitVersion): Promise
 export async function deleteBuiltUnit(us: string): Promise<void> {
   const key = builtUnitKey(us);
   if (supabase) {
-    const { error } = await supabase.from("shared_state").delete().eq("key", key);
+    const { error } = await supabase.from("shared_state").delete().eq("tenant_id", TENANT_ID).eq("key", key);
     if (error) throw new Error(`The unit could not be deleted from the shared course: ${error.message}`);
   }
   // Delete from IndexedDB

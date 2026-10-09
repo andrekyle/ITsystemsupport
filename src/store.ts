@@ -6,6 +6,7 @@ import { cloudEnabled, supabase } from "./lib/supabase";
 import { flushKey, flushValue, writeFromCloud } from "./lib/sync";
 import { logAudit } from "./lib/audit";
 import { courseScopedUnit } from "./lib/courseScope";
+import { TENANT_ID } from "./lib/tenant";
 import { cachedLessonEdits, loadLessonEdits, queueLessonEdits, subscribeLessonEdits } from "./lib/lessonEditStore";
 import { unitPackSnapshot } from "./lib/unitStorage";
 import { SAVED_SIGNATURE_REFERENCE } from "./lib/signature";
@@ -1273,6 +1274,7 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
       };
       setMessages((prev) => [...prev, optimistic]);
       const { error } = await supabase.from("chat_messages").insert({
+        tenant_id: TENANT_ID,
         sender_user_id: myAuthId,
         recipient_user_id: otherAuthId,
         sender_profile_id: author.id,
@@ -1419,6 +1421,7 @@ export async function broadcastChatMessage(
   // one shared id across all copies — lets the sender edit the broadcast later
   const broadcastId = crypto.randomUUID();
   const rows = recipients.map((r) => ({
+    tenant_id: TENANT_ID,
     sender_user_id: senderAuthId,
     recipient_user_id: r.authUserId,
     sender_profile_id: sender.id,

@@ -3,6 +3,15 @@ import { Icon } from "../icons";
 import { supabase } from "../lib/supabase";
 import { COURSE_META } from "../data/course";
 import { PasswordInput } from "./PasswordInput";
+import { TENANT, TENANT_ID } from "../lib/tenant";
+
+function TenantLogo() {
+  return TENANT.logo ? (
+    <img className="tenant-logo" src={TENANT.logo} alt={`${TENANT.name} logo`} />
+  ) : (
+    <><Icon name="certificate" size={26} /> {TENANT.appName}</>
+  );
+}
 
 function savedAuthMode(): "signin" | "signup" {
   try {
@@ -62,7 +71,11 @@ export function CloudAuth() {
     setNotice(null);
     try {
       if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { tenant_id: TENANT_ID, company: TENANT.name } },
+        });
         if (error) setError(friendlyError(error.message, "signup"));
         else if (!data.session)
           setNotice("Account created — check your email inbox to confirm your address, then sign in.");
@@ -104,9 +117,9 @@ export function CloudAuth() {
     <div className="gate">
       <div className="gate-card">
         <div className="logo">
-          <Icon name="certificate" size={26} />
-          ITSS Learn
+          <TenantLogo />
         </div>
+        <div className="tenant-location">{TENANT.name} · {TENANT.location}</div>
         <h1>{mode === "signin" ? "Sign in to your account" : "Create your account"}</h1>
         <p className="sub">
           {COURSE_META.title} · SAQA ID {COURSE_META.saqaId} · NQF Level {COURSE_META.nqfLevel}.
@@ -198,8 +211,7 @@ export function ResetPassword({ onDone }: { onDone: () => void }) {
     <div className="gate">
       <div className="gate-card">
         <div className="logo">
-          <Icon name="certificate" size={26} />
-          ITSS Learn
+          <TenantLogo />
         </div>
         <h1>Choose a new password</h1>
         <p className="sub">Enter a new password for your account — you'll be signed in right away.</p>

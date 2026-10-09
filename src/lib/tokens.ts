@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { COURSE_META, findUnit } from "../data/course";
+import { TENANT_ID } from "./tenant";
 import {
   CONTENT_MODELS,
   MARKING_MODELS,
@@ -55,6 +56,7 @@ export async function recordTokenUsage(ev: TokenUsageEvent): Promise<void> {
     if (!uid) return;
     const moduleId = findUnit(ev.us)?.module.id ?? "";
     await supabase.from("token_usage").insert({
+      tenant_id: TENANT_ID,
       user_id: uid,
       qual: COURSE_META.saqaId,
       module_id: moduleId,
@@ -128,6 +130,7 @@ export async function fetchTokenRecords(from: Date, to: Date): Promise<TokenReco
     const { data, error } = await supabase
       .from("token_usage")
       .select("created_at,qual,module_id,us,model,prompt_tokens,completion_tokens,total_tokens")
+      .eq("tenant_id", TENANT_ID)
       .gte("created_at", from.toISOString())
       .lt("created_at", to.toISOString())
       .order("created_at", { ascending: true })

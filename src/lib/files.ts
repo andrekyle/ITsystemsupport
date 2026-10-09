@@ -1,5 +1,6 @@
 import { SUPABASE_ANON_KEY, SUPABASE_URL, supabase } from "./supabase";
 import type { PoeDoc } from "../types";
+import { TENANT_ID } from "./tenant";
 
 /**
  * File handling: uploads go to the Supabase Storage "files" bucket when cloud
@@ -26,7 +27,7 @@ function sanitize(name: string) {
 export async function userPrefix(): Promise<string> {
   if (!supabase) return "local";
   const { data } = await supabase.auth.getUser();
-  return data.user?.id ?? "local";
+  return data.user?.id ? `${TENANT_ID}/${data.user.id}` : "local";
 }
 
 /** Upload a file and return its document record (path in cloud mode, data-URL locally). */

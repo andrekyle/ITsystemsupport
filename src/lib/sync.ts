@@ -15,6 +15,7 @@ import {
   receiveOnboardingPacks,
   storedOnboardingPacks,
 } from "./onboardingStorage";
+import { TENANT_ID } from "./tenant";
 
 /**
  * Cloud sync for the app's localStorage state.
@@ -128,11 +129,11 @@ async function pushKey(key: string, value: string | null) {
       let result;
       if (isShared(key)) {
         if (value === null) {
-          result = await supabase.from("shared_state").delete().eq("key", key);
+          result = await supabase.from("shared_state").delete().eq("tenant_id", TENANT_ID).eq("key", key);
         } else {
           result = await supabase
             .from("shared_state")
-            .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: "key" });
+            .upsert({ tenant_id: TENANT_ID, key, value, updated_at: new Date().toISOString() }, { onConflict: "tenant_id,key" });
         }
       } else if (value === null) {
         result = await supabase.from("app_state").delete().eq("user_id", owner).eq("key", key);
@@ -140,7 +141,7 @@ async function pushKey(key: string, value: string | null) {
         result = await supabase
           .from("app_state")
           .upsert(
-            { user_id: owner, key, value, updated_at: new Date().toISOString() },
+            { user_id: owner, tenant_id: TENANT_ID, key, value, updated_at: new Date().toISOString() },
             { onConflict: "user_id,key" }
           );
       }
@@ -259,8 +260,8 @@ export async function startSync(authUserId: string): Promise<void> {
   const [own, shared] = await Promise.all([
     // app_state is readable across accounts (staff directory) — hydrate
     // strictly from THIS user's own rows
-    supabase.from("app_state").select("key,value").eq("user_id", authUserId),
-    supabase.from("shared_state").select("key,value"),
+    supabase.from("app_state").select("key,value").eq("user_id", authUserId).eq("tenant_id", TENANT_ID),
+    supabase.from("shared_state").select("key,value").eq("tenant_id", TENANT_ID),
   ]);
   if (own.error) return; // stay on local data rather than blocking the app
 

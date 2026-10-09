@@ -6,6 +6,7 @@ import { MODULES } from "../data/course";
 import { loadProfiles, useChatThreads } from "../store";
 import { notifyIncoming, syncUnreadBadge } from "../lib/notify";
 import { Avatar, fileToAvatar } from "./Avatar";
+import { TENANT } from "../lib/tenant";
 
 /** Session schedule derived from the US 8252 lesson plan (starts 09:00). */
 const PLAN = getContent("8252")?.lessonPlan;
@@ -260,8 +261,8 @@ export function Header({
         <Icon name="menu" size={19} />
       </button>
       <div className="brand">
-        <Icon name="certificate" size={24} color="var(--azure)" />
-        <span className="brand-name">ITSS Learn</span>
+        {TENANT.logo ? <img className="header-tenant-logo" src={TENANT.logo} alt={`${TENANT.name} logo`} /> : <Icon name="certificate" size={24} color="var(--azure)" />}
+        <span className="brand-name">{TENANT.appName}</span>
         <span className="brand-sub">System Support · NQF 5</span>
       </div>
       <SessionClock onOpenUnit={onOpenUnit} />

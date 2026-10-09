@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { TENANT_ID } from "./tenant";
 
 const cache = new Map<string, string>();
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -39,7 +40,7 @@ export async function loadLessonEdits<T>(key: string, fallback: T): Promise<T> {
     try { return JSON.parse(legacy) as T; } catch { return fallback; }
   }
   if (!supabase) return cachedLessonEdits(key, fallback);
-  const { data, error } = await supabase.from("shared_state").select("value").eq("key", key).maybeSingle();
+  const { data, error } = await supabase.from("shared_state").select("value").eq("tenant_id", TENANT_ID).eq("key", key).maybeSingle();
   if (error || !data?.value) return cachedLessonEdits(key, fallback);
   receiveLessonEdits(key, data.value);
   try { return JSON.parse(data.value) as T; } catch { return fallback; }
@@ -57,8 +58,8 @@ async function persist(key: string, value: string): Promise<void> {
     await previous?.catch(() => {});
     const latest = cache.get(key) ?? value;
     const { error } = await supabase.from("shared_state").upsert(
-      { key, value: latest, updated_at: new Date().toISOString() },
-      { onConflict: "key" },
+      { tenant_id: TENANT_ID, key, value: latest, updated_at: new Date().toISOString() },
+      { onConflict: "tenant_id,key" },
     );
     if (error) throw new Error(`Lesson edits could not be saved: ${error.message}`);
     // Remove a legacy oversized copy after the database has accepted it.
