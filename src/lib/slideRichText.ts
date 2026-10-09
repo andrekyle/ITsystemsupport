@@ -4,9 +4,14 @@ const PREFIX = "<!--slide-rich-->";
 // Treat all of those as the same marker so the HTML is sanitised and rendered
 // instead of escaped into visible `<!--slide-rich--><p ...>` text.
 const PREFIX_RE = /^[\s\uFEFF]*<!\s*--\s*slide-rich\s*--\s*>/i;
+// Affected legacy saves sometimes lost the marker while retaining the editor's
+// own HTML. Limit recovery to our known classes so examples containing generic
+// HTML such as `<p>` can still be displayed literally.
+const LEGACY_RICH_RE = /<(?:p|div|span|ul|ol|li|blockquote|h[1-4]|table|t[dh])\b[^>]*\bclass\s*=\s*["'][^"']*\b(?:lesson-[\w-]+|slide-[\w-]+|section-title|card-grid)\b[^"']*["'][^>]*>/i;
 const richPayload = (text: string): string | null => {
   const match = text.match(PREFIX_RE);
-  return match ? text.slice(match[0].length) : null;
+  if (match) return text.slice(match[0].length);
+  return LEGACY_RICH_RE.test(text) ? text : null;
 };
 export const isRichText = (text: string) => richPayload(text) !== null;
 
