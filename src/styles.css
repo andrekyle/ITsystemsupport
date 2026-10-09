@@ -2049,21 +2049,32 @@ td .with-ico .ico {
   color: #161617;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
   background:
-    radial-gradient(circle at 10% 8%, rgba(245, 0, 100, .12), transparent 27%),
-    radial-gradient(circle at 72% 90%, rgba(63, 110, 255, .11), transparent 32%),
-    linear-gradient(145deg, #fafafa 0%, #f2f2f4 52%, #e9eaed 100%);
+    radial-gradient(circle at 10% 8%, rgba(255,255,255,.17), transparent 26%),
+    linear-gradient(120deg, #2e2cf6 0%, #3938f3 48%, #6876cf 100%);
 }
 
 .discovery-gate::before {
   content: "";
   position: absolute;
-  width: 520px;
-  height: 520px;
-  left: 25%;
-  bottom: -330px;
+  width: min(76vw, 1050px);
+  height: min(76vw, 1050px);
+  left: -12vw;
+  bottom: -48%;
   border-radius: 50%;
-  background: linear-gradient(145deg, rgba(245,0,100,.18), rgba(125,79,255,.12));
-  filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.055);
+  pointer-events: none;
+}
+
+.discovery-gate::after {
+  content: "";
+  position: absolute;
+  width: min(58vw, 820px);
+  height: min(58vw, 820px);
+  right: -20vw;
+  top: -18%;
+  border-radius: 50%;
+  background: rgba(26,32,190,.22);
   pointer-events: none;
 }
 
@@ -2099,9 +2110,11 @@ td .with-ico .ico {
 .discovery-gate .field label { color: #25272a; font-weight: 650; }
 .discovery-gate .field input { min-height: 50px; border-color: #d2d2d7; border-radius: 12px; background: rgba(255,255,255,.88); }
 .discovery-gate .field input:focus { border-color: #f50064; box-shadow: 0 0 0 4px rgba(245,0,100,.1); }
-.discovery-gate .btn:not(.ghost) { min-height: 50px; border-color: #f50064; border-radius: 999px; color: #fff; background: #f50064; font-weight: 700; letter-spacing: .01em; box-shadow:0 8px 22px rgba(245,0,100,.2); }
+.discovery-gate .btn:not(.ghost) { min-height: 50px; border-color: #f50064; border-radius: 999px; color: #fff !important; background: #f50064; font-weight: 700; letter-spacing: .01em; box-shadow:0 8px 22px rgba(245,0,100,.2); }
+.discovery-gate .btn:not(.ghost) svg { color:#fff !important; }
 .discovery-gate .btn:not(.ghost):hover { border-color: #d80058; background: #d80058; transform:translateY(-1px); }
-.discovery-gate .btn.ghost { color: #242629; border-color: #d2d2d7; border-radius: 999px; background:rgba(255,255,255,.4); }
+.gate.discovery-gate .gate-card > .btn.ghost { color: #242629; border-color: #d2d2d7; border-radius: 999px; background:rgba(255,255,255,.4); }
+.gate.discovery-gate .gate-card > .btn.ghost + .btn.ghost { margin-top:12px; }
 .discovery-gate .divider { color: #777a7f; }
 .discovery-gate .auth-error { color: #bd004e; }
 
@@ -2116,11 +2129,11 @@ td .with-ico .ico {
   flex-direction: column;
   justify-content: center;
 }
-.discovery-hero-logo { position:absolute; top:52px; left:0; width:min(280px,32vw); height:82px; object-fit:contain; object-position:left center; }
+.discovery-hero-logo { position:absolute; top:52px; left:0; width:min(280px,32vw); height:82px; object-fit:contain; object-position:left center; filter:brightness(0) invert(1); }
 .discovery-auth-showcase > p { margin: 0 0 14px; color: #f50064; font-size: 12px; font-weight: 750; letter-spacing: .2em; }
-.discovery-auth-showcase h2 { max-width: 690px; margin: 0 0 34px; color: #161617; font-size: clamp(58px, 6.4vw, 96px); font-weight:750; line-height: .94; letter-spacing: -.065em; }
+.discovery-auth-showcase h2 { max-width: 690px; margin: 0 0 34px; color: #fff; font-size: clamp(58px, 6.4vw, 96px); font-weight:750; line-height: .94; letter-spacing: -.065em; }
 .discovery-hero-rule { width:72px; height:5px; margin-bottom:24px; border-radius:999px; background:#f50064; }
-.discovery-auth-showcase .discovery-hero-copy { margin:0; color:#6e6e73; font-size:clamp(17px,1.5vw,22px); font-weight:500; letter-spacing:-.015em; }
+.discovery-auth-showcase .discovery-hero-copy { margin:0; color:rgba(255,255,255,.76); font-size:clamp(17px,1.5vw,22px); font-weight:500; letter-spacing:-.015em; }
 
 @media (max-width: 980px) {
   .discovery-gate { justify-content:center; padding:32px 20px; }
