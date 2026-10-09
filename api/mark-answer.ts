@@ -108,7 +108,7 @@ Reply with STRICT JSON only, no prose:
 const MAX_ANSWER_LEN = 4000;
 const MAX_CONCEPTS = 12;
 const LLM_TIMEOUT_MS = 40_000;
-const BUILD = "20261004-1";
+const BUILD = "20261009-cost-optimized";
 
 /* ---- token savers ----
  * 1. Prompt caching: SYSTEM_PROMPT is a byte-identical prefix of every call
@@ -122,7 +122,7 @@ const BUILD = "20261004-1";
  *    question, or classmates submitting the same copied text. Cached replies
  *    report zero usage so the token gauge stays truthful. Best-effort: the
  *    Edge isolate may be recycled at any time. */
-const PROMPT_CACHE_KEY = "itss-marking-v1";
+const PROMPT_CACHE_KEY = "itss-marking-v2";
 const MEMO_TTL_MS = 15 * 60 * 1000;
 const MEMO_MAX = 300;
 interface MemoEntry {
@@ -274,6 +274,7 @@ export default async function handler(req: Request): Promise<Response> {
 
   interface Verdict {
     credited: string[];
+    uncertain: string[];
     reason: string;
     usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
     model: string;
@@ -299,6 +300,7 @@ export default async function handler(req: Request): Promise<Response> {
         ...paramsFor(model),
         response_format: { type: "json_object" },
         prompt_cache_key: PROMPT_CACHE_KEY,
+        prompt_cache_retention: "24h",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userMsgFor(subset) },
@@ -335,6 +337,7 @@ export default async function handler(req: Request): Promise<Response> {
     const answerNorm = norm(answer);
     const spentNorm = spentSentences.map(norm).filter(Boolean);
     let credited: string[] = [];
+    let uncertain: string[] = [];
     if (Array.isArray(parsed.scores)) {
       const eligible = parsed.scores
         .filter(
@@ -349,7 +352,7 @@ export default async function handler(req: Request): Promise<Response> {
             (s as { same_idea?: unknown }).same_idea === true &&
             typeof (s as { confidence?: unknown }).confidence === "number" &&
             validIds.has((s as { id: string }).id) &&
-            (s as { confidence: number }).confidence >= CREDIT_THRESHOLD
+            (s as { confidence: number }).confidence >= 0.72
         )
         .map((s) => ({
           id: s.id,
@@ -367,11 +370,13 @@ export default async function handler(req: Request): Promise<Response> {
       for (const s of eligible) {
         if (claimed.some((c) => c.includes(s.ev) || s.ev.includes(c))) continue;
         claimed.push(s.ev);
-        credited.push(s.id);
+        if (s.confidence >= CREDIT_THRESHOLD) credited.push(s.id);
+        else uncertain.push(s.id);
       }
     }
     return {
       credited,
+      uncertain,
       reason: typeof parsed.reason === "string" ? parsed.reason.slice(0, 200) : "",
       usage: {
         prompt_tokens: n(data.usage?.prompt_tokens),
@@ -385,17 +390,15 @@ export default async function handler(req: Request): Promise<Response> {
   try {
     let lastStatus = 0;
     let lastBody = "";
-    /** Majority-voted judgement over a concept subset. Returns null when every
-     *  run failed (fills lastStatus/lastBody for the fallback chain). */
+    /** Single judgement over a concept subset. Borderline results alone are
+     * escalated below; failures populate the model fallback state. */
     const judgeVoted = async (
       model: string,
       subset: Concept[]
-    ): Promise<{ credited: string[]; reason: string; usage: Verdict["usage"]; model: string; votes: number } | null> => {
-      // gpt-5 models run at a forced temperature of 1, so single calls can
-      // flip on borderline answers. Self-consistency: three parallel votes,
-      // credit only what the majority credits. Deterministic (temp-0) models
-      // need one call.
-      const runs = model.startsWith("gpt-5") ? 3 : 1;
+    ): Promise<{ credited: string[]; uncertain: string[]; reason: string; usage: Verdict["usage"]; model: string; votes: number } | null> => {
+      // One call handles normal answers. Only borderline concepts are sent
+      // for an isolated second opinion below.
+      const runs = 1;
       const settled = await Promise.all(
         Array.from({ length: runs }, () =>
           judgeOnce(model, subset).catch((e): Failure => {
@@ -428,7 +431,7 @@ export default async function handler(req: Request): Promise<Response> {
       const sameSet = (a: string[], b: string[]) =>
         a.length === b.length && a.every((x) => b.includes(x));
       const reason = (oks.find((v) => sameSet(v.credited, credited)) ?? oks[0]).reason;
-      return { credited, reason, usage, model: oks[0].model, votes: oks.length };
+      return { credited, uncertain: oks[0].uncertain, reason, usage, model: oks[0].model, votes: oks.length };
     };
 
     for (const model of modelChain) {
@@ -449,10 +452,10 @@ export default async function handler(req: Request): Promise<Response> {
       let credited = batch.credited;
       let reason = batch.reason;
       let usage = batch.usage;
-      if (credited.length > 0 && concepts.length > 1) {
+      if (batch.uncertain.length > 0 && concepts.length > 1) {
         const VERIFIER = "gpt-4.1-mini";
         const confirmations = await Promise.all(
-          credited.map(async (id) => {
+          batch.uncertain.map(async (id) => {
             const concept = concepts.find((c) => String(c.id) === id);
             if (!concept) return { id, confirmed: false, usage: null as Verdict["usage"] | null };
             const v =
@@ -473,11 +476,9 @@ export default async function handler(req: Request): Promise<Response> {
             };
           }
         }
-        const dropped = confirmations.filter((c) => !c.confirmed).map((c) => c.id);
-        if (dropped.length > 0) {
-          credited = credited.filter((id) => !dropped.includes(id));
-          reason = credited.length > 0 ? reason : "not confirmed on isolated re-check";
-        }
+        const added = confirmations.filter((c) => c.confirmed).map((c) => c.id);
+        if (added.length > 0) credited = [...new Set([...credited, ...added])];
+        else if (credited.length === 0) reason = "borderline meaning was not confirmed on isolated re-check";
       }
 
       // Memoise the final verdict so an identical request within the TTL

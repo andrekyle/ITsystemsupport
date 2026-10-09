@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { WorkbookMemoItem, WorkbookMemoTask } from "../store";
 import { Icon } from "../icons";
+import { workbookMarkFingerprint } from "../lib/workbookMarking";
 
 type Values = Record<string, string | boolean>;
 type Save = (key: string, value: string | boolean) => void;
@@ -11,6 +12,7 @@ interface TaskMark {
   feedback: string;
   correctSegments?: string[];
   incorrectSegments?: string[];
+  answerHash?: string;
 }
 
 function MarkedAnswer({ answer, correct, incorrect }: { answer: string; correct: string[]; incorrect: string[] }) {
@@ -93,7 +95,8 @@ export function WorkbookTaskAnswer({ outcomeId, task, memoItem, valueKey, markKe
       const next = data.results?.[0];
       if (!response.ok || !next) throw new Error(data.error || "The answer could not be marked.");
       onChange(valueKey, answer);
-      onChange(markKey, JSON.stringify(next));
+      const rubricTask = { id: task.id, task: task.task, text: task.text, marks: task.marks, modelAnswer: task.modelAnswer };
+      onChange(markKey, JSON.stringify({ ...next, answerHash: workbookMarkFingerprint(answer, { task: rubricTask, criteria }) }));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The answer could not be marked.");
     } finally {

@@ -1231,7 +1231,7 @@ export function ExerciseQuestion({
   savedOk: boolean;
   /** how many of the allowed checks the learner has already used */
   savedTries: number;
-  onSave: (text: string, ok: boolean) => void;
+  onSave: (text: string, ok: boolean, marks?: number) => void;
   /** persists the number of checks used */
   onTries: (n: number) => void;
   /** super user only — allows revealing the answer without a correct attempt */
@@ -1340,7 +1340,7 @@ export function ExerciseQuestion({
       setReviewedText(val);
       setReviewStatus({ kind: "ran", approved: approved.size, reason: res.reason });
       const rNow = scoreAnswer(val, check, approved, approved);
-      onSave(val, rNow.ok);
+      onSave(val, rNow.ok, rNow.marks);
     });
     return () => {
       alive = false;
@@ -2983,6 +2983,13 @@ export function UnitPage({
       let score = 0;
       for (let i = 0; i < ex.checks.length; i++) {
         const check = ex.checks[i];
+        const answerKey = `exq.${ex.id}.${i}`;
+        const reviewedText = String(progress.units[u.us]?.logbook?.[`${answerKey}.reviewedText`] ?? "");
+        const reviewedMarks = Number(progress.units[u.us]?.logbook?.[`${answerKey}.marks`]);
+        if (reviewedText === answers[i] && Number.isFinite(reviewedMarks) && reviewedMarks >= 0) {
+          score += Math.min(reviewedMarks, check.concepts.length * 2);
+          continue;
+        }
         const concepts = check.concepts.map((group, gi) => ({ id: `c${gi}`, label: check.labels?.[gi] ?? group[0], lessonLine: lessonLineFor(check, gi) ?? check.answer.join("\n") }));
         const result = await requestSemanticReview(answers[i], concepts, [], u.us);
         if (!result.ran || result.error) throw new Error("AI marking is unavailable. Your answers are kept; please submit again. No attempt was used.");
@@ -5432,9 +5439,11 @@ export function UnitPage({
                             savedTries={Number(lb[`exq.${ex.id}.${i}.tries`] ?? 0) || 0}
                             canReveal={isSuperUser}
                             unitUs={u.us}
-                            onSave={(text, okNow) => {
+                            onSave={(text, okNow, marks) => {
                               setLogbookField(u.us, `exq.${ex.id}.${i}`, text);
                               setLogbookField(u.us, `exq.${ex.id}.${i}.ok`, okNow);
+                              setLogbookField(u.us, `exq.${ex.id}.${i}.reviewedText`, marks === undefined ? "" : text);
+                              setLogbookField(u.us, `exq.${ex.id}.${i}.marks`, marks === undefined ? "" : String(marks));
                             }}
                             onTries={(n) => {
                               setLogbookField(u.us, `exq.${ex.id}.${i}.tries`, String(n));

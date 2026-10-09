@@ -7,6 +7,7 @@ import { Icon } from "../icons";
 import type { WorkbookMemoBlueprint } from "./WorkbookMemo";
 import { WorkbookTaskAnswer } from "./WorkbookTaskAnswer";
 import { canSignDocumentField } from "../lib/documentSignatures";
+import { workbookMarkFingerprint } from "../lib/workbookMarking";
 
 type Values = Record<string, string | boolean>;
 type Save = (key: string, value: string | boolean) => void;
@@ -108,23 +109,34 @@ export function LearnerWorkbook({ values, onChange, onSave, profile, memoItems }
     if (!memoItems.length || marking) return;
     setMarking(true); setMarkError("");
     try {
-      const markingItems = displayedOutcomes.flatMap(outcome => outcome.questions.map(question => {
+      const entries = displayedOutcomes.flatMap(outcome => outcome.questions.map((question, questionIndex) => {
         const outcomeId = `outcome-${outcome.no}`;
         const memoItem = memoItems.find(item => item.id === outcomeId);
         const memoTask = memoItem?.tasks?.find(task => task.id === question.id);
         const criteria = memoItem?.criteria.filter(criterion => criterion.taskId === question.id) ?? [];
         if (!memoItem || !memoTask || !criteria.length) throw new Error("Replace the memo PDF to enable marking for every question.");
-        return { id: `${outcomeId}--${question.id}`, question: question.text, maxMarks: question.mark, tasks: [memoTask], criteria };
+        const item = { id: `${outcomeId}--${question.id}`, question: question.text, maxMarks: question.mark, tasks: [memoTask], criteria };
+        const legacyId = questionIndex === 0 ? `${outcomeId}.page-1` : undefined;
+        const answer = questionAnswer(outcome.no, question.id, legacyId);
+        const answerHash = workbookMarkFingerprint(answer, { task: memoTask, criteria });
+        let cached: { awarded:number; maxMarks:number; feedback:string; answerHash?:string; id?:string; correctSegments?:string[]; incorrectSegments?:string[] } | undefined;
+        try { cached = JSON.parse(String(values[`learner-workbook.task-mark.${question.id}`] ?? "")); } catch { cached = undefined; }
+        return { item, answer, answerHash, cached };
       }));
-      const answers = displayedOutcomes.flatMap(outcome => outcome.questions.map((question, questionIndex) => {
-        const legacyId = questionIndex === 0 ? `outcome-${outcome.no}.page-1` : undefined;
-        return { id: `outcome-${outcome.no}--${question.id}`, answer: `Task ${question.task}: ${question.text}\n${questionAnswer(outcome.no, question.id, legacyId)}` };
-      }));
-      const response = await fetch("/api/workbook-memo", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({mode:"mark",items:markingItems,answers}) });
-      const data = await response.json() as { results?: Array<{id:string;awarded:number;maxMarks:number;feedback:string;matchedCriteria:string[];correctSegments?:string[];incorrectSegments?:string[]}>; error?:string };
-      if (!response.ok || !data.results) throw new Error(data.error || "The workbook could not be marked.");
+      const pending = entries.filter(entry => entry.cached?.answerHash !== entry.answerHash);
+      let fresh: Array<{id:string;awarded:number;maxMarks:number;feedback:string;matchedCriteria:string[];correctSegments?:string[];incorrectSegments?:string[]}> = [];
+      if (pending.length) {
+        const response = await fetch("/api/workbook-memo", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({mode:"mark",items:pending.map(entry=>entry.item),answers:pending.map(entry=>({id:entry.item.id,answer:entry.answer}))}) });
+        const data = await response.json() as { results?: typeof fresh; error?:string };
+        if (!response.ok || !data.results) throw new Error(data.error || "The workbook could not be marked.");
+        fresh = data.results;
+      }
       for (const outcome of displayedOutcomes) {
-        const taskResults = outcome.questions.map(question => data.results!.find(result => result.id === `outcome-${outcome.no}--${question.id}`)).filter((result): result is NonNullable<typeof result> => !!result);
+        const taskResults = outcome.questions.map(question => {
+          const entry = entries.find(candidate => candidate.item.id === `outcome-${outcome.no}--${question.id}`)!;
+          const result = fresh.find(candidate => candidate.id === entry.item.id) ?? entry.cached;
+          return result ? { ...result, answerHash: entry.answerHash } : undefined;
+        }).filter((result): result is NonNullable<typeof result> => !!result);
         if (taskResults.length !== outcome.questions.length) throw new Error(`Not every question in Specific Outcome ${outcome.no} was marked.`);
         outcome.questions.forEach((question, index) => onChange(`learner-workbook.task-mark.${question.id}`, JSON.stringify(taskResults[index])));
         const awarded = taskResults.reduce((total, result) => total + result.awarded, 0);
