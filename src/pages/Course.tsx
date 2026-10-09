@@ -96,6 +96,8 @@ async function downloadNotesZip(
 const EX_MAX_ATTEMPTS = 3;
 /** Maximum times a learner may CHECK a single activity question. */
 const EXQ_MAX_CHECKS = 2;
+/** Maximum saved answer size accepted by activity submission and AI marking. */
+const MAX_ACTIVITY_ANSWER_CHARS = 4000;
 const URL_RE = /(https?:\/\/[^\s)]+)/g;
 const BOLD_RE = /\*\*([^*]+)\*\*/g;
 
@@ -1290,6 +1292,10 @@ export function ExerciseQuestion({
     ? scoreAnswer(val, check, extras, meaningVerified ? extras : new Set())
     : null;
   const ok = meaningVerified && (effectiveResult?.ok ?? false);
+  // Submission validation happens after per-question checking. If an older or
+  // pasted answer is oversized, always reopen its fields even when it was
+  // previously marked correct or has no checks left, so the learner can fix it.
+  const overSubmitLimit = val.length > MAX_ACTIVITY_ANSWER_CHARS;
   // no checks left and still not correct: the answer locks with its marks
   const locked = !canReveal && !ok && tries >= EXQ_MAX_CHECKS && !reviewPending;
   const feedback =
@@ -1377,7 +1383,7 @@ export function ExerciseQuestion({
           )}
         </span>
       </div>
-      {ok || result || locked ? (
+      {!overSubmitLimit && (ok || result || locked) ? (
         <MarkedAnswer
           text={val}
           check={check}
@@ -1436,6 +1442,10 @@ export function ExerciseQuestion({
                 />
               </div>
             ))}
+          </div>
+          <div className={`exq-character-count${overSubmitLimit ? " over-limit" : ""}`} role={overSubmitLimit ? "alert" : undefined}>
+            {val.length.toLocaleString()} / {MAX_ACTIVITY_ANSWER_CHARS.toLocaleString()} characters
+            {overSubmitLimit && " — shorten this answer before submitting."}
           </div>
           {val.trim().length > 0 && (
             <div
@@ -2968,7 +2978,7 @@ export function UnitPage({
     try {
       const answers = ex.checks.map((_, i) => String(progress.units[u.us]?.logbook?.[`exq.${ex.id}.${i}`] ?? ""));
       if (answers.some(answer => !answer.trim())) throw new Error("Answer each question before submitting.");
-      if (answers.some(answer => answer.length > 4000)) throw new Error("Keep each question's answer under 4,000 characters before submitting.");
+      if (answers.some(answer => answer.length > MAX_ACTIVITY_ANSWER_CHARS)) throw new Error("Keep each question's answer under 4,000 characters before submitting.");
       let score = 0;
       for (let i = 0; i < ex.checks.length; i++) {
         const check = ex.checks[i];

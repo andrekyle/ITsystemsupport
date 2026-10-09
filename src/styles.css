@@ -7267,6 +7267,18 @@ a.plan-ppt:hover {
   min-height: 46px;
 }
 
+.exq-character-count {
+  margin-top: 6px;
+  color: var(--ink-3);
+  font-size: 12.5px;
+  text-align: right;
+}
+
+.exq-character-count.over-limit {
+  color: var(--red, #c50f1f);
+  font-weight: 600;
+}
+
 /* ---------- spelling review (plain text, no box) ---------- */
 /* ---- spelling review: premium, Word-Editor-style panel ---- */
 
@@ -13192,15 +13204,24 @@ h2.section-title.howto-heading {
   font-weight: 650;
 }
 
+.content-inner:has(> .howto-page) {
+  max-width: none;
+  min-height: 100%;
+  padding: 0;
+}
+
 .howto-page {
   position: relative;
   isolation: isolate;
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: 28px 40px 64px;
 }
 
 .howto-page::before {
   position: absolute;
   z-index: -1;
-  inset: -16px;
+  inset: 0;
   background: url("/chat-wallpaper-light.svg") repeat;
   background-size: 420px 420px;
   content: "";
@@ -13333,6 +13354,10 @@ h2.section-title.howto-heading {
 }
 
 @media (max-width: 640px) {
+  .howto-page {
+    padding: 16px 10px 56px;
+  }
+
   .howto-row {
     grid-template-columns: 40px minmax(0, 1fr);
     gap: 0 12px;
