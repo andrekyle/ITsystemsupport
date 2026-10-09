@@ -1,5 +1,14 @@
 const PREFIX = "<!--slide-rich-->";
-export const isRichText = (text: string) => text.startsWith(PREFIX);
+// Synced/legacy values can acquire leading whitespace or a BOM. Some older
+// editor saves also inserted harmless spaces inside the HTML comment marker.
+// Treat all of those as the same marker so the HTML is sanitised and rendered
+// instead of escaped into visible `<!--slide-rich--><p ...>` text.
+const PREFIX_RE = /^[\s\uFEFF]*<!\s*--\s*slide-rich\s*--\s*>/i;
+const richPayload = (text: string): string | null => {
+  const match = text.match(PREFIX_RE);
+  return match ? text.slice(match[0].length) : null;
+};
+export const isRichText = (text: string) => richPayload(text) !== null;
 
 const escapeText = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -95,7 +104,8 @@ export function sanitizeSlideHtml(html: string): string {
   return result.innerHTML;
 }
 export function richTextHtml(text: string): string {
-  if (isRichText(text)) return sanitizeSlideHtml(text.slice(PREFIX.length));
+  const payload = richPayload(text);
+  if (payload !== null) return sanitizeSlideHtml(payload);
   let plain = text.trim();
   // Repair legacy one-cell Markdown tables that were saved as visible text.
   // Example: | Dear John,<br>I am writing ... | | --- |

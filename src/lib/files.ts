@@ -23,6 +23,31 @@ function sanitize(name: string) {
   return name.replace(/[^\w.\-]+/g, "_").slice(-80);
 }
 
+/** Ensure every cloud object is stored beneath the active tenant root. */
+export function tenantFilePrefix(prefix: string): string {
+  const clean = prefix.replace(/^\/+|\/+$/g, "");
+  return clean === TENANT_ID || clean.startsWith(`${TENANT_ID}/`)
+    ? clean
+    : `${TENANT_ID}/${clean}`;
+}
+
+function uploadFailure(xhr: XMLHttpRequest): Error {
+  let detail = xhr.responseText?.trim();
+  if (detail) {
+    try {
+      const body = JSON.parse(detail) as { message?: string; error?: string };
+      detail = body.message || body.error || detail;
+    } catch {
+      // Keep non-JSON responses as supplied by the storage service.
+    }
+  }
+  return new Error(
+    detail
+      ? `Upload failed (${xhr.status}): ${detail.slice(0, 240)}`
+      : `Upload failed (${xhr.status})`
+  );
+}
+
 /** Storage prefix for the signed-in account's private files. */
 export async function userPrefix(): Promise<string> {
   if (!supabase) return "local";
@@ -43,7 +68,7 @@ export async function uploadFile(
     uploadedAt: new Date().toISOString(),
   };
   if (supabase) {
-    const path = `${prefix}/${Date.now().toString(36)}-${sanitize(file.name)}`;
+    const path = `${tenantFilePrefix(prefix)}/${Date.now().toString(36)}-${sanitize(file.name)}`;
     const { data: sess } = await supabase.auth.getSession();
     const token = sess.session?.access_token;
     if (!token) throw new Error("Not signed in");
@@ -62,7 +87,7 @@ export async function uploadFile(
       xhr.onload = () =>
         xhr.status >= 200 && xhr.status < 300
           ? resolve()
-          : reject(new Error(`Upload failed (${xhr.status})`));
+          : reject(uploadFailure(xhr));
       xhr.onerror = () => reject(new Error("Network error during upload"));
       xhr.send(file);
     });
