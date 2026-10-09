@@ -44,8 +44,48 @@ function read<T>(key: string, fallback: T): T {
   }
 }
 
+/** Remove only attendance signature images that already exist in their
+ * authoritative per-person row key. Older register blobs duplicated those
+ * base64 images and could fill localStorage, preventing workbook answers from
+ * being saved. Returns the number of compacted registers. */
+function compactRedundantAttendanceImages(): number {
+  const registerPattern = /^itss\.attendance\.(\d{4}-\d{2}-\d{2})$/;
+  let compacted = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    const date = key?.match(registerPattern)?.[1];
+    if (!key || !date) continue;
+    try {
+      const data = JSON.parse(localStorage.getItem(key) ?? "null") as {
+        rows?: Record<string, Record<string, unknown>>;
+      } | null;
+      if (!data?.rows) continue;
+      let changed = false;
+      const rows = Object.fromEntries(Object.entries(data.rows).map(([profileId, row]) => {
+        const rowKey = `itss.attendance.${date}.row.${profileId}`;
+        if (!("signatureImage" in row) || !localStorage.getItem(rowKey)) return [profileId, row];
+        const { signatureImage: _duplicate, ...compactRow } = row;
+        changed = true;
+        return [profileId, compactRow];
+      }));
+      if (!changed) continue;
+      localStorage.setItem(key, JSON.stringify({ ...data, rows }));
+      compacted++;
+    } catch {
+      /* Never alter a register that cannot be parsed safely. */
+    }
+  }
+  return compacted;
+}
+
 function write(key: string, value: unknown) {
-  localStorage.setItem(key, JSON.stringify(value));
+  const encoded = JSON.stringify(value);
+  try {
+    localStorage.setItem(key, encoded);
+  } catch (error) {
+    if (!compactRedundantAttendanceImages()) throw error;
+    localStorage.setItem(key, encoded);
+  }
 }
 
 /* ---------- profiles ---------- */

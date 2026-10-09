@@ -87,14 +87,49 @@ function normalizeReg(data: AttData): AttData {
   return { ...data, rows, order };
 }
 
+/** Keep signature images only in their authoritative per-person row keys.
+ * Duplicating every base64 image in the aggregate register quickly exhausts
+ * the browser's small localStorage quota. */
+function compactReg(data: AttData): AttData {
+  return {
+    ...data,
+    rows: Object.fromEntries(
+      Object.entries(data.rows).map(([pid, { signatureImage: _image, ...row }]) => [pid, row])
+    ),
+  };
+}
+
+function writeReg(key: string, data: AttData): void {
+  localStorage.setItem(key, JSON.stringify(compactReg(data)));
+}
+
 function readReg(key: string): AttData {
+  let data: AttData = EMPTY;
   try {
     const raw = localStorage.getItem(key);
-    if (raw) return normalizeReg({ ...EMPTY, ...(JSON.parse(raw) as Partial<AttData>) });
+    if (raw) data = normalizeReg({ ...EMPTY, ...(JSON.parse(raw) as Partial<AttData>) });
   } catch {
     /* fall through */
   }
-  return EMPTY;
+  const dateIso = key.match(registerKeyPattern)?.[0]?.slice("itss.attendance.".length);
+  if (!dateIso) return data;
+  const prefix = `itss.attendance.${dateIso}.row.`;
+  const rows = { ...data.rows };
+  const order = [...data.order];
+  for (let i = 0; i < localStorage.length; i++) {
+    const rowKey = localStorage.key(i);
+    if (!rowKey?.startsWith(prefix)) continue;
+    const profileId = rowKey.slice(prefix.length);
+    try {
+      const row = JSON.parse(localStorage.getItem(rowKey) ?? "null") as AttRow | null;
+      if (!profileId || !row) continue;
+      rows[profileId] = row;
+      if (!order.includes(profileId)) order.push(profileId);
+    } catch {
+      /* ignore one malformed row */
+    }
+  }
+  return normalizeReg({ ...data, rows, order });
 }
 
 async function pullLatest(key: string): Promise<AttData | null> {
@@ -166,7 +201,7 @@ export async function updateRegisterSignatures(
     const row = data.rows[profileId];
     if (!row || row.signatureImage === signatureImage) continue;
     const next = { ...data, rows: { ...data.rows, [profileId]: { ...row, signatureImage } } };
-    localStorage.setItem(key, JSON.stringify(next)); // also syncs to the shared cloud copy
+    writeReg(key, next); // compact aggregate also syncs to the shared cloud copy
     const dateIso = key.slice("itss.attendance.".length);
     localStorage.setItem(attRowKey(dateIso, profileId), JSON.stringify(next.rows[profileId]));
   }
@@ -390,7 +425,10 @@ export function AttendancePage({
         } catch {
           setAttendanceNote("Some saved signatures are waiting to sync — try Refresh again online.");
           setReg(local);
-          return;
+          // A failed legacy upload must not block the download half of
+          // Refresh. Staff still need to see rows that other learners have
+          // already saved in the cloud; the unsent local rows remain queued
+          // and are merged back into the downloaded register below.
         }
       }
       const latest = await pullLatest(storageKey);
@@ -406,7 +444,7 @@ export function AttendancePage({
                 : [...latest.order, profile.id],
             }
           : latest;
-        localStorage.setItem(storageKey, JSON.stringify(next));
+        writeReg(storageKey, next);
         setReg(next);
       } else {
         setReg(local);
@@ -435,7 +473,7 @@ export function AttendancePage({
 
   const save = useCallback(
     (next: AttData) => {
-      localStorage.setItem(storageKey, JSON.stringify(next));
+      writeReg(storageKey, next);
       setReg(next);
     },
     [storageKey]
@@ -469,10 +507,10 @@ export function AttendancePage({
           }
         : local;
       if (base.rows[profile.id]) {
-        save(base);
         const ownRowKey = attRowKey(dateIso, profile.id);
         localStorage.setItem(ownRowKey, JSON.stringify(base.rows[profile.id]));
         savedOnDevice = true;
+        save(base);
         await Promise.all([flushKey(ownRowKey, true), flushKey(storageKey)]);
         setAttendanceNote("Your signature is saved on this register.");
         return;
@@ -491,14 +529,15 @@ export function AttendancePage({
         signature: e?.signature || profile.name,
         ...(sig ? { signatureImage: sig } : {}),
       };
-      save({
+      const next = {
         header: { ...base.header, ...reg.header },
         rows: { ...base.rows, [profile.id]: row },
         order: base.order.includes(profile.id) ? base.order : [...base.order, profile.id],
-      });
+      };
       const ownRowKey = attRowKey(dateIso, profile.id);
       localStorage.setItem(ownRowKey, JSON.stringify(row));
       savedOnDevice = true;
+      save(next);
       // The independent learner row is the authoritative signature record.
       await Promise.all([flushKey(ownRowKey, true), flushKey(storageKey)]);
       setAttendanceNote("Signed successfully.");
@@ -574,7 +613,7 @@ export function AttendancePage({
           }
         }
         if (changed) {
-          localStorage.setItem(key, JSON.stringify(data)); // also syncs to the cloud
+          writeReg(key, data); // compact aggregate also syncs to the cloud
           if (key === storageKey) setReg(data);
         }
       }
