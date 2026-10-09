@@ -30,7 +30,7 @@ import { cloudEnabled, supabase } from "./lib/supabase";
 import { installSync, startSync, stopSync, wipeLocalData } from "./lib/sync";
 import { logAudit } from "./lib/audit";
 import { Icon } from "./icons";
-import { authTenant, TENANT_ID } from "./lib/tenant";
+import { authTenant, TENANT, TENANT_ID } from "./lib/tenant";
 import { startPresence } from "./lib/presence";
 
 // mirror every itss.* localStorage write to the cloud (no-op until signed in)
@@ -251,8 +251,42 @@ export default function App() {
         return;
       }
       if (session?.user) {
-        const accountTenant = authTenant(session.user) ?? "investec";
+        const accountTenant = authTenant(session.user);
+        if (!accountTenant) {
+          // Accounts created before multi-tenant support have no tenant in
+          // their auth metadata.  Assign them to the branded site they used
+          // to sign in, then wait for USER_UPDATED before loading cloud data.
+          // This must be deferred because Supabase auth calls made directly
+          // inside onAuthStateChange can deadlock on the client's auth lock.
+          const legacyUserId = session.user.id;
+          window.setTimeout(() => {
+            if (syncedUser.current && syncedUser.current !== legacyUserId) return;
+            void sb.auth.updateUser({
+              data: { ...session.user.user_metadata, tenant_id: TENANT_ID },
+            }).then(({ error }) => {
+              if (!error) return;
+              try {
+                sessionStorage.setItem(
+                  "itss.auth-error",
+                  "Your older account could not be linked to this learning site. Please try again or ask your facilitator for help."
+                );
+              } catch {
+                // The sign-in screen still works when storage is unavailable.
+              }
+              void sb.auth.signOut();
+            });
+          }, 0);
+          return;
+        }
         if (accountTenant !== TENANT_ID) {
+          try {
+            sessionStorage.setItem(
+              "itss.auth-error",
+              `This account belongs to a different learning site and cannot sign in to ${TENANT.name}.`
+            );
+          } catch {
+            // The sign-in screen still works when storage is unavailable.
+          }
           void sb.auth.signOut();
           return;
         }

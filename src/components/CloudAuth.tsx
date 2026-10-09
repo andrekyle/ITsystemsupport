@@ -22,13 +22,23 @@ function savedAuthMode(): "signin" | "signup" {
   }
 }
 
+function savedAuthError(): string | null {
+  try {
+    const message = sessionStorage.getItem("itss.auth-error");
+    sessionStorage.removeItem("itss.auth-error");
+    return message;
+  } catch {
+    return null;
+  }
+}
+
 /** Email/password gate shown before the app when cloud sync is configured. */
 export function CloudAuth() {
   const [mode, setMode] = useState<"signin" | "signup">(savedAuthMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(savedAuthError);
   const [notice, setNotice] = useState<string | null>(null);
 
   // Keep the user on the registration screen if the page is refreshed (for
