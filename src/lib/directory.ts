@@ -182,7 +182,7 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
 export async function fetchSuperUserAuthId(): Promise<string | undefined> {
   if (!supabase) return undefined;
   try {
-    const { data, error } = await supabase.from("admins").select("user_id").limit(1);
+    const { data, error } = await supabase.from("admins").select("user_id").eq("tenant_id", TENANT_ID).limit(1);
     if (error) return undefined;
     const row = Array.isArray(data) ? data[0] : undefined;
     const uid = row?.user_id as string | undefined;

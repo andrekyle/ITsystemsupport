@@ -270,6 +270,7 @@ export default function App() {
               .from("admins")
               .select("user_id")
               .eq("user_id", authUserId)
+              .eq("tenant_id", TENANT_ID)
               .maybeSingle()
               .then(
                 ({ data }) => setAccountAdmin(!!data),

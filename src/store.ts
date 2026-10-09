@@ -6,7 +6,7 @@ import { cloudEnabled, supabase } from "./lib/supabase";
 import { flushKey, flushValue, writeFromCloud } from "./lib/sync";
 import { logAudit } from "./lib/audit";
 import { courseScopedUnit } from "./lib/courseScope";
-import { TENANT_ID } from "./lib/tenant";
+import { TENANT, TENANT_ID } from "./lib/tenant";
 import { cachedLessonEdits, loadLessonEdits, queueLessonEdits, subscribeLessonEdits } from "./lib/lessonEditStore";
 import { unitPackSnapshot } from "./lib/unitStorage";
 import { SAVED_SIGNATURE_REFERENCE } from "./lib/signature";
@@ -51,14 +51,14 @@ function write(key: string, value: unknown) {
 /* ---------- profiles ---------- */
 
 /** The designated super user of this installation — promoted automatically. */
-const SUPER_USER_NAME = "Andre Snell";
+const SUPER_USER_NAME = TENANT.superUserName;
 /**
  * The ONE and only cloud account that may hold the Super User role.
  * The `admins` table is still consulted for server-side RLS (so this account
  * can moderate chat, etc.), but no other account is ever promoted to Super
  * User in the client — even if it appears in that table by mistake.
  */
-const SUPER_USER_EMAIL = "andresnell29@gmail.com";
+const SUPER_USER_EMAIL = TENANT.superUserEmail;
 
 let accountEmail: string | null = null;
 /** Set by App whenever the cloud session changes — gates super-user promotion. */

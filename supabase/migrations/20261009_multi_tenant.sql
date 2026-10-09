@@ -10,6 +10,33 @@ returns text language sql stable as $$
   );
 $$;
 
+-- Admins are scoped to a company. Existing admin records belong to Investec.
+alter table public.admins add column if not exists tenant_id text not null default 'investec';
+create index if not exists admins_tenant_idx on public.admins (tenant_id);
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.admins a
+    where a.user_id = auth.uid()
+      and a.tenant_id = public.current_tenant()
+  );
+$$;
+
+drop policy if exists "read admins" on public.admins;
+create policy "read admins" on public.admins for select to authenticated
+  using (tenant_id = public.current_tenant());
+
+-- Safe to re-run after ad4snell@gmail.com has registered on Discovery.
+insert into public.admins (user_id, tenant_id)
+select id, 'discovery' from auth.users where lower(email) = 'ad4snell@gmail.com'
+on conflict (user_id) do update set tenant_id = excluded.tenant_id;
+
 alter table public.app_state add column if not exists tenant_id text not null default 'investec';
 create index if not exists app_state_tenant_idx on public.app_state (tenant_id, key);
 

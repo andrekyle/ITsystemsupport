@@ -7,6 +7,8 @@ export interface TenantBrand {
   appName: string;
   logo: string | null;
   accent: string;
+  superUserName: string;
+  superUserEmail: string;
 }
 
 const TENANTS: Record<TenantId, TenantBrand> = {
@@ -17,6 +19,8 @@ const TENANTS: Record<TenantId, TenantBrand> = {
     appName: "ITSS Learn",
     logo: null,
     accent: "#007cc3",
+    superUserName: "Andre Snell",
+    superUserEmail: "andresnell29@gmail.com",
   },
   discovery: {
     id: "discovery",
@@ -25,6 +29,8 @@ const TENANTS: Record<TenantId, TenantBrand> = {
     appName: "Discovery Learn",
     logo: "/logos/Discovery Logo with Chevron Emblem.png",
     accent: "#e51b35",
+    superUserName: "Andre Snell",
+    superUserEmail: "ad4snell@gmail.com",
   },
 };
 
