@@ -48,6 +48,7 @@ import { autoGrowTextarea } from "../lib/autoGrow";
 import { insertLessonPlanDay, lessonPlanDayCount, removeLessonPlanDay, startLessonPlanDay } from "../lib/lessonPlanDays";
 import { groupLessonHtml, isLessonBulletListLead, isLessonListLead, isLessonListPoint, isLessonNumberedListLead, isLessonSubheading, lessonListItemText } from "../lib/lessonSubsections";
 import { clearInlineDraft, loadInlineDraft, saveInlineDraft } from "../lib/inlineDraftStorage";
+import { resolvedSlideQuizAnswer } from "../lib/slideQuiz";
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
 
@@ -3063,7 +3064,9 @@ export function UnitPage({
     const answers = lessonQuizAnswers[lastIdx] ?? [];
     const passed =
       lastQuiz.length === 0 ||
-      (answers.length >= lastQuiz.length && lastQuiz.every((q, i) => answers[i] === q.answer));
+      (answers.length >= lastQuiz.length && lastQuiz.every((q, i) =>
+        answers[i] === resolvedSlideQuizAnswer(q, content.lesson[lastIdx].heading)
+      ));
     if (passed) toggleActivity(u.us, "Lesson & Training Aids");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonStep, lessonQuizAnswers, content, u.us]);
@@ -3079,7 +3082,7 @@ export function UnitPage({
       const key = `slidegate.${si}`;
       if (logbook[key] === true) return;
       const ans = lessonQuizAnswers[si];
-      if (ans && quiz.every((q, i) => ans[i] === q.answer)) {
+      if (ans && quiz.every((q, i) => ans[i] === resolvedSlideQuizAnswer(q, sec.heading))) {
         setLogbookField(u.us, key, true);
       }
     });
@@ -3864,6 +3867,7 @@ export function UnitPage({
             const generatedQuiz = Boolean(lessonEdits.generatedQuizzes?.[si]);
             const editingQuiz = editMode && isSuperUser && generatedQuiz;
             const hasSlideQuiz = slideQuiz.length > 0;
+            const correctQuizAnswers = slideQuiz.map(q => resolvedSlideQuizAnswer(q, sec.heading));
             const qAnswers = hasSlideQuiz
               ? (lessonQuizAnswers[si]?.length === slideQuiz.length
                   ? lessonQuizAnswers[si]
@@ -3872,7 +3876,7 @@ export function UnitPage({
             const qChecked = !!lessonQuizChecked[si];
             const qAllAnswered = hasSlideQuiz && qAnswers.every((a) => a >= 0);
             const qAllCorrect =
-              hasSlideQuiz && qAllAnswered && qAnswers.every((a, i) => a === slideQuiz[i].answer);
+              hasSlideQuiz && qAllAnswered && qAnswers.every((a, i) => a === correctQuizAnswers[i]);
             const quizAttemptsExhausted = maxQuizAttempts !== null && quizAttempts >= maxQuizAttempts && !qAllCorrect;
             const quizPassed = !hasSlideQuiz || qAllCorrect || isPrivileged;
             const setAnswer = (qi: number, oi: number) => {
@@ -3908,7 +3912,8 @@ export function UnitPage({
                 <div className="lesson-quiz-list">
                   {slideQuiz.map((q, qi) => {
                     const picked = qAnswers[qi];
-                    const correct = picked === q.answer;
+                    const correctAnswer = correctQuizAnswers[qi];
+                    const correct = picked === correctAnswer;
                     return (
                       <div key={qi} className={`quiz-q${editingQuiz ? " quiz-q-editing" : ""}`}>
                         {editingQuiz ? <GeneratedQuizEditor question={q} number={qi+1}
@@ -3922,9 +3927,9 @@ export function UnitPage({
                           {seededShuffle(q.options.map((_, i) => i), si * 977 + qi * 131 + q.q.length * 7 + 3).map((oi, displayPos) => {
                             const opt = q.options[oi];
                             const isPicked = picked === oi;
-                            const showCorrect = qChecked && oi === q.answer;
-                            const showWrong = qChecked && isPicked && oi !== q.answer;
-                            const staffAnswer = isPrivileged && showAnswers && oi === q.answer && !qChecked;
+                            const showCorrect = qChecked && oi === correctAnswer;
+                            const showWrong = qChecked && isPicked && oi !== correctAnswer;
+                            const staffAnswer = isPrivileged && showAnswers && oi === correctAnswer && !qChecked;
                             let cls = "opt";
                             if (isPicked && !qChecked && !staffAnswer) cls += " selected";
                             if (showCorrect || staffAnswer) cls += " correct";
@@ -3988,7 +3993,7 @@ export function UnitPage({
                     <span className={`lesson-quiz-status${qAllCorrect ? " ok" : " bad"}`}>
                       {qAllCorrect
                         ? `All ${slideQuiz.length} correct — Next unlocked.`
-                        : `${qAnswers.filter((a, i) => a === slideQuiz[i].answer).length} / ${slideQuiz.length} correct — fix the wrong answers and check again.`}
+                        : `${qAnswers.filter((a, i) => a === correctQuizAnswers[i]).length} / ${slideQuiz.length} correct — fix the wrong answers and check again.`}
                     </span>
                   )}
                   {quizAttemptsExhausted && <span className="lesson-quiz-status bad">No retries remaining.</span>}
