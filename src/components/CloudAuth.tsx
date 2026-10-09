@@ -130,14 +130,11 @@ export function CloudAuth() {
     <div className={`gate${TENANT_ID === "discovery" ? " discovery-gate" : ""}`}>
       {TENANT_ID === "discovery" && (
         <div className="discovery-auth-showcase" aria-hidden="true">
+          <img className="discovery-hero-logo" src={TENANT.logo!} alt="" />
           <p>LEARN. GROW. LEAD.</p>
           <h2>Build what comes next.</h2>
-          <div className="discovery-product-cards">
-            <span className="discovery-product-card gold"><i /></span>
-            <span className="discovery-product-card silver"><i /></span>
-            <span className="discovery-product-card midnight"><i /></span>
-            <span className="discovery-product-card magenta"><i /></span>
-          </div>
+          <div className="discovery-hero-rule" />
+          <p className="discovery-hero-copy">Your learning. Your progress. Your future.</p>
         </div>
       )}
       <div className="gate-card">
