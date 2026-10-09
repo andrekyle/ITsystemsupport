@@ -500,10 +500,20 @@ function LocalApp({
       profile={profile}
       theme={theme}
       onToggleTheme={() => setThemeState((t) => (t === "dark" ? "light" : "dark"))}
-      onSignOut={() => {
+      onSignOut={async () => {
         logAudit(profile, "auth.signout", "Signed out");
         setSession(null);
-        setProfile(null);
+        if (supabase) {
+          const { error } = await supabase.auth.signOut();
+          if (error) {
+            // Keep the current profile open when the cloud session could not
+            // be ended; otherwise the auto-profile resolver would reopen it.
+            setSession(profile.id);
+            window.alert("Sign out failed. Check your connection and try again.");
+          }
+        } else {
+          setProfile(null);
+        }
       }}
       onUpdateProfile={(patch) => {
         const updated = updateProfile(profile.id, patch);
