@@ -7,7 +7,10 @@ import { TENANT, TENANT_ID } from "../lib/tenant";
 
 function TenantLogo() {
   return TENANT.logo ? (
-    <img className="tenant-logo" src={TENANT.logo} alt={`${TENANT.name} logo`} />
+    <picture>
+      {TENANT.logoDark && <source media="(prefers-color-scheme: dark)" srcSet={TENANT.logoDark} />}
+      <img className="tenant-logo" src={TENANT.logo} alt={`${TENANT.name} logo`} />
+    </picture>
   ) : (
     <><Icon name="certificate" size={26} /> {TENANT.appName}</>
   );

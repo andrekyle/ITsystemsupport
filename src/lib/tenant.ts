@@ -6,6 +6,7 @@ export interface TenantBrand {
   location: string;
   appName: string;
   logo: string | null;
+  logoDark?: string | null;
   accent: string;
   superUserName: string;
   superUserEmail: string;
@@ -27,7 +28,8 @@ const TENANTS: Record<TenantId, TenantBrand> = {
     name: "Discovery",
     location: "Sandton",
     appName: "Discovery Learn",
-    logo: "/logos/Discovery Logo with Chevron Emblem.png",
+    logo: "/discovery/FullLighmode.svg",
+    logoDark: "/discovery/Full%20Darkmode%20Logo.svg",
     accent: "#e51b35",
     superUserName: "Andre Snell",
     superUserEmail: "ad4snell@gmail.com",
