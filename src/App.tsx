@@ -31,6 +31,7 @@ import { installSync, startSync, stopSync, wipeLocalData } from "./lib/sync";
 import { logAudit } from "./lib/audit";
 import { Icon } from "./icons";
 import { authTenant, TENANT_ID } from "./lib/tenant";
+import { startPresence } from "./lib/presence";
 
 // mirror every itss.* localStorage write to the cloud (no-op until signed in)
 installSync();
@@ -392,11 +393,13 @@ function LocalApp({
       });
     }
     const tick = () => touchLastOnline(profile.id);
+    const stopPresence = startPresence(profile);
     const timer = window.setInterval(tick, 4 * 60 * 1000);
     window.addEventListener("focus", tick);
     return () => {
       window.clearInterval(timer);
       window.removeEventListener("focus", tick);
+      stopPresence();
     };
   }, [profile?.id]);
 

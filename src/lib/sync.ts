@@ -72,6 +72,7 @@ const pushErrors = new Map<string, string>();
  *  up — an echo could land after someone else's newer save and undo it. */
 export function writeFromCloud(key: string, value: string) {
   if (key.startsWith(UNIT_BUILDER_SAVE_PROBE)) return;
+  if (key.startsWith("itss.presence.")) return;
   if (pendingFor(key)) return;
   if (key === ONBOARDING_KEY) {
     receiveOnboardingPacks(value);

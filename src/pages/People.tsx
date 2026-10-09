@@ -45,6 +45,7 @@ import {
   updateCloudProfile,
   type CloudDirectory,
 } from "../lib/directory";
+import { fetchPresence, type PresenceEntry } from "../lib/presence";
 
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -449,12 +450,15 @@ export function StudentsPage({
   const [rev, setRev] = useState(0);
   const refresh = () => setRev((r) => r + 1);
   const [cloud, setCloud] = useState<CloudDirectory | null>(null);
+  const [presence, setPresence] = useState<PresenceEntry[]>([]);
   useEffect(() => {
     let alive = true;
     let timer: number | undefined;
     const load = () => {
-      void fetchCloudDirectory().then((d) => {
-        if (alive && d) setCloud(d);
+      void Promise.all([fetchCloudDirectory(), fetchPresence()]).then(([d, live]) => {
+        if (!alive) return;
+        if (d) setCloud(d);
+        if (live) setPresence(live);
       });
     };
     load();
@@ -534,7 +538,23 @@ export function StudentsPage({
     }
   }
   const remoteIds = new Set(dedupedRemote.map((p) => p.id));
-  const all = [...local, ...dedupedRemote];
+  const isPresent = (p: Profile) => {
+    const keys = new Set(identityKeys(p));
+    return presence.find((live) =>
+      live.profileId === p.id ||
+      identityKeys({
+        id: live.profileId,
+        name: live.name,
+        role: "Learner",
+        createdAt: live.seenAt,
+        enrolment: { email: live.email ?? "", idNumber: live.idNumber ?? "" } as EnrolmentInfo,
+      }).some((key) => keys.has(key))
+    );
+  };
+  const all = [...local, ...dedupedRemote].map((p) => {
+    const live = isPresent(p);
+    return live ? { ...p, lastLogin: live.seenAt } : p;
+  });
   // Super Users manage every account; facilitators see their learners;
   // learners see the enrolled learner list (read-only)
   const people = (
