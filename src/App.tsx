@@ -404,6 +404,35 @@ function LocalApp({
   const [theme, setThemeState] = useState<Theme>(getTheme);
   const fluentTheme = theme === "dark" ? webDarkTheme : webLightTheme;
 
+  // Supabase has already verified the account password. Open the matching
+  // in-app profile immediately instead of showing the legacy device profile
+  // picker and requiring a second sign-in click.
+  useEffect(() => {
+    if (profile || !cloudIdentity) return;
+    const profiles = loadProfiles();
+    const email = cloudIdentity.email?.trim().toLowerCase() ?? "";
+    const match =
+      profiles.find((p) => p.cloudUserId === cloudIdentity.userId) ??
+      profiles.find((p) => p.enrolment?.email?.trim().toLowerCase() === email) ??
+      profiles.find((p) => p.name.trim().toLowerCase() === email) ??
+      (email === TENANT.superUserEmail
+        ? profiles.find(
+            (p) =>
+              p.role === "Super User" ||
+              p.name.trim().toLowerCase() === TENANT.superUserName.toLowerCase()
+          )
+        : undefined) ??
+      (profiles.length === 1 ? profiles[0] : undefined);
+    if (!match) return;
+    setSession(match.id);
+    if (match.cloudUserId !== cloudIdentity.userId) {
+      const patched = updateProfile(match.id, { cloudUserId: cloudIdentity.userId });
+      setProfile(patched ?? match);
+    } else {
+      setProfile(match);
+    }
+  }, [cloudIdentity, profile]);
+
   useEffect(() => {
     setTheme(theme);
   }, [theme]);
