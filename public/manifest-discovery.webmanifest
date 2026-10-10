@@ -10,7 +10,7 @@
   "background_color": "#0f1524",
   "theme_color": "#002147",
   "icons": [
-    { "src": "/discovery/LighModeDisk.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "/discovery/LighModeDisk.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+    { "src": "/discovery/DarkmodeDisk.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/discovery/DarkmodeDisk.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
   ]
 }
