@@ -7,7 +7,7 @@
     <meta id="app-description" name="description" content="ITSS Learn — LMS for the National Certificate: IT System Support (SAQA 48573) learnership." />
     <link id="app-manifest" rel="manifest" href="/manifest.webmanifest?v=3" />
     <link id="app-icon" rel="icon" type="image/png" href="/icons/icon-192.png" />
-    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link id="apple-touch-icon" rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -21,10 +21,18 @@
         if (!isDiscovery) return;
         document.title = "Discovery Learn";
         document.getElementById("app-description").content = "Discovery Learn learning platform.";
-        document.getElementById("app-manifest").href = "/manifest-discovery.webmanifest?v=3";
+        document.getElementById("app-manifest").href = "/manifest-discovery.webmanifest?v=4";
         const icon = document.getElementById("app-icon");
-        icon.type = "image/svg+xml";
-        icon.href = "/discovery/DarkmodeDisk.svg";
+        icon.type = "image/png";
+        icon.sizes = "32x32";
+        icon.href = "/discovery/icons/favicon-32.png";
+        const icon48 = document.createElement("link");
+        icon48.rel = "icon";
+        icon48.type = "image/png";
+        icon48.sizes = "48x48";
+        icon48.href = "/discovery/icons/favicon-48.png";
+        document.head.appendChild(icon48);
+        document.getElementById("apple-touch-icon").href = "/discovery/icons/apple-touch-icon.png";
         document.getElementById("apple-app-title").content = "Discovery Learn";
       })();
     </script>

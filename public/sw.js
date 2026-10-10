@@ -5,7 +5,7 @@
  *  - static assets (js/css/fonts/images/pdf): stale-while-revalidate
  *  - never caches Supabase or other cross-origin API calls
  */
-const VERSION = "itss-v9";
+const VERSION = "itss-v10";
 const SHELL = "/";
 
 self.addEventListener("install", (event) => {
@@ -75,4 +75,4 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
-// v9 separates the ITSS and Discovery installed-app identities.
+// v10 adds native-size Discovery icons for crisp installed-app rendering.
