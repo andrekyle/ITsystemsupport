@@ -1,0 +1,16 @@
+{
+  "id": "/",
+  "name": "Discovery Learn",
+  "short_name": "Discovery Learn",
+  "description": "Discovery Learn learning platform.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f1524",
+  "theme_color": "#002147",
+  "icons": [
+    { "src": "/discovery/LighModeDisk.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/discovery/LighModeDisk.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
