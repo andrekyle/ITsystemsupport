@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import { recoverFromStaleChunk } from "./lib/chunkRecovery";
+import { activeCourse } from "./data/courses";
 import "./styles.css";
 import "./lib/install"; // capture the PWA install prompt before React mounts
 
@@ -38,6 +39,7 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
+    <div className="installed-titlebar">{activeCourse().meta.title}</div>
     <AppErrorBoundary>
       <App />
     </AppErrorBoundary>

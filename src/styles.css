@@ -343,18 +343,8 @@ a:hover {
   font-size: 14px;
 }
 
-@media (display-mode: window-controls-overlay) {
-  .header {
-    padding-left: max(16px, env(titlebar-area-x, 0px));
-    padding-right: max(16px, calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw) + 8px));
-    -webkit-app-region: drag;
-    app-region: drag;
-  }
-
-  .header > * {
-    -webkit-app-region: no-drag;
-    app-region: no-drag;
-  }
+.installed-titlebar {
+  display: none;
 }
 
 .icon-btn {
@@ -2190,15 +2180,49 @@ td .with-ico .ico {
 }
 
 @media (display-mode: window-controls-overlay) {
-  .discovery-gate {
-    padding-top: calc(env(titlebar-area-height, 32px) + 16px);
+  #root {
+    padding-top: env(titlebar-area-height, 32px);
+  }
+
+  .installed-titlebar {
+    position: fixed;
+    top: env(titlebar-area-y, 0px);
+    left: env(titlebar-area-x, 0px);
+    width: env(titlebar-area-width, 100vw);
+    height: env(titlebar-area-height, 32px);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: 13px;
+    color: #fff;
+    background: #002147;
+    z-index: 100;
     -webkit-app-region: drag;
     app-region: drag;
   }
 
-  .discovery-gate .gate-card {
-    -webkit-app-region: no-drag;
-    app-region: no-drag;
+  .app {
+    height: calc(100dvh - env(titlebar-area-height, 32px));
+  }
+
+  .gate {
+    min-height: calc(100dvh - env(titlebar-area-height, 32px));
+  }
+
+  .sidebar {
+    top: calc(var(--header-h) + env(titlebar-area-height, 32px));
+  }
+
+  .side-scrim {
+    top: calc(var(--header-h) + env(titlebar-area-height, 32px));
+  }
+
+  @media (max-width: 520px) {
+    .discovery-gate .gate-card {
+      min-height: calc(100dvh - env(titlebar-area-height, 32px));
+    }
   }
 }
 
