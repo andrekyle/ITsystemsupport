@@ -10441,6 +10441,12 @@ table.data.training-table td {
 [data-theme="dark"] table.data.training-table td {
   border-bottom-color: rgba(255, 255, 255, 0.08);
   border-right-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="dark"] table.data.training-table .us-link,
+[data-theme="dark"] table.data.training-table .us-code {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* --- borderless inline icon link inside tables (e.g. Outlook calendar) --- */
