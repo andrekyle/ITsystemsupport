@@ -251,6 +251,7 @@ export default function App() {
         return;
       }
       if (session?.user) {
+        if (!recovering.current && !syncReady.current) setCloudState("loading");
         const accountTenant = authTenant(session.user);
         if (!accountTenant) {
           // Accounts created before multi-tenant support have no tenant in
@@ -409,28 +410,42 @@ function LocalApp({
   // picker and requiring a second sign-in click.
   useEffect(() => {
     if (profile || !cloudIdentity) return;
-    const profiles = loadProfiles();
-    const email = cloudIdentity.email?.trim().toLowerCase() ?? "";
-    const match =
-      profiles.find((p) => p.cloudUserId === cloudIdentity.userId) ??
-      profiles.find((p) => p.enrolment?.email?.trim().toLowerCase() === email) ??
-      profiles.find((p) => p.name.trim().toLowerCase() === email) ??
-      (email === TENANT.superUserEmail
-        ? profiles.find(
-            (p) =>
-              p.role === "Super User" ||
-              p.name.trim().toLowerCase() === TENANT.superUserName.toLowerCase()
-          )
-        : undefined) ??
-      (profiles.length === 1 ? profiles[0] : undefined);
-    if (!match) return;
-    setSession(match.id);
-    if (match.cloudUserId !== cloudIdentity.userId) {
-      const patched = updateProfile(match.id, { cloudUserId: cloudIdentity.userId });
-      setProfile(patched ?? match);
-    } else {
-      setProfile(match);
-    }
+    const openCloudProfile = () => {
+      const profiles = loadProfiles();
+      const email = cloudIdentity.email?.trim().toLowerCase() ?? "";
+      const match =
+        profiles.find((p) => p.cloudUserId === cloudIdentity.userId) ??
+        profiles.find((p) => p.enrolment?.email?.trim().toLowerCase() === email) ??
+        profiles.find((p) => p.name.trim().toLowerCase() === email) ??
+        (email === TENANT.superUserEmail
+          ? profiles.find(
+              (p) =>
+                p.role === "Super User" ||
+                p.name.trim().toLowerCase() === TENANT.superUserName.toLowerCase()
+            )
+          : undefined) ??
+        (profiles.length === 1 ? profiles[0] : undefined);
+      if (!match) return;
+      setSession(match.id);
+      if (match.cloudUserId !== cloudIdentity.userId) {
+        const patched = updateProfile(match.id, { cloudUserId: cloudIdentity.userId });
+        setProfile(patched ?? match);
+      } else {
+        setProfile(match);
+      }
+    };
+    openCloudProfile();
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.key === "itss.profiles") openCloudProfile();
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", openCloudProfile);
+    const timer = window.setInterval(openCloudProfile, 1000);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", openCloudProfile);
+      window.clearInterval(timer);
+    };
   }, [cloudIdentity, profile]);
 
   useEffect(() => {

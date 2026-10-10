@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
 import { supabase } from "../lib/supabase";
 import { activeCourse } from "../data/courses";
@@ -41,6 +41,7 @@ export function CloudAuth() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(savedAuthError);
   const [notice, setNotice] = useState<string | null>(null);
+  const submitting = useRef(false);
 
   // Keep the user on the registration screen if the page is refreshed (for
   // example after an accidental pull-to-refresh on mobile). Credentials stay
@@ -77,6 +78,8 @@ export function CloudAuth() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!supabase) return;
+    if (submitting.current) return;
+    submitting.current = true;
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -96,7 +99,10 @@ export function CloudAuth() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) setError(friendlyError(error.message, "signin"));
       }
+    } catch (error) {
+      setError(friendlyError(error instanceof Error ? error.message : String(error), mode));
     } finally {
+      submitting.current = false;
       setBusy(false);
     }
   }
