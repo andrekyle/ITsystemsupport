@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../icons";
 import { supabase } from "../lib/supabase";
-import { COURSE_META } from "../data/course";
+import { activeCourse } from "../data/courses";
 import { PasswordInput } from "./PasswordInput";
 import { TENANT, TENANT_ID } from "../lib/tenant";
 
@@ -34,6 +34,7 @@ function savedAuthError(): string | null {
 
 /** Email/password gate shown before the app when cloud sync is configured. */
 export function CloudAuth() {
+  const { meta: qualification } = activeCourse();
   const [mode, setMode] = useState<"signin" | "signup">(savedAuthMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -141,9 +142,9 @@ export function CloudAuth() {
         <div className="tenant-location">{TENANT.name} · {TENANT.location}</div>
         <h1>{mode === "signin" ? "Sign in to your account" : "Create your account"}</h1>
         <p className="sub">
-          {COURSE_META.title} · SAQA ID {COURSE_META.saqaId} · NQF Level {COURSE_META.nqfLevel}.
-          Your profile and progress are stored securely online — sign in from any device to
-          continue where you left off.
+          {qualification.title} · SAQA ID {qualification.saqaId} · NQF Level {qualification.nqfLevel}.
+          {" "}Sign in to continue this qualification. Your profile and learning progress are
+          stored securely online and available from any device.
         </p>
 
         <form onSubmit={submit}>

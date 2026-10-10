@@ -2112,8 +2112,8 @@ td .with-ico .ico {
 .discovery-gate .gate-card {
   position: relative;
   z-index: 2;
-  width: 460px;
-  padding: 46px 48px;
+  width: 440px;
+  padding: 32px 36px;
   color: #17181a;
   background: rgba(255,255,255,.78);
   border: 1px solid rgba(255,255,255,.68);
@@ -2125,8 +2125,8 @@ td .with-ico .ico {
 
 .discovery-gate .gate-card .logo { margin-bottom: 14px; }
 .discovery-gate .tenant-logo { max-width: 238px; max-height: 68px; }
-.discovery-gate .tenant-location { margin: 0 0 30px; color: #707075; letter-spacing: .12em; }
-.discovery-gate .gate-card h1 { font-size: 32px; font-weight: 700; letter-spacing: -.035em; }
+.discovery-gate .tenant-location { margin: 0 0 22px; color: #707075; letter-spacing: .12em; }
+.discovery-gate .gate-card h1 { font-size: 28px; font-weight: 700; letter-spacing: -.035em; }
 .discovery-gate .gate-card .sub { color: #5a5d62; }
 .discovery-gate .field label { color: #25272a; font-weight: 650; }
 .discovery-gate .field input { min-height: 50px; border-color: rgba(23,24,26,.18); border-radius: 12px; color:#17181a; background:rgba(255,255,255,.58); color-scheme:light; }
@@ -2172,7 +2172,7 @@ td .with-ico .ico {
 
 @media (max-width: 520px) {
   .discovery-gate { padding:0; }
-  .discovery-gate .gate-card { width:100%; min-height:100vh; padding:38px 26px; border:0; border-radius:0; box-shadow:none; background:rgba(255,255,255,.82); }
+  .discovery-gate .gate-card { width:100%; min-height:100vh; padding:30px 24px; border:0; border-radius:0; box-shadow:none; background:rgba(255,255,255,.82); }
 }
 
 .gate-card h1 {

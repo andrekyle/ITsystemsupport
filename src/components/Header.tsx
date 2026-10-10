@@ -263,8 +263,8 @@ export function Header({
         <Icon name="menu" size={19} />
       </button>
       <div className="brand">
-        {TENANT.logo && TENANT.id !== "discovery" ? <img className="header-tenant-logo" src={theme === "dark" && TENANT.logoDark ? TENANT.logoDark : TENANT.logo} alt={`${TENANT.name} logo`} /> : TENANT.id !== "discovery" ? <Icon name="certificate" size={24} color="var(--azure)" /> : null}
-        <span className="brand-name">{TENANT.appName}</span>
+        {TENANT.logo ? <img className="header-tenant-logo" src={theme === "dark" && TENANT.logoDark ? TENANT.logoDark : TENANT.logo} alt={`${TENANT.name} logo`} /> : <Icon name="certificate" size={24} color="var(--azure)" />}
+        {TENANT.id !== "discovery" && <span className="brand-name">{TENANT.appName}</span>}
         {TENANT.id !== "discovery" && <span className="brand-sub">System Support · NQF 5</span>}
       </div>
       <SessionClock onOpenUnit={onOpenUnit} />
