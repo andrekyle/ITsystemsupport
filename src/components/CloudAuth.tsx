@@ -129,10 +129,10 @@ export function CloudAuth() {
       {TENANT_ID === "discovery" && (
         <div className="discovery-auth-showcase" aria-hidden="true">
           <img className="discovery-hero-logo" src={TENANT.logo!} alt="" />
-          <p>LEARN. GROW. LEAD.</p>
-          <h2>Build what comes next.</h2>
+          <p>GROW WITH PURPOSE.</p>
+          <h2>Learn today.<br />Make an impact.</h2>
           <div className="discovery-hero-rule" />
-          <p className="discovery-hero-copy">Your learning. Your progress. Your future.</p>
+          <p className="discovery-hero-copy">Build your skills. Grow your confidence. Put your learning into practice.</p>
         </div>
       )}
       <div className="gate-card">
