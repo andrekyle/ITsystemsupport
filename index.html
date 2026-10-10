@@ -21,18 +21,18 @@
         if (!isDiscovery) return;
         document.title = "Discovery Learn";
         document.getElementById("app-description").content = "Discovery Learn learning platform.";
-        document.getElementById("app-manifest").href = "/manifest-discovery.webmanifest?v=4";
+        document.getElementById("app-manifest").href = "/manifest-discovery.webmanifest?v=5";
         const icon = document.getElementById("app-icon");
         icon.type = "image/png";
         icon.sizes = "32x32";
-        icon.href = "/discovery/icons/favicon-32.png";
+        icon.href = "/discovery/icons/favicon-32.png?v=5";
         const icon48 = document.createElement("link");
         icon48.rel = "icon";
         icon48.type = "image/png";
         icon48.sizes = "48x48";
-        icon48.href = "/discovery/icons/favicon-48.png";
+        icon48.href = "/discovery/icons/favicon-48.png?v=5";
         document.head.appendChild(icon48);
-        document.getElementById("apple-touch-icon").href = "/discovery/icons/apple-touch-icon.png";
+        document.getElementById("apple-touch-icon").href = "/discovery/icons/apple-touch-icon.png?v=5";
         document.getElementById("apple-app-title").content = "Discovery Learn";
       })();
     </script>
