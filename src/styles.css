@@ -2049,8 +2049,8 @@ td .with-ico .ico {
   color: #161617;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
   background:
-    radial-gradient(circle at 10% 8%, rgba(255,255,255,.17), transparent 26%),
-    linear-gradient(120deg, #2e2cf6 0%, #3938f3 48%, #6876cf 100%);
+    radial-gradient(circle at 12% 10%, rgba(255,255,255,.12), transparent 28%),
+    linear-gradient(120deg, #0b2948 0%, #123f68 52%, #176c78 100%);
 }
 
 .discovery-gate::before {
@@ -2061,8 +2061,8 @@ td .with-ico .ico {
   left: -12vw;
   bottom: -48%;
   border-radius: 50%;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.055);
+  border: 1px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.04);
   pointer-events: none;
 }
 
@@ -2074,7 +2074,7 @@ td .with-ico .ico {
   right: -20vw;
   top: -18%;
   border-radius: 50%;
-  background: rgba(26,32,190,.22);
+  background: rgba(6,31,54,.22);
   pointer-events: none;
 }
 
@@ -2084,11 +2084,10 @@ td .with-ico .ico {
   width: 460px;
   padding: 46px 48px;
   color: #17181a;
-  background: rgba(255,255,255,.72);
-  border: 1px solid rgba(255,255,255,.9);
+  background: #ffffff;
+  border: 1px solid rgba(255,255,255,.82);
   border-radius: 28px;
-  box-shadow: 0 30px 80px rgba(36,38,44,.14), inset 0 1px 0 rgba(255,255,255,.92);
-  backdrop-filter: blur(28px) saturate(140%);
+  box-shadow: 0 30px 80px rgba(4,24,43,.24);
 }
 
 .discovery-gate .gate-card::before {
@@ -2099,7 +2098,7 @@ td .with-ico .ico {
   width: 100%;
   height: 4px;
   border-radius: 28px 28px 0 0;
-  background: linear-gradient(90deg, #f50064, #ff4e98);
+  background: linear-gradient(90deg, #e51b35, #ef5a47);
 }
 
 .discovery-gate .gate-card .logo { margin-bottom: 14px; }
@@ -2109,14 +2108,14 @@ td .with-ico .ico {
 .discovery-gate .gate-card .sub { color: #5a5d62; }
 .discovery-gate .field label { color: #25272a; font-weight: 650; }
 .discovery-gate .field input { min-height: 50px; border-color: #d2d2d7; border-radius: 12px; background: rgba(255,255,255,.88); }
-.discovery-gate .field input:focus { border-color: #f50064; box-shadow: 0 0 0 4px rgba(245,0,100,.1); }
-.discovery-gate .btn:not(.ghost) { min-height: 50px; border-color: #f50064; border-radius: 999px; color: #fff !important; background: #f50064; font-weight: 700; letter-spacing: .01em; box-shadow:0 8px 22px rgba(245,0,100,.2); }
+.discovery-gate .field input:focus { border-color: #e51b35; box-shadow: 0 0 0 4px rgba(229,27,53,.1); }
+.discovery-gate .btn:not(.ghost) { min-height: 50px; border-color: #e51b35; border-radius: 999px; color: #fff !important; background: #e51b35; font-weight: 700; letter-spacing: .01em; box-shadow:0 8px 22px rgba(229,27,53,.2); }
 .discovery-gate .btn:not(.ghost) svg { color:#fff !important; }
-.discovery-gate .btn:not(.ghost):hover { border-color: #d80058; background: #d80058; transform:translateY(-1px); }
+.discovery-gate .btn:not(.ghost):hover { border-color: #c9142b; background: #c9142b; transform:translateY(-1px); }
 .gate.discovery-gate .gate-card > .btn.ghost { color: #242629; border-color: #d2d2d7; border-radius: 999px; background:rgba(255,255,255,.4); }
 .gate.discovery-gate .gate-card > .btn.ghost + .btn.ghost { margin-top:12px; }
 .discovery-gate .divider { color: #777a7f; }
-.discovery-gate .auth-error { color: #bd004e; }
+.discovery-gate .auth-error { color: #b31228; }
 
 .discovery-auth-showcase {
   position: absolute;
@@ -2130,9 +2129,9 @@ td .with-ico .ico {
   justify-content: center;
 }
 .discovery-hero-logo { position:absolute; top:52px; left:0; width:min(280px,32vw); height:82px; object-fit:contain; object-position:left center; filter:brightness(0) invert(1); }
-.discovery-auth-showcase > p { margin: 0 0 14px; color: #f50064; font-size: 12px; font-weight: 750; letter-spacing: .2em; }
+.discovery-auth-showcase > p { margin: 0 0 14px; color: #efb668; font-size: 12px; font-weight: 750; letter-spacing: .2em; }
 .discovery-auth-showcase h2 { max-width: 690px; margin: 0 0 34px; color: #fff; font-size: clamp(58px, 6.4vw, 96px); font-weight:750; line-height: .94; letter-spacing: -.065em; }
-.discovery-hero-rule { width:72px; height:5px; margin-bottom:24px; border-radius:999px; background:#f50064; }
+.discovery-hero-rule { width:72px; height:5px; margin-bottom:24px; border-radius:999px; background:#e51b35; }
 .discovery-auth-showcase .discovery-hero-copy { margin:0; color:rgba(255,255,255,.76); font-size:clamp(17px,1.5vw,22px); font-weight:500; letter-spacing:-.015em; }
 
 @media (max-width: 980px) {
@@ -2141,7 +2140,7 @@ td .with-ico .ico {
 }
 
 @media (max-width: 520px) {
-  .discovery-gate { padding:0; background:#fff; }
+  .discovery-gate { padding:0; background:#f4f6f8; }
   .discovery-gate .gate-card { width:100%; min-height:100vh; padding:38px 26px; box-shadow:none; }
 }
 
