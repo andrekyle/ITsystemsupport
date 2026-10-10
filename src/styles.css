@@ -795,10 +795,13 @@ a:hover {
 [data-theme="light"] .sidebar .side-item.install-app .ico {
   color: #fff;
 }
-[data-theme="light"] .sidebar .side-item:hover,
+[data-theme="light"] .sidebar .side-item:hover {
+  background: rgba(255,255,255,.13);
+  color: #fff;
+}
 [data-theme="light"] .sidebar .side-item.active,
 [data-theme="light"] .sidebar .side-item.active:hover {
-  background: rgba(255,255,255,.13);
+  background: transparent;
   color: #fff;
 }
 [data-theme="light"] .sidebar .side-item.active::before {
