@@ -343,10 +343,6 @@ a:hover {
   font-size: 14px;
 }
 
-.installed-titlebar {
-  display: none;
-}
-
 .icon-btn {
   display: inline-flex;
   align-items: center;
@@ -2177,53 +2173,6 @@ td .with-ico .ico {
 @media (max-width: 520px) {
   .discovery-gate { padding:0; }
   .discovery-gate .gate-card { width:100%; min-height:100vh; padding:30px 24px; border:0; border-radius:0; box-shadow:none; background:rgba(255,255,255,.82); }
-}
-
-@media (display-mode: window-controls-overlay) {
-  #root {
-    padding-top: env(titlebar-area-height, 32px);
-  }
-
-  .installed-titlebar {
-    position: fixed;
-    top: env(titlebar-area-y, 0px);
-    left: env(titlebar-area-x, 0px);
-    width: env(titlebar-area-width, 100vw);
-    height: env(titlebar-area-height, 32px);
-    display: flex;
-    align-items: center;
-    padding: 0 12px;
-    overflow: hidden;
-    white-space: nowrap;
-    font-size: 13px;
-    color: #fff;
-    background: #002147;
-    z-index: 100;
-    -webkit-app-region: drag;
-    app-region: drag;
-  }
-
-  .app {
-    height: calc(100dvh - env(titlebar-area-height, 32px));
-  }
-
-  .gate {
-    min-height: calc(100dvh - env(titlebar-area-height, 32px));
-  }
-
-  .sidebar {
-    top: calc(var(--header-h) + env(titlebar-area-height, 32px));
-  }
-
-  .side-scrim {
-    top: calc(var(--header-h) + env(titlebar-area-height, 32px));
-  }
-
-  @media (max-width: 520px) {
-    .discovery-gate .gate-card {
-      min-height: calc(100dvh - env(titlebar-area-height, 32px));
-    }
-  }
 }
 
 .gate-card h1 {
