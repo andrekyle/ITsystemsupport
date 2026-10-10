@@ -5,7 +5,7 @@
  *  - static assets (js/css/fonts/images/pdf): stale-while-revalidate
  *  - never caches Supabase or other cross-origin API calls
  */
-const VERSION = "itss-v7";
+const VERSION = "discovery-learn-v8";
 const SHELL = "/";
 
 self.addEventListener("install", (event) => {
@@ -51,6 +51,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Identity files must always be fresh so installed-app branding updates.
+  if (url.pathname === "/manifest.webmanifest" || url.pathname === "/sw.js") {
+    event.respondWith(fetch(req));
+    return;
+  }
+
   // static assets: serve from cache, refresh in the background
   if (ASSET_RE.test(url.pathname)) {
     event.respondWith(
@@ -69,4 +75,4 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
-// v7 refreshes open tabs onto the chunk-recovery build.
+// v8 refreshes the installed app's Discovery Learn identity.
