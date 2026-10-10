@@ -502,6 +502,34 @@ a:hover {
   flex-shrink: 0;
 }
 
+.pm-qualification {
+  margin: 6px 4px;
+  padding: 10px 6px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.pm-qualification-label {
+  display: block;
+  margin: 0 4px 7px;
+  color: var(--ink-3);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.pm-qualification .nice-select,
+.pm-qualification .nice-select-btn {
+  width: 100%;
+}
+
+.pm-qualification .nice-select-panel {
+  left: 0;
+  right: 0;
+  width: auto;
+}
+
 .profile-chip {
   display: flex;
   align-items: center;

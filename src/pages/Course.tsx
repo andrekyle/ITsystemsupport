@@ -5,7 +5,7 @@ import { Icon } from "../icons";
 import type { Exercise, ExerciseCheck, LessonFigure, LessonPlan, LessonPlanRow, LessonSection, LogbookSpec, PoeDoc, ProgressState, Profile, QuizQuestion, Role, Route, UnitActivity, UnitContent, UnitStandard } from "../types";
 import { UNIT_ACTIVITIES, isStaff } from "../types";
 import { COURSE_BLURB, COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
-import { getCourses, activeCourseId, courseStorageKey, deleteCustomCourse, setActiveCourse } from "../data/courses";
+import { activeCourseId, courseStorageKey, deleteCustomCourse } from "../data/courses";
 import { CourseCreator } from "../components/CourseCreator";
 import { useInlineCourse } from "../components/useInlineCourse";
 import { courseScopedUnit } from "../lib/courseScope";
@@ -1818,12 +1818,6 @@ export function CoursePage({
       <h1 className="page-title">{inline.text(COURSE_META.title, (d, v) => { d.meta.title = v; }, "title")}</h1>
       <p className="page-sub">{inline.text(COURSE_BLURB, (d, v) => { d.blurb = v; }, "blurb")}</p>
       <div className="course-switch">
-        <Select
-          ariaLabel="Switch course"
-          value={activeCourseId()}
-          options={getCourses().map((c) => ({ value: c.id, label: c.label }))}
-          onChange={setActiveCourse}
-        />
         {profile.role === "Super User" && <button className="btn ghost sm" onClick={() => setCreatingCourse(true)}><Icon name="plus" size={15} /> Add course</button>}
         {inline.controls}
         {canDeleteCourse && <button className="btn ghost sm danger-text" onClick={() => setDeletingCourse(true)}><Icon name="trash" size={15} /> Delete course</button>}
