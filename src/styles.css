@@ -343,6 +343,20 @@ a:hover {
   font-size: 14px;
 }
 
+@media (display-mode: window-controls-overlay) {
+  .header {
+    padding-left: max(16px, env(titlebar-area-x, 0px));
+    padding-right: max(16px, calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw) + 8px));
+    -webkit-app-region: drag;
+    app-region: drag;
+  }
+
+  .header > * {
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+  }
+}
+
 .icon-btn {
   display: inline-flex;
   align-items: center;
@@ -2173,6 +2187,19 @@ td .with-ico .ico {
 @media (max-width: 520px) {
   .discovery-gate { padding:0; }
   .discovery-gate .gate-card { width:100%; min-height:100vh; padding:30px 24px; border:0; border-radius:0; box-shadow:none; background:rgba(255,255,255,.82); }
+}
+
+@media (display-mode: window-controls-overlay) {
+  .discovery-gate {
+    padding-top: calc(env(titlebar-area-height, 32px) + 16px);
+    -webkit-app-region: drag;
+    app-region: drag;
+  }
+
+  .discovery-gate .gate-card {
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+  }
 }
 
 .gate-card h1 {
