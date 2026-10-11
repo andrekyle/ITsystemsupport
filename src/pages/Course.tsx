@@ -2251,11 +2251,14 @@ export function ModulePage({
             </span>}
             <span
               className={`status ${st === "completed" ? "done" : st === "in-progress" ? "progress" : "none"}`}
+              aria-label={locked ? "Locked" : st === "completed" ? "Completed" : st === "in-progress" ? `${Math.round(uc * 100)}% complete` : "Not started"}
             >
-              <Icon
-                name={locked ? "lock" : st === "completed" ? "checkCircle" : st === "in-progress" ? "halfCircle" : "circle"}
+              {!locked && st === "in-progress" ? (
+                <Ring value={uc} size={32} stroke={3} showLabel />
+              ) : <Icon
+                name={locked ? "lock" : st === "completed" ? "checkCircle" : "circle"}
                 size={22}
-              />
+              />}
             </span>
             <span className="main">
               <span className="module-unit-code">{usLabel(u.us)}</span>
