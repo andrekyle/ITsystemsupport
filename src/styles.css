@@ -2052,23 +2052,39 @@ td .with-ico .ico {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 16px;
+  gap: 8px 10px;
   max-width: 1200px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 .lesson-header-controls { flex: 1 1 220px; min-width: 0; }
 .unit-header-area.is-lesson > .unit-page-dropdown { order: 2; margin: 0; }
 .unit-header-area.is-lesson > .unit-page-dropdown[open] { order: 4; flex: 1 0 100%; }
 .unit-header-area.is-lesson > .unit-page-dropdown > summary,
 .unit-header-area.is-lesson.has-slide-edit > .unit-page-dropdown > summary {
-  min-height: 44px;
+  min-height: 32px;
   padding: 0;
+  gap: 6px;
+  font-size: 13px;
 }
 .unit-header-area.is-lesson > .btn.solid.sm.lesson-header-edit {
   position: static;
   order: 3;
-  min-height: 44px;
-  height: auto;
+  min-height: 30px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 400;
+  box-shadow: none;
+}
+.unit-header-area.is-lesson > .btn.solid.sm.lesson-header-edit:hover:not(:disabled),
+.unit-header-area.is-lesson > .btn.solid.sm.lesson-header-edit[aria-expanded="true"] {
+  background: var(--surface-2);
+  border-color: var(--ink-3);
+  color: var(--ink);
 }
 .lesson-header-controls .lesson-stepper { margin: 0; }
 .lesson-header-controls .lesson-top-nav { margin-left: 4px; }
