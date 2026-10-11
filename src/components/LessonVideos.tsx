@@ -57,7 +57,7 @@ function LessonVideo({ link, index }: { link: string; index: number }) {
   }
   return <figure className="lesson-video">
     {source.kind === "embed" ? <iframe src={source.src} title={`Lesson video ${index + 1}`}
-      loading="lazy" allow="fullscreen; picture-in-picture; encrypted-media" allowFullScreen
+      allow="picture-in-picture; encrypted-media" allowFullScreen
       referrerPolicy="strict-origin-when-cross-origin" />
       : <video controls preload="metadata" src={source.src} onError={() => setFailed(true)} />}
     {failed && <p className="auth-error" role="alert">This video could not be played. Check the link and the video host's permissions.</p>}

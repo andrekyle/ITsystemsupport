@@ -4908,6 +4908,12 @@ export function UnitPage({
                               ...lessonEdits, videos: { ...lessonEdits.videos, [si]: links },
                             });
                           }} />}
+                        {(lessonEdits.videos?.[si]?.length ?? 0) > 0 && (
+                          <button type="button" className="btn ghost sm"
+                            onClick={() => document.querySelector(".lesson-screen .lesson-video")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+                            View video
+                          </button>
+                        )}
                         <button type="button" className="btn ghost sm" disabled={savingLesson || !!inlineUnit} onClick={() => { setSlideEditOpen(false); setEditMode(false); }}>
                           {editable ? "Done editing slide" : "Close slide tools"}
                         </button>
@@ -5060,6 +5066,7 @@ export function UnitPage({
             return (
               <div key={sec.heading} className="lesson-screen">
                 {lessonControlsHost ? createPortal(stepper, lessonControlsHost) : stepper}
+                <LessonVideos links={lessonEdits.videos?.[si] ?? []} />
                 {isSlide && heroFig ? (() => {
                   const up = figureImages[heroFig.id];
                   const def = FIGURE_DEFAULTS[heroFig.id];
@@ -5135,7 +5142,6 @@ export function UnitPage({
                     </div>
                   </>
                 )}
-                <LessonVideos links={lessonEdits.videos?.[si] ?? []} />
                 {nav}
                 {isLast && (
                   <div className="callout">
