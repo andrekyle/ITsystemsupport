@@ -103,6 +103,20 @@ export interface EnrolmentInfo {
   signedDate: string;
 }
 
+export type ProfileContentType =
+  | "Article" | "Podcast" | "Video" | "Book" | "Course" | "Event" | "Experience"
+  | "Accomplishment" | "Award" | "Certificate" | "Badge" | "Degree";
+
+export interface ProfileContentEntry {
+  id: string;
+  type: ProfileContentType;
+  title: string;
+  organisation: string;
+  date: string;
+  description: string;
+  url: string;
+}
+
 export interface Profile {
   id: string;
   name: string;
@@ -130,6 +144,7 @@ export interface Profile {
   cloudUserId?: string;
   /** Filled-in Student Registration Form (paper-form replacement). */
   registrationForm?: RegistrationForm;
+  contentEntries?: ProfileContentEntry[];
 }
 
 /** Complete Student Registration Form — mirrors the paper form used at

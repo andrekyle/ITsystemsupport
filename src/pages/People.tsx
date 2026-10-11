@@ -28,6 +28,7 @@ import { openOnboardingPack } from "../lib/onboarding";
 import { mailtoLink, outlookComposeLink, teamsChatLink } from "../lib/integrations";
 import { VerdictSwitch } from "../components/VerdictSwitch";
 import { Avatar } from "../components/Avatar";
+import { ProfilePortfolio } from "../components/ProfilePortfolio";
 import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/EnrolmentForm";
 import { AlertModal, ConfirmModal, PromptModal } from "../components/Modal";
 import { downloadDoc, getFileBlob } from "../lib/files";
@@ -171,6 +172,7 @@ export function ProfilePage({
   const [profileTab, setProfileTab] = useState("details");
   const profileTabs = [
     { id: "details", label: "My details" },
+    { id: "content", label: "Learning & achievements" },
     { id: "signature", label: "Signature" },
     { id: "security", label: "Security" },
   ];
@@ -305,6 +307,11 @@ export function ProfilePage({
           <Icon name="document" size={15} /> Open onboarding pack
         </button>
       </div>
+      </section>
+
+      <section role="tabpanel" id="profile-panel-content" aria-labelledby="profile-tab-content"
+        hidden={profileTab !== "content"}>
+        <ProfilePortfolio profile={profile} onUpdateProfile={onUpdateProfile} />
       </section>
 
       <section role="tabpanel" id="profile-panel-signature" aria-labelledby="profile-tab-signature"

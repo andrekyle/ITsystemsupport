@@ -1933,6 +1933,24 @@ td .with-ico .ico {
   margin-top: 4px;
 }
 
+.profile-content-modal {
+  width: min(800px, 100%);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+
+.profile-content-picker + .profile-content-picker { margin-top: 26px; }
+.profile-content-picker h3 { margin: 0 0 8px; color: var(--ink); }
+.profile-content-picker p { margin: 0 0 12px; }
+.profile-content-options { display: flex; flex-wrap: wrap; gap: 10px; }
+.profile-content-options .btn { border: 1px solid var(--border); }
+.profile-content-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.profile-content-entry { min-width: 0; overflow-wrap: anywhere; }
+.profile-content-entry h3 { margin: 14px 0 8px; }
+.profile-content-meta { color: var(--ink-3); }
+.profile-content-description { white-space: pre-wrap; color: var(--ink-2); }
+.profile-content-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+
 .pw-row {
   display: flex;
   align-items: flex-end;
