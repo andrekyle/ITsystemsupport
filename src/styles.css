@@ -1981,6 +1981,7 @@ td .with-ico .ico {
   list-style: none;
 }
 .unit-page-dropdown > summary::-webkit-details-marker { display: none; }
+.unit-page-dropdown > summary[hidden] { display: none; }
 .unit-page-dropdown > summary svg { flex-shrink: 0; transition: transform 0.15s; }
 .unit-page-dropdown[open] > summary svg { transform: rotate(180deg); }
 .unit-page-dropdown > summary:focus-visible { outline: 2px solid var(--azure); outline-offset: 3px; }

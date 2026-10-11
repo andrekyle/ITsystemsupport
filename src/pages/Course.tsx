@@ -3209,20 +3209,6 @@ export function UnitPage({
     setPasteEditor(null);
   };
 
-  const openPresenter = () => {
-    const slides = buildPresenterSlides();
-    if (!slides.length) return;
-    // start on the current section if possible
-    const startIdx = slides.findIndex((s) => s.kind === "image" && s.sectionIndex >= (lessonStep ?? 0));
-    setPresenterAnswers({});
-    setPresenterChecked(false);
-    setPresenterPassed(false);
-    setPresenter({ slides, index: Math.max(0, startIdx) });
-    setTimeout(() => {
-      presenterRef.current?.requestFullscreen?.().catch(() => {});
-    }, 0);
-  };
-
   const [sharedSettings, updateSharedSettings] = useSharedSettings();
   const [workbookMemo, setWorkbookMemo] = useWorkbookMemo(unitId);
   /** super user's draft of the evaluation form link */
@@ -3427,8 +3413,8 @@ export function UnitPage({
         <span>{usLabel(u.us)}</span>
       </div>
 
-      <details className="unit-page-dropdown" key={`unit-header-${unitId}`}>
-        <summary>
+      <details className="unit-page-dropdown" key={`unit-header-${unitId}-${tab}`} open={tab !== "lesson"}>
+        <summary hidden={tab !== "lesson"}>
           <span>{usLabel(u.us)} · {tabs.find(item => item.id === tab)?.label ?? "Learning activities"}</span>
           <Icon name="chevronDown" size={18} />
         </summary>
@@ -3486,7 +3472,7 @@ export function UnitPage({
               onClick={(event) => {
                 setTab(t.id);
                 const dropdown = event.currentTarget.closest("details");
-                if (dropdown) dropdown.open = false;
+                if (dropdown && t.id === "lesson") dropdown.open = false;
               }}
             >
               <Icon name={t.icon} size={16} />
@@ -4799,15 +4785,6 @@ export function UnitPage({
                     Section {si + 1} of {total}
                   </span>
                   <span className="lesson-step-title">{plainSlideText(secHeading)}</span>
-                  <button
-                    type="button"
-                    className="btn ghost sm lesson-present-btn"
-                    onClick={openPresenter}
-                    title="Present all slides (full screen)"
-                  >
-                    <Icon name="play" size={13} />
-                    Present
-                  </button>
                   <span className="lesson-top-nav">
                     <button
                       type="button"
