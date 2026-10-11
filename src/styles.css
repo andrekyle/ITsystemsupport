@@ -4393,8 +4393,10 @@ textarea:focus {
 }
 
 .summary-login-cell {
-  display: grid;
-  gap: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
 }
 
 .summary-login-time {
