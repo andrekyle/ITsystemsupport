@@ -2078,7 +2078,7 @@ td .with-ico .ico {
   padding: clamp(32px, 5vw, 76px) clamp(32px, 5vw, 76px);
   color: #161617;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
-  background: #f7f8fa url("/discovery/Learn Today, Make an Impact.png") center / cover no-repeat;
+  background: #f7f8fa url("/discovery/Discovery Learning Hero Banner.png") center / cover no-repeat;
 }
 
 .discovery-gate .gate-card {
