@@ -115,6 +115,7 @@ export interface ProfileContentEntry {
   date: string;
   description: string;
   url: string;
+  image?: string;
 }
 
 export interface Profile {

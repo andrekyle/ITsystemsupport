@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, ProfileContentEntry, ProfileContentType } from "../types";
 import { ConfirmModal, Modal } from "./Modal";
+import { fileToImageDataUrl } from "./Avatar";
 
 const CONTENT_TYPES: { type: ProfileContentType; icon: string; achievement?: boolean }[] = [
   { type: "Article", icon: "document" },
@@ -29,12 +30,33 @@ export function ProfilePortfolio({
   const [draft, setDraft] = useState<ProfileContentEntry | null>(null);
   const [removing, setRemoving] = useState<ProfileContentEntry | null>(null);
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
   const entries = profile.contentEntries ?? [];
-  const close = () => { setAdding(false); setDraft(null); setError(""); };
+  const close = () => { if (uploading) return; setAdding(false); setDraft(null); setError(""); };
+
+  async function uploadImage(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setError("");
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      setError("Choose a PNG, JPEG or WebP image.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const image = await fileToImageDataUrl(file, 800);
+      setDraft(current => current ? { ...current, image } : current);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not upload the image. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!draft) return;
+    if (!draft || uploading) return;
     const title = draft.title.trim();
     const titleInput = event.currentTarget.elements.namedItem("title");
     if (titleInput instanceof HTMLInputElement) {
@@ -79,6 +101,7 @@ export function ProfilePortfolio({
         <div className="profile-content-grid">
           {entries.map(entry => (
             <article className="card profile-content-entry" key={entry.id}>
+              {entry.image && <img className="profile-content-image" src={entry.image} alt={`Image for ${entry.title}`} />}
               <span className="pill">
                 <Icon name={CONTENT_TYPES.find(item => item.type === entry.type)?.icon ?? "document"} size={15} />
                 {entry.type}
@@ -90,8 +113,10 @@ export function ProfilePortfolio({
               {entry.description && <p className="profile-content-description">{entry.description}</p>}
               {entry.url && <a href={entry.url} target="_blank" rel="noopener noreferrer">View resource <Icon name="chevronRight" size={13} /></a>}
               <div className="profile-content-actions">
-                <button className="btn ghost sm" type="button" onClick={() => { setDraft({ ...entry }); setAdding(true); }}>Edit</button>
-                <button className="btn ghost sm danger-text" type="button" onClick={() => setRemoving(entry)}>Remove</button>
+                <button className="icon-btn" type="button" title="Edit entry" aria-label={`Edit ${entry.title}`}
+                  onClick={() => { setDraft({ ...entry }); setAdding(true); }}><Icon name="pencil" size={18} /></button>
+                <button className="icon-btn danger-text" type="button" title="Remove entry" aria-label={`Remove ${entry.title}`}
+                  onClick={() => setRemoving(entry)}><Icon name="trash" size={18} /></button>
               </div>
             </article>
           ))}
@@ -104,14 +129,29 @@ export function ProfilePortfolio({
           onClose={close}
           actions={draft ? (
             <>
-              <button className="btn ghost" type="button" onClick={close}>Cancel</button>
-              <button className="btn" type="submit" form="profile-content-form">Save</button>
+              <button className="btn ghost" type="button" disabled={uploading} onClick={close}>Cancel</button>
+              <button className="btn" type="submit" form="profile-content-form" disabled={uploading}>Save</button>
             </>
           ) : <button className="btn ghost" type="button" onClick={close}>Cancel</button>}
         >
           {error && <p className="auth-error" role="alert">{error}</p>}
           {draft ? (
             <form id="profile-content-form" onSubmit={save}>
+              <label className="field">Image (optional)
+                <input type="file" accept="image/png,image/jpeg,image/webp" disabled={uploading} onChange={uploadImage} />
+              </label>
+              <p className="profile-content-meta">PNG, JPEG or WebP. The preview keeps the image's portrait or landscape proportions.</p>
+              {uploading && <p role="status">Uploading image...</p>}
+              {draft.image && (
+                <div className="profile-content-image-preview">
+                  <img className="profile-content-image" src={draft.image} alt="Uploaded image preview" />
+                  <button className="icon-btn danger-text" type="button" disabled={uploading}
+                    title="Remove image" aria-label="Remove uploaded image"
+                    onClick={() => setDraft({ ...draft, image: undefined })}>
+                    <Icon name="trash" size={18} />
+                  </button>
+                </div>
+              )}
               <label className="field">Title
                 <input name="title" autoFocus required maxLength={200} value={draft.title}
                   onChange={event => { event.target.setCustomValidity(""); setDraft({ ...draft, title: event.target.value }); }} />

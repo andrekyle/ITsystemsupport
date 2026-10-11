@@ -2272,7 +2272,7 @@ function fmtSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "questions" | "assignments" | "practical" | "workbook" | "memo" | "guide" | "logbook" | "quiz" | "selfassessment" | "evaluation" | "plan" | `custom-${string}` | `pdf-${string}`;
+type UnitTab = "overview" | "saqa" | "lesson" | "material" | "notes" | "exercises" | "questions" | "assignments" | "practical" | "workbook" | "memo" | "guide" | "logbook" | "quiz" | "selfassessment" | "evaluation" | "plan" | `custom-${string}` | `pdf-${string}`;
 
 /** Built-in lesson decks shipped with the app (public/downloads), per unit
  *  standard — always shown on the Course material tab ahead of uploads. */
@@ -2296,7 +2296,7 @@ const BUILTIN_DECKS: Record<string, { name: string; url: string }[]> = {
 
 const UNIT_TAB_KEY = "itss.unittab";
 const UNIT_TAB_US_KEY = "itss.unittab.us";
-const UNIT_TABS: UnitTab[] = ["overview", "lesson", "material", "notes", "exercises", "questions", "assignments", "practical", "workbook", "memo", "guide", "logbook", "quiz", "selfassessment", "evaluation", "plan"];
+const UNIT_TABS: UnitTab[] = ["overview", "saqa", "lesson", "material", "notes", "exercises", "questions", "assignments", "practical", "workbook", "memo", "guide", "logbook", "quiz", "selfassessment", "evaluation", "plan"];
 
 /** Restore the saved tab only for the same unit standard — opening another US always starts on Overview. */
 function loadUnitTab(unitId: string): UnitTab {
@@ -3392,6 +3392,8 @@ export function UnitPage({
   }
 
   const tabs: { id: UnitTab; label: string; icon: string; show: boolean }[] = [
+    { id: "overview", label: "Learning activities", icon: "checklist", show: true },
+    { id: "saqa", label: "SAQA details", icon: "certificate", show: !!content?.saqa },
     { id: "lesson", label: "Lesson", icon: "book", show: !!content?.lesson.length },
     { id: "material", label: "Course material", icon: "play", show: decks.length > 0 || !!builtUnit },
     { id: "notes", label: "Notes", icon: "document", show: !!content?.notes?.length || Object.values(userNotes).some((n) => n.us === unitId) || !!content?.lesson.length || unitId === "114055" },
@@ -3423,6 +3425,11 @@ export function UnitPage({
         <span>{usLabel(u.us)}</span>
       </div>
 
+      <details className="unit-page-dropdown" key={`unit-header-${unitId}`}>
+        <summary>
+          <span>{usLabel(u.us)} · {tabs.find(item => item.id === tab)?.label ?? "Learning activities"}</span>
+          <Icon name="chevronDown" size={18} />
+        </summary>
       <div className="eyebrow eyebrow-lg">
         <Icon name="document" size={22} />
         {isSaqaUnit(u.us) ? `Unit standard ${u.us}` : "Internal lesson"}
@@ -3474,7 +3481,11 @@ export function UnitPage({
               role="tab"
               aria-selected={tab === t.id}
               className={`tab${tab === t.id ? " active" : ""}`}
-              onClick={() => setTab(t.id)}
+              onClick={(event) => {
+                setTab(t.id);
+                const dropdown = event.currentTarget.closest("details");
+                if (dropdown) dropdown.open = false;
+              }}
             >
               <Icon name={t.icon} size={16} />
               {t.label}
@@ -3491,6 +3502,7 @@ export function UnitPage({
             </button>
           ))}
       </div>
+      </details>
 
       {tab === "overview" && (
         <>
@@ -3553,6 +3565,11 @@ export function UnitPage({
             );
           })()}
 
+        </>
+      )}
+
+      {tab === "saqa" && content?.saqa && (
+        <>
           {content?.saqa && (
             <>
               <h2 className="section-title">
@@ -3645,6 +3662,10 @@ export function UnitPage({
             </>
           )}
 
+        </>
+      )}
+
+      {(tab === "saqa" || tab === "overview") && (
           <div className="callout">
             <span className="ico">
               <Icon name="info" size={19} />
@@ -3653,7 +3674,6 @@ export function UnitPage({
               <Gloss text="Assessments for this unit standard are conducted in line with QCTO, SETA and institutional requirements, and must be valid, reliable, fair and aligned with the OCD and ASD for SAQA ID 48573. Constructive feedback is provided after each assessment." />
             </span>
           </div>
-        </>
       )}
 
       {tab === "lesson" && content && (

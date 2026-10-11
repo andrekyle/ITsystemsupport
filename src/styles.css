@@ -1950,6 +1950,34 @@ td .with-ico .ico {
 .profile-content-meta { color: var(--ink-3); }
 .profile-content-description { white-space: pre-wrap; color: var(--ink-2); }
 .profile-content-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.profile-content-entry .profile-content-image,
+.profile-content-image-preview .profile-content-image {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(100%, 220px);
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+.profile-content-image-preview { display: flex; align-items: flex-start; gap: 10px; }
+
+.unit-page-dropdown { margin-bottom: 12px; }
+.unit-page-dropdown > summary {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 8px 0;
+  color: var(--ink-2);
+  cursor: pointer;
+  list-style: none;
+}
+.unit-page-dropdown > summary::-webkit-details-marker { display: none; }
+.unit-page-dropdown > summary svg { flex-shrink: 0; transition: transform 0.15s; }
+.unit-page-dropdown[open] > summary svg { transform: rotate(180deg); }
+.unit-page-dropdown > summary:focus-visible { outline: 2px solid var(--azure); outline-offset: 3px; }
 
 .pw-row {
   display: flex;
