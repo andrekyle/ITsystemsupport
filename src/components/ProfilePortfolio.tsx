@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, ProfileContentEntry, ProfileContentType } from "../types";
 import { ConfirmModal, Modal } from "./Modal";
@@ -31,6 +31,7 @@ export function ProfilePortfolio({
   const [removing, setRemoving] = useState<ProfileContentEntry | null>(null);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const entries = profile.contentEntries ?? [];
   const close = () => { if (uploading) return; setAdding(false); setDraft(null); setError(""); };
 
@@ -137,10 +138,17 @@ export function ProfilePortfolio({
           {error && <p className="auth-error" role="alert">{error}</p>}
           {draft ? (
             <form id="profile-content-form" onSubmit={save}>
-              <label className="field">Image (optional)
-                <input type="file" accept="image/png,image/jpeg,image/webp" disabled={uploading} onChange={uploadImage} />
-              </label>
-              <p className="profile-content-meta">PNG, JPEG or WebP. The preview keeps the image's portrait or landscape proportions.</p>
+              <div className="profile-image-upload">
+                <span className="profile-image-upload-label">Image <span>(optional)</span></span>
+                <button type="button" className="btn ghost profile-image-upload-button"
+                  disabled={uploading} onClick={() => imageInputRef.current?.click()}>
+                  <Icon name="image" size={18} />
+                  {uploading ? "Uploading..." : draft.image ? "Replace image" : "Upload image"}
+                </button>
+                <input ref={imageInputRef} type="file" hidden aria-label="Image (optional)"
+                  accept="image/png,image/jpeg,image/webp" disabled={uploading} onChange={uploadImage} />
+                <p>PNG, JPEG or WebP. Portrait and landscape images keep their proportions.</p>
+              </div>
               {uploading && <p role="status">Uploading image...</p>}
               {draft.image && (
                 <div className="profile-content-image-preview">
