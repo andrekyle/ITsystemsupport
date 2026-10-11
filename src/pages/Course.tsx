@@ -3424,35 +3424,6 @@ export function UnitPage({
       </div>
       <h1 className="page-title">{u.title}</h1>
       {isSuperUser && <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} profileId={profile.id} onCancelInline={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />}
-      <div className="meta-row">
-        <span className="pill">
-          <span className="ico">
-            <Icon name="trend" size={15} />
-          </span>
-          NQF Level {u.nqf}
-        </span>
-        {u.credits > 0 && (
-          <span className="pill">
-            <span className="ico">
-              <Icon name="award" size={15} />
-            </span>
-            {u.credits} credits
-          </span>
-        )}
-        <span className="pill">
-          <span className="ico">
-            <Icon name="calendar" size={15} />
-          </span>
-          {u.dates}
-        </span>
-        <span className="pill">
-          <span className="ico">
-            <Icon name="clock" size={15} />
-          </span>
-          {u.time}
-        </span>
-      </div>
-
       <div style={{ margin: "16px 0 6px", maxWidth: 560 }}>
         <div className="bar-row">
           <Bar value={uc} green={uc === 1} />

@@ -2001,33 +2001,31 @@ td .with-ico .ico {
   align-items: center;
   justify-content: flex-start;
   gap: 8px;
-  padding: 12px;
+  padding: 0;
   margin: 16px 0;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface-2);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 .unit-page-dropdown > .unit-builder > .unit-builder-bar .btn {
   min-height: 34px;
   padding: 7px 10px;
   font-size: 12px;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  background: var(--surface);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
-.unit-page-dropdown > .meta-row { gap: 8px; margin: 12px 0; }
-.unit-page-dropdown > .meta-row .pill { font-size: 12px; padding: 6px 10px; }
 .unit-page-dropdown > .tabs {
-  flex-wrap: nowrap;
-  overflow-x: auto;
+  flex-wrap: wrap;
+  overflow: visible;
   gap: 4px;
   margin-top: 16px;
   padding-bottom: 4px;
-  scrollbar-width: thin;
+  background: none;
 }
 .unit-page-dropdown > .tabs .tab {
-  flex: 0 0 auto;
-  white-space: nowrap;
+  flex: 0 1 auto;
+  white-space: normal;
   padding: 9px 12px;
   font-size: 13px;
 }
@@ -3865,6 +3863,10 @@ textarea:focus {
 
 .opt:hover:not(:disabled) {
   background: var(--azure-lighter);
+}
+
+.quiz-q .opt:hover:not(:disabled):not(.selected) {
+  background: transparent;
 }
 
 .opt .mark {
