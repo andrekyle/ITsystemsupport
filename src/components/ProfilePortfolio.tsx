@@ -3,7 +3,6 @@ import { Icon } from "../icons";
 import type { Profile, ProfileContentEntry, ProfileContentType } from "../types";
 import { ConfirmModal } from "./Modal";
 import { fileToImageDataUrl } from "./Avatar";
-import { EditingTools } from "./EditingSidebar";
 
 const CONTENT_TYPES: { type: ProfileContentType; icon: string; achievement?: boolean }[] = [
   { type: "Article", icon: "document" },
@@ -133,7 +132,7 @@ export function ProfilePortfolio({
       {adding && (
         <section className="card profile-content-modal" aria-label="Profile entry editor">
           <h3>{draft ? `${entries.some(entry => entry.id === draft.id) ? "Edit" : "Add"} ${draft.type.toLowerCase()}` : "Add content to your profile"}</h3>
-          <EditingTools active={adding} title="Profile entry">
+          <div className="profile-content-actions">
           {draft ? (
             <>
               <button className="btn ghost" type="button" disabled={uploading} onClick={close}>Cancel</button>
@@ -141,10 +140,10 @@ export function ProfilePortfolio({
             </>
           ) : <button className="btn ghost" type="button" onClick={close}>Cancel</button>}
           {error && <p className="auth-error" role="alert">{error}</p>}
-          </EditingTools>
+          </div>
           {draft ? (
             <form id="profile-content-form" onSubmit={save}>
-              <EditingTools active title="Entry image">
+              <div>
               <div className="profile-image-upload">
                 <span className="profile-image-upload-label">Image <span>(optional)</span></span>
                 <button type="button" className="btn ghost profile-image-upload-button"
@@ -159,7 +158,7 @@ export function ProfilePortfolio({
               {uploading && <p role="status">Uploading image...</p>}
               {draft.image && <button className="btn ghost danger-text" type="button" disabled={uploading}
                 onClick={() => setDraft({ ...draft, image: undefined })}><Icon name="trash" size={18} /> Remove uploaded image</button>}
-              </EditingTools>
+              </div>
               {draft.image && (
                 <div className="profile-content-image-preview">
                   <img className="profile-content-image" src={draft.image} alt="Uploaded image preview" />
