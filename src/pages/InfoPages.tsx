@@ -22,6 +22,25 @@ import {
 } from "../data/course";
 
 export function AssessmentsPage({ profile }: { profile: Profile }) {
+  const [selectedTab, setSelectedTab] = useState("assessment-0");
+  const labels: Record<string, string> = {
+    "Assessment Planning": "Planning",
+    "Conducting Assessments": "Assessment",
+    "Record-Keeping & Documentation": "Records",
+    "Quality Assurance": "Quality",
+  };
+  const tabs = [
+    ...ASSESSMENT_FRAMEWORK.map((section, index) => ({
+      id: `assessment-${index}`,
+      label: labels[section.heading] ?? section.heading,
+      title: section.heading,
+      icon: section.icon,
+    })),
+    ...(isStaff(profile.role) ? [{
+      id: "facilitation", label: "Facilitation", title: "Facilitation responsibilities", icon: "presenter",
+    }] : []),
+  ];
+  const activeTab = tabs.some(tab => tab.id === selectedTab) ? selectedTab : tabs[0]?.id;
   return (
     <section className="assessments-page">
       <div className="eyebrow">
@@ -33,9 +52,33 @@ export function AssessmentsPage({ profile }: { profile: Profile }) {
         <Gloss text="Assessments are conducted in line with QCTO, SETA and institutional requirements, and are valid, reliable, fair and aligned with the OCD and ASD for SAQA ID 48573." />
       </p>
 
-      <div className="two-col">
-        {ASSESSMENT_FRAMEWORK.map((sec) => (
-          <div className="card" key={sec.heading}>
+      <div className="tabs assessment-tabs" role="tablist" aria-label="Assessment framework sections">
+        {tabs.map((tab, index) => (
+          <button key={tab.id} type="button" role="tab" id={`framework-tab-${tab.id}`}
+            aria-controls={`framework-panel-${tab.id}`} aria-selected={activeTab === tab.id}
+            tabIndex={activeTab === tab.id ? 0 : -1}
+            className={`tab${activeTab === tab.id ? " active" : ""}`} title={tab.title}
+            onClick={() => setSelectedTab(tab.id)}
+            onKeyDown={event => {
+              let next = index;
+              if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+              else if (event.key === "ArrowLeft") next = (index + tabs.length - 1) % tabs.length;
+              else if (event.key === "Home") next = 0;
+              else if (event.key === "End") next = tabs.length - 1;
+              else return;
+              event.preventDefault();
+              setSelectedTab(tabs[next].id);
+              document.getElementById(`framework-tab-${tabs[next].id}`)?.focus();
+            }}>
+            <Icon name={tab.icon} size={15} /> {tab.label}
+          </button>
+        ))}
+      </div>
+        {ASSESSMENT_FRAMEWORK.map((sec, index) => (
+          <section role="tabpanel" id={`framework-panel-assessment-${index}`}
+            aria-labelledby={`framework-tab-assessment-${index}`}
+            hidden={activeTab !== `assessment-${index}`} key={sec.heading}>
+          <div className="card">
             <h2 className="section-title mt-0" style={{ margin: "0 0 10px" }}>
               <span className="ico">
                 <Icon name={sec.icon} size={20} />
@@ -55,11 +98,12 @@ export function AssessmentsPage({ profile }: { profile: Profile }) {
               ))}
             </ul>
           </div>
+          </section>
         ))}
-      </div>
 
       {isStaff(profile.role) && (
-        <>
+        <section role="tabpanel" id="framework-panel-facilitation"
+          aria-labelledby="framework-tab-facilitation" hidden={activeTab !== "facilitation"}>
           <h2 className="section-title">
             <span className="ico">
               <Icon name="presenter" size={20} />
@@ -90,7 +134,7 @@ export function AssessmentsPage({ profile }: { profile: Profile }) {
               </div>
             ))}
           </div>
-        </>
+        </section>
       )}
 
       <div className="callout">

@@ -15696,24 +15696,28 @@ h2.section-title.howto-heading {
 
 /* ============ Training calendar in-place editing ============ */
 
-.calendar-tabs .tab {
+.calendar-tabs .tab,
+.assessment-tabs .tab {
   padding: 8px 10px;
   gap: 6px;
   font-size: 12px;
   white-space: nowrap;
 }
 
-.calendar-tabs .tab.active {
+.calendar-tabs .tab.active,
+.assessment-tabs .tab.active {
   color: var(--ink);
   border-bottom-color: var(--ink-2);
 }
 
-.calendar-tabs .tab:focus-visible {
+.calendar-tabs .tab:focus-visible,
+.assessment-tabs .tab:focus-visible {
   outline: 2px solid var(--ink-2);
   outline-offset: -2px;
 }
 
-.calendar-page [role="tabpanel"][hidden] {
+.calendar-page [role="tabpanel"][hidden],
+.assessments-page [role="tabpanel"][hidden] {
   display: none;
 }
 
