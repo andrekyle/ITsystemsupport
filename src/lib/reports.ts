@@ -860,15 +860,15 @@ export function reportDocumentHtml(
   <h1>${esc(kind.name)}</h1>
   <p class="sub">${esc(COURSE_META.title)} · SAQA ID ${esc(COURSE_META.saqaId)} · NQF Level ${COURSE_META.nqfLevel} · ${COURSE_META.credits} Credits · Quality assured by ${esc(COURSE_META.qualityAssurance)}</p>
 
-  <div class="banner">
+  ${kind.id === "data-analysis" ? `<div class="analysis-report-meta"><span><strong>Snapshot</strong> ${esc(today)}</span><span><strong>Unit scope</strong> ${scope === "all" ? "Whole programme" : "Started units"}</span><span><strong>Prepared for</strong> ${esc(author.name)}</span><span><strong>Source</strong> Recorded platform data</span></div><div class="banner">${esc(report.intro)}${question?.trim() ? `<p class="small">${esc(question.trim())}</p>` : ""}</div>` : `<div class="banner">
     <strong>${esc(kind.name)} — generated ${esc(today)}.</strong><br/>
     ${question?.trim() ? `<em>Question asked: “${esc(question.trim())}”</em><br/>` : ""}
     ${esc(report.intro)}
     <span class="small">${scope === "all" ? "Covers the whole programme." : "Covers only the unit standards worked on so far."} Written by the ITSS Learn AI reporting assistant from live platform data; reviewed by ${esc(author.name)}.</span>
-  </div>
+  </div>`}
   ${kind.id === "data-analysis" ? programmeAnalysisHtml(analysisData(rows, scope)) : ""}
-  <section class="report-section">${sections}</section>
-  ${recs ? `<section class="report-section">${recs}</section>` : ""}
+  <section class="report-section${kind.id === "data-analysis" ? " analysis-document-section" : ""}">${sections}</section>
+  ${recs ? `<section class="report-section${kind.id === "data-analysis" ? " analysis-document-section" : ""}">${recs}</section>` : ""}
 ${tracker ? "" : `
   <h2>Appendix · Data snapshot</h2>
   <p class="small">Figures as recorded on ITSS Learn at the time of generation (${esc(today)}).</p>

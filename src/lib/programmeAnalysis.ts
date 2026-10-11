@@ -68,27 +68,34 @@ export function programmeAnalysisData(rows: LearnerRow[], units: AnalysisUnit[],
 }
 
 export const PROGRAMME_ANALYSIS_CSS = `
-body { font:13px/1.5 "Segoe UI",Arial,sans-serif; color:#323130; background:#fff; }
-h1 { color:#323130; font-size:24px; font-weight:600; border-bottom:3px solid #00a4ef; padding-bottom:12px; margin-bottom:8px; }
+body { font:13px/1.5 "Segoe UI",Arial,sans-serif; color:#323130; background:#f3f2f1; padding:28px 32px; }
+h1 { color:#323130; font-size:24px; font-weight:600; border-left:5px solid #f2c811; padding:0 0 0 12px; margin-bottom:8px; }
 h2 { color:#323130; font-size:16px; font-weight:600; margin-top:28px; }
 h2::after { border-color:#edebe9; }
 .sub,.small { color:#605e5c; }
-.banner { background:#faf9f8; border:1px solid #edebe9; border-radius:0; padding:12px 16px; }
+.banner { background:#fff; border:0; border-radius:0; padding:12px 16px; }
+.analysis-report-meta { display:flex; flex-wrap:wrap; gap:8px 24px; border-bottom:1px solid #d2d0ce; padding-bottom:10px; margin-bottom:16px; color:#605e5c; font-size:12px; }
+.analysis-report-meta strong { color:#323130; font-weight:600; }
+.analysis-page-label { text-transform:uppercase; font-size:11px; letter-spacing:.08em; color:#605e5c; margin:18px 0 8px; }
+.analysis-document-section { background:#fff; padding:16px 20px; margin-top:16px; }
 th { background:#f3f2f1; font-weight:600; }
 th,td { border-color:#edebe9; font-size:12px; }
 .analysis-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:16px 0; }
-.analysis-kpi { background:#fff; border:1px solid #edebe9; border-left:3px solid #00a4ef; padding:12px 16px; border-radius:0; font-size:12px; color:#605e5c; }
+.analysis-kpi { background:#fff; border:0; border-bottom:3px solid #00a4ef; padding:16px 20px; border-radius:0; font-size:12px; color:#605e5c; }
 .analysis-kpi strong { display:block; color:#323130; font-size:32px; font-weight:600; line-height:1.2; margin-bottom:4px; }
-.analysis-kpi:nth-child(2) { border-left-color:#f25022; }
-.analysis-kpi:nth-child(3) { border-left-color:#7fba00; }
-.analysis-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
-.analysis-chart { --series:#00a4ef; margin:0; padding:16px; border:1px solid #edebe9; border-radius:0; background:#fff; min-width:0; break-inside:avoid; }
+.analysis-kpi:nth-child(2) { border-bottom-color:#f25022; }
+.analysis-kpi:nth-child(3) { border-bottom-color:#7fba00; }
+.analysis-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; align-items:start; }
+.analysis-chart { --series:#00a4ef; margin:0; padding:16px; border:0; border-radius:0; background:#fff; min-width:0; break-inside:avoid; }
 .analysis-chart.wide { grid-column:1/-1; }
 .analysis-chart h3 { color:#323130; font-size:14px; font-weight:600; margin:0 0 6px; }
 .analysis-chart:nth-child(2),.analysis-chart:nth-child(6),.analysis-chart:nth-child(7),.analysis-chart:nth-child(8) { --series:#7fba00; }
 .analysis-chart:nth-child(5) { --series:#ffb900; }
 .analysis-chart:nth-child(9) { --series:#f25022; }
 .analysis-chart p { font-size:11px; color:#605e5c; line-height:1.45; }
+.analysis-chart .analysis-method { margin:0 0 12px; }
+.analysis-chart .analysis-method summary { color:#605e5c; font-size:11px; }
+.analysis-chart .analysis-method p { margin:8px 0; }
 .analysis-row { display:grid; grid-template-columns:minmax(90px,1fr) minmax(70px,1.5fr) 85px; align-items:center; gap:8px; margin:9px 0; font-size:12px; }
 .analysis-row > span:first-child { overflow-wrap:anywhere; }
 .analysis-track { background:#f3f2f1; height:10px; border-radius:0; overflow:hidden; }
@@ -109,13 +116,14 @@ th,td { border-color:#edebe9; font-size:12px; }
 .analysis-appendix { max-width:100%; overflow-x:auto; }
 .analysis-chart table { table-layout:fixed; }
 .analysis-chart td, .analysis-chart th { overflow-wrap:anywhere; font-size:11px; }
+@media(max-width:1200px) { .analysis-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:700px) { body { padding:20px 16px; } .analysis-grid { grid-template-columns:1fr; } .analysis-kpis { grid-template-columns:1fr; } .analysis-row { grid-template-columns:minmax(70px,1fr) minmax(40px,1fr) 75px; } }
-@media print { body { padding:10mm 12mm; } .analysis-grid { display:block; } .analysis-chart { margin-bottom:16px; } .analysis-chart details { display:none; } .analysis-appendix { overflow:visible; } .analysis-chart,.analysis-track,.analysis-fill,.analysis-stack,.analysis-kpi { print-color-adjust:exact; -webkit-print-color-adjust:exact; } }
+@media print { body { padding:10mm 12mm; background:#fff; } .analysis-grid { display:block; } .analysis-chart { margin-bottom:16px; border:1px solid #edebe9; } .analysis-chart details { display:none; } .analysis-chart details.analysis-method { display:block; } .analysis-chart details.analysis-method > p { display:block; } .analysis-chart details.analysis-method summary { display:none; } .analysis-appendix { overflow:visible; } .analysis-chart,.analysis-track,.analysis-fill,.analysis-stack,.analysis-kpi { print-color-adjust:exact; -webkit-print-color-adjust:exact; } }
 `;
 
 export function programmeAnalysisHtml(data: ReturnType<typeof programmeAnalysisData>): string {
   const table = (headers: string[], rows: string[][]) => `<details><summary>View chart data</summary><table><thead><tr>${headers.map(text => `<th>${esc(text)}</th>`).join("")}</tr></thead><tbody>${rows.map(row => `<tr>${row.map(text => `<td>${esc(text)}</td>`).join("")}</tr>`).join("")}</tbody></table></details>`;
-  const card = (title: string, note: string, body: string, wide = false) => `<figure class="analysis-chart${wide ? " wide" : ""}"><figcaption><h3>${esc(title)}</h3><p>${esc(note)}</p></figcaption>${body}</figure>`;
+  const card = (title: string, note: string, body: string, wide = false) => `<figure class="analysis-chart${wide ? " wide" : ""}"><figcaption><h3>${esc(title)}</h3></figcaption><details class="analysis-method"><summary>Measure definition</summary><p>${esc(note)}</p></details>${body}</figure>`;
   const bars = data.charts.map(chart => {
     const max = Math.max(chart.max ?? 0, ...chart.points.map(point => point.value ?? 0), 1);
     return card(chart.title, chart.note, chart.points.length ? chart.points.map(point => `<div class="analysis-row"><span>${esc(point.label)}</span><span class="analysis-track" aria-hidden="true"><span class="analysis-fill" style="width:${(point.value ?? 0) / max * 100}%"></span></span><span class="analysis-value">${esc(fmt(point.value, chart.unit))}</span></div>`).join("") : "<p>No learners recorded.</p>");
