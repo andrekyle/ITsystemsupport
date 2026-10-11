@@ -345,11 +345,13 @@ export function PoePage({ profile }: { profile: Profile }) {
                           })}
                         </span>
                       </span>
+                      <span className="poe-file-actions">
                       {canDownload && (
                         <button
                           className="poe-dl"
                           onClick={() => void downloadDoc(doc)}
                           title="Download"
+                          aria-label={`Download ${doc.name}`}
                         >
                           <Icon name="download" size={17} />
                         </button>
@@ -367,10 +369,12 @@ export function PoePage({ profile }: { profile: Profile }) {
                             });
                           }}
                           title="Remove document"
+                          aria-label={`Remove ${doc.name}`}
                         >
                           ✕
                         </button>
                       )}
+                      </span>
                     </div>
                   ))}
                   {canEdit && !readOnly && files.length < max && (

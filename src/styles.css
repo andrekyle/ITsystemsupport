@@ -5943,10 +5943,11 @@ table.data.kv tr:last-child td {
 
 .poe-doc {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 10px;
   min-width: 0;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .poe-doc > svg {
@@ -5966,11 +5967,23 @@ table.data.kv tr:last-child td {
 }
 
 .poe-doc-line {
-  display: flex;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   min-width: 0;
   max-width: 100%;
+  width: 100%;
+  padding: 10px 0;
+}
+.poe-file-actions { display: inline-flex; align-items: center; gap: 4px; }
+.poe-file-actions > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
 }
 
 .poe-doc.multi .poe-doc-line {
@@ -11466,7 +11479,10 @@ table.data th.sortable.sorted { color: var(--ink); }
   gap: 6px;
   align-items: center;
   flex-wrap: wrap;
-  margin-top: 8px;
+  margin-top: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  justify-content: flex-end;
 }
 
 /* flat danger text-button (delete/destructive) — no glow, just red ink */
