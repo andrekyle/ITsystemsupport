@@ -3438,10 +3438,10 @@ export function UnitPage({
 
       <div className={`unit-header-area${tab === "lesson" && isPrivileged ? " has-slide-edit" : ""}`}>
       {tab === "lesson" && isPrivileged && (
-        <button type="button" className="btn ghost sm lesson-header-edit"
+        <button type="button" className="btn solid sm lesson-header-edit"
           aria-expanded={slideEditOpen} aria-controls="lesson-slide-edit-tools"
           onClick={() => setSlideEditOpen(open => !open)}>
-          <Icon name="pencil" size={15} /> Edit slide <Icon name="chevronDown" size={14} />
+          Edit slide
         </button>
       )}
       <details className="unit-page-dropdown" key={`unit-header-${unitId}-${tab}`}
