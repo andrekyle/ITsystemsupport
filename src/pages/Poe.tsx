@@ -241,12 +241,13 @@ export function PoePage({ profile }: { profile: Profile }) {
         </div>
       )}
 
-      <div className="tabs" role="tablist" aria-label="Portfolio evidence sections">
+      <div className="tabs poe-section-tabs" role="tablist" aria-label="Portfolio evidence sections">
         {POE_SECTIONS.map((sec, index) => (
           <button
             key={sec.heading}
             type="button"
             role="tab"
+            title={sec.heading}
             id={`poe-tab-${index}`}
             aria-controls={`poe-panel-${index}`}
             aria-selected={selectedSection === sec.heading}
@@ -265,8 +266,8 @@ export function PoePage({ profile }: { profile: Profile }) {
               document.getElementById(`poe-tab-${nextIndex}`)?.focus();
             }}
           >
-            <Icon name={sec.icon} size={15} />
-            {sec.heading}
+            <Icon name={sec.icon} size={14} />
+            {sec.heading.replace(/^\d+\.\s*/, "").split(/\s+/)[0]}
           </button>
         ))}
       </div>

@@ -2031,6 +2031,8 @@ td .with-ico .ico {
 }
 
 .unit-edit-menu { margin: 12px 0; }
+.poe-section-tabs { gap: 0; }
+.poe-section-tabs .tab { padding: 8px 10px; gap: 6px; font-size: 12px; white-space: nowrap; }
 .unit-edit-menu > summary,
 .lesson-edit-menu > summary {
   display: inline-flex;
