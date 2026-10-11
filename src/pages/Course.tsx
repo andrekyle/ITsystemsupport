@@ -3436,7 +3436,11 @@ export function UnitPage({
         <span>{usLabel(u.us)}</span>
       </div>
 
-      <details className="unit-page-dropdown" key={`unit-header-${unitId}-${tab}`} open={unitHeaderOpen} onToggle={event => setUnitHeaderOpen(event.currentTarget.open)}>
+      <details className="unit-page-dropdown" key={`unit-header-${unitId}-${tab}`}
+        open={tab !== "lesson" || unitHeaderOpen}
+        onToggle={event => {
+          if (tab === "lesson") setUnitHeaderOpen(event.currentTarget.open);
+        }}>
         <summary hidden={tab !== "lesson"}>
           <span>{usLabel(u.us)} · {tabs.find(item => item.id === tab)?.label ?? "Learning activities"}</span>
           <Icon name="chevronDown" size={18} />
