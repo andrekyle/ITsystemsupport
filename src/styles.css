@@ -732,6 +732,15 @@ a:hover {
   display: inline-flex;
 }
 
+.sidebar .side-item {
+  font-size: 13px;
+}
+
+.sidebar .side-item .ico svg {
+  width: 18px;
+  height: 18px;
+}
+
 .side-item .txt {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1985,6 +1994,43 @@ td .with-ico .ico {
 .unit-page-dropdown > summary svg { flex-shrink: 0; transition: transform 0.15s; }
 .unit-page-dropdown[open] > summary svg { transform: rotate(180deg); }
 .unit-page-dropdown > summary:focus-visible { outline: 2px solid var(--azure); outline-offset: 3px; }
+
+.unit-page-dropdown > .unit-builder > .unit-builder-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 12px;
+  margin: 16px 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.unit-page-dropdown > .unit-builder > .unit-builder-bar .btn {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+}
+.unit-page-dropdown > .meta-row { gap: 8px; margin: 12px 0; }
+.unit-page-dropdown > .meta-row .pill { font-size: 12px; padding: 6px 10px; }
+.unit-page-dropdown > .tabs {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 4px;
+  margin-top: 16px;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+.unit-page-dropdown > .tabs .tab {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  padding: 9px 12px;
+  font-size: 13px;
+}
 
 .lesson-stepper {
   padding: 6px 0;
