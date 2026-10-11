@@ -94,9 +94,22 @@ export function HowToPage({ navigate }: { navigate: (r: Route) => void }) {
         <span className="howto-stage"><Icon name="folder" size={16} /> POE Evidence</span>
       </div>
 
+      <div className="howto-layout">
+        <nav className="howto-navigation" aria-label="Completion guide steps">
+          <h3>Your learning journey</h3>
+          {STEPS.map((step, index) => (
+            <a key={step.title} href={`#completion-step-${index + 1}`}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              {step.title}
+            </a>
+          ))}
+        </nav>
+        <div className="howto-results">
+        <h3 className="howto-results-heading">Steps to completion</h3>
+        <p className="muted">{STEPS.length} steps to guide your learning</p>
       <ol className="howto-list">
         {STEPS.map((s, i) => (
-          <li className="howto-row" key={s.title}>
+          <li className="howto-row" id={`completion-step-${i + 1}`} key={s.title}>
             <span className="howto-bignum" aria-hidden="true">
               {String(i + 1).padStart(2, "0")}
             </span>
@@ -126,6 +139,8 @@ export function HowToPage({ navigate }: { navigate: (r: Route) => void }) {
           Stuck on anything? Ask on the <strong>Community &amp; Support</strong> page or message
           your facilitator on <strong>Chat</strong> — and keep an eye on the Training Calendar for
           session dates and deadlines.
+        </div>
+          </div>
         </div>
       </div>
     </div>
