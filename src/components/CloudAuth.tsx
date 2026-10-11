@@ -136,9 +136,52 @@ export function CloudAuth() {
         <div className="discovery-auth-showcase" aria-hidden="true">
           <img className="discovery-hero-logo" src={TENANT.logo!} alt="" />
           <p>GROW WITH PURPOSE.</p>
-          <h2>Learn today.<br />Make an impact.</h2>
+          <h2>Learn today.<br /><span>Make an impact.</span></h2>
           <div className="discovery-hero-rule" />
           <p className="discovery-hero-copy">Build your skills. Grow your confidence. Put your learning into practice.</p>
+        </div>
+      )}
+      {TENANT_ID === "discovery" && (
+        <div className="discovery-campus" aria-hidden="true">
+          <svg viewBox="0 0 900 800" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <linearGradient id="campus-sky" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stopColor="#bde5ff" />
+                <stop offset=".52" stopColor="#328bd2" />
+                <stop offset="1" stopColor="#07518c" />
+              </linearGradient>
+              <linearGradient id="campus-glass" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stopColor="#092844" />
+                <stop offset=".42" stopColor="#1268a5" />
+                <stop offset=".72" stopColor="#153f62" />
+                <stop offset="1" stopColor="#061e34" />
+              </linearGradient>
+              <pattern id="campus-windows" width="38" height="42" patternUnits="userSpaceOnUse">
+                <path d="M0 0H38M0 0V42" fill="none" stroke="#d2edff" strokeOpacity=".45" strokeWidth="2" />
+                <path d="M5 5H32V34H5Z" fill="#9ddcff" fillOpacity=".12" />
+              </pattern>
+            </defs>
+            <rect width="900" height="800" fill="url(#campus-sky)" />
+            <path d="M0 0H900V220L590 170 360 250 0 340Z" fill="#fff" fillOpacity=".12" />
+            <path d="M170 800V228Q180 156 250 145L405 127 540 202V800Z" fill="url(#campus-glass)" />
+            <path d="M170 800V228Q180 156 250 145L405 127 540 202V800Z" fill="url(#campus-windows)" />
+            <path d="M540 800V204L900 302V800Z" fill="#082941" />
+            <path d="M540 204L900 302V800H540Z" fill="url(#campus-windows)" />
+            <path d="M405 128Q480 167 540 204" fill="none" stroke="#e7f7ff" strokeOpacity=".8" strokeWidth="4" />
+            <path d="M0 706Q220 680 390 716T900 684V800H0Z" fill="#092a3b" fillOpacity=".8" />
+            <path d="M18 0Q-42 265 24 490T170 800" fill="none" stroke="#fff" strokeOpacity=".78" strokeWidth="3" />
+            <path d="M48 0Q-10 256 52 480T205 800" fill="none" stroke="#fff" strokeOpacity=".36" strokeWidth="2" />
+            <g fill="#d6ad6e" fillOpacity=".9">
+              <circle cx="90" cy="663" r="48" /><circle cx="135" cy="693" r="62" />
+              <circle cx="823" cy="638" r="43" /><circle cx="870" cy="685" r="58" />
+            </g>
+            <g fill="#285a42">
+              <path d="M42 800l48-186 52 186z" /><path d="M84 800l55-142 48 142z" />
+              <path d="M770 800l52-178 54 178z" /><path d="M824 800l48-136 42 136z" />
+            </g>
+            <path d="M0 755Q245 716 475 750T900 734V800H0Z" fill="#dfd5bb" />
+            <path d="M0 778H900" stroke="#fff" strokeOpacity=".75" strokeWidth="5" />
+          </svg>
         </div>
       )}
       <div className="gate-card">
