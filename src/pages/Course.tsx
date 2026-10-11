@@ -2835,6 +2835,8 @@ export function UnitPage({
   const idx = MODULES.indexOf(mod);
   const uc = unitCompletion(progress, u.us);
   const acts = progress.units[u.us]?.activities ?? {};
+  const completedActivities = UNIT_ACTIVITIES.filter(activity => !!acts[activity]).length;
+  const nextActivity = UNIT_ACTIVITIES.find(activity => !acts[activity]);
   const content = inlineUnit ?? builtUnit?.content ?? getContent(u.us);
   const practicalTask = content?.practicalTask ?? practicalTaskForUnit(u.us);
   // The lesson plan shown on the tab: inline table edits (shared, cloud-synced) win over the generated plan.
@@ -3505,40 +3507,58 @@ export function UnitPage({
       </details>
 
       {tab === "overview" && (
-        <>
+        <section className="unit-activity-checklist">
           <h2 className="section-title">
             <span className="ico">
               <Icon name="checklist" size={20} />
             </span>
             Learning activities
           </h2>
-          <p className="muted" style={{ marginTop: -6, marginBottom: 14 }}>
-            Mark each stage as it is completed. Progress is saved to your profile.
+          <p className="muted">
+            Follow the steps below and mark each stage when complete. Your progress is saved to your profile.
           </p>
-          {UNIT_ACTIVITIES.map((a) => {
+          <div className="activity-progress card">
+            <div className="activity-progress-heading" aria-live="polite">
+              <strong>{completedActivities === UNIT_ACTIVITIES.length ? "All stages complete" : "Your learning journey"}</strong>
+              <span>{completedActivities} of {UNIT_ACTIVITIES.length} stages complete</span>
+            </div>
+            <div role="progressbar" aria-label="Learning activities completed"
+              aria-valuemin={0} aria-valuemax={UNIT_ACTIVITIES.length} aria-valuenow={completedActivities}>
+              <Bar value={completedActivities / UNIT_ACTIVITIES.length} green={completedActivities === UNIT_ACTIVITIES.length} />
+            </div>
+          </div>
+          <ol className="activity-steps">
+          {UNIT_ACTIVITIES.map((a, index) => {
             const done = !!acts[a];
             const info = ACTIVITY_INFO[a];
             return (
+              <li key={a} className={`activity-step${done ? " is-complete" : ""}${a === nextActivity ? " is-next" : ""}`}>
               <button
-                key={a}
-                className={`activity${done ? " done" : ""}`}
+                type="button"
+                className="activity-step-button"
                 onClick={() => toggleActivity(u.us, a)}
                 aria-pressed={done}
+                aria-label={`${a}: ${done ? "complete, mark incomplete" : "not complete, mark complete"}`}
               >
-                <span className="box">
-                  <Icon name={done ? "checkCircle" : "circle"} size={22} />
+                <span className="activity-step-number" aria-hidden="true">
+                  {done ? <Icon name="check" size={20} /> : index + 1}
                 </span>
-                <span style={{ flex: 1 }}>
-                  <span className="t">{a}</span>
-                  <br />
-                  <span className="d">
+                <span className="activity-step-content">
+                  <span className="activity-step-kicker">Step {index + 1}</span>
+                  <span className="activity-step-title"><Icon name={info.icon} size={18} />{a}</span>
+                  <span className="activity-step-description">
                     <Gloss text={info.desc} />
                   </span>
                 </span>
-                <Icon name={info.icon} size={20} color="var(--azure)" />
+                <span className="activity-step-status">
+                  {done ? "Complete" : a === nextActivity ? "Next step" : "To do"}
+                </span>
               </button>
+              </li>
             );
           })}
+          </ol>
+          <p className="activity-checklist-hint">Select a step to mark it complete. Select it again to undo.</p>
 
           {content && (() => {
             const parts = [
@@ -3558,14 +3578,14 @@ export function UnitPage({
                   <Icon name="book" size={19} />
                 </span>
                 <span>
-                  This unit standard has full learning material: {text}. Use the tabs above to work
+                  This unit standard has full learning material: {text}. Expand the unit menu above to work
                   through it.
                 </span>
               </div>
             );
           })()}
 
-        </>
+        </section>
       )}
 
       {tab === "saqa" && content?.saqa && (

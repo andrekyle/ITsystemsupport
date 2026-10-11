@@ -1979,6 +1979,65 @@ td .with-ico .ico {
 .unit-page-dropdown[open] > summary svg { transform: rotate(180deg); }
 .unit-page-dropdown > summary:focus-visible { outline: 2px solid var(--azure); outline-offset: 3px; }
 
+.unit-activity-checklist { max-width: 1000px; }
+.activity-progress { margin: 20px 0 24px; }
+.activity-progress-heading { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.activity-progress-heading span { color: var(--ink-3); font-size: 13px; }
+.activity-steps { list-style: none; padding: 0; margin: 0; }
+.activity-step { position: relative; padding-bottom: 14px; }
+.activity-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 35px;
+  bottom: 0;
+  width: 2px;
+  height: 14px;
+  background: var(--border);
+}
+.activity-step-button {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  padding: 20px 16px;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.activity-step-button:hover { background: var(--surface-2); border-color: var(--azure); }
+.activity-step-button:focus-visible { outline: 2px solid var(--azure); outline-offset: 3px; }
+.activity-step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 38px;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  font-weight: 600;
+}
+.activity-step-content { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 6px; }
+.activity-step-kicker { color: var(--ink-3); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+.activity-step-title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.activity-step-description { color: var(--ink-2); font-size: 13px; line-height: 1.6; }
+.activity-step-status { flex-shrink: 0; font-size: 12px; color: var(--ink-3); }
+.activity-step.is-next .activity-step-button { border-color: var(--azure); }
+.activity-step.is-next .activity-step-number,
+.activity-step.is-next .activity-step-status { color: var(--azure); }
+.activity-step.is-complete .activity-step-number { background: var(--azure); border-color: var(--azure); color: var(--surface); }
+.activity-checklist-hint { margin: 0 0 22px; color: var(--ink-3); font-size: 12px; }
+@media (max-width: 640px) {
+  .activity-step-button { gap: 12px; flex-wrap: wrap; padding: 16px; }
+  .activity-step-content { flex-basis: calc(100% - 50px); }
+  .activity-step-status { margin-left: 50px; }
+}
+
 .pw-row {
   display: flex;
   align-items: flex-end;
@@ -13599,6 +13658,17 @@ h2.section-title.howto-heading {
 .howto-callout {
   max-width: 900px;
   font-size: 16.5px;
+}
+
+[data-theme="dark"] .howto-page {
+  --azure: #c5c5c5;
+  background: #303030;
+}
+
+[data-theme="dark"] .howto-row,
+[data-theme="dark"] .howto-callout {
+  background: #363636;
+  border-color: #484848;
 }
 
 @media (max-width: 640px) {
