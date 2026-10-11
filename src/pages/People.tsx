@@ -508,6 +508,14 @@ export function StudentsPage({
 }) {
   const isSuper = profile.role === "Super User";
   const isPrivileged = isStaff(profile.role);
+  const [peopleTab, setPeopleTab] = useState("directory");
+  const peopleTabs = [
+    { id: "directory", label: "Directory", icon: "people" },
+    ...(isPrivileged ? [{ id: "summary", label: "Summary", icon: "chart" }] : []),
+    { id: "online", label: "Online activity", icon: "clock" },
+    ...(isSuper ? [{ id: "management", label: "User management", icon: "settings" }] : []),
+  ];
+  const activePeopleTab = peopleTabs.some(tab => tab.id === peopleTab) ? peopleTab : "directory";
   const [rev, setRev] = useState(0);
   const refresh = () => setRev((r) => r + 1);
   const [cloud, setCloud] = useState<CloudDirectory | null>(null);
@@ -663,22 +671,31 @@ export function StudentsPage({
             : "Everyone enrolled on this learnership. Personal contact details are kept private."}
       </p>
 
-      {isSuper && <AddUser viewer={profile} onAdded={refresh} />}
-
-      {isSuper && (
-        <DownloadAllAssignments
-          learners={people.filter((p) => p.role === "Learner")}
-          remoteIds={remoteIds}
-          owners={cloud?.owners ?? {}}
-          cloudProfiles={cloud?.profiles ?? []}
-        />
-      )}
-
-      {people.length > 0 && <OnlineNow people={people} viewer={profile} />}
-
-      {isPrivileged && people.length > 0 && (
-        <PeopleSummary people={people} viewer={profile} cloud={cloud} remoteIds={remoteIds} navigate={navigate} />
-      )}
+      <div className="people-tabs-page">
+      <div className="tabs" role="tablist" aria-label="People sections">
+        {peopleTabs.map((tab, index) => (
+          <button key={tab.id} type="button" role="tab" id={`people-tab-${tab.id}`}
+            aria-controls={`people-panel-${tab.id}`} aria-selected={activePeopleTab === tab.id}
+            tabIndex={activePeopleTab === tab.id ? 0 : -1}
+            className={`tab${activePeopleTab === tab.id ? " active" : ""}`}
+            onClick={() => setPeopleTab(tab.id)}
+            onKeyDown={event => {
+              let next = index;
+              if (event.key === "ArrowRight") next = (index + 1) % peopleTabs.length;
+              else if (event.key === "ArrowLeft") next = (index + peopleTabs.length - 1) % peopleTabs.length;
+              else if (event.key === "Home") next = 0;
+              else if (event.key === "End") next = peopleTabs.length - 1;
+              else return;
+              event.preventDefault();
+              setPeopleTab(peopleTabs[next].id);
+              document.getElementById(`people-tab-${peopleTabs[next].id}`)?.focus();
+            }}>
+            <Icon name={tab.icon} size={15} /> {tab.label}
+          </button>
+        ))}
+      </div>
+      <section role="tabpanel" id="people-panel-directory" aria-labelledby="people-tab-directory" hidden={activePeopleTab !== "directory"}>
+      <h2 className="section-title">People directory <span className="muted">({people.length})</span></h2>
 
       {people.length === 0 && (
         <div className="callout">
@@ -734,6 +751,26 @@ export function StudentsPage({
           </button>
         );
       })}
+      </section>
+      {isPrivileged && (
+        <section role="tabpanel" id="people-panel-summary" aria-labelledby="people-tab-summary" hidden={activePeopleTab !== "summary"}>
+          <h2 className="section-title">Cohort summary</h2>
+          {people.length > 0 ? <PeopleSummary people={people} viewer={profile} cloud={cloud} remoteIds={remoteIds} navigate={navigate} /> : <p className="muted">No profiles available to summarise.</p>}
+        </section>
+      )}
+      <section role="tabpanel" id="people-panel-online" aria-labelledby="people-tab-online" hidden={activePeopleTab !== "online"}>
+        <h2 className="section-title">Online activity</h2>
+        {people.length > 0 ? <OnlineNow people={people} viewer={profile} /> : <p className="muted">No profiles available.</p>}
+      </section>
+      {isSuper && (
+        <section role="tabpanel" id="people-panel-management" aria-labelledby="people-tab-management" hidden={activePeopleTab !== "management"}>
+          <h2 className="section-title">Accounts and submissions</h2>
+          <AddUser viewer={profile} onAdded={refresh} />
+          <DownloadAllAssignments learners={people.filter(p => p.role === "Learner")}
+            remoteIds={remoteIds} owners={cloud?.owners ?? {}} cloudProfiles={cloud?.profiles ?? []} />
+        </section>
+      )}
+      </div>
     </>
   );
 }
@@ -1437,7 +1474,6 @@ function PeopleSummary({
   remoteIds: Set<string>;
   navigate: (r: Route) => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [cols, setCols] = useState<string[]>(loadSummaryCols);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [cloudStats, setCloudStats] = useState<Record<string, QuizStats>>({});
@@ -1447,7 +1483,7 @@ function PeopleSummary({
   const needScores = cols.includes("quizScore") || cols.includes("quizzes");
 
   useEffect(() => {
-    if (!open || !needScores) return;
+    if (!needScores) return;
     let alive = true;
     for (const p of people) {
       if (p.role !== "Learner" || cloudStats[p.id]) continue;
@@ -1469,7 +1505,7 @@ function PeopleSummary({
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, needScores, people, cloud, remoteIds]);
+  }, [needScores, people, cloud, remoteIds]);
 
   function toggleCol(id: string) {
     setCols((prev) => {
@@ -1478,14 +1514,6 @@ function PeopleSummary({
       return next;
     });
   }
-
-  if (!open)
-    return (
-      <button className="btn ghost" style={{ marginBottom: 14 }} onClick={() => setOpen(true)}>
-        <Icon name="chart" size={15} />
-        Summary table
-      </button>
-    );
 
   const active = SUMMARY_COLS.filter((c) => cols.includes(c.id));
   const hasActiveFilters = roleFilter !== "Learner";
@@ -1701,9 +1729,6 @@ function PeopleSummary({
         <button className="btn ghost summary-btn" onClick={() => setPickerOpen((v) => !v)}>
           <Icon name="settings" size={15} />
           Choose fields ({active.length})
-        </button>
-        <button className="btn ghost summary-btn" onClick={() => setOpen(false)}>
-          Close
         </button>
       </div>
 

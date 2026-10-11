@@ -2014,6 +2014,8 @@ td .with-ico .ico {
 .profile-image-upload .profile-image-upload-button:hover { border-color: var(--ink-3); }
 .profile-image-upload p { margin: 0; font-size: 12px; color: var(--ink-3); }
 
+.people-tabs-page > .tabs { margin-bottom: 20px; }
+.people-tabs-page > [role="tabpanel"][hidden] { display: none !important; }
 .unit-page-dropdown { margin-bottom: 12px; }
 .unit-header-area { position: relative; }
 .btn.solid.sm.lesson-header-edit {
