@@ -4858,25 +4858,10 @@ export function UnitPage({
                   <span className="lesson-section-ring" role="progressbar"
                     aria-label="Lesson section progress" aria-valuemin={0} aria-valuemax={100}
                     aria-valuenow={Math.round(((si + 1) / total) * 100)}
-                    aria-valuetext={`Section ${si + 1} of ${total}`}>
-                    <Ring value={(si + 1) / total} size={phone ? 64 : 84} stroke={phone ? 5 : 7} showLabel />
+                    aria-valuetext={`Section ${si + 1} of ${total}`}
+                    title={`Section ${si + 1} of ${total}: ${plainSlideText(secHeading)}`}>
+                    <Ring value={(si + 1) / total} size={48} stroke={4} showLabel />
                   </span>
-                  <span className="lesson-step-count">
-                    {(() => {
-                      // which numbered lesson does this section belong to?
-                      let cur: { n: number; title: string } | undefined;
-                      for (let i = si; i >= 0; i--) {
-                        const ls = content.lesson[i].lessonStart;
-                        if (ls) {
-                          cur = ls;
-                          break;
-                        }
-                      }
-                      return cur ? `Lesson ${cur.n} · ` : "";
-                    })()}
-                    Section {si + 1} of {total}
-                  </span>
-                  <span className="lesson-step-title">{plainSlideText(secHeading)}</span>
                   {isSuperUser && !slideEditOpen && !editable && lessonSaveStatus === "saved" && (
                     <span className="lesson-save-status" role="status">Saved to cloud</span>
                   )}
@@ -5063,12 +5048,6 @@ export function UnitPage({
             return (
               <div key={sec.heading} className="lesson-screen">
                 {stepper}
-                {sec.lessonStart && (
-                  <div className="lesson-start-banner">
-                    <span className="lesson-start-badge">Lesson {sec.lessonStart.n}</span>
-                    <span className="lesson-start-title">{sec.lessonStart.title}</span>
-                  </div>
-                )}
                 {isSlide && heroFig ? (() => {
                   const up = figureImages[heroFig.id];
                   const def = FIGURE_DEFAULTS[heroFig.id];

@@ -952,6 +952,7 @@ export function useQaThreads() {
 /* ---------- Voting Station (polls: vote for an action or person) ---------- */
 
 const POLLS_KEY = "itss.polls.shared";
+const POLLS_CACHE_KEY = `itssDevice.polls.${TENANT_ID}`;
 
 export interface PollOption {
   id: string;
@@ -1020,22 +1021,20 @@ export interface PollExtras {
   closesAt?: string;
 }
 
-/** Freshest shared poll list from the cloud (null when offline / local-only). */
+/** Freshest tenant poll list; null only when cloud sync is not configured. */
 async function pullPolls(): Promise<Poll[] | null> {
   if (!supabase) return null;
-  try {
-    const { data, error } = await supabase
-      .from("shared_state")
-      .select("value")
-      .eq("key", POLLS_KEY)
-      .maybeSingle();
-    if (error) return null;
-    if (!data?.value) return [];
-    const list = JSON.parse(data.value) as Poll[];
-    return Array.isArray(list) ? list : [];
-  } catch {
-    return null;
-  }
+  const { data, error } = await supabase
+    .from("shared_state")
+    .select("value")
+    .eq("tenant_id", TENANT_ID)
+    .eq("key", POLLS_KEY)
+    .maybeSingle();
+  if (error) throw new Error(`Could not load ${TENANT.name} polls: ${error.message}`);
+  if (!data?.value) return [];
+  const list = JSON.parse(data.value) as Poll[];
+  if (!Array.isArray(list)) throw new Error(`The ${TENANT.name} poll record is invalid.`);
+  return list;
 }
 
 /**
@@ -1046,11 +1045,12 @@ async function pullPolls(): Promise<Poll[] | null> {
  * and the list is re-pulled every few seconds while the page is open.
  */
 export function usePolls() {
-  const [list, setList] = useState<Poll[]>(() => read<Poll[]>(POLLS_KEY, []));
+  const [list, setList] = useState<Poll[]>(() => read<Poll[]>(POLLS_CACHE_KEY, []));
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
-      if (!e.key || e.key === POLLS_KEY) setList(read<Poll[]>(POLLS_KEY, []));
+      if (!e.key || e.key === POLLS_CACHE_KEY) setList(read<Poll[]>(POLLS_CACHE_KEY, []));
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
@@ -1061,12 +1061,18 @@ export function usePolls() {
     let alive = true;
     const refresh = async () => {
       if (document.visibilityState === "hidden") return;
-      const cloud = await pullPolls();
-      if (!alive || !cloud) return;
-      const json = JSON.stringify(cloud);
-      if (json !== localStorage.getItem(POLLS_KEY)) {
+      try {
+        const cloud = await pullPolls();
+        if (!alive || !cloud) return;
+        const json = JSON.stringify(cloud);
         writeFromCloud(POLLS_KEY, json);
-        setList(cloud);
+        if (json !== localStorage.getItem(POLLS_CACHE_KEY)) {
+          localStorage.setItem(POLLS_CACHE_KEY, json);
+          setList(cloud);
+        }
+        setError("");
+      } catch (cause) {
+        if (alive) setError(cause instanceof Error ? cause.message : "Polls could not be loaded.");
       }
     };
     void refresh();
@@ -1080,11 +1086,12 @@ export function usePolls() {
   }, []);
 
   const mutate = useCallback(async (updater: (fresh: Poll[]) => Poll[]): Promise<Poll[]> => {
-    const base = (await pullPolls()) ?? read<Poll[]>(POLLS_KEY, []);
+    const base = (await pullPolls()) ?? read<Poll[]>(POLLS_CACHE_KEY, []);
     const next = updater(base);
     write(POLLS_KEY, next);
+    localStorage.setItem(POLLS_CACHE_KEY, JSON.stringify(next));
     setList(next);
-    await flushKey(POLLS_KEY);
+    await flushKey(POLLS_KEY, !!supabase);
     return next;
   }, []);
 
@@ -1180,7 +1187,7 @@ export function usePolls() {
   const polls = [...list].sort(
     (a, b) => rank[pollStatus(a, now)] - rank[pollStatus(b, now)] || b.at.localeCompare(a.at)
   );
-  return { polls, create, vote, retract, setClosed, remove, clearVotes };
+  return { polls, error, create, vote, retract, setClosed, remove, clearVotes };
 }
 
 /* ---------- direct chat (1-to-1 conversations, database-enforced privacy) --------- */

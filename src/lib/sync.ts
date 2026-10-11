@@ -26,6 +26,8 @@ import { TENANT_ID } from "./tenant";
  * the app renders, so every existing hook keeps working unchanged.
  * Pending payloads live in IndexedDB, including legacy syncPending migration,
  * so file data is never duplicated into quota-limited localStorage.
+ * Pending queues are tenant-isolated. Unowned legacy poll caches are never
+ * seeded into cloud state; Voting loads the tenant's authoritative record.
  */
 
 const PREFIX = "itss.";
@@ -302,7 +304,8 @@ export async function startSync(authUserId: string): Promise<void> {
   }
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && syncable(key) && !cloudKeys.has(key)) {
+    // Polls must come from an explicit tenant-aware mutation, never an unowned legacy cache.
+    if (key && key !== "itss.polls.shared" && syncable(key) && !cloudKeys.has(key)) {
       const value = localStorage.getItem(key);
       if (value !== null) void pushKey(key, value);
     }
@@ -322,7 +325,8 @@ export function wipeLocalData() {
   const doomed: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && key.startsWith(PREFIX) && key !== "itss.theme" && key !== "itss.activeCourse") doomed.push(key);
+    if (key === `itssDevice.polls.${TENANT_ID}` ||
+        (key && key.startsWith(PREFIX) && key !== "itss.theme" && key !== "itss.activeCourse")) doomed.push(key);
   }
   for (const key of doomed) localStorage.removeItem(key);
 }

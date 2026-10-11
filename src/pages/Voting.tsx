@@ -7,6 +7,7 @@ import { canVoteInPoll, loadProfiles, pollStatus, usePolls } from "../store";
 import { fetchCloudDirectory, getCachedDirectory, remoteOnlyProfiles } from "../lib/directory";
 import { ConfirmModal, Modal } from "../components/Modal";
 import { DateTimePicker } from "../components/DateTimePicker";
+import { TENANT_ID } from "../lib/tenant";
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
@@ -53,7 +54,7 @@ type PollDraft = {
   closesAt: string;
 };
 
-const draftKey = (profileId: string) => `poll-draft:${profileId}`;
+const draftKey = (profileId: string) => `poll-draft:${TENANT_ID}:${profileId}`;
 
 function loadDraft(profileId: string): PollDraft | null {
   try {
@@ -71,7 +72,7 @@ function CreatePollForm({
 }: {
   profile: Profile;
   people: Profile[];
-  onCreate: (question: string, options: string[], extras: PollExtras) => void;
+  onCreate: (question: string, options: string[], extras: PollExtras) => Promise<boolean>;
 }) {
   const [draft] = useState(() => loadDraft(profile.id));
   const [open, setOpen] = useState(draft?.open ?? false);
@@ -85,6 +86,7 @@ function CreatePollForm({
   const [search, setSearch] = useState("");
   const [opensAt, setOpensAt] = useState(draft?.opensAt ?? "");
   const [closesAt, setClosesAt] = useState(draft?.closesAt ?? "");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const untouched =
@@ -171,9 +173,9 @@ function CreatePollForm({
     <form
       className="card vote-form"
       style={{ marginBottom: 16 }}
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
-        if (!canSubmit) return;
+        if (!canSubmit || saving) return;
         const extras: PollExtras = {};
         if (description.trim()) extras.description = description;
         if (restrict && selected.size)
@@ -184,8 +186,10 @@ function CreatePollForm({
         if (opensMs !== null && opensMs > Date.now())
           extras.opensAt = new Date(opensMs).toISOString();
         if (closesMs !== null) extras.closesAt = new Date(closesMs).toISOString();
-        onCreate(question, filled, extras);
-        reset();
+        setSaving(true);
+        try {
+          if (await onCreate(question, filled, extras)) reset();
+        } finally { setSaving(false); }
       }}
     >
       <h2 className="section-title mt-0" style={{ margin: "0 0 12px" }}>
@@ -370,10 +374,10 @@ function CreatePollForm({
       </div>
 
       <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-        <button className="btn primary" type="submit" disabled={!canSubmit}>
-          {scheduled ? "Schedule poll" : "Open poll"}
+        <button className="btn primary" type="submit" disabled={!canSubmit || saving}>
+          {saving ? "Saving..." : scheduled ? "Schedule poll" : "Open poll"}
         </button>
-        <button className="btn ghost" type="button" onClick={reset}>
+        <button className="btn ghost" type="button" disabled={saving} onClick={reset}>
           Cancel
         </button>
       </div>
@@ -581,7 +585,16 @@ function PollCard({
 /* ---------- page ---------- */
 
 export function VotingPage({ profile }: { profile: Profile }) {
-  const { polls, create, vote, retract, setClosed, remove, clearVotes } = usePolls();
+  const { polls, error, create, vote, retract, setClosed, remove, clearVotes } = usePolls();
+  const [actionError, setActionError] = useState("");
+  const runPollAction = async (action: () => Promise<unknown>) => {
+    setActionError("");
+    try { await action(); return true; }
+    catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : "The poll could not be updated. Please try again.");
+      return false;
+    }
+  };
   const staff = isStaff(profile.role);
   const [confirmDelete, setConfirmDelete] = useState<Poll | null>(null);
   const [confirmClear, setConfirmClear] = useState<Poll | null>(null);
@@ -645,11 +658,12 @@ export function VotingPage({ profile }: { profile: Profile }) {
         per poll and can change it until the poll closes. Results are shared with the whole class.
       </p>
 
+      {(error || actionError) && <p className="auth-error" role="alert">{actionError || error}</p>}
       {staff && (
         <CreatePollForm
           profile={profile}
           people={people}
-          onCreate={(q, opts, extras) => create(profile, q, opts, extras)}
+          onCreate={(q, opts, extras) => runPollAction(() => create(profile, q, opts, extras))}
         />
       )}
 
@@ -672,9 +686,9 @@ export function VotingPage({ profile }: { profile: Profile }) {
             poll={p}
             profile={profile}
             staff={staff}
-            onVote={(optionId) => vote(profile, p.id, optionId)}
-            onRetract={() => retract(profile.id, p.id)}
-            onSetClosed={(closed) => setClosed(p.id, closed)}
+            onVote={(optionId) => runPollAction(() => vote(profile, p.id, optionId))}
+            onRetract={() => runPollAction(() => retract(profile.id, p.id))}
+            onSetClosed={(closed) => runPollAction(() => setClosed(p.id, closed))}
             onDelete={() => setConfirmDelete(p)}
             onClearVotes={() => {
               setClearError("");
@@ -720,8 +734,10 @@ export function VotingPage({ profile }: { profile: Profile }) {
           confirmLabel="Delete"
           danger
           onConfirm={() => {
-            remove(confirmDelete.id);
-            setConfirmDelete(null);
+            void runPollAction(async () => {
+              await remove(confirmDelete.id);
+              setConfirmDelete(null);
+            });
           }}
           onCancel={() => setConfirmDelete(null)}
         />

@@ -1,3 +1,5 @@
+import { TENANT_ID } from "./tenant";
+
 export type PendingWrite = {
   userId: string;
   key: string;
@@ -17,7 +19,8 @@ const id = (write: Pick<PendingWrite, "userId" | "key">) =>
 
 function db() {
   return database ??= new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open("itss-sync-pending", 1);
+    // Retain Investec's existing queue; Discovery must not replay its pending saves.
+    const request = indexedDB.open(TENANT_ID === "investec" ? "itss-sync-pending" : `itss-sync-pending-${TENANT_ID}`, 1);
     request.onupgradeneeded = () => request.result.createObjectStore(STORE);
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
@@ -40,7 +43,7 @@ async function persist(write: PendingWrite, remove = false) {
   });
 }
 
-/** Migrate only after durable persistence, so a failed migration loses nothing. */
+/** Legacy unscoped queues belong to Investec; migrate only after durable persistence. */
 export function loadPendingWrites(): Promise<void> {
   return initialized ??= (async () => {
     const database = await db();
@@ -49,7 +52,9 @@ export function loadPendingWrites(): Promise<void> {
       request.onsuccess = () => resolve(request.result as PendingWrite[]);
       request.onerror = () => reject(request.error);
     });
-    const legacy = JSON.parse(localStorage.getItem(PENDING_KEY) ?? "[]") as PendingWrite[];
+    const legacy = (TENANT_ID === "investec"
+      ? JSON.parse(localStorage.getItem(PENDING_KEY) ?? "[]")
+      : []) as PendingWrite[];
     for (const write of legacy) {
       if (!stored.some(saved => id(saved) === id(write))) {
         await persist(write);
@@ -59,7 +64,7 @@ export function loadPendingWrites(): Promise<void> {
     for (const write of stored) {
       if (!writes.has(id(write))) writes.set(id(write), write);
     }
-    Storage.prototype.removeItem.call(localStorage, PENDING_KEY);
+    if (TENANT_ID === "investec") Storage.prototype.removeItem.call(localStorage, PENDING_KEY);
   })().catch(error => {
     initialized = undefined;
     throw error;
