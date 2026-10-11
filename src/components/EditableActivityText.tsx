@@ -2,6 +2,7 @@ import { useId, useState, type ReactNode } from "react";
 import { Icon } from "../icons";
 import { InlineText } from "./InlineText";
 import { EditingTools } from "./EditingSidebar";
+import { usePhoneView } from "./usePhoneView";
 
 export function EditableActivityText({
   text,
@@ -21,10 +22,11 @@ export function EditableActivityText({
   inline?: boolean;
 }) {
   const inputId = useId();
+  const phone = usePhoneView();
   const [draft, setDraft] = useState<string | null>(null);
   const [error, setError] = useState("");
 
-  if (!editable) return <>{children}</>;
+  if (!editable || phone) return <>{children}</>;
   if (inline) return <InlineText as="div" value={text} editable multiline placeholder={label} onSave={onSave} />;
 
   const cancel = () => {

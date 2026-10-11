@@ -11,6 +11,7 @@ import { useInlineCourse } from "../components/useInlineCourse";
 import { courseScopedUnit } from "../lib/courseScope";
 import { Select } from "../components/Select";
 import { GLOSSARY, getContent } from "../data/content";
+import { getSaqaDetails } from "../data/saqaDetails";
 import { FIGURE_DEFAULTS as BASE_FIGURE_DEFAULTS } from "../data/figureDefaults";
 import { HWSW_SLIDE_FIGURES } from "../data/hwswSlideFigures";
 const FIGURE_DEFAULTS = { ...BASE_FIGURE_DEFAULTS, ...HWSW_SLIDE_FIGURES };
@@ -50,6 +51,8 @@ import { groupLessonHtml, isLessonBulletListLead, isLessonListLead, isLessonList
 import { clearInlineDraft, loadInlineDraft, saveInlineDraft } from "../lib/inlineDraftStorage";
 import { resolvedSlideQuizAnswer } from "../lib/slideQuiz";
 import { EditingTools } from "../components/EditingSidebar";
+import { InfoSectionTabs } from "../components/InfoSectionTabs";
+import { usePhoneView } from "../components/usePhoneView";
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
 
@@ -57,6 +60,8 @@ const PlanText = InlineText;
 const PlanIconBtn = InlineIconBtn;
 
 function CourseEditingTools({ active, title, children }: { active: boolean; title: string; children: React.ReactNode }) {
+  const phone = usePhoneView();
+  if (phone) return null;
   return active ? <EditingTools active title={title}>{children}</EditingTools> : <>{children}</>;
 }
 
@@ -1803,6 +1808,7 @@ export function CoursePage({
 }) {
   const [creatingCourse, setCreatingCourse] = useState(false);
   const [programmeTab, setProgrammeTab] = useState("flow");
+  const phone = usePhoneView();
   const programmeTabs = [
     { id: "flow", label: "How modules work" },
     { id: "about", label: "About the programme" },
@@ -1815,7 +1821,7 @@ export function CoursePage({
   const [selectedCourseId] = useState(activeCourseId);
   const [courseDeleteBusy, setCourseDeleteBusy] = useState(false);
   const [courseDeleteError, setCourseDeleteError] = useState("");
-  const canDeleteCourse = profile.role === "Super User" && selectedCourseId.startsWith("custom-");
+  const canDeleteCourse = !phone && profile.role === "Super User" && selectedCourseId.startsWith("custom-");
   const removeCourse = async () => {
     if (!canDeleteCourse || courseDeleteBusy) return;
     setCourseDeleteBusy(true);
@@ -1839,12 +1845,12 @@ export function CoursePage({
       <h1 className="page-title">{inline.text(COURSE_META.title, (d, v) => { d.meta.title = v; }, "title")}</h1>
       <p className="page-sub">{inline.text(COURSE_BLURB, (d, v) => { d.blurb = v; }, "blurb")}</p>
       <div className="course-switch">
-        {profile.role === "Super User" && <button className="btn ghost sm" onClick={() => setCreatingCourse(true)}><Icon name="plus" size={15} /> Add course</button>}
+        {!phone && profile.role === "Super User" && <button className="btn ghost sm" onClick={() => setCreatingCourse(true)}><Icon name="plus" size={15} /> Add course</button>}
         {inline.controls}
         {canDeleteCourse && <button className="btn ghost sm danger-text" onClick={() => setDeletingCourse(true)}><Icon name="trash" size={15} /> Delete course</button>}
       </div>
-      {creatingCourse && <CourseCreator onClose={() => setCreatingCourse(false)} />}
-      {deletingCourse && <ConfirmModal
+      {!phone && creatingCourse && <CourseCreator onClose={() => setCreatingCourse(false)} />}
+      {!phone && deletingCourse && <ConfirmModal
         title="Delete course?"
         message={<>
           <p>Delete “{inline.text(COURSE_META.title, (d, v) => { d.meta.title = v; }, "title")}”? This removes the custom course from the shared course list for everyone. Existing learner records and uploaded files are kept.</p>
@@ -2429,6 +2435,7 @@ export function UnitPage({
   navigate: (r: Route) => void;
 }) {
   const [tab, setTab] = useState<UnitTab>(() => loadUnitTab(unitId));
+  const phone = usePhoneView();
   const builtUnit = useBuiltUnit(unitId);
   const [inlineUnit, setInlineUnit] = useState<UnitContent | undefined>(() => loadInlineDraft(profile.id, unitId));
   const inlineDraftOwner = `${profile.id}:${unitId}`;
@@ -2864,7 +2871,8 @@ export function UnitPage({
   const [generatingUnitQuiz, setGeneratingUnitQuiz] = useState(false);
   const [unitQuizCount, setUnitQuizCount] = useState(10);
   const [lessonSplitError, setLessonSplitError] = useState<string | null>(null);
-  const [editMode, setEditMode] = useState(false);
+  const [requestedEditMode, setEditMode] = useState(false);
+  const editMode = !phone && requestedEditMode;
   const [unitEditOpen, setUnitEditOpen] = useState(false);
   const [slideEditOpen, setSlideEditOpen] = useState(false);
   const [unitHeaderOpen, setUnitHeaderOpen] = useState(tab !== "lesson");
@@ -2915,7 +2923,11 @@ export function UnitPage({
   const acts = progress.units[u.us]?.activities ?? {};
   const completedActivities = UNIT_ACTIVITIES.filter(activity => !!acts[activity]).length;
   const nextActivity = UNIT_ACTIVITIES.find(activity => !acts[activity]);
-  const content = inlineUnit ?? builtUnit?.content ?? getContent(u.us);
+  const baseContent = builtUnit?.content ?? getContent(u.us);
+  const officialSaqa = getSaqaDetails(u.us);
+  const content = inlineUnit ?? (officialSaqa
+    ? { ...(baseContent ?? { lesson: [], exercises: [], assignments: [], quiz: [] }), saqa: officialSaqa }
+    : baseContent);
   const practicalTask = content?.practicalTask ?? practicalTaskForUnit(u.us);
   // The lesson plan shown on the tab: inline table edits (shared, cloud-synced) win over the generated plan.
   const planData: LessonPlan | undefined = content?.lessonPlan ? (lessonEdits.lessonPlan ?? content.lessonPlan) : undefined;
@@ -2935,13 +2947,13 @@ export function UnitPage({
     return r && r.best / r.total >= 0.8;
   }).length;
   const isPrivileged = isStaff(profile.role);
-  const isSuperUser = profile.role === "Super User";
+  const isSuperUser = profile.role === "Super User" && !phone;
   // A remembered staff-only tab must never remain open after switching to a
   // learner profile. Learners return to their workbook, while AI marking in
   // the workbook remains available without exposing the memo screen.
   useEffect(() => {
-    if (!isSuperUser && tab === "memo") setTab("workbook");
-  }, [isSuperUser, tab]);
+    if (profile.role !== "Super User" && tab === "memo") setTab("workbook");
+  }, [profile.role, tab]);
   const unitText = (value: string, update: (draft: UnitContent, text: string) => void, label = "Content") => <InlineText value={value} editable={isSuperUser && !!inlineUnit} multiline placeholder={label} onSave={text => setInlineUnit(current => { if (!current) return current; const next = structuredClone(current); update(next, text); return next; })} />;
 
   const blankBuiltActivity = (): Exercise => ({
@@ -3297,7 +3309,7 @@ export function UnitPage({
   const [saConfirm, setSaConfirm] = useState<"save" | "unlock" | null>(null);
   // shared/staff-uploaded content may only be downloaded by the super user,
   // unless the super user has explicitly allowed it for everyone
-  const canDownloadShared = isSuperUser || sharedSettings.allowSharedDownloads;
+  const canDownloadShared = profile.role === "Super User" || sharedSettings.allowSharedDownloads;
 
   const isPdfDoc = (s: PoeDoc) => /\.pdf$/i.test(s.name) || s.type.includes("pdf");
   // Units without their own material fall back to decks shared across the
@@ -3438,7 +3450,7 @@ export function UnitPage({
     e.target.value = "";
     const figId = pendingFigId.current;
     pendingFigId.current = null;
-    if (!file || !figId || !isPrivileged || figUploading) return;
+    if (!file || !figId || !isPrivileged || phone || figUploading) return;
     setFigError(null);
     if (!file.type.startsWith("image/")) {
       setFigError("Choose an image file, such as JPG, PNG or WebP.");
@@ -3468,7 +3480,7 @@ export function UnitPage({
     { id: "assignments", label: "Activity", icon: "folder", show: !builtUnit && !!content?.assignments.length },
     { id: "practical", label: "Practical Task", icon: "checklist", show: !!practicalTask },
     { id: "workbook", label: "Learner Workbook", icon: "document", show: unitId === "114046" || !!content?.workbook },
-    { id: "memo", label: "Memo", icon: "clipboard", show: (unitId === "114046" || !!content?.workbook) && isSuperUser },
+    { id: "memo", label: "Memo", icon: "clipboard", show: (unitId === "114046" || !!content?.workbook) && profile.role === "Super User" },
     { id: "guide", label: "Learner Guide", icon: "book", show: unitId === "114046" },
     { id: "logbook", label: "Logbook", icon: "book", show: !!content?.logbook },
     { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content?.quiz.length || !!content?.quizzes?.length || (!!builtUnit && isSuperUser) },
@@ -3491,8 +3503,8 @@ export function UnitPage({
         <span>{usLabel(u.us)}</span>
       </div>
 
-      <div className={`unit-header-area${tab === "lesson" && isPrivileged ? " has-slide-edit" : ""}`}>
-      {tab === "lesson" && isPrivileged && (
+      <div className={`unit-header-area${tab === "lesson" && isPrivileged && !phone ? " has-slide-edit" : ""}`}>
+      {tab === "lesson" && isPrivileged && !phone && (
         <button type="button" className="btn solid sm lesson-header-edit"
           aria-expanded={slideEditOpen} aria-controls="lesson-slide-edit-tools"
           onClick={() => setSlideEditOpen(open => !open)}>
@@ -3644,7 +3656,7 @@ export function UnitPage({
       )}
 
       {tab === "saqa" && content?.saqa && (
-        <>
+        <section className="assessments-page saqa-tabbed-details">
           {content?.saqa && (
             <>
               <h2 className="section-title">
@@ -3660,14 +3672,15 @@ export function UnitPage({
                 <span>{unitText(content.saqa.notice, (d, v) => { d.saqa!.notice = v; })}</span>
               </div>
 
-              <details className="saqa-details">
-                <summary>
-                  <Icon name="document" size={17} />
-                  Registration details
-                  <span className="chev">
-                    <Icon name="chevronDown" size={15} />
-                  </span>
-                </summary>
+              {content.saqa.source && (
+                <p className="muted saqa-source">
+                  <a href={content.saqa.source.url} target="_blank" rel="noopener noreferrer">View official SAQA record</a>
+                  {" · "}Checked {content.saqa.source.retrieved}. Registration and enrolment dates are historical record fields, not confirmation of current enrolment eligibility.
+                </p>
+              )}
+              <InfoSectionTabs key={unitId} id={`saqa-${unitId}`} sections={[
+                { title: "Registration details", icon: "document", content: (
+                <div className="saqa-table-scroll">
                 <table className="data kv">
                   <tbody>
                     {content.saqa.registration.map((r, ri) => (
@@ -3680,17 +3693,14 @@ export function UnitPage({
                     ))}
                   </tbody>
                 </table>
-              </details>
+                </div>
+                ) },
 
-              {content.saqa.sections.map((sec, si) => (
-                <details className="saqa-details" key={si}>
-                  <summary>
-                    <Icon name={sec.icon} size={17} />
-                    {unitText(sec.heading, (d, v) => { d.saqa!.sections[si].heading = v; })}
-                    <span className="chev">
-                      <Icon name="chevronDown" size={15} />
-                    </span>
-                  </summary>
+              ...content.saqa.sections.map((sec, si) => ({
+                title: sec.heading,
+                heading: unitText(sec.heading, (d, v) => { d.saqa!.sections[si].heading = v; }),
+                icon: sec.icon,
+                content: (
                   <div className="saqa-body">
                     {sec.paragraphs?.map((p, i) => (
                       <p key={i} className="lesson-p">
@@ -3712,6 +3722,7 @@ export function UnitPage({
                       </ul>
                     )}
                     {sec.table && (
+                      <div className="saqa-table-scroll">
                       <table className="data" style={{ marginTop: 10 }}>
                         <thead>
                           <tr>
@@ -3730,14 +3741,16 @@ export function UnitPage({
                           ))}
                         </tbody>
                       </table>
+                      </div>
                     )}
                   </div>
-                </details>
-              ))}
+                ),
+              })),
+              ]} />
             </>
           )}
 
-        </>
+        </section>
       )}
 
       {(tab === "saqa" || tab === "overview") && (
@@ -3746,7 +3759,7 @@ export function UnitPage({
               <Icon name="info" size={19} />
             </span>
             <span>
-              <Gloss text="Assessments for this unit standard are conducted in line with QCTO, SETA and institutional requirements, and must be valid, reliable, fair and aligned with the OCD and ASD for SAQA ID 48573. Constructive feedback is provided after each assessment." />
+              <Gloss text="Assessment must address this unit standard's specific outcomes, assessment criteria and stated range. Confirm assessor, moderation and current enrolment requirements with your provider and the relevant quality assurance body. Constructive feedback is provided after each assessment." />
             </span>
           </div>
       )}
@@ -3972,7 +3985,7 @@ export function UnitPage({
                           </span>
                         )}
                       </HeroTag>
-                      {isPrivileged && !editable && (
+                      {isPrivileged && !phone && !editable && (
                         <div className="lesson-hero-tools">
                           <button
                             type="button"
@@ -4489,7 +4502,7 @@ export function UnitPage({
                             >
                               <img src={cardFigSrc} alt={cardTitle} loading="lazy" />
                             </button>
-                            {isPrivileged && (
+                            {isPrivileged && !phone && (
                               <div className="lesson-hero-tools lesson-card-tools">
                                 <button
                                   type="button"
@@ -4516,7 +4529,7 @@ export function UnitPage({
                             )}
                           </div>
                         )}
-                        {c.figId && !cardFigSrc && isPrivileged && (
+                        {c.figId && !cardFigSrc && isPrivileged && !phone && (
                           <button
                             type="button"
                             className="lesson-card-imgdrop"
@@ -4706,7 +4719,7 @@ export function UnitPage({
                             </button>
                             {editableCap()}
                             {editable && figControls(f)}
-                            {isPrivileged && !editable && (
+                            {isPrivileged && !phone && !editable && (
                               <button
                                 type="button"
                                 className="fig-remove"
@@ -4742,7 +4755,7 @@ export function UnitPage({
                               </a>
                             )}
                             {editable && figControls(f)}
-                            {isPrivileged && !editable && (
+                            {isPrivileged && !phone && !editable && (
                               <button
                                 type="button"
                                 className="fig-remove"

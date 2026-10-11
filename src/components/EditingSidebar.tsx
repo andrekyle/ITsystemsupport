@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useId, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Icon } from "../icons";
+import { usePhoneView } from "./usePhoneView";
 
 type EditingContextValue = {
   target: HTMLElement | null;
@@ -10,13 +11,14 @@ type EditingContextValue = {
 const EditingContext = createContext<EditingContextValue | null>(null);
 
 export function EditingProvider({ children }: { children: ReactNode }) {
+  const phone = usePhoneView();
   const [target, setTarget] = useState<HTMLElement | null>(null);
   const [editors, setEditors] = useState<string[]>([]);
   const [register] = useState(() => (id: string) => {
     setEditors(current => [...current, id]);
     return () => setEditors(current => current.filter(editor => editor !== id));
   });
-  const active = editors.length > 0;
+  const active = !phone && editors.length > 0;
   return (
     <EditingContext.Provider value={{ target, register }}>
       <div className={`editing-layout${active ? " editing-layout-active" : ""}`}>
@@ -37,12 +39,13 @@ export function EditingTools({ active, title, children }: {
   children: ReactNode;
 }) {
   const context = useContext(EditingContext);
+  const phone = usePhoneView();
   const id = useId();
   const register = context?.register;
   useEffect(() => {
-    if (active && register) return register(id);
-  }, [active, register, id]);
-  if (!active) return null;
+    if (active && !phone && register) return register(id);
+  }, [active, phone, register, id]);
+  if (!active || phone) return null;
   const group = <section className="editing-tool-group">
     <h3>{title}</h3>
     {children}

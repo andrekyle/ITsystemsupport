@@ -445,6 +445,7 @@ export interface SaqaSection {
 }
 
 export interface SaqaDetails {
+  source?: { url: string; retrieved: string };
   notice: string;
   registration: { label: string; value: string }[];
   sections: SaqaSection[];

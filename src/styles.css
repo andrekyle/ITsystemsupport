@@ -2585,7 +2585,7 @@ td .with-ico .ico {
     background: #f7f8fa;
   }
   .discovery-signin-link { display: none; }
-  .discovery-gate .auth-inline-dialog { grid-column: 1; grid-row: 2; width: min(100%, 420px); }
+  .discovery-gate .auth-inline-dialog { grid-column: 1; grid-row: 1; width: min(100%, 420px); }
   .discovery-auth-showcase {
     position: relative;
     grid-column: 1;
@@ -2599,7 +2599,7 @@ td .with-ico .ico {
   }
   .discovery-hero-logo { width: 200px; height: 56px; }
   .discovery-auth-showcase h2 { margin-top: 0; font-size: clamp(46px, 8vw, 72px); }
-  .discovery-gate .gate-card { grid-column: 1; grid-row: 2; }
+  .discovery-gate .gate-card { grid-column: 1; grid-row: 1; }
   .discovery-gate .gate-card > .logo { display: block; }
   .discovery-gate .gate-card > .tenant-location { display: block; }
 }
@@ -5157,6 +5157,29 @@ textarea:focus {
 }
 
 /* ============ SAQA details ============ */
+
+.saqa-tabbed-details .assessment-tabs { flex-wrap: wrap; overflow: visible; }
+.saqa-tabbed-details .assessment-tabs .tab { flex: 0 1 auto; white-space: normal; }
+.saqa-source { font-size: 13px; line-height: 1.6; }
+.compliance-tabs.tabs { flex-wrap: wrap; overflow: visible; }
+.compliance-tabs.tabs .tab { flex: 0 1 auto; white-space: normal; }
+.compliance-page > [role="tabpanel"] > .section-title { margin-top: 0; }
+.compliance-page > [role="tabpanel"][hidden] { display: none !important; }
+.saqa-table-scroll { max-width: 100%; overflow-x: auto; }
+.saqa-tabbed-details .saqa-body > .lesson-p:first-child { margin-top: 0; }
+
+@media (max-width: 640px) {
+  .editing-sidebar,
+  .unit-edit-menu,
+  .lesson-header-edit,
+  .lesson-edit-toolbar,
+  .lesson-hero-tools,
+  .lesson-card-imgdrop,
+  .fig-remove,
+  .plan-edit-bar,
+  .slide-text-toolbar,
+  .plan-ctl { display: none !important; }
+}
 
 .saqa-details {
   border: 1px solid var(--border);

@@ -10,6 +10,7 @@ import { ConfirmModal } from "./Modal";
 import { DocumentSignature } from "./DocumentSignature";
 import { DocumentActions } from "./DocumentActions";
 import { canSignDocumentField } from "../lib/documentSignatures";
+import { usePhoneView } from "./usePhoneView";
 
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -126,13 +127,14 @@ interface LogbookProps {
 }
 
 export function Logbook({ spec, values, onChange, editable = false, onSpecChange, profile }: LogbookProps) {
+  const phone = usePhoneView();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState(false);
   /** file chosen but not yet saved — committed by the Save report button */
   const [pending, setPending] = useState<File | null>(null);
-  const editing = editable && !!onSpecChange;
+  const editing = !phone && editable && !!onSpecChange;
   const update = (mutate: (draft: LogbookSpec) => void) => {
     if (!onSpecChange) return;
     const draft = structuredClone(spec);

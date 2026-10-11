@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { Icon } from "../icons";
+import { usePhoneView } from "./usePhoneView";
 
 /** Plain-text cell that can be edited in place. Click to edit; saves on blur (Enter also saves, Escape cancels). */
 export function InlineText({
@@ -20,11 +21,12 @@ export function InlineText({
   multiline?: boolean;
 }) {
   const ref = useRef<HTMLElement | null>(null);
+  const phone = usePhoneView();
   useEffect(() => {
     const el = ref.current;
     if (el && document.activeElement !== el && el.textContent !== value) el.textContent = value;
   }, [value]);
-  if (!editable) return <Tag className={className}>{value}</Tag>;
+  if (!editable || phone) return <Tag className={className}>{value}</Tag>;
   return (
     <Tag
       ref={ref as React.Ref<never>}
@@ -61,6 +63,8 @@ export function InlineText({
 
 /** Small square icon button used for add / move / delete controls in editable tables. */
 export function InlineIconBtn({ title, icon, onClick, danger }: { title: string; icon: React.ComponentProps<typeof Icon>["name"]; onClick: () => void; danger?: boolean }) {
+  const phone = usePhoneView();
+  if (phone) return null;
   return (
     <button type="button" className={`plan-ctl${danger ? " danger" : ""}`} title={title} aria-label={title} onClick={(e) => { e.stopPropagation(); onClick(); }}>
       <Icon name={icon} size={13} />

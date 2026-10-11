@@ -1,5 +1,6 @@
 import type { UnitContent } from "../types";
 import { readBuiltUnit } from "../lib/builtUnits";
+import { getSaqaDetails } from "./saqaDetails";
 
 /** Illustrates the water-supply analogy used in the PSU "matching" quiz question.
  * Deliberately shows ONLY the analogy side (river → treatment plant → pipes → city
@@ -20348,5 +20349,10 @@ Improvement: distribute the technical slides beforehand."
 };
 
 export function getContent(us: string): UnitContent | undefined {
-  return readBuiltUnit(us)?.content ?? CONTENT[us];
+  const content = readBuiltUnit(us)?.content ?? CONTENT[us];
+  const saqa = getSaqaDetails(us);
+  if (!saqa) return content;
+  return content
+    ? { ...content, saqa }
+    : { lesson: [], exercises: [], assignments: [], quiz: [], saqa };
 }

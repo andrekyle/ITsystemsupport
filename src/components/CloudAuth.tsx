@@ -182,17 +182,16 @@ export function CloudAuth() {
 
   return (
     <div className={`gate${TENANT_ID === "discovery" ? " discovery-gate" : ""}`}>
-      {discovery && (
+      {discovery && !mobile && (
         <a className="discovery-signin-link" href="#discovery-login" ref={signInLink}
           onClick={() => setLoginOpen(true)}>
           Sign in
         </a>
       )}
-      {TENANT_ID === "discovery" && (
+      {discovery && !mobile && (
         <div className="discovery-auth-showcase">
           <img className="discovery-hero-logo" src={TENANT.logo!} alt="Discovery" />
-          {mobile && <p>GROW WITH PURPOSE.</p>}
-          <h2>{mobile ? <>Learn today.<br /><span>Make an impact.</span></> : <>Learn today.<br />Make an<br /><span>impact.</span></>}</h2>
+          <h2>Learn today.<br />Make an<br /><span>impact.</span></h2>
           <p className="discovery-hero-copy">Build your skills. Grow your confidence. Put your learning into practice.</p>
           <div className="discovery-hero-rule" />
         </div>

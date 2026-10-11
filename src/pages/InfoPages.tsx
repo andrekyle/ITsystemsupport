@@ -1,4 +1,6 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
+import { InfoSectionTabs } from "../components/InfoSectionTabs";
+import { usePhoneView } from "../components/usePhoneView";
 import { Icon } from "../icons";
 import { EditingTools } from "../components/EditingSidebar";
 import type { Profile, ProgressState, Route } from "../types";
@@ -151,51 +153,6 @@ export function AssessmentsPage({ profile }: { profile: Profile }) {
   );
 }
 
-function InfoSectionTabs({ id, sections }: {
-  id: string;
-  sections: { title: string; icon: string; content: ReactNode }[];
-}) {
-  const [selected, setSelected] = useState(0);
-  return (
-    <>
-      <div className="tabs assessment-tabs" role="tablist" aria-label={`${id} sections`}>
-        {sections.map((section, index) => (
-          <button key={section.title} type="button" role="tab" id={`${id}-tab-${index}`}
-            aria-controls={`${id}-panel-${index}`} aria-selected={selected === index}
-            tabIndex={selected === index ? 0 : -1}
-            className={`tab${selected === index ? " active" : ""}`}
-            onClick={() => setSelected(index)}
-            onKeyDown={event => {
-              let next = index;
-              if (event.key === "ArrowRight") next = (index + 1) % sections.length;
-              else if (event.key === "ArrowLeft") next = (index + sections.length - 1) % sections.length;
-              else if (event.key === "Home") next = 0;
-              else if (event.key === "End") next = sections.length - 1;
-              else return;
-              event.preventDefault();
-              setSelected(next);
-              document.getElementById(`${id}-tab-${next}`)?.focus();
-            }}>
-            <Icon name={section.icon} size={15} /> {section.title}
-          </button>
-        ))}
-      </div>
-      {sections.map((section, index) => (
-        <section key={section.title} role="tabpanel" id={`${id}-panel-${index}`}
-          aria-labelledby={`${id}-tab-${index}`} hidden={selected !== index}>
-          <div className="card">
-            <h2 className="section-title mt-0" style={{ margin: "0 0 10px" }}>
-              <span className="ico"><Icon name={section.icon} size={20} /></span>
-              {section.title}
-            </h2>
-            {section.content}
-          </div>
-        </section>
-      ))}
-    </>
-  );
-}
-
 export function DeliverablesPage() {
   return (
     <section className="assessments-page">
@@ -283,10 +240,12 @@ export function CalendarPage({
   profile?: Profile;
 }) {
   const customCourse = activeCourseId().startsWith("custom-");
-  const canEdit = customCourse ? profile?.role === "Super User" : import.meta.env.DEV;
+  const phone = usePhoneView();
+  const canEdit = !phone && (customCourse ? profile?.role === "Super User" : import.meta.env.DEV);
   // In-place editing of the calendar (dev only — saving writes the edits
   // straight back into the course data file through /api/save-calendar).
-  const [editing, setEditing] = useState(false);
+  const [requestedEditing, setEditing] = useState(false);
+  const editing = canEdit && requestedEditing;
   const [draft, setDraft] = useState<CalendarDraft>(makeCalendarDraft);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState("");

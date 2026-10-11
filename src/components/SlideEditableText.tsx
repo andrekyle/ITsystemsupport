@@ -1,5 +1,6 @@
 import { createElement, useLayoutEffect, useRef, type ClipboardEvent, type HTMLAttributes, type KeyboardEvent } from "react";
 import { plainTextToSlideHtml, sanitizeSlideHtml } from "../lib/slideRichText";
+import { usePhoneView } from "./usePhoneView";
 
 type Props = Omit<HTMLAttributes<HTMLElement>, "children" | "dangerouslySetInnerHTML" | "onInput" | "onBlur"> & {
   as: "div" | "span" | "p" | "th" | "td";
@@ -8,7 +9,9 @@ type Props = Omit<HTMLAttributes<HTMLElement>, "children" | "dangerouslySetInner
 };
 
 /** Save each input without letting React replace the focused editor's DOM/caret. */
-export function SlideEditableText({ as, html, onSave, contentEditable = true, onKeyDown, ...props }: Props) {
+export function SlideEditableText({ as, html, onSave, contentEditable: requestedEditable = true, onKeyDown, ...props }: Props) {
+  const phone = usePhoneView();
+  const contentEditable = !phone && requestedEditable;
   const ref = useRef<HTMLElement>(null);
   const saved = useRef("");
   useLayoutEffect(() => {
@@ -98,6 +101,7 @@ export function SlideEditableText({ as, html, onSave, contentEditable = true, on
     ...props,
     ref,
     contentEditable,
+    tabIndex: phone ? undefined : props.tabIndex,
     suppressContentEditableWarning: true,
     "data-slide-rich": "true",
     onKeyDown: keyDown,

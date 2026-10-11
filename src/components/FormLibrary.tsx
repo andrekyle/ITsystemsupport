@@ -8,9 +8,11 @@ import { FormBuilder } from "./FormBuilder";
 import { PaperForm } from "./PaperForm";
 import { ConfirmModal, Modal } from "./Modal";
 import { EditingTools } from "./EditingSidebar";
+import { usePhoneView } from "./usePhoneView";
 import "./form-builder.css";
 
 export function FormLibrary({ profile, children }: { profile: Profile; children: ReactNode }) {
+  const phone = usePhoneView();
   const { forms, loading, error, reload } = useForms();
   const [view, setView] = useState<"list" | "registration" | "builder" | SavedForm>("list");
   const [search, setSearch] = useState("");
@@ -18,7 +20,7 @@ export function FormLibrary({ profile, children }: { profile: Profile; children:
   const [actionError, setActionError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<SavedForm | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const canBuild = profile.role === "Super User";
+  const canBuild = profile.role === "Super User" && !phone;
   const query = search.trim().toLowerCase();
   const visibleForms = forms.filter(form => `${form.title} ${form.source_name}`.toLowerCase().includes(query));
   const showRegistration = "student registration form".includes(query);
@@ -92,7 +94,7 @@ export function FormLibrary({ profile, children }: { profile: Profile; children:
           </div>
         </>
       )}
-      {confirmDelete && <Modal title="Delete form" onClose={() => { if (!deleting) setConfirmDelete(null); }} actions={<>
+      {!phone && confirmDelete && <Modal title="Delete form" onClose={() => { if (!deleting) setConfirmDelete(null); }} actions={<>
         <button type="button" className="btn ghost" disabled={deleting} onClick={() => setConfirmDelete(null)}>Cancel</button>
         <button type="button" className="btn danger" disabled={deleting} onClick={() => void deleteForm()}>{deleting ? "Deleting..." : "Delete form"}</button>
       </>}><p>Delete <strong>{confirmDelete.title}</strong> and all completed responses? This cannot be undone.</p>{actionError && <p className="auth-error" role="alert">{actionError}</p>}</Modal>}

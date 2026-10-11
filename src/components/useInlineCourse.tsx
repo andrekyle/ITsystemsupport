@@ -4,13 +4,15 @@ import { flushKey } from "../lib/sync";
 import { supabase } from "../lib/supabase";
 import { InlineText } from "./InlineText";
 import { EditingTools } from "./EditingSidebar";
+import { usePhoneView } from "./usePhoneView";
 
 export function useInlineCourse(allowed: boolean) {
+  const phone = usePhoneView();
   const [course, setCourse] = useState(activeCourse);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const canEdit = allowed && course.id.startsWith("custom-");
+  const canEdit = allowed && !phone && course.id.startsWith("custom-");
   const change = (update: (draft: CourseData) => void) => setCourse(current => {
     const next = structuredClone(current); update(next); return next;
   });
@@ -37,5 +39,5 @@ export function useInlineCourse(allowed: boolean) {
       {error && <p role="alert" className="auth-error">{error}</p>}
     </EditingTools> : <button className="btn ghost sm" onClick={() => setEditing(true)}>Edit inline</button>}
   </div>;
-  return { course, editing, busy, text, change, controls };
+  return { course, editing: canEdit && editing, busy, text, change, controls };
 }

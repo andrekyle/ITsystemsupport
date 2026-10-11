@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { usePhoneView } from "./usePhoneView";
 import { Icon } from "../icons";
 import { DocumentActions } from "./DocumentActions";
 import { EditingTools } from "./EditingSidebar";
@@ -83,8 +84,10 @@ function GuidePage({ page, pageNumber, editMode, values, onChange }: { page: Lay
 }
 
 export function LearnerGuide({ values, onChange }: { values: SavedValues; onChange: SaveField }) {
+  const phone = usePhoneView();
   const [pages, setPages] = useState<LayoutPage[]>([]);
-  const [editMode, setEditMode] = useState(false);
+  const [requestedEditMode, setEditMode] = useState(false);
+  const editMode = !phone && requestedEditMode;
   const [error, setError] = useState("");
   useEffect(() => {
     const controller = new AbortController();
@@ -98,7 +101,7 @@ export function LearnerGuide({ values, onChange }: { values: SavedValues; onChan
       {editMode ? <EditingTools active title="Learner Guide">
         <button type="button" className="btn ghost" onClick={() => setEditMode(false)}><Icon name="book" size={15}/> Done editing</button>
         <p className="muted">Every text element is editable HTML. Changes save when you leave it.</p>
-      </EditingTools> : <div className="learner-guide-mode no-print" role="group" aria-label="Learner Guide mode">
+      </EditingTools> : !phone && <div className="learner-guide-mode no-print" role="group" aria-label="Learner Guide mode">
         <button type="button" className="active" aria-pressed onClick={() => setEditMode(false)}><Icon name="book" size={15}/> View</button>
         <button type="button" aria-pressed={false} onClick={() => setEditMode(true)}><Icon name="pencil" size={15}/> Edit</button>
         <span>Viewing the reconstructed HTML document.</span>

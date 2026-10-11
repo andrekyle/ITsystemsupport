@@ -3,6 +3,7 @@ import { InlineText } from "./InlineText";
 import { Icon } from "../icons";
 import type { QuizQuestion, QuizResult } from "../types";
 import { EditingTools } from "./EditingSidebar";
+import { usePhoneView } from "./usePhoneView";
 
 /** A stable pseudo-random shuffle so re-renders don't move items around. */
 export function seededShuffle<T>(arr: T[], seed: number): T[] {
@@ -43,7 +44,7 @@ export function Quiz({
   onSubmit,
   showAnswers = false,
   numberPrefix,
-  onEdit,
+  onEdit: requestedEdit,
   draftKey,
 }: {
   questions: QuizQuestion[];
@@ -59,6 +60,8 @@ export function Quiz({
   /** Private per-learner key used to retain an unfinished attempt. */
   draftKey?: string;
 }) {
+  const phone = usePhoneView();
+  const onEdit = phone ? undefined : requestedEdit;
   const fingerprint = useMemo(() => questionFingerprint(questions), [questions]);
   const [answers, setAnswers] = useState<Record<number, Ans>>(() => readDraft(draftKey, fingerprint));
   const [submitted, setSubmitted] = useState(false);
