@@ -241,11 +241,22 @@ export function CalendarPage({
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState("");
   const [focusedModuleId, setFocusedModuleId] = useState<string | null>(null);
+  const [selectedTab, setSelectedTab] = useState(MODULES[0]?.id ?? "milestones");
+  const calendarModules = editing ? draft.modules : MODULES;
+  const calendarTabs = [
+    ...calendarModules.map((module, index) => ({
+      id: module.id, label: `Module ${index + 1}`, title: module.name, icon: module.icon,
+    })),
+    { id: "milestones", label: "Milestones", title: "Programme milestones", icon: "certificate" },
+  ];
+  const activeTab = calendarTabs.some((tab) => tab.id === selectedTab)
+    ? selectedTab : calendarTabs[0].id;
 
   const startEditing = (moduleId: string | null = null) => {
     setDraft(makeCalendarDraft());
     setSaveState("idle");
     setFocusedModuleId(moduleId);
+    if (moduleId) setSelectedTab(moduleId);
     setEditing(true);
   };
 
@@ -262,6 +273,7 @@ export function CalendarPage({
       };
     });
     setFocusedModuleId(id);
+    setSelectedTab(id);
     setSaveState("idle");
     setEditing(true);
   };
@@ -387,7 +399,7 @@ export function CalendarPage({
   }
 
   return (
-    <>
+    <section className="calendar-page">
       <div className="eyebrow">
         <Icon name="calendar" size={15} />
         Training calendar
@@ -429,8 +441,39 @@ export function CalendarPage({
         {saveState === "error" && <span className="cal-save-note err">Save failed: {saveError}</span>}
       </p>
 
-      {(editing ? draft.modules : MODULES).map((m, i) => (
-        <div key={m.id}>
+      <div className="tabs calendar-tabs" role="tablist" aria-label="Training calendar sections">
+        {calendarTabs.map((tab, index) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            id={`calendar-tab-${tab.id}`}
+            aria-controls={`calendar-panel-${tab.id}`}
+            aria-selected={activeTab === tab.id}
+            tabIndex={activeTab === tab.id ? 0 : -1}
+            className={`tab${activeTab === tab.id ? " active" : ""}`}
+            title={tab.title}
+            onClick={() => setSelectedTab(tab.id)}
+            onKeyDown={(event) => {
+              let nextIndex = index;
+              if (event.key === "ArrowRight") nextIndex = (index + 1) % calendarTabs.length;
+              else if (event.key === "ArrowLeft") nextIndex = (index + calendarTabs.length - 1) % calendarTabs.length;
+              else if (event.key === "Home") nextIndex = 0;
+              else if (event.key === "End") nextIndex = calendarTabs.length - 1;
+              else return;
+              event.preventDefault();
+              setSelectedTab(calendarTabs[nextIndex].id);
+              document.getElementById(`calendar-tab-${calendarTabs[nextIndex].id}`)?.focus();
+            }}
+          >
+            <Icon name={tab.icon} size={15} /> {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {calendarModules.map((m, i) => (
+        <section key={m.id} role="tabpanel" id={`calendar-panel-${m.id}`}
+          aria-labelledby={`calendar-tab-${m.id}`} hidden={activeTab !== m.id}>
           <h2 className="section-title">
             <span className="ico">
               <Icon name={m.icon} size={20} />
@@ -585,9 +628,11 @@ export function CalendarPage({
               </button>
             </p>
           )}
-        </div>
+        </section>
       ))}
 
+      <section role="tabpanel" id="calendar-panel-milestones"
+        aria-labelledby="calendar-tab-milestones" hidden={activeTab !== "milestones"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="certificate" size={20} />
@@ -692,6 +737,7 @@ export function CalendarPage({
           </button>
         </p>
       )}
-    </>
+      </section>
+    </section>
   );
 }
