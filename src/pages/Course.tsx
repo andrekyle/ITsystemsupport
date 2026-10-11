@@ -23,6 +23,7 @@ import { Logbook } from "../components/Logbook";
 import { ConfirmModal } from "../components/Modal";
 import { SlideEditableText } from "../components/SlideEditableText";
 import { SlideTextToolbar } from "../components/SlideTextToolbar";
+import { LessonVideoEditor, LessonVideos } from "../components/LessonVideos";
 import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml, hydrateSlideImages } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
 import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, effectiveBuiltContent } from "../components/UnitBuilder";
@@ -4899,6 +4900,14 @@ export function UnitPage({
                   {isPrivileged && (
                       <EditingTools active={slideEditOpen || editable} title={`Slide ${si + 1}: actions and settings`}>
                       <div className="lesson-edit-menu-body" id="lesson-slide-edit-tools">
+                        {!phone && <LessonVideoEditor key={`${unitId}:${si}`} links={lessonEdits.videos?.[si] ?? []}
+                          disabled={!!inlineUnit || savingLesson}
+                          onSave={async links => {
+                            const editId = builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId;
+                            await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(editId)}`, {
+                              ...lessonEdits, videos: { ...lessonEdits.videos, [si]: links },
+                            });
+                          }} />}
                         <button type="button" className="btn ghost sm" disabled={savingLesson || !!inlineUnit} onClick={() => { setSlideEditOpen(false); setEditMode(false); }}>
                           {editable ? "Done editing slide" : "Close slide tools"}
                         </button>
@@ -5126,6 +5135,7 @@ export function UnitPage({
                     </div>
                   </>
                 )}
+                <LessonVideos links={lessonEdits.videos?.[si] ?? []} />
                 {nav}
                 {isLast && (
                   <div className="callout">

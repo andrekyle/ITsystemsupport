@@ -2492,6 +2492,8 @@ export function useOnboardingPacks() {
 /* ---------- super-user lesson edits (per unit, saved locally) ---------- */
 
 export interface LessonEdits {
+  /** External video links displayed on their lesson section. */
+  videos?: Record<number, string[]>;
   /** AI-generated quiz questions keyed by lesson section index. */
   generatedQuizzes?: Record<number, import("./types").QuizQuestion[]>;
   /** section index -> retries allowed after the first check; null means unlimited */
@@ -2736,7 +2738,9 @@ export function useLessonEdits(us: string, temporary = false) {
         for (const id of figIds) delete figureOffsetY[id];
         const sectionBody = { ...(d.sectionBody ?? {}) };
         delete sectionBody[sIdx];
-        return { ...d, headings, paragraphs, bullets, cards, examples, tableCells, figureOrder, captions, figureScale, figureOffsetY, sectionBody };
+        const videos = { ...(d.videos ?? {}) };
+        delete videos[sIdx];
+        return { ...d, headings, paragraphs, bullets, cards, examples, tableCells, figureOrder, captions, figureScale, figureOffsetY, sectionBody, videos };
       }),
     [apply]
   );

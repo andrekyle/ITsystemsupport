@@ -2015,6 +2015,15 @@ td .with-ico .ico {
 .profile-image-upload p { margin: 0; font-size: 12px; color: var(--ink-3); }
 
 .people-tabs-page > .tabs { margin-bottom: 20px; }
+.lesson-video-editor { min-width: 0; }
+.lesson-video-form { width: min(560px, 100%); padding: 12px 0; }
+.lesson-video-form label { display: grid; gap: 6px; }
+.lesson-video-form input { width: 100%; }
+.lesson-video-entry { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.lesson-video-entry > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.lesson-video { margin: 20px 0; max-width: 960px; }
+.lesson-video iframe,.lesson-video video { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; background: #000; }
+.lesson-video figcaption { margin-top: 8px; font-size: 12px; }
 .people-tabs-page > [role="tabpanel"][hidden] { display: none !important; }
 .unit-page-dropdown { margin-bottom: 12px; }
 .unit-header-area { position: relative; }
