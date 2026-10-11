@@ -61,9 +61,9 @@ test("chart labels are escaped and the report retains the requested palette and 
   assert.match(html, /&lt;script&gt;&quot;&amp;/);
   assert.doesNotMatch(html, /<script>/);
   assert.match(html, /Not recorded/);
-  assert.match(PROGRAMME_ANALYSIS_CSS, /#479ef5/);
-  assert.match(PROGRAMME_ANALYSIS_CSS, /#eef4ff/);
-  assert.match(PROGRAMME_ANALYSIS_CSS, /#c9dbf7/);
+  assert.match(PROGRAMME_ANALYSIS_CSS, /border-radius:0/);
+  assert.match(PROGRAMME_ANALYSIS_CSS, /background:var\(--series\)/);
+  assert.doesNotMatch(PROGRAMME_ANALYSIS_CSS, /4n\+/);
   for (const colour of ["#00a4ef", "#7fba00", "#ffb900", "#f25022"]) {
     assert.ok(PROGRAMME_ANALYSIS_CSS.includes(colour));
   }
