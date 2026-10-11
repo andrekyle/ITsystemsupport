@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, ProgressState, Route } from "../types";
 import { Gloss } from "./Course";
@@ -315,6 +316,7 @@ export function ProgressPage({
   progress: ProgressState;
   navigate: (r: Route) => void;
 }) {
+  const [selectedModule, setSelectedModule] = useState(MODULES[0]?.id ?? "");
   const { docs: poeDocs } = usePoe(profile.id);
   const { outcomes } = useOutcomes();
   const s = overallStats(progress, poeDocs, outcomes[profile.id] ?? {});
@@ -360,8 +362,39 @@ export function ProgressPage({
         </div>
       </div>
 
+      <div className="tabs" role="tablist" aria-label="Module progress">
+        {MODULES.map((m, index) => (
+          <button
+            key={m.id}
+            type="button"
+            role="tab"
+            id={`progress-tab-${m.id}`}
+            aria-controls={`progress-panel-${m.id}`}
+            aria-selected={selectedModule === m.id}
+            tabIndex={selectedModule === m.id ? 0 : -1}
+            className={`tab${selectedModule === m.id ? " active" : ""}`}
+            title={m.name}
+            onClick={() => setSelectedModule(m.id)}
+            onKeyDown={(event) => {
+              let nextIndex = index;
+              if (event.key === "ArrowRight") nextIndex = (index + 1) % MODULES.length;
+              else if (event.key === "ArrowLeft") nextIndex = (index + MODULES.length - 1) % MODULES.length;
+              else if (event.key === "Home") nextIndex = 0;
+              else if (event.key === "End") nextIndex = MODULES.length - 1;
+              else return;
+              event.preventDefault();
+              setSelectedModule(MODULES[nextIndex].id);
+              document.getElementById(`progress-tab-${MODULES[nextIndex].id}`)?.focus();
+            }}
+          >
+            <Icon name={m.icon} size={15} /> Module {index + 1}
+          </button>
+        ))}
+      </div>
+
       {MODULES.map((m, i) => (
-        <div key={m.id}>
+        <section key={m.id} role="tabpanel" id={`progress-panel-${m.id}`}
+          aria-labelledby={`progress-tab-${m.id}`} hidden={selectedModule !== m.id}>
           <h2 className="section-title">
             <span className="ico">
               <Icon name={m.icon} size={20} />
@@ -428,7 +461,7 @@ export function ProgressPage({
               })}
             </tbody>
           </table>
-        </div>
+        </section>
       ))}
     </>
   );
