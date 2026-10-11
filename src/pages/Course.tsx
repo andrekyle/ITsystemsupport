@@ -2154,20 +2154,36 @@ export function CoursePage({
   );
 }
 
-const UNIT_TILE_PHOTOS: Record<string, { src: string; alt: string; credit?: string; charcoal?: boolean }> = {
-  "8252": { src: "/admin-images/tracker.webp", alt: "Business reports and charts being reviewed on a laptop", charcoal: true },
-  "10135": { src: "/admin-images/users.webp", alt: "Project team working together around a laptop", charcoal: true },
-  "HWSW": { src: "/figures/unit-114183-banner.webp", alt: "Computer hardware beside a software management screen", charcoal: true },
-  "HWSW2": { src: "/figures/ram-install.jpg", alt: "Close-up of memory slots on a computer motherboard", credit: "ram-install", charcoal: true },
-  "114055": { src: "/admin-images/attendance.webp", alt: "Colleagues participating in a professional workplace discussion", charcoal: true },
-  "114050": { src: "/admin-images/analytics.webp", alt: "Computer technology displaying business performance charts", charcoal: true },
-  "114051": { src: "/admin-images/attendance.webp", alt: "Team meeting with participants and a digital agenda", charcoal: true },
-  "114059": { src: "/admin-images/forms.webp", alt: "Planning and documenting work on a laptop", charcoal: true },
-  "114074": { src: "/figures/unit-114074-banner.webp", alt: "Network architecture displayed beside a switch and server racks", charcoal: true },
-  "114046": { src: "/figures/unit-114046-banner.webp", alt: "Technician monitoring local area network health", charcoal: true },
-  "114076": { src: "/figures/unit-114076-banner.webp", alt: "Learner researching computer technology with a laptop and reference books", charcoal: true },
-  "114183": { src: "/figures/unit-114183-banner.webp", alt: "Technician troubleshooting a computer beside a systems management screen", charcoal: true },
-  "114058": { src: "/figures/datacentre-aisle.jpg", alt: "Server infrastructure supporting shared multi-user systems", credit: "datacentre-aisle", charcoal: true },
+const UNIT_TILE_BANNER_TITLES: Record<string, string> = {
+  "8252": "Business Reports",
+  "10135": "Project Teamwork",
+  "HWSW": "Hardware & Software",
+  "HWSW2": "Hardware Illustrated",
+  "114055": "Ethics & Professionalism",
+  "114050": "Business & IT",
+  "114051": "Technical Meetings",
+  "114059": "Work Planning & Delivery",
+  "114074": "Network Architecture",
+  "114046": "LAN Management",
+  "114076": "Computer Research",
+  "114183": "OS Troubleshooting",
+  "114058": "Multi-User Systems",
+};
+
+const UNIT_TILE_PHOTOS: Record<string, { src: string; alt: string; credit?: string }> = {
+  "8252": { src: "/figures/unit-business-reports.jpg", alt: "Colleagues reviewing written reports alongside laptops" },
+  "10135": { src: "/figures/unit-teamwork.jpg", alt: "Software project team collaborating with laptops" },
+  "HWSW": { src: "/figures/unit-hardware.jpg", alt: "Detailed close-up of computer circuitry and processor chips" },
+  "HWSW2": { src: "/figures/ram-install.jpg", alt: "Close-up of memory slots on a computer motherboard", credit: "ram-install" },
+  "114055": { src: "/figures/unit-meeting.jpg", alt: "Professionals listening and contributing to a group discussion" },
+  "114050": { src: "/figures/unit-teamwork.jpg", alt: "Business team using computer technology to collaborate" },
+  "114051": { src: "/figures/unit-meeting.jpg", alt: "Participants discussing ideas in a professional meeting" },
+  "114059": { src: "/figures/unit-research.jpg", alt: "Work plans and notes being written at a desk" },
+  "114074": { src: "/figures/unit-servers.jpg", alt: "Network equipment and cabling inside server cabinets" },
+  "114046": { src: "/figures/managed-switch.jpg", alt: "Managed Ethernet switches and organised network patch cables", credit: "managed-switch" },
+  "114076": { src: "/figures/unit-business-reports.jpg", alt: "Research notes being reviewed with information on laptops" },
+  "114183": { src: "/figures/rack-server-1u.jpg", alt: "Open server exposing its components for troubleshooting", credit: "rack-server-1u" },
+  "114058": { src: "/figures/unit-servers.jpg", alt: "Server infrastructure supporting shared multi-user systems" },
 };
 
 export function ModulePage({
@@ -2242,15 +2258,22 @@ export function ModulePage({
         return (
           <div
             key={u.us}
-            className={`unit-row module-unit-card${photo ? " has-photo" : ""}${photo?.charcoal ? " charcoal-photo" : ""}${locked ? " locked" : ""}`}
+            className={`unit-row module-unit-card${photo ? " has-photo" : ""}${locked ? " locked" : ""}`}
             role={inline.editing ? undefined : "button"}
             tabIndex={locked || inline.editing ? undefined : 0}
             onKeyDown={e => { if (!locked && !inline.editing && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); navigate({ page: "unit", moduleId: mod.id, unitId: u.us }); } }}
             onClick={() => !locked && !inline.editing && navigate({ page: "unit", moduleId: mod.id, unitId: u.us })}
           >
             {photo && <span className="module-unit-media">
+              <span className="module-unit-banner">
               <img className="module-unit-photo" src={photo.src} alt={photo.alt}
                 loading="lazy" decoding="async" />
+              <span className="module-unit-banner-copy" aria-hidden="true">
+                <span className="module-unit-banner-code">{usLabel(u.us)}</span>
+                <strong>{UNIT_TILE_BANNER_TITLES[u.us] ?? u.title}</strong>
+                <span className="module-unit-banner-caption">Module {idx + 1} · {mod.name}</span>
+              </span>
+              </span>
               {credit && <a className="module-unit-photo-credit" href={credit.sourceUrl}
                 target="_blank" rel="noopener noreferrer"
                 onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>

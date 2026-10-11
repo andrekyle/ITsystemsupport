@@ -1,0 +1,13 @@
+{
+  "license": "Unsplash License",
+  "licenseUrl": "https://unsplash.com/license",
+  "retrieved": "2026-10-11",
+  "photos": [
+    { "file": "unit-teamwork.jpg", "source": "https://images.unsplash.com/photo-1522071820081-009f0129c71c" },
+    { "file": "unit-business-reports.jpg", "source": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40" },
+    { "file": "unit-meeting.jpg", "source": "https://images.unsplash.com/photo-1515187029135-18ee286d815b" },
+    { "file": "unit-hardware.jpg", "source": "https://images.unsplash.com/photo-1518770660439-4636190af475" },
+    { "file": "unit-servers.jpg", "source": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31" },
+    { "file": "unit-research.jpg", "source": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173" }
+  ]
+}
