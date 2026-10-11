@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../icons";
 import { DocumentActions } from "./DocumentActions";
+import { EditingTools } from "./EditingSidebar";
 
 type SavedValues = Record<string, string | boolean>;
 type SaveField = (key: string, value: string | boolean) => void;
@@ -92,5 +93,17 @@ export function LearnerGuide({ values, onChange }: { values: SavedValues; onChan
   }, []);
   if (error) return <div className="callout"><span className="ico"><Icon name="info" size={18}/></span><span>{error}</span></div>;
   if (!pages.length) return <div className="learner-guide-loading"><Icon name="document" size={22}/><span>Opening the editable Learner Guide…</span></div>;
-  return <><DocumentActions name="Learner Guide"/><div className={`learner-guide-document document-print-target${editMode?" is-editing":" is-viewing"}`}><div className="learner-guide-mode no-print" role="group" aria-label="Learner Guide mode"><button type="button" className={!editMode?"active":""} aria-pressed={!editMode} onClick={()=>setEditMode(false)}><Icon name="book" size={15}/> View</button><button type="button" className={editMode?"active":""} aria-pressed={editMode} onClick={()=>setEditMode(true)}><Icon name="pencil" size={15}/> Edit</button><span>{editMode?"Every text element is editable HTML. Changes save when you leave it.":"Viewing the reconstructed HTML document."}</span></div>{pages.map((page,index)=><GuidePage key={index+1} page={page} pageNumber={index+1} editMode={editMode} values={values} onChange={onChange}/>)}</div></>;
+  return <><DocumentActions name="Learner Guide" editing={editMode}/>
+    <div className={`learner-guide-document document-print-target${editMode ? " is-editing" : " is-viewing"}`}>
+      {editMode ? <EditingTools active title="Learner Guide">
+        <button type="button" className="btn ghost" onClick={() => setEditMode(false)}><Icon name="book" size={15}/> Done editing</button>
+        <p className="muted">Every text element is editable HTML. Changes save when you leave it.</p>
+      </EditingTools> : <div className="learner-guide-mode no-print" role="group" aria-label="Learner Guide mode">
+        <button type="button" className="active" aria-pressed onClick={() => setEditMode(false)}><Icon name="book" size={15}/> View</button>
+        <button type="button" aria-pressed={false} onClick={() => setEditMode(true)}><Icon name="pencil" size={15}/> Edit</button>
+        <span>Viewing the reconstructed HTML document.</span>
+      </div>}
+      {pages.map((page,index) => <GuidePage key={index+1} page={page} pageNumber={index+1} editMode={editMode} values={values} onChange={onChange}/>)}
+    </div>
+  </>;
 }

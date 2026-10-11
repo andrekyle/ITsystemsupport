@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { WorkbookMemoItem, WorkbookMemoTask } from "../store";
 import { Icon } from "../icons";
+import { EditingTools } from "./EditingSidebar";
 import { workbookMarkFingerprint } from "../lib/workbookMarking";
 
 type Values = Record<string, string | boolean>;
@@ -55,6 +56,7 @@ export function WorkbookTaskAnswer({ outcomeId, task, memoItem, valueKey, markKe
   const [answer, setAnswer] = useState(savedAnswer);
   const [marking, setMarking] = useState(false);
   const [error, setError] = useState("");
+  const [editing, setEditing] = useState(false);
   // Progress is hydrated from IndexedDB/cloud after the workbook first
   // renders. Reflect that late-arriving value instead of leaving the input at
   // the empty snapshot it saw on mount.
@@ -97,6 +99,7 @@ export function WorkbookTaskAnswer({ outcomeId, task, memoItem, valueKey, markKe
       onChange(valueKey, answer);
       const rubricTask = { id: task.id, task: task.task, text: task.text, marks: task.marks, modelAnswer: task.modelAnswer };
       onChange(markKey, JSON.stringify({ ...next, answerHash: workbookMarkFingerprint(answer, { task: rubricTask, criteria }) }));
+      setEditing(false);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The answer could not be marked.");
     } finally {
@@ -113,7 +116,16 @@ export function WorkbookTaskAnswer({ outcomeId, task, memoItem, valueKey, markKe
           onBlur={() => updateAnswer(answer)}
         />}
     <div className="workbook-task-mark-row">
+      <EditingTools active={editing} title={`Task ${task.task} answer`}>
+        <button type="button" className="btn ghost sm" disabled={marking || !criteria.length} onClick={() => void mark()}>
+          <Icon name="robot" size={15} /> {marking ? "Marking..." : "Mark answer"}
+        </button>
+        <button type="button" className="btn ghost sm" disabled={marking} onClick={() => setEditing(false)}>
+          Done editing
+        </button>
+      </EditingTools>
       <span
+        hidden={editing}
         className="workbook-task-mark-wrap no-print"
         data-tooltip={!criteria.length ? "Refresh the memo to enable individual marking" : "Mark this answer with AI"}
       >
@@ -128,7 +140,7 @@ export function WorkbookTaskAnswer({ outcomeId, task, memoItem, valueKey, markKe
           {marking ? "Marking…" : "Mark answer"}
         </button>
       </span>
-      {result && <button type="button" className="workbook-task-edit no-print" onClick={() => onChange(markKey, "")}>Edit answer</button>}
+      {result && <button type="button" className="workbook-task-edit no-print" onClick={() => { onChange(markKey, ""); setEditing(true); }}>Edit answer</button>}
       {result && <span className="workbook-task-score">{result.awarded}/{result.maxMarks} — {result.feedback}</span>}
       {error && <span className="workbook-task-notice" role="alert">{error}</span>}
     </div>

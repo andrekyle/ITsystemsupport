@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
 import { Icon } from "../icons";
 import { Modal } from "./Modal";
+import { EditingTools } from "./EditingSidebar";
 import type { FormAnnotation, FormAnnotationKind, FormBox } from "../lib/formSchema";
 
 /** Acrobat-style Fill & Sign: place text, ticks, crosses, dots, lines and a
@@ -14,6 +15,7 @@ export interface FillSign {
   setTool: (tool: FillTool) => void;
   selected: string | null;
   setSelected: (id: string | null) => void;
+  disabled?: boolean;
   /** a signature saved once, reused for every signature placed afterwards */
   signature: { text?: string; path?: string } | null;
   setSignature: (signature: { text?: string; path?: string } | null) => void;
@@ -30,13 +32,14 @@ const TOOLS: { kind: FormAnnotationKind; label: string; glyph: string; hint: str
 
 export function FillSignBar({ fill }: { fill: FillSign }) {
   const active = TOOLS.find(tool => tool.kind === fill.tool);
-  return (
+  const tools = (
     <div className="fill-bar no-print" role="toolbar" aria-label="Fill and sign">
       <span className="fill-bar-title">Fill &amp; sign</span>
       {TOOLS.map(tool => (
         <button
           key={tool.kind}
           type="button"
+          disabled={fill.disabled}
           className={`fill-tool${fill.tool === tool.kind ? " on" : ""}`}
           aria-pressed={fill.tool === tool.kind}
           title={tool.label}
@@ -46,10 +49,12 @@ export function FillSignBar({ fill }: { fill: FillSign }) {
           <span>{tool.label}</span>
         </button>
       ))}
-      {fill.signature && <button type="button" className="fill-tool" title="Forget the saved signature" onClick={() => fill.setSignature(null)}><Icon name="close" size={14} /> <span>Clear signature</span></button>}
+      {fill.signature && <button type="button" className="fill-tool" disabled={fill.disabled} title="Forget the saved signature" onClick={() => fill.setSignature(null)}><Icon name="close" size={14} /> <span>Clear signature</span></button>}
+      {(fill.tool || fill.selected) && <button type="button" className="fill-tool" disabled={fill.disabled} onClick={() => { fill.setTool(null); fill.setSelected(null); }}>Done</button>}
       <span className="fill-hint" role="status">{active ? `${active.hint}. Esc to finish.` : fill.annotations.length ? "Click a mark to move, resize or delete it." : "Type in the boxes, or use a tool to write anywhere on the page."}</span>
     </div>
   );
+  return fill.tool || fill.selected ? <EditingTools active title="Fill and sign">{tools}</EditingTools> : tools;
 }
 
 const round = (v: number) => Math.round(v * 10000) / 10000;

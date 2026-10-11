@@ -1,8 +1,9 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, ProfileContentEntry, ProfileContentType } from "../types";
-import { ConfirmModal, Modal } from "./Modal";
+import { ConfirmModal } from "./Modal";
 import { fileToImageDataUrl } from "./Avatar";
+import { EditingTools } from "./EditingSidebar";
 
 const CONTENT_TYPES: { type: ProfileContentType; icon: string; achievement?: boolean }[] = [
   { type: "Article", icon: "document" },
@@ -34,6 +35,12 @@ export function ProfilePortfolio({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const entries = profile.contentEntries ?? [];
   const close = () => { if (uploading) return; setAdding(false); setDraft(null); setError(""); };
+  useEffect(() => {
+    if (!adding) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") close(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [adding, uploading]);
 
   async function uploadImage(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -124,20 +131,20 @@ export function ProfilePortfolio({
         </div>
       )}
       {adding && (
-        <Modal
-          title={draft ? `${entries.some(entry => entry.id === draft.id) ? "Edit" : "Add"} ${draft.type.toLowerCase()}` : "Add content to your profile"}
-          className="profile-content-modal"
-          onClose={close}
-          actions={draft ? (
+        <section className="card profile-content-modal" aria-label="Profile entry editor">
+          <h3>{draft ? `${entries.some(entry => entry.id === draft.id) ? "Edit" : "Add"} ${draft.type.toLowerCase()}` : "Add content to your profile"}</h3>
+          <EditingTools active={adding} title="Profile entry">
+          {draft ? (
             <>
               <button className="btn ghost" type="button" disabled={uploading} onClick={close}>Cancel</button>
               <button className="btn" type="submit" form="profile-content-form" disabled={uploading}>Save</button>
             </>
           ) : <button className="btn ghost" type="button" onClick={close}>Cancel</button>}
-        >
           {error && <p className="auth-error" role="alert">{error}</p>}
+          </EditingTools>
           {draft ? (
             <form id="profile-content-form" onSubmit={save}>
+              <EditingTools active title="Entry image">
               <div className="profile-image-upload">
                 <span className="profile-image-upload-label">Image <span>(optional)</span></span>
                 <button type="button" className="btn ghost profile-image-upload-button"
@@ -150,14 +157,12 @@ export function ProfilePortfolio({
                 <p>PNG, JPEG or WebP. Portrait and landscape images keep their proportions.</p>
               </div>
               {uploading && <p role="status">Uploading image...</p>}
+              {draft.image && <button className="btn ghost danger-text" type="button" disabled={uploading}
+                onClick={() => setDraft({ ...draft, image: undefined })}><Icon name="trash" size={18} /> Remove uploaded image</button>}
+              </EditingTools>
               {draft.image && (
                 <div className="profile-content-image-preview">
                   <img className="profile-content-image" src={draft.image} alt="Uploaded image preview" />
-                  <button className="icon-btn danger-text" type="button" disabled={uploading}
-                    title="Remove image" aria-label="Remove uploaded image"
-                    onClick={() => setDraft({ ...draft, image: undefined })}>
-                    <Icon name="trash" size={18} />
-                  </button>
                 </div>
               )}
               <label className="field">Title
@@ -198,7 +203,7 @@ export function ProfilePortfolio({
               ))}
             </>
           )}
-        </Modal>
+        </section>
       )}
       {removing && (
         <ConfirmModal title="Remove profile entry?" message={<>

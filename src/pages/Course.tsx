@@ -49,11 +49,16 @@ import { insertLessonPlanDay, lessonPlanDayCount, removeLessonPlanDay, startLess
 import { groupLessonHtml, isLessonBulletListLead, isLessonListLead, isLessonListPoint, isLessonNumberedListLead, isLessonSubheading, lessonListItemText } from "../lib/lessonSubsections";
 import { clearInlineDraft, loadInlineDraft, saveInlineDraft } from "../lib/inlineDraftStorage";
 import { resolvedSlideQuizAnswer } from "../lib/slideQuiz";
+import { EditingTools } from "../components/EditingSidebar";
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
 
 const PlanText = InlineText;
 const PlanIconBtn = InlineIconBtn;
+
+function CourseEditingTools({ active, title, children }: { active: boolean; title: string; children: React.ReactNode }) {
+  return active ? <EditingTools active title={title}>{children}</EditingTools> : <>{children}</>;
+}
 
 const newPlanRow = (): LessonPlanRow => ({ time: "10 minutes", title: "New activity", text: [""], resources: [] });
 
@@ -1244,6 +1249,7 @@ export function ExerciseQuestion({
   // existing marker, LLM review, spell checker and save path unchanged.
   const nParts = check.concepts.length;
   const [parts, setParts] = useState<string[]>(() => splitIntoParts(saved, check.concepts.length));
+  const [editingAnswer, setEditingAnswer] = useState(false);
   const val = useMemo(() => joinParts(parts), [parts]);
   // Auto-grow each answer box to fit its content (see autoGrowTextarea) —
   // re-run whenever the boxes' text changes, including programmatic changes
@@ -1449,6 +1455,7 @@ export function ExerciseQuestion({
             {overSubmitLimit && " — shorten this answer before submitting."}
           </div>
           {val.trim().length > 0 && (
+            <CourseEditingTools active={editingAnswer} title={`${check.labels?.[0] ?? "Activity answer"}: spelling`}>
             <div
               className={`exq-spell ${misspellings.length ? "has-issues" : "clean"}`}
               aria-live="polite"
@@ -1519,11 +1526,14 @@ export function ExerciseQuestion({
                 </>
               )}
             </div>
+            </CourseEditingTools>
           )}
         </>
       )}
       {!ok && (
+        <CourseEditingTools active={editingAnswer} title={`${check.labels?.[0] ?? "Activity answer"}: editing`}>
         <div className="exq-check">
+          {editingAnswer && <button type="button" className="btn ghost sm" onClick={() => setEditingAnswer(false)}>Done editing answer</button>}
           {locked && !result ? (
             <span className="exq-status wrong">
               No checks left — you have used your {EXQ_MAX_CHECKS} checks for this question, so
@@ -1535,6 +1545,7 @@ export function ExerciseQuestion({
             <button
               className="btn ghost"
               onClick={() => {
+                setEditingAnswer(true);
                 setResult(null);
                 setReviewing(false);
                 setExtras(new Set());
@@ -1559,6 +1570,7 @@ export function ExerciseQuestion({
                     onTries(next);
                   }
                   setResult(r);
+                  setEditingAnswer(false);
                   setReviewing(false);
                   setExtras(new Set());
                   setReviewedText(null);
@@ -1626,6 +1638,7 @@ export function ExerciseQuestion({
             </span>
           )}
         </div>
+        </CourseEditingTools>
       )}
       {ok && (
         <div className="exq-status ok">
@@ -1645,6 +1658,7 @@ export function ExerciseQuestion({
               style={{ marginLeft: "auto" }}
               title="Improve your answer to earn more marks"
               onClick={() => {
+                setEditingAnswer(true);
                 setResult(null);
                 setReviewing(false);
                 setExtras(new Set());
@@ -1911,7 +1925,7 @@ export function CoursePage({
                   <img src={m.image} alt="" loading="lazy" />
                 </span>
               )}
-              {inline.editing && <label className="field">Module image<input type="file" accept="image/png,image/jpeg,image/webp" disabled={inline.busy} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { const image = await fileToImageDataUrl(file); inline.change(d => { d.modules[i].image = image; }); } catch { e.target.setCustomValidity("Could not read image. Choose another file."); e.target.reportValidity(); } }} /></label>}
+              {inline.editing && <EditingTools active title={`Module ${i + 1}: image`}><label className="field">Module image<input type="file" accept="image/png,image/jpeg,image/webp" disabled={inline.busy} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { const image = await fileToImageDataUrl(file); inline.change(d => { d.modules[i].image = image; }); } catch { e.target.setCustomValidity("Could not read image. Choose another file."); e.target.reportValidity(); } }} /></label></EditingTools>}
               <div className="head">
                 <span className="ico">
                   <Icon name={m.icon} size={22} />
@@ -2796,6 +2810,12 @@ export function UnitPage({
   const [unitQuizCount, setUnitQuizCount] = useState(10);
   const [lessonSplitError, setLessonSplitError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [unitEditOpen, setUnitEditOpen] = useState(false);
+  const [slideEditOpen, setSlideEditOpen] = useState(false);
+  const [unitHeaderOpen, setUnitHeaderOpen] = useState(tab !== "lesson");
+  useEffect(() => { setUnitEditOpen(false); }, [unitId]);
+  useEffect(() => { setSlideEditOpen(false); }, [unitId, tab, lessonStep]);
+  useEffect(() => { setUnitHeaderOpen(tab !== "lesson"); }, [unitId, tab]);
   const [tableConfirm, setTableConfirm] = useState<{
     title: string;
     message: React.ReactNode;
@@ -2809,7 +2829,7 @@ export function UnitPage({
   useEffect(() => { setLessonSaveStatus(""); setLessonSaveError(""); }, [unitId, lessonEdits]);
   const saveLessonToCloud = async () => {
     if (savingLesson) return;
-    if (inlineUnit) { setLessonSaveError("Use Save inline changes and update files above to save this unit."); setLessonSaveStatus("error"); return; }
+    if (inlineUnit) { setLessonSaveError("Use Save inline changes and update files in the editing sidebar to save this unit."); setLessonSaveStatus("error"); return; }
     setSavingLesson(true);
     setLessonSaveStatus("");
     try {
@@ -3416,7 +3436,7 @@ export function UnitPage({
         <span>{usLabel(u.us)}</span>
       </div>
 
-      <details className="unit-page-dropdown" key={`unit-header-${unitId}-${tab}`} open={tab !== "lesson"}>
+      <details className="unit-page-dropdown" key={`unit-header-${unitId}-${tab}`} open={unitHeaderOpen} onToggle={event => setUnitHeaderOpen(event.currentTarget.open)}>
         <summary hidden={tab !== "lesson"}>
           <span>{usLabel(u.us)} · {tabs.find(item => item.id === tab)?.label ?? "Learning activities"}</span>
           <Icon name="chevronDown" size={18} />
@@ -3427,9 +3447,12 @@ export function UnitPage({
       </div>
       <h1 className="page-title">{u.title}</h1>
       {isSuperUser && (
-        <details className="unit-edit-menu">
+        <details className="unit-edit-menu" open={unitEditOpen} onToggle={event => setUnitEditOpen(event.currentTarget.open)}>
           <summary><Icon name="pencil" size={15} /> Edit unit <Icon name="chevronDown" size={14} /></summary>
+          <EditingTools active={unitEditOpen || !!inlineUnit} title="Unit editing">
+            <button type="button" className="btn ghost sm" onClick={() => setUnitEditOpen(false)}>Close unit tools</button>
           <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} profileId={profile.id} onCancelInline={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />
+          </EditingTools>
         </details>
       )}
       <div style={{ margin: "16px 0 6px", maxWidth: 560 }}>
@@ -3448,10 +3471,9 @@ export function UnitPage({
               role="tab"
               aria-selected={tab === t.id}
               className={`tab${tab === t.id ? " active" : ""}`}
-              onClick={(event) => {
+              onClick={() => {
                 setTab(t.id);
-                const dropdown = event.currentTarget.closest("details");
-                if (dropdown && t.id === "lesson") dropdown.open = false;
+                if (t.id === "lesson") setUnitHeaderOpen(false);
               }}
             >
               <Icon name={t.icon} size={16} />
@@ -3752,7 +3774,8 @@ export function UnitPage({
             const allFigIds = sec.figures?.map((f) => f.id) ?? [];
             const editable = editMode && isSuperUser;
             const figControls = (fig: LessonFigure) => (
-              <div className="fig-edit" onClick={(e) => e.stopPropagation()}>
+              <EditingTools active={editable} title={`Slide ${si + 1}: ${plainSlideText(capOf(fig.id, fig.caption)) || "Image"}`}>
+              <div className="fig-edit" style={{ position: "static", maxWidth: "100%" }} onClick={(e) => e.stopPropagation()}>
                 <button
                   type="button"
                   title="Move earlier in this section"
@@ -3800,6 +3823,7 @@ export function UnitPage({
                   +
                 </button>
               </div>
+              </EditingTools>
             );
             // First real (uploaded or default) figure in the effective order becomes the hero.
             const heroFig = orderedFigures.find((f) => figureImages[f.id] || FIGURE_DEFAULTS[f.id]);
@@ -3959,9 +3983,11 @@ export function UnitPage({
                     </button>
                   )}
                   {editMode && isSuperUser && generatedQuiz && (
+                    <EditingTools active title={`Slide ${si + 1}: generated quiz`}>
                     <button type="button" className="btn ghost lesson-quiz-reveal" onClick={() => editDeleteGeneratedQuiz(si)} title="Delete the entire generated quiz">
                       <Icon name="trash" size={14} /> Delete quiz
                     </button>
+                    </EditingTools>
                   )}
                 </div>
                 <div className="lesson-quiz-list">
@@ -4793,9 +4819,13 @@ export function UnitPage({
                     </button>
                   </span>
                   {isPrivileged && (
-                    <details className="lesson-edit-menu">
+                    <details className="lesson-edit-menu" open={slideEditOpen} onToggle={event => setSlideEditOpen(event.currentTarget.open)}>
                       <summary><Icon name="pencil" size={15} /> Edit slide <Icon name="chevronDown" size={14} /></summary>
+                      <EditingTools active={slideEditOpen || editable} title={`Slide ${si + 1}: actions and settings`}>
                       <div className="lesson-edit-menu-body">
+                        <button type="button" className="btn ghost sm" disabled={savingLesson || !!inlineUnit} onClick={() => { setSlideEditOpen(false); setEditMode(false); }}>
+                          {editable ? "Done editing slide" : "Close slide tools"}
+                        </button>
                   {isPrivileged && (
                     <button
                       type="button"
@@ -4894,17 +4924,16 @@ export function UnitPage({
                     </span>
                   )}
                       </div>
+                      {isSuperUser && lessonSaveStatus === "saved" && <p role="status">Saved to cloud.</p>}
+                      {isSuperUser && lessonSaveStatus === "error" && <p className="auth-error" role="alert">{lessonSaveError}</p>}
+                      {isSuperUser && quizGenerationError && <p className="auth-error" role="alert">{quizGenerationError}</p>}
+                      {isSuperUser && lessonSplitError && <p className="auth-error" role="alert">{lessonSplitError}</p>}
+                      </EditingTools>
                     </details>
                   )}
                 </div>
-                {isSuperUser && lessonSaveStatus === "saved" && <p role="status">Saved to cloud.</p>}
-                {isSuperUser && lessonSaveStatus === "error" && <div className="lesson-toolbar-messages"><p className="auth-error" role="alert">{lessonSaveError}</p></div>}
-                {isSuperUser && editMode && (quizGenerationError || lessonSplitError) && (
-                  <div className="lesson-toolbar-messages">
-                    {quizGenerationError && <p className="auth-error" role="alert">{quizGenerationError}</p>}
-                    {lessonSplitError && <p className="auth-error" role="alert">{lessonSplitError}</p>}
-                  </div>
-                )}
+                {isSuperUser && !slideEditOpen && !editable && lessonSaveStatus === "saved" && <p role="status">Saved to cloud.</p>}
+                {isSuperUser && !slideEditOpen && !editable && lessonSaveStatus === "error" && <p className="auth-error" role="alert">{lessonSaveError}</p>}
                 <div
                   className="lesson-progress"
                   role="progressbar"
@@ -5054,7 +5083,7 @@ export function UnitPage({
             );
           })}
           {pasteEditor && (
-            <div className="paste-editor-overlay" role="dialog" aria-modal="true" aria-label="Edit slide text">
+            <section aria-label="Edit slide text">
               <div className="paste-editor">
                 <h3>
                   <Icon name="pencil" size={16} />
@@ -5085,6 +5114,7 @@ export function UnitPage({
                   numbered points — the text is formatted in the lesson’s standard style automatically.
                   Use **double stars** for bold.
                 </p>
+                <EditingTools active={isSuperUser} title={`Slide ${pasteEditor.si + 1}: replace text`}>
                 <div className="paste-editor-actions">
                   <button className="btn" onClick={savePasteEditor}>
                     <Icon name="check" size={15} />
@@ -5094,8 +5124,9 @@ export function UnitPage({
                     Cancel
                   </button>
                 </div>
+                </EditingTools>
               </div>
-            </div>
+            </section>
           )}
         </>
       )}
@@ -5246,6 +5277,7 @@ export function UnitPage({
                         <Icon name="menu" size={13} />
                       </span>
                       {editNoteId === n.id ? (
+                        <>
                         <input
                           className="notes-rename"
                           value={editTitle}
@@ -5262,7 +5294,8 @@ export function UnitPage({
                             }
                             if (e.key === "Escape") setEditNoteId(null);
                           }}
-                          onBlur={() => {
+                          onBlur={(event) => {
+                            if ((event.relatedTarget as HTMLElement | null)?.closest("[data-note-rename-tools]")?.getAttribute("data-note-rename-tools") === n.id) return;
                             if (editTitle.trim()) {
                               if (n.mine) renameNote(n.id, editTitle.trim());
                               else if (n.shared) renameSharedNote(n.id, editTitle.trim());
@@ -5271,6 +5304,21 @@ export function UnitPage({
                             setEditNoteId(null);
                           }}
                         />
+                        <EditingTools active title={`Rename note: ${n.title}`}>
+                          <div data-note-rename-tools={n.id}>
+                          <button type="button" className="btn sm" onMouseDown={event => event.preventDefault()} onClick={() => {
+                            if (editTitle.trim()) {
+                              if (n.mine) renameNote(n.id, editTitle.trim());
+                              else if (n.shared) renameSharedNote(n.id, editTitle.trim());
+                              else setTitleOverride(n.id, editTitle.trim());
+                            }
+                            setEditNoteId(null);
+                          }}>Save name</button>
+                          <button type="button" className="btn ghost sm" onMouseDown={event => event.preventDefault()} onClick={() => setEditNoteId(null)}>Cancel</button>
+                          <p className="muted">Enter saves the name. Escape cancels.</p>
+                          </div>
+                        </EditingTools>
+                        </>
                       ) : (
                         <button className="notes-select" onClick={() => setNoteId(n.id)}>
                           <span className="nt">{n.title}</span>
@@ -5387,8 +5435,8 @@ export function UnitPage({
               of its text.
             </span>
           </div>
-          {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="btn ghost sm" disabled={!!activityEditor} onClick={addBuiltActivity}><Icon name="plus" size={14} /> Add activity</button>{activityEditError && <span role="alert" className="auth-error">{activityEditError}</span>}</div>}
-          {activityEditor && builtUnit && isSuperUser && <div className="card activity-editor-card"><h3>{activityEditor.index === null ? "Add activity" : "Edit activity"}</h3><fieldset disabled={activitySaving} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}><ActivityQuestionEditor key={activityEditor.value.id} value={activityEditor.value} onChange={value => setActivityEditor({ ...activityEditor, value })}/><div className="unit-editor-actions"><button type="button" className="btn" onClick={() => void saveActivityEditor()}>{activitySaving ? "Generating model answers…" : "Save activity"}</button><button type="button" className="btn ghost" onClick={() => { setActivityEditor(null); setActivityEditError(""); }}>Cancel</button></div></fieldset></div>}
+          {builtUnit && isSuperUser && <CourseEditingTools active={!!activityEditor || !!inlineUnit} title="Unit activities"><div className="activity-edit-bar"><button type="button" className="btn ghost sm" disabled={!!activityEditor} onClick={addBuiltActivity}><Icon name="plus" size={14} /> Add activity</button>{!activityEditor && activityEditError && <span role="alert" className="auth-error">{activityEditError}</span>}</div></CourseEditingTools>}
+          {activityEditor && builtUnit && isSuperUser && <div className="card activity-editor-card"><h3>{activityEditor.index === null ? "Add activity" : "Edit activity"}</h3><fieldset disabled={activitySaving} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}><ActivityQuestionEditor key={activityEditor.value.id} value={activityEditor.value} onChange={value => setActivityEditor({ ...activityEditor, value })}/></fieldset><EditingTools active title="Activity editing"><div className="unit-editor-actions"><button type="button" className="btn" disabled={activitySaving} onClick={() => void saveActivityEditor()}>{activitySaving ? "Generating model answers…" : "Save activity"}</button><button type="button" className="btn ghost" disabled={activitySaving} onClick={() => { setActivityEditor(null); setActivityEditError(""); }}>Cancel</button></div>{activityEditError && <p role="alert" className="auth-error">{activityEditError}</p>}</EditingTools></div>}
           {(tab === "questions" ? (content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index })) : builtUnit ? visibleBuiltActivities : content.exercises.map((ex, index) => ({ ex, kind: "exercises" as const, index }))).map(({ex, kind, index}) => {
             const exRes = progress.units[u.us]?.exercises?.[ex.id];
             const hasChecks = !!ex.checks && ex.checks.length > 0;
@@ -5431,7 +5479,7 @@ export function UnitPage({
                 </span>
               </summary>
               <div className="saqa-body">
-                {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="activity-remove-icon" aria-label="Remove activity" title="Remove activity" disabled={!!activityEditor} onClick={() => setTableConfirm({ title: "Remove activity?", message: <>Remove <strong>“{ex.title}”</strong>? This cannot be undone.</>, confirmLabel: "Remove activity", action: () => void removeBuiltActivity(kind, index) })}><Icon name="trash" size={15} /></button></div>}
+                {builtUnit && isSuperUser && <CourseEditingTools active={!!activityEditor || !!inlineUnit} title={`Activity: ${ex.title}`}><div className="activity-edit-bar"><button type="button" className="activity-remove-icon" aria-label="Remove activity" title="Remove activity" disabled={!!activityEditor} onClick={() => setTableConfirm({ title: "Remove activity?", message: <>Remove <strong>“{ex.title}”</strong>? This cannot be undone.</>, confirmLabel: "Remove activity", action: () => void removeBuiltActivity(kind, index) })}><Icon name="trash" size={15} /></button></div></CourseEditingTools>}
                 <p className="lesson-p" style={{ marginTop: 10 }}>
                   {inlineUnit ? unitText(ex.task, (d, v) => { d[kind]![index].task = v; }, "Activity instructions") : <Gloss text={ex.task} />}
                 </p>
@@ -5681,6 +5729,7 @@ export function UnitPage({
       {tab === "logbook" && content?.logbook && logbookData && (
         <>
           {isSuperUser && (
+            <CourseEditingTools active={editMode} title="Logbook editing">
             <div className="plan-edit-bar">
               <button
                 type="button"
@@ -5716,6 +5765,7 @@ export function UnitPage({
               {lessonSaveStatus === "saved" && <span className="muted">Saved to cloud — everyone now sees this version.</span>}
               {lessonSaveStatus === "error" && <span className="auth-error">{lessonSaveError}</span>}
             </div>
+            </CourseEditingTools>
           )}
           {isSuperUser && <LogbookBuilder unit={u} content={content} />}
           <Logbook
@@ -5730,6 +5780,7 @@ export function UnitPage({
       )}
 
       {tab === "quiz" && content && builtUnit && isSuperUser && (
+        <CourseEditingTools active={!!inlineUnit} title="Whole-unit quiz generation">
         <div className="activity-edit-bar">
           <label className="slide-quiz-count">
             Whole-unit questions
@@ -5740,6 +5791,7 @@ export function UnitPage({
           </button>
           {quizGenerationError && <span role="alert" className="auth-error">{quizGenerationError}</span>}
         </div>
+        </CourseEditingTools>
       )}
 
       {tab === "quiz" && content && content.quizzes && content.quizzes.length > 0 && (() => {
@@ -5931,7 +5983,7 @@ export function UnitPage({
               </span>
               Self assessment
             </h2>
-            {builtUnit && isSuperUser && <div className="activity-edit-bar">
+            {builtUnit && isSuperUser && !inlineUnit && <div className="activity-edit-bar">
               <button type="button" className="btn ghost sm" disabled={!!selfAssessmentDraft || !!inlineUnit} onClick={() => { setInlineUnit(structuredClone(content)); setEditMode(true); }}>Edit self assessment inline</button>
             </div>}
             {builtUnit && isSuperUser && selfAssessmentDraft && <div className="card self-assessment-editor">
@@ -5940,12 +5992,14 @@ export function UnitPage({
                 <UnitContentEditor name="Introduction" value={selfAssessmentDraft.intro} onChange={value => setSelfAssessmentDraft({ ...selfAssessmentDraft, intro: value as string[] })} />
                 <UnitContentEditor name="Checklist items" value={selfAssessmentDraft.items} onChange={value => setSelfAssessmentDraft({ ...selfAssessmentDraft, items: value as string[] })} />
                 <UnitContentEditor name="Closing instructions" value={selfAssessmentDraft.outro ?? []} onChange={value => setSelfAssessmentDraft({ ...selfAssessmentDraft, outro: value as string[] })} />
+              </fieldset>
+                <EditingTools active title="Self assessment editing">
                 {selfAssessmentError && <p className="auth-error" role="alert">{selfAssessmentError}</p>}
                 <div className="unit-editor-actions">
-                  <button type="button" className="btn" onClick={() => void saveSelfAssessment()}>{selfAssessmentSaving ? "Saving..." : "Save changes"}</button>
-                  <button type="button" className="btn ghost" onClick={() => { setSelfAssessmentDraft(undefined); setSelfAssessmentError(""); }}>Cancel</button>
+                  <button type="button" className="btn" disabled={selfAssessmentSaving} onClick={() => void saveSelfAssessment()}>{selfAssessmentSaving ? "Saving..." : "Save changes"}</button>
+                  <button type="button" className="btn ghost" disabled={selfAssessmentSaving} onClick={() => { setSelfAssessmentDraft(undefined); setSelfAssessmentError(""); }}>Cancel</button>
                 </div>
-              </fieldset>
+                </EditingTools>
             </div>}
             {sa.intro.map((p, pi) => (
               <p key={p} className="lesson-p" style={{ maxWidth: 720 }}>
@@ -6260,6 +6314,7 @@ export function UnitPage({
             for this unit standard.
           </p>
           {isSuperUser && (
+            <CourseEditingTools active={editMode} title="Lesson plan editing">
             <div className="plan-edit-bar">
               <button
                 type="button"
@@ -6295,6 +6350,7 @@ export function UnitPage({
               {lessonSaveStatus === "saved" && <span className="muted">Saved to cloud — everyone now sees this version.</span>}
               {lessonSaveStatus === "error" && <span className="auth-error">{lessonSaveError}</span>}
             </div>
+            </CourseEditingTools>
           )}
           {isSuperUser && <LessonPlanBuilder unit={u} content={content} />}
           {canDownloadShared && u.us === "8252" && (
@@ -6433,23 +6489,27 @@ export function UnitPage({
                             <PlanText as="div" className="k" value={d.label} editable={pe} placeholder="Label" onSave={(t) => updatePlan((x) => { x.details![di].label = t; })} />
                             <PlanText as="div" className="v" value={d.value} editable={pe} placeholder="Value" onSave={(t) => updatePlan((x) => { x.details![di].value = t; })} />
                           </div>
-                          {pe && <PlanIconBtn title="Remove detail" icon="close" danger onClick={() => updatePlan((x) => { x.details!.splice(di, 1); })} />}
+                          {pe && <EditingTools active title={`Plan detail ${di + 1}: ${d.label}`}><PlanIconBtn title="Remove detail" icon="close" danger onClick={() => updatePlan((x) => { x.details!.splice(di, 1); })} /></EditingTools>}
                         </div>
                       ))}
                       {pe && (
+                        <EditingTools active title="Lesson plan details">
                         <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { (x.details ??= []).push({ icon: "info", label: "Detail", value: "Value" }); })}>
                           <Icon name="plus" size={13} /> Add detail
                         </button>
+                        </EditingTools>
                       )}
                     </div>
                   )}
                   {pe && (
-                    <div className="plan-start">
+                    <EditingTools active title="Lesson plan timing">
+                    <div className="plan-start" style={{ flexWrap: "wrap" }}>
                       <Icon name="clock" size={15} />
                       <span>Session starts at</span>
                       <PlanText value={planData.startTime ?? "09:00"} editable placeholder="09:00" onSave={(t) => updatePlan((x) => { x.startTime = /^\d{1,2}:\d{2}$/.test(t) ? t : x.startTime; })} />
                       <span className="muted">(HH:MM — drives the clock column)</span>
                     </div>
+                    </EditingTools>
                   )}
                   <ul className="duty-list plan-prep">
                     {planData.prep.map((p, pi) => (
@@ -6458,14 +6518,16 @@ export function UnitPage({
                           <Icon name="checkCircle" size={16} />
                         </span>
                         <PlanText value={p} editable={pe} multiline placeholder="Preparation note" onSave={(t) => updatePlan((x) => { x.prep[pi] = t; })} />
-                        {pe && <PlanIconBtn title="Remove preparation note" icon="close" danger onClick={() => updatePlan((x) => { x.prep.splice(pi, 1); })} />}
+                        {pe && <EditingTools active title={`Preparation note ${pi + 1}`}><PlanIconBtn title="Remove preparation note" icon="close" danger onClick={() => updatePlan((x) => { x.prep.splice(pi, 1); })} /></EditingTools>}
                       </li>
                     ))}
                     {pe && (
                       <li>
+                        <EditingTools active title="Lesson plan preparation">
                         <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { x.prep.push("New preparation note"); })}>
                           <Icon name="plus" size={13} /> Add preparation note
                         </button>
+                        </EditingTools>
                       </li>
                     )}
                   </ul>
@@ -6493,11 +6555,23 @@ export function UnitPage({
                     `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
                   const rowCtls = (si: number, ri: number, r: LessonPlanRow) => pe ? (
                     <td className="plan-ctls">
+                      <EditingTools active title={`Section ${si + 1}, row ${ri + 1}: ${r.title}`}>
                       <PlanIconBtn title="Move row up" icon="chevronUp" onClick={() => updatePlan((x) => { const rows = x.sections[si].rows; if (ri > 0) [rows[ri - 1], rows[ri]] = [rows[ri], rows[ri - 1]]; })} />
                       <PlanIconBtn title="Move row down" icon="chevronDown" onClick={() => updatePlan((x) => { const rows = x.sections[si].rows; if (ri < rows.length - 1) [rows[ri + 1], rows[ri]] = [rows[ri], rows[ri + 1]]; })} />
                       <PlanIconBtn title="Insert row below" icon="plus" onClick={() => updatePlan((x) => { x.sections[si].rows.splice(ri + 1, 0, newPlanRow()); })} />
                       <PlanIconBtn title={r.break ? "Change to a normal activity row" : "Change to a break row"} icon="halfCircle" onClick={() => updatePlan((x) => { const row = x.sections[si].rows[ri]; row.break = !row.break; if (row.break) { delete row.text; delete row.bullets; delete row.resources; } })} />
                       <PlanIconBtn title="Delete row" icon="trash" danger onClick={() => setTableConfirm({ title: "Delete row?", message: `Delete “${r.title}” from the lesson plan?`, confirmLabel: "Delete row", action: () => updatePlan((x) => { x.sections[si].rows.splice(ri, 1); }) })} />
+                      {!r.break && <>
+                        <div className="plan-cell-adds">
+                          <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { (x.sections[si].rows[ri].text ??= []).push("New paragraph"); })}><Icon name="plus" size={12} /> Paragraph</button>
+                          <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { (x.sections[si].rows[ri].bullets ??= []).push("New bullet point"); })}><Icon name="plus" size={12} /> Bullet</button>
+                          <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { (x.sections[si].rows[ri].resources ??= []).push("LM p"); })}><Icon name="plus" size={12} /> Resource</button>
+                        </div>
+                        {r.text?.map((_, ti) => <button key={`p-${ti}`} type="button" className="btn ghost sm" onClick={() => updatePlan((x) => { const row = x.sections[si].rows[ri]; row.text!.splice(ti, 1); if (!row.text!.length) delete row.text; })}>Remove paragraph {ti + 1}</button>)}
+                        {r.bullets?.map((_, bi) => <button key={`b-${bi}`} type="button" className="btn ghost sm" onClick={() => updatePlan((x) => { const row = x.sections[si].rows[ri]; row.bullets!.splice(bi, 1); if (!row.bullets!.length) delete row.bullets; })}>Remove bullet {bi + 1}</button>)}
+                        {r.resources?.map((_, xi) => <button key={`r-${xi}`} type="button" className="btn ghost sm" onClick={() => updatePlan((x) => { const row = x.sections[si].rows[ri]; row.resources!.splice(xi, 1); if (!row.resources!.length) delete row.resources; })}>Remove resource {xi + 1}</button>)}
+                      </>}
+                      </EditingTools>
                     </td>
                   ) : null;
                   return lp.sections.map((sec, si) => {
@@ -6515,7 +6589,8 @@ export function UnitPage({
                             {(si === 0 || sec.startTime) && <strong>Day {day} · {sec.startTime ?? lp.startTime ?? "09:00"} </strong>}
                             <PlanText value={sec.heading ?? ""} editable={pe} placeholder="Section heading (optional)" onSave={(t) => updatePlan((x) => { x.sections[si].heading = t || undefined; })} />
                             {pe && (
-                              <span className="plan-sec-ctls">
+                              <EditingTools active title={`Plan section ${si + 1}: ${sec.heading || "Actions"}`}>
+                              <span className="plan-sec-ctls" style={{ flexWrap: "wrap", marginLeft: 0 }}>
                                 <span className="plan-sec-start">
                                   Day start
                                   <PlanText value={sec.startTime ?? ""} editable placeholder="HH:MM" onSave={(t) => updatePlan((x) => { x.sections[si].startTime = /^\d{1,2}:\d{2}$/.test(t) ? t : undefined; })} />
@@ -6535,6 +6610,7 @@ export function UnitPage({
                                   <PlanIconBtn title="Delete this section and all its rows" icon="trash" danger onClick={() => setTableConfirm({ title: "Delete section?", message: "Delete this whole section and all of its rows?", confirmLabel: "Delete section", action: () => updatePlan((x) => { x.sections.splice(si, 1); }) })} />
                                 )}
                               </span>
+                              </EditingTools>
                             )}
                           </td>
                         </tr>
@@ -6543,6 +6619,7 @@ export function UnitPage({
                         const dayInsert = pe && (ri > 0 || (si > 0 && !sec.startTime)) ? (
                           <tr className="plan-add-row">
                             <td colSpan={cols}>
+                              <EditingTools active title={`Section ${si + 1}, row ${ri + 1}: new day`}>
                               <button
                                 type="button"
                                 className="btn ghost sm plan-add"
@@ -6551,6 +6628,7 @@ export function UnitPage({
                               >
                                 <Icon name="calendar" size={13} /> Add day here
                               </button>
+                              </EditingTools>
                             </td>
                           </tr>
                         ) : null;
@@ -6614,7 +6692,6 @@ export function UnitPage({
                                   {pe ? (
                                     <>
                                       <PlanText value={t} editable multiline placeholder="Paragraph" onSave={(v) => updatePlan((x) => { x.sections[si].rows[ri].text![ti] = v; })} />
-                                      <PlanIconBtn title="Remove paragraph" icon="close" danger onClick={() => updatePlan((x) => { const row = x.sections[si].rows[ri]; row.text!.splice(ti, 1); if (!row.text!.length) delete row.text; })} />
                                     </>
                                   ) : (
                                     <Gloss text={t} />
@@ -6628,7 +6705,6 @@ export function UnitPage({
                                       {pe ? (
                                         <>
                                           <PlanText value={b} editable multiline placeholder="Bullet point" onSave={(v) => updatePlan((x) => { x.sections[si].rows[ri].bullets![bi] = v; })} />
-                                          <PlanIconBtn title="Remove bullet" icon="close" danger onClick={() => updatePlan((x) => { const row = x.sections[si].rows[ri]; row.bullets!.splice(bi, 1); if (!row.bullets!.length) delete row.bullets; })} />
                                         </>
                                       ) : (
                                         <span><Gloss text={b} /></span>
@@ -6637,24 +6713,14 @@ export function UnitPage({
                                   ))}
                                 </ul>
                               )}
-                              {pe && (
-                                <div className="plan-cell-adds">
-                                  <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { (x.sections[si].rows[ri].text ??= []).push("New paragraph"); })}><Icon name="plus" size={12} /> Paragraph</button>
-                                  <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { (x.sections[si].rows[ri].bullets ??= []).push("New bullet point"); })}><Icon name="plus" size={12} /> Bullet</button>
-                                </div>
-                              )}
                             </td>
                             <td className="plan-res">
                               {r.resources?.map((x, xi) => (
                                 <div key={xi} className="plan-res-item">
                                   <span className="plan-res-ico"><Icon name="folder" size={12} /></span>
                                   <PlanText value={x} editable={pe} placeholder="e.g. LM p4" onSave={(v) => updatePlan((d) => { d.sections[si].rows[ri].resources![xi] = v; })} />
-                                  {pe && <PlanIconBtn title="Remove resource" icon="close" danger onClick={() => updatePlan((d) => { const row = d.sections[si].rows[ri]; row.resources!.splice(xi, 1); if (!row.resources!.length) delete row.resources; })} />}
                                 </div>
                               ))}
-                              {pe && (
-                                <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((d) => { (d.sections[si].rows[ri].resources ??= []).push("LM p"); })}><Icon name="plus" size={12} /> Resource</button>
-                              )}
                             </td>
                             {rowCtls(si, ri, r)}
                           </tr>
@@ -6664,6 +6730,7 @@ export function UnitPage({
                       {pe && (
                         <tr className="plan-add-row">
                           <td colSpan={cols}>
+                            <EditingTools active title={`Plan section ${si + 1}: add rows and days`}>
                             <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { x.sections[si].rows.push(newPlanRow()); })}>
                               <Icon name="plus" size={13} /> Add row{sec.heading ? ` to “${sec.heading}”` : ""}
                             </button>
@@ -6672,6 +6739,7 @@ export function UnitPage({
                             })}>
                               <Icon name="calendar" size={13} /> Add day here
                             </button>
+                            </EditingTools>
                           </td>
                         </tr>
                       )}
@@ -6682,12 +6750,14 @@ export function UnitPage({
                 {isSuperUser && editMode && (
                   <tr className="plan-add-row plan-add-section">
                     <td colSpan={4}>
+                      <EditingTools active title="Lesson plan structure">
                       <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { x.sections.push({ heading: "New section", rows: [newPlanRow()] }); })}>
                         <Icon name="layers" size={13} /> Add section
                       </button>
                       <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => insertLessonPlanDay(x, x.sections.length, newPlanRow()))}>
                         <Icon name="calendar" size={13} /> Add next day
                       </button>
+                      </EditingTools>
                     </td>
                   </tr>
                 )}

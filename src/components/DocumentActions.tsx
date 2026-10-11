@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Icon } from "../icons";
+import { EditingTools } from "./EditingSidebar";
 
-export function DocumentActions({ name, labelled = false, onSave }: { name: string; labelled?: boolean; onSave?: () => Promise<void> }) {
+export function DocumentActions({ name, labelled = false, onSave, editing = false }: { name: string; labelled?: boolean; onSave?: () => Promise<void>; editing?: boolean }) {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -96,7 +97,7 @@ export function DocumentActions({ name, labelled = false, onSave }: { name: stri
     }, 1000);
   };
 
-  return (
+  const tools = (
     <div className={`document-actions no-print${labelled ? " is-labelled" : ""}`} role="toolbar" aria-label={`${name} actions`}>
       <button type="button" className={saved ? "is-saved" : ""} disabled={saving} onClick={() => void save()} title={saved ? "Saved" : `Save ${name}`} aria-label={`Save ${name}`}>
         <Icon name="save" size={18} />
@@ -114,4 +115,5 @@ export function DocumentActions({ name, labelled = false, onSave }: { name: stri
       {saveError && <span className="auth-error" role="alert">{saveError}</span>}
     </div>
   );
+  return editing ? <EditingTools active title={`${name} actions`}>{tools}</EditingTools> : tools;
 }

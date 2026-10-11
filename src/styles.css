@@ -297,6 +297,67 @@ a:hover {
   min-height: 0;
 }
 
+.editing-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.editing-layout > .body {
+  min-width: 0;
+}
+
+.editing-layout-active .content { min-width: 0; }
+
+.editing-layout-active .sidebar,
+.editing-layout-active .side-scrim {
+  display: none;
+}
+
+.editing-sidebar {
+  flex: 0 0 320px;
+  width: 320px;
+  padding: 20px 16px;
+  overflow-y: auto;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.editing-sidebar[hidden] { display: none; }
+.editing-sidebar-title { display: flex; align-items: center; gap: 8px; font-size: 17px; margin: 0 0 10px; }
+.editing-sidebar > .muted { font-size: 12px; margin: 0 0 20px; }
+.editing-tool-group { padding: 14px 12px; margin-bottom: 14px; border: 1px solid var(--border); }
+.editing-tool-group h3 { margin: 0 0 12px; font-size: 13px; }
+.editing-tool-group .btn { white-space: normal; }
+.workbook-task-mark-wrap[hidden] { display: none; }
+.editing-sidebar .slide-text-toolbar {
+  position: static;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.editing-sidebar .slide-tool-group { flex-wrap: wrap; width: 100%; max-width: 100%; padding: 0; border-left: 0; }
+.editing-sidebar .slide-text-controls { gap: 8px 2px; }
+.editing-sidebar .fill-bar { margin: 0; padding: 0; border: 0; }
+.editing-sidebar .unit-builder-panel { min-width: 0; padding: 0; border: 0; }
+.editing-tool-group > .btn { display: flex; width: 100%; justify-content: flex-start; margin: 6px 0; }
+.editing-tool-group .unit-editor-actions,
+.editing-tool-group .cal-toolbar { margin: 0; }
+.editing-tool-group input:not([type="checkbox"]):not([type="radio"]),
+.editing-tool-group select,
+.editing-tool-group textarea { max-width: 100%; }
+
+@media (max-width: 860px) {
+  .editing-layout-active { flex-direction: column; overflow-y: auto; }
+  .editing-layout-active > .body { flex: none; }
+  .editing-layout-active .content { overflow-y: visible; }
+  .editing-sidebar { width: auto; flex: none; order: -1; border-left: 0; border-bottom: 1px solid var(--border); }
+}
+
 .content {
   flex: 1;
   overflow-y: auto;

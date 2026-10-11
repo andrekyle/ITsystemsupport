@@ -7,6 +7,7 @@ import { SignIn } from "./components/SignIn";
 import { CloudAuth, ResetPassword } from "./components/CloudAuth";
 import { Header } from "./components/Header";
 import { Sidebar } from "./components/Sidebar";
+import { EditingProvider } from "./components/EditingSidebar";
 import { Dashboard, ProgressPage } from "./pages/Dashboard";
 import { CoursePage, ModulePage, UnitPage } from "./pages/Course";
 import { AssessmentsPage, CalendarPage, DeliverablesPage, ResourcesPage } from "./pages/InfoPages";
@@ -133,6 +134,7 @@ function Shell({
         onOpenUnit={(us) => navigate({ page: "unit", unitId: us })}
         navigate={navigate}
       />
+      <EditingProvider>
       <div className="body">
         <Sidebar
           collapsed={collapsed}
@@ -215,6 +217,7 @@ function Shell({
           </div>
         </main>
       </div>
+      </EditingProvider>
       {profile.role === "Super User" && route.page !== "reports" && (
         <button
           type="button"

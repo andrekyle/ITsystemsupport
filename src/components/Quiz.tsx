@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { InlineText } from "./InlineText";
 import { Icon } from "../icons";
 import type { QuizQuestion, QuizResult } from "../types";
+import { EditingTools } from "./EditingSidebar";
 
 /** A stable pseudo-random shuffle so re-renders don't move items around. */
 export function seededShuffle<T>(arr: T[], seed: number): T[] {
@@ -229,8 +230,15 @@ export function Quiz({
     };
     return <div className="quiz">{questions.map((q, qi) => <div className="quiz-q" key={qi}>
       <div className="qt"><span className="qn">{qi + 1}</span><InlineText value={q.q} editable multiline placeholder="Question" onSave={v => change(qi, q => { q.q = v; })} /></div>
+      <EditingTools active title={`Quiz question ${qi + 1}`}>
+        <p className="muted">Edit question text on the page.</p>
+        {(!q.kind || q.kind === "choice") && q.options.map((_, oi) => <label className="unit-editor-check" key={oi}>
+          <input type={q.answers ? "checkbox" : "radio"} name={`answer-${qi}`} aria-label={`Correct answer ${oi + 1}`} checked={(q.answers ?? [q.answer]).includes(oi)} onChange={e => change(qi, q => { if (q.answers) q.answers = e.target.checked ? [...q.answers, oi] : q.answers.filter(i => i !== oi); else q.answer = oi; })} />
+          Correct answer: option {oi + 1}
+        </label>)}
+      </EditingTools>
       {(!q.kind || q.kind === "choice") && q.options.map((option, oi) => <div className="opt" key={oi}>
-        <input type={q.answers ? "checkbox" : "radio"} name={`answer-${qi}`} aria-label={`Correct answer ${oi + 1}`} checked={(q.answers ?? [q.answer]).includes(oi)} onChange={e => change(qi, q => { if (q.answers) q.answers = e.target.checked ? [...q.answers, oi] : q.answers.filter(i => i !== oi); else q.answer = oi; })} />
+        <span>{oi + 1}.</span>
         <InlineText value={option} editable multiline placeholder={`Option ${oi + 1}`} onSave={v => change(qi, q => { q.options[oi] = v; })} />
       </div>)}
       {q.kind === "order" && q.items?.map((item, i) => <div className="opt" key={i}>{i + 1}. <InlineText value={item} editable placeholder="Item in correct order" onSave={v => change(qi, q => { q.items![i] = v; })} /></div>)}

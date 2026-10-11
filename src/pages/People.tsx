@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import JSZip from "jszip";
 import { Icon } from "../icons";
+import { EditingTools } from "../components/EditingSidebar";
 import type { EnrolmentInfo, PoeDoc, Profile, ProgressState, Role, Route } from "../types";
 import { Select } from "../components/Select";
 import { isStaff } from "../types";
@@ -253,10 +254,11 @@ export function ProfilePage({
       </h2>
 
       {editing ? (
-        <form className="card profile-enrol-card" onSubmit={save}>
+        <form id="profile-enrol-edit" className="card profile-enrol-card" onSubmit={save}>
           <EnrolmentForm value={draft} onChange={setDraft} />
+          <EditingTools active={editing} title="Enrolment details">
           <div className="profile-edit-actions">
-            <button className="btn" type="submit">
+            <button className="btn" type="submit" form="profile-enrol-edit">
               <Icon name="checkCircle" size={15} />
               Save
             </button>
@@ -271,6 +273,7 @@ export function ProfilePage({
               Cancel
             </button>
           </div>
+          </EditingTools>
         </form>
       ) : profile.enrolment ? (
         <EnrolmentDetails enrolment={profile.enrolment} />
@@ -2595,10 +2598,11 @@ function StudentDetail({
         )}
       </h2>
       {editingEnrol ? (
-        <form className="card profile-enrol-card" onSubmit={saveEnrol}>
+        <form id="student-enrol-edit" className="card profile-enrol-card" onSubmit={saveEnrol}>
           <EnrolmentForm value={draft} onChange={setDraft} />
+          <EditingTools active={editingEnrol} title="Student enrolment">
           <div className="profile-edit-actions">
-            <button className="btn" type="submit">
+            <button className="btn" type="submit" form="student-enrol-edit">
               <Icon name="checkCircle" size={15} />
               Save
             </button>
@@ -2606,6 +2610,7 @@ function StudentDetail({
               Cancel
             </button>
           </div>
+          </EditingTools>
         </form>
       ) : student.enrolment ? (
         <EnrolmentDetails enrolment={student.enrolment} redact={!staffViewer} />

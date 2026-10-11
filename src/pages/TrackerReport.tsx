@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
+import { EditingTools } from "../components/EditingSidebar";
 import type { Profile } from "../types";
 import { supabase } from "../lib/supabase";
 import { FILES_BUCKET } from "../lib/files";
@@ -25,8 +26,50 @@ export function TrackerReportPage({ profile }: { profile: Profile }) {
   const [note, setNote] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const currentUrl = useRef<string | null>(null);
+  const disconnectEditor = useRef<(() => void) | null>(null);
+  const [editingReport, setEditingReport] = useState(false);
+  const [reportTools, setReportTools] = useState<{ label: string; button: HTMLButtonElement; structure: boolean }[]>([]);
+  const [fillTool, setFillTool] = useState<HTMLInputElement | null>(null);
+
+  function connectEditor(frame: HTMLIFrameElement) {
+    disconnectEditor.current?.();
+    const doc = frame.contentDocument;
+    const toolbar = doc?.querySelector<HTMLElement>(".edit-toolbar");
+    if (!doc || !toolbar) return;
+    const Sheet = doc.defaultView?.CSSStyleSheet;
+    if (!Sheet) {
+      setNote("This browser cannot move report tools into the editing sidebar. Use a current browser.");
+      return;
+    }
+    // Keep sidebar presentation out of the report's exported HTML.
+    const toolStyle = new Sheet();
+    toolStyle.replaceSync('body.editing .edit-toolbar, body[contenteditable="true"] .edit-toolbar { display: none !important; }');
+    doc.adoptedStyleSheets = [...doc.adoptedStyleSheets, toolStyle];
+    const update = () => {
+      const active = doc.body.classList.contains("editing") || doc.body.contentEditable === "true";
+      setEditingReport(active);
+      setReportTools(Array.from(toolbar.querySelectorAll<HTMLButtonElement>("button")).map(button => ({
+        label: button.textContent?.trim() || button.title || "Report tool",
+        button,
+        structure: !!button.closest(".tracker-column-controls"),
+      })));
+      setFillTool(toolbar.querySelector<HTMLInputElement>('input[type="color"]'));
+    };
+    const observer = new MutationObserver(update);
+    observer.observe(doc.body, { attributes: true, attributeFilter: ["class", "contenteditable"] });
+    update();
+    disconnectEditor.current = () => {
+      observer.disconnect();
+      doc.adoptedStyleSheets = doc.adoptedStyleSheets.filter(sheet => sheet !== toolStyle);
+    };
+  }
 
   function setBlobUrl(u: string | null) {
+    disconnectEditor.current?.();
+    disconnectEditor.current = null;
+    setEditingReport(false);
+    setReportTools([]);
+    setFillTool(null);
     if (currentUrl.current) URL.revokeObjectURL(currentUrl.current);
     currentUrl.current = u;
     setUrl(u);
@@ -56,6 +99,7 @@ export function TrackerReportPage({ profile }: { profile: Profile }) {
   useEffect(() => {
     void refresh();
     return () => {
+      disconnectEditor.current?.();
       if (currentUrl.current) URL.revokeObjectURL(currentUrl.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -141,9 +185,32 @@ export function TrackerReportPage({ profile }: { profile: Profile }) {
 
       {status === "ready" && url && (
         <div className="card report-frame-card">
-          <iframe className="report-frame" src={url} title="Learner Tracker Report" />
+          {note && <p role="alert">{note}</p>}
+          <iframe className="report-frame" src={url} title="Learner Tracker Report"
+            onLoad={event => connectEditor(event.currentTarget)} />
         </div>
       )}
+      <EditingTools active={status === "ready" && editingReport} title="Report changes">
+        {reportTools.filter(tool => !tool.structure).map((tool, index) => (
+          <button key={index} type="button" className="btn ghost sm"
+            disabled={tool.button.disabled}
+            onClick={() => tool.button.click()}>{tool.label}</button>
+        ))}
+      </EditingTools>
+      <EditingTools active={status === "ready" && editingReport} title="Spreadsheet tools">
+        {reportTools.filter(tool => tool.structure).map((tool, index) => (
+          <button key={index} type="button" className="btn ghost sm"
+            disabled={tool.button.disabled}
+            onClick={() => tool.button.click()}>{tool.label}</button>
+        ))}
+        {fillTool && <label>Cell fill
+          <input type="color" defaultValue={fillTool.value} onChange={event => {
+            fillTool.value = event.target.value;
+            const FrameEvent = fillTool.ownerDocument.defaultView?.Event;
+            if (FrameEvent) fillTool.dispatchEvent(new FrameEvent("input", { bubbles: true }));
+          }} />
+        </label>}
+      </EditingTools>
     </>
   );
 }

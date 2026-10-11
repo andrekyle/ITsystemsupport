@@ -7,6 +7,7 @@ import { validateFormAnswers, readAnnotations, writeAnnotations, type FormAnswer
 import { FormBuilder } from "./FormBuilder";
 import { PaperForm } from "./PaperForm";
 import { ConfirmModal, Modal } from "./Modal";
+import { EditingTools } from "./EditingSidebar";
 import "./form-builder.css";
 
 export function FormLibrary({ profile, children }: { profile: Profile; children: ReactNode }) {
@@ -146,19 +147,20 @@ function SavedFormView({ template, profile, onClose }: { template: SavedForm; pr
     finally { setSaving(false); }
   };
 
-  return (
-    <>
-      <div className="fb-toolbar no-print">
+  const tools = <div className="fb-toolbar no-print">
         <button type="button" className="btn ghost" disabled={saving} onClick={() => dirty ? setConfirmLeave(true) : onClose()}><Icon name="chevronLeft" size={16} /> Forms</button>
         <button type="button" className="btn primary" disabled={loading || saving || !!loadError} onClick={() => void save()}><Icon name="check" size={16} /> {saving ? "Saving..." : "Save answers"}</button>
         <button type="button" className="btn ghost" disabled={loading || saving || !!loadError} onClick={async () => { if (await save()) window.print(); }}><Icon name="download" size={16} /> Print / PDF</button>
         {dirty ? <span className="fb-response-saved" role="status">Unsaved changes</span> : savedAt && <span className="fb-response-saved" role="status">Saved {new Date(savedAt).toLocaleString()}</span>}
-      </div>
+      {error && <p role="alert" className="auth-error">{error}</p>}
+      </div>;
+  return (
+    <>
+      {dirty || saving ? <EditingTools active title={`${template.title} answers`}>{tools}</EditingTools> : tools}
       {loading && <p role="status">Loading saved answers...</p>}
       {loadError && <div className="fb-message"><p className="auth-error" role="alert">{loadError}</p><button type="button" className="btn" onClick={() => setRevision(value => value + 1)}>Retry</button></div>}
-      {error && <p role="alert" className="auth-error">{error}</p>}
       <fieldset className="fb-response-controls" disabled={loading || saving || !!loadError}>
-        <PaperForm definition={template.definition} answers={answers} errors={fieldErrors} annotations={readAnnotations(answers)} onAnnotationsChange={list => { setAnswers(current => writeAnnotations(current, list)); setDirty(true); }} onChange={(fieldId, value) => {
+        <PaperForm definition={template.definition} answers={answers} disabled={loading || saving || !!loadError} errors={fieldErrors} annotations={readAnnotations(answers)} onAnnotationsChange={list => { setAnswers(current => writeAnnotations(current, list)); setDirty(true); }} onChange={(fieldId, value) => {
           setAnswers(current => ({ ...current, [fieldId]: value }));
           setDirty(true);
           setFieldErrors(current => { const next = { ...current }; delete next[fieldId]; return next; });

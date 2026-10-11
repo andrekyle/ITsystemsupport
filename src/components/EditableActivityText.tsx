@@ -1,6 +1,7 @@
 import { useId, useState, type ReactNode } from "react";
 import { Icon } from "../icons";
 import { InlineText } from "./InlineText";
+import { EditingTools } from "./EditingSidebar";
 
 export function EditableActivityText({
   text,
@@ -61,6 +62,7 @@ export function EditableActivityText({
             }}
           />
         </div>
+        <EditingTools active title={label}>
         {error && <p className="auth-error" role="alert">{error}</p>}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, paddingRight: 48 }}>
           <button type="button" className="btn primary" style={{ minHeight: 44 }} onClick={save} disabled={!draft.trim()}>
@@ -73,6 +75,7 @@ export function EditableActivityText({
             <Icon name="refresh" size={16} /> Restore original
           </button>
         </div>
+        </EditingTools>
       </div>
     );
   }

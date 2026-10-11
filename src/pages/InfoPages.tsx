@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Icon } from "../icons";
+import { EditingTools } from "../components/EditingSidebar";
 import type { Profile, ProgressState, Route } from "../types";
 import { isStaff } from "../types";
 import { Gloss } from "./Course";
@@ -418,28 +419,35 @@ export function CalendarPage({
             <Icon name="pencil" size={15} /> Edit calendar
           </button>
         )}
-        {canEdit && (
+        {canEdit && !editing && (
           <button className="btn ghost sm" onClick={addModule} disabled={saveState === "saving"}>
             <Icon name="plus" size={15} /> Add module
           </button>
         )}
-        {editing && (
-          <>
+      </p>
+      <EditingTools active={editing} title="Calendar changes">
+        <div className="cal-toolbar">
             <button className="btn primary sm" onClick={saveEdits} disabled={saveState === "saving"}>
               <Icon name="check" size={15} /> {saveState === "saving" ? "Saving…" : "Save changes"}
             </button>
             <button className="btn ghost sm" onClick={() => setEditing(false)} disabled={saveState === "saving"}>
               <Icon name="close" size={15} /> Cancel
             </button>
-          </>
-        )}
+        </div>
+        {saveState === "error" && <p role="alert" className="cal-save-note err">Save failed: {saveError}</p>}
+      </EditingTools>
+      <EditingTools active={editing} title="Structure">
+        <button className="btn ghost sm" onClick={addModule} disabled={saveState === "saving"}>
+          <Icon name="plus" size={15} /> Add module
+        </button>
+        <p className="muted">Select a module or Milestones tab to edit its rows on the page.</p>
+      </EditingTools>
         {saveState === "saved" && !editing && (
           <span className="cal-save-note ok">
             <Icon name="checkCircle" size={15} /> Calendar saved
           </span>
         )}
-        {saveState === "error" && <span className="cal-save-note err">Save failed: {saveError}</span>}
-      </p>
+        {saveState === "error" && !editing && <p role="alert" className="cal-save-note err">Save failed: {saveError}</p>}
 
       <div className="tabs calendar-tabs" role="tablist" aria-label="Training calendar sections">
         {calendarTabs.map((tab, index) => (
@@ -622,11 +630,11 @@ export function CalendarPage({
             </tbody>
           </table>
           {editing && (
-            <p className="cal-add-row">
+            <EditingTools active={activeTab === m.id} title={`Module ${i + 1} rows`}>
               <button className="btn ghost sm" onClick={() => addUnitRow(i)} title="Add a new unit standard row to this module">
                 <Icon name="plus" size={15} /> Add row
               </button>
-            </p>
+            </EditingTools>
           )}
         </section>
       ))}
@@ -731,11 +739,11 @@ export function CalendarPage({
         </tbody>
       </table>
       {editing && (
-        <p className="cal-add-row">
+        <EditingTools active={activeTab === "milestones"} title="Milestone rows">
           <button className="btn ghost sm" onClick={addMilestoneRow} title="Add a new milestone row">
             <Icon name="plus" size={15} /> Add row
           </button>
-        </p>
+        </EditingTools>
       )}
       </section>
     </section>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
+import { EditingTools } from "../components/EditingSidebar";
 import type { Profile, Route } from "../types";
 import { isStaff } from "../types";
 import { MODULES } from "../data/course";
@@ -112,14 +113,14 @@ function EngagementLinks({
               : "Your facilitator has not published collaboration links yet."}
           </span>
         )}
-        {isSuper && (
+        {isSuper && !editing && (
           <button className="btn ghost sm" onClick={() => setEditing((e) => !e)}>
             <Icon name="settings" size={15} /> {editing ? "Close" : "Configure"}
           </button>
         )}
       </div>
 
-      {isSuper && editing && (
+      <EditingTools active={isSuper && editing} title="Collaboration settings">
         <div className="engage-config">
           <div className="field">
             <label>Wayground (Quizizz) space URL</label>
@@ -151,8 +152,9 @@ function EngagementLinks({
           >
             <Icon name="checkCircle" size={15} /> Save
           </button>
+          <button type="button" className="btn ghost sm" onClick={() => setEditing(false)}>Cancel</button>
         </div>
-      )}
+      </EditingTools>
     </div>
   );
 }
@@ -523,6 +525,7 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
                   </select>
                 </span>
               </div>
+              <EditingTools active={editingId === t.id} title="Question changes">
               <div style={{ display: "flex", gap: 8 }}>
                 <button className="btn sm" onClick={() => submitEdit(t.id)} disabled={!editTitle.trim()}>
                   <Icon name="checkCircle" size={15} /> Save changes
@@ -531,6 +534,7 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
                   Cancel
                 </button>
               </div>
+              </EditingTools>
             </div>
           ) : (
             t.body && <p className="announce-body">{t.body}</p>
@@ -572,6 +576,7 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
                         }
                       }}
                     />
+                    <EditingTools active={isEditingThis} title={`Reply by ${r.by}`}>
                     <button
                       className="btn sm"
                       onClick={() => submitReplyEdit(t.id, r.id)}
@@ -588,6 +593,7 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
                     >
                       Cancel
                     </button>
+                    </EditingTools>
                   </div>
                 ) : (
                   <span>{r.body}</span>

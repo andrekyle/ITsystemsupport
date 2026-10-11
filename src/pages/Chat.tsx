@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, Fragment } from "react";
 import { Icon } from "../icons";
+import { EditingTools } from "../components/EditingSidebar";
 import type { Profile, Route } from "../types";
 import { isStaff } from "../types";
 import {
@@ -1010,6 +1011,7 @@ function ChatBubble({
                 }
               }}
             />
+            <EditingTools active={editing} title={`Message by ${msg.by}`}>
             <div className="chat-bubble-edit-actions">
               <button
                 type="button"
@@ -1028,6 +1030,7 @@ function ChatBubble({
                 <Icon name="checkCircle" size={14} /> {saving ? "Saving…" : "Save"}
               </button>
             </div>
+            </EditingTools>
             {msg.broadcastId && (
               <div className="mini-note" style={{ marginTop: 4 }}>
                 Broadcast message — saving updates every learner's copy.
