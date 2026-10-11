@@ -3503,7 +3503,7 @@ export function UnitPage({
                 aria-label={`${a}: ${done ? "complete, mark incomplete" : "not complete, mark complete"}`}
               >
                 <span className="activity-step-number" aria-hidden="true">
-                  {done ? <Icon name="check" size={20} /> : index + 1}
+                  <Icon name={done ? "checkCircle" : "circle"} size={20} />
                 </span>
                 <span className="activity-step-content">
                   <span className="activity-step-kicker">Step {index + 1}</span>

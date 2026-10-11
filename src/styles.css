@@ -2113,11 +2113,8 @@ td .with-ico .ico {
   justify-content: center;
   width: 28px;
   height: 28px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
   color: var(--ink-2);
-  background: var(--surface-2);
-  font-weight: 600;
+  background: transparent;
 }
 .activity-step-content { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 6px; }
 .activity-step-kicker { color: var(--ink-3); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
@@ -2125,7 +2122,6 @@ td .with-ico .ico {
 .activity-step-description { color: var(--ink-2); font-size: 13px; line-height: 1.6; }
 .activity-step-status { grid-column: 2; font-size: 11px; color: var(--ink-3); }
 .activity-step.is-next .activity-step-status { color: var(--ink); font-weight: 600; }
-.activity-step.is-complete .activity-step-number { background: var(--ink-2); border-color: var(--ink-2); color: var(--surface); }
 .activity-checklist-hint { margin: 0 0 22px; color: var(--ink-3); font-size: 12px; }
 @media (max-width: 640px) {
   .activity-steps { grid-template-columns: minmax(0, 1fr); }
