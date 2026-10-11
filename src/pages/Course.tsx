@@ -3436,6 +3436,14 @@ export function UnitPage({
         <span>{usLabel(u.us)}</span>
       </div>
 
+      <div className={`unit-header-area${tab === "lesson" && isPrivileged ? " has-slide-edit" : ""}`}>
+      {tab === "lesson" && isPrivileged && (
+        <button type="button" className="btn ghost sm lesson-header-edit"
+          aria-expanded={slideEditOpen} aria-controls="lesson-slide-edit-tools"
+          onClick={() => setSlideEditOpen(open => !open)}>
+          <Icon name="pencil" size={15} /> Edit slide <Icon name="chevronDown" size={14} />
+        </button>
+      )}
       <details className="unit-page-dropdown" key={`unit-header-${unitId}-${tab}`}
         open={tab !== "lesson" || unitHeaderOpen}
         onToggle={event => {
@@ -3496,6 +3504,7 @@ export function UnitPage({
           ))}
       </div>
       </details>
+      </div>
 
       {tab === "overview" && (
         <section className="unit-activity-checklist">
@@ -4823,10 +4832,8 @@ export function UnitPage({
                     </button>
                   </span>
                   {isPrivileged && (
-                    <details className="lesson-edit-menu" open={slideEditOpen} onToggle={event => setSlideEditOpen(event.currentTarget.open)}>
-                      <summary><Icon name="pencil" size={15} /> Edit slide <Icon name="chevronDown" size={14} /></summary>
                       <EditingTools active={slideEditOpen || editable} title={`Slide ${si + 1}: actions and settings`}>
-                      <div className="lesson-edit-menu-body">
+                      <div className="lesson-edit-menu-body" id="lesson-slide-edit-tools">
                         <button type="button" className="btn ghost sm" disabled={savingLesson || !!inlineUnit} onClick={() => { setSlideEditOpen(false); setEditMode(false); }}>
                           {editable ? "Done editing slide" : "Close slide tools"}
                         </button>
@@ -4933,7 +4940,6 @@ export function UnitPage({
                       {isSuperUser && quizGenerationError && <p className="auth-error" role="alert">{quizGenerationError}</p>}
                       {isSuperUser && lessonSplitError && <p className="auth-error" role="alert">{lessonSplitError}</p>}
                       </EditingTools>
-                    </details>
                   )}
                 </div>
                 {isSuperUser && !slideEditOpen && !editable && lessonSaveStatus === "saved" && <p role="status">Saved to cloud.</p>}

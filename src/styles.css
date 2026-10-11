@@ -2021,6 +2021,9 @@ td .with-ico .ico {
 .profile-image-upload p { margin: 0; font-size: 12px; color: var(--ink-3); }
 
 .unit-page-dropdown { margin-bottom: 12px; }
+.unit-header-area { position: relative; }
+.lesson-header-edit { position: absolute; right: 0; top: 0; z-index: 1; }
+.unit-header-area.has-slide-edit > .unit-page-dropdown > summary { padding-right: 140px; min-height: 36px; }
 .unit-page-dropdown > summary {
   display: flex;
   align-items: center;
