@@ -860,10 +860,10 @@ a:hover {
   color: var(--azure);
 }
 
-/* Light mode navigation: Oxford blue with clean, high-contrast controls. */
+/* Light mode navigation: charcoal with clean, high-contrast controls. */
 [data-theme="light"] .sidebar {
-  border-right-color: #17395d;
-  background: #002147;
+  border-right-color: #383838;
+  background: #252525;
   color: #fff;
 }
 [data-theme="light"] .sidebar .side-item,
@@ -10714,6 +10714,11 @@ table.data.outcome-table th {
 }
 
 /* module unit tables: lesson-sized text */
+table.data.training-table .text-link,
+table.data.training-table .text-link:hover {
+  color: var(--ink);
+}
+
 table.data.training-table {
   font-size: 17px;
 }
