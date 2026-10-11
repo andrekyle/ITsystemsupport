@@ -2022,7 +2022,22 @@ td .with-ico .ico {
 
 .unit-page-dropdown { margin-bottom: 12px; }
 .unit-header-area { position: relative; }
-.lesson-header-edit { position: absolute; right: 0; top: 0; z-index: 1; }
+.btn.solid.sm.lesson-header-edit {
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 1;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+.btn.solid.sm.lesson-header-edit:hover:not(:disabled) { filter: none; }
+[data-theme="light"] .btn.solid.sm.lesson-header-edit {
+  background: #f7f3f0;
+  border-color: #f7f3f0;
+  color: var(--ink);
+}
 .unit-header-area.has-slide-edit > .unit-page-dropdown > summary { padding-right: 140px; min-height: 36px; }
 .unit-page-dropdown > summary {
   display: flex;
