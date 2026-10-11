@@ -30,7 +30,6 @@ export function Dashboard({
   const dashboardTabs = [
     { id: "overview", label: "Overview" },
     { id: "learning", label: "Learning progress" },
-    { id: "achievements", label: "Achievements" },
     ...(profile.role === "Super User" ? [{ id: "ai", label: "AI usage" }] : []),
   ];
   const { docs: poeDocs } = usePoe(profile.id);
@@ -155,7 +154,7 @@ export function Dashboard({
         </section>
       )}
 
-      <section role="tabpanel" id="dashboard-panel-achievements" aria-labelledby="dashboard-tab-achievements" hidden={dashboardTab !== "achievements"}>
+      <section aria-label="Achievements">
       <div className="card xp-card">
         <div className="xp-head">
           <span className="xp-level">

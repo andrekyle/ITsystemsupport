@@ -2201,6 +2201,7 @@ export function ModulePage({
         <Bar value={c} green={c === 1} />
       </div>
 
+      <div className="module-unit-grid">
       {mod.units.map((u, ui) => {
         const st = unitStatus(progress, u.us);
         const uc = unitCompletion(progress, u.us);
@@ -2209,7 +2210,7 @@ export function ModulePage({
         return (
           <div
             key={u.us}
-            className={`unit-row${locked ? " locked" : ""}`}
+            className={`unit-row module-unit-card${locked ? " locked" : ""}`}
             role={inline.editing ? undefined : "button"}
             tabIndex={locked || inline.editing ? undefined : 0}
             onKeyDown={e => { if (!locked && !inline.editing && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); navigate({ page: "unit", moduleId: mod.id, unitId: u.us }); } }}
@@ -2224,8 +2225,9 @@ export function ModulePage({
               />
             </span>
             <span className="main">
+              <span className="module-unit-code">{usLabel(u.us)}</span>
               <span className="t">
-                {usLabel(u.us)} — {inline.text(u.title, (d, v) => { d.modules[idx].units[ui].title = v; }, "title")}
+                {inline.text(u.title, (d, v) => { d.modules[idx].units[ui].title = v; }, "title")}
               </span>
               <span className="m">
                 <span>
@@ -2260,6 +2262,7 @@ export function ModulePage({
           </div>
         );
       })}
+      </div>
     </>
   );
 }
