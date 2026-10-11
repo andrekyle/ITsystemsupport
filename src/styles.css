@@ -2252,8 +2252,10 @@ td .with-ico .ico {
   border-top: 0;
   padding-top: 0;
 }
-.lesson-stepper .lesson-progress { height: 3px; margin: 0 12px; }
-.lesson-stepper .lesson-progress > span { background: var(--ink-3); }
+.lesson-section-ring { display: inline-flex; flex-shrink: 0; }
+.lesson-section-ring .ring .val { stroke: #409cf0; }
+.lesson-section-ring .ring .track { stroke: #e8e8e8; }
+[data-theme="dark"] .lesson-section-ring .ring .track { stroke: #303030; }
 
 .unit-activity-checklist { max-width: 1000px; }
 .activity-progress { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 16px 0; padding: 14px 16px; box-shadow: none; }
@@ -7306,12 +7308,12 @@ a.plan-ppt:hover {
   content: "";
   width: 4px;
   height: 8px;
-  border: solid color-mix(in srgb, var(--azure) 78%, white);
+  border: solid var(--ink);
   border-width: 0 1.25px 1.25px 0;
   transform: translateY(-1px) rotate(45deg) scale(0);
 }
 .checklist-table input[type="checkbox"]:checked {
-  border-color: color-mix(in srgb, var(--azure) 62%, transparent);
+  border-color: var(--ink-3);
   background: transparent;
 }
 .checklist-table input[type="checkbox"]:checked::before {

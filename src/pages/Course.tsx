@@ -4855,6 +4855,12 @@ export function UnitPage({
                   }
                 }} />}
                 <div className="lesson-stepper-top">
+                  <span className="lesson-section-ring" role="progressbar"
+                    aria-label="Lesson section progress" aria-valuemin={0} aria-valuemax={100}
+                    aria-valuenow={Math.round(((si + 1) / total) * 100)}
+                    aria-valuetext={`Section ${si + 1} of ${total}`}>
+                    <Ring value={(si + 1) / total} size={phone ? 64 : 84} stroke={phone ? 5 : 7} showLabel />
+                  </span>
                   <span className="lesson-step-count">
                     {(() => {
                       // which numbered lesson does this section belong to?
@@ -5014,15 +5020,6 @@ export function UnitPage({
                   )}
                 </div>
                 {isSuperUser && !slideEditOpen && !editable && lessonSaveStatus === "error" && <p className="auth-error lesson-toolbar-error" role="alert">{lessonSaveError}</p>}
-                <div
-                  className="lesson-progress"
-                  role="progressbar"
-                  aria-valuemin={0}
-                  aria-valuemax={total}
-                  aria-valuenow={si + 1}
-                >
-                  <span style={{ width: `${((si + 1) / total) * 100}%` }} />
-                </div>
               </div>
             );
             const nav = (
