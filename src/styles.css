@@ -802,7 +802,7 @@ a:hover {
 }
 
 .sidebar .side-item {
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .sidebar .side-item .ico svg {
@@ -1055,14 +1055,8 @@ a.pill:hover {
 
 .card.clickable {
   cursor: pointer;
-  transition: border-color 0.12s, box-shadow 0.12s;
   text-align: left;
   width: 100%;
-}
-
-.card.clickable:hover {
-  border-color: color-mix(in srgb, var(--azure) 32%, var(--border));
-  box-shadow: 0 8px 22px rgba(75, 55, 42, 0.1);
 }
 
 .stat-card {
