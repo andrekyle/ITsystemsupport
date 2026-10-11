@@ -52,7 +52,6 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
     { page: "dashboard" as const, icon: "dashboard", label: "Dashboard" },
     { page: "course" as const, icon: "book", label: "My Course" },
     { page: "progress" as const, icon: "trend", label: "Progress" },
-    { page: "howto" as const, icon: "target", label: "Reach 100%" },
     { page: "community" as const, icon: "people", label: "Community & Support" },
     { page: "chat" as const, icon: "message", label: "Chat" },
     { page: "memories" as const, icon: "image", label: "Gallery" },

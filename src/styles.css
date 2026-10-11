@@ -2103,7 +2103,7 @@ td .with-ico .ico {
 .module-unit-card .main { min-width: 0; }
 .module-unit-grid .module-unit-card.has-photo {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) 17px;
+  grid-template-columns: 56px minmax(0, 1fr) 17px;
   grid-template-rows: auto 1fr;
   gap: 12px;
   padding: 18px;
@@ -2142,8 +2142,10 @@ td .with-ico .ico {
 .module-unit-grid .module-unit-card.has-photo .t { font-size: 16px; font-weight: 600; line-height: 1.45; margin-bottom: 18px; }
 .module-unit-grid .module-unit-card.has-photo .m { margin-top: auto; }
 .module-unit-card > .status, .module-unit-card > .chev { margin-top: 2px; }
-.module-unit-card > .status { display: inline-flex; align-items: center; justify-content: center; width: 32px; }
-.module-unit-card .status .ring .val { stroke: #8054c7; }
+.module-unit-card > .status { display: inline-flex; align-items: center; justify-content: center; width: 56px; }
+.module-unit-card .status .ring .val { stroke: #409cf0; }
+.module-unit-card .status .ring .track { stroke: #e8e8e8; }
+[data-theme="dark"] .module-unit-card .status .ring .track { stroke: #303030; }
 @media (max-width: 1100px) {
   .module-unit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -13620,176 +13622,6 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 
 /* floating AI assistant — end */
-
-/* ============ How to reach 100% (learner guide) ============ */
-
-h2.section-title.howto-heading {
-  font-size: 27px;
-  font-weight: 650;
-}
-
-.content-inner:has(> .howto-page) {
-  max-width: none;
-  min-height: 100%;
-  padding: 0;
-}
-
-.howto-page {
-  position: relative;
-  isolation: isolate;
-  box-sizing: border-box;
-  min-height: 100%;
-  padding: 28px 40px 64px;
-  background: var(--surface-2);
-}
-
-.howto-layout { margin-top: 32px; }
-.howto-results-heading { margin: 0 0 16px; font-size: 18px; font-weight: 600; }
-.howto-results { min-width: 0; }
-.howto-results > .muted { margin: 0 0 24px; font-size: 14px; }
-
-.howto-intro {
-  margin: -6px 0 16px;
-  font-size: 17px;
-  max-width: 800px;
-}
-
-/* the four unit stages, flat inline strip */
-.howto-stages {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  margin: 0 0 8px;
-}
-
-.howto-stage {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--azure);
-}
-
-.howto-stage-arrow {
-  color: var(--ink-3);
-  font-size: 15px;
-}
-
-/* Compact filled step markers keep the instructions easy to scan. */
-.howto-list {
-  list-style: none;
-  margin: 0 0 26px;
-  padding: 0;
-  width: 100%;
-}
-
-.howto-row {
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
-  gap: 0 18px;
-  padding: 24px;
-  align-items: start;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  margin-bottom: 14px;
-  scroll-margin-top: 24px;
-}
-
-.howto-bignum {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  color: var(--azure);
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.howto-row-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--azure);
-  margin-bottom: 8px;
-}
-
-.howto-row-ico {
-  display: inline-flex;
-  color: var(--azure);
-  flex-shrink: 0;
-}
-
-.howto-row-text {
-  margin: 0 0 10px;
-  font-size: 15px;
-  line-height: 1.65;
-  color: var(--ink-2);
-  max-width: 780px;
-}
-
-.howto-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 0;
-  background: none;
-  padding: 0;
-  font-family: inherit;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--azure);
-  cursor: pointer;
-}
-
-.howto-link svg {
-  transition: transform 0.12s;
-}
-
-.howto-link:hover svg {
-  transform: translateX(3px);
-}
-
-.howto-callout {
-  max-width: 900px;
-  font-size: 16.5px;
-}
-
-[data-theme="dark"] .howto-page {
-  --azure: #c5c5c5;
-  background: #303030;
-}
-
-[data-theme="dark"] .howto-row,
-[data-theme="dark"] .howto-callout {
-  background: #363636;
-  border-color: #484848;
-}
-
-@media (max-width: 640px) {
-  .howto-page {
-    padding: 16px 10px 56px;
-  }
-
-  .howto-row {
-    grid-template-columns: 40px minmax(0, 1fr);
-    gap: 0 12px;
-    padding: 18px 14px;
-  }
-
-  .howto-row-body {
-    min-width: 0;
-  }
-}
 
 /* ============ Mobile content polish (kept last so it wins the cascade) ============ */
 

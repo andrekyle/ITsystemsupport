@@ -24,7 +24,6 @@ import { ChatPage } from "./pages/Chat";
 import { FormsPage } from "./pages/Forms";
 import { TrackerReportPage } from "./pages/TrackerReport";
 import { ReportsPage } from "./pages/Reports";
-import { HowToPage } from "./pages/HowTo";
 import { VotingPage } from "./pages/Voting";
 import { OnboardingPage } from "./pages/Onboarding";
 import { cloudEnabled, supabase } from "./lib/supabase";
@@ -63,7 +62,6 @@ const VALID_PAGES = new Set([
   "forms",
   "trackerReport",
   "reports",
-  "howto",
   "onboarding",
 ]);
 
@@ -209,7 +207,6 @@ function Shell({
             {route.page === "reports" && profile.role === "Super User" && (
               <ReportsPage profile={profile} />
             )}
-            {route.page === "howto" && <HowToPage navigate={navigate} />}
             {route.page === "onboarding" && (
               <OnboardingPage profile={profile} route={route} navigate={navigate} />
             )}

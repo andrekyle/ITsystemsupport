@@ -2254,7 +2254,7 @@ export function ModulePage({
               aria-label={locked ? "Locked" : st === "completed" ? "Completed" : st === "in-progress" ? `${Math.round(uc * 100)}% complete` : "Not started"}
             >
               {!locked && st === "in-progress" ? (
-                <Ring value={uc} size={32} stroke={3} showLabel />
+                <Ring value={uc} size={56} stroke={5} showLabel />
               ) : <Icon
                 name={locked ? "lock" : st === "completed" ? "checkCircle" : "circle"}
                 size={22}

@@ -658,7 +658,6 @@ export type PageId =
   | "forms"
   | "trackerReport"
   | "reports"
-  | "howto"
   | "onboarding"
   | "voting";
 
