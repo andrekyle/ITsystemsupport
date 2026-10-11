@@ -3563,6 +3563,10 @@ textarea:focus {
   margin-bottom: 20px;
 }
 
+.dashboard-achievements {
+  margin-top: 24px;
+}
+
 .tab {
   display: inline-flex;
   align-items: center;

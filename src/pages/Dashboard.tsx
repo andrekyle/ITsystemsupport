@@ -125,7 +125,7 @@ export function Dashboard({
         </div>
       </div>
 
-      <section aria-label="Achievements">
+      <section className="dashboard-achievements" aria-label="Achievements">
       <div className="card xp-card">
         <div className="xp-head">
           <span className="xp-level">
