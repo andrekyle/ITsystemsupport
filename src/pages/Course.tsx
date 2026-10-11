@@ -15,7 +15,7 @@ import { FIGURE_DEFAULTS as BASE_FIGURE_DEFAULTS } from "../data/figureDefaults"
 import { HWSW_SLIDE_FIGURES } from "../data/hwswSlideFigures";
 const FIGURE_DEFAULTS = { ...BASE_FIGURE_DEFAULTS, ...HWSW_SLIDE_FIGURES };
 import { flushProgress, moduleCompletion, unitCompletion, unitStatus, readCourseWideSlides, useDeckOverrides, useLessonEdits, useLessonFigures, useNotes, usePlanSlides, useSharedSettings, useWorkbookMemo } from "../store";
-import { Bar } from "../components/Ring";
+import { Bar, Ring } from "../components/Ring";
 import { Quiz, seededShuffle } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
 import { ConfirmModal } from "../components/Modal";
@@ -2154,6 +2154,14 @@ export function CoursePage({
   );
 }
 
+const UNIT_TILE_PHOTOS: Record<string, { src: string; alt: string; credit?: string }> = {
+  "114074": { src: "/figures/managed-switch.jpg", alt: "Network switches and connected Ethernet cables", credit: "managed-switch" },
+  "114046": { src: "/figures/patch-panel.jpg", alt: "Patch panel used to organise local area network connections", credit: "patch-panel" },
+  "114076": { src: "/admin-images/course.webp", alt: "Laptop, reference book and notebook for computer research" },
+  "114183": { src: "/figures/rack-server-1u.jpg", alt: "Open server showing components for systems troubleshooting", credit: "rack-server-1u" },
+  "114058": { src: "/figures/datacentre-aisle.jpg", alt: "Server infrastructure supporting shared multi-user systems", credit: "datacentre-aisle" },
+};
+
 export function ModulePage({
   moduleId,
   profile,
@@ -2221,15 +2229,26 @@ export function ModulePage({
         const uc = unitCompletion(progress, u.us);
         const locked = unitLocked(u, profile.role);
         const unlockAt = unitUnlockTime(u);
+        const photo = activeCourseId() === "itss" ? UNIT_TILE_PHOTOS[u.us] : undefined;
+        const credit = photo?.credit ? BASE_FIGURE_DEFAULTS[photo.credit] : undefined;
         return (
           <div
             key={u.us}
-            className={`unit-row module-unit-card${locked ? " locked" : ""}`}
+            className={`unit-row module-unit-card${photo ? " has-photo" : ""}${locked ? " locked" : ""}`}
             role={inline.editing ? undefined : "button"}
             tabIndex={locked || inline.editing ? undefined : 0}
             onKeyDown={e => { if (!locked && !inline.editing && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); navigate({ page: "unit", moduleId: mod.id, unitId: u.us }); } }}
             onClick={() => !locked && !inline.editing && navigate({ page: "unit", moduleId: mod.id, unitId: u.us })}
           >
+            {photo && <span className="module-unit-media">
+              <img className="module-unit-photo" src={photo.src} alt={photo.alt}
+                loading="lazy" decoding="async" />
+              {credit && <a className="module-unit-photo-credit" href={credit.sourceUrl}
+                target="_blank" rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
+                {credit.author} · {credit.license}
+              </a>}
+            </span>}
             <span
               className={`status ${st === "completed" ? "done" : st === "in-progress" ? "progress" : "none"}`}
             >
@@ -3522,9 +3541,9 @@ export function UnitPage({
               <strong>{completedActivities === UNIT_ACTIVITIES.length ? "All stages complete" : "Your learning journey"}</strong>
               <span>{completedActivities} of {UNIT_ACTIVITIES.length} stages complete</span>
             </div>
-            <div role="progressbar" aria-label="Learning activities completed"
+            <div className="activity-progress-ring" role="progressbar" aria-label="Learning activities completed"
               aria-valuemin={0} aria-valuemax={UNIT_ACTIVITIES.length} aria-valuenow={completedActivities}>
-              <Bar value={completedActivities / UNIT_ACTIVITIES.length} green={completedActivities === UNIT_ACTIVITIES.length} />
+              <Ring value={completedActivities / UNIT_ACTIVITIES.length} size={52} stroke={4} showLabel />
             </div>
           </div>
           <ol className="activity-steps">
