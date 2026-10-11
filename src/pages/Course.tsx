@@ -4839,7 +4839,7 @@ export function UnitPage({
                     </button>
                   )}
                   {isSuperUser && (
-                    <span className="lesson-edit-toolbar">
+                    <span className={`lesson-edit-toolbar${editMode ? " is-editing" : ""}`}>
                       <button
                         type="button"
                         className={`btn ghost sm save-cloud-action${editMode ? " active" : ""}`}
