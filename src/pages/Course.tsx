@@ -2155,10 +2155,10 @@ export function CoursePage({
 }
 
 const UNIT_TILE_PHOTOS: Record<string, { src: string; alt: string; credit?: string }> = {
-  "114074": { src: "/figures/managed-switch.jpg", alt: "Network switches and connected Ethernet cables", credit: "managed-switch" },
-  "114046": { src: "/figures/patch-panel.jpg", alt: "Patch panel used to organise local area network connections", credit: "patch-panel" },
-  "114076": { src: "/admin-images/course.webp", alt: "Laptop, reference book and notebook for computer research" },
-  "114183": { src: "/figures/rack-server-1u.jpg", alt: "Open server showing components for systems troubleshooting", credit: "rack-server-1u" },
+  "114074": { src: "/figures/unit-114074-banner.webp", alt: "Network architecture displayed beside a switch and server racks" },
+  "114046": { src: "/figures/unit-114046-banner.webp", alt: "Technician monitoring local area network health" },
+  "114076": { src: "/figures/unit-114076-banner.webp", alt: "Learner researching computer technology with a laptop and reference books" },
+  "114183": { src: "/figures/unit-114183-banner.webp", alt: "Technician troubleshooting a computer beside a systems management screen" },
   "114058": { src: "/figures/datacentre-aisle.jpg", alt: "Server infrastructure supporting shared multi-user systems", credit: "datacentre-aisle" },
 };
 
