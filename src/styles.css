@@ -2134,6 +2134,7 @@ td .with-ico .ico {
   border-radius: 17px 17px 0 0;
   display: block;
 }
+.module-unit-card.charcoal-photo .module-unit-photo { filter: grayscale(1) brightness(0.8) contrast(1.1); }
 .module-unit-code { display: block; margin-bottom: 8px; color: var(--ink-3); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; }
 .module-unit-grid .module-unit-card .t { display: block; font-size: 14px; line-height: 1.5; }
 .module-unit-grid .module-unit-card .m { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 12px; font-size: 12px; }
@@ -2209,8 +2210,9 @@ td .with-ico .ico {
 .activity-progress-heading { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .activity-progress-heading span { color: var(--ink-3); font-size: 13px; }
 .activity-progress-ring { flex: 0 0 auto; }
-.activity-progress-ring .ring .track { stroke: #ebe4f5; }
-.activity-progress-ring .ring .val { stroke: #8054c7; }
+.activity-progress-ring .ring .track { stroke: #e8e8e8; }
+.activity-progress-ring .ring .val { stroke: #409cf0; }
+[data-theme="dark"] .activity-progress-ring .ring .track { stroke: #303030; }
 .activity-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; list-style: none; padding: 0; margin: 0 0 12px; }
 .activity-step { min-width: 0; }
 .activity-step-button {

@@ -2154,12 +2154,20 @@ export function CoursePage({
   );
 }
 
-const UNIT_TILE_PHOTOS: Record<string, { src: string; alt: string; credit?: string }> = {
-  "114074": { src: "/figures/unit-114074-banner.webp", alt: "Network architecture displayed beside a switch and server racks" },
-  "114046": { src: "/figures/unit-114046-banner.webp", alt: "Technician monitoring local area network health" },
-  "114076": { src: "/figures/unit-114076-banner.webp", alt: "Learner researching computer technology with a laptop and reference books" },
-  "114183": { src: "/figures/unit-114183-banner.webp", alt: "Technician troubleshooting a computer beside a systems management screen" },
-  "114058": { src: "/figures/datacentre-aisle.jpg", alt: "Server infrastructure supporting shared multi-user systems", credit: "datacentre-aisle" },
+const UNIT_TILE_PHOTOS: Record<string, { src: string; alt: string; credit?: string; charcoal?: boolean }> = {
+  "8252": { src: "/admin-images/tracker.webp", alt: "Business reports and charts being reviewed on a laptop", charcoal: true },
+  "10135": { src: "/admin-images/users.webp", alt: "Project team working together around a laptop", charcoal: true },
+  "HWSW": { src: "/figures/unit-114183-banner.webp", alt: "Computer hardware beside a software management screen", charcoal: true },
+  "HWSW2": { src: "/figures/ram-install.jpg", alt: "Close-up of memory slots on a computer motherboard", credit: "ram-install", charcoal: true },
+  "114055": { src: "/admin-images/attendance.webp", alt: "Colleagues participating in a professional workplace discussion", charcoal: true },
+  "114050": { src: "/admin-images/analytics.webp", alt: "Computer technology displaying business performance charts", charcoal: true },
+  "114051": { src: "/admin-images/attendance.webp", alt: "Team meeting with participants and a digital agenda", charcoal: true },
+  "114059": { src: "/admin-images/forms.webp", alt: "Planning and documenting work on a laptop", charcoal: true },
+  "114074": { src: "/figures/unit-114074-banner.webp", alt: "Network architecture displayed beside a switch and server racks", charcoal: true },
+  "114046": { src: "/figures/unit-114046-banner.webp", alt: "Technician monitoring local area network health", charcoal: true },
+  "114076": { src: "/figures/unit-114076-banner.webp", alt: "Learner researching computer technology with a laptop and reference books", charcoal: true },
+  "114183": { src: "/figures/unit-114183-banner.webp", alt: "Technician troubleshooting a computer beside a systems management screen", charcoal: true },
+  "114058": { src: "/figures/datacentre-aisle.jpg", alt: "Server infrastructure supporting shared multi-user systems", credit: "datacentre-aisle", charcoal: true },
 };
 
 export function ModulePage({
@@ -2234,7 +2242,7 @@ export function ModulePage({
         return (
           <div
             key={u.us}
-            className={`unit-row module-unit-card${photo ? " has-photo" : ""}${locked ? " locked" : ""}`}
+            className={`unit-row module-unit-card${photo ? " has-photo" : ""}${photo?.charcoal ? " charcoal-photo" : ""}${locked ? " locked" : ""}`}
             role={inline.editing ? undefined : "button"}
             tabIndex={locked || inline.editing ? undefined : 0}
             onKeyDown={e => { if (!locked && !inline.editing && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); navigate({ page: "unit", moduleId: mod.id, unitId: u.us }); } }}
@@ -3546,7 +3554,7 @@ export function UnitPage({
             </div>
             <div className="activity-progress-ring" role="progressbar" aria-label="Learning activities completed"
               aria-valuemin={0} aria-valuemax={UNIT_ACTIVITIES.length} aria-valuenow={completedActivities}>
-              <Ring value={completedActivities / UNIT_ACTIVITIES.length} size={52} stroke={4} showLabel />
+              <Ring value={completedActivities / UNIT_ACTIVITIES.length} size={56} stroke={5} showLabel />
             </div>
           </div>
           <ol className="activity-steps">
