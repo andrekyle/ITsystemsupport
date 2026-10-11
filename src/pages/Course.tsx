@@ -3423,7 +3423,12 @@ export function UnitPage({
         {isSaqaUnit(u.us) ? `Unit standard ${u.us}` : "Internal lesson"}
       </div>
       <h1 className="page-title">{u.title}</h1>
-      {isSuperUser && <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} profileId={profile.id} onCancelInline={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />}
+      {isSuperUser && (
+        <details className="unit-edit-menu">
+          <summary><Icon name="pencil" size={15} /> Edit unit <Icon name="chevronDown" size={14} /></summary>
+          <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} profileId={profile.id} onCancelInline={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />
+        </details>
+      )}
       <div style={{ margin: "16px 0 6px", maxWidth: 560 }}>
         <div className="bar-row">
           <Bar value={uc} green={uc === 1} />
@@ -4785,6 +4790,10 @@ export function UnitPage({
                     </button>
                   </span>
                   {isPrivileged && (
+                    <details className="lesson-edit-menu">
+                      <summary><Icon name="pencil" size={15} /> Edit slide <Icon name="chevronDown" size={14} /></summary>
+                      <div className="lesson-edit-menu-body">
+                  {isPrivileged && (
                     <button
                       type="button"
                       className="btn ghost sm"
@@ -4880,6 +4889,9 @@ export function UnitPage({
                         </>
                       )}
                     </span>
+                  )}
+                      </div>
+                    </details>
                   )}
                 </div>
                 {isSuperUser && lessonSaveStatus === "saved" && <p role="status">Saved to cloud.</p>}

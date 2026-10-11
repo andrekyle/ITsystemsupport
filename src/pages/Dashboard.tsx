@@ -26,6 +26,13 @@ export function Dashboard({
   progress: ProgressState;
   navigate: (r: Route) => void;
 }) {
+  const [dashboardTab, setDashboardTab] = useState("overview");
+  const dashboardTabs = [
+    { id: "overview", label: "Overview" },
+    { id: "learning", label: "Learning progress" },
+    { id: "achievements", label: "Achievements" },
+    ...(profile.role === "Super User" ? [{ id: "ai", label: "AI usage" }] : []),
+  ];
   const { docs: poeDocs } = usePoe(profile.id);
   const { outcomes } = useOutcomes();
   const s = overallStats(progress, poeDocs, outcomes[profile.id] ?? {});
@@ -119,8 +126,36 @@ export function Dashboard({
         </div>
       </div>
 
-      {profile.role === "Super User" && <TokenGauge />}
+      <div className="tabs" role="tablist" aria-label="Dashboard sections">
+        {dashboardTabs.map((item, index) => (
+          <button key={item.id} type="button" role="tab" id={`dashboard-tab-${item.id}`}
+            aria-controls={`dashboard-panel-${item.id}`} aria-selected={dashboardTab === item.id}
+            tabIndex={dashboardTab === item.id ? 0 : -1}
+            className={`tab${dashboardTab === item.id ? " active" : ""}`}
+            onClick={() => setDashboardTab(item.id)}
+            onKeyDown={event => {
+              let nextIndex = index;
+              if (event.key === "ArrowRight") nextIndex = (index + 1) % dashboardTabs.length;
+              else if (event.key === "ArrowLeft") nextIndex = (index + dashboardTabs.length - 1) % dashboardTabs.length;
+              else if (event.key === "Home") nextIndex = 0;
+              else if (event.key === "End") nextIndex = dashboardTabs.length - 1;
+              else return;
+              event.preventDefault();
+              setDashboardTab(dashboardTabs[nextIndex].id);
+              document.getElementById(`dashboard-tab-${dashboardTabs[nextIndex].id}`)?.focus();
+            }}>
+            {item.label}
+          </button>
+        ))}
+      </div>
 
+      {profile.role === "Super User" && (
+        <section role="tabpanel" id="dashboard-panel-ai" aria-labelledby="dashboard-tab-ai" hidden={dashboardTab !== "ai"}>
+          <TokenGauge />
+        </section>
+      )}
+
+      <section role="tabpanel" id="dashboard-panel-achievements" aria-labelledby="dashboard-tab-achievements" hidden={dashboardTab !== "achievements"}>
       <div className="card xp-card">
         <div className="xp-head">
           <span className="xp-level">
@@ -170,6 +205,9 @@ export function Dashboard({
         </p>
       </div>
 
+      </section>
+
+      <section role="tabpanel" id="dashboard-panel-overview" aria-labelledby="dashboard-tab-overview" hidden={dashboardTab !== "overview"}>
       {announcements.length > 0 && (
         <>
           <h2 className="section-title">
@@ -227,6 +265,9 @@ export function Dashboard({
         </>
       )}
 
+      </section>
+
+      <section role="tabpanel" id="dashboard-panel-learning" aria-labelledby="dashboard-tab-learning" hidden={dashboardTab !== "learning"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="trend" size={20} />
@@ -303,6 +344,7 @@ export function Dashboard({
           for the full schedule.
         </span>
       </div>
+      </section>
     </>
   );
 }
