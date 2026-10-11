@@ -2087,7 +2087,7 @@ td .with-ico .ico {
 .unit-edit-menu { margin: 12px 0; }
 .poe-section-tabs { gap: 0; }
 .poe-section-tabs .tab { padding: 8px 10px; gap: 6px; font-size: 12px; white-space: nowrap; }
-.module-unit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.module-unit-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .module-unit-grid .module-unit-card {
   align-items: flex-start;
   gap: 12px;
@@ -2142,6 +2142,9 @@ td .with-ico .ico {
 .module-unit-grid .module-unit-card.has-photo .t { font-size: 16px; font-weight: 600; line-height: 1.45; margin-bottom: 18px; }
 .module-unit-grid .module-unit-card.has-photo .m { margin-top: auto; }
 .module-unit-card > .status, .module-unit-card > .chev { margin-top: 2px; }
+@media (max-width: 1100px) {
+  .module-unit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 640px) {
   .module-unit-grid { grid-template-columns: minmax(0, 1fr); }
 }
