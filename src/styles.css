@@ -5936,7 +5936,10 @@ table.data.kv tr:last-child td {
   overflow-x: auto;
 }
 .poe-table td { vertical-align: middle; }
-.poe-table .poe-doc-cell { width: 480px; }
+.poe-table { table-layout: fixed; }
+.poe-table th:first-child { width: 30%; }
+.poe-table .poe-doc-cell { width: 70%; }
+.poe-table td { padding-top: 8px; padding-bottom: 8px; }
 
 .poe-item {
   display: flex;
@@ -11509,6 +11512,22 @@ table.data th.sortable.sorted { color: var(--ink); }
   padding-top: 10px;
   border-top: 1px solid var(--border);
   justify-content: flex-end;
+}
+.poe-table .poe-review-actions .v-seg { padding: 4px 7px; gap: 4px; font-size: 11px; }
+.poe-table .poe-review-actions .v-clear { padding: 4px 6px; }
+.poe-table .poe-review-actions .v-seg svg { width: 12px; height: 12px; }
+@media (min-width: 861px) {
+  .poe-table .poe-doc {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px 12px;
+  }
+  .poe-table .poe-doc-line { grid-column: 1; padding-top: 4px; padding-bottom: 4px; }
+  .poe-table .poe-review-actions { grid-column: 2; grid-row: 1; border: 0; padding: 0; }
+  .poe-table .poe-doc.multi .poe-review-actions { grid-row: auto; }
+  .poe-table .poe-doc > .poe-upload,
+  .poe-table .poe-doc > .upload-progress { grid-column: 1; }
 }
 
 /* flat danger text-button (delete/destructive) — no glow, just red ink */

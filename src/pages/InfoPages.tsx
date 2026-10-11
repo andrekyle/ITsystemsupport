@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Icon } from "../icons";
 import { EditingTools } from "../components/EditingSidebar";
 import type { Profile, ProgressState, Route } from "../types";
@@ -151,9 +151,54 @@ export function AssessmentsPage({ profile }: { profile: Profile }) {
   );
 }
 
-export function DeliverablesPage() {
+function InfoSectionTabs({ id, sections }: {
+  id: string;
+  sections: { title: string; icon: string; content: ReactNode }[];
+}) {
+  const [selected, setSelected] = useState(0);
   return (
     <>
+      <div className="tabs assessment-tabs" role="tablist" aria-label={`${id} sections`}>
+        {sections.map((section, index) => (
+          <button key={section.title} type="button" role="tab" id={`${id}-tab-${index}`}
+            aria-controls={`${id}-panel-${index}`} aria-selected={selected === index}
+            tabIndex={selected === index ? 0 : -1}
+            className={`tab${selected === index ? " active" : ""}`}
+            onClick={() => setSelected(index)}
+            onKeyDown={event => {
+              let next = index;
+              if (event.key === "ArrowRight") next = (index + 1) % sections.length;
+              else if (event.key === "ArrowLeft") next = (index + sections.length - 1) % sections.length;
+              else if (event.key === "Home") next = 0;
+              else if (event.key === "End") next = sections.length - 1;
+              else return;
+              event.preventDefault();
+              setSelected(next);
+              document.getElementById(`${id}-tab-${next}`)?.focus();
+            }}>
+            <Icon name={section.icon} size={15} /> {section.title}
+          </button>
+        ))}
+      </div>
+      {sections.map((section, index) => (
+        <section key={section.title} role="tabpanel" id={`${id}-panel-${index}`}
+          aria-labelledby={`${id}-tab-${index}`} hidden={selected !== index}>
+          <div className="card">
+            <h2 className="section-title mt-0" style={{ margin: "0 0 10px" }}>
+              <span className="ico"><Icon name={section.icon} size={20} /></span>
+              {section.title}
+            </h2>
+            {section.content}
+          </div>
+        </section>
+      ))}
+    </>
+  );
+}
+
+export function DeliverablesPage() {
+  return (
+    <section className="assessments-page">
       <div className="eyebrow">
         <Icon name="checklist" size={15} />
         Deliverables
@@ -163,36 +208,14 @@ export function DeliverablesPage() {
         Standards and submission timelines for programme deliverables across the training calendar.
       </p>
 
-      <section className="deliv-board" aria-label="Programme deliverables">
-        <div className="deliv-board-head">
-          <div>
-            <span className="deliv-kicker">Programme evidence</span>
-            <h2>Submission standards</h2>
-            <p>These deliverables must be completed and submitted as per the programme requirements.</p>
-          </div>
-          <span className="deliv-total"><Icon name="layers" size={22} /> {DELIVERABLES.length} deliverables</span>
-        </div>
-
-        <div className="deliv-list">
-          {DELIVERABLES.map((d, index) => (
-            <article className={`deliv-row tone-${index % 5}`} key={d.deliverable}>
-              <span className="deliv-row-num">{String(index + 1).padStart(2, "0")}</span>
-              <span className="deliv-ico" aria-hidden="true"><Icon name={d.icon} size={28} /></span>
-              <div className="deliv-copy">
-                <strong className="deliv-name">{d.deliverable}</strong>
-                <span className="deliv-standard">{d.standard}</span>
-              </div>
-              <span className="deliv-due">
-                <span className="deliv-due-value">
-                  <Icon name={index === 1 || index === 3 ? "calendar" : "clock"} size={25} />
-                  {d.due}
-                </span>
-              </span>
-              <Icon name="chevronRight" size={20} />
-            </article>
-          ))}
-        </div>
-      </section>
+      <InfoSectionTabs id="deliverables" sections={DELIVERABLES.map(d => ({
+        title: d.deliverable,
+        icon: d.icon,
+        content: <ul className="duty-list">
+          <li><span className="ico"><Icon name="checkCircle" size={16} /></span><span>{d.standard}</span></li>
+          <li><span className="ico"><Icon name="calendar" size={16} /></span><span>{d.due}</span></li>
+        </ul>,
+      }))} />
 
       <div className="callout">
         <span className="ico">
@@ -203,13 +226,13 @@ export function DeliverablesPage() {
           session. Attendance registers are signed and submitted <strong>after each session</strong>.
         </span>
       </div>
-    </>
+    </section>
   );
 }
 
 export function ResourcesPage() {
   return (
-    <>
+    <section className="assessments-page">
       <div className="eyebrow">
         <Icon name="globe" size={15} />
         Resources
@@ -217,37 +240,19 @@ export function ResourcesPage() {
       <h1 className="page-title">Resources</h1>
       <p className="page-sub">System Support NQF Level 5 Learnership · Investec Group</p>
 
-      <section className="res-board" aria-label="Learning resources">
-        <div className="res-board-head">
-          <div>
-            <span className="res-kicker">Reference library</span>
-            <h2>Useful links</h2>
-            <p>Trusted learning, qualification and compliance resources for this programme.</p>
-          </div>
-          <span className="res-total"><Icon name="layers" size={20} /> {RESOURCES.length} resources</span>
-        </div>
-        <div className="res-list">
-          {RESOURCES.map((r, index) => (
-            <a
-              className={`res-card tone-${index % 5}`}
-              key={r.title}
-              href={r.url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <span className="res-index">{String(index + 1).padStart(2, "0")}</span>
-              <span className="res-icon" aria-hidden="true"><Icon name="globe" size={23} /></span>
-              <span className="res-copy">
-                <strong className="t">{r.title}</strong>
-                <span className="d">{r.desc}</span>
-              </span>
-              <span className="res-action">Open resource <Icon name="chevronRight" size={14} /></span>
-              <Icon name="chevronRight" size={20} />
-            </a>
-          ))}
-        </div>
-      </section>
-    </>
+      <InfoSectionTabs id="resources" sections={RESOURCES.map(r => ({
+        title: r.title,
+        icon: "globe",
+        content: <>
+          <ul className="duty-list">
+            <li><span className="ico"><Icon name="checkCircle" size={16} /></span><span>{r.desc}</span></li>
+          </ul>
+          <a className="btn ghost" href={r.url} target="_blank" rel="noopener noreferrer">
+            <Icon name="globe" size={15} /> Open resource
+          </a>
+        </>,
+      }))} />
+    </section>
   );
 }
 
