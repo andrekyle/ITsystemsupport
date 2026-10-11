@@ -2310,6 +2310,15 @@ function StudentDetail({
       ? localDocs
       : (cloudDocs ?? localDocs);
   const canManage = isSuper;
+  const [detailTab, setDetailTab] = useState("enrolment");
+  const detailTabs = [
+    { id: "enrolment", label: "Enrolment" },
+    ...(staffViewer ? [{ id: "academic", label: "Academic record" }] : []),
+    ...(student.role === "Learner" && canRecordOutcomes ? [{ id: "outcomes", label: "Assessment outcomes" }] : []),
+    ...(staffViewer ? [{ id: "documents", label: "Documents" }] : []),
+    ...(canManage ? [{ id: "account", label: "Account settings" }] : []),
+  ];
+  const activeDetailTab = detailTabs.some(t => t.id === detailTab) ? detailTab : "enrolment";
   const [editingEnrol, setEditingEnrol] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmLocal, setConfirmLocal] = useState(false);
@@ -2569,15 +2578,44 @@ function StudentDetail({
         </div>
       )}
 
+      <div className="tabs student-detail-tabs" role="tablist" aria-label="Learner profile sections">
+        {detailTabs.map((tab, index) => (
+          <button key={tab.id} id={`student-detail-tab-${tab.id}`}
+            className={`tab${activeDetailTab === tab.id ? " active" : ""}`}
+            role="tab" aria-selected={activeDetailTab === tab.id}
+            aria-controls={`student-detail-panel-${tab.id}`}
+            tabIndex={activeDetailTab === tab.id ? 0 : -1}
+            onClick={() => setDetailTab(tab.id)}
+            onKeyDown={e => {
+              let next = index;
+              if (e.key === "ArrowRight") next = (index + 1) % detailTabs.length;
+              else if (e.key === "ArrowLeft") next = (index - 1 + detailTabs.length) % detailTabs.length;
+              else if (e.key === "Home") next = 0;
+              else if (e.key === "End") next = detailTabs.length - 1;
+              else return;
+              e.preventDefault();
+              setDetailTab(detailTabs[next].id);
+              document.getElementById(`student-detail-tab-${detailTabs[next].id}`)?.focus();
+            }}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {canManage && (
+        <section role="tabpanel" id="student-detail-panel-account"
+          aria-labelledby="student-detail-tab-account" hidden={activeDetailTab !== "account"}>
         <AdminPanel
           student={student}
           onPatch={patchStudent}
           onDelete={() => setConfirmDelete(true)}
           onRemoveLocal={!remote ? () => setConfirmLocal(true) : undefined}
         />
+        </section>
       )}
 
+      <section role="tabpanel" id="student-detail-panel-enrolment"
+        aria-labelledby="student-detail-tab-enrolment" hidden={activeDetailTab !== "enrolment"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="clipboard" size={20} />
@@ -2623,8 +2661,12 @@ function StudentDetail({
         </div>
       )}
 
+      </section>
+
       {staffViewer && (
         <>
+          <section role="tabpanel" id="student-detail-panel-academic"
+            aria-labelledby="student-detail-tab-academic" hidden={activeDetailTab !== "academic"}>
           <AcademicRecord
             student={student}
             remote={remote}
@@ -2632,7 +2674,10 @@ function StudentDetail({
             cloudProfileId={cloudProfileId}
             canDownload={isSuper}
           />
+          </section>
           {student.role === "Learner" && canRecordOutcomes && (
+            <section role="tabpanel" id="student-detail-panel-outcomes"
+              aria-labelledby="student-detail-tab-outcomes" hidden={activeDetailTab !== "outcomes"}>
             <OutcomesPanel
               student={student}
               viewer={viewer}
@@ -2641,7 +2686,10 @@ function StudentDetail({
               cloudProfileId={cloudProfileId}
               cloudDocs={cloudDocs}
             />
+            </section>
           )}
+          <section role="tabpanel" id="student-detail-panel-documents"
+            aria-labelledby="student-detail-tab-documents" hidden={activeDetailTab !== "documents"}>
           <h2 className="section-title">
             <span className="ico">
               <Icon name="folder" size={20} />
@@ -2687,6 +2735,7 @@ function StudentDetail({
               </div>
             ))
           )}
+          </section>
         </>
       )}
 

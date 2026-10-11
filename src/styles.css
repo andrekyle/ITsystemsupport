@@ -2084,6 +2084,9 @@ td .with-ico .ico {
   font-size: 13px;
 }
 
+.student-detail-tabs.tabs { flex-wrap: wrap; overflow: visible; gap: 0; margin: 24px 0 20px; }
+.student-detail-tabs.tabs .tab { flex: 0 1 auto; padding: 10px 14px; white-space: normal; }
+
 .unit-edit-menu { margin: 12px 0; }
 .poe-section-tabs { gap: 0; }
 .poe-section-tabs .tab { padding: 8px 10px; gap: 6px; font-size: 12px; white-space: nowrap; }
