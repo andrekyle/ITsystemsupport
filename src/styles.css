@@ -13420,12 +13420,8 @@ h2.section-title.howto-heading {
   background: var(--surface-2);
 }
 
-.howto-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 40px; margin-top: 32px; }
-.howto-navigation { align-self: start; }
-.howto-navigation h3, .howto-results-heading { margin: 0 0 16px; font-size: 18px; font-weight: 600; }
-.howto-navigation a { display: flex; align-items: baseline; gap: 12px; padding: 12px 0; color: var(--ink-2); font-size: 14px; line-height: 1.5; }
-.howto-navigation a:hover { color: var(--azure); }
-.howto-navigation a span { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.howto-layout { margin-top: 32px; }
+.howto-results-heading { margin: 0 0 16px; font-size: 18px; font-weight: 600; }
 .howto-results { min-width: 0; }
 .howto-results > .muted { margin: 0 0 24px; font-size: 14px; }
 
@@ -13487,8 +13483,6 @@ h2.section-title.howto-heading {
   justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--azure) 14%, var(--surface));
   color: var(--azure);
   font-size: 15px;
   font-weight: 700;
@@ -13558,12 +13552,6 @@ h2.section-title.howto-heading {
     padding: 18px 14px;
   }
 
-  @media (max-width: 980px) {
-    .howto-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
-    .howto-navigation { display: flex; flex-wrap: wrap; gap: 6px 16px; }
-    .howto-navigation h3 { width: 100%; margin-bottom: 4px; }
-    .howto-navigation a { padding: 6px 0; }
-  }
   .howto-row-body {
     min-width: 0;
   }

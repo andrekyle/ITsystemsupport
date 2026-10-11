@@ -168,6 +168,12 @@ export function ProfilePage({
   onUpdateProfile: (patch: Partial<Profile>) => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [profileTab, setProfileTab] = useState("details");
+  const profileTabs = [
+    { id: "details", label: "My details" },
+    { id: "signature", label: "Signature" },
+    { id: "security", label: "Security" },
+  ];
   const [sharedSettings] = useSharedSettings();
   const [draft, setDraft] = useState<EnrolmentInfo>({
     ...EMPTY_ENROLMENT,
@@ -200,6 +206,37 @@ export function ProfilePage({
 
       <ProfileHead profile={profile} />
 
+      <div className="tabs" role="tablist" aria-label="Profile settings">
+        {profileTabs.map((tab, index) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            id={`profile-tab-${tab.id}`}
+            aria-controls={`profile-panel-${tab.id}`}
+            aria-selected={profileTab === tab.id}
+            tabIndex={profileTab === tab.id ? 0 : -1}
+            className={`tab${profileTab === tab.id ? " active" : ""}`}
+            onClick={() => setProfileTab(tab.id)}
+            onKeyDown={(event) => {
+              let nextIndex = index;
+              if (event.key === "ArrowRight") nextIndex = (index + 1) % profileTabs.length;
+              else if (event.key === "ArrowLeft") nextIndex = (index + profileTabs.length - 1) % profileTabs.length;
+              else if (event.key === "Home") nextIndex = 0;
+              else if (event.key === "End") nextIndex = profileTabs.length - 1;
+              else return;
+              event.preventDefault();
+              setProfileTab(profileTabs[nextIndex].id);
+              document.getElementById(`profile-tab-${profileTabs[nextIndex].id}`)?.focus();
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <section role="tabpanel" id="profile-panel-details" aria-labelledby="profile-tab-details"
+        hidden={profileTab !== "details"}>
       <div className="contact-row">
         <button
           className="btn ghost sm"
@@ -261,7 +298,10 @@ export function ProfilePage({
           </span>
         </div>
       )}
+      </section>
 
+      <section role="tabpanel" id="profile-panel-signature" aria-labelledby="profile-tab-signature"
+        hidden={profileTab !== "signature"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="design" size={20} />
@@ -269,7 +309,10 @@ export function ProfilePage({
         My signature
       </h2>
       <SignatureEditor profile={profile} onUpdateProfile={onUpdateProfile} />
+      </section>
 
+      <section role="tabpanel" id="profile-panel-security" aria-labelledby="profile-tab-security"
+        hidden={profileTab !== "security"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="shield" size={20} />
@@ -281,6 +324,7 @@ export function ProfilePage({
         onSet={(hash) => onUpdateProfile({ passwordHash: hash })}
         onClear={() => onUpdateProfile({ passwordHash: undefined })}
       />
+      </section>
     </>
   );
 }

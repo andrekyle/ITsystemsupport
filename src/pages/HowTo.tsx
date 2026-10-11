@@ -95,15 +95,6 @@ export function HowToPage({ navigate }: { navigate: (r: Route) => void }) {
       </div>
 
       <div className="howto-layout">
-        <nav className="howto-navigation" aria-label="Completion guide steps">
-          <h3>Your learning journey</h3>
-          {STEPS.map((step, index) => (
-            <a key={step.title} href={`#completion-step-${index + 1}`}>
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              {step.title}
-            </a>
-          ))}
-        </nav>
         <div className="howto-results">
         <h3 className="howto-results-heading">Steps to completion</h3>
         <p className="muted">{STEPS.length} steps to guide your learning</p>
