@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
+import { createPortal } from "react-dom";
 import JSZip from "jszip";
 import { Icon } from "../icons";
 import type { Exercise, ExerciseCheck, LessonFigure, LessonPlan, LessonPlanRow, LessonSection, LogbookSpec, PoeDoc, ProgressState, Profile, QuizQuestion, Role, Route, UnitActivity, UnitContent, UnitStandard } from "../types";
@@ -2435,6 +2436,7 @@ export function UnitPage({
   navigate: (r: Route) => void;
 }) {
   const [tab, setTab] = useState<UnitTab>(() => loadUnitTab(unitId));
+  const [lessonControlsHost, setLessonControlsHost] = useState<HTMLDivElement | null>(null);
   const phone = usePhoneView();
   const builtUnit = useBuiltUnit(unitId);
   const [inlineUnit, setInlineUnit] = useState<UnitContent | undefined>(() => loadInlineDraft(profile.id, unitId));
@@ -3503,7 +3505,8 @@ export function UnitPage({
         <span>{usLabel(u.us)}</span>
       </div>
 
-      <div className={`unit-header-area${tab === "lesson" && isPrivileged && !phone ? " has-slide-edit" : ""}`}>
+      <div className={`unit-header-area${tab === "lesson" ? " is-lesson" : ""}${tab === "lesson" && isPrivileged && !phone ? " has-slide-edit" : ""}`}>
+      {tab === "lesson" && <div className="lesson-header-controls" ref={setLessonControlsHost} />}
       {tab === "lesson" && isPrivileged && !phone && (
         <button type="button" className="btn solid sm lesson-header-edit"
           aria-expanded={slideEditOpen} aria-controls="lesson-slide-edit-tools"
@@ -5047,7 +5050,7 @@ export function UnitPage({
             );
             return (
               <div key={sec.heading} className="lesson-screen">
-                {stepper}
+                {lessonControlsHost ? createPortal(stepper, lessonControlsHost) : stepper}
                 {isSlide && heroFig ? (() => {
                   const up = figureImages[heroFig.id];
                   const def = FIGURE_DEFAULTS[heroFig.id];

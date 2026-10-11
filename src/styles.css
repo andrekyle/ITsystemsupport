@@ -2048,6 +2048,30 @@ td .with-ico .ico {
 .unit-page-dropdown > summary svg { flex-shrink: 0; transition: transform 0.15s; }
 .unit-page-dropdown[open] > summary svg { transform: rotate(180deg); }
 .unit-page-dropdown > summary:focus-visible { outline: 2px solid var(--azure); outline-offset: 3px; }
+.unit-header-area.is-lesson {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  max-width: 1200px;
+  margin-bottom: 16px;
+}
+.lesson-header-controls { flex: 1 1 220px; min-width: 0; }
+.unit-header-area.is-lesson > .unit-page-dropdown { order: 2; margin: 0; }
+.unit-header-area.is-lesson > .unit-page-dropdown[open] { order: 4; flex: 1 0 100%; }
+.unit-header-area.is-lesson > .unit-page-dropdown > summary,
+.unit-header-area.is-lesson.has-slide-edit > .unit-page-dropdown > summary {
+  min-height: 44px;
+  padding: 0;
+}
+.unit-header-area.is-lesson > .btn.solid.sm.lesson-header-edit {
+  position: static;
+  order: 3;
+  min-height: 44px;
+  height: auto;
+}
+.lesson-header-controls .lesson-stepper { margin: 0; }
+.lesson-header-controls .lesson-top-nav { margin-left: 4px; }
 
 .unit-page-dropdown > .unit-builder > .unit-builder-bar {
   display: flex;
