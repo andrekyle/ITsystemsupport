@@ -1913,6 +1913,20 @@ td .with-ico .ico {
   padding: 20px 22px;
 }
 
+.profile-onboarding-pack {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.profile-onboarding-pack p {
+  margin: 0;
+  color: var(--ink-2);
+  flex: 1 1 240px;
+}
+
 .profile-edit-actions {
   display: flex;
   gap: 10px;

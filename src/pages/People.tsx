@@ -237,21 +237,6 @@ export function ProfilePage({
 
       <section role="tabpanel" id="profile-panel-details" aria-labelledby="profile-tab-details"
         hidden={profileTab !== "details"}>
-      <div className="contact-row">
-        <button
-          className="btn ghost sm"
-          title="Your printable onboarding pack — welcome letter, calendar, document checklist, POE guide"
-          onClick={() =>
-            openOnboardingPack(profile, {
-              supportEmail: sharedSettings.supportEmail,
-              teamsUrl: sharedSettings.teamsUrl,
-            })
-          }
-        >
-          <Icon name="document" size={15} /> My onboarding pack
-        </button>
-      </div>
-
       <h2 className="section-title">
         <span className="ico">
           <Icon name="clipboard" size={20} />
@@ -298,6 +283,28 @@ export function ProfilePage({
           </span>
         </div>
       )}
+
+      <h2 className="section-title">
+        <span className="ico">
+          <Icon name="document" size={20} />
+        </span>
+        Onboarding pack
+      </h2>
+      <div className="card profile-onboarding-pack">
+        <p>Your welcome letter, calendar, document checklist and POE guide in one printable pack.</p>
+        <button
+          type="button"
+          className="btn ghost sm"
+          onClick={() =>
+            openOnboardingPack(profile, {
+              supportEmail: sharedSettings.supportEmail,
+              teamsUrl: sharedSettings.teamsUrl,
+            })
+          }
+        >
+          <Icon name="document" size={15} /> Open onboarding pack
+        </button>
+      </div>
       </section>
 
       <section role="tabpanel" id="profile-panel-signature" aria-labelledby="profile-tab-signature"

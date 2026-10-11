@@ -1788,6 +1788,13 @@ export function CoursePage({
   profile: Profile;
 }) {
   const [creatingCourse, setCreatingCourse] = useState(false);
+  const [programmeTab, setProgrammeTab] = useState("flow");
+  const programmeTabs = [
+    { id: "flow", label: "How modules work" },
+    { id: "about", label: "About the programme" },
+    { id: "purpose", label: "Purpose & rationale" },
+    { id: "learning", label: "What you'll learn" },
+  ];
   const inline = useInlineCourse(profile.role === "Super User");
   const { meta: COURSE_META, blurb: COURSE_BLURB, modules: MODULES, moduleFlow: MODULE_FLOW, programmeAbout: PROGRAMME_ABOUT, programmePurpose: PROGRAMME_PURPOSE, whatYoullLearn: WHAT_YOULL_LEARN } = inline.course;
   const [deletingCourse, setDeletingCourse] = useState(false);
@@ -1928,6 +1935,37 @@ export function CoursePage({
         })}
       </div>
 
+      <div className="tabs" role="tablist" aria-label="Programme information">
+        {programmeTabs.map((tab, index) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            id={`programme-tab-${tab.id}`}
+            aria-controls={`programme-panel-${tab.id}`}
+            aria-selected={programmeTab === tab.id}
+            tabIndex={programmeTab === tab.id ? 0 : -1}
+            className={`tab${programmeTab === tab.id ? " active" : ""}`}
+            onClick={() => setProgrammeTab(tab.id)}
+            onKeyDown={(event) => {
+              let nextIndex = index;
+              if (event.key === "ArrowRight") nextIndex = (index + 1) % programmeTabs.length;
+              else if (event.key === "ArrowLeft") nextIndex = (index + programmeTabs.length - 1) % programmeTabs.length;
+              else if (event.key === "Home") nextIndex = 0;
+              else if (event.key === "End") nextIndex = programmeTabs.length - 1;
+              else return;
+              event.preventDefault();
+              setProgrammeTab(programmeTabs[nextIndex].id);
+              document.getElementById(`programme-tab-${programmeTabs[nextIndex].id}`)?.focus();
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <section role="tabpanel" id="programme-panel-flow" aria-labelledby="programme-tab-flow"
+        hidden={programmeTab !== "flow"}>
       <h2 className="section-title module-flow-block">
         <span className="ico">
           <Icon name="target" size={20} />
@@ -1960,6 +1998,10 @@ export function CoursePage({
         </div>
       </div>
 
+      </section>
+
+      <section role="tabpanel" id="programme-panel-about" aria-labelledby="programme-tab-about"
+        hidden={programmeTab !== "about"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="info" size={20} />
@@ -1986,7 +2028,10 @@ export function CoursePage({
           {PROGRAMME_ABOUT.saqaLink.label} ↗
         </a>
       </div>
+      </section>
 
+      <section role="tabpanel" id="programme-panel-purpose" aria-labelledby="programme-tab-purpose"
+        hidden={programmeTab !== "purpose"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="certificate" size={20} />
@@ -2050,7 +2095,10 @@ export function CoursePage({
           {inline.text(PROGRAMME_PURPOSE.rationale, (d, v) => { d.programmePurpose.rationale = v; }, "Text")}
         </p>
       </div>
+      </section>
 
+      <section role="tabpanel" id="programme-panel-learning" aria-labelledby="programme-tab-learning"
+        hidden={programmeTab !== "learning"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="book" size={20} />
@@ -2087,6 +2135,7 @@ export function CoursePage({
           </div>
         ))}
       </div>
+      </section>
     </>
   );
 }
