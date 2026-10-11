@@ -10441,12 +10441,12 @@ table.data.training-table td {
 [data-theme="dark"] table.data.training-table td {
   border-bottom-color: rgba(255, 255, 255, 0.08);
   border-right-color: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 [data-theme="dark"] table.data.training-table .us-link,
 [data-theme="dark"] table.data.training-table .us-code {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* --- borderless inline icon link inside tables (e.g. Outlook calendar) --- */
@@ -10533,7 +10533,7 @@ table.data .mini-note { display: block; }
   table.data.training-table tr,
   table.data.milestone-table tr {
     display: block;
-    padding: 10px 2px;
+    padding: 10px 12px;
     border-bottom: 1px solid var(--table-line);
   }
   table.data.training-table tr:last-child,
