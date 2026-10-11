@@ -1,0 +1,11 @@
+{
+  "source": "/discovery/Client-Server Networking Course Dashboard (1).png",
+  "description": "Exact image headers, including their captions, cropped from the user-provided dashboard reference. Course metadata and progress are rendered separately from live course data.",
+  "headers": [
+    { "file": "unit-114074-reference-header.webp", "crop": { "left": 14, "top": 9, "width": 574, "height": 236 } },
+    { "file": "unit-114046-reference-header.webp", "crop": { "left": 607, "top": 9, "width": 562, "height": 236 } },
+    { "file": "unit-114076-reference-header.webp", "crop": { "left": 1190, "top": 9, "width": 574, "height": 236 } },
+    { "file": "unit-114183-reference-header.webp", "crop": { "left": 14, "top": 491, "width": 574, "height": 210 } },
+    { "file": "unit-114058-reference-header.webp", "crop": { "left": 607, "top": 491, "width": 561, "height": 210 } }
+  ]
+}

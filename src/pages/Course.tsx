@@ -2170,20 +2170,20 @@ const UNIT_TILE_BANNER_TITLES: Record<string, string> = {
   "114058": "Multi-User Systems",
 };
 
-const UNIT_TILE_PHOTOS: Record<string, { src: string; alt: string; credit?: string }> = {
-  "8252": { src: "/figures/unit-business-reports.jpg", alt: "Colleagues reviewing written reports alongside laptops" },
-  "10135": { src: "/figures/unit-teamwork.jpg", alt: "Software project team collaborating with laptops" },
-  "HWSW": { src: "/figures/unit-hardware.jpg", alt: "Detailed close-up of computer circuitry and processor chips" },
-  "HWSW2": { src: "/figures/ram-install.jpg", alt: "Close-up of memory slots on a computer motherboard", credit: "ram-install" },
-  "114055": { src: "/figures/unit-meeting.jpg", alt: "Professionals listening and contributing to a group discussion" },
-  "114050": { src: "/figures/unit-teamwork.jpg", alt: "Business team using computer technology to collaborate" },
-  "114051": { src: "/figures/unit-meeting.jpg", alt: "Participants discussing ideas in a professional meeting" },
-  "114059": { src: "/figures/unit-research.jpg", alt: "Work plans and notes being written at a desk" },
-  "114074": { src: "/figures/unit-servers.jpg", alt: "Network equipment and cabling inside server cabinets" },
-  "114046": { src: "/figures/managed-switch.jpg", alt: "Managed Ethernet switches and organised network patch cables", credit: "managed-switch" },
-  "114076": { src: "/figures/unit-business-reports.jpg", alt: "Research notes being reviewed with information on laptops" },
-  "114183": { src: "/figures/rack-server-1u.jpg", alt: "Open server exposing its components for troubleshooting", credit: "rack-server-1u" },
-  "114058": { src: "/figures/unit-servers.jpg", alt: "Server infrastructure supporting shared multi-user systems" },
+const UNIT_TILE_PHOTOS: Record<string, { src: string; alt: string; credit?: string; referenceHeader?: boolean }> = {
+  "8252": { src: "/figures/unit-8252-reference-header.webp", alt: "US 8252, Business Reports, Module 1: Personal Development. A laptop displaying charts beside a report being written.", referenceHeader: true },
+  "10135": { src: "/figures/unit-10135-reference-header.webp", alt: "US 10135, Project Teamwork, Module 1: Personal Development. A project team collaborating around a laptop.", referenceHeader: true },
+  "HWSW": { src: "/figures/unit-HWSW-reference-header.webp", alt: "HWSW, Hardware and Software, Module 1: Personal Development. Close-up of a processor and motherboard.", referenceHeader: true },
+  "HWSW2": { src: "/figures/unit-HWSW2-reference-header.webp", alt: "HWSW2, Hardware Illustrated, Module 1: Personal Development. Computer components and an illustrated hardware guide.", referenceHeader: true },
+  "114055": { src: "/figures/unit-114055-reference-header.webp", alt: "US 114055, Ethics and Professionalism, Module 1: Personal Development. A presenter discussing integrity, respect and responsibility.", referenceHeader: true },
+  "114050": { src: "/figures/unit-114050-reference-header.webp", alt: "US 114050, Business and IT, Module 1: Personal Development. A screen illustrating the relationship between business and information technology.", referenceHeader: true },
+  "114051": { src: "/figures/unit-114051-reference-header.webp", alt: "US 114051, Technical Meetings, Module 1: Personal Development. A presenter explaining a technical diagram to colleagues.", referenceHeader: true },
+  "114059": { src: "/figures/unit-114059-reference-header.webp", alt: "Work Planning and Delivery, Module 1: Personal Development. A notebook with a plan, schedule, execute and deliver checklist.", referenceHeader: true },
+  "114074": { src: "/figures/unit-114074-reference-header.webp", alt: "US 114074, Network Architecture, Module 2: Client Server Networking. Computers, routers and servers connected with blue network cables.", referenceHeader: true },
+  "114046": { src: "/figures/unit-114046-reference-header.webp", alt: "US 114046, LAN Management, Module 2: Client Server Networking. A network switch and blue Ethernet cables in a computer lab.", referenceHeader: true },
+  "114076": { src: "/figures/unit-114076-reference-header.webp", alt: "US 114076, Computer Research, Module 2: Client Server Networking. Research books, a laptop and an open notebook.", referenceHeader: true },
+  "114183": { src: "/figures/unit-114183-reference-header.webp", alt: "US 114183, OS Troubleshooting, Module 2: Client Server Networking. A technician repairing a computer beside a troubleshooting screen.", referenceHeader: true },
+  "114058": { src: "/figures/unit-114058-reference-header.webp", alt: "US 114058, Multi-User Systems, Module 2: Client Server Networking. Three user workstations beside server racks.", referenceHeader: true },
 };
 
 export function ModulePage({
@@ -2247,7 +2247,7 @@ export function ModulePage({
         <Bar value={c} green={c === 1} />
       </div>
 
-      <div className="module-unit-grid">
+      <div className={`module-unit-grid${activeCourseId() === "itss" && mod.id === "m1" ? " personal-development-grid" : ""}`}>
       {mod.units.map((u, ui) => {
         const st = unitStatus(progress, u.us);
         const uc = unitCompletion(progress, u.us);
@@ -2258,7 +2258,7 @@ export function ModulePage({
         return (
           <div
             key={u.us}
-            className={`unit-row module-unit-card${photo ? " has-photo" : ""}${locked ? " locked" : ""}`}
+            className={`unit-row module-unit-card${photo ? " has-photo" : ""}${photo?.referenceHeader ? " has-reference-header" : ""}${locked ? " locked" : ""}`}
             role={inline.editing ? undefined : "button"}
             tabIndex={locked || inline.editing ? undefined : 0}
             onKeyDown={e => { if (!locked && !inline.editing && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); navigate({ page: "unit", moduleId: mod.id, unitId: u.us }); } }}
@@ -2268,11 +2268,11 @@ export function ModulePage({
               <span className="module-unit-banner">
               <img className="module-unit-photo" src={photo.src} alt={photo.alt}
                 loading="lazy" decoding="async" />
-              <span className="module-unit-banner-copy" aria-hidden="true">
+              {!photo.referenceHeader && <span className="module-unit-banner-copy" aria-hidden="true">
                 <span className="module-unit-banner-code">{usLabel(u.us)}</span>
                 <strong>{UNIT_TILE_BANNER_TITLES[u.us] ?? u.title}</strong>
                 <span className="module-unit-banner-caption">Module {idx + 1} · {mod.name}</span>
-              </span>
+              </span>}
               </span>
               {credit && <a className="module-unit-photo-credit" href={credit.sourceUrl}
                 target="_blank" rel="noopener noreferrer"
@@ -2285,16 +2285,18 @@ export function ModulePage({
               aria-label={locked ? "Locked" : st === "completed" ? "Completed" : st === "in-progress" ? `${Math.round(uc * 100)}% complete` : "Not started"}
             >
               {!locked && st === "in-progress" ? (
-                <Ring value={uc} size={56} stroke={5} showLabel />
+                <Ring value={uc} size={photo?.referenceHeader ? 84 : photo ? 64 : 56} stroke={photo?.referenceHeader ? 6 : 5} showLabel />
               ) : <Icon
                 name={locked ? "lock" : st === "completed" ? "checkCircle" : "circle"}
-                size={22}
+                size={photo?.referenceHeader ? 34 : photo ? 28 : 22}
               />}
             </span>
             <span className="main">
-              <span className="module-unit-code">{usLabel(u.us)}</span>
-              <span className="t">
-                {inline.text(u.title, (d, v) => { d.modules[idx].units[ui].title = v; }, "title")}
+              <span className="module-unit-heading">
+                <span className="module-unit-code">{usLabel(u.us)}</span>
+                <span className="t">
+                  {inline.text(u.title, (d, v) => { d.modules[idx].units[ui].title = v; }, "title")}
+                </span>
               </span>
               <span className="m">
                 <span>

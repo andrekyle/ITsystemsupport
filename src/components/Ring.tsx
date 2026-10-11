@@ -17,7 +17,7 @@ export function Ring({
   const off = c * (1 - Math.min(1, Math.max(0, value)));
   return (
     <span style={{ position: "relative", display: "inline-flex", width: size, height: size }}>
-      <svg width={size} height={size} className={`ring${value >= 1 ? " done" : ""}`}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className={`ring${value >= 1 ? " done" : ""}`}>
         <circle className="track" cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} />
         <circle
           className="val"
