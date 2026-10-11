@@ -125,35 +125,6 @@ export function Dashboard({
         </div>
       </div>
 
-      <div className="tabs" role="tablist" aria-label="Dashboard sections">
-        {dashboardTabs.map((item, index) => (
-          <button key={item.id} type="button" role="tab" id={`dashboard-tab-${item.id}`}
-            aria-controls={`dashboard-panel-${item.id}`} aria-selected={dashboardTab === item.id}
-            tabIndex={dashboardTab === item.id ? 0 : -1}
-            className={`tab${dashboardTab === item.id ? " active" : ""}`}
-            onClick={() => setDashboardTab(item.id)}
-            onKeyDown={event => {
-              let nextIndex = index;
-              if (event.key === "ArrowRight") nextIndex = (index + 1) % dashboardTabs.length;
-              else if (event.key === "ArrowLeft") nextIndex = (index + dashboardTabs.length - 1) % dashboardTabs.length;
-              else if (event.key === "Home") nextIndex = 0;
-              else if (event.key === "End") nextIndex = dashboardTabs.length - 1;
-              else return;
-              event.preventDefault();
-              setDashboardTab(dashboardTabs[nextIndex].id);
-              document.getElementById(`dashboard-tab-${dashboardTabs[nextIndex].id}`)?.focus();
-            }}>
-            {item.label}
-          </button>
-        ))}
-      </div>
-
-      {profile.role === "Super User" && (
-        <section role="tabpanel" id="dashboard-panel-ai" aria-labelledby="dashboard-tab-ai" hidden={dashboardTab !== "ai"}>
-          <TokenGauge />
-        </section>
-      )}
-
       <section aria-label="Achievements">
       <div className="card xp-card">
         <div className="xp-head">
@@ -205,6 +176,35 @@ export function Dashboard({
       </div>
 
       </section>
+
+      <div className="tabs dashboard-section-tabs" role="tablist" aria-label="Dashboard sections">
+        {dashboardTabs.map((item, index) => (
+          <button key={item.id} type="button" role="tab" id={`dashboard-tab-${item.id}`}
+            aria-controls={`dashboard-panel-${item.id}`} aria-selected={dashboardTab === item.id}
+            tabIndex={dashboardTab === item.id ? 0 : -1}
+            className={`tab${dashboardTab === item.id ? " active" : ""}`}
+            onClick={() => setDashboardTab(item.id)}
+            onKeyDown={event => {
+              let nextIndex = index;
+              if (event.key === "ArrowRight") nextIndex = (index + 1) % dashboardTabs.length;
+              else if (event.key === "ArrowLeft") nextIndex = (index + dashboardTabs.length - 1) % dashboardTabs.length;
+              else if (event.key === "Home") nextIndex = 0;
+              else if (event.key === "End") nextIndex = dashboardTabs.length - 1;
+              else return;
+              event.preventDefault();
+              setDashboardTab(dashboardTabs[nextIndex].id);
+              document.getElementById(`dashboard-tab-${dashboardTabs[nextIndex].id}`)?.focus();
+            }}>
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      {profile.role === "Super User" && (
+        <section role="tabpanel" id="dashboard-panel-ai" aria-labelledby="dashboard-tab-ai" hidden={dashboardTab !== "ai"}>
+          <TokenGauge />
+        </section>
+      )}
 
       <section role="tabpanel" id="dashboard-panel-overview" aria-labelledby="dashboard-tab-overview" hidden={dashboardTab !== "overview"}>
       {announcements.length > 0 && (

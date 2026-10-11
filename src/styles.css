@@ -3558,6 +3558,11 @@ textarea:focus {
   flex-wrap: wrap;
 }
 
+.tabs.dashboard-section-tabs {
+  margin-top: 28px;
+  margin-bottom: 20px;
+}
+
 .tab {
   display: inline-flex;
   align-items: center;
