@@ -42,6 +42,56 @@ export function CloudAuth() {
   const [error, setError] = useState<string | null>(savedAuthError);
   const [notice, setNotice] = useState<string | null>(null);
   const submitting = useRef(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const signInLink = useRef<HTMLAnchorElement>(null);
+  const discovery = TENANT_ID === "discovery";
+  const [mobile, setMobile] = useState(() => window.matchMedia("(max-width: 980px)").matches);
+  const popup = discovery && !mobile;
+  const [loginOpen, setLoginOpen] = useState(() =>
+    window.location.hash === "#discovery-login" || !!error || mode === "signup"
+  );
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 980px)");
+    const update = () => setMobile(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (!discovery) return;
+    const syncHash = () => setLoginOpen(window.location.hash === "#discovery-login");
+    window.addEventListener("hashchange", syncHash);
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, [discovery]);
+
+  useEffect(() => {
+    if (!dialogRef.current) return;
+    if (!popup) {
+      if (!dialogRef.current.open) dialogRef.current.show();
+      return;
+    }
+    if (loginOpen) {
+      dialogRef.current.close();
+      dialogRef.current.showModal();
+      dialogRef.current.querySelector<HTMLInputElement>("#ca-email")?.focus();
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        dialogRef.current?.close();
+        document.body.style.overflow = previousOverflow;
+      };
+    }
+    dialogRef.current.close();
+  }, [popup, loginOpen]);
+
+  function closeLogin() {
+    if (busy) return;
+    setLoginOpen(false);
+    setPassword("");
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    signInLink.current?.focus();
+  }
 
   // Keep the user on the registration screen if the page is refreshed (for
   // example after an accidental pull-to-refresh on mobile). Credentials stay
@@ -132,64 +182,36 @@ export function CloudAuth() {
 
   return (
     <div className={`gate${TENANT_ID === "discovery" ? " discovery-gate" : ""}`}>
+      {discovery && (
+        <a className="discovery-signin-link" href="#discovery-login" ref={signInLink}
+          onClick={() => setLoginOpen(true)}>
+          Sign in
+        </a>
+      )}
       {TENANT_ID === "discovery" && (
-        <div className="discovery-auth-showcase" aria-hidden="true">
-          <img className="discovery-hero-logo" src={TENANT.logo!} alt="" />
-          <p>GROW WITH PURPOSE.</p>
-          <h2>Learn today.<br /><span>Make an impact.</span></h2>
-          <div className="discovery-hero-rule" />
+        <div className="discovery-auth-showcase">
+          <img className="discovery-hero-logo" src={TENANT.logo!} alt="Discovery" />
+          {mobile && <p>GROW WITH PURPOSE.</p>}
+          <h2>{mobile ? <>Learn today.<br /><span>Make an impact.</span></> : <>Learn today.<br />Make an<br /><span>impact.</span></>}</h2>
           <p className="discovery-hero-copy">Build your skills. Grow your confidence. Put your learning into practice.</p>
+          <div className="discovery-hero-rule" />
         </div>
       )}
-      {TENANT_ID === "discovery" && (
-        <div className="discovery-campus" aria-hidden="true">
-          <svg viewBox="0 0 900 800" preserveAspectRatio="xMidYMid slice">
-            <defs>
-              <linearGradient id="campus-sky" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stopColor="#bde5ff" />
-                <stop offset=".52" stopColor="#328bd2" />
-                <stop offset="1" stopColor="#07518c" />
-              </linearGradient>
-              <linearGradient id="campus-glass" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stopColor="#092844" />
-                <stop offset=".42" stopColor="#1268a5" />
-                <stop offset=".72" stopColor="#153f62" />
-                <stop offset="1" stopColor="#061e34" />
-              </linearGradient>
-              <pattern id="campus-windows" width="38" height="42" patternUnits="userSpaceOnUse">
-                <path d="M0 0H38M0 0V42" fill="none" stroke="#d2edff" strokeOpacity=".45" strokeWidth="2" />
-                <path d="M5 5H32V34H5Z" fill="#9ddcff" fillOpacity=".12" />
-              </pattern>
-            </defs>
-            <rect width="900" height="800" fill="url(#campus-sky)" />
-            <path d="M0 0H900V220L590 170 360 250 0 340Z" fill="#fff" fillOpacity=".12" />
-            <path d="M170 800V228Q180 156 250 145L405 127 540 202V800Z" fill="url(#campus-glass)" />
-            <path d="M170 800V228Q180 156 250 145L405 127 540 202V800Z" fill="url(#campus-windows)" />
-            <path d="M540 800V204L900 302V800Z" fill="#082941" />
-            <path d="M540 204L900 302V800H540Z" fill="url(#campus-windows)" />
-            <path d="M405 128Q480 167 540 204" fill="none" stroke="#e7f7ff" strokeOpacity=".8" strokeWidth="4" />
-            <path d="M0 706Q220 680 390 716T900 684V800H0Z" fill="#092a3b" fillOpacity=".8" />
-            <path d="M18 0Q-42 265 24 490T170 800" fill="none" stroke="#fff" strokeOpacity=".78" strokeWidth="3" />
-            <path d="M48 0Q-10 256 52 480T205 800" fill="none" stroke="#fff" strokeOpacity=".36" strokeWidth="2" />
-            <g fill="#d6ad6e" fillOpacity=".9">
-              <circle cx="90" cy="663" r="48" /><circle cx="135" cy="693" r="62" />
-              <circle cx="823" cy="638" r="43" /><circle cx="870" cy="685" r="58" />
-            </g>
-            <g fill="#285a42">
-              <path d="M42 800l48-186 52 186z" /><path d="M84 800l55-142 48 142z" />
-              <path d="M770 800l52-178 54 178z" /><path d="M824 800l48-136 42 136z" />
-            </g>
-            <path d="M0 755Q245 716 475 750T900 734V800H0Z" fill="#dfd5bb" />
-            <path d="M0 778H900" stroke="#fff" strokeOpacity=".75" strokeWidth="5" />
-          </svg>
-        </div>
-      )}
+      <dialog ref={dialogRef} open={popup ? undefined : true}
+        className={popup ? "discovery-login-dialog" : "auth-inline-dialog"}
+        aria-labelledby="cloud-auth-title"
+        onCancel={(event) => { event.preventDefault(); closeLogin(); }}
+        onClick={(event) => { if (event.target === event.currentTarget) closeLogin(); }}>
       <div className="gate-card">
+        {popup && (
+          <button type="button" className="discovery-login-close" aria-label="Close sign-in"
+            disabled={busy} onClick={closeLogin}>×</button>
+        )}
         <div className="logo">
           <TenantLogo />
         </div>
         <div className="tenant-location">{TENANT.name} · {TENANT.location}</div>
-        <h1>{mode === "signin" ? "Sign in to your account" : "Create your account"}</h1>
+        <h1 id="cloud-auth-title">{mode === "signin" ? "Sign in to your account" : "Create your account"}</h1>
         <p className="sub">
           {qualification.title} · SAQA ID {qualification.saqaId} · NQF Level {qualification.nqfLevel}.
           {" "}Sign in to continue this qualification. Your profile and learning progress are
@@ -238,6 +260,7 @@ export function CloudAuth() {
         <div className="divider">or</div>
         <button
           className="btn ghost block"
+          disabled={busy}
           onClick={() => {
             setMode(mode === "signin" ? "signup" : "signin");
             setError(null);
@@ -252,6 +275,7 @@ export function CloudAuth() {
           </button>
         )}
       </div>
+      </dialog>
     </div>
   );
 }

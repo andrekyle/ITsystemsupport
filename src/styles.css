@@ -2069,7 +2069,7 @@ td .with-ico .ico {
 .discovery-gate {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(380px, .88fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   justify-content: stretch;
   gap: clamp(28px, 5vw, 82px);
@@ -2078,7 +2078,7 @@ td .with-ico .ico {
   padding: clamp(32px, 5vw, 76px) clamp(32px, 5vw, 76px);
   color: #161617;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
-  background: #f7f8fa;
+  background: #f7f8fa url("/discovery/Learn Today, Make an Impact.png") center / cover no-repeat;
 }
 
 .discovery-gate .gate-card {
@@ -2097,7 +2097,7 @@ td .with-ico .ico {
 }
 
 .discovery-gate .gate-card > .logo,
-.discovery-gate .gate-card > .tenant-location { display: none; }
+.discovery-gate .gate-card > .tenant-location { display: block; }
 .discovery-gate .tenant-logo { max-width: 200px; max-height: 52px; }
 .discovery-gate .tenant-location { margin: 0 0 18px; color: #707075; letter-spacing: .12em; }
 .discovery-gate .gate-card h1 { font-size: 25px; font-weight: 700; letter-spacing: -.035em; }
@@ -2123,34 +2123,74 @@ td .with-ico .ico {
 .discovery-gate .auth-error { color: #b31228; }
 
 .discovery-auth-showcase {
-  position: relative;
+  position: absolute;
   z-index: 1;
   grid-column: 1;
   grid-row: 1;
-  width: 100%;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
   min-width: 0;
-  min-height: min(720px, calc(100vh - 96px));
+  min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
 }
-.discovery-hero-logo { position:absolute; top:0; left:0; width:min(260px,28vw); height:72px; object-fit:contain; object-position:left center; }
+.discovery-hero-logo { position:absolute; top:0; left:0; width:min(320px,32vw); height:82px; object-fit:contain; object-position:left center; }
 .discovery-auth-showcase > p { margin: 0 0 18px; color: #a47b45; font-size: 12px; font-weight: 750; letter-spacing: .2em; }
-.discovery-auth-showcase h2 { max-width: 620px; margin: 0 0 30px; color: #101a34; font-size: clamp(54px, 6.2vw, 100px); font-weight:700; line-height: .98; letter-spacing: -.065em; }
+.discovery-auth-showcase h2 { max-width: 620px; margin: 100px 0 30px; color: #101a34; font-size: clamp(54px, 7vw, 110px); font-weight:500; line-height: .98; letter-spacing: -.065em; }
 .discovery-auth-showcase h2 span { color: #bd8e4f; }
-.discovery-hero-rule { width:80px; height:5px; margin-bottom:22px; border-radius:999px; background:#bd8e4f; }
+.discovery-hero-rule { width:210px; height:5px; margin-top:38px; border-radius:999px; background:linear-gradient(to right, #bd8e4f 38%, #e6e6e6 38%); }
 .discovery-auth-showcase .discovery-hero-copy { max-width: 500px; margin:0; color:#6f7783; font-size:clamp(16px,1.45vw,21px); font-weight:450; letter-spacing:-.015em; line-height:1.55; }
-.discovery-campus {
+.discovery-signin-link {
   position: absolute;
-  z-index: 0;
-  inset: 0 0 0 auto;
-  width: 58%;
-  overflow: hidden;
-  clip-path: ellipse(94% 98% at 100% 50%);
-  background: #167cc0;
+  z-index: 2;
+  top: 28px;
+  right: clamp(24px, 5vw, 76px);
+  padding: 12px 20px;
+  border-radius: 999px;
+  color: #002147;
+  background: #fff;
+  font-weight: 600;
 }
-.discovery-campus svg { display:block; width:100%; height:100%; }
+.discovery-signin-link:hover { color: #002147; background: #f0f3f7; }
+.auth-inline-dialog { position: static; margin: 0; padding: 0; border: 0; background: transparent; color: inherit; }
+.discovery-login-dialog {
+  width: min(440px, calc(100vw - 32px));
+  max-width: none;
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 28px;
+  background: #fff;
+  color: #17181a;
+  overflow-y: auto;
+}
+.discovery-login-dialog::backdrop { background: rgba(0, 33, 71, .72); }
+.discovery-login-dialog .gate-card {
+  width: 100%;
+  padding: 32px 30px;
+  border: 0;
+  border-radius: 28px;
+  box-shadow: none;
+}
+.discovery-login-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: #707075;
+  font-size: 24px;
+}
+.discovery-login-dialog .field input { background: #fff; }
+.discovery-login-dialog .divider::before,
+.discovery-login-dialog .divider::after { background: #d8d8d8; }
 
 @media (max-width: 980px) {
   .discovery-gate {
@@ -2159,32 +2199,39 @@ td .with-ico .ico {
     align-content: center;
     gap: 24px;
     padding: 38px 22px;
+    background: #f7f8fa;
   }
-  .discovery-campus { opacity: .2; width: 72%; }
+  .discovery-signin-link { display: none; }
+  .discovery-gate .auth-inline-dialog { grid-column: 1; grid-row: 2; width: min(100%, 420px); }
   .discovery-auth-showcase {
+    position: relative;
     grid-column: 1;
     grid-row: 1;
     width: min(100%, 520px);
+    height: auto;
+    overflow: visible;
+    clip-path: none;
     min-height: 0;
     padding-top: 68px;
   }
   .discovery-hero-logo { width: 200px; height: 56px; }
-  .discovery-auth-showcase h2 { font-size: clamp(46px, 8vw, 72px); }
+  .discovery-auth-showcase h2 { margin-top: 0; font-size: clamp(46px, 8vw, 72px); }
   .discovery-gate .gate-card { grid-column: 1; grid-row: 2; }
   .discovery-gate .gate-card > .logo { display: block; }
   .discovery-gate .gate-card > .tenant-location { display: block; }
 }
 
 @media (max-width: 520px) {
-  .discovery-gate { gap: 18px; padding: 28px 16px; }
-  .discovery-campus { width: 100%; opacity: .11; clip-path: none; }
+  .discovery-gate { gap: 18px; padding: 28px 16px; background-size: contain; }
   .discovery-auth-showcase { padding-top: 52px; }
   .discovery-hero-logo { width: 170px; height: 44px; }
+  .discovery-auth-showcase .discovery-hero-copy { margin-bottom: 0; }
   .discovery-auth-showcase > p { margin-bottom: 10px; font-size: 10px; }
   .discovery-auth-showcase h2 { margin-bottom: 16px; font-size: clamp(38px, 10vw, 52px); }
-  .discovery-hero-rule { margin-bottom: 12px; }
+  .discovery-hero-rule { margin-top: 22px; }
   .discovery-auth-showcase .discovery-hero-copy { font-size: 14px; }
   .discovery-gate .gate-card { padding: 22px 20px; }
+  .discovery-signin-link { top: 24px; right: 16px; padding: 10px 14px; }
 }
 
 .gate-card h1 {
