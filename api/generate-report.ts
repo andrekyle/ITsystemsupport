@@ -117,10 +117,16 @@ const EXECUTIVE_REFERENCE_RULES = `EXECUTIVE REPORT APPROVED STRUCTURE — HARD 
 - Do not add sessions, table or measures slides to the Executive Report unless the facilitator explicitly requests extra sections. Never replace or remove the learner overview slides.
 - Keep the cover title concise in the form "<Month> Report", with the qualification and month in the subtitle.`;
 
+const DATA_ANALYSIS_RULES = `report_kind "data-analysis": write a programme data-analysis narrative accompanying the client's thirteen deterministic charts. Do NOT return a slide deck, SVG, chart markup or invented chart values.
+Return STRICT JSON: {"intro":"brief factual cohort overview","sections":[{"heading":"finding-based heading","paragraphs":["analysis grounded in the supplied figures"],"bullets":["optional supporting finding"]}],"recommendations":["practical evidence-based action"]}.
+Include 5-7 sections covering completion and its distribution, attendance patterns, quiz/exercise performance, evidence and assessor-confirmed credits, unit/module status, and risk/data quality. Give 3-6 recommendations.
+Use data.analysis as the chart source. Distinguish whole-programme learner metrics from scoped unit/module metrics. Null means not recorded, not zero. Submitted is not Competent. Risk indicators overlap. This is a snapshot: do not claim improvement, decline or causation without historical data. The session chart only represents dates present in cohort signatures, not every scheduled session. State limitations explicitly. The client provides every learner's graph and data appendix; narrative need not repeat every name. Do not claim predictions or statistical significance.`;
+
 /** Answer-mode questions skip the report spec; kind runs skip the question ladder. Same rules, fewer tokens. */
 function buildSystemPrompt(hasQuestion: boolean, mode: string, kind: string): string {
   if (hasQuestion && mode === "answer") return [CORE_PROMPT, SCOPE_DIRECT_RULES, ANSWER_TAIL].join("\n\n");
   if (kind === "tracker") return [CORE_PROMPT, CLINICAL_RULES, TRACKER_RULES].join("\n\n");
+  if (kind === "data-analysis") return [CORE_PROMPT, CLINICAL_RULES, DATA_ANALYSIS_RULES].join("\n\n");
   if (kind === "executive") return [CORE_PROMPT, CLINICAL_RULES, DECK_RULES, EXECUTIVE_REFERENCE_RULES].join("\n\n");
   if (hasQuestion) return [CORE_PROMPT, SCOPE_DIRECT_RULES, CLINICAL_RULES, DECK_RULES].join("\n\n");
   return [CORE_PROMPT, CLINICAL_RULES, DECK_RULES].join("\n\n");
@@ -279,7 +285,7 @@ export default async function handler(req: Request): Promise<Response> {
           200
         );
       }
-      if (kind !== "tracker") {
+      if (kind !== "tracker" && kind !== "data-analysis") {
         // deck-template report: pass the cover + slides through; the client renders the fixed layout
         const slides = Array.isArray(parsed.slides)
           ? parsed.slides.filter(

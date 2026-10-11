@@ -35,6 +35,13 @@ const ERROR_TEXT: Record<string, string> = {
 
 /** Overlay narration per report kind — spoken to the user by name. */
 const GEN_PHASES: Record<string, (n: string) => string[]> = {
+  "data-analysis": (n) => [
+    `Analysing the programme data for you, ${n}…`,
+    "Comparing completion, attendance and assessment results…",
+    "Calculating evidence, credits, unit status and risk indicators…",
+    "Preparing thirteen data-driven graphs…",
+    "Formatting the colourful programme analysis report…",
+  ],
   progress: (n) => [
     `Pulling every learner's completion for you, ${n}…`,
     "Averaging quiz and exercise scores…",
@@ -271,6 +278,7 @@ function kindForPrompt(prompt: string): ReportKind {
     /\b(learner|student|submission|attendance)\s+tracker\b/.test(text) ||
     /\btracker\s+report\b/.test(text);
   if (asksForTracker) return byId("tracker");
+  if (/\bdata\s+analysis\b|\bprogramme\s+analysis\s+report\b|\bprogram\s+analysis\s+report\b/.test(text)) return byId("data-analysis");
   if (/\bexecutive\s+(summary|report)\b/.test(text)) return byId("executive");
   if (/\b(learnership|learner)\s+progress\s+report\b|\bprogress\s+report\b/.test(text)) return byId("progress");
   return CUSTOM_KIND;

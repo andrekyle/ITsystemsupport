@@ -1,5 +1,6 @@
 import type { Profile } from "../types";
-import { COURSE_META, MODULES } from "../data/course";
+import { COURSE_META, MODULES, POE_TOTAL } from "../data/course";
+import { programmeAnalysisData, programmeAnalysisHtml, PROGRAMME_ANALYSIS_CSS } from "./programmeAnalysis";
 import { TENANT_ID } from "./tenant";
 import { loadOutcomes } from "../store";
 import { docToolbar } from "./certificates";
@@ -27,6 +28,12 @@ export interface ReportKind {
 }
 
 export const REPORT_KINDS: ReportKind[] = [
+  {
+    id: "data-analysis",
+    name: "Programme data analysis report",
+    desc: "A graph-rich programme analysis: learner completion, attendance, assessment performance, evidence, credits, module competence, unit status and risk, with a colourful Microsoft-style palette.",
+    icon: "chart",
+  },
   {
     id: "progress",
     name: "Learnership progress report",
@@ -224,6 +231,16 @@ function outcomesData(rows: LearnerRow[], scope: ReportScope = "worked") {
   });
 }
 
+function analysisData(rows: LearnerRow[], scope: ReportScope) {
+  const selected = scope === "all" ? null : workedUnitCodes(rows);
+  const units = MODULES.flatMap(module => module.units
+    .filter(unit => !selected || selected.has(unit.us))
+    .map(unit => ({ us: unit.us, title: unit.title, module: module.name })));
+  // No started units means an empty worked-unit scope, not the first module.
+  const codes = new Set(units.map(unit => `US ${unit.us}`));
+  return programmeAnalysisData(rows, units, outcomesData(rows, "all").filter(unit => codes.has(unit.unitStandard)), POE_TOTAL, COURSE_META.credits);
+}
+
 /** Compact JSON bundle the AI writes the report from. */
 export function buildReportData(
   kind: string,
@@ -257,6 +274,13 @@ export function buildReportData(
     })),
   };
   switch (kind) {
+    case "data-analysis":
+      return {
+        ...base,
+        learners: rows.map(learnerStat),
+        analysis: analysisData(rows, scope),
+        note: "This is a current snapshot, not a historical comparison. Learner completion, scores, evidence and credits cover the whole programme; unit/module charts follow the selected scope. Missing scores/attendance are not zero. The client renders all charts from these exact data.",
+      };
     case "attendance":
       return {
         ...base,
@@ -828,6 +852,7 @@ export function reportDocumentHtml(
   .st-x { background: #ff5a52; }
   .tracker td.st-x { color: #fff; font-weight: 600; }
   @media print { body { padding: 10mm 12mm; } h2 { break-after: avoid; } tr { break-inside: avoid; } ${tracker ? "@page { size: A3 landscape; }" : ""} }
+  ${kind.id === "data-analysis" ? PROGRAMME_ANALYSIS_CSS : ""}
 </style>
 </head>
 <body>
@@ -841,12 +866,13 @@ export function reportDocumentHtml(
     ${esc(report.intro)}
     <span class="small">${scope === "all" ? "Covers the whole programme." : "Covers only the unit standards worked on so far."} Written by the ITSS Learn AI reporting assistant from live platform data; reviewed by ${esc(author.name)}.</span>
   </div>
+  ${kind.id === "data-analysis" ? programmeAnalysisHtml(analysisData(rows, scope)) : ""}
   <section class="report-section">${sections}</section>
   ${recs ? `<section class="report-section">${recs}</section>` : ""}
 ${tracker ? "" : `
   <h2>Appendix · Data snapshot</h2>
   <p class="small">Figures as recorded on ITSS Learn at the time of generation (${esc(today)}).</p>
-  ${appendixTable(kind.id, rows, scope)}
+  ${kind.id === "data-analysis" ? `<div class="analysis-appendix" tabindex="0" role="region" aria-label="Learner data snapshot">${appendixTable(kind.id, rows, scope)}</div>` : appendixTable(kind.id, rows, scope)}
 `}
   <div class="sign">
     <div>
