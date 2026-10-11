@@ -4803,6 +4803,9 @@ export function UnitPage({
                     Section {si + 1} of {total}
                   </span>
                   <span className="lesson-step-title">{plainSlideText(secHeading)}</span>
+                  {isSuperUser && !slideEditOpen && !editable && lessonSaveStatus === "saved" && (
+                    <span className="lesson-save-status" role="status">Saved to cloud</span>
+                  )}
                   <span className="lesson-top-nav">
                     <button
                       type="button"
@@ -4942,8 +4945,7 @@ export function UnitPage({
                       </EditingTools>
                   )}
                 </div>
-                {isSuperUser && !slideEditOpen && !editable && lessonSaveStatus === "saved" && <p role="status">Saved to cloud.</p>}
-                {isSuperUser && !slideEditOpen && !editable && lessonSaveStatus === "error" && <p className="auth-error" role="alert">{lessonSaveError}</p>}
+                {isSuperUser && !slideEditOpen && !editable && lessonSaveStatus === "error" && <p className="auth-error lesson-toolbar-error" role="alert">{lessonSaveError}</p>}
                 <div
                   className="lesson-progress"
                   role="progressbar"
