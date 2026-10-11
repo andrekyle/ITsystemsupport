@@ -860,10 +860,10 @@ a:hover {
   color: var(--azure);
 }
 
-/* Light mode navigation: charcoal with clean, high-contrast controls. */
+/* Light mode navigation with high-contrast white controls. */
 [data-theme="light"] .sidebar {
-  border-right-color: #383838;
-  background: #252525;
+  border-right-color: #0000FF;
+  background: #0000FF;
   color: #fff;
 }
 [data-theme="light"] .sidebar .side-item,
@@ -15656,6 +15656,8 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 
 /* ============ Training calendar in-place editing ============ */
+
+.assessments-page > .assessment-tabs { margin-bottom: 20px; }
 
 .calendar-tabs .tab,
 .assessment-tabs .tab {
