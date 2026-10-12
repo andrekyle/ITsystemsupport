@@ -24,7 +24,7 @@ import { ConfirmModal } from "../components/Modal";
 import { SlideEditableText } from "../components/SlideEditableText";
 import { SlideTextToolbar } from "../components/SlideTextToolbar";
 import { LessonVideoEditor, LessonVideos } from "../components/LessonVideos";
-import { videoQuizId } from "../lib/videoLearning";
+import { videoEngagementKey, videoQuizId } from "../lib/videoLearning";
 import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml, hydrateSlideImages } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
 import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, effectiveBuiltContent } from "../components/UnitBuilder";
@@ -5081,6 +5081,15 @@ export function UnitPage({
                     .filter(([id, result]) => id.startsWith("video:") && result.best === 5 && result.total === 5)
                     .map(([id]) => id)}
                   learnerName={profile.name}
+                  logbook={progress.units[u.us]?.logbook}
+                  onLike={(link, liked) => {
+                    setLogbookField(u.us, videoEngagementKey(link, "liked"), liked);
+                    if (liked) setLogbookField(u.us, videoEngagementKey(link, "likeXp"), true);
+                  }}
+                  onComment={(link, comments) => {
+                    setLogbookField(u.us, videoEngagementKey(link, "comments"), JSON.stringify(comments));
+                    setLogbookField(u.us, videoEngagementKey(link, "commentXp"), true);
+                  }}
                   onComplete={(link, answers) => {
                     const id = videoQuizId(link);
                     const previous = progress.units[u.us]?.quizzes?.[id];

@@ -4,7 +4,7 @@ import { Icon } from "../icons";
 import { lessonVideoSource, type LessonVideoSource } from "../lib/lessonVideo";
 import { recordLessonVideoView } from "../lib/lessonVideoViews";
 import type { QuizQuestion } from "../types";
-import { validVideoQuestions, videoQuizId, VideoWatchTracker, type VideoQuiz } from "../lib/videoLearning";
+import { validVideoQuestions, videoEngagementKey, videoQuizId, VideoWatchTracker, type VideoQuiz } from "../lib/videoLearning";
 import { VideoQuizEditor } from "./VideoQuizEditor";
 import { TrackedVideoPlayer } from "./TrackedVideoPlayer";
 
@@ -121,6 +121,10 @@ function LessonVideo({
   learnerName,
   onComplete,
   questions,
+  initialLiked = false,
+  initialComments = [],
+  onLike,
+  onComment,
 }: {
   link: string;
   index: number;
@@ -128,12 +132,16 @@ function LessonVideo({
   learnerName: string;
   questions?: QuizQuestion[];
   onComplete?: (answers: number[]) => void;
+  initialLiked?: boolean;
+  initialComments?: string[];
+  onLike?: (liked: boolean) => void;
+  onComment?: (comments: string[]) => void;
 }) {
   const [failed, setFailed] = useState(false);
   const [open, setOpen] = useState(false);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(initialLiked);
   const [saved, setSaved] = useState(false);
-  const [comments, setComments] = useState<string[]>([]);
+  const [comments, setComments] = useState<string[]>(initialComments);
   const [commentDraft, setCommentDraft] = useState("");
   const [showComments, setShowComments] = useState(false);
   const [shareCount, setShareCount] = useState(0);
@@ -206,9 +214,16 @@ function LessonVideo({
     event.preventDefault();
     const comment = commentDraft.trim();
     if (!comment) return;
-    setComments((current) => [...current, comment]);
-    setCommentDraft("");
-    setShowComments(true);
+    try {
+      const next = [...comments, comment];
+      onComment?.(next);
+      setComments(next);
+      setCommentDraft("");
+      setShowComments(true);
+      setStatus(onComment ? "Comment posted. Your first comment on this video earns 10 XP; additional comments earn no extra XP." : "Comment posted.");
+    } catch (cause) {
+      setStatus(cause instanceof Error ? cause.message : "Your comment could not be saved. Please retry.");
+    }
   }
 
   return <>
@@ -330,7 +345,15 @@ function LessonVideo({
               {isCompleted ? "Completed" : "Complete"}
             </button>
             <div className="lesson-video-action-tools">
-              <button type="button" className={`lesson-video-icon-button${liked ? " is-active" : ""}`} aria-label={liked ? "Unlike video" : "Like video"} aria-pressed={liked} onClick={() => setLiked((value) => !value)}>
+              <button type="button" className={`lesson-video-icon-button${liked ? " is-active" : ""}`} aria-label={liked ? "Unlike video" : "Like video"} aria-pressed={liked} onClick={() => {
+                try {
+                  onLike?.(!liked);
+                  setLiked(!liked);
+                  setStatus(!liked && onLike ? "Video liked. The first like on this video earns 5 XP; liking again earns no extra XP." : "");
+                } catch (cause) {
+                  setStatus(cause instanceof Error ? cause.message : "Your like could not be saved. Please retry.");
+                }
+              }}>
                 <Icon name="thumbUp" size={18} />
               </button>
               <button type="button" className="lesson-video-icon-button" aria-label="Share video" disabled={sharing} onClick={() => void shareVideo()}>
@@ -385,6 +408,9 @@ export function LessonVideos({
   onComplete,
   quizzes,
   completedVideoIds,
+  logbook,
+  onLike,
+  onComment,
 }: {
   links: string[];
   completed?: boolean;
@@ -392,6 +418,9 @@ export function LessonVideos({
   quizzes?: Record<string, VideoQuiz>;
   completedVideoIds?: string[];
   onComplete?: (link: string, answers: number[]) => void;
+  logbook?: Record<string, string | boolean>;
+  onLike?: (link: string, liked: boolean) => void;
+  onComment?: (link: string, comments: string[]) => void;
 }) {
   return <>{links.map((link, index) => {
     let id: string;
@@ -401,6 +430,20 @@ export function LessonVideos({
         {cause instanceof Error ? cause.message : "Invalid video link."}
       </p>;
     }
+    let initialComments: string[] = [];
+    const storedComments = logbook?.[videoEngagementKey(link, "comments")];
+    if (typeof storedComments === "string") {
+      try {
+        const parsed: unknown = JSON.parse(storedComments);
+        if (!Array.isArray(parsed) || !parsed.every(comment => typeof comment === "string"))
+          throw new Error("Saved video comments are invalid.");
+        initialComments = parsed;
+      } catch (cause) {
+        return <p key={id} className="auth-error" role="alert">
+          {cause instanceof Error ? cause.message : "Saved video comments could not be loaded."}
+        </p>;
+      }
+    }
     return <LessonVideo
       key={`${index}:${link}:${JSON.stringify(quizzes?.[id]?.questions)}`}
       link={link}
@@ -408,6 +451,10 @@ export function LessonVideos({
       completed={completedVideoIds?.includes(id) ?? completed}
       questions={quizzes?.[id]?.questions}
       learnerName={learnerName}
+      initialLiked={logbook?.[videoEngagementKey(link, "liked")] === true}
+      initialComments={initialComments}
+      onLike={onLike ? liked => onLike(link, liked) : undefined}
+      onComment={onComment ? comments => onComment(link, comments) : undefined}
       onComplete={onComplete ? answers => onComplete(link, answers) : undefined}
     />;
   })}</>;

@@ -2,9 +2,10 @@ import { createRoot } from "react-dom/client";
 import { LessonVideos } from "../src/components/LessonVideos";
 import { VideoQuizEditor } from "../src/components/VideoQuizEditor";
 import { TrackedVideoPlayer } from "../src/components/TrackedVideoPlayer";
-import { VideoWatchTracker, videoQuizId, type VideoQuiz } from "../src/lib/videoLearning";
+import { VideoWatchTracker, videoEngagementKey, videoQuizId, type VideoQuiz } from "../src/lib/videoLearning";
 import { useProgress, loadProgress } from "../src/store";
 import { computeGamification } from "../src/lib/gamification";
+import { installSync } from "../src/lib/sync";
 import "../src/styles.css";
 
 const tick = () => new Promise(resolve => setTimeout(resolve, 40));
@@ -28,9 +29,18 @@ const questions = Array.from({ length: 5 }, (_, i) => ({
 }));
 const quiz: VideoQuiz = { transcript: "The video explains five concepts. ".repeat(20), questions };
 function Fixture() {
-  const { state, saveQuizResult } = useProgress(profileId);
+  const { state, saveQuizResult, setLogbookField } = useProgress(profileId);
   return <LessonVideos links={[link]} quizzes={{ [id]: quiz }}
     completedVideoIds={state.units[unit]?.quizzes?.[id]?.best === 5 ? [id] : []}
+    logbook={state.units[unit]?.logbook}
+    onLike={(link, liked) => {
+      setLogbookField(unit, videoEngagementKey(link, "liked"), liked);
+      if (liked) setLogbookField(unit, videoEngagementKey(link, "likeXp"), true);
+    }}
+    onComment={(link, comments) => {
+      setLogbookField(unit, videoEngagementKey(link, "comments"), JSON.stringify(comments));
+      setLogbookField(unit, videoEngagementKey(link, "commentXp"), true);
+    }}
     onComplete={(_, answers) => saveQuizResult(unit, 5, 5, id, { answers, watchedFully: true })} />;
 }
 function launch() {
@@ -73,6 +83,7 @@ async function simulatePlayback() {
 
 async function test() {
   localStorage.clear();
+  installSync();
   const root = createRoot(document.getElementById("fixture")!);
   root.render(<Fixture />);
   await tick();
@@ -103,6 +114,39 @@ async function test() {
   const result = loadProgress(profileId).units[unit]?.quizzes?.[id];
   assert(result?.best === 5 && result.total === 5 && result.attempts === 1, "Completion persists the five-question result once");
   assert(computeGamification(loadProgress(profileId), 0, 0).xp === 100, "Existing quiz XP and evidence credit are earned");
+  document.querySelector<HTMLButtonElement>('button[aria-label="Like video"]')?.click();
+  await tick();
+  assert(computeGamification(loadProgress(profileId), 0, 0).xp === 105,
+    `First like awards five XP: ${JSON.stringify(loadProgress(profileId).units[unit])}; ${document.querySelector(".lesson-video-status")?.textContent}`);
+  document.querySelector<HTMLButtonElement>('button[aria-label="Unlike video"]')?.click();
+  await tick();
+  document.querySelector<HTMLButtonElement>('button[aria-label="Like video"]')?.click();
+  await tick();
+  assert(computeGamification(loadProgress(profileId), 0, 0).xp === 105, "Unlike/re-like cannot farm XP");
+  document.querySelector<HTMLButtonElement>('button[aria-label="Show comments"]')?.click();
+  await tick();
+  const commentInput = document.querySelector<HTMLInputElement>(".lesson-video-comments input");
+  assert(commentInput, "Comment input exists");
+  const inputSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+  assert(inputSetter, "Input setter exists");
+  for (const text of ["   ", "This explains networking clearly.", "Another comment."]) {
+    inputSetter.call(commentInput, text);
+    commentInput.dispatchEvent(new Event("input", { bubbles: true }));
+    await tick();
+    clickText("Post"); await tick();
+    const expected = text.trim() ? 115 : 105;
+    assert(computeGamification(loadProgress(profileId), 0, 0).xp === expected,
+      "Only the first nonempty comment earns ten XP");
+  }
+  const duplicateVideoProgress = structuredClone(loadProgress(profileId));
+  duplicateVideoProgress.units["duplicate-unit"] = {
+    activities: {}, logbook: {
+      [videoEngagementKey(link, "likeXp")]: true,
+      [videoEngagementKey(link, "commentXp")]: true,
+    },
+  };
+  assert(computeGamification(duplicateVideoProgress, 0, 0).xp === 115,
+    "Same video on another unit cannot duplicate engagement XP");
   complete.click(); await tick();
   assert(loadProgress(profileId).units[unit]?.quizzes?.[id]?.attempts === 1, "Repeat clicks cannot farm XP");
   document.querySelector<HTMLButtonElement>('button[aria-label="Close video"]')?.click();
@@ -114,6 +158,11 @@ async function test() {
   assert(document.querySelector<HTMLButtonElement>(".lesson-video-complete")?.disabled &&
     document.querySelector(".lesson-video-complete")?.textContent?.includes("Completed"),
   "Completion survives remounting");
+  assert(document.querySelector('button[aria-label="Unlike video"]'), "Like survives remounting");
+  document.querySelector<HTMLButtonElement>('button[aria-label="Show comments"]')?.click();
+  await tick();
+  assert(document.querySelectorAll(".lesson-video-comments li").length === 2, "Comments survive remounting");
+  assert(computeGamification(loadProgress(profileId), 0, 0).xp === 115, "Engagement XP survives remounting");
   document.querySelector<HTMLButtonElement>('button[aria-label="Close video"]')?.click();
   await tick();
 
@@ -209,7 +258,7 @@ async function test() {
   vimeoRoot.unmount();
   assert(!Object.keys(vimeoEvents).length, "Closing unsubscribes from Vimeo SDK events");
   document.body.dataset.result = "passed";
-  document.getElementById("result")!.textContent = "PASS: full watch + 5/5 gates completion; skipped playback and failed checks earn no XP; completion persists once; staff generate and save transcript-grounded questions";
+  document.getElementById("result")!.textContent = "PASS: full watch + 5/5 gates completion; likes earn 5 XP and first comments earn 10 XP once per video; engagement and completion persist without duplicate XP; transcript-grounded questions save correctly";
 }
 test().catch(error => {
   document.body.dataset.result = "failed";

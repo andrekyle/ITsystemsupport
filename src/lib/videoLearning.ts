@@ -21,6 +21,10 @@ export function videoQuizId(link: string): string {
   return `video:${lessonVideoSource(link).src}`;
 }
 
+export function videoEngagementKey(link: string, action: "liked" | "comments" | "likeXp" | "commentXp"): string {
+  return `videoengagement.${action}.${lessonVideoSource(link).src}`;
+}
+
 /** Credit only continuous playback, not seeks or repeated sections. */
 export class VideoWatchTracker {
   private previous: { seconds: number; time: number } | null = null;

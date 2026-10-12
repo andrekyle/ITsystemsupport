@@ -172,6 +172,8 @@ export function computeGamification(
   let quizzesPerfect = 0;
   let exercisesPassed = 0;
   let slideGates = 0;
+  const likedVideos = new Set<string>();
+  const commentedVideos = new Set<string>();
 
   for (const [, unit] of Object.entries(progress.units)) {
     const quizResults = [
@@ -229,6 +231,10 @@ export function computeGamification(
     // recorded as logbook flags so they can't be self-ticked.
     for (const [k, v] of Object.entries(unit.logbook ?? {})) {
       if (v === true && k.startsWith("slidegate.")) slideGates++;
+      if (v === true && k.startsWith("videoengagement.likeXp."))
+        likedVideos.add(k.slice("videoengagement.likeXp.".length));
+      if (v === true && k.startsWith("videoengagement.commentXp."))
+        commentedVideos.add(k.slice("videoengagement.commentXp.".length));
     }
   }
 
@@ -241,6 +247,7 @@ export function computeGamification(
   // each 5-question gate passed on a lesson slide is honest evidence of
   // working through the material — smaller than a full quiz (75/50)
   xp += slideGates * 5;
+  xp += likedVideos.size * 5 + commentedVideos.size * 10;
 
   // module completion (all 4 activities on every unit) for the badge
   let anyModuleComplete = false;
