@@ -2287,15 +2287,15 @@ td .with-ico .ico {
 
 .lesson-video-complete {
   display: inline-flex;
-  min-height: 36px;
+  min-height: 24px;
   align-items: center;
   gap: 7px;
-  padding: 0 14px;
+  padding: 0 8px;
   border: 1px solid var(--ink);
   border-radius: 99px;
   color: var(--surface-3);
   background: var(--ink);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
   cursor: pointer;
 }

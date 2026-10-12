@@ -90,6 +90,8 @@ async function test() {
   launch(); await tick();
   const complete = document.querySelector<HTMLButtonElement>(".lesson-video-complete");
   assert(complete?.disabled, "Complete starts disabled");
+  assert(!complete.querySelector("svg"), "Completion button has no check mark");
+  assert(complete.getBoundingClientRect().height <= 26, "Completion button is compact");
   assert(!document.querySelector(".lesson-video-quiz"), "Quiz is hidden before full playback");
   complete.click(); await tick();
   assert(!loadProgress(profileId).units[unit]?.quizzes?.[id], "No early result or XP is recorded");
@@ -116,6 +118,8 @@ async function test() {
     assert(getComputedStyle(complete).backgroundColor === "rgb(16, 124, 16)" &&
       getComputedStyle(complete).borderTopWidth === "0px",
       "Successfully completed video quiz displays a green borderless button in both themes");
+    assert(complete.getBoundingClientRect().height <= 26 && complete.getBoundingClientRect().width < 85,
+      "Completed button stays small");
   }
   const result = loadProgress(profileId).units[unit]?.quizzes?.[id];
   assert(result?.best === 5 && result.total === 5 && result.attempts === 1, "Completion persists the five-question result once");

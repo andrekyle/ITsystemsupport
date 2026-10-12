@@ -350,7 +350,6 @@ function LessonVideo({
                 }
               }}
             >
-              <Icon name="checkCircle" size={16} />
               {isCompleted ? "Completed" : "Complete"}
             </button>
             <div className="lesson-video-action-tools">
