@@ -8,7 +8,7 @@ import { CloudAuth, ResetPassword } from "./components/CloudAuth";
 import { Header } from "./components/Header";
 import { Sidebar } from "./components/Sidebar";
 import { EditingProvider } from "./components/EditingSidebar";
-import { Dashboard, ProgressPage } from "./pages/Dashboard";
+import { Dashboard, DiscoveryDashboard, ProgressPage } from "./pages/Dashboard";
 import { CoursePage, ModulePage, UnitPage } from "./pages/Course";
 import { AssessmentsPage, CalendarPage, DeliverablesPage, ResourcesPage } from "./pages/InfoPages";
 import { PoePage } from "./pages/Poe";
@@ -151,7 +151,11 @@ function Shell({
         <main className="content">
           <div className="content-inner">
             {route.page === "dashboard" && (
-              <Dashboard profile={profile} progress={state} navigate={navigate} />
+              TENANT_ID === "discovery" ? (
+                <DiscoveryDashboard profile={profile} progress={state} navigate={navigate} />
+              ) : (
+                <Dashboard profile={profile} progress={state} navigate={navigate} />
+              )
             )}
             {route.page === "course" && <CoursePage progress={state} navigate={navigate} profile={profile} />}
             {route.page === "module" && route.moduleId && (

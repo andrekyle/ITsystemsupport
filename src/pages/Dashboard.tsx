@@ -348,6 +348,193 @@ export function Dashboard({
   );
 }
 
+export function DiscoveryDashboard({
+  profile,
+  progress,
+  navigate,
+}: {
+  profile: Profile;
+  progress: ProgressState;
+  navigate: (r: Route) => void;
+}) {
+  const modules = MODULES.map((module) => ({
+    ...module,
+    completion: moduleCompletion(progress, module.id),
+  }));
+  const completedUnits = modules.reduce(
+    (count, module) =>
+      count + module.units.filter((unit) => unitStatus(progress, unit.us) === "completed").length,
+    0
+  );
+  const progressPercent =
+    TOTAL_UNITS === 0
+      ? 0
+      : Math.round(
+          (modules.reduce((sum, module) => sum + module.completion * module.units.length, 0) /
+            TOTAL_UNITS) *
+            100
+        );
+  const next = modules
+    .flatMap((module) => module.units.map((unit) => ({ module, unit })))
+    .find(({ unit }) => unitStatus(progress, unit.us) !== "completed");
+  const nextRoute: Route = next
+    ? { page: "unit", moduleId: next.module.id, unitId: next.unit.us }
+    : { page: "course" };
+  const firstName = profile.name.trim().split(/\s+/)[0] || profile.name;
+
+  const gettingStarted = [
+    {
+      icon: "book",
+      title: "Explore your course",
+      description: "See the learning plan and find the topics you'll work through.",
+      route: { page: "course" as const },
+    },
+    {
+      icon: "people",
+      title: "Meet your community",
+      description: "Connect with your learning community and find support.",
+      route: { page: "community" as const },
+    },
+    {
+      icon: "globe",
+      title: "Browse resources",
+      description: "Open the shared resources available for your learning.",
+      route: { page: "resources" as const },
+    },
+  ];
+
+  return (
+    <div className="discovery-onboarding">
+      <section className="discovery-onboarding-hero" aria-labelledby="discovery-welcome-title">
+        <div className="discovery-onboarding-hero-copy">
+          <div className="discovery-onboarding-kicker">
+            <Icon name="target" size={16} />
+            Your learning journey
+          </div>
+          <h1 id="discovery-welcome-title">Welcome to Discovery Learn, {firstName}</h1>
+          <p>
+            Get started with your learning plan, meet your community, and pick up where you left
+            off.
+          </p>
+          <div className="discovery-onboarding-actions">
+            <button
+              type="button"
+              className="discovery-onboarding-primary"
+              onClick={() => navigate(nextRoute)}
+            >
+              <Icon name="play" size={17} />
+              {next ? "Continue learning" : "Review your course"}
+            </button>
+            <button
+              type="button"
+              className="discovery-onboarding-secondary"
+              onClick={() => navigate({ page: "course" })}
+            >
+              Explore course
+              <Icon name="chevronRight" size={16} />
+            </button>
+          </div>
+        </div>
+        <div className="discovery-onboarding-progress" aria-label="Course progress">
+          <div className="discovery-onboarding-progress-head">
+            <span>Course progress</span>
+            <strong>{progressPercent}%</strong>
+          </div>
+          <div
+            className="discovery-onboarding-progress-track"
+            role="progressbar"
+            aria-label="Course progress"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progressPercent}
+          >
+            <span style={{ width: `${progressPercent}%` }} />
+          </div>
+          <span className="discovery-onboarding-progress-note">
+            {completedUnits} of {TOTAL_UNITS} unit standards completed
+          </span>
+        </div>
+      </section>
+
+      <section aria-labelledby="discovery-start-title">
+        <div className="discovery-onboarding-section-heading">
+          <div>
+            <span className="discovery-onboarding-eyebrow">A good place to begin</span>
+            <h2 id="discovery-start-title">Get started</h2>
+          </div>
+        </div>
+        <div className="discovery-onboarding-start-grid">
+          {gettingStarted.map((item, index) => (
+            <button
+              type="button"
+              className="discovery-onboarding-start-card"
+              key={item.title}
+              onClick={() => navigate(item.route)}
+            >
+              <span className="discovery-onboarding-step">0{index + 1}</span>
+              <span className="discovery-onboarding-card-icon">
+                <Icon name={item.icon} size={21} />
+              </span>
+              <strong>{item.title}</strong>
+              <span className="discovery-onboarding-card-description">{item.description}</span>
+              <span className="discovery-onboarding-card-link">
+                Open <Icon name="chevronRight" size={15} />
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="discovery-plan-title">
+        <div className="discovery-onboarding-section-heading">
+          <div>
+            <span className="discovery-onboarding-eyebrow">Your personalized learning plan</span>
+            <h2 id="discovery-plan-title">{COURSE_META.title}</h2>
+          </div>
+          <button
+            type="button"
+            className="discovery-onboarding-text-link"
+            onClick={() => navigate({ page: "progress" })}
+          >
+            View progress <Icon name="chevronRight" size={15} />
+          </button>
+        </div>
+        <div className="discovery-onboarding-module-list">
+          {modules.map((module, index) => (
+            <button
+              type="button"
+              className="discovery-onboarding-module"
+              key={module.id}
+              onClick={() => navigate({ page: "module", moduleId: module.id })}
+            >
+              <span className="discovery-onboarding-module-number">
+                {module.completion === 1 ? (
+                  <Icon name="checkCircle" size={19} />
+                ) : (
+                  String(index + 1).padStart(2, "0")
+                )}
+              </span>
+              <span className="discovery-onboarding-module-main">
+                <span className="discovery-onboarding-module-title">{module.name}</span>
+                <span className="discovery-onboarding-module-meta">
+                  {module.units.length} {module.units.length === 1 ? "unit" : "units"}
+                </span>
+              </span>
+              <span className="discovery-onboarding-module-meter">
+                <span className="discovery-onboarding-module-track">
+                  <span style={{ width: `${Math.round(module.completion * 100)}%` }} />
+                </span>
+                <span>{Math.round(module.completion * 100)}%</span>
+              </span>
+              <Icon name="chevronRight" size={17} />
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export function ProgressPage({
   profile,
   progress,
