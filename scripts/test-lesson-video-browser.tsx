@@ -32,6 +32,13 @@ async function test() {
     <LessonVideos links={[link]} learnerName="Test learner" />
   );
   await tick();
+  const launch = button("Watch Lesson video 1 in expanded player");
+  const launchStyle = getComputedStyle(launch);
+  assert(launchStyle.borderRadius === "0px", "Video thumbnail has square corners");
+  for (const side of ["Top", "Right", "Bottom", "Left"] as const) {
+    assert(launchStyle[`border${side}Width`] === "0px", "Video thumbnail has no border");
+    assert(launchStyle[`padding${side}`] === "0px", "Video thumbnail has no edge padding");
+  }
   const filePreview = document.querySelector<HTMLVideoElement>(".lesson-video-launch video");
   assert(filePreview?.getAttribute("src") === link, "Direct files display a video frame preview");
   assert(filePreview.muted && !filePreview.autoplay && !filePreview.controls,
