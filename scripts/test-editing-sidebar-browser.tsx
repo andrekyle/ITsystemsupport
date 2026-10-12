@@ -4,6 +4,7 @@ import { UnitPage } from "../src/pages/Course";
 import { buildUnitContent } from "../src/lib/unitBuilder";
 import { rememberUnitPack } from "../src/lib/unitStorage";
 import { installSync } from "../src/lib/sync";
+import { videoQuizId } from "../src/lib/videoLearning";
 import "../src/styles.css";
 
 const tick = () => new Promise(resolve => setTimeout(resolve, 60));
@@ -44,6 +45,19 @@ async function test() {
   }));
   localStorage.setItem("itss.lessonedits.114059.built-sidebar-fixture", JSON.stringify({
     videos: { 0: ["https://www.youtube.com/watch?v=abcdefghijk"] },
+    videoQuizzes: { [videoQuizId("https://www.youtube.com/watch?v=abcdefghijk")]: {
+      transcript: source.repeat(3),
+      questions: Array.from({ length: 5 }, (_, index) => ({
+        q: `Question ${index + 1}: What did the speaker explain about connecting devices within a local area network?`,
+        options: [
+          "A switch connects devices within a local area network using Ethernet connections.",
+          "A router connects different networks together.",
+          "Wireless devices cannot communicate.",
+          "None of the above.",
+        ],
+        answer: 0, explain: "The speaker explained the difference between routers and switches.",
+      })),
+    } },
   }));
   createRoot(document.getElementById("fixture")!).render(
     <EditingProvider><div className="body"><main className="content">
@@ -68,7 +82,7 @@ async function test() {
     assert(!media.querySelector('input[type="url"]'), "Add-video form starts collapsed");
     assert(media.querySelector(".lesson-video-source-link")?.textContent?.includes("Open video source"),
       "Long URLs are replaced by a labelled source link");
-    assert(media.querySelector(".lesson-video-quiz-state")?.textContent?.includes("Setup required"),
+    assert(media.querySelector(".lesson-video-quiz-state")?.textContent?.includes("5 questions saved"),
       "Assessment setup status is visible");
     fitsSidebar();
     click("Edit Video"); await tick();
@@ -102,7 +116,26 @@ async function test() {
     assert(assessment, "Video assessment setup exists");
     assessment.querySelector("summary")?.click(); await tick();
     assert(assessment.querySelector("textarea"), "Transcript entry remains available");
+    const prompt = assessment.querySelector<HTMLTextAreaElement>(".generated-quiz-prompt");
+    assert(prompt && parseFloat(getComputedStyle(prompt).fontSize) === 13,
+      "Sidebar question text is compact at 13px");
+    const options = assessment.querySelector<HTMLElement>(".generated-quiz-options");
+    assert(options && getComputedStyle(options).gridTemplateColumns.split(" ").length === 1,
+      "Sidebar answer options use one readable column");
+    for (const textarea of assessment.querySelectorAll<HTMLTextAreaElement>(".generated-quiz-edit textarea")) {
+      if (!textarea.getClientRects().length) continue;
+      assert(textarea.scrollHeight <= textarea.clientHeight + 2, "Question and option text is not clipped");
+    }
     fitsSidebar();
+    const saveVideo = assessment.querySelector<HTMLButtonElement>(".lesson-video-save");
+    const lastExplanation = assessment.querySelectorAll(".generated-quiz-explanation");
+    assert(saveVideo && lastExplanation.length === 5, "Save Video follows all five questions");
+    const saveRect = saveVideo.getBoundingClientRect();
+    const explanationRect = lastExplanation[4].getBoundingClientRect();
+    assert(saveRect.height <= 36 && saveRect.width < assessment.clientWidth,
+      "Save Video is compact rather than full width");
+    assert(saveRect.top - explanationRect.bottom >= 16,
+      "Save Video has at least 16px clearance from the explanation");
     click("Done editing slide"); await tick();
     assert(document.querySelector<HTMLElement>(".editing-sidebar")?.hidden, "Finishing closes the sidebar");
     if (new URL(location.href).searchParams.has("preview")) {

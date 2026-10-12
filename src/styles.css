@@ -2343,7 +2343,10 @@ td .with-ico .ico {
 .lesson-video-quiz-editor > summary { font-size: 12px; font-weight: 600; line-height: 1.5; cursor: pointer; }
 .lesson-video-quiz-state { display: block; margin: 4px 0 0 14px; color: var(--ink-3); font-size: 11px; font-weight: 400; }
 .lesson-video-quiz-editor .muted { font-size: 12px; line-height: 1.5; }
-.btn.lesson-video-save { width: 100%; background: #c62828; border: 1px solid #c62828; color: #fff; }
+.btn.sm.lesson-video-save {
+  width: auto; height: 32px; min-height: 32px; margin-top: 16px; padding: 6px 14px; font-size: 12px;
+  background: #c62828; border: 1px solid #c62828; color: #fff;
+}
 .btn.lesson-video-save:hover:not(:disabled) { background: #a51f1f; border-color: #a51f1f; color: #fff; }
 
 .lesson-video-comments {
@@ -16883,6 +16886,22 @@ body.resizing-slide-table-column * { cursor:col-resize !important; user-select:n
 .generated-quiz-explanation[open] summary span { display:none; }
 .generated-quiz-explanation textarea { margin-top:8px; }
 .generated-quiz-edit :is(textarea,input,button,summary):focus-visible { outline:2px solid var(--azure); outline-offset:2px; }
+
+.editing-sidebar .generated-quiz-edit { gap: 6px; margin: 12px 0; font-size: 12px; }
+.editing-sidebar .generated-quiz-heading label { font-size: 11px; }
+.editing-sidebar .generated-quiz-edit textarea {
+  min-height: 28px; padding: 5px 6px; font-size: 12px; line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.editing-sidebar .generated-quiz-edit .generated-quiz-prompt { font-size: 13px; }
+.editing-sidebar .generated-quiz-choices legend { padding-bottom: 4px; font-size: 11px; }
+.editing-sidebar .generated-quiz-options { grid-template-columns: 1fr; gap: 3px; }
+.editing-sidebar .generated-quiz-option { gap: 6px; padding: 0; }
+.editing-sidebar .generated-quiz-option label { padding-top: 5px; font-size: 11px; line-height: 17px; }
+.editing-sidebar .generated-quiz-option textarea { padding: 5px 6px; }
+.editing-sidebar .generated-quiz-explanation { padding-top: 4px; }
+.editing-sidebar .generated-quiz-explanation summary { gap: 6px; font-size: 11px; }
+.editing-sidebar .generated-quiz-explanation textarea { margin-top: 4px; }
 @media(max-width:600px) {
   .generated-quiz-options { grid-template-columns:1fr; }
   .lesson-quiz-list .quiz-q.quiz-q-editing { padding:12px; }
