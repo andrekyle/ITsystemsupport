@@ -2310,7 +2310,8 @@ td .with-ico .ico {
 .lesson-video-complete.is-complete:disabled {
   border: 0;
   color: #fff;
-  background: #107c10;
+  background: #188718;
+  font-size: 9px;
 }
 
 .lesson-video-action-tools {

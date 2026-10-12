@@ -115,7 +115,8 @@ async function test() {
   complete.click(); await tick();
   for (const theme of ["light", "dark"]) {
     document.documentElement.dataset.theme = theme;
-    assert(getComputedStyle(complete).backgroundColor === "rgb(16, 124, 16)" &&
+    assert(getComputedStyle(complete).backgroundColor === "rgb(24, 135, 24)" &&
+      getComputedStyle(complete).fontSize === "9px" &&
       getComputedStyle(complete).borderTopWidth === "0px",
       "Successfully completed video quiz displays a green borderless button in both themes");
     assert(complete.getBoundingClientRect().height <= 26 && complete.getBoundingClientRect().width < 85,
