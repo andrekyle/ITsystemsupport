@@ -207,6 +207,21 @@ async function test() {
   thumbnail.dispatchEvent(new Event("error"));
   await tick();
   assert(previewFixture.textContent?.includes("thumbnail unavailable"), "Thumbnail errors are visible");
+  const completedFixture = document.createElement("div");
+  document.body.append(completedFixture);
+  createRoot(completedFixture).render(<LessonVideos links={[link]} completed />);
+  await tick();
+  completedFixture.querySelector<HTMLButtonElement>(".lesson-video-launch")!.click();
+  await tick();
+  const completedButton = document.querySelector<HTMLButtonElement>(".lesson-video-complete.is-complete");
+  assert(completedButton?.disabled, "Completed video cannot earn completion again");
+  for (const theme of ["light", "dark"]) {
+    document.documentElement.dataset.theme = theme;
+    const style = getComputedStyle(completedButton);
+    assert(style.backgroundColor === "rgb(198, 40, 40)" && style.color === "rgb(255, 255, 255)" &&
+      style.borderTopWidth === "0px", "Completed button is red with white text and no border in both themes");
+  }
+  button("Close video").click();
   document.body.dataset.result = "passed";
   document.getElementById("result")!.textContent = "PASS: video thumbnails render for YouTube, Vimeo and direct files without autoplay; share counting and visible close-button regressions pass";
 }

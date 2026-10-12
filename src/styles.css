@@ -2307,6 +2307,12 @@ td .with-ico .ico {
   cursor: default;
 }
 
+.lesson-video-complete.is-complete:disabled {
+  border: 0;
+  color: #fff;
+  background: #c62828;
+}
+
 .lesson-video-action-tools {
   display: flex;
   align-items: center;
