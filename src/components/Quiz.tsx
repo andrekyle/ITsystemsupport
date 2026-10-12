@@ -233,7 +233,7 @@ export function Quiz({
     };
     return <div className="quiz">{questions.map((q, qi) => <div className="quiz-q" key={qi}>
       <div className="qt"><span className="qn">{qi + 1}</span><InlineText value={q.q} editable multiline placeholder="Question" onSave={v => change(qi, q => { q.q = v; })} /></div>
-      <EditingTools active title={`Quiz question ${qi + 1}`}>
+      <EditingTools active title={`Quiz question ${qi + 1}`} defaultOpen={false}>
         <p className="muted">Edit question text on the page.</p>
         {(!q.kind || q.kind === "choice") && q.options.map((_, oi) => <label className="unit-editor-check" key={oi}>
           <input type={q.answers ? "checkbox" : "radio"} name={`answer-${qi}`} aria-label={`Correct answer ${oi + 1}`} checked={(q.answers ?? [q.answer]).includes(oi)} onChange={e => change(qi, q => { if (q.answers) q.answers = e.target.checked ? [...q.answers, oi] : q.answers.filter(i => i !== oi); else q.answer = oi; })} />

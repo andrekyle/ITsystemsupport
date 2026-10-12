@@ -15,10 +15,13 @@ export function GeneratedQuizEditor({ question, number, onChange, onRemove }: {
   return <div className="generated-quiz-edit" onClick={event=>event.stopPropagation()}>
     <div className="generated-quiz-heading">
       <label htmlFor={`${id}-question`}>Question {number}</label>
-      <EditingTools active title={`Quiz question ${number}`}>
-      <button type="button" className="generated-quiz-remove" onClick={onRemove} aria-label={`Remove question ${number}`} title="Remove question">
-        <Icon name="trash" size={15}/>
-      </button>
+      <EditingTools active title={`Quiz question ${number}`} defaultOpen={false} headerAction={
+        <button type="button" className="generated-quiz-remove"
+          onClick={event => { event.preventDefault(); event.stopPropagation(); onRemove(); }}
+          aria-label={`Remove question ${number}`} title="Remove question">
+          <Icon name="trash" size={15}/>
+        </button>
+      }>
       <Select ariaLabel={`Correct answer for question ${number}`} value={String(question.answer)}
         options={question.options.map((_, index) => ({ value: String(index), label: `Option ${String.fromCharCode(65 + index)}` }))}
         onChange={value => onChange({ ...question, answer: Number(value) })} />

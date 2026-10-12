@@ -336,6 +336,9 @@ a:hover {
 .editing-tool-group[open] > summary > svg { transform: rotate(180deg); }
 .editing-tool-group > summary:focus-visible { outline: 2px solid var(--ink-3); outline-offset: -3px; border-radius: 10px; }
 .editing-tool-group h3 { margin: 0; font-size: 13px; line-height: 1.4; }
+.editing-tool-group > summary > h3 { flex: 1; }
+.editing-tool-group .generated-quiz-remove { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 28px; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--ink-3); cursor: pointer; }
+.editing-tool-group .generated-quiz-remove:hover { color: var(--red); }
 .editing-tool-group-body { min-width: 0; padding: 0 14px 14px; }
 .editing-tool-description { margin: 0 0 12px; color: var(--ink-3); font-size: 12px; line-height: 1.5; }
 .editing-tool-label { margin: 14px 0 8px; color: var(--ink-2); font-size: 12px; font-weight: 600; }
@@ -14548,9 +14551,7 @@ table.data th.sortable.sorted { color: var(--ink); }
   background: var(--surface);
 }
 
-.discovery-onboarding-secondary:hover,
-.discovery-onboarding-start-card:hover,
-.discovery-onboarding-module:hover {
+.discovery-onboarding-secondary:hover {
   border-color: color-mix(in srgb, var(--discovery-accent) 38%, var(--border));
 }
 

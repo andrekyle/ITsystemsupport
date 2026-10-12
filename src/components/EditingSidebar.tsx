@@ -35,13 +35,14 @@ export function EditingProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function EditingTools({ active, title, children, description, order = 50, defaultOpen = true }: {
+export function EditingTools({ active, title, children, description, order = 50, defaultOpen = true, headerAction }: {
   active: boolean;
   title: string;
   children: ReactNode;
   description?: string;
   order?: number;
   defaultOpen?: boolean;
+  headerAction?: ReactNode;
 }) {
   const context = useContext(EditingContext);
   const phone = usePhoneView();
@@ -52,7 +53,7 @@ export function EditingTools({ active, title, children, description, order = 50,
   }, [active, phone, register, id]);
   if (!active || phone) return null;
   const group = <details className="editing-tool-group" open={defaultOpen} style={{ order }}>
-    <summary><h3>{title}</h3><Icon name="chevronDown" size={16} /></summary>
+    <summary><h3>{title}</h3><Icon name="chevronDown" size={16} />{headerAction}</summary>
     <div className="editing-tool-group-body">
       {description && <p className="editing-tool-description">{description}</p>}
       {children}
