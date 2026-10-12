@@ -24,19 +24,24 @@ export function EditingProvider({ children }: { children: ReactNode }) {
       <div className={`editing-layout${active ? " editing-layout-active" : ""}`}>
         {children}
         <aside className="editing-sidebar" aria-label="Editing tools" hidden={!active}>
-          <h2 className="editing-sidebar-title"><Icon name="pencil" size={18} /> Editing tools</h2>
-          <p className="muted">Edit content on the page. Use the grouped tools below to save or finish.</p>
-          <div ref={setTarget} />
+          <header className="editing-sidebar-header">
+            <h2 className="editing-sidebar-title"><Icon name="pencil" size={18} /> Editing tools</h2>
+            <p>Choose a section below. Edit on the page, then save your changes.</p>
+          </header>
+          <div id="editing-sidebar-groups" className="editing-sidebar-groups" ref={setTarget} />
         </aside>
       </div>
     </EditingContext.Provider>
   );
 }
 
-export function EditingTools({ active, title, children }: {
+export function EditingTools({ active, title, children, description, order = 50, defaultOpen = true }: {
   active: boolean;
   title: string;
   children: ReactNode;
+  description?: string;
+  order?: number;
+  defaultOpen?: boolean;
 }) {
   const context = useContext(EditingContext);
   const phone = usePhoneView();
@@ -46,9 +51,12 @@ export function EditingTools({ active, title, children }: {
     if (active && !phone && register) return register(id);
   }, [active, phone, register, id]);
   if (!active || phone) return null;
-  const group = <section className="editing-tool-group">
-    <h3>{title}</h3>
-    {children}
-  </section>;
+  const group = <details className="editing-tool-group" open={defaultOpen} style={{ order }}>
+    <summary><h3>{title}</h3><Icon name="chevronDown" size={16} /></summary>
+    <div className="editing-tool-group-body">
+      {description && <p className="editing-tool-description">{description}</p>}
+      {children}
+    </div>
+  </details>;
   return context?.target ? createPortal(group, context.target) : group;
 }

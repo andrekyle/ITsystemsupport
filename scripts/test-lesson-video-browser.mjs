@@ -11,6 +11,15 @@ try {
     bundle: true, outfile: join(dir, "test.js"), jsx: "automatic",
     external: ["/discovery/*", "/chat-wallpaper-*.svg"],
     define: { "import.meta.env": "{}" },
+    plugins: [{
+      name: "fixture-worker-url",
+      setup(build) {
+        build.onResolve({ filter: /\?url$/ }, args => ({ path: args.path, namespace: "fixture-url" }));
+        build.onLoad({ filter: /.*/, namespace: "fixture-url" }, () => ({
+          contents: 'export default "unused-fixture-worker";', loader: "js",
+        }));
+      },
+    }],
   });
   writeFileSync(join(dir, "index.html"), '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="test.css"></head><body><div id="fixture"></div><pre id="result">Running</pre><script>window.onerror=function(message){document.body.dataset.result="failed";document.getElementById("result").textContent=String(message);};</script><script src="test.js"></script></body></html>');
   for (const viewport of [

@@ -3511,7 +3511,7 @@ export function UnitPage({
       {tab === "lesson" && <div className="lesson-header-controls" ref={setLessonControlsHost} />}
       {tab === "lesson" && isPrivileged && !phone && (
         <button type="button" className="btn solid sm lesson-header-edit"
-          aria-expanded={slideEditOpen} aria-controls="lesson-slide-edit-tools"
+          aria-expanded={slideEditOpen} aria-controls="editing-sidebar-groups"
           onClick={() => setSlideEditOpen(open => !open)}>
           Edit slide
         </button>
@@ -4899,8 +4899,22 @@ export function UnitPage({
                     </button>
                   </span>
                   {isPrivileged && (
-                      <EditingTools active={slideEditOpen || editable} title={`Slide ${si + 1}: actions and settings`}>
-                      <div className="lesson-edit-menu-body" id="lesson-slide-edit-tools">
+                    <>
+                      <EditingTools active={slideEditOpen || editable} title={`Slide ${si + 1} · Save and finish`} order={0}
+                        description="Save text edits to the cloud before closing the slide tools.">
+                        {isSuperUser && editMode && <button type="button" className="btn save-cloud-action"
+                          disabled={savingLesson} onClick={() => void saveLessonToCloud()}>
+                          <Icon name="save" size={16} />{savingLesson ? "Saving to cloud..." : "Save to cloud"}
+                        </button>}
+                        <button type="button" className="btn ghost sm" disabled={savingLesson || !!inlineUnit}
+                          onClick={() => { setSlideEditOpen(false); setEditMode(false); }}>
+                          <Icon name="checkCircle" size={16} />{editable ? "Done editing slide" : "Close slide tools"}
+                        </button>
+                        {isSuperUser && lessonSaveStatus === "saved" && <p role="status">Saved to cloud.</p>}
+                        {isSuperUser && lessonSaveStatus === "error" && <p className="auth-error" role="alert">{lessonSaveError}</p>}
+                      </EditingTools>
+                      <EditingTools active={slideEditOpen || editable} title="Videos and questions" order={30}
+                        description="Add a video, then open its question setup to paste a transcript and generate five questions.">
                         <LessonVideoEditor key={`${unitId}:${si}`} links={lessonEdits.videos?.[si] ?? []}
                           quizzes={lessonEdits.videoQuizzes}
                           onSaveQuiz={async (link, quiz) => {
@@ -4919,12 +4933,12 @@ export function UnitPage({
                         {(lessonEdits.videos?.[si]?.length ?? 0) > 0 && (
                           <button type="button" className="btn ghost sm"
                             onClick={() => document.querySelector(".lesson-screen .lesson-video")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
-                            View video
+                            <Icon name="play" size={16} />Preview videos on slide
                           </button>
                         )}
-                        <button type="button" className="btn ghost sm" disabled={savingLesson || !!inlineUnit} onClick={() => { setSlideEditOpen(false); setEditMode(false); }}>
-                          {editable ? "Done editing slide" : "Close slide tools"}
-                        </button>
+                      </EditingTools>
+                      <EditingTools active={slideEditOpen || editable} title="Slide content and images" order={10}
+                        description="Edit the slide text or add an image. Select slide text to use the formatting tools.">
                   {isPrivileged && (
                     <button
                       type="button"
@@ -4948,22 +4962,43 @@ export function UnitPage({
                       onClick={() => { if (content) { setInlineUnit(structuredClone(content)); setEditMode(true); } }}
                     >
                       <Icon name="editSquare" size={19} strokeWidth={1.7} />
+                      Edit structured content
                     </button>
                   )}
                   {isSuperUser && (
-                    <span className={`lesson-edit-toolbar${editMode ? " is-editing" : ""}`}>
+                    <>
+                    {!editMode && (
                       <button
                         type="button"
-                        className={`btn ghost sm save-cloud-action${editMode ? " active" : ""}`}
+                        className="btn ghost sm"
                         disabled={savingLesson}
-                        onClick={() => { if (editMode) void saveLessonToCloud(); else { setLessonSaveStatus(""); setEditMode(true); } }}
-                        title="Toggle edit mode (super user)"
+                        onClick={() => { setLessonSaveStatus(""); setEditMode(true); }}
+                        title="Edit the slide text on the page"
                       >
                         <Icon name="shield" size={13} />
-                        {savingLesson ? "Saving to cloud..." : editMode ? "Save to cloud" : "Edit content"}
+                        Edit slide text
                       </button>
-                      {editMode && (
-                        <>
+                    )}
+                      {editMode && <>
+                          <button type="button" className="btn ghost sm" onClick={() => openPasteEditor(si)}
+                            title="Replace this slide's text with pasted paragraphs">
+                            <Icon name="pencil" size={13} />Replace slide text
+                          </button>
+                          {builtUnit && <>
+                            <p className="editing-tool-description">To split a slide, place the cursor in its text. Everything after the cursor moves to a new slide.</p>
+                            <button type="button" className="btn ghost sm" onMouseDown={event => event.preventDefault()}
+                              onClick={() => void splitBuiltLessonAtCursor(si)}>
+                              <Icon name="chevronRight" size={13} />Split slide at cursor
+                            </button>
+                          </>}
+                      </>}
+                    </>
+                  )}
+                      {isSuperUser && lessonSplitError && <p className="auth-error" role="alert">{lessonSplitError}</p>}
+                      </EditingTools>
+                      {isSuperUser && editMode && (
+                        <EditingTools active={slideEditOpen || editable} title="Slide quiz settings" order={40} defaultOpen={false}
+                          description="These questions assess the slide text. Video questions are configured separately under Videos and questions.">
                           <label className="slide-quiz-count" title="Number of questions to generate">
                             Questions
                             <Select
@@ -4989,45 +5024,23 @@ export function UnitPage({
                             <Icon name="clipboard" size={13} />
                             {generatingQuiz === si ? "Generating quiz…" : "Generate quiz"}
                           </button>
-                          <button
-                            type="button"
-                            className="btn ghost sm"
-                            onClick={() => openPasteEditor(si)}
-                            title="Replace this slide's text — paste in paragraphs and they are formatted automatically"
-                          >
-                            <Icon name="pencil" size={13} />
-                            Paste text
-                          </button>
-                          {builtUnit && (
-                            <button
-                              type="button"
-                              className="btn ghost sm"
-                              onMouseDown={(event) => event.preventDefault()}
-                              onClick={() => void splitBuiltLessonAtCursor(si)}
-                              title="Place the cursor in this slide's text. Content after the cursor moves to a new next slide."
-                            >
-                              <Icon name="chevronRight" size={13} />
-                              Split slide here
-                            </button>
-                          )}
+                          {quizGenerationError && <p className="auth-error" role="alert">{quizGenerationError}</p>}
+                        </EditingTools>
+                      )}
+                      {isSuperUser && editMode && (
+                        <EditingTools active={slideEditOpen || editable} title="Reset slide edits" order={90} defaultOpen={false}
+                          description="Discard your changes to this section and restore its original content.">
                           <button
                             type="button"
                             className="btn ghost sm"
                             onClick={() => editResetSection(si, allFigIds)}
                             title="Discard my edits on this section"
                           >
-                            Reset section
+                            Reset section edits
                           </button>
-                        </>
+                        </EditingTools>
                       )}
-                    </span>
-                  )}
-                      </div>
-                      {isSuperUser && lessonSaveStatus === "saved" && <p role="status">Saved to cloud.</p>}
-                      {isSuperUser && lessonSaveStatus === "error" && <p className="auth-error" role="alert">{lessonSaveError}</p>}
-                      {isSuperUser && quizGenerationError && <p className="auth-error" role="alert">{quizGenerationError}</p>}
-                      {isSuperUser && lessonSplitError && <p className="auth-error" role="alert">{lessonSplitError}</p>}
-                      </EditingTools>
+                    </>
                   )}
                 </div>
                 {isSuperUser && !slideEditOpen && !editable && lessonSaveStatus === "error" && <p className="auth-error lesson-toolbar-error" role="alert">{lessonSaveError}</p>}

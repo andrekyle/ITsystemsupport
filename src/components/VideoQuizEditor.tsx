@@ -41,7 +41,9 @@ export function VideoQuizEditor({ quiz, disabled, onSave }: {
     finally { setBusy(false); }
   }
   return <details className="lesson-video-quiz-editor">
-    <summary>Video transcript and five-question assessment</summary>
+    <summary>Set up video questions <span className="lesson-video-quiz-state">
+      {validVideoQuestions(quiz?.questions) ? "5 questions saved" : "Setup required"}
+    </span></summary>
     <fieldset disabled={disabled || busy}>
       <label>Video transcript
         <textarea rows={6} maxLength={50000} value={transcript}

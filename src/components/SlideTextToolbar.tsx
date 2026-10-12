@@ -884,7 +884,8 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   const tableIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5" /><path d="M12 4v16M4 12h16" /></svg>;
   const imageIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 18 5-5 3 3 3-4 5 6"/></svg>;
   const paragraphIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h11M9 12h8M9 19h11" /><path d="M4 5v14m0-14L2 7m2-2 2 2m-2 12-2-2m2 2 2-2" /></svg>;
-  return <><EditingTools active={enabled} title="Lesson text and layout">
+  return <><EditingTools active={enabled} title="Text formatting" order={20}
+    description="Select text on the slide, then choose formatting. More options are grouped by text, paragraph, table and image.">
     <div className="slide-text-toolbar" ref={bar} onKeyDown={e => { if (e.key === "Escape") { setMenu(null); host.current?.focus(); } }}>
     <div className="slide-text-controls" role="toolbar" aria-label="Lesson rich text editor" aria-disabled={!ready}>
       <span className="slide-tool-group">

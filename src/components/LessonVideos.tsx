@@ -31,14 +31,16 @@ export function LessonVideoEditor({ links, onSave, disabled, quizzes, onSaveQuiz
   };
   return <div className="lesson-video-editor">
     <button type="button" className="btn ghost sm" disabled={disabled || saving}
-      aria-expanded={open} onClick={() => setOpen(value => !value)}>Add video</button>
+      aria-expanded={open} onClick={() => setOpen(value => !value)}>
+      <Icon name={open ? "close" : "play"} size={16} />{open ? "Cancel adding video" : "Add video"}
+    </button>
     {open && <div className="lesson-video-form">
       <label>Video link
         <input type="url" value={link} disabled={saving || disabled}
           placeholder="https://www.youtube.com/watch?v=..."
           onChange={event => setLink(event.target.value)} />
       </label>
-      <p className="muted">YouTube, Vimeo, or a direct MP4, WebM or OGV link. The host must allow playback or embedding.</p>
+      <p className="muted">Paste a YouTube, Vimeo or direct video link. The host must allow playback.</p>
       <button type="button" className="btn ghost sm" disabled={!link.trim() || saving || disabled}
         onClick={() => {
           try {
@@ -47,17 +49,22 @@ export function LessonVideoEditor({ links, onSave, disabled, quizzes, onSaveQuiz
             void save([...links, link.trim()]);
           } catch (cause) { setError(cause instanceof Error ? cause.message : "The video link is invalid."); }
         }}>{saving ? "Saving..." : "Insert video"}</button>
-      {links.map((value, index) => <div key={`${index}:${value}`}>
+    </div>}
+    {links.length > 0 && <div className="lesson-video-saved-list">
+      <p className="editing-tool-label">Videos on this slide ({links.length})</p>
+      {links.map((value, index) => <div className="lesson-video-editor-card" key={`${index}:${value}`}>
         <div className="lesson-video-entry">
-        <span>{value}</span>
-        <button type="button" className="btn ghost sm" disabled={saving || disabled}
+        <strong>Video {index + 1}</strong>
+        <button type="button" className="btn ghost sm lesson-video-remove" disabled={saving || disabled}
           onClick={() => void save(links.filter((_, i) => i !== index))}>Remove video {index + 1}</button>
         </div>
+        <a className="lesson-video-source-link" href={value} target="_blank" rel="noopener noreferrer"
+          title={value}>Open video source <Icon name="chevronRight" size={14} /></a>
         {onSaveQuiz && <VideoQuizEditor quiz={quizzes?.[videoQuizId(value)]} disabled={saving || disabled}
           onSave={quiz => onSaveQuiz(value, quiz)} />}
       </div>)}
-      {error && <p className="auth-error" role="alert">{error}</p>}
     </div>}
+    {error && <p className="auth-error" role="alert">{error}</p>}
   </div>;
 }
 
