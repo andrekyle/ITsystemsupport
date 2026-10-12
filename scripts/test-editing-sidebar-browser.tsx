@@ -71,10 +71,10 @@ async function test() {
     assert(media.querySelector(".lesson-video-quiz-state")?.textContent?.includes("Setup required"),
       "Assessment setup status is visible");
     fitsSidebar();
-    click("Add video"); await tick();
+    click("Edit Video"); await tick();
     assert(media.querySelector('input[type="url"]'), "Add video opens a dedicated form");
     fitsSidebar();
-    click("Cancel adding video"); await tick();
+    click("Cancel"); await tick();
     click("Edit slide text"); await tick();
     assert(group("Text formatting").open, "Text formatting appears when editing starts");
     const fontOptions = document.querySelector<HTMLButtonElement>('button[aria-label="Font and text options"]');

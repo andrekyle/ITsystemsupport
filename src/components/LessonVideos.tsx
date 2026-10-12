@@ -32,7 +32,8 @@ export function LessonVideoEditor({ links, onSave, disabled, quizzes, onSaveQuiz
   return <div className="lesson-video-editor">
     <button type="button" className="btn ghost sm" disabled={disabled || saving}
       aria-expanded={open} onClick={() => setOpen(value => !value)}>
-      <Icon name={open ? "close" : "play"} size={16} />{open ? "Cancel adding video" : "Add video"}
+      <Icon name={open ? "close" : links.length > 0 ? "pencil" : "play"} size={16} />
+      {open ? "Cancel" : links.length > 0 ? "Edit Video" : "Add video"}
     </button>
     {open && <div className="lesson-video-form">
       <label>Video link

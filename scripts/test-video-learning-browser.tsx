@@ -190,14 +190,16 @@ async function test() {
   try {
     clickText("Generate five video questions"); await tick();
     assert(staff.querySelectorAll(".generated-quiz-edit").length === 5, "Staff review all five generated questions");
-    clickText("Save reviewed video questions"); await tick();
+    const videoSaveButton = clickText("Save Video"); await tick();
+    assert(getComputedStyle(videoSaveButton).backgroundColor === "rgb(198, 40, 40)",
+      "Save Video is a red button");
     assert(savedQuiz?.questions.length === 5 && savedQuiz.transcript === quiz.transcript,
       "Reviewed assessment and source transcript are saved together");
     valueSetter.call(textarea, quiz.transcript + "Changed transcript.");
     textarea.dispatchEvent(new Event("input", { bubbles: true }));
     await tick();
     const saveButton = [...staff.querySelectorAll<HTMLButtonElement>("button")]
-      .find(button => button.textContent?.trim() === "Save reviewed video questions");
+      .find(button => button.textContent?.trim() === "Save Video");
     assert(saveButton?.disabled, "Changed transcripts require regeneration");
   } finally { window.fetch = originalFetch; }
 

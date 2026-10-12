@@ -57,9 +57,9 @@ export function VideoQuizEditor({ quiz, disabled, onSave }: {
         number={index + 1} onChange={next => {
           setQuestions(current => current.map((value, i) => i === index ? next : value)); setSaved(false);
         }} onRemove={() => { setQuestions(current => current.filter((_, i) => i !== index)); setSaved(false); }} />)}
-      {questions.length > 0 && <button type="button" className="btn ghost sm"
+      {questions.length > 0 && <button type="button" className="btn sm lesson-video-save"
         disabled={!validVideoQuestions(questions) || transcript !== generatedTranscript}
-        onClick={() => void save()}>Save reviewed video questions</button>}
+        onClick={() => void save()}>Save Video</button>}
     </fieldset>
     {transcript !== generatedTranscript && questions.length > 0 &&
       <p role="status">The transcript changed. Regenerate questions before saving.</p>}
