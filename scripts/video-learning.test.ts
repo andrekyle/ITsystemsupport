@@ -81,6 +81,33 @@ test("pauses and reopening do not grant unwatched time; skipped sections can be 
   }
 });
 
+test("YouTube end-frame duration rounding and polling jitter do not reject a full watch", () => {
+  const tracker = new VideoWatchTracker();
+  // Actual playable ending is 5:01; SDK metadata rounds up to 5:02.
+  for (let i = 0; i <= 1204; i++) {
+    const seconds = i / 4;
+    const jitter = i % 2 === 0 ? 0 : 15;
+    tracker.sample(seconds, 301.8, seconds * 1000 + jitter);
+  }
+  assert.equal(tracker.watchedSeconds, 301);
+  assert.equal(tracker.finished, true);
+
+  const delayedStart = new VideoWatchTracker();
+  for (let i = 4; i <= 1204; i++)
+    delayedStart.sample(i / 4, 301.8, i * 250);
+  assert.equal(delayedStart.finished, true, "Small SDK startup delay plus rounded end is accepted");
+
+  const skipped = new VideoWatchTracker();
+  for (let i = 0; i <= 600; i++) skipped.sample(i / 4, 301.8, i * 250);
+  skipped.pause();
+  for (let i = 606; i <= 1204; i++) skipped.sample(i / 4, 301.8, i * 250);
+  assert.equal(skipped.finished, false, "Skipping an interior section still blocks the quiz");
+
+  const incomplete = new VideoWatchTracker();
+  for (let i = 0; i <= 1190; i++) incomplete.sample(i / 4, 301.8, i * 250);
+  assert.equal(incomplete.finished, false, "More than two seconds missing still blocks completion");
+});
+
 test("video assessments require exactly five distinct valid questions", () => {
   const questions = Array.from({ length: 5 }, (_, i) => ({
     q: `Question ${i}`, options: ["A", "B", "C", "D"], answer: i % 4, explain: "From the transcript.",
@@ -121,6 +148,47 @@ test("view-count migration installs the missing RPC, isolates tenants and refres
     assert.equal((await database.query<{ count: number }>("select public.record_lesson_video_view('video') as count")).rows[0].count, 1);
     await assert.rejects(database.query("select public.record_lesson_video_view('')"), /valid video/);
     await assert.rejects(database.query("select * from public.lesson_video_views"), /permission denied/);
+    await database.exec("reset role");
+    const dailyMigration = await readFile(new URL("../supabase/migrations/20261012_lesson_video_daily_views.sql", import.meta.url), "utf8");
+    await database.exec(dailyMigration);
+    assert.equal((await database.query("select * from public.lesson_video_views")).rows.length, 0,
+      "Legacy click-based counts are reset");
+    await database.exec("set role authenticated");
+    const countView = async (video = "video") =>
+      (await database.query<{ count: number }>("select public.record_lesson_video_view($1) as count", [video])).rows[0].count;
+    assert.equal(await countView(), 1);
+    assert.equal(await countView(), 1, "Repeat opens do not count within 24 hours");
+    const accepted = await database.query("select public.record_lesson_video_view('other-video')");
+    assert.equal(accepted.rows.length, 1, "Different videos count independently");
+    await database.exec("reset role");
+    const receipt = (await database.query<{ last_counted_at: Date }>(
+      "select last_counted_at from public.lesson_video_view_receipts where video_id = 'video'")).rows[0].last_counted_at;
+    await database.exec(dailyMigration);
+    assert.equal((await database.query<{ count: number }>("select view_count as count from public.lesson_video_views where video_id = 'video'")).rows[0].count, 1,
+      "Rerunning migration does not reset legitimate totals");
+    assert.equal(String((await database.query<{ last_counted_at: Date }>(
+      "select last_counted_at from public.lesson_video_view_receipts where video_id = 'video'")).rows[0].last_counted_at), String(receipt));
+    await database.exec("set role authenticated");
+    await database.query("select set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', false)");
+    assert.equal(await countView(), 2, "Another user counts independently");
+    assert.equal(await countView(), 2);
+    await database.query("select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', false)");
+    await database.exec("reset role");
+    await database.exec(`update public.lesson_video_view_receipts
+      set last_counted_at = clock_timestamp() - interval '23 hours 59 minutes'
+      where user_id = '11111111-1111-4111-8111-111111111111' and video_id = 'video'`);
+    await database.exec("set role authenticated");
+    assert.equal(await countView(), 2, "Less than 24 hours never adds a view");
+    await database.exec("reset role");
+    await database.exec(`update public.lesson_video_view_receipts
+      set last_counted_at = clock_timestamp() - interval '24 hours'
+      where user_id = '11111111-1111-4111-8111-111111111111' and video_id = 'video'`);
+    await database.exec("set role authenticated");
+    assert.equal(await countView(), 3, "Another view counts after the rolling 24-hour window");
+    assert.equal(await countView(), 3, "New window also counts only once");
+    await assert.rejects(database.query("select * from public.lesson_video_view_receipts"), /permission denied/);
+    await database.query("select set_config('request.jwt.tenant', 'tenant-one', false)");
+    assert.equal(await countView(), 1, "Daily counts are isolated between tenants");
     await database.exec("reset role; set role anon");
     await assert.rejects(database.query("select public.record_lesson_video_view('video')"), /permission denied/);
   } finally { await database.close(); }

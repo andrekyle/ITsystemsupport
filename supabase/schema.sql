@@ -333,7 +333,9 @@ as $$
 $$;
 
 -- Video views: included in new installations; existing deployments can apply
--- migrations/20261012_lesson_video_views.sql independently.
+-- migrations/20261012_lesson_video_views.sql followed by
+-- migrations/20261012_lesson_video_daily_views.sql. The latter resets old
+-- click-based totals once and enforces one view per auth user per 24 hours.
 create table if not exists public.lesson_video_views (
   tenant_id text not null,
   video_id text not null,
@@ -344,6 +346,16 @@ create table if not exists public.lesson_video_views (
 alter table public.lesson_video_views enable row level security;
 revoke all on public.lesson_video_views from anon, authenticated;
 
+create table if not exists public.lesson_video_view_receipts (
+  tenant_id text not null,
+  video_id text not null,
+  user_id uuid not null,
+  last_counted_at timestamptz not null,
+  primary key (tenant_id, video_id, user_id)
+);
+alter table public.lesson_video_view_receipts enable row level security;
+revoke all on public.lesson_video_view_receipts from public, anon, authenticated;
+
 create or replace function public.record_lesson_video_view(p_video_id text)
 returns bigint
 language plpgsql
@@ -351,26 +363,45 @@ security definer
 set search_path = public
 as $$
 declare
+  viewer_id uuid := auth.uid();
+  viewer_tenant text := public.current_tenant();
+  viewed_at timestamptz := clock_timestamp();
+  accepted_at timestamptz;
   recorded_count bigint;
 begin
-  if auth.uid() is null then
+  if viewer_id is null then
     raise exception 'Authentication is required to record a video view.';
+  end if;
+  if viewer_tenant is null or length(btrim(viewer_tenant)) = 0 then
+    raise exception 'A tenant is required to record a video view.';
   end if;
   if p_video_id is null or length(btrim(p_video_id)) = 0 or length(p_video_id) > 2048 then
     raise exception 'A valid video identifier is required.';
   end if;
-  insert into public.lesson_video_views (tenant_id, video_id, view_count, updated_at)
-  values (public.current_tenant(), p_video_id, 1, now())
-  on conflict (tenant_id, video_id) do update
-    set view_count = public.lesson_video_views.view_count + 1,
-        updated_at = now()
-  returning view_count into recorded_count;
+  insert into public.lesson_video_view_receipts (tenant_id, video_id, user_id, last_counted_at)
+  values (viewer_tenant, p_video_id, viewer_id, viewed_at)
+  on conflict (tenant_id, video_id, user_id) do update
+    set last_counted_at = excluded.last_counted_at
+    where public.lesson_video_view_receipts.last_counted_at <= viewed_at - interval '24 hours'
+  returning last_counted_at into accepted_at;
+  if accepted_at is not null then
+    insert into public.lesson_video_views (tenant_id, video_id, view_count, updated_at)
+    values (viewer_tenant, p_video_id, 1, viewed_at)
+    on conflict (tenant_id, video_id) do update
+      set view_count = public.lesson_video_views.view_count + 1,
+          updated_at = excluded.updated_at
+    returning view_count into recorded_count;
+  else
+    select view_count into recorded_count from public.lesson_video_views
+    where tenant_id = viewer_tenant and video_id = p_video_id;
+    if recorded_count is null then
+      raise exception 'The video view total is missing. Contact an administrator.';
+    end if;
+  end if;
   return recorded_count;
 end;
 $$;
 revoke all on function public.record_lesson_video_view(text) from public, anon;
 grant execute on function public.record_lesson_video_view(text) to authenticated;
 notify pgrst, 'reload schema';
-
-
 

@@ -227,6 +227,33 @@ async function test() {
   assert(youtubeFinished && !youtubeError, `YouTube SDK playback unlocks after full viewing: ${youtubeError}`);
   streamingRoot.unmount();
 
+  const roundedTracker = new VideoWatchTracker();
+  const roundedStart = performance.now();
+  for (let i = 0; i <= 1200; i++) {
+    roundedTracker.sample(i / 4, 301.8, roundedStart - 300000 + i * 250 + (i % 2 ? 15 : 0));
+  }
+  let roundedFinished = false;
+  let roundedError = "";
+  window.YT = { Player: class {
+    constructor(_iframe: HTMLIFrameElement, options: { events: { onReady: () => void } }) {
+      setTimeout(options.events.onReady, 0);
+    }
+    getCurrentTime() { return Math.min(301, 300 + (performance.now() - roundedStart) / 1000); }
+    getDuration() { return 301.8; }
+    getPlayerState() { return this.getCurrentTime() >= 301 ? 0 : 1; }
+    playVideo() {}
+    destroy() {}
+  } };
+  const roundedRoot = createRoot(streaming);
+  roundedRoot.render(<TrackedVideoPlayer source={{ kind: "embed", src: "https://www.youtube-nocookie.com/embed/abcdefghijk" }}
+    title="Rounded YouTube duration" tracker={roundedTracker}
+    onFinished={() => { roundedFinished = true; }}
+    onError={message => { roundedError = message; }} />);
+  for (let i = 0; i < 60 && !roundedFinished && !roundedError; i++) await tick();
+  assert(roundedFinished && !roundedError,
+    `5:01 playable ending unlocks with 5:02 metadata despite polling jitter: ${roundedError}`);
+  roundedRoot.unmount();
+
   const vimeoEvents: Record<string, (data: { seconds: number; duration: number }) => void> = {};
   window.Vimeo = { Player: class {
     on(event: string, callback: (data: { seconds: number; duration: number }) => void) { vimeoEvents[event] = callback; }

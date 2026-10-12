@@ -44,7 +44,9 @@ export class VideoWatchTracker {
     const delta = seconds - previous.seconds;
     const elapsed = Math.max(0, (time - previous.time) / 1000);
     if (delta <= 0 || elapsed <= 0 || delta > elapsed * 1.25 + 0.3) return;
-    this.realSeconds += Math.min(delta, elapsed);
+    // SDK timestamps arrive in bursts; per-sample minima accumulate polling
+    // jitter as lost watch time even when playback stays at normal speed.
+    this.realSeconds += elapsed;
     const sorted = [...this.ranges, [previous.seconds, Math.min(seconds, duration)] as [number, number]]
       .sort((a, b) => a[0] - b[0]);
     const merged: [number, number][] = [];
@@ -61,7 +63,12 @@ export class VideoWatchTracker {
   }
 
   get finished() {
-    const tolerance = Math.min(0.75, this.duration * 0.02);
-    return this.duration > 0 && this.watchedSeconds >= this.duration - tolerance;
+    // Hosts can report a duration slightly beyond the final playable frame.
+    // Allow at most two seconds of boundary/polling drift, not skipped content.
+    const tolerance = Math.min(2, this.duration * 0.02);
+    const interiorGaps = this.ranges.reduce((total, range, index) =>
+      total + (index > 0 ? range[0] - this.ranges[index - 1][1] : 0), 0);
+    return this.duration > 0 && interiorGaps <= Math.min(0.5, this.duration * 0.01)
+      && this.watchedSeconds >= this.duration - tolerance;
   }
 }
