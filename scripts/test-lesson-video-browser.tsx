@@ -61,6 +61,15 @@ async function test() {
   }
   assert(Math.abs(media.getBoundingClientRect().width - viewer.getBoundingClientRect().width) < 1,
     "Video reaches both viewer edges");
+  const mediaBounds = media.getBoundingClientRect();
+  assert(Math.abs(mediaBounds.width / mediaBounds.height - 16 / 9) < 0.01,
+    "Player preserves its full 16:9 aspect ratio rather than squeezing or cropping the video");
+  const embedProbe = document.createElement("iframe");
+  player.append(embedProbe);
+  const embedBounds = embedProbe.getBoundingClientRect();
+  assert(Math.abs(embedBounds.width / embedBounds.height - 16 / 9) < 0.01,
+    "Embedded players also preserve the full video aspect ratio");
+  embedProbe.remove();
   const playerTop = player.getBoundingClientRect().top;
   const overflowFixture = document.createElement("div");
   overflowFixture.style.height = "1000px";

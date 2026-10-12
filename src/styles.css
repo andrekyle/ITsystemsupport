@@ -2141,7 +2141,8 @@ td .with-ico .ico {
 .lesson-video-modal {
   display: flex;
   flex-direction: column;
-  width: min(100%, 760px);
+  width: min(100%, 760px, calc((55vh - 54px) * 16 / 9));
+  width: min(100%, 760px, calc((55dvh - 54px) * 16 / 9));
   max-height: calc(100vh - 2 * var(--lesson-video-inset));
   max-height: calc(100dvh - 2 * var(--lesson-video-inset));
   overflow: hidden;
@@ -2209,8 +2210,7 @@ td .with-ico .ico {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
-  max-height: calc(55vh - 54px);
-  max-height: calc(55dvh - 54px);
+  height: auto;
   object-fit: contain;
   border: 0;
   margin: 0;
