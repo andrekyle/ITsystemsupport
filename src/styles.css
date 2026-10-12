@@ -2026,6 +2026,7 @@ td .with-ico .ico {
 .lesson-video figcaption { margin-top: 8px; font-size: 12px; }
 
 .lesson-video-launch {
+  position: relative;
   display: flex;
   width: 100%;
   min-height: 260px;
@@ -2036,9 +2037,42 @@ td .with-ico .ico {
   gap: 12px;
   border: 0;
   border-radius: 12px;
+  overflow: hidden;
   color: #fff;
   background: #171717;
   cursor: pointer;
+}
+
+.lesson-video-launch .lesson-video-thumbnail {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.lesson-video-launch-content {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: inherit;
+  aspect-ratio: 16 / 9;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, .65));
+  text-shadow: 0 1px 4px #000;
+}
+
+.lesson-video-preview-error {
+  position: absolute;
+  z-index: 1;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+  font-size: 12px;
 }
 
 .lesson-video-launch-play {
@@ -2058,6 +2092,7 @@ td .with-ico .ico {
 }
 
 .lesson-video-overlay {
+  --lesson-video-inset: 28px;
   position: fixed;
   z-index: 16000;
   inset: 0;
@@ -2065,13 +2100,16 @@ td .with-ico .ico {
   align-items: center;
   justify-content: center;
   overflow-y: auto;
-  padding: 28px;
+  padding: var(--lesson-video-inset);
   background: rgba(18, 18, 20, .62);
 }
 
 .lesson-video-modal {
   width: min(100%, 760px);
-  overflow: hidden;
+  max-height: calc(100vh - 2 * var(--lesson-video-inset));
+  max-height: calc(100dvh - 2 * var(--lesson-video-inset));
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid rgba(0, 0, 0, .08);
   border-radius: 18px;
   color: var(--ink);
@@ -2079,12 +2117,16 @@ td .with-ico .ico {
 }
 
 .lesson-video-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   min-height: 54px;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
   padding: 8px 18px;
+  background: var(--surface-3);
 }
 
 .lesson-video-watched {
@@ -2233,6 +2275,7 @@ td .with-ico .ico {
 }
 
 .lesson-video-modal-header > .lesson-video-icon-button {
+  flex-shrink: 0;
   width: 34px;
   height: 34px;
   border-color: transparent;
@@ -2320,8 +2363,8 @@ td .with-ico .ico {
 
 @media (max-width: 600px) {
   .lesson-video-overlay {
+    --lesson-video-inset: 12px;
     align-items: flex-start;
-    padding: 12px;
   }
 
   .lesson-video-modal {

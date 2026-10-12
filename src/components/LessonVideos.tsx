@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Icon } from "../icons";
-import { lessonVideoSource } from "../lib/lessonVideo";
+import { lessonVideoSource, type LessonVideoSource } from "../lib/lessonVideo";
 import { recordLessonVideoView } from "../lib/lessonVideoViews";
 
 export function LessonVideoEditor({ links, onSave, disabled }: {
@@ -51,6 +51,46 @@ export function LessonVideoEditor({ links, onSave, disabled }: {
   </div>;
 }
 
+function LessonVideoPreview({ source }: { source: LessonVideoSource }) {
+  const [error, setError] = useState("");
+  const url = new URL(source.src);
+  if (error) return <span className="lesson-video-preview-error" role="status">{error}</span>;
+  if (source.kind === "file") {
+    return <video
+      className="lesson-video-thumbnail"
+      src={source.src}
+      muted
+      playsInline
+      preload="metadata"
+      aria-hidden="true"
+      onLoadedMetadata={event => {
+        const video = event.currentTarget;
+        if (Number.isFinite(video.duration) && video.duration > 0) {
+          video.currentTime = Math.min(0.1, video.duration / 2);
+        }
+      }}
+      onError={() => setError("Video preview unavailable. Select Watch video to try playback.")}
+    />;
+  }
+  if (url.hostname === "www.youtube-nocookie.com") {
+    return <img
+      className="lesson-video-thumbnail"
+      src={`https://i.ytimg.com/vi/${url.pathname.split("/")[2]}/hqdefault.jpg`}
+      alt=""
+      loading="lazy"
+      onError={() => setError("Video thumbnail unavailable. Select Watch video to try playback.")}
+    />;
+  }
+  return <iframe
+    className="lesson-video-thumbnail"
+    src={source.src}
+    title="Video thumbnail preview"
+    tabIndex={-1}
+    aria-hidden="true"
+    referrerPolicy="strict-origin-when-cross-origin"
+  />;
+}
+
 function LessonVideo({
   link,
   index,
@@ -72,10 +112,13 @@ function LessonVideo({
   const [commentDraft, setCommentDraft] = useState("");
   const [showComments, setShowComments] = useState(false);
   const [shareCount, setShareCount] = useState(0);
+  const [sharing, setSharing] = useState(false);
   const [status, setStatus] = useState("");
   const [platformViewCount, setPlatformViewCount] = useState<number | null>(null);
   const [viewCountError, setViewCountError] = useState("");
   const openButton = useRef<HTMLButtonElement | null>(null);
+  const closeButton = useRef<HTMLButtonElement | null>(null);
+  const sharePending = useRef(false);
   let source;
   try { source = lessonVideoSource(link); }
   catch (cause) {
@@ -94,6 +137,7 @@ function LessonVideo({
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    closeButton.current?.focus({ preventScroll: true });
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
@@ -106,21 +150,28 @@ function LessonVideo({
   }, [open]);
 
   async function shareVideo() {
+    if (sharePending.current) return;
+    sharePending.current = true;
+    setSharing(true);
     setStatus("");
     try {
       if (navigator.share) {
         await navigator.share({ title, url: link });
+        setShareCount((count) => count + 1);
+        setStatus("Video shared.");
       } else if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(link);
-        setStatus("Video link copied.");
+        setStatus("Video link copied. Copying a link does not count as a share.");
       } else {
         setStatus("Sharing is not available in this browser.");
         return;
       }
-      setShareCount((count) => count + 1);
     } catch (cause) {
       if (cause instanceof DOMException && cause.name === "AbortError") return;
       setStatus(cause instanceof Error ? cause.message : "The video could not be shared.");
+    } finally {
+      sharePending.current = false;
+      setSharing(false);
     }
   }
 
@@ -150,9 +201,12 @@ function LessonVideo({
           setOpen(true);
         }}
       >
-        <span className="lesson-video-launch-play"><Icon name="play" size={30} /></span>
-        <span className="lesson-video-launch-label">{title}</span>
-        <span className="lesson-video-launch-hint">Watch video</span>
+        <LessonVideoPreview key={source.src} source={source} />
+        <span className="lesson-video-launch-content">
+          <span className="lesson-video-launch-play"><Icon name="play" size={30} /></span>
+          <span className="lesson-video-launch-label">{title}</span>
+          <span className="lesson-video-launch-hint">Watch video</span>
+        </span>
       </button>
       {failed && <p className="auth-error" role="alert">This video could not be played. Check the link and the video host's permissions.</p>}
     </figure>
@@ -172,7 +226,7 @@ function LessonVideo({
                   : `${platformViewCount.toLocaleString()} ${platformViewCount === 1 ? "view" : "views"} on this platform`}
               </span>
             </div>
-            <button type="button" className="lesson-video-icon-button" aria-label="Close video" onClick={() => setOpen(false)}>
+            <button ref={closeButton} type="button" className="lesson-video-icon-button" aria-label="Close video" onClick={() => setOpen(false)}>
               <Icon name="close" size={20} />
             </button>
           </header>
@@ -225,7 +279,7 @@ function LessonVideo({
               <button type="button" className={`lesson-video-icon-button${liked ? " is-active" : ""}`} aria-label={liked ? "Unlike video" : "Like video"} aria-pressed={liked} onClick={() => setLiked((value) => !value)}>
                 <Icon name="thumbUp" size={18} />
               </button>
-              <button type="button" className="lesson-video-icon-button" aria-label="Share video" onClick={() => void shareVideo()}>
+              <button type="button" className="lesson-video-icon-button" aria-label="Share video" disabled={sharing} onClick={() => void shareVideo()}>
                 <Icon name="share" size={18} />
               </button>
               <button type="button" className={`lesson-video-icon-button${saved ? " is-active" : ""}`} aria-label={saved ? "Remove saved video" : "Save video"} aria-pressed={saved} onClick={() => setSaved((value) => !value)}>
