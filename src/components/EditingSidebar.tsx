@@ -10,6 +10,10 @@ type EditingContextValue = {
 
 const EditingContext = createContext<EditingContextValue | null>(null);
 
+export function InlineEditingTools({ children }: { children: ReactNode }) {
+  return <EditingContext.Provider value={null}>{children}</EditingContext.Provider>;
+}
+
 export function EditingProvider({ children }: { children: ReactNode }) {
   const phone = usePhoneView();
   const [target, setTarget] = useState<HTMLElement | null>(null);

@@ -157,6 +157,32 @@ async function test() {
       "Reopening slide text retains the saved edit");
     click("Done editing slide"); await tick();
     assert(document.querySelector<HTMLElement>(".editing-sidebar")?.hidden, "Finishing closes the sidebar");
+    click("Edit unit"); await tick();
+    const dialog = document.querySelector<HTMLDialogElement>(".unit-edit-dialog");
+    assert(dialog?.open, "Edit unit opens a dialog");
+    const dialogBounds = dialog.getBoundingClientRect();
+    assert(dialogBounds.width >= innerWidth - 50 && dialogBounds.height >= innerHeight - 50,
+      "Unit editor uses nearly the full screen");
+    assert(document.querySelector<HTMLElement>(".editing-sidebar")?.hidden,
+      "Unit editor does not open sidebar tools");
+    click("Manage tabs and structure"); await tick();
+    assert(dialog.querySelector(".unit-editor-group"), "Structured content is inside the full-screen editor");
+    assert(!document.querySelector(".editing-sidebar .unit-editor-group"),
+      "Structured editor is not moved into the sidebar");
+    const topGroup = dialog.querySelector<HTMLDetailsElement>(".unit-editor-group")!;
+    topGroup.querySelector("summary")?.click(); await tick();
+    const nestedGroup = topGroup.querySelector<HTMLDetailsElement>(".unit-editor-group");
+    assert(nestedGroup, "Unit content sections are available");
+    nestedGroup.querySelector("summary")?.click(); await tick();
+    const field = nestedGroup.querySelector<HTMLTextAreaElement>("textarea");
+    assert(field && field.getBoundingClientRect().width > innerWidth * .7,
+      "Editing fields use the available full-screen width");
+    document.querySelector<HTMLButtonElement>('[aria-label="Close unit editor"]')?.click(); await tick();
+    assert(!dialog.open, "Close returns to the lesson");
+    click("Edit unit"); await tick();
+    assert(dialog.querySelector(".unit-editor-group"), "Closing and reopening retains the editor draft");
+    dialog.dispatchEvent(new Event("cancel", { cancelable: true })); await tick();
+    assert(!dialog.open && document.body.style.overflow !== "hidden", "Escape closes and restores page scrolling");
     if (new URL(location.href).searchParams.has("preview")) {
       click("Edit slide"); await tick();
       click("Edit slide text"); await tick();

@@ -21,6 +21,7 @@ import { Bar, Ring } from "../components/Ring";
 import { Quiz, seededShuffle } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
 import { ConfirmModal } from "../components/Modal";
+import { UnitEditingDialog } from "../components/UnitEditingDialog";
 import { SlideEditableText } from "../components/SlideEditableText";
 import { SlideTextToolbar } from "../components/SlideTextToolbar";
 import { LessonVideoEditor, LessonVideos } from "../components/LessonVideos";
@@ -3538,13 +3539,13 @@ export function UnitPage({
       </div>
       <h1 className="page-title">{u.title}</h1>
       {isSuperUser && (
-        <details className="unit-edit-menu" open={unitEditOpen} onToggle={event => setUnitEditOpen(event.currentTarget.open)}>
-          <summary><Icon name="pencil" size={15} /> Edit unit <Icon name="chevronDown" size={14} /></summary>
-          <EditingTools active={unitEditOpen || !!inlineUnit} title="Unit editing">
-            <button type="button" className="btn ghost sm" onClick={() => setUnitEditOpen(false)}>Close unit tools</button>
+        <>
+          <button type="button" className="btn ghost sm unit-edit-menu" onClick={() => setUnitEditOpen(true)}
+            aria-haspopup="dialog"><Icon name="pencil" size={15} /> Edit unit</button>
+          <UnitEditingDialog open={unitEditOpen} title={u.title} onClose={() => setUnitEditOpen(false)}>
           <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} profileId={profile.id} inlineActionsTarget={tab === "lesson" ? inlineActionsTarget : null} onCancelInline={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />
-          </EditingTools>
-        </details>
+          </UnitEditingDialog>
+        </>
       )}
       <div style={{ margin: "16px 0 6px", maxWidth: 560 }}>
         <div className="bar-row">
