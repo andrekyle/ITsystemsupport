@@ -165,22 +165,54 @@ async function test() {
       "Unit editor uses nearly the full screen");
     assert(document.querySelector<HTMLElement>(".editing-sidebar")?.hidden,
       "Unit editor does not open sidebar tools");
-    click("Manage tabs and structure"); await tick();
-    assert(dialog.querySelector(".unit-editor-group"), "Structured content is inside the full-screen editor");
-    assert(!document.querySelector(".editing-sidebar .unit-editor-group"),
-      "Structured editor is not moved into the sidebar");
-    const topGroup = dialog.querySelector<HTMLDetailsElement>(".unit-editor-group")!;
-    topGroup.querySelector("summary")?.click(); await tick();
-    const nestedGroup = topGroup.querySelector<HTMLDetailsElement>(".unit-editor-group");
-    assert(nestedGroup, "Unit content sections are available");
-    nestedGroup.querySelector("summary")?.click(); await tick();
-    const field = nestedGroup.querySelector<HTMLTextAreaElement>("textarea");
-    assert(field && field.getBoundingClientRect().width > innerWidth * .7,
+    const navItem = (index: number) => dialog.querySelectorAll<HTMLButtonElement>(".unit-workspace-nav-item")[index];
+    const navLabels = [...dialog.querySelectorAll(".unit-workspace-nav-item span span")].map(element => element.textContent);
+    assert(navLabels.join("|") === "Content and structure|Rebuild from source|Files and exports|Version history|Delete unit" &&
+      navItem(0).classList.contains("is-active") && navItem(0).getAttribute("aria-current") === "page",
+      `Workspace navigation lists every view with content active: ${navLabels.join("|")}`);
+    const scroll = dialog.querySelector<HTMLElement>(".unit-workspace-scroll");
+    const lessonSection = () => dialog.querySelector<HTMLElement>('.unit-editor-section[data-unit-section="lesson"]');
+    assert(scroll && lessonSection(), "Structured content opens directly inside the full-screen editor");
+    assert(!document.querySelector(".editing-sidebar .unit-editor-section"), "Structured editor is not moved into the sidebar");
+    assert(getComputedStyle(scroll).overflowY === "auto" && scroll.getBoundingClientRect().bottom <= dialogBounds.bottom + 1,
+      "Content scrolls inside the workspace instead of overflowing the dialog");
+    const save = () => dialog.querySelector<HTMLButtonElement>(".unit-workspace-save");
+    assert(save()?.disabled && save()?.textContent === "All changes saved", "Save stays idle until something changes");
+    assert(!lessonSection()!.querySelector("textarea"), "Lesson cards start collapsed");
+    for (const action of ["Move Lesson section 1 down", "Duplicate Lesson section 1", "Remove Lesson section 1"])
+      assert(lessonSection()!.querySelector(`[aria-label="${action}"]`), `Cards expose a labelled action: ${action}`);
+    lessonSection()!.querySelector<HTMLButtonElement>(".unit-editor-card-toggle")!.click(); await tick();
+    const card = lessonSection()!.querySelector<HTMLElement>(".unit-editor-card.is-open");
+    const heading = [...card?.querySelectorAll<HTMLElement>(".unit-editor-field") ?? []]
+      .find(field => field.querySelector(".unit-editor-field-label")?.textContent === "Heading")?.querySelector("textarea");
+    assert(card && heading, "Expanding a card reveals its labelled fields");
+    assert(heading.getBoundingClientRect().width >= scroll.clientWidth * .7,
       "Editing fields use the available full-screen width");
+    const headingStyle = getComputedStyle(heading);
+    assert(headingStyle.fontSize === "12px" && headingStyle.borderTopWidth === "0px", "Fields stay compact and borderless");
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(heading, "Edited heading");
+    heading.dispatchEvent(new Event("input", { bubbles: true })); await tick();
+    assert(!save()?.disabled && save()?.textContent === "Save all changes and rebuild files", "Editing enables Save");
+    assert(card.querySelector(".unit-editor-card-title")?.textContent === "Edited heading", "Card titles follow the edited heading");
+    assert([...dialog.querySelectorAll("button")].some(button => button.textContent?.trim() === "Discard changes"),
+      "Discard is offered for unsaved changes");
+    lessonSection()!.querySelector<HTMLButtonElement>('[aria-label="Remove Lesson section 1"]')!.click(); await tick();
+    assert(lessonSection()!.querySelector(".unit-editor-item-confirm") &&
+      lessonSection()!.querySelectorAll(".unit-editor-card").length === content.lesson.length,
+      "Remove asks for confirmation before deleting");
+    click("Keep"); await tick();
+    assert(!lessonSection()!.querySelector(".unit-editor-item-confirm"), "Keep cancels the removal");
     document.querySelector<HTMLButtonElement>('[aria-label="Close unit editor"]')?.click(); await tick();
     assert(!dialog.open, "Close returns to the lesson");
     click("Edit unit"); await tick();
-    assert(dialog.querySelector(".unit-editor-group"), "Closing and reopening retains the editor draft");
+    assert(lessonSection()?.querySelector(".unit-editor-card-title")?.textContent === "Edited heading" && !save()?.disabled,
+      "Closing and reopening retains the unsaved draft");
+    navItem(2).click(); await tick();
+    assert(navItem(2).classList.contains("is-active") && dialog.querySelector(".unit-action-card") && !lessonSection(),
+      "Navigation switches to the files view");
+    navItem(0).click(); await tick();
+    assert(lessonSection()?.querySelector(".unit-editor-card-title")?.textContent === "Edited heading",
+      "Returning to content keeps the draft");
     dialog.dispatchEvent(new Event("cancel", { cancelable: true })); await tick();
     assert(!dialog.open && document.body.style.overflow !== "hidden", "Escape closes and restores page scrolling");
     if (new URL(location.href).searchParams.has("preview")) {

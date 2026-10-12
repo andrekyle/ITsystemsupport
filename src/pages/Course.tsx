@@ -3542,8 +3542,8 @@ export function UnitPage({
         <>
           <button type="button" className="btn ghost sm unit-edit-menu" onClick={() => setUnitEditOpen(true)}
             aria-haspopup="dialog"><Icon name="pencil" size={15} /> Edit unit</button>
-          <UnitEditingDialog open={unitEditOpen} title={u.title} onClose={() => setUnitEditOpen(false)}>
-          <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} profileId={profile.id} inlineActionsTarget={tab === "lesson" ? inlineActionsTarget : null} onCancelInline={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />
+          <UnitEditingDialog open={unitEditOpen} title={u.title} subtitle={isSaqaUnit(u.us) ? `Unit standard ${u.us}` : "Internal lesson"} onClose={() => setUnitEditOpen(false)}>
+          <UnitBuilder key={unitId} open={unitEditOpen} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} profileId={profile.id} inlineActionsTarget={tab === "lesson" ? inlineActionsTarget : null} onCancelInline={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />
           </UnitEditingDialog>
         </>
       )}

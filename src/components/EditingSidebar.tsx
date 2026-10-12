@@ -14,6 +14,11 @@ export function InlineEditingTools({ children }: { children: ReactNode }) {
   return <EditingContext.Provider value={null}>{children}</EditingContext.Provider>;
 }
 
+/** True when editing tools render in place (full-screen editor or no provider) instead of in the sidebar. */
+export function useInlineEditing() {
+  return useContext(EditingContext) === null;
+}
+
 export function EditingProvider({ children }: { children: ReactNode }) {
   const phone = usePhoneView();
   const [target, setTarget] = useState<HTMLElement | null>(null);
