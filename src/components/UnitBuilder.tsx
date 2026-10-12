@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import type { LogbookSpec, PoeDoc, UnitContent, UnitStandard } from "../types";
 import type { LessonEdits } from "../store";
 import { buildUnitContent, validateUnitContent, lessonPlanFromSource, MAX_SOURCE_LENGTH, MAX_LESSON_PLAN_LENGTH, mergeUnitContentEnhancement } from "../lib/unitBuilder";
@@ -80,7 +81,7 @@ function unitBuilderError(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
-export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInline,profileId}:{unit:UnitStandard;content?:UnitContent;edits:LessonEdits;onSaved:()=>void;inlineDraft?:UnitContent;onCancelInline:()=>void;profileId:string}) {
+export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInline,profileId,inlineActionsTarget}:{unit:UnitStandard;content?:UnitContent;edits:LessonEdits;onSaved:()=>void;inlineDraft?:UnitContent;onCancelInline:()=>void;profileId:string;inlineActionsTarget?:HTMLElement|null}) {
   const built=useBuiltUnit(unit.us);
   const [open,setOpen]=useState(false);  const [source,setSource]=useState(built?.source??"");
   const [ai,setAi]=useState(true);
@@ -248,12 +249,14 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     }catch(error){setError(unitBuilderError(error,"The AI PowerPoint could not be created. The current unit is unchanged."));}
     finally{setBusy("");}
   };
-  const tools = <div className="unit-builder-bar">
-      <button type="button" className="btn ghost" disabled={!!busy || !!inlineDraft} onClick={()=>{setOpen(!open);setDraft(null);setError("");setConfirmBuild(false);}}><Icon name="document" size={16}/>{built?"Rebuild unit standard":"Build unit standard"}</button>
-      {inlineDraft ? <>
+  const inlineActions = inlineDraft ? <>
         <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(inlineDraft,edits),built?.source??source,built?.aiUsed??false);}catch(e){setError(inlineSaveError(e));}finally{setBusy("");}}}>{busy || "Save inline changes and update files"}</button>
         <button type="button" className="btn ghost" disabled={!!busy} onClick={onCancelInline}>Cancel inline changes</button>
-      </> : null}
+      {inlineActionsTarget && error && <p role="alert" className="auth-error">{error}</p>}
+      </> : null;
+  const tools = <div className="unit-builder-bar">
+      <button type="button" className="btn ghost" disabled={!!busy || !!inlineDraft} onClick={()=>{setOpen(!open);setDraft(null);setError("");setConfirmBuild(false);}}><Icon name="document" size={16}/>{built?"Rebuild unit standard":"Build unit standard"}</button>
+      {!inlineActionsTarget && inlineActions}
       {!inlineDraft && <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setDraft(effectiveBuiltContent(content ?? { lesson: [], exercises: [], assignments: [], quiz: [] },edits));setOpen(true);setError("");}}>Manage tabs and structure</button>}
       {built&&!inlineDraft&&<>
         <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(content??built.content,edits),built.source,built.aiUsed);}catch(e){setError(unitBuilderError(e,"The PDF and PowerPoint could not be updated."));}finally{setBusy("");}}}>Update PDF and PowerPoint</button>
@@ -267,6 +270,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       </>}
     </div>;
   return <section className="unit-builder">
+    {inlineActionsTarget && createPortal(inlineActions, inlineActionsTarget)}
     {open || inlineDraft ? <EditingTools active title={`Unit ${unit.us}`}>{tools}</EditingTools> : tools}
     {open&&<div className="unit-builder-panel">
       <h2>{draft?"Edit complete unit":"Build"} · US {unit.us}</h2>

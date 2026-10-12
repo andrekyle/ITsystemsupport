@@ -69,12 +69,12 @@ export function UnitContentEditor({value,onChange,name="Unit content",defaultOpe
     <button type="button" className="btn ghost sm" disabled={disabled} onClick={()=>onChange([...value,addTemplate(name,template.current)])}>Add {label(name).toLowerCase()}</button>
     </EditingTools>
   </div>;
-  if(value && typeof value==="object") return <details className="unit-editor-group" open={expanded} onToggle={event => setExpanded(event.currentTarget.open)}><summary>{label(name)}{typeof value.title==="string"?`: ${value.title}`:typeof value.heading==="string"?`: ${value.heading}`:""}</summary>
+  if(value && typeof value==="object") return <details className="unit-editor-group" open={expanded} onToggle={event => setExpanded(event.currentTarget.open)}><summary>{label(name)}{typeof value.title==="string"?`: ${plainSlideText(value.title).replace(/\s+/g, " ").trim()}`:typeof value.heading==="string"?`: ${plainSlideText(value.heading).replace(/\s+/g, " ").trim()}`:""}</summary>
     {Object.entries(value).filter(([key,item])=>item!==undefined&&!["id","icon","flat","quizGate"].includes(key)).map(([key,item])=><div key={key}>
       {key==="answer" && Array.isArray(value.options) ? <EditingTools active={active && expanded} title={`${label(name)} answer`}><div className="field"><label>Correct answer</label><Select disabled={disabled} ariaLabel="Correct answer" value={String(item)} options={value.options.map((o,i)=>({value:String(i),label:`${i+1}. ${o}`}))} onChange={v=>onChange({...value,answer:Number(v)})}/></div></EditingTools> : <UnitContentEditor name={key} value={item} active={active && expanded} disabled={disabled} onChange={next=>onChange({...value,[key]:next})}/>}
     </div>)}
   </details>;
   if(typeof value==="boolean") return <label className="unit-editor-check"><input type="checkbox" disabled={disabled} checked={value} onChange={e=>onChange(e.target.checked)}/>{label(name)}</label>;
   if(typeof value==="number") return <label className="field">{label(name)}<input type="number" disabled={disabled} value={value} onChange={e=>onChange(Number(e.target.value))}/></label>;
-  return <label className="field">{label(name)}<textarea disabled={disabled} rows={Math.min(8,Math.max(2,Math.ceil(String(value??"").length/100)))} value={plainSlideText(String(value??""))} onChange={e=>onChange(e.target.value)}/></label>;
+  return <label className="field unit-content-field">{label(name)}<textarea disabled={disabled} rows={Math.min(8,Math.max(2,Math.ceil(plainSlideText(String(value??"")).length/100)))} value={plainSlideText(String(value??""))} onChange={e=>onChange(e.target.value)}/></label>;
 }

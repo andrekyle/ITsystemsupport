@@ -5,6 +5,7 @@ import { buildUnitContent } from "../src/lib/unitBuilder";
 import { rememberUnitPack } from "../src/lib/unitStorage";
 import { installSync } from "../src/lib/sync";
 import { videoQuizId } from "../src/lib/videoLearning";
+import { plainSlideText } from "../src/lib/slideRichText";
 import "../src/styles.css";
 
 const tick = () => new Promise(resolve => setTimeout(resolve, 60));
@@ -95,7 +96,9 @@ async function test() {
     assert(fontOptions, "Formatting options are labelled");
     fontOptions.click(); await tick(); fitsSidebar();
     fontOptions.click(); await tick();
-    assert(finish.querySelector("button")?.textContent?.includes("Save to cloud"), "Save is the primary finish action");
+    assert(contentGroup.querySelector(".save-cloud-action"), "Cloud save is in Slide content and images");
+    assert(!finish.querySelector(".save-cloud-action"), "Finish section has no duplicate save action");
+    assert(!document.querySelector('[aria-label="Edit content inline"]'), "Slide editing has one entry point");
     const settings = group("Slide quiz settings");
     const reset = group("Reset slide edits");
     assert(!settings.open && !reset.open, "Secondary settings and reset are collapsed by default");
@@ -136,6 +139,22 @@ async function test() {
       "Save Video is compact rather than full width");
     assert(saveRect.top - explanationRect.bottom >= 16,
       "Save Video has at least 16px clearance from the explanation");
+    const slide = document.querySelector<HTMLElement>(".slide-whole-editor");
+    assert(slide, "Slide text can be edited");
+    slide.focus();
+    assert(document.activeElement === slide && slide.isContentEditable,
+      `Slide editor is focused and editable: ${slide.outerHTML.slice(0, 300)}`);
+    slide.innerHTML = '<h2>Saved heading</h2><p>Last focused edit must be saved.</p>';
+    // Blur must commit the final DOM contents even without a preceding input event.
+    click("Save to cloud"); await tick();
+    const saved = JSON.parse(localStorage.getItem(`itss.lessonedits.114059.built-sidebar-fixture`) ?? "{}");
+    assert(plainSlideText(saved.headings?.[0] ?? "") === "Saved heading" &&
+      saved.sectionBody?.[0]?.richHtml.includes("Last focused edit must be saved."),
+      "Cloud save persists the latest focused heading and body together");
+    assert(contentGroup.textContent?.includes("Saved to cloud."), "Save confirmation is next to the save button");
+    click("Edit slide text"); await tick();
+    assert(document.querySelector(".slide-whole-editor")?.textContent?.includes("Last focused edit must be saved."),
+      "Reopening slide text retains the saved edit");
     click("Done editing slide"); await tick();
     assert(document.querySelector<HTMLElement>(".editing-sidebar")?.hidden, "Finishing closes the sidebar");
     if (new URL(location.href).searchParams.has("preview")) {

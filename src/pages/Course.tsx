@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import JSZip from "jszip";
 import { Icon } from "../icons";
 import type { Exercise, ExerciseCheck, LessonFigure, LessonPlan, LessonPlanRow, LessonSection, LogbookSpec, PoeDoc, ProgressState, Profile, QuizQuestion, Role, Route, UnitActivity, UnitContent, UnitStandard } from "../types";
@@ -41,7 +41,7 @@ import { supabase } from "../lib/supabase";
 import { flushKey } from "../lib/sync";
 import { GeneratedQuizEditor } from "../components/GeneratedQuizEditor";
 import { saveBuiltUnit, useBuiltUnit } from "../lib/useBuiltUnit";
-import { flushLessonEdits } from "../lib/lessonEditStore";
+import { cachedLessonEdits, flushLessonEdits } from "../lib/lessonEditStore";
 import { EditableActivityText } from "../components/EditableActivityText";
 import { fileToImageDataUrl } from "../components/Avatar";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
@@ -2879,6 +2879,7 @@ export function UnitPage({
   const editMode = !phone && requestedEditMode;
   const [unitEditOpen, setUnitEditOpen] = useState(false);
   const [slideEditOpen, setSlideEditOpen] = useState(false);
+  const [inlineActionsTarget, setInlineActionsTarget] = useState<HTMLDivElement | null>(null);
   const [unitHeaderOpen, setUnitHeaderOpen] = useState(tab !== "lesson");
   useEffect(() => { setUnitEditOpen(false); }, [unitId]);
   useEffect(() => { setSlideEditOpen(false); }, [unitId, tab, lessonStep]);
@@ -2897,11 +2898,17 @@ export function UnitPage({
   const saveLessonToCloud = async () => {
     if (savingLesson) return;
     if (inlineUnit) { setLessonSaveError("Use Save inline changes and update files in the editing sidebar to save this unit."); setLessonSaveStatus("error"); return; }
+    const focused = document.activeElement;
+    if (focused instanceof HTMLElement && focused.isContentEditable) {
+      flushSync(() => focused.dispatchEvent(new Event("input", { bubbles: true })));
+      focused.blur();
+    }
     setSavingLesson(true);
     setLessonSaveStatus("");
     try {
       const editId = builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId;
-      await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(editId)}`, lessonEdits);
+      const key = `itss.lessonedits.${courseScopedUnit(editId)}`;
+      await flushLessonEdits(key, cachedLessonEdits(key, lessonEdits));
       setLessonSaveStatus("saved");
       setEditMode(false);
     } catch (error) {
@@ -3535,7 +3542,7 @@ export function UnitPage({
           <summary><Icon name="pencil" size={15} /> Edit unit <Icon name="chevronDown" size={14} /></summary>
           <EditingTools active={unitEditOpen || !!inlineUnit} title="Unit editing">
             <button type="button" className="btn ghost sm" onClick={() => setUnitEditOpen(false)}>Close unit tools</button>
-          <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} profileId={profile.id} onCancelInline={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />
+          <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} profileId={profile.id} inlineActionsTarget={tab === "lesson" ? inlineActionsTarget : null} onCancelInline={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />
           </EditingTools>
         </details>
       )}
@@ -4901,17 +4908,11 @@ export function UnitPage({
                   {isPrivileged && (
                     <>
                       <EditingTools active={slideEditOpen || editable} title={`Slide ${si + 1} · Save and finish`} order={0}
-                        description="Save text edits to the cloud before closing the slide tools.">
-                        {isSuperUser && editMode && <button type="button" className="btn save-cloud-action"
-                          disabled={savingLesson} onClick={() => void saveLessonToCloud()}>
-                          <Icon name="save" size={16} />{savingLesson ? "Saving to cloud..." : "Save to cloud"}
-                        </button>}
+                        description="Save your changes under Slide content and images before closing the slide tools.">
                         <button type="button" className="btn ghost sm" disabled={savingLesson || !!inlineUnit}
                           onClick={() => { setSlideEditOpen(false); setEditMode(false); }}>
                           <Icon name="checkCircle" size={16} />{editable ? "Done editing slide" : "Close slide tools"}
                         </button>
-                        {isSuperUser && lessonSaveStatus === "saved" && <p role="status">Saved to cloud.</p>}
-                        {isSuperUser && lessonSaveStatus === "error" && <p className="auth-error" role="alert">{lessonSaveError}</p>}
                       </EditingTools>
                       <EditingTools active={slideEditOpen || editable} title="Videos and questions" order={30}
                         description="Add a video, then open its question setup to paste a transcript and generate five questions.">
@@ -4953,18 +4954,6 @@ export function UnitPage({
                       {figUploading ? "Saving image..." : "Add image"}
                     </button>
                   )}
-                  {builtUnit && isSuperUser && !inlineUnit && (
-                    <button
-                      type="button"
-                      className="btn ghost sm lesson-inline-edit-btn"
-                      aria-label="Edit content inline"
-                      title="Edit content inline"
-                      onClick={() => { if (content) { setInlineUnit(structuredClone(content)); setEditMode(true); } }}
-                    >
-                      <Icon name="editSquare" size={19} strokeWidth={1.7} />
-                      Edit structured content
-                    </button>
-                  )}
                   {isSuperUser && (
                     <>
                     {!editMode && (
@@ -4995,6 +4984,13 @@ export function UnitPage({
                     </>
                   )}
                       {isSuperUser && lessonSplitError && <p className="auth-error" role="alert">{lessonSplitError}</p>}
+                      {isSuperUser && editMode && !inlineUnit && <button type="button" className="btn save-cloud-action"
+                        disabled={savingLesson} onClick={() => void saveLessonToCloud()}>
+                        <Icon name="save" size={16} />{savingLesson ? "Saving to cloud..." : "Save to cloud"}
+                      </button>}
+                      {isSuperUser && lessonSaveStatus === "saved" && <p role="status">Saved to cloud.</p>}
+                      {isSuperUser && lessonSaveStatus === "error" && <p className="auth-error" role="alert">{lessonSaveError}</p>}
+                      {inlineUnit && <div className="unit-editor-actions" ref={setInlineActionsTarget} />}
                       </EditingTools>
                       {isSuperUser && editMode && (
                         <EditingTools active={slideEditOpen || editable} title="Slide quiz settings" order={40} defaultOpen={false}
