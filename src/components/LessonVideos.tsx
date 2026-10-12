@@ -328,7 +328,6 @@ function LessonVideo({
                 ? viewCountError ? "Views unavailable" : "Views loading"
                 : `${platformViewCount.toLocaleString()} Platform views`}
             </span>
-            <span>{isCompleted ? "Completed" : "Not completed"}</span>
             <span>{shareCount} {shareCount === 1 ? "Share" : "Shares"}</span>
             <span>{comments.length} {comments.length === 1 ? "Comment" : "Comments"}</span>
             <span>{liked ? "1 Like" : "0 Likes"}</span>

@@ -113,6 +113,9 @@ async function test() {
   assert(!complete.disabled, "All five correct answers unlock Complete");
   assert(computeGamification(loadProgress(profileId), 0, 0).xp === 0, "XP waits for Complete");
   complete.click(); await tick();
+  assert([...document.querySelectorAll(".lesson-video-modal span, .lesson-video-modal button")]
+    .filter(element => element.textContent?.trim() === "Completed").length === 1,
+    "Only the green button displays Completed, with no duplicate status badge");
   for (const theme of ["light", "dark"]) {
     document.documentElement.dataset.theme = theme;
     assert(getComputedStyle(complete).backgroundColor === "rgb(24, 135, 24)" &&
