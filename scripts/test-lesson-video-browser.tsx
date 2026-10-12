@@ -49,6 +49,19 @@ async function test() {
   button("Watch Lesson video 1 in expanded player").click();
   await tick();
   closeIsVisible();
+  const scrollContent = document.querySelector<HTMLElement>(".lesson-video-scroll-content");
+  const player = document.querySelector<HTMLElement>(".lesson-video-player");
+  assert(scrollContent && player, "Player and scrolling details are separate");
+  const playerTop = player.getBoundingClientRect().top;
+  const overflowFixture = document.createElement("div");
+  overflowFixture.style.height = "1000px";
+  scrollContent.append(overflowFixture);
+  scrollContent.scrollTop = 150;
+  assert(scrollContent.scrollTop > 0, "Details content scrolls independently");
+  assert(player.getBoundingClientRect().top === playerTop, "Video does not move while details scroll");
+  closeIsVisible();
+  overflowFixture.remove();
+  scrollContent.scrollTop = 0;
   assert(document.activeElement === button("Close video"), "Opening focuses the close button");
   assert(document.body.style.overflow === "hidden", "Background scrolling is locked");
   stats(0);
@@ -130,8 +143,8 @@ async function test() {
       new Event("submit", { bubbles: true, cancelable: true }));
     await tick();
   }
-  assert(modal.scrollHeight > modal.clientHeight, "Long content scrolls inside the modal");
-  modal.scrollTop = modal.scrollHeight;
+  assert(scrollContent.scrollHeight > scrollContent.clientHeight, "Long content scrolls below the video");
+  scrollContent.scrollTop = scrollContent.scrollHeight;
   await tick();
   closeIsVisible();
   button("Close video").click();

@@ -287,6 +287,7 @@ function LessonVideo({
               onFinished={() => { setWatchedFully(true); setPlaybackError(""); }}
               onError={setPlaybackError} />
           </div>
+          <div className="lesson-video-scroll-content" tabIndex={0} aria-label="Video details and questions">
           {playbackError && <p className="auth-error lesson-video-feedback" role="alert">{playbackError}</p>}
           {viewCountError && <p className="auth-error lesson-video-feedback" role="alert">{viewCountError}</p>}
           {!quizReady && !isCompleted && <p className="lesson-video-feedback" role="status">
@@ -402,6 +403,7 @@ function LessonVideo({
               </form>
             </section>
           )}
+          </div>
         </section>
       </div>,
       document.body

@@ -2139,10 +2139,12 @@ td .with-ico .ico {
 }
 
 .lesson-video-modal {
+  display: flex;
+  flex-direction: column;
   width: min(100%, 760px);
   max-height: calc(100vh - 2 * var(--lesson-video-inset));
   max-height: calc(100dvh - 2 * var(--lesson-video-inset));
-  overflow-y: auto;
+  overflow: hidden;
   overscroll-behavior: contain;
   border: 1px solid rgba(0, 0, 0, .08);
   border-radius: 18px;
@@ -2151,6 +2153,7 @@ td .with-ico .ico {
 }
 
 .lesson-video-modal-header {
+  flex-shrink: 0;
   position: sticky;
   top: 0;
   z-index: 1;
@@ -2192,6 +2195,7 @@ td .with-ico .ico {
 }
 
 .lesson-video-player {
+  flex-shrink: 0;
   width: 100%;
   background: #000;
 }
@@ -2201,8 +2205,17 @@ td .with-ico .ico {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
+  max-height: calc(55vh - 54px);
+  max-height: calc(55dvh - 54px);
+  object-fit: contain;
   border: 0;
   background: #000;
+}
+
+.lesson-video-scroll-content {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .lesson-video-description {
@@ -14736,10 +14749,14 @@ table.data th.sortable.sorted { color: var(--ink); }
   flex: 0 0 30px;
   place-items: center;
   border-radius: 50%;
-  color: var(--discovery-accent);
+  color: var(--ink);
   background: var(--discovery-accent-soft);
   font-size: 11px;
   font-weight: 700;
+}
+
+.discovery-onboarding section[aria-labelledby="discovery-plan-title"] .discovery-onboarding-eyebrow {
+  color: var(--ink);
 }
 
 .discovery-onboarding-module-main {

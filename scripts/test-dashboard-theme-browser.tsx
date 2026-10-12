@@ -21,7 +21,7 @@ async function test() {
     probe.remove();
     for (const selector of [
       ".discovery-onboarding-kicker",
-      ".discovery-onboarding-eyebrow",
+      'section[aria-labelledby="discovery-start-title"] .discovery-onboarding-eyebrow',
       ".discovery-onboarding-card-icon",
       ".discovery-onboarding-card-link",
     ]) {
@@ -37,6 +37,16 @@ async function test() {
       const element = document.querySelector(selector);
       assert(element && getComputedStyle(element).backgroundColor === expected,
         `${theme}: ${selector} uses the theme accent (${element ? getComputedStyle(element).backgroundColor : "missing"} vs ${expected})`);
+    }
+    const inkProbe = document.createElement("span");
+    inkProbe.style.color = "var(--ink)";
+    document.body.append(inkProbe);
+    const ink = getComputedStyle(inkProbe).color;
+    inkProbe.remove();
+    for (const element of document.querySelectorAll(
+      '.discovery-onboarding-module-number, section[aria-labelledby="discovery-plan-title"] .discovery-onboarding-eyebrow'
+    )) {
+      assert(getComputedStyle(element).color === ink, "Learning plan heading and numbers use readable neutral text");
     }
   }
   document.body.dataset.result = "passed";
