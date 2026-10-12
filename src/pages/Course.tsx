@@ -5066,7 +5066,12 @@ export function UnitPage({
             return (
               <div key={sec.heading} className="lesson-screen">
                 {lessonControlsHost ? createPortal(stepper, lessonControlsHost) : stepper}
-                <LessonVideos links={lessonEdits.videos?.[si] ?? []} />
+                <LessonVideos
+                  links={lessonEdits.videos?.[si] ?? []}
+                  completed={!!acts["Lesson & Training Aids"]}
+                  learnerName={profile.name}
+                  onComplete={() => toggleActivity(u.us, "Lesson & Training Aids")}
+                />
                 {isSlide && heroFig ? (() => {
                   const up = figureImages[heroFig.id];
                   const def = FIGURE_DEFAULTS[heroFig.id];

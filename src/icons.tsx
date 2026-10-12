@@ -318,6 +318,25 @@ export const PATHS: Record<string, React.ReactNode> = {
       <path d="M5 12v7a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19v-7" />
     </>
   ),
+  thumbUp: (
+    <>
+      <path d="M8 10.5 12.1 4a1.7 1.7 0 0 1 3 1.2l-.6 4.3h4a2 2 0 0 1 1.9 2.6l-2 7a2 2 0 0 1-1.9 1.4H8" />
+      <path d="M4 10.5h4v10H4z" />
+    </>
+  ),
+  tag: (
+    <>
+      <path d="M4 4.5h7l9 9-6.5 6.5-9-9z" />
+      <circle cx="8.2" cy="8.2" r="1" />
+    </>
+  ),
+  more: (
+    <>
+      <circle cx="5" cy="12" r="1" fill="currentColor" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" />
+      <circle cx="19" cy="12" r="1" fill="currentColor" />
+    </>
+  ),
   refresh: (
     <>
       <path d="M20 12a8 8 0 1 1-2.4-5.7" />
