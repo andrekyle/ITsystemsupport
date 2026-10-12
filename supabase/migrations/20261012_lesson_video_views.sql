@@ -1,3 +1,5 @@
+-- Run this file in the Supabase SQL editor for existing deployments.
+-- The final NOTIFY refreshes PostgREST's RPC schema cache.
 create table if not exists public.lesson_video_views (
   tenant_id text not null,
   video_id text not null,
@@ -39,3 +41,5 @@ $$;
 
 revoke all on function public.record_lesson_video_view(text) from public, anon;
 grant execute on function public.record_lesson_video_view(text) to authenticated;
+
+notify pgrst, 'reload schema';

@@ -7,7 +7,7 @@ import { runBrowserTest } from "./browser-test-runner.mjs";
 const dir = mkdtempSync(join(tmpdir(), "lesson-video-test-"));
 try {
   await build({
-    entryPoints: [resolve("scripts/test-lesson-video-browser.tsx")],
+    entryPoints: [resolve(process.argv[2] ?? "scripts/test-lesson-video-browser.tsx")],
     bundle: true, outfile: join(dir, "test.js"), jsx: "automatic",
     external: ["/discovery/*", "/chat-wallpaper-*.svg"],
     define: { "import.meta.env": "{}" },

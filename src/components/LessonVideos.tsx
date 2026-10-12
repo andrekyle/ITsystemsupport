@@ -3,11 +3,17 @@ import { createPortal } from "react-dom";
 import { Icon } from "../icons";
 import { lessonVideoSource, type LessonVideoSource } from "../lib/lessonVideo";
 import { recordLessonVideoView } from "../lib/lessonVideoViews";
+import type { QuizQuestion } from "../types";
+import { validVideoQuestions, videoQuizId, VideoWatchTracker, type VideoQuiz } from "../lib/videoLearning";
+import { VideoQuizEditor } from "./VideoQuizEditor";
+import { TrackedVideoPlayer } from "./TrackedVideoPlayer";
 
-export function LessonVideoEditor({ links, onSave, disabled }: {
+export function LessonVideoEditor({ links, onSave, disabled, quizzes, onSaveQuiz }: {
   links: string[];
   onSave: (links: string[]) => Promise<void>;
   disabled: boolean;
+  quizzes?: Record<string, VideoQuiz>;
+  onSaveQuiz?: (link: string, quiz: VideoQuiz) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [link, setLink] = useState("");
@@ -41,10 +47,14 @@ export function LessonVideoEditor({ links, onSave, disabled }: {
             void save([...links, link.trim()]);
           } catch (cause) { setError(cause instanceof Error ? cause.message : "The video link is invalid."); }
         }}>{saving ? "Saving..." : "Insert video"}</button>
-      {links.map((value, index) => <div className="lesson-video-entry" key={`${index}:${value}`}>
+      {links.map((value, index) => <div key={`${index}:${value}`}>
+        <div className="lesson-video-entry">
         <span>{value}</span>
         <button type="button" className="btn ghost sm" disabled={saving || disabled}
           onClick={() => void save(links.filter((_, i) => i !== index))}>Remove video {index + 1}</button>
+        </div>
+        {onSaveQuiz && <VideoQuizEditor quiz={quizzes?.[videoQuizId(value)]} disabled={saving || disabled}
+          onSave={quiz => onSaveQuiz(value, quiz)} />}
       </div>)}
       {error && <p className="auth-error" role="alert">{error}</p>}
     </div>}
@@ -53,6 +63,15 @@ export function LessonVideoEditor({ links, onSave, disabled }: {
 
 function LessonVideoPreview({ source }: { source: LessonVideoSource }) {
   const [error, setError] = useState("");
+  const [thumbnailIndex, setThumbnailIndex] = useState(0);
+  const thumbnailSizes = ["maxresdefault", "sddefault", "hqdefault"];
+  function trySmallerThumbnail() {
+    if (thumbnailIndex < thumbnailSizes.length - 1) {
+      setThumbnailIndex(thumbnailIndex + 1);
+    } else {
+      setError("Video thumbnail unavailable. Select Watch video to try playback.");
+    }
+  }
   const url = new URL(source.src);
   if (error) return <span className="lesson-video-preview-error" role="status">{error}</span>;
   if (source.kind === "file") {
@@ -75,10 +94,14 @@ function LessonVideoPreview({ source }: { source: LessonVideoSource }) {
   if (url.hostname === "www.youtube-nocookie.com") {
     return <img
       className="lesson-video-thumbnail"
-      src={`https://i.ytimg.com/vi/${url.pathname.split("/")[2]}/hqdefault.jpg`}
+      src={`https://i.ytimg.com/vi/${url.pathname.split("/")[2]}/${thumbnailSizes[thumbnailIndex]}.jpg`}
       alt=""
       loading="lazy"
-      onError={() => setError("Video thumbnail unavailable. Select Watch video to try playback.")}
+      onLoad={event => {
+        // YouTube can return a 120px placeholder instead of a missing-image error.
+        if (event.currentTarget.naturalWidth <= 120) trySmallerThumbnail();
+      }}
+      onError={trySmallerThumbnail}
     />;
   }
   return <iframe
@@ -97,12 +120,14 @@ function LessonVideo({
   completed,
   learnerName,
   onComplete,
+  questions,
 }: {
   link: string;
   index: number;
   completed: boolean;
   learnerName: string;
-  onComplete?: () => void;
+  questions?: QuizQuestion[];
+  onComplete?: (answers: number[]) => void;
 }) {
   const [failed, setFailed] = useState(false);
   const [open, setOpen] = useState(false);
@@ -119,6 +144,15 @@ function LessonVideo({
   const openButton = useRef<HTMLButtonElement | null>(null);
   const closeButton = useRef<HTMLButtonElement | null>(null);
   const sharePending = useRef(false);
+  const tracker = useRef(new VideoWatchTracker());
+  const [watchedFully, setWatchedFully] = useState(false);
+  const [playbackError, setPlaybackError] = useState("");
+  const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [quizScore, setQuizScore] = useState<number | null>(null);
+  const [credited, setCredited] = useState(false);
+  const quizReady = validVideoQuestions(questions);
+  const canComplete = watchedFully && quizReady && quizScore === 5;
+  const isCompleted = completed || credited;
   let source;
   try { source = lessonVideoSource(link); }
   catch (cause) {
@@ -126,13 +160,6 @@ function LessonVideo({
   }
 
   const title = `Lesson video ${index + 1}`;
-  const playerSrc = (() => {
-    if (source.kind !== "embed") return source.src;
-    const url = new URL(source.src);
-    url.searchParams.set("autoplay", "1");
-    return url.href;
-  })();
-
   useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
@@ -193,6 +220,7 @@ function LessonVideo({
         aria-label={`Watch ${title} in expanded player`}
         onClick={() => {
           setFailed(false);
+          setPlaybackError("");
           setPlatformViewCount(null);
           setViewCountError("");
           void recordLessonVideoView(source.src).then(setPlatformViewCount).catch((cause: unknown) => {
@@ -222,7 +250,7 @@ function LessonVideo({
               </span>
               <span>
                 {platformViewCount === null
-                  ? viewCountError || `${learnerName || "You"} · ${completed ? "completed this lesson" : "learning now"}`
+                  ? `${learnerName || "You"} · ${isCompleted ? "completed this video" : "learning now"}`
                   : `${platformViewCount.toLocaleString()} ${platformViewCount === 1 ? "view" : "views"} on this platform`}
               </span>
             </div>
@@ -232,19 +260,36 @@ function LessonVideo({
           </header>
 
           <div className="lesson-video-player">
-            {source.kind === "embed" ? (
-              <iframe
-                src={playerSrc}
-                title={title}
-                allow="autoplay; picture-in-picture; encrypted-media"
-                allowFullScreen
-                referrerPolicy="strict-origin-when-cross-origin"
-              />
-            ) : (
-              <video controls autoPlay preload="metadata" src={source.src} onError={() => setFailed(true)} />
-            )}
-            {failed && <p className="auth-error" role="alert">This video could not be played. Check the link and the video host's permissions.</p>}
+            <TrackedVideoPlayer source={source} title={title} tracker={tracker.current}
+              onFinished={() => { setWatchedFully(true); setPlaybackError(""); }}
+              onError={setPlaybackError} />
           </div>
+          {playbackError && <p className="auth-error lesson-video-feedback" role="alert">{playbackError}</p>}
+          {viewCountError && <p className="auth-error lesson-video-feedback" role="alert">{viewCountError}</p>}
+          {!quizReady && !isCompleted && <p className="lesson-video-feedback" role="status">
+            Staff must add this video's transcript and five questions before it can be completed.
+          </p>}
+          {watchedFully && quizReady && !isCompleted && <section className="lesson-video-quiz" aria-label="Video knowledge check">
+            <h3>Video knowledge check</h3>
+            <p>Answer all five questions correctly to unlock Complete and earn XP.</p>
+            <form onSubmit={event => {
+              event.preventDefault();
+              setQuizScore(questions.reduce((score, question, i) => score + (answers[i] === question.answer ? 1 : 0), 0));
+            }}>
+              {questions.map((question, i) => <fieldset key={i}>
+                <legend>{i + 1}. {question.q}</legend>
+                {question.options.map((option, oi) => <label key={oi}>
+                  <input type="radio" name={`video-${index}-question-${i}`} checked={answers[i] === oi}
+                    onChange={() => { setAnswers(current => ({ ...current, [i]: oi })); setQuizScore(null); }} />
+                  {option}
+                </label>)}
+              </fieldset>)}
+              <button type="submit" className="btn" disabled={Object.keys(answers).length !== 5}>Check video answers</button>
+            </form>
+            {quizScore !== null && <p role="status">{quizScore === 5
+              ? "5/5 correct. Complete is now available."
+              : `${quizScore}/5 correct. Review the video and try again; all five must be correct.`}</p>}
+          </section>}
 
           <div className="lesson-video-description">
             <span className="lesson-video-kind">VIDEO LESSON · {source.kind === "embed" ? "STREAMING" : "VIDEO FILE"}</span>
@@ -259,7 +304,7 @@ function LessonVideo({
                 ? viewCountError ? "Views unavailable" : "Views loading"
                 : `${platformViewCount.toLocaleString()} Platform views`}
             </span>
-            <span>{completed ? "Completed" : "Not completed"}</span>
+            <span>{isCompleted ? "Completed" : "Not completed"}</span>
             <span>{shareCount} {shareCount === 1 ? "Share" : "Shares"}</span>
             <span>{comments.length} {comments.length === 1 ? "Comment" : "Comments"}</span>
             <span>{liked ? "1 Like" : "0 Likes"}</span>
@@ -268,12 +313,21 @@ function LessonVideo({
           <div className="lesson-video-actions">
             <button
               type="button"
-              className={`lesson-video-complete${completed ? " is-complete" : ""}`}
-              disabled={completed || !onComplete}
-              onClick={onComplete}
+              className={`lesson-video-complete${isCompleted ? " is-complete" : ""}`}
+              disabled={isCompleted || !onComplete || !canComplete}
+              onClick={() => {
+                if (!canComplete || isCompleted || !onComplete) return;
+                try {
+                  onComplete(Array.from({ length: 5 }, (_, i) => answers[i]));
+                  setCredited(true);
+                  setStatus("Video completed. Your quiz result has been recorded for XP.");
+                } catch (cause) {
+                  setStatus(cause instanceof Error ? cause.message : "Video completion could not be saved. Please retry.");
+                }
+              }}
             >
               <Icon name="checkCircle" size={16} />
-              {completed ? "Completed" : "Complete"}
+              {isCompleted ? "Completed" : "Complete"}
             </button>
             <div className="lesson-video-action-tools">
               <button type="button" className={`lesson-video-icon-button${liked ? " is-active" : ""}`} aria-label={liked ? "Unlike video" : "Like video"} aria-pressed={liked} onClick={() => setLiked((value) => !value)}>
@@ -329,20 +383,32 @@ export function LessonVideos({
   completed = false,
   learnerName = "You",
   onComplete,
+  quizzes,
+  completedVideoIds,
 }: {
   links: string[];
   completed?: boolean;
   learnerName?: string;
-  onComplete?: () => void;
+  quizzes?: Record<string, VideoQuiz>;
+  completedVideoIds?: string[];
+  onComplete?: (link: string, answers: number[]) => void;
 }) {
-  return <>{links.map((link, index) => (
-    <LessonVideo
-      key={`${index}:${link}`}
+  return <>{links.map((link, index) => {
+    let id: string;
+    try { id = videoQuizId(link); }
+    catch (cause) {
+      return <p key={`${index}:${link}`} className="auth-error" role="alert">
+        {cause instanceof Error ? cause.message : "Invalid video link."}
+      </p>;
+    }
+    return <LessonVideo
+      key={`${index}:${link}:${JSON.stringify(quizzes?.[id]?.questions)}`}
       link={link}
       index={index}
-      completed={completed}
+      completed={completedVideoIds?.includes(id) ?? completed}
+      questions={quizzes?.[id]?.questions}
       learnerName={learnerName}
-      onComplete={onComplete}
-    />
-  ))}</>;
+      onComplete={onComplete ? answers => onComplete(link, answers) : undefined}
+    />;
+  })}</>;
 }

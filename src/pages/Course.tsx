@@ -24,6 +24,7 @@ import { ConfirmModal } from "../components/Modal";
 import { SlideEditableText } from "../components/SlideEditableText";
 import { SlideTextToolbar } from "../components/SlideTextToolbar";
 import { LessonVideoEditor, LessonVideos } from "../components/LessonVideos";
+import { videoQuizId } from "../lib/videoLearning";
 import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml, hydrateSlideImages } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
 import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, effectiveBuiltContent } from "../components/UnitBuilder";
@@ -4900,14 +4901,21 @@ export function UnitPage({
                   {isPrivileged && (
                       <EditingTools active={slideEditOpen || editable} title={`Slide ${si + 1}: actions and settings`}>
                       <div className="lesson-edit-menu-body" id="lesson-slide-edit-tools">
-                        {!phone && <LessonVideoEditor key={`${unitId}:${si}`} links={lessonEdits.videos?.[si] ?? []}
+                        <LessonVideoEditor key={`${unitId}:${si}`} links={lessonEdits.videos?.[si] ?? []}
+                          quizzes={lessonEdits.videoQuizzes}
+                          onSaveQuiz={async (link, quiz) => {
+                            const editId = builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId;
+                            await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(editId)}`, {
+                              ...lessonEdits, videoQuizzes: { ...lessonEdits.videoQuizzes, [videoQuizId(link)]: quiz },
+                            });
+                          }}
                           disabled={!!inlineUnit || savingLesson}
                           onSave={async links => {
                             const editId = builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId;
                             await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(editId)}`, {
                               ...lessonEdits, videos: { ...lessonEdits.videos, [si]: links },
                             });
-                          }} />}
+                          }} />
                         {(lessonEdits.videos?.[si]?.length ?? 0) > 0 && (
                           <button type="button" className="btn ghost sm"
                             onClick={() => document.querySelector(".lesson-screen .lesson-video")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
@@ -5068,9 +5076,17 @@ export function UnitPage({
                 {lessonControlsHost ? createPortal(stepper, lessonControlsHost) : stepper}
                 <LessonVideos
                   links={lessonEdits.videos?.[si] ?? []}
-                  completed={!!acts["Lesson & Training Aids"]}
+                  quizzes={lessonEdits.videoQuizzes}
+                  completedVideoIds={Object.entries(progress.units[u.us]?.quizzes ?? {})
+                    .filter(([id, result]) => id.startsWith("video:") && result.best === 5 && result.total === 5)
+                    .map(([id]) => id)}
                   learnerName={profile.name}
-                  onComplete={() => toggleActivity(u.us, "Lesson & Training Aids")}
+                  onComplete={(link, answers) => {
+                    const id = videoQuizId(link);
+                    const previous = progress.units[u.us]?.quizzes?.[id];
+                    if (previous?.best === 5 && previous.total === 5) return;
+                    saveQuizResult(u.us, 5, 5, id, { answers, watchedFully: true });
+                  }}
                 />
                 {isSlide && heroFig ? (() => {
                   const up = figureImages[heroFig.id];

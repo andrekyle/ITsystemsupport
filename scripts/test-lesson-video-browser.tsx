@@ -147,14 +147,25 @@ async function test() {
   ]} />);
   await tick();
   const thumbnail = previewFixture.querySelector<HTMLImageElement>("img.lesson-video-thumbnail");
-  assert(thumbnail?.src === "https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg",
-    "YouTube links display their video thumbnail");
+  assert(thumbnail?.src === "https://i.ytimg.com/vi/abcdefghijk/maxresdefault.jpg",
+    "YouTube links request the highest-resolution thumbnail first");
   const vimeoPreview = previewFixture.querySelector<HTMLIFrameElement>("iframe.lesson-video-thumbnail");
   assert(vimeoPreview?.src === "https://player.vimeo.com/video/123456?h=abc123",
     "Vimeo preview retains the privacy hash and does not autoplay");
   assert(vimeoPreview.tabIndex === -1 && getComputedStyle(vimeoPreview).pointerEvents === "none",
     "Embedded preview does not intercept Watch video clicks");
   assert(!previewFixture.querySelector('[role="dialog"]'), "Thumbnails do not open the player");
+  Object.defineProperty(thumbnail, "naturalWidth", { configurable: true, value: 1280 });
+  thumbnail.dispatchEvent(new Event("load"));
+  await tick();
+  assert(thumbnail.src.endsWith("/maxresdefault.jpg"), "Available high-resolution thumbnails are retained");
+  Object.defineProperty(thumbnail, "naturalWidth", { configurable: true, value: 120 });
+  thumbnail.dispatchEvent(new Event("load"));
+  await tick();
+  assert(thumbnail.src.endsWith("/sddefault.jpg"), "Missing high-resolution placeholders fall back to SD");
+  thumbnail.dispatchEvent(new Event("error"));
+  await tick();
+  assert(thumbnail.src.endsWith("/hqdefault.jpg"), "Failed SD images fall back to the standard thumbnail");
   thumbnail.dispatchEvent(new Event("error"));
   await tick();
   assert(previewFixture.textContent?.includes("thumbnail unavailable"), "Thumbnail errors are visible");

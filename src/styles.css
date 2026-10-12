@@ -2294,6 +2294,23 @@ td .with-ico .ico {
   font-size: 12px;
 }
 
+.lesson-video-watch-progress,
+.lesson-video-feedback {
+  margin: 0;
+  padding: 12px 18px;
+  background: var(--surface-3);
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.lesson-video-quiz { padding: 18px; }
+.lesson-video-quiz fieldset { margin: 14px 0; border: 1px solid var(--border); border-radius: 8px; }
+.lesson-video-quiz label { display: flex; align-items: baseline; gap: 8px; padding: 6px; cursor: pointer; }
+.lesson-video-quiz input { flex-shrink: 0; }
+.lesson-video-quiz-editor { margin: 12px 0; }
+.lesson-video-quiz-editor > fieldset { min-width: 0; border: 0; padding: 8px 0; }
+.lesson-video-quiz-editor textarea { width: 100%; }
+
 .lesson-video-comments {
   padding: 16px 18px 18px;
   border-top: 1px solid var(--border);

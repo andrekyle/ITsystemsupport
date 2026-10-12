@@ -9,6 +9,9 @@ export async function recordLessonVideoView(videoId: string): Promise<number> {
     p_video_id: videoId,
   });
   if (error) {
+    if (error.code === "PGRST202") {
+      throw new Error("Video views are unavailable: an administrator must apply the lesson video views database migration. Playback and video assessment are still available.");
+    }
     throw new Error(`The video view could not be recorded: ${error.message}`);
   }
 

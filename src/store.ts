@@ -2494,6 +2494,8 @@ export function useOnboardingPacks() {
 export interface LessonEdits {
   /** External video links displayed on their lesson section. */
   videos?: Record<number, string[]>;
+  /** Transcript-grounded, reviewed five-question assessments keyed by canonical video id. */
+  videoQuizzes?: Record<string, import("./lib/videoLearning").VideoQuiz>;
   /** AI-generated quiz questions keyed by lesson section index. */
   generatedQuizzes?: Record<number, import("./types").QuizQuestion[]>;
   /** section index -> retries allowed after the first check; null means unlimited */
