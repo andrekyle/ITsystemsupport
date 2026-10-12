@@ -111,6 +111,12 @@ async function test() {
   assert(!complete.disabled, "All five correct answers unlock Complete");
   assert(computeGamification(loadProgress(profileId), 0, 0).xp === 0, "XP waits for Complete");
   complete.click(); await tick();
+  for (const theme of ["light", "dark"]) {
+    document.documentElement.dataset.theme = theme;
+    assert(getComputedStyle(complete).backgroundColor === "rgb(16, 124, 16)" &&
+      getComputedStyle(complete).borderTopWidth === "0px",
+      "Successfully completed video quiz displays a green borderless button in both themes");
+  }
   const result = loadProgress(profileId).units[unit]?.quizzes?.[id];
   assert(result?.best === 5 && result.total === 5 && result.attempts === 1, "Completion persists the five-question result once");
   assert(computeGamification(loadProgress(profileId), 0, 0).xp === 100, "Existing quiz XP and evidence credit are earned");
