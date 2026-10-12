@@ -2146,7 +2146,8 @@ td .with-ico .ico {
   max-height: calc(100dvh - 2 * var(--lesson-video-inset));
   overflow: hidden;
   overscroll-behavior: contain;
-  border: 1px solid rgba(0, 0, 0, .08);
+  border: 0;
+  padding: 0;
   border-radius: 18px;
   color: var(--ink);
   background: var(--surface-3);
@@ -2197,6 +2198,9 @@ td .with-ico .ico {
 .lesson-video-player {
   flex-shrink: 0;
   width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
   background: #000;
 }
 
@@ -2209,6 +2213,8 @@ td .with-ico .ico {
   max-height: calc(55dvh - 54px);
   object-fit: contain;
   border: 0;
+  margin: 0;
+  padding: 0;
   background: #000;
 }
 

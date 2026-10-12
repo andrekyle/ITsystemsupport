@@ -52,6 +52,15 @@ async function test() {
   const scrollContent = document.querySelector<HTMLElement>(".lesson-video-scroll-content");
   const player = document.querySelector<HTMLElement>(".lesson-video-player");
   assert(scrollContent && player, "Player and scrolling details are separate");
+  const viewer = document.querySelector<HTMLElement>(".lesson-video-modal")!;
+  const media = player.querySelector("video,iframe")!;
+  for (const element of [viewer, player, media]) {
+    const style = getComputedStyle(element);
+    assert(style.borderLeftWidth === "0px" && style.borderRightWidth === "0px" &&
+      style.paddingLeft === "0px" && style.paddingRight === "0px", "Video viewer has no side borders or padding");
+  }
+  assert(Math.abs(media.getBoundingClientRect().width - viewer.getBoundingClientRect().width) < 1,
+    "Video reaches both viewer edges");
   const playerTop = player.getBoundingClientRect().top;
   const overflowFixture = document.createElement("div");
   overflowFixture.style.height = "1000px";
