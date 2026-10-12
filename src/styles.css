@@ -14456,6 +14456,10 @@ table.data th.sortable.sorted { color: var(--ink); }
   max-width: 1180px;
 }
 
+[data-theme="dark"] .discovery-onboarding {
+  --discovery-accent: var(--azure);
+}
+
 .discovery-onboarding-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(220px, 290px);
