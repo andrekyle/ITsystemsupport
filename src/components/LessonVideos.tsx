@@ -122,23 +122,6 @@ function LessonVideoPreview({ source }: { source: LessonVideoSource }) {
   />;
 }
 
-function watchNativeShareCompletion() {
-  let leftPage = document.visibilityState === "hidden";
-  const markLeftPage = () => { leftPage = true; };
-  const onVisibilityChange = () => {
-    if (document.visibilityState === "hidden") leftPage = true;
-  };
-  window.addEventListener("blur", markLeftPage, { once: true });
-  document.addEventListener("visibilitychange", onVisibilityChange);
-  return {
-    didCompleteHandoff: () => leftPage,
-    cleanup: () => {
-      window.removeEventListener("blur", markLeftPage);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-    },
-  };
-}
-
 function LessonVideo({
   link,
   index,
@@ -171,6 +154,7 @@ function LessonVideo({
   const [showComments, setShowComments] = useState(false);
   const [shareCount, setShareCount] = useState(0);
   const [sharing, setSharing] = useState(false);
+  const [shareNeedsConfirmation, setShareNeedsConfirmation] = useState(false);
   const [status, setStatus] = useState("");
   const [platformViews, setPlatformViews] = useState<LessonVideoViewCount | null>(null);
   const [viewCountError, setViewCountError] = useState("");
@@ -213,21 +197,13 @@ function LessonVideo({
     if (sharePending.current) return;
     sharePending.current = true;
     setSharing(true);
+    setShareNeedsConfirmation(false);
     setStatus("");
     try {
       if (navigator.share) {
-        const completion = watchNativeShareCompletion();
-        try {
-          await navigator.share({ title, url: link });
-        } finally {
-          completion.cleanup();
-        }
-        if (!completion.didCompleteHandoff()) {
-          setStatus("Share opened. Complete the share in another app for it to count.");
-          return;
-        }
-        setShareCount((count) => count + 1);
-        setStatus("Video shared.");
+        await navigator.share({ title, url: link });
+        setShareNeedsConfirmation(true);
+        setStatus("Share flow finished. Confirm only if you completed the share in another app.");
       } else if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(link);
         setStatus("Video link copied. Copying a link does not count as a share.");
@@ -406,6 +382,15 @@ function LessonVideo({
             </div>
           </div>
           {status && <p className="lesson-video-status" role="status">{status}</p>}
+          {shareNeedsConfirmation && <div className="lesson-video-share-confirmation">
+            <button type="button" className="btn ghost sm" aria-label="Confirm completed share" onClick={() => {
+              setShareCount((count) => count + 1);
+              setShareNeedsConfirmation(false);
+              setStatus("Video shared.");
+            }}>
+              Confirm completed share
+            </button>
+          </div>}
 
           {showComments && (
             <section className="lesson-video-comments" aria-label="Video comments">
