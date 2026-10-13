@@ -332,10 +332,12 @@ as $$
   order by t.qual, t.module_id, t.us, t.model;
 $$;
 
--- Video views: included in new installations; existing deployments can apply
--- migrations/20261012_lesson_video_views.sql followed by
--- migrations/20261012_lesson_video_daily_views.sql. The latter resets old
--- click-based totals once and enforces one view per auth user per 24 hours.
+-- Video views: included in new installations; existing deployments apply
+-- migrations/20261013_lesson_video_daily_view_rpc.sql, which also resets old
+-- click-based totals once. Each signed-in learner counts at most once per
+-- video per calendar day (midnight South African time), and the result says
+-- whether the call counted so the app can tell learners they were already
+-- counted today.
 create table if not exists public.lesson_video_views (
   tenant_id text not null,
   video_id text not null,
@@ -344,7 +346,7 @@ create table if not exists public.lesson_video_views (
   primary key (tenant_id, video_id)
 );
 alter table public.lesson_video_views enable row level security;
-revoke all on public.lesson_video_views from anon, authenticated;
+revoke all on public.lesson_video_views from public, anon, authenticated;
 
 create table if not exists public.lesson_video_view_receipts (
   tenant_id text not null,
@@ -356,13 +358,14 @@ create table if not exists public.lesson_video_view_receipts (
 alter table public.lesson_video_view_receipts enable row level security;
 revoke all on public.lesson_video_view_receipts from public, anon, authenticated;
 
-create or replace function public.record_lesson_video_view(p_video_id text)
-returns bigint
+create or replace function public.record_lesson_video_daily_view(p_video_id text)
+returns jsonb
 language plpgsql
 security definer
 set search_path = public
 as $$
 declare
+  platform_zone constant text := 'Africa/Johannesburg';
   viewer_id uuid := auth.uid();
   viewer_tenant text := public.current_tenant();
   viewed_at timestamptz := clock_timestamp();
@@ -382,7 +385,8 @@ begin
   values (viewer_tenant, p_video_id, viewer_id, viewed_at)
   on conflict (tenant_id, video_id, user_id) do update
     set last_counted_at = excluded.last_counted_at
-    where public.lesson_video_view_receipts.last_counted_at <= viewed_at - interval '24 hours'
+    where (public.lesson_video_view_receipts.last_counted_at at time zone platform_zone)::date
+        < (viewed_at at time zone platform_zone)::date
   returning last_counted_at into accepted_at;
   if accepted_at is not null then
     insert into public.lesson_video_views (tenant_id, video_id, view_count, updated_at)
@@ -398,10 +402,10 @@ begin
       raise exception 'The video view total is missing. Contact an administrator.';
     end if;
   end if;
-  return recorded_count;
+  return jsonb_build_object('views', recorded_count, 'counted', accepted_at is not null);
 end;
 $$;
-revoke all on function public.record_lesson_video_view(text) from public, anon;
-grant execute on function public.record_lesson_video_view(text) to authenticated;
+revoke all on function public.record_lesson_video_daily_view(text) from public, anon;
+grant execute on function public.record_lesson_video_daily_view(text) to authenticated;
 notify pgrst, 'reload schema';
 

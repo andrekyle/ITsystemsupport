@@ -121,19 +121,8 @@ test("video assessments require exactly five distinct valid questions", () => {
 });
 
 test("view-count migration installs the missing RPC, isolates tenants and refreshes schema cache", async () => {
-  const database = new PGlite();
+  const database = await videoViewDatabase();
   try {
-    await database.exec(`
-      create role authenticated; create role anon;
-      create schema auth;
-      create function auth.uid() returns uuid language sql stable as $$
-        select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
-      $$;
-      create function public.current_tenant() returns text language sql stable as $$
-        select current_setting('request.jwt.tenant', true)
-      $$;
-      grant usage on schema public, auth to authenticated, anon;
-    `);
     const migration = await readFile(new URL("../supabase/migrations/20261012_lesson_video_views.sql", import.meta.url), "utf8");
     assert(migration.includes("notify pgrst, 'reload schema'"));
     await database.exec(migration);
@@ -191,5 +180,106 @@ test("view-count migration installs the missing RPC, isolates tenants and refres
     assert.equal(await countView(), 1, "Daily counts are isolated between tenants");
     await database.exec("reset role; set role anon");
     await assert.rejects(database.query("select public.record_lesson_video_view('video')"), /permission denied/);
+    await database.exec("reset role");
+    // Deployments that already count daily keep their totals and receipts when the RPC is renamed.
+    const beforeRename = await database.query<{ video_id: string; count: number }>(
+      "select video_id, view_count as count from public.lesson_video_views order by video_id");
+    await database.exec(await dailyViewRpcMigration());
+    assert.deepEqual((await database.query<{ video_id: string; count: number }>(
+      "select video_id, view_count as count from public.lesson_video_views order by video_id")).rows, beforeRename.rows,
+      "Renaming the RPC keeps legitimate daily totals");
+    await database.exec("set role authenticated");
+    await database.query("select set_config('request.jwt.tenant', 'tenant-two', false)");
+    await assert.rejects(database.query("select public.record_lesson_video_view('video')"), /does not exist/);
+    assert.deepEqual(await dailyView(database), { views: 3, counted: false }, "Existing receipts still block a second daily view");
+    await database.query("select set_config('request.jwt.claim.sub', '33333333-3333-4333-8333-333333333333', false)");
+    assert.deepEqual(await dailyView(database), { views: 4, counted: true }, "A new learner's first view counts");
+    assert.deepEqual(await dailyView(database), { views: 4, counted: false });
   } finally { await database.close(); }
 });
+
+test("once-a-day RPC replaces the per-click counter on deployments that never applied the daily migration", async () => {
+  const database = await videoViewDatabase();
+  try {
+    await database.exec(await readFile(new URL("../supabase/migrations/20261012_lesson_video_views.sql", import.meta.url), "utf8"));
+    await database.exec("set role authenticated");
+    await database.query("select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', false)");
+    await database.query("select set_config('request.jwt.tenant', 'tenant-one', false)");
+    for (let click = 0; click < 5; click++) await database.query("select public.record_lesson_video_view('video')");
+    await database.exec("reset role");
+    const migration = await dailyViewRpcMigration();
+    assert(migration.includes("notify pgrst, 'reload schema'"), "PostgREST learns about the renamed RPC");
+    await database.exec(migration);
+    assert.equal((await database.query("select * from public.lesson_video_views")).rows.length, 0,
+      "Per-click totals are reset once");
+    await database.exec("set role authenticated");
+    await assert.rejects(database.query("select public.record_lesson_video_view('video')"), /does not exist/,
+      "The per-click counter can no longer be called");
+    assert.deepEqual(await dailyView(database), { views: 1, counted: true });
+    for (let open = 0; open < 5; open++)
+      assert.deepEqual(await dailyView(database), { views: 1, counted: false }, "Reopening the video the same day never adds a view");
+    await database.query("select set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', false)");
+    assert.deepEqual(await dailyView(database), { views: 2, counted: true }, "Each learner counts once");
+    await database.query("select set_config('request.jwt.tenant', 'tenant-two', false)");
+    assert.deepEqual(await dailyView(database), { views: 1, counted: true }, "Tenants keep separate totals");
+    await database.query("select set_config('request.jwt.tenant', 'tenant-one', false)");
+    await database.exec("reset role");
+    await database.exec(migration);
+    assert.equal((await database.query<{ count: number }>(
+      "select view_count as count from public.lesson_video_views where tenant_id = 'tenant-one' and video_id = 'video'")).rows[0].count, 2,
+      "Rerunning the migration keeps daily totals");
+    // Days start at midnight South African time, not 24 hours after the last counted view.
+    const sastMidnight = "date_trunc('day', clock_timestamp() at time zone 'Africa/Johannesburg') at time zone 'Africa/Johannesburg'";
+    const backdateLearnerTwo = (lastCountedAt: string) => database.exec(`update public.lesson_video_view_receipts
+      set last_counted_at = ${lastCountedAt}
+      where user_id = '22222222-2222-4222-8222-222222222222' and video_id = 'video'`);
+    await backdateLearnerTwo(sastMidnight);
+    await database.exec("set role authenticated");
+    assert.deepEqual(await dailyView(database), { views: 2, counted: false },
+      "A view at the very start of today never counts again today, however many hours ago it was");
+    await database.exec("reset role");
+    await backdateLearnerTwo(`${sastMidnight} - interval '1 second'`);
+    await database.exec("set role authenticated");
+    assert.deepEqual(await dailyView(database), { views: 3, counted: true },
+      "A view just before midnight counts again today, even though less than 24 hours passed");
+    assert.deepEqual(await dailyView(database), { views: 3, counted: false }, "The new day also counts only once");
+    await database.exec("reset role");
+    await backdateLearnerTwo("clock_timestamp() - interval '24 hours'");
+    await database.exec("set role authenticated");
+    assert.deepEqual(await dailyView(database), { views: 4, counted: true }, "Yesterday's view never blocks today's");
+    await assert.rejects(database.query("select public.record_lesson_video_daily_view('')"), /valid video/);
+    await assert.rejects(database.query("select * from public.lesson_video_view_receipts"), /permission denied/);
+    await assert.rejects(database.query("select * from public.lesson_video_views"), /permission denied/);
+    await database.exec("reset role; set role anon");
+    await assert.rejects(database.query("select public.record_lesson_video_daily_view('video')"), /permission denied/);
+  } finally { await database.close(); }
+});
+
+async function videoViewDatabase() {
+  const database = new PGlite();
+  await database.exec(`
+    create role authenticated; create role anon;
+    create schema auth;
+    create function auth.uid() returns uuid language sql stable as $$
+      select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
+    $$;
+    create function public.current_tenant() returns text language sql stable as $$
+      select current_setting('request.jwt.tenant', true)
+    $$;
+    grant usage on schema public, auth to authenticated, anon;
+  `);
+  return database;
+}
+
+function dailyViewRpcMigration() {
+  return readFile(new URL("../supabase/migrations/20261013_lesson_video_daily_view_rpc.sql", import.meta.url), "utf8");
+}
+
+/** Calls the once-a-day RPC the way the app does and returns its `{ views, counted }` result. */
+async function dailyView(database: PGlite, video = "video") {
+  const { result } = (await database.query<{ result: unknown }>(
+    "select public.record_lesson_video_daily_view($1) as result", [video])).rows[0];
+  const value = typeof result === "string" ? JSON.parse(result) as unknown : result;
+  assert(value && typeof value === "object" && "views" in value && "counted" in value, `RPC returns views and counted: ${JSON.stringify(value)}`);
+  return { views: Number((value as { views: unknown }).views), counted: (value as { counted: unknown }).counted };
+}

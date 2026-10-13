@@ -49,6 +49,10 @@ async function test() {
   button("Watch Lesson video 1 in expanded player").click();
   await tick();
   closeIsVisible();
+  const viewsPill = document.querySelector<HTMLElement>('.lesson-video-stats span[title="Each learner counts once a day"]');
+  assert(viewsPill?.textContent === "Views unavailable", "Without a platform connection the daily view count is reported unavailable");
+  assert(document.querySelector(".lesson-video-watched")?.textContent?.includes("Test learner · learning now"),
+    "The learner line keeps its progress text until a daily count exists");
   const scrollContent = document.querySelector<HTMLElement>(".lesson-video-scroll-content");
   const player = document.querySelector<HTMLElement>(".lesson-video-player");
   assert(scrollContent && player, "Player and scrolling details are separate");
@@ -218,8 +222,8 @@ async function test() {
   for (const theme of ["light", "dark"]) {
     document.documentElement.dataset.theme = theme;
     const style = getComputedStyle(completedButton);
-    assert(style.backgroundColor === "rgb(198, 40, 40)" && style.color === "rgb(255, 255, 255)" &&
-      style.borderTopWidth === "0px", "Completed button is red with white text and no border in both themes");
+    assert(style.backgroundColor === "rgb(24, 135, 24)" && style.color === "rgb(255, 255, 255)" &&
+      style.borderTopWidth === "0px", "Completed button is green with white text and no border in both themes");
   }
   button("Close video").click();
   document.body.dataset.result = "passed";

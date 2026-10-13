@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Icon } from "../icons";
 import { lessonVideoSource, type LessonVideoSource } from "../lib/lessonVideo";
-import { recordLessonVideoView } from "../lib/lessonVideoViews";
+import { recordLessonVideoView, type LessonVideoViewCount } from "../lib/lessonVideoViews";
 import type { QuizQuestion } from "../types";
 import { validVideoQuestions, videoEngagementKey, videoQuizId, VideoWatchTracker, type VideoQuiz } from "../lib/videoLearning";
 import { VideoQuizEditor } from "./VideoQuizEditor";
@@ -155,7 +155,7 @@ function LessonVideo({
   const [shareCount, setShareCount] = useState(0);
   const [sharing, setSharing] = useState(false);
   const [status, setStatus] = useState("");
-  const [platformViewCount, setPlatformViewCount] = useState<number | null>(null);
+  const [platformViews, setPlatformViews] = useState<LessonVideoViewCount | null>(null);
   const [viewCountError, setViewCountError] = useState("");
   const openButton = useRef<HTMLButtonElement | null>(null);
   const closeButton = useRef<HTMLButtonElement | null>(null);
@@ -244,9 +244,9 @@ function LessonVideo({
         onClick={() => {
           setFailed(false);
           setPlaybackError("");
-          setPlatformViewCount(null);
           setViewCountError("");
-          void recordLessonVideoView(source.src).then(setPlatformViewCount).catch((cause: unknown) => {
+          // The platform counts each learner once a day; the last total stays visible while it refreshes.
+          void recordLessonVideoView(source.src).then(setPlatformViews).catch((cause: unknown) => {
             setViewCountError(cause instanceof Error ? cause.message : "The platform view count is unavailable.");
           });
           setOpen(true);
@@ -272,9 +272,14 @@ function LessonVideo({
                 {learnerName.trim().charAt(0).toUpperCase() || "Y"}
               </span>
               <span>
-                {platformViewCount === null
+                {platformViews === null
                   ? `${learnerName || "You"} · ${isCompleted ? "completed this video" : "learning now"}`
-                  : `${platformViewCount.toLocaleString()} ${platformViewCount === 1 ? "view" : "views"} on this platform`}
+                  : <>
+                    {`${platformViews.views.toLocaleString()} ${platformViews.views === 1 ? "view" : "views"} on this platform`}
+                    <small className="lesson-video-daily-note">
+                      {platformViews.counted ? "Counted as your view for today" : "You were already counted today"} · one view per learner per day
+                    </small>
+                  </>}
               </span>
             </div>
             <button ref={closeButton} type="button" className="lesson-video-icon-button" aria-label="Close video" onClick={() => setOpen(false)}>
@@ -323,10 +328,10 @@ function LessonVideo({
           </div>
 
           <div className="lesson-video-stats" aria-label="Your activity">
-            <span>
-              {platformViewCount === null
+            <span title="Each learner counts once a day">
+              {platformViews === null
                 ? viewCountError ? "Views unavailable" : "Views loading"
-                : `${platformViewCount.toLocaleString()} Platform views`}
+                : `${platformViews.views.toLocaleString()} Platform views`}
             </span>
             <span>{shareCount} {shareCount === 1 ? "Share" : "Shares"}</span>
             <span>{comments.length} {comments.length === 1 ? "Comment" : "Comments"}</span>

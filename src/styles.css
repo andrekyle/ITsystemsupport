@@ -2182,6 +2182,13 @@ td .with-ico .ico {
   font-weight: 600;
 }
 
+.lesson-video-daily-note {
+  display: block;
+  margin-top: 1px;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .lesson-video-watched-avatar {
   display: inline-flex;
   width: 28px;
