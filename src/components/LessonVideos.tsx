@@ -245,7 +245,7 @@ function LessonVideo({
           setFailed(false);
           setPlaybackError("");
           setViewCountError("");
-          // The platform counts each learner once a day; the last total stays visible while it refreshes.
+          // The platform counts each user once a day; the last total stays visible while it refreshes.
           void recordLessonVideoView(source.src).then(setPlatformViews).catch((cause: unknown) => {
             setViewCountError(cause instanceof Error ? cause.message : "The platform view count is unavailable.");
           });
@@ -268,16 +268,13 @@ function LessonVideo({
         <section className="lesson-video-modal" role="dialog" aria-modal="true" aria-labelledby={`lesson-video-title-${index}`}>
           <header className="lesson-video-modal-header">
             <div className="lesson-video-watched">
-              <span className="lesson-video-watched-avatar" aria-hidden="true">
-                {learnerName.trim().charAt(0).toUpperCase() || "Y"}
-              </span>
               <span>
                 {platformViews === null
                   ? `${learnerName || "You"} · ${isCompleted ? "completed this video" : "learning now"}`
                   : <>
                     {`${platformViews.views.toLocaleString()} ${platformViews.views === 1 ? "view" : "views"} on this platform`}
                     <small className="lesson-video-daily-note">
-                      {platformViews.counted ? "Counted as your view for today" : "You were already counted today"} · one view per learner per day
+                      {platformViews.counted ? "Counted as your view for today" : "You were already counted today"} · one view per user per day
                     </small>
                   </>}
               </span>
@@ -328,7 +325,7 @@ function LessonVideo({
           </div>
 
           <div className="lesson-video-stats" aria-label="Your activity">
-            <span title="Each learner counts once a day">
+            <span title="Each user counts once a day">
               {platformViews === null
                 ? viewCountError ? "Views unavailable" : "Views loading"
                 : `${platformViews.views.toLocaleString()} Platform views`}

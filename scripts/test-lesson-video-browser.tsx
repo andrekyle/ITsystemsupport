@@ -49,7 +49,7 @@ async function test() {
   button("Watch Lesson video 1 in expanded player").click();
   await tick();
   closeIsVisible();
-  const viewsPill = document.querySelector<HTMLElement>('.lesson-video-stats span[title="Each learner counts once a day"]');
+  const viewsPill = document.querySelector<HTMLElement>('.lesson-video-stats span[title="Each user counts once a day"]');
   assert(viewsPill?.textContent === "Views unavailable", "Without a platform connection the daily view count is reported unavailable");
   assert(document.querySelector(".lesson-video-watched")?.textContent?.includes("Test learner · learning now"),
     "The learner line keeps its progress text until a daily count exists");
