@@ -154,7 +154,6 @@ function LessonVideo({
   const [showComments, setShowComments] = useState(false);
   const [shareCount, setShareCount] = useState(0);
   const [sharing, setSharing] = useState(false);
-  const [shareNeedsConfirmation, setShareNeedsConfirmation] = useState(false);
   const [status, setStatus] = useState("");
   const [platformViews, setPlatformViews] = useState<LessonVideoViewCount | null>(null);
   const [viewCountError, setViewCountError] = useState("");
@@ -197,13 +196,12 @@ function LessonVideo({
     if (sharePending.current) return;
     sharePending.current = true;
     setSharing(true);
-    setShareNeedsConfirmation(false);
     setStatus("");
     try {
       if (navigator.share) {
         await navigator.share({ title, url: link });
-        setShareNeedsConfirmation(true);
-        setStatus("Share flow finished. Confirm only if you completed the share in another app.");
+        setShareCount((count) => count + 1);
+        setStatus("Video shared.");
       } else if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(link);
         setStatus("Video link copied. Copying a link does not count as a share.");
@@ -382,15 +380,6 @@ function LessonVideo({
             </div>
           </div>
           {status && <p className="lesson-video-status" role="status">{status}</p>}
-          {shareNeedsConfirmation && <div className="lesson-video-share-confirmation">
-            <button type="button" className="btn ghost sm" aria-label="Confirm completed share" onClick={() => {
-              setShareCount((count) => count + 1);
-              setShareNeedsConfirmation(false);
-              setStatus("Video shared.");
-            }}>
-              Confirm completed share
-            </button>
-          </div>}
 
           {showComments && (
             <section className="lesson-video-comments" aria-label="Video comments">

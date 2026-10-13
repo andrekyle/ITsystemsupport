@@ -112,12 +112,9 @@ async function test() {
   shareButton.click();
   await tick();
   assert(openedOnlyShares === 1, "Native share was opened");
-  stats(0);
-  assert(document.querySelector(".lesson-video-status")?.textContent?.includes("Confirm only if you completed"),
-    "Opening native share asks for completion confirmation");
-  button("Confirm completed share").click();
-  await tick();
   stats(1);
+  assert(document.querySelector(".lesson-video-status")?.textContent === "Video shared.",
+    "Resolved native shares count without a manual confirmation step");
 
   let shares = 0;
   let finishShare: (() => void) | undefined;
@@ -133,9 +130,6 @@ async function test() {
   stats(1);
   assert(finishShare, "Native share is pending");
   finishShare();
-  await tick();
-  stats(1);
-  button("Confirm completed share").click();
   await tick();
   stats(2);
   assert(!shareButton.disabled, "Sharing is enabled after completion");
