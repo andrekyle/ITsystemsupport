@@ -103,6 +103,19 @@ async function test() {
   assert(document.querySelector(".lesson-video-status")?.textContent?.includes("does not count"),
     "Clipboard feedback explains that copies are not shares");
 
+  const shareButton = button("Share video");
+  let openedOnlyShares = 0;
+  setShare(async data => {
+    assert(data?.url === link, "Shares the original video link");
+    openedOnlyShares++;
+  });
+  shareButton.click();
+  await tick();
+  assert(openedOnlyShares === 1, "Native share was opened");
+  stats(0);
+  assert(document.querySelector(".lesson-video-status")?.textContent?.includes("Complete the share"),
+    "Opening native share without a completed handoff does not count");
+
   let shares = 0;
   let finishShare: (() => void) | undefined;
   setShare(async data => {
@@ -110,13 +123,13 @@ async function test() {
     shares++;
     await new Promise<void>(resolve => { finishShare = resolve; });
   });
-  const shareButton = button("Share video");
   shareButton.click();
   shareButton.click();
   await tick();
   assert(shares === 1 && shareButton.disabled, "Prevents duplicate shares while pending");
   stats(0);
   assert(finishShare, "Native share is pending");
+  window.dispatchEvent(new Event("blur"));
   finishShare();
   await tick();
   stats(1);

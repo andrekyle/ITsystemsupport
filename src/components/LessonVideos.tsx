@@ -122,6 +122,23 @@ function LessonVideoPreview({ source }: { source: LessonVideoSource }) {
   />;
 }
 
+function watchNativeShareCompletion() {
+  let leftPage = document.visibilityState === "hidden";
+  const markLeftPage = () => { leftPage = true; };
+  const onVisibilityChange = () => {
+    if (document.visibilityState === "hidden") leftPage = true;
+  };
+  window.addEventListener("blur", markLeftPage, { once: true });
+  document.addEventListener("visibilitychange", onVisibilityChange);
+  return {
+    didCompleteHandoff: () => leftPage,
+    cleanup: () => {
+      window.removeEventListener("blur", markLeftPage);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    },
+  };
+}
+
 function LessonVideo({
   link,
   index,
@@ -199,7 +216,16 @@ function LessonVideo({
     setStatus("");
     try {
       if (navigator.share) {
-        await navigator.share({ title, url: link });
+        const completion = watchNativeShareCompletion();
+        try {
+          await navigator.share({ title, url: link });
+        } finally {
+          completion.cleanup();
+        }
+        if (!completion.didCompleteHandoff()) {
+          setStatus("Share opened. Complete the share in another app for it to count.");
+          return;
+        }
         setShareCount((count) => count + 1);
         setStatus("Video shared.");
       } else if (navigator.clipboard?.writeText) {
