@@ -2226,9 +2226,11 @@ td .with-ico .ico {
 }
 
 .lesson-video-scroll-content {
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .lesson-video-description {
@@ -2324,34 +2326,67 @@ td .with-ico .ico {
 .lesson-video-action-tools {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
 
 .lesson-video-icon-button {
   display: inline-flex;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border-2);
-  border-radius: 8px;
+  flex: 0 0 38px;
+  border: 1px solid color-mix(in srgb, var(--border-2) 78%, transparent);
+  border-radius: 12px;
   color: var(--ink-2);
-  background: transparent;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  box-shadow: none;
   cursor: pointer;
   text-decoration: none;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lesson-video-icon-button svg {
+  display: block;
+  flex: none;
+}
+
+.lesson-video-more-button svg {
+  transform: translateY(1px);
 }
 
 .lesson-video-modal-header > .lesson-video-icon-button {
   flex-shrink: 0;
   width: 34px;
   height: 34px;
+  flex-basis: 34px;
   border-color: transparent;
+  border-radius: 10px;
+  background: transparent;
+  box-shadow: none;
 }
 
 .lesson-video-icon-button:hover,
 .lesson-video-icon-button.is-active {
-  border-color: var(--ink-3);
+  border-color: color-mix(in srgb, var(--ink-3) 65%, transparent);
   color: var(--ink);
+  background: color-mix(in srgb, var(--surface-2) 86%, var(--ink) 4%);
+  box-shadow: none;
+}
+
+.lesson-video-icon-button:hover {
+  transform: translateY(-1px);
+}
+
+.lesson-video-icon-button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.lesson-video-icon-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 65%, transparent);
+  outline-offset: 3px;
 }
 
 .lesson-video-status {
@@ -2374,6 +2409,33 @@ td .with-ico .ico {
 .lesson-video-quiz fieldset { margin: 14px 0; border: 1px solid var(--border); border-radius: 8px; }
 .lesson-video-quiz label { display: flex; align-items: baseline; gap: 8px; padding: 6px; cursor: pointer; }
 .lesson-video-quiz input { flex-shrink: 0; }
+.lesson-video-check-answers {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 11px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lesson-video-check-answers:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--surface);
+}
+.lesson-video-check-answers:disabled {
+  opacity: .45;
+  cursor: default;
+}
+.lesson-video-check-answers:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ink-3) 45%, transparent);
+  outline-offset: 2px;
+}
 .lesson-video-quiz-editor { margin: 12px 0; }
 .lesson-video-quiz-editor > fieldset { min-width: 0; border: 0; padding: 8px 0; }
 .lesson-video-quiz-editor textarea { width: 100%; }
@@ -2412,10 +2474,85 @@ td .with-ico .ico {
 }
 
 .lesson-video-comments li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   padding: 10px 12px;
   border-radius: 9px;
   background: var(--surface);
   font-size: 12px;
+}
+
+.lesson-video-comment-like {
+  display: inline-flex;
+  min-width: 28px;
+  height: 28px;
+  margin-left: auto;
+  padding: 0 7px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ink-3);
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.lesson-video-comment-like:hover,
+.lesson-video-comment-like.is-active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.lesson-video-comment-like:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 65%, transparent);
+  outline-offset: 2px;
+}
+
+.lesson-video-comment-body {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 2px;
+  line-height: 1.35;
+}
+
+.lesson-video-comment-body strong {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.lesson-video-comment-body span {
+  overflow-wrap: anywhere;
+  color: var(--ink-2);
+}
+
+.lesson-video-comments .lesson-video-comment-edit {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) auto auto;
+  gap: 6px;
+  width: 100%;
+}
+
+.lesson-video-comments .lesson-video-comment-edit input {
+  height: 32px;
+}
+
+.lesson-video-comments .lesson-video-comment-edit button {
+  min-width: 0;
+  height: 32px;
+  padding: 0 10px;
+}
+
+.lesson-video-comments .lesson-video-comment-edit .is-cancel {
+  border: 1px solid var(--border-2);
+  color: var(--ink-2);
+  background: transparent;
 }
 
 .lesson-video-comments form {
@@ -2451,6 +2588,103 @@ td .with-ico .ico {
 .lesson-video-comments form button:disabled {
   opacity: .45;
   cursor: default;
+}
+
+.lesson-video-title-editor {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.lesson-video-title-editor input {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--surface);
+  font: inherit;
+  font-weight: 500;
+}
+
+/* Admin dashboard video analytics */
+.video-metrics { padding: 18px 0 8px; }
+.video-metrics-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.video-metrics-head h2 { margin: 0 0 4px; font-size: 20px; }
+.video-metrics-head p { margin: 0; color: var(--ink-3); font-size: 13px; }
+.video-metrics-sync { padding: 5px 9px; border-radius: 99px; color: var(--ink-3); background: var(--surface-2); font-size: 11px; white-space: nowrap; }
+.video-metrics-switch { display: inline-flex; gap: 3px; margin-bottom: 14px; padding: 3px; border-radius: 9px; background: var(--surface-2); }
+.video-metrics-switch button { padding: 6px 11px; border: 0; border-radius: 7px; color: var(--ink-3); background: transparent; font: inherit; font-size: 12px; cursor: pointer; }
+.video-metrics-switch button.active { color: var(--ink); background: var(--surface); font-weight: 650; }
+.video-metrics-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.video-metrics-kpis > div { display: grid; gap: 5px; padding: 13px 14px; border-radius: 11px; background: var(--surface-2); }
+.video-metrics-kpis span { color: var(--ink-3); font-size: 11px; }
+.video-metrics-kpis strong { color: var(--ink); font-size: 20px; font-weight: 650; }
+.video-trending-card { padding: 18px; }
+.video-trending-card h3, .video-user-grid h3 { margin: 0 0 4px; font-size: 15px; }
+.video-chart { display: grid; gap: 12px; margin-top: 18px; }
+.video-chart-row { display: grid; grid-template-columns: 22px minmax(150px, 1.2fr) minmax(120px, 2fr) 58px; align-items: center; gap: 10px; }
+.video-rank { color: var(--ink-3); font-size: 11px; text-align: center; }
+.video-chart-label { min-width: 0; display: grid; gap: 2px; }
+.video-chart-label strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.video-chart-label span { color: var(--ink-3); font-size: 10px; }
+.video-chart-track { height: 8px; overflow: hidden; border-radius: 99px; background: var(--surface-2); }
+.video-chart-track span { display: block; height: 100%; border-radius: inherit; background: var(--azure); }
+.video-chart-value { color: var(--ink-2); font-size: 11px; text-align: right; }
+.video-metrics-table-wrap { margin-top: 14px; padding: 0; overflow-x: auto; }
+.video-metrics-table { width: 100%; }
+.video-metrics-table th, .video-metrics-table td { padding: 9px 11px; font-size: 11px; white-space: nowrap; }
+.video-metrics-table td:first-child { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+.video-learner-picker { max-width: 360px; margin-bottom: 14px; }
+.video-learner-picker .video-learner-select { width: 100%; }
+.video-learner-picker .nice-select-btn {
+  min-height: 38px;
+  padding: 8px 16px 8px 12px;
+  border-color: var(--border) !important;
+  border-radius: 9px;
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.video-learner-picker .nice-select-btn:hover,
+.video-learner-picker .nice-select-btn.open,
+.video-learner-picker .nice-select-btn:focus-visible {
+  border-color: var(--border-2) !important;
+  color: var(--ink);
+  background: var(--surface);
+}
+.video-learner-picker .nice-select-chev { margin-right: 4px; color: var(--ink-3); }
+.video-learner-picker .nice-select-panel {
+  z-index: 90;
+  width: 100%;
+  max-height: 280px;
+  border-color: var(--border);
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .16);
+}
+.video-learner-picker .nice-select-opt { color: var(--ink-2); }
+.video-learner-picker .nice-select-opt.active { color: var(--ink); background: var(--surface-2); }
+.video-learner-picker .nice-select-opt.selected,
+.video-learner-picker .nice-select-tick { color: var(--ink); }
+.video-user-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; }
+.video-user-grid > .card { padding: 18px; }
+.video-user-row { display: flex; align-items: flex-start; gap: 9px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.video-user-row:last-child { border-bottom: 0; }
+.video-user-row > svg { flex: 0 0 auto; color: var(--ink-3); }
+.video-user-row > span { min-width: 0; display: grid; gap: 3px; }
+.video-user-row strong { overflow-wrap: anywhere; font-size: 12px; }
+.video-user-row small { color: var(--ink-3); font-size: 10px; line-height: 1.4; }
+.video-metrics .empty-state { margin: 14px 0 0; color: var(--ink-3); font-size: 12px; }
+
+@media (max-width: 760px) {
+  .video-metrics-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .video-user-grid { grid-template-columns: 1fr; }
+  .video-chart-row { grid-template-columns: 20px minmax(120px, 1fr) 52px; }
+  .video-chart-track { grid-column: 2 / -1; }
 }
 
 @media (max-width: 600px) {

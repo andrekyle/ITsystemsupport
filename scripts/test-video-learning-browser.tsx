@@ -221,6 +221,7 @@ async function test() {
   const streamingRoot = createRoot(streaming);
   let youtubeFinished = false;
   let youtubeError = "";
+  const youtubeQualities: string[] = [];
   const youtubeStart = performance.now();
   window.YT = { Player: class {
     constructor(_iframe: HTMLIFrameElement, options: { events: { onReady: () => void } }) {
@@ -230,16 +231,21 @@ async function test() {
     getDuration() { return 1; }
     getPlayerState() { return this.getCurrentTime() >= 1 ? 0 : 1; }
     playVideo() {}
+    setPlaybackQuality(quality: string) { youtubeQualities.push(quality); }
     destroy() {}
   } };
   streamingRoot.render(<TrackedVideoPlayer source={{ kind: "embed", src: "https://www.youtube-nocookie.com/embed/abcdefghijk" }}
     title="YouTube fixture" tracker={new VideoWatchTracker()} onFinished={() => { youtubeFinished = true; }}
     onError={message => { youtubeError = message; }} />);
   await tick();
-  assert(streaming.querySelector("iframe")?.src.includes("enablejsapi=1"),
+  const youtubeSrc = streaming.querySelector("iframe")?.src ?? "";
+  assert(youtubeSrc.includes("enablejsapi=1"),
     "YouTube player enables tracked playback");
+  assert(youtubeSrc.includes("vq=hd1080") && youtubeSrc.includes("hd=1"),
+    "YouTube expanded player requests HD playback");
   assert(!youtubeFinished, "YouTube cannot unlock before reaching the end");
   for (let i = 0; i < 60 && !youtubeFinished && !youtubeError; i++) await tick();
+  assert(youtubeQualities.includes("hd1080"), "YouTube SDK is asked for HD quality");
   assert(youtubeFinished && !youtubeError, `YouTube SDK playback unlocks after full viewing: ${youtubeError}`);
   streamingRoot.unmount();
 
@@ -271,11 +277,13 @@ async function test() {
   roundedRoot.unmount();
 
   const vimeoEvents: Record<string, (data: { seconds: number; duration: number }) => void> = {};
+  const vimeoQualities: string[] = [];
   window.Vimeo = { Player: class {
     on(event: string, callback: (data: { seconds: number; duration: number }) => void) { vimeoEvents[event] = callback; }
     off(event: string) { delete vimeoEvents[event]; }
     async ready() {}
     async play() {}
+    async setQuality(quality: string) { vimeoQualities.push(quality); }
   } };
   let vimeoFinished = false;
   const vimeoRoot = createRoot(streaming);
@@ -284,6 +292,9 @@ async function test() {
     onError={message => { throw new Error(message); }} />);
   await tick();
   assert(vimeoEvents.timeupdate && vimeoEvents.ended, "Vimeo SDK subscribes to playback and ending");
+  assert(streaming.querySelector("iframe")?.src.includes("quality=1080p"),
+    "Vimeo expanded player requests HD playback");
+  assert(vimeoQualities.includes("1080p"), "Vimeo SDK is asked for 1080p quality");
   const originalNow = performance.now.bind(performance);
   let time = 0;
   Object.defineProperty(performance, "now", { configurable: true, value: () => time });

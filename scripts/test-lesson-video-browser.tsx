@@ -11,10 +11,6 @@ function button(label: string) {
   assert(element, `Missing button: ${label}`);
   return element;
 }
-function stats(expected: number) {
-  assert(document.querySelector(".lesson-video-stats")?.textContent?.includes(
-    `${expected} ${expected === 1 ? "Share" : "Shares"}`), `Expected ${expected} shares`);
-}
 function closeIsVisible() {
   const rect = button("Close video").getBoundingClientRect();
   assert(rect.top >= 0 && rect.bottom <= innerHeight && rect.left >= 0 && rect.right <= innerWidth,
@@ -22,14 +18,18 @@ function closeIsVisible() {
   assert(document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)
     ?.closest('button[aria-label="Close video"]'), "Close button must not be covered");
 }
-function setShare(value: Navigator["share"] | undefined) {
-  Object.defineProperty(navigator, "share", { configurable: true, value });
-}
 
 async function test() {
   const link = "https://example.com/lesson.mp4";
+  const learnerProfile = {
+    id: "profile-test-learner",
+    name: "Test learner",
+    role: "Learner" as const,
+    createdAt: "2026-10-13T00:00:00.000Z",
+    avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230088cc'/%3E%3C/svg%3E",
+  };
   createRoot(document.getElementById("fixture")!).render(
-    <LessonVideos links={[link]} learnerName="Test learner" />
+    <LessonVideos links={[link]} learnerName="Test learner" learnerProfile={learnerProfile} />
   );
   await tick();
   const launch = button("Watch Lesson video 1 in expanded player");
@@ -86,89 +86,11 @@ async function test() {
   scrollContent.scrollTop = 0;
   assert(document.activeElement === button("Close video"), "Opening focuses the close button");
   assert(document.body.style.overflow === "hidden", "Background scrolling is locked");
-  stats(0);
-
-  setShare(undefined);
-  let copies = 0;
-  Object.defineProperty(navigator, "clipboard", {
-    configurable: true, value: { writeText: async (value: string) => {
-      assert(value === link, "Copies the video link");
-      copies++;
-    } },
-  });
-  button("Share video").click();
-  await tick();
-  assert(copies === 1, "Clipboard fallback copies once");
-  stats(0);
-  assert(document.querySelector(".lesson-video-status")?.textContent?.includes("does not count"),
-    "Clipboard feedback explains that copies are not shares");
-
-  const shareButton = button("Share video");
-  let openedOnlyShares = 0;
-  setShare(async data => {
-    assert(data?.url === link, "Shares the original video link");
-    openedOnlyShares++;
-  });
-  shareButton.click();
-  await tick();
-  assert(openedOnlyShares === 1, "Native share was opened");
-  stats(0);
-  assert(document.querySelector(".lesson-video-status")?.textContent?.includes("not counted"),
-    "Resolved native shares are not counted without proof of completed sending");
-
-  let shares = 0;
-  let finishShare: (() => void) | undefined;
-  setShare(async data => {
-    assert(data?.url === link, "Shares the original video link");
-    shares++;
-    await new Promise<void>(resolve => { finishShare = resolve; });
-  });
-  shareButton.click();
-  shareButton.click();
-  await tick();
-  assert(shares === 1 && shareButton.disabled, "Prevents duplicate shares while pending");
-  stats(0);
-  assert(finishShare, "Native share is pending");
-  finishShare();
-  await tick();
-  stats(0);
-  assert(!shareButton.disabled, "Sharing is enabled after completion");
-
-  setShare(async () => { throw new DOMException("Cancelled", "AbortError"); });
-  shareButton.click();
-  await tick();
-  stats(0);
-  assert(!document.querySelector(".lesson-video-status"), "Cancellation is not shown as an error or success");
-
-  setShare(async () => { throw new Error("Share failed"); });
-  shareButton.click();
-  await tick();
-  stats(0);
-  assert(document.querySelector(".lesson-video-status")?.textContent === "Share failed", "Share errors are visible");
-
-  setShare(undefined);
-  const originalExecCommand = document.execCommand;
-  Object.defineProperty(navigator, "clipboard", {
-    configurable: true, value: { writeText: async () => { throw new Error("Copy failed"); } },
-  });
-  Object.defineProperty(document, "execCommand", { configurable: true, value: () => false });
-  shareButton.click();
-  await tick();
-  stats(0);
-  assert(document.querySelector(".lesson-video-status")?.textContent === "Copy failed", "Copy errors are visible");
-  Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
-  let legacyCopied = false;
-  Object.defineProperty(document, "execCommand", { configurable: true, value: (command: string) => {
-    legacyCopied = command === "copy";
-    return legacyCopied;
-  } });
-  shareButton.click();
-  await tick();
-  stats(0);
-  assert(legacyCopied, "Legacy copy fallback is used when native share and clipboard are unavailable");
-  assert(document.querySelector(".lesson-video-status")?.textContent?.includes("does not count"),
-    "Legacy copy fallback gives non-counting feedback");
-  Object.defineProperty(document, "execCommand", { configurable: true, value: originalExecCommand });
+  assert(!document.querySelector('button[aria-label="Share video"]'), "Share button is removed");
+  assert(!document.querySelector('button[aria-label="Save video"]'), "Save/tag button is removed");
+  assert(!document.querySelector('button[aria-label="Remove saved video"]'), "Saved tag toggle is removed");
+  assert(!document.querySelector(".lesson-video-stats")?.textContent?.includes("Share"),
+    "Share stats are removed with the share action");
 
   button("Show comments").click();
   await tick();
@@ -186,6 +108,11 @@ async function test() {
       new Event("submit", { bubbles: true, cancelable: true }));
     await tick();
   }
+  const firstComment = document.querySelector<HTMLElement>(".lesson-video-comments li");
+  assert(firstComment?.querySelector<HTMLImageElement>("img.avatar-img")?.alt === "Test learner",
+    "Comments show the commenter's profile image avatar");
+  assert(firstComment?.querySelector(".lesson-video-comment-body strong")?.textContent === "Test learner",
+    "Comments show who posted them");
   assert(scrollContent.scrollHeight > scrollContent.clientHeight, "Long content scrolls below the video");
   scrollContent.scrollTop = scrollContent.scrollHeight;
   await tick();

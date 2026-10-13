@@ -7,6 +7,7 @@ interface YouTubePlayer {
   getDuration(): number;
   getPlayerState(): number;
   playVideo(): void;
+  setPlaybackQuality?(quality: string): void;
   destroy(): void;
 }
 interface VimeoPlayer {
@@ -14,6 +15,7 @@ interface VimeoPlayer {
   off(event: string): void;
   ready(): Promise<void>;
   play(): Promise<void>;
+  setQuality?(quality: string): Promise<void>;
 }
 declare global {
   interface Window {
@@ -70,22 +72,28 @@ function loadVimeo(): Promise<void> {
   return vimeoReady;
 }
 
-export function TrackedVideoPlayer({ source, title, tracker, onFinished, onError }: {
+export function TrackedVideoPlayer({ source, title, tracker, onFinished, onError, onWatchProgress }: {
   source: LessonVideoSource;
   title: string;
   tracker: VideoWatchTracker;
   onFinished: () => void;
   onError: (message: string) => void;
+  onWatchProgress?: (seconds: number, duration: number) => void;
 }) {
   const iframe = useRef<HTMLIFrameElement>(null);
-  const callbacks = useRef({ onFinished, onError });
-  callbacks.current = { onFinished, onError };
+  const callbacks = useRef({ onFinished, onError, onWatchProgress });
+  callbacks.current = { onFinished, onError, onWatchProgress };
+  const lastReported = useRef(0);
   const [watched, setWatched] = useState(tracker.watchedSeconds);
   const [duration, setDuration] = useState(tracker.duration);
   function sample(seconds: number, total: number) {
     tracker.sample(seconds, total, performance.now());
     setWatched(tracker.watchedSeconds);
     setDuration(tracker.duration);
+    if (tracker.watchedSeconds - lastReported.current >= 5 || tracker.finished) {
+      lastReported.current = tracker.watchedSeconds;
+      callbacks.current.onWatchProgress?.(tracker.watchedSeconds, tracker.duration);
+    }
   }
   function ended() {
     if (tracker.finished) callbacks.current.onFinished();
@@ -109,9 +117,11 @@ export function TrackedVideoPlayer({ source, title, tracker, onFinished, onError
           youtube = new window.YT.Player(iframe.current, { events: {
             onReady: () => {
               if (cancelled) return;
+              youtube?.setPlaybackQuality?.("hd1080");
               timer = window.setInterval(() => {
                 if (!youtube) return;
                 const state = youtube.getPlayerState();
+                if (state === 1) youtube.setPlaybackQuality?.("hd1080");
                 const seconds = youtube.getCurrentTime();
                 const total = youtube.getDuration();
                 if (state === 1 || state === 0) sample(seconds, total);
@@ -128,6 +138,7 @@ export function TrackedVideoPlayer({ source, title, tracker, onFinished, onError
           vimeo = new window.Vimeo.Player(iframe.current);
           await vimeo.ready();
           if (cancelled) return;
+          try { await vimeo.setQuality?.("1080p"); } catch { /* Vimeo may restrict quality per video/account. */ }
           vimeo.on("timeupdate", data => sample(data.seconds, data.duration));
           vimeo.on("pause", () => tracker.pause());
           vimeo.on("seeking", () => tracker.pause());
@@ -161,6 +172,10 @@ export function TrackedVideoPlayer({ source, title, tracker, onFinished, onError
     if (url.hostname === "www.youtube-nocookie.com") {
       url.searchParams.set("enablejsapi", "1");
       url.searchParams.set("origin", window.location.origin);
+      url.searchParams.set("vq", "hd1080");
+      url.searchParams.set("hd", "1");
+    } else if (url.hostname === "player.vimeo.com") {
+      url.searchParams.set("quality", "1080p");
     }
   }
   return <>

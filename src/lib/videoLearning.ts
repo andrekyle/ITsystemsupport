@@ -21,7 +21,7 @@ export function videoQuizId(link: string): string {
   return `video:${lessonVideoSource(link).src}`;
 }
 
-export function videoEngagementKey(link: string, action: "liked" | "comments" | "likeXp" | "commentXp"): string {
+export function videoEngagementKey(link: string, action: "liked" | "comments" | "likeXp" | "commentXp" | "watchSeconds" | "viewCount"): string {
   return `videoengagement.${action}.${lessonVideoSource(link).src}`;
 }
 
@@ -33,6 +33,14 @@ export class VideoWatchTracker {
   duration = 0;
 
   pause() { this.previous = null; }
+
+  /** Start a completely new watch attempt after an unsuccessful quiz. */
+  reset() {
+    this.previous = null;
+    this.ranges = [];
+    this.realSeconds = 0;
+    this.duration = 0;
+  }
 
   sample(seconds: number, duration: number, time: number) {
     if (!Number.isFinite(seconds) || !Number.isFinite(duration) || duration <= 0 || seconds < 0) return;

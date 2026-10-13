@@ -16,6 +16,7 @@ import { attendanceSignedCount, computeGamification } from "../lib/gamification"
 import { Bar, Ring } from "../components/Ring";
 import { TokenGauge } from "../components/TokenGauge";
 import { Button } from "@fluentui/react-components";
+import { VideoMetrics } from "../components/VideoMetrics";
 
 export function Dashboard({
   profile,
@@ -30,7 +31,10 @@ export function Dashboard({
   const dashboardTabs = [
     { id: "overview", label: "Overview" },
     { id: "learning", label: "Learning progress" },
-    ...(profile.role === "Super User" ? [{ id: "ai", label: "AI usage" }] : []),
+    ...(profile.role === "Super User" ? [
+      { id: "videos", label: "Video metrics" },
+      { id: "ai", label: "AI usage" },
+    ] : []),
   ];
   const { docs: poeDocs } = usePoe(profile.id);
   const { outcomes } = useOutcomes();
@@ -199,6 +203,12 @@ export function Dashboard({
           </button>
         ))}
       </div>
+
+      {profile.role === "Super User" && (
+        <section role="tabpanel" id="dashboard-panel-videos" aria-labelledby="dashboard-tab-videos" hidden={dashboardTab !== "videos"}>
+          <VideoMetrics />
+        </section>
+      )}
 
       {profile.role === "Super User" && (
         <section role="tabpanel" id="dashboard-panel-ai" aria-labelledby="dashboard-tab-ai" hidden={dashboardTab !== "ai"}>

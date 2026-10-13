@@ -4919,6 +4919,13 @@ export function UnitPage({
                         description="Add a video, then open its question setup to paste a transcript and generate five questions.">
                         <LessonVideoEditor key={`${unitId}:${si}`} links={lessonEdits.videos?.[si] ?? []}
                           quizzes={lessonEdits.videoQuizzes}
+                          titles={lessonEdits.videoTitles}
+                          onSaveTitle={async (link, title) => {
+                            const editId = builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId;
+                            await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(editId)}`, {
+                              ...lessonEdits, videoTitles: { ...lessonEdits.videoTitles, [videoQuizId(link)]: title },
+                            });
+                          }}
                           onSaveQuiz={async (link, quiz) => {
                             const editId = builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId;
                             await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(editId)}`, {
@@ -5086,11 +5093,13 @@ export function UnitPage({
                 {lessonControlsHost ? createPortal(stepper, lessonControlsHost) : stepper}
                 <LessonVideos
                   links={lessonEdits.videos?.[si] ?? []}
+                  titles={lessonEdits.videoTitles}
                   quizzes={lessonEdits.videoQuizzes}
                   completedVideoIds={Object.entries(progress.units[u.us]?.quizzes ?? {})
                     .filter(([id, result]) => id.startsWith("video:") && result.best === 5 && result.total === 5)
                     .map(([id]) => id)}
                   learnerName={profile.name}
+                  learnerProfile={profile}
                   logbook={progress.units[u.us]?.logbook}
                   onLike={(link, liked) => {
                     setLogbookField(u.us, videoEngagementKey(link, "liked"), liked);
@@ -5099,6 +5108,14 @@ export function UnitPage({
                   onComment={(link, comments) => {
                     setLogbookField(u.us, videoEngagementKey(link, "comments"), JSON.stringify(comments));
                     setLogbookField(u.us, videoEngagementKey(link, "commentXp"), true);
+                  }}
+                  onWatchProgress={(link, seconds) => {
+                    const key = videoEngagementKey(link, "watchSeconds");
+                    const previous = Number(progress.units[u.us]?.logbook?.[key] ?? 0);
+                    if (seconds > previous) setLogbookField(u.us, key, String(Math.floor(seconds)));
+                  }}
+                  onViewCount={(link, views) => {
+                    setLogbookField(u.us, videoEngagementKey(link, "viewCount"), String(views));
                   }}
                   onComplete={(link, answers) => {
                     const id = videoQuizId(link);
