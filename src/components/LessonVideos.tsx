@@ -122,6 +122,30 @@ function LessonVideoPreview({ source }: { source: LessonVideoSource }) {
   />;
 }
 
+async function copyShareLink(link: string) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(link);
+      return;
+    } catch {
+      // Try the legacy selection-based copy path below.
+    }
+  }
+  const input = document.createElement("textarea");
+  input.value = link;
+  input.setAttribute("readonly", "");
+  input.style.position = "fixed";
+  input.style.left = "-9999px";
+  input.style.top = "0";
+  document.body.append(input);
+  input.select();
+  try {
+    if (!document.execCommand("copy")) throw new Error("Copy failed");
+  } finally {
+    input.remove();
+  }
+}
+
 function LessonVideo({
   link,
   index,
@@ -199,15 +223,17 @@ function LessonVideo({
     setStatus("");
     try {
       if (navigator.share) {
-        await navigator.share({ title, url: link });
-        setShareCount((count) => count + 1);
-        setStatus("Video shared.");
-      } else if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(link);
-        setStatus("Video link copied. Copying a link does not count as a share.");
+        const shareData = { title, text: "Lesson video", url: link };
+        if (navigator.canShare && !navigator.canShare(shareData)) {
+          await copyShareLink(link);
+          setStatus("Video link copied. Copying a link does not count as a share.");
+          return;
+        }
+        await navigator.share(shareData);
+        setStatus("Share opened. External apps do not confirm completed sending, so this is not counted as a share.");
       } else {
-        setStatus("Sharing is not available in this browser.");
-        return;
+        await copyShareLink(link);
+        setStatus("Video link copied. Copying a link does not count as a share.");
       }
     } catch (cause) {
       if (cause instanceof DOMException && cause.name === "AbortError") return;

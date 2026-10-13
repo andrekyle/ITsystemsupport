@@ -112,9 +112,9 @@ async function test() {
   shareButton.click();
   await tick();
   assert(openedOnlyShares === 1, "Native share was opened");
-  stats(1);
-  assert(document.querySelector(".lesson-video-status")?.textContent === "Video shared.",
-    "Resolved native shares count without a manual confirmation step");
+  stats(0);
+  assert(document.querySelector(".lesson-video-status")?.textContent?.includes("not counted"),
+    "Resolved native shares are not counted without proof of completed sending");
 
   let shares = 0;
   let finishShare: (() => void) | undefined;
@@ -127,39 +127,48 @@ async function test() {
   shareButton.click();
   await tick();
   assert(shares === 1 && shareButton.disabled, "Prevents duplicate shares while pending");
-  stats(1);
+  stats(0);
   assert(finishShare, "Native share is pending");
   finishShare();
   await tick();
-  stats(2);
+  stats(0);
   assert(!shareButton.disabled, "Sharing is enabled after completion");
 
   setShare(async () => { throw new DOMException("Cancelled", "AbortError"); });
   shareButton.click();
   await tick();
-  stats(2);
+  stats(0);
   assert(!document.querySelector(".lesson-video-status"), "Cancellation is not shown as an error or success");
 
   setShare(async () => { throw new Error("Share failed"); });
   shareButton.click();
   await tick();
-  stats(2);
+  stats(0);
   assert(document.querySelector(".lesson-video-status")?.textContent === "Share failed", "Share errors are visible");
 
   setShare(undefined);
+  const originalExecCommand = document.execCommand;
   Object.defineProperty(navigator, "clipboard", {
     configurable: true, value: { writeText: async () => { throw new Error("Copy failed"); } },
   });
+  Object.defineProperty(document, "execCommand", { configurable: true, value: () => false });
   shareButton.click();
   await tick();
-  stats(2);
+  stats(0);
   assert(document.querySelector(".lesson-video-status")?.textContent === "Copy failed", "Copy errors are visible");
   Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
+  let legacyCopied = false;
+  Object.defineProperty(document, "execCommand", { configurable: true, value: (command: string) => {
+    legacyCopied = command === "copy";
+    return legacyCopied;
+  } });
   shareButton.click();
   await tick();
-  stats(2);
-  assert(document.querySelector(".lesson-video-status")?.textContent?.includes("not available"),
-    "Unsupported sharing is reported");
+  stats(0);
+  assert(legacyCopied, "Legacy copy fallback is used when native share and clipboard are unavailable");
+  assert(document.querySelector(".lesson-video-status")?.textContent?.includes("does not count"),
+    "Legacy copy fallback gives non-counting feedback");
+  Object.defineProperty(document, "execCommand", { configurable: true, value: originalExecCommand });
 
   button("Show comments").click();
   await tick();
