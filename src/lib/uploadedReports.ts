@@ -7,7 +7,6 @@ import {
   eruditioLogoDataUrl,
   requestReport,
   type AiDeck,
-  type DeckSlide,
   type ReportKind,
 } from "./reports";
 
@@ -58,65 +57,6 @@ function pageText(items: Array<{ str: string; transform: number[] }>): string {
     .join("\n");
 }
 
-function chunkText(text: string, maxLines = 38, maxChars = 2_500): string[] {
-  const chunks: string[] = [];
-  let lines: string[] = [];
-  let length = 0;
-  const flush = () => {
-    if (lines.length) chunks.push(lines.join("\n"));
-    lines = [];
-    length = 0;
-  };
-  for (const sourceLine of text.split(/\r?\n/)) {
-    const parts = sourceLine.length > 170
-      ? sourceLine.match(/.{1,170}(?:\s|$)|.{1,170}/g) ?? [sourceLine]
-      : [sourceLine];
-    for (const line of parts) {
-      if (lines.length && (lines.length >= maxLines || length + line.length + 1 > maxChars)) flush();
-      lines.push(line);
-      length += line.length + 1;
-    }
-  }
-  flush();
-  return chunks.length ? chunks : [""];
-}
-
-function pdfAppendix(source: PdfSource): DeckSlide[] {
-  return source.pages.flatMap((page) => {
-    const chunks = chunkText(page.text);
-    return chunks.map((text, index) => ({
-      layout: "source",
-      headline: `Source Appendix · Page ${page.page}${chunks.length > 1 ? ` (${index + 1}/${chunks.length})` : ""}`,
-      kicker: "COMPLETE EXTRACTED SOURCE TEXT",
-      sourceText: text,
-    }));
-  });
-}
-
-function spreadsheetAppendix(source: SpreadsheetSource): DeckSlide[] {
-  const slides: DeckSlide[] = [];
-  for (const sheet of source.sheets) {
-    const width = sheet.rows.reduce((max, row) => Math.max(max, row.length), 0);
-    const normalised = sheet.rows.map((row) => [...row, ...Array(Math.max(0, width - row.length)).fill("")]);
-    const columnStarts = Array.from({ length: Math.ceil(Math.max(width, 1) / 8) }, (_, index) => index * 8);
-    const rowStarts = Array.from({ length: Math.ceil(Math.max(normalised.length - 1, 1) / 10) }, (_, index) => index * 10);
-    for (const columnStart of columnStarts) {
-      for (const rowStart of rowStarts) {
-        const columns = (normalised[0] ?? []).slice(columnStart, columnStart + 8);
-        while (columns.length < Math.min(8, width - columnStart)) columns.push("");
-        slides.push({
-          layout: "source-table",
-          headline: `${sheet.name} · Source Matrix`,
-          kicker: `ROWS ${rowStart + 2}–${Math.min(rowStart + 11, normalised.length)} · COLUMNS ${columnStart + 1}–${Math.min(columnStart + 8, width)}`,
-          sourceColumns: columns.map((value, index) => value || `Column ${columnStart + index + 1}`),
-          sourceRows: normalised.slice(rowStart + 1, rowStart + 11).map((row) => row.slice(columnStart, columnStart + 8)),
-        });
-      }
-    }
-  }
-  return slides;
-}
-
 function sourceDataForAi(source: PdfSource | SpreadsheetSource): unknown {
   if (source.sourceType === "pdf") {
     return {
@@ -124,7 +64,7 @@ function sourceDataForAi(source: PdfSource | SpreadsheetSource): unknown {
       sourceType: source.sourceType,
       pageCount: source.pages.length,
       pages: source.pages,
-      completenessRule: "Use every named learner and every substantive source section. The client appends the full extracted text.",
+      completenessRule: "Use every named learner and every substantive source section in the styled report. No appendix will be added.",
     };
   }
   return {
@@ -132,15 +72,14 @@ function sourceDataForAi(source: PdfSource | SpreadsheetSource): unknown {
     sourceType: source.sourceType,
     sheetCount: source.sheets.length,
     sheets: source.sheets,
-    completenessRule: "Use every named learner and worksheet. The client appends every workbook cell.",
+    completenessRule: "Use every named learner and worksheet in the styled report. No appendix will be added.",
   };
 }
 
 async function renderStyledSource(
   file: File,
   source: PdfSource | SpreadsheetSource,
-  author: Profile,
-  appendix: DeckSlide[]
+  author: Profile
 ): Promise<UploadedReportResult> {
   const result = await requestReport(UPLOADED_KIND, sourceDataForAi(source), undefined, "report");
   if (!result.ok || !result.deck) {
@@ -151,28 +90,7 @@ async function renderStyledSource(
   }
   const deck: AiDeck = {
     cover: result.deck.cover,
-    slides: [
-      ...result.deck.slides,
-      {
-        layout: "cards",
-        headline: "Source Completeness Record",
-        kicker: "VERIFICATION APPENDIX",
-        cards: [
-          { title: "Source file", text: file.name },
-          {
-            title: source.sourceType === "pdf" ? "Pages preserved" : "Worksheets preserved",
-            text: String(source.sourceType === "pdf" ? source.pages.length : source.sheets.length),
-          },
-          {
-            title: source.sourceType === "pdf" ? "Extraction method" : "Workbook method",
-            text: source.sourceType === "pdf" ? "Page-by-page text extraction" : "Every worksheet, row and cell retained",
-          },
-          { title: "Review status", text: "Styled narrative plus complete source appendix included" },
-        ],
-        strip: { text: "SOURCE FIDELITY: COMPLETE EXTRACTED CONTENT FOLLOWS" },
-      },
-      ...appendix,
-    ],
+    slides: result.deck.slides,
   };
   const title = result.deck.cover.title?.trim() || `${fileStem(file.name)} — Eruditio report`;
   const count = source.sourceType === "pdf" ? source.pages.length : source.sheets.length;
@@ -195,7 +113,7 @@ async function renderStyledSource(
         ["Source type", source.sourceType === "pdf" ? "PDF document" : "Spreadsheet workbook"],
         [source.sourceType === "pdf" ? "Source pages" : "Worksheets", String(count)],
         ["Prepared by", author.name],
-        ["Completeness", "Full source appendix included"],
+        ["Output", "Styled Eruditio report"],
       ],
     }
   );
@@ -215,7 +133,7 @@ export async function buildUploadedPdfReport(file: File, author: Profile): Promi
     pages.push({ page: pageNumber, text: pageText(items) });
   }
   const source: PdfSource = { sourceFile: file.name, sourceType: "pdf", pages };
-  return renderStyledSource(file, source, author, pdfAppendix(source));
+  return renderStyledSource(file, source, author);
 }
 
 export async function buildUploadedSpreadsheetReport(file: File, author: Profile): Promise<UploadedReportResult> {
@@ -226,7 +144,7 @@ export async function buildUploadedSpreadsheetReport(file: File, author: Profile
       .map((row) => row.map((cell) => String(cell))),
   }));
   const source: SpreadsheetSource = { sourceFile: file.name, sourceType: "spreadsheet", sheets };
-  return renderStyledSource(file, source, author, spreadsheetAppendix(source));
+  return renderStyledSource(file, source, author);
 }
 
 export async function buildUploadedReport(file: File, author: Profile): Promise<UploadedReportResult> {

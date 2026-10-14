@@ -405,9 +405,6 @@ export interface DeckSlide {
   cardStart?: number;
   items?: { title?: string; text?: string }[];
   note?: string;
-  sourceText?: string;
-  sourceColumns?: string[];
-  sourceRows?: string[][];
 }
 
 function learnerDeckSummary(row: LearnerRow): string {
@@ -1076,16 +1073,6 @@ const clamp01 = (v: unknown): number => {
 function deckSlideBody(s: DeckSlide): string {
   const layout = s.layout.trim().toLowerCase();
 
-  if (layout === "source") {
-    return `${s.kicker ? `<div class="kicker">${esc(s.kicker)}</div>` : ""}<div class="source-copy">${esc(s.sourceText ?? "")}</div>`;
-  }
-
-  if (layout === "source-table") {
-    const columns = s.sourceColumns ?? [];
-    const rows = s.sourceRows ?? [];
-    return `${s.kicker ? `<div class="kicker">${esc(s.kicker)}</div>` : ""}<div class="source-table-wrap"><table class="source-table"><thead><tr>${columns.map((column) => `<th>${esc(column)}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${esc(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
-  }
-
   if (layout === "kpi") {
     const kpis = (s.kpis ?? []).slice(0, 4);
     const cards = kpis
@@ -1425,12 +1412,6 @@ export function deckDocumentHtml(
   .c-card .tag{font-size:9.75pt;font-weight:700;color:${DECK.o};letter-spacing:.08em;text-transform:uppercase}
   .c-card .h{font-size:13.5pt;font-weight:700;line-height:1.28;margin-top:.14in}
   .c-card .s{font-size:9.38pt;color:${DECK.grey};line-height:1.42;margin-top:.15in}
-  .source-copy{height:4.78in;margin-top:.15in;padding:.2in .24in;border-radius:.1in;background:${DECK.paper};white-space:pre-wrap;overflow:hidden;font-size:9.5pt;line-height:1.3;color:${DECK.ink}}
-  .source-table-wrap{height:4.78in;margin-top:.15in;overflow:hidden}
-  .source-table{width:100%;border-collapse:collapse;table-layout:fixed}
-  .source-table th{background:${DECK.g};color:#fff;border:1px solid ${DECK.cell};padding:.055in .06in;font-size:7.5pt;line-height:1.1;text-align:left;overflow-wrap:anywhere}
-  .source-table td{border:1px solid ${DECK.cell};padding:.045in .06in;font-size:7.2pt;line-height:1.15;vertical-align:top;overflow-wrap:anywhere}
-  .source-table tbody tr:nth-child(even) td{background:${DECK.paper}}
   ${logoCss}
 </style>
 </head>

@@ -130,7 +130,7 @@ SOURCE FIDELITY — HARD RULES:
 - Preserve source inconsistencies. If two source values conflict, state both and flag them for review.
 - Include every named learner found in the source across consecutive table or cards slides. Never select a representative subset.
 - Use the source's actual programme, client, reporting month, facilitator and provider in the cover where present.
-- The client appends a complete verbatim source appendix after your slides, so organise and style the report meaningfully rather than repeating raw page text.
+- No source appendix is added. The styled slides themselves must carry every substantive source section and every named learner, using continuation slides whenever required.
 
 Use the DECK_RULES layouts and visual sequence. For monthly training reports prefer:
 1. KPI summary using only supported counts.
@@ -140,7 +140,7 @@ Use the DECK_RULES layouts and visual sequence. For monthly training reports pre
 5. Challenges and conclusion/cohort position.
 6. Recommendations grounded in the source.
 
-For assessment-progress reports, weight the deck toward unit-standard tables, outcomes, learner status and annexures. For spreadsheet trackers, use KPI, table, measures and cards slides to summarise the workbook; the complete workbook matrices are appended by the client.
+For assessment-progress reports, weight the deck toward unit-standard tables, outcomes and learner status. For spreadsheet trackers, use KPI, table, measures and cards slides to represent every worksheet and learner status needed by the report.
 
 Reply with STRICT JSON matching DECK_RULES. Make 5 or more slides and every continuation slide required for complete named-learner coverage.`;
 

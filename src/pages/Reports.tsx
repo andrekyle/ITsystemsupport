@@ -711,7 +711,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
       <section className="reports-upload-card" aria-labelledby="uploaded-report-title">
         <div>
           <h3 id="uploaded-report-title">Generate from an uploaded report</h3>
-          <p>Upload a PDF or spreadsheet. The AI restructures it into the approved 16:9 Eruditio report template and includes a complete source appendix.</p>
+          <p>Upload a PDF or spreadsheet. The AI restructures its content into the approved 16:9 Eruditio report template.</p>
         </div>
         <label className={`reports-upload-btn${uploadedBusy ? " busy" : ""}`}>
           {uploadedBusy ? "Preparing report…" : "Choose PDF or spreadsheet"}
