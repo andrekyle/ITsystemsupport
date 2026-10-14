@@ -337,8 +337,6 @@ a:hover {
 .editing-tool-group > summary:focus-visible { outline: 2px solid var(--ink-3); outline-offset: -3px; border-radius: 10px; }
 .editing-tool-group h3 { margin: 0; font-size: 13px; line-height: 1.4; }
 .editing-tool-group > summary > h3 { flex: 1; }
-.editing-tool-group .generated-quiz-remove { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 28px; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--ink-3); cursor: pointer; }
-.editing-tool-group .generated-quiz-remove:hover { color: var(--red); }
 .editing-tool-group-body { min-width: 0; padding: 0 14px 14px; }
 .editing-tool-description { margin: 0 0 12px; color: var(--ink-3); font-size: 12px; line-height: 1.5; }
 .editing-tool-label { margin: 14px 0 8px; color: var(--ink-2); font-size: 12px; font-weight: 600; }
@@ -14220,7 +14218,6 @@ table.data th.sortable.sorted { color: var(--ink); }
   margin: 0 auto 22px;
   padding: 16px 18px;
   border: 1px solid var(--border);
-  border-left: 3px solid var(--azure);
   border-radius: 14px;
   background: var(--surface);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
@@ -14254,19 +14251,27 @@ table.data th.sortable.sorted { color: var(--ink); }
 
 .reports-upload-btn {
   position: relative;
+  display: inline-flex;
   flex: 0 0 auto;
-  padding: 8px 12px;
-  border-radius: 7px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 37px;
+  padding: 0 16px;
+  border: 1px solid var(--azure);
+  border-radius: var(--radius);
   background: var(--azure);
-  color: #fff;
+  color: #ffffff;
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 650;
+  font-size: 13px;
+  font-weight: 400;
   white-space: nowrap;
 }
 
 .reports-upload-btn:hover {
-  filter: brightness(1.1);
+  border-color: var(--azure);
+  color: #ffffff;
+  filter: brightness(1.12);
 }
 
 .reports-upload-btn.busy {

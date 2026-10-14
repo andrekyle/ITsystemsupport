@@ -11,3 +11,9 @@ When a user asks the assistant to style or generate a learner, assessment, atten
 - Preserve conflicting totals or wording exactly as source information and flag them for review instead of correcting them silently.
 - Validate completeness before presenting a generated report: compare source page/sheet counts and learner, unit-standard, row, and status coverage where those structures are present.
 - Prefer the existing upload-to-report flow in `src/lib/uploadedReports.ts` and the Reports page rather than creating a second parser or report pipeline.
+
+## Output template per source type
+
+- **Spreadsheet uploads** produce a **Learner tracker report**: a deterministic, cell-for-cell rendering of every worksheet as a `.tracker` grid, enhanced with `enhanceTrackerHtml()` from `src/lib/trackerEditor.ts` so it is editable in the browser, with per-column filters, the status legend (`NYS`, `C`, `SA`, `IP`, `X`), a sign-off block, and `@page { size: A3 landscape }` for Print → Save as PDF. No AI rewriting is applied to the grid, so no cell can be lost or re-interpreted.
+- **PDF uploads** are restyled by the AI into the approved 16:9 Eruditio slide deck rendered by `deckDocumentHtml()` in `src/lib/reports.ts`.
+- Editing toolbars must be hidden in print output via `@media print`.

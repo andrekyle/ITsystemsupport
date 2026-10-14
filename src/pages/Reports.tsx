@@ -385,7 +385,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
       if (!preview) {
         const link = document.createElement("a");
         link.href = URL.createObjectURL(new Blob([result.html], { type: "text/html" }));
-        link.download = `${file.name.replace(/\.[^.]+$/, "")}-Styled.html`;
+        link.download = `${file.name.replace(/\.[^.]+$/, "")}${result.kind === "spreadsheet" ? "-Learner-Tracker" : "-Styled"}.html`;
         link.click();
         URL.revokeObjectURL(link.href);
       } else {
@@ -394,9 +394,9 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         preview.document.close();
       }
       setUploadedMessage(
-        `${result.kind === "pdf" ? "PDF" : "spreadsheet"} ready — ${result.pagesOrSheets} ${
-          result.kind === "pdf" ? "page" : "sheet"
-        }${result.pagesOrSheets === 1 ? "" : "s"} preserved.`
+        result.kind === "pdf"
+          ? `PDF ready — ${result.pagesOrSheets} page${result.pagesOrSheets === 1 ? "" : "s"} preserved.`
+          : `Learner tracker ready — ${result.pagesOrSheets} sheet${result.pagesOrSheets === 1 ? "" : "s"}, ${result.records} row${result.records === 1 ? "" : "s"} preserved.`
       );
     } catch (error) {
       preview?.close();
@@ -711,7 +711,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
       <section className="reports-upload-card" aria-labelledby="uploaded-report-title">
         <div>
           <h3 id="uploaded-report-title">Generate from an uploaded report</h3>
-          <p>Upload a PDF or spreadsheet. The AI restructures its content into the approved 16:9 Eruditio report template.</p>
+          <p>Upload a PDF to restyle it into the approved 16:9 Eruditio report template, or a spreadsheet to build an editable Learner tracker report you can print or save as a PDF.</p>
         </div>
         <div className="reports-upload-actions">
           <label className={`reports-upload-btn${uploadedBusy ? " busy" : ""}`}>

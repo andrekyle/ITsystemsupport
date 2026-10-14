@@ -18,28 +18,24 @@ function assert(value: unknown, message: string): asserts value {
 async function test() {
   createRoot(document.getElementById("fixture")!).render(<Fixture />);
   await tick();
-  const group = document.querySelector<HTMLDetailsElement>(".editing-tool-group");
-  if (innerWidth <= 640) {
-    assert(!group, "Desktop quiz tools stay hidden on phones");
-  } else {
-    assert(group && !group.open, "Quiz question tools are closed by default");
-    const summary = group.querySelector("summary")!;
-    const remove = summary.querySelector<HTMLButtonElement>('[aria-label="Remove question 1"]');
-    assert(remove, "Delete is available in the collapsed header");
-    const bounds = remove.getBoundingClientRect();
-    assert(bounds.width === 28 && bounds.height === 28, "Delete is a small icon button");
-    assert(summary.getBoundingClientRect().right - bounds.right <= 16, "Delete is at the far right");
-    summary.click();
-    assert(group.open, "Header opens quiz question tools");
-    assert(group.querySelector('[aria-label="Correct answer for question 1"]'), "Correct answer control remains available");
-    summary.click();
-    remove.click();
-    assert(!group.open, "Delete does not toggle the group");
-    await tick();
-    assert(!document.querySelector(".editing-tool-group"), "Delete removes the question");
-  }
+  const editor = document.querySelector<HTMLElement>(".generated-quiz-edit");
+  assert(editor, "Quiz question editor is displayed inline");
+  assert(!document.querySelector(".editing-tool-group"), "Question is not duplicated in editing tools");
+  const answers = editor.querySelectorAll<HTMLInputElement>('input[type="radio"]');
+  assert(answers.length === 4 && answers[1].checked, "Correct answer is selected beside the visible options");
+  answers[2].click();
+  await tick();
+  assert(document.querySelectorAll<HTMLInputElement>('.generated-quiz-edit input[type="radio"]')[2].checked,
+    "Correct answer can be changed directly on the question");
+  const remove = editor.querySelector<HTMLButtonElement>('[aria-label="Remove question 1"]');
+  assert(remove, "Delete remains available beside the displayed question");
+  const bounds = remove.getBoundingClientRect();
+  assert(bounds.width === 28 && bounds.height === 28, "Delete remains a small icon button");
+  remove.click();
+  await tick();
+  assert(!document.querySelector(".generated-quiz-edit"), "Delete removes the question");
   document.body.dataset.result = "passed";
-  document.getElementById("result")!.textContent = "PASS: collapsed quiz tools, compact right-aligned delete and question removal";
+  document.getElementById("result")!.textContent = "PASS: correct answer selection is inline with no duplicated sidebar question";
 }
 test().catch(error => {
   document.body.dataset.result = "failed";
