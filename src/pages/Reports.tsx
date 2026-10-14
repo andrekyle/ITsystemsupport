@@ -24,6 +24,7 @@ import {
   type ReportKind,
   type ReportScope,
 } from "../lib/reports";
+import { buildUploadedReport } from "../lib/uploadedReports";
 
 const ERROR_TEXT: Record<string, string> = {
   not_configured: "The AI service is not configured on this deployment (missing API key).",
@@ -332,6 +333,8 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   const [briefRange, setBriefRange] = useState<"full" | "month" | "custom">("month");
   const [briefText, setBriefText] = useState("");
   const [briefHistory, setBriefHistory] = useState<string[]>(loadReportBriefHistory);
+  const [uploadedBusy, setUploadedBusy] = useState(false);
+  const [uploadedMessage, setUploadedMessage] = useState<string | null>(null);
 
   function needsBrief(kind: ReportKind) {
     return kind.id === "tracker" || kind.id === "executive" || kind.id === "progress";
@@ -370,6 +373,37 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     setBriefKind(null);
     setQuestion("");
     void generate(kind, prompt, "kind");
+  }
+
+  async function handleUploadedReport(file: File | undefined) {
+    if (!file) return;
+    setUploadedBusy(true);
+    setUploadedMessage(null);
+    const preview = window.open("", "_blank");
+    try {
+      const result = await buildUploadedReport(file);
+      if (!preview) {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(new Blob([result.html], { type: "text/html" }));
+        link.download = `${file.name.replace(/\.[^.]+$/, "")}-Styled.html`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      } else {
+        preview.document.open();
+        preview.document.write(result.html);
+        preview.document.close();
+      }
+      setUploadedMessage(
+        `${result.kind === "pdf" ? "PDF" : "spreadsheet"} ready — ${result.pagesOrSheets} ${
+          result.kind === "pdf" ? "page" : "sheet"
+        }${result.pagesOrSheets === 1 ? "" : "s"} preserved.`
+      );
+    } catch (error) {
+      preview?.close();
+      setUploadedMessage(error instanceof Error ? error.message : "The uploaded file could not be processed.");
+    } finally {
+      setUploadedBusy(false);
+    }
   }
 
   useEffect(() => {
@@ -673,6 +707,26 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         </span>
         AI Assistant
       </h2>
+
+      <section className="reports-upload-card" aria-labelledby="uploaded-report-title">
+        <div>
+          <h3 id="uploaded-report-title">Generate from an uploaded report</h3>
+          <p>Upload a PDF or spreadsheet. The assistant preserves every extracted page, sheet, row and cell in an editable Eruditio report.</p>
+        </div>
+        <label className={`reports-upload-btn${uploadedBusy ? " busy" : ""}`}>
+          {uploadedBusy ? "Preparing report…" : "Choose PDF or spreadsheet"}
+          <input
+            type="file"
+            accept=".pdf,.xlsx,.xls,.csv,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
+            disabled={uploadedBusy}
+            onChange={(event) => {
+              void handleUploadedReport(event.currentTarget.files?.[0]);
+              event.currentTarget.value = "";
+            }}
+          />
+        </label>
+        {uploadedMessage && <span className="reports-upload-message" role="status">{uploadedMessage}</span>}
+      </section>
 
       {msgs.length > 0 && !wantReport ? (
         <div className="reports-chat">
