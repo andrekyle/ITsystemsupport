@@ -709,8 +709,9 @@ export function ReportsPage({ profile }: { profile: Profile }) {
       </h2>
 
       <section className="reports-upload-card" aria-labelledby="uploaded-report-title">
-        <div>
-          <h3 id="uploaded-report-title">Generate from an uploaded report</h3>
+        <div className="reports-upload-title">
+          <Icon name="document" size={18} />
+          <span id="uploaded-report-title">Generate from an uploaded report</span>
         </div>
         <div className="reports-upload-actions">
           <label className={`reports-upload-btn${uploadedBusy ? " busy" : ""}`}>
