@@ -405,6 +405,9 @@ export interface DeckSlide {
   cardStart?: number;
   items?: { title?: string; text?: string }[];
   note?: string;
+  sourceText?: string;
+  sourceColumns?: string[];
+  sourceRows?: string[][];
 }
 
 function learnerDeckSummary(row: LearnerRow): string {
@@ -1023,7 +1026,7 @@ export function openReportDocument(
 let logoCache: string | null = null;
 
 /** Eruditio logo as a data URL so downloaded reports stay self-contained. */
-async function eruditioLogoDataUrl(): Promise<string> {
+export async function eruditioLogoDataUrl(): Promise<string> {
   if (logoCache !== null) return logoCache;
   try {
     const blob = await (await fetch("/logos/eruditio.svg")).blob();
@@ -1072,6 +1075,16 @@ const clamp01 = (v: unknown): number => {
 
 function deckSlideBody(s: DeckSlide): string {
   const layout = s.layout.trim().toLowerCase();
+
+  if (layout === "source") {
+    return `${s.kicker ? `<div class="kicker">${esc(s.kicker)}</div>` : ""}<div class="source-copy">${esc(s.sourceText ?? "")}</div>`;
+  }
+
+  if (layout === "source-table") {
+    const columns = s.sourceColumns ?? [];
+    const rows = s.sourceRows ?? [];
+    return `${s.kicker ? `<div class="kicker">${esc(s.kicker)}</div>` : ""}<div class="source-table-wrap"><table class="source-table"><thead><tr>${columns.map((column) => `<th>${esc(column)}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${esc(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  }
 
   if (layout === "kpi") {
     const kpis = (s.kpis ?? []).slice(0, 4);
@@ -1220,13 +1233,22 @@ function paginateDeckSlides(slides: DeckSlide[]): DeckSlide[] {
   });
 }
 
+export interface DeckDocumentMeta {
+  eyebrow?: string;
+  sponsorWord?: string;
+  metaRows?: [string, string][];
+  filename?: string;
+  footerText?: string;
+}
+
 /** Printable deck document — pixel replica of the approved PPTX template. */
 export function deckDocumentHtml(
   kind: ReportKind,
   deck: AiDeck,
   rows: LearnerRow[],
   author: Profile,
-  logo: string
+  logo: string,
+  documentMeta: DeckDocumentMeta = {}
 ): string {
   const now = new Date();
   const cover = deck.cover ?? {};
@@ -1239,19 +1261,20 @@ export function deckDocumentHtml(
   );
   const month = monthMatch?.[monthMatch.length - 1] ?? now.toLocaleString("en-GB", { month: "long" });
   const sponsor = (COURSE_META as { sponsor?: string }).sponsor ?? "";
-  const sponsorWord = (sponsor.trim().split(/\s+/)[0] || "Learnership").toUpperCase();
-  const eyebrow = `${sponsorWord} • ${month.toUpperCase()} LEARNERSHIP REPORT`;
+  const sponsorWord = documentMeta.sponsorWord ?? (sponsor.trim().split(/\s+/)[0] || "Learnership").toUpperCase();
+  const eyebrow = documentMeta.eyebrow ?? `${sponsorWord} • ${month.toUpperCase()} LEARNERSHIP REPORT`;
   const title = cover.title?.trim() || `${month} ${kind.name}`;
   const subtitle = cover.subtitle?.trim() || `${COURSE_META.title} • ${month} ${now.getFullYear()}`;
   const card = cover.card ?? {};
   const slides = paginateDeckSlides(deck.slides);
   const slug = kind.name.replace(/\s+/g, "-").toLowerCase();
-  const filename = `${slug}-${now.toISOString().slice(0, 10)}.html`;
+  const filename = documentMeta.filename ?? `${slug}-${now.toISOString().slice(0, 10)}.html`;
+  const footerText = documentMeta.footerText ?? "Eruditio • Empower · Develop · Transform";
   const logoCss = logo
     ? `.slogo{background-image:url("${logo}")}.clogo{background-image:url("${logo}")}`
     : "";
 
-  const metaRows: [string, string][] = [
+  const metaRows: [string, string][] = documentMeta.metaRows ?? [
     ["SAQA ID", COURSE_META.saqaId],
     ...(sponsor ? ([["Sponsor", sponsor]] as [string, string][]) : []),
     ["NQF level", `Level ${COURSE_META.nqfLevel} • ${COURSE_META.credits} credits`],
@@ -1276,7 +1299,7 @@ export function deckDocumentHtml(
       <div class="s">${esc(card.body || `Compiled from the ITSS Learn platform records by ${author.name}.`)}</div>
     </div>
     <div class="fline"></div>
-    <div class="ftext">Eruditio • Empower · Develop · Transform</div>
+    <div class="ftext">${esc(footerText)}</div>
     <div class="fpage">01</div>
   </section>`;
 
@@ -1291,7 +1314,7 @@ export function deckDocumentHtml(
     <div class="rule"></div>
     <div class="content">${deckSlideBody(s)}</div>
     <div class="fline"></div>
-    <div class="ftext">Eruditio • Empower · Develop · Transform</div>
+    <div class="ftext">${esc(footerText)}</div>
     <div class="fpage">${String(i + 2).padStart(2, "0")}</div>
   </section>`
     )
@@ -1402,6 +1425,12 @@ export function deckDocumentHtml(
   .c-card .tag{font-size:9.75pt;font-weight:700;color:${DECK.o};letter-spacing:.08em;text-transform:uppercase}
   .c-card .h{font-size:13.5pt;font-weight:700;line-height:1.28;margin-top:.14in}
   .c-card .s{font-size:9.38pt;color:${DECK.grey};line-height:1.42;margin-top:.15in}
+  .source-copy{height:4.78in;margin-top:.15in;padding:.2in .24in;border-radius:.1in;background:${DECK.paper};white-space:pre-wrap;overflow:hidden;font-size:9.5pt;line-height:1.3;color:${DECK.ink}}
+  .source-table-wrap{height:4.78in;margin-top:.15in;overflow:hidden}
+  .source-table{width:100%;border-collapse:collapse;table-layout:fixed}
+  .source-table th{background:${DECK.g};color:#fff;border:1px solid ${DECK.cell};padding:.055in .06in;font-size:7.5pt;line-height:1.1;text-align:left;overflow-wrap:anywhere}
+  .source-table td{border:1px solid ${DECK.cell};padding:.045in .06in;font-size:7.2pt;line-height:1.15;vertical-align:top;overflow-wrap:anywhere}
+  .source-table tbody tr:nth-child(even) td{background:${DECK.paper}}
   ${logoCss}
 </style>
 </head>

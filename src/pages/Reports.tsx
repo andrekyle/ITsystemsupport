@@ -381,7 +381,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     setUploadedMessage(null);
     const preview = window.open("", "_blank");
     try {
-      const result = await buildUploadedReport(file);
+      const result = await buildUploadedReport(file, profile);
       if (!preview) {
         const link = document.createElement("a");
         link.href = URL.createObjectURL(new Blob([result.html], { type: "text/html" }));
@@ -711,7 +711,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
       <section className="reports-upload-card" aria-labelledby="uploaded-report-title">
         <div>
           <h3 id="uploaded-report-title">Generate from an uploaded report</h3>
-          <p>Upload a PDF or spreadsheet. The assistant preserves every extracted page, sheet, row and cell in an editable Eruditio report.</p>
+          <p>Upload a PDF or spreadsheet. The AI restructures it into the approved 16:9 Eruditio report template and includes a complete source appendix.</p>
         </div>
         <label className={`reports-upload-btn${uploadedBusy ? " busy" : ""}`}>
           {uploadedBusy ? "Preparing report…" : "Choose PDF or spreadsheet"}

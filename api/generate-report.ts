@@ -122,11 +122,34 @@ Return STRICT JSON: {"intro":"brief factual cohort overview","sections":[{"headi
 Include 5-7 sections covering completion and its distribution, attendance patterns, quiz/exercise performance, evidence and assessor-confirmed credits, unit/module status, and risk/data quality. Give 3-6 recommendations.
 Use data.analysis as the chart source. Distinguish whole-programme learner metrics from scoped unit/module metrics. Null means not recorded, not zero. Submitted is not Competent. Risk indicators overlap. This is a snapshot: do not claim improvement, decline or causation without historical data. The session chart only represents dates present in cohort signatures, not every scheduled session. State limitations explicitly. The client provides every learner's graph and data appendix; narrative need not repeat every name. Do not claim predictions or statistical significance.`;
 
+const UPLOADED_SOURCE_RULES = `report_kind "uploaded-source": transform the uploaded source into the approved Eruditio 16:9 client-report deck. The uploaded document, not the platform qualification defaults, is the authority.
+
+SOURCE FIDELITY — HARD RULES:
+- Use only facts, names, dates, statuses, results, comments and wording present in data.pages or data.sheets.
+- Do not invent missing IDs, attendance, outcomes, totals, dates, programme details or recommendations presented as source facts.
+- Preserve source inconsistencies. If two source values conflict, state both and flag them for review.
+- Include every named learner found in the source across consecutive table or cards slides. Never select a representative subset.
+- Use the source's actual programme, client, reporting month, facilitator and provider in the cover where present.
+- The client appends a complete verbatim source appendix after your slides, so organise and style the report meaningfully rather than repeating raw page text.
+
+Use the DECK_RULES layouts and visual sequence. For monthly training reports prefer:
+1. KPI summary using only supported counts.
+2. Objectives or delivery focus as cards.
+3. Learner feedback across enough table/cards continuation slides to include every learner.
+4. Content, methodology and assessment-results slides where present.
+5. Challenges and conclusion/cohort position.
+6. Recommendations grounded in the source.
+
+For assessment-progress reports, weight the deck toward unit-standard tables, outcomes, learner status and annexures. For spreadsheet trackers, use KPI, table, measures and cards slides to summarise the workbook; the complete workbook matrices are appended by the client.
+
+Reply with STRICT JSON matching DECK_RULES. Make 5 or more slides and every continuation slide required for complete named-learner coverage.`;
+
 /** Answer-mode questions skip the report spec; kind runs skip the question ladder. Same rules, fewer tokens. */
 function buildSystemPrompt(hasQuestion: boolean, mode: string, kind: string): string {
   if (hasQuestion && mode === "answer") return [CORE_PROMPT, SCOPE_DIRECT_RULES, ANSWER_TAIL].join("\n\n");
   if (kind === "tracker") return [CORE_PROMPT, CLINICAL_RULES, TRACKER_RULES].join("\n\n");
   if (kind === "data-analysis") return [CORE_PROMPT, CLINICAL_RULES, DATA_ANALYSIS_RULES].join("\n\n");
+  if (kind === "uploaded-source") return [CORE_PROMPT, CLINICAL_RULES, DECK_RULES, UPLOADED_SOURCE_RULES].join("\n\n");
   if (kind === "executive") return [CORE_PROMPT, CLINICAL_RULES, DECK_RULES, EXECUTIVE_REFERENCE_RULES].join("\n\n");
   if (hasQuestion) return [CORE_PROMPT, SCOPE_DIRECT_RULES, CLINICAL_RULES, DECK_RULES].join("\n\n");
   return [CORE_PROMPT, CLINICAL_RULES, DECK_RULES].join("\n\n");

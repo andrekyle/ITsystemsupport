@@ -1,6 +1,15 @@
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import * as XLSX from "xlsx";
+import type { Profile } from "../types";
+import {
+  deckDocumentHtml,
+  eruditioLogoDataUrl,
+  requestReport,
+  type AiDeck,
+  type DeckSlide,
+  type ReportKind,
+} from "./reports";
 
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
@@ -12,78 +21,27 @@ export interface UploadedReportResult {
   kind: "pdf" | "spreadsheet";
 }
 
-const esc = (value: string) =>
-  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-
-const fileStem = (name: string) => name.replace(/\.[^.]+$/, "").replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "") || "uploaded-report";
-
-function toolbar(filename: string): string {
-  return `
-    <div class="toolbar" contenteditable="false">
-      <button type="button" onclick="toggleEdit()">Edit report</button>
-      <button type="button" onclick="downloadHtml()">Download HTML</button>
-      <button type="button" onclick="window.print()">Print / Save PDF</button>
-    </div>
-    <script>
-      var editing = false;
-      function toggleEdit() {
-        editing = !editing;
-        document.body.contentEditable = editing ? "true" : "false";
-        document.querySelector(".toolbar button").textContent = editing ? "Editing on" : "Edit report";
-      }
-      function downloadHtml() {
-        var clone = document.documentElement.cloneNode(true);
-        clone.querySelector(".toolbar").setAttribute("contenteditable", "false");
-        var blob = new Blob(["<!doctype html>" + clone.outerHTML], { type: "text/html" });
-        var link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = ${JSON.stringify(filename)};
-        link.click();
-        URL.revokeObjectURL(link.href);
-      }
-    </script>`;
+interface PdfSource {
+  sourceFile: string;
+  sourceType: "pdf";
+  pages: { page: number; text: string }[];
 }
 
-function baseDocument(title: string, body: string, filename: string, landscape = false): string {
-  return `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>${esc(title)}</title>
-<style>
-  * { box-sizing: border-box; }
-  :root { --orange: #f47b20; --green: #126b4b; --mint: #e7f4ed; --ink: #25352f; --line: #cfe1d7; }
-  body { margin: 0; padding: 32px 42px; color: var(--ink); font: 15px/1.55 "Segoe UI", Arial, sans-serif; background: #f4f7f5; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  main { max-width: 1180px; margin: 0 auto; background: #fff; padding: 34px 42px; box-shadow: 0 4px 24px rgba(18, 107, 75, .12); }
-  h1 { color: var(--green); margin: 0 0 4px; font-size: 30px; }
-  h2 { color: var(--green); border-bottom: 3px solid var(--orange); padding-bottom: 6px; margin: 30px 0 12px; }
-  .meta, .notice { background: var(--mint); border-left: 5px solid var(--orange); padding: 12px 16px; margin: 16px 0 22px; }
-  .small { color: #5d6d65; font-size: 13px; }
-  .page { break-after: page; }
-  .page:last-child { break-after: auto; }
-  .source-text { white-space: pre-wrap; font-family: "Segoe UI", Arial, sans-serif; }
-  table { width: 100%; border-collapse: collapse; margin: 10px 0 24px; }
-  th { background: var(--green); color: white; text-align: left; }
-  th, td { border: 1px solid var(--line); padding: 7px 9px; vertical-align: top; }
-  tr:nth-child(even) td { background: #f8fbf9; }
-  .sheet { break-after: page; }
-  .sheet:last-child { break-after: auto; }
-  .toolbar { position: fixed; right: 16px; bottom: 16px; z-index: 5; display: flex; gap: 6px; }
-  .toolbar button { border: 0; border-radius: 5px; padding: 6px 9px; background: var(--green); color: white; cursor: pointer; font-size: 12px; }
-  .toolbar button:hover { background: var(--orange); }
-  body[contenteditable="true"] { caret-color: var(--orange); }
-  body[contenteditable="true"] main { outline: 2px dashed var(--orange); outline-offset: 5px; }
-  @media print {
-    body { padding: 0; background: #fff; }
-    main { max-width: none; box-shadow: none; padding: 10mm 12mm; }
-    .toolbar { display: none !important; }
-    @page { size: ${landscape ? "A4 landscape" : "A4"}; margin: 0; }
-  }
-</style>
-</head>
-<body>${toolbar(filename)}<main>${body}</main></body>
-</html>`;
+interface SpreadsheetSource {
+  sourceFile: string;
+  sourceType: "spreadsheet";
+  sheets: { name: string; rows: string[][] }[];
 }
+
+const UPLOADED_KIND: ReportKind = {
+  id: "uploaded-source",
+  name: "Uploaded source report",
+  desc: "An Eruditio-styled report generated from an uploaded source document.",
+  icon: "document",
+};
+
+const fileStem = (name: string) =>
+  name.replace(/\.[^.]+$/, "").replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "") || "uploaded-report";
 
 function pageText(items: Array<{ str: string; transform: number[] }>): string {
   const lines = new Map<number, { x: number; text: string }[]>();
@@ -100,9 +58,153 @@ function pageText(items: Array<{ str: string; transform: number[] }>): string {
     .join("\n");
 }
 
-export async function buildUploadedPdfReport(file: File): Promise<UploadedReportResult> {
+function chunkText(text: string, maxLines = 38, maxChars = 2_500): string[] {
+  const chunks: string[] = [];
+  let lines: string[] = [];
+  let length = 0;
+  const flush = () => {
+    if (lines.length) chunks.push(lines.join("\n"));
+    lines = [];
+    length = 0;
+  };
+  for (const sourceLine of text.split(/\r?\n/)) {
+    const parts = sourceLine.length > 170
+      ? sourceLine.match(/.{1,170}(?:\s|$)|.{1,170}/g) ?? [sourceLine]
+      : [sourceLine];
+    for (const line of parts) {
+      if (lines.length && (lines.length >= maxLines || length + line.length + 1 > maxChars)) flush();
+      lines.push(line);
+      length += line.length + 1;
+    }
+  }
+  flush();
+  return chunks.length ? chunks : [""];
+}
+
+function pdfAppendix(source: PdfSource): DeckSlide[] {
+  return source.pages.flatMap((page) => {
+    const chunks = chunkText(page.text);
+    return chunks.map((text, index) => ({
+      layout: "source",
+      headline: `Source Appendix · Page ${page.page}${chunks.length > 1 ? ` (${index + 1}/${chunks.length})` : ""}`,
+      kicker: "COMPLETE EXTRACTED SOURCE TEXT",
+      sourceText: text,
+    }));
+  });
+}
+
+function spreadsheetAppendix(source: SpreadsheetSource): DeckSlide[] {
+  const slides: DeckSlide[] = [];
+  for (const sheet of source.sheets) {
+    const width = sheet.rows.reduce((max, row) => Math.max(max, row.length), 0);
+    const normalised = sheet.rows.map((row) => [...row, ...Array(Math.max(0, width - row.length)).fill("")]);
+    const columnStarts = Array.from({ length: Math.ceil(Math.max(width, 1) / 8) }, (_, index) => index * 8);
+    const rowStarts = Array.from({ length: Math.ceil(Math.max(normalised.length - 1, 1) / 10) }, (_, index) => index * 10);
+    for (const columnStart of columnStarts) {
+      for (const rowStart of rowStarts) {
+        const columns = (normalised[0] ?? []).slice(columnStart, columnStart + 8);
+        while (columns.length < Math.min(8, width - columnStart)) columns.push("");
+        slides.push({
+          layout: "source-table",
+          headline: `${sheet.name} · Source Matrix`,
+          kicker: `ROWS ${rowStart + 2}–${Math.min(rowStart + 11, normalised.length)} · COLUMNS ${columnStart + 1}–${Math.min(columnStart + 8, width)}`,
+          sourceColumns: columns.map((value, index) => value || `Column ${columnStart + index + 1}`),
+          sourceRows: normalised.slice(rowStart + 1, rowStart + 11).map((row) => row.slice(columnStart, columnStart + 8)),
+        });
+      }
+    }
+  }
+  return slides;
+}
+
+function sourceDataForAi(source: PdfSource | SpreadsheetSource): unknown {
+  if (source.sourceType === "pdf") {
+    return {
+      sourceFile: source.sourceFile,
+      sourceType: source.sourceType,
+      pageCount: source.pages.length,
+      pages: source.pages,
+      completenessRule: "Use every named learner and every substantive source section. The client appends the full extracted text.",
+    };
+  }
+  return {
+    sourceFile: source.sourceFile,
+    sourceType: source.sourceType,
+    sheetCount: source.sheets.length,
+    sheets: source.sheets,
+    completenessRule: "Use every named learner and worksheet. The client appends every workbook cell.",
+  };
+}
+
+async function renderStyledSource(
+  file: File,
+  source: PdfSource | SpreadsheetSource,
+  author: Profile,
+  appendix: DeckSlide[]
+): Promise<UploadedReportResult> {
+  const result = await requestReport(UPLOADED_KIND, sourceDataForAi(source), undefined, "report");
+  if (!result.ok || !result.deck) {
+    const reason = !result.ok ? result.error : "empty_report";
+    if (reason === "not_configured") throw new Error("AI report styling is not configured on this deployment.");
+    if (reason === "timeout") throw new Error("The AI took too long to style the report. Please try again.");
+    throw new Error(`The AI could not create the Eruditio report (${reason}).`);
+  }
+  const deck: AiDeck = {
+    cover: result.deck.cover,
+    slides: [
+      ...result.deck.slides,
+      {
+        layout: "cards",
+        headline: "Source Completeness Record",
+        kicker: "VERIFICATION APPENDIX",
+        cards: [
+          { title: "Source file", text: file.name },
+          {
+            title: source.sourceType === "pdf" ? "Pages preserved" : "Worksheets preserved",
+            text: String(source.sourceType === "pdf" ? source.pages.length : source.sheets.length),
+          },
+          {
+            title: source.sourceType === "pdf" ? "Extraction method" : "Workbook method",
+            text: source.sourceType === "pdf" ? "Page-by-page text extraction" : "Every worksheet, row and cell retained",
+          },
+          { title: "Review status", text: "Styled narrative plus complete source appendix included" },
+        ],
+        strip: { text: "SOURCE FIDELITY: COMPLETE EXTRACTED CONTENT FOLLOWS" },
+      },
+      ...appendix,
+    ],
+  };
+  const title = result.deck.cover.title?.trim() || `${fileStem(file.name)} — Eruditio report`;
+  const count = source.sourceType === "pdf" ? source.pages.length : source.sheets.length;
+  const records = source.sourceType === "pdf"
+    ? source.pages.reduce((total, page) => total + page.text.split(/\r?\n/).filter(Boolean).length, 0)
+    : source.sheets.reduce((total, sheet) => total + sheet.rows.length, 0);
+  const html = deckDocumentHtml(
+    UPLOADED_KIND,
+    deck,
+    [],
+    author,
+    await eruditioLogoDataUrl(),
+    {
+      sponsorWord: "ERUDITIO",
+      eyebrow: "ERUDITIO • SOURCE-BASED CLIENT REPORT",
+      filename: `${fileStem(file.name)}-Styled.html`,
+      footerText: "Confidential Client Report · Empower · Develop · Transform",
+      metaRows: [
+        ["Source file", file.name],
+        ["Source type", source.sourceType === "pdf" ? "PDF document" : "Spreadsheet workbook"],
+        [source.sourceType === "pdf" ? "Source pages" : "Worksheets", String(count)],
+        ["Prepared by", author.name],
+        ["Completeness", "Full source appendix included"],
+      ],
+    }
+  );
+  return { html, title, pagesOrSheets: count, records, kind: source.sourceType };
+}
+
+export async function buildUploadedPdfReport(file: File, author: Profile): Promise<UploadedReportResult> {
   const pdf = await getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
-  const pages: string[] = [];
+  const pages: PdfSource["pages"] = [];
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
     const page = await pdf.getPage(pageNumber);
     const content = await page.getTextContent();
@@ -110,42 +212,28 @@ export async function buildUploadedPdfReport(file: File): Promise<UploadedReport
       (item): item is typeof item & { str: string; transform: number[] } =>
         "str" in item && "transform" in item && typeof item.str === "string" && Array.isArray(item.transform)
     );
-    pages.push(`<section class="page"><h2>Page ${pageNumber}</h2><div class="source-text">${esc(pageText(items))}</div></section>`);
+    pages.push({ page: pageNumber, text: pageText(items) });
   }
-  const title = `${fileStem(file.name)} — Eruditio report`;
-  const body = `<h1>${esc(title)}</h1>
-    <div class="meta"><strong>Source:</strong> ${esc(file.name)}<br><span class="small">All extracted page text is preserved below. Edit the report in the browser before downloading or printing.</span></div>
-    ${pages.join("")}`;
-  return { html: baseDocument(title, body, `${fileStem(file.name)}-Styled.html`), title, pagesOrSheets: pdf.numPages, records: pages.length, kind: "pdf" };
+  const source: PdfSource = { sourceFile: file.name, sourceType: "pdf", pages };
+  return renderStyledSource(file, source, author, pdfAppendix(source));
 }
 
-export async function buildUploadedSpreadsheetReport(file: File): Promise<UploadedReportResult> {
+export async function buildUploadedSpreadsheetReport(file: File, author: Profile): Promise<UploadedReportResult> {
   const workbook = XLSX.read(await file.arrayBuffer(), { cellDates: false, raw: false });
-  const sheets = workbook.SheetNames.map((name) => {
-    const sheet = workbook.Sheets[name];
-    const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, defval: "" });
-    const width = rows.reduce((max, row) => Math.max(max, row.length), 0);
-    const normalised = rows.map((row) => [...row, ...Array(Math.max(0, width - row.length)).fill("")]);
-    const header = normalised[0] ?? [];
-    const body = normalised.slice(1);
-    return `<section class="sheet"><h2>${esc(name)}</h2>
-      <p class="small">${body.length} data row${body.length === 1 ? "" : "s"} · ${width} column${width === 1 ? "" : "s"} · every source cell is retained</p>
-      <table><thead><tr>${(header.length ? header : Array.from({ length: width }, (_, i) => `Column ${i + 1}`)).map((cell, i) => `<th>${esc(String(cell || `Column ${i + 1}`))}</th>`).join("")}</tr></thead>
-      <tbody>${body.map((row) => `<tr>${row.map((cell) => `<td>${esc(String(cell))}</td>`).join("")}</tr>`).join("")}</tbody></table></section>`;
-  });
-  const records = sheets.reduce((total, sheet) => total + (sheet.match(/<tr>/g)?.length ?? 0), 0);
-  const title = `${fileStem(file.name)} — Eruditio tracker`;
-  const body = `<h1>${esc(title)}</h1>
-    <div class="meta"><strong>Source:</strong> ${esc(file.name)}<br><span class="small">Workbook structure and every populated cell are preserved. Edit any report text or table cell before downloading or printing.</span></div>
-    ${sheets.join("")}`;
-  return { html: baseDocument(title, body, `${fileStem(file.name)}-Styled.html`, true), title, pagesOrSheets: workbook.SheetNames.length, records, kind: "spreadsheet" };
+  const sheets = workbook.SheetNames.map((name) => ({
+    name,
+    rows: XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[name], { header: 1, defval: "" })
+      .map((row) => row.map((cell) => String(cell))),
+  }));
+  const source: SpreadsheetSource = { sourceFile: file.name, sourceType: "spreadsheet", sheets };
+  return renderStyledSource(file, source, author, spreadsheetAppendix(source));
 }
 
-export async function buildUploadedReport(file: File): Promise<UploadedReportResult> {
+export async function buildUploadedReport(file: File, author: Profile): Promise<UploadedReportResult> {
   const extension = file.name.split(".").pop()?.toLowerCase();
-  if (extension === "pdf" || file.type === "application/pdf") return buildUploadedPdfReport(file);
+  if (extension === "pdf" || file.type === "application/pdf") return buildUploadedPdfReport(file, author);
   if (extension === "xlsx" || extension === "xls" || extension === "csv" || file.type.includes("spreadsheet")) {
-    return buildUploadedSpreadsheetReport(file);
+    return buildUploadedSpreadsheetReport(file, author);
   }
   throw new Error("Upload a PDF or Excel workbook (.xlsx/.xls/.csv).");
 }
