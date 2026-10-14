@@ -708,6 +708,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         AI Assistant
       </h2>
 
+      <div className="reports-content-layout">
       <section className="reports-upload-card" aria-labelledby="uploaded-report-title">
         <div className="reports-upload-title">
           <Icon name="document" size={18} />
@@ -841,6 +842,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
           )}
         </div>
       )}
+      </div>
       {briefKind && (
         <Modal
           title={`What should be in your ${briefKind.name}?`}
