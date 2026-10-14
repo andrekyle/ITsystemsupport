@@ -713,19 +713,21 @@ export function ReportsPage({ profile }: { profile: Profile }) {
           <h3 id="uploaded-report-title">Generate from an uploaded report</h3>
           <p>Upload a PDF or spreadsheet. The AI restructures its content into the approved 16:9 Eruditio report template.</p>
         </div>
-        <label className={`reports-upload-btn${uploadedBusy ? " busy" : ""}`}>
-          {uploadedBusy ? "Preparing report…" : "Choose PDF or spreadsheet"}
-          <input
-            type="file"
-            accept=".pdf,.xlsx,.xls,.csv,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
-            disabled={uploadedBusy}
-            onChange={(event) => {
-              void handleUploadedReport(event.currentTarget.files?.[0]);
-              event.currentTarget.value = "";
-            }}
-          />
-        </label>
-        {uploadedMessage && <span className="reports-upload-message" role="status">{uploadedMessage}</span>}
+        <div className="reports-upload-actions">
+          <label className={`reports-upload-btn${uploadedBusy ? " busy" : ""}`}>
+            {uploadedBusy ? "Preparing report…" : "Choose PDF or spreadsheet"}
+            <input
+              type="file"
+              accept=".pdf,.xlsx,.xls,.csv,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
+              disabled={uploadedBusy}
+              onChange={(event) => {
+                void handleUploadedReport(event.currentTarget.files?.[0]);
+                event.currentTarget.value = "";
+              }}
+            />
+          </label>
+          {uploadedMessage && <span className="reports-upload-message" role="status">{uploadedMessage}</span>}
+        </div>
       </section>
 
       {msgs.length > 0 && !wantReport ? (

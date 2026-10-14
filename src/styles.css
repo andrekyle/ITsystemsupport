@@ -14213,25 +14213,27 @@ table.data th.sortable.sorted { color: var(--ink); }
 
 .reports-upload-card {
   width: min(780px, 96%);
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 18px;
   margin: 0 auto 22px;
   padding: 16px 18px;
-  border: 1px solid rgba(244, 123, 32, 0.28);
-  border-left: 4px solid var(--orange, #f47b20);
-  border-radius: 12px;
-  background: rgba(231, 244, 237, 0.72);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--azure);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
   text-align: left;
 }
 
 .reports-upload-card > div {
-  flex: 1;
+  min-width: 0;
 }
 
 .reports-upload-card h3 {
   margin: 0 0 4px;
-  color: var(--green, #126b4b);
+  color: var(--ink);
   font-size: 15px;
 }
 
@@ -14242,12 +14244,20 @@ table.data th.sortable.sorted { color: var(--ink); }
   line-height: 1.45;
 }
 
+.reports-upload-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  min-width: 0;
+}
+
 .reports-upload-btn {
   position: relative;
   flex: 0 0 auto;
   padding: 8px 12px;
   border-radius: 7px;
-  background: var(--green, #126b4b);
+  background: var(--azure);
   color: #fff;
   cursor: pointer;
   font-size: 12px;
@@ -14256,7 +14266,7 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 
 .reports-upload-btn:hover {
-  background: var(--orange, #f47b20);
+  filter: brightness(1.1);
 }
 
 .reports-upload-btn.busy {
@@ -14275,14 +14285,21 @@ table.data th.sortable.sorted { color: var(--ink); }
 
 .reports-upload-message {
   flex: 0 0 auto;
-  color: var(--green, #126b4b);
+  color: var(--ink-2);
   font-size: 12px;
+  white-space: nowrap;
 }
 
 @media (max-width: 700px) {
   .reports-upload-card {
     align-items: stretch;
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .reports-upload-actions {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
   .reports-upload-btn {
     text-align: center;
