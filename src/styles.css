@@ -14212,7 +14212,7 @@ table.data th.sortable.sorted { color: var(--ink); }
 .reports-upload-card {
   width: min(780px, 96%);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 18px;
   margin: 0 auto 22px;
@@ -14230,8 +14230,10 @@ table.data th.sortable.sorted { color: var(--ink); }
 
 .reports-upload-card h3 {
   margin: 0;
-  color: var(--ink);
-  font-size: 15px;
+  color: var(--ink-2);
+  font-family: inherit;
+  font-size: 15.5px;
+  font-weight: 400;
 }
 
 .reports-upload-card p {
@@ -14241,10 +14243,11 @@ table.data th.sortable.sorted { color: var(--ink); }
   line-height: 1.45;
 }
 
+/* fixed button column so the button never shifts when the status message appears */
 .reports-upload-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  justify-content: flex-end;
   gap: 14px;
   min-width: 0;
 }
@@ -14289,10 +14292,12 @@ table.data th.sortable.sorted { color: var(--ink); }
 }
 
 .reports-upload-message {
-  flex: 0 0 auto;
+  min-width: 0;
   color: var(--ink-2);
   font-size: 12px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (max-width: 700px) {
@@ -14302,9 +14307,9 @@ table.data th.sortable.sorted { color: var(--ink); }
     gap: 12px;
   }
   .reports-upload-actions {
-    align-items: flex-start;
-    flex-wrap: wrap;
-    justify-content: flex-start;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+    gap: 8px;
   }
   .reports-upload-btn {
     text-align: center;
@@ -14314,6 +14319,7 @@ table.data th.sortable.sorted { color: var(--ink); }
 [data-theme="light"] .reports-list-btn,
 [data-theme="light"] .reports-list-btn:hover:not(:disabled),
 [data-theme="light"] .reports-list-btn svg,
+[data-theme="light"] .reports-upload-card h3,
 [data-theme="light"] .reports-hero-note {
   color: #000;
 }
