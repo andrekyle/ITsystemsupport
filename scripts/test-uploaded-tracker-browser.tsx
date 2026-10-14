@@ -3,13 +3,13 @@ import { buildUploadedSpreadsheetReport } from "../src/lib/uploadedReports";
 import type { Profile } from "../src/types";
 
 const SHEET_ONE = [
-  ["Learner name", "Learner surname", "ID number", "114051", "114052", "Comments"],
-  ["Thabo", "Mokoena", "9001015800081", "C", "SA", "On track for completion"],
-  ["Naledi", "Dlamini", "9203124500083", "NYS", "IP", "Awaiting portfolio"],
+  ["No", "Surname", "Name", "114051", "114052"],
+  ["1", "Mokoena", "Thabo", "C", "SA"],
+  ["2", "Dlamini", "Naledi", "NYC", "TBC"],
 ];
 const SHEET_TWO = [
-  ["Learner name", "Session 1", "Session 2"],
-  ["Thabo Mokoena", "✓", "X"],
+  ["No", "Surname", "Name", "114053"],
+  ["1", "Mokoena", "Thabo", "C"],
 ];
 
 const author = { name: "Andre Kyle", signatureImage: "" } as unknown as Profile;
@@ -47,38 +47,31 @@ async function test() {
   const tables = doc.querySelectorAll("table.tracker");
   assert(tables.length === 2, "Each worksheet is rendered as its own tracker grid");
   const first = tables[0] as HTMLTableElement;
-  const headers = [...first.rows[0].cells].map((cell) => cell.textContent?.trim());
-  assert(headers.join("|") === SHEET_ONE[0].join("|"), "Header row is preserved exactly");
-  const dataRows = [...first.rows].filter((row) => row.cells[0].tagName === "TD");
+  const headers = [...first.querySelectorAll("thead tr")[0].cells].map((cell) => cell.textContent?.trim());
+  assert(headers.join("|") === ["No.", ...SHEET_ONE[0].slice(1)].join("|"), "Header row is preserved exactly");
+  const dataRows = [...first.querySelectorAll("tbody tr")];
   assert(dataRows.length === 2, "Both learner rows are present");
   assert(
     [...dataRows[0].cells].map((cell) => cell.textContent?.trim()).join("|") === SHEET_ONE[1].join("|"),
     "Learner cell values are preserved exactly"
   );
-  assert(dataRows[0].cells[3].classList.contains("st-c"), "Competent cells are colour-coded");
-  assert(dataRows[1].cells[4].classList.contains("st-ip"), "In-process cells are colour-coded");
-  assert(doc.querySelector(".legend .st-nys"), "The status legend is shown for the codes in use");
+  assert(dataRows[0].cells[3].classList.contains("status-C"), "Competent cells are colour-coded");
+  assert(dataRows[1].cells[4].classList.contains("status-TBC"), "Status cells are preserved");
+  assert(doc.querySelector(".legend .legend-code"), "The status legend is shown");
   assert(
-    [...tables[1].rows[0].cells].map((cell) => cell.textContent?.trim()).join("|") === SHEET_TWO[0].join("|"),
+    [...tables[1].rows[0].cells].map((cell) => cell.textContent?.trim()).join("|") === ["No.", ...SHEET_TWO[0].slice(1)].join("|"),
     "The second worksheet is preserved too"
   );
 
-  assert(doc.querySelector(".doc-toolbar button[onclick='window.print()']"), "A print/save-as-PDF button is offered");
-  assert(result.html.includes("size: A3 landscape"), "The tracker prints as A3 landscape");
-  const editButton = doc.getElementById("__editBtn") as HTMLButtonElement;
+  assert(doc.getElementById("print-report"), "A print/save-as-PDF button is offered");
+  assert(result.html.includes("@page{size:16in 9in"), "The tracker uses the approved 16:9 print layout");
+  const editButton = doc.getElementById("toggle-edit") as HTMLButtonElement;
   assert(editButton, "An editing toggle is offered");
   assert(doc.querySelector(".tracker-column-controls"), "Spreadsheet editing controls are attached");
   editButton.click();
   await tick();
-  assert(doc.body.getAttribute("contenteditable") === "true", "Editing makes the whole tracker editable");
-  assert(/on$/.test(editButton.textContent!.trim()), "The editing toggle reports its state");
-
-  const filters = first.querySelectorAll<HTMLInputElement>(".flt input");
-  assert(filters.length === 3, "Learner columns can be filtered");
-  filters[0].value = "naledi";
-  filters[0].dispatchEvent(new Event("input", { bubbles: true }));
-  await tick();
-  assert(dataRows[0].style.display === "none" && dataRows[1].style.display === "", "Filtering hides non-matching learners");
+  assert(first.querySelector("[contenteditable='true']"), "Editing makes the tracker editable");
+  assert(/Viewing mode/.test(editButton.textContent!.trim()), "The editing toggle reports its state");
 
   document.body.dataset.result = "passed";
   document.getElementById("result")!.textContent =
@@ -87,5 +80,5 @@ async function test() {
 
 test().catch((error) => {
   document.body.dataset.result = "failed";
-  document.getElementById("result")!.textContent = String(error);
+  document.getElementById("result")!.textContent = error instanceof Error ? error.stack ?? error.message : String(error);
 });

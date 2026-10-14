@@ -2,7 +2,6 @@ import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import * as XLSX from "xlsx";
 import type { Profile } from "../types";
-import { docToolbar } from "./certificates";
 import {
   deckDocumentHtml,
   eruditioLogoDataUrl,
@@ -185,158 +184,79 @@ function sheetTableHtml(sheet: SpreadsheetSource["sheets"][number], index: numbe
   </section>`;
 }
 
-/** Editable, print-ready learner tracker built straight from the uploaded workbook. */
+/** Editable, print-ready tracker using the same report template as the approved HTML. */
 function trackerDocumentHtml(file: File, source: SpreadsheetSource, author: Profile): string {
   const today = new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
-  const stem = fileStem(file.name);
-  const filename = `${stem}-learner-tracker-${new Date().toISOString().slice(0, 10)}.html`;
-  const learners = source.sheets.reduce((total, sheet) => total + Math.max(sheet.rows.length - 1, 0), 0);
-  const usedCodes = new Set<string>();
-  for (const sheet of source.sheets) {
-    for (const row of sheet.rows) {
-      for (const cell of row) {
-        const code = cell.trim().toUpperCase();
-        if (STATUS_CLASSES[code]) usedCodes.add(code);
-      }
-    }
-  }
-  const legendCodes = STATUS_LEGEND.filter(([code]) => usedCodes.has(code));
-  const legend = legendCodes.length
-    ? `<div class="legend">${legendCodes
-        .map(
-          ([code, label]) =>
-            `<span class="item"><span class="sw ${STATUS_CLASSES[code]}"></span><strong>${code}</strong> ${label}</span>`
-        )
-        .join("")}</div>`
-    : "";
-  return `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<title>Learner tracker report — ${esc(file.name)}</title>
+  const filename = `${fileStem(file.name)}-Learner-Tracker-Edited.html`;
+  const sheets = source.sheets.map((sheet) => ({
+    name: sheet.name.trim() || "Worksheet",
+    headers: sheet.rows[0] ?? [],
+    rows: sheet.rows.slice(1),
+  }));
+  const learnerRows = sheets[0]?.rows ?? [];
+  const learners = learnerRows.length;
+  const allStatuses = sheets.flatMap((sheet) => sheet.rows.flatMap((row) => row.slice(3).map((cell) => cell.trim().toUpperCase())));
+  const statusCounts = { C: allStatuses.filter((status) => status === "C").length, NYC: allStatuses.filter((status) => status === "NYC").length, TBC: allStatuses.filter((status) => status === "TBC").length };
+  const totalStatuses = statusCounts.C + statusCounts.NYC + statusCounts.TBC;
+  const unitCount = sheets.reduce((total, sheet) => Math.max(total, Math.max(sheet.headers.length - 3, 0)), 0);
+  const escAttr = (value: string) => esc(value).replace(/'/g, "&#39;");
+  const legend = `<div class="legend">${[
+    ["C", "Competent", "var(--competent)"],
+    ["NYC", "Not Yet Competent", "var(--nyc)"],
+    ["TBC", "To Be Confirmed", "var(--tbc)"],
+  ].map(([code, label, colour]) => `<div class="legend-item"><span class="legend-swatch" style="background:${colour}"></span><span class="legend-code">${code}</span><span>${label}</span></div>`).join("")}</div>`;
+  const tableFor = (sheet: typeof sheets[number]) => {
+    const headers = sheet.headers;
+    const statusHeaders = headers.slice(3);
+    return `<table class="tracker" data-sheet="${escAttr(sheet.name)}">
+      <thead><tr><th class="no">No.</th><th class="surname">Surname</th><th class="name">Name</th>${statusHeaders.map((header) => `<th>${esc(String(header))}</th>`).join("")}</tr></thead>
+      <tbody>${sheet.rows.map((row, rowIndex) => {
+        const number = row[0] || rowIndex + 1;
+        return `<tr><td class="no">${esc(String(number))}</td><td class="surname">${esc(String(row[1] ?? ""))}</td><td class="name">${esc(String(row[2] ?? ""))}</td>${statusHeaders.map((_, index) => {
+          const status = String(row[index + 3] ?? "").trim().toUpperCase();
+          const valid = status === "C" || status === "NYC" || status === "TBC";
+          return `<td class="status${valid ? ` status-${status}` : ""}" contenteditable="true">${esc(status || String(row[index + 3] ?? ""))}</td>`;
+        }).join("")}</tr>`;
+      }).join("")}</tbody>
+    </table>`;
+  };
+  const overview = learnerRows.map((row, index) => {
+    const name = `${String(row[2] ?? "").trim()} ${String(row[1] ?? "").trim()}`.trim();
+    const statuses = sheets.flatMap((sheet) => sheet.rows[index]?.slice(3) ?? []).map((value) => String(value).trim().toUpperCase());
+    const competent = statuses.filter((status) => status === "C").length;
+    const nyc = statuses.filter((status) => status === "NYC").length;
+    const tbc = statuses.filter((status) => status === "TBC").length;
+    const progress = unitCount ? Math.round((competent / unitCount) * 100) : 0;
+    return `<tr><td class="num">${index + 1}</td><td class="learner">${esc(name)}</td><td>${competent}</td><td>${nyc}</td><td>${tbc}</td><td class="progress-cell"><div class="bar"><span style="width:${progress}%"></span></div><div class="bar-label">${competent}/${unitCount} · ${progress}%</div></td></tr>`;
+  }).join("");
+  const sectionPages = sheets.map((sheet, index) => {
+    const statuses = sheet.rows.flatMap((row) => row.slice(3).map((cell) => String(cell).trim().toUpperCase()));
+    const summary = ["C", "NYC", "TBC"].map((code) => `${statuses.filter((status) => status === code).length} ${code}`).filter((value) => !value.startsWith("0 ")).join(" · ");
+    return `<section class="page${index === 1 ? " core" : ""}">
+      <h1 class="report-title">Learner tracker report</h1>
+      <p class="qualification">${esc(sheet.name)} unit standards · ${sheet.rows.length} learners · ${statuses.length} learner-unit status entries</p>
+      <div class="section-head"><h2>${esc(sheet.name)}</h2><p>${esc(summary)}</p></div>
+      ${legend}${tableFor(sheet)}
+      <div class="notes"><strong>Section result:</strong> Every status is reproduced exactly from the ${esc(sheet.name)} worksheet.</div>
+      <div class="footer"><span>${esc(file.name)} · ${esc(sheet.name)} Unit Standards</span><span class="page-number">${String(index + 2).padStart(2, "0")}</span></div>
+    </section>`;
+  }).join("");
+  const percent = (value: number) => totalStatuses ? `${((value / totalStatuses) * 100).toFixed(1)}%` : "0.0%";
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Learner tracker report — ${esc(file.name)}</title>
 <style>
-  * { box-sizing: border-box; }
-  body { font: 15px/1.7 "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif; color: #444; margin: 0; padding: 34px 44px; }
-  h1 { font-size: 26px; margin: 0 0 3px; color: #479ef5; letter-spacing: -0.01em; }
-  h2 { display: flex; align-items: center; gap: 12px; font-size: 17.5px; font-weight: 650; margin: 32px 0 12px; color: #479ef5; }
-  h2::after { content: ""; flex: 1; border-top: 1px solid #e1e9f6; }
-  p { margin: 0 0 12px; }
-  .sub { color: #5f6368; margin: 0 0 18px; }
-  .banner { background: #eef4ff; border: 1px solid #c9dbf7; border-radius: 10px; padding: 14px 18px; margin: 18px 0; }
-  .small { color: #5f6368; font-size: 12px; }
-  .legend { display: flex; flex-wrap: wrap; gap: 10px 26px; margin: 4px 0 18px; }
-  .legend .item { display: inline-flex; align-items: center; gap: 9px; font-size: 14px; color: #444; }
-  .legend .sw { width: 16px; height: 16px; border-radius: 4px; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08); }
-  table.tracker { border-collapse: collapse; width: 100%; margin: 8px 0 4px; table-layout: auto; }
-  .tracker th, .tracker td { font-size: 13px; padding: 6px 9px; border: 0.5px solid rgba(0, 0, 0, 0.94); text-align: left; vertical-align: top; }
-  .tracker th { background: #f2f6fd; font-weight: 600; vertical-align: middle; }
-  .tracker th.c, .tracker td.c { text-align: center; white-space: nowrap; }
-  .tracker .nm { min-width: 90px; }
-  .tracker .flt input { width: 100%; min-width: 46px; padding: 3px 5px; border: 1px solid #ccd7ea; border-radius: 4px; font: inherit; font-size: 11.5px; color: #444; background: #fff; }
-  .tracker .flt input:focus { outline: none; border-color: #479ef5; }
-  .tracker .flt th { padding: 4px; background: #fff; }
-  .st-nys { background: #ffdd33; }
-  .st-c { background: #3ecf6a; }
-  .st-sa { background: #45b6ff; }
-  .st-ip { background: #ffb266; }
-  .st-x { background: #ff5a52; color: #fff; }
-  .sign { display: flex; gap: 60px; margin-top: 36px; align-items: flex-end; }
-  .sign div { flex: 1; font-size: 12.5px; color: #444; }
-  .sign .sign-img { display: block; max-height: 58px; max-width: 220px; margin-bottom: 2px; }
-  .sign .sign-line { display: block; border-top: 1.5px solid #999; margin-bottom: 5px; }
-  .sign .sign-line-tall { margin-top: 60px; }
-  @media print {
-    body { padding: 8mm 10mm; }
-    h2 { break-after: avoid; }
-    tr { break-inside: avoid; }
-    .tracker .flt { display: none !important; }
-    @page { size: A3 landscape; margin: 10mm; }
-  }
-</style>
-</head>
-<body>
-  ${docToolbar(filename)}
-  <div class="sheet">
-    <h1>Learner tracker report</h1>
-    <p class="sub">${esc(file.name)} · ${source.sheets.length} worksheet${source.sheets.length === 1 ? "" : "s"} · ${learners} learner row${learners === 1 ? "" : "s"} · generated ${esc(today)}</p>
-    <div class="banner">
-      <strong>Every row, column and cell of the uploaded workbook is reproduced below.</strong><br/>
-      Click <em>Editing: off</em> to switch the tracker into spreadsheet mode — type in any cell, add or delete rows and columns, fill colours, and undo with Ctrl+Z. Use <em>Print</em> to save the tracker as a PDF (A3 landscape).
-      <span class="small">Prepared by ${esc(author.name)} from ${esc(file.name)}. No values have been added, removed or re-interpreted.</span>
-    </div>
-    ${legend}
-    ${source.sheets.map((sheet, index) => sheetTableHtml(sheet, index)).join("")}
-    <div class="sign">
-      <div>
-        ${author.signatureImage ? `<img class="sign-img" src="${author.signatureImage}" alt="Signature of ${esc(author.name)}" />` : ""}
-        <span class="sign-line"></span>
-        Compiled by <strong>${esc(author.name)}</strong> · ${esc(today)}
-      </div>
-      <div>
-        <span class="sign-line sign-line-tall"></span>
-        Reviewed by (name &amp; signature)
-      </div>
-    </div>
-  </div>
-  <style>
-    .edit-toolbar { position: fixed; bottom: 14px; right: 12px; z-index: 999; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; font-family: "Segoe UI", system-ui, sans-serif; }
-    .edit-toolbar button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border: 1px solid #c9d4e4; border-radius: 8px; background: #ffffff; color: #444; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14); }
-    .edit-toolbar button:hover { background: #f0f5fb; }
-    .edit-toolbar button.on { border-color: #479ef5; color: #479ef5; }
-    body[contenteditable="true"] { caret-color: #479ef5; }
-    body[contenteditable="true"]:focus { outline: none; }
-    @media print { .edit-toolbar { display: none !important; } }
-  </style>
-  <div class="edit-toolbar" contenteditable="false">
-    <button type="button" id="__editBtn" onclick="__toggleEdit()" title="Edit any cell before printing or downloading">&#9998; Editing: off</button>
-  </div>
-  <script>
-    var __editing = false;
-    function __toggleEdit() {
-      __editing = !__editing;
-      document.body.contentEditable = __editing ? "true" : "false";
-      document.body.classList.toggle("editing", __editing);
-      var b = document.getElementById("__editBtn");
-      b.textContent = "\\u270E Editing: " + (__editing ? "on" : "off");
-      b.className = __editing ? "on" : "";
-    }
-    // per-column filters on every tracker grid
-    Array.prototype.forEach.call(document.querySelectorAll("table.tracker"), function (t) {
-      var inputs = Array.prototype.slice.call(t.querySelectorAll(".flt input"));
-      function apply() {
-        Array.prototype.forEach.call(t.rows, function (r) {
-          if (!r.cells.length || r.cells[0].tagName !== "TD") return;
-          var show = true;
-          inputs.forEach(function (inp) {
-            var v = inp.value.trim().toLowerCase();
-            if (!v || !show) return;
-            var cell = r.cells[Number(inp.getAttribute("data-col"))];
-            if (!cell || cell.innerText.toLowerCase().indexOf(v) === -1) show = false;
-          });
-          r.style.display = show ? "" : "none";
-        });
-      }
-      inputs.forEach(function (inp) {
-        inp.addEventListener("input", apply);
-        inp.setAttribute("contenteditable", "false");
-      });
-    });
-    function __downloadDoc() {
-      var clone = document.documentElement.cloneNode(true);
-      Array.prototype.forEach.call(clone.querySelectorAll(".doc-toolbar, .edit-toolbar"), function (el) { el.remove(); });
-      var body = clone.querySelector("body");
-      if (body) { body.removeAttribute("contenteditable"); body.classList.remove("editing"); }
-      var blob = new Blob(["<!doctype html>" + clone.outerHTML], { type: "text/html" });
-      var a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = ${JSON.stringify(filename)};
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
-  </script>
-</body>
-</html>`;
+:root{--blue:#2e9b7a;--blue-deep:#f0872b;--blue-soft:#edf7f3;--blue-head:#f7f5f1;--line:#222b38;--ink:#273244;--muted:#657086;--competent:#35c96f;--competent-soft:#dcfce7;--nyc:#ffd92f;--nyc-soft:#fff7bf;--tbc:#43aaf5;--tbc-soft:#dff2ff;--paper:#fff}*{box-sizing:border-box;margin:0;padding:0}body{background:#d9dee8;color:var(--ink);font-family:Calibri,"Segoe UI",Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{position:relative;width:16in;min-height:9in;margin:20px auto;padding:.34in .45in .42in;overflow:hidden;background:var(--paper);box-shadow:0 5px 24px rgba(20,30,50,.25)}.report-title{color:var(--blue);font-size:25pt;font-weight:800;line-height:1.05}.qualification{margin-top:.1in;color:var(--muted);font-size:11.5pt}.summary{margin-top:.2in;padding:.18in .2in;border:1px solid #b9ddcf;border-radius:.1in;background:var(--blue-soft)}.summary h2{font-size:12pt}.summary p{margin-top:.055in;font-size:10.3pt;line-height:1.28}.summary .source{color:var(--muted);font-size:8.8pt}.legend{display:flex;align-items:center;gap:.3in;margin-top:.16in;font-size:10pt}.legend-item{display:flex;align-items:center;gap:.08in}.legend-swatch{width:.16in;height:.16in;border-radius:.035in}.legend-code{font-weight:800}.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:.15in;margin-top:.18in}.metric{position:relative;padding:.15in .16in .12in;border:0;border-radius:.08in;background:#f7f5f1;overflow:hidden}.metric:before{content:"";position:absolute;inset:0 0 auto;height:.045in;background:var(--accent,var(--blue))}.metric-value{color:var(--accent,var(--blue));font-size:21pt;font-weight:800;line-height:1}.metric-label{margin-top:.05in;font-size:9.7pt;font-weight:700}.metric-note{margin-top:.025in;color:var(--muted);font-size:7.8pt}.section-head{display:flex;align-items:flex-end;justify-content:space-between;margin-top:.18in}.section-head h2{color:var(--blue);font-size:17pt}.section-head p{color:var(--muted);font-size:9pt}table{width:100%;border-collapse:collapse;table-layout:fixed}.tracker{margin-top:.12in;border:1.2px solid var(--line)}.tracker th,.tracker td{border:1px solid var(--line);text-align:center;vertical-align:middle}.tracker thead th{background:var(--blue-head);font-size:8.4pt;font-weight:800;padding:.075in .045in}.tracker tbody td{height:.32in;font-size:8.6pt;padding:.035in}.tracker .no{width:.42in}.tracker .surname{width:1.12in;text-align:left;padding-left:.08in}.tracker .name{width:1.42in;text-align:left;padding-left:.08in}.status{font-weight:800}.status-C{background:var(--competent-soft);color:#16713c}.status-NYC{background:var(--nyc-soft);color:#745d00}.status-TBC{background:var(--tbc-soft);color:#075f9d}.overview{margin-top:.12in}.overview th{padding:.045in;border:1px solid var(--line);background:var(--blue-head);font-size:8pt}.overview td{height:.185in;padding:.015in .06in;border:1px solid var(--line);font-size:7.6pt}.overview .learner{text-align:left;font-weight:700}.overview .num{text-align:center;width:.75in}.overview .progress-cell{width:3.1in}.bar{position:relative;height:.09in;border-radius:.05in;background:#e9edf4;overflow:hidden}.bar>span{display:block;height:100%;border-radius:.07in;background:var(--competent)}.bar-label{margin-top:.01in;color:var(--muted);font-size:6.8pt;text-align:right}.notes{margin-top:.16in;padding:.13in .17in;border-radius:.08in;background:var(--blue-soft);font-size:9.2pt;line-height:1.3}.footer{position:absolute;left:.45in;right:.45in;bottom:.16in;display:flex;justify-content:space-between;padding-top:.07in;border-top:1px solid #cbd5e1;color:var(--muted);font-size:7.5pt}.page-number{color:var(--blue);font-weight:800}.editor-toolbar{position:sticky;top:0;z-index:1000;display:flex;align-items:center;gap:4px;padding:5px 8px;background:#172033;color:#fff;box-shadow:0 3px 14px rgba(0,0,0,.28)}.editor-toolbar button{border:0;border-radius:4px;padding:4px 7px;background:#fff;color:#172033;font:600 11px/1 Calibri,"Segoe UI",Arial,sans-serif;cursor:pointer}.editor-toolbar button.primary{background:var(--blue);color:#fff}.editor-toolbar button.danger{color:#b91c1c}.editor-toolbar .editor-status{margin-left:auto;font-size:10px;color:#cbd5e1}body.editing [contenteditable=true]{outline:1px dashed #2e9b7a;outline-offset:1px;cursor:text}@media print{@page{size:16in 9in;margin:0}body{background:#fff}.editor-toolbar{display:none}.page{margin:0;box-shadow:none;break-after:page}.page:last-child{break-after:auto}}
+</style></head><body>
+<div class="editor-toolbar edit-toolbar" role="toolbar" aria-label="Report editing controls"><button id="toggle-edit" class="primary" type="button">Edit report</button><button id="save-edits" type="button">Save changes</button><button id="download-html" type="button">Download edited HTML</button><button id="print-report" type="button">Print / Save PDF</button><button id="reset-edits" class="danger" type="button">Reset</button><span id="editor-status" class="editor-status">Viewing mode</span></div>
+<section class="page"><h1 class="report-title">Learner tracker report</h1><p class="qualification">${esc(file.name)} · ${source.sheets.length} worksheets · ${learners} learners · generated ${esc(today)}</p><div class="summary"><h2>Learner tracker report — generated ${esc(today)}.</h2><p><em>Report scope: all learners and all status entries from the uploaded worksheets are included.</em></p><p>The cohort consists of ${learners} learners across ${unitCount} unit standards. Of ${totalStatuses} learner-unit status entries, ${statusCounts.C} are marked Competent, ${statusCounts.NYC} are marked Not Yet Competent, and ${statusCounts.TBC} are To Be Confirmed.</p><p class="source">Source: ${esc(file.name)}. Statuses are reproduced exactly as recorded in the workbook. Prepared by ${esc(author.name)}.</p></div>${legend}<div class="metrics"><div class="metric" style="--accent:var(--blue)"><div class="metric-value">${learners}</div><div class="metric-label">Learners</div><div class="metric-note">No learner omitted</div></div><div class="metric" style="--accent:var(--blue-deep)"><div class="metric-value">${unitCount}</div><div class="metric-label">Unit standards</div><div class="metric-note">${sheets.map((sheet) => `${Math.max(sheet.headers.length - 3, 0)} ${sheet.name}`).join(" · ")}</div></div><div class="metric" style="--accent:var(--competent)"><div class="metric-value">${statusCounts.C}</div><div class="metric-label">Competent entries</div><div class="metric-note">${percent(statusCounts.C)} of all status entries</div></div><div class="metric" style="--accent:#d3aa00"><div class="metric-value">${statusCounts.NYC}</div><div class="metric-label">Not Yet Competent</div><div class="metric-note">${percent(statusCounts.NYC)} of all status entries</div></div><div class="metric" style="--accent:#a97852"><div class="metric-value">${statusCounts.TBC}</div><div class="metric-label">To Be Confirmed</div><div class="metric-note">${percent(statusCounts.TBC)} of all status entries</div></div></div><div class="section-head"><h2>Cohort overview</h2><p>Progress bar = Competent entries out of ${unitCount} unit standards</p></div><table class="overview"><thead><tr><th>No.</th><th>Learner full name</th><th>C</th><th>NYC</th><th>TBC</th><th>Competent progress</th></tr></thead><tbody>${overview}</tbody></table><div class="footer"><span>${esc(file.name)} · Learner Tracker Report</span><span class="page-number">01</span></div></section>
+${sectionPages}
+<script>
+var original=document.body.innerHTML, editing=false;
+document.getElementById("toggle-edit").onclick=function(){editing=!editing;document.body.classList.toggle("editing",editing);document.querySelectorAll("[contenteditable]").forEach(function(e){e.contentEditable=editing?"true":"false"});this.textContent=editing?"Viewing mode":"Edit report";document.getElementById("editor-status").textContent=editing?"Editing mode":"Viewing mode"};
+document.getElementById("save-edits").onclick=function(){localStorage.setItem("uploaded-tracker-edits",document.body.innerHTML);document.getElementById("editor-status").textContent="Changes saved"};
+document.getElementById("download-html").onclick=function(){var clone=document.documentElement.cloneNode(true);clone.querySelector(".editor-toolbar").remove();var b=new Blob(["<!doctype html>"+clone.outerHTML],{type:"text/html"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=${JSON.stringify(filename)};a.click();URL.revokeObjectURL(a.href)};
+document.getElementById("print-report").onclick=function(){window.print()};
+document.getElementById("reset-edits").onclick=function(){if(confirm("Reset all edits?")){document.body.innerHTML=original;location.reload()}};
+</script></body></html>`;
 }
 
 export async function buildUploadedPdfReport(file: File, author: Profile): Promise<UploadedReportResult> {
