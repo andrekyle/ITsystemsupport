@@ -82,6 +82,19 @@ async function test() {
 
   assert(doc.getElementById("print-report"), "A print/save-as-PDF button is offered");
   assert(result.html.includes("@page{size:16in 9in"), "The tracker uses the approved 16:9 print layout");
+  const toolbar = doc.querySelector<HTMLElement>(".editor-toolbar")!;
+  const toolbarStyle = frame.contentWindow!.getComputedStyle(toolbar);
+  assert(toolbar.getBoundingClientRect().height >= 40, "The toolbar bar is wider than the original strip");
+  assert(toolbarStyle.boxShadow === "none", "The toolbar has no glow");
+  for (const button of [...toolbar.querySelectorAll<HTMLButtonElement>("button")]) {
+    const style = frame.contentWindow!.getComputedStyle(button);
+    assert(style.borderTopWidth === "0px" && style.borderBottomWidth === "0px", `${button.id} has no border`);
+    assert(style.boxShadow === "none", `${button.id} has no glow`);
+    const [r, g, b] = style.backgroundColor.match(/\d+/g)!.map(Number);
+    assert((r + g + b) / 3 < 140, `${button.id} uses a dark-mode background`);
+    const [tr, tg, tb] = style.color.match(/\d+/g)!.map(Number);
+    assert((tr + tg + tb) / 3 > 150, `${button.id} uses light dark-mode text`);
+  }
   const editButton = doc.getElementById("toggle-edit") as HTMLButtonElement;
   assert(editButton, "An editing toggle is offered");
   assert(doc.querySelector(".tracker-column-controls"), "Spreadsheet editing controls are attached");

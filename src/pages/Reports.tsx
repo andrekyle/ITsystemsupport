@@ -711,7 +711,6 @@ export function ReportsPage({ profile }: { profile: Profile }) {
       <section className="reports-upload-card" aria-labelledby="uploaded-report-title">
         <div>
           <h3 id="uploaded-report-title">Generate from an uploaded report</h3>
-          <p>Upload a PDF to restyle it into the approved 16:9 Eruditio report template, or a spreadsheet to build an editable Learner tracker report you can print or save as a PDF.</p>
         </div>
         <div className="reports-upload-actions">
           <label className={`reports-upload-btn${uploadedBusy ? " busy" : ""}`}>
