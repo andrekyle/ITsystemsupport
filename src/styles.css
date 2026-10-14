@@ -14211,7 +14211,7 @@ table.data th.sortable.sorted { color: var(--ink); }
 
 .reports-content-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 292px;
+  grid-template-columns: minmax(0, 1fr) 320px;
   align-items: start;
   gap: 28px;
   width: 100%;
@@ -14231,55 +14231,33 @@ table.data th.sortable.sorted { color: var(--ink); }
   grid-row: 1;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  width: 292px;
-  min-height: 172px;
+  gap: 14px;
+  width: 320px;
+  min-height: 136px;
   margin: 20px 0 0;
-  padding: 20px;
+  padding: 16px;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, #fff 24%, transparent);
-  border-radius: 24px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
   background:
     linear-gradient(145deg,
-      color-mix(in srgb, var(--surface) 82%, transparent),
-      color-mix(in srgb, var(--surface-2) 66%, transparent));
-  box-shadow:
-    inset 1px 1px 0 rgba(255, 255, 255, 0.2),
-    inset -1px -1px 0 rgba(15, 23, 42, 0.12);
-  backdrop-filter: blur(22px) saturate(145%);
-  -webkit-backdrop-filter: blur(22px) saturate(145%);
+      color-mix(in srgb, var(--surface) 92%, transparent),
+      color-mix(in srgb, var(--surface-2) 82%, transparent));
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(14px) saturate(115%);
+  -webkit-backdrop-filter: blur(14px) saturate(115%);
   text-align: left;
 }
 
 .reports-upload-card::before,
 .reports-upload-card::after {
-  position: absolute;
-  z-index: -1;
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  content: "";
-  filter: blur(28px);
-  opacity: 0.38;
-  pointer-events: none;
-}
-
-.reports-upload-card::before {
-  right: -48px;
-  top: -58px;
-  background: var(--azure);
-}
-
-.reports-upload-card::after {
-  bottom: -80px;
-  left: -38px;
-  background: #2e9b7a;
+  display: none;
 }
 
 [data-theme="dark"] .reports-upload-card {
-  border-color: rgba(255, 255, 255, 0.09);
+  border-color: var(--border);
   background:
-    linear-gradient(145deg, rgba(42, 52, 68, 0.76), rgba(19, 27, 41, 0.66));
+    linear-gradient(145deg, rgba(36, 43, 54, 0.9), rgba(28, 33, 42, 0.86));
 }
 
 .reports-upload-card > div {
