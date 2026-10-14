@@ -2185,11 +2185,13 @@ const MEMORIES_KEY = "itss.memories.shared";
 async function pullMemories(): Promise<MemoryPhoto[] | null> {
   if (!supabase) return null;
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("shared_state")
       .select("value")
+      .eq("tenant_id", TENANT_ID)
       .eq("key", MEMORIES_KEY)
       .maybeSingle();
+    if (error) return null;
     if (data?.value) {
       const list = JSON.parse(data.value) as MemoryPhoto[];
       return Array.isArray(list) ? list : [];
@@ -2256,7 +2258,7 @@ export function useMemories() {
         try {
           const blob = await (await fetch(image)).blob();
           const ext = blob.type === "image/png" ? "png" : "jpg";
-          const path = `shared/memories/${id}.${ext}`;
+          const path = `${TENANT_ID}/shared/memories/${id}.${ext}`;
           const { error } = await supabase.storage
             .from("files")
             .upload(path, blob, { upsert: true, contentType: blob.type || "image/jpeg" });

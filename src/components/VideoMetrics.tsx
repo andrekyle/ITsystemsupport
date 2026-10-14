@@ -28,6 +28,7 @@ type VideoRow = {
 };
 
 type LearnerVideo = Omit<VideoRow, "learners" | "score"> & { completed: boolean; liked: boolean };
+type ChartMetric = "watch" | "views" | "likes" | "comments" | "completions";
 
 const PREFIX = "videoengagement.";
 
@@ -116,10 +117,110 @@ function duration(seconds: number): string {
   return `${hours >= 10 ? Math.round(hours) : hours.toFixed(1)} hr`;
 }
 
+const CHART_METRICS: { id: ChartMetric; label: string }[] = [
+  { id: "watch", label: "Watch time" },
+  { id: "views", label: "Views" },
+  { id: "likes", label: "Likes" },
+  { id: "comments", label: "Comments" },
+  { id: "completions", label: "Quiz completions" },
+];
+
+function chartValue(video: VideoRow, metric: ChartMetric): number {
+  if (metric === "watch") return video.watchSeconds / 60;
+  return video[metric];
+}
+
+function chartNumber(value: number, metric: ChartMetric): string {
+  return metric === "watch" ? `${Math.round(value)} min` : Math.round(value).toLocaleString("en-ZA");
+}
+
+function shortVideoTitle(title: string): string {
+  const words = title.split(/\s+/).filter(Boolean);
+  const short = words.slice(0, 2).join(" ");
+  return short.length > 15 ? `${short.slice(0, 13)}…` : short;
+}
+
+const AXIS_CHAR_EM = .58;
+const AXIS_LABEL_SIZE = 10;
+
+/** Shortens a label only if it cannot fit its bar slot at the given font size. */
+function fitAxisLabel(title: string, maxWidth: number, fontSize: number): string {
+  const text = shortVideoTitle(title);
+  const maxChars = Math.floor(maxWidth / (fontSize * AXIS_CHAR_EM));
+  return text.length > maxChars ? `${text.slice(0, Math.max(1, maxChars - 1)).trimEnd()}…` : text;
+}
+
+/** Bar path with rounded top corners and a flat base that sits on the baseline. */
+function topRoundedBar(x: number, y: number, width: number, height: number, radius: number): string {
+  const r = Math.min(radius, width / 2, height);
+  const bottom = y + height;
+  return `M${x},${bottom} V${y + r} Q${x},${y} ${x + r},${y} H${x + width - r} Q${x + width},${y} ${x + width},${y + r} V${bottom} Z`;
+}
+
+/** AI-usage-style vertical comparison chart with direct metric values. */
+function VideoPerformanceChart({ videos, metric }: { videos: VideoRow[]; metric: ChartMetric }) {
+  const [tooltip, setTooltip] = useState<{ title: string; value: string; x: number; y: number } | null>(null);
+  const rows = [...videos].sort((a, b) => chartValue(b, metric) - chartValue(a, metric));
+  const W = 860;
+  const H = 250;
+  const padL = 12;
+  const padR = 68;
+  const padT = 18;
+  const padB = 42;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+  const slots = Math.max(rows.length, 12);
+  const slot = plotW / slots;
+  const barW = Math.min(22, slot * .36);
+  const labelWidth = slot - 6;
+  const rawMax = Math.max(1, ...rows.map(row => chartValue(row, metric)));
+  const tidyMax = rawMax <= 10 ? 10 : Math.ceil(rawMax / 10 ** Math.floor(Math.log10(rawMax))) * 10 ** Math.floor(Math.log10(rawMax));
+  const max = rawMax / tidyMax > .8 ? tidyMax * 1.25 : tidyMax;
+  const y = (value: number) => padT + plotH - value / max * plotH;
+  const grid = [0, .5, 1].map(fraction => ({ value: max * fraction, py: y(max * fraction) }));
+  const metricLabel = CHART_METRICS.find(item => item.id === metric)?.label ?? metric;
+  const positionTooltip = (event: React.MouseEvent<SVGPathElement>, video: VideoRow, value: number) => {
+    const bounds = event.currentTarget.closest(".video-chart-stage")?.getBoundingClientRect();
+    if (!bounds) return;
+    setTooltip({
+      title: video.title,
+      value: `${chartNumber(value, metric)} ${metricLabel.toLowerCase()}`,
+      x: event.clientX - bounds.left,
+      y: event.clientY - bounds.top,
+    });
+  };
+  return <div className="video-chart-stage">
+    <svg className="oa-chart video-vertical-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${metricLabel} by video`}>
+    {grid.map(line => <g key={line.value}>
+      {line.value > 0 && <line className="oa-grid" x1={padL} x2={padL + plotW} y1={line.py} y2={line.py} />}
+      <text className="oa-axis" x={padL + plotW + 9} y={line.py + 4}>{chartNumber(line.value, metric)}</text>
+    </g>)}
+    {rows.map((video, index) => {
+      const value = chartValue(video, metric);
+      const cx = padL + slot * index + slot / 2;
+      return <g key={video.id}>
+        {value > 0 && <path className="video-bar-primary" d={topRoundedBar(cx - barW / 2, y(value), barW, Math.max(2, y(0) - y(value)), 4)}
+          onMouseEnter={event => positionTooltip(event, video, value)}
+          onMouseMove={event => positionTooltip(event, video, value)}
+          onMouseLeave={() => setTooltip(null)} />}
+        {value > 0 && <text className="video-bar-value" x={cx} y={Math.max(padT + 10, y(value) - 7)} textAnchor="middle">{chartNumber(value, metric)}</text>}
+        <text className="video-axis-title" x={cx} y={H - 14} textAnchor="middle" style={{ fontSize: AXIS_LABEL_SIZE }}>{fitAxisLabel(video.title, labelWidth, AXIS_LABEL_SIZE)}<title>{video.title}</title></text>
+      </g>;
+    })}
+    <line className="oa-baseline" x1={padL} x2={padL + plotW} y1={padT + plotH} y2={padT + plotH} />
+    </svg>
+    {tooltip && <div className="video-chart-tooltip" style={{ left: tooltip.x, top: tooltip.y }} role="tooltip">
+      <strong>{tooltip.title}</strong>
+      <span>{tooltip.value}</span>
+    </div>}
+  </div>;
+}
+
 export function VideoMetrics() {
   const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"videos" | "learners">("videos");
+  const [chartMetric, setChartMetric] = useState<ChartMetric>("watch");
   const [selectedId, setSelectedId] = useState("");
 
   useEffect(() => {
@@ -163,6 +264,8 @@ export function VideoMetrics() {
     })).sort((a, b) => b.score - a.score);
   }, [activity]);
   const selected = activity.find(item => item.learner.id === selectedId) ?? activity[0];
+  const selectedVideos = selected?.videos ?? [];
+  const chartOrderedVideos = [...videos].sort((a, b) => chartValue(b, chartMetric) - chartValue(a, chartMetric));
   const totals = videos.reduce((sum, row) => ({
     seconds: sum.seconds + row.watchSeconds,
     views: sum.views + row.views,
@@ -170,8 +273,6 @@ export function VideoMetrics() {
     comments: sum.comments + row.comments,
     completions: sum.completions + row.completions,
   }), { seconds: 0, views: 0, likes: 0, comments: 0, completions: 0 });
-  const maxScore = Math.max(1, ...videos.map(row => row.score));
-
   return <div className="video-metrics">
     <div className="video-metrics-head">
       <div>
@@ -186,7 +287,7 @@ export function VideoMetrics() {
     </div>
 
     {view === "videos" ? <>
-      <div className="video-metrics-kpis">
+      <div className="video-metrics-kpis oa-metrics">
         <div><span>Watch time</span><strong>{duration(totals.seconds)}</strong></div>
         <div><span>Platform views</span><strong>{totals.views}</strong></div>
         <div><span>Likes</span><strong>{totals.likes}</strong></div>
@@ -194,20 +295,20 @@ export function VideoMetrics() {
         <div><span>Quiz completions</span><strong>{totals.completions}</strong></div>
       </div>
       <section className="card video-trending-card">
-        <h3>Trending videos</h3>
-        <p className="mini-note">Ranked using watch time, likes, comments and completed video quizzes.</p>
-        {videos.length ? <div className="video-chart">
-          {videos.slice(0, 10).map((video, index) => <div className="video-chart-row" key={video.id}>
-            <span className="video-rank">{index + 1}</span>
-            <div className="video-chart-label"><strong>{video.title}</strong><span>{video.course}</span></div>
-            <div className="video-chart-track"><span style={{ width: `${Math.max(4, video.score / maxScore * 100)}%` }} /></div>
-            <span className="video-chart-value">{duration(video.watchSeconds)}</span>
-          </div>)}
-        </div> : <p className="empty-state">Video metrics will appear after learners begin watching course videos.</p>}
+        <div className="video-chart-head">
+          <div><h3>Compare video performance</h3><p className="mini-note">Choose what you want to compare. Each bar is one video, ordered from highest to lowest.</p></div>
+        </div>
+        {videos.length ? <>
+        <div className="video-chart-metrics" role="group" aria-label="Choose chart metric">
+          {CHART_METRICS.map(item => <button key={item.id} type="button" className={chartMetric === item.id ? "active" : ""} aria-pressed={chartMetric === item.id} onClick={() => setChartMetric(item.id)}>{item.label}</button>)}
+        </div>
+        <VideoPerformanceChart videos={chartOrderedVideos} metric={chartMetric} />
+        <p className="video-chart-help"><strong>How to read this:</strong> A taller green bar means a higher result. Hover over a bar to see the full video name and exact value.</p>
+        </> : <p className="empty-state">{loading ? "Loading video activity…" : "No video activity recorded yet. Metrics appear here once learners watch, like, comment on or complete videos."}</p>}
       </section>
       {videos.length > 0 && <div className="table-wrap card video-metrics-table-wrap"><table className="data video-metrics-table">
-        <thead><tr><th>Video</th><th>Course</th><th>Views</th><th>Learners</th><th>Watch time</th><th>Likes</th><th>Comments</th><th>Completed</th></tr></thead>
-        <tbody>{videos.map(video => <tr key={video.id}><td><strong>{video.title}</strong></td><td>{video.course}</td><td>{video.views}</td><td>{video.learners}</td><td>{duration(video.watchSeconds)}</td><td>{video.likes}</td><td>{video.comments}</td><td>{video.completions}</td></tr>)}</tbody>
+        <thead><tr><th>#</th><th>Video</th><th>Course</th><th>Views</th><th>Learners</th><th>Watch time</th><th>Likes</th><th>Comments</th><th>Completed</th></tr></thead>
+        <tbody>{chartOrderedVideos.map((video, index) => <tr key={video.id}><td>{index + 1}</td><td><strong>{video.title}</strong></td><td>{video.course}</td><td>{video.views}</td><td>{video.learners}</td><td>{duration(video.watchSeconds)}</td><td>{video.likes}</td><td>{video.comments}</td><td>{video.completions}</td></tr>)}</tbody>
       </table></div>}
     </> : <>
       <div className="video-learner-picker field">
@@ -223,14 +324,14 @@ export function VideoMetrics() {
       </div>
       {selected ? <>
         <div className="video-metrics-kpis">
-          <div><span>Videos engaged</span><strong>{selected.videos.length}</strong></div>
-          <div><span>Watch time</span><strong>{duration(selected.videos.reduce((n, row) => n + row.watchSeconds, 0))}</strong></div>
-          <div><span>Likes</span><strong>{selected.videos.reduce((n, row) => n + row.likes, 0)}</strong></div>
-          <div><span>Comments</span><strong>{selected.videos.reduce((n, row) => n + row.comments, 0)}</strong></div>
+          <div><span>Videos engaged</span><strong>{selectedVideos.length}</strong></div>
+          <div><span>Watch time</span><strong>{duration(selectedVideos.reduce((n, row) => n + row.watchSeconds, 0))}</strong></div>
+          <div><span>Likes</span><strong>{selectedVideos.reduce((n, row) => n + row.likes, 0)}</strong></div>
+          <div><span>Comments</span><strong>{selectedVideos.reduce((n, row) => n + row.comments, 0)}</strong></div>
           <div><span>Uploads</span><strong>{Object.keys(selected.docs).length + (selected.learner.contentEntries?.length ?? 0)}</strong></div>
         </div>
         <div className="video-user-grid">
-          <section className="card"><h3>Video interaction</h3>{selected.videos.length ? selected.videos.map(video => <div className="video-user-row" key={video.id}>
+          <section className="card"><h3>Video interaction</h3>{selectedVideos.length ? selectedVideos.map(video => <div className="video-user-row" key={video.id}>
             <Icon name={video.completed ? "checkCircle" : "play"} size={17} />
             <span><strong>{video.title}</strong><small>{duration(video.watchSeconds)} · {video.liked ? "Liked" : "Not liked"} · {video.comments} comments · {video.completed ? "Quiz completed" : "Quiz incomplete"}</small></span>
           </div>) : <p className="empty-state">No recorded video interaction yet.</p>}</section>

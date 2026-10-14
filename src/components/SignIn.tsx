@@ -508,13 +508,22 @@ export function SignIn({
               Continue
             </button>
             {dupError && <p className="auth-error" style={{ marginTop: 8 }}>{dupError}</p>}
+            {(profiles.length > 0 || cloudEnabled) && <div className="divider">or</div>}
             {profiles.length > 0 && (
-              <>
-                <div className="divider">or</div>
-                <button type="button" className="btn ghost block" onClick={() => setCreating(false)}>
-                  Back to profiles
-                </button>
-              </>
+              <button type="button" className="btn ghost block" onClick={() => setCreating(false)}>
+                Back to profiles
+              </button>
+            )}
+            {cloudEnabled && (
+              <button
+                type="button"
+                className="btn ghost block"
+                style={profiles.length > 0 ? { marginTop: 8 } : undefined}
+                onClick={() => void supabase?.auth.signOut()}
+              >
+                <Icon name="signout" size={17} style={{ transform: "rotate(180deg)" }} />
+                Go to login page
+              </button>
             )}
           </form>
         )}
