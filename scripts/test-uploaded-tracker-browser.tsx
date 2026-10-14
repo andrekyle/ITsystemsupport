@@ -4,12 +4,14 @@ import type { Profile } from "../src/types";
 
 const SHEET_ONE = [
   ["No", "Surname", "Name", "114051", "114052"],
-  ["1", "Mokoena", "Thabo", "C", "SA"],
+  ["1", "Mokoena", "Thabo", "c", "TBC"],
   ["2", "Dlamini", "Naledi", "NYC", "TBC"],
 ];
 const SHEET_TWO = [
-  ["No", "Surname", "Name", "114053"],
-  ["1", "Mokoena", "Thabo", "C"],
+  ["Record", "Surname", "Name", "114053"],
+  ["2", "Dlamini", "Naledi", "C"],
+  ["1", "Mokoena", "Thabo", "NYC"],
+  ["3", "Ncube", "Sipho", "TBC"],
 ];
 
 const author = { name: "Andre Kyle", signatureImage: "" } as unknown as Profile;
@@ -30,10 +32,12 @@ function workbookFile(): File {
 }
 
 async function test() {
+  const storageKey = "uploaded-tracker-edits:HONOR-Learner-Progress-List-Third-Quarter";
+  localStorage.removeItem(storageKey);
   const result = await buildUploadedSpreadsheetReport(workbookFile(), author);
   assert(result.kind === "spreadsheet", "Spreadsheet uploads report as a spreadsheet source");
   assert(result.pagesOrSheets === 2, "Both worksheets are kept");
-  assert(result.records === 3, "Every learner row is kept");
+  assert(result.records === 5, "Every learner row is kept");
   assert(/learner tracker/i.test(result.title), "Output is titled as a learner tracker");
 
   const frame = document.createElement("iframe");
@@ -48,19 +52,32 @@ async function test() {
   assert(tables.length === 2, "Each worksheet is rendered as its own tracker grid");
   const first = tables[0] as HTMLTableElement;
   const headers = [...first.querySelectorAll("thead tr")[0].cells].map((cell) => cell.textContent?.trim());
-  assert(headers.join("|") === ["No.", ...SHEET_ONE[0].slice(1)].join("|"), "Header row is preserved exactly");
+  assert(headers.join("|") === SHEET_ONE[0].join("|"), "Header row is preserved exactly");
   const dataRows = [...first.querySelectorAll("tbody tr")];
   assert(dataRows.length === 2, "Both learner rows are present");
   assert(
     [...dataRows[0].cells].map((cell) => cell.textContent?.trim()).join("|") === SHEET_ONE[1].join("|"),
     "Learner cell values are preserved exactly"
   );
-  assert(dataRows[0].cells[3].classList.contains("status-C"), "Competent cells are colour-coded");
+  assert(dataRows[0].cells[3].textContent === "c", "Status capitalization is preserved exactly");
+  assert(dataRows[0].cells[3].classList.contains("status-C"), "Competent cells are colour-coded without changing their text");
   assert(dataRows[1].cells[4].classList.contains("status-TBC"), "Status cells are preserved");
   assert(doc.querySelector(".legend .legend-code"), "The status legend is shown");
   assert(
-    [...tables[1].rows[0].cells].map((cell) => cell.textContent?.trim()).join("|") === ["No.", ...SHEET_TWO[0].slice(1)].join("|"),
-    "The second worksheet is preserved too"
+    [...tables[1].rows[0].cells].map((cell) => cell.textContent?.trim()).join("|") === SHEET_TWO[0].join("|"),
+    "The second worksheet's distinct headers are preserved too"
+  );
+  const metricValues = [...doc.querySelectorAll(".metric-value")].map((node) => node.textContent?.trim());
+  assert(metricValues.slice(0, 5).join("|") === "3|3|2|2|3", "Summary totals include all standards and unique learners across every sheet");
+  const overviewRows = [...doc.querySelectorAll<HTMLTableRowElement>(".overview tbody tr")];
+  assert(overviewRows.length === 3, "The cohort overview contains the union of learners from all sheets");
+  assert(
+    overviewRows.map((row) => row.cells[1].textContent?.trim()).join("|") === "Thabo Mokoena|Naledi Dlamini|Sipho Ncube",
+    "Learners are combined by identity rather than worksheet row position"
+  );
+  assert(
+    [...overviewRows[0].cells].slice(2, 5).map((cell) => cell.textContent?.trim()).join("|") === "1|1|1",
+    "Reordered worksheet statuses are assigned to the correct learner"
   );
 
   assert(doc.getElementById("print-report"), "A print/save-as-PDF button is offered");
@@ -72,6 +89,23 @@ async function test() {
   await tick();
   assert(first.querySelector("[contenteditable='true']"), "Editing makes the tracker editable");
   assert(/Viewing mode/.test(editButton.textContent!.trim()), "The editing toggle reports its state");
+  dataRows[0].cells[3].textContent = "Edited exactly";
+  (doc.getElementById("save-edits") as HTMLButtonElement).click();
+  await tick();
+  assert(doc.getElementById("editor-status")?.textContent === "Changes saved", "Save changes confirms the edit was persisted");
+
+  const restoredFrame = document.createElement("iframe");
+  restoredFrame.srcdoc = result.html;
+  document.getElementById("fixture")!.appendChild(restoredFrame);
+  await new Promise((resolve) => restoredFrame.addEventListener("load", resolve, { once: true }));
+  await tick();
+  const restoredDoc = restoredFrame.contentDocument!;
+  assert(
+    restoredDoc.querySelector<HTMLTableCellElement>("table.tracker tbody td:nth-child(4)")?.textContent === "Edited exactly",
+    "Saved edits are restored when the generated HTML is loaded again"
+  );
+  assert(restoredDoc.getElementById("editor-status")?.textContent === "Saved changes restored", "Restored edits are reported in the toolbar");
+  localStorage.removeItem(storageKey);
 
   document.body.dataset.result = "passed";
   document.getElementById("result")!.textContent =
