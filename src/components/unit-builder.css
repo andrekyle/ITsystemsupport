@@ -135,6 +135,9 @@
 .unit-action-card-copy p { margin:0; font-size:13px; line-height:1.55; color:var(--editor-muted); }
 .unit-action-card .btn { flex-shrink:0; height:36px; padding:0 16px; border-radius:999px; background:var(--editor-panel-2); }
 .unit-action-card-actions { display:flex; flex-shrink:0; gap:8px; }
+.unit-delete-confirmation { display:grid; gap:10px; width:min(420px,100%); }
+.unit-delete-confirmation label { display:grid; gap:6px; font-size:13px; }
+.unit-delete-confirmation input { width:100%; }
 .unit-action-card.is-danger { box-shadow:inset 3px 0 0 var(--red); }
 
 /* Build view inside the workspace */

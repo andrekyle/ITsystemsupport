@@ -1,7 +1,7 @@
 import { useMemo, useSyncExternalStore } from "react";
-import { builtUnitKey, readBuiltUnit, unitPackValue, type BuiltUnitVersion } from "./builtUnits";
+import { builtUnitKey, deletedBuiltUnitKey, readBuiltUnit, unitPackValue, type BuiltUnit, type BuiltUnitVersion } from "./builtUnits";
 import { supabase } from "./supabase";
-import { loadUnitPack, persistUnitPack, rememberUnitPack, unitPackSnapshot } from "./unitStorage";
+import { forgetUnitPack, loadUnitPack, persistUnitPack, rememberUnitPack, unitPackSnapshot } from "./unitStorage";
 import { courseScopedUnit } from "./courseScope";
 import { TENANT_ID } from "./tenant";
 
@@ -13,6 +13,16 @@ const subscribe = (listener: () => void) => {
 export function useBuiltUnit(us: string) {
   const snapshot = useSyncExternalStore(subscribe, () => unitPackSnapshot(builtUnitKey(us)), () => null);
   return useMemo(() => snapshot ? readBuiltUnit(us) : undefined, [snapshot, us]);
+}
+function readDeletedBuiltUnit(us:string):BuiltUnit|undefined{
+  try{
+    const data=JSON.parse(unitPackSnapshot(deletedBuiltUnitKey(us))??"null") as BuiltUnit|null;
+    return data?.content?.lesson&&data?.revision&&data?.files?data:undefined;
+  }catch{return undefined;}
+}
+export function useDeletedBuiltUnit(us:string){
+  const snapshot=useSyncExternalStore(subscribe,()=>unitPackSnapshot(deletedBuiltUnitKey(us)),()=>null);
+  return useMemo(()=>snapshot?readDeletedBuiltUnit(us):undefined,[snapshot,us]);
 }
 export async function saveBuiltUnit(us: string, next: BuiltUnitVersion): Promise<void> {
   await loadUnitPack(builtUnitKey(us)).catch(()=>{});
@@ -37,9 +47,19 @@ export async function saveBuiltUnit(us: string, next: BuiltUnitVersion): Promise
 
 export async function deleteBuiltUnit(us: string): Promise<void> {
   const key = builtUnitKey(us);
+  await loadUnitPack(key).catch(()=>{});
+  const current=readBuiltUnit(us);
+  if(!current)throw new Error("This unit build is no longer available to back up.");
+  const backupKey=deletedBuiltUnitKey(us);
+  const backupValue=JSON.stringify(current);
   if (supabase) {
+    const { error: backupError } = await supabase.from("shared_state").upsert({ tenant_id: TENANT_ID, key: backupKey, value: backupValue, updated_at: new Date().toISOString() }, { onConflict: "tenant_id,key" });
+    if (backupError) throw new Error(`The safety backup could not be created: ${backupError.message}`);
     const { error } = await supabase.from("shared_state").delete().eq("tenant_id", TENANT_ID).eq("key", key);
     if (error) throw new Error(`The unit could not be deleted from the shared course: ${error.message}`);
+    await persistUnitPack(backupKey,backupValue).catch(()=>{});
+  } else {
+    await persistUnitPack(backupKey,backupValue);
   }
   // Delete from IndexedDB
   const database = await new Promise<IDBDatabase>((resolve, reject) => {
@@ -59,5 +79,20 @@ export async function deleteBuiltUnit(us: string): Promise<void> {
     Storage.prototype.removeItem.call(localStorage, `unitbuilder-save-probe.${us}`);
   } catch { /* optional cleanup */ }
   // Notify listeners
-  window.dispatchEvent(new Event("unit-built"));
+  forgetUnitPack(key);
+}
+
+export async function restoreDeletedBuiltUnit(us:string):Promise<void>{
+  const backupKey=deletedBuiltUnitKey(us);
+  await loadUnitPack(backupKey).catch(()=>{});
+  const backup=readDeletedBuiltUnit(us);
+  if(!backup)throw new Error("No deleted-build backup is available for this unit.");
+  await saveBuiltUnit(us,{...backup,revision:crypto.randomUUID(),createdAt:new Date().toISOString()});
+  if(supabase){
+    const {error}=await supabase.from("shared_state").delete().eq("tenant_id",TENANT_ID).eq("key",backupKey);
+    if(error)throw new Error(`The build was restored, but its backup marker could not be cleared: ${error.message}`);
+  }
+  const database=await new Promise<IDBDatabase>((resolve,reject)=>{const request=indexedDB.open("itss-unit-packs",1);request.onerror=()=>reject(request.error);request.onsuccess=()=>resolve(request.result);});
+  await new Promise<void>((resolve,reject)=>{const tx=database.transaction("packs","readwrite");tx.objectStore("packs").delete(backupKey);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});
+  forgetUnitPack(backupKey);
 }

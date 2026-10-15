@@ -4,7 +4,7 @@ import type { LogbookSpec, PoeDoc, UnitContent, UnitStandard } from "../types";
 import type { LessonEdits } from "../store";
 import { buildUnitContent, validateUnitContent, lessonPlanFromSource, MAX_SOURCE_LENGTH, MAX_LESSON_PLAN_LENGTH, mergeUnitContentEnhancement } from "../lib/unitBuilder";
 import { logbookFromSource, logbookStats, MAX_LOGBOOK_SOURCE_LENGTH } from "../lib/logbookBuilder";
-import { useBuiltUnit, saveBuiltUnit, deleteBuiltUnit } from "../lib/useBuiltUnit";
+import { useBuiltUnit, useDeletedBuiltUnit, saveBuiltUnit, deleteBuiltUnit, restoreDeletedBuiltUnit } from "../lib/useBuiltUnit";
 import { unitHistory, unitVersionArchive, MAX_UNIT_HISTORY, type BuiltUnitVersion, type UnitSourceDocuments } from "../lib/builtUnits";
 import { importUnitSource } from "../lib/unitSourceImport";
 import { importPracticalTask } from "../lib/practicalTaskImport";
@@ -84,6 +84,7 @@ function unitBuilderError(error: unknown, fallback: string): string {
 type BuilderView="content"|"build"|"files"|"versions"|"delete";
 export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInline,profileId,inlineActionsTarget,open=true}:{unit:UnitStandard;content?:UnitContent;edits:LessonEdits;onSaved:()=>void;inlineDraft?:UnitContent;onCancelInline:()=>void;profileId:string;inlineActionsTarget?:HTMLElement|null;open?:boolean}) {
   const built=useBuiltUnit(unit.us);
+  const deletedBackup=useDeletedBuiltUnit(unit.us);
   const [view,setView]=useState<BuilderView|null>(null);
   const [dirty,setDirty]=useState(false);
   const scrollRef=useRef<HTMLDivElement>(null);
@@ -104,6 +105,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   const [draft,setDraft]=useState<UnitContent|null>(null);
   const [newTabKind, setNewTabKind] = useState("customTabs");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteName, setDeleteName] = useState("");
   const addTab = () => {
     if (!draft) return;
     setDirty(true);
@@ -296,7 +298,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       {inlineActionsTarget && error && <p role="alert" className="auth-error">{error}</p>}
       </> : null;
   const activeView:BuilderView=view??(content?"content":"build");
-  const select=(next:BuilderView)=>{setView(next);setError("");setMessage("");setConfirmBuild(false);setConfirmDelete(false);};
+  const select=(next:BuilderView)=>{setView(next);setError("");setMessage("");setConfirmBuild(false);setConfirmDelete(false);setDeleteName("");};
   const baseline=()=>effectiveBuiltContent(content??{lesson:[],exercises:[],assignments:[],quiz:[]},edits);
   // The structured draft is taken from the live unit each time the editor is shown, unless edits are pending.
   useEffect(()=>{
@@ -376,6 +378,10 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
           </div>
           :activeView==="content"?(draft?<UnitContentEditor disabled={!!busy} value={draft as never} onChange={v=>updateDraft(v as unknown as UnitContent)}/>:<p className="muted">Preparing the unit content…</p>)
           :activeView==="build"?<div className="unit-builder-panel unit-build-view">
+            {!built&&deletedBackup&&<div className="unit-action-card unit-deleted-backup-card">
+              <div className="unit-action-card-copy"><h3>Deleted build backup available</h3><p>Restore the saved lessons, learner activities, quizzes and files from the build deleted on {new Date(deletedBackup.createdAt).toLocaleString("en-ZA",{dateStyle:"medium",timeStyle:"short"})}.</p></div>
+              <button type="button" className="btn" disabled={!!busy} onClick={()=>{setError("");setBusy("Restoring deleted build…");void restoreDeletedBuiltUnit(unit.us).then(()=>{setMessage("The deleted build has been restored.");onSaved();}).catch(e=>setError(e instanceof Error?e.message:"The deleted build could not be restored.")).finally(()=>setBusy(""));}}><Icon name="refresh" size={15}/>Restore deleted build</button>
+            </div>}
             {built&&<p className="muted">Building replaces this unit's learning content. The last {MAX_UNIT_HISTORY} versions stay restorable from Version history. Learner work is retained.</p>}
             <section className="unit-build-step">
               <header className="unit-build-step-head"><span className="unit-editor-index">1</span><div><h3>Source content</h3><p>Paste your teaching material or import a document. Use headings such as “# Estimating effort” with a blank line before the supporting paragraphs.</p></div></header>
@@ -462,10 +468,14 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
             <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>void restore(version)}>Restore this version</button>
           </li>)}</ul>:<div className="unit-workspace-notice"><h3>No earlier versions yet</h3><p>Each save or rebuild keeps the previous build here so you can restore it.</p></div>)
           :<div className="unit-action-card is-danger">
-            <div className="unit-action-card-copy"><h3>Delete this unit build</h3><p>Removes the built lessons, activities, quizzes and download files for US {unit.us}. Learner progress and submissions are kept, and the unit can be rebuilt at any time.</p></div>
+            <div className="unit-action-card-copy"><h3>Delete this unit build</h3><p>A recoverable backup is created before the live build is removed. Learner progress and submissions are retained.</p></div>
             <div className="unit-action-card-actions">
-              <button type="button" className="btn ghost danger-text" disabled={!!busy} onClick={()=>{if(!confirmDelete){setConfirmDelete(true);setError("");setMessage("");return;}setConfirmDelete(false);setBusy("Deleting unit…");void deleteBuiltUnit(unit.us).then(()=>{setMessage("Unit deleted. You can rebuild it anytime.");setDraft(null);setDirty(false);setView("build");onSaved();setBusy("");}).catch(e=>{setError(e instanceof Error?e.message:"The unit could not be deleted.");setBusy("");});}}>{confirmDelete?"Yes, delete unit":"Delete unit"}</button>
-              {confirmDelete&&!busy&&<button type="button" className="btn ghost" onClick={()=>setConfirmDelete(false)}>Cancel</button>}
+              {!confirmDelete&&<button type="button" className="btn ghost danger-text" disabled={!!busy} onClick={()=>{setConfirmDelete(true);setDeleteName("");setError("");setMessage("");}}>Delete unit</button>}
+              {confirmDelete&&!busy&&<div className="unit-delete-confirmation">
+                <label>Type <strong>{`US ${unit.us}`}</strong> to confirm<input type="text" autoComplete="off" value={deleteName} onChange={event=>setDeleteName(event.target.value)} placeholder={`US ${unit.us}`}/></label>
+                <button type="button" className="btn ghost danger-text" disabled={deleteName.trim()!==`US ${unit.us}`} onClick={()=>{setConfirmDelete(false);setBusy("Creating safety backup and deleting unit…");void deleteBuiltUnit(unit.us).then(()=>{setMessage("Unit deleted. A restorable backup is available here.");setDraft(null);setDirty(false);setView("build");onSaved();}).catch(e=>setError(e instanceof Error?e.message:"The unit could not be deleted.")).finally(()=>setBusy(""));}}>Create backup and delete</button>
+                <button type="button" className="btn ghost" onClick={()=>{setConfirmDelete(false);setDeleteName("");}}>Cancel</button>
+              </div>}
             </div>
           </div>}
         </div>

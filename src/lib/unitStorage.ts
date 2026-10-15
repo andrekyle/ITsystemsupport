@@ -3,7 +3,7 @@ const cache = new Map<string, string>();
 const pending = new Set<string>();
 const loads = new Map<string, Promise<void>>();
 let generation=0;
-export const isUnitPackKey = (key:string) => /^itss\.unitbuilder\.(?:custom-[^.]+\.)?[^.]+\.shared$/.test(key);
+export const isUnitPackKey = (key:string) => /^itss\.unitbuilder\.(?:custom-[^.]+\.)?[^.]+\.(?:shared|deleted-backup)$/.test(key);
 /** Large shared records that must bypass quota-limited localStorage. */
 export const isLargeStateKey = (key:string) => isUnitPackKey(key) || /^itss\.workbookmemo\..+\.shared$/.test(key) || /^itss\.progress\..+$/.test(key);
 let database: Promise<IDBDatabase> | undefined;
@@ -17,6 +17,7 @@ function db() {
 }
 function notify(){ window.dispatchEvent(new Event("unit-built")); }
 export function rememberUnitPack(key:string,value:string){cache.set(key,value);notify();}
+export function forgetUnitPack(key:string){cache.delete(key);pending.delete(key);loads.delete(key);notify();}
 export async function persistUnitPack(key:string,value:string){
   const database=await db();
   await new Promise<void>((resolve,reject)=>{

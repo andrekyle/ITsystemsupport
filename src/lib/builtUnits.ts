@@ -233,6 +233,7 @@ function restorableVersions(unit: BuiltUnit | BuiltUnitVersion, us: string): { p
 }
 
 export const builtUnitKey = (us: string) => `itss.unitbuilder.${courseScopedUnit(us)}.shared`;
+export const deletedBuiltUnitKey = (us: string) => `itss.unitbuilder.${courseScopedUnit(us)}.deleted-backup`;
 export function readBuiltUnit(us: string): BuiltUnit | undefined {
   try {
     if (typeof localStorage === "undefined") return;
