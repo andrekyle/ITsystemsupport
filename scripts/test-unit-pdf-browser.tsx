@@ -2,8 +2,9 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { getDocument } from "pdfjs-dist";
-import { importUnitPdf } from "../src/lib/unitPdfImport";
-import { PDF_WASM_URL } from "../src/lib/formImport";
+import { unitPdfFromImport } from "../src/lib/unitPdfImport";
+import { PDF_WASM_URL, extractFormDocument } from "../src/lib/formImport";
+import { withHtmlAi } from "./test-unit-html-browser";
 import { PracticalTask } from "../src/components/PracticalTask";
 import { validateUnitContent, mergeUnitContentEnhancement } from "../src/lib/unitBuilder";
 import { unitExportPages, makeUnitExports } from "../src/lib/unitExports";
@@ -36,12 +37,16 @@ async function unchangedPages(file: File, model: PracticalTaskDocument) {
   } finally { await loading.destroy(); }
 }
 
+async function legacyUnitPdf(file: File, title: string) {
+  return unitPdfFromImport(await extractFormDocument(file,undefined,{preservePdf:true}),title);
+}
+
 async function syntheticPdf(count=31): Promise<File> {
   const {default:PDFDocument}=await import("pdfkit/js/pdfkit.standalone.js");
   const pdf=new PDFDocument({autoFirstPage:false,compress:false});
-  const chunks:Uint8Array[]=[];
+  const chunks:ArrayBuffer[]=[];
   const ready=new Promise<File>((resolve,reject)=>{
-    pdf.on("data",(chunk:Uint8Array)=>chunks.push(new Uint8Array(chunk)));
+    pdf.on("data",(chunk:Uint8Array)=>chunks.push(new Uint8Array(chunk).buffer));
     pdf.on("end",()=>resolve(new File(chunks,"native-fields.pdf",{type:"application/pdf"})));
     pdf.on("error",reject);
   });
@@ -56,6 +61,7 @@ async function syntheticPdf(count=31): Promise<File> {
 }
 
 export async function testPdfFirstBuilderUi() {
+  return withHtmlAi(async()=>{
     const unit={us:`pdf-ui-${crypto.randomUUID()}`,title:"PDF-first Build test",nqf:5,credits:4,dates:"",time:""};
     const key=builtUnitKey(unit.us);
     const oldSource="Keep this existing lesson source. ".repeat(10);
@@ -72,7 +78,7 @@ export async function testPdfFirstBuilderUi() {
       const mode=fixture.querySelector<HTMLInputElement>('input[role="switch"]')!;
       assert(mode&&!mode.checked,"PDF-only mode must be the default, even when an older build has lesson source.");
       assert(!fixture.querySelector('textarea'),"Optional generation inputs must not clutter the default PDF flow.");
-      assert(fixture.querySelector(".unit-build-step h3")?.textContent==="Original PDFs with editable fields","Original PDF uploads must be the first Build step.");
+      assert(fixture.querySelector(".unit-build-step h3")?.textContent==="Convert PDFs to editable HTML","HTML conversion must be the first Build step.");
       for(const label of ["Upload learner guide PDF","Upload practical task PDF","Upload learner workbook PDF"]){
         const input=fixture.querySelector<HTMLInputElement>(`input[aria-label="${label}"]`)!;
         const transfer=new DataTransfer();
@@ -81,11 +87,11 @@ export async function testPdfFirstBuilderUi() {
         flushSync(()=>input.dispatchEvent(new Event("change",{bubbles:true})));
         const until=Date.now()+30000;
         while(fixture.querySelector(".unit-workspace-spinner")&&Date.now()<until)await new Promise(resolve=>setTimeout(resolve,25));
-        assert(!fixture.querySelector(".auth-error"),`${label} must prepare original PDF pages without AI or authentication.`);
+        assert(!fixture.querySelector(".auth-error"),`${label} must convert to HTML using the signed-in AI flow.`);
       }
       const publish=fixture.querySelector<HTMLButtonElement>(".unit-build-action")!;
-      assert(!publish.disabled&&publish.textContent==="Save original PDFs with editable fields","All three PDF uploads must be publishable independently of source generation.");
-      assert(fixture.textContent?.includes("Learner Guide ready: 1 original pages")&&fixture.textContent?.includes("Practical Task ready: 1 original pages")&&fixture.textContent?.includes("Learner Workbook ready: 1 original pages"),"Each source PDF must use the original-page importer.");
+      assert(!publish.disabled&&publish.textContent==="Save editable HTML documents","All three HTML uploads must be publishable independently of lesson generation.");
+      assert(fixture.textContent?.includes("Learner Guide: 1 pages (HTML")&&fixture.textContent?.includes("Practical Task: 1 pages (HTML")&&fixture.textContent?.includes("Learner Workbook: 1 pages (HTML"),"Each source PDF must use the HTML importer.");
       flushSync(()=>mode.click());
       assert(fixture.querySelector<HTMLTextAreaElement>('textarea')?.value===oldSource,"Opting into lesson generation must retain the existing separate source text.");
       flushSync(()=>mode.click());
@@ -93,7 +99,8 @@ export async function testPdfFirstBuilderUi() {
     } finally {
       flushSync(()=>root.unmount());fixture.remove();forgetUnitPack(key);
     }
-    return "Passed PDF-first Build UI: three original-document upload controls, generation off by default despite existing source, local imports and independent PDF publishing.";
+    return "Passed HTML Build UI: three code+AI document uploads, optional lessons off by default and independent HTML publishing.";
+  });
 }
 
 export async function testUnitPdfReplicas() {
@@ -107,13 +114,13 @@ export async function testUnitPdfReplicas() {
     const response=await fetch(`/${encodeURIComponent(name)}`);
     assert(response.ok,`Reference PDF must be available: ${name}`);
     const file=new File([await response.blob()],name,{type:"application/pdf"});
-    const model=await importUnitPdf(file,title);
+    const model=await legacyUnitPdf(file,title);
     assert(model.replica?.display==="image","Uploaded documents must use unchanged original page images.");
     await unchangedPages(file,model);
     models.push(model);
   }
   assert(models[0].sourcePageCount===17,"The actual workbook must keep all 17 pages.");
-  const native=await importUnitPdf(await syntheticPdf(),"Native field test");
+  const native=await legacyUnitPdf(await syntheticPdf(),"Native field test");
   assert(native.replica!.pages.length===31,"Unit PDFs must not be truncated at the form builder's 30-page limit.");
   assert(native.replica!.sections[30].fields.some(field=>field.placement?.page===31),"Native fields after page 30 must stay on their actual page.");
   const unit={us:"114046",title:"Original PDF test",nqf:5,credits:4,dates:"",time:""};

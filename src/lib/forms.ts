@@ -133,7 +133,7 @@ async function storePages(pages: FormPage[], ownerId: string, formId: string, up
 
 /** Persist unit replicas using the same page storage as the form builder. */
 export async function storeUnitReplicaPages(pages: FormPage[]): Promise<FormPage[]> {
-  if (!supabase || !pages.some(page => page.src.startsWith("data:"))) return pages;
+  if (!supabase || !pages.some(page => page.src.startsWith("data:") || page.layer?.pictures.some(picture=>picture.src.startsWith("data:")))) return pages;
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) throw new Error("Sign in before saving PDF pages.");
   const uploaded: string[] = [];

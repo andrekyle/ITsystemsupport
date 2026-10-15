@@ -4,6 +4,7 @@ import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { MAX_MASTHEAD_CHARS, parseFormDefinition, type FormBox, type FormDefinition, type FormField, type FormPage, type FormPlacement, type LayerText, type PageLayer } from "./formSchema";
 import { analysePage, estimateSkew, extractLayer, textColour, type PageAnalysis, type PixelSource, type TextRun } from "./pageAnalysis";
 import { supabase } from "./supabase";
+import { readPdfHtmlArtwork, type PdfHtmlArtwork } from "./pdfHtmlArtwork";
 
 GlobalWorkerOptions.workerSrc = workerUrl;
 export const PDF_WASM_URL = `${import.meta.env.BASE_URL}pdfjs-wasm/`;
@@ -145,6 +146,7 @@ interface TextItem extends TextRun {
   font: string;
   bold: boolean;
   italic: boolean;
+  rotation?: number;
 }
 
 /** The face the PDF used, reduced to a family the browser can offer. */
@@ -191,6 +193,7 @@ async function textItems(page: PDFPageProxy, width: number): Promise<TextItem[]>
       w: Math.abs(x2 - x1) || fontSize * viewport.scale * 0.5,
       h: Math.abs(baseline - top) + fontSize * viewport.scale * 0.2,
       size: fontSize * viewport.scale,
+      ...(Math.abs(b) > Math.abs(a) ? {rotation: -Math.atan2(b,a)*180/Math.PI} : {}),
       ...describeFont(fontName, style?.fontFamily ?? "sans-serif"),
     });
   }
@@ -209,6 +212,18 @@ async function textItems(page: PDFPageProxy, width: number): Promise<TextItem[]>
   return kept.sort((a, b) => a.y - b.y || a.x - b.x);
 }
 
+function textInkBox(item: Pick<TextItem, "x" | "y" | "w" | "h" | "size" | "rotation">): FormBox {
+  if (!item.rotation) return { x: item.x, y: item.y, w: item.w, h: item.h };
+  const radians = item.rotation * Math.PI / 180;
+  const corners = [0, item.w].flatMap(x => [-0.8 * item.size, 0.2 * item.size].map(y => ({
+    x: item.x + x * Math.cos(radians) - y * Math.sin(radians),
+    y: item.y + 0.8 * item.size + x * Math.sin(radians) + y * Math.cos(radians),
+  })));
+  const x = Math.min(...corners.map(point => point.x));
+  const y = Math.min(...corners.map(point => point.y));
+  return { x, y, w: Math.max(...corners.map(point => point.x)) - x, h: Math.max(...corners.map(point => point.y)) - y };
+}
+
 /** A scanned page carrying an OCR text layer draws its words invisibly over
  *  the picture; that text only roughly follows the print and must not be
  *  rebuilt as the page. */
@@ -223,7 +238,7 @@ async function hasHiddenText(page: PDFPageProxy): Promise<boolean> {
 
 /** The page rebuilt as real text plus its drawn shapes, with picture regions
  *  cut from the render. */
-function buildLayer(canvas: HTMLCanvasElement, items: TextItem[], analysis: PageAnalysis): PageLayer | undefined {
+function buildLayer(canvas: HTMLCanvasElement, items: TextItem[], analysis: PageAnalysis, requireHtml = false): PageLayer | undefined {
   if (!items.length) return undefined;
   const context = canvas.getContext("2d", { willReadFrequently: true });
   if (!context) return undefined;
@@ -240,16 +255,17 @@ function buildLayer(canvas: HTMLCanvasElement, items: TextItem[], analysis: Page
     f: item.font,
     b: item.bold,
     i: item.italic,
-    c: textColour(pixels, { x: item.x, y: item.y, w: item.w, h: item.h }),
+    c: textColour(pixels, textInkBox(item)),
+    ...(item.rotation ? {rotation:item.rotation} : {}),
   }));
   const ticks = analysis.boxes.filter(box => box.kind === "tick").map(box => ({ x: box.x * canvas.width, y: box.y * canvas.height, w: box.w * canvas.width, h: box.h * canvas.height }));
   const combs = analysis.boxes.filter(box => box.kind === "comb" && box.n).map(box => ({ x: box.x * canvas.width, y: box.y * canvas.height, w: box.w * canvas.width, h: box.h * canvas.height, n: box.n! }));
-  const geometry = extractLayer(pixels, items, ticks, combs);
+  const geometry = extractLayer(pixels, items.map(item => ({ ...item, ...textInkBox(item) })), ticks, combs);
   // text that leaves much of the page's ink unexplained is not the print
   // (an OCR layer, outlined lettering): the picture is the truer page
   const pictureArea = geometry.pictures.reduce((sum, rect) => sum + rect.w * rect.h, 0) / (canvas.width * canvas.height);
-  if (geometry.unexplained > 0.35 || pictureArea > 0.2) return undefined;
-  const pictures = geometry.pictures.flatMap(rect => {
+  if (!requireHtml && (geometry.unexplained > 0.35 || pictureArea > 0.2)) return undefined;
+  const pictures = (requireHtml ? [] : geometry.pictures).flatMap(rect => {
     const crop = window.document.createElement("canvas");
     crop.width = Math.max(1, Math.round(rect.w));
     crop.height = Math.max(1, Math.round(rect.h));
@@ -325,7 +341,7 @@ async function pdfFields(document: PDFDocumentProxy, preservePdf = false): Promi
   return preservePdf ? definition : parseFormDefinition(definition);
 }
 
-async function importPdf(file: File, signal?: AbortSignal, preservePdf = false): Promise<ImportedFormDocument> {
+async function importPdf(file: File, signal?: AbortSignal, preservePdf = false, digitalPdf = false): Promise<ImportedFormDocument> {
   const loading = getDocument({ data: new Uint8Array(await file.arrayBuffer()), wasmUrl: PDF_WASM_URL, ...(preservePdf ? { stopAtErrors: true } : {}) });
   const cancel = () => { void loading.destroy(); };
   signal?.addEventListener("abort", cancel, { once: true });
@@ -358,9 +374,10 @@ async function importPdf(file: File, signal?: AbortSignal, preservePdf = false):
       // scanned pages (with or without an OCR text layer) come in slightly rotated
       if (!nativeDefinition && !preservePdf) canvas = deskewCanvas(canvas, runs);
       const analysis = nativeDefinition && !preservePdf ? { page: pageNumber, width: canvas.width, height: canvas.height, text: [], boxes: [] } : analyseCanvas(canvas, runs, pageNumber);
-      const layer = preservePdf || (await hasHiddenText(page)) ? undefined : buildLayer(canvas, items, analysis);
+      const layer = digitalPdf ? buildLayer(canvas, items, analysis, true)
+        : preservePdf || (await hasHiddenText(page)) ? undefined : buildLayer(canvas, items, analysis);
       pages.push({ src: canvas.toDataURL(preservePdf ? "image/png" : "image/jpeg", 0.85), width: canvas.width, height: canvas.height, path: "", ...(layer ? { layer } : {}), analysis });
-      if (!nativeDefinition && !preservePdf) images.push(shrink(canvas, AI_PIXELS, 0.7));
+      if (digitalPdf || (!nativeDefinition && !preservePdf)) images.push(shrink(canvas, AI_PIXELS, 0.7));
       releaseCanvas(canvas);
       page.cleanup();
     }
@@ -421,10 +438,10 @@ async function importImage(file: File): Promise<ImportedFormDocument> {
   }
 }
 
-export async function extractFormDocument(file: File, signal?: AbortSignal, options?: { preservePdf?: boolean }): Promise<ImportedFormDocument> {
+export async function extractFormDocument(file: File, signal?: AbortSignal, options?: { preservePdf?: boolean; digitalPdf?: boolean }): Promise<ImportedFormDocument> {
   const extension = checkFormUpload(file);
   checkAborted(signal);
-  const document = extension === "pdf" ? await importPdf(file, signal, options?.preservePdf)
+  const document = extension === "pdf" ? await importPdf(file, signal, options?.preservePdf, options?.digitalPdf)
     : extension === "docx" ? await importWord(file) : await importImage(file);
   checkAborted(signal);
   // replica pages go to the AI one page per request, so only a text-only document can be too big
@@ -449,7 +466,7 @@ function generationRequest(document: ImportedFormDocument, pageIndex?: number) {
   };
 }
 
-async function requestDefinition(body: unknown, token: string, signal?: AbortSignal): Promise<{ definition: FormDefinition; mastheadBox?: MastheadBox | null }> {
+async function requestDefinition(body: unknown, token: string, signal?: AbortSignal): Promise<{ definition: FormDefinition; mastheadBox?: MastheadBox | null; artwork?: PdfHtmlArtwork }> {
   const response = await fetch("/api/generate-form", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -458,7 +475,7 @@ async function requestDefinition(body: unknown, token: string, signal?: AbortSig
   });
   // the server streams keep-alive spaces while OpenAI works, then the JSON
   const raw = (await response.text()).trim();
-  let result: { definition?: unknown; mastheadBox?: MastheadBox | null; error?: string };
+  let result: { definition?: unknown; mastheadBox?: MastheadBox | null; error?: string; artwork?: unknown };
   try {
     if (!raw) throw new Error("empty");
     result = JSON.parse(raw);
@@ -475,9 +492,65 @@ async function requestDefinition(body: unknown, token: string, signal?: AbortSig
   // a page the model found nothing to fill in on comes back with no sections
   const answer = result.definition as { sections?: unknown[]; title?: unknown } | undefined;
   if (answer && Array.isArray(answer.sections) && !answer.sections.length) {
-    return { definition: { title: typeof answer.title === "string" ? answer.title : "", description: "", sections: [], titleColor: "", accentColor: "", masthead: "", pages: [], display: "image" }, mastheadBox: null };
+    return { definition: { title: typeof answer.title === "string" ? answer.title : "", description: "", sections: [], titleColor: "", accentColor: "", masthead: "", pages: [], display: "image" }, mastheadBox: null,
+      ...(result.artwork ? {artwork:readPdfHtmlArtwork(result.artwork)} : {}) };
   }
-  return { definition: parseFormDefinition(result.definition), mastheadBox: result.mastheadBox };
+  const definition = parseFormDefinition(result.definition);
+  if (result.artwork && answer?.sections) {
+    const count = answer.sections.reduce<number>((total,section)=>{
+      const fields=section && typeof section==="object" ? (section as Record<string,unknown>).fields : undefined;
+      return total+(Array.isArray(fields)?fields.length:0);
+    },0);
+    if (count!==definition.sections.reduce((total,section)=>total+section.fields.length,0)) throw new Error("AI HTML conversion returned more fields than can be preserved. Split this page into smaller documents.");
+  }
+  return { definition, mastheadBox: result.mastheadBox,
+    ...(result.artwork ? {artwork:readPdfHtmlArtwork(result.artwork)} : {}) };
+}
+
+/** AI interprets each page; code retains the source text and renders safe HTML. */
+export async function convertPdfHtml(document: ImportedFormDocument, onProgress?: (done: number, total: number) => void): Promise<FormDefinition> {
+  if (!supabase) throw new Error("PDF-to-HTML conversion needs a signed-in cloud administrator and the AI service.");
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session) throw new Error("Sign in before converting PDFs to HTML.");
+  const missing = document.pages.findIndex(page => !page.layer?.text.length);
+  if (missing !== -1) throw new Error(`Page ${missing + 1} has no extractable text. Run OCR on the PDF before converting it to HTML. No image-only substitute was created.`);
+  const pages = document.pages.map(({ analysis: _analysis, ...page }) => page);
+  const sections: FormDefinition["sections"] = [];
+  onProgress?.(0, document.pages.length);
+  for (const [index, page] of document.pages.entries()) {
+    if (!page.layer) throw new Error(`Page ${index + 1} is missing its HTML layer.`);
+    const result = await requestDefinition({ ...generationRequest(document, index), html: true }, data.session.access_token);
+    if (!result.artwork) throw new Error(`AI HTML conversion omitted artwork for page ${index + 1}.`);
+    for (const box of result.artwork.pictures) {
+      if (page.layer.text.some(run => {
+        const ink = textInkBox({ x: run.x * page.width, y: run.y * page.height, w: run.w * page.width, h: run.h * page.height, size: run.s * page.width, rotation: run.rotation });
+        const x = ink.x / page.width, y = ink.y / page.height;
+        const width = ink.w / page.width, height = ink.h / page.height;
+        const w = Math.max(0, Math.min(box.x + box.w, x + width) - Math.max(box.x, x));
+        const h = Math.max(0, Math.min(box.y + box.h, y + height) - Math.max(box.y, y));
+        return w * h > width * height * 0.2;
+      })) throw new Error(`Page ${index + 1}: AI tried to crop printed text into an image. Retry conversion instead of publishing an image-based substitute.`);
+    }
+    const image = await createImageBitmap(await (await fetch(page.src)).blob());
+    try {
+      const pictures = result.artwork.pictures.map(box => {
+        const canvas = window.document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(box.w * page.width));
+        canvas.height = Math.max(1, Math.round(box.h * page.height));
+        const context = canvas.getContext("2d");
+        if (!context) throw new Error("The browser could not convert the document artwork.");
+        context.drawImage(image, box.x * page.width, box.y * page.height, box.w * page.width, box.h * page.height, 0, 0, canvas.width, canvas.height);
+        const src = canvas.toDataURL("image/png");
+        releaseCanvas(canvas);
+        return { ...box, src, path: "" };
+      });
+      pages[index] = { ...pages[index], layer: { ...page.layer, fills: result.artwork.fills, pictures } };
+    } finally { image.close(); }
+    const fields = pageFields(result.definition, index + 1);
+    sections.push({ id: `page_${index + 1}`, title: `Page ${index + 1}`, description: "", fields, columns: 4, widths: [], rows: [], banner: "", pageBreak: false });
+    onProgress?.(index + 1, document.pages.length);
+  }
+  return { title: document.name.replace(/\.pdf$/i, ""), description: "", sections, pages, display: "digital", titleColor: "", accentColor: "", masthead: "" };
 }
 
 /** Fields of one page's answer, renumbered onto that page with ids that

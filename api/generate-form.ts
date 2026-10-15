@@ -1,4 +1,5 @@
 import { FORM_FIELD_TYPES, LAYOUT_CELL_KINDS, parseFormDefinition, parseReplicaOutput } from "../src/lib/formSchema";
+import { readPdfHtmlArtwork, type PdfHtmlArtwork } from "../src/lib/pdfHtmlArtwork";
 
 // Edge runtime. It must START responding within 25 s, so the slow OpenAI call
 // is streamed: a keep-alive space goes out immediately and every few seconds
@@ -172,7 +173,32 @@ title: the printed form title verbatim. description: "".
 CHARACTERS: write every string with plain keyboard characters: a hyphen for bullets, middle dots and dashes, straight quotes for curly quotes. Letters with accents are fine. Never write unicode escape sequences.
 List the fields in reading order: page by page, top to bottom, left to right. If the upload is not a legible form, return an empty fields array.`;
 
-type Mode = "grid" | "replica";
+const htmlSchema = {
+  ...replicaSchema,
+  required: [...replicaSchema.required, "artwork"],
+  properties: {
+    ...replicaSchema.properties,
+    artwork: {
+      type: "object", additionalProperties: false, required: ["fills","pictures","issues"],
+      properties: {
+        fills: { type:"array",maxItems:100,items:{
+          ...boxSchema,required:[...boxSchema.required,"c"],
+          properties:{...boxSchema.properties,c:{type:"string",pattern:"^#[0-9a-fA-F]{6}$"}},
+        }},
+        pictures:{type:"array",maxItems:20,items:boxSchema},
+        issues:{type:"array",items:textSchema},
+      },
+    },
+  },
+};
+const HTML_PROMPT = `${REPLICA_PROMPT}
+HTML CONVERSION: unlike the replica mode above, this page will NOT be displayed as an image.
+Code keeps EVERY supplied printed text run as real positioned HTML text and rebuilds all detected rules and table borders as HTML shapes. Do not rewrite or omit printed content. Your field list binds editable HTML controls to the original answer areas.
+Also return artwork: fills are the solid colour rectangles behind printed text (cover panels, vertical strips, coloured table cells), with x,y,w,h fractions and c as #RRGGBB. Include large panels even when text lies on them; never cover a white answer cell with a coloured panel.
+pictures are tightly cropped logos, photographs or diagrams ONLY, as x,y,w,h. Do NOT crop printed titles, vertical side labels, ordinary text, tables or full pages. Exclude supplied text runs from artwork crops. Those must remain HTML, never pictures. Omit white background fills. Preserve the original design; do not invent a new cover, logo, colours, headings, fields or wording. Every printed page, including non-form guide pages, is a valid HTML document. Empty fields are allowed when there is nothing to fill in.
+issues: compare the image with the supplied text runs. If visible words are missing, OCR is inaccurate, source content is unreadable, or the page cannot be faithfully reconstructed using text, detected rules and artwork, list the specific problems. Do not invent a transcription. Otherwise return an empty issues array.`;
+
+type Mode = "grid" | "replica" | "html";
 type PageData = {
   page: number;
   text: { t: string; x: number; y: number; w: number; h: number; in: string; right: string; below: string; left: string; above: string }[];
@@ -238,7 +264,7 @@ async function describeOpenAiFailure(response: Response): Promise<string> {
 }
 
 type MastheadBox = { page: number; x: number; y: number; width: number; height: number };
-type Payload = { definition: unknown; mastheadBox: MastheadBox | null; model: string } | { error: string };
+type Payload = { definition: unknown; mastheadBox: MastheadBox | null; model: string; artwork?: PdfHtmlArtwork } | { error: string };
 
 /** Typographic characters in the extracted text push the constrained decoder
  *  into an endless "\u0000" loop (seen with the middle dot), so the text is
@@ -339,11 +365,11 @@ async function generate(
 ): Promise<Payload> {
   const plain = sanitizeText(text);
   const attempts = [plain, asciiOnly(plain)];
-  const prompt = mode === "replica" ? REPLICA_PROMPT : PROMPT;
-  const schema = mode === "replica" ? replicaSchema : definitionSchema;
+  const prompt = mode === "html" ? HTML_PROMPT : mode === "replica" ? REPLICA_PROMPT : PROMPT;
+  const schema = mode === "html" ? htmlSchema : mode === "replica" ? replicaSchema : definitionSchema;
   try {
     for (let attempt = 0; attempt < attempts.length; attempt++) {
-      const request = mode === "replica"
+      const request = mode !== "grid"
         ? { filename: sanitizeText(name), pages }
         : { filename: sanitizeText(name), document_text: attempts[attempt] };
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -396,10 +422,11 @@ function interpret(completion: Completion, mode: Mode, pages: PageData[]): Paylo
   } catch {
     return { error: "The AI's answer was not valid JSON. Please try again." };
   }
-  if (mode === "replica") {
+  if (mode !== "grid") {
     try {
       const pageBoxes = pages.map(page => ({ boxes: page.boxes.map(box => ({ id: box.id, x: box.x, y: box.y, w: box.w, h: box.h, kind: box.k, ...(box.n ? { n: box.n } : {}) })) }));
-      return { definition: parseReplicaOutput(raw, pageBoxes), mastheadBox: null, model: MODEL };
+      return { definition: parseReplicaOutput(raw, pageBoxes), mastheadBox: null, model: MODEL,
+        ...(mode === "html" ? {artwork:readPdfHtmlArtwork((raw as Record<string,unknown>).artwork)} : {}) };
     } catch (error) {
       const reason = error instanceof Error ? error.message : "unknown reason";
       return { error: `No fillable fields could be identified (${reason}). Upload a clearer blank form or add the fields manually.` };
@@ -481,7 +508,7 @@ export default async function handler(request: Request): Promise<Response> {
       const analysed = readPages(input.pages);
       if (!analysed || analysed.length !== images.length) return json({ error: "The page analysis does not match the page images." }, 400);
       pages = analysed;
-      mode = "replica";
+      mode = input.html === true ? "html" : "replica";
     }
     if (!text.trim() && !images.length) return json({ error: "No readable content was found in the upload." }, 400);
   } catch {

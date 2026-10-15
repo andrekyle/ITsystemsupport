@@ -50,7 +50,7 @@ export function UploadedPdf({ definition, profile, values, onChange, onSave }: {
   };
   return <>
     <DocumentActions name={definition.title} onSave={onSave} />
-    <p className="muted no-print">Original PDF pages. Type in the answer areas, or use Fill &amp; sign to add text, ticks and signatures anywhere needed.</p>
+    <p className="muted no-print">{definition.display === "digital" ? "Converted HTML document." : "Original PDF pages (older image-based version)."} Type in the answer areas, or use Fill &amp; sign to add text, ticks and signatures anywhere needed.</p>
     <div className="uploaded-pdf document-print-target">
       <PaperForm definition={definition} answers={local} onChange={change}
         readOnlyFields={definition.sections.flatMap(section => section.fields).filter(field => field.type === "signature" && !canSignDocumentField(profile.role, field.label)).map(field => field.id)}

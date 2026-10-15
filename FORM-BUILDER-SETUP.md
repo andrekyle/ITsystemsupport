@@ -30,29 +30,41 @@ Generated forms preserve field content and order, not the exact paper layout. Re
 
 ## Checks
 
-### Build: original unit PDFs
+### Build: PDF to editable HTML
 
 Build's Learner Guide, Practical Task, Learner Workbook and additional PDF uploads
-use the existing replica renderer, not the text-document or AI slide layout.
-Every original page is rendered without deskewing, font substitution, new covers
-or reflow. Native PDF fields and detected blank cells, answer lines, combs and
-tick boxes receive positioned HTML controls. Fill & sign handles additional
-answer areas that automatic detection cannot identify, including scanned pages.
-Field detection runs locally; these PDFs are not sent to AI.
+use code and the authenticated AI form endpoint together. Code extracts all
+printed text runs, fonts, positions, rules and table borders. AI reviews each page
+image to identify answer fields, solid colour panels and tightly cropped artwork.
+The digital renderer uses real HTML text and CSS shapes, not a full-page image.
+Only logos, photographs and diagrams may remain image crops. It does not ask AI
+to rewrite questions, invent a cover or replace the source wording.
+Review the conversion before publishing: substitute fonts and AI-measured colour
+panels may differ from the PDF. Pages without extractable text fail explicitly;
+run OCR on a scanned PDF before uploading. There is no image-only success fallback.
 
 Uploads support 20 MB and 250 pages per PDF. Pages are saved using the existing
 `form-pages` storage bucket (apply `supabase/migrations/20260912_form_pages.sql`).
 Answers and annotations use the unit's existing learner-progress storage, with
 separate namespaces for each document. Printed output and editable HTML exports
-retain the original pages. The learner-pack PDF includes original page images,
-not a reformatted transcription.
+use the HTML page layers. The learner-pack PDF remains an original-source reference:
+it includes original page images, not the converted HTML. Use the document's
+Print / Save as PDF action for the converted document with saved answers.
 
-PDF-only builds are the default, need no pasted lesson text and make no AI requests.
+PDF-only builds are the default and need no pasted lesson text. Conversion requires
+a signed-in administrator, a configured AI endpoint and one AI request per page.
 Enable **Also generate lesson tabs** to use separately provided lesson source
 text without changing the
-uploaded documents. Rebuilding an older unit recreates replicas from its archived
+uploaded documents. Rebuilding an older unit converts its archived
 original PDFs; old additional-document tabs without an archived PDF must be
-reuploaded to restore their original appearance. Existing saved text-document
+reuploaded for HTML conversion. Existing saved text-document
 answers are not erased or guessed into newly positioned PDF fields.
+
+HTML conversion checks: run `node --import tsx --test scripts/pdf-html.test.ts`.
+With Vite running, `testUnitHtml()` from `scripts/test-unit-html-browser.tsx`
+checks all 59 pages of the three 114046 source PDFs, every extracted text run,
+rotated HTML titles, editable answers, standalone HTML downloads and the no-text
+failure path. Authentication and AI responses are mocked; PDF extraction and
+HTML rendering are real. Live AI layout fidelity still needs administrator review.
 
 Run `node --import tsx --test scripts/form-builder.test.ts scripts/generate-form.test.ts scripts/form-database.test.ts` and `npm run build` from the project directory. The database test runs the migration twice in embedded PostgreSQL and checks template permissions, response isolation, source-document access and cascading deletion without contacting Supabase.

@@ -1,0 +1,57 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import handler from "../api/generate-form";
+import { readPdfHtmlArtwork } from "../src/lib/pdfHtmlArtwork";
+
+test("HTML artwork rejects page-image substitutes, invalid bounds and incomplete sources", () => {
+  assert.deepEqual(readPdfHtmlArtwork({fills:[],pictures:[],issues:[]}), {fills:[],pictures:[],issues:[]});
+  assert.throws(()=>readPdfHtmlArtwork({fills:[],pictures:[{x:0,y:0,w:1,h:1}],issues:[]}), /page image/);
+  assert.throws(()=>readPdfHtmlArtwork({fills:[{x:0,y:0,w:2,h:1,c:"#ffffff"}],pictures:[],issues:[]}), /outside/);
+  assert.throws(()=>readPdfHtmlArtwork({fills:[],pictures:[],issues:["Question 3 is unreadable"]}), /Question 3/);
+  assert.throws(()=>readPdfHtmlArtwork({fills:[],pictures:[]}), /completeness/);
+});
+
+test("authenticated HTML mode uses strict AI layout schema and validates its response", async () => {
+  const originalFetch = globalThis.fetch;
+  const keys=["SUPABASE_URL","SUPABASE_ANON_KEY","OPENAI_API_KEY"];
+  const before=keys.map(key=>process.env[key]);
+  process.env.SUPABASE_URL="https://example.invalid";
+  process.env.SUPABASE_ANON_KEY="test";
+  process.env.OPENAI_API_KEY="test";
+  let calls=0;
+  let issues:string[]=[];
+  globalThis.fetch=async(url,init)=>{
+    if(String(url).endsWith("/auth/v1/user"))return Response.json({id:"admin"});
+    if(String(url).endsWith("/rpc/is_admin"))return Response.json(true);
+    assert.equal(String(url),"https://api.openai.com/v1/chat/completions");
+    calls++;
+    const request=JSON.parse(String(init?.body));
+    assert.match(request.messages[0].content,/HTML CONVERSION/);
+    assert.match(request.messages[0].content,/untrusted source data/);
+    assert.equal(request.response_format.json_schema.strict,true);
+    assert.ok(request.response_format.json_schema.schema.required.includes("artwork"));
+    const content=JSON.stringify({title:"Original guide",description:"",fields:[],artwork:{fills:[],pictures:[],issues}});
+    const encoder=new TextEncoder();
+    return new Response(new ReadableStream({start(controller){
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({choices:[{delta:{content},finish_reason:null}]})}\n\ndata: ${JSON.stringify({choices:[{delta:{},finish_reason:"stop"}]})}\n\ndata: [DONE]\n\n`));
+      controller.close();
+    }}),{headers:{"Content-Type":"text/event-stream"}});
+  };
+  const request=()=>handler(new Request("https://example.invalid/api/generate-form",{
+    method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer test-session"},
+    body:JSON.stringify({html:true,name:"guide.pdf",images:["data:image/png;base64,AA=="],pages:[{text:[],boxes:[]}]}),
+  }));
+  try {
+    const valid=await (await request()).json();
+    assert.ok(valid.definition);
+    assert.deepEqual(valid.artwork,{fills:[],pictures:[],issues:[]});
+    issues=["Visible question missing from extracted text"];
+    const invalid=await (await request()).json();
+    assert.match(invalid.error,/Visible question missing/);
+    assert.equal(invalid.definition,undefined);
+    assert.equal(calls,2);
+  } finally {
+    globalThis.fetch=originalFetch;
+    keys.forEach((key,index)=>{if(before[index]===undefined)delete process.env[key];else process.env[key]=before[index];});
+  }
+});

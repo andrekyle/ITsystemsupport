@@ -246,7 +246,7 @@ function DigitalPage({ layer, ratio, onText }: { layer: PageLayer; ratio: number
         const target = Number(span.dataset.w) * pageWidth;
         if (!natural || !target) return;
         const scale = Math.min(1.3, Math.max(0.6, target / natural));
-        if (Math.abs(scale - 1) > 0.015) span.style.transform = `scaleX(${scale.toFixed(4)})`;
+        span.style.transform = `${span.dataset.rotation ? `rotate(${span.dataset.rotation}deg) ` : ""}${Math.abs(scale-1)>0.015 ? `scaleX(${scale.toFixed(4)})` : ""}`;
       });
     };
     fit();
@@ -289,6 +289,7 @@ function DigitalPage({ layer, ratio, onText }: { layer: PageLayer; ratio: number
           key={`t${index}`}
           className="rp-text"
           data-w={run.w}
+          data-rotation={run.rotation || undefined}
           contentEditable={onText ? true : undefined}
           suppressContentEditableWarning
           spellCheck={false}
@@ -304,6 +305,7 @@ function DigitalPage({ layer, ratio, onText }: { layer: PageLayer; ratio: number
             fontWeight: run.b ? 700 : 400,
             fontStyle: run.i ? "italic" : "normal",
             color: run.c,
+            ...(run.rotation ? {transform:`rotate(${run.rotation}deg)`,transformOrigin:"0 0.847em"} : {}),
           }}
         >
           {run.t}

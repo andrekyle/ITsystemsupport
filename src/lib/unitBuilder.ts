@@ -850,8 +850,8 @@ export function validateUnitContent(content: UnitContent, requireComplete = true
   for (const document of documents) {
     if (document.replica) {
       const replica=document.replica;
-      if (!nonempty(document.title) || !replica.pages.length || replica.pages.length !== document.sourcePageCount || replica.display !== "image") throw new Error("Every PDF replica must preserve all original pages.");
-      if (replica.pages.some(page => !nonempty(page.src) || page.width <= 0 || page.height <= 0 || page.layer)) throw new Error("An original PDF page is missing or has been replaced by a rebuilt layout.");
+      if (!nonempty(document.title) || !replica.pages.length || replica.pages.length !== document.sourcePageCount) throw new Error("Every converted PDF must preserve all source pages.");
+      if (replica.pages.some(page => !nonempty(page.src) || page.width <= 0 || page.height <= 0 || (replica.display === "digital" && !page.layer?.text.length))) throw new Error("A converted PDF page is missing its source or HTML text.");
       const fields=replica.sections.flatMap(section=>section.fields);
       if (new Set(fields.map(field=>field.id)).size!==fields.length) throw new Error("PDF fields need unique IDs.");
       for (const field of fields) {

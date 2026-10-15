@@ -97,6 +97,8 @@ export interface LayerText {
   b: boolean;
   i: boolean;
   c: string;
+  /** Rotation around the text baseline, in degrees. */
+  rotation?: number;
 }
 
 export interface LayerShape {
@@ -326,7 +328,8 @@ function readLayer(value: unknown): PageLayer | undefined {
     const t = typeof item.t === "string" ? item.t.slice(0, 500) : "";
     const s = fraction(item.s);
     if (!t.trim() || !s || s > 0.2) continue;
-    runs.push({ t, ...box, s, f: typeof item.f === "string" && FONT_KEY.test(item.f) ? item.f : "sans", b: item.b === true, i: item.i === true, c: colorValue(item.c) || "#000000" });
+    runs.push({ t, ...box, s, f: typeof item.f === "string" && FONT_KEY.test(item.f) ? item.f : "sans", b: item.b === true, i: item.i === true, c: colorValue(item.c) || "#000000",
+      ...(typeof item.rotation === "number" && Number.isFinite(item.rotation) && Math.abs(item.rotation)<=180 ? {rotation:item.rotation} : {}) });
   }
   const shapes = (list: unknown, frame: boolean) => (Array.isArray(list) ? list.slice(0, MAX_LAYER_SHAPES) : []).map(shape => readShape(shape, frame)).filter((shape): shape is LayerShape => !!shape);
   const pictures: LayerPicture[] = [];

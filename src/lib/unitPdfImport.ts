@@ -1,5 +1,5 @@
 import type { PracticalTaskDocument } from "../types";
-import { extractFormDocument, type ImportedFormDocument } from "./formImport";
+import { convertPdfHtml, extractFormDocument, type ImportedFormDocument } from "./formImport";
 import type { FormBox, FormDefinition, FormField } from "./formSchema";
 
 function overlaps(a: FormBox, b: FormBox): boolean {
@@ -48,8 +48,30 @@ export function unitPdfFromImport(imported: ImportedFormDocument, title: string)
   };
 }
 
-export async function importUnitPdf(file: File, title: string): Promise<PracticalTaskDocument> {
+export async function importUnitPdf(file: File, title: string, onProgress?: (done: number, total: number) => void): Promise<PracticalTaskDocument> {
   if (!/\.pdf$/i.test(file.name)) throw new Error("Choose a PDF document.");
   if (file.size > 20 * 1024 * 1024) throw new Error("Choose a PDF under 20 MB.");
-  return unitPdfFromImport(await extractFormDocument(file, undefined, { preservePdf: true }), title);
+  const imported = await extractFormDocument(file, undefined, { preservePdf: true, digitalPdf: true });
+  const document = unitPdfFromImport(imported, title);
+  const previous = document.replica!.sections.flatMap(section => section.fields);
+  const replica = await convertPdfHtml(imported, onProgress);
+  for (const section of replica.sections) {
+    const used = new Set<string>();
+    section.fields = section.fields.map(field => {
+      const match = previous.find(old => !used.has(old.id) && old.placement && field.placement
+        && old.placement.page === field.placement.page && old.placement.box && field.placement.box
+        && overlaps(old.placement.box, field.placement.box));
+      if (!match) return {...field,id:`html_${field.id}`};
+      used.add(match.id);
+      return {...field, id:match.id};
+    });
+  }
+  for (const native of imported.definition?.sections.flatMap(section=>section.fields) ?? []) {
+    const section = replica.sections.find(section=>section.id===`page_${native.placement?.page}`);
+    if (!section) throw new Error("A native PDF field is missing its source page.");
+    section.fields = section.fields.filter(field=>!field.placement?.box || !native.placement?.box || !overlaps(field.placement.box,native.placement.box));
+    section.fields.push(native);
+  }
+  document.replica = {...replica, title};
+  return document;
 }

@@ -226,11 +226,12 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
         const response=await fetch(url);
         if(!response.ok)throw new Error(`The saved source document could not be read (HTTP ${response.status}). Upload it again or retry.`);
         const title={learnerGuide:"Learner Guide",learnerWorkbook:"Learner Workbook",practicalTask:"Practical Task"}[kind];
-        return importUnitPdf(new File([await response.blob()],original.name,{type:"application/pdf"}),title);
+        return importUnitPdf(new File([await response.blob()],original.name,{type:"application/pdf"}),title,(done,total)=>setBusy(`Converting ${title} to HTML with code and AI: ${done}/${total} pages...`));
       };
-      const workbook=learnerWorkbook?.replica?learnerWorkbook:await recoverSourceDocument("learnerWorkbook")??learnerWorkbook;
-      const practical=practicalTask?.replica?practicalTask:await recoverSourceDocument("practicalTask")??practicalTask;
-      const guide=learnerGuide?.replica?learnerGuide:await recoverSourceDocument("learnerGuide")??learnerGuide;
+      const workbook=learnerWorkbook?.replica?.display==="digital"?learnerWorkbook:await recoverSourceDocument("learnerWorkbook")??learnerWorkbook;
+      const practical=practicalTask?.replica?.display==="digital"?practicalTask:await recoverSourceDocument("practicalTask")??practicalTask;
+      const guide=learnerGuide?.replica?.display==="digital"?learnerGuide:await recoverSourceDocument("learnerGuide")??learnerGuide;
+      if ([workbook,practical,guide,...editableDocuments.map(item=>item.document)].some(document=>document?.replica?.display==="image")) throw new Error("An older document still uses page images. Upload its original PDF again to convert it to real HTML before rebuilding.");
       const documentsOnly=!generateLessons;
       let next:UnitContent=documentsOnly
         ? structuredClone(content??{lesson:[],exercises:[],assignments:[],quiz:[]})
@@ -254,7 +255,8 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
         if(preservedWorkbook)next.workbook=preservedWorkbook;
         if(result.usage) void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.input_tokens??result.usage.prompt_tokens??0,completionTokens:result.usage.output_tokens??result.usage.completion_tokens??0,totalTokens:result.usage.total_tokens??0});
       }
-      await publish(next,documentsOnly?(built?.source??""):source,documentsOnly?(built?.aiUsed??false):ai);
+      const htmlAiUsed=[guide,workbook,practical,...editableDocuments.map(item=>item.document)].some(document=>document?.replica?.display==="digital");
+      await publish(next,documentsOnly?(built?.source??""):source,htmlAiUsed||(documentsOnly?(built?.aiUsed??false):ai));
       doneBusy(()=>select("content"));
     }catch(e){setError(unitBuilderError(e,"The unit could not be built. Your current content is unchanged."));setBusy("");}
   };
@@ -263,9 +265,9 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     if(!file)return;
     setError("");setMessage("");
     try{
-      setBusy("Keeping original PDF pages and adding editable fields...");
+      setBusy("Converting PDF to HTML with code and AI...");
       const title={learnerGuide:"Learner Guide",learnerWorkbook:"Learner Workbook",practicalTask:"Practical Task"}[kind];
-      const converted=await importUnitPdf(file,title);
+      const converted=await importUnitPdf(file,title,(done,total)=>setBusy(`Converting ${title} to HTML with code and AI: ${done}/${total} pages...`));
       if(kind==="learnerGuide"){
         setLearnerGuide(converted);
       }else if(kind==="practicalTask"){
@@ -274,7 +276,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
         setLearnerWorkbook(converted);
       }
       setSourceDocumentFiles(current=>({...current,[kind]:file}));
-      setMessage(`${file.name}: all ${converted.sourcePageCount} original pages are ready with editable answer areas. The PDF layout has not been changed.`);
+      setMessage(`${file.name}: all ${converted.sourcePageCount} pages converted to HTML text and editable answer areas. Review the conversion before publishing.`);
     }catch(err){setError(err instanceof Error?err.message:String(err));}
     finally{setBusy("");}
   };
@@ -348,7 +350,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   const heading={content:"Content and structure",build:built?"Rebuild documents":"Build documents",files:"Files and exports",versions:"Version history",delete:"Delete unit"}[activeView];
   const intro={
     content:dirty?"You have unsaved changes. Saving updates every tab and rebuilds the download files.":"Expand a card to edit it. Saving updates every tab and rebuilds the download files.",
-    build:"Upload your PDFs to keep the same documents and make their fields editable. Lesson generation is separate and optional.",
+    build:"Upload PDFs to convert them into real HTML using code and AI. Keep the source wording and layout, with editable answer fields. Lesson generation is separate.",
     files:"Regenerate the download files from the content that is live now.",
     versions:`The last ${MAX_UNIT_HISTORY} builds stay restorable.`,
     delete:"Remove this built unit. Learner work is retained.",
@@ -410,7 +412,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
             </div>}
             {built&&<p className="muted">Publishing PDFs keeps existing lesson content unless you explicitly enable lesson generation. The last {MAX_UNIT_HISTORY} versions stay restorable from Version history. Learner work is retained.</p>}
             <section className="unit-build-step">
-              <header className="unit-build-step-head"><span className="unit-editor-index">1</span><div><h3>Original PDFs with editable fields</h3><p>Keep the same text, tables, branding and page layout. Only add editable answer fields. No redesign or AI rewriting.</p></div></header>
+              <header className="unit-build-step-head"><span className="unit-editor-index">1</span><div><h3>Convert PDFs to editable HTML</h3><p>Code preserves the printed text and table geometry. AI identifies answer fields, colour panels and artwork. No rewritten questions or replacement covers. Review the converted layout before publishing.</p></div></header>
               <div className="unit-settings-card">
                 <div className="unit-source-field"><span>Upload blank training documents, up to 20 MB and 250 pages per PDF. Fill &amp; sign lets learners complete additional answer areas.</span>
                   {([[
@@ -420,17 +422,17 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
                   ],[
                     "learnerWorkbook","Learner Workbook PDF","Upload learner workbook PDF"
                   ]] as [keyof UnitSourceDocuments,string,string][]).map(([kind,label,aria])=><div className="unit-settings-row" key={kind}><span className="unit-settings-copy"><strong>{label}</strong><span>{kind==="practicalTask"?(practicalTaskFileName||sourceDocumentName(kind)):sourceDocumentName(kind)}</span></span><label className="unit-import-button"><span>{built?.files.sourceDocuments?.[kind]||sourceDocumentFiles[kind]?"Replace PDF":"Choose PDF"}</span><input aria-label={aria} type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={e=>{const file=e.target.files?.[0];e.target.value="";void chooseSourceDocument(kind,file);}}/></label></div>)}
-                  {learnerGuide?.replica&&<span className="muted">Learner Guide ready: {learnerGuide.sourcePageCount} original pages with editable fields.</span>}
-                  {practicalTask?.replica&&<span className="muted">Practical Task ready: {practicalTask.sourcePageCount} original pages with editable fields.</span>}
-                  {learnerWorkbook?.replica&&<span className="muted">Learner Workbook ready: {learnerWorkbook.sourcePageCount} original pages with editable fields. No replacement cover or generated questions.</span>}
+                  {learnerGuide?.replica&&<span className="muted">Learner Guide: {learnerGuide.sourcePageCount} pages ({learnerGuide.replica.display==="digital"?"HTML with editable fields":"older image version - rebuild to convert"}).</span>}
+                  {practicalTask?.replica&&<span className="muted">Practical Task: {practicalTask.sourcePageCount} pages ({practicalTask.replica.display==="digital"?"HTML with editable fields":"older image version - rebuild to convert"}).</span>}
+                  {learnerWorkbook?.replica&&<span className="muted">Learner Workbook: {learnerWorkbook.sourcePageCount} pages ({learnerWorkbook.replica.display==="digital"?"HTML with editable fields":"older image version - rebuild to convert"}).</span>}
                 </div>
-                <div className="unit-source-field"><strong>Additional editable PDF tabs</strong><span>Each PDF keeps its original pages and layout, with editable fields added in place.</span><div className="unit-settings-row"><span className="unit-settings-copy"><strong>Add another PDF</strong><span>PDF up to 20 MB and 250 pages · multiple documents supported</span></span><label className="unit-import-button"><span>Choose PDF</span><input aria-label="Upload an additional editable PDF" type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Keeping original PDF pages and adding editable fields...");setError("");try{const base=file.name.replace(/\.pdf$/i,"").replace(/^SAQA\s*-?\s*\d+\s*-?\s*/i,"").trim()||"Document";const title=/learner\s*workbook/i.test(base)?"Learner Workbook":/learner\s*guide/i.test(base)?"Learner Guide":/practical/i.test(base)?"Practical Task":base;const document=await importUnitPdf(file,title);const entry={id:crypto.randomUUID(),title,sourceName:file.name,document};setEditableDocuments(current=>[...current,entry]);setMessage(`Added ${file.name}: ${document.sourcePageCount} original pages with editable fields.`);}catch(err){setError(err instanceof Error?err.message:String(err));}finally{setBusy("");}}}/></label></div>{editableDocuments.map(item=><div className="unit-settings-row" key={item.id}><span className="unit-settings-copy"><strong>{item.title}</strong><span>{item.sourceName} · {item.document.sourcePageCount??item.document.sections.length} pages</span></span><button type="button" className="btn ghost sm" disabled={!!busy} onClick={()=>setEditableDocuments(current=>current.filter(document=>document.id!==item.id))}>Remove</button></div>)}</div>
+                <div className="unit-source-field"><strong>Additional editable HTML tabs</strong><span>Each PDF is converted with the same code and AI workflow.</span><div className="unit-settings-row"><span className="unit-settings-copy"><strong>Add another PDF</strong><span>PDF up to 20 MB and 250 pages · multiple documents supported</span></span><label className="unit-import-button"><span>Choose PDF</span><input aria-label="Upload an additional editable PDF" type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Converting PDF to HTML with code and AI...");setError("");try{const base=file.name.replace(/\.pdf$/i,"").replace(/^SAQA\s*-?\s*\d+\s*-?\s*/i,"").trim()||"Document";const title=/learner\s*workbook/i.test(base)?"Learner Workbook":/learner\s*guide/i.test(base)?"Learner Guide":/practical/i.test(base)?"Practical Task":base;const document=await importUnitPdf(file,title,(done,total)=>setBusy(`Converting ${title} to HTML with code and AI: ${done}/${total} pages...`));const entry={id:crypto.randomUUID(),title,sourceName:file.name,document};setEditableDocuments(current=>[...current,entry]);setMessage(`Added ${file.name}: ${document.sourcePageCount} HTML pages with editable fields. Review before publishing.`);}catch(err){setError(err instanceof Error?err.message:String(err));}finally{setBusy("");}}}/></label></div>{editableDocuments.map(item=><div className="unit-settings-row" key={item.id}><span className="unit-settings-copy"><strong>{item.title}</strong><span>{item.sourceName} · {item.document.sourcePageCount??item.document.sections.length} pages</span></span><button type="button" className="btn ghost sm" disabled={!!busy} onClick={()=>setEditableDocuments(current=>current.filter(document=>document.id!==item.id))}>Remove</button></div>)}</div>
               </div>
             </section>
             <section className="unit-build-step">
-              <header className="unit-build-step-head"><span className="unit-editor-index">2</span><div><h3>Optional lesson generation</h3><p>Leave off to publish only the original PDFs above. This separate source text creates lesson slides; it does not change the uploaded unit documents.</p></div></header>
+              <header className="unit-build-step-head"><span className="unit-editor-index">2</span><div><h3>Optional lesson generation</h3><p>Leave off to publish only the converted HTML documents above. This separate source text creates lesson slides; it does not rewrite the uploaded unit documents.</p></div></header>
               <div className="unit-settings-card">
-                <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Also generate lesson tabs</strong><span>Off by default. Leave off to only add editable fields to your PDFs and keep existing lessons.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={generateLessons} disabled={!!busy} onChange={e=>setGenerateLessons(e.target.checked)}/></label>
+                <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Also generate lesson tabs</strong><span>Off by default. HTML conversion uses code and AI regardless of this setting. Existing lessons stay unchanged when off.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={generateLessons} disabled={!!busy} onChange={e=>setGenerateLessons(e.target.checked)}/></label>
                 {generateLessons&&<>
                 <div className="unit-settings-row"><div className="unit-settings-copy"><strong>Import content</strong><span>{fileName || "TXT, Markdown, PDF, DOCX or PPTX"}</span></div>
                   <label className="unit-import-button"><span>Choose file</span><input aria-label="Import teaching content" type="file" accept=".txt,.md,.pdf,.docx,.pptx" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Reading source document…");setError("");try{setSource(await importUnitSource(file));setFileName(file.name);}catch(err){setError(String(err));}finally{setBusy("");}}}/></label>
@@ -472,9 +474,9 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
             <div className="unit-build-footer">
               {confirmBuild&&!busy&&<p className="unit-confirm" role="alert">{!generateLessons?"Publish the selected PDFs without changing their layout or replacing existing lessons?":"Rebuild the lessons and supporting content while keeping uploaded PDFs unchanged?"} The current version stays restorable for the next {MAX_UNIT_HISTORY} builds.</p>}
               <div className="unit-build-footer-actions">
-                <button type="button" className="btn unit-build-action" disabled={!!busy||(generateLessons?source.trim().length<100:!hasPdfDocuments)} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>{if(built&&!confirmBuild){setConfirmBuild(true);setError("");setMessage("");return;}setConfirmBuild(false);void build();}}><span>{busy?`Creating ${busyProgress}%`:confirmBuild?"Yes, publish the updated unit":!generateLessons?"Save original PDFs with editable fields":!built?"Build complete unit standard":"Rebuild complete unit standard"}</span></button>
+                <button type="button" className="btn unit-build-action" disabled={!!busy||(generateLessons?source.trim().length<100:!hasPdfDocuments)} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>{if(built&&!confirmBuild){setConfirmBuild(true);setError("");setMessage("");return;}setConfirmBuild(false);void build();}}><span>{busy?`Creating ${busyProgress}%`:confirmBuild?"Yes, publish the updated unit":!generateLessons?"Save editable HTML documents":!built?"Build complete unit standard":"Rebuild complete unit standard"}</span></button>
                 {confirmBuild&&!busy&&<button type="button" className="btn ghost" onClick={()=>setConfirmBuild(false)}>Cancel</button>}
-                {!busy&&<span className="muted">{generateLessons?"Add at least 100 characters of separate lesson source text. Uploaded PDFs remain unchanged.":"Upload PDFs to publish the same documents with editable fields. Lesson generation is off."}</span>}
+                {!busy&&<span className="muted">{generateLessons?"Add at least 100 characters of separate lesson source text. Uploaded document wording is retained.":"Upload PDFs to convert them to HTML with code and AI. Lesson generation is off."}</span>}
               </div>
             </div>
           </div>
