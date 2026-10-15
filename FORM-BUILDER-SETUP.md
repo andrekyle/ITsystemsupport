@@ -43,6 +43,10 @@ When an artwork crop overlaps extracted labels, code makes the text rectangles
 transparent (including rotated text and antialiased edges), retaining the labels
 as HTML and the surrounding artwork as an image. This avoids duplicate raster
 text without rejecting otherwise usable diagrams or logos.
+Artwork is not limited to 30% of a page: large individual diagrams are supported.
+Crops covering at least 90% of both page dimensions are rejected as page-sized
+substitutes. Layout validation failures are reported as conversion errors, not as
+missing fillable fields.
 Review the conversion before publishing: substitute fonts and AI-measured colour
 panels may differ from the PDF. Pages without extractable text fail explicitly;
 run OCR on a scanned PDF before uploading. There is no image-only success fallback.

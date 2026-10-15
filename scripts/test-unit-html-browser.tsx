@@ -60,7 +60,7 @@ export async function testOverlappingArtwork() {
       if (String(input) !== "/api/generate-form") return originalFetch(input, init);
       return Response.json({
         definition: { title: "Overlapping diagram", sections: [] },
-        artwork: { fills: [], pictures: [{ x: 0.1, y: 0.1, w: 0.4, h: 0.4 }, { x: 0.5, y: 0.4, w: 0.4, h: 0.5 }], issues: [] },
+        artwork: { fills: [], pictures: [{ x: 0.1, y: 0.1, w: 0.6, h: 0.6 }, { x: 0.5, y: 0.4, w: 0.4, h: 0.5 }], issues: [] },
       });
     };
     try {

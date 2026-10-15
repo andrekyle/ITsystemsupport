@@ -195,7 +195,7 @@ const HTML_PROMPT = `${REPLICA_PROMPT}
 HTML CONVERSION: unlike the replica mode above, this page will NOT be displayed as an image.
 Code keeps EVERY supplied printed text run as real positioned HTML text and rebuilds all detected rules and table borders as HTML shapes. Do not rewrite or omit printed content. Your field list binds editable HTML controls to the original answer areas.
 Also return artwork: fills are the solid colour rectangles behind printed text (cover panels, vertical strips, coloured table cells), with x,y,w,h fractions and c as #RRGGBB. Include large panels even when text lies on them; never cover a white answer cell with a coloured panel.
-pictures are tightly cropped logos, photographs or diagrams ONLY, as x,y,w,h. Do NOT crop printed titles, vertical side labels, ordinary text, tables or full pages. Avoid surrounding text in artwork crops. If a diagram or logo contains supplied text runs, code makes those text regions transparent in the crop and keeps the labels as HTML. Include its background colour panels in fills where necessary. Omit white background fills. Preserve the original design; do not invent a new cover, logo, colours, headings, fields or wording. Every printed page, including non-form guide pages, is a valid HTML document. Empty fields are allowed when there is nothing to fill in.
+pictures are tightly cropped logos, photographs or diagrams ONLY, as x,y,w,h. Do NOT crop printed titles, vertical side labels, ordinary text, tables or full pages. A crop spanning at least 90% of BOTH page dimensions is not allowed: identify individual artwork regions instead. Large diagrams occupying more than 30% of the page are allowed when tightly cropped. Avoid surrounding text in artwork crops. If a diagram or logo contains supplied text runs, code makes those text regions transparent in the crop and keeps the labels as HTML. Include its background colour panels in fills where necessary. Omit white background fills. Preserve the original design; do not invent a new cover, logo, colours, headings, fields or wording. Every printed page, including non-form guide pages, is a valid HTML document. Empty fields are allowed when there is nothing to fill in.
 issues: compare the image with the supplied text runs. If visible words are missing, OCR is inaccurate, source content is unreadable, or the page cannot be faithfully reconstructed using text, detected rules and artwork, list the specific problems. Do not invent a transcription. Otherwise return an empty issues array.`;
 
 type Mode = "grid" | "replica" | "html";
@@ -429,6 +429,7 @@ function interpret(completion: Completion, mode: Mode, pages: PageData[]): Paylo
         ...(mode === "html" ? {artwork:readPdfHtmlArtwork((raw as Record<string,unknown>).artwork)} : {}) };
     } catch (error) {
       const reason = error instanceof Error ? error.message : "unknown reason";
+      if (mode === "html") return { error: `PDF-to-HTML conversion could not validate the AI page layout: ${reason}` };
       return { error: `No fillable fields could be identified (${reason}). Upload a clearer blank form or add the fields manually.` };
     }
   }

@@ -37,7 +37,8 @@ export function readPdfHtmlArtwork(value: unknown): PdfHtmlArtwork {
     }),
     pictures: source.pictures.map(value => {
       const bounds = box(value);
-      if (bounds.w*bounds.h > 0.3) throw new Error("AI HTML conversion tried to use a page image instead of HTML.");
+      // Large diagrams are valid artwork; only page-sized crops are substitutes.
+      if (bounds.w >= 0.9 && bounds.h >= 0.9) throw new Error("AI returned a page-sized artwork crop. Retry conversion so it identifies individual diagrams or logos instead.");
       return bounds;
     }),
   };
