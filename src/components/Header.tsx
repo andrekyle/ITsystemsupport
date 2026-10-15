@@ -389,7 +389,10 @@ export function Header({
                   ariaLabel="Selected qualification"
                   value={activeCourseId()}
                   options={getCourses().map((course) => ({ value: course.id, label: course.label }))}
-                  onChange={setActiveCourse}
+                  disabled={profile.role === "Learner"}
+                  onChange={(id) => {
+                    if (profile.role !== "Learner") setActiveCourse(id);
+                  }}
                 />
               </div>
               <button className="pm-item" role="menuitem" onClick={onSignOut}>

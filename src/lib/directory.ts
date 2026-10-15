@@ -416,21 +416,21 @@ export function bestProgress(
 ): ProgressState {
   const local = loadProgress(profile.id);
   const link = resolveCloudLink(profile, cloud);
-  const remote = link ? cloud?.progress?.[link.cloudId] : undefined;
+  const remote = cloud?.progress?.[profile.id] ?? (link ? cloud?.progress?.[link.cloudId] : undefined);
   if (!remote) return local;
   return mergeProgressEvidence(local, remote);
 }
 
-/** "Best" POE docs for a learner: the richer complete copy wins. */
+/** Retain distinct POE files from both snapshots; cloud wins for the same key. */
 export function bestPoeDocs(
   profile: Profile,
   cloud?: CloudLearnerData | null
 ): Record<string, PoeDoc> {
   const local = loadPoeDocs(profile.id);
   const link = resolveCloudLink(profile, cloud);
-  const remote = link ? cloud?.poe?.[link.cloudId] : undefined;
+  const remote = cloud?.poe?.[profile.id] ?? (link ? cloud?.poe?.[link.cloudId] : undefined);
   if (!remote) return local;
-  return Object.keys(local).length >= Object.keys(remote).length ? local : remote;
+  return { ...local, ...remote };
 }
 
 /** "Best" Appendix C checklist (same richer-copy rule). */

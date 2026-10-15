@@ -55,7 +55,7 @@ export function LessonVideoEditor({ links, onSave, disabled, quizzes, onSaveQuiz
     } finally { setSaving(false); }
   };
   return <div className="lesson-video-editor">
-    <button type="button" className="btn ghost sm" disabled={disabled || saving}
+    <button type="button" className="btn ghost sm slide-tool-action" disabled={disabled || saving}
       aria-expanded={open} onClick={() => setOpen(value => !value)}>
       <Icon name={open ? "close" : links.length > 0 ? "pencil" : "play"} size={16} />
       {open ? "Cancel" : links.length > 0 ? "Edit Video" : "Add video"}
@@ -67,7 +67,7 @@ export function LessonVideoEditor({ links, onSave, disabled, quizzes, onSaveQuiz
           onChange={event => setLink(event.target.value)} />
       </label>
       <p className="muted">Paste a YouTube, Vimeo or direct video link. The host must allow playback.</p>
-      <button type="button" className="btn ghost sm" disabled={!link.trim() || saving || disabled}
+      <button type="button" className="btn ghost sm slide-tool-action" disabled={!link.trim() || saving || disabled}
         onClick={() => {
           try {
             const source = lessonVideoSource(link);

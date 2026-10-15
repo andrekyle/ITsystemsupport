@@ -11,13 +11,13 @@ import {
   isSaqaUnit,
   usLabel,
 } from "../data/course";
-import { loadAnnouncements, loadProfiles, moduleCompletion, overallStats, unitStatus, useOutcomes, usePoe } from "../store";
+import { loadAnnouncements, loadProfiles, moduleCompletion, overallStats, poeItemCount, unitStatus, useOutcomes, usePoe } from "../store";
 import { attendanceSignedCount, computeGamification } from "../lib/gamification";
 import { Bar, Ring } from "../components/Ring";
 import { TokenGauge } from "../components/TokenGauge";
 import { Button } from "@fluentui/react-components";
 import { VideoMetrics } from "../components/VideoMetrics";
-import { fetchCloudLearnerData } from "../lib/directory";
+import { bestPoeDocs, fetchCloudLearnerData, type CloudLearnerData } from "../lib/directory";
 import { mergeProgressEvidence } from "../lib/progressEvidence";
 import { cloudEnabled } from "../lib/supabase";
 
@@ -31,7 +31,7 @@ export function Dashboard({
   navigate: (r: Route) => void;
 }) {
   const [dashboardTab, setDashboardTab] = useState("overview");
-  const [savedEvidence, setSavedEvidence] = useState<{ profileId: string; progress: ProgressState } | null>(null);
+  const [savedEvidence, setSavedEvidence] = useState<{ profileId: string; progress: ProgressState; cloud: CloudLearnerData } | null>(null);
   const [evidenceError, setEvidenceError] = useState(false);
   useEffect(() => {
     if (!cloudEnabled || profile.role !== "Learner") return;
@@ -41,7 +41,7 @@ export function Dashboard({
       if (!alive) return;
       setEvidenceError(!data);
       if (data?.progress[profile.id]) {
-        setSavedEvidence({ profileId: profile.id, progress: data.progress[profile.id] });
+        setSavedEvidence({ profileId: profile.id, progress: data.progress[profile.id], cloud: data });
       }
     }).catch(error => {
       console.error("Could not load saved XP evidence:", error);
@@ -64,7 +64,10 @@ export function Dashboard({
   const gameProgress = savedEvidence?.profileId === profile.id
     ? mergeProgressEvidence(progress, savedEvidence.progress)
     : progress;
-  const game = computeGamification(gameProgress, poeDone, attendanceSignedCount(profile));
+  const gamePoe = savedEvidence?.profileId === profile.id
+    ? bestPoeDocs(profile, savedEvidence.cloud)
+    : poeDocs;
+  const game = computeGamification(gameProgress, poeItemCount(gamePoe), attendanceSignedCount(profile));
   const announcements = loadAnnouncements().slice(0, 2);
 
   // next unit not yet completed

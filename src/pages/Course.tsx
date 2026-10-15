@@ -4910,7 +4910,7 @@ export function UnitPage({
                     <>
                       <EditingTools active={slideEditOpen || editable} title={`Slide ${si + 1} · Save and finish`} order={0}
                         description="Save your changes under Slide content and images before closing the slide tools.">
-                        <button type="button" className="btn ghost sm" disabled={savingLesson || !!inlineUnit}
+                        <button type="button" className="btn ghost sm slide-tool-action" disabled={savingLesson || !!inlineUnit}
                           onClick={() => { setSlideEditOpen(false); setEditMode(false); }}>
                           <Icon name="checkCircle" size={16} />{editable ? "Done editing slide" : "Close slide tools"}
                         </button>
@@ -4945,7 +4945,7 @@ export function UnitPage({
                   {isPrivileged && (
                     <button
                       type="button"
-                      className="btn ghost sm"
+                      className="btn ghost sm slide-tool-action"
                       disabled={figUploading}
                       onClick={() => {
                         pendingFigId.current = `lesson-added-${si}-${Date.now()}-${crypto.randomUUID()}`;
@@ -4961,7 +4961,7 @@ export function UnitPage({
                     {!editMode && (
                       <button
                         type="button"
-                        className="btn ghost sm"
+                        className="btn ghost sm slide-tool-action"
                         disabled={savingLesson}
                         onClick={() => { setLessonSaveStatus(""); setEditMode(true); }}
                         title="Edit the slide text on the page"
@@ -4971,13 +4971,13 @@ export function UnitPage({
                       </button>
                     )}
                       {editMode && <>
-                          <button type="button" className="btn ghost sm" onClick={() => openPasteEditor(si)}
+                          <button type="button" className="btn ghost sm slide-tool-action" onClick={() => openPasteEditor(si)}
                             title="Replace this slide's text with pasted paragraphs">
                             <Icon name="pencil" size={13} />Replace slide text
                           </button>
                           {builtUnit && <>
                             <p className="editing-tool-description">To split a slide, place the cursor in its text. Everything after the cursor moves to a new slide.</p>
-                            <button type="button" className="btn ghost sm" onMouseDown={event => event.preventDefault()}
+                            <button type="button" className="btn ghost sm slide-tool-action" onMouseDown={event => event.preventDefault()}
                               onClick={() => void splitBuiltLessonAtCursor(si)}>
                               <Icon name="chevronRight" size={13} />Split slide at cursor
                             </button>
