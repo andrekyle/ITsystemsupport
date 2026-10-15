@@ -18,5 +18,11 @@ export function testCloudProfileResolution() {
   assert(resolveCloudProfile([{ ...legacy, enrolment: undefined }], { ...identity, email: null }) === null, "Missing emails must not match.");
   assert(resolveCloudProfile([legacy, { ...legacy, id: "duplicate" }], identity) === null, "Ambiguous email matches must not be selected.");
   assert(resolveCloudProfile([admin], { userId: "admin-auth", email: TENANT.superUserEmail })?.id === admin.id, "The designated admin retains access.");
+  const seededLearner = { ...legacy, id: "facilitator-seeded-learner" };
+  const directory = [seededLearner];
+  const local = [admin];
+  const candidates = [...directory.filter(p => !local.some(q => q.id === p.id)), ...local];
+  assert(resolveCloudProfile(candidates, identity)?.id === seededLearner.id, "A facilitator-seeded learner must be found outside the account's local snapshot.");
+  assert(candidates.filter(p => profileMatchesCloudIdentity(p, identity)).length === 1, "The cloud-account picker must hide the unrelated facilitator.");
   return "Passed cloud profile isolation: stale admin cache, lone profile, mislinked admin, email matching, conflicting links, missing emails, ambiguous profiles and admin access.";
 }

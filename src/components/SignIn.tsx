@@ -24,7 +24,7 @@ import { Select } from "./Select";
 import { cloudEnabled, supabase } from "../lib/supabase";
 import { fetchCloudDirectory } from "../lib/directory";
 import { ConfirmModal } from "./Modal";
-import { profileMatchesCloudIdentity } from "../lib/cloudProfile";
+import { profileMatchesCloudIdentity, resolveCloudProfile } from "../lib/cloudProfile";
 
 type CloudIdentity = { userId: string; email: string | null };
 
@@ -36,7 +36,7 @@ export function SignIn({
   cloudIdentity?: CloudIdentity | null;
 }) {
   const [profiles, setProfiles] = useState<Profile[]>(loadProfiles());
-  const [creating, setCreating] = useState(profiles.length === 0);
+  const [creating, setCreating] = useState(!cloudIdentity && profiles.length === 0);
 
   // On a fresh device the cloud sync hydrates `itss.profiles` from Supabase
   // *after* this component has mounted. Without watching for that, the
@@ -88,6 +88,47 @@ export function SignIn({
   const [resetError, setResetError] = useState("");
   const [dupError, setDupError] = useState("");
   const [removing, setRemoving] = useState<Profile | null>(null);
+  const [checkingCloudProfile, setCheckingCloudProfile] = useState(!!cloudIdentity);
+  const [cloudProfileError, setCloudProfileError] = useState("");
+  const [lookupAttempt, setLookupAttempt] = useState(0);
+
+  useEffect(() => {
+    if (!cloudIdentity) return;
+    const identity = cloudIdentity;
+    let cancelled = false;
+    setCheckingCloudProfile(true);
+    setCloudProfileError("");
+    async function findAccountProfile() {
+      try {
+        const directory = await fetchCloudDirectory();
+        if (cancelled) return;
+        if (!directory) {
+          setCloudProfileError("We could not check the saved learner profiles. Retry before creating a new profile.");
+          return;
+        }
+        const local = loadProfiles();
+        const match = resolveCloudProfile(
+          [...directory.profiles.filter(p => !local.some(q => q.id === p.id)), ...local],
+          identity
+        );
+        if (!match) {
+          setCloudProfileError("No unique profile matches your signed-in account. Ask your facilitator to check your learner profile's email and account link before creating another profile.");
+          return;
+        }
+        adoptCloudProfile(match);
+        onSignIn(match);
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Could not find the signed-in account's learner profile:", error);
+          setCloudProfileError("We could not check the saved learner profiles. Please retry.");
+        }
+      } finally {
+        if (!cancelled) setCheckingCloudProfile(false);
+      }
+    }
+    void findAccountProfile();
+    return () => { cancelled = true; };
+  }, [cloudIdentity?.userId, cloudIdentity?.email, lookupAttempt]);
 
   // If cloud hydration brought profiles in after the "create new" screen
   // opened, drop back to the picker so the user can just click their name.
@@ -174,7 +215,7 @@ export function SignIn({
     Learner: 4,
   };
   const lastId = getLastProfileId();
-  const orderedProfiles = [...profiles].sort((a, b) => {
+  const orderedProfiles = profiles.filter(p => !cloudIdentity || profileMatchesCloudIdentity(p, cloudIdentity)).sort((a, b) => {
     if (a.id === lastId) return -1;
     if (b.id === lastId) return 1;
     const dr = (rolePriority[a.role] ?? 9) - (rolePriority[b.role] ?? 9);
@@ -334,6 +375,16 @@ export function SignIn({
               ? "Required for first-time enrolment on the learnership. This information is saved to your profile and is visible to you, your facilitator and super users."
               : `${COURSE_META.title} · SAQA ID ${COURSE_META.saqaId} · NQF Level ${COURSE_META.nqfLevel}. Your progress is saved to your profile on this device.`}
         </p>
+        {checkingCloudProfile && <p role="status">Looking for your learner profile...</p>}
+        {cloudProfileError && (
+          <div role="alert">
+            <p className="auth-error">{cloudProfileError}</p>
+            <button type="button" className="btn ghost block" disabled={checkingCloudProfile} onClick={() => setLookupAttempt(attempt => attempt + 1)}>
+              Retry profile lookup
+            </button>
+          </div>
+        )}
+        {dupError && !creating && !enrolling && <p className="auth-error" role="alert">{dupError}</p>}
 
         {authFor && !resetting && (
           <form onSubmit={submitAuth}>
@@ -448,7 +499,7 @@ export function SignIn({
               </div>
             ))}
             <div className="divider">or</div>
-            <button className="btn ghost block" onClick={() => setCreating(true)}>
+            <button className="btn ghost block" disabled={checkingCloudProfile} onClick={() => setCreating(true)}>
               <Icon name="person" size={17} />
               Create a new profile
             </button>
