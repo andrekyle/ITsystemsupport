@@ -2074,7 +2074,7 @@ td .with-ico .ico {
 .lesson-video-form input { width: 100%; }
 .lesson-video-entry { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
 .lesson-video-entry > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.lesson-video-editor-card { padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.lesson-video-editor-card { padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 11px; background: var(--surface); }
 .lesson-video-editor-card .lesson-video-entry { justify-content: space-between; margin: 0; font-size: 13px; }
 .lesson-video-remove { font-size: 11px; padding: 6px 8px; }
 .lesson-video-source-link { display: inline-flex; align-items: center; gap: 6px; margin: 8px 0; font-size: 12px; }
@@ -17416,7 +17416,48 @@ body.resizing-slide-table-column * { cursor:col-resize !important; user-select:n
   border-color: #3a3a3a !important;
   color: #d7d7d7;
 }
-[data-theme="dark"] .nice-select-panel { border-color: #3a3a3a; background: #242424; }
+[data-theme="dark"] .nice-select-panel,
+[data-theme="dark"] .lesson-video-editor-card {
+  border-color: #3a3a3a;
+  background: #242424;
+  box-shadow: 0 8px 24px #00000066;
+}
+[data-theme="dark"] .lesson-video-editor-card { color: #d7d7d7; }
+[data-theme="dark"] .lesson-video-editor-card .lesson-video-entry strong,
+[data-theme="dark"] .lesson-video-editor-card .lesson-video-title-editor {
+  color: #d7d7d7;
+  font-weight: 500;
+}
+[data-theme="dark"] .lesson-video-editor-card .lesson-video-title-editor input {
+  border: 1px solid #3a3a3a;
+  border-radius: 11px;
+  background: #242424;
+  color: #d7d7d7;
+  font-size: 13px;
+  font-weight: 400;
+  box-shadow: none;
+}
+[data-theme="dark"] .lesson-video-editor-card .lesson-video-source-link,
+[data-theme="dark"] .lesson-video-editor-card .lesson-video-quiz-editor > summary {
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: #d7d7d7;
+  font-size: 13px;
+  font-weight: 400;
+}
+[data-theme="dark"] .lesson-video-editor-card .lesson-video-source-link {
+  display: flex;
+}
+[data-theme="dark"] .lesson-video-editor-card .lesson-video-source-link:hover,
+[data-theme="dark"] .lesson-video-editor-card .lesson-video-quiz-editor > summary:hover {
+  background: #303030;
+  color: #f0f0f0;
+}
+[data-theme="dark"] .lesson-video-editor-card .lesson-video-source-link:focus-visible,
+[data-theme="dark"] .lesson-video-editor-card .lesson-video-quiz-editor > summary:focus-visible {
+  outline: 2px solid #d7d7d7;
+  outline-offset: 2px;
+}
 [data-theme="dark"] .nice-select-opt.active { background: #303030; color: #f0f0f0; }
 [data-theme="dark"] .nice-select-opt.selected, [data-theme="dark"] .nice-select-tick { color: #d7d7d7; }
 select {
