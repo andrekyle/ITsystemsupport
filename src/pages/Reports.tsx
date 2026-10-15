@@ -335,6 +335,30 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   const [briefHistory, setBriefHistory] = useState<string[]>(loadReportBriefHistory);
   const [uploadedBusy, setUploadedBusy] = useState(false);
   const [uploadedMessage, setUploadedMessage] = useState<string | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
+  const uploadMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!uploadMenuOpen) return;
+    uploadMenuRef.current?.querySelector<HTMLButtonElement>(".reports-upload-option")?.focus();
+    const closeOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !uploadMenuRef.current?.contains(event.target)) {
+        setUploadMenuOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    return () => document.removeEventListener("pointerdown", closeOutside);
+  }, [uploadMenuOpen]);
+
+  function chooseUpload(accept: string) {
+    const input = uploadInputRef.current;
+    if (!input) return;
+    input.accept = accept;
+    setUploadMenuOpen(false);
+    uploadMenuRef.current?.querySelector<HTMLButtonElement>(".reports-gpt-plus")?.focus();
+    input.click();
+  }
 
   function needsBrief(kind: ReportKind) {
     return kind.id === "tracker" || kind.id === "executive" || kind.id === "progress";
@@ -567,10 +591,60 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   );
 
   const composer = (
+    <>
     <div className="reports-gpt-pill">
-      <span className="reports-gpt-plus" aria-hidden="true">
+      <div
+        className="reports-upload-wrap"
+        ref={uploadMenuRef}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            event.stopPropagation();
+            setUploadMenuOpen(false);
+            uploadMenuRef.current?.querySelector<HTMLButtonElement>(".reports-gpt-plus")?.focus();
+          }
+        }}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setUploadMenuOpen(false);
+        }}
+      >
+      <button
+        type="button"
+        className="reports-gpt-plus"
+        aria-label="Upload a PDF or spreadsheet to generate a report"
+        aria-expanded={uploadMenuOpen}
+        aria-controls="reports-upload-options"
+        disabled={uploadedBusy}
+        onClick={() => {
+          setModeMenu(false);
+          setUploadMenuOpen((open) => !open);
+        }}
+      >
         <Icon name="plus" size={21} />
-      </span>
+      </button>
+      {uploadMenuOpen && (
+        <div id="reports-upload-options" className="reports-upload-options" role="group" aria-label="Choose what to upload">
+          <button type="button" className="reports-upload-option" onClick={() => chooseUpload(".pdf,application/pdf")}>
+            <Icon name="document" size={20} />
+            <span>Upload PDF<small>Restyle a report as Eruditio slides</small></span>
+          </button>
+          <button type="button" className="reports-upload-option" onClick={() => chooseUpload(".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv")}>
+            <Icon name="document" size={20} />
+            <span>Upload spreadsheet<small>Create an editable learner tracker</small></span>
+          </button>
+        </div>
+      )}
+      </div>
+      <input
+        ref={uploadInputRef}
+        type="file"
+        hidden
+        accept=".pdf,.xlsx,.xls,.csv,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
+        disabled={uploadedBusy}
+        onChange={(event) => {
+          void handleUploadedReport(event.currentTarget.files?.[0]);
+          event.currentTarget.value = "";
+        }}
+      />
       <textarea
         rows={1}
         value={question}
@@ -678,6 +752,12 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         <Icon name={question.trim() ? "arrowUp" : "wave"} size={21} strokeWidth={2.1} />
       </button>
     </div>
+    {(uploadedBusy || uploadedMessage) && (
+      <span className="reports-upload-message" role="status">
+        {uploadedBusy ? "Preparing report…" : uploadedMessage}
+      </span>
+    )}
+    </>
   );
 
   return (
@@ -709,28 +789,6 @@ export function ReportsPage({ profile }: { profile: Profile }) {
       </h2>
 
       <div className="reports-content-layout">
-      <section className="reports-upload-card" aria-labelledby="uploaded-report-title">
-        <div className="reports-upload-title">
-          <Icon name="document" size={18} />
-          <span id="uploaded-report-title">Generate from an uploaded report</span>
-        </div>
-        <div className="reports-upload-actions">
-          <label className={`reports-upload-btn${uploadedBusy ? " busy" : ""}`}>
-            {uploadedBusy ? "Preparing report…" : "Choose PDF or spreadsheet"}
-            <input
-              type="file"
-              accept=".pdf,.xlsx,.xls,.csv,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
-              disabled={uploadedBusy}
-              onChange={(event) => {
-                void handleUploadedReport(event.currentTarget.files?.[0]);
-                event.currentTarget.value = "";
-              }}
-            />
-          </label>
-          {uploadedMessage && <span className="reports-upload-message" role="status">{uploadedMessage}</span>}
-        </div>
-      </section>
-
       {msgs.length > 0 && !wantReport ? (
         <div className="reports-chat">
           <div className="chat-top">

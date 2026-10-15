@@ -12,6 +12,11 @@ function slug(value: string, fallback: string): string {
 export async function importPracticalTask(file: File, unitTitle: string): Promise<PracticalTaskDocument> {
   if (!/\.pdf$/i.test(file.name) && file.type !== "application/pdf") throw new Error("Choose a PDF practical-task document.");
   const source = await importUnitSource(file);
+  return practicalTaskFromSource(source, file.name, unitTitle);
+}
+
+/** Preserve repeated PDF labels while assigning a distinct identity to each entry. */
+export function practicalTaskFromSource(source: string, sourceName: string, unitTitle: string): PracticalTaskDocument {
   const lines = source.split(/\n+/).map(line => line.replace(/\s{2,}/g, " ").trim()).filter(Boolean);
   const sections: PracticalTaskSection[] = [];
   let current: PracticalTaskSection = { id: "task-details", title: "Practical task details", fields: [] };
@@ -21,10 +26,10 @@ export async function importPracticalTask(file: File, unitTitle: string): Promis
 
   for (const line of lines) {
     if (HEADING.test(line) && line.length < 140) {
-      current = { id: slug(line, `section-${sections.length + 1}`), title: line, fields: [], items: [] };
+      current = { id: `section-${sections.length + 1}-${slug(line, "section")}`, title: line, fields: [], items: [] };
       sections.push(current);
     } else if (FIELD_LABEL.test(line) && line.length < 100) {
-      const field: PracticalTaskField = { id: slug(line, `field-${++fieldNo}`), label: line.replace(/:$/, ""), type: /comment|feedback|address|testimonial|evidence/i.test(line) ? "textarea" : /email/i.test(line) ? "email" : /telephone|contact|cell/i.test(line) ? "tel" : /date/i.test(line) ? "date" : "text" };
+      const field: PracticalTaskField = { id: `field-${++fieldNo}-${slug(line, "field")}`, label: line.replace(/:$/, ""), type: /comment|feedback|address|testimonial|evidence/i.test(line) ? "textarea" : /email/i.test(line) ? "email" : /telephone|contact|cell/i.test(line) ? "tel" : /date/i.test(line) ? "date" : "text" };
       current.fields = [...(current.fields ?? []), field];
     } else if (line.length > 25) {
       current.items = [...(current.items ?? []), { id: `response-${++itemNo}`, text: line, responseLabel: "Learner response" }];
@@ -35,7 +40,7 @@ export async function importPracticalTask(file: File, unitTitle: string): Promis
   return {
     title: lines.find(line => /practical task/i.test(line)) ?? "Practical Task",
     subtitle: unitTitle,
-    sourceName: file.name,
+    sourceName,
     notice: "This form was converted from the uploaded PDF. Review the headings and fields in Manage tabs and structure before publishing it to learners.",
     sections: usable,
   };

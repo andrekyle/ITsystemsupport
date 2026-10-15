@@ -10,6 +10,7 @@ import {
   type ReportKind,
 } from "./reports";
 import { enhanceTrackerHtml } from "./trackerEditor";
+import { REPORT_DIALOG_SCRIPT } from "./dialogs";
 
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
@@ -246,7 +247,7 @@ function trackerDocumentHtml(file: File, source: SpreadsheetSource, author: Prof
           const originalStatus = String(row[index + 3] ?? "");
           const status = normalizedStatus(originalStatus);
           const valid = status === "C" || status === "NYC" || status === "TBC";
-          return `<td class="status${valid ? ` status-${status}` : ""}" contenteditable="true">${esc(originalStatus)}</td>`;
+          return `<td class="status${valid ? ` status-${status}` : ""}">${esc(originalStatus)}</td>`;
         }).join("")}</tr>`;
       }).join("")}</tbody>
     </table>`;
@@ -274,20 +275,62 @@ function trackerDocumentHtml(file: File, source: SpreadsheetSource, author: Prof
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Learner tracker report — ${esc(file.name)}</title>
 <style>
 :root{--blue:#2e9b7a;--blue-deep:#f0872b;--blue-soft:#edf7f3;--blue-head:#f7f5f1;--line:#222b38;--ink:#273244;--muted:#657086;--competent:#35c96f;--competent-soft:#dcfce7;--nyc:#ffd92f;--nyc-soft:#fff7bf;--tbc:#43aaf5;--tbc-soft:#dff2ff;--paper:#fff}*{box-sizing:border-box;margin:0;padding:0}body{background:#d9dee8;color:var(--ink);font-family:Calibri,"Segoe UI",Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{position:relative;width:16in;min-height:9in;margin:20px auto;padding:.34in .45in .42in;overflow:hidden;background:var(--paper);box-shadow:0 5px 24px rgba(20,30,50,.25)}.report-title{color:var(--blue);font-size:25pt;font-weight:800;line-height:1.05}.qualification{margin-top:.1in;color:var(--muted);font-size:11.5pt}.summary{margin-top:.2in;padding:.18in .2in;border:1px solid #b9ddcf;border-radius:.1in;background:var(--blue-soft)}.summary h2{font-size:12pt}.summary p{margin-top:.055in;font-size:10.3pt;line-height:1.28}.summary .source{color:var(--muted);font-size:8.8pt}.legend{display:flex;align-items:center;gap:.3in;margin-top:.16in;font-size:10pt}.legend-item{display:flex;align-items:center;gap:.08in}.legend-swatch{width:.16in;height:.16in;border-radius:.035in}.legend-code{font-weight:800}.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:.15in;margin-top:.18in}.metric{position:relative;padding:.15in .16in .12in;border:0;border-radius:.08in;background:#f7f5f1;overflow:hidden}.metric:before{content:"";position:absolute;inset:0 0 auto;height:.045in;background:var(--accent,var(--blue))}.metric-value{color:var(--accent,var(--blue));font-size:21pt;font-weight:800;line-height:1}.metric-label{margin-top:.05in;font-size:9.7pt;font-weight:700}.metric-note{margin-top:.025in;color:var(--muted);font-size:7.8pt}.section-head{display:flex;align-items:flex-end;justify-content:space-between;margin-top:.18in}.section-head h2{color:var(--blue);font-size:17pt}.section-head p{color:var(--muted);font-size:9pt}table{width:100%;border-collapse:collapse;table-layout:fixed}.tracker{margin-top:.12in;border:1.2px solid var(--line)}.tracker th,.tracker td{border:1px solid var(--line);text-align:center;vertical-align:middle}.tracker thead th{background:var(--blue-head);font-size:8.4pt;font-weight:800;padding:.075in .045in}.tracker tbody td{height:.32in;font-size:8.6pt;padding:.035in}.tracker .no{width:.42in}.tracker .surname{width:1.12in;text-align:left;padding-left:.08in}.tracker .name{width:1.42in;text-align:left;padding-left:.08in}.status{font-weight:800}.status-C{background:var(--competent-soft);color:#16713c}.status-NYC{background:var(--nyc-soft);color:#745d00}.status-TBC{background:var(--tbc-soft);color:#075f9d}.overview{margin-top:.12in}.overview th{padding:.045in;border:1px solid var(--line);background:var(--blue-head);font-size:8pt}.overview td{height:.185in;padding:.015in .06in;border:1px solid var(--line);font-size:7.6pt}.overview .learner{text-align:left;font-weight:700}.overview .num{text-align:center;width:.75in}.overview .progress-cell{width:3.1in}.bar{position:relative;height:.09in;border-radius:.05in;background:#e9edf4;overflow:hidden}.bar>span{display:block;height:100%;border-radius:.07in;background:var(--competent)}.bar-label{margin-top:.01in;color:var(--muted);font-size:6.8pt;text-align:right}.notes{margin-top:.16in;padding:.13in .17in;border-radius:.08in;background:var(--blue-soft);font-size:9.2pt;line-height:1.3}.footer{position:absolute;left:.45in;right:.45in;bottom:.16in;display:flex;justify-content:space-between;padding-top:.07in;border-top:1px solid #cbd5e1;color:var(--muted);font-size:7.5pt}.page-number{color:var(--blue);font-weight:800}.editor-toolbar{position:sticky;top:0;z-index:1000;display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:10px 16px;background:#172033;color:#fff;box-shadow:none}.editor-toolbar button{border:0;border-radius:5px;padding:7px 12px;background:#26354d;color:#e7eefa;font:600 11.5px/1 Calibri,"Segoe UI",Arial,sans-serif;cursor:pointer;box-shadow:none;outline:0}.editor-toolbar button:hover{background:#32455f}.editor-toolbar button.primary{background:var(--blue);color:#fff}.editor-toolbar button.primary:hover{background:#36ad8a}.editor-toolbar button.danger{background:#3b2531;color:#f78a8a}.editor-toolbar button.danger:hover{background:#4c2f3e}.editor-toolbar .editor-status{margin-left:auto;font-size:10.5px;color:#9db0ca}.editor-toolbar .tracker-column-controls{gap:7px}.editor-toolbar .tracker-column-controls button{padding:7px 12px}.editor-toolbar .tracker-colour-label{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:0;border-radius:5px;background:#26354d;color:#e7eefa;font:600 11.5px/1 Calibri,"Segoe UI",Arial,sans-serif;box-shadow:none}.editor-toolbar .tracker-colour-label input{width:20px;height:20px;border:0;background:transparent}body.editing [contenteditable=true]{outline:1px dashed #2e9b7a;outline-offset:1px;cursor:text}@media print{@page{size:16in 9in;margin:0}body{background:#fff}.editor-toolbar{display:none}.page{margin:0;box-shadow:none;break-after:page}.page:last-child{break-after:auto}}
+</style>
+<style>
+.editor-toolbar {
+  background: #1f1f1f;
+  color: #e7e7e7;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+.editor-toolbar button,
+.editor-toolbar button.primary,
+.editor-toolbar button.danger,
+.editor-toolbar .tracker-colour-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 28px;
+  background: #2c2c2c;
+  color: #e7e7e7;
+  font: 400 12px/1.4 "Segoe UI", Arial, sans-serif;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, .08);
+}
+.editor-toolbar .tracker-column-controls { flex-wrap: wrap; }
+.editor-toolbar .tracker-column-controls button { padding: 8px 14px; }
+.editor-toolbar button:hover,
+.editor-toolbar button.primary:hover,
+.editor-toolbar button.danger:hover,
+.editor-toolbar .tracker-colour-label:hover {
+  background: #383838;
+  color: #fff;
+}
+.editor-toolbar button:focus-visible,
+.editor-toolbar .tracker-colour-label:focus-within {
+  outline: 2px solid #479ef5;
+  outline-offset: 2px;
+}
+.editor-toolbar .editor-status { color: #9d9d9d; }
+body.editing #report-pages { outline: none; caret-color: #479ef5; }
+@media print { .editor-toolbar { display: none !important; } }
 </style></head><body>
 <div class="editor-toolbar edit-toolbar" role="toolbar" aria-label="Report editing controls"><button id="toggle-edit" class="primary" type="button">Edit report</button><button id="save-edits" type="button">Save changes</button><button id="download-html" type="button">Download edited HTML</button><button id="print-report" type="button">Print / Save PDF</button><button id="reset-edits" class="danger" type="button">Reset</button><span id="editor-status" class="editor-status">Viewing mode</span></div>
-<main id="report-pages">
+<main id="report-pages" contenteditable="false">
 <section class="page"><h1 class="report-title">Learner tracker report</h1><p class="qualification">${esc(file.name)} · ${source.sheets.length} worksheets · ${learners} learners · generated ${esc(today)}</p><div class="summary"><h2>Learner tracker report — generated ${esc(today)}.</h2><p><em>Report scope: all learners and all status entries from the uploaded worksheets are included.</em></p><p>The cohort consists of ${learners} learners across ${unitCount} unit standards. Of ${totalStatuses} learner-unit status entries, ${statusCounts.C} are marked Competent, ${statusCounts.NYC} are marked Not Yet Competent, and ${statusCounts.TBC} are To Be Confirmed.</p><p class="source">Source: ${esc(file.name)}. Statuses are reproduced exactly as recorded in the workbook. Prepared by ${esc(author.name)}.</p></div>${legend}<div class="metrics"><div class="metric" style="--accent:var(--blue)"><div class="metric-value">${learners}</div><div class="metric-label">Learners</div><div class="metric-note">No learner omitted</div></div><div class="metric" style="--accent:var(--blue-deep)"><div class="metric-value">${unitCount}</div><div class="metric-label">Unit standards</div><div class="metric-note">${sheets.map((sheet) => `${Math.max(sheet.headers.length - 3, 0)} ${sheet.name}`).join(" · ")}</div></div><div class="metric" style="--accent:var(--competent)"><div class="metric-value">${statusCounts.C}</div><div class="metric-label">Competent entries</div><div class="metric-note">${percent(statusCounts.C)} of all status entries</div></div><div class="metric" style="--accent:#d3aa00"><div class="metric-value">${statusCounts.NYC}</div><div class="metric-label">Not Yet Competent</div><div class="metric-note">${percent(statusCounts.NYC)} of all status entries</div></div><div class="metric" style="--accent:#a97852"><div class="metric-value">${statusCounts.TBC}</div><div class="metric-label">To Be Confirmed</div><div class="metric-note">${percent(statusCounts.TBC)} of all status entries</div></div></div><div class="section-head"><h2>Cohort overview</h2><p>Progress bar = Competent entries out of ${unitCount} unit standards</p></div><table class="overview"><thead><tr><th>No.</th><th>Learner full name</th><th>C</th><th>NYC</th><th>TBC</th><th>Competent progress</th></tr></thead><tbody>${overview}</tbody></table><div class="footer"><span>${esc(file.name)} · Learner Tracker Report</span><span class="page-number">01</span></div></section>
 ${sectionPages}
 </main>
+${REPORT_DIALOG_SCRIPT}
 <script>
 var reportPages=document.getElementById("report-pages"),original=reportPages.innerHTML,editing=false,storageKey=${JSON.stringify(`uploaded-tracker-edits:${fileStem(file.name)}`)};
 try{var saved=localStorage.getItem(storageKey);if(saved){reportPages.innerHTML=saved;document.getElementById("editor-status").textContent="Saved changes restored"}}catch(error){document.getElementById("editor-status").textContent="Saved changes unavailable";console.error("Could not restore learner tracker edits",error)}
-document.getElementById("toggle-edit").onclick=function(){editing=!editing;document.body.classList.toggle("editing",editing);reportPages.querySelectorAll("[contenteditable]").forEach(function(e){e.contentEditable=editing?"true":"false"});this.textContent=editing?"Viewing mode":"Edit report";document.getElementById("editor-status").textContent=editing?"Editing mode":"Viewing mode"};
+reportPages.querySelectorAll("[contenteditable]").forEach(function(e){if(!e.matches(".tracker-fill-handle,.tracker-col-resize,.tracker-row-resize,input,select,textarea,button"))e.removeAttribute("contenteditable")});
+document.getElementById("toggle-edit").onclick=function(){editing=!editing;document.body.classList.toggle("editing",editing);reportPages.contentEditable=editing?"true":"false";this.textContent=editing?"Viewing mode":"Edit report";document.getElementById("editor-status").textContent=editing?"Editing mode — all report text is editable":"Viewing mode"};
 document.getElementById("save-edits").onclick=function(){try{localStorage.setItem(storageKey,reportPages.innerHTML);document.getElementById("editor-status").textContent="Changes saved"}catch(error){document.getElementById("editor-status").textContent="Changes could not be saved";console.error("Could not save learner tracker edits",error)}};
-document.getElementById("download-html").onclick=function(){var clone=document.documentElement.cloneNode(true);clone.querySelectorAll(".editor-toolbar,.edit-toolbar").forEach(function(e){e.remove()});var b=new Blob(["<!doctype html>"+clone.outerHTML],{type:"text/html"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=${JSON.stringify(filename)};a.click();URL.revokeObjectURL(a.href)};
+document.getElementById("download-html").onclick=function(){var clone=document.documentElement.cloneNode(true);clone.querySelector("body").classList.remove("editing");clone.querySelector("#report-pages").contentEditable="false";clone.querySelector("#toggle-edit").textContent="Edit report";clone.querySelector("#editor-status").textContent="Viewing mode";clone.querySelectorAll(".tracker-column-controls,.tracker-fill-handle,.tracker-col-resize,.tracker-row-resize").forEach(function(e){e.remove()});clone.querySelectorAll(".tracker-selected,.tracker-group-selected,.tracker-fill-target").forEach(function(e){e.classList.remove("tracker-selected","tracker-group-selected","tracker-fill-target")});var b=new Blob(["<!doctype html>"+clone.outerHTML],{type:"text/html"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=${JSON.stringify(filename)};a.click();URL.revokeObjectURL(a.href)};
 document.getElementById("print-report").onclick=function(){window.print()};
-document.getElementById("reset-edits").onclick=function(){if(confirm("Reset all edits?")){try{localStorage.removeItem(storageKey)}catch(error){console.error("Could not clear saved learner tracker edits",error)}reportPages.innerHTML=original;location.reload()}};
+document.getElementById("reset-edits").onclick=async function(){if(await showAppDialog("Reset all edits?",true)){try{localStorage.removeItem(storageKey)}catch(error){document.getElementById("editor-status").textContent="Saved edits could not be reset";console.error("Could not clear saved learner tracker edits",error);return}reportPages.innerHTML=original;location.reload()}};
 </script></body></html>`;
 }
 

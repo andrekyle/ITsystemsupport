@@ -159,7 +159,7 @@
 .unit-editor-section { scroll-margin-top:12px; }
 .unit-editor-section-head { display:flex; align-items:center; gap:10px; margin:0 0 10px; }
 .unit-editor-section-head h3 { margin:0; font-size:15px; font-weight:600; color:var(--ink); }
-.unit-editor-count { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 2px; background:none; color:var(--editor-muted); font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; }
+.unit-editor-count { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 2px; background:none; color:var(--editor-muted); font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; }
 .unit-editor-list { display:flex; flex-direction:column; }
 .unit-editor-section > .unit-editor-list { padding:4px 0; border-radius:12px; background:var(--editor-panel); }
 .unit-editor-list-tools { display:flex; justify-content:flex-end; gap:4px; padding:4px 10px 2px; }

@@ -9,6 +9,7 @@ import { loadMarkingModel, recordTokenUsage } from "./tokens";
 import type { LearnerRow } from "../pages/Analytics";
 import { enhanceTrackerHtml } from "./trackerEditor";
 import { supabase } from "./supabase";
+import { REPORT_DIALOG_SCRIPT } from "./dialogs";
 
 /**
  * AI report generation (super user only): builds a compact statistics bundle
@@ -905,6 +906,7 @@ ${tracker ? "" : `
     <button type="button" class="section-control" onclick="__removeSection()">− Remove section</button>
     <button type="button" id="__editBtn" onclick="__toggleEdit()" title="Click any text to change it before printing or downloading">✎ Editing: off</button>
   </div>
+  ${REPORT_DIALOG_SCRIPT}
   <script>
     // toggle whole-document editing — every character becomes editable
     var __editing = false;
@@ -935,7 +937,7 @@ ${tracker ? "" : `
       section.scrollIntoView({ behavior:"smooth", block:"center" });
     }
     function __removeSection() {
-      if (!__selectedSection) { alert("Select a report section first."); return; }
+      if (!__selectedSection) { void showAppDialog("Select a report section first."); return; }
       var next = __selectedSection.nextElementSibling || __selectedSection.previousElementSibling;
       __selectedSection.remove();
       __selectedSection = next && next.classList.contains("report-section") ? next : null;
@@ -1437,6 +1439,7 @@ export function deckDocumentHtml(
     <button type="button" class="section-control" onclick="__removeSection()">− Remove section</button>
     <button type="button" id="__editBtn" onclick="__toggleEdit()" title="Click any text to change it before printing or downloading">✎ Editing: off</button>
   </div>
+  ${REPORT_DIALOG_SCRIPT}
   <script>
     var __editing = false;
     var __selectedSection = null;
@@ -1475,7 +1478,7 @@ export function deckDocumentHtml(
       section.scrollIntoView({ behavior:"smooth", block:"center" });
     }
     function __removeSection() {
-      if (!__selectedSection) { alert("Select a report section first."); return; }
+      if (!__selectedSection) { void showAppDialog("Select a report section first."); return; }
       var slides = document.querySelectorAll(".slide");
       if (slides.length <= 1) return;
       var next = __selectedSection.nextElementSibling || __selectedSection.previousElementSibling;

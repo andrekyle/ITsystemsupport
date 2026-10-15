@@ -32,6 +32,7 @@ import { logAudit } from "./lib/audit";
 import { Icon } from "./icons";
 import { authTenant, TENANT, TENANT_ID } from "./lib/tenant";
 import { startPresence } from "./lib/presence";
+import { showAppDialog } from "./lib/dialogs";
 
 // mirror every itss.* localStorage write to the cloud (no-op until signed in)
 installSync();
@@ -528,7 +529,7 @@ function LocalApp({
             // Keep the current profile open when the cloud session could not
             // be ended; otherwise the auto-profile resolver would reopen it.
             setSession(profile.id);
-            window.alert("Sign out failed. Check your connection and try again.");
+            await showAppDialog("Sign out failed. Check your connection and try again.");
           }
         } else {
           setProfile(null);

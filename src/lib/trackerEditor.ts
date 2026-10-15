@@ -1,3 +1,5 @@
+import { REPORT_DIALOG_SCRIPT } from "./dialogs";
+
 const EDITOR_STYLES = `
   body.editing :is(table.trk,table.tracker) td, body.editing :is(table.trk,table.tracker) th,
   body[contenteditable="true"] :is(table.trk,table.tracker) td, body[contenteditable="true"] :is(table.trk,table.tracker) th { position: relative; }
@@ -182,7 +184,7 @@ const EDITOR_SCRIPT = String.raw`
     attachHandle(cell, 'Drag to fill-copy this cell');
   }
   function selectWholeRow() {
-    if (!selected || selected.tagName !== 'TD') { alert('Select a cell in a learner row first.'); return; }
+    if (!selected || selected.tagName !== 'TD') { void showAppDialog('Select a cell in a learner row first.'); return; }
     var anchor = selected;
     clearSelection();
     selected = anchor;
@@ -192,7 +194,7 @@ const EDITOR_SCRIPT = String.raw`
     attachHandle(selectedCells[selectedCells.length - 1], 'Drag to copy this whole row');
   }
   function selectWholeColumn() {
-    if (!selected) { alert('Select a table cell first.'); return; }
+    if (!selected) { void showAppDialog('Select a table cell first.'); return; }
     var anchor = selected;
     var column = startColumn(anchor);
     clearSelection();
@@ -217,7 +219,7 @@ const EDITOR_SCRIPT = String.raw`
     return cell;
   }
   function addColumn(side) {
-    if (!selected) { alert('Select a table cell first.'); return; }
+    if (!selected) { void showAppDialog('Select a table cell first.'); return; }
     var boundary = startColumn(selected) + (side === 'right' ? span(selected) : 0);
     var adjusted = [];
     Array.prototype.forEach.call(table.rows, function (row) {
@@ -243,7 +245,7 @@ const EDITOR_SCRIPT = String.raw`
     record();
   }
   function deleteColumn() {
-    if (!selected) { alert('Select a table cell first.'); return; }
+    if (!selected) { void showAppDialog('Select a table cell first.'); return; }
     var column = startColumn(selected);
     var map = gridMap();
     var adjusted = [];
@@ -261,7 +263,7 @@ const EDITOR_SCRIPT = String.raw`
     record();
   }
   function deleteRow() {
-    if (!selected || selected.tagName !== 'TD') { alert('Select a cell in the row you want to delete.'); return; }
+    if (!selected || selected.tagName !== 'TD') { void showAppDialog('Select a cell in the row you want to delete.'); return; }
     selected.parentElement.remove();
     selected = null;
     selectedCells = [];
@@ -491,7 +493,7 @@ const EDITOR_SCRIPT = String.raw`
     if (selectAction === 'column') selectWholeColumn();
     if (rowAction === 'delete') deleteRow();
     if (fillAction === 'clear') {
-      if (!selected) { alert('Select a table cell first.'); return; }
+      if (!selected) { void showAppDialog('Select a table cell first.'); return; }
       (selectedCells.length ? selectedCells : [selected]).forEach(function (cell) {
         cell.style.removeProperty('background-color');
         cell.style.removeProperty('color');
@@ -502,7 +504,7 @@ const EDITOR_SCRIPT = String.raw`
   });
   controls.addEventListener('input', function (event) {
     if (event.target.getAttribute('data-fill') !== 'colour') return;
-    if (!selected) { alert('Select a table cell first.'); return; }
+    if (!selected) { void showAppDialog('Select a table cell first.'); return; }
     (selectedCells.length ? selectedCells : [selected]).forEach(function (cell) {
       cell.style.backgroundColor = event.target.value;
     });
@@ -553,7 +555,7 @@ const EDITOR_SCRIPT = String.raw`
 export function enhanceTrackerHtml(html: string): string {
   if (html.includes("__trackerSpreadsheetEditor")) return html;
   const style = `<style data-tracker-editor>${EDITOR_STYLES}</style>`;
-  const script = `<script data-tracker-editor>${EDITOR_SCRIPT}</script>`;
+  const script = `${html.includes("data-report-dialog") ? "" : REPORT_DIALOG_SCRIPT}<script data-tracker-editor>${EDITOR_SCRIPT}</script>`;
   const withStyle = html.includes("</head>") ? html.replace("</head>", `${style}</head>`) : style + html;
   return withStyle.includes("</body>") ? withStyle.replace("</body>", `${script}</body>`) : withStyle + script;
 }
