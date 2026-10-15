@@ -57,6 +57,45 @@
 }
 .source-document-table th { background: #f3f3f3; color: #202020; }
 .source-document-table textarea { min-width: 120px; min-height: 80px; }
+.source-document.source-workbook {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 28px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #111;
+  line-height: 1.45;
+}
+.source-workbook-actions, .source-workbook-details {
+  max-width: 980px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.source-workbook .source-workbook-page { overflow: visible; font-size: 14px; }
+.source-workbook .lw-cover::after { display: none; }
+.source-workbook .lw-cover-panel h1 { text-transform: uppercase; color: #111; }
+.source-workbook .lw-cover aside { color: #000; }
+.source-workbook .source-workbook-fields { margin: 16px 0; }
+.source-workbook .lw-cover-table { margin: 0; font-size: 17px; }
+.source-workbook .source-document-table th { background: #d1d2d2; color: #111; }
+.source-workbook .source-document-table th, .source-workbook .source-document-table td { border-color: #777; padding: 6px 8px; }
+.source-workbook .lw-page:not(.lw-cover) h3 { padding: 6px 8px; background: #d1d2d2; font-size: 14px; }
+.source-workbook-answer {
+  margin: 16px 0;
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 27px, #aaa 27px, #aaa 28px);
+}
+.source-workbook .source-workbook-answer textarea {
+  display: block;
+  min-height: inherit;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  line-height: 28px;
+}
+.source-workbook-answer > .document-print-value { display: block; min-height: inherit; line-height: 28px; white-space: pre-wrap; }
+.source-workbook-details { margin-top: 20px; color: var(--muted); font-size: 12px; }
 @media print {
   .source-document {
     max-width: none;
@@ -72,4 +111,11 @@
   .source-document-table { table-layout: fixed; }
   .source-document-table tr { break-inside: avoid; }
   .source-document h3 { break-after: avoid; }
+  body:has(.document-print-target) .source-workbook .source-workbook-page {
+    height: auto !important;
+    min-height: 297mm !important;
+    overflow: visible !important;
+    break-after: page;
+  }
+  body:has(.document-print-target) .source-workbook .source-workbook-page:last-child { break-after: auto; }
 }
