@@ -2445,9 +2445,9 @@ td .with-ico .ico {
   background: #c62828; border: 1px solid #c62828; color: #fff;
 }
 .btn.lesson-video-save:hover:not(:disabled) { background: #a51f1f; border-color: #a51f1f; color: #fff; }
-.lesson-video-editor-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
-.lesson-video-editor-actions .lesson-video-save { margin-top: 0; }
-.lesson-video-quiz-preview { max-width: 760px; }
+.lesson-video-editor-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:10px; }
+.lesson-video-editor-actions .lesson-video-save { margin-top:0; }
+.lesson-video-quiz-preview { max-width:760px; }
 
 .lesson-video-comments {
   padding: 16px 18px 18px;

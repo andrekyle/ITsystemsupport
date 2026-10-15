@@ -4939,12 +4939,6 @@ export function UnitPage({
                               ...lessonEdits, videos: { ...lessonEdits.videos, [si]: links },
                             });
                           }} />
-                        {(lessonEdits.videos?.[si]?.length ?? 0) > 0 && (
-                          <button type="button" className="btn ghost sm"
-                            onClick={() => document.querySelector(".lesson-screen .lesson-video")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
-                            <Icon name="play" size={16} />Preview videos on slide
-                          </button>
-                        )}
                       </EditingTools>
                       <EditingTools active={slideEditOpen || editable} title="Slide content and images" order={10}
                         description="Edit the slide text or add an image. Select slide text to use the formatting tools.">
