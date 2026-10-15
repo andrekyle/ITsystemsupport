@@ -314,7 +314,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     ...(built?[
       {id:"files" as const,label:"Files and exports",icon:"download",hint:"PDF, PowerPoint and answer guide"},
       {id:"versions" as const,label:"Version history",icon:"clock",hint:versions.length?`${versions.length} restorable`:"No earlier versions"},
-      {id:"delete" as const,label:"Delete unit",icon:"trash",hint:"Remove this build"},
+      ...(unit.us==="114046"?[]:[{id:"delete" as const,label:"Delete unit",icon:"trash",hint:"Remove this build"}]),
     ]:[]),
   ];
   const heading={content:"Content and structure",build:built?"Rebuild from source":"Build from source",files:"Files and exports",versions:"Version history",delete:"Delete unit"}[activeView];
