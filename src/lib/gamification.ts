@@ -327,9 +327,8 @@ export function leaderboard(profiles: Profile[]): LeaderboardRow[] {
  * Cloud-first leaderboard. Uses the cloud directory as the authoritative
  * roster of accounts (only accounts that have actually signed in with their
  * own Supabase auth show up). Each learner's XP is computed through the same
- * bestProgress/bestPoeDocs helpers the Analytics page uses — whichever copy
- * (local snapshot or cloud sync) holds more evidence wins — so the
- * leaderboard and Analytics can never disagree about a learner's XP.
+ * bestProgress/bestPoeDocs helpers the Analytics page uses. Recorded progress
+ * is reconciled across saved copies without awarding duplicate assessment XP.
  */
 export function cloudLeaderboard(cloud: CloudLearnerData, currentProfile?: Profile): LeaderboardRow[] {
   let profiles = cloud.profiles;
@@ -353,7 +352,7 @@ export function cloudLeaderboard(cloud: CloudLearnerData, currentProfile?: Profi
     .map((p) => {
       const progress = bestProgress(p, cloud);
       const poe = bestPoeDocs(p, cloud);
-      const g = computeGamification(progress, poeItemCount(poe), attendanceSignedCount(p.id));
+      const g = computeGamification(progress, poeItemCount(poe), attendanceSignedCount(p));
       return { profile: p, xp: g.xp, level: g.level, levelName: g.levelName, earnedBadges: g.earnedCount };
     })
     .sort((a, b) => b.xp - a.xp);

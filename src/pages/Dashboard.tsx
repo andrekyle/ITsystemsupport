@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, ProgressState, Route } from "../types";
 import { Gloss } from "./Course";
@@ -17,6 +17,9 @@ import { Bar, Ring } from "../components/Ring";
 import { TokenGauge } from "../components/TokenGauge";
 import { Button } from "@fluentui/react-components";
 import { VideoMetrics } from "../components/VideoMetrics";
+import { fetchCloudLearnerData } from "../lib/directory";
+import { mergeProgressEvidence } from "../lib/progressEvidence";
+import { cloudEnabled } from "../lib/supabase";
 
 export function Dashboard({
   profile,
@@ -28,6 +31,24 @@ export function Dashboard({
   navigate: (r: Route) => void;
 }) {
   const [dashboardTab, setDashboardTab] = useState("overview");
+  const [savedEvidence, setSavedEvidence] = useState<{ profileId: string; progress: ProgressState } | null>(null);
+  const [evidenceError, setEvidenceError] = useState(false);
+  useEffect(() => {
+    if (!cloudEnabled || profile.role !== "Learner") return;
+    let alive = true;
+    setEvidenceError(false);
+    void fetchCloudLearnerData().then(data => {
+      if (!alive) return;
+      setEvidenceError(!data);
+      if (data?.progress[profile.id]) {
+        setSavedEvidence({ profileId: profile.id, progress: data.progress[profile.id] });
+      }
+    }).catch(error => {
+      console.error("Could not load saved XP evidence:", error);
+      if (alive) setEvidenceError(true);
+    });
+    return () => { alive = false; };
+  }, [profile.id, profile.role]);
   const dashboardTabs = [
     { id: "overview", label: "Overview" },
     { id: "learning", label: "Learning progress" },
@@ -40,7 +61,10 @@ export function Dashboard({
   const { outcomes } = useOutcomes();
   const s = overallStats(progress, poeDocs, outcomes[profile.id] ?? {});
   const poeDone = Object.keys(poeDocs).length;
-  const game = computeGamification(progress, poeDone, attendanceSignedCount(profile.id));
+  const gameProgress = savedEvidence?.profileId === profile.id
+    ? mergeProgressEvidence(progress, savedEvidence.progress)
+    : progress;
+  const game = computeGamification(gameProgress, poeDone, attendanceSignedCount(profile));
   const announcements = loadAnnouncements().slice(0, 2);
 
   // next unit not yet completed
@@ -62,6 +86,7 @@ export function Dashboard({
         {COURSE_META.title} · SAQA ID {COURSE_META.saqaId} · NQF Level {COURSE_META.nqfLevel} ·{" "}
         {COURSE_META.credits} Credits
       </p>
+      {evidenceError && <p className="auth-error" role="alert">Could not verify all saved XP evidence. The displayed XP may be incomplete; reload to retry.</p>}
 
       <div className="card-grid">
         <div className="card stat-card">

@@ -631,17 +631,23 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
 
 function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Route) => void }) {
   const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
+  const [cloudError, setCloudError] = useState(false);
   useEffect(() => {
     if (!cloudEnabled) return;
     let alive = true;
-    void fetchCloudLearnerData().then((d) => {
-      if (alive && d) setCloud(d);
-    });
-    const refresh = window.setInterval(() => {
-      void fetchCloudLearnerData().then((d) => {
-        if (alive && d) setCloud(d);
-      });
-    }, 60_000);
+    const load = async () => {
+      try {
+        const data = await fetchCloudLearnerData();
+        if (!alive) return;
+        setCloudError(!data);
+        if (data) setCloud(data);
+      } catch (error) {
+        console.error("Could not refresh leaderboard evidence:", error);
+        if (alive) setCloudError(true);
+      }
+    };
+    void load();
+    const refresh = window.setInterval(() => { void load(); }, 60_000);
     return () => {
       alive = false;
       window.clearInterval(refresh);
@@ -670,9 +676,16 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
         Class leaderboard
       </h2>
       <div className="card leaderboard-card">
+        {cloudError && (
+          <p className="auth-error" role="alert">
+            Could not load complete learner evidence. {cloud ? "Showing the last successfully loaded scores." : "Scores are unavailable."} Retrying automatically.
+          </p>
+        )}
         {rows.length === 0 ? (
           <p className="mini-note">
-            {cloudEnabled && !cloud
+            {cloudError
+              ? "Waiting for complete class data."
+              : cloudEnabled && !cloud
               ? "Loading class data…"
               : "No learners yet — the leaderboard fills up as the class works."}
           </p>

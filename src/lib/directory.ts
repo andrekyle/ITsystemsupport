@@ -2,6 +2,7 @@ import { supabase } from "./supabase";
 import type { EnrolmentInfo, PoeDoc, Profile, ProgressState } from "../types";
 import { loadChecklistTicks, loadPoeDocs, loadProgress } from "../store";
 import { TENANT_ID } from "./tenant";
+import { mergeProgressEvidence } from "./progressEvidence";
 
 export interface CloudDirectory {
   /** profiles synced by other signed-in accounts (this account's own rows excluded) */
@@ -262,8 +263,8 @@ export interface CloudLearnerData extends CloudDirectory {
 
 /**
  * Directory plus each learner's progress and Appendix C checklist, for
- * cross-account reporting (compliance records). Rows from the profile's
- * owning account win when several accounts hold a copy of the same key.
+ * cross-account reporting (compliance records). Progress evidence is retained
+ * across saved copies of the same profile; checklists prefer the owning account.
  */
 export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> {
   if (!supabase) return null;
@@ -273,6 +274,10 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
     supabase.from("app_state").select("user_id,key,value").eq("tenant_id", TENANT_ID).like("key", "itss.checklist.%"),
   ]);
   if (!dir) return null;
+  if (progRes.error || checkRes.error) {
+    console.error("Could not load complete learner evidence:", progRes.error ?? checkRes.error);
+    return null;
+  }
 
   const pick = <T,>(
     rows: { user_id: string; key: string; value: string }[] | null,
@@ -292,9 +297,28 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
     return out;
   };
 
+  const progress: Record<string, ProgressState> = {};
+  for (const row of progRes.data ?? []) {
+    const pid = row.key.slice("itss.progress.".length);
+    try {
+      const snapshot = JSON.parse(row.value) as ProgressState;
+      if (!snapshot || !snapshot.units || typeof snapshot.units !== "object" || Array.isArray(snapshot.units)) {
+        throw new Error("Invalid learner progress snapshot.");
+      }
+      const existing = progress[pid];
+      progress[pid] = !existing ? snapshot
+        : dir.owners[pid] === row.user_id
+        ? mergeProgressEvidence(existing, snapshot)
+        : mergeProgressEvidence(snapshot, existing);
+    } catch (error) {
+      console.error("Could not read learner progress evidence:", row.key, error);
+      return null;
+    }
+  }
+
   return {
     ...dir,
-    progress: pick<ProgressState>(progRes.error ? null : progRes.data, "itss.progress."),
+    progress,
     checklists: pick<Record<string, "yes" | "no">>(
       checkRes.error ? null : checkRes.data,
       "itss.checklist."
@@ -383,26 +407,9 @@ export function mergeProfileWithCloud(
   return Object.keys(patch).length ? { ...local, ...patch } : local;
 }
 
-/** Rough count of recorded evidence in a progress state — used to choose the
- *  richer of two copies of the same learner's progress. */
-function progressWeight(p: ProgressState): number {
-  let n = 0;
-  for (const unit of Object.values(p.units)) {
-    n += Object.values(unit.activities).filter(Boolean).length;
-    if (unit.quiz?.total) n++;
-    n += Object.values(unit.quizzes ?? {}).filter((q) => q.total > 0).length;
-    n += Object.values(unit.exercises ?? {}).filter((e) => e.total > 0).length;
-    n += Object.keys(unit.logbook ?? {}).length;
-  }
-  return n;
-}
-
-/** "Best" progress for a learner: whichever copy holds MORE evidence wins.
- *  The viewer's own device copy is authoritative for themselves, but for other
- *  learners a stale local snapshot must not shadow their real cloud-synced
- *  work (that made Analytics XP disagree with the class leaderboard). The
- *  cloud lookup is identity-aware so a locally-seeded profile still pulls in
- *  its real cloud data even when the ids differ. */
+/** Retain evidence from local and cloud copies of the same learner. Different
+ *  quizzes/exercises are combined; matching assessments keep a real best result,
+ *  not a synthetic score. Source snapshots are never overwritten. */
 export function bestProgress(
   profile: Profile,
   cloud?: CloudLearnerData | null
@@ -411,10 +418,10 @@ export function bestProgress(
   const link = resolveCloudLink(profile, cloud);
   const remote = link ? cloud?.progress?.[link.cloudId] : undefined;
   if (!remote) return local;
-  return progressWeight(local) >= progressWeight(remote) ? local : remote;
+  return mergeProgressEvidence(local, remote);
 }
 
-/** "Best" POE docs for a learner (same richer-copy rule as `bestProgress`). */
+/** "Best" POE docs for a learner: the richer complete copy wins. */
 export function bestPoeDocs(
   profile: Profile,
   cloud?: CloudLearnerData | null
