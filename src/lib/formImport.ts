@@ -4,7 +4,7 @@ import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { MAX_MASTHEAD_CHARS, parseFormDefinition, type FormBox, type FormDefinition, type FormField, type FormPage, type FormPlacement, type LayerText, type PageLayer } from "./formSchema";
 import { analysePage, estimateSkew, extractLayer, textColour, type PageAnalysis, type PixelSource, type TextRun } from "./pageAnalysis";
 import { supabase } from "./supabase";
-import { readPdfHtmlArtwork, type PdfHtmlArtwork } from "./pdfHtmlArtwork";
+import { pdfHtmlPictureMasks, readPdfHtmlArtwork, type PdfHtmlArtwork } from "./pdfHtmlArtwork";
 
 GlobalWorkerOptions.workerSrc = workerUrl;
 export const PDF_WASM_URL = `${import.meta.env.BASE_URL}pdfjs-wasm/`;
@@ -521,16 +521,11 @@ export async function convertPdfHtml(document: ImportedFormDocument, onProgress?
     if (!page.layer) throw new Error(`Page ${index + 1} is missing its HTML layer.`);
     const result = await requestDefinition({ ...generationRequest(document, index), html: true }, data.session.access_token);
     if (!result.artwork) throw new Error(`AI HTML conversion omitted artwork for page ${index + 1}.`);
-    for (const box of result.artwork.pictures) {
-      if (page.layer.text.some(run => {
-        const ink = textInkBox({ x: run.x * page.width, y: run.y * page.height, w: run.w * page.width, h: run.h * page.height, size: run.s * page.width, rotation: run.rotation });
-        const x = ink.x / page.width, y = ink.y / page.height;
-        const width = ink.w / page.width, height = ink.h / page.height;
-        const w = Math.max(0, Math.min(box.x + box.w, x + width) - Math.max(box.x, x));
-        const h = Math.max(0, Math.min(box.y + box.h, y + height) - Math.max(box.y, y));
-        return w * h > width * height * 0.2;
-      })) throw new Error(`Page ${index + 1}: AI tried to crop printed text into an image. Retry conversion instead of publishing an image-based substitute.`);
-    }
+    const textMasks = page.layer.text.map(run => {
+      const ink = textInkBox({ x: run.x * page.width, y: run.y * page.height, w: run.w * page.width, h: run.h * page.height, size: run.s * page.width, rotation: run.rotation });
+      // Include antialiased edge pixels so the crop cannot double-print a label.
+      return { x: (ink.x - 1) / page.width, y: (ink.y - 1) / page.height, w: (ink.w + 2) / page.width, h: (ink.h + 2) / page.height };
+    });
     const image = await createImageBitmap(await (await fetch(page.src)).blob());
     try {
       const pictures = result.artwork.pictures.map(box => {
@@ -540,6 +535,13 @@ export async function convertPdfHtml(document: ImportedFormDocument, onProgress?
         const context = canvas.getContext("2d");
         if (!context) throw new Error("The browser could not convert the document artwork.");
         context.drawImage(image, box.x * page.width, box.y * page.height, box.w * page.width, box.h * page.height, 0, 0, canvas.width, canvas.height);
+        for (const mask of pdfHtmlPictureMasks(box, textMasks)) {
+          const x = Math.floor((mask.x - box.x) / box.w * canvas.width);
+          const y = Math.floor((mask.y - box.y) / box.h * canvas.height);
+          const right = Math.ceil((mask.x + mask.w - box.x) / box.w * canvas.width);
+          const bottom = Math.ceil((mask.y + mask.h - box.y) / box.h * canvas.height);
+          context.clearRect(x, y, right - x, bottom - y);
+        }
         const src = canvas.toDataURL("image/png");
         releaseCanvas(canvas);
         return { ...box, src, path: "" };

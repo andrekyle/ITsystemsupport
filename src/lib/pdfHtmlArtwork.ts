@@ -2,6 +2,17 @@ import type { FormBox, LayerShape } from "./formSchema";
 
 export type PdfHtmlArtwork = { fills: LayerShape[]; pictures: FormBox[]; issues: string[] };
 
+/** Keep artwork around labels, but let the HTML text supply the labels themselves. */
+export function pdfHtmlPictureMasks(picture: FormBox, text: FormBox[]): FormBox[] {
+  return text.flatMap(run => {
+    const x = Math.max(picture.x, run.x);
+    const y = Math.max(picture.y, run.y);
+    const w = Math.min(picture.x + picture.w, run.x + run.w) - x;
+    const h = Math.min(picture.y + picture.h, run.y + run.h) - y;
+    return w > 0 && h > 0 ? [{ x, y, w, h }] : [];
+  });
+}
+
 export function readPdfHtmlArtwork(value: unknown): PdfHtmlArtwork {
   if (!value || typeof value !== "object") throw new Error("AI HTML conversion omitted the page artwork.");
   const source = value as Record<string, unknown>;

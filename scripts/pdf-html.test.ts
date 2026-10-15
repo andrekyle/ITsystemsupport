@@ -1,7 +1,25 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import handler from "../api/generate-form";
-import { readPdfHtmlArtwork } from "../src/lib/pdfHtmlArtwork";
+import { pdfHtmlPictureMasks, readPdfHtmlArtwork } from "../src/lib/pdfHtmlArtwork";
+
+test("artwork masks overlapping labels without rejecting or removing the artwork", () => {
+  const picture = { x: 0.2, y: 0.2, w: 0.4, h: 0.3 };
+  const masks = pdfHtmlPictureMasks(picture, [
+    { x: 0.3, y: 0.3, w: 0.1, h: 0.05 },
+    { x: 0.1, y: 0.25, w: 0.2, h: 0.1 },
+    { x: 0.8, y: 0.8, w: 0.1, h: 0.1 },
+    { x: 0.1, y: 0.1, w: 0.8, h: 0.8 },
+  ]);
+  assert.equal(masks.length, 3);
+  for (const mask of masks) {
+    assert.ok(mask.x >= picture.x && mask.y >= picture.y);
+    assert.ok(mask.x + mask.w <= picture.x + picture.w);
+    assert.ok(mask.y + mask.h <= picture.y + picture.h);
+  }
+  for (const key of ["x", "y", "w", "h"] as const) assert.ok(Math.abs(masks[2][key] - picture[key]) < 1e-12);
+  assert.deepEqual(pdfHtmlPictureMasks(picture, []), []);
+});
 
 test("HTML artwork rejects page-image substitutes, invalid bounds and incomplete sources", () => {
   assert.deepEqual(readPdfHtmlArtwork({fills:[],pictures:[],issues:[]}), {fills:[],pictures:[],issues:[]});

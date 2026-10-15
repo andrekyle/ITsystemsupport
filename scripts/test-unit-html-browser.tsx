@@ -8,7 +8,7 @@ import { importUnitPdf } from "../src/lib/unitPdfImport";
 import { ReplicaForm } from "../src/components/ReplicaForm";
 import { DocumentActions } from "../src/components/DocumentActions";
 import { validateUnitContent } from "../src/lib/unitBuilder";
-import type { FormAnswers } from "../src/lib/formSchema";
+import type { FormAnswers, LayerText } from "../src/lib/formSchema";
 
 function assert(value: unknown, message: string): asserts value {
   if(!value)throw new Error(message);
@@ -43,6 +43,57 @@ export async function withHtmlAi<T>(run: (calls:()=>number)=>Promise<T>): Promis
   }
 }
 
+export async function testOverlappingArtwork() {
+  return withHtmlAi(async () => {
+    const originalFetch = globalThis.fetch;
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 100;
+    const context = canvas.getContext("2d")!;
+    context.fillStyle = "#336699";
+    context.fillRect(0, 0, 100, 100);
+    const src = canvas.toDataURL("image/png");
+    const text: LayerText[] = [
+      { t: "Diagram label", x: 0.2, y: 0.2, w: 0.2, h: 0.1, s: 0.1, f: "arial", b: false, i: false, c: "#000000" },
+      { t: "Vertical label", x: 0.7, y: 0.7, w: 0.2, h: 0.1, s: 0.1, f: "arial", b: false, i: false, c: "#000000", rotation: -90 },
+    ];
+    globalThis.fetch = async (input, init) => {
+      if (String(input) !== "/api/generate-form") return originalFetch(input, init);
+      return Response.json({
+        definition: { title: "Overlapping diagram", sections: [] },
+        artwork: { fills: [], pictures: [{ x: 0.1, y: 0.1, w: 0.4, h: 0.4 }, { x: 0.5, y: 0.4, w: 0.4, h: 0.5 }], issues: [] },
+      });
+    };
+    try {
+      const converted = await convertPdfHtml({
+        name: "overlapping-artwork.pdf", text: "Diagram label\nVertical label", images: [src],
+        pages: [{
+          src, width: 100, height: 100, path: "",
+          layer: { text, fills: [], rules: [], frames: [], combs: [], pictures: [] },
+          analysis: { page: 1, width: 100, height: 100, text: [], boxes: [] },
+        }],
+      });
+      const layer = converted.pages[0].layer!;
+      assert(converted.display === "digital", "Overlap must not fall back to page images.");
+      assert(JSON.stringify(layer.text) === JSON.stringify(text), "Every source label must remain unchanged HTML text.");
+      assert(layer.pictures.length === 2, "Do not discard the overlapping diagrams.");
+      for (const [index, picture] of layer.pictures.entries()) {
+        const image = await createImageBitmap(await (await originalFetch(picture.src)).blob());
+        try {
+          canvas.width = image.width;
+          canvas.height = image.height;
+          context.drawImage(image, 0, 0);
+          assert(context.getImageData(2, 2, 1, 1).data[3] === 255, "Artwork outside labels must be retained.");
+          const y = index === 0 ? 15 : 25;
+          assert(context.getImageData(15, y, 1, 1).data[3] === 0, "Normal and rotated printed labels must be transparent in artwork crops.");
+        } finally { image.close(); }
+      }
+      return "Passed overlapping artwork: conversion succeeds, both diagrams retained, normal and rotated labels masked, all HTML text unchanged.";
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+}
+
 export async function testUnitHtml() {
   return withHtmlAi(async calls=>{
     const originalFetch=globalThis.fetch;
@@ -63,6 +114,7 @@ export async function testUnitHtml() {
         for(const item of source.items){
           if("str" in item && item.str.trim())assert(text.includes(item.str.trim().replace(/\s+/g," ")),`Missing source text on page ${index+1}: ${item.str}`);
         }
+
         assert(!definition.pages[index].layer!.pictures.length,"Mock must not introduce image substitutes.");
       }
       await loading.destroy();

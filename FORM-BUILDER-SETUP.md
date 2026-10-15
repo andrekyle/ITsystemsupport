@@ -39,6 +39,10 @@ image to identify answer fields, solid colour panels and tightly cropped artwork
 The digital renderer uses real HTML text and CSS shapes, not a full-page image.
 Only logos, photographs and diagrams may remain image crops. It does not ask AI
 to rewrite questions, invent a cover or replace the source wording.
+When an artwork crop overlaps extracted labels, code makes the text rectangles
+transparent (including rotated text and antialiased edges), retaining the labels
+as HTML and the surrounding artwork as an image. This avoids duplicate raster
+text without rejecting otherwise usable diagrams or logos.
 Review the conversion before publishing: substitute fonts and AI-measured colour
 panels may differ from the PDF. Pages without extractable text fail explicitly;
 run OCR on a scanned PDF before uploading. There is no image-only success fallback.
