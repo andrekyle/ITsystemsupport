@@ -33,6 +33,7 @@ import { Icon } from "./icons";
 import { authTenant, TENANT, TENANT_ID } from "./lib/tenant";
 import { startPresence } from "./lib/presence";
 import { showAppDialog } from "./lib/dialogs";
+import { profileMatchesCloudIdentity, resolveCloudProfile } from "./lib/cloudProfile";
 
 // mirror every itss.* localStorage write to the cloud (no-op until signed in)
 installSync();
@@ -299,6 +300,9 @@ export default function App() {
         setAccountEmail(session.user.email);
         syncedEmail.current = session.user.email?.trim().toLowerCase() ?? null;
         if (syncedUser.current !== session.user.id) {
+          syncReady.current = false;
+          setAccountAdmin(false);
+          if (!recovering.current) setCloudState("loading");
           syncedUser.current = session.user.id;
           const authUserId = session.user.id;
           // Supabase warns against starting further client operations directly
@@ -404,6 +408,7 @@ function LocalApp({
   cloudIdentity: { userId: string; email: string | null } | null;
 }) {
   const [profile, setProfile] = useState<Profile | null>(() => {
+    if (cloudIdentity) return resolveCloudProfile(loadProfiles(), cloudIdentity);
     const id = getSession();
     return id ? loadProfiles().find((p) => p.id === id) ?? null : null;
   });
@@ -417,19 +422,7 @@ function LocalApp({
     if (profile || !cloudIdentity) return;
     const openCloudProfile = () => {
       const profiles = loadProfiles();
-      const email = cloudIdentity.email?.trim().toLowerCase() ?? "";
-      const match =
-        profiles.find((p) => p.cloudUserId === cloudIdentity.userId) ??
-        profiles.find((p) => p.enrolment?.email?.trim().toLowerCase() === email) ??
-        profiles.find((p) => p.name.trim().toLowerCase() === email) ??
-        (email === TENANT.superUserEmail
-          ? profiles.find(
-              (p) =>
-                p.role === "Super User" ||
-                p.name.trim().toLowerCase() === TENANT.superUserName.toLowerCase()
-            )
-          : undefined) ??
-        (profiles.length === 1 ? profiles[0] : undefined);
+      const match = resolveCloudProfile(profiles, cloudIdentity);
       if (!match) return;
       setSession(match.id);
       if (match.cloudUserId !== cloudIdentity.userId) {
@@ -491,6 +484,10 @@ function LocalApp({
       <SignIn
         cloudIdentity={cloudIdentity}
         onSignIn={async (p) => {
+          if (cloudIdentity && !profileMatchesCloudIdentity(p, cloudIdentity)) {
+            await showAppDialog("This profile does not belong to the signed-in account. Use your own learner profile or ask your facilitator to check its email address.");
+            return;
+          }
           setSession(p.id);
           // Stamp our Supabase auth uid onto this profile so others can address
           // us in chat as soon as we sign in — the id syncs to cloud storage

@@ -24,6 +24,7 @@ import { Select } from "./Select";
 import { cloudEnabled, supabase } from "../lib/supabase";
 import { fetchCloudDirectory } from "../lib/directory";
 import { ConfirmModal } from "./Modal";
+import { profileMatchesCloudIdentity } from "../lib/cloudProfile";
 
 type CloudIdentity = { userId: string; email: string | null };
 
@@ -74,7 +75,10 @@ export function SignIn({
   const [staffCode, setStaffCode] = useState("");
   const [sharedSettings] = useSharedSettings();
   const [enrolling, setEnrolling] = useState(false);
-  const [enrol, setEnrol] = useState<EnrolmentInfo>(EMPTY_ENROLMENT);
+  const [enrol, setEnrol] = useState<EnrolmentInfo>(() => ({
+    ...EMPTY_ENROLMENT,
+    email: cloudIdentity?.email ?? EMPTY_ENROLMENT.email,
+  }));
   const [authFor, setAuthFor] = useState<Profile | null>(null);
   const [authPw, setAuthPw] = useState("");
   const [authError, setAuthError] = useState(false);
@@ -129,18 +133,14 @@ export function SignIn({
   }
 
   function profileBelongsToCloudAccount(p: Profile): boolean {
-    if (!cloudIdentity) return false;
-    if (p.cloudUserId === cloudIdentity.userId) return true;
-    const email = cloudIdentity.email?.trim().toLowerCase();
-    if (!email) return false;
-    if (p.enrolment?.email?.trim().toLowerCase() === email) return true;
-    // Legacy super-user profiles pre-date cloudUserId and may not have an
-    // enrolment email. loadProfiles() only grants this role to the designated
-    // cloud account, so it is safe to treat that promoted profile as its own.
-    return p.role === "Super User" && isDesignatedSuperUser(p.name);
+    return !!cloudIdentity && profileMatchesCloudIdentity(p, cloudIdentity);
   }
 
   function pickProfile(p: Profile) {
+    if (cloudIdentity && !profileBelongsToCloudAccount(p)) {
+      setDupError("This profile belongs to a different account. Use your own learner profile or ask your facilitator to check its email address.");
+      return;
+    }
     // Supabase has already verified the account password. Requiring the old
     // device-local profile password as well can lock the account owner out
     // after a cloud password reset, even though authentication succeeded.
@@ -254,10 +254,13 @@ export function SignIn({
     }
     try {
       const p = createProfile(name, role, undefined, password ? await hashPassword(password) : undefined);
+      const linked = cloudIdentity
+        ? updateProfile(p.id, { cloudUserId: cloudIdentity.userId }) ?? p
+        : p;
       setProfiles(loadProfiles());
       logAudit(p, "account.create", `Created ${role} account at sign-in`);
       logAudit(p, "auth.signin", "Signed in");
-      onSignIn(p);
+      onSignIn(linked);
     } catch (err) {
       if (err instanceof DuplicateProfileError) {
         setDupError(err.message);
@@ -270,6 +273,10 @@ export function SignIn({
   async function submitEnrolment(e: React.FormEvent) {
     e.preventDefault();
     setDupError("");
+    if (cloudIdentity && enrol.email.trim().toLowerCase() !== cloudIdentity.email?.trim().toLowerCase()) {
+      setDupError("Use the email address of your signed-in account for this learner profile.");
+      return;
+    }
     const existing = await findExisting({ name, enrolment: enrol });
     if (existing) {
       if (!existing.isLocal) adoptCloudProfile(existing.match);
@@ -283,11 +290,14 @@ export function SignIn({
         { ...enrol, signedDate: new Date().toISOString() },
         password ? await hashPassword(password) : undefined
       );
+      const linked = cloudIdentity
+        ? updateProfile(p.id, { cloudUserId: cloudIdentity.userId }) ?? p
+        : p;
       setProfiles(loadProfiles());
       logAudit(p, "account.create", "Learner enrolled (self-service)");
       logAudit(p, "enrolment.saved", "Biographical enrolment form signed");
       logAudit(p, "auth.signin", "Signed in");
-      onSignIn(p);
+      onSignIn(linked);
     } catch (err) {
       if (err instanceof DuplicateProfileError) {
         setDupError(err.message);
