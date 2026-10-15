@@ -1,9 +1,10 @@
-import type { PracticalTaskDocument, Profile } from "../types";
+import type { PracticalTaskDocument, PracticalTaskField, Profile } from "../types";
 import { Icon } from "../icons";
 import { useRef } from "react";
 import { DocumentSignature } from "./DocumentSignature";
 import { DocumentActions } from "./DocumentActions";
 import { canSignDocumentField } from "../lib/documentSignatures";
+import "./source-document.css";
 
 type SavedValues = Record<string, string | boolean>;
 type SaveField = (key: string, value: string | boolean) => void;
@@ -92,21 +93,68 @@ function PracticalTask114046({ values, onChange, profile }: { values: SavedValue
   </div></>;
 }
 
-export function PracticalTask({ document, unitId, profile, values, onChange }: {
+function SourceDocument({ document, unitId, profile, values, onChange, onSave }: PracticalTaskProps) {
+  const field = (definition: PracticalTaskField, storageKey: string, sourceLabel: string) => {
+    const current = String(values[storageKey] ?? "");
+    if (/signature/i.test(definition.label)) {
+      const editable = canSignDocumentField(profile.role, definition.label);
+      return <DocumentSignature value={current} label={definition.label} editable={editable} savedSignature={editable ? profile.signatureImage : undefined} onChange={value => onChange(storageKey, value)} />;
+    }
+    return definition.type === "textarea"
+      ? <textarea aria-label={sourceLabel} rows={4} defaultValue={current} onBlur={event => onChange(storageKey, event.target.value)} />
+      : <input aria-label={sourceLabel} type={definition.type ?? "text"} defaultValue={current} onBlur={event => onChange(storageKey, event.target.value)} />;
+  };
+  return <><DocumentActions name={document.title} onSave={onSave} />
+    <article className="source-document document-print-target">
+      <header className="source-document-header"><p>Unit standard {unitId}</p><h2>{document.title}</h2><p>{document.sourceName}{document.sourcePageCount ? ` · ${document.sourcePageCount} source pages` : ""}</p></header>
+      {document.notice && <p className="source-document-notice no-print">{document.notice}</p>}
+      {document.sections.map(section => <section key={section.id} className="source-document-section">
+        {section.blocks?.map((block, index) => {
+          if (block.kind === "page") return <div key={index} className={`source-page-boundary${block.number > 1 ? " source-page-break" : ""}`} data-source-page={block.number}>Source page {block.number}</div>;
+          if (block.kind === "field") {
+            const definition = block.field;
+            return <label className="source-document-field" key={index}><span>{definition.label}</span>{field(definition, `practical.${section.id}.${definition.id}`, definition.label)}</label>;
+          }
+          if (block.kind === "table") return <div className="source-table-scroll" key={block.id}><table className="data source-document-table">
+            <thead><tr>{block.headers.map((header, column) => <th key={column} scope="col">{header}</th>)}</tr></thead>
+            <tbody>{block.rows.map((row, r) => <tr key={r}>{row.map((cell, c) => <td key={c}>{cell}
+              {(!cell.trim() || /^[_\u2026.\s]{3,}$/.test(cell)) && field({ id: `${block.id}.${r}.${c}`, label: block.headers[c] || `Row ${r + 1}, column ${c + 1}`, type: "textarea" }, `practical.${section.id}.${block.id}.${r}.${c}`, `${block.headers[c] || `Column ${c + 1}`}, row ${r + 1}`)}
+            </td>)}</tr>)}</tbody>
+          </table></div>;
+          const item = block.item;
+          const text = block.format === "heading" ? <h3>{item.text}</h3>
+            : block.format === "numbered" ? <ol className="source-document-list"><li>{item.text}</li></ol>
+              : block.format === "bullet" ? <ul className="source-document-list"><li>{item.text}</li></ul>
+                : <p>{item.text}</p>;
+          return <div key={item.id}>{text}{item.responseLabel && <label className="source-document-field"><span>{item.responseLabel}</span><textarea rows={5} defaultValue={String(values[`practical.${section.id}.${item.id}`] ?? "")} onBlur={event => onChange(`practical.${section.id}.${item.id}`, event.target.value)} /></label>}</div>;
+        })}
+      </section>)}
+    </article>
+  </>;
+}
+
+type PracticalTaskProps = {
   document: PracticalTaskDocument;
   unitId: string;
   profile: Profile;
   values: Record<string, string | boolean>;
   onChange: (key: string, value: string | boolean) => void;
-}) {
-  if (unitId === "114046") return <PracticalTask114046 values={values} onChange={onChange} profile={profile} />;
+  onSave?: () => Promise<void>;
+  storagePrefix?: string;
+};
+
+export function PracticalTask({ document, unitId, profile, values: storedValues, onChange: saveValue, onSave, storagePrefix = "" }: PracticalTaskProps) {
+  const values = storagePrefix ? Object.fromEntries(Object.entries(storedValues).filter(([key]) => key.startsWith(storagePrefix)).map(([key, value]) => [key.slice(storagePrefix.length), value])) : storedValues;
+  const onChange: SaveField = (key, value) => saveValue(`${storagePrefix}${key}`, value);
+  if (document.sourceText !== undefined) return <SourceDocument key={`${storagePrefix}${unitId}.${document.sourceName}`} document={document} unitId={unitId} profile={profile} values={values} onChange={onChange} onSave={onSave} />;
+  if (unitId === "114046" && !storagePrefix) return <PracticalTask114046 values={values} onChange={onChange} profile={profile} />;
   const key = (section: string, field: string) => `practical.${section}.${field}`;
   const savedCount = document.sections.reduce((total, section) => total
     + (section.fields ?? []).filter(field => String(values[key(section.id, field.id)] ?? "").trim()).length
     + (section.items ?? []).filter(item => String(values[key(section.id, item.id)] ?? "").trim()).length, 0);
   const total = document.sections.reduce((sum, section) => sum + (section.fields?.length ?? 0) + (section.items?.length ?? 0), 0);
 
-  return <><DocumentActions name="Practical Task" /><section className="practical-task document-print-target">
+  return <><DocumentActions name="Practical Task" onSave={onSave} /><section className="practical-task document-print-target">
     <header className="practical-hero">
       <div className="practical-hero-icon"><Icon name="checklist" size={28} /></div>
       <div><span className="practical-kicker">Unit standard {unitId}</span><h2>{document.title}</h2><p>{document.subtitle}</p></div>

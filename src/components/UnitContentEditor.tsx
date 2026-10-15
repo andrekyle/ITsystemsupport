@@ -10,7 +10,7 @@ export function fieldLabel(key:string) { return names[key] ?? key.replace(/([A-Z
 const label = fieldLabel;
 type Value = string | number | boolean | null | Value[] | { [key:string]: Value };
 type Fields = { [key:string]: Value };
-const HIDDEN_KEYS = ["id","icon","flat","quizGate"];
+const HIDDEN_KEYS = ["id","icon","flat","quizGate","sourceText","sourcePageCount","kind","format"];
 function visibleEntries(value:Fields):[string,Value][] { return Object.entries(value).filter(([key,item])=>item!==undefined&&!HIDDEN_KEYS.includes(key)); }
 /** Top-level sections of a content object, used for outline navigation. */
 export function contentSections(value:unknown):{key:string;label:string;count:number|null}[] {

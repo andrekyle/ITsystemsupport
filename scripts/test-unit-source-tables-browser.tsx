@@ -25,7 +25,7 @@ async function test() {
   const wordText = await importUnitSource(await zippedFile({ "word/document.xml": wordDocument }, "docx"));
   assert(wordText === [
     "Before the table.",
-    "| Item | Description | Quantity |\n| --- | --- | --- |\n| A-1 | First paragraph. Second \\| paragraph. | 2 |\n| Merged note |  | 3 |\n| Nested | Before nested content nested value | 4 |",
+    "| Item | Description | Quantity |\n| --- | --- | --- |\n| A-1 | First paragraph.<br>Second \\| paragraph. | 2 |\n| Merged note |  | 3 |\n| Nested | Before nested content<br>nested value | 4 |",
     "After the table.",
     "| Code | Path |\n| --- | --- |\n| B-2 | C:\\\\work\\\\draft |",
   ].join("\n\n"), `DOCX preserves table cells, order, merged/nested text, and escaped delimiters:\n${wordText}`);
@@ -43,7 +43,7 @@ async function test() {
     "ppt/notesSlides/notesSlide1.xml": slide(shape("Speaker notes are not slide content")),
   }, "pptx"));
   assert(pptText === [
-    "| Task | Hours |\n| --- | --- |\n| Review | 2 hours |\n| Merged slide note |  |",
+    "| Task | Hours |\n| --- | --- |\n| Review | 2<br>hours |\n| Merged slide note |  |",
     "# Actual slide title",
     "Following paragraph",
     "# Later slide",

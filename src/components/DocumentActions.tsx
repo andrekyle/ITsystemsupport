@@ -58,7 +58,8 @@ export function DocumentActions({ name, labelled = false, onSave, editing = fals
     const css = Array.from(document.styleSheets).map(sheet => {
       try { return Array.from(sheet.cssRules).map(rule => rule.cssText).join("\n"); } catch { return ""; }
     }).join("\n");
-    const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${name}</title><style>${css}\nbody{margin:0;padding:24px;background:#fff}.document-print-target{margin:0 auto!important}.document-signature-actions{display:none!important}</style></head><body class="document-export">${clone.outerHTML}</body></html>`;
+    const title = name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${title}</title><style>${css}\nbody{margin:0;padding:24px;background:#fff}.document-print-target{margin:0 auto!important}.document-signature-actions{display:none!important}</style></head><body class="document-export">${clone.outerHTML}</body></html>`;
     const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
     const link = document.createElement("a");
     link.href = url;

@@ -44,6 +44,7 @@ async function makeDocx(): Promise<File> {
   const zip = new JSZip();
   zip.file("[Content_Types].xml", '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
   zip.file("word/document.xml", scheduleDocx());
+  zip.file("word/numbering.xml", '<w:numbering xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:abstractNum w:abstractNumId="0"><w:lvl w:ilvl="0"><w:numFmt w:val="bullet"/><w:lvlText w:val="-"/></w:lvl></w:abstractNum><w:num w:numId="3"><w:abstractNumId w:val="0"/></w:num></w:numbering>');
   const blob = await zip.generateAsync({ type: "blob" });
   return new File([blob], "114059 Facilitator Guide.docx", { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
 }

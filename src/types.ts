@@ -559,6 +559,8 @@ export interface UnitContent {
   selfAssessment?: SelfAssessment;
   /** Memo-aligned learner workbook with one answer box per marked task. */
   workbook?: WorkbookSpec;
+  /** Source-faithful workbook upload; takes precedence over generated workbook activities. */
+  learnerWorkbook?: PracticalTaskDocument;
 }
 
 export interface EditableUnitDocument {
@@ -589,7 +591,15 @@ export interface PracticalTaskSection {
   description?: string;
   fields?: PracticalTaskField[];
   items?: PracticalTaskItem[];
+  /** Ordered source blocks, absent on legacy hand-authored assessment forms. */
+  blocks?: SourceDocumentBlock[];
 }
+
+export type SourceDocumentBlock =
+  | { kind: "page"; number: number }
+  | { kind: "field"; field: PracticalTaskField }
+  | { kind: "item"; item: PracticalTaskItem; format: "paragraph" | "numbered" | "bullet" | "heading" }
+  | { kind: "table"; id: string; headers: string[]; rows: string[][] };
 
 export interface PracticalTaskDocument {
   title: string;
@@ -597,6 +607,9 @@ export interface PracticalTaskDocument {
   sourceName?: string;
   notice?: string;
   sections: PracticalTaskSection[];
+  /** Clean extraction kept for completeness checks, never rewritten by AI. */
+  sourceText?: string;
+  sourcePageCount?: number;
 }
 
 /** End-of-unit self assessment: learner ticks each statement they feel competent in. */

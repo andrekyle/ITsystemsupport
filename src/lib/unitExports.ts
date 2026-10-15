@@ -2,6 +2,7 @@ import type { UnitContent, UnitStandard } from "../types";
 import { COURSE_META, findUnit } from "../data/course";
 import { plainSlideText } from "./slideRichText";
 import { isLessonBulletListLead, isLessonListLead } from "./lessonSubsections";
+import { sourceDocumentText } from "./practicalTaskImport";
 
 export type ExportPage = { title: string; lines: string[] };
 export const PPT_MIN_FONT_SIZE = 18;
@@ -128,6 +129,11 @@ export function unitExportPages(unit: UnitStandard, content: UnitContent): Expor
   }
   for (const n of content.studyNotes ?? []) blocks.push({ title: `Notes: ${n.title}`, lines: [n.text] });
   for (const tab of content.customTabs ?? []) blocks.push({ title: tab.title, lines: [tab.text] });
+  for (const document of [content.learnerWorkbook, content.practicalTask, ...(content.editableDocuments ?? []).map(item => item.document)]) {
+    if (!document?.sourceText) continue;
+    const pages = sourceDocumentText(document).split("\f").map(page => page.trim()).filter(Boolean);
+    pages.forEach((page, index) => blocks.push({ title: `${document.title}${document.sourcePageCount ? ` - source page ${index + 1}` : ""}`, lines: page.split("\n") }));
+  }
   if (content.selfAssessment) blocks.push({ title: "Self assessment", lines: [...content.selfAssessment.intro, ...content.selfAssessment.items.map(i => `[ ] ${i}`), ...content.selfAssessment.outro] });
   if (content.evaluation) blocks.push({ title: "Lesson evaluation", lines: [content.evaluation.intro, ...content.evaluation.questions.map(q => `${q}\nResponse: ________________________________`)] });
   if (content.lessonPlan) blocks.push({ title: content.lessonPlan.title, lines: [...content.lessonPlan.prep, ...content.lessonPlan.sections.flatMap(s => [s.heading ?? "", ...s.rows.flatMap(r => [`${r.time ?? ""} ${r.title}`, ...(r.text ?? []), ...(r.bullets ?? [])])])] });

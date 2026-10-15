@@ -95,7 +95,8 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   const [selfAssessmentContent,setSelfAssessmentContent]=useState("");
   const [logbookContent,setLogbookContent]=useState("");
   const [logbookImageName,setLogbookImageName]=useState("");
-  const [practicalTask,setPracticalTask]=useState<UnitContent["practicalTask"]>();
+  const [practicalTask,setPracticalTask]=useState<UnitContent["practicalTask"]>(content?.practicalTask);
+  const [learnerWorkbook,setLearnerWorkbook]=useState<UnitContent["learnerWorkbook"]>(content?.learnerWorkbook);
   const [practicalTaskFileName,setPracticalTaskFileName]=useState("");
   const [sourceDocumentFiles,setSourceDocumentFiles]=useState<Partial<Record<keyof UnitSourceDocuments,File>>>({});
   const [editableDocuments,setEditableDocuments]=useState<NonNullable<UnitContent["editableDocuments"]>>(content?.editableDocuments ?? []);
@@ -139,7 +140,12 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     setBusyProgress(100);
     window.setTimeout(()=>{setBusy("");after?.();},450);
   };
-  useEffect(()=>{if(built)setSource(built.source);},[built?.revision]);
+  useEffect(()=>{
+    if(built)setSource(built.source);
+    setPracticalTask(content?.practicalTask);
+    setLearnerWorkbook(content?.learnerWorkbook);
+    setEditableDocuments(content?.editableDocuments??[]);
+  },[built?.revision,unit.us]);
   useEffect(()=>{
     if(!busy){setBusyProgress(0);return;}
     setBusyProgress(1);
@@ -202,11 +208,24 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   const build=async()=>{
     setError("");setMessage("");setWarning("");setBusy("Building lessons, activities and tab content…");
     try {
+      const recoverSourceDocument=async(kind:"practicalTask"|"learnerWorkbook")=>{
+        const original=built?.files.sourceDocuments?.[kind];
+        if(!original)return undefined;
+        const url=await getFileUrl(original);
+        if(!url)throw new Error(`The saved ${kind==="learnerWorkbook"?"learner workbook":"practical task"} source is unavailable. Upload its PDF again before rebuilding.`);
+        const response=await fetch(url);
+        if(!response.ok)throw new Error(`The saved source document could not be read (HTTP ${response.status}). Upload it again or retry.`);
+        const document=await importPracticalTask(new File([await response.blob()],original.name,{type:"application/pdf"}),unit.title);
+        return kind==="learnerWorkbook"?{...document,title:"Learner Workbook"}:document;
+      };
+      const workbook=learnerWorkbook??await recoverSourceDocument("learnerWorkbook");
+      const practical=practicalTask?.sourceText!==undefined?practicalTask:await recoverSourceDocument("practicalTask")??practicalTask;
       let next=buildUnitContent(unit,source,{minutes});
-      const preservedWorkbook=unit.us==="114074"&&content?.workbook?structuredClone(content.workbook):undefined;
+      const preservedWorkbook=!workbook&&unit.us==="114074"&&content?.workbook?structuredClone(content.workbook):undefined;
       if(preservedWorkbook)next.workbook=preservedWorkbook;
-      if(practicalTask)next.practicalTask=practicalTask;
-      if(editableDocuments.length)next.editableDocuments=editableDocuments;
+      if(practical)next.practicalTask=practical;
+      if(workbook){next.learnerWorkbook=workbook;next.workbook=undefined;}
+      next.editableDocuments=editableDocuments;
       // Pasted or photographed logbook content builds the logbook directly; AI output (when on) may refine it.
       const pastedLogbook=logbookContent.trim()?logbookFromSource(unit,logbookContent):undefined;
       if(pastedLogbook)next.logbook=pastedLogbook;
@@ -218,8 +237,6 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
         if(!response.ok) throw new Error(result.error??"AI generation failed. Turn it off to build entirely with built-in code.");
         next=mergeUnitContentEnhancement(next,result.content,unit);setWarning("");
         if(preservedWorkbook)next.workbook=preservedWorkbook;
-        if(practicalTask)next.practicalTask=practicalTask;
-        if(editableDocuments.length)next.editableDocuments=editableDocuments;
         if(result.usage) void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.input_tokens??result.usage.prompt_tokens??0,completionTokens:result.usage.output_tokens??result.usage.completion_tokens??0,totalTokens:result.usage.total_tokens??0});
       }
       await publish(next,source,ai);
@@ -238,14 +255,8 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
         const converted=await importPracticalTask(file,unit.title);
         setPracticalTask(converted);setPracticalTaskFileName(file.name);
       }else{
-        // The original workbook is retained as a file. Its text is also made
-        // available to the AI build, while US 114074's existing interactive
-        // workbook remains authoritative and is never replaced by a rebuild.
-        const workbookText=await importUnitSource(file);
-        setActivityBlocks(blocks=>{
-          const withoutWorkbook=blocks.filter(block=>block.heading!=="Learner Workbook PDF");
-          return [...withoutWorkbook,{heading:"Learner Workbook PDF",text:workbookText}];
-        });
+        const converted=await importPracticalTask(file,unit.title);
+        setLearnerWorkbook({...converted,title:"Learner Workbook"});
       }
       setSourceDocumentFiles(current=>({...current,[kind]:file}));
       setMessage(`${file.name} is ready and will be uploaded with the unit build.`);
@@ -413,7 +424,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
                   <div className="unit-settings-row unit-logbook-import"><span className="unit-settings-copy"><strong>Read logbook image</strong><span>{logbookImageName || "PNG, JPEG or WebP screenshots/photos"}</span></span><label className="unit-import-button"><span>Upload image</span><input aria-label="Upload logbook image" type="file" accept="image/png,image/jpeg,image/webp" multiple disabled={!!busy} onChange={async e=>{const files=e.target.files;e.target.value="";await readLogbookImages(files);}}/></label></div>
                   <label>Logbook text<textarea rows={7} value={logbookContent} disabled={!!busy} onChange={e=>setLogbookContent(e.target.value)} placeholder="Example: embedded knowledge questions with checklist ticks, practical activities, workplace activities, other activities, project evidence and project checklist..."/></label>
                 </div>
-                <div className="unit-source-field"><strong>Unit document PDFs</strong><span>Upload the three original documents used to build the unit. They are retained with the saved unit; the guide supplies lesson content, the practical task becomes an editable form, and the workbook supports the existing interactive Learner Workbook.</span>
+                <div className="unit-source-field"><strong>Unit document PDFs</strong><span>Source styling is removed before building. The guide supplies lesson text. The actual uploaded practical task and workbook become editable HTML documents, preserving all extracted wording, numbering, tables and page boundaries without AI rewriting. Original PDFs are kept for reference.</span>
                   {([[
                     "learnerGuide","Learner Guide PDF","Upload learner guide PDF"
                   ],[
@@ -422,6 +433,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
                     "learnerWorkbook","Learner Workbook PDF","Upload learner workbook PDF"
                   ]] as [keyof UnitSourceDocuments,string,string][]).map(([kind,label,aria])=><div className="unit-settings-row" key={kind}><span className="unit-settings-copy"><strong>{label}</strong><span>{kind==="practicalTask"?(practicalTaskFileName||sourceDocumentName(kind)):sourceDocumentName(kind)}</span></span><label className="unit-import-button"><span>{built?.files.sourceDocuments?.[kind]||sourceDocumentFiles[kind]?"Replace PDF":"Choose PDF"}</span><input aria-label={aria} type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={e=>{const file=e.target.files?.[0];e.target.value="";void chooseSourceDocument(kind,file);}}/></label></div>)}
                   {practicalTask&&<span className="muted">Practical Task ready: {practicalTask.sections.length} editable sections will be published.</span>}
+                  {learnerWorkbook&&<span className="muted">Learner Workbook ready: the uploaded document will replace generated workbook tasks.</span>}
                 </div>
                 <div className="unit-source-field"><strong>Additional editable PDF tabs</strong><span>Upload learner workbooks, learner guides, assessments or other unit documents. Each PDF becomes its own editable HTML tab.</span><div className="unit-settings-row"><span className="unit-settings-copy"><strong>Convert another PDF</strong><span>PDF up to 20 MB · multiple documents supported</span></span><label className="unit-import-button"><span>Choose PDF</span><input aria-label="Upload an additional editable PDF" type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Converting PDF into editable HTML...");setError("");try{const document=await importPracticalTask(file,unit.title);const base=file.name.replace(/\.pdf$/i,"").replace(/^SAQA\s*-?\s*\d+\s*-?\s*/i,"").trim()||"Document";const title=/learner\s*workbook/i.test(base)?"Learner Workbook":/learner\s*guide/i.test(base)?"Learner Guide":/practical/i.test(base)?"Practical Task":base;const entry={id:crypto.randomUUID(),title,sourceName:file.name,document:{...document,title}};setEditableDocuments(current=>[...current,entry]);setMessage(`Created the editable ${title} tab from ${file.name}.`);}catch(err){setError(err instanceof Error?err.message:String(err));}finally{setBusy("");}}}/></label></div>{editableDocuments.map(item=><div className="unit-settings-row" key={item.id}><span className="unit-settings-copy"><strong>{item.title}</strong><span>{item.sourceName} · {item.document.sections.length} sections</span></span><button type="button" className="btn ghost sm" onClick={()=>setEditableDocuments(current=>current.filter(document=>document.id!==item.id))}>Remove</button></div>)}</div>
               </div>
