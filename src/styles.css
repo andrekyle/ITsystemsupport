@@ -17334,7 +17334,8 @@ body.resizing-slide-table-column * { cursor:col-resize !important; user-select:n
 .lesson-video-editor-card .generated-quiz-options { grid-template-columns:1fr; }
 .generated-quiz-option { display:grid; grid-template-columns:14px 16px minmax(0,1fr); align-items:start; gap:8px; min-width:0; padding:0; border:0; border-radius:5px; }
 .generated-quiz-option.is-correct { }
-.generated-quiz-option input[type="radio"] { width:14px; height:14px; min-height:0; padding:0; margin:calc(var(--quiz-option-padding) + (var(--quiz-option-line) - 14px) / 2) 0 0; accent-color:var(--azure); cursor:pointer; }
+.generated-quiz-option input[type="radio"] { appearance:none; box-sizing:border-box; width:14px; height:14px; min-height:0; padding:0; margin:calc(var(--quiz-option-padding) + (var(--quiz-option-line) - 14px) / 2) 0 0; border:1px solid var(--quiz-editor-muted); border-radius:50%; background:transparent; box-shadow:none; accent-color:var(--azure); cursor:pointer; }
+.generated-quiz-option input[type="radio"]:checked { border-color:var(--azure); background-image:radial-gradient(circle, var(--azure) 0 3px, transparent 3px); }
 .generated-quiz-option label { padding:var(--quiz-option-padding) 0; color:var(--quiz-editor-label); font-size:15px; line-height:var(--quiz-option-line); }
 .generated-quiz-option textarea { min-height:calc(var(--quiz-option-line) + 2 * var(--quiz-option-padding)); border:0 !important; padding:var(--quiz-option-padding) 0; line-height:var(--quiz-option-line); background:transparent; }
 .generated-quiz-explanation { min-width:0; border-top:0; padding-top:9px; }
@@ -17345,7 +17346,11 @@ body.resizing-slide-table-column * { cursor:col-resize !important; user-select:n
 .generated-quiz-explanation summary span { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--quiz-editor-muted); }
 .generated-quiz-explanation[open] summary span { display:none; }
 .generated-quiz-explanation textarea { margin-top:8px; }
-.generated-quiz-edit :is(textarea,input,button,summary):focus-visible { outline:2px solid var(--azure); outline-offset:2px; }
+.generated-quiz-edit :is(textarea,input,button,summary):focus-visible { outline:1px solid var(--azure); outline-offset:1px; }
+@media (forced-colors: active) {
+  .generated-quiz-option input[type="radio"] { appearance:auto; }
+  .generated-quiz-option input[type="radio"]:checked { background-image:none; }
+}
 
 .editing-sidebar .generated-quiz-edit { --quiz-option-line:18px; --quiz-option-padding:5px; gap: 6px; margin: 12px 0; font-size: 12px; }
 .editing-sidebar .generated-quiz-heading label { font-size: 11px; }
