@@ -30,4 +30,29 @@ Generated forms preserve field content and order, not the exact paper layout. Re
 
 ## Checks
 
+### Build: original unit PDFs
+
+Build's Learner Guide, Practical Task, Learner Workbook and additional PDF uploads
+use the existing replica renderer, not the text-document or AI slide layout.
+Every original page is rendered without deskewing, font substitution, new covers
+or reflow. Native PDF fields and detected blank cells, answer lines, combs and
+tick boxes receive positioned HTML controls. Fill & sign handles additional
+answer areas that automatic detection cannot identify, including scanned pages.
+Field detection runs locally; these PDFs are not sent to AI.
+
+Uploads support 20 MB and 250 pages per PDF. Pages are saved using the existing
+`form-pages` storage bucket (apply `supabase/migrations/20260912_form_pages.sql`).
+Answers and annotations use the unit's existing learner-progress storage, with
+separate namespaces for each document. Printed output and editable HTML exports
+retain the original pages. The learner-pack PDF includes original page images,
+not a reformatted transcription.
+
+PDF-only builds are the default, need no pasted lesson text and make no AI requests.
+Enable **Also generate lesson tabs** to use separately provided lesson source
+text without changing the
+uploaded documents. Rebuilding an older unit recreates replicas from its archived
+original PDFs; old additional-document tabs without an archived PDF must be
+reuploaded to restore their original appearance. Existing saved text-document
+answers are not erased or guessed into newly positioned PDF fields.
+
 Run `node --import tsx --test scripts/form-builder.test.ts scripts/generate-form.test.ts scripts/form-database.test.ts` and `npm run build` from the project directory. The database test runs the migration twice in embedded PostgreSQL and checks template permissions, response isolation, source-document access and cascading deletion without contacting Supabase.

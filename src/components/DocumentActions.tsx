@@ -44,6 +44,15 @@ export function DocumentActions({ name, labelled = false, onSave, editing = fals
         Array.from(copy.options).forEach((option, optionIndex) => option.toggleAttribute("selected", field.options[optionIndex]?.selected ?? false));
       }
     });
+    clone.querySelectorAll<HTMLButtonElement>(".replica-field button[role=checkbox],.replica-field button[role=radio]").forEach(button => {
+      const input = document.createElement("input");
+      input.type = button.getAttribute("role") === "radio" ? "radio" : "checkbox";
+      if (input.type === "radio") input.name = `pdf-choice-${button.dataset.fieldId}`;
+      input.className = `${button.className.replace(/\bon\b/g, "")} replica-export-choice`;
+      input.setAttribute("aria-label", button.getAttribute("aria-label") ?? "Select");
+      if (button.getAttribute("aria-checked") === "true") input.setAttribute("checked", "checked");
+      button.replaceWith(input);
+    });
     clone.querySelectorAll<HTMLTextAreaElement>(".lw-lines textarea,.workbook-task-response textarea").forEach(field => {
       const printValue = document.createElement("span");
       printValue.className = "document-print-value";
@@ -59,7 +68,8 @@ export function DocumentActions({ name, labelled = false, onSave, editing = fals
       try { return Array.from(sheet.cssRules).map(rule => rule.cssText).join("\n"); } catch { return ""; }
     }).join("\n");
     const title = name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${title}</title><style>${css}\nbody{margin:0;padding:24px;background:#fff}.document-print-target{margin:0 auto!important}.document-signature-actions{display:none!important}</style></head><body class="document-export">${clone.outerHTML}</body></html>`;
+    const replicaScript = clone.querySelector(".replica-comb") ? `<script>document.querySelectorAll(".replica-comb").forEach(function(box){var input=box.querySelector("input");if(!input)return;var cells=box.querySelectorAll(".replica-comb-cell");input.addEventListener("input",function(){cells.forEach(function(cell,index){cell.textContent=input.value[index]||"";cell.classList.remove("caret","selected","caret-end")})})});</script>` : "";
+    const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${title}</title><style>${css}\nbody{margin:0;padding:24px;background:#fff}.document-print-target{margin:0 auto!important}.document-signature-actions{display:none!important}</style></head><body class="document-export">${clone.outerHTML}${replicaScript}</body></html>`;
     const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
     const link = document.createElement("a");
     link.href = url;
@@ -75,8 +85,13 @@ export function DocumentActions({ name, labelled = false, onSave, editing = fals
     if (active instanceof HTMLElement) active.blur();
     const replacements: Array<{ field: Element; printValue: HTMLElement }> = [];
     target.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>("input:not([type=file]),textarea,select").forEach(field => {
+      if (field.classList.contains("replica-comb-input")) return;
       const printValue = document.createElement("span");
       printValue.className = "document-print-value";
+      if (field.closest(".replica-field")) {
+        if (field.classList.contains("replica-textarea")) printValue.classList.add("replica-textarea-value");
+        if (field.classList.contains("paper-signature")) printValue.classList.add("paper-signature");
+      }
       if (field instanceof HTMLInputElement && field.type === "checkbox") {
         printValue.classList.add("is-checkbox");
         printValue.textContent = field.checked ? "✓" : "";

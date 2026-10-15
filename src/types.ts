@@ -561,6 +561,8 @@ export interface UnitContent {
   workbook?: WorkbookSpec;
   /** Source-faithful workbook upload; takes precedence over generated workbook activities. */
   learnerWorkbook?: PracticalTaskDocument;
+  /** Uploaded guide shown as its original PDF pages with editable answer fields. */
+  learnerGuide?: PracticalTaskDocument;
 }
 
 export interface EditableUnitDocument {
@@ -610,6 +612,8 @@ export interface PracticalTaskDocument {
   /** Clean extraction kept for completeness checks, never rewritten by AI. */
   sourceText?: string;
   sourcePageCount?: number;
+  /** Original PDF pages and positioned inputs, never a redesigned text document. */
+  replica?: import("./lib/formSchema").FormDefinition;
 }
 
 /** End-of-unit self assessment: learner ticks each statement they feel competent in. */

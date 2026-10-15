@@ -11,6 +11,12 @@ const label = fieldLabel;
 type Value = string | number | boolean | null | Value[] | { [key:string]: Value };
 type Fields = { [key:string]: Value };
 const HIDDEN_KEYS = ["id","icon","flat","quizGate","sourceText","sourcePageCount","kind","format"];
+function originalPdfSummary(value:Value) {
+  if(!value||typeof value!=="object"||Array.isArray(value))return null;
+  const replica=value.replica;
+  if(!replica||typeof replica!=="object"||Array.isArray(replica)||!Array.isArray(replica.pages))return null;
+  return <div className="unit-workspace-notice"><strong>{String(value.title??"Original PDF")}</strong><p>{String(value.sourceName??"Uploaded PDF")} · {replica.pages.length} original pages.</p><p>The printed content and layout are kept unchanged. Fill in the fields on the document tab. To replace the original, upload its PDF under Build documents.</p></div>;
+}
 function visibleEntries(value:Fields):[string,Value][] { return Object.entries(value).filter(([key,item])=>item!==undefined&&!HIDDEN_KEYS.includes(key)); }
 /** Top-level sections of a content object, used for outline navigation. */
 export function contentSections(value:unknown):{key:string;label:string;count:number|null}[] {
@@ -108,6 +114,8 @@ function InlineEditor({value,onChange,name="Unit content",disabled=false}:Editor
 }
 
 function InlineValue({name,value,disabled,onChange,bare=false}:{name:string;value:Value;disabled:boolean;onChange:(value:Value)=>void;bare?:boolean}) {
+  const original=originalPdfSummary(value);
+  if(original)return original;
   if(Array.isArray(value)) return bare?<InlineList name={name} value={value} disabled={disabled} onChange={onChange}/>:<div className="unit-editor-subsection">
     <div className="unit-editor-subsection-head"><span className="unit-editor-field-label">{label(name)}</span><span className="unit-editor-count">{value.length}</span></div>
     <InlineList name={name} value={value} disabled={disabled} onChange={onChange}/>
@@ -220,6 +228,8 @@ function InlineField({name,value,caption,disabled,onChange}:{name:string;value:V
 function SidebarEditor({value,onChange,name="Unit content",defaultOpen=false,active=true,disabled=false}:EditorProps) {
   const template=useRef<Value>(Array.isArray(value)&&value.length?value[value.length-1]:blankFor(name));
   const [expanded, setExpanded] = useState(defaultOpen);
+  const original=originalPdfSummary(value);
+  if(original)return original;
   if(Array.isArray(value)) template.current=value.length?value[value.length-1]:blankFor(name);
   if(Array.isArray(value)) return <div className="unit-editor-array">
     {value.map((entry,i)=><div className="unit-editor-item" key={i}>

@@ -48,7 +48,7 @@ const boxStyle = (box: FormBox, extra?: CSSProperties): CSSProperties => ({
  * The uploaded pages themselves, with the fields laid over the exact boxes
  * they were bound to — the digital form is the paper form.
  */
-export function ReplicaForm({ definition, answers, onChange, errors = {}, adjust, fill, onLayerText }: {
+export function ReplicaForm({ definition, answers, onChange, errors = {}, adjust, fill, onLayerText, readOnlyFields }: {
   definition: FormDefinition;
   answers: FormAnswers;
   onChange: (fieldId: string, value: FormAnswer) => void;
@@ -58,6 +58,7 @@ export function ReplicaForm({ definition, answers, onChange, errors = {}, adjust
   fill?: FillSign;
   /** builder: printed text of the rebuilt page is editable in place */
   onLayerText?: LayerTextEdit;
+  readOnlyFields?: readonly string[];
 }) {
   const prefix = useId();
   const fields = definition.sections.flatMap(section => section.fields);
@@ -94,6 +95,7 @@ export function ReplicaForm({ definition, answers, onChange, errors = {}, adjust
             fill={fill}
             onPlace={place}
             onLayerText={onLayerText}
+            readOnlyFields={readOnlyFields}
           />
         </FitSheet>
       ))}
@@ -133,7 +135,7 @@ const clampBox = (box: FormBox): FormBox => {
   return { x: round(x), y: round(y), w: round(w), h: round(h) };
 };
 
-function ReplicaPage({ page, src, layer, ratio, title, fields, dates, prefix, answers, errors, onChange, adjust, fill, onPlace, onLayerText }: {
+function ReplicaPage({ page, src, layer, ratio, title, fields, dates, prefix, answers, errors, onChange, adjust, fill, onPlace, onLayerText, readOnlyFields }: {
   page: number;
   src: string;
   layer?: PageLayer;
@@ -149,6 +151,7 @@ function ReplicaPage({ page, src, layer, ratio, title, fields, dates, prefix, an
   fill?: FillSign;
   onPlace: (page: number, x: number, y: number, ratio: number) => void;
   onLayerText?: LayerTextEdit;
+  readOnlyFields?: readonly string[];
 }) {
   const pageRef = useRef<HTMLDivElement>(null);
   const dateIds = new Set(dates.flatMap(group => [group.year.id, group.month.id, group.day.id]));
@@ -194,7 +197,7 @@ function ReplicaPage({ page, src, layer, ratio, title, fields, dates, prefix, an
     >
       {layer ? <DigitalPage layer={layer} ratio={ratio} onText={onLayerText ? (index, text) => onLayerText(page, index, text) : undefined} /> : <img src={src} alt={`${title || "Form"} - page ${page}`} draggable={false} />}
       {fields.filter(field => !dateIds.has(field.id)).map(field => (
-        <ReplicaField key={field.id} field={field} ratio={ratio} pageRef={pageRef} prefix={prefix} value={answers[field.id]} error={errors[field.id]} onChange={value => onChange(field.id, value)} adjust={adjust} />
+        <ReplicaField key={field.id} field={field} ratio={ratio} pageRef={pageRef} prefix={prefix} value={answers[field.id]} error={errors[field.id]} onChange={value => onChange(field.id, value)} adjust={adjust} readOnly={readOnlyFields?.includes(field.id)} />
       ))}
       {dates.map(group => <ReplicaDateFields key={group.year.id} group={group} ratio={ratio} pageRef={pageRef} prefix={prefix} answers={answers} errors={errors} onChange={onChange} adjust={adjust} />)}
       {fill && <AnnotationLayer page={page} ratio={ratio} pageRef={pageRef} fill={fill} />}
@@ -310,7 +313,7 @@ function DigitalPage({ layer, ratio, onText }: { layer: PageLayer; ratio: number
   );
 }
 
-function ReplicaField({ field, ratio, pageRef, prefix, value, error, onChange, adjust }: {
+function ReplicaField({ field, ratio, pageRef, prefix, value, error, onChange, adjust, readOnly }: {
   field: FormField;
   ratio: number;
   pageRef: RefObject<HTMLDivElement>;
@@ -319,6 +322,7 @@ function ReplicaField({ field, ratio, pageRef, prefix, value, error, onChange, a
   error?: string;
   onChange: (value: FormAnswer) => void;
   adjust?: ReplicaAdjust;
+  readOnly?: boolean;
 }) {
   const placement = field.placement!;
   const id = `${prefix}-${field.id}`;
@@ -345,6 +349,7 @@ function ReplicaField({ field, ratio, pageRef, prefix, value, error, onChange, a
             type="button"
             className={`${tickClass(box)}${on ? " on" : ""}${errorClass}`}
             role={multiple ? "checkbox" : "radio"}
+            data-field-id={field.id}
             aria-checked={on}
             aria-label={`${field.label}: ${option}`}
             title={`${field.label}: ${option}`}
@@ -401,6 +406,7 @@ function ReplicaField({ field, ratio, pageRef, prefix, value, error, onChange, a
         id={id}
         className={`replica-input${field.type === "signature" ? " paper-signature" : ""}${errorClass}`}
         type={field.type === "signature" ? "text" : field.type}
+        readOnly={readOnly}
         value={text}
         step={field.type === "number" ? "any" : undefined}
         maxLength={field.maxLength || (field.type === "number" ? undefined : 2000)}

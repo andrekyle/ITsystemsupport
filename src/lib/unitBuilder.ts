@@ -817,6 +817,8 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
 /** Validate the editable pack before replacing any saved content. */
 export function validateUnitContent(content: UnitContent, requireComplete = true): void {
   const nonempty = (s: unknown) => typeof s === "string" && s.trim().length > 0;
+  const hasOriginalPdf=[content.learnerGuide,content.learnerWorkbook,content.practicalTask,...(content.editableDocuments??[]).map(item=>item.document)].some(document=>document?.replica?.pages.length);
+  if(hasOriginalPdf)requireComplete=false;
   if (requireComplete && (!content.lesson?.length || !content.assignments?.length)) throw new Error("Keep at least one lesson and assignment.");
   for (const s of content.lesson) if (!nonempty(s.heading) || !s.paragraphs?.some(nonempty)) throw new Error("Every lesson needs a title and teaching text.");
   for (const q of [...content.quiz, ...content.lesson.flatMap(s => s.slideQuiz ?? []), ...(content.quizzes ?? []).flatMap(q => q.questions)]) {
@@ -844,8 +846,23 @@ export function validateUnitContent(content: UnitContent, requireComplete = true
   }
   const customTabs = content.customTabs ?? [];
   if (customTabs.some(tab => !nonempty(tab.id) || !nonempty(tab.title)) || new Set(customTabs.map(tab => tab.id)).size !== customTabs.length) throw new Error("Each custom tab needs a title and a unique ID.");
-  const documents = [content.practicalTask, content.learnerWorkbook, ...(content.editableDocuments ?? []).map(item => item.document)].filter(document => document !== undefined);
+  const documents = [content.practicalTask, content.learnerWorkbook, content.learnerGuide, ...(content.editableDocuments ?? []).map(item => item.document)].filter(document => document !== undefined);
   for (const document of documents) {
+    if (document.replica) {
+      const replica=document.replica;
+      if (!nonempty(document.title) || !replica.pages.length || replica.pages.length !== document.sourcePageCount || replica.display !== "image") throw new Error("Every PDF replica must preserve all original pages.");
+      if (replica.pages.some(page => !nonempty(page.src) || page.width <= 0 || page.height <= 0 || page.layer)) throw new Error("An original PDF page is missing or has been replaced by a rebuilt layout.");
+      const fields=replica.sections.flatMap(section=>section.fields);
+      if (new Set(fields.map(field=>field.id)).size!==fields.length) throw new Error("PDF fields need unique IDs.");
+      for (const field of fields) {
+        const placement=field.placement;
+        if (!placement || !Number.isInteger(placement.page) || placement.page<1 || placement.page>replica.pages.length) throw new Error("A PDF field is not on an original page.");
+        for (const box of [placement.box,...placement.options]) {
+          if (box && (![box.x,box.y,box.w,box.h].every(Number.isFinite) || box.x<0 || box.y<0 || box.w<=0 || box.h<=0 || box.x+box.w>1.001 || box.y+box.h>1.001)) throw new Error("A PDF field lies outside its original page.");
+        }
+      }
+      continue;
+    }
     if (!nonempty(document.title) || !document.sections?.length) throw new Error("Every uploaded document needs a title and at least one section.");
     const sectionIds = document.sections.map(section => section.id);
     if (sectionIds.some(id => !nonempty(id)) || new Set(sectionIds).size !== sectionIds.length) throw new Error("Practical-task sections need unique IDs.");

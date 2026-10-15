@@ -7,7 +7,8 @@ import { logbookFromSource, logbookStats, MAX_LOGBOOK_SOURCE_LENGTH } from "../l
 import { useBuiltUnit, useDeletedBuiltUnit, saveBuiltUnit, deleteBuiltUnit, restoreDeletedBuiltUnit } from "../lib/useBuiltUnit";
 import { unitHistory, unitVersionArchive, MAX_UNIT_HISTORY, type BuiltUnitVersion, type UnitSourceDocuments } from "../lib/builtUnits";
 import { importUnitSource } from "../lib/unitSourceImport";
-import { importPracticalTask } from "../lib/practicalTaskImport";
+import { importUnitPdf } from "../lib/unitPdfImport";
+import { storeUnitReplicaPages } from "../lib/forms";
 import { makeUnitExports } from "../lib/unitExports";
 import { createAiPresentation, type AiPresentationSlide } from "../lib/aiPresentation";
 import { plainSlideText } from "../lib/slideRichText";
@@ -89,6 +90,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   const [dirty,setDirty]=useState(false);
   const scrollRef=useRef<HTMLDivElement>(null);
   const [source,setSource]=useState(built?.source??"");
+  const [generateLessons,setGenerateLessons]=useState(false);
   const [ai,setAi]=useState(true);
   const [minutes,setMinutes]=useState(300);
   const [activityBlocks,setActivityBlocks]=useState<{heading:string;text:string}[]>([{heading:"",text:""}]);
@@ -97,9 +99,11 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   const [logbookImageName,setLogbookImageName]=useState("");
   const [practicalTask,setPracticalTask]=useState<UnitContent["practicalTask"]>(content?.practicalTask);
   const [learnerWorkbook,setLearnerWorkbook]=useState<UnitContent["learnerWorkbook"]>(content?.learnerWorkbook);
+  const [learnerGuide,setLearnerGuide]=useState<UnitContent["learnerGuide"]>(content?.learnerGuide);
   const [practicalTaskFileName,setPracticalTaskFileName]=useState("");
   const [sourceDocumentFiles,setSourceDocumentFiles]=useState<Partial<Record<keyof UnitSourceDocuments,File>>>({});
   const [editableDocuments,setEditableDocuments]=useState<NonNullable<UnitContent["editableDocuments"]>>(content?.editableDocuments ?? []);
+  const hasPdfDocuments=!!(learnerGuide?.replica||learnerWorkbook?.replica||practicalTask?.replica||editableDocuments.some(item=>item.document.replica)||Object.values(built?.files.sourceDocuments??{}).some(Boolean));
   const [busy,setBusy]=useState("");
   const [error,setError]=useState("");
   const [message,setMessage]=useState("");
@@ -144,6 +148,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     if(built)setSource(built.source);
     setPracticalTask(content?.practicalTask);
     setLearnerWorkbook(content?.learnerWorkbook);
+    setLearnerGuide(content?.learnerGuide);
     setEditableDocuments(content?.editableDocuments??[]);
   },[built?.revision,unit.us]);
   useEffect(()=>{
@@ -165,6 +170,11 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
 
   const publish=async(next:UnitContent,sourceText:string,aiUsed:boolean)=>{
     validateUnitContent(next, !draft && !inlineDraft);
+    next=structuredClone(next);
+    setBusy("Saving original PDF pages and editable fields...");
+    for(const document of [next.learnerGuide,next.learnerWorkbook,next.practicalTask,...(next.editableDocuments??[]).map(item=>item.document)]){
+      if(document?.replica)document.replica.pages=await storeUnitReplicaPages(document.replica.pages);
+    }
     setBusy("Creating PDF, PowerPoint and answer guide…");
     const files=await makeUnitExports(unit,next);
     setBusy("Saving the unit and course materials…");
@@ -186,7 +196,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     }
     await saveBuiltUnit(unit.us,{revision,createdAt:new Date().toISOString(),source:sourceText,content:next,files:{pdf,pptx,answers,material:built?.files.material,materialEditable:built?.files.materialEditable,sourceDocuments:Object.keys(sourceDocuments).length?sourceDocuments:undefined},aiUsed,planSource:built?.planSource});
     setSourceDocumentFiles({});
-    setSource(sourceText);setDraft(null);setDirty(false);setMessage("Unit built and saved. All learning tabs and download files are ready.");onSaved();
+    setSource(sourceText);setDraft(null);setDirty(false);setMessage("Unit saved. Uploaded PDFs keep their original layout, with editable fields. Tabs and download files are ready.");onSaved();
   };
   const readLogbookImages=async(files: FileList|null)=>{
     const selected=Array.from(files??[]).filter(file=>file.type.startsWith("image/"));
@@ -206,30 +216,35 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     finally{setBusy("");}
   };
   const build=async()=>{
-    setError("");setMessage("");setWarning("");setBusy("Building lessons, activities and tab content…");
+    setError("");setMessage("");setWarning("");setBusy(!generateLessons?"Preparing original PDF pages and editable fields...":"Building lessons and preserving original PDF documents...");
     try {
-      const recoverSourceDocument=async(kind:"practicalTask"|"learnerWorkbook")=>{
+      const recoverSourceDocument=async(kind:keyof UnitSourceDocuments)=>{
         const original=built?.files.sourceDocuments?.[kind];
         if(!original)return undefined;
         const url=await getFileUrl(original);
         if(!url)throw new Error(`The saved ${kind==="learnerWorkbook"?"learner workbook":"practical task"} source is unavailable. Upload its PDF again before rebuilding.`);
         const response=await fetch(url);
         if(!response.ok)throw new Error(`The saved source document could not be read (HTTP ${response.status}). Upload it again or retry.`);
-        const document=await importPracticalTask(new File([await response.blob()],original.name,{type:"application/pdf"}),unit.title);
-        return kind==="learnerWorkbook"?{...document,title:"Learner Workbook"}:document;
+        const title={learnerGuide:"Learner Guide",learnerWorkbook:"Learner Workbook",practicalTask:"Practical Task"}[kind];
+        return importUnitPdf(new File([await response.blob()],original.name,{type:"application/pdf"}),title);
       };
-      const workbook=learnerWorkbook??await recoverSourceDocument("learnerWorkbook");
-      const practical=practicalTask?.sourceText!==undefined?practicalTask:await recoverSourceDocument("practicalTask")??practicalTask;
-      let next=buildUnitContent(unit,source,{minutes});
+      const workbook=learnerWorkbook?.replica?learnerWorkbook:await recoverSourceDocument("learnerWorkbook")??learnerWorkbook;
+      const practical=practicalTask?.replica?practicalTask:await recoverSourceDocument("practicalTask")??practicalTask;
+      const guide=learnerGuide?.replica?learnerGuide:await recoverSourceDocument("learnerGuide")??learnerGuide;
+      const documentsOnly=!generateLessons;
+      let next:UnitContent=documentsOnly
+        ? structuredClone(content??{lesson:[],exercises:[],assignments:[],quiz:[]})
+        : buildUnitContent(unit,source,{minutes});
       const preservedWorkbook=!workbook&&unit.us==="114074"&&content?.workbook?structuredClone(content.workbook):undefined;
       if(preservedWorkbook)next.workbook=preservedWorkbook;
       if(practical)next.practicalTask=practical;
       if(workbook){next.learnerWorkbook=workbook;next.workbook=undefined;}
+      if(guide)next.learnerGuide=guide;
       next.editableDocuments=editableDocuments;
       // Pasted or photographed logbook content builds the logbook directly; AI output (when on) may refine it.
-      const pastedLogbook=logbookContent.trim()?logbookFromSource(unit,logbookContent):undefined;
+      const pastedLogbook=generateLessons&&logbookContent.trim()?logbookFromSource(unit,logbookContent):undefined;
       if(pastedLogbook)next.logbook=pastedLogbook;
-      if(ai){
+      if(ai&&!documentsOnly){
         setBusy("Researching the unit standard and creating the tabs with OpenAI...");
         const token=(await supabase?.auth.getSession())?.data.session?.access_token;
         const response=await fetch("/api/enhance-unit-content",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({unit,source,minutes,model:loadContentModel(),presentationModel:loadPresentationModel(),lessonStructure:next.lesson.map(section=>({heading:section.heading,paragraphs:section.paragraphs})),activityContent:activityBlocks.map((block,index)=>`Activity ${index+1} heading:\n${block.heading.trim()||`Activity ${index+1}`}\n\nActivity ${index+1} content:\n${block.text.trim()}`).filter(text=>text.trim()).join("\n\n--- ACTIVITY SEPARATOR ---\n\n"),selfAssessmentContent,logbookContent}),signal:AbortSignal.timeout(85_000)});
@@ -239,7 +254,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
         if(preservedWorkbook)next.workbook=preservedWorkbook;
         if(result.usage) void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.input_tokens??result.usage.prompt_tokens??0,completionTokens:result.usage.output_tokens??result.usage.completion_tokens??0,totalTokens:result.usage.total_tokens??0});
       }
-      await publish(next,source,ai);
+      await publish(next,documentsOnly?(built?.source??""):source,documentsOnly?(built?.aiUsed??false):ai);
       doneBusy(()=>select("content"));
     }catch(e){setError(unitBuilderError(e,"The unit could not be built. Your current content is unchanged."));setBusy("");}
   };
@@ -248,18 +263,18 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     if(!file)return;
     setError("");setMessage("");
     try{
-      setBusy(kind==="practicalTask"?"Converting practical task PDFâ€¦":"Reading source PDFâ€¦");
+      setBusy("Keeping original PDF pages and adding editable fields...");
+      const title={learnerGuide:"Learner Guide",learnerWorkbook:"Learner Workbook",practicalTask:"Practical Task"}[kind];
+      const converted=await importUnitPdf(file,title);
       if(kind==="learnerGuide"){
-        setSource(await importUnitSource(file));setFileName(file.name);
+        setLearnerGuide(converted);
       }else if(kind==="practicalTask"){
-        const converted=await importPracticalTask(file,unit.title);
         setPracticalTask(converted);setPracticalTaskFileName(file.name);
       }else{
-        const converted=await importPracticalTask(file,unit.title);
-        setLearnerWorkbook({...converted,title:"Learner Workbook"});
+        setLearnerWorkbook(converted);
       }
       setSourceDocumentFiles(current=>({...current,[kind]:file}));
-      setMessage(`${file.name} is ready and will be uploaded with the unit build.`);
+      setMessage(`${file.name}: all ${converted.sourcePageCount} original pages are ready with editable answer areas. The PDF layout has not been changed.`);
     }catch(err){setError(err instanceof Error?err.message:String(err));}
     finally{setBusy("");}
   };
@@ -323,17 +338,17 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   const restore=async(version:BuiltUnitVersion)=>{setError("");setMessage("");setBusy("Restoring saved version…");try{await saveBuiltUnit(unit.us,unitVersionArchive(version));onSaved();setMessage(`The version saved on ${versionLabel(version)} is now live. The version it replaced is still restorable.`);}catch(e){setError(String(e));}finally{setBusy("");}};
   const navItems:{id:BuilderView;label:string;icon:string;hint:string}[]=[
     {id:"content",label:"Content and structure",icon:"layers",hint:"Edit every tab of this unit"},
-    {id:"build",label:built?"Rebuild from source":"Build from source",icon:"document",hint:"Import teaching material"},
+    {id:"build",label:built?"Rebuild documents":"Build documents",icon:"document",hint:"Original PDFs, editable fields"},
     ...(built?[
       {id:"files" as const,label:"Files and exports",icon:"download",hint:"PDF, PowerPoint and answer guide"},
       {id:"versions" as const,label:"Version history",icon:"clock",hint:versions.length?`${versions.length} restorable`:"No earlier versions"},
       ...(unit.us==="114046"?[]:[{id:"delete" as const,label:"Delete unit",icon:"trash",hint:"Remove this build"}]),
     ]:[]),
   ];
-  const heading={content:"Content and structure",build:built?"Rebuild from source":"Build from source",files:"Files and exports",versions:"Version history",delete:"Delete unit"}[activeView];
+  const heading={content:"Content and structure",build:built?"Rebuild documents":"Build documents",files:"Files and exports",versions:"Version history",delete:"Delete unit"}[activeView];
   const intro={
     content:dirty?"You have unsaved changes. Saving updates every tab and rebuilds the download files.":"Expand a card to edit it. Saving updates every tab and rebuilds the download files.",
-    build:"Paste or import the teaching material, then build every tab from it.",
+    build:"Upload your PDFs to keep the same documents and make their fields editable. Lesson generation is separate and optional.",
     files:"Regenerate the download files from the content that is live now.",
     versions:`The last ${MAX_UNIT_HISTORY} builds stay restorable.`,
     delete:"Remove this built unit. Learner work is retained.",
@@ -393,18 +408,39 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
               <div className="unit-action-card-copy"><h3>Deleted build backup available</h3><p>Restore the saved lessons, learner activities, quizzes and files from the build deleted on {new Date(deletedBackup.createdAt).toLocaleString("en-ZA",{dateStyle:"medium",timeStyle:"short"})}.</p></div>
               <button type="button" className="btn" disabled={!!busy} onClick={()=>{setError("");setBusy("Restoring deleted build…");void restoreDeletedBuiltUnit(unit.us).then(()=>{setMessage("The deleted build has been restored.");onSaved();}).catch(e=>setError(e instanceof Error?e.message:"The deleted build could not be restored.")).finally(()=>setBusy(""));}}><Icon name="refresh" size={15}/>Restore deleted build</button>
             </div>}
-            {built&&<p className="muted">Building replaces this unit's learning content. The last {MAX_UNIT_HISTORY} versions stay restorable from Version history. Learner work is retained.</p>}
+            {built&&<p className="muted">Publishing PDFs keeps existing lesson content unless you explicitly enable lesson generation. The last {MAX_UNIT_HISTORY} versions stay restorable from Version history. Learner work is retained.</p>}
             <section className="unit-build-step">
-              <header className="unit-build-step-head"><span className="unit-editor-index">1</span><div><h3>Source content</h3><p>Paste your teaching material or import a document. Use headings such as “# Estimating effort” with a blank line before the supporting paragraphs.</p></div></header>
+              <header className="unit-build-step-head"><span className="unit-editor-index">1</span><div><h3>Original PDFs with editable fields</h3><p>Keep the same text, tables, branding and page layout. Only add editable answer fields. No redesign or AI rewriting.</p></div></header>
               <div className="unit-settings-card">
+                <div className="unit-source-field"><span>Upload blank training documents, up to 20 MB and 250 pages per PDF. Fill &amp; sign lets learners complete additional answer areas.</span>
+                  {([[
+                    "learnerGuide","Learner Guide PDF","Upload learner guide PDF"
+                  ],[
+                    "practicalTask","Practical Task PDF","Upload practical task PDF"
+                  ],[
+                    "learnerWorkbook","Learner Workbook PDF","Upload learner workbook PDF"
+                  ]] as [keyof UnitSourceDocuments,string,string][]).map(([kind,label,aria])=><div className="unit-settings-row" key={kind}><span className="unit-settings-copy"><strong>{label}</strong><span>{kind==="practicalTask"?(practicalTaskFileName||sourceDocumentName(kind)):sourceDocumentName(kind)}</span></span><label className="unit-import-button"><span>{built?.files.sourceDocuments?.[kind]||sourceDocumentFiles[kind]?"Replace PDF":"Choose PDF"}</span><input aria-label={aria} type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={e=>{const file=e.target.files?.[0];e.target.value="";void chooseSourceDocument(kind,file);}}/></label></div>)}
+                  {learnerGuide?.replica&&<span className="muted">Learner Guide ready: {learnerGuide.sourcePageCount} original pages with editable fields.</span>}
+                  {practicalTask?.replica&&<span className="muted">Practical Task ready: {practicalTask.sourcePageCount} original pages with editable fields.</span>}
+                  {learnerWorkbook?.replica&&<span className="muted">Learner Workbook ready: {learnerWorkbook.sourcePageCount} original pages with editable fields. No replacement cover or generated questions.</span>}
+                </div>
+                <div className="unit-source-field"><strong>Additional editable PDF tabs</strong><span>Each PDF keeps its original pages and layout, with editable fields added in place.</span><div className="unit-settings-row"><span className="unit-settings-copy"><strong>Add another PDF</strong><span>PDF up to 20 MB and 250 pages · multiple documents supported</span></span><label className="unit-import-button"><span>Choose PDF</span><input aria-label="Upload an additional editable PDF" type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Keeping original PDF pages and adding editable fields...");setError("");try{const base=file.name.replace(/\.pdf$/i,"").replace(/^SAQA\s*-?\s*\d+\s*-?\s*/i,"").trim()||"Document";const title=/learner\s*workbook/i.test(base)?"Learner Workbook":/learner\s*guide/i.test(base)?"Learner Guide":/practical/i.test(base)?"Practical Task":base;const document=await importUnitPdf(file,title);const entry={id:crypto.randomUUID(),title,sourceName:file.name,document};setEditableDocuments(current=>[...current,entry]);setMessage(`Added ${file.name}: ${document.sourcePageCount} original pages with editable fields.`);}catch(err){setError(err instanceof Error?err.message:String(err));}finally{setBusy("");}}}/></label></div>{editableDocuments.map(item=><div className="unit-settings-row" key={item.id}><span className="unit-settings-copy"><strong>{item.title}</strong><span>{item.sourceName} · {item.document.sourcePageCount??item.document.sections.length} pages</span></span><button type="button" className="btn ghost sm" disabled={!!busy} onClick={()=>setEditableDocuments(current=>current.filter(document=>document.id!==item.id))}>Remove</button></div>)}</div>
+              </div>
+            </section>
+            <section className="unit-build-step">
+              <header className="unit-build-step-head"><span className="unit-editor-index">2</span><div><h3>Optional lesson generation</h3><p>Leave off to publish only the original PDFs above. This separate source text creates lesson slides; it does not change the uploaded unit documents.</p></div></header>
+              <div className="unit-settings-card">
+                <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Also generate lesson tabs</strong><span>Off by default. Leave off to only add editable fields to your PDFs and keep existing lessons.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={generateLessons} disabled={!!busy} onChange={e=>setGenerateLessons(e.target.checked)}/></label>
+                {generateLessons&&<>
                 <div className="unit-settings-row"><div className="unit-settings-copy"><strong>Import content</strong><span>{fileName || "TXT, Markdown, PDF, DOCX or PPTX"}</span></div>
                   <label className="unit-import-button"><span>Choose file</span><input aria-label="Import teaching content" type="file" accept=".txt,.md,.pdf,.docx,.pptx" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Reading source document…");setError("");try{setSource(await importUnitSource(file));setFileName(file.name);}catch(err){setError(String(err));}finally{setBusy("");}}}/></label>
                 </div>
                 <label className="unit-source-field"><strong>Source content</strong><span>Paste the teaching material for this unit.</span><textarea rows={7} value={source} maxLength={MAX_SOURCE_LENGTH} disabled={!!busy} onChange={e=>setSource(e.target.value)} placeholder={`Paste the content for US ${unit.us} here…`}/></label>
+                </>}
               </div>
             </section>
-            <section className="unit-build-step">
-              <header className="unit-build-step-head"><span className="unit-editor-index">2</span><div><h3>Activities, self-assessment and logbook</h3><p>Optional. Add the activity wording, competence checklist and logbook content the build should include.</p></div></header>
+            {generateLessons&&<section className="unit-build-step">
+              <header className="unit-build-step-head"><span className="unit-editor-index">3</span><div><h3>Optional supporting content</h3><p>Activity, self-assessment and logbook text applies to lesson generation only.</p></div></header>
               <div className="unit-settings-card">
                 <div className="unit-source-field"><strong>Activity and learner workbook content</strong><span>Add each activity in its own box. Include its specific outcome, exact question wording and marks. Every distinct marked question becomes its own learner-workbook answer box; questions under the same specific outcome stay grouped together.</span>
                   {activityBlocks.map((block,index)=><div className="unit-activity-block" key={index}>
@@ -424,39 +460,27 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
                   <div className="unit-settings-row unit-logbook-import"><span className="unit-settings-copy"><strong>Read logbook image</strong><span>{logbookImageName || "PNG, JPEG or WebP screenshots/photos"}</span></span><label className="unit-import-button"><span>Upload image</span><input aria-label="Upload logbook image" type="file" accept="image/png,image/jpeg,image/webp" multiple disabled={!!busy} onChange={async e=>{const files=e.target.files;e.target.value="";await readLogbookImages(files);}}/></label></div>
                   <label>Logbook text<textarea rows={7} value={logbookContent} disabled={!!busy} onChange={e=>setLogbookContent(e.target.value)} placeholder="Example: embedded knowledge questions with checklist ticks, practical activities, workplace activities, other activities, project evidence and project checklist..."/></label>
                 </div>
-                <div className="unit-source-field"><strong>Unit document PDFs</strong><span>Source styling is removed before building. The guide supplies lesson text. The actual uploaded practical task and workbook become editable HTML documents, preserving all extracted wording, numbering, tables and page boundaries without AI rewriting. Original PDFs are kept for reference.</span>
-                  {([[
-                    "learnerGuide","Learner Guide PDF","Upload learner guide PDF"
-                  ],[
-                    "practicalTask","Practical Task PDF","Upload practical task PDF"
-                  ],[
-                    "learnerWorkbook","Learner Workbook PDF","Upload learner workbook PDF"
-                  ]] as [keyof UnitSourceDocuments,string,string][]).map(([kind,label,aria])=><div className="unit-settings-row" key={kind}><span className="unit-settings-copy"><strong>{label}</strong><span>{kind==="practicalTask"?(practicalTaskFileName||sourceDocumentName(kind)):sourceDocumentName(kind)}</span></span><label className="unit-import-button"><span>{built?.files.sourceDocuments?.[kind]||sourceDocumentFiles[kind]?"Replace PDF":"Choose PDF"}</span><input aria-label={aria} type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={e=>{const file=e.target.files?.[0];e.target.value="";void chooseSourceDocument(kind,file);}}/></label></div>)}
-                  {practicalTask&&<span className="muted">Practical Task ready: {practicalTask.sections.length} editable sections will be published.</span>}
-                  {learnerWorkbook&&<span className="muted">Learner Workbook ready: the uploaded pages become editable HTML in the Eruditio workbook layout, with its logo, orange cover and learner fields. Uploaded wording and questions replace generated workbook tasks.</span>}
-                </div>
-                <div className="unit-source-field"><strong>Additional editable PDF tabs</strong><span>Upload learner workbooks, learner guides, assessments or other unit documents. Each PDF becomes its own editable HTML tab.</span><div className="unit-settings-row"><span className="unit-settings-copy"><strong>Convert another PDF</strong><span>PDF up to 20 MB · multiple documents supported</span></span><label className="unit-import-button"><span>Choose PDF</span><input aria-label="Upload an additional editable PDF" type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Converting PDF into editable HTML...");setError("");try{const document=await importPracticalTask(file,unit.title);const base=file.name.replace(/\.pdf$/i,"").replace(/^SAQA\s*-?\s*\d+\s*-?\s*/i,"").trim()||"Document";const title=/learner\s*workbook/i.test(base)?"Learner Workbook":/learner\s*guide/i.test(base)?"Learner Guide":/practical/i.test(base)?"Practical Task":base;const entry={id:crypto.randomUUID(),title,sourceName:file.name,document:{...document,title}};setEditableDocuments(current=>[...current,entry]);setMessage(`Created the editable ${title} tab from ${file.name}.`);}catch(err){setError(err instanceof Error?err.message:String(err));}finally{setBusy("");}}}/></label></div>{editableDocuments.map(item=><div className="unit-settings-row" key={item.id}><span className="unit-settings-copy"><strong>{item.title}</strong><span>{item.sourceName} · {item.document.sections.length} sections</span></span><button type="button" className="btn ghost sm" onClick={()=>setEditableDocuments(current=>current.filter(document=>document.id!==item.id))}>Remove</button></div>)}</div>
               </div>
-            </section>
-            <section className="unit-build-step">
-              <header className="unit-build-step-head"><span className="unit-editor-index">3</span><div><h3>Build settings</h3><p>When AI is enabled, OpenAI lays out every word of the source as balanced, professionally structured textbook slides without rewriting or shortening it. It also researches the unit standard and creates the matching supporting tabs.</p></div></header>
+            </section>}
+            {generateLessons&&<section className="unit-build-step">
+              <header className="unit-build-step-head"><span className="unit-editor-index">4</span><div><h3>Lesson generation settings</h3><p>These settings apply only to separately supplied lesson source text. Uploaded PDFs are never redesigned or rewritten.</p></div></header>
               <div className="unit-settings-card">
                 <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Session duration</strong><span>Planned teaching time in minutes.</span></span><input aria-label="Session duration in minutes" className="unit-duration" type="number" min={60} max={2400} value={minutes} disabled={!!busy} onChange={e=>setMinutes(Math.min(2400,Math.max(60,Number(e.target.value))))}/></label>
                 <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Build with OpenAI web research</strong><span>Use OpenAI to structure professional lesson slides and build the supporting tabs.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={ai} disabled={!!busy} onChange={e=>setAi(e.target.checked)}/></label>
               </div>
-            </section>
+            </section>}
             <div className="unit-build-footer">
-              {confirmBuild&&!busy&&<p className="unit-confirm" role="alert">Rebuilding replaces every tab of US {unit.us} with the content above. The current version stays restorable for the next {MAX_UNIT_HISTORY} builds.</p>}
+              {confirmBuild&&!busy&&<p className="unit-confirm" role="alert">{!generateLessons?"Publish the selected PDFs without changing their layout or replacing existing lessons?":"Rebuild the lessons and supporting content while keeping uploaded PDFs unchanged?"} The current version stays restorable for the next {MAX_UNIT_HISTORY} builds.</p>}
               <div className="unit-build-footer-actions">
-                <button type="button" className="btn unit-build-action" disabled={!!busy||source.trim().length<100} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>{if(built&&!confirmBuild){setConfirmBuild(true);setError("");setMessage("");return;}setConfirmBuild(false);void build();}}><span>{busy?`Creating ${busyProgress}%`:!built?"Build complete unit standard":confirmBuild?"Yes, replace the saved unit":"Rebuild complete unit standard"}</span></button>
+                <button type="button" className="btn unit-build-action" disabled={!!busy||(generateLessons?source.trim().length<100:!hasPdfDocuments)} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>{if(built&&!confirmBuild){setConfirmBuild(true);setError("");setMessage("");return;}setConfirmBuild(false);void build();}}><span>{busy?`Creating ${busyProgress}%`:confirmBuild?"Yes, publish the updated unit":!generateLessons?"Save original PDFs with editable fields":!built?"Build complete unit standard":"Rebuild complete unit standard"}</span></button>
                 {confirmBuild&&!busy&&<button type="button" className="btn ghost" onClick={()=>setConfirmBuild(false)}>Cancel</button>}
-                {source.trim().length<100&&!busy&&<span className="muted">Add at least 100 characters of source content to build.</span>}
+                {!busy&&<span className="muted">{generateLessons?"Add at least 100 characters of separate lesson source text. Uploaded PDFs remain unchanged.":"Upload PDFs to publish the same documents with editable fields. Lesson generation is off."}</span>}
               </div>
             </div>
           </div>
           :activeView==="files"?<div className="unit-workspace-cards">
             {built&&built.files.sourceDocuments&&Object.values(built.files.sourceDocuments).some(Boolean)&&<div className="unit-action-card">
-              <div className="unit-action-card-copy"><h3>Original unit documents</h3><p>The source PDFs uploaded with this build. Replacements are uploaded from Rebuild from source.</p></div>
+              <div className="unit-action-card-copy"><h3>Original unit documents</h3><p>The source PDFs uploaded with this build. Replacements are uploaded from Rebuild documents.</p></div>
               <div className="unit-action-card-actions">
                 {(["learnerGuide","practicalTask","learnerWorkbook"] as (keyof UnitSourceDocuments)[]).map(kind=>{
                   const document=built.files.sourceDocuments?.[kind];

@@ -6,6 +6,7 @@ import { analysePage, estimateSkew, extractLayer, textColour, type PageAnalysis,
 import { supabase } from "./supabase";
 
 GlobalWorkerOptions.workerSrc = workerUrl;
+export const PDF_WASM_URL = `${import.meta.env.BASE_URL}pdfjs-wasm/`;
 
 export const FORM_UPLOAD_ACCEPT = ".pdf,.docx,.png,.jpg,.jpeg,.webp,.bmp,.gif";
 export const MAX_FORM_UPLOAD_BYTES = 25 * 1024 * 1024;
@@ -273,7 +274,7 @@ function widgetBox(page: PDFPageProxy, rect: number[]): FormBox | null {
 }
 
 /** Fields declared inside a fillable PDF, placed exactly where its widgets sit. */
-async function pdfFields(document: PDFDocumentProxy): Promise<FormDefinition | undefined> {
+async function pdfFields(document: PDFDocumentProxy, preservePdf = false): Promise<FormDefinition | undefined> {
   const objects = await document.getFieldObjects();
   if (!objects) return undefined;
   const metadata = new Map<string, { required: boolean; readOnly: boolean; label: string; widgets: WidgetBox[] }>();
@@ -320,17 +321,19 @@ async function pdfFields(document: PDFDocumentProxy): Promise<FormDefinition | u
     fields.push({ id: `field_${fields.length + 1}`, label: info?.label || field.alternativeText || name, type, required: info?.required === true || field.required === true, helpText: "", options: unique, ...(placement ? { placement } : {}), ...(Number.isInteger(field.charLimit) && (field.charLimit as number) > 0 ? { maxLength: field.charLimit as number } : {}) });
   }
   if (!fields.length) return undefined;
-  return parseFormDefinition({ title: "Imported form", description: "", sections: [{ id: "section_1", title: "Form details", description: "", fields }], pages: [] });
+  const definition: FormDefinition = { title: "Imported form", description: "", titleColor: "", accentColor: "", masthead: "", display: "image", sections: [{ id: "section_1", title: "Form details", description: "", fields, columns: 4, widths: [], rows: [], banner: "", pageBreak: false }], pages: [] };
+  return preservePdf ? definition : parseFormDefinition(definition);
 }
 
-async function importPdf(file: File, signal?: AbortSignal): Promise<ImportedFormDocument> {
-  const loading = getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+async function importPdf(file: File, signal?: AbortSignal, preservePdf = false): Promise<ImportedFormDocument> {
+  const loading = getDocument({ data: new Uint8Array(await file.arrayBuffer()), wasmUrl: PDF_WASM_URL, ...(preservePdf ? { stopAtErrors: true } : {}) });
   const cancel = () => { void loading.destroy(); };
   signal?.addEventListener("abort", cancel, { once: true });
   try {
     const document = await loading.promise;
-    if (document.numPages > MAX_PAGES) throw new Error(`Upload at most ${MAX_PAGES} pages at a time.`);
-    const nativeDefinition = await pdfFields(document);
+    const limit = preservePdf ? 250 : MAX_PAGES;
+    if (document.numPages > limit) throw new Error(`Upload at most ${limit} pages at a time.`);
+    const nativeDefinition = await pdfFields(document, preservePdf);
     const texts: string[] = [];
     const images: string[] = [];
     const pages: ImportedPage[] = [];
@@ -353,11 +356,11 @@ async function importPdf(file: File, signal?: AbortSignal): Promise<ImportedForm
       const items = await textItems(page, canvas.width);
       const runs: TextRun[] = items;
       // scanned pages (with or without an OCR text layer) come in slightly rotated
-      if (!nativeDefinition) canvas = deskewCanvas(canvas, runs);
-      const analysis = nativeDefinition ? { page: pageNumber, width: canvas.width, height: canvas.height, text: [], boxes: [] } : analyseCanvas(canvas, runs, pageNumber);
-      const layer = (await hasHiddenText(page)) ? undefined : buildLayer(canvas, items, analysis);
-      pages.push({ src: canvas.toDataURL("image/jpeg", 0.85), width: canvas.width, height: canvas.height, path: "", ...(layer ? { layer } : {}), analysis });
-      if (!nativeDefinition) images.push(shrink(canvas, AI_PIXELS, 0.7));
+      if (!nativeDefinition && !preservePdf) canvas = deskewCanvas(canvas, runs);
+      const analysis = nativeDefinition && !preservePdf ? { page: pageNumber, width: canvas.width, height: canvas.height, text: [], boxes: [] } : analyseCanvas(canvas, runs, pageNumber);
+      const layer = preservePdf || (await hasHiddenText(page)) ? undefined : buildLayer(canvas, items, analysis);
+      pages.push({ src: canvas.toDataURL(preservePdf ? "image/png" : "image/jpeg", 0.85), width: canvas.width, height: canvas.height, path: "", ...(layer ? { layer } : {}), analysis });
+      if (!nativeDefinition && !preservePdf) images.push(shrink(canvas, AI_PIXELS, 0.7));
       releaseCanvas(canvas);
       page.cleanup();
     }
@@ -418,14 +421,14 @@ async function importImage(file: File): Promise<ImportedFormDocument> {
   }
 }
 
-export async function extractFormDocument(file: File, signal?: AbortSignal): Promise<ImportedFormDocument> {
+export async function extractFormDocument(file: File, signal?: AbortSignal, options?: { preservePdf?: boolean }): Promise<ImportedFormDocument> {
   const extension = checkFormUpload(file);
   checkAborted(signal);
-  const document = extension === "pdf" ? await importPdf(file, signal)
+  const document = extension === "pdf" ? await importPdf(file, signal, options?.preservePdf)
     : extension === "docx" ? await importWord(file) : await importImage(file);
   checkAborted(signal);
   // replica pages go to the AI one page per request, so only a text-only document can be too big
-  if (document.text.length > 80_000 || (!document.pages.length && new TextEncoder().encode(JSON.stringify(generationRequest(document))).length > MAX_GENERATION_BYTES)) {
+  if (!options?.preservePdf && (document.text.length > 80_000 || (!document.pages.length && new TextEncoder().encode(JSON.stringify(generationRequest(document))).length > MAX_GENERATION_BYTES))) {
     throw new Error("This form has too much content. Split it into smaller documents.");
   }
   return document;

@@ -23,12 +23,13 @@ function savedSignature(): { text?: string; path?: string } | null {
  * form gets the white sheet, hairline table grid, bold captions beside
  * write-in boxes and orange tick cells of the hand-built registration form.
  */
-export function PaperForm({ definition, answers, onChange, errors = {}, adjust, annotations, onAnnotationsChange, onLayerText, disabled = false }: {
+export function PaperForm({ definition, answers, onChange, errors = {}, adjust, annotations, onAnnotationsChange, onLayerText, disabled = false, readOnlyFields }: {
   definition: FormDefinition;
   answers: FormAnswers;
   onChange: (fieldId: string, value: FormAnswer) => void;
   errors?: Record<string, string>;
   disabled?: boolean;
+  readOnlyFields?: readonly string[];
   /** form-builder box editing for replica pages */
   adjust?: ReplicaAdjust;
   /** Acrobat-style marks the person filling in places anywhere on the pages */
@@ -52,7 +53,7 @@ export function PaperForm({ definition, answers, onChange, errors = {}, adjust, 
       : undefined;
     return (
       <>
-        <ReplicaForm definition={definition} answers={answers} onChange={onChange} errors={errors} adjust={adjust} fill={fill} onLayerText={onLayerText} />
+        <ReplicaForm definition={definition} answers={answers} onChange={onChange} errors={errors} adjust={adjust} fill={fill} onLayerText={onLayerText} readOnlyFields={readOnlyFields} />
         {unplaced.length > 0 && (
           <div className="srf-wrap paper-form-wrap replica-extra">
             <FitSheet width={1000}>
