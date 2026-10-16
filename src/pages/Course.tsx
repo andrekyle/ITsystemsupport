@@ -29,6 +29,7 @@ import { videoEngagementKey, videoQuizId } from "../lib/videoLearning";
 import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml, hydrateSlideImages, normalizeSlideDocument } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
 import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, effectiveBuiltContent } from "../components/UnitBuilder";
+import { lessonEditsAfterSplit } from "../lib/lessonSectionEdits";
 import { InlineText, InlineIconBtn } from "../components/InlineText";
 import { ActivityQuestionEditor } from "../components/ActivityQuestionEditor";
 import { UnitContentEditor } from "../components/UnitContentEditor";
@@ -2840,7 +2841,7 @@ export function UnitPage({
   const [deckReplaceError, setDeckReplaceError] = useState<string | null>(null);
   const { figures: figureImages, setFigure, removeFigure, refreshFigureUrl } = useLessonFigures(unitId);
   const failedFigureRefreshes = useRef(new Set<string>());
-  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, setAllQuizRetries: editAllQuizRetries, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection, setLessonPlan: editSetLessonPlan, setLogbook: editSetLogbook } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId, !!inlineUnit);
+  const { edits: lessonEdits, deleteSection: editDeleteSection, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, setAllQuizRetries: editAllQuizRetries, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection, setLessonPlan: editSetLessonPlan, setLogbook: editSetLogbook } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId, !!inlineUnit);
   const migratingInlineImages = useRef(new Set<string>());
   useEffect(() => {
     if (inlineUnit || profile.role !== "Super User") return;
@@ -2881,6 +2882,9 @@ export function UnitPage({
   const [generatingUnitQuiz, setGeneratingUnitQuiz] = useState(false);
   const [unitQuizCount, setUnitQuizCount] = useState(10);
   const [lessonSplitError, setLessonSplitError] = useState<string | null>(null);
+  const [deletingSlide, setDeletingSlide] = useState(false);
+  const [deleteSlideError, setDeleteSlideError] = useState("");
+  useEffect(() => { setDeleteSlideError(""); }, [unitId]);
   const [requestedEditMode, setEditMode] = useState(false);
   const editMode = !phone && requestedEditMode;
   const [unitEditOpen, setUnitEditOpen] = useState(false);
@@ -2945,6 +2949,9 @@ export function UnitPage({
   const content = inlineUnit ?? (officialSaqa
     ? { ...(baseContent ?? { lesson: [], exercises: [], assignments: [], quiz: [] }), saqa: officialSaqa }
     : baseContent);
+  const visibleLessonIndices = content?.lesson.flatMap((_, si) => lessonEdits.deletedSections?.includes(si) ? [] : [si]) ?? [];
+  const activeLessonIndex = visibleLessonIndices.includes(lessonStep) ? lessonStep
+    : visibleLessonIndices.find(si => si >= lessonStep) ?? visibleLessonIndices.at(-1);
   const practicalTask = content?.practicalTask ?? practicalTaskForUnit(u.us);
   const workbookEnabled = unitId !== "114074";
   // The lesson plan shown on the tab: inline table edits (shared, cloud-synced) win over the generated plan.
@@ -2974,6 +2981,22 @@ export function UnitPage({
     else if (profile.role !== "Super User" && tab === "memo") setTab("workbook");
   }, [profile.role, tab, workbookEnabled]);
   const unitText = (value: string, update: (draft: UnitContent, text: string) => void, label = "Content") => <InlineText value={value} editable={isSuperUser && !!inlineUnit} multiline placeholder={label} onSave={text => setInlineUnit(current => { if (!current) return current; const next = structuredClone(current); update(next, text); return next; })} />;
+  const deleteLessonSlide = async (si: number) => {
+    if (!isSuperUser || deletingSlide) return;
+    setDeletingSlide(true);
+    setDeleteSlideError("");
+    try {
+      await editDeleteSection(si);
+      setLessonStep(visibleLessonIndices.find(index => index > si) ?? visibleLessonIndices.filter(index => index < si).at(-1) ?? 0);
+      setPasteEditor(null);
+      setEditMode(!!inlineUnit);
+      setSlideEditOpen(!!inlineUnit);
+    } catch (error) {
+      setDeleteSlideError(error instanceof Error ? error.message : "The slide could not be deleted. Please retry.");
+    } finally {
+      setDeletingSlide(false);
+    }
+  };
 
   const blankBuiltActivity = (): Exercise => ({
     id: `manual-activity-${crypto.randomUUID()}`,
@@ -3073,7 +3096,12 @@ export function UnitPage({
       slideQuiz: original.slideQuiz,
     };
     nextContent.lesson.splice(si, 1, current, moved);
-    await saveBuiltContent(nextContent);
+    const revision = crypto.randomUUID();
+    const editKey = `itss.lessonedits.${courseScopedUnit(`${unitId}.built-${builtUnit.revision}`)}`;
+    const shiftedEdits = lessonEditsAfterSplit(cachedLessonEdits(editKey, lessonEdits), si,
+      Object.keys(figureImages).filter(id => /^lesson-added-\d+-/.test(id)));
+    await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(`${unitId}.built-${revision}`)}`, shiftedEdits);
+    await saveBuiltUnit(unitId, { ...builtUnit, revision, content: nextContent, createdAt: new Date().toISOString() });
     setLessonStep(si + 1);
     setEditMode(true);
   };
@@ -3217,10 +3245,10 @@ export function UnitPage({
   // working through the training material — credit "Lesson & Training Aids"
   // automatically so lessons count toward progress without a manual tick.
   useEffect(() => {
-    if (!content || !content.lesson.length) return;
+    if (!content || !visibleLessonIndices.length) return;
     if (acts["Lesson & Training Aids"]) return;
-    const lastIdx = content.lesson.length - 1;
-    if (lessonStep < lastIdx) return;
+    const lastIdx = visibleLessonIndices[visibleLessonIndices.length - 1];
+    if (activeLessonIndex !== lastIdx) return;
     const lastQuiz = content.lesson[lastIdx].slideQuiz ?? [];
     const answers = lessonQuizAnswers[lastIdx] ?? [];
     const passed =
@@ -3230,7 +3258,7 @@ export function UnitPage({
       ));
     if (passed) toggleActivity(u.us, "Lesson & Training Aids");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lessonStep, lessonQuizAnswers, content, u.us]);
+  }, [lessonStep, lessonQuizAnswers, content, u.us, lessonEdits.deletedSections, activeLessonIndex]);
 
   // Record each passed slide gate in the unit's progress logbook so it counts
   // toward the learner's XP (see computeGamification) and staff results views.
@@ -3239,6 +3267,7 @@ export function UnitPage({
     const logbook = progress.units[u.us]?.logbook ?? {};
     content.lesson.forEach((sec, si) => {
       const quiz = sec.slideQuiz ?? [];
+      if (lessonEdits.deletedSections?.includes(si)) return;
       if (!quiz.length) return;
       const key = `slidegate.${si}`;
       if (logbook[key] === true) return;
@@ -3248,13 +3277,16 @@ export function UnitPage({
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lessonQuizAnswers, content, u.us]);
+  }, [lessonQuizAnswers, content, u.us, lessonEdits.deletedSections]);
 
   /** Added images share the existing per-unit figure storage, including cloud sync. */
   const sectionFigures = (si: number, originals: LessonFigure[] = []): LessonFigure[] => [
     ...originals,
     ...Object.keys(figureImages)
-      .filter((id) => id.startsWith(`lesson-added-${si}-`))
+      .filter((id) => {
+        const original = id.match(/^lesson-added-(\d+)-/);
+        return original && (lessonEdits.figureSections?.[id] ?? Number(original[1])) === si;
+      })
       .sort()
       .map((id, index) => ({
         id,
@@ -3267,6 +3299,7 @@ export function UnitPage({
     if (!content) return [];
     const out: PresenterSlide[] = [];
     content.lesson.forEach((sec, si) => {
+      if (lessonEdits.deletedSections?.includes(si)) return;
       sectionFigures(si, sec.figures).forEach((fig) => {
         const up = figureImages[fig.id];
         const def = FIGURE_DEFAULTS[fig.id];
@@ -3647,7 +3680,7 @@ export function UnitPage({
 
           {content && (() => {
             const parts = [
-              `a ${content.lesson.length}-section lesson`,
+              `a ${visibleLessonIndices.length}-section lesson`,
               content.exercises.length ? `${content.exercises.length} exercises` : null,
               content.assignments.length ? `${content.assignments.length} assignments` : null,
               content.quiz.length ? `a ${content.quiz.length}-question knowledge check` : null,
@@ -3811,13 +3844,20 @@ export function UnitPage({
           )}
           {figUploading && <p role="status">Saving image...</p>}
           {figError && <p className="auth-error" role="alert">{figError}</p>}
+          {deleteSlideError && <p className="auth-error" role="alert">{deleteSlideError}</p>}
+          {!visibleLessonIndices.length && <p role="status">No slides remain in this lesson.</p>}
+          {inlineUnit && isSuperUser && <EditingTools active title="Save lesson draft" order={5}
+            description="Publish the draft, including removed slides, or cancel its changes.">
+            <div className="unit-editor-actions" ref={setInlineActionsTarget} />
+          </EditingTools>}
           {content.lesson.map((originalSection, si) => {
             const sec = { ...originalSection, figures: sectionFigures(si, originalSection.figures) };
             // edX-style wizard: only render the section that is currently on screen
-            if (si !== Math.min(lessonStep, content.lesson.length - 1)) return null;
-            const total = content.lesson.length;
-            const isFirst = si === 0;
-            const isLast = si === total - 1;
+            if (si !== activeLessonIndex) return null;
+            const total = visibleLessonIndices.length;
+            const position = visibleLessonIndices.indexOf(si);
+            const isFirst = position === 0;
+            const isLast = position === total - 1;
             const go = (next: number) => {
               setLessonStep(next);
               document.querySelector(".content")?.scrollTo({ top: 0, behavior: "smooth" });
@@ -3873,7 +3913,7 @@ export function UnitPage({
             const allFigIds = sec.figures?.map((f) => f.id) ?? [];
             const editable = editMode && isSuperUser;
             const figControls = (fig: LessonFigure) => (
-              <EditingTools active={editable} title={`Slide ${si + 1}: ${plainSlideText(capOf(fig.id, fig.caption)) || "Image"}`}>
+              <EditingTools active={editable} title={`Slide ${position + 1}: ${plainSlideText(capOf(fig.id, fig.caption)) || "Image"}`}>
               <div className="fig-edit" style={{ position: "static", maxWidth: "100%" }} onClick={(e) => e.stopPropagation()}>
                 <button
                   type="button"
@@ -3980,7 +4020,7 @@ export function UnitPage({
                         <img className="lesson-hero-img" src={src} alt={plainSlideText(heroCap)} style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
                         <div className="lesson-hero-shade" />
                         <div className="lesson-hero-body">
-                          <div className="lesson-hero-eyebrow">Section {si + 1}</div>
+                          <div className="lesson-hero-eyebrow">Section {position + 1}</div>
                           <SlideEditableText as="div"
                             className="lesson-hero-title"
                             contentEditable={editable}
@@ -4082,7 +4122,7 @@ export function UnitPage({
                     </button>
                   )}
                   {editMode && isSuperUser && generatedQuiz && (
-                    <EditingTools active title={`Slide ${si + 1}: generated quiz`}>
+                    <EditingTools active title={`Slide ${position + 1}: generated quiz`}>
                     <button type="button" className="btn ghost lesson-quiz-reveal" onClick={() => editDeleteGeneratedQuiz(si)} title="Delete the entire generated quiz">
                       <Icon name="trash" size={14} /> Delete quiz
                     </button>
@@ -4878,10 +4918,10 @@ export function UnitPage({
                 <div className="lesson-stepper-top">
                   <span className="lesson-section-ring" role="progressbar"
                     aria-label="Lesson section progress" aria-valuemin={0} aria-valuemax={100}
-                    aria-valuenow={Math.round(((si + 1) / total) * 100)}
-                    aria-valuetext={`Section ${si + 1} of ${total}`}
-                    title={`Section ${si + 1} of ${total}: ${plainSlideText(secHeading)}`}>
-                    <Ring value={(si + 1) / total} size={48} stroke={4} showLabel />
+                    aria-valuenow={Math.round(((position + 1) / total) * 100)}
+                    aria-valuetext={`Section ${position + 1} of ${total}`}
+                    title={`Section ${position + 1} of ${total}: ${plainSlideText(secHeading)}`}>
+                    <Ring value={(position + 1) / total} size={48} stroke={4} showLabel />
                   </span>
                   {isSuperUser && !slideEditOpen && !editable && lessonSaveStatus === "saved" && (
                     <span className="lesson-save-status" role="status">Saved to cloud</span>
@@ -4891,7 +4931,7 @@ export function UnitPage({
                       type="button"
                       className="btn ghost sm"
                       disabled={isFirst}
-                      onClick={() => go(si - 1)}
+                      onClick={() => go(visibleLessonIndices[position - 1])}
                       title="Previous section"
                     >
                       <Icon name="chevronLeft" size={14} />
@@ -4901,7 +4941,7 @@ export function UnitPage({
                       type="button"
                       className="btn ghost sm"
                       disabled={!quizPassed}
-                      onClick={() => (isLast ? setTab("exercises") : go(si + 1))}
+                      onClick={() => (isLast ? setTab("exercises") : go(visibleLessonIndices[position + 1]))}
                       title={
                         !quizPassed
                           ? "Answer this section's questions to unlock Next"
@@ -4914,9 +4954,19 @@ export function UnitPage({
                       <Icon name="chevronRight" size={14} />
                     </button>
                   </span>
+                  {isSuperUser && <button type="button" className="btn ghost sm"
+                    disabled={deletingSlide || savingLesson || figUploading}
+                    onClick={() => setTableConfirm({
+                      title: "Delete slide?",
+                      message: `Delete slide ${position + 1}: ${plainSlideText(secHeading)}? Its text, images, videos and questions will no longer appear in the lesson.`,
+                      confirmLabel: "Delete slide",
+                      action: () => { void deleteLessonSlide(si); },
+                    })}>
+                    <Icon name="trash" size={14} />{deletingSlide ? "Deleting slide..." : "Delete slide"}
+                  </button>}
                   {isPrivileged && (
                     <>
-                      <EditingTools active={slideEditOpen || editable} title={`Slide ${si + 1} · Save and finish`} order={0}
+                      <EditingTools active={slideEditOpen || editable} title={`Slide ${position + 1} · Save and finish`} order={0}
                         description="Save your changes under Slide content and images before closing the slide tools.">
                         <button type="button" className="btn ghost sm slide-tool-action" disabled={savingLesson || !!inlineUnit}
                           onClick={() => { setSlideEditOpen(false); setEditMode(false); }}>
@@ -4986,7 +5036,9 @@ export function UnitPage({
                           {builtUnit && <>
                             <p className="editing-tool-description">To split a slide, place the cursor in its text. Everything after the cursor moves to a new slide.</p>
                             <button type="button" className="btn ghost sm slide-tool-action" onMouseDown={event => event.preventDefault()}
-                              onClick={() => void splitBuiltLessonAtCursor(si)}>
+                              disabled={!!inlineUnit || savingLesson || deletingSlide}
+                              title={inlineUnit ? "Save the inline draft before splitting slides" : undefined}
+                              onClick={() => void splitBuiltLessonAtCursor(si).catch(error => setLessonSplitError(error instanceof Error ? error.message : "The slide could not be split. Please retry."))}>
                               <Icon name="chevronRight" size={13} />Split slide at cursor
                             </button>
                           </>}
@@ -5000,7 +5052,6 @@ export function UnitPage({
                       </button>}
                       {isSuperUser && lessonSaveStatus === "saved" && <p role="status">Saved to cloud.</p>}
                       {isSuperUser && lessonSaveStatus === "error" && <p className="auth-error" role="alert">{lessonSaveError}</p>}
-                      {inlineUnit && <div className="unit-editor-actions" ref={setInlineActionsTarget} />}
                       </EditingTools>
                       {isSuperUser && editMode && (
                         <EditingTools active={slideEditOpen || editable} title="Slide quiz settings" order={40} defaultOpen={false}
@@ -5057,28 +5108,30 @@ export function UnitPage({
                 <button
                   className="btn ghost"
                   disabled={isFirst}
-                  onClick={() => go(si - 1)}
+                  onClick={() => go(visibleLessonIndices[position - 1])}
                 >
                   <Icon name="chevronLeft" size={16} />
                   Previous
                 </button>
                 <span className="lesson-nav-dots">
                   <span className="lesson-nav-count">
-                    Slide {si + 1} of {total}
+                    Slide {position + 1} of {total}
                   </span>
-                  {content.lesson.map((s, i) => (
+                  {visibleLessonIndices.map((i, dotIndex) => {
+                    const s = content.lesson[i];
+                    return (
                     <button
                       key={i}
                       type="button"
                       className={`lesson-dot${i === si ? " active" : ""}${i < si ? " done" : ""}${s.lessonStart && i > 0 ? " lesson-start" : ""}`}
-                      aria-label={`Go to section ${i + 1}${s.lessonStart ? ` (start of lesson ${s.lessonStart.n})` : ""}`}
+                      aria-label={`Go to section ${dotIndex + 1}${s.lessonStart ? ` (start of lesson ${s.lessonStart.n})` : ""}`}
                       title={s.lessonStart ? `Lesson ${s.lessonStart.n} starts here` : undefined}
                       onClick={() => go(i)}
                     />
-                  ))}
+                  ); })}
                 </span>
                 {!isLast ? (
-                  <button className="btn" onClick={() => go(si + 1)} disabled={!quizPassed}>
+                  <button className="btn" onClick={() => go(visibleLessonIndices[position + 1])} disabled={!quizPassed}>
                     Next
                     <Icon name="chevronRight" size={16} />
                   </button>

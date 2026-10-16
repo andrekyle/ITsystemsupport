@@ -54,7 +54,7 @@ async function logbookImageDataUrl(file: File): Promise<string> {
     bitmap.close();
   }
 }
-export function effectiveBuiltContent(content:UnitContent, edits:LessonEdits):UnitContent {
+export function effectiveBuiltContent(content:UnitContent, edits:LessonEdits, retainDeleted = false):UnitContent {
   const next=structuredClone(content);
   next.lesson=next.lesson.map((s,si)=>({...s,heading:edits.headings?.[si]??s.heading,
     paragraphs:edits.sectionBody?.[si]?.paragraphs??s.paragraphs.map((p,pi)=>edits.paragraphs?.[`${si}:${pi}`]??p),
@@ -68,6 +68,7 @@ export function effectiveBuiltContent(content:UnitContent, edits:LessonEdits):Un
     table:s.table?{headers:s.table.headers.map((h,ci)=>edits.tableCells?.[`${si}:h:${ci}`]??h),rows:s.table.rows.map((r,ri)=>r.map((v,ci)=>edits.tableCells?.[`${si}:${ri}:${ci}`]??v))}:undefined,
   }));
   next.lesson=next.lesson.map((s,si)=>edits.sectionBody?.[si]?.richHtml!==undefined?{...s,bullets:undefined,table:undefined,cards:undefined,example:undefined,examples:undefined}:s);
+  if(!retainDeleted)next.lesson=next.lesson.filter((_,si)=>!edits.deletedSections?.includes(si));
   if(edits.lessonPlan) next.lessonPlan=structuredClone(edits.lessonPlan);
   if(edits.logbook) next.logbook=structuredClone(edits.logbook);
   return next;
@@ -176,7 +177,8 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       if(document?.replica)document.replica.pages=await storeUnitReplicaPages(document.replica.pages);
     }
     setBusy("Creating PDF, PowerPoint and answer guide…");
-    const files=await makeUnitExports(unit,next);
+    const exportContent=inlineDraft?{...next,lesson:next.lesson.filter((_,si)=>!edits.deletedSections?.includes(si))}:next;
+    const files=await makeUnitExports(unit,exportContent);
     setBusy("Saving the unit and course materials…");
     const prefix=`shared/unitbuilder/${courseScopedUnit(unit.us)}`;
     const [pdf,pptx,answers]=await Promise.all([uploadFile(prefix,files.pdf),uploadFile(prefix,files.pptx),uploadFile(prefix,files.answers)]);
@@ -321,7 +323,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     finally{setBusy("");}
   };
   const inlineActions = inlineDraft ? <>
-        <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(inlineDraft,edits),built?.source??source,built?.aiUsed??false);}catch(e){setError(inlineSaveError(e));}finally{setBusy("");}}}>{busy || "Save inline changes and update files"}</button>
+        <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(inlineDraft,edits,true),built?.source??source,built?.aiUsed??false);}catch(e){setError(inlineSaveError(e));}finally{setBusy("");}}}>{busy || "Save inline changes and update files"}</button>
         <button type="button" className="btn ghost" disabled={!!busy} onClick={onCancelInline}>Cancel inline changes</button>
       {inlineActionsTarget && error && <p role="alert" className="auth-error">{error}</p>}
       </> : null;

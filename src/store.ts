@@ -8,7 +8,7 @@ import { logAudit } from "./lib/audit";
 import { courseScopedUnit } from "./lib/courseScope";
 import { TENANT, TENANT_ID } from "./lib/tenant";
 import { tenantFilePrefix } from "./lib/files";
-import { cachedLessonEdits, loadLessonEdits, queueLessonEdits, subscribeLessonEdits } from "./lib/lessonEditStore";
+import { cachedLessonEdits, flushLessonEdits, loadLessonEdits, queueLessonEdits, receiveLessonEdits, subscribeLessonEdits } from "./lib/lessonEditStore";
 import { flushUnitPack, unitPackSnapshot } from "./lib/unitStorage";
 import { SAVED_SIGNATURE_REFERENCE } from "./lib/signature";
 import {
@@ -2495,6 +2495,10 @@ export function useOnboardingPacks() {
 /* ---------- super-user lesson edits (per unit, saved locally) ---------- */
 
 export interface LessonEdits {
+  /** Deleted slides retain their source indices so other slides' edits and learner answers stay attached. */
+  deletedSections?: number[];
+  /** Added figure ids whose slide index changed after splitting a slide. */
+  figureSections?: Record<string, number>;
   /** External video links displayed on their lesson section. */
   videos?: Record<number, string[]>;
   /** Custom display titles keyed by canonical video id. */
@@ -2580,6 +2584,19 @@ export function useLessonEdits(us: string, temporary = false) {
       }),
     [apply]
   );
+  const deleteSection = useCallback(async (sIdx: number) => {
+    const remove = (current: LessonEdits): LessonEdits => ({
+      ...current, deletedSections: Array.from(new Set([...(current.deletedSections ?? []), sIdx])),
+    });
+    if (temporary) { setEditsState(remove); return; }
+    const previous = cachedLessonEdits(key, edits);
+    try {
+      await flushLessonEdits(key, remove(previous));
+    } catch (error) {
+      receiveLessonEdits(key, JSON.stringify({ ...cachedLessonEdits(key, previous), deletedSections: previous.deletedSections }));
+      throw error;
+    }
+  }, [key, temporary, edits]);
   const setGeneratedQuiz = useCallback((sIdx: number, questions: import("./types").QuizQuestion[]) =>
     apply((d) => ({ ...d, generatedQuizzes: { ...(d.generatedQuizzes ?? {}), [sIdx]: questions } })), [apply]);
   const setQuizRetries = useCallback((sIdx: number, retries: number | null) =>
@@ -2774,7 +2791,7 @@ export function useLessonEdits(us: string, temporary = false) {
     [apply]
   );
 
-  return { edits, setHeading, setParagraph, setCaption, setKeyed, setSectionBody, setSectionBodyItem, setGeneratedQuiz, setQuizRetries, setAllQuizRetries, updateGeneratedQuizQuestion, removeGeneratedQuizQuestion, deleteGeneratedQuiz, moveFigure, setScale, setOffsetY, resetSection, setLessonPlan, setLogbook };
+  return { edits, deleteSection, setHeading, setParagraph, setCaption, setKeyed, setSectionBody, setSectionBodyItem, setGeneratedQuiz, setQuizRetries, setAllQuizRetries, updateGeneratedQuizQuestion, removeGeneratedQuizQuestion, deleteGeneratedQuiz, moveFigure, setScale, setOffsetY, resetSection, setLessonPlan, setLogbook };
 }
 
 /* ---------- user-uploaded notes (stored separately per profile) ---------- */

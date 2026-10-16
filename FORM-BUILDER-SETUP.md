@@ -83,6 +83,15 @@ tables are retained without running automatic heading/list/table inference again
 The first paragraph uses the same body typography as other paragraphs, without
 an automatic blue accent line or extra indentation, in both viewing and editing.
 
+Super Users can **Delete slide** directly beside the lesson's Previous/Next
+controls. A confirmation is required and deletion is saved through the existing
+shared lesson edits (or retained in the current inline draft until it is saved).
+Deleted slides are omitted from navigation, presentation and updated exports.
+Source indices are retained internally so remaining slides keep their text edits,
+videos, questions and learner answers. Deleting the final slide shows an empty
+lesson rather than restoring removed content. Save failures are shown on the page.
+Check with `node scripts/test-lesson-heading-browser.mjs scripts/test-slide-deletion-browser.tsx`.
+
 The slide text toolbar includes **Format painter** beside Underline. Select source
 text, click Format painter, then select destination text to apply its font, size,
 emphasis, explicit text colour, highlight and paragraph formatting once. Heading
