@@ -28,6 +28,13 @@ function verify(mode: string) {
   assert(!lesson.querySelector(".section-title,.lesson-subsection,.lesson-subheading"), `${mode}: no inferred header or heading groups`);
   assert(lesson.textContent?.includes(title) && lesson.textContent.includes(paragraph), `${mode}: title and body wording preserved`);
   assert(lesson.querySelector('[data-slide-title="true"]')?.tagName === "P", `${mode}: slide title is plain body text by default`);
+  const paragraphs = Array.from(lesson.querySelectorAll<HTMLElement>(".lesson-p"));
+  assert(paragraphs.length > 0, `${mode}: paragraph formatting fixture is present`);
+  for (const element of paragraphs) {
+    const style = getComputedStyle(element);
+    assert(style.borderLeftWidth === "0px" && style.paddingLeft === "0px", `${mode}: paragraphs have no automatic blue line or indentation`);
+    assert(style.fontSize === getComputedStyle(paragraphs[0]).fontSize && style.lineHeight === getComputedStyle(paragraphs[0]).lineHeight, `${mode}: first paragraph uses the same typography as other paragraphs`);
+  }
   const headings = Array.from(lesson.querySelectorAll("h1,h2,h3,h4"));
   assert(headings.length === (mode === "Saved rich-text lesson" ? 1 : 0), `${mode}: only author-selected headings remain`);
   if (mode === "Saved rich-text lesson") {
@@ -56,7 +63,7 @@ async function test() {
   click("Edit slide text"); await tick(); verify("Editor");
   const editor = document.querySelector<HTMLElement>(".slide-whole-editor")!;
   // Reproduce an already-saved slide whose subheadings are ordinary paragraphs.
-  editor.innerHTML = `<p data-slide-title="true">Cost estimation</p>${shortLines.map(text=>`<p>${text}</p>`).join('')}<img data-figure-id="layout-test" style="float:left;display:inline;width:80px;height:80px;margin-right:60%"><p>${title}</p><p>${paragraph}</p><h3>${nextTitle}</h3><p>${nextParagraph}</p>`;
+  editor.innerHTML = `<p class="lesson-p" data-slide-title="true">Cost estimation</p>${shortLines.map(text=>`<p class="lesson-p">${text}</p>`).join('')}<img data-figure-id="layout-test" style="float:left;display:inline;width:80px;height:80px;margin-right:60%"><p>${title}</p><p>${paragraph}</p><h3>${nextTitle}</h3><p>${nextParagraph}</p>`;
   editor.dispatchEvent(new Event("input", { bubbles: true }));
   await tick(); click("Done editing slide"); await tick(); verify("Saved rich-text lesson");
   click("Edit slide"); await tick(); click("Edit slide text"); await tick();

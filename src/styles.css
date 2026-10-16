@@ -9262,20 +9262,7 @@ a.plan-ppt:hover {
   margin-right: 4px;
 }
 
-/* ---- Lead paragraph gets bigger and darker ---- */
-.lesson-screen .lesson-section > .lesson-p:first-of-type,
-.lesson-screen .lesson-section > .slide-whole-editor > .lesson-p:first-of-type {
-  font-size: 20px;
-  line-height: 1.75;
-  color: var(--ink);
-  font-weight: 400;
-  border-left: 3px solid var(--azure-light);
-  padding-left: 14px;
-  margin-left: -2px;
-  margin-bottom: 18px;
-}
-
-/* ---- Follow-on paragraphs a bit larger too ---- */
+/* ---- Uniform lesson body paragraphs ---- */
 .lesson-screen .lesson-section > .lesson-p,
 .lesson-screen .lesson-section > .slide-whole-editor > .lesson-p {
   font-size: var(--lesson-body-size);

@@ -80,6 +80,8 @@ resizing an image does not enable text wrapping. Older floated images are
 normalised when displayed. Slide titles start as body text; use the editor's
 Paragraph style control to choose headings. Saved author-selected headings and
 tables are retained without running automatic heading/list/table inference again.
+The first paragraph uses the same body typography as other paragraphs, without
+an automatic blue accent line or extra indentation, in both viewing and editing.
 
 The slide text toolbar includes **Format painter** beside Underline. Select source
 text, click Format painter, then select destination text to apply its font, size,
