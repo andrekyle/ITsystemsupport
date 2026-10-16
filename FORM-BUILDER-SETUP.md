@@ -75,4 +75,10 @@ rotated HTML titles, editable answers, standalone HTML downloads and the no-text
 failure path. Authentication and AI responses are mocked; PDF extraction and
 HTML rendering are real. Live AI layout fidelity still needs administrator review.
 
+Lesson slide editing keeps text in normal single-column flow. Adding, moving or
+resizing an image does not enable text wrapping. Older floated images are
+normalised when displayed. Slide titles start as body text; use the editor's
+Paragraph style control to choose headings. Saved author-selected headings and
+tables are retained without running automatic heading/list/table inference again.
+
 Run `node --import tsx --test scripts/form-builder.test.ts scripts/generate-form.test.ts scripts/form-database.test.ts` and `npm run build` from the project directory. The database test runs the migration twice in embedded PostgreSQL and checks template permissions, response isolation, source-document access and cascading deletion without contacting Supabase.

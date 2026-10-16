@@ -303,18 +303,12 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       const exactRange = event.type === "pointercancel" ? null : rangeAtPoint(event.clientX, event.clientY);
       const finalRange = exactRange && current.editor.contains(exactRange.startContainer) ? exactRange : current.dropRange;
       if (current.moved && finalRange && event.type !== "pointercancel") {
-        // Move the actual flow anchor, not only the painted image. A transform
-        // would leave the float exclusion box behind and let text run under it.
         current.image.style.transform = "none";
         current.image.style.transformOrigin = "top left";
         const dropNode = finalRange.startContainer;
         const dropElement = dropNode instanceof Element ? dropNode : dropNode.parentElement;
         const dropBlock = dropElement?.closest<HTMLElement>("p,li,blockquote,h1,h2,h3,h4,div");
-        // A float only affects content that follows it in document order. If
-        // it is inserted at the pointer's character offset, text earlier on
-        // that same first line is laid out before the float and paints across
-        // the image. Anchor it at the start of the dropped text block instead
-        // so the browser wraps the entire line around the image.
+        // Keep images before the paragraph, never between words on a text line.
         if (dropBlock && dropBlock !== current.editor && current.editor.contains(dropBlock)) {
           dropBlock.insertBefore(current.image, dropBlock.firstChild);
         } else {
@@ -337,25 +331,15 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
             event.clientX - current.grabX - editorRect.left
           )
         );
-        const placeLeft = desiredLeft + imageRect.width / 2 <= editorRect.width / 2;
-        // Keep the vertical text-flow anchor chosen by the caret range, but
-        // preserve the pointer's exact horizontal drop position. Previously
-        // every drop was reduced to a binary left/right float, which made the
-        // image jump to one of two apparent snap points on release. Percentage
-        // spacing also keeps the chosen position proportional on narrower
-        // screens.
-        const outerSpace = placeLeft
-          ? desiredLeft
-          : Math.max(0, editorRect.width - desiredLeft - imageRect.width);
         const outerPercent = editorRect.width > 0
-          ? Math.min(100, Math.max(0, outerSpace / editorRect.width * 100))
+          ? Math.min(100, Math.max(0, desiredLeft / editorRect.width * 100))
           : 0;
-        current.image.style.float = placeLeft ? "left" : "right";
-        current.image.style.display = "inline";
+        current.image.style.float = "none";
+        current.image.style.display = "block";
         current.image.style.marginTop = "8px";
         current.image.style.marginBottom = "8px";
-        current.image.style.marginLeft = placeLeft ? `${outerPercent}%` : "16px";
-        current.image.style.marginRight = placeLeft ? "16px" : `${outerPercent}%`;
+        current.image.style.marginLeft = `${outerPercent}%`;
+        current.image.style.marginRight = "0";
         const caret = document.createRange();
         caret.setStartAfter(current.image);
         caret.collapse(true);
@@ -713,9 +697,9 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     img.style.width = "60%";
     img.style.height = "auto";
     img.style.maxWidth = "100%";
-    img.style.display = "inline";
-    img.style.float = "left";
-    img.style.margin = "8px 16px 8px 0";
+    img.style.display = "block";
+    img.style.float = "none";
+    img.style.margin = "12px auto";
     const selectionRange = restored.selection.getRangeAt(0);
     selectionRange.insertNode(img);
     const paragraph = document.createElement("p");
@@ -774,16 +758,13 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         image.style.maxWidth = "100%";
         image.style.transformOrigin = "top left";
         image.style.transform = "none";
-        // Use real float/margin geometry so the text exclusion area moves and
-        // resizes with the picture. West handles anchor the right edge; east
-        // handles anchor the left edge.
+        image.style.float = "none";
+        image.style.display = "block";
         if (corner.endsWith("e")) {
-          image.style.float = "left";
           image.style.marginLeft = "0";
-          image.style.marginRight = "16px";
+          image.style.marginRight = "auto";
         } else {
-          image.style.float = "right";
-          image.style.marginLeft = "16px";
+          image.style.marginLeft = "auto";
           image.style.marginRight = "0";
         }
         image.style.marginTop = `${corner.startsWith("n") ? startMarginTop + start.height - next.height : startMarginTop}px`;
@@ -946,9 +927,9 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       </> : menu === "image" ? <>
         <label><input type="checkbox" checked={cropImage} onChange={e => { const checked = e.target.checked; setCropImage(checked); updateImage(image => { image.dataset.cropped = String(checked); image.style.height = checked ? `${imageHeight}px` : "auto"; image.style.objectFit = checked ? "cover" : "contain"; }); }} /> Crop to frame</label>
         <strong className="slide-image-wrap-label">Text wrapping</strong>
-        <button type="button" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "left"; image.style.display = "inline"; image.style.margin = "8px 16px 8px 0"; })}>Wrap text right</button>
+        <button type="button" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px auto 12px 0"; })}>Align image left</button>
         <button type="button" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px auto"; })}>No wrap · centre</button>
-        <button type="button" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "right"; image.style.display = "inline"; image.style.margin = "8px 0 8px 16px"; })}>Wrap text left</button>
+        <button type="button" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px 0 12px auto"; })}>Align image right</button>
         <button type="button" className="danger" onClick={() => { if (!selectedImage) return; const editor = selectedImage.closest<HTMLElement>(EDITOR_SELECTOR); selectedImage.remove(); setSelectedImage(null); setMenu(null); notifyEditor(editor); }}>Remove image</button>
         <small>Drag the image inside the lesson to move it to another insertion point.</small>
       </> : <>

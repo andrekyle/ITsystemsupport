@@ -26,7 +26,7 @@ import { SlideEditableText } from "../components/SlideEditableText";
 import { SlideTextToolbar } from "../components/SlideTextToolbar";
 import { LessonVideoEditor, LessonVideos } from "../components/LessonVideos";
 import { videoEngagementKey, videoQuizId } from "../lib/videoLearning";
-import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml, hydrateSlideImages } from "../lib/slideRichText";
+import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml, hydrateSlideImages, normalizeSlideDocument } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
 import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, effectiveBuiltContent } from "../components/UnitBuilder";
 import { InlineText, InlineIconBtn } from "../components/InlineText";
@@ -51,7 +51,7 @@ import { loadContentModel } from "../lib/tokens";
 import { checkSpelling, type SpellIssue } from "../lib/spellcheck";
 import { autoGrowTextarea } from "../lib/autoGrow";
 import { insertLessonPlanDay, lessonPlanDayCount, removeLessonPlanDay, startLessonPlanDay } from "../lib/lessonPlanDays";
-import { groupLessonHtml, isLessonBulletListLead, isLessonListLead, isLessonListPoint, isLessonNumberedListLead, isLessonSubheading, lessonListItemText } from "../lib/lessonSubsections";
+import { isLessonBulletListLead, isLessonListLead, isLessonListPoint, isLessonNumberedListLead, isLessonSubheading, lessonListItemText } from "../lib/lessonSubsections";
 import { clearInlineDraft, loadInlineDraft, saveInlineDraft } from "../lib/inlineDraftStorage";
 import { resolvedSlideQuizAnswer } from "../lib/slideQuiz";
 import { EditingTools } from "../components/EditingSidebar";
@@ -3030,9 +3030,9 @@ export function UnitPage({
     beforeWrap.appendChild(beforeRange.cloneContents());
     afterWrap.appendChild(afterRange.cloneContents());
     const cleanPart = (wrap: HTMLElement) => {
-      const h2 = wrap.querySelector(":scope > h2");
-      const title = h2 ? htmlToMarked(h2 as HTMLElement) : "";
-      h2?.remove();
+      const heading = wrap.querySelector(':scope > [data-slide-title="true"]');
+      const title = heading ? htmlToMarked(heading as HTMLElement) : "";
+      heading?.remove();
       const html = sanitizeSlideHtml(wrap.innerHTML);
       const probe = document.createElement("div");
       probe.innerHTML = html;
@@ -4190,7 +4190,7 @@ export function UnitPage({
                   while (pi < effParagraphs.length && sec.paragraphFormats[pi] === format) items.push(`<li>${markedToHtml(lessonListItemText(paraText(pi++)))}</li>`);
                   html.push(`<${tag} class="lesson-inferred-list">${items.join("")}</${tag}>`);
                 } else if (format === "subheading") {
-                  html.push(`<h3 class="lesson-subheading">${markedToHtml(paraText(pi++))}</h3>`);
+                  html.push(`<p class="lesson-p">${markedToHtml(paraText(pi++))}</p>`);
                 } else {
                   html.push(`<p class="lesson-p">${markedToHtml(paraText(pi++))}</p>`);
                 }
@@ -4202,9 +4202,10 @@ export function UnitPage({
               + (sec.table ? tableHtml({headers:sec.table.headers.map((h,i)=>cellText("h",i,h)),rows:sec.table.rows.map((r,ri)=>r.map((c,ci)=>cellText(ri,ci,c)))}) : "")
               + (sec.cards?.length ? `<div class="card-grid lesson-cards">${sec.cards.map((c,ci)=>`<div class="card lesson-card"><div class="t">${markedToHtml(cardText(ci,"t",c.title))}</div><div class="d">${markedToHtml(cardText(ci,"d",c.text))}</div>${c.table?tableHtml(c.table):""}</div>`).join("")}</div>` : "")
               + [sec.example,...(sec.examples??[])].map((e,xi)=>e?`<div class="lesson-example"><h3>${markedToHtml(exText(xi,"t",e.title))}</h3>${e.lines.map((line,li)=>`<p class="lesson-p">${markedToHtml(exText(xi,String(li),line))}</p>`).join("")}</div>`:"").join("");
-            const groupedBodyHtml = groupLessonHtml(bodyOverride?.richHtml ?? initialBodyHtml, plainSlideText(secHeading));
-            const unifiedText = editable || bodyOverride?.richHtml !== undefined || Boolean(sec.paragraphFormats?.length) || groupedBodyHtml.includes("lesson-table-scroll");
-            const unifiedHtml = `<h2 class="section-title">${markedToHtml(secHeading)}</h2>${groupedBodyHtml}`;
+            const groupedBodyHtml = normalizeSlideDocument(bodyOverride?.richHtml ?? initialBodyHtml);
+            const unifiedText = true;
+            const hasSavedTitle = /data-slide-title="true"/.test(groupedBodyHtml);
+            const unifiedHtml = `${secHeading && !hasSavedTitle ? `<p class="lesson-p" data-slide-title="true">${markedToHtml(secHeading)}</p>` : ""}${groupedBodyHtml}`;
             const body = (
               <div className="saqa-body lesson-section">
                 {unifiedText ? <SlideEditableText as="div" className="slide-whole-editor" contentEditable={editable}
@@ -4261,9 +4262,11 @@ export function UnitPage({
                     // only their compact ids in lesson edits so Base64 image
                     // data can never exhaust localStorage.
                     clone.querySelectorAll<HTMLImageElement>("img[data-figure-id]").forEach(image => image.removeAttribute("src"));
-                    const heading=clone.querySelector(":scope > h2");
-                    editHeading(si,heading?htmlToMarked(heading as HTMLElement):"");heading?.remove();
-                    editSetSectionBody(si,{paragraphs:[htmlToMarked(clone)],richHtml:sanitizeSlideHtml(clone.innerHTML)});
+                    const heading=clone.querySelector(':scope > [data-slide-title="true"]');
+                    editHeading(si,heading?htmlToMarked(heading as HTMLElement):"");
+                    const richHtml=sanitizeSlideHtml(clone.innerHTML);
+                    heading?.remove();
+                    editSetSectionBody(si,{paragraphs:[htmlToMarked(clone)],richHtml});
                   }}/>:<>
                 {(() => {
                   const renderParagraphs = (start: number, end: number, heading: string): React.ReactNode[] => {

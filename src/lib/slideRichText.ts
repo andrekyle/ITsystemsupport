@@ -74,6 +74,7 @@ export function sanitizeSlideHtml(html: string): string {
       if (classes.length) out.className = classes.join(" ");
       if (node.tagName === "TH" && ["col", "row"].includes(node.getAttribute("scope") ?? "")) out.setAttribute("scope", node.getAttribute("scope")!);
       if (node.dataset.userColor === "true") out.dataset.userColor = "true";
+      if (node.dataset.slideTitle === "true") out.dataset.slideTitle = "true";
       if (node.tagName === "IMG") {
         if (figureId) out.setAttribute("data-figure-id", figureId);
         if (/^(?:data:image\/(?:png|jpe?g|webp|gif);base64,|https:\/\/)/i.test(imageSrc)) out.setAttribute("src", imageSrc);
@@ -121,6 +122,30 @@ export function richTextHtml(text: string): string {
 }
 export function saveRichText(el: HTMLElement): string {
   return PREFIX + sanitizeSlideHtml(el.innerHTML);
+}
+
+/** Older editor saves inferred headings and floated images without author input. */
+export function normalizeSlideDocument(html: string): string {
+  const root = document.createElement("div");
+  root.innerHTML = sanitizeSlideHtml(html);
+  for (const heading of Array.from(root.querySelectorAll("h2.section-title,h3.lesson-subheading"))) {
+    const paragraph = document.createElement("p");
+    paragraph.className = "lesson-p";
+    paragraph.innerHTML = heading.innerHTML;
+    if (heading.classList.contains("section-title") || heading.getAttribute("data-slide-title") === "true") paragraph.dataset.slideTitle = "true";
+    heading.replaceWith(paragraph);
+  }
+  for (const image of root.querySelectorAll<HTMLImageElement>("img")) {
+    const floated = image.style.float === "left" || image.style.float === "right";
+    image.style.float = "none";
+    image.style.display = "block";
+    if (floated) {
+      image.style.marginLeft = "auto";
+      image.style.marginRight = "auto";
+    }
+    image.style.transform = "none";
+  }
+  return root.innerHTML;
 }
 
 /** Replace compact inline-image ids with their current local or signed URLs. */
