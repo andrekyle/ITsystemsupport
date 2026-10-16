@@ -2856,7 +2856,12 @@ export function UnitPage({
         let changed = false;
         for (const image of Array.from(root.querySelectorAll<HTMLImageElement>('img[src^="data:image/"]:not([data-figure-id])'))) {
           const id = `lesson-inline-${sectionKey}-${crypto.randomUUID()}`;
-          if (!(await setFigure(id, image.src))) continue;
+          try {
+            await setFigure(id, image.src);
+          } catch (error) {
+            setFigError(error instanceof Error ? error.message : "A lesson image could not be saved.");
+            continue;
+          }
           image.dataset.figureId = id;
           image.removeAttribute("src");
           changed = true;
@@ -3471,11 +3476,9 @@ export function UnitPage({
     setFigUploading(true);
     try {
       const dataUrl = await fileToImageDataUrl(file, 1400);
-      if (!(await setFigure(figId, dataUrl))) {
-        setFigError("The picture could not be saved — check your connection and try again.");
-      }
-    } catch {
-      setFigError("Could not read that image — try a clear JPG or PNG file.");
+      await setFigure(figId, dataUrl);
+    } catch (error) {
+      setFigError(error instanceof Error ? error.message : "Could not read or save that image. Try a JPG or PNG file.");
     } finally {
       setFigUploading(false);
     }
@@ -4858,11 +4861,11 @@ export function UnitPage({
                   setFigError(null);
                   setFigUploading(true);
                   try {
-                    if (!(await setFigure(id, dataUrl))) {
-                      setFigError("The picture could not be saved — check your connection and try again.");
-                      return null;
-                    }
+                    await setFigure(id, dataUrl);
                     return { id, src: dataUrl };
+                  } catch (error) {
+                    setFigError(error instanceof Error ? error.message : "The picture could not be saved.");
+                    return null;
                   } finally {
                     setFigUploading(false);
                   }

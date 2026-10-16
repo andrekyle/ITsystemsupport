@@ -7,6 +7,7 @@ import { flushKey, flushValue, writeFromCloud } from "./lib/sync";
 import { logAudit } from "./lib/audit";
 import { courseScopedUnit } from "./lib/courseScope";
 import { TENANT, TENANT_ID } from "./lib/tenant";
+import { tenantFilePrefix } from "./lib/files";
 import { cachedLessonEdits, loadLessonEdits, queueLessonEdits, subscribeLessonEdits } from "./lib/lessonEditStore";
 import { flushUnitPack, unitPackSnapshot } from "./lib/unitStorage";
 import { SAVED_SIGNATURE_REFERENCE } from "./lib/signature";
@@ -2024,7 +2025,7 @@ async function uploadFigure(us: string, id: string, dataUrl: string): Promise<st
   const blob = await (await fetch(dataUrl)).blob();
   const safeId = id.replace(/[^\w.\-]+/g, "_");
   const ext = blob.type === "image/png" ? "png" : "jpg";
-  const path = `shared/lessonfigs/${us}/${safeId}-${Date.now().toString(36)}.${ext}`;
+  const path = `${tenantFilePrefix(`shared/lessonfigs/${us}`)}/${safeId}-${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage
     .from("files")
     .upload(path, blob, { upsert: true, contentType: blob.type || "image/jpeg" });
@@ -2090,11 +2091,6 @@ export function useLessonFigures(us: string) {
         try {
           const path = await uploadFigure(us, id, image);
           const next: Record<string, LessonFigureImage> = { ...fresh, [id]: { path, uploadedAt } };
-          // the replaced upload (if any) is no longer referenced — clean it up
-          const oldPath = fresh[id]?.path;
-          if (oldPath && oldPath !== path) {
-            void supabase.storage.from("files").remove([oldPath]).catch(() => {});
-          }
           // migrate any legacy inline data-URL figures of this unit to storage,
           // shrinking localStorage/shared-state far below the browser quota
           for (const [fid, f] of Object.entries(next)) {
@@ -2107,14 +2103,19 @@ export function useLessonFigures(us: string) {
             }
           }
           write(lessonFigsKey(us), next);
+          const oldPath = fresh[id]?.path;
+          if (oldPath && oldPath !== path) {
+            void supabase.storage.from("files").remove([oldPath]).catch(() => {});
+          }
           // Keep a usable bitmap during the render between storing the path
           // and resolving its signed URL. Without this, rich-text hydration
           // temporarily emits an img with no src (a dark empty rectangle).
           setFigUrls((urls) => ({ ...urls, [id]: image }));
           setFigures(next);
           return true;
-        } catch {
-          return false; // upload failed (offline / permissions)
+        } catch (error) {
+          const detail = error && typeof error === "object" && "message" in error ? String(error.message) : "Unknown storage error";
+          throw new Error(`The picture could not be saved: ${detail}`);
         }
       }
       // local-only mode: keep the picture inline in localStorage
@@ -2122,7 +2123,7 @@ export function useLessonFigures(us: string) {
       try {
         write(lessonFigsKey(us), next);
       } catch {
-        return false; // storage quota exceeded
+        throw new Error("The picture could not be saved because browser storage is full. Remove unused local files and try again.");
       }
       setFigures(next);
       return true;
