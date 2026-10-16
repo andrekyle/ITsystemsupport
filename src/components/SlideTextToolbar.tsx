@@ -6,6 +6,7 @@ import { SlideEditHistory } from "../lib/slideEditHistory";
 import { sanitizeSlideHtml } from "../lib/slideRichText";
 import { resizeImageRect, type ResizeCorner } from "../lib/imageGeometry";
 import { EditingTools } from "./EditingSidebar";
+import { copySlideTextFormat, paintSlideTextFormat, type SlideTextFormat } from "../lib/slideFormatPainter";
 
 const EDITOR_SELECTOR = '[data-slide-rich="true"][contenteditable="true"]';
 
@@ -48,6 +49,29 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   const imageInput = useRef<HTMLInputElement>(null);
   const [ready, setReady] = useState(false);
   const [active, setActive] = useState<string[]>([]);
+  const [paintFormat, setPaintFormat] = useState<SlideTextFormat | null>(null);
+  useEffect(() => {
+    if (!enabled) { setPaintFormat(null); return; }
+    if (!paintFormat) return;
+    const paint = (event: Event) => {
+      if (!(event.target instanceof Element) || !event.target.closest(EDITOR_SELECTOR)) return;
+      if (event instanceof KeyboardEvent && !["Shift", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+      const selection = window.getSelection();
+      const node = selection?.anchorNode;
+      const element = node instanceof Element ? node : node?.parentElement;
+      const editor = element?.closest<HTMLElement>(EDITOR_SELECTOR);
+      if (editor && selection && paintSlideTextFormat(editor, selection, paintFormat)) setPaintFormat(null);
+    };
+    const cancel = (event: KeyboardEvent) => { if (event.key === "Escape") setPaintFormat(null); };
+    document.addEventListener("pointerup", paint);
+    document.addEventListener("keyup", paint);
+    document.addEventListener("keydown", cancel);
+    return () => {
+      document.removeEventListener("pointerup", paint);
+      document.removeEventListener("keyup", paint);
+      document.removeEventListener("keydown", cancel);
+    };
+  }, [enabled, paintFormat]);
   const refreshHistory = () => setHistoryCounts({ undo: history.current.undoCount, redo: history.current.redoCount });
   const replay = (direction: "undo" | "redo") => {
     replaying.current = true;
@@ -880,6 +904,13 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         {commandButton("bold", "Bold", <strong aria-hidden="true">B</strong>)}
         {commandButton("italic", "Italic", <i aria-hidden="true">i</i>)}
         {commandButton("underline", "Underline", <u aria-hidden="true">U</u>)}
+        <button type="button" className="slide-tool-icon" disabled={!ready && !paintFormat} aria-label="Format painter" aria-pressed={!!paintFormat}
+          title={paintFormat ? "Select destination text to apply formatting. Escape cancels." : "Copy formatting from selected text, then select text to format"}
+          onMouseDown={event => event.preventDefault()} onClick={() => {
+            if (paintFormat) { setPaintFormat(null); return; }
+            const restored = restoreSelection();
+            if (restored?.selection?.rangeCount) setPaintFormat(copySlideTextFormat(restored.editor, restored.selection.getRangeAt(0)));
+          }}><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="13" height="6" rx="1" /><path d="M16 6h4v7h-9v3m-2 0h4v6H9z" /></svg></button>
         {menuToggle("text", "Font and text options", "A")}
       </span>
       <span className="slide-tool-group">
@@ -898,7 +929,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         {selectedImage && menuToggle("image", "Resize and crop selected image", imageIcon)}
       </span>
     </div>
-    <div className="slide-editor-status" aria-live="polite">{ready ? "Formatting applies to the current selection" : "Select lesson text to begin formatting"}</div>
+    <div className="slide-editor-status" aria-live="polite">{paintFormat ? "Format painter: select text to apply. Esc cancels." : ready ? "Formatting applies to the current selection" : "Select lesson text to begin formatting"}</div>
     <input ref={imageInput} className="slide-image-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={event => void insertImage(event)} />
     {menu && <div id={`slide-${menu}-options`} className="slide-text-options" role="group" aria-label={menu === "text" ? "Font and text options" : menu === "table" ? "Table options" : menu === "image" ? "Image options" : "Paragraph and editing options"}>
       {menu === "text" ? <>

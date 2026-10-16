@@ -81,4 +81,17 @@ normalised when displayed. Slide titles start as body text; use the editor's
 Paragraph style control to choose headings. Saved author-selected headings and
 tables are retained without running automatic heading/list/table inference again.
 
+The slide text toolbar includes **Format painter** beside Underline. Select source
+text, click Format painter, then select destination text to apply its font, size,
+emphasis, explicit text colour, highlight and paragraph formatting once. Heading
+style and paragraph alignment/spacing apply to the destination paragraphs;
+character formatting applies only to the selected words. Escape or clicking the
+tool again cancels. Changes use the normal save and undo/redo paths.
+Check with `node scripts/test-lesson-heading-browser.mjs scripts/test-format-painter-browser.tsx`.
+
+Unit 114074 does not expose the Learner Workbook or its Memo tab, including for
+older saved builds with generated workbook content. Remembered workbook tabs
+return to Learning activities. Existing saved content and learner responses are
+retained; other units' workbook tabs are unchanged.
+
 Run `node --import tsx --test scripts/form-builder.test.ts scripts/generate-form.test.ts scripts/form-database.test.ts` and `npm run build` from the project directory. The database test runs the migration twice in embedded PostgreSQL and checks template permissions, response isolation, source-document access and cascading deletion without contacting Supabase.
