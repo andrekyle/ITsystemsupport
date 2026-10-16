@@ -38,6 +38,7 @@ import { GeneratedWorkbook } from "../components/GeneratedWorkbook";
 import { LearnerGuide } from "../components/LearnerGuide";
 import { WorkbookMemo } from "../components/WorkbookMemo";
 import { practicalTaskForUnit } from "../data/practicalTasks";
+import { withDefaultLearnerWorkbook } from "../data/learnerWorkbooks";
 import { supabase } from "../lib/supabase";
 import { flushKey } from "../lib/sync";
 import { GeneratedQuizEditor } from "../components/GeneratedQuizEditor";
@@ -2942,9 +2943,9 @@ export function UnitPage({
   const nextActivity = UNIT_ACTIVITIES.find(activity => !acts[activity]);
   const baseContent = builtUnit?.content ?? getContent(u.us);
   const officialSaqa = getSaqaDetails(u.us);
-  const content = inlineUnit ?? (officialSaqa
+  const content = withDefaultLearnerWorkbook(u.us, inlineUnit ?? (officialSaqa
     ? { ...(baseContent ?? { lesson: [], exercises: [], assignments: [], quiz: [] }), saqa: officialSaqa }
-    : baseContent);
+    : baseContent));
   const practicalTask = content?.practicalTask ?? practicalTaskForUnit(u.us);
   // The lesson plan shown on the tab: inline table edits (shared, cloud-synced) win over the generated plan.
   const planData: LessonPlan | undefined = content?.lessonPlan ? (lessonEdits.lessonPlan ?? content.lessonPlan) : undefined;

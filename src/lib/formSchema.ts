@@ -328,8 +328,17 @@ function readLayer(value: unknown): PageLayer | undefined {
     const t = typeof item.t === "string" ? item.t.slice(0, 500) : "";
     const s = fraction(item.s);
     if (!t.trim() || !s || s > 0.2) continue;
+    const rotation = typeof item.rotation === "number" && Number.isFinite(item.rotation) && Math.abs(item.rotation) <= 180 ? item.rotation : undefined;
+    if (rotation) {
+      // Rotated text advances along its baseline, not towards the page's right edge.
+      const w = fraction(item.w), h = fraction(item.h);
+      if (w !== null && h !== null) {
+        box.w = Math.round(w * 10000) / 10000;
+        box.h = Math.round(h * 10000) / 10000;
+      }
+    }
     runs.push({ t, ...box, s, f: typeof item.f === "string" && FONT_KEY.test(item.f) ? item.f : "sans", b: item.b === true, i: item.i === true, c: colorValue(item.c) || "#000000",
-      ...(typeof item.rotation === "number" && Number.isFinite(item.rotation) && Math.abs(item.rotation)<=180 ? {rotation:item.rotation} : {}) });
+      ...(rotation !== undefined ? { rotation } : {}) });
   }
   const shapes = (list: unknown, frame: boolean) => (Array.isArray(list) ? list.slice(0, MAX_LAYER_SHAPES) : []).map(shape => readShape(shape, frame)).filter((shape): shape is LayerShape => !!shape);
   const pictures: LayerPicture[] = [];

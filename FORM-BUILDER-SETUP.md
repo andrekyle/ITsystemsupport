@@ -81,4 +81,32 @@ normalised when displayed. Slide titles start as body text; use the editor's
 Paragraph style control to choose headings. Saved author-selected headings and
 tables are retained without running automatic heading/list/table inference again.
 
+### Unit 114074 learner workbook
+
+Unit 114074 includes the supplied 18-page workbook as its **Learner Workbook**
+tab, including when an older saved unit has no workbook. An explicitly uploaded
+replacement still takes precedence. The bundled document contains all 607
+extracted text runs and 97 reviewed answer fields. It uses the existing HTML
+page renderer and learner-progress storage, with automatic per-field saving,
+explicit Save verification, editable HTML download, and Print / Save as PDF.
+Signature permissions remain role-specific. Original page images are retained
+only for the existing learner-pack source-reference export, not as the displayed
+HTML pages.
+
+The source's incomplete assessment-time/total-mark details, blank self-assessment
+descriptions and LAN/WAN wording are preserved and flagged in Source document
+notes. No answers or missing assessment information are invented. This bundled
+conversion was reviewed directly; it does not require a live AI call to open.
+Its layout was extracted with `extractFormDocument` using `preservePdf: true`
+and `digitalPdf: true`. Regenerate the bundled data from that complete import
+JSON with `node scripts/make-114074-workbook.mjs <import.json>` and the original
+114074 PDF in the project root.
+
+Run the desktop/mobile workbook regression with
+`node scripts/test-lesson-heading-browser.mjs scripts/test-114074-workbook-browser.tsx`.
+Run the page-by-page source comparison with
+`node --import tsx --test scripts/114074-workbook.test.ts` while the supplied PDF
+is present. The conversion retains the rotated cover title's baseline dimensions
+when the unit is saved or rebuilt.
+
 Run `node --import tsx --test scripts/form-builder.test.ts scripts/generate-form.test.ts scripts/form-database.test.ts` and `npm run build` from the project directory. The database test runs the migration twice in embedded PostgreSQL and checks template permissions, response isolation, source-document access and cascading deletion without contacting Supabase.
