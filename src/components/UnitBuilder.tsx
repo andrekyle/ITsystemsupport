@@ -4,8 +4,8 @@ import type { LogbookSpec, PoeDoc, UnitContent, UnitStandard } from "../types";
 import type { LessonEdits } from "../store";
 import { buildUnitContent, validateUnitContent, lessonPlanFromSource, MAX_SOURCE_LENGTH, MAX_LESSON_PLAN_LENGTH, mergeUnitContentEnhancement } from "../lib/unitBuilder";
 import { logbookFromSource, logbookStats, MAX_LOGBOOK_SOURCE_LENGTH } from "../lib/logbookBuilder";
-import { useBuiltUnit, useDeletedBuiltUnit, saveBuiltUnit, restoreBuiltUnit, deleteBuiltUnit, restoreDeletedBuiltUnit } from "../lib/useBuiltUnit";
-import { unitHistory, MAX_UNIT_HISTORY, type BuiltUnitVersion, type UnitSourceDocuments } from "../lib/builtUnits";
+import { useBuiltUnit, useDeletedBuiltUnit, saveBuiltUnit, deleteBuiltUnit, restoreDeletedBuiltUnit } from "../lib/useBuiltUnit";
+import { unitHistory, unitVersionArchive, MAX_UNIT_HISTORY, type BuiltUnitVersion, type UnitSourceDocuments } from "../lib/builtUnits";
 import { importUnitSource } from "../lib/unitSourceImport";
 import { importUnitPdf } from "../lib/unitPdfImport";
 import { storeUnitReplicaPages } from "../lib/forms";
@@ -339,7 +339,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   const discardDraft=()=>{setDraft(baseline());setDirty(false);setError("");};
   const jumpTo=(key:string)=>scrollRef.current?.querySelector(`[data-unit-section="${key}"]`)?.scrollIntoView({block:"start",behavior:"smooth"});
   const sections=contentSections(draft);
-  const restore=async(version:BuiltUnitVersion)=>{setError("");setMessage("");setBusy("Restoring saved version…");try{await restoreBuiltUnit(unit.us,version);onSaved();setMessage(`The version saved on ${versionLabel(version)} is now live. The version it replaced is still restorable.`);}catch(e){setError(e instanceof Error?e.message:"The saved version could not be restored.");}finally{setBusy("");}};
+  const restore=async(version:BuiltUnitVersion)=>{setError("");setMessage("");setBusy("Restoring saved version…");try{await saveBuiltUnit(unit.us,unitVersionArchive(version));onSaved();setMessage(`The version saved on ${versionLabel(version)} is now live. The version it replaced is still restorable.`);}catch(e){setError(String(e));}finally{setBusy("");}};
   const navItems:{id:BuilderView;label:string;icon:string;hint:string}[]=[
     {id:"content",label:"Content and structure",icon:"layers",hint:"Edit every tab of this unit"},
     {id:"build",label:built?"Rebuild documents":"Build documents",icon:"document",hint:"Original PDFs, editable fields"},
