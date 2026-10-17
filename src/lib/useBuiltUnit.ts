@@ -1,5 +1,5 @@
 import { useMemo, useSyncExternalStore } from "react";
-import { builtUnitKey, deletedBuiltUnitKey, readBuiltUnit, unitPackValue, type BuiltUnit, type BuiltUnitVersion } from "./builtUnits";
+import { builtUnitKey, deletedBuiltUnitKey, readBuiltUnit, unitPackValue, unitVersionArchive, type BuiltUnit, type BuiltUnitVersion } from "./builtUnits";
 import { supabase } from "./supabase";
 import { forgetUnitPack, loadUnitPack, persistUnitPack, rememberUnitPack, unitPackSnapshot } from "./unitStorage";
 import { courseScopedUnit } from "./courseScope";
@@ -43,6 +43,19 @@ export async function saveBuiltUnit(us: string, next: BuiltUnitVersion): Promise
     Storage.prototype.removeItem.call(localStorage,key);
     Storage.prototype.removeItem.call(localStorage,`unitbuilder-save-probe.${us}`);
   } catch { /* The pack is already saved; optional cleanup cannot undo it. */ }
+}
+
+/** Restore archived content as a new live revision.
+ *
+ * Reusing the archive's revision would also reuse revision-scoped lesson edits
+ * and UI state, which can make the restored build appear not to have changed.
+ */
+export async function restoreBuiltUnit(us:string,version:BuiltUnitVersion):Promise<void>{
+  await saveBuiltUnit(us,{
+    ...unitVersionArchive(version),
+    revision:crypto.randomUUID(),
+    createdAt:new Date().toISOString(),
+  });
 }
 
 export async function deleteBuiltUnit(us: string): Promise<void> {
