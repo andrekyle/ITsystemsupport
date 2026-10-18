@@ -17340,7 +17340,9 @@ body.moving-slide-image .slide-image-selection { display:none; }
 .slide-color-mode > span { margin-right:auto; color:var(--tool-ink); font-size:11px; }
 .slide-text-options button.slide-color-mode-toggle { position:relative; display:flex; flex:0 0 112px; align-items:center; justify-content:space-between; box-sizing:border-box; width:112px; min-width:112px; height:28px; min-height:28px; padding:0 9px; overflow:hidden; border:1px solid var(--tool-border); border-radius:14px; background:var(--tool-hover); color:var(--tool-ink); font-size:10px; line-height:1; }
 .slide-text-options button.slide-color-mode-toggle.is-dark { background:#0d0d0d; }
-.slide-color-mode-toggle > span:not(.slide-color-mode-thumb) { position:relative; z-index:1; transition:color .14s ease; }
+.slide-color-mode-toggle > span:not(.slide-color-mode-thumb) { position:absolute; z-index:1; top:0; display:flex; align-items:center; justify-content:center; width:54px; height:100%; transition:color .14s ease; }
+.slide-color-mode-toggle .slide-color-mode-light { left:2px; }
+.slide-color-mode-toggle .slide-color-mode-dark { right:2px; }
 .slide-color-mode-toggle:not(.is-dark) .slide-color-mode-light,
 .slide-color-mode-toggle.is-dark .slide-color-mode-dark { color:#fff; }
 .slide-text-options button.slide-color-mode-toggle .slide-color-mode-thumb { position:absolute; top:2px; left:2px; width:52px; height:22px; border-radius:11px; background:var(--azure); transition:transform .16s ease; }
