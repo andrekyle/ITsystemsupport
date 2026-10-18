@@ -390,6 +390,30 @@ a:hover {
   outline-offset: 2px;
 }
 .btn.ghost.sm.slide-tool-action svg { flex-shrink: 0; }
+.editing-tool-group-body > .btn.save-cloud-action {
+  justify-content: center;
+  border-color: #ff163b;
+  background: #ff163b;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(255, 22, 59, 0.3);
+}
+.editing-tool-group-body > .btn.save-cloud-action:hover:not(:disabled) {
+  border-color: #e0002b;
+  background: #e0002b;
+  color: #fff;
+  box-shadow: 0 8px 22px rgba(224, 0, 43, 0.38);
+}
+.editing-tool-group-body > .btn.save-cloud-action:focus-visible {
+  outline: 3px solid rgba(255, 22, 59, 0.32);
+  outline-offset: 2px;
+}
+.editing-tool-group-body > .btn.save-cloud-action:disabled {
+  border-color: #ff8a9e;
+  background: #ff8a9e;
+  color: rgba(255, 255, 255, 0.9);
+  box-shadow: none;
+}
 .editing-sidebar .slide-quiz-count { display: grid; grid-template-columns: 1fr auto; gap: 12px; width: 100%; margin: 10px 0; padding: 0; }
 .editing-tool-group-body > .lesson-inline-edit-btn { width: 100%; height: auto; }
 .editing-tool-group .auth-error { font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
