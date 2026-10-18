@@ -112,6 +112,14 @@ function loadSavedOptions(key: string, isAllowed: (value: string) => boolean, li
   }
 }
 
+function currentAppColorMode(): "light" | "dark" {
+  const activeTheme = document.documentElement.dataset.theme;
+  if (activeTheme === "light" || activeTheme === "dark") return activeTheme;
+  const savedTheme = localStorage.getItem("itss.theme");
+  if (savedTheme === "light" || savedTheme === "dark") return savedTheme;
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 const commands = [
   ["bold", "Bold"], ["italic", "Italic"], ["underline", "Underline"],
   ["strikeThrough", "Strikethrough"], ["subscript", "Subscript"], ["superscript", "Superscript"],
@@ -133,11 +141,12 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   const [historyCounts, setHistoryCounts] = useState({ undo: 0, redo: 0 });
   const [font, setFont] = useState("");
   const [textColour, setTextColour] = useState("#808080");
-  const [textColorMode, setTextColorMode] = useState<"light" | "dark">("light");
+  const [textColorMode, setTextColorMode] = useState<"light" | "dark">(currentAppColorMode);
   const [hexColorInput, setHexColorInput] = useState("#808080");
   const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
   const colorPalette = useRef<HTMLDivElement>(null);
-  const [savedTextColors, setSavedTextColors] = useState(() => loadSavedOptions(SAVED_TEXT_COLORS_KEY, value => /^#[\da-f]{6}$/i.test(value), 8));
+  const [savedTextColors, setSavedTextColors] = useState(() => loadSavedOptions(SAVED_TEXT_COLORS_KEY, value => /^#[\da-f]{6}$/i.test(value), 7));
+  const [savedColorTarget, setSavedColorTarget] = useState<number | null>(null);
   const [savedFonts, setSavedFonts] = useState(() => loadSavedOptions(SAVED_TEXT_FONTS_KEY, value => FONT_OPTIONS.includes(value), 4));
   const [formatOptionsError, setFormatOptionsError] = useState("");
   const [highlightColour, setHighlightColour] = useState("#fff59d");
@@ -174,19 +183,28 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     setTextColour(color);
     setHexColorInput(color);
     run("foreColor", color);
-    setColorPaletteOpen(false);
     setFormatOptionsError("");
   };
   const saveCustomTextColor = (color: string) => {
     const normalized = color.toLowerCase();
     applyTextColor(normalized);
-    if (savedTextColors.includes(normalized)) return;
-    if (savedTextColors.length >= 8) {
-      setFormatOptionsError("Remove a saved color before saving another.");
+    const existingIndex = savedTextColors.indexOf(normalized);
+    if (existingIndex >= 0) {
+      setSavedColorTarget(existingIndex);
       return;
     }
-    const next = [...savedTextColors, normalized];
-    if (saveFormattingOptions(SAVED_TEXT_COLORS_KEY, next)) setSavedTextColors(next);
+    const target = savedColorTarget ?? (savedTextColors.length >= 7 ? 6 : savedTextColors.length);
+    const next = target < savedTextColors.length
+      ? savedTextColors.map((saved, index) => index === target ? normalized : saved)
+      : [...savedTextColors, normalized];
+    if (saveFormattingOptions(SAVED_TEXT_COLORS_KEY, next)) {
+      setSavedTextColors(next);
+      setSavedColorTarget(target);
+    }
+  };
+  const applyPaletteColor = (color: string) => {
+    if (savedColorTarget === null) applyTextColor(color);
+    else saveCustomTextColor(color);
   };
   const applyHexColor = () => {
     const entered = hexColorInput.trim().replace(/^#/, "");
@@ -196,10 +214,6 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     }
     const expanded = entered.length === 3 ? entered.split("").map(char => char + char).join("") : entered;
     saveCustomTextColor(`#${expanded.toLowerCase()}`);
-  };
-  const removeSavedColor = (color: string) => {
-    const next = savedTextColors.filter(saved => saved !== color);
-    if (saveFormattingOptions(SAVED_TEXT_COLORS_KEY, next)) setSavedTextColors(next);
   };
   const addSavedFont = () => {
     if (!font || savedFonts.includes(font) || savedFonts.length >= 4) return;
@@ -213,10 +227,16 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   useEffect(() => {
     if (!colorPaletteOpen) return;
     const closeOnPointerDown = (event: PointerEvent) => {
-      if (!colorPalette.current?.contains(event.target as Node)) setColorPaletteOpen(false);
+      if (!colorPalette.current?.contains(event.target as Node)) {
+        setColorPaletteOpen(false);
+        setSavedColorTarget(null);
+      }
     };
     const closeOnKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setColorPaletteOpen(false);
+      if (event.key === "Escape") {
+        setColorPaletteOpen(false);
+        setSavedColorTarget(null);
+      }
     };
     document.addEventListener("pointerdown", closeOnPointerDown);
     document.addEventListener("keydown", closeOnKeyDown);
@@ -1219,7 +1239,10 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         <div className="slide-tool-field"><span>Size</span><Select ariaLabel="Font size" disabled={!ready} placeholder="Choose size" value={size} options={[10, 13, 16, 18, 24, 32, 48].map((value, i) => ({ value: String(i + 1), label: `${value} px` }))} onChange={value => { setSize(value); run("fontSize", value); }} /></div>
         <div className="slide-color-picker" ref={colorPalette}>
           <button type="button" className="slide-tool-colour slide-tool-color-trigger" disabled={!ready} aria-label="Text color palette" aria-expanded={colorPaletteOpen} title="Text color"
-            onMouseDown={event => event.preventDefault()} onClick={() => setColorPaletteOpen(open => !open)}>
+            onMouseDown={event => event.preventDefault()} onClick={() => setColorPaletteOpen(open => {
+              if (open) setSavedColorTarget(null);
+              return !open;
+            })}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17 12 3l6 14M8 12h8" /><path d="M3 21h18" style={{ stroke: textColour, strokeWidth: 3, strokeLinecap: "butt" }} /></svg>
           </button>
           {colorPaletteOpen && <div className="slide-color-palette" role="group" aria-label="Text color palette">
@@ -1238,7 +1261,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
               <div className="slide-color-grid slide-apple-colors">
                 {APPLE_COLORS.map(({ name, value }) => <button type="button" key={name}
                   className={`slide-color-swatch${textColour.toLowerCase() === value ? " selected" : ""}`} style={{ backgroundColor: value }} title={`${name} · ${value}`}
-                  aria-label={`Apply Apple color ${name}`} aria-pressed={textColour.toLowerCase() === value} onMouseDown={event => event.preventDefault()} onClick={() => applyTextColor(value)} />)}
+                  aria-label={`Apply Apple color ${name}`} aria-pressed={textColour.toLowerCase() === value} onMouseDown={event => event.preventDefault()} onClick={() => applyPaletteColor(value)} />)}
               </div>
             </div>
             <div className="slide-color-section">
@@ -1246,16 +1269,15 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
               <div className="slide-color-grid slide-pastel-colors">
                 {PASTEL_COLORS.map(({ name, value }) => <button type="button" key={name}
                   className={`slide-color-swatch${textColour.toLowerCase() === value ? " selected" : ""}`} style={{ backgroundColor: value }} title={`${name} · ${value}`}
-                  aria-label={`Apply pastel color ${name}`} aria-pressed={textColour.toLowerCase() === value} onMouseDown={event => event.preventDefault()} onClick={() => applyTextColor(value)} />)}
+                  aria-label={`Apply pastel color ${name}`} aria-pressed={textColour.toLowerCase() === value} onMouseDown={event => event.preventDefault()} onClick={() => applyPaletteColor(value)} />)}
               </div>
             </div>
             {savedTextColors.length > 0 && <div className="slide-color-section">
-              <span className="slide-color-heading">Saved Colors ({savedTextColors.length}/8)</span>
+              <span className="slide-color-heading">Saved Colors ({savedTextColors.length}/7)</span>
               <div className="slide-color-grid slide-saved-colors">
-                {savedTextColors.map(color => <span className="slide-color-saved-item" key={color}>
-                  <button type="button" className={`slide-color-swatch${textColour.toLowerCase() === color ? " selected" : ""}`} style={{ backgroundColor: color }} title={`Apply ${color}`}
-                    aria-label={`Apply saved color ${color}`} aria-pressed={textColour.toLowerCase() === color} onMouseDown={event => event.preventDefault()} onClick={() => applyTextColor(color)} />
-                  <button type="button" className="slide-color-remove" aria-label={`Remove saved color ${color}`} title={`Remove ${color}`} onMouseDown={event => event.preventDefault()} onClick={() => removeSavedColor(color)}>×</button>
+                {savedTextColors.map((color, index) => <span className="slide-color-saved-item" key={color}>
+                  <button type="button" className={`slide-color-swatch${textColour.toLowerCase() === color ? " selected" : ""}`} style={{ backgroundColor: color }} title={`Apply ${color} and select this block for replacement`}
+                    aria-label={`Apply saved color ${color} and select it for replacement`} aria-pressed={savedColorTarget === index} onMouseDown={event => event.preventDefault()} onClick={() => { setSavedColorTarget(index); applyTextColor(color); }} />
                 </span>)}
               </div>
             </div>}
@@ -1306,7 +1328,6 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       </> : <>
         {commands.filter(([cmd]) => ["justifyFull", "selectAll"].includes(cmd)).map(([cmd, label]) => commandButton(cmd, label))}
       </>}
-      {!ready && <small>Click or select slide text to start formatting.</small>}
     </div>}
     </div>
     </EditingTools>
