@@ -5056,13 +5056,13 @@ export function UnitPage({
                     <button
                       type="button"
                       className="btn ghost sm"
-                      disabled={!quizPassed}
-                      onClick={() => (isLast ? setTab("exercises") : go(visibleLessonIndices[position + 1]))}
+                      disabled={!quizPassed || isLast}
+                      onClick={() => { if (!isLast) go(visibleLessonIndices[position + 1]); }}
                       title={
                         !quizPassed
                           ? "Answer this section's questions to unlock Next"
                           : isLast
-                          ? "Continue to the exercises"
+                          ? "This is the last section"
                           : "Next section"
                       }
                     >
@@ -5262,17 +5262,11 @@ export function UnitPage({
                     />
                   ); })}
                 </span>
-                {!isLast ? (
-                  <button className="btn" onClick={() => go(visibleLessonIndices[position + 1])} disabled={!quizPassed}>
-                    Next
-                    <Icon name="chevronRight" size={16} />
-                  </button>
-                ) : (
-                  <button className="btn" onClick={() => setTab("exercises")} disabled={!quizPassed}>
-                    Finish lesson
-                    <Icon name="checkCircle" size={16} />
-                  </button>
-                )}
+                <button className="btn" onClick={() => { if (!isLast) go(visibleLessonIndices[position + 1]); }} disabled={!quizPassed || isLast}
+                  title={isLast ? "This is the last section" : undefined}>
+                  Next
+                  <Icon name="chevronRight" size={16} />
+                </button>
               </div>
             );
             return (
