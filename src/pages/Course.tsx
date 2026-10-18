@@ -2883,8 +2883,9 @@ export function UnitPage({
   const [unitQuizCount, setUnitQuizCount] = useState(10);
   const [lessonSplitError, setLessonSplitError] = useState<string | null>(null);
   const [proofreadingSlide, setProofreadingSlide] = useState<number | null>(null);
-  const [proofreadStatus, setProofreadStatus] = useState<"" | "done" | "error">("");
+  const [proofreadStatus, setProofreadStatus] = useState<"" | "done" | "partial" | "error">("");
   const [proofreadError, setProofreadError] = useState("");
+  const [proofreadNotice, setProofreadNotice] = useState("");
   const [addingSlide, setAddingSlide] = useState(false);
   const [deletingSlide, setDeletingSlide] = useState(false);
   const [deleteSlideError, setDeleteSlideError] = useState("");
@@ -3123,6 +3124,7 @@ export function UnitPage({
     setProofreadingSlide(si);
     setProofreadStatus("");
     setProofreadError("");
+    setProofreadNotice("");
     try {
       const response = await fetch("/api/proofread-slide", {
         method: "POST",
@@ -3130,12 +3132,23 @@ export function UnitPage({
         body: JSON.stringify({ segments: nodes.map(node => node.data), model: loadContentModel() }),
         signal: AbortSignal.timeout(65_000),
       });
-      const data = await response.json() as { segments?: string[]; error?: string; usage?: { input_tokens?: number; output_tokens?: number; prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }; model?: string };
+      const data = await response.json() as { segments?: string[]; unchangedSegments?: number; error?: string; usage?: { input_tokens?: number; output_tokens?: number; prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }; model?: string };
       if (!response.ok || !data.segments || data.segments.length !== nodes.length) throw new Error(data.error ?? "AI proofreading returned incomplete text.");
+      const unchangedSegments = data.unchangedSegments ?? 0;
+      if (data.usage) void recordTokenUsage({ us: unitId, model: data.model ?? loadContentModel(), promptTokens: data.usage.input_tokens ?? data.usage.prompt_tokens ?? 0, completionTokens: data.usage.output_tokens ?? data.usage.completion_tokens ?? 0, totalTokens: data.usage.total_tokens ?? 0 });
+      if (unchangedSegments >= nodes.length) {
+        setProofreadStatus("error");
+        setProofreadError("AI suggestions could not be validated safely. No slide text was changed. Please retry or edit the text manually.");
+        return;
+      }
       data.segments.forEach((text, index) => { nodes[index].data = text; });
       editor.dispatchEvent(new Event("input", { bubbles: true }));
-      if (data.usage) void recordTokenUsage({ us: unitId, model: data.model ?? loadContentModel(), promptTokens: data.usage.input_tokens ?? data.usage.prompt_tokens ?? 0, completionTokens: data.usage.output_tokens ?? data.usage.completion_tokens ?? 0, totalTokens: data.usage.total_tokens ?? 0 });
-      setProofreadStatus("done");
+      if (unchangedSegments) {
+        setProofreadNotice(`${unchangedSegments} text fragment${unchangedSegments === 1 ? " was" : "s were"} left unchanged because the returned edit could not be checked safely.`);
+        setProofreadStatus("partial");
+      } else {
+        setProofreadStatus("done");
+      }
     } catch (error) {
       setProofreadStatus("error");
       setProofreadError(error instanceof Error ? error.message : "AI proofreading failed. Please retry.");
@@ -5123,6 +5136,7 @@ export function UnitPage({
                             <Icon name="sparkles" size={13} />{proofreadingSlide === si ? "AI is proofreading..." : "AI fix spelling & grammar"}
                           </button>
                           {proofreadStatus === "done" && <p role="status">AI proofreading complete. Review the changes, then save to cloud.</p>}
+                          {proofreadStatus === "partial" && <p role="status">AI proofreading made safe corrections. {proofreadNotice} Review the changes, then save to cloud.</p>}
                           {proofreadStatus === "error" && <p className="auth-error" role="alert">{proofreadError}</p>}
                           {builtUnit && <>
                             <button type="button" className="btn ghost sm slide-tool-action"
