@@ -1163,9 +1163,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       setFormatOptionsError("The selected text color could not be reset.");
       return;
     }
-    const walker = document.createTreeWalker(fragment, NodeFilter.SHOW_ELEMENT);
-    while (walker.nextNode()) {
-      const element = walker.currentNode as HTMLElement;
+    fragment.querySelectorAll<HTMLElement>("*").forEach(element => {
       element.removeAttribute("data-user-color");
       element.removeAttribute("data-light-color");
       element.removeAttribute("data-dark-color");
@@ -1173,7 +1171,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       element.style.removeProperty("--slide-light-color");
       element.style.removeProperty("--slide-dark-color");
       if (element.tagName === "FONT") element.removeAttribute("color");
-    }
+    });
     selectedRange.insertNode(fragment);
 
     const restoredSelection = document.createRange();
