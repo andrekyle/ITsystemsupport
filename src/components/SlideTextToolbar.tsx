@@ -1225,8 +1225,13 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
           {colorPaletteOpen && <div className="slide-color-palette" role="group" aria-label="Text color palette">
             <div className="slide-color-mode" role="group" aria-label="Choose theme for selected text color">
               <span>Apply to</span>
-              <button type="button" className={textColorMode === "light" ? "active" : ""} aria-pressed={textColorMode === "light"} onMouseDown={event => event.preventDefault()} onClick={() => setTextColorMode("light")}>Light mode</button>
-              <button type="button" className={textColorMode === "dark" ? "active" : ""} aria-pressed={textColorMode === "dark"} onMouseDown={event => event.preventDefault()} onClick={() => setTextColorMode("dark")}>Dark mode</button>
+              <button type="button" className={`slide-color-mode-toggle${textColorMode === "dark" ? " is-dark" : ""}`}
+                role="switch" aria-checked={textColorMode === "dark"} aria-label={`Color mode: ${textColorMode}. Toggle to ${textColorMode === "dark" ? "light" : "dark"} mode.`}
+                onMouseDown={event => event.preventDefault()} onClick={() => setTextColorMode(mode => mode === "light" ? "dark" : "light")}>
+                <span className="slide-color-mode-light">Light</span>
+                <span className="slide-color-mode-dark">Dark</span>
+                <span className="slide-color-mode-thumb" aria-hidden="true" />
+              </button>
             </div>
             <div className="slide-color-section">
               <span className="slide-color-heading">Apple Colors · {textColorMode} mode</span>
