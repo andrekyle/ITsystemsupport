@@ -12,15 +12,56 @@ const EDITOR_SELECTOR = '[data-slide-rich="true"][contenteditable="true"]';
 const SAVED_TEXT_COLORS_KEY = "itss.slide-text.saved-colors.v1";
 const SAVED_TEXT_FONTS_KEY = "itss.slide-text.saved-fonts.v1";
 const FONT_OPTIONS = ["Arial", "Verdana", "Georgia", "Times New Roman", "Courier New", "Tahoma", "Trebuchet MS"];
-const THEME_COLORS = [
-  ["#ffffff", "#000000", "#e7e6e6", "#44546a", "#5b9bd5", "#ed7d31", "#a5a5a5", "#ffc000", "#4472c4", "#70ad47"],
-  ["#f2f2f2", "#7f7f7f", "#d0cece", "#d6dce4", "#deebf7", "#fbe5d6", "#ededed", "#fff2cc", "#d9e2f3", "#e2f0d9"],
-  ["#d9d9d9", "#595959", "#aeaaaa", "#adb9ca", "#bdd7ee", "#f4b183", "#dbdbdb", "#ffe699", "#b4c6e7", "#c6e0b4"],
-  ["#bfbfbf", "#404040", "#757171", "#8497b0", "#9bc2e6", "#f7caac", "#c9c9c9", "#ffd966", "#8ea9db", "#a9d18e"],
-  ["#a6a6a6", "#262626", "#3b3838", "#323f4f", "#2f75b5", "#c55a11", "#7b7b7b", "#bf9000", "#2f5597", "#548235"],
-  ["#7f7f7f", "#0d0d0d", "#171616", "#222a35", "#1f4e79", "#843c0c", "#525252", "#7f6000", "#1f3864", "#375623"],
+const APPLE_COLORS = [
+  { name: "Licorice", value: "#000000" },
+  { name: "Lead", value: "#212121" },
+  { name: "Tungsten", value: "#424242" },
+  { name: "Iron", value: "#5e5e5e" },
+  { name: "Steel", value: "#797979" },
+  { name: "Tin", value: "#919191" },
+  { name: "Nickel", value: "#929292" },
+  { name: "Aluminum", value: "#a9a9a9" },
+  { name: "Magnesium", value: "#c0c0c0" },
+  { name: "Silver", value: "#d6d6d6" },
+  { name: "Mercury", value: "#ebebeb" },
+  { name: "Snow", value: "#ffffff" },
+  { name: "Cayenne", value: "#941100" },
+  { name: "Mocha", value: "#945200" },
+  { name: "Asparagus", value: "#929000" },
+  { name: "Fern", value: "#4f8f00" },
+  { name: "Clover", value: "#008f00" },
+  { name: "Moss", value: "#009051" },
+  { name: "Teal", value: "#009193" },
+  { name: "Ocean", value: "#005493" },
+  { name: "Midnight", value: "#011993" },
+  { name: "Eggplant", value: "#531b93" },
+  { name: "Plum", value: "#942193" },
+  { name: "Maroon", value: "#941751" },
+  { name: "Maraschino", value: "#ff2600" },
+  { name: "Tangerine", value: "#ff9300" },
+  { name: "Lemon", value: "#fffb00" },
+  { name: "Lime", value: "#8efa00" },
+  { name: "Spring", value: "#00fa00" },
+  { name: "Sea Foam", value: "#00fa92" },
+  { name: "Turquoise", value: "#00fdff" },
+  { name: "Aqua", value: "#0096ff" },
+  { name: "Blueberry", value: "#0433ff" },
+  { name: "Grape", value: "#9437ff" },
+  { name: "Magenta", value: "#ff40ff" },
+  { name: "Strawberry", value: "#ff2f92" },
+  { name: "Salmon", value: "#ff7e79" },
+  { name: "Cantaloupe", value: "#ffd479" },
+  { name: "Banana", value: "#fffc79" },
+  { name: "Honeydew", value: "#d4fb79" },
+  { name: "Flora", value: "#73fa79" },
+  { name: "Spindrift", value: "#73fcd6" },
+  { name: "Ice", value: "#73fdff" },
+  { name: "Sky", value: "#76d6ff" },
+  { name: "Orchid", value: "#7a81ff" },
+  { name: "Lavender", value: "#d783ff" },
+  { name: "Bubblegum", value: "#ff85ff" },
+  { name: "Carnation", value: "#ff8ad8" },
 ];
-const STANDARD_COLORS = ["#c00000", "#ff0000", "#ffc000", "#ffff00", "#92d050", "#00b050", "#00b0f0", "#0070c0", "#002060", "#7030a0"];
 
 function loadSavedOptions(key: string, isAllowed: (value: string) => boolean, limit: number): string[] {
   try {
@@ -1130,19 +1171,11 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
           </button>
           {colorPaletteOpen && <div className="slide-color-palette" role="group" aria-label="Text color palette">
             <div className="slide-color-section">
-              <span className="slide-color-heading">Theme Colors</span>
-              <div className="slide-color-grid slide-theme-colors">
-                {THEME_COLORS.flatMap((row, rowIndex) => row.map((color, columnIndex) => <button type="button" key={`${rowIndex}-${columnIndex}`}
-                  className={`slide-color-swatch${textColour.toLowerCase() === color ? " selected" : ""}`} style={{ backgroundColor: color }} title={color}
-                  aria-label={`Apply theme color ${color}`} aria-pressed={textColour.toLowerCase() === color} onMouseDown={event => event.preventDefault()} onClick={() => applyTextColor(color)} />))}
-              </div>
-            </div>
-            <div className="slide-color-section">
-              <span className="slide-color-heading">Standard Colors</span>
-              <div className="slide-color-grid slide-standard-colors">
-                {STANDARD_COLORS.map(color => <button type="button" key={color}
-                  className={`slide-color-swatch${textColour.toLowerCase() === color ? " selected" : ""}`} style={{ backgroundColor: color }} title={color}
-                  aria-label={`Apply standard color ${color}`} aria-pressed={textColour.toLowerCase() === color} onMouseDown={event => event.preventDefault()} onClick={() => applyTextColor(color)} />)}
+              <span className="slide-color-heading">Apple Colors</span>
+              <div className="slide-color-grid slide-apple-colors">
+                {APPLE_COLORS.map(({ name, value }) => <button type="button" key={name}
+                  className={`slide-color-swatch${textColour.toLowerCase() === value ? " selected" : ""}`} style={{ backgroundColor: value }} title={`${name} · ${value}`}
+                  aria-label={`Apply Apple color ${name}`} aria-pressed={textColour.toLowerCase() === value} onMouseDown={event => event.preventDefault()} onClick={() => applyTextColor(value)} />)}
               </div>
             </div>
             {savedTextColors.length > 0 && <div className="slide-color-section">
