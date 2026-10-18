@@ -48,7 +48,7 @@ import { EditableActivityText } from "../components/EditableActivityText";
 import { fileToImageDataUrl } from "../components/Avatar";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 import { requestSemanticReview } from "../lib/llm";
-import { loadContentModel } from "../lib/tokens";
+import { loadContentModel, recordTokenUsage } from "../lib/tokens";
 import { checkSpelling, type SpellIssue } from "../lib/spellcheck";
 import { autoGrowTextarea } from "../lib/autoGrow";
 import { insertLessonPlanDay, lessonPlanDayCount, removeLessonPlanDay, startLessonPlanDay } from "../lib/lessonPlanDays";
@@ -2882,6 +2882,9 @@ export function UnitPage({
   const [generatingUnitQuiz, setGeneratingUnitQuiz] = useState(false);
   const [unitQuizCount, setUnitQuizCount] = useState(10);
   const [lessonSplitError, setLessonSplitError] = useState<string | null>(null);
+  const [proofreadingSlide, setProofreadingSlide] = useState<number | null>(null);
+  const [proofreadStatus, setProofreadStatus] = useState<"" | "done" | "error">("");
+  const [proofreadError, setProofreadError] = useState("");
   const [addingSlide, setAddingSlide] = useState(false);
   const [deletingSlide, setDeletingSlide] = useState(false);
   const [deleteSlideError, setDeleteSlideError] = useState("");
@@ -3105,6 +3108,40 @@ export function UnitPage({
     await saveBuiltUnit(unitId, { ...builtUnit, revision, content: nextContent, createdAt: new Date().toISOString() });
     setLessonStep(si + 1);
     setEditMode(true);
+  };
+  const proofreadLessonSlide = async (si: number) => {
+    if (proofreadingSlide !== null) return;
+    const editor = document.querySelector<HTMLElement>(`[data-lesson-editor="${si}"]`);
+    if (!editor) { setProofreadStatus("error"); setProofreadError("Open the slide text editor before using AI proofreading."); return; }
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+    const nodes: Text[] = [];
+    while (walker.nextNode()) {
+      const node = walker.currentNode as Text;
+      if (node.data.trim()) nodes.push(node);
+    }
+    if (!nodes.length) { setProofreadStatus("error"); setProofreadError("This slide has no text to proofread."); return; }
+    setProofreadingSlide(si);
+    setProofreadStatus("");
+    setProofreadError("");
+    try {
+      const response = await fetch("/api/proofread-slide", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ segments: nodes.map(node => node.data), model: loadContentModel() }),
+        signal: AbortSignal.timeout(65_000),
+      });
+      const data = await response.json() as { segments?: string[]; error?: string; usage?: { input_tokens?: number; output_tokens?: number; prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }; model?: string };
+      if (!response.ok || !data.segments || data.segments.length !== nodes.length) throw new Error(data.error ?? "AI proofreading returned incomplete text.");
+      data.segments.forEach((text, index) => { nodes[index].data = text; });
+      editor.dispatchEvent(new Event("input", { bubbles: true }));
+      if (data.usage) void recordTokenUsage({ us: unitId, model: data.model ?? loadContentModel(), promptTokens: data.usage.input_tokens ?? data.usage.prompt_tokens ?? 0, completionTokens: data.usage.output_tokens ?? data.usage.completion_tokens ?? 0, totalTokens: data.usage.total_tokens ?? 0 });
+      setProofreadStatus("done");
+    } catch (error) {
+      setProofreadStatus("error");
+      setProofreadError(error instanceof Error ? error.message : "AI proofreading failed. Please retry.");
+    } finally {
+      setProofreadingSlide(null);
+    }
   };
   const addBuiltLessonSlide = async (si: number) => {
     setLessonSplitError(null);
@@ -5067,6 +5104,14 @@ export function UnitPage({
                             title="Replace this slide's text with pasted paragraphs">
                             <Icon name="pencil" size={13} />Replace slide text
                           </button>
+                          <button type="button" className="btn ghost sm slide-tool-action"
+                            disabled={proofreadingSlide !== null || savingLesson}
+                            onClick={() => void proofreadLessonSlide(si)}
+                            title="Use AI to correct spelling and grammar on this slide">
+                            <Icon name="sparkles" size={13} />{proofreadingSlide === si ? "AI is proofreading..." : "AI fix spelling & grammar"}
+                          </button>
+                          {proofreadStatus === "done" && <p role="status">AI proofreading complete. Review the changes, then save to cloud.</p>}
+                          {proofreadStatus === "error" && <p className="auth-error" role="alert">{proofreadError}</p>}
                           {builtUnit && <>
                             <button type="button" className="btn ghost sm slide-tool-action"
                               disabled={addingSlide || savingLesson || deletingSlide}

@@ -21,6 +21,12 @@ function Svg({ size = 20, children, ...rest }: P & { children: React.ReactNode }
 }
 
 export const PATHS: Record<string, React.ReactNode> = {
+  sparkles: (
+    <>
+      <path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2z" />
+      <path d="m18.5 13 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7zM5.5 14l.8 2.7 2.7.8-2.7.8L5.5 21l-.8-2.7-2.7-.8 2.7-.8z" />
+    </>
+  ),
   save: (
     <>
       <path d="M4.5 3.5h12l3 3v14h-15z" />
