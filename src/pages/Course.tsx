@@ -4168,6 +4168,18 @@ export function UnitPage({
               hasSlideQuiz && qAllAnswered && qAnswers.every((a, i) => a === correctQuizAnswers[i]);
             const quizAttemptsExhausted = maxQuizAttempts !== null && quizAttempts >= maxQuizAttempts && !qAllCorrect;
             const quizPassed = !hasSlideQuiz || qAllCorrect || isPrivileged;
+            const canNavigateToSection = (targetIndex: number) => {
+              const targetPosition = visibleLessonIndices.indexOf(targetIndex);
+              if (targetPosition <= position || isPrivileged) return true;
+              return visibleLessonIndices.slice(position, targetPosition).every(index => {
+                const questions = lessonEdits.generatedQuizzes?.[index] ?? content.lesson[index]?.slideQuiz ?? [];
+                if (!questions.length) return true;
+                const answers = lessonQuizAnswers[index] ?? [];
+                return questions.every((question, questionIndex) =>
+                  answers[questionIndex] === resolvedSlideQuizAnswer(question, content.lesson[index].heading)
+                );
+              });
+            };
             const setAnswer = (qi: number, oi: number) => {
               setLessonQuizAnswers((prev) => {
                 const cur = prev[si]?.slice() ?? slideQuiz.map(() => -1);
@@ -5211,6 +5223,7 @@ export function UnitPage({
                       className={`lesson-dot${i === si ? " active" : ""}${i < si ? " done" : ""}${s.lessonStart && i > 0 ? " lesson-start" : ""}`}
                       aria-label={`Go to section ${dotIndex + 1}${s.lessonStart ? ` (start of lesson ${s.lessonStart.n})` : ""}`}
                       title={s.lessonStart ? `Lesson ${s.lessonStart.n} starts here` : undefined}
+                      disabled={!canNavigateToSection(i)}
                       onClick={() => go(i)}
                     />
                   ); })}
