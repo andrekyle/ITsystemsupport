@@ -12,6 +12,15 @@ const EDITOR_SELECTOR = '[data-slide-rich="true"][contenteditable="true"]';
 const SAVED_TEXT_COLORS_KEY = "itss.slide-text.saved-colors.v1";
 const SAVED_TEXT_FONTS_KEY = "itss.slide-text.saved-fonts.v1";
 const FONT_OPTIONS = ["Arial", "Verdana", "Georgia", "Times New Roman", "Courier New", "Tahoma", "Trebuchet MS"];
+const THEME_COLORS = [
+  ["#ffffff", "#000000", "#e7e6e6", "#44546a", "#5b9bd5", "#ed7d31", "#a5a5a5", "#ffc000", "#4472c4", "#70ad47"],
+  ["#f2f2f2", "#7f7f7f", "#d0cece", "#d6dce4", "#deebf7", "#fbe5d6", "#ededed", "#fff2cc", "#d9e2f3", "#e2f0d9"],
+  ["#d9d9d9", "#595959", "#aeaaaa", "#adb9ca", "#bdd7ee", "#f4b183", "#dbdbdb", "#ffe699", "#b4c6e7", "#c6e0b4"],
+  ["#bfbfbf", "#404040", "#757171", "#8497b0", "#9bc2e6", "#f7caac", "#c9c9c9", "#ffd966", "#8ea9db", "#a9d18e"],
+  ["#a6a6a6", "#262626", "#3b3838", "#323f4f", "#2f75b5", "#c55a11", "#7b7b7b", "#bf9000", "#2f5597", "#548235"],
+  ["#7f7f7f", "#0d0d0d", "#171616", "#222a35", "#1f4e79", "#843c0c", "#525252", "#7f6000", "#1f3864", "#375623"],
+];
+const STANDARD_COLORS = ["#c00000", "#ff0000", "#ffc000", "#ffff00", "#92d050", "#00b050", "#00b0f0", "#0070c0", "#002060", "#7030a0"];
 
 function loadSavedOptions(key: string, isAllowed: (value: string) => boolean, limit: number): string[] {
   try {
@@ -46,6 +55,8 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   const [historyCounts, setHistoryCounts] = useState({ undo: 0, redo: 0 });
   const [font, setFont] = useState("");
   const [textColour, setTextColour] = useState("#808080");
+  const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
+  const colorPalette = useRef<HTMLDivElement>(null);
   const [savedTextColors, setSavedTextColors] = useState(() => loadSavedOptions(SAVED_TEXT_COLORS_KEY, value => /^#[\da-f]{6}$/i.test(value), 8));
   const [savedFonts, setSavedFonts] = useState(() => loadSavedOptions(SAVED_TEXT_FONTS_KEY, value => FONT_OPTIONS.includes(value), 4));
   const [formatOptionsError, setFormatOptionsError] = useState("");
@@ -79,10 +90,21 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       return false;
     }
   };
-  const addSavedColor = () => {
-    const color = textColour.toLowerCase();
-    if (savedTextColors.includes(color) || savedTextColors.length >= 8) return;
-    const next = [...savedTextColors, color];
+  const applyTextColor = (color: string) => {
+    setTextColour(color);
+    run("foreColor", color);
+    setColorPaletteOpen(false);
+    setFormatOptionsError("");
+  };
+  const saveCustomTextColor = (color: string) => {
+    const normalized = color.toLowerCase();
+    applyTextColor(normalized);
+    if (savedTextColors.includes(normalized)) return;
+    if (savedTextColors.length >= 8) {
+      setFormatOptionsError("Remove a saved color before saving another.");
+      return;
+    }
+    const next = [...savedTextColors, normalized];
     if (saveFormattingOptions(SAVED_TEXT_COLORS_KEY, next)) setSavedTextColors(next);
   };
   const removeSavedColor = (color: string) => {
@@ -98,6 +120,21 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     const next = savedFonts.filter(value => value !== saved);
     if (saveFormattingOptions(SAVED_TEXT_FONTS_KEY, next)) setSavedFonts(next);
   };
+  useEffect(() => {
+    if (!colorPaletteOpen) return;
+    const closeOnPointerDown = (event: PointerEvent) => {
+      if (!colorPalette.current?.contains(event.target as Node)) setColorPaletteOpen(false);
+    };
+    const closeOnKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setColorPaletteOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOnPointerDown);
+    document.addEventListener("keydown", closeOnKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnPointerDown);
+      document.removeEventListener("keydown", closeOnKeyDown);
+    };
+  }, [colorPaletteOpen]);
   useEffect(() => {
     if (!enabled) { setPaintFormat(null); return; }
     if (!paintFormat) return;
@@ -1085,17 +1122,44 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
           </span>)}
         </div>}
         <div className="slide-tool-field"><span>Size</span><Select ariaLabel="Font size" disabled={!ready} placeholder="Choose size" value={size} options={[10, 13, 16, 18, 24, 32, 48].map((value, i) => ({ value: String(i + 1), label: `${value} px` }))} onChange={value => { setSize(value); run("fontSize", value); }} /></div>
-        <label className="slide-tool-colour" title="Text colour" aria-disabled={!ready}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17 12 3l6 14M8 12h8" /><path d="M3 21h18" style={{ stroke: textColour, strokeWidth: 3 }} /></svg>
-          <input aria-label="Text colour" disabled={!ready} type="color" value={textColour} onChange={e => { setTextColour(e.target.value); run("foreColor", e.target.value); }} />
-        </label>
-        <div className="slide-saved-colors" aria-label={`Saved text colors, ${savedTextColors.length} of 8`}>
-          <span className="slide-saved-label">Saved colors ({savedTextColors.length}/8)</span>
-          <button type="button" disabled={!ready || savedTextColors.includes(textColour.toLowerCase()) || savedTextColors.length >= 8} onMouseDown={event => event.preventDefault()} onClick={addSavedColor}>{savedTextColors.length >= 8 ? "Limit reached" : "Save color"}</button>
-          {savedTextColors.map(color => <span className="slide-saved-color" key={color}>
-            <button type="button" className="slide-saved-color-apply" disabled={!ready} onMouseDown={event => event.preventDefault()} onClick={() => { setTextColour(color); run("foreColor", color); }} style={{ backgroundColor: color }} aria-label={`Apply saved text color ${color}`} title={color} />
-            <button type="button" className="slide-saved-remove" onMouseDown={event => event.preventDefault()} onClick={() => removeSavedColor(color)} aria-label={`Remove saved text color ${color}`} title={`Remove ${color}`}>×</button>
-          </span>)}
+        <div className="slide-color-picker" ref={colorPalette}>
+          <button type="button" className="slide-tool-colour slide-tool-color-trigger" disabled={!ready} aria-label="Text color palette" aria-expanded={colorPaletteOpen} title="Text color"
+            onMouseDown={event => event.preventDefault()} onClick={() => setColorPaletteOpen(open => !open)}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17 12 3l6 14M8 12h8" /><path d="M3 21h18" style={{ stroke: textColour, strokeWidth: 3 }} /></svg>
+            <span aria-hidden="true">⌄</span>
+          </button>
+          {colorPaletteOpen && <div className="slide-color-palette" role="group" aria-label="Text color palette">
+            <div className="slide-color-section">
+              <span className="slide-color-heading">Theme Colors</span>
+              <div className="slide-color-grid slide-theme-colors">
+                {THEME_COLORS.flatMap((row, rowIndex) => row.map((color, columnIndex) => <button type="button" key={`${rowIndex}-${columnIndex}`}
+                  className={`slide-color-swatch${textColour.toLowerCase() === color ? " selected" : ""}`} style={{ backgroundColor: color }} title={color}
+                  aria-label={`Apply theme color ${color}`} aria-pressed={textColour.toLowerCase() === color} onMouseDown={event => event.preventDefault()} onClick={() => applyTextColor(color)} />))}
+              </div>
+            </div>
+            <div className="slide-color-section">
+              <span className="slide-color-heading">Standard Colors</span>
+              <div className="slide-color-grid slide-standard-colors">
+                {STANDARD_COLORS.map(color => <button type="button" key={color}
+                  className={`slide-color-swatch${textColour.toLowerCase() === color ? " selected" : ""}`} style={{ backgroundColor: color }} title={color}
+                  aria-label={`Apply standard color ${color}`} aria-pressed={textColour.toLowerCase() === color} onMouseDown={event => event.preventDefault()} onClick={() => applyTextColor(color)} />)}
+              </div>
+            </div>
+            {savedTextColors.length > 0 && <div className="slide-color-section">
+              <span className="slide-color-heading">Saved Colors ({savedTextColors.length}/8)</span>
+              <div className="slide-color-grid slide-saved-colors">
+                {savedTextColors.map(color => <span className="slide-color-saved-item" key={color}>
+                  <button type="button" className={`slide-color-swatch${textColour.toLowerCase() === color ? " selected" : ""}`} style={{ backgroundColor: color }} title={`Apply ${color}`}
+                    aria-label={`Apply saved color ${color}`} aria-pressed={textColour.toLowerCase() === color} onMouseDown={event => event.preventDefault()} onClick={() => applyTextColor(color)} />
+                  <button type="button" className="slide-color-remove" aria-label={`Remove saved color ${color}`} title={`Remove ${color}`} onMouseDown={event => event.preventDefault()} onClick={() => removeSavedColor(color)}>×</button>
+                </span>)}
+              </div>
+            </div>}
+            <label className="slide-color-more">
+              <span>More Colors...</span>
+              <input aria-label="Choose a custom text color" type="color" value={textColour} onChange={event => saveCustomTextColor(event.target.value)} />
+            </label>
+          </div>}
         </div>
         <label className="slide-tool-colour" title="Highlight" aria-disabled={!ready}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 13 9-10 4 4-10 9-3-3Zm0 0-3 5h5l1-2M3 21h18" /><path d="M3 21h18" style={{ stroke: highlightColour, strokeWidth: 3 }} /></svg>
