@@ -61,6 +61,44 @@ const APPLE_COLORS = [
   { name: "Bubblegum", value: "#ff85ff" },
   { name: "Carnation", value: "#ff8ad8" },
 ];
+const PASTEL_COLORS = [
+  { name: "Rosewater", value: "#f6d7d7" },
+  { name: "Peach", value: "#f8dfcc" },
+  { name: "Butter", value: "#fbf1c7" },
+  { name: "Pistachio", value: "#e3f0c8" },
+  { name: "Mint", value: "#d5efdc" },
+  { name: "Sea Glass", value: "#d2eee8" },
+  { name: "Powder Blue", value: "#d6eaf5" },
+  { name: "Periwinkle", value: "#d9e0f5" },
+  { name: "Lilac", value: "#e8dcf3" },
+  { name: "Mauve", value: "#f0d8ed" },
+  { name: "Blush", value: "#f4d9e4" },
+  { name: "Shell", value: "#f5e1d9" },
+  { name: "Dusty Rose", value: "#edc4c9" },
+  { name: "Apricot", value: "#f2c8a5" },
+  { name: "Vanilla", value: "#f4e5a8" },
+  { name: "Sage", value: "#d2dfaa" },
+  { name: "Celadon", value: "#bfe2c4" },
+  { name: "Aqua Mist", value: "#b8e2dc" },
+  { name: "Sky", value: "#b9dcec" },
+  { name: "Cornflower", value: "#bdc9ed" },
+  { name: "Wisteria", value: "#d0bfe5" },
+  { name: "Orchid", value: "#e3bee0" },
+  { name: "Pink", value: "#ebbfd3" },
+  { name: "Coral Mist", value: "#efc5b5" },
+  { name: "Rose", value: "#df9da7" },
+  { name: "Melon", value: "#e9ab7b" },
+  { name: "Marigold", value: "#e8d077" },
+  { name: "Avocado", value: "#b7cc7c" },
+  { name: "Fern", value: "#91c69b" },
+  { name: "Jade", value: "#86c9b8" },
+  { name: "Ocean Mist", value: "#83bfd6" },
+  { name: "Bluebell", value: "#91a8d9" },
+  { name: "Amethyst", value: "#b198d2" },
+  { name: "Mulberry", value: "#d095c4" },
+  { name: "Watermelon", value: "#df91aa" },
+  { name: "Salmon", value: "#e3a08d" },
+];
 
 function loadSavedOptions(key: string, isAllowed: (value: string) => boolean, limit: number): string[] {
   try {
@@ -95,6 +133,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   const [historyCounts, setHistoryCounts] = useState({ undo: 0, redo: 0 });
   const [font, setFont] = useState("");
   const [textColour, setTextColour] = useState("#808080");
+  const [textColorMode, setTextColorMode] = useState<"light" | "dark">("light");
   const [hexColorInput, setHexColorInput] = useState("#808080");
   const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
   const colorPalette = useRef<HTMLDivElement>(null);
@@ -1100,8 +1139,13 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         const probe = document.createElement("span");
         probe.style.color = value;
         const selectedColour = probe.style.color;
+        const appliedRange = restored.selection?.rangeCount ? restored.selection.getRangeAt(0) : null;
         restored.editor.querySelectorAll<HTMLElement>("[style*='color']").forEach(element => {
-          if (element.style.color === selectedColour || element.style.color.toLowerCase() === value.toLowerCase()) element.dataset.userColor = "true";
+          if (appliedRange?.intersectsNode(element) && (element.style.color === selectedColour || element.style.color.toLowerCase() === value.toLowerCase())) {
+            element.dataset.userColor = "true";
+            element.setAttribute(`data-${textColorMode}-color`, value.toLowerCase());
+            element.style.setProperty(`--slide-${textColorMode}-color`, value.toLowerCase());
+          }
         });
       }
     }
@@ -1179,12 +1223,25 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17 12 3l6 14M8 12h8" /><path d="M3 21h18" style={{ stroke: textColour, strokeWidth: 3, strokeLinecap: "butt" }} /></svg>
           </button>
           {colorPaletteOpen && <div className="slide-color-palette" role="group" aria-label="Text color palette">
+            <div className="slide-color-mode" role="group" aria-label="Choose theme for selected text color">
+              <span>Apply to</span>
+              <button type="button" className={textColorMode === "light" ? "active" : ""} aria-pressed={textColorMode === "light"} onMouseDown={event => event.preventDefault()} onClick={() => setTextColorMode("light")}>Light mode</button>
+              <button type="button" className={textColorMode === "dark" ? "active" : ""} aria-pressed={textColorMode === "dark"} onMouseDown={event => event.preventDefault()} onClick={() => setTextColorMode("dark")}>Dark mode</button>
+            </div>
             <div className="slide-color-section">
-              <span className="slide-color-heading">Apple Colors</span>
+              <span className="slide-color-heading">Apple Colors · {textColorMode} mode</span>
               <div className="slide-color-grid slide-apple-colors">
                 {APPLE_COLORS.map(({ name, value }) => <button type="button" key={name}
                   className={`slide-color-swatch${textColour.toLowerCase() === value ? " selected" : ""}`} style={{ backgroundColor: value }} title={`${name} · ${value}`}
                   aria-label={`Apply Apple color ${name}`} aria-pressed={textColour.toLowerCase() === value} onMouseDown={event => event.preventDefault()} onClick={() => applyTextColor(value)} />)}
+              </div>
+            </div>
+            <div className="slide-color-section">
+              <span className="slide-color-heading">Pastel Colors · {textColorMode} mode</span>
+              <div className="slide-color-grid slide-pastel-colors">
+                {PASTEL_COLORS.map(({ name, value }) => <button type="button" key={name}
+                  className={`slide-color-swatch${textColour.toLowerCase() === value ? " selected" : ""}`} style={{ backgroundColor: value }} title={`${name} · ${value}`}
+                  aria-label={`Apply pastel color ${name}`} aria-pressed={textColour.toLowerCase() === value} onMouseDown={event => event.preventDefault()} onClick={() => applyTextColor(value)} />)}
               </div>
             </div>
             {savedTextColors.length > 0 && <div className="slide-color-section">
@@ -1202,7 +1259,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
               <input id="slide-custom-color" aria-label="Choose a custom text color" type="color" value={textColour} onChange={event => saveCustomTextColor(event.target.value)} />
             </div>
             <form className="slide-color-hex-form" onSubmit={event => { event.preventDefault(); applyHexColor(); }}>
-              <label htmlFor="slide-hex-color">Hex color</label>
+              <label htmlFor="slide-hex-color">{textColorMode} hex</label>
               <input id="slide-hex-color" type="text" value={hexColorInput} placeholder="#RRGGBB" maxLength={7} spellCheck={false}
                 aria-label="Enter HTML hex color code" aria-invalid={!/^(?:#?[\da-f]{3}|#?[\da-f]{6})$/i.test(hexColorInput.trim())}
                 onChange={event => { setHexColorInput(event.target.value); setFormatOptionsError(""); }} />

@@ -60,7 +60,7 @@ export function sanitizeSlideHtml(html: string): string {
   const source = document.createElement("template");
   source.innerHTML = html;
   const allowed = new Set(["SPAN", "B", "STRONG", "I", "EM", "U", "S", "STRIKE", "SUB", "SUP", "BR", "P", "DIV", "UL", "OL", "LI", "BLOCKQUOTE", "FONT", "H1", "H2", "H3", "H4", "TABLE", "COLGROUP", "COL", "THEAD", "TBODY", "TR", "TH", "TD", "IMG"]);
-  const styles = ["font-family", "font-size", "font-weight", "font-style", "text-decoration", "color", "background-color", "text-align", "text-indent", "line-height", "letter-spacing", "margin-left", "margin-right", "margin-top", "margin-bottom", "vertical-align", "width", "min-width", "max-width", "height", "min-height", "table-layout", "object-fit", "object-position", "float", "display", "transform", "transform-origin"];
+  const styles = ["font-family", "font-size", "font-weight", "font-style", "text-decoration", "color", "background-color", "text-align", "text-indent", "line-height", "letter-spacing", "margin-left", "margin-right", "margin-top", "margin-bottom", "vertical-align", "width", "min-width", "max-width", "height", "min-height", "table-layout", "object-fit", "object-position", "float", "display", "transform", "transform-origin", "--slide-light-color", "--slide-dark-color"];
   function clean(node: Node): Node {
     if (node.nodeType === Node.TEXT_NODE) return document.createTextNode(node.textContent ?? "");
     const fragment = document.createDocumentFragment();
@@ -74,6 +74,10 @@ export function sanitizeSlideHtml(html: string): string {
       if (classes.length) out.className = classes.join(" ");
       if (node.tagName === "TH" && ["col", "row"].includes(node.getAttribute("scope") ?? "")) out.setAttribute("scope", node.getAttribute("scope")!);
       if (node.dataset.userColor === "true") out.dataset.userColor = "true";
+      for (const mode of ["light", "dark"] as const) {
+        const color = node.getAttribute(`data-${mode}-color`);
+        if (node.dataset.userColor === "true" && color && /^#[\da-f]{6}$/i.test(color)) out.setAttribute(`data-${mode}-color`, color.toLowerCase());
+      }
       if (node.dataset.slideTitle === "true") out.dataset.slideTitle = "true";
       if (node.tagName === "IMG") {
         if (figureId) out.setAttribute("data-figure-id", figureId);
@@ -96,6 +100,7 @@ export function sanitizeSlideHtml(html: string): string {
         // Text colour is inherited from the lesson theme unless the author
         // deliberately chose it with the editor's colour picker.
         if (prop === "color" && node.dataset.userColor !== "true") continue;
+        if (prop.startsWith("--slide-") && (node.dataset.userColor !== "true" || !/^#[\da-f]{6}$/i.test(value))) continue;
         if (value && !/url\s*\(|expression|var\s*\(/i.test(value)) out.style.setProperty(prop, value);
       }
       if (node.tagName === "FONT") {
