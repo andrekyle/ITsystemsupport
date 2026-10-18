@@ -9,6 +9,21 @@ import { EditingTools } from "./EditingSidebar";
 import { copySlideTextFormat, paintSlideTextFormat, type SlideTextFormat } from "../lib/slideFormatPainter";
 
 const EDITOR_SELECTOR = '[data-slide-rich="true"][contenteditable="true"]';
+const SAVED_TEXT_COLORS_KEY = "itss.slide-text.saved-colors.v1";
+const SAVED_TEXT_FONTS_KEY = "itss.slide-text.saved-fonts.v1";
+const FONT_OPTIONS = ["Arial", "Verdana", "Georgia", "Times New Roman", "Courier New", "Tahoma", "Trebuchet MS"];
+
+function loadSavedOptions(key: string, isAllowed: (value: string) => boolean, limit: number): string[] {
+  try {
+    const stored: unknown = JSON.parse(localStorage.getItem(key) ?? "[]");
+    return Array.isArray(stored)
+      ? Array.from(new Set(stored.filter((value): value is string => typeof value === "string" && isAllowed(value)))).slice(0, limit)
+      : [];
+  } catch (error) {
+    console.error(`Could not load saved slide formatting options from ${key}.`, error);
+    return [];
+  }
+}
 
 const commands = [
   ["bold", "Bold"], ["italic", "Italic"], ["underline", "Underline"],
@@ -31,6 +46,9 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   const [historyCounts, setHistoryCounts] = useState({ undo: 0, redo: 0 });
   const [font, setFont] = useState("");
   const [textColour, setTextColour] = useState("#808080");
+  const [savedTextColors, setSavedTextColors] = useState(() => loadSavedOptions(SAVED_TEXT_COLORS_KEY, value => /^#[\da-f]{6}$/i.test(value), 8));
+  const [savedFonts, setSavedFonts] = useState(() => loadSavedOptions(SAVED_TEXT_FONTS_KEY, value => FONT_OPTIONS.includes(value), 4));
+  const [formatOptionsError, setFormatOptionsError] = useState("");
   const [highlightColour, setHighlightColour] = useState("#fff59d");
   const [size, setSize] = useState("");
   const [blockStyle, setBlockStyle] = useState("p");
@@ -50,6 +68,36 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   const [ready, setReady] = useState(false);
   const [active, setActive] = useState<string[]>([]);
   const [paintFormat, setPaintFormat] = useState<SlideTextFormat | null>(null);
+  const saveFormattingOptions = (key: string, values: string[]) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(values));
+      setFormatOptionsError("");
+      return true;
+    } catch (error) {
+      console.error(`Could not save slide formatting options to ${key}.`, error);
+      setFormatOptionsError("Saved formatting options could not be stored in this browser.");
+      return false;
+    }
+  };
+  const addSavedColor = () => {
+    const color = textColour.toLowerCase();
+    if (savedTextColors.includes(color) || savedTextColors.length >= 8) return;
+    const next = [...savedTextColors, color];
+    if (saveFormattingOptions(SAVED_TEXT_COLORS_KEY, next)) setSavedTextColors(next);
+  };
+  const removeSavedColor = (color: string) => {
+    const next = savedTextColors.filter(saved => saved !== color);
+    if (saveFormattingOptions(SAVED_TEXT_COLORS_KEY, next)) setSavedTextColors(next);
+  };
+  const addSavedFont = () => {
+    if (!font || savedFonts.includes(font) || savedFonts.length >= 4) return;
+    const next = [...savedFonts, font];
+    if (saveFormattingOptions(SAVED_TEXT_FONTS_KEY, next)) setSavedFonts(next);
+  };
+  const removeSavedFont = (saved: string) => {
+    const next = savedFonts.filter(value => value !== saved);
+    if (saveFormattingOptions(SAVED_TEXT_FONTS_KEY, next)) setSavedFonts(next);
+  };
   useEffect(() => {
     if (!enabled) { setPaintFormat(null); return; }
     if (!paintFormat) return;
@@ -1024,16 +1072,31 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         {selectedImage && menuToggle("image", "Resize and crop selected image", imageIcon)}
       </span>
     </div>
-    <div className="slide-editor-status" aria-live="polite">{paintFormat ? "Format painter: select text to apply. Esc cancels." : ready ? "Formatting applies to the current selection" : "Select lesson text to begin formatting"}</div>
+    <div className={`slide-editor-status${formatOptionsError ? " has-error" : ""}`} aria-live="polite">{formatOptionsError || (paintFormat ? "Format painter: select text to apply. Esc cancels." : ready ? "Formatting applies to the current selection" : "Select lesson text to begin formatting")}</div>
     <input ref={imageInput} className="slide-image-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={event => void insertImage(event)} />
     {menu && <div id={`slide-${menu}-options`} className="slide-text-options" role="group" aria-label={menu === "text" ? "Font and text options" : menu === "table" ? "Table options" : menu === "image" ? "Image options" : "Paragraph and editing options"}>
       {menu === "text" ? <>
-        <div className="slide-tool-field"><span>Font</span><Select ariaLabel="Font" disabled={!ready} placeholder="Choose font" value={font} options={["Arial", "Verdana", "Georgia", "Times New Roman", "Courier New", "Tahoma", "Trebuchet MS"].map(value => ({ value, label: value }))} onChange={value => { setFont(value); run("fontName", value); }} /></div>
+        <div className="slide-tool-field"><span>Font</span><Select ariaLabel="Font" disabled={!ready} placeholder="Choose font" value={font} options={FONT_OPTIONS.map(value => ({ value, label: value }))} onChange={value => { setFont(value); run("fontName", value); }} /><button type="button" disabled={!ready || !font || savedFonts.includes(font) || savedFonts.length >= 4} onMouseDown={event => event.preventDefault()} onClick={addSavedFont} title={savedFonts.length >= 4 ? "Saved font limit reached" : "Save selected font"}>Save font</button></div>
+        {savedFonts.length > 0 && <div className="slide-saved-fonts" aria-label={`Saved fonts, ${savedFonts.length} of 4`}>
+          <span className="slide-saved-label">Saved fonts ({savedFonts.length}/4)</span>
+          {savedFonts.map(saved => <span className="slide-saved-font" key={saved}>
+            <button type="button" className="slide-saved-font-apply" disabled={!ready} onMouseDown={event => event.preventDefault()} onClick={() => { setFont(saved); run("fontName", saved); }} style={{ fontFamily: saved }} aria-label={`Apply ${saved} font`}>{saved}</button>
+            <button type="button" className="slide-saved-remove" onMouseDown={event => event.preventDefault()} onClick={() => removeSavedFont(saved)} aria-label={`Remove saved ${saved} font`} title={`Remove ${saved}`}>×</button>
+          </span>)}
+        </div>}
         <div className="slide-tool-field"><span>Size</span><Select ariaLabel="Font size" disabled={!ready} placeholder="Choose size" value={size} options={[10, 13, 16, 18, 24, 32, 48].map((value, i) => ({ value: String(i + 1), label: `${value} px` }))} onChange={value => { setSize(value); run("fontSize", value); }} /></div>
         <label className="slide-tool-colour" title="Text colour" aria-disabled={!ready}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17 12 3l6 14M8 12h8" /><path d="M3 21h18" style={{ stroke: textColour, strokeWidth: 3 }} /></svg>
           <input aria-label="Text colour" disabled={!ready} type="color" value={textColour} onChange={e => { setTextColour(e.target.value); run("foreColor", e.target.value); }} />
         </label>
+        <div className="slide-saved-colors" aria-label={`Saved text colors, ${savedTextColors.length} of 8`}>
+          <span className="slide-saved-label">Saved colors ({savedTextColors.length}/8)</span>
+          <button type="button" disabled={!ready || savedTextColors.includes(textColour.toLowerCase()) || savedTextColors.length >= 8} onMouseDown={event => event.preventDefault()} onClick={addSavedColor}>{savedTextColors.length >= 8 ? "Limit reached" : "Save color"}</button>
+          {savedTextColors.map(color => <span className="slide-saved-color" key={color}>
+            <button type="button" className="slide-saved-color-apply" disabled={!ready} onMouseDown={event => event.preventDefault()} onClick={() => { setTextColour(color); run("foreColor", color); }} style={{ backgroundColor: color }} aria-label={`Apply saved text color ${color}`} title={color} />
+            <button type="button" className="slide-saved-remove" onMouseDown={event => event.preventDefault()} onClick={() => removeSavedColor(color)} aria-label={`Remove saved text color ${color}`} title={`Remove ${color}`}>×</button>
+          </span>)}
+        </div>
         <label className="slide-tool-colour" title="Highlight" aria-disabled={!ready}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 13 9-10 4 4-10 9-3-3Zm0 0-3 5h5l1-2M3 21h18" /><path d="M3 21h18" style={{ stroke: highlightColour, strokeWidth: 3 }} /></svg>
           <input aria-label="Highlight" disabled={!ready} type="color" value={highlightColour} onChange={e => { setHighlightColour(e.target.value); run("hiliteColor", e.target.value); }} />
