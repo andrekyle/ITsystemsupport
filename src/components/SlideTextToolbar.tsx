@@ -1182,6 +1182,49 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
     setActive(commands.filter(([cmd]) => document.queryCommandState(cmd)).map(([cmd]) => cmd));
   };
+  const resetSelectedTextColor = () => {
+    const restored = restoreSelection();
+    const selection = restored?.selection;
+    if (!restored || !selection?.rangeCount) {
+      setFormatOptionsError("Select slide text to reset its color.");
+      return;
+    }
+    const selectedRange = selection.getRangeAt(0);
+    if (selectedRange.collapsed) {
+      setFormatOptionsError("Select slide text to reset its color.");
+      return;
+    }
+
+    const fragment = selectedRange.extractContents();
+    const selectedNodes = Array.from(fragment.childNodes);
+    if (!selectedNodes.length) {
+      setFormatOptionsError("The selected text color could not be reset.");
+      return;
+    }
+    const walker = document.createTreeWalker(fragment, NodeFilter.SHOW_ELEMENT);
+    while (walker.nextNode()) {
+      const element = walker.currentNode as HTMLElement;
+      element.removeAttribute("data-user-color");
+      element.removeAttribute("data-light-color");
+      element.removeAttribute("data-dark-color");
+      element.style.removeProperty("color");
+      element.style.removeProperty("--slide-light-color");
+      element.style.removeProperty("--slide-dark-color");
+      if (element.tagName === "FONT") element.removeAttribute("color");
+    }
+    selectedRange.insertNode(fragment);
+
+    const restoredSelection = document.createRange();
+    restoredSelection.setStartBefore(selectedNodes[0]);
+    restoredSelection.setEndAfter(selectedNodes[selectedNodes.length - 1]);
+    selection.removeAllRanges();
+    selection.addRange(restoredSelection);
+    range.current = restoredSelection.cloneRange();
+    restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
+    setSavedColorTarget(null);
+    setColorPaletteOpen(false);
+    setFormatOptionsError("");
+  };
   const commandButton = (cmd: string, label: string, icon?: ReactNode) => (
     <button key={cmd} type="button" className={icon ? "slide-tool-icon" : undefined} disabled={cmd === "undo" ? historyCounts.undo === 0 : cmd === "redo" ? historyCounts.redo === 0 : !ready} aria-label={label} aria-pressed={cmd === "undo" || cmd === "redo" ? undefined : active.includes(cmd)} title={cmd === "undo" || cmd === "redo" ? `${label} (${historyCounts[cmd]} of 20 available)` : label}
       onMouseDown={e => e.preventDefault()} onClick={() => run(cmd)}>{icon ?? label}</button>
@@ -1269,6 +1312,9 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
                 <span className="slide-color-mode-thumb" aria-hidden="true" />
               </button>
             </div>
+            <button type="button" className="slide-color-reset" onMouseDown={event => event.preventDefault()} onClick={resetSelectedTextColor}>
+              Reset selected text to app default
+            </button>
             <div className="slide-color-section">
               <span className="slide-color-heading">Apple Colors · {textColorMode} mode</span>
               <div className="slide-color-grid slide-apple-colors">
