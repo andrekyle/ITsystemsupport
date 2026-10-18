@@ -914,6 +914,34 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     if (colgroup) colgroup.insertBefore(document.createElement("col"), colgroup.children[index] ?? null);
     notifyEditor(cell.closest<HTMLElement>(EDITOR_SELECTOR));
   };
+  const deleteTableRow = () => {
+    const cell = selectedCell;
+    const row = cell?.parentElement;
+    const table = cell?.closest("table");
+    if (!cell || !(row instanceof HTMLTableRowElement) || !table || table.rows.length <= 1) return;
+    const editor = cell.closest<HTMLElement>(EDITOR_SELECTOR);
+    const rowIndex = row.rowIndex;
+    const cellIndex = cell.cellIndex;
+    row.remove();
+    const nextRow = table.rows[Math.min(rowIndex, table.rows.length - 1)];
+    setSelectedCell(nextRow?.cells[Math.min(cellIndex, nextRow.cells.length - 1)] ?? null);
+    notifyEditor(editor);
+  };
+  const deleteTableColumn = () => {
+    const cell = selectedCell;
+    const table = cell?.closest("table");
+    if (!cell || !table) return;
+    const columnCount = Math.max(...Array.from(table.rows).map(row => row.cells.length));
+    if (columnCount <= 1) return;
+    const editor = cell.closest<HTMLElement>(EDITOR_SELECTOR);
+    const index = cell.cellIndex;
+    const rowIndex = cell.closest("tr")?.rowIndex ?? 0;
+    Array.from(table.rows).forEach(row => row.cells[index]?.remove());
+    table.querySelector("colgroup")?.children[index]?.remove();
+    const nextRow = table.rows[Math.min(rowIndex, table.rows.length - 1)];
+    setSelectedCell(nextRow?.cells[Math.min(index, nextRow.cells.length - 1)] ?? null);
+    notifyEditor(editor);
+  };
   const run = (command: string, value?: string) => {
     if (command === "undo" || command === "redo") { replay(command); return; }
     if (command === "insertUnorderedList" || command === "insertOrderedList") {
@@ -1024,6 +1052,8 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         <button type="button" disabled={!selectedCell} onMouseDown={e => e.preventDefault()} onClick={() => addTableRow(true)}>Add row below</button>
         <button type="button" disabled={!selectedCell} onMouseDown={e => e.preventDefault()} onClick={() => addTableColumn(false)}>Add column left</button>
         <button type="button" disabled={!selectedCell} onMouseDown={e => e.preventDefault()} onClick={() => addTableColumn(true)}>Add column right</button>
+        <button type="button" className="danger" disabled={!selectedCell || (selectedCell.closest("table")?.rows.length ?? 0) <= 1} onMouseDown={e => e.preventDefault()} onClick={deleteTableRow}>Delete row</button>
+        <button type="button" className="danger" disabled={!selectedCell || Math.max(0, ...Array.from(selectedCell.closest("table")?.rows ?? []).map(row => row.cells.length)) <= 1} onMouseDown={e => e.preventDefault()} onClick={deleteTableColumn}>Delete column</button>
         <label className="slide-tool-range">Column width <input type="number" min="48" max="900" step="1" disabled={!selectedCell} value={columnWidth} onChange={e => updateColumnWidth(Math.max(48, Number(e.target.value) || 48))} /> px</label>
         <label className="slide-tool-range">Row height <input type="number" min="28" max="600" step="1" disabled={!selectedCell} value={rowHeight} onChange={e => updateRowHeight(Math.max(28, Number(e.target.value) || 28))} /> px</label>
         {selectedCell && <small>Sizes apply to the selected cell’s complete column or row.</small>}

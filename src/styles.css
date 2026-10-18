@@ -1432,14 +1432,14 @@ table.data.lesson-table td {
   white-space: pre-line;
   overflow-wrap: break-word;
   line-height: 1.5;
+  color: var(--ink-2);
+  font-family: inherit;
+  font-weight: 350;
 }
 .lesson-table-scroll > table.lesson-table th {
   text-transform: none;
   letter-spacing: normal;
-  color: inherit;
-  font-family: inherit;
   font-size: inherit;
-  font-weight: inherit;
 }
 
 /* SO header rows stand out; AC rows are indented under them */
