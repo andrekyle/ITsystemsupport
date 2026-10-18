@@ -16,6 +16,14 @@ type VideoComment = {
   likedBy: string[];
   createdAt: string;
 };
+type VideoLayout = { width: number; align: "left" | "center" | "right" };
+const videoLayoutKey = (id: string) => `itss.video-layout.${id}`;
+function readVideoLayout(id: string): VideoLayout {
+  try {
+    const value = JSON.parse(localStorage.getItem(videoLayoutKey(id)) ?? "null") as Partial<VideoLayout> | null;
+    return { width: Math.min(100, Math.max(30, Number(value?.width) || 100)), align: value?.align === "left" || value?.align === "right" ? value.align : "center" };
+  } catch { return { width: 100, align: "center" }; }
+}
 
 function isVideoComment(value: unknown): value is VideoComment {
   if (!value || typeof value !== "object") return false;
@@ -110,6 +118,7 @@ export function LessonVideoEditor({ links, onSave, disabled, quizzes, onSaveQuiz
             />
           </span>
         </label>}
+        <VideoLayoutEditor id={videoQuizId(value)} disabled={saving || disabled} />
         <a className="lesson-video-source-link" href={value} target="_blank" rel="noopener noreferrer"
           title={value}>Open video source <Icon name="chevronRight" size={14} /></a>
         {onSaveQuiz && <VideoQuizEditor quiz={quizzes?.[videoQuizId(value)]} disabled={saving || disabled}
@@ -117,6 +126,20 @@ export function LessonVideoEditor({ links, onSave, disabled, quizzes, onSaveQuiz
       </div>)}
     </div>}
     {error && <p className="auth-error" role="alert">{error}</p>}
+  </div>;
+}
+
+function VideoLayoutEditor({ id, disabled }: { id: string; disabled: boolean }) {
+  const [layout, setLayout] = useState<VideoLayout>(() => readVideoLayout(id));
+  const update = (next: VideoLayout) => { setLayout(next); localStorage.setItem(videoLayoutKey(id), JSON.stringify(next)); window.dispatchEvent(new CustomEvent("itss-video-layout", { detail: id })); };
+  return <div className="lesson-video-layout-editor">
+    <label>Video width
+      <input type="range" min="30" max="100" step="5" value={layout.width} disabled={disabled} onChange={event => update({ ...layout, width: Number(event.target.value) })} />
+      <span>{layout.width}%</span>
+    </label>
+    <fieldset><legend>Alignment</legend>
+      {(["left", "center", "right"] as const).map(align => <label key={align}><input type="radio" name={`video-align-${id}`} checked={layout.align === align} disabled={disabled} onChange={() => update({ ...layout, align })} /> {align}</label>)}
+    </fieldset>
   </div>;
 }
 
@@ -204,6 +227,7 @@ function LessonVideo({
   onWatchProgress?: (seconds: number, duration: number) => void;
   onViewCount?: (views: number) => void;
 }) {
+  const videoId = videoQuizId(link);
   const commenterProfile: Profile = learnerProfile ?? {
     id: "current-video-learner",
     name: learnerName || "You",
@@ -211,6 +235,12 @@ function LessonVideo({
     createdAt: "",
   };
   const [failed, setFailed] = useState(false);
+  const [layout, setLayout] = useState<VideoLayout>(() => readVideoLayout(videoId));
+  useEffect(() => {
+    const refresh = (event: Event) => { if ((event as CustomEvent<string>).detail === videoId) setLayout(readVideoLayout(videoId)); };
+    window.addEventListener("itss-video-layout", refresh);
+    return () => window.removeEventListener("itss-video-layout", refresh);
+  }, [videoId]);
   const [open, setOpen] = useState(false);
   const [liked, setLiked] = useState(initialLiked);
   const [comments, setComments] = useState<VideoComment[]>(() => initialComments.map((comment, commentIndex) =>
@@ -296,7 +326,7 @@ function LessonVideo({
   }
 
   return <>
-    <figure className="lesson-video">
+    <figure className={`lesson-video lesson-video-align-${layout.align}`} style={{ width: `${layout.width}%` }}>
       <button
         ref={openButton}
         type="button"

@@ -2127,6 +2127,14 @@ td .with-ico .ico {
 .lesson-video-form label { font-size: 12px; font-weight: 600; }
 .lesson-video-form > .btn { width: 100%; border: 1px solid var(--border); margin-top: 6px; }
 .lesson-video { margin: 20px 0; max-width: 960px; }
+.lesson-video-align-left { margin-right: auto; }
+.lesson-video-align-center { margin-left: auto; margin-right: auto; }
+.lesson-video-align-right { margin-left: auto; }
+.lesson-video-layout-editor { display: grid; gap: 8px; margin: 10px 0; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; }
+.lesson-video-layout-editor > label { display: flex; align-items: center; gap: 8px; }
+.lesson-video-layout-editor input[type="range"] { flex: 1; }
+.lesson-video-layout-editor fieldset { display: flex; gap: 12px; margin: 0; padding: 0; border: 0; }
+.lesson-video-layout-editor legend { margin-right: 4px; font-weight: 600; }
 .lesson-video iframe,.lesson-video video { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; background: #000; }
 .lesson-video figcaption { margin-top: 8px; font-size: 12px; }
 
