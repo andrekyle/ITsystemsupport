@@ -17300,6 +17300,11 @@ td.cal-row-actions {
 [data-theme="dark"] .slide-text-options button:hover:not(:disabled) { border-color: var(--tool-border); background: var(--tool-hover); color: var(--tool-ink); }
 .slide-text-options input[type="color"] { width: 32px; height: 30px; border: 1px solid var(--tool-border); border-radius: 4px; background: var(--tool-bg); padding: 2px; }
 .slide-image-input { display:none; }
+.slide-image-wrap-actions { display:grid; flex:1 0 100%; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.slide-text-options .slide-image-wrap-actions > button { box-sizing:border-box; width:100%; min-width:0; min-height:44px; padding:8px 10px; border:0; border-radius:9px; background:var(--tool-hover); text-align:center; }
+[data-theme="dark"] .slide-text-options .slide-image-wrap-actions > button { border:0; background:#202020; color:var(--tool-ink); }
+[data-theme="dark"] .slide-text-options .slide-image-wrap-actions > button:hover:not(:disabled) { border:0; background:#303030; color:#f0f0f0; }
+[data-theme="dark"] .slide-text-options .slide-image-wrap-actions > button.danger { color:#ff8a80; }
 .slide-tool-range { display:inline-flex; align-items:center; gap:6px; }
 .slide-tool-range input[type="range"] { width:130px; accent-color:var(--azure); }
 .slide-tool-range input[type="number"] { width:74px; min-height:30px; padding:4px 7px; border:1px solid var(--tool-border); border-radius:5px; background:var(--tool-bg); color:var(--tool-ink); }

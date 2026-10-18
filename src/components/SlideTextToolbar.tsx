@@ -1332,10 +1332,12 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       </> : menu === "image" ? <>
         <label><input type="checkbox" checked={cropImage} onChange={e => { const checked = e.target.checked; setCropImage(checked); updateImage(image => { image.dataset.cropped = String(checked); image.style.height = checked ? `${imageHeight}px` : "auto"; image.style.objectFit = checked ? "cover" : "contain"; }); }} /> Crop to frame</label>
         <strong className="slide-image-wrap-label">Text wrapping</strong>
-        <button type="button" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px auto 12px 0"; })}>Align image left</button>
-        <button type="button" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px auto"; })}>No wrap · centre</button>
-        <button type="button" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px 0 12px auto"; })}>Align image right</button>
-        <button type="button" className="danger" onClick={() => { if (!selectedImage) return; const editor = selectedImage.closest<HTMLElement>(EDITOR_SELECTOR); selectedImage.remove(); setSelectedImage(null); setMenu(null); notifyEditor(editor); }}>Remove image</button>
+        <div className="slide-image-wrap-actions">
+          <button type="button" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px auto 12px 0"; })}>Align image left</button>
+          <button type="button" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px auto"; })}>No wrap · centre</button>
+          <button type="button" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px 0 12px auto"; })}>Align image right</button>
+          <button type="button" className="danger" onClick={() => { if (!selectedImage) return; const editor = selectedImage.closest<HTMLElement>(EDITOR_SELECTOR); selectedImage.remove(); setSelectedImage(null); setMenu(null); notifyEditor(editor); }}>Remove image</button>
+        </div>
         <small>Drag the image inside the lesson to move it to another insertion point.</small>
       </> : <>
         {commands.filter(([cmd]) => ["justifyFull", "selectAll"].includes(cmd)).map(([cmd, label]) => commandButton(cmd, label))}
