@@ -974,7 +974,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     setActive(commands.filter(([cmd]) => document.queryCommandState(cmd)).map(([cmd]) => cmd));
   };
   const commandButton = (cmd: string, label: string, icon?: ReactNode) => (
-    <button key={cmd} type="button" className={icon ? "slide-tool-icon" : undefined} disabled={cmd === "undo" ? historyCounts.undo === 0 : cmd === "redo" ? historyCounts.redo === 0 : !ready} aria-label={label} aria-pressed={cmd === "undo" || cmd === "redo" ? undefined : active.includes(cmd)} title={cmd === "undo" || cmd === "redo" ? `${label} (${historyCounts[cmd]} of 10 available)` : label}
+    <button key={cmd} type="button" className={icon ? "slide-tool-icon" : undefined} disabled={cmd === "undo" ? historyCounts.undo === 0 : cmd === "redo" ? historyCounts.redo === 0 : !ready} aria-label={label} aria-pressed={cmd === "undo" || cmd === "redo" ? undefined : active.includes(cmd)} title={cmd === "undo" || cmd === "redo" ? `${label} (${historyCounts[cmd]} of 20 available)` : label}
       onMouseDown={e => e.preventDefault()} onClick={() => run(cmd)}>{icon ?? label}</button>
   );
   const alignmentIcon = (center = false) => <svg viewBox="0 0 24 24" aria-hidden="true"><path d={center ? "M3 5h18M6 11h12M9 17h6" : "M3 5h18M3 11h12M3 17h6"} /></svg>;

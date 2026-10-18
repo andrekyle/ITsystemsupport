@@ -1,6 +1,6 @@
 export type SlideTextEdit = { field: number; before: string; after: string };
 
-/** A slide editing session retains the ten most recent changes. */
+/** A slide editing session retains the twenty most recent changes. */
 export class SlideEditHistory {
   private past: SlideTextEdit[] = [];
   private future: SlideTextEdit[] = [];
@@ -11,7 +11,7 @@ export class SlideEditHistory {
   record(edit: SlideTextEdit) {
     if (edit.before === edit.after) return;
     this.past.push(edit);
-    if (this.past.length > 10) this.past.shift();
+    if (this.past.length > 20) this.past.shift();
     this.future = [];
   }
 
