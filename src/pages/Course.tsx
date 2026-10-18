@@ -6274,7 +6274,10 @@ export function UnitPage({
               <span className="ico">
                 <Icon name="clipboard" size={20} />
               </span>
-              Question {qNo} — {active.title}
+              Question {qNo} — {inlineUnit ? unitText(active.title, (draft, value) => {
+                const quiz = draft.quizzes?.find(item => item.id === active.id);
+                if (quiz) quiz.title = value || active.title;
+              }, "Quiz title") : active.title}
             </h2>
             <div className="exam-instruction">
               <p>
