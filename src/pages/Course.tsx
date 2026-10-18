@@ -29,7 +29,7 @@ import { videoEngagementKey, videoQuizId } from "../lib/videoLearning";
 import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml, hydrateSlideImages, normalizeSlideDocument } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
 import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, effectiveBuiltContent } from "../components/UnitBuilder";
-import { lessonEditsAfterSplit } from "../lib/lessonSectionEdits";
+import { lessonEditsAfterInsert, lessonEditsAfterSplit } from "../lib/lessonSectionEdits";
 import { InlineText, InlineIconBtn } from "../components/InlineText";
 import { ActivityQuestionEditor } from "../components/ActivityQuestionEditor";
 import { UnitContentEditor } from "../components/UnitContentEditor";
@@ -2882,6 +2882,7 @@ export function UnitPage({
   const [generatingUnitQuiz, setGeneratingUnitQuiz] = useState(false);
   const [unitQuizCount, setUnitQuizCount] = useState(10);
   const [lessonSplitError, setLessonSplitError] = useState<string | null>(null);
+  const [addingSlide, setAddingSlide] = useState(false);
   const [deletingSlide, setDeletingSlide] = useState(false);
   const [deleteSlideError, setDeleteSlideError] = useState("");
   useEffect(() => { setDeleteSlideError(""); }, [unitId]);
@@ -3104,6 +3105,39 @@ export function UnitPage({
     await saveBuiltUnit(unitId, { ...builtUnit, revision, content: nextContent, createdAt: new Date().toISOString() });
     setLessonStep(si + 1);
     setEditMode(true);
+  };
+  const addBuiltLessonSlide = async (si: number) => {
+    setLessonSplitError(null);
+    if (!builtUnit || !content || addingSlide) {
+      if (!builtUnit) setLessonSplitError("New slides can be added after the unit has been built.");
+      return;
+    }
+    setAddingSlide(true);
+    try {
+      const nextContent = structuredClone(builtUnit.content) as UnitContent;
+      const newSlide: LessonSection = {
+        heading: "New slide",
+        icon: "book",
+        paragraphs: ["Add your slide content here."],
+      };
+      nextContent.lesson.splice(si + 1, 0, newSlide);
+      const revision = crypto.randomUUID();
+      const editKey = `itss.lessonedits.${courseScopedUnit(`${unitId}.built-${builtUnit.revision}`)}`;
+      const shiftedEdits = lessonEditsAfterInsert(
+        cachedLessonEdits(editKey, lessonEdits),
+        si,
+        Object.keys(figureImages).filter(id => /^lesson-added-\d+-/.test(id)),
+      );
+      await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(`${unitId}.built-${revision}`)}`, shiftedEdits);
+      await saveBuiltUnit(unitId, { ...builtUnit, revision, content: nextContent, createdAt: new Date().toISOString() });
+      setLessonStep(si + 1);
+      setEditMode(true);
+      setSlideEditOpen(true);
+    } catch (error) {
+      setLessonSplitError(error instanceof Error ? error.message : "The slide could not be added. Please retry.");
+    } finally {
+      setAddingSlide(false);
+    }
   };
   const updateBuiltActivityList = async (kind: "exercises" | "questionSessions", updater: (items: Exercise[]) => Exercise[]) => {
     if (!builtUnit) return;
@@ -5034,6 +5068,12 @@ export function UnitPage({
                             <Icon name="pencil" size={13} />Replace slide text
                           </button>
                           {builtUnit && <>
+                            <button type="button" className="btn ghost sm slide-tool-action"
+                              disabled={addingSlide || savingLesson || deletingSlide}
+                              onClick={() => void addBuiltLessonSlide(si)}
+                              title="Insert a blank slide after this slide">
+                              <Icon name="editSquare" size={13} />{addingSlide ? "Adding slide..." : "Add slide after this"}
+                            </button>
                             <p className="editing-tool-description">To split a slide, place the cursor in its text. Everything after the cursor moves to a new slide.</p>
                             <button type="button" className="btn ghost sm slide-tool-action" onMouseDown={event => event.preventDefault()}
                               disabled={!!inlineUnit || savingLesson || deletingSlide}
