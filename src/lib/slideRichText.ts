@@ -80,6 +80,9 @@ export function sanitizeSlideHtml(html: string): string {
         if (/^(?:data:image\/(?:png|jpe?g|webp|gif);base64,|https:\/\/)/i.test(imageSrc)) out.setAttribute("src", imageSrc);
         out.setAttribute("alt", node.getAttribute("alt")?.slice(0, 300) ?? "Lesson image");
         out.setAttribute("draggable", "false");
+        if (["eager", "lazy"].includes(node.getAttribute("loading") ?? "")) out.setAttribute("loading", node.getAttribute("loading")!);
+        if (["async", "sync", "auto"].includes(node.getAttribute("decoding") ?? "")) out.setAttribute("decoding", node.getAttribute("decoding")!);
+        if (["high", "low", "auto"].includes(node.getAttribute("fetchpriority") ?? "")) out.setAttribute("fetchpriority", node.getAttribute("fetchpriority")!);
         if (node.dataset.cropped === "true") out.dataset.cropped = "true";
       }
       if (node.tagName === "TD" || node.tagName === "TH") {
@@ -154,7 +157,12 @@ export function hydrateSlideImages(html: string, sources: Record<string, string 
   template.innerHTML = html;
   template.content.querySelectorAll<HTMLImageElement>("img[data-figure-id]").forEach(image => {
     const source = sources[image.dataset.figureId ?? ""];
-    if (source) image.src = source;
+    if (source) {
+      image.src = source;
+      image.loading = "eager";
+      image.decoding = "async";
+      image.setAttribute("fetchpriority", "high");
+    }
     // Transforms move only the painted pixels, not the float exclusion box.
     // Wrapped images must use actual flow geometry so text cannot sit below.
     if (image.style.float === "left" || image.style.float === "right") image.style.transform = "none";

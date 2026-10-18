@@ -2839,9 +2839,29 @@ export function UnitPage({
   const deckReplaceRef = useRef<HTMLInputElement>(null);
   const [deckReplacePct, setDeckReplacePct] = useState<number | null>(null);
   const [deckReplaceError, setDeckReplaceError] = useState<string | null>(null);
-  const { figures: figureImages, setFigure, removeFigure, refreshFigureUrl } = useLessonFigures(unitId);
   const failedFigureRefreshes = useRef(new Set<string>());
   const { edits: lessonEdits, deleteSection: editDeleteSection, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, setAllQuizRetries: editAllQuizRetries, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection, setLessonPlan: editSetLessonPlan, setLogbook: editSetLogbook } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId, !!inlineUnit);
+  const figurePriorityIds = useMemo(() => {
+    const source = inlineUnit ?? builtUnit?.content ?? getContent(unitId);
+    if (!source?.lesson.length) return [];
+    const visible = source.lesson.flatMap((_, index) => lessonEdits.deletedSections?.includes(index) ? [] : [index]);
+    const activeIndex = visible.includes(lessonStep)
+      ? lessonStep
+      : visible.find(index => index >= lessonStep) ?? visible.at(-1);
+    if (activeIndex === undefined) return [];
+    const section = source.lesson[activeIndex];
+    const figureOrder = lessonEdits.figureOrder?.[activeIndex] ?? [];
+    const orderedFigures = [...(section.figures ?? [])].sort((a, b) => {
+      const aIndex = figureOrder.indexOf(a.id);
+      const bIndex = figureOrder.indexOf(b.id);
+      return (aIndex < 0 ? Number.MAX_SAFE_INTEGER : aIndex) - (bIndex < 0 ? Number.MAX_SAFE_INTEGER : bIndex);
+    });
+    const bodyHtml = lessonEdits.sectionBody?.[activeIndex]?.richHtml ?? "";
+    const inlineFigureIds = Array.from(bodyHtml.matchAll(/\bdata-figure-id=["']([^"']+)["']/g), match => match[1]);
+    const cardFigureIds = section.cards?.flatMap(card => card.figId ? [card.figId] : []) ?? [];
+    return Array.from(new Set([...orderedFigures.map(figure => figure.id), ...cardFigureIds, ...inlineFigureIds]));
+  }, [builtUnit, inlineUnit, lessonEdits.deletedSections, lessonEdits.figureOrder, lessonEdits.sectionBody, lessonStep, unitId]);
+  const { figures: figureImages, setFigure, removeFigure, refreshFigureUrl } = useLessonFigures(unitId, figurePriorityIds);
   const migratingInlineImages = useRef(new Set<string>());
   useEffect(() => {
     if (inlineUnit || profile.role !== "Super User") return;
@@ -4100,8 +4120,8 @@ export function UnitPage({
                         title={editable ? "Editing" : "Click to enlarge"}
                         style={{ maxHeight: `${Math.round(420 * heroScale)}px`, minHeight: `${Math.round(240 * Math.min(1, heroScale))}px` }}
                       >
-                        <img className="lesson-hero-bg" src={src} alt="" aria-hidden="true" style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
-                        <img className="lesson-hero-img" src={src} alt={plainSlideText(heroCap)} style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
+                        <img className="lesson-hero-bg" src={src} alt="" aria-hidden="true" loading="eager" decoding="async" fetchPriority="high" style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
+                        <img className="lesson-hero-img" src={src} alt={plainSlideText(heroCap)} loading="eager" decoding="async" fetchPriority="high" style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
                         <div className="lesson-hero-shade" />
                         <div className="lesson-hero-body">
                           <div className="lesson-hero-eyebrow">Section {position + 1}</div>
@@ -4833,7 +4853,7 @@ export function UnitPage({
                 </>}
                 {unifiedText && sec.cards?.filter(c=>c.figId).map(c=>{
                   const src=figureImages[c.figId!]?.image ?? FIGURE_DEFAULTS[c.figId!]?.src;
-                  return src?<img key={c.figId} src={src} alt={c.title} style={{maxWidth:"100%"}}/>:null;
+                  return src?<img key={c.figId} src={src} alt={c.title} loading="eager" decoding="async" fetchPriority="high" style={{maxWidth:"100%"}}/>:null;
                 })}
                 {sec.figures && (
                   <div className="figure-grid">
@@ -4872,7 +4892,7 @@ export function UnitPage({
                               onClick={() => !editable && openLightboxFor({ id: f.id, caption: cap })}
                               title={editable ? "Editing" : "Click to enlarge"}
                             >
-                              <img src={up.image} alt={cap} loading="lazy" style={imgStyle} />
+                              <img src={up.image} alt={cap} loading={figurePriorityIds.includes(f.id) ? "eager" : "lazy"} decoding="async" fetchPriority={figurePriorityIds.includes(f.id) ? "high" : "auto"} style={imgStyle} />
                             </button>
                             {editableCap()}
                             {editable && figControls(f)}
@@ -4898,7 +4918,7 @@ export function UnitPage({
                               onClick={() => !editable && openLightboxFor({ id: f.id, caption: cap })}
                               title={editable ? "Editing" : "Click to enlarge"}
                             >
-                              <img src={def.src} alt={cap} loading="lazy" style={imgStyle} />
+                              <img src={def.src} alt={cap} loading={figurePriorityIds.includes(f.id) ? "eager" : "lazy"} decoding="async" fetchPriority={figurePriorityIds.includes(f.id) ? "high" : "auto"} style={imgStyle} />
                             </button>
                             {editableCap(
                               <a

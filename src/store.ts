@@ -2033,7 +2033,7 @@ async function uploadFigure(us: string, id: string, dataUrl: string): Promise<st
   return path;
 }
 
-export function useLessonFigures(us: string) {
+export function useLessonFigures(us: string, priorityIds: readonly string[]) {
   const [figures, setFigures] = useState<Record<string, LessonFigureImage>>(() =>
     read<Record<string, LessonFigureImage>>(lessonFigsKey(us), {})
   );
@@ -2059,20 +2059,23 @@ export function useLessonFigures(us: string) {
     let alive = true;
     const need = Object.entries(figures).filter(([, f]) => f.path && !f.image);
     if (!need.length) return;
+    const priority = new Set(priorityIds);
+    const prioritized = need.filter(([id]) => priority.has(id));
+    const remaining = need.filter(([id]) => !priority.has(id));
     void (async () => {
-      const resolved: Record<string, string> = {};
-      await Promise.all(
-        need.map(async ([id, f]) => {
-          const url = await signedFigUrl(f.path!);
-          if (url) resolved[id] = url;
-        })
-      );
-      if (alive && Object.keys(resolved).length) setFigUrls((u) => ({ ...u, ...resolved }));
+      const resolveGroup = async (group: [string, LessonFigureImage][]) => {
+        await Promise.all(group.map(async ([id, figure]) => {
+          const url = await signedFigUrl(figure.path!);
+          if (alive && url) setFigUrls(urls => ({ ...urls, [id]: url }));
+        }));
+      };
+      await resolveGroup(prioritized);
+      if (alive) await resolveGroup(remaining);
     })();
     return () => {
       alive = false;
     };
-  }, [figures]);
+  }, [figures, priorityIds]);
 
   /** figures with `image` always usable as an <img> src (data-URL or signed URL) */
   const merged = useMemo(() => {
