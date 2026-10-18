@@ -183,9 +183,10 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     const prefix=`shared/unitbuilder/${courseScopedUnit(unit.us)}`;
     const [pdf,pptx,answers]=await Promise.all([uploadFile(prefix,files.pdf),uploadFile(prefix,files.pptx),uploadFile(prefix,files.answers)]);
     const revision=crypto.randomUUID();
-    if(inlineDraft){
-      // Keep rich text and figure layout attached to the new revision. The
-      // old published revision remains untouched if either save fails.
+    if(Object.keys(edits).length){
+      // Keep rich text, quizzes, figures, videos, and layout edits attached
+      // to the new revision. The old published revision remains untouched if
+      // either save fails.
       const key=`itss.lessonedits.${courseScopedUnit(`${unit.us}.built-${revision}`)}`;
       await flushLessonEdits(key,edits);
     }
