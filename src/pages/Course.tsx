@@ -6212,7 +6212,12 @@ export function UnitPage({
                       <Icon name={pct !== null && pct >= 80 ? "checkCircle" : "clipboard"} size={22} />
                     </span>
                     <span>
-                      <span className="nm">{qz.title}</span>
+                      <span className="nm" onClick={event => { if (inlineUnit) event.stopPropagation(); }}>
+                        {inlineUnit ? unitText(qz.title, (draft, value) => {
+                          const quiz = draft.quizzes?.find(item => item.id === qz.id);
+                          if (quiz) quiz.title = value || qz.title;
+                        }, "Quiz title") : qz.title}
+                      </span>
                       <br />
                       <span className="rl">
                         {qz.questions.length} questions
