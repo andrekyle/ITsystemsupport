@@ -39,7 +39,7 @@ import { profileMatchesCloudIdentity, resolveCloudProfile } from "./lib/cloudPro
 installSync();
 
 const ROUTE_KEY = "itss.route";
-const VALID_PAGES = new Set([
+const VALID_PAGES = new Set<Route["page"]>([
   "dashboard",
   "course",
   "module",
@@ -67,10 +67,40 @@ const VALID_PAGES = new Set([
   "onboarding",
 ]);
 
-function loadRoute(): Route {
+function parseRoute(value: unknown): Route | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const candidate = value as Record<string, unknown>;
+  if (typeof candidate.page !== "string" || !VALID_PAGES.has(candidate.page as Route["page"])) return null;
+  return {
+    page: candidate.page as Route["page"],
+    ...(typeof candidate.moduleId === "string" ? { moduleId: candidate.moduleId } : {}),
+    ...(typeof candidate.unitId === "string" ? { unitId: candidate.unitId } : {}),
+    ...(typeof candidate.studentId === "string" ? { studentId: candidate.studentId } : {}),
+    ...(typeof candidate.packId === "string" ? { packId: candidate.packId } : {}),
+  };
+}
+
+function routeFromUrl(): Route | null {
   try {
-    const saved = JSON.parse(localStorage.getItem(ROUTE_KEY) || "null");
-    if (saved && VALID_PAGES.has(saved.page)) return saved as Route;
+    const encoded = new URLSearchParams(window.location.search).get("itssRoute");
+    return encoded ? parseRoute(JSON.parse(encoded)) : null;
+  } catch {
+    return null;
+  }
+}
+
+function routeUrl(route: Route): string {
+  const url = new URL(window.location.href);
+  url.searchParams.set("itssRoute", JSON.stringify(route));
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function loadRoute(): Route {
+  const fromUrl = routeFromUrl();
+  if (fromUrl) return fromUrl;
+  try {
+    const saved = parseRoute(JSON.parse(localStorage.getItem(ROUTE_KEY) || "null"));
+    if (saved) return saved;
   } catch {
     /* fall through to default */
   }
@@ -100,16 +130,17 @@ function Shell({
   // in-app navigation pushes a browser history entry so back/forward work;
   // on mobile the navigation drawer closes so the destination page is visible
   const navigate = useCallback((r: Route) => {
-    window.history.pushState(r, "");
+    window.history.pushState(r, "", routeUrl(r));
     setRoute(r);
     if (window.innerWidth < MOBILE_BP) setCollapsed(true);
   }, []);
   useEffect(() => {
     // seed the current history entry with the initial route
-    window.history.replaceState(loadRoute(), "");
+    const initialRoute = loadRoute();
+    window.history.replaceState(initialRoute, "", routeUrl(initialRoute));
     const onPop = (e: PopStateEvent) => {
-      const r = e.state as Route | null;
-      if (r && VALID_PAGES.has(r.page)) setRoute(r);
+      const r = parseRoute(e.state) ?? routeFromUrl();
+      if (r) setRoute(r);
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
