@@ -17576,7 +17576,7 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 [data-theme="dark"] select { border-color: #3a3a3a !important; background: #242424; color: #d7d7d7; }
 [data-theme="dark"] select:focus { border-color: #3a3a3a !important; background: #242424; }
 [data-theme="dark"] select:hover { border-color: #3a3a3a !important; }
-.slide-whole-editor { outline:none; min-height:1.5em; font-size:var(--lesson-body-size, 19px); line-height:var(--lesson-body-leading, 1.63); color:var(--ink-2); }
+.slide-whole-editor { box-sizing:border-box; outline:none; min-height:1.5em; padding:12px 14px; border:1px solid color-mix(in srgb, var(--border) 68%, transparent); border-radius:8px; font-size:var(--lesson-body-size, 19px); line-height:var(--lesson-body-leading, 1.63); color:var(--ink-2); }
 .slide-whole-editor[contenteditable="true"] { min-height:240px; padding:18px 20px; border:1px solid color-mix(in srgb, var(--border) 82%, transparent); border-radius:10px; background:color-mix(in srgb, var(--surface) 96%, var(--azure-light)); cursor:text; caret-color:var(--azure); box-shadow:none; }
 .slide-whole-editor[contenteditable="true"] [data-user-color="true"] { color:revert-layer; }
 .slide-whole-editor[contenteditable="true"] [data-user-color="true"][data-light-color] { color:var(--slide-light-color) !important; }
