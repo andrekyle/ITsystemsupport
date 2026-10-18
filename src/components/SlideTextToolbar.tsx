@@ -6,6 +6,7 @@ import { sanitizeSlideHtml } from "../lib/slideRichText";
 import { resizeImageRect, type ResizeCorner } from "../lib/imageGeometry";
 import { EditingTools } from "./EditingSidebar";
 import { copySlideTextFormat, paintSlideTextFormat, type SlideTextFormat } from "../lib/slideFormatPainter";
+import { Icon } from "../icons";
 import { setTheme, THEME_CHANGE_EVENT, type Theme } from "../store";
 
 const EDITOR_SELECTOR = '[data-slide-rich="true"][contenteditable="true"]';
@@ -1272,10 +1273,11 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
                 <span className="slide-color-mode-dark">Dark</span>
                 <span className="slide-color-mode-thumb" aria-hidden="true" />
               </button>
+              <button type="button" className="slide-color-reset" aria-label="Reset selected text to app default" title="Reset selected text to app default"
+                onMouseDown={event => event.preventDefault()} onClick={resetSelectedTextColor}>
+                <Icon name="refresh" size={15} />
+              </button>
             </div>
-            <button type="button" className="slide-color-reset" onMouseDown={event => event.preventDefault()} onClick={resetSelectedTextColor}>
-              Reset selected text to app default
-            </button>
             <div className="slide-color-section">
               <span className="slide-color-heading">Apple Colors · {textColorMode} mode</span>
               <div className="slide-color-grid slide-apple-colors">

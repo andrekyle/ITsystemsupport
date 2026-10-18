@@ -2960,6 +2960,8 @@ export function UnitPage({
   const pendingFigId = useRef<string | null>(null);
   const [figError, setFigError] = useState<string | null>(null);
   const [figUploading, setFigUploading] = useState(false);
+  const [copiedFigure, setCopiedFigure] = useState<string | null>(null);
+  const [copyingFigure, setCopyingFigure] = useState(false);
   const [deckId, setDeckId] = useState<string | null>(null);
   const found = findUnit(unitId);
   if (!found) return <p>Unit standard not found.</p>;
@@ -3623,6 +3625,36 @@ export function UnitPage({
     }
   }
 
+  async function copySlideFigure(src: string) {
+    setFigError(null);
+    setCopyingFigure(true);
+    try {
+      const response = await fetch(src);
+      if (!response.ok) throw new Error("The slide image could not be loaded for copying.");
+      const blob = await response.blob();
+      if (!blob.type.startsWith("image/")) throw new Error("The slide image could not be copied.");
+      const dataUrl = await fileToImageDataUrl(new File([blob], "slide-image", { type: blob.type }), 1400);
+      setCopiedFigure(dataUrl);
+    } catch (error) {
+      setFigError(error instanceof Error ? error.message : "The slide image could not be copied.");
+    } finally {
+      setCopyingFigure(false);
+    }
+  }
+
+  async function pasteSlideFigure(figId: string) {
+    if (!copiedFigure || figUploading) return;
+    setFigError(null);
+    setFigUploading(true);
+    try {
+      await setFigure(figId, copiedFigure);
+    } catch (error) {
+      setFigError(error instanceof Error ? error.message : "The copied image could not be pasted.");
+    } finally {
+      setFigUploading(false);
+    }
+  }
+
   const tabs: { id: UnitTab; label: string; icon: string; show: boolean }[] = [
     { id: "overview", label: "Learning activities", icon: "checklist", show: true },
     { id: "saqa", label: "SAQA details", icon: "certificate", show: !!content?.saqa },
@@ -4160,6 +4192,18 @@ export function UnitPage({
                           >
                             <Icon name="image" size={13} />
                             Replace picture
+                          </button>
+                          <button type="button" className="hero-tool" disabled={copyingFigure || figUploading}
+                            title="Copy this picture so you can paste it onto another slide"
+                            onClick={() => void copySlideFigure(src)}>
+                            <Icon name="copy" size={13} />
+                            {copyingFigure ? "Copying..." : "Copy image"}
+                          </button>
+                          <button type="button" className="hero-tool" disabled={!copiedFigure || figUploading}
+                            title="Paste the copied picture onto this slide"
+                            onClick={() => void pasteSlideFigure(heroFig.id)}>
+                            <Icon name="clipboard" size={13} />
+                            Paste image
                           </button>
                           {up && (
                             <button
