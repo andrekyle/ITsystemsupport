@@ -17264,7 +17264,7 @@ td.cal-row-actions {
 .slide-text-controls .slide-tool-menu-table { min-width: 30px; }
 .slide-text-controls .slide-tool-menu-label { display: inline-flex; align-items: center; }
 .slide-text-toolbar .nice-select-chev svg { width: 12px; height: 12px; }
-.slide-text-color-menu-icon { display:inline-block; padding:0 1px 2px; border-bottom:2px solid; border-radius:0; line-height:1; }
+.slide-text-color-menu-icon { display:inline-block; padding:0; border:0; border-radius:0; font:400 18px/1 Arial,sans-serif; text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:5px; }
 .slide-text-controls .slide-tool-menu[aria-expanded="true"] { background: var(--tool-hover); }
 .slide-text-controls .slide-tool-menu[aria-expanded="true"] { color: var(--azure); }
 .slide-text-toolbar button[aria-pressed="true"], .slide-text-toolbar button[aria-expanded="true"] { background: var(--tool-hover); color: var(--tool-ink); box-shadow: none; }
@@ -17346,7 +17346,12 @@ body.moving-slide-image .slide-image-selection { display:none; }
 .slide-text-options button.slide-color-remove:hover:not(:disabled),
 .slide-text-options button.slide-color-remove:focus-visible { position:absolute; top:-4px; right:-4px; z-index:1; display:flex; align-items:center; justify-content:center; width:12px; min-width:12px; height:12px; min-height:12px; padding:0 !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; color:var(--tool-ink); font-size:12px; font-weight:600; line-height:10px; }
 .slide-text-options button.slide-color-remove:hover:not(:disabled) { color:#c62828; }
-.slide-text-options .slide-color-grid.slide-saved-colors { display:grid; flex:initial; }
+.slide-text-options .slide-color-grid.slide-saved-colors { display:grid; flex:initial; grid-template-columns:repeat(8, 24px); gap:6px; }
+.slide-text-options .slide-color-grid.slide-saved-colors .slide-color-saved-item { width:24px; height:24px; }
+.slide-text-options .slide-color-grid.slide-saved-colors .slide-color-swatch { width:24px; height:24px; }
+.slide-text-options .slide-color-grid.slide-saved-colors .slide-color-remove { opacity:0; visibility:hidden; transition:opacity .12s ease; }
+.slide-text-options .slide-color-grid.slide-saved-colors .slide-color-saved-item:hover .slide-color-remove,
+.slide-text-options .slide-color-grid.slide-saved-colors .slide-color-saved-item:focus-within .slide-color-remove { opacity:1; visibility:visible; }
 .slide-text-options .slide-color-palette .slide-color-swatch,
 .slide-text-options .slide-color-palette .slide-color-remove { padding:0; }
 .slide-color-more { position:relative; display:flex !important; align-items:center; justify-content:space-between; margin-top:8px; padding-top:7px; border-top:1px solid var(--tool-border); font-size:12px !important; cursor:pointer; }

@@ -1142,7 +1142,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
             const restored = restoreSelection();
             if (restored?.selection?.rangeCount) setPaintFormat(copySlideTextFormat(restored.editor, restored.selection.getRangeAt(0)));
           }}><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="13" height="6" rx="1" /><path d="M16 6h4v7h-9v3m-2 0h4v6H9z" /></svg></button>
-        {menuToggle("text", "Font and text options", <span className="slide-text-color-menu-icon" style={{ borderBottomColor: textColour }}>A</span>)}
+        {menuToggle("text", "Font and text options", <span className="slide-text-color-menu-icon" style={{ textDecorationColor: textColour }}>A</span>)}
       </span>
       <span className="slide-tool-group">
         {commandButton("justifyLeft", "Align left", alignmentIcon())}
