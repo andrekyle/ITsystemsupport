@@ -380,6 +380,17 @@ a:hover {
   font-weight: 400;
   white-space: nowrap;
 }
+.btn.ghost.sm.slide-tool-action.proofread-action {
+  border-color: var(--green);
+  background: var(--green-bg);
+  color: var(--green);
+  font-weight: 600;
+}
+.btn.ghost.sm.slide-tool-action.proofread-action:hover:not(:disabled) {
+  border-color: var(--green);
+  background: var(--green);
+  color: #fff;
+}
 .btn.ghost.sm.slide-tool-action:hover:not(:disabled) {
   border-color: var(--border);
   background: var(--surface-2);

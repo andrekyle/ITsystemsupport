@@ -5104,7 +5104,7 @@ export function UnitPage({
                             title="Replace this slide's text with pasted paragraphs">
                             <Icon name="pencil" size={13} />Replace slide text
                           </button>
-                          <button type="button" className="btn ghost sm slide-tool-action"
+                          <button type="button" className="btn ghost sm slide-tool-action proofread-action"
                             disabled={proofreadingSlide !== null || savingLesson}
                             onClick={() => void proofreadLessonSlide(si)}
                             title="Use AI to correct spelling and grammar on this slide">
