@@ -31,13 +31,34 @@ export function SlideEditableText({ as, html, onSave, contentEditable: requested
     saved.current = next;
   };
 
+  const normalizeDefaultTypography = (block: HTMLElement) => {
+    block.classList.add("slide-editor-default-text");
+    if (block.tagName === "P") block.classList.add("lesson-p");
+    [block, ...Array.from(block.querySelectorAll<HTMLElement>("*"))].forEach(element => {
+      element.style.removeProperty("font-family");
+      element.style.removeProperty("font-size");
+      element.style.removeProperty("color");
+      element.removeAttribute("face");
+      element.removeAttribute("size");
+      element.removeAttribute("color");
+      delete element.dataset.userColor;
+    });
+  };
+
   const paste = (event: ClipboardEvent<HTMLElement>) => {
     if (!(contentEditable === true || contentEditable === "true")) return;
     event.preventDefault();
-    // Insert plain text through the browser's active editing context. It then
-    // inherits the caret's current font, size, weight, colour and block/list
-    // style instead of importing inconsistent formatting from Word or a site.
     const text = event.clipboardData.getData("text/plain");
+    if (event.currentTarget.classList.contains("slide-whole-editor")) {
+      const pasted = document.createElement("template");
+      pasted.innerHTML = plainTextToSlideHtml(text);
+      pasted.content.querySelectorAll<HTMLElement>("p,ul,ol,li").forEach(normalizeDefaultTypography);
+      if (pasted.content.childNodes.length) {
+        document.execCommand("insertHTML", false, pasted.innerHTML);
+        save();
+      }
+      return;
+    }
     if (/\r?\n/.test(text)) document.execCommand("insertHTML", false, plainTextToSlideHtml(text));
     else document.execCommand("insertText", false, text);
     save();
@@ -55,8 +76,34 @@ export function SlideEditableText({ as, html, onSave, contentEditable: requested
         event.preventDefault();
         document.execCommand("insertParagraph");
         document.execCommand("formatBlock", false, "p");
+        if (event.currentTarget.classList.contains("slide-whole-editor")) {
+          const editor = event.currentTarget;
+          window.setTimeout(() => {
+            const selection = window.getSelection();
+            const node = selection?.anchorNode;
+            const element = node instanceof Element ? node : node?.parentElement;
+            const block = element?.closest<HTMLElement>("p,li,blockquote,div");
+            if (block && block !== editor && editor.contains(block)) {
+              normalizeDefaultTypography(block);
+              save();
+            }
+          }, 0);
+        }
         save();
         return;
+      }
+      if (event.currentTarget.classList.contains("slide-whole-editor")) {
+        const editor = event.currentTarget;
+        window.setTimeout(() => {
+          const selection = window.getSelection();
+          const node = selection?.anchorNode;
+          const element = node instanceof Element ? node : node?.parentElement;
+          const block = element?.closest<HTMLElement>("p,li,blockquote,div");
+          if (block && block !== editor && editor.contains(block)) {
+            normalizeDefaultTypography(block);
+            save();
+          }
+        }, 0);
       }
     }
     if (event.key === "Backspace") {
