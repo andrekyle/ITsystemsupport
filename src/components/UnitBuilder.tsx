@@ -334,7 +334,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   useEffect(()=>{
     if(!open||inlineDraft||activeView!=="content")return;
     if(!draft||!dirty){setDraft(baseline());setDirty(false);}
-  },[open,inlineDraft,activeView,built?.revision]);
+  },[open,inlineDraft,activeView,built?.revision,content]);
   const updateDraft=(next:UnitContent)=>{setDraft(next);setDirty(true);};
   const discardDraft=()=>{setDraft(baseline());setDirty(false);setError("");};
   const jumpTo=(key:string)=>scrollRef.current?.querySelector(`[data-unit-section="${key}"]`)?.scrollIntoView({block:"start",behavior:"smooth"});
