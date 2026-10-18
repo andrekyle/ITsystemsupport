@@ -508,9 +508,9 @@ function LessonVideo({
               <button type="button" className="lesson-video-icon-button" aria-label={showComments ? "Hide comments" : "Show comments"} aria-expanded={showComments} onClick={() => setShowComments((value) => !value)}>
                 <Icon name="message" size={18} />
               </button>
-              <a className="lesson-video-icon-button lesson-video-more-button" href={link} target="_blank" rel="noopener noreferrer" aria-label="Open source video">
+              {learnerProfile?.role === "Super User" && <a className="lesson-video-icon-button lesson-video-more-button" href={link} target="_blank" rel="noopener noreferrer" aria-label="Open source video">
                 <Icon name="more" size={18} />
-              </a>
+              </a>}
             </div>
           </div>
           {status && <p className="lesson-video-status" role="status">{status}</p>}
