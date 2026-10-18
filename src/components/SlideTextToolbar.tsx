@@ -6,6 +6,7 @@ import { sanitizeSlideHtml } from "../lib/slideRichText";
 import { resizeImageRect, type ResizeCorner } from "../lib/imageGeometry";
 import { EditingTools } from "./EditingSidebar";
 import { copySlideTextFormat, paintSlideTextFormat, type SlideTextFormat } from "../lib/slideFormatPainter";
+import { setTheme, THEME_CHANGE_EVENT, type Theme } from "../store";
 
 const EDITOR_SELECTOR = '[data-slide-rich="true"][contenteditable="true"]';
 const SAVED_TEXT_COLORS_KEY = "itss.slide-text.saved-colors.v1";
@@ -168,6 +169,14 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   const [ready, setReady] = useState(false);
   const [active, setActive] = useState<string[]>([]);
   const [paintFormat, setPaintFormat] = useState<SlideTextFormat | null>(null);
+  useEffect(() => {
+    const syncTheme = (event: Event) => {
+      const nextTheme = (event as CustomEvent<Theme>).detail;
+      if (nextTheme === "light" || nextTheme === "dark") setTextColorMode(nextTheme);
+    };
+    window.addEventListener(THEME_CHANGE_EVENT, syncTheme);
+    return () => window.removeEventListener(THEME_CHANGE_EVENT, syncTheme);
+  }, []);
   const saveFormattingOptions = (key: string, values: string[]) => {
     try {
       localStorage.setItem(key, JSON.stringify(values));
@@ -1250,7 +1259,11 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
               <span>Apply to</span>
               <button type="button" className={`slide-color-mode-toggle${textColorMode === "dark" ? " is-dark" : ""}`}
                 role="switch" aria-checked={textColorMode === "dark"} aria-label={`Color mode: ${textColorMode}. Toggle to ${textColorMode === "dark" ? "light" : "dark"} mode.`}
-                onMouseDown={event => event.preventDefault()} onClick={() => setTextColorMode(mode => mode === "light" ? "dark" : "light")}>
+                onMouseDown={event => event.preventDefault()} onClick={() => {
+                  const nextTheme = textColorMode === "light" ? "dark" : "light";
+                  setTextColorMode(nextTheme);
+                  setTheme(nextTheme);
+                }}>
                 <span className="slide-color-mode-light">Light</span>
                 <span className="slide-color-mode-dark">Dark</span>
                 <span className="slide-color-mode-thumb" aria-hidden="true" />

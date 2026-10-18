@@ -21,6 +21,7 @@ import {
 const PROFILES_KEY = "itss.profiles";
 const SESSION_KEY = "itss.session";
 const THEME_KEY = "itss.theme";
+export const THEME_CHANGE_EVENT = "itss-theme-change";
 const progressKey = (profileId: string) => `itss.progress.${profileId}`;
 
 export type Theme = "light" | "dark";
@@ -34,6 +35,7 @@ export function getTheme(): Theme {
 export function setTheme(theme: Theme) {
   localStorage.setItem(THEME_KEY, theme);
   document.documentElement.dataset.theme = theme;
+  window.dispatchEvent(new CustomEvent<Theme>(THEME_CHANGE_EVENT, { detail: theme }));
 }
 
 function read<T>(key: string, fallback: T): T {

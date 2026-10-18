@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FluentProvider, webDarkTheme, webLightTheme } from "@fluentui/react-components";
 import type { Profile, Route } from "./types";
 import type { Theme } from "./store";
-import { getSession, getTheme, loadProfiles, setAccountAdmin, setAccountEmail, setSession, setTheme, touchLastOnline, updateProfile, useProgress } from "./store";
+import { getSession, getTheme, loadProfiles, setAccountAdmin, setAccountEmail, setSession, setTheme, THEME_CHANGE_EVENT, touchLastOnline, updateProfile, useProgress } from "./store";
 import { SignIn } from "./components/SignIn";
 import { CloudAuth, ResetPassword } from "./components/CloudAuth";
 import { Header } from "./components/Header";
@@ -480,6 +480,15 @@ function LocalApp({
   useEffect(() => {
     setTheme(theme);
   }, [theme]);
+
+  useEffect(() => {
+    const syncTheme = (event: Event) => {
+      const nextTheme = (event as CustomEvent<Theme>).detail;
+      if (nextTheme === "light" || nextTheme === "dark") setThemeState(nextTheme);
+    };
+    window.addEventListener(THEME_CHANGE_EVENT, syncTheme);
+    return () => window.removeEventListener(THEME_CHANGE_EVENT, syncTheme);
+  }, []);
 
   useEffect(() => {
     if (!profile) return;
