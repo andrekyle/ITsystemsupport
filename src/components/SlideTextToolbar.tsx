@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 
 import { Select } from "./Select";
-import { Icon } from "../icons";
 import { SlideEditHistory } from "../lib/slideEditHistory";
 import { sanitizeSlideHtml } from "../lib/slideRichText";
 import { resizeImageRect, type ResizeCorner } from "../lib/imageGeometry";
@@ -96,6 +95,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   const [historyCounts, setHistoryCounts] = useState({ undo: 0, redo: 0 });
   const [font, setFont] = useState("");
   const [textColour, setTextColour] = useState("#808080");
+  const [hexColorInput, setHexColorInput] = useState("#808080");
   const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
   const colorPalette = useRef<HTMLDivElement>(null);
   const [savedTextColors, setSavedTextColors] = useState(() => loadSavedOptions(SAVED_TEXT_COLORS_KEY, value => /^#[\da-f]{6}$/i.test(value), 8));
@@ -133,6 +133,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   };
   const applyTextColor = (color: string) => {
     setTextColour(color);
+    setHexColorInput(color);
     run("foreColor", color);
     setColorPaletteOpen(false);
     setFormatOptionsError("");
@@ -147,6 +148,15 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     }
     const next = [...savedTextColors, normalized];
     if (saveFormattingOptions(SAVED_TEXT_COLORS_KEY, next)) setSavedTextColors(next);
+  };
+  const applyHexColor = () => {
+    const entered = hexColorInput.trim().replace(/^#/, "");
+    if (!/^(?:[\da-f]{3}|[\da-f]{6})$/i.test(entered)) {
+      setFormatOptionsError("Enter a valid 3- or 6-digit hex color, such as #F80 or #FF8800.");
+      return;
+    }
+    const expanded = entered.length === 3 ? entered.split("").map(char => char + char).join("") : entered;
+    saveCustomTextColor(`#${expanded.toLowerCase()}`);
   };
   const removeSavedColor = (color: string) => {
     const next = savedTextColors.filter(saved => saved !== color);
@@ -1106,7 +1116,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
   const alignmentIcon = (center = false) => <svg viewBox="0 0 24 24" aria-hidden="true"><path d={center ? "M3 5h18M6 11h12M9 17h6" : "M3 5h18M3 11h12M3 17h6"} /></svg>;
   const menuToggle = (kind: "text" | "paragraph" | "table" | "image", label: string, symbol: ReactNode) => <button type="button" className={`slide-tool-menu slide-tool-menu-${kind}`} aria-label={label} title={label}
     aria-expanded={menu === kind} aria-controls={`slide-${kind}-options`} onMouseDown={e => e.preventDefault()}
-    onClick={() => setMenu(menu === kind ? null : kind)}><span className="slide-tool-menu-label">{symbol}</span>{kind === "text" && <span className="slide-tool-chevron" aria-hidden="true"><Icon name="chevronDown" size={12} /></span>}</button>;
+    onClick={() => setMenu(menu === kind ? null : kind)}><span className="slide-tool-menu-label">{symbol}</span></button>;
   const tableIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5" /><path d="M12 4v16M4 12h16" /></svg>;
   const imageIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 18 5-5 3 3 3-4 5 6"/></svg>;
   const paragraphIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h11M9 12h8M9 19h11" /><path d="M4 5v14m0-14L2 7m2-2 2 2m-2 12-2-2m2 2 2-2" /></svg>;
@@ -1132,7 +1142,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
             const restored = restoreSelection();
             if (restored?.selection?.rangeCount) setPaintFormat(copySlideTextFormat(restored.editor, restored.selection.getRangeAt(0)));
           }}><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="13" height="6" rx="1" /><path d="M16 6h4v7h-9v3m-2 0h4v6H9z" /></svg></button>
-        {menuToggle("text", "Font and text options", "A")}
+        {menuToggle("text", "Font and text options", <span className="slide-text-color-menu-icon" style={{ borderBottomColor: textColour }}>A</span>)}
       </span>
       <span className="slide-tool-group">
         {commandButton("justifyLeft", "Align left", alignmentIcon())}
@@ -1166,8 +1176,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         <div className="slide-color-picker" ref={colorPalette}>
           <button type="button" className="slide-tool-colour slide-tool-color-trigger" disabled={!ready} aria-label="Text color palette" aria-expanded={colorPaletteOpen} title="Text color"
             onMouseDown={event => event.preventDefault()} onClick={() => setColorPaletteOpen(open => !open)}>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17 12 3l6 14M8 12h8" /><path d="M3 21h18" style={{ stroke: textColour, strokeWidth: 3 }} /></svg>
-            <span aria-hidden="true">⌄</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17 12 3l6 14M8 12h8" /><path d="M3 21h18" style={{ stroke: textColour, strokeWidth: 3, strokeLinecap: "butt" }} /></svg>
           </button>
           {colorPaletteOpen && <div className="slide-color-palette" role="group" aria-label="Text color palette">
             <div className="slide-color-section">
@@ -1188,10 +1197,17 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
                 </span>)}
               </div>
             </div>}
-            <label className="slide-color-more">
-              <span>More Colors...</span>
-              <input aria-label="Choose a custom text color" type="color" value={textColour} onChange={event => saveCustomTextColor(event.target.value)} />
-            </label>
+            <div className="slide-color-more">
+              <label htmlFor="slide-custom-color">More Colors...</label>
+              <input id="slide-custom-color" aria-label="Choose a custom text color" type="color" value={textColour} onChange={event => saveCustomTextColor(event.target.value)} />
+            </div>
+            <form className="slide-color-hex-form" onSubmit={event => { event.preventDefault(); applyHexColor(); }}>
+              <label htmlFor="slide-hex-color">Hex color</label>
+              <input id="slide-hex-color" type="text" value={hexColorInput} placeholder="#RRGGBB" maxLength={7} spellCheck={false}
+                aria-label="Enter HTML hex color code" aria-invalid={!/^(?:#?[\da-f]{3}|#?[\da-f]{6})$/i.test(hexColorInput.trim())}
+                onChange={event => { setHexColorInput(event.target.value); setFormatOptionsError(""); }} />
+              <button type="submit">Apply</button>
+            </form>
           </div>}
         </div>
         <label className="slide-tool-colour" title="Highlight" aria-disabled={!ready}>

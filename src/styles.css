@@ -17263,9 +17263,8 @@ td.cal-row-actions {
 .slide-text-controls .slide-tool-menu-text { min-width: 42px; }
 .slide-text-controls .slide-tool-menu-table { min-width: 30px; }
 .slide-text-controls .slide-tool-menu-label { display: inline-flex; align-items: center; }
-.slide-text-controls .slide-tool-chevron { display: inline-flex; align-items: center; color: color-mix(in srgb, var(--tool-ink) 72%, transparent); }
-.slide-text-controls .slide-tool-chevron svg,
 .slide-text-toolbar .nice-select-chev svg { width: 12px; height: 12px; }
+.slide-text-color-menu-icon { display:inline-block; padding:0 1px 2px; border-bottom:2px solid; border-radius:0; line-height:1; }
 .slide-text-controls .slide-tool-menu[aria-expanded="true"] { background: var(--tool-hover); }
 .slide-text-controls .slide-tool-menu[aria-expanded="true"] { color: var(--azure); }
 .slide-text-toolbar button[aria-pressed="true"], .slide-text-toolbar button[aria-expanded="true"] { background: var(--tool-hover); color: var(--tool-ink); box-shadow: none; }
@@ -17333,25 +17332,27 @@ body.moving-slide-image .slide-image-selection { display:none; }
 .slide-text-options .slide-saved-color-apply { width:24px; min-width:24px; height:24px; padding:0; border:1px solid var(--tool-border); border-radius:4px; }
 .slide-text-options .slide-saved-color-apply:disabled { opacity:.45; }
 .slide-color-picker { position:relative; flex:0 0 auto; }
-.slide-text-options .slide-color-picker .slide-tool-color-trigger { gap:2px; width:44px; min-width:44px; flex-basis:44px; padding:4px 2px; }
-.slide-tool-color-trigger > span { color:color-mix(in srgb, var(--tool-ink) 70%, transparent); font-size:12px; line-height:1; }
+.slide-text-options .slide-color-picker .slide-tool-color-trigger { gap:0; width:32px; min-width:32px; flex-basis:32px; padding:4px; }
 .slide-color-palette { position:absolute; z-index:80; top:calc(100% + 6px); right:0; box-sizing:border-box; width:224px; max-height:min(330px, 70vh); overflow:auto; padding:8px; border:1px solid var(--tool-border); border-radius:5px; background:var(--tool-bg); color:var(--tool-ink); box-shadow:0 4px 12px #0004; }
 .slide-color-section + .slide-color-section { margin-top:8px; padding-top:7px; border-top:1px solid var(--tool-border); }
 .slide-color-heading { display:block; margin:0 0 5px; color:var(--tool-ink); font-size:11px; line-height:1.25; }
 .slide-color-grid { display:grid; grid-template-columns:repeat(12, 1fr); gap:2px; }
-.slide-text-options .slide-color-swatch { box-sizing:border-box; width:100%; min-width:0; height:17px; min-height:17px; padding:0; border:1px solid color-mix(in srgb, var(--tool-ink) 18%, transparent); border-radius:1px; }
+.slide-text-options .slide-color-swatch { box-sizing:border-box; width:100%; min-width:0; height:17px; min-height:17px; padding:0; border:1px solid color-mix(in srgb, var(--tool-ink) 18%, transparent); border-radius:0; }
 .slide-text-options .slide-color-swatch:hover:not(:disabled) { outline:1px solid var(--tool-ink); outline-offset:1px; }
 .slide-text-options .slide-color-swatch.selected { outline:2px solid var(--tool-ink); outline-offset:1px; }
 .slide-color-saved-item { position:relative; display:block; min-width:0; }
-.slide-text-options .slide-color-remove { position:absolute; top:-4px; right:-4px; z-index:1; display:flex; align-items:center; justify-content:center; width:12px; min-width:12px; height:12px; min-height:12px; padding:0; border:1px solid var(--tool-bg); border-radius:50%; background:var(--tool-ink); color:var(--tool-bg); font-size:10px; line-height:10px; }
-.slide-text-options .slide-color-remove:hover:not(:disabled) { background:#c62828; color:white; }
+.slide-text-options .slide-color-remove { position:absolute; top:-4px; right:-4px; z-index:1; display:flex; align-items:center; justify-content:center; width:12px; min-width:12px; height:12px; min-height:12px; padding:0; border:0; border-radius:0; background:transparent; color:var(--tool-ink); font-size:12px; font-weight:600; line-height:10px; }
+.slide-text-options .slide-color-remove:hover:not(:disabled) { background:transparent; color:#c62828; }
 .slide-text-options .slide-color-grid.slide-saved-colors { display:grid; flex:initial; }
 .slide-text-options .slide-color-palette .slide-color-swatch,
 .slide-text-options .slide-color-palette .slide-color-remove { padding:0; }
-[data-theme="dark"] .slide-text-options .slide-color-palette .slide-color-swatch { border-color:#60636a; border-radius:1px; }
-[data-theme="dark"] .slide-text-options .slide-color-palette .slide-color-remove { border-color:var(--tool-bg); border-radius:50%; background:var(--tool-ink); color:var(--tool-bg); }
-.slide-color-more { position:relative; display:block !important; margin-top:8px; padding-top:7px; border-top:1px solid var(--tool-border); font-size:12px !important; cursor:pointer; }
-.slide-color-more input[type="color"] { position:absolute; inset:0; width:100%; height:100%; padding:0; border:0; opacity:0; cursor:pointer; }
+.slide-color-more { position:relative; display:flex !important; align-items:center; justify-content:space-between; margin-top:8px; padding-top:7px; border-top:1px solid var(--tool-border); font-size:12px !important; cursor:pointer; }
+.slide-color-more input[type="color"] { width:24px; height:20px; padding:0; border:0; border-radius:0; background:transparent; cursor:pointer; }
+.slide-color-hex-form { display:flex; flex:1 0 100%; align-items:center; gap:6px; margin-top:3px; }
+.slide-text-options .slide-color-hex-form label { font-size:11px; white-space:nowrap; }
+.slide-text-options .slide-color-hex-form input { box-sizing:border-box; width:88px; min-width:0; height:26px; padding:3px 6px; border:1px solid var(--tool-border); border-radius:0; background:var(--tool-bg); color:var(--tool-ink); font:12px ui-monospace, SFMono-Regular, Consolas, monospace; }
+.slide-text-options .slide-color-hex-form input[aria-invalid="true"] { border-color:#c62828; }
+.slide-text-options .slide-color-hex-form button { min-height:26px; padding:4px 7px; border-radius:0; }
 .slide-text-toolbar .nice-select-btn,
 .slide-text-toolbar .nice-select-btn.open,
 .slide-text-toolbar .nice-select-btn:focus-visible { border: 0; outline: none; box-shadow: none; background: var(--tool-hover); color: var(--tool-ink); text-decoration: none; }
