@@ -382,13 +382,19 @@ a:hover {
 }
 .btn.ghost.sm.slide-tool-action.proofread-action {
   border: 0;
-  background: var(--green);
+  justify-content: center;
+  background: var(--azure);
   color: #fff;
+  box-shadow: none;
   font-weight: 600;
 }
 .btn.ghost.sm.slide-tool-action.proofread-action:hover:not(:disabled) {
-  background: var(--green);
+  background: var(--azure-dark);
   color: #fff;
+  box-shadow: none;
+}
+.btn.ghost.sm.slide-tool-action.proofread-action:focus-visible {
+  outline-color: var(--azure);
 }
 .btn.ghost.sm.slide-tool-action:hover:not(:disabled) {
   border-color: var(--border);
@@ -406,16 +412,16 @@ a:hover {
   background: #ff163b;
   color: #fff;
   font-weight: 700;
-  box-shadow: 0 6px 18px rgba(255, 22, 59, 0.3);
+  box-shadow: none;
 }
 .editing-tool-group-body > .btn.save-cloud-action:hover:not(:disabled) {
   border-color: #e0002b;
   background: #e0002b;
   color: #fff;
-  box-shadow: 0 8px 22px rgba(224, 0, 43, 0.38);
+  box-shadow: none;
 }
 .editing-tool-group-body > .btn.save-cloud-action:focus-visible {
-  outline: 3px solid rgba(255, 22, 59, 0.32);
+  outline: 2px solid #ff163b;
   outline-offset: 2px;
 }
 .editing-tool-group-body > .btn.save-cloud-action:disabled {
@@ -10048,15 +10054,15 @@ a.plan-ppt:hover {
   background: #c51f32;
   color: rgba(255, 255, 255, 0.84);
   font-weight: 400;
-  box-shadow: 0 5px 14px rgba(145, 17, 35, 0.22);
+  box-shadow: none;
 }
 .btn.ghost.sm.save-cloud-action.active:hover:not(:disabled) {
   border: 0;
   color: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 6px 18px rgba(145, 17, 35, 0.3);
+  box-shadow: none;
 }
 .btn.ghost.sm.save-cloud-action.active:focus-visible {
-  outline: 2px solid rgba(197, 31, 50, 0.35);
+  outline: 2px solid #c51f32;
   outline-offset: 2px;
 }
 .activity-edit-bar {
