@@ -83,14 +83,17 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         history.current[direction === "undo" ? "redo" : "undo"]();
         return;
       }
-      editor.focus();
+      const scrollingElement = document.scrollingElement as HTMLElement | null;
+      const scrollState = [scrollingElement, ...Array.from(document.querySelectorAll<HTMLElement>(".content"))]
+        .filter((element): element is HTMLElement => Boolean(element))
+        .map(element => ({ element, top: element.scrollTop, left: element.scrollLeft }));
+      editor.focus({ preventScroll: true });
       editor.innerHTML = direction === "undo" ? edit.before : edit.after;
       baselines.current.set(edit.field, sanitizeSlideHtml(editor.innerHTML));
-      // Use the same blur save path as typed and formatted text, then return
-      // the caret to this field so the next keystroke continues editing it.
+      // Input uses the editor's normal save path. Avoid blur/focus here: both
+      // can scroll a long lesson back to the focused editor (or page top).
       editor.dispatchEvent(new Event("input", { bubbles: true }));
-      editor.blur();
-      editor.focus();
+      editor.focus({ preventScroll: true });
       const caret = document.createRange();
       caret.selectNodeContents(editor);
       caret.collapse(false);
@@ -100,6 +103,12 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       range.current = caret;
       const length = editor.textContent?.length ?? 0;
       bookmark.current = { start: length, end: length };
+      const restoreScroll = () => scrollState.forEach(({ element, top, left }) => {
+        element.scrollTop = top;
+        element.scrollLeft = left;
+      });
+      restoreScroll();
+      requestAnimationFrame(restoreScroll);
       setReady(true);
       setActive(commands.filter(([cmd]) => document.queryCommandState(cmd)).map(([cmd]) => cmd));
       const block = (document.queryCommandValue("formatBlock") || "p").toString().replace(/[<>]/g, "").toLowerCase();
@@ -621,6 +630,30 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
     setActive(commands.filter(([cmd]) => document.queryCommandState(cmd)).map(([cmd]) => cmd));
   };
+  const convertSelectionToTable = () => {
+    const restored = restoreSelection();
+    if (!restored?.selection?.rangeCount) return;
+    const selectedRange = restored.selection.getRangeAt(0);
+    if (selectedRange.collapsed) return;
+    const container = document.createElement("div");
+    container.appendChild(selectedRange.cloneContents());
+    let lines = Array.from(container.querySelectorAll<HTMLElement>("p,li,h1,h2,h3,h4"))
+      .map(element => (element.innerText || element.textContent || "").trim())
+      .filter(Boolean);
+    if (!lines.length) lines = selectedRange.toString().split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+    if (!lines.length) return;
+    const matrix = lines.map(line => {
+      const cells = line.includes("\t") ? line.split("\t") : line.includes("|") ? line.split("|") : [line];
+      return cells.map(cell => cell.trim()).filter((cell, index, all) => cell || (index > 0 && index < all.length - 1));
+    });
+    const columns = Math.max(1, ...matrix.map(row => row.length));
+    const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const colgroup = `<colgroup>${Array.from({ length: columns }, () => "<col>").join("")}</colgroup>`;
+    const rows = matrix.map(row => `<tr>${Array.from({ length: columns }, (_, index) => `<td>${escape(row[index] ?? "")}<br></td>`).join("")}</tr>`).join("");
+    document.execCommand("insertHTML", false, `<div class="lesson-table-scroll"><table class="data lesson-table">${colgroup}<tbody>${rows}</tbody></table></div><p><br></p>`);
+    if (restored.selection.rangeCount) range.current = restored.selection.getRangeAt(0).cloneRange();
+    restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
+  };
   const insertLayout = () => {
     const restored = restoreSelection(true);
     if (!restored) return;
@@ -847,6 +880,40 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
     setRowHeight(height);
     notifyEditor(row.closest<HTMLElement>(EDITOR_SELECTOR));
   };
+  const addTableRow = (after: boolean) => {
+    const cell = selectedCell;
+    const row = cell?.parentElement;
+    const table = cell?.closest("table");
+    if (!cell || !(row instanceof HTMLTableRowElement) || !table) return;
+    const count = Math.max(...Array.from(table.rows).map(item => item.cells.length));
+    const next = document.createElement("tr");
+    const tag = row.parentElement?.tagName === "THEAD" ? "th" : "td";
+    for (let index = 0; index < count; index += 1) {
+      const nextCell = document.createElement(tag);
+      if (tag === "th") nextCell.setAttribute("scope", "col");
+      nextCell.appendChild(document.createElement("br"));
+      next.appendChild(nextCell);
+    }
+    row.parentElement?.insertBefore(next, after ? row.nextSibling : row);
+    setSelectedCell(next.cells[Math.min(cell.cellIndex, count - 1)] ?? null);
+    notifyEditor(cell.closest<HTMLElement>(EDITOR_SELECTOR));
+  };
+  const addTableColumn = (after: boolean) => {
+    const cell = selectedCell;
+    const table = cell?.closest("table");
+    if (!cell || !table) return;
+    const index = cell.cellIndex + (after ? 1 : 0);
+    Array.from(table.rows).forEach(row => {
+      const tag = row.parentElement?.tagName === "THEAD" ? "th" : "td";
+      const nextCell = document.createElement(tag);
+      if (tag === "th") nextCell.setAttribute("scope", "col");
+      nextCell.appendChild(document.createElement("br"));
+      row.insertBefore(nextCell, row.cells[index] ?? null);
+    });
+    const colgroup = table.querySelector("colgroup");
+    if (colgroup) colgroup.insertBefore(document.createElement("col"), colgroup.children[index] ?? null);
+    notifyEditor(cell.closest<HTMLElement>(EDITOR_SELECTOR));
+  };
   const run = (command: string, value?: string) => {
     if (command === "undo" || command === "redo") { replay(command); return; }
     if (command === "insertUnorderedList" || command === "insertOrderedList") {
@@ -951,7 +1018,12 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         <div className="slide-tool-field"><span>Rows</span><Select ariaLabel="Table rows" disabled={!ready} value={tableRows} options={Array.from({ length: 10 }, (_, index) => ({ value: String(index + 1), label: String(index + 1) }))} onChange={setTableRows} /></div>
         <div className="slide-tool-field"><span>Columns</span><Select ariaLabel="Table columns" disabled={!ready} value={tableCols} options={Array.from({ length: 8 }, (_, index) => ({ value: String(index + 1), label: String(index + 1) }))} onChange={setTableCols} /></div>
         <button type="button" disabled={!ready} onMouseDown={e => e.preventDefault()} onClick={insertTable}>Insert table</button>
+        <button type="button" disabled={!ready} onMouseDown={e => e.preventDefault()} onClick={convertSelectionToTable}>Turn selection into table</button>
         <button type="button" disabled={!ready} onMouseDown={e => e.preventDefault()} onClick={insertLayout}>Split screen</button>
+        <button type="button" disabled={!selectedCell} onMouseDown={e => e.preventDefault()} onClick={() => addTableRow(false)}>Add row above</button>
+        <button type="button" disabled={!selectedCell} onMouseDown={e => e.preventDefault()} onClick={() => addTableRow(true)}>Add row below</button>
+        <button type="button" disabled={!selectedCell} onMouseDown={e => e.preventDefault()} onClick={() => addTableColumn(false)}>Add column left</button>
+        <button type="button" disabled={!selectedCell} onMouseDown={e => e.preventDefault()} onClick={() => addTableColumn(true)}>Add column right</button>
         <label className="slide-tool-range">Column width <input type="number" min="48" max="900" step="1" disabled={!selectedCell} value={columnWidth} onChange={e => updateColumnWidth(Math.max(48, Number(e.target.value) || 48))} /> px</label>
         <label className="slide-tool-range">Row height <input type="number" min="28" max="600" step="1" disabled={!selectedCell} value={rowHeight} onChange={e => updateRowHeight(Math.max(28, Number(e.target.value) || 28))} /> px</label>
         {selectedCell && <small>Sizes apply to the selected cell’s complete column or row.</small>}

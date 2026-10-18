@@ -1436,6 +1436,10 @@ table.data.lesson-table td {
 .lesson-table-scroll > table.lesson-table th {
   text-transform: none;
   letter-spacing: normal;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
 }
 
 /* SO header rows stand out; AC rows are indented under them */
