@@ -381,13 +381,12 @@ a:hover {
   white-space: nowrap;
 }
 .btn.ghost.sm.slide-tool-action.proofread-action {
-  border-color: var(--green);
-  background: var(--green-bg);
-  color: var(--green);
+  border: 0;
+  background: var(--green);
+  color: #fff;
   font-weight: 600;
 }
 .btn.ghost.sm.slide-tool-action.proofread-action:hover:not(:disabled) {
-  border-color: var(--green);
   background: var(--green);
   color: #fff;
 }
