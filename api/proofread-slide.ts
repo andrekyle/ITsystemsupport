@@ -55,11 +55,16 @@ export default async function handler(req: Request): Promise<Response> {
     }),
   });
   if (!response.ok) return Response.json({ error: `OpenAI proofreading failed (${response.status}).` }, { status: 502 });
-  const data = await response.json() as {
+  let data: {
     choices?: { finish_reason?: string; message?: { content?: string; refusal?: string | null } }[];
     usage?: unknown;
     model?: string;
   };
+  try {
+    data = await response.json() as typeof data;
+  } catch {
+    return Response.json({ error: "OpenAI returned an empty proofreading response. No slide text was changed." }, { status: 502 });
+  }
   const choice = data.choices?.[0];
   if (choice?.finish_reason === "length") {
     return Response.json({ error: "OpenAI could not finish proofreading this slide in one response. No slide text was changed." }, { status: 502 });

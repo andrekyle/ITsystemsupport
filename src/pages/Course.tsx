@@ -2897,6 +2897,7 @@ export function UnitPage({
     })();
   }, [editSetSectionBody, inlineUnit, lessonEdits.sectionBody, profile.role, setFigure, unitId]);
   const [generatingQuiz, setGeneratingQuiz] = useState<number | null>(null);
+  const [generatingAllQuizzes, setGeneratingAllQuizzes] = useState<{ done: number; total: number } | null>(null);
   const [quizQuestionCount, setQuizQuestionCount] = useState(5);
   const [quizGenerationError, setQuizGenerationError] = useState<string | null>(null);
   const [generatingUnitQuiz, setGeneratingUnitQuiz] = useState(false);
@@ -3154,7 +3155,13 @@ export function UnitPage({
         body: JSON.stringify({ segments: nodes.map(node => node.data), model: loadContentModel() }),
         signal: AbortSignal.timeout(65_000),
       });
-      const data = await response.json() as { segments?: string[]; unchangedSegments?: number; error?: string; usage?: { input_tokens?: number; output_tokens?: number; prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }; model?: string };
+      const rawResponse = await response.text();
+      let data: { segments?: string[]; unchangedSegments?: number; error?: string; usage?: { input_tokens?: number; output_tokens?: number; prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }; model?: string };
+      try {
+        data = JSON.parse(rawResponse) as typeof data;
+      } catch {
+        throw new Error(response.ok ? "The proofreading service returned an empty or invalid response. Please retry." : `AI proofreading failed (${response.status}). Please retry.`);
+      }
       if (!response.ok || !data.segments || data.segments.length !== nodes.length) throw new Error(data.error ?? "AI proofreading returned incomplete text.");
       const unchangedSegments = data.unchangedSegments ?? 0;
       if (data.usage) void recordTokenUsage({ us: unitId, model: data.model ?? loadContentModel(), promptTokens: data.usage.input_tokens ?? data.usage.prompt_tokens ?? 0, completionTokens: data.usage.output_tokens ?? data.usage.completion_tokens ?? 0, totalTokens: data.usage.total_tokens ?? 0 });
@@ -3313,6 +3320,28 @@ export function UnitPage({
       editGeneratedQuiz(si, data.questions);
     } catch (error) { setQuizGenerationError(error instanceof Error ? error.message : "Quiz generation failed."); }
     finally { setGeneratingQuiz(null); }
+  };
+  const generateQuizzesForEverySlide = async () => {
+    if (!content || generatingAllQuizzes || generatingQuiz !== null) return;
+    const slides = visibleLessonIndices;
+    setGeneratingAllQuizzes({ done: 0, total: slides.length });
+    setQuizGenerationError(null);
+    try {
+      for (let index = 0; index < slides.length; index += 1) {
+        const si = slides[index];
+        const section = content.lesson[si];
+        const source = [section.heading, ...section.paragraphs, ...(section.bullets ?? [])].join("\n");
+        const response = await fetch("/api/generate-slide-quiz", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slideText: source, count: quizQuestionCount, model: loadContentModel() }) });
+        const data = await response.json() as { questions?: QuizQuestion[]; error?: string };
+        if (!response.ok || !data.questions?.length) throw new Error(data.error ?? `Quiz generation failed on slide ${index + 1}.`);
+        editGeneratedQuiz(si, data.questions);
+        setGeneratingAllQuizzes({ done: index + 1, total: slides.length });
+      }
+    } catch (error) {
+      setQuizGenerationError(error instanceof Error ? error.message : "Quiz generation failed.");
+    } finally {
+      setGeneratingAllQuizzes(null);
+    }
   };
 
   const generateUnitQuiz = async () => {
@@ -3694,8 +3723,13 @@ export function UnitPage({
       {tab === "lesson" && isPrivileged && !phone && (
         <button type="button" className="btn solid sm lesson-header-edit"
           aria-expanded={slideEditOpen} aria-controls="editing-sidebar-groups"
-          onClick={() => setSlideEditOpen(open => !open)}>
-          Edit slide
+          onClick={() => {
+            setSlideEditOpen(open => !open);
+            setLessonSaveStatus("");
+            setEditMode(true);
+          }}>
+          <Icon name="shield" size={13} />
+          Edit slide text
         </button>
       )}
       <details className="unit-page-dropdown" key={`unit-header-${unitId}-${tab}`}
@@ -5176,18 +5210,6 @@ export function UnitPage({
                   )}
                   {isSuperUser && (
                     <>
-                    {!editMode && (
-                      <button
-                        type="button"
-                        className="btn ghost sm slide-tool-action"
-                        disabled={savingLesson}
-                        onClick={() => { setLessonSaveStatus(""); setEditMode(true); }}
-                        title="Edit the slide text on the page"
-                      >
-                        <Icon name="shield" size={13} />
-                        Edit slide text
-                      </button>
-                    )}
                       {editMode && <>
                           <button type="button" className="btn ghost sm slide-tool-action" onClick={() => openPasteEditor(si)}
                             title="Replace this slide's text with pasted paragraphs">
@@ -5256,6 +5278,11 @@ export function UnitPage({
                             <Icon name="clipboard" size={13} />
                             {generatingQuiz === si ? "Generating quiz…" : "Generate quiz"}
                           </button>
+                          <button type="button" className="btn ghost sm" onClick={() => void generateQuizzesForEverySlide()} disabled={!!generatingAllQuizzes || generatingQuiz !== null} title="Generate a quiz for every lesson slide">
+                            <Icon name="clipboard" size={13} />
+                            {generatingAllQuizzes ? `Adding quizzes… ${generatingAllQuizzes.done}/${generatingAllQuizzes.total}` : "Add quiz to every slide"}
+                          </button>
+                          {generatingAllQuizzes && <progress className="slide-quiz-generation-progress" max={generatingAllQuizzes.total} value={generatingAllQuizzes.done} aria-label="Quiz generation progress" />}
                           {quizGenerationError && <p className="auth-error" role="alert">{quizGenerationError}</p>}
                         </EditingTools>
                       )}
@@ -5302,6 +5329,7 @@ export function UnitPage({
                       aria-label={`Go to section ${dotIndex + 1}${s.lessonStart ? ` (start of lesson ${s.lessonStart.n})` : ""}`}
                       title={s.lessonStart ? `Lesson ${s.lessonStart.n} starts here` : undefined}
                       disabled={!canNavigateToSection(i)}
+                      onMouseDown={event => event.preventDefault()}
                       onClick={() => go(i)}
                     />
                   ); })}

@@ -1,5 +1,5 @@
 :root {
-  --app-canvas: #fffdfb;
+  --app-canvas: #ffffff;
   --azure: #479ef5;
   --azure-dark: #62abf5;
   --azure-darker: #202124;
@@ -35,7 +35,7 @@
 .res-board {
   max-width: 1200px;
   overflow: visible;
-  border: 0;
+  border: 1px solid #409cf0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
@@ -431,6 +431,7 @@ a:hover {
   box-shadow: none;
 }
 .editing-sidebar .slide-quiz-count { display: grid; grid-template-columns: 1fr auto; gap: 12px; width: 100%; margin: 10px 0; padding: 0; }
+.editing-sidebar .slide-quiz-generation-progress { width: 100%; height: 6px; accent-color: #409cf0; }
 .editing-tool-group-body > .lesson-inline-edit-btn { width: 100%; height: auto; }
 .editing-tool-group .auth-error { font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
 .editing-tool-group .unit-editor-actions,
@@ -1230,7 +1231,7 @@ a.pill:hover {
 }
 
 .ring.done .val {
-  stroke: var(--green);
+  stroke: #e4ddd8;
 }
 
 /* ============ Module / unit lists ============ */
@@ -2860,14 +2861,16 @@ td .with-ico .ico {
   z-index: 1;
   height: 28px;
   min-height: 28px;
-  padding: 0 10px;
+  padding: 0 14px;
+  border-radius: 999px;
   font-size: 12px;
+  font-weight: 500;
 }
 .btn.solid.sm.lesson-header-edit:hover:not(:disabled) { filter: none; }
 [data-theme="light"] .btn.solid.sm.lesson-header-edit {
-  background: #f7f3f0;
-  border-color: #f7f3f0;
-  color: var(--ink);
+  background: #409cf0;
+  border-color: #409cf0;
+  color: #fff;
 }
 .unit-header-area.has-slide-edit > .unit-page-dropdown > summary { padding-right: 140px; min-height: 36px; }
 .unit-page-dropdown > summary {
@@ -2908,19 +2911,23 @@ td .with-ico .ico {
   order: 3;
   min-height: 30px;
   height: 30px;
-  padding: 0 10px;
-  border: 1px solid transparent;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid #409cf0;
   border-radius: 5px;
-  background: transparent;
-  color: var(--ink-2);
+  background: #409cf0;
+  color: #fff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   font-size: 12px;
   font-weight: 400;
   box-shadow: none;
 }
 .unit-header-area.is-lesson > .btn.solid.sm.lesson-header-edit:hover:not(:disabled),
 .unit-header-area.is-lesson > .btn.solid.sm.lesson-header-edit[aria-expanded="true"] {
-  background: var(--surface-2);
-  color: var(--ink);
+  border-color: #348ddc;
+  background: #348ddc;
+  color: #fff;
 }
 .lesson-header-controls .lesson-stepper { margin: 0; }
 .lesson-header-controls .lesson-top-nav { margin-left: 4px; }
@@ -5320,8 +5327,8 @@ textarea:focus {
   position: absolute;
   right: 14px;
   top: 50%;
-  width: 7px;
-  height: 7px;
+  width: 9px;
+  height: 9px;
   border-right: 1.5px solid var(--ink-3);
   border-bottom: 1.5px solid var(--ink-3);
   transform: translateY(-70%) rotate(45deg);
@@ -9282,6 +9289,7 @@ a.plan-ppt:hover {
   --lesson-body-leading: 1.63;
   max-width: 1200px;
   overflow-wrap: anywhere;
+  color: rgba(0, 0, 0, .95);
 }
 .lesson-screen .lesson-section > .slide-whole-editor,
 .lesson-screen .lesson-section > :not(.lesson-quiz-card) {
@@ -9316,7 +9324,15 @@ a.plan-ppt:hover {
 .lesson-screen .lesson-section > .slide-whole-editor .slide-editor-default-text {
   font-size: var(--lesson-body-size);
   line-height: var(--lesson-body-leading);
-  color: var(--ink-2);
+  color: rgba(0, 0, 0, .95);
+}
+[data-theme="dark"] .lesson-screen .lesson-section { color: rgba(255, 255, 255, .95); }
+[data-theme="dark"] .lesson-screen .lesson-section > .slide-whole-editor p.lesson-p:not([data-slide-title="true"]),
+[data-theme="dark"] .lesson-screen .lesson-section > .slide-whole-editor .slide-editor-default-text,
+[data-theme="dark"] .slide-whole-editor .slide-editor-list,
+[data-theme="dark"] .slide-whole-editor ol:not(.lesson-numlist):not(.lesson-inferred-list),
+[data-theme="dark"] .slide-whole-editor ul:not(.lesson-inferred-list) {
+  color: rgba(255, 255, 255, .95);
 }
 
 /* Imported formatting never controls slide typography. Lists use native
@@ -10400,12 +10416,13 @@ a.plan-ppt:hover {
   text-align: center;
 }
 .lesson-dot {
-  width: 7px;
-  height: 7px;
+  width: 9px;
+  height: 9px;
   border-radius: 999px;
-  border: none;
-  background: var(--border-2);
+  border: 1px solid #e4ddd8;
+  background: transparent;
   cursor: pointer;
+  user-select: none;
   padding: 0;
   transition:
     background 0.2s ease,
@@ -10442,12 +10459,21 @@ a.plan-ppt:hover {
   outline-offset: 2px;
 }
 .lesson-dot.done {
-  background: color-mix(in srgb, var(--green) 65%, var(--surface));
+  background: #e4ddd8;
+  border-color: #e4ddd8;
 }
 .lesson-dot.active {
-  width: 7px;
-  background: var(--azure);
+  background: #e4ddd8;
+  border-color: #e4ddd8;
   transform: none;
+}
+[data-theme="dark"] .lesson-dot {
+  border-color: #555;
+}
+[data-theme="dark"] .lesson-dot.done,
+[data-theme="dark"] .lesson-dot.active {
+  background: #777;
+  border-color: #777;
 }
 
 /* --- Quiz: inline figure (e.g. water-supply analogy diagram) --- */
@@ -17243,7 +17269,7 @@ td.cal-row-actions {
 
 
 /* Slide text formatting controls: monochrome in both themes. */
-.slide-text-toolbar { --tool-bg: #f7f8fa; --tool-ink: #252a32; --tool-hover: #e9edf2; --tool-border: #d7dce3; position: sticky; top: 12px; z-index: 30; margin: 10px 0 16px; padding: 7px 8px 0; background: var(--tool-bg); color: var(--tool-ink); border: 1px solid var(--tool-border); border-radius: 10px; box-shadow: 0 5px 18px rgba(15,23,42,.10); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+.slide-text-toolbar { --tool-bg: #f5f0ed; --tool-ink: #252a32; --tool-hover: #ebe5e1; --tool-border: #ddd5cf; position: sticky; top: 12px; z-index: 30; margin: 10px 0 16px; padding: 7px 8px 0; background: var(--tool-bg); color: var(--tool-ink); border: 1px solid var(--tool-border); border-radius: 10px; box-shadow: 0 5px 18px rgba(15,23,42,.10); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
 [data-theme="dark"] .slide-text-toolbar { --tool-bg: var(--surface-2); --tool-ink: #d2d5da; --tool-hover: var(--surface-3); --tool-border: var(--border-2); color-scheme: dark; background: transparent; border-color: transparent; border-radius: 0; box-shadow: none; }
 .slide-text-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 2px; min-height:38px; }
 .slide-tool-group { display: inline-flex; align-items: center; gap: 1px; padding: 0 7px; border-left: 1px solid var(--tool-border); }
@@ -17589,7 +17615,7 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 [data-theme="dark"] select { border-color: #3a3a3a !important; background: #242424; color: #d7d7d7; }
 [data-theme="dark"] select:focus { border-color: #3a3a3a !important; background: #242424; }
 [data-theme="dark"] select:hover { border-color: #3a3a3a !important; }
-.slide-whole-editor { box-sizing:border-box; outline:none; min-height:1.5em; padding:12px 14px; border:1px solid color-mix(in srgb, var(--border) 68%, transparent); border-radius:8px; font-size:var(--lesson-body-size, 19px); line-height:var(--lesson-body-leading, 1.63); color:var(--ink-2); }
+.slide-whole-editor { box-sizing:border-box; outline:none; min-height:1.5em; padding:12px 14px; border:1px solid color-mix(in srgb, var(--border) 68%, transparent); border-radius:8px; font-size:var(--lesson-body-size, 19px); line-height:var(--lesson-body-leading, 1.63); color:rgba(0, 0, 0, .95); }
 .slide-whole-editor[contenteditable="true"] { min-height:240px; padding:18px 20px; border:1px solid color-mix(in srgb, var(--border) 82%, transparent); border-radius:10px; background:color-mix(in srgb, var(--surface) 96%, var(--azure-light)); cursor:text; caret-color:var(--azure); box-shadow:none; }
 .slide-whole-editor[contenteditable="true"] [data-user-color="true"] { color:revert-layer; }
 .slide-whole-editor[contenteditable="true"] [data-user-color="true"][data-light-color] { color:var(--slide-light-color) !important; }
@@ -17602,7 +17628,9 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 [data-theme="dark"] [data-slide-rich] [data-user-color="true"][data-light-color]:not([data-dark-color]),
 [data-theme="dark"] .slide-rich-text [data-user-color="true"][data-light-color]:not([data-dark-color]) { color:inherit !important; }
 .slide-whole-editor[contenteditable="true"]:focus { border-color:var(--border-2, var(--border)); box-shadow:none; }
-.slide-whole-editor .slide-editor-default-text { font-family:inherit; font-size:var(--lesson-body-size, 19px); line-height:var(--lesson-body-leading, 1.63); color:var(--ink-2); }
+.slide-whole-editor .slide-editor-default-text { font-family:inherit; font-size:var(--lesson-body-size, 19px); line-height:var(--lesson-body-leading, 1.63); color:rgba(0, 0, 0, .95); }
+[data-theme="dark"] .slide-whole-editor,
+[data-theme="dark"] .slide-whole-editor .slide-editor-default-text { color:rgba(255, 255, 255, .95); }
 .slide-whole-editor .slide-editor-list,
 .slide-whole-editor ol:not(.lesson-numlist):not(.lesson-inferred-list),
 .slide-whole-editor ul:not(.lesson-inferred-list) { font-family:inherit; font-size:inherit; font-weight:inherit; line-height:inherit; color:var(--ink-2); }

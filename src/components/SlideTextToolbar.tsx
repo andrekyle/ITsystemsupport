@@ -1157,29 +1157,25 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
       return;
     }
 
-    const fragment = selectedRange.extractContents();
-    const selectedNodes = Array.from(fragment.childNodes);
-    if (!selectedNodes.length) {
-      setFormatOptionsError("The selected text color could not be reset.");
-      return;
+    // Use the browser command so a selection nested inside a larger colored
+    // span is split at its boundaries and immediately returns to inherited
+    // text color.
+    document.execCommand("styleWithCSS", false, "true");
+    document.execCommand("foreColor", false, "inherit");
+    const appliedRange = selection.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
+    if (appliedRange) {
+      restored.editor.querySelectorAll<HTMLElement>("[data-user-color], [style*='color'], font[color]").forEach(element => {
+        if (!appliedRange.intersectsNode(element)) return;
+        element.removeAttribute("data-user-color");
+        element.removeAttribute("data-light-color");
+        element.removeAttribute("data-dark-color");
+        element.style.removeProperty("color");
+        element.style.removeProperty("--slide-light-color");
+        element.style.removeProperty("--slide-dark-color");
+        if (element.tagName === "FONT") element.removeAttribute("color");
+      });
+      range.current = appliedRange;
     }
-    fragment.querySelectorAll<HTMLElement>("*").forEach(element => {
-      element.removeAttribute("data-user-color");
-      element.removeAttribute("data-light-color");
-      element.removeAttribute("data-dark-color");
-      element.style.removeProperty("color");
-      element.style.removeProperty("--slide-light-color");
-      element.style.removeProperty("--slide-dark-color");
-      if (element.tagName === "FONT") element.removeAttribute("color");
-    });
-    selectedRange.insertNode(fragment);
-
-    const restoredSelection = document.createRange();
-    restoredSelection.setStartBefore(selectedNodes[0]);
-    restoredSelection.setEndAfter(selectedNodes[selectedNodes.length - 1]);
-    selection.removeAllRanges();
-    selection.addRange(restoredSelection);
-    range.current = restoredSelection.cloneRange();
     restored.editor.dispatchEvent(new Event("input", { bubbles: true }));
     setSavedColorTarget(null);
     setColorPaletteOpen(false);
@@ -1333,6 +1329,7 @@ export function SlideTextToolbar({ enabled, onStoreImage }: { enabled: boolean; 
         <label><input type="checkbox" checked={cropImage} onChange={e => { const checked = e.target.checked; setCropImage(checked); updateImage(image => { image.dataset.cropped = String(checked); image.style.height = checked ? `${imageHeight}px` : "auto"; image.style.objectFit = checked ? "cover" : "contain"; }); }} /> Crop to frame</label>
         <strong className="slide-image-wrap-label">Text wrapping</strong>
         <div className="slide-image-wrap-actions">
+          <button type="button" className="slide-image-fill-action" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "none"; image.style.display = "block"; image.style.width = "100%"; image.style.height = "auto"; image.style.maxWidth = "100%"; image.style.objectFit = "cover"; image.style.margin = "0"; })}>Full slide image</button>
           <button type="button" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px auto 12px 0"; })}>Align image left</button>
           <button type="button" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px auto"; })}>No wrap · centre</button>
           <button type="button" onClick={() => updateImage(image => { image.style.transform = "none"; image.style.float = "none"; image.style.display = "block"; image.style.margin = "12px 0 12px auto"; })}>Align image right</button>
