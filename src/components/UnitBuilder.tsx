@@ -398,6 +398,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
               <button type="button" className="btn ghost" disabled={!!busy} onClick={addTab}><Icon name="plus" size={15}/>Add tab</button>
             </div>
             {dirty&&<button type="button" className="btn ghost" disabled={!!busy} onClick={discardDraft}>Discard changes</button>}
+            {built&&<button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");setBusy("Creating backup…");try{const snapshot=draft??built.content;await saveBuiltUnit(unit.us,{...built,revision:crypto.randomUUID(),createdAt:new Date().toISOString(),content:structuredClone(snapshot),files:{...built.files}});setMessage("Backup created. Your current lesson slides are preserved in Version history.");}catch(e){setError(unitBuilderError(e,"The lesson backup could not be created."));}finally{setBusy("");}}}>Back up current lesson</button>}
             <button type="button" className="btn unit-build-action unit-workspace-save" disabled={!!busy||!dirty} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={async()=>{setError("");try{await publish(draft,built?.source??source,built?.aiUsed??false);doneBusy();}catch(e){setError(unitBuilderError(e,"The unit changes could not be saved."));setBusy("");}}}><span>{busy?`Saving ${busyProgress}%`:dirty?"Save all changes and rebuild files":"All changes saved"}</span></button>
           </div>}
         </header>
