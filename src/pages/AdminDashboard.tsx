@@ -92,7 +92,7 @@ export function AdminDashboardPage({ profile, navigate }: { profile: Profile; na
     <div className="admin-charts">
       <Chart title="Users by role" subtitle="Current profiles" data={roles} />
       <Chart title="Learner completion" subtitle="Share of the course completed" data={completion} />
-      <Chart title="New profiles" subtitle="Profiles created per month · last 6 months" data={signups} />
+      <Chart title="New profiles" subtitle="Profiles created per month · last 6 months" data={signups} columns />
     </div>
     <div className="admin-panels">
       <section className="admin-panel"><div className="admin-panel-head"><div><h2>Needs attention</h2><p>Learners with multiple risk signals</p></div><button type="button" onClick={() => navigate({ page: "analytics" })}>View analytics →</button></div>
@@ -108,9 +108,9 @@ export function AdminDashboardPage({ profile, navigate }: { profile: Profile; na
   </div>;
 }
 
-function Chart({ title, subtitle, data }: { title: string; subtitle: string; data: { name: string; count: number }[] }) {
+function Chart({ title, subtitle, data, columns = false }: { title: string; subtitle: string; data: { name: string; count: number }[]; columns?: boolean }) {
   const max = Math.max(1, ...data.map((item) => item.count));
-  return <section className="admin-panel admin-chart"><h2>{title}</h2><p>{subtitle}</p><div className="admin-bars" role="img" aria-label={`${title}: ${data.map((item) => `${item.name} ${item.count}`).join(", ")}`}>
-    {data.map((item) => <div className="admin-bar-row" key={item.name}><span>{item.name}</span><div className="admin-bar-track"><div style={{ width: `${item.count / max * 100}%` }} /></div><strong>{item.count}</strong></div>)}
+  return <section className={`admin-panel admin-chart${columns ? " admin-columns" : ""}`}><h2>{title}</h2><p>{subtitle}</p><div className="admin-bars" role="img" aria-label={`${title}: ${data.map((item) => `${item.name} ${item.count}`).join(", ")}`}>
+    {data.map((item) => <div className="admin-bar-row" key={item.name}><span>{item.name}</span><div className="admin-bar-track"><div style={columns ? { height: `${item.count / max * 100}%` } : { width: `${item.count / max * 100}%` }} /></div><strong>{item.count}</strong></div>)}
   </div></section>;
 }
