@@ -84,8 +84,8 @@ export function AdminDashboardPage({ profile, navigate }: { profile: Profile; na
 
   return <div className="admin-overview">
     <div className="admin-overview-head">
-      <div><span className="admin-eyebrow">{TENANT.name} · Platform administration</span><h1>Admin overview</h1><p>Users, engagement and learning across this organisation</p></div>
-      <button type="button" className="admin-refresh" onClick={() => void refresh()} disabled={loading}>{loading ? "Refreshing…" : "Refresh data"}</button>
+      <div><h1>{`Your platform at a glance, ${profile.name.split(" ")[0]}`}</h1><p>{TENANT.name} users, engagement and learning in one place</p></div>
+      <button type="button" className="admin-refresh" onClick={() => void refresh()} disabled={loading}><span aria-hidden="true">↻</span>{loading ? "Refreshing…" : "Refresh data"}</button>
     </div>
     <p className="admin-data-note" role={error ? "alert" : undefined}>{error ? "Cloud data could not be refreshed. Showing available local or previously loaded data." : cloudEnabled ? `Tenant data · ${updated ? `Updated ${updated.toLocaleTimeString()}` : "Loading cloud data…"}` : "Local data on this device"}</p>
     <div className="admin-tiles">{tiles.map((tile) => <button type="button" className="admin-tile" key={tile.label} onClick={() => navigate({ page: tile.page })}><span>{tile.label}</span><strong>{tile.value}</strong><small>{tile.detail}</small></button>)}</div>
