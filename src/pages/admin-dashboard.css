@@ -1,0 +1,36 @@
+.admin-overview { color: var(--ink); }
+.admin-overview-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+.admin-eyebrow { color: var(--azure); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.admin-overview h1 { margin: 7px 0 5px; font-size: clamp(27px, 3vw, 36px); }
+.admin-overview-head p, .admin-panel p { margin: 0; color: var(--ink-3); font-size: 13px; }
+.admin-refresh { padding: 10px 16px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--ink); cursor: pointer; white-space: nowrap; }
+.admin-refresh:hover, .admin-tile:hover { border-color: var(--azure); }
+.admin-refresh:disabled { opacity: .6; cursor: wait; }
+.admin-data-note { margin: 13px 0 20px; color: var(--ink-3); font-size: 12px; }
+.admin-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.admin-tile { min-width: 0; min-height: 134px; padding: 19px; text-align: left; border: 1px solid var(--border); border-radius: 17px; background: var(--surface); box-shadow: 0 4px 16px rgba(75,55,42,.045); color: var(--ink); cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; }
+.admin-tile span { color: var(--ink-3); font-size: 13px; }
+.admin-tile strong { margin: 13px 0 4px; color: var(--azure); font-size: 29px; line-height: 1; font-weight: 650; }
+.admin-tile small { color: var(--ink-3); font-size: 11px; line-height: 1.35; }
+.admin-charts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
+.admin-panel { min-width: 0; padding: 20px; border: 1px solid var(--border); border-radius: 17px; background: var(--surface); box-shadow: 0 4px 16px rgba(75,55,42,.045); }
+.admin-panel h2 { margin: 0 0 4px; font-size: 17px; }
+.admin-bars { display: grid; gap: 14px; margin-top: 24px; }
+.admin-bar-row { display: grid; grid-template-columns: 82px minmax(0, 1fr) 25px; align-items: center; gap: 8px; font-size: 11px; }
+.admin-bar-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-3); }
+.admin-bar-row strong { text-align: right; }
+.admin-bar-track { height: 12px; overflow: hidden; border-radius: 10px; background: var(--app-canvas); }
+.admin-bar-track div { height: 100%; border-radius: inherit; background: var(--azure); min-width: 0; }
+.admin-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
+.admin-panel-head { display: flex; align-items: start; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
+.admin-panel-head button { border: 0; background: none; color: var(--azure); font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.admin-user-row { width: 100%; padding: 12px 0; display: flex; justify-content: space-between; align-items: center; gap: 10px; border: 0; border-top: 1px solid var(--border); background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
+.admin-user-row span { min-width: 0; display: grid; gap: 3px; }
+.admin-user-row strong { font-size: 13px; font-weight: 600; }
+.admin-user-row small { color: var(--ink-3); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-user-row b, .admin-user-row time { white-space: nowrap; font-size: 12px; font-weight: 500; }
+.admin-user-row:hover strong { color: var(--azure); }
+.admin-empty { padding: 16px 0; }
+.admin-footnote { color: var(--ink-3); font-size: 11px; margin-top: 16px; }
+@media (max-width: 1050px) { .admin-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .admin-charts { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 680px) { .admin-overview-head { flex-direction: column; } .admin-tiles, .admin-charts, .admin-panels { grid-template-columns: 1fr; } }

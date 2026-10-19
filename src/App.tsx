@@ -18,6 +18,7 @@ import { SectionDPage } from "./pages/Checklist";
 import { AttendancePage } from "./pages/Attendance";
 import { CompliancePage } from "./pages/Compliance";
 import { AnalyticsPage } from "./pages/Analytics";
+import { AdminDashboardPage } from "./pages/AdminDashboard";
 import { CommunityPage } from "./pages/Community";
 import { MemoriesPage } from "./pages/Memories";
 import { ChatPage } from "./pages/Chat";
@@ -41,6 +42,7 @@ installSync();
 const ROUTE_KEY = "itss.route";
 const VALID_PAGES = new Set<Route["page"]>([
   "dashboard",
+  "adminDashboard",
   "course",
   "module",
   "unit",
@@ -183,6 +185,7 @@ function Shell({
         )}
         <main className="content">
           <div className="content-inner">
+            {route.page === "adminDashboard" && profile.role === "Super User" && <AdminDashboardPage profile={profile} navigate={navigate} />}
             {route.page === "dashboard" && (
               TENANT_ID === "discovery" ? (
                 <DiscoveryDashboard profile={profile} progress={state} navigate={navigate} />

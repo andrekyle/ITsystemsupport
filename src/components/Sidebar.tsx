@@ -50,6 +50,7 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
 
   const learningNav = [
     { page: "dashboard" as const, icon: "dashboard", label: "Dashboard" },
+    ...(profile.role === "Super User" ? [{ page: "adminDashboard" as const, icon: "chart", label: "Admin Overview" }] : []),
     { page: "course" as const, icon: "book", label: "My Course" },
     { page: "progress" as const, icon: "trend", label: "Progress" },
     { page: "community" as const, icon: "people", label: "Community & Support" },

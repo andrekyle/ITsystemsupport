@@ -654,6 +654,7 @@ export interface CourseModule {
 
 export type PageId =
   | "dashboard"
+  | "adminDashboard"
   | "course"
   | "module"
   | "unit"
