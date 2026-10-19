@@ -5,6 +5,7 @@ import { TENANT } from "../lib/tenant";
 import { cloudEnabled } from "../lib/supabase";
 import { dedupeProfiles, fetchCloudLearnerData, mergeProfileWithCloud, remoteOnlyProfiles, type CloudLearnerData } from "../lib/directory";
 import { analyse } from "./Analytics";
+import { Icon } from "../icons";
 import "./admin-dashboard.css";
 
 const daysAgo = (date?: string) => date && Number.isFinite(Date.parse(date))
@@ -72,14 +73,14 @@ export function AdminDashboardPage({ profile, navigate }: { profile: Profile; na
   });
 
   const tiles = [
-    { label: "Total users", value: users.length, detail: `${learners.length} learners · ${staff} staff`, page: "students" as const },
-    { label: "Active in 7 days", value: active7, detail: `${active30} active in 30 days`, page: "students" as const },
-    { label: "Never signed in", value: never, detail: "Based on recorded profile logins", page: "students" as const },
-    { label: "Learners at risk", value: atRisk, detail: "Based on learning and attendance signals", page: "analytics" as const },
-    { label: "Average completion", value: percent(average), detail: `${completed} learners at 100%`, page: "analytics" as const },
-    { label: "Average quiz score", value: quizAverage === null ? "—" : percent(quizAverage), detail: `${quizRows.length} learners with quiz results`, page: "analytics" as const },
-    { label: "Average attendance", value: attendanceAverage === null ? "—" : percent(attendanceAverage), detail: `${attendanceRows.length} learners with registers`, page: "attendance" as const },
-    { label: "Evidence items", value: learners.reduce((sum, r) => sum + r.poeDone, 0), detail: "POE items across learners", page: "analytics" as const },
+    { label: "Total users", value: users.length, detail: `${learners.length} learners · ${staff} staff`, icon: "people", page: "students" as const },
+    { label: "Active in 7 days", value: active7, detail: `${active30} active in 30 days`, icon: "trend", page: "students" as const },
+    { label: "Never signed in", value: never, detail: "Based on recorded profile logins", icon: "clock", page: "students" as const },
+    { label: "Learners at risk", value: atRisk, detail: "Based on learning and attendance signals", icon: "shield", page: "analytics" as const },
+    { label: "Average completion", value: percent(average), detail: `${completed} learners at 100%`, icon: "checklist", page: "analytics" as const },
+    { label: "Average quiz score", value: quizAverage === null ? "—" : percent(quizAverage), detail: `${quizRows.length} learners with quiz results`, icon: "chart", page: "analytics" as const },
+    { label: "Average attendance", value: attendanceAverage === null ? "—" : percent(attendanceAverage), detail: `${attendanceRows.length} learners with registers`, icon: "calendar", page: "attendance" as const },
+    { label: "Evidence items", value: learners.reduce((sum, r) => sum + r.poeDone, 0), detail: "POE items across learners", icon: "folder", page: "analytics" as const },
   ];
 
   return <div className="admin-overview">
@@ -88,7 +89,7 @@ export function AdminDashboardPage({ profile, navigate }: { profile: Profile; na
       <button type="button" className="admin-refresh" onClick={() => void refresh()} disabled={loading}><span aria-hidden="true">↻</span>{loading ? "Refreshing…" : "Refresh data"}</button>
     </div>
     <p className="admin-data-note" role={error ? "alert" : undefined}>{error ? "Cloud data could not be refreshed. Showing available local or previously loaded data." : cloudEnabled ? `Tenant data · ${updated ? `Updated ${updated.toLocaleTimeString()}` : "Loading cloud data…"}` : "Local data on this device"}</p>
-    <div className="admin-tiles">{tiles.map((tile) => <button type="button" className="admin-tile" key={tile.label} onClick={() => navigate({ page: tile.page })}><span>{tile.label}</span><strong>{tile.value}</strong><small>{tile.detail}</small></button>)}</div>
+    <div className="admin-tiles">{tiles.map((tile) => <button type="button" className="admin-tile" key={tile.label} onClick={() => navigate({ page: tile.page })}><span className="admin-tile-label"><span className="admin-tile-icon"><Icon name={tile.icon} size={15} /></span>{tile.label}</span><strong>{tile.value}</strong><small>{tile.detail}</small></button>)}</div>
     <div className="admin-charts">
       <Chart title="Users by role" subtitle="Current profiles" data={roles} />
       <Chart title="Learner completion" subtitle="Share of the course completed" data={completion} />

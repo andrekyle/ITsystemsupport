@@ -1436,7 +1436,7 @@ export function ExerciseQuestion({
                   placeholder={
                     nParts === 1
                       ? `Type your answer here (at least ${MIN_ANSWER_WORDS} words — explain in your own words), then check it…`
-                      : `Explain key idea ${i + 1} in your own words (at least ${MIN_EXPLANATION_WORDS} words)…`
+                      : undefined
                   }
                   value={p}
                   onFocus={() => setFocusPart(i)}
