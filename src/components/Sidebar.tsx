@@ -96,7 +96,7 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
   const nav = learningNav;
 
   return (
-    <nav className={`sidebar${collapsed ? " collapsed" : ""}${route.page === "adminDashboard" ? " admin-blue-sidebar" : ""}`} aria-label="Main navigation">
+    <nav className={`sidebar${collapsed ? " collapsed" : ""}`} aria-label="Main navigation">
       <div className="sidebar-scroll">
         <div className="side-section">
           {nav.map((n) => (

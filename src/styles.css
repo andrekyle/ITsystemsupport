@@ -956,8 +956,8 @@ a:hover {
 
 /* Light mode navigation with high-contrast white controls. */
 [data-theme="light"] .sidebar {
-  border-right-color: #002147;
-  background: #002147;
+  border-right-color: #0750c9;
+  background: radial-gradient(circle at 110% 105%, #02c7f9 0, #0878ec 26%, transparent 27%), linear-gradient(135deg, #0750c9 0%, #096ee9 100%);
   color: #fff;
 }
 [data-theme="light"] .sidebar .side-item,
@@ -968,17 +968,20 @@ a:hover {
 }
 [data-theme="light"] .sidebar .side-item:hover {
   color: #fff;
+  background: rgba(255,255,255,.12);
 }
 [data-theme="light"] .sidebar .side-item.active {
-  background: transparent;
+  background: rgba(255,255,255,.2);
   color: #fff;
 }
 [data-theme="light"] .sidebar .side-item.active:hover {
   color: #fff;
+  background: rgba(255,255,255,.25);
 }
 [data-theme="light"] .sidebar .side-item.active::before {
-  background: #fff;
+  display: none;
 }
+[data-theme="light"] .sidebar .sidebar-footer { border-top: 1px solid rgba(255,255,255,.22); }
 [data-theme="light"] .sidebar .side-item .badge {
   border-color: rgba(255,255,255,.42);
   background: rgba(255,255,255,.12);

@@ -68,16 +68,6 @@
 [data-theme="light"] .admin-panels > .admin-panel:first-child .admin-user-row { border-color: rgba(255,255,255,.22); }
 [data-theme="light"] .admin-user-row { border-color: #edf2f8; }
 [data-theme="light"] .admin-panel-head button { color: #075cce; }
-[data-theme="light"] .sidebar.admin-blue-sidebar { background: linear-gradient(165deg, #f8fbff 0%, #eaf3ff 100%); border-right: 1px solid #dbe9fa; box-shadow: 8px 0 28px rgba(39, 99, 177, .06); }
-[data-theme="light"] .sidebar.admin-blue-sidebar .sidebar-scroll { padding: 18px 12px; }
-[data-theme="light"] .sidebar.admin-blue-sidebar .side-item { min-height: 42px; padding: 9px 12px; border-radius: 11px; color: #39516f; font-weight: 500; transition: background .15s, color .15s; }
-[data-theme="light"] .sidebar.admin-blue-sidebar .side-item .ico, [data-theme="light"] .sidebar.admin-blue-sidebar .side-item.install-app, [data-theme="light"] .sidebar.admin-blue-sidebar .side-item.install-app .ico { color: inherit; }
-[data-theme="light"] .sidebar.admin-blue-sidebar .side-item:hover { color: #0756cc; background: #e0edff; }
-[data-theme="light"] .sidebar.admin-blue-sidebar .side-item.active, [data-theme="light"] .sidebar.admin-blue-sidebar .side-item.active:hover { color: #fff; background: linear-gradient(100deg, #0862e8, #238af9); box-shadow: 0 7px 16px rgba(16, 103, 222, .2); }
-[data-theme="light"] .sidebar.admin-blue-sidebar .side-item.active .ico { color: #fff; }
-[data-theme="light"] .sidebar.admin-blue-sidebar .side-item.active::before { display: none; }
-[data-theme="light"] .sidebar.admin-blue-sidebar .sidebar-footer { padding: 12px; border-top: 1px solid #dbe9fa; }
-[data-theme="light"] .sidebar.admin-blue-sidebar .side-item .badge { color: #0862d5; background: #e5f0ff; border-color: #c7defc; }
 @media (max-width: 1050px) { .admin-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .admin-charts { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 680px) { .admin-overview-head { min-height: 150px; } .admin-tiles, .admin-charts, .admin-panels { grid-template-columns: 1fr; } }
 @media (max-width: 680px) { [data-theme="light"] .admin-overview { padding: 4px 14px 24px; border-radius: 18px; } }
