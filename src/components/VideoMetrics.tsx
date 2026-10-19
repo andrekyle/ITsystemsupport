@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Icon } from "../icons";
 import { Select } from "./Select";
 import type { Profile, ProgressState } from "../types";
@@ -159,6 +159,7 @@ function topRoundedBar(x: number, y: number, width: number, height: number, radi
 
 /** AI-usage-style vertical comparison chart with direct metric values. */
 function VideoPerformanceChart({ videos, metric }: { videos: VideoRow[]; metric: ChartMetric }) {
+  const gradientId = useId();
   const [tooltip, setTooltip] = useState<{ title: string; value: string; x: number; y: number } | null>(null);
   const rows = [...videos].sort((a, b) => chartValue(b, metric) - chartValue(a, metric));
   const W = 860;
@@ -191,6 +192,7 @@ function VideoPerformanceChart({ videos, metric }: { videos: VideoRow[]; metric:
   };
   return <div className="video-chart-stage">
     <svg className="oa-chart video-vertical-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${metricLabel} by video`}>
+    <defs><linearGradient id={gradientId} x1="0" y1="1" x2="0" y2="0"><stop stopColor="var(--dashboard-chart-start, #10a37f)" /><stop offset="1" stopColor="var(--dashboard-chart-end, #10a37f)" /></linearGradient></defs>
     {grid.map(line => <g key={line.value}>
       {line.value > 0 && <line className="oa-grid" x1={padL} x2={padL + plotW} y1={line.py} y2={line.py} />}
       <text className="oa-axis" x={padL + plotW + 9} y={line.py + 4}>{chartNumber(line.value, metric)}</text>
@@ -199,7 +201,7 @@ function VideoPerformanceChart({ videos, metric }: { videos: VideoRow[]; metric:
       const value = chartValue(video, metric);
       const cx = padL + slot * index + slot / 2;
       return <g key={video.id}>
-        {value > 0 && <path className="video-bar-primary" d={topRoundedBar(cx - barW / 2, y(value), barW, Math.max(2, y(0) - y(value)), 4)}
+        {value > 0 && <path className="video-bar-primary" style={{ fill: `url(#${gradientId})` }} d={topRoundedBar(cx - barW / 2, y(value), barW, Math.max(2, y(0) - y(value)), 4)}
           onMouseEnter={event => positionTooltip(event, video, value)}
           onMouseMove={event => positionTooltip(event, video, value)}
           onMouseLeave={() => setTooltip(null)} />}
@@ -288,11 +290,11 @@ export function VideoMetrics() {
 
     {view === "videos" ? <>
       <div className="video-metrics-kpis oa-metrics">
-        <div><span>Watch time</span><strong>{duration(totals.seconds)}</strong></div>
-        <div><span>Platform views</span><strong>{totals.views}</strong></div>
-        <div><span>Likes</span><strong>{totals.likes}</strong></div>
-        <div><span>Comments</span><strong>{totals.comments}</strong></div>
-        <div><span>Quiz completions</span><strong>{totals.completions}</strong></div>
+        <div><span><Icon name="clock" size={15} />Watch time</span><strong>{duration(totals.seconds)}</strong></div>
+        <div><span><Icon name="play" size={15} />Platform views</span><strong>{totals.views}</strong></div>
+        <div><span><Icon name="thumbUp" size={15} />Likes</span><strong>{totals.likes}</strong></div>
+        <div><span><Icon name="chat" size={15} />Comments</span><strong>{totals.comments}</strong></div>
+        <div><span><Icon name="checklist" size={15} />Quiz completions</span><strong>{totals.completions}</strong></div>
       </div>
       <section className="card video-trending-card">
         <div className="video-chart-head">
@@ -303,7 +305,7 @@ export function VideoMetrics() {
           {CHART_METRICS.map(item => <button key={item.id} type="button" className={chartMetric === item.id ? "active" : ""} aria-pressed={chartMetric === item.id} onClick={() => setChartMetric(item.id)}>{item.label}</button>)}
         </div>
         <VideoPerformanceChart videos={chartOrderedVideos} metric={chartMetric} />
-        <p className="video-chart-help"><strong>How to read this:</strong> A taller green bar means a higher result. Hover over a bar to see the full video name and exact value.</p>
+        <p className="video-chart-help"><strong>How to read this:</strong> A taller bar means a higher result. Hover over a bar to see the full video name and exact value.</p>
         </> : <p className="empty-state">{loading ? "Loading video activity…" : "No video activity recorded yet. Metrics appear here once learners watch, like, comment on or complete videos."}</p>}
       </section>
       {videos.length > 0 && <div className="table-wrap card video-metrics-table-wrap"><table className="data video-metrics-table">
@@ -324,11 +326,11 @@ export function VideoMetrics() {
       </div>
       {selected ? <>
         <div className="video-metrics-kpis">
-          <div><span>Videos engaged</span><strong>{selectedVideos.length}</strong></div>
-          <div><span>Watch time</span><strong>{duration(selectedVideos.reduce((n, row) => n + row.watchSeconds, 0))}</strong></div>
-          <div><span>Likes</span><strong>{selectedVideos.reduce((n, row) => n + row.likes, 0)}</strong></div>
-          <div><span>Comments</span><strong>{selectedVideos.reduce((n, row) => n + row.comments, 0)}</strong></div>
-          <div><span>Uploads</span><strong>{Object.keys(selected.docs).length + (selected.learner.contentEntries?.length ?? 0)}</strong></div>
+          <div><span><Icon name="play" size={15} />Videos engaged</span><strong>{selectedVideos.length}</strong></div>
+          <div><span><Icon name="clock" size={15} />Watch time</span><strong>{duration(selectedVideos.reduce((n, row) => n + row.watchSeconds, 0))}</strong></div>
+          <div><span><Icon name="thumbUp" size={15} />Likes</span><strong>{selectedVideos.reduce((n, row) => n + row.likes, 0)}</strong></div>
+          <div><span><Icon name="chat" size={15} />Comments</span><strong>{selectedVideos.reduce((n, row) => n + row.comments, 0)}</strong></div>
+          <div><span><Icon name="folder" size={15} />Uploads</span><strong>{Object.keys(selected.docs).length + (selected.learner.contentEntries?.length ?? 0)}</strong></div>
         </div>
         <div className="video-user-grid">
           <section className="card"><h3>Video interaction</h3>{selectedVideos.length ? selectedVideos.map(video => <div className="video-user-row" key={video.id}>

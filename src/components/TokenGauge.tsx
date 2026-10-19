@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Icon } from "../icons";
 import { COURSE_META, MODULES, findUnit, usLabel } from "../data/course";
 import {
@@ -173,6 +173,7 @@ interface DayAgg {
  *  output tokens (light green) stacked on top, gridlines and right-hand
  *  axis labels. Pure SVG — scales with the card width. */
 function DailyChart({ days, monthLabel }: { days: DayAgg[]; monthLabel: string }) {
+  const gradientId = useId();
   const W = 860;
   const H = 200;
   const padL = 10;
@@ -195,6 +196,12 @@ function DailyChart({ days, monthLabel }: { days: DayAgg[]; monthLabel: string }
       role="img"
       aria-label={`Daily token usage for ${monthLabel}`}
     >
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="1" x2="0" y2="0">
+          <stop stopColor="var(--dashboard-chart-start, #10a37f)" />
+          <stop offset="1" stopColor="var(--dashboard-chart-end, #10a37f)" />
+        </linearGradient>
+      </defs>
       {grid.map((g) => (
         <g key={g.v}>
           <line className="oa-grid" x1={padL} x2={padL + plotW} y1={g.py} y2={g.py} />
@@ -212,6 +219,7 @@ function DailyChart({ days, monthLabel }: { days: DayAgg[]; monthLabel: string }
               <>
                 <rect
                   className="oa-bar-in"
+                  style={{ fill: `url(#${gradientId})` }}
                   x={cx - barW / 2}
                   y={y(d.total)}
                   width={barW}
@@ -550,29 +558,29 @@ export function TokenGauge() {
             {/* ——— headline metrics ——— */}
             <div className="oa-metrics">
               <div className="oa-metric">
-                <div className="oa-metric-lbl">Total spend</div>
+                <div className="oa-metric-lbl"><Icon name="chart" size={15} />Total spend</div>
                 <div className="oa-metric-num">
                   {records ? `≈${usd(monthTotals.costUSD)}` : "…"}
                 </div>
               </div>
               <div className="oa-metric">
-                <div className="oa-metric-lbl">Total tokens</div>
+                <div className="oa-metric-lbl"><Icon name="chip" size={15} />Total tokens</div>
                 <div className="oa-metric-num">
                   {records ? monthTotals.total.toLocaleString("en-ZA") : "…"}
                 </div>
               </div>
               <div className="oa-metric">
-                <div className="oa-metric-lbl">Requests</div>
+                <div className="oa-metric-lbl"><Icon name="chat" size={15} />Requests</div>
                 <div className="oa-metric-num">{records ? monthTotals.requests : "…"}</div>
               </div>
               <div className="oa-metric">
-                <div className="oa-metric-lbl">Input / output</div>
+                <div className="oa-metric-lbl"><Icon name="trend" size={15} />Input / output</div>
                 <div className="oa-metric-num oa-metric-sm">
                   {records ? `${fmtTokens(monthTotals.prompt)} / ${fmtTokens(monthTotals.completion)}` : "…"}
                 </div>
               </div>
               <div className="oa-metric">
-                <div className="oa-metric-lbl">All time</div>
+                <div className="oa-metric-lbl"><Icon name="clock" size={15} />All time</div>
                 <div className="oa-metric-num oa-metric-sm">
                   {allTimeTotals ? `${fmtTokens(allTimeTotals.total)} tok · ≈${usd(allTimeTotals.costUSD)}` : "—"}
                 </div>
