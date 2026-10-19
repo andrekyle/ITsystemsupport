@@ -50,11 +50,11 @@ export function Dashboard({
     return () => { alive = false; };
   }, [profile.id, profile.role]);
   const dashboardTabs = [
-    { id: "overview", label: "Overview" },
-    { id: "learning", label: "Learning progress" },
+    { id: "overview", label: "Overview", icon: "home" },
+    { id: "learning", label: "Learning progress", icon: "trend" },
     ...(profile.role === "Super User" ? [
-      { id: "videos", label: "Video metrics" },
-      { id: "ai", label: "AI usage" },
+      { id: "videos", label: "Video metrics", icon: "play" },
+      { id: "ai", label: "AI usage", icon: "chart" },
     ] : []),
   ];
   const { docs: poeDocs } = usePoe(profile.id);
@@ -79,7 +79,7 @@ export function Dashboard({
   })();
 
   return (
-    <>
+    <div className="learner-dashboard">
       <div className="eyebrow">
         <Icon name="home" size={15} />
         Dashboard
@@ -91,14 +91,14 @@ export function Dashboard({
       </p>
       {evidenceError && <p className="auth-error" role="alert">Could not verify all saved XP evidence. The displayed XP may be incomplete; reload to retry.</p>}
 
-      <div className="card-grid">
+      <div className="card-grid dashboard-stats">
         <div className="card stat-card">
           <span className="ico">
             <Icon name="target" size={26} />
           </span>
           <div>
-            <div className="num">{Math.round(s.overall * 100)}%</div>
             <div className="lbl">Overall completion</div>
+            <div className="num">{Math.round(s.overall * 100)}%</div>
           </div>
         </div>
         <div className="card stat-card">
@@ -106,11 +106,11 @@ export function Dashboard({
             <Icon name="award" size={26} />
           </span>
           <div>
+            <div className="lbl">Credits earned</div>
             <div className="num">
               {s.creditsEarned}
               <span style={{ fontSize: 15, color: "var(--ink-3)" }}> / {COURSE_META.credits}</span>
             </div>
-            <div className="lbl">Credits earned</div>
           </div>
         </div>
         <div className="card stat-card">
@@ -118,11 +118,11 @@ export function Dashboard({
             <Icon name="checkCircle" size={26} />
           </span>
           <div>
+            <div className="lbl">Unit standards completed</div>
             <div className="num">
               {s.unitsCompleted}
               <span style={{ fontSize: 15, color: "var(--ink-3)" }}> / {TOTAL_UNITS}</span>
             </div>
-            <div className="lbl">Unit standards completed</div>
           </div>
         </div>
         <div className="card stat-card">
@@ -130,11 +130,11 @@ export function Dashboard({
             <Icon name="book" size={26} />
           </span>
           <div>
+            <div className="lbl">Modules completed</div>
             <div className="num">
               {s.modulesCompleted}
               <span style={{ fontSize: 15, color: "var(--ink-3)" }}> / {MODULES.length}</span>
             </div>
-            <div className="lbl">Modules completed</div>
           </div>
         </div>
         <div
@@ -148,11 +148,11 @@ export function Dashboard({
             <Icon name="folder" size={26} />
           </span>
           <div>
+            <div className="lbl">POE items complete</div>
             <div className="num">
               {poeDone}
               <span style={{ fontSize: 15, color: "var(--ink-3)" }}> / {POE_TOTAL}</span>
             </div>
-            <div className="lbl">POE items complete</div>
           </div>
         </div>
       </div>
@@ -227,24 +227,25 @@ export function Dashboard({
               setDashboardTab(dashboardTabs[nextIndex].id);
               document.getElementById(`dashboard-tab-${dashboardTabs[nextIndex].id}`)?.focus();
             }}>
+            <Icon name={item.icon} size={17} />
             {item.label}
           </button>
         ))}
       </div>
 
       {profile.role === "Super User" && (
-        <section role="tabpanel" id="dashboard-panel-videos" aria-labelledby="dashboard-tab-videos" hidden={dashboardTab !== "videos"}>
+        <section className="dashboard-detail-panel" role="tabpanel" tabIndex={0} id="dashboard-panel-videos" aria-labelledby="dashboard-tab-videos" hidden={dashboardTab !== "videos"}>
           <VideoMetrics />
         </section>
       )}
 
       {profile.role === "Super User" && (
-        <section role="tabpanel" id="dashboard-panel-ai" aria-labelledby="dashboard-tab-ai" hidden={dashboardTab !== "ai"}>
+        <section className="dashboard-detail-panel" role="tabpanel" tabIndex={0} id="dashboard-panel-ai" aria-labelledby="dashboard-tab-ai" hidden={dashboardTab !== "ai"}>
           <TokenGauge />
         </section>
       )}
 
-      <section role="tabpanel" id="dashboard-panel-overview" aria-labelledby="dashboard-tab-overview" hidden={dashboardTab !== "overview"}>
+      <section className="dashboard-detail-panel" role="tabpanel" tabIndex={0} id="dashboard-panel-overview" aria-labelledby="dashboard-tab-overview" hidden={dashboardTab !== "overview"}>
       {announcements.length > 0 && (
         <>
           <h2 className="section-title">
@@ -304,23 +305,20 @@ export function Dashboard({
 
       </section>
 
-      <section role="tabpanel" id="dashboard-panel-learning" aria-labelledby="dashboard-tab-learning" hidden={dashboardTab !== "learning"}>
+      <section className="dashboard-detail-panel" role="tabpanel" tabIndex={0} id="dashboard-panel-learning" aria-labelledby="dashboard-tab-learning" hidden={dashboardTab !== "learning"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="trend" size={20} />
         </span>
         Module progress
       </h2>
-      <div className="card" style={{ padding: "8px 18px" }}>
+      <div className="card dashboard-module-progress">
         {MODULES.map((m, i) => {
           const c = moduleCompletion(progress, m.id);
           return (
             <div
               key={m.id}
               className="dash-mod-row"
-              style={{
-                borderBottom: i < MODULES.length - 1 ? "1px solid var(--border)" : "none",
-              }}
             >
               <Icon name={m.icon} size={19} color="var(--azure)" />
               <span className="dash-mod-name">
@@ -343,7 +341,7 @@ export function Dashboard({
         </span>
         Programme milestones
       </h2>
-      <div className="card-grid">
+      <div className="card-grid dashboard-milestones">
         {PROGRAMME_MILESTONES.map((ms) => (
           <div className="card stat-card" key={ms.name}>
             <span className="ico">
@@ -382,7 +380,7 @@ export function Dashboard({
         </span>
       </div>
       </section>
-    </>
+    </div>
   );
 }
 
