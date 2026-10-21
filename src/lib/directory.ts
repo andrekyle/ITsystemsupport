@@ -309,7 +309,10 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
         : mergeProgressEvidence(snapshot, existing);
     } catch (error) {
       console.error("Could not read learner progress evidence:", row.key, error);
-      return null;
+      // One damaged/stale row must not hide every other learner's valid
+      // progress. Keep loading the remaining snapshots and let the direct
+      // profile lookup provide another chance to recover this one.
+      continue;
     }
   }
 

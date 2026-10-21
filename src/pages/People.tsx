@@ -41,6 +41,7 @@ import {
   fetchCloudDirectory,
   fetchCloudLearnerData,
   fetchCloudProgress,
+  bestProgress,
   identityKeys,
   mergeProfileWithCloud,
   purgeOwnProfileCopy,
@@ -654,6 +655,7 @@ export function StudentsPage({
         cloudProfileId={cloudProfileId}
         cloudDocs={cloud?.poe[cloudProfileId]}
         cloudProgress={cloud?.progress}
+        cloud={cloud}
       />
     );
   }
@@ -1858,6 +1860,7 @@ function AcademicRecord({
   owner,
   cloudProfileId,
   cloudProgress,
+  cloud,
   canDownload,
 }: {
   student: Profile;
@@ -1866,6 +1869,8 @@ function AcademicRecord({
   /** identity-matched profile id in the owner's cloud account */
   cloudProfileId?: string;
   cloudProgress?: Record<string, ProgressState>;
+  /** complete directory used to reconcile migrated/duplicate profile ids */
+  cloud?: CloudLearnerData | null;
   /** super user only — shows the completed-assignments download */
   canDownload?: boolean;
 }) {
@@ -1880,26 +1885,33 @@ function AcademicRecord({
       (merged, snapshot) => merged ? mergeProgressEvidence(merged, snapshot) : snapshot,
       null
     );
-    if (mergedCloud) {
-      setProgress(mergeProgressEvidence(local, mergedCloud));
-      return;
-    }
+    // bestProgress also includes every identity-matched cloud profile. This is
+    // important for learners whose evidence is split across a seeded profile
+    // id and a later sign-in profile id.
+    const identityProgress = cloud ? bestProgress(student, cloud) : null;
+    const baseline = identityProgress
+      ? mergeProgressEvidence(local, identityProgress)
+      : mergedCloud
+        ? mergeProgressEvidence(local, mergedCloud)
+        : local;
     // Never leave a remote learner's record behind a blocking spinner. The
     // direct query below can enrich this baseline when the directory snapshot
     // has not arrived yet or when a profile was linked to a stale owner copy.
-    setProgress(local);
+    setProgress(baseline);
     if (!owner) {
       return;
     }
     let alive = true;
     void fetchCloudProgress(owner, cloudProfileId ?? student.id, student.id).then((p) => {
       if (!alive) return;
-      setProgress(p ? mergeProgressEvidence(local, p) : local);
+      // Always enrich the bulk snapshot. Previously this query was skipped as
+      // soon as any cloud row existed, leaving newer/duplicate evidence out.
+      if (p) setProgress((current) => mergeProgressEvidence(current, p));
     });
     return () => {
       alive = false;
     };
-  }, [student.id, remote, owner, cloudProfileId, cloudProgress]);
+  }, [student, remote, owner, cloudProfileId, cloudProgress, cloud]);
 
   const units = assessedUnits();
 
@@ -2313,6 +2325,7 @@ function StudentDetail({
   cloudProfileId,
   cloudDocs,
   cloudProgress,
+  cloud,
 }: {
   student: Profile;
   viewer: Profile;
@@ -2326,6 +2339,7 @@ function StudentDetail({
   cloudProfileId?: string;
   cloudDocs?: Record<string, PoeDoc>;
   cloudProgress?: Record<string, ProgressState>;
+  cloud?: CloudLearnerData | null;
 }) {
   const isSuper = viewer.role === "Super User";
   const staffViewer = isStaff(viewer.role);
@@ -2706,6 +2720,7 @@ function StudentDetail({
             owner={owner}
             cloudProfileId={cloudProfileId}
             cloudProgress={cloudProgress}
+            cloud={cloud}
             canDownload={isSuper}
           />
           </section>
@@ -2720,6 +2735,7 @@ function StudentDetail({
               cloudProfileId={cloudProfileId}
               cloudDocs={cloudDocs}
               cloudProgress={cloudProgress}
+              cloud={cloud}
             />
             </section>
           )}
@@ -2819,6 +2835,7 @@ function OutcomesPanel({
   cloudProfileId,
   cloudDocs,
   cloudProgress,
+  cloud,
 }: {
   student: Profile;
   viewer: Profile;
@@ -2830,6 +2847,7 @@ function OutcomesPanel({
   /** POE docs for this learner from the cloud directory (staff-side view) */
   cloudDocs?: Record<string, PoeDoc>;
   cloudProgress?: Record<string, ProgressState>;
+  cloud?: CloudLearnerData | null;
 }) {
   const { outcomes, setOutcome, clearOutcome } = useOutcomes();
   const [progress, setProgress] = useState<ProgressState>(() =>
@@ -2843,16 +2861,21 @@ function OutcomesPanel({
       (merged, snapshot) => merged ? mergeProgressEvidence(merged, snapshot) : snapshot,
       null
     );
-    setProgress(mergedCloud ? mergeProgressEvidence(local, mergedCloud) : local);
+    const identityProgress = cloud ? bestProgress(student, cloud) : null;
+    setProgress(identityProgress
+      ? mergeProgressEvidence(local, identityProgress)
+      : mergedCloud
+        ? mergeProgressEvidence(local, mergedCloud)
+        : local);
     if (!owner) return;
     let alive = true;
     void fetchCloudProgress(owner, cloudProfileId ?? student.id, student.id).then((p) => {
-      if (alive && !mergedCloud && p) setProgress(mergeProgressEvidence(local, p));
+      if (alive && p) setProgress((current) => mergeProgressEvidence(current, p));
     });
     return () => {
       alive = false;
     };
-  }, [student.id, remote, owner, cloudProfileId, cloudProgress]);
+  }, [student, remote, owner, cloudProfileId, cloudProgress, cloud]);
   // POE docs — cloud copy for remote students, local for people on this device.
   const poe = remote ? (cloudDocs ?? {}) : loadPoeDocs(student.id);
   const forLearner = outcomes[student.id] ?? {};
