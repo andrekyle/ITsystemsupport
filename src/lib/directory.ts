@@ -334,13 +334,19 @@ export async function fetchCloudProgress(
   const profileIds = [...new Set([profileId, alternateProfileId].filter((id): id is string => Boolean(id)))];
   const { data, error } = await supabase
     .from("app_state")
-    .select("value")
-    .eq("user_id", owner)
+    .select("user_id,value")
     .eq("tenant_id", TENANT_ID)
     .in("key", profileIds.map((id) => `itss.progress.${id}`));
   if (error || !data?.length) return null;
   let merged: ProgressState | null = null;
-  for (const row of data) {
+  // Reconcile every row visible through RLS. Duplicate profile copies are
+  // common after account/profile migrations; merge non-owner copies first so
+  // the designated owner's current values remain preferred without losing
+  // stronger scores or historical evidence from another copy.
+  const ordered = [...data].sort(
+    (a, b) => Number(a.user_id === owner) - Number(b.user_id === owner)
+  );
+  for (const row of ordered) {
     try {
       const next = JSON.parse(row.value) as ProgressState;
       merged = merged ? mergeProgressEvidence(merged, next) : next;
@@ -419,9 +425,26 @@ export function bestProgress(
 ): ProgressState {
   const local = loadProgress(profile.id);
   const link = resolveCloudLink(profile, cloud);
-  const remote = cloud?.progress?.[profile.id] ?? (link ? cloud?.progress?.[link.cloudId] : undefined);
-  if (!remote) return local;
-  return mergeProgressEvidence(local, remote);
+  if (!cloud) return local;
+
+  // A learner can have a seeded profile id and a later sign-in profile id.
+  // Merge every cloud snapshot belonging to either identity, not just the
+  // freshest directory copy, otherwise older quiz/exercise evidence vanishes
+  // from the leaderboard after an account migration.
+  const ids = new Set([profile.id, ...(link ? [link.cloudId] : [])]);
+  const keys = new Set(identityKeys(profile));
+  for (const cp of cloud.profiles) {
+    if (identityKeys(cp).some((key) => keys.has(key))) ids.add(cp.id);
+  }
+  let merged = local;
+  let found = false;
+  for (const id of ids) {
+    const remote = cloud.progress[id];
+    if (!remote) continue;
+    merged = mergeProgressEvidence(merged, remote);
+    found = true;
+  }
+  return found ? merged : local;
 }
 
 /** Retain distinct POE files from both snapshots; cloud wins for the same key. */
@@ -431,9 +454,17 @@ export function bestPoeDocs(
 ): Record<string, PoeDoc> {
   const local = loadPoeDocs(profile.id);
   const link = resolveCloudLink(profile, cloud);
-  const remote = cloud?.poe?.[profile.id] ?? (link ? cloud?.poe?.[link.cloudId] : undefined);
-  if (!remote) return local;
-  return { ...local, ...remote };
+  if (!cloud) return local;
+  const ids = new Set([profile.id, ...(link ? [link.cloudId] : [])]);
+  const keys = new Set(identityKeys(profile));
+  for (const cp of cloud.profiles) {
+    if (identityKeys(cp).some((key) => keys.has(key))) ids.add(cp.id);
+  }
+  let merged = { ...local };
+  for (const id of ids) {
+    if (cloud.poe[id]) merged = { ...merged, ...cloud.poe[id] };
+  }
+  return merged;
 }
 
 /** "Best" Appendix C checklist (same richer-copy rule). */

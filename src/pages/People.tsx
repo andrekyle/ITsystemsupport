@@ -1869,11 +1869,11 @@ function AcademicRecord({
   /** super user only — shows the completed-assignments download */
   canDownload?: boolean;
 }) {
-  const [progress, setProgress] = useState<ProgressState | null>(
-    remote ? null : loadProgress(student.id)
+  const [progress, setProgress] = useState<ProgressState>(() =>
+    remote ? { units: {} } : loadProgress(student.id)
   );
   useEffect(() => {
-    const local = remote ? null : loadProgress(student.id);
+    const local = remote ? { units: {} } : loadProgress(student.id);
     const cloudSnapshots = [cloudProgress?.[student.id], cloudProgress?.[cloudProfileId ?? student.id]]
       .filter((p): p is ProgressState => Boolean(p));
     const mergedCloud = cloudSnapshots.reduce<ProgressState | null>(
@@ -1881,25 +1881,23 @@ function AcademicRecord({
       null
     );
     if (mergedCloud) {
-      setProgress(mergeProgressEvidence(local ?? { units: {} }, mergedCloud));
+      setProgress(mergeProgressEvidence(local, mergedCloud));
       return;
     }
+    // Never leave a remote learner's record behind a blocking spinner. The
+    // direct query below can enrich this baseline when the directory snapshot
+    // has not arrived yet or when a profile was linked to a stale owner copy.
+    setProgress(local);
     if (!owner) {
-      setProgress(local ?? { units: {} });
       return;
     }
     let alive = true;
-    const fallbackTimer = window.setTimeout(() => {
-      if (alive && !mergedCloud) setProgress(local ?? { units: {} });
-    }, 8000);
-    setProgress(remote ? null : local);
     void fetchCloudProgress(owner, cloudProfileId ?? student.id, student.id).then((p) => {
       if (!alive) return;
-      setProgress(p ? mergeProgressEvidence(local ?? { units: {} }, p) : (local ?? { units: {} }));
+      setProgress(p ? mergeProgressEvidence(local, p) : local);
     });
     return () => {
       alive = false;
-      window.clearTimeout(fallbackTimer);
     };
   }, [student.id, remote, owner, cloudProfileId, cloudProgress]);
 
@@ -1954,14 +1952,6 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
       )}
     </h2>
   );
-
-  if (!progress)
-    return (
-      <>
-        {heading}
-        <p className="muted">Loading saved scores from the cloud…</p>
-      </>
-    );
 
   // overall quiz totals across the whole programme
   const { quizCount, quizAttempted, quizCompetent, questionsBest, questionsTotal, overallPct } =
