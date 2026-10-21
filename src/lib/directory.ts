@@ -120,7 +120,13 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
     supabase.from("app_state").select("user_id,value").eq("tenant_id", TENANT_ID).eq("key", "itss.profiles"),
     supabase.from("app_state").select("user_id,key,value").eq("tenant_id", TENANT_ID).like("key", "itss.poe.%"),
   ]);
-  if (profRes.error || poeRes.error) return null;
+  // Learner profiles remain useful even when the optional POE index query is
+  // unavailable (for example while its policy or storage migration is being
+  // updated). Do not discard the entire directory in that case.
+  if (profRes.error) return null;
+  if (poeRes.error) {
+    console.error("Could not load cloud POE index; continuing without POE data:", poeRes.error);
+  }
 
   const profiles: Profile[] = [];
   const owners: CloudDirectory["owners"] = {};
@@ -271,9 +277,12 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
     supabase.from("app_state").select("user_id,key,value").eq("tenant_id", TENANT_ID).like("key", "itss.checklist.%"),
   ]);
   if (!dir) return null;
-  if (progRes.error || checkRes.error) {
-    console.error("Could not load complete learner evidence:", progRes.error ?? checkRes.error);
+  if (progRes.error) {
+    console.error("Could not load learner progress evidence:", progRes.error);
     return null;
+  }
+  if (checkRes.error) {
+    console.error("Could not load learner checklists; continuing without checklist data:", checkRes.error);
   }
 
   const pick = <T,>(
