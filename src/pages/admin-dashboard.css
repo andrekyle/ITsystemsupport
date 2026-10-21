@@ -86,3 +86,80 @@
 @media (max-width: 1050px) { .admin-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .admin-charts { grid-template-columns: 1fr 1fr; } [data-theme="light"] .admin-tile:nth-child(2n) { border-right: 0; } [data-theme="light"] .admin-tile:nth-child(-n+6) { border-bottom: 1px solid #edf1f6; } }
 @media (max-width: 760px) { .admin-overview-head { min-height: 190px; padding-top: 56px; } .admin-refresh { top: 4px; } }
 @media (max-width: 680px) { .admin-tiles, .admin-charts, .admin-panels { grid-template-columns: 1fr; } [data-theme="light"] .admin-tile { border-right: 0; border-bottom: 1px solid #edf1f6; } [data-theme="light"] .admin-tile:last-child { border-bottom: 0; } }
+
+/* Metric tiles: the number leads, supporting context stays compact. */
+.admin-tile,
+[data-theme="light"] .admin-tile {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(76px, .7fr);
+  align-items: center;
+  column-gap: 20px;
+  min-height: 132px;
+  padding: 22px 24px;
+}
+
+.admin-tile-value,
+[data-theme="light"] .admin-tile .admin-tile-value {
+  display: block;
+  min-width: 0;
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(38px, 3.4vw, 52px);
+  font-weight: 600;
+  line-height: .92;
+  letter-spacing: -.055em;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.admin-tile-copy {
+  display: grid;
+  align-content: center;
+  gap: 11px;
+  min-width: 0;
+  padding-right: 20px;
+  border-right: 1px solid var(--border);
+}
+
+.admin-tile .admin-tile-label {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.admin-tile .admin-tile-icon {
+  width: 26px;
+  height: 26px;
+}
+
+.admin-tile .admin-tile-copy small {
+  display: block;
+  color: var(--ink-3);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+[data-theme="dark"] .admin-tile-copy { border-left-color: #414141; }
+
+@media (max-width: 1180px) {
+  .admin-tile,
+  [data-theme="light"] .admin-tile {
+    grid-template-columns: minmax(0, 1fr) 72px;
+    column-gap: 16px;
+    padding: 20px;
+  }
+  .admin-tile-copy { padding-right: 16px; }
+}
+
+@media (max-width: 680px) {
+  .admin-tile,
+  [data-theme="light"] .admin-tile {
+    grid-template-columns: minmax(0, 1fr) 92px;
+    min-height: 112px;
+  }
+}

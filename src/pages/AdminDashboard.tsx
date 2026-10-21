@@ -89,7 +89,13 @@ export function AdminDashboardPage({ profile, navigate }: { profile: Profile; na
       <button type="button" className="admin-refresh" onClick={() => void refresh()} disabled={loading}><span aria-hidden="true">↻</span>{loading ? "Refreshing…" : "Refresh data"}</button>
     </div>
     <p className="admin-data-note" role={error ? "alert" : undefined}>{error ? "Cloud data could not be refreshed. Showing available local or previously loaded data." : cloudEnabled ? `Tenant data · ${updated ? `Updated ${updated.toLocaleTimeString()}` : "Loading cloud data…"}` : "Local data on this device"}</p>
-    <div className="admin-tiles">{tiles.map((tile) => <button type="button" className="admin-tile" key={tile.label} onClick={() => navigate({ page: tile.page })}><span className="admin-tile-label"><span className="admin-tile-icon"><Icon name={tile.icon} size={15} /></span>{tile.label}</span><strong>{tile.value}</strong><small>{tile.detail}</small></button>)}</div>
+    <div className="admin-tiles">{tiles.map((tile) => <button type="button" className="admin-tile" key={tile.label} onClick={() => navigate({ page: tile.page })}>
+      <span className="admin-tile-copy">
+        <span className="admin-tile-label"><span className="admin-tile-icon"><Icon name={tile.icon} size={15} /></span>{tile.label}</span>
+        <small>{tile.detail}</small>
+      </span>
+      <strong className="admin-tile-value">{tile.value}</strong>
+    </button>)}</div>
     <div className="admin-charts">
       <Chart title="Users by role" subtitle="Current profiles" data={roles} />
       <Chart title="Learner completion" subtitle="Share of the course completed" data={completion} />

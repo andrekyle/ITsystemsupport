@@ -25,6 +25,7 @@ import { cachedLessonEdits, flushLessonEdits, loadLessonEdits } from "../lib/les
 import { isStaleChunkError, recoverFromStaleChunk } from "../lib/chunkRecovery";
 import { saveInlineDraft } from "../lib/inlineDraftStorage";
 import { EditingTools } from "./EditingSidebar";
+import { ConfirmModal } from "./Modal";
 
 async function readApiJson(response: Response, service: string): Promise<any> {
   const text = await response.text();
@@ -130,6 +131,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   const [warning,setWarning]=useState("");
   const [fileName,setFileName]=useState("");
   const [confirmBuild,setConfirmBuild]=useState(false);
+  const [confirmRebuild,setConfirmRebuild]=useState(false);
   const versions=unitHistory(built);
   const versionLabel=(version:BuiltUnitVersion)=>new Date(version.createdAt).toLocaleString("en-ZA",{dateStyle:"medium",timeStyle:"short"});
   const versionHint=(version:BuiltUnitVersion)=>`${version.content.lesson.length} lesson${version.content.lesson.length===1?"":"s"} · ${version.aiUsed?"AI build":"built-in build"}`;
@@ -335,9 +337,27 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   useEffect(()=>{
     if(!open||inlineDraft||activeView!=="content")return;
     if(!draft||!dirty){setDraft(baseline());setDirty(false);}
-  },[open,inlineDraft,activeView,built?.revision,content]);
+  },[open,inlineDraft,activeView,built?.revision,content,edits]);
   const updateDraft=(next:UnitContent)=>{setDraft(next);setDirty(true);};
   const discardDraft=()=>{setDraft(baseline());setDirty(false);setError("");};
+  const saveDraftOnly=async()=>{
+    if(!built||!draft||busy)return;
+    setError("");setMessage("");setBusy("Saving changes without rebuilding files...");
+    try{
+      const editKey=`itss.lessonedits.${courseScopedUnit(`${unit.us}.built-${built.revision}`)}`;
+      const currentEdits=await loadLessonEdits<LessonEdits>(editKey,cachedLessonEdits(editKey,edits));
+      const revision=crypto.randomUUID();
+      // Structured content and live slide overrides advance together under
+      // one revision. Existing exports stay untouched until Rebuild is used.
+      await flushLessonEdits(editKey,currentEdits);
+      await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(`${unit.us}.built-${revision}`)}`,currentEdits);
+      await saveBuiltUnit(unit.us,{revision,createdAt:new Date().toISOString(),source:built.source,content:structuredClone(draft),files:{...built.files},aiUsed:built.aiUsed,planSource:built.planSource});
+      setDirty(false);
+      setMessage("Changes saved as one unit version. PDF, PowerPoint and answer files were not rebuilt.");
+      onSaved();
+    }catch(e){setError(unitBuilderError(e,"The changes could not be saved."));}
+    finally{setBusy("");}
+  };
   const jumpTo=(key:string)=>scrollRef.current?.querySelector(`[data-unit-section="${key}"]`)?.scrollIntoView({block:"start",behavior:"smooth"});
   const sections=contentSections(draft);
   const restore=async(version:BuiltUnitVersion)=>{setError("");setMessage("");setBusy("Restoring saved version…");try{await saveBuiltUnit(unit.us,unitVersionArchive(version));onSaved();setMessage(`The version saved on ${versionLabel(version)} is now live. The version it replaced is still restorable.`);}catch(e){setError(String(e));}finally{setBusy("");}};
@@ -352,7 +372,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   ];
   const heading={content:"Content and structure",build:built?"Rebuild documents":"Build documents",files:"Files and exports",versions:"Version history",delete:"Delete unit"}[activeView];
   const intro={
-    content:dirty?"You have unsaved changes. Saving updates every tab and rebuilds the download files.":"Expand a card to edit it. Saving updates every tab and rebuilds the download files.",
+    content:dirty?"You have unsaved changes. Use the save icon to update the unit without rebuilding files.":"Slide edits and structured content use the same saved unit version. Rebuild files only when needed.",
     build:"Upload PDFs to convert them into real HTML using code and AI. Keep the source wording and layout, with editable answer fields. Lesson generation is separate.",
     files:"Regenerate the download files from the content that is live now.",
     versions:`The last ${MAX_UNIT_HISTORY} builds stay restorable.`,
@@ -366,6 +386,15 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     {!busy&&<button type="button" className="unit-editor-icon-btn" aria-label="Dismiss message" onClick={()=>{setMessage("");setWarning("");setError("");}}><Icon name="close" size={14}/></button>}
   </div>:null;
   return <section className="unit-builder">
+    {confirmRebuild&&<ConfirmModal
+      title="Rebuild unit files?"
+      message={<p style={{margin:0}}>This will save the current unit and regenerate its PDF, editable PowerPoint, and answer guide. Use the blue save icon instead if you only want to save your changes.</p>}
+      confirmLabel="Rebuild files"
+      cancelLabel="Cancel"
+      busy={!!busy}
+      onCancel={()=>setConfirmRebuild(false)}
+      onConfirm={()=>{setConfirmRebuild(false);setError("");void publish(draft!,built?.source??source,built?.aiUsed??false).then(()=>doneBusy()).catch(e=>{setError(unitBuilderError(e,"The unit changes could not be saved."));setBusy("");});}}
+    />}
     {inlineActionsTarget && createPortal(inlineActions, inlineActionsTarget)}
     <div className="unit-workspace">
       <nav className="unit-workspace-nav" aria-label="Unit editor sections">
@@ -399,7 +428,8 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
             </div>
             {dirty&&<button type="button" className="btn ghost" disabled={!!busy} onClick={discardDraft}>Discard changes</button>}
             {built&&<button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");setBusy("Creating backup…");try{const snapshot=draft??built.content;await saveBuiltUnit(unit.us,{...built,revision:crypto.randomUUID(),createdAt:new Date().toISOString(),content:structuredClone(snapshot),files:{...built.files}});setMessage("Backup created. Your current lesson slides are preserved in Version history.");}catch(e){setError(unitBuilderError(e,"The lesson backup could not be created."));}finally{setBusy("");}}}>Back up current lesson</button>}
-            <button type="button" className="btn unit-build-action unit-workspace-save" disabled={!!busy||!dirty} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={async()=>{setError("");try{await publish(draft,built?.source??source,built?.aiUsed??false);doneBusy();}catch(e){setError(unitBuilderError(e,"The unit changes could not be saved."));setBusy("");}}}><span>{busy?`Saving ${busyProgress}%`:dirty?"Save all changes and rebuild files":"All changes saved"}</span></button>
+            {built&&<button type="button" className="unit-workspace-save-only" aria-label="Save changes without rebuilding files" title="Save changes only" disabled={!!busy} onClick={()=>void saveDraftOnly()}><Icon name="save" size={20}/></button>}
+            <button type="button" className="btn unit-build-action unit-workspace-save" disabled={!!busy||!dirty} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>setConfirmRebuild(true)}><span>{busy?`Saving ${busyProgress}%`:dirty?"Save all changes and rebuild files":"All changes saved"}</span></button>
           </div>}
         </header>
         <div className="unit-workspace-scroll" ref={scrollRef}>

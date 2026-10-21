@@ -445,6 +445,24 @@ a:hover {
   background: var(--surface); color: var(--ink); font: inherit; font-size: 13px;
 }
 
+/* Match side-edit tools to the structured content panel typography. */
+.editing-sidebar,
+.editing-sidebar button,
+.editing-sidebar input,
+.editing-sidebar textarea,
+.editing-sidebar select { font-size: 13px; font-weight: 400; }
+.editing-tool-group { border-color: var(--border); border-radius: 9px; background: var(--surface); }
+.editing-tool-group > summary { min-height: 42px; padding: 10px 12px; }
+.editing-tool-group h3,
+.editing-tool-description,
+.editing-tool-label { font-size: 13px; font-weight: 400; }
+.editing-tool-description { color: var(--ink-3); }
+.editing-tool-label { margin: 14px 0 7px; color: var(--ink-2); }
+.editing-tool-group-body { padding: 0 12px 12px; }
+.editing-tool-group-body > .btn,
+.editing-tool-group-body > .lesson-video-editor > .btn,
+.btn.ghost.sm.slide-tool-action { font-size: 13px; font-weight: 400; }
+
 @media (max-width: 860px) {
   .editing-layout-active { flex-direction: column; overflow-y: auto; }
   .editing-layout-active > .body { flex: none; }
