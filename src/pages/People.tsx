@@ -1888,6 +1888,9 @@ function AcademicRecord({
       return;
     }
     let alive = true;
+    const fallbackTimer = window.setTimeout(() => {
+      if (alive && !mergedCloud) setProgress(local ?? { units: {} });
+    }, 8000);
     setProgress(remote ? null : local);
     void fetchCloudProgress(owner, cloudProfileId ?? student.id, student.id).then((p) => {
       if (!alive) return;
@@ -1895,6 +1898,7 @@ function AcademicRecord({
     });
     return () => {
       alive = false;
+      window.clearTimeout(fallbackTimer);
     };
   }, [student.id, remote, owner, cloudProfileId, cloudProgress]);
 
