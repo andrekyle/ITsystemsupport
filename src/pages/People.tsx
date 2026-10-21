@@ -39,6 +39,7 @@ import { updateRegisterSignatures } from "./Attendance";
 import {
   deleteCloudProfile,
   fetchCloudDirectory,
+  fetchCloudLearnerData,
   fetchCloudProgress,
   identityKeys,
   mergeProfileWithCloud,
@@ -46,6 +47,7 @@ import {
   resolveCloudLink,
   updateCloudProfile,
   type CloudDirectory,
+  type CloudLearnerData,
 } from "../lib/directory";
 import { fetchPresence, type PresenceEntry } from "../lib/presence";
 import { mergeProgressEvidence } from "../lib/progressEvidence";
@@ -519,13 +521,13 @@ export function StudentsPage({
   const activePeopleTab = peopleTabs.some(tab => tab.id === peopleTab) ? peopleTab : "directory";
   const [rev, setRev] = useState(0);
   const refresh = () => setRev((r) => r + 1);
-  const [cloud, setCloud] = useState<CloudDirectory | null>(null);
+  const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
   const [presence, setPresence] = useState<PresenceEntry[]>([]);
   useEffect(() => {
     let alive = true;
     let timer: number | undefined;
     const load = () => {
-      void Promise.all([fetchCloudDirectory(), fetchPresence()]).then(([d, live]) => {
+      void Promise.all([fetchCloudLearnerData(), fetchPresence()]).then(([d, live]) => {
         if (!alive) return;
         if (d) setCloud(d);
         if (live) setPresence(live);
@@ -651,6 +653,7 @@ export function StudentsPage({
         passwordSet={!!mergeProfileWithCloud(student, cloud).passwordHash}
         cloudProfileId={cloudProfileId}
         cloudDocs={cloud?.poe[cloudProfileId]}
+        cloudProgress={cloud?.progress}
       />
     );
   }
@@ -1854,6 +1857,7 @@ function AcademicRecord({
   remote,
   owner,
   cloudProfileId,
+  cloudProgress,
   canDownload,
 }: {
   student: Profile;
@@ -1861,6 +1865,7 @@ function AcademicRecord({
   owner?: string;
   /** identity-matched profile id in the owner's cloud account */
   cloudProfileId?: string;
+  cloudProgress?: Record<string, ProgressState>;
   /** super user only — shows the completed-assignments download */
   canDownload?: boolean;
 }) {
@@ -1869,20 +1874,29 @@ function AcademicRecord({
   );
   useEffect(() => {
     const local = remote ? null : loadProgress(student.id);
+    const cloudSnapshots = [cloudProgress?.[student.id], cloudProgress?.[cloudProfileId ?? student.id]]
+      .filter((p): p is ProgressState => Boolean(p));
+    const mergedCloud = cloudSnapshots.reduce<ProgressState | null>(
+      (merged, snapshot) => merged ? mergeProgressEvidence(merged, snapshot) : snapshot,
+      null
+    );
+    if (mergedCloud) {
+      setProgress(mergeProgressEvidence(local ?? { units: {} }, mergedCloud));
+    }
     if (!owner) {
-      setProgress(local ?? { units: {} });
+      if (!mergedCloud) setProgress(local ?? { units: {} });
       return;
     }
     let alive = true;
     setProgress(remote ? null : local);
     void fetchCloudProgress(owner, cloudProfileId ?? student.id, student.id).then((p) => {
       if (!alive) return;
-      setProgress(p ? mergeProgressEvidence(local ?? { units: {} }, p) : (local ?? { units: {} }));
+      if (!mergedCloud) setProgress(p ? mergeProgressEvidence(local ?? { units: {} }, p) : (local ?? { units: {} }));
     });
     return () => {
       alive = false;
     };
-  }, [student.id, remote, owner, cloudProfileId]);
+  }, [student.id, remote, owner, cloudProfileId, cloudProgress]);
 
   const units = assessedUnits();
 
@@ -2303,6 +2317,7 @@ function StudentDetail({
   passwordSet,
   cloudProfileId,
   cloudDocs,
+  cloudProgress,
 }: {
   student: Profile;
   viewer: Profile;
@@ -2315,6 +2330,7 @@ function StudentDetail({
   /** identity-matched profile id in the owner's cloud account (may differ from student.id) */
   cloudProfileId?: string;
   cloudDocs?: Record<string, PoeDoc>;
+  cloudProgress?: Record<string, ProgressState>;
 }) {
   const isSuper = viewer.role === "Super User";
   const staffViewer = isStaff(viewer.role);
@@ -2694,6 +2710,7 @@ function StudentDetail({
             remote={remote}
             owner={owner}
             cloudProfileId={cloudProfileId}
+            cloudProgress={cloudProgress}
             canDownload={isSuper}
           />
           </section>
@@ -2707,6 +2724,7 @@ function StudentDetail({
               owner={owner}
               cloudProfileId={cloudProfileId}
               cloudDocs={cloudDocs}
+              cloudProgress={cloudProgress}
             />
             </section>
           )}
@@ -2805,6 +2823,7 @@ function OutcomesPanel({
   owner,
   cloudProfileId,
   cloudDocs,
+  cloudProgress,
 }: {
   student: Profile;
   viewer: Profile;
@@ -2815,6 +2834,7 @@ function OutcomesPanel({
   cloudProfileId?: string;
   /** POE docs for this learner from the cloud directory (staff-side view) */
   cloudDocs?: Record<string, PoeDoc>;
+  cloudProgress?: Record<string, ProgressState>;
 }) {
   const { outcomes, setOutcome, clearOutcome } = useOutcomes();
   const [progress, setProgress] = useState<ProgressState>(() =>
@@ -2822,16 +2842,22 @@ function OutcomesPanel({
   );
   useEffect(() => {
     const local = remote ? { units: {} } : loadProgress(student.id);
-    setProgress(local);
+    const cloudSnapshots = [cloudProgress?.[student.id], cloudProgress?.[cloudProfileId ?? student.id]]
+      .filter((p): p is ProgressState => Boolean(p));
+    const mergedCloud = cloudSnapshots.reduce<ProgressState | null>(
+      (merged, snapshot) => merged ? mergeProgressEvidence(merged, snapshot) : snapshot,
+      null
+    );
+    setProgress(mergedCloud ? mergeProgressEvidence(local, mergedCloud) : local);
     if (!owner) return;
     let alive = true;
     void fetchCloudProgress(owner, cloudProfileId ?? student.id, student.id).then((p) => {
-      if (alive && p) setProgress(mergeProgressEvidence(local, p));
+      if (alive && !mergedCloud && p) setProgress(mergeProgressEvidence(local, p));
     });
     return () => {
       alive = false;
     };
-  }, [student.id, remote, owner, cloudProfileId]);
+  }, [student.id, remote, owner, cloudProfileId, cloudProgress]);
   // POE docs — cloud copy for remote students, local for people on this device.
   const poe = remote ? (cloudDocs ?? {}) : loadPoeDocs(student.id);
   const forLearner = outcomes[student.id] ?? {};
