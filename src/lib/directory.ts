@@ -327,22 +327,28 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
  *  account's cloud storage — used when staff view users from other accounts. */
 export async function fetchCloudProgress(
   owner: string,
-  profileId: string
+  profileId: string,
+  alternateProfileId?: string
 ): Promise<ProgressState | null> {
   if (!supabase) return null;
+  const profileIds = [...new Set([profileId, alternateProfileId].filter((id): id is string => Boolean(id)))];
   const { data, error } = await supabase
     .from("app_state")
     .select("value")
     .eq("user_id", owner)
     .eq("tenant_id", TENANT_ID)
-    .eq("key", `itss.progress.${profileId}`)
-    .maybeSingle();
-  if (error || !data) return null;
-  try {
-    return JSON.parse(data.value) as ProgressState;
-  } catch {
-    return null;
+    .in("key", profileIds.map((id) => `itss.progress.${id}`));
+  if (error || !data?.length) return null;
+  let merged: ProgressState | null = null;
+  for (const row of data) {
+    try {
+      const next = JSON.parse(row.value) as ProgressState;
+      merged = merged ? mergeProgressEvidence(merged, next) : next;
+    } catch {
+      /* ignore malformed snapshots and keep any valid progress */
+    }
   }
+  return merged;
 }
 
 /** Resolve the cloud link for a locally-held profile. Direct id match wins;

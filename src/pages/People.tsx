@@ -1875,7 +1875,7 @@ function AcademicRecord({
     }
     let alive = true;
     setProgress(remote ? null : local);
-    void fetchCloudProgress(owner, cloudProfileId ?? student.id).then((p) => {
+    void fetchCloudProgress(owner, cloudProfileId ?? student.id, student.id).then((p) => {
       if (!alive) return;
       setProgress(p ? mergeProgressEvidence(local ?? { units: {} }, p) : (local ?? { units: {} }));
     });
@@ -2825,7 +2825,7 @@ function OutcomesPanel({
     setProgress(local);
     if (!owner) return;
     let alive = true;
-    void fetchCloudProgress(owner, cloudProfileId ?? student.id).then((p) => {
+    void fetchCloudProgress(owner, cloudProfileId ?? student.id, student.id).then((p) => {
       if (alive && p) setProgress(mergeProgressEvidence(local, p));
     });
     return () => {
