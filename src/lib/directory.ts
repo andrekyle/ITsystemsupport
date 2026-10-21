@@ -11,6 +11,9 @@ export interface CloudDirectory {
   poe: Record<string, Record<string, PoeDoc>>;
   /** profile id -> owning auth user id (for cross-account management) */
   owners: Record<string, string>;
+  /** profile id -> auth user id inferred from progress rows, even when the
+   * profile itself is missing from the synced directory snapshot */
+  progressOwners?: Record<string, string>;
 }
 
 /** Every identity token that identifies a person — the same profile on a
@@ -304,8 +307,16 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
   };
 
   const progress: Record<string, ProgressState> = {};
+  const progressOwners: Record<string, string> = {};
   for (const row of progRes.data ?? []) {
     const pid = row.key.slice("itss.progress.".length);
+    // Keep this relationship even when the matching profile snapshot is
+    // stale or absent. It lets staff resolve a learner's canonical progress
+    // by the learner's cloud auth id instead of silently falling back to an
+    // empty seeded profile.
+    if (!(pid in progressOwners) || dir.owners[pid] === row.user_id) {
+      progressOwners[pid] = row.user_id;
+    }
     try {
       const snapshot = JSON.parse(row.value) as ProgressState;
       if (!snapshot || !snapshot.units || typeof snapshot.units !== "object" || Array.isArray(snapshot.units)) {
@@ -328,6 +339,7 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
   return {
     ...dir,
     progress,
+    progressOwners,
     checklists: pick<Record<string, "yes" | "no">>(
       checkRes.error ? null : checkRes.data,
       "itss.checklist."
@@ -389,6 +401,14 @@ export function resolveCloudLink(
     if (identityKeys(cp).some((k) => localKeys.has(k))) {
       const owner = cloud.owners[cp.id];
       if (owner) return { owner, cloudId: cp.id };
+    }
+  }
+  if (local.cloudUserId && cloud.progressOwners) {
+    const ownedProgressIds = Object.entries(cloud.progressOwners)
+      .filter(([, owner]) => owner === local.cloudUserId)
+      .map(([id]) => id);
+    if (ownedProgressIds.length === 1) {
+      return { owner: local.cloudUserId, cloudId: ownedProgressIds[0] };
     }
   }
   return undefined;
@@ -485,6 +505,11 @@ export function cloudProfileIds(
   const keys = new Set(identityKeys(profile));
   for (const cp of cloud.profiles) {
     if (identityKeys(cp).some((key) => keys.has(key))) ids.add(cp.id);
+  }
+  if (profile.cloudUserId && cloud.progressOwners) {
+    for (const [id, owner] of Object.entries(cloud.progressOwners)) {
+      if (owner === profile.cloudUserId) ids.add(id);
+    }
   }
   return ids;
 }
