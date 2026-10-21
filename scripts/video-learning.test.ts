@@ -22,6 +22,8 @@ test("slide quiz questions must be grounded in the supplied slide context", () =
   }));
   assert.equal(questionsUseSlideContext(slide, grounded, 5), true);
   assert.equal(questionsUseSlideContext(slide, generic, 5), false);
+  const visual = grounded.map(question => ({ ...question, q: "Which device is shown in the image?", explain: "The image shows a router." }));
+  assert.equal(questionsUseSlideContext("Hardware identification", visual, 5, true), true);
 });
 
 test("AI video quiz endpoint uses transcript-only facts and rejects incomplete or invalid answers", async () => {

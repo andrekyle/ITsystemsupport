@@ -3330,15 +3330,35 @@ export function UnitPage({
       ] : []),
       ...(section.example ? [section.example.title, ...section.example.lines] : []),
       ...(section.examples ?? []).flatMap(example => [example.title, ...example.lines]),
+      ...sectionFigures(si, section.figures).flatMap(figure => [
+        `Figure: ${lessonEdits.captions?.[figure.id] ?? figure.caption}`,
+        ...(figure.hint ? [`Figure description: ${figure.hint}`] : []),
+        ...(figure.note ? [`Figure note: ${figure.note}`] : []),
+        ...(figure.bullets ?? []),
+      ]),
     ];
     return lines.map(plainSlideText).map(line => line.trim()).filter(Boolean).join("\n");
+  };
+  const slideQuizImages = (si: number) => {
+    if (!content) return [];
+    const section = content.lesson[si];
+    const ids = [
+      ...sectionFigures(si, section.figures).map(figure => figure.id),
+      ...(section.cards ?? []).flatMap(card => card.figId ? [card.figId] : []),
+    ];
+    return Array.from(new Set(ids)).flatMap(id => {
+      const source = figureImages[id]?.image ?? FIGURE_DEFAULTS[id]?.src;
+      if (!source) return [];
+      if (/^(?:https?:\/\/|data:image\/)/i.test(source)) return [source];
+      return [new URL(source, window.location.origin).href];
+    }).slice(0, 4);
   };
   const generateSlideQuiz = async (si: number) => {
     if (!content) return;
     setGeneratingQuiz(si); setQuizGenerationError(null);
     const source = slideQuizSource(si);
     try {
-      const response = await fetch("/api/generate-slide-quiz", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slideText: source, count: quizQuestionCount, model: loadContentModel() }) });
+      const response = await fetch("/api/generate-slide-quiz", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slideText: source, slideImages: slideQuizImages(si), count: quizQuestionCount, model: loadContentModel() }) });
       const data = await response.json() as { questions?: QuizQuestion[]; error?: string };
       if (!response.ok || !data.questions?.length) throw new Error(data.error ?? "No questions were returned.");
       editGeneratedQuiz(si, data.questions);
@@ -3354,7 +3374,7 @@ export function UnitPage({
       for (let index = 0; index < slides.length; index += 1) {
         const si = slides[index];
         const source = slideQuizSource(si);
-        const response = await fetch("/api/generate-slide-quiz", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slideText: source, count: quizQuestionCount, model: loadContentModel() }) });
+        const response = await fetch("/api/generate-slide-quiz", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slideText: source, slideImages: slideQuizImages(si), count: quizQuestionCount, model: loadContentModel() }) });
         const data = await response.json() as { questions?: QuizQuestion[]; error?: string };
         if (!response.ok || !data.questions?.length) throw new Error(data.error ?? `Quiz generation failed on slide ${index + 1}.`);
         editGeneratedQuiz(si, data.questions);
