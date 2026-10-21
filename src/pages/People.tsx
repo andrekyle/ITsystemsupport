@@ -42,6 +42,7 @@ import {
   fetchCloudLearnerData,
   fetchCloudProgress,
   bestProgress,
+  cloudProfileIds,
   identityKeys,
   mergeProfileWithCloud,
   purgeOwnProfileCopy,
@@ -1879,7 +1880,8 @@ function AcademicRecord({
   );
   useEffect(() => {
     const local = remote ? { units: {} } : loadProgress(student.id);
-    const cloudSnapshots = [cloudProgress?.[student.id], cloudProgress?.[cloudProfileId ?? student.id]]
+    const identityIds = cloudProfileIds(student, cloud);
+    const cloudSnapshots = [...identityIds].map((id) => cloudProgress?.[id])
       .filter((p): p is ProgressState => Boolean(p));
     const mergedCloud = cloudSnapshots.reduce<ProgressState | null>(
       (merged, snapshot) => merged ? mergeProgressEvidence(merged, snapshot) : snapshot,
@@ -1902,7 +1904,7 @@ function AcademicRecord({
       return;
     }
     let alive = true;
-    void fetchCloudProgress(owner, cloudProfileId ?? student.id, student.id).then((p) => {
+    void fetchCloudProgress(owner, cloudProfileId ?? student.id, student.id, [...identityIds]).then((p) => {
       if (!alive) return;
       // Always enrich the bulk snapshot. Previously this query was skipped as
       // soon as any cloud row existed, leaving newer/duplicate evidence out.
@@ -2855,7 +2857,8 @@ function OutcomesPanel({
   );
   useEffect(() => {
     const local = remote ? { units: {} } : loadProgress(student.id);
-    const cloudSnapshots = [cloudProgress?.[student.id], cloudProgress?.[cloudProfileId ?? student.id]]
+    const identityIds = cloudProfileIds(student, cloud);
+    const cloudSnapshots = [...identityIds].map((id) => cloudProgress?.[id])
       .filter((p): p is ProgressState => Boolean(p));
     const mergedCloud = cloudSnapshots.reduce<ProgressState | null>(
       (merged, snapshot) => merged ? mergeProgressEvidence(merged, snapshot) : snapshot,
@@ -2869,7 +2872,7 @@ function OutcomesPanel({
         : local);
     if (!owner) return;
     let alive = true;
-    void fetchCloudProgress(owner, cloudProfileId ?? student.id, student.id).then((p) => {
+    void fetchCloudProgress(owner, cloudProfileId ?? student.id, student.id, [...identityIds]).then((p) => {
       if (alive && p) setProgress((current) => mergeProgressEvidence(current, p));
     });
     return () => {

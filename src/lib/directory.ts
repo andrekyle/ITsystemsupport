@@ -331,10 +331,13 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
 export async function fetchCloudProgress(
   owner: string,
   profileId: string,
-  alternateProfileId?: string
+  alternateProfileId?: string,
+  additionalProfileIds: string[] = []
 ): Promise<ProgressState | null> {
   if (!supabase) return null;
-  const profileIds = [...new Set([profileId, alternateProfileId].filter((id): id is string => Boolean(id)))];
+  const profileIds = [...new Set(
+    [profileId, alternateProfileId, ...additionalProfileIds].filter((id): id is string => Boolean(id))
+  )];
   const { data, error } = await supabase
     .from("app_state")
     .select("user_id,value")
@@ -427,18 +430,13 @@ export function bestProgress(
   cloud?: CloudLearnerData | null
 ): ProgressState {
   const local = loadProgress(profile.id);
-  const link = resolveCloudLink(profile, cloud);
   if (!cloud) return local;
 
   // A learner can have a seeded profile id and a later sign-in profile id.
   // Merge every cloud snapshot belonging to either identity, not just the
   // freshest directory copy, otherwise older quiz/exercise evidence vanishes
   // from the leaderboard after an account migration.
-  const ids = new Set([profile.id, ...(link ? [link.cloudId] : [])]);
-  const keys = new Set(identityKeys(profile));
-  for (const cp of cloud.profiles) {
-    if (identityKeys(cp).some((key) => keys.has(key))) ids.add(cp.id);
-  }
+  const ids = cloudProfileIds(profile, cloud);
   let merged = local;
   let found = false;
   for (const id of ids) {
@@ -456,18 +454,30 @@ export function bestPoeDocs(
   cloud?: CloudLearnerData | null
 ): Record<string, PoeDoc> {
   const local = loadPoeDocs(profile.id);
-  const link = resolveCloudLink(profile, cloud);
   if (!cloud) return local;
-  const ids = new Set([profile.id, ...(link ? [link.cloudId] : [])]);
-  const keys = new Set(identityKeys(profile));
-  for (const cp of cloud.profiles) {
-    if (identityKeys(cp).some((key) => keys.has(key))) ids.add(cp.id);
-  }
+  const ids = cloudProfileIds(profile, cloud);
   let merged = { ...local };
   for (const id of ids) {
     if (cloud.poe[id]) merged = { ...merged, ...cloud.poe[id] };
   }
   return merged;
+}
+
+/** All profile ids that can belong to the same learner across seeded and
+ * signed-in copies. Used by staff views to recover progress after migrations. */
+export function cloudProfileIds(
+  profile: Profile,
+  cloud: CloudLearnerData | CloudDirectory | null | undefined
+): Set<string> {
+  const ids = new Set([profile.id]);
+  if (!cloud) return ids;
+  const link = resolveCloudLink(profile, cloud);
+  if (link) ids.add(link.cloudId);
+  const keys = new Set(identityKeys(profile));
+  for (const cp of cloud.profiles) {
+    if (identityKeys(cp).some((key) => keys.has(key))) ids.add(cp.id);
+  }
+  return ids;
 }
 
 /** "Best" Appendix C checklist (same richer-copy rule). */
