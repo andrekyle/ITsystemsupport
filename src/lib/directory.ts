@@ -115,8 +115,6 @@ export function getCachedSuperUserAuthId(): string | undefined {
  */
 export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
   if (!supabase) return null;
-  const { data: auth } = await supabase.auth.getUser();
-  const me = auth.user?.id;
 
   const [profRes, poeRes] = await Promise.all([
     supabase.from("app_state").select("user_id,value").eq("tenant_id", TENANT_ID).eq("key", "itss.profiles"),
@@ -134,7 +132,6 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
   const chosen = new Map<string, { p: Profile; owner: string }>();
   const loginTime = (p: Profile) => (p.lastLogin ? Date.parse(p.lastLogin) : 0);
   for (const row of profRes.data ?? []) {
-    if (row.user_id === me) continue; // this account's profiles are already local
     try {
       for (const p of JSON.parse(row.value) as Profile[]) {
         if (!p?.id) continue;

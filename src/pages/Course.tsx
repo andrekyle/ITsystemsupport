@@ -5321,17 +5321,21 @@ export function UnitPage({
                   </span>
                   {visibleLessonIndices.map((i, dotIndex) => {
                     const s = content.lesson[i];
+                    const hasVideo = (lessonEdits.videos?.[i] ?? []).length > 0;
+                    const lessonLabel = s.lessonStart ? ` (start of lesson ${s.lessonStart.n})` : "";
                     return (
                     <button
                       key={i}
                       type="button"
-                      className={`lesson-dot${i === si ? " active" : ""}${i < si ? " done" : ""}${s.lessonStart && i > 0 ? " lesson-start" : ""}`}
-                      aria-label={`Go to section ${dotIndex + 1}${s.lessonStart ? ` (start of lesson ${s.lessonStart.n})` : ""}`}
-                      title={s.lessonStart ? `Lesson ${s.lessonStart.n} starts here` : undefined}
+                      className={`lesson-dot${i === si ? " active" : ""}${i < si ? " done" : ""}${s.lessonStart && i > 0 ? " lesson-start" : ""}${hasVideo ? " has-video" : ""}`}
+                      aria-label={`Go to section ${dotIndex + 1}${lessonLabel}${hasVideo ? " (has video)" : ""}`}
+                      data-tooltip={hasVideo ? "Video included" : undefined}
                       disabled={!canNavigateToSection(i)}
                       onMouseDown={event => event.preventDefault()}
                       onClick={() => go(i)}
-                    />
+                    >
+                      {hasVideo && <Icon name="videoCamera" size={11} className="lesson-dot-video" />}
+                    </button>
                   ); })}
                 </span>
                 <button className="btn" onClick={() => { if (!isLast) go(visibleLessonIndices[position + 1]); }} disabled={!quizPassed || isLast}

@@ -48,6 +48,7 @@ import {
   type CloudDirectory,
 } from "../lib/directory";
 import { fetchPresence, type PresenceEntry } from "../lib/presence";
+import { mergeProgressEvidence } from "../lib/progressEvidence";
 
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -1868,10 +1869,6 @@ function AcademicRecord({
   );
   useEffect(() => {
     const local = remote ? null : loadProgress(student.id);
-    if (local && Object.keys(local.units).length > 0) {
-      setProgress(local);
-      return;
-    }
     if (!owner) {
       setProgress(local ?? { units: {} });
       return;
@@ -1880,7 +1877,7 @@ function AcademicRecord({
     setProgress(remote ? null : local);
     void fetchCloudProgress(owner, cloudProfileId ?? student.id).then((p) => {
       if (!alive) return;
-      setProgress(p && Object.keys(p.units).length > 0 ? p : (local ?? { units: {} }));
+      setProgress(p ? mergeProgressEvidence(local ?? { units: {} }, p) : (local ?? { units: {} }));
     });
     return () => {
       alive = false;
@@ -2826,10 +2823,10 @@ function OutcomesPanel({
   useEffect(() => {
     const local = remote ? { units: {} } : loadProgress(student.id);
     setProgress(local);
-    if (!owner || Object.keys(local.units).length > 0) return;
+    if (!owner) return;
     let alive = true;
     void fetchCloudProgress(owner, cloudProfileId ?? student.id).then((p) => {
-      if (alive && p && Object.keys(p.units).length > 0) setProgress(p);
+      if (alive && p) setProgress(mergeProgressEvidence(local, p));
     });
     return () => {
       alive = false;

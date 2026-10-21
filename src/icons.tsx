@@ -220,6 +220,12 @@ export const PATHS: Record<string, React.ReactNode> = {
       <path d="M10 8.8v6.4l5.2-3.2z" />
     </>
   ),
+  videoCamera: (
+    <>
+      <rect x="3.5" y="7" width="12" height="10" rx="2" />
+      <path d="m15.5 10 5-2.5v9l-5-2.5z" />
+    </>
+  ),
   pause: (
     <>
       <circle cx="12" cy="12" r="8.5" />

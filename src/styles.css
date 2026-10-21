@@ -601,9 +601,9 @@ a:hover {
   right: 0;
   width: 260px;
   background: var(--surface);
-  border: 1px solid var(--border-2);
+  border: 0;
   border-radius: var(--radius);
-  box-shadow: 0 6.4px 14.4px rgba(0, 0, 0, 0.13), 0 1.2px 3.6px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
   padding: 6px;
   z-index: 100;
 }
@@ -10785,6 +10785,32 @@ a.plan-ppt:hover {
     width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
     transform 0.15s ease;
 }
+.lesson-dot.has-video { position: relative; overflow: visible; }
+.lesson-dot-video { position: absolute; left: 50%; top: 10px; color: #087f68; pointer-events: none; transform: translateX(-50%); }
+.lesson-dot.done .lesson-dot-video, .lesson-dot.active .lesson-dot-video { color: var(--azure); }
+.lesson-dot.has-video::before {
+  content: attr(data-tooltip);
+  visibility: hidden;
+  position: absolute;
+  z-index: 10;
+  left: 50%;
+  top: calc(100% + 22px);
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--ink-2);
+  box-shadow: none;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-50%);
+  transition: opacity .12s ease;
+}
+.lesson-dot.has-video:hover::before, .lesson-dot.has-video:focus-visible::before { visibility: visible; opacity: 1; }
 /* a section that starts a new lesson gets a divider gap in the dot rail */
 .lesson-dot.lesson-start {
   margin-left: 14px;
