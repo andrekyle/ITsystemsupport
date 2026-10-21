@@ -35,11 +35,15 @@ export function mergeProgressEvidence(older: ProgressState, preferred: ProgressS
     }
     const logbook = { ...before.logbook, ...after.logbook };
     for (const [key, value] of Object.entries(before.logbook ?? {})) {
-      if (value === true && (
+      const preferredValue = after.logbook?.[key];
+      const completionFlag = key.endsWith(".ok") ||
         key.startsWith("slidegate.") ||
         key.startsWith("videoengagement.likeXp.") ||
-        key.startsWith("videoengagement.commentXp.")
-      )) logbook[key] = true;
+        key.startsWith("videoengagement.commentXp.");
+      if ((value === true && completionFlag) ||
+          ((preferredValue === undefined || preferredValue === "") && value !== undefined)) {
+        logbook[key] = value;
+      }
     }
     units[id] = {
       ...before,

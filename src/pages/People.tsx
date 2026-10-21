@@ -1882,9 +1882,10 @@ function AcademicRecord({
     );
     if (mergedCloud) {
       setProgress(mergeProgressEvidence(local ?? { units: {} }, mergedCloud));
+      return;
     }
     if (!owner) {
-      if (!mergedCloud) setProgress(local ?? { units: {} });
+      setProgress(local ?? { units: {} });
       return;
     }
     let alive = true;
@@ -1894,7 +1895,7 @@ function AcademicRecord({
     setProgress(remote ? null : local);
     void fetchCloudProgress(owner, cloudProfileId ?? student.id, student.id).then((p) => {
       if (!alive) return;
-      if (!mergedCloud) setProgress(p ? mergeProgressEvidence(local ?? { units: {} }, p) : (local ?? { units: {} }));
+      setProgress(p ? mergeProgressEvidence(local ?? { units: {} }, p) : (local ?? { units: {} }));
     });
     return () => {
       alive = false;
