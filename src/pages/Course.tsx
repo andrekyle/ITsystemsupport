@@ -3309,11 +3309,34 @@ export function UnitPage({
         ...(content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index })),
       ].filter(({ ex }) => ex.id.startsWith("manual-") || !isEmptyGeneratedBuiltActivity(ex))
     : [];
+  const slideQuizSource = (si: number) => {
+    if (!content) return "";
+    const section = content.lesson[si];
+    const body = lessonEdits.sectionBody?.[si];
+    const paragraphs = body ? body.paragraphs : section.paragraphs.map((value, index) => lessonEdits.paragraphs?.[`${si}:${index}`] ?? value);
+    const bullets = body ? body.bullets ?? [] : (section.bullets ?? []).map((value, index) => lessonEdits.bullets?.[`${si}:${index}`] ?? value);
+    const lines = [
+      lessonEdits.headings?.[si] ?? section.heading,
+      ...paragraphs,
+      ...bullets,
+      ...(section.cards ?? []).flatMap((card, index) => [
+        lessonEdits.cards?.[`${si}:${index}:t`] ?? card.title,
+        lessonEdits.cards?.[`${si}:${index}:d`] ?? card.text,
+        ...(card.table ? [...card.table.headers, ...card.table.rows.flat()] : []),
+      ]),
+      ...(section.table ? [
+        ...section.table.headers.map((cell, column) => lessonEdits.tableCells?.[`${si}:h:${column}`] ?? cell),
+        ...section.table.rows.flatMap((row, rowIndex) => row.map((cell, column) => lessonEdits.tableCells?.[`${si}:${rowIndex}:${column}`] ?? cell)),
+      ] : []),
+      ...(section.example ? [section.example.title, ...section.example.lines] : []),
+      ...(section.examples ?? []).flatMap(example => [example.title, ...example.lines]),
+    ];
+    return lines.map(plainSlideText).map(line => line.trim()).filter(Boolean).join("\n");
+  };
   const generateSlideQuiz = async (si: number) => {
     if (!content) return;
     setGeneratingQuiz(si); setQuizGenerationError(null);
-    const section = content.lesson[si];
-    const source = [section.heading, ...section.paragraphs, ...(section.bullets ?? [])].join("\n");
+    const source = slideQuizSource(si);
     try {
       const response = await fetch("/api/generate-slide-quiz", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slideText: source, count: quizQuestionCount, model: loadContentModel() }) });
       const data = await response.json() as { questions?: QuizQuestion[]; error?: string };
@@ -3330,8 +3353,7 @@ export function UnitPage({
     try {
       for (let index = 0; index < slides.length; index += 1) {
         const si = slides[index];
-        const section = content.lesson[si];
-        const source = [section.heading, ...section.paragraphs, ...(section.bullets ?? [])].join("\n");
+        const source = slideQuizSource(si);
         const response = await fetch("/api/generate-slide-quiz", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slideText: source, count: quizQuestionCount, model: loadContentModel() }) });
         const data = await response.json() as { questions?: QuizQuestion[]; error?: string };
         if (!response.ok || !data.questions?.length) throw new Error(data.error ?? `Quiz generation failed on slide ${index + 1}.`);

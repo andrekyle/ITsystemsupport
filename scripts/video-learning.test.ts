@@ -3,7 +3,26 @@ import { test } from "node:test";
 import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { VideoWatchTracker, validVideoQuestions, videoQuizId } from "../src/lib/videoLearning";
-import generateQuiz from "../api/generate-slide-quiz";
+import generateQuiz, { questionsUseSlideContext } from "../api/generate-slide-quiz";
+
+test("slide quiz questions must be grounded in the supplied slide context", () => {
+  const slide = "INTER-NETWORK. Internetworking connects individual LANs into WANs by using routers, bridges, and gateways.";
+  const grounded = Array.from({ length: 5 }, (_, index) => ({
+    q: `How does internetworking connect networks in example ${index + 1}?`,
+    options: ["Using routers", "Educational methodologies", "Marketing strategies", "Project planning"],
+    answer: 0,
+    explain: "The slide states that routers connect networks.",
+  }));
+  const generic = grounded.map(question => ({
+    ...question,
+    q: "Which option best describes the primary focus of the slide?",
+    options: ["Educational methodologies", "Technical specifications", "Project management", "Marketing strategies"],
+    answer: 1,
+    explain: "The slide focuses on technical specifications.",
+  }));
+  assert.equal(questionsUseSlideContext(slide, grounded, 5), true);
+  assert.equal(questionsUseSlideContext(slide, generic, 5), false);
+});
 
 test("AI video quiz endpoint uses transcript-only facts and rejects incomplete or invalid answers", async () => {
   const previousKey = process.env.OPENAI_API_KEY;
