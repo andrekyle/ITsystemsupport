@@ -119,6 +119,17 @@ function syncable(key: string) {
   return key.startsWith(PREFIX) && !LOCAL_ONLY.has(key) && !key.startsWith(UNIT_BUILDER_SAVE_PROBE);
 }
 
+/** Profile id encoded in account-owned learner state. Old facilitator/device
+ * copies can retain these keys after the profile has moved to its own account;
+ * they must not recreate deleted duplicate cloud rows on the next sign-in. */
+function ownedProfileId(key: string): string | undefined {
+  const direct = key.match(
+    /^itss\.(?:progress|poe|notes|noteorder|notetitles|checklist|sectiond)\.([^.]+)$/
+  );
+  if (direct) return direct[1];
+  return key.match(/^itss\.lessonquiz\.([^.]+)\./)?.[1];
+}
+
 async function pushKey(key: string, value: string | null) {
   if (!supabase || !userId) return false;
   const owner = userId;
@@ -290,7 +301,28 @@ export async function startSync(authUserId: string): Promise<void> {
     if (!LOCAL_ONLY.has(row.key) && !dirtyAtStart.has(row.key)) writeFromCloud(row.key, row.value);
   }
   hydrating = false;
+  // When this account already has an authoritative cloud profile list, only
+  // upload per-profile state for ids still present in that list. Without this
+  // guard, a browser that once held another learner's seeded progress can
+  // resurrect that duplicate row after an administrator consolidates it.
+  let ownedProfileIds: Set<string> | null = null;
+  if (cloudKeys.has("itss.profiles")) {
+    try {
+      const profiles = JSON.parse(localStorage.getItem("itss.profiles") ?? "[]") as { id?: string }[];
+      ownedProfileIds = new Set(profiles.map((profile) => profile.id).filter((id): id is string => Boolean(id)));
+    } catch {
+      ownedProfileIds = null;
+    }
+  }
+  const orphanedProfileState = (key: string) => {
+    const profileId = ownedProfileId(key);
+    return !!profileId && !!ownedProfileIds && !ownedProfileIds.has(profileId);
+  };
   for (const write of pendingWrites().filter(write => write.userId === authUserId)) {
+    if (orphanedProfileState(write.key)) {
+      await forgetPendingWrite(write);
+      continue;
+    }
     await pushKey(write.key, write.value);
   }
 
@@ -305,7 +337,7 @@ export async function startSync(authUserId: string): Promise<void> {
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     // Polls must come from an explicit tenant-aware mutation, never an unowned legacy cache.
-    if (key && key !== "itss.polls.shared" && syncable(key) && !cloudKeys.has(key)) {
+    if (key && key !== "itss.polls.shared" && syncable(key) && !cloudKeys.has(key) && !orphanedProfileState(key)) {
       const value = localStorage.getItem(key);
       if (value !== null) void pushKey(key, value);
     }
