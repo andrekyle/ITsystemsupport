@@ -2931,7 +2931,7 @@ export function UnitPage({
   const [lessonSaveStatus, setLessonSaveStatus] = useState<"" | "saved" | "error">("");
   const [lessonSaveError, setLessonSaveError] = useState("");
   useEffect(() => { setLessonSaveStatus(""); setLessonSaveError(""); }, [unitId, lessonEdits]);
-  const saveLessonToCloud = async () => {
+  const saveLessonToCloud = async (rethrow = false) => {
     if (savingLesson) return;
     if (inlineUnit) { setLessonSaveError("Use Save inline changes and update files in the editing sidebar to save this unit."); setLessonSaveStatus("error"); return; }
     const focused = document.activeElement;
@@ -2950,6 +2950,7 @@ export function UnitPage({
     } catch (error) {
       setLessonSaveStatus("error");
       setLessonSaveError(error instanceof Error ? error.message : "Cloud save failed. Please retry.");
+      if (rethrow) throw error;
     } finally {
       setSavingLesson(false);
     }
@@ -6602,7 +6603,7 @@ export function UnitPage({
         </>
       )}
 
-      {tab === "material" && builtUnit && <BuiltUnitDownloads us={unitId} staff={isPrivileged} />}
+      {tab === "material" && builtUnit && <BuiltUnitDownloads us={unitId} staff={isPrivileged} onSaveChanges={() => saveLessonToCloud(true)} savingChanges={savingLesson} />}
       {tab === "material" && decks.length > 0 && (
         <>
           <h2 className="section-title">

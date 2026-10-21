@@ -692,12 +692,13 @@ export function LogbookBuilder({unit,content}:{unit:UnitStandard;content?:UnitCo
   </section>;
 }
 
-export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
+export function BuiltUnitDownloads({us,staff,onSaveChanges,savingChanges=false}:{us:string;staff:boolean;onSaveChanges?:()=>Promise<void>;savingChanges?:boolean}){
   const built=useBuiltUnit(us);
   const pdfRef=useRef<HTMLInputElement|null>(null);
   const editableRef=useRef<HTMLInputElement|null>(null);
   const [error,setError]=useState("");
   const [busy,setBusy]=useState("");
+  const [message,setMessage]=useState("");
   const [uploadPct,setUploadPct]=useState<number|null>(null);
   const [materialUrl,setMaterialUrl]=useState<string|null>(null);
   const isPdf=(doc?:PoeDoc)=>!!doc&&(/\.pdf$/i.test(doc.name)||doc.type.includes("pdf"));
@@ -719,25 +720,33 @@ export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
     const editKey=`itss.lessonedits.${courseScopedUnit(`${us}.built-${built.revision}`)}`;
     const edits=await loadLessonEdits<LessonEdits>(editKey,cachedLessonEdits(editKey,{}));
     const content=effectiveBuiltContent(built.content,edits);
-    await saveBuiltUnit(us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content,files:{...built.files,...next},aiUsed:built.aiUsed,planSource:built.planSource});
+    const revision=crypto.randomUUID();
+    // Keep every slide-level override (rich text, media placement, quizzes,
+    // videos, and layout) attached when a PDF or PowerPoint upload advances
+    // the unit revision. No export files are regenerated on this path.
+    await flushLessonEdits(editKey,edits);
+    await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(`${us}.built-${revision}`)}`,edits);
+    await saveBuiltUnit(us,{revision,createdAt:new Date().toISOString(),source:built.source,content,files:{...built.files,...next},aiUsed:built.aiUsed,planSource:built.planSource});
   };
   const onPdf=async(file:File|undefined)=>{
     if(!file)return;
     if(!/\.pdf$/i.test(file.name)&&!file.type.includes("pdf")){setError("Upload a PDF export for the displayed course material. Upload the editable PowerPoint separately.");return;}
-    setError("");setBusy("Uploading course material...");setUploadPct(0);
+    setError("");setMessage("");setBusy("Uploading course material...");setUploadPct(0);
     try{
       const doc=await uploadFile(`shared/unitbuilder/${courseScopedUnit(us)}/material`,file,setUploadPct);
       await saveMaterial({material:doc,materialEditable:editableMaterial});
+      setMessage("Course material saved without rebuilding the unit files.");
     }catch(e){setError(e instanceof Error?e.message:"The course material could not be uploaded.");}
     finally{setBusy("");setUploadPct(null);}
   };
   const onEditable=async(file:File|undefined)=>{
     if(!file)return;
     if(!/\.(ppt|pptx)$/i.test(file.name)&&!file.type.includes("presentation")){setError("Upload the editable slides as a PowerPoint file (.ppt or .pptx).");return;}
-    setError("");setBusy("Uploading editable slides...");setUploadPct(0);
+    setError("");setMessage("");setBusy("Uploading editable slides...");setUploadPct(0);
     try{
       const doc=await uploadFile(`shared/unitbuilder/${courseScopedUnit(us)}/material`,file,setUploadPct);
       await saveMaterial({material:displayMaterial,materialEditable:doc});
+      setMessage("PowerPoint saved without rebuilding the unit files.");
     }catch(e){setError(e instanceof Error?e.message:"The editable slides could not be uploaded.");}
     finally{setBusy("");setUploadPct(null);}
   };
@@ -748,6 +757,7 @@ export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
       <button type="button" className="deck-chip active"><Icon name="presenter" size={15}/><span>{displayMaterial?.name.replace(/\.pdf$/i,"")||editableMaterial?.name.replace(/\.(ppt|pptx)$/i,"")||`US ${us} course material`}</span></button>
     </div>
     <div className="unit-builder-bar built-material-actions">
+      {staff&&onSaveChanges&&<button type="button" className="btn solid dl-sample plan-ppt" disabled={!!busy||savingChanges} onClick={()=>{setError("");setMessage("");void onSaveChanges().then(()=>setMessage("Changes saved. The unit files were not rebuilt.")).catch(e=>setError(e instanceof Error?e.message:"The changes could not be saved."));}}><Icon name="checkCircle" size={15}/>{savingChanges?"Saving changes...":"Save changes only"}</button>}
       {displayMaterial&&<button type="button" className="btn ghost dl-sample plan-ppt" onClick={()=>void downloadDoc(displayMaterial).catch(()=>setError("The file could not be downloaded. Please retry."))}><Icon name="download" size={15}/>Download this file</button>}
       {editableMaterial&&<button type="button" className="btn ghost dl-sample plan-ppt" onClick={()=>void downloadDoc(editableMaterial).catch(()=>setError("The editable slides could not be downloaded. Please retry."))}><Icon name="download" size={15}/>Editable slides (.pptx)</button>}
       {staff&&<button type="button" className="btn ghost dl-sample plan-ppt" disabled={!!busy} onClick={()=>pdfRef.current?.click()}><Icon name="presenter" size={15}/>{displayMaterial?"Replace with my version (.pdf)":"Upload course material (.pdf)"}</button>}
@@ -759,6 +769,6 @@ export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
     {uploadPct!==null&&<div className="upload-progress plan-upload-progress" role="progressbar" aria-valuenow={uploadPct}><div className="track"><div className="fill" style={{width:`${uploadPct}%`}}/></div><span className="pct">Uploading... {uploadPct}%</span></div>}
     {!displayMaterial&&<p className="muted built-material-empty">{staff?"Upload the PDF export of your slides to show the presentation here. You can also upload the editable PowerPoint source.":"No course material has been uploaded for this built unit yet."}</p>}
     {displayMaterial&&(materialUrl?<SlideViewer src={materialUrl} allowDownload={staff}/>:<p className="muted">Loading course material...</p>)}
-    {busy&&<p role="status">{busy}</p>}{error&&<p role="alert" className="auth-error">{error}</p>}
+    {(busy||message)&&<p role="status">{busy||message}</p>}{error&&<p role="alert" className="auth-error">{error}</p>}
   </div>;
 }
