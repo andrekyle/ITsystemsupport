@@ -3196,9 +3196,9 @@ export function UnitPage({
     try {
       const nextContent = structuredClone(builtUnit.content) as UnitContent;
       const newSlide: LessonSection = {
-        heading: "New slide",
+        heading: "",
         icon: "book",
-        paragraphs: ["Add your slide content here."],
+        paragraphs: [],
       };
       nextContent.lesson.splice(si + 1, 0, newSlide);
       const revision = crypto.randomUUID();
