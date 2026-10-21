@@ -2554,8 +2554,12 @@ export function useLessonEdits(us: string, temporary = false) {
 
   useEffect(() => {
     if (temporary) { setEditsState({}); return; }
+    let active = true;
     setEditsState(cachedLessonEdits<LessonEdits>(key, {}));
-    void loadLessonEdits<LessonEdits>(key, {}).then(setEditsState);
+    void loadLessonEdits<LessonEdits>(key, {}).then(loaded => {
+      if (active) setEditsState(cachedLessonEdits<LessonEdits>(key, loaded));
+    });
+    return () => { active = false; };
   }, [key, temporary]);
 
   useEffect(() => {

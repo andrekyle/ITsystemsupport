@@ -743,20 +743,13 @@ export function BuiltUnitDownloads({us,staff,onSaveChanges,savingChanges=false}:
   },[displayMaterial?.path,displayMaterial?.data,displayMaterial?.uploadedAt]);
   if(!built)return null;
   const saveMaterial=async(next:{material?:PoeDoc;materialEditable?:PoeDoc})=>{
-    // Lesson edits live beside the built unit under the revision that was
-    // active when they were made. Uploading a PDF/PPT creates a new revision;
-    // fold the current edits into that revision first or the upload silently
-    // restores the older, unedited lesson content.
+    // Replacing course-material files must not create a content revision.
+    // Slide edits are keyed by the built revision, so changing it for a file
+    // upload can detach the visible edits just before the user presses Save.
     const editKey=`itss.lessonedits.${courseScopedUnit(`${us}.built-${built.revision}`)}`;
     const edits=await loadLessonEdits<LessonEdits>(editKey,cachedLessonEdits(editKey,{}));
-    const content=effectiveBuiltContent(built.content,edits);
-    const revision=crypto.randomUUID();
-    // Keep every slide-level override (rich text, media placement, quizzes,
-    // videos, and layout) attached when a PDF or PowerPoint upload advances
-    // the unit revision. No export files are regenerated on this path.
     await flushLessonEdits(editKey,edits);
-    await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(`${us}.built-${revision}`)}`,edits);
-    await saveBuiltUnit(us,{revision,createdAt:new Date().toISOString(),source:built.source,content,files:{...built.files,...next},aiUsed:built.aiUsed,planSource:built.planSource});
+    await saveBuiltUnit(us,{revision:built.revision,createdAt:new Date().toISOString(),source:built.source,content:built.content,files:{...built.files,...next},aiUsed:built.aiUsed,planSource:built.planSource});
   };
   const onPdf=async(file:File|undefined)=>{
     if(!file)return;
