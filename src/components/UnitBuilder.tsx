@@ -21,7 +21,7 @@ import { SlideViewer } from "./SlideViewer";
 import { Icon } from "../icons";
 import "./unit-builder.css";
 import { courseScopedUnit } from "../lib/courseScope";
-import { flushLessonEdits } from "../lib/lessonEditStore";
+import { cachedLessonEdits, flushLessonEdits, loadLessonEdits } from "../lib/lessonEditStore";
 import { isStaleChunkError, recoverFromStaleChunk } from "../lib/chunkRecovery";
 import { saveInlineDraft } from "../lib/inlineDraftStorage";
 import { EditingTools } from "./EditingSidebar";
@@ -712,7 +712,14 @@ export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
   },[displayMaterial?.path,displayMaterial?.data,displayMaterial?.uploadedAt]);
   if(!built)return null;
   const saveMaterial=async(next:{material?:PoeDoc;materialEditable?:PoeDoc})=>{
-    await saveBuiltUnit(us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content:built.content,files:{...built.files,...next},aiUsed:built.aiUsed,planSource:built.planSource});
+    // Lesson edits live beside the built unit under the revision that was
+    // active when they were made. Uploading a PDF/PPT creates a new revision;
+    // fold the current edits into that revision first or the upload silently
+    // restores the older, unedited lesson content.
+    const editKey=`itss.lessonedits.${courseScopedUnit(`${us}.built-${built.revision}`)}`;
+    const edits=await loadLessonEdits<LessonEdits>(editKey,cachedLessonEdits(editKey,{}));
+    const content=effectiveBuiltContent(built.content,edits);
+    await saveBuiltUnit(us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content,files:{...built.files,...next},aiUsed:built.aiUsed,planSource:built.planSource});
   };
   const onPdf=async(file:File|undefined)=>{
     if(!file)return;
