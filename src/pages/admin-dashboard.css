@@ -296,3 +296,47 @@
   [data-theme="light"] .admin-tile .admin-tile-value,
   [data-theme="dark"] .admin-tile .admin-tile-value { font-size: 44px; }
 }
+
+/* Compact overview heading: keep the metrics above the fold. */
+.admin-overview-head {
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 6px 0 4px;
+  text-align: left;
+}
+.admin-overview-head > div { min-width: 0; }
+.admin-overview h1 {
+  margin-bottom: 5px;
+  font-size: clamp(24px, 2.4vw, 30px);
+}
+.admin-overview-head .admin-refresh {
+  position: static;
+  flex: none;
+  padding: 9px 16px;
+}
+.admin-data-note {
+  margin: 4px 0 14px;
+  text-align: left;
+}
+
+@media (max-width: 680px) {
+  .admin-overview-head {
+    align-items: flex-start;
+    gap: 14px;
+    padding-top: 2px;
+  }
+  .admin-overview h1 { font-size: 23px; }
+  .admin-overview-head .admin-refresh {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-overview-head { flex-direction: column; }
+  .admin-data-note { margin-top: 2px; }
+}
