@@ -664,7 +664,7 @@ function lessonPlanFromEnhancement(plan: UnitContent["lessonPlan"], unit: UnitSt
       || items.some(item => item.length > 280)
       || items.join(" ").length > 500;
   });
-  if (isVerbose) return undefined;
+  if (isVerbose || instructionalRows.length > 12 || JSON.stringify(sections).length > 6000) return undefined;
   const template = getContent("8252")?.lessonPlan;
   const details = (plan?.details ?? [])
     .filter(detail => nonemptyString(detail?.label) && nonemptyString(detail?.value))
@@ -684,77 +684,77 @@ function lessonPlanFromEnhancement(plan: UnitContent["lessonPlan"], unit: UnitSt
 
 function lessonPlanFromTemplate(unit: UnitStandard, topics: UnitTopic[], minutes: number): UnitContent["lessonPlan"] {
   const template = getContent("8252")?.lessonPlan;
-  const setupRows = structuredClone(template?.sections?.[0]?.rows ?? [
-    { title: "Room Set Up", text: ["Ensure venue and equipment needed is ready."] },
-    {
-      time: "20 minutes",
-      title: "Meet, Greet & Seat",
-      text: [
-        "Learners to get out their stationery and settle. Allow learners to sign the class register OR check learners against the class register.",
-        "Explain the parking bay to the learners where they can ask questions and it will be parked until the class has been completed, and then attended to.",
-      ],
-      resources: ["Class Register", "LM p1"],
-    },
-  ]);
-  const topicMinutes = Math.max(10, Math.floor((minutes - 120) / Math.max(1, topics.length)));
-  const topicRows = topics.map((topic, index) => {
+  const headings = [...new Set(topics.map(topic => topic.heading.replace(/\s*(?:—|\(|-)\s*continued(?:\s+\d+)?\)?$/i, "").trim()))];
+  // Pagination must not turn one manual topic into dozens of schedule rows.
+  const groupSize = Math.max(1, Math.ceil(headings.length / 8));
+  const groups = Array.from({ length: Math.ceil(headings.length / groupSize) }, (_, index) => headings.slice(index * groupSize, (index + 1) * groupSize));
+  const breakMinutes = minutes >= 180 ? 10 : 0;
+  const lunchMinutes = minutes >= 300 ? 45 : 0;
+  const teachingMinutes = minutes - 25 - breakMinutes - lunchMinutes;
+  const topicMinutes = Math.floor(teachingMinutes / groups.length);
+  const topicRows = groups.map((group, index) => {
+    const heading = group.length === 1 ? group[0] : `Topics ${index * groupSize + 1}-${index * groupSize + group.length}`;
     return {
-      time: `${topicMinutes} minutes`,
-      title: `${topic.heading} — Facilitator & Class`,
+      time: `${topicMinutes + (index < teachingMinutes % groups.length ? 1 : 0)} minutes`,
+      title: `${heading} — Facilitator & Class`,
       bullets: [
-        `Guide learners through the section on ${topic.heading.toLowerCase()} and explain its key ideas.`,
-        "Use a relevant workplace example, invite questions and check understanding before continuing.",
+        "Explain key ideas with a workplace example.",
+        "Invite questions and check understanding.",
       ],
-      resources: [`Learner manual — section ${index + 1}`],
+      resources: [`Learner manual - ${group.length === 1 ? heading : `sections ${index * groupSize + 1}-${index * groupSize + group.length}`}`],
     };
   });
+  const startTime = template?.startTime ?? DEFAULT_PLAN_START;
+  const [hour, minute] = startTime.split(":").map(Number);
+  const timeSummary = minutes < 1440
+    ? `${startTime} - ${planClock(hour * 60 + minute + minutes)} (${minutes} minutes)`
+    : `${minutes} minutes, starting ${startTime}`;
   return {
     title: template?.title ?? DEFAULT_PLAN_TITLE,
-    startTime: template?.startTime ?? DEFAULT_PLAN_START,
-    details: structuredClone(template?.details ?? DEFAULT_PLAN_DETAILS),
+    startTime,
+    details: structuredClone(template?.details ?? DEFAULT_PLAN_DETAILS).map(detail =>
+      /^time$/i.test(detail.label) ? { ...detail, value: timeSummary }
+        : /^duration$/i.test(detail.label) ? { ...detail, value: `${minutes} minutes` } : detail),
     prep: structuredClone(template?.prep ?? DEFAULT_PLAN_PREP),
     sections: [
-      { rows: setupRows },
+      { rows: [
+        { title: "Room Set Up", text: ["Check venue, equipment and learning materials."] },
+        { time: "10 minutes", title: "Meet, Greet & Seat", bullets: ["Take attendance and introduce the session."], resources: ["Class register"] },
+      ] },
       {
         heading: `Unit Standard ${unit.us}`,
         rows: [
           {
-            time: "25 minutes",
+            time: "5 minutes",
             title: "Index & Unit Standard Alignment — Facilitator",
-            text: [
-              "Read through the index with the learners, highlighting the areas that will be covered in this manual. Make reference to the Unit Standard Alignment Index to outline the specific outcomes that will be covered.",
-            ],
-            resources: ["LM p3"],
+            bullets: ["Confirm outcomes, evidence requirements and the session agenda."],
+            resources: ["Unit standard", "Learner manual"],
           },
           ...topicRows.slice(0, Math.max(1, Math.ceil(topicRows.length / 2))),
-          { time: "10 minutes", title: "Break", break: true },
+          ...(breakMinutes ? [{ time: `${breakMinutes} minutes`, title: "Break", break: true }] : []),
           ...topicRows.slice(Math.max(1, Math.ceil(topicRows.length / 2))),
-          { time: "60 minutes", title: "Lunch", break: true },
+          ...(lunchMinutes ? [{ time: `${lunchMinutes} minutes`, title: "Lunch", break: true }] : []),
           {
-            time: "10 minutes",
+            time: "5 minutes",
             title: "Self-Assessment — Learners individually",
             bullets: [
-              "Explain to the learners that they have to judge their own knowledge gained in the unit by ticking the blocks they feel competent with.",
-              "Allow the learners to tick the blocks and take feedback from each learner.",
-              "Identify those learners who have shortcomings and assist them with fulfilling the requirements.",
+              "Complete the competence checklist and identify support needs.",
             ],
-            resources: ["LM p12"],
+            resources: ["Self assessment"],
           },
           {
-            time: "10 minutes",
+            time: "3 minutes",
             title: "Parking Bay — Facilitator",
             bullets: [
-              "Take all the questions from the learners and answer them individually.",
-              "Ensure the entire class understands the questions posed by other learners.",
+              "Resolve outstanding questions.",
             ],
             resources: ["White Board"],
           },
           {
-            time: "10 minutes",
+            time: "2 minutes",
             title: "Closing — Facilitator",
             bullets: [
-              "Thank the learners for their participation.",
-              "Agree with them when the next facilitation session is scheduled for.",
+              "Confirm evidence submissions and next steps.",
             ],
           },
         ],
@@ -771,15 +771,15 @@ export function mergeUnitContentEnhancement(base: UnitContent, enhancement: Unit
   next.evaluation = undefined;
   if (enhancement.selfAssessment?.items?.length) next.selfAssessment = selfAssessmentFromTemplate(enhancement.selfAssessment.items);
   if (enhancement.lessonPlan?.sections?.length) {
-    next.lessonPlan = lessonPlanFromEnhancement(enhancement.lessonPlan, unit)
-      ?? lessonPlanFromTemplate(unit, next.lesson.map(section => ({ heading: section.heading, paragraphs: section.paragraphs })), enhancement.lessonPlan.details?.length ? Number(enhancement.lessonPlan.details.find(detail => /duration/i.test(detail.label))?.value.match(/\d+/)?.[0] ?? 300) : 300);
+    const generatedPlan = lessonPlanFromEnhancement(enhancement.lessonPlan, unit);
+    if (generatedPlan) next.lessonPlan = generatedPlan;
   }
   next.exercises = [];
   next.questionSessions = [];
   if (nonemptyArray(enhancement.assignments)) next.assignments = enhancement.assignments;
   next.quiz = [];
   next.quizzes = undefined;
-  if (enhancement.workbook?.outcomes?.length) next.workbook = enhancement.workbook;
+  if (!next.learnerWorkbook && enhancement.workbook?.outcomes?.length) next.workbook = enhancement.workbook;
   next.lesson = next.lesson.map(section => ({ ...section, slideQuiz: undefined, quizGate: undefined }));
   validateUnitContent(next);
   return next;
@@ -817,6 +817,8 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
 /** Validate the editable pack before replacing any saved content. */
 export function validateUnitContent(content: UnitContent, requireComplete = true): void {
   const nonempty = (s: unknown) => typeof s === "string" && s.trim().length > 0;
+  const hasOriginalPdf=[content.learnerGuide,content.learnerWorkbook,content.practicalTask,...(content.editableDocuments??[]).map(item=>item.document)].some(document=>document?.replica?.pages.length);
+  if(hasOriginalPdf)requireComplete=false;
   if (requireComplete && (!content.lesson?.length || !content.assignments?.length)) throw new Error("Keep at least one lesson and assignment.");
   for (const s of content.lesson) if (!nonempty(s.heading) || !s.paragraphs?.some(nonempty)) throw new Error("Every lesson needs a title and teaching text.");
   for (const q of [...content.quiz, ...content.lesson.flatMap(s => s.slideQuiz ?? []), ...(content.quizzes ?? []).flatMap(q => q.questions)]) {
@@ -844,14 +846,43 @@ export function validateUnitContent(content: UnitContent, requireComplete = true
   }
   const customTabs = content.customTabs ?? [];
   if (customTabs.some(tab => !nonempty(tab.id) || !nonempty(tab.title)) || new Set(customTabs.map(tab => tab.id)).size !== customTabs.length) throw new Error("Each custom tab needs a title and a unique ID.");
-  if (content.practicalTask) {
-    if (!nonempty(content.practicalTask.title) || !content.practicalTask.sections?.length) throw new Error("The practical task needs a title and at least one section.");
-    const sectionIds = content.practicalTask.sections.map(section => section.id);
+  const documents = [content.practicalTask, content.learnerWorkbook, content.learnerGuide, ...(content.editableDocuments ?? []).map(item => item.document)].filter(document => document !== undefined);
+  for (const document of documents) {
+    if (document.replica) {
+      const replica=document.replica;
+      if (!nonempty(document.title) || !replica.pages.length || replica.pages.length !== document.sourcePageCount) throw new Error("Every converted PDF must preserve all source pages.");
+      if (replica.pages.some(page => !nonempty(page.src) || page.width <= 0 || page.height <= 0 || (replica.display === "digital" && !page.layer?.text.length))) throw new Error("A converted PDF page is missing its source or HTML text.");
+      const fields=replica.sections.flatMap(section=>section.fields);
+      if (new Set(fields.map(field=>field.id)).size!==fields.length) throw new Error("PDF fields need unique IDs.");
+      for (const field of fields) {
+        const placement=field.placement;
+        if (!placement || !Number.isInteger(placement.page) || placement.page<1 || placement.page>replica.pages.length) throw new Error("A PDF field is not on an original page.");
+        for (const box of [placement.box,...placement.options]) {
+          if (box && (![box.x,box.y,box.w,box.h].every(Number.isFinite) || box.x<0 || box.y<0 || box.w<=0 || box.h<=0 || box.x+box.w>1.001 || box.y+box.h>1.001)) throw new Error("A PDF field lies outside its original page.");
+        }
+      }
+      continue;
+    }
+    if (!nonempty(document.title) || !document.sections?.length) throw new Error("Every uploaded document needs a title and at least one section.");
+    const sectionIds = document.sections.map(section => section.id);
     if (sectionIds.some(id => !nonempty(id)) || new Set(sectionIds).size !== sectionIds.length) throw new Error("Practical-task sections need unique IDs.");
-    for (const section of content.practicalTask.sections) {
+    for (const section of document.sections) {
       if (!nonempty(section.title)) throw new Error("Every practical-task section needs a title.");
-      const ids = [...(section.fields ?? []), ...(section.items ?? [])].map(item => item.id);
+      const ids = [...(section.fields ?? []).map(field => field.id), ...(section.items ?? []).map(item => item.id), ...(section.blocks ?? []).flatMap(block =>
+        block.kind === "field" ? [block.field.id] : block.kind === "item" ? [block.item.id] : block.kind === "table" ? [block.id] : []
+      )];
       if (ids.some(id => !nonempty(id)) || new Set(ids).size !== ids.length) throw new Error("Practical-task fields need unique IDs within each section.");
+      if (document.sourceText !== undefined && !section.blocks?.length) throw new Error("Every source-document section needs ordered content.");
+      for (const block of section.blocks ?? []) {
+        if (block.kind === "field" && !nonempty(block.field.label)) throw new Error("An uploaded document field needs its source label.");
+        if (block.kind === "item" && !nonempty(block.item.text)) throw new Error("An uploaded document paragraph is missing.");
+        if (block.kind === "page" && (!Number.isInteger(block.number) || block.number < 1)) throw new Error("Source page numbers must be positive integers.");
+        if (block.kind === "table" && (!nonempty(block.id) || !block.headers.length || !block.rows.length || block.rows.some(row => row.length !== block.headers.length))) throw new Error("An uploaded document table has incomplete rows or columns.");
+      }
+    }
+    if (document.sourcePageCount !== undefined) {
+      const pages = document.sections.flatMap(section => section.blocks ?? []).filter(block => block.kind === "page");
+      if (pages.length !== document.sourcePageCount || pages.some((page, index) => page.number !== index + 1)) throw new Error("The converted document does not contain every source page in order.");
     }
   }
   const editableDocuments = content.editableDocuments ?? [];
@@ -861,6 +892,3 @@ export function validateUnitContent(content: UnitContent, requireComplete = true
     if (!editable.document?.sections?.length) throw new Error(`The editable ${editable.title} tab needs at least one section.`);
   }
 }
-
-
-

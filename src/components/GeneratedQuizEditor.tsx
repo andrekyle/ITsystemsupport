@@ -13,7 +13,9 @@ export function GeneratedQuizEditor({ question, number, onChange, onRemove }: {
   return <div className="generated-quiz-edit" onClick={event=>event.stopPropagation()}>
     <div className="generated-quiz-heading">
       <label htmlFor={`${id}-question`}>Question {number}</label>
-      <button type="button" className="generated-quiz-remove" onClick={onRemove} aria-label={`Remove question ${number}`} title="Remove question">
+      <button type="button" className="generated-quiz-remove"
+        onClick={event => { event.preventDefault(); event.stopPropagation(); onRemove(); }}
+        aria-label={`Remove question ${number}`} title="Remove question">
         <Icon name="trash" size={15}/>
       </button>
     </div>
@@ -25,8 +27,10 @@ export function GeneratedQuizEditor({ question, number, onChange, onRemove }: {
         {question.options.map((option,index)=>{
           const letter=String.fromCharCode(65+index);
           return <div className={`generated-quiz-option${question.answer===index ? " is-correct" : ""}`} key={index}>
-            <input type="radio" name={`${id}-answer`} checked={question.answer===index}
-              aria-label={`Mark option ${letter} as correct`} onChange={()=>onChange({...question,answer:index})}/>
+            <input type="radio" name={`${id}-correct-answer`} value={index}
+              aria-label={`Set option ${letter} as the correct answer`}
+              checked={question.answer===index}
+              onChange={()=>onChange({...question,answer:index})}/>
             <label htmlFor={`${id}-option-${index}`}>{letter}</label>
             <textarea id={`${id}-option-${index}`} aria-label={`Option ${letter}`} rows={1} value={option}
               ref={element=>autoGrowTextarea(element)} onChange={event=>onChange({...question,options:question.options.map((text,i)=>i===index?event.target.value:text)})}/>

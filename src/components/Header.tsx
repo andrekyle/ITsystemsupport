@@ -7,6 +7,8 @@ import { loadProfiles, useChatThreads } from "../store";
 import { notifyIncoming, syncUnreadBadge } from "../lib/notify";
 import { Avatar, fileToAvatar } from "./Avatar";
 import { TENANT } from "../lib/tenant";
+import { activeCourseId, getCourses, setActiveCourse } from "../data/courses";
+import { Select } from "./Select";
 
 /** Session schedule derived from the US 8252 lesson plan (starts 09:00). */
 const PLAN = getContent("8252")?.lessonPlan;
@@ -262,8 +264,8 @@ export function Header({
       </button>
       <div className="brand">
         {TENANT.logo ? <img className="header-tenant-logo" src={theme === "dark" && TENANT.logoDark ? TENANT.logoDark : TENANT.logo} alt={`${TENANT.name} logo`} /> : <Icon name="certificate" size={24} color="var(--azure)" />}
-        {!TENANT.logo && <span className="brand-name">{TENANT.appName}</span>}
-        <span className="brand-sub">System Support · NQF 5</span>
+        {TENANT.id !== "discovery" && <span className="brand-name">{TENANT.appName}</span>}
+        {TENANT.id !== "discovery" && <span className="brand-sub">System Support · NQF 5</span>}
       </div>
       <SessionClock onOpenUnit={onOpenUnit} />
       <div className="header-right">
@@ -381,6 +383,18 @@ export function Header({
                   Remove picture
                 </button>
               )}
+              <div className="pm-qualification">
+                <span className="pm-qualification-label">Qualification</span>
+                <Select
+                  ariaLabel="Selected qualification"
+                  value={activeCourseId()}
+                  options={getCourses().map((course) => ({ value: course.id, label: course.label }))}
+                  disabled={profile.role === "Learner"}
+                  onChange={(id) => {
+                    if (profile.role !== "Learner") setActiveCourse(id);
+                  }}
+                />
+              </div>
               <button className="pm-item" role="menuitem" onClick={onSignOut}>
                 <Icon name="signout" size={17} />
                 Sign out

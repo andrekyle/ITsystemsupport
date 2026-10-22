@@ -60,7 +60,7 @@ export function sanitizeSlideHtml(html: string): string {
   const source = document.createElement("template");
   source.innerHTML = html;
   const allowed = new Set(["SPAN", "B", "STRONG", "I", "EM", "U", "S", "STRIKE", "SUB", "SUP", "BR", "P", "DIV", "UL", "OL", "LI", "BLOCKQUOTE", "FONT", "H1", "H2", "H3", "H4", "TABLE", "COLGROUP", "COL", "THEAD", "TBODY", "TR", "TH", "TD", "IMG"]);
-  const styles = ["font-family", "font-size", "font-weight", "font-style", "text-decoration", "color", "background-color", "text-align", "text-indent", "line-height", "letter-spacing", "margin-left", "margin-right", "margin-top", "margin-bottom", "vertical-align", "width", "min-width", "max-width", "height", "min-height", "table-layout", "object-fit", "object-position", "float", "display", "transform", "transform-origin"];
+  const styles = ["font-family", "font-size", "font-weight", "font-style", "text-decoration", "color", "background-color", "text-align", "text-indent", "line-height", "letter-spacing", "margin-left", "margin-right", "margin-top", "margin-bottom", "vertical-align", "width", "min-width", "max-width", "height", "min-height", "table-layout", "object-fit", "object-position", "float", "display", "transform", "transform-origin", "--slide-light-color", "--slide-dark-color"];
   function clean(node: Node): Node {
     if (node.nodeType === Node.TEXT_NODE) return document.createTextNode(node.textContent ?? "");
     const fragment = document.createDocumentFragment();
@@ -70,15 +70,23 @@ export function sanitizeSlideHtml(html: string): string {
     if (node.tagName === "IMG" && !/^[\w.-]{1,180}$/.test(figureId) && !/^data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(imageSrc)) return fragment;
     const out = allowed.has(node.tagName) ? document.createElement(node.tagName === "FONT" ? "span" : node.tagName.toLowerCase()) : fragment;
     if (out instanceof HTMLElement) {
-      const classes = Array.from(node.classList).filter(c => ["section-title", "lesson-p", "lesson-subsection", "lesson-subheading", "lesson-point-group", "lesson-point-lead", "lesson-inferred-list", "lesson-numlist", "slide-editor-list", "slide-layout-grid", "num", "data", "lesson-table", "lesson-table-scroll", "card-grid", "lesson-cards", "card", "lesson-card", "t", "d", "lesson-example"].includes(c));
+      const classes = Array.from(node.classList).filter(c => ["section-title", "lesson-p", "lesson-subsection", "lesson-subheading", "lesson-point-group", "lesson-point-lead", "lesson-inferred-list", "lesson-numlist", "slide-editor-list", "slide-editor-default-text", "slide-layout-grid", "num", "data", "lesson-table", "lesson-table-scroll", "card-grid", "lesson-cards", "card", "lesson-card", "t", "d", "lesson-example"].includes(c));
       if (classes.length) out.className = classes.join(" ");
       if (node.tagName === "TH" && ["col", "row"].includes(node.getAttribute("scope") ?? "")) out.setAttribute("scope", node.getAttribute("scope")!);
       if (node.dataset.userColor === "true") out.dataset.userColor = "true";
+      for (const mode of ["light", "dark"] as const) {
+        const color = node.getAttribute(`data-${mode}-color`);
+        if (node.dataset.userColor === "true" && color && /^#[\da-f]{6}$/i.test(color)) out.setAttribute(`data-${mode}-color`, color.toLowerCase());
+      }
+      if (node.dataset.slideTitle === "true") out.dataset.slideTitle = "true";
       if (node.tagName === "IMG") {
         if (figureId) out.setAttribute("data-figure-id", figureId);
         if (/^(?:data:image\/(?:png|jpe?g|webp|gif);base64,|https:\/\/)/i.test(imageSrc)) out.setAttribute("src", imageSrc);
         out.setAttribute("alt", node.getAttribute("alt")?.slice(0, 300) ?? "Lesson image");
         out.setAttribute("draggable", "false");
+        if (["eager", "lazy"].includes(node.getAttribute("loading") ?? "")) out.setAttribute("loading", node.getAttribute("loading")!);
+        if (["async", "sync", "auto"].includes(node.getAttribute("decoding") ?? "")) out.setAttribute("decoding", node.getAttribute("decoding")!);
+        if (["high", "low", "auto"].includes(node.getAttribute("fetchpriority") ?? "")) out.setAttribute("fetchpriority", node.getAttribute("fetchpriority")!);
         if (node.dataset.cropped === "true") out.dataset.cropped = "true";
       }
       if (node.tagName === "TD" || node.tagName === "TH") {
@@ -92,6 +100,7 @@ export function sanitizeSlideHtml(html: string): string {
         // Text colour is inherited from the lesson theme unless the author
         // deliberately chose it with the editor's colour picker.
         if (prop === "color" && node.dataset.userColor !== "true") continue;
+        if (prop.startsWith("--slide-") && (node.dataset.userColor !== "true" || !/^#[\da-f]{6}$/i.test(value))) continue;
         if (value && !/url\s*\(|expression|var\s*\(/i.test(value)) out.style.setProperty(prop, value);
       }
       if (node.tagName === "FONT") {
@@ -123,13 +132,42 @@ export function saveRichText(el: HTMLElement): string {
   return PREFIX + sanitizeSlideHtml(el.innerHTML);
 }
 
+/** Older editor saves inferred headings and floated images without author input. */
+export function normalizeSlideDocument(html: string): string {
+  const root = document.createElement("div");
+  root.innerHTML = sanitizeSlideHtml(html);
+  for (const heading of Array.from(root.querySelectorAll("h2.section-title,h3.lesson-subheading"))) {
+    const paragraph = document.createElement("p");
+    paragraph.className = "lesson-p";
+    paragraph.innerHTML = heading.innerHTML;
+    if (heading.classList.contains("section-title") || heading.getAttribute("data-slide-title") === "true") paragraph.dataset.slideTitle = "true";
+    heading.replaceWith(paragraph);
+  }
+  for (const image of root.querySelectorAll<HTMLImageElement>("img")) {
+    const floated = image.style.float === "left" || image.style.float === "right";
+    image.style.float = "none";
+    image.style.display = "block";
+    if (floated) {
+      image.style.marginLeft = "auto";
+      image.style.marginRight = "auto";
+    }
+    image.style.transform = "none";
+  }
+  return root.innerHTML;
+}
+
 /** Replace compact inline-image ids with their current local or signed URLs. */
 export function hydrateSlideImages(html: string, sources: Record<string, string | undefined>): string {
   const template = document.createElement("template");
   template.innerHTML = html;
   template.content.querySelectorAll<HTMLImageElement>("img[data-figure-id]").forEach(image => {
     const source = sources[image.dataset.figureId ?? ""];
-    if (source) image.src = source;
+    if (source) {
+      image.src = source;
+      image.loading = "eager";
+      image.decoding = "async";
+      image.setAttribute("fetchpriority", "high");
+    }
     // Transforms move only the painted pixels, not the float exclusion box.
     // Wrapped images must use actual flow geometry so text cannot sit below.
     if (image.style.float === "left" || image.style.float === "right") image.style.transform = "none";

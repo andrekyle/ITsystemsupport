@@ -3,6 +3,7 @@ import { UNIT_ACTIVITIES } from "../types";
 import { MODULES } from "../data/course";
 import { loadPoeDocs, loadProgress, poeItemCount } from "../store";
 import { bestPoeDocs, bestProgress, identityKeys, type CloudLearnerData } from "./directory";
+import { attendanceEvidence, type AttendanceEvidenceRow } from "./attendanceEvidence";
 
 /**
  * Gamification layer: XP, levels and badges are computed deterministically
@@ -44,11 +45,7 @@ const LEVELS: { name: string; xp: number }[] = [
 ];
 
 /** A row as stored on a register sheet (subset used for identity matching). */
-interface AttRowLike {
-  name?: string;
-  surname?: string;
-  idNumber?: string;
-}
+type AttRowLike = AttendanceEvidenceRow;
 
 /** Accepts a bare profile id (matches only its own row key) or a profile
  *  object — then a filled register also counts when a row carries the same
@@ -72,55 +69,31 @@ function signedRegister(rows: Record<string, AttRowLike> | undefined, ref: Profi
   return false;
 }
 
-function readRegisterRows(key: string): Record<string, AttRowLike> | undefined {
-  try {
-    return (JSON.parse(localStorage.getItem(key) ?? "{}") as { rows?: Record<string, AttRowLike> })
-      .rows;
-  } catch {
-    return undefined; /* corrupt register — skip */
-  }
-}
-
 /** Count attendance registers on this device that the profile has signed. */
 export function attendanceSignedCount(ref: ProfileRef): number {
   let signed = 0;
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (!key || !key.startsWith("itss.attendance.")) continue;
-    if (signedRegister(readRegisterRows(key), ref)) signed++;
+  for (const rows of attendanceEvidence().values()) {
+    if (signedRegister(rows, ref)) signed++;
   }
   return signed;
 }
 
 /** Total attendance registers held on this device (for participation rates). */
 export function attendanceRegisterCount(): number {
-  let n = 0;
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && key.startsWith("itss.attendance.")) n++;
-  }
-  return n;
+  return attendanceEvidence().size;
 }
 
 /** ISO dates (sorted) of every attendance register held on this device. */
 export function attendanceRegisterDates(): string[] {
-  const dates: string[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && key.startsWith("itss.attendance.")) dates.push(key.slice("itss.attendance.".length));
-  }
-  return dates.sort();
+  return [...attendanceEvidence().keys()].sort();
 }
 
 /** Dates of FILLED registers only — at least one learner signed. Empty sheets
  *  (created by browsing to a date, or future sessions) don't count in reports. */
 export function attendanceFilledRegisterDates(): string[] {
   const dates: string[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (!key || !key.startsWith("itss.attendance.")) continue;
-    const rows = readRegisterRows(key);
-    if (rows && Object.keys(rows).length > 0) dates.push(key.slice("itss.attendance.".length));
+  for (const [date, rows] of attendanceEvidence()) {
+    if (Object.keys(rows).length > 0) dates.push(date);
   }
   return dates.sort();
 }
@@ -128,10 +101,8 @@ export function attendanceFilledRegisterDates(): string[] {
 /** ISO dates of the registers this profile has signed. */
 export function attendanceSignedDates(ref: ProfileRef): string[] {
   const dates: string[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (!key || !key.startsWith("itss.attendance.")) continue;
-    if (signedRegister(readRegisterRows(key), ref)) dates.push(key.slice("itss.attendance.".length));
+  for (const [date, rows] of attendanceEvidence()) {
+    if (signedRegister(rows, ref)) dates.push(date);
   }
   return dates.sort();
 }
@@ -145,12 +116,8 @@ export function attendanceExpectedCount(ref: ProfileRef): number {
   // measured against FILLED registers only — empty/future sheets don't count
   const dates: string[] = [];
   let first: string | null = null;
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (!key || !key.startsWith("itss.attendance.")) continue;
-    const rows = readRegisterRows(key);
-    if (!rows || Object.keys(rows).length === 0) continue;
-    const date = key.slice("itss.attendance.".length);
+  for (const [date, rows] of attendanceEvidence()) {
+    if (Object.keys(rows).length === 0) continue;
     dates.push(date);
     if (signedRegister(rows, ref) && (!first || date < first)) first = date;
   }
@@ -172,6 +139,8 @@ export function computeGamification(
   let quizzesPerfect = 0;
   let exercisesPassed = 0;
   let slideGates = 0;
+  const likedVideos = new Set<string>();
+  const commentedVideos = new Set<string>();
 
   for (const [, unit] of Object.entries(progress.units)) {
     const quizResults = [
@@ -229,6 +198,10 @@ export function computeGamification(
     // recorded as logbook flags so they can't be self-ticked.
     for (const [k, v] of Object.entries(unit.logbook ?? {})) {
       if (v === true && k.startsWith("slidegate.")) slideGates++;
+      if (v === true && k.startsWith("videoengagement.likeXp."))
+        likedVideos.add(k.slice("videoengagement.likeXp.".length));
+      if (v === true && k.startsWith("videoengagement.commentXp."))
+        commentedVideos.add(k.slice("videoengagement.commentXp.".length));
     }
   }
 
@@ -241,6 +214,7 @@ export function computeGamification(
   // each 5-question gate passed on a lesson slide is honest evidence of
   // working through the material — smaller than a full quiz (75/50)
   xp += slideGates * 5;
+  xp += likedVideos.size * 5 + commentedVideos.size * 10;
 
   // module completion (all 4 activities on every unit) for the badge
   let anyModuleComplete = false;
@@ -320,9 +294,8 @@ export function leaderboard(profiles: Profile[]): LeaderboardRow[] {
  * Cloud-first leaderboard. Uses the cloud directory as the authoritative
  * roster of accounts (only accounts that have actually signed in with their
  * own Supabase auth show up). Each learner's XP is computed through the same
- * bestProgress/bestPoeDocs helpers the Analytics page uses — whichever copy
- * (local snapshot or cloud sync) holds more evidence wins — so the
- * leaderboard and Analytics can never disagree about a learner's XP.
+ * bestProgress/bestPoeDocs helpers the Analytics page uses. Recorded progress
+ * is reconciled across saved copies without awarding duplicate assessment XP.
  */
 export function cloudLeaderboard(cloud: CloudLearnerData, currentProfile?: Profile): LeaderboardRow[] {
   let profiles = cloud.profiles;
@@ -346,7 +319,7 @@ export function cloudLeaderboard(cloud: CloudLearnerData, currentProfile?: Profi
     .map((p) => {
       const progress = bestProgress(p, cloud);
       const poe = bestPoeDocs(p, cloud);
-      const g = computeGamification(progress, poeItemCount(poe), attendanceSignedCount(p.id));
+      const g = computeGamification(progress, poeItemCount(poe), attendanceSignedCount(p));
       return { profile: p, xp: g.xp, level: g.level, levelName: g.levelName, earnedBadges: g.earnedCount };
     })
     .sort((a, b) => b.xp - a.xp);

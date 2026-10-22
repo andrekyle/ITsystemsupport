@@ -1,0 +1,14 @@
+{
+  "source": "/discovery/Modern E-Learning Course Dashboard.png",
+  "description": "Exact image headers cropped from the user-provided Personal Development dashboard. Course details and progress remain live. The reference's Work Planning header says US 114095; the actual unit remains US 114059.",
+  "headers": [
+    { "file": "unit-8252-reference-header.webp", "crop": { "left": 17, "top": 8, "width": 465, "height": 188 } },
+    { "file": "unit-10135-reference-header.webp", "crop": { "left": 499, "top": 8, "width": 464, "height": 188 } },
+    { "file": "unit-HWSW-reference-header.webp", "crop": { "left": 980, "top": 8, "width": 462, "height": 188 } },
+    { "file": "unit-HWSW2-reference-header.webp", "crop": { "left": 17, "top": 365, "width": 465, "height": 203 } },
+    { "file": "unit-114055-reference-header.webp", "crop": { "left": 499, "top": 365, "width": 464, "height": 203 } },
+    { "file": "unit-114050-reference-header.webp", "crop": { "left": 980, "top": 365, "width": 462, "height": 203 } },
+    { "file": "unit-114051-reference-header.webp", "crop": { "left": 17, "top": 738, "width": 465, "height": 187 } },
+    { "file": "unit-114059-reference-header.webp", "crop": { "left": 499, "top": 738, "width": 464, "height": 187 } }
+  ]
+}

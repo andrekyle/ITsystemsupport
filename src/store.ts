@@ -7,7 +7,8 @@ import { flushKey, flushValue, writeFromCloud } from "./lib/sync";
 import { logAudit } from "./lib/audit";
 import { courseScopedUnit } from "./lib/courseScope";
 import { TENANT, TENANT_ID } from "./lib/tenant";
-import { cachedLessonEdits, loadLessonEdits, queueLessonEdits, subscribeLessonEdits } from "./lib/lessonEditStore";
+import { tenantFilePrefix } from "./lib/files";
+import { cachedLessonEdits, flushLessonEdits, loadLessonEdits, queueLessonEdits, receiveLessonEdits, subscribeLessonEdits } from "./lib/lessonEditStore";
 import { flushUnitPack, unitPackSnapshot } from "./lib/unitStorage";
 import { SAVED_SIGNATURE_REFERENCE } from "./lib/signature";
 import {
@@ -20,6 +21,7 @@ import {
 const PROFILES_KEY = "itss.profiles";
 const SESSION_KEY = "itss.session";
 const THEME_KEY = "itss.theme";
+export const THEME_CHANGE_EVENT = "itss-theme-change";
 const progressKey = (profileId: string) => `itss.progress.${profileId}`;
 
 export type Theme = "light" | "dark";
@@ -33,6 +35,7 @@ export function getTheme(): Theme {
 export function setTheme(theme: Theme) {
   localStorage.setItem(THEME_KEY, theme);
   document.documentElement.dataset.theme = theme;
+  window.dispatchEvent(new CustomEvent<Theme>(THEME_CHANGE_EVENT, { detail: theme }));
 }
 
 function read<T>(key: string, fallback: T): T {
@@ -952,6 +955,7 @@ export function useQaThreads() {
 /* ---------- Voting Station (polls: vote for an action or person) ---------- */
 
 const POLLS_KEY = "itss.polls.shared";
+const POLLS_CACHE_KEY = `itssDevice.polls.${TENANT_ID}`;
 
 export interface PollOption {
   id: string;
@@ -1020,22 +1024,20 @@ export interface PollExtras {
   closesAt?: string;
 }
 
-/** Freshest shared poll list from the cloud (null when offline / local-only). */
+/** Freshest tenant poll list; null only when cloud sync is not configured. */
 async function pullPolls(): Promise<Poll[] | null> {
   if (!supabase) return null;
-  try {
-    const { data, error } = await supabase
-      .from("shared_state")
-      .select("value")
-      .eq("key", POLLS_KEY)
-      .maybeSingle();
-    if (error) return null;
-    if (!data?.value) return [];
-    const list = JSON.parse(data.value) as Poll[];
-    return Array.isArray(list) ? list : [];
-  } catch {
-    return null;
-  }
+  const { data, error } = await supabase
+    .from("shared_state")
+    .select("value")
+    .eq("tenant_id", TENANT_ID)
+    .eq("key", POLLS_KEY)
+    .maybeSingle();
+  if (error) throw new Error(`Could not load ${TENANT.name} polls: ${error.message}`);
+  if (!data?.value) return [];
+  const list = JSON.parse(data.value) as Poll[];
+  if (!Array.isArray(list)) throw new Error(`The ${TENANT.name} poll record is invalid.`);
+  return list;
 }
 
 /**
@@ -1046,11 +1048,12 @@ async function pullPolls(): Promise<Poll[] | null> {
  * and the list is re-pulled every few seconds while the page is open.
  */
 export function usePolls() {
-  const [list, setList] = useState<Poll[]>(() => read<Poll[]>(POLLS_KEY, []));
+  const [list, setList] = useState<Poll[]>(() => read<Poll[]>(POLLS_CACHE_KEY, []));
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
-      if (!e.key || e.key === POLLS_KEY) setList(read<Poll[]>(POLLS_KEY, []));
+      if (!e.key || e.key === POLLS_CACHE_KEY) setList(read<Poll[]>(POLLS_CACHE_KEY, []));
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
@@ -1061,12 +1064,18 @@ export function usePolls() {
     let alive = true;
     const refresh = async () => {
       if (document.visibilityState === "hidden") return;
-      const cloud = await pullPolls();
-      if (!alive || !cloud) return;
-      const json = JSON.stringify(cloud);
-      if (json !== localStorage.getItem(POLLS_KEY)) {
+      try {
+        const cloud = await pullPolls();
+        if (!alive || !cloud) return;
+        const json = JSON.stringify(cloud);
         writeFromCloud(POLLS_KEY, json);
-        setList(cloud);
+        if (json !== localStorage.getItem(POLLS_CACHE_KEY)) {
+          localStorage.setItem(POLLS_CACHE_KEY, json);
+          setList(cloud);
+        }
+        setError("");
+      } catch (cause) {
+        if (alive) setError(cause instanceof Error ? cause.message : "Polls could not be loaded.");
       }
     };
     void refresh();
@@ -1080,11 +1089,12 @@ export function usePolls() {
   }, []);
 
   const mutate = useCallback(async (updater: (fresh: Poll[]) => Poll[]): Promise<Poll[]> => {
-    const base = (await pullPolls()) ?? read<Poll[]>(POLLS_KEY, []);
+    const base = (await pullPolls()) ?? read<Poll[]>(POLLS_CACHE_KEY, []);
     const next = updater(base);
     write(POLLS_KEY, next);
+    localStorage.setItem(POLLS_CACHE_KEY, JSON.stringify(next));
     setList(next);
-    await flushKey(POLLS_KEY);
+    await flushKey(POLLS_KEY, !!supabase);
     return next;
   }, []);
 
@@ -1180,7 +1190,7 @@ export function usePolls() {
   const polls = [...list].sort(
     (a, b) => rank[pollStatus(a, now)] - rank[pollStatus(b, now)] || b.at.localeCompare(a.at)
   );
-  return { polls, create, vote, retract, setClosed, remove, clearVotes };
+  return { polls, error, create, vote, retract, setClosed, remove, clearVotes };
 }
 
 /* ---------- direct chat (1-to-1 conversations, database-enforced privacy) --------- */
@@ -2017,7 +2027,7 @@ async function uploadFigure(us: string, id: string, dataUrl: string): Promise<st
   const blob = await (await fetch(dataUrl)).blob();
   const safeId = id.replace(/[^\w.\-]+/g, "_");
   const ext = blob.type === "image/png" ? "png" : "jpg";
-  const path = `shared/lessonfigs/${us}/${safeId}-${Date.now().toString(36)}.${ext}`;
+  const path = `${tenantFilePrefix(`shared/lessonfigs/${us}`)}/${safeId}-${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage
     .from("files")
     .upload(path, blob, { upsert: true, contentType: blob.type || "image/jpeg" });
@@ -2025,7 +2035,7 @@ async function uploadFigure(us: string, id: string, dataUrl: string): Promise<st
   return path;
 }
 
-export function useLessonFigures(us: string) {
+export function useLessonFigures(us: string, priorityIds: readonly string[]) {
   const [figures, setFigures] = useState<Record<string, LessonFigureImage>>(() =>
     read<Record<string, LessonFigureImage>>(lessonFigsKey(us), {})
   );
@@ -2051,20 +2061,23 @@ export function useLessonFigures(us: string) {
     let alive = true;
     const need = Object.entries(figures).filter(([, f]) => f.path && !f.image);
     if (!need.length) return;
+    const priority = new Set(priorityIds);
+    const prioritized = need.filter(([id]) => priority.has(id));
+    const remaining = need.filter(([id]) => !priority.has(id));
     void (async () => {
-      const resolved: Record<string, string> = {};
-      await Promise.all(
-        need.map(async ([id, f]) => {
-          const url = await signedFigUrl(f.path!);
-          if (url) resolved[id] = url;
-        })
-      );
-      if (alive && Object.keys(resolved).length) setFigUrls((u) => ({ ...u, ...resolved }));
+      const resolveGroup = async (group: [string, LessonFigureImage][]) => {
+        await Promise.all(group.map(async ([id, figure]) => {
+          const url = await signedFigUrl(figure.path!);
+          if (alive && url) setFigUrls(urls => ({ ...urls, [id]: url }));
+        }));
+      };
+      await resolveGroup(prioritized);
+      if (alive) await resolveGroup(remaining);
     })();
     return () => {
       alive = false;
     };
-  }, [figures]);
+  }, [figures, priorityIds]);
 
   /** figures with `image` always usable as an <img> src (data-URL or signed URL) */
   const merged = useMemo(() => {
@@ -2083,11 +2096,6 @@ export function useLessonFigures(us: string) {
         try {
           const path = await uploadFigure(us, id, image);
           const next: Record<string, LessonFigureImage> = { ...fresh, [id]: { path, uploadedAt } };
-          // the replaced upload (if any) is no longer referenced — clean it up
-          const oldPath = fresh[id]?.path;
-          if (oldPath && oldPath !== path) {
-            void supabase.storage.from("files").remove([oldPath]).catch(() => {});
-          }
           // migrate any legacy inline data-URL figures of this unit to storage,
           // shrinking localStorage/shared-state far below the browser quota
           for (const [fid, f] of Object.entries(next)) {
@@ -2100,14 +2108,19 @@ export function useLessonFigures(us: string) {
             }
           }
           write(lessonFigsKey(us), next);
+          const oldPath = fresh[id]?.path;
+          if (oldPath && oldPath !== path) {
+            void supabase.storage.from("files").remove([oldPath]).catch(() => {});
+          }
           // Keep a usable bitmap during the render between storing the path
           // and resolving its signed URL. Without this, rich-text hydration
           // temporarily emits an img with no src (a dark empty rectangle).
           setFigUrls((urls) => ({ ...urls, [id]: image }));
           setFigures(next);
           return true;
-        } catch {
-          return false; // upload failed (offline / permissions)
+        } catch (error) {
+          const detail = error && typeof error === "object" && "message" in error ? String(error.message) : "Unknown storage error";
+          throw new Error(`The picture could not be saved: ${detail}`);
         }
       }
       // local-only mode: keep the picture inline in localStorage
@@ -2115,7 +2128,7 @@ export function useLessonFigures(us: string) {
       try {
         write(lessonFigsKey(us), next);
       } catch {
-        return false; // storage quota exceeded
+        throw new Error("The picture could not be saved because browser storage is full. Remove unused local files and try again.");
       }
       setFigures(next);
       return true;
@@ -2178,11 +2191,13 @@ const MEMORIES_KEY = "itss.memories.shared";
 async function pullMemories(): Promise<MemoryPhoto[] | null> {
   if (!supabase) return null;
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("shared_state")
       .select("value")
+      .eq("tenant_id", TENANT_ID)
       .eq("key", MEMORIES_KEY)
       .maybeSingle();
+    if (error) return null;
     if (data?.value) {
       const list = JSON.parse(data.value) as MemoryPhoto[];
       return Array.isArray(list) ? list : [];
@@ -2249,7 +2264,7 @@ export function useMemories() {
         try {
           const blob = await (await fetch(image)).blob();
           const ext = blob.type === "image/png" ? "png" : "jpg";
-          const path = `shared/memories/${id}.${ext}`;
+          const path = `${TENANT_ID}/shared/memories/${id}.${ext}`;
           const { error } = await supabase.storage
             .from("files")
             .upload(path, blob, { upsert: true, contentType: blob.type || "image/jpeg" });
@@ -2485,6 +2500,16 @@ export function useOnboardingPacks() {
 /* ---------- super-user lesson edits (per unit, saved locally) ---------- */
 
 export interface LessonEdits {
+  /** Deleted slides retain their source indices so other slides' edits and learner answers stay attached. */
+  deletedSections?: number[];
+  /** Added figure ids whose slide index changed after splitting a slide. */
+  figureSections?: Record<string, number>;
+  /** External video links displayed on their lesson section. */
+  videos?: Record<number, string[]>;
+  /** Custom display titles keyed by canonical video id. */
+  videoTitles?: Record<string, string>;
+  /** Transcript-grounded, reviewed five-question assessments keyed by canonical video id. */
+  videoQuizzes?: Record<string, import("./lib/videoLearning").VideoQuiz>;
   /** AI-generated quiz questions keyed by lesson section index. */
   generatedQuizzes?: Record<number, import("./types").QuizQuestion[]>;
   /** section index -> retries allowed after the first check; null means unlimited */
@@ -2529,8 +2554,12 @@ export function useLessonEdits(us: string, temporary = false) {
 
   useEffect(() => {
     if (temporary) { setEditsState({}); return; }
+    let active = true;
     setEditsState(cachedLessonEdits<LessonEdits>(key, {}));
-    void loadLessonEdits<LessonEdits>(key, {}).then(setEditsState);
+    void loadLessonEdits<LessonEdits>(key, {}).then(loaded => {
+      if (active) setEditsState(cachedLessonEdits<LessonEdits>(key, loaded));
+    });
+    return () => { active = false; };
   }, [key, temporary]);
 
   useEffect(() => {
@@ -2564,6 +2593,19 @@ export function useLessonEdits(us: string, temporary = false) {
       }),
     [apply]
   );
+  const deleteSection = useCallback(async (sIdx: number) => {
+    const remove = (current: LessonEdits): LessonEdits => ({
+      ...current, deletedSections: Array.from(new Set([...(current.deletedSections ?? []), sIdx])),
+    });
+    if (temporary) { setEditsState(remove); return; }
+    const previous = cachedLessonEdits(key, edits);
+    try {
+      await flushLessonEdits(key, remove(previous));
+    } catch (error) {
+      receiveLessonEdits(key, JSON.stringify({ ...cachedLessonEdits(key, previous), deletedSections: previous.deletedSections }));
+      throw error;
+    }
+  }, [key, temporary, edits]);
   const setGeneratedQuiz = useCallback((sIdx: number, questions: import("./types").QuizQuestion[]) =>
     apply((d) => ({ ...d, generatedQuizzes: { ...(d.generatedQuizzes ?? {}), [sIdx]: questions } })), [apply]);
   const setQuizRetries = useCallback((sIdx: number, retries: number | null) =>
@@ -2729,7 +2771,9 @@ export function useLessonEdits(us: string, temporary = false) {
         for (const id of figIds) delete figureOffsetY[id];
         const sectionBody = { ...(d.sectionBody ?? {}) };
         delete sectionBody[sIdx];
-        return { ...d, headings, paragraphs, bullets, cards, examples, tableCells, figureOrder, captions, figureScale, figureOffsetY, sectionBody };
+        const videos = { ...(d.videos ?? {}) };
+        delete videos[sIdx];
+        return { ...d, headings, paragraphs, bullets, cards, examples, tableCells, figureOrder, captions, figureScale, figureOffsetY, sectionBody, videos };
       }),
     [apply]
   );
@@ -2756,7 +2800,7 @@ export function useLessonEdits(us: string, temporary = false) {
     [apply]
   );
 
-  return { edits, setHeading, setParagraph, setCaption, setKeyed, setSectionBody, setSectionBodyItem, setGeneratedQuiz, setQuizRetries, setAllQuizRetries, updateGeneratedQuizQuestion, removeGeneratedQuizQuestion, deleteGeneratedQuiz, moveFigure, setScale, setOffsetY, resetSection, setLessonPlan, setLogbook };
+  return { edits, deleteSection, setHeading, setParagraph, setCaption, setKeyed, setSectionBody, setSectionBodyItem, setGeneratedQuiz, setQuizRetries, setAllQuizRetries, updateGeneratedQuizQuestion, removeGeneratedQuizQuestion, deleteGeneratedQuiz, moveFigure, setScale, setOffsetY, resetSection, setLessonPlan, setLogbook };
 }
 
 /* ---------- user-uploaded notes (stored separately per profile) ---------- */

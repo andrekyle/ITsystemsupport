@@ -9,3 +9,6 @@ Learnership-*.html
 
 .vercel
 .env*
+
+# Local database recovery exports contain learner progress and personal data.
+supabase-export/

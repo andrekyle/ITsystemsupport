@@ -80,7 +80,10 @@ function delimitedTable(lines: Line[], start: number): Match | undefined {
   const delimiter: Delimiter | undefined = /(?<!\\)\|/.test(first) ? "pipe" : /\t/.test(first) ? "tab" : / {2,}/.test(first) ? "spaces" : undefined;
   if (!delimiter) return undefined;
   const headers = cells(first, delimiter);
-  if (headers.length < 2 || headers.length > 16 || headers.some(cell => !cell || cell.length > 160 || isNumber(cell))) return undefined;
+  const separator = delimiter === "pipe" && lines[start + 1] ? cells(lines[start + 1].text, delimiter) : [];
+  const explicitMarkdown = separator.length === headers.length && separator.every(cell => /^:?-{3,}:?$/.test(cell));
+  if (headers.length < 2 || headers.length > (explicitMarkdown ? 100 : 16)
+    || (!explicitMarkdown && headers.some(cell => !cell || cell.length > 160 || isNumber(cell)))) return undefined;
   const types = headers.map(headerType);
   const knownHeaders = types.filter(Boolean).length;
   if (delimiter === "spaces" && knownHeaders < 2) return undefined;
@@ -104,7 +107,7 @@ function delimitedTable(lines: Line[], start: number): Match | undefined {
     if (row.length === 1) break;
     // A visibly tabular but broken row should not be silently assigned columns.
     if (row.length !== headers.length) return undefined;
-    if (types.some((type, index) => type && type !== "text" && type !== "description" && !fits(row[index], type))) return undefined;
+    if (!markdown && types.some((type, index) => type && type !== "text" && type !== "description" && !fits(row[index], type))) return undefined;
     rows.push(row);
     cursor++;
   }
@@ -210,11 +213,10 @@ function expandInlineMarkdownTables(source: string): string {
 
 /** Reconstruct clearly tabular imports while retaining all unrecognised source text. */
 export function parseLessonTextBlocks(paragraphs: readonly string[]): LessonTextBlock[] {
-  // Clean each imported paragraph before recording offsets. This keeps the
-  // source ranges accurate when flattened Markdown grows into multiple lines,
-  // and prevents document-export <br> tags from reaching the slide as text.
+  // Preserve encoded cell line breaks until table rows have been identified.
+  // Decoding them early would split a single row into unrelated paragraphs.
   const normalizedParagraphs = paragraphs.map(paragraph =>
-    expandInlineMarkdownTables(paragraph).replace(/\s*<br\s*\/?>\s*/gi, "\n").trim(),
+    expandInlineMarkdownTables(paragraph).trim(),
   );
   const ranges: { text: string; start: number; end: number }[] = [];
   let source = "";
@@ -233,7 +235,7 @@ export function parseLessonTextBlocks(paragraphs: readonly string[]): LessonText
       if (paragraph.end <= start || paragraph.start >= end) continue;
       const complete = start <= paragraph.start && end >= paragraph.end;
       const text = complete ? paragraph.text : source.slice(Math.max(start, paragraph.start), Math.min(end, paragraph.end)).trim();
-      if (text) blocks.push({ kind: "paragraph", text });
+      if (text) blocks.push({ kind: "paragraph", text: text.replace(/\s*<br\s*\/?>\s*/gi, "\n") });
     }
   };
   let copiedThrough = 0;

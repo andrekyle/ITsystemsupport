@@ -32,7 +32,7 @@ function command(socket, method, params = {}) {
 }
 
 /** Use real time: virtual-time DOM dumps can finish before IndexedDB commits. */
-export async function runBrowserTest(dir) {
+export async function runBrowserTest(dir, viewport) {
   const browser = [process.env.CHROME_PATH, "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"].find(path => path && existsSync(path));
   if (!browser) throw new Error("Set CHROME_PATH to a Chromium browser executable.");
@@ -57,6 +57,11 @@ export async function runBrowserTest(dir) {
     const pages = await (await fetch(`http://${endpoint.host}/json/list`)).json();
     const page = await connect(pages.find(page => page.type === "page").webSocketDebuggerUrl);
     try {
+      if (viewport) {
+        await command(page, "Emulation.setDeviceMetricsOverride", {
+          ...viewport, deviceScaleFactor: 1, mobile: viewport.width < 600,
+        });
+      }
       await command(page, "Page.navigate", { url: pathToFileURL(join(dir, "index.html")).href });
       await new Promise(resolve => setTimeout(resolve, 200));
       const result = await command(page, "Runtime.evaluate", {

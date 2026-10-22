@@ -30,4 +30,79 @@ Generated forms preserve field content and order, not the exact paper layout. Re
 
 ## Checks
 
+### Build: PDF to editable HTML
+
+Build's Learner Guide, Practical Task, Learner Workbook and additional PDF uploads
+use code and the authenticated AI form endpoint together. Code extracts all
+printed text runs, fonts, positions, rules and table borders. AI reviews each page
+image to identify answer fields, solid colour panels and tightly cropped artwork.
+The digital renderer uses real HTML text and CSS shapes, not a full-page image.
+Only logos, photographs and diagrams may remain image crops. It does not ask AI
+to rewrite questions, invent a cover or replace the source wording.
+When an artwork crop overlaps extracted labels, code makes the text rectangles
+transparent (including rotated text and antialiased edges), retaining the labels
+as HTML and the surrounding artwork as an image. This avoids duplicate raster
+text without rejecting otherwise usable diagrams or logos.
+Artwork is not limited to 30% of a page: large individual diagrams are supported.
+Crops covering at least 90% of both page dimensions are rejected as page-sized
+substitutes. Layout validation failures are reported as conversion errors, not as
+missing fillable fields.
+Review the conversion before publishing: substitute fonts and AI-measured colour
+panels may differ from the PDF. Pages without extractable text fail explicitly;
+run OCR on a scanned PDF before uploading. There is no image-only success fallback.
+
+Uploads support 20 MB and 250 pages per PDF. Pages are saved using the existing
+`form-pages` storage bucket (apply `supabase/migrations/20260912_form_pages.sql`).
+Answers and annotations use the unit's existing learner-progress storage, with
+separate namespaces for each document. Printed output and editable HTML exports
+use the HTML page layers. The learner-pack PDF remains an original-source reference:
+it includes original page images, not the converted HTML. Use the document's
+Print / Save as PDF action for the converted document with saved answers.
+
+PDF-only builds are the default and need no pasted lesson text. Conversion requires
+a signed-in administrator, a configured AI endpoint and one AI request per page.
+Enable **Also generate lesson tabs** to use separately provided lesson source
+text without changing the
+uploaded documents. Rebuilding an older unit converts its archived
+original PDFs; old additional-document tabs without an archived PDF must be
+reuploaded for HTML conversion. Existing saved text-document
+answers are not erased or guessed into newly positioned PDF fields.
+
+HTML conversion checks: run `node --import tsx --test scripts/pdf-html.test.ts`.
+With Vite running, `testUnitHtml()` from `scripts/test-unit-html-browser.tsx`
+checks all 59 pages of the three 114046 source PDFs, every extracted text run,
+rotated HTML titles, editable answers, standalone HTML downloads and the no-text
+failure path. Authentication and AI responses are mocked; PDF extraction and
+HTML rendering are real. Live AI layout fidelity still needs administrator review.
+
+Lesson slide editing keeps text in normal single-column flow. Adding, moving or
+resizing an image does not enable text wrapping. Older floated images are
+normalised when displayed. Slide titles start as body text; use the editor's
+Paragraph style control to choose headings. Saved author-selected headings and
+tables are retained without running automatic heading/list/table inference again.
+The first paragraph uses the same body typography as other paragraphs, without
+an automatic blue accent line or extra indentation, in both viewing and editing.
+
+Super Users can **Delete slide** directly beside the lesson's Previous/Next
+controls. A confirmation is required and deletion is saved through the existing
+shared lesson edits (or retained in the current inline draft until it is saved).
+Deleted slides are omitted from navigation, presentation and updated exports.
+Source indices are retained internally so remaining slides keep their text edits,
+videos, questions and learner answers. Deleting the final slide shows an empty
+lesson rather than restoring removed content. Save failures are shown on the page.
+Check with `node scripts/test-lesson-heading-browser.mjs scripts/test-slide-deletion-browser.tsx`.
+
+The slide text toolbar includes **Format painter** beside Underline. Select source
+text, click Format painter, then select destination text to apply its font, size,
+emphasis, explicit text colour, highlight and paragraph formatting once. Heading
+style and paragraph alignment/spacing apply to the destination paragraphs;
+character formatting applies only to the selected words. Escape or clicking the
+tool again cancels. Changes use the normal save and undo/redo paths.
+Check with `node scripts/test-lesson-heading-browser.mjs scripts/test-format-painter-browser.tsx`.
+
+Unit 114074 does not expose the Learner Workbook or its Memo tab, including for
+older saved builds with generated workbook content. Remembered workbook tabs
+return to Learning activities. Existing saved content and learner responses are
+retained; other units' workbook tabs are unchanged.
+
 Run `node --import tsx --test scripts/form-builder.test.ts scripts/generate-form.test.ts scripts/form-database.test.ts` and `npm run build` from the project directory. The database test runs the migration twice in embedded PostgreSQL and checks template permissions, response isolation, source-document access and cascading deletion without contacting Supabase.

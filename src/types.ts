@@ -103,6 +103,21 @@ export interface EnrolmentInfo {
   signedDate: string;
 }
 
+export type ProfileContentType =
+  | "Article" | "Podcast" | "Video" | "Book" | "Course" | "Event" | "Experience"
+  | "Accomplishment" | "Award" | "Certificate" | "Badge" | "Degree";
+
+export interface ProfileContentEntry {
+  id: string;
+  type: ProfileContentType;
+  title: string;
+  organisation: string;
+  date: string;
+  description: string;
+  url: string;
+  image?: string;
+}
+
 export interface Profile {
   id: string;
   name: string;
@@ -130,6 +145,7 @@ export interface Profile {
   cloudUserId?: string;
   /** Filled-in Student Registration Form (paper-form replacement). */
   registrationForm?: RegistrationForm;
+  contentEntries?: ProfileContentEntry[];
 }
 
 /** Complete Student Registration Form — mirrors the paper form used at
@@ -429,6 +445,7 @@ export interface SaqaSection {
 }
 
 export interface SaqaDetails {
+  source?: { url: string; retrieved: string };
   notice: string;
   registration: { label: string; value: string }[];
   sections: SaqaSection[];
@@ -542,6 +559,10 @@ export interface UnitContent {
   selfAssessment?: SelfAssessment;
   /** Memo-aligned learner workbook with one answer box per marked task. */
   workbook?: WorkbookSpec;
+  /** Source-faithful workbook upload; takes precedence over generated workbook activities. */
+  learnerWorkbook?: PracticalTaskDocument;
+  /** Uploaded guide shown as its original PDF pages with editable answer fields. */
+  learnerGuide?: PracticalTaskDocument;
 }
 
 export interface EditableUnitDocument {
@@ -572,7 +593,15 @@ export interface PracticalTaskSection {
   description?: string;
   fields?: PracticalTaskField[];
   items?: PracticalTaskItem[];
+  /** Ordered source blocks, absent on legacy hand-authored assessment forms. */
+  blocks?: SourceDocumentBlock[];
 }
+
+export type SourceDocumentBlock =
+  | { kind: "page"; number: number }
+  | { kind: "field"; field: PracticalTaskField }
+  | { kind: "item"; item: PracticalTaskItem; format: "paragraph" | "numbered" | "bullet" | "heading" }
+  | { kind: "table"; id: string; headers: string[]; rows: string[][] };
 
 export interface PracticalTaskDocument {
   title: string;
@@ -580,6 +609,11 @@ export interface PracticalTaskDocument {
   sourceName?: string;
   notice?: string;
   sections: PracticalTaskSection[];
+  /** Clean extraction kept for completeness checks, never rewritten by AI. */
+  sourceText?: string;
+  sourcePageCount?: number;
+  /** Original PDF pages and positioned inputs, never a redesigned text document. */
+  replica?: import("./lib/formSchema").FormDefinition;
 }
 
 /** End-of-unit self assessment: learner ticks each statement they feel competent in. */
@@ -620,6 +654,7 @@ export interface CourseModule {
 
 export type PageId =
   | "dashboard"
+  | "adminDashboard"
   | "course"
   | "module"
   | "unit"
@@ -642,7 +677,6 @@ export type PageId =
   | "forms"
   | "trackerReport"
   | "reports"
-  | "howto"
   | "onboarding"
   | "voting";
 

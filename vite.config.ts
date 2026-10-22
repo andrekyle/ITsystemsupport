@@ -3,6 +3,28 @@ import react from "@vitejs/plugin-react";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
+function pdfWasmAssets(): Plugin {
+  const directory=path.resolve("node_modules","pdfjs-dist","wasm");
+  return {
+    name:"pdf-wasm-assets",
+    async generateBundle(){
+      for(const name of await fs.readdir(directory)){
+        this.emitFile({type:"asset",fileName:`pdfjs-wasm/${name}`,source:await fs.readFile(path.join(directory,name))});
+      }
+    },
+    configureServer(server){
+      server.middlewares.use("/pdfjs-wasm", (request,response,next)=>{
+        const name=(request.url??"").split("?")[0].replace(/^\//,"");
+        if(!/^[a-zA-Z0-9_.-]+$/.test(name)){next();return;}
+        void fs.readFile(path.join(directory,name)).then(bytes=>{
+          response.setHeader("Content-Type",name.endsWith(".wasm")?"application/wasm":name.endsWith(".js")?"text/javascript":"text/plain");
+          response.end(bytes);
+        }).catch(next);
+      });
+    },
+  };
+}
+
 /** Serve the Vercel function api/mark-answer.ts in local dev, so the LLM
  *  semantic marking behaves the same on localhost as in production.
  *  Needs OPENAI_API_KEY in .env.local; without it the endpoint reports
@@ -258,7 +280,7 @@ function apiDev(env: Record<string, string>): Plugin {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   return {
-    plugins: [react(), markAnswerDev(env), formBuilderDev(env), saveCalendarDev(), apiDev(env)],
+    plugins: [react(), pdfWasmAssets(), markAnswerDev(env), formBuilderDev(env), saveCalendarDev(), apiDev(env)],
     server: {
       watch: {
         // These document/binary files sit in the project root and are not part

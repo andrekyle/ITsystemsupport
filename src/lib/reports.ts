@@ -1,5 +1,6 @@
 import type { Profile } from "../types";
-import { COURSE_META, MODULES } from "../data/course";
+import { COURSE_META, MODULES, POE_TOTAL } from "../data/course";
+import { programmeAnalysisData, programmeAnalysisHtml, PROGRAMME_ANALYSIS_CSS } from "./programmeAnalysis";
 import { TENANT_ID } from "./tenant";
 import { loadOutcomes } from "../store";
 import { docToolbar } from "./certificates";
@@ -8,6 +9,7 @@ import { loadMarkingModel, recordTokenUsage } from "./tokens";
 import type { LearnerRow } from "../pages/Analytics";
 import { enhanceTrackerHtml } from "./trackerEditor";
 import { supabase } from "./supabase";
+import { REPORT_DIALOG_SCRIPT } from "./dialogs";
 
 /**
  * AI report generation (super user only): builds a compact statistics bundle
@@ -27,6 +29,12 @@ export interface ReportKind {
 }
 
 export const REPORT_KINDS: ReportKind[] = [
+  {
+    id: "data-analysis",
+    name: "Programme data analysis report",
+    desc: "A graph-rich programme analysis: learner completion, attendance, assessment performance, evidence, credits, module competence, unit status and risk, with a colourful Microsoft-style palette.",
+    icon: "chart",
+  },
   {
     id: "progress",
     name: "Learnership progress report",
@@ -224,6 +232,16 @@ function outcomesData(rows: LearnerRow[], scope: ReportScope = "worked") {
   });
 }
 
+function analysisData(rows: LearnerRow[], scope: ReportScope) {
+  const selected = scope === "all" ? null : workedUnitCodes(rows);
+  const units = MODULES.flatMap(module => module.units
+    .filter(unit => !selected || selected.has(unit.us))
+    .map(unit => ({ us: unit.us, title: unit.title, module: module.name })));
+  // No started units means an empty worked-unit scope, not the first module.
+  const codes = new Set(units.map(unit => `US ${unit.us}`));
+  return programmeAnalysisData(rows, units, outcomesData(rows, "all").filter(unit => codes.has(unit.unitStandard)), POE_TOTAL, COURSE_META.credits);
+}
+
 /** Compact JSON bundle the AI writes the report from. */
 export function buildReportData(
   kind: string,
@@ -257,6 +275,13 @@ export function buildReportData(
     })),
   };
   switch (kind) {
+    case "data-analysis":
+      return {
+        ...base,
+        learners: rows.map(learnerStat),
+        analysis: analysisData(rows, scope),
+        note: "This is a current snapshot, not a historical comparison. Learner completion, scores, evidence and credits cover the whole programme; unit/module charts follow the selected scope. Missing scores/attendance are not zero. The client renders all charts from these exact data.",
+      };
     case "attendance":
       return {
         ...base,
@@ -828,6 +853,7 @@ export function reportDocumentHtml(
   .st-x { background: #ff5a52; }
   .tracker td.st-x { color: #fff; font-weight: 600; }
   @media print { body { padding: 10mm 12mm; } h2 { break-after: avoid; } tr { break-inside: avoid; } ${tracker ? "@page { size: A3 landscape; }" : ""} }
+  ${kind.id === "data-analysis" ? PROGRAMME_ANALYSIS_CSS : ""}
 </style>
 </head>
 <body>
@@ -835,18 +861,19 @@ export function reportDocumentHtml(
   <h1>${esc(kind.name)}</h1>
   <p class="sub">${esc(COURSE_META.title)} · SAQA ID ${esc(COURSE_META.saqaId)} · NQF Level ${COURSE_META.nqfLevel} · ${COURSE_META.credits} Credits · Quality assured by ${esc(COURSE_META.qualityAssurance)}</p>
 
-  <div class="banner">
+  ${kind.id === "data-analysis" ? `<div class="analysis-report-meta"><span><strong>Snapshot</strong> ${esc(today)}</span><span><strong>Unit scope</strong> ${scope === "all" ? "Whole programme" : "Started units"}</span><span><strong>Prepared for</strong> ${esc(author.name)}</span><span><strong>Source</strong> Recorded platform data</span></div><div class="banner">${esc(report.intro)}${question?.trim() ? `<p class="small">${esc(question.trim())}</p>` : ""}</div>` : `<div class="banner">
     <strong>${esc(kind.name)} — generated ${esc(today)}.</strong><br/>
     ${question?.trim() ? `<em>Question asked: “${esc(question.trim())}”</em><br/>` : ""}
     ${esc(report.intro)}
     <span class="small">${scope === "all" ? "Covers the whole programme." : "Covers only the unit standards worked on so far."} Written by the ITSS Learn AI reporting assistant from live platform data; reviewed by ${esc(author.name)}.</span>
-  </div>
-  <section class="report-section">${sections}</section>
-  ${recs ? `<section class="report-section">${recs}</section>` : ""}
+  </div>`}
+  ${kind.id === "data-analysis" ? programmeAnalysisHtml(analysisData(rows, scope)) : ""}
+  <section class="report-section${kind.id === "data-analysis" ? " analysis-document-section" : ""}">${sections}</section>
+  ${recs ? `<section class="report-section${kind.id === "data-analysis" ? " analysis-document-section" : ""}">${recs}</section>` : ""}
 ${tracker ? "" : `
   <h2>Appendix · Data snapshot</h2>
   <p class="small">Figures as recorded on ITSS Learn at the time of generation (${esc(today)}).</p>
-  ${appendixTable(kind.id, rows, scope)}
+  ${kind.id === "data-analysis" ? `<div class="analysis-appendix" tabindex="0" role="region" aria-label="Learner data snapshot">${appendixTable(kind.id, rows, scope)}</div>` : appendixTable(kind.id, rows, scope)}
 `}
   <div class="sign">
     <div>
@@ -879,6 +906,7 @@ ${tracker ? "" : `
     <button type="button" class="section-control" onclick="__removeSection()">− Remove section</button>
     <button type="button" id="__editBtn" onclick="__toggleEdit()" title="Click any text to change it before printing or downloading">✎ Editing: off</button>
   </div>
+  ${REPORT_DIALOG_SCRIPT}
   <script>
     // toggle whole-document editing — every character becomes editable
     var __editing = false;
@@ -909,7 +937,7 @@ ${tracker ? "" : `
       section.scrollIntoView({ behavior:"smooth", block:"center" });
     }
     function __removeSection() {
-      if (!__selectedSection) { alert("Select a report section first."); return; }
+      if (!__selectedSection) { void showAppDialog("Select a report section first."); return; }
       var next = __selectedSection.nextElementSibling || __selectedSection.previousElementSibling;
       __selectedSection.remove();
       __selectedSection = next && next.classList.contains("report-section") ? next : null;
@@ -997,7 +1025,7 @@ export function openReportDocument(
 let logoCache: string | null = null;
 
 /** Eruditio logo as a data URL so downloaded reports stay self-contained. */
-async function eruditioLogoDataUrl(): Promise<string> {
+export async function eruditioLogoDataUrl(): Promise<string> {
   if (logoCache !== null) return logoCache;
   try {
     const blob = await (await fetch("/logos/eruditio.svg")).blob();
@@ -1194,13 +1222,22 @@ function paginateDeckSlides(slides: DeckSlide[]): DeckSlide[] {
   });
 }
 
+export interface DeckDocumentMeta {
+  eyebrow?: string;
+  sponsorWord?: string;
+  metaRows?: [string, string][];
+  filename?: string;
+  footerText?: string;
+}
+
 /** Printable deck document — pixel replica of the approved PPTX template. */
 export function deckDocumentHtml(
   kind: ReportKind,
   deck: AiDeck,
   rows: LearnerRow[],
   author: Profile,
-  logo: string
+  logo: string,
+  documentMeta: DeckDocumentMeta = {}
 ): string {
   const now = new Date();
   const cover = deck.cover ?? {};
@@ -1213,19 +1250,20 @@ export function deckDocumentHtml(
   );
   const month = monthMatch?.[monthMatch.length - 1] ?? now.toLocaleString("en-GB", { month: "long" });
   const sponsor = (COURSE_META as { sponsor?: string }).sponsor ?? "";
-  const sponsorWord = (sponsor.trim().split(/\s+/)[0] || "Learnership").toUpperCase();
-  const eyebrow = `${sponsorWord} • ${month.toUpperCase()} LEARNERSHIP REPORT`;
+  const sponsorWord = documentMeta.sponsorWord ?? (sponsor.trim().split(/\s+/)[0] || "Learnership").toUpperCase();
+  const eyebrow = documentMeta.eyebrow ?? `${sponsorWord} • ${month.toUpperCase()} LEARNERSHIP REPORT`;
   const title = cover.title?.trim() || `${month} ${kind.name}`;
   const subtitle = cover.subtitle?.trim() || `${COURSE_META.title} • ${month} ${now.getFullYear()}`;
   const card = cover.card ?? {};
   const slides = paginateDeckSlides(deck.slides);
   const slug = kind.name.replace(/\s+/g, "-").toLowerCase();
-  const filename = `${slug}-${now.toISOString().slice(0, 10)}.html`;
+  const filename = documentMeta.filename ?? `${slug}-${now.toISOString().slice(0, 10)}.html`;
+  const footerText = documentMeta.footerText ?? "Eruditio • Empower · Develop · Transform";
   const logoCss = logo
     ? `.slogo{background-image:url("${logo}")}.clogo{background-image:url("${logo}")}`
     : "";
 
-  const metaRows: [string, string][] = [
+  const metaRows: [string, string][] = documentMeta.metaRows ?? [
     ["SAQA ID", COURSE_META.saqaId],
     ...(sponsor ? ([["Sponsor", sponsor]] as [string, string][]) : []),
     ["NQF level", `Level ${COURSE_META.nqfLevel} • ${COURSE_META.credits} credits`],
@@ -1250,7 +1288,7 @@ export function deckDocumentHtml(
       <div class="s">${esc(card.body || `Compiled from the ITSS Learn platform records by ${author.name}.`)}</div>
     </div>
     <div class="fline"></div>
-    <div class="ftext">Eruditio • Empower · Develop · Transform</div>
+    <div class="ftext">${esc(footerText)}</div>
     <div class="fpage">01</div>
   </section>`;
 
@@ -1265,7 +1303,7 @@ export function deckDocumentHtml(
     <div class="rule"></div>
     <div class="content">${deckSlideBody(s)}</div>
     <div class="fline"></div>
-    <div class="ftext">Eruditio • Empower · Develop · Transform</div>
+    <div class="ftext">${esc(footerText)}</div>
     <div class="fpage">${String(i + 2).padStart(2, "0")}</div>
   </section>`
     )
@@ -1401,6 +1439,7 @@ export function deckDocumentHtml(
     <button type="button" class="section-control" onclick="__removeSection()">− Remove section</button>
     <button type="button" id="__editBtn" onclick="__toggleEdit()" title="Click any text to change it before printing or downloading">✎ Editing: off</button>
   </div>
+  ${REPORT_DIALOG_SCRIPT}
   <script>
     var __editing = false;
     var __selectedSection = null;
@@ -1439,7 +1478,7 @@ export function deckDocumentHtml(
       section.scrollIntoView({ behavior:"smooth", block:"center" });
     }
     function __removeSection() {
-      if (!__selectedSection) { alert("Select a report section first."); return; }
+      if (!__selectedSection) { void showAppDialog("Select a report section first."); return; }
       var slides = document.querySelectorAll(".slide");
       if (slides.length <= 1) return;
       var next = __selectedSection.nextElementSibling || __selectedSection.previousElementSibling;

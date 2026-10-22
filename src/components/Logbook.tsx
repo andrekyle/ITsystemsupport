@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { Icon } from "../icons";
 import { DateTimePicker } from "./DateTimePicker";
 import { InlineText, InlineIconBtn } from "./InlineText";
+import { EditingTools } from "./EditingSidebar";
 import type { LogbookChecklistRow, LogbookSpec, PoeDoc, Profile } from "../types";
 import { deleteFile, downloadDoc, uploadFile, userPrefix } from "../lib/files";
 import { autoGrowTextarea } from "../lib/autoGrow";
@@ -9,6 +10,7 @@ import { ConfirmModal } from "./Modal";
 import { DocumentSignature } from "./DocumentSignature";
 import { DocumentActions } from "./DocumentActions";
 import { canSignDocumentField } from "../lib/documentSignatures";
+import { usePhoneView } from "./usePhoneView";
 
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -43,12 +45,12 @@ function ChecklistRows({
             {editable && onEdit ? (
               <div className="lb-edit-row">
                 <InlineText value={row.text} editable multiline placeholder="Checklist item" onSave={(text) => onEdit((list) => { list[i].text = text; })} />
-                <span className="lb-edit-ctls">
+                <EditingTools active title={`Checklist item ${startNo + i}`}><div className="lb-edit-ctls">
                   <InlineIconBtn title="Move up" icon="chevronUp" onClick={() => onEdit((list) => { if (i > 0) [list[i - 1], list[i]] = [list[i], list[i - 1]]; })} />
                   <InlineIconBtn title="Move down" icon="chevronDown" onClick={() => onEdit((list) => { if (i < list.length - 1) [list[i + 1], list[i]] = [list[i], list[i + 1]]; })} />
                   <InlineIconBtn title="Insert row below" icon="plus" onClick={() => onEdit((list) => { list.splice(i + 1, 0, { text: "New checklist item", marks: list[i].marks.slice() }); })} />
                   <InlineIconBtn title="Delete row" icon="trash" danger onClick={() => onEdit((list) => { list.splice(i, 1); })} />
-                </span>
+                </div></EditingTools>
               </div>
             ) : (
               row.text
@@ -125,13 +127,14 @@ interface LogbookProps {
 }
 
 export function Logbook({ spec, values, onChange, editable = false, onSpecChange, profile }: LogbookProps) {
+  const phone = usePhoneView();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState(false);
   /** file chosen but not yet saved — committed by the Save report button */
   const [pending, setPending] = useState<File | null>(null);
-  const editing = editable && !!onSpecChange;
+  const editing = !phone && editable && !!onSpecChange;
   const update = (mutate: (draft: LogbookSpec) => void) => {
     if (!onSpecChange) return;
     const draft = structuredClone(spec);
@@ -143,7 +146,9 @@ export function Logbook({ spec, values, onChange, editable = false, onSpecChange
     <InlineText value={value} editable={editing} onSave={onSave} as={options.as} className={options.className} placeholder={options.placeholder} multiline={options.multiline} />
   );
   const addButton = (label: string, onClick: () => void) => (
-    <button type="button" className="btn ghost sm plan-add" onClick={onClick}><Icon name="plus" size={13} /> {label}</button>
+    <EditingTools active={editing} title="Logbook structure">
+      <button type="button" className="btn ghost sm plan-add" onClick={onClick}><Icon name="plus" size={13} /> {label}</button>
+    </EditingTools>
   );
   const projectDoc: PoeDoc | null = (() => {
     const raw = values["project.upload"];
@@ -257,7 +262,7 @@ export function Logbook({ spec, values, onChange, editable = false, onSpecChange
   );
 
   return (
-    <><DocumentActions name="Learner Logbook" /><div className={`logbook document-print-target${editing ? " lb-editing" : ""}`}>
+    <><DocumentActions name="Learner Logbook" editing={editing} /><div className={`logbook document-print-target${editing ? " lb-editing" : ""}`}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="book" size={20} />
@@ -277,14 +282,14 @@ export function Logbook({ spec, values, onChange, editable = false, onSpecChange
               <tr key={fi}>
                 <td className="k">
                   {editing ? (
-                    <span className="lb-edit-row">
+                    <div className="lb-edit-row">
                       {text(f, (v) => update((d) => { d.detailFields[fi] = v; }), { placeholder: "Field label" })}
-                      <span className="lb-edit-ctls">
+                      <EditingTools active title={`Learner detail ${fi + 1}`}><div className="lb-edit-ctls">
                         <InlineIconBtn title="Move up" icon="chevronUp" onClick={() => update((d) => { if (fi > 0) [d.detailFields[fi - 1], d.detailFields[fi]] = [d.detailFields[fi], d.detailFields[fi - 1]]; })} />
                         <InlineIconBtn title="Move down" icon="chevronDown" onClick={() => update((d) => { if (fi < d.detailFields.length - 1) [d.detailFields[fi + 1], d.detailFields[fi]] = [d.detailFields[fi], d.detailFields[fi + 1]]; })} />
                         <InlineIconBtn title="Remove field" icon="trash" danger onClick={() => update((d) => { d.detailFields.splice(fi, 1); })} />
-                      </span>
-                    </span>
+                      </div></EditingTools>
+                    </div>
                   ) : f}
                 </td>
                 <td className="lb-fill">
@@ -443,9 +448,9 @@ export function Logbook({ spec, values, onChange, editable = false, onSpecChange
           Evidence checklist
         </div>
         {editing && (
-          <p className="muted lb-edit-hint">
+          <EditingTools active title="Logbook editing"><p className="muted lb-edit-hint">
             Click a row to edit its text. Clicking a mark sets the default evidence mark for that row; learners can still adjust their own marks.
-          </p>
+          </p></EditingTools>
         )}
         <div className="lb-scroll">
           <table className="data lb-matrix">
@@ -513,11 +518,11 @@ export function Logbook({ spec, values, onChange, editable = false, onSpecChange
                   {editing ? (
                     <div className="lb-edit-row">
                       {text(a, (v) => update((d) => { d.workplaceActivities[i] = v; }), { placeholder: "Workplace activity", multiline: true })}
-                      <span className="lb-edit-ctls">
+                      <EditingTools active title={`Workplace activity ${i + 1}`}><div className="lb-edit-ctls">
                         <InlineIconBtn title="Move up" icon="chevronUp" onClick={() => update((d) => { if (i > 0) [d.workplaceActivities[i - 1], d.workplaceActivities[i]] = [d.workplaceActivities[i], d.workplaceActivities[i - 1]]; })} />
                         <InlineIconBtn title="Move down" icon="chevronDown" onClick={() => update((d) => { if (i < d.workplaceActivities.length - 1) [d.workplaceActivities[i + 1], d.workplaceActivities[i]] = [d.workplaceActivities[i], d.workplaceActivities[i + 1]]; })} />
                         <InlineIconBtn title="Delete activity" icon="trash" danger onClick={() => update((d) => { d.workplaceActivities.splice(i, 1); })} />
-                      </span>
+                      </div></EditingTools>
                     </div>
                   ) : a}
                 </td>
@@ -560,11 +565,11 @@ export function Logbook({ spec, values, onChange, editable = false, onSpecChange
                   {editing ? (
                     <div className="lb-edit-row">
                       {text(a.activity, (v) => update((d) => { d.otherActivities[i].activity = v; }), { as: "strong", placeholder: "Activity" })}
-                      <span className="lb-edit-ctls">
+                      <EditingTools active title={`Other activity ${i + 1}`}><div className="lb-edit-ctls">
                         <InlineIconBtn title="Move up" icon="chevronUp" onClick={() => update((d) => { if (i > 0) [d.otherActivities[i - 1], d.otherActivities[i]] = [d.otherActivities[i], d.otherActivities[i - 1]]; })} />
                         <InlineIconBtn title="Move down" icon="chevronDown" onClick={() => update((d) => { if (i < d.otherActivities.length - 1) [d.otherActivities[i + 1], d.otherActivities[i]] = [d.otherActivities[i], d.otherActivities[i + 1]]; })} />
                         <InlineIconBtn title="Delete activity" icon="trash" danger onClick={() => update((d) => { d.otherActivities.splice(i, 1); })} />
-                      </span>
+                      </div></EditingTools>
                     </div>
                   ) : (
                     <strong>{a.activity}</strong>
@@ -727,11 +732,11 @@ export function Logbook({ spec, values, onChange, editable = false, onSpecChange
                       {editing ? (
                         <div className="lb-edit-row">
                           {text(p.name, (v) => update((d) => { d.projectChecklist[pi].name = v; }), { placeholder: "Project name" })}
-                          <span className="lb-edit-ctls">
+                          <EditingTools active title={`Project ${pi + 1}`}><div className="lb-edit-ctls">
                             <InlineIconBtn title="Move up" icon="chevronUp" onClick={() => update((d) => { if (pi > 0) [d.projectChecklist[pi - 1], d.projectChecklist[pi]] = [d.projectChecklist[pi], d.projectChecklist[pi - 1]]; })} />
                             <InlineIconBtn title="Move down" icon="chevronDown" onClick={() => update((d) => { if (pi < d.projectChecklist.length - 1) [d.projectChecklist[pi + 1], d.projectChecklist[pi]] = [d.projectChecklist[pi], d.projectChecklist[pi + 1]]; })} />
                             <InlineIconBtn title="Delete project" icon="trash" danger onClick={() => update((d) => { d.projectChecklist.splice(pi, 1); })} />
-                          </span>
+                          </div></EditingTools>
                         </div>
                       ) : p.name}
                     </td>
@@ -764,4 +769,3 @@ export function Logbook({ spec, values, onChange, editable = false, onSpecChange
     </div></>
   );
 }
-

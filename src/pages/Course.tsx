@@ -1,29 +1,35 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
+import { createPortal, flushSync } from "react-dom";
 import JSZip from "jszip";
 import { Icon } from "../icons";
 import type { Exercise, ExerciseCheck, LessonFigure, LessonPlan, LessonPlanRow, LessonSection, LogbookSpec, PoeDoc, ProgressState, Profile, QuizQuestion, Role, Route, UnitActivity, UnitContent, UnitStandard } from "../types";
 import { UNIT_ACTIVITIES, isStaff } from "../types";
 import { COURSE_BLURB, COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
-import { getCourses, activeCourseId, courseStorageKey, deleteCustomCourse, setActiveCourse } from "../data/courses";
+import { activeCourseId, courseStorageKey, deleteCustomCourse } from "../data/courses";
 import { CourseCreator } from "../components/CourseCreator";
 import { useInlineCourse } from "../components/useInlineCourse";
 import { courseScopedUnit } from "../lib/courseScope";
 import { Select } from "../components/Select";
 import { GLOSSARY, getContent } from "../data/content";
+import { getSaqaDetails } from "../data/saqaDetails";
 import { FIGURE_DEFAULTS as BASE_FIGURE_DEFAULTS } from "../data/figureDefaults";
 import { HWSW_SLIDE_FIGURES } from "../data/hwswSlideFigures";
 const FIGURE_DEFAULTS = { ...BASE_FIGURE_DEFAULTS, ...HWSW_SLIDE_FIGURES };
 import { flushProgress, moduleCompletion, unitCompletion, unitStatus, readCourseWideSlides, useDeckOverrides, useLessonEdits, useLessonFigures, useNotes, usePlanSlides, useSharedSettings, useWorkbookMemo } from "../store";
-import { Bar } from "../components/Ring";
+import { Bar, Ring } from "../components/Ring";
 import { Quiz, seededShuffle } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
 import { ConfirmModal } from "../components/Modal";
+import { UnitEditingDialog } from "../components/UnitEditingDialog";
 import { SlideEditableText } from "../components/SlideEditableText";
 import { SlideTextToolbar } from "../components/SlideTextToolbar";
-import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml, hydrateSlideImages } from "../lib/slideRichText";
+import { LessonVideoEditor, LessonVideos } from "../components/LessonVideos";
+import { videoEngagementKey, videoQuizId } from "../lib/videoLearning";
+import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml, hydrateSlideImages, normalizeSlideDocument } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
 import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, effectiveBuiltContent } from "../components/UnitBuilder";
+import { lessonEditsAfterInsert, lessonEditsAfterSplit } from "../lib/lessonSectionEdits";
 import { InlineText, InlineIconBtn } from "../components/InlineText";
 import { ActivityQuestionEditor } from "../components/ActivityQuestionEditor";
 import { UnitContentEditor } from "../components/UnitContentEditor";
@@ -37,23 +43,32 @@ import { supabase } from "../lib/supabase";
 import { flushKey } from "../lib/sync";
 import { GeneratedQuizEditor } from "../components/GeneratedQuizEditor";
 import { saveBuiltUnit, useBuiltUnit } from "../lib/useBuiltUnit";
-import { flushLessonEdits } from "../lib/lessonEditStore";
+import { cachedLessonEdits, flushLessonEdits } from "../lib/lessonEditStore";
 import { EditableActivityText } from "../components/EditableActivityText";
 import { fileToImageDataUrl } from "../components/Avatar";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 import { requestSemanticReview } from "../lib/llm";
-import { loadContentModel } from "../lib/tokens";
+import { loadContentModel, recordTokenUsage } from "../lib/tokens";
 import { checkSpelling, type SpellIssue } from "../lib/spellcheck";
 import { autoGrowTextarea } from "../lib/autoGrow";
 import { insertLessonPlanDay, lessonPlanDayCount, removeLessonPlanDay, startLessonPlanDay } from "../lib/lessonPlanDays";
-import { groupLessonHtml, isLessonBulletListLead, isLessonListLead, isLessonListPoint, isLessonNumberedListLead, isLessonSubheading, lessonListItemText } from "../lib/lessonSubsections";
+import { isLessonBulletListLead, isLessonListLead, isLessonListPoint, isLessonNumberedListLead, isLessonSubheading, lessonListItemText } from "../lib/lessonSubsections";
 import { clearInlineDraft, loadInlineDraft, saveInlineDraft } from "../lib/inlineDraftStorage";
 import { resolvedSlideQuizAnswer } from "../lib/slideQuiz";
+import { EditingTools } from "../components/EditingSidebar";
+import { InfoSectionTabs } from "../components/InfoSectionTabs";
+import { usePhoneView } from "../components/usePhoneView";
 
 const GLOSS_RE = new RegExp(`\\b(${Object.keys(GLOSSARY).join("|")})\\b`, "gi");
 
 const PlanText = InlineText;
 const PlanIconBtn = InlineIconBtn;
+
+function CourseEditingTools({ active, title, children }: { active: boolean; title: string; children: React.ReactNode }) {
+  const phone = usePhoneView();
+  if (phone) return null;
+  return active ? <EditingTools active title={title}>{children}</EditingTools> : <>{children}</>;
+}
 
 const newPlanRow = (): LessonPlanRow => ({ time: "10 minutes", title: "New activity", text: [""], resources: [] });
 
@@ -1244,6 +1259,7 @@ export function ExerciseQuestion({
   // existing marker, LLM review, spell checker and save path unchanged.
   const nParts = check.concepts.length;
   const [parts, setParts] = useState<string[]>(() => splitIntoParts(saved, check.concepts.length));
+  const [editingAnswer, setEditingAnswer] = useState(false);
   const val = useMemo(() => joinParts(parts), [parts]);
   // Auto-grow each answer box to fit its content (see autoGrowTextarea) —
   // re-run whenever the boxes' text changes, including programmatic changes
@@ -1420,7 +1436,7 @@ export function ExerciseQuestion({
                   placeholder={
                     nParts === 1
                       ? `Type your answer here (at least ${MIN_ANSWER_WORDS} words — explain in your own words), then check it…`
-                      : `Explain key idea ${i + 1} in your own words (at least ${MIN_EXPLANATION_WORDS} words)…`
+                      : undefined
                   }
                   value={p}
                   onFocus={() => setFocusPart(i)}
@@ -1449,6 +1465,7 @@ export function ExerciseQuestion({
             {overSubmitLimit && " — shorten this answer before submitting."}
           </div>
           {val.trim().length > 0 && (
+            <CourseEditingTools active={editingAnswer} title={`${check.labels?.[0] ?? "Activity answer"}: spelling`}>
             <div
               className={`exq-spell ${misspellings.length ? "has-issues" : "clean"}`}
               aria-live="polite"
@@ -1519,11 +1536,14 @@ export function ExerciseQuestion({
                 </>
               )}
             </div>
+            </CourseEditingTools>
           )}
         </>
       )}
       {!ok && (
+        <CourseEditingTools active={editingAnswer} title={`${check.labels?.[0] ?? "Activity answer"}: editing`}>
         <div className="exq-check">
+          {editingAnswer && <button type="button" className="btn ghost sm" onClick={() => setEditingAnswer(false)}>Done editing answer</button>}
           {locked && !result ? (
             <span className="exq-status wrong">
               No checks left — you have used your {EXQ_MAX_CHECKS} checks for this question, so
@@ -1535,6 +1555,7 @@ export function ExerciseQuestion({
             <button
               className="btn ghost"
               onClick={() => {
+                setEditingAnswer(true);
                 setResult(null);
                 setReviewing(false);
                 setExtras(new Set());
@@ -1559,6 +1580,7 @@ export function ExerciseQuestion({
                     onTries(next);
                   }
                   setResult(r);
+                  setEditingAnswer(false);
                   setReviewing(false);
                   setExtras(new Set());
                   setReviewedText(null);
@@ -1626,6 +1648,7 @@ export function ExerciseQuestion({
             </span>
           )}
         </div>
+        </CourseEditingTools>
       )}
       {ok && (
         <div className="exq-status ok">
@@ -1645,6 +1668,7 @@ export function ExerciseQuestion({
               style={{ marginLeft: "auto" }}
               title="Improve your answer to earn more marks"
               onClick={() => {
+                setEditingAnswer(true);
                 setResult(null);
                 setReviewing(false);
                 setExtras(new Set());
@@ -1788,13 +1812,21 @@ export function CoursePage({
   profile: Profile;
 }) {
   const [creatingCourse, setCreatingCourse] = useState(false);
+  const [programmeTab, setProgrammeTab] = useState("flow");
+  const phone = usePhoneView();
+  const programmeTabs = [
+    { id: "flow", label: "How modules work" },
+    { id: "about", label: "About the programme" },
+    { id: "purpose", label: "Purpose & rationale" },
+    { id: "learning", label: "What you'll learn" },
+  ];
   const inline = useInlineCourse(profile.role === "Super User");
   const { meta: COURSE_META, blurb: COURSE_BLURB, modules: MODULES, moduleFlow: MODULE_FLOW, programmeAbout: PROGRAMME_ABOUT, programmePurpose: PROGRAMME_PURPOSE, whatYoullLearn: WHAT_YOULL_LEARN } = inline.course;
   const [deletingCourse, setDeletingCourse] = useState(false);
   const [selectedCourseId] = useState(activeCourseId);
   const [courseDeleteBusy, setCourseDeleteBusy] = useState(false);
   const [courseDeleteError, setCourseDeleteError] = useState("");
-  const canDeleteCourse = profile.role === "Super User" && selectedCourseId.startsWith("custom-");
+  const canDeleteCourse = !phone && profile.role === "Super User" && selectedCourseId.startsWith("custom-");
   const removeCourse = async () => {
     if (!canDeleteCourse || courseDeleteBusy) return;
     setCourseDeleteBusy(true);
@@ -1818,18 +1850,12 @@ export function CoursePage({
       <h1 className="page-title">{inline.text(COURSE_META.title, (d, v) => { d.meta.title = v; }, "title")}</h1>
       <p className="page-sub">{inline.text(COURSE_BLURB, (d, v) => { d.blurb = v; }, "blurb")}</p>
       <div className="course-switch">
-        <Select
-          ariaLabel="Switch course"
-          value={activeCourseId()}
-          options={getCourses().map((c) => ({ value: c.id, label: c.label }))}
-          onChange={setActiveCourse}
-        />
-        {profile.role === "Super User" && <button className="btn ghost sm" onClick={() => setCreatingCourse(true)}><Icon name="plus" size={15} /> Add course</button>}
+        {!phone && profile.role === "Super User" && <button className="btn ghost sm" onClick={() => setCreatingCourse(true)}><Icon name="plus" size={15} /> Add course</button>}
         {inline.controls}
         {canDeleteCourse && <button className="btn ghost sm danger-text" onClick={() => setDeletingCourse(true)}><Icon name="trash" size={15} /> Delete course</button>}
       </div>
-      {creatingCourse && <CourseCreator onClose={() => setCreatingCourse(false)} />}
-      {deletingCourse && <ConfirmModal
+      {!phone && creatingCourse && <CourseCreator onClose={() => setCreatingCourse(false)} />}
+      {!phone && deletingCourse && <ConfirmModal
         title="Delete course?"
         message={<>
           <p>Delete “{inline.text(COURSE_META.title, (d, v) => { d.meta.title = v; }, "title")}”? This removes the custom course from the shared course list for everyone. Existing learner records and uploaded files are kept.</p>
@@ -1910,7 +1936,7 @@ export function CoursePage({
                   <img src={m.image} alt="" loading="lazy" />
                 </span>
               )}
-              {inline.editing && <label className="field">Module image<input type="file" accept="image/png,image/jpeg,image/webp" disabled={inline.busy} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { const image = await fileToImageDataUrl(file); inline.change(d => { d.modules[i].image = image; }); } catch { e.target.setCustomValidity("Could not read image. Choose another file."); e.target.reportValidity(); } }} /></label>}
+              {inline.editing && <EditingTools active title={`Module ${i + 1}: image`}><label className="field">Module image<input type="file" accept="image/png,image/jpeg,image/webp" disabled={inline.busy} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { const image = await fileToImageDataUrl(file); inline.change(d => { d.modules[i].image = image; }); } catch { e.target.setCustomValidity("Could not read image. Choose another file."); e.target.reportValidity(); } }} /></label></EditingTools>}
               <div className="head">
                 <span className="ico">
                   <Icon name={m.icon} size={22} />
@@ -1934,6 +1960,37 @@ export function CoursePage({
         })}
       </div>
 
+      <div className="tabs" role="tablist" aria-label="Programme information">
+        {programmeTabs.map((tab, index) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            id={`programme-tab-${tab.id}`}
+            aria-controls={`programme-panel-${tab.id}`}
+            aria-selected={programmeTab === tab.id}
+            tabIndex={programmeTab === tab.id ? 0 : -1}
+            className={`tab${programmeTab === tab.id ? " active" : ""}`}
+            onClick={() => setProgrammeTab(tab.id)}
+            onKeyDown={(event) => {
+              let nextIndex = index;
+              if (event.key === "ArrowRight") nextIndex = (index + 1) % programmeTabs.length;
+              else if (event.key === "ArrowLeft") nextIndex = (index + programmeTabs.length - 1) % programmeTabs.length;
+              else if (event.key === "Home") nextIndex = 0;
+              else if (event.key === "End") nextIndex = programmeTabs.length - 1;
+              else return;
+              event.preventDefault();
+              setProgrammeTab(programmeTabs[nextIndex].id);
+              document.getElementById(`programme-tab-${programmeTabs[nextIndex].id}`)?.focus();
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <section role="tabpanel" id="programme-panel-flow" aria-labelledby="programme-tab-flow"
+        hidden={programmeTab !== "flow"}>
       <h2 className="section-title module-flow-block">
         <span className="ico">
           <Icon name="target" size={20} />
@@ -1966,6 +2023,10 @@ export function CoursePage({
         </div>
       </div>
 
+      </section>
+
+      <section role="tabpanel" id="programme-panel-about" aria-labelledby="programme-tab-about"
+        hidden={programmeTab !== "about"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="info" size={20} />
@@ -1992,7 +2053,10 @@ export function CoursePage({
           {PROGRAMME_ABOUT.saqaLink.label} ↗
         </a>
       </div>
+      </section>
 
+      <section role="tabpanel" id="programme-panel-purpose" aria-labelledby="programme-tab-purpose"
+        hidden={programmeTab !== "purpose"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="certificate" size={20} />
@@ -2056,7 +2120,10 @@ export function CoursePage({
           {inline.text(PROGRAMME_PURPOSE.rationale, (d, v) => { d.programmePurpose.rationale = v; }, "Text")}
         </p>
       </div>
+      </section>
 
+      <section role="tabpanel" id="programme-panel-learning" aria-labelledby="programme-tab-learning"
+        hidden={programmeTab !== "learning"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="book" size={20} />
@@ -2093,9 +2160,42 @@ export function CoursePage({
           </div>
         ))}
       </div>
+      </section>
     </>
   );
 }
+
+const UNIT_TILE_BANNER_TITLES: Record<string, string> = {
+  "8252": "Business Reports",
+  "10135": "Project Teamwork",
+  "HWSW": "Hardware & Software",
+  "HWSW2": "Hardware Illustrated",
+  "114055": "Ethics & Professionalism",
+  "114050": "Business & IT",
+  "114051": "Technical Meetings",
+  "114059": "Work Planning & Delivery",
+  "114074": "Network Architecture",
+  "114046": "LAN Management",
+  "114076": "Computer Research",
+  "114183": "OS Troubleshooting",
+  "114058": "Multi-User Systems",
+};
+
+const UNIT_TILE_PHOTOS: Record<string, { src: string; alt: string; credit?: string; referenceHeader?: boolean }> = {
+  "8252": { src: "/figures/unit-8252-reference-header.webp", alt: "US 8252, Business Reports, Module 1: Personal Development. A laptop displaying charts beside a report being written.", referenceHeader: true },
+  "10135": { src: "/figures/unit-10135-reference-header.webp", alt: "US 10135, Project Teamwork, Module 1: Personal Development. A project team collaborating around a laptop.", referenceHeader: true },
+  "HWSW": { src: "/figures/unit-HWSW-reference-header.webp", alt: "HWSW, Hardware and Software, Module 1: Personal Development. Close-up of a processor and motherboard.", referenceHeader: true },
+  "HWSW2": { src: "/figures/unit-HWSW2-reference-header.webp", alt: "HWSW2, Hardware Illustrated, Module 1: Personal Development. Computer components and an illustrated hardware guide.", referenceHeader: true },
+  "114055": { src: "/figures/unit-114055-reference-header.webp", alt: "US 114055, Ethics and Professionalism, Module 1: Personal Development. A presenter discussing integrity, respect and responsibility.", referenceHeader: true },
+  "114050": { src: "/figures/unit-114050-reference-header.webp", alt: "US 114050, Business and IT, Module 1: Personal Development. A screen illustrating the relationship between business and information technology.", referenceHeader: true },
+  "114051": { src: "/figures/unit-114051-reference-header.webp", alt: "US 114051, Technical Meetings, Module 1: Personal Development. A presenter explaining a technical diagram to colleagues.", referenceHeader: true },
+  "114059": { src: "/figures/unit-114059-reference-header.webp", alt: "Work Planning and Delivery, Module 1: Personal Development. A notebook with a plan, schedule, execute and deliver checklist.", referenceHeader: true },
+  "114074": { src: "/figures/unit-114074-reference-header.webp", alt: "US 114074, Network Architecture, Module 2: Client Server Networking. Computers, routers and servers connected with blue network cables.", referenceHeader: true },
+  "114046": { src: "/figures/unit-114046-reference-header.webp", alt: "US 114046, LAN Management, Module 2: Client Server Networking. A network switch and blue Ethernet cables in a computer lab.", referenceHeader: true },
+  "114076": { src: "/figures/unit-114076-reference-header.webp", alt: "US 114076, Computer Research, Module 2: Client Server Networking. Research books, a laptop and an open notebook.", referenceHeader: true },
+  "114183": { src: "/figures/unit-114183-reference-header.webp", alt: "US 114183, OS Troubleshooting, Module 2: Client Server Networking. A technician repairing a computer beside a troubleshooting screen.", referenceHeader: true },
+  "114058": { src: "/figures/unit-114058-reference-header.webp", alt: "US 114058, Multi-User Systems, Module 2: Client Server Networking. Three user workstations beside server racks.", referenceHeader: true },
+};
 
 export function ModulePage({
   moduleId,
@@ -2158,31 +2258,56 @@ export function ModulePage({
         <Bar value={c} green={c === 1} />
       </div>
 
+      <div className={`module-unit-grid${activeCourseId() === "itss" && mod.id === "m1" ? " personal-development-grid" : ""}`}>
       {mod.units.map((u, ui) => {
         const st = unitStatus(progress, u.us);
         const uc = unitCompletion(progress, u.us);
         const locked = unitLocked(u, profile.role);
         const unlockAt = unitUnlockTime(u);
+        const photo = activeCourseId() === "itss" ? UNIT_TILE_PHOTOS[u.us] : undefined;
+        const credit = photo?.credit ? BASE_FIGURE_DEFAULTS[photo.credit] : undefined;
         return (
           <div
             key={u.us}
-            className={`unit-row${locked ? " locked" : ""}`}
+            className={`unit-row module-unit-card${photo ? " has-photo" : ""}${photo?.referenceHeader ? " has-reference-header" : ""}${locked ? " locked" : ""}`}
             role={inline.editing ? undefined : "button"}
             tabIndex={locked || inline.editing ? undefined : 0}
             onKeyDown={e => { if (!locked && !inline.editing && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); navigate({ page: "unit", moduleId: mod.id, unitId: u.us }); } }}
             onClick={() => !locked && !inline.editing && navigate({ page: "unit", moduleId: mod.id, unitId: u.us })}
           >
+            {photo && <span className="module-unit-media">
+              <span className="module-unit-banner">
+              <img className="module-unit-photo" src={photo.src} alt={photo.alt}
+                loading="lazy" decoding="async" />
+              {!photo.referenceHeader && <span className="module-unit-banner-copy" aria-hidden="true">
+                <span className="module-unit-banner-code">{usLabel(u.us)}</span>
+                <strong>{UNIT_TILE_BANNER_TITLES[u.us] ?? u.title}</strong>
+                <span className="module-unit-banner-caption">Module {idx + 1} · {mod.name}</span>
+              </span>}
+              </span>
+              {credit && <a className="module-unit-photo-credit" href={credit.sourceUrl}
+                target="_blank" rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
+                {credit.author} · {credit.license}
+              </a>}
+            </span>}
             <span
               className={`status ${st === "completed" ? "done" : st === "in-progress" ? "progress" : "none"}`}
+              aria-label={locked ? "Locked" : st === "completed" ? "Completed" : st === "in-progress" ? `${Math.round(uc * 100)}% complete` : "Not started"}
             >
-              <Icon
-                name={locked ? "lock" : st === "completed" ? "checkCircle" : st === "in-progress" ? "halfCircle" : "circle"}
-                size={22}
-              />
+              {!locked && st === "in-progress" ? (
+                <Ring value={uc} size={photo?.referenceHeader ? 84 : photo ? 64 : 56} stroke={photo?.referenceHeader ? 6 : 5} showLabel />
+              ) : <Icon
+                name={locked ? "lock" : st === "completed" ? "checkCircle" : "circle"}
+                size={photo?.referenceHeader ? 34 : photo ? 28 : 22}
+              />}
             </span>
             <span className="main">
-              <span className="t">
-                {usLabel(u.us)} — {inline.text(u.title, (d, v) => { d.modules[idx].units[ui].title = v; }, "title")}
+              <span className="module-unit-heading">
+                <span className="module-unit-code">{usLabel(u.us)}</span>
+                <span className="t">
+                  {inline.text(u.title, (d, v) => { d.modules[idx].units[ui].title = v; }, "title")}
+                </span>
               </span>
               <span className="m">
                 <span>
@@ -2217,6 +2342,7 @@ export function ModulePage({
           </div>
         );
       })}
+      </div>
     </>
   );
 }
@@ -2229,7 +2355,7 @@ function fmtSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "questions" | "assignments" | "practical" | "workbook" | "memo" | "guide" | "logbook" | "quiz" | "selfassessment" | "evaluation" | "plan" | `custom-${string}` | `pdf-${string}`;
+type UnitTab = "overview" | "saqa" | "lesson" | "material" | "notes" | "exercises" | "questions" | "assignments" | "practical" | "workbook" | "memo" | "guide" | "logbook" | "quiz" | "selfassessment" | "evaluation" | "plan" | `custom-${string}` | `pdf-${string}`;
 
 /** Built-in lesson decks shipped with the app (public/downloads), per unit
  *  standard — always shown on the Course material tab ahead of uploads. */
@@ -2253,7 +2379,7 @@ const BUILTIN_DECKS: Record<string, { name: string; url: string }[]> = {
 
 const UNIT_TAB_KEY = "itss.unittab";
 const UNIT_TAB_US_KEY = "itss.unittab.us";
-const UNIT_TABS: UnitTab[] = ["overview", "lesson", "material", "notes", "exercises", "questions", "assignments", "practical", "workbook", "memo", "guide", "logbook", "quiz", "selfassessment", "evaluation", "plan"];
+const UNIT_TABS: UnitTab[] = ["overview", "saqa", "lesson", "material", "notes", "exercises", "questions", "assignments", "practical", "workbook", "memo", "guide", "logbook", "quiz", "selfassessment", "evaluation", "plan"];
 
 /** Restore the saved tab only for the same unit standard — opening another US always starts on Overview. */
 function loadUnitTab(unitId: string): UnitTab {
@@ -2314,6 +2440,8 @@ export function UnitPage({
   navigate: (r: Route) => void;
 }) {
   const [tab, setTab] = useState<UnitTab>(() => loadUnitTab(unitId));
+  const [lessonControlsHost, setLessonControlsHost] = useState<HTMLDivElement | null>(null);
+  const phone = usePhoneView();
   const builtUnit = useBuiltUnit(unitId);
   const [inlineUnit, setInlineUnit] = useState<UnitContent | undefined>(() => loadInlineDraft(profile.id, unitId));
   const inlineDraftOwner = `${profile.id}:${unitId}`;
@@ -2711,9 +2839,29 @@ export function UnitPage({
   const deckReplaceRef = useRef<HTMLInputElement>(null);
   const [deckReplacePct, setDeckReplacePct] = useState<number | null>(null);
   const [deckReplaceError, setDeckReplaceError] = useState<string | null>(null);
-  const { figures: figureImages, setFigure, removeFigure, refreshFigureUrl } = useLessonFigures(unitId);
   const failedFigureRefreshes = useRef(new Set<string>());
-  const { edits: lessonEdits, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, setAllQuizRetries: editAllQuizRetries, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection, setLessonPlan: editSetLessonPlan, setLogbook: editSetLogbook } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId, !!inlineUnit);
+  const { edits: lessonEdits, deleteSection: editDeleteSection, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, setAllQuizRetries: editAllQuizRetries, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection, setLessonPlan: editSetLessonPlan, setLogbook: editSetLogbook } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId, !!inlineUnit);
+  const figurePriorityIds = useMemo(() => {
+    const source = inlineUnit ?? builtUnit?.content ?? getContent(unitId);
+    if (!source?.lesson.length) return [];
+    const visible = source.lesson.flatMap((_, index) => lessonEdits.deletedSections?.includes(index) ? [] : [index]);
+    const activeIndex = visible.includes(lessonStep)
+      ? lessonStep
+      : visible.find(index => index >= lessonStep) ?? visible.at(-1);
+    if (activeIndex === undefined) return [];
+    const section = source.lesson[activeIndex];
+    const figureOrder = lessonEdits.figureOrder?.[activeIndex] ?? [];
+    const orderedFigures = [...(section.figures ?? [])].sort((a, b) => {
+      const aIndex = figureOrder.indexOf(a.id);
+      const bIndex = figureOrder.indexOf(b.id);
+      return (aIndex < 0 ? Number.MAX_SAFE_INTEGER : aIndex) - (bIndex < 0 ? Number.MAX_SAFE_INTEGER : bIndex);
+    });
+    const bodyHtml = lessonEdits.sectionBody?.[activeIndex]?.richHtml ?? "";
+    const inlineFigureIds = Array.from(bodyHtml.matchAll(/\bdata-figure-id=["']([^"']+)["']/g), match => match[1]);
+    const cardFigureIds = section.cards?.flatMap(card => card.figId ? [card.figId] : []) ?? [];
+    return Array.from(new Set([...orderedFigures.map(figure => figure.id), ...cardFigureIds, ...inlineFigureIds]));
+  }, [builtUnit, inlineUnit, lessonEdits.deletedSections, lessonEdits.figureOrder, lessonEdits.sectionBody, lessonStep, unitId]);
+  const { figures: figureImages, setFigure, removeFigure, refreshFigureUrl } = useLessonFigures(unitId, figurePriorityIds);
   const migratingInlineImages = useRef(new Set<string>());
   useEffect(() => {
     if (inlineUnit || profile.role !== "Super User") return;
@@ -2729,7 +2877,12 @@ export function UnitPage({
         let changed = false;
         for (const image of Array.from(root.querySelectorAll<HTMLImageElement>('img[src^="data:image/"]:not([data-figure-id])'))) {
           const id = `lesson-inline-${sectionKey}-${crypto.randomUUID()}`;
-          if (!(await setFigure(id, image.src))) continue;
+          try {
+            await setFigure(id, image.src);
+          } catch (error) {
+            setFigError(error instanceof Error ? error.message : "A lesson image could not be saved.");
+            continue;
+          }
           image.dataset.figureId = id;
           image.removeAttribute("src");
           changed = true;
@@ -2744,12 +2897,29 @@ export function UnitPage({
     })();
   }, [editSetSectionBody, inlineUnit, lessonEdits.sectionBody, profile.role, setFigure, unitId]);
   const [generatingQuiz, setGeneratingQuiz] = useState<number | null>(null);
+  const [generatingAllQuizzes, setGeneratingAllQuizzes] = useState<{ done: number; total: number } | null>(null);
   const [quizQuestionCount, setQuizQuestionCount] = useState(5);
   const [quizGenerationError, setQuizGenerationError] = useState<string | null>(null);
   const [generatingUnitQuiz, setGeneratingUnitQuiz] = useState(false);
   const [unitQuizCount, setUnitQuizCount] = useState(10);
   const [lessonSplitError, setLessonSplitError] = useState<string | null>(null);
-  const [editMode, setEditMode] = useState(false);
+  const [proofreadingSlide, setProofreadingSlide] = useState<number | null>(null);
+  const [proofreadStatus, setProofreadStatus] = useState<"" | "done" | "partial" | "error">("");
+  const [proofreadError, setProofreadError] = useState("");
+  const [proofreadNotice, setProofreadNotice] = useState("");
+  const [addingSlide, setAddingSlide] = useState(false);
+  const [deletingSlide, setDeletingSlide] = useState(false);
+  const [deleteSlideError, setDeleteSlideError] = useState("");
+  useEffect(() => { setDeleteSlideError(""); }, [unitId]);
+  const [requestedEditMode, setEditMode] = useState(false);
+  const editMode = !phone && requestedEditMode;
+  const [unitEditOpen, setUnitEditOpen] = useState(false);
+  const [slideEditOpen, setSlideEditOpen] = useState(false);
+  const [inlineActionsTarget, setInlineActionsTarget] = useState<HTMLDivElement | null>(null);
+  const [unitHeaderOpen, setUnitHeaderOpen] = useState(tab !== "lesson");
+  useEffect(() => { setUnitEditOpen(false); }, [unitId]);
+  useEffect(() => { setSlideEditOpen(false); }, [unitId, tab, lessonStep]);
+  useEffect(() => { setUnitHeaderOpen(tab !== "lesson"); }, [unitId, tab]);
   const [tableConfirm, setTableConfirm] = useState<{
     title: string;
     message: React.ReactNode;
@@ -2761,19 +2931,26 @@ export function UnitPage({
   const [lessonSaveStatus, setLessonSaveStatus] = useState<"" | "saved" | "error">("");
   const [lessonSaveError, setLessonSaveError] = useState("");
   useEffect(() => { setLessonSaveStatus(""); setLessonSaveError(""); }, [unitId, lessonEdits]);
-  const saveLessonToCloud = async () => {
+  const saveLessonToCloud = async (rethrow = false) => {
     if (savingLesson) return;
-    if (inlineUnit) { setLessonSaveError("Use Save inline changes and update files above to save this unit."); setLessonSaveStatus("error"); return; }
+    if (inlineUnit) { setLessonSaveError("Use Save inline changes and update files in the editing sidebar to save this unit."); setLessonSaveStatus("error"); return; }
+    const focused = document.activeElement;
+    if (focused instanceof HTMLElement && focused.isContentEditable) {
+      flushSync(() => focused.dispatchEvent(new Event("input", { bubbles: true })));
+      focused.blur();
+    }
     setSavingLesson(true);
     setLessonSaveStatus("");
     try {
       const editId = builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId;
-      await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(editId)}`, lessonEdits);
+      const key = `itss.lessonedits.${courseScopedUnit(editId)}`;
+      await flushLessonEdits(key, cachedLessonEdits(key, lessonEdits));
       setLessonSaveStatus("saved");
       setEditMode(false);
     } catch (error) {
       setLessonSaveStatus("error");
       setLessonSaveError(error instanceof Error ? error.message : "Cloud save failed. Please retry.");
+      if (rethrow) throw error;
     } finally {
       setSavingLesson(false);
     }
@@ -2785,6 +2962,8 @@ export function UnitPage({
   const pendingFigId = useRef<string | null>(null);
   const [figError, setFigError] = useState<string | null>(null);
   const [figUploading, setFigUploading] = useState(false);
+  const [copiedFigure, setCopiedFigure] = useState<string | null>(null);
+  const [copyingFigure, setCopyingFigure] = useState(false);
   const [deckId, setDeckId] = useState<string | null>(null);
   const found = findUnit(unitId);
   if (!found) return <p>Unit standard not found.</p>;
@@ -2792,8 +2971,18 @@ export function UnitPage({
   const idx = MODULES.indexOf(mod);
   const uc = unitCompletion(progress, u.us);
   const acts = progress.units[u.us]?.activities ?? {};
-  const content = inlineUnit ?? builtUnit?.content ?? getContent(u.us);
+  const completedActivities = UNIT_ACTIVITIES.filter(activity => !!acts[activity]).length;
+  const nextActivity = UNIT_ACTIVITIES.find(activity => !acts[activity]);
+  const baseContent = builtUnit?.content ?? getContent(u.us);
+  const officialSaqa = getSaqaDetails(u.us);
+  const content = inlineUnit ?? (officialSaqa
+    ? { ...(baseContent ?? { lesson: [], exercises: [], assignments: [], quiz: [] }), saqa: officialSaqa }
+    : baseContent);
+  const visibleLessonIndices = content?.lesson.flatMap((_, si) => lessonEdits.deletedSections?.includes(si) ? [] : [si]) ?? [];
+  const activeLessonIndex = visibleLessonIndices.includes(lessonStep) ? lessonStep
+    : visibleLessonIndices.find(si => si >= lessonStep) ?? visibleLessonIndices.at(-1);
   const practicalTask = content?.practicalTask ?? practicalTaskForUnit(u.us);
+  const workbookEnabled = unitId !== "114074";
   // The lesson plan shown on the tab: inline table edits (shared, cloud-synced) win over the generated plan.
   const planData: LessonPlan | undefined = content?.lessonPlan ? (lessonEdits.lessonPlan ?? content.lessonPlan) : undefined;
   const updatePlan = (mutate: (draft: LessonPlan) => void) => {
@@ -2812,14 +3001,31 @@ export function UnitPage({
     return r && r.best / r.total >= 0.8;
   }).length;
   const isPrivileged = isStaff(profile.role);
-  const isSuperUser = profile.role === "Super User";
+  const isSuperUser = profile.role === "Super User" && !phone;
   // A remembered staff-only tab must never remain open after switching to a
   // learner profile. Learners return to their workbook, while AI marking in
   // the workbook remains available without exposing the memo screen.
   useEffect(() => {
-    if (!isSuperUser && tab === "memo") setTab("workbook");
-  }, [isSuperUser, tab]);
+    if (!workbookEnabled && (tab === "workbook" || tab === "memo")) setTab("overview");
+    else if (profile.role !== "Super User" && tab === "memo") setTab("workbook");
+  }, [profile.role, tab, workbookEnabled]);
   const unitText = (value: string, update: (draft: UnitContent, text: string) => void, label = "Content") => <InlineText value={value} editable={isSuperUser && !!inlineUnit} multiline placeholder={label} onSave={text => setInlineUnit(current => { if (!current) return current; const next = structuredClone(current); update(next, text); return next; })} />;
+  const deleteLessonSlide = async (si: number) => {
+    if (!isSuperUser || deletingSlide) return;
+    setDeletingSlide(true);
+    setDeleteSlideError("");
+    try {
+      await editDeleteSection(si);
+      setLessonStep(visibleLessonIndices.find(index => index > si) ?? visibleLessonIndices.filter(index => index < si).at(-1) ?? 0);
+      setPasteEditor(null);
+      setEditMode(!!inlineUnit);
+      setSlideEditOpen(!!inlineUnit);
+    } catch (error) {
+      setDeleteSlideError(error instanceof Error ? error.message : "The slide could not be deleted. Please retry.");
+    } finally {
+      setDeletingSlide(false);
+    }
+  };
 
   const blankBuiltActivity = (): Exercise => ({
     id: `manual-activity-${crypto.randomUUID()}`,
@@ -2878,9 +3084,9 @@ export function UnitPage({
     beforeWrap.appendChild(beforeRange.cloneContents());
     afterWrap.appendChild(afterRange.cloneContents());
     const cleanPart = (wrap: HTMLElement) => {
-      const h2 = wrap.querySelector(":scope > h2");
-      const title = h2 ? htmlToMarked(h2 as HTMLElement) : "";
-      h2?.remove();
+      const heading = wrap.querySelector(':scope > [data-slide-title="true"]');
+      const title = heading ? htmlToMarked(heading as HTMLElement) : "";
+      heading?.remove();
       const html = sanitizeSlideHtml(wrap.innerHTML);
       const probe = document.createElement("div");
       probe.innerHTML = html;
@@ -2919,9 +3125,99 @@ export function UnitPage({
       slideQuiz: original.slideQuiz,
     };
     nextContent.lesson.splice(si, 1, current, moved);
-    await saveBuiltContent(nextContent);
+    const revision = crypto.randomUUID();
+    const editKey = `itss.lessonedits.${courseScopedUnit(`${unitId}.built-${builtUnit.revision}`)}`;
+    const shiftedEdits = lessonEditsAfterSplit(cachedLessonEdits(editKey, lessonEdits), si,
+      Object.keys(figureImages).filter(id => /^lesson-added-\d+-/.test(id)));
+    await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(`${unitId}.built-${revision}`)}`, shiftedEdits);
+    await saveBuiltUnit(unitId, { ...builtUnit, revision, content: nextContent, createdAt: new Date().toISOString() });
     setLessonStep(si + 1);
     setEditMode(true);
+  };
+  const proofreadLessonSlide = async (si: number) => {
+    if (proofreadingSlide !== null) return;
+    const editor = document.querySelector<HTMLElement>(`[data-lesson-editor="${si}"]`);
+    if (!editor) { setProofreadStatus("error"); setProofreadError("Open the slide text editor before using AI proofreading."); return; }
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+    const nodes: Text[] = [];
+    while (walker.nextNode()) {
+      const node = walker.currentNode as Text;
+      if (node.data.trim()) nodes.push(node);
+    }
+    if (!nodes.length) { setProofreadStatus("error"); setProofreadError("This slide has no text to proofread."); return; }
+    setProofreadingSlide(si);
+    setProofreadStatus("");
+    setProofreadError("");
+    setProofreadNotice("");
+    try {
+      const response = await fetch("/api/proofread-slide", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ segments: nodes.map(node => node.data), model: loadContentModel() }),
+        signal: AbortSignal.timeout(65_000),
+      });
+      const rawResponse = await response.text();
+      let data: { segments?: string[]; unchangedSegments?: number; error?: string; usage?: { input_tokens?: number; output_tokens?: number; prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }; model?: string };
+      try {
+        data = JSON.parse(rawResponse) as typeof data;
+      } catch {
+        throw new Error(response.ok ? "The proofreading service returned an empty or invalid response. Please retry." : `AI proofreading failed (${response.status}). Please retry.`);
+      }
+      if (!response.ok || !data.segments || data.segments.length !== nodes.length) throw new Error(data.error ?? "AI proofreading returned incomplete text.");
+      const unchangedSegments = data.unchangedSegments ?? 0;
+      if (data.usage) void recordTokenUsage({ us: unitId, model: data.model ?? loadContentModel(), promptTokens: data.usage.input_tokens ?? data.usage.prompt_tokens ?? 0, completionTokens: data.usage.output_tokens ?? data.usage.completion_tokens ?? 0, totalTokens: data.usage.total_tokens ?? 0 });
+      if (unchangedSegments >= nodes.length) {
+        setProofreadStatus("error");
+        setProofreadError("AI suggestions could not be validated safely. No slide text was changed. Please retry or edit the text manually.");
+        return;
+      }
+      data.segments.forEach((text, index) => { nodes[index].data = text; });
+      editor.dispatchEvent(new Event("input", { bubbles: true }));
+      if (unchangedSegments) {
+        setProofreadNotice(`${unchangedSegments} text fragment${unchangedSegments === 1 ? " was" : "s were"} left unchanged because the returned edit could not be checked safely.`);
+        setProofreadStatus("partial");
+      } else {
+        setProofreadStatus("done");
+      }
+    } catch (error) {
+      setProofreadStatus("error");
+      setProofreadError(error instanceof Error ? error.message : "AI proofreading failed. Please retry.");
+    } finally {
+      setProofreadingSlide(null);
+    }
+  };
+  const addBuiltLessonSlide = async (si: number) => {
+    setLessonSplitError(null);
+    if (!builtUnit || !content || addingSlide) {
+      if (!builtUnit) setLessonSplitError("New slides can be added after the unit has been built.");
+      return;
+    }
+    setAddingSlide(true);
+    try {
+      const nextContent = structuredClone(builtUnit.content) as UnitContent;
+      const newSlide: LessonSection = {
+        heading: "",
+        icon: "book",
+        paragraphs: [],
+      };
+      nextContent.lesson.splice(si + 1, 0, newSlide);
+      const revision = crypto.randomUUID();
+      const editKey = `itss.lessonedits.${courseScopedUnit(`${unitId}.built-${builtUnit.revision}`)}`;
+      const shiftedEdits = lessonEditsAfterInsert(
+        cachedLessonEdits(editKey, lessonEdits),
+        si,
+        Object.keys(figureImages).filter(id => /^lesson-added-\d+-/.test(id)),
+      );
+      await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(`${unitId}.built-${revision}`)}`, shiftedEdits);
+      await saveBuiltUnit(unitId, { ...builtUnit, revision, content: nextContent, createdAt: new Date().toISOString() });
+      setLessonStep(si + 1);
+      setEditMode(true);
+      setSlideEditOpen(true);
+    } catch (error) {
+      setLessonSplitError(error instanceof Error ? error.message : "The slide could not be added. Please retry.");
+    } finally {
+      setAddingSlide(false);
+    }
   };
   const updateBuiltActivityList = async (kind: "exercises" | "questionSessions", updater: (items: Exercise[]) => Exercise[]) => {
     if (!builtUnit) return;
@@ -3013,18 +3309,82 @@ export function UnitPage({
         ...(content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index })),
       ].filter(({ ex }) => ex.id.startsWith("manual-") || !isEmptyGeneratedBuiltActivity(ex))
     : [];
+  const slideQuizSource = (si: number) => {
+    if (!content) return "";
+    const section = content.lesson[si];
+    const body = lessonEdits.sectionBody?.[si];
+    const paragraphs = body ? body.paragraphs : section.paragraphs.map((value, index) => lessonEdits.paragraphs?.[`${si}:${index}`] ?? value);
+    const bullets = body ? body.bullets ?? [] : (section.bullets ?? []).map((value, index) => lessonEdits.bullets?.[`${si}:${index}`] ?? value);
+    const lines = [
+      lessonEdits.headings?.[si] ?? section.heading,
+      ...paragraphs,
+      ...bullets,
+      ...(section.cards ?? []).flatMap((card, index) => [
+        lessonEdits.cards?.[`${si}:${index}:t`] ?? card.title,
+        lessonEdits.cards?.[`${si}:${index}:d`] ?? card.text,
+        ...(card.table ? [...card.table.headers, ...card.table.rows.flat()] : []),
+      ]),
+      ...(section.table ? [
+        ...section.table.headers.map((cell, column) => lessonEdits.tableCells?.[`${si}:h:${column}`] ?? cell),
+        ...section.table.rows.flatMap((row, rowIndex) => row.map((cell, column) => lessonEdits.tableCells?.[`${si}:${rowIndex}:${column}`] ?? cell)),
+      ] : []),
+      ...(section.example ? [section.example.title, ...section.example.lines] : []),
+      ...(section.examples ?? []).flatMap(example => [example.title, ...example.lines]),
+      ...sectionFigures(si, section.figures).flatMap(figure => [
+        `Figure: ${lessonEdits.captions?.[figure.id] ?? figure.caption}`,
+        ...(figure.hint ? [`Figure description: ${figure.hint}`] : []),
+        ...(figure.note ? [`Figure note: ${figure.note}`] : []),
+        ...(figure.bullets ?? []),
+      ]),
+    ];
+    return lines.map(plainSlideText).map(line => line.trim()).filter(Boolean).join("\n");
+  };
+  const slideQuizImages = (si: number) => {
+    if (!content) return [];
+    const section = content.lesson[si];
+    const ids = [
+      ...sectionFigures(si, section.figures).map(figure => figure.id),
+      ...(section.cards ?? []).flatMap(card => card.figId ? [card.figId] : []),
+    ];
+    return Array.from(new Set(ids)).flatMap(id => {
+      const source = figureImages[id]?.image ?? FIGURE_DEFAULTS[id]?.src;
+      if (!source) return [];
+      if (/^(?:https?:\/\/|data:image\/)/i.test(source)) return [source];
+      return [new URL(source, window.location.origin).href];
+    }).slice(0, 4);
+  };
   const generateSlideQuiz = async (si: number) => {
     if (!content) return;
     setGeneratingQuiz(si); setQuizGenerationError(null);
-    const section = content.lesson[si];
-    const source = [section.heading, ...section.paragraphs, ...(section.bullets ?? [])].join("\n");
+    const source = slideQuizSource(si);
     try {
-      const response = await fetch("/api/generate-slide-quiz", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slideText: source, count: quizQuestionCount, model: loadContentModel() }) });
+      const response = await fetch("/api/generate-slide-quiz", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slideText: source, slideImages: slideQuizImages(si), count: quizQuestionCount, model: loadContentModel() }) });
       const data = await response.json() as { questions?: QuizQuestion[]; error?: string };
       if (!response.ok || !data.questions?.length) throw new Error(data.error ?? "No questions were returned.");
       editGeneratedQuiz(si, data.questions);
     } catch (error) { setQuizGenerationError(error instanceof Error ? error.message : "Quiz generation failed."); }
     finally { setGeneratingQuiz(null); }
+  };
+  const generateQuizzesForEverySlide = async () => {
+    if (!content || generatingAllQuizzes || generatingQuiz !== null) return;
+    const slides = visibleLessonIndices;
+    setGeneratingAllQuizzes({ done: 0, total: slides.length });
+    setQuizGenerationError(null);
+    try {
+      for (let index = 0; index < slides.length; index += 1) {
+        const si = slides[index];
+        const source = slideQuizSource(si);
+        const response = await fetch("/api/generate-slide-quiz", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slideText: source, slideImages: slideQuizImages(si), count: quizQuestionCount, model: loadContentModel() }) });
+        const data = await response.json() as { questions?: QuizQuestion[]; error?: string };
+        if (!response.ok || !data.questions?.length) throw new Error(data.error ?? `Quiz generation failed on slide ${index + 1}.`);
+        editGeneratedQuiz(si, data.questions);
+        setGeneratingAllQuizzes({ done: index + 1, total: slides.length });
+      }
+    } catch (error) {
+      setQuizGenerationError(error instanceof Error ? error.message : "Quiz generation failed.");
+    } finally {
+      setGeneratingAllQuizzes(null);
+    }
   };
 
   const generateUnitQuiz = async () => {
@@ -3063,10 +3423,10 @@ export function UnitPage({
   // working through the training material — credit "Lesson & Training Aids"
   // automatically so lessons count toward progress without a manual tick.
   useEffect(() => {
-    if (!content || !content.lesson.length) return;
+    if (!content || !visibleLessonIndices.length) return;
     if (acts["Lesson & Training Aids"]) return;
-    const lastIdx = content.lesson.length - 1;
-    if (lessonStep < lastIdx) return;
+    const lastIdx = visibleLessonIndices[visibleLessonIndices.length - 1];
+    if (activeLessonIndex !== lastIdx) return;
     const lastQuiz = content.lesson[lastIdx].slideQuiz ?? [];
     const answers = lessonQuizAnswers[lastIdx] ?? [];
     const passed =
@@ -3076,7 +3436,7 @@ export function UnitPage({
       ));
     if (passed) toggleActivity(u.us, "Lesson & Training Aids");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lessonStep, lessonQuizAnswers, content, u.us]);
+  }, [lessonStep, lessonQuizAnswers, content, u.us, lessonEdits.deletedSections, activeLessonIndex]);
 
   // Record each passed slide gate in the unit's progress logbook so it counts
   // toward the learner's XP (see computeGamification) and staff results views.
@@ -3085,6 +3445,7 @@ export function UnitPage({
     const logbook = progress.units[u.us]?.logbook ?? {};
     content.lesson.forEach((sec, si) => {
       const quiz = sec.slideQuiz ?? [];
+      if (lessonEdits.deletedSections?.includes(si)) return;
       if (!quiz.length) return;
       const key = `slidegate.${si}`;
       if (logbook[key] === true) return;
@@ -3094,13 +3455,16 @@ export function UnitPage({
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lessonQuizAnswers, content, u.us]);
+  }, [lessonQuizAnswers, content, u.us, lessonEdits.deletedSections]);
 
   /** Added images share the existing per-unit figure storage, including cloud sync. */
   const sectionFigures = (si: number, originals: LessonFigure[] = []): LessonFigure[] => [
     ...originals,
     ...Object.keys(figureImages)
-      .filter((id) => id.startsWith(`lesson-added-${si}-`))
+      .filter((id) => {
+        const original = id.match(/^lesson-added-(\d+)-/);
+        return original && (lessonEdits.figureSections?.[id] ?? Number(original[1])) === si;
+      })
       .sort()
       .map((id, index) => ({
         id,
@@ -3113,6 +3477,7 @@ export function UnitPage({
     if (!content) return [];
     const out: PresenterSlide[] = [];
     content.lesson.forEach((sec, si) => {
+      if (lessonEdits.deletedSections?.includes(si)) return;
       sectionFigures(si, sec.figures).forEach((fig) => {
         const up = figureImages[fig.id];
         const def = FIGURE_DEFAULTS[fig.id];
@@ -3164,20 +3529,6 @@ export function UnitPage({
     setPasteEditor(null);
   };
 
-  const openPresenter = () => {
-    const slides = buildPresenterSlides();
-    if (!slides.length) return;
-    // start on the current section if possible
-    const startIdx = slides.findIndex((s) => s.kind === "image" && s.sectionIndex >= (lessonStep ?? 0));
-    setPresenterAnswers({});
-    setPresenterChecked(false);
-    setPresenterPassed(false);
-    setPresenter({ slides, index: Math.max(0, startIdx) });
-    setTimeout(() => {
-      presenterRef.current?.requestFullscreen?.().catch(() => {});
-    }, 0);
-  };
-
   const [sharedSettings, updateSharedSettings] = useSharedSettings();
   const [workbookMemo, setWorkbookMemo] = useWorkbookMemo(unitId);
   /** super user's draft of the evaluation form link */
@@ -3188,7 +3539,7 @@ export function UnitPage({
   const [saConfirm, setSaConfirm] = useState<"save" | "unlock" | null>(null);
   // shared/staff-uploaded content may only be downloaded by the super user,
   // unless the super user has explicitly allowed it for everyone
-  const canDownloadShared = isSuperUser || sharedSettings.allowSharedDownloads;
+  const canDownloadShared = profile.role === "Super User" || sharedSettings.allowSharedDownloads;
 
   const isPdfDoc = (s: PoeDoc) => /\.pdf$/i.test(s.name) || s.type.includes("pdf");
   // Units without their own material fall back to decks shared across the
@@ -3329,7 +3680,7 @@ export function UnitPage({
     e.target.value = "";
     const figId = pendingFigId.current;
     pendingFigId.current = null;
-    if (!file || !figId || !isPrivileged || figUploading) return;
+    if (!file || !figId || !isPrivileged || phone || figUploading) return;
     setFigError(null);
     if (!file.type.startsWith("image/")) {
       setFigError("Choose an image file, such as JPG, PNG or WebP.");
@@ -3338,17 +3689,47 @@ export function UnitPage({
     setFigUploading(true);
     try {
       const dataUrl = await fileToImageDataUrl(file, 1400);
-      if (!(await setFigure(figId, dataUrl))) {
-        setFigError("The picture could not be saved — check your connection and try again.");
-      }
-    } catch {
-      setFigError("Could not read that image — try a clear JPG or PNG file.");
+      await setFigure(figId, dataUrl);
+    } catch (error) {
+      setFigError(error instanceof Error ? error.message : "Could not read or save that image. Try a JPG or PNG file.");
+    } finally {
+      setFigUploading(false);
+    }
+  }
+
+  async function copySlideFigure(src: string) {
+    setFigError(null);
+    setCopyingFigure(true);
+    try {
+      const response = await fetch(src);
+      if (!response.ok) throw new Error("The slide image could not be loaded for copying.");
+      const blob = await response.blob();
+      if (!blob.type.startsWith("image/")) throw new Error("The slide image could not be copied.");
+      const dataUrl = await fileToImageDataUrl(new File([blob], "slide-image", { type: blob.type }), 1400);
+      setCopiedFigure(dataUrl);
+    } catch (error) {
+      setFigError(error instanceof Error ? error.message : "The slide image could not be copied.");
+    } finally {
+      setCopyingFigure(false);
+    }
+  }
+
+  async function pasteSlideFigure(figId: string) {
+    if (!copiedFigure || figUploading) return;
+    setFigError(null);
+    setFigUploading(true);
+    try {
+      await setFigure(figId, copiedFigure);
+    } catch (error) {
+      setFigError(error instanceof Error ? error.message : "The copied image could not be pasted.");
     } finally {
       setFigUploading(false);
     }
   }
 
   const tabs: { id: UnitTab; label: string; icon: string; show: boolean }[] = [
+    { id: "overview", label: "Learning activities", icon: "checklist", show: true },
+    { id: "saqa", label: "SAQA details", icon: "certificate", show: !!content?.saqa },
     { id: "lesson", label: "Lesson", icon: "book", show: !!content?.lesson.length },
     { id: "material", label: "Course material", icon: "play", show: decks.length > 0 || !!builtUnit },
     { id: "notes", label: "Notes", icon: "document", show: !!content?.notes?.length || Object.values(userNotes).some((n) => n.us === unitId) || !!content?.lesson.length || unitId === "114055" },
@@ -3356,9 +3737,9 @@ export function UnitPage({
     { id: "questions", label: "Activity", icon: "chat", show: !builtUnit && !!content?.questionSessions?.length },
     { id: "assignments", label: "Activity", icon: "folder", show: !builtUnit && !!content?.assignments.length },
     { id: "practical", label: "Practical Task", icon: "checklist", show: !!practicalTask },
-    { id: "workbook", label: "Learner Workbook", icon: "document", show: unitId === "114046" || !!content?.workbook },
-    { id: "memo", label: "Memo", icon: "clipboard", show: (unitId === "114046" || !!content?.workbook) && isSuperUser },
-    { id: "guide", label: "Learner Guide", icon: "book", show: unitId === "114046" },
+    { id: "workbook", label: "Learner Workbook", icon: "document", show: workbookEnabled && (!!content?.learnerWorkbook || unitId === "114046" || !!content?.workbook) },
+    { id: "memo", label: "Memo", icon: "clipboard", show: workbookEnabled && !content?.learnerWorkbook && (unitId === "114046" || !!content?.workbook) && profile.role === "Super User" },
+    { id: "guide", label: "Learner Guide", icon: "book", show: !!content?.learnerGuide || unitId === "114046" },
     { id: "logbook", label: "Logbook", icon: "book", show: !!content?.logbook },
     { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content?.quiz.length || !!content?.quizzes?.length || (!!builtUnit && isSuperUser) },
     { id: "selfassessment", label: "Self assessment", icon: "checkCircle", show: !!content?.selfAssessment },
@@ -3380,41 +3761,43 @@ export function UnitPage({
         <span>{usLabel(u.us)}</span>
       </div>
 
+      <div className={`unit-header-area${tab === "lesson" ? " is-lesson" : ""}${tab === "lesson" && isPrivileged && !phone ? " has-slide-edit" : ""}`}>
+      {tab === "lesson" && <div className="lesson-header-controls" ref={setLessonControlsHost} />}
+      {tab === "lesson" && isPrivileged && !phone && (
+        <button type="button" className="btn solid sm lesson-header-edit"
+          aria-expanded={slideEditOpen} aria-controls="editing-sidebar-groups"
+          onClick={() => {
+            setSlideEditOpen(open => !open);
+            setLessonSaveStatus("");
+            setEditMode(true);
+          }}>
+          <Icon name="shield" size={13} />
+          Edit slide text
+        </button>
+      )}
+      <details className="unit-page-dropdown" key={`unit-header-${unitId}-${tab}`}
+        open={tab !== "lesson" || unitHeaderOpen}
+        onToggle={event => {
+          if (tab === "lesson") setUnitHeaderOpen(event.currentTarget.open);
+        }}>
+        <summary hidden={tab !== "lesson"}>
+          <span>{usLabel(u.us)} · {tabs.find(item => item.id === tab)?.label ?? "Learning activities"}</span>
+          <Icon name="chevronDown" size={18} />
+        </summary>
       <div className="eyebrow eyebrow-lg">
         <Icon name="document" size={22} />
         {isSaqaUnit(u.us) ? `Unit standard ${u.us}` : "Internal lesson"}
       </div>
       <h1 className="page-title">{u.title}</h1>
-      {isSuperUser && <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} profileId={profile.id} onCancelInline={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />}
-      <div className="meta-row">
-        <span className="pill">
-          <span className="ico">
-            <Icon name="trend" size={15} />
-          </span>
-          NQF Level {u.nqf}
-        </span>
-        {u.credits > 0 && (
-          <span className="pill">
-            <span className="ico">
-              <Icon name="award" size={15} />
-            </span>
-            {u.credits} credits
-          </span>
-        )}
-        <span className="pill">
-          <span className="ico">
-            <Icon name="calendar" size={15} />
-          </span>
-          {u.dates}
-        </span>
-        <span className="pill">
-          <span className="ico">
-            <Icon name="clock" size={15} />
-          </span>
-          {u.time}
-        </span>
-      </div>
-
+      {isSuperUser && (
+        <>
+          <button type="button" className="btn ghost sm unit-edit-menu" onClick={() => setUnitEditOpen(true)}
+            aria-haspopup="dialog"><Icon name="pencil" size={15} /> Edit unit</button>
+          <UnitEditingDialog open={unitEditOpen} title={u.title} subtitle={isSaqaUnit(u.us) ? `Unit standard ${u.us}` : "Internal lesson"} onClose={() => setUnitEditOpen(false)}>
+          <UnitBuilder key={unitId} open={unitEditOpen} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} profileId={profile.id} inlineActionsTarget={tab === "lesson" ? inlineActionsTarget : null} onCancelInline={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />
+          </UnitEditingDialog>
+        </>
+      )}
       <div style={{ margin: "16px 0 6px", maxWidth: 560 }}>
         <div className="bar-row">
           <Bar value={uc} green={uc === 1} />
@@ -3431,7 +3814,10 @@ export function UnitPage({
               role="tab"
               aria-selected={tab === t.id}
               className={`tab${tab === t.id ? " active" : ""}`}
-              onClick={() => setTab(t.id)}
+              onClick={() => {
+                setTab(t.id);
+                if (t.id === "lesson") setUnitHeaderOpen(false);
+              }}
             >
               <Icon name={t.icon} size={16} />
               {t.label}
@@ -3448,46 +3834,66 @@ export function UnitPage({
             </button>
           ))}
       </div>
+      </details>
+      </div>
 
       {tab === "overview" && (
-        <>
+        <section className="unit-activity-checklist">
           <h2 className="section-title">
             <span className="ico">
               <Icon name="checklist" size={20} />
             </span>
             Learning activities
           </h2>
-          <p className="muted" style={{ marginTop: -6, marginBottom: 14 }}>
-            Mark each stage as it is completed. Progress is saved to your profile.
+          <p className="muted">
+            Follow the steps below and mark each stage when complete. Your progress is saved to your profile.
           </p>
-          {UNIT_ACTIVITIES.map((a) => {
+          <div className="activity-progress card">
+            <div className="activity-progress-heading" aria-live="polite">
+              <strong>{completedActivities === UNIT_ACTIVITIES.length ? "All stages complete" : "Your learning journey"}</strong>
+              <span>{completedActivities} of {UNIT_ACTIVITIES.length} stages complete</span>
+            </div>
+            <div className="activity-progress-ring" role="progressbar" aria-label="Learning activities completed"
+              aria-valuemin={0} aria-valuemax={UNIT_ACTIVITIES.length} aria-valuenow={completedActivities}>
+              <Ring value={completedActivities / UNIT_ACTIVITIES.length} size={56} stroke={5} showLabel />
+            </div>
+          </div>
+          <ol className="activity-steps">
+          {UNIT_ACTIVITIES.map((a, index) => {
             const done = !!acts[a];
             const info = ACTIVITY_INFO[a];
             return (
+              <li key={a} className={`activity-step${done ? " is-complete" : ""}${a === nextActivity ? " is-next" : ""}`}>
               <button
-                key={a}
-                className={`activity${done ? " done" : ""}`}
+                type="button"
+                className="activity-step-button"
                 onClick={() => toggleActivity(u.us, a)}
                 aria-pressed={done}
+                aria-label={`${a}: ${done ? "complete, mark incomplete" : "not complete, mark complete"}`}
               >
-                <span className="box">
-                  <Icon name={done ? "checkCircle" : "circle"} size={22} />
+                <span className="activity-step-number" aria-hidden="true">
+                  <Icon name={done ? "checkCircle" : "circle"} size={20} />
                 </span>
-                <span style={{ flex: 1 }}>
-                  <span className="t">{a}</span>
-                  <br />
-                  <span className="d">
+                <span className="activity-step-content">
+                  <span className="activity-step-kicker">Step {index + 1}</span>
+                  <span className="activity-step-title"><Icon name={info.icon} size={18} />{a}</span>
+                  <span className="activity-step-description">
                     <Gloss text={info.desc} />
                   </span>
                 </span>
-                <Icon name={info.icon} size={20} color="var(--azure)" />
+                <span className="activity-step-status">
+                  {done ? "Complete" : a === nextActivity ? "Next step" : "To do"}
+                </span>
               </button>
+              </li>
             );
           })}
+          </ol>
+          <p className="activity-checklist-hint">Select a step to mark it complete. Select it again to undo.</p>
 
           {content && (() => {
             const parts = [
-              `a ${content.lesson.length}-section lesson`,
+              `a ${visibleLessonIndices.length}-section lesson`,
               content.exercises.length ? `${content.exercises.length} exercises` : null,
               content.assignments.length ? `${content.assignments.length} assignments` : null,
               content.quiz.length ? `a ${content.quiz.length}-question knowledge check` : null,
@@ -3503,13 +3909,18 @@ export function UnitPage({
                   <Icon name="book" size={19} />
                 </span>
                 <span>
-                  This unit standard has full learning material: {text}. Use the tabs above to work
+                  This unit standard has full learning material: {text}. Expand the unit menu above to work
                   through it.
                 </span>
               </div>
             );
           })()}
 
+        </section>
+      )}
+
+      {tab === "saqa" && content?.saqa && (
+        <section className="assessments-page saqa-tabbed-details">
           {content?.saqa && (
             <>
               <h2 className="section-title">
@@ -3525,14 +3936,15 @@ export function UnitPage({
                 <span>{unitText(content.saqa.notice, (d, v) => { d.saqa!.notice = v; })}</span>
               </div>
 
-              <details className="saqa-details">
-                <summary>
-                  <Icon name="document" size={17} />
-                  Registration details
-                  <span className="chev">
-                    <Icon name="chevronDown" size={15} />
-                  </span>
-                </summary>
+              {content.saqa.source && (
+                <p className="muted saqa-source">
+                  <a href={content.saqa.source.url} target="_blank" rel="noopener noreferrer">View official SAQA record</a>
+                  {" · "}Checked {content.saqa.source.retrieved}. Registration and enrolment dates are historical record fields, not confirmation of current enrolment eligibility.
+                </p>
+              )}
+              <InfoSectionTabs key={unitId} id={`saqa-${unitId}`} sections={[
+                { title: "Registration details", icon: "document", content: (
+                <div className="saqa-table-scroll">
                 <table className="data kv">
                   <tbody>
                     {content.saqa.registration.map((r, ri) => (
@@ -3545,17 +3957,14 @@ export function UnitPage({
                     ))}
                   </tbody>
                 </table>
-              </details>
+                </div>
+                ) },
 
-              {content.saqa.sections.map((sec, si) => (
-                <details className="saqa-details" key={si}>
-                  <summary>
-                    <Icon name={sec.icon} size={17} />
-                    {unitText(sec.heading, (d, v) => { d.saqa!.sections[si].heading = v; })}
-                    <span className="chev">
-                      <Icon name="chevronDown" size={15} />
-                    </span>
-                  </summary>
+              ...content.saqa.sections.map((sec, si) => ({
+                title: sec.heading,
+                heading: unitText(sec.heading, (d, v) => { d.saqa!.sections[si].heading = v; }),
+                icon: sec.icon,
+                content: (
                   <div className="saqa-body">
                     {sec.paragraphs?.map((p, i) => (
                       <p key={i} className="lesson-p">
@@ -3577,6 +3986,7 @@ export function UnitPage({
                       </ul>
                     )}
                     {sec.table && (
+                      <div className="saqa-table-scroll">
                       <table className="data" style={{ marginTop: 10 }}>
                         <thead>
                           <tr>
@@ -3595,22 +4005,27 @@ export function UnitPage({
                           ))}
                         </tbody>
                       </table>
+                      </div>
                     )}
                   </div>
-                </details>
-              ))}
+                ),
+              })),
+              ]} />
             </>
           )}
 
+        </section>
+      )}
+
+      {(tab === "saqa" || tab === "overview") && (
           <div className="callout">
             <span className="ico">
               <Icon name="info" size={19} />
             </span>
             <span>
-              <Gloss text="Assessments for this unit standard are conducted in line with QCTO, SETA and institutional requirements, and must be valid, reliable, fair and aligned with the OCD and ASD for SAQA ID 48573. Constructive feedback is provided after each assessment." />
+              <Gloss text="Assessment must address this unit standard's specific outcomes, assessment criteria and stated range. Confirm assessor, moderation and current enrolment requirements with your provider and the relevant quality assurance body. Constructive feedback is provided after each assessment." />
             </span>
           </div>
-        </>
       )}
 
       {tab === "lesson" && content && (
@@ -3642,13 +4057,20 @@ export function UnitPage({
           )}
           {figUploading && <p role="status">Saving image...</p>}
           {figError && <p className="auth-error" role="alert">{figError}</p>}
+          {deleteSlideError && <p className="auth-error" role="alert">{deleteSlideError}</p>}
+          {!visibleLessonIndices.length && <p role="status">No slides remain in this lesson.</p>}
+          {inlineUnit && isSuperUser && <EditingTools active title="Save lesson draft" order={5}
+            description="Publish the draft, including removed slides, or cancel its changes.">
+            <div className="unit-editor-actions" ref={setInlineActionsTarget} />
+          </EditingTools>}
           {content.lesson.map((originalSection, si) => {
             const sec = { ...originalSection, figures: sectionFigures(si, originalSection.figures) };
             // edX-style wizard: only render the section that is currently on screen
-            if (si !== Math.min(lessonStep, content.lesson.length - 1)) return null;
-            const total = content.lesson.length;
-            const isFirst = si === 0;
-            const isLast = si === total - 1;
+            if (si !== activeLessonIndex) return null;
+            const total = visibleLessonIndices.length;
+            const position = visibleLessonIndices.indexOf(si);
+            const isFirst = position === 0;
+            const isLast = position === total - 1;
             const go = (next: number) => {
               setLessonStep(next);
               document.querySelector(".content")?.scrollTo({ top: 0, behavior: "smooth" });
@@ -3704,7 +4126,8 @@ export function UnitPage({
             const allFigIds = sec.figures?.map((f) => f.id) ?? [];
             const editable = editMode && isSuperUser;
             const figControls = (fig: LessonFigure) => (
-              <div className="fig-edit" onClick={(e) => e.stopPropagation()}>
+              <EditingTools active={editable} title={`Slide ${position + 1}: ${plainSlideText(capOf(fig.id, fig.caption)) || "Image"}`}>
+              <div className="fig-edit" style={{ position: "static", maxWidth: "100%" }} onClick={(e) => e.stopPropagation()}>
                 <button
                   type="button"
                   title="Move earlier in this section"
@@ -3752,6 +4175,7 @@ export function UnitPage({
                   +
                 </button>
               </div>
+              </EditingTools>
             );
             // First real (uploaded or default) figure in the effective order becomes the hero.
             const heroFig = orderedFigures.find((f) => figureImages[f.id] || FIGURE_DEFAULTS[f.id]);
@@ -3805,11 +4229,11 @@ export function UnitPage({
                         title={editable ? "Editing" : "Click to enlarge"}
                         style={{ maxHeight: `${Math.round(420 * heroScale)}px`, minHeight: `${Math.round(240 * Math.min(1, heroScale))}px` }}
                       >
-                        <img className="lesson-hero-bg" src={src} alt="" aria-hidden="true" style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
-                        <img className="lesson-hero-img" src={src} alt={plainSlideText(heroCap)} style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
+                        <img className="lesson-hero-bg" src={src} alt="" aria-hidden="true" loading="eager" decoding="async" fetchPriority="high" style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
+                        <img className="lesson-hero-img" src={src} alt={plainSlideText(heroCap)} loading="eager" decoding="async" fetchPriority="high" style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
                         <div className="lesson-hero-shade" />
                         <div className="lesson-hero-body">
-                          <div className="lesson-hero-eyebrow">Section {si + 1}</div>
+                          <div className="lesson-hero-eyebrow">Section {position + 1}</div>
                           <SlideEditableText as="div"
                             className="lesson-hero-title"
                             contentEditable={editable}
@@ -3832,7 +4256,7 @@ export function UnitPage({
                           </span>
                         )}
                       </HeroTag>
-                      {isPrivileged && !editable && (
+                      {isPrivileged && !phone && !editable && (
                         <div className="lesson-hero-tools">
                           <button
                             type="button"
@@ -3845,6 +4269,18 @@ export function UnitPage({
                           >
                             <Icon name="image" size={13} />
                             Replace picture
+                          </button>
+                          <button type="button" className="hero-tool" disabled={copyingFigure || figUploading}
+                            title="Copy this picture so you can paste it onto another slide"
+                            onClick={() => void copySlideFigure(src)}>
+                            <Icon name="copy" size={13} />
+                            {copyingFigure ? "Copying..." : "Copy image"}
+                          </button>
+                          <button type="button" className="hero-tool" disabled={!copiedFigure || figUploading}
+                            title="Paste the copied picture onto this slide"
+                            onClick={() => void pasteSlideFigure(heroFig.id)}>
+                            <Icon name="clipboard" size={13} />
+                            Paste image
                           </button>
                           {up && (
                             <button
@@ -3910,9 +4346,11 @@ export function UnitPage({
                     </button>
                   )}
                   {editMode && isSuperUser && generatedQuiz && (
+                    <EditingTools active title={`Slide ${position + 1}: generated quiz`}>
                     <button type="button" className="btn ghost lesson-quiz-reveal" onClick={() => editDeleteGeneratedQuiz(si)} title="Delete the entire generated quiz">
                       <Icon name="trash" size={14} /> Delete quiz
                     </button>
+                    </EditingTools>
                   )}
                 </div>
                 <div className="lesson-quiz-list">
@@ -4020,7 +4458,7 @@ export function UnitPage({
                   while (pi < effParagraphs.length && sec.paragraphFormats[pi] === format) items.push(`<li>${markedToHtml(lessonListItemText(paraText(pi++)))}</li>`);
                   html.push(`<${tag} class="lesson-inferred-list">${items.join("")}</${tag}>`);
                 } else if (format === "subheading") {
-                  html.push(`<h3 class="lesson-subheading">${markedToHtml(paraText(pi++))}</h3>`);
+                  html.push(`<p class="lesson-p">${markedToHtml(paraText(pi++))}</p>`);
                 } else {
                   html.push(`<p class="lesson-p">${markedToHtml(paraText(pi++))}</p>`);
                 }
@@ -4032,9 +4470,10 @@ export function UnitPage({
               + (sec.table ? tableHtml({headers:sec.table.headers.map((h,i)=>cellText("h",i,h)),rows:sec.table.rows.map((r,ri)=>r.map((c,ci)=>cellText(ri,ci,c)))}) : "")
               + (sec.cards?.length ? `<div class="card-grid lesson-cards">${sec.cards.map((c,ci)=>`<div class="card lesson-card"><div class="t">${markedToHtml(cardText(ci,"t",c.title))}</div><div class="d">${markedToHtml(cardText(ci,"d",c.text))}</div>${c.table?tableHtml(c.table):""}</div>`).join("")}</div>` : "")
               + [sec.example,...(sec.examples??[])].map((e,xi)=>e?`<div class="lesson-example"><h3>${markedToHtml(exText(xi,"t",e.title))}</h3>${e.lines.map((line,li)=>`<p class="lesson-p">${markedToHtml(exText(xi,String(li),line))}</p>`).join("")}</div>`:"").join("");
-            const groupedBodyHtml = groupLessonHtml(bodyOverride?.richHtml ?? initialBodyHtml, plainSlideText(secHeading));
-            const unifiedText = editable || bodyOverride?.richHtml !== undefined || Boolean(sec.paragraphFormats?.length) || groupedBodyHtml.includes("lesson-table-scroll");
-            const unifiedHtml = `<h2 class="section-title">${markedToHtml(secHeading)}</h2>${groupedBodyHtml}`;
+            const groupedBodyHtml = normalizeSlideDocument(bodyOverride?.richHtml ?? initialBodyHtml);
+            const unifiedText = true;
+            const hasSavedTitle = /data-slide-title="true"/.test(groupedBodyHtml);
+            const unifiedHtml = `${secHeading && !hasSavedTitle ? `<p class="lesson-p" data-slide-title="true">${markedToHtml(secHeading)}</p>` : ""}${groupedBodyHtml}`;
             const body = (
               <div className="saqa-body lesson-section">
                 {unifiedText ? <SlideEditableText as="div" className="slide-whole-editor" contentEditable={editable}
@@ -4091,9 +4530,11 @@ export function UnitPage({
                     // only their compact ids in lesson edits so Base64 image
                     // data can never exhaust localStorage.
                     clone.querySelectorAll<HTMLImageElement>("img[data-figure-id]").forEach(image => image.removeAttribute("src"));
-                    const heading=clone.querySelector(":scope > h2");
-                    editHeading(si,heading?htmlToMarked(heading as HTMLElement):"");heading?.remove();
-                    editSetSectionBody(si,{paragraphs:[htmlToMarked(clone)],richHtml:sanitizeSlideHtml(clone.innerHTML)});
+                    const heading=clone.querySelector(':scope > [data-slide-title="true"]');
+                    editHeading(si,heading?htmlToMarked(heading as HTMLElement):"");
+                    const richHtml=sanitizeSlideHtml(clone.innerHTML);
+                    heading?.remove();
+                    editSetSectionBody(si,{paragraphs:[htmlToMarked(clone)],richHtml});
                   }}/>:<>
                 {(() => {
                   const renderParagraphs = (start: number, end: number, heading: string): React.ReactNode[] => {
@@ -4348,7 +4789,7 @@ export function UnitPage({
                             >
                               <img src={cardFigSrc} alt={cardTitle} loading="lazy" />
                             </button>
-                            {isPrivileged && (
+                            {isPrivileged && !phone && (
                               <div className="lesson-hero-tools lesson-card-tools">
                                 <button
                                   type="button"
@@ -4375,7 +4816,7 @@ export function UnitPage({
                             )}
                           </div>
                         )}
-                        {c.figId && !cardFigSrc && isPrivileged && (
+                        {c.figId && !cardFigSrc && isPrivileged && !phone && (
                           <button
                             type="button"
                             className="lesson-card-imgdrop"
@@ -4522,7 +4963,7 @@ export function UnitPage({
                 </>}
                 {unifiedText && sec.cards?.filter(c=>c.figId).map(c=>{
                   const src=figureImages[c.figId!]?.image ?? FIGURE_DEFAULTS[c.figId!]?.src;
-                  return src?<img key={c.figId} src={src} alt={c.title} style={{maxWidth:"100%"}}/>:null;
+                  return src?<img key={c.figId} src={src} alt={c.title} loading="eager" decoding="async" fetchPriority="high" style={{maxWidth:"100%"}}/>:null;
                 })}
                 {sec.figures && (
                   <div className="figure-grid">
@@ -4561,11 +5002,11 @@ export function UnitPage({
                               onClick={() => !editable && openLightboxFor({ id: f.id, caption: cap })}
                               title={editable ? "Editing" : "Click to enlarge"}
                             >
-                              <img src={up.image} alt={cap} loading="lazy" style={imgStyle} />
+                              <img src={up.image} alt={cap} loading={figurePriorityIds.includes(f.id) ? "eager" : "lazy"} decoding="async" fetchPriority={figurePriorityIds.includes(f.id) ? "high" : "auto"} style={imgStyle} />
                             </button>
                             {editableCap()}
                             {editable && figControls(f)}
-                            {isPrivileged && !editable && (
+                            {isPrivileged && !phone && !editable && (
                               <button
                                 type="button"
                                 className="fig-remove"
@@ -4587,7 +5028,7 @@ export function UnitPage({
                               onClick={() => !editable && openLightboxFor({ id: f.id, caption: cap })}
                               title={editable ? "Editing" : "Click to enlarge"}
                             >
-                              <img src={def.src} alt={cap} loading="lazy" style={imgStyle} />
+                              <img src={def.src} alt={cap} loading={figurePriorityIds.includes(f.id) ? "eager" : "lazy"} decoding="async" fetchPriority={figurePriorityIds.includes(f.id) ? "high" : "auto"} style={imgStyle} />
                             </button>
                             {editableCap(
                               <a
@@ -4601,7 +5042,7 @@ export function UnitPage({
                               </a>
                             )}
                             {editable && figControls(f)}
-                            {isPrivileged && !editable && (
+                            {isPrivileged && !phone && !editable && (
                               <button
                                 type="button"
                                 className="fig-remove"
@@ -4691,47 +5132,32 @@ export function UnitPage({
                   setFigError(null);
                   setFigUploading(true);
                   try {
-                    if (!(await setFigure(id, dataUrl))) {
-                      setFigError("The picture could not be saved — check your connection and try again.");
-                      return null;
-                    }
+                    await setFigure(id, dataUrl);
                     return { id, src: dataUrl };
+                  } catch (error) {
+                    setFigError(error instanceof Error ? error.message : "The picture could not be saved.");
+                    return null;
                   } finally {
                     setFigUploading(false);
                   }
                 }} />}
                 <div className="lesson-stepper-top">
-                  <span className="lesson-step-count">
-                    {(() => {
-                      // which numbered lesson does this section belong to?
-                      let cur: { n: number; title: string } | undefined;
-                      for (let i = si; i >= 0; i--) {
-                        const ls = content.lesson[i].lessonStart;
-                        if (ls) {
-                          cur = ls;
-                          break;
-                        }
-                      }
-                      return cur ? `Lesson ${cur.n} · ` : "";
-                    })()}
-                    Section {si + 1} of {total}
+                  <span className="lesson-section-ring" role="progressbar"
+                    aria-label="Lesson section progress" aria-valuemin={0} aria-valuemax={100}
+                    aria-valuenow={Math.round(((position + 1) / total) * 100)}
+                    aria-valuetext={`Section ${position + 1} of ${total}`}
+                    title={`Section ${position + 1} of ${total}: ${plainSlideText(secHeading)}`}>
+                    <Ring value={(position + 1) / total} size={48} stroke={4} showLabel />
                   </span>
-                  <span className="lesson-step-title">{plainSlideText(secHeading)}</span>
-                  <button
-                    type="button"
-                    className="btn ghost sm lesson-present-btn"
-                    onClick={openPresenter}
-                    title="Present all slides (full screen)"
-                  >
-                    <Icon name="play" size={13} />
-                    Present
-                  </button>
+                  {isSuperUser && !slideEditOpen && !editable && lessonSaveStatus === "saved" && (
+                    <span className="lesson-save-status" role="status">Saved to cloud</span>
+                  )}
                   <span className="lesson-top-nav">
                     <button
                       type="button"
                       className="btn ghost sm"
                       disabled={isFirst}
-                      onClick={() => go(si - 1)}
+                      onClick={() => go(visibleLessonIndices[position - 1])}
                       title="Previous section"
                     >
                       <Icon name="chevronLeft" size={14} />
@@ -4740,10 +5166,11 @@ export function UnitPage({
                     <button
                       type="button"
                       className="btn ghost sm"
-                      onClick={() => (isLast ? setTab("exercises") : go(si + 1))}
+                      disabled={isLast}
+                      onClick={() => { if (!isLast) go(visibleLessonIndices[position + 1]); }}
                       title={
                         isLast
-                          ? "Continue to the exercises"
+                          ? "This is the last section"
                           : "Next section"
                       }
                     >
@@ -4751,10 +5178,56 @@ export function UnitPage({
                       <Icon name="chevronRight" size={14} />
                     </button>
                   </span>
+                  {isSuperUser && <button type="button" className="btn ghost sm"
+                    disabled={deletingSlide || savingLesson || figUploading}
+                    onClick={() => setTableConfirm({
+                      title: "Delete slide?",
+                      message: `Delete slide ${position + 1}: ${plainSlideText(secHeading)}? Its text, images, videos and questions will no longer appear in the lesson.`,
+                      confirmLabel: "Delete slide",
+                      action: () => { void deleteLessonSlide(si); },
+                    })}>
+                    <Icon name="trash" size={14} />{deletingSlide ? "Deleting slide..." : "Delete slide"}
+                  </button>}
+                  {isPrivileged && (
+                    <>
+                      <EditingTools active={slideEditOpen || editable} title={`Slide ${position + 1} · Save and finish`} order={0}
+                        description="Save your changes under Slide content and images before closing the slide tools.">
+                        <button type="button" className="btn ghost sm slide-tool-action" disabled={savingLesson || !!inlineUnit}
+                          onClick={() => { setSlideEditOpen(false); setEditMode(false); }}>
+                          <Icon name="checkCircle" size={16} />{editable ? "Done editing slide" : "Close slide tools"}
+                        </button>
+                      </EditingTools>
+                      <EditingTools active={slideEditOpen || editable} title="Videos and questions" order={30}
+                        description="Add a video, then open its question setup to paste a transcript and generate five questions.">
+                        <LessonVideoEditor key={`${unitId}:${si}`} links={lessonEdits.videos?.[si] ?? []}
+                          quizzes={lessonEdits.videoQuizzes}
+                          titles={lessonEdits.videoTitles}
+                          onSaveTitle={async (link, title) => {
+                            const editId = builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId;
+                            await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(editId)}`, {
+                              ...lessonEdits, videoTitles: { ...lessonEdits.videoTitles, [videoQuizId(link)]: title },
+                            });
+                          }}
+                          onSaveQuiz={async (link, quiz) => {
+                            const editId = builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId;
+                            await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(editId)}`, {
+                              ...lessonEdits, videoQuizzes: { ...lessonEdits.videoQuizzes, [videoQuizId(link)]: quiz },
+                            });
+                          }}
+                          disabled={!!inlineUnit || savingLesson}
+                          onSave={async links => {
+                            const editId = builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId;
+                            await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(editId)}`, {
+                              ...lessonEdits, videos: { ...lessonEdits.videos, [si]: links },
+                            });
+                          }} />
+                      </EditingTools>
+                      <EditingTools active={slideEditOpen || editable} title="Slide content and images" order={10}
+                        description="Edit the slide text or add an image. Select slide text to use the formatting tools.">
                   {isPrivileged && (
                     <button
                       type="button"
-                      className="btn ghost sm"
+                      className="btn ghost sm slide-tool-action"
                       disabled={figUploading}
                       onClick={() => {
                         pendingFigId.current = `lesson-added-${si}-${Date.now()}-${crypto.randomUUID()}`;
@@ -4765,31 +5238,51 @@ export function UnitPage({
                       {figUploading ? "Saving image..." : "Add image"}
                     </button>
                   )}
-                  {builtUnit && isSuperUser && !inlineUnit && (
-                    <button
-                      type="button"
-                      className="btn ghost sm lesson-inline-edit-btn"
-                      aria-label="Edit content inline"
-                      title="Edit content inline"
-                      onClick={() => { if (content) { setInlineUnit(structuredClone(content)); setEditMode(true); } }}
-                    >
-                      <Icon name="editSquare" size={19} strokeWidth={1.7} />
-                    </button>
-                  )}
                   {isSuperUser && (
-                    <span className="lesson-edit-toolbar">
-                      <button
-                        type="button"
-                        className={`btn ghost sm save-cloud-action${editMode ? " active" : ""}`}
-                        disabled={savingLesson}
-                        onClick={() => { if (editMode) void saveLessonToCloud(); else { setLessonSaveStatus(""); setEditMode(true); } }}
-                        title="Toggle edit mode (super user)"
-                      >
-                        <Icon name="shield" size={13} />
-                        {savingLesson ? "Saving to cloud..." : editMode ? "Save to cloud" : "Edit content"}
-                      </button>
-                      {editMode && (
-                        <>
+                    <>
+                      {editMode && <>
+                          <button type="button" className="btn ghost sm slide-tool-action" onClick={() => openPasteEditor(si)}
+                            title="Replace this slide's text with pasted paragraphs">
+                            <Icon name="pencil" size={13} />Replace slide text
+                          </button>
+                          <button type="button" className="btn ghost sm slide-tool-action proofread-action"
+                            disabled={proofreadingSlide !== null || savingLesson}
+                            onClick={() => void proofreadLessonSlide(si)}
+                            title="Use AI to correct spelling and grammar on this slide">
+                            <Icon name="sparkles" size={13} />{proofreadingSlide === si ? "AI is proofreading..." : "AI fix spelling & grammar"}
+                          </button>
+                          {proofreadStatus === "done" && <p role="status">AI proofreading complete. Review the changes, then save to cloud.</p>}
+                          {proofreadStatus === "partial" && <p role="status">AI proofreading made safe corrections. {proofreadNotice} Review the changes, then save to cloud.</p>}
+                          {proofreadStatus === "error" && <p className="auth-error" role="alert">{proofreadError}</p>}
+                          {builtUnit && <>
+                            <button type="button" className="btn ghost sm slide-tool-action"
+                              disabled={addingSlide || savingLesson || deletingSlide}
+                              onClick={() => void addBuiltLessonSlide(si)}
+                              title="Insert a blank slide after this slide">
+                              <Icon name="editSquare" size={13} />{addingSlide ? "Adding slide..." : "Add slide after this"}
+                            </button>
+                            <p className="editing-tool-description">To split a slide, place the cursor in its text. Everything after the cursor moves to a new slide.</p>
+                            <button type="button" className="btn ghost sm slide-tool-action" onMouseDown={event => event.preventDefault()}
+                              disabled={!!inlineUnit || savingLesson || deletingSlide}
+                              title={inlineUnit ? "Save the inline draft before splitting slides" : undefined}
+                              onClick={() => void splitBuiltLessonAtCursor(si).catch(error => setLessonSplitError(error instanceof Error ? error.message : "The slide could not be split. Please retry."))}>
+                              <Icon name="chevronRight" size={13} />Split slide at cursor
+                            </button>
+                          </>}
+                      </>}
+                    </>
+                  )}
+                      {isSuperUser && lessonSplitError && <p className="auth-error" role="alert">{lessonSplitError}</p>}
+                      {isSuperUser && editMode && !inlineUnit && <button type="button" className="btn save-cloud-action"
+                        disabled={savingLesson} onClick={() => void saveLessonToCloud()}>
+                        <Icon name="save" size={16} />{savingLesson ? "Saving to cloud..." : "Save to cloud"}
+                      </button>}
+                      {isSuperUser && lessonSaveStatus === "saved" && <p role="status">Saved to cloud.</p>}
+                      {isSuperUser && lessonSaveStatus === "error" && <p className="auth-error" role="alert">{lessonSaveError}</p>}
+                      </EditingTools>
+                      {isSuperUser && editMode && (
+                        <EditingTools active={slideEditOpen || editable} title="Slide quiz settings" order={40} defaultOpen={false}
+                          description="These questions assess the slide text. Video questions are configured separately under Videos and questions.">
                           <label className="slide-quiz-count" title="Number of questions to generate">
                             Questions
                             <Select
@@ -4815,57 +5308,31 @@ export function UnitPage({
                             <Icon name="clipboard" size={13} />
                             {generatingQuiz === si ? "Generating quiz…" : "Generate quiz"}
                           </button>
-                          <button
-                            type="button"
-                            className="btn ghost sm"
-                            onClick={() => openPasteEditor(si)}
-                            title="Replace this slide's text — paste in paragraphs and they are formatted automatically"
-                          >
-                            <Icon name="pencil" size={13} />
-                            Paste text
+                          <button type="button" className="btn ghost sm" onClick={() => void generateQuizzesForEverySlide()} disabled={!!generatingAllQuizzes || generatingQuiz !== null} title="Generate a quiz for every lesson slide">
+                            <Icon name="clipboard" size={13} />
+                            {generatingAllQuizzes ? `Adding quizzes… ${generatingAllQuizzes.done}/${generatingAllQuizzes.total}` : "Add quiz to every slide"}
                           </button>
-                          {builtUnit && (
-                            <button
-                              type="button"
-                              className="btn ghost sm"
-                              onMouseDown={(event) => event.preventDefault()}
-                              onClick={() => void splitBuiltLessonAtCursor(si)}
-                              title="Place the cursor in this slide's text. Content after the cursor moves to a new next slide."
-                            >
-                              <Icon name="chevronRight" size={13} />
-                              Split slide here
-                            </button>
-                          )}
+                          {generatingAllQuizzes && <progress className="slide-quiz-generation-progress" max={generatingAllQuizzes.total} value={generatingAllQuizzes.done} aria-label="Quiz generation progress" />}
+                          {quizGenerationError && <p className="auth-error" role="alert">{quizGenerationError}</p>}
+                        </EditingTools>
+                      )}
+                      {isSuperUser && editMode && (
+                        <EditingTools active={slideEditOpen || editable} title="Reset slide edits" order={90} defaultOpen={false}
+                          description="Discard your changes to this section and restore its original content.">
                           <button
                             type="button"
                             className="btn ghost sm"
                             onClick={() => editResetSection(si, allFigIds)}
                             title="Discard my edits on this section"
                           >
-                            Reset section
+                            Reset section edits
                           </button>
-                        </>
+                        </EditingTools>
                       )}
-                    </span>
+                    </>
                   )}
                 </div>
-                {isSuperUser && lessonSaveStatus === "saved" && <p role="status">Saved to cloud.</p>}
-                {isSuperUser && lessonSaveStatus === "error" && <div className="lesson-toolbar-messages"><p className="auth-error" role="alert">{lessonSaveError}</p></div>}
-                {isSuperUser && editMode && (quizGenerationError || lessonSplitError) && (
-                  <div className="lesson-toolbar-messages">
-                    {quizGenerationError && <p className="auth-error" role="alert">{quizGenerationError}</p>}
-                    {lessonSplitError && <p className="auth-error" role="alert">{lessonSplitError}</p>}
-                  </div>
-                )}
-                <div
-                  className="lesson-progress"
-                  role="progressbar"
-                  aria-valuemin={0}
-                  aria-valuemax={total}
-                  aria-valuenow={si + 1}
-                >
-                  <span style={{ width: `${((si + 1) / total) * 100}%` }} />
-                </div>
+                {isSuperUser && !slideEditOpen && !editable && lessonSaveStatus === "error" && <p className="auth-error lesson-toolbar-error" role="alert">{lessonSaveError}</p>}
               </div>
             );
             const nav = (
@@ -4873,48 +5340,76 @@ export function UnitPage({
                 <button
                   className="btn ghost"
                   disabled={isFirst}
-                  onClick={() => go(si - 1)}
+                  onClick={() => go(visibleLessonIndices[position - 1])}
                 >
                   <Icon name="chevronLeft" size={16} />
                   Previous
                 </button>
                 <span className="lesson-nav-dots">
                   <span className="lesson-nav-count">
-                    Slide {si + 1} of {total}
+                    Slide {position + 1} of {total}
                   </span>
-                  {content.lesson.map((s, i) => (
+                  {visibleLessonIndices.map((i, dotIndex) => {
+                    const s = content.lesson[i];
+                    const hasVideo = (lessonEdits.videos?.[i] ?? []).length > 0;
+                    const lessonLabel = s.lessonStart ? ` (start of lesson ${s.lessonStart.n})` : "";
+                    return (
                     <button
                       key={i}
                       type="button"
-                      className={`lesson-dot${i === si ? " active" : ""}${i < si ? " done" : ""}${s.lessonStart && i > 0 ? " lesson-start" : ""}`}
-                      aria-label={`Go to section ${i + 1}${s.lessonStart ? ` (start of lesson ${s.lessonStart.n})` : ""}`}
-                      title={s.lessonStart ? `Lesson ${s.lessonStart.n} starts here` : undefined}
+                      className={`lesson-dot${i === si ? " active" : ""}${i < si ? " done" : ""}${s.lessonStart && i > 0 ? " lesson-start" : ""}${hasVideo ? " has-video" : ""}`}
+                      aria-label={`Go to section ${dotIndex + 1}${lessonLabel}${hasVideo ? " (has video)" : ""}`}
+                      data-tooltip={hasVideo ? "Video included" : undefined}
+                      onMouseDown={event => event.preventDefault()}
                       onClick={() => go(i)}
-                    />
-                  ))}
+                    >
+                      {hasVideo && <Icon name="videoCamera" size={11} className="lesson-dot-video" />}
+                    </button>
+                  ); })}
                 </span>
-                {!isLast ? (
-                  <button className="btn" onClick={() => go(si + 1)}>
-                    Next
-                    <Icon name="chevronRight" size={16} />
-                  </button>
-                ) : (
-                  <button className="btn" onClick={() => setTab("exercises")}>
-                    Finish lesson
-                    <Icon name="checkCircle" size={16} />
-                  </button>
-                )}
+                <button className="btn" onClick={() => { if (!isLast) go(visibleLessonIndices[position + 1]); }} disabled={isLast}
+                  title={isLast ? "This is the last section" : undefined}>
+                  Next
+                  <Icon name="chevronRight" size={16} />
+                </button>
               </div>
             );
             return (
               <div key={sec.heading} className="lesson-screen">
-                {stepper}
-                {sec.lessonStart && (
-                  <div className="lesson-start-banner">
-                    <span className="lesson-start-badge">Lesson {sec.lessonStart.n}</span>
-                    <span className="lesson-start-title">{sec.lessonStart.title}</span>
-                  </div>
-                )}
+                {lessonControlsHost ? createPortal(stepper, lessonControlsHost) : stepper}
+                <LessonVideos
+                  links={lessonEdits.videos?.[si] ?? []}
+                  titles={lessonEdits.videoTitles}
+                  quizzes={lessonEdits.videoQuizzes}
+                  completedVideoIds={Object.entries(progress.units[u.us]?.quizzes ?? {})
+                    .filter(([id, result]) => id.startsWith("video:") && result.best === 5 && result.total === 5)
+                    .map(([id]) => id)}
+                  learnerName={profile.name}
+                  learnerProfile={profile}
+                  logbook={progress.units[u.us]?.logbook}
+                  onLike={(link, liked) => {
+                    setLogbookField(u.us, videoEngagementKey(link, "liked"), liked);
+                    if (liked) setLogbookField(u.us, videoEngagementKey(link, "likeXp"), true);
+                  }}
+                  onComment={(link, comments) => {
+                    setLogbookField(u.us, videoEngagementKey(link, "comments"), JSON.stringify(comments));
+                    setLogbookField(u.us, videoEngagementKey(link, "commentXp"), true);
+                  }}
+                  onWatchProgress={(link, seconds) => {
+                    const key = videoEngagementKey(link, "watchSeconds");
+                    const previous = Number(progress.units[u.us]?.logbook?.[key] ?? 0);
+                    if (seconds > previous) setLogbookField(u.us, key, String(Math.floor(seconds)));
+                  }}
+                  onViewCount={(link, views) => {
+                    setLogbookField(u.us, videoEngagementKey(link, "viewCount"), String(views));
+                  }}
+                  onComplete={(link, answers) => {
+                    const id = videoQuizId(link);
+                    const previous = progress.units[u.us]?.quizzes?.[id];
+                    if (previous?.best === 5 && previous.total === 5) return;
+                    saveQuizResult(u.us, 5, 5, id, { answers, watchedFully: true });
+                  }}
+                />
                 {isSlide && heroFig ? (() => {
                   const up = figureImages[heroFig.id];
                   const def = FIGURE_DEFAULTS[heroFig.id];
@@ -5006,7 +5501,7 @@ export function UnitPage({
             );
           })}
           {pasteEditor && (
-            <div className="paste-editor-overlay" role="dialog" aria-modal="true" aria-label="Edit slide text">
+            <section aria-label="Edit slide text">
               <div className="paste-editor">
                 <h3>
                   <Icon name="pencil" size={16} />
@@ -5037,6 +5532,7 @@ export function UnitPage({
                   numbered points — the text is formatted in the lesson’s standard style automatically.
                   Use **double stars** for bold.
                 </p>
+                <EditingTools active={isSuperUser} title={`Slide ${pasteEditor.si + 1}: replace text`}>
                 <div className="paste-editor-actions">
                   <button className="btn" onClick={savePasteEditor}>
                     <Icon name="check" size={15} />
@@ -5046,8 +5542,9 @@ export function UnitPage({
                     Cancel
                   </button>
                 </div>
+                </EditingTools>
               </div>
-            </div>
+            </section>
           )}
         </>
       )}
@@ -5198,6 +5695,7 @@ export function UnitPage({
                         <Icon name="menu" size={13} />
                       </span>
                       {editNoteId === n.id ? (
+                        <>
                         <input
                           className="notes-rename"
                           value={editTitle}
@@ -5214,7 +5712,8 @@ export function UnitPage({
                             }
                             if (e.key === "Escape") setEditNoteId(null);
                           }}
-                          onBlur={() => {
+                          onBlur={(event) => {
+                            if ((event.relatedTarget as HTMLElement | null)?.closest("[data-note-rename-tools]")?.getAttribute("data-note-rename-tools") === n.id) return;
                             if (editTitle.trim()) {
                               if (n.mine) renameNote(n.id, editTitle.trim());
                               else if (n.shared) renameSharedNote(n.id, editTitle.trim());
@@ -5223,6 +5722,21 @@ export function UnitPage({
                             setEditNoteId(null);
                           }}
                         />
+                        <EditingTools active title={`Rename note: ${n.title}`}>
+                          <div data-note-rename-tools={n.id}>
+                          <button type="button" className="btn sm" onMouseDown={event => event.preventDefault()} onClick={() => {
+                            if (editTitle.trim()) {
+                              if (n.mine) renameNote(n.id, editTitle.trim());
+                              else if (n.shared) renameSharedNote(n.id, editTitle.trim());
+                              else setTitleOverride(n.id, editTitle.trim());
+                            }
+                            setEditNoteId(null);
+                          }}>Save name</button>
+                          <button type="button" className="btn ghost sm" onMouseDown={event => event.preventDefault()} onClick={() => setEditNoteId(null)}>Cancel</button>
+                          <p className="muted">Enter saves the name. Escape cancels.</p>
+                          </div>
+                        </EditingTools>
+                        </>
                       ) : (
                         <button className="notes-select" onClick={() => setNoteId(n.id)}>
                           <span className="nt">{n.title}</span>
@@ -5339,8 +5853,8 @@ export function UnitPage({
               of its text.
             </span>
           </div>
-          {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="btn ghost sm" disabled={!!activityEditor} onClick={addBuiltActivity}><Icon name="plus" size={14} /> Add activity</button>{activityEditError && <span role="alert" className="auth-error">{activityEditError}</span>}</div>}
-          {activityEditor && builtUnit && isSuperUser && <div className="card activity-editor-card"><h3>{activityEditor.index === null ? "Add activity" : "Edit activity"}</h3><fieldset disabled={activitySaving} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}><ActivityQuestionEditor key={activityEditor.value.id} value={activityEditor.value} onChange={value => setActivityEditor({ ...activityEditor, value })}/><div className="unit-editor-actions"><button type="button" className="btn" onClick={() => void saveActivityEditor()}>{activitySaving ? "Generating model answers…" : "Save activity"}</button><button type="button" className="btn ghost" onClick={() => { setActivityEditor(null); setActivityEditError(""); }}>Cancel</button></div></fieldset></div>}
+          {builtUnit && isSuperUser && <CourseEditingTools active={!!activityEditor || !!inlineUnit} title="Unit activities"><div className="activity-edit-bar"><button type="button" className="btn ghost sm" disabled={!!activityEditor} onClick={addBuiltActivity}><Icon name="plus" size={14} /> Add activity</button>{!activityEditor && activityEditError && <span role="alert" className="auth-error">{activityEditError}</span>}</div></CourseEditingTools>}
+          {activityEditor && builtUnit && isSuperUser && <div className="card activity-editor-card"><h3>{activityEditor.index === null ? "Add activity" : "Edit activity"}</h3><fieldset disabled={activitySaving} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}><ActivityQuestionEditor key={activityEditor.value.id} value={activityEditor.value} onChange={value => setActivityEditor({ ...activityEditor, value })}/></fieldset><EditingTools active title="Activity editing"><div className="unit-editor-actions"><button type="button" className="btn" disabled={activitySaving} onClick={() => void saveActivityEditor()}>{activitySaving ? "Generating model answers…" : "Save activity"}</button><button type="button" className="btn ghost" disabled={activitySaving} onClick={() => { setActivityEditor(null); setActivityEditError(""); }}>Cancel</button></div>{activityEditError && <p role="alert" className="auth-error">{activityEditError}</p>}</EditingTools></div>}
           {(tab === "questions" ? (content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index })) : builtUnit ? visibleBuiltActivities : content.exercises.map((ex, index) => ({ ex, kind: "exercises" as const, index }))).map(({ex, kind, index}) => {
             const exRes = progress.units[u.us]?.exercises?.[ex.id];
             const hasChecks = !!ex.checks && ex.checks.length > 0;
@@ -5383,7 +5897,7 @@ export function UnitPage({
                 </span>
               </summary>
               <div className="saqa-body">
-                {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="activity-remove-icon" aria-label="Remove activity" title="Remove activity" disabled={!!activityEditor} onClick={() => setTableConfirm({ title: "Remove activity?", message: <>Remove <strong>“{ex.title}”</strong>? This cannot be undone.</>, confirmLabel: "Remove activity", action: () => void removeBuiltActivity(kind, index) })}><Icon name="trash" size={15} /></button></div>}
+                {builtUnit && isSuperUser && <CourseEditingTools active={!!activityEditor || !!inlineUnit} title={`Activity: ${ex.title}`}><div className="activity-edit-bar"><button type="button" className="activity-remove-icon" aria-label="Remove activity" title="Remove activity" disabled={!!activityEditor} onClick={() => setTableConfirm({ title: "Remove activity?", message: <>Remove <strong>“{ex.title}”</strong>? This cannot be undone.</>, confirmLabel: "Remove activity", action: () => void removeBuiltActivity(kind, index) })}><Icon name="trash" size={15} /></button></div></CourseEditingTools>}
                 <p className="lesson-p" style={{ marginTop: 10 }}>
                   {inlineUnit ? unitText(ex.task, (d, v) => { d[kind]![index].task = v; }, "Activity instructions") : <Gloss text={ex.task} />}
                 </p>
@@ -5633,6 +6147,7 @@ export function UnitPage({
       {tab === "logbook" && content?.logbook && logbookData && (
         <>
           {isSuperUser && (
+            <CourseEditingTools active={editMode} title="Logbook editing">
             <div className="plan-edit-bar">
               <button
                 type="button"
@@ -5668,6 +6183,7 @@ export function UnitPage({
               {lessonSaveStatus === "saved" && <span className="muted">Saved to cloud — everyone now sees this version.</span>}
               {lessonSaveStatus === "error" && <span className="auth-error">{lessonSaveError}</span>}
             </div>
+            </CourseEditingTools>
           )}
           {isSuperUser && <LogbookBuilder unit={u} content={content} />}
           <Logbook
@@ -5682,6 +6198,7 @@ export function UnitPage({
       )}
 
       {tab === "quiz" && content && builtUnit && isSuperUser && (
+        <CourseEditingTools active={!!inlineUnit} title="Whole-unit quiz generation">
         <div className="activity-edit-bar">
           <label className="slide-quiz-count">
             Whole-unit questions
@@ -5692,6 +6209,7 @@ export function UnitPage({
           </button>
           {quizGenerationError && <span role="alert" className="auth-error">{quizGenerationError}</span>}
         </div>
+        </CourseEditingTools>
       )}
 
       {tab === "quiz" && content && content.quizzes && content.quizzes.length > 0 && (() => {
@@ -5727,7 +6245,12 @@ export function UnitPage({
                       <Icon name={pct !== null && pct >= 80 ? "checkCircle" : "clipboard"} size={22} />
                     </span>
                     <span>
-                      <span className="nm">{qz.title}</span>
+                      <span className="nm" onClick={event => { if (inlineUnit) event.stopPropagation(); }}>
+                        {inlineUnit ? unitText(qz.title, (draft, value) => {
+                          const quiz = draft.quizzes?.find(item => item.id === qz.id);
+                          if (quiz) quiz.title = value || qz.title;
+                        }, "Quiz title") : qz.title}
+                      </span>
                       <br />
                       <span className="rl">
                         {qz.questions.length} questions
@@ -5789,7 +6312,10 @@ export function UnitPage({
               <span className="ico">
                 <Icon name="clipboard" size={20} />
               </span>
-              Question {qNo} — {active.title}
+              Question {qNo} — {inlineUnit ? unitText(active.title, (draft, value) => {
+                const quiz = draft.quizzes?.find(item => item.id === active.id);
+                if (quiz) quiz.title = value || active.title;
+              }, "Quiz title") : active.title}
             </h2>
             <div className="exam-instruction">
               <p>
@@ -5883,7 +6409,7 @@ export function UnitPage({
               </span>
               Self assessment
             </h2>
-            {builtUnit && isSuperUser && <div className="activity-edit-bar">
+            {builtUnit && isSuperUser && !inlineUnit && <div className="activity-edit-bar">
               <button type="button" className="btn ghost sm" disabled={!!selfAssessmentDraft || !!inlineUnit} onClick={() => { setInlineUnit(structuredClone(content)); setEditMode(true); }}>Edit self assessment inline</button>
             </div>}
             {builtUnit && isSuperUser && selfAssessmentDraft && <div className="card self-assessment-editor">
@@ -5892,12 +6418,14 @@ export function UnitPage({
                 <UnitContentEditor name="Introduction" value={selfAssessmentDraft.intro} onChange={value => setSelfAssessmentDraft({ ...selfAssessmentDraft, intro: value as string[] })} />
                 <UnitContentEditor name="Checklist items" value={selfAssessmentDraft.items} onChange={value => setSelfAssessmentDraft({ ...selfAssessmentDraft, items: value as string[] })} />
                 <UnitContentEditor name="Closing instructions" value={selfAssessmentDraft.outro ?? []} onChange={value => setSelfAssessmentDraft({ ...selfAssessmentDraft, outro: value as string[] })} />
+              </fieldset>
+                <EditingTools active title="Self assessment editing">
                 {selfAssessmentError && <p className="auth-error" role="alert">{selfAssessmentError}</p>}
                 <div className="unit-editor-actions">
-                  <button type="button" className="btn" onClick={() => void saveSelfAssessment()}>{selfAssessmentSaving ? "Saving..." : "Save changes"}</button>
-                  <button type="button" className="btn ghost" onClick={() => { setSelfAssessmentDraft(undefined); setSelfAssessmentError(""); }}>Cancel</button>
+                  <button type="button" className="btn" disabled={selfAssessmentSaving} onClick={() => void saveSelfAssessment()}>{selfAssessmentSaving ? "Saving..." : "Save changes"}</button>
+                  <button type="button" className="btn ghost" disabled={selfAssessmentSaving} onClick={() => { setSelfAssessmentDraft(undefined); setSelfAssessmentError(""); }}>Cancel</button>
                 </div>
-              </fieldset>
+                </EditingTools>
             </div>}
             {sa.intro.map((p, pi) => (
               <p key={p} className="lesson-p" style={{ maxWidth: 720 }}>
@@ -6028,12 +6556,14 @@ export function UnitPage({
       })()}
 
       {content?.customTabs?.filter(item => item.id === tab).map(item => <section className="card" key={item.id}><h2>{unitText(item.title, (d, v) => { d.customTabs!.find(t => t.id === item.id)!.title = v; })}</h2><div style={{ whiteSpace: "pre-wrap" }}>{unitText(item.text, (d, v) => { d.customTabs!.find(t => t.id === item.id)!.text = v; })}</div></section>)}
-      {tab === "practical" && practicalTask && <PracticalTask document={practicalTask} unitId={u.us} profile={profile} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} />}
-      {tab === "workbook" && unitId === "114046" && <LearnerWorkbook profile={profile} memoItems={workbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
-      {tab === "workbook" && unitId !== "114046" && content?.workbook && <GeneratedWorkbook workbook={content.workbook} memoItems={workbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
-      {tab === "memo" && isSuperUser && (unitId === "114046" || content?.workbook) && <WorkbookMemo unitId={unitId} blueprint={unitId === "114046" ? WORKBOOK_114046_BLUEPRINT : content!.workbook!.outcomes.map(outcome => ({ id: outcome.id, question: outcome.title, maxMarks: outcome.questions.reduce((total, question) => total + question.marks, 0), tasks: outcome.questions.map(question => ({ task: question.task, text: question.text, marks: question.marks })) }))} memo={workbookMemo} onChange={next=>setWorkbookMemo(()=>next)} />}
-      {tab === "guide" && unitId === "114046" && <LearnerGuide values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} />}
-      {content?.editableDocuments?.filter(item => `pdf-${item.id}` === tab).map(item => <PracticalTask key={item.id} document={item.document} unitId={`${u.us}.${item.id}`} profile={profile} values={progress.units[u.us]?.logbook ?? {}} onChange={(key,value)=>setLogbookField(u.us,`editable-document.${item.id}.${key}`,value)} />)}
+      {tab === "practical" && practicalTask && <PracticalTask document={practicalTask} unitId={u.us} profile={profile} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && content?.learnerWorkbook && <PracticalTask document={content.learnerWorkbook} unitId={u.us} profile={profile} presentation="workbook" storagePrefix="learner-workbook." values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && !content?.learnerWorkbook && unitId === "114046" && <LearnerWorkbook profile={profile} memoItems={workbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && !content?.learnerWorkbook && unitId !== "114046" && content?.workbook && <GeneratedWorkbook workbook={content.workbook} memoItems={workbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "memo" && !content?.learnerWorkbook && isSuperUser && (unitId === "114046" || content?.workbook) && <WorkbookMemo unitId={unitId} blueprint={unitId === "114046" ? WORKBOOK_114046_BLUEPRINT : content!.workbook!.outcomes.map(outcome => ({ id: outcome.id, question: outcome.title, maxMarks: outcome.questions.reduce((total, question) => total + question.marks, 0), tasks: outcome.questions.map(question => ({ task: question.task, text: question.text, marks: question.marks })) }))} memo={workbookMemo} onChange={next=>setWorkbookMemo(()=>next)} />}
+      {tab === "guide" && content?.learnerGuide && <PracticalTask document={content.learnerGuide} unitId={u.us} profile={profile} storagePrefix="learner-guide." values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {tab === "guide" && !content?.learnerGuide && unitId === "114046" && <LearnerGuide values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} />}
+      {content?.editableDocuments?.filter(item => `pdf-${item.id}` === tab).map(item => <PracticalTask key={item.id} document={item.document} unitId={u.us} presentation={/workbook/i.test(item.title) ? "workbook" : undefined} storagePrefix={`editable-document.${item.id}.`} profile={profile} values={progress.units[u.us]?.logbook ?? {}} onChange={(key,value)=>setLogbookField(u.us,key,value)} onSave={() => flushProgress(profile.id)} />)}
       {tab === "evaluation" && content?.evaluation && <section className="unit-evaluation"><h2>Lesson evaluation</h2><p>{unitText(content.evaluation.intro, (d, v) => { d.evaluation!.intro = v; })}</p>{content.evaluation.questions.map((question, i) => <label className="field" key={`${builtUnit?.revision}:${i}`}>{unitText(question, (d, v) => { d.evaluation!.questions[i] = v; })}<textarea rows={3} defaultValue={String(progress.units[u.us]?.logbook?.[`unit-evaluation.${builtUnit?.revision}.${i}`] ?? "")} onBlur={e => setLogbookField(u.us, `unit-evaluation.${builtUnit?.revision}.${i}`, e.target.value)} /></label>)}<p className="muted">Your responses save when you leave each field.</p></section>}
       {tab === "evaluation" && !content?.evaluation && (
         <>
@@ -6101,7 +6631,7 @@ export function UnitPage({
         </>
       )}
 
-      {tab === "material" && builtUnit && <BuiltUnitDownloads us={unitId} staff={isPrivileged} />}
+      {tab === "material" && builtUnit && <BuiltUnitDownloads us={unitId} staff={isPrivileged} onSaveChanges={() => saveLessonToCloud(true)} savingChanges={savingLesson} />}
       {tab === "material" && decks.length > 0 && (
         <>
           <h2 className="section-title">
@@ -6212,6 +6742,7 @@ export function UnitPage({
             for this unit standard.
           </p>
           {isSuperUser && (
+            <CourseEditingTools active={editMode} title="Lesson plan editing">
             <div className="plan-edit-bar">
               <button
                 type="button"
@@ -6247,6 +6778,7 @@ export function UnitPage({
               {lessonSaveStatus === "saved" && <span className="muted">Saved to cloud — everyone now sees this version.</span>}
               {lessonSaveStatus === "error" && <span className="auth-error">{lessonSaveError}</span>}
             </div>
+            </CourseEditingTools>
           )}
           {isSuperUser && <LessonPlanBuilder unit={u} content={content} />}
           {canDownloadShared && u.us === "8252" && (
@@ -6385,23 +6917,27 @@ export function UnitPage({
                             <PlanText as="div" className="k" value={d.label} editable={pe} placeholder="Label" onSave={(t) => updatePlan((x) => { x.details![di].label = t; })} />
                             <PlanText as="div" className="v" value={d.value} editable={pe} placeholder="Value" onSave={(t) => updatePlan((x) => { x.details![di].value = t; })} />
                           </div>
-                          {pe && <PlanIconBtn title="Remove detail" icon="close" danger onClick={() => updatePlan((x) => { x.details!.splice(di, 1); })} />}
+                          {pe && <EditingTools active title={`Plan detail ${di + 1}: ${d.label}`}><PlanIconBtn title="Remove detail" icon="close" danger onClick={() => updatePlan((x) => { x.details!.splice(di, 1); })} /></EditingTools>}
                         </div>
                       ))}
                       {pe && (
+                        <EditingTools active title="Lesson plan details">
                         <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { (x.details ??= []).push({ icon: "info", label: "Detail", value: "Value" }); })}>
                           <Icon name="plus" size={13} /> Add detail
                         </button>
+                        </EditingTools>
                       )}
                     </div>
                   )}
                   {pe && (
-                    <div className="plan-start">
+                    <EditingTools active title="Lesson plan timing">
+                    <div className="plan-start" style={{ flexWrap: "wrap" }}>
                       <Icon name="clock" size={15} />
                       <span>Session starts at</span>
                       <PlanText value={planData.startTime ?? "09:00"} editable placeholder="09:00" onSave={(t) => updatePlan((x) => { x.startTime = /^\d{1,2}:\d{2}$/.test(t) ? t : x.startTime; })} />
                       <span className="muted">(HH:MM — drives the clock column)</span>
                     </div>
+                    </EditingTools>
                   )}
                   <ul className="duty-list plan-prep">
                     {planData.prep.map((p, pi) => (
@@ -6410,14 +6946,16 @@ export function UnitPage({
                           <Icon name="checkCircle" size={16} />
                         </span>
                         <PlanText value={p} editable={pe} multiline placeholder="Preparation note" onSave={(t) => updatePlan((x) => { x.prep[pi] = t; })} />
-                        {pe && <PlanIconBtn title="Remove preparation note" icon="close" danger onClick={() => updatePlan((x) => { x.prep.splice(pi, 1); })} />}
+                        {pe && <EditingTools active title={`Preparation note ${pi + 1}`}><PlanIconBtn title="Remove preparation note" icon="close" danger onClick={() => updatePlan((x) => { x.prep.splice(pi, 1); })} /></EditingTools>}
                       </li>
                     ))}
                     {pe && (
                       <li>
+                        <EditingTools active title="Lesson plan preparation">
                         <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { x.prep.push("New preparation note"); })}>
                           <Icon name="plus" size={13} /> Add preparation note
                         </button>
+                        </EditingTools>
                       </li>
                     )}
                   </ul>
@@ -6445,11 +6983,23 @@ export function UnitPage({
                     `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
                   const rowCtls = (si: number, ri: number, r: LessonPlanRow) => pe ? (
                     <td className="plan-ctls">
+                      <EditingTools active title={`Section ${si + 1}, row ${ri + 1}: ${r.title}`}>
                       <PlanIconBtn title="Move row up" icon="chevronUp" onClick={() => updatePlan((x) => { const rows = x.sections[si].rows; if (ri > 0) [rows[ri - 1], rows[ri]] = [rows[ri], rows[ri - 1]]; })} />
                       <PlanIconBtn title="Move row down" icon="chevronDown" onClick={() => updatePlan((x) => { const rows = x.sections[si].rows; if (ri < rows.length - 1) [rows[ri + 1], rows[ri]] = [rows[ri], rows[ri + 1]]; })} />
                       <PlanIconBtn title="Insert row below" icon="plus" onClick={() => updatePlan((x) => { x.sections[si].rows.splice(ri + 1, 0, newPlanRow()); })} />
                       <PlanIconBtn title={r.break ? "Change to a normal activity row" : "Change to a break row"} icon="halfCircle" onClick={() => updatePlan((x) => { const row = x.sections[si].rows[ri]; row.break = !row.break; if (row.break) { delete row.text; delete row.bullets; delete row.resources; } })} />
                       <PlanIconBtn title="Delete row" icon="trash" danger onClick={() => setTableConfirm({ title: "Delete row?", message: `Delete “${r.title}” from the lesson plan?`, confirmLabel: "Delete row", action: () => updatePlan((x) => { x.sections[si].rows.splice(ri, 1); }) })} />
+                      {!r.break && <>
+                        <div className="plan-cell-adds">
+                          <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { (x.sections[si].rows[ri].text ??= []).push("New paragraph"); })}><Icon name="plus" size={12} /> Paragraph</button>
+                          <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { (x.sections[si].rows[ri].bullets ??= []).push("New bullet point"); })}><Icon name="plus" size={12} /> Bullet</button>
+                          <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { (x.sections[si].rows[ri].resources ??= []).push("LM p"); })}><Icon name="plus" size={12} /> Resource</button>
+                        </div>
+                        {r.text?.map((_, ti) => <button key={`p-${ti}`} type="button" className="btn ghost sm" onClick={() => updatePlan((x) => { const row = x.sections[si].rows[ri]; row.text!.splice(ti, 1); if (!row.text!.length) delete row.text; })}>Remove paragraph {ti + 1}</button>)}
+                        {r.bullets?.map((_, bi) => <button key={`b-${bi}`} type="button" className="btn ghost sm" onClick={() => updatePlan((x) => { const row = x.sections[si].rows[ri]; row.bullets!.splice(bi, 1); if (!row.bullets!.length) delete row.bullets; })}>Remove bullet {bi + 1}</button>)}
+                        {r.resources?.map((_, xi) => <button key={`r-${xi}`} type="button" className="btn ghost sm" onClick={() => updatePlan((x) => { const row = x.sections[si].rows[ri]; row.resources!.splice(xi, 1); if (!row.resources!.length) delete row.resources; })}>Remove resource {xi + 1}</button>)}
+                      </>}
+                      </EditingTools>
                     </td>
                   ) : null;
                   return lp.sections.map((sec, si) => {
@@ -6467,7 +7017,8 @@ export function UnitPage({
                             {(si === 0 || sec.startTime) && <strong>Day {day} · {sec.startTime ?? lp.startTime ?? "09:00"} </strong>}
                             <PlanText value={sec.heading ?? ""} editable={pe} placeholder="Section heading (optional)" onSave={(t) => updatePlan((x) => { x.sections[si].heading = t || undefined; })} />
                             {pe && (
-                              <span className="plan-sec-ctls">
+                              <EditingTools active title={`Plan section ${si + 1}: ${sec.heading || "Actions"}`}>
+                              <span className="plan-sec-ctls" style={{ flexWrap: "wrap", marginLeft: 0 }}>
                                 <span className="plan-sec-start">
                                   Day start
                                   <PlanText value={sec.startTime ?? ""} editable placeholder="HH:MM" onSave={(t) => updatePlan((x) => { x.sections[si].startTime = /^\d{1,2}:\d{2}$/.test(t) ? t : undefined; })} />
@@ -6487,6 +7038,7 @@ export function UnitPage({
                                   <PlanIconBtn title="Delete this section and all its rows" icon="trash" danger onClick={() => setTableConfirm({ title: "Delete section?", message: "Delete this whole section and all of its rows?", confirmLabel: "Delete section", action: () => updatePlan((x) => { x.sections.splice(si, 1); }) })} />
                                 )}
                               </span>
+                              </EditingTools>
                             )}
                           </td>
                         </tr>
@@ -6495,6 +7047,7 @@ export function UnitPage({
                         const dayInsert = pe && (ri > 0 || (si > 0 && !sec.startTime)) ? (
                           <tr className="plan-add-row">
                             <td colSpan={cols}>
+                              <EditingTools active title={`Section ${si + 1}, row ${ri + 1}: new day`}>
                               <button
                                 type="button"
                                 className="btn ghost sm plan-add"
@@ -6503,6 +7056,7 @@ export function UnitPage({
                               >
                                 <Icon name="calendar" size={13} /> Add day here
                               </button>
+                              </EditingTools>
                             </td>
                           </tr>
                         ) : null;
@@ -6566,7 +7120,6 @@ export function UnitPage({
                                   {pe ? (
                                     <>
                                       <PlanText value={t} editable multiline placeholder="Paragraph" onSave={(v) => updatePlan((x) => { x.sections[si].rows[ri].text![ti] = v; })} />
-                                      <PlanIconBtn title="Remove paragraph" icon="close" danger onClick={() => updatePlan((x) => { const row = x.sections[si].rows[ri]; row.text!.splice(ti, 1); if (!row.text!.length) delete row.text; })} />
                                     </>
                                   ) : (
                                     <Gloss text={t} />
@@ -6580,7 +7133,6 @@ export function UnitPage({
                                       {pe ? (
                                         <>
                                           <PlanText value={b} editable multiline placeholder="Bullet point" onSave={(v) => updatePlan((x) => { x.sections[si].rows[ri].bullets![bi] = v; })} />
-                                          <PlanIconBtn title="Remove bullet" icon="close" danger onClick={() => updatePlan((x) => { const row = x.sections[si].rows[ri]; row.bullets!.splice(bi, 1); if (!row.bullets!.length) delete row.bullets; })} />
                                         </>
                                       ) : (
                                         <span><Gloss text={b} /></span>
@@ -6589,24 +7141,14 @@ export function UnitPage({
                                   ))}
                                 </ul>
                               )}
-                              {pe && (
-                                <div className="plan-cell-adds">
-                                  <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { (x.sections[si].rows[ri].text ??= []).push("New paragraph"); })}><Icon name="plus" size={12} /> Paragraph</button>
-                                  <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { (x.sections[si].rows[ri].bullets ??= []).push("New bullet point"); })}><Icon name="plus" size={12} /> Bullet</button>
-                                </div>
-                              )}
                             </td>
                             <td className="plan-res">
                               {r.resources?.map((x, xi) => (
                                 <div key={xi} className="plan-res-item">
                                   <span className="plan-res-ico"><Icon name="folder" size={12} /></span>
                                   <PlanText value={x} editable={pe} placeholder="e.g. LM p4" onSave={(v) => updatePlan((d) => { d.sections[si].rows[ri].resources![xi] = v; })} />
-                                  {pe && <PlanIconBtn title="Remove resource" icon="close" danger onClick={() => updatePlan((d) => { const row = d.sections[si].rows[ri]; row.resources!.splice(xi, 1); if (!row.resources!.length) delete row.resources; })} />}
                                 </div>
                               ))}
-                              {pe && (
-                                <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((d) => { (d.sections[si].rows[ri].resources ??= []).push("LM p"); })}><Icon name="plus" size={12} /> Resource</button>
-                              )}
                             </td>
                             {rowCtls(si, ri, r)}
                           </tr>
@@ -6616,6 +7158,7 @@ export function UnitPage({
                       {pe && (
                         <tr className="plan-add-row">
                           <td colSpan={cols}>
+                            <EditingTools active title={`Plan section ${si + 1}: add rows and days`}>
                             <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { x.sections[si].rows.push(newPlanRow()); })}>
                               <Icon name="plus" size={13} /> Add row{sec.heading ? ` to “${sec.heading}”` : ""}
                             </button>
@@ -6624,6 +7167,7 @@ export function UnitPage({
                             })}>
                               <Icon name="calendar" size={13} /> Add day here
                             </button>
+                            </EditingTools>
                           </td>
                         </tr>
                       )}
@@ -6634,12 +7178,14 @@ export function UnitPage({
                 {isSuperUser && editMode && (
                   <tr className="plan-add-row plan-add-section">
                     <td colSpan={4}>
+                      <EditingTools active title="Lesson plan structure">
                       <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => { x.sections.push({ heading: "New section", rows: [newPlanRow()] }); })}>
                         <Icon name="layers" size={13} /> Add section
                       </button>
                       <button type="button" className="btn ghost sm plan-add" onClick={() => updatePlan((x) => insertLessonPlanDay(x, x.sections.length, newPlanRow()))}>
                         <Icon name="calendar" size={13} /> Add next day
                       </button>
+                      </EditingTools>
                     </td>
                   </tr>
                 )}

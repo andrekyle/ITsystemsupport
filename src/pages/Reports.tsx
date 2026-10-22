@@ -24,6 +24,7 @@ import {
   type ReportKind,
   type ReportScope,
 } from "../lib/reports";
+import { buildUploadedReport } from "../lib/uploadedReports";
 
 const ERROR_TEXT: Record<string, string> = {
   not_configured: "The AI service is not configured on this deployment (missing API key).",
@@ -35,6 +36,13 @@ const ERROR_TEXT: Record<string, string> = {
 
 /** Overlay narration per report kind — spoken to the user by name. */
 const GEN_PHASES: Record<string, (n: string) => string[]> = {
+  "data-analysis": (n) => [
+    `Analysing the programme data for you, ${n}…`,
+    "Comparing completion, attendance and assessment results…",
+    "Calculating evidence, credits, unit status and risk indicators…",
+    "Preparing thirteen data-driven graphs…",
+    "Formatting the colourful programme analysis report…",
+  ],
   progress: (n) => [
     `Pulling every learner's completion for you, ${n}…`,
     "Averaging quiz and exercise scores…",
@@ -271,6 +279,7 @@ function kindForPrompt(prompt: string): ReportKind {
     /\b(learner|student|submission|attendance)\s+tracker\b/.test(text) ||
     /\btracker\s+report\b/.test(text);
   if (asksForTracker) return byId("tracker");
+  if (/\bdata\s+analysis\b|\bprogramme\s+analysis\s+report\b|\bprogram\s+analysis\s+report\b/.test(text)) return byId("data-analysis");
   if (/\bexecutive\s+(summary|report)\b/.test(text)) return byId("executive");
   if (/\b(learnership|learner)\s+progress\s+report\b|\bprogress\s+report\b/.test(text)) return byId("progress");
   return CUSTOM_KIND;
@@ -324,6 +333,32 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   const [briefRange, setBriefRange] = useState<"full" | "month" | "custom">("month");
   const [briefText, setBriefText] = useState("");
   const [briefHistory, setBriefHistory] = useState<string[]>(loadReportBriefHistory);
+  const [uploadedBusy, setUploadedBusy] = useState(false);
+  const [uploadedMessage, setUploadedMessage] = useState<string | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
+  const uploadMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!uploadMenuOpen) return;
+    uploadMenuRef.current?.querySelector<HTMLButtonElement>(".reports-upload-option")?.focus();
+    const closeOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !uploadMenuRef.current?.contains(event.target)) {
+        setUploadMenuOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    return () => document.removeEventListener("pointerdown", closeOutside);
+  }, [uploadMenuOpen]);
+
+  function chooseUpload(accept: string) {
+    const input = uploadInputRef.current;
+    if (!input) return;
+    input.accept = accept;
+    setUploadMenuOpen(false);
+    uploadMenuRef.current?.querySelector<HTMLButtonElement>(".reports-gpt-plus")?.focus();
+    input.click();
+  }
 
   function needsBrief(kind: ReportKind) {
     return kind.id === "tracker" || kind.id === "executive" || kind.id === "progress";
@@ -362,6 +397,37 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     setBriefKind(null);
     setQuestion("");
     void generate(kind, prompt, "kind");
+  }
+
+  async function handleUploadedReport(file: File | undefined) {
+    if (!file) return;
+    setUploadedBusy(true);
+    setUploadedMessage(null);
+    const preview = window.open("", "_blank");
+    try {
+      const result = await buildUploadedReport(file, profile);
+      if (!preview) {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(new Blob([result.html], { type: "text/html" }));
+        link.download = `${file.name.replace(/\.[^.]+$/, "")}${result.kind === "spreadsheet" ? "-Learner-Tracker" : "-Styled"}.html`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      } else {
+        preview.document.open();
+        preview.document.write(result.html);
+        preview.document.close();
+      }
+      setUploadedMessage(
+        result.kind === "pdf"
+          ? `PDF ready — ${result.pagesOrSheets} page${result.pagesOrSheets === 1 ? "" : "s"} preserved.`
+          : `Learner tracker ready — ${result.pagesOrSheets} sheet${result.pagesOrSheets === 1 ? "" : "s"}, ${result.records} row${result.records === 1 ? "" : "s"} preserved.`
+      );
+    } catch (error) {
+      preview?.close();
+      setUploadedMessage(error instanceof Error ? error.message : "The uploaded file could not be processed.");
+    } finally {
+      setUploadedBusy(false);
+    }
   }
 
   useEffect(() => {
@@ -525,10 +591,60 @@ export function ReportsPage({ profile }: { profile: Profile }) {
   );
 
   const composer = (
+    <>
     <div className="reports-gpt-pill">
-      <span className="reports-gpt-plus" aria-hidden="true">
+      <div
+        className="reports-upload-wrap"
+        ref={uploadMenuRef}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            event.stopPropagation();
+            setUploadMenuOpen(false);
+            uploadMenuRef.current?.querySelector<HTMLButtonElement>(".reports-gpt-plus")?.focus();
+          }
+        }}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setUploadMenuOpen(false);
+        }}
+      >
+      <button
+        type="button"
+        className="reports-gpt-plus"
+        aria-label="Upload a PDF or spreadsheet to generate a report"
+        aria-expanded={uploadMenuOpen}
+        aria-controls="reports-upload-options"
+        disabled={uploadedBusy}
+        onClick={() => {
+          setModeMenu(false);
+          setUploadMenuOpen((open) => !open);
+        }}
+      >
         <Icon name="plus" size={21} />
-      </span>
+      </button>
+      {uploadMenuOpen && (
+        <div id="reports-upload-options" className="reports-upload-options" role="group" aria-label="Choose what to upload">
+          <button type="button" className="reports-upload-option" onClick={() => chooseUpload(".pdf,application/pdf")}>
+            <Icon name="document" size={20} />
+            <span>Upload PDF<small>Restyle a report as Eruditio slides</small></span>
+          </button>
+          <button type="button" className="reports-upload-option" onClick={() => chooseUpload(".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv")}>
+            <Icon name="document" size={20} />
+            <span>Upload spreadsheet<small>Create an editable learner tracker</small></span>
+          </button>
+        </div>
+      )}
+      </div>
+      <input
+        ref={uploadInputRef}
+        type="file"
+        hidden
+        accept=".pdf,.xlsx,.xls,.csv,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
+        disabled={uploadedBusy}
+        onChange={(event) => {
+          void handleUploadedReport(event.currentTarget.files?.[0]);
+          event.currentTarget.value = "";
+        }}
+      />
       <textarea
         rows={1}
         value={question}
@@ -636,6 +752,12 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         <Icon name={question.trim() ? "arrowUp" : "wave"} size={21} strokeWidth={2.1} />
       </button>
     </div>
+    {(uploadedBusy || uploadedMessage) && (
+      <span className="reports-upload-message" role="status">
+        {uploadedBusy ? "Preparing report…" : uploadedMessage}
+      </span>
+    )}
+    </>
   );
 
   return (
@@ -666,6 +788,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         AI Assistant
       </h2>
 
+      <div className="reports-content-layout">
       {msgs.length > 0 && !wantReport ? (
         <div className="reports-chat">
           <div className="chat-top">
@@ -777,6 +900,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
           )}
         </div>
       )}
+      </div>
       {briefKind && (
         <Modal
           title={`What should be in your ${briefKind.name}?`}

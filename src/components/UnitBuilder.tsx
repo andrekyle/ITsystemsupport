@@ -1,27 +1,31 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import type { LogbookSpec, PoeDoc, UnitContent, UnitStandard } from "../types";
 import type { LessonEdits } from "../store";
 import { buildUnitContent, validateUnitContent, lessonPlanFromSource, MAX_SOURCE_LENGTH, MAX_LESSON_PLAN_LENGTH, mergeUnitContentEnhancement } from "../lib/unitBuilder";
 import { logbookFromSource, logbookStats, MAX_LOGBOOK_SOURCE_LENGTH } from "../lib/logbookBuilder";
-import { useBuiltUnit, saveBuiltUnit, deleteBuiltUnit } from "../lib/useBuiltUnit";
-import { unitHistory, unitVersionArchive, MAX_UNIT_HISTORY, type BuiltUnitVersion } from "../lib/builtUnits";
+import { useBuiltUnit, useDeletedBuiltUnit, saveBuiltUnit, deleteBuiltUnit, restoreDeletedBuiltUnit } from "../lib/useBuiltUnit";
+import { unitHistory, unitVersionArchive, MAX_UNIT_HISTORY, type BuiltUnitVersion, type UnitSourceDocuments } from "../lib/builtUnits";
 import { importUnitSource } from "../lib/unitSourceImport";
-import { importPracticalTask } from "../lib/practicalTaskImport";
+import { importUnitPdf } from "../lib/unitPdfImport";
+import { storeUnitReplicaPages } from "../lib/forms";
 import { makeUnitExports } from "../lib/unitExports";
 import { createAiPresentation, type AiPresentationSlide } from "../lib/aiPresentation";
 import { plainSlideText } from "../lib/slideRichText";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 import { supabase } from "../lib/supabase";
 import { loadContentModel, loadPresentationModel, recordTokenUsage } from "../lib/tokens";
-import { UnitContentEditor } from "./UnitContentEditor";
+import { UnitContentEditor, contentSections } from "./UnitContentEditor";
 import { Select } from "./Select";
 import { SlideViewer } from "./SlideViewer";
 import { Icon } from "../icons";
 import "./unit-builder.css";
 import { courseScopedUnit } from "../lib/courseScope";
-import { flushLessonEdits } from "../lib/lessonEditStore";
+import { cachedLessonEdits, flushLessonEdits, loadLessonEdits } from "../lib/lessonEditStore";
 import { isStaleChunkError, recoverFromStaleChunk } from "../lib/chunkRecovery";
 import { saveInlineDraft } from "../lib/inlineDraftStorage";
+import { EditingTools } from "./EditingSidebar";
+import { ConfirmModal } from "./Modal";
 
 async function readApiJson(response: Response, service: string): Promise<any> {
   const text = await response.text();
@@ -51,7 +55,7 @@ async function logbookImageDataUrl(file: File): Promise<string> {
     bitmap.close();
   }
 }
-export function effectiveBuiltContent(content:UnitContent, edits:LessonEdits):UnitContent {
+export function effectiveBuiltContent(content:UnitContent, edits:LessonEdits, retainDeleted = false):UnitContent {
   const next=structuredClone(content);
   next.lesson=next.lesson.map((s,si)=>({...s,heading:edits.headings?.[si]??s.heading,
     paragraphs:edits.sectionBody?.[si]?.paragraphs??s.paragraphs.map((p,pi)=>edits.paragraphs?.[`${si}:${pi}`]??p),
@@ -65,6 +69,7 @@ export function effectiveBuiltContent(content:UnitContent, edits:LessonEdits):Un
     table:s.table?{headers:s.table.headers.map((h,ci)=>edits.tableCells?.[`${si}:h:${ci}`]??h),rows:s.table.rows.map((r,ri)=>r.map((v,ci)=>edits.tableCells?.[`${si}:${ri}:${ci}`]??v))}:undefined,
   }));
   next.lesson=next.lesson.map((s,si)=>edits.sectionBody?.[si]?.richHtml!==undefined?{...s,bullets:undefined,table:undefined,cards:undefined,example:undefined,examples:undefined}:s);
+  if(!retainDeleted)next.lesson=next.lesson.filter((_,si)=>!edits.deletedSections?.includes(si));
   if(edits.lessonPlan) next.lessonPlan=structuredClone(edits.lessonPlan);
   if(edits.logbook) next.logbook=structuredClone(edits.logbook);
   return next;
@@ -79,26 +84,38 @@ function unitBuilderError(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
-export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInline,profileId}:{unit:UnitStandard;content?:UnitContent;edits:LessonEdits;onSaved:()=>void;inlineDraft?:UnitContent;onCancelInline:()=>void;profileId:string}) {
+type BuilderView="content"|"build"|"files"|"versions"|"delete";
+export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInline,profileId,inlineActionsTarget,open=true}:{unit:UnitStandard;content?:UnitContent;edits:LessonEdits;onSaved:()=>void;inlineDraft?:UnitContent;onCancelInline:()=>void;profileId:string;inlineActionsTarget?:HTMLElement|null;open?:boolean}) {
   const built=useBuiltUnit(unit.us);
-  const [open,setOpen]=useState(false);  const [source,setSource]=useState(built?.source??"");
+  const deletedBackup=useDeletedBuiltUnit(unit.us);
+  const [view,setView]=useState<BuilderView|null>(null);
+  const [dirty,setDirty]=useState(false);
+  const scrollRef=useRef<HTMLDivElement>(null);
+  const [source,setSource]=useState(built?.source??"");
+  const [generateLessons,setGenerateLessons]=useState(false);
   const [ai,setAi]=useState(true);
   const [minutes,setMinutes]=useState(300);
   const [activityBlocks,setActivityBlocks]=useState<{heading:string;text:string}[]>([{heading:"",text:""}]);
   const [selfAssessmentContent,setSelfAssessmentContent]=useState("");
   const [logbookContent,setLogbookContent]=useState("");
   const [logbookImageName,setLogbookImageName]=useState("");
-  const [practicalTask,setPracticalTask]=useState<UnitContent["practicalTask"]>();
+  const [practicalTask,setPracticalTask]=useState<UnitContent["practicalTask"]>(content?.practicalTask);
+  const [learnerWorkbook,setLearnerWorkbook]=useState<UnitContent["learnerWorkbook"]>(content?.learnerWorkbook);
+  const [learnerGuide,setLearnerGuide]=useState<UnitContent["learnerGuide"]>(content?.learnerGuide);
   const [practicalTaskFileName,setPracticalTaskFileName]=useState("");
+  const [sourceDocumentFiles,setSourceDocumentFiles]=useState<Partial<Record<keyof UnitSourceDocuments,File>>>({});
   const [editableDocuments,setEditableDocuments]=useState<NonNullable<UnitContent["editableDocuments"]>>(content?.editableDocuments ?? []);
+  const hasPdfDocuments=!!(learnerGuide?.replica||learnerWorkbook?.replica||practicalTask?.replica||editableDocuments.some(item=>item.document.replica)||Object.values(built?.files.sourceDocuments??{}).some(Boolean));
   const [busy,setBusy]=useState("");
   const [error,setError]=useState("");
   const [message,setMessage]=useState("");
   const [draft,setDraft]=useState<UnitContent|null>(null);
   const [newTabKind, setNewTabKind] = useState("customTabs");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteName, setDeleteName] = useState("");
   const addTab = () => {
     if (!draft) return;
+    setDirty(true);
     if (newTabKind === "customTabs") {
       setDraft({ ...draft, customTabs: [...(draft.customTabs ?? []), { id: `custom-${crypto.randomUUID()}`, title: "New tab", text: "Add your content here." }] });
       return;
@@ -114,9 +131,8 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   const [warning,setWarning]=useState("");
   const [fileName,setFileName]=useState("");
   const [confirmBuild,setConfirmBuild]=useState(false);
-  const [restoreRevision,setRestoreRevision]=useState("");
+  const [confirmRebuild,setConfirmRebuild]=useState(false);
   const versions=unitHistory(built);
-  const selectedVersion=versions.find(version=>version.revision===restoreRevision)??versions[0];
   const versionLabel=(version:BuiltUnitVersion)=>new Date(version.createdAt).toLocaleString("en-ZA",{dateStyle:"medium",timeStyle:"short"});
   const versionHint=(version:BuiltUnitVersion)=>`${version.content.lesson.length} lesson${version.content.lesson.length===1?"":"s"} · ${version.aiUsed?"AI build":"built-in build"}`;
   const [busyProgress,setBusyProgress]=useState(0);
@@ -131,7 +147,13 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     setBusyProgress(100);
     window.setTimeout(()=>{setBusy("");after?.();},450);
   };
-  useEffect(()=>{if(built)setSource(built.source);},[built?.revision]);
+  useEffect(()=>{
+    if(built)setSource(built.source);
+    setPracticalTask(content?.practicalTask);
+    setLearnerWorkbook(content?.learnerWorkbook);
+    setLearnerGuide(content?.learnerGuide);
+    setEditableDocuments(content?.editableDocuments??[]);
+  },[built?.revision,unit.us]);
   useEffect(()=>{
     if(!busy){setBusyProgress(0);return;}
     setBusyProgress(1);
@@ -151,20 +173,35 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
 
   const publish=async(next:UnitContent,sourceText:string,aiUsed:boolean)=>{
     validateUnitContent(next, !draft && !inlineDraft);
+    next=structuredClone(next);
+    setBusy("Saving original PDF pages and editable fields...");
+    for(const document of [next.learnerGuide,next.learnerWorkbook,next.practicalTask,...(next.editableDocuments??[]).map(item=>item.document)]){
+      if(document?.replica)document.replica.pages=await storeUnitReplicaPages(document.replica.pages);
+    }
     setBusy("Creating PDF, PowerPoint and answer guide…");
-    const files=await makeUnitExports(unit,next);
+    const exportContent=inlineDraft?{...next,lesson:next.lesson.filter((_,si)=>!edits.deletedSections?.includes(si))}:next;
+    const files=await makeUnitExports(unit,exportContent);
     setBusy("Saving the unit and course materials…");
     const prefix=`shared/unitbuilder/${courseScopedUnit(unit.us)}`;
     const [pdf,pptx,answers]=await Promise.all([uploadFile(prefix,files.pdf),uploadFile(prefix,files.pptx),uploadFile(prefix,files.answers)]);
     const revision=crypto.randomUUID();
-    if(inlineDraft){
-      // Keep rich text and figure layout attached to the new revision. The
-      // old published revision remains untouched if either save fails.
+    if(Object.keys(edits).length){
+      // Keep rich text, quizzes, figures, videos, and layout edits attached
+      // to the new revision. The old published revision remains untouched if
+      // either save fails.
       const key=`itss.lessonedits.${courseScopedUnit(`${unit.us}.built-${revision}`)}`;
       await flushLessonEdits(key,edits);
     }
-    await saveBuiltUnit(unit.us,{revision,createdAt:new Date().toISOString(),source:sourceText,content:next,files:{pdf,pptx,answers,material:built?.files.material,materialEditable:built?.files.materialEditable},aiUsed,planSource:built?.planSource});
-    setSource(sourceText);setDraft(null);setMessage("Unit built and saved. All learning tabs and download files are ready.");onSaved();
+    const sourceDocuments={...(built?.files.sourceDocuments??{})};
+    const sourceEntries=Object.entries(sourceDocumentFiles) as [keyof UnitSourceDocuments,File][];
+    if(sourceEntries.length){
+      setBusy("Uploading the original unit documentsâ€¦");
+      const uploaded=await Promise.all(sourceEntries.map(async([kind,file])=>[kind,await uploadFile(`${prefix}/source-documents`,file)] as const));
+      uploaded.forEach(([kind,document])=>{sourceDocuments[kind]=document;});
+    }
+    await saveBuiltUnit(unit.us,{revision,createdAt:new Date().toISOString(),source:sourceText,content:next,files:{pdf,pptx,answers,material:built?.files.material,materialEditable:built?.files.materialEditable,sourceDocuments:Object.keys(sourceDocuments).length?sourceDocuments:undefined},aiUsed,planSource:built?.planSource});
+    setSourceDocumentFiles({});
+    setSource(sourceText);setDraft(null);setDirty(false);setMessage("Unit saved. Uploaded PDFs keep their original layout, with editable fields. Tabs and download files are ready.");onSaved();
   };
   const readLogbookImages=async(files: FileList|null)=>{
     const selected=Array.from(files??[]).filter(file=>file.type.startsWith("image/"));
@@ -184,28 +221,69 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     finally{setBusy("");}
   };
   const build=async()=>{
-    setError("");setMessage("");setWarning("");setBusy("Building lessons, activities and tab content…");
+    setError("");setMessage("");setWarning("");setBusy(!generateLessons?"Preparing original PDF pages and editable fields...":"Building lessons and preserving original PDF documents...");
     try {
-      let next=buildUnitContent(unit,source,{minutes});
-      if(practicalTask)next.practicalTask=practicalTask;
-      if(editableDocuments.length)next.editableDocuments=editableDocuments;
+      const recoverSourceDocument=async(kind:keyof UnitSourceDocuments)=>{
+        const original=built?.files.sourceDocuments?.[kind];
+        if(!original)return undefined;
+        const url=await getFileUrl(original);
+        if(!url)throw new Error(`The saved ${kind==="learnerWorkbook"?"learner workbook":"practical task"} source is unavailable. Upload its PDF again before rebuilding.`);
+        const response=await fetch(url);
+        if(!response.ok)throw new Error(`The saved source document could not be read (HTTP ${response.status}). Upload it again or retry.`);
+        const title={learnerGuide:"Learner Guide",learnerWorkbook:"Learner Workbook",practicalTask:"Practical Task"}[kind];
+        return importUnitPdf(new File([await response.blob()],original.name,{type:"application/pdf"}),title,(done,total)=>setBusy(`Converting ${title} to HTML with code and AI: ${done}/${total} pages...`));
+      };
+      const workbook=learnerWorkbook?.replica?.display==="digital"?learnerWorkbook:await recoverSourceDocument("learnerWorkbook")??learnerWorkbook;
+      const practical=practicalTask?.replica?.display==="digital"?practicalTask:await recoverSourceDocument("practicalTask")??practicalTask;
+      const guide=learnerGuide?.replica?.display==="digital"?learnerGuide:await recoverSourceDocument("learnerGuide")??learnerGuide;
+      if ([workbook,practical,guide,...editableDocuments.map(item=>item.document)].some(document=>document?.replica?.display==="image")) throw new Error("An older document still uses page images. Upload its original PDF again to convert it to real HTML before rebuilding.");
+      const documentsOnly=!generateLessons;
+      let next:UnitContent=documentsOnly
+        ? structuredClone(content??{lesson:[],exercises:[],assignments:[],quiz:[]})
+        : buildUnitContent(unit,source,{minutes});
+      const preservedWorkbook=!workbook&&unit.us==="114074"&&content?.workbook?structuredClone(content.workbook):undefined;
+      if(preservedWorkbook)next.workbook=preservedWorkbook;
+      if(practical)next.practicalTask=practical;
+      if(workbook){next.learnerWorkbook=workbook;next.workbook=undefined;}
+      if(guide)next.learnerGuide=guide;
+      next.editableDocuments=editableDocuments;
       // Pasted or photographed logbook content builds the logbook directly; AI output (when on) may refine it.
-      const pastedLogbook=logbookContent.trim()?logbookFromSource(unit,logbookContent):undefined;
+      const pastedLogbook=generateLessons&&logbookContent.trim()?logbookFromSource(unit,logbookContent):undefined;
       if(pastedLogbook)next.logbook=pastedLogbook;
-      if(ai){
+      if(ai&&!documentsOnly){
         setBusy("Researching the unit standard and creating the tabs with OpenAI...");
         const token=(await supabase?.auth.getSession())?.data.session?.access_token;
         const response=await fetch("/api/enhance-unit-content",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({unit,source,minutes,model:loadContentModel(),presentationModel:loadPresentationModel(),lessonStructure:next.lesson.map(section=>({heading:section.heading,paragraphs:section.paragraphs})),activityContent:activityBlocks.map((block,index)=>`Activity ${index+1} heading:\n${block.heading.trim()||`Activity ${index+1}`}\n\nActivity ${index+1} content:\n${block.text.trim()}`).filter(text=>text.trim()).join("\n\n--- ACTIVITY SEPARATOR ---\n\n"),selfAssessmentContent,logbookContent}),signal:AbortSignal.timeout(85_000)});
         const result=await readApiJson(response,"The AI build service");
         if(!response.ok) throw new Error(result.error??"AI generation failed. Turn it off to build entirely with built-in code.");
         next=mergeUnitContentEnhancement(next,result.content,unit);setWarning("");
-        if(practicalTask)next.practicalTask=practicalTask;
-        if(editableDocuments.length)next.editableDocuments=editableDocuments;
+        if(preservedWorkbook)next.workbook=preservedWorkbook;
         if(result.usage) void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.input_tokens??result.usage.prompt_tokens??0,completionTokens:result.usage.output_tokens??result.usage.completion_tokens??0,totalTokens:result.usage.total_tokens??0});
       }
-      await publish(next,source,ai);
-      doneBusy(()=>setOpen(false));
+      const htmlAiUsed=[guide,workbook,practical,...editableDocuments.map(item=>item.document)].some(document=>document?.replica?.display==="digital");
+      await publish(next,documentsOnly?(built?.source??""):source,htmlAiUsed||(documentsOnly?(built?.aiUsed??false):ai));
+      doneBusy(()=>select("content"));
     }catch(e){setError(unitBuilderError(e,"The unit could not be built. Your current content is unchanged."));setBusy("");}
+  };
+  const sourceDocumentName=(kind:keyof UnitSourceDocuments)=>sourceDocumentFiles[kind]?.name??built?.files.sourceDocuments?.[kind]?.name??"PDF up to 20 MB";
+  const chooseSourceDocument=async(kind:keyof UnitSourceDocuments,file?:File)=>{
+    if(!file)return;
+    setError("");setMessage("");
+    try{
+      setBusy("Converting PDF to HTML with code and AI...");
+      const title={learnerGuide:"Learner Guide",learnerWorkbook:"Learner Workbook",practicalTask:"Practical Task"}[kind];
+      const converted=await importUnitPdf(file,title,(done,total)=>setBusy(`Converting ${title} to HTML with code and AI: ${done}/${total} pages...`));
+      if(kind==="learnerGuide"){
+        setLearnerGuide(converted);
+      }else if(kind==="practicalTask"){
+        setPracticalTask(converted);setPracticalTaskFileName(file.name);
+      }else{
+        setLearnerWorkbook(converted);
+      }
+      setSourceDocumentFiles(current=>({...current,[kind]:file}));
+      setMessage(`${file.name}: all ${converted.sourcePageCount} pages converted to HTML text and editable answer areas. Review the conversion before publishing.`);
+    }catch(err){setError(err instanceof Error?err.message:String(err));}
+    finally{setBusy("");}
   };
   const createAiDeck=async()=>{
     if(!built||!content)return;
@@ -247,65 +325,235 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     }catch(error){setError(unitBuilderError(error,"The AI PowerPoint could not be created. The current unit is unchanged."));}
     finally{setBusy("");}
   };
-  return <section className="unit-builder">
-    <div className="unit-builder-bar">
-      <button type="button" className="btn ghost" disabled={!!busy || !!inlineDraft} onClick={()=>{setOpen(!open);setDraft(null);setError("");setConfirmBuild(false);}}><Icon name="document" size={16}/>{built?"Rebuild unit standard":"Build unit standard"}</button>
-      {inlineDraft ? <>
-        <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(inlineDraft,edits),built?.source??source,built?.aiUsed??false);}catch(e){setError(inlineSaveError(e));}finally{setBusy("");}}}>{busy || "Save inline changes and update files"}</button>
+  const inlineActions = inlineDraft ? <>
+        <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(inlineDraft,edits,true),built?.source??source,built?.aiUsed??false);}catch(e){setError(inlineSaveError(e));}finally{setBusy("");}}}>{busy || "Save inline changes and update files"}</button>
         <button type="button" className="btn ghost" disabled={!!busy} onClick={onCancelInline}>Cancel inline changes</button>
-      </> : null}
-      {!inlineDraft && <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setDraft(effectiveBuiltContent(content ?? { lesson: [], exercises: [], assignments: [], quiz: [] },edits));setOpen(true);setError("");}}>Manage tabs and structure</button>}
-      {built&&!inlineDraft&&<>
-        <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(content??built.content,edits),built.source,built.aiUsed);}catch(e){setError(unitBuilderError(e,"The PDF and PowerPoint could not be updated."));}finally{setBusy("");}}}>Update PDF and PowerPoint</button>
-        {content&&<button type="button" className="btn ghost" disabled={!!busy} onClick={()=>void createAiDeck()}><Icon name="presenter" size={15}/>{busy?"Creating AI PowerPoint…":"Create AI PowerPoint"}</button>}
-        {selectedVersion&&<span className="unit-restore">
-          <Select className="unit-version-select" ariaLabel="Saved unit versions" disabled={!!busy} value={selectedVersion.revision} onChange={setRestoreRevision} options={versions.map(version=>({value:version.revision,label:versionLabel(version),hint:versionHint(version)}))}/>
-          <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");setMessage("");setBusy("Restoring saved version…");try{await saveBuiltUnit(unit.us,unitVersionArchive(selectedVersion));setRestoreRevision("");onSaved();setMessage(`The version saved on ${versionLabel(selectedVersion)} is now live. The version it replaced is still restorable.`);}catch(e){setError(String(e));}finally{setBusy("");}}}>Restore version</button>
-        </span>}
-        <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{if(!confirmDelete){setConfirmDelete(true);setError("");setMessage("");return;}setConfirmDelete(false);setBusy("Deleting unit…");void deleteBuiltUnit(unit.us).then(()=>{setMessage("Unit deleted. You can rebuild it anytime.");onSaved();setBusy("");}).catch(e=>{setError(e instanceof Error?e.message:"The unit could not be deleted.");setBusy("");});}}>{confirmDelete?"Yes, delete unit":"Delete unit"}</button>
-        {confirmDelete&&!busy&&<button type="button" className="btn ghost" onClick={()=>setConfirmDelete(false)}>Cancel</button>}
-      </>}
-    </div>
-    {open&&<div className="unit-builder-panel">
-      <h2>{draft?"Edit complete unit":"Build"} · US {unit.us}</h2>
-      {draft && <div className="unit-editor-actions">
-        <Select ariaLabel="Tab to add" value={newTabKind} onChange={setNewTabKind} options={[
-          { value: "customTabs", label: "Custom content tab" }, { value: "lessonPlan", label: "Lesson plan" },
-          { value: "logbook", label: "Logbook" }, { value: "practicalTask", label: "Practical task" }, { value: "selfAssessment", label: "Self assessment" },
-          { value: "evaluation", label: "Evaluation" }, { value: "quizzes", label: "Additional quizzes" },
-        ]} />
-        <button type="button" className="btn ghost sm" disabled={!!busy} onClick={addTab}>Add tab</button>
-      </div>}
-      {draft?<><p>Edit any tab below. Saving also rebuilds the PDF and editable PowerPoint.</p><UnitContentEditor value={draft as never} onChange={v=>setDraft(v as unknown as UnitContent)}/><button type="button" className="btn unit-build-action" disabled={!!busy} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={async()=>{setError("");try{await publish(draft,built?.source??source,built?.aiUsed??false);doneBusy(()=>setOpen(false));}catch(e){setError(unitBuilderError(e,"The unit changes could not be saved."));setBusy("");}}}><span>{busy?`Creating ${busyProgress}%`:"Save all changes and rebuild files"}</span></button></>:<>
-        <p>Paste your teaching material or import a document. Use headings such as “# Estimating effort” with a blank line before the supporting paragraphs.</p>
-        {built&&<p className="muted">Building replaces this unit's learning content. The last {MAX_UNIT_HISTORY} versions stay restorable from the version list above. Learner work is retained.</p>}
-        <div className="unit-settings-card">
-          <div className="unit-settings-row"><div className="unit-settings-copy"><strong>Import content</strong><span>{fileName || "TXT, Markdown, PDF, DOCX or PPTX"}</span></div>
-            <label className="unit-import-button"><span>Choose file</span><input aria-label="Import teaching content" type="file" accept=".txt,.md,.pdf,.docx,.pptx" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Reading source document…");setError("");try{setSource(await importUnitSource(file));setFileName(file.name);}catch(err){setError(String(err));}finally{setBusy("");}}}/></label>
+      {inlineActionsTarget && error && <p role="alert" className="auth-error">{error}</p>}
+      </> : null;
+  const activeView:BuilderView=view??(content?"content":"build");
+  const select=(next:BuilderView)=>{setView(next);setError("");setMessage("");setConfirmBuild(false);setConfirmDelete(false);setDeleteName("");};
+  const baseline=()=>effectiveBuiltContent(content??{lesson:[],exercises:[],assignments:[],quiz:[]},edits);
+  // The structured draft is taken from the live unit each time the editor is shown, unless edits are pending.
+  useEffect(()=>{
+    if(!open||inlineDraft||activeView!=="content")return;
+    if(!draft||!dirty){setDraft(baseline());setDirty(false);}
+  },[open,inlineDraft,activeView,built?.revision,content,edits]);
+  const updateDraft=(next:UnitContent)=>{setDraft(next);setDirty(true);};
+  const discardDraft=()=>{setDraft(baseline());setDirty(false);setError("");};
+  const saveDraftOnly=async()=>{
+    if(!built||!draft||busy)return;
+    setError("");setMessage("");setBusy("Saving changes without rebuilding files...");
+    try{
+      const editKey=`itss.lessonedits.${courseScopedUnit(`${unit.us}.built-${built.revision}`)}`;
+      const currentEdits=await loadLessonEdits<LessonEdits>(editKey,cachedLessonEdits(editKey,edits));
+      const revision=crypto.randomUUID();
+      // Structured content and live slide overrides advance together under
+      // one revision. Existing exports stay untouched until Rebuild is used.
+      await flushLessonEdits(editKey,currentEdits);
+      await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(`${unit.us}.built-${revision}`)}`,currentEdits);
+      await saveBuiltUnit(unit.us,{revision,createdAt:new Date().toISOString(),source:built.source,content:structuredClone(draft),files:{...built.files},aiUsed:built.aiUsed,planSource:built.planSource});
+      setDirty(false);
+      setMessage("Changes saved as one unit version. PDF, PowerPoint and answer files were not rebuilt.");
+      onSaved();
+    }catch(e){setError(unitBuilderError(e,"The changes could not be saved."));}
+    finally{setBusy("");}
+  };
+  const jumpTo=(key:string)=>scrollRef.current?.querySelector(`[data-unit-section="${key}"]`)?.scrollIntoView({block:"start",behavior:"smooth"});
+  const sections=contentSections(draft);
+  const restore=async(version:BuiltUnitVersion)=>{setError("");setMessage("");setBusy("Restoring saved version…");try{await saveBuiltUnit(unit.us,unitVersionArchive(version));onSaved();setMessage(`The version saved on ${versionLabel(version)} is now live. The version it replaced is still restorable.`);}catch(e){setError(String(e));}finally{setBusy("");}};
+  const navItems:{id:BuilderView;label:string;icon:string;hint:string}[]=[
+    {id:"content",label:"Content and structure",icon:"layers",hint:"Edit every tab of this unit"},
+    {id:"build",label:built?"Rebuild documents":"Build documents",icon:"document",hint:"Original PDFs, editable fields"},
+    ...(built?[
+      {id:"files" as const,label:"Files and exports",icon:"download",hint:"PDF, PowerPoint and answer guide"},
+      {id:"versions" as const,label:"Version history",icon:"clock",hint:versions.length?`${versions.length} restorable`:"No earlier versions"},
+      ...(unit.us==="114046"?[]:[{id:"delete" as const,label:"Delete unit",icon:"trash",hint:"Remove this build"}]),
+    ]:[]),
+  ];
+  const heading={content:"Content and structure",build:built?"Rebuild documents":"Build documents",files:"Files and exports",versions:"Version history",delete:"Delete unit"}[activeView];
+  const intro={
+    content:dirty?"You have unsaved changes. Use the save icon to update the unit without rebuilding files.":"Slide edits and structured content use the same saved unit version. Rebuild files only when needed.",
+    build:"Upload PDFs to convert them into real HTML using code and AI. Keep the source wording and layout, with editable answer fields. Lesson generation is separate.",
+    files:"Regenerate the download files from the content that is live now.",
+    versions:`The last ${MAX_UNIT_HISTORY} builds stay restorable.`,
+    delete:"Remove this built unit. Learner work is retained.",
+  }[activeView];
+  const status=(busy||message||warning||error)?<div className={`unit-workspace-status${error?" is-error":""}`}>
+    {busy&&<p role="status"><span className="unit-workspace-spinner" aria-hidden="true"/>{busy}</p>}
+    {message&&<p role="status">{message}</p>}
+    {warning&&<p role="status">{warning}</p>}
+    {error&&<p role="alert" className="auth-error">{error}</p>}
+    {!busy&&<button type="button" className="unit-editor-icon-btn" aria-label="Dismiss message" onClick={()=>{setMessage("");setWarning("");setError("");}}><Icon name="close" size={14}/></button>}
+  </div>:null;
+  return <section className="unit-builder">
+    {confirmRebuild&&<ConfirmModal
+      title="Rebuild unit files?"
+      message={<p style={{margin:0}}>This will save the current unit and regenerate its PDF, editable PowerPoint, and answer guide. Use the blue save icon instead if you only want to save your changes.</p>}
+      confirmLabel="Rebuild files"
+      cancelLabel="Cancel"
+      busy={!!busy}
+      onCancel={()=>setConfirmRebuild(false)}
+      onConfirm={()=>{setConfirmRebuild(false);setError("");void publish(draft!,built?.source??source,built?.aiUsed??false).then(()=>doneBusy()).catch(e=>{setError(unitBuilderError(e,"The unit changes could not be saved."));setBusy("");});}}
+    />}
+    {inlineActionsTarget && createPortal(inlineActions, inlineActionsTarget)}
+    <div className="unit-workspace">
+      <nav className="unit-workspace-nav" aria-label="Unit editor sections">
+        <div className="unit-workspace-nav-group">
+          {navItems.map(item=><button key={item.id} type="button" className={`unit-workspace-nav-item${activeView===item.id?" is-active":""}${item.id==="delete"?" is-danger":""}`} aria-current={activeView===item.id?"page":undefined} disabled={!!inlineDraft||!!busy} onClick={()=>select(item.id)}>
+            <Icon name={item.icon} size={17}/>
+            <span className="unit-workspace-nav-copy"><span>{item.label}</span><small>{item.hint}</small></span>
+          </button>)}
+        </div>
+        {activeView==="content"&&!inlineDraft&&sections.length>0&&<div className="unit-workspace-outline">
+          <p className="unit-workspace-outline-title">On this page</p>
+          {sections.map(section=><button key={section.key} type="button" className="unit-workspace-outline-item" onClick={()=>jumpTo(section.key)}>
+            <span>{section.label}</span>{section.count!==null&&<span className="unit-editor-count">{section.count}</span>}
+          </button>)}
+        </div>}
+      </nav>
+      <div className="unit-workspace-main">
+        <header className="unit-workspace-head">
+          <div className="unit-workspace-title">
+            <h2>{inlineDraft?"Inline slide changes":heading}</h2>
+            <p>{inlineDraft?"Slide text edited on the lesson page is waiting to be saved.":intro}</p>
           </div>
-          <label className="unit-source-field"><strong>Source content</strong><span>Paste the teaching material for this unit.</span><textarea rows={7} value={source} maxLength={MAX_SOURCE_LENGTH} disabled={!!busy} onChange={e=>setSource(e.target.value)} placeholder={`Paste the content for US ${unit.us} here…`}/></label>
+          {activeView==="content"&&!inlineDraft&&draft&&<div className="unit-workspace-head-actions">
+            <div className="unit-workspace-add-tab">
+              <Select disabled={!!busy} ariaLabel="Tab to add" value={newTabKind} onChange={setNewTabKind} options={[
+                { value: "customTabs", label: "Custom content tab" }, { value: "lessonPlan", label: "Lesson plan" },
+                { value: "logbook", label: "Logbook" }, { value: "practicalTask", label: "Practical task" }, { value: "selfAssessment", label: "Self assessment" },
+                { value: "evaluation", label: "Evaluation" }, { value: "quizzes", label: "Additional quizzes" },
+              ]} />
+              <button type="button" className="btn ghost" disabled={!!busy} onClick={addTab}><Icon name="plus" size={15}/>Add tab</button>
+            </div>
+            {dirty&&<button type="button" className="btn ghost" disabled={!!busy} onClick={discardDraft}>Discard changes</button>}
+            {built&&<button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");setBusy("Creating backup…");try{const snapshot=draft??built.content;await saveBuiltUnit(unit.us,{...built,revision:crypto.randomUUID(),createdAt:new Date().toISOString(),content:structuredClone(snapshot),files:{...built.files}});setMessage("Backup created. Your current lesson slides are preserved in Version history.");}catch(e){setError(unitBuilderError(e,"The lesson backup could not be created."));}finally{setBusy("");}}}>Back up current lesson</button>}
+            {built&&<button type="button" className="unit-workspace-save-only" aria-label="Save changes without rebuilding files" title="Save changes only" disabled={!!busy} onClick={()=>void saveDraftOnly()}><Icon name="save" size={20}/></button>}
+            <button type="button" className="btn unit-build-action unit-workspace-save" disabled={!!busy||!dirty} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>setConfirmRebuild(true)}><span>{busy?`Saving ${busyProgress}%`:dirty?"Save all changes and rebuild files":"All changes saved"}</span></button>
+          </div>}
+        </header>
+        <div className="unit-workspace-scroll" ref={scrollRef}>
+          {inlineDraft?<div className="unit-workspace-notice">
+            <h3>Finish the inline slide changes first</h3>
+            <p>Save the slide edits to update every tab and the download files, or cancel them to discard those edits. The structured editor unlocks afterwards.</p>
+            {!inlineActionsTarget&&<div className="unit-workspace-notice-actions">{inlineActions}</div>}
+          </div>
+          :activeView==="content"?(draft?<UnitContentEditor disabled={!!busy} value={draft as never} onChange={v=>updateDraft(v as unknown as UnitContent)}/>:<p className="muted">Preparing the unit content…</p>)
+          :activeView==="build"?<div className="unit-builder-panel unit-build-view">
+            {!built&&deletedBackup&&<div className="unit-action-card unit-deleted-backup-card">
+              <div className="unit-action-card-copy"><h3>Deleted build backup available</h3><p>Restore the saved lessons, learner activities, quizzes and files from the build deleted on {new Date(deletedBackup.createdAt).toLocaleString("en-ZA",{dateStyle:"medium",timeStyle:"short"})}.</p></div>
+              <button type="button" className="btn" disabled={!!busy} onClick={()=>{setError("");setBusy("Restoring deleted build…");void restoreDeletedBuiltUnit(unit.us).then(()=>{setMessage("The deleted build has been restored.");onSaved();}).catch(e=>setError(e instanceof Error?e.message:"The deleted build could not be restored.")).finally(()=>setBusy(""));}}><Icon name="refresh" size={15}/>Restore deleted build</button>
+            </div>}
+            {built&&<p className="muted">Publishing PDFs keeps existing lesson content unless you explicitly enable lesson generation. The last {MAX_UNIT_HISTORY} versions stay restorable from Version history. Learner work is retained.</p>}
+            <section className="unit-build-step">
+              <header className="unit-build-step-head"><span className="unit-editor-index">1</span><div><h3>Convert PDFs to editable HTML</h3><p>Code preserves the printed text and table geometry. AI identifies answer fields, colour panels and artwork. No rewritten questions or replacement covers. Review the converted layout before publishing.</p></div></header>
+              <div className="unit-settings-card">
+                <div className="unit-source-field"><span>Upload blank training documents, up to 20 MB and 250 pages per PDF. Fill &amp; sign lets learners complete additional answer areas.</span>
+                  {([[
+                    "learnerGuide","Learner Guide PDF","Upload learner guide PDF"
+                  ],[
+                    "practicalTask","Practical Task PDF","Upload practical task PDF"
+                  ],[
+                    "learnerWorkbook","Learner Workbook PDF","Upload learner workbook PDF"
+                  ]] as [keyof UnitSourceDocuments,string,string][]).map(([kind,label,aria])=><div className="unit-settings-row" key={kind}><span className="unit-settings-copy"><strong>{label}</strong><span>{kind==="practicalTask"?(practicalTaskFileName||sourceDocumentName(kind)):sourceDocumentName(kind)}</span></span><label className="unit-import-button"><span>{built?.files.sourceDocuments?.[kind]||sourceDocumentFiles[kind]?"Replace PDF":"Choose PDF"}</span><input aria-label={aria} type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={e=>{const file=e.target.files?.[0];e.target.value="";void chooseSourceDocument(kind,file);}}/></label></div>)}
+                  {learnerGuide?.replica&&<span className="muted">Learner Guide: {learnerGuide.sourcePageCount} pages ({learnerGuide.replica.display==="digital"?"HTML with editable fields":"older image version - rebuild to convert"}).</span>}
+                  {practicalTask?.replica&&<span className="muted">Practical Task: {practicalTask.sourcePageCount} pages ({practicalTask.replica.display==="digital"?"HTML with editable fields":"older image version - rebuild to convert"}).</span>}
+                  {learnerWorkbook?.replica&&<span className="muted">Learner Workbook: {learnerWorkbook.sourcePageCount} pages ({learnerWorkbook.replica.display==="digital"?"HTML with editable fields":"older image version - rebuild to convert"}).</span>}
+                </div>
+                <div className="unit-source-field"><strong>Additional editable HTML tabs</strong><span>Each PDF is converted with the same code and AI workflow.</span><div className="unit-settings-row"><span className="unit-settings-copy"><strong>Add another PDF</strong><span>PDF up to 20 MB and 250 pages · multiple documents supported</span></span><label className="unit-import-button"><span>Choose PDF</span><input aria-label="Upload an additional editable PDF" type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Converting PDF to HTML with code and AI...");setError("");try{const base=file.name.replace(/\.pdf$/i,"").replace(/^SAQA\s*-?\s*\d+\s*-?\s*/i,"").trim()||"Document";const title=/learner\s*workbook/i.test(base)?"Learner Workbook":/learner\s*guide/i.test(base)?"Learner Guide":/practical/i.test(base)?"Practical Task":base;const document=await importUnitPdf(file,title,(done,total)=>setBusy(`Converting ${title} to HTML with code and AI: ${done}/${total} pages...`));const entry={id:crypto.randomUUID(),title,sourceName:file.name,document};setEditableDocuments(current=>[...current,entry]);setMessage(`Added ${file.name}: ${document.sourcePageCount} HTML pages with editable fields. Review before publishing.`);}catch(err){setError(err instanceof Error?err.message:String(err));}finally{setBusy("");}}}/></label></div>{editableDocuments.map(item=><div className="unit-settings-row" key={item.id}><span className="unit-settings-copy"><strong>{item.title}</strong><span>{item.sourceName} · {item.document.sourcePageCount??item.document.sections.length} pages</span></span><button type="button" className="btn ghost sm" disabled={!!busy} onClick={()=>setEditableDocuments(current=>current.filter(document=>document.id!==item.id))}>Remove</button></div>)}</div>
+              </div>
+            </section>
+            <section className="unit-build-step">
+              <header className="unit-build-step-head"><span className="unit-editor-index">2</span><div><h3>Optional lesson generation</h3><p>Leave off to publish only the converted HTML documents above. This separate source text creates lesson slides; it does not rewrite the uploaded unit documents.</p></div></header>
+              <div className="unit-settings-card">
+                <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Also generate lesson tabs</strong><span>Off by default. HTML conversion uses code and AI regardless of this setting. Existing lessons stay unchanged when off.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={generateLessons} disabled={!!busy} onChange={e=>setGenerateLessons(e.target.checked)}/></label>
+                {generateLessons&&<>
+                <div className="unit-settings-row"><div className="unit-settings-copy"><strong>Import content</strong><span>{fileName || "TXT, Markdown, PDF, DOCX or PPTX"}</span></div>
+                  <label className="unit-import-button"><span>Choose file</span><input aria-label="Import teaching content" type="file" accept=".txt,.md,.pdf,.docx,.pptx" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Reading source document…");setError("");try{setSource(await importUnitSource(file));setFileName(file.name);}catch(err){setError(String(err));}finally{setBusy("");}}}/></label>
+                </div>
+                <label className="unit-source-field"><strong>Source content</strong><span>Paste the teaching material for this unit.</span><textarea rows={7} value={source} maxLength={MAX_SOURCE_LENGTH} disabled={!!busy} onChange={e=>setSource(e.target.value)} placeholder={`Paste the content for US ${unit.us} here…`}/></label>
+                </>}
+              </div>
+            </section>
+            {generateLessons&&<section className="unit-build-step">
+              <header className="unit-build-step-head"><span className="unit-editor-index">3</span><div><h3>Optional supporting content</h3><p>Activity, self-assessment and logbook text applies to lesson generation only.</p></div></header>
+              <div className="unit-settings-card">
+                <div className="unit-source-field"><strong>Activity and learner workbook content</strong><span>Add each activity in its own box. Include its specific outcome, exact question wording and marks. Every distinct marked question becomes its own learner-workbook answer box; questions under the same specific outcome stay grouped together.</span>
+                  {activityBlocks.map((block,index)=><div className="unit-activity-block" key={index}>
+                    <div className="unit-activity-block-head"><span className="unit-editor-index">{index+1}</span><strong>Activity {index+1}</strong>
+                      <div className="unit-editor-item-actions" role="group" aria-label={`Activity ${index+1} actions`}>
+                        <button type="button" className="unit-editor-icon-btn" title="Move up" aria-label={`Move activity ${index+1} up`} disabled={!!busy||index===0} onClick={()=>setActivityBlocks(blocks=>{const next=[...blocks];[next[index-1],next[index]]=[next[index],next[index-1]];return next;})}><Icon name="chevronUp" size={15}/></button>
+                        <button type="button" className="unit-editor-icon-btn danger" title="Remove activity" aria-label={`Remove activity ${index+1}`} disabled={!!busy||activityBlocks.length===1} onClick={()=>setActivityBlocks(blocks=>blocks.filter((_,i)=>i!==index))}><Icon name="trash" size={15}/></button>
+                      </div>
+                    </div>
+                    <label>Activity {index+1} heading<input type="text" value={block.heading} disabled={!!busy} onChange={e=>setActivityBlocks(blocks=>blocks.map((item,i)=>i===index?{...item,heading:e.target.value}:item))} placeholder="Example: Specific Outcome 1 — Network access"/></label>
+                    <label>Activity {index+1} content<textarea rows={5} value={block.text} disabled={!!busy} onChange={e=>setActivityBlocks(blocks=>blocks.map((item,i)=>i===index?{...item,text:e.target.value}:item))} placeholder={"Example:\nTask 1: Identify physical components of LAN — 5 marks\nTask 2: Define Network Access Control — 5 marks"}/></label>
+                  </div>)}
+                  <button type="button" className="unit-editor-add" disabled={!!busy} onClick={()=>setActivityBlocks(blocks=>[...blocks,{heading:"",text:""}])}><Icon name="plus" size={14}/>Add another activity</button>
+                </div>
+                <label className="unit-source-field"><strong>Self-assessment content</strong><span>Paste or describe the competence checklist learners must tick after the lesson.</span><textarea rows={4} value={selfAssessmentContent} disabled={!!busy} onChange={e=>setSelfAssessmentContent(e.target.value)} placeholder="Example: I can prepare a time estimate..., I can explain cost components..., revisit areas needing more practice..."/></label>
+                <div className="unit-source-field"><strong>Logbook content</strong><span>Paste the logbook content, or upload clear images of the logbook pages and check the extracted text.</span>
+                  <div className="unit-settings-row unit-logbook-import"><span className="unit-settings-copy"><strong>Read logbook image</strong><span>{logbookImageName || "PNG, JPEG or WebP screenshots/photos"}</span></span><label className="unit-import-button"><span>Upload image</span><input aria-label="Upload logbook image" type="file" accept="image/png,image/jpeg,image/webp" multiple disabled={!!busy} onChange={async e=>{const files=e.target.files;e.target.value="";await readLogbookImages(files);}}/></label></div>
+                  <label>Logbook text<textarea rows={7} value={logbookContent} disabled={!!busy} onChange={e=>setLogbookContent(e.target.value)} placeholder="Example: embedded knowledge questions with checklist ticks, practical activities, workplace activities, other activities, project evidence and project checklist..."/></label>
+                </div>
+              </div>
+            </section>}
+            {generateLessons&&<section className="unit-build-step">
+              <header className="unit-build-step-head"><span className="unit-editor-index">4</span><div><h3>Lesson generation settings</h3><p>These settings apply only to separately supplied lesson source text. Uploaded PDFs are never redesigned or rewritten.</p></div></header>
+              <div className="unit-settings-card">
+                <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Session duration</strong><span>Planned teaching time in minutes.</span></span><input aria-label="Session duration in minutes" className="unit-duration" type="number" min={60} max={2400} value={minutes} disabled={!!busy} onChange={e=>setMinutes(Math.min(2400,Math.max(60,Number(e.target.value))))}/></label>
+                <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Build with OpenAI web research</strong><span>Use OpenAI to structure professional lesson slides and build the supporting tabs.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={ai} disabled={!!busy} onChange={e=>setAi(e.target.checked)}/></label>
+              </div>
+            </section>}
+            <div className="unit-build-footer">
+              {confirmBuild&&!busy&&<p className="unit-confirm" role="alert">{!generateLessons?"Publish the selected PDFs without changing their layout or replacing existing lessons?":"Rebuild the lessons and supporting content while keeping uploaded PDFs unchanged?"} The current version stays restorable for the next {MAX_UNIT_HISTORY} builds.</p>}
+              <div className="unit-build-footer-actions">
+                <button type="button" className="btn unit-build-action" disabled={!!busy||(generateLessons?source.trim().length<100:!hasPdfDocuments)} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>{if(built&&!confirmBuild){setConfirmBuild(true);setError("");setMessage("");return;}setConfirmBuild(false);void build();}}><span>{busy?`Creating ${busyProgress}%`:confirmBuild?"Yes, publish the updated unit":!generateLessons?"Save editable HTML documents":!built?"Build complete unit standard":"Rebuild complete unit standard"}</span></button>
+                {confirmBuild&&!busy&&<button type="button" className="btn ghost" onClick={()=>setConfirmBuild(false)}>Cancel</button>}
+                {!busy&&<span className="muted">{generateLessons?"Add at least 100 characters of separate lesson source text. Uploaded document wording is retained.":"Upload PDFs to convert them to HTML with code and AI. Lesson generation is off."}</span>}
+              </div>
+            </div>
+          </div>
+          :activeView==="files"?<div className="unit-workspace-cards">
+            {built&&built.files.sourceDocuments&&Object.values(built.files.sourceDocuments).some(Boolean)&&<div className="unit-action-card">
+              <div className="unit-action-card-copy"><h3>Original unit documents</h3><p>The source PDFs uploaded with this build. Replacements are uploaded from Rebuild documents.</p></div>
+              <div className="unit-action-card-actions">
+                {(["learnerGuide","practicalTask","learnerWorkbook"] as (keyof UnitSourceDocuments)[]).map(kind=>{
+                  const document=built.files.sourceDocuments?.[kind];
+                  if(!document)return null;
+                  const label={learnerGuide:"Learner Guide PDF",practicalTask:"Practical Task PDF",learnerWorkbook:"Learner Workbook PDF"}[kind];
+                  return <button type="button" className="btn ghost" key={kind} disabled={!!busy} onClick={()=>void downloadDoc(document).catch(()=>setError(`${label} could not be downloaded. Please retry.`))}><Icon name="download" size={15}/>{label}</button>;
+                })}
+              </div>
+            </div>}
+            {built&&<div className="unit-action-card">
+              <div className="unit-action-card-copy"><h3>Download files</h3><p>Rebuild the PDF, editable PowerPoint and answer guide from the content that is live now.</p></div>
+              <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(content??built.content,edits),built.source,built.aiUsed);}catch(e){setError(unitBuilderError(e,"The PDF and PowerPoint could not be updated."));}finally{setBusy("");}}}>Update PDF and PowerPoint</button>
+            </div>}
+            {built&&content&&<div className="unit-action-card">
+              <div className="unit-action-card-copy"><h3>AI PowerPoint</h3><p>Generate a presentation deck from this unit's lessons with AI. It downloads immediately; the saved unit files are not changed.</p></div>
+              <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>void createAiDeck()}><Icon name="presenter" size={15}/>{busy?"Creating AI PowerPoint…":"Create AI PowerPoint"}</button>
+            </div>}
+          </div>
+          :activeView==="versions"?(versions.length?<ul className="unit-version-list">{versions.map(version=><li key={version.revision} className="unit-action-card">
+            <div className="unit-action-card-copy"><h3>{versionLabel(version)}</h3><p>{versionHint(version)}</p></div>
+            <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>void restore(version)}>Restore this version</button>
+          </li>)}</ul>:<div className="unit-workspace-notice"><h3>No earlier versions yet</h3><p>Each save or rebuild keeps the previous build here so you can restore it.</p></div>)
+          :<div className="unit-action-card is-danger">
+            <div className="unit-action-card-copy"><h3>Delete this unit build</h3><p>A recoverable backup is created before the live build is removed. Learner progress and submissions are retained.</p></div>
+            <div className="unit-action-card-actions">
+              {!confirmDelete&&<button type="button" className="btn ghost danger-text" disabled={!!busy} onClick={()=>{setConfirmDelete(true);setDeleteName("");setError("");setMessage("");}}>Delete unit</button>}
+              {confirmDelete&&!busy&&<div className="unit-delete-confirmation">
+                <label>Type <strong>{`US ${unit.us}`}</strong> to confirm<input type="text" autoComplete="off" value={deleteName} onChange={event=>setDeleteName(event.target.value)} placeholder={`US ${unit.us}`}/></label>
+                <button type="button" className="btn ghost danger-text" disabled={deleteName.trim()!==`US ${unit.us}`} onClick={()=>{setConfirmDelete(false);setBusy("Creating safety backup and deleting unit…");void deleteBuiltUnit(unit.us).then(()=>{setMessage("Unit deleted. A restorable backup is available here.");setDraft(null);setDirty(false);setView("build");onSaved();}).catch(e=>setError(e instanceof Error?e.message:"The unit could not be deleted.")).finally(()=>setBusy(""));}}>Create backup and delete</button>
+                <button type="button" className="btn ghost" onClick={()=>{setConfirmDelete(false);setDeleteName("");}}>Cancel</button>
+              </div>}
+            </div>
+          </div>}
         </div>
-        <h3 className="unit-settings-heading">Activity, self-assessment and logbook content</h3>
-        <div className="unit-settings-card">
-          <div className="unit-source-field"><strong>Activity and learner workbook content</strong><span>Add each activity in its own box. Include its specific outcome, exact question wording and marks. Every distinct marked question becomes its own learner-workbook answer box; questions under the same specific outcome stay grouped together.</span>{activityBlocks.map((block,index)=><div className="unit-activity-block" key={index}><label>Activity {index+1} heading<input type="text" value={block.heading} disabled={!!busy} onChange={e=>setActivityBlocks(blocks=>blocks.map((item,i)=>i===index?{...item,heading:e.target.value}:item))} placeholder="Example: Specific Outcome 1 — Network access"/></label><label>Activity {index+1} content<textarea rows={5} value={block.text} disabled={!!busy} onChange={e=>setActivityBlocks(blocks=>blocks.map((item,i)=>i===index?{...item,text:e.target.value}:item))} placeholder={"Example:\nTask 1: Identify physical components of LAN — 5 marks\nTask 2: Define Network Access Control — 5 marks"}/></label><div className="unit-editor-actions"><button type="button" className="btn ghost sm" disabled={!!busy||index===0} onClick={()=>setActivityBlocks(blocks=>{const next=[...blocks];[next[index-1],next[index]]=[next[index],next[index-1]];return next;})}>Move up</button><button type="button" className="btn ghost sm" disabled={!!busy||activityBlocks.length===1} onClick={()=>setActivityBlocks(blocks=>blocks.filter((_,i)=>i!==index))}>Remove activity</button></div></div>)}<button type="button" className="btn ghost sm" disabled={!!busy} onClick={()=>setActivityBlocks(blocks=>[...blocks,{heading:"",text:""}])}>Add another activity</button></div>
-          <label className="unit-source-field"><strong>Self-assessment content</strong><span>Paste or describe the competence checklist learners must tick after the lesson.</span><textarea rows={4} value={selfAssessmentContent} disabled={!!busy} onChange={e=>setSelfAssessmentContent(e.target.value)} placeholder="Example: I can prepare a time estimate..., I can explain cost components..., revisit areas needing more practice..."/></label>
-          <label className="unit-source-field"><strong>Logbook content</strong><span>Paste the logbook content, or upload clear images of the logbook pages and check the extracted text.</span><div className="unit-settings-row unit-logbook-import"><span className="unit-settings-copy"><strong>Read logbook image</strong><span>{logbookImageName || "PNG, JPEG or WebP screenshots/photos"}</span></span><label className="unit-import-button"><span>Upload image</span><input aria-label="Upload logbook image" type="file" accept="image/png,image/jpeg,image/webp" multiple disabled={!!busy} onChange={async e=>{const files=e.target.files;e.target.value="";await readLogbookImages(files);}}/></label></div><textarea rows={7} value={logbookContent} disabled={!!busy} onChange={e=>setLogbookContent(e.target.value)} placeholder="Example: embedded knowledge questions with checklist ticks, practical activities, workplace activities, other activities, project evidence and project checklist..."/></label>
-          <div className="unit-source-field"><strong>Practical task</strong><span>Upload a text-based PDF. The app converts its headings, fields and questions into an editable learner HTML form.</span><div className="unit-settings-row"><span className="unit-settings-copy"><strong>Convert practical-task PDF</strong><span>{practicalTaskFileName || "PDF up to 20 MB"}</span></span><label className="unit-import-button"><span>Choose PDF</span><input aria-label="Upload practical task PDF" type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Converting practical task PDF...");setError("");try{const converted=await importPracticalTask(file,unit.title);setPracticalTask(converted);setPracticalTaskFileName(file.name);setMessage(`Converted ${file.name} into ${converted.sections.length} editable sections.`);}catch(err){setError(err instanceof Error?err.message:String(err));}finally{setBusy("");}}}/></label></div>{practicalTask&&<span className="muted">Ready: {practicalTask.sections.length} editable sections will be published under the Practical Task tab.</span>}</div>
-          <div className="unit-source-field"><strong>Additional editable PDF tabs</strong><span>Upload learner workbooks, learner guides, assessments or other unit documents. Each PDF becomes its own editable HTML tab.</span><div className="unit-settings-row"><span className="unit-settings-copy"><strong>Convert another PDF</strong><span>PDF up to 20 MB · multiple documents supported</span></span><label className="unit-import-button"><span>Choose PDF</span><input aria-label="Upload an additional editable PDF" type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Converting PDF into editable HTML...");setError("");try{const document=await importPracticalTask(file,unit.title);const base=file.name.replace(/\.pdf$/i,"").replace(/^SAQA\s*-?\s*\d+\s*-?\s*/i,"").trim()||"Document";const title=/learner\s*workbook/i.test(base)?"Learner Workbook":/learner\s*guide/i.test(base)?"Learner Guide":/practical/i.test(base)?"Practical Task":base;const entry={id:crypto.randomUUID(),title,sourceName:file.name,document:{...document,title}};setEditableDocuments(current=>[...current,entry]);setMessage(`Created the editable ${title} tab from ${file.name}.`);}catch(err){setError(err instanceof Error?err.message:String(err));}finally{setBusy("");}}}/></label></div>{editableDocuments.map(item=><div className="unit-settings-row" key={item.id}><span className="unit-settings-copy"><strong>{item.title}</strong><span>{item.sourceName} · {item.document.sections.length} sections</span></span><button type="button" className="btn ghost sm" onClick={()=>setEditableDocuments(current=>current.filter(document=>document.id!==item.id))}>Remove</button></div>)}</div>
-        </div>
-        <h3 className="unit-settings-heading">Build settings</h3>
-        <div className="unit-settings-card">
-          <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Session duration</strong><span>Planned teaching time in minutes.</span></span><input aria-label="Session duration in minutes" className="unit-duration" type="number" min={60} max={2400} value={minutes} disabled={!!busy} onChange={e=>setMinutes(Math.min(2400,Math.max(60,Number(e.target.value))))}/></label>
-          <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Build with OpenAI web research</strong><span>Use OpenAI to structure professional lesson slides and build the supporting tabs.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={ai} disabled={!!busy} onChange={e=>setAi(e.target.checked)}/></label>
-        </div>
-        <p className="muted">When AI is enabled, OpenAI lays out every word of the source as balanced, professionally structured textbook slides without rewriting or shortening it. It also researches the unit standard and creates the matching supporting tabs.</p>
-        {confirmBuild&&!busy&&<p className="unit-confirm" role="alert">Rebuilding replaces every tab of US {unit.us} with the content above. The current version stays restorable for the next {MAX_UNIT_HISTORY} builds.</p>}
-        <button type="button" className="btn unit-build-action" disabled={!!busy||source.trim().length<100} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>{if(built&&!confirmBuild){setConfirmBuild(true);setError("");setMessage("");return;}setConfirmBuild(false);void build();}}><span>{busy?`Creating ${busyProgress}%`:!built?"Build complete unit standard":confirmBuild?"Yes, replace the saved unit":"Rebuild complete unit standard"}</span></button>
-        {confirmBuild&&!busy&&<button type="button" className="btn ghost" onClick={()=>setConfirmBuild(false)}>Cancel</button>}
-      </>}
-      <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(false);setDraft(null);}}>Close</button>
-    </div>}
-    {busy&&<p role="status">{busy}</p>}{message&&<p role="status">{message}</p>}{warning&&<p role="status">{warning}</p>}{error&&<p role="alert" className="auth-error">{error}</p>}
+        {status}
+      </div>
+    </div>
   </section>;
 }
 
@@ -317,7 +565,7 @@ async function publishUnitPart(unit:UnitStandard,built:BuiltUnitVersion,next:Uni
   setBusy("Saving…");
   const prefix=`shared/unitbuilder/${courseScopedUnit(unit.us)}`;
   const [pdf,pptx,answers]=await Promise.all([uploadFile(prefix,files.pdf),uploadFile(prefix,files.pptx),uploadFile(prefix,files.answers)]);
-  await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content:next,files:{pdf,pptx,answers,material:built.files.material,materialEditable:built.files.materialEditable},aiUsed:built.aiUsed,planSource:extra.planSource??built.planSource});
+  await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content:next,files:{pdf,pptx,answers,material:built.files.material,materialEditable:built.files.materialEditable,sourceDocuments:built.files.sourceDocuments},aiUsed:built.aiUsed,planSource:extra.planSource??built.planSource});
 }
 
 /** Replace only the lesson plan of a built unit from pasted facilitator notes. */
@@ -361,27 +609,32 @@ export function LessonPlanBuilder({unit,content}:{unit:UnitStandard;content?:Uni
     finally{setBusy("");}
   };
   return <section className="unit-builder">
-    <div className="unit-builder-bar">
+    {!open && <div className="unit-builder-bar">
       <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(!open);setError("");setPreview(undefined);}}><Icon name="presenter" size={16}/>{open?"Close lesson plan builder":"Build lesson plan from notes"}</button>
-    </div>
+    </div>}
     {open&&<div className="unit-builder-panel">
       <h2>Lesson plan · US {unit.us}</h2>
       <p>Paste the facilitator schedule for this unit. It replaces the plan below exactly as written — the rest of the unit is untouched.</p>
       <div className="unit-settings-card">
+        <EditingTools active title="Import lesson plan">
         <div className="unit-settings-row"><div className="unit-settings-copy"><strong>Import lesson plan</strong><span>{fileName||"TXT, Markdown, PDF, DOCX or PPTX"}</span></div>
           <label className="unit-import-button"><span>Choose file</span><input aria-label="Import lesson plan" type="file" accept=".txt,.md,.pdf,.docx,.pptx" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Reading lesson plan document…");setError("");try{setPlanSource(await importUnitSource(file));setFileName(file.name);setPreview(undefined);}catch(err){setError(String(err));}finally{setBusy("");}}}/></label>
         </div>
+        </EditingTools>
         <label className="unit-source-field"><strong>Lesson plan content</strong><span>Import the Word (.docx) or PDF facilitator guide — the Time / Activity / Resources table is read row by row, including bulleted steps and resource cells such as “LM p4-6”. You can also paste straight from Word. Otherwise start each activity on a new line with its time (“20 min | Meet, Greet &amp; Seat” or “09:00 – 09:20 Meet, Greet &amp; Seat”), and use “# ” for a section heading.</span><textarea rows={12} value={planSource} maxLength={MAX_LESSON_PLAN_LENGTH} disabled={!!busy} onChange={e=>{setPlanSource(e.target.value);setPreview(undefined);}} placeholder={"Title: Facilitator Preparation\nDate: Friday, 17 July 2026\nVenue: Investec, Sandton\nFacilitator: Andre Snell\nPrep:\n- Study the notes in this lesson plan before class.\n\n# Unit Standard "+unit.us+"\n09:00 – 09:20 | Meet, Greet & Seat\nLearners sign the class register and settle.\nResources: Class Register, LM p1\n\n45 min | Introduction — Facilitator & Class\n- Read through the learner material and facilitate discussion.\nResources: LM p4\n\n10 min | Break"}/></label>
       </div>
       {preview&&<div className="unit-confirm">
         <strong>{preview.title}</strong> — {planStats(preview)}
         <ul className="plan-preview">{preview.sections.map((section,index)=><li key={index}>{section.heading??"Session set-up"}: {section.rows.map(row=>`${row.time?`${row.time} · `:""}${row.title}`).join(" • ")}</li>)}</ul>
       </div>}
+      <EditingTools active title={`Lesson plan ${unit.us}`}>
       <button type="button" className="btn ghost" disabled={!!busy||!planSource.trim()} onClick={()=>{setError("");setMessage("");try{setPreview(parsePlan());}catch(e){setPreview(undefined);setError(e instanceof Error?e.message:String(e));}}}>Preview plan</button>
       <button type="button" className="btn unit-build-action" disabled={!!busy||!planSource.trim()} aria-busy={!!busy} onClick={()=>void save()}><span>{busy?"Saving…":"Save lesson plan"}</span></button>
       <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(false);setPreview(undefined);}}>Close</button>
+      {error&&<p role="alert" className="auth-error">{error}</p>}
+      </EditingTools>
     </div>}
-    {busy&&<p role="status">{busy}</p>}{message&&<p role="status">{message}</p>}{error&&<p role="alert" className="auth-error">{error}</p>}
+    {busy&&<p role="status">{busy}</p>}{message&&<p role="status">{message}</p>}{!open&&error&&<p role="alert" className="auth-error">{error}</p>}
   </section>;
 }
 
@@ -432,17 +685,19 @@ export function LogbookBuilder({unit,content}:{unit:UnitStandard;content?:UnitCo
     finally{setBusy("");}
   };
   return <section className="unit-builder">
-    <div className="unit-builder-bar">
+    {!open && <div className="unit-builder-bar">
       <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(!open);setError("");setMessage("");setPreview(undefined);}}><Icon name="book" size={16}/>{open?"Close logbook builder":"Build logbook from notes"}</button>
-    </div>
+    </div>}
     {open&&<div className="unit-builder-panel">
       <h2>Logbook · US {unit.us}</h2>
       <p>Import or paste the logbook form for this unit. It replaces the logbook structure below exactly as written — learners' saved entries and the rest of the unit are untouched.</p>
       <div className="unit-settings-card">
+        <EditingTools active title="Import logbook">
         <div className="unit-settings-row"><div className="unit-settings-copy"><strong>Import logbook</strong><span>{fileName||"DOCX, PDF, PPTX, TXT — or photos/scans of the logbook pages"}</span></div>
           <label className="unit-import-button"><span>Choose file</span><input aria-label="Import logbook" type="file" accept=".txt,.md,.pdf,.docx,.pptx" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Reading logbook document…");setError("");setMessage("");try{setSource(await importUnitSource(file));setFileName(file.name);setPreview(undefined);}catch(err){setError(String(err));}finally{setBusy("");}}}/></label>
           <label className="unit-import-button"><span>Read images</span><input aria-label="Read logbook images" type="file" accept="image/*" multiple disabled={!!busy} onChange={e=>{const files=e.target.files;void readImages(files).finally(()=>{e.target.value="";});}}/></label>
         </div>
+        </EditingTools>
         <label className="unit-source-field"><strong>Logbook content</strong><span>Use the section headings “Learner details”, “Project”, “Embedded knowledge questions”, “Practical activities”, “Workplace activities”, “Other activities” and “Project checklist”. Word tables are read row by row — “No | Text | ✓ | | | ✓ | |” keeps the six evidence marks (Workplace: Learner Activity, Logbook Activity, Project · Assessor: Learner Manual, Logbook Activity, Project). Typed rows work too: “1. Explain the purpose of a cost/benefit analysis. ✓ - - ✓ - -”. Lines such as “Assignment: Assignment One”, “Programme: …” and “Unit standard: …” set the headings.</span><textarea rows={12} value={source} maxLength={MAX_LOGBOOK_SOURCE_LENGTH} disabled={!!busy} onChange={e=>{setSource(e.target.value);setPreview(undefined);}} placeholder={"Assignment: Assignment One\nProgramme: Information Technology - Systems Support\nUnit standard: "+unit.us+" - "+unit.title+"\n\nProject\nTime: 30 minutes\nWorkplace project\nApply the unit learning in the workplace and attach the evidence.\nResources: Logbook\n\nEmbedded knowledge questions\n1. Explain the purpose of a cost/benefit analysis. ✓ - - ✓ - -\n2. Describe how to prepare a time estimate.\n\nPractical activities\n3. Prepare a cost estimate for an element of work.\n\nWorkplace activities\n- Estimate a real unit of work at the workplace.\n\nOther activities\nWorkplace project — Attach the completed estimate.\n\nProject checklist\n1. "+unit.us}/></label>
       </div>
       {preview&&<div className="unit-confirm">
@@ -456,20 +711,24 @@ export function LogbookBuilder({unit,content}:{unit:UnitStandard;content?:UnitCo
           <li>Project checklist: {preview.projectChecklist.map(item=>`${item.no}. ${item.name}`).join(" • ")}</li>
         </ul>
       </div>}
+      <EditingTools active title={`Logbook ${unit.us}`}>
       <button type="button" className="btn ghost" disabled={!!busy||!source.trim()} onClick={()=>{setError("");setMessage("");try{setPreview(parse());}catch(e){setPreview(undefined);setError(e instanceof Error?e.message:String(e));}}}>Preview logbook</button>
       <button type="button" className="btn unit-build-action" disabled={!!busy||!source.trim()} aria-busy={!!busy} onClick={()=>void save()}><span>{busy?"Saving…":"Save logbook"}</span></button>
       <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(false);setPreview(undefined);}}>Close</button>
+      {error&&<p role="alert" className="auth-error">{error}</p>}
+      </EditingTools>
     </div>}
-    {busy&&<p role="status">{busy}</p>}{message&&<p role="status">{message}</p>}{error&&<p role="alert" className="auth-error">{error}</p>}
+    {busy&&<p role="status">{busy}</p>}{message&&<p role="status">{message}</p>}{!open&&error&&<p role="alert" className="auth-error">{error}</p>}
   </section>;
 }
 
-export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
+export function BuiltUnitDownloads({us,staff,onSaveChanges,savingChanges=false}:{us:string;staff:boolean;onSaveChanges?:()=>Promise<void>;savingChanges?:boolean}){
   const built=useBuiltUnit(us);
   const pdfRef=useRef<HTMLInputElement|null>(null);
   const editableRef=useRef<HTMLInputElement|null>(null);
   const [error,setError]=useState("");
   const [busy,setBusy]=useState("");
+  const [message,setMessage]=useState("");
   const [uploadPct,setUploadPct]=useState<number|null>(null);
   const [materialUrl,setMaterialUrl]=useState<string|null>(null);
   const isPdf=(doc?:PoeDoc)=>!!doc&&(/\.pdf$/i.test(doc.name)||doc.type.includes("pdf"));
@@ -484,25 +743,33 @@ export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
   },[displayMaterial?.path,displayMaterial?.data,displayMaterial?.uploadedAt]);
   if(!built)return null;
   const saveMaterial=async(next:{material?:PoeDoc;materialEditable?:PoeDoc})=>{
-    await saveBuiltUnit(us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content:built.content,files:{...built.files,...next},aiUsed:built.aiUsed,planSource:built.planSource});
+    // Replacing course-material files must not create a content revision.
+    // Slide edits are keyed by the built revision, so changing it for a file
+    // upload can detach the visible edits just before the user presses Save.
+    const editKey=`itss.lessonedits.${courseScopedUnit(`${us}.built-${built.revision}`)}`;
+    const edits=await loadLessonEdits<LessonEdits>(editKey,cachedLessonEdits(editKey,{}));
+    await flushLessonEdits(editKey,edits);
+    await saveBuiltUnit(us,{revision:built.revision,createdAt:new Date().toISOString(),source:built.source,content:built.content,files:{...built.files,...next},aiUsed:built.aiUsed,planSource:built.planSource});
   };
   const onPdf=async(file:File|undefined)=>{
     if(!file)return;
     if(!/\.pdf$/i.test(file.name)&&!file.type.includes("pdf")){setError("Upload a PDF export for the displayed course material. Upload the editable PowerPoint separately.");return;}
-    setError("");setBusy("Uploading course material...");setUploadPct(0);
+    setError("");setMessage("");setBusy("Uploading course material...");setUploadPct(0);
     try{
       const doc=await uploadFile(`shared/unitbuilder/${courseScopedUnit(us)}/material`,file,setUploadPct);
       await saveMaterial({material:doc,materialEditable:editableMaterial});
+      setMessage("Course material saved without rebuilding the unit files.");
     }catch(e){setError(e instanceof Error?e.message:"The course material could not be uploaded.");}
     finally{setBusy("");setUploadPct(null);}
   };
   const onEditable=async(file:File|undefined)=>{
     if(!file)return;
     if(!/\.(ppt|pptx)$/i.test(file.name)&&!file.type.includes("presentation")){setError("Upload the editable slides as a PowerPoint file (.ppt or .pptx).");return;}
-    setError("");setBusy("Uploading editable slides...");setUploadPct(0);
+    setError("");setMessage("");setBusy("Uploading editable slides...");setUploadPct(0);
     try{
       const doc=await uploadFile(`shared/unitbuilder/${courseScopedUnit(us)}/material`,file,setUploadPct);
       await saveMaterial({material:displayMaterial,materialEditable:doc});
+      setMessage("PowerPoint saved without rebuilding the unit files.");
     }catch(e){setError(e instanceof Error?e.message:"The editable slides could not be uploaded.");}
     finally{setBusy("");setUploadPct(null);}
   };
@@ -513,6 +780,7 @@ export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
       <button type="button" className="deck-chip active"><Icon name="presenter" size={15}/><span>{displayMaterial?.name.replace(/\.pdf$/i,"")||editableMaterial?.name.replace(/\.(ppt|pptx)$/i,"")||`US ${us} course material`}</span></button>
     </div>
     <div className="unit-builder-bar built-material-actions">
+      {staff&&onSaveChanges&&<button type="button" className="btn ghost save-only-icon" aria-label={savingChanges?"Saving changes":"Save changes without rebuilding unit files"} title={savingChanges?"Saving changes…":"Save changes only"} disabled={!!busy||savingChanges} onClick={()=>{setError("");setMessage("");void onSaveChanges().then(()=>setMessage("Changes saved. The unit files were not rebuilt.")).catch(e=>setError(e instanceof Error?e.message:"The changes could not be saved."));}}><Icon name="save" size={20}/></button>}
       {displayMaterial&&<button type="button" className="btn ghost dl-sample plan-ppt" onClick={()=>void downloadDoc(displayMaterial).catch(()=>setError("The file could not be downloaded. Please retry."))}><Icon name="download" size={15}/>Download this file</button>}
       {editableMaterial&&<button type="button" className="btn ghost dl-sample plan-ppt" onClick={()=>void downloadDoc(editableMaterial).catch(()=>setError("The editable slides could not be downloaded. Please retry."))}><Icon name="download" size={15}/>Editable slides (.pptx)</button>}
       {staff&&<button type="button" className="btn ghost dl-sample plan-ppt" disabled={!!busy} onClick={()=>pdfRef.current?.click()}><Icon name="presenter" size={15}/>{displayMaterial?"Replace with my version (.pdf)":"Upload course material (.pdf)"}</button>}
@@ -524,6 +792,6 @@ export function BuiltUnitDownloads({us,staff}:{us:string;staff:boolean}){
     {uploadPct!==null&&<div className="upload-progress plan-upload-progress" role="progressbar" aria-valuenow={uploadPct}><div className="track"><div className="fill" style={{width:`${uploadPct}%`}}/></div><span className="pct">Uploading... {uploadPct}%</span></div>}
     {!displayMaterial&&<p className="muted built-material-empty">{staff?"Upload the PDF export of your slides to show the presentation here. You can also upload the editable PowerPoint source.":"No course material has been uploaded for this built unit yet."}</p>}
     {displayMaterial&&(materialUrl?<SlideViewer src={materialUrl} allowDownload={staff}/>:<p className="muted">Loading course material...</p>)}
-    {busy&&<p role="status">{busy}</p>}{error&&<p role="alert" className="auth-error">{error}</p>}
+    {(busy||message)&&<p role="status">{busy||message}</p>}{error&&<p role="alert" className="auth-error">{error}</p>}
   </div>;
 }

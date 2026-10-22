@@ -2,8 +2,11 @@ import type { UnitContent, UnitStandard } from "../types";
 import { COURSE_META, findUnit } from "../data/course";
 import { plainSlideText } from "./slideRichText";
 import { isLessonBulletListLead, isLessonListLead } from "./lessonSubsections";
+import { sourceDocumentText } from "./practicalTaskImport";
+import { readAsDataURL } from "./files";
+import type { FormPage } from "./formSchema";
 
-export type ExportPage = { title: string; lines: string[] };
+export type ExportPage = { title: string; lines: string[]; originalPage?: FormPage };
 export const PPT_MIN_FONT_SIZE = 18;
 const PPT_BODY_WIDTH = 11.55;
 const PPT_BODY_HEIGHT = 4.72;
@@ -128,10 +131,20 @@ export function unitExportPages(unit: UnitStandard, content: UnitContent): Expor
   }
   for (const n of content.studyNotes ?? []) blocks.push({ title: `Notes: ${n.title}`, lines: [n.text] });
   for (const tab of content.customTabs ?? []) blocks.push({ title: tab.title, lines: [tab.text] });
+  for (const document of [content.learnerGuide, content.learnerWorkbook, content.practicalTask, ...(content.editableDocuments ?? []).map(item => item.document)]) {
+    if (document?.replica) {
+      document.replica.pages.forEach(page=>blocks.push({title:document.title,lines:[],originalPage:page}));
+      continue;
+    }
+    if (!document?.sourceText) continue;
+    const pages = sourceDocumentText(document).split("\f").map(page => page.trim()).filter(Boolean);
+    pages.forEach((page, index) => blocks.push({ title: `${document.title}${document.sourcePageCount ? ` - source page ${index + 1}` : ""}`, lines: page.split("\n") }));
+  }
   if (content.selfAssessment) blocks.push({ title: "Self assessment", lines: [...content.selfAssessment.intro, ...content.selfAssessment.items.map(i => `[ ] ${i}`), ...content.selfAssessment.outro] });
   if (content.evaluation) blocks.push({ title: "Lesson evaluation", lines: [content.evaluation.intro, ...content.evaluation.questions.map(q => `${q}\nResponse: ________________________________`)] });
   if (content.lessonPlan) blocks.push({ title: content.lessonPlan.title, lines: [...content.lessonPlan.prep, ...content.lessonPlan.sections.flatMap(s => [s.heading ?? "", ...s.rows.flatMap(r => [`${r.time ?? ""} ${r.title}`, ...(r.text ?? []), ...(r.bullets ?? [])])])] });
   return blocks.flatMap(block => {
+    if (block.originalPage) return [block];
     const grouped: string[][] = [];
     for (let i = 0; i < block.lines.length; i++) {
       const lead = block.lines[i];
@@ -187,20 +200,36 @@ export async function makeUnitExports(unit: UnitStandard, content: UnitContent):
     slide.addText(`US ${unit.us} · ITSS Learn`, { x: 0.55, y: 7.02, w: 5.5, h: 0.28, fontFace: "Aptos", fontSize: PPT_MIN_FONT_SIZE, color: GREY, margin: 0, fit: "none" });
     if (i !== undefined) slide.addText(`${i + 1} / ${presentationPages.length + 1}`, { x: 11.75, y: 7.02, w: 1.0, h: 0.28, fontFace: "Aptos", fontSize: PPT_MIN_FONT_SIZE, color: GREY, align: "right", margin: 0, fit: "none" });
   };
-  const renderPdf = (entries: ExportPage[]): Promise<Blob> => new Promise((resolve, reject) => {
+  const renderPdf = async (entries: ExportPage[]): Promise<Blob> => {
+    const images=await Promise.all(entries.map(async entry=>{
+      const src=entry.originalPage?.src;
+      if(!src||src.startsWith("data:"))return src;
+      const response=await fetch(src);
+      if(!response.ok)throw new Error(`An original PDF page could not be exported (HTTP ${response.status}).`);
+      return readAsDataURL(new File([await response.blob()],"page.png",{type:"image/png"}));
+    }));
+    return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ autoFirstPage: false, size: "A4", layout: "landscape", margin: 40, info: { Title: `US ${unit.us}: ${unit.title}` } });
     const chunks: Uint8Array[] = [];
     doc.on("data", (chunk: Uint8Array) => chunks.push(new Uint8Array(chunk)));
     doc.on("error", reject);
     doc.on("end", () => resolve(new Blob(chunks as BlobPart[], { type: "application/pdf" })));
     entries.forEach((page,i) => {
+      if(page.originalPage){
+        const width=595.28;
+        const height=width*page.originalPage.height/page.originalPage.width;
+        doc.addPage({size:[width,height],layout:"portrait",margin:0});
+        doc.image(images[i],0,0,{width,height});
+        return;
+      }
       doc.addPage();
       doc.font("Helvetica-Bold").fontSize(20).fillColor("#202020").text(page.title,40,35,{ width:760, height:60, ellipsis:true });
       doc.font("Helvetica").fontSize(14).fillColor("#303030").text(page.lines.join("\n"),40,105,{ width:760, lineGap:5 });
       doc.fontSize(9).fillColor("#666666").text(`US ${unit.us} | ${i+1} / ${entries.length}`,40,555,{ lineBreak:false });
     });
     doc.end();
-  });
+    });
+  };
   const pptx = new PptxGenJS(); pptx.layout = "LAYOUT_WIDE"; pptx.title = unit.title; pptx.subject = `US ${unit.us}`; pptx.author = "ITSS Learn";
   const addContentChrome = (slide: any, page: PresentationPage, i: number) => {
     slide.background = { color: "FFFFFF" };

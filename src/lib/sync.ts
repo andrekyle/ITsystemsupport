@@ -26,6 +26,8 @@ import { TENANT_ID } from "./tenant";
  * the app renders, so every existing hook keeps working unchanged.
  * Pending payloads live in IndexedDB, including legacy syncPending migration,
  * so file data is never duplicated into quota-limited localStorage.
+ * Pending queues are tenant-isolated. Unowned legacy poll caches are never
+ * seeded into cloud state; Voting loads the tenant's authoritative record.
  */
 
 const PREFIX = "itss.";
@@ -115,6 +117,17 @@ export function writeFromCloud(key: string, value: string) {
 
 function syncable(key: string) {
   return key.startsWith(PREFIX) && !LOCAL_ONLY.has(key) && !key.startsWith(UNIT_BUILDER_SAVE_PROBE);
+}
+
+/** Profile id encoded in account-owned learner state. Old facilitator/device
+ * copies can retain these keys after the profile has moved to its own account;
+ * they must not recreate deleted duplicate cloud rows on the next sign-in. */
+function ownedProfileId(key: string): string | undefined {
+  const direct = key.match(
+    /^itss\.(?:progress|poe|notes|noteorder|notetitles|checklist|sectiond)\.([^.]+)$/
+  );
+  if (direct) return direct[1];
+  return key.match(/^itss\.lessonquiz\.([^.]+)\./)?.[1];
 }
 
 async function pushKey(key: string, value: string | null) {
@@ -221,6 +234,38 @@ export async function flushValue(
   if (requireCloud && pendingFor(key)) throw new Error("More edits were made while saving. Click Save to cloud again to save the latest changes.");
 }
 
+/** Save every edit queued for the signed-in account before an operation that
+ * removes its local data (notably sign-out).  A failed push deliberately
+ * rejects so the caller can keep the local copy instead of losing work. */
+export async function flushPendingCloudWrites(): Promise<void> {
+  if (!supabase || !userId) return;
+
+  // Let in-flight IndexedDB writes finish before taking the queue snapshot.
+  await waitForPendingWrites();
+  const owner = userId;
+  const keys = new Set<string>([
+    ...timers.keys(),
+    ...pendingWrites()
+      .filter(write => write.userId === owner)
+      .map(write => write.key),
+  ]);
+
+  for (const key of keys) {
+    const timer = timers.get(key);
+    if (timer) clearTimeout(timer);
+    timers.delete(key);
+    const pending = pendingWrites().find(write => write.userId === owner && write.key === key);
+    const value = pending ? pending.value : localStorage.getItem(key);
+    const saved = await pushKey(key, value);
+    if (!saved || pendingWrites().some(write => write.userId === owner && write.key === key)) {
+      const detail = pushErrors.get(key);
+      throw new Error(detail
+        ? `Cloud save failed: ${detail}. Your work is still on this device.`
+        : "Cloud save failed. Your work is still on this device.");
+    }
+  }
+}
+
 /**
  * Patch localStorage so every write/removal of a syncable key is mirrored to
  * the cloud. Installed once at startup; harmless in local-only mode because
@@ -288,7 +333,28 @@ export async function startSync(authUserId: string): Promise<void> {
     if (!LOCAL_ONLY.has(row.key) && !dirtyAtStart.has(row.key)) writeFromCloud(row.key, row.value);
   }
   hydrating = false;
+  // When this account already has an authoritative cloud profile list, only
+  // upload per-profile state for ids still present in that list. Without this
+  // guard, a browser that once held another learner's seeded progress can
+  // resurrect that duplicate row after an administrator consolidates it.
+  let ownedProfileIds: Set<string> | null = null;
+  if (cloudKeys.has("itss.profiles")) {
+    try {
+      const profiles = JSON.parse(localStorage.getItem("itss.profiles") ?? "[]") as { id?: string }[];
+      ownedProfileIds = new Set(profiles.map((profile) => profile.id).filter((id): id is string => Boolean(id)));
+    } catch {
+      ownedProfileIds = null;
+    }
+  }
+  const orphanedProfileState = (key: string) => {
+    const profileId = ownedProfileId(key);
+    return !!profileId && !!ownedProfileIds && !ownedProfileIds.has(profileId);
+  };
   for (const write of pendingWrites().filter(write => write.userId === authUserId)) {
+    if (orphanedProfileState(write.key)) {
+      await forgetPendingWrite(write);
+      continue;
+    }
     await pushKey(write.key, write.value);
   }
 
@@ -302,7 +368,8 @@ export async function startSync(authUserId: string): Promise<void> {
   }
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && syncable(key) && !cloudKeys.has(key)) {
+    // Polls must come from an explicit tenant-aware mutation, never an unowned legacy cache.
+    if (key && key !== "itss.polls.shared" && syncable(key) && !cloudKeys.has(key) && !orphanedProfileState(key)) {
       const value = localStorage.getItem(key);
       if (value !== null) void pushKey(key, value);
     }
@@ -322,7 +389,8 @@ export function wipeLocalData() {
   const doomed: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && key.startsWith(PREFIX) && key !== "itss.theme" && key !== "itss.activeCourse") doomed.push(key);
+    if (key === `itssDevice.polls.${TENANT_ID}` ||
+        (key && key.startsWith(PREFIX) && key !== "itss.theme" && key !== "itss.activeCourse")) doomed.push(key);
   }
   for (const key of doomed) localStorage.removeItem(key);
 }

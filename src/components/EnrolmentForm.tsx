@@ -1,4 +1,5 @@
 import React from "react";
+import { Select } from "./Select";
 import type { EnrolmentInfo } from "../types";
 import {
   ENROL_DISABILITIES,
@@ -111,16 +112,15 @@ export function EnrolmentForm({
   ) => (
     <div className={`field${span ? ` ${span}` : ""}`}>
       <label htmlFor={`en-${k}`}>{label}</label>
-      <select id={`en-${k}`} value={value[k]} onChange={set(k)} required={required}>
-        <option value="" disabled>
-          Select…
-        </option>
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
+      <Select
+        id={`en-${k}`}
+        ariaLabel={label}
+        value={value[k]}
+        options={options.map(option => ({ value: option, label: option }))}
+        placeholder="Select…"
+        required={required}
+        onChange={selected => onChange({ ...value, [k]: selected })}
+      />
     </div>
   );
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import JSZip from "jszip";
 import { Icon } from "../icons";
+import { EditingTools } from "../components/EditingSidebar";
 import type { EnrolmentInfo, PoeDoc, Profile, ProgressState, Role, Route } from "../types";
 import { Select } from "../components/Select";
 import { isStaff } from "../types";
@@ -28,6 +29,7 @@ import { openOnboardingPack } from "../lib/onboarding";
 import { mailtoLink, outlookComposeLink, teamsChatLink } from "../lib/integrations";
 import { VerdictSwitch } from "../components/VerdictSwitch";
 import { Avatar } from "../components/Avatar";
+import { ProfilePortfolio } from "../components/ProfilePortfolio";
 import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/EnrolmentForm";
 import { AlertModal, ConfirmModal, PromptModal } from "../components/Modal";
 import { downloadDoc, getFileBlob } from "../lib/files";
@@ -37,15 +39,20 @@ import { updateRegisterSignatures } from "./Attendance";
 import {
   deleteCloudProfile,
   fetchCloudDirectory,
+  fetchCloudLearnerData,
   fetchCloudProgress,
+  bestProgress,
+  cloudProfileIds,
   identityKeys,
   mergeProfileWithCloud,
   purgeOwnProfileCopy,
   resolveCloudLink,
   updateCloudProfile,
   type CloudDirectory,
+  type CloudLearnerData,
 } from "../lib/directory";
 import { fetchPresence, type PresenceEntry } from "../lib/presence";
+import { mergeProgressEvidence } from "../lib/progressEvidence";
 
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -168,6 +175,13 @@ export function ProfilePage({
   onUpdateProfile: (patch: Partial<Profile>) => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [profileTab, setProfileTab] = useState("details");
+  const profileTabs = [
+    { id: "details", label: "My details" },
+    { id: "content", label: "Learning & achievements" },
+    { id: "signature", label: "Signature" },
+    { id: "security", label: "Security" },
+  ];
   const [sharedSettings] = useSharedSettings();
   const [draft, setDraft] = useState<EnrolmentInfo>({
     ...EMPTY_ENROLMENT,
@@ -200,21 +214,37 @@ export function ProfilePage({
 
       <ProfileHead profile={profile} />
 
-      <div className="contact-row">
-        <button
-          className="btn ghost sm"
-          title="Your printable onboarding pack — welcome letter, calendar, document checklist, POE guide"
-          onClick={() =>
-            openOnboardingPack(profile, {
-              supportEmail: sharedSettings.supportEmail,
-              teamsUrl: sharedSettings.teamsUrl,
-            })
-          }
-        >
-          <Icon name="document" size={15} /> My onboarding pack
-        </button>
+      <div className="tabs" role="tablist" aria-label="Profile settings">
+        {profileTabs.map((tab, index) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            id={`profile-tab-${tab.id}`}
+            aria-controls={`profile-panel-${tab.id}`}
+            aria-selected={profileTab === tab.id}
+            tabIndex={profileTab === tab.id ? 0 : -1}
+            className={`tab${profileTab === tab.id ? " active" : ""}`}
+            onClick={() => setProfileTab(tab.id)}
+            onKeyDown={(event) => {
+              let nextIndex = index;
+              if (event.key === "ArrowRight") nextIndex = (index + 1) % profileTabs.length;
+              else if (event.key === "ArrowLeft") nextIndex = (index + profileTabs.length - 1) % profileTabs.length;
+              else if (event.key === "Home") nextIndex = 0;
+              else if (event.key === "End") nextIndex = profileTabs.length - 1;
+              else return;
+              event.preventDefault();
+              setProfileTab(profileTabs[nextIndex].id);
+              document.getElementById(`profile-tab-${profileTabs[nextIndex].id}`)?.focus();
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
+      <section role="tabpanel" id="profile-panel-details" aria-labelledby="profile-tab-details"
+        hidden={profileTab !== "details"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="clipboard" size={20} />
@@ -229,10 +259,11 @@ export function ProfilePage({
       </h2>
 
       {editing ? (
-        <form className="card profile-enrol-card" onSubmit={save}>
+        <form id="profile-enrol-edit" className="card profile-enrol-card" onSubmit={save}>
           <EnrolmentForm value={draft} onChange={setDraft} />
+          <EditingTools active={editing} title="Enrolment details">
           <div className="profile-edit-actions">
-            <button className="btn" type="submit">
+            <button className="btn" type="submit" form="profile-enrol-edit">
               <Icon name="checkCircle" size={15} />
               Save
             </button>
@@ -247,6 +278,7 @@ export function ProfilePage({
               Cancel
             </button>
           </div>
+          </EditingTools>
         </form>
       ) : profile.enrolment ? (
         <EnrolmentDetails enrolment={profile.enrolment} />
@@ -264,12 +296,45 @@ export function ProfilePage({
 
       <h2 className="section-title">
         <span className="ico">
+          <Icon name="document" size={20} />
+        </span>
+        Onboarding pack
+      </h2>
+      <div className="card profile-onboarding-pack">
+        <p>Your welcome letter, calendar, document checklist and POE guide in one printable pack.</p>
+        <button
+          type="button"
+          className="btn ghost sm"
+          onClick={() =>
+            openOnboardingPack(profile, {
+              supportEmail: sharedSettings.supportEmail,
+              teamsUrl: sharedSettings.teamsUrl,
+            })
+          }
+        >
+          <Icon name="document" size={15} /> Open onboarding pack
+        </button>
+      </div>
+      </section>
+
+      <section role="tabpanel" id="profile-panel-content" aria-labelledby="profile-tab-content"
+        hidden={profileTab !== "content"}>
+        <ProfilePortfolio profile={profile} onUpdateProfile={onUpdateProfile} />
+      </section>
+
+      <section role="tabpanel" id="profile-panel-signature" aria-labelledby="profile-tab-signature"
+        hidden={profileTab !== "signature"}>
+      <h2 className="section-title">
+        <span className="ico">
           <Icon name="design" size={20} />
         </span>
         My signature
       </h2>
       <SignatureEditor profile={profile} onUpdateProfile={onUpdateProfile} />
+      </section>
 
+      <section role="tabpanel" id="profile-panel-security" aria-labelledby="profile-tab-security"
+        hidden={profileTab !== "security"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="shield" size={20} />
@@ -281,6 +346,7 @@ export function ProfilePage({
         onSet={(hash) => onUpdateProfile({ passwordHash: hash })}
         onClear={() => onUpdateProfile({ passwordHash: undefined })}
       />
+      </section>
     </>
   );
 }
@@ -447,15 +513,23 @@ export function StudentsPage({
 }) {
   const isSuper = profile.role === "Super User";
   const isPrivileged = isStaff(profile.role);
+  const [peopleTab, setPeopleTab] = useState("directory");
+  const peopleTabs = [
+    { id: "directory", label: "Directory", icon: "people" },
+    ...(isPrivileged ? [{ id: "summary", label: "Summary", icon: "chart" }] : []),
+    { id: "online", label: "Online activity", icon: "clock" },
+    ...(isSuper ? [{ id: "management", label: "User management", icon: "settings" }] : []),
+  ];
+  const activePeopleTab = peopleTabs.some(tab => tab.id === peopleTab) ? peopleTab : "directory";
   const [rev, setRev] = useState(0);
   const refresh = () => setRev((r) => r + 1);
-  const [cloud, setCloud] = useState<CloudDirectory | null>(null);
+  const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
   const [presence, setPresence] = useState<PresenceEntry[]>([]);
   useEffect(() => {
     let alive = true;
     let timer: number | undefined;
     const load = () => {
-      void Promise.all([fetchCloudDirectory(), fetchPresence()]).then(([d, live]) => {
+      void Promise.all([fetchCloudLearnerData(), fetchPresence()]).then(([d, live]) => {
         if (!alive) return;
         if (d) setCloud(d);
         if (live) setPresence(live);
@@ -581,6 +655,8 @@ export function StudentsPage({
         passwordSet={!!mergeProfileWithCloud(student, cloud).passwordHash}
         cloudProfileId={cloudProfileId}
         cloudDocs={cloud?.poe[cloudProfileId]}
+        cloudProgress={cloud?.progress}
+        cloud={cloud}
       />
     );
   }
@@ -602,22 +678,31 @@ export function StudentsPage({
             : "Everyone enrolled on this learnership. Personal contact details are kept private."}
       </p>
 
-      {isSuper && <AddUser viewer={profile} onAdded={refresh} />}
-
-      {isSuper && (
-        <DownloadAllAssignments
-          learners={people.filter((p) => p.role === "Learner")}
-          remoteIds={remoteIds}
-          owners={cloud?.owners ?? {}}
-          cloudProfiles={cloud?.profiles ?? []}
-        />
-      )}
-
-      {people.length > 0 && <OnlineNow people={people} viewer={profile} />}
-
-      {isPrivileged && people.length > 0 && (
-        <PeopleSummary people={people} viewer={profile} cloud={cloud} remoteIds={remoteIds} navigate={navigate} />
-      )}
+      <div className="people-tabs-page">
+      <div className="tabs" role="tablist" aria-label="People sections">
+        {peopleTabs.map((tab, index) => (
+          <button key={tab.id} type="button" role="tab" id={`people-tab-${tab.id}`}
+            aria-controls={`people-panel-${tab.id}`} aria-selected={activePeopleTab === tab.id}
+            tabIndex={activePeopleTab === tab.id ? 0 : -1}
+            className={`tab${activePeopleTab === tab.id ? " active" : ""}`}
+            onClick={() => setPeopleTab(tab.id)}
+            onKeyDown={event => {
+              let next = index;
+              if (event.key === "ArrowRight") next = (index + 1) % peopleTabs.length;
+              else if (event.key === "ArrowLeft") next = (index + peopleTabs.length - 1) % peopleTabs.length;
+              else if (event.key === "Home") next = 0;
+              else if (event.key === "End") next = peopleTabs.length - 1;
+              else return;
+              event.preventDefault();
+              setPeopleTab(peopleTabs[next].id);
+              document.getElementById(`people-tab-${peopleTabs[next].id}`)?.focus();
+            }}>
+            <Icon name={tab.icon} size={15} /> {tab.label}
+          </button>
+        ))}
+      </div>
+      <section role="tabpanel" id="people-panel-directory" aria-labelledby="people-tab-directory" hidden={activePeopleTab !== "directory"}>
+      <h2 className="section-title">People directory <span className="muted">({people.length})</span></h2>
 
       {people.length === 0 && (
         <div className="callout">
@@ -673,6 +758,26 @@ export function StudentsPage({
           </button>
         );
       })}
+      </section>
+      {isPrivileged && (
+        <section role="tabpanel" id="people-panel-summary" aria-labelledby="people-tab-summary" hidden={activePeopleTab !== "summary"}>
+          <h2 className="section-title">Cohort summary</h2>
+          {people.length > 0 ? <PeopleSummary people={people} viewer={profile} cloud={cloud} remoteIds={remoteIds} navigate={navigate} /> : <p className="muted">No profiles available to summarise.</p>}
+        </section>
+      )}
+      <section role="tabpanel" id="people-panel-online" aria-labelledby="people-tab-online" hidden={activePeopleTab !== "online"}>
+        <h2 className="section-title">Online activity</h2>
+        {people.length > 0 ? <OnlineNow people={people} viewer={profile} /> : <p className="muted">No profiles available.</p>}
+      </section>
+      {isSuper && (
+        <section role="tabpanel" id="people-panel-management" aria-labelledby="people-tab-management" hidden={activePeopleTab !== "management"}>
+          <h2 className="section-title">Accounts and submissions</h2>
+          <AddUser viewer={profile} onAdded={refresh} />
+          <DownloadAllAssignments learners={people.filter(p => p.role === "Learner")}
+            remoteIds={remoteIds} owners={cloud?.owners ?? {}} cloudProfiles={cloud?.profiles ?? []} />
+        </section>
+      )}
+      </div>
     </>
   );
 }
@@ -1376,7 +1481,6 @@ function PeopleSummary({
   remoteIds: Set<string>;
   navigate: (r: Route) => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [cols, setCols] = useState<string[]>(loadSummaryCols);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [cloudStats, setCloudStats] = useState<Record<string, QuizStats>>({});
@@ -1386,7 +1490,7 @@ function PeopleSummary({
   const needScores = cols.includes("quizScore") || cols.includes("quizzes");
 
   useEffect(() => {
-    if (!open || !needScores) return;
+    if (!needScores) return;
     let alive = true;
     for (const p of people) {
       if (p.role !== "Learner" || cloudStats[p.id]) continue;
@@ -1408,7 +1512,7 @@ function PeopleSummary({
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, needScores, people, cloud, remoteIds]);
+  }, [needScores, people, cloud, remoteIds]);
 
   function toggleCol(id: string) {
     setCols((prev) => {
@@ -1417,14 +1521,6 @@ function PeopleSummary({
       return next;
     });
   }
-
-  if (!open)
-    return (
-      <button className="btn ghost" style={{ marginBottom: 14 }} onClick={() => setOpen(true)}>
-        <Icon name="chart" size={15} />
-        Summary table
-      </button>
-    );
 
   const active = SUMMARY_COLS.filter((c) => cols.includes(c.id));
   const hasActiveFilters = roleFilter !== "Learner";
@@ -1641,9 +1737,6 @@ function PeopleSummary({
           <Icon name="settings" size={15} />
           Choose fields ({active.length})
         </button>
-        <button className="btn ghost summary-btn" onClick={() => setOpen(false)}>
-          Close
-        </button>
       </div>
 
       <div className="summary-filters">
@@ -1767,6 +1860,8 @@ function AcademicRecord({
   remote,
   owner,
   cloudProfileId,
+  cloudProgress,
+  cloud,
   canDownload,
 }: {
   student: Profile;
@@ -1774,32 +1869,51 @@ function AcademicRecord({
   owner?: string;
   /** identity-matched profile id in the owner's cloud account */
   cloudProfileId?: string;
+  cloudProgress?: Record<string, ProgressState>;
+  /** complete directory used to reconcile migrated/duplicate profile ids */
+  cloud?: CloudLearnerData | null;
   /** super user only — shows the completed-assignments download */
   canDownload?: boolean;
 }) {
-  const [progress, setProgress] = useState<ProgressState | null>(
-    remote ? null : loadProgress(student.id)
+  const [progress, setProgress] = useState<ProgressState>(() =>
+    remote ? { units: {} } : loadProgress(student.id)
   );
   useEffect(() => {
-    const local = remote ? null : loadProgress(student.id);
-    if (local && Object.keys(local.units).length > 0) {
-      setProgress(local);
-      return;
-    }
+    const local = remote ? { units: {} } : loadProgress(student.id);
+    const identityIds = cloudProfileIds(student, cloud);
+    const cloudSnapshots = [...identityIds].map((id) => cloudProgress?.[id])
+      .filter((p): p is ProgressState => Boolean(p));
+    const mergedCloud = cloudSnapshots.reduce<ProgressState | null>(
+      (merged, snapshot) => merged ? mergeProgressEvidence(merged, snapshot) : snapshot,
+      null
+    );
+    // bestProgress also includes every identity-matched cloud profile. This is
+    // important for learners whose evidence is split across a seeded profile
+    // id and a later sign-in profile id.
+    const identityProgress = cloud ? bestProgress(student, cloud) : null;
+    const baseline = identityProgress
+      ? mergeProgressEvidence(local, identityProgress)
+      : mergedCloud
+        ? mergeProgressEvidence(local, mergedCloud)
+        : local;
+    // Never leave a remote learner's record behind a blocking spinner. The
+    // direct query below can enrich this baseline when the directory snapshot
+    // has not arrived yet or when a profile was linked to a stale owner copy.
+    setProgress(baseline);
     if (!owner) {
-      setProgress(local ?? { units: {} });
       return;
     }
     let alive = true;
-    setProgress(remote ? null : local);
-    void fetchCloudProgress(owner, cloudProfileId ?? student.id).then((p) => {
+    void fetchCloudProgress(owner, cloudProfileId ?? student.id, student.id, [...identityIds]).then((p) => {
       if (!alive) return;
-      setProgress(p && Object.keys(p.units).length > 0 ? p : (local ?? { units: {} }));
+      // Always enrich the bulk snapshot. Previously this query was skipped as
+      // soon as any cloud row existed, leaving newer/duplicate evidence out.
+      if (p) setProgress((current) => mergeProgressEvidence(current, p));
     });
     return () => {
       alive = false;
     };
-  }, [student.id, remote, owner, cloudProfileId]);
+  }, [student, remote, owner, cloudProfileId, cloudProgress, cloud]);
 
   const units = assessedUnits();
 
@@ -1852,14 +1966,6 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
       )}
     </h2>
   );
-
-  if (!progress)
-    return (
-      <>
-        {heading}
-        <p className="muted">Loading saved scores from the cloud…</p>
-      </>
-    );
 
   // overall quiz totals across the whole programme
   const { quizCount, quizAttempted, quizCompetent, questionsBest, questionsTotal, overallPct } =
@@ -2220,6 +2326,8 @@ function StudentDetail({
   passwordSet,
   cloudProfileId,
   cloudDocs,
+  cloudProgress,
+  cloud,
 }: {
   student: Profile;
   viewer: Profile;
@@ -2232,6 +2340,8 @@ function StudentDetail({
   /** identity-matched profile id in the owner's cloud account (may differ from student.id) */
   cloudProfileId?: string;
   cloudDocs?: Record<string, PoeDoc>;
+  cloudProgress?: Record<string, ProgressState>;
+  cloud?: CloudLearnerData | null;
 }) {
   const isSuper = viewer.role === "Super User";
   const staffViewer = isStaff(viewer.role);
@@ -2249,6 +2359,15 @@ function StudentDetail({
       ? localDocs
       : (cloudDocs ?? localDocs);
   const canManage = isSuper;
+  const [detailTab, setDetailTab] = useState("enrolment");
+  const detailTabs = [
+    { id: "enrolment", label: "Enrolment" },
+    ...(staffViewer ? [{ id: "academic", label: "Academic record" }] : []),
+    ...(student.role === "Learner" && canRecordOutcomes ? [{ id: "outcomes", label: "Assessment outcomes" }] : []),
+    ...(staffViewer ? [{ id: "documents", label: "Documents" }] : []),
+    ...(canManage ? [{ id: "account", label: "Account settings" }] : []),
+  ];
+  const activeDetailTab = detailTabs.some(t => t.id === detailTab) ? detailTab : "enrolment";
   const [editingEnrol, setEditingEnrol] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmLocal, setConfirmLocal] = useState(false);
@@ -2508,15 +2627,44 @@ function StudentDetail({
         </div>
       )}
 
+      <div className="tabs student-detail-tabs" role="tablist" aria-label="Learner profile sections">
+        {detailTabs.map((tab, index) => (
+          <button key={tab.id} id={`student-detail-tab-${tab.id}`}
+            className={`tab${activeDetailTab === tab.id ? " active" : ""}`}
+            role="tab" aria-selected={activeDetailTab === tab.id}
+            aria-controls={`student-detail-panel-${tab.id}`}
+            tabIndex={activeDetailTab === tab.id ? 0 : -1}
+            onClick={() => setDetailTab(tab.id)}
+            onKeyDown={e => {
+              let next = index;
+              if (e.key === "ArrowRight") next = (index + 1) % detailTabs.length;
+              else if (e.key === "ArrowLeft") next = (index - 1 + detailTabs.length) % detailTabs.length;
+              else if (e.key === "Home") next = 0;
+              else if (e.key === "End") next = detailTabs.length - 1;
+              else return;
+              e.preventDefault();
+              setDetailTab(detailTabs[next].id);
+              document.getElementById(`student-detail-tab-${detailTabs[next].id}`)?.focus();
+            }}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {canManage && (
+        <section role="tabpanel" id="student-detail-panel-account"
+          aria-labelledby="student-detail-tab-account" hidden={activeDetailTab !== "account"}>
         <AdminPanel
           student={student}
           onPatch={patchStudent}
           onDelete={() => setConfirmDelete(true)}
           onRemoveLocal={!remote ? () => setConfirmLocal(true) : undefined}
         />
+        </section>
       )}
 
+      <section role="tabpanel" id="student-detail-panel-enrolment"
+        aria-labelledby="student-detail-tab-enrolment" hidden={activeDetailTab !== "enrolment"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="clipboard" size={20} />
@@ -2537,10 +2685,11 @@ function StudentDetail({
         )}
       </h2>
       {editingEnrol ? (
-        <form className="card profile-enrol-card" onSubmit={saveEnrol}>
+        <form id="student-enrol-edit" className="card profile-enrol-card" onSubmit={saveEnrol}>
           <EnrolmentForm value={draft} onChange={setDraft} />
+          <EditingTools active={editingEnrol} title="Student enrolment">
           <div className="profile-edit-actions">
-            <button className="btn" type="submit">
+            <button className="btn" type="submit" form="student-enrol-edit">
               <Icon name="checkCircle" size={15} />
               Save
             </button>
@@ -2548,6 +2697,7 @@ function StudentDetail({
               Cancel
             </button>
           </div>
+          </EditingTools>
         </form>
       ) : student.enrolment ? (
         <EnrolmentDetails enrolment={student.enrolment} redact={!staffViewer} />
@@ -2560,16 +2710,25 @@ function StudentDetail({
         </div>
       )}
 
+      </section>
+
       {staffViewer && (
         <>
+          <section role="tabpanel" id="student-detail-panel-academic"
+            aria-labelledby="student-detail-tab-academic" hidden={activeDetailTab !== "academic"}>
           <AcademicRecord
             student={student}
             remote={remote}
             owner={owner}
             cloudProfileId={cloudProfileId}
+            cloudProgress={cloudProgress}
+            cloud={cloud}
             canDownload={isSuper}
           />
+          </section>
           {student.role === "Learner" && canRecordOutcomes && (
+            <section role="tabpanel" id="student-detail-panel-outcomes"
+              aria-labelledby="student-detail-tab-outcomes" hidden={activeDetailTab !== "outcomes"}>
             <OutcomesPanel
               student={student}
               viewer={viewer}
@@ -2577,8 +2736,13 @@ function StudentDetail({
               owner={owner}
               cloudProfileId={cloudProfileId}
               cloudDocs={cloudDocs}
+              cloudProgress={cloudProgress}
+              cloud={cloud}
             />
+            </section>
           )}
+          <section role="tabpanel" id="student-detail-panel-documents"
+            aria-labelledby="student-detail-tab-documents" hidden={activeDetailTab !== "documents"}>
           <h2 className="section-title">
             <span className="ico">
               <Icon name="folder" size={20} />
@@ -2624,6 +2788,7 @@ function StudentDetail({
               </div>
             ))
           )}
+          </section>
         </>
       )}
 
@@ -2671,6 +2836,8 @@ function OutcomesPanel({
   owner,
   cloudProfileId,
   cloudDocs,
+  cloudProgress,
+  cloud,
 }: {
   student: Profile;
   viewer: Profile;
@@ -2681,6 +2848,8 @@ function OutcomesPanel({
   cloudProfileId?: string;
   /** POE docs for this learner from the cloud directory (staff-side view) */
   cloudDocs?: Record<string, PoeDoc>;
+  cloudProgress?: Record<string, ProgressState>;
+  cloud?: CloudLearnerData | null;
 }) {
   const { outcomes, setOutcome, clearOutcome } = useOutcomes();
   const [progress, setProgress] = useState<ProgressState>(() =>
@@ -2688,16 +2857,28 @@ function OutcomesPanel({
   );
   useEffect(() => {
     const local = remote ? { units: {} } : loadProgress(student.id);
-    setProgress(local);
-    if (!owner || Object.keys(local.units).length > 0) return;
+    const identityIds = cloudProfileIds(student, cloud);
+    const cloudSnapshots = [...identityIds].map((id) => cloudProgress?.[id])
+      .filter((p): p is ProgressState => Boolean(p));
+    const mergedCloud = cloudSnapshots.reduce<ProgressState | null>(
+      (merged, snapshot) => merged ? mergeProgressEvidence(merged, snapshot) : snapshot,
+      null
+    );
+    const identityProgress = cloud ? bestProgress(student, cloud) : null;
+    setProgress(identityProgress
+      ? mergeProgressEvidence(local, identityProgress)
+      : mergedCloud
+        ? mergeProgressEvidence(local, mergedCloud)
+        : local);
+    if (!owner) return;
     let alive = true;
-    void fetchCloudProgress(owner, cloudProfileId ?? student.id).then((p) => {
-      if (alive && p && Object.keys(p.units).length > 0) setProgress(p);
+    void fetchCloudProgress(owner, cloudProfileId ?? student.id, student.id, [...identityIds]).then((p) => {
+      if (alive && p) setProgress((current) => mergeProgressEvidence(current, p));
     });
     return () => {
       alive = false;
     };
-  }, [student.id, remote, owner, cloudProfileId]);
+  }, [student, remote, owner, cloudProfileId, cloudProgress, cloud]);
   // POE docs — cloud copy for remote students, local for people on this device.
   const poe = remote ? (cloudDocs ?? {}) : loadPoeDocs(student.id);
   const forLearner = outcomes[student.id] ?? {};

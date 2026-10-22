@@ -1,4 +1,5 @@
 import type { Exercise } from "../types";
+import { EditingTools } from "./EditingSidebar";
 
 export function ActivityQuestionEditor({ value, onChange }: { value: Exercise; onChange: (value: Exercise) => void }) {
   return <div>
@@ -7,8 +8,12 @@ export function ActivityQuestionEditor({ value, onChange }: { value: Exercise; o
     <label className="field">Instructions (optional)<textarea value={(value.scenario ?? []).join("\n")} onChange={e => onChange({ ...value, scenario: e.target.value.split("\n") })} /></label>
     {value.steps.map((question, i) => <div key={i}>
       <label className="field">Question {i + 1}<textarea rows={3} value={question} onChange={e => onChange({ ...value, steps: value.steps.map((q, j) => j === i ? e.target.value : q) })} /></label>
+      <EditingTools active title={`Activity question ${i + 1}`}>
       <button type="button" className="btn ghost sm" disabled={value.steps.length === 1} onClick={() => onChange({ ...value, steps: value.steps.filter((_, j) => j !== i) })}>Remove question</button>
+      </EditingTools>
     </div>)}
+    <EditingTools active title="Activity questions">
     <button type="button" className="btn ghost sm" disabled={value.steps.length >= 12} onClick={() => onChange({ ...value, steps: [...value.steps, ""] })}>Add question</button>
+    </EditingTools>
   </div>;
 }

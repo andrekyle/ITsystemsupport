@@ -3,7 +3,21 @@ import { unitPackSnapshot } from "./unitStorage";
 import { courseScopedUnit } from "./courseScope";
 import { layoutLessonSections } from "./lessonLayout";
 
-export type UnitFiles = { pdf: PoeDoc; pptx: PoeDoc; answers: PoeDoc; material?: PoeDoc; materialEditable?: PoeDoc };
+export type UnitSourceDocuments = {
+  learnerGuide?: PoeDoc;
+  practicalTask?: PoeDoc;
+  learnerWorkbook?: PoeDoc;
+};
+
+export type UnitFiles = {
+  pdf: PoeDoc;
+  pptx: PoeDoc;
+  answers: PoeDoc;
+  material?: PoeDoc;
+  materialEditable?: PoeDoc;
+  /** Original source PDFs supplied in the builder, retained alongside the generated exports. */
+  sourceDocuments?: UnitSourceDocuments;
+};
 export type BuiltUnitVersion = { revision: string; source: string; content: UnitContent; files: UnitFiles; createdAt: string; aiUsed: boolean; planSource?: string };
 export type BuiltUnit = BuiltUnitVersion & { previous?: BuiltUnitVersion; history?: BuiltUnitVersion[] };
 
@@ -219,6 +233,7 @@ function restorableVersions(unit: BuiltUnit | BuiltUnitVersion, us: string): { p
 }
 
 export const builtUnitKey = (us: string) => `itss.unitbuilder.${courseScopedUnit(us)}.shared`;
+export const deletedBuiltUnitKey = (us: string) => `itss.unitbuilder.${courseScopedUnit(us)}.deleted-backup`;
 export function readBuiltUnit(us: string): BuiltUnit | undefined {
   try {
     if (typeof localStorage === "undefined") return;

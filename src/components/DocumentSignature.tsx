@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
 import { fileToSignature, SAVED_SIGNATURE_REFERENCE } from "../lib/signature";
+import { EditingTools } from "./EditingSidebar";
 
 const REMOVED_SIGNATURE = "__signature_removed__";
 
@@ -61,6 +62,20 @@ export function DocumentSignature({
     catch { setError("The signature could not be removed. Please try again."); }
   };
 
+  const active = editable && (busy || !!error);
+  const tools = editable && <div className={active ? "unit-editor-actions" : "document-signature-actions"}>
+        {savedSignature && savedSignature !== image && (
+          <button type="button" className={active ? "btn ghost sm" : undefined} disabled={busy} onClick={(event) => { event.stopPropagation(); applyValue(savedSignature); }} title={`Use saved ${label.toLowerCase()}`} aria-label={`Use saved ${label.toLowerCase()}`}>
+            <Icon name="checkCircle" size={12} />
+          </button>
+        )}
+        <button type="button" className={active ? "btn ghost sm" : undefined} onClick={(event) => { event.stopPropagation(); chooseFile(); }} disabled={busy} title={image || (localValue && !removed) ? `Edit ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`} aria-label={image || (localValue && !removed) ? `Edit ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`}>
+          <Icon name={image || (localValue && !removed) ? "pencil" : "upload"} size={12} />
+        </button>
+        {(image || (localValue && !removed)) && <button type="button" className={active ? "btn ghost sm" : undefined} disabled={busy} onPointerDown={event => event.stopPropagation()} onClick={remove} title={`Remove ${label.toLowerCase()}`} aria-label={`Remove ${label.toLowerCase()}`}><Icon name="close" size={12} /></button>}
+        {busy && <span role="status">Saving signature...</span>}
+        {error && <><p className="auth-error" role="alert">{error}</p><button type="button" className="btn ghost sm" onClick={() => setError("")}>Done</button></>}
+      </div>;
   return (
     <div className={`document-signature ${className}`.trim()}>
       {image ? (
@@ -70,17 +85,7 @@ export function DocumentSignature({
       ) : (
         <span className="document-signature-empty">{removed ? "" : "Signature"}</span>
       )}
-      {editable && <div className="document-signature-actions">
-        {savedSignature && savedSignature !== image && (
-          <button type="button" onClick={(event) => { event.stopPropagation(); applyValue(savedSignature); }} title={`Use saved ${label.toLowerCase()}`} aria-label={`Use saved ${label.toLowerCase()}`}>
-            <Icon name="checkCircle" size={12} />
-          </button>
-        )}
-        <button type="button" onClick={(event) => { event.stopPropagation(); chooseFile(); }} disabled={busy} title={image || (localValue && !removed) ? `Edit ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`} aria-label={image || (localValue && !removed) ? `Edit ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`}>
-          <Icon name={image || (localValue && !removed) ? "pencil" : "upload"} size={12} />
-        </button>
-        {(image || (localValue && !removed)) && <button type="button" onPointerDown={event => event.stopPropagation()} onClick={remove} title={`Remove ${label.toLowerCase()}`} aria-label={`Remove ${label.toLowerCase()}`}><Icon name="close" size={12} /></button>}
-      </div>}
+      {active ? <EditingTools active title={label}>{tools}</EditingTools> : tools}
       {editable && <input
         ref={inputRef}
         className="document-signature-file"
@@ -89,7 +94,6 @@ export function DocumentSignature({
         onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; void upload(file); }}
         aria-label={`Upload ${label.toLowerCase()}`}
       />}
-      {error && <small role="alert">{error}</small>}
     </div>
   );
 }

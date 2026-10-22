@@ -4,15 +4,38 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#002147" />
-    <meta name="description" content="ITSS Learn — LMS for the National Certificate: IT System Support (SAQA 48573) learnership." />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" type="image/svg+xml" href="/discovery/DarkmodeDisk.svg" />
-    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta id="app-description" name="description" content="ITSS Learn — LMS for the National Certificate: IT System Support (SAQA 48573) learnership." />
+    <link id="app-manifest" rel="manifest" href="/manifest.webmanifest?v=3" />
+    <link id="app-icon" rel="icon" type="image/png" href="/icons/icon-192.png" />
+    <link id="apple-touch-icon" rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="ITSS Learn" />
-    <title>Discovery Learn</title>
+    <meta id="apple-app-title" name="apple-mobile-web-app-title" content="ITSS Learn" />
+    <title>ITSS Learn — System Support NQF 5</title>
+    <script>
+      (() => {
+        const localDiscovery = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+          && new URLSearchParams(location.search).get("tenant") === "discovery";
+        const isDiscovery = location.hostname === "itss-learn-discovery.vercel.app" || localDiscovery;
+        if (!isDiscovery) return;
+        document.title = "Discovery Learn";
+        document.getElementById("app-description").content = "Discovery Learn learning platform.";
+        document.getElementById("app-manifest").href = "/manifest-discovery.webmanifest?v=7";
+        const icon = document.getElementById("app-icon");
+        icon.type = "image/png";
+        icon.sizes = "32x32";
+        icon.href = "/discovery/icons/favicon-32.png?v=5";
+        const icon48 = document.createElement("link");
+        icon48.rel = "icon";
+        icon48.type = "image/png";
+        icon48.sizes = "48x48";
+        icon48.href = "/discovery/icons/favicon-48.png?v=5";
+        document.head.appendChild(icon48);
+        document.getElementById("apple-touch-icon").href = "/discovery/icons/apple-touch-icon.png?v=5";
+        document.getElementById("apple-app-title").content = "Discovery Learn";
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

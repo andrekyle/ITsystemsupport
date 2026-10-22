@@ -1,5 +1,7 @@
 import type { UnitContent } from "../types";
 import { readBuiltUnit } from "../lib/builtUnits";
+import { getSaqaDetails } from "./saqaDetails";
+import { LEARNER_GUIDE_CONTENT_PAGES } from "./learnerGuide114046";
 
 /** Illustrates the water-supply analogy used in the PSU "matching" quiz question.
  * Deliberately shows ONLY the analogy side (river → treatment plant → pipes → city
@@ -20347,6 +20349,39 @@ Improvement: distribute the technical slides beforehand."
   },
 };
 
+// US 114046 is a protected, document-backed unit. Its richer cloud build can
+// be replaced through the builder, but deleting that build must never make the
+// lesson disappear: reconstruct a dependable baseline from the checked-in
+// learner-guide transcription while the dedicated workbook, guide and
+// practical-task components continue to provide their original document tabs.
+CONTENT["114046"] = {
+  lesson: LEARNER_GUIDE_CONTENT_PAGES.map((page, index) => ({
+    heading: page.title.trim() || `Learner Guide page ${index + 1}`,
+    icon: "presenter",
+    flat: true,
+    paragraphs: page.text.split(/\n\s*\n/).map(text => text.replace(/\s*\n\s*/g, " ").trim()).filter(Boolean),
+  })),
+  exercises: [],
+  assignments: [{
+    id: "114046-workplace-assignment",
+    title: "LAN management workplace assignment",
+    brief: "Apply the learner-guide principles to the management and support of a local area network.",
+    requirements: [
+      "Explain how access to LAN resources is controlled for users, operators and administrators.",
+      "Identify performance and support issues affecting the LAN and recommend suitable controls.",
+      "Explain typical LAN malware threats and the measures used to prevent or contain them.",
+      "Attach relevant workplace evidence and reflect on the result.",
+    ],
+    evidence: "A completed workplace response with supporting records, reviewed by the facilitator or assessor.",
+  }],
+  quiz: [],
+};
+
 export function getContent(us: string): UnitContent | undefined {
-  return readBuiltUnit(us)?.content ?? CONTENT[us];
+  const content = readBuiltUnit(us)?.content ?? CONTENT[us];
+  const saqa = getSaqaDetails(us);
+  if (!saqa) return content;
+  return content
+    ? { ...content, saqa }
+    : { lesson: [], exercises: [], assignments: [], quiz: [], saqa };
 }

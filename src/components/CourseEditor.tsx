@@ -4,6 +4,7 @@ import { UnitContentEditor } from "./UnitContentEditor";
 import { fileToImageDataUrl } from "./Avatar";
 import { flushKey } from "../lib/sync";
 import { supabase } from "../lib/supabase";
+import { EditingTools } from "./EditingSidebar";
 
 export function CourseEditor({ onClose }: { onClose: () => void }) {
   const [draft, setDraft] = useState(() => structuredClone(activeCourse()));
@@ -25,7 +26,8 @@ export function CourseEditor({ onClose }: { onClose: () => void }) {
     <h2>Edit course and modules</h2>
     <p>Update course headings, programme content, module tiles and unit details. Open a unit to edit its learning content and tabs.</p>
     <fieldset disabled={busy} style={{ border: 0, padding: 0, minWidth: 0 }}>
-      <details className="unit-editor-group"><summary>Module tile images</summary>
+      <EditingTools active title="Module tile images">
+      <fieldset disabled={busy} style={{ border: 0, padding: 0, minWidth: 0 }}>
         {draft.modules.map((module, index) => <div key={module.id} className="field">
           <label>{module.name} — image</label>
           {module.image && <img src={module.image} alt={module.name} style={{ width: 160, height: 90, objectFit: "cover", borderRadius: 6 }} />}
@@ -40,13 +42,16 @@ export function CourseEditor({ onClose }: { onClose: () => void }) {
           }} />
           <button className="btn ghost sm" onClick={() => setDraft(current => ({ ...current, modules: current.modules.map((item, i) => i === index ? { ...item, image: undefined } : item) }))}>Remove image</button>
         </div>)}
-      </details>
-      <UnitContentEditor name="Course content" value={draft as never} onChange={value => setDraft(value as unknown as CourseData)} defaultOpen />
+      </fieldset>
+      </EditingTools>
+      <UnitContentEditor name="Course content" value={draft as never} onChange={value => setDraft(value as unknown as CourseData)} defaultOpen disabled={busy} />
     </fieldset>
+    <EditingTools active title="Course and modules">
     {error && <p role="alert" className="auth-error">{error}</p>}
     <div className="unit-editor-actions">
       <button className="btn ghost" disabled={busy} onClick={() => void save()}>{busy ? "Saving…" : "Save course"}</button>
       <button className="btn ghost" disabled={busy} onClick={onClose}>Cancel</button>
     </div>
+    </EditingTools>
   </section>;
 }

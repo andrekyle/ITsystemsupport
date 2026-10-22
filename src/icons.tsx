@@ -21,6 +21,12 @@ function Svg({ size = 20, children, ...rest }: P & { children: React.ReactNode }
 }
 
 export const PATHS: Record<string, React.ReactNode> = {
+  sparkles: (
+    <>
+      <path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2z" />
+      <path d="m18.5 13 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7zM5.5 14l.8 2.7 2.7.8-2.7.8L5.5 21l-.8-2.7-2.7-.8 2.7-.8z" />
+    </>
+  ),
   save: (
     <>
       <path d="M4.5 3.5h12l3 3v14h-15z" />
@@ -214,6 +220,12 @@ export const PATHS: Record<string, React.ReactNode> = {
       <path d="M10 8.8v6.4l5.2-3.2z" />
     </>
   ),
+  videoCamera: (
+    <>
+      <rect x="3.5" y="7" width="12" height="10" rx="2" />
+      <path d="m15.5 10 5-2.5v9l-5-2.5z" />
+    </>
+  ),
   pause: (
     <>
       <circle cx="12" cy="12" r="8.5" />
@@ -316,6 +328,25 @@ export const PATHS: Record<string, React.ReactNode> = {
     <>
       <path d="M12 15V3.5M7.5 7.5 12 3l4.5 4.5" />
       <path d="M5 12v7a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19v-7" />
+    </>
+  ),
+  thumbUp: (
+    <>
+      <path d="M8 10.5 12.1 4a1.7 1.7 0 0 1 3 1.2l-.6 4.3h4a2 2 0 0 1 1.9 2.6l-2 7a2 2 0 0 1-1.9 1.4H8" />
+      <path d="M4 10.5h4v10H4z" />
+    </>
+  ),
+  tag: (
+    <>
+      <path d="M4 4.5h7l9 9-6.5 6.5-9-9z" />
+      <circle cx="8.2" cy="8.2" r="1" />
+    </>
+  ),
+  more: (
+    <>
+      <circle cx="5" cy="12" r="1" fill="currentColor" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" />
+      <circle cx="19" cy="12" r="1" fill="currentColor" />
     </>
   ),
   refresh: (

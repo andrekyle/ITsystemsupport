@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>End User Computing — September 2026 Skills Development Training Report</title>
+<style>
+  :root{--orange:#f0872b;--green:#2e9b7a;--yellow:#fdcb29;--sand:#dcbda0;--red:#c95d4b;--ink:#171717;--muted:#62676b;--paper:#fff;--soft:#f7f5f1;--mint:#edf7f3;--line:#ded9d1}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#4a4a50;color:var(--ink);font-family:Calibri,"Segoe UI",Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .slide{position:relative;width:13.333in;height:7.5in;margin:20px auto;overflow:hidden;background:var(--paper);box-shadow:0 6px 26px rgba(0,0,0,.4)}
+  .top-orange{position:absolute;inset:0 0 auto;height:.146in;background:var(--orange)}
+  .top-green{position:absolute;top:.146in;left:0;width:100%;height:.073in;background:var(--green)}
+  .eyebrow{position:absolute;top:.36in;left:.646in;color:var(--green);font-size:9.75pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+  .title{position:absolute;top:.66in;left:.646in;max-width:9.45in;font-size:25.5pt;font-weight:700;line-height:1.06}
+  .title.long{top:.7in;font-size:21.5pt}
+  .logo{position:absolute;top:.295in;right:.646in;width:2.288in;height:.9in;object-fit:contain;object-position:right center}
+  .rule{position:absolute;top:1.479in;left:.646in;width:12.042in;height:.031in;background:var(--orange)}
+  .content{position:absolute;top:1.71in;left:.646in;width:12.042in;height:5.18in;display:flex;flex-direction:column;overflow:hidden}
+  .footer-line{position:absolute;left:.646in;bottom:.29in;width:12.042in;border-top:1px solid var(--sand)}
+  .footer-text{position:absolute;left:.646in;bottom:.11in;color:var(--muted);font-size:8.25pt}
+  .page-no{position:absolute;right:.646in;bottom:.1in;color:var(--orange);font-size:9pt;font-weight:700}
+  .kicker{color:var(--green);font-size:10.5pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+  .body{color:var(--muted);font-size:12pt;line-height:1.4}
+  .body strong{color:var(--ink)}
+  .lead{color:var(--ink);font-size:12.5pt;line-height:1.43}
+  .small{font-size:10.3pt;line-height:1.31}
+  .callout{padding:.22in .25in;border-radius:.1in;background:var(--soft)}
+  .callout.mint{background:var(--mint)}
+  .callout.green{background:var(--green);color:#fff}
+  .callout.orange{background:var(--orange);color:#fff}
+  .callout.red{background:#f9eeeb;border-left:.08in solid var(--red)}
+  .callout .body{color:inherit}
+  .cols-2{display:grid;grid-template-columns:1fr 1fr;gap:.3in}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:.22in}
+  .kpi{position:relative;min-height:1.15in;padding:.23in .22in .15in;border:1px solid var(--line);border-radius:.09in;background:#fff;overflow:hidden}
+  .kpi::before{content:"";position:absolute;inset:0 0 auto;height:.085in;background:var(--accent,var(--green))}
+  .kpi-value{color:var(--accent,var(--green));font-size:27pt;font-weight:700;line-height:1}
+  .kpi-label{margin-top:.07in;font-size:11.5pt;font-weight:700;line-height:1.15}
+  .kpi-note{margin-top:.05in;color:var(--muted);font-size:9.25pt;line-height:1.18}
+  .objective-list{display:grid;grid-template-columns:1fr 1fr;gap:.22in .28in;margin-top:.2in}
+  .objective{display:flex;gap:.18in;min-height:1.35in;padding:.22in;border-radius:.1in;background:var(--soft)}
+  .chip{display:flex;flex:none;align-items:center;justify-content:center;width:.55in;height:.55in;border-radius:.14in;background:var(--accent,var(--orange));color:#fff;font-size:13pt;font-weight:700}
+  .objective p{color:var(--muted);font-size:11.2pt;line-height:1.35}
+  .learner-grid{display:grid;grid-template-columns:1fr 1fr;gap:.22in .28in}
+  .learner-card{position:relative;min-height:2.24in;padding:.2in .22in .18in;border-radius:.1in;background:var(--soft);overflow:hidden}
+  .learner-card.dismissed{background:#f9eeeb;border-left:.07in solid var(--red)}
+  .learner-head{display:flex;align-items:center;gap:.15in}
+  .learner-head h3{font-size:14pt;line-height:1.12}
+  .meta{display:grid;grid-template-columns:1.45in 1fr;gap:.05in .1in;margin-top:.12in}
+  .meta dt{color:var(--green);font-size:9pt;font-weight:700;text-transform:uppercase}
+  .meta dd{color:var(--ink);font-size:9.8pt;font-weight:600;line-height:1.2}
+  .comment{margin-top:.11in;padding-top:.1in;border-top:1px solid var(--line);color:var(--muted);font-size:9.5pt;line-height:1.25}
+  .comment::before{content:"Trainer comment: ";color:var(--green);font-size:8.5pt;font-weight:700;text-transform:uppercase}
+  .dismissed .comment::before{color:var(--red)}
+  table{width:100%;border-collapse:collapse}
+  th{padding:.1in .11in;border:1px solid #363636;background:var(--green);color:#fff;text-align:left;font-size:10pt;font-weight:700;line-height:1.15}
+  td{padding:.1in .11in;border:1px solid #555;background:#fff;font-size:10pt;line-height:1.25;vertical-align:top}
+  tr:nth-child(even) td{background:#fbfaf8}
+  .method-card{padding:.25in;border-radius:.1in;background:var(--soft)}
+  .method-card h3{font-size:14pt}
+  .method-card p{margin-top:.1in;color:var(--muted);font-size:11pt;line-height:1.36}
+  .section-number{color:var(--orange);font-size:9.5pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+  .cover .top-orange{height:.229in}.cover .top-green{top:.229in;height:.083in}
+  .cover-logo{position:absolute;top:.52in;left:.75in;width:3.438in;height:1.35in;object-fit:contain;object-position:left center}
+  .cover-kicker{position:absolute;top:2.08in;left:.75in;color:var(--green);font-size:13.5pt;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+  .cover-title{position:absolute;top:2.4in;left:.75in;width:11.4in;font-size:34pt;font-weight:700;line-height:1.04}
+  .cover-sub{position:absolute;top:3.3in;left:.75in;width:11.25in;color:var(--muted);font-size:14.25pt}
+  .cover-meta{position:absolute;top:4.03in;left:.75in;width:8.66in}
+  .cover-meta th{width:2.32in;font-size:10.25pt}.cover-meta td{font-size:10.25pt}
+  .cover-card{position:absolute;top:4.03in;right:.75in;width:2.8in;height:2.47in;padding:.27in;border-radius:.1in;background:var(--soft)}
+  .cover-card .big{color:var(--green);font-size:34pt;font-weight:700;line-height:1}
+  .cover-card h3{margin-top:.09in;font-size:13pt;line-height:1.15}
+  .cover-card p{margin-top:.11in;color:var(--muted);font-size:10.5pt;line-height:1.3}
+  .cover-footer{position:absolute;left:.75in;bottom:.39in;color:var(--muted);font-size:9pt}
+  .cover-band{position:absolute;left:0;bottom:0;width:100%;height:.14in;background:var(--green)}
+  @media print{@page{size:13.333in 7.5in;margin:0}body{background:#fff}.slide{margin:0;box-shadow:none;break-after:page}.slide:last-child{break-after:auto}}
+</style>
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="top-orange"></div><div class="top-green"></div>
+  <img class="cover-logo" src="../public/logos/eruditio.svg" alt="Eruditio Skills Development">
+  <div class="cover-kicker">Skills Development · Training Report</div>
+  <h1 class="cover-title">End User Computing</h1>
+  <p class="cover-sub">Client Report · NQF Level 3 · September 2026</p>
+  <table class="cover-meta">
+    <tr><th>Training provider</th><td>Eruditio Skills Development Consultants (Pty) Ltd</td></tr>
+    <tr><th>Client</th><td>Honor Technologies Africa (Pty) Ltd</td></tr>
+    <tr><th>Training programme</th><td>End User Computing (EUC)</td></tr>
+    <tr><th>Training dates</th><td>1, 8, 15, 22 and 29 September 2026</td></tr>
+    <tr><th>Operational note</th><td>29 September cancelled due to power outage</td></tr>
+    <tr><th>Training venue</th><td>Eruditio’s Premises (Villa Valencia Office Park)</td></tr>
+    <tr><th>Facilitator</th><td>Samuel Rakabopa</td></tr>
+    <tr><th>Report date</th><td>30 September 2026</td></tr>
+  </table>
+  <aside class="cover-card">
+    <div class="big">16</div>
+    <h3>Learners enrolled</h3>
+    <p>Modules 7 and 8<br>Microsoft Office Excel and Outlook<br><br>14 learners submitted work for assessment</p>
+  </aside>
+  <div class="cover-footer">Confidential Client Report · Empower · Develop · Transform</div>
+  <div class="cover-band"></div>
+</section>
+
+<section class="slide">
+  <div class="top-orange"></div><div class="top-green"></div>
+  <div class="eyebrow">End User Computing · September 2026</div>
+  <h2 class="title">Summary</h2>
+  <img class="logo" src="../public/logos/eruditio.svg" alt="">
+  <div class="rule"></div>
+  <div class="content">
+    <div class="callout mint">
+      <p class="lead">During September 2026, training for the NQF Level 3 End User Computing programme focused on Microsoft Excel and Outlook. Of the 16 learners enrolled, two were dismissed following continued concerns regarding poor attendance and academic submissions. This was an unfortunate and difficult outcome, as every learner began the programme with the opportunity to grow and succeed. However, the decision was necessary to uphold the programme’s standards and to protect a focused, committed learning environment.</p>
+    </div>
+    <div class="cols-2" style="margin-top:.2in">
+      <div class="callout">
+        <div class="kicker">Resilience and progress</div>
+        <p class="body small" style="margin-top:.1in">The departure of two members of the group did not diminish the morale or engagement of the remaining learners, who continued to show resilience, determination and mutual support. Fourteen learners have submitted work, which is currently being assessed.</p>
+      </div>
+      <div class="callout">
+        <div class="kicker">Graduation outlook</div>
+        <p class="body small" style="margin-top:.1in">The programme has provided learners with a valuable platform to strengthen their academic, digital and workplace skills, while also developing greater confidence in their abilities. As graduation approaches, there is a genuine sense of excitement and pride among the learners.</p>
+      </div>
+    </div>
+    <div class="callout green" style="margin-top:.19in">
+      <p class="body small">The occasion will recognise not only the achievements of those who successfully complete the programme, but also the commitment, perseverance and personal growth demonstrated throughout their learning journey. Eruditio is proud to have partnered with Honor in delivering this meaningful initiative and looks forward to sharing a memorable graduation celebration with the learners and stakeholders, honouring the progress made and the opportunities that lie ahead.</p>
+    </div>
+  </div>
+  <div class="footer-line"></div><div class="footer-text">Honor Technologies Africa (Pty) Ltd · Confidential Client Report</div><div class="page-no">02</div>
+</section>
+
+<section class="slide">
+  <div class="top-orange"></div><div class="top-green"></div>
+  <div class="eyebrow">End User Computing · September 2026</div>
+  <h2 class="title">Training Objectives</h2>
+  <img class="logo" src="../public/logos/eruditio.svg" alt="">
+  <div class="rule"></div>
+  <div class="content">
+    <div class="kicker">The objectives of the September training sessions were to:</div>
+    <div class="objective-list">
+      <div class="objective"><div class="chip">01</div><p>Develop learners’ knowledge and practical skills in using Microsoft Office Excel to create, format, edit, and manage spreadsheets, and Microsoft Office Outlook to manage email, contacts, calendars, and tasks.</p></div>
+      <div class="objective"><div class="chip" style="--accent:var(--green)">02</div><p>Enable learners to apply the concepts, functions, and procedures covered in Module 7: Using Microsoft Office Excel and Module 8: Using Microsoft Office Outlook within the End User Computing programme.</p></div>
+      <div class="objective"><div class="chip" style="--accent:var(--yellow);color:var(--ink)">03</div><p>Provide structured practical activities that allow all 16 learners to participate effectively.</p></div>
+      <div class="objective"><div class="chip" style="--accent:var(--sand)">04</div><p>Monitor learner participation, attendance, practical competence, and progress while maximizing individual hands-on practice time.</p></div>
+    </div>
+    <div class="kpis" style="margin-top:.25in">
+      <div class="kpi" style="--accent:var(--orange)"><div class="kpi-value">4</div><div class="kpi-label">Sessions delivered</div><div class="kpi-note">1, 8, 15 and 22 September</div></div>
+      <div class="kpi" style="--accent:var(--green)"><div class="kpi-value">14</div><div class="kpi-label">Work submitted</div><div class="kpi-note">Currently being assessed</div></div>
+      <div class="kpi" style="--accent:var(--yellow)"><div class="kpi-value">2</div><div class="kpi-label">Modules</div><div class="kpi-note">Microsoft Excel and Outlook</div></div>
+      <div class="kpi" style="--accent:var(--red)"><div class="kpi-value">2</div><div class="kpi-label">Dismissals</div><div class="kpi-note">Attendance and submission concerns</div></div>
+    </div>
+  </div>
+  <div class="footer-line"></div><div class="footer-text">End User Computing · Training Objectives</div><div class="page-no">03</div>
+</section>
+
+<section class="slide">
+  <div class="top-orange"></div><div class="top-green"></div>
+  <div class="eyebrow">Facilitator Feedback · Learners 01–04</div>
+  <h2 class="title">Learner Progress Overview</h2>
+  <img class="logo" src="../public/logos/eruditio.svg" alt="">
+  <div class="rule"></div>
+  <div class="content">
+    <div class="learner-grid">
+      <article class="learner-card"><div class="learner-head"><div class="chip">01</div><h3>Sizwe Mpiliso</h3></div><dl class="meta"><dt>Attendance record</dt><dd>1, 8, 15, 22 Sep</dd><dt>Submission / assessment status</dt><dd>Submitted. In Assessment Process</dd></dl><p class="comment">Sizwe attended all four delivered sessions in September and participated consistently. His reliable attendance and positive engagement set a good example for his peers.</p></article>
+      <article class="learner-card"><div class="learner-head"><div class="chip" style="--accent:var(--green)">02</div><h3>Sizwe Mpata</h3></div><dl class="meta"><dt>Attendance record</dt><dd>1, 15, 22 Sep = 3 days</dd><dt>Submission / assessment status</dt><dd>Submitted. In Assessment Process</dd></dl><p class="comment">Sizwe attended three of the four delivered sessions in September. He missed one session.</p></article>
+      <article class="learner-card"><div class="learner-head"><div class="chip" style="--accent:var(--yellow);color:var(--ink)">03</div><h3>Siphokazi Mdletye</h3></div><dl class="meta"><dt>Attendance record</dt><dd>15, 22 Sep = 2 days</dd><dt>Submission / assessment status</dt><dd>Submitted. In Assessment Process</dd></dl><p class="comment">Siphokazi attended two of the four delivered sessions. She missed two sessions without communicating a reason. Her absence requires follow-up from the facilitator.</p></article>
+      <article class="learner-card"><div class="learner-head"><div class="chip" style="--accent:var(--sand)">04</div><h3>Mandy Muvhulalwa</h3></div><dl class="meta"><dt>Attendance record</dt><dd>1, 8, 15 Sep = 3 days</dd><dt>Submission / assessment status</dt><dd>Submitted. In Assessment Process</dd></dl><p class="comment">Mandy attended three of the four delivered sessions. She missed one session and did not communicate a reason. Facilitator will follow up.</p></article>
+    </div>
+  </div>
+  <div class="footer-line"></div><div class="footer-text">End User Computing · Facilitator Feedback</div><div class="page-no">04</div>
+</section>
+
+<section class="slide">
+  <div class="top-orange"></div><div class="top-green"></div>
+  <div class="eyebrow">Facilitator Feedback · Learners 05–08</div>
+  <h2 class="title">Learner Progress Overview — continued</h2>
+  <img class="logo" src="../public/logos/eruditio.svg" alt="">
+  <div class="rule"></div>
+  <div class="content">
+    <div class="learner-grid">
+      <article class="learner-card"><div class="learner-head"><div class="chip">05</div><h3>Khusela Ngwenya</h3></div><dl class="meta"><dt>Attendance record</dt><dd>1, 8, 15 Sep = 3 days</dd><dt>Submission / assessment status</dt><dd>Submitted. In Assessment Process</dd></dl><p class="comment">Khusela attended three of the four delivered sessions in September. She missed one session due to illness and communicated the reason.</p></article>
+      <article class="learner-card"><div class="learner-head"><div class="chip" style="--accent:var(--green)">06</div><h3>Gift Nhlenyama</h3></div><dl class="meta"><dt>Attendance record</dt><dd>1, 8, 15, 22 Sep</dd><dt>Submission / assessment status</dt><dd>Submitted. In Assessment Process</dd></dl><p class="comment">Gift attended all four delivered sessions in September. He demonstrated consistent commitment, focus, and active participation.</p></article>
+      <article class="learner-card"><div class="learner-head"><div class="chip" style="--accent:var(--yellow);color:var(--ink)">07</div><h3>Nkosana Khoza</h3></div><dl class="meta"><dt>Attendance record</dt><dd>1, 8, 15, 22 Sep</dd><dt>Submission / assessment status</dt><dd>Submitted. In Assessment Process</dd></dl><p class="comment">Nkosana attended all four delivered sessions in September and participated with enthusiasm. His consistent attendance supported his progress in the programme.</p></article>
+      <article class="learner-card"><div class="learner-head"><div class="chip" style="--accent:var(--sand)">08</div><h3>Keamogetse Mhlanga</h3></div><dl class="meta"><dt>Attendance record</dt><dd>1, 8, 15, 22 Sep</dd><dt>Submission / assessment status</dt><dd>Submitted. In Assessment Process</dd></dl><p class="comment">Keamogetse attended all four delivered sessions in September. She remained reliable, focused, and engaged throughout the month.</p></article>
+    </div>
+  </div>
+  <div class="footer-line"></div><div class="footer-text">End User Computing · Facilitator Feedback</div><div class="page-no">05</div>
+</section>
+
+<section class="slide">
+  <div class="top-orange"></div><div class="top-green"></div>
+  <div class="eyebrow">Facilitator Feedback · Learners 09–12</div>
+  <h2 class="title">Learner Progress Overview — continued</h2>
+  <img class="logo" src="../public/logos/eruditio.svg" alt="">
+  <div class="rule"></div>
+  <div class="content">
+    <div class="learner-grid">
+      <article class="learner-card"><div class="learner-head"><div class="chip">09</div><h3>Dineo Malinde</h3></div><dl class="meta"><dt>Attendance record</dt><dd>1, 8, 15, 22 Sep</dd><dt>Submission / assessment status</dt><dd>Submitted. In Assessment Process</dd></dl><p class="comment">Dineo attended all four delivered sessions in September and participated with energy and commitment. Her consistent attendance supported her progress in the programme.</p></article>
+      <article class="learner-card"><div class="learner-head"><div class="chip" style="--accent:var(--green)">10</div><h3>Akhona Nzuza</h3></div><dl class="meta"><dt>Attendance record</dt><dd>1, 8, 15, 22 Sep</dd><dt>Submission / assessment status</dt><dd>Submitted. In Assessment Process</dd></dl><p class="comment">Akhona attended all four delivered sessions in September and showed enthusiasm and focus in each session. Her consistent participation showed enthusiasm and willingness to learn.</p></article>
+      <article class="learner-card"><div class="learner-head"><div class="chip" style="--accent:var(--yellow);color:var(--ink)">11</div><h3>Thembani Makhuvela</h3></div><dl class="meta"><dt>Attendance record</dt><dd>1, 15, 22 Sep = 3 days</dd><dt>Submission / assessment status</dt><dd>Submitted. In Assessment Process</dd></dl><p class="comment">Thembani attended three of the four delivered sessions in September. He missed one session due to illness and provided a medical certificate. Will catch up on the missed session.</p></article>
+      <article class="learner-card"><div class="learner-head"><div class="chip" style="--accent:var(--sand)">12</div><h3>Thando Tau</h3></div><dl class="meta"><dt>Attendance record</dt><dd>Absent all days</dd><dt>Submission / assessment status</dt><dd>Submitted. In Assessment Process</dd></dl><p class="comment">Thando did not attend any of the four delivered sessions in September due to work commitments. He communicated this to management. Facilitator will follow up with learner for a catch-up session.</p></article>
+    </div>
+  </div>
+  <div class="footer-line"></div><div class="footer-text">End User Computing · Facilitator Feedback</div><div class="page-no">06</div>
+</section>
+
+<section class="slide">
+  <div class="top-orange"></div><div class="top-green"></div>
+  <div class="eyebrow">Facilitator Feedback · Learners 13–16</div>
+  <h2 class="title">Learner Progress Overview — continued</h2>
+  <img class="logo" src="../public/logos/eruditio.svg" alt="">
+  <div class="rule"></div>
+  <div class="content">
+    <div class="learner-grid">
+      <article class="learner-card dismissed"><div class="learner-head"><div class="chip" style="--accent:var(--red)">13</div><h3>Alicia Micheals</h3></div><dl class="meta"><dt>Attendance record</dt><dd>8, 22 Sep = 2 days</dd><dt>Submission / assessment status</dt><dd>Submitted. In Assessment Process</dd></dl><p class="comment">Alicia attended two of the four delivered sessions in September. She missed two sessions. This pattern has continued across reporting periods. DISMISSED from the learnership.</p></article>
+      <article class="learner-card dismissed"><div class="learner-head"><div class="chip" style="--accent:var(--red)">14</div><h3>Vontay van Rensburg</h3></div><dl class="meta"><dt>Attendance record</dt><dd>Absent all days</dd><dt>Submission / assessment status</dt><dd>No Submission</dd></dl><p class="comment">Vontay did not attend any of the four delivered sessions in September, following the same attendance pattern recorded in August. No reason is recorded. DISMISSED from the learnership.</p></article>
+      <article class="learner-card"><div class="learner-head"><div class="chip" style="--accent:var(--yellow);color:var(--ink)">15</div><h3>Humphrey Seboa</h3></div><dl class="meta"><dt>Attendance record</dt><dd>1, 8, 15, 22 Sep</dd><dt>Submission / assessment status</dt><dd>Submitted. In Assessment Process</dd></dl><p class="comment">Humphrey attended all four delivered sessions in September and participated with energy and commitment.</p></article>
+      <article class="learner-card"><div class="learner-head"><div class="chip" style="--accent:var(--sand)">16</div><h3>Thato Hlophe</h3></div><dl class="meta"><dt>Attendance record</dt><dd>1, 8, 15, 22 Sep</dd><dt>Submission / assessment status</dt><dd>Submitted. In Assessment Process</dd></dl><p class="comment">Thato attended all four delivered sessions in September and engaged positively.</p></article>
+    </div>
+  </div>
+  <div class="footer-line"></div><div class="footer-text">End User Computing · Facilitator Feedback</div><div class="page-no">07</div>
+</section>
+
+<section class="slide">
+  <div class="top-orange"></div><div class="top-green"></div>
+  <div class="eyebrow">End User Computing · September 2026</div>
+  <h2 class="title long">Training Content, Methodology and Assessment Results</h2>
+  <img class="logo" src="../public/logos/eruditio.svg" alt="">
+  <div class="rule"></div>
+  <div class="content">
+    <div class="cols-2">
+      <div class="method-card"><div class="section-number">04 · Training content delivered / tracked</div><h3 style="margin-top:.12in">Module 7: Using Microsoft Office Excel</h3><p><strong>Unit standard:</strong> 116943</p><h3 style="margin-top:.18in">Module 8: Using Microsoft Office Outlook</h3><p><strong>Unit standard:</strong> 116945</p></div>
+      <div class="method-card"><div class="section-number">05 · Training methodology</div><h3 style="margin-top:.12in">Face-to-face classroom delivery</h3><p>Training was delivered face-to-face in a classroom using an interactive approach.</p></div>
+    </div>
+    <div class="kicker" style="margin-top:.22in">06 · Assessment results</div>
+    <table style="margin-top:.12in">
+      <thead><tr><th>Assessment / Submission Status</th><th>Learner(s) / Count</th></tr></thead>
+      <tbody>
+        <tr><td>Submitted / awaiting assessment</td><td>16 Learners</td></tr>
+        <tr><td>Outstanding / being completed</td><td>16 Learners</td></tr>
+        <tr><td>Competent / Not Yet Competent</td><td>N/A</td></tr>
+        <tr><td>Check / follow-up required</td><td>To follow up on all learners</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="footer-line"></div><div class="footer-text">End User Computing · Content, Methodology and Assessment</div><div class="page-no">08</div>
+</section>
+
+<section class="slide">
+  <div class="top-orange"></div><div class="top-green"></div>
+  <div class="eyebrow">End User Computing · September 2026</div>
+  <h2 class="title">Challenges Identified</h2>
+  <img class="logo" src="../public/logos/eruditio.svg" alt="">
+  <div class="rule"></div>
+  <div class="content">
+    <div class="callout orange">
+      <div class="kicker" style="color:#fff">07 · Attendance</div>
+      <p class="lead" style="margin-top:.14in;color:#fff">Four sessions were scheduled for September. Overall attendance has improved.</p>
+    </div>
+    <div class="kpis" style="margin-top:.3in">
+      <div class="kpi" style="--accent:var(--orange)"><div class="kpi-value">5</div><div class="kpi-label">Dates listed</div><div class="kpi-note">1, 8, 15, 22 and 29 September</div></div>
+      <div class="kpi" style="--accent:var(--green)"><div class="kpi-value">4</div><div class="kpi-label">Sessions delivered</div><div class="kpi-note">Structured training completed</div></div>
+      <div class="kpi" style="--accent:var(--yellow)"><div class="kpi-value">↑</div><div class="kpi-label">Attendance</div><div class="kpi-note">Overall attendance improved</div></div>
+      <div class="kpi" style="--accent:var(--sand)"><div class="kpi-value">1</div><div class="kpi-label">Cancellation</div><div class="kpi-note">29 September · power outage</div></div>
+    </div>
+    <div class="callout mint" style="margin-top:.28in"><p class="body">Continued attendance monitoring, regular communication, and targeted facilitator support should remain a priority to ensure that learners stay on track.</p></div>
+  </div>
+  <div class="footer-line"></div><div class="footer-text">End User Computing · Challenges Identified</div><div class="page-no">09</div>
+</section>
+
+<section class="slide">
+  <div class="top-orange"></div><div class="top-green"></div>
+  <div class="eyebrow">End User Computing · September 2026</div>
+  <h2 class="title">Conclusion</h2>
+  <img class="logo" src="../public/logos/eruditio.svg" alt="">
+  <div class="rule"></div>
+  <div class="content">
+    <div class="callout mint">
+      <p class="lead">The End User Computing programme showed encouraging and measurable progress during September 2026. Four structured training sessions were successfully delivered, supporting continuity in learning and allowing learners to build further on their practical skills. A strong level of participation and commitment was evident across the group.</p>
+    </div>
+    <div class="cols-2" style="margin-top:.2in">
+      <div class="callout">
+        <div class="kicker">Skills and assessment</div>
+        <p class="body small" style="margin-top:.1in">During the month, learners continued developing their practical knowledge of Microsoft Excel and Microsoft Outlook. These skills remain important for both workplace readiness and successful programme completion. Learner work was also submitted for assessment, marking an important step towards completion.</p>
+      </div>
+      <div class="callout">
+        <div class="kicker">Support and resilience</div>
+        <p class="body small" style="margin-top:.1in">Although two learners were dismissed during the reporting period, the remaining group continued to show resilience, focus, and a positive attitude towards their studies. Class morale remained strong, with growing excitement around the upcoming graduation ceremony.</p>
+      </div>
+    </div>
+    <div class="callout green" style="margin-top:.18in"><p class="body small">Continued attendance monitoring, regular communication, and targeted facilitator support should remain a priority. Graduation will provide an opportunity to recognise the learners’ commitment, growth, and achievements throughout the programme.</p></div>
+  </div>
+  <div class="footer-line"></div><div class="footer-text">Eruditio Skills Development Consultants (Pty) Ltd · Empower · Develop · Transform</div><div class="page-no">10</div>
+</section>
+
+</body>
+</html>

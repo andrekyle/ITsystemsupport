@@ -35,6 +35,7 @@ function fmtSize(bytes: number) {
 }
 
 export function PoePage({ profile }: { profile: Profile }) {
+  const [selectedSection, setSelectedSection] = useState(POE_SECTIONS[0]?.heading ?? "");
   const isSuper = profile.role === "Super User";
   // assessors and moderators may open any learner's POE (read-only); the super user may also manage it
   const canBrowse = isSuper || profile.role === "Assessor" || profile.role === "Moderator";
@@ -240,8 +241,40 @@ export function PoePage({ profile }: { profile: Profile }) {
         </div>
       )}
 
-      {POE_SECTIONS.map((sec) => (
-        <div key={sec.heading}>
+      <div className="tabs poe-section-tabs" role="tablist" aria-label="Portfolio evidence sections">
+        {POE_SECTIONS.map((sec, index) => (
+          <button
+            key={sec.heading}
+            type="button"
+            role="tab"
+            title={sec.heading}
+            id={`poe-tab-${index}`}
+            aria-controls={`poe-panel-${index}`}
+            aria-selected={selectedSection === sec.heading}
+            tabIndex={selectedSection === sec.heading ? 0 : -1}
+            className={`tab${selectedSection === sec.heading ? " active" : ""}`}
+            onClick={() => setSelectedSection(sec.heading)}
+            onKeyDown={(event) => {
+              let nextIndex = index;
+              if (event.key === "ArrowRight") nextIndex = (index + 1) % POE_SECTIONS.length;
+              else if (event.key === "ArrowLeft") nextIndex = (index + POE_SECTIONS.length - 1) % POE_SECTIONS.length;
+              else if (event.key === "Home") nextIndex = 0;
+              else if (event.key === "End") nextIndex = POE_SECTIONS.length - 1;
+              else return;
+              event.preventDefault();
+              setSelectedSection(POE_SECTIONS[nextIndex].heading);
+              document.getElementById(`poe-tab-${nextIndex}`)?.focus();
+            }}
+          >
+            <Icon name={sec.icon} size={14} />
+            {sec.heading.replace(/^\d+\.\s*/, "").split(/\s+/)[0]}
+          </button>
+        ))}
+      </div>
+
+      {POE_SECTIONS.map((sec, index) => (
+        <section key={sec.heading} role="tabpanel" id={`poe-panel-${index}`}
+          aria-labelledby={`poe-tab-${index}`} hidden={selectedSection !== sec.heading}>
           <h2 className="section-title">
             <span className="ico">
               <Icon name={sec.icon} size={20} />
@@ -312,11 +345,13 @@ export function PoePage({ profile }: { profile: Profile }) {
                           })}
                         </span>
                       </span>
+                      <span className="poe-file-actions">
                       {canDownload && (
                         <button
                           className="poe-dl"
                           onClick={() => void downloadDoc(doc)}
                           title="Download"
+                          aria-label={`Download ${doc.name}`}
                         >
                           <Icon name="download" size={17} />
                         </button>
@@ -334,10 +369,12 @@ export function PoePage({ profile }: { profile: Profile }) {
                             });
                           }}
                           title="Remove document"
+                          aria-label={`Remove ${doc.name}`}
                         >
                           ✕
                         </button>
                       )}
+                      </span>
                     </div>
                   ))}
                   {canEdit && !readOnly && files.length < max && (
@@ -394,7 +431,7 @@ export function PoePage({ profile }: { profile: Profile }) {
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
       ))}
 
       <input ref={fileRef} type="file" accept={ACCEPT_ATTR} style={{ display: "none" }} onChange={onPickFile} />

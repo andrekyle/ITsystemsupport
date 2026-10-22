@@ -241,6 +241,13 @@ export function CompliancePage({
   const overdue = deadlines.filter((d) => d.status === "overdue").length;
   const dueSoon = deadlines.filter((d) => d.status === "due-soon").length;
   const [showAllDeadlines, setShowAllDeadlines] = useState(false);
+  const [selectedTab, setSelectedTab] = useState("deadlines");
+  const complianceTabs = [
+    { id: "deadlines", label: "Deadlines & key dates", icon: "calendar" },
+    { id: "records", label: staff ? "Learner records" : "My compliance record", icon: "checklist" },
+    ...(staff ? [{ id: "audit", label: "Audit trail", icon: "eye" }] : []),
+  ];
+  const activeTab = complianceTabs.some(item => item.id === selectedTab) ? selectedTab : "deadlines";
   const visibleDeadlines = showAllDeadlines
     ? deadlines
     : deadlines.filter((d) => d.status !== "done").slice(0, 10);
@@ -263,7 +270,7 @@ export function CompliancePage({
   }
 
   return (
-    <>
+    <section className="assessments-page compliance-page">
       <div className="eyebrow">
         <Icon name="shield" size={15} />
         Compliance
@@ -315,6 +322,31 @@ export function CompliancePage({
         )}
       </div>
 
+      <div className="tabs assessment-tabs compliance-tabs" role="tablist" aria-label="Compliance sections">
+        {complianceTabs.map((item, index) => (
+          <button key={item.id} type="button" role="tab" id={`compliance-tab-${item.id}`}
+            aria-controls={`compliance-panel-${item.id}`} aria-selected={activeTab === item.id}
+            tabIndex={activeTab === item.id ? 0 : -1}
+            className={`tab${activeTab === item.id ? " active" : ""}`}
+            onClick={() => setSelectedTab(item.id)}
+            onKeyDown={event => {
+              let next = index;
+              if (event.key === "ArrowRight") next = (index + 1) % complianceTabs.length;
+              else if (event.key === "ArrowLeft") next = (index + complianceTabs.length - 1) % complianceTabs.length;
+              else if (event.key === "Home") next = 0;
+              else if (event.key === "End") next = complianceTabs.length - 1;
+              else return;
+              event.preventDefault();
+              setSelectedTab(complianceTabs[next].id);
+              document.getElementById(`compliance-tab-${complianceTabs[next].id}`)?.focus();
+            }}>
+            <Icon name={item.icon} size={15} /> {item.label}
+          </button>
+        ))}
+      </div>
+
+      <section role="tabpanel" id="compliance-panel-deadlines"
+        aria-labelledby="compliance-tab-deadlines" hidden={activeTab !== "deadlines"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="calendar" size={20} />
@@ -325,7 +357,7 @@ export function CompliancePage({
           <Icon name="download" size={15} /> Calendar (.ics)
         </button>
       </h2>
-      <div className="card">
+      <div className="card" style={{ overflowX: "auto" }}>
         <table className="data deadline-table">
           <thead>
             <tr>
@@ -377,6 +409,10 @@ export function CompliancePage({
         </button>
       </div>
 
+      </section>
+
+      <section role="tabpanel" id="compliance-panel-records"
+        aria-labelledby="compliance-tab-records" hidden={activeTab !== "records"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="checklist" size={20} />
@@ -519,8 +555,13 @@ export function CompliancePage({
         </p>
       </div>
 
-      {staff && <AuditTrail />}
-    </>
+      </section>
+
+      {staff && <section role="tabpanel" id="compliance-panel-audit"
+        aria-labelledby="compliance-tab-audit" hidden={activeTab !== "audit"}>
+        <AuditTrail />
+      </section>}
+    </section>
   );
 }
 

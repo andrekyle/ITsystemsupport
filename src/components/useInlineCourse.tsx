@@ -3,13 +3,16 @@ import { activeCourse, courseStorageKey, saveCustomCourse, type CourseData } fro
 import { flushKey } from "../lib/sync";
 import { supabase } from "../lib/supabase";
 import { InlineText } from "./InlineText";
+import { EditingTools } from "./EditingSidebar";
+import { usePhoneView } from "./usePhoneView";
 
 export function useInlineCourse(allowed: boolean) {
+  const phone = usePhoneView();
   const [course, setCourse] = useState(activeCourse);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const canEdit = allowed && course.id.startsWith("custom-");
+  const canEdit = allowed && !phone && course.id.startsWith("custom-");
   const change = (update: (draft: CourseData) => void) => setCourse(current => {
     const next = structuredClone(current); update(next); return next;
   });
@@ -29,12 +32,12 @@ export function useInlineCourse(allowed: boolean) {
     } catch (e) { setError(e instanceof Error ? e.message : "Could not save course."); setBusy(false); }
   }
   const controls = canEdit && <div className="unit-editor-actions">
-    {editing ? <>
+    {editing ? <EditingTools active={editing} title="Course details">
       <button className="btn ghost sm" disabled={busy} onClick={() => void save()}>{busy ? "Saving..." : "Save changes"}</button>
       <button className="btn ghost sm" disabled={busy} onClick={() => { setCourse(activeCourse()); setEditing(false); setError(""); }}>Cancel</button>
       <span className="muted">Click text on the page to edit it.</span>
-    </> : <button className="btn ghost sm" onClick={() => setEditing(true)}>Edit inline</button>}
-    {error && <p role="alert" className="auth-error">{error}</p>}
+      {error && <p role="alert" className="auth-error">{error}</p>}
+    </EditingTools> : <button className="btn ghost sm" onClick={() => setEditing(true)}>Edit inline</button>}
   </div>;
-  return { course, editing, busy, text, change, controls };
+  return { course, editing: canEdit && editing, busy, text, change, controls };
 }

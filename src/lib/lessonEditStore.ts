@@ -40,8 +40,16 @@ export async function loadLessonEdits<T>(key: string, fallback: T): Promise<T> {
     try { return JSON.parse(legacy) as T; } catch { return fallback; }
   }
   if (!supabase) return cachedLessonEdits(key, fallback);
+  // Remember the exact local value at request time. Editing can continue while
+  // the cloud read is in flight (notably when a PPT upload changes revisions).
+  // A late response must never replace those newer local edits.
+  const cacheAtRequest = cache.get(key);
   const { data, error } = await supabase.from("shared_state").select("value").eq("tenant_id", TENANT_ID).eq("key", key).maybeSingle();
   if (error || !data?.value) return cachedLessonEdits(key, fallback);
+  const latestCache = cache.get(key);
+  if (latestCache !== cacheAtRequest && latestCache !== undefined) {
+    try { return JSON.parse(latestCache) as T; } catch { return fallback; }
+  }
   receiveLessonEdits(key, data.value);
   try { return JSON.parse(data.value) as T; } catch { return fallback; }
 }

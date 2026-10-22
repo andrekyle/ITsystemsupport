@@ -1,16 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
 import { supabase } from "../lib/supabase";
-import { COURSE_META } from "../data/course";
+import { activeCourse } from "../data/courses";
 import { PasswordInput } from "./PasswordInput";
 import { TENANT, TENANT_ID } from "../lib/tenant";
 
 function TenantLogo() {
   return TENANT.logo ? (
-    <picture>
-      {TENANT.logoDark && <source media="(prefers-color-scheme: dark)" srcSet={TENANT.logoDark} />}
-      <img className="tenant-logo" src={TENANT.logo} alt={`${TENANT.name} logo`} />
-    </picture>
+    <img className="tenant-logo" src={TENANT.logo} alt={`${TENANT.name} logo`} />
   ) : (
     <><Icon name="certificate" size={26} /> {TENANT.appName}</>
   );
@@ -37,12 +34,64 @@ function savedAuthError(): string | null {
 
 /** Email/password gate shown before the app when cloud sync is configured. */
 export function CloudAuth() {
+  const { meta: qualification } = activeCourse();
   const [mode, setMode] = useState<"signin" | "signup">(savedAuthMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(savedAuthError);
   const [notice, setNotice] = useState<string | null>(null);
+  const submitting = useRef(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const signInLink = useRef<HTMLAnchorElement>(null);
+  const discovery = TENANT_ID === "discovery";
+  const [mobile, setMobile] = useState(() => window.matchMedia("(max-width: 980px)").matches);
+  const popup = discovery && !mobile;
+  const [loginOpen, setLoginOpen] = useState(() =>
+    window.location.hash === "#discovery-login" || !!error || mode === "signup"
+  );
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 980px)");
+    const update = () => setMobile(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (!discovery) return;
+    const syncHash = () => setLoginOpen(window.location.hash === "#discovery-login");
+    window.addEventListener("hashchange", syncHash);
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, [discovery]);
+
+  useEffect(() => {
+    if (!dialogRef.current) return;
+    if (!popup) {
+      if (!dialogRef.current.open) dialogRef.current.show();
+      return;
+    }
+    if (loginOpen) {
+      dialogRef.current.close();
+      dialogRef.current.showModal();
+      dialogRef.current.querySelector<HTMLInputElement>("#ca-email")?.focus();
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        dialogRef.current?.close();
+        document.body.style.overflow = previousOverflow;
+      };
+    }
+    dialogRef.current.close();
+  }, [popup, loginOpen]);
+
+  function closeLogin() {
+    if (busy) return;
+    setLoginOpen(false);
+    setPassword("");
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    signInLink.current?.focus();
+  }
 
   // Keep the user on the registration screen if the page is refreshed (for
   // example after an accidental pull-to-refresh on mobile). Credentials stay
@@ -79,6 +128,8 @@ export function CloudAuth() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!supabase) return;
+    if (submitting.current) return;
+    submitting.current = true;
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -98,7 +149,10 @@ export function CloudAuth() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) setError(friendlyError(error.message, "signin"));
       }
+    } catch (error) {
+      setError(friendlyError(error instanceof Error ? error.message : String(error), mode));
     } finally {
+      submitting.current = false;
       setBusy(false);
     }
   }
@@ -127,17 +181,40 @@ export function CloudAuth() {
   }
 
   return (
-    <div className="gate">
+    <div className={`gate${TENANT_ID === "discovery" ? " discovery-gate" : ""}`}>
+      {discovery && !mobile && (
+        <a className="discovery-signin-link" href="#discovery-login" ref={signInLink}
+          onClick={() => setLoginOpen(true)}>
+          Sign in
+        </a>
+      )}
+      {discovery && !mobile && (
+        <div className="discovery-auth-showcase">
+          <img className="discovery-hero-logo" src={TENANT.logo!} alt="Discovery" />
+          <h2>Learn today.<br />Make an<br /><span>impact.</span></h2>
+          <p className="discovery-hero-copy">Build your skills. Grow your confidence. Put your learning into practice.</p>
+          <div className="discovery-hero-rule" />
+        </div>
+      )}
+      <dialog ref={dialogRef} open={popup ? undefined : true}
+        className={popup ? "discovery-login-dialog" : "auth-inline-dialog"}
+        aria-labelledby="cloud-auth-title"
+        onCancel={(event) => { event.preventDefault(); closeLogin(); }}
+        onClick={(event) => { if (event.target === event.currentTarget) closeLogin(); }}>
       <div className="gate-card">
+        {popup && (
+          <button type="button" className="discovery-login-close" aria-label="Close sign-in"
+            disabled={busy} onClick={closeLogin}>×</button>
+        )}
         <div className="logo">
           <TenantLogo />
         </div>
         <div className="tenant-location">{TENANT.name} · {TENANT.location}</div>
-        <h1>{mode === "signin" ? "Sign in to your account" : "Create your account"}</h1>
+        <h1 id="cloud-auth-title">{mode === "signin" ? "Sign in to your account" : "Create your account"}</h1>
         <p className="sub">
-          {COURSE_META.title} · SAQA ID {COURSE_META.saqaId} · NQF Level {COURSE_META.nqfLevel}.
-          Your profile and progress are stored securely online — sign in from any device to
-          continue where you left off.
+          {qualification.title} · SAQA ID {qualification.saqaId} · NQF Level {qualification.nqfLevel}.
+          {" "}Sign in to continue this qualification. Your profile and learning progress are
+          stored securely online and available from any device.
         </p>
 
         <form onSubmit={submit}>
@@ -182,6 +259,7 @@ export function CloudAuth() {
         <div className="divider">or</div>
         <button
           className="btn ghost block"
+          disabled={busy}
           onClick={() => {
             setMode(mode === "signin" ? "signup" : "signin");
             setError(null);
@@ -196,6 +274,7 @@ export function CloudAuth() {
           </button>
         )}
       </div>
+      </dialog>
     </div>
   );
 }
@@ -221,7 +300,7 @@ export function ResetPassword({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <div className="gate">
+    <div className={`gate${TENANT_ID === "discovery" ? " discovery-gate" : ""}`}>
       <div className="gate-card">
         <div className="logo">
           <TenantLogo />

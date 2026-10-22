@@ -6,8 +6,10 @@
  * Every part is progressive enhancement: unsupported APIs no-op silently.
  */
 
+import { activeCourse } from "../data/courses";
+
 let audioCtx: AudioContext | null = null;
-const BASE_TITLE = typeof document !== "undefined" ? document.title : "ITSS Learn";
+document.title = activeCourse().meta.title;
 
 /** Short two-tone "pop" rendered with WebAudio — no sound file needed. */
 export function playMessageTone(): void {
@@ -59,7 +61,8 @@ export function syncUnreadBadge(count: number): void {
   } catch {
     /* unsupported */
   }
-  document.title = count > 0 ? `(${count}) ${BASE_TITLE}` : BASE_TITLE;
+  const title = activeCourse().meta.title;
+  document.title = count > 0 ? `(${count}) ${title}` : title;
 }
 
 /** Ask for system-notification permission (safe to call repeatedly). */

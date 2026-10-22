@@ -8,6 +8,7 @@ import { PaperForm } from "./PaperForm";
 import { isFullyPlaced } from "./ReplicaForm";
 import { Select } from "./Select";
 import { ConfirmModal } from "./Modal";
+import { EditingTools } from "./EditingSidebar";
 
 const FIELD_NAMES: Record<FormFieldType, string> = {
   text: "Short text", textarea: "Long text", email: "Email", tel: "Phone number", number: "Number", date: "Date",
@@ -152,13 +153,17 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
   return (
     <div className="form-builder">
       <div className="fb-toolbar">
-        <button type="button" className="btn ghost" disabled={busy === "saving"} onClick={() => source || draft ? setConfirmLeave(true) : onCancel()}><Icon name="chevronLeft" size={16} /> Forms</button>
+        {!draft && <button type="button" className="btn ghost" disabled={busy === "saving"} onClick={() => source || draft ? setConfirmLeave(true) : onCancel()}><Icon name="chevronLeft" size={16} /> Forms</button>}
         <h2>Form builder</h2>
         {draft && <span className="fb-field-count">{totalFields} fields</span>}
-        {draft && <button type="button" className="btn primary" onClick={() => void save()} disabled={!!busy}><Icon name="check" size={16} /> {busy === "saving" ? "Saving..." : "Save form"}</button>}
+        <EditingTools active={!!draft} title="Save form">
+          <button type="button" className="btn primary" onClick={() => void save()} disabled={!!busy}><Icon name="check" size={16} /> {busy === "saving" ? "Saving..." : "Save form"}</button>
+          <button type="button" className="btn ghost" disabled={busy === "saving"} onClick={() => setConfirmLeave(true)}><Icon name="chevronLeft" size={16} /> Forms</button>
+          {error && <p className="auth-error fb-message" role="alert">{error}</p>}
+        </EditingTools>
       </div>
 
-      {error && <p className="auth-error fb-message" role="alert">{error}</p>}
+      {!draft && error && <p className="auth-error fb-message" role="alert">{error}</p>}
       {!draft ? (
         <div className="fb-upload-layout">
           <div>
@@ -184,6 +189,8 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
         </div>
       ) : (
         <>
+          <EditingTools active title="Form view and settings">
+          <fieldset disabled={!!busy} style={{ border: 0, padding: 0, minWidth: 0 }}>
           <div className="fb-review-toolbar">
             <div className="fb-mode" role="tablist" aria-label="Form builder view">
               <button type="button" role="tab" aria-selected={mode === "edit"} onClick={() => setMode("edit")}>Fields</button>
@@ -212,6 +219,8 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
               )}
             </div>
           )}
+          </fieldset>
+          </EditingTools>
           {missing.length > 0 && (
             <details className="fb-missing">
               <summary>Verbatim check: {missing.length} printed line{missing.length === 1 ? "" : "s"} of the original {missing.length === 1 ? "was" : "were"} not found in the replica</summary>
@@ -228,7 +237,9 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
                 <section key={section.id} className="fb-section">
                   <div className="fb-section-head">
                     <div className="field"><label htmlFor={section.id}>Section {sectionIndex + 1}</label><input id={section.id} value={section.title} maxLength={300} onChange={event => updateSection(section.id, current => ({ ...current, title: event.target.value }))} /></div>
-                    <button type="button" className="btn fb-icon" aria-label={`Remove section ${sectionIndex + 1}`} title="Remove section" disabled={draft.sections.length === 1} onClick={() => setDraft({ ...draft, sections: draft.sections.filter(current => current.id !== section.id) })}><Icon name="close" size={16} /></button>
+                    <EditingTools active title={`Section ${sectionIndex + 1}`}>
+                    <button type="button" className="btn fb-icon" aria-label={`Remove section ${sectionIndex + 1}`} title="Remove section" disabled={!!busy || draft.sections.length === 1} onClick={() => setDraft({ ...draft, sections: draft.sections.filter(current => current.id !== section.id) })}><Icon name="close" size={16} /></button>
+                    </EditingTools>
                   </div>
                   <div className="field"><label htmlFor={`${section.id}-description`}>Section instructions</label><textarea id={`${section.id}-description`} rows={2} value={section.description} maxLength={5000} onChange={event => updateSection(section.id, current => ({ ...current, description: event.target.value }))} /></div>
                   {section.rows.length > 0 && <p className="fb-field-note">This section keeps the printed layout of the uploaded document ({section.columns} columns, {section.rows.length} rows). Fields you add here appear in a grid below it; removed fields leave their boxes blank.</p>}
@@ -237,22 +248,30 @@ export function FormBuilder({ profile, onSaved, onCancel }: {
                     <div key={field.id} className="fb-field-editor">
                       <div className="fb-field-editor-main">
                         <div className="field"><label htmlFor={field.id}>Field label</label><input id={field.id} value={field.label} maxLength={500} onChange={event => updateField(section.id, field.id, { label: event.target.value })} /></div>
-                        <div className="field"><label>Type</label><Select value={field.type} ariaLabel={`Type for ${field.label || `field ${fieldIndex + 1}`}`} options={FORM_FIELD_TYPES.map(type => ({ value: type, label: FIELD_NAMES[type] }))} onChange={value => updateField(section.id, field.id, { type: value as FormFieldType, options: CHOICE_FIELD_TYPES.includes(value as FormFieldType) ? field.options : [] })} /></div>
+                        <EditingTools active title={`Section ${sectionIndex + 1} · Field ${fieldIndex + 1}`}>
+                        <fieldset disabled={!!busy} style={{ border: 0, padding: 0, minWidth: 0 }}>
+                        <div className="field"><label>Type</label><Select disabled={!!busy} value={field.type} ariaLabel={`Type for ${field.label || `field ${fieldIndex + 1}`}`} options={FORM_FIELD_TYPES.map(type => ({ value: type, label: FIELD_NAMES[type] }))} onChange={value => updateField(section.id, field.id, { type: value as FormFieldType, options: CHOICE_FIELD_TYPES.includes(value as FormFieldType) ? field.options : [] })} /></div>
                         <label className="fb-choice"><input type="checkbox" checked={field.required} onChange={event => updateField(section.id, field.id, { required: event.target.checked })} /><span>Required</span></label>
                         <div className="fb-actions">
                           <button type="button" className="btn fb-icon" aria-label={`Move field ${fieldIndex + 1} up`} title="Move field up" disabled={fieldIndex === 0} onClick={() => moveField(section.id, fieldIndex, -1)}><Icon name="chevronUp" size={16} /></button>
                           <button type="button" className="btn fb-icon" aria-label={`Move field ${fieldIndex + 1} down`} title="Move field down" disabled={fieldIndex === section.fields.length - 1} onClick={() => moveField(section.id, fieldIndex, 1)}><Icon name="chevronDown" size={16} /></button>
                           <button type="button" className="btn fb-icon" aria-label={`Remove field ${fieldIndex + 1}`} title="Remove field" disabled={!isReplica && section.fields.length === 1 && !section.rows.some(row => row.cells.some(cell => cell.kind === "text"))} onClick={() => updateSection(section.id, current => ({ ...current, fields: current.fields.filter(item => item.id !== field.id) }))}><Icon name="close" size={16} /></button>
                         </div>
+                        </fieldset>
+                        </EditingTools>
                       </div>
                       <div className="field"><label htmlFor={`${field.id}-help`}>Field instructions</label><textarea id={`${field.id}-help`} rows={2} maxLength={3000} value={field.helpText} onChange={event => updateField(section.id, field.id, { helpText: event.target.value })} /></div>
                       {CHOICE_FIELD_TYPES.includes(field.type) && <div className="field"><label htmlFor={`${field.id}-options`}>Options</label><textarea id={`${field.id}-options`} rows={3} value={field.options.join("\n")} onChange={event => updateField(section.id, field.id, { options: event.target.value.split("\n") })} placeholder="One option per line" /></div>}
                     </div>
                   ))}
-                  <button type="button" className="btn ghost" disabled={totalFields >= MAX_FORM_FIELDS} onClick={() => updateSection(section.id, current => ({ ...current, fields: [...current.fields, newField()] }))}><Icon name="document" size={16} /> Add field</button>
+                  <EditingTools active title={`Add to section ${sectionIndex + 1}`}>
+                  <button type="button" className="btn ghost" disabled={!!busy || totalFields >= MAX_FORM_FIELDS} onClick={() => updateSection(section.id, current => ({ ...current, fields: [...current.fields, newField()] }))}><Icon name="document" size={16} /> Add field</button>
+                  </EditingTools>
                 </section>
               ))}
-              <button type="button" className="btn ghost" disabled={draft.sections.length >= 30 || totalFields >= MAX_FORM_FIELDS} onClick={() => setDraft({ ...draft, sections: [...draft.sections, newSection()] })}><Icon name="layers" size={16} /> Add section</button>
+              <EditingTools active title="Form structure">
+              <button type="button" className="btn ghost" disabled={!!busy || draft.sections.length >= 30 || totalFields >= MAX_FORM_FIELDS} onClick={() => setDraft({ ...draft, sections: [...draft.sections, newSection()] })}><Icon name="layers" size={16} /> Add section</button>
+              </EditingTools>
             </fieldset>
           )}
         </>

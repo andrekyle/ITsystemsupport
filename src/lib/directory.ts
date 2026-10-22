@@ -2,6 +2,7 @@ import { supabase } from "./supabase";
 import type { EnrolmentInfo, PoeDoc, Profile, ProgressState } from "../types";
 import { loadChecklistTicks, loadPoeDocs, loadProgress } from "../store";
 import { TENANT_ID } from "./tenant";
+import { mergeProgressEvidence } from "./progressEvidence";
 
 export interface CloudDirectory {
   /** profiles synced by other signed-in accounts (this account's own rows excluded) */
@@ -10,6 +11,9 @@ export interface CloudDirectory {
   poe: Record<string, Record<string, PoeDoc>>;
   /** profile id -> owning auth user id (for cross-account management) */
   owners: Record<string, string>;
+  /** profile id -> auth user id inferred from progress rows, even when the
+   * profile itself is missing from the synced directory snapshot */
+  progressOwners?: Record<string, string>;
 }
 
 /** Every identity token that identifies a person — the same profile on a
@@ -114,14 +118,18 @@ export function getCachedSuperUserAuthId(): string | undefined {
  */
 export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
   if (!supabase) return null;
-  const { data: auth } = await supabase.auth.getUser();
-  const me = auth.user?.id;
 
   const [profRes, poeRes] = await Promise.all([
     supabase.from("app_state").select("user_id,value").eq("tenant_id", TENANT_ID).eq("key", "itss.profiles"),
     supabase.from("app_state").select("user_id,key,value").eq("tenant_id", TENANT_ID).like("key", "itss.poe.%"),
   ]);
-  if (profRes.error || poeRes.error) return null;
+  // Learner profiles remain useful even when the optional POE index query is
+  // unavailable (for example while its policy or storage migration is being
+  // updated). Do not discard the entire directory in that case.
+  if (profRes.error) return null;
+  if (poeRes.error) {
+    console.error("Could not load cloud POE index; continuing without POE data:", poeRes.error);
+  }
 
   const profiles: Profile[] = [];
   const owners: CloudDirectory["owners"] = {};
@@ -133,7 +141,6 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
   const chosen = new Map<string, { p: Profile; owner: string }>();
   const loginTime = (p: Profile) => (p.lastLogin ? Date.parse(p.lastLogin) : 0);
   for (const row of profRes.data ?? []) {
-    if (row.user_id === me) continue; // this account's profiles are already local
     try {
       for (const p of JSON.parse(row.value) as Profile[]) {
         if (!p?.id) continue;
@@ -262,8 +269,8 @@ export interface CloudLearnerData extends CloudDirectory {
 
 /**
  * Directory plus each learner's progress and Appendix C checklist, for
- * cross-account reporting (compliance records). Rows from the profile's
- * owning account win when several accounts hold a copy of the same key.
+ * cross-account reporting (compliance records). Progress evidence is retained
+ * across saved copies of the same profile; checklists prefer the owning account.
  */
 export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> {
   if (!supabase) return null;
@@ -273,6 +280,13 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
     supabase.from("app_state").select("user_id,key,value").eq("tenant_id", TENANT_ID).like("key", "itss.checklist.%"),
   ]);
   if (!dir) return null;
+  if (progRes.error) {
+    console.error("Could not load learner progress evidence:", progRes.error);
+    return null;
+  }
+  if (checkRes.error) {
+    console.error("Could not load learner checklists; continuing without checklist data:", checkRes.error);
+  }
 
   const pick = <T,>(
     rows: { user_id: string; key: string; value: string }[] | null,
@@ -292,9 +306,40 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
     return out;
   };
 
+  const progress: Record<string, ProgressState> = {};
+  const progressOwners: Record<string, string> = {};
+  for (const row of progRes.data ?? []) {
+    const pid = row.key.slice("itss.progress.".length);
+    // Keep this relationship even when the matching profile snapshot is
+    // stale or absent. It lets staff resolve a learner's canonical progress
+    // by the learner's cloud auth id instead of silently falling back to an
+    // empty seeded profile.
+    if (!(pid in progressOwners) || dir.owners[pid] === row.user_id) {
+      progressOwners[pid] = row.user_id;
+    }
+    try {
+      const snapshot = JSON.parse(row.value) as ProgressState;
+      if (!snapshot || !snapshot.units || typeof snapshot.units !== "object" || Array.isArray(snapshot.units)) {
+        throw new Error("Invalid learner progress snapshot.");
+      }
+      const existing = progress[pid];
+      progress[pid] = !existing ? snapshot
+        : dir.owners[pid] === row.user_id
+        ? mergeProgressEvidence(existing, snapshot)
+        : mergeProgressEvidence(snapshot, existing);
+    } catch (error) {
+      console.error("Could not read learner progress evidence:", row.key, error);
+      // One damaged/stale row must not hide every other learner's valid
+      // progress. Keep loading the remaining snapshots and let the direct
+      // profile lookup provide another chance to recover this one.
+      continue;
+    }
+  }
+
   return {
     ...dir,
-    progress: pick<ProgressState>(progRes.error ? null : progRes.data, "itss.progress."),
+    progress,
+    progressOwners,
     checklists: pick<Record<string, "yes" | "no">>(
       checkRes.error ? null : checkRes.data,
       "itss.checklist."
@@ -306,22 +351,37 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
  *  account's cloud storage — used when staff view users from other accounts. */
 export async function fetchCloudProgress(
   owner: string,
-  profileId: string
+  profileId: string,
+  alternateProfileId?: string,
+  additionalProfileIds: string[] = []
 ): Promise<ProgressState | null> {
   if (!supabase) return null;
+  const profileIds = [...new Set(
+    [profileId, alternateProfileId, ...additionalProfileIds].filter((id): id is string => Boolean(id))
+  )];
   const { data, error } = await supabase
     .from("app_state")
-    .select("value")
-    .eq("user_id", owner)
+    .select("user_id,value")
     .eq("tenant_id", TENANT_ID)
-    .eq("key", `itss.progress.${profileId}`)
-    .maybeSingle();
-  if (error || !data) return null;
-  try {
-    return JSON.parse(data.value) as ProgressState;
-  } catch {
-    return null;
+    .in("key", profileIds.map((id) => `itss.progress.${id}`));
+  if (error || !data?.length) return null;
+  let merged: ProgressState | null = null;
+  // Reconcile every row visible through RLS. Duplicate profile copies are
+  // common after account/profile migrations; merge non-owner copies first so
+  // the designated owner's current values remain preferred without losing
+  // stronger scores or historical evidence from another copy.
+  const ordered = [...data].sort(
+    (a, b) => Number(a.user_id === owner) - Number(b.user_id === owner)
+  );
+  for (const row of ordered) {
+    try {
+      const next = JSON.parse(row.value) as ProgressState;
+      merged = merged ? mergeProgressEvidence(merged, next) : next;
+    } catch {
+      /* ignore malformed snapshots and keep any valid progress */
+    }
   }
+  return merged;
 }
 
 /** Resolve the cloud link for a locally-held profile. Direct id match wins;
@@ -341,6 +401,14 @@ export function resolveCloudLink(
     if (identityKeys(cp).some((k) => localKeys.has(k))) {
       const owner = cloud.owners[cp.id];
       if (owner) return { owner, cloudId: cp.id };
+    }
+  }
+  if (local.cloudUserId && cloud.progressOwners) {
+    const ownedProgressIds = Object.entries(cloud.progressOwners)
+      .filter(([, owner]) => owner === local.cloudUserId)
+      .map(([id]) => id);
+    if (ownedProgressIds.length === 1) {
+      return { owner: local.cloudUserId, cloudId: ownedProgressIds[0] };
     }
   }
   return undefined;
@@ -383,47 +451,67 @@ export function mergeProfileWithCloud(
   return Object.keys(patch).length ? { ...local, ...patch } : local;
 }
 
-/** Rough count of recorded evidence in a progress state — used to choose the
- *  richer of two copies of the same learner's progress. */
-function progressWeight(p: ProgressState): number {
-  let n = 0;
-  for (const unit of Object.values(p.units)) {
-    n += Object.values(unit.activities).filter(Boolean).length;
-    if (unit.quiz?.total) n++;
-    n += Object.values(unit.quizzes ?? {}).filter((q) => q.total > 0).length;
-    n += Object.values(unit.exercises ?? {}).filter((e) => e.total > 0).length;
-    n += Object.keys(unit.logbook ?? {}).length;
-  }
-  return n;
-}
-
-/** "Best" progress for a learner: whichever copy holds MORE evidence wins.
- *  The viewer's own device copy is authoritative for themselves, but for other
- *  learners a stale local snapshot must not shadow their real cloud-synced
- *  work (that made Analytics XP disagree with the class leaderboard). The
- *  cloud lookup is identity-aware so a locally-seeded profile still pulls in
- *  its real cloud data even when the ids differ. */
+/** Retain evidence from local and cloud copies of the same learner. Different
+ *  quizzes/exercises are combined; matching assessments keep a real best result,
+ *  not a synthetic score. Source snapshots are never overwritten. */
 export function bestProgress(
   profile: Profile,
   cloud?: CloudLearnerData | null
 ): ProgressState {
   const local = loadProgress(profile.id);
-  const link = resolveCloudLink(profile, cloud);
-  const remote = link ? cloud?.progress?.[link.cloudId] : undefined;
-  if (!remote) return local;
-  return progressWeight(local) >= progressWeight(remote) ? local : remote;
+  if (!cloud) return local;
+
+  // A learner can have a seeded profile id and a later sign-in profile id.
+  // Merge every cloud snapshot belonging to either identity, not just the
+  // freshest directory copy, otherwise older quiz/exercise evidence vanishes
+  // from the leaderboard after an account migration.
+  const ids = cloudProfileIds(profile, cloud);
+  let merged = local;
+  let found = false;
+  for (const id of ids) {
+    const remote = cloud.progress[id];
+    if (!remote) continue;
+    merged = mergeProgressEvidence(merged, remote);
+    found = true;
+  }
+  return found ? merged : local;
 }
 
-/** "Best" POE docs for a learner (same richer-copy rule as `bestProgress`). */
+/** Retain distinct POE files from both snapshots; cloud wins for the same key. */
 export function bestPoeDocs(
   profile: Profile,
   cloud?: CloudLearnerData | null
 ): Record<string, PoeDoc> {
   const local = loadPoeDocs(profile.id);
+  if (!cloud) return local;
+  const ids = cloudProfileIds(profile, cloud);
+  let merged = { ...local };
+  for (const id of ids) {
+    if (cloud.poe[id]) merged = { ...merged, ...cloud.poe[id] };
+  }
+  return merged;
+}
+
+/** All profile ids that can belong to the same learner across seeded and
+ * signed-in copies. Used by staff views to recover progress after migrations. */
+export function cloudProfileIds(
+  profile: Profile,
+  cloud: CloudLearnerData | CloudDirectory | null | undefined
+): Set<string> {
+  const ids = new Set([profile.id]);
+  if (!cloud) return ids;
   const link = resolveCloudLink(profile, cloud);
-  const remote = link ? cloud?.poe?.[link.cloudId] : undefined;
-  if (!remote) return local;
-  return Object.keys(local).length >= Object.keys(remote).length ? local : remote;
+  if (link) ids.add(link.cloudId);
+  const keys = new Set(identityKeys(profile));
+  for (const cp of cloud.profiles) {
+    if (identityKeys(cp).some((key) => keys.has(key))) ids.add(cp.id);
+  }
+  if (profile.cloudUserId && cloud.progressOwners) {
+    for (const [id, owner] of Object.entries(cloud.progressOwners)) {
+      if (owner === profile.cloudUserId) ids.add(id);
+    }
+  }
+  return ids;
 }
 
 /** "Best" Appendix C checklist (same richer-copy rule). */

@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { InfoSectionTabs } from "../components/InfoSectionTabs";
+import { usePhoneView } from "../components/usePhoneView";
 import { Icon } from "../icons";
+import { EditingTools } from "../components/EditingSidebar";
 import type { Profile, ProgressState, Route } from "../types";
 import { isStaff } from "../types";
 import { Gloss } from "./Course";
@@ -21,6 +24,25 @@ import {
 } from "../data/course";
 
 export function AssessmentsPage({ profile }: { profile: Profile }) {
+  const [selectedTab, setSelectedTab] = useState("assessment-0");
+  const labels: Record<string, string> = {
+    "Assessment Planning": "Planning",
+    "Conducting Assessments": "Assessment",
+    "Record-Keeping & Documentation": "Records",
+    "Quality Assurance": "Quality",
+  };
+  const tabs = [
+    ...ASSESSMENT_FRAMEWORK.map((section, index) => ({
+      id: `assessment-${index}`,
+      label: labels[section.heading] ?? section.heading,
+      title: section.heading,
+      icon: section.icon,
+    })),
+    ...(isStaff(profile.role) ? [{
+      id: "facilitation", label: "Facilitation", title: "Facilitation responsibilities", icon: "presenter",
+    }] : []),
+  ];
+  const activeTab = tabs.some(tab => tab.id === selectedTab) ? selectedTab : tabs[0]?.id;
   return (
     <section className="assessments-page">
       <div className="eyebrow">
@@ -32,9 +54,33 @@ export function AssessmentsPage({ profile }: { profile: Profile }) {
         <Gloss text="Assessments are conducted in line with QCTO, SETA and institutional requirements, and are valid, reliable, fair and aligned with the OCD and ASD for SAQA ID 48573." />
       </p>
 
-      <div className="two-col">
-        {ASSESSMENT_FRAMEWORK.map((sec) => (
-          <div className="card" key={sec.heading}>
+      <div className="tabs assessment-tabs" role="tablist" aria-label="Assessment framework sections">
+        {tabs.map((tab, index) => (
+          <button key={tab.id} type="button" role="tab" id={`framework-tab-${tab.id}`}
+            aria-controls={`framework-panel-${tab.id}`} aria-selected={activeTab === tab.id}
+            tabIndex={activeTab === tab.id ? 0 : -1}
+            className={`tab${activeTab === tab.id ? " active" : ""}`} title={tab.title}
+            onClick={() => setSelectedTab(tab.id)}
+            onKeyDown={event => {
+              let next = index;
+              if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+              else if (event.key === "ArrowLeft") next = (index + tabs.length - 1) % tabs.length;
+              else if (event.key === "Home") next = 0;
+              else if (event.key === "End") next = tabs.length - 1;
+              else return;
+              event.preventDefault();
+              setSelectedTab(tabs[next].id);
+              document.getElementById(`framework-tab-${tabs[next].id}`)?.focus();
+            }}>
+            <Icon name={tab.icon} size={15} /> {tab.label}
+          </button>
+        ))}
+      </div>
+        {ASSESSMENT_FRAMEWORK.map((sec, index) => (
+          <section role="tabpanel" id={`framework-panel-assessment-${index}`}
+            aria-labelledby={`framework-tab-assessment-${index}`}
+            hidden={activeTab !== `assessment-${index}`} key={sec.heading}>
+          <div className="card">
             <h2 className="section-title mt-0" style={{ margin: "0 0 10px" }}>
               <span className="ico">
                 <Icon name={sec.icon} size={20} />
@@ -54,11 +100,12 @@ export function AssessmentsPage({ profile }: { profile: Profile }) {
               ))}
             </ul>
           </div>
+          </section>
         ))}
-      </div>
 
       {isStaff(profile.role) && (
-        <>
+        <section role="tabpanel" id="framework-panel-facilitation"
+          aria-labelledby="framework-tab-facilitation" hidden={activeTab !== "facilitation"}>
           <h2 className="section-title">
             <span className="ico">
               <Icon name="presenter" size={20} />
@@ -89,7 +136,7 @@ export function AssessmentsPage({ profile }: { profile: Profile }) {
               </div>
             ))}
           </div>
-        </>
+        </section>
       )}
 
       <div className="callout">
@@ -108,7 +155,7 @@ export function AssessmentsPage({ profile }: { profile: Profile }) {
 
 export function DeliverablesPage() {
   return (
-    <>
+    <section className="assessments-page">
       <div className="eyebrow">
         <Icon name="checklist" size={15} />
         Deliverables
@@ -118,36 +165,14 @@ export function DeliverablesPage() {
         Standards and submission timelines for programme deliverables across the training calendar.
       </p>
 
-      <section className="deliv-board" aria-label="Programme deliverables">
-        <div className="deliv-board-head">
-          <div>
-            <span className="deliv-kicker">Programme evidence</span>
-            <h2>Submission standards</h2>
-            <p>These deliverables must be completed and submitted as per the programme requirements.</p>
-          </div>
-          <span className="deliv-total"><Icon name="layers" size={22} /> {DELIVERABLES.length} deliverables</span>
-        </div>
-
-        <div className="deliv-list">
-          {DELIVERABLES.map((d, index) => (
-            <article className={`deliv-row tone-${index % 5}`} key={d.deliverable}>
-              <span className="deliv-row-num">{String(index + 1).padStart(2, "0")}</span>
-              <span className="deliv-ico" aria-hidden="true"><Icon name={d.icon} size={28} /></span>
-              <div className="deliv-copy">
-                <strong className="deliv-name">{d.deliverable}</strong>
-                <span className="deliv-standard">{d.standard}</span>
-              </div>
-              <span className="deliv-due">
-                <span className="deliv-due-value">
-                  <Icon name={index === 1 || index === 3 ? "calendar" : "clock"} size={25} />
-                  {d.due}
-                </span>
-              </span>
-              <Icon name="chevronRight" size={20} />
-            </article>
-          ))}
-        </div>
-      </section>
+      <InfoSectionTabs id="deliverables" sections={DELIVERABLES.map(d => ({
+        title: d.deliverable,
+        icon: d.icon,
+        content: <ul className="duty-list">
+          <li><span className="ico"><Icon name="checkCircle" size={16} /></span><span>{d.standard}</span></li>
+          <li><span className="ico"><Icon name="calendar" size={16} /></span><span>{d.due}</span></li>
+        </ul>,
+      }))} />
 
       <div className="callout">
         <span className="ico">
@@ -158,13 +183,13 @@ export function DeliverablesPage() {
           session. Attendance registers are signed and submitted <strong>after each session</strong>.
         </span>
       </div>
-    </>
+    </section>
   );
 }
 
 export function ResourcesPage() {
   return (
-    <>
+    <section className="assessments-page">
       <div className="eyebrow">
         <Icon name="globe" size={15} />
         Resources
@@ -172,37 +197,19 @@ export function ResourcesPage() {
       <h1 className="page-title">Resources</h1>
       <p className="page-sub">System Support NQF Level 5 Learnership · Investec Group</p>
 
-      <section className="res-board" aria-label="Learning resources">
-        <div className="res-board-head">
-          <div>
-            <span className="res-kicker">Reference library</span>
-            <h2>Useful links</h2>
-            <p>Trusted learning, qualification and compliance resources for this programme.</p>
-          </div>
-          <span className="res-total"><Icon name="layers" size={20} /> {RESOURCES.length} resources</span>
-        </div>
-        <div className="res-list">
-          {RESOURCES.map((r, index) => (
-            <a
-              className={`res-card tone-${index % 5}`}
-              key={r.title}
-              href={r.url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <span className="res-index">{String(index + 1).padStart(2, "0")}</span>
-              <span className="res-icon" aria-hidden="true"><Icon name="globe" size={23} /></span>
-              <span className="res-copy">
-                <strong className="t">{r.title}</strong>
-                <span className="d">{r.desc}</span>
-              </span>
-              <span className="res-action">Open resource <Icon name="chevronRight" size={14} /></span>
-              <Icon name="chevronRight" size={20} />
-            </a>
-          ))}
-        </div>
-      </section>
-    </>
+      <InfoSectionTabs id="resources" sections={RESOURCES.map(r => ({
+        title: r.title,
+        icon: "globe",
+        content: <>
+          <ul className="duty-list">
+            <li><span className="ico"><Icon name="checkCircle" size={16} /></span><span>{r.desc}</span></li>
+          </ul>
+          <a className="btn ghost" href={r.url} target="_blank" rel="noopener noreferrer">
+            <Icon name="globe" size={15} /> Open resource
+          </a>
+        </>,
+      }))} />
+    </section>
   );
 }
 
@@ -233,19 +240,32 @@ export function CalendarPage({
   profile?: Profile;
 }) {
   const customCourse = activeCourseId().startsWith("custom-");
-  const canEdit = customCourse ? profile?.role === "Super User" : import.meta.env.DEV;
+  const phone = usePhoneView();
+  const canEdit = !phone && (customCourse ? profile?.role === "Super User" : import.meta.env.DEV);
   // In-place editing of the calendar (dev only — saving writes the edits
   // straight back into the course data file through /api/save-calendar).
-  const [editing, setEditing] = useState(false);
+  const [requestedEditing, setEditing] = useState(false);
+  const editing = canEdit && requestedEditing;
   const [draft, setDraft] = useState<CalendarDraft>(makeCalendarDraft);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState("");
   const [focusedModuleId, setFocusedModuleId] = useState<string | null>(null);
+  const [selectedTab, setSelectedTab] = useState(MODULES[0]?.id ?? "milestones");
+  const calendarModules = editing ? draft.modules : MODULES;
+  const calendarTabs = [
+    ...calendarModules.map((module, index) => ({
+      id: module.id, label: `Module ${index + 1}`, title: module.name, icon: module.icon,
+    })),
+    { id: "milestones", label: "Milestones", title: "Programme milestones", icon: "certificate" },
+  ];
+  const activeTab = calendarTabs.some((tab) => tab.id === selectedTab)
+    ? selectedTab : calendarTabs[0].id;
 
   const startEditing = (moduleId: string | null = null) => {
     setDraft(makeCalendarDraft());
     setSaveState("idle");
     setFocusedModuleId(moduleId);
+    if (moduleId) setSelectedTab(moduleId);
     setEditing(true);
   };
 
@@ -262,6 +282,7 @@ export function CalendarPage({
       };
     });
     setFocusedModuleId(id);
+    setSelectedTab(id);
     setSaveState("idle");
     setEditing(true);
   };
@@ -387,7 +408,7 @@ export function CalendarPage({
   }
 
   return (
-    <>
+    <section className="calendar-page">
       <div className="eyebrow">
         <Icon name="calendar" size={15} />
         Training calendar
@@ -406,31 +427,69 @@ export function CalendarPage({
             <Icon name="pencil" size={15} /> Edit calendar
           </button>
         )}
-        {canEdit && (
+        {canEdit && !editing && (
           <button className="btn ghost sm" onClick={addModule} disabled={saveState === "saving"}>
             <Icon name="plus" size={15} /> Add module
           </button>
         )}
-        {editing && (
-          <>
+      </p>
+      <EditingTools active={editing} title="Calendar changes">
+        <div className="cal-toolbar">
             <button className="btn primary sm" onClick={saveEdits} disabled={saveState === "saving"}>
               <Icon name="check" size={15} /> {saveState === "saving" ? "Saving…" : "Save changes"}
             </button>
             <button className="btn ghost sm" onClick={() => setEditing(false)} disabled={saveState === "saving"}>
               <Icon name="close" size={15} /> Cancel
             </button>
-          </>
-        )}
+        </div>
+        {saveState === "error" && <p role="alert" className="cal-save-note err">Save failed: {saveError}</p>}
+      </EditingTools>
+      <EditingTools active={editing} title="Structure">
+        <button className="btn ghost sm" onClick={addModule} disabled={saveState === "saving"}>
+          <Icon name="plus" size={15} /> Add module
+        </button>
+        <p className="muted">Select a module or Milestones tab to edit its rows on the page.</p>
+      </EditingTools>
         {saveState === "saved" && !editing && (
           <span className="cal-save-note ok">
             <Icon name="checkCircle" size={15} /> Calendar saved
           </span>
         )}
-        {saveState === "error" && <span className="cal-save-note err">Save failed: {saveError}</span>}
-      </p>
+        {saveState === "error" && !editing && <p role="alert" className="cal-save-note err">Save failed: {saveError}</p>}
 
-      {(editing ? draft.modules : MODULES).map((m, i) => (
-        <div key={m.id}>
+      <div className="tabs calendar-tabs" role="tablist" aria-label="Training calendar sections">
+        {calendarTabs.map((tab, index) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            id={`calendar-tab-${tab.id}`}
+            aria-controls={`calendar-panel-${tab.id}`}
+            aria-selected={activeTab === tab.id}
+            tabIndex={activeTab === tab.id ? 0 : -1}
+            className={`tab${activeTab === tab.id ? " active" : ""}`}
+            title={tab.title}
+            onClick={() => setSelectedTab(tab.id)}
+            onKeyDown={(event) => {
+              let nextIndex = index;
+              if (event.key === "ArrowRight") nextIndex = (index + 1) % calendarTabs.length;
+              else if (event.key === "ArrowLeft") nextIndex = (index + calendarTabs.length - 1) % calendarTabs.length;
+              else if (event.key === "Home") nextIndex = 0;
+              else if (event.key === "End") nextIndex = calendarTabs.length - 1;
+              else return;
+              event.preventDefault();
+              setSelectedTab(calendarTabs[nextIndex].id);
+              document.getElementById(`calendar-tab-${calendarTabs[nextIndex].id}`)?.focus();
+            }}
+          >
+            <Icon name={tab.icon} size={15} /> {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {calendarModules.map((m, i) => (
+        <section key={m.id} role="tabpanel" id={`calendar-panel-${m.id}`}
+          aria-labelledby={`calendar-tab-${m.id}`} hidden={activeTab !== m.id}>
           <h2 className="section-title">
             <span className="ico">
               <Icon name={m.icon} size={20} />
@@ -579,15 +638,17 @@ export function CalendarPage({
             </tbody>
           </table>
           {editing && (
-            <p className="cal-add-row">
+            <EditingTools active={activeTab === m.id} title={`Module ${i + 1} rows`}>
               <button className="btn ghost sm" onClick={() => addUnitRow(i)} title="Add a new unit standard row to this module">
                 <Icon name="plus" size={15} /> Add row
               </button>
-            </p>
+            </EditingTools>
           )}
-        </div>
+        </section>
       ))}
 
+      <section role="tabpanel" id="calendar-panel-milestones"
+        aria-labelledby="calendar-tab-milestones" hidden={activeTab !== "milestones"}>
       <h2 className="section-title">
         <span className="ico">
           <Icon name="certificate" size={20} />
@@ -686,12 +747,13 @@ export function CalendarPage({
         </tbody>
       </table>
       {editing && (
-        <p className="cal-add-row">
+        <EditingTools active={activeTab === "milestones"} title="Milestone rows">
           <button className="btn ghost sm" onClick={addMilestoneRow} title="Add a new milestone row">
             <Icon name="plus" size={15} /> Add row
           </button>
-        </p>
+        </EditingTools>
       )}
-    </>
+      </section>
+    </section>
   );
 }

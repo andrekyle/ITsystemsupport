@@ -451,20 +451,20 @@ export function TokenGauge() {
                   </span>
                   <span className="token-num">{fmtTokens(totals.total)}</span>
                   <span className="token-sub">
-                    {totals.requests} req · ≈{usd(totals.costUSD)}
+                    {totals.requests} requests · ≈{usd(totals.costUSD)}
                   </span>
                 </button>
                 {open && (
                   <div className="token-units">
                     {units.map(([us, t]) => (
                       <div key={us || "?"} className="token-unit-row">
-                        <span className="token-unit-name">{us ? usTitle(us) : "Unknown unit"}</span>
+                        <span className="token-unit-name" title={us ? usTitle(us) : "Unknown unit"}>{us ? usTitle(us) : "Unknown unit"}</span>
                         <span className="token-bar bar">
                           <span style={{ width: `${totals.total ? Math.max(2, Math.round((t.total / totals.total) * 100)) : 0}%` }} />
                         </span>
                         <span className="token-num">{fmtTokens(t.total)}</span>
                         <span className="token-sub">
-                          {t.requests} req · {fmtTokens(t.prompt)} in / {fmtTokens(t.completion)} out
+                          {t.requests} requests · {fmtTokens(t.prompt)} in / {fmtTokens(t.completion)} out
                         </span>
                       </div>
                     ))}
@@ -550,29 +550,29 @@ export function TokenGauge() {
             {/* ——— headline metrics ——— */}
             <div className="oa-metrics">
               <div className="oa-metric">
-                <div className="oa-metric-lbl">Total spend</div>
+                <div className="oa-metric-lbl"><Icon name="chart" size={15} />Total spend</div>
                 <div className="oa-metric-num">
                   {records ? `≈${usd(monthTotals.costUSD)}` : "…"}
                 </div>
               </div>
               <div className="oa-metric">
-                <div className="oa-metric-lbl">Total tokens</div>
+                <div className="oa-metric-lbl"><Icon name="chip" size={15} />Total tokens</div>
                 <div className="oa-metric-num">
                   {records ? monthTotals.total.toLocaleString("en-ZA") : "…"}
                 </div>
               </div>
               <div className="oa-metric">
-                <div className="oa-metric-lbl">Requests</div>
+                <div className="oa-metric-lbl"><Icon name="chat" size={15} />Requests</div>
                 <div className="oa-metric-num">{records ? monthTotals.requests : "…"}</div>
               </div>
               <div className="oa-metric">
-                <div className="oa-metric-lbl">Input / output</div>
+                <div className="oa-metric-lbl"><Icon name="trend" size={15} />Input / output</div>
                 <div className="oa-metric-num oa-metric-sm">
                   {records ? `${fmtTokens(monthTotals.prompt)} / ${fmtTokens(monthTotals.completion)}` : "…"}
                 </div>
               </div>
               <div className="oa-metric">
-                <div className="oa-metric-lbl">All time</div>
+                <div className="oa-metric-lbl"><Icon name="clock" size={15} />All time</div>
                 <div className="oa-metric-num oa-metric-sm">
                   {allTimeTotals ? `${fmtTokens(allTimeTotals.total)} tok · ≈${usd(allTimeTotals.costUSD)}` : "—"}
                 </div>

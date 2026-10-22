@@ -4,12 +4,12 @@ import { SlideEditHistory } from "../src/lib/slideEditHistory.ts";
 const history = new SlideEditHistory();
 assert.equal(history.undo(), undefined);
 assert.equal(history.redo(), undefined);
-for (let i = 0; i < 12; i++) history.record({ field: 0, before: String(i), after: String(i + 1) });
-assert.equal(history.undoCount, 10);
-for (let i = 11; i >= 2; i--) assert.equal(history.undo()?.before, String(i));
-assert.equal(history.undo(), undefined, "Older edits must fall outside the ten-edit limit");
-assert.equal(history.redoCount, 10);
-for (let i = 3; i <= 12; i++) assert.equal(history.redo()?.after, String(i));
+for (let i = 0; i < 22; i++) history.record({ field: 0, before: String(i), after: String(i + 1) });
+assert.equal(history.undoCount, 20);
+for (let i = 21; i >= 2; i--) assert.equal(history.undo()?.before, String(i));
+assert.equal(history.undo(), undefined, "Older edits must fall outside the twenty-edit limit");
+assert.equal(history.redoCount, 20);
+for (let i = 3; i <= 22; i++) assert.equal(history.redo()?.after, String(i));
 assert.equal(history.redo(), undefined);
 
 history.undo();

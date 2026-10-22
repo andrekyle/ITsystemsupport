@@ -2,12 +2,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FluentProvider, webDarkTheme, webLightTheme } from "@fluentui/react-components";
 import type { Profile, Route } from "./types";
 import type { Theme } from "./store";
-import { getSession, getTheme, loadProfiles, setAccountAdmin, setAccountEmail, setSession, setTheme, touchLastOnline, updateProfile, useProgress } from "./store";
+import { getSession, getTheme, loadProfiles, setAccountAdmin, setAccountEmail, setSession, setTheme, THEME_CHANGE_EVENT, touchLastOnline, updateProfile, useProgress } from "./store";
 import { SignIn } from "./components/SignIn";
 import { CloudAuth, ResetPassword } from "./components/CloudAuth";
 import { Header } from "./components/Header";
 import { Sidebar } from "./components/Sidebar";
-import { Dashboard, ProgressPage } from "./pages/Dashboard";
+import { EditingProvider } from "./components/EditingSidebar";
+import { Dashboard, DiscoveryDashboard, ProgressPage } from "./pages/Dashboard";
 import { CoursePage, ModulePage, UnitPage } from "./pages/Course";
 import { AssessmentsPage, CalendarPage, DeliverablesPage, ResourcesPage } from "./pages/InfoPages";
 import { PoePage } from "./pages/Poe";
@@ -17,28 +18,31 @@ import { SectionDPage } from "./pages/Checklist";
 import { AttendancePage } from "./pages/Attendance";
 import { CompliancePage } from "./pages/Compliance";
 import { AnalyticsPage } from "./pages/Analytics";
+import { AdminDashboardPage } from "./pages/AdminDashboard";
 import { CommunityPage } from "./pages/Community";
 import { MemoriesPage } from "./pages/Memories";
 import { ChatPage } from "./pages/Chat";
 import { FormsPage } from "./pages/Forms";
 import { TrackerReportPage } from "./pages/TrackerReport";
 import { ReportsPage } from "./pages/Reports";
-import { HowToPage } from "./pages/HowTo";
 import { VotingPage } from "./pages/Voting";
 import { OnboardingPage } from "./pages/Onboarding";
 import { cloudEnabled, supabase } from "./lib/supabase";
-import { installSync, startSync, stopSync, wipeLocalData } from "./lib/sync";
+import { flushPendingCloudWrites, installSync, startSync, stopSync, wipeLocalData } from "./lib/sync";
 import { logAudit } from "./lib/audit";
 import { Icon } from "./icons";
 import { authTenant, TENANT, TENANT_ID } from "./lib/tenant";
 import { startPresence } from "./lib/presence";
+import { showAppDialog } from "./lib/dialogs";
+import { profileMatchesCloudIdentity, resolveCloudProfile } from "./lib/cloudProfile";
 
 // mirror every itss.* localStorage write to the cloud (no-op until signed in)
 installSync();
 
 const ROUTE_KEY = "itss.route";
-const VALID_PAGES = new Set([
+const VALID_PAGES = new Set<Route["page"]>([
   "dashboard",
+  "adminDashboard",
   "course",
   "module",
   "unit",
@@ -62,14 +66,43 @@ const VALID_PAGES = new Set([
   "forms",
   "trackerReport",
   "reports",
-  "howto",
   "onboarding",
 ]);
 
-function loadRoute(): Route {
+function parseRoute(value: unknown): Route | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const candidate = value as Record<string, unknown>;
+  if (typeof candidate.page !== "string" || !VALID_PAGES.has(candidate.page as Route["page"])) return null;
+  return {
+    page: candidate.page as Route["page"],
+    ...(typeof candidate.moduleId === "string" ? { moduleId: candidate.moduleId } : {}),
+    ...(typeof candidate.unitId === "string" ? { unitId: candidate.unitId } : {}),
+    ...(typeof candidate.studentId === "string" ? { studentId: candidate.studentId } : {}),
+    ...(typeof candidate.packId === "string" ? { packId: candidate.packId } : {}),
+  };
+}
+
+function routeFromUrl(): Route | null {
   try {
-    const saved = JSON.parse(localStorage.getItem(ROUTE_KEY) || "null");
-    if (saved && VALID_PAGES.has(saved.page)) return saved as Route;
+    const encoded = new URLSearchParams(window.location.search).get("itssRoute");
+    return encoded ? parseRoute(JSON.parse(encoded)) : null;
+  } catch {
+    return null;
+  }
+}
+
+function routeUrl(route: Route): string {
+  const url = new URL(window.location.href);
+  url.searchParams.set("itssRoute", JSON.stringify(route));
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function loadRoute(): Route {
+  const fromUrl = routeFromUrl();
+  if (fromUrl) return fromUrl;
+  try {
+    const saved = parseRoute(JSON.parse(localStorage.getItem(ROUTE_KEY) || "null"));
+    if (saved) return saved;
   } catch {
     /* fall through to default */
   }
@@ -99,16 +132,17 @@ function Shell({
   // in-app navigation pushes a browser history entry so back/forward work;
   // on mobile the navigation drawer closes so the destination page is visible
   const navigate = useCallback((r: Route) => {
-    window.history.pushState(r, "");
+    window.history.pushState(r, "", routeUrl(r));
     setRoute(r);
     if (window.innerWidth < MOBILE_BP) setCollapsed(true);
   }, []);
   useEffect(() => {
     // seed the current history entry with the initial route
-    window.history.replaceState(loadRoute(), "");
+    const initialRoute = loadRoute();
+    window.history.replaceState(initialRoute, "", routeUrl(initialRoute));
     const onPop = (e: PopStateEvent) => {
-      const r = e.state as Route | null;
-      if (r && VALID_PAGES.has(r.page)) setRoute(r);
+      const r = parseRoute(e.state) ?? routeFromUrl();
+      if (r) setRoute(r);
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -133,6 +167,7 @@ function Shell({
         onOpenUnit={(us) => navigate({ page: "unit", unitId: us })}
         navigate={navigate}
       />
+      <EditingProvider>
       <div className="body">
         <Sidebar
           collapsed={collapsed}
@@ -150,8 +185,13 @@ function Shell({
         )}
         <main className="content">
           <div className="content-inner">
+            {route.page === "adminDashboard" && profile.role === "Super User" && <AdminDashboardPage profile={profile} navigate={navigate} />}
             {route.page === "dashboard" && (
-              <Dashboard profile={profile} progress={state} navigate={navigate} />
+              TENANT_ID === "discovery" ? (
+                <DiscoveryDashboard profile={profile} progress={state} navigate={navigate} />
+              ) : (
+                <Dashboard profile={profile} progress={state} navigate={navigate} />
+              )
             )}
             {route.page === "course" && <CoursePage progress={state} navigate={navigate} profile={profile} />}
             {route.page === "module" && route.moduleId && (
@@ -207,7 +247,6 @@ function Shell({
             {route.page === "reports" && profile.role === "Super User" && (
               <ReportsPage profile={profile} />
             )}
-            {route.page === "howto" && <HowToPage navigate={navigate} />}
             {route.page === "onboarding" && (
               <OnboardingPage profile={profile} route={route} navigate={navigate} />
             )}
@@ -215,6 +254,7 @@ function Shell({
           </div>
         </main>
       </div>
+      </EditingProvider>
       {profile.role === "Super User" && route.page !== "reports" && (
         <button
           type="button"
@@ -251,6 +291,7 @@ export default function App() {
         return;
       }
       if (session?.user) {
+        if (!recovering.current && !syncReady.current) setCloudState("loading");
         const accountTenant = authTenant(session.user);
         if (!accountTenant) {
           // Accounts created before multi-tenant support have no tenant in
@@ -293,6 +334,9 @@ export default function App() {
         setAccountEmail(session.user.email);
         syncedEmail.current = session.user.email?.trim().toLowerCase() ?? null;
         if (syncedUser.current !== session.user.id) {
+          syncReady.current = false;
+          setAccountAdmin(false);
+          if (!recovering.current) setCloudState("loading");
           syncedUser.current = session.user.id;
           const authUserId = session.user.id;
           // Supabase warns against starting further client operations directly
@@ -398,15 +442,56 @@ function LocalApp({
   cloudIdentity: { userId: string; email: string | null } | null;
 }) {
   const [profile, setProfile] = useState<Profile | null>(() => {
+    if (cloudIdentity) return resolveCloudProfile(loadProfiles(), cloudIdentity);
     const id = getSession();
     return id ? loadProfiles().find((p) => p.id === id) ?? null : null;
   });
   const [theme, setThemeState] = useState<Theme>(getTheme);
   const fluentTheme = theme === "dark" ? webDarkTheme : webLightTheme;
 
+  // Supabase has already verified the account password. Open the matching
+  // in-app profile immediately instead of showing the legacy device profile
+  // picker and requiring a second sign-in click.
+  useEffect(() => {
+    if (profile || !cloudIdentity) return;
+    const openCloudProfile = () => {
+      const profiles = loadProfiles();
+      const match = resolveCloudProfile(profiles, cloudIdentity);
+      if (!match) return;
+      setSession(match.id);
+      if (match.cloudUserId !== cloudIdentity.userId) {
+        const patched = updateProfile(match.id, { cloudUserId: cloudIdentity.userId });
+        setProfile(patched ?? match);
+      } else {
+        setProfile(match);
+      }
+    };
+    openCloudProfile();
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.key === "itss.profiles") openCloudProfile();
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", openCloudProfile);
+    const timer = window.setInterval(openCloudProfile, 1000);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", openCloudProfile);
+      window.clearInterval(timer);
+    };
+  }, [cloudIdentity, profile]);
+
   useEffect(() => {
     setTheme(theme);
   }, [theme]);
+
+  useEffect(() => {
+    const syncTheme = (event: Event) => {
+      const nextTheme = (event as CustomEvent<Theme>).detail;
+      if (nextTheme === "light" || nextTheme === "dark") setThemeState(nextTheme);
+    };
+    window.addEventListener(THEME_CHANGE_EVENT, syncTheme);
+    return () => window.removeEventListener(THEME_CHANGE_EVENT, syncTheme);
+  }, []);
 
   useEffect(() => {
     if (!profile) return;
@@ -442,6 +527,10 @@ function LocalApp({
       <SignIn
         cloudIdentity={cloudIdentity}
         onSignIn={async (p) => {
+          if (cloudIdentity && !profileMatchesCloudIdentity(p, cloudIdentity)) {
+            await showAppDialog("This profile does not belong to the signed-in account. Use your own learner profile or ask your facilitator to check its email address.");
+            return;
+          }
           setSession(p.id);
           // Stamp our Supabase auth uid onto this profile so others can address
           // us in chat as soon as we sign in — the id syncs to cloud storage
@@ -471,10 +560,38 @@ function LocalApp({
       profile={profile}
       theme={theme}
       onToggleTheme={() => setThemeState((t) => (t === "dark" ? "light" : "dark"))}
-      onSignOut={() => {
-        logAudit(profile, "auth.signout", "Signed out");
-        setSession(null);
-        setProfile(null);
+      onSignOut={async () => {
+        if (supabase) {
+          // Commit a focused field's blur handler, then ensure recent debounced
+          // edits reach the cloud before SIGNED_OUT wipes this device's copy.
+          const active = document.activeElement;
+          if (active instanceof HTMLElement) active.blur();
+          await new Promise<void>(resolve => window.setTimeout(resolve, 0));
+          try {
+            await flushPendingCloudWrites();
+          } catch (error) {
+            await showAppDialog(error instanceof Error
+              ? `${error.message} You have not been signed out; try again when your connection is stable.`
+              : "Your latest work could not be saved. You have not been signed out.");
+            return;
+          }
+          logAudit(profile, "auth.signout", "Signed out");
+          // The audit write is best-effort and must not put learner data back
+          // at risk after the guarded flush above.
+          await flushPendingCloudWrites().catch(() => {});
+          setSession(null);
+          const { error } = await supabase.auth.signOut();
+          if (error) {
+            // Keep the current profile open when the cloud session could not
+            // be ended; otherwise the auto-profile resolver would reopen it.
+            setSession(profile.id);
+            await showAppDialog("Sign out failed. Check your connection and try again.");
+          }
+        } else {
+          logAudit(profile, "auth.signout", "Signed out");
+          setSession(null);
+          setProfile(null);
+        }
       }}
       onUpdateProfile={(patch) => {
         const updated = updateProfile(profile.id, patch);

@@ -17,6 +17,8 @@ export function Select({
   disabled = false,
   placeholder = "",
   buttonLabel,
+  id,
+  required = false,
 }: {
   value: string;
   options: SelectOption[];
@@ -26,9 +28,12 @@ export function Select({
   disabled?: boolean;
   placeholder?: string;
   buttonLabel?: string;
+  id?: string;
+  required?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
+  const [invalid, setInvalid] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const listId = useId();
@@ -58,6 +63,7 @@ export function Select({
   };
 
   const pick = (v: string) => {
+    setInvalid(false);
     onChange(v);
     setOpen(false);
   };
@@ -96,6 +102,7 @@ export function Select({
   return (
     <div className={`nice-select${className ? ` ${className}` : ""}`} ref={rootRef}>
       <button
+        id={id}
         type="button"
         disabled={disabled}
         className={`nice-select-btn${open ? " open" : ""}`}
@@ -103,6 +110,9 @@ export function Select({
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
         aria-label={ariaLabel}
+        aria-required={required || undefined}
+        aria-invalid={invalid || undefined}
+        aria-describedby={invalid ? `${listId}-error` : undefined}
         onClick={() => (open ? setOpen(false) : openPanel())}
         onKeyDown={onKeyDown}
       >
@@ -111,6 +121,23 @@ export function Select({
           <Icon name="chevronDown" size={14} />
         </span>
       </button>
+      {required && (
+        <input
+          tabIndex={-1}
+          aria-hidden="true"
+          value={value}
+          required
+          disabled={disabled}
+          onChange={() => {}}
+          onInvalid={(event) => {
+            event.preventDefault();
+            setInvalid(true);
+            rootRef.current?.querySelector<HTMLButtonElement>(".nice-select-btn")?.focus();
+          }}
+          style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none", padding: 0, border: 0 }}
+        />
+      )}
+      {invalid && <span id={`${listId}-error`} role="alert">Please select an option.</span>}
       {open && !disabled && (
         <div className="nice-select-panel" role="listbox" id={listId} ref={panelRef}>
           {options.map((o, i) => (
