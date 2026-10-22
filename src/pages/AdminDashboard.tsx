@@ -5,7 +5,6 @@ import { TENANT } from "../lib/tenant";
 import { cloudEnabled } from "../lib/supabase";
 import { dedupeProfiles, fetchCloudLearnerData, mergeProfileWithCloud, remoteOnlyProfiles, type CloudLearnerData } from "../lib/directory";
 import { analyse } from "./Analytics";
-import { Icon } from "../icons";
 import "./admin-dashboard.css";
 
 const daysAgo = (date?: string) => date && Number.isFinite(Date.parse(date))
@@ -91,7 +90,7 @@ export function AdminDashboardPage({ profile, navigate }: { profile: Profile; na
     <p className="admin-data-note" role={error ? "alert" : undefined}>{error ? "Cloud data could not be refreshed. Showing available local or previously loaded data." : cloudEnabled ? `Tenant data · ${updated ? `Updated ${updated.toLocaleTimeString()}` : "Loading cloud data…"}` : "Local data on this device"}</p>
     <div className="admin-tiles">{tiles.map((tile) => <button type="button" className="admin-tile" key={tile.label} onClick={() => navigate({ page: tile.page })}>
       <span className="admin-tile-copy">
-        <span className="admin-tile-label"><span className="admin-tile-icon"><Icon name={tile.icon} size={15} /></span>{tile.label}</span>
+        <span className="admin-tile-label">{tile.label}</span>
         <small>{tile.detail}</small>
       </span>
       <strong className="admin-tile-value">{tile.value}</strong>
