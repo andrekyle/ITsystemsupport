@@ -4886,21 +4886,94 @@ textarea:focus {
 }
 [data-theme="light"] .learner-dashboard .bar { background: #e8edf5; }
 [data-theme="light"] .learner-dashboard .bar:not(.green) > span { background: linear-gradient(90deg, #1473f9, #39a4ff); }
+
+/* Keep the learner KPI board connected in dark mode too. */
+[data-theme="dark"] .learner-dashboard .dashboard-stats {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid #343a43;
+  border-radius: 22px;
+  background: #202327;
+  box-shadow: none;
+}
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card {
+  display: grid;
+  grid-template-columns: 27px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: start;
+  align-items: center;
+  column-gap: 9px;
+  min-width: 0;
+  min-height: 128px;
+  padding: 20px 17px;
+  border: 0;
+  border-right: 1px solid #343a43;
+  border-radius: 0;
+  background: #202327;
+  box-shadow: none;
+}
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:last-child { border-right: 0; }
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card.clickable:hover { background: #272b30; }
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card > div { display: contents; }
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card .ico {
+  grid-column: 1;
+  grid-row: 1;
+  align-items: center;
+  justify-content: center;
+  width: 27px;
+  height: 27px;
+  margin: 0;
+  border-radius: 50%;
+  background: #1688c9;
+  color: #fff;
+}
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card .ico svg { width: 17px; height: 17px; }
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(2) .ico { background: #17946c; }
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(3) .ico { background: #e87650; }
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(4) .ico { background: #d72c70; }
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(5) .ico { background: #1688c9; }
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card .lbl {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+  color: #d6dbe3;
+  font-size: 12px;
+  font-weight: 600;
+}
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card .num {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin-top: 17px;
+  color: #f5f7fa;
+  font-size: 29px;
+  font-weight: 700;
+}
 @media (max-width: 1250px) {
   [data-theme="light"] .learner-dashboard .dashboard-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card:nth-child(3) { border-right: 0; }
   [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card:nth-child(-n+3) { border-bottom: 1px solid #edf1f6; }
+  [data-theme="dark"] .learner-dashboard .dashboard-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  [data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(3) { border-right: 0; }
+  [data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(-n+3) { border-bottom: 1px solid #343a43; }
 }
 @media (max-width: 700px) {
   [data-theme="light"] .learner-dashboard .dashboard-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card:nth-child(3) { border-right: 1px solid #edf1f6; }
   [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card:nth-child(2n) { border-right: 0; }
   [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card:nth-child(-n+4) { border-bottom: 1px solid #edf1f6; }
+  [data-theme="dark"] .learner-dashboard .dashboard-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  [data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(3) { border-right: 1px solid #343a43; }
+  [data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(2n) { border-right: 0; }
+  [data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(-n+4) { border-bottom: 1px solid #343a43; }
 }
 @media (max-width: 430px) {
   [data-theme="light"] .learner-dashboard .dashboard-stats { grid-template-columns: 1fr; }
   [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card { border-right: 0; border-bottom: 1px solid #edf1f6; }
   [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card:last-child { border-bottom: 0; }
+  [data-theme="dark"] .learner-dashboard .dashboard-stats { grid-template-columns: 1fr; }
+  [data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card { border-right: 0; border-bottom: 1px solid #343a43; }
+  [data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:last-child { border-bottom: 0; }
 }
 
 .tab {
