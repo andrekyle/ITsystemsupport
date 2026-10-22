@@ -5,7 +5,7 @@
  *  - static assets (js/css/fonts/images/pdf): stale-while-revalidate
  *  - never caches Supabase or other cross-origin API calls
  */
-const VERSION = "itss-v16";
+const VERSION = "itss-v17";
 const SHELL = "/";
 
 self.addEventListener("install", (event) => {
@@ -75,4 +75,4 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
-// v16 resolves existing profiles from their verified account ownership.
+// v17 resolves verified profiles and preserves course content during saves.
