@@ -234,6 +234,38 @@ export async function flushValue(
   if (requireCloud && pendingFor(key)) throw new Error("More edits were made while saving. Click Save to cloud again to save the latest changes.");
 }
 
+/** Save every edit queued for the signed-in account before an operation that
+ * removes its local data (notably sign-out).  A failed push deliberately
+ * rejects so the caller can keep the local copy instead of losing work. */
+export async function flushPendingCloudWrites(): Promise<void> {
+  if (!supabase || !userId) return;
+
+  // Let in-flight IndexedDB writes finish before taking the queue snapshot.
+  await waitForPendingWrites();
+  const owner = userId;
+  const keys = new Set<string>([
+    ...timers.keys(),
+    ...pendingWrites()
+      .filter(write => write.userId === owner)
+      .map(write => write.key),
+  ]);
+
+  for (const key of keys) {
+    const timer = timers.get(key);
+    if (timer) clearTimeout(timer);
+    timers.delete(key);
+    const pending = pendingWrites().find(write => write.userId === owner && write.key === key);
+    const value = pending ? pending.value : localStorage.getItem(key);
+    const saved = await pushKey(key, value);
+    if (!saved || pendingWrites().some(write => write.userId === owner && write.key === key)) {
+      const detail = pushErrors.get(key);
+      throw new Error(detail
+        ? `Cloud save failed: ${detail}. Your work is still on this device.`
+        : "Cloud save failed. Your work is still on this device.");
+    }
+  }
+}
+
 /**
  * Patch localStorage so every write/removal of a syncable key is mirrored to
  * the cloud. Installed once at startup; harmless in local-only mode because

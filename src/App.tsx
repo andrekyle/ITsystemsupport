@@ -28,7 +28,7 @@ import { ReportsPage } from "./pages/Reports";
 import { VotingPage } from "./pages/Voting";
 import { OnboardingPage } from "./pages/Onboarding";
 import { cloudEnabled, supabase } from "./lib/supabase";
-import { installSync, startSync, stopSync, wipeLocalData } from "./lib/sync";
+import { flushPendingCloudWrites, installSync, startSync, stopSync, wipeLocalData } from "./lib/sync";
 import { logAudit } from "./lib/audit";
 import { Icon } from "./icons";
 import { authTenant, TENANT, TENANT_ID } from "./lib/tenant";
@@ -561,9 +561,25 @@ function LocalApp({
       theme={theme}
       onToggleTheme={() => setThemeState((t) => (t === "dark" ? "light" : "dark"))}
       onSignOut={async () => {
-        logAudit(profile, "auth.signout", "Signed out");
-        setSession(null);
         if (supabase) {
+          // Commit a focused field's blur handler, then ensure recent debounced
+          // edits reach the cloud before SIGNED_OUT wipes this device's copy.
+          const active = document.activeElement;
+          if (active instanceof HTMLElement) active.blur();
+          await new Promise<void>(resolve => window.setTimeout(resolve, 0));
+          try {
+            await flushPendingCloudWrites();
+          } catch (error) {
+            await showAppDialog(error instanceof Error
+              ? `${error.message} You have not been signed out; try again when your connection is stable.`
+              : "Your latest work could not be saved. You have not been signed out.");
+            return;
+          }
+          logAudit(profile, "auth.signout", "Signed out");
+          // The audit write is best-effort and must not put learner data back
+          // at risk after the guarded flush above.
+          await flushPendingCloudWrites().catch(() => {});
+          setSession(null);
           const { error } = await supabase.auth.signOut();
           if (error) {
             // Keep the current profile open when the cloud session could not
@@ -572,6 +588,8 @@ function LocalApp({
             await showAppDialog("Sign out failed. Check your connection and try again.");
           }
         } else {
+          logAudit(profile, "auth.signout", "Signed out");
+          setSession(null);
           setProfile(null);
         }
       }}
