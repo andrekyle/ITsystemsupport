@@ -3885,7 +3885,6 @@ export function UnitPage({
             const qAllCorrect =
               hasSlideQuiz && qAllAnswered && qAnswers.every((a, i) => a === correctQuizAnswers[i]);
             const quizAttemptsExhausted = maxQuizAttempts !== null && quizAttempts >= maxQuizAttempts && !qAllCorrect;
-            const quizPassed = !hasSlideQuiz || qAllCorrect || isPrivileged;
             const setAnswer = (qi: number, oi: number) => {
               setLessonQuizAnswers((prev) => {
                 const cur = prev[si]?.slice() ?? slideQuiz.map(() => -1);
@@ -3898,7 +3897,7 @@ export function UnitPage({
               <div className="lesson-slide-quiz">
                 <div className="lesson-slide-quiz-title">
                   <Icon name="checkCircle" size={16} />
-                  {editingQuiz ? "Edit questions" : slideQuiz.length === 1 ? "Answer the question to unlock Next" : `Answer all ${slideQuiz.length} to unlock Next`}
+                  {editingQuiz ? "Edit questions" : "Practise the questions — you can move to the next slide at any time"}
                   {isPrivileged && !editingQuiz && (
                     <button
                       type="button"
@@ -3999,11 +3998,13 @@ export function UnitPage({
                   {qChecked && (
                     <span className={`lesson-quiz-status${qAllCorrect ? " ok" : " bad"}`}>
                       {qAllCorrect
-                        ? `All ${slideQuiz.length} correct — Next unlocked.`
-                        : `${qAnswers.filter((a, i) => a === correctQuizAnswers[i]).length} / ${slideQuiz.length} correct — fix the wrong answers and check again.`}
+                        ? `All ${slideQuiz.length} correct.`
+                        : quizAttemptsExhausted
+                          ? `${qAnswers.filter((a, i) => a === correctQuizAnswers[i]).length} / ${slideQuiz.length} correct — you can continue to the next slide.`
+                          : `${qAnswers.filter((a, i) => a === correctQuizAnswers[i]).length} / ${slideQuiz.length} correct — try again or continue to the next slide.`}
                     </span>
                   )}
-                  {quizAttemptsExhausted && <span className="lesson-quiz-status bad">No retries remaining.</span>}
+                  {quizAttemptsExhausted && <span className="lesson-quiz-status bad">No retries remaining. You can still continue.</span>}
                 </div>}
               </div>
             ) : null;
@@ -4739,12 +4740,9 @@ export function UnitPage({
                     <button
                       type="button"
                       className="btn ghost sm"
-                      disabled={!quizPassed}
                       onClick={() => (isLast ? setTab("exercises") : go(si + 1))}
                       title={
-                        !quizPassed
-                          ? "Answer this section's questions to unlock Next"
-                          : isLast
+                        isLast
                           ? "Continue to the exercises"
                           : "Next section"
                       }
@@ -4896,12 +4894,12 @@ export function UnitPage({
                   ))}
                 </span>
                 {!isLast ? (
-                  <button className="btn" onClick={() => go(si + 1)} disabled={!quizPassed}>
+                  <button className="btn" onClick={() => go(si + 1)}>
                     Next
                     <Icon name="chevronRight" size={16} />
                   </button>
                 ) : (
-                  <button className="btn" onClick={() => setTab("exercises")} disabled={!quizPassed}>
+                  <button className="btn" onClick={() => setTab("exercises")}>
                     Finish lesson
                     <Icon name="checkCircle" size={16} />
                   </button>

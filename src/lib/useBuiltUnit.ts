@@ -1,9 +1,9 @@
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { builtUnitKey, readBuiltUnit, unitPackValue, type BuiltUnitVersion } from "./builtUnits";
 import { supabase } from "./supabase";
-import { loadUnitPack, persistUnitPack, rememberUnitPack, unitPackSnapshot } from "./unitStorage";
-import { courseScopedUnit } from "./courseScope";
+import { forgetUnitPack, loadUnitPack, persistUnitPack, rememberUnitPack, unitPackSnapshot } from "./unitStorage";
 import { TENANT_ID } from "./tenant";
+import { watchSharedUnit } from "./sharedUnitRefresh";
 
 const subscribe = (listener: () => void) => {
   window.addEventListener("storage", listener);
@@ -11,7 +11,9 @@ const subscribe = (listener: () => void) => {
   return () => { window.removeEventListener("storage", listener); window.removeEventListener("unit-built", listener); };
 };
 export function useBuiltUnit(us: string) {
-  const snapshot = useSyncExternalStore(subscribe, () => unitPackSnapshot(builtUnitKey(us)), () => null);
+  const key = builtUnitKey(us);
+  const snapshot = useSyncExternalStore(subscribe, () => unitPackSnapshot(key), () => null);
+  useEffect(() => watchSharedUnit(key), [key]);
   return useMemo(() => snapshot ? readBuiltUnit(us) : undefined, [snapshot, us]);
 }
 export async function saveBuiltUnit(us: string, next: BuiltUnitVersion): Promise<void> {
@@ -41,23 +43,10 @@ export async function deleteBuiltUnit(us: string): Promise<void> {
     const { error } = await supabase.from("shared_state").delete().eq("tenant_id", TENANT_ID).eq("key", key);
     if (error) throw new Error(`The unit could not be deleted from the shared course: ${error.message}`);
   }
-  // Delete from IndexedDB
-  const database = await new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open("itss-unit-packs", 1);
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-  });
-  await new Promise<void>((resolve, reject) => {
-    const tx = database.transaction("packs", "readwrite");
-    tx.objectStore("packs").delete(key);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
+  forgetUnitPack(key);
   // Delete from localStorage
   try {
     Storage.prototype.removeItem.call(localStorage, key);
     Storage.prototype.removeItem.call(localStorage, `unitbuilder-save-probe.${us}`);
   } catch { /* optional cleanup */ }
-  // Notify listeners
-  window.dispatchEvent(new Event("unit-built"));
 }

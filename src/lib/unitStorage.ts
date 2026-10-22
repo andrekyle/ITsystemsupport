@@ -1,5 +1,5 @@
 /** Large generated packs belong in IndexedDB, not the small localStorage quota. */
-const cache = new Map<string, string>();
+const cache = new Map<string, string | null>();
 const pending = new Set<string>();
 const loads = new Map<string, Promise<void>>();
 let generation=0;
@@ -65,6 +65,17 @@ export function unitPackSnapshot(key:string):string|null {
 export function receiveUnitPack(key:string,value:string){
   rememberUnitPack(key,value);
   void persistUnitPack(key,value).catch(()=>{});
+}
+/** A deleted published unit must not reappear from an older device copy. */
+export function forgetUnitPack(key:string){
+  cache.set(key,null);
+  try { Storage.prototype.removeItem.call(localStorage,key); } catch { /* optional cleanup */ }
+  void db().then(database=>new Promise<void>((resolve,reject)=>{
+    const tx=database.transaction("packs","readwrite");
+    tx.objectStore("packs").delete(key);
+    tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+  })).catch(()=>{});
+  notify();
 }
 export async function storedUnitPacks():Promise<[string,string][]> {
   const database=await db();
