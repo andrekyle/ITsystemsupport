@@ -24,7 +24,7 @@ import { Select } from "./Select";
 import { cloudEnabled, supabase } from "../lib/supabase";
 import { fetchCloudDirectory } from "../lib/directory";
 import { ConfirmModal } from "./Modal";
-import { profileMatchesCloudIdentity, resolveCloudProfile } from "../lib/cloudProfile";
+import { isSuperUserIdentity, profileMatchesCloudIdentity, resolveCloudProfile } from "../lib/cloudProfile";
 
 type CloudIdentity = { userId: string; email: string | null };
 
@@ -100,6 +100,11 @@ export function SignIn({
     setCloudProfileError("");
     async function findAccountProfile() {
       try {
+        if (isSuperUserIdentity(identity)) {
+          const owner = resolveCloudProfile(loadProfiles(), identity);
+          if (owner && !cancelled) onSignIn(owner);
+          return;
+        }
         const directory = await fetchCloudDirectory();
         if (cancelled) return;
         if (!directory) {
@@ -119,7 +124,7 @@ export function SignIn({
         onSignIn(match);
       } catch (error) {
         if (!cancelled) {
-          console.error("Could not find the signed-in account's learner profile:", error);
+          console.error("Could not find the signed-in account's profile:", error);
           setCloudProfileError("We could not check the saved learner profiles. Please retry.");
         }
       } finally {
@@ -375,7 +380,7 @@ export function SignIn({
               ? "Required for first-time enrolment on the learnership. This information is saved to your profile and is visible to you, your facilitator and super users."
               : `${COURSE_META.title} · SAQA ID ${COURSE_META.saqaId} · NQF Level ${COURSE_META.nqfLevel}. Your progress is saved to your profile on this device.`}
         </p>
-        {checkingCloudProfile && <p role="status">Looking for your learner profile...</p>}
+        {checkingCloudProfile && <p role="status">Opening your account...</p>}
         {cloudProfileError && (
           <div role="alert">
             <p className="auth-error">{cloudProfileError}</p>

@@ -18,6 +18,18 @@ export function testCloudProfileResolution() {
   assert(resolveCloudProfile([{ ...legacy, enrolment: undefined }], { ...identity, email: null }) === null, "Missing emails must not match.");
   assert(resolveCloudProfile([legacy, { ...legacy, id: "duplicate" }], identity) === null, "Ambiguous email matches must not be selected.");
   assert(resolveCloudProfile([admin], { userId: "admin-auth", email: TENANT.superUserEmail })?.id === admin.id, "The designated admin retains access.");
+  const ownerIdentity = { userId: "admin-auth", email: ` ${TENANT.superUserEmail.toUpperCase()} ` };
+  const freshOwner = resolveCloudProfile([], ownerIdentity);
+  assert(freshOwner?.role === "Super User" && freshOwner.cloudUserId === ownerIdentity.userId, "The verified owner can sign in without a learner profile.");
+  assert(freshOwner?.id === resolveCloudProfile([], ownerIdentity)?.id, "The session-only owner id is stable across devices.");
+  assert(profileMatchesCloudIdentity(freshOwner!, ownerIdentity), "The owner fallback passes the account ownership check.");
+  const staleOwner = { ...admin, cloudUserId: "old-admin-auth" };
+  const repairedOwner = resolveCloudProfile([learner, staleOwner], ownerIdentity);
+  assert(repairedOwner?.id === admin.id && repairedOwner.cloudUserId === ownerIdentity.userId, "A stale owner link does not force learner enrolment or change the owner profile id.");
+  assert(resolveCloudProfile([admin, { ...admin, id: "duplicate-admin" }], ownerIdentity)?.id === admin.id, "Duplicate owner copies do not lock out the verified owner.");
+  assert(resolveCloudProfile([learner], ownerIdentity)?.id !== learner.id, "The owner fallback never opens an unrelated learner profile.");
+  assert(resolveCloudProfile([], identity) === null, "Learners still require their matching profile.");
+  assert(resolveCloudProfile([], { userId: "other-site-owner", email: TENANT.id === "investec" ? "ad4snell@gmail.com" : "andresnell29@gmail.com" }) === null, "The other site's owner cannot bootstrap a superuser here.");
   const seededLearner = { ...legacy, id: "facilitator-seeded-learner" };
   const directory = [seededLearner];
   const local = [admin];
