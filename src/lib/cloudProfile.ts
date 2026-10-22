@@ -57,3 +57,19 @@ export function resolveCloudProfile(profiles: Profile[], identity: CloudIdentity
   if (linked.length === 1) return linked[0];
   return matches.length === 1 ? matches[0] : null;
 }
+
+/** Use only with profiles read from this auth user's tenant-scoped database row.
+ * Row ownership survives email changes and old/missing cloudUserId fields. */
+export function resolveOwnedCloudProfile(profiles: Profile[], identity: CloudIdentity): Profile | null {
+  const matched = resolveCloudProfile(profiles, identity);
+  if (matched) return { ...matched, cloudUserId: identity.userId };
+  const eligible = profiles.filter(profile =>
+    profileMatchesCloudIdentity({ ...profile, cloudUserId: identity.userId }, identity)
+  );
+  const email = identity.email?.trim().toLowerCase();
+  const emailMatches = email ? eligible.filter(profile =>
+    profile.enrolment?.email?.trim().toLowerCase() === email || profile.name.trim().toLowerCase() === email
+  ) : [];
+  const profile = emailMatches.length === 1 ? emailMatches[0] : eligible.length === 1 ? eligible[0] : null;
+  return profile ? { ...profile, cloudUserId: identity.userId } : null;
+}

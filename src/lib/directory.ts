@@ -110,6 +110,21 @@ export function getCachedSuperUserAuthId(): string | undefined {
   return cachedSuperUid;
 }
 
+/** The authenticated account's own profiles, independent of directory deduplication. */
+export async function fetchAccountProfiles(authUserId: string): Promise<Profile[] | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase.from("app_state").select("value")
+    .eq("tenant_id", TENANT_ID).eq("user_id", authUserId).eq("key", "itss.profiles").maybeSingle();
+  if (error) return null;
+  if (!data?.value) return [];
+  try {
+    const profiles: unknown = JSON.parse(data.value);
+    return Array.isArray(profiles) ? profiles.filter((profile): profile is Profile =>
+      !!profile && typeof profile.id === "string" && typeof profile.name === "string" && typeof profile.role === "string"
+    ) : null;
+  } catch { return null; }
+}
+
 /**
  * Reads every account's synced profiles and POE document indexes so staff can
  * see users who sign in with their own email accounts. Requires the read-all

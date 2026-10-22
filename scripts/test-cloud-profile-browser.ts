@@ -1,6 +1,6 @@
 import type { Profile } from "../src/types";
 import { TENANT } from "../src/lib/tenant";
-import { profileMatchesCloudIdentity, resolveCloudProfile } from "../src/lib/cloudProfile";
+import { profileMatchesCloudIdentity, resolveCloudProfile, resolveOwnedCloudProfile } from "../src/lib/cloudProfile";
 
 export function testCloudProfileResolution() {
   const learner = { id: "learner-profile", name: "Learner", role: "Learner", cloudUserId: "learner-auth" } as Profile;
@@ -29,6 +29,14 @@ export function testCloudProfileResolution() {
   assert(resolveCloudProfile([admin, { ...admin, id: "duplicate-admin" }], ownerIdentity)?.id === admin.id, "Duplicate owner copies do not lock out the verified owner.");
   assert(resolveCloudProfile([learner], ownerIdentity)?.id !== learner.id, "The owner fallback never opens an unrelated learner profile.");
   assert(resolveCloudProfile([], identity) === null, "Learners still require their matching profile.");
+  const ownedLegacy = { ...learner, cloudUserId: undefined, enrolment: undefined };
+  assert(resolveOwnedCloudProfile([ownedLegacy], identity)?.id === learner.id, "An account's sole owned profile can sign in without legacy link fields.");
+  const staleLink = { ...learner, cloudUserId: "previous-auth-account", enrolment: { email: "old-address@example.test" } } as Profile;
+  const ownedMatch = resolveOwnedCloudProfile([staleLink], identity);
+  assert(ownedMatch?.id === learner.id && profileMatchesCloudIdentity(ownedMatch, identity), "Verified row ownership can repair outdated email and auth fields without changing the profile id.");
+  assert(resolveCloudProfile([staleLink], identity) === null, "Another account's directory profile cannot use the owned-row fallback.");
+  assert(resolveOwnedCloudProfile([ownedLegacy, { ...ownedLegacy, id: "other-owned" }], identity) === null, "Ambiguous owned profiles are never selected arbitrarily.");
+  assert(resolveOwnedCloudProfile([admin], identity) === null, "A learner cannot use row ownership to acquire a reserved superuser profile.");
   assert(resolveCloudProfile([], { userId: "other-site-owner", email: TENANT.id === "investec" ? "ad4snell@gmail.com" : "andresnell29@gmail.com" }) === null, "The other site's owner cannot bootstrap a superuser here.");
   const seededLearner = { ...legacy, id: "facilitator-seeded-learner" };
   const directory = [seededLearner];

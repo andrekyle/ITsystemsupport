@@ -22,9 +22,10 @@ import { EMPTY_ENROLMENT, EnrolmentForm } from "./EnrolmentForm";
 import { PasswordInput } from "./PasswordInput";
 import { Select } from "./Select";
 import { cloudEnabled, supabase } from "../lib/supabase";
-import { fetchCloudDirectory } from "../lib/directory";
+import { fetchAccountProfiles, fetchCloudDirectory } from "../lib/directory";
 import { ConfirmModal } from "./Modal";
-import { isSuperUserIdentity, profileMatchesCloudIdentity, resolveCloudProfile } from "../lib/cloudProfile";
+import { isSuperUserIdentity, profileMatchesCloudIdentity, resolveCloudProfile, resolveOwnedCloudProfile } from "../lib/cloudProfile";
+import { TENANT } from "../lib/tenant";
 
 type CloudIdentity = { userId: string; email: string | null };
 
@@ -105,6 +106,14 @@ export function SignIn({
           if (owner && !cancelled) onSignIn(owner);
           return;
         }
+        const ownedProfiles = await fetchAccountProfiles(identity.userId);
+        if (cancelled) return;
+        const owned = ownedProfiles ? resolveOwnedCloudProfile(ownedProfiles, identity) : null;
+        if (owned) {
+          adoptCloudProfile(owned, ownedProfiles ?? []);
+          onSignIn(owned);
+          return;
+        }
         const directory = await fetchCloudDirectory();
         if (cancelled) return;
         if (!directory) {
@@ -112,12 +121,18 @@ export function SignIn({
           return;
         }
         const local = loadProfiles();
-        const match = resolveCloudProfile(
-          [...directory.profiles.filter(p => !local.some(q => q.id === p.id)), ...local],
-          identity
-        );
+        const candidates = new Map(local.map(profile => [profile.id, profile]));
+        for (const profile of directory.profiles) {
+          const cached = candidates.get(profile.id);
+          if (!cached || (!profileMatchesCloudIdentity(cached, identity) && profileMatchesCloudIdentity(profile, identity))) {
+            candidates.set(profile.id, profile);
+          }
+        }
+        const match = resolveCloudProfile([...candidates.values()], identity);
         if (!match) {
-          setCloudProfileError("No unique profile matches your signed-in account. Ask your facilitator to check your learner profile's email and account link before creating another profile.");
+          setCloudProfileError((ownedProfiles?.length ?? 0) > 1
+            ? "This account has more than one saved profile. Your facilitator needs to confirm which profile holds your progress."
+            : "Your account is signed in, but its saved profile could not be linked. Your facilitator needs to check the profile's email or account ownership.");
           return;
         }
         adoptCloudProfile(match);
@@ -169,12 +184,14 @@ export function SignIn({
   /** Write a cloud-only profile into local storage so subsequent sign-ins,
    *  attendance registers and progress are attached to the same identity
    *  across devices. */
-  function adoptCloudProfile(p: Profile) {
+  function adoptCloudProfile(p: Profile, accountProfiles: Profile[] = []) {
     const existing = loadProfiles();
-    if (!existing.some((q) => q.id === p.id)) {
-      const merged = [...existing, p];
-      localStorage.setItem("itss.profiles", JSON.stringify(merged));
-    }
+    // A slow initial hydration must not replace an account's full profile
+    // list with just the person being opened.
+    const merged = new Map(accountProfiles.map(profile => [profile.id, profile]));
+    for (const profile of existing) merged.set(profile.id, profile);
+    merged.set(p.id, { ...merged.get(p.id), ...p });
+    localStorage.setItem("itss.profiles", JSON.stringify([...merged.values()]));
     setProfiles(loadProfiles());
   }
 
@@ -383,6 +400,7 @@ export function SignIn({
         {checkingCloudProfile && <p role="status">Opening your account...</p>}
         {cloudProfileError && (
           <div role="alert">
+            {cloudIdentity && <p className="muted">Signed in as {cloudIdentity.email ?? "an account without an email"} on {TENANT.name}.</p>}
             <p className="auth-error">{cloudProfileError}</p>
             <button type="button" className="btn ghost block" disabled={checkingCloudProfile} onClick={() => setLookupAttempt(attempt => attempt + 1)}>
               Retry profile lookup
