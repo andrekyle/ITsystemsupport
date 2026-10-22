@@ -67,7 +67,8 @@ export function Dashboard({
   const gamePoe = savedEvidence?.profileId === profile.id
     ? bestPoeDocs(profile, savedEvidence.cloud)
     : poeDocs;
-  const game = computeGamification(gameProgress, poeItemCount(gamePoe), attendanceSignedCount(profile));
+  const classesAttended = attendanceSignedCount(profile);
+  const game = computeGamification(gameProgress, poeItemCount(gamePoe), classesAttended);
   const announcements = loadAnnouncements().slice(0, 2);
 
   // next unit not yet completed
@@ -125,6 +126,13 @@ export function Dashboard({
           <div className="num">
             {s.modulesCompleted}<span className="stat-total"> / {MODULES.length}</span>
           </div>
+        </div>
+        <div className="card stat-card">
+          <div className="learner-stat-copy">
+            <div className="lbl"><span className="ico"><Icon name="calendar" size={17} /></span>Classes attended</div>
+            <small>Signed attendance registers</small>
+          </div>
+          <div className="num">{classesAttended}</div>
         </div>
         <div
           className="card stat-card clickable"

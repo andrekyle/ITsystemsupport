@@ -5012,6 +5012,7 @@ textarea:focus {
   font-size: 13px;
   font-weight: 650;
   line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 .learner-dashboard .dashboard-stats .stat-card .ico,
 [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card .ico,
@@ -5025,6 +5026,7 @@ textarea:focus {
   color: var(--ink-3);
   font-size: 12px;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 .learner-dashboard .dashboard-stats .stat-card .num,
 [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card .num,
@@ -5039,6 +5041,7 @@ textarea:focus {
   letter-spacing: -.055em;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .learner-dashboard .dashboard-stats .stat-total {
   color: var(--ink-3);
@@ -5047,6 +5050,21 @@ textarea:focus {
 }
 [data-theme="light"] .learner-dashboard .dashboard-stats .learner-stat-copy { border-right-color: #dde3eb; }
 [data-theme="dark"] .learner-dashboard .dashboard-stats .learner-stat-copy { border-right-color: #3b414a; }
+
+/* Six learner metrics: three balanced columns by two rows. */
+.learner-dashboard .dashboard-stats,
+[data-theme="light"] .learner-dashboard .dashboard-stats,
+[data-theme="dark"] .learner-dashboard .dashboard-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.learner-dashboard .dashboard-stats .stat-card:nth-child(3n),
+[data-theme="light"] .learner-dashboard .dashboard-stats .stat-card:nth-child(3n),
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(3n) { border-right: 0; }
+.learner-dashboard .dashboard-stats .stat-card:nth-child(-n+3),
+[data-theme="light"] .learner-dashboard .dashboard-stats .stat-card:nth-child(-n+3) { border-bottom: 1px solid #edf1f6; }
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(-n+3) { border-bottom: 1px solid #343a43; }
+[data-theme="light"] .learner-dashboard .dashboard-stats .stat-card:nth-child(6) .ico,
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(6) .ico { background: #17946c; }
 
 @media (max-width: 1180px) {
   .learner-dashboard .dashboard-stats .stat-card,
@@ -5059,13 +5077,36 @@ textarea:focus {
   .learner-dashboard .dashboard-stats .learner-stat-copy { padding-right: 16px; }
 }
 
+@media (max-width: 700px) {
+  .learner-dashboard .dashboard-stats,
+  [data-theme="light"] .learner-dashboard .dashboard-stats,
+  [data-theme="dark"] .learner-dashboard .dashboard-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .learner-dashboard .dashboard-stats .stat-card:nth-child(3n),
+  [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card:nth-child(3n),
+  [data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(3n) { border-right: 1px solid var(--border); }
+  .learner-dashboard .dashboard-stats .stat-card:nth-child(2n),
+  [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card:nth-child(2n),
+  [data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(2n) { border-right: 0; }
+  .learner-dashboard .dashboard-stats .stat-card:nth-child(-n+4),
+  [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card:nth-child(-n+4),
+  [data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(-n+4) { border-bottom: 1px solid var(--border); }
+}
+
 @media (max-width: 430px) {
+  .learner-dashboard .dashboard-stats,
+  [data-theme="light"] .learner-dashboard .dashboard-stats,
+  [data-theme="dark"] .learner-dashboard .dashboard-stats { grid-template-columns: 1fr; }
   .learner-dashboard .dashboard-stats .stat-card,
   [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card,
   [data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card {
     grid-template-columns: minmax(0, 1fr) 92px;
     min-height: 124px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
   }
+  .learner-dashboard .dashboard-stats .stat-card:last-child,
+  [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card:last-child,
+  [data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:last-child { border-bottom: 0; }
   .learner-dashboard .dashboard-stats .stat-card .num,
   [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card .num,
   [data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card .num { font-size: 42px; }
