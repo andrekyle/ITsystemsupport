@@ -93,48 +93,37 @@ export function Dashboard({
 
       <div className="card-grid dashboard-stats">
         <div className="card stat-card">
-          <span className="ico">
-            <Icon name="target" size={26} />
-          </span>
-          <div>
-            <div className="lbl">Overall completion</div>
-            <div className="num">{Math.round(s.overall * 100)}%</div>
+          <div className="learner-stat-copy">
+            <div className="lbl"><span className="ico"><Icon name="target" size={17} /></span>Overall completion</div>
+            <small>Course progress across all modules</small>
+          </div>
+          <div className="num">{Math.round(s.overall * 100)}%</div>
+        </div>
+        <div className="card stat-card">
+          <div className="learner-stat-copy">
+            <div className="lbl"><span className="ico"><Icon name="award" size={17} /></span>Credits earned</div>
+            <small>{Math.max(0, COURSE_META.credits - s.creditsEarned)} credits remaining</small>
+          </div>
+          <div className="num">
+            {s.creditsEarned}<span className="stat-total"> / {COURSE_META.credits}</span>
           </div>
         </div>
         <div className="card stat-card">
-          <span className="ico">
-            <Icon name="award" size={26} />
-          </span>
-          <div>
-            <div className="lbl">Credits earned</div>
-            <div className="num">
-              {s.creditsEarned}
-              <span style={{ fontSize: 15, color: "var(--ink-3)" }}> / {COURSE_META.credits}</span>
-            </div>
+          <div className="learner-stat-copy">
+            <div className="lbl"><span className="ico"><Icon name="checkCircle" size={17} /></span>Unit standards completed</div>
+            <small>{Math.max(0, TOTAL_UNITS - s.unitsCompleted)} unit standards remaining</small>
+          </div>
+          <div className="num">
+            {s.unitsCompleted}<span className="stat-total"> / {TOTAL_UNITS}</span>
           </div>
         </div>
         <div className="card stat-card">
-          <span className="ico">
-            <Icon name="checkCircle" size={26} />
-          </span>
-          <div>
-            <div className="lbl">Unit standards completed</div>
-            <div className="num">
-              {s.unitsCompleted}
-              <span style={{ fontSize: 15, color: "var(--ink-3)" }}> / {TOTAL_UNITS}</span>
-            </div>
+          <div className="learner-stat-copy">
+            <div className="lbl"><span className="ico"><Icon name="book" size={17} /></span>Modules completed</div>
+            <small>{Math.max(0, MODULES.length - s.modulesCompleted)} modules remaining</small>
           </div>
-        </div>
-        <div className="card stat-card">
-          <span className="ico">
-            <Icon name="book" size={26} />
-          </span>
-          <div>
-            <div className="lbl">Modules completed</div>
-            <div className="num">
-              {s.modulesCompleted}
-              <span style={{ fontSize: 15, color: "var(--ink-3)" }}> / {MODULES.length}</span>
-            </div>
+          <div className="num">
+            {s.modulesCompleted}<span className="stat-total"> / {MODULES.length}</span>
           </div>
         </div>
         <div
@@ -144,15 +133,12 @@ export function Dashboard({
           tabIndex={0}
           style={{ cursor: "pointer" }}
         >
-          <span className="ico">
-            <Icon name="folder" size={26} />
-          </span>
-          <div>
-            <div className="lbl">POE items complete</div>
-            <div className="num">
-              {poeDone}
-              <span style={{ fontSize: 15, color: "var(--ink-3)" }}> / {POE_TOTAL}</span>
-            </div>
+          <div className="learner-stat-copy">
+            <div className="lbl"><span className="ico"><Icon name="folder" size={17} /></span>POE items complete</div>
+            <small>{Math.max(0, POE_TOTAL - poeDone)} evidence items remaining</small>
+          </div>
+          <div className="num">
+            {poeDone}<span className="stat-total"> / {POE_TOTAL}</span>
           </div>
         </div>
       </div>
