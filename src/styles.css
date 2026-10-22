@@ -4992,12 +4992,15 @@ textarea:focus {
 [data-theme="light"] .learner-dashboard .dashboard-stats .learner-stat-copy,
 [data-theme="dark"] .learner-dashboard .dashboard-stats .learner-stat-copy {
   display: grid;
+  grid-column: 1;
+  grid-row: 1;
   align-content: center;
   gap: 14px;
   min-width: 0;
   height: 100%;
   padding-right: 22px;
   border-right: 1px solid var(--border);
+  text-align: left;
 }
 .learner-dashboard .dashboard-stats .stat-card .lbl,
 [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card .lbl,
@@ -5013,6 +5016,7 @@ textarea:focus {
   font-weight: 650;
   line-height: 1.25;
   overflow-wrap: anywhere;
+  text-align: left;
 }
 .learner-dashboard .dashboard-stats .stat-card .ico,
 [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card .ico,
@@ -5031,8 +5035,10 @@ textarea:focus {
 .learner-dashboard .dashboard-stats .stat-card .num,
 [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card .num,
 [data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card .num {
-  grid-column: auto;
-  grid-row: auto;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  align-self: center;
   margin: 0;
   color: var(--ink);
   font-size: clamp(38px, 3.4vw, 52px);
