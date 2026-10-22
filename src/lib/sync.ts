@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 import { isLargeStateKey, receiveUnitPack, storedUnitPacks, clearUnitPacks } from "./unitStorage";
-import { receiveLessonEdits } from "./lessonEditStore";
+import { hasPendingLessonEdits, receiveLessonEdits } from "./lessonEditStore";
 import {
   PENDING_KEY,
   pendingWrites,
@@ -13,7 +13,6 @@ import {
   clearOnboardingPacks,
   ONBOARDING_KEY,
   receiveOnboardingPacks,
-  storedOnboardingPacks,
 } from "./onboardingStorage";
 import { TENANT_ID } from "./tenant";
 
@@ -82,7 +81,10 @@ export function writeFromCloud(key: string, value: string) {
     return;
   }
   if(isLargeStateKey(key)){receiveUnitPack(key,value);return;}
-  if(key.startsWith("itss.lessonedits.")){receiveLessonEdits(key,value);return;}
+  if(key.startsWith("itss.lessonedits.")){
+    if (!hasPendingLessonEdits(key)) receiveLessonEdits(key,value);
+    return;
+  }
   const attendanceMatch = key.match(ATTENDANCE_REGISTER_RE);
   if (attendanceMatch && !localStorage.getItem(attendanceMigrationKey(attendanceMatch[1]))) {
     // One-time recovery for legacy registers: different devices may hold
@@ -308,13 +310,14 @@ export async function startSync(authUserId: string): Promise<void> {
   userId = authUserId;
   if (!supabase) return;
   const cachedTenant = localStorage.getItem(TENANT_CACHE_KEY);
-  if (cachedTenant !== TENANT_ID) {
+  if (cachedTenant && cachedTenant !== TENANT_ID) {
     // A browser may be reused after the same deployment is reconfigured for a
     // different company. Never upload the previous tenant's local cache into
     // the new tenant merely because the new cloud has no matching keys yet.
     wipeLocalData();
-    localStorage.setItem(TENANT_CACHE_KEY, TENANT_ID);
   }
+  // An absent marker is an older installation, not evidence of another tenant.
+  localStorage.setItem(TENANT_CACHE_KEY, TENANT_ID);
   try {
     await loadPendingWrites();
   } catch (error) {
@@ -367,18 +370,15 @@ export async function startSync(authUserId: string): Promise<void> {
     await pushKey(write.key, write.value);
   }
 
-  // push local-only data (e.g. work done before cloud sync was configured)
+  // Shared course material is published explicitly by its editor. A cache
+  // miss (or a truncated cloud listing) must never make a learner republish it.
   for(const [key,value] of await storedUnitPacks().catch(()=>[] as [string,string][])) {
-    if(!cloudKeys.has(key)) await pushKey(key,value);
-  }
-  if (!cloudKeys.has(ONBOARDING_KEY)) {
-    const value = await storedOnboardingPacks().catch(() => null);
-    if (value !== null) await pushKey(ONBOARDING_KEY, value);
+    if(!isShared(key) && !cloudKeys.has(key) && !orphanedProfileState(key)) await pushKey(key,value);
   }
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     // Polls must come from an explicit tenant-aware mutation, never an unowned legacy cache.
-    if (key && key !== "itss.polls.shared" && syncable(key) && !cloudKeys.has(key) && !orphanedProfileState(key)) {
+    if (key && !isShared(key) && syncable(key) && !cloudKeys.has(key) && !orphanedProfileState(key)) {
       const value = localStorage.getItem(key);
       if (value !== null) void pushKey(key, value);
     }

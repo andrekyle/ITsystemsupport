@@ -1,4 +1,9 @@
 /** Large generated packs belong in IndexedDB, not the small localStorage quota. */
+import { TENANT_ID } from "./tenant";
+
+const recoveryPrefix = "itssDevice.courseRecovery.";
+const recoveryKey = () => `${recoveryPrefix}${TENANT_ID}.${Date.now()}.${crypto.randomUUID()}`;
+const recoveryCopy = (key: string, value: string) => JSON.stringify({ tenantId: TENANT_ID, key, value, savedAt: new Date().toISOString() });
 const cache = new Map<string, string | null>();
 const pending = new Set<string>();
 const loads = new Map<string, Promise<void>>();
@@ -21,11 +26,29 @@ export async function persistUnitPack(key:string,value:string){
   const database=await db();
   await new Promise<void>((resolve,reject)=>{
     const tx=database.transaction("packs","readwrite");
-    tx.objectStore("packs").put(value,key);
+    const store = tx.objectStore("packs");
+    if (isUnitPackKey(key)) {
+      const previous = store.get(key);
+      previous.onsuccess = () => {
+        if (typeof previous.result === "string" && previous.result !== value) {
+          store.put(recoveryCopy(key, previous.result), recoveryKey());
+        }
+      };
+    }
+    store.put(value,key);
     tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
   });
   // Bypass sync's removeItem wrapper: migration is not a shared deletion.
   try { Storage.prototype.removeItem.call(localStorage,key); } catch { /* cache cleanup is best effort */ }
+}
+/** Local recovery copies never enter the cloud sync upload list. */
+export async function archiveCourseCopy(key: string, value: string): Promise<void> {
+  const database = await db();
+  await new Promise<void>((resolve, reject) => {
+    const tx = database.transaction("packs", "readwrite");
+    tx.objectStore("packs").put(recoveryCopy(key, value), recoveryKey());
+    tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
+  });
 }
 /** Make the latest cached value durable before a user leaves an editor. */
 export async function flushUnitPack(key:string):Promise<string> {
@@ -72,7 +95,12 @@ export function forgetUnitPack(key:string){
   try { Storage.prototype.removeItem.call(localStorage,key); } catch { /* optional cleanup */ }
   void db().then(database=>new Promise<void>((resolve,reject)=>{
     const tx=database.transaction("packs","readwrite");
-    tx.objectStore("packs").delete(key);
+    const store = tx.objectStore("packs");
+    const previous = store.get(key);
+    previous.onsuccess = () => {
+      if (typeof previous.result === "string" && isUnitPackKey(key)) store.put(recoveryCopy(key, previous.result), recoveryKey());
+    };
+    store.delete(key);
     tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
   })).catch(()=>{});
   notify();
@@ -82,12 +110,15 @@ export async function storedUnitPacks():Promise<[string,string][]> {
   return new Promise((resolve,reject)=>{
     const rows:[string,string][]=[];
     const request=database.transaction("packs").objectStore("packs").openCursor();
-    request.onsuccess=()=>{const c=request.result;if(c){rows.push([String(c.key),c.value]);c.continue();}else resolve(rows);};
+    request.onsuccess=()=>{const c=request.result;if(c){if(!String(c.key).startsWith(recoveryPrefix))rows.push([String(c.key),c.value]);c.continue();}else resolve(rows);};
     request.onerror=()=>reject(request.error);
   });
 }
 export function clearUnitPacks(){
   generation++;cache.clear();pending.clear();loads.clear();
-  void db().then(database=>{database.transaction("packs","readwrite").objectStore("packs").clear();}).catch(()=>{});
+  void db().then(database=>{
+    const request=database.transaction("packs","readwrite").objectStore("packs").openCursor();
+    request.onsuccess=()=>{const cursor=request.result;if(cursor){if(!String(cursor.key).startsWith(recoveryPrefix))cursor.delete();cursor.continue();}};
+  }).catch(()=>{});
   notify();
 }

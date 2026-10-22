@@ -179,7 +179,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       if(document?.replica)document.replica.pages=await storeUnitReplicaPages(document.replica.pages);
     }
     setBusy("Creating PDF, PowerPoint and answer guide…");
-    const exportContent=inlineDraft?{...next,lesson:next.lesson.filter((_,si)=>!edits.deletedSections?.includes(si))}:next;
+    const exportContent={...next,lesson:next.lesson.filter((_,si)=>!edits.deletedSections?.includes(si))};
     const files=await makeUnitExports(unit,exportContent);
     setBusy("Saving the unit and course materials…");
     const prefix=`shared/unitbuilder/${courseScopedUnit(unit.us)}`;
@@ -332,7 +332,9 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       </> : null;
   const activeView:BuilderView=view??(content?"content":"build");
   const select=(next:BuilderView)=>{setView(next);setError("");setMessage("");setConfirmBuild(false);setConfirmDelete(false);setDeleteName("");};
-  const baseline=()=>effectiveBuiltContent(content??{lesson:[],exercises:[],assignments:[],quiz:[]},edits);
+  // Keep the original slide indices in saved units. The revision's deletion
+  // flags hide slides once; removing them here would apply those flags again.
+  const baseline=()=>effectiveBuiltContent(content??{lesson:[],exercises:[],assignments:[],quiz:[]},edits,true);
   // The structured draft is taken from the live unit each time the editor is shown, unless edits are pending.
   useEffect(()=>{
     if(!open||inlineDraft||activeView!=="content")return;
@@ -528,7 +530,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
             </div>}
             {built&&<div className="unit-action-card">
               <div className="unit-action-card-copy"><h3>Download files</h3><p>Rebuild the PDF, editable PowerPoint and answer guide from the content that is live now.</p></div>
-              <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(content??built.content,edits),built.source,built.aiUsed);}catch(e){setError(unitBuilderError(e,"The PDF and PowerPoint could not be updated."));}finally{setBusy("");}}}>Update PDF and PowerPoint</button>
+              <button type="button" className="btn ghost" disabled={!!busy} onClick={async()=>{setError("");try{await publish(effectiveBuiltContent(content??built.content,edits,true),built.source,built.aiUsed);}catch(e){setError(unitBuilderError(e,"The PDF and PowerPoint could not be updated."));}finally{setBusy("");}}}>Update PDF and PowerPoint</button>
             </div>}
             {built&&content&&<div className="unit-action-card">
               <div className="unit-action-card-copy"><h3>AI PowerPoint</h3><p>Generate a presentation deck from this unit's lessons with AI. It downloads immediately; the saved unit files are not changed.</p></div>

@@ -5,7 +5,7 @@
  *  - static assets (js/css/fonts/images/pdf): stale-while-revalidate
  *  - never caches Supabase or other cross-origin API calls
  */
-const VERSION = "itss-v14";
+const VERSION = "itss-v15";
 const SHELL = "/";
 
 self.addEventListener("install", (event) => {
@@ -75,4 +75,4 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
-// v14 refreshes installed clients onto the superuser sign-in fix.
+// v15 preserves course copies and refreshes shared lesson content safely.

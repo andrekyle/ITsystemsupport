@@ -8,7 +8,7 @@ import { logAudit } from "./lib/audit";
 import { courseScopedUnit } from "./lib/courseScope";
 import { TENANT, TENANT_ID } from "./lib/tenant";
 import { tenantFilePrefix } from "./lib/files";
-import { cachedLessonEdits, flushLessonEdits, loadLessonEdits, queueLessonEdits, receiveLessonEdits, subscribeLessonEdits } from "./lib/lessonEditStore";
+import { cachedLessonEdits, flushLessonEdits, loadLessonEdits, queueLessonEdits, receiveLessonEdits, subscribeLessonEdits, watchLessonEdits } from "./lib/lessonEditStore";
 import { flushUnitPack, unitPackSnapshot } from "./lib/unitStorage";
 import { SAVED_SIGNATURE_REFERENCE } from "./lib/signature";
 import {
@@ -2559,15 +2559,17 @@ export function useLessonEdits(us: string, temporary = false) {
     setEditsState(cachedLessonEdits<LessonEdits>(key, {}));
     void loadLessonEdits<LessonEdits>(key, {}).then(loaded => {
       if (active) setEditsState(cachedLessonEdits<LessonEdits>(key, loaded));
-    });
+    }).catch(() => { /* retain offline material */ });
     return () => { active = false; };
   }, [key, temporary]);
 
   useEffect(() => {
     if (temporary) return;
-    return subscribeLessonEdits(key, value => {
+    const unsubscribe = subscribeLessonEdits(key, value => {
       try { setEditsState(JSON.parse(value) as LessonEdits); } catch { /* retain valid state */ }
     });
+    const stopWatching = watchLessonEdits(key);
+    return () => { unsubscribe(); stopWatching(); };
   }, [key, temporary]);
 
   const apply = useCallback(

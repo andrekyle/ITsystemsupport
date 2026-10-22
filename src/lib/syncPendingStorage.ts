@@ -48,15 +48,37 @@ async function persist(write: PendingWrite, remove = false) {
 export function loadPendingWrites(): Promise<void> {
   return initialized ??= (async () => {
     const database = await db();
-    const stored = await new Promise<PendingWrite[]>((resolve, reject) => {
-      const request = database.transaction(STORE).objectStore(STORE).getAll();
-      request.onsuccess = () => resolve(request.result as PendingWrite[]);
-      request.onerror = () => reject(request.error);
+    const rows = await new Promise<{ keys: IDBValidKey[]; values: PendingWrite[] }>((resolve, reject) => {
+      const tx = database.transaction(STORE);
+      const store = tx.objectStore(STORE);
+      const keys = store.getAllKeys();
+      const values = store.getAll();
+      tx.oncomplete = () => resolve({ keys: keys.result, values: values.result });
+      tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
     });
+    const stored = rows.values.filter(write => !!write.tenantId);
+    // Queues are already stored in a tenant-specific database. Upgrade the
+    // older records before sync starts filtering by tenant, without replacing
+    // an existing explicitly scoped save for the same account/key.
+    for (let index = 0; index < rows.values.length; index++) {
+      const previous = rows.values[index];
+      if (previous.tenantId) continue;
+      const upgraded = { ...previous, tenantId: TENANT_ID };
+      const current = stored.find(write => id(write) === id(upgraded)) ?? upgraded;
+      await new Promise<void>((resolve, reject) => {
+        const tx = database.transaction(STORE, "readwrite");
+        const store = tx.objectStore(STORE);
+        store.put(current, id(current));
+        if (rows.keys[index] !== id(current)) store.delete(rows.keys[index]);
+        tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
+      });
+      if (!stored.includes(current)) stored.push(current);
+    }
     const legacy = (TENANT_ID === "investec"
       ? JSON.parse(localStorage.getItem(PENDING_KEY) ?? "[]")
       : []) as PendingWrite[];
-    for (const write of legacy) {
+    for (const previous of legacy) {
+      const write = { ...previous, tenantId: previous.tenantId ?? TENANT_ID };
       if (!stored.some(saved => id(saved) === id(write))) {
         await persist(write);
         stored.push(write);
