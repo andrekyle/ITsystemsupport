@@ -2,6 +2,7 @@ import { TENANT_ID } from "./tenant";
 
 export type PendingWrite = {
   userId: string;
+  tenantId?: string;
   key: string;
   value: string | null;
   revision: string;
@@ -14,8 +15,8 @@ let initialized: Promise<void> | undefined;
 let operations: Promise<void> = Promise.resolve();
 const writes = new Map<string, PendingWrite>();
 
-const id = (write: Pick<PendingWrite, "userId" | "key">) =>
-  JSON.stringify([write.userId, write.key]);
+const id = (write: Pick<PendingWrite, "userId" | "tenantId" | "key">) =>
+  JSON.stringify([write.tenantId ?? "legacy", write.userId, write.key]);
 
 function db() {
   return database ??= new Promise<IDBDatabase>((resolve, reject) => {

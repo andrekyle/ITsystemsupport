@@ -236,7 +236,7 @@ export async function purgeOwnProfileCopy(profileId: string): Promise<string | n
         value: JSON.stringify(list),
         updated_at: new Date().toISOString(),
       },
-      { onConflict: "user_id,key" }
+      { onConflict: "tenant_id,user_id,key" }
     );
     if (writeErr) return `Could not update cloud profiles: ${writeErr.message}`;
   }
@@ -557,7 +557,7 @@ async function writeOwnerProfiles(owner: string, profiles: Profile[]): Promise<s
       value: JSON.stringify(profiles),
       updated_at: new Date().toISOString(),
     },
-    { onConflict: "user_id,key" }
+    { onConflict: "tenant_id,user_id,key" }
   );
   return error ? RLS_HINT : null;
 }

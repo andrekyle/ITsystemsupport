@@ -34,6 +34,7 @@ const PREFIX = "itss.";
 const UNIT_BUILDER_SAVE_PROBE = "unitbuilder-save-probe.";
 const ATTENDANCE_REGISTER_RE = /^itss\.attendance\.(\d{4}-\d{2}-\d{2})$/;
 const attendanceMigrationKey = (date: string) => `itssDevice.attendanceMigrated.${date}`;
+const TENANT_CACHE_KEY = "itssDevice.cloudTenant";
 /** device-local keys that should not follow the account across devices */
 const LOCAL_ONLY = new Set(["itss.session", "itss.route", "itss.theme", "itss.activeCourse", PENDING_KEY]);
 
@@ -57,10 +58,10 @@ const timers = new Map<string, ReturnType<typeof setTimeout>>();
 const rawSet = localStorage.setItem.bind(localStorage);
 function rememberPending(key: string, value: string | null) {
   if (!userId) return Promise.resolve();
-  return rememberPendingWrite({ userId, key, value, revision: crypto.randomUUID() });
+  return rememberPendingWrite({ userId, tenantId: TENANT_ID, key, value, revision: crypto.randomUUID() });
 }
 function pendingFor(key: string) {
-  return pendingWrites().find(write => write.userId === userId && write.key === key);
+  return pendingWrites().find(write => write.userId === userId && write.tenantId === TENANT_ID && write.key === key);
 }
 
 /** Whether the current account still has an unsent value for this key. */
@@ -151,13 +152,13 @@ async function pushKey(key: string, value: string | null) {
             .upsert({ tenant_id: TENANT_ID, key, value, updated_at: new Date().toISOString() }, { onConflict: "tenant_id,key" });
         }
       } else if (value === null) {
-        result = await supabase.from("app_state").delete().eq("user_id", owner).eq("key", key);
+        result = await supabase.from("app_state").delete().eq("user_id", owner).eq("tenant_id", TENANT_ID).eq("key", key);
       } else {
         result = await supabase
           .from("app_state")
           .upsert(
             { user_id: owner, tenant_id: TENANT_ID, key, value, updated_at: new Date().toISOString() },
-            { onConflict: "user_id,key" }
+            { onConflict: "tenant_id,user_id,key" }
           );
       }
       if (result.error) {
@@ -292,7 +293,7 @@ export function installSync() {
     if (syncable(key)) queue(key, null);
   };
   window.addEventListener("online", () => {
-    for (const write of pendingWrites().filter(write => write.userId === userId)) {
+    for (const write of pendingWrites().filter(write => write.userId === userId && write.tenantId === TENANT_ID)) {
       void pushKey(write.key, write.value);
     }
   });
@@ -306,13 +307,21 @@ export function installSync() {
 export async function startSync(authUserId: string): Promise<void> {
   userId = authUserId;
   if (!supabase) return;
+  const cachedTenant = localStorage.getItem(TENANT_CACHE_KEY);
+  if (cachedTenant !== TENANT_ID) {
+    // A browser may be reused after the same deployment is reconfigured for a
+    // different company. Never upload the previous tenant's local cache into
+    // the new tenant merely because the new cloud has no matching keys yet.
+    wipeLocalData();
+    localStorage.setItem(TENANT_CACHE_KEY, TENANT_ID);
+  }
   try {
     await loadPendingWrites();
   } catch (error) {
     console.error("Could not load pending cloud saves; cloud hydration was skipped to protect local edits:", error);
     return;
   }
-  const dirtyAtStart = new Set(pendingWrites().filter(write => write.userId === authUserId).map(write => write.key));
+  const dirtyAtStart = new Set(pendingWrites().filter(write => write.userId === authUserId && write.tenantId === TENANT_ID).map(write => write.key));
 
   const [own, shared] = await Promise.all([
     // app_state is readable across accounts (staff directory) — hydrate
@@ -350,7 +359,7 @@ export async function startSync(authUserId: string): Promise<void> {
     const profileId = ownedProfileId(key);
     return !!profileId && !!ownedProfileIds && !ownedProfileIds.has(profileId);
   };
-  for (const write of pendingWrites().filter(write => write.userId === authUserId)) {
+  for (const write of pendingWrites().filter(write => write.userId === authUserId && write.tenantId === TENANT_ID)) {
     if (orphanedProfileState(write.key)) {
       await forgetPendingWrite(write);
       continue;

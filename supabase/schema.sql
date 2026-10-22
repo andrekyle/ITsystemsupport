@@ -13,10 +13,11 @@
 -- One row per synced app-state key, per authenticated user.
 create table if not exists public.app_state (
   user_id    uuid        not null references auth.users (id) on delete cascade,
+  tenant_id  text        not null default 'investec',
   key        text        not null,
   value      text        not null,
   updated_at timestamptz not null default now(),
-  primary key (user_id, key)
+  primary key (tenant_id, user_id, key)
 );
 
 -- Admins (the super user) may edit and delete ANY account's rows.

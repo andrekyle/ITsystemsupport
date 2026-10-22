@@ -2347,6 +2347,7 @@ async function pullOnboarding(): Promise<OnboardingPack[] | null> {
     const { data } = await supabase
       .from("shared_state")
       .select("value")
+      .eq("tenant_id", TENANT_ID)
       .eq("key", ONBOARDING_KEY)
       .maybeSingle();
     if (data?.value) {

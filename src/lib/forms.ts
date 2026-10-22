@@ -158,7 +158,7 @@ function pagePaths(definition: FormDefinition): string[] {
 
 export async function removeFormTemplate(template: SavedForm): Promise<void> {
   if (supabase) {
-    const { data, error } = await supabase.from("forms").delete().eq("id", template.id).select("id");
+    const { data, error } = await supabase.from("forms").delete().eq("tenant_id", TENANT_ID).eq("id", template.id).select("id");
     if (error) throw databaseError(error);
     if (!data?.length) throw new Error("The form could not be deleted. Check your permissions.");
     await discardStorage(template.source_path, pagePaths(template.definition));
@@ -173,7 +173,7 @@ export async function loadFormResponse(formId: string, profileId: string): Promi
   if (!supabase) return readLocal<FormResponse | null>(`form-builder:response:${formId}:${profileId}`, null);
   const { data: session, error: authError } = await supabase.auth.getUser();
   if (authError || !session.user) throw new Error("Sign in to load your saved answers.");
-  const { data, error } = await supabase.from("form_responses").select("form_id,user_id,profile_id,answers,updated_at").eq("form_id", formId).eq("user_id", session.user.id).eq("profile_id", profileId).maybeSingle();
+  const { data, error } = await supabase.from("form_responses").select("form_id,user_id,profile_id,answers,updated_at").eq("tenant_id", TENANT_ID).eq("form_id", formId).eq("user_id", session.user.id).eq("profile_id", profileId).maybeSingle();
   if (error) throw databaseError(error);
   return data as FormResponse | null;
 }
