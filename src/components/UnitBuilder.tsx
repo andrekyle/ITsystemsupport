@@ -231,7 +231,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
         const response=await fetch(url);
         if(!response.ok)throw new Error(`The saved source document could not be read (HTTP ${response.status}). Upload it again or retry.`);
         const title={learnerGuide:"Learner Guide",learnerWorkbook:"Learner Workbook",practicalTask:"Practical Task"}[kind];
-        return importUnitPdf(new File([await response.blob()],original.name,{type:"application/pdf"}),title,(done,total)=>setBusy(`Converting ${title} to HTML with code and AI: ${done}/${total} pages...`));
+        return importUnitPdf(new File([await response.blob()],original.name,{type:"application/pdf"}),title,(done,total)=>setBusy(`Rebuild agent: converting ${title} to canonical HTML: ${done}/${total} pages...`));
       };
       const workbook=learnerWorkbook?.replica?.display==="digital"?learnerWorkbook:await recoverSourceDocument("learnerWorkbook")??learnerWorkbook;
       const practical=practicalTask?.replica?.display==="digital"?practicalTask:await recoverSourceDocument("practicalTask")??practicalTask;
@@ -272,7 +272,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     try{
       setBusy("Converting PDF to HTML with code and AI...");
       const title={learnerGuide:"Learner Guide",learnerWorkbook:"Learner Workbook",practicalTask:"Practical Task"}[kind];
-      const converted=await importUnitPdf(file,title,(done,total)=>setBusy(`Converting ${title} to HTML with code and AI: ${done}/${total} pages...`));
+      const converted=await importUnitPdf(file,title,(done,total)=>setBusy(`Rebuild agent: converting ${title} to canonical HTML: ${done}/${total} pages...`));
       if(kind==="learnerGuide"){
         setLearnerGuide(converted);
       }else if(kind==="practicalTask"){

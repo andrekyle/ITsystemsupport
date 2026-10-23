@@ -5388,6 +5388,22 @@ textarea:focus {
   gap: 4px;
 }
 
+.self-assess-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.self-assess-row > .self-assess-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.self-assess-remove {
+  flex: none;
+  margin-top: 10px;
+}
+
 .self-assess-item {
   display: flex;
   align-items: flex-start;

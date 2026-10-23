@@ -16,7 +16,7 @@ import { getSaqaDetails } from "../data/saqaDetails";
 import { FIGURE_DEFAULTS as BASE_FIGURE_DEFAULTS } from "../data/figureDefaults";
 import { HWSW_SLIDE_FIGURES } from "../data/hwswSlideFigures";
 const FIGURE_DEFAULTS = { ...BASE_FIGURE_DEFAULTS, ...HWSW_SLIDE_FIGURES };
-import { flushProgress, moduleCompletion, unitCompletion, unitStatus, readCourseWideSlides, useDeckOverrides, useLessonEdits, useLessonFigures, useNotes, usePlanSlides, useSharedSettings, useWorkbookMemo } from "../store";
+import { flushProgress, loadProgress, moduleCompletion, unitCompletion, unitStatus, readCourseWideSlides, useDeckOverrides, useLessonEdits, useLessonFigures, useNotes, usePlanSlides, useSharedSettings, useWorkbookMemo } from "../store";
 import { Bar, Ring } from "../components/Ring";
 import { Quiz, seededShuffle } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
@@ -1569,6 +1569,7 @@ export function ExerciseQuestion({
           ) : !result && !locked ? (
             <>
               <button
+                type="button"
                 className="btn"
                 onClick={() => {
                   const r = scoreAnswer(val, check);
@@ -2427,6 +2428,7 @@ export function UnitPage({
   toggleActivity,
   saveQuizResult,
   setLogbookField,
+  setLogbookFields,
   saveExerciseResult,
   navigate,
 }: {
@@ -2436,6 +2438,7 @@ export function UnitPage({
   toggleActivity: (us: string, a: UnitActivity) => void;
   saveQuizResult: (us: string, score: number, total: number, quizId?: string, attempt?: unknown) => void;
   setLogbookField: (us: string, key: string, value: string | boolean) => void;
+  setLogbookFields: (us: string, fields: Record<string, string | boolean>) => void;
   saveExerciseResult: (us: string, exId: string, score: number, total: number) => void;
   navigate: (r: Route) => void;
 }) {
@@ -3273,15 +3276,19 @@ export function UnitPage({
     setMarkingActivity(ex.id);
     setActivityMarkError(previous => ({ ...previous, [ex.id]: "" }));
     try {
-      const answers = ex.checks.map((_, i) => String(progress.units[u.us]?.logbook?.[`exq.${ex.id}.${i}`] ?? ""));
+      // The component prop can be one render behind the last textarea input.
+      // Read the latest persisted pack so submit never marks an older snapshot.
+      const latestProgress = loadProgress(profile.id);
+      const latestLogbook = latestProgress.units[u.us]?.logbook ?? {};
+      const answers = ex.checks.map((_, i) => String(latestLogbook[`exq.${ex.id}.${i}`] ?? ""));
       if (answers.some(answer => !answer.trim())) throw new Error("Answer each question before submitting.");
       if (answers.some(answer => answer.length > MAX_ACTIVITY_ANSWER_CHARS)) throw new Error("Keep each question's answer under 4,000 characters before submitting.");
       let score = 0;
       for (let i = 0; i < ex.checks.length; i++) {
         const check = ex.checks[i];
         const answerKey = `exq.${ex.id}.${i}`;
-        const reviewedText = String(progress.units[u.us]?.logbook?.[`${answerKey}.reviewedText`] ?? "");
-        const reviewedMarks = Number(progress.units[u.us]?.logbook?.[`${answerKey}.marks`]);
+        const reviewedText = String(latestLogbook[`${answerKey}.reviewedText`] ?? "");
+        const reviewedMarks = Number(latestLogbook[`${answerKey}.marks`]);
         if (reviewedText === answers[i] && Number.isFinite(reviewedMarks) && reviewedMarks >= 0) {
           score += Math.min(reviewedMarks, check.concepts.length * 2);
           continue;
@@ -3292,6 +3299,9 @@ export function UnitPage({
         score += new Set(result.credited.filter(id => concepts.some(c => c.id === id))).size * 2;
       }
       saveExerciseResult(u.us, ex.id, score, ex.checks.reduce((total, check) => total + check.concepts.length * 2, 0));
+      // Make the answer text and result durable before navigation or a closed
+      // cloud-sync debounce can interrupt the save.
+      await flushProgress(profile.id);
     } catch (error) {
       setActivityMarkError(previous => ({ ...previous, [ex.id]: error instanceof Error ? error.message : "Could not mark answers. Please retry." }));
     } finally {
@@ -4417,6 +4427,7 @@ export function UnitPage({
                 </div>
                 {!editingQuiz && <div className="lesson-quiz-actions">
                   <button
+                        type="button"
                     className="btn"
                     disabled={!qAllAnswered || quizAttemptsExhausted}
                     onClick={() => {
@@ -5951,12 +5962,12 @@ export function UnitPage({
                             savedTries={Number(lb[`exq.${ex.id}.${i}.tries`] ?? 0) || 0}
                             canReveal={isSuperUser}
                             unitUs={u.us}
-                            onSave={(text, okNow, marks) => {
-                              setLogbookField(u.us, `exq.${ex.id}.${i}`, text);
-                              setLogbookField(u.us, `exq.${ex.id}.${i}.ok`, okNow);
-                              setLogbookField(u.us, `exq.${ex.id}.${i}.reviewedText`, marks === undefined ? "" : text);
-                              setLogbookField(u.us, `exq.${ex.id}.${i}.marks`, marks === undefined ? "" : String(marks));
-                            }}
+                            onSave={(text, okNow, marks) => setLogbookFields(u.us, {
+                              [`exq.${ex.id}.${i}`]: text,
+                              [`exq.${ex.id}.${i}.ok`]: okNow,
+                              [`exq.${ex.id}.${i}.reviewedText`]: marks === undefined ? "" : text,
+                              [`exq.${ex.id}.${i}.marks`]: marks === undefined ? "" : String(marks),
+                            })}
                             onTries={(n) => {
                               setLogbookField(u.us, `exq.${ex.id}.${i}.tries`, String(n));
                             }}
@@ -6020,6 +6031,7 @@ export function UnitPage({
                       {activityMarkError[ex.id] && <p role="alert" className="auth-error">{activityMarkError[ex.id]}</p>}
                       {attempts < EX_MAX_ATTEMPTS && (
                         <button
+                          type="button"
                           className="btn"
                           disabled={markingActivity !== null}
                           onClick={() => void submitActivityAnswers(ex)}
@@ -6030,6 +6042,7 @@ export function UnitPage({
                       )}
                       {res && attempts < EX_MAX_ATTEMPTS && (
                         <button
+                          type="button"
                           className="btn ghost"
                           disabled={markingActivity !== null}
                           onClick={() => {
@@ -6453,23 +6466,36 @@ export function UnitPage({
                 const key = `selfassess-${i}`;
                 const isTicked = values[key] === true;
                 return (
-                  <label
-                    key={key}
-                    className={`self-assess-item${isTicked ? " ticked" : ""}${locked ? " locked" : ""}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isTicked}
-                      disabled={locked}
-                      onChange={(e) => {
-                        if (locked) return;
-                        setLogbookField(u.us, key, e.target.checked);
-                      }}
-                    />
-                    <span>
-                      {inlineUnit ? unitText(item, (d, v) => { d.selfAssessment!.items[i] = v; }) : <Gloss text={item} />}
-                    </span>
-                  </label>
+                  <div className="self-assess-row" key={key}>
+                    <label
+                      className={`self-assess-item${isTicked ? " ticked" : ""}${locked ? " locked" : ""}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isTicked}
+                        disabled={locked}
+                        onChange={(e) => {
+                          if (locked) return;
+                          setLogbookField(u.us, key, e.target.checked);
+                        }}
+                      />
+                      <span>
+                        {inlineUnit ? unitText(item, (d, v) => { d.selfAssessment!.items[i] = v; }) : <Gloss text={item} />}
+                      </span>
+                    </label>
+                    {isSuperUser && inlineUnit && <button
+                      type="button"
+                      className="activity-remove-icon self-assess-remove"
+                      aria-label={`Delete self assessment option ${i + 1}`}
+                      title="Delete self assessment option"
+                      onClick={() => setInlineUnit(current => {
+                        if (!current?.selfAssessment) return current;
+                        const next = structuredClone(current);
+                        next.selfAssessment!.items.splice(i, 1);
+                        return next;
+                      })}
+                    ><Icon name="trash" size={15} /></button>}
+                  </div>
                 );
               })}
             </div>

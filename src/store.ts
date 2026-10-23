@@ -610,6 +610,37 @@ export function useProgress(profileId: string) {
     [profileId, update]
   );
 
+  /** Persist a group of related answer fields in one transaction. This is
+   * important for activity marking: separate React updates can be batched or
+   * observed out of order while the AI result is returning. */
+  const setLogbookFields = useCallback(
+    (us: string, fields: Record<string, string | boolean>) => {
+      update((prev) => {
+        const savedSignature = read<Profile[]>(PROFILES_KEY, []).find(profile => profile.id === profileId)?.signatureImage;
+        const compacted = compactProgressStorage(prev, savedSignature);
+        const unit: UnitProgress = compacted.units[us] ?? { activities: {} };
+        const logbook = { ...unit.logbook };
+        for (const [key, value] of Object.entries(fields)) {
+          if (key.includes(".task-mark.") && typeof value === "string") {
+            try {
+              const mark = JSON.parse(value) as Record<string, unknown>;
+              delete mark.correctSegments;
+              delete mark.matchedCriteria;
+              delete mark.id;
+              logbook[key] = JSON.stringify(mark);
+              continue;
+            } catch {
+              // Preserve the original value when the caller supplied malformed JSON.
+            }
+          }
+          logbook[key] = value;
+        }
+        return { ...compacted, units: { ...compacted.units, [us]: { ...unit, logbook } } };
+      });
+    },
+    [profileId, update]
+  );
+
   const saveExerciseResult = useCallback(
     (us: string, exId: string, score: number, total: number) => {
       const actor = read<Profile[]>(PROFILES_KEY, []).find((p) => p.id === profileId);
@@ -645,7 +676,7 @@ export function useProgress(profileId: string) {
     [update]
   );
 
-  return { state, toggleActivity, saveQuizResult, setLogbookField, saveExerciseResult };
+  return { state, toggleActivity, saveQuizResult, setLogbookField, setLogbookFields, saveExerciseResult };
 }
 
 /* ---------- shared app settings (controlled by the super user) ---------- */
