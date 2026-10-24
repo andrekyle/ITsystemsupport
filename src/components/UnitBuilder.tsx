@@ -400,6 +400,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     {inlineActionsTarget && createPortal(inlineActions, inlineActionsTarget)}
     <div className="unit-workspace">
       <nav className="unit-workspace-nav" aria-label="Unit editor sections">
+        <p className="unit-workspace-nav-caption">Builder</p>
         <div className="unit-workspace-nav-group">
           {navItems.map(item=><button key={item.id} type="button" className={`unit-workspace-nav-item${activeView===item.id?" is-active":""}${item.id==="delete"?" is-danger":""}`} aria-current={activeView===item.id?"page":undefined} disabled={!!inlineDraft||!!busy} onClick={()=>select(item.id)}>
             <Icon name={item.icon} size={17}/>
@@ -419,7 +420,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
             <h2>{inlineDraft?"Inline slide changes":heading}</h2>
             <p>{inlineDraft?"Slide text edited on the lesson page is waiting to be saved.":intro}</p>
           </div>
-          {activeView==="content"&&!inlineDraft&&draft&&<div className="unit-workspace-head-actions">
+          {activeView==="content"&&!inlineDraft&&draft&&<div className="unit-workspace-head-actions" role="toolbar" aria-label="Content commands">
             <div className="unit-workspace-add-tab">
               <Select disabled={!!busy} ariaLabel="Tab to add" value={newTabKind} onChange={setNewTabKind} options={[
                 { value: "customTabs", label: "Custom content tab" }, { value: "lessonPlan", label: "Lesson plan" },
