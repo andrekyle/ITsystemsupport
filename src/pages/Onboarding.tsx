@@ -712,7 +712,7 @@ export function PackExplorer({
                         >
                           <Icon name="eye" size={15} />
                         </button>
-                      )}
+                      ) || <span className="ob-action-placeholder" aria-hidden="true" />}
                       <button
                         className="ob-icon-btn"
                         title={`Download ${file.name}`}
