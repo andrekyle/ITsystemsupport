@@ -34,6 +34,13 @@ function ClosingPages114076({ values, onChange }: { values: Values; onChange: Sa
   return <><section className="lw-page" data-page="10"><div className="lw-bar">SELF-ASSESSMENT</div><p>Rate yourself against the learning outcomes: 1 Not able to comply; 2 Reasonable compliance; 3 Able to comply fully.</p><table className="lw-table lw-self"><thead><tr><th>Learning outcome</th><th>Rating / comments</th></tr></thead><tbody>{["Plan the research","Conduct research","Present research results"].map((label,index)=><tr key={label}><th>{label}</th><td><SourceField id={`self-${index}`} label={`${label} self-assessment`} values={values} onChange={onChange}/></td></tr>)}</tbody></table><p>Learner signature: <SourceField id="self-learner-signature" label="Self-assessment learner signature" values={values} onChange={onChange}/> Date: <SourceField id="self-date" label="Self-assessment date" type="date" values={values} onChange={onChange}/></p></section><section className="lw-page" data-page="11"><div className="lw-bar">ASSESSMENT FEEDBACK REPORT</div><h3>Facilitator feedback &amp; remarks</h3><SourceLines id="facilitator-feedback" label="Facilitator feedback and remarks" values={values} onChange={onChange}/><h3>Assessment judgement</h3><p>Learner total mark: <SourceField id="total-mark" label="Learner total mark" values={values} onChange={onChange}/></p><p>Requirements met / Requirements not met</p><h3>Learner feedback &amp; comments</h3><SourceLines id="learner-feedback" label="Learner feedback and comments" values={values} onChange={onChange}/></section><section className="lw-page" data-page="12"><div className="lw-bar">DECLARATIONS</div><p>Facilitator declaration</p><SourceLines id="facilitator-declaration" label="Facilitator declaration" values={values} onChange={onChange}/><p>Learner declaration</p><SourceLines id="learner-declaration" label="Learner declaration" values={values} onChange={onChange}/><p>Assessor declaration</p><SourceLines id="assessor-declaration" label="Assessor declaration" values={values} onChange={onChange}/><table className="lw-table lw-sign"><tbody><tr><th>Learner date</th><td><SourceField id="final-learner-date" label="Final learner date" type="date" values={values} onChange={onChange}/></td><th>Facilitator date</th><td><SourceField id="final-facilitator-date" label="Final facilitator date" type="date" values={values} onChange={onChange}/></td><th>Assessor date</th><td><SourceField id="final-assessor-date" label="Final assessor date" type="date" values={values} onChange={onChange}/></td></tr></tbody></table></section></>;
 }
 
+function OriginalWorkbook114076({ values, onChange }: { values: Values; onChange: Save }) {
+  return <section className="original-workbook-114076">
+    <iframe title="Original 114076 learner workbook" src="/downloads/US-114076-Learner-Workbook.pdf" />
+    <div className="lw-page original-workbook-fields"><div className="lw-bar">LEARNER INFORMATION — COMPLETE ONLINE</div><table className="lw-table lw-details"><tbody>{[["name","Name & Surname"],["organisation","Organisation"],["unit-dept","Unit/Dept"],["facilitator","Facilitator Name"],["date-started","Date Started"],["date-completed","Date of Completion"],["learner-id","Learner ID No."],["email","Email Address"]].map(([id,label])=><tr key={id}><th>{label}</th><td><SourceField id={`online-${id}`} label={label} type={/date/i.test(label)?"date":"text"} values={values} onChange={onChange}/></td></tr>)}</tbody></table><p>Answers to the activities are completed in the workbook above and are marked using the existing AI marking control.</p></div>
+  </section>;
+}
+
 interface MarkResult {
   awarded: number;
   maxMarks: number;
@@ -147,7 +154,7 @@ export function GeneratedWorkbook({ workbook, unit, profile, memoItems, values, 
           })}</tbody>
         </table>
       </WorkbookCover>
-      {unit.us === "114076" && <SourcePages114076 values={values} onChange={onChange} />}
+      {unit.us === "114076" && <OriginalWorkbook114076 values={values} onChange={onChange} />}
       {displayedOutcomes.map((outcome, outcomeIndex) => {
         const result = resultFor(outcome.id);
         return <section className="lw-page" data-page={outcomeIndex + 2} key={outcome.id}>
@@ -175,7 +182,6 @@ export function GeneratedWorkbook({ workbook, unit, profile, memoItems, values, 
           </div>)}
         </section>;
       })}
-      {unit.us === "114076" && <ClosingPages114076 values={values} onChange={onChange} />}
     </div>
   </section>;
 }
