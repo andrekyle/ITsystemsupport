@@ -43,6 +43,7 @@ export function GeneratedWorkbook({ workbook, unit, profile, memoItems, values, 
   onChange: Save;
   onSave: () => Promise<void>;
 }) {
+  const [editMode, setEditMode] = useState(false);
   const isResearchWorkbook = String(unit.us).trim() === "114076" || /use computer technology to research a computer topic/i.test(workbook.title);
   const [marking, setMarking] = useState(false);
   const [error, setError] = useState("");
@@ -120,6 +121,7 @@ export function GeneratedWorkbook({ workbook, unit, profile, memoItems, values, 
       <div className="lw-workbook-actions-copy"><strong>Workbook tools</strong><span>Answers save automatically. Save verifies the latest content on this device and in the cloud before you leave.</span></div>
       <div className="lw-workbook-actions-controls">
         <DocumentActions name={workbook.title} onSave={onSave} />
+        {profile.role === "Super User" && <button type="button" className="btn ghost sm" aria-pressed={editMode} onClick={() => setEditMode(value => !value)}>{editMode ? "Done editing" : "Edit page"}</button>}
         <button type="button" className="btn lw-mark-workbook" disabled={marking || !memoItems.length} onClick={() => void mark()}>
           <Icon name="robot" size={17} />
           {marking ? "Marking answers…" : memoItems.length ? "Mark workbook" : "Upload memo to mark"}
@@ -127,7 +129,7 @@ export function GeneratedWorkbook({ workbook, unit, profile, memoItems, values, 
       </div>
       {error && <span className="auth-error" role="alert">{error}</span>}
     </div>
-    <div className="lw-document document-print-target">
+    <div className={`lw-document document-print-target${editMode ? " workbook-editing" : ""}`} contentEditable={editMode} suppressContentEditableWarning>
       <WorkbookCover
         number={1}
         title={workbook.title.toUpperCase()}
