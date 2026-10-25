@@ -13,17 +13,12 @@ import { Select } from "../components/Select";
 import { Button } from "@fluentui/react-components";
 import {
   ArchiveRegular,
-  ArrowDownloadRegular,
-  DesktopRegular,
   DocumentPdfRegular,
   DocumentRegular,
   DocumentTableRegular,
   DocumentWordRegular,
   FolderRegular,
-  HardDriveRegular,
   ImageRegular,
-  MusicNote1Regular,
-  VideoClipRegular,
 } from "@fluentui/react-icons";
 import { logAudit } from "../lib/audit";
 import {
@@ -162,17 +157,6 @@ function FileTypeIcon({ name }: { name: string }) {
 function ExplorerFolderIcon({ open = false }: { open?: boolean }) {
   const IconComponent = open ? FolderRegular : FolderRegular;
   return <IconComponent className="ob-real-folder-icon" aria-hidden="true" />;
-}
-
-function WindowsNavIcon({ kind }: { kind: "downloads" | "documents" | "pictures" | "desktop" | "music" | "videos" | "drive" | "folder" }) {
-  const IconComponent = kind === "downloads" ? ArrowDownloadRegular
-    : kind === "documents" ? DocumentRegular
-      : kind === "pictures" ? ImageRegular
-        : kind === "desktop" ? DesktopRegular
-          : kind === "music" ? MusicNote1Regular
-            : kind === "videos" ? VideoClipRegular
-              : kind === "drive" ? HardDriveRegular : FolderRegular;
-  return <IconComponent className={`ob-windows-nav-icon ob-windows-nav-${kind}`} aria-hidden="true" />;
 }
 
 /** In-app replacement for the browser's unstyleable folder-upload prompt. */
@@ -611,21 +595,6 @@ export function PackExplorer({
       {error && <div className="ob-error" role="alert">{error}</div>}
       <div className="ob-explorer" ref={explorerRef} style={{ "--ob-folder-pane": `${folderPaneWidth}px` } as React.CSSProperties}>
         <nav className="ob-folder-nav" aria-label="Pack folders">
-          <div className="ob-windows-nav-section">
-            {[['downloads', 'Downloads'], ['documents', 'Documents'], ['pictures', 'Pictures'], ['folder', 'Job Applications'], ['folder', 'New folder (3)'], ['folder', 'personal'], ['videos', 'Videos']].map(([kind, label]) => (
-              <div className="ob-windows-nav-row" key={label}><WindowsNavIcon kind={kind as Parameters<typeof WindowsNavIcon>[0]["kind"]} /><span>{label}</span><span className="ob-pin">◆</span></div>
-            ))}
-          </div>
-          <div className="ob-windows-nav-divider" />
-          <div className="ob-windows-nav-row ob-windows-nav-heading"><Icon name="chevronDown" size={12} /><span className="ob-windows-pc">▸</span><strong>This PC</strong></div>
-          <div className="ob-windows-nav-row ob-windows-nav-indent"><Icon name="chevronRight" size={12} /><span className="ob-windows-pc">◈</span><span>3D Objects</span></div>
-          <div className="ob-windows-nav-row ob-windows-nav-indent"><Icon name="chevronRight" size={12} /><WindowsNavIcon kind="desktop" /><span>Desktop</span></div>
-          <div className="ob-windows-nav-row ob-windows-nav-indent"><Icon name="chevronRight" size={12} /><WindowsNavIcon kind="documents" /><span>Documents</span></div>
-          <div className="ob-windows-nav-row ob-windows-nav-indent"><Icon name="chevronRight" size={12} /><WindowsNavIcon kind="downloads" /><span>Downloads</span></div>
-          <div className="ob-windows-nav-row ob-windows-nav-indent"><Icon name="chevronRight" size={12} /><WindowsNavIcon kind="music" /><span>Music</span></div>
-          <div className="ob-windows-nav-row ob-windows-nav-indent"><Icon name="chevronRight" size={12} /><WindowsNavIcon kind="pictures" /><span>Pictures</span></div>
-          <div className="ob-windows-nav-row ob-windows-nav-indent"><Icon name="chevronRight" size={12} /><WindowsNavIcon kind="videos" /><span>Videos</span></div>
-          <div className="ob-windows-nav-row ob-windows-nav-indent"><Icon name="chevronDown" size={12} /><WindowsNavIcon kind="drive" /><span>Local Disk (C:)</span></div>
           <Button appearance="subtle" className={!currentFolder ? "active" : ""} aria-current={!currentFolder ? "location" : undefined}
             aria-expanded={folders.length ? expandedFolders.has("") : undefined}
             onClick={() => selectFolder("", folders.length > 0)}>

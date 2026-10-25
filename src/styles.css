@@ -18792,28 +18792,6 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   overflow-x: hidden;
   overflow-y: auto;
 }
-.ob-windows-nav-section { padding: 0 0 4px; }
-.ob-windows-nav-divider { height: 1px; margin: 5px 0; background: var(--border); }
-.ob-windows-nav-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 30px;
-  padding: 3px 12px 3px 18px;
-  color: var(--ink-2);
-  font-size: 13px;
-  white-space: nowrap;
-}
-.ob-windows-nav-row span:not(.ob-pin) { overflow: hidden; text-overflow: ellipsis; }
-.ob-windows-nav-row.ob-windows-nav-heading { padding-left: 12px; color: var(--ink); }
-.ob-windows-nav-indent { padding-left: 20px; }
-.ob-windows-nav-icon { flex: 0 0 auto; width: 17px; height: 17px; color: #2374c6; }
-.ob-windows-nav-folder { color: #e4a522; }
-.ob-windows-nav-drive { color: #75838e; }
-.ob-windows-pc { flex: 0 0 auto; width: 17px; color: #2d87b9; font-size: 16px; }
-.ob-pin { margin-left: auto; color: #8b969d; font-size: 9px; transform: rotate(45deg); }
-[data-theme="dark"] .ob-windows-nav-row { color: #d9d9d9; }
-[data-theme="dark"] .ob-windows-nav-heading { color: #fff; }
 .ob-folder-nav button {
   display: flex;
   align-items: center;
