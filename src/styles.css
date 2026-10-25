@@ -4010,9 +4010,6 @@ textarea:focus {
 .generated-workbook { max-width:980px; margin:0 auto; }
 .generated-workbook-114076 .lw-document { gap:18px; }
 .generated-workbook-114076 .lw-page:not(.lw-cover) { min-height:0; padding-top:34px; padding-bottom:34px; }
-.original-workbook-114076 { display:grid; gap:18px; }
-.original-workbook-114076 iframe { display:block; width:100%; height:1500px; border:1px solid #b8b8b8; background:#fff; }
-.original-workbook-114076 .original-workbook-fields { min-height:0; }
 .generated-workbook-document { display:grid; gap:22px; padding-top:18px; }
 .generated-workbook-document>header { padding:24px 28px; border-radius:12px; color:#fff; background:linear-gradient(135deg,#262626,#454545); }
 .generated-workbook-document>header span { font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
