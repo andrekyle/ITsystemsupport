@@ -15,9 +15,19 @@ function CleanHtmlDocument({ definition, answers, onChange, profile }: { definit
   return <div className="clean-html-document">
     {pages.map(({ page, index }) => {
       const pageFields = fieldForPage(index + 1);
-      const text = (page.layer?.text ?? []).slice().sort((a, b) => a.y - b.y || a.x - b.x).map(run => run.t).join(" ").trim();
+      const runs = (page.layer?.text ?? []).slice().sort((a, b) => a.y - b.y || a.x - b.x);
+      const lines: typeof runs[] = [];
+      for (const run of runs) {
+        const line = lines.find(item => item.length && Math.abs(item[0].y - run.y) < Math.max(run.h, item[0].h) * 0.7);
+        (line ?? (lines.push([]), lines[lines.length - 1])).push(run);
+      }
       return <section className="clean-html-page" key={index}>
-        {text && <div className="clean-html-copy">{text}</div>}
+        {lines.length > 0 && <div className="clean-html-copy">{lines.map((line, lineIndex) => {
+          const content = line.map(run => run.t).join(" ").trim();
+          if (!content) return null;
+          const heading = line.some(run => run.b) && (line.some(run => run.s >= 0.018) || /^(overview|introduction|instructions|purpose|resources|assessment|unit standard)/i.test(content));
+          return heading ? <h2 key={lineIndex}>{content}</h2> : <p key={lineIndex}>{content}</p>;
+        })}</div>}
         {pageFields.length > 0 && <div className="clean-html-fields">{pageFields.map(field => {
           const value = answers[field.id];
           const label = field.label || "Answer";
