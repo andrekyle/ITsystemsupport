@@ -376,13 +376,14 @@ export function PackExplorer({
   const folders = useMemo(() => onboardingFolders(pack.files), [pack.files]);
   const currentFolder = folders.includes(folder) ? folder : "";
   const search = query.trim().toLowerCase();
+  const searchScope = currentFolder ? `${currentFolder}/` : "";
 
   const filtered = useMemo(() => {
     const matches = pack.files.filter(file => {
       const path = onboardingFilePath(file);
-      return search
-        ? (!currentFolder || path.startsWith(`${currentFolder}/`)) && path.toLowerCase().includes(search)
-        : parentFolder(path) === currentFolder;
+      if (!search) return parentFolder(path) === currentFolder;
+      if (searchScope && !path.startsWith(searchScope)) return false;
+      return path.toLowerCase().includes(search) || file.name.toLowerCase().includes(search);
     });
     return matches.sort((a, b) => {
       let result = 0;
@@ -396,7 +397,7 @@ export function PackExplorer({
       }
       return (sort.descending ? -result : result) || onboardingFilePath(a).localeCompare(onboardingFilePath(b));
     });
-  }, [pack.files, currentFolder, search, sort]);
+  }, [pack.files, currentFolder, search, searchScope, sort]);
   const childFolders = folders.filter(path => parentFolder(path) === currentFolder &&
     (!search || path.toLowerCase().includes(search) ||
       filtered.some(file => onboardingFilePath(file).startsWith(`${path}/`))))
@@ -550,8 +551,10 @@ export function PackExplorer({
             value={query}
             placeholder="Search this folder…"
             aria-label="Search this folder"
+            type="search"
             onChange={(e) => setQuery(e.target.value)}
           />
+          {query && <button className="ob-search-clear" type="button" aria-label="Clear search" onClick={() => setQuery("")}>×</button>}
         </div>
         {canManage && (
           <div className="ob-explorer-actions">
