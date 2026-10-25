@@ -18948,6 +18948,31 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .ob-explorer-count { margin: 8px 0 0; }
 .ob-explorer button:focus-visible { outline: 2px solid var(--azure); outline-offset: -2px; }
 
+/* Windows Explorer dark theme: keep the pane and details view on the same
+   dark canvas while preserving the light Office document glyphs. */
+[data-theme="dark"] .ob-explorer {
+  border-color: #3b3b3b;
+  background: #202020;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 28%);
+}
+[data-theme="dark"] .ob-folder-nav,
+[data-theme="dark"] .ob-details thead { background: #252525; }
+[data-theme="dark"] .ob-folder-nav button { color: #e6e6e6; }
+[data-theme="dark"] .ob-folder-nav button:hover,
+[data-theme="dark"] .ob-details tbody tr:not(.ob-file-group-row):hover { background: #2d2d2d; }
+[data-theme="dark"] .ob-folder-nav button.active { background: #373737; color: #fff; }
+[data-theme="dark"] .ob-details { color: #f3f3f3; }
+[data-theme="dark"] .ob-details th button,
+[data-theme="dark"] .ob-actions-label { color: #cfcfcf; }
+[data-theme="dark"] .ob-details .ob-file-group-row th {
+  background: #303030;
+  border-color: #454545;
+  color: #e4e4e4;
+}
+[data-theme="dark"] .ob-details td { border-color: transparent; }
+[data-theme="dark"] .ob-details .ob-details-empty { color: #a7a7a7; }
+[data-theme="dark"] .ob-folder-resizer { border-left-color: #454545; }
+
 @media (max-width: 800px) {
   .ob-explorer { grid-template-columns: minmax(0, 1fr); }
   .ob-folder-nav, .ob-folder-resizer { display: none; }
