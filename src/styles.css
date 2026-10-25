@@ -18799,8 +18799,10 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .ob-preview-close { width: 26px; height: 26px; padding: 0; border: 0; background: transparent; color: var(--ink-2); font-size: 22px; line-height: 1; cursor: pointer; }
 .ob-preview-close:hover { background: var(--surface-2); border-radius: 4px; }
 .ob-preview iframe { flex: 1; width: 100%; min-height: 400px; border: 0; background: #fff; }
+.ob-preview-text { flex: 1; margin: 0; padding: 20px; overflow: auto; white-space: pre-wrap; word-break: break-word; color: var(--ink); background: var(--surface); font: 13px/1.6 Consolas, "Cascadia Code", monospace; }
 [data-theme="dark"] .ob-preview { background: #252525; }
 [data-theme="dark"] .ob-preview iframe { background: #1f1f1f; }
+[data-theme="dark"] .ob-preview-text { color: #e8e8e8; background: #202020; }
 .ob-folder-nav {
   padding: 8px 0;
   overflow-x: hidden;

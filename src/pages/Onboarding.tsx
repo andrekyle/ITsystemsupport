@@ -1,5 +1,6 @@
 import { Fragment, useMemo, useRef, useState } from "react";
 import JSZip from "jszip";
+import * as XLSX from "xlsx";
 import { Icon } from "../icons";
 import type { Profile, Route } from "../types";
 import {
@@ -21,6 +22,7 @@ import {
   ImageRegular,
 } from "@fluentui/react-icons";
 import { logAudit } from "../lib/audit";
+import { importUnitSource } from "../lib/unitSourceImport";
 import {
   archiveFilePaths, fileTypeLabel, filesFromDirectoryHandle, filesFromDroppedEntry,
   onboardingFilePath, onboardingFolders, parentFolder, selectedFiles, withoutUploadRoot,
@@ -371,7 +373,7 @@ export function PackExplorer({
     column: "type", descending: false,
   });
   const [opening, setOpening] = useState<string | null>(null);
-  const [preview, setPreview] = useState<{ file: OnboardingFile; url: string } | null>(null);
+  const [preview, setPreview] = useState<{ file: OnboardingFile; url: string; content?: string } | null>(null);
   const [previewWidth, setPreviewWidth] = useState(420);
   const [downloadingPack, setDownloadingPack] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -495,7 +497,15 @@ export function PackExplorer({
     try {
       const url = await getFileUrl(file);
       if (!url) throw new Error(`"${file.name}" could not be opened. Check your connection and try again.`);
-      setPreview({ file, url });
+      const blob = await getFileBlob(file);
+      const ext = extOf(file.name);
+      let content: string | undefined;
+      if (blob && ["docx", "pptx"].includes(ext)) content = await importUnitSource(new File([blob], file.name, { type: file.type }));
+      else if (blob && ["xlsx", "xls", "csv"].includes(ext)) {
+        const workbook = XLSX.read(await blob.arrayBuffer(), { type: "array" });
+        content = workbook.SheetNames.map(name => `## ${name}\n\n${XLSX.utils.sheet_to_csv(workbook.Sheets[name])}`).join("\n\n");
+      } else if (blob && ext === "txt") content = await blob.text();
+      setPreview({ file, url, content });
     } catch (error) {
       setError(error instanceof Error ? error.message : "The file could not be opened.");
     } finally { setOpening(null); }
@@ -754,7 +764,9 @@ export function PackExplorer({
             }} />
           <aside className="ob-preview" aria-label={`Preview ${preview.file.name}`}>
             <div className="ob-preview-head"><div><strong>{preview.file.name}</strong><span>{fileTypeLabel(preview.file.name)}</span></div><button className="ob-preview-close" aria-label="Close preview" onClick={() => setPreview(null)}>×</button></div>
-            <iframe title={`Preview of ${preview.file.name}`} src={preview.url} />
+            {preview.content !== undefined
+              ? <pre className="ob-preview-text">{preview.content}</pre>
+              : <iframe title={`Preview of ${preview.file.name}`} src={preview.url} />}
           </aside>
         </>}
       </div>
