@@ -481,6 +481,11 @@ a:hover {
   margin: 0 auto;
   padding: 28px 40px 64px;
 }
+.content-inner:has(.ob-explorer) {
+  max-width: 1800px;
+  padding-left: 32px;
+  padding-right: 32px;
+}
 
 /* ============ Header ============ */
 
