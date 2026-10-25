@@ -240,7 +240,7 @@ type PracticalTaskProps = {
 export function PracticalTask({ document, unitId, profile, values: storedValues, onChange: saveValue, onSave, storagePrefix = "", presentation }: PracticalTaskProps) {
   const values = storagePrefix ? Object.fromEntries(Object.entries(storedValues).filter(([key]) => key.startsWith(storagePrefix)).map(([key, value]) => [key.slice(storagePrefix.length), value])) : storedValues;
   const onChange: SaveField = (key, value) => saveValue(`${storagePrefix}${key}`, value);
-  if (document.replica) return <><UploadedPdf key={`${profile.id}.${storagePrefix}${unitId}.${document.sourceName}`} definition={document.replica} profile={profile} values={values} onChange={onChange} onSave={onSave} />{document.notice && <details className="no-print"><summary>Source document notes</summary><p>{document.notice}</p></details>}</>;
+  if (document.replica) return <><UploadedPdf key={`${profile.id}.${storagePrefix}${unitId}.${document.sourceName}`} definition={document.replica} profile={profile} values={values} onChange={onChange} onSave={onSave} storageKey="replica.answers" />{document.notice && <details className="no-print"><summary>Source document notes</summary><p>{document.notice}</p></details>}</>;
   if (document.sourceText !== undefined) return <SourceDocument key={`${storagePrefix}${unitId}.${document.sourceName}`} document={document} unitId={unitId} profile={profile} values={values} onChange={onChange} onSave={onSave} presentation={presentation} />;
   if (unitId === "114046" && !storagePrefix) return <PracticalTask114046 values={values} onChange={onChange} profile={profile} />;
   const key = (section: string, field: string) => `practical.${section}.${field}`;

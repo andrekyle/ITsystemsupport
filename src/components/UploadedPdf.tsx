@@ -21,14 +21,15 @@ function readPdfAnswers(raw: string | boolean | undefined): FormAnswers {
   return answers;
 }
 
-export function UploadedPdf({ definition, profile, values, onChange, onSave }: {
+export function UploadedPdf({ definition, profile, values, onChange, onSave, storageKey = "replica.answers" }: {
   definition: FormDefinition;
   profile: Profile;
   values: Record<string, string | boolean>;
   onChange: (key: string, value: string | boolean) => void;
   onSave?: () => Promise<void>;
+  storageKey?: string;
 }) {
-  const key = "practical.replica.answers";
+  const key = storageKey;
   const raw = values[key];
   const [local, setLocal] = useState<FormAnswers>(() => readPdfAnswers(raw));
   const current=useRef(local);
