@@ -3,6 +3,7 @@ import { readBuiltUnit } from "../lib/builtUnits";
 import { getSaqaDetails } from "./saqaDetails";
 import { LEARNER_GUIDE_CONTENT_PAGES } from "./learnerGuide114046";
 import { LEARNER_WORKBOOK_114076 } from "./learnerWorkbook114076";
+import { WORKBOOK_114076 } from "./workbook114076";
 
 /** Illustrates the water-supply analogy used in the PSU "matching" quiz question.
  * Deliberately shows ONLY the analogy side (river → treatment plant → pipes → city
@@ -20384,6 +20385,7 @@ CONTENT["114076"] = {
   assignments: CONTENT["114076"]?.assignments ?? [],
   quiz: CONTENT["114076"]?.quiz ?? [],
   learnerWorkbook: LEARNER_WORKBOOK_114076,
+  workbook: WORKBOOK_114076,
 };
 
 export function getContent(us: string): UnitContent | undefined {
