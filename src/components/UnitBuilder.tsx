@@ -5,7 +5,7 @@ import type { LessonEdits } from "../store";
 import { buildUnitContent, validateUnitContent, lessonPlanFromSource, MAX_SOURCE_LENGTH, MAX_LESSON_PLAN_LENGTH, mergeUnitContentEnhancement } from "../lib/unitBuilder";
 import { logbookFromSource, logbookStats, MAX_LOGBOOK_SOURCE_LENGTH } from "../lib/logbookBuilder";
 import { useBuiltUnit, useDeletedBuiltUnit, saveBuiltUnit, deleteBuiltUnit, restoreDeletedBuiltUnit } from "../lib/useBuiltUnit";
-import { unitHistory, unitVersionArchive, MAX_UNIT_HISTORY, type BuiltUnitVersion, type UnitSourceDocuments } from "../lib/builtUnits";
+import { unitHistory, unitVersionArchive, MAX_UNIT_HISTORY, readBuiltUnit, type BuiltUnitVersion, type UnitSourceDocuments } from "../lib/builtUnits";
 import { importUnitSource } from "../lib/unitSourceImport";
 import { importUnitPdf } from "../lib/unitPdfImport";
 import { storeUnitReplicaPages } from "../lib/forms";
@@ -199,7 +199,12 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       const uploaded=await Promise.all(sourceEntries.map(async([kind,file])=>[kind,await uploadFile(`${prefix}/source-documents`,file)] as const));
       uploaded.forEach(([kind,document])=>{sourceDocuments[kind]=document;});
     }
-    await saveBuiltUnit(unit.us,{revision,createdAt:new Date().toISOString(),source:sourceText,content:next,files:{pdf,pptx,answers,material:built?.files.material,materialEditable:built?.files.materialEditable,sourceDocuments:Object.keys(sourceDocuments).length?sourceDocuments:undefined},aiUsed,planSource:built?.planSource});
+    // Merge file metadata from the latest persisted revision as well. This is
+    // important when two builder tabs are open: uploading one PDF must not
+    // discard a source document or generated file saved by the other tab.
+    const latestBuilt=readBuiltUnit(unit.us);
+    const latestSourceDocuments={...(latestBuilt?.files.sourceDocuments??{}),...sourceDocuments};
+    await saveBuiltUnit(unit.us,{revision,createdAt:new Date().toISOString(),source:sourceText,content:next,files:{pdf,pptx,answers,material:latestBuilt?.files.material??built?.files.material,materialEditable:latestBuilt?.files.materialEditable??built?.files.materialEditable,sourceDocuments:Object.keys(latestSourceDocuments).length?latestSourceDocuments:undefined},aiUsed,planSource:latestBuilt?.planSource??built?.planSource});
     setSourceDocumentFiles({});
     setSource(sourceText);setDraft(null);setDirty(false);setMessage("Unit saved. Uploaded PDFs keep their original layout, with editable fields. Tabs and download files are ready.");onSaved();
   };
@@ -238,8 +243,12 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       const guide=learnerGuide?.replica?.display==="digital"?learnerGuide:await recoverSourceDocument("learnerGuide")??learnerGuide;
       if ([workbook,practical,guide,...editableDocuments.map(item=>item.document)].some(document=>document?.replica?.display==="image")) throw new Error("An older document still uses page images. Upload its original PDF again to convert it to real HTML before rebuilding.");
       const documentsOnly=!generateLessons;
+      // Document uploads/edits are scoped mutations. Re-read the latest saved
+      // content before applying them so an old builder tab can never publish a
+      // stale snapshot over newer tabs, learner-facing content, or submissions.
+      const latestSavedContent = documentsOnly ? readBuiltUnit(unit.us)?.content : undefined;
       let next:UnitContent=documentsOnly
-        ? structuredClone(content??{lesson:[],exercises:[],assignments:[],quiz:[]})
+        ? structuredClone(latestSavedContent ?? content ?? {lesson:[],exercises:[],assignments:[],quiz:[]})
         : buildUnitContent(unit,source,{minutes});
       const preservedWorkbook=!workbook&&unit.us==="114074"&&content?.workbook?structuredClone(content.workbook):undefined;
       if(preservedWorkbook)next.workbook=preservedWorkbook;
@@ -261,7 +270,8 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
         if(result.usage) void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.input_tokens??result.usage.prompt_tokens??0,completionTokens:result.usage.output_tokens??result.usage.completion_tokens??0,totalTokens:result.usage.total_tokens??0});
       }
       const htmlAiUsed=[guide,workbook,practical,...editableDocuments.map(item=>item.document)].some(document=>document?.replica?.display==="digital");
-      await publish(next,documentsOnly?(built?.source??""):source,htmlAiUsed||(documentsOnly?(built?.aiUsed??false):ai));
+      const latestBeforePublish=documentsOnly?readBuiltUnit(unit.us):undefined;
+      await publish(next,documentsOnly?(latestBeforePublish?.source??built?.source??""):source,htmlAiUsed||(documentsOnly?(latestBeforePublish?.aiUsed??built?.aiUsed??false):ai));
       doneBusy(()=>select("content"));
     }catch(e){setError(unitBuilderError(e,"The unit could not be built. Your current content is unchanged."));setBusy("");}
   };
