@@ -18916,8 +18916,8 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 }
 .ob-details .ob-file-group-row th {
   padding: 9px 16px;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  border-top: 0;
+  border-bottom: 0;
   background: #f3f3f5;
   color: var(--ink-2);
   font-size: 12px;
@@ -18966,6 +18966,13 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .ob-mobile-file-meta { display: none; }
 .ob-actions-label { padding: 10px; display: block; color: var(--ink-3); }
 .ob-explorer-count { margin: 8px 0 0; }
+.ob-type-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  color: var(--ink-3);
+}
+.ob-type-totals span + span::before { content: "·"; margin: 0 9px; color: var(--border); }
 .ob-explorer button:focus-visible { outline: 2px solid var(--azure); outline-offset: -2px; }
 
 /* Windows Explorer dark theme: keep the pane and details view on the same
