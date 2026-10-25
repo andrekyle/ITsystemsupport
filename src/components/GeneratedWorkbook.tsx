@@ -97,7 +97,7 @@ export function GeneratedWorkbook({ workbook, unit, profile, memoItems, values, 
     }
   };
 
-  return <section className="generated-workbook">
+  return <section className={`generated-workbook generated-workbook-${unit.us}`}>
     <div className="lw-workbook-actions no-print">
       <div className="lw-workbook-actions-copy"><strong>Workbook tools</strong><span>Answers save automatically. Save verifies the latest content on this device and in the cloud before you leave.</span></div>
       <div className="lw-workbook-actions-controls">
