@@ -18796,7 +18796,7 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .ob-explorer.has-preview .ob-preview-resizer { display: none; }
 .ob-preview-resizer { width: 5px; border-left: 1px solid var(--border); cursor: col-resize; touch-action: none; }
 .ob-preview-resizer:hover, .ob-preview-resizer:focus-visible { border-left-color: var(--azure); outline: none; }
-.ob-preview { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; min-width: 0; background: var(--surface); }
+.ob-preview { position: fixed; inset: 0 0 0 auto; z-index: 1000; display: flex; flex-direction: column; width: clamp(420px, 62vw, 900px); min-width: 0; background: var(--surface); border-left: 1px solid var(--border); box-shadow: -8px 0 24px rgb(0 0 0 / 12%); }
 .ob-preview-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; min-height: 58px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
 .ob-preview-head div { min-width: 0; }
 .ob-preview-head strong, .ob-preview-head span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
