@@ -503,6 +503,9 @@
 .unit-editor-root .unit-editor-input:hover { background:var(--win-layer-alt); border-color:var(--win-text-secondary) !important; }
 .unit-editor-root .unit-editor-textarea:focus,
 .unit-editor-root .unit-editor-input:focus { background:var(--win-layer-alt); border-color:var(--win-accent) !important; box-shadow:inset 0 -2px var(--win-accent); }
+.unit-editor-root .unit-editor-textarea,
+.unit-editor-root .unit-editor-textarea:hover,
+.unit-editor-root .unit-editor-textarea:focus { border:0 !important; box-shadow:none; }
 .unit-editor-root .unit-editor-group { border-color:var(--win-stroke); border-radius:4px; background:var(--win-layer-alt); }
 .unit-editor-root .unit-editor-group > summary { color:var(--win-text); border-radius:4px; }
 .unit-editor-root .unit-editor-group > summary:hover { background:var(--win-subtle-hover); }
