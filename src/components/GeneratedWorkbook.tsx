@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Profile, UnitStandard, WorkbookSpec } from "../types";
 import type { WorkbookMemoItem } from "../store";
 import { Icon } from "../icons";
@@ -44,6 +44,34 @@ export function GeneratedWorkbook({ workbook, unit, profile, memoItems, values, 
   onSave: () => Promise<void>;
 }) {
   const [editMode, setEditMode] = useState(false);
+  const workbookRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const root = workbookRef.current;
+    if (!root || !editMode) return;
+    const handles: HTMLDivElement[] = [];
+    root.querySelectorAll<HTMLTableElement>("table.lw-table").forEach(table => {
+      table.style.tableLayout = "fixed";
+      table.querySelectorAll<HTMLTableCellElement>("thead th").forEach((header, index) => {
+        const handle = document.createElement("div");
+        handle.className = "workbook-column-resize-handle";
+        handle.setAttribute("aria-label", `Resize column ${index + 1}`);
+        handle.addEventListener("pointerdown", event => {
+          event.preventDefault(); event.stopPropagation();
+          const startX = event.clientX;
+          const startWidth = header.getBoundingClientRect().width;
+          const cells = Array.from(table.rows).map(row => row.cells[index]).filter(Boolean);
+          const move = (moveEvent: PointerEvent) => {
+            const width = Math.max(28, startWidth + moveEvent.clientX - startX);
+            cells.forEach(cell => { cell.style.width = `${width}px`; });
+          };
+          const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+          window.addEventListener("pointermove", move); window.addEventListener("pointerup", up, { once: true });
+        });
+        header.appendChild(handle); handles.push(handle);
+      });
+    });
+    return () => handles.forEach(handle => handle.remove());
+  }, [editMode]);
   const isResearchWorkbook = String(unit.us).trim() === "114076" || /use computer technology to research a computer topic/i.test(workbook.title);
   const [marking, setMarking] = useState(false);
   const [error, setError] = useState("");
@@ -129,7 +157,7 @@ export function GeneratedWorkbook({ workbook, unit, profile, memoItems, values, 
       </div>
       {error && <span className="auth-error" role="alert">{error}</span>}
     </div>
-    <div className={`lw-document document-print-target${editMode ? " workbook-editing" : ""}`} contentEditable={editMode} suppressContentEditableWarning>
+    <div ref={workbookRef} className={`lw-document document-print-target${editMode ? " workbook-editing" : ""}`} contentEditable={editMode} suppressContentEditableWarning>
       <WorkbookCover
         number={1}
         title={workbook.title.toUpperCase()}
