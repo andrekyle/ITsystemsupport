@@ -35,10 +35,16 @@ export function readPdfHtmlArtwork(value: unknown): PdfHtmlArtwork {
       if (typeof color !== "string" || !/^#[0-9a-f]{6}$/i.test(color)) throw new Error("AI HTML conversion returned an invalid colour.");
       return { ...bounds, c: color };
     }),
-    pictures: source.pictures.map(value => {
+    // A page-sized crop is the model's fallback for "I could not isolate the
+    // artwork". It must not abort the whole conversion: the PDF text layer
+    // and editable fields are still usable, while retaining the crop would
+    // simply place a non-editable screenshot over the page.
+    pictures: source.pictures.filter(value => {
+      if (!value || typeof value !== "object") throw new Error("AI HTML conversion returned an invalid rectangle.");
+      const item = value as Record<string, unknown>;
+      return !(typeof item.w === "number" && typeof item.h === "number" && item.w >= 0.9 && item.h >= 0.9);
+    }).map(value => {
       const bounds = box(value);
-      // Large diagrams are valid artwork; only page-sized crops are substitutes.
-      if (bounds.w >= 0.9 && bounds.h >= 0.9) throw new Error("AI returned a page-sized artwork crop. Retry conversion so it identifies individual diagrams or logos instead.");
       return bounds;
     }),
   };
