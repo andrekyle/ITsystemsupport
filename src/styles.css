@@ -18893,7 +18893,7 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .ob-details th:nth-child(2) { width: 20%; }
 .ob-details th:nth-child(3) { width: 17%; }
 .ob-details th:nth-child(4) { width: 8%; }
-.ob-details th:nth-child(5) { width: 80px; }
+.ob-details th:nth-child(5) { width: 112px; }
 .ob-details th button {
   width: 100%;
   padding: 10px;
@@ -18955,6 +18955,8 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .ob-details .ob-type-icon > span { min-width: 12px; padding: 1px; bottom: 3px; font-size: 5px; }
 .ob-details-size { text-align: right; font-variant-numeric: tabular-nums; }
 .ob-details .ob-icon-btn { width: 25px; height: 25px; border-color: transparent; background: transparent; border-radius: 3px; }
+.ob-details td:last-child { padding-left: 6px; padding-right: 6px; }
+.ob-details .ob-file-actions { justify-content: center; gap: 2px; min-width: 100px; }
 .ob-details tbody tr:not(.ob-file-group-row):hover { background: #f5f8fc; }
 .ob-details thead { background: #fff; }
 .ob-details th button { padding: 12px 16px; color: #4b5563; }
