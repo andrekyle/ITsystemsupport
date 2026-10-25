@@ -5,6 +5,8 @@ import { DocumentSignature } from "./DocumentSignature";
 import { DocumentActions } from "./DocumentActions";
 import { canSignDocumentField } from "../lib/documentSignatures";
 import { WorkbookCover } from "./WorkbookCover";
+import { WorkbookTaskAnswer } from "./WorkbookTaskAnswer";
+import type { WorkbookMemoItem } from "../store";
 import { UploadedPdf } from "./UploadedPdf";
 import "./source-document.css";
 
@@ -235,9 +237,10 @@ type PracticalTaskProps = {
   onSave?: () => Promise<void>;
   storagePrefix?: string;
   presentation?: "workbook";
+  memoItems?: WorkbookMemoItem[];
 };
 
-export function PracticalTask({ document, unitId, profile, values: storedValues, onChange: saveValue, onSave, storagePrefix = "", presentation }: PracticalTaskProps) {
+export function PracticalTask({ document, unitId, profile, values: storedValues, onChange: saveValue, onSave, storagePrefix = "", presentation, memoItems = [] }: PracticalTaskProps) {
   const values = storagePrefix ? Object.fromEntries(Object.entries(storedValues).filter(([key]) => key.startsWith(storagePrefix)).map(([key, value]) => [key.slice(storagePrefix.length), value])) : storedValues;
   const onChange: SaveField = (key, value) => saveValue(`${storagePrefix}${key}`, value);
   if (document.replica) return <><UploadedPdf key={`${profile.id}.${storagePrefix}${unitId}.${document.sourceName}`} definition={document.replica} profile={profile} values={values} onChange={onChange} onSave={onSave} storageKey="replica.answers" />{document.notice && <details className="no-print"><summary>Source document notes</summary><p>{document.notice}</p></details>}</>;
@@ -275,7 +278,11 @@ export function PracticalTask({ document, unitId, profile, values: storedValues,
         </div>}
         {!!section.items?.length && <div className="practical-items">{section.items.map((item, itemIndex) => {
           const storageKey = key(section.id, item.id);
-          return <div className="practical-item" key={item.id}><div className="practical-item-title"><span>{itemIndex + 1}</span><div><strong>{item.text}</strong>{item.guidance && <p>{item.guidance}</p>}</div></div><label className="field"><span>{item.responseLabel ?? "Learner response"}</span><textarea rows={7} defaultValue={String(values[storageKey] ?? "")} onBlur={event => onChange(storageKey, event.target.value)} /></label></div>;
+          const memoItem = memoItems.find(candidate => candidate.id === item.id);
+          const memoTask = memoItem?.tasks?.[0];
+          return <div className="practical-item" key={item.id}><div className="practical-item-title"><span>{itemIndex + 1}</span><div><strong>{item.text}</strong>{item.guidance && <p>{item.guidance}</p>}</div></div>{memoItem && memoTask
+            ? <WorkbookTaskAnswer outcomeId={memoItem.id} task={memoTask} memoItem={memoItem} valueKey={storageKey} markKey={`practical.mark.${item.id}`} values={values} onChange={onChange} />
+            : <label className="field"><span>{item.responseLabel ?? "Learner response"}</span><textarea rows={7} defaultValue={String(values[storageKey] ?? "")} onBlur={event => onChange(storageKey, event.target.value)} /></label>}</div>;
         })}</div>}
       </article>)}
     </div>
