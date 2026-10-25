@@ -18883,6 +18883,11 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .ob-real-file-icon.ob-real-file-jpg,
 .ob-real-file-icon.ob-real-file-jpeg,
 .ob-real-file-icon.ob-real-file-png { color: #6a5acd; }
+.ob-office-group-icon { width: 17px; height: 17px; vertical-align: middle; color: #2b6dcc; }
+.ob-office-group-pdfs { color: #e14848; }
+.ob-office-group-spreadsheets { color: #16834a; }
+.ob-office-group-images { color: #6a5acd; }
+.ob-office-group-archives { color: #7d6a58; }
 .ob-details th { padding: 0; border-bottom: 1px solid var(--border); text-align: left; font-weight: 500; }
 .ob-details th:first-child { width: 46%; }
 .ob-details th:nth-child(2) { width: 20%; }

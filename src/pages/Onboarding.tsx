@@ -159,6 +159,16 @@ function ExplorerFolderIcon({ open = false }: { open?: boolean }) {
   return <IconComponent className="ob-real-folder-icon" aria-hidden="true" />;
 }
 
+function OfficeGroupIcon({ group }: { group: FileGroup }) {
+  const IconComponent = group.id === "documents" ? DocumentWordRegular
+    : group.id === "pdfs" ? DocumentPdfRegular
+      : group.id === "spreadsheets" ? DocumentTableRegular
+        : group.id === "images" ? ImageRegular
+          : group.id === "archives" ? ArchiveRegular
+            : group.id === "web" ? DocumentRegular : FolderRegular;
+  return <IconComponent className={`ob-office-group-icon ob-office-group-${group.id}`} aria-hidden="true" />;
+}
+
 /** In-app replacement for the browser's unstyleable folder-upload prompt. */
 function UploadPackDialog({
   busy,
@@ -673,7 +683,7 @@ export function PackExplorer({
                 <Fragment key={group.id}>
                   <tr className="ob-file-group-row">
                     <th colSpan={5} scope="rowgroup">
-                      <Icon name={group.icon} size={15} />
+                      <OfficeGroupIcon group={group} />
                       <span>{group.label}</span>
                       <span className="ob-file-group-count">{files.length}</span>
                     </th>
