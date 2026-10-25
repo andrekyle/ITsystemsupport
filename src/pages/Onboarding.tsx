@@ -13,11 +13,7 @@ import { Select } from "../components/Select";
 import { Button } from "@fluentui/react-components";
 import {
   ArchiveRegular,
-  DocumentPdfRegular,
   DocumentRegular,
-  DocumentTableRegular,
-  DocumentWordRegular,
-  FolderRegular,
   ImageRegular,
 } from "@fluentui/react-icons";
 import { logAudit } from "../lib/audit";
@@ -26,6 +22,7 @@ import {
   onboardingFilePath, onboardingFolders, parentFolder, selectedFiles, withoutUploadRoot,
   type DirectoryHandleLike, type DroppedEntry, type UploadSelection,
 } from "../lib/onboardingFiles";
+import windowsFolderUrl from "../../scripts/windows.svg?url";
 
 /** Largest onboarding folder/batch accepted, in megabytes. */
 const MAX_PACK_MB = 500;
@@ -145,18 +142,17 @@ function PackDialog({
 
 function FileTypeIcon({ name }: { name: string }) {
   const ext = extOf(name);
-  const IconComponent = ["doc", "docx", "rtf", "odt"].includes(ext) ? DocumentWordRegular
-    : ext === "pdf" ? DocumentPdfRegular
-      : ["xls", "xlsx", "csv", "ods"].includes(ext) ? DocumentTableRegular
-          : ["ppt", "pptx", "odp"].includes(ext) ? DocumentRegular
+  if (ext === "pdf") return <img className="ob-real-file-icon ob-real-file-pdf-image" src="/icons/pdf-file-icon.webp" alt="" aria-hidden="true" />;
+  if (["doc", "docx", "rtf", "odt"].includes(ext)) return <img className="ob-real-file-icon ob-real-file-word-image" src="/icons/word-file-icon.webp" alt="" aria-hidden="true" />;
+  if (["xls", "xlsx", "csv", "ods"].includes(ext)) return <img className="ob-real-file-icon ob-real-file-excel-image" src="/icons/excel-file-icon.webp" alt="" aria-hidden="true" />;
+  const IconComponent = ["ppt", "pptx", "odp"].includes(ext) ? DocumentRegular
           : ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp"].includes(ext) ? ImageRegular
             : ["zip", "rar", "7z"].includes(ext) ? ArchiveRegular : DocumentRegular;
   return <IconComponent className={`ob-real-file-icon ob-real-file-${ext || "generic"}`} aria-hidden="true" />;
 }
 
 function ExplorerFolderIcon({ open = false }: { open?: boolean }) {
-  const IconComponent = open ? FolderRegular : FolderRegular;
-  return <IconComponent className="ob-real-folder-icon" aria-hidden="true" />;
+  return <img className={`ob-real-folder-icon${open ? " is-open" : ""}`} src={windowsFolderUrl} alt="" aria-hidden="true" />;
 }
 
 /** In-app replacement for the browser's unstyleable folder-upload prompt. */

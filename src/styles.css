@@ -18834,7 +18834,7 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   white-space: nowrap;
 }
 .ob-folder-nav svg, .ob-folder-row svg { flex-shrink: 0; }
-.ob-folder-nav .ob-folder-icon, .ob-folder-row svg { color: #c69a35; }
+.ob-folder-nav .ob-folder-icon { color: #c69a35; }
 .ob-folder-disclosure { color: var(--ink-3); transition: transform .14s ease; }
 .ob-folder-disclosure.open { transform: rotate(90deg); }
 .ob-folder-disclosure-placeholder { width: 13px; flex: 0 0 13px; }
@@ -18882,10 +18882,13 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 }
 .ob-real-folder-icon {
   flex: 0 0 auto;
-  width: 18px;
-  height: 18px;
-  color: #d99316;
-  stroke-width: 1.4;
+  width: 19px;
+  height: 19px;
+  margin-right: 2px;
+  object-fit:contain;
+  transform:scaleX(-1);
+  transform-origin:center;
+  filter:brightness(1.18) saturate(1.55) hue-rotate(350deg);
 }
 .ob-real-file-icon {
   flex: 0 0 auto;
@@ -18894,6 +18897,9 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   color: #2563c7;
 }
 .ob-real-file-icon.ob-real-file-pdf { color: #e14848; }
+.ob-real-file-icon.ob-real-file-pdf-image { width:20px; height:23px; object-fit:contain; }
+.ob-real-file-icon.ob-real-file-word-image { width:22px; height:22px; object-fit:contain; }
+.ob-real-file-icon.ob-real-file-excel-image { width:22px; height:22px; object-fit:contain; }
 .ob-real-file-icon.ob-real-file-doc,
 .ob-real-file-icon.ob-real-file-docx { color: #2b6dcc; }
 .ob-real-file-icon.ob-real-file-xls,
