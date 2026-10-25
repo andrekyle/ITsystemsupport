@@ -10,6 +10,11 @@ import { WorkbookCover } from "./WorkbookCover";
 type Values = Record<string, string | boolean>;
 type Save = (key: string, value: string | boolean) => void;
 
+function SourceField({ id, label, values, onChange, type = "text" }: { id: string; label: string; values: Values; onChange: Save; type?: string }) {
+  const key = `built-workbook.source.${id}`;
+  return <input aria-label={label} type={type} defaultValue={String(values[key] ?? "")} onBlur={event => onChange(key, event.target.value)} />;
+}
+
 function WorkbookTable114076({ values, onChange }: { values: Values; onChange: Save }) {
   const field = (id: string, label: string, type = "text") => <SourceField id={id} label={label} type={type} values={values} onChange={onChange} />;
   const rows = ["Exercise 1", "Exercise 2", "Exercise 3", "Exercise 4", "Exercise 5"];
