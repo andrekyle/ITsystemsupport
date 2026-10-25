@@ -38,6 +38,7 @@ export function GeneratedWorkbook({ workbook, unit, profile, memoItems, values, 
   onChange: Save;
   onSave: () => Promise<void>;
 }) {
+  const isResearchWorkbook = String(unit.us).trim() === "114076" || /use computer technology to research a computer topic/i.test(workbook.title);
   const [marking, setMarking] = useState(false);
   const [error, setError] = useState("");
   const registration = profile.registrationForm;
@@ -135,7 +136,7 @@ export function GeneratedWorkbook({ workbook, unit, profile, memoItems, values, 
           })}</tbody>
         </table>
       </WorkbookCover>
-      {unit.us === "114076" && <WorkbookTable114076 values={values} onChange={onChange} />}
+      {isResearchWorkbook && <WorkbookTable114076 values={values} onChange={onChange} />}
       {displayedOutcomes.map((outcome, outcomeIndex) => {
         const result = resultFor(outcome.id);
         return <section className="lw-page" data-page={outcomeIndex + 2} key={outcome.id}>
