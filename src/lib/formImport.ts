@@ -520,7 +520,11 @@ export async function convertPdfHtml(document: ImportedFormDocument, onProgress?
   for (const [index, page] of document.pages.entries()) {
     if (!page.layer) throw new Error(`Page ${index + 1} is missing its HTML layer.`);
     const result = await requestDefinition({ ...generationRequest(document, index), html: true }, data.session.access_token);
-    if (!result.artwork) throw new Error(`AI HTML conversion omitted artwork for page ${index + 1}.`);
+    // Artwork is supplementary. A model response that contains a valid text
+    // and field definition but no isolated logos/diagrams must still produce
+    // a clean React/HTML page; rejecting it here made otherwise usable PDFs
+    // appear to have failed conversion.
+    const artwork = result.artwork ? readPdfHtmlArtwork(result.artwork) : { fills: [], pictures: [], issues: [] };
     const textMasks = page.layer.text.map(run => {
       const ink = textInkBox({ x: run.x * page.width, y: run.y * page.height, w: run.w * page.width, h: run.h * page.height, size: run.s * page.width, rotation: run.rotation });
       // Include antialiased edge pixels so the crop cannot double-print a label.
@@ -528,7 +532,7 @@ export async function convertPdfHtml(document: ImportedFormDocument, onProgress?
     });
     const image = await createImageBitmap(await (await fetch(page.src)).blob());
     try {
-      const pictures = result.artwork.pictures.map(box => {
+      const pictures = artwork.pictures.map(box => {
         const canvas = window.document.createElement("canvas");
         canvas.width = Math.max(1, Math.round(box.w * page.width));
         canvas.height = Math.max(1, Math.round(box.h * page.height));
@@ -546,7 +550,7 @@ export async function convertPdfHtml(document: ImportedFormDocument, onProgress?
         releaseCanvas(canvas);
         return { ...box, src, path: "" };
       });
-      pages[index] = { ...pages[index], layer: { ...page.layer, fills: result.artwork.fills, pictures } };
+      pages[index] = { ...pages[index], layer: { ...page.layer, fills: artwork.fills, pictures } };
     } finally { image.close(); }
     const fields = pageFields(result.definition, index + 1);
     sections.push({ id: `page_${index + 1}`, title: `Page ${index + 1}`, description: "", fields, columns: 4, widths: [], rows: [], banner: "", pageBreak: false });
