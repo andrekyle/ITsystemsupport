@@ -59,7 +59,7 @@ function groupOf(file: OnboardingFile): FileGroup {
 }
 
 /** Files that a browser can display directly in a new tab. */
-const VIEWABLE = new Set(["pdf", "html", "htm", "png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "txt"]);
+const PREVIEWABLE = new Set(["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "html", "htm", "csv", "txt"]);
 
 function fmtSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -371,6 +371,8 @@ export function PackExplorer({
     column: "type", descending: false,
   });
   const [opening, setOpening] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ file: OnboardingFile; url: string } | null>(null);
+  const [previewWidth, setPreviewWidth] = useState(420);
   const [downloadingPack, setDownloadingPack] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const folders = useMemo(() => onboardingFolders(pack.files), [pack.files]);
@@ -485,7 +487,7 @@ export function PackExplorer({
 
   async function openFile(file: OnboardingFile) {
     setError(null);
-    if (!VIEWABLE.has(extOf(file.name))) {
+    if (!PREVIEWABLE.has(extOf(file.name))) {
       await downloadFile(file);
       return;
     }
@@ -493,7 +495,7 @@ export function PackExplorer({
     try {
       const url = await getFileUrl(file);
       if (!url) throw new Error(`"${file.name}" could not be opened. Check your connection and try again.`);
-      window.open(url, "_blank", "noopener,noreferrer");
+      setPreview({ file, url });
     } catch (error) {
       setError(error instanceof Error ? error.message : "The file could not be opened.");
     } finally { setOpening(null); }
@@ -601,7 +603,7 @@ export function PackExplorer({
       </div>
 
       {error && <div className="ob-error" role="alert">{error}</div>}
-      <div className="ob-explorer" ref={explorerRef} style={{ "--ob-folder-pane": `${folderPaneWidth}px` } as React.CSSProperties}>
+      <div className={`ob-explorer${preview ? " has-preview" : ""}`} ref={explorerRef} style={{ "--ob-folder-pane": `${folderPaneWidth}px`, "--ob-preview-width": `${previewWidth}px` } as React.CSSProperties}>
         <nav className="ob-folder-nav" aria-label="Pack folders">
           <Button appearance="subtle" className={!currentFolder ? "active" : ""} aria-current={!currentFolder ? "location" : undefined}
             aria-expanded={folders.length ? expandedFolders.has("") : undefined}
@@ -700,7 +702,7 @@ export function PackExplorer({
                     <td title={fileTypeLabel(file.name)}>{fileTypeLabel(file.name)}</td>
                     <td className="ob-details-size">{fmtSize(file.size)}</td>
                     <td><div className="ob-file-actions">
-                      {VIEWABLE.has(ext) && (
+                      {PREVIEWABLE.has(ext) && (
                         <button
                           className="ob-icon-btn"
                           title={`Open ${file.name}`}
@@ -740,6 +742,21 @@ export function PackExplorer({
             </tbody>
           </table>
         </div>
+        {preview && <>
+          <div className="ob-preview-resizer" role="separator" aria-label="Resize preview" tabIndex={0}
+            onPointerDown={event => {
+              event.preventDefault();
+              const startX = event.clientX;
+              const startWidth = previewWidth;
+              const move = (next: PointerEvent) => setPreviewWidth(Math.min(720, Math.max(300, startWidth + startX - next.clientX)));
+              const stop = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", stop); };
+              window.addEventListener("pointermove", move); window.addEventListener("pointerup", stop);
+            }} />
+          <aside className="ob-preview" aria-label={`Preview ${preview.file.name}`}>
+            <div className="ob-preview-head"><div><strong>{preview.file.name}</strong><span>{fileTypeLabel(preview.file.name)}</span></div><button className="ob-preview-close" aria-label="Close preview" onClick={() => setPreview(null)}>×</button></div>
+            <iframe title={`Preview of ${preview.file.name}`} src={preview.url} />
+          </aside>
+        </>}
       </div>
       <div className="ob-explorer-count ob-type-totals" aria-label="Pack totals">
         <span>{selectedFolderCount} folders</span>
