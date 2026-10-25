@@ -18768,6 +18768,9 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   border-radius: 8px;
   background: var(--surface);
   overflow: hidden;
+  border-color: #d9d9d9;
+  border-radius: 9px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
 }
 .ob-folder-nav {
   padding: 8px 0;
@@ -18841,6 +18844,30 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   font-size: 13px;
   color: var(--ink-2);
 }
+.ob-real-folder-icon {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: #d99316;
+  stroke-width: 1.4;
+}
+.ob-real-file-icon {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  color: #2563c7;
+}
+.ob-real-file-icon.ob-real-file-pdf { color: #e14848; }
+.ob-real-file-icon.ob-real-file-doc,
+.ob-real-file-icon.ob-real-file-docx { color: #2b6dcc; }
+.ob-real-file-icon.ob-real-file-xls,
+.ob-real-file-icon.ob-real-file-xlsx,
+.ob-real-file-icon.ob-real-file-csv { color: #16834a; }
+.ob-real-file-icon.ob-real-file-ppt,
+.ob-real-file-icon.ob-real-file-pptx { color: #d45b2c; }
+.ob-real-file-icon.ob-real-file-jpg,
+.ob-real-file-icon.ob-real-file-jpeg,
+.ob-real-file-icon.ob-real-file-png { color: #6a5acd; }
 .ob-details th { padding: 0; border-bottom: 1px solid var(--border); text-align: left; font-weight: 500; }
 .ob-details th:first-child { width: 46%; }
 .ob-details th:nth-child(2) { width: 20%; }
@@ -18859,8 +18886,8 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 }
 .ob-details th button:hover { color: var(--ink); }
 .ob-details td {
-  padding: 3px 10px;
-  height: 34px;
+  padding: 3px 16px;
+  height: 40px;
   border: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -18868,10 +18895,10 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   vertical-align: middle;
 }
 .ob-details .ob-file-group-row th {
-  padding: 10px;
+  padding: 9px 16px;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
-  background: var(--surface-2);
+  background: #f3f3f5;
   color: var(--ink-2);
   font-size: 12px;
   font-weight: 500;
@@ -18891,7 +18918,7 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .ob-entry-name {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 10px;
   width: 100%;
   padding: 0;
   border: 0;
@@ -18908,6 +18935,12 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .ob-details .ob-type-icon > span { min-width: 12px; padding: 1px; bottom: 3px; font-size: 5px; }
 .ob-details-size { text-align: right; font-variant-numeric: tabular-nums; }
 .ob-details .ob-icon-btn { width: 25px; height: 25px; border-color: transparent; background: transparent; border-radius: 3px; }
+.ob-details tbody tr:not(.ob-file-group-row):hover { background: #f5f8fc; }
+.ob-details thead { background: #fff; }
+.ob-details th button { padding: 12px 16px; color: #4b5563; }
+.ob-folder-nav { background: #fff; }
+.ob-folder-nav button:hover { background: #f3f6fa; }
+.ob-folder-nav button.active { background: #e8f1fb; color: #1f2937; }
 .ob-details .ob-details-empty { padding: 32px 12px; text-align: center; color: var(--ink-3); }
 .ob-search-location { display: block; padding: 2px 0 0 25px; border: 0; background: transparent; color: var(--azure); font: inherit; font-size: 11px; cursor: pointer; }
 .ob-mobile-file-meta { display: none; }

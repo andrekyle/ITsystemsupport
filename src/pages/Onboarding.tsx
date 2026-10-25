@@ -11,6 +11,15 @@ import { getFileBlob, getFileUrl, uploadFile } from "../lib/files";
 import { ConfirmModal, Modal } from "../components/Modal";
 import { Select } from "../components/Select";
 import { Button } from "@fluentui/react-components";
+import {
+  ArchiveRegular,
+  DocumentPdfRegular,
+  DocumentRegular,
+  DocumentTableRegular,
+  DocumentWordRegular,
+  FolderRegular,
+  ImageRegular,
+} from "@fluentui/react-icons";
 import { logAudit } from "../lib/audit";
 import {
   archiveFilePaths, fileTypeLabel, filesFromDirectoryHandle, filesFromDroppedEntry,
@@ -136,28 +145,18 @@ function PackDialog({
 
 function FileTypeIcon({ name }: { name: string }) {
   const ext = extOf(name);
-  let kind = "file";
-  let label = ext.slice(0, 3).toUpperCase() || "FILE";
-  if (["doc", "docx", "rtf", "odt"].includes(ext)) { kind = "word"; label = "W"; }
-  else if (ext === "pdf") { kind = "pdf"; label = "PDF"; }
-  else if (["xls", "xlsx", "csv", "ods"].includes(ext)) { kind = "excel"; label = "X"; }
-  else if (["ppt", "pptx", "odp"].includes(ext)) { kind = "powerpoint"; label = "P"; }
-  else if (["html", "htm"].includes(ext)) { kind = "html"; label = "</>"; }
-  else if (["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp"].includes(ext)) { kind = "image"; label = "IMG"; }
-  else if (["zip", "rar", "7z"].includes(ext)) { kind = "archive"; label = "ZIP"; }
-  else if (ext === "txt") { kind = "text"; label = "TXT"; }
+  const IconComponent = ["doc", "docx", "rtf", "odt"].includes(ext) ? DocumentWordRegular
+    : ext === "pdf" ? DocumentPdfRegular
+      : ["xls", "xlsx", "csv", "ods"].includes(ext) ? DocumentTableRegular
+          : ["ppt", "pptx", "odp"].includes(ext) ? DocumentRegular
+          : ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp"].includes(ext) ? ImageRegular
+            : ["zip", "rar", "7z"].includes(ext) ? ArchiveRegular : DocumentRegular;
+  return <IconComponent className={`ob-real-file-icon ob-real-file-${ext || "generic"}`} aria-hidden="true" />;
+}
 
-  return (
-    <span className={`ob-type-icon ob-type-${kind}`} aria-hidden="true">
-      <svg viewBox="0 0 38 44">
-        <path className="ob-type-sheet" d="M7 1.5h16l8 8V42H7z" />
-        <path className="ob-type-fold" d="M23 1.5v8h8" />
-        {kind === "image" && <><circle cx="18" cy="19" r="2.2" /><path d="m11 31 7-7 4 4 3-3 5 5" /></>}
-        {kind === "archive" && <path d="M20 8v4h-3v4h3v4h-3v4h3v4h-3v5h4" />}
-      </svg>
-      {kind !== "image" && kind !== "archive" && <span>{label}</span>}
-    </span>
-  );
+function ExplorerFolderIcon({ open = false }: { open?: boolean }) {
+  const IconComponent = open ? FolderRegular : FolderRegular;
+  return <IconComponent className="ob-real-folder-icon" aria-hidden="true" />;
 }
 
 /** In-app replacement for the browser's unstyleable folder-upload prompt. */
@@ -597,7 +596,7 @@ export function PackExplorer({
             aria-expanded={folders.length ? expandedFolders.has("") : undefined}
             onClick={() => selectFolder("", folders.length > 0)}>
             {folders.length > 0 && <Icon name="chevronRight" size={13} className={`ob-folder-disclosure${expandedFolders.has("") ? " open" : ""}`} />}
-            <Icon name="folder" size={16} className="ob-folder-icon" /><span className="ob-folder-label">{pack.name}</span>
+            <ExplorerFolderIcon /><span className="ob-folder-label">{pack.name}</span>
           </Button>
           {folders.filter(path => {
             if (!expandedFolders.has("")) return false;
@@ -615,7 +614,7 @@ export function PackExplorer({
               {hasChildren
                 ? <Icon name="chevronRight" size={13} className={`ob-folder-disclosure${isExpanded ? " open" : ""}`} />
                 : <span className="ob-folder-disclosure-placeholder" />}
-              <Icon name="folder" size={16} className="ob-folder-icon" /><span className="ob-folder-label">{path.split("/").pop()}</span>
+              <ExplorerFolderIcon open={isExpanded} /><span className="ob-folder-label">{path.split("/").pop()}</span>
             </Button>;
           })}
         </nav>
@@ -656,7 +655,7 @@ export function PackExplorer({
               {childFolders.map(path => (
                 <tr key={path} className="ob-folder-row">
                   <td><button className="ob-entry-name" onClick={() => navigateFolder(path)} title={path}>
-                    <Icon name="folder" size={20} /><span>{path.split("/").pop()}</span>
+                    <ExplorerFolderIcon open /><span>{path.split("/").pop()}</span>
                   </button></td>
                   <td>{new Date(Math.max(...pack.files
                     .filter(file => onboardingFilePath(file).startsWith(`${path}/`))
