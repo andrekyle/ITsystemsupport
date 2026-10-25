@@ -18892,14 +18892,14 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 }
 .ob-real-file-icon {
   flex: 0 0 auto;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   color: #2563c7;
 }
 .ob-real-file-icon.ob-real-file-pdf { color: #e14848; }
-.ob-real-file-icon.ob-real-file-pdf-image { width:20px; height:23px; object-fit:contain; }
-.ob-real-file-icon.ob-real-file-word-image { width:22px; height:22px; object-fit:contain; }
-.ob-real-file-icon.ob-real-file-excel-image { width:22px; height:22px; object-fit:contain; }
+.ob-real-file-icon.ob-real-file-pdf-image { width:16px; height:19px; object-fit:contain; }
+.ob-real-file-icon.ob-real-file-word-image { width:18px; height:18px; object-fit:contain; }
+.ob-real-file-icon.ob-real-file-excel-image { width:18px; height:18px; object-fit:contain; }
 .ob-real-file-icon.ob-real-file-doc,
 .ob-real-file-icon.ob-real-file-docx { color: #2b6dcc; }
 .ob-real-file-icon.ob-real-file-xls,
