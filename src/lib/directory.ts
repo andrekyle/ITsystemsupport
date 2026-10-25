@@ -134,9 +134,10 @@ export async function fetchAccountProfiles(authUserId: string): Promise<Profile[
 export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
   if (!supabase) return null;
 
-  const [profRes, poeRes] = await Promise.all([
+  const [profRes, poeRes, adminRes] = await Promise.all([
     supabase.from("app_state").select("user_id,value").eq("tenant_id", TENANT_ID).eq("key", "itss.profiles"),
     supabase.from("app_state").select("user_id,key,value").eq("tenant_id", TENANT_ID).like("key", "itss.poe.%"),
+    supabase.from("admins").select("user_id").eq("tenant_id", TENANT_ID),
   ]);
   // Learner profiles remain useful even when the optional POE index query is
   // unavailable (for example while its policy or storage migration is being
@@ -148,27 +149,34 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
 
   const profiles: Profile[] = [];
   const owners: CloudDirectory["owners"] = {};
-  // Same profile id can appear in more than one account's row (e.g. the
-  // facilitator seeded a learner via People > Add User and that learner also
-  // signs in on their own device). We keep the *freshest* copy — the one
-  // with the most recent lastLogin — and prefer the profile's own account
-  // (owner === profile.ownerHint) when timestamps tie.
-  const chosen = new Map<string, { p: Profile; owner: string }>();
+  const adminIds = new Set((adminRes.error ? [] : adminRes.data ?? []).map((row) => row.user_id));
+  // The same profile id can appear in more than one account's row. Prefer the
+  // designated Super User account, then the profile's stamped cloud owner,
+  // then the freshest remaining copy.
+  const chosen = new Map<string, { p: Profile; owner: string; canonical: boolean; designatedAdmin: boolean }>();
   const loginTime = (p: Profile) => (p.lastLogin ? Date.parse(p.lastLogin) : 0);
   for (const row of profRes.data ?? []) {
     try {
       for (const p of JSON.parse(row.value) as Profile[]) {
         if (!p?.id) continue;
         const cur = chosen.get(p.id);
-        // Own row wins on ties; newer lastLogin always wins.
-        const incomingOwn = row.user_id === p.id; /* rare */
+        // A profile's stamped cloud auth id is the canonical ownership signal.
+        // Profile ids are app-generated strings, so comparing them to auth UUIDs
+        // can never establish ownership. The designated admin also wins for the
+        // Super User profile, even if a stale copied profile logged in later.
+        const incomingOwn = p.cloudUserId === row.user_id;
+        const incomingAdmin = p.role === "Super User" && adminIds.has(row.user_id);
         const t = loginTime(p);
         if (!cur) {
-          chosen.set(p.id, { p, owner: row.user_id });
+          chosen.set(p.id, { p, owner: row.user_id, canonical: incomingOwn, designatedAdmin: incomingAdmin });
         } else {
           const curT = loginTime(cur.p);
-          if (t > curT || (t === curT && incomingOwn && cur.owner !== p.id)) {
-            chosen.set(p.id, { p, owner: row.user_id });
+          if (
+            (incomingAdmin && !cur.designatedAdmin) ||
+            (incomingAdmin === cur.designatedAdmin && incomingOwn && !cur.canonical) ||
+            (incomingAdmin === cur.designatedAdmin && incomingOwn === cur.canonical && t > curT)
+          ) {
+            chosen.set(p.id, { p, owner: row.user_id, canonical: incomingOwn, designatedAdmin: incomingAdmin });
           }
         }
       }
