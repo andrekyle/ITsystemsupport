@@ -406,8 +406,13 @@ export function PackExplorer({
     .map(group => ({ group, files: filtered.filter(file => groupOf(file).id === group.id) }))
     .filter(({ files }) => files.length > 0);
   const allFileTypeTotals = [...FILE_GROUPS, OTHER_GROUP]
-    .map(group => ({ group, count: pack.files.filter(file => groupOf(file).id === group.id).length }))
+    .map(group => ({ group, count: pack.files.filter(file => {
+      const path = onboardingFilePath(file);
+      return (!currentFolder || path.startsWith(`${currentFolder}/`)) && groupOf(file).id === group.id;
+    }).length }))
     .filter(({ count }) => count > 0);
+  const selectedFolderFiles = pack.files.filter(file => !currentFolder || onboardingFilePath(file).startsWith(`${currentFolder}/`));
+  const selectedFolderCount = folders.filter(path => !currentFolder || path.startsWith(`${currentFolder}/`)).length;
 
   function navigateFolder(path: string) {
     setFolder(path);
@@ -737,8 +742,8 @@ export function PackExplorer({
         </div>
       </div>
       <div className="ob-explorer-count ob-type-totals" aria-label="Pack totals">
-        <span>{folders.length} folders</span>
-        <span>{pack.files.length} files</span>
+        <span>{selectedFolderCount} folders</span>
+        <span>{selectedFolderFiles.length} files</span>
         {allFileTypeTotals.map(({ group, count }) => <span key={group.id}>{group.label} {count}</span>)}
         {search && <span>{filtered.length} found here</span>}
       </div>
