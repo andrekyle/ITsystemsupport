@@ -2985,7 +2985,9 @@ export function UnitPage({
   const activeLessonIndex = visibleLessonIndices.includes(lessonStep) ? lessonStep
     : visibleLessonIndices.find(si => si >= lessonStep) ?? visibleLessonIndices.at(-1);
   const practicalTask = content?.practicalTask ?? practicalTaskForUnit(u.us);
-  const workbookEnabled = unitId !== "114074";
+  // A workbook tab is available whenever the unit supplies one (including
+  // uploaded learner-workbook PDFs). Do not hide it for a specific unit.
+  const workbookEnabled = true;
   // The lesson plan shown on the tab: inline table edits (shared, cloud-synced) win over the generated plan.
   const planData: LessonPlan | undefined = content?.lessonPlan ? (lessonEdits.lessonPlan ?? content.lessonPlan) : undefined;
   const updatePlan = (mutate: (draft: LessonPlan) => void) => {
