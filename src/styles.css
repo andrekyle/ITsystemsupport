@@ -18793,9 +18793,10 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
 }
 .ob-explorer.has-preview { grid-template-columns: var(--ob-folder-pane, 260px) 5px minmax(320px, 1fr) 5px var(--ob-preview-width, 420px); }
+.ob-explorer.has-preview .ob-preview-resizer { display: none; }
 .ob-preview-resizer { width: 5px; border-left: 1px solid var(--border); cursor: col-resize; touch-action: none; }
 .ob-preview-resizer:hover, .ob-preview-resizer:focus-visible { border-left-color: var(--azure); outline: none; }
-.ob-preview { display: flex; flex-direction: column; min-width: 0; background: var(--surface); border-left: 1px solid var(--border); }
+.ob-preview { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; min-width: 0; background: var(--surface); }
 .ob-preview-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; min-height: 58px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
 .ob-preview-head div { min-width: 0; }
 .ob-preview-head strong, .ob-preview-head span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
