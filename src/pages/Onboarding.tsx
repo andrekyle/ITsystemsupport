@@ -490,7 +490,7 @@ export function PackExplorer({
   async function openFile(file: OnboardingFile) {
     setError(null);
     if (!PREVIEWABLE.has(extOf(file.name))) {
-      await downloadFile(file);
+      setError(`Preview is not available for "${file.name}". Use its download icon to save it.`);
       return;
     }
     setOpening(file.id);
@@ -500,11 +500,18 @@ export function PackExplorer({
       const blob = await getFileBlob(file);
       const ext = extOf(file.name);
       let content: string | undefined;
-      if (blob && ["docx", "pptx"].includes(ext)) content = await importUnitSource(new File([blob], file.name, { type: file.type }));
-      else if (blob && ["xlsx", "xls", "csv"].includes(ext)) {
-        const workbook = XLSX.read(await blob.arrayBuffer(), { type: "array" });
-        content = workbook.SheetNames.map(name => `## ${name}\n\n${XLSX.utils.sheet_to_csv(workbook.Sheets[name])}`).join("\n\n");
-      } else if (blob && ext === "txt") content = await blob.text();
+      try {
+        if (blob && ["docx", "pptx"].includes(ext)) content = await importUnitSource(new File([blob], file.name, { type: file.type }));
+        else if (blob && ["xlsx", "xls", "csv"].includes(ext)) {
+          const workbook = XLSX.read(await blob.arrayBuffer(), { type: "array" });
+          content = workbook.SheetNames.map(name => `## ${name}\n\n${XLSX.utils.sheet_to_csv(workbook.Sheets[name])}`).join("\n\n");
+        } else if (blob && ext === "txt") content = await blob.text();
+      } catch (error) {
+        content = `Preview could not read this ${fileTypeLabel(file.name)}.\n\n${error instanceof Error ? error.message : "Use the download icon to open the original file."}`;
+      }
+      if (content === undefined && ["doc", "docx", "xls", "xlsx", "ppt", "pptx"].includes(ext)) {
+        content = `Preview could not load this ${fileTypeLabel(file.name)}.\n\nUse the download icon to open the original file.`;
+      }
       setPreview({ file, url, content });
     } catch (error) {
       setError(error instanceof Error ? error.message : "The file could not be opened.");
