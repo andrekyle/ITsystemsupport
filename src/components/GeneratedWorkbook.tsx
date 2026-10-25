@@ -1,10 +1,11 @@
 import { useState } from "react";
-import type { WorkbookSpec } from "../types";
+import type { Profile, UnitStandard, WorkbookSpec } from "../types";
 import type { WorkbookMemoItem } from "../store";
 import { Icon } from "../icons";
 import { DocumentActions } from "./DocumentActions";
 import { WorkbookTaskAnswer } from "./WorkbookTaskAnswer";
 import { workbookMarkFingerprint } from "../lib/workbookMarking";
+import { WorkbookCover } from "./WorkbookCover";
 
 type Values = Record<string, string | boolean>;
 type Save = (key: string, value: string | boolean) => void;
@@ -16,8 +17,10 @@ interface MarkResult {
   answerHash?: string;
 }
 
-export function GeneratedWorkbook({ workbook, memoItems, values, onChange, onSave }: {
+export function GeneratedWorkbook({ workbook, unit, profile, memoItems, values, onChange, onSave }: {
   workbook: WorkbookSpec;
+  unit: UnitStandard;
+  profile: Profile;
   memoItems: WorkbookMemoItem[];
   values: Values;
   onChange: Save;
@@ -25,6 +28,13 @@ export function GeneratedWorkbook({ workbook, memoItems, values, onChange, onSav
 }) {
   const [marking, setMarking] = useState(false);
   const [error, setError] = useState("");
+  const registration = profile.registrationForm;
+  const coverFields = [
+    ["name", "Name", registration?.fullName || profile.name.split(/\s+/)[0] || ""],
+    ["surname", "Surname", registration?.surname || profile.name.split(/\s+/).slice(1).join(" ")],
+    ["id", "ID Number", registration?.nationalId || ""],
+    ["contact", "Contact", registration?.contactNumber || ""],
+  ] as const;
   const displayedOutcomes = workbook.outcomes.map(outcome => {
     const memo = memoItems.find(item => item.id === outcome.id);
     return memo?.tasks?.length
@@ -99,14 +109,23 @@ export function GeneratedWorkbook({ workbook, memoItems, values, onChange, onSav
       </div>
       {error && <span className="auth-error" role="alert">{error}</span>}
     </div>
-    <div className="generated-workbook-document document-print-target">
-      <header>
-        <span>Learner Workbook</span>
-        <h1>{workbook.title}</h1>
-      </header>
-      {displayedOutcomes.map(outcome => {
+    <div className="lw-document document-print-target">
+      <WorkbookCover
+        number={1}
+        title={workbook.title.toUpperCase()}
+        metadata={[`UNIT STANDARD ${unit.us}`, `NQF LEVEL: ${unit.nqf}`, `CREDITS: ${unit.credits}`, `NOTIONAL HOURS: ${unit.time}`]}
+      >
+        <table className="lw-table lw-cover-table">
+          <thead><tr><th colSpan={2}>LEARNER INFORMATION</th></tr></thead>
+          <tbody>{coverFields.map(([id, label, fallback]) => {
+            const key = `built-workbook.cover.${id}`;
+            return <tr key={id}><th>{label}</th><td><input aria-label={label} defaultValue={String(values[key] ?? fallback)} onBlur={event => onChange(key, event.target.value)} /></td></tr>;
+          })}</tbody>
+        </table>
+      </WorkbookCover>
+      {displayedOutcomes.map((outcome, outcomeIndex) => {
         const result = resultFor(outcome.id);
-        return <article className="card generated-workbook-outcome" key={outcome.id}>
+        return <section className="lw-page" data-page={outcomeIndex + 2} key={outcome.id}>
           <div className="lw-outcome-head">
             <strong>SPECIFIC OUTCOME {outcome.specificOutcome}.</strong>
             <b>{outcome.title}</b>
@@ -129,7 +148,7 @@ export function GeneratedWorkbook({ workbook, memoItems, values, onChange, onSav
               onChange={onChange}
             />
           </div>)}
-        </article>;
+        </section>;
       })}
     </div>
   </section>;
