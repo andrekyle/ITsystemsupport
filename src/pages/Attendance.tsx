@@ -163,6 +163,16 @@ async function pullLatest(key: string, strict = false): Promise<AttData | null> 
         /* ignore one malformed row without hiding the rest of the class */
       }
     }
+    // Signature images are also kept in the per-row local cache. Preserve a
+    // locally available image when an older/cloud aggregate row has only the
+    // typed signature text; otherwise the print view falls back to that text.
+    const local = readReg(key);
+    for (const [profileId, localRow] of Object.entries(local.rows)) {
+      if (!localRow.signatureImage || !merged.rows[profileId]) continue;
+      if (!merged.rows[profileId].signatureImage) {
+        merged.rows[profileId] = { ...merged.rows[profileId], signatureImage: localRow.signatureImage };
+      }
+    }
     if (registerResult.data?.value || Object.keys(merged.rows).length) return normalizeReg(merged);
   } catch (error) {
     if (strict) throw error;
@@ -383,9 +393,8 @@ function StaticSheet({ dateIso, data }: { dateIso: string; data: AttData }) {
         <div>Office 44/45 Villa Valencia Business Park, 244 Monument Road</div>
         <div>Glen Marais, Kempton Park 1619</div>
         <div>
-          www.eruditio.co.za&ensp;<span className="att-link">info@eruditio.co.za</span>
+          www.eruditio.co.za&ensp;<span className="att-link">info@eruditio.co.za</span>&ensp;+27 11 973 0205
         </div>
-        <div>+27 11 973 0205</div>
       </div>
     </div>
   );
@@ -696,7 +705,21 @@ export function AttendancePage({
   /** Print with a landscape @page rule injected for the duration of the dialog.
       (The rule can't live in styles.css — @page is global and would flip every
       other page's print, e.g. the Registration Form, into landscape.) */
-  const printLandscape = () => {
+  const printLandscape = async () => {
+    const images = Array.from(document.querySelectorAll<HTMLImageElement>(".att-sheet .att-sig-img"));
+    await Promise.all(
+      images.map(async (image) => {
+        if (image.complete) return;
+        try {
+          await image.decode();
+        } catch {
+          await new Promise<void>((resolve) => {
+            image.addEventListener("load", () => resolve(), { once: true });
+            image.addEventListener("error", () => resolve(), { once: true });
+          });
+        }
+      })
+    );
     const style = document.createElement("style");
     style.textContent = "@page { size: A4 landscape; margin: 8mm; }";
     document.head.appendChild(style);
@@ -740,8 +763,10 @@ export function AttendancePage({
     setAllRegs(regs);
     // let React render the sheets (and images lay out) before opening the print dialog
     setTimeout(() => {
-      printLandscape();
-      setAllRegs(null);
+      void (async () => {
+        await printLandscape();
+        setAllRegs(null);
+      })();
     }, 700);
   };
 
@@ -1057,9 +1082,8 @@ export function AttendancePage({
           <div>Office 44/45 Villa Valencia Business Park, 244 Monument Road</div>
           <div>Glen Marais, Kempton Park 1619</div>
           <div>
-            www.eruditio.co.za&ensp;<span className="att-link">info@eruditio.co.za</span>
+            www.eruditio.co.za&ensp;<span className="att-link">info@eruditio.co.za</span>&ensp;+27 11 973 0205
           </div>
-          <div>+27 11 973 0205</div>
         </div>
       </div>
       </FitSheet>

@@ -11940,6 +11940,7 @@ input.att-sig {
   font-size: 11.5px;
   line-height: 1.5;
   margin-top: 16px;
+  white-space: nowrap;
 }
 
 .att-company .att-link {
