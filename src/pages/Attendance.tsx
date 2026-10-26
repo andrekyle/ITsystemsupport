@@ -294,7 +294,15 @@ function headerDefaults(dateIso: string): Record<string, string> {
 }
 
 /** Read-only register sheet used by the "Download all registers" print view. */
-function StaticSheet({ dateIso, data }: { dateIso: string; data: AttData }) {
+function StaticSheet({
+  dateIso,
+  data,
+  signatureImages,
+}: {
+  dateIso: string;
+  data: AttData;
+  signatureImages?: Record<string, string>;
+}) {
   const defaults = headerDefaults(dateIso);
   const hdr = (field: string) => data.header[field] ?? defaults[field] ?? "";
   return (
@@ -350,6 +358,7 @@ function StaticSheet({ dateIso, data }: { dateIso: string; data: AttData }) {
             {Array.from({ length: Math.max(ROW_COUNT, data.order.length) }, (_, i) => {
               const pid = data.order[i];
               const row = pid ? data.rows[pid] : undefined;
+              const signatureImage = row?.signatureImage ?? (pid ? signatureImages?.[pid] : undefined);
               return (
                 <tr key={i}>
                   <td className="att-num">{i + 1}.</td>
@@ -360,8 +369,8 @@ function StaticSheet({ dateIso, data }: { dateIso: string; data: AttData }) {
                   <td>{row?.gender}</td>
                   <td>{row?.arrival}</td>
                   <td className="att-sig-cell">
-                    {row?.signatureImage ? (
-                      <img className="att-sig-img" src={row.signatureImage} alt={`${row.name} signature`} />
+                    {signatureImage ? (
+                      <img className="att-sig-img" src={signatureImage} alt={`${row?.name} signature`} />
                     ) : (
                       <span className="att-sig">{row?.signature}</span>
                     )}
@@ -424,7 +433,29 @@ export function AttendancePage({
   const [refreshing, setRefreshing] = useState(false);
   const [signing, setSigning] = useState(false);
   const [attendanceNote, setAttendanceNote] = useState("");
+  const [profileSignatures, setProfileSignatures] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      loadProfiles()
+        .filter((p) => !!p.signatureImage)
+        .map((p) => [p.id, p.signatureImage as string])
+    )
+  );
   const storageKey = attKey(dateIso);
+
+  useEffect(() => {
+    let active = true;
+    void fetchCloudDirectory().then((dir) => {
+      if (!active || !dir) return;
+      setProfileSignatures((current) => {
+        const next = { ...current };
+        for (const p of dir.profiles) if (p.signatureImage) next[p.id] = p.signatureImage;
+        return next;
+      });
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
@@ -948,7 +979,12 @@ export function AttendancePage({
         createPortal(
           <div className="att-all">
             {allRegs.map((r) => (
-              <StaticSheet key={r.date} dateIso={r.date} data={r.data} />
+              <StaticSheet
+                key={r.date}
+                dateIso={r.date}
+                data={r.data}
+                signatureImages={profileSignatures}
+              />
             ))}
           </div>,
           document.body
@@ -1024,6 +1060,9 @@ export function AttendancePage({
             <tbody>
               {Array.from({ length: Math.max(ROW_COUNT, reg.order.length) }, (_, i) => {
                 const pid = reg.order[i];
+                const rowSignatureImage = pid
+                  ? reg.rows[pid]?.signatureImage ?? profileSignatures[pid]
+                  : undefined;
                 return (
                   <tr key={i}>
                     <td className="att-num">{i + 1}.</td>
@@ -1034,10 +1073,10 @@ export function AttendancePage({
                     <td>{pid ? cell(pid, "gender") : null}</td>
                     <td>{pid ? cell(pid, "arrival") : null}</td>
                     <td className="att-sig-cell">
-                      {pid && reg.rows[pid]?.signatureImage ? (
+                      {pid && rowSignatureImage ? (
                         <img
                           className="att-sig-img"
-                          src={reg.rows[pid].signatureImage}
+                          src={rowSignatureImage}
                           alt={`${reg.rows[pid].name} signature`}
                         />
                       ) : pid ? (
