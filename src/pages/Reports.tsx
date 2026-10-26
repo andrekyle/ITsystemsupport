@@ -279,6 +279,9 @@ function kindForPrompt(prompt: string): ReportKind {
     /\b(learner|student|submission|attendance)\s+tracker\b/.test(text) ||
     /\btracker\s+report\b/.test(text);
   if (asksForTracker) return byId("tracker");
+  if (/\battendance\s+(?:report|summary)\b|\b(?:report|summary)\s+(?:of|on|for)\s+attendance\b/i.test(text)) {
+    return byId("attendance");
+  }
   if (/\bdata\s+analysis\b|\bprogramme\s+analysis\s+report\b|\bprogram\s+analysis\s+report\b/.test(text)) return byId("data-analysis");
   if (/\bexecutive\s+(summary|report)\b/.test(text)) return byId("executive");
   if (/\b(learnership|learner)\s+progress\s+report\b|\bprogress\s+report\b/.test(text)) return byId("progress");
@@ -505,7 +508,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
     const sharedRegisters = await fetchReportRegisterSessions(rows);
     const result = await requestReport(
       k,
-      buildReportData(k.id, rows, registers, scope, sharedRegisters),
+      buildReportData(k.id, rows, registers, scope, sharedRegisters, q),
       q,
       makingReport ? "report" : "answer",
       history
@@ -869,7 +872,9 @@ export function ReportsPage({ profile }: { profile: Profile }) {
                   className="reports-list-btn"
                   disabled={!!busy || rows.length === 0}
                   title={k.desc}
-                  onClick={() => needsBrief(k) ? openReportBrief(k) : generate(k, undefined, "kind")}
+                  onClick={() => needsBrief(k)
+                    ? openReportBrief(k)
+                    : generate(k, k.id === "attendance" ? "Cover the current calendar month only." : undefined, "kind")}
                 >
                   <Icon name={k.icon} size={18} />
                   {k.name}

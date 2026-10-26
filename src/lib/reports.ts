@@ -248,7 +248,8 @@ export function buildReportData(
   rows: LearnerRow[],
   registers: number,
   scope: ReportScope = "worked",
-  sharedRegisters: ReportRegisterSession[] = []
+  sharedRegisters: ReportRegisterSession[] = [],
+  question?: string
 ): unknown {
   const workedCount = workedUnitCodes(rows).size;
   const base = {
@@ -282,23 +283,50 @@ export function buildReportData(
         analysis: analysisData(rows, scope),
         note: "This is a current snapshot, not a historical comparison. Learner completion, scores, evidence and credits cover the whole programme; unit/module charts follow the selected scope. Missing scores/attendance are not zero. The client renders all charts from these exact data.",
       };
-    case "attendance":
+    case "attendance": {
+      const allDates = [...new Set([
+        ...attendanceFilledRegisterDates(),
+        ...sharedRegisters.map((session) => session.date),
+      ])].sort();
+      const allMonthsRequested = /\b(?:every|all|full|entire|historical|history)\b[\s\S]*\b(?:month|months|attendance|registers|sessions)\b|\b(?:month|months|attendance|registers|sessions)\b[\s\S]*\b(?:every|all|full|entire|historical|history)\b/i.test(question ?? "");
+      const now = new Date();
+      const reportDates = allMonthsRequested
+        ? allDates
+        : allDates.filter((date) => {
+            const parsed = new Date(`${date}T12:00:00`);
+            return parsed.getFullYear() === now.getFullYear() && parsed.getMonth() === now.getMonth();
+          });
+      const reportDateSet = new Set(reportDates);
+      const reportSessions = scheduledSessions(rows, sharedRegisters).filter((session) => reportDateSet.has(session.date));
       return {
         ...base,
         note: "Figures come straight from the filled attendance registers. sessionsExpected counts registers dated on/after the learner's firstSession — learners who joined later are only measured from when they started, so attending every session since firstSession is a 100% attendance rate, not a shortfall.",
-        registerDates: attendanceFilledRegisterDates(),
+        attendancePeriod: allMonthsRequested
+          ? "every available month in the attendance history"
+          : `current calendar month (${now.toLocaleString("en-GB", { month: "long", year: "numeric" })}) only`,
+        registeredSessions: allMonthsRequested ? base.registeredSessions : reportSessions,
+        sessionAttendance: reportSessions.map((session) => ({
+          date: session.date,
+          signed: session.signed,
+          expected: session.expected,
+        })),
+        registerDates: reportDates,
         learners: rows.map((r) => ({
           name: r.profile.name,
           gender: genderOf(r),
           pronouns: pronounsOf(r),
-          sessionsAttended: r.attendance,
-          sessionsExpected: r.attendanceExpected,
-          attendanceRatePct: pctStr(r.attendanceRate),
+          sessionsAttended: r.signedDates.filter((date) => reportDateSet.has(date)).length,
+          sessionsExpected: reportDates.filter((date) => !r.signedDates[0] || date >= r.signedDates[0]).length,
+          attendanceRatePct: (() => {
+            const expected = reportDates.filter((date) => !r.signedDates[0] || date >= r.signedDates[0]).length;
+            return expected ? Math.round((r.signedDates.filter((date) => reportDateSet.has(date)).length / expected) * 100) : null;
+          })(),
           firstSession: r.signedDates[0] ?? null,
-          signedDates: r.signedDates,
+          signedDates: r.signedDates.filter((date) => reportDateSet.has(date)),
           lastSeen: r.lastLogin ? new Date(r.lastLogin).toLocaleDateString() : "never signed in",
         })),
       };
+    }
     case "risk":
       return {
         ...base,
