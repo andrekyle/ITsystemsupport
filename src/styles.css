@@ -4130,6 +4130,20 @@ textarea:focus {
   .lw-table th,.lw-table td{padding:4px 3px}
   .lw-checklist th,.lw-checklist td{font-size:9px}
 }
+
+/* Keep the landing-page feature cards comfortable on phones. These rules are
+ * intentionally last because the page has a few legacy card themes above. */
+@media screen and (max-width:600px){
+  .deliv-board,.res-board{width:100%;max-width:100%;border:0;border-radius:0}
+  .deliv-list,.res-list{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:12px;padding:0 2px;overflow:visible}
+  .deliv-row,.deliv-row:first-child,.res-card{display:flex!important;box-sizing:border-box;width:100%;min-width:0;min-height:0;height:auto;padding:20px 18px;border-radius:16px;overflow:hidden}
+  .deliv-row-num,.res-index{margin-bottom:12px;font-size:10px;letter-spacing:.1em}
+  .deliv-copy,.res-copy{width:100%;min-width:0;padding:0 34px 0 0;gap:8px}
+  .deliv-name,.res-card .t{font-size:clamp(20px,6vw,26px);line-height:1.12;overflow-wrap:anywhere}
+  .deliv-standard,.res-card .d{font-size:14px;line-height:1.45;overflow-wrap:anywhere}
+  .deliv-ico,.res-icon{top:18px;right:18px;width:34px;height:34px}
+  .deliv-due,.res-action{margin-top:18px;padding:9px 13px;font-size:12px}
+}
 .lw-ai-result { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:5px 8px; padding:11px 14px; border:.5px solid #888; border-top:0; font-size:14px; line-height:1.55; }
 .lw-ai-result strong { font-size:18px; line-height:1.25; }
 .lw-ai-result span { grid-column:1 / -1; color:#111; }
