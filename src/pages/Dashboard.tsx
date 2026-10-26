@@ -17,8 +17,7 @@ import { Bar, Ring } from "../components/Ring";
 import { TokenGauge } from "../components/TokenGauge";
 import { Button } from "@fluentui/react-components";
 import { VideoMetrics } from "../components/VideoMetrics";
-import { bestPoeDocs, fetchCloudLearnerData, type CloudLearnerData } from "../lib/directory";
-import { mergeProgressEvidence } from "../lib/progressEvidence";
+import { bestPoeDocs, bestProgress, fetchCloudLearnerData, type CloudLearnerData } from "../lib/directory";
 import { cloudEnabled } from "../lib/supabase";
 
 export function Dashboard({
@@ -59,14 +58,19 @@ export function Dashboard({
   ];
   const { docs: poeDocs } = usePoe(profile.id);
   const { outcomes } = useOutcomes();
-  const s = overallStats(progress, poeDocs, outcomes[profile.id] ?? {});
-  const poeDone = Object.keys(poeDocs).length;
-  const gameProgress = savedEvidence?.profileId === profile.id
-    ? mergeProgressEvidence(progress, savedEvidence.progress)
+  // A learner may have a seeded local profile and a different cloud profile
+  // id after signing in. Reconcile all linked snapshots so saved completions
+  // do not disappear from the dashboard.
+  const effectiveProgress = savedEvidence?.profileId === profile.id
+    ? bestProgress(profile, savedEvidence.cloud)
     : progress;
-  const gamePoe = savedEvidence?.profileId === profile.id
+  const effectivePoe = savedEvidence?.profileId === profile.id
     ? bestPoeDocs(profile, savedEvidence.cloud)
     : poeDocs;
+  const s = overallStats(effectiveProgress, effectivePoe, outcomes[profile.id] ?? {});
+  const poeDone = Object.keys(effectivePoe).length;
+  const gameProgress = effectiveProgress;
+  const gamePoe = effectivePoe;
   const classesAttended = attendanceSignedCount(profile);
   const game = computeGamification(gameProgress, poeItemCount(gamePoe), classesAttended);
   const announcements = loadAnnouncements().slice(0, 2);
@@ -75,7 +79,7 @@ export function Dashboard({
   const next = (() => {
     for (const m of MODULES)
       for (const u of m.units)
-        if (unitStatus(progress, u.us) !== "completed") return { m, u };
+        if (unitStatus(effectiveProgress, u.us) !== "completed") return { m, u };
     return undefined;
   })();
 
@@ -308,7 +312,7 @@ export function Dashboard({
       </h2>
       <div className="card dashboard-module-progress">
         {MODULES.map((m, i) => {
-          const c = moduleCompletion(progress, m.id);
+          const c = moduleCompletion(effectiveProgress, m.id);
           return (
             <div
               key={m.id}
