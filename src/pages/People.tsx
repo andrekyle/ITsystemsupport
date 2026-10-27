@@ -35,6 +35,7 @@ import { AlertModal, ConfirmModal, PromptModal } from "../components/Modal";
 import { downloadDoc, getFileBlob } from "../lib/files";
 import { fileToSignature } from "../lib/signature";
 import { cloudEnabled, makeHeadlessClient } from "../lib/supabase";
+import { TENANT_ID } from "../lib/tenant";
 import { updateRegisterSignatures } from "./Attendance";
 import {
   deleteCloudProfile,
@@ -835,6 +836,7 @@ function AddUser({ viewer, onAdded }: { viewer: Profile; onAdded: () => void }) 
           const { data, error: signUpErr } = await headless.auth.signUp({
             email: trimmedEmail,
             password,
+            options: { data: { tenant_id: TENANT_ID } },
           });
           if (signUpErr) {
             const msg = signUpErr.message.toLowerCase();

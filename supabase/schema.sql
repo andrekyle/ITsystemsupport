@@ -1,4 +1,7 @@
--- ITSS Learn — Supabase schema
+-- ITSS Learn — Supabase bootstrap schema.
+-- Apply migrations in date order after this file, including
+-- migrations/20261027_secure_public_rls.sql. Do not rerun this bootstrap on an
+-- existing database: its original policies would replace the hardened ones.
 -- Run this once in your Supabase project: Dashboard → SQL Editor → New query → paste → Run.
 --
 -- REQUIRED AUTH SETTING: Dashboard → Authentication → Sign In / Providers → Email
