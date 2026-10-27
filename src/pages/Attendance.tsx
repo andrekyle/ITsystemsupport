@@ -63,6 +63,7 @@ const attKey = (dateIso: string) => `itss.attendance.${dateIso}`;
 const attRowKey = (dateIso: string, profileId: string) =>
   `itss.attendance.${dateIso}.row.${profileId}`;
 const registerKeyPattern = /^itss\.attendance\.\d{4}-\d{2}-\d{2}$/;
+const registerRowKeyPattern = /^(itss\.attendance\.\d{4}-\d{2}-\d{2})\.row\..+$/;
 const attendanceMigrationKey = (dateIso: string) =>
   `itssDevice.attendanceMigrated.${dateIso}`;
 
@@ -146,9 +147,15 @@ async function pullLatest(key: string, strict = false): Promise<AttData | null> 
     ]);
     if (registerResult.error) throw registerResult.error;
     if (rowResult.error) throw rowResult.error;
-    let merged: AttData = registerResult.data?.value
-      ? normalizeReg({ ...EMPTY, ...(JSON.parse(registerResult.data.value) as Partial<AttData>) })
-      : { header: {}, rows: {}, order: [] };
+    let merged: AttData = { header: {}, rows: {}, order: [] };
+    if (registerResult.data?.value) {
+      try {
+        merged = normalizeReg({ ...EMPTY, ...(JSON.parse(registerResult.data.value) as Partial<AttData>) });
+      } catch (error) {
+        // An older malformed aggregate must not hide authoritative row records.
+        console.warn("Could not read attendance register header", key, error);
+      }
+    }
     for (const saved of rowResult.data ?? []) {
       const profileId = saved.key.slice(`itss.attendance.${dateIso}.row.`.length);
       if (!profileId) continue;
@@ -191,21 +198,41 @@ function cachePulledRegister(dateIso: string, data: AttData): void {
 }
 
 /** Every register key: those on this device plus any others in the cloud. */
-async function allRegisterKeys(): Promise<string[]> {
+async function allRegisterKeys(reportCloudFailure = false): Promise<string[]> {
   const keys = new Set<string>();
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
     if (k && registerKeyPattern.test(k)) keys.add(k);
+    else if (k) {
+      const registerKey = k.match(registerRowKeyPattern)?.[1];
+      if (registerKey) keys.add(registerKey);
+    }
   }
   if (supabase) {
     try {
-      const { data } = await supabase
-        .from("shared_state")
-        .select("key")
-        .eq("tenant_id", TENANT_ID)
-        .like("key", "itss.attendance.%");
-      for (const r of data ?? []) if (registerKeyPattern.test(r.key)) keys.add(r.key);
-    } catch {
+      // Shared state may contain more than the server's default page size.
+      // Row-only dates are valid even when the old aggregate key is absent.
+      const pageSize = 500;
+      for (let offset = 0; ; offset += pageSize) {
+        const { data, error } = await supabase
+          .from("shared_state")
+          .select("key")
+          .eq("tenant_id", TENANT_ID)
+          .like("key", "itss.attendance.%")
+          .order("key")
+          .range(offset, offset + pageSize - 1);
+        if (error) throw error;
+        for (const row of data ?? []) {
+          if (registerKeyPattern.test(row.key)) keys.add(row.key);
+          else {
+            const registerKey = row.key.match(registerRowKeyPattern)?.[1];
+            if (registerKey) keys.add(registerKey);
+          }
+        }
+        if (!data || data.length < pageSize) break;
+      }
+    } catch (error) {
+      if (reportCloudFailure && !keys.size) throw error;
       /* offline — local keys only */
     }
   }
@@ -430,6 +457,7 @@ export function AttendancePage({
   /** bulk-print chooser: every signed register, so staff can pick which session dates to print */
   const [pickRegs, setPickRegs] = useState<{ date: string; data: AttData }[] | null>(null);
   const [pickedDates, setPickedDates] = useState<Set<string>>(new Set());
+  const [savedDates, setSavedDates] = useState<string[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [signing, setSigning] = useState(false);
   const [attendanceNote, setAttendanceNote] = useState("");
@@ -441,6 +469,17 @@ export function AttendancePage({
     )
   );
   const storageKey = attKey(dateIso);
+
+  useEffect(() => {
+    if (!staff) return;
+    let active = true;
+    void allRegisterKeys(true).then((keys) => {
+      if (active) setSavedDates(keys.map((key) => key.slice("itss.attendance.".length)).sort().reverse());
+    }).catch(() => {
+      if (active) setAttendanceNote("Saved register dates could not be loaded. Check your connection and try again.");
+    });
+    return () => { active = false; };
+  }, [staff, dateIso]);
 
   useEffect(() => {
     let active = true;
@@ -736,26 +775,33 @@ export function AttendancePage({
   /** Print with a landscape @page rule injected for the duration of the dialog.
       (The rule can't live in styles.css — @page is global and would flip every
       other page's print, e.g. the Registration Form, into landscape.) */
-  const printLandscape = async () => {
+  const printLandscape = async (onDone?: () => void) => {
     const images = Array.from(document.querySelectorAll<HTMLImageElement>(".att-sheet .att-sig-img"));
     await Promise.all(
       images.map(async (image) => {
         if (image.complete) return;
-        try {
-          await image.decode();
-        } catch {
-          await new Promise<void>((resolve) => {
-            image.addEventListener("load", () => resolve(), { once: true });
-            image.addEventListener("error", () => resolve(), { once: true });
-          });
-        }
+        await image.decode().catch(() => { /* print remaining rows if an image fails */ });
       })
     );
     const style = document.createElement("style");
     style.textContent = "@page { size: A4 landscape; margin: 8mm; }";
     document.head.appendChild(style);
-    window.print();
-    setTimeout(() => style.remove(), 1000);
+    let fallback: ReturnType<typeof setTimeout>;
+    const finish = () => {
+      window.removeEventListener("afterprint", finish);
+      clearTimeout(fallback);
+      style.remove();
+      onDone?.();
+    };
+    window.addEventListener("afterprint", finish, { once: true });
+    // Some browsers do not emit afterprint when the dialog is cancelled.
+    fallback = setTimeout(finish, 120_000);
+    try {
+      window.print();
+    } catch (error) {
+      finish();
+      throw error;
+    }
   };
 
   /** Gather every signed register (local + cloud) and let staff pick the dates to print. */
@@ -764,7 +810,7 @@ export function AttendancePage({
     setAttendanceNote("");
     try {
       const regs: { date: string; data: AttData }[] = [];
-      for (const key of await allRegisterKeys()) {
+      for (const key of await allRegisterKeys(true)) {
         try {
           const data = (await pullLatest(key)) ?? readReg(key);
           if (!Object.keys(data.rows).length) continue; // skip unsigned/empty registers
@@ -806,8 +852,7 @@ export function AttendancePage({
     // let React render the sheets (and images lay out) before opening the print dialog
     setTimeout(() => {
       void (async () => {
-        await printLandscape();
-        setAllRegs(null);
+        await printLandscape(() => setAllRegs(null));
       })();
     }, 700);
   };
@@ -862,6 +907,20 @@ export function AttendancePage({
           value={dateIso}
           onChange={(v) => v && setDateIso(v)}
         />
+        {staff && savedDates.length > 0 && (
+          <select
+            className="att-saved-dates"
+            aria-label="Open a saved register"
+            value=""
+            onChange={(event) => { if (event.target.value) setDateIso(event.target.value); }}
+          >
+            <option value="">Open saved register…</option>
+            {savedDates.map((date) => <option key={date} value={date}>{date}</option>)}
+          </select>
+        )}
+        {staff && !Object.keys(reg.rows).length && savedDates.length > 0 && (
+          <span className="att-note">No signatures on this date. Open a saved register to view earlier entries.</span>
+        )}
         <button className="btn ghost sm" disabled={refreshing || signing} onClick={() => void refresh()}>
           <Icon name="trend" size={15} /> {refreshing ? "Refreshing…" : "Refresh"}
         </button>
@@ -869,7 +928,7 @@ export function AttendancePage({
           <Icon name="check" size={15} /> {signing ? "Signing…" : signed ? "Signed" : "Sign the register — I'm here"}
         </button>
         {staff && (
-          <button className="btn ghost sm" onClick={printLandscape}>
+          <button className="btn ghost sm" onClick={() => void printLandscape()}>
             <Icon name="download" size={15} /> Download as PDF
           </button>
         )}
