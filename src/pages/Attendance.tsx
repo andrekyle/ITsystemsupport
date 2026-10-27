@@ -761,17 +761,28 @@ export function AttendancePage({
   /** Gather every signed register (local + cloud) and let staff pick the dates to print. */
   const downloadAll = async () => {
     setLoadingAll(true);
+    setAttendanceNote("");
     try {
       const regs: { date: string; data: AttData }[] = [];
       for (const key of await allRegisterKeys()) {
-        const data = (await pullLatest(key)) ?? readReg(key);
-        if (!Object.keys(data.rows).length) continue; // skip unsigned/empty registers
-        regs.push({ date: key.slice("itss.attendance.".length), data });
+        try {
+          const data = (await pullLatest(key)) ?? readReg(key);
+          if (!Object.keys(data.rows).length) continue; // skip unsigned/empty registers
+          regs.push({ date: key.slice("itss.attendance.".length), data });
+        } catch (error) {
+          console.warn("Could not load attendance register", key, error);
+        }
       }
       regs.sort((a, b) => a.date.localeCompare(b.date));
-      if (!regs.length) return;
+      if (!regs.length) {
+        setAttendanceNote("No signed registers are available to download yet.");
+        return;
+      }
       setPickRegs(regs);
       setPickedDates(new Set(regs.map((r) => r.date))); // everything selected by default
+    } catch (error) {
+      console.error("Could not gather attendance registers", error);
+      setAttendanceNote("The registers could not be loaded. Check your connection and try again.");
     } finally {
       setLoadingAll(false);
     }
