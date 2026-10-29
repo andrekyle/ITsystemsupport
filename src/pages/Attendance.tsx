@@ -145,8 +145,15 @@ async function pullLatest(key: string, strict = false): Promise<AttData | null> 
         .eq("tenant_id", TENANT_ID)
         .like("key", `itss.attendance.${dateIso}.row.%`),
     ]);
-    if (registerResult.error) throw registerResult.error;
-    if (rowResult.error) throw rowResult.error;
+    if (registerResult.error && rowResult.error) {
+      throw registerResult.error;
+    }
+    if (registerResult.error) {
+      console.warn("Could not load attendance register header; using saved learner rows.", registerResult.error);
+    }
+    if (rowResult.error) {
+      console.warn("Could not load attendance learner rows; using the saved register snapshot.", rowResult.error);
+    }
     let merged: AttData = { header: {}, rows: {}, order: [] };
     if (registerResult.data?.value) {
       try {
