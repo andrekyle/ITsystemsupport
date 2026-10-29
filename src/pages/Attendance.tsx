@@ -160,6 +160,22 @@ async function pullLatest(key: string, strict = false): Promise<AttData | null> 
         supabase.from("shared_state").select("key,value").like("key", `itss.attendance.${dateIso}.row.%`),
       ]);
     }
+    // Some historical registers were saved before tenant tagging and can
+    // therefore be invisible to the tenant-scoped query even though they are
+    // still present in Supabase. Recover those rows for the legacy Investec
+    // tenant only; tenant-scoped rows remain authoritative below.
+    if (
+      TENANT_ID === "investec" &&
+      !registerResult.data?.value &&
+      !registerResult.error &&
+      !rowResult.error &&
+      !(rowResult.data?.length)
+    ) {
+      [registerResult, rowResult] = await Promise.all([
+        supabase.from("shared_state").select("value").eq("key", key).maybeSingle(),
+        supabase.from("shared_state").select("key,value").like("key", `itss.attendance.${dateIso}.row.%`),
+      ]);
+    }
     if (registerResult.error && rowResult.error) {
       throw registerResult.error;
     }
@@ -261,6 +277,26 @@ async function allRegisterKeys(reportCloudFailure = false): Promise<string[]> {
         }
         const { data, error } = result;
         if (error) throw error;
+        if (TENANT_ID === "investec" && offset === 0 && !data?.length) {
+          const legacy = await supabase
+            .from("shared_state")
+            .select("key")
+            .like("key", "itss.attendance.%")
+            .order("key")
+            .range(0, pageSize - 1);
+          if (legacy.error) throw legacy.error;
+          if (legacy.data?.length) {
+            for (const row of legacy.data) {
+              if (registerKeyPattern.test(row.key)) keys.add(row.key);
+              else {
+                const registerKey = row.key.match(registerRowKeyPattern)?.[1];
+                if (registerKey) keys.add(registerKey);
+              }
+            }
+            if (legacy.data.length < pageSize) break;
+            continue;
+          }
+        }
         for (const row of data ?? []) {
           if (registerKeyPattern.test(row.key)) keys.add(row.key);
           else {
