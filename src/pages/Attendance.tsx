@@ -133,18 +133,33 @@ function readReg(key: string): AttData {
   return normalizeReg({ ...data, rows, order });
 }
 
+function needsLegacySharedStateRead(error: { message?: string } | null): boolean {
+  return !!error && /tenant_id|column .*does not exist|schema cache/i.test(error.message ?? "");
+}
+
 async function pullLatest(key: string, strict = false): Promise<AttData | null> {
   if (!supabase) return null;
   try {
     const dateIso = key.slice("itss.attendance.".length);
-    const [registerResult, rowResult] = await Promise.all([
-      supabase.from("shared_state").select("value").eq("tenant_id", TENANT_ID).eq("key", key).maybeSingle(),
-      supabase
-        .from("shared_state")
-        .select("key,value")
-        .eq("tenant_id", TENANT_ID)
-        .like("key", `itss.attendance.${dateIso}.row.%`),
-    ]);
+    let registerResult = await supabase
+      .from("shared_state")
+      .select("value")
+      .eq("tenant_id", TENANT_ID)
+      .eq("key", key)
+      .maybeSingle();
+    let rowResult = await supabase
+      .from("shared_state")
+      .select("key,value")
+      .eq("tenant_id", TENANT_ID)
+      .like("key", `itss.attendance.${dateIso}.row.%`);
+    // Keep old deployments readable while the tenant migration is being
+    // applied. This fallback is read-only and only used for a missing column.
+    if (needsLegacySharedStateRead(registerResult.error) || needsLegacySharedStateRead(rowResult.error)) {
+      [registerResult, rowResult] = await Promise.all([
+        supabase.from("shared_state").select("value").eq("key", key).maybeSingle(),
+        supabase.from("shared_state").select("key,value").like("key", `itss.attendance.${dateIso}.row.%`),
+      ]);
+    }
     if (registerResult.error && rowResult.error) {
       throw registerResult.error;
     }
@@ -229,13 +244,22 @@ async function allRegisterKeys(reportCloudFailure = false): Promise<string[]> {
       // Row-only dates are valid even when the old aggregate key is absent.
       const pageSize = 500;
       for (let offset = 0; ; offset += pageSize) {
-        const { data, error } = await supabase
+        let result = await supabase
           .from("shared_state")
           .select("key")
           .eq("tenant_id", TENANT_ID)
           .like("key", "itss.attendance.%")
           .order("key")
           .range(offset, offset + pageSize - 1);
+        if (needsLegacySharedStateRead(result.error)) {
+          result = await supabase
+            .from("shared_state")
+            .select("key")
+            .like("key", "itss.attendance.%")
+            .order("key")
+            .range(offset, offset + pageSize - 1);
+        }
+        const { data, error } = result;
         if (error) throw error;
         for (const row of data ?? []) {
           if (registerKeyPattern.test(row.key)) keys.add(row.key);
