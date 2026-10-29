@@ -716,6 +716,16 @@ export function AttendancePage({
         }
         if (changed) {
           writeReg(key, data); // compact aggregate also syncs to the cloud
+          const dateIso = key.slice("itss.attendance.".length);
+          await Promise.all(
+            Object.entries(data.rows)
+              .filter(([, row]) => !!row.signatureImage)
+              .map(async ([pid, row]) => {
+                const rowKey = attRowKey(dateIso, pid);
+                localStorage.setItem(rowKey, JSON.stringify(row));
+                await flushKey(rowKey);
+              })
+          );
           if (key === storageKey) setReg(data);
         }
       }
