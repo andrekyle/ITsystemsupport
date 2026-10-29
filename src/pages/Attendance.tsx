@@ -177,14 +177,22 @@ async function pullLatest(key: string, strict = false): Promise<AttData | null> 
         /* ignore one malformed row without hiding the rest of the class */
       }
     }
-    // Signature images are also kept in the per-row local cache. Preserve a
-    // locally available image when an older/cloud aggregate row has only the
-    // typed signature text; otherwise the print view falls back to that text.
+    // The legacy aggregate can contain rows that were never copied to the
+    // per-person cloud keys, or the row query can be partially unavailable.
+    // Restore only rows missing from the cloud result; cloud rows remain
+    // authoritative when both copies exist.
     const local = readReg(key);
     for (const [profileId, localRow] of Object.entries(local.rows)) {
-      if (!localRow.signatureImage || !merged.rows[profileId]) continue;
-      if (!merged.rows[profileId].signatureImage) {
-        merged.rows[profileId] = { ...merged.rows[profileId], signatureImage: localRow.signatureImage };
+      const cloudRow = merged.rows[profileId];
+      if (!cloudRow) {
+        merged.rows[profileId] = localRow;
+        if (!merged.order.includes(profileId)) merged.order.push(profileId);
+        continue;
+      }
+      // Signature images are also kept in the per-row local cache. Preserve a
+      // locally available image when an older/cloud row has only typed text.
+      if (localRow.signatureImage && !cloudRow.signatureImage) {
+        merged.rows[profileId] = { ...cloudRow, signatureImage: localRow.signatureImage };
       }
     }
     if (registerResult.data?.value || Object.keys(merged.rows).length) return normalizeReg(merged);
