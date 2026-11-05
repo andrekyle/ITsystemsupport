@@ -110,6 +110,5 @@ export const PRACTICAL_TASK_114046: PracticalTaskDocument = {
 export function practicalTaskForUnit(us: string): PracticalTaskDocument | undefined {
   if (us === "114046") return PRACTICAL_TASK_114046;
   if (us === "114074") return { title: "Practical Task", subtitle: "Demonstrate an understanding of different computer network architectures and standards", sourceName: "SAQA-114074  - Practical task.pdf", sections: [] };
-  if (us === "114076") return { title: "Practical Assessment Guide", subtitle: "Use computer technology to research a computer topic", sourceName: "SAQA-114076-Practical Assesement.pdf", sections: [] };
   return undefined;
 }

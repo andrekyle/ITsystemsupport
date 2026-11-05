@@ -96,8 +96,9 @@ export function TrackedVideoPlayer({ source, title, tracker, onFinished, onError
     }
   }
   function ended() {
-    if (tracker.finished) callbacks.current.onFinished();
-    else callbacks.current.onError("Some of the video was skipped. Watch the missing sections at normal speed to unlock the questions.");
+    // Pausing and using the seek bar are normal playback controls. The quiz
+    // checks understanding; seeking must not invalidate a completed playback.
+    callbacks.current.onFinished();
   }
 
   useEffect(() => {
@@ -196,8 +197,8 @@ export function TrackedVideoPlayer({ source, title, tracker, onFinished, onError
         onEnded={event => { sample(event.currentTarget.currentTime, event.currentTarget.duration); ended(); }}
         onError={() => callbacks.current.onError("This video could not be played. Check the link and host permissions.")} />}
     <p className="lesson-video-watch-progress" role="status">
-      Watched {Math.floor(watched)}{duration > 0 ? ` of ${Math.ceil(duration)}` : ""} seconds.
-      {" "}Watch the entire video at normal speed, then answer all five questions correctly.
+      Played {Math.floor(watched)}{duration > 0 ? ` of ${Math.ceil(duration)}` : ""} seconds.
+      {" "}You can pause, rewind, or skip ahead. Reach the end to unlock the knowledge check.
     </p>
   </>;
 }

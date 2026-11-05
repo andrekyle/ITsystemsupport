@@ -2,6 +2,7 @@ import type { PoeDoc, UnitContent } from "../types";
 import { unitPackSnapshot } from "./unitStorage";
 import { courseScopedUnit } from "./courseScope";
 import { layoutLessonSections } from "./lessonLayout";
+import { fiveResearchSelfAssessment } from "./selfAssessment114076";
 
 export type UnitSourceDocuments = {
   learnerGuide?: PoeDoc;
@@ -210,11 +211,15 @@ function cleanLegacyGeneratedContent<T extends BuiltUnit | BuiltUnitVersion>(uni
     lesson: layoutLessonSections(content.lesson),
     evaluation: content.evaluation,
     lessonPlan: isLegacyGeneratedLessonPlan(content.lessonPlan, unit.planSource) ? lessonPlanTemplate(us, content) : content.lessonPlan,
-    selfAssessment: content.selfAssessment ? {
+    selfAssessment: content.selfAssessment ? (us === "114076" ? fiveResearchSelfAssessment({
       ...content.selfAssessment,
       intro: content.selfAssessment.intro ?? SELF_ASSESSMENT_INTRO,
       outro: content.selfAssessment.outro ?? SELF_ASSESSMENT_OUTRO,
-    } : content.selfAssessment,
+    }) : {
+      ...content.selfAssessment,
+      intro: content.selfAssessment.intro ?? SELF_ASSESSMENT_INTRO,
+      outro: content.selfAssessment.outro ?? SELF_ASSESSMENT_OUTRO,
+    }) : content.selfAssessment,
     exercises: content.exercises.filter(activity => !isLegacyGeneratedActivity(activity)),
     questionSessions: (content.questionSessions ?? []).filter(activity => !isLegacyGeneratedQuestionSession(activity)),
     studyNotes: content.studyNotes,

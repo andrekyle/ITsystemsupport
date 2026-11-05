@@ -3,19 +3,13 @@ import { createPortal } from "react-dom";
 import { Icon } from "../icons";
 import { lessonVideoSource, type LessonVideoSource } from "../lib/lessonVideo";
 import { recordLessonVideoView, type LessonVideoViewCount } from "../lib/lessonVideoViews";
+import { editVideoComment, loadVideoSocial, postVideoComment, setCommentLike, setVideoLike, type SharedVideoComment } from "../lib/lessonVideoSocial";
 import type { Profile, QuizQuestion } from "../types";
 import { validVideoQuestions, videoEngagementKey, videoQuizId, VideoWatchTracker, type VideoQuiz } from "../lib/videoLearning";
 import { VideoQuizEditor } from "./VideoQuizEditor";
 import { TrackedVideoPlayer } from "./TrackedVideoPlayer";
 import { Avatar } from "./Avatar";
 
-type VideoComment = {
-  id: string;
-  text: string;
-  author: Pick<Profile, "id" | "name" | "role" | "avatar">;
-  likedBy: string[];
-  createdAt: string;
-};
 type VideoLayout = { width: number; align: "left" | "center" | "right" };
 const videoLayoutKey = (id: string) => `itss.video-layout.${id}`;
 function readVideoLayout(id: string): VideoLayout {
@@ -23,20 +17,6 @@ function readVideoLayout(id: string): VideoLayout {
     const value = JSON.parse(localStorage.getItem(videoLayoutKey(id)) ?? "null") as Partial<VideoLayout> | null;
     return { width: Math.min(100, Math.max(30, Number(value?.width) || 100)), align: value?.align === "left" || value?.align === "right" ? value.align : "center" };
   } catch { return { width: 100, align: "center" }; }
-}
-
-function isVideoComment(value: unknown): value is VideoComment {
-  if (!value || typeof value !== "object") return false;
-  const comment = value as Partial<VideoComment>;
-  return typeof comment.id === "string"
-    && typeof comment.text === "string"
-    && !!comment.author
-    && typeof comment.author.id === "string"
-    && typeof comment.author.name === "string"
-    && typeof comment.author.role === "string"
-    && Array.isArray(comment.likedBy)
-    && comment.likedBy.every(id => typeof id === "string")
-    && typeof comment.createdAt === "string";
 }
 
 export function LessonVideoEditor({ links, onSave, disabled, quizzes, onSaveQuiz, titles, onSaveTitle }: {
@@ -205,8 +185,6 @@ function LessonVideo({
   learnerProfile,
   onComplete,
   questions,
-  initialLiked = false,
-  initialComments = [],
   onLike,
   onComment,
   onWatchProgress,
@@ -220,10 +198,8 @@ function LessonVideo({
   learnerProfile?: Profile;
   questions?: QuizQuestion[];
   onComplete?: (answers: number[]) => void;
-  initialLiked?: boolean;
-  initialComments?: Array<string | VideoComment>;
   onLike?: (liked: boolean) => void;
-  onComment?: (comments: VideoComment[]) => void;
+  onComment?: () => void;
   onWatchProgress?: (seconds: number, duration: number) => void;
   onViewCount?: (views: number) => void;
 }) {
@@ -242,19 +218,29 @@ function LessonVideo({
     return () => window.removeEventListener("itss-video-layout", refresh);
   }, [videoId]);
   const [open, setOpen] = useState(false);
-  const [liked, setLiked] = useState(initialLiked);
-  const [comments, setComments] = useState<VideoComment[]>(() => initialComments.map((comment, commentIndex) =>
-    typeof comment === "string"
-      ? {
-          id: `legacy-${commentIndex}-${comment}`,
-          text: comment,
-          author: { id: commenterProfile.id, name: commenterProfile.name, role: commenterProfile.role, avatar: commenterProfile.avatar },
-          likedBy: [],
-          createdAt: "",
-        }
-      : comment
-  ));
+  const [liked, setLiked] = useState(false);
+  const [viewerId, setViewerId] = useState("");
+  const [likeCount, setLikeCount] = useState(0);
+  const [comments, setComments] = useState<SharedVideoComment[]>([]);
+  const orderedComments = (() => {
+    const result: SharedVideoComment[] = [];
+    const visit = (parentId: string | null, seen: Set<string>) => {
+      for (const comment of comments) {
+        if (comment.parentId !== parentId || seen.has(comment.id)) continue;
+        seen.add(comment.id);
+        result.push(comment);
+        visit(comment.id, seen);
+      }
+    };
+    const seen = new Set<string>();
+    visit(null, seen);
+    for (const comment of comments) if (!seen.has(comment.id)) result.push(comment);
+    return result;
+  })();
+  const [socialError, setSocialError] = useState("");
+  const [socialBusy, setSocialBusy] = useState(false);
   const [commentDraft, setCommentDraft] = useState("");
+  const [replyTo, setReplyTo] = useState<string | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editCommentDraft, setEditCommentDraft] = useState("");
   const [showComments, setShowComments] = useState(true);
@@ -275,13 +261,31 @@ function LessonVideo({
   const quizReady = validVideoQuestions(questions);
   const canComplete = watchedFully && quizReady && quizScore === 5;
   const isCompleted = completed || credited;
-  let source;
+  let source: LessonVideoSource;
   try { source = lessonVideoSource(link); }
   catch (cause) {
     return <p className="auth-error" role="alert">{cause instanceof Error ? cause.message : "Invalid video link."}</p>;
   }
 
   const title = heading?.trim() || `Lesson video ${index + 1}`;
+  async function refreshSocial() {
+    try {
+      const state = await loadVideoSocial(source.src);
+      setLiked(state.liked);
+      setViewerId(state.viewerId);
+      setLikeCount(state.likes);
+      setComments(state.comments);
+      setSocialError("");
+    } catch (cause) {
+      setSocialError(cause instanceof Error ? cause.message : "The shared discussion could not be loaded.");
+    }
+  }
+  useEffect(() => {
+    if (!open) return;
+    void refreshSocial();
+    const timer = window.setInterval(() => { void refreshSocial(); }, 15_000);
+    return () => window.clearInterval(timer);
+  }, [open, source.src]);
   useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
@@ -298,30 +302,23 @@ function LessonVideo({
     };
   }, [open]);
 
-  function addComment(event: React.FormEvent<HTMLFormElement>) {
+  async function addComment(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const comment = commentDraft.trim();
-    if (!comment) return;
+    if (!comment || socialBusy) return;
+    setSocialBusy(true);
     try {
-      const next: VideoComment[] = [...comments, {
-        id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        text: comment,
-        author: {
-          id: commenterProfile.id,
-          name: commenterProfile.name,
-          role: commenterProfile.role,
-          avatar: commenterProfile.avatar,
-        },
-        likedBy: [],
-        createdAt: new Date().toISOString(),
-      }];
-      onComment?.(next);
-      setComments(next);
+      await postVideoComment(source.src, comment, commenterProfile.name, replyTo);
+      onComment?.();
       setCommentDraft("");
+      setReplyTo(null);
       setShowComments(true);
-      setStatus(onComment ? "Comment posted. Your first comment on this video earns 10 XP; additional comments earn no extra XP." : "Comment posted.");
+      await refreshSocial();
+      setStatus("Comment posted. Your first comment on this video earns 10 XP; additional comments earn no extra XP.");
     } catch (cause) {
       setStatus(cause instanceof Error ? cause.message : "Your comment could not be saved. Please retry.");
+    } finally {
+      setSocialBusy(false);
     }
   }
 
@@ -494,19 +491,25 @@ function LessonVideo({
               <Icon name="refresh" size={15} /> Redo quiz
             </button>}
             <div className="lesson-video-action-tools">
-              <button type="button" className={`lesson-video-icon-button${liked ? " is-active" : ""}`} aria-label={liked ? "Unlike video" : "Like video"} aria-pressed={liked} onClick={() => {
+              <button type="button" disabled={socialBusy || !!socialError} className={`lesson-video-icon-button${liked ? " is-active" : ""}`} aria-label={liked ? "Unlike video" : "Like video"} aria-pressed={liked} onClick={async () => {
+                setSocialBusy(true);
                 try {
+                  await setVideoLike(source.src, !liked);
                   onLike?.(!liked);
-                  setLiked(!liked);
+                  await refreshSocial();
                   setStatus(!liked && onLike ? "Video liked. The first like on this video earns 5 XP; liking again earns no extra XP." : "");
                 } catch (cause) {
                   setStatus(cause instanceof Error ? cause.message : "Your like could not be saved. Please retry.");
+                } finally {
+                  setSocialBusy(false);
                 }
               }}>
                 <Icon name="thumbUp" size={18} />
+                <span>{likeCount}</span>
               </button>
               <button type="button" className="lesson-video-icon-button" aria-label={showComments ? "Hide comments" : "Show comments"} aria-expanded={showComments} onClick={() => setShowComments((value) => !value)}>
                 <Icon name="message" size={18} />
+                <span>{comments.length}</span>
               </button>
               {learnerProfile?.role === "Super User" && <a className="lesson-video-icon-button lesson-video-more-button" href={link} target="_blank" rel="noopener noreferrer" aria-label="Open source video">
                 <Icon name="more" size={18} />
@@ -514,28 +517,30 @@ function LessonVideo({
             </div>
           </div>
           {status && <p className="lesson-video-status" role="status">{status}</p>}
+          {socialError && <p className="auth-error lesson-video-feedback" role="alert">{socialError} <button type="button" onClick={() => void refreshSocial()}>Retry</button></p>}
 
           {showComments && (
             <section className="lesson-video-comments" aria-label="Video comments">
               <h3>Comments ({comments.length})</h3>
               {comments.length > 0 ? (
                 <ul>
-                  {comments.map((comment) => <li key={comment.id}>
-                    <Avatar profile={comment.author as Profile} size={32} />
+                  {orderedComments.map((comment) => <li key={comment.id} className={comment.parentId ? "lesson-video-reply" : undefined}>
+                    <Avatar profile={{ id: comment.authorId, name: comment.authorName, role: "Learner", createdAt: "" }} size={32} />
                     <span className="lesson-video-comment-body">
-                      <strong>{comment.author.name}</strong>
+                      <strong>{comment.authorName}{comment.parentId && <small> · reply</small>}</strong>
                       {editingCommentId === comment.id ? <form
                         className="lesson-video-comment-edit"
-                        onSubmit={(event) => {
+                        onSubmit={async (event) => {
                           event.preventDefault();
                           const text = editCommentDraft.trim();
                           if (!text) return;
-                          const next = comments.map(item => item.id === comment.id ? { ...item, text } : item);
-                          setComments(next);
-                          onComment?.(next);
-                          setEditingCommentId(null);
-                          setEditCommentDraft("");
-                          setStatus("Comment updated.");
+                          try {
+                            await editVideoComment(comment.id, text);
+                            await refreshSocial();
+                            setEditingCommentId(null);
+                            setEditCommentDraft("");
+                            setStatus("Comment updated.");
+                          } catch (cause) { setStatus(cause instanceof Error ? cause.message : "Comment update failed."); }
                         }}
                       >
                         <input
@@ -550,8 +555,11 @@ function LessonVideo({
                           setEditCommentDraft("");
                         }}>Cancel</button>
                       </form> : <span>{comment.text}</span>}
+                      <button type="button" className="lesson-video-reply-button" onClick={() => { setReplyTo(comment.id); setShowComments(true); }}>
+                        Reply
+                      </button>
                     </span>
-                    {comment.author.id === commenterProfile.id && editingCommentId !== comment.id && <button
+                    {comment.authorId === viewerId && editingCommentId !== comment.id && <button
                       type="button"
                       className="lesson-video-comment-like"
                       aria-label="Edit your comment"
@@ -562,18 +570,17 @@ function LessonVideo({
                     >
                       <Icon name="pencil" size={14} />
                     </button>}
-                    {comment.author.id !== commenterProfile.id && <button
+                    {comment.authorId !== viewerId && <button
                       type="button"
-                      className={`lesson-video-comment-like${comment.likedBy.includes(commenterProfile.id) ? " is-active" : ""}`}
-                      aria-label={comment.likedBy.includes(commenterProfile.id) ? `Unlike ${comment.author.name}'s comment` : `Like ${comment.author.name}'s comment`}
-                      aria-pressed={comment.likedBy.includes(commenterProfile.id)}
-                      onClick={() => {
-                        const liked = comment.likedBy.includes(commenterProfile.id);
-                        const next = comments.map(item => item.id === comment.id
-                          ? { ...item, likedBy: liked ? item.likedBy.filter(id => id !== commenterProfile.id) : [...item.likedBy, commenterProfile.id] }
-                          : item);
-                        setComments(next);
-                        onComment?.(next);
+                      className={`lesson-video-comment-like${comment.likedBy.includes(viewerId) ? " is-active" : ""}`}
+                      aria-label={comment.likedBy.includes(viewerId) ? `Unlike ${comment.authorName}'s comment` : `Like ${comment.authorName}'s comment`}
+                      aria-pressed={comment.likedBy.includes(viewerId)}
+                      onClick={async () => {
+                        const liked = comment.likedBy.includes(viewerId);
+                        try {
+                          await setCommentLike(comment.id, !liked);
+                          await refreshSocial();
+                        } catch (cause) { setStatus(cause instanceof Error ? cause.message : "Comment like failed."); }
                       }}
                     >
                       <Icon name="thumbUp" size={14} />
@@ -584,15 +591,16 @@ function LessonVideo({
               ) : (
                 <p>Start the conversation about this video.</p>
               )}
+              {replyTo && <p className="lesson-video-reply-target">Replying to {comments.find(comment => comment.id === replyTo)?.authorName ?? "comment"} <button type="button" onClick={() => setReplyTo(null)}>Cancel</button></p>}
               <form onSubmit={addComment}>
                 <label className="sr-only" htmlFor={`lesson-video-comment-${index}`}>Write a comment</label>
                 <input
                   id={`lesson-video-comment-${index}`}
                   value={commentDraft}
                   onChange={(event) => setCommentDraft(event.target.value)}
-                  placeholder="Write a comment..."
+                  placeholder={replyTo ? "Write a reply..." : "Write a comment..."}
                 />
-                <button type="submit" disabled={!commentDraft.trim()}>Post</button>
+                <button type="submit" disabled={!commentDraft.trim() || socialBusy || !!socialError}>{replyTo ? "Reply" : "Post"}</button>
               </form>
             </section>
           )}
@@ -628,7 +636,7 @@ export function LessonVideos({
   onComplete?: (link: string, answers: number[]) => void;
   logbook?: Record<string, string | boolean>;
   onLike?: (link: string, liked: boolean) => void;
-  onComment?: (link: string, comments: VideoComment[]) => void;
+  onComment?: (link: string) => void;
   onWatchProgress?: (link: string, seconds: number, duration: number) => void;
   onViewCount?: (link: string, views: number) => void;
   titles?: Record<string, string>;
@@ -641,20 +649,6 @@ export function LessonVideos({
         {cause instanceof Error ? cause.message : "Invalid video link."}
       </p>;
     }
-    let initialComments: Array<string | VideoComment> = [];
-    const storedComments = logbook?.[videoEngagementKey(link, "comments")];
-    if (typeof storedComments === "string") {
-      try {
-        const parsed: unknown = JSON.parse(storedComments);
-        if (!Array.isArray(parsed) || !parsed.every(comment => typeof comment === "string" || isVideoComment(comment)))
-          throw new Error("Saved video comments are invalid.");
-        initialComments = parsed;
-      } catch (cause) {
-        return <p key={id} className="auth-error" role="alert">
-          {cause instanceof Error ? cause.message : "Saved video comments could not be loaded."}
-        </p>;
-      }
-    }
     return <LessonVideo
       key={`${index}:${link}:${JSON.stringify(quizzes?.[id]?.questions)}`}
       link={link}
@@ -664,10 +658,8 @@ export function LessonVideos({
       questions={quizzes?.[id]?.questions}
       learnerName={learnerName}
       learnerProfile={learnerProfile}
-      initialLiked={logbook?.[videoEngagementKey(link, "liked")] === true}
-      initialComments={initialComments}
       onLike={onLike ? liked => onLike(link, liked) : undefined}
-      onComment={onComment ? comments => onComment(link, comments) : undefined}
+      onComment={onComment ? () => onComment(link) : undefined}
       onWatchProgress={onWatchProgress ? (seconds, duration) => onWatchProgress(link, seconds, duration) : undefined}
       onViewCount={onViewCount ? views => onViewCount(link, views) : undefined}
       onComplete={onComplete ? answers => onComplete(link, answers) : undefined}

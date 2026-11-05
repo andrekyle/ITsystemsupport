@@ -2594,6 +2594,29 @@ td .with-ico .ico {
   font-size: 12px;
 }
 
+.lesson-video-comments li.lesson-video-reply {
+  margin-left: clamp(18px, 5vw, 44px);
+  border-left: 2px solid var(--border-2);
+}
+
+.lesson-video-reply-button {
+  justify-self: start;
+  padding: 3px 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+.lesson-video-reply-target button {
+  margin-left: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+}
+
 .lesson-video-comment-like {
   display: inline-flex;
   min-width: 28px;

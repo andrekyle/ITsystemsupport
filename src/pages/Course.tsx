@@ -26,6 +26,7 @@ import { SlideEditableText } from "../components/SlideEditableText";
 import { SlideTextToolbar } from "../components/SlideTextToolbar";
 import { LessonVideoEditor, LessonVideos } from "../components/LessonVideos";
 import { videoEngagementKey, videoQuizId } from "../lib/videoLearning";
+import { fiveResearchSelfAssessment } from "../lib/selfAssessment114076";
 import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml, hydrateSlideImages, normalizeSlideDocument, inlineFigureReferences } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
 import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, effectiveBuiltContent } from "../components/UnitBuilder";
@@ -3003,7 +3004,7 @@ export function UnitPage({
   const activeLessonIndex = visibleLessonIndices.includes(lessonStep) ? lessonStep
     : visibleLessonIndices.find(si => si >= lessonStep) ?? visibleLessonIndices.at(-1);
   const hasPublishedPdfDocuments = !!(content?.learnerWorkbook?.replica || content?.learnerGuide?.replica || content?.practicalTask?.replica);
-  const practicalTask = u.us === "114076" ? practicalTaskForUnit(u.us) : content?.practicalTask ?? (hasPublishedPdfDocuments ? undefined : practicalTaskForUnit(u.us));
+  const practicalTask = u.us === "114076" ? undefined : content?.practicalTask ?? (hasPublishedPdfDocuments ? undefined : practicalTaskForUnit(u.us));
   // A workbook tab is available whenever the unit supplies one (including
   // uploaded learner-workbook PDFs). Do not hide it for a specific unit.
   const workbookEnabled = true;
@@ -3077,6 +3078,8 @@ export function UnitPage({
   });
   const saveBuiltContent = async (nextContent: UnitContent) => {
     if (!builtUnit) return;
+    if (unitId === "114076" && nextContent.selfAssessment)
+      nextContent = { ...nextContent, selfAssessment: fiveResearchSelfAssessment(nextContent.selfAssessment) };
     // Keep the revision stable so lesson edits remain attached when an
     // activity or quiz changes.
     await saveBuiltUnit(unitId, { revision: builtUnit.revision, createdAt: new Date().toISOString(), source: builtUnit.source, content: nextContent, files: builtUnit.files, aiUsed: builtUnit.aiUsed, planSource: builtUnit.planSource });
@@ -3089,7 +3092,7 @@ export function UnitPage({
       if (!selfAssessmentDraft.items.length || selfAssessmentDraft.items.some(item => !item.trim())) {
         throw new Error("Enter at least one checklist item and fill in any empty items.");
       }
-      await saveBuiltContent({ ...structuredClone(builtUnit.content), selfAssessment: structuredClone(selfAssessmentDraft) });
+      await saveBuiltContent({ ...structuredClone(builtUnit.content), selfAssessment: unitId === "114076" ? fiveResearchSelfAssessment(selfAssessmentDraft) : structuredClone(selfAssessmentDraft) });
       setSelfAssessmentDraft(undefined);
     } catch (error) {
       setSelfAssessmentError(error instanceof Error ? error.message : "The self assessment could not be saved.");
@@ -5445,8 +5448,7 @@ export function UnitPage({
                     setLogbookField(u.us, videoEngagementKey(link, "liked"), liked);
                     if (liked) setLogbookField(u.us, videoEngagementKey(link, "likeXp"), true);
                   }}
-                  onComment={(link, comments) => {
-                    setLogbookField(u.us, videoEngagementKey(link, "comments"), JSON.stringify(comments));
+                  onComment={(link) => {
                     setLogbookField(u.us, videoEngagementKey(link, "commentXp"), true);
                   }}
                   onWatchProgress={(link, seconds) => {
@@ -6429,7 +6431,7 @@ export function UnitPage({
       )}
 
       {tab === "selfassessment" && content?.selfAssessment && (() => {
-        const sa = content.selfAssessment;
+        const sa = unitId === "114076" ? fiveResearchSelfAssessment(content.selfAssessment) : content.selfAssessment;
         const values = progress.units[u.us]?.logbook ?? {};
         const total = sa.items.length;
         const ticked = sa.items.reduce((n, _, i) => n + (values[`selfassess-${i}`] === true ? 1 : 0), 0);
@@ -6472,7 +6474,7 @@ export function UnitPage({
               <h3>Edit self assessment</h3>
               <fieldset disabled={selfAssessmentSaving} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
                 <UnitContentEditor name="Introduction" value={selfAssessmentDraft.intro} onChange={value => setSelfAssessmentDraft({ ...selfAssessmentDraft, intro: value as string[] })} />
-                <UnitContentEditor name="Checklist items" value={selfAssessmentDraft.items} onChange={value => setSelfAssessmentDraft({ ...selfAssessmentDraft, items: value as string[] })} />
+                <UnitContentEditor name="Checklist items" value={selfAssessmentDraft.items} onChange={value => setSelfAssessmentDraft({ ...selfAssessmentDraft, items: unitId === "114076" ? (value as string[]).slice(0, 5) : value as string[] })} />
                 <UnitContentEditor name="Closing instructions" value={selfAssessmentDraft.outro ?? []} onChange={value => setSelfAssessmentDraft({ ...selfAssessmentDraft, outro: value as string[] })} />
               </fieldset>
                 <EditingTools active title="Self assessment editing">

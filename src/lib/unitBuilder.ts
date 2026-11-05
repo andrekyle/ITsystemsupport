@@ -2,6 +2,7 @@ import type { UnitContent, UnitStandard, LessonSection, LessonPlan, LessonPlanRo
 import { getContent } from "../data/content";
 import { lessonTableMarkdown, parseLessonTextBlocks } from "./lessonTables";
 import { layoutLessonSections, normalizeLessonParagraphs, paginateLesson } from "./lessonLayout";
+import { fiveResearchSelfAssessment } from "./selfAssessment114076";
 
 export const MAX_SOURCE_LENGTH = 120_000;
 export const MAX_LESSON_PLAN_LENGTH = 40_000;
@@ -224,9 +225,9 @@ export function normalizeLogbookSpec(unit: UnitStandard, logbook: UnitContent["l
   };
 }
 
-function selfAssessmentFromTemplate(items: string[]): UnitContent["selfAssessment"] {
+function selfAssessmentFromTemplate(items: string[], us?: string): UnitContent["selfAssessment"] {
   const template = getContent("8252")?.selfAssessment;
-  return {
+  const assessment = {
     intro: [...(template?.intro ?? [
       "You are now ready to go through a check list. Be honest with yourself.",
       "Tick the box with either a √ or an X to indicate your response.",
@@ -237,6 +238,7 @@ function selfAssessmentFromTemplate(items: string[]): UnitContent["selfAssessmen
       "Decide on a plan of action to achieve these goals. Regularly review these goals.",
     ])],
   };
+  return us === "114076" ? fiveResearchSelfAssessment(assessment) : assessment;
 }
 
 const DEFAULT_PLAN_TITLE = "Facilitator Preparation";
@@ -769,7 +771,7 @@ export function mergeUnitContentEnhancement(base: UnitContent, enhancement: Unit
   if (generatedLessons) next.lesson = layoutLessonSections(generatedLessons);
   if (generatedLogbookIsUsable(enhancement.logbook, next.lesson)) next.logbook = normalizeLogbookSpec(unit, enhancement.logbook);
   next.evaluation = undefined;
-  if (enhancement.selfAssessment?.items?.length) next.selfAssessment = selfAssessmentFromTemplate(enhancement.selfAssessment.items);
+  if (enhancement.selfAssessment?.items?.length) next.selfAssessment = selfAssessmentFromTemplate(enhancement.selfAssessment.items, unit.us);
   if (enhancement.lessonPlan?.sections?.length) {
     const generatedPlan = lessonPlanFromEnhancement(enhancement.lessonPlan, unit);
     if (generatedPlan) next.lessonPlan = generatedPlan;
@@ -808,7 +810,7 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
     assignments: [{ id: "built-workplace-project", title: `Workplace project: ${unit.title}`, brief: "Choose a realistic unit of work relevant to this learning material. Prepare a practical plan and explain your decisions using the source.", requirements: goals.concat(["Document assumptions, resources, dependencies and delivery risks.", "Submit your plan, supporting evidence and a short reflection on the result."]), evidence: "A completed workplace plan, supporting calculations or records, and a reflection reviewed by your facilitator." }],
     quiz: [],
     logbook: logbookFromTopics(unit, topics),
-    selfAssessment: selfAssessmentFromTemplate(goals.map(g => `I am able to ${g.charAt(0).toLowerCase()}${g.slice(1)}`)),
+    selfAssessment: selfAssessmentFromTemplate(goals.map(g => `I am able to ${g.charAt(0).toLowerCase()}${g.slice(1)}`), unit.us),
     lessonPlan: lessonPlanFromTemplate(unit, topics, options.minutes),
     workbook: { title: "Learner Workbook", outcomes: workbookOutcomes },
   };
