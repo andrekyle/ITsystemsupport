@@ -85,12 +85,12 @@ export function UploadedPdf({ definition, profile, values, onChange, onSave, sto
   };
   return <>
     <DocumentActions name={definition.title} onSave={onSave} />
-    <p className="muted no-print">{definition.display === "digital" ? "Converted HTML document." : "Original PDF pages (older image-based version)."} Type in the answer areas, or use Fill &amp; sign to add text, ticks and signatures anywhere needed.{onSave && " Answers save automatically to your learner profile as you type. Use Save to verify your latest changes."}</p>
+    <p className="muted no-print">Editable replica of the original document. Type in the answer areas, or use Fill &amp; sign to add text, ticks and signatures anywhere needed.{onSave && " Answers save automatically to your learner profile as you type. Use Save to verify your latest changes."}</p>
     <div className="uploaded-pdf document-print-target">
-      {definition.display === "digital" ? <CleanHtmlDocument definition={definition} answers={local} onChange={change} profile={profile} /> : <PaperForm definition={definition} answers={local} onChange={change}
+      <PaperForm definition={definition} answers={local} onChange={change}
         readOnlyFields={definition.sections.flatMap(section => section.fields).filter(field => field.type === "signature" && !canSignDocumentField(profile.role, field.label)).map(field => field.id)}
         annotations={readAnnotations(local)}
-        onAnnotationsChange={annotations => update(ANNOTATIONS_KEY, JSON.stringify(annotations))} />}
+        onAnnotationsChange={annotations => update(ANNOTATIONS_KEY, JSON.stringify(annotations))} />
     </div>
   </>;
 }

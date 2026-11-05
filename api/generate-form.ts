@@ -361,6 +361,7 @@ async function generate(
   images: string[],
   mode: Mode,
   pages: PageData[],
+  repairFeedback: string,
   signal: AbortSignal
 ): Promise<Payload> {
   const plain = sanitizeText(text);
@@ -383,9 +384,9 @@ async function generate(
           stream: true,
           response_format: { type: "json_schema", json_schema: { name: "uploaded_form", strict: true, schema } },
           messages: [
-            { role: "system", content: attempt ? `${prompt}\n\n${RETRY_NOTE}` : prompt },
+            { role: "system", content: `${attempt ? `${prompt}\n\n${RETRY_NOTE}` : prompt}${repairFeedback ? "\n\nREPAIR REQUIRED: The previous HTML conversion failed validation. Correct only the identified layout or field-placement problems. Do not omit printed text or replace the page with an image. The validation errors are supplied in the user request." : ""}` },
             { role: "user", content: [
-              { type: "text", text: JSON.stringify(request) },
+              { type: "text", text: JSON.stringify({ ...request, ...(repairFeedback ? { validation_errors: repairFeedback } : {}) }) },
               ...images.map(image => ({ type: "image_url", image_url: { url: image, detail: "high" } })),
             ] },
           ],
@@ -477,6 +478,7 @@ export default async function handler(request: Request): Promise<Response> {
   let images: string[] = [];
   let mode: Mode = "grid";
   let pages: PageData[] = [];
+  let repairFeedback = "";
   try {
     const authHeaders = { Authorization: authorization, apikey: anonKey };
     const user = await fetch(`${url}/auth/v1/user`, { headers: authHeaders });
@@ -500,6 +502,7 @@ export default async function handler(request: Request): Promise<Response> {
     }
     if (typeof input.name === "string") name = input.name.slice(0, 250);
     if (typeof input.text === "string") text = input.text;
+    if (input.html === true && typeof input.repairFeedback === "string") repairFeedback = sanitizeText(input.repairFeedback).slice(0, 3000);
     const list = Array.isArray(input.images) ? input.images : [];
     if (text.length > 80_000 || list.length > 30 || list.some(image => typeof image !== "string" || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(image))) {
       return json({ error: "Unsupported document content or too many pages." }, 400);
@@ -528,7 +531,7 @@ export default async function handler(request: Request): Promise<Response> {
       push(" ");
       heartbeat = setInterval(() => push(" "), HEARTBEAT_MS);
       timeout = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
-      void generate(apiKey, name, text, images, mode, pages, controller.signal)
+      void generate(apiKey, name, text, images, mode, pages, repairFeedback, controller.signal)
         .then(payload => push(JSON.stringify(payload)))
         .catch(() => push(JSON.stringify({ error: "Form generation failed." })))
         .finally(() => {

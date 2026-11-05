@@ -519,7 +519,19 @@ export async function convertPdfHtml(document: ImportedFormDocument, onProgress?
   onProgress?.(0, document.pages.length);
   for (const [index, page] of document.pages.entries()) {
     if (!page.layer) throw new Error(`Page ${index + 1} is missing its HTML layer.`);
-    const result = await requestDefinition({ ...generationRequest(document, index), html: true }, data.session.access_token);
+    let result: Awaited<ReturnType<typeof requestDefinition>> | undefined;
+    let repairFeedback = "";
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        result = await requestDefinition({ ...generationRequest(document, index), html: true, ...(repairFeedback ? { repairFeedback } : {}) }, data.session.access_token);
+        if (!result.artwork) throw new Error("AI conversion omitted the page artwork review.");
+        break;
+      } catch (error) {
+        repairFeedback = error instanceof Error ? error.message : "The page layout could not be validated.";
+        if (attempt === 2) throw new Error(`Page ${index + 1} could not be repaired after three AI attempts: ${repairFeedback}`);
+      }
+    }
+    if (!result) throw new Error(`Page ${index + 1} could not be converted.`);
     // Artwork is supplementary. A model response that contains a valid text
     // and field definition but no isolated logos/diagrams must still produce
     // a clean React/HTML page; rejecting it here made otherwise usable PDFs

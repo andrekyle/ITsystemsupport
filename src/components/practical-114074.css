@@ -1,0 +1,44 @@
+.pt-114074-document .pt-page-two { padding: 42px 66px; }
+.pt-114074-document .pt-page-two > h2 { margin-bottom: 14px; }
+.pt-114074-document .pt-form-table th { font-size: 14px; }
+.pt-114074-document .pt-form-table .pt-pink th { font-size: 16px; }
+.pt-114074-document .pt-form-table td { height: 27px; }
+.pt-114074-document .pt-submission { margin-top: 18px; }
+.pt-114074-document .pt-submission tr:first-child td { height: 80px; }
+.pt-114074-document .pt-submission tr:first-child textarea { min-height: 45px; }
+.pt-114074-document .pt-workplace-note { display: block; min-height: 0; margin: 16px 0 0; padding: 9px 12px; font-size: 14px; line-height: 1.3; }
+.pt-114074-document .pt-workplace-note h3,.pt-114074-document .pt-workplace-note p { margin: 3px 0; padding: 0; }
+.pt-114074-document .pt-page-three { padding: 34px 48px; }
+.pt-114074-document .pt-page-three > h3 { margin: 6px 0 10px; padding: 4px 7px; font-size: 13px; }
+.pt-114074-document .pt-page-three .pt-theory + h3 { margin: 14px 0 10px; }
+.pt-114074-document .pt-114074-observation { margin-bottom: 10px; font-size: 12px; }
+.pt-114074-document .pt-114074-observation th,.pt-114074-document .pt-114074-observation td { padding: 2px 4px; }
+.pt-114074-document .pt-114074-observation .pt-task-copy { height: 52px; }
+.pt-114074-document .pt-114074-observation .pt-comment-cell,.pt-114074-document .pt-114074-observation .pt-comment-cell textarea { height: 66px; min-height: 66px; }
+.pt-114074-document .pt-114074-observation .pt-date input { font-size: 10px; }
+.pt-114074-document .pt-page-three .pt-theory { margin-bottom: 10px; font-size: 12px; }
+.pt-114074-document .pt-page-three .pt-lined-inputs > input { height: 20px; min-height: 20px; }
+.pt-114074-document .pt-page-three .pt-theory td:last-child { height: 80px; }
+.pt-114074-document .pt-page-three > h2 { margin-top: 14px; margin-bottom: 4px; font-size: 17px; }
+.pt-114074-document .pt-page-four { padding: 28px 60px; }
+.pt-114074-document .pt-page-four > h3 { margin: 0 0 8px; }
+.pt-114074-document .pt-page-four > p { margin: 6px 0; font-size: 14px; }
+.pt-114074-document .pt-testimony { margin-top: 10px; font-size: 12px; }
+.pt-114074-document .pt-testimony-area { height: 190px !important; }
+.pt-114074-document .pt-testimony-area .pt-lined-inputs > input { height: 36px; min-height: 36px; }
+.pt-114074-document .pt-page-four .pt-theory { margin: 10px 0; font-size: 12px; }
+.pt-114074-document .pt-page-four .pt-theory td:last-child { height: 80px; }
+.pt-114074-document .pt-page-four .pt-theory .pt-lined-inputs > input { height: 20px; min-height: 20px; }
+.pt-114074-document .pt-page-four .pt-outcome { font-size: 12px; }
+.pt-114074-document .pt-page-four .pt-outcome td,.pt-114074-document .pt-page-four .pt-outcome th { height: 34px; }
+.pt-114074-document .pt-page-four .pt-outcome .pt-check label { display: flex; gap: 7px; justify-content: center; }
+.pt-114074-document .pt-page-four .pt-outcome .pt-check label span { position: static; width: auto; height: auto; overflow: visible; clip: auto; }
+.pt-114074-document .pt-114074-outcome { width: 100%; table-layout: fixed; }
+.pt-114074-document .pt-114074-outcome .pt-114074-outcome-label { width: 24%; }
+.pt-114074-document .pt-114074-outcome .pt-114074-outcome-answer { width: 26%; }
+.pt-114074-document .pt-114074-outcome td:first-child { width: auto; }
+.pt-114074-document .pt-114074-outcome .pt-114074-choice { padding: 3px 8px; }
+.pt-114074-document .pt-114074-outcome .pt-114074-choice label { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; padding: 0; white-space: normal; text-align: left; }
+.pt-114074-document .pt-114074-outcome .pt-114074-choice input[type="checkbox"] { position: static; flex: none; margin: 0; }
+.pt-114074-document .pt-114074-outcome th,.pt-114074-document .pt-114074-outcome td { box-sizing: border-box; overflow: hidden; overflow-wrap: anywhere; }
+@media print { .pt-114074-document .pt-page { break-after: page; } .pt-114074-document .pt-page:last-child { break-after: auto; } }

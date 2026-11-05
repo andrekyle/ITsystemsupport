@@ -101,6 +101,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   const [logbookImageName,setLogbookImageName]=useState("");
   const [practicalTask,setPracticalTask]=useState<UnitContent["practicalTask"]>(content?.practicalTask);
   const [learnerWorkbook,setLearnerWorkbook]=useState<UnitContent["learnerWorkbook"]>(content?.learnerWorkbook);
+  const [workbookTemplate,setWorkbookTemplate]=useState<UnitContent["workbook"]>(content?.learnerWorkbook?.workbookTemplateBuilt ? content?.workbook : undefined);
   const [learnerGuide,setLearnerGuide]=useState<UnitContent["learnerGuide"]>(content?.learnerGuide);
   const [practicalTaskFileName,setPracticalTaskFileName]=useState("");
   const [sourceDocumentFiles,setSourceDocumentFiles]=useState<Partial<Record<keyof UnitSourceDocuments,File>>>({});
@@ -151,6 +152,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     if(built)setSource(built.source);
     setPracticalTask(content?.practicalTask);
     setLearnerWorkbook(content?.learnerWorkbook);
+    setWorkbookTemplate(content?.learnerWorkbook?.workbookTemplateBuilt ? content?.workbook : undefined);
     setLearnerGuide(content?.learnerGuide);
     setEditableDocuments(content?.editableDocuments??[]);
   },[built?.revision,unit.us]);
@@ -171,8 +173,17 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
     return value;
   });
 
-  const publish=async(next:UnitContent,sourceText:string,aiUsed:boolean)=>{
-    validateUnitContent(next, !draft && !inlineDraft);
+  const publish=async(next:UnitContent,sourceText:string,aiUsed:boolean,documentsOnly=false)=>{
+    if(documentsOnly){
+      // A document-only save must not fail because an unrelated, previously
+      // saved lesson or quiz is incomplete. Validate just the new documents.
+      const changedDocuments:UnitContent={lesson:[],exercises:[],assignments:[],quiz:[],
+        learnerGuide:sourceDocumentFiles.learnerGuide?next.learnerGuide:undefined,
+        learnerWorkbook:sourceDocumentFiles.learnerWorkbook?next.learnerWorkbook:undefined,
+        practicalTask:sourceDocumentFiles.practicalTask?next.practicalTask:undefined,
+        workbook:sourceDocumentFiles.learnerWorkbook?next.workbook:undefined};
+      validateUnitContent(changedDocuments,false);
+    }else validateUnitContent(next, !draft && !inlineDraft);
     next=structuredClone(next);
     setBusy("Saving original PDF pages and editable fields...");
     for(const document of [next.learnerGuide,next.learnerWorkbook,next.practicalTask,...(next.editableDocuments??[]).map(item=>item.document)]){
@@ -228,19 +239,9 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   const build=async()=>{
     setError("");setMessage("");setWarning("");setBusy(!generateLessons?"Preparing original PDF pages and editable fields...":"Building lessons and preserving original PDF documents...");
     try {
-      const recoverSourceDocument=async(kind:keyof UnitSourceDocuments)=>{
-        const original=built?.files.sourceDocuments?.[kind];
-        if(!original)return undefined;
-        const url=await getFileUrl(original);
-        if(!url)throw new Error(`The saved ${kind==="learnerWorkbook"?"learner workbook":"practical task"} source is unavailable. Upload its PDF again before rebuilding.`);
-        const response=await fetch(url);
-        if(!response.ok)throw new Error(`The saved source document could not be read (HTTP ${response.status}). Upload it again or retry.`);
-        const title={learnerGuide:"Learner Guide",learnerWorkbook:"Learner Workbook",practicalTask:"Practical Task"}[kind];
-        return importUnitPdf(new File([await response.blob()],original.name,{type:"application/pdf"}),title,(done,total)=>setBusy(`Rebuild agent: converting ${title} to canonical HTML: ${done}/${total} pages...`));
-      };
-      const workbook=learnerWorkbook?.replica?.display==="digital"?learnerWorkbook:await recoverSourceDocument("learnerWorkbook")??learnerWorkbook;
-      const practical=practicalTask?.replica?.display==="digital"?practicalTask:await recoverSourceDocument("practicalTask")??practicalTask;
-      const guide=learnerGuide?.replica?.display==="digital"?learnerGuide:await recoverSourceDocument("learnerGuide")??learnerGuide;
+      const workbook=sourceDocumentFiles.learnerWorkbook?learnerWorkbook:undefined;
+      const practical=sourceDocumentFiles.practicalTask?practicalTask:undefined;
+      const guide=sourceDocumentFiles.learnerGuide?learnerGuide:undefined;
       if ([workbook,practical,guide,...editableDocuments.map(item=>item.document)].some(document=>document?.replica?.display==="image")) throw new Error("An older document still uses page images. Upload its original PDF again to convert it to real HTML before rebuilding.");
       const documentsOnly=!generateLessons;
       // Document uploads/edits are scoped mutations. Re-read the latest saved
@@ -250,10 +251,18 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       let next:UnitContent=documentsOnly
         ? structuredClone(latestSavedContent ?? content ?? {lesson:[],exercises:[],assignments:[],quiz:[]})
         : buildUnitContent(unit,source,{minutes});
+      if(!documentsOnly){
+        next.practicalTask=content?.practicalTask;
+        next.learnerWorkbook=content?.learnerWorkbook;
+        next.learnerGuide=content?.learnerGuide;
+      }
       const preservedWorkbook=!workbook&&unit.us==="114074"&&content?.workbook?structuredClone(content.workbook):undefined;
       if(preservedWorkbook)next.workbook=preservedWorkbook;
       if(practical)next.practicalTask=practical;
-      if(workbook){next.learnerWorkbook=workbook;next.workbook=undefined;}
+      if(workbook){
+        if(!workbookTemplate)throw new Error("OpenAI has not built the structured workbook. Upload the PDF again; nothing was published.");
+        next.learnerWorkbook=workbook;next.workbook=workbookTemplate;
+      }
       if(guide)next.learnerGuide=guide;
       next.editableDocuments=editableDocuments;
       // Pasted or photographed logbook content builds the logbook directly; AI output (when on) may refine it.
@@ -271,7 +280,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       }
       const htmlAiUsed=[guide,workbook,practical,...editableDocuments.map(item=>item.document)].some(document=>document?.replica?.display==="digital");
       const latestBeforePublish=documentsOnly?readBuiltUnit(unit.us):undefined;
-      await publish(next,documentsOnly?(latestBeforePublish?.source??built?.source??""):source,htmlAiUsed||(documentsOnly?(latestBeforePublish?.aiUsed??built?.aiUsed??false):ai));
+      await publish(next,documentsOnly?(latestBeforePublish?.source??built?.source??""):source,htmlAiUsed||(documentsOnly?(latestBeforePublish?.aiUsed??built?.aiUsed??false):ai),documentsOnly);
       doneBusy(()=>select("content"));
     }catch(e){setError(unitBuilderError(e,"The unit could not be built. Your current content is unchanged."));setBusy("");}
   };
@@ -283,15 +292,63 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       setBusy("Converting PDF to HTML with code and AI...");
       const title={learnerGuide:"Learner Guide",learnerWorkbook:"Learner Workbook",practicalTask:"Practical Task"}[kind];
       const converted=await importUnitPdf(file,title,(done,total)=>setBusy(`Rebuild agent: converting ${title} to canonical HTML: ${done}/${total} pages...`));
+      let generatedWorkbook:UnitContent["workbook"];
+      if(kind==="learnerWorkbook"){
+        setBusy("OpenAI: extracting the source workbook tasks for the Unit 114046 layout...");
+        const token=(await supabase?.auth.getSession())?.data.session?.access_token;
+        const response=await fetch("/api/build-learner-workbook",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({unit,sourceText:converted.sourceText,model:loadContentModel()}),signal:AbortSignal.timeout(120_000)});
+        const result=await readApiJson(response,"The workbook builder");
+        if(!response.ok||!result.workbook)throw new Error(result.error??"OpenAI could not build the workbook. Nothing was changed.");
+        generatedWorkbook=result.workbook;
+        if(result.usage)void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.input_tokens??0,completionTokens:result.usage.output_tokens??0,totalTokens:result.usage.total_tokens??0});
+      }
       if(kind==="learnerGuide"){
         setLearnerGuide(converted);
       }else if(kind==="practicalTask"){
         setPracticalTask(converted);setPracticalTaskFileName(file.name);
       }else{
-        setLearnerWorkbook(converted);
+        setLearnerWorkbook({...converted,workbookTemplateBuilt:true});setWorkbookTemplate(generatedWorkbook);
       }
       setSourceDocumentFiles(current=>({...current,[kind]:file}));
       setMessage(`${file.name}: all ${converted.sourcePageCount} pages converted to HTML text and editable answer areas. Review the conversion before publishing.`);
+    }catch(err){setError(err instanceof Error?err.message:String(err));}
+    finally{setBusy("");}
+  };
+  const chooseDocumentSet=async(selected:File[])=>{
+    if(!selected.length)return;
+    setError("");setMessage("");
+    try{
+      if(selected.length>3)throw new Error("Choose up to three PDFs at once. Nothing was changed.");
+      const ordered: {kind:keyof UnitSourceDocuments;file:File;title:string}[]=[];
+      for(const file of selected){
+        const name=file.name.toLowerCase();
+        const kind:keyof UnitSourceDocuments|undefined=/learner[\s_-]*guide/.test(name)?"learnerGuide":/learner[\s_-]*workbook/.test(name)?"learnerWorkbook":/practical[\s_-]*task/.test(name)?"practicalTask":undefined;
+        if(!kind)throw new Error(`Cannot identify ${file.name}. Include Learner Guide, Learner Workbook, or Practical Task in each PDF filename.`);
+        if(ordered.some(item=>item.kind===kind))throw new Error(`More than one ${kind} PDF was selected. Choose one of each document type.`);
+        ordered.push({kind,file,title:{learnerGuide:"Learner Guide",learnerWorkbook:"Learner Workbook",practicalTask:"Practical Task"}[kind]});
+      }
+      const converted=await Promise.all(ordered.map(async item=>{
+        setBusy(`Rebuild agent: converting ${item.title} to editable HTML...`);
+        const document=await importUnitPdf(item.file,item.title,(done,total)=>setBusy(`Rebuild agent: ${item.title} ${done}/${total} pages...`));
+        let workbook:UnitContent["workbook"];
+        if(item.kind==="learnerWorkbook"){
+          const token=(await supabase?.auth.getSession())?.data.session?.access_token;
+          const response=await fetch("/api/build-learner-workbook",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({unit,sourceText:document.sourceText,model:loadContentModel()}),signal:AbortSignal.timeout(120_000)});
+          const result=await readApiJson(response,"The workbook builder");
+          if(!response.ok||!result.workbook)throw new Error(result.error??"OpenAI could not build the workbook. Nothing was changed.");
+          workbook=result.workbook;
+        }
+        return {...item,document,workbook};
+      }));
+      const nextFiles:Partial<Record<keyof UnitSourceDocuments,File>>={};
+      for(const item of converted){
+        nextFiles[item.kind]=item.file;
+        if(item.kind==="learnerGuide")setLearnerGuide(item.document);
+        else if(item.kind==="learnerWorkbook"){setLearnerWorkbook({...item.document,workbookTemplateBuilt:true});setWorkbookTemplate(item.workbook);}
+        else {setPracticalTask(item.document);setPracticalTaskFileName(item.file.name);}
+      }
+      setSourceDocumentFiles(current=>({...current,...nextFiles}));
+      setMessage(`${converted.length} PDF${converted.length===1?"":"s"} converted to editable HTML. Check the page and field counts below, then publish to make them available in the course.`);
     }catch(err){setError(err instanceof Error?err.message:String(err));}
     finally{setBusy("");}
   };
@@ -461,7 +518,8 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
             <section className="unit-build-step">
               <header className="unit-build-step-head"><span className="unit-editor-index">1</span><div><h3>Convert PDFs to editable HTML</h3><p>Code preserves the printed text and table geometry. AI identifies answer fields, colour panels and artwork. No rewritten questions or replacement covers. Review the converted layout before publishing.</p></div></header>
               <div className="unit-settings-card">
-                <div className="unit-source-field"><span>Upload blank training documents, up to 20 MB and 250 pages per PDF. Fill &amp; sign lets learners complete additional answer areas.</span>
+                <div className="unit-source-field"><strong>PDF document agent</strong><span>Upload any one of the Learner Workbook, Learner Guide or Practical Task PDFs, or upload several together. Only the documents you select are converted; the others remain unchanged.</span><div className="unit-settings-row"><span className="unit-settings-copy"><strong>Upload document set</strong><span>Select one, two or three named PDFs. Existing published documents stay unchanged until you save.</span></span><label className="unit-import-button"><span>Choose PDFs</span><input aria-label="Upload learner workbook, learner guide or practical task PDFs" type="file" accept="application/pdf,.pdf" multiple disabled={!!busy} onChange={e=>{const files=Array.from(e.target.files??[]);e.target.value="";void chooseDocumentSet(files);}}/></label></div><span>Or upload one at a time below. Maximum 20 MB and 250 pages per PDF.</span>
+                  {unit.us==="114076"&&<div className="unit-settings-row"><span className="unit-settings-copy"><strong>Unit 114076 source workbook</strong><span>Use the actual 12-page workbook bundled with this course, not the retired generic activity form.</span></span><button type="button" className="btn ghost sm" disabled={!!busy} onClick={()=>void (async()=>{setError("");try{const response=await fetch("/downloads/US-114076-Learner-Workbook.pdf");if(!response.ok)throw new Error("The bundled Unit 114076 workbook PDF could not be loaded.");await chooseSourceDocument("learnerWorkbook",new File([await response.blob()],"US-114076-Learner-Workbook.pdf",{type:"application/pdf"}));}catch(error){setError(error instanceof Error?error.message:"The source workbook could not be loaded.");}})()}>Convert source workbook</button></div>}
                   {([[
                     "learnerGuide","Learner Guide PDF","Upload learner guide PDF"
                   ],[

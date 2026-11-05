@@ -225,6 +225,7 @@ function apiDev(env: Record<string, string>): Plugin {
     "generate-activity-answers",
     "extract-logbook-image",
     "enhance-unit-content",
+    "build-learner-workbook",
     "workbook-memo",
   ];
   return {

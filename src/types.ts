@@ -520,6 +520,8 @@ export interface WorkbookQuestion {
   task: number;
   text: string;
   marks: number;
+  /** Printed activity/question label when it differs from the unique task number. */
+  sourceLabel?: string;
 }
 
 export interface WorkbookOutcome {
@@ -612,6 +614,8 @@ export interface PracticalTaskDocument {
   /** Clean extraction kept for completeness checks, never rewritten by AI. */
   sourceText?: string;
   sourcePageCount?: number;
+  /** Workbook questions were rebuilt with the 114046 template and stored in UnitContent.workbook. */
+  workbookTemplateBuilt?: boolean;
   /** Original PDF pages and positioned inputs, never a redesigned text document. */
   replica?: import("./lib/formSchema").FormDefinition;
 }

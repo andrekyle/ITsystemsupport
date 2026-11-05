@@ -26,7 +26,7 @@ import { SlideEditableText } from "../components/SlideEditableText";
 import { SlideTextToolbar } from "../components/SlideTextToolbar";
 import { LessonVideoEditor, LessonVideos } from "../components/LessonVideos";
 import { videoEngagementKey, videoQuizId } from "../lib/videoLearning";
-import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml, hydrateSlideImages, normalizeSlideDocument } from "../lib/slideRichText";
+import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml, hydrateSlideImages, normalizeSlideDocument, inlineFigureReferences } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
 import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, effectiveBuiltContent } from "../components/UnitBuilder";
 import { lessonEditsAfterInsert, lessonEditsAfterSplit } from "../lib/lessonSectionEdits";
@@ -35,9 +35,14 @@ import { ActivityQuestionEditor } from "../components/ActivityQuestionEditor";
 import { UnitContentEditor } from "../components/UnitContentEditor";
 import { PracticalTask } from "../components/PracticalTask";
 import { LearnerWorkbook, WORKBOOK_114046_BLUEPRINT } from "../components/LearnerWorkbook";
+import { TemplateLearnerWorkbook } from "../components/TemplateLearnerWorkbook";
 import { WORKBOOK_MEMO_114076 } from "../data/workbookMemo114076";
+import { WORKBOOK_114076 } from "../data/workbook114076";
+import { Workbook114074 } from "../components/Workbook114074";
+import { WORKBOOK_114074 } from "../data/workbook114074";
 import { GeneratedWorkbook } from "../components/GeneratedWorkbook";
 import { LearnerGuide } from "../components/LearnerGuide";
+import { Guide114074 } from "../components/Guide114074";
 import { WorkbookMemo } from "../components/WorkbookMemo";
 import { practicalTaskForUnit } from "../data/practicalTasks";
 import { supabase } from "../lib/supabase";
@@ -2845,14 +2850,15 @@ export function UnitPage({
   const [deckReplaceError, setDeckReplaceError] = useState<string | null>(null);
   const failedFigureRefreshes = useRef(new Set<string>());
   const { edits: lessonEdits, deleteSection: editDeleteSection, setHeading: editHeading, setParagraph: editParagraph, setCaption: editCaption, setKeyed: editKeyed, setSectionBody: editSetSectionBody, setSectionBodyItem: editSetSectionBodyItem, setGeneratedQuiz: editGeneratedQuiz, setAllQuizRetries: editAllQuizRetries, updateGeneratedQuizQuestion: editGeneratedQuizQuestion, removeGeneratedQuizQuestion: editRemoveGeneratedQuizQuestion, deleteGeneratedQuiz: editDeleteGeneratedQuiz, moveFigure: editMoveFig, setScale: editSetScale, setOffsetY: editSetOffsetY, resetSection: editResetSection, setLessonPlan: editSetLessonPlan, setLogbook: editSetLogbook } = useLessonEdits(builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId, !!inlineUnit);
-  const figurePriorityIds = useMemo(() => {
+  const { figurePriorityIds, inlineFigureRefs } = useMemo(() => {
+    const none = { figurePriorityIds: [] as string[], inlineFigureRefs: [] as ReturnType<typeof inlineFigureReferences> };
     const source = inlineUnit ?? builtUnit?.content ?? getContent(unitId);
-    if (!source?.lesson.length) return [];
+    if (!source?.lesson.length) return none;
     const visible = source.lesson.flatMap((_, index) => lessonEdits.deletedSections?.includes(index) ? [] : [index]);
     const activeIndex = visible.includes(lessonStep)
       ? lessonStep
       : visible.find(index => index >= lessonStep) ?? visible.at(-1);
-    if (activeIndex === undefined) return [];
+    if (activeIndex === undefined) return none;
     const section = source.lesson[activeIndex];
     const figureOrder = lessonEdits.figureOrder?.[activeIndex] ?? [];
     const orderedFigures = [...(section.figures ?? [])].sort((a, b) => {
@@ -2860,12 +2866,20 @@ export function UnitPage({
       const bIndex = figureOrder.indexOf(b.id);
       return (aIndex < 0 ? Number.MAX_SAFE_INTEGER : aIndex) - (bIndex < 0 ? Number.MAX_SAFE_INTEGER : bIndex);
     });
-    const bodyHtml = lessonEdits.sectionBody?.[activeIndex]?.richHtml ?? "";
-    const inlineFigureIds = Array.from(bodyHtml.matchAll(/\bdata-figure-id=["']([^"']+)["']/g), match => match[1]);
+    const inlineFigureRefs = inlineFigureReferences(lessonEdits.sectionBody?.[activeIndex]?.richHtml);
     const cardFigureIds = section.cards?.flatMap(card => card.figId ? [card.figId] : []) ?? [];
-    return Array.from(new Set([...orderedFigures.map(figure => figure.id), ...cardFigureIds, ...inlineFigureIds]));
+    return {
+      figurePriorityIds: Array.from(new Set([...orderedFigures.map(figure => figure.id), ...cardFigureIds, ...inlineFigureRefs.map(ref => ref.id)])),
+      inlineFigureRefs,
+    };
   }, [builtUnit, inlineUnit, lessonEdits.deletedSections, lessonEdits.figureOrder, lessonEdits.sectionBody, lessonStep, unitId]);
-  const { figures: figureImages, setFigure, removeFigure, refreshFigureUrl } = useLessonFigures(unitId, figurePriorityIds);
+  // Only pictures the open slide embeds are rebuilt from Storage: section
+  // figures have defaults and an upload box, and cards hide missing pictures.
+  const inlineFigureIds = useMemo(() => inlineFigureRefs.map(ref => ref.id), [inlineFigureRefs]);
+  const { figures: figureImages, setFigure, removeFigure, refreshFigureUrl, issues: figureIssues } = useLessonFigures(unitId, figurePriorityIds, {
+    recoverIds: inlineFigureIds,
+    persistRepairs: isStaff(profile.role),
+  });
   const migratingInlineImages = useRef(new Set<string>());
   useEffect(() => {
     if (inlineUnit || profile.role !== "Super User") return;
@@ -2982,10 +2996,14 @@ export function UnitPage({
   const content = inlineUnit ?? (officialSaqa
     ? { ...(baseContent ?? { lesson: [], exercises: [], assignments: [], quiz: [] }), saqa: officialSaqa }
     : baseContent);
+  const workbookDocument = unitId === "114076" && content?.learnerWorkbook?.sourceName === "US-114076-Learner-Workbook.pdf" && !content.learnerWorkbook.replica
+    ? undefined
+    : content?.learnerWorkbook;
   const visibleLessonIndices = content?.lesson.flatMap((_, si) => lessonEdits.deletedSections?.includes(si) ? [] : [si]) ?? [];
   const activeLessonIndex = visibleLessonIndices.includes(lessonStep) ? lessonStep
     : visibleLessonIndices.find(si => si >= lessonStep) ?? visibleLessonIndices.at(-1);
-  const practicalTask = content?.practicalTask ?? practicalTaskForUnit(u.us);
+  const hasPublishedPdfDocuments = !!(content?.learnerWorkbook?.replica || content?.learnerGuide?.replica || content?.practicalTask?.replica);
+  const practicalTask = u.us === "114076" ? practicalTaskForUnit(u.us) : content?.practicalTask ?? (hasPublishedPdfDocuments ? undefined : practicalTaskForUnit(u.us));
   // A workbook tab is available whenever the unit supplies one (including
   // uploaded learner-workbook PDFs). Do not hide it for a specific unit.
   const workbookEnabled = true;
@@ -3008,6 +3026,23 @@ export function UnitPage({
   }).length;
   const isPrivileged = isStaff(profile.role);
   const isSuperUser = profile.role === "Super User" && !phone;
+  // Pictures the slide embeds that neither the figure map nor Storage can
+  // supply. Editors are told how to repair them; learners only that they are
+  // unavailable, since a learner cannot re-insert a picture.
+  const unresolvedFigureMessage = useMemo(() => {
+    const unresolved = inlineFigureRefs.filter((ref) => figureIssues[ref.id]);
+    if (!unresolved.length) return null;
+    const names = unresolved.map((ref, index) => `"${ref.alt || `Picture ${index + 1}`}"`);
+    const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+    const plural = names.length > 1;
+    if (unresolved.some((ref) => figureIssues[ref.id] === "unavailable")) {
+      return `The picture${plural ? "s" : ""} ${list} could not be loaded. Check your connection and try again.`;
+    }
+    if (isPrivileged) {
+      return `The picture${plural ? "s" : ""} ${list} could not be found in storage. Delete ${plural ? "them" : "it"} from the slide and use "Insert image at cursor" to add ${plural ? "them" : "it"} again.`;
+    }
+    return `The picture${plural ? "s" : ""} ${list} ${plural ? "are" : "is"} currently unavailable.`;
+  }, [figureIssues, inlineFigureRefs, isPrivileged]);
   // A remembered staff-only tab must never remain open after switching to a
   // learner profile. Learners return to their workbook, while AI marking in
   // the workbook remains available without exposing the memo screen.
@@ -3751,9 +3786,9 @@ export function UnitPage({
     { id: "questions", label: "Activity", icon: "chat", show: !builtUnit && !!content?.questionSessions?.length },
     { id: "assignments", label: "Activity", icon: "folder", show: !builtUnit && !!content?.assignments.length },
     { id: "practical", label: "Practical Task", icon: "checklist", show: !!practicalTask },
-    { id: "workbook", label: "Learner Workbook", icon: "document", show: workbookEnabled && (!!content?.learnerWorkbook || unitId === "114046" || !!content?.workbook) },
-    { id: "memo", label: "Memo", icon: "clipboard", show: workbookEnabled && (unitId === "114046" || unitId === "114076" || !!content?.workbook) && profile.role === "Super User" },
-    { id: "guide", label: "Learner Guide", icon: "book", show: !!content?.learnerGuide || unitId === "114046" },
+    { id: "workbook", label: "Learner Workbook", icon: "document", show: workbookEnabled && (unitId === "114074" || unitId === "114076" || !!workbookDocument || unitId === "114046" || !!content?.workbook) },
+    { id: "memo", label: "Memo", icon: "clipboard", show: workbookEnabled && (unitId === "114046" || unitId === "114074" || unitId === "114076" || !!content?.workbook) && profile.role === "Super User" },
+    { id: "guide", label: "Learner Guide", icon: "book", show: !!content?.learnerGuide || unitId === "114046" || (unitId === "114074" && !hasPublishedPdfDocuments) },
     { id: "logbook", label: "Logbook", icon: "book", show: !!content?.logbook },
     { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content?.quiz.length || !!content?.quizzes?.length || (!!builtUnit && isSuperUser) },
     { id: "selfassessment", label: "Self assessment", icon: "checkCircle", show: !!content?.selfAssessment },
@@ -4071,6 +4106,7 @@ export function UnitPage({
           )}
           {figUploading && <p role="status">Saving image...</p>}
           {figError && <p className="auth-error" role="alert">{figError}</p>}
+          {unresolvedFigureMessage && <p className="auth-error" role="alert">{unresolvedFigureMessage}</p>}
           {deleteSlideError && <p className="auth-error" role="alert">{deleteSlideError}</p>}
           {!visibleLessonIndices.length && <p role="status">No slides remain in this lesson.</p>}
           {inlineUnit && isSuperUser && <EditingTools active title="Save lesson draft" order={5}
@@ -4503,7 +4539,10 @@ export function UnitPage({
                     failedFigureRefreshes.current.add(id);
                     void refreshFigureUrl(id).then(url => {
                       if (url) imageElement.src = url;
-                      else setFigError("A lesson image could not be loaded. Check your connection and try again.");
+                      // Nothing resolvable: drop the dead URL so the picture
+                      // renders as the unresolved placeholder, and let the
+                      // per-figure message explain what happened.
+                      else imageElement.removeAttribute("src");
                     }).catch(() => {
                       setFigError("A lesson image could not be loaded. Check your connection and try again.");
                     });
@@ -6587,11 +6626,14 @@ export function UnitPage({
 
       {content?.customTabs?.filter(item => item.id === tab).map(item => <section className="card" key={item.id}><h2>{unitText(item.title, (d, v) => { d.customTabs!.find(t => t.id === item.id)!.title = v; })}</h2><div style={{ whiteSpace: "pre-wrap" }}>{unitText(item.text, (d, v) => { d.customTabs!.find(t => t.id === item.id)!.text = v; })}</div></section>)}
       {tab === "practical" && practicalTask && <PracticalTask document={practicalTask} unitId={u.us} profile={profile} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
-      {workbookEnabled && tab === "workbook" && content?.learnerWorkbook && unitId !== "114076" && <PracticalTask document={content.learnerWorkbook} unitId={u.us} profile={profile} presentation="workbook" memoItems={effectiveWorkbookMemo.items} storagePrefix="learner-workbook." values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && unitId === "114074" && <Workbook114074 profile={profile} memoItems={effectiveWorkbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && workbookDocument?.workbookTemplateBuilt && content?.workbook && unitId !== "114074" && unitId !== "114076" && <TemplateLearnerWorkbook workbook={content.workbook} unit={u} profile={profile} memoItems={workbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && workbookDocument && !workbookDocument.workbookTemplateBuilt && unitId !== "114074" && unitId !== "114076" && <PracticalTask document={workbookDocument} unitId={u.us} profile={profile} presentation="workbook" memoItems={effectiveWorkbookMemo.items} storagePrefix="learner-workbook." values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
       {workbookEnabled && tab === "workbook" && !content?.learnerWorkbook && unitId === "114046" && <LearnerWorkbook profile={profile} memoItems={workbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
-      {workbookEnabled && tab === "workbook" && !content?.learnerWorkbook && unitId !== "114046" && content?.workbook && <GeneratedWorkbook workbook={content.workbook} unit={u} profile={profile} memoItems={workbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
-      {workbookEnabled && tab === "workbook" && unitId === "114076" && content?.workbook && <GeneratedWorkbook workbook={content.workbook} unit={u} profile={profile} memoItems={effectiveWorkbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
-      {workbookEnabled && tab === "memo" && isSuperUser && (unitId === "114046" || unitId === "114076" || content?.workbook) && <WorkbookMemo unitId={unitId} blueprint={unitId === "114046" ? WORKBOOK_114046_BLUEPRINT : unitId === "114076" ? WORKBOOK_MEMO_114076.items.map(item => ({ id: item.id, question: item.question, maxMarks: item.maxMarks, tasks: (item.tasks ?? []).map(task => ({ task: task.task, text: task.text, marks: task.marks })) })) : content!.workbook!.outcomes.map(outcome => ({ id: outcome.id, question: outcome.title, maxMarks: outcome.questions.reduce((total, question) => total + question.marks, 0), tasks: outcome.questions.map(question => ({ task: question.task, text: question.text, marks: question.marks })) }))} memo={effectiveWorkbookMemo} onChange={next=>setWorkbookMemo(()=>next)} />}
+      {workbookEnabled && tab === "workbook" && !workbookDocument && unitId !== "114046" && unitId !== "114074" && unitId !== "114076" && content?.workbook && <GeneratedWorkbook workbook={content.workbook} unit={u} profile={profile} memoItems={workbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && unitId === "114076" && <TemplateLearnerWorkbook source114076 workbook={WORKBOOK_114076} unit={u} profile={profile} memoItems={workbookMemo.items.filter(item => WORKBOOK_114076.outcomes.some(outcome => outcome.id === item.id))} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "memo" && isSuperUser && (unitId === "114046" || unitId === "114074" || unitId === "114076" || content?.workbook) && <WorkbookMemo unitId={unitId} blueprint={unitId === "114046" ? WORKBOOK_114046_BLUEPRINT : unitId === "114074" ? WORKBOOK_114074.outcomes.map(outcome => ({ id: outcome.id, question: outcome.title, maxMarks: outcome.questions.reduce((total, question) => total + question.marks, 0), tasks: outcome.questions.map(question => ({ task: question.task, text: question.text, marks: question.marks })) })) : (unitId === "114076" ? WORKBOOK_114076 : content!.workbook!).outcomes.map(outcome => ({ id: outcome.id, question: outcome.title, maxMarks: outcome.questions.reduce((total, question) => total + question.marks, 0), tasks: outcome.questions.map(question => ({ task: question.task, text: question.text, marks: question.marks })) }))} memo={unitId === "114076" ? workbookMemo : effectiveWorkbookMemo} onChange={next=>setWorkbookMemo(()=>next)} />}
+      {tab === "guide" && unitId === "114074" && !hasPublishedPdfDocuments && <Guide114074 values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
       {tab === "guide" && content?.learnerGuide && <PracticalTask document={content.learnerGuide} unitId={u.us} profile={profile} storagePrefix="learner-guide." values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
       {tab === "guide" && !content?.learnerGuide && unitId === "114046" && <LearnerGuide values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} />}
       {content?.editableDocuments?.filter(item => `pdf-${item.id}` === tab).map(item => <PracticalTask key={item.id} document={item.document} unitId={u.us} presentation={/workbook/i.test(item.title) ? "workbook" : undefined} storagePrefix={`editable-document.${item.id}.`} profile={profile} values={progress.units[u.us]?.logbook ?? {}} onChange={(key,value)=>setLogbookField(u.us,key,value)} onSave={() => flushProgress(profile.id)} />)}

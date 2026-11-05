@@ -7,6 +7,7 @@ import { Select } from "../components/Select";
 import { isStaff } from "../types";
 import { COURSE_META, MODULES, POE_SECTIONS, POE_TOTAL, usLabel } from "../data/course";
 import { getContent } from "../data/content";
+import { WORKBOOK_114074 } from "../data/workbook114074";
 import {
   assertNoDuplicateProfile,
   createProfile,
@@ -23,6 +24,7 @@ import {
   useOutcomes,
   usePoe,
   useSharedSettings,
+  useWorkbookMemo,
 } from "../store";
 import { logAudit } from "../lib/audit";
 import { openOnboardingPack } from "../lib/onboarding";
@@ -1877,6 +1879,7 @@ function AcademicRecord({
   /** super user only — shows the completed-assignments download */
   canDownload?: boolean;
 }) {
+  const [workbook114074Memo] = useWorkbookMemo("114074");
   const [progress, setProgress] = useState<ProgressState>(() =>
     remote ? { units: {} } : loadProgress(student.id)
   );
@@ -2024,6 +2027,17 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
               ]
             : [];
         const exercises = (content?.exercises ?? []).filter((e) => e.checks);
+        const workbookAnswers = canDownload && unit.us === "114074"
+          ? WORKBOOK_114074.outcomes.map((outcome) => {
+              const task = outcome.questions[0];
+              const answer = String(prog?.logbook?.[`built-workbook.${outcome.id}.${task.id}`] ?? "").trim();
+              const memoTask = workbook114074Memo.items.find((item) => item.id === outcome.id)?.tasks?.find((item) => item.id === task.id || item.task === task.task);
+              const modelAnswer = memoTask?.modelAnswer?.trim() ?? "";
+              let mark: { awarded: number; maxMarks: number; feedback: string } | null = null;
+              try { mark = JSON.parse(String(prog?.logbook?.[`built-workbook.mark.${outcome.id}`] ?? "")); } catch { /* Not marked yet. */ }
+              return { outcome, task, answer, modelAnswer, mark };
+            }).filter((row) => row.answer || row.modelAnswer || row.mark)
+          : [];
         // Logbook project upload (stored as a JSON PoeDoc under project.upload)
         let logbookDoc: PoeDoc | null = null;
         {
@@ -2144,7 +2158,18 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
                 <span className="dt">{logbookDoc.uploadedAt ? fmtDateTime(logbookDoc.uploadedAt) : ""}</span>
               </div>
             )}
-            {quizRows.length === 0 && exercises.length === 0 && !logbookDoc && (
+            {workbookAnswers.length > 0 && <details className="exercise-answers">
+              <summary className="attempt-row acad"><Icon name="book" size={17} /><span className="sc">Learner workbook answers and model answers</span><span className="cell"><span className="chip done">{workbookAnswers.length} activities</span></span></summary>
+              <div className="workbook-learner-answer-list">{workbookAnswers.map(({ outcome, task, answer, modelAnswer, mark }) => <section className="workbook-learner-answer" key={outcome.id}>
+                <strong>Activity {task.task}: {task.text}</strong>
+                <div className="workbook-learner-answer-caption">Learner answer</div>
+                <div className="workbook-learner-answer-text">{answer || "No answer saved."}</div>
+                <div className="workbook-learner-answer-caption">Model answer</div>
+                <div className="workbook-learner-answer-text">{modelAnswer || "No model answer is available in the current marking memo."}</div>
+                {mark && <p>AI mark: {mark.awarded}/{mark.maxMarks} — {mark.feedback}</p>}
+              </section>)}</div>
+            </details>}
+            {quizRows.length === 0 && exercises.length === 0 && !logbookDoc && workbookAnswers.length === 0 && (
               <p className="muted" style={{ margin: 0 }}>
                 No marked work in this unit.
               </p>

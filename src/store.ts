@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { EnrolmentInfo, PoeDoc, Profile, ProgressState, Role, UnitActivity, UnitProgress } from "./types";
 import { UNIT_ACTIVITIES } from "./types";
 import { MODULES, POE_SECTIONS } from "./data/course";
@@ -8,6 +8,7 @@ import { logAudit } from "./lib/audit";
 import { courseScopedUnit } from "./lib/courseScope";
 import { TENANT, TENANT_ID } from "./lib/tenant";
 import { tenantFilePrefix } from "./lib/files";
+import { lessonFigureFolder, matchFigureFile, safeFigureId, type StoredFigureFile } from "./lib/lessonFigureRecovery";
 import { cachedLessonEdits, flushLessonEdits, loadLessonEdits, queueLessonEdits, receiveLessonEdits, subscribeLessonEdits, watchLessonEdits } from "./lib/lessonEditStore";
 import { flushUnitPack, unitPackSnapshot } from "./lib/unitStorage";
 import { SAVED_SIGNATURE_REFERENCE } from "./lib/signature";
@@ -2056,9 +2057,10 @@ async function signedFigUrl(path: string): Promise<string | null> {
 async function uploadFigure(us: string, id: string, dataUrl: string): Promise<string> {
   if (!supabase) throw new Error("cloud sync not configured");
   const blob = await (await fetch(dataUrl)).blob();
-  const safeId = id.replace(/[^\w.\-]+/g, "_");
   const ext = blob.type === "image/png" ? "png" : "jpg";
-  const path = `${tenantFilePrefix(`shared/lessonfigs/${us}`)}/${safeId}-${crypto.randomUUID()}.${ext}`;
+  // Object names start with the figure id so a lost map entry can be rebuilt
+  // from the folder listing (see lookupFigureInStorage).
+  const path = `${tenantFilePrefix(lessonFigureFolder(us))}/${safeFigureId(id)}-${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage
     .from("files")
     .upload(path, blob, { upsert: true, contentType: blob.type || "image/jpeg" });
@@ -2066,15 +2068,92 @@ async function uploadFigure(us: string, id: string, dataUrl: string): Promise<st
   return path;
 }
 
-export function useLessonFigures(us: string, priorityIds: readonly string[]) {
+export type LessonFigureIssue =
+  /** the slide names a figure that is in neither the figure map nor Storage */
+  | "missing"
+  /** the figure map points at a picture that no longer exists or cannot be read */
+  | "unreadable"
+  /** Storage could not be reached to check */
+  | "unavailable";
+
+export interface LessonFigureOptions {
+  /** figure ids the current slide cannot render without; lost map entries are rebuilt from Storage */
+  recoverIds?: readonly string[];
+  /** write rebuilt entries back into the shared figure map (lesson editors only) */
+  persistRepairs?: boolean;
+}
+
+type FigureLookup = { status: "found"; figure: LessonFigureImage & { path: string } } | { status: "missing" } | { status: "unavailable" };
+
+const hasFigureSource = (figure?: LessonFigureImage): boolean => Boolean(figure?.path || figure?.image);
+
+/** Folder listings used to rebuild lost figure-map entries: one request per unit per session. */
+const figFolderCache = new Map<string, { listing: Promise<StoredFigureFile[] | null>; at: number }>();
+/** A "fresh" listing younger than this is reused, so several broken pictures on one slide share one request. */
+const FIG_LISTING_FRESH_MS = 5000;
+
+async function listFigureFiles(us: string, fresh: boolean): Promise<StoredFigureFile[] | null> {
+  if (!supabase) return null;
+  const folder = tenantFilePrefix(lessonFigureFolder(us));
+  let cached = figFolderCache.get(folder);
+  if (cached && fresh && Date.now() - cached.at > FIG_LISTING_FRESH_MS) {
+    figFolderCache.delete(folder);
+    cached = undefined;
+  }
+  if (!cached) {
+    const listing = supabase.storage
+      .from("files")
+      .list(folder, { limit: 1000, sortBy: { column: "created_at", order: "desc" } })
+      .then(({ data, error }) => (error ? null : data ?? []))
+      .catch(() => null);
+    cached = { listing, at: Date.now() };
+    figFolderCache.set(folder, cached);
+    // a failed listing must not poison later attempts
+    void listing.then((files) => {
+      if (files === null && figFolderCache.get(folder)?.listing === listing) figFolderCache.delete(folder);
+    });
+  }
+  return cached.listing;
+}
+
+/** Find the Storage object a slide's figure id refers to when the figure map cannot. */
+async function lookupFigureInStorage(us: string, id: string, fresh: boolean): Promise<FigureLookup> {
+  const files = await listFigureFiles(us, fresh);
+  if (!files) return { status: "unavailable" };
+  const match = matchFigureFile(id, files);
+  if (!match) return { status: "missing" };
+  return {
+    status: "found",
+    figure: {
+      path: `${tenantFilePrefix(lessonFigureFolder(us))}/${match.name}`,
+      uploadedAt: match.created_at ?? new Date().toISOString(),
+    },
+  };
+}
+
+export function useLessonFigures(us: string, priorityIds: readonly string[], options: LessonFigureOptions = {}) {
+  const { recoverIds = [], persistRepairs = false } = options;
   const [figures, setFigures] = useState<Record<string, LessonFigureImage>>(() =>
     read<Record<string, LessonFigureImage>>(lessonFigsKey(us), {})
   );
   /** figure id -> resolved signed URL for path-based entries */
   const [figUrls, setFigUrls] = useState<Record<string, string>>({});
+  /** entries rebuilt from Storage for this session only (not written to the shared map) */
+  const [repaired, setRepaired] = useState<Record<string, LessonFigureImage>>({});
+  const [issues, setIssues] = useState<Record<string, LessonFigureIssue>>({});
+  /** lookups already made this session, so a picture that is truly gone is checked once */
+  const lookedUp = useRef(new Set<string>());
+  const [retry, setRetry] = useState(0);
+  const unitRef = useRef(us);
+  unitRef.current = us;
+  const repairedRef = useRef(repaired);
+  repairedRef.current = repaired;
 
   useEffect(() => {
     setFigures(read<Record<string, LessonFigureImage>>(lessonFigsKey(us), {}));
+    setRepaired({});
+    setIssues({});
+    lookedUp.current = new Set();
   }, [us]);
 
   useEffect(() => {
@@ -2087,10 +2166,97 @@ export function useLessonFigures(us: string, priorityIds: readonly string[]) {
     return () => window.removeEventListener("storage", onStorage);
   }, [us]);
 
+  // coming back online re-checks pictures that could not be resolved
+  useEffect(() => {
+    const onOnline = () => {
+      lookedUp.current = new Set();
+      setIssues({});
+      setRetry((n) => n + 1);
+    };
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, []);
+
+  const setIssue = useCallback((id: string, issue: LessonFigureIssue | null) => {
+    setIssues((current) => {
+      if (issue === null) {
+        if (!(id in current)) return current;
+        const { [id]: _cleared, ...rest } = current;
+        return rest;
+      }
+      return current[id] === issue ? current : { ...current, [id]: issue };
+    });
+  }, []);
+
+  /** A figure just saved or removed no longer needs a session repair or an issue. */
+  const forgetRepair = useCallback(
+    (id: string) => {
+      lookedUp.current.delete(id);
+      setRepaired((entries) => {
+        if (!(id in entries)) return entries;
+        const { [id]: _dropped, ...rest } = entries;
+        return rest;
+      });
+      setIssue(id, null);
+    },
+    [setIssue]
+  );
+
+  /** Rebuild a figure the map cannot resolve from the unit's Storage folder. */
+  const repair = useCallback(
+    async (id: string, fallback: LessonFigureIssue, fresh = false): Promise<string | null> => {
+      const found = await lookupFigureInStorage(us, id, fresh);
+      // the learner has moved to another unit while Storage was answering
+      if (unitRef.current !== us) return null;
+      if (found.status !== "found") {
+        setIssue(id, found.status === "missing" ? fallback : "unavailable");
+        return null;
+      }
+      const current = read<Record<string, LessonFigureImage>>(lessonFigsKey(us), {});
+      const known = current[id]?.path ?? repairedRef.current[id]?.path;
+      if (known === found.figure.path) {
+        // the map already points at this object, so it genuinely cannot be read
+        setIssue(id, fallback);
+        return null;
+      }
+      const url = await signedFigUrl(found.figure.path);
+      if (unitRef.current !== us) return null;
+      if (!url) {
+        setIssue(id, "unavailable");
+        return null;
+      }
+      let persisted = false;
+      if (persistRepairs) {
+        try {
+          const next = { ...current, [id]: found.figure };
+          write(lessonFigsKey(us), next);
+          setFigures(next);
+          persisted = true;
+        } catch {
+          /* browser storage full: keep the repair for this session only */
+        }
+      }
+      if (!persisted) setRepaired((entries) => ({ ...entries, [id]: found.figure }));
+      setFigUrls((urls) => ({ ...urls, [id]: url }));
+      setIssue(id, null);
+      return url;
+    },
+    [us, persistRepairs, setIssue]
+  );
+
+  // the shared map wins over a session repair unless its entry has no source at all
+  const entries = useMemo(() => {
+    const out: Record<string, LessonFigureImage> = { ...repaired };
+    for (const [id, figure] of Object.entries(figures)) {
+      if (hasFigureSource(figure) || !hasFigureSource(out[id])) out[id] = figure;
+    }
+    return out;
+  }, [figures, repaired]);
+
   // resolve signed URLs for cloud-stored figures
   useEffect(() => {
     let alive = true;
-    const need = Object.entries(figures).filter(([, f]) => f.path && !f.image);
+    const need = Object.entries(entries).filter(([, f]) => f.path && !f.image);
     if (!need.length) return;
     const priority = new Set(priorityIds);
     const prioritized = need.filter(([id]) => priority.has(id));
@@ -2099,7 +2265,18 @@ export function useLessonFigures(us: string, priorityIds: readonly string[]) {
       const resolveGroup = async (group: [string, LessonFigureImage][]) => {
         await Promise.all(group.map(async ([id, figure]) => {
           const url = await signedFigUrl(figure.path!);
-          if (alive && url) setFigUrls(urls => ({ ...urls, [id]: url }));
+          if (!alive) return;
+          if (url) {
+            setFigUrls((urls) => (urls[id] === url ? urls : { ...urls, [id]: url }));
+            setIssue(id, null);
+            return;
+          }
+          // The stored path no longer resolves; another device may have
+          // re-uploaded the picture under a new object name.
+          const attempt = `${id}:${figure.path}`;
+          if (lookedUp.current.has(attempt)) return;
+          lookedUp.current.add(attempt);
+          await repair(id, "unreadable", true);
         }));
       };
       await resolveGroup(prioritized);
@@ -2108,16 +2285,32 @@ export function useLessonFigures(us: string, priorityIds: readonly string[]) {
     return () => {
       alive = false;
     };
-  }, [figures, priorityIds]);
+  }, [entries, priorityIds, repair, setIssue, retry]);
+
+  // rebuild map entries the slide references but the figure map has lost
+  const recoverKey = recoverIds.join("\n");
+  useEffect(() => {
+    const lost = recoverKey
+      .split("\n")
+      .filter((id) => id && !hasFigureSource(entries[id]) && !lookedUp.current.has(id));
+    if (!lost.length) return;
+    for (const id of lost) lookedUp.current.add(id);
+    if (!supabase) {
+      // local-only mode has no second copy to recover from
+      for (const id of lost) setIssue(id, "missing");
+      return;
+    }
+    void Promise.all(lost.map((id) => repair(id, "missing")));
+  }, [recoverKey, entries, repair, setIssue, retry]);
 
   /** figures with `image` always usable as an <img> src (data-URL or signed URL) */
   const merged = useMemo(() => {
     const out: Record<string, LessonFigureImage> = {};
-    for (const [id, f] of Object.entries(figures)) {
+    for (const [id, f] of Object.entries(entries)) {
       out[id] = f.image ? f : { ...f, image: figUrls[id] };
     }
     return out;
-  }, [figures, figUrls]);
+  }, [entries, figUrls]);
 
   const setFigure = useCallback(
     async (id: string, image: string): Promise<boolean> => {
@@ -2148,6 +2341,7 @@ export function useLessonFigures(us: string, priorityIds: readonly string[]) {
           // temporarily emits an img with no src (a dark empty rectangle).
           setFigUrls((urls) => ({ ...urls, [id]: image }));
           setFigures(next);
+          forgetRepair(id);
           return true;
         } catch (error) {
           const detail = error && typeof error === "object" && "message" in error ? String(error.message) : "Unknown storage error";
@@ -2162,15 +2356,16 @@ export function useLessonFigures(us: string, priorityIds: readonly string[]) {
         throw new Error("The picture could not be saved because browser storage is full. Remove unused local files and try again.");
       }
       setFigures(next);
+      forgetRepair(id);
       return true;
     },
-    [us]
+    [us, forgetRepair]
   );
 
   const removeFigure = useCallback(
     (id: string) => {
       const fresh = read<Record<string, LessonFigureImage>>(lessonFigsKey(us), {});
-      const doomed = fresh[id]?.path;
+      const doomed = fresh[id]?.path ?? repaired[id]?.path;
       if (doomed && supabase) {
         void supabase.storage.from("files").remove([doomed]).catch(() => {});
       }
@@ -2184,21 +2379,26 @@ export function useLessonFigures(us: string, priorityIds: readonly string[]) {
         return updated;
       });
       setFigures(next);
+      forgetRepair(id);
     },
-    [us]
+    [us, repaired, forgetRepair]
   );
 
+  /** Re-sign a figure whose picture failed to load; falls back to rebuilding it from Storage. */
   const refreshFigureUrl = useCallback(async (id: string): Promise<string | null> => {
-    const path = figures[id]?.path;
-    if (!path) return null;
-    figUrlCache.delete(path);
-    const url = await signedFigUrl(path);
-    if (!url) return null;
-    setFigUrls((urls) => ({ ...urls, [id]: url }));
-    return url;
-  }, [figures]);
+    const path = entries[id]?.path;
+    if (path) {
+      figUrlCache.delete(path);
+      const url = await signedFigUrl(path);
+      if (url) {
+        setFigUrls((urls) => ({ ...urls, [id]: url }));
+        return url;
+      }
+    }
+    return repair(id, path ? "unreadable" : "missing", true);
+  }, [entries, repair]);
 
-  return { figures: merged, setFigure, removeFigure, refreshFigureUrl };
+  return { figures: merged, setFigure, removeFigure, refreshFigureUrl, issues };
 }
 
 /* ---------- class memories photo wall (shared with everyone) ---------- */

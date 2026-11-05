@@ -1,6 +1,6 @@
 import type { PracticalTaskDocument } from "../types";
 import { convertPdfHtml, extractFormDocument, type ImportedFormDocument } from "./formImport";
-import type { FormBox, FormDefinition, FormField } from "./formSchema";
+import type { FormBox, FormDefinition, FormField, LayerText } from "./formSchema";
 
 /**
  * The single PDF-to-course boundary.
@@ -30,6 +30,22 @@ function fieldsForPage(document: ImportedFormDocument, pageNumber: number): Form
     .filter(field => field.placement?.page === pageNumber);
 }
 
+/** Rotated PDF labels advance along their baseline, not across the page. */
+function textInkBounds(run: LayerText, pageWidth: number, pageHeight: number): FormBox {
+  if (!run.rotation) return { x: run.x, y: run.y, w: run.w, h: run.h };
+  const radians = run.rotation * Math.PI / 180;
+  const size = run.s * pageWidth;
+  const originX = run.x * pageWidth;
+  const originY = run.y * pageHeight;
+  const corners = [0, run.w * pageWidth].flatMap(x => [-0.8 * size, 0.2 * size].map(y => ({
+    x: originX + x * Math.cos(radians) - y * Math.sin(radians),
+    y: originY + 0.8 * size + x * Math.sin(radians) + y * Math.cos(radians),
+  })));
+  const left = Math.min(...corners.map(point => point.x));
+  const top = Math.min(...corners.map(point => point.y));
+  return { x: left / pageWidth, y: top / pageHeight, w: (Math.max(...corners.map(point => point.x)) - left) / pageWidth, h: (Math.max(...corners.map(point => point.y)) - top) / pageHeight };
+}
+
 /** Deterministic checks run after every AI response and before publication. */
 export function validateCoursePdfRebuild(document: PracticalTaskDocument, sourcePageCount: number): void {
   const replica = document.replica;
@@ -40,6 +56,16 @@ export function validateCoursePdfRebuild(document: PracticalTaskDocument, source
   if (replica.sections.length !== sourcePageCount) throw new Error("PDF rebuild did not create one HTML section per source page.");
   if (replica.pages.some((page, index) => !page.src || page.width <= 0 || page.height <= 0 || !page.layer?.text.length)) {
     throw new Error("PDF rebuild produced a page without an extractable HTML text layer.");
+  }
+  for (const [index, page] of replica.pages.entries()) {
+    const layer = page.layer!;
+    const bounds = [...layer.text.map(run => textInkBounds(run, page.width, page.height)), ...layer.rules, ...layer.fills, ...layer.frames, ...layer.combs, ...layer.pictures];
+    if (bounds.some(item => ![item.x, item.y, item.w, item.h].every(Number.isFinite) || item.w <= 0 || item.h <= 0 || item.x < -0.005 || item.y < -0.005 || item.x + item.w > 1.005 || item.y + item.h > 1.005)) {
+      throw new Error(`Page ${index + 1} has HTML content outside the page boundary. Fix the PDF or retry conversion; no document was published.`);
+    }
+    if (layer.text.some(run => !run.t.trim() || !Number.isFinite(run.s) || run.s <= 0)) {
+      throw new Error(`Page ${index + 1} has unreadable printed text. No document was published.`);
+    }
   }
   const ids = new Set<string>();
   for (const section of replica.sections) {

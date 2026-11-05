@@ -175,6 +175,28 @@ export function hydrateSlideImages(html: string, sources: Record<string, string 
   return template.innerHTML;
 }
 
+export interface InlineFigureReference {
+  id: string;
+  /** Alt text of the inline picture, used to name it in user-facing messages. */
+  alt: string;
+}
+
+/** Inline pictures a slide refers to by compact figure id, in document order. */
+export function inlineFigureReferences(html: string | undefined): InlineFigureReference[] {
+  if (!html || !html.includes("data-figure-id")) return [];
+  const template = document.createElement("template");
+  template.innerHTML = html;
+  const seen = new Set<string>();
+  const refs: InlineFigureReference[] = [];
+  template.content.querySelectorAll<HTMLImageElement>("img[data-figure-id]").forEach((image) => {
+    const id = image.dataset.figureId ?? "";
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    refs.push({ id, alt: image.getAttribute("alt")?.trim() ?? "" });
+  });
+  return refs;
+}
+
 export function plainSlideText(text: string): string {
   if (!isRichText(text)) return text;
   const el = document.createElement("div");
