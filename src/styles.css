@@ -14384,6 +14384,20 @@ table.data th.sortable.sorted { color: var(--ink); }
   height: 190px;
   object-fit: cover;
 }
+.mem-photo-retry {
+  display: flex;
+  height: 190px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.mem-photo-retry:disabled { cursor: default; }
 .mem-meta {
   display: flex;
   align-items: center;

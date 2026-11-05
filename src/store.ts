@@ -2417,6 +2417,32 @@ export interface MemoryPhoto {
 }
 
 const MEMORIES_KEY = "itss.memories.shared";
+const MEMORIES_FOLDER = `${TENANT_ID}/shared/memories`;
+
+/** Rebuild entries whose shared list was lost while the image is still in Storage. */
+async function recoverMemoryFiles(known: MemoryPhoto[]): Promise<MemoryPhoto[]> {
+  if (!supabase) return known;
+  const knownPaths = new Set(known.map(photo => photo.path).filter(Boolean));
+  const recovered: MemoryPhoto[] = [];
+  for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await supabase.storage.from("files").list(MEMORIES_FOLDER, {
+      limit: 1000, offset, sortBy: { column: "name", order: "asc" },
+    });
+    if (error || !data) return known.concat(recovered);
+    for (const file of data) {
+      if (!/\.(?:jpe?g|png|webp|gif|avif)$/i.test(file.name)) continue;
+      const path = `${MEMORIES_FOLDER}/${file.name}`;
+      if (knownPaths.has(path)) continue;
+      knownPaths.add(path);
+      recovered.push({
+        id: file.name.replace(/\.[^.]+$/, ""), path,
+        by: "Class memory", byId: "", uploadedAt: file.created_at ?? new Date().toISOString(),
+      });
+    }
+    if (data.length < 1000) break;
+  }
+  return known.concat(recovered);
+}
 
 /** Fetch the freshest shared photo list from the cloud (null when offline/local). */
 async function pullMemories(): Promise<MemoryPhoto[] | null> {
@@ -2429,11 +2455,14 @@ async function pullMemories(): Promise<MemoryPhoto[] | null> {
       .eq("key", MEMORIES_KEY)
       .maybeSingle();
     if (error) return null;
-    if (data?.value) {
-      const list = JSON.parse(data.value) as MemoryPhoto[];
-      return Array.isArray(list) ? list : [];
-    }
-    return [];
+    const parsed: unknown = data?.value ? JSON.parse(data.value) : [];
+    const cloud = Array.isArray(parsed) ? parsed.filter((photo): photo is MemoryPhoto =>
+      !!photo && typeof photo.id === "string" && typeof photo.uploadedAt === "string"
+      && (typeof photo.path === "string" || typeof photo.image === "string")) : [];
+    // A missing cloud row must not erase an older browser-only gallery.
+    const local = !data ? read<MemoryPhoto[]>(MEMORIES_KEY, []).filter(photo => !!photo?.image) : [];
+    const merged = [...cloud, ...local.filter(photo => !cloud.some(item => item.id === photo.id))];
+    return await recoverMemoryFiles(merged);
   } catch {
     return null; // offline — caller falls back to the local copy
   }
@@ -2457,7 +2486,7 @@ export function useMemories() {
     void (async () => {
       const cloud = await pullMemories();
       if (cloud) {
-        write(MEMORIES_KEY, cloud);
+        writeFromCloud(MEMORIES_KEY, JSON.stringify(cloud));
         setPhotos(cloud);
       }
     })();
@@ -2482,6 +2511,18 @@ export function useMemories() {
       alive = false;
     };
   }, [photos]);
+
+  const retryPhoto = useCallback(async (photo: MemoryPhoto) => {
+    if (!photo.path) return;
+    figUrlCache.delete(photo.path);
+    setUrls(current => { const next = { ...current }; delete next[photo.id]; return next; });
+    const url = await signedFigUrl(photo.path);
+    if (url) setUrls(current => ({ ...current, [photo.id]: url }));
+  }, []);
+
+  const markPhotoMissing = useCallback((id: string) => {
+    setUrls(current => { const next = { ...current }; delete next[id]; return next; });
+  }, []);
 
   /** Add downscaled JPEG data-URLs; returns how many photos were saved. */
   const addPhotos = useCallback(async (who: Pick<Profile, "id" | "name">, images: string[]): Promise<number> => {
@@ -2525,7 +2566,8 @@ export function useMemories() {
     const base = (await pullMemories()) ?? read<MemoryPhoto[]>(MEMORIES_KEY, []);
     const doomed = base.find((p) => p.id === id);
     if (doomed?.path && supabase) {
-      void supabase.storage.from("files").remove([doomed.path]).catch(() => {});
+      const { error } = await supabase.storage.from("files").remove([doomed.path]);
+      if (error) throw new Error(`The photo could not be removed from storage: ${error.message}`);
     }
     const next = base.filter((p) => p.id !== id);
     write(MEMORIES_KEY, next);
@@ -2533,7 +2575,7 @@ export function useMemories() {
     void flushKey(MEMORIES_KEY);
   }, []);
 
-  return { photos, urls, addPhotos, removePhoto };
+  return { photos, urls, addPhotos, removePhoto, retryPhoto, markPhotoMissing };
 }
 
 /* ---------- student onboarding packs (admin/facilitator uploads) ---------- */

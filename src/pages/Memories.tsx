@@ -12,7 +12,7 @@ const fmtDate = (iso: string) =>
 /** Class photo wall — everyone uploads pictures; play them back as a slideshow. */
 export function MemoriesPage({ profile }: { profile: Profile }) {
   const staff = isStaff(profile.role);
-  const { photos, urls, addPhotos, removePhoto } = useMemories();
+  const { photos, urls, addPhotos, removePhoto, retryPhoto, markPhotoMissing } = useMemories();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,8 +27,11 @@ export function MemoriesPage({ profile }: { profile: Profile }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [photos, urls]
   );
-  /** newest first for the wall */
-  const wall = useMemo(() => [...chrono].reverse(), [chrono]);
+  /** Keep unavailable images visible so learners can retry instead of seeing an empty gallery. */
+  const wall = useMemo(
+    () => [...photos].sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt)),
+    [photos]
+  );
 
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []).filter((f) => f.type.startsWith("image/"));
@@ -105,19 +108,23 @@ export function MemoriesPage({ profile }: { profile: Profile }) {
       ) : (
         <div className="mem-grid">
           {wall.map((p) => {
-            const src = srcOf(p)!;
+            const src = srcOf(p);
             const canRemove = staff || p.byId === profile.id;
             const chronoIdx = chrono.findIndex((c) => c.id === p.id);
             return (
               <figure className="mem-card" key={p.id}>
-                <button
+                {src ? <button
                   type="button"
                   className="mem-open"
                   title="Click to view"
                   onClick={() => setShow({ idx: Math.max(0, chronoIdx), auto: false })}
                 >
-                  <img src={src} alt={`Photo by ${p.by}`} loading="lazy" />
-                </button>
+                  <img src={src} alt={`Photo by ${p.by}`} loading="lazy" onError={() => markPhotoMissing(p.id)} />
+                </button> : <button type="button" className="mem-open mem-photo-retry"
+                  onClick={() => void retryPhoto(p)} disabled={!p.path}>
+                  <Icon name="image" size={26} />
+                  {p.path ? "Photo unavailable — retry loading" : "Photo file unavailable"}
+                </button>}
                 <figcaption className="mem-meta">
                   <span className="mem-by" title={p.by}>{p.by}</span>
                   <span className="mem-when">{fmtDate(p.uploadedAt)}</span>
@@ -145,7 +152,8 @@ export function MemoriesPage({ profile }: { profile: Profile }) {
           confirmLabel="Remove"
           danger
           onConfirm={() => {
-            void removePhoto(confirmId);
+            void removePhoto(confirmId).catch(cause =>
+              setError(cause instanceof Error ? cause.message : "The photo could not be removed."));
             setConfirmId(null);
           }}
           onCancel={() => setConfirmId(null)}
