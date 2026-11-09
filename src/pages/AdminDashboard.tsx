@@ -54,7 +54,7 @@ export function AdminDashboardPage({ profile, navigate }: { profile: Profile; na
   const attendanceRows = learners.filter((r) => r.attendanceRate !== null);
   const attendanceAverage = attendanceRows.length ? attendanceRows.reduce((sum, r) => sum + (r.attendanceRate ?? 0), 0) / attendanceRows.length : null;
 
-  const roles = ["Learner", "Facilitator", "Assessor", "Moderator", "Super User"].map((name) => ({ name, count: users.filter((p) => p.role === name).length }));
+  const roles = ["Learner", "Facilitator", "Assessor", "Moderator", "Admin", "Super User"].map((name) => ({ name, count: users.filter((p) => p.role === name).length }));
   const completion = [
     { name: "0–24%", count: learners.filter((r) => r.completion < .25).length },
     { name: "25–49%", count: learners.filter((r) => r.completion >= .25 && r.completion < .5).length },
@@ -92,6 +92,12 @@ export function AdminDashboardPage({ profile, navigate }: { profile: Profile; na
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
     const a = document.createElement("a"); a.href = url; a.download = "learner-register.csv"; a.click(); URL.revokeObjectURL(url);
   }
+  const lifecycleRows = learners.map((r) => {
+    const docs = r.poeDone;
+    const stage = r.completion >= 1 ? "Ready for graduation" : docs >= 8 ? "Evidence verification" : r.completion > 0 ? "Active learnership" : "Onboarding";
+    const tone = stage === "Ready for graduation" ? "complete" : stage === "Evidence verification" ? "review" : stage === "Onboarding" ? "new" : "active";
+    return { ...r, docs, stage, tone };
+  }).sort((a, b) => a.stage.localeCompare(b.stage) || a.profile.name.localeCompare(b.profile.name));
 
   return <div className="admin-overview">
     <div className="admin-overview-head">
@@ -125,6 +131,14 @@ export function AdminDashboardPage({ profile, navigate }: { profile: Profile; na
       <div className="admin-panel-head"><div><h2>Skills Development evidence register</h2><p>Admin oversight checklist for sampled learner files and measured-period evidence.</p></div><button type="button" onClick={downloadLearnerRegister}>Download learner register CSV ↓</button></div>
       <div className="admin-evidence-grid">{evidenceGroups.map((group) => <div className="admin-evidence-group" key={group.title}><h3>{group.title}</h3>{group.items.map((item) => <label key={item}><input type="checkbox" /> <span>{item}</span></label>)}</div>)}</div>
       <p className="admin-evidence-note">Also retain sampled attendance registers, trainer payslips, disability confirmations and reasonable-accommodation letters where applicable. Absorption claims require the succeeding long-term employment contract and the trainee tracker to include all learners.</p>
+    </section>
+    <section className="admin-panel admin-operations-panel">
+      <div className="admin-panel-head"><div><h2>Learner operations</h2><p>Manage the full client-service-provider journey from onboarding through graduation. Open a learner to verify their complete document record.</p></div><button type="button" onClick={() => navigate({ page: "students" })}>Open directory →</button></div>
+      <div className="admin-operations-table" role="table" aria-label="Learner lifecycle tracker">
+        <div className="admin-operations-row admin-operations-head" role="row"><span>Learner</span><span>Lifecycle stage</span><span>Learning</span><span>Documents</span><span></span></div>
+        {lifecycleRows.map((row) => <button type="button" className="admin-operations-row" key={row.profile.id} onClick={() => navigate({ page: "students", studentId: row.profile.id })} role="row"><strong>{row.profile.name}</strong><span><i className={`admin-stage-dot ${row.tone}`} />{row.stage}</span><span>{percent(row.completion)}</span><span>{row.docs} POE items</span><b>Verify →</b></button>)}
+        {!lifecycleRows.length && <p className="admin-empty">No learner records are available yet.</p>}
+      </div>
     </section>
     <p className="admin-footnote">Activity uses recorded sign-ins, not live online presence. Metrics cover profiles available to this tenant; cloud figures depend on successful sync.</p>
   </div>;

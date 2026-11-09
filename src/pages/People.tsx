@@ -2751,7 +2751,7 @@ function StudentDetail({
             cloudProfileId={cloudProfileId}
             cloudProgress={cloudProgress}
             cloud={cloud}
-            canDownload={isSuper}
+            canDownload={staffViewer}
           />
           </section>
           {student.role === "Learner" && canRecordOutcomes && (
@@ -2777,7 +2777,7 @@ function StudentDetail({
             </span>
             Uploaded documents — {poeItemCount(docs)} / {POE_TOTAL} items · {uploaded.length}{" "}
             {uploaded.length === 1 ? "file" : "files"}
-            {isSuper && uploaded.length > 0 && (
+            {staffViewer && uploaded.length > 0 && (
               <button
                 className="btn ghost profile-edit"
                 onClick={() => void downloadPortfolio()}
@@ -2808,7 +2808,7 @@ function StudentDetail({
                     {sec.heading} · {item.label} · {fmtSize(doc.size)} · {fmtDate(doc.uploadedAt)}
                   </span>
                 </span>
-                {isSuper && (
+                {staffViewer && (
                   <button className="poe-dl" onClick={() => void downloadDoc(doc)} title="Download">
                     <Icon name="download" size={17} />
                   </button>

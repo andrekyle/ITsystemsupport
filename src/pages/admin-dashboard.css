@@ -50,6 +50,16 @@
 .admin-evidence-group h3 { margin: 0 0 12px; font-size: 13px; }
 .admin-evidence-group label { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0; color: var(--ink-3); font-size: 12px; }
 .admin-evidence-note { margin-top: 18px !important; line-height: 1.55; }
+.admin-operations-panel { margin-top: 18px; }
+.admin-operations-table { margin-top: 16px; overflow-x: auto; }
+.admin-operations-row { width: 100%; min-width: 680px; display: grid; grid-template-columns: 1.3fr 1.35fr .65fr .9fr auto; gap: 14px; align-items: center; padding: 13px 4px; border: 0; border-top: 1px solid var(--border); background: transparent; color: var(--ink); text-align: left; font: inherit; font-size: 12px; }
+button.admin-operations-row { cursor: pointer; }
+button.admin-operations-row:hover strong, button.admin-operations-row:hover b { text-decoration: underline; }
+.admin-operations-head { border-top: 0; color: var(--ink-3); font-size: 11px; font-weight: 600; }
+.admin-operations-row strong { font-size: 13px; }
+.admin-operations-row b { white-space: nowrap; font-size: 11px; font-weight: 600; }
+.admin-stage-dot { display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; background: #7d8ba0; }
+.admin-stage-dot.complete { background: #1a9b6c; }.admin-stage-dot.review { background: #e69a2b; }.admin-stage-dot.new { background: #4d8fe8; }.admin-stage-dot.active { background: #825dd1; }
 @media (max-width: 900px) { .admin-evidence-grid { grid-template-columns: 1fr; } }
 [data-theme="dark"] .admin-refresh, [data-theme="dark"] .admin-tile, [data-theme="dark"] .admin-panel { background: var(--surface-2); border-color: transparent; }
 [data-theme="dark"] .admin-refresh:hover, [data-theme="dark"] .admin-tile:hover { background: var(--surface-3); border-color: var(--border); }
