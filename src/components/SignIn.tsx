@@ -234,7 +234,8 @@ export function SignIn({
     Facilitator: 1,
     Assessor: 2,
     Moderator: 3,
-    Learner: 4,
+    Admin: 4,
+    Learner: 5,
   };
   const lastId = getLastProfileId();
   const orderedProfiles = profiles.filter(p => !cloudIdentity || profileMatchesCloudIdentity(p, cloudIdentity)).sort((a, b) => {

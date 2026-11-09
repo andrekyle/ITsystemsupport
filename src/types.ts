@@ -1,8 +1,9 @@
-export type Role = "Learner" | "Facilitator" | "Assessor" | "Moderator" | "Super User";
+export type Role = "Learner" | "Facilitator" | "Assessor" | "Moderator" | "Admin" | "Super User";
 
 /** Staff roles see facilitation content (lesson plans, model answers) and the student list. */
-export const STAFF_ROLES: readonly Role[] = ["Facilitator", "Assessor", "Moderator", "Super User"];
+export const STAFF_ROLES: readonly Role[] = ["Facilitator", "Assessor", "Moderator", "Admin", "Super User"];
 export const isStaff = (role: Role) => STAFF_ROLES.includes(role);
+export const isAdminRole = (role: Role) => role === "Admin" || role === "Super User";
 
 /* ---------- biographical enrolment information ---------- */
 

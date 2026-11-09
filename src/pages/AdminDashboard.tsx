@@ -81,6 +81,17 @@ export function AdminDashboardPage({ profile, navigate }: { profile: Profile; na
     { label: "Average attendance", value: attendanceAverage === null ? "—" : percent(attendanceAverage), detail: `${attendanceRows.length} learners with registers`, icon: "calendar", page: "attendance" as const },
     { label: "Evidence items", value: learners.reduce((sum, r) => sum + r.poeDone, 0), detail: "POE items across learners", icon: "folder", page: "analytics" as const },
   ];
+  const evidenceGroups = [
+    { title: "Learner file", items: ["EEA1", "Certified ID copy", "Signed class register", "Certificate of completion", "Signed learnership + employment contract"] },
+    { title: "Payroll & funding", items: ["Invoice + proof of payment", "12-month payroll summary", "First, middle and last payslip", "EMP201 for measured period", "Proof of payment for first and last EMP201"] },
+    { title: "SETA & provider", items: ["SETA registration", "WSP / ATR / Pivotal report", "Proof of submission to SETA", "SETA approval", "Eruditio accreditation proof"] },
+  ];
+  function downloadLearnerRegister() {
+    const rows = [["Learner", "Role", "Email", "Created", "Last sign-in"], ...learners.map((r) => [r.profile.name, r.profile.role, r.profile.enrolment?.email ?? "", r.profile.createdAt, r.profile.lastLogin ?? ""])];
+    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const a = document.createElement("a"); a.href = url; a.download = "learner-register.csv"; a.click(); URL.revokeObjectURL(url);
+  }
 
   return <div className="admin-overview">
     <div className="admin-overview-head">
@@ -110,6 +121,11 @@ export function AdminDashboardPage({ profile, navigate }: { profile: Profile; na
         {!users.some((p) => p.lastLogin) && <p className="admin-empty">No sign-ins have been recorded yet.</p>}
       </section>
     </div>
+    <section className="admin-panel admin-evidence-panel">
+      <div className="admin-panel-head"><div><h2>Skills Development evidence register</h2><p>Admin oversight checklist for sampled learner files and measured-period evidence.</p></div><button type="button" onClick={downloadLearnerRegister}>Download learner register CSV ↓</button></div>
+      <div className="admin-evidence-grid">{evidenceGroups.map((group) => <div className="admin-evidence-group" key={group.title}><h3>{group.title}</h3>{group.items.map((item) => <label key={item}><input type="checkbox" /> <span>{item}</span></label>)}</div>)}</div>
+      <p className="admin-evidence-note">Also retain sampled attendance registers, trainer payslips, disability confirmations and reasonable-accommodation letters where applicable. Absorption claims require the succeeding long-term employment contract and the trainee tracker to include all learners.</p>
+    </section>
     <p className="admin-footnote">Activity uses recorded sign-ins, not live online presence. Metrics cover profiles available to this tenant; cloud figures depend on successful sync.</p>
   </div>;
 }

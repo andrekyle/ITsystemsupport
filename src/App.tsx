@@ -185,9 +185,9 @@ function Shell({
         )}
         <main className="content">
           <div className="content-inner">
-            {route.page === "adminDashboard" && profile.role === "Super User" && <AdminDashboardPage profile={profile} navigate={navigate} />}
+            {route.page === "adminDashboard" && (profile.role === "Super User" || profile.role === "Admin") && <AdminDashboardPage profile={profile} navigate={navigate} />}
             {route.page === "dashboard" && (
-              TENANT_ID === "discovery" ? (
+              profile.role === "Admin" ? <AdminDashboardPage profile={profile} navigate={navigate} /> : TENANT_ID === "discovery" ? (
                 <DiscoveryDashboard profile={profile} progress={state} navigate={navigate} />
               ) : (
                 <Dashboard profile={profile} progress={state} navigate={navigate} />

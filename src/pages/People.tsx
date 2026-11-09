@@ -931,6 +931,7 @@ function AddUser({ viewer, onAdded }: { viewer: Profile; onAdded: () => void }) 
               { value: "Facilitator", label: "Facilitator" },
               { value: "Assessor", label: "Assessor" },
               { value: "Moderator", label: "Moderator" },
+              { value: "Admin", label: "Admin — oversight only" },
             ]}
           />
         </div>

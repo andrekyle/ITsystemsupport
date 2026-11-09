@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, Route } from "../types";
-import { isStaff } from "../types";
+import { isAdminRole, isStaff } from "../types";
 import type { ProgressState } from "../types";
 import { isInstalled, installHelpMessage, onInstallChange, promptInstall } from "../lib/install";
 import { AlertModal } from "./Modal";
@@ -39,6 +39,7 @@ interface Props {
 
 export function Sidebar({ collapsed, route, profile, navigate }: Props) {
   const isPrivileged = isStaff(profile.role);
+  const isAdmin = profile.role === "Admin";
   const [installed, setInstalled] = useState(isInstalled);
   const [installMsg, setInstallMsg] = useState<string | null>(null);
   useEffect(() => onInstallChange(() => setInstalled(isInstalled())), []);
@@ -50,17 +51,19 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
 
   const learningNav = [
     { page: "dashboard" as const, icon: "dashboard", label: "Dashboard" },
-    ...(profile.role === "Super User" ? [{ page: "adminDashboard" as const, icon: "chart", label: "Admin Overview" }] : []),
-    { page: "course" as const, icon: "book", label: "My Course" },
-    { page: "progress" as const, icon: "trend", label: "Progress" },
-    { page: "community" as const, icon: "people", label: "Community & Support" },
-    { page: "chat" as const, icon: "message", label: "Chat" },
-    { page: "memories" as const, icon: "image", label: "Gallery" },
-    { page: "poe" as const, icon: "folder", label: "Portfolio of Evidence" },
-    { page: "onboarding" as const, icon: "folder", label: "Qualification Packs" },
-    { page: "checklist" as const, icon: "checklist", label: "Appendix C Checklist" },
-    { page: "sectiond" as const, icon: "document", label: "Section D Declaration" },
-    { page: "forms" as const, icon: "clipboard", label: "Forms" },
+    ...(isAdminRole(profile.role) ? [{ page: "adminDashboard" as const, icon: "chart", label: "Admin Overview" }] : []),
+    ...(!isAdmin ? [{ page: "course" as const, icon: "book", label: "My Course" }] : []),
+    ...(!isAdmin ? [{ page: "progress" as const, icon: "trend", label: "Progress" }] : []),
+    ...(!isAdmin ? [
+      { page: "community" as const, icon: "people", label: "Community & Support" },
+      { page: "chat" as const, icon: "message", label: "Chat" },
+      { page: "memories" as const, icon: "image", label: "Gallery" },
+      { page: "poe" as const, icon: "folder", label: "Portfolio of Evidence" },
+      { page: "onboarding" as const, icon: "folder", label: "Qualification Packs" },
+      { page: "checklist" as const, icon: "checklist", label: "Appendix C Checklist" },
+      { page: "sectiond" as const, icon: "document", label: "Section D Declaration" },
+      { page: "forms" as const, icon: "clipboard", label: "Forms" },
+    ] : []),
     { page: "compliance" as const, icon: "shield", label: "Compliance" },
     ...(isPrivileged
       ? [{ page: "analytics" as const, icon: "chart", label: "Learning Analytics" }]
@@ -80,10 +83,10 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
             label: "Enrolled Learners",
           },
         ]),
-    ...(profile.role === "Super User"
+    ...(isAdminRole(profile.role)
       ? [
           { page: "trackerReport" as const, icon: "chart", label: "Learner Tracker Report" },
-          { page: "reports" as const, icon: "robot", label: "AI Assistant" },
+          ...(!isAdmin ? [{ page: "reports" as const, icon: "robot", label: "AI Assistant" }] : []),
         ]
       : []),
     { page: "calendar" as const, icon: "calendar", label: "Training Calendar" },
