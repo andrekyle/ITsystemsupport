@@ -1,0 +1,23 @@
+/* Share the learner workbook's cover, page system, tables and print rules. */
+.guide-workbook-114076 .guide-workbook-page { min-height:1268px; overflow:visible; color:#111; font-size:15px; line-height:1.5; border:1px solid #f3b680; }
+.guide-workbook-114076 .guide-workbook-page h3 { margin:20px 0 12px; color:#111; font-size:17px; line-height:1.4; }
+.guide-workbook-114076 .guide-workbook-page p { margin:0 0 10px; }
+.guide-workbook-114076 .guide-workbook-page ul { margin:6px 0 10px; padding-left:24px; }
+.guide-workbook-114076 .guide-source-table { margin:14px 0 22px; font-size:14px; line-height:1.45; }
+.guide-workbook-114076 .guide-source-table td { padding:8px 10px; vertical-align:top; overflow-wrap:anywhere; }
+.guide-workbook-114076 .guide-source-table p:last-child { margin-bottom:0; }
+.guide-workbook-114076 .guide-cell-blue { background:#c7d8ee; }
+.guide-workbook-114076 .guide-source-panel { padding:14px 18px; margin:16px 0; border:1px solid #929ca8; background:#c7d8ee; text-align:left; }
+.guide-workbook-114076 .guide-source-panel h3:first-child { margin-top:0; }
+.guide-workbook-114076 .guide-source-copy { margin:12px 0; }
+.guide-workbook-114076 .lw-lines textarea { height:auto; min-height:150px; }
+@media(max-width:900px) {
+  .guide-workbook-114076.lw-document { box-sizing:border-box; width:100%; margin:0; padding:16px 0; overflow-x:auto; }
+  .guide-workbook-114076 .lw-page { width:100%; min-width:0; }
+  .guide-workbook-114076 .guide-workbook-page { padding:28px 20px; min-height:0; }
+}
+@media print {
+  body:has(.guide-workbook-114076) .guide-workbook-114076 .guide-workbook-page { height:auto!important; min-height:297mm!important; overflow:visible!important; }
+  .guide-workbook-114076 .guide-source-table tr { break-inside:avoid; }
+  .guide-workbook-114076 .guide-cell-blue,.guide-workbook-114076 .guide-source-panel { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+}

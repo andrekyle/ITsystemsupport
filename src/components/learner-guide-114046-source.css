@@ -1,0 +1,8 @@
+.recreated-learner-guide { width:100%; }
+.recreated-learner-guide-pages { width:100%; background:#e8e8e8; }
+.recreated-learner-guide-pages #pages { display:flex; flex-direction:column; align-items:center; gap:20px; padding:20px; margin:0; }
+.recreated-learner-guide-pages .page { position:relative; flex:0 0 auto; width:min(100%,816px)!important; height:auto!important; aspect-ratio:816 / 1056; background:#fff; box-shadow:0 2px 12px rgba(0,0,0,.25); overflow:hidden; }
+.recreated-learner-guide-pages .page>img,.recreated-learner-guide-pages .page>canvas { position:absolute; inset:0; width:100%; height:100%; z-index:1; }
+.recreated-learner-guide-pages .textLayer { display:block!important; position:absolute; inset:0; z-index:2!important; pointer-events:none; visibility:visible!important; }
+.recreated-learner-guide-pages .textLayer span { position:absolute; white-space:pre; transform-origin:0 0; line-height:1; color:#111!important; font-family:Arial,sans-serif; visibility:visible!important; }
+@media print { .recreated-learner-guide-pages #pages { padding:0; gap:0; } .recreated-learner-guide-pages .page { box-shadow:none; break-after:page; } }

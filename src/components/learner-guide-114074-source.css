@@ -1,0 +1,25 @@
+.recreated-learner-guide { width:100%; }
+.recreated-learner-guide-pages { width:100%; background:#e8e8e8; }
+.recreated-learner-guide-pages #pages { display:flex; flex-direction:column; align-items:center; gap:20px; padding:20px; margin:0; }
+.recreated-learner-guide-pages .page { position:relative; flex:0 0 auto; width:816px!important; height:1056px!important; aspect-ratio:auto; background:#fff; box-shadow:0 2px 12px rgba(0,0,0,.25); overflow:hidden; }
+.recreated-learner-guide-pages .page>img,.recreated-learner-guide-pages .page>canvas { position:absolute; inset:0; width:100%; height:100%; z-index:1; }
+.recreated-learner-guide-pages .textLayer { display:block!important; position:absolute; inset:0; width:816px!important; height:1056px!important; --scale-factor:1.3333333333333333; z-index:2!important; pointer-events:none; visibility:visible!important; }
+.recreated-learner-guide-pages .textLayer span { position:absolute; white-space:pre; transform-origin:0 0; line-height:1; color:#111!important; visibility:visible!important; }
+.recreated-learner-guide-pages .page.guide-introduction-page { box-sizing:border-box; height:auto!important; min-height:1056px; padding:72px 50px 60px; color:#111; font:14px/1.5 Arial, sans-serif; }
+.guide-introduction-page h2 { margin:0 0 22px; font-size:16px; line-height:1.4; }
+.guide-introduction-table { width:100%; table-layout:fixed; border-collapse:collapse; color:#111; background:#fff; font:inherit; }
+.guide-introduction-table th,.guide-introduction-table td { border:1px solid #888; padding:12px 14px; vertical-align:top; text-align:left; white-space:normal; overflow-wrap:anywhere; }
+.guide-introduction-table th { width:22%; font-weight:700; background:#f4f5f7; }
+.guide-introduction-table td { font-weight:400; }
+.recreated-learner-guide-pages .page.guide-114074-page { box-sizing:border-box; width:min(100%,816px)!important; height:auto!important; aspect-ratio:816 / 1056; }
+.recreated-learner-guide-pages .guide-114074-page > img.f { position:relative; display:block; width:100%; height:auto; object-fit:contain; }
+.recreated-learner-guide-pages .guide-114074-page > img.b { display:none!important; }
+.recreated-learner-guide-pages .guide-114074-page .textLayer { width:100%!important; height:100%!important; overflow:hidden; }
+.recreated-learner-guide-pages .guide-114074-page .textLayer span { color:transparent!important; text-shadow:none!important; -webkit-text-fill-color:transparent!important; pointer-events:none; }
+.recreated-learner-guide-pages .page.guide-114074-page.guide-introduction-page { aspect-ratio:auto; min-height:1056px; }
+@media(max-width:600px) {
+  .recreated-learner-guide-pages .page.guide-114074-page.guide-introduction-page { min-height:0; padding:28px 16px; font-size:13px; }
+  .guide-114074-page .guide-introduction-table th,.guide-114074-page .guide-introduction-table td { padding:9px 8px; }
+  .guide-114074-page .guide-introduction-table th { width:26%; }
+}
+@media print { .recreated-learner-guide-pages #pages { padding:0; gap:0; } .recreated-learner-guide-pages .page { box-shadow:none; break-after:page; } .guide-introduction-table tr { break-inside:avoid; } }

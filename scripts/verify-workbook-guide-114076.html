@@ -1,0 +1,29 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>114076 workbook guide validation</title></head><body><pre id="result">Running</pre><div id="root"></div><script type="module">
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import {GuideWorkbook114076} from '/src/components/GuideWorkbook114076.tsx';
+import '/src/styles.css';
+const root=createRoot(document.querySelector('#root'));
+root.render(React.createElement(GuideWorkbook114076,{values:{},onChange:()=>{},onSave:async()=>{}}));
+const normalize=text=>text.replace(/[\s_•\uF0B7\uF0A7]/g,'');
+const timer=setInterval(async()=>{
+  const pages=[...document.querySelectorAll('.guide-workbook-114076 .lw-page')];
+  if(pages.length!==27)return;
+  clearInterval(timer);
+  try{
+    const data=await(await fetch('/learner-guide-114076/workbook-pages.json')).json();
+    for(const page of data.pages.slice(1)){
+      const items=[...page.items,...page.tables.flatMap(table=>table.rows.flatMap(row=>row.flatMap(cell=>cell.items)))];
+      const ids=items.map(item=>item.id);
+      if(new Set(ids).size!==ids.length)throw new Error(`Duplicated source text on page ${page.number}`);
+      const expected=normalize(items.map(item=>item.text).join('')).length;
+      const actual=normalize(pages[page.number-1].textContent).length;
+      if(expected!==actual)throw new Error(`Text mismatch page ${page.number}: ${actual}/${expected}`);
+    }
+    if(document.querySelector('.semantic-guide,.textLayer,canvas'))throw new Error('Old renderer remains');
+    if(!document.querySelector('.lw-cover aside')?.textContent.includes('LEARNER GUIDE'))throw new Error('Workbook cover missing');
+    document.querySelector('#result').textContent=JSON.stringify({status:'PASS',pages:pages.length,tables:document.querySelectorAll('.guide-workbook-114076 table').length,inputs:document.querySelectorAll('.guide-workbook-114076 input').length,cover:'WorkbookCover',source:data.source});
+    if(location.hash)document.querySelector(`[data-page="${location.hash.slice(1)}"]`)?.scrollIntoView();
+  }catch(error){document.querySelector('#result').textContent=`FAIL: ${error.message}`;}
+},100);
+</script></body></html>

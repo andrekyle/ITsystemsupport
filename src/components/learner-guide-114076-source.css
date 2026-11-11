@@ -1,0 +1,25 @@
+.recreated-learner-guide { width:100%; }
+.semantic-guide { max-width:900px; margin:auto; padding:24px; color:#172033; font:16px/1.65 "Segoe UI",Arial,sans-serif; }
+.semantic-guide-section { padding:40px 48px; margin-bottom:24px; background:#fff; border-top:5px solid #f3780d; box-shadow:0 3px 16px #00000012; overflow-wrap:anywhere; }
+.semantic-guide h1 { color:#173b72; font-size:28px; line-height:1.3; }
+.semantic-guide h2 { color:#173b72; font-size:19px; line-height:1.4; margin:24px 0 12px; }
+.semantic-guide p { margin:0 0 14px; }
+.semantic-guide ul { padding-left:24px; }
+.semantic-guide table { width:100%; border-collapse:collapse; margin:18px 0; table-layout:fixed; font:inherit; }
+.semantic-guide th,.semantic-guide td { border:1px solid #b9c3cf; padding:10px 12px; vertical-align:top; text-align:left; }
+.semantic-guide th { background:#eef3fa; }
+.semantic-guide footer { border-top:1px solid #d9e0ea; margin-top:30px; padding-top:12px; color:#667085; font-size:12px; }
+@media(max-width:600px) { .semantic-guide { padding:8px; } .semantic-guide-section { padding:24px 18px; } .semantic-guide th,.semantic-guide td { padding:7px; } }
+@media print { .semantic-guide { max-width:none; padding:0; font-size:11pt; } .semantic-guide-section { padding:12mm; margin:0; box-shadow:none; break-after:page; } .semantic-guide tr { break-inside:avoid; } }
+.recreated-learner-guide-pages { width:100%; background:#e8e8e8; }
+.recreated-learner-guide-pages #pages { display:flex; flex-direction:column; align-items:center; gap:20px; padding:20px; margin:0; }
+.recreated-learner-guide-pages .page { position:relative; flex:0 0 auto; width:min(100%,793.76px)!important; height:auto!important; aspect-ratio:793.76 / 1122.56; background:#fff; box-shadow:0 2px 12px rgba(0,0,0,.25); overflow:hidden; }
+.recreated-learner-guide-pages .page>img,.recreated-learner-guide-pages .page>canvas { position:absolute; inset:0; width:100%; height:100%; z-index:1; }
+.recreated-learner-guide-pages .textLayer { display:block!important; position:absolute; inset:0; z-index:2!important; pointer-events:none; visibility:visible!important; }
+.recreated-learner-guide-pages .textLayer span { position:absolute; white-space:pre; transform-origin:0 0; line-height:1; color:#111!important; font-family:Arial,sans-serif; visibility:visible!important; }
+.recreated-learner-guide-pages .page.guide-114076-page { box-sizing:border-box; width:min(100%,793.76px)!important; height:auto!important; aspect-ratio:793.76 / 1122.56; }
+.recreated-learner-guide-pages .guide-114076-page > img.f { position:relative; display:block; width:100%; height:auto; object-fit:contain; }
+.recreated-learner-guide-pages .guide-114076-page > img.b { display:none!important; }
+.recreated-learner-guide-pages .guide-114076-page .textLayer { width:100%!important; height:100%!important; overflow:hidden; }
+.recreated-learner-guide-pages .guide-114076-page .textLayer span { color:transparent!important; text-shadow:none!important; -webkit-text-fill-color:transparent!important; pointer-events:none; }
+@media print { .recreated-learner-guide-pages #pages { padding:0; gap:0; } .recreated-learner-guide-pages .page { box-shadow:none; break-after:page; } }

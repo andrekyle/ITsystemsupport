@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Semantic guide validation</title></head>
+<body><pre id="result">Running</pre><script type="module">
+import { semanticLearnerGuide } from "/src/lib/semanticLearnerGuide.ts";
+try {
+  const source = await (await fetch("/SAQA-114076-Learner-Guide.html")).text();
+  const parsed = new DOMParser().parseFromString(source, "text/html");
+  const visuals = await (await fetch("/learner-guide-114076/graphics.json")).json();
+  const converted = new DOMParser().parseFromString(semanticLearnerGuide(source, visuals), "text/html");
+  converted.querySelectorAll("footer").forEach(footer => footer.remove());
+  const normalize = text => text.replace(/[\s•\uF0B7\uF0A7–]/g, "");
+  const original = Array.from(parsed.querySelectorAll(".textLayer span"))
+    .filter(span => !span.style.transform.includes("rotate"))
+    .map(span => span.textContent).join("");
+  const expected = normalize(original).length;
+  const actual = normalize(converted.body.textContent).length;
+  const sections = converted.querySelectorAll(".semantic-guide-section").length;
+  if (sections !== 27 || expected !== actual) throw new Error(`Content mismatch: ${sections} sections; ${actual}/${expected} characters`);
+  if (converted.querySelector("canvas,.textLayer,[style]")) throw new Error("Positioned content remains");
+  const images = converted.querySelectorAll("img");
+  if(images.length !== visuals.graphics.length || !converted.querySelector(".semantic-guide-cover") || !converted.querySelector(".semantic-guide-panel")) throw new Error("Original graphics or panels are missing");
+  for(const image of images) {
+    if (!image.src.startsWith("data:image/png;base64,iVBOR")) throw new Error("Original PNG graphic is not embedded");
+  }
+  document.querySelector("#result").textContent = JSON.stringify({status:"PASS",sections,characters:actual,graphics:images.length,panels:converted.querySelectorAll(".semantic-guide-panel").length,headings:converted.querySelectorAll("h1,h2").length,tables:converted.querySelectorAll("table").length,paragraphs:converted.querySelectorAll("p").length});
+} catch(error) { document.querySelector("#result").textContent = `FAIL: ${error.message}`; }
+</script></body></html>
