@@ -660,6 +660,7 @@ export interface CourseModule {
 export type PageId =
   | "dashboard"
   | "adminDashboard"
+  | "evidenceRegister"
   | "course"
   | "module"
   | "unit"

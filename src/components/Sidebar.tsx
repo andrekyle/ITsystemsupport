@@ -52,6 +52,7 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
   const learningNav = [
     { page: "dashboard" as const, icon: "dashboard", label: "Dashboard" },
     ...(isAdminRole(profile.role) ? [{ page: "adminDashboard" as const, icon: "chart", label: "Admin Overview" }] : []),
+    ...(isAdminRole(profile.role) ? [{ page: "evidenceRegister" as const, icon: "checklist", label: "Skills Evidence Register" }] : []),
     ...(!isAdmin ? [{ page: "course" as const, icon: "book", label: "My Course" }] : []),
     ...(!isAdmin ? [{ page: "progress" as const, icon: "trend", label: "Progress" }] : []),
     ...(!isAdmin ? [
@@ -89,12 +90,14 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
           ...(!isAdmin ? [{ page: "reports" as const, icon: "robot", label: "AI Assistant" }] : []),
         ]
       : []),
-    { page: "calendar" as const, icon: "calendar", label: "Training Calendar" },
-    { page: "attendance" as const, icon: "clipboard", label: "Attendance Register" },
-    { page: "voting" as const, icon: "chart", label: "Voting Station" },
-    { page: "assessments" as const, icon: "clipboard", label: "Assessments" },
-    { page: "deliverables" as const, icon: "checklist", label: "Deliverables" },
-    { page: "resources" as const, icon: "globe", label: "Resources" },
+    ...(!isAdmin ? [
+      { page: "calendar" as const, icon: "calendar", label: "Training Calendar" },
+      { page: "attendance" as const, icon: "clipboard", label: "Attendance Register" },
+      { page: "voting" as const, icon: "chart", label: "Voting Station" },
+      { page: "assessments" as const, icon: "clipboard", label: "Assessments" },
+      { page: "deliverables" as const, icon: "checklist", label: "Deliverables" },
+      { page: "resources" as const, icon: "globe", label: "Resources" },
+    ] : []),
   ];
   const nav = learningNav;
 

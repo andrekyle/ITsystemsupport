@@ -1,29 +1,9 @@
 import type { WorkbookMemoState } from "../store";
-
-/** Baseline memo generated from the 114076 learner-workbook/research topics. */
-export const WORKBOOK_MEMO_114076: WorkbookMemoState = {
-  model: "Generated from the 114076 learner workbook and learner-guide research outcomes",
-  updatedAt: "2026-10-25T00:00:00.000Z",
-  items: [
-    { id: "research-topic", question: "Research topic and scope", maxMarks: 10, tasks: [{ id: "topic", task: 1, text: "Define a focused computer-related research topic, question and scope.", marks: 10, modelAnswer: "The learner identifies a specific computer topic, states a focused research question and explains the scope and purpose of the investigation." }], criteria: [
-      { id: "topic-focus", taskId: "topic", text: "Topic is specific and computer-related.", marks: 3 },
-      { id: "research-question", taskId: "topic", text: "Research question is clear and answerable.", marks: 3 },
-      { id: "scope", taskId: "topic", text: "Purpose and scope are explained realistically.", marks: 4 },
-    ] },
-    { id: "sources", question: "Sources and search strategy", maxMarks: 15, tasks: [{ id: "sources", task: 2, text: "Identify reliable sources and explain the search and evaluation strategy.", marks: 15, modelAnswer: "The learner records appropriate sources, search terms/tools and checks for authority, relevance, accuracy and currency." }], criteria: [
-      { id: "source-selection", taskId: "sources", text: "Uses relevant and sufficiently varied sources.", marks: 5 },
-      { id: "search-method", taskId: "sources", text: "Explains keywords, search tools and selection method.", marks: 5 },
-      { id: "evaluation", taskId: "sources", text: "Explains how source reliability, relevance and currency were checked.", marks: 5 },
-    ] },
-    { id: "findings", question: "Research findings", maxMarks: 15, tasks: [{ id: "findings", task: 3, text: "Present and communicate the research findings.", marks: 15, modelAnswer: "The learner presents accurate, structured findings using headings, a logical sequence, appropriate terminology and acknowledged sources." }], criteria: [
-      { id: "accuracy", taskId: "findings", text: "Information is accurate and relevant to the research question.", marks: 5 },
-      { id: "structure", taskId: "findings", text: "Findings are logically structured and clearly communicated.", marks: 5 },
-      { id: "acknowledgement", taskId: "findings", text: "Sources are acknowledged and evidence is used appropriately.", marks: 5 },
-    ] },
-    { id: "conclusion", question: "Conclusion and reflection", maxMarks: 10, tasks: [{ id: "conclusion", task: 4, text: "Draw a conclusion, explain application and reflect on the research process.", marks: 10, modelAnswer: "The learner answers the research question, identifies an appropriate application and reflects on strengths, limitations or improvements." }], criteria: [
-      { id: "conclusion-answer", taskId: "conclusion", text: "Conclusion follows from the findings and answers the question.", marks: 4 },
-      { id: "application", taskId: "conclusion", text: "Explains a practical application of the research.", marks: 3 },
-      { id: "reflection", taskId: "conclusion", text: "Reflection identifies learning, limitations or improvements.", marks: 3 },
-    ] },
-  ],
+import { WORKBOOK_114076 } from "./workbook114076";
+const answers: Record<string,string> = {
+  "activity-1": "Choose a focused computer-related topic, research question, purpose and objectives.\nDefine the scope, boundaries, assumptions, key concepts and intended deliverable.\nSet a realistic time plan with stages, milestones and progress reports.\nSelect suitable research methods such as literature review, interviews, questionnaires, observation, experiments or analysis of existing data.\nIdentify reliable primary and secondary sources and check relevance, authority, accuracy and currency.\nIdentify the target audience and choose an appropriate presentation method.\nSelect computer applications for searching, recording, organising, analysing and presenting the research data.\nInclude ethical, privacy, consent, confidentiality, copyright and data-security requirements.",
+  "activity-2": "Data collection in computer science is the systematic gathering of relevant observations, measurements, records, responses or digital evidence to answer a research question.\nDefine the population, sample, variables and data required before collecting information.\nUse surveys, interviews, observation, experiments, system logs, databases, documents or reliable online sources as appropriate.\nRecord data consistently in a structured computer application and retain source, date, consent and collection-method information.\nCheck data for completeness, accuracy, duplicates, bias, relevance and ethical or privacy concerns.\nAnalyse the data with an appropriate application, explain the method, report progress and draw conclusions supported by evidence.",
+  "activity-3-1": "Coding assigns labels or categories to data so similar responses, concepts or observations can be grouped and analysed.\nAnalytical memos record interpretations, patterns, questions, decisions and links between categories during analysis.\nDisplays are tables, charts, graphs, diagrams or other visual presentations that make data and patterns easier to inspect.\nValidity is the extent to which a method and findings accurately measure or represent what the research claims to examine.\nContextual analysis interprets information in relation to its setting, circumstances, participants, history and surrounding conditions.\nNarrative analysis examines how people or sources construct and communicate stories, including sequence, meaning, themes and viewpoint.",
+  "activity-3-2": "Quantitative content analysis converts content into countable categories or variables and uses numerical analysis to identify frequency, distribution, relationships or trends.\nFindings should state what was counted, the sample and unit of analysis, coding rules, totals or percentages and comparisons or patterns.\nResults should use suitable tables, charts or graphs and be interpreted in relation to the research question.\nAcknowledge limitations, coding error, sampling bias and the difference between association and causation.\nConclusions must be supported by the data, and the application and analysis method should be identified so results can be checked."
 };
+export const WORKBOOK_MEMO_114076: WorkbookMemoState = { model: "114076 learner workbook and computer research learning material", updatedAt: "2026-11-11T00:00:00.000Z", items: WORKBOOK_114076.outcomes.map(outcome => ({ id: outcome.id, question: outcome.title, maxMarks: outcome.questions.reduce((sum, question) => sum + question.marks, 0), tasks: outcome.questions.map(question => ({ ...question, modelAnswer: answers[question.id] })), criteria: outcome.questions.map(question => ({ id: `${question.id}-criterion`, taskId: question.id, text: answers[question.id], marks: question.marks })) })) };

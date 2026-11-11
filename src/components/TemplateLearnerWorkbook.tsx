@@ -51,7 +51,7 @@ export function TemplateLearnerWorkbook({ workbook, unit, profile, memoItems, va
       const pending = entries.filter(entry => entry.cached?.answerHash !== entry.answerHash);
       let fresh: Array<{ id: string; awarded: number; maxMarks: number; feedback: string; correctSegments?: string[]; incorrectSegments?: string[] }> = [];
       if (pending.length) {
-        const response = await fetch("/api/workbook-memo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "mark", items: pending.map(entry => entry.item), answers: pending.map(entry => ({ id: entry.item.id, answer: entry.answer })) }) });
+        const response = await fetch("/api/workbook-memo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "mark", unitId: unit.us, qualificationContext: `South African vocational qualification context for Unit Standard ${unit.us}: assess the learner against the selected unit's official memo and learning outcomes only.`, learningContext: workbook.outcomes.map(outcome => ({ outcome: outcome.title, learningOutcomes: outcome.learningOutcomes })), items: pending.map(entry => entry.item), answers: pending.map(entry => ({ id: entry.item.id, answer: entry.answer })) }) });
         const data = await response.json() as { results?: typeof fresh; error?: string };
         if (!response.ok || !data.results) throw new Error(data.error || "The workbook could not be marked.");
         fresh = data.results;

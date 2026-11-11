@@ -19,6 +19,7 @@ import { AttendancePage } from "./pages/Attendance";
 import { CompliancePage } from "./pages/Compliance";
 import { AnalyticsPage } from "./pages/Analytics";
 import { AdminDashboardPage } from "./pages/AdminDashboard";
+import { EvidenceRegisterPage } from "./pages/EvidenceRegister";
 import { CommunityPage } from "./pages/Community";
 import { MemoriesPage } from "./pages/Memories";
 import { ChatPage } from "./pages/Chat";
@@ -43,6 +44,7 @@ const ROUTE_KEY = "itss.route";
 const VALID_PAGES = new Set<Route["page"]>([
   "dashboard",
   "adminDashboard",
+  "evidenceRegister",
   "course",
   "module",
   "unit",
@@ -186,6 +188,7 @@ function Shell({
         <main className="content">
           <div className="content-inner">
             {route.page === "adminDashboard" && (profile.role === "Super User" || profile.role === "Admin") && <AdminDashboardPage profile={profile} navigate={navigate} />}
+            {route.page === "evidenceRegister" && (profile.role === "Super User" || profile.role === "Admin") && <EvidenceRegisterPage profile={profile} />}
             {route.page === "dashboard" && (
               profile.role === "Admin" ? <AdminDashboardPage profile={profile} navigate={navigate} /> : TENANT_ID === "discovery" ? (
                 <DiscoveryDashboard profile={profile} progress={state} navigate={navigate} />

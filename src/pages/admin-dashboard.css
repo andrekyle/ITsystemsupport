@@ -1,4 +1,5 @@
 .admin-overview { color: var(--ink); max-width: 1240px; margin: 0 auto; }
+.admin-overview > .admin-charts, .admin-overview > .admin-panels { display: none !important; }
 .admin-overview-head { position: relative; min-height: 170px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 19px; padding: 10px 0 4px; text-align: center; }
 .admin-overview h1 { margin: 0 0 10px; font-size: clamp(26px, 3vw, 32px); font-weight: 400; letter-spacing: normal; }
 .admin-overview-head p, .admin-panel p { margin: 0; color: var(--ink-3); font-size: 13px; }
@@ -50,16 +51,131 @@
 .admin-evidence-group h3 { margin: 0 0 12px; font-size: 13px; }
 .admin-evidence-group label { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0; color: var(--ink-3); font-size: 12px; }
 .admin-evidence-note { margin-top: 18px !important; line-height: 1.55; }
+.admin-evidence-panel .admin-records-toolbar {
+  align-items: center;
+  padding: 0 0 18px;
+  border-bottom: 1px solid var(--border);
+}
+.admin-evidence-panel .admin-records-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink);
+  font-size: 13px;
+}
+.admin-evidence-panel .admin-records-toolbar select,
+.evidence-register-actions select {
+  min-height: 36px;
+  padding: 7px 30px 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.admin-evidence-panel .admin-records-toolbar > span {
+  color: var(--ink-3);
+  font-size: 12px;
+}
+.evidence-register-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 11px 0;
+  border-top: 1px solid var(--border);
+}
+.evidence-register-item label {
+  margin: 0;
+  align-items: center;
+}
+.evidence-register-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding-left: 24px;
+}
+.evidence-register-actions button {
+  flex: none;
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 1px solid #b9d4f5;
+  border-radius: 7px;
+  background: #f3f8ff;
+  color: #075dcc;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.evidence-register-actions button:hover {
+  background: #e3f0ff;
+  border-color: #77b5ff;
+}
+.evidence-register-actions > span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-3);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.evidence-register-actions select {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 30px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  font-size: 11px;
+}
+[data-theme="dark"] .evidence-register-actions button {
+  border-color: #355d8c;
+  background: #19304c;
+  color: #9ac8ff;
+}
+[data-theme="dark"] .evidence-register-actions button:hover { background: #24466d; }
+@media (max-width: 600px) {
+  .admin-evidence-panel .admin-records-toolbar { align-items: stretch; flex-direction: column; gap: 10px; }
+  .admin-evidence-panel .admin-records-toolbar label { align-items: stretch; flex-direction: column; gap: 6px; }
+  .admin-evidence-panel .admin-records-toolbar select { width: 100%; }
+  .evidence-register-actions { flex-wrap: wrap; }
+  .evidence-register-actions select { flex: 1 1 190px; }
+}
 .admin-operations-panel { margin-top: 18px; }
+.admin-records-toolbar { display: flex; align-items: end; justify-content: space-between; gap: 24px; padding-bottom: 22px; }
+.admin-records-eyebrow { display: block; margin-bottom: 9px; color: #101f3a; font-size: 11px; font-weight: 800; letter-spacing: .14em; }
+.admin-records-toolbar h2 { margin: 0 0 7px; color: #101f3a; font-size: 24px; letter-spacing: -.03em; }
+.admin-records-toolbar p { margin: 0; color: #17233b; font-size: 13px; }
+.admin-records-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: end; }
+.admin-records-search { display: flex; align-items: center; gap: 9px; width: 270px; height: 44px; padding: 0 13px; border: 1px solid #dfe5ee; border-radius: 10px; background: #fff; color: #16315e; }
+.admin-records-search input { width: 100%; border: 0; outline: 0; background: transparent; color: #17233b; font: inherit; font-size: 13px; }
+.admin-record-button { height: 44px; padding: 0 15px; border: 1px solid #dfe5ee; border-radius: 10px; background: #fff; color: #123466; font: inherit; font-size: 13px; cursor: pointer; }
+.admin-record-button:hover { background: #f5f8fc; border-color: #b9c8dc; }
+.admin-record-add { width: 50px; padding: 0; font-size: 22px; line-height: 1; }
 .admin-operations-table { margin-top: 16px; overflow-x: auto; }
-.admin-operations-row { width: 100%; min-width: 680px; display: grid; grid-template-columns: 1.3fr 1.35fr .65fr .9fr auto; gap: 14px; align-items: center; padding: 13px 4px; border: 0; border-top: 1px solid var(--border); background: transparent; color: var(--ink); text-align: left; font: inherit; font-size: 12px; }
-button.admin-operations-row { cursor: pointer; }
-button.admin-operations-row:hover strong, button.admin-operations-row:hover b { text-decoration: underline; }
-.admin-operations-head { border-top: 0; color: var(--ink-3); font-size: 11px; font-weight: 600; }
-.admin-operations-row strong { font-size: 13px; }
-.admin-operations-row b { white-space: nowrap; font-size: 11px; font-weight: 600; }
+.admin-operations-row { box-sizing: border-box; width: 100%; min-width: 0; display: grid; grid-template-columns: minmax(150px, 1.4fr) minmax(170px, 1.3fr) minmax(70px, .55fr) minmax(100px, .85fr) minmax(110px, .85fr) minmax(110px, .85fr) 72px; gap: 14px; align-items: center; padding: 16px 16px; border: 0; border-top: 1px solid var(--border); background: var(--surface); color: var(--ink); text-align: left; font: inherit; font-size: 14px; text-decoration: none !important; }
+button.admin-operations-row { cursor: pointer; transition: background .15s, transform .15s; }
+button.admin-operations-row:hover { background: var(--surface-2); }
+button.admin-operations-row:hover strong, button.admin-operations-row:hover b { text-decoration: none !important; }
+.admin-operations-head { padding: 9px 16px 11px; border-top: 0; background: transparent; color: var(--ink-3); font-size: 12px; font-weight: 400; }
+.admin-operations-head > span { text-align: left; }
+.admin-operations-row > span { font-weight: 400; text-align: left; }
+.admin-operations-row span:first-child { font-size: 14px; font-weight: 400; text-decoration: none !important; }
+.admin-operations-row > span:last-child { white-space: nowrap; color: var(--ink); font-size: 13px; font-weight: 400; text-decoration: none !important; }
+.admin-operations-row:not(.admin-operations-head) { border-top: 1px solid rgba(120, 137, 160, .18); }
 .admin-stage-dot { display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; background: #7d8ba0; }
 .admin-stage-dot.complete { background: #1a9b6c; }.admin-stage-dot.review { background: #e69a2b; }.admin-stage-dot.new { background: #4d8fe8; }.admin-stage-dot.active { background: #825dd1; }
+ [data-theme="dark"] .admin-records-eyebrow,
+ [data-theme="dark"] .admin-records-toolbar h2 { color: var(--ink); }
+ [data-theme="dark"] .admin-records-toolbar p { color: var(--ink-3); }
+ [data-theme="dark"] .admin-records-search,
+ [data-theme="dark"] .admin-record-button { border-color: var(--border); background: var(--surface-3); color: var(--ink); }
+ [data-theme="dark"] .admin-records-search input { color: var(--ink); }
+ [data-theme="dark"] .admin-record-button:hover { background: var(--surface-2); border-color: var(--ink-3); }
+ [data-theme="dark"] .admin-operations-row { background: var(--surface-2); border-color: var(--border); color: var(--ink); }
+[data-theme="dark"] .admin-operations-row:not(.admin-operations-head) { border-top-color: rgba(255, 255, 255, .09); }
+ [data-theme="dark"] .admin-operations-row:hover { background: var(--surface-3); }
+ [data-theme="dark"] .admin-operations-head { background: transparent; color: var(--ink-3); }
 @media (max-width: 900px) { .admin-evidence-grid { grid-template-columns: 1fr; } }
 [data-theme="dark"] .admin-refresh, [data-theme="dark"] .admin-tile, [data-theme="dark"] .admin-panel { background: var(--surface-2); border-color: transparent; }
 [data-theme="dark"] .admin-refresh:hover, [data-theme="dark"] .admin-tile:hover { background: var(--surface-3); border-color: var(--border); }

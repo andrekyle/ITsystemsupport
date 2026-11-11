@@ -21,7 +21,6 @@ import { Bar, Ring } from "../components/Ring";
 import { Quiz, seededShuffle } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
 import { ConfirmModal } from "../components/Modal";
-import { UnitEditingDialog } from "../components/UnitEditingDialog";
 import { SlideEditableText } from "../components/SlideEditableText";
 import { SlideTextToolbar } from "../components/SlideTextToolbar";
 import { LessonVideoEditor, LessonVideos } from "../components/LessonVideos";
@@ -29,7 +28,7 @@ import { videoEngagementKey, videoQuizId } from "../lib/videoLearning";
 import { fiveResearchSelfAssessment } from "../lib/selfAssessment114076";
 import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml, hydrateSlideImages, normalizeSlideDocument, inlineFigureReferences } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
-import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, effectiveBuiltContent } from "../components/UnitBuilder";
+import { BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, effectiveBuiltContent } from "../components/UnitBuilder";
 import { lessonEditsAfterInsert, lessonEditsAfterSplit } from "../lib/lessonSectionEdits";
 import { InlineText, InlineIconBtn } from "../components/InlineText";
 import { ActivityQuestionEditor } from "../components/ActivityQuestionEditor";
@@ -41,6 +40,23 @@ import { WORKBOOK_MEMO_114076 } from "../data/workbookMemo114076";
 import { WORKBOOK_114076 } from "../data/workbook114076";
 import { Workbook114074 } from "../components/Workbook114074";
 import { WORKBOOK_114074 } from "../data/workbook114074";
+import { WORKBOOK_10135 } from "../data/workbook10135";
+import { WORKBOOK_MEMO_10135 } from "../data/workbookMemo10135";
+import { WORKBOOK_114055 } from "../data/workbook114055";
+import { WORKBOOK_MEMO_114055 } from "../data/workbookMemo114055";
+import { WORKBOOK_114050 } from "../data/workbook114050";
+import { WORKBOOK_MEMO_114050 } from "../data/workbookMemo114050";
+import { WORKBOOK_114051 } from "../data/workbook114051";
+import { WORKBOOK_MEMO_114051 } from "../data/workbookMemo114051";
+import { WORKBOOK_114059 } from "../data/workbook114059";
+import { WORKBOOK_MEMO_114059 } from "../data/workbookMemo114059";
+import { WORKBOOK_114183 } from "../data/workbook114183";
+import { WORKBOOK_MEMO_114183 } from "../data/workbookMemo114183";
+import { WORKBOOK_114058 } from "../data/workbook114058";
+import { WORKBOOK_MEMO_114058 } from "../data/workbookMemo114058";
+import { Workbook8252 } from "../components/Workbook8252";
+import { WORKBOOK_8252 } from "../data/workbook8252";
+import { WORKBOOK_MEMO_8252 } from "../data/workbookMemo8252";
 import { GeneratedWorkbook } from "../components/GeneratedWorkbook";
 import { LearnerGuide } from "../components/LearnerGuide";
 import { Guide114074 } from "../components/Guide114074";
@@ -2932,11 +2948,9 @@ export function UnitPage({
   useEffect(() => { setDeleteSlideError(""); }, [unitId]);
   const [requestedEditMode, setEditMode] = useState(false);
   const editMode = !phone && requestedEditMode;
-  const [unitEditOpen, setUnitEditOpen] = useState(false);
   const [slideEditOpen, setSlideEditOpen] = useState(false);
   const [inlineActionsTarget, setInlineActionsTarget] = useState<HTMLDivElement | null>(null);
   const [unitHeaderOpen, setUnitHeaderOpen] = useState(tab !== "lesson");
-  useEffect(() => { setUnitEditOpen(false); }, [unitId]);
   useEffect(() => { setSlideEditOpen(false); }, [unitId, tab, lessonStep]);
   useEffect(() => { setUnitHeaderOpen(tab !== "lesson"); }, [unitId, tab]);
   const [tableConfirm, setTableConfirm] = useState<{
@@ -3582,7 +3596,7 @@ export function UnitPage({
 
   const [sharedSettings, updateSharedSettings] = useSharedSettings();
   const [workbookMemo, setWorkbookMemo] = useWorkbookMemo(unitId);
-  const effectiveWorkbookMemo = unitId === "114076" && !workbookMemo.items.length ? WORKBOOK_MEMO_114076 : workbookMemo;
+  const effectiveWorkbookMemo = unitId === "10135" ? WORKBOOK_MEMO_10135 : unitId === "114050" ? WORKBOOK_MEMO_114050 : unitId === "114051" ? WORKBOOK_MEMO_114051 : unitId === "114055" ? WORKBOOK_MEMO_114055 : unitId === "114058" ? WORKBOOK_MEMO_114058 : unitId === "114059" ? WORKBOOK_MEMO_114059 : unitId === "114183" ? WORKBOOK_MEMO_114183 : unitId === "8252" ? WORKBOOK_MEMO_8252 : unitId === "114076" && !workbookMemo.items.length ? WORKBOOK_MEMO_114076 : workbookMemo;
   /** super user's draft of the evaluation form link */
   const [evalDraft, setEvalDraft] = useState<string | null>(null);
   /** transient "Saved" flash on the Self assessment tab, keyed by unit id */
@@ -3781,22 +3795,22 @@ export function UnitPage({
 
   const tabs: { id: UnitTab; label: string; icon: string; show: boolean }[] = [
     { id: "overview", label: "Learning activities", icon: "checklist", show: true },
-    { id: "saqa", label: "SAQA details", icon: "certificate", show: !!content?.saqa },
-    { id: "lesson", label: "Lesson", icon: "book", show: !!content?.lesson.length },
-    { id: "material", label: "Course material", icon: "play", show: decks.length > 0 || !!builtUnit },
-    { id: "notes", label: "Notes", icon: "document", show: !!content?.notes?.length || Object.values(userNotes).some((n) => n.us === unitId) || !!content?.lesson.length || unitId === "114055" },
-    { id: "exercises", label: "Activity", icon: "exercise", show: builtUnit ? true : !!content?.exercises.length },
-    { id: "questions", label: "Activity", icon: "chat", show: !builtUnit && !!content?.questionSessions?.length },
-    { id: "assignments", label: "Activity", icon: "folder", show: !builtUnit && !!content?.assignments.length },
-    { id: "practical", label: "Practical Task", icon: "checklist", show: !!practicalTask },
-    { id: "workbook", label: "Learner Workbook", icon: "document", show: workbookEnabled && (unitId === "114074" || unitId === "114076" || !!workbookDocument || unitId === "114046" || !!content?.workbook) },
-    { id: "memo", label: "Memo", icon: "clipboard", show: workbookEnabled && (unitId === "114046" || unitId === "114074" || unitId === "114076" || !!content?.workbook) && profile.role === "Super User" },
-    { id: "guide", label: "Learner Guide", icon: "book", show: !!content?.learnerGuide || unitId === "114046" || (unitId === "114074" && !hasPublishedPdfDocuments) },
-    { id: "logbook", label: "Logbook", icon: "book", show: !!content?.logbook },
-    { id: "quiz", label: "Quiz", icon: "clipboard", show: !!content?.quiz.length || !!content?.quizzes?.length || (!!builtUnit && isSuperUser) },
-    { id: "selfassessment", label: "Self assessment", icon: "checkCircle", show: !!content?.selfAssessment },
+    { id: "saqa", label: "SAQA details", icon: "certificate", show: true },
+    { id: "lesson", label: "Lesson", icon: "book", show: true },
+    { id: "material", label: "Course material", icon: "play", show: true },
+    { id: "notes", label: "Notes", icon: "document", show: true },
+    { id: "exercises", label: "Activity", icon: "exercise", show: true },
+    { id: "questions", label: "Activity", icon: "chat", show: false },
+    { id: "assignments", label: "Activity", icon: "folder", show: false },
+    { id: "practical", label: "Practical Task", icon: "checklist", show: false },
+    { id: "workbook", label: "Learner Workbook", icon: "document", show: workbookEnabled },
+    { id: "memo", label: "Memo", icon: "clipboard", show: workbookEnabled && (unitId === "114046" || unitId === "114074" || unitId === "114076" || unitId === "8252" || !!content?.workbook) && profile.role === "Super User" },
+    { id: "guide", label: "Learner Guide", icon: "book", show: true },
+    { id: "logbook", label: "Logbook", icon: "book", show: true },
+    { id: "quiz", label: "Quiz", icon: "clipboard", show: true },
+    { id: "selfassessment", label: "Self assessment", icon: "checkCircle", show: true },
     { id: "evaluation", label: "Evaluation", icon: "chat", show: true },
-    { id: "plan", label: "Lesson plan", icon: "presenter", show: !!content?.lessonPlan && isPrivileged },
+    { id: "plan", label: "Lesson plan", icon: "presenter", show: true },
     ...(content?.editableDocuments ?? []).map(item => ({ id: `pdf-${item.id}` as UnitTab, label: item.title, icon: "document", show: true })),
     ...(content?.customTabs ?? []).map(item => ({ id: item.id as UnitTab, label: item.title, icon: "document", show: true })),
   ];
@@ -3841,15 +3855,6 @@ export function UnitPage({
         {isSaqaUnit(u.us) ? `Unit standard ${u.us}` : "Internal lesson"}
       </div>
       <h1 className="page-title">{u.title}</h1>
-      {isSuperUser && (
-        <>
-          <button type="button" className="btn ghost sm unit-edit-menu" onClick={() => setUnitEditOpen(true)}
-            aria-haspopup="dialog"><Icon name="pencil" size={15} /> Edit unit</button>
-          <UnitEditingDialog open={unitEditOpen} title={u.title} subtitle={isSaqaUnit(u.us) ? `Unit standard ${u.us}` : "Internal lesson"} onClose={() => setUnitEditOpen(false)}>
-          <UnitBuilder key={unitId} open={unitEditOpen} unit={u} content={content} edits={lessonEdits} inlineDraft={inlineUnit} profileId={profile.id} inlineActionsTarget={tab === "lesson" ? inlineActionsTarget : null} onCancelInline={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setEditMode(false); }} onSaved={() => { clearInlineDraft(profile.id, unitId); setInlineUnit(undefined); setQuizId(null); setEditMode(false); setLessonQuizAnswers({}); setLessonQuizChecked({}); setLessonQuizAttempts({}); }} />
-          </UnitEditingDialog>
-        </>
-      )}
       <div style={{ margin: "16px 0 6px", maxWidth: 560 }}>
         <div className="bar-row">
           <Bar value={uc} green={uc === 1} />
@@ -6629,12 +6634,20 @@ export function UnitPage({
       {content?.customTabs?.filter(item => item.id === tab).map(item => <section className="card" key={item.id}><h2>{unitText(item.title, (d, v) => { d.customTabs!.find(t => t.id === item.id)!.title = v; })}</h2><div style={{ whiteSpace: "pre-wrap" }}>{unitText(item.text, (d, v) => { d.customTabs!.find(t => t.id === item.id)!.text = v; })}</div></section>)}
       {tab === "practical" && practicalTask && <PracticalTask document={practicalTask} unitId={u.us} profile={profile} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
       {workbookEnabled && tab === "workbook" && unitId === "114074" && <Workbook114074 profile={profile} memoItems={effectiveWorkbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
-      {workbookEnabled && tab === "workbook" && workbookDocument?.workbookTemplateBuilt && content?.workbook && unitId !== "114074" && unitId !== "114076" && <TemplateLearnerWorkbook workbook={content.workbook} unit={u} profile={profile} memoItems={workbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
-      {workbookEnabled && tab === "workbook" && workbookDocument && !workbookDocument.workbookTemplateBuilt && unitId !== "114074" && unitId !== "114076" && <PracticalTask document={workbookDocument} unitId={u.us} profile={profile} presentation="workbook" memoItems={effectiveWorkbookMemo.items} storagePrefix="learner-workbook." values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && unitId === "10135" && <TemplateLearnerWorkbook workbook={WORKBOOK_10135} unit={u} profile={profile} memoItems={WORKBOOK_MEMO_10135.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && unitId === "114055" && <TemplateLearnerWorkbook workbook={WORKBOOK_114055} unit={u} profile={profile} memoItems={WORKBOOK_MEMO_114055.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && unitId === "114050" && <TemplateLearnerWorkbook workbook={WORKBOOK_114050} unit={u} profile={profile} memoItems={WORKBOOK_MEMO_114050.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && unitId === "114051" && <TemplateLearnerWorkbook workbook={WORKBOOK_114051} unit={u} profile={profile} memoItems={WORKBOOK_MEMO_114051.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && unitId === "114059" && <TemplateLearnerWorkbook workbook={WORKBOOK_114059} unit={u} profile={profile} memoItems={WORKBOOK_MEMO_114059.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && unitId === "114183" && <TemplateLearnerWorkbook workbook={WORKBOOK_114183} unit={u} profile={profile} memoItems={WORKBOOK_MEMO_114183.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && unitId === "114058" && <TemplateLearnerWorkbook workbook={WORKBOOK_114058} unit={u} profile={profile} memoItems={WORKBOOK_MEMO_114058.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && workbookDocument?.workbookTemplateBuilt && content?.workbook && unitId !== "114074" && unitId !== "114076" && unitId !== "8252" && <TemplateLearnerWorkbook workbook={content.workbook} unit={u} profile={profile} memoItems={workbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && workbookDocument && !workbookDocument.workbookTemplateBuilt && unitId !== "114074" && unitId !== "114076" && unitId !== "8252" && <PracticalTask document={workbookDocument} unitId={u.us} profile={profile} presentation="workbook" memoItems={effectiveWorkbookMemo.items} storagePrefix="learner-workbook." values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
       {workbookEnabled && tab === "workbook" && !content?.learnerWorkbook && unitId === "114046" && <LearnerWorkbook profile={profile} memoItems={workbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
-      {workbookEnabled && tab === "workbook" && !workbookDocument && unitId !== "114046" && unitId !== "114074" && unitId !== "114076" && content?.workbook && <GeneratedWorkbook workbook={content.workbook} unit={u} profile={profile} memoItems={workbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
-      {workbookEnabled && tab === "workbook" && unitId === "114076" && <TemplateLearnerWorkbook source114076 workbook={WORKBOOK_114076} unit={u} profile={profile} memoItems={workbookMemo.items.filter(item => WORKBOOK_114076.outcomes.some(outcome => outcome.id === item.id))} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
-      {workbookEnabled && tab === "memo" && isSuperUser && (unitId === "114046" || unitId === "114074" || unitId === "114076" || content?.workbook) && <WorkbookMemo unitId={unitId} blueprint={unitId === "114046" ? WORKBOOK_114046_BLUEPRINT : unitId === "114074" ? WORKBOOK_114074.outcomes.map(outcome => ({ id: outcome.id, question: outcome.title, maxMarks: outcome.questions.reduce((total, question) => total + question.marks, 0), tasks: outcome.questions.map(question => ({ task: question.task, text: question.text, marks: question.marks })) })) : (unitId === "114076" ? WORKBOOK_114076 : content!.workbook!).outcomes.map(outcome => ({ id: outcome.id, question: outcome.title, maxMarks: outcome.questions.reduce((total, question) => total + question.marks, 0), tasks: outcome.questions.map(question => ({ task: question.task, text: question.text, marks: question.marks })) }))} memo={unitId === "114076" ? workbookMemo : effectiveWorkbookMemo} onChange={next=>setWorkbookMemo(()=>next)} />}
+      {workbookEnabled && tab === "workbook" && !workbookDocument && unitId !== "114046" && unitId !== "114074" && unitId !== "114076" && unitId !== "8252" && content?.workbook && <GeneratedWorkbook workbook={content.workbook} unit={u} profile={profile} memoItems={workbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && unitId === "114076" && <TemplateLearnerWorkbook source114076 workbook={WORKBOOK_114076} unit={u} profile={profile} memoItems={WORKBOOK_MEMO_114076.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "workbook" && unitId === "8252" && <Workbook8252 profile={profile} memoItems={effectiveWorkbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
+      {workbookEnabled && tab === "memo" && isSuperUser && (unitId === "10135" || unitId === "114046" || unitId === "114074" || unitId === "114076" || unitId === "8252" || content?.workbook) && <WorkbookMemo unitId={unitId} blueprint={unitId === "10135" ? WORKBOOK_10135.outcomes.map(outcome => ({ id: outcome.id, question: outcome.title, maxMarks: outcome.questions.reduce((total, question) => total + question.marks, 0), tasks: outcome.questions.map(question => ({ task: question.task, text: question.text, marks: question.marks })) })) : unitId === "114046" ? WORKBOOK_114046_BLUEPRINT : (unitId === "114074" ? WORKBOOK_114074 : (unitId === "114076" ? WORKBOOK_114076 : unitId === "8252" ? WORKBOOK_8252 : content!.workbook!)).outcomes.map(outcome => ({ id: outcome.id, question: outcome.title, maxMarks: outcome.questions.reduce((total, question) => total + question.marks, 0), tasks: outcome.questions.map(question => ({ task: question.task, text: question.text, marks: question.marks })) }))} memo={unitId === "10135" ? (workbookMemo.items.length ? workbookMemo : WORKBOOK_MEMO_10135) : unitId === "114076" ? workbookMemo : effectiveWorkbookMemo} onChange={next=>setWorkbookMemo(()=>next)} />}
       {tab === "guide" && unitId === "114074" && !hasPublishedPdfDocuments && <Guide114074 values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
       {tab === "guide" && content?.learnerGuide && <PracticalTask document={content.learnerGuide} unitId={u.us} profile={profile} storagePrefix="learner-guide." values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
       {tab === "guide" && !content?.learnerGuide && unitId === "114046" && <LearnerGuide values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} />}

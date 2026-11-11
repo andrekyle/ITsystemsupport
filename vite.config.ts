@@ -34,7 +34,7 @@ function markAnswerDev(env: Record<string, string>): Plugin {
     name: "mark-answer-dev",
     configureServer(server: ViteDevServer) {
       if (env.OPENAI_API_KEY && !process.env.OPENAI_API_KEY) {
-        process.env.OPENAI_API_KEY = env.OPENAI_API_KEY;
+        process.env.OPENAI_API_KEY = env.OPENAI_API_KEY.trim();
       }
       server.middlewares.use("/api/generate-slide-quiz", (req, res) => {
         void (async () => {
@@ -78,7 +78,7 @@ function formBuilderDev(env: Record<string, string>): Plugin {
     name: "form-builder-dev",
     configureServer(server: ViteDevServer) {
       for (const key of ["OPENAI_API_KEY", "SUPABASE_URL", "SUPABASE_ANON_KEY", "VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"]) {
-        if (env[key] && process.env[key] === undefined) process.env[key] = env[key];
+        if (env[key] && process.env[key] === undefined) process.env[key] = env[key].trim();
       }
       for (const endpoint of ["generate-form", "enhance-unit-quiz"]) server.middlewares.use(`/api/${endpoint}`, (request, response) => {
         void (async () => {
@@ -232,7 +232,7 @@ function apiDev(env: Record<string, string>): Plugin {
     name: "api-dev",
     configureServer(server: ViteDevServer) {
       for (const key of ["OPENAI_API_KEY", "SUPABASE_URL", "SUPABASE_ANON_KEY", "VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"]) {
-        if (env[key] && process.env[key] === undefined) process.env[key] = env[key];
+        if (env[key] && process.env[key] === undefined) process.env[key] = env[key].trim();
       }
       for (const endpoint of endpoints) {
         server.middlewares.use(`/api/${endpoint}`, (request, response) => {

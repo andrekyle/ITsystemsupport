@@ -42,7 +42,7 @@ function MarkedAnswer({ answer, correct, incorrect }: { answer: string; correct:
   return <div className="workbook-marked-answer" aria-label="Marked answer">{nodes}</div>;
 }
 
-export function WorkbookTaskAnswer({ outcomeId, task, memoItem, valueKey, markKey, values, onChange, legacyAnswer = "" }: {
+export function WorkbookTaskAnswer({ outcomeId, task, memoItem, valueKey, markKey, values, onChange, legacyAnswer = "", revealAnswer = false }: {
   outcomeId: string;
   task: WorkbookMemoTask;
   memoItem?: WorkbookMemoItem;
@@ -51,16 +51,19 @@ export function WorkbookTaskAnswer({ outcomeId, task, memoItem, valueKey, markKe
   values: Values;
   onChange: Save;
   legacyAnswer?: string;
+  revealAnswer?: boolean;
 }) {
   const savedAnswer = String(values[valueKey] ?? legacyAnswer);
   const [answer, setAnswer] = useState(savedAnswer);
   const [marking, setMarking] = useState(false);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(revealAnswer);
   // Progress is hydrated from IndexedDB/cloud after the workbook first
   // renders. Reflect that late-arriving value instead of leaving the input at
   // the empty snapshot it saw on mount.
   useEffect(() => setAnswer(savedAnswer), [savedAnswer]);
+  useEffect(() => setShowAnswer(revealAnswer), [revealAnswer]);
   let result: TaskMark | undefined;
   try {
     result = JSON.parse(String(values[markKey] ?? "")) as TaskMark;
@@ -68,6 +71,7 @@ export function WorkbookTaskAnswer({ outcomeId, task, memoItem, valueKey, markKe
     result = undefined;
   }
   const criteria = memoItem?.criteria.filter(criterion => criterion.taskId === task.id) ?? [];
+  const modelAnswer = task.modelAnswer ?? memoItem?.tasks?.find(candidate => candidate.id === task.id)?.modelAnswer;
   const updateAnswer = (next: string) => {
     setAnswer(next);
     try {
@@ -118,7 +122,7 @@ export function WorkbookTaskAnswer({ outcomeId, task, memoItem, valueKey, markKe
     <div className="workbook-task-mark-row">
       <EditingTools active={editing} title={`Task ${task.task} answer`}>
         <button type="button" className="btn ghost sm" disabled={marking || !criteria.length} onClick={() => void mark()}>
-          <Icon name="robot" size={15} /> {marking ? "Marking..." : "Mark answer"}
+          <Icon name="robot" size={15} /> {marking ? "Checking..." : "Check my answer"}
         </button>
         <button type="button" className="btn ghost sm" disabled={marking} onClick={() => setEditing(false)}>
           Done editing
@@ -137,12 +141,14 @@ export function WorkbookTaskAnswer({ outcomeId, task, memoItem, valueKey, markKe
           onClick={() => void mark()}
         >
           <Icon name="robot" size={15} />
-          {marking ? "Marking…" : "Mark answer"}
+          {marking ? "Checking…" : "Check my answer"}
         </button>
       </span>
       {result && <button type="button" className="workbook-task-edit no-print" onClick={() => { onChange(markKey, ""); setEditing(true); }}>Edit answer</button>}
+      {modelAnswer && <button type="button" className="workbook-answer-toggle no-print" onClick={() => setShowAnswer((visible) => !visible)}><Icon name={showAnswer ? "eyeOff" : "checkCircle"} size={15} />{showAnswer ? "Hide answer" : "Check my answer"}</button>}
       {result && <span className="workbook-task-score">{result.awarded}/{result.maxMarks} — {result.feedback}</span>}
       {error && <span className="workbook-task-notice" role="alert">{error}</span>}
     </div>
+    {showAnswer && modelAnswer && <div className="workbook-model-answer no-print"><strong><Icon name="document" size={15} /> Correct answer — from the lesson</strong><ul>{modelAnswer.split(/\n+/).map((line, index) => <li key={index}><Icon name="checkCircle" size={16} /><span>{line}</span></li>)}</ul></div>}
   </div>;
 }

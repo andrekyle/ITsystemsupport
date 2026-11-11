@@ -81,11 +81,6 @@ export function AdminDashboardPage({ profile, navigate }: { profile: Profile; na
     { label: "Average attendance", value: attendanceAverage === null ? "—" : percent(attendanceAverage), detail: `${attendanceRows.length} learners with registers`, icon: "calendar", page: "attendance" as const },
     { label: "Evidence items", value: learners.reduce((sum, r) => sum + r.poeDone, 0), detail: "POE items across learners", icon: "folder", page: "analytics" as const },
   ];
-  const evidenceGroups = [
-    { title: "Learner file", items: ["EEA1", "Certified ID copy", "Signed class register", "Certificate of completion", "Signed learnership + employment contract"] },
-    { title: "Payroll & funding", items: ["Invoice + proof of payment", "12-month payroll summary", "First, middle and last payslip", "EMP201 for measured period", "Proof of payment for first and last EMP201"] },
-    { title: "SETA & provider", items: ["SETA registration", "WSP / ATR / Pivotal report", "Proof of submission to SETA", "SETA approval", "Eruditio accreditation proof"] },
-  ];
   function downloadLearnerRegister() {
     const rows = [["Learner", "Role", "Email", "Created", "Last sign-in"], ...learners.map((r) => [r.profile.name, r.profile.role, r.profile.enrolment?.email ?? "", r.profile.createdAt, r.profile.lastLogin ?? ""])];
     const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -96,7 +91,9 @@ export function AdminDashboardPage({ profile, navigate }: { profile: Profile; na
     const docs = r.poeDone;
     const stage = r.completion >= 1 ? "Ready for graduation" : docs >= 8 ? "Evidence verification" : r.completion > 0 ? "Active learnership" : "Onboarding";
     const tone = stage === "Ready for graduation" ? "complete" : stage === "Evidence verification" ? "review" : stage === "Onboarding" ? "new" : "active";
-    return { ...r, docs, stage, tone };
+    const onboarding = r.profile.enrolment ? "Complete" : "Pending";
+    const graduation = r.completion >= 1 ? "Ready" : "In progress";
+    return { ...r, docs, stage, tone, onboarding, graduation };
   }).sort((a, b) => a.stage.localeCompare(b.stage) || a.profile.name.localeCompare(b.profile.name));
 
   return <div className="admin-overview">
@@ -127,16 +124,13 @@ export function AdminDashboardPage({ profile, navigate }: { profile: Profile; na
         {!users.some((p) => p.lastLogin) && <p className="admin-empty">No sign-ins have been recorded yet.</p>}
       </section>
     </div>
-    <section className="admin-panel admin-evidence-panel">
-      <div className="admin-panel-head"><div><h2>Skills Development evidence register</h2><p>Admin oversight checklist for sampled learner files and measured-period evidence.</p></div><button type="button" onClick={downloadLearnerRegister}>Download learner register CSV ↓</button></div>
-      <div className="admin-evidence-grid">{evidenceGroups.map((group) => <div className="admin-evidence-group" key={group.title}><h3>{group.title}</h3>{group.items.map((item) => <label key={item}><input type="checkbox" /> <span>{item}</span></label>)}</div>)}</div>
-      <p className="admin-evidence-note">Also retain sampled attendance registers, trainer payslips, disability confirmations and reasonable-accommodation letters where applicable. Absorption claims require the succeeding long-term employment contract and the trainee tracker to include all learners.</p>
-    </section>
     <section className="admin-panel admin-operations-panel">
-      <div className="admin-panel-head"><div><h2>Learner operations</h2><p>Manage the full client-service-provider journey from onboarding through graduation. Open a learner to verify their complete document record.</p></div><button type="button" onClick={() => navigate({ page: "students" })}>Open directory →</button></div>
+      <div className="admin-records-toolbar">
+        <div><span className="admin-records-eyebrow">PROCESSED DATA</span><h2>Learner operations</h2><p>Browse the latest learner records and verify documents from onboarding through graduation.</p></div>
+      </div>
       <div className="admin-operations-table" role="table" aria-label="Learner lifecycle tracker">
-        <div className="admin-operations-row admin-operations-head" role="row"><span>Learner</span><span>Lifecycle stage</span><span>Learning</span><span>Documents</span><span></span></div>
-        {lifecycleRows.map((row) => <button type="button" className="admin-operations-row" key={row.profile.id} onClick={() => navigate({ page: "students", studentId: row.profile.id })} role="row"><strong>{row.profile.name}</strong><span><i className={`admin-stage-dot ${row.tone}`} />{row.stage}</span><span>{percent(row.completion)}</span><span>{row.docs} POE items</span><b>Verify →</b></button>)}
+        <div className="admin-operations-row admin-operations-head" role="row"><span>LEARNER</span><span>LIFECYCLE STAGE</span><span>LEARNING</span><span>DOCUMENTS</span><span>ONBOARDING</span><span>GRADUATION</span><span></span></div>
+        {lifecycleRows.map((row) => <button type="button" className="admin-operations-row" key={row.profile.id} onClick={() => navigate({ page: "students", studentId: row.profile.id })} role="row"><span>{row.profile.name}</span><span>{row.stage}</span><span>{percent(row.completion)}</span><span>{row.docs} POE items</span><span>{row.onboarding}</span><span>{row.graduation}</span><span>Verify →</span></button>)}
         {!lifecycleRows.length && <p className="admin-empty">No learner records are available yet.</p>}
       </div>
     </section>

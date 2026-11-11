@@ -21,6 +21,16 @@ import { REPORT_DIALOG_SCRIPT } from "./dialogs";
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+/** Recover documents returned by older report previews that wrapped the HTML
+ * source in a help message and a code block instead of rendering it. */
+function unwrapHtmlSourcePreview(html: string): string {
+  const match = html.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+  if (!match || !/<!doctype\s+html|<html[\s>]/i.test(match[1])) return html;
+  const holder = document.createElement("textarea");
+  holder.innerHTML = match[1];
+  return holder.value.trim();
+}
+
 export interface ReportKind {
   id: string;
   name: string;
@@ -1038,10 +1048,14 @@ export function openReportDocument(
       win.close();
       return;
     }
-    // AI-generated trackers receive the same spreadsheet editing controls as
-    // the dedicated Learner Tracker page, including column and drag-fill tools.
-    win.document.write(kind.id === "tracker" ? enhanceTrackerHtml(html) : html);
-    win.document.close();
+    // Navigate to a real HTML document. `document.write` can leave the browser
+    // showing the generated source as plain text when the popup is reused or
+    // when a report is regenerated quickly.
+    const source = unwrapHtmlSourcePreview(html);
+    const rendered = kind.id === "tracker" ? enhanceTrackerHtml(source) : source;
+    const url = URL.createObjectURL(new Blob([rendered], { type: "text/html" }));
+    win.location.replace(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   })();
 }
 

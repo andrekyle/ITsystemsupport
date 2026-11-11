@@ -416,9 +416,9 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         link.click();
         URL.revokeObjectURL(link.href);
       } else {
-        preview.document.open();
-        preview.document.write(result.html);
-        preview.document.close();
+        const url = URL.createObjectURL(new Blob([result.html], { type: "text/html" }));
+        preview.location.replace(url);
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
       }
       setUploadedMessage(
         result.kind === "pdf"
