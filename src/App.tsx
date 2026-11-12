@@ -129,7 +129,7 @@ function Shell({
   const MOBILE_BP = 860;
   const [collapsed, setCollapsed] = useState(() => window.innerWidth < MOBILE_BP);
   const [route, setRoute] = useState<Route>(loadRoute);
-  const { state, toggleActivity, saveQuizResult, setLogbookField, setLogbookFields, saveExerciseResult } = useProgress(profile.id);
+  const { state, ready, loadError, toggleActivity, saveQuizResult, setLogbookField, setLogbookFields, saveExerciseResult } = useProgress(profile.id);
 
   // in-app navigation pushes a browser history entry so back/forward work;
   // on mobile the navigation drawer closes so the destination page is visible
@@ -155,6 +155,13 @@ function Shell({
     // scroll content to top on navigation
     document.querySelector(".content")?.scrollTo({ top: 0 });
   }, [route]);
+
+  if (!ready) return <main className="content"><section className="card">
+    {loadError ? <>
+      <p className="auth-error" role="alert">Your saved work could not be loaded. Editing is disabled to protect it. {loadError}</p>
+      <button type="button" className="btn" onClick={() => window.location.reload()}>Reload saved work</button>
+    </> : <p role="status">Loading your saved work...</p>}
+  </section></main>;
 
   return (
     <div className="app">

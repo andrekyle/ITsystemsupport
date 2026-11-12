@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { WorkbookMemoItem, WorkbookMemoTask } from "../store";
 import { isStaff, type Profile } from "../types";
 import { Icon } from "../icons";
@@ -57,6 +57,8 @@ export function WorkbookTaskAnswer({ profile, outcomeId, task, memoItem, valueKe
 }) {
   const savedAnswer = String(values[valueKey] ?? legacyAnswer);
   const [answer, setAnswer] = useState(savedAnswer);
+  const latestAnswer = useRef(savedAnswer);
+  const unsavedDraft = useRef(false);
   const [marking, setMarking] = useState(false);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(false);
@@ -64,7 +66,11 @@ export function WorkbookTaskAnswer({ profile, outcomeId, task, memoItem, valueKe
   // Progress is hydrated from IndexedDB/cloud after the workbook first
   // renders. Reflect that late-arriving value instead of leaving the input at
   // the empty snapshot it saw on mount.
-  useEffect(() => setAnswer(savedAnswer), [savedAnswer]);
+  useEffect(() => {
+    if (unsavedDraft.current) return;
+    latestAnswer.current = savedAnswer;
+    setAnswer(savedAnswer);
+  }, [savedAnswer]);
   useEffect(() => setShowAnswer(revealAnswer), [revealAnswer]);
   let result: TaskMark | undefined;
   try {
@@ -75,9 +81,12 @@ export function WorkbookTaskAnswer({ profile, outcomeId, task, memoItem, valueKe
   const criteria = memoItem?.criteria.filter(criterion => criterion.taskId === task.id) ?? [];
   const modelAnswer = task.modelAnswer ?? memoItem?.tasks?.find(candidate => candidate.id === task.id)?.modelAnswer;
   const updateAnswer = (next: string) => {
+    unsavedDraft.current = true;
+    latestAnswer.current = next;
     setAnswer(next);
     try {
       onChange(valueKey, next);
+      unsavedDraft.current = false;
       if (error === "This answer could not be saved. Free some browser storage and try again.") setError("");
     } catch {
       setError("This answer could not be saved. Free some browser storage and try again.");
@@ -90,21 +99,25 @@ export function WorkbookTaskAnswer({ profile, outcomeId, task, memoItem, valueKe
     setMarking(true);
     setError("");
     try {
+      const submittedAnswer = answer;
+      onChange(valueKey, submittedAnswer);
       const response = await fetch("/api/workbook-memo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode: "mark",
           items: [{ id: outcomeId, question: task.text, maxMarks: task.marks, tasks: [task], criteria }],
-          answers: [{ id: outcomeId, answer: `Task ${task.task}: ${task.text}\n${answer.trim()}` }],
+          answers: [{ id: outcomeId, answer: `Task ${task.task}: ${task.text}\n${submittedAnswer.trim()}` }],
         }),
       });
       const data = await response.json() as { results?: Array<TaskMark & { id: string }>; error?: string };
       const next = data.results?.[0];
       if (!response.ok || !next) throw new Error(data.error || "The answer could not be marked.");
-      onChange(valueKey, answer);
+      if (latestAnswer.current !== submittedAnswer) {
+        throw new Error("Your answer changed while it was being marked. Your latest work has been kept. Check your answer again for updated feedback.");
+      }
       const rubricTask = { id: task.id, task: task.task, text: task.text, marks: task.marks, modelAnswer: task.modelAnswer };
-      onChange(markKey, JSON.stringify({ ...next, answerHash: workbookMarkFingerprint(answer, { task: rubricTask, criteria }) }));
+      onChange(markKey, JSON.stringify({ ...next, answerHash: workbookMarkFingerprint(submittedAnswer, { task: rubricTask, criteria }) }));
       setEditing(false);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The answer could not be marked.");

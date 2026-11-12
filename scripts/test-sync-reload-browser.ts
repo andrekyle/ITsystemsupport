@@ -29,10 +29,11 @@ Object.assign(globalThis, { testCloud: { from(table: string) {
       cloud.set(row.key, row.value);
       return { error: null };
     },
-    delete() { return { async eq(_column: string, key: string) {
-      if (failure) return { error: { message: "Offline" } };
+    delete() { return { eq(column: string, key: string) {
+      if (column !== "key") return this;
+      if (failure) return Promise.resolve({ error: { message: "Offline" } });
       cloud.delete(key);
-      return { error: null };
+      return Promise.resolve({ error: null });
     } }; },
   };
 } } });

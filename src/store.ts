@@ -10,7 +10,7 @@ import { TENANT, TENANT_ID } from "./lib/tenant";
 import { tenantFilePrefix } from "./lib/files";
 import { lessonFigureFolder, matchFigureFile, safeFigureId, type StoredFigureFile } from "./lib/lessonFigureRecovery";
 import { cachedLessonEdits, flushLessonEdits, loadLessonEdits, queueLessonEdits, receiveLessonEdits, subscribeLessonEdits, watchLessonEdits } from "./lib/lessonEditStore";
-import { flushUnitPack, unitPackSnapshot } from "./lib/unitStorage";
+import { flushUnitPack, loadUnitPack, unitPackSnapshot } from "./lib/unitStorage";
 import { SAVED_SIGNATURE_REFERENCE } from "./lib/signature";
 import {
   loadOnboardingPacks,
@@ -457,9 +457,32 @@ export async function flushProgress(profileId: string): Promise<void> {
 
 export function useProgress(profileId: string) {
   const [state, setState] = useState<ProgressState>(() => readProgress(profileId));
+  const [hydration, setHydration] = useState({ profileId, ready: false, error: "" });
+  const ready = hydration.profileId === profileId && hydration.ready;
+  const loadError = hydration.profileId === profileId ? hydration.error : "";
 
   useEffect(() => {
-    setState(readProgress(profileId));
+    let active = true;
+    setHydration({ profileId, ready: false, error: "" });
+    void loadUnitPack(progressKey(profileId)).then(() => {
+      if (!active) return;
+      const encoded = unitPackSnapshot(progressKey(profileId));
+      if (encoded !== null) {
+        const parsed = JSON.parse(encoded) as ProgressState;
+        if (!parsed || typeof parsed.units !== "object" || parsed.units === null || Array.isArray(parsed.units)) {
+          throw new Error("The saved progress has an invalid format.");
+        }
+      }
+      setState(readProgress(profileId));
+      setHydration({ profileId, ready: true, error: "" });
+    }).catch(error => {
+      if (active) setHydration({
+        profileId,
+        ready: false,
+        error: error instanceof Error ? error.message : "Your saved work could not be loaded.",
+      });
+    });
+    return () => { active = false; };
   }, [profileId]);
 
   // One-time backfill per load: credit evidence-backed activities that were
@@ -467,6 +490,7 @@ export function useProgress(profileId: string) {
   // exercises / POE uploads without ticking the stage no longer read as 0%.
   // Quizzes and marked exercises are both FORMATIVE assessment evidence.
   useEffect(() => {
+    if (!ready) return;
     const key = progressKey(profileId);
     const cur = readProgress(profileId);
     let changed = false;
@@ -497,7 +521,7 @@ export function useProgress(profileId: string) {
       write(key, { ...cur, units });
       setState(readProgress(profileId));
     }
-  }, [profileId]);
+  }, [profileId, ready]);
 
   // live-sync when another tab writes this profile's progress
   useEffect(() => {
@@ -513,13 +537,14 @@ export function useProgress(profileId: string) {
 
   const update = useCallback(
     (fn: (prev: ProgressState) => ProgressState) => {
+      if (!ready) throw new Error("Your saved work is still loading. Wait until it has loaded before editing.");
       // base updates on fresh storage so concurrent tabs never clobber each other
       const fresh = readProgress(profileId);
       const next = fn(fresh);
       write(progressKey(profileId), next);
       setState(next);
     },
-    [profileId]
+    [profileId, ready]
   );
 
   const toggleActivity = useCallback(
@@ -677,7 +702,7 @@ export function useProgress(profileId: string) {
     [update]
   );
 
-  return { state, toggleActivity, saveQuizResult, setLogbookField, setLogbookFields, saveExerciseResult };
+  return { state, ready, loadError, toggleActivity, saveQuizResult, setLogbookField, setLogbookFields, saveExerciseResult };
 }
 
 /* ---------- shared app settings (controlled by the super user) ---------- */

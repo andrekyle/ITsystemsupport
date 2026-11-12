@@ -9,12 +9,13 @@ try {
   await build({
     entryPoints: [resolve("src/lib/sync.ts")], bundle: true, format: "esm",
     outfile: join(dir, "sync.mjs"),
+    define: { "import.meta.env": "{}" },
     plugins: [{ name: "mock-cloud", setup(b) {
       b.onResolve({ filter: /^\.\/supabase$/ }, () => ({ path: "cloud", namespace: "fixture" }));
       b.onResolve({ filter: /^\.\/unitStorage$/ }, () => ({ path: "packs", namespace: "fixture" }));
       b.onLoad({ filter: /.*/, namespace: "fixture" }, args => ({ contents: args.path === "cloud"
         ? "export const supabase = globalThis.testCloud;"
-        : "export const isUnitPackKey = () => false; export const receiveUnitPack = () => {}; export const storedUnitPacks = async () => []; export const clearUnitPacks = () => {};" }));
+        : "export const isUnitPackKey = () => false; export const isLargeStateKey = () => false; export const archiveCourseCopy = async () => {}; export const receiveUnitPack = () => {}; export const storedUnitPacks = async () => []; export const clearUnitPacks = () => {};" }));
     } }],
   });
   await build({

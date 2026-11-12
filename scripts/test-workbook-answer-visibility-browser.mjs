@@ -7,7 +7,7 @@ import { runBrowserTest } from "./browser-test-runner.mjs";
 const dir = mkdtempSync(join(tmpdir(), "workbook-answer-visibility-"));
 try {
   await build({
-    entryPoints: [resolve("scripts\\test-workbook-answer-visibility-browser.tsx")],
+    entryPoints: [resolve(process.argv[2] ?? "scripts\\test-workbook-answer-visibility-browser.tsx")],
     bundle: true, outfile: join(dir, "test.js"), jsx: "automatic",
     define: { "import.meta.env": "{}" },
     plugins: [{

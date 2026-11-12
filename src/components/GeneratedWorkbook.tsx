@@ -13,7 +13,7 @@ type Save = (key: string, value: string | boolean) => void;
 
 function SourceField({ id, label, values, onChange, type = "text" }: { id: string; label: string; values: Values; onChange: Save; type?: string }) {
   const key = `built-workbook.source.${id}`;
-  return <input aria-label={label} type={type} defaultValue={String(values[key] ?? "")} onBlur={event => onChange(key, event.target.value)} />;
+  return <input aria-label={label} type={type} value={String(values[key] ?? "")} onChange={event => onChange(key, event.target.value)} />;
 }
 
 function WorkbookTable114076({ values, onChange }: { values: Values; onChange: Save }) {
@@ -29,8 +29,8 @@ function WorkbookTable114076({ values, onChange }: { values: Values; onChange: S
 }
 
 function WorkbookContent114074({ values, onChange }: { values: Values; onChange: Save }) {
-  const field = (id: string, label: string, type = "text") => <input aria-label={label} type={type} defaultValue={String(values[`built-workbook.source.${id}`] ?? "")} onBlur={event => onChange(`built-workbook.source.${id}`, event.target.value)} />;
-  const area = (id: string, label: string) => <textarea aria-label={label} rows={5} defaultValue={String(values[`built-workbook.source.${id}`] ?? "")} onBlur={event => onChange(`built-workbook.source.${id}`, event.target.value)} />;
+  const field = (id: string, label: string, type = "text") => <input aria-label={label} type={type} value={String(values[`built-workbook.source.${id}`] ?? "")} onChange={event => onChange(`built-workbook.source.${id}`, event.target.value)} />;
+  const area = (id: string, label: string) => <textarea aria-label={label} rows={5} value={String(values[`built-workbook.source.${id}`] ?? "")} onChange={event => onChange(`built-workbook.source.${id}`, event.target.value)} />;
   return <>
     <section className="lw-page" data-page="2"><h2 className="lw-centre">Learner Information:</h2><table className="lw-table lw-details"><thead><tr><th>Details</th><th>Please Complete this Section</th></tr></thead><tbody>{[["name","Name & Surname"],["organisation","Organisation"],["unit-dept","Unit/Dept"],["facilitator","Facilitator Name"],["date-started","Date Started"],["date-completed","Date of Completion"]].map(([id,label])=><tr key={id}><th>{label}</th><td>{field(id,label,/date/i.test(label)?"date":"text")}</td></tr>)}</tbody></table><div className="lw-copy"><h3>Copyright</h3><p>All rights reserved. The copyright of this document, its previous editions and any annexures thereto, is protected and expressly reserved. No part of this document may be reproduced, stored in a retrievable system, or transmitted, in any form or by any means, electronic, mechanical, photocopying, recording or otherwise without the prior permission.</p></div></section>
     <section className="lw-page" data-page="3"><table className="lw-table lw-overview"><thead><tr><th colSpan={2}>OVERVIEW</th></tr></thead><tbody><tr><th>About the<br/>Learner<br/>Workbook</th><td>This Learner Exercise Workbook has been designed and developed to evaluate learners’ level of understanding. It forms part of a series of Learner Workbooks that have been developed for <b>NATIONAL CERTIFICATE: INFORMATION TECHNOLOGY: SYSTEMS SUPPORT: SAQA 48573 - LEVEL 5 - 147 CREDITS.</b></td></tr><tr><th>Purpose</th><td>The purpose of this Learner Exercise Workbook is to evaluate learners’ understanding on the specific outcomes and/or assessment criteria of the following SAQA Registered Unit Standards:</td></tr><tr><th colSpan={2} style={{padding:0}}><table className="lw-table lw-us-table"><thead><tr><th>US No</th><th>US Title</th><th>Level</th><th>Credits</th></tr></thead><tbody><tr><td>SAQA 114074</td><td><b>DEMONSTRATE AN UNDERSTANDING OF DIFFERENT COMPUTER NETWORK ARCHITECTURES AND STANDARDS</b></td><td>5</td><td>5</td></tr></tbody></table></th></tr><tr><th>Context</th><td>This assessment represents the Formative Assessment component of Function in a business environment, for the <b>Demonstrate an understanding of different computer network architectures and standards</b> unit standard and should be completed in the classroom/training room.</td></tr><tr><th>Resources</th><td>The following are resources needed for this assessment:<ol><li>Learner Guide; and</li><li>Assessment Preparation.</li></ol></td></tr><tr><th>Instructions to<br/>Facilitators</th><td>Facilitators will be required to:<ul><li>Explain the completion of the workbook to each learner; and</li><li>Interview the learner on similar questions, should he/she not be able to write.</li></ul></td></tr></tbody></table></section>
@@ -202,7 +202,7 @@ export function GeneratedWorkbook({ workbook, unit, profile, memoItems, values, 
           <thead><tr><th colSpan={2}>LEARNER INFORMATION</th></tr></thead>
           <tbody>{coverFields.map(([id, label, fallback]) => {
             const key = `built-workbook.cover.${id}`;
-            return <tr key={id}><th>{label}</th><td><input aria-label={label} defaultValue={String(values[key] ?? fallback)} onBlur={event => onChange(key, event.target.value)} /></td></tr>;
+            return <tr key={id}><th>{label}</th><td><input aria-label={label} value={String(values[key] ?? fallback)} onChange={event => onChange(key, event.target.value)} /></td></tr>;
           })}</tbody>
         </table>
       </WorkbookCover>

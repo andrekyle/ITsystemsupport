@@ -21,13 +21,13 @@ function Field({ id, label, values, onChange, type = "text", profile }: { id: st
     return <DocumentSignature value={String(values[key] ?? "")} savedSignature={editable ? profile.signatureImage : undefined} label={label} editable={editable} onChange={value => onChange(key, value)} />;
   }
   const value = String(values[key] ?? "");
-  return <input key={value} type={type} aria-label={label} defaultValue={value} onBlur={event => onChange(key, event.target.value)} />;
+  return <input type={type} aria-label={label} value={value} onChange={event => onChange(key, event.target.value)} />;
 }
 
 function MultilineField({ id, label, values, onChange }: { id: string; label: string; values: Values; onChange: Save }) {
   const key = `learner-workbook.${id}`;
   const value = String(values[key] ?? "");
-  return <textarea key={value} rows={4} aria-label={label} defaultValue={value} onBlur={event => onChange(key, event.target.value)} />;
+  return <textarea rows={4} aria-label={label} value={value} onChange={event => onChange(key, event.target.value)} />;
 }
 
 function Tick({ id, label, values, onChange }: { id: string; label: string; values: Values; onChange: Save }) {
@@ -44,14 +44,12 @@ function Lines({ id, count, values, onChange, label, legacyId }: { id: string; c
     (_, index) => String(values[`learner-workbook.${previousId}.line-${index + 1}`] ?? "")
   ).filter(Boolean).join("\n");
   const previousAnswer = legacyId ? String(values[`learner-workbook.${legacyId}.answer`] ?? "") : "";
-  const currentAnswer = String(values[key] ?? "");
-  const answer = currentAnswer || previousAnswer || previousLines;
+  const answer = String(values[key] ?? (previousAnswer || previousLines));
   return <div className="lw-lines">
     <textarea
-      key={answer}
       aria-label={`${label} answer`}
-      defaultValue={answer}
-      onBlur={event => onChange(key, event.target.value)}
+      value={answer}
+      onChange={event => onChange(key, event.target.value)}
     />
   </div>;
 }
