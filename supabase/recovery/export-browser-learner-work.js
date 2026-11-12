@@ -68,6 +68,12 @@
           if (!cursor) return;
           const key = pending ? cursor.value?.key : String(cursor.key);
           if (wanted(key)) rows.push({ key: String(cursor.key), value: cursor.value });
+          else if (!pending && String(cursor.key).startsWith('itssDevice.courseRecovery.')) {
+            try {
+              const recovery = JSON.parse(cursor.value);
+              if (wanted(recovery.key)) rows.push({ key: String(cursor.key), value: cursor.value });
+            } catch (error) { output.errors.push('Recovery snapshot: ' + error.message); }
+          }
           cursor.continue();
         };
         transaction.oncomplete = () => resolve(rows);

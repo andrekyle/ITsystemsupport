@@ -10,9 +10,11 @@ const assert = (value: unknown, message: string) => { if (!value) throw new Erro
 function checkTables() {
   const issues: string[] = [];
   for (const table of fixture.querySelectorAll<HTMLTableElement>(".document-print-target table")) {
-    const parent = table.parentElement!;
-    const style = getComputedStyle(parent);
-    const rect = parent.getBoundingClientRect();
+    const page = table.closest<HTMLElement>(".lw-page,.lgd-page,.pt-page");
+    assert(page, `Table ${table.className} must belong to a printable page`);
+    if (page.matches(".lw-cover,.pt-cover")) continue;
+    const style = getComputedStyle(page);
+    const rect = page.getBoundingClientRect();
     const left = rect.left + parseFloat(style.borderLeftWidth) + parseFloat(style.paddingLeft);
     const right = rect.right - parseFloat(style.borderRightWidth) - parseFloat(style.paddingRight);
     const bounds = table.getBoundingClientRect();

@@ -60,6 +60,10 @@ async function test() {
           ? <TemplateLearnerWorkbook workbook={workbook} unit={unit} profile={profile} memoItems={memo.items} values={values} onChange={onChange} onSave={onSave} />
           : <LearnerWorkbook profile={profile} memoItems={memo.items} values={values} onChange={onChange} onSave={onSave} />));
       assert(fixture.textContent?.includes("My own response"), `${role} retains the learner's response`);
+      const actions = fixture.querySelector(".document-actions");
+      assert(actions?.querySelectorAll("button").length === 2, "Document toolbar contains only PDF and HTML downloads");
+      assert(!actions.querySelector('[aria-label^="Save "]'), "Document toolbar has no manual save button");
+      assert(actions.querySelector(".document-action-pdf") && actions.querySelector(".document-action-html"), "Both download options remain available");
       assert(fixture.textContent?.includes("2/5"), `${role} retains the task score`);
       assert(fixture.textContent?.includes(feedback) === staff, `${role}: feedback visibility follows staff access`);
       if (!staff) {

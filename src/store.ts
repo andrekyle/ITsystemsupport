@@ -12,6 +12,7 @@ import { lessonFigureFolder, matchFigureFile, safeFigureId, type StoredFigureFil
 import { cachedLessonEdits, flushLessonEdits, loadLessonEdits, queueLessonEdits, receiveLessonEdits, subscribeLessonEdits, watchLessonEdits } from "./lib/lessonEditStore";
 import { flushUnitPack, loadUnitPack, unitPackSnapshot } from "./lib/unitStorage";
 import { SAVED_SIGNATURE_REFERENCE } from "./lib/signature";
+import { parseProgressSnapshot } from "./lib/progressEvidence";
 import {
   loadOnboardingPacks,
   loadOnboardingPacksForUpdate,
@@ -468,10 +469,7 @@ export function useProgress(profileId: string) {
       if (!active) return;
       const encoded = unitPackSnapshot(progressKey(profileId));
       if (encoded !== null) {
-        const parsed = JSON.parse(encoded) as ProgressState;
-        if (!parsed || typeof parsed.units !== "object" || parsed.units === null || Array.isArray(parsed.units)) {
-          throw new Error("The saved progress has an invalid format.");
-        }
+        parseProgressSnapshot(encoded);
       }
       setState(readProgress(profileId));
       setHydration({ profileId, ready: true, error: "" });
@@ -538,8 +536,8 @@ export function useProgress(profileId: string) {
   const update = useCallback(
     (fn: (prev: ProgressState) => ProgressState) => {
       if (!ready) throw new Error("Your saved work is still loading. Wait until it has loaded before editing.");
-      // base updates on fresh storage so concurrent tabs never clobber each other
-      const fresh = readProgress(profileId);
+      const encoded = unitPackSnapshot(progressKey(profileId));
+      const fresh = encoded === null ? EMPTY : parseProgressSnapshot(encoded);
       const next = fn(fresh);
       write(progressKey(profileId), next);
       setState(next);

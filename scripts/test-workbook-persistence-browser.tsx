@@ -80,6 +80,7 @@ async function test() {
   catch (error) { blocked = /still loading/.test(String(error)); }
   assert(blocked, "Writes during hydration are blocked explicitly");
   await waitFor(() => progress.ready, "Saved progress did not finish loading");
+  assert(!fixture.querySelector('.document-actions [aria-label^="Save "]'), "Workbook autosaving does not require a save button");
   const activity = fixture.querySelector<HTMLTextAreaElement>('[data-primary-activity="1"]')!;
   assert(activity.value === "Existing activity answer", "Existing work is restored before editing");
   input(activity, "Activity saved without clicking away");

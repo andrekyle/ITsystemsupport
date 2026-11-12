@@ -9,6 +9,7 @@ const pending = new Set<string>();
 const loads = new Map<string, Promise<void>>();
 let generation=0;
 export const isUnitPackKey = (key:string) => /^itss\.unitbuilder\.(?:custom-[^.]+\.)?[^.]+\.(?:shared|deleted-backup)$/.test(key);
+export const isProgressKey = (key: string) => /^itss\.progress\.[^.]+$/.test(key);
 /** Large shared records that must bypass quota-limited localStorage. */
 export const isLargeStateKey = (key:string) => isUnitPackKey(key) || /^itss\.workbookmemo\..+\.shared$/.test(key) || /^itss\.progress\..+$/.test(key);
 let database: Promise<IDBDatabase> | undefined;
@@ -22,12 +23,12 @@ function db() {
 }
 function notify(){ window.dispatchEvent(new Event("unit-built")); }
 export function rememberUnitPack(key:string,value:string){cache.set(key,value);notify();}
-export async function persistUnitPack(key:string,value:string){
+export async function persistUnitPack(key:string,value:string, preservePrevious = false){
   const database=await db();
   await new Promise<void>((resolve,reject)=>{
     const tx=database.transaction("packs","readwrite");
     const store = tx.objectStore("packs");
-    if (isUnitPackKey(key)) {
+    if (isUnitPackKey(key) || (preservePrevious && isProgressKey(key))) {
       const previous = store.get(key);
       previous.onsuccess = () => {
         if (typeof previous.result === "string" && previous.result !== value) {
@@ -85,9 +86,10 @@ export function unitPackSnapshot(key:string):string|null {
   return null;
 }
 /** Cloud is already durable; cache it without letting local quota break sync. */
-export function receiveUnitPack(key:string,value:string){
+export function receiveUnitPack(key:string,value:string, preservePrevious = false){
   rememberUnitPack(key,value);
-  void persistUnitPack(key,value).catch(()=>{});
+  void persistUnitPack(key,value,preservePrevious).catch(error =>
+    console.error("Could not persist saved content and its recovery copy:", error));
 }
 /** A deleted published unit must not reappear from an older device copy. */
 export function forgetUnitPack(key:string){

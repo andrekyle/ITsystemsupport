@@ -80,6 +80,7 @@ import { insertLessonPlanDay, lessonPlanDayCount, removeLessonPlanDay, startLess
 import { isLessonBulletListLead, isLessonListLead, isLessonListPoint, isLessonNumberedListLead, isLessonSubheading, lessonListItemText } from "../lib/lessonSubsections";
 import { clearInlineDraft, loadInlineDraft, saveInlineDraft } from "../lib/inlineDraftStorage";
 import { resolvedSlideQuizAnswer } from "../lib/slideQuiz";
+import { parseLessonQuizState, reconcileLessonQuiz, recordLessonQuiz, type LessonQuizState } from "../lib/lessonQuizProgress";
 import { EditingTools } from "../components/EditingSidebar";
 import { InfoSectionTabs } from "../components/InfoSectionTabs";
 import { usePhoneView } from "../components/usePhoneView";
@@ -2427,26 +2428,16 @@ function loadLessonStep(profileId: string, unitId: string): number {
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
 
-interface LessonQuizState {
-  answers: Record<number, number[]>;
-  checked: Record<number, boolean>;
-  attempts: Record<number, number>;
-}
-
 function loadLessonQuizState(profileId: string, unitId: string): LessonQuizState {
-  try {
-    const raw = localStorage.getItem(lessonQuizKey(profileId, unitId));
-    if (raw) {
-      const p = JSON.parse(raw) as Partial<LessonQuizState>;
-      return { answers: p.answers ?? {}, checked: p.checked ?? {}, attempts: p.attempts ?? {} };
-    }
-  } catch {
-    // malformed state — start fresh
-  }
-  return { answers: {}, checked: {}, attempts: {} };
+  const raw = localStorage.getItem(lessonQuizKey(profileId, unitId));
+  return raw === null ? { answers: {}, checked: {}, attempts: {} } : parseLessonQuizState(raw);
 }
 
-export function UnitPage({
+export function UnitPage(props: React.ComponentProps<typeof UnitPageContent>) {
+  return <UnitPageContent key={`${props.profile.id}:${props.unitId}`} {...props} />;
+}
+
+function UnitPageContent({
   unitId,
   profile,
   progress,
@@ -2511,15 +2502,8 @@ export function UnitPage({
   /** edX-style lesson wizard — index of the section currently on screen */
   const [lessonStep, setLessonStep] = useState<number>(() => loadLessonStep(profile.id, unitId));
   /** lesson-view per-slide quiz answers, keyed by section index — persisted per learner */
-  const [lessonQuizAnswers, setLessonQuizAnswers] = useState<Record<number, number[]>>(
-    () => loadLessonQuizState(profile.id, unitId).answers
-  );
-  /** lesson-view per-slide quiz: has the learner clicked "Check answers" for this section */
-  const [lessonQuizChecked, setLessonQuizChecked] = useState<Record<number, boolean>>(
-    () => loadLessonQuizState(profile.id, unitId).checked
-  );
-  const [lessonQuizAttempts, setLessonQuizAttempts] = useState<Record<number, number>>(
-    () => loadLessonQuizState(profile.id, unitId).attempts
+  const [savedLessonQuiz, setSavedLessonQuiz] = useState<LessonQuizState>(
+    () => loadLessonQuizState(profile.id, unitId)
   );
   /** staff-only toggle: reveal correct answer on every slide quiz */
   const [showAnswers, setShowAnswers] = useState(false);
@@ -2832,10 +2816,6 @@ export function UnitPage({
     setTab(loadUnitTab(unitId));
     setQuizId(null);
     setLessonStep(loadLessonStep(profile.id, unitId));
-    const savedQuiz = loadLessonQuizState(profile.id, unitId);
-    setLessonQuizAnswers(savedQuiz.answers);
-    setLessonQuizChecked(savedQuiz.checked);
-    setLessonQuizAttempts(savedQuiz.attempts);
   }, [unitId, profile.id]);
 
   useEffect(() => {
@@ -2845,12 +2825,6 @@ export function UnitPage({
   useEffect(() => {
     localStorage.setItem(lessonStepKey(profile.id, unitId), String(lessonStep));
   }, [lessonStep, unitId, profile.id]);
-  useEffect(() => {
-    localStorage.setItem(
-      lessonQuizKey(profile.id, unitId),
-      JSON.stringify({ answers: lessonQuizAnswers, checked: lessonQuizChecked, attempts: lessonQuizAttempts })
-    );
-  }, [lessonQuizAnswers, lessonQuizChecked, lessonQuizAttempts, unitId, profile.id]);
   const [noteError, setNoteError] = useState<string | null>(null);
   const [zipping, setZipping] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -2981,6 +2955,7 @@ export function UnitPage({
       const key = `itss.lessonedits.${courseScopedUnit(editId)}`;
       await flushLessonEdits(key, cachedLessonEdits(key, lessonEdits));
       setLessonSaveStatus("saved");
+      setSlideEditOpen(false);
       setEditMode(false);
     } catch (error) {
       setLessonSaveStatus("error");
@@ -3013,6 +2988,18 @@ export function UnitPage({
   const content = inlineUnit ?? (officialSaqa
     ? { ...(baseContent ?? { lesson: [], exercises: [], assignments: [], quiz: [] }), saqa: officialSaqa }
     : baseContent);
+  const slideQuizDefinitions = useMemo(() => content?.lesson.map((section, si) => ({
+    heading: section.heading,
+    questions: lessonEdits.generatedQuizzes?.[si] ?? section.slideQuiz ?? [],
+  })) ?? [], [content?.lesson, lessonEdits.generatedQuizzes]);
+  const lessonQuiz = useMemo(() => reconcileLessonQuiz(savedLessonQuiz, slideQuizDefinitions),
+    [savedLessonQuiz, slideQuizDefinitions]);
+  if (!savedLessonQuiz.identities && lessonQuiz.identities) setSavedLessonQuiz(lessonQuiz);
+  const { answers: lessonQuizAnswers, checked: lessonQuizChecked, attempts: lessonQuizAttempts } = lessonQuiz;
+  useEffect(() => {
+    if (!slideQuizDefinitions.length) return;
+    localStorage.setItem(lessonQuizKey(profile.id, unitId), JSON.stringify(lessonQuiz));
+  }, [lessonQuiz, slideQuizDefinitions, unitId, profile.id]);
   const workbookDocument = unitId === "114076" && content?.learnerWorkbook?.sourceName === "US-114076-Learner-Workbook.pdf" && !content.learnerWorkbook.replica
     ? undefined
     : content?.learnerWorkbook;
@@ -3494,7 +3481,7 @@ export function UnitPage({
     if (acts["Lesson & Training Aids"]) return;
     const lastIdx = visibleLessonIndices[visibleLessonIndices.length - 1];
     if (activeLessonIndex !== lastIdx) return;
-    const lastQuiz = content.lesson[lastIdx].slideQuiz ?? [];
+    const lastQuiz = slideQuizDefinitions[lastIdx].questions;
     const answers = lessonQuizAnswers[lastIdx] ?? [];
     const passed =
       lastQuiz.length === 0 ||
@@ -3503,7 +3490,7 @@ export function UnitPage({
       ));
     if (passed) toggleActivity(u.us, "Lesson & Training Aids");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lessonStep, lessonQuizAnswers, content, u.us, lessonEdits.deletedSections, activeLessonIndex]);
+  }, [lessonStep, lessonQuizAnswers, content, u.us, lessonEdits.deletedSections, activeLessonIndex, slideQuizDefinitions]);
 
   // Record each passed slide gate in the unit's progress logbook so it counts
   // toward the learner's XP (see computeGamification) and staff results views.
@@ -3511,7 +3498,7 @@ export function UnitPage({
     if (!content) return;
     const logbook = progress.units[u.us]?.logbook ?? {};
     content.lesson.forEach((sec, si) => {
-      const quiz = sec.slideQuiz ?? [];
+      const quiz = slideQuizDefinitions[si].questions;
       if (lessonEdits.deletedSections?.includes(si)) return;
       if (!quiz.length) return;
       const key = `slidegate.${si}`;
@@ -3522,7 +3509,7 @@ export function UnitPage({
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lessonQuizAnswers, content, u.us, lessonEdits.deletedSections]);
+  }, [lessonQuizAnswers, content, u.us, lessonEdits.deletedSections, slideQuizDefinitions]);
 
   /** Added images share the existing per-unit figure storage, including cloud sync. */
   const sectionFigures = (si: number, originals: LessonFigure[] = []): LessonFigure[] => [
@@ -4382,12 +4369,16 @@ export function UnitPage({
               hasSlideQuiz && qAllAnswered && qAnswers.every((a, i) => a === correctQuizAnswers[i]);
             const quizAttemptsExhausted = maxQuizAttempts !== null && quizAttempts >= maxQuizAttempts && !qAllCorrect;
             const setAnswer = (qi: number, oi: number) => {
-              setLessonQuizAnswers((prev) => {
-                const cur = prev[si]?.slice() ?? slideQuiz.map(() => -1);
+              setSavedLessonQuiz((previous) => {
+                const current = reconcileLessonQuiz(previous, slideQuizDefinitions);
+                const cur = current.answers[si]?.slice() ?? slideQuiz.map(() => -1);
                 cur[qi] = oi;
-                return { ...prev, [si]: cur };
+                return recordLessonQuiz({
+                  ...current,
+                  answers: { ...current.answers, [si]: cur },
+                  checked: { ...current.checked, [si]: false },
+                }, slideQuizDefinitions);
               });
-              setLessonQuizChecked((prev) => ({ ...prev, [si]: false }));
             };
             const quizBlock = hasSlideQuiz ? (
               <div className="lesson-slide-quiz">
@@ -4481,8 +4472,14 @@ export function UnitPage({
                     className="btn"
                     disabled={!qAllAnswered || quizAttemptsExhausted}
                     onClick={() => {
-                      setLessonQuizChecked((prev) => ({ ...prev, [si]: true }));
-                      setLessonQuizAttempts((prev) => ({ ...prev, [si]: (prev[si] ?? 0) + 1 }));
+                      setSavedLessonQuiz(previous => {
+                        const current = reconcileLessonQuiz(previous, slideQuizDefinitions);
+                        return recordLessonQuiz({
+                          ...current,
+                          checked: { ...current.checked, [si]: true },
+                          attempts: { ...current.attempts, [si]: (current.attempts[si] ?? 0) + 1 },
+                        }, slideQuizDefinitions);
+                      });
                     }}
                   >
                     Check answers
@@ -5254,10 +5251,13 @@ export function UnitPage({
                   </button>}
                   {isPrivileged && (
                     <>
-                      <EditingTools active={slideEditOpen || editable} title={`Slide ${position + 1} · Save and finish`} order={0}
-                        description="Save your changes under Slide content and images before closing the slide tools.">
+                      <EditingTools active={slideEditOpen || editable} title={`Slide ${position + 1} · Finish editing`} order={0}
+                        description="Changes save automatically. Finish editing to close the slide tools.">
                         <button type="button" className="btn ghost sm slide-tool-action" disabled={savingLesson || !!inlineUnit}
-                          onClick={() => { setSlideEditOpen(false); setEditMode(false); }}>
+                          onClick={() => {
+                            if (editable && isSuperUser) void saveLessonToCloud();
+                            else { setSlideEditOpen(false); setEditMode(false); }
+                          }}>
                           <Icon name="checkCircle" size={16} />{editable ? "Done editing slide" : "Close slide tools"}
                         </button>
                       </EditingTools>
@@ -5337,10 +5337,6 @@ export function UnitPage({
                     </>
                   )}
                       {isSuperUser && lessonSplitError && <p className="auth-error" role="alert">{lessonSplitError}</p>}
-                      {isSuperUser && editMode && !inlineUnit && <button type="button" className="btn save-cloud-action"
-                        disabled={savingLesson} onClick={() => void saveLessonToCloud()}>
-                        <Icon name="save" size={16} />{savingLesson ? "Saving to cloud..." : "Save to cloud"}
-                      </button>}
                       {isSuperUser && lessonSaveStatus === "saved" && <p role="status">Saved to cloud.</p>}
                       {isSuperUser && lessonSaveStatus === "error" && <p className="auth-error" role="alert">{lessonSaveError}</p>}
                       </EditingTools>

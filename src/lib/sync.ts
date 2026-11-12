@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
-import { isLargeStateKey, receiveUnitPack, storedUnitPacks, clearUnitPacks } from "./unitStorage";
+import { isLargeStateKey, isProgressKey, loadUnitPack, unitPackSnapshot, receiveUnitPack, storedUnitPacks, clearUnitPacks } from "./unitStorage";
+import { mergeProgressChanges, mergeProgressEvidence, parseProgressSnapshot } from "./progressEvidence";
 import { hasPendingLessonEdits, receiveLessonEdits } from "./lessonEditStore";
 import {
   PENDING_KEY,
@@ -15,6 +16,7 @@ import {
   receiveOnboardingPacks,
 } from "./onboardingStorage";
 import { TENANT_ID } from "./tenant";
+import type { ProgressState } from "../types";
 
 /**
  * Cloud sync for the app's localStorage state.
@@ -51,13 +53,16 @@ function isShared(key: string) {
 }
 
 let userId: string | null = null;
-let hydrating = false;
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
 // the untouched setter, captured before installSync() wraps it
 const rawSet = localStorage.setItem.bind(localStorage);
-function rememberPending(key: string, value: string | null) {
+function rememberPending(key: string, value: string | null, baseValue = isProgressKey(key) ? unitPackSnapshot(key) : undefined) {
   if (!userId) return Promise.resolve();
-  return rememberPendingWrite({ userId, tenantId: TENANT_ID, key, value, revision: crypto.randomUUID() });
+  const existing = pendingFor(key);
+  return rememberPendingWrite({
+    userId, tenantId: TENANT_ID, key, value, revision: crypto.randomUUID(),
+    baseValue: existing ? existing.baseValue : baseValue,
+  });
 }
 function pendingFor(key: string) {
   return pendingWrites().find(write => write.userId === userId && write.tenantId === TENANT_ID && write.key === key);
@@ -72,9 +77,13 @@ const pushErrors = new Map<string, string>();
 
 /** Store a value that was just pulled FROM the cloud without echoing it back
  *  up — an echo could land after someone else's newer save and undo it. */
-export function writeFromCloud(key: string, value: string) {
+export function writeFromCloud(key: string, value: string): void | Promise<void> {
   if (key.startsWith(UNIT_BUILDER_SAVE_PROBE)) return;
   if (key.startsWith("itss.presence.")) return;
+  if (isProgressKey(key)) return reconcileCloudProgress(key, value).catch(error => {
+    console.error("Could not reconcile saved progress; the original local copy was kept:", error);
+    throw error;
+  });
   if (pendingFor(key)) return;
   if (key === ONBOARDING_KEY) {
     receiveOnboardingPacks(value);
@@ -118,6 +127,32 @@ export function writeFromCloud(key: string, value: string) {
   rawSet(key, value);
 }
 
+async function reconcileCloudProgress(key: string, value: string): Promise<void> {
+  const owner = userId;
+  const cloud = parseProgressSnapshot(value);
+  await loadUnitPack(key);
+  if (userId !== owner) return;
+  const pending = pendingFor(key);
+  if (pending?.value === null) return;
+  const localValue = pending?.value ?? unitPackSnapshot(key);
+  const local = localValue === null ? undefined : parseProgressSnapshot(localValue);
+  // Pending edits apply only changed fields. With no pending edits, recover
+  // missing evidence while preferring the cloud's nonempty narrative fields.
+  const merged = JSON.stringify(local
+    ? pending ? mergeProgressWrite(local, cloud, pending.baseValue) : mergeProgressEvidence(local, cloud)
+    : cloud);
+  const persisted = pending ? rememberPendingWrite({
+    ...pending, value: merged, baseValue: value, revision: crypto.randomUUID(),
+  }) : Promise.resolve();
+  receiveUnitPack(key, merged, true);
+  await persisted;
+}
+
+function mergeProgressWrite(local: ProgressState, current: ProgressState, baseValue?: string | null): ProgressState {
+  if (baseValue === undefined) return mergeProgressEvidence(current, local, "save");
+  return mergeProgressChanges(baseValue === null ? { units: {} } : parseProgressSnapshot(baseValue), local, current);
+}
+
 function syncable(key: string) {
   return key.startsWith(PREFIX) && !LOCAL_ONLY.has(key) && !key.startsWith(UNIT_BUILDER_SAVE_PROBE);
 }
@@ -131,6 +166,44 @@ function ownedProfileId(key: string): string | undefined {
   );
   if (direct) return direct[1];
   return key.match(/^itss\.lessonquiz\.([^.]+)\./)?.[1];
+}
+
+async function pushProgress(key: string, value: string, owner: string): Promise<void> {
+  if (!supabase) throw new Error("Cloud saving is unavailable.");
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const remote = await supabase.from("app_state").select("value,updated_at")
+      .eq("user_id", owner).eq("tenant_id", TENANT_ID).eq("key", key).maybeSingle();
+    if (remote.error) throw new Error(remote.error.message);
+    if (userId !== owner) throw new Error("The signed-in account changed while saving.");
+    const pending = pendingFor(key);
+    if (pending?.value === null) throw new Error("This progress was removed while saving. Retry the latest change.");
+    const local = parseProgressSnapshot(pending?.value ?? value);
+    const current = remote.data ? parseProgressSnapshot(remote.data.value) : { units: {} };
+    const merged = JSON.stringify(mergeProgressWrite(local, current, pending?.baseValue));
+    if (pending) {
+      await rememberPendingWrite({ ...pending, value: merged, baseValue: remote.data?.value ?? null });
+    }
+    if (userId !== owner) throw new Error("The signed-in account changed while saving.");
+    const updatedAt = new Date(Math.max(Date.now(),
+      remote.data ? new Date(remote.data.updated_at).getTime() + 1 : 0)).toISOString();
+    const result = remote.data
+      ? await supabase.from("app_state").update({ value: merged, updated_at: updatedAt })
+        .eq("user_id", owner).eq("tenant_id", TENANT_ID).eq("key", key)
+        .eq("updated_at", remote.data.updated_at).select("key").maybeSingle()
+      : await supabase.from("app_state").insert({
+        user_id: owner, tenant_id: TENANT_ID, key, value: merged, updated_at: updatedAt,
+      }).select("key").maybeSingle();
+    if (result.error) {
+      if (result.error.code === "23505") continue;
+      throw new Error(result.error.message);
+    }
+    if (!result.data) continue; // Another device saved after our read; merge its new revision.
+    if (userId === owner && pendingFor(key)?.revision === pending?.revision) {
+      receiveUnitPack(key, merged, true);
+    }
+    return;
+  }
+  throw new Error("Progress changed on another device while saving. Your edits are still on this device. Keep this page open and reconnect or edit again to retry.");
 }
 
 async function pushKey(key: string, value: string | null) {
@@ -155,6 +228,9 @@ async function pushKey(key: string, value: string | null) {
         }
       } else if (value === null) {
         result = await supabase.from("app_state").delete().eq("user_id", owner).eq("tenant_id", TENANT_ID).eq("key", key);
+      } else if (isProgressKey(key)) {
+        await pushProgress(key, value, owner);
+        result = { error: null };
       } else {
         result = await supabase
           .from("app_state")
@@ -182,9 +258,8 @@ async function pushKey(key: string, value: string | null) {
   return saved;
 }
 
-function queue(key: string, value: string | null) {
-  if (hydrating) return;
-  const persisted = rememberPending(key, value);
+function queue(key: string, value: string | null, baseValue?: string | null) {
+  const persisted = rememberPending(key, value, baseValue);
   void persisted.catch(error => console.error("Could not persist pending cloud save:", error));
   const existing = timers.get(key);
   if (existing) clearTimeout(existing);
@@ -232,9 +307,9 @@ export async function flushValue(
     const detail = pushErrors.get(key);
     throw new Error(detail
       ? `Cloud save failed: ${detail}. Your edits are still on this device.`
-      : "Cloud save failed. Check your connection and try Save to cloud again. Your edits are still on this device.");
+      : "Cloud save failed. Your edits are still on this device and will retry when you reconnect.");
   }
-  if (requireCloud && pendingFor(key)) throw new Error("More edits were made while saving. Click Save to cloud again to save the latest changes.");
+  if (requireCloud && pendingFor(key)) throw new Error("More edits were made while saving. The latest changes remain queued for automatic saving.");
 }
 
 /** Save every edit queued for the signed-in account before an operation that
@@ -286,7 +361,12 @@ export function installSync() {
   }
   localStorage.setItem = (key: string, value: string) => {
     if (key.startsWith(UNIT_BUILDER_SAVE_PROBE)) return;
-    if(isLargeStateKey(key)){receiveUnitPack(key,value);if(syncable(key))queue(key,value);return;}
+    if(isLargeStateKey(key)){
+      const baseValue = isProgressKey(key) ? unitPackSnapshot(key) : undefined;
+      receiveUnitPack(key,value);
+      if(syncable(key))queue(key,value,baseValue);
+      return;
+    }
     rawSet(key, value);
     if (syncable(key)) queue(key, value);
   };
@@ -304,7 +384,8 @@ export function installSync() {
 /**
  * Hydrate localStorage from the signed-in user's cloud snapshot, then push up
  * any local keys the cloud does not have yet (first login from this device).
- * Cloud values win unless this account has an unsynced local write.
+ * Cloud values win unless this account has an unsynced local write. Progress
+ * reconciles saved evidence in either direction instead of replacing a record.
  */
 export async function startSync(authUserId: string): Promise<void> {
   userId = authUserId;
@@ -332,19 +413,20 @@ export async function startSync(authUserId: string): Promise<void> {
     supabase.from("app_state").select("key,value").eq("user_id", authUserId).eq("tenant_id", TENANT_ID),
     supabase.from("shared_state").select("key,value").eq("tenant_id", TENANT_ID),
   ]);
-  if (own.error) return; // stay on local data rather than blocking the app
+  if (own.error || userId !== authUserId) return; // stay on local data rather than blocking the app
 
-  hydrating = true;
   const cloudKeys = new Set<string>();
   for (const row of own.data ?? []) {
     cloudKeys.add(row.key);
-    if (!LOCAL_ONLY.has(row.key) && !dirtyAtStart.has(row.key)) writeFromCloud(row.key, row.value);
+    if (!LOCAL_ONLY.has(row.key) && (!dirtyAtStart.has(row.key) || isProgressKey(row.key))) {
+      await writeFromCloud(row.key, row.value);
+      if (userId !== authUserId) return;
+    }
   }
   for (const row of shared.error ? [] : shared.data ?? []) {
     cloudKeys.add(row.key);
-    if (!LOCAL_ONLY.has(row.key) && !dirtyAtStart.has(row.key)) writeFromCloud(row.key, row.value);
+    if (!LOCAL_ONLY.has(row.key) && !dirtyAtStart.has(row.key)) await writeFromCloud(row.key, row.value);
   }
-  hydrating = false;
   // When this account already has an authoritative cloud profile list, only
   // upload per-profile state for ids still present in that list. Without this
   // guard, a browser that once held another learner's seeded progress can

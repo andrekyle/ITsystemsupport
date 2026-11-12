@@ -1,31 +1,7 @@
-import { useState } from "react";
 import { Icon } from "../icons";
 import { EditingTools } from "./EditingSidebar";
 
-export function DocumentActions({ name, labelled = false, onSave, editing = false }: { name: string; labelled?: boolean; onSave?: () => Promise<void>; editing?: boolean }) {
-  const [saved, setSaved] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
-
-  const save = async () => {
-    const active = document.activeElement;
-    if (active instanceof HTMLElement) active.blur();
-    setSaving(true);
-    setSaved(false);
-    setSaveError("");
-    try {
-      // Allow blur handlers to commit their field before taking the snapshot.
-      await new Promise<void>(resolve => window.setTimeout(resolve, 0));
-      await onSave?.();
-      setSaved(true);
-      window.setTimeout(() => setSaved(false), 1600);
-    } catch (error) {
-      setSaveError(error instanceof Error ? error.message : `${name} could not be saved.`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
+export function DocumentActions({ name, labelled = false, editing = false }: { name: string; labelled?: boolean; onSave?: () => Promise<void>; editing?: boolean }) {
   const downloadHtml = () => {
     const source = document.querySelector<HTMLElement>(".document-print-target");
     if (!source) return;
@@ -115,10 +91,6 @@ export function DocumentActions({ name, labelled = false, onSave, editing = fals
 
   const tools = (
     <div className={`document-actions no-print${labelled ? " is-labelled" : ""}`} role="toolbar" aria-label={`${name} actions`}>
-      <button type="button" className={saved ? "is-saved" : ""} disabled={saving} onClick={() => void save()} title={saved ? "Saved" : `Save ${name}`} aria-label={`Save ${name}`}>
-        <Icon name="save" size={18} />
-        {labelled && <span>{saving ? "Saving…" : saved ? "Saved" : "Save"}</span>}
-      </button>
       <button type="button" className="document-action-pdf" onClick={downloadPdf} title={`Download ${name} as PDF`} aria-label={`Download ${name} as PDF`}>
         <Icon name="download" size={18} />
         {labelled && <span>PDF</span>}
@@ -127,8 +99,6 @@ export function DocumentActions({ name, labelled = false, onSave, editing = fals
         <Icon name="document" size={18} />
         {labelled && <span>HTML</span>}
       </button>
-      {saved && !labelled && <span role="status">Saved</span>}
-      {saveError && <span className="auth-error" role="alert">{saveError}</span>}
     </div>
   );
   return editing ? <EditingTools active title={`${name} actions`}>{tools}</EditingTools> : tools;

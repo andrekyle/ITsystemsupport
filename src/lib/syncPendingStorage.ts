@@ -5,6 +5,8 @@ export type PendingWrite = {
   tenantId?: string;
   key: string;
   value: string | null;
+  /** Progress snapshot before the first unsynced edit, for field-level reconciliation. */
+  baseValue?: string | null;
   revision: string;
 };
 
