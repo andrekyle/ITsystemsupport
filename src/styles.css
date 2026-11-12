@@ -4632,6 +4632,21 @@ textarea:focus {
     -webkit-box-shadow:none!important;
     background:#fff!important;
   }
+  /* Every exported table fills the content area between the page margins,
+     including tables with a narrower inline width in the source document. */
+  body:has(.document-print-target) .document-print-target table {
+    box-sizing:border-box!important;
+    width:100%!important;
+    min-width:100%!important;
+    max-width:100%!important;
+    margin-left:0!important;
+    margin-right:0!important;
+    table-layout:fixed!important;
+  }
+  body:has(.document-print-target) .document-print-target table :is(th,td) {
+    min-width:0!important;
+    overflow-wrap:anywhere;
+  }
   body:has(.document-print-target) .document-print-target :is(.lw-table,.pt-table,.lb-table,table.data) {
     border-collapse:collapse!important;
     border-spacing:0!important;

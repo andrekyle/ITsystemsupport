@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { spawn } from "node:child_process";
@@ -32,7 +32,7 @@ function command(socket, method, params = {}) {
 }
 
 /** Use real time: virtual-time DOM dumps can finish before IndexedDB commits. */
-export async function runBrowserTest(dir, viewport) {
+export async function runBrowserTest(dir, viewport, options = {}) {
   const browser = [process.env.CHROME_PATH, "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"].find(path => path && existsSync(path));
   if (!browser) throw new Error("Set CHROME_PATH to a Chromium browser executable.");
@@ -62,6 +62,7 @@ export async function runBrowserTest(dir, viewport) {
           ...viewport, deviceScaleFactor: 1, mobile: viewport.width < 600,
         });
       }
+      if (options.media) await command(page, "Emulation.setEmulatedMedia", { media: options.media });
       await command(page, "Page.navigate", { url: pathToFileURL(join(dir, "index.html")).href });
       await new Promise(resolve => setTimeout(resolve, 200));
       const result = await command(page, "Runtime.evaluate", {
@@ -80,6 +81,10 @@ export async function runBrowserTest(dir, viewport) {
       if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails));
       console.log(result.result.value.message);
       if (result.result.value.status !== "passed") process.exitCode = 1;
+      if (options.pdfPath && result.result.value.status === "passed") {
+        const pdf = await command(page, "Page.printToPDF", { printBackground: true, preferCSSPageSize: true });
+        writeFileSync(options.pdfPath, Buffer.from(pdf.data, "base64"));
+      }
     } finally { page.close(); }
   } finally {
     if (browserSocket) {
