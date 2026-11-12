@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { WorkbookMemoState } from "../store";
+import { isStaff, type Profile } from "../types";
 import { deleteFile, downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 
 export interface WorkbookMemoBlueprint {
@@ -24,14 +25,15 @@ async function memoRequest(body: Record<string, unknown>) {
 
 const pause = (milliseconds: number) => new Promise(resolve => setTimeout(resolve, milliseconds));
 
-export function WorkbookMemo({ unitId, blueprint, memo, onChange }: { unitId: string; blueprint: WorkbookMemoBlueprint[]; memo: WorkbookMemoState; onChange: (next: WorkbookMemoState) => void }) {
+export function WorkbookMemo({ profile, unitId, blueprint, memo, onChange }: { profile: Profile; unitId: string; blueprint: WorkbookMemoBlueprint[]; memo: WorkbookMemoState; onChange: (next: WorkbookMemoState) => void }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
+  const canManage = profile.role === "Super User";
 
   const pick = async (file?: File) => {
-    if (!file) return;
+    if (!canManage || !file) return;
     if (file.type !== "application/pdf" && !/\.pdf$/i.test(file.name)) { setError("Choose a PDF memo."); return; }
     if (file.size > 10 * 1024 * 1024) { setError("The memo must be 10 MB or smaller."); return; }
     setBusy(true); setError(""); setProgress(5);
@@ -66,15 +68,17 @@ export function WorkbookMemo({ unitId, blueprint, memo, onChange }: { unitId: st
     finally { setBusy(false); }
   };
 
+  if (!isStaff(profile.role)) return null;
+
   return <section className="card workbook-memo">
-    <div className="workbook-memo-head"><div className="practical-hero-icon"><Icon name="document" size={26}/></div><div><span className="practical-kicker">Learner Workbook</span><h2>Marking memo</h2><p>Upload the official PDF memo. OpenAI extracts its marking criteria and uses them as the ground truth for semantic marking.</p></div></div>
+    <div className="workbook-memo-head"><div className="practical-hero-icon"><Icon name="document" size={26}/></div><div><span className="practical-kicker">Learner Workbook</span><h2>Marking memo</h2><p>Staff-only model answers and marking criteria. Super Users can upload or replace the official PDF memo used for semantic marking.</p></div></div>
     <div className="workbook-memo-upload">
-      <input ref={input} hidden type="file" accept="application/pdf,.pdf" onChange={event => { const file=event.target.files?.[0]; event.target.value=""; void pick(file); }}/>
-      <button className="btn" type="button" disabled={busy} onClick={()=>input.current?.click()}><Icon name="upload" size={16}/> {busy ? `Reading memo… ${progress}%` : memo.file ? "Replace memo PDF" : "Upload memo PDF"}</button>
+      {canManage && <><input ref={input} hidden type="file" accept="application/pdf,.pdf" onChange={event => { const file=event.target.files?.[0]; event.target.value=""; void pick(file); }}/>
+      <button className="btn" type="button" disabled={busy} onClick={()=>input.current?.click()}><Icon name="upload" size={16}/> {busy ? `Reading memo… ${progress}%` : memo.file ? "Replace memo PDF" : "Upload memo PDF"}</button></>}
       {memo.file && <>{(memo.file.path || memo.file.data) && <button className="btn ghost" type="button" onClick={()=>void downloadDoc(memo.file!)}><Icon name="download" size={16}/> Download memo</button>}<span className="muted">{memo.file.name}</span></>}
     </div>
     {error && <p className="auth-error" role="alert">{error}</p>}
     {!!memo.items.length && <div className="workbook-memo-ready"><Icon name="checkCircle" size={18}/><div><strong>Memo ready for marking</strong><span>{memo.items.length} activities · {memo.items.reduce((sum,item)=>sum+item.criteria.length,0)} marking criteria{memo.updatedAt ? ` · updated ${new Date(memo.updatedAt).toLocaleString()}` : ""}</span></div></div>}
-    {!!memo.items.length && <div className="workbook-memo-list">{memo.items.map(item=><details key={item.id}><summary><span>{item.question}</span><b>{item.maxMarks} marks</b></summary>{item.tasks?.length ? <table className="workbook-memo-table"><thead><tr><th>Question</th><th>Marks</th></tr></thead><tbody>{[...item.tasks].sort((a,b)=>a.task-b.task).map(task=><tr key={task.id}><td><strong>Task {task.task}</strong><span>{task.text}</span></td><td>{task.marks}</td></tr>)}</tbody></table> : null}<h4>Marking criteria</h4><table className="workbook-memo-table"><thead><tr><th>Criterion</th><th>Marks</th></tr></thead><tbody>{item.criteria.map(criterion=><tr key={criterion.id}><td>{criterion.text}</td><td>{criterion.marks}</td></tr>)}</tbody></table></details>)}</div>}
+    {!!memo.items.length && <div className="workbook-memo-list">{memo.items.map(item=><details key={item.id}><summary><span>{item.question}</span><b>{item.maxMarks} marks</b></summary>{item.tasks?.length ? <table className="workbook-memo-table"><thead><tr><th>Question and model answer</th><th>Marks</th></tr></thead><tbody>{[...item.tasks].sort((a,b)=>a.task-b.task).map(task=><tr key={task.id}><td><strong>Task {task.task}</strong><span>{task.text}</span><p style={{ whiteSpace: "pre-wrap" }}>{task.modelAnswer}</p></td><td>{task.marks}</td></tr>)}</tbody></table> : null}<h4>Marking criteria</h4><table className="workbook-memo-table"><thead><tr><th>Criterion</th><th>Marks</th></tr></thead><tbody>{item.criteria.map(criterion=><tr key={criterion.id}><td>{criterion.text}</td><td>{criterion.marks}</td></tr>)}</tbody></table></details>)}</div>}
   </section>;
 }

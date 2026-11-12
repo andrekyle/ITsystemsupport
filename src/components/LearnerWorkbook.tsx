@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Profile } from "../types";
+import { isStaff } from "../types";
 import type { WorkbookMemoItem } from "../store";
 import { DocumentSignature } from "./DocumentSignature";
 import { DocumentActions } from "./DocumentActions";
@@ -7,7 +8,7 @@ import { Icon } from "../icons";
 import type { WorkbookMemoBlueprint } from "./WorkbookMemo";
 import { WorkbookTaskAnswer } from "./WorkbookTaskAnswer";
 import { canSignDocumentField } from "../lib/documentSignatures";
-import { workbookMarkFingerprint } from "../lib/workbookMarking";
+import { learnerWorkbookFeedback, workbookMarkFingerprint } from "../lib/workbookMarking";
 import { WorkbookCover } from "./WorkbookCover";
 
 type Values = Record<string, string | boolean>;
@@ -83,8 +84,8 @@ export const WORKBOOK_114046_BLUEPRINT: WorkbookMemoBlueprint[] = outcomes.map(o
   tasks: outcome.questions.map(question => ({ task: question.task, text: question.text, marks: question.mark })),
 }));
 
-function OutcomeHeader({ outcome, result }: { outcome: typeof outcomes[number]; result?: { awarded: number; maxMarks: number; feedback: string } }) {
-  return <><div className="lw-outcome-head"><strong>SPECIFIC OUTCOME {outcome.no}.</strong><b>{outcome.title}</b><span>Learning Outcomes</span><ol>{outcome.points.map(point => <li key={point}>{point}</li>)}</ol></div>{result && <div className="lw-ai-result"><Icon name="checkCircle" size={15}/><strong>AI mark: {result.awarded}/{result.maxMarks}</strong><span>{result.feedback}</span></div>}</>;
+function OutcomeHeader({ outcome, result, profile }: { outcome: typeof outcomes[number]; result?: { awarded: number; maxMarks: number; feedback: string }; profile: Profile }) {
+  return <><div className="lw-outcome-head"><strong>SPECIFIC OUTCOME {outcome.no}.</strong><b>{outcome.title}</b><span>Learning Outcomes</span><ol>{outcome.points.map(point => <li key={point}>{point}</li>)}</ol></div>{result && <div className="lw-ai-result"><Icon name="checkCircle" size={15}/><strong>AI mark: {result.awarded}/{result.maxMarks}</strong><span>{isStaff(profile.role) ? result.feedback : learnerWorkbookFeedback(result)}</span></div>}</>;
 }
 
 export function LearnerWorkbook({ values, onChange, onSave, profile, memoItems }: { values: Values; onChange: Save; onSave: () => Promise<void>; profile: Profile; memoItems: WorkbookMemoItem[] }) {
@@ -161,10 +162,10 @@ export function LearnerWorkbook({ values, onChange, onSave, profile, memoItems }
 
     <Page number={5} className="lw-declaration-page"><div className="lw-bar">Learner’s Declaration</div><p>I, {field("declaration-name","Learner declaration name")}, hereby declare that I am ready for the assessment, have reviewed the assessment preparation and plan, understand the assessment process, and am happy that it will be conducted fairly.</p><table className="lw-table lw-sign"><tbody><tr><th>Learner Signature</th><td>{field("declaration-signature","Learner signature")}</td><th>Date</th><td>{field("declaration-date","Declaration date","date")}</td><th>Facilitator Signature</th><td>{field("declaration-facilitator","Facilitator signature")}</td></tr></tbody></table><div className="lw-unit-title lw-unit-inline"><div><b>Demonstrate an understanding of issues affecting the management of a local area computer network (LAN)</b><h1>Learning Unit 1</h1><dl><dt>UNIT STANDARD NUMBER</dt><dd>114046</dd><dt>LEVEL ON THE NQF</dt><dd>5</dd><dt>CREDITS</dt><dd>4</dd><dt>FIELD</dt><dd>Physical, Mathematical, Computer and Life Sciences</dd><dt>SUB FIELD</dt><dd>Information Technology and Computer Sciences</dd></dl></div><div className="lw-purpose"><b>PURPOSE:</b><ul><li>This unit standard provides conceptual knowledge of the areas covered.</li><li>It is for those working in or entering Data Communications &amp; Networking.</li><li>Explain management of access to a LAN.</li><li>Explain LAN performance issues.</li><li>Explain LAN support issues.</li><li>Explain typical viruses on LANs.</li></ul><b>LEARNING ASSUMED TO BE IN PLACE:</b><p>The credit value assumes prior knowledge and skills in local area networks, computer network principles, and supporting users of a LAN.</p></div></div></Page>
 
-    {displayedOutcomes.map((outcome, outcomeIndex) => <Page key={outcome.no} number={6 + outcomeIndex}><OutcomeHeader outcome={outcome} result={results[outcomeIndex]}/>{outcome.questions.map((question, questionIndex) => {
+    {displayedOutcomes.map((outcome, outcomeIndex) => <Page key={outcome.no} number={6 + outcomeIndex}><OutcomeHeader profile={profile} outcome={outcome} result={results[outcomeIndex]}/>{outcome.questions.map((question, questionIndex) => {
       const legacyId = questionIndex === 0 ? `outcome-${outcome.no}.page-1` : undefined;
       const task = { id: question.id, task: question.task, text: question.text, marks: question.mark };
-      return <div className="lw-task-answer" key={question.id}><table className="lw-table lw-question"><thead><tr><th>Task</th><th>Questions Description</th><th>SO</th><th>Mark</th></tr></thead><tbody><tr><td>{question.task}</td><td>{question.text}</td><td>{outcome.no}</td><td>{question.mark}</td></tr></tbody></table><WorkbookTaskAnswer outcomeId={`outcome-${outcome.no}`} task={task} memoItem={memoItems.find(item => item.id === `outcome-${outcome.no}`)} valueKey={`learner-workbook.outcome-${outcome.no}.${question.id}.answer`} markKey={`learner-workbook.task-mark.${question.id}`} values={values} onChange={onChange} legacyAnswer={legacyId ? questionAnswer(outcome.no, question.id, legacyId) : ""}/></div>;
+      return <div className="lw-task-answer" key={question.id}><table className="lw-table lw-question"><thead><tr><th>Task</th><th>Questions Description</th><th>SO</th><th>Mark</th></tr></thead><tbody><tr><td>{question.task}</td><td>{question.text}</td><td>{outcome.no}</td><td>{question.mark}</td></tr></tbody></table><WorkbookTaskAnswer profile={profile} outcomeId={`outcome-${outcome.no}`} task={task} memoItem={memoItems.find(item => item.id === `outcome-${outcome.no}`)} valueKey={`learner-workbook.outcome-${outcome.no}.${question.id}.answer`} markKey={`learner-workbook.task-mark.${question.id}`} values={values} onChange={onChange} legacyAnswer={legacyId ? questionAnswer(outcome.no, question.id, legacyId) : ""}/></div>;
     })}</Page>)}
 
     <Page number={10}><div className="lw-bar">SELF-ASSESSMENT</div><p>The learner must use this self-evaluation checklist to rate their mastery of the learning outcomes.</p><ol><li>Not able to comply</li><li>Reasonable compliance</li><li>Able to comply fully</li></ol><table className="lw-table lw-self"><thead><tr><th>LEARNING OUTCOMES</th><th>1</th><th>2</th><th>3</th></tr></thead><tbody>{Array.from({length:7},(_,index)=><tr key={index}><td>{index+1}</td>{[1,2,3].map(score=><td key={score}><Tick id={`self.${index+1}.${score}`} label={`Learning outcome ${index+1}, rating ${score}`} values={values} onChange={onChange}/></td>)}</tr>)}</tbody></table><div className="lw-sign-lines"><label>Learner Signature {field("self-learner-signature","Learner signature")}</label><label>Date {field("self-learner-date","Learner date","date")}</label><label>Facilitator’s Signature {field("self-facilitator-signature","Facilitator signature")}</label><label>Date {field("self-facilitator-date","Facilitator date","date")}</label></div><div className="lw-bar">ASSESSMENT FEEDBACK REPORT</div><h3>FACILITATOR FEEDBACK &amp; REMARKS</h3><Lines id="facilitator-feedback" count={5} label="Facilitator feedback and remarks" values={values} onChange={onChange}/></Page>

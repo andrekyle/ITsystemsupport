@@ -1,10 +1,11 @@
 import React, { Fragment, useEffect, useRef, useState } from "react";
 import type { Profile, UnitStandard, WorkbookSpec } from "../types";
+import { isStaff } from "../types";
 import type { WorkbookMemoItem } from "../store";
 import { Icon } from "../icons";
 import { DocumentActions } from "./DocumentActions";
 import { WorkbookTaskAnswer } from "./WorkbookTaskAnswer";
-import { workbookMarkFingerprint } from "../lib/workbookMarking";
+import { learnerWorkbookFeedback, workbookMarkFingerprint } from "../lib/workbookMarking";
 import { WorkbookCover } from "./WorkbookCover";
 
 type Values = Record<string, string | boolean>;
@@ -220,13 +221,14 @@ export function GeneratedWorkbook({ workbook, unit, profile, memoItems, values, 
             <span>Learning Outcomes</span>
             <ol>{outcome.learningOutcomes.map(item => <li key={item}>{item}</li>)}</ol>
           </div>
-          {result && <div className="lw-ai-result"><Icon name="checkCircle" size={15} /><strong>AI mark: {result.awarded}/{result.maxMarks}</strong><span>{result.feedback}</span></div>}
+          {result && <div className="lw-ai-result"><Icon name="checkCircle" size={15} /><strong>AI mark: {result.awarded}/{result.maxMarks}</strong><span>{isStaff(profile.role) ? result.feedback : learnerWorkbookFeedback(result)}</span></div>}
           {outcome.questions.map(question => <div className="lw-task-answer" key={question.id}>
             <table className="lw-table lw-question">
               <thead><tr><th>Task</th><th>Questions Description</th><th>SO</th><th>Mark</th></tr></thead>
               <tbody><tr><td>{question.task}</td><td>{question.text}</td><td>{outcome.specificOutcome}</td><td>{question.marks}</td></tr></tbody>
             </table>
             <WorkbookTaskAnswer
+              profile={profile}
               outcomeId={outcome.id}
               task={question}
               memoItem={memoItems.find(item => item.id === outcome.id)}

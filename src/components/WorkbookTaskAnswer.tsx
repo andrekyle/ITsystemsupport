@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import type { WorkbookMemoItem, WorkbookMemoTask } from "../store";
+import { isStaff, type Profile } from "../types";
 import { Icon } from "../icons";
 import { EditingTools } from "./EditingSidebar";
-import { workbookMarkFingerprint } from "../lib/workbookMarking";
+import { learnerWorkbookFeedback, workbookMarkFingerprint } from "../lib/workbookMarking";
 
 type Values = Record<string, string | boolean>;
 type Save = (key: string, value: string | boolean) => void;
@@ -42,7 +43,8 @@ function MarkedAnswer({ answer, correct, incorrect }: { answer: string; correct:
   return <div className="workbook-marked-answer" aria-label="Marked answer">{nodes}</div>;
 }
 
-export function WorkbookTaskAnswer({ outcomeId, task, memoItem, valueKey, markKey, values, onChange, legacyAnswer = "", revealAnswer = false }: {
+export function WorkbookTaskAnswer({ profile, outcomeId, task, memoItem, valueKey, markKey, values, onChange, legacyAnswer = "", revealAnswer = false }: {
+  profile: Profile;
   outcomeId: string;
   task: WorkbookMemoTask;
   memoItem?: WorkbookMemoItem;
@@ -145,10 +147,10 @@ export function WorkbookTaskAnswer({ outcomeId, task, memoItem, valueKey, markKe
         </button>
       </span>
       {result && <button type="button" className="workbook-task-edit no-print" onClick={() => { onChange(markKey, ""); setEditing(true); }}>Edit answer</button>}
-      {modelAnswer && <button type="button" className="workbook-answer-toggle no-print" onClick={() => setShowAnswer((visible) => !visible)}><Icon name={showAnswer ? "eyeOff" : "checkCircle"} size={15} />{showAnswer ? "Hide answer" : "Check my answer"}</button>}
-      {result && <span className="workbook-task-score">{result.awarded}/{result.maxMarks} — {result.feedback}</span>}
+      {isStaff(profile.role) && modelAnswer && <button type="button" className="workbook-answer-toggle no-print" onClick={() => setShowAnswer((visible) => !visible)}><Icon name={showAnswer ? "eyeOff" : "checkCircle"} size={15} />{showAnswer ? "Hide answer" : "Check my answer"}</button>}
+      {result && <span className="workbook-task-score">{result.awarded}/{result.maxMarks} — {isStaff(profile.role) ? result.feedback : learnerWorkbookFeedback(result)}</span>}
       {error && <span className="workbook-task-notice" role="alert">{error}</span>}
     </div>
-    {showAnswer && modelAnswer && <div className="workbook-model-answer no-print"><strong><Icon name="document" size={15} /> Correct answer — from the lesson</strong><ul>{modelAnswer.split(/\n+/).map((line, index) => <li key={index}><Icon name="checkCircle" size={16} /><span>{line}</span></li>)}</ul></div>}
+    {isStaff(profile.role) && showAnswer && modelAnswer && <div className="workbook-model-answer no-print"><strong><Icon name="document" size={15} /> Correct answer — from the lesson</strong><ul>{modelAnswer.split(/\n+/).map((line, index) => <li key={index}><Icon name="checkCircle" size={16} /><span>{line}</span></li>)}</ul></div>}
   </div>;
 }

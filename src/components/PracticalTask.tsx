@@ -299,7 +299,7 @@ export function PracticalTask({ document, unitId, profile, values: storedValues,
           const memoItem = memoItems.find(candidate => candidate.id === item.id);
           const memoTask = memoItem?.tasks?.[0];
           return <div className="practical-item" key={item.id}><div className="practical-item-title"><span>{itemIndex + 1}</span><div><strong>{item.text}</strong>{item.guidance && <p>{item.guidance}</p>}</div></div>{memoItem && memoTask
-            ? <WorkbookTaskAnswer outcomeId={memoItem.id} task={memoTask} memoItem={memoItem} valueKey={storageKey} markKey={`practical.mark.${item.id}`} values={values} onChange={onChange} />
+            ? <WorkbookTaskAnswer profile={profile} outcomeId={memoItem.id} task={memoTask} memoItem={memoItem} valueKey={storageKey} markKey={`practical.mark.${item.id}`} values={values} onChange={onChange} />
             : <label className="field"><span>{item.responseLabel ?? "Learner response"}</span><textarea rows={7} defaultValue={String(values[storageKey] ?? "")} onBlur={event => onChange(storageKey, event.target.value)} /></label>}</div>;
         })}</div>}
       </article>)}

@@ -1,8 +1,9 @@
 import { useState } from "react";
 import type { Profile } from "../types";
+import { isStaff } from "../types";
 import type { WorkbookMemoItem } from "../store";
 import { Icon } from "../icons";
-import { workbookMarkFingerprint } from "../lib/workbookMarking";
+import { learnerWorkbookFeedback, workbookMarkFingerprint } from "../lib/workbookMarking";
 import { WorkbookCover } from "./WorkbookCover";
 import { WorkbookTaskAnswer } from "./WorkbookTaskAnswer";
 import { DocumentActions } from "./DocumentActions";
@@ -107,10 +108,10 @@ export function Workbook8252({ values, onChange, onSave, profile, memoItems }: {
     const question = outcome.questions[index];
     return <section className="lw-page workbook-114074-page workbook-114074-activity" data-page={page} key={question.id}>
       {index === 0 && <div className="lw-outcome-head"><strong>SPECIFIC OUTCOME {outcome.specificOutcome}.</strong><b>{outcome.title}</b><span>Learning Outcomes</span><ol>{outcome.learningOutcomes.map((item, i) => <li key={i}>{item}</li>)}</ol></div>}
-      {index === 0 && outcomeResult && <div className="lw-ai-result"><Icon name="checkCircle" size={15}/><strong>AI mark: {outcomeResult.awarded}/{outcomeResult.maxMarks}</strong><span>{outcomeResult.feedback}</span></div>}
+      {index === 0 && outcomeResult && <div className="lw-ai-result"><Icon name="checkCircle" size={15}/><strong>AI mark: {outcomeResult.awarded}/{outcomeResult.maxMarks}</strong><span>{isStaff(profile.role) ? outcomeResult.feedback : learnerWorkbookFeedback(outcomeResult)}</span></div>}
       <div className="lw-task-answer">
         <table className="lw-table lw-question"><thead><tr><th>Activity</th><th>Questions Description</th><th>Mark</th></tr></thead><tbody><tr><td>{question.sourceLabel ?? question.task}</td><td>{question.text}</td><td>{question.marks}</td></tr></tbody></table>
-        <WorkbookTaskAnswer outcomeId={outcome.id} task={question} memoItem={memoItem} valueKey={`learner-workbook.${outcome.id}.${question.id}.answer`} markKey={`learner-workbook.task-mark.${question.id}`} values={values} onChange={(key, value) => saveTaskAnswer(question.id, key, value)} />
+        <WorkbookTaskAnswer profile={profile} outcomeId={outcome.id} task={question} memoItem={memoItem} valueKey={`learner-workbook.${outcome.id}.${question.id}.answer`} markKey={`learner-workbook.task-mark.${question.id}`} values={values} onChange={(key, value) => saveTaskAnswer(question.id, key, value)} />
       </div>
     </section>;
   };
