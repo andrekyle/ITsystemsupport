@@ -27,6 +27,11 @@ import {
 import { buildUploadedReport } from "../lib/uploadedReports";
 
 const ERROR_TEXT: Record<string, string> = {
+  service_unavailable: "The report service is temporarily unavailable. Please try again shortly.",
+  http_503: "The report service is temporarily unavailable (503). Please try again shortly.",
+  invalid_api_key: "The report service's OpenAI key is invalid or lacks access. An administrator must update the server configuration.",
+  quota_exceeded: "The report service has reached its OpenAI credit or usage limit. An administrator must check the account's credits and limits.",
+  rate_limited: "The report service is receiving too many AI requests. Wait a moment, then try again.",
   not_configured: "The AI service is not configured on this deployment (missing API key).",
   network: "Could not reach the AI service — check your connection and try again.",
   timeout: "The AI took too long to answer. Try again in a moment.",

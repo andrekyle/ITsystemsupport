@@ -1,3 +1,4 @@
+import { fetchWithServiceRetry, reportServiceError } from "./aiServiceErrors";
 import type { Profile } from "../types";
 import { COURSE_META, MODULES, POE_TOTAL } from "../data/course";
 import { programmeAnalysisData, programmeAnalysisHtml, PROGRAMME_ANALYSIS_CSS } from "./programmeAnalysis";
@@ -597,7 +598,7 @@ export async function requestReport(
   history?: { role: "user" | "assistant"; text: string }[]
 ): Promise<ReportResult> {
   try {
-    const r = await fetch("/api/generate-report", {
+    const r = await fetchWithServiceRetry("/api/generate-report", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -610,7 +611,11 @@ export async function requestReport(
         ...(history && history.length ? { history } : {}),
       }),
     });
-    if (!r.ok) return { ok: false, error: `http_${r.status}` };
+    if (!r.ok) {
+      const failure = await r.json().catch(() => ({})) as { error?: unknown };
+      const knownErrors = ["not_configured", "service_unavailable", "quota_exceeded", "invalid_api_key", "rate_limited", "timeout"];
+      return { ok: false, error: typeof failure.error === "string" && knownErrors.includes(failure.error) ? failure.error : reportServiceError(r.status) };
+    }
     const payload = (await r.json()) as Partial<AiReport> &
       Partial<AiDeck> & {
         error?: string;

@@ -8,6 +8,7 @@
  *
  * Runs on Vercel's Edge runtime. Requires the `OPENAI_API_KEY` env var.
  */
+import { fetchWithServiceRetry, reportServiceError } from "../src/lib/aiServiceErrors";
 import { MARKING_MODELS } from "../src/lib/aiModels";
 
 export const config = { runtime: "edge" };
@@ -255,7 +256,7 @@ export default async function handler(req: Request): Promise<Response> {
   try {
     let lastError = "llm_failed";
     for (const model of modelChain) {
-      const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      const r = await fetchWithServiceRetry("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -274,7 +275,9 @@ export default async function handler(req: Request): Promise<Response> {
         signal: controller.signal,
       });
       if (!r.ok) {
-        lastError = `http_${r.status}`;
+        const failure = await r.json().catch(() => ({})) as { error?: { code?: string } };
+        lastError = reportServiceError(r.status, failure.error?.code);
+        if (["quota_exceeded", "invalid_api_key", "rate_limited", "service_unavailable"].includes(lastError)) return json({ error: lastError }, 200);
         continue; // model not available on this key — try the next candidate
       }
       const data = (await r.json()) as {
