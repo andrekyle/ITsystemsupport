@@ -2797,6 +2797,7 @@ export function useOnboardingPacks() {
 /* ---------- super-user lesson edits (per unit, saved locally) ---------- */
 
 export interface LessonEdits {
+  activityOverrides?: import("./lib/activityOverrides").ActivityOverrides;
   /** Deleted slides retain their source indices so other slides' edits and learner answers stay attached. */
   deletedSections?: number[];
   /** Added figure ids whose slide index changed after splitting a slide. */

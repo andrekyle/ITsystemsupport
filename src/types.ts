@@ -638,6 +638,8 @@ export interface ProgressState {
 }
 
 export interface UnitStandard {
+  /** Optional uploaded card banner. */
+  image?: string;
   us: string;
   title: string;
   nqf: number;

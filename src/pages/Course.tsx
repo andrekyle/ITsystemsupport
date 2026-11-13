@@ -7,6 +7,9 @@ import type { Exercise, ExerciseCheck, LessonFigure, LessonPlan, LessonPlanRow, 
 import { UNIT_ACTIVITIES, isStaff } from "../types";
 import { COURSE_BLURB, COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
 import { activeCourseId, courseStorageKey, deleteCustomCourse } from "../data/courses";
+import { STANDARD_UNIT_TABS } from "../lib/unitTabs";
+import { UnitCardBanner } from "../components/UnitCardBanner";
+import { UnitLiveActions } from "../components/ModuleUnitsLive";
 import { CourseCreator } from "../components/CourseCreator";
 import { useInlineCourse } from "../components/useInlineCourse";
 import { courseScopedUnit } from "../lib/courseScope";
@@ -31,7 +34,8 @@ import { SlideViewer } from "../components/SlideViewer";
 import { BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, effectiveBuiltContent } from "../components/UnitBuilder";
 import { lessonEditsAfterInsert, lessonEditsAfterSplit } from "../lib/lessonSectionEdits";
 import { InlineText, InlineIconBtn } from "../components/InlineText";
-import { ActivityQuestionEditor } from "../components/ActivityQuestionEditor";
+import { ActivityInlineEditor } from "../components/ActivityInlineEditor";
+import { applyActivityOverrides } from "../lib/activityOverrides";
 import { UnitContentEditor } from "../components/UnitContentEditor";
 import { PracticalTask } from "../components/PracticalTask";
 import { LearnerWorkbook, WORKBOOK_114046_BLUEPRINT } from "../components/LearnerWorkbook";
@@ -1945,6 +1949,7 @@ export function CoursePage({
         </span>
         Modules
       </h2>
+      {inline.editing && <button type="button" className="btn ghost sm" disabled={inline.busy} onClick={() => inline.change(d => { d.modules.push({ id: `module-${crypto.randomUUID()}`, name: "New module", icon: "book", activities: 0, units: [] }); })}><Icon name="plus" size={15} />Add module</button>}
       <div className="card-grid modules-grid">
         {MODULES.map((m, i) => {
           const c = moduleCompletion(progress, m.id);
@@ -1958,12 +1963,23 @@ export function CoursePage({
               onKeyDown={e => { if (!inline.editing && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); navigate({ page: "module", moduleId: m.id }); } }}
               onClick={() => { if (!inline.editing) navigate({ page: "module", moduleId: m.id }); }}
             >
-              {m.image && (
-                <span className="module-hero">
-                  <img src={m.image} alt="" loading="lazy" />
-                </span>
-              )}
-              {inline.editing && <EditingTools active title={`Module ${i + 1}: image`}><label className="field">Module image<input type="file" accept="image/png,image/jpeg,image/webp" disabled={inline.busy} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { const image = await fileToImageDataUrl(file); inline.change(d => { d.modules[i].image = image; }); } catch { e.target.setCustomValidity("Could not read image. Choose another file."); e.target.reportValidity(); } }} /></label></EditingTools>}
+              {inline.editing ? <label className={`module-hero module-image-live${m.image ? "" : " module-image-empty"}`} title="Click to upload a banner image">
+                {m.image ? <img src={m.image} alt={`Module ${i + 1} banner`} /> : <span>Upload banner image</span>}
+                <span className="module-image-hint"><Icon name="upload" size={16} />{m.image ? "Replace image" : "Upload image"}</span>
+                <input type="file" className="module-image-input" aria-label={`Upload Module ${i + 1} banner image`} accept="image/png,image/jpeg,image/webp" disabled={inline.busy}
+                  onChange={async event => {
+                    const input = event.currentTarget;
+                    const file = input.files?.[0];
+                    if (!file) return;
+                    input.setCustomValidity("");
+                    try {
+                      if (!/^image\/(png|jpeg|webp)$/.test(file.type)) throw new Error("Choose a PNG, JPEG or WebP image.");
+                      const image = await fileToImageDataUrl(file);
+                      inline.change(d => { d.modules[i].image = image; });
+                      input.value = "";
+                    } catch (error) { input.setCustomValidity(error instanceof Error ? error.message : "Could not read image."); input.reportValidity(); }
+                  }} />
+              </label> : m.image && <span className="module-hero"><img src={m.image} alt="" loading="lazy" /></span>}
               <div className="head">
                 <span className="ico">
                   <Icon name={m.icon} size={22} />
@@ -1975,8 +1991,11 @@ export function CoursePage({
                 </div>
               </div>
               <span className="sub module-sub">
-                {m.units.length} unit standards · {credits} credits · {m.activities} activities
+                {m.units.length} unit standards · {credits} credits · {inline.text(m.activities, (d, v) => { d.modules[i].activities = Number(v); }, "Activities")} activities
               </span>
+              {inline.editing && <>
+                <button type="button" className="btn ghost sm danger-text" disabled={inline.busy} onClick={event => { event.stopPropagation(); inline.change(d => { d.modules = d.modules.filter(item => item.id !== m.id); }); }}><Icon name="trash" size={14} />Delete module</button>
+              </>}
               <div className="bar-row">
                 <Bar value={c} green={c === 1} />
                 <span className="pct">{Math.round(c * 100)}%</span>
@@ -2235,6 +2254,7 @@ export function ModulePage({
   progress: ProgressState;
   navigate: (r: Route) => void;
 }) {
+  const [activeUnit, setActiveUnit] = useState<number | null>(null);
   const inline = useInlineCourse(profile.role === "Super User");
   const mod = inline.course.modules.find(m => m.id === moduleId);
   if (!mod) return <p>Module not found.</p>;
@@ -2285,39 +2305,38 @@ export function ModulePage({
         <Bar value={c} green={c === 1} />
       </div>
 
+      {inline.editing && <button type="button" className="btn ghost sm" disabled={inline.busy} onClick={() => {
+        setActiveUnit(mod.units.length);
+        inline.change(d => { d.modules[idx].units.push({ us: `new-${crypto.randomUUID().slice(0, 8)}`, title: "New unit standard", nqf: 5, credits: 0, dates: "", time: "" }); });
+      }}><Icon name="plus" size={15} />Add unit standard</button>}
       <div className={`module-unit-grid${activeCourseId() === "itss" && mod.id === "m1" ? " personal-development-grid" : ""}`}>
       {mod.units.map((u, ui) => {
         const st = unitStatus(progress, u.us);
         const uc = unitCompletion(progress, u.us);
         const locked = unitLocked(u, profile.role);
         const unlockAt = unitUnlockTime(u);
-        const photo = activeCourseId() === "itss" ? UNIT_TILE_PHOTOS[u.us] : undefined;
+        const defaultPhoto = UNIT_TILE_PHOTOS[u.us];
+        const photo = u.image ? { src: u.image, alt: u.title, referenceHeader: false } : defaultPhoto;
         const credit = photo?.credit ? BASE_FIGURE_DEFAULTS[photo.credit] : undefined;
         return (
           <div
             key={u.us}
-            className={`unit-row module-unit-card${photo ? " has-photo" : ""}${photo?.referenceHeader ? " has-reference-header" : ""}${locked ? " locked" : ""}`}
+            className={`unit-row module-unit-card has-photo${photo?.referenceHeader ? " has-reference-header" : ""}${locked ? " locked" : ""}`}
             role={inline.editing ? undefined : "button"}
             tabIndex={locked || inline.editing ? undefined : 0}
             onKeyDown={e => { if (!locked && !inline.editing && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); navigate({ page: "unit", moduleId: mod.id, unitId: u.us }); } }}
             onClick={() => !locked && !inline.editing && navigate({ page: "unit", moduleId: mod.id, unitId: u.us })}
           >
-            {photo && <span className="module-unit-media">
-              <span className="module-unit-banner">
-              <img className="module-unit-photo" src={photo.src} alt={photo.alt}
-                loading="lazy" decoding="async" />
-              {!photo.referenceHeader && <span className="module-unit-banner-copy" aria-hidden="true">
-                <span className="module-unit-banner-code">{usLabel(u.us)}</span>
-                <strong>{UNIT_TILE_BANNER_TITLES[u.us] ?? u.title}</strong>
-                <span className="module-unit-banner-caption">Module {idx + 1} · {mod.name}</span>
-              </span>}
-              </span>
-              {credit && <a className="module-unit-photo-credit" href={credit.sourceUrl}
-                target="_blank" rel="noopener noreferrer"
-                onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
-                {credit.author} · {credit.license}
+            <span className="module-unit-media">
+              <UnitCardBanner src={photo?.src} alt={photo?.alt ?? u.title} referenceHeader={photo?.referenceHeader}
+                code={usLabel(u.us)} title={UNIT_TILE_BANNER_TITLES[u.us] ?? u.title} caption={`Module ${idx + 1} · ${mod.name}`}
+                editable={inline.editing && activeUnit === ui} disabled={inline.busy} onBusyChange={inline.metadataBusy}
+                onUpload={image => inline.change(d => { const unit = d.modules[idx].units.find(item => item.us === u.us); if (unit) unit.image = image; })} />
+              {credit && !u.image && <a className="module-unit-photo-credit" href={credit.sourceUrl}
+                target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
+                {credit.author} {"\u00b7"} {credit.license}
               </a>}
-            </span>}
+            </span>
             <span
               className={`status ${st === "completed" ? "done" : st === "in-progress" ? "progress" : "none"}`}
               aria-label={locked ? "Locked" : st === "completed" ? "Completed" : st === "in-progress" ? `${Math.round(uc * 100)}% complete` : "Not started"}
@@ -2331,25 +2350,25 @@ export function ModulePage({
             </span>
             <span className="main">
               <span className="module-unit-heading">
-                <span className="module-unit-code">{usLabel(u.us)}</span>
+                <span className="module-unit-code">{inline.editing && activeUnit === ui ? <>US {inline.text(u.us, (d, v) => { d.modules[idx].units[ui].us = v; }, "Unit standard code")}</> : usLabel(u.us)}</span>
                 <span className="t">
-                  {inline.text(u.title, (d, v) => { d.modules[idx].units[ui].title = v; }, "title")}
+                  {inline.text(u.title, (d, v) => { d.modules[idx].units[ui].title = v; }, "title", activeUnit === ui)}
                 </span>
               </span>
               <span className="m">
                 <span>
-                  <Icon name="trend" size={13} /> NQF {inline.text(u.nqf, (d, v) => { d.modules[idx].units[ui].nqf = Number(v); }, "nqf")}
+                  <Icon name="trend" size={13} /> NQF {inline.text(u.nqf, (d, v) => { d.modules[idx].units[ui].nqf = Number(v); }, "nqf", activeUnit === ui)}
                 </span>
                 {(inline.editing || u.credits > 0) && (
                   <span>
-                    <Icon name="award" size={13} /> {inline.text(u.credits, (d, v) => { d.modules[idx].units[ui].credits = Number(v); }, "credits")} credits
+                    <Icon name="award" size={13} /> {inline.text(u.credits, (d, v) => { d.modules[idx].units[ui].credits = Number(v); }, "credits", activeUnit === ui)} credits
                   </span>
                 )}
                 <span>
-                  <Icon name="calendar" size={13} /> {inline.text(u.dates, (d, v) => { d.modules[idx].units[ui].dates = v; }, "dates")}
+                  <Icon name="calendar" size={13} /> {inline.text(u.dates, (d, v) => { d.modules[idx].units[ui].dates = v; }, "dates", activeUnit === ui)}
                 </span>
                 <span>
-                  <Icon name="clock" size={13} /> {inline.text(u.time, (d, v) => { d.modules[idx].units[ui].time = v; }, "time")}
+                  <Icon name="clock" size={13} /> {inline.text(u.time, (d, v) => { d.modules[idx].units[ui].time = v; }, "time", activeUnit === ui)}
                 </span>
                 {locked && unlockAt && (
                   <span className="unlock-note">
@@ -2362,6 +2381,8 @@ export function ModulePage({
                   </span>
                 )}
               </span>
+              {inline.editing && <UnitLiveActions module={mod} index={ui} editing={activeUnit === ui} onEdit={active => setActiveUnit(active ? ui : null)} disabled={inline.busy} onBusyChange={inline.metadataBusy}
+                onChange={update => inline.change(d => { const target = d.modules.find(item => item.id === mod.id); if (target) update(target); })} />}
             </span>
             <span className="chev">
               <Icon name={locked ? "lock" : "chevronRight"} size={17} />
@@ -2983,7 +3004,7 @@ function UnitPageContent({
   const acts = progress.units[u.us]?.activities ?? {};
   const completedActivities = UNIT_ACTIVITIES.filter(activity => !!acts[activity]).length;
   const nextActivity = UNIT_ACTIVITIES.find(activity => !acts[activity]);
-  const baseContent = builtUnit?.content ?? getContent(u.us);
+  const baseContent: UnitContent = applyActivityOverrides(builtUnit?.content ?? getContent(u.us) ?? { lesson: [], exercises: [], assignments: [], quiz: [] }, lessonEdits.activityOverrides);
   const officialSaqa = getSaqaDetails(u.us);
   const content = inlineUnit ?? (officialSaqa
     ? { ...(baseContent ?? { lesson: [], exercises: [], assignments: [], quiz: [] }), saqa: officialSaqa }
@@ -3267,14 +3288,18 @@ function UnitPageContent({
     }
   };
   const updateBuiltActivityList = async (kind: "exercises" | "questionSessions", updater: (items: Exercise[]) => Exercise[]) => {
-    if (!builtUnit) return;
-    setActivityEditError("");
-    const nextContent = structuredClone(builtUnit.content) as UnitContent;
-    nextContent[kind] = updater([...(nextContent[kind] ?? [])]);
-    await saveBuiltContent(nextContent);
+    const editId = builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId;
+    const key = `itss.lessonedits.${courseScopedUnit(editId)}`;
+    const latest = cachedLessonEdits<import("../store").LessonEdits>(key, lessonEdits);
+    const currentContent = applyActivityOverrides(builtUnit?.content ?? getContent(unitId) ?? { lesson: [], exercises: [], assignments: [], quiz: [] }, latest.activityOverrides);
+    const before = currentContent[kind] ?? [];
+    const after = updater([...before]);
+    const activityOverrides = { ...latest.activityOverrides };
+    for (const item of before) if (!after.some(next => next.id === item.id)) activityOverrides[`${kind}:${item.id}`] = null;
+    for (const item of after) if (JSON.stringify(item) !== JSON.stringify(before.find(previous => previous.id === item.id))) activityOverrides[`${kind}:${item.id}`] = item;
+    await flushLessonEdits(key, { ...latest, activityOverrides });
   };
   const addBuiltActivity = () => {
-    if (!builtUnit) return;
     try {
       setActivityEditError("");
       setActivityEditor({ kind: "exercises", index: null, value: blankBuiltActivity() });
@@ -3783,26 +3808,24 @@ function UnitPageContent({
   }
 
   const tabs: { id: UnitTab; label: string; icon: string; show: boolean }[] = [
-    { id: "overview", label: "Learning activities", icon: "checklist", show: true },
-    { id: "saqa", label: "SAQA details", icon: "certificate", show: true },
-    { id: "lesson", label: "Lesson", icon: "book", show: true },
-    { id: "material", label: "Course material", icon: "play", show: true },
-    { id: "notes", label: "Notes", icon: "document", show: true },
-    { id: "exercises", label: "Activity", icon: "exercise", show: true },
-    { id: "questions", label: "Activity", icon: "chat", show: false },
-    { id: "assignments", label: "Activity", icon: "folder", show: false },
-    { id: "practical", label: "Practical Task", icon: "checklist", show: false },
-    { id: "workbook", label: "Learner Workbook", icon: "document", show: workbookEnabled },
-    { id: "memo", label: "Memo", icon: "clipboard", show: workbookEnabled && (unitId === "114046" || unitId === "114074" || unitId === "114076" || unitId === "8252" || !!content?.workbook) && isPrivileged },
-    { id: "guide", label: "Learner Guide", icon: "book", show: true },
-    { id: "logbook", label: "Logbook", icon: "book", show: true },
-    { id: "quiz", label: "Quiz", icon: "clipboard", show: true },
-    { id: "selfassessment", label: "Self assessment", icon: "checkCircle", show: true },
-    { id: "evaluation", label: "Evaluation", icon: "chat", show: true },
-    { id: "plan", label: "Lesson plan", icon: "presenter", show: true },
+    ...STANDARD_UNIT_TABS.map(item => ({ ...item, show: item.id !== "memo" || isPrivileged })),
     ...(content?.editableDocuments ?? []).map(item => ({ id: `pdf-${item.id}` as UnitTab, label: item.title, icon: "document", show: true })),
     ...(content?.customTabs ?? []).map(item => ({ id: item.id as UnitTab, label: item.title, icon: "document", show: true })),
   ];
+
+  const hasBuiltInWorkbook = ["10135", "114046", "114074", "114076", "8252"].includes(unitId);
+  const missingTabContent: Partial<Record<UnitTab, boolean>> = {
+    saqa: !content?.saqa,
+    lesson: visibleLessonIndices.length === 0,
+    material: !builtUnit && decks.length === 0,
+    exercises: builtUnit ? visibleBuiltActivities.length === 0 : !content?.exercises.length,
+    workbook: !hasBuiltInWorkbook && !workbookDocument && !content?.workbook,
+    memo: isPrivileged && !hasBuiltInWorkbook && !content?.workbook,
+    guide: !["114074", "114076", "114046"].includes(unitId) && !content?.learnerGuide,
+    logbook: !logbookData,
+    selfassessment: !content?.selfAssessment,
+    plan: !planData,
+  };
 
   return (
     <>
@@ -3882,6 +3905,12 @@ function UnitPageContent({
       </div>
       </details>
       </div>
+
+      {missingTabContent[tab] && <section className="card unit-tab-empty" role="status">
+        <h2>{tabs.find(item => item.id === tab)?.label}</h2>
+        <p>This unit's {tabs.find(item => item.id === tab)?.label.toLowerCase()} content has not been added yet.</p>
+        {tab === "saqa" && /^\d+$/.test(u.us) && <a href={`https://allqs.saqa.org.za/showUnitStandard.php?id=${u.us}`} target="_blank" rel="noopener noreferrer">View the official SAQA record</a>}
+      </section>}
 
       {tab === "overview" && (
         <section className="unit-activity-checklist">
@@ -5912,8 +5941,8 @@ function UnitPageContent({
               of its text.
             </span>
           </div>
-          {builtUnit && isSuperUser && <CourseEditingTools active={!!activityEditor || !!inlineUnit} title="Unit activities"><div className="activity-edit-bar"><button type="button" className="btn ghost sm" disabled={!!activityEditor} onClick={addBuiltActivity}><Icon name="plus" size={14} /> Add activity</button>{!activityEditor && activityEditError && <span role="alert" className="auth-error">{activityEditError}</span>}</div></CourseEditingTools>}
-          {activityEditor && builtUnit && isSuperUser && <div className="card activity-editor-card"><h3>{activityEditor.index === null ? "Add activity" : "Edit activity"}</h3><fieldset disabled={activitySaving} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}><ActivityQuestionEditor key={activityEditor.value.id} value={activityEditor.value} onChange={value => setActivityEditor({ ...activityEditor, value })}/></fieldset><EditingTools active title="Activity editing"><div className="unit-editor-actions"><button type="button" className="btn" disabled={activitySaving} onClick={() => void saveActivityEditor()}>{activitySaving ? "Generating model answers…" : "Save activity"}</button><button type="button" className="btn ghost" disabled={activitySaving} onClick={() => { setActivityEditor(null); setActivityEditError(""); }}>Cancel</button></div>{activityEditError && <p role="alert" className="auth-error">{activityEditError}</p>}</EditingTools></div>}
+          {isSuperUser && <div className="activity-edit-bar"><button type="button" className="btn ghost sm" disabled={!!activityEditor || !!inlineUnit} onClick={addBuiltActivity}><Icon name="plus" size={14} /> Add activity</button>{!activityEditor && activityEditError && <span role="alert" className="auth-error">{activityEditError}</span>}</div>}
+          {activityEditor && isSuperUser && <div className="card activity-editor-card"><h3>{activityEditor.index === null ? "Add activity" : "Edit activity"}</h3><fieldset disabled={activitySaving} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}><ActivityInlineEditor key={activityEditor.value.id} value={activityEditor.value} disabled={activitySaving} onChange={value => setActivityEditor({ ...activityEditor, value })}/></fieldset><div className="unit-editor-actions"><button type="button" className="btn" disabled={activitySaving} onClick={() => void saveActivityEditor()}>{activitySaving ? "Generating model answers…" : "Save activity"}</button><button type="button" className="btn ghost" disabled={activitySaving} onClick={() => { setActivityEditor(null); setActivityEditError(""); }}>Cancel</button></div>{activityEditError && <p role="alert" className="auth-error">{activityEditError}</p>}</div>}
           {(tab === "questions" ? (content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index })) : builtUnit ? visibleBuiltActivities : content.exercises.map((ex, index) => ({ ex, kind: "exercises" as const, index }))).map(({ex, kind, index}) => {
             const exRes = progress.units[u.us]?.exercises?.[ex.id];
             const hasChecks = !!ex.checks && ex.checks.length > 0;
@@ -6717,6 +6746,18 @@ function UnitPageContent({
           )}
         </>
       )}
+
+      {tab === "material" && isPrivileged && <div className="course-material-upload">
+        <button type="button" className="btn ghost" disabled={planUploadPct !== null} onClick={() => planFileRef.current?.click()}>
+          <Icon name="upload" size={16} />{planUploadPct !== null ? `Uploading ${planUploadPct}%` : "Upload course material (.pdf)"}
+        </button>
+        <input ref={planFileRef} type="file" accept=".pdf,application/pdf" hidden onChange={onPickPlanFile} />
+        <p className="mini-note">Upload a PDF up to {MAX_SLIDE_MB} MB. For PowerPoint slides, export as PDF first.</p>
+        {planUploadPct !== null && <div className="upload-progress" role="progressbar" aria-label="Course material upload" aria-valuemin={0} aria-valuemax={100} aria-valuenow={planUploadPct}>
+          <div className="track"><div className="fill" style={{ width: `${planUploadPct}%` }} /></div>
+        </div>}
+        {planError && <p role="alert" className="auth-error">{planError}</p>}
+      </div>}
 
       {tab === "material" && builtUnit && <BuiltUnitDownloads us={unitId} staff={isPrivileged} onSaveChanges={() => saveLessonToCloud(true)} savingChanges={savingLesson} />}
       {tab === "material" && decks.length > 0 && (

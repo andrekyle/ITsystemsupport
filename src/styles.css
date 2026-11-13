@@ -20060,3 +20060,24 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 [data-theme="light"] .admin-bar-track div {
   background: #0071e3;
 }
+
+.module-image-live { position: relative; display: block; cursor: pointer; }
+.module-image-live:focus-within { outline: 2px solid var(--azure); outline-offset: 3px; }
+.module-image-empty { min-height: 150px; display: flex; align-items: center; justify-content: center; background: var(--surface-2); color: var(--ink-3); }
+.module-image-hint { position: absolute; right: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border-radius: 8px; background: var(--surface); color: var(--ink); font-size: 12px; pointer-events: none; }
+.module-image-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+
+.module-live-actions { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; font-size: 12px; }
+.module-unit-grid[hidden] { display: none; }
+
+.module-unit-card:has(.unit-live-actions) { position: relative; }
+.unit-live-actions { display: block; grid-column: 1 / -1; min-width: 0; width: 100%; padding-top: 10px; cursor: default; box-sizing: border-box; }
+.module-unit-card .unit-live-actions .module-live-actions { justify-content: flex-start; }
+.module-unit-card .unit-live-actions .mini-note { display: block; white-space: normal; }
+
+.module-unit-card .unit-card-banner-empty { aspect-ratio: 2.45; min-height: 170px; background: linear-gradient(135deg, #243746, #17232d); }
+.unit-banner-placeholder { position: absolute; inset: 0; display: flex; align-items: flex-start; justify-content: center; padding-top: 22px; color: #8fa8bb; }
+.unit-banner-upload { position: absolute; top: 10px; right: 10px; display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; border-radius: 8px; background: var(--surface); color: var(--ink); font-size: 12px; cursor: pointer; }
+.unit-banner-upload input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.unit-banner-upload:focus-within { outline: 2px solid var(--azure); outline-offset: 2px; }
+.unit-banner-error { position: absolute; left: 10px; bottom: 10px; padding: 8px; background: var(--surface); color: var(--red); font-size: 12px; }

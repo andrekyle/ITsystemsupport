@@ -8,7 +8,13 @@ export const COURSES: CourseData[] = [IT_SYSTEMS_SUPPORT, GENERIC_MANAGEMENT];
 
 export const courseStorageKey = (id: string) => `itss.course.${id}.shared`;
 export function getCourses(): CourseData[] {
-  const courses = [...COURSES];
+  const courses = COURSES.map(base => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(courseStorageKey(base.id)) ?? "null") as CourseData | null;
+      if (saved?.id === base.id && saved.meta?.title && Array.isArray(saved.modules)) return saved;
+    } catch { /* Use built-in content when an override cannot be read. */ }
+    return base;
+  });
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i)!;
     if (!key.startsWith("itss.course.") || !key.endsWith(".shared")) continue;
@@ -19,6 +25,70 @@ export function getCourses(): CourseData[] {
     } catch { /* Ignore invalid stored course records. */ }
   }
   return courses;
+}
+
+/** Merge only edited fields into the latest record. Reject overlapping edits. */
+export function mergeCourseEdits<T>(original: T, edited: T, latest: T, path = "course"): T {
+  const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+  if (same(original, edited)) return structuredClone(latest);
+  if (same(edited, latest)) return structuredClone(latest);
+  if (Array.isArray(original) && Array.isArray(edited) && Array.isArray(latest)) {
+    const identity = (value: unknown): unknown => value && typeof value === "object" ? (value as { id?: string; us?: string }).id ?? (value as { us?: string }).us : undefined;
+    if ([...original, ...edited, ...latest].every(value => identity(value) !== undefined)) {
+      const result = structuredClone(latest);
+      for (const value of original) {
+        const edit = edited.find(candidate => identity(candidate) === identity(value));
+        const target = result.findIndex(candidate => identity(candidate) === identity(value));
+        if (!edit) {
+          if (target >= 0 && !same(value, result[target])) throw new Error(`${path}: an item being deleted was changed elsewhere. Reload before deleting it.`);
+          if (target >= 0) result.splice(target, 1);
+        } else if (!same(value, edit)) {
+          if (target < 0) throw new Error(`${path}: an edited item was removed. Reload before editing it again.`);
+          result[target] = mergeCourseEdits(value, edit, result[target], `${path}.${identity(value)}`);
+        }
+      }
+      for (const value of edited) {
+        if (original.some(candidate => identity(candidate) === identity(value))) continue;
+        if (result.some(candidate => identity(candidate) === identity(value))) throw new Error(`${path}: this item already exists. Choose a unique code.`);
+        result.push(structuredClone(value));
+      }
+      return result as T;
+    }
+    if (original.length === edited.length && original.length === latest.length && original.every(value => identity(value) === undefined)) {
+      return original.map((value, index) => mergeCourseEdits(value, edited[index], latest[index], `${path}.${index}`)) as T;
+    }
+  } else if (original && edited && latest && typeof original === "object" && typeof edited === "object" && typeof latest === "object") {
+    const before = original as Record<string, unknown>;
+    const after = edited as Record<string, unknown>;
+    const current = latest as Record<string, unknown>;
+    const result = structuredClone(current);
+    for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) {
+      if (same(before[key], after[key])) continue;
+      const value = mergeCourseEdits(before[key], after[key], current[key], `${path}.${key}`);
+      if (key in after) result[key] = value;
+      else delete result[key];
+    }
+    return result as T;
+  }
+  if (!same(original, latest)) throw new Error(`${path} was changed elsewhere. Reload and review that field before saving.`);
+  return structuredClone(edited);
+}
+
+export function saveCourseEdits(original: CourseData, edited: CourseData) {
+  if (original.id !== edited.id) throw new Error("The course identity cannot be changed.");
+  const latest = getCourses().find(course => course.id === original.id);
+  if (!latest) throw new Error("This course is no longer available.");
+  const merged = mergeCourseEdits(original, edited, latest);
+  if (JSON.stringify(merged) !== JSON.stringify(latest)) saveCourse(merged);
+  return merged;
+}
+
+/** Save edits to built-in or custom courses using the shared course record. */
+export function saveCourse(course: CourseData) {
+  if (!COURSES.some(base => base.id === course.id) && !course.id.startsWith("custom-")) throw new Error("Unknown course.");
+  const stored = localStorage.getItem(courseStorageKey(course.id));
+  if (stored && JSON.parse(stored).deleted === true) throw new Error("This course has been deleted.");
+  localStorage.setItem(courseStorageKey(course.id), JSON.stringify(course));
 }
 
 export function saveCustomCourse(course: CourseData) {
