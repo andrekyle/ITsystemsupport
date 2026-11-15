@@ -1,3 +1,4 @@
+import { isAdminRole } from "../types";
 import { useEffect, useState, type ReactNode } from "react";
 import type { Profile } from "../types";
 import { Icon } from "../icons";
@@ -20,7 +21,7 @@ export function FormLibrary({ profile, children }: { profile: Profile; children:
   const [actionError, setActionError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<SavedForm | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const canBuild = profile.role === "Super User" && !phone;
+  const canBuild = isAdminRole(profile.role) && !phone;
   const query = search.trim().toLowerCase();
   const visibleForms = forms.filter(form => `${form.title} ${form.source_name}`.toLowerCase().includes(query));
   const showRegistration = "student registration form".includes(query);

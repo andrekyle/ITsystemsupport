@@ -1,3 +1,5 @@
+import { assignmentFor, canSeeProfile, isAssignedStaff, useAssignments } from "../lib/assignments";
+import { isAdminRole } from "../types";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Profile, UnitStandard } from "../types";
@@ -518,8 +520,10 @@ export function AttendancePage({
   profile: Profile;
   onUpdateProfile: (patch: Partial<Profile>) => void;
 }) {
+  const assignments = useAssignments();
+  const [directoryProfiles, setDirectoryProfiles] = useState<Profile[]>([]);
   const staff = isStaff(profile.role);
-  const isSuper = profile.role === "Super User";
+  const isSuper = isAdminRole(profile.role);
   const [dateIso, setDateIso] = useState(defaultFriday);
   const [reg, setReg] = useState<AttData>(() => readReg(attKey(dateIso)));
   const [askSig, setAskSig] = useState(false);
@@ -544,6 +548,18 @@ export function AttendancePage({
     )
   );
   const storageKey = attKey(dateIso);
+  const allowedProfileIds = new Set([
+    profile.id,
+    ...assignmentFor(profile, assignments).learnerIds,
+    ...[...loadProfiles(), ...directoryProfiles].filter(p => canSeeProfile(profile, p, assignments)).map(p => p.id),
+  ]);
+  const visibleRegister = (data: AttData): AttData => {
+    if (!isAssignedStaff(profile)) return data;
+    const order = data.order.filter(id => allowedProfileIds.has(id));
+    return { ...data, order, rows: Object.fromEntries(Object.entries(data.rows).filter(([id]) => allowedProfileIds.has(id))) };
+  };
+  const visibleOrder = visibleRegister(reg).order;
+
 
   useEffect(() => {
     if (!staff) return;
@@ -560,6 +576,7 @@ export function AttendancePage({
     let active = true;
     void fetchCloudDirectory().then((dir) => {
       if (!active || !dir) return;
+      setDirectoryProfiles(dir.profiles);
       setProfileSignatures((current) => {
         const next = { ...current };
         for (const p of dir.profiles) if (p.signatureImage) next[p.id] = p.signatureImage;
@@ -771,6 +788,7 @@ export function AttendancePage({
   /** Staff: re-run the signature cleanup on every saved signature — all
    *  attendance registers plus every profile (this account and others). */
   const fixSignatures = async () => {
+    if (!isSuper) return;
     setFixingSig(true);
     setFixNote("Cleaning signatures…");
     let fixed = 0;
@@ -897,7 +915,7 @@ export function AttendancePage({
       const regs: { date: string; data: AttData }[] = [];
       for (const key of await allRegisterKeys(true)) {
         try {
-          const data = (await pullLatest(key)) ?? readReg(key);
+          const data = visibleRegister((await pullLatest(key)) ?? readReg(key));
           if (!Object.keys(data.rows).length) continue; // skip unsigned/empty registers
           regs.push({ date: key.slice("itss.attendance.".length), data });
         } catch (error) {
@@ -950,7 +968,7 @@ export function AttendancePage({
   };
 
   // students only sign; the register itself is edited by staff
-  const canEditRow = (_pid: string) => staff;
+  const canEditRow = (pid: string) => staff && (!isAssignedStaff(profile) || allowedProfileIds.has(pid));
 
   const cell = (pid: string, field: keyof AttRow, cls?: string) => {
     const row = reg.rows[pid];
@@ -1029,7 +1047,7 @@ export function AttendancePage({
         )}
         {fixNote && <span className="att-note">{fixNote}</span>}
         {attendanceNote && <span className="att-note">{attendanceNote}</span>}
-        {profile.role === "Super User" && (
+        {isAdminRole(profile.role) && (
           <button className="btn ghost sm danger" onClick={() => setConfirming({ kind: "register" })}>
             Clear register
           </button>
@@ -1137,7 +1155,7 @@ export function AttendancePage({
               <StaticSheet
                 key={r.date}
                 dateIso={r.date}
-                data={r.data}
+                data={visibleRegister(r.data)}
                 signatureImages={profileSignatures}
               />
             ))}
@@ -1213,8 +1231,8 @@ export function AttendancePage({
               </tr>
             </thead>
             <tbody>
-              {Array.from({ length: Math.max(ROW_COUNT, reg.order.length) }, (_, i) => {
-                const pid = reg.order[i];
+              {Array.from({ length: Math.max(ROW_COUNT, visibleOrder.length) }, (_, i) => {
+                const pid = visibleOrder[i];
                 const rowSignatureImage = pid
                   ? reg.rows[pid]?.signatureImage ?? profileSignatures[pid]
                   : undefined;

@@ -1,4 +1,5 @@
 import type { ProgressState, Profile } from "../types";
+import { hasFormativeEvidence, savedWorkbookResults } from "./academicEvidence";
 import { UNIT_ACTIVITIES } from "../types";
 import { MODULES } from "../data/course";
 import { loadPoeDocs, loadProgress, poeItemCount } from "../store";
@@ -174,7 +175,7 @@ export function computeGamification(
     }
 
     let unitHasExercise = false;
-    for (const ex of Object.values(unit.exercises ?? {})) {
+    for (const ex of [...Object.values(unit.exercises ?? {}), ...savedWorkbookResults(unit)]) {
       if (!ex.total) continue;
       unitHasExercise = true;
       const ratio = ex.best / ex.total;
@@ -225,7 +226,7 @@ export function computeGamification(
     for (const u of m.units) {
       totalUnits++;
       const unit = progress.units[u.us];
-      const complete = unit && UNIT_ACTIVITIES.every((a) => unit.activities[a]);
+      const complete = unit && UNIT_ACTIVITIES.every((a) => unit.activities[a] || (a === "Formative Assessment" && hasFormativeEvidence(unit)));
       if (complete) {
         done++;
         unitsCompleted++;

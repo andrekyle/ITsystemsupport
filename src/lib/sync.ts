@@ -125,6 +125,7 @@ export function writeFromCloud(key: string, value: string): void | Promise<void>
     }
   }
   rawSet(key, value);
+  if (key === "itss.staff-assignments.shared") window.dispatchEvent(new Event("itss:staff-assignments"));
 }
 
 async function reconcileCloudProgress(key: string, value: string): Promise<void> {

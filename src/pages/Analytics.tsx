@@ -1,3 +1,5 @@
+import { canSeeProfile, useAssignments } from "../lib/assignments";
+import { savedWorkbookResults } from "../lib/academicEvidence";
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, Route } from "../types";
@@ -78,7 +80,7 @@ export function analyse(p: Profile, cloud: CloudLearnerData | null): LearnerRow 
       quizBestSum += q.best / q.total;
       quizCount++;
     }
-    for (const ex of Object.values(unit.exercises ?? {})) {
+    for (const ex of [...Object.values(unit.exercises ?? {}), ...savedWorkbookResults(unit)]) {
       if (!ex.total) continue;
       exSum += ex.best / ex.total;
       exCount++;
@@ -175,6 +177,7 @@ const SORT_LABELS: Record<SortKey, string> = {
 };
 
 export function AnalyticsPage({ profile, navigate }: { profile: Profile; navigate: (r: Route) => void }) {
+  const assignments = useAssignments();
   const registers = attendanceRegisterCount();
   const [sort, setSort] = useState<SortKey>("completion");
   const [ascending, setAscending] = useState(false);
@@ -212,9 +215,9 @@ export function AnalyticsPage({ profile, navigate }: { profile: Profile; navigat
       ...localLearners.map((p) => mergeProfileWithCloud(p, cloud)),
       ...remote,
     ]);
-    return all.map((p) => analyse(p, cloud));
+    return all.filter(p => canSeeProfile(profile, p, assignments)).map((p) => analyse(p, cloud));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [registers, profile.id, cloud]);
+  }, [registers, profile.id, cloud, JSON.stringify(assignments)]);
 
   const sorted = useMemo(() => {
     const arr = [...rows];

@@ -1,3 +1,6 @@
+import { canSeeCourse, isAssignedStaff, useAssignments } from "./lib/assignments";
+import { activeCourseId, getCourses, setActiveCourse } from "./data/courses";
+import { isAdminRole } from "./types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FluentProvider, webDarkTheme, webLightTheme } from "@fluentui/react-components";
 import type { Profile, Route } from "./types";
@@ -130,6 +133,13 @@ function Shell({
   const [collapsed, setCollapsed] = useState(() => window.innerWidth < MOBILE_BP);
   const [route, setRoute] = useState<Route>(loadRoute);
   const { state, ready, loadError, toggleActivity, saveQuizResult, setLogbookField, setLogbookFields, saveExerciseResult } = useProgress(profile.id);
+  const assignments = useAssignments();
+  const courseIndependentPages = new Set(["students", "profile", "chat", "adminDashboard", "evidenceRegister", "reports", "trackerReport"]);
+  const courseAllowed = courseIndependentPages.has(route.page) || canSeeCourse(profile, activeCourseId(), assignments);
+  const allowedCourses = getCourses().filter(course => canSeeCourse(profile, course.id, assignments));
+  useEffect(() => {
+    if (!courseAllowed && allowedCourses.length) setActiveCourse(allowedCourses[0].id);
+  }, [courseAllowed, allowedCourses.map(course => course.id).join(",")]);
 
   // in-app navigation pushes a browser history entry so back/forward work;
   // on mobile the navigation drawer closes so the destination page is visible
@@ -194,8 +204,9 @@ function Shell({
         )}
         <main className="content">
           <div className="content-inner">
-            {route.page === "adminDashboard" && (profile.role === "Super User" || profile.role === "Admin") && <AdminDashboardPage profile={profile} navigate={navigate} />}
-            {route.page === "evidenceRegister" && (profile.role === "Super User" || profile.role === "Admin") && <EvidenceRegisterPage profile={profile} />}
+            {!courseAllowed ? <section className="card"><h1>{allowedCourses.length ? "Opening assigned course..." : "No courses assigned"}</h1><p>{isAssignedStaff(profile) ? "An administrator must assign your courses before you can access course content." : "This course is unavailable."}</p></section> : <>
+            {route.page === "adminDashboard" && isAdminRole(profile.role) && <AdminDashboardPage profile={profile} navigate={navigate} />}
+            {route.page === "evidenceRegister" && isAdminRole(profile.role) && <EvidenceRegisterPage profile={profile} />}
             {route.page === "dashboard" && (
               profile.role === "Admin" ? <AdminDashboardPage profile={profile} navigate={navigate} /> : TENANT_ID === "discovery" ? (
                 <DiscoveryDashboard profile={profile} progress={state} navigate={navigate} />
@@ -255,18 +266,19 @@ function Shell({
               />
             )}
             {route.page === "trackerReport" && <TrackerReportPage profile={profile} />}
-            {route.page === "reports" && profile.role === "Super User" && (
+            {route.page === "reports" && isAdminRole(profile.role) && (
               <ReportsPage profile={profile} />
             )}
             {route.page === "onboarding" && (
               <OnboardingPage profile={profile} route={route} navigate={navigate} />
             )}
             {route.page === "resources" && <ResourcesPage />}
+            </>}
           </div>
         </main>
       </div>
       </EditingProvider>
-      {profile.role === "Super User" && route.page !== "reports" && (
+      {isAdminRole(profile.role) && route.page !== "reports" && (
         <button
           type="button"
           className="ai-fab"

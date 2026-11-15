@@ -13,6 +13,7 @@ import { cachedLessonEdits, flushLessonEdits, loadLessonEdits, queueLessonEdits,
 import { flushUnitPack, loadUnitPack, unitPackSnapshot } from "./lib/unitStorage";
 import { SAVED_SIGNATURE_REFERENCE } from "./lib/signature";
 import { parseProgressSnapshot } from "./lib/progressEvidence";
+import { hasFormativeEvidence, savedWorkbookAnswers } from "./lib/academicEvidence";
 import {
   loadOnboardingPacks,
   loadOnboardingPacksForUpdate,
@@ -1883,12 +1884,14 @@ function creditActivityEvidence(profileId: string, us: string, activity: UnitAct
 }
 
 export function usePoe(profileId: string) {
+  const [loadedProfileId, setLoadedProfileId] = useState(profileId);
   const [docs, setDocs] = useState<Record<string, PoeDoc>>(() =>
     read<Record<string, PoeDoc>>(poeKey(profileId), {})
   );
 
   useEffect(() => {
     setDocs(read<Record<string, PoeDoc>>(poeKey(profileId), {}));
+    setLoadedProfileId(profileId);
   }, [profileId]);
 
   useEffect(() => {
@@ -1933,7 +1936,9 @@ export function usePoe(profileId: string) {
     [profileId]
   );
 
-  return { docs, saveDoc, removeDoc };
+  // A profile switch must never render the previous learner's documents.
+  const visibleDocs = loadedProfileId === profileId ? docs : read<Record<string, PoeDoc>>(poeKey(profileId), {});
+  return { docs: visibleDocs, saveDoc, removeDoc };
 }
 
 /* ---------- facilitator-uploaded lesson-plan slides (shared per unit standard) ---------- */
@@ -3261,10 +3266,7 @@ export function useNotes(profileId: string) {
 /* ---------- derived stats ---------- */
 
 export function unitCompletion(state: ProgressState, us: string): number {
-  const p = state.units[us];
-  if (!p) return 0;
-  const done = UNIT_ACTIVITIES.filter((a) => p.activities[a]).length;
-  return done / UNIT_ACTIVITIES.length;
+  return unitProgress(state, us);
 }
 
 /**
@@ -3288,17 +3290,11 @@ export function unitProgress(
 ): number {
   const p = state.units[us];
   const activities = p?.activities ?? {};
-  const quizzes = p?.quizzes ?? {};
-  const quiz = p?.quiz;
-  const exercises = p?.exercises ?? {};
-  const anyQuizAttempted =
-    !!(quiz && quiz.total) ||
-    Object.values(quizzes).some((q) => q.total > 0);
-  const anyExerciseAttempted = Object.values(exercises).some((e) => e.total > 0);
+  const formative = hasFormativeEvidence(p);
   const anyPoeForUnit = Object.keys(poe).some((k) => poeDocUnits(k).includes(us));
   const done = UNIT_ACTIVITIES.filter((a) => {
     if (activities[a]) return true;
-    if (a === "Formative Assessment" && (anyQuizAttempted || anyExerciseAttempted)) return true;
+    if (a === "Formative Assessment" && formative) return true;
     if (a === "POE Evidence" && anyPoeForUnit) return true;
     return false;
   }).length;
@@ -3307,7 +3303,7 @@ export function unitProgress(
 
 export function unitStatus(state: ProgressState, us: string): "not-started" | "in-progress" | "completed" {
   const c = unitCompletion(state, us);
-  if (c === 0) return "not-started";
+  if (c === 0) return savedWorkbookAnswers(state.units[us]).length ? "in-progress" : "not-started";
   if (c === 1) return "completed";
   return "in-progress";
 }

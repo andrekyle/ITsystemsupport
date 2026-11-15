@@ -39,7 +39,6 @@ interface Props {
 
 export function Sidebar({ collapsed, route, profile, navigate }: Props) {
   const isPrivileged = isStaff(profile.role);
-  const isAdmin = profile.role === "Admin";
   const [installed, setInstalled] = useState(isInstalled);
   const [installMsg, setInstallMsg] = useState<string | null>(null);
   useEffect(() => onInstallChange(() => setInstalled(isInstalled())), []);
@@ -53,9 +52,8 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
     { page: "dashboard" as const, icon: "dashboard", label: "Dashboard" },
     ...(isAdminRole(profile.role) ? [{ page: "adminDashboard" as const, icon: "chart", label: "Admin Overview" }] : []),
     ...(isAdminRole(profile.role) ? [{ page: "evidenceRegister" as const, icon: "checklist", label: "Skills Evidence Register" }] : []),
-    ...(!isAdmin ? [{ page: "course" as const, icon: "book", label: "My Course" }] : []),
-    ...(!isAdmin ? [{ page: "progress" as const, icon: "trend", label: "Progress" }] : []),
-    ...(!isAdmin ? [
+    { page: "course" as const, icon: "book", label: "My Course" },
+    { page: "progress" as const, icon: "trend", label: "Progress" },
       { page: "community" as const, icon: "people", label: "Community & Support" },
       { page: "chat" as const, icon: "message", label: "Chat" },
       { page: "memories" as const, icon: "image", label: "Gallery" },
@@ -64,7 +62,6 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
       { page: "checklist" as const, icon: "checklist", label: "Appendix C Checklist" },
       { page: "sectiond" as const, icon: "document", label: "Section D Declaration" },
       { page: "forms" as const, icon: "clipboard", label: "Forms" },
-    ] : []),
     { page: "compliance" as const, icon: "shield", label: "Compliance" },
     ...(isPrivileged
       ? [{ page: "analytics" as const, icon: "chart", label: "Learning Analytics" }]
@@ -74,7 +71,7 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
           {
             page: "students" as const,
             icon: "people",
-            label: profile.role === "Super User" ? "Users" : "Students",
+            label: isAdminRole(profile.role) ? "Users" : "Students",
           },
         ]
       : [
@@ -87,17 +84,15 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
     ...(isAdminRole(profile.role)
       ? [
           { page: "trackerReport" as const, icon: "chart", label: "Learner Tracker Report" },
-          ...(!isAdmin ? [{ page: "reports" as const, icon: "robot", label: "AI Assistant" }] : []),
+          { page: "reports" as const, icon: "robot", label: "AI Assistant" },
         ]
       : []),
-    ...(!isAdmin ? [
       { page: "calendar" as const, icon: "calendar", label: "Training Calendar" },
       { page: "attendance" as const, icon: "clipboard", label: "Attendance Register" },
       { page: "voting" as const, icon: "chart", label: "Voting Station" },
       { page: "assessments" as const, icon: "clipboard", label: "Assessments" },
       { page: "deliverables" as const, icon: "checklist", label: "Deliverables" },
       { page: "resources" as const, icon: "globe", label: "Resources" },
-    ] : []),
   ];
   const nav = learningNav;
 

@@ -1,3 +1,4 @@
+import { isAdminRole } from "../types";
 import { useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { WorkbookMemoState } from "../store";
@@ -30,7 +31,7 @@ export function WorkbookMemo({ profile, unitId, blueprint, memo, onChange }: { p
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
-  const canManage = profile.role === "Super User";
+  const canManage = isAdminRole(profile.role);
 
   const pick = async (file?: File) => {
     if (!canManage || !file) return;
@@ -71,7 +72,7 @@ export function WorkbookMemo({ profile, unitId, blueprint, memo, onChange }: { p
   if (!isStaff(profile.role)) return null;
 
   return <section className="card workbook-memo">
-    <div className="workbook-memo-head"><div className="practical-hero-icon"><Icon name="document" size={26}/></div><div><span className="practical-kicker">Learner Workbook</span><h2>Marking memo</h2><p>Staff-only model answers and marking criteria. Super Users can upload or replace the official PDF memo used for semantic marking.</p></div></div>
+    <div className="workbook-memo-head"><div className="practical-hero-icon"><Icon name="document" size={26}/></div><div><span className="practical-kicker">Learner Workbook</span><h2>Marking memo</h2><p>Staff-only model answers and marking criteria. Administrators can upload or replace the official PDF memo used for semantic marking.</p></div></div>
     <div className="workbook-memo-upload">
       {canManage && <><input ref={input} hidden type="file" accept="application/pdf,.pdf" onChange={event => { const file=event.target.files?.[0]; event.target.value=""; void pick(file); }}/>
       <button className="btn" type="button" disabled={busy} onClick={()=>input.current?.click()}><Icon name="upload" size={16}/> {busy ? `Reading memo… ${progress}%` : memo.file ? "Replace memo PDF" : "Upload memo PDF"}</button></>}

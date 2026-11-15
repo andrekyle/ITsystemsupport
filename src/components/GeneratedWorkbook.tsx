@@ -1,3 +1,4 @@
+import { isAdminRole } from "../types";
 import React, { Fragment, useEffect, useRef, useState } from "react";
 import type { Profile, UnitStandard, WorkbookSpec } from "../types";
 import { isStaff } from "../types";
@@ -184,7 +185,7 @@ export function GeneratedWorkbook({ workbook, unit, profile, memoItems, values, 
       <div className="lw-workbook-actions-copy"><strong>Workbook tools</strong><span>Answers save automatically. Save verifies the latest content on this device and in the cloud before you leave.</span></div>
       <div className="lw-workbook-actions-controls">
         <DocumentActions name={workbook.title} onSave={onSave} />
-        {profile.role === "Super User" && <button type="button" className="btn ghost sm" aria-pressed={editMode} onClick={() => setEditMode(value => !value)}>{editMode ? "Done editing" : "Edit page"}</button>}
+        {isAdminRole(profile.role) && <button type="button" className="btn ghost sm" aria-pressed={editMode} onClick={() => setEditMode(value => !value)}>{editMode ? "Done editing" : "Edit page"}</button>}
         <button type="button" className="btn lw-mark-workbook" disabled={marking || !memoItems.length} onClick={() => void mark()}>
           <Icon name="robot" size={17} />
           {marking ? "Marking answers…" : memoItems.length ? "Mark workbook" : "Upload memo to mark"}

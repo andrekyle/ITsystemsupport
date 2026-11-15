@@ -65,6 +65,7 @@ export function Quiz({
   const fingerprint = useMemo(() => questionFingerprint(questions), [questions]);
   const [answers, setAnswers] = useState<Record<number, Ans>>(() => readDraft(draftKey, fingerprint));
   const [submitted, setSubmitted] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [dragFrom, setDragFrom] = useState<{ qi: number; idx: number } | null>(null);
   const [matchSel, setMatchSel] = useState<{ qi: number; leftIdx: number } | null>(null);
   const [showKey, setShowKey] = useState(false);
@@ -148,8 +149,7 @@ export function Quiz({
   const pct = Math.round((score / questions.length) * 100);
 
   function submit() {
-    if (draftKey) localStorage.removeItem(draftKey);
-    setSubmitted(true);
+    setSaveError("");
     // stamp each choice answer with its display order so reviews can mirror
     // exactly what the learner saw on screen
     const snapshot: Record<number, Ans> = {};
@@ -160,7 +160,15 @@ export function Quiz({
           ? { ...a, disp: shuffled[qi].optOrder }
           : a;
     }
-    onSubmit(score, questions.length, snapshot);
+    try {
+      onSubmit(score, questions.length, snapshot);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Your quiz could not be saved. Your answers are retained; please retry.");
+      return;
+    }
+    setSubmitted(true);
+    // Clear the recovery draft only after the result was successfully saved.
+    if (draftKey) localStorage.removeItem(draftKey);
     document.querySelector(".content")?.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -252,6 +260,7 @@ export function Quiz({
 
   return (
     <div>
+      {saveError && <p className="auth-error" role="alert">{saveError}</p>}
       {previous && !submitted && (
         <div className="callout" style={{ marginTop: 0 }}>
           <span className="ico">

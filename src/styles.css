@@ -6780,6 +6780,8 @@ textarea:focus {
 .attempt-row.acad .cell {
   display: inline-flex;
   justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .attempt-row.acad .cell,
@@ -6793,7 +6795,9 @@ textarea:focus {
 }
 
 .attempt-row.acad .chip {
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  max-width: 100%;
   font-weight: 400;
 }
 
@@ -6813,9 +6817,9 @@ textarea:focus {
   margin: 0;
 }
 
-@container (min-width: 640px) {
+@container (min-width: 960px) {
   .attempt-row.acad {
-    grid-template-columns: 20px minmax(0, 1fr) 138px 112px 178px;
+    grid-template-columns: 20px minmax(180px, 1fr) 220px 112px 178px;
   }
 
   .attempt-row.acad .cell,

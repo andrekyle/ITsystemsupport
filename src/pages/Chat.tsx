@@ -1,3 +1,4 @@
+import { canSeeProfile, isAssignedStaff, useAssignments } from "../lib/assignments";
 import { useEffect, useMemo, useRef, useState, Fragment } from "react";
 import { Icon } from "../icons";
 import { EditingTools } from "../components/EditingSidebar";
@@ -47,6 +48,7 @@ export function ChatPage({
   route: Route;
   navigate: (r: Route) => void;
 }) {
+  const assignments = useAssignments();
   const isSuper = profile.role === "Super User";
   const staff = isStaff(profile.role);
 
@@ -93,12 +95,12 @@ export function ChatPage({
   const people = useMemo<Profile[]>(() => {
     if (!cloud) return [];
     const all = cloud.profiles
-      .filter((p) => p.id !== profile.id)
+      .filter((p) => p.id !== profile.id && (!isAssignedStaff(profile) || canSeeProfile(profile, p, assignments)))
       // learners only see other learners and staff — never other learners' chats
       .filter((p) => (staff ? true : p.role === "Learner" || isStaff(p.role)))
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
     return all;
-  }, [cloud, profile.id, staff]);
+  }, [cloud, profile.id, staff, JSON.stringify(assignments)]);
 
   /** Index by profile id AND by that profile's Supabase auth uid so we can
    *  resolve senders no matter which identifier a message carries. */
@@ -125,11 +127,14 @@ export function ChatPage({
   // - super user sees every conversation (moderation view)
   // - everyone else only sees their own conversations
   const visibleThreads = useMemo(
-    () => (isSuper ? threads : threads.filter((t) => t.aId === profile.id || t.bId === profile.id)),
-    [threads, isSuper, profile.id]
+    () => (isSuper ? threads : threads.filter((t) =>
+      (t.aId === profile.id || t.bId === profile.id) &&
+      (!isAssignedStaff(profile) || peopleByAny.has(t.aId === profile.id ? t.bId : t.aId)))),
+    [threads, isSuper, profile.id, peopleByAny]
   );
 
   const [openWith, setOpenWith] = useState<string | null>(null);
+  const safeOpenWith = openWith && (!isAssignedStaff(profile) || peopleByAny.has(openWith)) ? openWith : null;
   /** open a person's profile — learners may only view learner profiles */
   const openProfile = (id: string) => {
     const p = peopleByAny.get(id);
@@ -184,8 +189,9 @@ export function ChatPage({
 
   // deep-linkable ?studentId (reused from the shared Route)
   useEffect(() => {
-    if (route.studentId && route.studentId !== profile.id) setOpenWith(route.studentId);
-  }, [route.studentId, profile.id]);
+    if (route.studentId && route.studentId !== profile.id &&
+      (!isAssignedStaff(profile) || peopleByAny.has(route.studentId))) setOpenWith(route.studentId);
+  }, [route.studentId, profile.id, peopleByAny]);
 
   // Ask once for system-notification permission so incoming messages can
   // alert the user (sound/vibration/badge work without it).
@@ -194,7 +200,7 @@ export function ChatPage({
   }, []);
 
   /** WhatsApp-style mobile navigation: list OR conversation, never both. */
-  const hasOpen = !!(monitorThread || openWith);
+  const hasOpen = !!(monitorThread || safeOpenWith);
   const closeThread = () => {
     setMonitorKey(null);
     setOpenWith(null);
@@ -211,7 +217,7 @@ export function ChatPage({
             threads={visibleThreads}
             nameFor={nameFor}
             isOnline={isOnline}
-            openWith={openWith}
+            openWith={safeOpenWith}
             monitorKey={monitorKey}
             onBroadcast={
               staff && broadcastRecipients.length > 0 ? () => setBroadcasting(true) : undefined
@@ -232,11 +238,11 @@ export function ChatPage({
         <section className="chat-main card">
           {monitorThread ? (
             <MonitorThread thread={monitorThread} me={profile} nameFor={nameFor} peopleByAny={peopleByAny} onOpenProfile={openProfile} onBack={closeThread} />
-          ) : openWith ? (
+          ) : safeOpenWith ? (
             <ChatThread
               me={profile}
-              otherId={openWith}
-              other={peopleById.get(openWith)}
+              otherId={safeOpenWith}
+              other={peopleById.get(safeOpenWith)}
               peopleByAny={peopleByAny}
               nameFor={nameFor}
               cloud={cloud}

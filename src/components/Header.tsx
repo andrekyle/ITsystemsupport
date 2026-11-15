@@ -1,3 +1,4 @@
+import { canSeeCourse, useAssignments } from "../lib/assignments";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, Route } from "../types";
@@ -174,6 +175,7 @@ export function Header({
   onOpenUnit,
   navigate,
 }: Props) {
+  const assignments = useAssignments();
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -388,10 +390,10 @@ export function Header({
                 <Select
                   ariaLabel="Selected qualification"
                   value={activeCourseId()}
-                  options={getCourses().map((course) => ({ value: course.id, label: course.label }))}
+                  options={getCourses().filter(course => canSeeCourse(profile, course.id, assignments)).map((course) => ({ value: course.id, label: course.label }))}
                   disabled={profile.role === "Learner"}
                   onChange={(id) => {
-                    if (profile.role !== "Learner") setActiveCourse(id);
+                    if (profile.role !== "Learner" && canSeeCourse(profile, id, assignments)) setActiveCourse(id);
                   }}
                 />
               </div>

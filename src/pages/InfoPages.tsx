@@ -1,3 +1,4 @@
+import { isAdminRole } from "../types";
 import { useState } from "react";
 import { InfoSectionTabs } from "../components/InfoSectionTabs";
 import { usePhoneView } from "../components/usePhoneView";
@@ -241,7 +242,7 @@ export function CalendarPage({
 }) {
   const customCourse = activeCourseId().startsWith("custom-");
   const phone = usePhoneView();
-  const canEdit = !phone && (customCourse ? profile?.role === "Super User" : import.meta.env.DEV);
+  const canEdit = !phone && (customCourse ? (!!profile && isAdminRole(profile.role)) : import.meta.env.DEV);
   // In-place editing of the calendar (dev only — saving writes the edits
   // straight back into the course data file through /api/save-calendar).
   const [requestedEditing, setEditing] = useState(false);

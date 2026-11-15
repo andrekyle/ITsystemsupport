@@ -1,3 +1,4 @@
+import { canSeeProfile, isAssignedStaff, useAssignments } from "../lib/assignments";
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, ProgressState, Route } from "../types";
@@ -197,11 +198,12 @@ export function CompliancePage({
   progress: ProgressState;
   navigate: (r: Route) => void;
 }) {
+  const assignments = useAssignments();
   const staff = isStaff(profile.role);
   const { outcomes } = useOutcomes();
   const reviews = loadPoeReviews();
   const [settings] = useSharedSettings();
-  const profiles = loadProfiles();
+  const profiles = loadProfiles().filter(p => canSeeProfile(profile, p, assignments));
   const learners = profiles.filter((p) => p.role === "Learner");
   const registers = attendanceRegisterCount();
 
@@ -223,7 +225,7 @@ export function CompliancePage({
   const records = useMemo(() => {
     if (!staff) return [complianceFor(profile, outcomes, reviews)];
     const remoteLearners = remoteOnlyProfiles(profiles, cloud?.profiles ?? []).filter(
-      (p) => p.role === "Learner"
+      (p) => p.role === "Learner" && canSeeProfile(profile, p, assignments)
     );
     // enrich seeded local copies with cloud-only visuals (avatar, lastLogin,
     // signature) so the compliance list looks the same as the People page
@@ -235,7 +237,7 @@ export function CompliancePage({
       a.profile.name.localeCompare(b.profile.name, undefined, { sensitivity: "base" })
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [staff, profile.id, outcomes, profiles.length, cloud]);
+  }, [staff, profile.id, outcomes, profiles.length, cloud, JSON.stringify(assignments)]);
 
   const deadlines = useMemo(() => buildDeadlines(progress), [progress]);
   const overdue = deadlines.filter((d) => d.status === "overdue").length;
@@ -245,7 +247,7 @@ export function CompliancePage({
   const complianceTabs = [
     { id: "deadlines", label: "Deadlines & key dates", icon: "calendar" },
     { id: "records", label: staff ? "Learner records" : "My compliance record", icon: "checklist" },
-    ...(staff ? [{ id: "audit", label: "Audit trail", icon: "eye" }] : []),
+    ...(staff && !isAssignedStaff(profile) ? [{ id: "audit", label: "Audit trail", icon: "eye" }] : []),
   ];
   const activeTab = complianceTabs.some(item => item.id === selectedTab) ? selectedTab : "deadlines";
   const visibleDeadlines = showAllDeadlines
@@ -557,7 +559,7 @@ export function CompliancePage({
 
       </section>
 
-      {staff && <section role="tabpanel" id="compliance-panel-audit"
+      {staff && !isAssignedStaff(profile) && <section role="tabpanel" id="compliance-panel-audit"
         aria-labelledby="compliance-tab-audit" hidden={activeTab !== "audit"}>
         <AuditTrail />
       </section>}

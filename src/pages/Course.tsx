@@ -1,3 +1,4 @@
+import { isAdminRole } from "../types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
 import { createPortal, flushSync } from "react-dom";
@@ -5,6 +6,7 @@ import JSZip from "jszip";
 import { Icon } from "../icons";
 import type { Exercise, ExerciseCheck, LessonFigure, LessonPlan, LessonPlanRow, LessonSection, LogbookSpec, PoeDoc, ProgressState, Profile, QuizQuestion, Role, Route, UnitActivity, UnitContent, UnitStandard } from "../types";
 import { UNIT_ACTIVITIES, isStaff } from "../types";
+import { hasFormativeEvidence } from "../lib/academicEvidence";
 import { COURSE_BLURB, COURSE_META, MODULES, MODULE_FLOW, PROGRAMME_ABOUT, PROGRAMME_PURPOSE, TOTAL_UNITS, WHAT_YOULL_LEARN, findModule, findUnit, isSaqaUnit, usLabel } from "../data/course";
 import { activeCourseId, courseStorageKey, deleteCustomCourse } from "../data/courses";
 import { STANDARD_UNIT_TABS } from "../lib/unitTabs";
@@ -1851,13 +1853,13 @@ export function CoursePage({
     { id: "purpose", label: "Purpose & rationale" },
     { id: "learning", label: "What you'll learn" },
   ];
-  const inline = useInlineCourse(profile.role === "Super User");
+  const inline = useInlineCourse(isAdminRole(profile.role));
   const { meta: COURSE_META, blurb: COURSE_BLURB, modules: MODULES, moduleFlow: MODULE_FLOW, programmeAbout: PROGRAMME_ABOUT, programmePurpose: PROGRAMME_PURPOSE, whatYoullLearn: WHAT_YOULL_LEARN } = inline.course;
   const [deletingCourse, setDeletingCourse] = useState(false);
   const [selectedCourseId] = useState(activeCourseId);
   const [courseDeleteBusy, setCourseDeleteBusy] = useState(false);
   const [courseDeleteError, setCourseDeleteError] = useState("");
-  const canDeleteCourse = !phone && profile.role === "Super User" && selectedCourseId.startsWith("custom-");
+  const canDeleteCourse = !phone && isAdminRole(profile.role) && selectedCourseId.startsWith("custom-");
   const removeCourse = async () => {
     if (!canDeleteCourse || courseDeleteBusy) return;
     setCourseDeleteBusy(true);
@@ -1881,7 +1883,7 @@ export function CoursePage({
       <h1 className="page-title">{inline.text(COURSE_META.title, (d, v) => { d.meta.title = v; }, "title")}</h1>
       <p className="page-sub">{inline.text(COURSE_BLURB, (d, v) => { d.blurb = v; }, "blurb")}</p>
       <div className="course-switch">
-        {!phone && profile.role === "Super User" && <button className="btn ghost sm" onClick={() => setCreatingCourse(true)}><Icon name="plus" size={15} /> Add course</button>}
+        {!phone && isAdminRole(profile.role) && <button className="btn ghost sm" onClick={() => setCreatingCourse(true)}><Icon name="plus" size={15} /> Add course</button>}
         {inline.controls}
         {canDeleteCourse && <button className="btn ghost sm danger-text" onClick={() => setDeletingCourse(true)}><Icon name="trash" size={15} /> Delete course</button>}
       </div>
@@ -2255,7 +2257,7 @@ export function ModulePage({
   navigate: (r: Route) => void;
 }) {
   const [activeUnit, setActiveUnit] = useState<number | null>(null);
-  const inline = useInlineCourse(profile.role === "Super User");
+  const inline = useInlineCourse(isAdminRole(profile.role));
   const mod = inline.course.modules.find(m => m.id === moduleId);
   if (!mod) return <p>Module not found.</p>;
   const idx = inline.course.modules.indexOf(mod);
@@ -2896,7 +2898,7 @@ function UnitPageContent({
   });
   const migratingInlineImages = useRef(new Set<string>());
   useEffect(() => {
-    if (inlineUnit || profile.role !== "Super User") return;
+    if (inlineUnit || !isAdminRole(profile.role)) return;
     const candidates = Object.entries(lessonEdits.sectionBody ?? {}).filter(([, body]) => /<img\b[^>]*src=["']data:image\//i.test(body.richHtml ?? ""));
     if (!candidates.length) return;
     void (async () => {
@@ -3001,7 +3003,8 @@ function UnitPageContent({
   const { module: mod, unit: u } = found;
   const idx = MODULES.indexOf(mod);
   const uc = unitCompletion(progress, u.us);
-  const acts = progress.units[u.us]?.activities ?? {};
+  const acts = { ...progress.units[u.us]?.activities };
+  if (hasFormativeEvidence(progress.units[u.us])) acts["Formative Assessment"] = true;
   const completedActivities = UNIT_ACTIVITIES.filter(activity => !!acts[activity]).length;
   const nextActivity = UNIT_ACTIVITIES.find(activity => !acts[activity]);
   const baseContent: UnitContent = applyActivityOverrides(builtUnit?.content ?? getContent(u.us) ?? { lesson: [], exercises: [], assignments: [], quiz: [] }, lessonEdits.activityOverrides);
@@ -3050,7 +3053,7 @@ function UnitPageContent({
     return r && r.best / r.total >= 0.8;
   }).length;
   const isPrivileged = isStaff(profile.role);
-  const isSuperUser = profile.role === "Super User" && !phone;
+  const isSuperUser = isAdminRole(profile.role) && !phone;
   // Pictures the slide embeds that neither the figure map nor Storage can
   // supply. Editors are told how to repair them; learners only that they are
   // unavailable, since a learner cannot re-insert a picture.
@@ -3619,7 +3622,7 @@ function UnitPageContent({
   const [saConfirm, setSaConfirm] = useState<"save" | "unlock" | null>(null);
   // shared/staff-uploaded content may only be downloaded by the super user,
   // unless the super user has explicitly allowed it for everyone
-  const canDownloadShared = profile.role === "Super User" || sharedSettings.allowSharedDownloads;
+  const canDownloadShared = isAdminRole(profile.role) || sharedSettings.allowSharedDownloads;
 
   const isPdfDoc = (s: PoeDoc) => /\.pdf$/i.test(s.name) || s.type.includes("pdf");
   // Units without their own material fall back to decks shared across the
@@ -6346,7 +6349,7 @@ function UnitPageContent({
                         {qz.questions.length} questions
                         {res
                           ? ` · best ${res.best}/${res.total} (${pct}%) · ${res.attempts} attempt${res.attempts === 1 ? "" : "s"}`
-                          : " · not attempted yet"}
+                          : " · no saved result linked to this quiz"}
                       </span>
                     </span>
                     <span className="chev" style={{ marginLeft: "auto" }}>

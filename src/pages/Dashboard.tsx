@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, ProgressState, Route } from "../types";
+import { isAdminRole } from "../types";
 import { Gloss } from "./Course";
 import {
   COURSE_META,
@@ -19,6 +20,7 @@ import { Button } from "@fluentui/react-components";
 import { VideoMetrics } from "../components/VideoMetrics";
 import { bestPoeDocs, bestProgress, fetchCloudLearnerData, type CloudLearnerData } from "../lib/directory";
 import { cloudEnabled } from "../lib/supabase";
+import { SavedAcademicWork } from "../components/SavedAcademicWork";
 
 export function Dashboard({
   profile,
@@ -39,8 +41,8 @@ export function Dashboard({
     void fetchCloudLearnerData().then(data => {
       if (!alive) return;
       setEvidenceError(!data);
-      if (data?.progress[profile.id]) {
-        setSavedEvidence({ profileId: profile.id, progress: data.progress[profile.id], cloud: data });
+      if (data) {
+        setSavedEvidence({ profileId: profile.id, progress: bestProgress(profile, data), cloud: data });
       }
     }).catch(error => {
       console.error("Could not load saved XP evidence:", error);
@@ -51,7 +53,7 @@ export function Dashboard({
   const dashboardTabs = [
     { id: "overview", label: "Overview", icon: "home" },
     { id: "learning", label: "Learning progress", icon: "trend" },
-    ...(profile.role === "Super User" ? [
+    ...(isAdminRole(profile.role) ? [
       { id: "videos", label: "Video metrics", icon: "play" },
       { id: "ai", label: "AI usage", icon: "chart" },
     ] : []),
@@ -95,6 +97,7 @@ export function Dashboard({
         {COURSE_META.credits} Credits
       </p>
       {evidenceError && <p className="auth-error" role="alert">Could not verify all saved XP evidence. The displayed XP may be incomplete; reload to retry.</p>}
+      {profile.role === "Learner" && <SavedAcademicWork profile={profile} progress={effectiveProgress} />}
 
       <div className="card-grid dashboard-stats">
         <div className="card stat-card">
@@ -231,13 +234,13 @@ export function Dashboard({
         ))}
       </div>
 
-      {profile.role === "Super User" && (
+      {isAdminRole(profile.role) && (
         <section className="dashboard-detail-panel" role="tabpanel" tabIndex={0} id="dashboard-panel-videos" aria-labelledby="dashboard-tab-videos" hidden={dashboardTab !== "videos"}>
           <VideoMetrics />
         </section>
       )}
 
-      {profile.role === "Super User" && (
+      {isAdminRole(profile.role) && (
         <section className="dashboard-detail-panel" role="tabpanel" tabIndex={0} id="dashboard-panel-ai" aria-labelledby="dashboard-tab-ai" hidden={dashboardTab !== "ai"}>
           <TokenGauge />
         </section>
@@ -589,6 +592,7 @@ export function ProgressPage({
         Progress tracking
       </div>
       <h1 className="page-title">My progress</h1>
+      <SavedAcademicWork profile={profile} progress={progress} />
       <p className="page-sub">
         Track completion across all {TOTAL_UNITS} unit standards, {COURSE_META.credits} credits and{" "}
         {MODULES.length} modules of SAQA ID {COURSE_META.saqaId}.

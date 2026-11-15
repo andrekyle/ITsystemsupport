@@ -199,7 +199,23 @@ export function inlineFigureReferences(html: string | undefined): InlineFigureRe
 
 export function plainSlideText(text: string): string {
   if (!isRichText(text)) return text;
+  // Read-only command-line exports have no DOM. Decode marked rich text as
+  // plain text there too; never insert stored HTML directly into a report.
+  if (typeof document === "undefined") {
+    const html = (richPayload(text) ?? text)
+      .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
+      .replace(/<br\s*\/?>|<\/(?:div|p|li|h[1-6]|tr)>/gi, "\n")
+      .replace(/<(?:div|p|li|h[1-6]|tr)\b[^>]*>/gi, "\n")
+      .replace(/<\/(?:td|th)>/gi, " ")
+      .replace(/<!--[\s\S]*?-->|<[^>]*>/g, "");
+    const entities: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
+    return html.replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos|nbsp);/gi, (entity, code: string) => {
+      if (code[0] !== "#") return entities[code.toLowerCase()] ?? entity;
+      const point = code[1].toLowerCase() === "x" ? parseInt(code.slice(2), 16) : Number(code.slice(1));
+      return point > 0 && point <= 0x10ffff ? String.fromCodePoint(point) : "";
+    });
+  }
   const el = document.createElement("div");
-  el.innerHTML = richTextHtml(text).replace(/<br\s*\/?>|<\/(?:div|p|li|h1|h2|h3|h4|tr)>/gi, "\n").replace(/<\/(?:td|th)>/gi, " ");
+  el.innerHTML = richTextHtml(text).replace(/<br\s*\/?>|<\/(?:div|p|li|h1|h2|h3|h4|tr)>/gi, "\n").replace(/<(?:div|p|li|h[1-6]|tr)\b[^>]*>/gi, "\n").replace(/<\/(?:td|th)>/gi, " ");
   return el.textContent ?? "";
 }

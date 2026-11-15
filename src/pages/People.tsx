@@ -1,3 +1,11 @@
+import { getCourses } from "../data/courses";
+import { combineLessonQuizEvidence, hasSavedAcademicWork, localLessonQuizEvidence, quizEvidenceLabel, savedAcademicWorkHtml, savedLessonAnswers, savedLessonQuizResults, savedWorkbookAnswers, type LessonQuizEvidence } from "../lib/academicEvidence";
+import { useSavedLessonQuizzes } from "../lib/useSavedLessonQuizzes";
+import type { SavedLessonAnswer } from "../lib/academicEvidence";
+import { WORKBOOK_SPECS } from "../data/workbookSpecs";
+import { canSeeCourse, canSeeProfile, useAssignments } from "../lib/assignments";
+import { StaffAssignmentsPanel } from "../components/StaffAssignments";
+import { isAdminRole } from "../types";
 import { useEffect, useRef, useState } from "react";
 import JSZip from "jszip";
 import { Icon } from "../icons";
@@ -44,6 +52,7 @@ import {
   fetchCloudDirectory,
   fetchCloudLearnerData,
   fetchCloudProgress,
+  fetchCloudLessonQuizzes,
   bestProgress,
   cloudProfileIds,
   identityKeys,
@@ -514,7 +523,8 @@ export function StudentsPage({
   route: Route;
   navigate: (r: Route) => void;
 }) {
-  const isSuper = profile.role === "Super User";
+  const assignments = useAssignments();
+  const isSuper = isAdminRole(profile.role);
   const isPrivileged = isStaff(profile.role);
   const [peopleTab, setPeopleTab] = useState("directory");
   const peopleTabs = [
@@ -582,6 +592,7 @@ export function StudentsPage({
     const patch: Partial<Profile> = {};
     if (newerLogin(match.lastLogin, p.lastLogin)) patch.lastLogin = match.lastLogin;
     if (!p.avatar && match.avatar) patch.avatar = match.avatar;
+    if (!p.cloudUserId && match.cloudUserId) patch.cloudUserId = match.cloudUserId;
     return Object.keys(patch).length ? { ...p, ...patch } : p;
   };
   const local = localRaw.map(mergeFromCloud);
@@ -637,9 +648,11 @@ export function StudentsPage({
   const people = (
     isSuper
       ? all.filter((p) => p.id !== profile.id)
-      : all.filter((p) => p.role === "Learner")
+      : all.filter((p) => p.role === "Learner" && canSeeProfile(profile, p, assignments))
   ).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
-  const student = route.studentId ? all.find((p) => p.id === route.studentId) : undefined;
+  const student = route.studentId ? people.find((p) => p.id === route.studentId) : undefined;
+
+  if (route.studentId && !student) return <div className="card"><h1>Student unavailable</h1><p>This student is not assigned to you or is no longer available.</p><button className="btn" onClick={() => navigate({ page: "students" })}>Back to students</button></div>;
 
   if (student && (isPrivileged || student.role === "Learner")) {
     // Identity-aware link so a locally-seeded profile still finds its owner
@@ -776,6 +789,7 @@ export function StudentsPage({
         <section role="tabpanel" id="people-panel-management" aria-labelledby="people-tab-management" hidden={activePeopleTab !== "management"}>
           <h2 className="section-title">Accounts and submissions</h2>
           <AddUser viewer={profile} onAdded={refresh} />
+          <StaffAssignmentsPanel viewer={profile} people={all.map(p => ({ ...p, cloudUserId: p.cloudUserId ?? resolveCloudLink(p, cloud)?.owner }))} />
           <DownloadAllAssignments learners={people.filter(p => p.role === "Learner")}
             remoteIds={remoteIds} owners={cloud?.owners ?? {}} cloudProfiles={cloud?.profiles ?? []} />
         </section>
@@ -931,7 +945,7 @@ function AddUser({ viewer, onAdded }: { viewer: Profile; onAdded: () => void }) 
               { value: "Facilitator", label: "Facilitator" },
               { value: "Assessor", label: "Assessor" },
               { value: "Moderator", label: "Moderator" },
-              { value: "Admin", label: "Admin — oversight only" },
+              { value: "Admin", label: "Admin — platform administration" },
             ]}
           />
         </div>
@@ -1019,7 +1033,7 @@ function AdminPanel({
         <span className="ico">
           <Icon name="shield" size={20} />
         </span>
-        Manage account — super user
+        Manage account
       </h2>
       <div className="card profile-enrol-card">
         <form className="pw-row" onSubmit={saveDetails}>
@@ -1038,6 +1052,7 @@ function AdminPanel({
                 { value: "Facilitator", label: "Facilitator" },
                 { value: "Assessor", label: "Assessor" },
                 { value: "Moderator", label: "Moderator" },
+                { value: "Admin", label: "Admin" },
               ]}
             />
           </div>
@@ -1149,14 +1164,17 @@ const ASSIGNMENT_NAV_CSS = `
 
 /** Every exercise/assignment a learner has worked on — typed answers with
  *  marks — as printable HTML section blocks (one per unit standard). */
-function assignmentUnitBlocks(prog: ProgressState): string[] {
+function assignmentUnitBlocks(prog: ProgressState, lessons: LessonQuizEvidence = {}): string[] {
   const unitBlocks: string[] = [];
-  for (const { unit, content } of assessedUnits()) {
-    if (!content?.exercises.length) continue;
+  const knownUnits = MODULES.flatMap(module => module.units);
+  const ids = new Set([...knownUnits.map(unit => unit.us), ...Object.keys(prog.units), ...Object.keys(lessons)]);
+  for (const id of ids) {
+    const unit = knownUnits.find(candidate => candidate.us === id) ?? { us: id, title: "Saved learner work" };
+    const content = getContent(id);
     const up = prog.units[unit.us];
     const lb = up?.logbook ?? {};
     const exBlocks: string[] = [];
-    for (const ex of content.exercises) {
+    for (const ex of content?.exercises ?? []) {
       if (!ex.checks?.length) continue;
       const answers = ex.steps
         .map((step, i) => ({
@@ -1188,6 +1206,8 @@ function assignmentUnitBlocks(prog: ProgressState): string[] {
         }</p>${qHtml}
       </div>`);
     }
+    const additionalWork = savedAcademicWorkHtml(up, content?.workbook ?? WORKBOOK_SPECS[unit.us], lessons[unit.us]);
+    if (additionalWork) exBlocks.push(additionalWork);
     if (exBlocks.length)
       unitBlocks.push(`
     <section>
@@ -1230,9 +1250,11 @@ function DownloadAllAssignments({
 }) {
   const [busy, setBusy] = useState(false);
   const [progressMsg, setProgressMsg] = useState("");
+  const [exportError, setExportError] = useState("");
 
   async function downloadAll() {
     setBusy(true);
+    setExportError("");
     try {
       const sections: string[] = [];
       const navLinks: string[] = [];
@@ -1240,28 +1262,21 @@ function DownloadAllAssignments({
       for (let i = 0; i < learners.length; i++) {
         const s = learners[i];
         setProgressMsg(`Preparing… ${i + 1}/${learners.length}`);
-        let prog: ProgressState | null;
-        // Resolve the learner's cloud identity so even a locally-seeded profile
-        // (different local/cloud ids) picks up their real progress.
         const link = resolveCloudLink(s, { profiles: cloudProfiles, poe: {}, owners });
-        if (remoteIds.has(s.id)) {
-          const owner = link?.owner ?? owners[s.id];
-          const cloudId = link?.cloudId ?? s.id;
-          prog = owner ? await fetchCloudProgress(owner, cloudId) : null;
-        } else {
-          prog = loadProgress(s.id);
-          if (Object.keys(prog.units).length === 0 && link) {
-            prog = (await fetchCloudProgress(link.owner, link.cloudId)) ?? prog;
-          }
-        }
-        const blocks = prog ? assignmentUnitBlocks(prog) : [];
+        if (remoteIds.has(s.id) && !link) throw new Error(`The cloud account for ${s.name} could not be resolved.`);
+        const ids = cloudProfileIds(s, { profiles: cloudProfiles, poe: {}, owners });
+        const local = loadProgress(s.id);
+        const remoteProgress = link ? await fetchCloudProgress(link.owner, link.cloudId, s.id, [...ids], true) : null;
+        const prog = remoteProgress ? mergeProgressEvidence(local, remoteProgress) : local;
+        const lessons = combineLessonQuizEvidence(localLessonQuizEvidence(ids), await fetchCloudLessonQuizzes(ids));
+        const blocks = assignmentUnitBlocks(prog, lessons);
         if (blocks.length) withWork++;
         navLinks.push(
           `<a href="#learner-${i}"${blocks.length ? "" : ' class="empty" title="No saved answers yet"'}>${escHtml(s.name)}</a>`
         );
         sections.push(`
   <div class="learner-head" id="learner-${i}"><h1>${escHtml(s.name)}</h1></div>
-  ${blocks.length ? blocks.join("") : `<p><em>${prog ? "No assignment or exercise answers have been saved yet." : "Saved answers could not be fetched from the cloud."}</em></p>`}`);
+  ${blocks.length ? blocks.join("") : `<p><em>${prog ? "No saved assignment, workbook or quiz evidence was found in the available records." : "Saved answers could not be fetched from the cloud."}</em></p>`}`);
       }
       const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
@@ -1275,6 +1290,8 @@ ${navLinks.join("\n")}
 ${sections.join("")}
 </body></html>`;
       downloadHtmlFile("Assignments — all learners.html", html);
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : "Saved work could not be loaded for export.");
     } finally {
       setBusy(false);
       setProgressMsg("");
@@ -1282,7 +1299,7 @@ ${sections.join("")}
   }
 
   return (
-    <button
+    <><button
       className="btn ghost"
       style={{ margin: "0 0 14px" }}
       onClick={() => void downloadAll()}
@@ -1291,7 +1308,7 @@ ${sections.join("")}
     >
       <Icon name="download" size={15} />
       {busy ? progressMsg || "Preparing…" : "Download all assignments"}
-    </button>
+    </button>{exportError && <p role="alert">{exportError}</p>}</>
   );
 }
 
@@ -1757,6 +1774,7 @@ function PeopleSummary({
               { value: "Facilitator", label: "Facilitator" },
               { value: "Assessor", label: "Assessor" },
               { value: "Moderator", label: "Moderator" },
+              { value: "Admin", label: "Admin" },
               { value: "Super User", label: "Super User" },
             ]}
           />
@@ -1862,6 +1880,7 @@ function PeopleSummary({
 /** Full academic record — every quiz and marked exercise with the student's scores. */
 function AcademicRecord({
   student,
+  viewer,
   remote,
   owner,
   cloudProfileId,
@@ -1870,6 +1889,7 @@ function AcademicRecord({
   canDownload,
 }: {
   student: Profile;
+  viewer: Profile;
   remote?: boolean;
   owner?: string;
   /** identity-matched profile id in the owner's cloud account */
@@ -1880,11 +1900,19 @@ function AcademicRecord({
   /** super user only — shows the completed-assignments download */
   canDownload?: boolean;
 }) {
+  const assignments = useAssignments();
   const [workbook114074Memo] = useWorkbookMemo("114074");
   const [progress, setProgress] = useState<ProgressState>(() =>
     remote ? { units: {} } : loadProgress(student.id)
   );
+  const [lessonRefresh, setLessonRefresh] = useState(0);
+  const lessonIds = cloudProfileIds(student, cloud);
+  if (cloudProfileId) lessonIds.add(cloudProfileId);
+  const { lessons: lessonQuizzes, loading: lessonLoading, error: lessonError } = useSavedLessonQuizzes(lessonIds, lessonRefresh);
+  const [progressLoading, setProgressLoading] = useState(!!owner);
+  const [progressError, setProgressError] = useState("");
   useEffect(() => {
+    setProgressLoading(!!owner); setProgressError("");
     const local = remote ? { units: {} } : loadProgress(student.id);
     const identityIds = cloudProfileIds(student, cloud);
     const cloudSnapshots = [...identityIds].map((id) => cloudProgress?.[id])
@@ -1910,44 +1938,43 @@ function AcademicRecord({
       return;
     }
     let alive = true;
-    void fetchCloudProgress(owner, cloudProfileId ?? student.id, student.id, [...identityIds]).then((p) => {
+    void fetchCloudProgress(owner, cloudProfileId ?? student.id, student.id, [...identityIds], true).then((p) => {
       if (!alive) return;
       // Always enrich the bulk snapshot. Previously this query was skipped as
       // soon as any cloud row existed, leaving newer/duplicate evidence out.
       if (p) setProgress((current) => mergeProgressEvidence(current, p));
-    });
+    }).catch(error => {
+      if (alive) setProgressError(error instanceof Error ? error.message : "Saved learner progress could not be loaded.");
+    }).finally(() => { if (alive) setProgressLoading(false); });
     return () => {
       alive = false;
     };
-  }, [student, remote, owner, cloudProfileId, cloudProgress, cloud]);
+  }, [student, remote, owner, cloudProfileId, cloudProgress, cloud, lessonRefresh]);
 
-  const units = assessedUnits();
+  const knownUnits = getCourses().filter(course => canSeeCourse(viewer, course.id, assignments)).flatMap(course => course.modules.flatMap(module => module.units));
+  const unitIds = new Set(knownUnits.map(unit => unit.us));
+  if (isAdminRole(viewer.role)) for (const id of [...Object.keys(progress.units), ...Object.keys(lessonQuizzes)]) unitIds.add(id);
+  const units = [...unitIds].map(id => ({ unit: knownUnits.find(unit => unit.us === id) ?? { us: id, title: "Saved learner work" }, content: getContent(id) }));
+  const visibleProgress = { ...progress, units: Object.fromEntries(Object.entries(progress.units).filter(([id]) => unitIds.has(id))) };
+  const visibleLessons = Object.fromEntries(Object.entries(lessonQuizzes).filter(([id]) => unitIds.has(id)));
+
 
   /** Export every exercise/assignment the learner has worked on — their typed
    *  answers with marks — as a single printable HTML file. */
   function downloadAssignments(prog: ProgressState) {
-    const unitBlocks = assignmentUnitBlocks(prog);
+    const unitBlocks = assignmentUnitBlocks({ ...prog, units: visibleProgress.units }, visibleLessons);
     const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <title>Completed assignments — ${escHtml(student.name)}</title>
 <style>${ASSIGNMENT_DOC_CSS}</style></head><body>
 <h1>Completed assignments — ${escHtml(student.name)}</h1>
 <p class="sub">System Support NQF Level 5 Learnership · exported ${escHtml(exportTimestamp())} by the super user</p>
-${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise answers have been saved yet.</em></p>"}
+${unitBlocks.length ? unitBlocks.join("") : "<p><em>No saved assignment, workbook or quiz evidence was found in the available records.</em></p>"}
 </body></html>`;
     downloadHtmlFile(`Assignments — ${student.name}.html`, html);
   }
 
-  const hasWork =
-    !!progress &&
-    units.some(({ unit, content }) => {
-      const up = progress.units[unit.us];
-      if (!up) return false;
-      if (up.exercises && Object.keys(up.exercises).length) return true;
-      return !!content?.exercises.some((ex) =>
-        (ex.checks ?? []).some((_, i) => String(up.logbook?.[`exq.${ex.id}.${i}`] ?? "").trim())
-      );
-    });
+  const hasWork = hasSavedAcademicWork(visibleProgress, visibleLessons);
 
   const heading = (
     <h2 className="section-title">
@@ -1959,52 +1986,37 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
         <button
           className="btn ghost profile-edit"
           onClick={() => downloadAssignments(progress)}
-          disabled={!hasWork}
+          disabled={!hasWork || lessonLoading || progressLoading || !!lessonError || !!progressError}
           title={
             hasWork
-              ? "Download all completed assignment and exercise answers with marks"
-              : "No assignment answers saved yet"
+              ? "Download saved workbook answers, exercise marks and quiz evidence"
+              : "No saved academic work is available"
           }
         >
           <Icon name="download" size={15} />
-          Download completed assignments
+          {lessonLoading || progressLoading ? "Loading saved work..." : "Download saved assignments and quizzes"}
         </button>
       )}
     </h2>
   );
 
-  // overall quiz totals across the whole programme
-  const { quizCount, quizAttempted, quizCompetent, questionsBest, questionsTotal, overallPct } =
-    quizStats(progress);
+  const workbookAnswerCount = Object.values(visibleProgress.units).reduce((sum, unit) => sum + savedWorkbookAnswers(unit).length, 0);
+  const lessonAnswerCount = Object.values(visibleLessons).reduce((sum, states) => sum + savedLessonAnswers(states).length, 0);
+  const completedLessonQuizzes = Object.values(visibleLessons).flatMap(states => savedLessonQuizResults(states)).filter(result => result.completed).length;
+  const recordedQuizResults = Object.values(visibleProgress.units).flatMap(unit => [...(unit.quiz ? [unit.quiz] : []), ...Object.values(unit.quizzes ?? {})]);
+  const questionsBest = recordedQuizResults.reduce((sum, result) => sum + result.best, 0);
+  const questionsTotal = recordedQuizResults.reduce((sum, result) => sum + result.total, 0);
 
   return (
     <>
       {heading}
+      {progressError && <p role="alert">{progressError} <button className="btn ghost sm" onClick={() => setLessonRefresh(value => value + 1)}>Retry</button></p>}
+      {lessonError && <p role="alert">{lessonError} <button className="btn ghost sm" onClick={() => setLessonRefresh(value => value + 1)}>Retry</button></p>}
       <div className="card attempts-card">
-        <div className="task-label" style={{ marginTop: 0 }}>
-          Overall — across all {quizCount} quizzes
-        </div>
-        <div className="attempt-row">
-          <span className="col-left">
-            <Icon
-              name={quizCompetent === quizCount && quizCount > 0 ? "checkCircle" : "clipboard"}
-              size={17}
-              color={
-                quizCompetent === quizCount && quizCount > 0 ? "var(--green)" : "var(--ink-3)"
-              }
-            />
-            <span className="sc">
-              {questionsBest} / {questionsTotal} questions
-            </span>
-            <span className={`chip ${overallPct >= 80 ? "done" : "none"}`}>{overallPct}%</span>
-            <span className={`chip ${quizCompetent === quizCount && quizCount > 0 ? "done" : "progress"}`}>
-              {quizCompetent} of {quizCount} quizzes competent
-            </span>
-          </span>
-          <span className="dt">
-            {quizAttempted} of {quizCount} attempted
-          </span>
-        </div>
+        <div className="task-label" style={{ marginTop: 0 }}>Saved academic work</div>
+        <div className="attempt-row"><span>{workbookAnswerCount} workbook answers</span><span>{lessonError ? "Lesson-quiz records unavailable" : lessonLoading ? "Loading lesson quizzes..." : `${lessonAnswerCount} lesson-quiz answers`}</span></div>
+        {!lessonLoading && !lessonError && <p className="chip done">{completedLessonQuizzes} lesson quizzes completed</p>}
+        {recordedQuizResults.length > 0 && <div className="attempt-row"><span>{recordedQuizResults.length} recorded knowledge/video quiz results</span><span>{questionsBest}/{questionsTotal} questions correct in recorded best attempts</span></div>}
       </div>
 
       {units.map(({ unit, content }) => {
@@ -2027,7 +2039,23 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
                 },
               ]
             : [];
+        if (prog?.quiz && !quizRows.some(row => row.key === "quiz")) {
+          quizRows.push({ key: "quiz", label: "Saved knowledge check", totalQuestions: prog.quiz.total, result: prog.quiz });
+        }
+        for (const [id, result] of Object.entries(prog?.quizzes ?? {})) {
+          if (!quizRows.some(row => row.key === id)) quizRows.push({ key: id, label: id.startsWith("video:") ? "Video quiz" : "Saved unit quiz", totalQuestions: result.total, result });
+        }
         const exercises = (content?.exercises ?? []).filter((e) => e.checks);
+        const savedWorkbook = savedWorkbookAnswers(prog, content?.workbook ?? WORKBOOK_SPECS[unit.us]);
+        const savedLessons = savedLessonAnswers(lessonQuizzes[unit.us]);
+        const lessonResults = savedLessonQuizResults(lessonQuizzes[unit.us], (content?.lesson ?? []).map(section => ({ heading: section.heading, questions: section.slideQuiz ?? [] })));
+        const reviewedAnswers = new Map(lessonResults.flatMap(result => result.answers).map(answer => [answer.key, answer]));
+        const savedLessonGroups = new Map<string, SavedLessonAnswer[]>();
+        for (const answer of savedLessons) {
+          const group = savedLessonGroups.get(answer.heading) ?? [];
+          group.push(reviewedAnswers.get(answer.key) ?? answer);
+          savedLessonGroups.set(answer.heading, group);
+        }
         const workbookAnswers = canDownload && unit.us === "114074"
           ? WORKBOOK_114074.outcomes.map((outcome) => {
               const task = outcome.questions[0];
@@ -2057,6 +2085,22 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
             <div className="task-label" style={{ marginTop: 0 }}>
               {usLabel(unit.us)} — {unit.title}
             </div>
+            {(savedWorkbook.length > 0 || savedLessons.length > 0) && <p className="mini-note">
+              Recorded work: {savedWorkbook.length} workbook answers. {lessonLoading ? "Loading saved lesson-quiz answers…" : lessonError ? "Lesson-quiz records unavailable; retry above." : `${lessonResults.filter(result => result.completed).length} lesson quizzes completed · ${savedLessons.length} saved lesson-quiz answers.`}
+              {" "}Expand the saved records below to review the learner’s answers.
+            </p>}
+            {lessonResults.map(result => <details className="exercise-answers" key={`lesson.${result.key}`}>
+              <summary className="attempt-row acad">
+                <Icon name={result.completed ? "checkCircle" : "clipboard"} size={17} color={result.completed ? "var(--green)" : "var(--ink-3)"} />
+                <span className="sc">Lesson quiz — {result.title.replace(/^(?:lesson quiz\s*[—–-]\s*)+/i, "")}</span>
+                <span className="cell"><span className={`chip ${result.completed ? "done" : "progress"}`}>
+                  {result.completed ? "Completed" : "In progress"} — score not recorded
+                </span></span>
+                <span className="cell">{result.attempts ? <span className="chip progress">{result.attempts} attempt{result.attempts === 1 ? "" : "s"}</span> : null}</span>
+                <span className="dt">{result.total} questions</span>
+              </summary>
+              <LessonQuizReview answers={result.answers} />
+            </details>)}
             {quizRows.map((row) => {
               const r = row.result;
               const pct = r ? Math.round((r.best / r.total) * 100) : null;
@@ -2078,10 +2122,10 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
                     <span className="cell">
                       {r ? (
                         <span className={`chip ${pct !== null && pct >= 80 ? "done" : "none"}`}>
-                          {r.best}/{r.total} · {pct}%
+                          Completed · {r.best}/{r.total} · {pct}%
                         </span>
                       ) : (
-                        <span className="chip none">not attempted</span>
+                        <span className="chip none">{quizEvidenceLabel(r, prog?.logbook?.[`quiz.${row.key}.picks`], progressLoading || lessonLoading)}</span>
                       )}
                     </span>
                     <span className="cell">
@@ -2121,7 +2165,7 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
                           {r.best}/{r.total} marks · {pct}%
                         </span>
                       ) : (
-                        <span className="chip none">not attempted</span>
+                        <span className="chip none">{progressLoading ? "Checking saved records…" : typedAny ? "Answer saved · unmarked" : "No saved result linked to this exercise"}</span>
                       )}
                     </span>
                     <span className="cell">
@@ -2139,6 +2183,20 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
                 </details>
               );
             })}
+            {savedWorkbook.length > 0 && <details className="exercise-answers">
+              <summary className="attempt-row acad"><Icon name="book" size={17} /><span className="sc">Saved learner workbook</span><span className="chip done">{savedWorkbook.length} answers</span></summary>
+              {savedWorkbook.map(row => <section className="workbook-learner-answer" key={row.key}>
+                <strong>{row.question}</strong><div className="workbook-learner-answer-text">{row.answer}</div>
+                {row.mark ? <p>Saved mark: {row.mark.awarded}/{row.mark.maxMarks} ? {row.mark.feedback}</p> : <p>No mark recorded.</p>}
+              </section>)}
+            </details>}
+            {savedLessons.length > 0 && <details className="exercise-answers">
+              <summary className="attempt-row acad"><Icon name="clipboard" size={17} /><span className="sc">Saved lesson quizzes</span><span className="chip done">{savedLessons.length} answers</span></summary>
+              {[...savedLessonGroups].map(([heading, answers]) => <details className="exercise-answers" key={heading}>
+                <summary className="attempt-row"><span>{heading}</span><span className="mini-note">{answers.length} saved answers</span></summary>
+                <LessonQuizReview answers={answers} />
+              </details>)}
+            </details>}
             {logbookDoc && (
               <div className="attempt-row acad">
                 <Icon name="folder" size={17} color="var(--green)" />
@@ -2170,9 +2228,9 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
                 {mark && <p>AI mark: {mark.awarded}/{mark.maxMarks} — {mark.feedback}</p>}
               </section>)}</div>
             </details>}
-            {quizRows.length === 0 && exercises.length === 0 && !logbookDoc && workbookAnswers.length === 0 && (
+            {quizRows.length === 0 && exercises.length === 0 && !logbookDoc && workbookAnswers.length === 0 && savedWorkbook.length === 0 && savedLessons.length === 0 && (
               <p className="muted" style={{ margin: 0 }}>
-                No marked work in this unit.
+                {progressLoading || lessonLoading ? "Loading saved work…" : progressError || lessonError ? "Some saved records could not be loaded. Retry above." : "No saved learner submissions were found for this unit."}
               </p>
             )}
           </div>
@@ -2187,13 +2245,25 @@ ${unitBlocks.length ? unitBlocks.join("") : "<p><em>No assignment or exercise an
  *  come from `progress.units[us].logbook['quiz.<id>.picks']` — for older
  *  attempts made before we saved picks, only questions + correct answers
  *  are shown. */
+function LessonQuizReview({ answers }: { answers: SavedLessonAnswer[] }) {
+  return answers.every(answer => answer.options?.length) ? <QuizAnswers
+    questions={answers.map(answer => ({ q: answer.question, options: answer.options!, answer: answer.options!.indexOf(answer.correctAnswer ?? ""), explain: answer.explanation ?? "" }))}
+    picks={JSON.stringify(Object.fromEntries(answers.map((answer, index) => [index, { kind: "choice", picks: [answer.options!.indexOf(answer.answer)] }])))}
+  /> : <div className="exercise-answer-list">
+    <p className="mini-note">The original question text and answer options were not stored with this older submission. The saved option numbers below are preserved.</p>
+    {answers.map((answer, index) => <section className="exercise-answer" key={answer.key}>
+      <div className="mini-note">Question {index + 1}</div>{!answer.legacy && <div className="exercise-answer-q">{answer.question}</div>}<p>Learner’s selection: {answer.answer.replace(/^Saved option /, "Option ")}</p>
+    </section>)}
+  </div>;
+}
+
 function QuizAnswers({
   questions,
   result,
   picks,
 }: {
   questions: import("../types").QuizQuestion[];
-  result?: { best: number; total: number; attempts: number; history?: { score: number; total: number; date: string }[] };
+  result?: { best: number; total: number; attempts?: number; history?: { score: number; total: number; date: string }[] };
   picks?: unknown;
 }) {
   let parsedPicks: Record<number, { kind: string; picks?: number[]; disp?: number[] }> | null = null;
@@ -2217,8 +2287,9 @@ function QuizAnswers({
   return (
     <div className="exercise-answer-list">
       <p className="mini-note" style={{ margin: 0 }}>
-        Where an attempt recorded it, options appear in the shuffled order the learner saw on
-        screen; older attempts list the authored order instead.
+        {parsedPicks ? "Saved learner selections are labelled below. Where available, green ticks indicate the saved answer key." :
+          result ? "A score is saved, but learner selections are unavailable. The questions and green ticks below are the current answer key." :
+            "Reference questions and answer key only. No learner submission is linked to these questions; green ticks are not evidence of the learner’s answers."}
       </p>
       {result?.history && result.history.length > 0 && (
         <div className="quiz-history">
@@ -2232,6 +2303,7 @@ function QuizAnswers({
       )}
       {questions.map((q, qi) => {
         const correct = q.answers ?? [q.answer];
+        const hasAnswerKey = correct.some(index => index >= 0 && index < q.options.length);
         const pick = parsedPicks ? parsedPicks[qi] : undefined;
         const chosen: number[] =
           pick && pick.kind === "choice" && Array.isArray(pick.picks) ? pick.picks : [];
@@ -2254,12 +2326,12 @@ function QuizAnswers({
                   const isPicked = chosen.includes(oi);
                   let cls = "quiz-option";
                   if (isCorrect) cls += " correct";
-                  if (isPicked && !isCorrect) cls += " wrong-pick";
+                  if (isPicked && !isCorrect && hasAnswerKey) cls += " wrong-pick";
                   if (isPicked && isCorrect) cls += " right-pick";
                   return (
                     <div className={cls} key={oi}>
                       <span className="quiz-mark">
-                        {isCorrect ? "✓" : isPicked ? "✗" : ""}
+                        {isCorrect ? "✓" : isPicked && hasAnswerKey ? "✗" : ""}
                       </span>
                       {String.fromCharCode(65 + pos)}. {opt}
                       {isPicked && (
@@ -2371,7 +2443,7 @@ function StudentDetail({
   cloudProgress?: Record<string, ProgressState>;
   cloud?: CloudLearnerData | null;
 }) {
-  const isSuper = viewer.role === "Super User";
+  const isSuper = isAdminRole(viewer.role);
   const staffViewer = isStaff(viewer.role);
   const canRecordOutcomes =
     isSuper || viewer.role === "Assessor" || viewer.role === "Moderator";
@@ -2745,6 +2817,7 @@ function StudentDetail({
           <section role="tabpanel" id="student-detail-panel-academic"
             aria-labelledby="student-detail-tab-academic" hidden={activeDetailTab !== "academic"}>
           <AcademicRecord
+            viewer={viewer}
             student={student}
             remote={remote}
             owner={owner}

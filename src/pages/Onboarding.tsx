@@ -1,3 +1,4 @@
+import { isAdminRole } from "../types";
 import { Fragment, useMemo, useRef, useState } from "react";
 import JSZip from "jszip";
 import { Icon } from "../icons";
@@ -777,7 +778,7 @@ export function OnboardingPage({
   route: Route;
   navigate: (r: Route) => void;
 }) {
-  const canManage = profile.role === "Super User" || profile.role === "Facilitator";
+  const canManage = isAdminRole(profile.role) || profile.role === "Facilitator";
   const { packs, createPack, renamePack, removePack, addFiles, removeFile } = useOnboardingPacks();
 
   const [dialog, setDialog] = useState<{ pack: OnboardingPack | null } | null>(null);
@@ -788,7 +789,7 @@ export function OnboardingPage({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const canAccessStaffPacks = profile.role === "Super User" || profile.role === "Facilitator";
+  const canAccessStaffPacks = isAdminRole(profile.role) || profile.role === "Facilitator";
   const visiblePacks = useMemo(
     () => packs.filter((pack) => pack.audience !== "staff" || canAccessStaffPacks),
     [packs, canAccessStaffPacks]

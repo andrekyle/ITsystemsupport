@@ -123,7 +123,7 @@ export function TrackerReportPage({ profile }: { profile: Profile }) {
   if (profile.role !== "Super User" && profile.role !== "Admin") {
     return (
       <div className="card">
-        <p>This report is only available to the Super User.</p>
+        <p>This report is only available to administrators.</p>
       </div>
     );
   }

@@ -6,15 +6,16 @@
 .evidence-register-page .poe-doc > .poe-upload { align-self: flex-start; }
 .evidence-register-page .poe-doc select { max-width: 100%; min-height: 36px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--ink); font: inherit; }
 .evidence-register-page .admin-evidence-note { color: var(--ink-3); font-size: 13px; }
+.evidence-register-page .poe-download { white-space: nowrap; }
+.evidence-register-page .evidence-download-note { color: var(--ink-3); font-size: 13px; }
+.evidence-register-page .poe-table-card { overflow-x: auto; }
 @media (max-width: 600px) {
-  .evidence-register-page .poe-table th:first-child { width: 45%; }
-  .evidence-register-page .poe-table .poe-doc-cell { width: 55%; }
+  .evidence-register-page .poe-table { min-width: 640px; }
   .evidence-register-page .poe-upload { min-width: 0; white-space: normal; }
   .evidence-register-page .poe-doc-line { flex-wrap: wrap; }
 }
 .evidence-learner-picker { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .evidence-learner-picker .nice-select { width: 320px; max-width: 100%; }
-.evidence-register-page .poe-table-card { overflow: visible; }
 .evidence-register-page .poe-doc .nice-select { width: 100%; }
 @media (max-width: 600px) {
   .evidence-learner-picker { flex-direction: column; align-items: stretch; }

@@ -1,3 +1,5 @@
+import { canSeeProfile, useAssignments } from "../lib/assignments";
+import { isAdminRole } from "../types";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
 import { EditingTools } from "../components/EditingSidebar";
@@ -28,7 +30,7 @@ const fmtWhen = (iso: string) => {
 
 export function CommunityPage({ profile, navigate }: { profile: Profile; navigate: (r: Route) => void }) {
   const staff = isStaff(profile.role);
-  const isSuper = profile.role === "Super User";
+  const isSuper = isAdminRole(profile.role);
   const [settings, updateSettings] = useSharedSettings();
 
   return (
@@ -261,7 +263,7 @@ function Announcements({
 
 function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
   const { threads, ask, reply, toggleResolved, editQuestion, editReply, remove } = useQaThreads();
-  const isSuper = profile.role === "Super User";
+  const isSuper = isAdminRole(profile.role);
   const [asking, setAsking] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -630,6 +632,7 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
 /* ---------- leaderboard ---------- */
 
 function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Route) => void }) {
+  const assignments = useAssignments();
   const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
   const [cloudError, setCloudError] = useState(false);
   useEffect(() => {
@@ -659,12 +662,13 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
   // Analytics page uses, so the two views always agree. Falls back to
   // local-only ranking when the app is offline or cloud sync is
   // unavailable (dev / signed-out use).
-  const rows: LeaderboardRow[] = cloud
+  const allRows: LeaderboardRow[] = cloud
     ? cloudLeaderboard(cloud, profile)
     : cloudEnabled
     ? [] // still loading — keep the spinner-less empty state until cloud lands
     : leaderboard(loadProfiles());
 
+  const rows = allRows.filter(row => canSeeProfile(profile, row.profile, assignments));
   const myIndex = rows.findIndex((r) => r.profile.id === profile.id);
 
   return (

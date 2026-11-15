@@ -1,3 +1,5 @@
+import { canSeeProfile, isAssignedStaff, useAssignments } from "../lib/assignments";
+import { isAdminRole } from "../types";
 import { useEffect, useRef, useState } from "react";
 import JSZip from "jszip";
 import { Icon } from "../icons";
@@ -36,9 +38,10 @@ function fmtSize(bytes: number) {
 
 export function PoePage({ profile }: { profile: Profile }) {
   const [selectedSection, setSelectedSection] = useState(POE_SECTIONS[0]?.heading ?? "");
-  const isSuper = profile.role === "Super User";
+  const assignments = useAssignments();
+  const isSuper = isAdminRole(profile.role);
   // assessors and moderators may open any learner's POE (read-only); the super user may also manage it
-  const canBrowse = isSuper || profile.role === "Assessor" || profile.role === "Moderator";
+  const canBrowse = isSuper || isAssignedStaff(profile);
   // Cloud directory: students who sign in with their own accounts live in
   // other accounts' storage, so the browse dropdown must merge them in —
   // along with their POE document indexes — exactly like the People page.
@@ -55,7 +58,7 @@ export function PoePage({ profile }: { profile: Profile }) {
   }, [canBrowse]);
   const localProfiles = loadProfiles();
   const remoteProfiles = canBrowse && cloud ? remoteOnlyProfiles(localProfiles, cloud.profiles) : [];
-  const profiles = [...localProfiles, ...remoteProfiles].sort((a, b) =>
+  const profiles = [...localProfiles, ...remoteProfiles].filter(p => canSeeProfile(profile, p, assignments)).sort((a, b) =>
     a.id === profile.id
       ? -1
       : b.id === profile.id
@@ -63,20 +66,21 @@ export function PoePage({ profile }: { profile: Profile }) {
         : a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
   );
   const [viewId, setViewId] = useState(profile.id);
-  const viewing = profiles.find((p) => p.id === viewId) ?? profile;
-  const readOnly = viewId !== profile.id && !isSuper;
-  const canEdit = viewId === profile.id || isSuper;
+  const safeViewId = profiles.some(p => p.id === viewId) ? viewId : profile.id;
+  const viewing = profiles.find((p) => p.id === safeViewId) ?? profile;
+  const readOnly = safeViewId !== profile.id && !isSuper;
+  const canEdit = safeViewId === profile.id || isSuper;
   // downloads: the super user may download anything; everyone else only their own uploads
-  const canDownload = viewId === profile.id || isSuper;
+  const canDownload = safeViewId === profile.id || isSuper;
 
-  const { docs: ownDocs, saveDoc, removeDoc } = usePoe(viewId);
+  const { docs: ownDocs, saveDoc, removeDoc } = usePoe(safeViewId);
   // Documents a cloud-account student uploaded under their own account are
   // not in this account's storage — pull them from the directory. Documents
   // stored locally win on key collisions; a locally-managed profile with its
   // own uploads keeps using the local copy (mirrors the People page).
-  const isRemoteProfile = !localProfiles.some((p) => p.id === viewId);
+  const isRemoteProfile = !localProfiles.some((p) => p.id === safeViewId);
   const cloudLink = resolveCloudLink(viewing, cloud);
-  const cloudDocs = (cloudLink && cloud?.poe[cloudLink.cloudId]) || cloud?.poe[viewId];
+  const cloudDocs = (cloudLink && cloud?.poe[cloudLink.cloudId]) || cloud?.poe[safeViewId];
   const docs: Record<string, PoeDoc> =
     cloudDocs && (isRemoteProfile || Object.keys(ownDocs).length === 0)
       ? { ...cloudDocs, ...ownDocs }
@@ -86,7 +90,7 @@ export function PoePage({ profile }: { profile: Profile }) {
   const canReview =
     (profile.role === "Assessor" || profile.role === "Moderator" || isSuper) &&
     viewing.role === "Learner";
-  const viewReviews = reviews[viewId] ?? {};
+  const viewReviews = reviews[safeViewId] ?? {};
   const reviewedCount = Object.keys(viewReviews).length;
   const competentCount = Object.values(viewReviews).filter((r) => r.status === "competent").length;
   const fileRef = useRef<HTMLInputElement>(null);
@@ -157,7 +161,7 @@ export function PoePage({ profile }: { profile: Profile }) {
     try {
       const prefix = await userPrefix();
       const doc: PoeDoc = await uploadFile(
-        `${prefix}/poe/${viewId}/${pendingItem}`,
+        `${prefix}/poe/${safeViewId}/${pendingItem}`,
         file,
         setUploadPct
       );
@@ -192,12 +196,12 @@ export function PoePage({ profile }: { profile: Profile }) {
             {profile.role} — {isSuper ? "viewing and managing" : "viewing (read-only)"} POE for
           </span>
           <Select
-            value={viewId}
+            value={safeViewId}
             onChange={setViewId}
             ariaLabel="Choose whose POE to view"
             options={profiles.map((p) => ({ value: p.id, label: p.name, hint: p.role }))}
           />
-          {viewId !== profile.id && <Avatar profile={viewing} size={26} />}
+          {safeViewId !== profile.id && <Avatar profile={viewing} size={26} />}
         </div>
       )}
 
@@ -412,14 +416,14 @@ export function PoePage({ profile }: { profile: Profile }) {
                         yesTitle="Mark this evidence competent"
                         noTitle="Mark not yet competent — the learner sees your feedback"
                         onYes={() => {
-                          setReview(profile, viewId, item.id, "competent");
+                          setReview(profile, safeViewId, item.id, "competent");
                           logAudit(profile, "poe.review", `Marked POE item ${item.id} competent`, {
                             id: viewing.id,
                             name: viewing.name,
                           });
                         }}
                         onNo={() => setNycItem(item.id)}
-                        onClear={() => clearReview(viewId, item.id)}
+                        onClear={() => clearReview(safeViewId, item.id)}
                       />
                     </div>
                   )}
@@ -442,7 +446,7 @@ export function PoePage({ profile }: { profile: Profile }) {
           message="Feedback for the learner (what must be fixed)?"
           confirmLabel="Record review"
           onSubmit={(note) => {
-            setReview(profile, viewId, nycItem, "nyc", note.trim() || undefined);
+            setReview(profile, safeViewId, nycItem, "nyc", note.trim() || undefined);
             logAudit(profile, "poe.review", `Marked POE item ${nycItem} not yet competent`, {
               id: viewing.id,
               name: viewing.name,
@@ -458,9 +462,9 @@ export function PoePage({ profile }: { profile: Profile }) {
           <Icon name="shield" size={19} />
         </span>
         <span>
-          Documents are saved to {viewId === profile.id ? "your" : `${viewing.name}'s`} profile on
-          this device and are only accessible from {viewId === profile.id ? "your" : "their"}{" "}
-          account — and by Super Users for moderation and verification.
+          Documents are saved to {safeViewId === profile.id ? "your" : `${viewing.name}'s`} profile on
+          this device and are only accessible from {safeViewId === profile.id ? "your" : "their"}{" "}
+          account — and by administrators for moderation and verification.
         </span>
       </div>
     </>

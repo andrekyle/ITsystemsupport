@@ -1,6 +1,9 @@
+import { canSeeProfile, isAssignedStaff, readAssignments } from "./assignments";
+import { parseLessonQuizState } from "./lessonQuizProgress";
+import type { LessonQuizEvidence } from "./academicEvidence";
 import { supabase } from "./supabase";
 import type { EnrolmentInfo, PoeDoc, Profile, ProgressState } from "../types";
-import { loadChecklistTicks, loadPoeDocs, loadProgress } from "../store";
+import { getSession, loadProfiles, loadChecklistTicks, loadPoeDocs, loadProgress } from "../store";
 import { TENANT_ID } from "./tenant";
 import { mergeProgressEvidence } from "./progressEvidence";
 
@@ -103,8 +106,22 @@ export function dedupeProfiles(list: Profile[]): Profile[] {
  *  (stale-while-revalidate) instead of flashing “unknown” placeholders. */
 let cachedDirectory: CloudDirectory | null = null;
 let cachedSuperUid: string | undefined;
+function scopeStaffDirectory(directory: CloudDirectory): CloudDirectory {
+  const viewer = loadProfiles().find(p => p.id === getSession());
+  if (!viewer || !isAssignedStaff(viewer)) return directory;
+  const assignments = readAssignments();
+  const profiles = directory.profiles.map(p => ({ ...p, cloudUserId: p.cloudUserId ?? directory.owners[p.id] }))
+    .filter(p => canSeeProfile(viewer, p, assignments));
+  const ids = new Set(profiles.map(p => p.id));
+  return { ...directory, profiles,
+    poe: Object.fromEntries(Object.entries(directory.poe).filter(([id]) => ids.has(id))),
+    owners: Object.fromEntries(Object.entries(directory.owners).filter(([id]) => ids.has(id))),
+    progressOwners: Object.fromEntries(Object.entries(directory.progressOwners ?? {}).filter(([id]) => ids.has(id))),
+  };
+}
+
 export function getCachedDirectory(): CloudDirectory | null {
-  return cachedDirectory;
+  return cachedDirectory ? scopeStaffDirectory(cachedDirectory) : null;
 }
 export function getCachedSuperUserAuthId(): string | undefined {
   return cachedSuperUid;
@@ -134,8 +151,16 @@ export async function fetchAccountProfiles(authUserId: string): Promise<Profile[
 export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
   if (!supabase) return null;
 
+  async function readVisibleProfiles() {
+    const response = await supabase!.rpc("visible_profiles");
+    if (!response.error) return response as { data: { user_id: string; value: string }[]; error: null };
+    const viewer = loadProfiles().find(p => p.id === getSession());
+    // Fail closed for assigned staff until the database migration is installed.
+    if (viewer && isAssignedStaff(viewer)) return { data: null, error: response.error };
+    return supabase!.from("app_state").select("user_id,value").eq("tenant_id", TENANT_ID).eq("key", "itss.profiles");
+  }
   const [profRes, poeRes, adminRes] = await Promise.all([
-    supabase.from("app_state").select("user_id,value").eq("tenant_id", TENANT_ID).eq("key", "itss.profiles"),
+    readVisibleProfiles(),
     supabase.from("app_state").select("user_id,key,value").eq("tenant_id", TENANT_ID).like("key", "itss.poe.%"),
     supabase.from("admins").select("user_id").eq("tenant_id", TENANT_ID),
   ]);
@@ -201,7 +226,7 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
   }
 
   cachedDirectory = { profiles, poe, owners };
-  return cachedDirectory;
+  return scopeStaffDirectory(cachedDirectory);
 }
 
 /** Auth uid of the sole designated super user, read straight from the
@@ -311,6 +336,9 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
     console.error("Could not load learner checklists; continuing without checklist data:", checkRes.error);
   }
 
+  const viewer = loadProfiles().find(p => p.id === getSession());
+  const allowedIds = viewer && isAssignedStaff(viewer) ? new Set(dir.profiles.map(p => p.id)) : null;
+
   const pick = <T,>(
     rows: { user_id: string; key: string; value: string }[] | null,
     prefix: string
@@ -318,6 +346,7 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
     const out: Record<string, T> = {};
     for (const row of rows ?? []) {
       const pid = row.key.slice(prefix.length);
+      if (allowedIds && !allowedIds.has(pid)) continue;
       // the owning account's copy wins; otherwise first row seen
       if (pid in out && dir.owners[pid] !== row.user_id) continue;
       try {
@@ -333,6 +362,7 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
   const progressOwners: Record<string, string> = {};
   for (const row of progRes.data ?? []) {
     const pid = row.key.slice("itss.progress.".length);
+    if (allowedIds && !allowedIds.has(pid)) continue;
     // Keep this relationship even when the matching profile snapshot is
     // stale or absent. It lets staff resolve a learner's canonical progress
     // by the learner's cloud auth id instead of silently falling back to an
@@ -376,7 +406,8 @@ export async function fetchCloudProgress(
   owner: string,
   profileId: string,
   alternateProfileId?: string,
-  additionalProfileIds: string[] = []
+  additionalProfileIds: string[] = [],
+  throwOnError = false
 ): Promise<ProgressState | null> {
   if (!supabase) return null;
   const profileIds = [...new Set(
@@ -387,7 +418,11 @@ export async function fetchCloudProgress(
     .select("user_id,value")
     .eq("tenant_id", TENANT_ID)
     .in("key", profileIds.map((id) => `itss.progress.${id}`));
-  if (error || !data?.length) return null;
+  if (error) {
+    if (throwOnError) throw new Error("Saved learner progress could not be loaded. Please try again.");
+    return null;
+  }
+  if (!data?.length) return null;
   let merged: ProgressState | null = null;
   // Reconcile every row visible through RLS. Duplicate profile copies are
   // common after account/profile migrations; merge non-owner copies first so
@@ -405,6 +440,30 @@ export async function fetchCloudProgress(
     }
   }
   return merged;
+}
+
+/** Lesson-slide quiz submissions are stored separately from progress results. */
+export async function fetchCloudLessonQuizzes(profileIds: Iterable<string>, onProgress?: (saved: LessonQuizEvidence) => void): Promise<LessonQuizEvidence> {
+  const client = supabase;
+  if (!client) return {};
+  const result: LessonQuizEvidence = {};
+  await Promise.all([...new Set(profileIds)].map(async id => {
+    const prefix = `itss.lessonquiz.${id}.`;
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await client.from("app_state").select("key,value,updated_at")
+        .eq("tenant_id", TENANT_ID).like("key", `${prefix}%`).order("updated_at").range(from, from + 999)
+        .abortSignal(AbortSignal.timeout(20000));
+      if (error) throw new Error("Saved lesson quizzes could not be loaded. Please try again.");
+      for (const row of data ?? []) {
+        if (!row.key.startsWith(prefix)) continue;
+        try { (result[row.key.slice(prefix.length)] ??= []).push(parseLessonQuizState(row.value)); }
+        catch { /* Keep loading valid submissions without rewriting damaged rows. */ }
+      }
+      onProgress?.({ ...result });
+      if (!data || data.length < 1000) break;
+    }
+  }));
+  return result;
 }
 
 /** Resolve the cloud link for a locally-held profile. Direct id match wins;

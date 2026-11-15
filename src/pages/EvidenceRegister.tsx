@@ -3,7 +3,7 @@ import { downloadDoc, uploadFile, userPrefix } from "../lib/files";
 import { loadProfiles, usePoe } from "../store";
 import type { Profile } from "../types";
 import { Select } from "../components/Select";
-import { fetchCloudDirectory, remoteOnlyProfiles, resolveCloudLink, type CloudDirectory } from "../lib/directory";
+import { cloudProfileIds, fetchCloudDirectory, remoteOnlyProfiles, type CloudDirectory } from "../lib/directory";
 import { Icon } from "../icons";
 import "./admin-dashboard.css";
 import "./evidence-register.css";
@@ -15,6 +15,31 @@ const evidenceGroups = [
 ];
 
 const itemKey = (item: string) => "sde-" + item.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+const evidenceNames: Record<string, string> = {
+  "EEA1": "EEA1",
+  "Certified ID copy": "Certified-ID",
+  "Signed class register": "Class-Register",
+  "Certificate of completion": "Completion-Certificate",
+  "Signed learnership + employment contract": "Learnership-Contract",
+  "Invoice + proof of payment": "Invoice-Payment",
+  "12-month payroll summary": "Payroll-Summary",
+  "First, middle and last payslip": "Payslips",
+  "EMP201 for measured period": "EMP201",
+  "Proof of payment for first and last EMP201": "EMP201-Payments",
+  "SETA registration": "SETA-Registration",
+  "WSP / ATR / Pivotal report": "WSP-ATR-Pivotal",
+  "Proof of submission to SETA": "SETA-Submission",
+  "SETA approval": "SETA-Approval",
+  "Eruditio accreditation proof": "Eruditio-Accreditation",
+};
+
+function evidenceFilename(item: string, originalName: string, learnerName: string) {
+  const extension = originalName.match(/\.[a-z0-9]{1,10}$/i)?.[0] ?? "";
+  const name = learnerName.normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40).replace(/-$/, "");
+  return `${evidenceNames[item] ?? "Evidence"}-${name || "Learner"}${extension}`;
+}
 
 export function EvidenceRegisterPage({ profile: _profile }: { profile: Profile }) {
   const [cloud, setCloud] = useState<CloudDirectory | null>(null);
@@ -32,8 +57,7 @@ export function EvidenceRegisterPage({ profile: _profile }: { profile: Profile }
   const [learnerId, setLearnerId] = useState("");
   const learner = learners.find((p) => p.id === learnerId) ?? learners[0];
   const { docs: ownDocs, saveDoc } = usePoe(learner?.id ?? "");
-  const cloudLink = learner ? resolveCloudLink(learner, cloud) : null;
-  const cloudDocs = (cloudLink && cloud?.poe[cloudLink.cloudId]) || (learner && cloud?.poe[learner.id]);
+  const cloudDocs = learner ? Object.assign({}, ...[...cloudProfileIds(learner, cloud)].map((id) => cloud?.poe[id] ?? {})) as typeof ownDocs : {};
   const docs = { ...cloudDocs, ...ownDocs };
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [selectedSection, setSelectedSection] = useState(evidenceGroups[0].title);
@@ -49,7 +73,7 @@ export function EvidenceRegisterPage({ profile: _profile }: { profile: Profile }
     try {
       const prefix = await userPrefix();
       const doc = await uploadFile(`${prefix}/poe/${learner.id}/${itemKey(item)}`, file, setUploadPct);
-      if (!saveDoc(itemKey(item), doc)) throw new Error("Storage is full. Free up space and try again.");
+      if (!saveDoc(itemKey(item), { ...doc, name: evidenceFilename(item, file.name, learner.name) })) throw new Error("Storage is full. Free up space and try again.");
     }
     catch (e) { setError(e instanceof Error ? e.message : "Upload failed"); }
     finally { setPendingItem(null); setUploadPct(null); }
@@ -99,19 +123,27 @@ export function EvidenceRegisterPage({ profile: _profile }: { profile: Profile }
         id={`evidence-panel-${index}`} aria-labelledby={`evidence-tab-${index}`} hidden={selectedSection !== group.title}>
         <h2 className="section-title"><span className="ico"><Icon name="folder" size={20} /></span>{group.title}</h2>
         <div className="card poe-table-card"><table className="data poe-table">
-          <thead><tr><th>Item</th><th>Evidence</th></tr></thead>
+          <thead><tr><th>Item</th><th>Evidence</th><th>Verification</th></tr></thead>
           <tbody>{group.items.map((item) => {
-            const doc = docs[itemKey(item)];
+            // The certified ID may already have been uploaded in the learner's POE.
+            const doc = docs[itemKey(item)] ?? (item === "Certified ID copy" ? docs["id-copy"] ?? docs["gm-id-copy"] : undefined);
+            const filename = doc ? evidenceFilename(item, doc.name, learner?.name ?? "Learner") : "";
             return <tr key={item}>
               <td><div className="poe-item"><span className={`status ${doc ? "done" : "none"}`} role="img" aria-label={doc ? "Uploaded" : "Not uploaded"}>
                 <Icon name={doc ? "checkCircle" : "circle"} size={20} />
               </span><span className="t">{item}</span></div></td>
               <td className="poe-doc-cell"><div className="poe-doc">
-                {doc ? <div className="poe-doc-line"><Icon name="file" size={18} /><span className="fileinfo"><span className="poe-file" title={doc.name}>{doc.name}</span></span>
-                  <button type="button" className="btn ghost poe-upload" onClick={() => void downloadDoc(doc)}><Icon name="download" size={15} />Download</button></div>
+                {doc ? <div className="poe-doc-line"><Icon name="file" size={18} /><span className="fileinfo"><span className="poe-file" title={filename}>{filename}</span></span>
+                  </div>
                 : <><button type="button" className="btn ghost poe-upload" disabled={!learner || uploadPct !== null} onClick={() => { setPendingItem(item); inputRef.current?.click(); }}><Icon name="upload" size={15} />{pendingItem === item && uploadPct !== null ? `Uploading ${uploadPct}%` : "Upload evidence"}</button>
                   </>}
               </div></td>
+              <td>{doc ? <button type="button" className="btn ghost poe-download"
+                aria-label={`Download ${item} for verification`}
+                title={doc ? `Download ${item} for verification` : "Upload evidence to enable download"}
+                onClick={() => { if (doc) void downloadDoc({ ...doc, name: filename }).catch(() => setError(`Could not download ${item}. Please try again.`)); }}>
+                <Icon name="download" size={15} />Download
+              </button> : <span className="evidence-download-note">Awaiting evidence</span>}</td>
             </tr>;
           })}</tbody>
         </table></div>
