@@ -23,7 +23,9 @@ export function savedLessonQuizResults(states: LessonQuizState[] = [], slides: S
         if (!Array.isArray(entries) || !entries.length) continue;
         const questions = entries.map(entry => JSON.parse(entry) as [string, string]);
         if (questions.some(pair => !Array.isArray(pair) || pair.length !== 2 || pair.some(value => typeof value !== "string"))) continue;
-        const selected = questions.map(([question, correct]) => {
+        const validOrder = (order: unknown, count: number): order is number[] => Array.isArray(order) && order.length === count && new Set(order).size === count && order.every(index => Number.isInteger(index) && index >= 0 && index < count);
+        const questionOrder = validOrder(version.questionOrder, questions.length) ? version.questionOrder : undefined;
+        const selected = questions.map(([question, correct], sortedIndex) => {
           const answer = answers.get(question);
           if (!answer) return undefined;
           const [identity] = JSON.parse(question);
@@ -31,10 +33,13 @@ export function savedLessonQuizResults(states: LessonQuizState[] = [], slides: S
           if (!Array.isArray(options) || options.some(option => typeof option !== "string")) return undefined;
           const source = slides.filter(slide => plainSlideText(slide.heading).trim() === plainSlideText(heading).trim())[occurrence];
           const authored = source?.questions.find(item => item.q === text && JSON.stringify([...item.options].sort()) === JSON.stringify(options));
-          return { ...answer, options: (authored?.options ?? options).map((option: string) => plainSlideText(option).trim()),
+          const position = questionOrder?.indexOf(sortedIndex) ?? -1;
+          const optionOrder = position >= 0 ? version.optionOrders?.[position] : undefined;
+          const orderedOptions = validOrder(optionOrder, options.length) ? optionOrder.map(index => options[index]) : authored?.options ?? options;
+          return { ...answer, options: orderedOptions.map((option: string) => plainSlideText(option).trim()),
             correctAnswer: plainSlideText(correct).trim(),
             explanation: authored?.explain ? plainSlideText(authored.explain).trim() : undefined,
-            order: authored ? source.questions.indexOf(authored) : savedOrder.get(question) ?? Number.MAX_SAFE_INTEGER };
+            order: position >= 0 ? position : authored ? source.questions.indexOf(authored) : savedOrder.get(question) ?? Number.MAX_SAFE_INTEGER };
         });
         if (!selected.some(Boolean)) continue;
         const complete = version.checked === true && selected.every(Boolean);
@@ -43,8 +48,9 @@ export function savedLessonQuizResults(states: LessonQuizState[] = [], slides: S
           answers: selected.filter(answer => !!answer).sort((a, b) => a!.order - b!.order).map(answer => { const { order, ...display } = answer!; return display; }) });
       } catch { /* Do not infer completion for an unreadable quiz version. */ }
     }
-    if (versions.length) continue;
+    if (versions.length && !state.recoveredSlides) continue;
     for (const [slide, picks] of Object.entries(state.answers ?? {})) {
+      if (state.recoveredSlides?.includes(Number(slide))) continue;
       if (!Array.isArray(picks) || !picks.some(pick => Number.isInteger(pick) && pick >= 0)) continue;
       const key = `legacy.${slide}`;
       results.set(key, { key, title: `Slide ${Number(slide) + 1}`, completed: state.checked[Number(slide)] === true && picks.every(pick => Number.isInteger(pick) && pick >= 0),
@@ -130,8 +136,9 @@ export function savedLessonAnswers(states: LessonQuizState[] = []): SavedLessonA
         }
       } catch { /* Never guess the question text for a damaged identity. */ }
     }
-    if (identities.length) continue;
+    if (identities.length && !state.recoveredSlides) continue;
     for (const [slide, picks] of Object.entries(state.answers ?? {})) {
+      if (state.recoveredSlides?.includes(Number(slide))) continue;
       if (!Array.isArray(picks)) continue;
       picks.forEach((pick, index) => {
         if (!Number.isInteger(pick) || pick < 0) return;
@@ -176,11 +183,14 @@ export function savedAcademicWorkHtml(unit: UnitProgress | undefined, workbook: 
   const workbookAnswers = savedWorkbookAnswers(unit, workbook);
   const lessonAnswers = savedLessonAnswers(lessons);
   const lessonResults = savedLessonQuizResults(lessons);
+  const readableLessons = lessonAnswers.filter(answer => !answer.legacy);
+  const unavailableLessons = lessonAnswers.filter(answer => answer.legacy);
   const quizzes = [...(unit?.quiz ? [["Knowledge check", unit.quiz] as const] : []), ...Object.entries(unit?.quizzes ?? {})];
   return [
     ...lessonResults.map(result => `<p class="marks">Lesson quiz — ${escape(result.title)}: <strong>${result.completed ? "Completed" : "In progress"}</strong> — score not recorded.</p>`),
     ...workbookAnswers.map(row => `<div class="exercise"><h3>${escape(row.question)}</h3><div class="answer">${escape(row.answer)}</div>${row.mark ? `<p class="marks">Saved mark: ${row.mark.awarded}/${row.mark.maxMarks} — ${escape(row.mark.feedback)}</p>` : "<p class=\"marks\">Saved answer; no mark recorded.</p>"}</div>`),
-    ...(lessonAnswers.length ? ["<h3>Saved lesson-quiz answers</h3>", ...lessonAnswers.map(row => `<div class="q"><p class="marks">${escape(row.heading)}</p><div class="q-text">${escape(row.question)}</div><div class="answer">${escape(row.answer)}</div>${row.legacy ? "<p class=\"marks\">Original question text was not stored with this older submission.</p>" : ""}</div>`)] : []),
+    ...(readableLessons.length ? ["<h3>Saved lesson-quiz answers</h3>", ...readableLessons.map(row => `<div class="q"><p class="marks">${escape(row.heading)}</p><div class="q-text">${escape(row.question)}</div><div class="answer">${escape(row.answer)}</div></div>`)] : []),
+    ...(unavailableLessons.length ? [`<p class="marks">Answer text unavailable for ${unavailableLessons.length} archived selections. The original question and option text must be recovered before these selections can be reviewed. Saved completion records are retained.</p>`] : []),
     ...quizzes.map(([id, result]) => `<div class="exercise"><h3>Saved quiz result — ${escape(id)}</h3><p class="marks">Best ${escape(result.best)}/${escape(result.total)}; ${escape(result.attempts)} attempt(s).</p></div>`),
   ].join("\n");
 }

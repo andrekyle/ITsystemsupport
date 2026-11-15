@@ -8,7 +8,10 @@ function compile(file, dependencies) {
   return exports;
 }
 const rich = compile("src/lib/slideRichText.ts", {});
-const quiz = compile("src/lib/lessonQuizProgress.ts", { "./slideQuiz": {} });
+const slideQuiz = compile("src/lib/slideQuiz.ts", { "./slideRichText": rich });
+const quiz = compile("src/lib/lessonQuizProgress.ts", { "./slideQuiz": slideQuiz });
+const recoveryData = compile("src/data/verifiedLegacyQuizContext.ts", {});
+const recovery = compile("src/lib/legacyQuizRecovery.ts", { "../data/verifiedLegacyQuizContext": recoveryData, "./lessonQuizProgress": quiz });
 const evidence = compile("src/lib/academicEvidence.ts", { "./slideRichText": rich, "./lessonQuizProgress": quiz });
 global.localStorage = { length: 0 };
 const audit = JSON.parse(fs.readFileSync("supabase-export/learner-progress-audit.json", "utf8"));
@@ -44,6 +47,31 @@ function render(ids, refresh = 0) {
   return value;
 }
 async function main() {
+  let targetSlide32;
+  if (fs.existsSync("supabase-export/tsepiso-progress-audit.json")) {
+    const target = JSON.parse(fs.readFileSync("supabase-export/tsepiso-progress-audit.json", "utf8"));
+    const original = quiz.parseLessonQuizState(target.rows.find(row => row.key.endsWith(".114050") && row.key.startsWith("itss.lessonquiz.")).value);
+    const sourceAudit = JSON.parse(fs.readFileSync("supabase-export/tsepiso-quiz-source-audit.json", "utf8"));
+    assert(await recovery.verifyLegacyQuizSource("114050", sourceAudit.shared));
+    assert(!await recovery.verifyLegacyQuizSource("114050", sourceAudit.shared.map(row => ({ ...row, value: row.value + " " }))), "Changed source must disable positional recovery");
+    assert(!await recovery.verifyLegacyQuizSource("114050", [...sourceAudit.shared, { key: "itss.unitbuilder.114050.shared", value: "{}" }]), "A custom unit pack must disable default-source recovery");
+    assert.equal(recovery.recoverLegacyQuizContext("114050", original), original, "Unverified source must never be used to relabel responses");
+    const before = structuredClone(original);
+    const restored = recovery.recoverLegacyQuizContext("114050", original, true);
+    assert.equal(restored.recoveredSlides.length, 18);
+    assert(restored.recoveredSlides.includes(31));
+    assert.deepEqual(original, before, "Recovery must not mutate the saved submission");
+    assert.deepEqual(restored.answers, original.answers);
+    assert.deepEqual(restored.attempts, original.attempts);
+    assert.deepEqual(restored.checked, original.checked);
+    assert.equal(evidence.savedLessonAnswers([restored]).length, evidence.savedLessonAnswers([original]).length, "Unresolved selections must be retained alongside recovered ones");
+    const question = recoveryData.VERIFIED_LEGACY_QUIZ_CONTEXT["114050"][31].questions[0];
+    const restoredAnswer = evidence.savedLessonAnswers([restored]).find(answer => answer.question === question.q);
+    assert.equal(restoredAnswer.answer, question.options[original.answers[31][0]]);
+    targetSlide32 = evidence.savedLessonQuizResults([restored]).find(result => result.answers.some(answer => answer.question === question.q));
+    assert(evidence.savedLessonQuizResults([restored]).every(result => !("correct" in result)), "Recovery must not manufacture grades");
+    console.log("Tsepiso recovery passed: 18 verified original quizzes recovered, including Slide 32; all selections, attempts and completion flags retained, no scores calculated.");
+  }
   assert.equal(render(["bradley"]).loading, true);
   render(["bradley"]);
   assert.equal(requests.length, 1, "Fresh directory objects with identical IDs must not restart the query");
@@ -65,6 +93,7 @@ async function main() {
   assert.deepEqual(render(["different-student"]).lessons, {}, "Switching students must not expose the previous learner's work");
   const lookups = [];
   const directory = compile("src/lib/directory.ts", {
+    "./legacyQuizRecovery": recovery,
     "./lessonQuizProgress": quiz, "./tenant": { TENANT_ID: row.tenant_id },
     "./supabase": { supabase: { from() {
       return { select() { return this; }, eq() { return this; }, like(key, prefix) { this.prefix = prefix; return this; },
@@ -101,6 +130,15 @@ async function main() {
   const component = {};
   new Function(...Object.keys(bindings), "require", "exports", code)(...Object.values(bindings), require, component);
   const html = renderToStaticMarkup(React.createElement(component.AcademicRecord, { student: { id, name: audit.learner }, viewer: { role: "Admin" } }));
+  if (targetSlide32) {
+    const targetHtml = renderToStaticMarkup(React.createElement(component.LessonQuizReview, { answers: targetSlide32.answers }));
+    assert(targetHtml.includes("Data") || targetHtml.includes("data"));
+    assert(targetHtml.includes('class="quiz-options"'));
+    assert(targetHtml.includes("learner&#x27;s pick"));
+    assert(!targetHtml.includes("Answer text unavailable"));
+    assert(!targetHtml.includes("Saved option"));
+    assert(!targetHtml.includes("100%"));
+  }
   assert(html.includes("19 workbook answers"));
   assert(html.includes("45 saved lesson-quiz answers"));
   assert(html.includes("9 lesson quizzes completed"));
@@ -141,9 +179,9 @@ async function main() {
   const legacyReview = legacyHtml.slice(legacyHtml.indexOf("Lesson quiz —"), legacyHtml.indexOf("Current quiz 1"));
   assert(legacyReview.includes("Lesson quiz — Slide 58"));
   assert(!legacyReview.includes("Lesson quiz — Lesson quiz"));
-  assert.equal((legacyReview.match(/Question 1/g) ?? []).length, 1, "Legacy questions must not repeat the same label");
-  assert(legacyReview.includes("original question text and answer options were not stored"));
-  assert(legacyReview.includes("Learner’s selection: Option 2"));
+  assert(!legacyReview.includes("Question 1"), "Missing original questions must not be replaced with fabricated question rows");
+  assert(legacyReview.includes("Answer text unavailable."));
+  assert(!legacyReview.includes("Learner’s selection: Option"), "Option numbers alone must not be presented as student answer text");
   if (process.env.ACADEMIC_VIEW_FIXTURE) {
     const path = require("node:path");
     const output = path.resolve(process.env.ACADEMIC_VIEW_FIXTURE);

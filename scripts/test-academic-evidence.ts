@@ -41,6 +41,9 @@ const originalSlides = [{ heading: "Original quiz", questions: [
 const orderedState = recordLessonQuiz({ answers: { 0: [0, 1] }, checked: { 0: true }, attempts: { 0: 1 } }, originalSlides);
 const orderedBefore = structuredClone(orderedState);
 const review = savedLessonQuizResults([orderedState], originalSlides)[0];
+const historicalReview = savedLessonQuizResults([orderedState])[0];
+assert.deepEqual(historicalReview.answers.map(answer => answer.question), originalSlides[0].questions.map(question => question.q), "New saves must retain question order even after the course source is unavailable");
+assert.deepEqual(historicalReview.answers[0].options, originalSlides[0].questions[0].options, "New saves must retain option order without relying on current course content");
 assert.deepEqual(review.answers.map(answer => answer.question), originalSlides[0].questions.map(question => question.q), "Quiz review must use authored question order, not sorted identity keys");
 assert.deepEqual(review.answers[0].options, ["Z option", "A option"]);
 assert.equal(review.answers[1].correctAnswer, "Correct");

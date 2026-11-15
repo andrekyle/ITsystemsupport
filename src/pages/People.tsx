@@ -2250,10 +2250,7 @@ function LessonQuizReview({ answers }: { answers: SavedLessonAnswer[] }) {
     questions={answers.map(answer => ({ q: answer.question, options: answer.options!, answer: answer.options!.indexOf(answer.correctAnswer ?? ""), explain: answer.explanation ?? "" }))}
     picks={JSON.stringify(Object.fromEntries(answers.map((answer, index) => [index, { kind: "choice", picks: [answer.options!.indexOf(answer.answer)] }])))}
   /> : <div className="exercise-answer-list">
-    <p className="mini-note">The original question text and answer options were not stored with this older submission. The saved option numbers below are preserved.</p>
-    {answers.map((answer, index) => <section className="exercise-answer" key={answer.key}>
-      <div className="mini-note">Question {index + 1}</div>{!answer.legacy && <div className="exercise-answer-q">{answer.question}</div>}<p>Learner’s selection: {answer.answer.replace(/^Saved option /, "Option ")}</p>
-    </section>)}
+    <p className="mini-note" role="status"><strong>Answer text unavailable.</strong> This record retains {answers.length} saved selections, but the original questions and choices must be recovered before the answers can be reviewed. The completion record is preserved.</p>
   </div>;
 }
 

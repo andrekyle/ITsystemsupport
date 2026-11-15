@@ -1,5 +1,6 @@
 import { canSeeProfile, isAssignedStaff, readAssignments } from "./assignments";
 import { parseLessonQuizState } from "./lessonQuizProgress";
+import { hasVerifiedLegacyQuizContext, recoverLegacyQuizContext, verifyLegacyQuizSource } from "./legacyQuizRecovery";
 import type { LessonQuizEvidence } from "./academicEvidence";
 import { supabase } from "./supabase";
 import type { EnrolmentInfo, PoeDoc, Profile, ProgressState } from "../types";
@@ -447,6 +448,15 @@ export async function fetchCloudLessonQuizzes(profileIds: Iterable<string>, onPr
   const client = supabase;
   if (!client) return {};
   const result: LessonQuizEvidence = {};
+  const sources = new Map<string, Promise<boolean>>();
+  const confirmedSource = (unitId: string): Promise<boolean> => {
+    if (!sources.has(unitId)) sources.set(unitId, (async () => {
+      const { data, error } = await client.from("shared_state").select("key,value").eq("tenant_id", TENANT_ID)
+        .in("key", [`itss.lessonedits.${unitId}`, `itss.unitbuilder.${unitId}.shared`]).abortSignal(AbortSignal.timeout(20000));
+      return !error && await verifyLegacyQuizSource(unitId, data ?? []);
+    })().catch(() => false));
+    return sources.get(unitId)!;
+  };
   await Promise.all([...new Set(profileIds)].map(async id => {
     const prefix = `itss.lessonquiz.${id}.`;
     for (let from = 0; ; from += 1000) {
@@ -456,7 +466,12 @@ export async function fetchCloudLessonQuizzes(profileIds: Iterable<string>, onPr
       if (error) throw new Error("Saved lesson quizzes could not be loaded. Please try again.");
       for (const row of data ?? []) {
         if (!row.key.startsWith(prefix)) continue;
-        try { (result[row.key.slice(prefix.length)] ??= []).push(parseLessonQuizState(row.value)); }
+        try {
+          const unitId = row.key.slice(prefix.length);
+          const saved = parseLessonQuizState(row.value);
+          const confirmed = !saved.identities && hasVerifiedLegacyQuizContext(unitId) && await confirmedSource(unitId);
+          (result[unitId] ??= []).push(recoverLegacyQuizContext(unitId, saved, !!confirmed));
+        }
         catch { /* Keep loading valid submissions without rewriting damaged rows. */ }
       }
       onProgress?.({ ...result });

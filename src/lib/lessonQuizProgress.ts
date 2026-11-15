@@ -8,9 +8,11 @@ interface QuizRecords {
 }
 
 export interface LessonQuizState extends QuizRecords {
+  /** Positional slides whose text was recovered from verified historical definitions. */
+  recoveredSlides?: number[];
   identities?: {
     picks: Record<string, string>;
-    versions: Record<string, { checked: boolean; attempts: number }>;
+    versions: Record<string, { checked: boolean; attempts: number; questionOrder?: number[]; optionOrders?: number[][] }>;
   };
   legacy?: QuizRecords;
 }
@@ -60,7 +62,12 @@ export function recordLessonQuiz(state: LessonQuizState, slides: SlideQuizDefini
       const option = question.options[state.answers[si]?.[qi] ?? -1];
       if (option !== undefined) picks[keys[qi]] = option;
     });
-    versions[versionKey(slide, keys)] = { checked: !!state.checked[si], attempts: state.attempts[si] ?? 0 };
+    const key = versionKey(slide, keys);
+    const sortedQuestions: string[] = JSON.parse(key);
+    versions[key] = { checked: !!state.checked[si], attempts: state.attempts[si] ?? 0,
+      questionOrder: keys.map((questionKey, qi) => sortedQuestions.indexOf(JSON.stringify([questionKey, slide.questions[qi].options[resolvedSlideQuizAnswer(slide.questions[qi], slide.heading)]]))),
+      optionOrders: slide.questions.map(question => { const sorted = [...question.options].sort(); return question.options.map(option => sorted.indexOf(option)); }),
+    };
   });
   return { ...state, identities: { picks, versions } };
 }

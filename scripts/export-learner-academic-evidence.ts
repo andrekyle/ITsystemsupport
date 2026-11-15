@@ -5,16 +5,22 @@ import { WORKBOOK_SPECS } from "../src/data/workbookSpecs";
 import { COURSES } from "../src/data/courses";
 import { parseLessonQuizState } from "../src/lib/lessonQuizProgress";
 import { mergeProgressEvidence } from "../src/lib/progressEvidence";
+import { recoverLegacyQuizContext, verifyLegacyQuizSource } from "../src/lib/legacyQuizRecovery";
 import type { ProgressState } from "../src/types";
 
 const audit = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
 const output = process.argv[3];
+const sourceRows: { key: string; value: string }[] = process.argv[4] ? JSON.parse(fs.readFileSync(process.argv[4], "utf8")).shared ?? [] : [];
 if (!output) throw new Error("Supply a private output HTML path.");
 let progress: ProgressState = { units: {} };
 const lessons: LessonQuizEvidence = {};
 for (const row of audit.rows) {
   if (row.key.startsWith("itss.progress.")) progress = mergeProgressEvidence(progress, JSON.parse(row.value));
-  if (row.key.startsWith("itss.lessonquiz.")) (lessons[row.key.split(".").slice(3).join(".")] ??= []).push(parseLessonQuizState(row.value));
+  if (row.key.startsWith("itss.lessonquiz.")) {
+    const unitId = row.key.split(".").slice(3).join(".");
+    const state = parseLessonQuizState(row.value);
+    (lessons[unitId] ??= []).push(recoverLegacyQuizContext(unitId, state, await verifyLegacyQuizSource(unitId, sourceRows)));
+  }
 }
 const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const units = COURSES.flatMap(course => course.modules.flatMap(module => module.units));
