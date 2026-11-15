@@ -2445,25 +2445,29 @@ export interface MemoryPhoto {
 }
 
 const MEMORIES_KEY = "itss.memories.shared";
-const MEMORIES_FOLDER = `${TENANT_ID}/shared/memories`;
+const MEMORIES_FOLDERS = [`${TENANT_ID}/shared/memories`, ...(TENANT_ID === "investec" ? ["shared/memories"] : [])];
 
 /** Rebuild entries whose shared list was lost while the image is still in Storage. */
 async function recoverMemoryFiles(known: MemoryPhoto[]): Promise<MemoryPhoto[]> {
   if (!supabase) return known;
   const knownPaths = new Set(known.map(photo => photo.path).filter(Boolean));
+  const knownIds = new Set(known.map(photo => photo.id));
   const recovered: MemoryPhoto[] = [];
-  for (let offset = 0; ; offset += 1000) {
-    const { data, error } = await supabase.storage.from("files").list(MEMORIES_FOLDER, {
+  for (const folder of MEMORIES_FOLDERS) for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await supabase.storage.from("files").list(folder, {
       limit: 1000, offset, sortBy: { column: "name", order: "asc" },
     });
-    if (error || !data) return known.concat(recovered);
+    if (error) throw new Error("Gallery photos could not be loaded. Please retry.");
+    if (!data) break;
     for (const file of data) {
       if (!/\.(?:jpe?g|png|webp|gif|avif)$/i.test(file.name)) continue;
-      const path = `${MEMORIES_FOLDER}/${file.name}`;
-      if (knownPaths.has(path)) continue;
+      const path = `${folder}/${file.name}`;
+      const id = file.name.replace(/\.[^.]+$/, "");
+      if (knownPaths.has(path) || knownIds.has(id)) continue;
       knownPaths.add(path);
+      knownIds.add(id);
       recovered.push({
-        id: file.name.replace(/\.[^.]+$/, ""), path,
+        id, path,
         by: "Class memory", byId: "", uploadedAt: file.created_at ?? new Date().toISOString(),
       });
     }
@@ -2473,7 +2477,7 @@ async function recoverMemoryFiles(known: MemoryPhoto[]): Promise<MemoryPhoto[]> 
 }
 
 /** Fetch the freshest shared photo list from the cloud (null when offline/local). */
-async function pullMemories(): Promise<MemoryPhoto[] | null> {
+async function pullMemories(strict = false): Promise<MemoryPhoto[] | null> {
   if (!supabase) return null;
   try {
     const { data, error } = await supabase
@@ -2482,7 +2486,7 @@ async function pullMemories(): Promise<MemoryPhoto[] | null> {
       .eq("tenant_id", TENANT_ID)
       .eq("key", MEMORIES_KEY)
       .maybeSingle();
-    if (error) return null;
+    if (error) throw error;
     const parsed: unknown = data?.value ? JSON.parse(data.value) : [];
     const cloud = Array.isArray(parsed) ? parsed.filter((photo): photo is MemoryPhoto =>
       !!photo && typeof photo.id === "string" && typeof photo.uploadedAt === "string"
@@ -2491,13 +2495,18 @@ async function pullMemories(): Promise<MemoryPhoto[] | null> {
     const local = !data ? read<MemoryPhoto[]>(MEMORIES_KEY, []).filter(photo => !!photo?.image) : [];
     const merged = [...cloud, ...local.filter(photo => !cloud.some(item => item.id === photo.id))];
     return await recoverMemoryFiles(merged);
-  } catch {
+  } catch (error) {
+    if (strict) throw error;
     return null; // offline — caller falls back to the local copy
   }
 }
 
 export function useMemories() {
   const [photos, setPhotos] = useState<MemoryPhoto[]>(() => read<MemoryPhoto[]>(MEMORIES_KEY, []));
+  const [loading, setLoading] = useState(cloudEnabled);
+  const [loadError, setLoadError] = useState("");
+  const [refresh, setRefresh] = useState(0);
+  const refreshPhotos = useCallback(() => setRefresh(value => value + 1), []);
   /** photo id -> resolved signed URL for cloud-stored photos */
   const [urls, setUrls] = useState<Record<string, string>>({});
 
@@ -2511,14 +2520,21 @@ export function useMemories() {
 
   // freshen from the cloud on mount so classmates' photos appear without a re-login
   useEffect(() => {
+    let alive = true;
+    setLoading(cloudEnabled); setLoadError("");
     void (async () => {
-      const cloud = await pullMemories();
-      if (cloud) {
-        writeFromCloud(MEMORIES_KEY, JSON.stringify(cloud));
-        setPhotos(cloud);
-      }
+      try {
+        const cloud = await pullMemories(true);
+        if (alive && cloud) {
+          writeFromCloud(MEMORIES_KEY, JSON.stringify(cloud));
+          setPhotos(cloud);
+        }
+      } catch {
+        if (alive) setLoadError("Gallery photos could not be loaded. Check your connection and retry.");
+      } finally { if (alive) setLoading(false); }
     })();
-  }, []);
+    return () => { alive = false; };
+  }, [refresh]);
 
   // resolve signed URLs for cloud-stored photos
   useEffect(() => {
@@ -2603,7 +2619,7 @@ export function useMemories() {
     void flushKey(MEMORIES_KEY);
   }, []);
 
-  return { photos, urls, addPhotos, removePhoto, retryPhoto, markPhotoMissing };
+  return { photos, urls, loading, loadError, refreshPhotos, addPhotos, removePhoto, retryPhoto, markPhotoMissing };
 }
 
 /* ---------- student onboarding packs (admin/facilitator uploads) ---------- */

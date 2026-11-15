@@ -12,7 +12,7 @@ const fmtDate = (iso: string) =>
 /** Class photo wall — everyone uploads pictures; play them back as a slideshow. */
 export function MemoriesPage({ profile }: { profile: Profile }) {
   const staff = isStaff(profile.role);
-  const { photos, urls, addPhotos, removePhoto, retryPhoto, markPhotoMissing } = useMemories();
+  const { photos, urls, loading, loadError, refreshPhotos, addPhotos, removePhoto, retryPhoto, markPhotoMissing } = useMemories();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -75,6 +75,7 @@ export function MemoriesPage({ profile }: { profile: Profile }) {
       </p>
 
       <div className="mem-actions">
+        <button className="btn ghost sm" onClick={refreshPhotos} disabled={loading || !!busy}>{loading ? "Loading gallery…" : "Refresh gallery"}</button>
         <button className="btn solid sm" onClick={() => fileRef.current?.click()} disabled={!!busy}>
           <Icon name="image" size={14} />
           Add pictures
@@ -99,11 +100,12 @@ export function MemoriesPage({ profile }: { profile: Profile }) {
           onChange={(e) => void onPick(e)}
         />
       </div>
+      {loadError && <p className="mem-error" role="alert">{loadError}</p>}
 
       {wall.length === 0 && !busy ? (
         <div className="mem-empty">
           <Icon name="image" size={26} />
-          <p>No pictures yet — be the first to add a class memory.</p>
+          <p role={loading ? "status" : undefined}>{loading ? "Loading gallery photos…" : loadError ? "Photos are temporarily unavailable. Use Refresh gallery to retry." : "No pictures yet — be the first to add a class memory."}</p>
         </div>
       ) : (
         <div className="mem-grid">
