@@ -1,13 +1,25 @@
-import { VERIFIED_LEGACY_QUIZ_CONTEXT, VERIFIED_LEGACY_QUIZ_SOURCE_HASHES } from "../data/verifiedLegacyQuizContext";
+import { VERIFIED_LEGACY_QUIZ_CONTEXT, VERIFIED_LEGACY_QUIZ_SOURCE_HASHES, VERIFIED_LEGACY_BUILT_SOURCES } from "../data/verifiedLegacyQuizContext";
 import { recordLessonQuiz, type LessonQuizState, type SlideQuizDefinition } from "./lessonQuizProgress";
 
 /** Read-only recovery using pinned definitions verified against repository history. */
 export const hasVerifiedLegacyQuizContext = (unitId: string) => !!VERIFIED_LEGACY_QUIZ_CONTEXT[unitId];
 
 export async function verifyLegacyQuizSource(unitId: string, rows: { key: string; value: string }[]): Promise<boolean> {
+  const pinnedBuilt = VERIFIED_LEGACY_BUILT_SOURCES[unitId];
+  if (pinnedBuilt) {
+    const relevant = rows.filter(row => row.key === `itss.unitbuilder.${unitId}.shared` || row.key === `itss.lessonedits.${unitId}`);
+    if (relevant.length !== Object.keys(pinnedBuilt).length || new Set(relevant.map(row => row.key)).size !== relevant.length) return false;
+    for (const row of relevant) {
+      if (!pinnedBuilt[row.key]) return false;
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(row.value));
+      if ([...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, "0")).join("") !== pinnedBuilt[row.key]) return false;
+    }
+    return hasVerifiedLegacyQuizContext(unitId);
+  }
   if (!hasVerifiedLegacyQuizContext(unitId) || rows.some(row => row.key === `itss.unitbuilder.${unitId}.shared`)) return false;
-  const edits = rows.find(row => row.key === `itss.lessonedits.${unitId}`);
-  if (!edits) return false;
+  const sources = rows.filter(row => row.key === `itss.lessonedits.${unitId}`);
+  if (sources.length !== 1) return false;
+  const edits = sources[0];
   const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(edits.value));
   return [...new Uint8Array(hash)].map(byte => byte.toString(16).padStart(2, "0")).join("") === VERIFIED_LEGACY_QUIZ_SOURCE_HASHES[unitId];
 }

@@ -47,6 +47,23 @@ function render(ids, refresh = 0) {
   return value;
 }
 async function main() {
+  if (fs.existsSync("supabase-export/all-learners/source-snapshot.json")) {
+    const snapshot = JSON.parse(fs.readFileSync("supabase-export/all-learners/source-snapshot.json", "utf8"));
+    const shared = snapshot.shared.filter(row => row.tenant_id === "investec");
+    for (const unit of ["8252", "114051", "114046", "114074"]) {
+      assert(await recovery.verifyLegacyQuizSource(unit, shared), `Audited source must verify for ${unit}`);
+      const sourceKey = recoveryData.VERIFIED_LEGACY_BUILT_SOURCES[unit] ? `itss.unitbuilder.${unit}.shared` : `itss.lessonedits.${unit}`;
+      const source = shared.find(row => row.key === sourceKey);
+      assert(!await recovery.verifyLegacyQuizSource(unit, shared.filter(row => row !== source)), "Missing source must disable recovery");
+      assert(!await recovery.verifyLegacyQuizSource(unit, shared.map(row => row === source ? { ...row, value: row.value + " " } : row)), "Changed pack/edits must disable recovery");
+      assert(!await recovery.verifyLegacyQuizSource(unit, [...shared, source]), "Ambiguous duplicate sources must disable recovery");
+      assert(!await recovery.verifyLegacyQuizSource(unit, snapshot.shared.filter(row => row.tenant_id === "discovery")), "Other tenant course sources must not authorize recovery");
+      if (recoveryData.VERIFIED_LEGACY_BUILT_SOURCES[unit] && !shared.some(row => row.key === `itss.lessonedits.${unit}`)) {
+        assert(!await recovery.verifyLegacyQuizSource(unit, [...shared, { key: `itss.lessonedits.${unit}`, value: "{}" }]), "New quiz overrides must disable recovery");
+      }
+    }
+    console.log("Expanded recovery guards passed: audited sources only; missing, changed, duplicate, other-tenant and new override sources rejected.");
+  }
   let targetSlide32;
   if (fs.existsSync("supabase-export/tsepiso-progress-audit.json")) {
     const target = JSON.parse(fs.readFileSync("supabase-export/tsepiso-progress-audit.json", "utf8"));
