@@ -3385,11 +3385,11 @@ function UnitPageContent({
     /^Questioning\s+[-–—]\s+Prepare a (?:time|cost) estimate for an element of work$/i.test(ex.title)
     || (ex.title === "New activity" && ex.steps?.[0] === "Add the first learner question.")
     || (ex.title === "Activity 1" && ex.steps?.[0] === "Add the first learner question.");
-  const visibleBuiltActivities = builtUnit && content
+  const visibleActivities = content
     ? [
         ...content.exercises.map((ex, index) => ({ ex, kind: "exercises" as const, index })),
         ...(content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index })),
-      ].filter(({ ex }) => ex.id.startsWith("manual-") || !isEmptyGeneratedBuiltActivity(ex))
+      ].filter(({ ex }) => !builtUnit || ex.id.startsWith("manual-") || !isEmptyGeneratedBuiltActivity(ex))
     : [];
   const slideQuizSource = (si: number) => {
     if (!content) return "";
@@ -3821,7 +3821,7 @@ function UnitPageContent({
     saqa: !content?.saqa,
     lesson: visibleLessonIndices.length === 0,
     material: !builtUnit && decks.length === 0,
-    exercises: builtUnit ? visibleBuiltActivities.length === 0 : !content?.exercises.length,
+    exercises: visibleActivities.length === 0,
     workbook: !hasBuiltInWorkbook && !workbookDocument && !content?.workbook,
     memo: isPrivileged && !hasBuiltInWorkbook && !content?.workbook,
     guide: !["114074", "114076", "114046"].includes(unitId) && !content?.learnerGuide,
@@ -3972,7 +3972,7 @@ function UnitPageContent({
           {content && (() => {
             const parts = [
               `a ${visibleLessonIndices.length}-section lesson`,
-              content.exercises.length ? `${content.exercises.length} exercises` : null,
+              visibleActivities.length ? `${visibleActivities.length} activities` : null,
               content.assignments.length ? `${content.assignments.length} assignments` : null,
               content.quiz.length ? `a ${content.quiz.length}-question knowledge check` : null,
               content.quizzes?.length ? `${content.quizzes.length} knowledge quizzes` : null,
@@ -5946,7 +5946,7 @@ function UnitPageContent({
           </div>
           {isSuperUser && <div className="activity-edit-bar"><button type="button" className="btn ghost sm" disabled={!!activityEditor || !!inlineUnit} onClick={addBuiltActivity}><Icon name="plus" size={14} /> Add activity</button>{!activityEditor && activityEditError && <span role="alert" className="auth-error">{activityEditError}</span>}</div>}
           {activityEditor && isSuperUser && <div className="card activity-editor-card"><h3>{activityEditor.index === null ? "Add activity" : "Edit activity"}</h3><fieldset disabled={activitySaving} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}><ActivityInlineEditor key={activityEditor.value.id} value={activityEditor.value} disabled={activitySaving} onChange={value => setActivityEditor({ ...activityEditor, value })}/></fieldset><div className="unit-editor-actions"><button type="button" className="btn" disabled={activitySaving} onClick={() => void saveActivityEditor()}>{activitySaving ? "Generating model answers…" : "Save activity"}</button><button type="button" className="btn ghost" disabled={activitySaving} onClick={() => { setActivityEditor(null); setActivityEditError(""); }}>Cancel</button></div>{activityEditError && <p role="alert" className="auth-error">{activityEditError}</p>}</div>}
-          {(tab === "questions" ? (content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index })) : builtUnit ? visibleBuiltActivities : content.exercises.map((ex, index) => ({ ex, kind: "exercises" as const, index }))).map(({ex, kind, index}) => {
+          {(tab === "questions" ? (content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index })) : visibleActivities).map(({ex, kind, index}) => {
             const exRes = progress.units[u.us]?.exercises?.[ex.id];
             const hasChecks = !!ex.checks && ex.checks.length > 0;
             const exTotalMarks = ex.checks?.reduce((t, c) => t + c.concepts.length * 2, 0) ?? 0;
