@@ -55,23 +55,33 @@ const otherStaff = { id: "assessor", role: "Assessor", name: "Assessor" };
 const roster = [admin, staffViewer, otherStaff, { ...learner, name: "Assigned student" }, { ...unrelated, name: "Unassigned student" }].map(p => ({ ...p, name: p.name ?? p.id, createdAt: "2026-11-15" }));
 let pageAssignments = { [staffViewer.id]: { courseIds: ["itss"], learnerIds: [learner.id] } };
 const jsx = (type, props) => ({ type, props });
+let hookStates, hookIndex = 0, pageEffects;
+const cloudConfig = { cloudEnabled: false };
+let loadDirectory = async () => null;
 const { StudentsPage } = compile("src/pages/People.tsx", {
   "react/jsx-runtime": { jsx, jsxs: jsx },
-  react: { useState: initial => [typeof initial === "function" ? initial() : initial, () => {}], useRef: value => ({ current: value }), useEffect() {} },
+  react: { useState: initial => {
+    const value = typeof initial === "function" ? initial() : initial;
+    if (!hookStates) return [value, () => {}];
+    const index = hookIndex++;
+    if (!(index in hookStates)) hookStates[index] = value;
+    return [hookStates[index], next => { hookStates[index] = typeof next === "function" ? next(hookStates[index]) : next; }];
+  }, useRef: value => ({ current: value }), useEffect(effect) { pageEffects?.push(effect); } },
   "../types": types,
   "../lib/assignments": { ...access, useAssignments: () => pageAssignments },
   "../data/course": { MODULES: [], POE_SECTIONS: [], POE_TOTAL: 0 },
   "../store": { loadProfiles: () => roster, loadPoeDocs: () => ({}), poeItemCount: () => 0 },
-  "../lib/directory": { identityKeys: p => [p.id], resolveCloudLink: () => null, mergeProfileWithCloud: p => p },
+  "../lib/directory": { identityKeys: p => [p.id], resolveCloudLink: () => null, mergeProfileWithCloud: p => p, fetchCloudLearnerData: () => loadDirectory() },
   "../icons": {}, "../components/EditingSidebar": {}, "../components/Select": {},
   "../components/StaffAssignments": {}, "../data/content": {}, "../data/workbook114074": {},
   "../lib/audit": {}, "../lib/onboarding": {}, "../lib/integrations": {},
   "../components/VerdictSwitch": {}, "../components/Avatar": {}, "../components/ProfilePortfolio": {},
   "../components/EnrolmentForm": {}, "../components/Modal": {}, "../lib/files": {},
-  "../lib/signature": {}, "../lib/supabase": {}, "../lib/tenant": {}, "./Attendance": {},
-  "../lib/presence": {}, "../lib/progressEvidence": {}, jszip: {},
+  "../lib/signature": {}, "../lib/supabase": cloudConfig, "../lib/tenant": {}, "./Attendance": {},
+  "../lib/presence": { fetchPresence: () => new Promise(() => {}) }, "../lib/progressEvidence": {}, jszip: {},
 });
 function page(profile, studentId) {
+  hookIndex = 0;
   return StudentsPage({ profile, route: { page: "students", studentId }, navigate() {} });
 }
 function directoryIds(tree) {
@@ -98,6 +108,34 @@ pageAssignments = {};
 assert.deepEqual(directoryIds(page(staffViewer)), []);
 assert(JSON.stringify(page(staffViewer, learner.id)).includes("Student unavailable"));
 console.log("Directory page checks passed: assigned-only roster, blocked direct links, administrator visibility, and revocation.");
+
+async function testProfileLoading() {
+  cloudConfig.cloudEnabled = true;
+  global.window = { ...global.window, setInterval() { return 1; }, clearInterval() {}, addEventListener() {}, removeEventListener() {} };
+  const remoteStudent = { id: 'cloud-only', name: 'Cloud student', role: 'Learner', createdAt: '2026-11-15' };
+  for (const outcome of ['found', 'missing', 'error']) {
+    hookStates = []; pageEffects = [];
+    let resolve, reject;
+    loadDirectory = () => new Promise((yes, no) => { resolve = yes; reject = no; });
+    const initial = JSON.stringify(page(admin, remoteStudent.id));
+    assert(initial.includes('Loading student profile'), 'A pending lookup must show loading');
+    assert(!initial.includes('Student unavailable'), 'A pending lookup must not flash access denial');
+    const cleanup = pageEffects[0](); pageEffects = undefined;
+    if (outcome === 'error') reject(new Error('Offline'));
+    else resolve({ profiles: outcome === 'found' ? [remoteStudent] : [], owners: {}, poe: {} });
+    await new Promise(resolve => setImmediate(resolve));
+    const loaded = page(admin, remoteStudent.id);
+    if (outcome === 'found') assert.equal(loaded.props.student.id, remoteStudent.id, 'Profile opens without waiting for presence');
+    if (outcome === 'missing') assert(JSON.stringify(loaded).includes('Student unavailable'), 'Confirmed missing/unauthorized student stays blocked');
+    if (outcome === 'error') {
+      assert(JSON.stringify(loaded).includes('Unable to load student profile'));
+      assert(!JSON.stringify(loaded).includes('Student unavailable'), 'Network failure must not be labelled access denial');
+    }
+    cleanup();
+  }
+  hookStates = undefined; cloudConfig.cloudEnabled = false;
+  console.log('Student profile loading passed: no unavailable flash, remote profile opens, confirmed denial retained, network errors allow retry.');
+}
 
 async function testDatabasePolicies() {
   delete global.window;
@@ -189,4 +227,4 @@ async function testDatabasePolicies() {
     console.log('Database visibility checks passed: filtered profile arrays, assigned progress, tenant isolation, role-spoof denial, and revocation.');
   } finally { await db.close(); }
 }
-testDatabasePolicies().catch(error => { console.error(error); process.exitCode = 1; });
+testProfileLoading().then(testDatabasePolicies).catch(error => { console.error(error); process.exitCode = 1; });

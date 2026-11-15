@@ -537,16 +537,25 @@ export function StudentsPage({
   const [rev, setRev] = useState(0);
   const refresh = () => setRev((r) => r + 1);
   const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
+  const [directoryLoaded, setDirectoryLoaded] = useState(!cloudEnabled);
+  const [directoryError, setDirectoryError] = useState(false);
   const [presence, setPresence] = useState<PresenceEntry[]>([]);
   useEffect(() => {
     let alive = true;
     let timer: number | undefined;
     const load = () => {
-      void Promise.all([fetchCloudLearnerData(), fetchPresence()]).then(([d, live]) => {
+      void fetchCloudLearnerData().then((d) => {
         if (!alive) return;
         if (d) setCloud(d);
-        if (live) setPresence(live);
+        setDirectoryError(cloudEnabled && !d);
+      }).catch(() => {
+        if (alive) setDirectoryError(true);
+      }).finally(() => {
+        if (alive) setDirectoryLoaded(true);
       });
+      void fetchPresence().then((live) => {
+        if (alive && live) setPresence(live);
+      }).catch(() => { /* Presence must not block opening a student profile. */ });
     };
     load();
     // Refresh periodically so that other learners' lastLogin timestamps stay
@@ -652,6 +661,8 @@ export function StudentsPage({
   ).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
   const student = route.studentId ? people.find((p) => p.id === route.studentId) : undefined;
 
+  if (route.studentId && !student && !directoryLoaded) return <div className="card" role="status" aria-live="polite"><p>Loading student profile…</p></div>;
+  if (route.studentId && !student && directoryError) return <div className="card"><h1>Unable to load student profile</h1><p>Please try loading the student profile again.</p><button className="btn" onClick={refresh}>Try again</button></div>;
   if (route.studentId && !student) return <div className="card"><h1>Student unavailable</h1><p>This student is not assigned to you or is no longer available.</p><button className="btn" onClick={() => navigate({ page: "students" })}>Back to students</button></div>;
 
   if (student && (isPrivileged || student.role === "Learner")) {
