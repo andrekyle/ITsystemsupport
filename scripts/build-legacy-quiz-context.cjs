@@ -39,16 +39,25 @@ for (const unit of builtUnits) {
   const packKey = `itss.unitbuilder.${unit}.shared`;
   const editKey = `itss.lessonedits.${unit}`;
   const packs = shared.filter(row => row.key === packKey);
-  const edits = shared.filter(row => row.key === editKey);
-  if (packs.length !== 1 || edits.length > 1 || edits.some(row => Object.keys(JSON.parse(row.value).generatedQuizzes ?? {}).length)) throw new Error(`Unverified built source for ${unit}`);
+  const edits = shared.filter(row => row.key === editKey || row.key.startsWith(`${editKey}.built-`));
+  if (packs.length !== 1 || new Set(edits.map(row => row.key)).size !== edits.length) throw new Error(`Unverified built source for ${unit}`);
   const pack = JSON.parse(packs[0].value);
   const versions = [pack, ...(pack.history ?? [])];
   const slides = {};
   for (let index = 0; index < (pack.content?.lesson?.length ?? 0); index++) {
     const candidates = versions.map(version => version.content?.lesson?.[index]).filter(slide => slide?.slideQuiz?.length)
       .map(slide => ({ heading: slide.heading, questions: slide.slideQuiz }));
+    const archived = edits.flatMap(row => {
+      const value = JSON.parse(row.value);
+      const questions = value.generatedQuizzes?.[index];
+      return questions?.length ? [{ heading: `Slide ${index + 1}`, questions }] : [];
+    });
+    const all = [...candidates, ...archived];
+    const identity = slide => JSON.stringify(slide.questions.map(question => ({ q: question.q, options: question.options, answer: question.answer, imageSvg: question.imageSvg ?? '' })));
     // Require corroboration in at least two saved pack revisions, with no disagreement.
-    if (candidates.length >= 2 && new Set(candidates.map(slide => JSON.stringify(slide))).size === 1) slides[index] = candidates[0];
+    // Archived generated quizzes are original definitions too. Even one conflicting
+    // archived version makes positional relabelling unsafe; never ignore it.
+    if (all.length && new Set(all.map(identity)).size === 1 && (candidates.length >= 2 || archived.length)) slides[index] = candidates[0] ?? archived[0];
   }
   if (Object.keys(slides).length) {
     verified[unit] = slides;

@@ -450,9 +450,10 @@ export async function fetchCloudLessonQuizzes(profileIds: Iterable<string>, onPr
   const result: LessonQuizEvidence = {};
   const sources = new Map<string, Promise<boolean>>();
   const confirmedSource = (unitId: string): Promise<boolean> => {
+    if (!/^[\w-]+$/.test(unitId)) return Promise.resolve(false);
     if (!sources.has(unitId)) sources.set(unitId, (async () => {
       const { data, error } = await client.from("shared_state").select("key,value").eq("tenant_id", TENANT_ID)
-        .in("key", [`itss.lessonedits.${unitId}`, `itss.unitbuilder.${unitId}.shared`]).abortSignal(AbortSignal.timeout(20000));
+        .or(`key.eq.itss.lessonedits.${unitId},key.like.itss.lessonedits.${unitId}.built-%,key.eq.itss.unitbuilder.${unitId}.shared`).abortSignal(AbortSignal.timeout(20000));
       return !error && await verifyLegacyQuizSource(unitId, data ?? []);
     })().catch(() => false));
     return sources.get(unitId)!;

@@ -50,7 +50,7 @@ async function main() {
   if (fs.existsSync("supabase-export/all-learners/source-snapshot.json")) {
     const snapshot = JSON.parse(fs.readFileSync("supabase-export/all-learners/source-snapshot.json", "utf8"));
     const shared = snapshot.shared.filter(row => row.tenant_id === "investec");
-    for (const unit of ["8252", "114051", "114046", "114074"]) {
+    for (const unit of ["8252", "114051", "114046", "114074", "114059"]) {
       assert(await recovery.verifyLegacyQuizSource(unit, shared), `Audited source must verify for ${unit}`);
       const sourceKey = recoveryData.VERIFIED_LEGACY_BUILT_SOURCES[unit] ? `itss.unitbuilder.${unit}.shared` : `itss.lessonedits.${unit}`;
       const source = shared.find(row => row.key === sourceKey);
@@ -61,7 +61,28 @@ async function main() {
       if (recoveryData.VERIFIED_LEGACY_BUILT_SOURCES[unit] && !shared.some(row => row.key === `itss.lessonedits.${unit}`)) {
         assert(!await recovery.verifyLegacyQuizSource(unit, [...shared, { key: `itss.lessonedits.${unit}`, value: "{}" }]), "New quiz overrides must disable recovery");
       }
+      const versioned = shared.find(row => row.key.startsWith(`itss.lessonedits.${unit}.built-`));
+      if (versioned && recoveryData.VERIFIED_LEGACY_BUILT_SOURCES[unit]) {
+        assert(!await recovery.verifyLegacyQuizSource(unit, shared.filter(row => row !== versioned)), 'Missing version-specific original definitions must disable recovery');
+        assert(!await recovery.verifyLegacyQuizSource(unit, shared.map(row => row === versioned ? { ...row, value: row.value + ' ' } : row)), 'Changed version-specific definitions must disable recovery');
+        assert(!await recovery.verifyLegacyQuizSource(unit, [...shared, { key: `itss.lessonedits.${unit}.built-new`, value: '{}' }]), 'New version-specific definitions must disable recovery');
+      }
     }
+    const originalRow = snapshot.rows.find(row => row.key === 'itss.lessonquiz.p_mrolz8et_3ary3.114059');
+    const original = quiz.parseLessonQuizState(originalRow.value);
+    const restored = recovery.recoverLegacyQuizContext('114059', original, await recovery.verifyLegacyQuizSource('114059', shared));
+    assert.deepEqual(restored.recoveredSlides, [10, 11, 12]);
+    assert(!recoveryData.VERIFIED_LEGACY_QUIZ_CONTEXT['114059'][0], 'Conflicting Slide 1 versions cannot be guessed');
+    assert(!recoveryData.VERIFIED_LEGACY_QUIZ_CONTEXT['114059'][1], 'Conflicting Slide 2 versions cannot be guessed');
+    assert.deepEqual(restored.answers, original.answers);
+    assert.deepEqual(restored.checked, original.checked);
+    assert.deepEqual(restored.attempts, original.attempts);
+    assert.equal(evidence.savedLessonAnswers([restored]).length, evidence.savedLessonAnswers([original]).length);
+    assert(evidence.savedLessonQuizResults([restored]).every(result => !('correct' in result)));
+    const restoredText = evidence.savedLessonAnswers([restored]).filter(answer => !answer.legacy);
+    assert.equal(restoredText.length, 15);
+    assert(restoredText.some(answer => answer.question.includes('key metric of performance')));
+    console.log('US 114059 original archived definitions recovered for Slides 11–13; conflicting versions rejected, selections and completion retained, no grades calculated.');
     console.log("Expanded recovery guards passed: audited sources only; missing, changed, duplicate, other-tenant and new override sources rejected.");
   }
   let targetSlide32;
@@ -126,6 +147,24 @@ async function main() {
   lookups.find(query => !query.prefix.includes(id)).resolve({ data: [], error: null });
   const retrieved = await lookup;
   assert.equal(evidence.savedLessonAnswers(retrieved["10135"]).length, 45, "The actual cloud query/parser must retain Bradley's saved US 10135 selections");
+  if (fs.existsSync('supabase-export/all-learners/source-snapshot.json')) {
+    const snapshot = JSON.parse(fs.readFileSync('supabase-export/all-learners/source-snapshot.json', 'utf8'));
+    const archivedRow = snapshot.rows.find(row => row.key === 'itss.lessonquiz.p_mrolz8et_3ary3.114059');
+    let queriedVersions = false;
+    const archivedDirectory = compile('src/lib/directory.ts', {
+      './legacyQuizRecovery': recovery, './lessonQuizProgress': quiz, './tenant': { TENANT_ID: 'investec' },
+      './supabase': { supabase: { from(table) {
+        return { select() { return this; }, eq() { return this; }, like() { return this; }, order() { return this; }, range() { return this; },
+          or(filter) { queriedVersions = filter.includes('key.like.itss.lessonedits.114059.built-%'); return this; },
+          async abortSignal() { return { data: table === 'shared_state' ? snapshot.shared.filter(row => row.tenant_id === 'investec' && (row.key.startsWith('itss.lessonedits.114059.') || row.key === 'itss.lessonedits.114059' || row.key === 'itss.unitbuilder.114059.shared')) : [archivedRow], error: null }; }
+        };
+      } } },
+    });
+    const recovered = await archivedDirectory.fetchCloudLessonQuizzes(['p_mrolz8et_3ary3']);
+    assert(queriedVersions, 'The real cloud path must fetch the original version-specific edits');
+    assert.deepEqual(recovered['114059'][0].recoveredSlides, [10, 11, 12]);
+    assert.equal(evidence.savedLessonAnswers(recovered['114059']).length, 50);
+  }
   // Render the actual academic record with Bradley's real saved work and an
   // unmatched current catalogue, reproducing the screenshot's situation.
   const React = require("react");

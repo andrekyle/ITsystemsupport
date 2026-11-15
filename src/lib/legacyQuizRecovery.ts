@@ -7,7 +7,7 @@ export const hasVerifiedLegacyQuizContext = (unitId: string) => !!VERIFIED_LEGAC
 export async function verifyLegacyQuizSource(unitId: string, rows: { key: string; value: string }[]): Promise<boolean> {
   const pinnedBuilt = VERIFIED_LEGACY_BUILT_SOURCES[unitId];
   if (pinnedBuilt) {
-    const relevant = rows.filter(row => row.key === `itss.unitbuilder.${unitId}.shared` || row.key === `itss.lessonedits.${unitId}`);
+    const relevant = rows.filter(row => row.key === `itss.unitbuilder.${unitId}.shared` || row.key === `itss.lessonedits.${unitId}` || row.key.startsWith(`itss.lessonedits.${unitId}.built-`));
     if (relevant.length !== Object.keys(pinnedBuilt).length || new Set(relevant.map(row => row.key)).size !== relevant.length) return false;
     for (const row of relevant) {
       if (!pinnedBuilt[row.key]) return false;

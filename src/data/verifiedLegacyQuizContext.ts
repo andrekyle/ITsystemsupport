@@ -8,10 +8,128 @@ export const VERIFIED_LEGACY_QUIZ_SOURCE_HASHES: Record<string, string> = {
 };
 export const VERIFIED_LEGACY_BUILT_SOURCES: Record<string, Record<string, string>> = {
   "114046": {
-    "itss.unitbuilder.114046.shared": "68ba6061005cf6fe12fe3d5dd44e9c920f70fea5b2b4b2ad40f6445fdcc9cc6e"
+    "itss.unitbuilder.114046.shared": "68ba6061005cf6fe12fe3d5dd44e9c920f70fea5b2b4b2ad40f6445fdcc9cc6e",
+    "itss.lessonedits.114046.built-7b8ae6ed-e3eb-4cd4-a453-5e7ae2191cc3": "54dc13fe59a7d1bfc40c0d9452f687aaf0f65eeafe57ee792e3dc02a468dd3fc",
+    "itss.lessonedits.114046.built-43b712cc-f524-4f85-b27a-138b10603821": "007e442d815eb42269a6be7d59e658c99058e320fc2d2aaedcb7597994fc5fe1",
+    "itss.lessonedits.114046.built-e206f4c2-304e-4e1f-80a3-e75df6ca130c": "9573d30feed9ff1bb433f38887c4d70e46cfa147166f05fc2284f3b4d9d1560f",
+    "itss.lessonedits.114046.built-ec052a15-553e-4a4c-be15-4cfe8d91f49e": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "itss.lessonedits.114046.built-df3fba1f-6d2b-454e-8080-75519e87d795": "fd1d132a94f9965626af6caba051e429df2a2e39e67d9fa4e5b114b9e7e13561",
+    "itss.lessonedits.114046.built-7f964a8c-5c70-46d1-b77d-374b27213fb0": "ec79af768a5da3547a601ffdc2fb2cdf054d768babfa0465af89f583cb98a35a",
+    "itss.lessonedits.114046.built-1c8a0cc4-13b7-4b98-8f73-c8ff7183527c": "4d4f43960e5e336d1f3fc299aab5d4ce35b0b3d042d9f1311efca7c1814b7571",
+    "itss.lessonedits.114046.built-1ce5da46-aa36-45e0-a98c-a5cece21cb7e": "df331a7ac690114ec336a3e8ecc9d94538bf00bbdce3831d1b4627756208bd9f",
+    "itss.lessonedits.114046.built-541f8e30-568b-4a3c-81b5-3f3b8fc32e5a": "f07bebc7653d8d970614b72c78f32ce2b33edb1a8f72f8cfc055eca4a19caf99",
+    "itss.lessonedits.114046.built-46d57b98-cf82-4043-9d43-a9c866f2f54c": "a9d042456ab9b0098f1d4505b9552e76d5f3dac67325c88086fd55f0f538d260",
+    "itss.lessonedits.114046.built-faf676d6-b15c-400d-9add-5c4e5ff75969": "adff16ad68b9a15aa673fb352714c4bfbe555c2503449070adc2bd8cbd76de9a",
+    "itss.lessonedits.114046.built-d35a9094-e98f-43c4-acf3-4c7e4c15329c": "c25e9f34a145503b830ba25cb46abc3c79b26765165456a44fd922fa89d0d33c",
+    "itss.lessonedits.114046.built-15d5e81a-17cc-41dd-ad92-90fd4facde98": "f95c3c7471eeb6b9d3bfacbcb7ecd46a9234b057cce69f30b83c74d83dfb2f8f",
+    "itss.lessonedits.114046.built-f3b45959-38e8-4418-a61f-b1d11cca3ae4": "a5fd49febd8758a0192ffb9e617303c3085d68084d9dd5a01b4adcc9acd5bec3",
+    "itss.lessonedits.114046.built-19fabebc-5846-4050-90a4-be04095e6028": "65be07b1ecc345498b4eb2b334d3b3b5b7fce007ac8357ea98424d70553ea60f",
+    "itss.lessonedits.114046.built-543806c6-e64c-45d9-ac5a-24b301a7efdb": "22571674d4a9768357c2d47c0015f8499e51cb0380f4d7bef70bb2643347b492",
+    "itss.lessonedits.114046.built-44091ce9-42b0-465b-8ec2-8c6f9e20dacd": "57840f1e859ae046dda8105ed27554dc5f286b5eae13fd4cbd1056182fc024df",
+    "itss.lessonedits.114046.built-f7bb64de-febe-4d3d-974f-3ff5a413d82f": "be0cd2cea8f6f42d9f05b5d9a3553194994e0685bb3f4deae811900d8da241ff",
+    "itss.lessonedits.114046.built-b322fa44-a039-4486-8d0f-cddba972b556": "3347a328278db34551715b71d14b6b79179a598a075f20e0107fb5366a0cb5df",
+    "itss.lessonedits.114046.built-b69fd0dc-356b-48d1-b737-b3759dce7e5c": "5e52ae86d05bdad31355edc915dd07919c5bba23c64dfbd36195d8acf6c516fb",
+    "itss.lessonedits.114046.built-fa44166f-efaf-44ec-b086-c355bfd28aa3": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "itss.lessonedits.114046.built-4173c448-ad49-4a64-aa68-ba478f960a35": "6c34bf23057e534216afaa40891b119d4254569ff7ae4a763fbe443d7f547436",
+    "itss.lessonedits.114046.built-93492194-cb32-470e-a179-0655f0f82630": "c477549892e6c7cb4ac866b9506462d889d729dc1852c0c61dc4785761a7cb15",
+    "itss.lessonedits.114046.built-6bb562b8-f538-440a-aacf-d72a1cb60dcc": "ee1955c82fb965e412d8c76f2f3da15f1b61fa05b1de9b69ff5cba414607a2db",
+    "itss.lessonedits.114046.built-a178264b-c0dd-43fe-a8fb-afde86c24920": "89360d79398707d273eeac1202e934ea2f7c12939268f19a4ae6b0045a8bdd96",
+    "itss.lessonedits.114046.built-a43eb66f-9f8f-44c8-9f4c-78327d1a7e02": "cf44608fd753b7b7975d96989196067fdc9df6516b60ee181557eaf22d6cb7f1",
+    "itss.lessonedits.114046.built-3e5b23b4-aba8-4733-943b-8e19effbf5ec": "81e41bed7976e17064b92e1288b562baa1b09c1cef3c3211a2c5c70cc8665c32",
+    "itss.lessonedits.114046.built-08a62b32-65d9-40af-9cf7-4b7bfea8ee8a": "0bff899cf2683f442c3e32aa36abd198e813312dbf9c77c0bdad7b2a3baba4e3",
+    "itss.lessonedits.114046.built-dfbd5f4c-899d-4023-bc30-4e214b8fe793": "df6331314e83689af98e67709bf37757d5c8671575e25f8d14d2c571a00c6746",
+    "itss.lessonedits.114046.built-5c45a252-27a7-4024-8012-d16a35e8e4a7": "c7b79652569ddc889fe1b94c8426f9579eec48b6a6600a99a71de0e03969f0f0",
+    "itss.lessonedits.114046.built-41dc22d2-149a-450a-86d7-b3ffb1df7f0e": "1bb09bccb9b0d7c98bb9c42e84b44683f01b7391ba02bcc174299cd3c436c580",
+    "itss.lessonedits.114046.built-d61e71f7-e71d-46a3-a86c-d879261a48b7": "89360d79398707d273eeac1202e934ea2f7c12939268f19a4ae6b0045a8bdd96",
+    "itss.lessonedits.114046.built-45e822a1-2c30-4147-963f-9b9c17b0b4d8": "3bcb4a0174d1688fd042c5af7a2179de7549b348d83ef04c1b85d0bc871b8e65",
+    "itss.lessonedits.114046.built-15a5ec89-51cb-4bfe-b072-efb670f90c75": "d0199c9a1a965b1a0ab92d2171ebdbfcc6879e3d8fef54190fba5ab8f902dd5d",
+    "itss.lessonedits.114046.built-7fce7774-5283-47f9-8929-b00721f80744": "259912c76f65a10d58f842a9ebce5144fdbd9c6318003f92b37da872eae4cc51",
+    "itss.lessonedits.114046.built-dffc246b-62c6-4b8d-9b7b-6cf637d34ed3": "60b18484bba4eec4622094438621de6debaf1db06887732647a9a6686fb7120f",
+    "itss.lessonedits.114046.built-5cf3ebd2-4018-4cbd-bc4e-19e9f1d9e9cb": "fbc8bfa30603755898cc3431e069a7978cb3f86c3aa1566835706046a91d85f3",
+    "itss.lessonedits.114046.built-7d5f4e41-5dde-4fba-bbb9-899762736d87": "ceefb4e3c7c947e6e44fcde32f407f17cfbef990c1740d96ed80f33b0dd0e25e",
+    "itss.lessonedits.114046.built-a9de0737-4c28-4463-8f70-d3c321766ee0": "9ee138d3f53c9cb8fe4080108f15daa8295fa3a02775d31d8dd93be107b03473",
+    "itss.lessonedits.114046.built-9c81d0ed-25a5-46f9-8805-1a034bac84f3": "3520dfae78f6c9ea2e1e0277f5389376947ee8a35edfce48014add30a3c955fa",
+    "itss.lessonedits.114046.built-8e8b047c-b347-41df-9b67-0641617c2e0d": "d8c9dc2045ada9bbfae6ada1169c9fabc080343f1f22e1f9966c5945e896c07a",
+    "itss.lessonedits.114046.built-daae5cd3-7de0-44ce-83f8-1a98f3c28201": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "itss.lessonedits.114046.built-bbaf6a8d-d337-4a9d-99cd-18d2e06ccc8f": "37df5c85df8b6671bcb37db4d2865866a40a2ffa8c37dbda1ec13ca91684be9f",
+    "itss.lessonedits.114046.built-0e688856-889b-4f19-97b5-b644018cf649": "00ecd320912d325278c3bb766c77df830d6f567ebeeff001a2442fd5a175e121",
+    "itss.lessonedits.114046.built-c02562b1-bb70-4447-b4df-0720feb47dec": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "itss.lessonedits.114046.built-74320297-b641-454f-9a22-a64b0658a9c8": "ae501adc42886a261501ead1dd8905840caf8a6126276cdc6890ffc0d6d831b8",
+    "itss.lessonedits.114046.built-a75e7e82-8c8b-4bb3-aacf-33edff0f7cd9": "092434c5b0f1bea4c971161a9d26ef7943760eebc8d47fed139043253d329f87",
+    "itss.lessonedits.114046.built-596ad629-a10a-4a50-8e0f-fb75d8d31ea5": "7a9912b4e6214a71c74afa95603a122ff8b4d1c2405d48951681de0c1115a32e",
+    "itss.lessonedits.114046.built-65c875ef-9b91-4b16-ac9f-9683301d352a": "2ea9cb9fe447e0a51ec0fbd22f3f1223322c9bfdf0b46b1c46db575a6fcd4e0c",
+    "itss.lessonedits.114046.built-9ad9cfe6-4448-467a-9647-9130931ea3ec": "7ffd272f11f8bf3e8ebf2b3fa38d4a8f3257e9d0f1e90018877fe7413e4ab76a",
+    "itss.lessonedits.114046.built-9f0be8d8-16cd-4d97-9c89-15c831b48c86": "9e1494c4ab01fe77253856bd777349224516257abd2df0913468b4ba265c823f",
+    "itss.lessonedits.114046.built-91b3ec85-e279-4968-8f17-adf9a5cc205e": "00d26f08d4d0e3215b0bba4e3e0dc24f7c3550055471aee34eb1273212068c11",
+    "itss.lessonedits.114046.built-c7a292d4-4f0e-4815-8be8-639d0d52a261": "b8e456e5ab690c4fb4e29887c7836f9a63df64835f92ecd8e9e9dba6393b8c9e",
+    "itss.lessonedits.114046.built-2bd930ed-f43e-4df6-9170-e262dc4fa0fe": "ebe53e6485f7678088c08108d3aabc6f83a5413d6be63286aabf7ce469fbcc15",
+    "itss.lessonedits.114046.built-a8d910be-83c9-45d5-89de-eb689ae1e7ae": "7fd7b7c7fb68fe32a31af423ec614cc7ce0c65a4b3accf232995a292e7f62189",
+    "itss.lessonedits.114046.built-3acc765f-8ec6-4db3-ad3a-2b3278995d2c": "1ef2399da1349232942b52569c53d33d6144dbc04444e38fbd59b75fcb2ccce6",
+    "itss.lessonedits.114046.built-43c4e836-7866-4cb9-b9c3-06b8f4e833ea": "81020de093949e49155ce7aa7d8ec9470f9010ad2237bf4d67ed6b32845a139e",
+    "itss.lessonedits.114046.built-8f8417ce-1fc5-495d-8f05-5af63cb89c52": "99f6b10259b70d2ad7ca41e468b54bc3c2405afac7e075c9157902a504b3d20b",
+    "itss.lessonedits.114046.built-4a16be21-017f-486f-abd0-4e5c69c8e521": "a3dfc3f49c54625d0497037137641d125bcccdd217da3c870cdca5a2d908ac88",
+    "itss.lessonedits.114046.built-8e554198-0850-4217-af68-9d4c9be71d40": "5bbe294e3e7b6819c1e21654c34707130d2b0fa896d7428fa6f9131554cf5f72"
+  },
+  "114059": {
+    "itss.unitbuilder.114059.shared": "70ff4957820e599ca35eb3d53f7b9817cdf346380a0cfa411a465a4fffbfba6a",
+    "itss.lessonedits.114059.built-985bb21d-454a-43b5-80f7-1521d5458aa6": "48a219129e087c43de925e673a334de0ef161719268e49afe6cc0d3f825501ee",
+    "itss.lessonedits.114059.built-8cdadeb3-3435-413b-9bd8-fd8a1667cc40": "e9dcd014ffb3fc3e112e0c2a743fadbe4e383ea8be69688101c38019de7b8843",
+    "itss.lessonedits.114059.built-172f2329-a6ce-4b34-9bda-c1916528f116": "5118746d3a59cb0990a93320143dcb1fd16d5ce5c5c8366e47adce2ccc2bd390",
+    "itss.lessonedits.114059.built-fd385f69-f46a-4a20-8088-fc46e2cfecbb": "4695f04dbfef06bc27d7621e6f998301dc0edb4f58b120b9423bf39b134cb1e3",
+    "itss.lessonedits.114059.built-e4b3fc32-6ecd-4dc1-a316-c22e3917c0e9": "fd051f1f432b62ba1b0e5b23b1a747ab0446b7ee34367a49af9daea0bd70ca7e",
+    "itss.lessonedits.114059.built-7acfe017-9319-4013-99b8-6881d285475d": "076759ab62fdba19294162a33ff85fc5cc675b144fd7feccc71551386010343f",
+    "itss.lessonedits.114059.built-f320946a-3fc3-4107-b75a-41872d3120eb": "9b094e5e370e8655ee3c2ba50061382fe4026be9e5e5d4a2043db33c0b75d0ba",
+    "itss.lessonedits.114059.built-d3b3c546-b4f1-4fd2-a9a8-5a6471e7e96b": "12aa65a41604873ee91949749d5bda44ee6674967bde0ca834e4e575b6ccb02c",
+    "itss.lessonedits.114059.built-36fedc19-7624-4d79-affa-4b37b301156f": "e4510727c93f365b8f24225ead17a2b2452ec1dee65438168af8cffccd895348",
+    "itss.lessonedits.114059.built-00cb0389-deab-438e-b1be-d78f0b1ba49a": "2d73048b6ba6bb499d99fd29d85a70692242eb55a7e315be2441880b764f7870",
+    "itss.lessonedits.114059.built-c6f7d0b2-2932-41e9-a286-1a6ca7dae3d1": "ad1a7afb16ffb474fb37609c76fec11f10db0f4fb9a6e486bb6ba7fb49543e8b",
+    "itss.lessonedits.114059.built-e347e4cd-b0a0-4502-ab91-0da6bf4f05d4": "9dddb007cba97202165027120ea390a926909be5e4ecf92064ebcbab1698e41f",
+    "itss.lessonedits.114059.built-d1de3cc9-b9ba-4aef-914a-0161d4410295": "078541f8cf2a238277f6ce437d2dddc1d1584e95dc84a3a4e127bb0204bdde4b",
+    "itss.lessonedits.114059.built-389b84ce-f5f1-4840-b956-60aa174c84a4": "fbe895e662c16cdb389c17fb49421ea9e80087e3f93a9ec17dcc4f5adbf5aa14",
+    "itss.lessonedits.114059.built-a58a3c67-0547-4d32-a864-a0c6a53e31e6": "d3a241d99de2e9c698a576ae1c6bef50f0bf00298a6a1252239eb1c1df08e1d5",
+    "itss.lessonedits.114059.built-2adf41ba-02aa-4943-8363-106888351455": "8cb828de6b0db733d75c0151f066f01f9eea4ce44758e86f82036c4d43fdb3ca",
+    "itss.lessonedits.114059.built-2c4719d5-e85a-49af-93ba-9ecea0181e26": "ce06a6d39894ee720d9d656809ae5b5cd730f3ca364cc3b624e21dd0b1eb4951"
   },
   "114074": {
-    "itss.unitbuilder.114074.shared": "f351c07e3304142bce82794b53e15362fbace520935d32006376ea503de73b62"
+    "itss.unitbuilder.114074.shared": "f351c07e3304142bce82794b53e15362fbace520935d32006376ea503de73b62",
+    "itss.lessonedits.114074.built-b05dc0e4-e528-43c9-884a-1f70713971f7": "817bce41c95c3299b9a7f75bef9d2744ea73126d589953d1a804c647191719d4",
+    "itss.lessonedits.114074.built-11f33757-1dcc-4c22-9e3d-9b17acdecb94": "d4f8db54a6beb627d55628ca6c8c0434dcbb26c50962c917a625abbaca0e556b",
+    "itss.lessonedits.114074.built-78188169-84cc-4ad6-a87f-8a9b93128822": "37efeafb532318e6ef1eb3fa9cfa84c75375b48d258ea0a76443f3873a6d3782",
+    "itss.lessonedits.114074.built-87674859-f808-475a-903f-943ff1406cc1": "1a8d31a5b5ad9f113695945d3bea458bb337551211f5e9b2737777e0abe00ca6",
+    "itss.lessonedits.114074.built-f1deddb9-46d8-4abb-aa3e-b7096d6fed3e": "d4f8db54a6beb627d55628ca6c8c0434dcbb26c50962c917a625abbaca0e556b",
+    "itss.lessonedits.114074.built-6059eab1-1a68-45d0-9b57-2548703e5af3": "817bce41c95c3299b9a7f75bef9d2744ea73126d589953d1a804c647191719d4",
+    "itss.lessonedits.114074.built-5a4c354a-cac2-4b6e-b672-72617a91a52f": "d4f8db54a6beb627d55628ca6c8c0434dcbb26c50962c917a625abbaca0e556b",
+    "itss.lessonedits.114074.built-03e90c7a-b98d-4e0c-abdd-2a327e9dfcb4": "a0e6b2cd571e1a80a4c13e68537b5debffa254694868ae93ac5b72e91755f33f",
+    "itss.lessonedits.114074.built-d95ed472-b0c6-4f56-8999-c62478c974d4": "d4f8db54a6beb627d55628ca6c8c0434dcbb26c50962c917a625abbaca0e556b",
+    "itss.lessonedits.114074.built-e752240d-b476-4a02-b4dd-130eee2a8690": "0dd333813a262c734513248a43c364e7581f31923b186a3ba6e7e771d3e051cd",
+    "itss.lessonedits.114074.built-0f428dc6-a6d3-428a-929b-1ac7f7039ba7": "2e806c3d68cecbd9e30b7386cae6a5cc2f408b926452c80e87ccfd6988f70e82",
+    "itss.lessonedits.114074.built-9b9d649d-9278-483a-a6a2-46195109a6e0": "2e806c3d68cecbd9e30b7386cae6a5cc2f408b926452c80e87ccfd6988f70e82",
+    "itss.lessonedits.114074.built-7bf2d82e-c7a4-4523-b56b-4963e436c14d": "2e806c3d68cecbd9e30b7386cae6a5cc2f408b926452c80e87ccfd6988f70e82",
+    "itss.lessonedits.114074.built-9883ef23-29f1-4119-af80-f1ce06cf5216": "19f80f7f3c6e4932f5023c0205cfecaa33ac35f136ca8505f283361428c433a6",
+    "itss.lessonedits.114074.built-fd0f885a-eb9a-4b3f-a107-a0942ca59332": "63d24e5f333adb2c4cc130db912634b4210f6310940807fef7d9efc6b78560e2",
+    "itss.lessonedits.114074.built-6767e581-5226-487c-9118-2a2fa92ad4be": "2d6bec68fe68d10ed2b23b52eda4577feb385ac716007eca1f837a5b1176559f",
+    "itss.lessonedits.114074.built-271604db-6dd0-4c78-8c49-013be9a800db": "82c1830b31b20a1a9692e4ca0b5851d8b0f86f62bce3f91c9d62dff455489357",
+    "itss.lessonedits.114074.built-c37223e1-92d1-4a9f-887b-78e8c6004440": "3effc782b9de3549bd6fe539db54ae24dc303ee30f2b8006f6290cb8a3a16d12",
+    "itss.lessonedits.114074.built-896d2071-1dda-438c-b876-abc6fc097eda": "4ec89b705d5a6736712a475091397d818a4e1225c310ccd478af868831a8a5f2",
+    "itss.lessonedits.114074.built-3c22c4db-fc0b-45ee-bbce-24ff1be32214": "7275a26428942f241a27dc647df3e8940b72294843ac155a753d78410eabb02d",
+    "itss.lessonedits.114074.built-5b5c6272-fc6f-4c42-9cd7-86ddfe133439": "0c95fa07486c8dfb16edc581ca61007c0aef0d10e738475984847690424d3f7f",
+    "itss.lessonedits.114074.built-fa5690fb-fdf6-43b2-99ab-0ed2825ffb2e": "4014cd2c2ac4b55b260d53b30f8a1c0db641e6ab97064f326454e678d7c9dd77",
+    "itss.lessonedits.114074.built-3ae16f0f-ad08-4024-8628-15d7bfb3fa85": "cf0d61bdad76523d7f329cc08aa80e66b976f3d0f2b08bd3f82501a56658a226",
+    "itss.lessonedits.114074.built-e292ccbe-740e-4f55-9666-f0c6a20ff6f6": "cf0d61bdad76523d7f329cc08aa80e66b976f3d0f2b08bd3f82501a56658a226",
+    "itss.lessonedits.114074.built-6440b940-8d82-4e8c-9ed6-0e7ea94d52a8": "219a218f77bb386bea328b7b8fdf13abeab7f144cdbdcca7f614e2417c085a0d",
+    "itss.lessonedits.114074.built-56617345-9990-4bb4-8fc8-3d5ef0810016": "6f346624e2cec3b45431e02f4030623ca77ed38ac45f10aba82103c2a997902d",
+    "itss.lessonedits.114074.built-9508297e-1bbe-4327-80f8-fe62dc705ba3": "0f355acb5b8e01bfbaed470d65b44b84a454d6eecdefbb965238c056c38a92b9",
+    "itss.lessonedits.114074.built-b169359c-b70c-47dc-b695-d86b271995d3": "cf0d61bdad76523d7f329cc08aa80e66b976f3d0f2b08bd3f82501a56658a226",
+    "itss.lessonedits.114074.built-264e8c0a-8208-42b7-9b9e-bb2b13b1adfb": "219a218f77bb386bea328b7b8fdf13abeab7f144cdbdcca7f614e2417c085a0d",
+    "itss.lessonedits.114074.built-363eca3c-0cd9-4ed0-b7b6-a44a669f77a0": "8509bac2d75770c75cb8a97e5990104d279bf53d4a76cd494d804d9f2b72d7ac",
+    "itss.lessonedits.114074.built-cd3034ce-ea5e-48ba-898c-174ab79681e7": "546966f88e426d3b49e63d20195fbc40f61078d21e4f1e230f2c1df101958661",
+    "itss.lessonedits.114074.built-7add165b-4500-4fdb-8796-cd67ae9be3fa": "219a218f77bb386bea328b7b8fdf13abeab7f144cdbdcca7f614e2417c085a0d",
+    "itss.lessonedits.114074.built-6111a1c9-34d6-4225-8fda-8dc636262be4": "a76dcfd2e8242eb9716cdb37ca0bd228af1f852c73790fad2005b9e30bbadb97",
+    "itss.lessonedits.114074.built-087f5ac9-1cb7-40e2-829f-a56d912eca35": "219a218f77bb386bea328b7b8fdf13abeab7f144cdbdcca7f614e2417c085a0d",
+    "itss.lessonedits.114074.built-4631492d-df8b-49a7-b5d5-ebb4b9f325a5": "da147ffffdbfe8705f2c60e0712797b6c3d30688358cff8566395e4d650445fb",
+    "itss.lessonedits.114074.built-7c778740-14e7-4700-8f35-f120a507bd9f": "e3d22058e58b33de61990e05ee95bf15c2925c5a7ebe283c8aaa4fc94a542690",
+    "itss.lessonedits.114074.built-309d4158-a115-4907-baf4-a6f6bc2fc2cf": "247e03b89f2e8d649fc84b47160eff6cdb21be376f7ee7fefabcbef562ffe387",
+    "itss.lessonedits.114074.built-b3d0754f-6269-440d-ae3a-474e44f43f61": "a1a2d057ac0f63ec16dd6875d95c172775fb3eab56a13b151be6b0689c9ed8b6"
   }
 };
 export const VERIFIED_LEGACY_QUIZ_CONTEXT: Record<string, Record<number, SlideQuizDefinition>> = {
@@ -498,682 +616,6 @@ export const VERIFIED_LEGACY_QUIZ_CONTEXT: Record<string, Record<number, SlideQu
     }
   },
   "114046": {
-    "0": {
-      "heading": "<!--slide-rich-->Introduction",
-      "questions": [
-        {
-          "q": "What is the main topic introduced in the slide?",
-          "options": [
-            "The Management of Access To A Local Area Computer Network",
-            "The importance of paper documentation",
-            "How to build a computer system",
-            "The history of computer networks"
-          ],
-          "answer": 0,
-          "explain": "The slide introduces the topic 'The Management of Access To A Local Area Computer Network'."
-        },
-        {
-          "q": "According to the slide, where do most companies keep their information?",
-          "options": [
-            "On paper documents",
-            "On their computer systems",
-            "In external hard drives",
-            "On cloud storage only"
-          ],
-          "answer": 1,
-          "explain": "The slide states that most companies keep all their information on their computer systems."
-        },
-        {
-          "q": "Why do companies prefer to keep information on computer systems rather than on paper?",
-          "options": [
-            "Because paper is more expensive",
-            "Because paper can easily be misplaced or lost",
-            "Because computers are slower",
-            "Because paper is more secure"
-          ],
-          "answer": 1,
-          "explain": "The slide explains that paper can easily be misplaced or lost, so keeping information on computers is safer."
-        },
-        {
-          "q": "Does storing information on computers guarantee that the information is safe?",
-          "options": [
-            "Yes, it guarantees safety",
-            "No, it does not necessarily mean it is safe",
-            "Only if the computer is turned off",
-            "Only if the information is encrypted"
-          ],
-          "answer": 1,
-          "explain": "The slide clarifies that storing information on computers does not necessarily mean it is safe."
-        },
-        {
-          "q": "What is implied as a potential risk even when information is stored on computers?",
-          "options": [
-            "Information can be misplaced or lost",
-            "Information might not be safe despite being on computers",
-            "Computers are always secure",
-            "Paper documents are more reliable"
-          ],
-          "answer": 1,
-          "explain": "The slide implies that information might not be safe even though it is stored on computers."
-        }
-      ]
-    },
-    "1": {
-      "heading": "<!--slide-rich-->Secondary Storage",
-      "questions": [
-        {
-          "q": "What is another name for secondary storage?",
-          "options": [
-            "Primary storage",
-            "Mass storage",
-            "Cache memory",
-            "Volatile storage"
-          ],
-          "answer": 1,
-          "explain": "Secondary storage is also known as mass storage or just storage."
-        },
-        {
-          "q": "How does the CPU access secondary storage?",
-          "options": [
-            "Directly through the CPU registers",
-            "Using input/output channels and intermediate primary storage",
-            "Through the cache memory",
-            "Directly via the system bus"
-          ],
-          "answer": 1,
-          "explain": "The CPU accesses secondary storage using input/output channels and transfers data via an intermediate area in primary storage."
-        },
-        {
-          "q": "Which of the following is true about secondary storage?",
-          "options": [
-            "It loses data when powered down",
-            "It is volatile memory",
-            "It is typically more expensive per unit than primary storage",
-            "It is non-volatile and retains data when powered down"
-          ],
-          "answer": 3,
-          "explain": "Secondary storage is non-volatile, meaning it does not lose data when the device is powered down."
-        },
-        {
-          "q": "Compared to primary storage, secondary storage is generally:",
-          "options": [
-            "More expensive and smaller in capacity",
-            "Less expensive and larger in capacity",
-            "More expensive and larger in capacity",
-            "Less expensive and smaller in capacity"
-          ],
-          "answer": 1,
-          "explain": "Secondary storage is typically an order of magnitude less expensive and has an order of magnitude more capacity than primary storage."
-        },
-        {
-          "q": "Why do modern computer systems have more secondary storage than primary storage?",
-          "options": [
-            "Because secondary storage is faster",
-            "Because data is kept longer and secondary storage is cheaper",
-            "Because primary storage is non-volatile",
-            "Because secondary storage is directly accessible by the CPU"
-          ],
-          "answer": 1,
-          "explain": "Modern systems have more secondary storage because it is cheaper and used to keep data for longer periods."
-        }
-      ]
-    },
-    "2": {
-      "heading": "<!--slide-rich-->Mordern Secondary Storage",
-      "questions": [
-        {
-          "q": "What is the typical access time for a byte of information stored on a hard disk?",
-          "options": [
-            "A few thousandths of a second (milliseconds)",
-            "A few millionths of a second (microseconds)",
-            "A few billionths of a second (nanoseconds)",
-            "A few seconds"
-          ],
-          "answer": 0,
-          "explain": "The slide states that hard disks typically take a few thousandths of a second, or milliseconds, to access a byte of information."
-        },
-        {
-          "q": "How does the access time of random access memory (RAM) compare to that of hard disks?",
-          "options": [
-            "RAM access time is about a million times slower than hard disks",
-            "RAM access time is about a million times faster than hard disks",
-            "RAM and hard disks have roughly the same access time",
-            "RAM access time is slightly slower than hard disks"
-          ],
-          "answer": 1,
-          "explain": "RAM access time is measured in nanoseconds, which is about a million times faster than the milliseconds access time of hard disks."
-        },
-        {
-          "q": "Which of the following secondary storage devices typically has longer access times than hard disks?",
-          "options": [
-            "Flash memory (USB sticks)",
-            "Rotating optical storage devices (CD and DVD drives)",
-            "Magnetic tape",
-            "Standalone RAM disks"
-          ],
-          "answer": 1,
-          "explain": "The slide mentions that rotating optical storage devices such as CD and DVD drives typically have longer access times than hard disks."
-        },
-        {
-          "q": "Which of the following is NOT listed as an example of secondary storage technology in the slide?",
-          "options": [
-            "Flash memory (USB sticks)",
-            "Floppy disks",
-            "Solid-state drives (SSD)",
-            "Punch cards"
-          ],
-          "answer": 2,
-          "explain": "The slide does not mention solid-state drives (SSD) as an example, but it does list flash memory, floppy disks, and punch cards."
-        },
-        {
-          "q": "What distinguishes solid-state memory from rotating magnetic storage devices according to the slide?",
-          "options": [
-            "Solid-state memory is typically about a million times slower",
-            "Rotating magnetic storage devices have faster access times",
-            "Solid-state memory has significantly faster access times",
-            "Both have similar access times"
-          ],
-          "answer": 2,
-          "explain": "The slide explains that solid-state memory is distinguished by having access times about a million times faster than rotating magnetic storage devices like hard disks."
-        }
-      ]
-    },
-    "3": {
-      "heading": "Addressability",
-      "questions": [
-        {
-          "q": "What does location-addressable storage use to select each unit of information?",
-          "options": [
-            "Numerical memory address",
-            "Physical location",
-            "Data content",
-            "Access time"
-          ],
-          "answer": 0,
-          "explain": "Location-addressable storage selects each unit of information using its numerical memory address."
-        },
-        {
-          "q": "In modern computers, location-addressable storage is usually limited to which type of storage?",
-          "options": [
-            "Primary storage",
-            "Secondary storage",
-            "External storage",
-            "Cloud storage"
-          ],
-          "answer": 0,
-          "explain": "Location-addressable storage is usually limited to primary storage in modern computers."
-        },
-        {
-          "q": "Why is location-addressability generally not used directly by humans?",
-          "options": [
-            "It is very efficient",
-            "It is burdensome for humans",
-            "It is slow",
-            "It is expensive"
-          ],
-          "answer": 1,
-          "explain": "Location-addressability is very efficient but burdensome for humans, so it is not typically used directly by them."
-        }
-      ]
-    },
-    "4": {
-      "heading": "File System Storage",
-      "questions": [
-        {
-          "q": "In file system storage, how is information organized?",
-          "options": [
-            "Into fixed-length blocks",
-            "Into files of variable length",
-            "As a continuous stream of bytes",
-            "In encrypted packets"
-          ],
-          "answer": 1,
-          "explain": "Information in file system storage is divided into files of variable length."
-        },
-        {
-          "q": "What does the operating system provide to make file storage operations more understandable?",
-          "options": [
-            "Direct device addressing",
-            "File system abstraction",
-            "Encrypted storage",
-            "Fixed-length file naming"
-          ],
-          "answer": 1,
-          "explain": "The operating system provides the file system abstraction to make operations more understandable."
-        },
-        {
-          "q": "Which types of storage commonly use file systems in modern computers?",
-          "options": [
-            "Primary and cache storage",
-            "Secondary, tertiary, and off-line storage",
-            "Only primary storage",
-            "Only off-line storage"
-          ],
-          "answer": 1,
-          "explain": "In modern computers, secondary, tertiary, and off-line storage use file systems."
-        }
-      ]
-    },
-    "5": {
-      "heading": "Content-addressable storage",
-      "questions": [
-        {
-          "q": "What is used to select each individually accessible unit of information in content-addressable storage?",
-          "options": [
-            "Memory address",
-            "Hash value",
-            "File name",
-            "Physical location"
-          ],
-          "answer": 1,
-          "explain": "Each unit is selected with a hash value, which acts as a short identifier."
-        },
-        {
-          "q": "What does the hash value in content-addressable storage pertain to?",
-          "options": [
-            "File size",
-            "Memory address",
-            "File type",
-            "User ID"
-          ],
-          "answer": 1,
-          "explain": "The hash value pertains to the memory address where the information is stored."
-        },
-        {
-          "q": "Which implementation of content-addressable storage is faster?",
-          "options": [
-            "Software",
-            "Hardware",
-            "Both are equally fast",
-            "Neither is fast"
-          ],
-          "answer": 1,
-          "explain": "Hardware implementation is faster but more expensive."
-        },
-        {
-          "q": "Which implementation of content-addressable storage is more expensive?",
-          "options": [
-            "Software",
-            "Hardware",
-            "Both cost the same",
-            "Cost depends on data size"
-          ],
-          "answer": 1,
-          "explain": "Hardware is the more expensive option compared to software."
-        },
-        {
-          "q": "Content-addressable storage can be implemented using which of the following?",
-          "options": [
-            "Only software",
-            "Only hardware",
-            "Software or hardware",
-            "Neither software nor hardware"
-          ],
-          "answer": 2,
-          "explain": "It can be implemented using either software or hardware."
-        }
-      ]
-    },
-    "6": {
-      "heading": "<!--slide-rich-->User",
-      "questions": [
-        {
-          "q": "What is a 'user' in a computing context?",
-          "options": [
-            "A person who develops software",
-            "A person who uses a computer system",
-            "A computer hardware component",
-            "A type of programming language"
-          ],
-          "answer": 1,
-          "explain": "A user in computing refers to one who uses a computer system."
-        },
-        {
-          "q": "What is commonly required for a user to identify themselves on a system?",
-          "options": [
-            "A user account and username",
-            "A programming script",
-            "A hardware token only",
-            "An IP address"
-          ],
-          "answer": 0,
-          "explain": "Users have a user account and a username (and usually a password) to identify themselves."
-        },
-        {
-          "q": "What is the process of a user proving their identity called?",
-          "options": [
-            "Authorization",
-            "Authentication",
-            "Encryption",
-            "Compilation"
-          ],
-          "answer": 1,
-          "explain": "The process of identification is often referred to as authentication."
-        },
-        {
-          "q": "Does authentication automatically grant a user permission to access system resources?",
-          "options": [
-            "Yes, authentication equals authorization",
-            "No, authentication does not imply authorization",
-            "Only if the user is an administrator",
-            "Only on certain operating systems"
-          ],
-          "answer": 1,
-          "explain": "Authentication does not automatically imply authorization to access resources."
-        },
-        {
-          "q": "After a user logs on, how does the operating system often refer to them internally?",
-          "options": [
-            "By their username",
-            "By their email address",
-            "By an integer identifier",
-            "By their password"
-          ],
-          "answer": 2,
-          "explain": "The operating system often uses an integer identifier to refer to the user rather than their username."
-        }
-      ]
-    },
-    "7": {
-      "heading": "Operator Role",
-      "questions": [
-        {
-          "q": "What was the traditional primary responsibility of a computer operator?",
-          "options": [
-            "Managing mainframe computers daily",
-            "Programming new software",
-            "Designing computer hardware",
-            "Developing network protocols"
-          ],
-          "answer": 0,
-          "explain": "The traditional role of a computer operator was to work with mainframes which required a great deal of management day-to-day."
-        },
-        {
-          "q": "Why has the employment of computer operators decreased?",
-          "options": [
-            "Due to automation and modern technology making traditional roles obsolete",
-            "Because of lack of interest in the profession",
-            "Due to outsourcing to other countries",
-            "Because computers are no longer used"
-          ],
-          "answer": 0,
-          "explain": "The employment of operators has greatly decreased due to modern technology making the more traditional roles obsolete."
-        },
-        {
-          "q": "Which of the following tasks is typically part of an operator's role?",
-          "options": [
-            "Logging events such as backups and machine malfunctions",
-            "Writing complex software algorithms",
-            "Designing new computer systems",
-            "Managing company finances"
-          ],
-          "answer": 0,
-          "explain": "Logging events is amongst the operator’s role, listing each backup that is run or things such as machine malfunction."
-        },
-        {
-          "q": "How has the role of the operator changed with the proliferation of personal computers?",
-          "options": [
-            "It now includes managing backup systems, media cycling, and printer maintenance",
-            "It focuses solely on programming",
-            "It has become obsolete",
-            "It now involves hardware manufacturing"
-          ],
-          "answer": 0,
-          "explain": "The role of the operator has changed to include duties such as managing backup systems, cycling tapes or other media, and maintaining printers."
-        },
-        {
-          "q": "In modern IT environments, the operator role is best described as:",
-          "options": [
-            "A lower level system administrator assisting with monotonous tasks",
-            "A senior network architect",
-            "A software developer",
-            "A hardware engineer"
-          ],
-          "answer": 0,
-          "explain": "The operator fills in as a lower level system administrator handling tasks that are monotonous or require legwork for system or network administrators."
-        }
-      ]
-    },
-    "8": {
-      "heading": "Network administrator",
-      "questions": [
-        {
-          "q": "What is the primary role of a network administrator?",
-          "options": [
-            "Designing network security protocols",
-            "Maintaining hardware and software that comprises the network",
-            "Developing software applications",
-            "Managing company finances"
-          ],
-          "answer": 1,
-          "explain": "Network administrators maintain the hardware and software that comprises the network, including deployment, configuration, maintenance, and monitoring of network gear."
-        },
-        {
-          "q": "Which of the following tasks is commonly part of network administration?",
-          "options": [
-            "Writing code for new applications",
-            "Network address assignment and routing table configuration",
-            "Managing employee schedules",
-            "Designing marketing strategies"
-          ],
-          "answer": 1,
-          "explain": "Network administration includes activities such as network address assignment, routing protocol assignment, and routing table configuration."
-        },
-        {
-          "q": "Network specialists and analysts primarily focus on:",
-          "options": [
-            "Network design and security, troubleshooting and debugging",
-            "Hardware installation",
-            "Software development",
-            "Financial auditing"
-          ],
-          "answer": 0,
-          "explain": "Network specialists and analysts concentrate on network design and security, particularly troubleshooting and debugging network-related problems."
-        },
-        {
-          "q": "Which of the following is sometimes included in the responsibilities of a network administrator?",
-          "options": [
-            "Maintenance of network servers like file servers and VPN gateways",
-            "Creating marketing content",
-            "Managing payroll",
-            "Developing mobile apps"
-          ],
-          "answer": 0,
-          "explain": "Network administrators sometimes maintain certain network servers such as file servers, VPN gateways, and intrusion detection systems."
-        },
-        {
-          "q": "What kind of maintenance might a network administrator perform on individual machines?",
-          "options": [
-            "Updating drivers and settings of personal computers and printers",
-            "Installing new operating systems",
-            "Writing user manuals",
-            "Conducting employee training"
-          ],
-          "answer": 0,
-          "explain": "Network administration often includes maintenance of network facilities in individual machines, such as drivers and settings of personal computers and printers."
-        }
-      ]
-    },
-    "9": {
-      "heading": "<!--slide-rich-->Responsibilities of a Network Administrator",
-      "questions": [
-        {
-          "q": "What is one of the primary responsibilities of a Network Administrator?",
-          "options": [
-            "Designing marketing strategies",
-            "Implementing voice and/or data communication systems",
-            "Managing human resources",
-            "Conducting financial audits"
-          ],
-          "answer": 1,
-          "explain": "Network Administrators are responsible for implementing voice and/or data communication systems."
-        },
-        {
-          "q": "What knowledge is essential for troubleshooting network problems?",
-          "options": [
-            "Knowledge of financial regulations",
-            "Understanding of software, hardware, and systems behavior",
-            "Expertise in graphic design",
-            "Familiarity with social media platforms"
-          ],
-          "answer": 1,
-          "explain": "Network Administrators must understand the behavior of software, hardware, and systems to troubleshoot problems effectively."
-        },
-        {
-          "q": "Which technology is specifically mentioned as part of a Network Administrator's responsibilities?",
-          "options": [
-            "Cloud Computing",
-            "IP Telephony and Voice Over IP solutions",
-            "Blockchain technology",
-            "Artificial Intelligence"
-          ],
-          "answer": 1,
-          "explain": "Understanding of IP Telephony and Voice Over IP solutions is a key responsibility of Network Administrators."
-        },
-        {
-          "q": "What type of networks should a Network Administrator understand?",
-          "options": [
-            "Local Area Networks (LAN)",
-            "Metropolitan Area Networks (MAN)",
-            "Wide Area Networks (WAN)",
-            "Personal Area Networks (PAN)"
-          ],
-          "answer": 1,
-          "explain": "Network Administrators should have an understanding of Metropolitan Area Networks (MAN)."
-        },
-        {
-          "q": "What is a key skill required for a Network Administrator when diagnosing problems?",
-          "options": [
-            "Ability to write code",
-            "Ability to quickly and correctly diagnose problems",
-            "Ability to design websites",
-            "Ability to manage projects"
-          ],
-          "answer": 1,
-          "explain": "A key skill for Network Administrators is the ability to quickly and correctly diagnose problems."
-        }
-      ]
-    },
-    "10": {
-      "heading": "<!--slide-rich-->Responsibilities of a Network Administrator",
-      "questions": [
-        {
-          "q": "Which of the following is a key responsibility of a Network Administrator regarding communication systems?",
-          "options": [
-            "Designing and implementing voice and/or data communication systems",
-            "Writing software applications for end-users",
-            "Managing financial accounts of the company",
-            "Conducting marketing research for new products"
-          ],
-          "answer": 0,
-          "explain": "Network Administrators plan, define, design, develop, coordinate, and implement voice and/or data communication systems."
-        },
-        {
-          "q": "What skill is essential for a Network Administrator when dealing with network problems?",
-          "options": [
-            "Quickly diagnosing and effectively communicating solutions to problems",
-            "Creating graphic designs for network interfaces",
-            "Managing employee payroll",
-            "Developing new hardware devices"
-          ],
-          "answer": 0,
-          "explain": "They must be able to quickly and correctly diagnose problems and communicate solutions effectively to co-workers or end-users."
-        },
-        {
-          "q": "Which technology understanding is important for Network Administrators in relation to radio communications?",
-          "options": [
-            "Knowledge of radio frequency regulations and packet transfer over radio frequencies",
-            "Expertise in satellite communication only",
-            "Programming mobile apps",
-            "Designing printed circuit boards"
-          ],
-          "answer": 0,
-          "explain": "Network Administrators need a strong understanding of radio frequency regulations and radio communications including packet transfer over radio frequencies."
-        },
-        {
-          "q": "What network-related knowledge is necessary for Network Administrators to ensure service-quality objectives?",
-          "options": [
-            "Knowledge of network and communication hardware and software",
-            "Knowledge of graphic design software",
-            "Knowledge of financial auditing",
-            "Knowledge of human resource policies"
-          ],
-          "answer": 0,
-          "explain": "They must have knowledge of network and communication hardware and software to perform network management functions and ensure service-quality objectives."
-        },
-        {
-          "q": "Which of the following is part of a Network Administrator's understanding related to network infrastructure extension?",
-          "options": [
-            "Use of point-to-point radio communications to extend Ethernet network infrastructure",
-            "Use of social media to promote network services",
-            "Use of cloud storage for data backup only",
-            "Use of manual switches for telephone systems"
-          ],
-          "answer": 0,
-          "explain": "Network Administrators understand the use of point-to-point radio communications to extend Ethernet network infrastructure to outlying enterprise properties."
-        }
-      ]
-    },
-    "11": {
-      "heading": "Administration",
-      "questions": [
-        {
-          "q": "What is a key responsibility when coordinating voice network services with outside providers?",
-          "options": [
-            "Managing financial accounts",
-            "Coordinating technical and maintenance support",
-            "Designing marketing strategies",
-            "Developing new software applications"
-          ],
-          "answer": 1,
-          "explain": "The slide states that coordinating voice network services involves technical and maintenance support with outside service providers."
-        },
-        {
-          "q": "Why is a strong grasp of network security important for Internet-facing systems?",
-          "options": [
-            "To improve user interface design",
-            "To detect and prevent intrusions and other security threats",
-            "To increase network speed",
-            "To reduce hardware costs"
-          ],
-          "answer": 1,
-          "explain": "The slide emphasizes the need for strong knowledge of network security to detect and prevent intrusions and other security issues."
-        },
-        {
-          "q": "What type of maps are created and maintained as part of network documentation?",
-          "options": [
-            "Geographical maps",
-            "Logical, physical, and protocol maps",
-            "Marketing maps",
-            "Financial maps"
-          ],
-          "answer": 1,
-          "explain": "The slide mentions creating and maintaining logical, physical, and protocol maps as part of network documentation."
-        },
-        {
-          "q": "Which of the following tasks is included in server maintenance and troubleshooting?",
-          "options": [
-            "Designing new network protocols",
-            "Applying software security patches and operating system updates",
-            "Writing marketing reports",
-            "Developing new hardware components"
-          ],
-          "answer": 1,
-          "explain": "Server maintenance includes applying software security patches, operating system updates, performance tuning, log analysis, and maintaining application updates and bug fixes."
-        },
-        {
-          "q": "What is the purpose of researching and evaluating voice and/or data software and hardware?",
-          "options": [
-            "To recommend improved and efficient hardware, software, and procedures",
-            "To create advertising campaigns",
-            "To develop new programming languages",
-            "To manage employee schedules"
-          ],
-          "answer": 0,
-          "explain": "The slide states that researching and evaluating software and hardware helps recommend improved and most efficient hardware, software, and procedures."
-        }
-      ]
-    },
     "12": {
       "heading": "Development",
       "questions": [
@@ -1231,6 +673,126 @@ export const VERIFIED_LEGACY_QUIZ_CONTEXT: Record<string, Record<number, SlideQu
           ],
           "answer": 1,
           "explain": "Meeting with vendors to hold product demonstrations and resolve communication network issues is part of the development process."
+        }
+      ]
+    },
+    "13": {
+      "heading": "<!--slide-rich--><span>Local Area Computer Network Support issues&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;</span>",
+      "questions": [
+        {
+          "q": "Who can install local area networks?",
+          "options": [
+            "Suppliers of computer components",
+            "External computing technical companies",
+            "Experts within organizations",
+            "All of the above"
+          ],
+          "answer": 3,
+          "explain": "Local area networks can be installed by suppliers, external companies, or internal experts, making 'All of the above' the correct answer."
+        },
+        {
+          "q": "What is a primary advantage of using suppliers for LAN installation?",
+          "options": [
+            "Higher maintenance costs",
+            "Immediate guarantee honors",
+            "Expertise in network maintenance",
+            "Higher installation costs"
+          ],
+          "answer": 1,
+          "explain": "Using suppliers for LAN installation typically results in lower costs for the organization, and they honor guarantees immediately."
+        },
+        {
+          "q": "What is a disadvantage of using third-party professionals for LAN setup?",
+          "options": [
+            "Lower costs",
+            "Higher expertise",
+            "Longer repair times",
+            "Immediate guarantee honors"
+          ],
+          "answer": 2,
+          "explain": "Third-party professionals may have higher expertise, but they often take longer to repair or exchange items, which can cost the organization time."
+        },
+        {
+          "q": "Why have many organizations initiated their own IT departments?",
+          "options": [
+            "To increase costs",
+            "To lessen the gap between pros and cons",
+            "To rely solely on suppliers",
+            "To avoid using external companies"
+          ],
+          "answer": 1,
+          "explain": "Organizations have initiated their own IT departments to lessen the gap between the pros and cons of using suppliers and third-party professionals."
+        },
+        {
+          "q": "What is a key difference between suppliers and third-party professionals regarding guarantees?",
+          "options": [
+            "Suppliers offer better guarantees",
+            "Third-party professionals offer better guarantees",
+            "Both offer the same level of guarantees",
+            "Suppliers do not offer guarantees"
+          ],
+          "answer": 0,
+          "explain": "Suppliers typically offer better guarantees for the products they sell compared to third-party professionals."
+        }
+      ]
+    },
+    "14": {
+      "heading": "<!--slide-rich--><span>Local Area Computer Network Support issues&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span>",
+      "questions": [
+        {
+          "q": "What is one benefit of establishing an IT department in an organization?",
+          "options": [
+            "It eliminates the need for any external support.",
+            "It is more cost-effective in call-out hours charged from professionals.",
+            "It ensures immediate knowledge of all new technologies.",
+            "It focuses on personal computer support only."
+          ],
+          "answer": 1,
+          "explain": "Establishing an IT department is more cost-effective in call-out hours charged from professionals."
+        },
+        {
+          "q": "What is a downside of having an IT department in an organization?",
+          "options": [
+            "They can handle all types of technology immediately.",
+            "They may only focus on the needs of the IT equipment in the organization.",
+            "They are always available for support.",
+            "They reduce overall IT costs significantly."
+          ],
+          "answer": 1,
+          "explain": "The IT department often focuses only on the needs of the IT equipment in the organization."
+        },
+        {
+          "q": "When does the IT department typically gain knowledge about new technology?",
+          "options": [
+            "When it becomes available in the market.",
+            "When the organization decides to use it.",
+            "When external professionals provide training.",
+            "When employees request new technology."
+          ],
+          "answer": 1,
+          "explain": "The IT department usually gains knowledge about new products only when the organization decides to use them."
+        },
+        {
+          "q": "What is the duration of the activity mentioned in the slide?",
+          "options": [
+            "60 minutes",
+            "90 minutes",
+            "120 minutes",
+            "30 minutes"
+          ],
+          "answer": 1,
+          "explain": "The activity duration mentioned in the slide is 90 minutes."
+        },
+        {
+          "q": "What type of activity is suggested in the slide?",
+          "options": [
+            "Individual only",
+            "Self & Group",
+            "Group only",
+            "Online only"
+          ],
+          "answer": 1,
+          "explain": "The activity suggested in the slide is a combination of self and group work."
         }
       ]
     },
@@ -1351,6 +913,66 @@ export const VERIFIED_LEGACY_QUIZ_CONTEXT: Record<string, Record<number, SlideQu
           ],
           "answer": 0,
           "explain": "A simple example of a Trojan horse is a program named 'waterfalls.scr' which claimed to be a free waterfall screensaver."
+        }
+      ]
+    },
+    "17": {
+      "heading": "<!--slide-rich--><span>Typical Viruses On Local Area Computer Neworks&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span>",
+      "questions": [
+        {
+          "q": "What is a common function of a Trojan horse payload?",
+          "options": [
+            "To enhance system security",
+            "To allow hackers remote access",
+            "To improve computer performance",
+            "To create backups of data"
+          ],
+          "answer": 1,
+          "explain": "Trojan horse payloads are designed to breach and damage systems, often allowing hackers to access the user's computer remotely."
+        },
+        {
+          "q": "Which of the following is NOT a type of Trojan horse payload mentioned?",
+          "options": [
+            "Downloader",
+            "Data Encryption",
+            "Email Sending",
+            "Denial-of-service attack (DoS)"
+          ],
+          "answer": 1,
+          "explain": "Data Encryption is not listed as one of the nine main types of Trojan horse payloads."
+        },
+        {
+          "q": "What does a Proxy Trojan do?",
+          "options": [
+            "Disables security software",
+            "Directs the infected computer to expensive connections",
+            "Disguises others as the infected computer",
+            "Sends emails from the infected computer"
+          ],
+          "answer": 2,
+          "explain": "A Proxy Trojan disguises other systems as the infected computer, allowing for deceptive access."
+        },
+        {
+          "q": "What is the purpose of a Denial-of-service attack (DoS) Trojan?",
+          "options": [
+            "To send spam emails",
+            "To destroy data",
+            "To overwhelm a system and make it unavailable",
+            "To download additional malware"
+          ],
+          "answer": 2,
+          "explain": "A Denial-of-service attack (DoS) Trojan aims to overwhelm a system, making it unavailable to users."
+        },
+        {
+          "q": "Which Trojan horse payload type is responsible for adding or copying data from the infected computer?",
+          "options": [
+            "FTP Trojan",
+            "URL Trojan",
+            "Remote Access",
+            "Email Sending"
+          ],
+          "answer": 0,
+          "explain": "An FTP Trojan is specifically designed to add or copy data from the infected computer."
         }
       ]
     },
@@ -3639,312 +3261,194 @@ export const VERIFIED_LEGACY_QUIZ_CONTEXT: Record<string, Record<number, SlideQu
       ]
     }
   },
-  "114074": {
-    "1": {
-      "heading": "<!--slide-rich--><span style=\"font-family: inherit; font-size: inherit; font-weight: bold;\">De facto</span><span style=\"font-family: inherit; font-size: inherit; font-weight: inherit;\">means by tradition or by facts. These standards are developed without any formal planning. These standards come into existence due to historical developments. These standards are still being used by many organizations in the world. SNA is an example of a de facto standard.</span>",
+  "114059": {
+    "10": {
+      "heading": "Slide 11",
       "questions": [
         {
-          "q": "Which of the following best describes a de facto standard?",
+          "q": "What is the best approach for an inexperienced estimator to fix the cost of an item of work?",
           "options": [
-            "Developed through formal planning and regulation",
-            "Established by historical developments and tradition",
-            "Created to fulfill specific legal requirements",
-            "Developed by major organizations through research"
+            "Estimate the cost based on a single overall figure",
+            "Describe the item in detail and estimate costs for each detail with expert help",
+            "Use only previous project costs without adjustments",
+            "Ignore hardware and software costs"
           ],
           "answer": 1,
-          "explain": "A de facto standard is one that arises from tradition or historical developments without formal planning."
+          "explain": "The best way is to describe the item of work with as many details as possible, take help from experienced persons to identify costs, then add them up and compare with similar past work."
         },
         {
-          "q": "How do de jure standards differ from de facto standards?",
+          "q": "Which of the following is NOT mentioned as a critical resource limiting a company's results?",
           "options": [
-            "De jure standards are based on tradition, while de facto standards are legally mandated.",
-            "De jure standards are developed through research and regulation, while de facto standards are not.",
-            "De jure standards are used by fewer organizations compared to de facto standards.",
-            "De jure standards are created without any formal planning."
-          ],
-          "answer": 1,
-          "explain": "De jure standards are established through formal research and legal requirements, whereas de facto standards develop informally."
-        },
-        {
-          "q": "Which organization is NOT mentioned as a developer of communication protocols and standards?",
-          "options": [
-            "American National Standards Institute (ANSI)",
-            "Institute of Electrical and Electronics Engineers (IEEE)",
-            "International Telecommunications Union – Telecommunication Standards Sector (ITU-T)",
-            "World Wide Web Consortium (W3C)"
+            "People",
+            "Money",
+            "Knowledge (intellectual property)",
+            "Time"
           ],
           "answer": 3,
-          "explain": "The World Wide Web Consortium (W3C) is not listed among the organizations that develop communication protocols and standards."
+          "explain": "While time is described as a critical resource, the CEO typically mentions people, money, and knowledge as critical resources limiting company results."
         },
         {
-          "q": "When are de facto standards most likely to be used by organizations?",
+          "q": "Why is time considered a unique critical resource for a company?",
           "options": [
-            "When there is a legal requirement for compliance",
-            "When they arise from historical developments and tradition",
-            "When they are developed through formal research",
-            "When they are established by major organizations"
-          ],
-          "answer": 1,
-          "explain": "Organizations tend to use de facto standards that have arisen from historical developments and tradition."
-        },
-        {
-          "q": "Which of the following is an example of a de facto standard?",
-          "options": [
-            "ISO 9001",
-            "SNA",
-            "IEEE 802.11",
-            "ANSI X3.4"
-          ],
-          "answer": 1,
-          "explain": "SNA (Systems Network Architecture) is given as an example of a de facto standard in the text."
-        }
-      ]
-    },
-    "2": {
-      "heading": "<!--slide-rich--><span style=\"font-size: 20px; font-weight: bold;\">What is network topology?</span>",
-      "questions": [
-        {
-          "q": "Which term describes the physical layout or arrangement of connected devices in a network?",
-          "options": [
-            "Network architecture",
-            "Network topology",
-            "Network protocol",
-            "Network design"
-          ],
-          "answer": 1,
-          "explain": "Network topology refers to the physical layout or arrangement of connected devices in a network."
-        },
-        {
-          "q": "How many different types of network topologies are mentioned in the slide?",
-          "options": [
-            "Four",
-            "Five",
-            "Six",
-            "Three"
-          ],
-          "answer": 1,
-          "explain": "The slide lists five different types of network topologies: Bus, Ring, Star, Tree, and Mesh."
-        },
-        {
-          "q": "Which of the following is NOT listed as a type of network topology in the slide?",
-          "options": [
-            "Tree topology",
-            "Star topology",
-            "Hybrid topology",
-            "Ring topology"
+            "It can be bought or borrowed easily",
+            "It can be stored for future use",
+            "It cannot be increased or recovered once lost",
+            "It is less important than money or people"
           ],
           "answer": 2,
-          "explain": "Hybrid topology is not mentioned in the slide; the types listed are Bus, Ring, Star, Tree, and Mesh."
+          "explain": "Time is unique because unlike other resources, you cannot get more of it from anyone else; once it is gone, it is lost forever."
         },
         {
-          "q": "When considering network design, why is understanding topology important?",
+          "q": "In the context of optimizing organizational performance, what does a 'critical resource' mean?",
           "options": [
-            "It determines the speed of the network.",
-            "It affects the physical layout of devices.",
-            "It defines the network's security protocols.",
-            "It influences the cost of network devices."
+            "A resource that is abundant and easy to replace",
+            "A resource that limits output or profit and could increase them if more were available",
+            "A resource that is not important for decision making",
+            "A resource that is only related to financial capital"
           ],
           "answer": 1,
-          "explain": "Understanding topology is important because it affects the physical layout of connected devices in a network."
+          "explain": "A critical resource is one that limits output or profit; having more of it would allow increased output or profit."
         },
         {
-          "q": "In a scenario where you need a network structure that allows for easy addition of devices, which topology would be most suitable?",
+          "q": "What factors must be considered in software project costing that differ from engineering projects?",
           "options": [
-            "Bus topology",
-            "Star topology",
-            "Ring topology",
-            "Mesh topology"
+            "Repetitive work and stable output rates",
+            "Wilder fluctuations, risk factors, impact factors, changes, and miscommunications",
+            "Only hardware and software costs",
+            "No need to factor in profit margin"
           ],
           "answer": 1,
-          "explain": "Star topology is most suitable for easy addition of devices, as new devices can be connected to the central hub without disrupting the network."
+          "explain": "Software projects experience wilder fluctuations, higher risk, changes, and miscommunications that greatly affect costing, unlike more repetitive engineering projects."
         }
       ]
     },
-    "4": {
-      "heading": "<!--slide-rich--><span style=\"font-weight: bold;\">What is bus topology?</span>",
+    "11": {
+      "heading": "Slide 12",
       "questions": [
         {
-          "q": "Which of the following best describes bus topology?",
+          "q": "According to the slide, why is time considered a key metric of performance for successful companies?",
           "options": [
-            "A network where all nodes are connected to a central hub",
-            "A network where all computers are connected to a common communication medium",
-            "A network that uses a star configuration for connections",
-            "A wireless network configuration"
+            "Because it is more important than cost budget",
+            "Because fast completion leads to earlier benefits",
+            "Because time is easier to measure than cost",
+            "Because it reduces the number of people needed"
           ],
           "answer": 1,
-          "explain": "Bus topology is defined as a network configuration where all computers or nodes are connected to a common communication medium, often referred to as a bus."
+          "explain": "The slide emphasizes that the sooner you finish your project, the sooner you benefit from the results, making time a critical performance metric."
         },
         {
-          "q": "How does data transmission occur in a bus topology?",
+          "q": "What is one reason the slide gives for time becoming more important in recent years?",
           "options": [
-            "Data is sent to a central server for processing",
-            "Data travels through the bus and is checked by each computer for the destination address",
-            "Data is broadcasted to all computers at once",
-            "Data is sent in a circular manner among the computers"
-          ],
-          "answer": 1,
-          "explain": "In bus topology, the sending computer transmits data through the bus, and each computer checks the address to determine if it should keep the data or pass it along."
-        },
-        {
-          "q": "What can occur if two computers transmit data simultaneously in a bus topology?",
-          "options": [
-            "Data is successfully transmitted to both computers",
-            "A collision occurs",
-            "The network automatically resolves the conflict",
-            "Data is lost without any notification"
-          ],
-          "answer": 1,
-          "explain": "A collision can occur in bus topology when two computers attempt to transmit data at the same time, leading to potential data loss or corruption."
-        },
-        {
-          "q": "When is bus topology typically used?",
-          "options": [
-            "In large enterprise networks",
-            "In peer-to-peer networks",
-            "In wireless communication systems",
-            "In hierarchical network structures"
-          ],
-          "answer": 1,
-          "explain": "Bus topology is mostly used in peer-to-peer networks, which typically involve a smaller number of computers."
-        },
-        {
-          "q": "Why are terminators used in a bus topology?",
-          "options": [
-            "To enhance the speed of data transmission",
-            "To absorb signals at the end of the bus",
-            "To connect multiple buses together",
-            "To prevent unauthorized access to the network"
-          ],
-          "answer": 1,
-          "explain": "Terminators are used at the end of a bus in bus topology to absorb signals and prevent reflections that can disrupt data transmission."
-        }
-      ]
-    },
-    "5": {
-      "heading": "<!--slide-rich-->A Network Topology is the way computer systems or network equipment connect to each other. Topologies may define both physical and logical aspects of a network. Both logical and physical topologies could be the same or different in the same network.",
-      "questions": [
-        {
-          "q": "Which of the following best describes the main topic of the slide?",
-          "options": [
-            "Network Protocols",
-            "Data Structures",
-            "Web Development",
-            "Machine Learning"
+            "The rise of the Internet increasing competition",
+            "The decrease in project costs",
+            "The availability of more resources",
+            "The improvement in quality assurance"
           ],
           "answer": 0,
-          "explain": "The main topic of the slide is focused on network protocols."
+          "explain": "The slide suggests that because of the Internet, competition is much more intense, making speed more critical."
         },
         {
-          "q": "How can network protocols impact communication between devices?",
+          "q": "How does the slide suggest companies should determine appropriate time standards?",
           "options": [
-            "By defining hardware specifications",
-            "By establishing rules for data exchange",
-            "By improving software performance",
-            "By increasing storage capacity"
-          ],
-          "answer": 1,
-          "explain": "Network protocols establish rules for data exchange, which is crucial for effective communication between devices."
-        },
-        {
-          "q": "When considering network protocols, which of the following is a key function they serve?",
-          "options": [
-            "Data encryption",
-            "Error detection and correction",
-            "User interface design",
-            "Database management"
-          ],
-          "answer": 1,
-          "explain": "Error detection and correction is a key function of network protocols to ensure data integrity during transmission."
-        },
-        {
-          "q": "Why is it important to adhere to established network protocols?",
-          "options": [
-            "To enhance user experience",
-            "To ensure compatibility between different systems",
-            "To reduce hardware costs",
-            "To simplify programming languages"
-          ],
-          "answer": 1,
-          "explain": "Adhering to established network protocols ensures compatibility between different systems, allowing them to communicate effectively."
-        },
-        {
-          "q": "In the context of network protocols, which of the following scenarios illustrates their application?",
-          "options": [
-            "A user designing a website",
-            "Two computers communicating over the internet",
-            "A developer writing a mobile app",
-            "A database storing user information"
-          ],
-          "answer": 1,
-          "explain": "The scenario of two computers communicating over the internet illustrates the application of network protocols, as they govern the communication process."
-        }
-      ]
-    },
-    "8": {
-      "heading": "<!--slide-rich--><span style=\"font-weight: bold;\">Bus Topology</span>",
-      "questions": [
-        {
-          "q": "How many hosts are connected in a point-to-point network?",
-          "options": [
-            "One",
-            "Two",
-            "Three",
-            "Four"
-          ],
-          "answer": 1,
-          "explain": "A point-to-point network contains exactly two hosts connected back to back."
-        },
-        {
-          "q": "Which technology is used in bus topology to manage data transmission conflicts?",
-          "options": [
-            "Ethernet",
-            "CSMA/CD",
-            "Token Ring",
-            "Wi-Fi"
-          ],
-          "answer": 1,
-          "explain": "Bus topology may use CSMA/CD technology to handle situations where more than one host sends data simultaneously."
-        },
-        {
-          "q": "Why might a failure of the shared communication line in bus topology affect all devices?",
-          "options": [
-            "Because devices are connected directly",
-            "Because all devices share the same line",
-            "Because each device has its own line",
-            "Because the bus master is down"
-          ],
-          "answer": 1,
-          "explain": "In bus topology, if the shared communication line fails, all devices connected to it will also fail."
-        },
-        {
-          "q": "When using point-to-point connections, how do the end hosts perceive their connection?",
-          "options": [
-            "As if they are connected through a network",
-            "As if they are connected directly",
-            "As if they are on a bus topology",
-            "As if they are connected wirelessly"
-          ],
-          "answer": 1,
-          "explain": "The end hosts in a point-to-point connection see each other as if they are connected directly, regardless of any intermediate devices."
-        },
-        {
-          "q": "In a bus topology, what happens to the data once it reaches the extreme end of the line?",
-          "options": [
-            "It is sent back",
-            "It is stored",
-            "It is removed by the terminator",
-            "It is forwarded to the next device"
+            "By following internal management decisions",
+            "By benchmarking against competitors only",
+            "By letting the customer suggest the standards",
+            "By using ISO process documentation"
           ],
           "answer": 2,
-          "explain": "The data sent in a bus topology is removed from the line by the terminator once it reaches the extreme end."
+          "explain": "The slide advises putting yourself in the customer's shoes and letting them suggest reasonable time standards."
+        },
+        {
+          "q": "What does the slide identify as a major turn-off to customers?",
+          "options": [
+            "High product cost",
+            "Late delivery",
+            "Poor product quality",
+            "Lack of customer service"
+          ],
+          "answer": 1,
+          "explain": "Late delivery is highlighted as one of the biggest turn-offs to any purchaser."
+        },
+        {
+          "q": "What does the slide say about Total Quality Management (TQM) in relation to time?",
+          "options": [
+            "TQM focuses mainly on prompt delivery and response",
+            "Customers rarely notice product quality unless defective",
+            "TQM ensures projects finish on time",
+            "TQM replaces the need for time management"
+          ],
+          "answer": 1,
+          "explain": "The slide notes that customers may not remark on product quality unless there is a defect, but they are very aware of prompt response and delivery, implying TQM alone may not address time management adequately."
         }
       ]
     },
-    "9": {
-      "heading": "<!--slide-rich--><span style=\"font-size: 20px; font-weight: bold;\">Star Topology</span>",
+    "12": {
+      "heading": "Slide 13",
       "questions": [
         {
-          "q": "Which device serves as the central connection point in a star topology?",
+          "q": "According to the slide, what is considered the principal project target when time is a key company parameter?",
+          "options": [
+            "The quality of the product",
+            "The date of completion",
+            "The cost of the project",
+            "The number of resources used"
+          ],
+          "answer": 1,
+          "explain": "The slide states that with time as a key company parameter, the principal project target is the date of completion."
+        },
+        {
+          "q": "What attitude does the slide suggest should be avoided regarding project delays?",
+          "options": [
+            "Taking full responsibility for delays",
+            "Ignoring delays completely",
+            "Easily accepting that time is out of control",
+            "Communicating delays promptly to customers"
+          ],
+          "answer": 2,
+          "explain": "The slide advises breaking the syndrome of easily accepting that time is out of control and making excuses for delays."
+        },
+        {
+          "q": "Why is on-time delivery considered important to customers, according to the slide?",
+          "options": [
+            "It reduces the cost of the product",
+            "It is a visible sign of total quality being delivered",
+            "It allows customers to negotiate better prices",
+            "It increases the complexity of the project"
+          ],
+          "answer": 1,
+          "explain": "The slide explains that on-time delivery is a very visible sign of the total quality being delivered to customers."
+        },
+        {
+          "q": "What example does the slide give to illustrate the benefit of timely delivery?",
+          "options": [
+            "A Norwegian lawyer with a 48-hour turnaround policy",
+            "A software company delivering updates monthly",
+            "A construction firm finishing projects early",
+            "A retailer offering same-day shipping"
+          ],
+          "answer": 0,
+          "explain": "The slide gives the example of a Norwegian lawyer who had a 48-hour turnaround policy, which was a unique selling proposition."
+        },
+        {
+          "q": "What is the recommended approach to ensure on-time delivery?",
+          "options": [
+            "Ignore customer needs and focus on internal deadlines",
+            "Plan properly and ensure resources and team commitment",
+            "Delay communication until the product is ready",
+            "Reduce product quality to speed up delivery"
+          ],
+          "answer": 1,
+          "explain": "The slide recommends planning and making sure resources are available, with the whole team committed to delivering on or before the promised time."
+        }
+      ]
+    }
+  },
+  "114074": {
+    "7": {
+      "heading": "Slide 8",
+      "questions": [
+        {
+          "q": "What is the central device in a star topology called?",
           "options": [
             "Router",
             "Hub",
@@ -3955,408 +3459,228 @@ export const VERIFIED_LEGACY_QUIZ_CONTEXT: Record<string, Record<number, SlideQu
           "explain": "In star topology, all hosts are connected to a central device known as the Hub."
         },
         {
-          "q": "How does the failure of the hub device affect connectivity in a star topology?",
+          "q": "What happens if the hub fails in a star topology?",
           "options": [
-            "Only one host loses connection",
+            "Only one host fails",
             "All hosts lose connectivity",
-            "No effect on connectivity",
-            "Only external connections are affected"
+            "Only the hub needs to be replaced",
+            "No impact on the network"
           ],
           "answer": 1,
-          "explain": "The hub acts as a single point of failure; if it fails, connectivity of all hosts to each other fails."
+          "explain": "The hub acts as a single point of failure; if it fails, all hosts lose connectivity."
         },
         {
-          "q": "When adding a new host to a star topology, what is required?",
+          "q": "How many connections does each host have in a ring topology?",
+          "options": [
+            "One",
+            "Two",
+            "Three",
+            "Four"
+          ],
+          "answer": 1,
+          "explain": "In ring topology, each host connects to exactly two other machines."
+        },
+        {
+          "q": "What is required to connect one more host in a star topology?",
           "options": [
             "Two cables",
             "One cable",
             "No cables",
-            "A router"
+            "A switch"
           ],
           "answer": 1,
-          "explain": "To connect one more host in a star topology, only one cable is required."
+          "explain": "To connect one more host in star topology, only one cable is required."
         },
         {
-          "q": "In a ring topology, how is data transmitted between non-adjacent hosts?",
+          "q": "What type of device can the hub in a star topology be?",
           "options": [
-            "Directly",
-            "Through the hub",
-            "Through intermediate hosts",
-            "Simultaneously"
-          ],
-          "answer": 2,
-          "explain": "In ring topology, data travels through all intermediate hosts when communicating with a non-adjacent host."
-        },
-        {
-          "q": "Why might a star topology be considered less expensive compared to other topologies?",
-          "options": [
-            "It requires fewer devices",
-            "It needs less cable for additional hosts",
-            "It is easier to configure",
-            "It has no single point of failure"
-          ],
-          "answer": 1,
-          "explain": "Star topology is not expensive because adding one more host requires only one cable."
-        }
-      ]
-    },
-    "10": {
-      "heading": "<!--slide-rich--><span style=\"font-size: 20px;\"><span style=\"font-weight: bold;\">Ring Topology</span>&nbsp;</span>",
-      "questions": [
-        {
-          "q": "Which statement best describes the consequence of a host failure in a ring topology?",
-          "options": [
-            "Only the host that fails is affected",
-            "The entire ring fails",
-            "Only adjacent hosts are affected",
-            "The backup ring takes over"
-          ],
-          "answer": 1,
-          "explain": "In a ring topology, the failure of any host results in the failure of the whole ring, as every connection is a point of failure."
-        },
-        {
-          "q": "How does a mesh topology differ from a ring topology in terms of connections?",
-          "options": [
-            "Mesh topology has a single connection per host",
-            "Mesh topology connects hosts to multiple other hosts",
-            "Ring topology connects hosts in a linear fashion",
-            "Mesh topology is less complex than ring topology"
-          ],
-          "answer": 1,
-          "explain": "In mesh topology, a host is connected to one or more other hosts, allowing for multiple connections, unlike in ring topology where each host is connected in a circular manner."
-        },
-        {
-          "q": "Why might a backup ring be employed in a ring topology?",
-          "options": [
-            "To increase the number of hosts",
-            "To prevent total failure of the network",
-            "To simplify the network design",
-            "To reduce costs"
-          ],
-          "answer": 1,
-          "explain": "A backup ring is employed in a ring topology to prevent total failure of the network in case any host fails."
-        },
-        {
-          "q": "Which of the following is a characteristic of mesh topology?",
-          "options": [
-            "All hosts are connected in a single path",
-            "Every host has a point-to-point connection to every other host",
-            "Hosts may connect to only a few other hosts",
-            "There is no redundancy in connections"
-          ],
-          "answer": 2,
-          "explain": "In mesh topology, hosts can connect to one or more other hosts, and not necessarily to every other host."
-        },
-        {
-          "q": "When considering network reliability, how does the failure of a host in a ring topology compare to that in a mesh topology?",
-          "options": [
-            "Ring topology is more reliable than mesh",
-            "Mesh topology is more reliable due to multiple connections",
-            "Both are equally reliable",
-            "Ring topology has no points of failure"
-          ],
-          "answer": 1,
-          "explain": "Mesh topology is generally more reliable than ring topology because it allows for multiple connections, reducing the impact of a single host failure."
-        }
-      ]
-    },
-    "11": {
-      "heading": "<!--slide-rich--><span style=\"font-size: 20px; font-weight: bold;\">Mesh Topology</span>",
-      "questions": [
-        {
-          "q": "Which statement best describes Full Mesh topology?",
-          "options": [
-            "All hosts are connected to a central hub.",
-            "Not all hosts have direct connections to each other.",
-            "Every host has a point-to-point connection to every other host.",
-            "Hosts connect in a linear fashion."
-          ],
-          "answer": 2,
-          "explain": "Full Mesh topology requires that all hosts have direct point-to-point connections to every other host, which ensures maximum reliability."
-        },
-        {
-          "q": "How does Partially Mesh topology differ from Full Mesh topology?",
-          "options": [
-            "It requires fewer cables than Full Mesh.",
-            "All hosts are connected to every other host.",
-            "It is less reliable than Full Mesh.",
-            "It connects hosts in a strictly hierarchical manner."
-          ],
-          "answer": 0,
-          "explain": "Partially Mesh topology allows for some hosts to connect to others without requiring a direct connection to every host, thus needing fewer cables."
-        },
-        {
-          "q": "What is a key characteristic of Tree topology?",
-          "options": [
-            "It has a single point of failure at the root.",
-            "All hosts are connected in a circular manner.",
-            "It has no hierarchical structure.",
-            "It requires all hosts to connect to a central server."
-          ],
-          "answer": 0,
-          "explain": "Tree topology has a root node, and if this root goes down, the entire network can suffer, indicating a single point of failure."
-        },
-        {
-          "q": "In Tree topology, what is the role of the distribution layer?",
-          "options": [
-            "It connects user computers directly to the network.",
-            "It acts as a mediator between the access layer and the core layer.",
-            "It serves as the central point of the network.",
-            "It connects all hosts in a circular fashion."
-          ],
-          "answer": 1,
-          "explain": "The distribution layer in Tree topology mediates between the access layer (where user computers are attached) and the core layer (the central point of the network)."
-        },
-        {
-          "q": "Why is Tree topology considered to inherit properties from both Star and Bus topologies?",
-          "options": [
-            "It uses a central hub for all connections.",
-            "It has a hierarchical structure and can suffer from a single point of failure.",
-            "It requires all hosts to connect directly to each other.",
-            "It connects hosts in a linear sequence."
-          ],
-          "answer": 1,
-          "explain": "Tree topology combines the hierarchical nature of Star topology with the linear connections of Bus topology, leading to both strengths and vulnerabilities."
-        }
-      ]
-    },
-    "12": {
-      "heading": "<!--slide-rich--><span style=\"font-size: 20px; font-weight: bold;\">Tree Topology&nbsp;</span>",
-      "questions": [
-        {
-          "q": "How does a failure in a Daisy Chain topology affect the network?",
-          "options": [
-            "It causes the entire network to fail.",
-            "It divides the network into unreachable segments.",
-            "It allows for alternative routing paths.",
-            "It only affects the end hosts."
-          ],
-          "answer": 1,
-          "explain": "In a Daisy Chain topology, each link represents a single point of failure, and if one link fails, it splits the network into two segments."
-        },
-        {
-          "q": "Which statement best describes a Hybrid Topology?",
-          "options": [
-            "It connects hosts in a linear fashion.",
-            "It is a combination of multiple topologies.",
-            "It has only one point of failure.",
-            "It is the simplest network design."
-          ],
-          "answer": 1,
-          "explain": "A Hybrid Topology is defined as a network structure that incorporates more than one topology, thus inheriting the merits and demerits of each."
-        },
-        {
-          "q": "When does a Daisy Chain topology represent a Ring topology?",
-          "options": [
-            "When all hosts are connected to a central hub.",
-            "When end hosts are connected to each other.",
-            "When there are no points of failure.",
-            "When it is combined with a Star topology."
-          ],
-          "answer": 1,
-          "explain": "A Daisy Chain topology represents a Ring topology when the end hosts are connected to each other, allowing for a continuous loop."
-        },
-        {
-          "q": "Why is the Internet considered an example of a Hybrid topology?",
-          "options": [
-            "It uses only Daisy Chain connections.",
-            "It combines multiple network topologies.",
-            "It has no points of failure.",
-            "It operates solely on Ring topology."
-          ],
-          "answer": 1,
-          "explain": "The Internet is classified as the largest Hybrid topology because it combines various topologies, including Star, Ring, and Bus."
-        },
-        {
-          "q": "In a Daisy Chain topology, how does each intermediate host function?",
-          "options": [
-            "As a central controller for the network.",
-            "As a relay for its immediate hosts.",
-            "As an endpoint with no connections.",
-            "As a point of failure for the entire network."
-          ],
-          "answer": 1,
-          "explain": "Each intermediate host in a Daisy Chain topology acts as a relay for its immediate hosts, facilitating communication between them."
-        }
-      ]
-    },
-    "13": {
-      "heading": "<!--slide-rich--><span style=\"font-weight: bold;\">Daisy Chain</span>",
-      "questions": [
-        {
-          "q": "Which of the following best defines broadband in telecommunications?",
-          "options": [
-            "A medium that can only carry audio signals.",
-            "A communication medium that can carry a wide range of signal frequencies.",
-            "A single-channel system for voice calls only.",
-            "A type of LAN that supports only one transmission."
-          ],
-          "answer": 1,
-          "explain": "Broadband is defined as a communications medium that can carry a wide range of signal frequencies, including audio and video."
-        },
-        {
-          "q": "How does broadband differ from baseband in LAN transmission?",
-          "options": [
-            "Broadband supports multiple transmissions while baseband supports only one.",
-            "Baseband can carry video signals while broadband cannot.",
-            "Broadband is less prevalent than baseband in LANs.",
-            "Baseband uses multiple frequency channels while broadband uses a single channel."
-          ],
-          "answer": 0,
-          "explain": "Broadband supports multiple transmissions via multiple frequency channels, while baseband is a single-channel system that supports only one transmission at any given time."
-        },
-        {
-          "q": "When considering LAN transmission options, which option is most prevalent?",
-          "options": [
-            "Broadband LANs",
-            "Baseband LANs",
-            "Cable TV systems",
-            "ATM systems"
-          ],
-          "answer": 1,
-          "explain": "Baseband LANs are noted as the most prevalent option for LAN transmission compared to broadband LANs."
-        },
-        {
-          "q": "Why is broadband significant in telecommunications?",
-          "options": [
-            "It can only carry voice calls.",
-            "It allows for the transmission of television and videoconferencing data.",
-            "It is the only type of LAN available.",
-            "It can only support a single channel."
-          ],
-          "answer": 1,
-          "explain": "Broadband is significant because it can carry various types of data, including television and videoconferencing, in addition to voice calls."
-        },
-        {
-          "q": "Which of the following is NOT classified as a broadband medium?",
-          "options": [
-            "ADSL",
-            "Cable TV",
-            "ATM",
-            "Standard ISDN"
+            "Only Layer-1",
+            "Only Layer-2",
+            "Only Layer-3",
+            "Any layer device"
           ],
           "answer": 3,
-          "explain": "Standard ISDN barely qualifies as a broadband medium, unlike ADSL, Cable TV, and ATM, which are classified as broadband."
+          "explain": "The hub device can be a Layer-1, Layer-2, or Layer-3 device."
         }
       ]
     },
-    "14": {
-      "heading": "<!--slide-rich-->A network structure whose design contains more than one topology is said to be a Hybrid Topology. Hybrid topology inherits the merits and demerits of all the incorporating topologies.&nbsp;<span>The above picture represents an arbitrary Hybrid topology. The combining topologies may contain attributes of Star, Ring, Bus, and Daisy-chain topologies. Most WANs are connected by means of dual Ring topology, and networks connected to them are mostly Star topology networks. The Internet is the best example of the largest Hybrid topology.</span>",
+    "32": {
+      "heading": "<!--slide-rich--><img data-figure-id=\"lesson-inline-32-1d13a093-f4e7-4504-a3f5-6e0adb745a74\" alt=\"LAN Architectures Training Infographic\" draggable=\"false\" loading=\"eager\" decoding=\"async\" fetchpriority=\"high\" style=\"margin: 0px; width: 100%; max-width: 100%; height: auto; object-fit: cover; float: none; display: block; transform: none;\">",
       "questions": [
         {
-          "q": "Which of the following best describes the main topic of the slide?",
+          "q": "Which protocol is the original specification of the OSI's Data Link Control protocol standard?",
           "options": [
-            "Marketing Strategies",
-            "Project Management",
-            "Network Topology",
-            "Data Analysis"
+            "Ethernet",
+            "HDLC",
+            "PPP",
+            "SDLC"
+          ],
+          "answer": 1,
+          "explain": "HDLC (High-Level Data Link Control) is the original specification of the OSI's Data Link Control protocol standard."
+        },
+        {
+          "q": "How does HDLC differ from protocols designed for LANs?",
+          "options": [
+            "HDLC is faster than LAN protocols",
+            "HDLC is designed for lower data rates and more distortion",
+            "LAN protocols are more complex than HDLC",
+            "LAN protocols are used for remote connections"
+          ],
+          "answer": 1,
+          "explain": "HDLC is designed for connecting remotely located DTEs with lower data rates and more susceptibility to distortion, while LAN protocols are tailored for higher data rates over more reliable mediums."
+        },
+        {
+          "q": "Why was the Data Link Control layer divided into two sublayers?",
+          "options": [
+            "To simplify data transmission",
+            "To improve error detection",
+            "To accommodate higher data rates and reliable mediums",
+            "To reduce the number of protocols"
           ],
           "answer": 2,
-          "explain": "The slide focuses on network topology, which refers to the arrangement of different elements (links, nodes, etc.) in a computer network."
+          "explain": "The Data Link Control layer was divided into two sublayers to accommodate the need for higher data rates and more reliable physical mediums in LANs."
         },
         {
-          "q": "How does a star topology differ from a bus topology?",
+          "q": "When was HDLC developed in relation to local area networks (LANs)?",
           "options": [
-            "Star topology has a central node, while bus topology connects all nodes in a single line.",
-            "Star topology connects all nodes in a single line, while bus topology has a central node.",
-            "Star topology is more cost-effective than bus topology.",
-            "Star topology requires fewer cables than bus topology."
-          ],
-          "answer": 0,
-          "explain": "In a star topology, all nodes are connected to a central hub or switch, while in a bus topology, all nodes share a single communication line."
-        },
-        {
-          "q": "When would it be advantageous to use a mesh topology over a ring topology?",
-          "options": [
-            "When cost is a major concern",
-            "When redundancy and reliability are priorities",
-            "When speed is the main requirement",
-            "When simplicity is needed"
+            "After the development of LANs",
+            "Before the advent of LANs",
+            "Simultaneously with LANs",
+            "HDLC is not related to LANs"
           ],
           "answer": 1,
-          "explain": "Mesh topology provides multiple paths for data to travel, which increases redundancy and reliability compared to a single path in a ring topology."
+          "explain": "HDLC was developed before the advent of local area networks (LANs), which is why it is designed for different conditions than those typically found in LANs."
         },
         {
-          "q": "Which of the following is a key advantage of using a ring topology?",
+          "q": "Where is the Data Link Control protocol used primarily?",
           "options": [
-            "Easy to install and manage",
-            "Data packets travel in one direction, reducing collisions",
-            "High redundancy and reliability",
-            "Requires less cabling than other topologies"
+            "In wide area networks",
+            "In local area networks",
+            "In both local and wide area networks",
+            "In satellite communications"
           ],
           "answer": 1,
-          "explain": "In a ring topology, data packets travel in one direction, which helps to minimize collisions and manage data flow more effectively."
-        },
-        {
-          "q": "Why might a hybrid topology be preferred in certain networking scenarios?",
-          "options": [
-            "It is the least expensive option available",
-            "It combines the benefits of multiple topologies to meet diverse needs",
-            "It is the simplest topology to implement",
-            "It requires the least amount of maintenance"
-          ],
-          "answer": 1,
-          "explain": "A hybrid topology integrates various topologies, allowing for flexibility and optimization based on specific network requirements and conditions."
+          "explain": "The Data Link Control protocol is primarily used in local area networks (LANs) to transfer data frames among stations connected on the same physical link."
         }
       ]
     },
-    "15": {
-      "heading": "<!--slide-rich-->",
+    "36": {
+      "heading": "<!--slide-rich--><span>The 7 Levels of OSI</span>",
       "questions": [
         {
-          "q": "Which of the following best describes the main topic of the slide?",
+          "q": "Which of the following best defines the primary subject of the slide?",
           "options": [
-            "Marketing Strategies",
-            "Project Management",
-            "Data Analysis",
-            "Team Collaboration"
+            "Visual Design Principles",
+            "Data Analysis Techniques",
+            "Project Management Strategies",
+            "Marketing Fundamentals"
           ],
           "answer": 0,
-          "explain": "The main topic of the slide is focused on marketing strategies."
+          "explain": "The primary subject of the slide is about Visual Design Principles."
         },
         {
-          "q": "How would you categorize the information presented in the slide?",
+          "q": "How can the application of visual design principles impact user engagement?",
           "options": [
-            "Statistical Data",
-            "Theoretical Concepts",
-            "Practical Applications",
-            "Historical Overview"
-          ],
-          "answer": 2,
-          "explain": "The information is categorized as practical applications of marketing strategies."
-        },
-        {
-          "q": "Why is it important to understand marketing strategies in a business context?",
-          "options": [
-            "To enhance product design",
-            "To improve customer service",
-            "To drive sales and growth",
-            "To manage employee performance"
-          ],
-          "answer": 2,
-          "explain": "Understanding marketing strategies is crucial for driving sales and growth in a business."
-        },
-        {
-          "q": "When implementing a new marketing strategy, which step should be prioritized according to the slide?",
-          "options": [
-            "Market Research",
-            "Budget Allocation",
-            "Team Training",
-            "Product Development"
-          ],
-          "answer": 0,
-          "explain": "Market research should be prioritized as it informs the effectiveness of the marketing strategy."
-        },
-        {
-          "q": "Which of the following elements is likely included in the marketing strategies discussed in the slide?",
-          "options": [
-            "Employee Satisfaction",
-            "Customer Engagement",
-            "Financial Reporting",
-            "Supply Chain Management"
+            "By increasing the loading speed of a website",
+            "By enhancing the aesthetic appeal and usability of content",
+            "By reducing the number of images used",
+            "By limiting the color palette to black and white"
           ],
           "answer": 1,
-          "explain": "Customer engagement is a key element in effective marketing strategies."
+          "explain": "Applying visual design principles enhances aesthetic appeal and usability, which can significantly increase user engagement."
+        },
+        {
+          "q": "When considering visual design, which element is crucial for creating a cohesive look?",
+          "options": [
+            "Random selection of colors",
+            "Consistency in typography",
+            "Use of multiple font styles",
+            "Ignoring white space"
+          ],
+          "answer": 1,
+          "explain": "Consistency in typography is crucial for creating a cohesive look in visual design."
+        },
+        {
+          "q": "Why is it important to consider the target audience when applying visual design principles?",
+          "options": [
+            "To ensure designs are complex and detailed",
+            "To align the design with audience preferences and expectations",
+            "To make designs more colorful and vibrant",
+            "To limit the use of text in designs"
+          ],
+          "answer": 1,
+          "explain": "Considering the target audience ensures that the design aligns with their preferences and expectations, making it more effective."
+        },
+        {
+          "q": "In what sequence should visual design principles be applied during the design process?",
+          "options": [
+            "Color selection, typography, layout, imagery",
+            "Layout, typography, color selection, imagery",
+            "Imagery, layout, color selection, typography",
+            "Typography, imagery, layout, color selection"
+          ],
+          "answer": 1,
+          "explain": "The correct sequence is layout, typography, color selection, and then imagery to create a well-structured design."
+        }
+      ]
+    },
+    "37": {
+      "heading": "<!--slide-rich--><br>",
+      "questions": [
+        {
+          "q": "Which protocol in TCP/IP is responsible for establishing a connection between two hosts?",
+          "options": [
+            "IP",
+            "TCP",
+            "UDP",
+            "HTTP"
+          ],
+          "answer": 1,
+          "explain": "TCP (Transmission Control Protocol) is responsible for establishing a connection and enabling data exchange between two hosts."
+        },
+        {
+          "q": "How does TCP ensure the delivery of data?",
+          "options": [
+            "By using encryption",
+            "By establishing a connection",
+            "By compressing data",
+            "By sending packets in random order"
+          ],
+          "answer": 1,
+          "explain": "TCP guarantees delivery of data by establishing a connection between hosts, ensuring that packets are delivered in the correct order."
+        },
+        {
+          "q": "What is the primary function of the IP protocol in TCP/IP networks?",
+          "options": [
+            "Establishing connections",
+            "Guaranteeing packet order",
+            "Handling packet delivery",
+            "Managing data streams"
+          ],
+          "answer": 2,
+          "explain": "The IP protocol deals only with packets and is responsible for handling packet delivery in TCP/IP networks."
+        },
+        {
+          "q": "When packets are sent over a TCP connection, how are they delivered?",
+          "options": [
+            "In random order",
+            "In the same order they were sent",
+            "Only if requested",
+            "In reverse order"
+          ],
+          "answer": 1,
+          "explain": "TCP guarantees that packets will be delivered in the same order in which they were sent."
+        },
+        {
+          "q": "Which of the following statements is true about TCP in TCP/IP networks?",
+          "options": [
+            "It is the only protocol used",
+            "It guarantees data delivery and order",
+            "It does not establish connections",
+            "It compresses data for faster transmission"
+          ],
+          "answer": 1,
+          "explain": "TCP guarantees delivery of data and ensures that packets are delivered in the same order, making it a crucial protocol in TCP/IP networks."
         }
       ]
     },
