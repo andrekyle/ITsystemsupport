@@ -5,6 +5,7 @@ import { isAdminRole, type PoeDoc, type Profile, type ProgressState } from "../t
 import { Select } from "../components/Select";
 import { cloudProfileIds, fetchCloudLearnerData, mergeProfileWithCloud, remoteOnlyProfiles, type CloudLearnerData } from "../lib/directory";
 import { Icon } from "../icons";
+import { Modal } from "../components/Modal";
 import { useSkillsPortfolio } from "../lib/skillsPortfolio";
 import { SKILLS_PORTFOLIO, portfolioReportHtml, profilePortfolioDefaults, validatePortfolioImport, type PortfolioTable } from "../lib/skillsPortfolioContent";
 import { mergeProgressEvidence } from "../lib/progressEvidence";
@@ -60,6 +61,7 @@ function SkillsRegister({ profile }: { profile: Profile }) {
   const unitLessons = unitId ? lessonEvidence.lessons[unitId] ?? [] : [];
   const [upload, setUpload] = useState<{ id: string; label: string; oldId?: string } | null>(null);
   const [uploadPct, setUploadPct] = useState<number | null>(null);
+  const [review, setReview] = useState<{ id: string; label: string; fallback?: PoeDoc; oldId?: string } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const importInput = useRef<HTMLInputElement>(null);
   const disabled = !learner || record.loading || record.saving || !!record.error || uploadPct !== null;
@@ -83,34 +85,47 @@ function SkillsRegister({ profile }: { profile: Profile }) {
     } catch (e) { setError(e instanceof Error ? e.message : "Upload failed."); }
     finally { setUpload(null); setUploadPct(null); }
   }
-  function attachment(id: string, label: string, fallback?: PoeDoc, oldId?: string) {
+  function attachmentRecord(id: string, fallback?: PoeDoc) {
     const value = record.values[id];
-    const item = value && typeof value === "object" && !Array.isArray(value) ? value : fallback ? { doc: fallback } : undefined;
+    return value && typeof value === "object" && !Array.isArray(value) ? value : fallback ? { doc: fallback } : undefined;
+  }
+  const reviewItem = review ? attachmentRecord(review.id, review.fallback) : undefined;
+  function attachment(id: string, label: string, fallback?: PoeDoc, oldId?: string) {
+    const item = attachmentRecord(id, fallback);
     return <div className="portfolio-evidence" key={id}>
-      <div className="portfolio-file-actions">
-        {item && <span className="poe-file" title={item.doc.name}><Icon name="file" size={16} /> {item.doc.name}</span>}
-        <button type="button" className="btn ghost" disabled={disabled} onClick={() => { setUpload({ id, label, oldId }); fileInput.current?.click(); }}><Icon name="upload" size={15} />{upload?.id === id && uploadPct !== null ? `${uploadPct}%` : item ? "Replace evidence" : "Upload evidence"}</button>
-        {item && <button type="button" className="btn ghost" onClick={() => void downloadDoc({ ...item.doc, name: filename(label, item.doc.name, learner?.name ?? "Learner") }).catch(() => setError("Could not download evidence. Please retry."))}><Icon name="download" size={15} />Download</button>}
-      </div>
-      {item ? <>
-        <Select ariaLabel={`Verification: ${label}`} value={item.status ?? "Pending verification"} disabled={disabled} options={["Pending verification", "Verified", "Needs correction", "Not applicable"].map(value => ({ value, label: value }))}
-          onChange={status => record.update(id, { ...item, status, reviewer: profile.name, reviewedAt: new Date().toISOString() })} />
-        {item.reviewer && <small>{item.status} by {item.reviewer} · {new Date(item.reviewedAt!).toLocaleString()}</small>}
-        <label className="portfolio-field">Verification notes<textarea aria-label={`Verification notes: ${label}`} value={item.note ?? ""} disabled={disabled} onChange={event => record.update(id, { ...item, note: event.target.value })} /></label>
-      </> : <span className="muted">Awaiting evidence</span>}
+      {item && <div className="portfolio-attachment-name" title={item.doc.name}><Icon name="file" size={16} /><span>{item.doc.name}</span></div>}
+      {item ? <div className="portfolio-review-line">
+        <span className={`portfolio-evidence-status${item.status === 'Verified' ? ' verified' : ''}`}>{item.status ?? 'Pending verification'}</span>
+        <button type="button" className="btn ghost" aria-label={`Manage evidence: ${label}`} onClick={() => setReview({ id, label, fallback, oldId })}>Manage</button>
+      </div> : <button type="button" className="btn ghost" disabled={disabled} onClick={() => { setUpload({ id, label, oldId }); fileInput.current?.click(); }}>{upload?.id === id && uploadPct !== null ? `Uploading ${uploadPct}%` : 'Upload evidence'}</button>}
     </div>;
   }
   function renderTable(block: PortfolioTable) {
     const stored = values[`extra.${block.id}`];
     const extra = Array.isArray(stored) ? stored : [];
     const rows = [...block.rows, ...extra.map((row, ri) => row.map((text, ci) => ({ id: `${block.id}-extra-${ri}-${ci}`, text, fixed: false })))];
-    return <div className="portfolio-table" key={block.id}><div className="card poe-table-card"><table className="data poe-table">
+    const results = block.headers.some(header => /C\s*\/\s*NYC/i.test(header));
+    function cellControl(cell: { id: string; text: string }, ri: number, ci: number) {
+      const header = block.headers[ci] ?? "Value";
+      const value = ri < block.rows.length ? String(values[cell.id] ?? "") : cell.text;
+      const onChange = (value: string) => {
+        if (ri < block.rows.length) record.update(cell.id, value);
+        else { const next = extra.map(row => [...row]); next[ri - block.rows.length][ci] = value; record.update(`extra.${block.id}`, next); }
+      };
+      if (/C\s*\/\s*NYC/i.test(header)) {
+        const options = [{ value: "", label: "Not recorded" }, { value: "C", label: "Competent (C)" }, { value: "NYC", label: "Not yet competent (NYC)" }, { value: "Recognised", label: "Recognised" }];
+        if (value && !options.some(option => option.value === value)) options.push({ value, label: value });
+        return <Select ariaLabel={`${header}, row ${ri + 1}`} value={value} options={options} disabled={disabled} onChange={onChange} />;
+      }
+      const label = `${header}, row ${ri + 1}`;
+      return /description|finding|outcome|activities|scope|details|criteria|information|recorded|completed|parties|control/i.test(header)
+        ? <textarea aria-label={label} disabled={disabled} rows={2} value={value} onChange={event => onChange(event.target.value)} />
+        : <input type="text" aria-label={label} disabled={disabled} value={value} onChange={event => onChange(event.target.value)} />;
+    }
+    return <div className="portfolio-table" key={block.id}><div className="card poe-table-card"><table className={`data poe-table portfolio-data-table${results ? " portfolio-results-table" : ""}`}>
+      {results && <colgroup><col style={{ width: "11%" }} /><col style={{ width: "8%" }} /><col style={{ width: "25%" }} /><col style={{ width: "27%" }} /><col style={{ width: "29%" }} /></colgroup>}
       <thead><tr>{block.headers.map((header, i) => <th key={i}>{header}</th>)}<th>Evidence & verification</th></tr></thead>
-      <tbody>{rows.map((row, ri) => <tr key={ri}>{row.map((cell, ci) => <td key={cell.id}>{cell.fixed ? cell.text : <textarea aria-label={`${block.headers[ci] ?? "Value"}, row ${ri + 1}`} disabled={disabled} rows={2}
-        value={ri < block.rows.length ? String(values[cell.id] ?? "") : cell.text} onChange={event => {
-          if (ri < block.rows.length) record.update(cell.id, event.target.value);
-          else { const next = extra.map(row => [...row]); next[ri - block.rows.length][ci] = event.target.value; record.update(`extra.${block.id}`, next); }
-        }} />}</td>)}<td>{attachment(`doc.${sectionId}.${block.id}-${ri}`, row[0]?.text || `${section?.title ?? "Portfolio"} row ${ri + 1}`)}</td></tr>)}</tbody>
+      <tbody>{rows.map((row, ri) => <tr key={ri}>{row.map((cell, ci) => <td key={cell.id}>{cell.fixed ? cell.text : cellControl(cell, ri, ci)}</td>)}<td>{attachment(`doc.${sectionId}.${block.id}-${ri}`, row[0]?.text || `${section?.title ?? "Portfolio"} row ${ri + 1}`)}</td></tr>)}</tbody>
     </table></div><button type="button" className="btn ghost" disabled={disabled} onClick={() => record.update(`extra.${block.id}`, [...extra, block.headers.map(() => "")])}>+ Add row</button></div>;
   }
   async function importData(file: File) {
@@ -127,7 +142,7 @@ function SkillsRegister({ profile }: { profile: Profile }) {
     <div className="card evidence-register-toolbar">
       <div className="evidence-learner-picker"><strong>Learner portfolio</strong><Select value={learner?.id ?? ""} ariaLabel="Choose learner portfolio" disabled={uploadPct !== null || record.saving || !learners.length}
         placeholder={loading ? "Loading learners…" : "No learners available"} options={learners.map(p => ({ value: p.id, label: p.name, hint: p.enrolment?.email }))}
-        onChange={async id => { if (record.dirty && !await record.save()) return; setLearnerId(id); setError(""); }} /></div>
+        onChange={async id => { if (record.dirty && !await record.save()) return; setReview(null); setLearnerId(id); setError(""); }} /></div>
       <div className="portfolio-actions">
         <button type="button" className="btn primary" disabled={disabled || !record.dirty} onClick={() => void record.save()}>{record.saving ? "Saving…" : "Save changes"}</button>
         <button type="button" className="btn ghost" disabled={disabled} onClick={() => learner && downloadText(filename("Skills-Evidence", ".json", learner.name), JSON.stringify({ format: "itss-skills-portfolio-v1", learnerId: learner.id, learner: learner.name, exportedAt: new Date().toISOString(), values }, null, 2), "application/json")}>Export data</button>
@@ -173,6 +188,16 @@ function SkillsRegister({ profile }: { profile: Profile }) {
       </section>
     </div>}
     <input ref={fileInput} type="file" hidden onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void uploadEvidence(file); }} />
+    {review && reviewItem && <Modal title={`Verification details — ${review.label}`} onClose={() => setReview(null)} actions={<button type="button" className="btn primary" onClick={() => setReview(null)}>Done</button>}>
+      <p className="portfolio-review-filename">{reviewItem.doc.name}</p>
+      <div className="portfolio-actions">
+        <button type="button" className="btn ghost" disabled={disabled} onClick={() => { setUpload({ id: review.id, label: review.label, oldId: review.oldId }); fileInput.current?.click(); }}>Replace evidence</button>
+        <button type="button" className="btn ghost" onClick={() => void downloadDoc({ ...reviewItem.doc, name: filename(review.label, reviewItem.doc.name, learner?.name ?? 'Learner') }).catch(() => setError('Could not download evidence. Please retry.'))}>Download</button>
+      </div>
+      <label className="portfolio-field">Verification status<Select ariaLabel={`Verification: ${review.label}`} value={reviewItem.status ?? 'Pending verification'} disabled={disabled} options={['Pending verification','Verified','Needs correction','Not applicable'].map(value => ({value,label:value}))} onChange={status => record.update(review.id, { ...reviewItem, status, reviewer: profile.name, reviewedAt: new Date().toISOString() })} /></label>
+      <p>{reviewItem.status ?? 'Pending verification'}{reviewItem.reviewer ? ` by ${reviewItem.reviewer} · ${new Date(reviewItem.reviewedAt!).toLocaleString()}` : ''}</p>
+      <label className="portfolio-field">Verification notes<textarea aria-label={`Verification notes: ${review.label}`} value={reviewItem.note ?? ''} disabled={disabled} onChange={event => record.update(review.id, { ...reviewItem, note: event.target.value })} /></label>
+    </Modal>}
     <input ref={importInput} type="file" hidden accept=".json,application/json" onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void importData(file); }} />
   </div>;
 }

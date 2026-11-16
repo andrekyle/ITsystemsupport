@@ -7,6 +7,9 @@ function assert(value: unknown, message: string): asserts value { if (!value) th
 async function until(check: () => boolean, message: string) { for (let i=0;i<120;i++) { if(check()) return; await tick(); } throw new Error(message); }
 function button(text: string) { const found=[...document.querySelectorAll<HTMLButtonElement>('button')].find(button=>button.textContent?.trim()===text); assert(found, `Missing button ${text}`); return found; }
 async function choose(label: string, option: string) {
+  if (label.startsWith('Verification: ') && !document.querySelector(`button[aria-label="${label}"]`)) {
+    document.querySelector<HTMLButtonElement>(`button[aria-label="Manage evidence: ${label.slice(14)}"]`)!.click();await tick();
+  }
   const trigger=document.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`); assert(trigger, `Missing select ${label}`);trigger.click(); await tick();
   const item=[...document.querySelectorAll<HTMLElement>('[role="option"]')].find(item=>item.textContent?.trim().includes(option));assert(item,`Missing option ${option}`);item.click();await tick();
 }
@@ -36,21 +39,46 @@ async function test() {
   await choose('Choose learner portfolio','Alice Example');await until(()=>input('Training provider').value==='Actual training provider','Saved fields reload');
   await choose('Portfolio section','Existing evidence checklist');
   assert(document.body.textContent?.includes('Actual-ID.pdf'),'Existing identity evidence stays available');
-  button('Download').click();await tick();assert((globalThis as any).__downloaded,'Actual document download is wired');
+  button('Manage').click();await tick();button('Download').click();await tick();assert((globalThis as any).__downloaded,'Actual document download is wired');button('Done').click();await tick();
   await choose('Portfolio section','1. Learner overview');
   button('Upload evidence').click();await tick();
   const file=document.querySelector<HTMLInputElement>('input[type="file"]:not([accept])')!;
   const transfer=new DataTransfer();transfer.items.add(new File(['test'],'long original filename.pdf',{type:'application/pdf'}));file.files=transfer.files;file.dispatchEvent(new Event('change',{bubbles:true}));
-  await until(()=>!!document.querySelector('button[aria-label^="Verification:"]'),'Uploaded evidence becomes reviewable');
+  await until(()=>!!document.querySelector('button[aria-label^="Manage evidence:"]'),'Uploaded evidence becomes reviewable');
   await choose('Verification: Learner overview','Verified');
   assert(document.body.textContent?.includes('Verified by Real reviewer'),'Real reviewer and date are recorded');
-  button('Replace evidence').click();await tick();
+  const note=document.querySelector<HTMLTextAreaElement>('[role="dialog"] textarea')!;await enter(note,'Reviewed supporting evidence');
+  button('Done').click();await tick();
+  assert(!document.querySelector('[role="dialog"]'),'Review details close without stretching the row');
+  button('Manage').click();await tick();button('Replace evidence').click();await tick();
   const replacement=new DataTransfer();replacement.items.add(new File(['replacement'],'replacement.pdf',{type:'application/pdf'}));file.files=replacement.files;file.dispatchEvent(new Event('change',{bubbles:true}));
   await until(()=>document.querySelector('button[aria-label^="Verification:"]')?.textContent?.includes('Pending verification')??false,'Replacing an attachment clears stale verification');
+  button('Done').click();await tick();
+  await choose('Portfolio section','38. Final learner results');
+  const resultsTable=document.querySelector<HTMLTableElement>('.portfolio-results-table')!;
+  assert(resultsTable,'Final results must use the compact table layout');
+  const firstRow=resultsTable.querySelector<HTMLTableRowElement>('tbody tr')!;
+  assert(!firstRow.querySelector('textarea'),'Results and references must not use oversized text areas');
+  assert(firstRow.querySelector('input[type="text"]'),'Assessment reference uses a compact input');
+  assert(firstRow.getBoundingClientRect().height<95,'Empty evidence rows should remain compact');
+  assert(firstRow.cells[0].getBoundingClientRect().width/resultsTable.getBoundingClientRect().width<0.16,'Unit-standard ID must not consume a third of the table');
+  await choose('C / NYC / recognised, row 1','Competent (C)');
+  button('Save changes').click();await until(()=>button('Save changes').disabled,'Decision saves');
   await choose('Portfolio section','41. Skills Development verification pack');
   const before=document.querySelectorAll('tbody tr').length;button('+ Add row').click();await tick();assert(document.querySelectorAll('tbody tr').length===before+1,'Add row is wired');
-  const cell=document.querySelector<HTMLTextAreaElement>('tbody tr:last-child textarea')!;await enter(cell,'Actual evidence reference');
+  const cell=document.querySelector<HTMLInputElement | HTMLTextAreaElement>('tbody tr:last-child input[type="text"], tbody tr:last-child textarea')!;await enter(cell,'Actual evidence reference');
   button('Save changes').click();await until(()=>button('Save changes').disabled,'Rows and uploads save');
+  await choose('Portfolio section','50. Absorption and all learner tracker');
+  button('Upload evidence').click();await tick();
+  const employmentFile=new DataTransfer();employmentFile.items.add(new File(['employment'],'employment.pdf',{type:'application/pdf'}));file.files=employmentFile.files;file.dispatchEvent(new Event('change',{bubbles:true}));
+  await until(()=>!!document.querySelector('button[aria-label="Manage evidence: Post learnership employment"]'),'Employment attachment uploaded');
+  await choose('Verification: Post learnership employment','Verified');
+  button('Done').click();await tick();
+  const employmentRow=document.querySelector<HTMLTableRowElement>('.portfolio-fields .portfolio-table tbody tr')!;
+  assert(employmentRow.getBoundingClientRect().height<150,'A verified attachment must not create a tall empty row');
+  assert(!employmentRow.querySelector('textarea[aria-label^="Verification notes"]'),'Reviewer notes belong outside the table row');
+  assert(employmentRow.querySelectorAll('button').length===1,'Uploaded evidence should expose just one Manage action in the row');
+  assert(!employmentRow.querySelector('[aria-haspopup="listbox"]'),'Verification controls stay in Manage, not the table');
   const html=portfolioReportHtml({id:'alice',name:'<script>bad</script>',role:'Learner',createdAt:''},{f7:'<img src=x onerror=bad>'});
   assert(!html.includes('<script>bad'),'Export escapes user input');
   assert(html.includes('Skills Development verification pack'),'Export includes all sections');
