@@ -17,6 +17,33 @@
 .evidence-learner-picker { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .evidence-learner-picker .nice-select { width: 320px; max-width: 100%; }
 .evidence-register-page .poe-doc .nice-select { width: 100%; }
+.evidence-register-page .portfolio-layout { display: grid; gap: 20px; min-width: 0; }
+.evidence-register-page .portfolio-navigation { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(220px, 2fr); gap: 14px; align-items: end; }
+.evidence-register-page .portfolio-navigation > p { grid-column: 1 / -1; margin: 0; }
+.evidence-register-page .portfolio-content { min-width: 0; padding: 24px; }
+.evidence-register-page .portfolio-actions, .evidence-register-page .portfolio-file-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.evidence-register-page .portfolio-actions { margin: 16px 0; }
+.evidence-register-page .portfolio-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 22px; }
+.evidence-register-page .portfolio-fields > p, .evidence-register-page .portfolio-fields > h3, .evidence-register-page .portfolio-fields > .portfolio-table { grid-column: 1 / -1; }
+.evidence-register-page .portfolio-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; color: var(--ink-2); font-size: 14px; }
+.evidence-register-page .portfolio-field input, .evidence-register-page textarea { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--ink); font: inherit; }
+.evidence-register-page textarea { min-height: 80px; resize: vertical; }
+.evidence-register-page .portfolio-check { display: flex; gap: 10px; align-items: flex-start; }
+.evidence-register-page .portfolio-check input { margin-top: 4px; accent-color: var(--brand); }
+.evidence-register-page .portfolio-table { min-width: 0; }
+.evidence-register-page .portfolio-table table { min-width: 900px; }
+.evidence-register-page .portfolio-table td { min-width: 140px; vertical-align: top; }
+.evidence-register-page .portfolio-table td:last-child { min-width: 240px; }
+.evidence-register-page .portfolio-evidence { display: grid; gap: 10px; margin: 8px 0; }
+.evidence-register-page .portfolio-evidence .poe-file { overflow-wrap: anywhere; white-space: normal; }
+.evidence-register-page .portfolio-evidence small { color: var(--ink-3); }
+.evidence-register-page .portfolio-legacy-item { border-bottom: 1px solid var(--border); padding: 16px 0; }
+.evidence-register-page .portfolio-bottom-nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 24px; }
+@media (max-width: 700px) {
+  .evidence-register-page .portfolio-navigation, .evidence-register-page .portfolio-fields { grid-template-columns: minmax(0, 1fr); }
+  .evidence-register-page .portfolio-content { padding: 16px; }
+  .evidence-register-page .portfolio-actions .btn { flex: 1 1 auto; }
+}
 @media (max-width: 600px) {
   .evidence-learner-picker { flex-direction: column; align-items: stretch; }
   .evidence-learner-picker .nice-select { width: 100%; }
