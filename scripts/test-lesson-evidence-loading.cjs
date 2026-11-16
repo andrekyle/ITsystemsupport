@@ -50,7 +50,7 @@ async function main() {
   if (fs.existsSync("supabase-export/all-learners/source-snapshot.json")) {
     const snapshot = JSON.parse(fs.readFileSync("supabase-export/all-learners/source-snapshot.json", "utf8"));
     const shared = snapshot.shared.filter(row => row.tenant_id === "investec");
-    for (const unit of ["8252", "114051", "114046", "114074", "114059"]) {
+    for (const unit of ["8252", "114051", "114046", "114074", "114059", "114076"]) {
       assert(await recovery.verifyLegacyQuizSource(unit, shared), `Audited source must verify for ${unit}`);
       const sourceKey = recoveryData.VERIFIED_LEGACY_BUILT_SOURCES[unit] ? `itss.unitbuilder.${unit}.shared` : `itss.lessonedits.${unit}`;
       const source = shared.find(row => row.key === sourceKey);
@@ -83,6 +83,26 @@ async function main() {
     assert.equal(restoredText.length, 15);
     assert(restoredText.some(answer => answer.question.includes('key metric of performance')));
     console.log('US 114059 original archived definitions recovered for Slides 11–13; conflicting versions rejected, selections and completion retained, no grades calculated.');
+    const researchRow = snapshot.rows.find(row => row.key === 'itss.lessonquiz.p_mrom4usy_le6ki.114076');
+    const researchOriginal = quiz.parseLessonQuizState(researchRow.value);
+    const researchBefore = structuredClone(researchOriginal);
+    const researchRestored = recovery.recoverLegacyQuizContext('114076', researchOriginal, await recovery.verifyLegacyQuizSource('114076', shared));
+    assert.equal(researchRestored.recoveredSlides.length, 20, 'Twenty of the screenshot learner’s 24 quizzes have unambiguous original definitions');
+    assert(researchRestored.recoveredSlides.includes(0), 'The first screenshot quiz must show its recovered original questions');
+    assert.deepEqual(researchOriginal, researchBefore, 'Recovery cannot mutate the original submission');
+    assert.deepEqual(researchRestored.answers, researchOriginal.answers);
+    assert.deepEqual(researchRestored.checked, researchOriginal.checked);
+    assert.deepEqual(researchRestored.attempts, researchOriginal.attempts);
+    const researchAnswers = evidence.savedLessonAnswers([researchRestored]);
+    assert.equal(researchAnswers.length, 120, 'All 120 selections in the screenshot must remain preserved');
+    assert.equal(researchAnswers.filter(answer => !answer.legacy).length, 100);
+    const researchResults = evidence.savedLessonQuizResults([researchRestored]);
+    assert.equal(researchResults.filter(result => result.completed).length, 24);
+    assert(researchResults.every(result => !('correct' in result)), 'No recovered historical scores may be calculated');
+    const firstQuestion = recoveryData.VERIFIED_LEGACY_QUIZ_CONTEXT['114076'][0].questions[0];
+    assert.equal(researchAnswers.find(answer => answer.question === firstQuestion.q).answer, firstQuestion.options[researchOriginal.answers[0][0]]);
+    assert.equal(researchResults.find(result => result.answers.some(answer => answer.question === firstQuestion.q)).attempts, 2);
+    console.log('US 114076 screenshot regression passed: 20 original quiz contexts / 100 readable answers recovered; all 120 selections, 24 completions and original attempts preserved.');
     console.log("Expanded recovery guards passed: audited sources only; missing, changed, duplicate, other-tenant and new override sources rejected.");
   }
   let targetSlide32;

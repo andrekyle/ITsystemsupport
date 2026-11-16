@@ -130,6 +130,25 @@ export const VERIFIED_LEGACY_BUILT_SOURCES: Record<string, Record<string, string
     "itss.lessonedits.114074.built-7c778740-14e7-4700-8f35-f120a507bd9f": "e3d22058e58b33de61990e05ee95bf15c2925c5a7ebe283c8aaa4fc94a542690",
     "itss.lessonedits.114074.built-309d4158-a115-4907-baf4-a6f6bc2fc2cf": "247e03b89f2e8d649fc84b47160eff6cdb21be376f7ee7fefabcbef562ffe387",
     "itss.lessonedits.114074.built-b3d0754f-6269-440d-ae3a-474e44f43f61": "a1a2d057ac0f63ec16dd6875d95c172775fb3eab56a13b151be6b0689c9ed8b6"
+  },
+  "114076": {
+    "itss.unitbuilder.114076.shared": "90d9be4c0537167ffab13fb76f3a79a68677510cdbe793b34e15a2049d6af60b",
+    "itss.lessonedits.114076.built-5dd34825-3708-4afb-86f0-54111bf7db66": "7e7ad672762bfbc60f65b95c330ec23d3a6e400c3c48f20841e05358e4d7fd07",
+    "itss.lessonedits.114076.built-9d1c3f4d-bda6-4f93-98b6-176dee369096": "a2b409bdf2c27a10e1dfd27c416d2ed53a7eb96a5fea326ad4de20a0425a75db",
+    "itss.lessonedits.114076.built-eee978c1-5c7d-4054-be26-dce6389d8d36": "40dce38815352745b548cbca0e7188d2a0681a3141804db90e2f555aa8da1cb7",
+    "itss.lessonedits.114076.built-6d0d1bf6-8162-42b2-81e9-d80de0770aa6": "4ebad6f252aed16b29fbea2e061f38dae929cadd01073e4db6e6c65c3bb72712",
+    "itss.lessonedits.114076.built-759477c7-571d-442c-a1d2-01024a24deea": "d51f2254fa9c0055496c68393cee1f93e4fa3ec8d0b55f9a4effb1ca7f942266",
+    "itss.lessonedits.114076.built-7e52ebfd-c1d2-475f-bc15-c2dbe05676fc": "c89fa98d2d742bd635984e9333d4950de7051aba70e97d91fd7bc601102ecd60",
+    "itss.lessonedits.114076.built-359550b6-ec59-4262-96f8-3b056acddc0f": "1dd57f78eaf55f746cc0d621da910992197539f784a0a827ac1111751daee204",
+    "itss.lessonedits.114076.built-0b2bb4ba-decf-4d27-9085-c3faee2bcba0": "c4f794e5899e76bbb0dcc0c837cfdf796ba4b397f2444f3d610da81572fac948",
+    "itss.lessonedits.114076.built-43f500c8-cf2d-4d3d-8d55-da2db5857ca0": "237407dfa802d3447c1e3ad7346f0896a6d6df602424491be5defd7a576d70a9",
+    "itss.lessonedits.114076.built-4dba1960-0848-4c21-aa7c-4b88e264248a": "745cc6232c07ba609c907c00a5b015feafbd17d32f489d685836a0626a3c43fe",
+    "itss.lessonedits.114076.built-042dd395-dc46-4ce9-a20b-ec69a1da10f9": "b24813f138478c7b459b82fb0614d936bef710f9c861919a62d5f0ab8c046ced",
+    "itss.lessonedits.114076.built-eea284d8-21be-4a11-86e3-595471c70026": "cace0d6134635549462acbb6ca86235171e626c03dee50b18ae6bd25b0d884b5",
+    "itss.lessonedits.114076.built-69160631-734c-4f4c-aca9-1192f515e106": "c862f62835d1a3c1237425868ab1d0ccf879cc34abe04a78779bf3cd3cba9c3a",
+    "itss.lessonedits.114076.built-2f3dccb6-ccdc-4f02-8451-8da99fb163aa": "2c254b20e804971b3199594c549bfeb47d4143c347163006ebf4561e53830028",
+    "itss.lessonedits.114076.built-5467459a-2b61-404b-bcff-8a74ed9e7ac9": "a069a7ee096d24f79fe5ebe5bb9950b2cd8631b1f15256366222b3ac0f11b53f",
+    "itss.lessonedits.114076.built-375aaaa5-45eb-47b8-b06f-9272ca2c68e1": "e9fe970532286951bf95fe3017f072a7f6a5636fe788e89dad1c428f7dbe396f"
   }
 };
 export const VERIFIED_LEGACY_QUIZ_CONTEXT: Record<string, Record<number, SlideQuizDefinition>> = {
@@ -3504,6 +3523,66 @@ export const VERIFIED_LEGACY_QUIZ_CONTEXT: Record<string, Record<number, SlideQu
         }
       ]
     },
+    "31": {
+      "heading": "<!--slide-rich--><img data-figure-id=\"lesson-inline-31-f1b1c8ae-ddb1-420f-a6f3-4b199b28dea7\" alt=\"Transparent Network Switch Star Diagram\" draggable=\"false\" style=\"margin: 12px auto; width: 60%; max-width: 100%; height: auto; float: none; display: block;\">",
+      "questions": [
+        {
+          "q": "Which protocol is the original specification of the OSI's Data Link Control protocol standard?",
+          "options": [
+            "Ethernet",
+            "HDLC",
+            "PPP",
+            "SDLC"
+          ],
+          "answer": 1,
+          "explain": "HDLC (High-Level Data Link Control) is the original specification of the OSI's Data Link Control protocol standard."
+        },
+        {
+          "q": "How does HDLC differ from protocols designed for LANs?",
+          "options": [
+            "HDLC is faster than LAN protocols",
+            "HDLC is designed for lower data rates and more distortion",
+            "LAN protocols are more complex than HDLC",
+            "LAN protocols are used for remote connections"
+          ],
+          "answer": 1,
+          "explain": "HDLC is designed for connecting remotely located DTEs with lower data rates and more susceptibility to distortion, while LAN protocols are tailored for higher data rates over more reliable mediums."
+        },
+        {
+          "q": "Why was the Data Link Control layer divided into two sublayers?",
+          "options": [
+            "To simplify data transmission",
+            "To improve error detection",
+            "To accommodate higher data rates and reliable mediums",
+            "To reduce the number of protocols"
+          ],
+          "answer": 2,
+          "explain": "The Data Link Control layer was divided into two sublayers to accommodate the need for higher data rates and more reliable physical mediums in LANs."
+        },
+        {
+          "q": "When was HDLC developed in relation to local area networks (LANs)?",
+          "options": [
+            "After the development of LANs",
+            "Before the advent of LANs",
+            "Simultaneously with LANs",
+            "HDLC is not related to LANs"
+          ],
+          "answer": 1,
+          "explain": "HDLC was developed before the advent of local area networks (LANs), which is why it is designed for different conditions than those typically found in LANs."
+        },
+        {
+          "q": "Where is the Data Link Control protocol used primarily?",
+          "options": [
+            "In wide area networks",
+            "In local area networks",
+            "In both local and wide area networks",
+            "In satellite communications"
+          ],
+          "answer": 1,
+          "explain": "The Data Link Control protocol is primarily used in local area networks (LANs) to transfer data frames among stations connected on the same physical link."
+        }
+      ]
+    },
     "32": {
       "heading": "<!--slide-rich--><img data-figure-id=\"lesson-inline-32-1d13a093-f4e7-4504-a3f5-6e0adb745a74\" alt=\"LAN Architectures Training Infographic\" draggable=\"false\" loading=\"eager\" decoding=\"async\" fetchpriority=\"high\" style=\"margin: 0px; width: 100%; max-width: 100%; height: auto; object-fit: cover; float: none; display: block; transform: none;\">",
       "questions": [
@@ -3561,6 +3640,126 @@ export const VERIFIED_LEGACY_QUIZ_CONTEXT: Record<string, Record<number, SlideQu
           ],
           "answer": 1,
           "explain": "The Data Link Control protocol is primarily used in local area networks (LANs) to transfer data frames among stations connected on the same physical link."
+        }
+      ]
+    },
+    "33": {
+      "heading": "<!--slide-rich-->",
+      "questions": [
+        {
+          "q": "Which of the following best describes the primary focus of the slide content?",
+          "options": [
+            "Technical specifications",
+            "Marketing strategies",
+            "Educational methodologies",
+            "Project management techniques"
+          ],
+          "answer": 0,
+          "explain": "The primary focus of the slide content is on technical specifications."
+        },
+        {
+          "q": "How would you categorize the information presented in the slide?",
+          "options": [
+            "Quantitative data",
+            "Qualitative analysis",
+            "Descriptive overview",
+            "Comparative analysis"
+          ],
+          "answer": 1,
+          "explain": "The information is categorized as qualitative analysis, focusing on descriptive aspects rather than numerical data."
+        },
+        {
+          "q": "When analyzing the slide, which key term is most relevant to its subject?",
+          "options": [
+            "Stakeholder engagement",
+            "Performance metrics",
+            "User experience",
+            "System architecture"
+          ],
+          "answer": 3,
+          "explain": "System architecture is the most relevant key term as it relates directly to the technical specifications discussed."
+        },
+        {
+          "q": "Why is it important to understand the technical specifications outlined in the slide?",
+          "options": [
+            "To improve marketing strategies",
+            "To enhance user engagement",
+            "To ensure project alignment with goals",
+            "To reduce operational costs"
+          ],
+          "answer": 2,
+          "explain": "Understanding technical specifications is crucial to ensure project alignment with goals, as it guides the project's development."
+        },
+        {
+          "q": "Which of the following processes is likely emphasized in the slide content?",
+          "options": [
+            "Budget allocation",
+            "Risk assessment",
+            "System design",
+            "Market analysis"
+          ],
+          "answer": 2,
+          "explain": "The slide content likely emphasizes system design as it relates to technical specifications."
+        }
+      ]
+    },
+    "34": {
+      "heading": "<!--slide-rich--><br>",
+      "questions": [
+        {
+          "q": "Which of the following best defines the primary subject of the slide?",
+          "options": [
+            "Visual Design Principles",
+            "Data Analysis Techniques",
+            "Project Management Strategies",
+            "Marketing Fundamentals"
+          ],
+          "answer": 0,
+          "explain": "The primary subject of the slide is about Visual Design Principles."
+        },
+        {
+          "q": "How can the application of visual design principles impact user engagement?",
+          "options": [
+            "By increasing the loading speed of a website",
+            "By enhancing the aesthetic appeal and usability of content",
+            "By reducing the number of images used",
+            "By limiting the color palette to black and white"
+          ],
+          "answer": 1,
+          "explain": "Applying visual design principles enhances aesthetic appeal and usability, which can significantly increase user engagement."
+        },
+        {
+          "q": "When considering visual design, which element is crucial for creating a cohesive look?",
+          "options": [
+            "Random selection of colors",
+            "Consistency in typography",
+            "Use of multiple font styles",
+            "Ignoring white space"
+          ],
+          "answer": 1,
+          "explain": "Consistency in typography is crucial for creating a cohesive look in visual design."
+        },
+        {
+          "q": "Why is it important to consider the target audience when applying visual design principles?",
+          "options": [
+            "To ensure designs are complex and detailed",
+            "To align the design with audience preferences and expectations",
+            "To make designs more colorful and vibrant",
+            "To limit the use of text in designs"
+          ],
+          "answer": 1,
+          "explain": "Considering the target audience ensures that the design aligns with their preferences and expectations, making it more effective."
+        },
+        {
+          "q": "In what sequence should visual design principles be applied during the design process?",
+          "options": [
+            "Color selection, typography, layout, imagery",
+            "Layout, typography, color selection, imagery",
+            "Imagery, layout, color selection, typography",
+            "Typography, imagery, layout, color selection"
+          ],
+          "answer": 1,
+          "explain": "The correct sequence is layout, typography, color selection, and then imagery to create a well-structured design."
         }
       ]
     },
@@ -3801,6 +4000,1388 @@ export const VERIFIED_LEGACY_QUIZ_CONTEXT: Record<string, Record<number, SlideQu
           ],
           "answer": 1,
           "explain": "TCP guarantees delivery of data and ensures that packets are delivered in the same order, making it a crucial protocol in TCP/IP networks."
+        }
+      ]
+    }
+  },
+  "114076": {
+    "0": {
+      "heading": "<!--slide-rich--><span style=\"font-family: inherit; font-weight: bold; letter-spacing: -0.006em;\">Planning steps of research</span>",
+      "questions": [
+        {
+          "q": "Which step involves identifying a research problem or area of interest from everyday life experiences?",
+          "options": [
+            "Step 1",
+            "Step 2",
+            "Step 3",
+            "Step 4"
+          ],
+          "answer": 0,
+          "explain": "Step 1 is about identifying the problem or topic, which includes selecting a research problem or area of interest from various sources."
+        },
+        {
+          "q": "How does reviewing prior research contribute to the research process?",
+          "options": [
+            "It helps in creating research questions and understanding current knowledge.",
+            "It replaces the need for a research hypothesis.",
+            "It eliminates the need for a research design.",
+            "It guarantees successful data collection."
+          ],
+          "answer": 0,
+          "explain": "Reviewing prior research informs the researcher about the current state of knowledge, helps in creating research questions, and aids in designing the study."
+        },
+        {
+          "q": "What are the four general purposes for conducting educational research as described in the planning steps?",
+          "options": [
+            "To explore, describe, predict, or explain educational phenomena",
+            "To analyze, summarize, categorize, or evaluate educational phenomena",
+            "To observe, interpret, compare, or contrast educational phenomena",
+            "To investigate, document, replicate, or innovate educational phenomena"
+          ],
+          "answer": 0,
+          "explain": "The four general purposes for conducting educational research are to explore, describe, predict, or explain the relation between educational variables."
+        },
+        {
+          "q": "In which step is it necessary to create a statement that includes the educational topic and justification for research?",
+          "options": [
+            "Step 1",
+            "Step 2",
+            "Step 3",
+            "Step 4"
+          ],
+          "answer": 0,
+          "explain": "In Step 1, the researcher must create a statement that includes the educational topic or specific problem along with the justification for research."
+        },
+        {
+          "q": "Why is it important to determine the resources needed to conduct the study in Step 1?",
+          "options": [
+            "To ensure the research can be conducted systematically and feasibly.",
+            "To limit the scope of the research to only theoretical aspects.",
+            "To avoid the need for any prior research.",
+            "To guarantee immediate results from the study."
+          ],
+          "answer": 0,
+          "explain": "Determining the resources needed in Step 1 is crucial to ensure that the research problem can be researched systematically and feasibly."
+        }
+      ]
+    },
+    "2": {
+      "heading": "Slide 3",
+      "questions": [
+        {
+          "q": "Which data forms are primarily used in qualitative research according to the slide?",
+          "options": [
+            "Numbers and statistics",
+            "Words and narratives",
+            "Graphs and charts",
+            "Surveys and questionnaires"
+          ],
+          "answer": 1,
+          "explain": "Qualitative data are gathered primarily from observations, interviews, and documents, using words rather than numbers."
+        },
+        {
+          "q": "How are hypotheses treated in qualitative research as per the overview provided?",
+          "options": [
+            "They are established before the research begins",
+            "They are disregarded during the research",
+            "They are developed during the study",
+            "They are fixed and unchangeable"
+          ],
+          "answer": 2,
+          "explain": "Hypotheses are developed during the study to take into account what is being learned about the setting and the people."
+        },
+        {
+          "q": "Why is qualitative research considered useful in understanding causal processes?",
+          "options": [
+            "It relies solely on numerical data",
+            "It minimizes the role of context",
+            "It uses systematic techniques for analysis",
+            "It avoids the collection of observational data"
+          ],
+          "answer": 2,
+          "explain": "Qualitative research is useful in understanding causal processes and facilitating action based on the research results through the use of systematic techniques."
+        },
+        {
+          "q": "When conducting qualitative research, in which settings is the research primarily conducted?",
+          "options": [
+            "Laboratories",
+            "Natural settings",
+            "Virtual environments",
+            "Controlled experiments"
+          ],
+          "answer": 1,
+          "explain": "Qualitative research is conducted in natural settings to understand issues or situations."
+        },
+        {
+          "q": "Which of the following methods may be combined with qualitative methods in a study?",
+          "options": [
+            "Only observational methods",
+            "Quantitative methods",
+            "Statistical analysis only",
+            "Experimental methods"
+          ],
+          "answer": 1,
+          "explain": "Qualitative methods may be combined with quantitative methods in conducting a study."
+        }
+      ]
+    },
+    "5": {
+      "heading": "<!--slide-rich--><span style=\"font-family: inherit; font-weight: bold; letter-spacing: -0.006em;\">Reasons for Qualitative Research</span>",
+      "questions": [
+        {
+          "q": "Which qualitative research reason emphasizes understanding user perceptions and meanings of a system?",
+          "options": [
+            "Understanding contextual influences",
+            "Providing formative evaluation",
+            "Understanding user perspectives",
+            "Assessing outcomes"
+          ],
+          "answer": 2,
+          "explain": "The slide states that qualitative methods help in understanding how users perceive and evaluate a system, highlighting the importance of users' perspectives."
+        },
+        {
+          "q": "Why are qualitative methods considered useful for understanding the influence of social and organizational context on systems use?",
+          "options": [
+            "They provide quantitative data",
+            "They allow for in-depth investigation of contextual influences",
+            "They assess existing systems only",
+            "They focus on user satisfaction"
+          ],
+          "answer": 1,
+          "explain": "Qualitative methods are useful for discovering and understanding contextual influences, which are crucial for evaluating how systems function in different settings."
+        },
+        {
+          "q": "When is formative evaluation particularly beneficial according to the slide?",
+          "options": [
+            "When assessing existing systems",
+            "When providing timely feedback during system development",
+            "When focusing solely on user satisfaction",
+            "When conducting experimental designs"
+          ],
+          "answer": 1,
+          "explain": "The slide indicates that formative evaluation is aimed at improving a programme under development, making it valuable for providing timely feedback."
+        },
+        {
+          "q": "Which aspect of qualitative research allows for the development of testable hypotheses and theories?",
+          "options": [
+            "Understanding user perspectives",
+            "Providing quantitative data",
+            "Exploring contextual influences",
+            "Assessing system outcomes"
+          ],
+          "answer": 2,
+          "explain": "The slide mentions that qualitative methods help in discovering and understanding contextual influences, which can lead to the development of testable hypotheses and theories."
+        },
+        {
+          "q": "How do qualitative methods contribute to explaining user behavior with respect to a system?",
+          "options": [
+            "By providing numerical data",
+            "By allowing in-depth investigation of user perspectives",
+            "By assessing system success quantitatively",
+            "By focusing on external factors only"
+          ],
+          "answer": 1,
+          "explain": "Qualitative methods allow researchers to investigate users' perspectives in depth, which contributes to explaining their behavior regarding the system."
+        }
+      ]
+    },
+    "6": {
+      "heading": "<!--slide-rich--><span style=\"font-family: inherit; font-weight: bold; letter-spacing: -0.006em;\">Research Questions and Evaluation Goals</span>",
+      "questions": [
+        {
+          "q": "Which type of methods are typically used to understand the perception of an information system by its users?",
+          "options": [
+            "Quantitative methods",
+            "Qualitative methods",
+            "Statistical methods",
+            "Experimental methods"
+          ],
+          "answer": 1,
+          "explain": "Qualitative methods are specifically mentioned as being used to understand the perception of an information system by its users."
+        },
+        {
+          "q": "How do qualitative methods differ from quantitative methods in terms of focus?",
+          "options": [
+            "They focus on correlation of variables.",
+            "They focus on description and interpretation of events.",
+            "They focus on generalization to a specified population.",
+            "They focus on hypothesis testing."
+          ],
+          "answer": 1,
+          "explain": "Qualitative methods focus on description, interpretation, and explanation of events, rather than on the correlation of variables."
+        },
+        {
+          "q": "What is the fundamental question that qualitative studies seek to answer?",
+          "options": [
+            "What is the hypothesis?",
+            "What is going on here?",
+            "What are the variables?",
+            "What is the population?"
+          ],
+          "answer": 1,
+          "explain": "The fundamental question in qualitative studies is framed as 'What is going on here?'"
+        },
+        {
+          "q": "Why are qualitative methods considered to have strengths in avoiding tunnel vision?",
+          "options": [
+            "They focus on a large sample size.",
+            "They rely on statistical analysis.",
+            "They allow for discovering new ways of making sense of situations.",
+            "They test specific hypotheses."
+          ],
+          "answer": 2,
+          "explain": "One of the major strengths of qualitative methods is their ability to avoid tunnel vision and discover new ways of making sense of what is going on."
+        },
+        {
+          "q": "When framing questions in qualitative studies, which types of queries are typically used?",
+          "options": [
+            "What, when, and where",
+            "How, why, and what",
+            "Who, what, and when",
+            "If, then, and why"
+          ],
+          "answer": 1,
+          "explain": "Qualitative studies typically frame their questions as 'what,' 'how,' and 'why' queries."
+        }
+      ]
+    },
+    "7": {
+      "heading": "<!--slide-rich--><span style=\"font-family: inherit; font-weight: bold; letter-spacing: -0.006em;\">Other considerations to make in planning a research project Designing&nbsp;</span>",
+      "questions": [
+        {
+          "q": "Which stage of a research project involves planning and preparing the methodological procedure?",
+          "options": [
+            "Designing",
+            "Reporting",
+            "Interpreting",
+            "Collecting"
+          ],
+          "answer": 0,
+          "explain": "The design stage constitutes the step where the methodological procedure is planned and prepared."
+        },
+        {
+          "q": "How does the choice of interview technique impact the design of a research project?",
+          "options": [
+            "It determines the time schedule",
+            "It defines the research question",
+            "It influences the type and number of interviews conducted",
+            "It affects the reporting format"
+          ],
+          "answer": 2,
+          "explain": "When the chosen technique is interviews, designing the research project will be to determine which kind of interviews to use and how many interviews to perform."
+        },
+        {
+          "q": "What is the primary focus of the reporting stage in the research process?",
+          "options": [
+            "Planning the methodology",
+            "Conducting interviews",
+            "Writing a report to present findings",
+            "Analyzing data"
+          ],
+          "answer": 2,
+          "explain": "Reporting covers the part of the research process where the researcher writes a report to present his findings."
+        },
+        {
+          "q": "Which type of interviews might be included in the design of a research project?",
+          "options": [
+            "Personal, collective, expert",
+            "Quantitative, qualitative, mixed",
+            "Formal, informal, structured",
+            "Open-ended, closed-ended, semi-structured"
+          ],
+          "answer": 0,
+          "explain": "The design stage involves determining which kind of interviews to use—personal, collective (focus group), expert, etc."
+        },
+        {
+          "q": "When planning a research project, what is a key consideration regarding the time schedule?",
+          "options": [
+            "How to conduct interviews",
+            "How different steps interrelate",
+            "What methodology to use",
+            "How to analyze data"
+          ],
+          "answer": 1,
+          "explain": "The time schedule and how the different steps interrelate is a key consideration in planning a research project."
+        }
+      ]
+    },
+    "8": {
+      "heading": "<!--slide-rich--><span style=\"font-family: inherit; font-weight: bold; letter-spacing: -0.006em;\">What do we mean by collecting data?</span>",
+      "questions": [
+        {
+          "q": "How does one implement a plan for collecting data according to the introduction?",
+          "options": [
+            "By defining the information needed",
+            "By putting the design for collecting information into operation",
+            "By analyzing the data",
+            "By organizing the collected data"
+          ],
+          "answer": 1,
+          "explain": "Implementing a plan for collecting data means putting your design for collecting information into operation."
+        },
+        {
+          "q": "Which of the following methods is NOT mentioned as a way to collect data?",
+          "options": [
+            "Direct observation",
+            "Interviews",
+            "Surveys",
+            "Focus groups"
+          ],
+          "answer": 3,
+          "explain": "Focus groups are not mentioned as a method for collecting data in the provided text."
+        },
+        {
+          "q": "When should recording of observations ideally take place during data collection?",
+          "options": [
+            "Before data collection begins",
+            "Concurrent with data collection",
+            "After data collection is complete",
+            "At random times during the process"
+          ],
+          "answer": 1,
+          "explain": "Recording should be done concurrent with data collection if possible, or soon afterwards, to ensure accuracy."
+        },
+        {
+          "q": "Why is it important to organize and record data appropriately?",
+          "options": [
+            "To make it easier to forget the information",
+            "To ensure it is optimally useful",
+            "To avoid any form of analysis",
+            "To make the collection process longer"
+          ],
+          "answer": 1,
+          "explain": "Organizing and recording data appropriately ensures it is optimally useful for analysis and future application."
+        },
+        {
+          "q": "Which aspect of collecting data involves defining what is being observed?",
+          "options": [
+            "Data analysis",
+            "Data collection planning",
+            "Observation methodology",
+            "Data organization"
+          ],
+          "answer": 2,
+          "explain": "Defining what you're observing is part of the observation methodology in the data collection process."
+        }
+      ]
+    },
+    "9": {
+      "heading": "<!--slide-rich--><span style=\"font-family: inherit; font-weight: bold; letter-spacing: -0.006em;\">Some of the things you might do with the information you collect include:</span>",
+      "questions": [
+        {
+          "q": "Which of the following is NOT mentioned as a way to protect collected materials from loss or erasure?",
+          "options": [
+            "Making photocopies of recording forms",
+            "Entering information into a computer program",
+            "Transcribing audio recordings",
+            "Performing mathematical operations"
+          ],
+          "answer": 1,
+          "explain": "The slide states that making photocopies is a method to guard against loss, while entering information into a computer program is not mentioned as a protective measure."
+        },
+        {
+          "q": "What is the purpose of coding data as described in the slide?",
+          "options": [
+            "To arrange data in a more accessible format",
+            "To translate qualitative data into a numerical form",
+            "To perform mathematical operations on data",
+            "To gather information from various sources"
+          ],
+          "answer": 1,
+          "explain": "The slide explains that coding data involves translating qualitative data into a form suitable for processing by software or statistical analysis."
+        },
+        {
+          "q": "When organizing data, which factor is suggested to influence how data should be grouped?",
+          "options": [
+            "The research design",
+            "The number of participants",
+            "The type of software used",
+            "The length of the data collection"
+          ],
+          "answer": 0,
+          "explain": "The slide indicates that how data is organized depends on the research design and evaluation questions."
+        },
+        {
+          "q": "In the context of preparing quantitative information for analysis, which operation is mentioned as an example?",
+          "options": [
+            "Transcribing audio recordings",
+            "Making photocopies",
+            "Calculating the mean",
+            "Gathering information from all sources"
+          ],
+          "answer": 2,
+          "explain": "The slide specifically mentions calculating the mean, median, and mode as examples of mathematical operations needed for quantitative analysis."
+        },
+        {
+          "q": "How can observations be grouped according to the slide?",
+          "options": [
+            "By the color of the data",
+            "By the dependent variable",
+            "By the software used",
+            "By the time of day"
+          ],
+          "answer": 1,
+          "explain": "The slide states that observations might be grouped by the dependent variable, among other criteria, to facilitate analysis."
+        }
+      ]
+    },
+    "10": {
+      "heading": "<!--slide-rich--><span style=\"font-family: inherit; font-weight: bold; letter-spacing: -0.006em;\">Ethics for gathering data&nbsp;</span>",
+      "questions": [
+        {
+          "q": "Which ethical issue is emphasized as crucial for researchers when presenting their findings?",
+          "options": [
+            "Misrepresentation of results",
+            "Data storage methods",
+            "Participant consent",
+            "Research funding sources"
+          ],
+          "answer": 0,
+          "explain": "The slide emphasizes that presenting truthful results is a crucial ethical issue for researchers, highlighting that there is never any justification for misrepresentation."
+        },
+        {
+          "q": "Why is misrepresentation in research considered to have enormous costs?",
+          "options": [
+            "It affects only the researcher",
+            "It undermines trust in research",
+            "It is a common practice",
+            "It is legally punishable"
+          ],
+          "answer": 1,
+          "explain": "The slide states that the cost of misrepresentation is enormous, both to the researcher and the professional community, indicating it undermines trust in research."
+        },
+        {
+          "q": "When conducting educational research with human subjects, which organization has prepared ethical guidelines mentioned in the slide?",
+          "options": [
+            "American Psychological Association",
+            "Department of Health, Education, and Welfare",
+            "National Science Foundation",
+            "World Health Organization"
+          ],
+          "answer": 1,
+          "explain": "The slide specifically mentions that the Department of Health, Education, and Welfare has prepared ethical guidelines for educational research with human subjects."
+        },
+        {
+          "q": "How should researchers approach the collection and storing of data from human subjects according to the slide?",
+          "options": [
+            "With minimal ethical considerations",
+            "By following established ethical guidelines",
+            "Only focusing on data accuracy",
+            "Ignoring participant confidentiality"
+          ],
+          "answer": 1,
+          "explain": "The slide indicates that researchers should consider several ethical issues related to professionalism and follow ethical guidelines when collecting and storing data from human subjects."
+        },
+        {
+          "q": "Which of the following is NOT mentioned as a professional issue related to ethical research?",
+          "options": [
+            "Truthful results",
+            "Fraud justification",
+            "Data storage",
+            "Human subject research"
+          ],
+          "answer": 1,
+          "explain": "The slide states there is never any justification for misrepresentation or fraud, indicating that fraud justification is not a professional issue that should be considered."
+        }
+      ]
+    },
+    "11": {
+      "heading": "<!--slide-rich--><span style=\"font-family: inherit; font-weight: bold; letter-spacing: -0.006em;\">Data Collection in computer science&nbsp;</span>",
+      "questions": [
+        {
+          "q": "Which principle is emphasized in qualitative data collection regarding the scope of data?",
+          "options": [
+            "Data must be strictly defined in advance",
+            "Everything is potential data",
+            "Only formal rules can determine admissibility",
+            "Data must be collected from a single source"
+          ],
+          "answer": 1,
+          "explain": "The most important principle of qualitative data collection is that everything is potential data, meaning the evaluator does not restrict the scope of data collection in advance."
+        },
+        {
+          "q": "What are the three main sources of data used by qualitative evaluators?",
+          "options": [
+            "Surveys, interviews, and experiments",
+            "Observation, open-ended interviews, and documents",
+            "Quantitative metrics, field studies, and surveys",
+            "Focus groups, closed-ended surveys, and interviews"
+          ],
+          "answer": 1,
+          "explain": "Qualitative evaluators use three main sources for data: observation, open-ended interviews and survey questions, and documents and texts."
+        },
+        {
+          "q": "Why might data overload be considered a more intractable problem than validity in qualitative data collection?",
+          "options": [
+            "It is easier to manage than validity",
+            "It requires strict rules for data admissibility",
+            "The evaluator must continually decide what data are relevant",
+            "It does not affect the quality of the research"
+          ],
+          "answer": 2,
+          "explain": "Data overload is considered more intractable because the evaluator must continually make decisions about what data are relevant and may change these decisions over the course of the project."
+        },
+        {
+          "q": "How does the role of the researcher differ in qualitative data collection compared to quantitative methods?",
+          "options": [
+            "The researcher is not involved in data collection",
+            "The researcher uses statistical tools for analysis",
+            "The researcher engages directly in the setting studied",
+            "The researcher relies solely on pre-existing data"
+          ],
+          "answer": 2,
+          "explain": "In qualitative data collection, the researcher is directly engaged in the setting studied, often referred to as 'fieldwork', which is a key aspect that differentiates it from quantitative methods."
+        },
+        {
+          "q": "When recording qualitative data, what form is essential for analysis according to the text?",
+          "options": [
+            "Summary reports",
+            "Statistical tables",
+            "Detailed verbatim field notes or interview transcripts",
+            "Abstracted conclusions"
+          ],
+          "answer": 2,
+          "explain": "Detailed, often verbatim form as field notes or interview transcripts is essential for the types of analysis used in qualitative research."
+        }
+      ]
+    },
+    "12": {
+      "heading": "<!--slide-rich--><span style=\"font-family: inherit; font-weight: bold; letter-spacing: -0.006em;\">Observation</span><span style=\"font-family: inherit; letter-spacing: -0.006em;\">&nbsp;</span>",
+      "questions": [
+        {
+          "q": "Which term is used to distinguish active involvement in qualitative observation from passive observation?",
+          "options": [
+            "Participant observation",
+            "Active observation",
+            "Interactive observation",
+            "Qualitative observation"
+          ],
+          "answer": 0,
+          "explain": "The term 'participant observation' is used to distinguish active involvement in qualitative studies from passive or non-interactive observation."
+        },
+        {
+          "q": "How does participant observation benefit the observer in qualitative studies?",
+          "options": [
+            "It allows for retrospective analysis.",
+            "It enables informal discussions with system users.",
+            "It limits the observer's engagement with the setting.",
+            "It focuses solely on recorded data."
+          ],
+          "answer": 1,
+          "explain": "Participant observation benefits the observer by allowing them to engage in informal discussions with system users and ask questions for clarification."
+        },
+        {
+          "q": "Which aspect of participant observation is emphasized in the context of qualitative studies?",
+          "options": [
+            "Detailed descriptive accounts",
+            "Quantitative data collection",
+            "Statistical analysis",
+            "Historical context"
+          ],
+          "answer": 0,
+          "explain": "Participant observation emphasizes producing detailed descriptive accounts of ongoing activities and verbal interactions within the studied setting."
+        },
+        {
+          "q": "Why is participant observation considered crucial for the assessment of a system?",
+          "options": [
+            "It provides a historical overview.",
+            "It allows for immediate context understanding.",
+            "It focuses on user feedback after the fact.",
+            "It limits observer influence on the study."
+          ],
+          "answer": 1,
+          "explain": "Participant observation is crucial for assessing a system because it captures the immediate context of use, including users' explanations and evaluations."
+        },
+        {
+          "q": "When conducting participant observation, what type of accounts does the observer typically record?",
+          "options": [
+            "Statistical summaries",
+            "Detailed descriptive accounts",
+            "Theoretical frameworks",
+            "Historical narratives"
+          ],
+          "answer": 1,
+          "explain": "The observer in participant observation typically records detailed descriptive accounts of ongoing activities and interactions, rather than statistical summaries or theoretical frameworks."
+        }
+      ]
+    },
+    "13": {
+      "heading": "<!--slide-rich--><span style=\"font-family: inherit; font-weight: bold; letter-spacing: -0.006em;\">Open-Ended Interviews and Survey Questions</span>",
+      "questions": [
+        {
+          "q": "Which of the following best describes the primary goal of open-ended interviewing?",
+          "options": [
+            "To collect data from pre-established response categories",
+            "To elicit respondents' views in their own terms",
+            "To follow a rigid interview format",
+            "To limit the conversation to specific topics"
+          ],
+          "answer": 1,
+          "explain": "The primary goal of open-ended interviewing is to elicit the respondent’s views and experiences in his or her own terms, rather than collecting data from pre-established response categories."
+        },
+        {
+          "q": "How does open-ended interviewing differ from structured interviews?",
+          "options": [
+            "It requires a rigid format",
+            "It allows for follow-up questions and probing",
+            "It focuses solely on quantitative data",
+            "It eliminates the need for participant feedback"
+          ],
+          "answer": 1,
+          "explain": "Open-ended interviewing allows the interviewer to elaborate on questions, follow up on unanticipated information, and probe for further explanation, which differs from the rigid format of structured interviews."
+        },
+        {
+          "q": "When are focus groups particularly useful in qualitative research?",
+          "options": [
+            "When collecting individual data",
+            "When participants need to work independently",
+            "When interviewing several people together",
+            "When avoiding any form of interaction among participants"
+          ],
+          "answer": 2,
+          "explain": "Focus groups are particularly useful in qualitative research when interviewing several people together, as they allow participants to react and respond to each other's remarks."
+        },
+        {
+          "q": "Which of the following is NOT mentioned as a source of qualitative data?",
+          "options": [
+            "Documents",
+            "Interviews",
+            "Pictures or photographs",
+            "Surveys with fixed responses"
+          ],
+          "answer": 3,
+          "explain": "Surveys with fixed responses are not mentioned as a source of qualitative data; instead, documents, texts, pictures, and artifacts are highlighted."
+        },
+        {
+          "q": "Why is it important for an interviewer to elaborate on questions if they are not understood?",
+          "options": [
+            "To maintain a rigid interview structure",
+            "To ensure participants feel comfortable",
+            "To gather more accurate and detailed responses",
+            "To limit the scope of the interview"
+          ],
+          "answer": 2,
+          "explain": "It is important for an interviewer to elaborate on questions that are not understood to gather more accurate and detailed responses from participants."
+        }
+      ]
+    },
+    "14": {
+      "heading": "<!--slide-rich--><span style=\"font-family: inherit; letter-spacing: -0.006em;\"><span style=\"font-weight: bold;\">Summary of data collection</span> methods in research Methods From the list below, select the data gathering method(s) you wish to use and learn the best practices for implementing it.</span>",
+      "questions": [
+        {
+          "q": "Which data collection method involves a systematic examination of oral, written, or visual communication?",
+          "options": [
+            "Experiment",
+            "Content analysis",
+            "Survey",
+            "Observation"
+          ],
+          "answer": 1,
+          "explain": "Content analysis is defined as the systematic examination of oral, written, or visual communication."
+        },
+        {
+          "q": "How does an experiment differ from a focus group in research methods?",
+          "options": [
+            "An experiment measures cause and effect relations, while a focus group gathers information through discussion.",
+            "An experiment is a directed conversation, while a focus group uses checklists.",
+            "An experiment involves surveys, while a focus group involves observation.",
+            "An experiment is systematic observation, while a focus group is a series of questions."
+          ],
+          "answer": 0,
+          "explain": "An experiment uses various designs to measure cause and effect relations, whereas a focus group consists of similar individuals providing information during a moderated discussion."
+        },
+        {
+          "q": "When conducting an interview as a data collection method, what is the primary tool used to gather information?",
+          "options": [
+            "Checklists",
+            "Surveys",
+            "A list of questions",
+            "Group discussions"
+          ],
+          "answer": 2,
+          "explain": "An interview is characterized by a directed conversation using a list of questions designed to gather extended responses."
+        },
+        {
+          "q": "Which method involves the systematic observation of behavior using checklists or scaled ratings?",
+          "options": [
+            "Survey",
+            "Observation",
+            "Experiment",
+            "Focus group"
+          ],
+          "answer": 1,
+          "explain": "Observation is defined as the systematic observation of behavior using checklists, scaled ratings, or narrative comments."
+        },
+        {
+          "q": "In which data collection method are individuals administered an ordered series of questions?",
+          "options": [
+            "Interview",
+            "Focus group",
+            "Survey",
+            "Experiment"
+          ],
+          "answer": 2,
+          "explain": "A survey involves administering an ordered series of questions to individuals in a systematic manner."
+        }
+      ]
+    },
+    "15": {
+      "heading": "<!--slide-rich--><span style=\"font-family: inherit; font-weight: bold; letter-spacing: -0.006em;\">When and by whom should data be collected and analysed?</span>",
+      "questions": [
+        {
+          "q": "Who can be hired or found to assist with data collection and analysis?",
+          "options": [
+            "A professional statistician only",
+            "A volunteer from a nearby college or university",
+            "Only full-time employees of the organization",
+            "Any member of the community"
+          ],
+          "answer": 1,
+          "explain": "The text states that you can hire or find a volunteer outside evaluator, such as from a nearby college or university, to take care of data collection and/or analysis."
+        },
+        {
+          "q": "Why might less formal evaluations still provide valuable information?",
+          "options": [
+            "They are always more accurate than formal evaluations.",
+            "They can provide insights based on simple data like dropout numbers and characteristics of participants.",
+            "They require no statistical knowledge.",
+            "They are quicker to conduct than formal evaluations."
+          ],
+          "answer": 1,
+          "explain": "The text mentions that while less formal evaluations may not be as sophisticated, they can still provide important and usable information, such as dropout numbers and participant characteristics."
+        },
+        {
+          "q": "Which method is suggested for someone who wants to conduct a formal evaluation themselves?",
+          "options": [
+            "Attend a workshop on data collection",
+            "Learn enough about statistics and statistical software, possibly by taking a course",
+            "Only rely on qualitative data",
+            "Outsource all data processing"
+          ],
+          "answer": 1,
+          "explain": "The text advises that one can try to learn enough about statistics and statistical software to conduct a formal evaluation, suggesting taking a course as an option."
+        },
+        {
+          "q": "When might qualitative data be a suitable option for evaluation?",
+          "options": [
+            "When evaluating the effectiveness of a new medication",
+            "When assessing compliance patterns related to a program",
+            "When conducting a rigorous statistical analysis",
+            "When you have no quantitative data available"
+          ],
+          "answer": 1,
+          "explain": "The text indicates that qualitative data might be suitable for drawing reasonable conclusions about use or compliance patterns, depending on the nature of the program."
+        },
+        {
+          "q": "What should be used for comparison in evaluations, if possible?",
+          "options": [
+            "A control group that is randomly selected or closely matched",
+            "Only qualitative data from past evaluations",
+            "A group of volunteers from the community",
+            "Data from previous programs without a control group"
+          ],
+          "answer": 0,
+          "explain": "The text suggests that if possible, a randomized or closely matched control group should be used for comparison in evaluations."
+        }
+      ]
+    },
+    "16": {
+      "heading": "<!--slide-rich--><span style=\"font-family: inherit; font-weight: bold; letter-spacing: -0.006em;\">When and by whom should data be collected and analysed?</span>",
+      "questions": [
+        {
+          "q": "Which option is NOT mentioned as a way to collect and analyze data?",
+          "options": [
+            "Hiring a professional statistician",
+            "Using qualitative data exclusively for a medication evaluation",
+            "Finding a volunteer evaluator from a university",
+            "Conducting a less formal evaluation"
+          ],
+          "answer": 1,
+          "explain": "The text states that using qualitative data exclusively for a medication evaluation is not advisable, making it the option not mentioned as a way to collect and analyze data."
+        },
+        {
+          "q": "How can you conduct a less formal evaluation according to the text?",
+          "options": [
+            "By relying solely on quantitative data and rigorous statistical procedures",
+            "By hiring a statistician to analyze the data for you",
+            "By collecting basic data such as dropout numbers and characteristics of the people served",
+            "By using only qualitative data for comprehensive insights"
+          ],
+          "answer": 2,
+          "explain": "The text indicates that a less formal evaluation can be conducted by collecting basic data like dropout numbers and characteristics of the people served, which can provide valuable information."
+        },
+        {
+          "q": "When might you want to collect and rely largely on qualitative data?",
+          "options": [
+            "For evaluating the effectiveness of a new medication",
+            "When the program focuses on compliance patterns",
+            "For rigorous statistical analysis",
+            "When you want to use a randomized control group"
+          ],
+          "answer": 1,
+          "explain": "The text suggests that relying on qualitative data might be reasonable for drawing conclusions about use or compliance patterns, depending on the program's focus."
+        },
+        {
+          "q": "Which method is suggested for improving the sophistication of the evaluation process?",
+          "options": [
+            "Conducting the evaluation without any statistical knowledge",
+            "Taking a course in statistics and statistical software",
+            "Only using qualitative data for analysis",
+            "Hiring an evaluator who only focuses on qualitative methods"
+          ],
+          "answer": 1,
+          "explain": "The text recommends learning about statistics and statistical software, such as by taking a course, to conduct a more formal evaluation."
+        },
+        {
+          "q": "Why is it beneficial to use a randomized or closely matched control group?",
+          "options": [
+            "It guarantees perfect results",
+            "It allows for a more accurate comparison",
+            "It eliminates the need for data collection",
+            "It ensures that qualitative data is sufficient"
+          ],
+          "answer": 1,
+          "explain": "The text states that using a randomized or closely matched control group is beneficial for comparison, which enhances the evaluation's accuracy."
+        }
+      ]
+    },
+    "18": {
+      "heading": "<!--slide-rich--><span style=\"font-family: inherit; letter-spacing: -0.006em;\"><span style=\"font-weight: bold;\">Summary of data collection</span> methods in research Methods From the list below, select the data gathering method(s) you wish to use and learn the best practices for implementing it.</span>",
+      "questions": [
+        {
+          "q": "Which best describes the primary goal of qualitative data analysis according to the slide?",
+          "options": [
+            "Finding numerical patterns in data",
+            "Understanding and searching for coherence and order",
+            "Testing a hypothesis with statistical methods",
+            "Creating visual representations of data"
+          ],
+          "answer": 1,
+          "explain": "The slide states that the basic goal of qualitative data analysis is understanding, specifically the search for coherence and order."
+        },
+        {
+          "q": "How does qualitative data analysis proceed during a research project?",
+          "options": [
+            "It is conducted only after all data collection is complete",
+            "It is an iterative process starting early and continuing throughout the research",
+            "It happens once at the midpoint of the study",
+            "It is completed before data collection begins"
+          ],
+          "answer": 1,
+          "explain": "The slide explains that qualitative data analysis is an ongoing iterative process that starts as soon as the project begins and continues through the entire research."
+        },
+        {
+          "q": "Why are data collection, analysis, interpretation, and research design described as intertwined in qualitative research?",
+          "options": [
+            "Because they are all independent steps",
+            "Because they depend on each other and influence one another",
+            "Because they occur in a fixed sequence without overlap",
+            "Because only data collection matters"
+          ],
+          "answer": 1,
+          "explain": "The slide states that these processes are intertwined and depend on each other, highlighting their mutual influence in qualitative research."
+        },
+        {
+          "q": "Which activity occurs first in the iterative process of qualitative data analysis?",
+          "options": [
+            "Testing and modifying understanding",
+            "Developing an initial understanding of the setting and perspectives",
+            "Reaching a final interpretation",
+            "Publishing the research findings"
+          ],
+          "answer": 1,
+          "explain": "According to the slide, the iterative process starts by developing an initial understanding of the setting and perspectives of the people being studied."
+        },
+        {
+          "q": "In qualitative research, how is an adequately coherent interpretation achieved?",
+          "options": [
+            "By collecting data only once",
+            "Through cycles of additional data collection and analysis",
+            "By ignoring conflicting data",
+            "By focusing solely on numerical data"
+          ],
+          "answer": 1,
+          "explain": "The slide indicates that understanding is tested and modified through cycles of additional data collection and analysis until a coherent interpretation is reached."
+        }
+      ]
+    },
+    "19": {
+      "heading": "<!--slide-rich--><span style=\"font-family: inherit; font-weight: bold; letter-spacing: -0.006em;\">When and by whom should data be collected and analysed?</span>",
+      "questions": [
+        {
+          "q": "How does coding in qualitative research primarily differ from coding in experimental or survey research?",
+          "options": [
+            "It uses pre-established categories for frequency counts",
+            "It sorts data segments into categories to develop theory",
+            "It applies explicit, unambiguous rules",
+            "It focuses only on numerical data"
+          ],
+          "answer": 1,
+          "explain": "In qualitative research, coding involves selecting data segments and sorting them into categories that facilitate insight, comparison, and theory development, unlike experimental or survey research which uses pre-established categories for frequency counts."
+        },
+        {
+          "q": "Which source is NOT mentioned as a possible origin for coding categories in qualitative research?",
+          "options": [
+            "Evaluation questions",
+            "Existing theory",
+            "Random selection",
+            "Language of the people studied"
+          ],
+          "answer": 2,
+          "explain": "The text mentions evaluation questions, existing theory, prior knowledge, and the language of the people studied as sources for coding categories, but not random selection."
+        },
+        {
+          "q": "Why is qualitative coding described as being 'grounded in the data'?",
+          "options": [
+            "Because it uses standardized categories",
+            "Because it is developed interactively with the data",
+            "Because it relies on numerical analysis",
+            "Because it ignores the context of the data"
+          ],
+          "answer": 1,
+          "explain": "Qualitative coding is grounded in the data because it is developed in interaction with and tailored to the understanding of the particular data being analysed."
+        },
+        {
+          "q": "Which of the following best describes a key goal of qualitative coding?",
+          "options": [
+            "Generating frequency counts of items",
+            "Sorting data to facilitate insight and theory development",
+            "Applying unambiguous rules to categorize data",
+            "Using only pre-established categories"
+          ],
+          "answer": 1,
+          "explain": "The key goal of qualitative coding is to sort data into categories that facilitate insight, comparison, and development of theory."
+        },
+        {
+          "q": "In qualitative coding, how might some categories be developed during analysis?",
+          "options": [
+            "By strictly following preset rules",
+            "Inductively by the evaluator during analysis",
+            "By ignoring the participants' language",
+            "By counting occurrences only"
+          ],
+          "answer": 1,
+          "explain": "Some coding categories are developed inductively by the evaluator during analysis, meaning they emerge from the data rather than being predetermined."
+        }
+      ]
+    },
+    "20": {
+      "heading": "<!--slide-rich--><span style=\"font-family: inherit; font-weight: bold; letter-spacing: -0.006em;\">When and by whom should data be collected and analysed?</span>",
+      "questions": [
+        {
+          "q": "How can an analytical memo be best described in qualitative research?",
+          "options": [
+            "A direct transcript of interviews",
+            "A written reflection or analysis related to the research",
+            "A summary of field notes",
+            "A statistical data report"
+          ],
+          "answer": 1,
+          "explain": "An analytical memo is anything a researcher writes related to the research other than direct field notes or transcription, used to facilitate reflection and analytical insight."
+        },
+        {
+          "q": "Which of the following is NOT an example of an analytical memo?",
+          "options": [
+            "A brief marginal comment on a transcript",
+            "A theoretical idea included in field notes",
+            "A full analytical essay",
+            "A verbatim transcription of an interview"
+          ],
+          "answer": 3,
+          "explain": "An analytical memo includes comments, theoretical ideas, or essays, but not direct transcriptions, which are not considered memos."
+        },
+        {
+          "q": "Why is writing analytical memos considered an important technique in research?",
+          "options": [
+            "It helps convert perceptions into a visible form for reflection",
+            "It replaces the need for field notes",
+            "It is used only after data collection is complete",
+            "It provides statistical analysis"
+          ],
+          "answer": 0,
+          "explain": "Writing memos converts the researcher’s perceptions and thoughts into visible form, facilitating reflection and further manipulation."
+        },
+        {
+          "q": "When should the process of writing analytical memos ideally begin in a research study?",
+          "options": [
+            "Only after data collection is complete",
+            "Before starting the study or early in the study",
+            "After the final report is written",
+            "Only during transcription"
+          ],
+          "answer": 1,
+          "explain": "Memos should begin early in the study, perhaps even before starting the study, to support reflection and analysis."
+        },
+        {
+          "q": "Which purpose does writing analytical memos serve in qualitative research?",
+          "options": [
+            "To facilitate reflection and analytical insight",
+            "To record exact spoken words",
+            "To collect numerical data",
+            "To create participant profiles"
+          ],
+          "answer": 0,
+          "explain": "Memos are used as a way to facilitate reflection and analytical insight by converting thoughts into visible form."
+        }
+      ]
+    },
+    "22": {
+      "heading": "",
+      "questions": [
+        {
+          "q": "How do displays like matrices and flowcharts compare to memos in qualitative research?",
+          "options": [
+            "They make ideas and data visible and permanent, similar to memos",
+            "They are primarily used for writing detailed narratives unlike memos",
+            "They replace memos entirely in qualitative analysis",
+            "They are less effective than memos for data visualization"
+          ],
+          "answer": 0,
+          "explain": "Displays such as matrices and flowcharts are similar to memos because they make ideas, data, and analysis visible and permanent."
+        },
+        {
+          "q": "Which key function of displays helps researchers grasp data or analysis as a whole?",
+          "options": [
+            "Data reduction",
+            "Data collection",
+            "Data encryption",
+            "Data replication"
+          ],
+          "answer": 0,
+          "explain": "Displays serve the key function of data reduction and presenting data or analysis in a form that allows it to be grasped as a whole."
+        },
+        {
+          "q": "Why might a researcher use a matrix as a data-oriented display?",
+          "options": [
+            "To elaborate coding categories alongside a reduced subset of data in each category",
+            "To create a narrative report of the research findings",
+            "To replace the need for concept maps and flowcharts",
+            "To visualize organizational hierarchies exclusively"
+          ],
+          "answer": 0,
+          "explain": "Matrices can be used as an elaboration of coding, presenting coding categories with a reduced subset of data in each category."
+        },
+        {
+          "q": "Which type of display is primarily used to show connections among categories?",
+          "options": [
+            "Concept maps, flowcharts, causal networks, and organisational diagrams",
+            "Matrices showing coding categories",
+            "Memos summarizing data",
+            "Graphs depicting statistical values"
+          ],
+          "answer": 0,
+          "explain": "Concept maps, flowcharts, causal networks, and organisational diagrams are used to display connections among categories."
+        },
+        {
+          "q": "Who provided the most detailed elaboration of analytical displays in qualitative research?",
+          "options": [
+            "Miles and Huberman",
+            "Glaser and Strauss",
+            "Lincoln and Guba",
+            "Patton and Creswell"
+          ],
+          "answer": 0,
+          "explain": "Miles and Huberman have given the most detailed elaboration of analytical displays."
+        }
+      ]
+    },
+    "24": {
+      "heading": "",
+      "questions": [
+        {
+          "q": "Which characteristic best defines 'rich data' according to the slide?",
+          "options": [
+            "Data that is simple and straightforward",
+            "Data that is detailed and varied",
+            "Data that is minimal and focused",
+            "Data that is quantitative only"
+          ],
+          "answer": 1,
+          "explain": "Rich data are defined as data that are detailed and varied enough to provide a full and revealing picture of what is going on."
+        },
+        {
+          "q": "How does collecting rich data help a researcher in theory development?",
+          "options": [
+            "It confirms the researcher's initial prejudices",
+            "It limits the scope of data to only expected outcomes",
+            "It challenges the researcher to test and develop theories",
+            "It avoids the need for data analysis"
+          ],
+          "answer": 2,
+          "explain": "Collecting rich data makes it difficult for the researcher to see only what supports his or her prejudices and expectations, thus providing a test of one’s developing theories and a basis for generating, developing, and supporting such theories."
+        },
+        {
+          "q": "Why is it difficult for researchers to focus only on their prejudices when using rich data?",
+          "options": [
+            "Because rich data is quantitative",
+            "Because rich data provides a limited view",
+            "Because rich data is detailed and varied, revealing more aspects",
+            "Because rich data is collected randomly"
+          ],
+          "answer": 2,
+          "explain": "Rich data's detailed and varied nature makes it difficult for researchers to see only what supports their prejudices and expectations."
+        },
+        {
+          "q": "Which of the following is a direct benefit of using rich data in research?",
+          "options": [
+            "Simplifying the research process",
+            "Supporting the generation and development of theories",
+            "Reducing the amount of data to analyze",
+            "Avoiding the need for hypothesis testing"
+          ],
+          "answer": 1,
+          "explain": "Rich data provides a basis for generating, developing, and supporting theories."
+        },
+        {
+          "q": "In the context of rich data, what does the term 'full and revealing picture' imply?",
+          "options": [
+            "Data that only confirms existing theories",
+            "Data that excludes contradictory information",
+            "Data that comprehensively shows processes and what is happening",
+            "Data that is only numerical"
+          ],
+          "answer": 2,
+          "explain": "Rich data are detailed and varied enough to provide a full and revealing picture of what is going on and the processes involved."
+        }
+      ]
+    },
+    "25": {
+      "heading": "",
+      "questions": [
+        {
+          "q": "Why is identifying discrepant data important in qualitative research validity testing?",
+          "options": [
+            "It helps confirm prior theories without challenge",
+            "It highlights potential flaws in interpretations or explanations",
+            "It simplifies data analysis by removing outliers",
+            "It ensures all data fits the expected conclusions"
+          ],
+          "answer": 1,
+          "explain": "Identifying discrepant data is important because instances that cannot be accounted for by a particular interpretation can point up important defects in that account."
+        },
+        {
+          "q": "Which challenge is commonly faced when dealing with discrepant evidence in qualitative research?",
+          "options": [
+            "Pressure to emphasize discrepant data over supporting data",
+            "Pressure to ignore data that do not fit prior theories or conclusions",
+            "Pressure to collect more quantitative data",
+            "Pressure to change research questions"
+          ],
+          "answer": 1,
+          "explain": "There are strong pressures to ignore data that do not fit prior theories or conclusions, making it important to rigorously examine all data."
+        },
+        {
+          "q": "How should researchers handle particularly difficult cases with discrepant evidence according to the slide?",
+          "options": [
+            "Exclude the discrepant evidence from the report",
+            "Force the data to fit the existing theory",
+            "Report the discrepant evidence and let readers draw their own conclusions",
+            "Ignore the discrepant evidence to maintain consistency"
+          ],
+          "answer": 2,
+          "explain": "In difficult cases, the only solution may be to report the discrepant evidence and allow readers to draw their own conclusions."
+        },
+        {
+          "q": "Which term best describes data that do not fit a particular interpretation or explanation in qualitative research?",
+          "options": [
+            "Supporting data",
+            "Discrepant data",
+            "Confirmatory data",
+            "Quantitative data"
+          ],
+          "answer": 1,
+          "explain": "Data that do not fit a particular interpretation or explanation are called discrepant data."
+        },
+        {
+          "q": "In the context of qualitative research, what is a negative case?",
+          "options": [
+            "A case that supports the main theory",
+            "A case that contradicts or cannot be explained by the current interpretation",
+            "A case with incomplete data",
+            "A case that confirms prior conclusions"
+          ],
+          "answer": 1,
+          "explain": "A negative case is an instance that cannot be accounted for by a particular interpretation or explanation, highlighting potential defects in the account."
+        }
+      ]
+    },
+    "26": {
+      "heading": "",
+      "questions": [
+        {
+          "q": "How should you proceed if your outcome variable is not normally distributed according to the slide on reporting experiment results?",
+          "options": [
+            "Ignore the distribution and proceed with analysis",
+            "Consult a statistician to consider transforming the variable",
+            "Only compare group means and standard deviations",
+            "Use non-statistical descriptive methods only"
+          ],
+          "answer": 1,
+          "explain": "The slide advises consulting a statistician to determine if you need to transform the variable when it is not normally distributed."
+        },
+        {
+          "q": "Which statistical elements give a rough sense of group differences before applying formal statistical tests?",
+          "options": [
+            "Group means and standard deviations",
+            "Median and mode",
+            "Correlation coefficients",
+            "P-values"
+          ],
+          "answer": 0,
+          "explain": "Comparing group means and standard deviations provides a rough sense of group differences on outcome measures before statistical tests are applied."
+        },
+        {
+          "q": "Why is it important to use statistical tests when comparing group differences in an experiment?",
+          "options": [
+            "To confirm the data is normally distributed",
+            "To demonstrate differences are unlikely due to chance",
+            "To calculate descriptive statistics",
+            "To summarize findings in relation to hypotheses"
+          ],
+          "answer": 1,
+          "explain": "Statistical tests are necessary to show that group differences are unlikely to have occurred by chance, beyond just comparing means and standard deviations."
+        },
+        {
+          "q": "When reporting results, what is one way to represent the magnitude of an intervention effect?",
+          "options": [
+            "Using p-values",
+            "Reporting percentage change",
+            "Listing all raw data points",
+            "Providing only qualitative descriptions"
+          ],
+          "answer": 1,
+          "explain": "The slide suggests representing the magnitude of an intervention effect with a percentage change, such as scores increasing 35% in the intervention group."
+        },
+        {
+          "q": "What additional aspects should be discussed in your report besides the main findings?",
+          "options": [
+            "Only the statistical significance of results",
+            "Practical or theoretical implications, limitations, and future research directions",
+            "The names of all participants",
+            "Detailed raw data without interpretation"
+          ],
+          "answer": 1,
+          "explain": "The slide recommends discussing practical or theoretical implications, major shortcomings or limitations, and suggestions for future research along with the main findings."
+        }
+      ]
+    },
+    "27": {
+      "heading": "",
+      "questions": [
+        {
+          "q": "How should researchers approach the initial results of a quantitative content analysis to develop accurate findings?",
+          "options": [
+            "Simply report the initial results without further examination",
+            "Critically examine results and check for statistical pitfalls",
+            "Ignore statistical significance and focus on raw data",
+            "Only compare results between groups without context"
+          ],
+          "answer": 1,
+          "explain": "The slide emphasizes the importance of critically examining results and checking for statistical pitfalls to develop accurate findings, rather than just reporting initial results."
+        },
+        {
+          "q": "Which question is important to ask when comparing content between groups before an intervention in quantitative content analysis?",
+          "options": [
+            "Were the groups motivated to participate after the intervention?",
+            "Were there significant differences between groups on the content before the intervention started?",
+            "Did the groups have different instructional interventions?",
+            "Was the sample size larger than 50 cases per group?"
+          ],
+          "answer": 1,
+          "explain": "The slide specifically suggests asking if there were significant differences between groups on the content before the intervention started when comparing content between groups."
+        },
+        {
+          "q": "Why is it important to consider interrater reliability in quantitative content analysis when multiple coders are used?",
+          "options": [
+            "To ensure that the results are biased towards one coder",
+            "To confirm that the level of agreement among coders is acceptable (e.g., .70 or higher)",
+            "To reduce the sample size needed for analysis",
+            "To avoid the need for statistical significance testing"
+          ],
+          "answer": 1,
+          "explain": "The slide states that if multiple raters/coders are used, the level of interrater reliability should be acceptable (e.g., .70 or higher) to ensure reliable results and to detect any bias."
+        },
+        {
+          "q": "What potential issue arises when sample sizes are very large in group comparisons during quantitative content analysis?",
+          "options": [
+            "Lack of statistical significance",
+            "Inability to calculate effect sizes",
+            "Almost any difference becomes statistically significant, even trivial ones",
+            "Reduced motivation among participants"
+          ],
+          "answer": 2,
+          "explain": "The slide explains that with very large groups, almost any difference, even trivial ones, will be statistically significant, potentially leading to unwarranted conclusions."
+        },
+        {
+          "q": "When might consulting a statistician be necessary according to the slide on quantitative content analysis findings?",
+          "options": [
+            "When results are statistically significant but trivial",
+            "When you cannot resolve statistical problems on your own",
+            "When the sample size is exactly 25 cases per group",
+            "When interrater reliability is above .70"
+          ],
+          "answer": 1,
+          "explain": "The slide advises consulting with a statistician if you are unable to resolve statistical problems on your own."
+        }
+      ]
+    },
+    "28": {
+      "heading": "",
+      "questions": [
+        {
+          "q": "How does participant observation differ from traditional observation in qualitative research?",
+          "options": [
+            "The researcher participates and interacts within the setting rather than just observing from outside",
+            "The researcher uses only quantitative data during observation",
+            "The researcher follows a fixed interview schedule",
+            "The researcher only records behaviour without interaction"
+          ],
+          "answer": 0,
+          "explain": "Participant observation involves the researcher actively participating and interacting in the natural setting rather than merely recording behaviour as an outside observer."
+        },
+        {
+          "q": "Which term refers to the practice of obtaining feedback from study participants to verify the researcher's interpretations?",
+          "options": [
+            "Member checking",
+            "Triangulation",
+            "Summative evaluation",
+            "Validity threat"
+          ],
+          "answer": 0,
+          "explain": "Member checking is defined as getting feedback from participants to check the researchers’ interpretation."
+        },
+        {
+          "q": "Why is triangulation used in qualitative research?",
+          "options": [
+            "To cross-check inferences using multiple methods or data sources",
+            "To develop categories and hypotheses inductively",
+            "To administer a summative evaluation",
+            "To ensure participants answer open-ended questions"
+          ],
+          "answer": 0,
+          "explain": "Triangulation involves cross-checking inferences by using multiple methods, sources, or forms of data for drawing conclusions."
+        },
+        {
+          "q": "Which characteristic best describes 'rich data' in qualitative research?",
+          "options": [
+            "Detailed, comprehensive, and holistic",
+            "Numerical and statistical",
+            "Brief and focused on a single aspect",
+            "Derived only from closed-ended questions"
+          ],
+          "answer": 0,
+          "explain": "Rich data is described as data that are detailed, comprehensive, and holistic."
+        },
+        {
+          "q": "What is a validity threat in qualitative research?",
+          "options": [
+            "A rival hypothesis or alternative explanation that may invalidate conclusions",
+            "The process of testing programme impact after implementation",
+            "Collecting data through open-ended questions",
+            "The use of non-quantitative data such as pictures and artefacts"
+          ],
+          "answer": 0,
+          "explain": "A validity threat is a way in which one’s description, interpretation, or conclusion might be invalid, also known as a rival hypothesis or alternative explanation."
         }
       ]
     }

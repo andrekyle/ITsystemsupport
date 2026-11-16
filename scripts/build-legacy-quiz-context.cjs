@@ -45,8 +45,15 @@ for (const unit of builtUnits) {
   const versions = [pack, ...(pack.history ?? [])];
   const slides = {};
   for (let index = 0; index < (pack.content?.lesson?.length ?? 0); index++) {
-    const candidates = versions.map(version => version.content?.lesson?.[index]).filter(slide => slide?.slideQuiz?.length)
-      .map(slide => ({ heading: slide.heading, questions: slide.slideQuiz }));
+    const candidates = versions.flatMap(version => {
+      const section = version.content?.lesson?.[index];
+      const versionEdits = edits.find(row => row.key === `${editKey}.built-${version.revision}`);
+      const overrides = versionEdits ? JSON.parse(versionEdits.value) : {};
+      // Match the lesson renderer: a saved generated quiz replaces the embedded
+      // quiz in this exact revision. The hidden embedded questions were not shown.
+      const questions = overrides.generatedQuizzes?.[index] ?? section?.slideQuiz;
+      return questions?.length ? [{ heading: overrides.headings?.[index] ?? section?.heading ?? `Slide ${index + 1}`, questions }] : [];
+    });
     const archived = edits.flatMap(row => {
       const value = JSON.parse(row.value);
       const questions = value.generatedQuizzes?.[index];
