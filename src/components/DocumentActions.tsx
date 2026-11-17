@@ -91,6 +91,7 @@ export function DocumentActions({ name, labelled = false, editing = false }: { n
 
   const tools = (
     <div className={`document-actions no-print${labelled ? " is-labelled" : ""}`} role="toolbar" aria-label={`${name} actions`}>
+      {/workbook/i.test(name) && <button type="button" title="Back to workbook top" aria-label="Back to workbook top" onClick={() => document.querySelector('.document-print-target')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h5v-7h4v7h5V9" /></svg></button>}
       <button type="button" className="document-action-pdf" onClick={downloadPdf} title={`Download ${name} as PDF`} aria-label={`Download ${name} as PDF`}>
         <Icon name="download" size={18} />
         {labelled && <span>PDF</span>}

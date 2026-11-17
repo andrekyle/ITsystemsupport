@@ -6,6 +6,7 @@ import { Select } from "../components/Select";
 import { cloudProfileIds, fetchCloudLearnerData, mergeProfileWithCloud, remoteOnlyProfiles, type CloudLearnerData } from "../lib/directory";
 import { Icon } from "../icons";
 import { Modal } from "../components/Modal";
+import { PortfolioDateInput } from "../components/PortfolioDateInput";
 import { useSkillsPortfolio } from "../lib/skillsPortfolio";
 import { SKILLS_PORTFOLIO, portfolioReportHtml, profilePortfolioDefaults, validatePortfolioImport, type PortfolioTable } from "../lib/skillsPortfolioContent";
 import { mergeProgressEvidence } from "../lib/progressEvidence";
@@ -20,6 +21,12 @@ const oldKey = (text: string) => "sde-" + text.toLowerCase().replace(/[^a-z0-9]+
 function filename(label: string, original: string, learner: string) {
   const clean = (text: string, max: number) => text.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").slice(0, max).replace(/-$/, "");
   return `${clean(label, 42) || "Evidence"}-${clean(learner, 32) || "Learner"}${original.match(/\.[a-z0-9]{1,10}$/i)?.[0] ?? ""}`;
+}
+function formatPortfolioReviewDate(value?: string) {
+  if (!value || Number.isNaN(Date.parse(value))) return "Date not recorded";
+  return new Intl.DateTimeFormat("en-ZA", {
+    dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Johannesburg",
+  }).format(new Date(value));
 }
 function downloadText(name: string, text: string, type: string) {
   const url = URL.createObjectURL(new Blob([text], { type }));
@@ -52,16 +59,39 @@ function SkillsRegister({ profile }: { profile: Profile }) {
   const { docs: localDocs, saveDoc } = usePoe(learner?.id ?? "");
   const cloudDocs = learner ? Object.assign({}, ...[...cloudProfileIds(learner, cloud)].map(id => cloud?.poe[id] ?? {})) as Record<string, PoeDoc> : {};
   const docs = { ...cloudDocs, ...localDocs };
-  const values = { ...(learner ? profilePortfolioDefaults(learner) : {}), ...record.values };
+  const existingDocuments = [...Object.entries(docs), ...Object.entries(record.values).flatMap(([key, value]) =>
+    value && typeof value === "object" && !Array.isArray(value) ? [[key, value.doc] as [string, PoeDoc]] : [])]
+    .filter(([, doc], index, all) => all.findIndex(([, other]) => (other.path || other.data || other.name) === (doc.path || doc.data || doc.name)) === index);
+  const linkedDocuments: typeof record.values = {};
+  const administration = SKILLS_PORTFOLIO.find(item => item.id === "section-3");
+  administration?.blocks.forEach(block => {
+    if (block.kind !== "table") return;
+    block.rows.forEach((row, index) => {
+      const label = row[0]?.text ?? "";
+      const keys = /Identity document/i.test(label) ? ["id-copy", "gm-id-copy", oldKey("Certified ID copy")]
+        : /Learnership agreement/i.test(label) ? ["agreement", "gm-agreement", oldKey("Signed learnership + employment contract")]
+        : /SETA enrolment/i.test(label) ? [oldKey("SETA registration")] : [];
+      const found = keys.map(key => docs[key]).find(Boolean);
+      if (found) linkedDocuments[`doc.section-3.${block.id}-${index}`] = { doc: found };
+    });
+  });
+  const values = { ...(learner ? profilePortfolioDefaults(learner) : {}), ...linkedDocuments, ...record.values };
   const [sectionId, setSectionId] = useState(SKILLS_PORTFOLIO[0].id);
   const [search, setSearch] = useState("");
   const section = SKILLS_PORTFOLIO.find(section => section.id === sectionId);
   const unitId = section?.title.match(/^Unit standard (\d+)$/)?.[1];
   const unitProgress = unitId ? progress.units[unitId] : undefined;
   const unitLessons = unitId ? lessonEvidence.lessons[unitId] ?? [] : [];
+  const workbookAnswerCount = savedWorkbookAnswers(unitProgress).length;
+  const lessonAnswerCount = savedLessonAnswers(unitLessons).length;
+  const completedQuizCount = savedLessonQuizResults(unitLessons).filter(quiz => quiz.completed).length;
+  const platformWorkLoading = loading || lessonEvidence.loading;
+  const hasPlatformWork = workbookAnswerCount > 0 || lessonAnswerCount > 0 || completedQuizCount > 0;
   const [upload, setUpload] = useState<{ id: string; label: string; oldId?: string } | null>(null);
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [review, setReview] = useState<{ id: string; label: string; fallback?: PoeDoc; oldId?: string } | null>(null);
+  const [existingTarget, setExistingTarget] = useState<{ id: string; label: string } | null>(null);
+  const [existingKey, setExistingKey] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const importInput = useRef<HTMLInputElement>(null);
   const disabled = !learner || record.loading || record.saving || !!record.error || uploadPct !== null;
@@ -86,18 +116,20 @@ function SkillsRegister({ profile }: { profile: Profile }) {
     finally { setUpload(null); setUploadPct(null); }
   }
   function attachmentRecord(id: string, fallback?: PoeDoc) {
-    const value = record.values[id];
+    const value = values[id];
+    if (value === false) return undefined;
     return value && typeof value === "object" && !Array.isArray(value) ? value : fallback ? { doc: fallback } : undefined;
   }
   const reviewItem = review ? attachmentRecord(review.id, review.fallback) : undefined;
   function attachment(id: string, label: string, fallback?: PoeDoc, oldId?: string) {
     const item = attachmentRecord(id, fallback);
-    return <div className="portfolio-evidence" key={id}>
-      {item && <div className="portfolio-attachment-name" title={item.doc.name}><Icon name="file" size={16} /><span>{item.doc.name}</span></div>}
+    return <div className={`portfolio-evidence${item ? " has-document" : " is-empty"}`} key={id}>
+      {item && <div className="portfolio-attachment-name" title={item.doc.name}><Icon name="upload" size={16} /><span>{item.doc.name}</span></div>}
       {item ? <div className="portfolio-review-line">
         <span className={`portfolio-evidence-status${item.status === 'Verified' ? ' verified' : ''}`}>{item.status ?? 'Pending verification'}</span>
         <button type="button" className="btn ghost" aria-label={`Manage evidence: ${label}`} onClick={() => setReview({ id, label, fallback, oldId })}>Manage</button>
-      </div> : <button type="button" className="btn ghost" disabled={disabled} onClick={() => { setUpload({ id, label, oldId }); fileInput.current?.click(); }}>{upload?.id === id && uploadPct !== null ? `Uploading ${uploadPct}%` : 'Upload evidence'}</button>}
+      </div> : <button type="button" className="btn ghost evidence-icon-action" aria-label="Upload evidence" title={`Upload evidence: ${label}`} disabled={disabled} onClick={() => { setUpload({ id, label, oldId }); fileInput.current?.click(); }}>{upload?.id === id && uploadPct !== null ? <span>{uploadPct}%</span> : <Icon name="upload" size={16} />}</button>}
+      {!item && existingDocuments.length > 0 && <button type="button" className="btn ghost evidence-icon-action" aria-label="Use existing document" title={`Use existing document: ${label}`} disabled={disabled} onClick={() => { setExistingKey(""); setExistingTarget({ id, label }); }}><Icon name="folder" size={16} /></button>}
     </div>;
   }
   function renderTable(block: PortfolioTable) {
@@ -118,11 +150,13 @@ function SkillsRegister({ profile }: { profile: Profile }) {
         return <Select ariaLabel={`${header}, row ${ri + 1}`} value={value} options={options} disabled={disabled} onChange={onChange} />;
       }
       const label = `${header}, row ${ri + 1}`;
+      if (/\bdates?\b/i.test(header)) return <PortfolioDateInput label={label} value={value} disabled={disabled} onChange={onChange} />;
       return /description|finding|outcome|activities|scope|details|criteria|information|recorded|completed|parties|control/i.test(header)
-        ? <textarea aria-label={label} disabled={disabled} rows={2} value={value} onChange={event => onChange(event.target.value)} />
-        : <input type="text" aria-label={label} disabled={disabled} value={value} onChange={event => onChange(event.target.value)} />;
+        ? <textarea aria-label={label} disabled={disabled} rows={1} value={value} onChange={event => onChange(event.target.value)} />
+        : <input type="text" aria-label={label} placeholder={sectionId === "section-3" ? "Add reference or note" : undefined} disabled={disabled} value={value} onChange={event => onChange(event.target.value)} />;
     }
-    return <div className="portfolio-table" key={block.id}><div className="card poe-table-card"><table className={`data poe-table portfolio-data-table${results ? " portfolio-results-table" : ""}`}>
+    return <div className="portfolio-table" key={block.id}><div className="card poe-table-card"><table className={`data poe-table portfolio-data-table${results ? " portfolio-results-table" : ""}${sectionId === "section-3" ? " portfolio-administration-table" : ""}`}>
+      {sectionId === "section-3" && <colgroup><col style={{ width: "36%" }} /><col style={{ width: "22%" }} /><col style={{ width: "42%" }} /></colgroup>}
       {results && <colgroup><col style={{ width: "11%" }} /><col style={{ width: "8%" }} /><col style={{ width: "25%" }} /><col style={{ width: "27%" }} /><col style={{ width: "29%" }} /></colgroup>}
       <thead><tr>{block.headers.map((header, i) => <th key={i}>{header}</th>)}<th>Evidence & verification</th></tr></thead>
       <tbody>{rows.map((row, ri) => <tr key={ri}>{row.map((cell, ci) => <td key={cell.id}>{cell.fixed ? cell.text : cellControl(cell, ri, ci)}</td>)}<td>{attachment(`doc.${sectionId}.${block.id}-${ri}`, row[0]?.text || `${section?.title ?? "Portfolio"} row ${ri + 1}`)}</td></tr>)}</tbody>
@@ -138,13 +172,15 @@ function SkillsRegister({ profile }: { profile: Profile }) {
   }
   const filtered = SKILLS_PORTFOLIO.filter(item => `${item.title} ${item.blocks.filter(block => block.kind === "text").map(block => block.text).join(" ")}`.toLowerCase().includes(search.toLowerCase()));
   return <div className="admin-overview evidence-register-page">
-    <div className="admin-overview-head"><div><h1>Skills Development evidence register</h1><p>Learner portfolio, assessment, workplace evidence and verification records.</p></div></div>
-    <div className="card evidence-register-toolbar">
+    <header className="portfolio-page-header">
+      <div className="portfolio-heading-copy"><span className="portfolio-eyebrow">LEARNING &amp; DEVELOPMENT</span><h1>Skills Development evidence register</h1><p>Learner portfolios, assessment and verification records.</p></div>
+    </header>
+    <div className={`card evidence-register-toolbar${record.dirty ? " has-unsaved-changes" : ""}`}>
       <div className="evidence-learner-picker"><strong>Learner portfolio</strong><Select value={learner?.id ?? ""} ariaLabel="Choose learner portfolio" disabled={uploadPct !== null || record.saving || !learners.length}
         placeholder={loading ? "Loading learners…" : "No learners available"} options={learners.map(p => ({ value: p.id, label: p.name, hint: p.enrolment?.email }))}
-        onChange={async id => { if (record.dirty && !await record.save()) return; setReview(null); setLearnerId(id); setError(""); }} /></div>
+        onChange={async id => { if (record.dirty && !await record.save()) return; setReview(null); setExistingTarget(null); setLearnerId(id); setError(""); }} /></div>
       <div className="portfolio-actions">
-        <button type="button" className="btn primary" disabled={disabled || !record.dirty} onClick={() => void record.save()}>{record.saving ? "Saving…" : "Save changes"}</button>
+        <button type="button" className="btn primary" disabled={disabled} onClick={() => void record.save()}>{record.saving ? "Saving…" : "Save changes"}</button>
         <button type="button" className="btn ghost" disabled={disabled} onClick={() => learner && downloadText(filename("Skills-Evidence", ".json", learner.name), JSON.stringify({ format: "itss-skills-portfolio-v1", learnerId: learner.id, learner: learner.name, exportedAt: new Date().toISOString(), values }, null, 2), "application/json")}>Export data</button>
         <button type="button" className="btn ghost" disabled={disabled} onClick={() => importInput.current?.click()}>Import data</button>
         <button type="button" className="btn ghost" disabled={disabled} onClick={() => learner && downloadText(filename("Skills-Portfolio", ".html", learner.name), portfolioReportHtml(learner, values), "text/html;charset=utf-8")}>Download portfolio</button>
@@ -161,7 +197,7 @@ function SkillsRegister({ profile }: { profile: Profile }) {
         <p className="muted">50 portfolio sections · records are saved separately for each learner.</p>
       </nav>
       <section className="card portfolio-content" aria-label={section?.title ?? "Existing evidence checklist"} aria-busy={record.loading}>
-        {section ? <><h2 className="section-title">{section.title}</h2>
+        {section ? <>{section.id === "section-1" ? <div className="portfolio-overview-heading"><h2>{section.title}</h2>{section.blocks.slice(0, 2).map(block => block.kind === "text" ? <span key={block.id}>{block.text}</span> : null)}</div> : <h2 className="section-title">{section.title}</h2>}
         {section.id === 'section-50' && <div className="portfolio-table"><h3>All learners on the platform</h3>
           <button type="button" className="btn ghost" onClick={() => {
             const rows = [['Learner','Email','Employer','Profile created','Last sign-in'], ...learners.map(p => [p.name,p.enrolment?.email ?? '',p.enrolment?.employer ?? '',p.createdAt,p.lastLogin ?? ''])];
@@ -169,17 +205,23 @@ function SkillsRegister({ profile }: { profile: Profile }) {
           }}>Download learner register CSV</button>
           <div className="poe-table-card"><table className="data poe-table"><thead><tr><th>Learner</th><th>Email</th><th>Employer / host</th><th>Recorded units</th></tr></thead><tbody>{learners.map(p => <tr key={p.id}><td>{p.name}</td><td>{p.enrolment?.email ?? '—'}</td><td>{p.enrolment?.employer ?? '—'}</td><td>{Object.keys(cloud?.progress[p.id]?.units ?? {}).length}</td></tr>)}</tbody></table></div>
         </div>}
-        {unitId && <div className="portfolio-live-evidence card"><h3>Recorded platform work</h3>
-          <p>{savedWorkbookAnswers(unitProgress).length} workbook answers · {lessonEvidence.loading ? "Loading lesson quizzes…" : `${savedLessonAnswers(unitLessons).length} saved lesson-quiz answers · ${savedLessonQuizResults(unitLessons).filter(quiz => quiz.completed).length} completed lesson quizzes`}</p>
-          {lessonEvidence.error && <p role="alert">{lessonEvidence.error}</p>}
-          <button type="button" className="btn ghost" disabled={lessonEvidence.loading || !learner} onClick={() => learner && downloadText(filename(`US-${unitId}-Saved-Work`, ".html", learner.name), `<!doctype html><html><meta charset="utf-8"><title>Saved learner work</title>${savedAcademicWorkHtml(unitProgress, WORKBOOK_SPECS[unitId], unitLessons)}</html>`, "text/html;charset=utf-8")}>Download recorded learner work</button>
-        </div>}
-        <div className="portfolio-fields">{section.blocks.map(block => {
+        {unitId && <aside className="portfolio-live-evidence" aria-label="Recorded platform work">
+          <div className="portfolio-live-summary"><h3>Recorded platform work</h3>
+            <p>{platformWorkLoading ? "Loading saved learner work..." : hasPlatformWork
+              ? `${workbookAnswerCount} workbook answers \u00b7 ${lessonAnswerCount} lesson-quiz answers \u00b7 ${completedQuizCount} completed quizzes`
+              : lessonEvidence.error ? "Saved learner work could not be fully loaded." : "No saved workbook or lesson-quiz work for this unit yet."}</p>
+            {lessonEvidence.error && <p role="alert">{lessonEvidence.error}</p>}
+          </div>
+          {hasPlatformWork && <button type="button" className="btn ghost" disabled={platformWorkLoading || !learner} onClick={() => learner && downloadText(filename(`US-${unitId}-Saved-Work`, ".html", learner.name), `<!doctype html><html><meta charset="utf-8"><title>Saved learner work</title>${savedAcademicWorkHtml(unitProgress, WORKBOOK_SPECS[unitId], unitLessons)}</html>`, "text/html;charset=utf-8")}>Download recorded learner work</button>}
+        </aside>}
+        <div className="portfolio-fields">{section.blocks.map((block, index) => {
+          if (section.id === "section-1" && index < 2 && block.kind === "text") return null;
           if (block.kind === "text") return /^h/.test(block.level) ? <h3 key={block.id}>{block.text}</h3> : <p key={block.id}>{block.text}</p>;
           if (block.kind === "table") return renderTable(block);
           const value = values[block.id];
           if (block.type === "checkbox") return <label className="portfolio-check" key={block.id}><input type="checkbox" checked={value === true} disabled={disabled} onChange={event => record.update(block.id, event.target.checked)} />{block.label}</label>;
           return <label className="portfolio-field" key={block.id}>{block.label}{block.type === "select" ? <Select ariaLabel={block.label} value={String(value ?? "")} disabled={disabled} options={block.options ?? []} onChange={value => record.update(block.id, value)} />
+            : /\bdates?\b/i.test(block.label) || block.type === "date" ? <PortfolioDateInput label={block.label} value={String(value ?? "")} disabled={disabled} onChange={value => record.update(block.id, value)} />
             : block.type === "textarea" ? <textarea value={String(value ?? "")} disabled={disabled} onChange={event => record.update(block.id, event.target.value)} />
             : <input type="text" value={String(value ?? "")} disabled={disabled} onChange={event => record.update(block.id, event.target.value)} />}</label>;
         })}</div><h3>Section evidence</h3>{attachment(`doc.${section.id}.supporting`, section.title)}
@@ -188,15 +230,30 @@ function SkillsRegister({ profile }: { profile: Profile }) {
       </section>
     </div>}
     <input ref={fileInput} type="file" hidden onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void uploadEvidence(file); }} />
-    {review && reviewItem && <Modal title={`Verification details — ${review.label}`} onClose={() => setReview(null)} actions={<button type="button" className="btn primary" onClick={() => setReview(null)}>Done</button>}>
-      <p className="portfolio-review-filename">{reviewItem.doc.name}</p>
+    {review && reviewItem && <Modal className="portfolio-review-modal" title="Manage evidence" onClose={() => setReview(null)} actions={<button type="button" className="btn primary" onClick={() => setReview(null)}>Done</button>}>
+      <div className="portfolio-review-document"><span className="portfolio-review-context">{review.label}</span><div className="portfolio-review-file"><Icon name="file" size={18} /><p className="portfolio-review-filename">{reviewItem.doc.name}</p></div></div>
       <div className="portfolio-actions">
+        {existingDocuments.length > 0 && <button type="button" className="btn ghost" disabled={disabled} onClick={() => { setExistingKey(""); setExistingTarget({ id: review.id, label: review.label }); setReview(null); }}>Use existing document</button>}
+        <button type="button" className="btn ghost" disabled={disabled} onClick={() => {
+          record.update(review.id, false);
+          setReview(null);
+        }} data-action="remove">Remove document</button>
         <button type="button" className="btn ghost" disabled={disabled} onClick={() => { setUpload({ id: review.id, label: review.label, oldId: review.oldId }); fileInput.current?.click(); }}>Replace evidence</button>
         <button type="button" className="btn ghost" onClick={() => void downloadDoc({ ...reviewItem.doc, name: filename(review.label, reviewItem.doc.name, learner?.name ?? 'Learner') }).catch(() => setError('Could not download evidence. Please retry.'))}>Download</button>
       </div>
       <label className="portfolio-field">Verification status<Select ariaLabel={`Verification: ${review.label}`} value={reviewItem.status ?? 'Pending verification'} disabled={disabled} options={['Pending verification','Verified','Needs correction','Not applicable'].map(value => ({value,label:value}))} onChange={status => record.update(review.id, { ...reviewItem, status, reviewer: profile.name, reviewedAt: new Date().toISOString() })} /></label>
-      <p>{reviewItem.status ?? 'Pending verification'}{reviewItem.reviewer ? ` by ${reviewItem.reviewer} · ${new Date(reviewItem.reviewedAt!).toLocaleString()}` : ''}</p>
+      <p className="portfolio-review-audit">{reviewItem.status ?? 'Pending verification'}{reviewItem.reviewer ? ` by ${reviewItem.reviewer} · ${formatPortfolioReviewDate(reviewItem.reviewedAt)}` : ''}</p>
       <label className="portfolio-field">Verification notes<textarea aria-label={`Verification notes: ${review.label}`} value={reviewItem.note ?? ''} disabled={disabled} onChange={event => record.update(review.id, { ...reviewItem, note: event.target.value })} /></label>
+    </Modal>}
+    {existingTarget && <Modal className="portfolio-existing-document-modal" title={`Use existing document - ${existingTarget.label}`} onClose={() => setExistingTarget(null)} actions={<button type="button" className="btn primary" disabled={disabled || !existingKey} onClick={() => {
+      const selected = existingDocuments.find(([key]) => key === existingKey);
+      if (!selected) return;
+      record.update(existingTarget.id, { doc: selected[1] });
+      setExistingTarget(null);
+    }}>Link document</button>}>
+      <p>Choose a document already uploaded for {learner?.name}.</p>
+      <Select ariaLabel="Existing uploaded document" value={existingKey} placeholder="Choose an uploaded document" options={existingDocuments.map(([key, doc]) => ({ value: key, label: doc.name, hint: key }))} onChange={setExistingKey} />
+      <p>Reuses the existing file. Verification is recorded separately for this portfolio entry.</p>
     </Modal>}
     <input ref={importInput} type="file" hidden accept=".json,application/json" onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void importData(file); }} />
   </div>;

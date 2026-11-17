@@ -5,7 +5,7 @@ import '../src/styles.css';
 const tick = () => new Promise(resolve => setTimeout(resolve, 50));
 function assert(value: unknown, message: string): asserts value { if (!value) throw new Error(message); }
 async function until(check: () => boolean, message: string) { for (let i=0;i<120;i++) { if(check()) return; await tick(); } throw new Error(message); }
-function button(text: string) { const found=[...document.querySelectorAll<HTMLButtonElement>('button')].find(button=>button.textContent?.trim()===text); assert(found, `Missing button ${text}`); return found; }
+function button(text: string) { const found=[...document.querySelectorAll<HTMLButtonElement>('button')].find(button=>button.textContent?.trim()===text || button.getAttribute('aria-label')===text); assert(found, `Missing button ${text}`); return found; }
 async function choose(label: string, option: string) {
   if (label.startsWith('Verification: ') && !document.querySelector(`button[aria-label="${label}"]`)) {
     document.querySelector<HTMLButtonElement>(`button[aria-label="Manage evidence: ${label.slice(14)}"]`)!.click();await tick();
@@ -32,11 +32,37 @@ async function test() {
   assert(document.body.textContent?.includes('draft is retained'),'Failed saves retain drafts');
   button('Retry').click();await until(()=>!input('Training provider').disabled,'Retry loads safely');
   assert(input('Training provider').value==='Actual training provider','Draft survives retry');
-  button('Save changes').click();await until(()=>button('Save changes').disabled,'Saved changes acknowledged');
+  button('Save changes').click();await until(()=>document.querySelector('[role="status"]')?.textContent==='All changes saved.','Saved changes acknowledged');
   await choose('Choose learner portfolio','Bob Example');
   await until(()=>!input('Training provider').disabled,'Second learner loads');
   assert(input('Training provider').value==='','One learner must never inherit another learner’s data');
   await choose('Choose learner portfolio','Alice Example');await until(()=>input('Training provider').value==='Actual training provider','Saved fields reload');
+  await choose('Portfolio section','3. Learner administration');
+  const identityRow = document.querySelector<HTMLTableRowElement>('.portfolio-data-table tbody tr')!;
+  assert(identityRow.textContent?.includes('Actual-ID.pdf'),'Administration reuses the existing learner identity upload');
+  assert(!identityRow.textContent?.includes('Verified'),'Reused documents do not inherit a verification decision');
+  identityRow.querySelector<HTMLButtonElement>('button')!.click();await tick();
+  button('Remove document').click();await tick();
+  assert(!document.querySelector('[role="dialog"]'),'Removing the link closes Manage');
+  assert(!document.querySelector('.portfolio-attachment-name'),'Removing a reused file suppresses automatic relinking');
+  button('Save changes').click();await until(()=>document.querySelector('[role="status"]')?.textContent==='All changes saved.','Removed document saves');
+  await choose('Choose learner portfolio','Bob Example');await tick();
+  await choose('Choose learner portfolio','Alice Example');await tick();
+  await until(()=>!document.querySelector('[aria-busy="true"]'),'Learner reloads after removal');
+  assert(!document.querySelector('.portfolio-attachment-name'),'Removed link stays removed after reload');
+  button('Use existing document').click();await tick();
+  await choose('Existing uploaded document','Actual-ID.pdf');button('Link document').click();await tick();
+  assert(document.querySelector('.portfolio-attachment-name'),'Original upload remains available to relink');
+  button('Use existing document').click();await tick();
+  await choose('Existing uploaded document','Actual-ID.pdf');button('Link document').click();await tick();
+  assert(!document.querySelector('[role="dialog"]'),'Linking an existing upload closes the picker');
+  assert(document.querySelectorAll('.portfolio-attachment-name').length===2,'Selected existing document is linked without uploading again');
+  button('Save changes').click();await until(()=>document.querySelector('[role="status"]')?.textContent==='All changes saved.','Existing document link saves');
+  await choose('Choose learner portfolio','Bob Example');await tick();
+  await until(()=>!document.querySelector('[aria-busy="true"]'),'Second learner administration loads');
+  assert(!document.body.textContent?.includes('Actual-ID.pdf'),'Existing document links are isolated per learner');
+  await choose('Choose learner portfolio','Alice Example');await tick();
+  await until(()=>document.querySelectorAll('.portfolio-attachment-name').length===2,'Existing link reloads for its learner');
   await choose('Portfolio section','Existing evidence checklist');
   assert(document.body.textContent?.includes('Actual-ID.pdf'),'Existing identity evidence stays available');
   button('Manage').click();await tick();button('Download').click();await tick();assert((globalThis as any).__downloaded,'Actual document download is wired');button('Done').click();await tick();
@@ -63,11 +89,11 @@ async function test() {
   assert(firstRow.getBoundingClientRect().height<95,'Empty evidence rows should remain compact');
   assert(firstRow.cells[0].getBoundingClientRect().width/resultsTable.getBoundingClientRect().width<0.16,'Unit-standard ID must not consume a third of the table');
   await choose('C / NYC / recognised, row 1','Competent (C)');
-  button('Save changes').click();await until(()=>button('Save changes').disabled,'Decision saves');
+  button('Save changes').click();await until(()=>document.querySelector('[role="status"]')?.textContent==='All changes saved.','Decision saves');
   await choose('Portfolio section','41. Skills Development verification pack');
   const before=document.querySelectorAll('tbody tr').length;button('+ Add row').click();await tick();assert(document.querySelectorAll('tbody tr').length===before+1,'Add row is wired');
   const cell=document.querySelector<HTMLInputElement | HTMLTextAreaElement>('tbody tr:last-child input[type="text"], tbody tr:last-child textarea')!;await enter(cell,'Actual evidence reference');
-  button('Save changes').click();await until(()=>button('Save changes').disabled,'Rows and uploads save');
+  button('Save changes').click();await until(()=>document.querySelector('[role="status"]')?.textContent==='All changes saved.','Rows and uploads save');
   await choose('Portfolio section','50. Absorption and all learner tracker');
   button('Upload evidence').click();await tick();
   const employmentFile=new DataTransfer();employmentFile.items.add(new File(['employment'],'employment.pdf',{type:'application/pdf'}));file.files=employmentFile.files;file.dispatchEvent(new Event('change',{bubbles:true}));

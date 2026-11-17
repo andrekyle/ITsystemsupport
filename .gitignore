@@ -12,3 +12,11 @@ Learnership-*.html
 
 # Local database recovery exports contain learner progress and personal data.
 supabase-export/
+
+# Local learner portfolios, financial drafts, and their data-specific generators.
+artifacts/
+scripts/build-cohort-portfolio.py
+scripts/build-populated-portfolio.py
+scripts/export-app-workbooks.mjs
+scripts/generate-investec-payslips.mjs
+scripts/generate-training-invoices.mjs

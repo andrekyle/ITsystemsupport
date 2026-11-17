@@ -1,6 +1,6 @@
 import { assignmentFor, canSeeProfile, isAssignedStaff, useAssignments } from "../lib/assignments";
 import { isAdminRole } from "../types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Profile, UnitStandard } from "../types";
 import { isStaff } from "../types";
@@ -937,6 +937,47 @@ export function AttendancePage({
     }
   };
 
+  const openedAllRegisters = useRef(false);
+  useEffect(() => {
+    if (!staff || openedAllRegisters.current || !["all", "html"].includes(new URLSearchParams(window.location.search).get("attendanceExport") ?? "")) return;
+    openedAllRegisters.current = true;
+    void downloadAll();
+  }, [staff]);
+
+  const downloadPickedHtml = () => {
+    const selected = pickRegs?.filter(item => pickedDates.has(item.date)) ?? [];
+    if (!selected.length) return;
+    setAllRegs(selected);
+    setLoadingAll(true);
+    setTimeout(() => {
+      void (async () => {
+        try {
+          const source = document.querySelector<HTMLElement>(".att-all");
+          if (!source) throw new Error("The attendance sheets could not be rendered.");
+          const clone = source.cloneNode(true) as HTMLElement;
+          for (const image of Array.from(clone.querySelectorAll<HTMLImageElement>("img"))) {
+            if (image.src.startsWith("data:")) continue;
+            const response = await fetch(image.src);
+            if (!response.ok) throw new Error("A register image could not be included. Retry the export.");
+            const blob = await response.blob();
+            image.src = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = reject; reader.readAsDataURL(blob);
+            });
+          }
+          const styles = Array.from(document.styleSheets).map(sheet => {
+            try { return Array.from(sheet.cssRules).map(rule => rule.cssText).join("\n"); } catch { return ""; }
+          }).join("\n");
+          const html = '<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Signed attendance registers</title><style>' + styles + '\nbody{margin:0;padding:20px;background:#eee;color:#111}.att-all{display:block!important;position:static!important}.att-sheet{margin:0 auto 24px;background:white}.register-export-actions{margin:0 auto 16px;text-align:center}@page{size:A4 landscape;margin:8mm}@media print{.register-export-actions{display:none}.att-sheet{break-after:page;margin:0}.att-sheet:last-child{break-after:auto}}</style></head><body><div class="register-export-actions"><button onclick="window.print()">Print / save PDF</button><p>' + selected.length + ' signed session registers</p></div>' + clone.outerHTML + '</body></html>';
+          const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
+          const link = document.createElement("a"); link.href = url; link.download = "Eruditio-Signed-Attendance-Registers.html"; link.click();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (error) {
+          setAttendanceNote(error instanceof Error ? error.message : "Could not export the signed registers.");
+        } finally { setAllRegs(null); setLoadingAll(false); }
+      })();
+    }, 700);
+  };
+
   const togglePicked = (date: string) =>
     setPickedDates((prev) => {
       const next = new Set(prev);
@@ -959,6 +1000,13 @@ export function AttendancePage({
       })();
     }, 700);
   };
+
+  const autoHtmlExported = useRef(false);
+  useEffect(() => {
+    if (!staff || !pickRegs?.length || autoHtmlExported.current || new URLSearchParams(window.location.search).get("attendanceExport") !== "html") return;
+    autoHtmlExported.current = true;
+    downloadPickedHtml();
+  }, [staff, pickRegs, pickedDates]);
 
   const onConfirm = () => {
     if (!confirming) return;
@@ -1126,7 +1174,8 @@ export function AttendancePage({
             })}
           </div>
           <div className="att-sigask-actions">
-            <button className="btn primary" disabled={!pickedDates.size} onClick={printPicked}>
+            <button className="btn" disabled={loadingAll || !pickedDates.size} onClick={downloadPickedHtml}>Download selected HTML ({pickedDates.size})</button>
+            <button className="btn primary" disabled={loadingAll || !pickedDates.size} onClick={printPicked}>
               <Icon name="download" /> Print selected ({pickedDates.size})
             </button>
             <button
