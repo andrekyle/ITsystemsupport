@@ -1984,7 +1984,7 @@ export function CoursePage({
                     } catch (error) { input.setCustomValidity(error instanceof Error ? error.message : "Could not read image."); input.reportValidity(); }
                   }} />
               </label> : m.image && <span className="module-hero"><img src={m.image} alt="" loading="lazy" /></span>}
-              {m.image && <ImageDownload src={m.image} name={`Module-${i + 1}-${m.name}`} />}
+              {inline.editing && m.image && <ImageDownload src={m.image} name={`Module-${i + 1}-${m.name}`} />}
               </div>
               <div className="head">
                 <span className="ico">

@@ -19,7 +19,7 @@ const profile = { id: "inline-test", name: "Test", role: "Super User" } as any;
 const progress = { units: {} } as any;
 const root = createRoot(document.getElementById("fixture")!);
 async function test() {
-  const course = createCourse({ title: "Inline course", saqaId: "48573", nqfLevel: 5, credits: 10, description: "Description", unitCounts: [1] }, [{ name: "Module", description: "Module summary", outcomes: ["Apply the subject"], units: [{ us: "8252", title: "Test unit", nqf: 5, credits: 10, description: "Unit summary", outcomes: ["Apply the subject"] }] }]);
+  const course = createCourse({ title: "Inline course", saqaId: "48573", nqfLevel: 5, credits: 10, description: "Description", unitCounts: [1], moduleNames: ["Module"], unitCodes: [["8252"]] }, [{ name: "Module", description: "Module summary", outcomes: ["Apply the subject"], units: [{ us: "8252", title: "Test unit", nqf: 5, credits: 10, description: "Unit summary", outcomes: ["Apply the subject"] }] }]);
   saveCustomCourse(course); localStorage.setItem("itss.activeCourse", course.id);
   root.render(<CoursePage profile={profile} progress={progress} navigate={() => { throw new Error("Editing navigated away"); }} />);
   await waitFor(() => !!document.querySelector(".page-title")); click("Edit inline"); await tick();

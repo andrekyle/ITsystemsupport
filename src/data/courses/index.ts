@@ -108,7 +108,7 @@ export function deleteCustomCourse(id: string) {
 
 export function createCourse(details: CourseDetails, modules: GeneratedCourseModule[]): CourseData {
   validateCourseDetails(details);
-  validateCourseModules(modules, details.unitCounts);
+  validateCourseModules(modules, details.unitCounts, details);
   // Keep the page shape without inheriting another qualification's content.
   function empty(value: unknown): unknown {
     if (Array.isArray(value)) return [];
@@ -123,7 +123,7 @@ export function createCourse(details: CourseDetails, modules: GeneratedCourseMod
   course.meta = { title: details.title.trim(), saqaId: details.saqaId.trim(), nqfLevel: details.nqfLevel, credits: details.credits, time: "09h00 - 14h00", sponsor: "", qualityAssurance: "" };
   course.modules = modules.map((module, index) => ({
     ...structuredClone(module), id: `${courseId}-m${index + 1}`, icon: "layers", activities: 0,
-    units: module.units.map(unit => ({ ...structuredClone(unit), dates: "", time: course.meta.time, metadataSource: `https://allqs.saqa.org.za/showQualification.php?id=${course.meta.saqaId}` })),
+    units: module.units.map(unit => ({ ...structuredClone(unit), dates: "", time: course.meta.time, metadataSource: `https://allqs.saqa.org.za/showUnitStandard.php?id=${unit.us}` })),
   }));
   course.programmeAbout.intro = course.blurb;
   course.programmeAbout.lead = "On completion, the graduate will be able to:";

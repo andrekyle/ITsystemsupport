@@ -10,7 +10,7 @@ export function ImageDownload({ src, name }: { src: string; name: string }) {
     : /\.(png|jpe?g|webp|gif|svg|avif)(?:[?#]|$)/i.exec(src)?.[1] ?? "png";
   const filename = `${name.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").slice(0, 120) || "banner"}.${extension}`;
   return <a className="banner-image-download" href={src} download={filename}
-    aria-label={`Download image for ${name}`} title={error || "Download original image"} aria-busy={busy}
+    aria-label={busy ? `Downloading image for ${name}` : error ? `Retry download for ${name}` : `Download image for ${name}`} title={busy ? "Downloading..." : error || "Download original image"} aria-busy={busy}
     onClick={async event => {
       event.stopPropagation();
       if (!/^https?:/i.test(src) || new URL(src).origin === window.location.origin) return;
@@ -27,6 +27,6 @@ export function ImageDownload({ src, name }: { src: string; name: string }) {
       } catch { setError("Download failed. Click to retry."); }
       finally { setBusy(false); }
     }} onKeyDown={event => event.stopPropagation()}>
-    <Icon name="download" size={16} />{busy ? "Downloading..." : error ? "Retry download" : "Download image"}
+    <Icon name="download" size={16} />
   </a>;
 }

@@ -20069,7 +20069,7 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 
 .module-image-live { position: relative; display: block; cursor: pointer; }
 .module-banner-container { position: relative; }
-.banner-image-download { position: absolute; left: 12px; bottom: 12px; z-index: 1; display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border-radius: 8px; background: var(--surface); color: var(--ink); font-size: 12px; text-decoration: none; cursor: pointer; }
+.banner-image-download { position: absolute; left: 12px; bottom: 12px; z-index: 1; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 0; border-radius: 6px; background: var(--surface); color: var(--ink); text-decoration: none; cursor: pointer; }
 .banner-image-download:focus-visible { outline: 2px solid var(--azure); outline-offset: 2px; }
 .unit-card-banner .banner-image-download { left: 10px; top: 10px; bottom: auto; }
 .module-image-live:focus-within { outline: 2px solid var(--azure); outline-offset: 3px; }

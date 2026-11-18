@@ -8,7 +8,7 @@ Object.defineProperty(globalThis, "localStorage", { value: {
   getItem: (key: string) => data.get(key) ?? null,
   setItem: (key: string, value: string) => data.set(key, value),
 }, configurable: true });
-const details = { title: "New qualification", saqaId: "123456", nqfLevel: 4, credits: 120, description: "New course description", unitCounts: [2, 1] };
+const details = { title: "New qualification", saqaId: "123456", nqfLevel: 4, credits: 120, description: "New course description", unitCounts: [2, 1], moduleNames: ["Module 1", "Module 2"], unitCodes: [["11", "12"], ["21"]] };
 assert.equal(getCourses().length, 2);
 const modules = details.unitCounts.map((count, index) => ({ name: `Module ${index + 1}`, description: "Module summary", outcomes: ["Apply the subject"], units: Array.from({ length: count }, (_, i) => ({ us: `${index + 1}${i + 1}`, title: `Unit ${i + 1}`, nqf: 4, credits: 5, description: "Unit summary", outcomes: ["Demonstrate competence"] })) }));
 const course = createCourse(details, modules);
