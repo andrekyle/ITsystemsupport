@@ -12,6 +12,17 @@ import { EditingTools } from "./EditingSidebar";
 import { usePhoneView } from "./usePhoneView";
 import "./form-builder.css";
 
+function printForm() {
+  const source = document.querySelector<HTMLElement>(".paper-form-wrap, .srf-wrap");
+  if (!source) return;
+  const popup = window.open("", "_blank", "popup,width=1100,height=900");
+  if (!popup) { window.print(); return; }
+  const styles = [...document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')].map(link => `<link rel="stylesheet" href="${link.href}">`).join("");
+  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Form</title>${styles}<style>@page{size:A4;margin:8mm}body{margin:0;background:#fff}.srf-wrap,.paper-form-wrap{display:block!important;overflow:visible!important;max-width:none!important}.sheet-fit,.sheet-fit-mid,.sheet-fit-inner{width:auto!important;height:auto!important;transform:none!important;overflow:visible!important}.no-print{display:none!important}</style></head><body>${source.outerHTML}</body></html>`);
+  popup.document.close();
+  popup.addEventListener("load", () => { popup.focus(); popup.print(); popup.close(); });
+}
+
 export function FormLibrary({ profile, children }: { profile: Profile; children: ReactNode }) {
   const phone = usePhoneView();
   const { forms, loading, error, reload } = useForms();
@@ -153,7 +164,7 @@ function SavedFormView({ template, profile, onClose }: { template: SavedForm; pr
   const tools = <div className="fb-toolbar no-print">
         <button type="button" className="btn ghost" disabled={saving} onClick={() => dirty ? setConfirmLeave(true) : onClose()}><Icon name="chevronLeft" size={16} /> Forms</button>
         <button type="button" className="btn primary" disabled={loading || saving || !!loadError} onClick={() => void save()}><Icon name="check" size={16} /> {saving ? "Saving..." : "Save answers"}</button>
-        <button type="button" className="btn ghost" disabled={loading || saving || !!loadError} onClick={async () => { if (await save()) { document.body.classList.add("printing-registration"); const cleanup = () => document.body.classList.remove("printing-registration"); window.addEventListener("afterprint", cleanup, { once: true }); window.print(); window.setTimeout(cleanup, 1500); } }}><Icon name="download" size={16} /> Print / PDF</button>
+        <button type="button" className="btn ghost" disabled={loading || saving || !!loadError} onClick={async () => { if (await save()) printForm(); }}><Icon name="download" size={16} /> Print / PDF</button>
         {dirty ? <span className="fb-response-saved" role="status">Unsaved changes</span> : savedAt && <span className="fb-response-saved" role="status">Saved {new Date(savedAt).toLocaleString()}</span>}
       {error && <p role="alert" className="auth-error">{error}</p>}
       </div>;
