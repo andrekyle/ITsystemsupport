@@ -52,17 +52,22 @@
 .client-documents strong { font-size: 13px; font-weight: 600; }
 .client-documents small { display: block; font-size: 11px; color: var(--ink-3); overflow-wrap: anywhere; }
 .client-footer { text-align: center; padding: 24px; font-size: 11px; color: var(--ink-3); }
-.client-admin-panel { margin: 18px 0; padding: 14px; border: 1px solid var(--border); border-radius: 6px; }
-.client-admin-panel summary { cursor: pointer; font-weight: 600; }
-.client-admin-panel form, .client-admin-row { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin: 14px 0; }
-.client-admin-panel label { display: grid; gap: 4px; font-size: 12px; }
-.client-admin-panel input, .client-admin-panel select { padding: 7px 9px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--ink); font: inherit; }
+.client-admin-panel { display: block; margin: 18px 0; padding: 0 22px 22px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--ink); }
+.client-admin-panel summary { cursor: pointer; margin: 0 -22px; padding: 18px 22px; border-bottom: 1px solid var(--border); font-size: 16px; font-weight: 650; }
+.client-admin-panel > p { margin: 16px 0; color: var(--ink-3); }
+.client-admin-panel h3 { margin: 24px 0 12px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 15px; }
+.client-admin-panel form, .client-admin-row { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 14px 0 20px; }
+.client-admin-panel label { display: grid; gap: 6px; min-width: 180px; flex: 1 1 180px; font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.client-admin-panel input, .client-admin-panel select { box-sizing: border-box; width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--ink); font: inherit; }
 .client-admin-panel .nice-select { min-width: 188px; }
 .client-admin-panel .nice-select-btn { min-height: 36px; padding: 7px 9px; }
 .client-file-field input[type="file"] { min-width: 280px; }
 .client-form-action { min-height: 36px; white-space: nowrap; }
-.client-admin-panel li { display: flex; gap: 12px; align-items: center; margin: 10px 0; }
-@media(max-width:760px) { .client-login { grid-template-columns: 1fr; } .client-intro { padding: 24px; } .client-intro .client-brand { margin-bottom: 30px; } .client-intro h1 { font-size: 34px; } .client-intro small { padding-top: 20px; } .client-header { flex-wrap: wrap; padding: 16px; } .client-content { padding: 24px 14px; } .client-stats { gap: 8px; } .client-stats > div { padding: 12px; } .client-doc-heading { align-items: stretch; flex-direction: column; } .client-panel { padding: 16px; } }
+.client-admin-panel ul { margin: 12px 0 0; padding: 0; list-style: none; }
+.client-admin-panel li { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin: 8px 0; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.client-admin-status { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; padding: 16px 0; }
+.client-admin-panel .client-setup-notice { padding: 12px; border-radius: 6px; background: var(--surface-2); }
+@media(max-width:760px) { .client-login { grid-template-columns: 1fr; } .client-intro { padding: 24px; } .client-intro .client-brand { margin-bottom: 30px; } .client-intro h1 { font-size: 34px; } .client-intro small { padding-top: 20px; } .client-header { flex-wrap: wrap; padding: 16px; } .client-content { padding: 24px 14px; } .client-stats { gap: 8px; } .client-stats > div { padding: 12px; } .client-doc-heading { align-items: stretch; flex-direction: column; } .client-panel { padding: 16px; } .client-admin-panel { padding: 0 14px 16px; } .client-admin-panel summary { margin: 0 -14px; padding: 16px 14px; } .client-admin-panel li { align-items: flex-start; flex-direction: column; } .client-admin-panel .nice-select, .client-file-field input[type="file"] { min-width: 0; width: 100%; } }
 
 /* Investec client branding: white, charcoal and restrained grey surfaces. */
 .client-investec { --client-accent: #303749; --client-hero: #fff; --ink: #171717; --ink-3: #535763; --border: #dededc; --surface: #fff; --surface-2: #f4f4f2; --app-canvas: #fafaf9; color-scheme: light; }
