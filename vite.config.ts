@@ -77,7 +77,7 @@ function formBuilderDev(env: Record<string, string>): Plugin {
   return {
     name: "form-builder-dev",
     configureServer(server: ViteDevServer) {
-      for (const key of ["OPENAI_API_KEY", "OPENAI_IMAGE_MODEL", "SUPABASE_URL", "SUPABASE_ANON_KEY", "VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"]) {
+      for (const key of ["OPENAI_API_KEY", "OPENAI_IMAGE_MODEL", "SUPABASE_URL", "SUPABASE_ANON_KEY", "VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY", "CLIENT_PORTAL_BASE_URL"]) {
         if (env[key] && process.env[key] === undefined) process.env[key] = env[key].trim();
       }
       for (const endpoint of ["generate-form", "enhance-unit-quiz"]) server.middlewares.use(`/api/${endpoint}`, (request, response) => {
@@ -221,6 +221,8 @@ function saveCalendarDev(): Plugin {
  *  endpoints (e.g. the AI report writer) return http_404 in local dev. */
 function apiDev(env: Record<string, string>): Plugin {
   const endpoints = [
+    "invite-client",
+    "client-portal-status",
     "unit-metadata",
     "course-metadata",
     "qualification-pack",
@@ -235,7 +237,7 @@ function apiDev(env: Record<string, string>): Plugin {
   return {
     name: "api-dev",
     configureServer(server: ViteDevServer) {
-      for (const key of ["OPENAI_API_KEY", "OPENAI_IMAGE_MODEL", "SUPABASE_URL", "SUPABASE_ANON_KEY", "VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"]) {
+      for (const key of ["OPENAI_API_KEY", "OPENAI_IMAGE_MODEL", "SUPABASE_URL", "SUPABASE_ANON_KEY", "VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY", "CLIENT_PORTAL_BASE_URL"]) {
         if (env[key] && process.env[key] === undefined) process.env[key] = env[key].trim();
       }
       for (const endpoint of endpoints) {

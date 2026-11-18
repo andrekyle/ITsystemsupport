@@ -1,0 +1,165 @@
+.client-portal { --client-accent: #278c6d; --client-hero: #183d32; min-height: 100dvh; background: var(--app-canvas, #f6f7f8); color: var(--ink); font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+.client-portal button { font: inherit; cursor: pointer; padding: 8px 14px; border: 1px solid var(--border); border-radius: 6px; color: var(--ink); background: var(--surface); }
+.client-portal button:disabled { opacity: .55; cursor: default; }
+.client-portal button:focus-visible, .client-portal input:focus-visible { outline: 2px solid var(--client-accent); outline-offset: 2px; }
+.client-portal input { font: inherit; width: 100%; min-height: 40px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; color: var(--ink); background: var(--surface); }
+.client-brand { display: flex; align-items: center; gap: 14px; }
+.client-brand strong { font: 600 28px Georgia, serif; }
+.client-brand img { width: 140px; height: 44px; object-fit: contain; }
+.client-brand > span { padding-left: 14px; border-left: 1px solid currentColor; font-size: 11px; opacity: .75; }
+.client-login { display: grid; grid-template-columns: 1fr 1fr; }
+.client-intro { padding: clamp(30px, 6vw, 100px); background: var(--client-hero); color: #fff; display: flex; flex-direction: column; align-items: flex-start; }
+.client-intro .client-brand { margin-bottom: 100px; }
+.client-intro .client-brand img { background: white; padding: 6px; border-radius: 4px; }
+.client-eyebrow { display: block; font-size: 10px; font-weight: 600; letter-spacing: .15em; }
+.client-intro h1 { font-size: clamp(36px, 4vw, 58px); line-height: 1.1; font-weight: 500; letter-spacing: -.035em; margin: 20px 0; }
+.client-intro p { max-width: 360px; opacity: .85; }
+.client-intro small { margin-top: auto; padding-top: 80px; font-size: 11px; opacity: .65; }
+.client-login-form { display: grid; align-items: center; justify-items: center; padding: 40px 24px; }
+.client-login-form > div { width: min(390px, 100%); }
+.client-login-form h2 { font-size: 26px; font-weight: 600; margin-bottom: 8px; }
+.client-login-form p { color: var(--ink-3); font-size: 13px; }
+.client-login-form form { display: grid; gap: 18px; margin-top: 28px; }
+.client-login-form label { display: grid; gap: 6px; font-size: 12px; font-weight: 600; }
+.client-portal .client-primary { background: var(--client-accent); color: #fff; border: 0; min-height: 42px; }
+.client-portal .client-link { border: 0; background: transparent; padding-left: 0; color: var(--ink); margin-top: 12px; font-size: 12px; }
+.client-account-help { margin-top: 36px; }
+.client-portal [role="alert"] { color: var(--red, #a93030); }
+.client-header { background: var(--surface); padding: 18px max(24px, calc((100vw - 1180px)/2)); display: flex; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid var(--border); }
+.client-header > div:last-child { display: flex; align-items: center; gap: 16px; font-size: 12px; }
+.client-header .client-brand strong { font-size: 24px; }
+.client-content { max-width: 1180px; margin: 0 auto; padding: 30px 24px; }
+.client-page-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; }
+.client-page-heading h1 { font-size: 29px; margin: 6px 0; }
+.client-page-heading p { margin: 0; color: var(--ink-3); font-size: 13px; }
+.client-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.client-stats > div { background: var(--surface); padding: 18px 22px; border-radius: 8px; }
+.client-stats strong { display: block; font-size: 30px; font-weight: 600; }
+.client-stats span { font-size: 12px; color: var(--ink-3); }
+.client-panel { padding: 22px; background: var(--surface); border-radius: 8px; margin-bottom: 20px; }
+.client-panel h2 { font-size: 17px; font-weight: 600; margin: 0 0 16px; }
+.client-table-wrap { overflow: auto; }
+.client-panel table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+.client-panel th { font-size: 10px; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+.client-panel th, .client-panel td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
+.client-doc-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.client-doc-heading input { width: min(280px, 100%); }
+.client-filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0; }
+.client-filters button { font-size: 12px; padding: 6px 10px; border: 0; background: var(--surface-2); }
+.client-filters [aria-pressed="true"] { background: var(--client-accent); color: #fff; }
+.client-documents { list-style: none; margin: 0; padding: 0; }
+.client-documents li { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+.client-documents strong { font-size: 13px; font-weight: 600; }
+.client-documents small { display: block; font-size: 11px; color: var(--ink-3); overflow-wrap: anywhere; }
+.client-footer { text-align: center; padding: 24px; font-size: 11px; color: var(--ink-3); }
+.client-admin-panel { margin: 18px 0; padding: 14px; border: 1px solid var(--border); border-radius: 6px; }
+.client-admin-panel summary { cursor: pointer; font-weight: 600; }
+.client-admin-panel form, .client-admin-row { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin: 14px 0; }
+.client-admin-panel label { display: grid; gap: 4px; font-size: 12px; }
+.client-admin-panel input, .client-admin-panel select { padding: 7px 9px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--ink); font: inherit; }
+.client-admin-panel li { display: flex; gap: 12px; align-items: center; margin: 10px 0; }
+@media(max-width:760px) { .client-login { grid-template-columns: 1fr; } .client-intro { padding: 24px; } .client-intro .client-brand { margin-bottom: 30px; } .client-intro h1 { font-size: 34px; } .client-intro small { padding-top: 20px; } .client-header { flex-wrap: wrap; padding: 16px; } .client-content { padding: 24px 14px; } .client-stats { gap: 8px; } .client-stats > div { padding: 12px; } .client-doc-heading { align-items: stretch; flex-direction: column; } .client-panel { padding: 16px; } }
+
+/* Investec client branding: white, charcoal and restrained grey surfaces. */
+.client-investec { --client-accent: #303749; --client-hero: #fff; --ink: #171717; --ink-3: #535763; --border: #dededc; --surface: #fff; --surface-2: #f4f4f2; --app-canvas: #fafaf9; color-scheme: light; }
+.client-brand .client-logo-reversed { display: none; }
+.client-investec .client-brand { display: flex; flex-wrap: nowrap; align-items: center; justify-content: flex-start; gap: 18px; width: 100%; min-width: 0; }
+.client-investec .client-brand img { display: block; width: clamp(180px, 23vw, 300px); height: auto; aspect-ratio: 5 / 1; flex: 0 1 auto; object-fit: contain; object-position: left center; min-width: 0; }
+.client-investec .client-brand > span { flex: 0 0 auto; white-space: nowrap; padding: 0; border: 0; font-size: 12px; opacity: 1; color: #535763; }
+.client-investec .client-intro { color: #303749; border-right: 1px solid #eeeeec; }
+.client-investec .client-intro .client-brand { color: #111; }
+.client-investec .client-intro .client-brand img { background: transparent; padding: 0; border-radius: 0; }
+.client-investec .client-intro h1, .client-investec .client-page-heading h1 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; letter-spacing: -.025em; color: #303749; }
+.client-investec .client-intro .client-eyebrow { background: #f4f4f2; padding: 8px 12px; letter-spacing: .1em; }
+.client-investec .client-header { background: #fff; color: #171717; border-bottom: 1px solid #e5e5e2; }
+.client-investec .client-login-form { background: #f7f7f5; }
+.client-investec .client-login-form h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; color: #303749; font-size: 30px; }
+.client-investec .client-primary:hover:not(:disabled), .client-investec .client-filters [aria-pressed="true"]:hover { background: #171d2b; }
+.client-investec button:focus-visible, .client-investec input:focus-visible { outline-color: #303749; }
+.client-investec .client-panel, .client-investec .client-stats > div { border-radius: 2px; }
+@media(max-width:760px) { .client-investec .client-brand { gap: 10px; } .client-investec .client-brand img { width: min(220px, 58vw); height: auto; } .client-investec .client-brand > span { padding: 0; font-size: 11px; } .client-investec .client-intro { border-right: 0; border-bottom: 1px solid #eeeeec; } }
+
+.client-investec .client-intro .client-brand { margin-bottom: 40px; }
+.client-investec .client-zebra { display: block; width: min(340px, 100%); height: auto; object-fit: contain; margin: 24px 0 0; }
+.client-investec .client-intro small { padding-top: 24px; }
+@media(max-width:760px) { .client-investec .client-zebra { width: 200px; margin-top: 16px; } }
+
+/* Keep the desktop sign-in composition within the viewport. Generous vertical
+   spacing otherwise pushes the zebra and footer below shorter laptop screens. */
+@media (min-width: 761px) {
+  .client-login {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .client-login .client-intro {
+    min-height: 0;
+    padding: clamp(24px, 4vh, 56px) clamp(30px, 6vw, 100px);
+  }
+  .client-login .client-intro .client-brand {
+    margin-bottom: clamp(20px, 3vh, 32px);
+  }
+  .client-login .client-intro h1 {
+    margin: clamp(12px, 2vh, 20px) 0;
+  }
+  .client-investec .client-zebra {
+    width: min(300px, 72%);
+    margin-top: clamp(12px, 2vh, 24px);
+  }
+  .client-login .client-intro small {
+    padding-top: clamp(12px, 2vh, 24px);
+  }
+}
+
+/* Face the zebra towards the sign-in form, matching the supplied reference. */
+.client-investec .client-zebra { transform: scaleX(-1); }
+
+/* Preserve the black wordmark proportions without intrinsic image letterboxing. */
+.client-investec .client-brand .client-logo-standard { display: block; width: clamp(200px, 23vw, 300px); height: auto; aspect-ratio: 5 / 1; padding: 0; margin: 0; background: transparent; border: 0; border-radius: 0; filter: none; }
+@media(max-width:760px) { .client-investec .client-brand .client-logo-standard { width: min(240px, 62vw); } }
+
+/* Align the portal label with the lettering, below the raised brand symbol. */
+.client-investec .client-brand { align-items: flex-end; gap: 20px; }
+.client-investec .client-brand > span { line-height: 1.4; margin: 0 0 3px; padding: 0; }
+.client-investec .client-intro .client-brand { margin-bottom: 28px; }
+.client-investec .client-intro > .client-eyebrow { background: transparent; padding: 0; margin: 0; }
+@media(max-width:760px) { .client-investec .client-brand { gap: 12px; } .client-investec .client-brand > span { margin-bottom: 2px; } }
+
+.client-compliance p { font-size: 13px; color: var(--ink-3); }
+.client-compliance-status { font-size: 11px; font-weight: 500; padding: 5px 9px; background: var(--surface-2); border-radius: 3px; }
+
+.client-portal .pw-toggle { border: 0; background: transparent; box-shadow: none; }
+
+.client-admin-panel h3 { font-size: 14px; margin: 22px 0 10px; padding-top: 16px; border-top: 1px solid var(--border); }
+.client-admin-status { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px 0; font-size: 12px; }
+.client-admin-status span { color: var(--ink-3); }
+.client-admin-panel .btn { background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 8px 12px; font: inherit; cursor: pointer; }
+.client-admin-panel .btn:disabled { opacity: .5; cursor: default; }
+.client-admin-panel .client-setup-notice { padding: 12px; background: var(--surface-2); font-size: 13px; border-radius: 5px; }
+
+/* Keep account controls separate from the brand's flexible width. */
+.client-portal .client-header { padding: 18px max(24px, calc((100vw - 1180px)/2)); gap: 28px; }
+.client-investec .client-header .client-brand { width: auto; flex: 1 1 auto; min-width: 0; }
+.client-investec .client-header .client-logo-standard { width: 240px; max-width: 100%; }
+.client-portal .client-user-menu { flex: 0 0 auto; gap: 16px; }
+.client-user-menu > span { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.client-portal button { white-space: nowrap; line-height: 1.4; min-height: 36px; padding: 8px 16px; font-size: 13px; font-weight: 500; }
+.client-portal .client-header button { flex-shrink: 0; }
+.client-portal .client-content { width: 100%; box-sizing: border-box; padding-top: 28px; }
+.client-portal .client-page-heading { margin-bottom: 24px; }
+.client-portal .client-page-heading h1 { font-size: 32px; line-height: 1.2; border: 0; padding: 0; margin: 8px 0; }
+.client-portal .client-page-heading p { color: #535763; font-size: 14px; }
+.client-portal .client-error { background: #fff5f4; color: #8c2923; border-radius: 6px; padding: 16px 20px; font-size: 14px; max-width: 760px; }
+.client-preview-notice { display: flex; align-items: center; justify-content: space-between; gap: 20px; background: var(--surface-2); padding: 14px 18px; margin-bottom: 24px; border-radius: 5px; font-size: 13px; }
+.client-preview-notice p { margin: 3px 0 0; color: var(--ink-3); }
+.client-preview-notice a { color: var(--ink); font-weight: 600; white-space: nowrap; text-underline-offset: 3px; }
+.client-portal .pw-toggle { min-height: 0; }
+@media(max-width:760px) {
+ .client-portal .client-header { padding: 16px; gap: 16px; }
+ .client-investec .client-header .client-brand { flex-basis: 100%; }
+ .client-portal .client-user-menu { width: 100%; justify-content: space-between; }
+ .client-user-menu > span { max-width: calc(100vw - 150px); }
+ .client-portal .client-content { padding: 22px 16px; }
+ .client-portal .client-page-heading h1 { font-size: 26px; }
+ .client-preview-notice { align-items: flex-start; flex-direction: column; gap: 10px; }
+}

@@ -37,6 +37,8 @@ const TENANTS: Record<TenantId, TenantBrand> = {
 };
 
 function configuredTenant(): TenantId {
+  const client = window.location.pathname.match(/^\/clients\/(investec|discovery)(?:\/|$)/)?.[1];
+  if (client === "discovery" || client === "investec") return client;
   const env = String(import.meta.env.VITE_TENANT ?? "").toLowerCase();
   if (env === "discovery") return "discovery";
   if (env === "investec") return "investec";

@@ -87,6 +87,9 @@
 .unit-builder, .unit-editor-root { --editor-bg:var(--app-canvas); --editor-panel:var(--surface); --editor-panel-2:var(--surface-2); --editor-line:var(--border); --editor-muted:var(--ink-3); }
 .unit-edit-dialog .unit-builder { display:flex; flex:1; flex-direction:column; min-height:0; margin:0; }
 .unit-workspace { display:flex; flex:1; min-height:0; }
+/* Inline builders need a bounded viewport so the content pane can actually scroll. */
+.unit-builder > .unit-workspace { height:clamp(320px, 75dvh, 900px); }
+.unit-edit-dialog .unit-builder > .unit-workspace { height:auto; }
 .unit-workspace-nav { display:flex; flex-direction:column; flex-shrink:0; gap:22px; width:248px; box-sizing:border-box; padding:14px 12px 24px; overflow-y:auto; border-right:1px solid var(--editor-line); background:var(--surface-3); }
 .unit-workspace-nav-group, .unit-workspace-outline { display:flex; flex-direction:column; gap:2px; }
 .unit-workspace-nav-item { position:relative; display:flex; align-items:center; gap:10px; width:100%; padding:8px 10px; border:0; border-radius:10px; background:transparent; color:var(--ink-2); font:inherit; text-align:left; cursor:pointer; }
@@ -125,7 +128,8 @@
 .unit-workspace-save:hover:not(:disabled) { color:#fff; filter:brightness(1.08); }
 .unit-workspace-save:disabled { background:var(--editor-panel-2); color:var(--editor-muted); cursor:default; }
 .unit-workspace-save[aria-busy="true"] { background:var(--azure); color:#fff; cursor:progress; }
-.unit-workspace-scroll { flex:1; min-height:0; padding:20px 28px 48px; overflow-y:auto; overscroll-behavior:contain; }
+.unit-workspace-scroll { flex:1; min-height:0; padding:20px 28px 48px; overflow-y:auto; overscroll-behavior-y:auto; touch-action:pan-y; }
+.unit-edit-dialog .unit-workspace-scroll { overscroll-behavior-y:contain; }
 .unit-workspace-status { display:flex; flex-shrink:0; align-items:center; gap:12px; padding:10px 20px 10px 28px; border-top:1px solid var(--editor-line); background:var(--editor-panel); font-size:13px; color:var(--ink-2); }
 .unit-workspace-status p { display:flex; flex:1; align-items:center; gap:8px; margin:0; line-height:1.5; }
 .unit-workspace-status .auth-error { margin:0; }

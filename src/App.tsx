@@ -8,6 +8,8 @@ import type { Theme } from "./store";
 import { getSession, getTheme, loadProfiles, setAccountAdmin, setAccountEmail, setSession, setTheme, THEME_CHANGE_EVENT, touchLastOnline, updateProfile, useProgress } from "./store";
 import { SignIn } from "./components/SignIn";
 import { CloudAuth, ResetPassword } from "./components/CloudAuth";
+import { ClientPortal } from "./pages/ClientPortal";
+import { clientPortalRequested, trustedClientAccount } from "./lib/clientPortal";
 import { Header } from "./components/Header";
 import { Sidebar } from "./components/Sidebar";
 import { EditingProvider } from "./components/EditingSidebar";
@@ -294,7 +296,11 @@ function Shell({
 }
 
 export default function App() {
-  const [cloudState, setCloudState] = useState<"loading" | "signedout" | "recovery" | "ready">(
+  return clientPortalRequested() ? <ClientPortal /> : <StaffApp />;
+}
+
+function StaffApp() {
+  const [cloudState, setCloudState] = useState<"loading" | "signedout" | "recovery" | "ready" | "client">(
     cloudEnabled ? "loading" : "ready"
   );
   const syncedUser = useRef<string | null>(null);
@@ -306,6 +312,15 @@ export default function App() {
     if (!supabase) return;
     const sb = supabase;
     const { data: sub } = sb.auth.onAuthStateChange((event, session) => {
+      if (session?.user && trustedClientAccount(session.user)) {
+        stopSync();
+        syncedUser.current = null;
+        syncedEmail.current = null;
+        syncReady.current = false;
+        setAccountAdmin(false);
+        setCloudState("client");
+        return;
+      }
       if (event === "PASSWORD_RECOVERY") {
         // arrived from a password-reset email — let the user set a new password first
         recovering.current = true;
@@ -438,6 +453,7 @@ export default function App() {
     );
   }
   if (cloudState === "signedout") return <CloudAuth />;
+  if (cloudState === "client") return <ClientPortal />;
   if (cloudState === "recovery")
     return (
       <ResetPassword

@@ -529,7 +529,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
             <button type="button" className="btn unit-build-action unit-workspace-save" disabled={!!busy||!dirty} aria-busy={!!busy} style={{"--progress":`${busyProgress}%`} as CSSProperties} onClick={()=>setConfirmRebuild(true)}><span>{busy?`Saving ${busyProgress}%`:dirty?"Save all changes and rebuild files":"All changes saved"}</span></button>
           </div>}
         </header>
-        <div className="unit-workspace-scroll" ref={scrollRef}>
+        <div className="unit-workspace-scroll" ref={scrollRef} role="region" aria-label="Unit editor content" tabIndex={0}>
           {inlineDraft?<div className="unit-workspace-notice">
             <h3>Finish the inline slide changes first</h3>
             <p>Save the slide edits to update every tab and the download files, or cancel them to discard those edits. The structured editor unlocks afterwards.</p>

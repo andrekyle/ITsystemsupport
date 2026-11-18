@@ -68,7 +68,7 @@ async function test() {
   button('Manage').click();await tick();button('Download').click();await tick();assert((globalThis as any).__downloaded,'Actual document download is wired');button('Done').click();await tick();
   await choose('Portfolio section','1. Learner overview');
   button('Upload evidence').click();await tick();
-  const file=document.querySelector<HTMLInputElement>('input[type="file"]:not([accept])')!;
+  const file=document.querySelector<HTMLInputElement>('input[aria-label="Upload portfolio evidence file"]')!;
   const transfer=new DataTransfer();transfer.items.add(new File(['test'],'long original filename.pdf',{type:'application/pdf'}));file.files=transfer.files;file.dispatchEvent(new Event('change',{bubbles:true}));
   await until(()=>!!document.querySelector('button[aria-label^="Manage evidence:"]'),'Uploaded evidence becomes reviewable');
   await choose('Verification: Learner overview','Verified');

@@ -9,6 +9,7 @@ import { ensureCourseCovers } from "../lib/courseCovers";
 import { packCourseDetails, readQualificationDraft, type QualificationDraft } from "../lib/qualificationPack";
 
 import { completeQualificationMetadata } from "../lib/completeQualificationMetadata";
+import { Select } from "./Select";
 import "./course-creator-progress.css";
 
 export function CourseCreator({ onClose }: { onClose: () => void }) {
@@ -74,7 +75,14 @@ export function CourseCreator({ onClose }: { onClose: () => void }) {
   </>}>
     {!draft ? <>
       <p>Select a pack already uploaded under Qualification Packs. AI will use its folder names to identify the qualification, modules and unit standards, and suggest descriptions and outcomes. Unit titles, NQF levels and credits will be filled from SAQA records using the extracted codes. Pack documents will not be read. Review the result before creating the course and its cover images.</p>
-      <label className="field"><span>Qualification pack</span><select value={packId} disabled={saving} onChange={event => { setPackId(event.target.value); setError(""); }}><option value="">Select a qualification pack</option>{packs.map(item => <option key={item.id} value={item.id}>{item.name} ({item.files.length} files)</option>)}</select></label>
+      <label className="field"><span>Qualification pack</span><Select
+        value={packId}
+        disabled={saving || !packs.length}
+        placeholder="Select a qualification pack"
+        ariaLabel="Qualification pack"
+        options={packs.map(item => ({ value: item.id, label: item.name, hint: `${item.files.length} files` }))}
+        onChange={value => { setPackId(value); setError(""); }}
+      /></label>
       {pack && <p>{pack.description || pack.name}</p>}
       {!packs.length && <p role="status">No qualification packs are available. Upload one under Qualification Packs, then return here.</p>}
     </> : <section aria-label="Qualification pack review">

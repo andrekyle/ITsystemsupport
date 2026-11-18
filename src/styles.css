@@ -11744,6 +11744,13 @@ table.data tr.done-row .text-link {
   overflow-y: auto;
 }
 
+/* The custom qualification-pack menu must be able to paint outside the
+   scrollable card; otherwise the card clips the options as soon as the list
+   reaches its lower edge. Keep scrolling for the normal closed state. */
+.course-creator-modal:has(.nice-select-btn.open) {
+  overflow: visible;
+}
+
 .course-creator-modal .modal-title {
   font-size: 17px;
   margin-bottom: 10px;
@@ -20098,4 +20105,10 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   .content .lw-document .lw-page { min-height: 0; height: auto; padding: 24px 30px; }
   .content .lw-document .lw-cover-main { min-height: 0; padding-top: 12px; }
   .content .lw-document .lw-cover-main > img { width: 280px; margin-bottom: 18px; }
+}
+
+/* Light-mode table records use black text for readable labels and values. */
+[data-theme="light"] table tbody td,
+[data-theme="light"] table tbody td :is(span, p, small, strong, input:not([type="button"]):not([type="submit"]), textarea, select) {
+  color: #000;
 }
