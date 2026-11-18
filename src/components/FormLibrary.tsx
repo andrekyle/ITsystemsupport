@@ -153,7 +153,7 @@ function SavedFormView({ template, profile, onClose }: { template: SavedForm; pr
   const tools = <div className="fb-toolbar no-print">
         <button type="button" className="btn ghost" disabled={saving} onClick={() => dirty ? setConfirmLeave(true) : onClose()}><Icon name="chevronLeft" size={16} /> Forms</button>
         <button type="button" className="btn primary" disabled={loading || saving || !!loadError} onClick={() => void save()}><Icon name="check" size={16} /> {saving ? "Saving..." : "Save answers"}</button>
-        <button type="button" className="btn ghost" disabled={loading || saving || !!loadError} onClick={async () => { if (await save()) window.print(); }}><Icon name="download" size={16} /> Print / PDF</button>
+        <button type="button" className="btn ghost" disabled={loading || saving || !!loadError} onClick={async () => { if (await save()) { document.body.classList.add("printing-registration"); const cleanup = () => document.body.classList.remove("printing-registration"); window.addEventListener("afterprint", cleanup, { once: true }); window.print(); window.setTimeout(cleanup, 1500); } }}><Icon name="download" size={16} /> Print / PDF</button>
         {dirty ? <span className="fb-response-saved" role="status">Unsaved changes</span> : savedAt && <span className="fb-response-saved" role="status">Saved {new Date(savedAt).toLocaleString()}</span>}
       {error && <p role="alert" className="auth-error">{error}</p>}
       </div>;
