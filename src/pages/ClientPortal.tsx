@@ -110,7 +110,7 @@ export function ClientPortal() {
       return [link, handler] as const;
     });
     return () => handlers.forEach(([link, handler]) => link.removeEventListener('click', handler));
-  }, [documents, filtered]);
+  }, [documents]);
   useEffect(() => {
     const existing = window.document.querySelector('.client-document-viewer');
     existing?.remove();
