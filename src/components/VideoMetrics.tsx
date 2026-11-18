@@ -18,7 +18,6 @@ import {
 type VideoRow = {
   id: string;
   title: string;
-  course: string;
   learners: number;
   views: number;
   watchSeconds: number;
@@ -75,7 +74,6 @@ function learnerVideos(progress: ProgressState, titles: Record<string, string>):
       row = {
         id,
         title: titles[id] ?? fallbackTitle(id),
-        course: COURSE_META.title,
         watchSeconds: 0,
         views: 0,
         likes: 0,
@@ -250,7 +248,7 @@ export function VideoMetrics() {
     const map = new Map<string, VideoRow & { people: Set<string> }>();
     for (const entry of activity) for (const video of entry.videos) {
       const row = map.get(video.id) ?? {
-        id: video.id, title: video.title, course: video.course,
+        id: video.id, title: video.title,
         learners: 0, views: 0, watchSeconds: 0, likes: 0, comments: 0, completions: 0,
         score: 0, people: new Set<string>(),
       };
@@ -312,8 +310,8 @@ export function VideoMetrics() {
         </> : <p className="empty-state">{loading ? "Loading video activity…" : "No video activity recorded yet. Metrics appear here once learners watch, like, comment on or complete videos."}</p>}
       </section>
       {videos.length > 0 && <div className="table-wrap card video-metrics-table-wrap"><table className="data video-metrics-table">
-        <thead><tr><th>#</th><th>Video</th><th>Course</th><th>Views</th><th>Learners</th><th>Watch time</th><th>Likes</th><th>Comments</th><th>Completed</th></tr></thead>
-        <tbody>{chartOrderedVideos.map((video, index) => <tr key={video.id}><td>{index + 1}</td><td><strong>{video.title}</strong></td><td>{video.course}</td><td>{video.views}</td><td>{video.learners}</td><td>{duration(video.watchSeconds)}</td><td>{video.likes}</td><td>{video.comments}</td><td>{video.completions}</td></tr>)}</tbody>
+        <thead><tr><th>#</th><th>Video</th><th>Views</th><th>Learners</th><th>Watch time</th><th>Likes</th><th>Comments</th><th>Completed</th></tr></thead>
+        <tbody>{chartOrderedVideos.map((video, index) => <tr key={video.id}><td>{index + 1}</td><td><strong>{video.title}</strong></td><td>{video.views}</td><td>{video.learners}</td><td>{duration(video.watchSeconds)}</td><td>{video.likes}</td><td>{video.comments}</td><td>{video.completions}</td></tr>)}</tbody>
       </table></div>}
     </> : <>
       <div className="video-learner-picker field">

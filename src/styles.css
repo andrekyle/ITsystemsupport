@@ -3391,8 +3391,9 @@ td .with-ico .ico {
   background: linear-gradient(135deg, #f7efe7 0%, #fffaf5 52%, #e7f3ef 100%);
 }
 .gate:not(.discovery-gate) .gate-card {
+  border-top: 0 !important;
   border: 1px solid rgba(20, 91, 78, .16);
-  border-top: 5px solid #ef6a22;
+  border-top: 0;
   border-radius: 14px;
   box-shadow: 0 20px 55px rgba(28, 76, 66, .12);
 }

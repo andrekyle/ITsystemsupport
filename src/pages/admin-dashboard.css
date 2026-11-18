@@ -228,8 +228,8 @@ button.admin-operations-row:hover strong, button.admin-operations-row:hover b { 
   grid-template-columns: minmax(0, 1.3fr) minmax(76px, .7fr);
   align-items: center;
   column-gap: 20px;
-  min-height: 132px;
-  padding: 22px 24px;
+  min-height: 190px;
+  padding: 28px;
 }
 
 .admin-tile-value,
