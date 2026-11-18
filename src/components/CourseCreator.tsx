@@ -1,92 +1,81 @@
 import { useState } from "react";
 import { Modal } from "./Modal";
 import { createCourse, courseStorageKey, saveCustomCourse, setActiveCourse } from "../data/courses";
+import { useOnboardingPacks } from "../store";
 import { flushKey } from "../lib/sync";
 import { supabase } from "../lib/supabase";
 import { loadContentModel } from "../lib/tokens";
-import { validateCourseDetails, validateCourseModules, type GeneratedCourseModule } from "../lib/courseMetadata";
 import { ensureCourseCovers } from "../lib/courseCovers";
+import { packCourseDetails, readQualificationDraft, type QualificationDraft } from "../lib/qualificationPack";
 
 export function CourseCreator({ onClose }: { onClose: () => void }) {
-  const [fields, setFields] = useState({ title: "", saqaId: "", nqfLevel: "5", credits: "0", description: "" });
-  const [moduleCount, setModuleCount] = useState("1");
-  const [unitCounts, setUnitCounts] = useState(["1"]);
-  const [moduleNames, setModuleNames] = useState([""]);
-  const [unitCodes, setUnitCodes] = useState<string[][]>([[""]]);
-  const [modules, setModules] = useState<GeneratedCourseModule[] | null>(null);
+  const { packs } = useOnboardingPacks();
+  const [packId, setPackId] = useState("");
+  const [draft, setDraft] = useState<QualificationDraft | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [coverProgress, setCoverProgress] = useState("");
+  const [progress, setProgress] = useState("");
   const [pending, setPending] = useState<ReturnType<typeof createCourse> | null>(null);
-  const details = () => ({ ...fields, nqfLevel: Number(fields.nqfLevel), credits: Number(fields.credits), unitCounts: unitCounts.map(Number), moduleNames: moduleNames.map(name => name.trim()), unitCodes: unitCodes.map(codes => codes.map(code => code.trim())) });
-  async function generate() {
-    setSaving(true); setError("");
+  const pack = packs.find(item => item.id === packId);
+  function change(update: (value: QualificationDraft) => void) {
+    setDraft(current => { if (!current) return current; const next = structuredClone(current); update(next); return next; });
+  }
+  async function readPack() {
+    setSaving(true); setError(""); setProgress("Reading the qualification pack...");
     try {
-      const input = details();
-      validateCourseDetails(input);
-      if (Number(moduleCount) !== input.unitCounts.length) throw new Error("Enter a module count between 1 and 20.");
+      if (!pack) throw new Error("Select an uploaded qualification pack.");
       const session = await supabase?.auth.getSession();
       const token = session?.data.session?.access_token;
-      const response = await fetch("/api/course-metadata", { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ ...input, model: loadContentModel() }), signal: AbortSignal.timeout(180000) });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Could not generate course metadata.");
-      validateCourseModules(data.modules, input.unitCounts, input);
-      setModules(data.modules);
-    } catch (e) { setError(e instanceof Error ? e.message : "Could not generate course metadata."); }
+      const response = await fetch("/api/qualification-pack", { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ packId, model: loadContentModel() }), signal: AbortSignal.timeout(290000) });
+      const result = await response.json();
+      if (!response.ok || result.error) throw new Error(result.error || "Could not read the qualification pack.");
+      setDraft(readQualificationDraft(result.draft)); setProgress("");
+    } catch (e) { setError(e instanceof Error ? e.message : "Could not read the qualification pack."); setProgress(""); }
     finally { setSaving(false); }
   }
   async function save() {
-    if (!modules) return;
+    if (!draft || !pack) return;
     setSaving(true); setError("");
     try {
-      let course = pending ?? createCourse(details(), modules);
+      let course = pending ?? createCourse(packCourseDetails(draft), draft.modules);
+      course.sourcePack = { id: pack.id, name: pack.name };
+      course.modules.forEach(module => module.units.forEach(unit => { unit.metadataSource = `Qualification pack: ${pack.name}`; }));
       setPending(course);
-      course = await ensureCourseCovers(course, null, setPending, setCoverProgress);
+      course = await ensureCourseCovers(course, null, setPending, setProgress);
       setPending(course);
       saveCustomCourse(course);
       await flushKey(courseStorageKey(course.id), !!supabase);
       setActiveCourse(course.id);
     } catch (e) { setError(e instanceof Error ? e.message : "Could not save the course."); setSaving(false); }
   }
-  return <Modal className="course-creator-modal" title="Add course" onClose={onClose} actions={<>
+  return <Modal className="course-creator-modal" title="Add course from qualification pack" onClose={onClose} actions={<>
     <button className="btn ghost" disabled={saving} onClick={onClose}>Cancel</button>
-    {modules && !pending && <button className="btn ghost" disabled={saving} onClick={() => { setModules(null); setError(""); }}>Edit details</button>}
-    <button className="btn ghost" disabled={saving} onClick={() => void (modules ? save() : generate())}>{saving ? modules ? "Saving..." : "Generating metadata..." : pending ? "Retry save" : modules ? "Create course" : "Generate course metadata"}</button>
+    {draft && !pending && <button className="btn ghost" disabled={saving} onClick={() => { setDraft(null); setError(""); setProgress(""); }}>Choose another pack</button>}
+    <button className="btn ghost" disabled={saving || !pack} onClick={() => void (draft ? save() : readPack())}>{saving ? draft ? "Creating tiles..." : "Reading pack..." : pending ? "Retry save" : draft ? "Create course and tiles" : "Read qualification pack"}</button>
   </>}>
-    <p>Enter each module name and its unit standard codes. AI will use those exact codes to populate metadata from the SAQA unit records.</p>
-    <fieldset disabled={saving || !!modules} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
-      {([['title', 'Course name'], ['saqaId', 'SAQA ID'], ['nqfLevel', 'NQF level'], ['credits', 'Credits'], ['description', 'Description']] as const).map(([key, label]) => <label className="field" key={key}>
-        <span>{label}</span>
-        <input value={fields[key]} type={key === 'nqfLevel' || key === 'credits' ? 'number' : 'text'} min={key === 'nqfLevel' ? 1 : key === 'credits' ? 0 : undefined} max={key === 'nqfLevel' ? 10 : undefined} step={1} onChange={e => setFields({ ...fields, [key]: e.target.value })} />
-      </label>)}
-      <label className="field"><span>Number of modules</span><input type="number" min={1} max={20} step={1} value={moduleCount} onChange={event => {
-        const value = event.target.value; setModuleCount(value);
-        const count = Number(value);
-        if (Number.isInteger(count) && count >= 1 && count <= 20) {
-          setUnitCounts(current => Array.from({ length: count }, (_, index) => current[index] ?? "1"));
-          setModuleNames(current => Array.from({ length: count }, (_, index) => current[index] ?? ""));
-          setUnitCodes(current => Array.from({ length: count }, (_, index) => current[index] ?? [""]));
-        }
-      }} /></label>
-      {unitCounts.map((count, index) => <div key={index}>
-        <label className="field"><span>Module {index + 1}: name</span><input value={moduleNames[index]} maxLength={300} onChange={event => setModuleNames(current => current.map((name, i) => i === index ? event.target.value : name))} /></label>
-        <label className="field"><span>Module {index + 1}: number of unit standards</span><input type="number" min={1} max={30} step={1} value={count} onChange={event => {
-          const value = event.target.value;
-          setUnitCounts(current => current.map((item, i) => i === index ? value : item));
-          const length = Number(value);
-          if (Number.isInteger(length) && length >= 1 && length <= 30) setUnitCodes(current => current.map((codes, i) => i === index ? Array.from({ length }, (_, j) => codes[j] ?? "") : codes));
-        }} /></label>
-        {unitCodes[index].map((code, unitIndex) => <label className="field" key={unitIndex}><span>Module {index + 1}, unit standard {unitIndex + 1}: code</span><input type="text" inputMode="numeric" placeholder="e.g. 114051" maxLength={9} value={code} onChange={event => setUnitCodes(current => current.map((codes, i) => i === index ? codes.map((item, j) => j === unitIndex ? event.target.value : item) : codes))} /></label>)}
-      </div>)}
-    </fieldset>
-    {modules && <section aria-label="Generated course metadata">
-      <p>Review the generated module summaries and learning outcomes before creating the course. You can edit metadata later in the Training Calendar.</p>
-      {modules.map((module, index) => <details key={index} open><summary><strong>Module {index + 1}: {module.name}</strong> - {module.units.length} unit standards</summary>
-        <p>{module.description}</p><ul>{module.outcomes.map((outcome, i) => <li key={i}>{outcome}</li>)}</ul>
-        {module.units.map(unit => <details key={unit.us}><summary>{unit.us}: {unit.title} - NQF {unit.nqf} - {unit.credits} credits</summary><p>{unit.description}</p><ul>{unit.outcomes.map((outcome, i) => <li key={i}>{outcome}</li>)}</ul></details>)}
-      </details>)}
+    {!draft ? <>
+      <p>Select a pack already uploaded under Qualification Packs. AI will read its qualification details, modules and unit standards. Review the result before creating the course and its cover images.</p>
+      <label className="field"><span>Qualification pack</span><select value={packId} disabled={saving} onChange={event => { setPackId(event.target.value); setError(""); }}><option value="">Select a qualification pack</option>{packs.map(item => <option key={item.id} value={item.id}>{item.name} ({item.files.length} files)</option>)}</select></label>
+      {pack && <p>{pack.description || pack.name}</p>}
+      {!packs.length && <p role="status">No qualification packs are available. Upload one under Qualification Packs, then return here.</p>}
+    </> : <section aria-label="Qualification pack review">
+      <p>Read from {pack?.name}. Review the qualification, module assignments and unit metadata. Covers will be generated when you create the course.</p>
+      {draft.issues.length > 0 && <div role="status"><strong>Review notes</strong><ul>{draft.issues.map((issue, i) => <li key={i}>{issue}</li>)}</ul></div>}
+      <fieldset disabled={saving || !!pending} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+        {([['title','Qualification name'],['saqaId','SAQA ID'],['nqfLevel','NQF level'],['credits','Credits'],['description','Description']] as const).map(([key,label]) => <label className="field" key={key}><span>{label}</span><input type={key === 'nqfLevel' || key === 'credits' ? 'number' : 'text'} value={typeof draft.qualification[key] === 'number' && Number(draft.qualification[key]) < (key === 'nqfLevel' ? 1 : 0) ? '' : draft.qualification[key]} onChange={event => change(value => { Object.assign(value.qualification, { [key]: key === 'nqfLevel' || key === 'credits' ? event.target.value === '' ? -1 : Number(event.target.value) : event.target.value }); })} /></label>)}
+        <p>{draft.modules.length} modules, {draft.modules.reduce((total, module) => total + module.units.length, 0)} unit standards</p>
+        {draft.modules.map((module, mi) => <details key={mi} open><summary>Module {mi + 1}: {module.name} ({module.units.length} unit standards)</summary>
+          <label className="field"><span>Module {mi + 1}: name</span><input value={module.name} onChange={event => change(value => { value.modules[mi].name = event.target.value; })} /></label>
+          <label className="field"><span>Module summary</span><textarea value={module.description} onChange={event => change(value => { value.modules[mi].description = event.target.value; })} /></label>
+          <label className="field"><span>Module learning outcomes (one per line)</span><textarea value={module.outcomes.join("\n")} onChange={event => change(value => { value.modules[mi].outcomes = event.target.value.split("\n"); })} /></label>
+          {module.units.map((unit, ui) => <details key={ui}><summary>{unit.us}: {unit.title}</summary>
+            {([['us','Unit standard code'],['title','Unit title'],['nqf','Unit NQF level'],['credits','Unit credits'],['description','Unit summary']] as const).map(([key,label]) => <label className="field" key={key}><span>{label}</span><input type={key === 'nqf' || key === 'credits' ? 'number' : 'text'} value={typeof unit[key] === 'number' && Number(unit[key]) < (key === 'nqf' ? 1 : 0) ? '' : unit[key]} onChange={event => change(value => { Object.assign(value.modules[mi].units[ui], { [key]: key === 'nqf' || key === 'credits' ? event.target.value === '' ? -1 : Number(event.target.value) : event.target.value }); })} /></label>)}
+            <label className="field"><span>Unit learning outcomes (one per line)</span><textarea value={unit.outcomes.join("\n")} onChange={event => change(value => { value.modules[mi].units[ui].outcomes = event.target.value.split("\n"); })} /></label>
+          </details>)}
+        </details>)}
+      </fieldset>
     </section>}
     {error && <p role="alert" className="auth-error">{error}</p>}
-    {coverProgress && <p role="status">{coverProgress}</p>}
+    {progress && <p role="status">{progress}</p>}
   </Modal>;
 }

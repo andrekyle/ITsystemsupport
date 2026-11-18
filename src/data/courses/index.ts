@@ -3,7 +3,7 @@ import { IT_SYSTEMS_SUPPORT } from "./it-systems-support";
 import { GENERIC_MANAGEMENT } from "./generic-management";
 
 /** The IT course is the reference shape every course must match. */
-export type CourseData = typeof IT_SYSTEMS_SUPPORT;
+export type CourseData = typeof IT_SYSTEMS_SUPPORT & { sourcePack?: { id: string; name: string } };
 
 export const COURSES: CourseData[] = [IT_SYSTEMS_SUPPORT, GENERIC_MANAGEMENT];
 

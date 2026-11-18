@@ -223,6 +223,7 @@ function apiDev(env: Record<string, string>): Plugin {
   const endpoints = [
     "unit-metadata",
     "course-metadata",
+    "qualification-pack",
     "cover-image",
     "generate-report",
     "generate-activity-answers",
