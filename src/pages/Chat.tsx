@@ -1,4 +1,5 @@
-import { canSeeProfile, isAssignedStaff, useAssignments } from "../lib/assignments";
+import { canSeeCourse, canSeeProfile, isAssignedStaff, useAssignments } from "../lib/assignments";
+import { activeCourseId } from "../data/courses";
 import { useEffect, useMemo, useRef, useState, Fragment } from "react";
 import { Icon } from "../icons";
 import { EditingTools } from "../components/EditingSidebar";
@@ -49,6 +50,7 @@ export function ChatPage({
   navigate: (r: Route) => void;
 }) {
   const assignments = useAssignments();
+  const courseId = activeCourseId();
   const isSuper = profile.role === "Super User";
   const staff = isStaff(profile.role);
 
@@ -96,11 +98,12 @@ export function ChatPage({
     if (!cloud) return [];
     const all = cloud.profiles
       .filter((p) => p.id !== profile.id && (!isAssignedStaff(profile) || canSeeProfile(profile, p, assignments)))
+      .filter((p) => p.role !== "Learner" || (canSeeCourse(p, courseId, assignments) && (p.cohortId ?? "default") === (profile.cohortId ?? "default")))
       // learners only see other learners and staff — never other learners' chats
       .filter((p) => (staff ? true : p.role === "Learner" || isStaff(p.role)))
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
     return all;
-  }, [cloud, profile.id, staff, JSON.stringify(assignments)]);
+  }, [cloud, profile.id, staff, courseId, profile.cohortId, JSON.stringify(assignments)]);
 
   /** Index by profile id AND by that profile's Supabase auth uid so we can
    *  resolve senders no matter which identifier a message carries. */
