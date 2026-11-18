@@ -25,7 +25,7 @@ import { flushProgress, loadProgress, moduleCompletion, unitCompletion, unitStat
 import { Bar, Ring } from "../components/Ring";
 import { Quiz, seededShuffle } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
-import { ConfirmModal } from "../components/Modal";
+import { ConfirmModal, Modal } from "../components/Modal";
 import { SlideEditableText } from "../components/SlideEditableText";
 import { SlideTextToolbar } from "../components/SlideTextToolbar";
 import { LessonVideoEditor, LessonVideos } from "../components/LessonVideos";
@@ -2938,6 +2938,8 @@ function UnitPageContent({
   const [proofreadError, setProofreadError] = useState("");
   const [proofreadNotice, setProofreadNotice] = useState("");
   const [addingSlide, setAddingSlide] = useState(false);
+  const [firstSlideDraft, setFirstSlideDraft] = useState<{ heading: string; text: string } | null>(null);
+  const [firstSlideError, setFirstSlideError] = useState("");
   const [deletingSlide, setDeletingSlide] = useState(false);
   const [deleteSlideError, setDeleteSlideError] = useState("");
   useEffect(() => { setDeleteSlideError(""); }, [unitId]);
@@ -3252,6 +3254,39 @@ function UnitPageContent({
     } finally {
       setProofreadingSlide(null);
     }
+  };
+  const createFirstLessonSlide = async () => {
+    if (!firstSlideDraft || !isSuperUser || addingSlide) return;
+    setFirstSlideError("");
+    if (!firstSlideDraft.heading.trim() || !firstSlideDraft.text.trim()) {
+      setFirstSlideError("Enter a slide heading and slide text.");
+      return;
+    }
+    setAddingSlide(true);
+    try {
+      const next = structuredClone(content) as UnitContent;
+      const si = next.lesson.length;
+      const parsed = parsePastedLessonText(firstSlideDraft.text);
+      next.lesson.push({ heading: firstSlideDraft.heading.trim(), icon: "book", paragraphs: parsed.paragraphs, ...(parsed.bullets.length ? { bullets: parsed.bullets } : {}) });
+      if (inlineUnit) {
+        setInlineUnit(next);
+      } else {
+        const { makeUnitExports } = await import("../lib/unitExports");
+        const files = await makeUnitExports(u, { ...next, lesson: next.lesson.filter((_, index) => !lessonEdits.deletedSections?.includes(index)) });
+        const prefix = `shared/unitbuilder/${courseScopedUnit(unitId)}`;
+        const [pdf, pptx, answers] = await Promise.all([uploadFile(prefix, files.pdf), uploadFile(prefix, files.pptx), uploadFile(prefix, files.answers)]);
+        const revision = crypto.randomUUID();
+        const oldEditId = builtUnit ? `${unitId}.built-${builtUnit.revision}` : unitId;
+        await flushLessonEdits(`itss.lessonedits.${courseScopedUnit(`${unitId}.built-${revision}`)}`, cachedLessonEdits(`itss.lessonedits.${courseScopedUnit(oldEditId)}`, lessonEdits));
+        await saveBuiltUnit(unitId, { ...builtUnit, revision, source: builtUnit?.source ?? "", content: next, files: { ...builtUnit?.files, pdf, pptx, answers }, aiUsed: builtUnit?.aiUsed ?? false, createdAt: new Date().toISOString() });
+      }
+      setLessonStep(si);
+      setEditMode(true);
+      setSlideEditOpen(true);
+      setFirstSlideDraft(null);
+    } catch (error) {
+      setFirstSlideError(error instanceof Error ? error.message : "The slide could not be saved. Your text is kept; please retry.");
+    } finally { setAddingSlide(false); }
   };
   const addBuiltLessonSlide = async (si: number) => {
     setLessonSplitError(null);
@@ -3844,6 +3879,11 @@ function UnitPageContent({
         <button type="button" className="btn solid sm lesson-header-edit"
           aria-expanded={slideEditOpen} aria-controls="editing-sidebar-groups"
           onClick={() => {
+            if (!visibleLessonIndices.length && isSuperUser) {
+              setFirstSlideError("");
+              setFirstSlideDraft({ heading: u.title, text: "" });
+              return;
+            }
             setSlideEditOpen(open => !open);
             setLessonSaveStatus("");
             setEditMode(true);
@@ -4102,6 +4142,15 @@ function UnitPageContent({
           </div>
       )}
 
+      {firstSlideDraft && <Modal title="Create first lesson slide" onClose={() => { if (!addingSlide) setFirstSlideDraft(null); }} actions={<>
+        <button type="button" className="btn ghost" disabled={addingSlide} onClick={() => setFirstSlideDraft(null)}>Cancel</button>
+        <button type="button" className="btn solid" disabled={addingSlide} onClick={() => void createFirstLessonSlide()}>{addingSlide ? "Saving slide and course files..." : "Create slide"}</button>
+      </>}>
+        <p>This unit has no lesson slides yet. Add the first slide to start editing.</p>
+        <label className="field"><span>Slide heading</span><input autoFocus disabled={addingSlide} value={firstSlideDraft.heading} onChange={event => setFirstSlideDraft(current => current ? { ...current, heading: event.target.value } : current)} /></label>
+        <label className="field"><span>Slide text</span><textarea rows={8} disabled={addingSlide} value={firstSlideDraft.text} onChange={event => setFirstSlideDraft(current => current ? { ...current, text: event.target.value } : current)} /></label>
+        {firstSlideError && <p role="alert" className="auth-error">{firstSlideError}</p>}
+      </Modal>}
       {tab === "lesson" && content && (
         <>
           <div style={{ marginTop: 18 }} />
@@ -4133,7 +4182,7 @@ function UnitPageContent({
           {figError && <p className="auth-error" role="alert">{figError}</p>}
           {unresolvedFigureMessage && <p className="auth-error" role="alert">{unresolvedFigureMessage}</p>}
           {deleteSlideError && <p className="auth-error" role="alert">{deleteSlideError}</p>}
-          {!visibleLessonIndices.length && <p role="status">No slides remain in this lesson.</p>}
+          {!visibleLessonIndices.length && <p role="status">No slides remain in this lesson.{isSuperUser && " Click Edit slide text to create the first slide."}</p>}
           {inlineUnit && isSuperUser && <EditingTools active title="Save lesson draft" order={5}
             description="Publish the draft, including removed slides, or cancel its changes.">
             <div className="unit-editor-actions" ref={setInlineActionsTarget} />
