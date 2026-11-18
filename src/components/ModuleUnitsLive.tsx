@@ -17,7 +17,16 @@ export function UnitLiveActions({ module, index, editing, onEdit, disabled, onCh
     try {
       const { data } = supabase ? await supabase.auth.getSession() : { data: { session: null } };
       const response = await fetch("/api/unit-metadata", { method: "POST", headers: { "Content-Type": "application/json", ...(data.session?.access_token ? { Authorization: `Bearer ${data.session.access_token}` } : {}) }, body: JSON.stringify({ us: unit.us, model: loadContentModel() }), signal: AbortSignal.timeout(60_000) });
-      const result = await response.json();
+      // API gateways and local dev fallbacks can return plain text (for
+      // example, "An error occurred") instead of JSON. Read the body safely
+      // so the user sees a useful message rather than a JSON.parse exception.
+      const raw = await response.text();
+      let result: { error?: string; metadata?: { title: string | null; nqf: number | null; credits: number | null }; usage?: Record<string, unknown>; model?: string };
+      try {
+        result = JSON.parse(raw);
+      } catch {
+        throw new Error(response.ok ? "The metadata service returned an invalid response." : raw.trim() || "The metadata service is unavailable.");
+      }
       if (!response.ok) throw new Error(result.error || "Could not suggest unit metadata.");
       const metadata = result.metadata;
       if (!metadata || !(metadata.title === null || typeof metadata.title === "string") || !(metadata.nqf === null || Number.isInteger(metadata.nqf) && metadata.nqf >= 1 && metadata.nqf <= 10) || !(metadata.credits === null || Number.isInteger(metadata.credits) && metadata.credits >= 0)) throw new Error("The AI returned invalid metadata.");
