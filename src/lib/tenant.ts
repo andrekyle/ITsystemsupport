@@ -18,7 +18,7 @@ const TENANTS: Record<TenantId, TenantBrand> = {
     name: "Investec",
     location: "Sandton",
     appName: "Eruditio eLearning",
-    logo: null,
+    logo: "/logos/investec.svg",
     accent: "#007cc3",
     superUserName: "Andre Snell",
     superUserEmail: "andresnell29@gmail.com",

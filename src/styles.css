@@ -3386,6 +3386,41 @@ td .with-ico .ico {
   margin-bottom: 22px;
 }
 
+/* Eruditio learning sign-in palette */
+.gate:not(.discovery-gate) {
+  background: linear-gradient(135deg, #f7efe7 0%, #fffaf5 52%, #e7f3ef 100%);
+}
+.gate:not(.discovery-gate) .gate-card {
+  border: 1px solid rgba(20, 91, 78, .16);
+  border-top: 5px solid #ef6a22;
+  border-radius: 14px;
+  box-shadow: 0 20px 55px rgba(28, 76, 66, .12);
+}
+.gate:not(.discovery-gate) .gate-card .logo { color: #168b78; }
+.gate:not(.discovery-gate) .gate-card .tenant-logo { width: 220px; max-width: 100%; height: auto; max-height: none; }
+.gate:not(.discovery-gate) .gate-card h1 { color: #173f38; }
+.gate:not(.discovery-gate) .gate-card .sub { color: #5c6d68; }
+.gate:not(.discovery-gate) .gate-card .btn.primary,
+.gate:not(.discovery-gate) .gate-card form button[type="submit"] {
+  color: #fff;
+  border: 0;
+  background: linear-gradient(90deg, #e96522, #f0a11d);
+  box-shadow: none;
+  transform: none;
+}
+.gate:not(.discovery-gate) .gate-card form button[type="submit"]:hover,
+.gate:not(.discovery-gate) .gate-card form button[type="submit"]:focus-visible {
+  border: 0;
+  box-shadow: none;
+  transform: none;
+}
+.investec-gate { background: #f7f7f5; }
+.investec-gate .gate-card { border-top: 0 !important; border-color: #dededc; box-shadow: 0 14px 35px rgba(48,55,73,.08); }
+.investec-gate .gate-card form button[type="submit"] { color: #fff; background: #303749 !important; border-color: #303749 !important; box-shadow: none; }
+.investec-gate .gate-card .logo { color: #303749; }
+.investec-gate .gate-card { position: relative; overflow: hidden; }
+.investec-auth-zebra { position: absolute; top: 22px; right: 24px; display: block; width: 155px; height: 105px; object-fit: contain; object-position: center bottom; margin: 0; opacity: .9; }
+
 .tenant-logo { display:block; max-width:220px; max-height:58px; object-fit:contain; }
 .tenant-location { margin:-4px 0 18px; color:var(--ink-3); font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; }
 .header-tenant-logo { width:auto; height:30px; max-width:156px; object-fit:contain; }
@@ -4878,12 +4913,12 @@ textarea:focus {
 }
 
 .tabs.dashboard-section-tabs {
-  gap: 8px;
+  gap: 4px;
   margin: 28px 0 24px;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
 }
 
 .tabs.dashboard-section-tabs .tab,
@@ -4894,11 +4929,11 @@ textarea:focus {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  min-height: 43px;
+  min-height: 40px;
   margin: 0;
   padding: 11px 13px;
   border: 0;
-  border-radius: 11px;
+  border-radius: 7px;
   color: var(--ink-2);
   background: transparent;
   box-shadow: none;
@@ -4912,14 +4947,14 @@ textarea:focus {
 .tabs.dashboard-section-tabs .tab:hover,
 .dashboard-detail-panel .video-metrics-switch button:hover,
 .dashboard-detail-panel .video-chart-metrics button:hover {
-  background: transparent;
+  background: transparent !important;
   color: var(--ink);
 }
 
 .tabs.dashboard-section-tabs .tab.active,
 .dashboard-detail-panel .video-metrics-switch button.active,
 .dashboard-detail-panel .video-chart-metrics button.active {
-  background: transparent;
+  background: transparent !important;
   color: var(--azure);
   font-weight: 400;
 }

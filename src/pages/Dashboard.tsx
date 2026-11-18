@@ -12,8 +12,8 @@ import {
   isSaqaUnit,
   usLabel,
 } from "../data/course";
-import { loadAnnouncements, loadProfiles, moduleCompletion, overallStats, poeItemCount, unitStatus, useOutcomes, usePoe } from "../store";
-import { attendanceSignedCount, computeGamification } from "../lib/gamification";
+import { loadAnnouncements, loadProfiles, moduleCompletion, overallStats, unitStatus, useOutcomes, usePoe } from "../store";
+import { attendanceSignedCount } from "../lib/gamification";
 import { Bar, Ring } from "../components/Ring";
 import { TokenGauge } from "../components/TokenGauge";
 import { Button } from "@fluentui/react-components";
@@ -71,19 +71,8 @@ export function Dashboard({
     : poeDocs;
   const s = overallStats(effectiveProgress, effectivePoe, outcomes[profile.id] ?? {});
   const poeDone = Object.keys(effectivePoe).length;
-  const gameProgress = effectiveProgress;
-  const gamePoe = effectivePoe;
   const classesAttended = attendanceSignedCount(profile);
-  const game = computeGamification(gameProgress, poeItemCount(gamePoe), classesAttended);
   const announcements = loadAnnouncements().slice(0, 2);
-
-  // next unit not yet completed
-  const next = (() => {
-    for (const m of MODULES)
-      for (const u of m.units)
-        if (unitStatus(effectiveProgress, u.us) !== "completed") return { m, u };
-    return undefined;
-  })();
 
   return (
     <div className="learner-dashboard">
@@ -158,58 +147,6 @@ export function Dashboard({
         </div>
       </div>
 
-      <section className="dashboard-achievements" aria-label="Achievements">
-      <div className="card xp-card">
-        <div className="xp-head">
-          <span className="xp-level">
-            <Icon name="award" size={22} />
-            Level {game.level} · {game.levelName}
-          </span>
-          <span className="xp-points">
-            {game.xp} XP
-            {game.nextLevelXp !== null && (
-              <span className="mini-note"> · {game.nextLevelXp - game.xp} XP to next level</span>
-            )}
-          </span>
-        </div>
-        <Bar
-          value={
-            game.nextLevelXp === null
-              ? 1
-              : (game.xp - game.levelFloor) / (game.nextLevelXp - game.levelFloor)
-          }
-          green={game.nextLevelXp === null}
-        />
-        <div className="badge-strip">
-          {game.badges.map((b) => (
-            <span
-              key={b.id}
-              className={`game-badge${b.earned ? " earned" : ""}`}
-              title={`${b.name} — ${b.desc}${b.earned ? "" : " (locked)"}`}
-            >
-              <Icon name={b.icon} size={16} />
-              <span className="game-badge-name">{b.name}</span>
-            </span>
-          ))}
-        </div>
-        <p className="mini-note" style={{ margin: "6px 0 0" }}>
-          Earn XP by finishing activities, scoring 80%+ on quizzes, passing exercises, uploading POE
-          evidence and signing the register. See the class leaderboard on the{" "}
-          <a
-            href="#community"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate({ page: "community" });
-            }}
-          >
-            Community page
-          </a>
-          .
-        </p>
-      </div>
-
-      </section>
-
       <div className="tabs dashboard-section-tabs" role="tablist" aria-label="Dashboard sections">
         {dashboardTabs.map((item, index) => (
           <button key={item.id} type="button" role="tab" id={`dashboard-tab-${item.id}`}
@@ -268,39 +205,6 @@ export function Dashboard({
               </span>
             </button>
           ))}
-        </>
-      )}
-
-      {next && (
-        <>
-          <h2 className="section-title">
-            <span className="ico">
-              <Icon name="play" size={20} />
-            </span>
-            Continue learning
-          </h2>
-          <button
-            className="card clickable"
-            onClick={() => navigate({ page: "unit", moduleId: next.m.id, unitId: next.u.us })}
-          >
-            <div className="module-card">
-              <div className="head">
-                <span className="ico">
-                  <Icon name={next.m.icon} size={22} />
-                </span>
-                <div style={{ flex: 1 }}>
-                  <h3>
-                    {usLabel(next.u.us)} — {next.u.title}
-                  </h3>
-                  <span className="sub">
-                    {next.m.name} · NQF {next.u.nqf}
-                    {next.u.credits > 0 ? ` · ${next.u.credits} credits` : ""} · {next.u.dates}
-                  </span>
-                </div>
-                <Icon name="chevronRight" size={18} color="var(--ink-3)" />
-              </div>
-            </div>
-          </button>
         </>
       )}
 

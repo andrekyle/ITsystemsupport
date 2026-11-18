@@ -1,4 +1,25 @@
 .client-portal { --client-accent: #278c6d; --client-hero: #183d32; min-height: 100dvh; background: var(--app-canvas, #f6f7f8); color: var(--ink); font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+.client-portal .client-content { max-width: 1240px; padding: 34px 32px 52px; }
+.client-portal { background: #f5f7f9; color: #0d3557; }
+.client-portal { background: #f7f8fa; }
+.client-portal { --client-accent: #278c6d; background: var(--app-canvas, #f6f7f8); color: var(--ink); }
+.client-portal .client-header { background: #fff; border-bottom: 1px solid #dce3e8; }
+.client-portal .client-page-heading { margin-bottom: 28px; }
+.client-portal .client-page-heading h1 { color: #132d46; font-size: 30px; font-weight: 650; letter-spacing: -.02em; }
+.client-portal .client-page-heading p { color: #637286; }
+.client-portal .client-stats { gap: 14px; margin-bottom: 24px; }
+.client-portal .client-stats > div { padding: 24px 28px; border: 1px solid rgba(203,215,225,.8); border-radius: 14px; box-shadow: 0 8px 24px rgba(13,53,87,.06); background: rgba(255,255,255,.92); }
+.client-portal .client-stats strong { color: #132d46; font-size: 32px; }
+.client-portal .client-panel { padding: 28px 34px; border: 1px solid rgba(203,215,225,.8); border-radius: 14px; box-shadow: 0 8px 24px rgba(13,53,87,.05); background: rgba(255,255,255,.94); }
+.client-portal .client-panel h2,
+.client-portal .client-collapsible > summary { color: #132d46; font-size: 19px; font-weight: 650; }
+.client-portal .client-panel h2,
+.client-portal .client-collapsible > summary { font-size: 24px; font-weight: 700; }
+.client-portal .client-doc-heading input { min-height: 40px; border-color: #cbd5de; }
+.client-portal .client-filters { gap: 8px; margin: 18px 0; }
+.client-portal .client-filters button { border-color: #dce3e8; border-radius: 999px; color: #30465b; background: #f5f7f8; }
+.client-portal .client-filters button[aria-pressed="true"] { color: #fff; border-color: #20384f; background: #20384f; }
+.client-portal .client-documents li { padding: 14px 0; border-bottom: 1px solid #e3e8ec; }
 .client-portal button { font: inherit; cursor: pointer; padding: 8px 14px; border: 1px solid var(--border); border-radius: 6px; color: var(--ink); background: var(--surface); }
 .client-portal button:disabled { opacity: .55; cursor: default; }
 .client-portal button:focus-visible, .client-portal input:focus-visible { outline: 2px solid var(--client-accent); outline-offset: 2px; }
@@ -7,21 +28,23 @@
 .client-brand strong { font: 600 28px Georgia, serif; }
 .client-brand img { width: 140px; height: 44px; object-fit: contain; }
 .client-brand > span { padding-left: 14px; border-left: 1px solid currentColor; font-size: 11px; opacity: .75; }
+.client-intro .client-brand > span { color: #ffd27a; border-color: #ffd27a; }
 .client-login { display: grid; grid-template-columns: 1fr 1fr; }
-.client-intro { padding: clamp(30px, 6vw, 100px); background: var(--client-hero); color: #fff; display: flex; flex-direction: column; align-items: flex-start; }
+.client-intro { padding: clamp(30px, 6vw, 100px); background: linear-gradient(145deg, #123d36 0%, #176b5c 58%, #f06a22 150%); color: #fff; display: flex; flex-direction: column; align-items: flex-start; }
 .client-intro .client-brand { margin-bottom: 100px; }
 .client-intro .client-brand img { background: white; padding: 6px; border-radius: 4px; }
 .client-eyebrow { display: block; font-size: 10px; font-weight: 600; letter-spacing: .15em; }
 .client-intro h1 { font-size: clamp(36px, 4vw, 58px); line-height: 1.1; font-weight: 500; letter-spacing: -.035em; margin: 20px 0; }
 .client-intro p { max-width: 360px; opacity: .85; }
 .client-intro small { margin-top: auto; padding-top: 80px; font-size: 11px; opacity: .65; }
-.client-login-form { display: grid; align-items: center; justify-items: center; padding: 40px 24px; }
+.client-login-form { display: grid; align-items: center; justify-items: center; padding: 40px 24px; background: #fffaf5; border-left: 6px solid #f3a51f; }
 .client-login-form > div { width: min(390px, 100%); }
 .client-login-form h2 { font-size: 26px; font-weight: 600; margin-bottom: 8px; }
+.client-login-form h2 { color: #173f38; }
 .client-login-form p { color: var(--ink-3); font-size: 13px; }
 .client-login-form form { display: grid; gap: 18px; margin-top: 28px; }
 .client-login-form label { display: grid; gap: 6px; font-size: 12px; font-weight: 600; }
-.client-portal .client-primary { background: var(--client-accent); color: #fff; border: 0; min-height: 42px; }
+.client-portal .client-primary { background: linear-gradient(90deg, #ef641d, #f39b1f); color: #fff; border: 0; min-height: 42px; box-shadow: 0 8px 18px rgba(239,100,29,.2); }
 .client-portal .client-link { border: 0; background: transparent; padding-left: 0; color: var(--ink); margin-top: 12px; font-size: 12px; }
 .client-account-help { margin-top: 36px; }
 .client-portal [role="alert"] { color: var(--red, #a93030); }
@@ -37,6 +60,11 @@
 .client-stats strong { display: block; font-size: 30px; font-weight: 600; }
 .client-stats span { font-size: 12px; color: var(--ink-3); }
 .client-panel { padding: 22px; background: var(--surface); border-radius: 8px; margin-bottom: 20px; }
+.client-collapsible > summary { cursor: pointer; list-style: none; font-size: 17px; font-weight: 600; }
+.client-collapsible > summary::-webkit-details-marker { display: none; }
+.client-collapsible > summary::after { content: "▾"; float: right; color: var(--ink-3); }
+.client-collapsible[open] > summary { margin-bottom: 16px; }
+.client-collapsible[open] > summary::after { content: "▴"; }
 .client-panel h2 { font-size: 17px; font-weight: 600; margin: 0 0 16px; }
 .client-table-wrap { overflow: auto; }
 .client-panel table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
@@ -51,9 +79,14 @@
 .client-documents li { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border); }
 .client-documents strong { font-size: 13px; font-weight: 600; }
 .client-documents small { display: block; font-size: 11px; color: var(--ink-3); overflow-wrap: anywhere; }
-.client-document-viewer { position: fixed; z-index: 1200; top: 0; right: 0; bottom: 0; width: 50vw; min-width: 320px; max-width: 85vw; resize: horizontal; overflow: hidden; display: flex; flex-direction: column; background: var(--surface); border-left: 1px solid var(--border); box-shadow: -10px 0 30px rgba(0,0,0,.16); }
+.client-document-viewer { position: fixed; z-index: 1200; top: 0; right: 0; bottom: 0; width: 50vw; min-width: 320px; max-width: 85vw; resize: horizontal; overflow: hidden; display: flex; flex-direction: column; background: var(--surface); border-left: 1px solid var(--border); box-shadow: none; }
 .client-document-viewer header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
 .client-document-viewer iframe { flex: 1; width: 100%; border: 0; background: #f5f5f5; }
+body:has(.client-document-viewer) .client-portal .client-content,
+body:has(.client-document-viewer) .client-portal .client-header,
+body:has(.client-document-viewer) .client-portal .client-footer { width: calc(100% - 50vw); max-width: none; margin-left: 0; margin-right: 50vw; box-sizing: border-box; }
+body:has(.client-document-viewer) .client-portal .client-content { margin-left: 0 !important; margin-right: 50vw !important; }
+body:has(.client-document-viewer) .client-portal .client-header { padding-left: 24px !important; padding-right: 24px !important; }
 .client-footer { text-align: center; padding: 24px; font-size: 11px; color: var(--ink-3); }
 .client-admin-panel { display: block; margin: 18px 0; padding: 0 22px 22px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--ink); }
 .client-admin-panel summary { cursor: pointer; margin: 0 -22px; padding: 18px 22px; border-bottom: 1px solid var(--border); font-size: 16px; font-weight: 650; }
@@ -80,12 +113,14 @@
 .client-investec .client-brand img { display: block; width: clamp(180px, 23vw, 300px); height: auto; aspect-ratio: 5 / 1; flex: 0 1 auto; object-fit: contain; object-position: left center; min-width: 0; }
 .client-investec .client-brand > span { flex: 0 0 auto; white-space: nowrap; padding: 0; border: 0; font-size: 12px; opacity: 1; color: #535763; }
 .client-investec .client-intro { color: #303749; border-right: 1px solid #eeeeec; }
+.client-investec .client-intro { background: #fff; border-right: 1px solid #eeeeec; }
 .client-investec .client-intro .client-brand { color: #111; }
 .client-investec .client-intro .client-brand img { background: transparent; padding: 0; border-radius: 0; }
 .client-investec .client-intro h1, .client-investec .client-page-heading h1 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; letter-spacing: -.025em; color: #303749; }
 .client-investec .client-intro .client-eyebrow { background: #f4f4f2; padding: 8px 12px; letter-spacing: .1em; }
 .client-investec .client-header { background: #fff; color: #171717; border-bottom: 1px solid #e5e5e2; }
-.client-investec .client-login-form { background: #f7f7f5; }
+.client-investec .client-login-form { background: #f7f7f5; border-left: 0; }
+.client-investec .client-primary { background: #303749; color: #fff; border: 0; box-shadow: none; }
 .client-investec .client-login-form h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; color: #303749; font-size: 30px; }
 .client-investec .client-primary:hover:not(:disabled), .client-investec .client-filters [aria-pressed="true"]:hover { background: #171d2b; }
 .client-investec button:focus-visible, .client-investec input:focus-visible { outline-color: #303749; }
@@ -144,16 +179,20 @@
 .client-portal .pw-toggle { border: 0; background: transparent; box-shadow: none; }
 
 .client-admin-panel h3 { font-size: 14px; margin: 22px 0 10px; padding-top: 16px; border-top: 1px solid var(--border); }
-.client-admin-panel > h3 { margin-top: 14px; padding-top: 12px; }
+.client-admin-panel { color: #102746; font-family: Arial, "Helvetica Neue", sans-serif; }
+.client-admin-panel summary { color: #102746; font-size: 17px; font-weight: 600; }
+.client-admin-panel > p { color: #102746; font-size: 15px; }
+.client-admin-panel h3 { color: #102746; font-size: 16px; font-weight: 600; }
+.client-admin-panel > h3 { margin: 8px 0 6px; padding-top: 8px; }
 .client-admin-panel form,
-.client-admin-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 1.2fr) auto; align-items: end; gap: 8px; }
+.client-admin-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 1.2fr) auto; align-items: end; gap: 5px; }
 .client-admin-panel form > label,
-.client-admin-row > label { display: grid; gap: 4px; min-width: 0; font-size: 11px; font-weight: 600; }
-.client-admin-panel input { min-height: 34px; padding: 6px 9px; font-size: 12px; }
-.client-admin-panel .btn { min-height: 34px; padding: 6px 10px; font-size: 12px; }
+.client-admin-row > label { display: grid; gap: 4px; min-width: 0; color: #102746; font-size: 13px; font-weight: 400; }
+.client-admin-panel input { min-height: 30px; padding: 4px 8px; font-size: 11px; }
+.client-admin-panel .btn { min-height: 30px; padding: 4px 9px; font-size: 11px; }
 .client-admin-panel form + ul,
 .client-admin-panel .client-admin-row + h3 { margin-top: 10px; }
-.client-admin-panel ul { margin: 8px 0 0; padding-left: 18px; font-size: 12px; }
+.client-admin-panel ul { margin: 5px 0 0; padding-left: 14px; font-size: 11px; }
 .client-admin-panel li { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
 .client-admin-status { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px 0; font-size: 12px; }
 .client-admin-status span { color: var(--ink-3); }

@@ -6,10 +6,10 @@
  * Every part is progressive enhancement: unsupported APIs no-op silently.
  */
 
-import { activeCourse } from "../data/courses";
+import { TENANT } from "./tenant";
 
 let audioCtx: AudioContext | null = null;
-document.title = activeCourse().meta.title;
+document.title = TENANT.appName;
 
 /** Short two-tone "pop" rendered with WebAudio — no sound file needed. */
 export function playMessageTone(): void {
@@ -61,7 +61,7 @@ export function syncUnreadBadge(count: number): void {
   } catch {
     /* unsupported */
   }
-  const title = activeCourse().meta.title;
+  const title = TENANT.appName;
   document.title = count > 0 ? `(${count}) ${title}` : title;
 }
 

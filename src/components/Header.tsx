@@ -266,7 +266,6 @@ export function Header({
         <Icon name="menu" size={19} />
       </button>
       <div className="brand">
-        {TENANT.logo ? <img className="header-tenant-logo" src={theme === "dark" && TENANT.logoDark ? TENANT.logoDark : TENANT.logo} alt={`${TENANT.name} logo`} /> : <Icon name="certificate" size={24} color="var(--azure)" />}
         {TENANT.id !== "discovery" && <span className="brand-name">{TENANT.appName}</span>}
         {TENANT.id !== "discovery" && <span className="brand-sub">{loadedQualification}</span>}
       </div>

@@ -181,7 +181,7 @@ export function CloudAuth() {
   }
 
   return (
-    <div className={`gate${TENANT_ID === "discovery" ? " discovery-gate" : ""}`}>
+    <div className={`gate${TENANT_ID === "discovery" ? " discovery-gate" : " investec-gate"}`}>
       {discovery && !mobile && (
         <a className="discovery-signin-link" href="#discovery-login" ref={signInLink}
           onClick={() => setLoginOpen(true)}>
@@ -208,12 +208,11 @@ export function CloudAuth() {
         <div className="logo">
           <TenantLogo />
         </div>
-        <div className="tenant-location">{TENANT.name} · {TENANT.location}</div>
+        {TENANT_ID === "investec" && <img className="investec-auth-zebra" src="/logos/investec-zebra.png" alt="Investec zebra" />}
         <h1 id="cloud-auth-title">{mode === "signin" ? "Sign in to your account" : "Create your account"}</h1>
         <p className="sub">
           {qualification.title} · SAQA ID {qualification.saqaId} · NQF Level {qualification.nqfLevel}.
-          {" "}Sign in to continue this qualification. Your profile and learning progress are
-          stored securely online and available from any device.
+          {" "}Sign in to continue this qualification.
         </p>
 
         <form onSubmit={submit}>
