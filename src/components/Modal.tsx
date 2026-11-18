@@ -1,12 +1,11 @@
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 /** In-app modal dialog — replaces browser popups so all prompts share the app UI. */
 export function Modal({
   title,
   children,
   actions,
-  onClose,
   className,
 }: {
   title: string;
@@ -15,16 +14,9 @@ export function Modal({
   onClose: () => void;
   className?: string;
 }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
+  // Dismissal is handled only by explicit actions so drafts survive stray clicks.
   return (
-    <div className="modal-overlay no-print" onClick={onClose}>
+    <div className="modal-overlay no-print">
       <div
         className={`modal-card${className ? ` ${className}` : ""}`}
         role="dialog"

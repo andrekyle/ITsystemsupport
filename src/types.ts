@@ -638,6 +638,11 @@ export interface ProgressState {
 }
 
 export interface UnitStandard {
+  /** Generated covers already include their title artwork. */
+  imageIncludesText?: boolean;
+  description?: string;
+  outcomes?: string[];
+  metadataSource?: string;
   /** Optional uploaded card banner. */
   image?: string;
   us: string;
@@ -649,6 +654,8 @@ export interface UnitStandard {
 }
 
 export interface CourseModule {
+  description?: string;
+  outcomes?: string[];
   id: string;
   name: string;
   icon: string;

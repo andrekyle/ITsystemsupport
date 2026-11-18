@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { loadContentModel } from "../lib/tokens";
 import type { QuizQuestion } from "../types";
@@ -21,13 +21,6 @@ export function VideoQuizEditor({ quiz, disabled, onSave }: {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewAnswers, setPreviewAnswers] = useState<Record<number, number>>({});
   const [previewScore, setPreviewScore] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!previewOpen) return;
-    const close = (event: KeyboardEvent) => { if (event.key === "Escape") setPreviewOpen(false); };
-    window.addEventListener("keydown", close);
-    return () => window.removeEventListener("keydown", close);
-  }, [previewOpen]);
 
   async function generate() {
     setBusy(true); setError(""); setSaved(false);
@@ -85,7 +78,7 @@ export function VideoQuizEditor({ quiz, disabled, onSave }: {
     {saved && <p role="status">Five video questions saved.</p>}
     {error && <p className="auth-error" role="alert">{error}</p>}
     {previewOpen && validVideoQuestions(questions) && createPortal(
-      <div className="lesson-video-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setPreviewOpen(false); }}>
+      <div className="lesson-video-overlay" role="presentation">
         <section className="lesson-video-modal lesson-video-quiz-preview" role="dialog" aria-modal="true" aria-labelledby="video-quiz-preview-title">
           <header className="lesson-video-modal-header"><div className="lesson-video-watched"><span>Staff preview · learner view</span></div><button type="button" className="lesson-video-icon-button" aria-label="Close quiz preview" onClick={() => setPreviewOpen(false)}><Icon name="close" size={20} /></button></header>
           <div className="lesson-video-scroll-content"><section className="lesson-video-quiz" aria-label="Video knowledge check preview">

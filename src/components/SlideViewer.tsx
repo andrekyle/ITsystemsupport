@@ -117,8 +117,6 @@ function Presenter({ src, onClose }: { src: string; onClose: () => void }) {
       } else if (e.key === "End") {
         e.preventDefault();
         setPage(pagesRef.current || 1);
-      } else if (e.key === "Escape" && !document.fullscreenElement) {
-        onClose();
       }
     };
     window.addEventListener("keydown", onKey);

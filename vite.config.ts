@@ -77,7 +77,7 @@ function formBuilderDev(env: Record<string, string>): Plugin {
   return {
     name: "form-builder-dev",
     configureServer(server: ViteDevServer) {
-      for (const key of ["OPENAI_API_KEY", "SUPABASE_URL", "SUPABASE_ANON_KEY", "VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"]) {
+      for (const key of ["OPENAI_API_KEY", "OPENAI_IMAGE_MODEL", "SUPABASE_URL", "SUPABASE_ANON_KEY", "VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"]) {
         if (env[key] && process.env[key] === undefined) process.env[key] = env[key].trim();
       }
       for (const endpoint of ["generate-form", "enhance-unit-quiz"]) server.middlewares.use(`/api/${endpoint}`, (request, response) => {
@@ -118,7 +118,7 @@ function formBuilderDev(env: Record<string, string>): Plugin {
   };
 }
 
-type CalendarUnit = { us: string; title: string; nqf: number; credits: number; dates: string; time: string };
+type CalendarUnit = { us: string; title: string; nqf: number; credits: number; dates: string; time: string; image?: string; imageIncludesText?: boolean };
 type CalendarModule = { id: string; name: string; icon: string; image?: string; activities: number; units: CalendarUnit[] };
 type CalendarMilestone = { name: string; dates: string; time: string; icon: string };
 
@@ -144,7 +144,7 @@ function saveCalendarDev(): Plugin {
         lines.push(`    activities: ${num(m.activities)},`, "    units: [");
         for (const u of m.units)
           lines.push(
-            `      { us: "${clean(u.us)}", title: "${clean(u.title)}", nqf: ${num(u.nqf)}, credits: ${num(u.credits)}, dates: "${clean(u.dates)}", time: "${clean(u.time)}" },`
+            `      ${JSON.stringify(u)},`
           );
         lines.push("    ],", "  },");
         return lines.join("\n");
@@ -222,6 +222,8 @@ function saveCalendarDev(): Plugin {
 function apiDev(env: Record<string, string>): Plugin {
   const endpoints = [
     "unit-metadata",
+    "course-metadata",
+    "cover-image",
     "generate-report",
     "generate-activity-answers",
     "extract-logbook-image",
@@ -232,7 +234,7 @@ function apiDev(env: Record<string, string>): Plugin {
   return {
     name: "api-dev",
     configureServer(server: ViteDevServer) {
-      for (const key of ["OPENAI_API_KEY", "SUPABASE_URL", "SUPABASE_ANON_KEY", "VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"]) {
+      for (const key of ["OPENAI_API_KEY", "OPENAI_IMAGE_MODEL", "SUPABASE_URL", "SUPABASE_ANON_KEY", "VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"]) {
         if (env[key] && process.env[key] === undefined) process.env[key] = env[key].trim();
       }
       for (const endpoint of endpoints) {

@@ -5,11 +5,13 @@ import { fileToImageDataUrl } from "./Avatar";
 import { flushKey } from "../lib/sync";
 import { supabase } from "../lib/supabase";
 import { EditingTools } from "./EditingSidebar";
+import { ensureCourseCovers } from "../lib/courseCovers";
 
 export function CourseEditor({ onClose }: { onClose: () => void }) {
   const [draft, setDraft] = useState(() => structuredClone(activeCourse()));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [coverProgress, setCoverProgress] = useState("");
   async function save() {
     setBusy(true); setError("");
     try {
@@ -17,7 +19,8 @@ export function CourseEditor({ onClose }: { onClose: () => void }) {
       const codes = draft.modules.flatMap(module => module.units.map(unit => unit.us.trim()));
       if (codes.some(code => !code) || new Set(codes).size !== codes.length) throw new Error("Each unit must have a unique, non-empty code.");
       if (draft.modules.some(module => module.units.some(unit => !unit.title.trim()))) throw new Error("Enter a title for every unit.");
-      saveCustomCourse(draft);
+      const covered = await ensureCourseCovers(draft, activeCourse(), setDraft, setCoverProgress);
+      saveCustomCourse(covered);
       await flushKey(courseStorageKey(draft.id), !!supabase);
       location.reload();
     } catch (e) { setError(e instanceof Error ? e.message : "Could not save course."); setBusy(false); }
@@ -48,6 +51,7 @@ export function CourseEditor({ onClose }: { onClose: () => void }) {
     </fieldset>
     <EditingTools active title="Course and modules">
     {error && <p role="alert" className="auth-error">{error}</p>}
+    {coverProgress && <p role="status">{coverProgress}</p>}
     <div className="unit-editor-actions">
       <button className="btn ghost" disabled={busy} onClick={() => void save()}>{busy ? "Saving…" : "Save course"}</button>
       <button className="btn ghost" disabled={busy} onClick={onClose}>Cancel</button>

@@ -214,8 +214,6 @@ function Slideshow({
       else if (e.key === " ") {
         e.preventDefault();
         setPlaying((p) => !p);
-      } else if (e.key === "Escape" && !document.fullscreenElement) {
-        onClose();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -265,7 +263,7 @@ function Slideshow({
         <button className="mem-show-btn" title="Next (→)" onClick={next}>
           <Icon name="chevronRight" size={17} />
         </button>
-        <button className="mem-show-btn" title="Close (Esc)" onClick={close}>
+        <button className="mem-show-btn" title="Close" onClick={close}>
           <Icon name="close" size={17} />
         </button>
       </div>

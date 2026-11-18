@@ -291,13 +291,8 @@ function LessonVideo({
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     closeButton.current?.focus({ preventScroll: true });
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
       openButton.current?.focus();
     };
   }, [open]);
@@ -353,9 +348,7 @@ function LessonVideo({
       {failed && <p className="auth-error" role="alert">This video could not be played. Check the link and the video host's permissions.</p>}
     </figure>
     {open && createPortal(
-      <div className="lesson-video-overlay" onMouseDown={(event) => {
-        if (event.target === event.currentTarget) setOpen(false);
-      }}>
+      <div className="lesson-video-overlay">
         <section className="lesson-video-modal" role="dialog" aria-modal="true" aria-labelledby={`lesson-video-title-${index}`}>
           <header className="lesson-video-modal-header">
             <div className="lesson-video-watched">

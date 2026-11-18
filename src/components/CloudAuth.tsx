@@ -199,8 +199,7 @@ export function CloudAuth() {
       <dialog ref={dialogRef} open={popup ? undefined : true}
         className={popup ? "discovery-login-dialog" : "auth-inline-dialog"}
         aria-labelledby="cloud-auth-title"
-        onCancel={(event) => { event.preventDefault(); closeLogin(); }}
-        onClick={(event) => { if (event.target === event.currentTarget) closeLogin(); }}>
+        onCancel={(event) => event.preventDefault()}>
       <div className="gate-card">
         {popup && (
           <button type="button" className="discovery-login-close" aria-label="Close sign-in"

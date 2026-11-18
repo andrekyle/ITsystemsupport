@@ -4,6 +4,7 @@ import { flushKey } from "../lib/sync";
 import { supabase } from "../lib/supabase";
 import { InlineText } from "./InlineText";
 import { usePhoneView } from "./usePhoneView";
+import { ensureCourseCovers } from "../lib/courseCovers";
 
 export function useInlineCourse(allowed: boolean) {
   const phone = usePhoneView();
@@ -21,6 +22,7 @@ export function useInlineCourse(allowed: boolean) {
   const metadataBusy = useCallback((active: boolean) => setPendingMetadata(count => Math.max(0, count + (active ? 1 : -1))), []);
   const busy = saving || pendingMetadata > 0;
   const [error, setError] = useState("");
+  const [coverProgress, setCoverProgress] = useState("");
   const canEdit = allowed && !phone;
   const change = (update: (draft: CourseData) => void) => setCourse(current => {
     const next = structuredClone(current); update(next); return next;
@@ -36,7 +38,8 @@ export function useInlineCourse(allowed: boolean) {
       if ([course.meta.nqfLevel, ...units.map(u => u.nqf)].some(n => !Number.isInteger(n) || n < 1 || n > 10)
         || [course.meta.credits, ...units.map(u => u.credits)].some(n => !Number.isInteger(n) || n < 0)) throw new Error("Enter valid NQF levels (1–10) and non-negative credits.");
       if (course.modules.some(m => !Number.isInteger(m.activities) || m.activities < 0)) throw new Error("Activities must be a non-negative whole number.");
-      saveCourseEdits(original.current, course);
+      const covered = await ensureCourseCovers(course, original.current, setCourse, setCoverProgress);
+      saveCourseEdits(original.current, covered);
       await flushKey(courseStorageKey(course.id), !!supabase);
       location.reload();
     } catch (e) { setError(e instanceof Error ? e.message : "Could not save course."); setBusy(false); }
@@ -47,6 +50,7 @@ export function useInlineCourse(allowed: boolean) {
       <button className="btn ghost sm" disabled={busy} onClick={() => { setCourse(activeCourse()); setEditing(false); setError(""); }}>Cancel</button>
       <span className="muted">Click text on the page to edit it.</span>
       {error && <p role="alert" className="auth-error">{error}</p>}
+      {coverProgress && <p role="status">{coverProgress}</p>}
     </> : <button className="btn ghost sm" onClick={startEditing}>Edit inline</button>}
   </div>;
   return { course, canEdit, startEditing, editing: canEdit && editing, busy, metadataBusy, text, change, controls };

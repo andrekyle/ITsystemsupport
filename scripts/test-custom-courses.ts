@@ -8,14 +8,20 @@ Object.defineProperty(globalThis, "localStorage", { value: {
   getItem: (key: string) => data.get(key) ?? null,
   setItem: (key: string, value: string) => data.set(key, value),
 }, configurable: true });
-const details = { title: "New qualification", saqaId: "123456", nqfLevel: 4, credits: 120, description: "New course description", moduleName: "First module" };
+const details = { title: "New qualification", saqaId: "123456", nqfLevel: 4, credits: 120, description: "New course description", unitCounts: [2, 1] };
 assert.equal(getCourses().length, 2);
-const course = createCourse(details);
-assert.equal(course.modules.length, 6, "A new course copies the complete module structure");
-assert.ok(course.modules[0].units.length > 0, "Copied modules retain their units");
+const modules = details.unitCounts.map((count, index) => ({ name: `Module ${index + 1}`, description: "Module summary", outcomes: ["Apply the subject"], units: Array.from({ length: count }, (_, i) => ({ us: `${index + 1}${i + 1}`, title: `Unit ${i + 1}`, nqf: 4, credits: 5, description: "Unit summary", outcomes: ["Demonstrate competence"] })) }));
+const course = createCourse(details, modules);
+assert.deepEqual(course.modules.map(module => module.units.length), [2, 1]);
+assert.ok(course.modules[0].units.length > 0, "Generated modules retain their units");
 assert.equal(course.programmeAbout.intro, details.description);
-assert.ok(course.poeSections.length > 0, "Copied course retains POE tabs");
-assert.ok(course.programmeMilestones.length > 0, "Copied course retains calendar milestones");
+assert.equal(course.poeSections.length, 0, "New courses do not inherit another qualification's POE content");
+assert.equal(course.programmeMilestones.length, 0, "New courses do not inherit scheduled dates");
+assert.equal(course.modules[0].description, "Module summary");
+assert.equal(course.modules[0].units[0].description, "Unit summary");
+assert.equal(course.modules[0].units[0].dates, "");
+assert.throws(() => createCourse({ ...details, unitCounts: [1] }, modules));
+assert.throws(() => createCourse(details, [modules[0], modules[0]]));
 saveCustomCourse(course);
 assert.equal(getCourses().length, 3);
 localStorage.setItem("itss.activeCourse", course.id);
@@ -24,16 +30,16 @@ course.modules[0].units.push({ us: "123", title: "New unit", nqf: 4, credits: 5,
 saveCustomCourse(course);
 assert.equal(getCourses().length, 3, "Saving a course does not duplicate it");
 assert.equal(activeCourse().modules[0].units.at(-1)?.title, "New unit");
-const another = createCourse(details);
+const another = createCourse(details, modules);
 saveCustomCourse(another);
 assert.equal(getCourses().length, 4);
 assert.notEqual(course.id, another.id);
 assert.notEqual(course.modules[0].id, another.modules[0].id);
 data.set(courseStorageKey("custom-broken"), "invalid JSON");
 assert.equal(getCourses().length, 4);
-assert.throws(() => createCourse({ ...details, title: " " }));
-assert.throws(() => createCourse({ ...details, nqfLevel: 11 }));
-assert.throws(() => createCourse({ ...details, credits: -1 }));
+assert.throws(() => createCourse({ ...details, title: " " }, modules));
+assert.throws(() => createCourse({ ...details, nqfLevel: 11 }, modules));
+assert.throws(() => createCourse({ ...details, credits: -1 }, modules));
 const unrelatedKey = "itss.lessonedits.8252";
 localStorage.setItem(unrelatedKey, "preserve learner content");
 deleteCustomCourse(course.id);

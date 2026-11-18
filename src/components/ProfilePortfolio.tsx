@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, ProfileContentEntry, ProfileContentType } from "../types";
 import { ConfirmModal } from "./Modal";
@@ -34,12 +34,6 @@ export function ProfilePortfolio({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const entries = profile.contentEntries ?? [];
   const close = () => { if (uploading) return; setAdding(false); setDraft(null); setError(""); };
-  useEffect(() => {
-    if (!adding) return;
-    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") close(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [adding, uploading]);
 
   async function uploadImage(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];

@@ -23,6 +23,7 @@ export function showAppDialog(message: string, confirmation = false): Promise<bo
     if (confirmation) button("Cancel", "cancel");
     const accept = button(confirmation ? "Confirm" : "OK", "accept");
     dialog.append(text, actions);
+    dialog.addEventListener("cancel", (event) => event.preventDefault());
     dialog.addEventListener("close", () => {
       const accepted = dialog.returnValue === "accept";
       dialog.remove();

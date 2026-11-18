@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../icons";
 import { fileToImageDataUrl } from "./Avatar";
+import { ImageDownload } from "./ImageDownload";
 
 export function UnitCardBanner({ src, alt, referenceHeader, code, title, caption, editable, disabled, onUpload, onBusyChange }: {
   src?: string; alt: string; referenceHeader?: boolean; code: string; title: string; caption: string;
@@ -16,6 +17,7 @@ export function UnitCardBanner({ src, alt, referenceHeader, code, title, caption
     {(!hasImage || !referenceHeader) && <span className="module-unit-banner-copy" aria-hidden="true">
       <span className="module-unit-banner-code">{code}</span><strong>{title}</strong><span className="module-unit-banner-caption">{caption}</span>
     </span>}
+    {hasImage && <ImageDownload src={src!} name={`${code}-${title}`} />}
     {editable && <label className="unit-banner-upload" onClick={event => event.stopPropagation()}>
       <Icon name="upload" size={15} />{hasImage ? "Replace image" : "Upload image"}
       <input type="file" accept="image/png,image/jpeg,image/webp" aria-label={`Upload banner for ${code}`} disabled={disabled}

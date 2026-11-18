@@ -13,6 +13,7 @@ import type { IcsEvent } from "../lib/integrations";
 import { activeCourse, activeCourseId, courseStorageKey, saveCustomCourse } from "../data/courses";
 import { flushKey } from "../lib/sync";
 import { supabase } from "../lib/supabase";
+import { ensureCourseCovers } from "../lib/courseCovers";
 import {
   ASSESSMENT_FRAMEWORK,
   DELIVERABLES,
@@ -241,6 +242,7 @@ export function CalendarPage({
   profile?: Profile;
 }) {
   const customCourse = activeCourseId().startsWith("custom-");
+  const [coverProgress, setCoverProgress] = useState("");
   const phone = usePhoneView();
   const canEdit = !phone && (customCourse ? (!!profile && isAdminRole(profile.role)) : import.meta.env.DEV);
   // In-place editing of the calendar (dev only — saving writes the edits
@@ -363,12 +365,17 @@ export function CalendarPage({
         throw new Error("Enter a name for every module before saving.");
       }
       // drop rows that were added but left completely empty
-      const modules = draft.modules.map((m) => ({
+      let modules = draft.modules.map((m) => ({
         ...m,
         name: m.name.trim(),
         units: m.units.filter((u) => `${u.us}${u.title}${u.dates}`.trim() !== ""),
       }));
       const milestones = draft.milestones.filter((ms) => `${ms.name}${ms.dates}`.trim() !== "");
+      if (modules.some(module => module.units.some(unit => !unit.title.trim() || !unit.us.trim()))) throw new Error("Enter a title and code for each unit standard before saving.");
+      const original = activeCourse();
+      const covered = await ensureCourseCovers({ ...original, modules }, original,
+        course => setDraft(current => ({ ...current, modules: course.modules })), setCoverProgress);
+      modules = covered.modules;
       if (customCourse) {
         const course = { ...activeCourse(), modules, programmeMilestones: milestones };
         saveCustomCourse(course);
@@ -444,6 +451,7 @@ export function CalendarPage({
             </button>
         </div>
         {saveState === "error" && <p role="alert" className="cal-save-note err">Save failed: {saveError}</p>}
+        {coverProgress && <p role="status">{coverProgress}</p>}
       </EditingTools>
       <EditingTools active={editing} title="Structure">
         <button className="btn ghost sm" onClick={addModule} disabled={saveState === "saving"}>

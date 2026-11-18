@@ -1,3 +1,4 @@
+import { validateCourseDetails, validateCourseModules, type CourseDetails, type GeneratedCourseModule } from "../../lib/courseMetadata";
 import { IT_SYSTEMS_SUPPORT } from "./it-systems-support";
 import { GENERIC_MANAGEMENT } from "./generic-management";
 
@@ -105,26 +106,31 @@ export function deleteCustomCourse(id: string) {
   localStorage.setItem(courseStorageKey(id), JSON.stringify({ id, deleted: true }));
 }
 
-export function createCourse(details: { title: string; saqaId: string; nqfLevel: number; credits: number; description: string; moduleName: string }): CourseData {
-  if (!details.title.trim() || !details.moduleName.trim()) throw new Error("Enter the course name and first module name.");
-  if (!/^\d+$/.test(details.saqaId.trim())) throw new Error("Enter a numeric SAQA ID.");
-  if (!Number.isInteger(details.nqfLevel) || details.nqfLevel < 1 || details.nqfLevel > 10 || !Number.isInteger(details.credits) || details.credits < 0) throw new Error("Enter a valid NQF level (1–10) and credits.");
-  // Start with a complete working course so every tab, activity and lesson
-  // feature is available immediately. The copied data remains editable via
-  // the course calendar and the existing inline editors.
-  const course = structuredClone(IT_SYSTEMS_SUPPORT) as CourseData;
+export function createCourse(details: CourseDetails, modules: GeneratedCourseModule[]): CourseData {
+  validateCourseDetails(details);
+  validateCourseModules(modules, details.unitCounts);
+  // Keep the page shape without inheriting another qualification's content.
+  function empty(value: unknown): unknown {
+    if (Array.isArray(value)) return [];
+    if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, empty(item)]));
+    return typeof value === "string" ? "" : value;
+  }
+  const course = empty(IT_SYSTEMS_SUPPORT) as CourseData;
   const courseId = `custom-${crypto.randomUUID()}`;
   course.id = courseId;
   course.label = `${details.title.trim()} (${details.saqaId.trim()})`;
   course.blurb = details.description.trim();
   course.meta = { title: details.title.trim(), saqaId: details.saqaId.trim(), nqfLevel: details.nqfLevel, credits: details.credits, time: "09h00 - 14h00", sponsor: "", qualityAssurance: "" };
-  course.modules = course.modules.map((module, index) => ({
-    ...module,
-    id: `${courseId}-m${index + 1}`,
-    name: index === 0 ? details.moduleName.trim() : module.name,
+  course.modules = modules.map((module, index) => ({
+    ...structuredClone(module), id: `${courseId}-m${index + 1}`, icon: "layers", activities: 0,
+    units: module.units.map(unit => ({ ...structuredClone(unit), dates: "", time: course.meta.time, metadataSource: `https://allqs.saqa.org.za/showQualification.php?id=${course.meta.saqaId}` })),
   }));
   course.programmeAbout.intro = course.blurb;
+  course.programmeAbout.lead = "On completion, the graduate will be able to:";
+  course.programmeAbout.outcomes = modules.flatMap(module => module.outcomes.map(text => ({ icon: "award", text })));
   course.programmeAbout.saqaLink = { label: "View qualification on SAQA", url: `https://allqs.saqa.org.za/showQualification.php?id=${course.meta.saqaId}` };
+  course.programmePurpose.intro = course.blurb;
+  course.moduleFlow = structuredClone(IT_SYSTEMS_SUPPORT.moduleFlow);
   return course;
 }
 

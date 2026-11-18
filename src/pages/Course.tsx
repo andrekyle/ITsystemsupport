@@ -80,6 +80,7 @@ import { fileToImageDataUrl } from "../components/Avatar";
 import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
 import { requestSemanticReview } from "../lib/llm";
 import { loadContentModel, recordTokenUsage } from "../lib/tokens";
+import { ImageDownload } from "../components/ImageDownload";
 import { checkSpelling, type SpellIssue } from "../lib/spellcheck";
 import { autoGrowTextarea } from "../lib/autoGrow";
 import { insertLessonPlanDay, lessonPlanDayCount, removeLessonPlanDay, startLessonPlanDay } from "../lib/lessonPlanDays";
@@ -1965,6 +1966,7 @@ export function CoursePage({
               onKeyDown={e => { if (!inline.editing && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); navigate({ page: "module", moduleId: m.id }); } }}
               onClick={() => { if (!inline.editing) navigate({ page: "module", moduleId: m.id }); }}
             >
+              <div className="module-banner-container">
               {inline.editing ? <label className={`module-hero module-image-live${m.image ? "" : " module-image-empty"}`} title="Click to upload a banner image">
                 {m.image ? <img src={m.image} alt={`Module ${i + 1} banner`} /> : <span>Upload banner image</span>}
                 <span className="module-image-hint"><Icon name="upload" size={16} />{m.image ? "Replace image" : "Upload image"}</span>
@@ -1982,6 +1984,8 @@ export function CoursePage({
                     } catch (error) { input.setCustomValidity(error instanceof Error ? error.message : "Could not read image."); input.reportValidity(); }
                   }} />
               </label> : m.image && <span className="module-hero"><img src={m.image} alt="" loading="lazy" /></span>}
+              {m.image && <ImageDownload src={m.image} name={`Module-${i + 1}-${m.name}`} />}
+              </div>
               <div className="head">
                 <span className="ico">
                   <Icon name={m.icon} size={22} />
@@ -2318,7 +2322,7 @@ export function ModulePage({
         const locked = unitLocked(u, profile.role);
         const unlockAt = unitUnlockTime(u);
         const defaultPhoto = UNIT_TILE_PHOTOS[u.us];
-        const photo = u.image ? { src: u.image, alt: u.title, referenceHeader: false } : defaultPhoto;
+        const photo = u.image ? { src: u.image, alt: u.title, referenceHeader: !!u.imageIncludesText } : defaultPhoto;
         const credit = photo?.credit ? BASE_FIGURE_DEFAULTS[photo.credit] : undefined;
         return (
           <div
@@ -2333,7 +2337,7 @@ export function ModulePage({
               <UnitCardBanner src={photo?.src} alt={photo?.alt ?? u.title} referenceHeader={photo?.referenceHeader}
                 code={usLabel(u.us)} title={UNIT_TILE_BANNER_TITLES[u.us] ?? u.title} caption={`Module ${idx + 1} · ${mod.name}`}
                 editable={inline.editing && activeUnit === ui} disabled={inline.busy} onBusyChange={inline.metadataBusy}
-                onUpload={image => inline.change(d => { const unit = d.modules[idx].units.find(item => item.us === u.us); if (unit) unit.image = image; })} />
+                onUpload={image => inline.change(d => { const unit = d.modules[idx].units.find(item => item.us === u.us); if (unit) { unit.image = image; unit.imageIncludesText = false; } })} />
               {credit && !u.image && <a className="module-unit-photo-credit" href={credit.sourceUrl}
                 target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
                 {credit.author} {"\u00b7"} {credit.license}
@@ -2557,10 +2561,7 @@ function UnitPageContent({
   useEffect(() => {
     if (!lightbox) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        if (document.fullscreenElement) return; // browser will exit fullscreen; keep lightbox open
-        setLightbox(null);
-      } else if (e.key === "ArrowLeft") {
+      if (e.key === "ArrowLeft") {
         setLightbox((lb) => (lb ? { ...lb, index: (lb.index - 1 + lb.items.length) % lb.items.length } : lb));
       } else if (e.key === "ArrowRight") {
         setLightbox((lb) => (lb ? { ...lb, index: (lb.index + 1) % lb.items.length } : lb));
@@ -2791,11 +2792,6 @@ function UnitPageContent({
       const cur = presenter.slides[presenter.index];
       const onQuiz = cur && cur.kind === "quiz";
       if (e.key === "Escape") {
-        if (onQuiz && !presenterPassed) {
-          e.preventDefault();
-          return;
-        }
-        if (!document.fullscreenElement) closePresenter();
         return;
       }
       // While on quiz slide (before passing), block navigation keys
@@ -7372,7 +7368,6 @@ function UnitPageContent({
             className={`lightbox${isFullscreen ? " fullscreen" : ""}`}
             role="dialog"
             aria-modal="true"
-            onClick={() => setLightbox(null)}
           >
             <button
               type="button"
