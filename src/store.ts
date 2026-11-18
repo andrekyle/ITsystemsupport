@@ -1281,6 +1281,11 @@ export interface ChatMessage {
   broadcastId?: string;
 }
 
+function currentChatCourseId(): string {
+  try { return localStorage.getItem("itss.activeCourse") || "itss"; } catch { return "itss"; }
+}
+const chatCohortId = (profile?: Profile) => profile?.cohortId?.trim() || "default";
+
 /** Wire representation of a message row in Supabase. */
 interface DbChatRow {
   id: string;
@@ -1297,6 +1302,8 @@ interface DbChatRow {
   edited_at?: string | null;
   reaction?: string | null;
   broadcast_id?: string | null;
+  course_id?: string | null;
+  cohort_id?: string | null;
 }
 
 function rowToMessage(row: DbChatRow): ChatMessage {
@@ -1333,6 +1340,8 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [myAuthId, setMyAuthId] = useState<string | null>(null);
   const otherAuthId = peer.authUserId ?? null;
+  const courseId = currentChatCourseId();
+  const cohortId = chatCohortId(myProfile);
 
   useEffect(() => {
     if (!supabase) return;
@@ -1360,6 +1369,8 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
         .from("chat_messages")
         .select("*")
         .eq("tenant_id", TENANT_ID)
+        .eq("course_id", courseId)
+        .eq("cohort_id", cohortId)
         .or(
           `and(sender_user_id.eq.${myAuthId},recipient_user_id.eq.${otherAuthId}),and(sender_user_id.eq.${otherAuthId},recipient_user_id.eq.${myAuthId})`
         )
@@ -1373,7 +1384,7 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
       alive = false;
       clearInterval(t);
     };
-  }, [myAuthId, otherAuthId]);
+  }, [myAuthId, otherAuthId, courseId, cohortId]);
 
   const send = useCallback(
     async (author: Profile, body: string) => {
@@ -1393,6 +1404,8 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
       setMessages((prev) => [...prev, optimistic]);
       const { error } = await supabase.from("chat_messages").insert({
         tenant_id: TENANT_ID,
+        course_id: courseId,
+        cohort_id: cohortId,
         sender_user_id: myAuthId,
         recipient_user_id: otherAuthId,
         sender_profile_id: author.id,
@@ -1406,7 +1419,7 @@ export function useChat(myProfile: Profile, peer: ChatPeer) {
         setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
       }
     },
-    [myAuthId, otherAuthId, peer.profileId]
+    [myAuthId, otherAuthId, peer.profileId, courseId, cohortId]
   );
 
   const markRead = useCallback(async () => {
@@ -1540,7 +1553,9 @@ export async function broadcastChatMessage(
   sender: Profile,
   senderAuthId: string,
   recipients: { profileId: string; authUserId: string }[],
-  body: string
+  body: string,
+  courseId = currentChatCourseId(),
+  cohortId = chatCohortId(sender)
 ): Promise<number> {
   if (!supabase) return 0;
   const text = body.trim();
@@ -1549,6 +1564,8 @@ export async function broadcastChatMessage(
   const broadcastId = crypto.randomUUID();
   const rows = recipients.map((r) => ({
     tenant_id: TENANT_ID,
+    course_id: courseId,
+    cohort_id: cohortId,
     sender_user_id: senderAuthId,
     recipient_user_id: r.authUserId,
     sender_profile_id: sender.id,
@@ -1589,8 +1606,9 @@ export interface ChatThreadInfo {
  * The hook groups the visible messages by profile-pair so the UI can list
  * conversations.
  */
-export function useChatThreads(): ChatThreadInfo[] {
+export function useChatThreads(cohortId = "default"): ChatThreadInfo[] {
   const [threads, setThreads] = useState<ChatThreadInfo[]>([]);
+  const courseId = currentChatCourseId();
 
   useEffect(() => {
     if (!supabase) return;
@@ -1602,6 +1620,8 @@ export function useChatThreads(): ChatThreadInfo[] {
         .from("chat_messages")
         .select("*")
         .eq("tenant_id", TENANT_ID)
+        .eq("course_id", courseId)
+        .eq("cohort_id", cohortId)
         .order("sent_at", { ascending: true });
       if (!alive || error || !data) return;
       const grouped = new Map<string, ChatMessage[]>();
@@ -1645,7 +1665,7 @@ export function useChatThreads(): ChatThreadInfo[] {
       alive = false;
       clearInterval(t);
     };
-  }, []);
+  }, [courseId, cohortId]);
 
   return threads;
 }

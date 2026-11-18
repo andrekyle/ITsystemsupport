@@ -2471,6 +2471,7 @@ function StudentDetail({
       ? localDocs
       : (cloudDocs ?? localDocs);
   const canManage = isSuper;
+  const [cohortDraft, setCohortDraft] = useState(student.cohortId ?? "");
   const [detailTab, setDetailTab] = useState("enrolment");
   const detailTabs = [
     { id: "enrolment", label: "Enrolment" },
@@ -2821,6 +2822,14 @@ function StudentDetail({
           <span>This {student.role === "Learner" ? "student" : "user"} has not completed the biographical enrolment form yet.</span>
         </div>
       )}
+      {canManage && <div className="card" style={{ marginTop: 14, padding: 16 }}>
+        <label className="field" style={{ margin: 0 }}>
+          <span>Chat cohort / intake</span>
+          <input value={cohortDraft} placeholder="e.g. 2026-january" onChange={event => setCohortDraft(event.target.value)} />
+        </label>
+        <button className="btn ghost sm" style={{ marginTop: 10 }} onClick={() => void patchStudent({ cohortId: cohortDraft.trim() || undefined })}>Save cohort</button>
+        <p className="mini-note" style={{ margin: "8px 0 0" }}>Learners with the same course and cohort can see one another’s chat. Leave blank to use the default cohort.</p>
+      </div>}
 
       </section>
 

@@ -121,7 +121,7 @@ export function ChatPage({
   const nameFor = (id: string): string =>
     id === profile.id ? profile.name : peopleByAny.get(id)?.name ?? "Unknown";
 
-  const threads = useChatThreads();
+  const threads = useChatThreads(profile.cohortId);
 
   // Filter to conversations relevant to the viewer:
   // - super user sees every conversation (moderation view)

@@ -123,6 +123,8 @@ export interface Profile {
   id: string;
   name: string;
   role: Role;
+  /** Admin-assigned intake/group identifier used to isolate course chat. */
+  cohortId?: string;
   createdAt: string;
   /** ISO timestamp of the most recent sign-in to this profile */
   lastLogin?: string;

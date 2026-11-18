@@ -185,7 +185,7 @@ export function Header({
   // Live-updating list of chat threads. The dropdown shows every conversation
   // with unread messages PLUS the two most recent conversations (read or not),
   // so the panel is never empty once you've chatted with anyone.
-  const chatThreads = useChatThreads();
+  const chatThreads = useChatThreads(profile.cohortId);
   const notifs = useMemo(() => {
     const rows = chatThreads
       .filter((t) => t.aId === profile.id || t.bId === profile.id)
