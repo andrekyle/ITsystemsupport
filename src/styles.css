@@ -6577,8 +6577,6 @@ textarea:focus {
   body.printing-registration .sidebar,
   body.printing-registration .header,
   body.printing-registration .no-print { display: none !important; }
-  body.printing-registration .content-inner > :not(:has(.srf-wrap)) { display: none !important; }
-  body.printing-registration .forms-library > :not(:has(.srf-wrap)) { display: none !important; }
   body.printing-registration .forms-library { display: block !important; }
   body.printing-registration .content-inner { max-width: none !important; }
 
