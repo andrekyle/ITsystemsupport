@@ -1,4 +1,5 @@
-import JSZip from "jszip";
+// Use the self-contained build: the Node entry imports readable-stream/stream.
+import JSZip from "jszip/dist/jszip.min.js";
 import * as XLSX from "xlsx";
 import { CONTENT_MODELS, selectAiModel } from "../src/lib/aiModels";
 import { readQualificationDraft } from "../src/lib/qualificationPack";
