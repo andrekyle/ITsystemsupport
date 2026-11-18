@@ -6599,6 +6599,18 @@ textarea:focus {
     border: 0 !important;
     flex: none !important;
   }
+  /* Prevent the screen-fit wrapper or app shell from reserving a large blank
+     viewport-sized region above the printed registration form. */
+  body:has(.srf-wrap) .sheet-fit,
+  body:has(.srf-wrap) .sheet-fit-mid,
+  body:has(.srf-wrap) .sheet-fit-inner,
+  body:has(.srf-wrap) .srf-wrap {
+    position: static !important;
+    transform: none !important;
+    top: auto !important;
+    left: auto !important;
+  }
+  body:has(.srf-wrap) .sheet-fit-inner { width: auto !important; }
   .srf-actions { display: none !important; }
   .srf-page {
     border: 0 !important;
