@@ -38,7 +38,7 @@ export function UnitLiveActions({ module, index, editing, onEdit, disabled, onCh
           if (metadata[key] !== null && target[key] === unit[key]) Object.assign(target, { [key]: metadata[key] });
         }
       });
-      if (result.usage) void recordTokenUsage({ us: unit.us, model: result.model, promptTokens: Number(result.usage.prompt_tokens ?? 0), completionTokens: Number(result.usage.completion_tokens ?? 0), totalTokens: Number(result.usage.total_tokens ?? 0) });
+      if (result.usage) void recordTokenUsage({ us: unit.us, model: result.model ?? loadContentModel(), promptTokens: Number(result.usage.prompt_tokens ?? 0), completionTokens: Number(result.usage.completion_tokens ?? 0), totalTokens: Number(result.usage.total_tokens ?? 0) });
       setMessage("SAQA metadata populated. Review the title, NQF level and credits, then Save changes.");
     } catch (error) { setMessage(error instanceof Error ? error.message : "Could not load metadata."); }
     finally { setPending(null); onBusyChange(false); }
