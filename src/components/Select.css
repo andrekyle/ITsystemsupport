@@ -1,0 +1,29 @@
+/* Keep the popup typography identical to its trigger, including inside headings. */
+.nice-select {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.nice-select .nice-select-btn,
+.nice-select .nice-select-panel,
+.nice-select .nice-select-opt {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  text-transform: none;
+}
+.nice-select .nice-select-opt { font-weight: 400; }
+.nice-select .nice-select-opt.selected { font-weight: 500; }
+.nice-select .nice-select-opt-hint { font-family: inherit; font-size: .875em; }
+.nice-select .nice-select-panel {
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  scroll-behavior: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-3) var(--surface);
+}

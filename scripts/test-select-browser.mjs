@@ -1,0 +1,10 @@
+import { build } from 'esbuild';
+import { mkdtempSync,writeFileSync,readFileSync } from 'node:fs';
+import { join,resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+import { runBrowserTest } from './browser-test-runner.mjs';
+const dir=mkdtempSync(join(tmpdir(),'select-browser-'));
+await build({entryPoints:[resolve('scripts/test-select-browser.tsx')],bundle:true,outfile:join(dir,'test.js'),jsx:'automatic'});
+writeFileSync(join(dir,'app.css'),readFileSync('src/styles.css','utf8'));
+writeFileSync(join(dir,'index.html'),'<!doctype html><html><head><link rel="stylesheet" href="app.css"><link rel="stylesheet" href="test.css"></head><body style="min-height:1500px"><h2 id="fixture" style="margin:30px;width:400px"></h2><pre id="result"></pre><script src="test.js"></script></body></html>');
+await runBrowserTest(dir,{width:1000,height:800});

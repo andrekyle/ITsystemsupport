@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Icon } from "../icons";
+import "./Select.css";
 
 export type SelectOption = { value: string; label: string; hint?: string };
 
@@ -36,6 +37,7 @@ export function Select({
   const [invalid, setInvalid] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const revealActive = useRef(false);
   const listId = useId();
 
   const selected = options.find((o) => o.value === value);
@@ -51,13 +53,23 @@ export function Select({
 
   useEffect(() => {
     if (!open) return;
-    // keep the active option visible while arrowing through the list
-    panelRef.current
-      ?.querySelector<HTMLElement>(`[data-idx="${active}"]`)
-      ?.scrollIntoView({ block: "nearest" });
+    // Pointer hover must never fight wheel/touch scrolling. Only opening and
+    // keyboard navigation reveal an option, without scrolling the page/modal.
+    if (!revealActive.current) return;
+    revealActive.current = false;
+    const panel = panelRef.current;
+    const option = panel?.querySelector<HTMLElement>(`[data-idx="${active}"]`);
+    if (!panel || !option) return;
+    const bounds = panel.getBoundingClientRect();
+    const item = option.getBoundingClientRect();
+    const top = bounds.top + panel.clientTop;
+    const bottom = top + panel.clientHeight;
+    if (item.top < top) panel.scrollTop -= top - item.top;
+    else if (item.bottom > bottom) panel.scrollTop += item.bottom - bottom;
   }, [open, active]);
 
   const openPanel = () => {
+    revealActive.current = true;
     setActive(Math.max(0, options.findIndex((o) => o.value === value)));
     setOpen(true);
   };
@@ -76,6 +88,7 @@ export function Select({
       }
       return;
     }
+    if (["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) revealActive.current = true;
     if (e.key === "Escape") {
       e.preventDefault();
       setOpen(false);
@@ -149,7 +162,7 @@ export function Select({
               className={`nice-select-opt${o.value === value ? " selected" : ""}${
                 i === active ? " active" : ""
               }`}
-              onPointerMove={() => setActive(i)}
+              onPointerMove={() => { revealActive.current = false; setActive(i); }}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => pick(o.value)}
             >
