@@ -1282,7 +1282,10 @@ export interface ChatMessage {
 }
 
 function currentChatCourseId(): string {
-  try { return localStorage.getItem("itss.activeCourse") || "itss"; } catch { return "itss"; }
+  try {
+    const active = localStorage.getItem("itss.activeCourse") || "itss";
+    return active === "itss" ? "itssinvestec2026" : active;
+  } catch { return "itssinvestec2026"; }
 }
 const chatCohortId = (profile?: Profile) => profile?.cohortId?.trim() || "default";
 
