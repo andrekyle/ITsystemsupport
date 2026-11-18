@@ -62,6 +62,7 @@
 .client-admin-panel .nice-select { min-width: 188px; }
 .client-admin-panel .nice-select-btn { min-height: 36px; padding: 7px 9px; }
 .client-file-field input[type="file"] { min-width: 280px; }
+.client-file-picker { min-height: 38px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
 .client-form-action { min-height: 36px; white-space: nowrap; }
 .client-admin-panel ul { margin: 12px 0 0; padding: 0; list-style: none; }
 .client-admin-panel li { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin: 8px 0; padding: 12px 0; border-bottom: 1px solid var(--border); }
