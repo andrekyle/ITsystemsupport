@@ -6572,6 +6572,14 @@ textarea:focus {
   @page { size: A4; margin: 8mm; }
   .sidebar, .header, .no-print { display: none !important; }
 
+  /* The registration form marks the print session explicitly so browsers
+     that do not evaluate :has() consistently still print only the form. */
+  body.printing-registration .sidebar,
+  body.printing-registration .header,
+  body.printing-registration .no-print { display: none !important; }
+  body.printing-registration .content-inner > :not(:has(.srf-wrap)) { display: none !important; }
+  body.printing-registration .content-inner { max-width: none !important; }
+
   html:has(.srf-wrap), body:has(.srf-wrap) {
     height: auto !important;
     overflow: visible !important;

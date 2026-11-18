@@ -207,7 +207,13 @@ function StudentRegistrationForm({
 
   function print() {
     save();
-    setTimeout(() => window.print(), 60);
+    setTimeout(() => {
+      document.body.classList.add("printing-registration");
+      const cleanup = () => document.body.classList.remove("printing-registration");
+      window.addEventListener("afterprint", cleanup, { once: true });
+      window.print();
+      window.setTimeout(cleanup, 1500);
+    }, 60);
   }
 
   return (
