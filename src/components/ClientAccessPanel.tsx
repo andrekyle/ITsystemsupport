@@ -13,6 +13,7 @@ export function ClientAccessPanel({ learners }: { learners: Profile[] }) {
   const [message, setMessage] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Evidence');
   const [start, setStart] = useState('2026-07-17');
@@ -43,14 +44,14 @@ export function ClientAccessPanel({ learners }: { learners: Profile[] }) {
     try { await action(); } catch (failure) { setError(failure instanceof Error ? failure.message : 'The client action failed.'); }
     finally { setBusy(false); }
   }
-  async function invite(event: FormEvent) {
+  async function createClient(event: FormEvent) {
     event.preventDefault();
     await run(async () => {
       const { data } = await supabase!.auth.getSession();
-      if (!data.session) throw new Error('Sign in to invite clients.');
-      const response = await fetch('/api/invite-client', { method: 'POST', headers: { Authorization: `Bearer ${data.session.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email }) });
-      const result = await response.json().catch(() => ({ error: 'The invitation service is unavailable. Restart the application server.' })); if (!response.ok) throw new Error(result.error || 'Could not invite the client.');
-      setMessage('Client invitation sent.'); setName(''); setEmail(''); await refresh();
+      if (!data.session) throw new Error('Sign in to create client accounts.');
+      const response = await fetch('/api/create-client', { method: 'POST', headers: { Authorization: `Bearer ${data.session.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) });
+      const result = await response.json().catch(() => ({ error: 'The client account service is unavailable.' })); if (!response.ok) throw new Error(result.error || 'Could not create the client account.');
+      setMessage('Client account created.'); setName(''); setEmail(''); setPassword(''); await refresh();
     });
   }
   async function publishCohort() {
@@ -79,8 +80,7 @@ export function ClientAccessPanel({ learners }: { learners: Profile[] }) {
   }
   return <details open className="client-admin-panel"><summary>Client portal access and publishing</summary><p>Clients can view published cohort details and download approved documents. They cannot edit learner records.</p><p>Client sign-in: <a href={clientPortalUrl()} target="_blank" rel="noopener">{clientPortalUrl()}</a></p>{!supabase ? <p>Enable cloud access to invite clients and publish evidence.</p> : <>
     <div className="client-admin-status"><strong>{ready ? 'Portal database connected' : 'Checking portal setup...'}</strong><span>{accounts.length} client accounts / {documents.filter(document => document.published).length} published documents</span><button type="button" className="btn" disabled={busy} onClick={() => void run(refresh)}>Refresh</button></div>
-    {setup && !setup.invitationsReady && <p role="status" className="client-setup-notice">Invitations need server configuration: {!setup.serviceKeyReady && 'add SUPABASE_SERVICE_ROLE_KEY to .env.local'}{!setup.serviceKeyReady && !setup.portalUrlReady && ' and '}{!setup.portalUrlReady && 'set CLIENT_PORTAL_BASE_URL'}. Restart the server after updating these settings.</p>}
-    <h3>Client accounts</h3><form onSubmit={invite}><label>Client contact<input value={name} onChange={event => setName(event.target.value)} required maxLength={120} /></label><label>Email<input type="email" value={email} onChange={event => setEmail(event.target.value)} required /></label><button className="btn" disabled={busy || !ready || setup?.invitationsReady === false}>Send invitation</button></form>
+    <h3>Client accounts</h3><form onSubmit={createClient}><label>Client name<input value={name} onChange={event => setName(event.target.value)} required maxLength={120} /></label><label>Email<input type="email" value={email} onChange={event => setEmail(event.target.value)} required /></label><label>Temporary password<input type="password" value={password} onChange={event => setPassword(event.target.value)} minLength={12} required /></label><button className="btn" disabled={busy || !ready || !setup?.serviceKeyReady}>Create client account</button></form>
     {accounts.length > 0 && <ul>{accounts.map(account => <li key={account.user_id}><span>{account.display_name} · {account.email} · {account.enabled ? 'Active' : 'Access disabled'}</span><button className="btn ghost" disabled={busy} onClick={() => void run(async () => { const result = await supabase!.from('client_portal_accounts').update({ enabled: !account.enabled }).eq('user_id', account.user_id).eq('tenant_id', TENANT_ID); if (result.error) throw new Error(portalError(result.error)); await refresh(); })}>{account.enabled ? 'Disable access' : 'Enable access'}</button></li>)}</ul>}
     <h3>Publish learner cohort</h3><div className="client-admin-row"><label>Programme start<input type="date" value={start} onChange={event => setStart(event.target.value)} /></label><label>Programme end<input type="date" value={end} min={start} onChange={event => setEnd(event.target.value)} /></label><button className="btn" disabled={busy || !learners.length} onClick={() => void publishCohort()}>Publish cohort ({learners.length} learners)</button></div>
     <h3>Evidence and compliance documents</h3><form onSubmit={upload}><label>Document title<input value={title} onChange={event => setTitle(event.target.value)} required maxLength={200} /></label><label>Category<select value={category} onChange={event => setCategory(event.target.value)}>{CLIENT_CATEGORIES.map(value => <option key={value}>{value}</option>)}</select></label><label>File<input type="file" ref={file} required /></label><button className="btn" disabled={busy}>Upload draft</button></form>
