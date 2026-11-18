@@ -144,6 +144,17 @@
 .client-portal .pw-toggle { border: 0; background: transparent; box-shadow: none; }
 
 .client-admin-panel h3 { font-size: 14px; margin: 22px 0 10px; padding-top: 16px; border-top: 1px solid var(--border); }
+.client-admin-panel > h3 { margin-top: 14px; padding-top: 12px; }
+.client-admin-panel form,
+.client-admin-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 1.2fr) auto; align-items: end; gap: 8px; }
+.client-admin-panel form > label,
+.client-admin-row > label { display: grid; gap: 4px; min-width: 0; font-size: 11px; font-weight: 600; }
+.client-admin-panel input { min-height: 34px; padding: 6px 9px; font-size: 12px; }
+.client-admin-panel .btn { min-height: 34px; padding: 6px 10px; font-size: 12px; }
+.client-admin-panel form + ul,
+.client-admin-panel .client-admin-row + h3 { margin-top: 10px; }
+.client-admin-panel ul { margin: 8px 0 0; padding-left: 18px; font-size: 12px; }
+.client-admin-panel li { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
 .client-admin-status { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px 0; font-size: 12px; }
 .client-admin-status span { color: var(--ink-3); }
 .client-admin-panel .btn { background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 8px 12px; font: inherit; cursor: pointer; }
@@ -168,6 +179,8 @@
 .client-preview-notice a { color: var(--ink); font-weight: 600; white-space: nowrap; text-underline-offset: 3px; }
 .client-portal .pw-toggle { min-height: 0; }
 @media(max-width:760px) {
+ .client-admin-panel form, .client-admin-row { grid-template-columns: 1fr 1fr; }
+ .client-admin-panel form > button, .client-admin-row > button { grid-column: span 2; }
  .client-portal .client-header { padding: 16px; gap: 16px; }
  .client-investec .client-header .client-brand { flex-basis: 100%; }
  .client-portal .client-user-menu { width: 100%; justify-content: space-between; }
