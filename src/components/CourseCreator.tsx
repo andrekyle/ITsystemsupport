@@ -21,7 +21,7 @@ export function CourseCreator({ onClose }: { onClose: () => void }) {
     setDraft(current => { if (!current) return current; const next = structuredClone(current); update(next); return next; });
   }
   async function readPack() {
-    setSaving(true); setError(""); setProgress("Reading the qualification pack...");
+    setSaving(true); setError(""); setProgress("Reading qualification folder names...");
     try {
       if (!pack) throw new Error("Select an uploaded qualification pack.");
       const session = await supabase?.auth.getSession();
@@ -39,7 +39,7 @@ export function CourseCreator({ onClose }: { onClose: () => void }) {
     try {
       let course = pending ?? createCourse(packCourseDetails(draft), draft.modules);
       course.sourcePack = { id: pack.id, name: pack.name };
-      course.modules.forEach(module => module.units.forEach(unit => { unit.metadataSource = `Qualification pack: ${pack.name}`; }));
+      course.modules.forEach(module => module.units.forEach(unit => { unit.metadataSource = `Qualification pack folder names: ${pack.name} (AI-suggested metadata)`; }));
       setPending(course);
       course = await ensureCourseCovers(course, null, setPending, setProgress);
       setPending(course);
@@ -54,7 +54,7 @@ export function CourseCreator({ onClose }: { onClose: () => void }) {
     <button className="btn ghost" disabled={saving || !pack} onClick={() => void (draft ? save() : readPack())}>{saving ? draft ? "Creating tiles..." : "Reading pack..." : pending ? "Retry save" : draft ? "Create course and tiles" : "Read qualification pack"}</button>
   </>}>
     {!draft ? <>
-      <p>Select a pack already uploaded under Qualification Packs. AI will read its qualification details, modules and unit standards. Review the result before creating the course and its cover images.</p>
+      <p>Select a pack already uploaded under Qualification Packs. AI will use its folder names to identify the qualification, modules and unit standards, and suggest descriptions and outcomes. Document contents will not be read. Review the result before creating the course and its cover images.</p>
       <label className="field"><span>Qualification pack</span><select value={packId} disabled={saving} onChange={event => { setPackId(event.target.value); setError(""); }}><option value="">Select a qualification pack</option>{packs.map(item => <option key={item.id} value={item.id}>{item.name} ({item.files.length} files)</option>)}</select></label>
       {pack && <p>{pack.description || pack.name}</p>}
       {!packs.length && <p role="status">No qualification packs are available. Upload one under Qualification Packs, then return here.</p>}
