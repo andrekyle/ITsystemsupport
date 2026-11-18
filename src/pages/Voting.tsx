@@ -1,3 +1,4 @@
+import { isEnrolledInCourse } from "../lib/courseEnrolment";
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile } from "../types";
@@ -641,7 +642,7 @@ export function VotingPage({ profile }: { profile: Profile }) {
   const people = useMemo(() => {
     const local = loadProfiles();
     const remote = remoteOnlyProfiles(local, cloudProfiles);
-    return [...local, ...remote].sort((a, b) =>
+    return [...local, ...remote].filter(profile => isEnrolledInCourse(profile)).sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
     );
   }, [cloudProfiles]);

@@ -1,3 +1,4 @@
+import { isEnrolledInCourse } from "./courseEnrolment";
 import { useSyncExternalStore } from "react";
 import { isAdminRole, type Profile } from "../types";
 import { supabase } from "./supabase";
@@ -31,10 +32,12 @@ export function assignmentFor(viewer: Profile, assignments: StaffAssignments): S
 }
 
 export function canSeeCourse(viewer: Profile, courseId: string, assignments: StaffAssignments): boolean {
+  if (viewer.role === "Learner" && !isEnrolledInCourse(viewer, courseId)) return false;
   return !isAssignedStaff(viewer) || assignmentFor(viewer, assignments).courseIds.includes(courseId);
 }
 
 export function canSeeProfile(viewer: Profile, target: Profile, assignments: StaffAssignments): boolean {
+  if (!isEnrolledInCourse(target)) return false;
   if (isAdminRole(viewer.role) || viewer.id === target.id ||
     (!!viewer.cloudUserId && viewer.cloudUserId === target.cloudUserId)) return true;
   if (!isAssignedStaff(viewer)) return target.role === "Learner";

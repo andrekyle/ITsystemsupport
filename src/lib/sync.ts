@@ -163,10 +163,10 @@ function syncable(key: string) {
  * they must not recreate deleted duplicate cloud rows on the next sign-in. */
 function ownedProfileId(key: string): string | undefined {
   const direct = key.match(
-    /^itss\.(?:progress|poe|notes|noteorder|notetitles|checklist|sectiond)\.([^.]+)$/
+    /^itss\.(?:progress|poe|notes|noteorder|notetitles|checklist|sectiond)\.(?:custom-[^.]+\.)?([^.]+)$/
   );
   if (direct) return direct[1];
-  return key.match(/^itss\.lessonquiz\.([^.]+)\./)?.[1];
+  return key.match(/^itss\.lessonquiz\.(?:custom-[^.]+\.)?([^.]+)\./)?.[1];
 }
 
 async function pushProgress(key: string, value: string, owner: string): Promise<void> {

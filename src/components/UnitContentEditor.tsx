@@ -51,7 +51,7 @@ function blankFor(name: string): Value {
   if (/lesson plan sections|sections/.test(key)) return { heading: "New section", rows: [blankFor("rows")] };
   if (/lesson plan rows|rows/.test(key)) return { time: "10 min", title: "New lesson activity", text: ["Describe what the facilitator and learners do."], bullets: [], resources: [] };
   if (/details/.test(key)) return { icon: "info", label: "Detail", value: "Value" };
-  if (/study notes/.test(key)) return { title: "New note", text: "Add study note text." };
+  if (/study ?notes/.test(key)) return { title: "New note", text: "Add study note text." };
   if (/registration/.test(key)) return { label: "Label", value: "Value" };
   if (/projectchecklist/.test(key)) return { no: "1", name: "Checklist item" };
   if (/knowledgequestions|practicalactivities/.test(key)) return { text: "New checklist item", marks: [true, false, false, true, false, false] };

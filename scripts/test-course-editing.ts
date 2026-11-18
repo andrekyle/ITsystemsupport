@@ -6,7 +6,7 @@ Object.defineProperty(globalThis, "localStorage", { configurable: true, value: {
   getItem: (key: string) => storage.get(key) ?? null,
   setItem: (key: string, value: string) => storage.set(key, value),
 } });
-Object.defineProperty(globalThis, "window", { configurable: true, value: new EventTarget() });
+Object.defineProperty(globalThis, "window", { configurable: true, value: Object.assign(new EventTarget(), { location: { pathname: "/", hostname: "localhost" } }) });
 const { builtUnitKey, readBuiltUnit } = await import("../src/lib/builtUnits");
 const { rememberUnitPack, isUnitPackKey } = await import("../src/lib/unitStorage");
 const { validateUnitContent } = await import("../src/lib/unitBuilder");

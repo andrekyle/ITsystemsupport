@@ -1,3 +1,4 @@
+import { courseScopedKey, courseScopedUnit } from "../lib/courseScope";
 import { assignmentFor, canSeeProfile, isAssignedStaff, useAssignments } from "../lib/assignments";
 import { isAdminRole } from "../types";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -61,13 +62,15 @@ interface AttData {
 
 const EMPTY: AttData = { header: {}, rows: {}, order: [] };
 
-const attKey = (dateIso: string) => `itss.attendance.${dateIso}`;
+const ATTENDANCE_PREFIX = courseScopedKey("itss.attendance.");
+const attKey = (dateIso: string) => `${ATTENDANCE_PREFIX}${dateIso}`;
 const attRowKey = (dateIso: string, profileId: string) =>
-  `itss.attendance.${dateIso}.row.${profileId}`;
-const registerKeyPattern = /^itss\.attendance\.\d{4}-\d{2}-\d{2}$/;
-const registerRowKeyPattern = /^(itss\.attendance\.\d{4}-\d{2}-\d{2})\.row\..+$/;
+  `${ATTENDANCE_PREFIX}${dateIso}.row.${profileId}`;
+const escapedAttendancePrefix = ATTENDANCE_PREFIX.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const registerKeyPattern = new RegExp(`^${escapedAttendancePrefix}\\d{4}-\\d{2}-\\d{2}$`);
+const registerRowKeyPattern = new RegExp(`^(${escapedAttendancePrefix}\\d{4}-\\d{2}-\\d{2})\\.row\\..+$`);
 const attendanceMigrationKey = (dateIso: string) =>
-  `itssDevice.attendanceMigrated.${dateIso}`;
+  `itssDevice.attendanceMigrated.${courseScopedUnit(dateIso)}`;
 
 /** Names on the register always start with a capital letter (per word). */
 function capWords(s: string): string {
@@ -114,9 +117,9 @@ function readReg(key: string): AttData {
   } catch {
     /* fall through */
   }
-  const dateIso = key.match(registerKeyPattern)?.[0]?.slice("itss.attendance.".length);
+  const dateIso = key.match(registerKeyPattern)?.[0]?.slice(ATTENDANCE_PREFIX.length);
   if (!dateIso) return data;
-  const prefix = `itss.attendance.${dateIso}.row.`;
+  const prefix = `${ATTENDANCE_PREFIX}${dateIso}.row.`;
   const rows = { ...data.rows };
   const order = [...data.order];
   for (let i = 0; i < localStorage.length; i++) {
@@ -142,7 +145,7 @@ function needsLegacySharedStateRead(error: { message?: string } | null): boolean
 async function pullLatest(key: string, strict = false): Promise<AttData | null> {
   if (!supabase) return null;
   try {
-    const dateIso = key.slice("itss.attendance.".length);
+    const dateIso = key.slice(ATTENDANCE_PREFIX.length);
     let registerResult = await supabase
       .from("shared_state")
       .select("value")
@@ -153,13 +156,13 @@ async function pullLatest(key: string, strict = false): Promise<AttData | null> 
       .from("shared_state")
       .select("key,value")
       .eq("tenant_id", TENANT_ID)
-      .like("key", `itss.attendance.${dateIso}.row.%`);
+      .like("key", `${ATTENDANCE_PREFIX}${dateIso}.row.%`);
     // Keep old deployments readable while the tenant migration is being
     // applied. This fallback is read-only and only used for a missing column.
     if (needsLegacySharedStateRead(registerResult.error) || needsLegacySharedStateRead(rowResult.error)) {
       [registerResult, rowResult] = await Promise.all([
         supabase.from("shared_state").select("value").eq("key", key).maybeSingle(),
-        supabase.from("shared_state").select("key,value").like("key", `itss.attendance.${dateIso}.row.%`),
+        supabase.from("shared_state").select("key,value").like("key", `${ATTENDANCE_PREFIX}${dateIso}.row.%`),
       ]);
     }
     // Some historical registers were saved before tenant tagging and can
@@ -175,7 +178,7 @@ async function pullLatest(key: string, strict = false): Promise<AttData | null> 
     ) {
       [registerResult, rowResult] = await Promise.all([
         supabase.from("shared_state").select("value").eq("key", key).maybeSingle(),
-        supabase.from("shared_state").select("key,value").like("key", `itss.attendance.${dateIso}.row.%`),
+        supabase.from("shared_state").select("key,value").like("key", `${ATTENDANCE_PREFIX}${dateIso}.row.%`),
       ]);
     }
     if (registerResult.error && rowResult.error) {
@@ -197,7 +200,7 @@ async function pullLatest(key: string, strict = false): Promise<AttData | null> 
       }
     }
     for (const saved of rowResult.data ?? []) {
-      const profileId = saved.key.slice(`itss.attendance.${dateIso}.row.`.length);
+      const profileId = saved.key.slice(`${ATTENDANCE_PREFIX}${dateIso}.row.`.length);
       if (!profileId) continue;
       try {
         const row = JSON.parse(saved.value) as AttRow;
@@ -266,14 +269,14 @@ async function allRegisterKeys(reportCloudFailure = false): Promise<string[]> {
           .from("shared_state")
           .select("key")
           .eq("tenant_id", TENANT_ID)
-          .like("key", "itss.attendance.%")
+          .like("key", `${ATTENDANCE_PREFIX}%`)
           .order("key")
           .range(offset, offset + pageSize - 1);
         if (needsLegacySharedStateRead(result.error)) {
           result = await supabase
             .from("shared_state")
             .select("key")
-            .like("key", "itss.attendance.%")
+            .like("key", `${ATTENDANCE_PREFIX}%`)
             .order("key")
             .range(offset, offset + pageSize - 1);
         }
@@ -283,7 +286,7 @@ async function allRegisterKeys(reportCloudFailure = false): Promise<string[]> {
           const legacy = await supabase
             .from("shared_state")
             .select("key")
-            .like("key", "itss.attendance.%")
+            .like("key", `${ATTENDANCE_PREFIX}%`)
             .order("key")
             .range(0, pageSize - 1);
           if (legacy.error) throw legacy.error;
@@ -328,7 +331,7 @@ export async function updateRegisterSignatures(
     if (!row || row.signatureImage === signatureImage) continue;
     const next = { ...data, rows: { ...data.rows, [profileId]: { ...row, signatureImage } } };
     writeReg(key, next); // compact aggregate also syncs to the shared cloud copy
-    const dateIso = key.slice("itss.attendance.".length);
+    const dateIso = key.slice(ATTENDANCE_PREFIX.length);
     localStorage.setItem(attRowKey(dateIso, profileId), JSON.stringify(next.rows[profileId]));
   }
 }
@@ -565,7 +568,7 @@ export function AttendancePage({
     if (!staff) return;
     let active = true;
     void allRegisterKeys(true).then((keys) => {
-      if (active) setSavedDates(keys.map((key) => key.slice("itss.attendance.".length)).sort().reverse());
+      if (active) setSavedDates(keys.map((key) => key.slice(ATTENDANCE_PREFIX.length)).sort().reverse());
     }).catch(() => {
       if (active) setAttendanceNote("Saved register dates could not be loaded. Check your connection and try again.");
     });
@@ -809,7 +812,7 @@ export function AttendancePage({
         }
         if (changed) {
           writeReg(key, data); // compact aggregate also syncs to the cloud
-          const dateIso = key.slice("itss.attendance.".length);
+          const dateIso = key.slice(ATTENDANCE_PREFIX.length);
           await Promise.all(
             Object.entries(data.rows)
               .filter(([, row]) => !!row.signatureImage)
@@ -917,7 +920,7 @@ export function AttendancePage({
         try {
           const data = visibleRegister((await pullLatest(key)) ?? readReg(key));
           if (!Object.keys(data.rows).length) continue; // skip unsigned/empty registers
-          regs.push({ date: key.slice("itss.attendance.".length), data });
+          regs.push({ date: key.slice(ATTENDANCE_PREFIX.length), data });
         } catch (error) {
           console.warn("Could not load attendance register", key, error);
         }

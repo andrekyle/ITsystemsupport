@@ -3,7 +3,7 @@ import { IT_SYSTEMS_SUPPORT } from "./it-systems-support";
 import { GENERIC_MANAGEMENT } from "./generic-management";
 
 /** The IT course is the reference shape every course must match. */
-export type CourseData = typeof IT_SYSTEMS_SUPPORT & { sourcePack?: { id: string; name: string } };
+export type CourseData = typeof IT_SYSTEMS_SUPPORT & { learnerIds?: string[]; sourcePack?: { id: string; name: string } };
 
 export const COURSES: CourseData[] = [IT_SYSTEMS_SUPPORT, GENERIC_MANAGEMENT];
 
@@ -118,6 +118,7 @@ export function createCourse(details: CourseDetails, modules: GeneratedCourseMod
   const course = empty(IT_SYSTEMS_SUPPORT) as CourseData;
   const courseId = `custom-${crypto.randomUUID()}`;
   course.id = courseId;
+  course.learnerIds = [];
   course.label = `${details.title.trim()} (${details.saqaId.trim()})`;
   course.blurb = details.description.trim();
   course.meta = { title: details.title.trim(), saqaId: details.saqaId.trim(), nqfLevel: details.nqfLevel, credits: details.credits, time: "09h00 - 14h00", sponsor: "", qualityAssurance: "" };

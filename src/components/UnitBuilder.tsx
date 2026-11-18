@@ -92,7 +92,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   const [dirty,setDirty]=useState(false);
   const scrollRef=useRef<HTMLDivElement>(null);
   const [source,setSource]=useState(built?.source??"");
-  const [generateLessons,setGenerateLessons]=useState(false);
+  const [generateLessons,setGenerateLessons]=useState(!built && !content?.lesson.length);
   const [ai,setAi]=useState(true);
   const [minutes,setMinutes]=useState(300);
   const [activityBlocks,setActivityBlocks]=useState<{heading:string;text:string}[]>([{heading:"",text:""}]);
@@ -128,6 +128,24 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       return;
     }
     setDraft({ ...draft, [key]: draft[key] ?? defaults[key] ?? (key === "evaluation" ? { intro: "Evaluate this unit", questions: ["What did you learn?"] } : []) });
+  };
+  const downloadContent = () => {
+    const value = draft ?? effectiveBuiltContent(content ?? { lesson: [], exercises: [], assignments: [], quiz: [] }, edits, true);
+    const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: "application/json" }));
+    const link = document.createElement("a"); link.href = url; link.download = `US-${unit.us}-editable-content.json`; link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const importSavedContent = async (file: File | undefined) => {
+    if (!file) return;
+    setError("");
+    try {
+      if (file.size > 20 * 1024 * 1024) throw new Error("Choose a saved content file smaller than 20 MB.");
+      const next = JSON.parse(await file.text()) as UnitContent;
+      if (!next || ![next.lesson, next.exercises, next.assignments, next.quiz].every(Array.isArray)) throw new Error("Choose an editable content file downloaded from the unit editor.");
+      validateUnitContent(next, false);
+      setDraft(next); setDirty(true); setView("content");
+      setMessage("Content uploaded for review. Save your changes to publish it to the unit tabs.");
+    } catch (e) { setError(e instanceof Error ? e.message : "The content file could not be read."); }
   };
   const [warning,setWarning]=useState("");
   const [fileName,setFileName]=useState("");
@@ -278,6 +296,12 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
         if(preservedWorkbook)next.workbook=preservedWorkbook;
         if(result.usage) void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.input_tokens??result.usage.prompt_tokens??0,completionTokens:result.usage.output_tokens??result.usage.completion_tokens??0,totalTokens:result.usage.total_tokens??0});
       }
+      if (!documentsOnly) {
+        // Reuse supplied teaching text for reading resources; keep authored material intact.
+        next.studyNotes = content?.studyNotes?.length ? structuredClone(content.studyNotes) : next.lesson.map(section => ({ title: plainSlideText(section.heading), text: [...section.paragraphs, ...(section.bullets ?? [])].map(plainSlideText).join("\n\n") }));
+        if (!next.learnerGuide) next.learnerGuide = { title: "Learner Guide", subtitle: unit.title, sections: next.lesson.map((section, index) => ({ id: `guide-${index}`, title: plainSlideText(section.heading), items: [...section.paragraphs, ...(section.bullets ?? [])].map((text, i) => ({ id: `guide-${index}-${i}`, text: plainSlideText(text) })) })) };
+        next.evaluation = content?.evaluation ? structuredClone(content.evaluation) : { intro: `Evaluate the learning session for ${unit.title}.`, questions: ["Which topics were most useful to you?", "Which topics need more explanation or practice?", "How will you apply this learning in your workplace?", "What could improve the learning session?"] };
+      }
       const htmlAiUsed=[guide,workbook,practical,...editableDocuments.map(item=>item.document)].some(document=>document?.replica?.display==="digital");
       const latestBeforePublish=documentsOnly?readBuiltUnit(unit.us):undefined;
       await publish(next,documentsOnly?(latestBeforePublish?.source??built?.source??""):source,htmlAiUsed||(documentsOnly?(latestBeforePublish?.aiUsed??built?.aiUsed??false):ai),documentsOnly);
@@ -397,7 +421,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
         <button type="button" className="btn ghost" disabled={!!busy} onClick={onCancelInline}>Cancel inline changes</button>
       {inlineActionsTarget && error && <p role="alert" className="auth-error">{error}</p>}
       </> : null;
-  const activeView:BuilderView=view??(content?"content":"build");
+  const activeView:BuilderView=view??(built || content?.lesson.length ? "content" : "build");
   const select=(next:BuilderView)=>{setView(next);setError("");setMessage("");setConfirmBuild(false);setConfirmDelete(false);setDeleteName("");};
   // Keep the original slide indices in saved units. The revision's deletion
   // flags hide slides once; removing them here would apply those flags again.
@@ -488,11 +512,14 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
             <p>{inlineDraft?"Slide text edited on the lesson page is waiting to be saved.":intro}</p>
           </div>
           {activeView==="content"&&!inlineDraft&&draft&&<div className="unit-workspace-head-actions" role="toolbar" aria-label="Content commands">
+            <button type="button" className="btn ghost" disabled={!!busy} onClick={downloadContent}><Icon name="download" size={15}/>Download editable content</button>
+            <label className="unit-import-button"><span>Upload saved content</span><input aria-label="Upload saved unit content" type="file" accept=".json,application/json" disabled={!!busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; void importSavedContent(file); }}/></label>
             <div className="unit-workspace-add-tab">
               <Select disabled={!!busy} ariaLabel="Tab to add" value={newTabKind} onChange={setNewTabKind} options={[
                 { value: "customTabs", label: "Custom content tab" }, { value: "lessonPlan", label: "Lesson plan" },
                 { value: "logbook", label: "Logbook" }, { value: "practicalTask", label: "Practical task" }, { value: "selfAssessment", label: "Self assessment" },
                 { value: "evaluation", label: "Evaluation" }, { value: "quizzes", label: "Additional quizzes" },
+                { value: "studyNotes", label: "Notes" }, { value: "lesson", label: "Lesson" }, { value: "exercises", label: "Activities" }, { value: "quiz", label: "Quiz" }, { value: "workbook", label: "Learner Workbook" },
               ]} />
               <button type="button" className="btn ghost" disabled={!!busy} onClick={addTab}><Icon name="plus" size={15}/>Add tab</button>
             </div>
@@ -537,7 +564,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
             <section className="unit-build-step">
               <header className="unit-build-step-head"><span className="unit-editor-index">2</span><div><h3>Optional lesson generation</h3><p>Leave off to publish only the converted HTML documents above. This separate source text creates lesson slides; it does not rewrite the uploaded unit documents.</p></div></header>
               <div className="unit-settings-card">
-                <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Also generate lesson tabs</strong><span>Off by default. HTML conversion uses code and AI regardless of this setting. Existing lessons stay unchanged when off.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={generateLessons} disabled={!!busy} onChange={e=>setGenerateLessons(e.target.checked)}/></label>
+                <label className="unit-settings-row"><span className="unit-settings-copy"><strong>Also generate lesson tabs</strong><span>Generate lessons and supporting tabs from your source text. Turn off to publish uploaded documents only.</span></span><input className="unit-ai-switch" type="checkbox" role="switch" checked={generateLessons} disabled={!!busy} onChange={e=>setGenerateLessons(e.target.checked)}/></label>
                 {generateLessons&&<>
                 <div className="unit-settings-row"><div className="unit-settings-copy"><strong>Import content</strong><span>{fileName || "TXT, Markdown, PDF, DOCX or PPTX"}</span></div>
                   <label className="unit-import-button"><span>Choose file</span><input aria-label="Import teaching content" type="file" accept=".txt,.md,.pdf,.docx,.pptx" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Reading source document…");setError("");try{setSource(await importUnitSource(file));setFileName(file.name);}catch(err){setError(String(err));}finally{setBusy("");}}}/></label>
@@ -596,6 +623,10 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
                   return <button type="button" className="btn ghost" key={kind} disabled={!!busy} onClick={()=>void downloadDoc(document).catch(()=>setError(`${label} could not be downloaded. Please retry.`))}><Icon name="download" size={15}/>{label}</button>;
                 })}
               </div>
+            </div>}
+            {built&&<div className="unit-action-card">
+              <div className="unit-action-card-copy"><h3>Saved files</h3><p>Download the latest saved teaching and assessment documents.</p></div>
+              <div className="unit-action-card-actions">{([['pdf','Lesson PDF'],['pptx','Editable PowerPoint'],['answers','Answer guide']] as const).map(([key,label]) => <button key={key} type="button" className="btn ghost" disabled={!!busy || !built.files[key]} onClick={() => void downloadDoc(built.files[key]).catch(() => setError(`${label} could not be downloaded. Retry.`))}><Icon name="download" size={15}/>{label}</button>)}</div>
             </div>}
             {built&&<div className="unit-action-card">
               <div className="unit-action-card-copy"><h3>Download files</h3><p>Rebuild the PDF, editable PowerPoint and answer guide from the content that is live now.</p></div>

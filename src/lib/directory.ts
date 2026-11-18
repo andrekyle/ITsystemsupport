@@ -1,3 +1,4 @@
+import { courseScopedKey } from "./courseScope";
 import { canSeeProfile, isAssignedStaff, readAssignments } from "./assignments";
 import { parseLessonQuizState } from "./lessonQuizProgress";
 import { hasVerifiedLegacyQuizContext, recoverLegacyQuizContext, verifyLegacyQuizSource } from "./legacyQuizRecovery";
@@ -162,7 +163,7 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
   }
   const [profRes, poeRes, adminRes] = await Promise.all([
     readVisibleProfiles(),
-    supabase.from("app_state").select("user_id,key,value").eq("tenant_id", TENANT_ID).like("key", "itss.poe.%"),
+    supabase.from("app_state").select("user_id,key,value").eq("tenant_id", TENANT_ID).like("key", courseScopedKey("itss.poe.%")),
     supabase.from("admins").select("user_id").eq("tenant_id", TENANT_ID),
   ]);
   // Learner profiles remain useful even when the optional POE index query is
@@ -218,7 +219,8 @@ export async function fetchCloudDirectory(): Promise<CloudDirectory | null> {
 
   const poe: CloudDirectory["poe"] = {};
   for (const row of poeRes.data ?? []) {
-    const pid = row.key.slice("itss.poe.".length);
+    const pid = row.key.slice(courseScopedKey("itss.poe.").length);
+    if (!pid || pid.includes(".")) continue;
     try {
       poe[pid] = { ...(poe[pid] ?? {}), ...(JSON.parse(row.value) as Record<string, PoeDoc>) };
     } catch {
@@ -291,13 +293,13 @@ export async function purgeOwnProfileCopy(profileId: string): Promise<string | n
   }
 
   const dataKeys = [
-    `itss.progress.${profileId}`,
-    `itss.poe.${profileId}`,
-    `itss.notes.${profileId}`,
-    `itss.noteorder.${profileId}`,
-    `itss.notetitles.${profileId}`,
-    `itss.checklist.${profileId}`,
-    `itss.sectiond.${profileId}`,
+    courseScopedKey(`itss.progress.${profileId}`),
+    courseScopedKey(`itss.poe.${profileId}`),
+    courseScopedKey(`itss.notes.${profileId}`),
+    courseScopedKey(`itss.noteorder.${profileId}`),
+    courseScopedKey(`itss.notetitles.${profileId}`),
+    courseScopedKey(`itss.checklist.${profileId}`),
+    courseScopedKey(`itss.sectiond.${profileId}`),
   ];
   const { error: delErr } = await supabase
     .from("app_state")
@@ -325,8 +327,8 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
   if (!supabase) return null;
   const [dir, progRes, checkRes] = await Promise.all([
     fetchCloudDirectory(),
-    supabase.from("app_state").select("user_id,key,value").eq("tenant_id", TENANT_ID).like("key", "itss.progress.%"),
-    supabase.from("app_state").select("user_id,key,value").eq("tenant_id", TENANT_ID).like("key", "itss.checklist.%"),
+    supabase.from("app_state").select("user_id,key,value").eq("tenant_id", TENANT_ID).like("key", courseScopedKey("itss.progress.%")),
+    supabase.from("app_state").select("user_id,key,value").eq("tenant_id", TENANT_ID).like("key", courseScopedKey("itss.checklist.%")),
   ]);
   if (!dir) return null;
   if (progRes.error) {
@@ -347,6 +349,7 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
     const out: Record<string, T> = {};
     for (const row of rows ?? []) {
       const pid = row.key.slice(prefix.length);
+      if (!pid || pid.includes(".")) continue;
       if (allowedIds && !allowedIds.has(pid)) continue;
       // the owning account's copy wins; otherwise first row seen
       if (pid in out && dir.owners[pid] !== row.user_id) continue;
@@ -362,7 +365,8 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
   const progress: Record<string, ProgressState> = {};
   const progressOwners: Record<string, string> = {};
   for (const row of progRes.data ?? []) {
-    const pid = row.key.slice("itss.progress.".length);
+    const pid = row.key.slice(courseScopedKey("itss.progress.").length);
+    if (!pid || pid.includes(".")) continue;
     if (allowedIds && !allowedIds.has(pid)) continue;
     // Keep this relationship even when the matching profile snapshot is
     // stale or absent. It lets staff resolve a learner's canonical progress
@@ -396,7 +400,7 @@ export async function fetchCloudLearnerData(): Promise<CloudLearnerData | null> 
     progressOwners,
     checklists: pick<Record<string, "yes" | "no">>(
       checkRes.error ? null : checkRes.data,
-      "itss.checklist."
+      courseScopedKey("itss.checklist.")
     ),
   };
 }
@@ -418,7 +422,7 @@ export async function fetchCloudProgress(
     .from("app_state")
     .select("user_id,value")
     .eq("tenant_id", TENANT_ID)
-    .in("key", profileIds.map((id) => `itss.progress.${id}`));
+    .in("key", profileIds.map((id) => courseScopedKey(`itss.progress.${id}`)));
   if (error) {
     if (throwOnError) throw new Error("Saved learner progress could not be loaded. Please try again.");
     return null;
@@ -459,7 +463,7 @@ export async function fetchCloudLessonQuizzes(profileIds: Iterable<string>, onPr
     return sources.get(unitId)!;
   };
   await Promise.all([...new Set(profileIds)].map(async id => {
-    const prefix = `itss.lessonquiz.${id}.`;
+    const prefix = courseScopedKey(`itss.lessonquiz.${id}.`);
     for (let from = 0; ; from += 1000) {
       const { data, error } = await client.from("app_state").select("key,value,updated_at")
         .eq("tenant_id", TENANT_ID).like("key", `${prefix}%`).order("updated_at").range(from, from + 999)
@@ -686,13 +690,13 @@ export async function deleteCloudProfile(owner: string, profileId: string): Prom
   );
   if (err) return err;
   const dataKeys = [
-    `itss.progress.${profileId}`,
-    `itss.poe.${profileId}`,
-    `itss.notes.${profileId}`,
-    `itss.noteorder.${profileId}`,
-    `itss.notetitles.${profileId}`,
-    `itss.checklist.${profileId}`,
-    `itss.sectiond.${profileId}`,
+    courseScopedKey(`itss.progress.${profileId}`),
+    courseScopedKey(`itss.poe.${profileId}`),
+    courseScopedKey(`itss.notes.${profileId}`),
+    courseScopedKey(`itss.noteorder.${profileId}`),
+    courseScopedKey(`itss.notetitles.${profileId}`),
+    courseScopedKey(`itss.checklist.${profileId}`),
+    courseScopedKey(`itss.sectiond.${profileId}`),
   ];
   await supabase.from("app_state").delete().eq("user_id", owner).eq("tenant_id", TENANT_ID).in("key", dataKeys);
   return null;

@@ -5,7 +5,7 @@ import { MODULES, POE_SECTIONS } from "./data/course";
 import { cloudEnabled, supabase } from "./lib/supabase";
 import { flushKey, flushValue, writeFromCloud } from "./lib/sync";
 import { logAudit } from "./lib/audit";
-import { courseScopedUnit } from "./lib/courseScope";
+import { courseScopedKey, courseScopedUnit } from "./lib/courseScope";
 import { TENANT, TENANT_ID } from "./lib/tenant";
 import { tenantFilePrefix } from "./lib/files";
 import { lessonFigureFolder, matchFigureFile, safeFigureId, type StoredFigureFile } from "./lib/lessonFigureRecovery";
@@ -25,7 +25,7 @@ const PROFILES_KEY = "itss.profiles";
 const SESSION_KEY = "itss.session";
 const THEME_KEY = "itss.theme";
 export const THEME_CHANGE_EVENT = "itss-theme-change";
-const progressKey = (profileId: string) => `itss.progress.${profileId}`;
+const progressKey = (profileId: string) => courseScopedKey(`itss.progress.${profileId}`);
 
 export type Theme = "light" | "dark";
 
@@ -326,7 +326,7 @@ export async function verifyPassword(password: string, stored: string | undefine
 
 /** Read a profile's POE documents without subscribing (for lists/counts). */
 export function loadPoeDocs(profileId: string): Record<string, PoeDoc> {
-  return read<Record<string, PoeDoc>>(`itss.poe.${profileId}`, {});
+  return read<Record<string, PoeDoc>>(courseScopedKey(`itss.poe.${profileId}`), {});
 }
 
 /** Number of POE items with at least one uploaded file (multi-file keys use "id__n"). */
@@ -337,10 +337,10 @@ export function poeItemCount(docs: Record<string, PoeDoc>): number {
 export function deleteProfile(id: string) {
   write(PROFILES_KEY, loadProfiles().filter((p) => p.id !== id));
   localStorage.removeItem(progressKey(id));
-  localStorage.removeItem(`itss.poe.${id}`);
-  localStorage.removeItem(`itss.notes.${id}`);
-  localStorage.removeItem(`itss.noteorder.${id}`);
-  localStorage.removeItem(`itss.notetitles.${id}`);
+  localStorage.removeItem(courseScopedKey(`itss.poe.${id}`));
+  localStorage.removeItem(courseScopedKey(`itss.notes.${id}`));
+  localStorage.removeItem(courseScopedKey(`itss.noteorder.${id}`));
+  localStorage.removeItem(courseScopedKey(`itss.notetitles.${id}`));
 }
 
 export function updateProfile(id: string, patch: Partial<Profile>): Profile | undefined {
@@ -706,7 +706,8 @@ export function useProgress(profileId: string) {
 
 /* ---------- shared app settings (controlled by the super user) ---------- */
 
-const SHARED_SETTINGS_KEY = "itss.settings.shared";
+const TENANT_SETTINGS_KEY = "itss.settings.shared";
+const SHARED_SETTINGS_KEY = courseScopedKey(TENANT_SETTINGS_KEY);
 
 export interface SharedSettings {
   /** allow non-super users to download shared/staff-uploaded content */
@@ -733,7 +734,7 @@ const DEFAULT_SHARED_SETTINGS: SharedSettings = {
 };
 
 function readSharedSettings(): SharedSettings {
-  return { ...DEFAULT_SHARED_SETTINGS, ...read<Partial<SharedSettings>>(SHARED_SETTINGS_KEY, {}) };
+  return { ...DEFAULT_SHARED_SETTINGS, ...read<Partial<SharedSettings>>(SHARED_SETTINGS_KEY, {}), staffCode: read<Partial<SharedSettings>>(TENANT_SETTINGS_KEY, {}).staffCode ?? "" };
 }
 
 export function useSharedSettings(): [SharedSettings, (patch: Partial<SharedSettings>) => void] {
@@ -741,15 +742,17 @@ export function useSharedSettings(): [SharedSettings, (patch: Partial<SharedSett
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === SHARED_SETTINGS_KEY) setSettings(readSharedSettings());
+      if (e.key === SHARED_SETTINGS_KEY || e.key === TENANT_SETTINGS_KEY) setSettings(readSharedSettings());
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   const update = useCallback((patch: Partial<SharedSettings>) => {
-    const next = { ...readSharedSettings(), ...patch };
-    write(SHARED_SETTINGS_KEY, next);
+    const { staffCode, ...coursePatch } = patch;
+    if (staffCode !== undefined) write(TENANT_SETTINGS_KEY, { ...read<Partial<SharedSettings>>(TENANT_SETTINGS_KEY, {}), staffCode });
+    const next = { ...readSharedSettings(), ...coursePatch };
+    if (Object.keys(coursePatch).length) write(SHARED_SETTINGS_KEY, next);
     setSettings(next);
   }, []);
 
@@ -829,7 +832,7 @@ const newId = () => `${Date.now().toString(36)}_${Math.random().toString(36).sli
 
 /* ---------- announcements (staff → everyone) ---------- */
 
-const ANNOUNCE_KEY = "itss.announce.shared";
+const ANNOUNCE_KEY = courseScopedKey("itss.announce.shared");
 
 export interface Announcement {
   id: string;
@@ -884,7 +887,7 @@ export function loadAnnouncements(): Announcement[] {
 
 /* ---------- Q&A support threads (learners ask, staff answer) ---------- */
 
-const QA_KEY = "itss.qa.shared";
+const QA_KEY = courseScopedKey("itss.qa.shared");
 
 export interface QaReply {
   id: string;
@@ -1010,8 +1013,8 @@ export function useQaThreads() {
 
 /* ---------- Voting Station (polls: vote for an action or person) ---------- */
 
-const POLLS_KEY = "itss.polls.shared";
-const POLLS_CACHE_KEY = `itssDevice.polls.${TENANT_ID}`;
+const POLLS_KEY = courseScopedKey("itss.polls.shared");
+const POLLS_CACHE_KEY = `itssDevice.polls.${TENANT_ID}${courseScopedUnit("cohort") === "cohort" ? "" : `.${courseScopedUnit("cohort")}`}`;
 
 export interface PollOption {
   id: string;
@@ -1649,7 +1652,7 @@ export function useChatThreads(): ChatThreadInfo[] {
 
 /* ---------- POE reviews (assessor verdicts per evidence item) ---------- */
 
-const POE_REVIEW_KEY = "itss.poereview.shared";
+const POE_REVIEW_KEY = courseScopedKey("itss.poereview.shared");
 
 export type PoeReviewStatus = "competent" | "nyc";
 
@@ -1702,7 +1705,7 @@ export function loadPoeReviews(): PoeReviewMap {
 
 /* ---------- unit assessment outcomes (assessor records C / NYC) ---------- */
 
-const OUTCOMES_KEY = "itss.outcomes.shared";
+const OUTCOMES_KEY = courseScopedKey("itss.outcomes.shared");
 
 export type OutcomeStatus = "C" | "NYC";
 
@@ -1755,14 +1758,14 @@ export function loadOutcomes(): OutcomeMap {
 
 /** Read a profile's Appendix C checklist without subscribing. */
 export function loadChecklistTicks(profileId: string): Record<string, ChecklistTick> {
-  return read<Record<string, ChecklistTick>>(`itss.checklist.${profileId}`, {});
+  return read<Record<string, ChecklistTick>>(courseScopedKey(`itss.checklist.${profileId}`), {});
 }
 
 /* ---------- Appendix C checklist (per profile) ---------- */
 
 export type ChecklistTick = "yes" | "no";
 
-const checklistKey = (profileId: string) => `itss.checklist.${profileId}`;
+const checklistKey = (profileId: string) => courseScopedKey(`itss.checklist.${profileId}`);
 
 export function useChecklist(profileId: string) {
   const [ticks, setTicks] = useState<Record<string, ChecklistTick>>(() =>
@@ -1800,7 +1803,7 @@ export function useChecklist(profileId: string) {
 
 /* ---------- Section D: required evidence & declaration (per profile) ---------- */
 
-const sectionDKey = (profileId: string) => `itss.sectiond.${profileId}`;
+const sectionDKey = (profileId: string) => courseScopedKey(`itss.sectiond.${profileId}`);
 
 export function useSectionD(profileId: string) {
   const [fields, setFields] = useState<Record<string, string>>(() =>
@@ -1838,7 +1841,7 @@ export function useSectionD(profileId: string) {
 
 /* ---------- POE documents (stored separately per profile) ---------- */
 
-const poeKey = (profileId: string) => `itss.poe.${profileId}`;
+const poeKey = (profileId: string) => courseScopedKey(`itss.poe.${profileId}`);
 
 /* POE checklist items -> the unit standards they evidence, parsed from labels
    like "Business reports written at work (US 8252)". */
@@ -2088,7 +2091,7 @@ async function uploadFigure(us: string, id: string, dataUrl: string): Promise<st
   const ext = blob.type === "image/png" ? "png" : "jpg";
   // Object names start with the figure id so a lost map entry can be rebuilt
   // from the folder listing (see lookupFigureInStorage).
-  const path = `${tenantFilePrefix(lessonFigureFolder(us))}/${safeFigureId(id)}-${crypto.randomUUID()}.${ext}`;
+  const path = `${tenantFilePrefix(lessonFigureFolder(courseScopedUnit(us)))}/${safeFigureId(id)}-${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage
     .from("files")
     .upload(path, blob, { upsert: true, contentType: blob.type || "image/jpeg" });
@@ -2122,7 +2125,7 @@ const FIG_LISTING_FRESH_MS = 5000;
 
 async function listFigureFiles(us: string, fresh: boolean): Promise<StoredFigureFile[] | null> {
   if (!supabase) return null;
-  const folder = tenantFilePrefix(lessonFigureFolder(us));
+  const folder = tenantFilePrefix(lessonFigureFolder(courseScopedUnit(us)));
   let cached = figFolderCache.get(folder);
   if (cached && fresh && Date.now() - cached.at > FIG_LISTING_FRESH_MS) {
     figFolderCache.delete(folder);
@@ -2153,7 +2156,7 @@ async function lookupFigureInStorage(us: string, id: string, fresh: boolean): Pr
   return {
     status: "found",
     figure: {
-      path: `${tenantFilePrefix(lessonFigureFolder(us))}/${match.name}`,
+      path: `${tenantFilePrefix(lessonFigureFolder(courseScopedUnit(us)))}/${match.name}`,
       uploadedAt: match.created_at ?? new Date().toISOString(),
     },
   };
@@ -2444,8 +2447,9 @@ export interface MemoryPhoto {
   uploadedAt: string;
 }
 
-const MEMORIES_KEY = "itss.memories.shared";
-const MEMORIES_FOLDERS = [`${TENANT_ID}/shared/memories`, ...(TENANT_ID === "investec" ? ["shared/memories"] : [])];
+const MEMORIES_KEY = courseScopedKey("itss.memories.shared");
+const MEMORY_FOLDER = `${TENANT_ID}/shared/memories/${courseScopedUnit("photos")}`;
+const MEMORIES_FOLDERS = courseScopedUnit("photos") === "photos" ? [`${TENANT_ID}/shared/memories`, ...(TENANT_ID === "investec" ? ["shared/memories"] : [])] : [MEMORY_FOLDER];
 
 /** Rebuild entries whose shared list was lost while the image is still in Storage. */
 async function recoverMemoryFiles(known: MemoryPhoto[]): Promise<MemoryPhoto[]> {
@@ -2580,7 +2584,7 @@ export function useMemories() {
         try {
           const blob = await (await fetch(image)).blob();
           const ext = blob.type === "image/png" ? "png" : "jpg";
-          const path = `${TENANT_ID}/shared/memories/${id}.${ext}`;
+          const path = `${courseScopedUnit("photos") === "photos" ? `${TENANT_ID}/shared/memories` : MEMORY_FOLDER}/${id}.${ext}`;
           const { error } = await supabase.storage
             .from("files")
             .upload(path, blob, { upsert: true, contentType: blob.type || "image/jpeg" });
@@ -3134,10 +3138,10 @@ export interface UserNote {
   uploadedAt: string;
 }
 
-const notesKey = (profileId: string) => `itss.notes.${profileId}`;
-const noteOrderKey = (profileId: string) => `itss.noteorder.${profileId}`;
-const noteTitlesKey = (profileId: string) => `itss.notetitles.${profileId}`;
-const SHARED_NOTES_KEY = "itss.notes.shared";
+const notesKey = (profileId: string) => courseScopedKey(`itss.notes.${profileId}`);
+const noteOrderKey = (profileId: string) => courseScopedKey(`itss.noteorder.${profileId}`);
+const noteTitlesKey = (profileId: string) => courseScopedKey(`itss.notetitles.${profileId}`);
+const SHARED_NOTES_KEY = courseScopedKey("itss.notes.shared");
 
 export function useNotes(profileId: string) {
   const [notes, setNotes] = useState<Record<string, UserNote>>(() =>

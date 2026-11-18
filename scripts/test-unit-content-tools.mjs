@@ -1,0 +1,9 @@
+import { build } from "esbuild";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { runBrowserTest } from "./browser-test-runner.mjs";
+const dir = mkdtempSync(join(tmpdir(), "unit-content-tools-"));
+await build({ entryPoints: [resolve("scripts/test-unit-content-tools.tsx")], bundle: true, outfile: join(dir,"test.js"), jsx: "automatic", define: { "import.meta.env": "{}" }, plugins: [{ name:"exports", setup(b) { b.onResolve({filter:/\?url$/}, args=>({path:args.path,namespace:"url-stub"})); b.onLoad({filter:/.*/,namespace:"url-stub"},()=>({contents:'export default ""',loader:"js"})); b.onLoad({ filter:/[\\/]unitExports\.ts$/ }, () => ({ contents: 'export async function makeUnitExports(){return Object.fromEntries(["pdf","pptx","answers"].map(key=>[key,new File(["test"],key+".pdf",{type:"application/pdf"})]))}', loader:"ts" })); } }] });
+writeFileSync(join(dir,"index.html"), '<!doctype html><html><body><div id="fixture"></div><pre id="result">Running</pre><script src="test.js"></script></body></html>');
+await runBrowserTest(dir, { width:1280, height:900 });

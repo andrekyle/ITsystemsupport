@@ -1,3 +1,5 @@
+import { isEnrolledInCourse, enrolCourseLearners } from "../lib/courseEnrolment";
+import { CourseEnrolment } from "../components/CourseEnrolment";
 import { getCourses } from "../data/courses";
 import { combineLessonQuizEvidence, hasSavedAcademicWork, localLessonQuizEvidence, quizEvidenceLabel, savedAcademicWorkHtml, savedLessonAnswers, savedLessonQuizResults, savedWorkbookAnswers, type LessonQuizEvidence } from "../lib/academicEvidence";
 import { useSavedLessonQuizzes } from "../lib/useSavedLessonQuizzes";
@@ -656,7 +658,7 @@ export function StudentsPage({
   // learners see the enrolled learner list (read-only)
   const people = (
     isSuper
-      ? all.filter((p) => p.id !== profile.id)
+      ? all.filter((p) => p.id !== profile.id && isEnrolledInCourse(p))
       : all.filter((p) => p.role === "Learner" && canSeeProfile(profile, p, assignments))
   ).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
   const student = route.studentId ? people.find((p) => p.id === route.studentId) : undefined;
@@ -705,6 +707,7 @@ export function StudentsPage({
             : "Everyone enrolled on this learnership. Personal contact details are kept private."}
       </p>
 
+      {isSuper && <CourseEnrolment candidates={all} onSaved={refresh} />}
       <div className="people-tabs-page">
       <div className="tabs" role="tablist" aria-label="People sections">
         {peopleTabs.map((tab, index) => (
@@ -800,7 +803,7 @@ export function StudentsPage({
         <section role="tabpanel" id="people-panel-management" aria-labelledby="people-tab-management" hidden={activePeopleTab !== "management"}>
           <h2 className="section-title">Accounts and submissions</h2>
           <AddUser viewer={profile} onAdded={refresh} />
-          <StaffAssignmentsPanel viewer={profile} people={all.map(p => ({ ...p, cloudUserId: p.cloudUserId ?? resolveCloudLink(p, cloud)?.owner }))} />
+          <StaffAssignmentsPanel viewer={profile} people={all.filter(p => isEnrolledInCourse(p)).map(p => ({ ...p, cloudUserId: p.cloudUserId ?? resolveCloudLink(p, cloud)?.owner }))} />
           <DownloadAllAssignments learners={people.filter(p => p.role === "Learner")}
             remoteIds={remoteIds} owners={cloud?.owners ?? {}} cloudProfiles={cloud?.profiles ?? []} />
         </section>
@@ -896,6 +899,7 @@ function AddUser({ viewer, onAdded }: { viewer: Profile; onAdded: () => void }) 
         enrolment,
         pw ? await hashPassword(pw) : undefined
       );
+      if (role === "Learner") enrolCourseLearners([{ ...created, cloudUserId }]);
       // stamp the resolved auth uid on the profile so chat can address them
       // immediately even before they sign in for the first time
       if (cloudUserId) {

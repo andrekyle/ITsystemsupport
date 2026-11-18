@@ -1,3 +1,4 @@
+import { isEnrolledInCourse } from "../lib/courseEnrolment";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Profile, Route } from "../types";
 import { loadProfiles } from "../store";
@@ -39,7 +40,7 @@ export function AdminDashboardPage({ profile, navigate }: { profile: Profile; na
     return dedupeProfiles([
       ...local.map((p) => mergeProfileWithCloud(p, cloud)),
       ...remoteOnlyProfiles(local, cloud?.profiles ?? []),
-    ]);
+    ]).filter(profile => isEnrolledInCourse(profile));
   }, [cloud, revision]);
   const learners = useMemo(() => users.filter((p) => p.role === "Learner").map((p) => analyse(p, cloud)), [users, cloud]);
   const staff = users.length - learners.length;

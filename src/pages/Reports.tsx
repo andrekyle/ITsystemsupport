@@ -1,3 +1,4 @@
+import { isEnrolledInCourse } from "../lib/courseEnrolment";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile } from "../types";
@@ -487,7 +488,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
       ...localLearners.map((p) => mergeProfileWithCloud(p, cloud)),
       ...remote,
     ]);
-    return all.map((p) => analyse(p, cloud));
+    return all.filter(profile => isEnrolledInCourse(profile)).map((p) => analyse(p, cloud));
   }, [registers, cloud]);
 
   async function generate(

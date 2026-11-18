@@ -14,7 +14,7 @@ import { UnitCardBanner } from "../components/UnitCardBanner";
 import { UnitLiveActions } from "../components/ModuleUnitsLive";
 import { CourseCreator } from "../components/CourseCreator";
 import { useInlineCourse } from "../components/useInlineCourse";
-import { courseScopedUnit } from "../lib/courseScope";
+import { courseScopedKey, courseScopedUnit } from "../lib/courseScope";
 import { Select } from "../components/Select";
 import { GLOSSARY, getContent } from "../data/content";
 import { getSaqaDetails } from "../data/saqaDetails";
@@ -33,7 +33,7 @@ import { videoEngagementKey, videoQuizId } from "../lib/videoLearning";
 import { fiveResearchSelfAssessment } from "../lib/selfAssessment114076";
 import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml, hydrateSlideImages, normalizeSlideDocument, inlineFigureReferences } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
-import { BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, effectiveBuiltContent } from "../components/UnitBuilder";
+import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, effectiveBuiltContent } from "../components/UnitBuilder";
 import { lessonEditsAfterInsert, lessonEditsAfterSplit } from "../lib/lessonSectionEdits";
 import { InlineText, InlineIconBtn } from "../components/InlineText";
 import { ActivityInlineEditor } from "../components/ActivityInlineEditor";
@@ -88,7 +88,7 @@ import { isLessonBulletListLead, isLessonListLead, isLessonListPoint, isLessonNu
 import { clearInlineDraft, loadInlineDraft, saveInlineDraft } from "../lib/inlineDraftStorage";
 import { resolvedSlideQuizAnswer } from "../lib/slideQuiz";
 import { parseLessonQuizState, reconcileLessonQuiz, recordLessonQuiz, type LessonQuizState } from "../lib/lessonQuizProgress";
-import { EditingTools } from "../components/EditingSidebar";
+import { InlineEditingTools, EditingTools } from "../components/EditingSidebar";
 import { InfoSectionTabs } from "../components/InfoSectionTabs";
 import { usePhoneView } from "../components/usePhoneView";
 
@@ -2444,8 +2444,8 @@ function loadUnitTab(unitId: string): UnitTab {
 
 /* Per-learner lesson state under itss.* keys so it cloud-syncs with the account
    and never leaks between profiles sharing a device. */
-const lessonStepKey = (profileId: string, unitId: string) => `itss.lessonstep.${profileId}.${unitId}`;
-const lessonQuizKey = (profileId: string, unitId: string) => `itss.lessonquiz.${profileId}.${unitId}`;
+const lessonStepKey = (profileId: string, unitId: string) => courseScopedKey(`itss.lessonstep.${profileId}.${unitId}`);
+const lessonQuizKey = (profileId: string, unitId: string) => courseScopedKey(`itss.lessonquiz.${profileId}.${unitId}`);
 
 function loadLessonStep(profileId: string, unitId: string): number {
   const raw =
@@ -2946,6 +2946,8 @@ function UnitPageContent({
   const [requestedEditMode, setEditMode] = useState(false);
   const editMode = !phone && requestedEditMode;
   const [slideEditOpen, setSlideEditOpen] = useState(false);
+  const [unitToolsOpen, setUnitToolsOpen] = useState(false);
+  useEffect(() => { setUnitToolsOpen(false); }, [unitId]);
   const [inlineActionsTarget, setInlineActionsTarget] = useState<HTMLDivElement | null>(null);
   const [unitHeaderOpen, setUnitHeaderOpen] = useState(tab !== "lesson");
   useEffect(() => { setSlideEditOpen(false); }, [unitId, tab, lessonStep]);
@@ -3945,9 +3947,23 @@ function UnitPageContent({
       </details>
       </div>
 
+      {isSuperUser && <section aria-label="Unit content management" style={{ margin: "16px 0" }}>
+        <button type="button" className="btn solid" aria-expanded={unitToolsOpen || !!inlineUnit} aria-controls="unit-content-manager" onClick={() => setUnitToolsOpen(open => !open)}>
+          <Icon name="document" size={16} />{unitToolsOpen ? "Close content tools" : "Generate, upload, edit and download"}
+        </button>
+        <div id="unit-content-manager" hidden={!unitToolsOpen && !inlineUnit}>
+          <p>Supply the teaching content for this unit. Build documents generates the lessons and supporting materials. Content and structure lets you review and edit the tabs; Files and exports provides downloads.</p>
+          <InlineEditingTools><UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} profileId={profile.id}
+            open={unitToolsOpen || !!inlineUnit} inlineDraft={inlineUnit} inlineActionsTarget={inlineActionsTarget}
+            onCancelInline={() => { setInlineUnit(undefined); setEditMode(false); }}
+            onSaved={() => { setInlineUnit(undefined); setEditMode(false); setLessonSaveStatus("saved"); }} /></InlineEditingTools>
+        </div>
+      </section>}
+
       {missingTabContent[tab] && <section className="card unit-tab-empty" role="status">
         <h2>{tabs.find(item => item.id === tab)?.label}</h2>
         <p>This unit's {tabs.find(item => item.id === tab)?.label.toLowerCase()} content has not been added yet.</p>
+        {isSuperUser && <button type="button" className="btn ghost" onClick={() => setUnitToolsOpen(true)}>Add content for this unit</button>}
         {tab === "saqa" && /^\d+$/.test(u.us) && <a href={`https://allqs.saqa.org.za/showUnitStandard.php?id=${u.us}`} target="_blank" rel="noopener noreferrer">View the official SAQA record</a>}
       </section>}
 

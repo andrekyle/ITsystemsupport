@@ -1,3 +1,4 @@
+import { courseScopedUnit } from "../lib/courseScope";
 import { useEffect, useId, useMemo, useState } from "react";
 import { Icon } from "../icons";
 import { Select } from "./Select";
@@ -46,6 +47,8 @@ function titleMap(): Record<string, string> {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (!key?.startsWith("itss.lessonedits.")) continue;
+      const scope = courseScopedUnit("");
+      if (scope ? !key.startsWith(`itss.lessonedits.${scope}`) : key.startsWith("itss.lessonedits.custom-")) continue;
       const value = JSON.parse(localStorage.getItem(key) ?? "{}") as { videoTitles?: Record<string, string> };
       Object.assign(titles, value.videoTitles ?? {});
     }

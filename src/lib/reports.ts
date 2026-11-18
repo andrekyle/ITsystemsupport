@@ -1,3 +1,4 @@
+import { courseScopedKey } from "./courseScope";
 import { fetchWithServiceRetry, reportServiceError } from "./aiServiceErrors";
 import type { Profile } from "../types";
 import { COURSE_META, MODULES, POE_TOTAL } from "../data/course";
@@ -154,18 +155,20 @@ export interface ReportRegisterSession {
 
 /** Load the same local + shared-cloud register set used by Attendance. */
 export async function fetchReportRegisterSessions(rows: LearnerRow[]): Promise<ReportRegisterSession[]> {
+  const prefix = courseScopedKey("itss.attendance.");
+  const isRegister = (key: string) => key.startsWith(prefix) && /^\d{4}-\d{2}-\d{2}$/.test(key.slice(prefix.length));
   const values = new Map<string, string>();
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key?.startsWith("itss.attendance.")) {
+    if (key && isRegister(key)) {
       const value = localStorage.getItem(key);
       if (value) values.set(key, value);
     }
   }
   if (supabase) {
     try {
-      const { data } = await supabase.from("shared_state").select("key,value").eq("tenant_id", TENANT_ID).like("key", "itss.attendance.%");
-      for (const item of data ?? []) if (typeof item.value === "string") values.set(item.key, item.value);
+      const { data } = await supabase.from("shared_state").select("key,value").eq("tenant_id", TENANT_ID).like("key", `${prefix}%`);
+      for (const item of data ?? []) if (isRegister(item.key) && typeof item.value === "string") values.set(item.key, item.value);
     } catch {
       /* offline: retain local register copies */
     }
@@ -176,7 +179,7 @@ export async function fetchReportRegisterSessions(rows: LearnerRow[]): Promise<R
       const parsed = JSON.parse(value) as { rows?: Record<string, unknown> };
       const signed = parsed.rows ? Object.keys(parsed.rows).length : 0;
       if (signed > 0) sessions.push({
-        date: key.slice("itss.attendance.".length),
+        date: key.slice(prefix.length),
         signed,
         expected: rows.length,
       });

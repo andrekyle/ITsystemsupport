@@ -1,3 +1,4 @@
+import { courseScopedKey } from "./courseScope";
 import type { ProgressState, UnitProgress, WorkbookSpec } from "../types";
 import { parseLessonQuizState, type LessonQuizState, type SlideQuizDefinition } from "./lessonQuizProgress";
 import { plainSlideText } from "./slideRichText";
@@ -152,7 +153,7 @@ export function savedLessonAnswers(states: LessonQuizState[] = []): SavedLessonA
 
 export function localLessonQuizEvidence(profileIds: Iterable<string>): LessonQuizEvidence {
   const evidence: LessonQuizEvidence = {};
-  const prefixes = [...profileIds].map(id => `itss.lessonquiz.${id}.`);
+  const prefixes = [...profileIds].map(id => courseScopedKey(`itss.lessonquiz.${id}.`));
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i)!;
     const prefix = prefixes.find(value => key.startsWith(value));

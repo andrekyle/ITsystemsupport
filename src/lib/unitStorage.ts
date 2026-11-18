@@ -9,7 +9,7 @@ const pending = new Set<string>();
 const loads = new Map<string, Promise<void>>();
 let generation=0;
 export const isUnitPackKey = (key:string) => /^itss\.unitbuilder\.(?:custom-[^.]+\.)?[^.]+\.(?:shared|deleted-backup)$/.test(key);
-export const isProgressKey = (key: string) => /^itss\.progress\.[^.]+$/.test(key);
+export const isProgressKey = (key: string) => /^itss\.progress\.(?:custom-[^.]+\.)?[^.]+$/.test(key);
 /** Large shared records that must bypass quota-limited localStorage. */
 export const isLargeStateKey = (key:string) => isUnitPackKey(key) || /^itss\.workbookmemo\..+\.shared$/.test(key) || /^itss\.progress\..+$/.test(key);
 let database: Promise<IDBDatabase> | undefined;

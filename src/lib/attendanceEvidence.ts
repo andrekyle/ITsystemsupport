@@ -1,3 +1,4 @@
+import { courseScopedKey } from "./courseScope";
 export interface AttendanceEvidenceRow {
   name?: string;
   surname?: string;
@@ -9,11 +10,12 @@ export interface AttendanceEvidenceRow {
 export function attendanceEvidence(
   storage: Pick<Storage, "length" | "key" | "getItem"> = localStorage
 ): Map<string, Record<string, AttendanceEvidenceRow>> {
+  const prefix = courseScopedKey("itss.attendance.");
   const registers = new Map<string, Record<string, AttendanceEvidenceRow>>();
   const individual: { date: string; id: string; row: AttendanceEvidenceRow }[] = [];
   for (let i = 0; i < storage.length; i++) {
     const key = storage.key(i);
-    const match = key?.match(/^itss\.attendance\.(\d{4}-\d{2}-\d{2})(?:\.row\.(.+))?$/);
+    const match = key?.startsWith(prefix) ? key.slice(prefix.length).match(/^(\d{4}-\d{2}-\d{2})(?:\.row\.(.+))?$/) : null;
     if (!key || !match) continue;
     try {
       const value = JSON.parse(storage.getItem(key) ?? "null");
