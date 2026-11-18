@@ -32,7 +32,13 @@ export function CourseCreator({ onClose }: { onClose: () => void }) {
       const session = await supabase?.auth.getSession();
       const token = session?.data.session?.access_token;
       const response = await fetch("/api/qualification-pack", { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ packId, model: loadContentModel() }), signal: AbortSignal.timeout(290000) });
-      const result = await response.json();
+      const raw = await response.text();
+      let result: { error?: string; draft?: unknown };
+      try {
+        result = JSON.parse(raw);
+      } catch {
+        throw new Error(response.ok ? "The qualification-pack service returned an invalid response." : raw.trim() || "The qualification-pack service is unavailable.");
+      }
       if (!response.ok || result.error) throw new Error(result.error || "Could not read the qualification pack.");
       const extracted = readQualificationDraft(result.draft);
       setDraft(extracted); setPercent(15);
