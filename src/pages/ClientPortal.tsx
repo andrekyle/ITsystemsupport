@@ -21,6 +21,7 @@ export function ClientPortal() {
   const [recovery, setRecovery] = useState(new URLSearchParams(window.location.search).get("setup") === "1");
   const [category, setCategory] = useState('All');
   const [search, setSearch] = useState('');
+  const [viewer, setViewer] = useState<{ document: ClientDocument; url: string } | null>(null);
   const request = useRef(0);
   useEffect(() => {
     if (!supabase) return;
@@ -89,6 +90,41 @@ export function ClientPortal() {
     finally { setBusy(false); }
   }
   async function signOut() { request.current++; setAccount(null); setDocuments([]); setLearners([]); const result = await supabase?.auth.signOut(); if (result?.error) setError('Could not sign out. Please retry.'); }
+  async function openDocument(document: ClientDocument) {
+    if (!supabase) return;
+    const { data, error } = await supabase.storage.from('client-evidence').download(document.storage_path);
+    if (error || !data) { setError('This document could not be opened. It may no longer be published.'); return; }
+    if (viewer) URL.revokeObjectURL(viewer.url);
+    setViewer({ document, url: URL.createObjectURL(data) });
+  }
+  useEffect(() => {
+    const links = Array.from(window.document.querySelectorAll<HTMLElement>('.client-documents li > div:first-child'));
+    const handlers = links.map(link => {
+      const handler = () => {
+        const filename = link.querySelector('small')?.textContent?.split('·')[1]?.trim();
+        const document = documents.find(item => item.filename === filename);
+        if (document) void openDocument(document);
+      };
+      link.style.cursor = 'pointer';
+      link.addEventListener('click', handler);
+      return [link, handler] as const;
+    });
+    return () => handlers.forEach(([link, handler]) => link.removeEventListener('click', handler));
+  }, [documents, filtered]);
+  useEffect(() => {
+    const existing = window.document.querySelector('.client-document-viewer');
+    existing?.remove();
+    if (!viewer) return;
+    const panel = window.document.createElement('aside');
+    panel.className = 'client-document-viewer';
+    panel.setAttribute('aria-label', 'Document viewer');
+    panel.innerHTML = `<header><strong>${viewer.document.title.replace(/[<>]/g, '')}</strong><button type="button">Close</button></header><iframe title="${viewer.document.filename.replace(/[<>]/g, '')}"></iframe>`;
+    panel.querySelector('button')?.addEventListener('click', () => { URL.revokeObjectURL(viewer.url); setViewer(null); });
+    const frame = panel.querySelector('iframe');
+    if (frame) frame.src = viewer.url;
+    window.document.body.appendChild(panel);
+    return () => panel.remove();
+  }, [viewer]);
   const investec = TENANT_ID === 'investec';
   const portalClass = `client-portal${investec ? ' client-investec' : ''}`;
   const brand = <div className="client-brand">{investec ? <img className="client-logo-standard" src="/logos/investec.svg" alt="Investec" width="300" height="60" /> : TENANT.logo ? <img src={TENANT.logo} alt={TENANT.name} /> : <strong>{TENANT.name}</strong>}<span>Client portal</span></div>;
