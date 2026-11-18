@@ -16,11 +16,12 @@ function click(label){[...document.querySelectorAll('button')].find(el=>el.textC
 let calls=0;let covers=0;let fail=true;const originalFetch=window.fetch;
 window.fetch=async(url,options)=>{
  if(String(url).startsWith('data:'))return originalFetch(url);
+ if(url==='/api/unit-metadata'){await new Promise(r=>setTimeout(r,50));return Response.json({metadata:{us:'123',title:'Teamwork',nqf:5,credits:10}})}
  if(url==='/api/cover-image'){covers++;if(covers===2)return Response.json({error:'Cover service unavailable'},{status:502});return Response.json({image:'data:image/jpeg;base64,/9j/2Q=='})}
  assert(url==='/api/qualification-pack','Read selected pack rather than external SAQA metadata');calls++;
  assert(JSON.parse(options.body).packId==='pack-1','Selected existing pack sent');
  if(fail)return Response.json({error:'Try reading again'},{status:502});
- return Response.json({draft:{qualification:{title:'Management',saqaId:'12345',nqfLevel:5,credits:10,description:'Management qualification'},modules:[{name:'Team development',description:'Team skills',outcomes:['Lead teams'],units:[{us:'123',title:'Teamwork',nqf:5,credits:10,description:'Work in teams',outcomes:['Support a team']}]}],issues:['Review module grouping']}});
+ return Response.json({draft:{qualification:{title:'Management',saqaId:'12345',nqfLevel:5,credits:10,description:'Management qualification'},modules:[{name:'Team development',description:'Team skills',outcomes:['Lead teams'],units:[{us:'123',title:'Unit Standard 123',nqf:null,credits:null,description:'Work in teams',outcomes:['Support a team']}]}],issues:['Review module grouping']}});
 };
 (async()=>{try{
  let closed=false;createRoot(document.getElementById('root')).render(<CourseCreator onClose={()=>closed=true}/>);
@@ -29,7 +30,7 @@ window.fetch=async(url,options)=>{
  const select=document.querySelector('select');select.value='pack-1';select.dispatchEvent(new Event('change',{bubbles:true}));await tick();
  document.querySelector('.modal-overlay').click();window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));assert(!closed,'Explicit dismissal only');
  click('Read qualification pack');await until(()=>document.querySelector('[role=alert]'));assert(select.value==='pack-1','Read failure preserves pack selection');
- fail=false;click('Read qualification pack');await until(()=>document.querySelector('[aria-label="Qualification pack review"]'));
+ fail=false;click('Read qualification pack');await until(()=>document.querySelector('[role=progressbar]'));assert(document.querySelector('[role=progressbar]').getAttribute('aria-valuenow')!==null,'Percentage progress is visible');await until(()=>document.querySelector('[aria-label="Qualification pack review"]')&&!document.querySelector('[role=progressbar]'));
  assert(document.body.textContent.includes('Team development'),'Extracted modules shown');assert(document.body.textContent.includes('123: Teamwork'),'Unit mapped to module');assert(document.body.textContent.includes('Review module grouping'),'Review warnings shown');assert(!localStorage.length,'Review does not save');
  input('Module 1: name','Reviewed module');await tick();click('Create course and tiles');await until(()=>document.querySelector('[role=alert]'));assert(!window.savedCourse,'No save on partial cover failure');click('Retry save');await until(()=>window.savedCourse);
  assert(window.savedCourse.modules[0].name==='Reviewed module','Review edits saved');assert(window.savedCourse.sourcePack.id==='pack-1','Source pack preserved');assert(window.savedCourse.modules[0].units[0].imageIncludesText,'Unit artwork saved');assert(covers===3,'Retry keeps completed cover');assert(calls===2,'Save does not re-read pack');
