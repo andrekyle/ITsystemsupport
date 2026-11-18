@@ -176,6 +176,7 @@ export function Header({
   navigate,
 }: Props) {
   const assignments = useAssignments();
+  const loadedQualification = getCourses().find((course) => course.id === activeCourseId())?.meta.title ?? "Qualification";
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -267,7 +268,7 @@ export function Header({
       <div className="brand">
         {TENANT.logo ? <img className="header-tenant-logo" src={theme === "dark" && TENANT.logoDark ? TENANT.logoDark : TENANT.logo} alt={`${TENANT.name} logo`} /> : <Icon name="certificate" size={24} color="var(--azure)" />}
         {TENANT.id !== "discovery" && <span className="brand-name">{TENANT.appName}</span>}
-        {TENANT.id !== "discovery" && <span className="brand-sub">System Support · NQF 5</span>}
+        {TENANT.id !== "discovery" && <span className="brand-sub">{loadedQualification}</span>}
       </div>
       <SessionClock onOpenUnit={onOpenUnit} />
       <div className="header-right">

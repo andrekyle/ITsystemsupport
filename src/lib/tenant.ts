@@ -17,7 +17,7 @@ const TENANTS: Record<TenantId, TenantBrand> = {
     id: "investec",
     name: "Investec",
     location: "Sandton",
-    appName: "ITSS Learn",
+    appName: "Eruditio eLearning",
     logo: null,
     accent: "#007cc3",
     superUserName: "Andre Snell",
