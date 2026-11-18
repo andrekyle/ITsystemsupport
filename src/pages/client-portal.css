@@ -57,6 +57,10 @@
 .client-admin-panel form, .client-admin-row { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin: 14px 0; }
 .client-admin-panel label { display: grid; gap: 4px; font-size: 12px; }
 .client-admin-panel input, .client-admin-panel select { padding: 7px 9px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--ink); font: inherit; }
+.client-admin-panel .nice-select { min-width: 188px; }
+.client-admin-panel .nice-select-btn { min-height: 36px; padding: 7px 9px; }
+.client-file-field input[type="file"] { min-width: 280px; }
+.client-form-action { min-height: 36px; white-space: nowrap; }
 .client-admin-panel li { display: flex; gap: 12px; align-items: center; margin: 10px 0; }
 @media(max-width:760px) { .client-login { grid-template-columns: 1fr; } .client-intro { padding: 24px; } .client-intro .client-brand { margin-bottom: 30px; } .client-intro h1 { font-size: 34px; } .client-intro small { padding-top: 20px; } .client-header { flex-wrap: wrap; padding: 16px; } .client-content { padding: 24px 14px; } .client-stats { gap: 8px; } .client-stats > div { padding: 12px; } .client-doc-heading { align-items: stretch; flex-direction: column; } .client-panel { padding: 16px; } }
 
