@@ -79,6 +79,7 @@ function SkillsRegister({ profile }: { profile: Profile }) {
   const values = { ...(learner ? profilePortfolioDefaults(learner) : {}), ...linkedDocuments, ...record.values };
   const [sectionId, setSectionId] = useState(SKILLS_PORTFOLIO[0].id);
   const [search, setSearch] = useState("");
+  const [registerTab, setRegisterTab] = useState<"evidence" | "client">("evidence");
   const section = SKILLS_PORTFOLIO.find(section => section.id === sectionId);
   const unitId = section?.title.match(/^Unit standard (\d+)$/)?.[1];
   const unitProgress = unitId ? progress.units[unitId] : undefined;
@@ -190,7 +191,11 @@ function SkillsRegister({ profile }: { profile: Profile }) {
       <p role="status" aria-live="polite">{record.loading ? "Loading portfolio…" : record.saving ? "Saving changes…" : record.dirty ? "Unsaved changes — draft retained on this device." : "All changes saved."}</p>
     </div>
     {(error || record.error) && <div className="card" role="alert"><p>{error || record.error}</p><button type="button" className="btn" onClick={() => { setError(""); record.refresh(); setRefresh(value => value + 1); }}>Retry</button></div>}
-    <ClientAccessPanel learners={learners} />
+    <nav className="evidence-register-tabs" aria-label="Evidence register views">
+      <button type="button" className={`btn ${registerTab === "evidence" ? "primary" : "ghost"}`} onClick={() => setRegisterTab("evidence")}>Skills evidence</button>
+      <button type="button" className={`btn ${registerTab === "client" ? "primary" : "ghost"}`} onClick={() => setRegisterTab("client")}>Client portal</button>
+    </nav>
+    {registerTab === "client" ? <ClientAccessPanel learners={learners} /> : <>
     {!loading && !learners.length && <p className="card">No learners are available.</p>}
     {learner && <div className="portfolio-layout">
       <nav className="card portfolio-navigation" aria-label="Portfolio sections">
@@ -231,6 +236,7 @@ function SkillsRegister({ profile }: { profile: Profile }) {
         </> : <><h2 className="section-title">Existing evidence checklist</h2>{existingItems.map(label => { const key = oldKey(label); return <div className="portfolio-legacy-item" key={key}><h3>{label}</h3>{attachment(`doc.existing.${key}`, label, docs[key] ?? (label === "Certified ID copy" ? docs["id-copy"] ?? docs["gm-id-copy"] : undefined), key)}</div>; })}</>}
       </section>
     </div>}
+    </>}
     <input ref={fileInput} type="file" aria-label="Upload portfolio evidence file" hidden onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void uploadEvidence(file); }} />
     {review && reviewItem && <Modal className="portfolio-review-modal" title="Manage evidence" onClose={() => setReview(null)} actions={<button type="button" className="btn primary" onClick={() => setReview(null)}>Done</button>}>
       <div className="portfolio-review-document"><span className="portfolio-review-context">{review.label}</span><div className="portfolio-review-file"><Icon name="file" size={18} /><p className="portfolio-review-filename">{reviewItem.doc.name}</p></div></div>

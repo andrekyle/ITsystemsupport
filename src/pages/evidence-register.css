@@ -211,3 +211,9 @@
   .evidence-learner-picker { flex-direction: column; align-items: stretch; }
   .evidence-learner-picker .nice-select { width: 100%; }
 }
+.evidence-register-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
