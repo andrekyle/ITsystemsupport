@@ -18830,14 +18830,10 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .slide-whole-editor ol.lesson-numlist { display:block; padding-left:28px; list-style:decimal; }
 .slide-whole-editor ol.lesson-numlist > li { display:list-item; padding-left:8px; margin-bottom:20px; }
 .slide-whole-editor ol.lesson-numlist > li::marker { color:var(--muted); font-weight:600; }
-/* An inline picture whose source cannot be resolved renders as a deliberate
-   placeholder around its alt text instead of a bare broken-image icon. */
+/* Keep unresolved inline figures from displaying browser-generated broken-image text. */
 .slide-whole-editor img[data-figure-id]:not([src]),
 .slide-rich-text img[data-figure-id]:not([src]) {
-  display:block; box-sizing:border-box; width:min(60%, 480px); min-height:120px; margin:12px auto; padding:16px;
-  border:2px dashed color-mix(in srgb, var(--amber) 70%, transparent); border-radius:10px;
-  background:color-mix(in srgb, var(--amber) 8%, var(--surface)); color:var(--ink-2);
-  font-size:14px; line-height:1.4; text-align:center; cursor:default;
+  display:none;
 }
 
 /* ============ Onboarding packs ============ */

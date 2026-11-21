@@ -2152,6 +2152,7 @@ const hasFigureSource = (figure?: LessonFigureImage): boolean => Boolean(figure?
 const figFolderCache = new Map<string, { listing: Promise<StoredFigureFile[] | null>; at: number }>();
 /** A "fresh" listing younger than this is reused, so several broken pictures on one slide share one request. */
 const FIG_LISTING_FRESH_MS = 5000;
+const FIGURE_RETRY_MS = 15000;
 
 async function listFigureFiles(us: string, fresh: boolean): Promise<StoredFigureFile[] | null> {
   if (!supabase) return null;
@@ -2361,8 +2362,22 @@ export function useLessonFigures(us: string, priorityIds: readonly string[], opt
       for (const id of lost) setIssue(id, "missing");
       return;
     }
-    void Promise.all(lost.map((id) => repair(id, "missing")));
+    void Promise.all(lost.map((id) => repair(id, "missing", true)));
   }, [recoverKey, entries, repair, setIssue, retry]);
+
+  useEffect(() => {
+    const retryable = recoverKey.split("\n").filter((id) => id && issues[id]);
+    if (!supabase || !retryable.length) return;
+    const timer = window.setTimeout(() => {
+      for (const id of retryable) {
+        for (const token of lookedUp.current) {
+          if (token === id || token.startsWith(`${id}:`)) lookedUp.current.delete(token);
+        }
+      }
+      setRetry((current) => current + 1);
+    }, FIGURE_RETRY_MS);
+    return () => window.clearTimeout(timer);
+  }, [recoverKey, issues, retry]);
 
   /** figures with `image` always usable as an <img> src (data-URL or signed URL) */
   const merged = useMemo(() => {
