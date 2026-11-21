@@ -46,7 +46,7 @@ import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/
 import { AlertModal, ConfirmModal, PromptModal } from "../components/Modal";
 import { downloadDoc, getFileBlob } from "../lib/files";
 import { fileToSignature } from "../lib/signature";
-import { cloudEnabled, makeHeadlessClient } from "../lib/supabase";
+import { cloudEnabled, makeHeadlessClient, supabase } from "../lib/supabase";
 import { TENANT_ID } from "../lib/tenant";
 import { updateRegisterSignatures } from "./Attendance";
 import {
@@ -1003,11 +1003,13 @@ function generateTempPassword(): string {
 function AdminPanel({
   student,
   onPatch,
+  onLogin,
   onDelete,
   onRemoveLocal,
 }: {
   student: Profile;
   onPatch: (patch: Partial<Profile>) => Promise<boolean>;
+  onLogin: (change: { email?: string; password?: string }) => Promise<boolean>;
   onDelete: () => void;
   /** present when this device holds a local copy — removes only that copy */
   onRemoveLocal?: () => void;
@@ -1015,6 +1017,8 @@ function AdminPanel({
   const [name, setName] = useState(student.name);
   const [role, setRole] = useState<Role>(student.role);
   const [pw, setPw] = useState("");
+  const [email, setEmail] = useState(student.enrolment?.email ?? "");
+  const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
   const flash = (m: string) => {
@@ -1029,11 +1033,14 @@ function AdminPanel({
   }
 
   async function setPassword() {
-    if (!pw) return;
-    if (await onPatch({ passwordHash: await hashPassword(pw) })) {
+    if (!pw || busy) return;
+    setBusy(true);
+    try {
+    if (await (cloudEnabled ? onLogin({ password: pw }) : onPatch({ passwordHash: await hashPassword(pw) }))) {
       setPw("");
       flash("Password set.");
     }
+    } finally { setBusy(false); }
   }
 
   async function resetPassword() {
@@ -1077,6 +1084,19 @@ function AdminPanel({
           </button>
         </form>
 
+        {cloudEnabled && <form className="pw-row" style={{ marginTop: 14 }} onSubmit={async e => {
+          e.preventDefault();
+          if (busy) return;
+          setBusy(true);
+          try { if (await onLogin({ email: email.trim() })) flash("Login email updated."); }
+          finally { setBusy(false); }
+        }}>
+          <div className="field" style={{ flex: 2, marginBottom: 0 }}>
+            <label htmlFor="ad-email">Login email</label>
+            <input id="ad-email" type="email" required value={email} onChange={e => setEmail(e.target.value)} />
+          </div>
+          <button className="btn sm" disabled={busy} type="submit">Save login email</button>
+        </form>}
         <div className="pw-row" style={{ marginTop: 14 }}>
           <div className="field" style={{ flex: 2, marginBottom: 0 }}>
             <label htmlFor="ad-pw">
@@ -1087,14 +1107,14 @@ function AdminPanel({
               type="password"
               value={pw}
               onChange={(e) => setPw(e.target.value)}
-              placeholder="New password"
+              placeholder={cloudEnabled ? "New password (at least 8 characters)" : "New password"}
               autoComplete="new-password"
             />
           </div>
-          <button className="btn ghost sm" type="button" disabled={!pw} onClick={setPassword}>
+          <button className="btn ghost sm" type="button" disabled={busy || !pw || (cloudEnabled && pw.length < 8)} onClick={setPassword}>
             Set password
           </button>
-          {student.passwordHash && (
+          {!cloudEnabled && student.passwordHash && (
             <button className="btn ghost sm" type="button" onClick={resetPassword}>
               Reset (remove) password
             </button>
@@ -2535,10 +2555,37 @@ function StudentDetail({
   }
 
   /** Routes profile changes to the local store, or to the owning account's cloud rows. */
+  async function updateLogin(change: { email?: string; password?: string }): Promise<boolean> {
+    try {
+      if (!supabase || !owner) throw new Error("This profile has no saved cloud account link. Refresh the user list and try again.");
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session) throw new Error("Sign in again before changing login details.");
+      const response = await fetch("/api/update-user-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
+        body: JSON.stringify({ owner, profileId: cloudProfileId ?? student.id, ...change }),
+      });
+      const result = await response.json().catch(() => ({ error: "Login management is unavailable on this server." }));
+      if (!response.ok || result.ok !== true) throw new Error(result.error || "The login details could not be updated.");
+      const patch: Partial<Profile> = change.email
+        ? { enrolment: { ...student.enrolment, email: change.email.trim().toLowerCase() } as EnrolmentInfo }
+        : { passwordHash: await hashPassword(change.password!) };
+      const saveError = await updateCloudProfile(owner, cloudProfileId ?? student.id, patch);
+      if (saveError) throw new Error("The login was updated, but its profile copy could not be saved. " + saveError);
+      if (!remote) updateProfile(student.id, patch);
+      logAudit(viewer, change.password ? "account.password" : "enrolment.saved", change.password ? "Updated login password" : "Updated login email", { id: student.id, name: student.name });
+      onChanged();
+      return true;
+    } catch (error) {
+      setAlertMsg(error instanceof Error ? error.message : "Could not update login details.");
+      return false;
+    }
+  }
+
   async function patchStudent(patch: Partial<Profile>): Promise<boolean> {
     if (remote) {
       if (!owner) return false;
-      const err = await updateCloudProfile(owner, student.id, patch);
+      const err = await updateCloudProfile(owner, cloudProfileId ?? student.id, patch);
       if (err) {
         setAlertMsg(err);
         return false;
@@ -2770,6 +2817,7 @@ function StudentDetail({
         <AdminPanel
           student={student}
           onPatch={patchStudent}
+          onLogin={updateLogin}
           onDelete={() => setConfirmDelete(true)}
           onRemoveLocal={!remote ? () => setConfirmLocal(true) : undefined}
         />

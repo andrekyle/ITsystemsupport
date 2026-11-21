@@ -221,6 +221,7 @@ function saveCalendarDev(): Plugin {
  *  endpoints (e.g. the AI report writer) return http_404 in local dev. */
 function apiDev(env: Record<string, string>): Plugin {
   const endpoints = [
+    "update-user-login",
     "invite-client",
     "client-portal-status",
     "unit-metadata",

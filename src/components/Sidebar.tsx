@@ -62,7 +62,6 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
       { page: "checklist" as const, icon: "checklist", label: "Appendix C Checklist" },
       { page: "sectiond" as const, icon: "document", label: "Section D Declaration" },
       { page: "forms" as const, icon: "clipboard", label: "Forms" },
-    { page: "compliance" as const, icon: "shield", label: "Compliance" },
     ...(isPrivileged
       ? [{ page: "analytics" as const, icon: "chart", label: "Learning Analytics" }]
       : []),
@@ -90,9 +89,6 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
       { page: "calendar" as const, icon: "calendar", label: "Training Calendar" },
       { page: "attendance" as const, icon: "clipboard", label: "Attendance Register" },
       { page: "voting" as const, icon: "chart", label: "Voting Station" },
-      { page: "assessments" as const, icon: "clipboard", label: "Assessments" },
-      { page: "deliverables" as const, icon: "checklist", label: "Deliverables" },
-      { page: "resources" as const, icon: "globe", label: "Resources" },
   ];
   const nav = learningNav;
 

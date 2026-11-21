@@ -674,6 +674,7 @@ export async function updateCloudProfile(
 ): Promise<string | null> {
   const profiles = await readOwnerProfiles(owner);
   if (!profiles) return RLS_HINT;
+  if (!profiles.some(p => p.id === profileId)) return "The saved profile was not found. Refresh the user list and try again.";
   const next = profiles.map((p) => (p.id === profileId ? { ...p, ...patch } : p));
   return writeOwnerProfiles(owner, next);
 }
