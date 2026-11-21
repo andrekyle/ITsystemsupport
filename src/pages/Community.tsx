@@ -14,7 +14,7 @@ import {
 } from "../store";
 import { logAudit } from "../lib/audit";
 import { cloudLeaderboard, leaderboard, type LeaderboardRow } from "../lib/gamification";
-import { fetchCloudLearnerData, type CloudLearnerData } from "../lib/directory";
+import { fetchChatPeers, fetchCloudLearnerData, type CloudLearnerData } from "../lib/directory";
 import { mailtoLink, outlookComposeLink, teamsChatLink } from "../lib/integrations";
 import { Avatar } from "../components/Avatar";
 import { cloudEnabled } from "../lib/supabase";
@@ -635,6 +635,9 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
   const assignments = useAssignments();
   const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
   const [cloudError, setCloudError] = useState(false);
+  const [classmates, setClassmates] = useState<Profile[]>([]);
+  const [classmatesLoading, setClassmatesLoading] = useState(profile.role === "Learner" && cloudEnabled);
+  const [classmatesError, setClassmatesError] = useState("");
   useEffect(() => {
     if (!cloudEnabled) return;
     let alive = true;
@@ -656,6 +659,30 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
       window.clearInterval(refresh);
     };
   }, []);
+  useEffect(() => {
+    if (profile.role !== "Learner" || !cloudEnabled) {
+      setClassmates([]);
+      setClassmatesLoading(false);
+      setClassmatesError("");
+      return;
+    }
+    let alive = true;
+    setClassmates([]);
+    setClassmatesLoading(true);
+    setClassmatesError("");
+    void fetchChatPeers()
+      .then((peers) => {
+        if (alive) setClassmates(peers);
+      })
+      .catch((error) => {
+        console.error("Could not load leaderboard classmates:", error);
+        if (alive) setClassmatesError("Could not load classmates. Ask your administrator to check the class setup.");
+      })
+      .finally(() => {
+        if (alive) setClassmatesLoading(false);
+      });
+    return () => { alive = false; };
+  }, [profile.id, profile.cloudUserId, profile.role]);
 
   // Cloud-first: real accounts from Supabase drive the roster, and each
   // learner's XP comes from the same bestProgress/bestPoeDocs data the
@@ -670,6 +697,9 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
 
   const rows = allRows.filter(row => canSeeProfile(profile, row.profile, assignments));
   const myIndex = rows.findIndex((r) => r.profile.id === profile.id);
+  const unrankedClassmates = classmates.filter((classmate) =>
+    !rows.some((row) => row.profile.id === classmate.id)
+  );
 
   return (
     <>
@@ -704,7 +734,9 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
                 title={canView ? `View ${r.profile.name}'s profile` : undefined}
                 onClick={canView ? () => navigate({ page: "students", studentId: r.profile.id }) : undefined}
               >
-                <span className={`rank r${i + 1}`}>{i + 1}</span>
+                {!(profile.role === "Learner" && unrankedClassmates.length > 0) && (
+                  <span className={`rank r${i + 1}`}>{i + 1}</span>
+                )}
                 <Avatar profile={r.profile} size={30} />
                 <span className="lb-name">
                   {r.profile.name}
@@ -718,10 +750,38 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
             })}
           </ol>
         )}
-        {myIndex >= 0 && (
+        {myIndex >= 0 && !(profile.role === "Learner" && unrankedClassmates.length > 0) && (
           <p className="mini-note">
             You are ranked #{myIndex + 1} of {rows.length} — keep going!
           </p>
+        )}
+        {profile.role === "Learner" && (
+          <section aria-label="Your classmates">
+            <h3 className="section-title">Your classmates</h3>
+            {classmatesLoading && !classmates.length && <p className="mini-note" role="status">Loading classmates…</p>}
+            {classmatesError && <p className="auth-error" role="alert">{classmatesError}</p>}
+            {!classmatesLoading && !classmatesError && !classmates.length && (
+              <p className="mini-note">No classmates found in this cohort yet.</p>
+            )}
+            {unrankedClassmates.length > 0 && (
+              <p className="mini-note">Their XP scores are not available in your view, but you can see your classmates below.</p>
+            )}
+            {unrankedClassmates.length > 0 && (
+              <ul className="leaderboard">
+                {unrankedClassmates.map((classmate) => (
+                  <li
+                    key={classmate.id}
+                  >
+                    <Avatar profile={classmate} size={30} />
+                    <span className="lb-name">
+                      {classmate.name}
+                      <span className="mini-note">Classmate</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         )}
         <p className="mini-note">
           XP comes from real recorded work only: quizzes at 80%+ (50, perfect 75 — halved when the
