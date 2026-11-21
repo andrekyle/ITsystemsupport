@@ -14,7 +14,12 @@ import {
 } from "../store";
 import { logAudit } from "../lib/audit";
 import { cloudLeaderboard, leaderboard, type LeaderboardRow } from "../lib/gamification";
-import { fetchChatPeers, fetchCloudLearnerData, type CloudLearnerData } from "../lib/directory";
+import {
+  fetchCohortLeaderboard,
+  fetchCloudLearnerData,
+  type CohortLeaderboardEntry,
+  type CloudLearnerData,
+} from "../lib/directory";
 import { mailtoLink, outlookComposeLink, teamsChatLink } from "../lib/integrations";
 import { Avatar } from "../components/Avatar";
 import { cloudEnabled } from "../lib/supabase";
@@ -635,9 +640,9 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
   const assignments = useAssignments();
   const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
   const [cloudError, setCloudError] = useState(false);
-  const [classmates, setClassmates] = useState<Profile[]>([]);
-  const [classmatesLoading, setClassmatesLoading] = useState(profile.role === "Learner" && cloudEnabled);
-  const [classmatesError, setClassmatesError] = useState("");
+  const [classScores, setClassScores] = useState<CohortLeaderboardEntry[] | null>(null);
+  const [classScoresLoading, setClassScoresLoading] = useState(profile.role === "Learner" && cloudEnabled);
+  const [classScoresError, setClassScoresError] = useState("");
   useEffect(() => {
     if (!cloudEnabled) return;
     let alive = true;
@@ -658,48 +663,74 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
       alive = false;
       window.clearInterval(refresh);
     };
-  }, []);
+  }, [profile.role]);
   useEffect(() => {
     if (profile.role !== "Learner" || !cloudEnabled) {
-      setClassmates([]);
-      setClassmatesLoading(false);
-      setClassmatesError("");
+      setClassScores(null);
+      setClassScoresLoading(false);
+      setClassScoresError("");
       return;
     }
     let alive = true;
-    setClassmates([]);
-    setClassmatesLoading(true);
-    setClassmatesError("");
-    void fetchChatPeers()
-      .then((peers) => {
-        if (alive) setClassmates(peers);
-      })
-      .catch((error) => {
-        console.error("Could not load leaderboard classmates:", error);
-        if (alive) setClassmatesError("Could not load classmates. Ask your administrator to check the class setup.");
-      })
-      .finally(() => {
-        if (alive) setClassmatesLoading(false);
-      });
-    return () => { alive = false; };
+    setClassScores(null);
+    const load = () => {
+      setClassScoresLoading(true);
+      setClassScoresError("");
+      void fetchCohortLeaderboard()
+        .then((scores) => {
+          if (alive) setClassScores(scores);
+        })
+        .catch((error) => {
+          console.error("Could not load class leaderboard XP:", error);
+          if (alive) setClassScoresError("Class XP could not be loaded. Ask your administrator to check the class leaderboard setup.");
+        })
+        .finally(() => {
+          if (alive) setClassScoresLoading(false);
+        });
+    };
+    load();
+    const refresh = window.setInterval(load, 60_000);
+    return () => {
+      alive = false;
+      window.clearInterval(refresh);
+    };
   }, [profile.id, profile.cloudUserId, profile.role]);
 
-  // Cloud-first: real accounts from Supabase drive the roster, and each
-  // learner's XP comes from the same bestProgress/bestPoeDocs data the
-  // Analytics page uses, so the two views always agree. Falls back to
-  // local-only ranking when the app is offline or cloud sync is
-  // unavailable (dev / signed-out use).
+  // Learner scores come from a cohort-scoped RPC so other learners' saved
+  // evidence is never exposed. Staff use the cloud directory; offline builds
+  // retain the local-only leaderboard.
   const allRows: LeaderboardRow[] = cloud
     ? cloudLeaderboard(cloud, profile)
     : cloudEnabled
     ? [] // still loading — keep the spinner-less empty state until cloud lands
     : leaderboard(loadProfiles());
 
-  const rows = allRows.filter(row => canSeeProfile(profile, row.profile, assignments));
-  const myIndex = rows.findIndex((r) => r.profile.id === profile.id);
-  const unrankedClassmates = classmates.filter((classmate) =>
-    !rows.some((row) => row.profile.id === classmate.id)
-  );
+  type DisplayRow = {
+    profile: Profile;
+    xp: number;
+    level?: number;
+    levelName?: string;
+    earnedBadges?: number;
+  };
+  const visibleRows: DisplayRow[] = profile.role === "Learner" && cloudEnabled
+    ? (classScores ?? []).map((entry) => {
+        const detail = allRows.find((row) =>
+          row.profile.id === entry.profile.id ||
+          (!!entry.profile.cloudUserId && row.profile.cloudUserId === entry.profile.cloudUserId)
+        );
+        const isCurrent = entry.profile.id === profile.id ||
+          (!!profile.cloudUserId && entry.profile.cloudUserId === profile.cloudUserId);
+        return {
+          ...detail,
+          profile: isCurrent ? profile : entry.profile,
+          xp: entry.xp,
+        };
+      })
+    : allRows.filter(row => canSeeProfile(profile, row.profile, assignments));
+  const rows = visibleRows;
+  const isCurrentRow = (row: DisplayRow) =>
+    row.profile.id === profile.id || (!!profile.cloudUserId && row.profile.cloudUserId === profile.cloudUserId);
+  const myIndex = rows.findIndex(isCurrentRow);
 
   return (
     <>
@@ -715,9 +746,14 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
             Could not load complete learner evidence. {cloud ? "Showing the last successfully loaded scores." : "Scores are unavailable."} Retrying automatically.
           </p>
         )}
+        {classScoresError && <p className="auth-error" role="alert">{classScoresError}</p>}
         {rows.length === 0 ? (
           <p className="mini-note">
-            {cloudError
+            {classScoresLoading
+              ? "Loading classmates' XP…"
+              : classScoresError
+              ? "Class rankings are unavailable right now."
+              : cloudError
               ? "Waiting for complete class data."
               : cloudEnabled && !cloud
               ? "Loading class data…"
@@ -727,22 +763,24 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
           <ol className="leaderboard">
             {rows.map((r, i) => {
               const canView = isStaff(profile.role) || r.profile.role === "Learner";
+              const isMe = isCurrentRow(r);
+              const subtitle = isMe
+                ? r.level !== undefined && r.levelName && r.earnedBadges !== undefined
+                  ? `Level ${r.level} · ${r.levelName} · ${r.earnedBadges} badges`
+                  : "You"
+                : "Classmate";
               return (
               <li
                 key={r.profile.id}
-                className={`${r.profile.id === profile.id ? "me" : ""}${canView ? " lb-clickable" : ""}`}
+                className={`${isMe ? "me" : ""}${canView ? " lb-clickable" : ""}`}
                 title={canView ? `View ${r.profile.name}'s profile` : undefined}
-                onClick={canView ? () => navigate({ page: "students", studentId: r.profile.id }) : undefined}
+                onClick={canView && !isMe ? () => navigate({ page: "students", studentId: r.profile.id }) : undefined}
               >
-                {!(profile.role === "Learner" && unrankedClassmates.length > 0) && (
-                  <span className={`rank r${i + 1}`}>{i + 1}</span>
-                )}
+                <span className={`rank r${i + 1}`}>{i + 1}</span>
                 <Avatar profile={r.profile} size={30} />
                 <span className="lb-name">
                   {r.profile.name}
-                  <span className="mini-note">
-                    Level {r.level} · {r.levelName} · {r.earnedBadges} badges
-                  </span>
+                  <span className="mini-note">{subtitle}</span>
                 </span>
                 <span className="lb-xp">{r.xp} XP</span>
               </li>
@@ -750,38 +788,10 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
             })}
           </ol>
         )}
-        {myIndex >= 0 && !(profile.role === "Learner" && unrankedClassmates.length > 0) && (
+        {myIndex >= 0 && !classScoresError && (
           <p className="mini-note">
             You are ranked #{myIndex + 1} of {rows.length} — keep going!
           </p>
-        )}
-        {profile.role === "Learner" && (
-          <section aria-label="Your classmates">
-            <h3 className="section-title">Your classmates</h3>
-            {classmatesLoading && !classmates.length && <p className="mini-note" role="status">Loading classmates…</p>}
-            {classmatesError && <p className="auth-error" role="alert">{classmatesError}</p>}
-            {!classmatesLoading && !classmatesError && !classmates.length && (
-              <p className="mini-note">No classmates found in this cohort yet.</p>
-            )}
-            {unrankedClassmates.length > 0 && (
-              <p className="mini-note">Their XP scores are not available in your view, but you can see your classmates below.</p>
-            )}
-            {unrankedClassmates.length > 0 && (
-              <ul className="leaderboard">
-                {unrankedClassmates.map((classmate) => (
-                  <li
-                    key={classmate.id}
-                  >
-                    <Avatar profile={classmate} size={30} />
-                    <span className="lb-name">
-                      {classmate.name}
-                      <span className="mini-note">Classmate</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
         )}
         <p className="mini-note">
           XP comes from real recorded work only: quizzes at 80%+ (50, perfect 75 — halved when the

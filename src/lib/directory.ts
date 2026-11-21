@@ -152,6 +152,39 @@ export async function fetchChatPeers(): Promise<Profile[]> {
   });
 }
 
+export interface CohortLeaderboardEntry {
+  profile: Profile;
+  xp: number;
+}
+
+/** Same-cohort leaderboard identities and XP only; raw learner evidence stays private. */
+export async function fetchCohortLeaderboard(): Promise<CohortLeaderboardEntry[]> {
+  if (!supabase) throw new Error("The class leaderboard is unavailable offline.");
+  const { data, error } = await supabase.rpc("cohort_leaderboard");
+  if (error) throw new Error(`Could not load class XP: ${error.message}`);
+  if (!Array.isArray(data)) throw new Error("The class leaderboard returned an invalid response.");
+  return data.flatMap((row): CohortLeaderboardEntry[] => {
+    if (!row || typeof row.profile_id !== "string" || typeof row.auth_user_id !== "string" ||
+      typeof row.display_name !== "string" || typeof row.xp !== "number" ||
+      !Number.isFinite(row.xp) || row.xp < 0) return [];
+    const avatar = typeof row.avatar === "string" && /^data:image\/(?:jpeg|png|webp|gif);base64,/i.test(row.avatar)
+      ? row.avatar
+      : undefined;
+    return [{
+      profile: {
+        id: row.profile_id,
+        cloudUserId: row.auth_user_id,
+        name: row.display_name,
+        role: "Learner",
+        createdAt: "",
+        cohortId: typeof row.cohort_id === "string" ? row.cohort_id : "default",
+        ...(avatar ? { avatar } : {}),
+      },
+      xp: row.xp,
+    }];
+  });
+}
+
 /** The authenticated account's own profiles, independent of directory deduplication. */
 export async function fetchAccountProfiles(authUserId: string): Promise<Profile[] | null> {
   if (!supabase) return null;
