@@ -13,7 +13,7 @@ import {
   type ChatMessage,
   type ChatThreadInfo,
 } from "../store";
-import { fetchCloudDirectory, fetchSuperUserAuthId, getCachedDirectory, getCachedSuperUserAuthId } from "../lib/directory";
+import { fetchChatPeers, fetchCloudDirectory, fetchSuperUserAuthId, getCachedDirectory, getCachedSuperUserAuthId } from "../lib/directory";
 import type { CloudDirectory } from "../lib/directory";
 import { Avatar, initials } from "../components/Avatar";
 import { AlertModal, ConfirmModal, Modal } from "../components/Modal";
@@ -58,6 +58,9 @@ export function ChatPage({
   // "unknown" profiles while the fresh copy loads.
   const [cloud, setCloud] = useState<CloudDirectory | null>(getCachedDirectory());
   const [superUid, setSuperUid] = useState<string | undefined>(getCachedSuperUserAuthId());
+  const [classmates, setClassmates] = useState<Profile[]>([]);
+  const [classmatesLoading, setClassmatesLoading] = useState(false);
+  const [classmatesError, setClassmatesError] = useState("");
   // Bump every ~30s so the "online now" dots (derived from lastLogin) refresh.
   const [presenceTick, setPresenceTick] = useState(0);
   useEffect(() => {
@@ -82,6 +85,31 @@ export function ChatPage({
     };
   }, []);
 
+  useEffect(() => {
+    if (profile.role !== "Learner") {
+      setClassmates([]);
+      setClassmatesLoading(false);
+      setClassmatesError("");
+      return;
+    }
+    let alive = true;
+    setClassmates([]);
+    setClassmatesLoading(true);
+    setClassmatesError("");
+    void fetchChatPeers()
+      .then((peers) => {
+        if (alive) setClassmates(peers);
+      })
+      .catch((error) => {
+        console.error("Could not load same-cohort chat peers:", error);
+        if (alive) setClassmatesError("Could not load classmates. Ask your administrator to check the chat setup.");
+      })
+      .finally(() => {
+        if (alive) setClassmatesLoading(false);
+      });
+    return () => { alive = false; };
+  }, [profile.id, profile.cloudUserId, profile.role]);
+
   // Someone is "online now" if their last-online stamp landed in the last 5
   // minutes (App.tsx re-touches it every 4 minutes while the app is open).
   const isOnline = (p: Profile): boolean => {
@@ -93,17 +121,19 @@ export function ChatPage({
   // depending on it — the value doesn't matter, only the re-render trigger
   void presenceTick;
 
-  /** Every profile that has signed into the cloud (excluding self). */
+  /** Chat contacts available to this viewer (excluding self). */
   const people = useMemo<Profile[]>(() => {
-    if (!cloud) return [];
-    const all = cloud.profiles
+    const source = profile.role === "Learner"
+      ? [...classmates, ...(cloud?.profiles ?? []).filter((p) => isStaff(p.role))]
+      : cloud?.profiles ?? [];
+    const all = source
       .filter((p) => p.id !== profile.id && (!isAssignedStaff(profile) || canSeeProfile(profile, p, assignments)))
       .filter((p) => p.role !== "Learner" || (canSeeCourse(p, courseId, assignments) && (p.cohortId ?? "default") === (profile.cohortId ?? "default")))
       // learners only see other learners and staff — never other learners' chats
       .filter((p) => (staff ? true : p.role === "Learner" || isStaff(p.role)))
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
     return all;
-  }, [cloud, profile.id, staff, courseId, profile.cohortId, JSON.stringify(assignments)]);
+  }, [classmates, cloud, profile.id, profile.role, staff, courseId, profile.cohortId, JSON.stringify(assignments)]);
 
   /** Index by profile id AND by that profile's Supabase auth uid so we can
    *  resolve senders no matter which identifier a message carries. */
@@ -156,9 +186,10 @@ export function ChatPage({
   const safeOpenWith = openWith && (!isAssignedStaff(profile) || peopleByAny.has(openWith)) ? openWith : null;
   /** open a person's profile — learners may only view learner profiles */
   const openProfile = (id: string) => {
+    if (!staff) return;
     const p = peopleByAny.get(id);
     if (!p) return;
-    if (staff || p.role === "Learner") navigate({ page: "students", studentId: p.id });
+    navigate({ page: "students", studentId: p.id });
   };
   /** thread key of a third-party conversation the super user is monitoring */
   const [monitorKey, setMonitorKey] = useState<string | null>(null);
@@ -260,6 +291,9 @@ export function ChatPage({
               setMonitorKey(key);
             }}
             onOpenProfile={openProfile}
+            canOpenProfile={staff}
+            peopleLoading={profile.role === "Learner" && classmatesLoading}
+            peopleError={profile.role === "Learner" ? classmatesError : ""}
           />
         </aside>
         <section className="chat-main card">
@@ -277,6 +311,7 @@ export function ChatPage({
               peerAuthUserId={peerAuthUserId}
               isOnline={isOnline}
               onOpenProfile={openProfile}
+              canOpenProfile={staff}
               onBack={closeThread}
             />
           ) : (
@@ -367,6 +402,9 @@ function ChatSidebar({
   onSelect,
   onMonitor,
   onOpenProfile,
+  canOpenProfile,
+  peopleLoading,
+  peopleError,
   onBroadcast,
   broadcastCount = 0,
 }: {
@@ -380,6 +418,9 @@ function ChatSidebar({
   onSelect: (otherId: string) => void;
   onMonitor: (threadKey: string) => void;
   onOpenProfile: (profileId: string) => void;
+  canOpenProfile: boolean;
+  peopleLoading: boolean;
+  peopleError: string;
   onBroadcast?: () => void;
   broadcastCount?: number;
 }) {
@@ -465,7 +506,11 @@ function ChatSidebar({
           )
         ) : peopleRows.length === 0 ? (
           <p className="mini-note" style={{ padding: 12 }}>
-            No matching people.
+            {q
+              ? "No matching people."
+              : peopleLoading
+                ? "Loading classmates…"
+                : peopleError || (viewer.role === "Learner" ? "No classmates found in this cohort." : "No matching people.")}
           </p>
         ) : (
           peopleRows.map((p) => (
@@ -475,12 +520,12 @@ function ChatSidebar({
               onClick={() => onSelect(p.id)}
             >
               <span
-                className="chat-avatar chat-avatar-link"
-                title={`View ${p.name}'s profile`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenProfile(p.id);
-                }}
+                className={`chat-avatar${canOpenProfile ? " chat-avatar-link" : ""}`}
+                title={canOpenProfile ? `View ${p.name}'s profile` : undefined}
+                onClick={canOpenProfile ? (e) => {
+                    e.stopPropagation();
+                    onOpenProfile(p.id);
+                  } : undefined}
               >
                 <Avatar profile={p} size={48} />
                 {isOnline(p) && <span className="presence-dot" title="Online now" />}
@@ -640,6 +685,7 @@ function ChatThread({
   peerAuthUserId,
   isOnline,
   onOpenProfile,
+  canOpenProfile,
   onBack,
 }: {
   me: Profile;
@@ -652,6 +698,7 @@ function ChatThread({
   peerAuthUserId?: string;
   isOnline: (p: Profile) => boolean;
   onOpenProfile: (profileId: string) => void;
+  canOpenProfile: boolean;
   /** mobile: return to the conversation list */
   onBack: () => void;
 }) {
@@ -756,8 +803,9 @@ function ChatThread({
         <button
           type="button"
           className="chat-head-person"
-          title={`View ${other?.name ?? nameFor(otherId)}'s profile`}
-          onClick={() => onOpenProfile(otherId)}
+          title={canOpenProfile ? `View ${other?.name ?? nameFor(otherId)}'s profile` : undefined}
+          aria-disabled={!canOpenProfile}
+          onClick={canOpenProfile ? () => onOpenProfile(otherId) : undefined}
         >
           {other && (
             <span className="chat-avatar">
@@ -814,7 +862,7 @@ function ChatThread({
                   sender={sender}
                   onEdit={edit}
                   onReact={react}
-                  onOpenProfile={onOpenProfile}
+                  onOpenProfile={canOpenProfile ? onOpenProfile : undefined}
                   selected={selectedMsgId === m.id}
                   onToggleSelect={() => setSelectedMsgId((p) => (p === m.id ? null : m.id))}
                 />

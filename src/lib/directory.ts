@@ -129,6 +129,25 @@ export function getCachedSuperUserAuthId(): string | undefined {
   return cachedSuperUid;
 }
 
+/** Minimal same-cohort learner identities for the New Chat picker. */
+export async function fetchChatPeers(): Promise<Profile[]> {
+  if (!supabase) throw new Error("Cloud chat is unavailable.");
+  const { data, error } = await supabase.rpc("chat_peers");
+  if (error) throw new Error(`Could not load classmates: ${error.message}`);
+  if (!Array.isArray(data)) throw new Error("The classmate directory returned an invalid response.");
+  return data.flatMap((row): Profile[] => {
+    if (!row || typeof row.profile_id !== "string" || typeof row.display_name !== "string") return [];
+    return [{
+      id: row.profile_id,
+      name: row.display_name,
+      role: "Learner",
+      createdAt: "",
+      cohortId: typeof row.cohort_id === "string" ? row.cohort_id : "default",
+      ...(typeof row.auth_user_id === "string" ? { cloudUserId: row.auth_user_id } : {}),
+    }];
+  });
+}
+
 /** The authenticated account's own profiles, independent of directory deduplication. */
 export async function fetchAccountProfiles(authUserId: string): Promise<Profile[] | null> {
   if (!supabase) return null;
