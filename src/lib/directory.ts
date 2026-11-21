@@ -137,6 +137,9 @@ export async function fetchChatPeers(): Promise<Profile[]> {
   if (!Array.isArray(data)) throw new Error("The classmate directory returned an invalid response.");
   return data.flatMap((row): Profile[] => {
     if (!row || typeof row.profile_id !== "string" || typeof row.display_name !== "string") return [];
+    const avatar = typeof row.avatar === "string" && /^data:image\/(?:jpeg|png|webp|gif);base64,/i.test(row.avatar)
+      ? row.avatar
+      : undefined;
     return [{
       id: row.profile_id,
       name: row.display_name,
@@ -144,6 +147,7 @@ export async function fetchChatPeers(): Promise<Profile[]> {
       createdAt: "",
       cohortId: typeof row.cohort_id === "string" ? row.cohort_id : "default",
       ...(typeof row.auth_user_id === "string" ? { cloudUserId: row.auth_user_id } : {}),
+      ...(avatar ? { avatar } : {}),
     }];
   });
 }

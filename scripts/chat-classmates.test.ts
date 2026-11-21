@@ -11,6 +11,7 @@ test("chat classmates are limited to same-cohort identities and sends", async ()
   const unlinkedOwnerId = "44444444-4444-4444-8444-444444444444";
   const staffId = "55555555-5555-4555-8555-555555555555";
   const unknownId = "66666666-6666-4666-8666-666666666666";
+  const peerAvatar = "data:image/jpeg;base64,ZmFrZQ==";
   try {
     await database.exec(`
       create role authenticated;
@@ -48,7 +49,7 @@ test("chat classmates are limited to same-cohort identities and sends", async ()
         }]'),
         ('investec', '${classmateId}', 'itss.profiles', '[{
           "id":"peer-profile","name":"Classmate","role":"Learner",
-          "cloudUserId":"${classmateId}","cohortId":"cohort-a"
+          "cloudUserId":"${classmateId}","cohortId":"cohort-a","avatar":"${peerAvatar}"
         }]'),
         ('investec', '${otherCohortId}', 'itss.profiles', '[{
           "id":"peer-profile","name":"Classmate copy","role":"Learner",
@@ -69,16 +70,19 @@ test("chat classmates are limited to same-cohort identities and sends", async ()
     `);
     const migration = await readFile(new URL("../supabase/migrations/20261121_chat_classmates.sql", import.meta.url), "utf8");
     await database.exec(migration);
+    const avatarMigration = await readFile(new URL("../supabase/migrations/20261121_chat_peer_avatars.sql", import.meta.url), "utf8");
+    await database.exec(avatarMigration);
 
     await database.query("select set_config('request.jwt.claim.sub', $1, false)", [learnerId]);
     await database.query("select set_config('request.jwt.claims', $1, false)", [JSON.stringify({ email: "bonolo@example.test" })]);
     await database.exec("set role authenticated");
 
-    const peers = await database.query<{ profile_id: string; display_name: string; auth_user_id: string | null }>(
-      "select profile_id, display_name, auth_user_id from public.chat_peers()");
+    const peers = await database.query<{ profile_id: string; display_name: string; auth_user_id: string | null; avatar: string | null }>(
+      "select profile_id, display_name, auth_user_id, avatar from public.chat_peers()");
     assert.deepEqual(peers.rows.map((peer) => peer.profile_id), ["peer-profile"]);
     assert.equal(peers.rows.find((peer) => peer.profile_id === "peer-profile")?.auth_user_id, classmateId);
-    assert.equal(Object.keys(peers.rows[0]).sort().join(","), "auth_user_id,display_name,profile_id");
+    assert.equal(peers.rows.find((peer) => peer.profile_id === "peer-profile")?.avatar, peerAvatar);
+    assert.equal(Object.keys(peers.rows[0]).sort().join(","), "auth_user_id,avatar,display_name,profile_id");
 
     await database.query(
       `insert into public.chat_messages
