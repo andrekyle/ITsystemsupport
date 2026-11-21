@@ -179,6 +179,7 @@ export function Header({
   const loadedQualification = getCourses().find((course) => course.id === activeCourseId())?.meta.title ?? "Qualification";
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [avatarError, setAvatarError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -252,11 +253,13 @@ export function Header({
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
+    setAvatarError("");
     try {
       const avatar = await fileToAvatar(file);
       onUpdateProfile({ avatar });
-    } catch {
-      // ignore unreadable images
+    } catch (error) {
+      console.error("Could not save profile picture:", error);
+      setAvatarError("Could not save this picture. Try another image or a smaller file.");
     }
   }
 
@@ -375,6 +378,7 @@ export function Header({
                 <Icon name="person" size={17} />
                 {profile.avatar ? "Change profile picture" : "Add profile picture"}
               </button>
+              {avatarError && <p className="mini-note" role="alert" style={{ padding: "0 14px" }}>{avatarError}</p>}
               {profile.avatar && (
                 <button
                   className="pm-item"

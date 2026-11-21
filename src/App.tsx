@@ -633,7 +633,28 @@ function LocalApp({
         }
       }}
       onUpdateProfile={(patch) => {
-        const updated = updateProfile(profile.id, patch);
+        let updated = updateProfile(profile.id, patch);
+        if (
+          !updated &&
+          cloudIdentity &&
+          profile.role === "Super User" &&
+          profile.cloudUserId === cloudIdentity.userId &&
+          profile.id === `superuser-${TENANT_ID}-${cloudIdentity.userId}`
+        ) {
+          const sessionUpdated: Profile = {
+            ...profile,
+            ...patch,
+            id: profile.id,
+            cloudUserId: profile.cloudUserId,
+            role: "Super User",
+          };
+          updated = sessionUpdated;
+          const profiles = loadProfiles();
+          const next = profiles.some((item) => item.id === profile.id)
+            ? profiles.map((item) => item.id === profile.id ? sessionUpdated : item)
+            : [...profiles, sessionUpdated];
+          localStorage.setItem("itss.profiles", JSON.stringify(next));
+        }
         if (updated) setProfile(updated);
       }}
     />
