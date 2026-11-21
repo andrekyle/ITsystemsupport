@@ -17,6 +17,16 @@ export function seededShuffle<T>(arr: T[], seed: number): T[] {
   return a;
 }
 
+/** Shuffle choice options while avoiding a predictable correct answer in A. */
+export function seededQuizOptionOrder(optionCount: number, answer: number, seed: number): number[] {
+  const order = seededShuffle(Array.from({ length: optionCount }, (_, i) => i), seed);
+  if (optionCount > 1 && Number.isInteger(answer) && order[0] === answer) {
+    const swap = 1 + (Math.abs(seed) % (optionCount - 1));
+    [order[0], order[swap]] = [order[swap], order[0]];
+  }
+  return order;
+}
+
 type ChoiceAns = { kind: "choice"; picks: number[]; disp?: number[] };
 type OrderAns = { kind: "order"; order: number[] }; // current visible order as original indices
 type MatchAns = { kind: "match"; picks: Record<number, number> }; // leftIdx -> rightOriginalIdx
@@ -102,7 +112,7 @@ export function Quiz({
       }
       if (q.options?.length) {
         // display order for choice options — answers keep their ORIGINAL indices
-        return { optOrder: seededShuffle(q.options.map((_, i) => i), seed + mountSeed) };
+        return { optOrder: seededQuizOptionOrder(q.options.length, q.answer, seed + mountSeed) };
       }
       return {};
     });

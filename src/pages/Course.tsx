@@ -23,7 +23,7 @@ import { HWSW_SLIDE_FIGURES } from "../data/hwswSlideFigures";
 const FIGURE_DEFAULTS = { ...BASE_FIGURE_DEFAULTS, ...HWSW_SLIDE_FIGURES };
 import { flushProgress, loadProgress, moduleCompletion, unitCompletion, unitStatus, readCourseWideSlides, useDeckOverrides, useLessonEdits, useLessonFigures, useNotes, usePlanSlides, useSharedSettings, useWorkbookMemo } from "../store";
 import { Bar, Ring } from "../components/Ring";
-import { Quiz, seededShuffle } from "../components/Quiz";
+import { Quiz, seededQuizOptionOrder, seededShuffle } from "../components/Quiz";
 import { Logbook } from "../components/Logbook";
 import { ConfirmModal, Modal } from "../components/Modal";
 import { SlideEditableText } from "../components/SlideEditableText";
@@ -4512,7 +4512,7 @@ function UnitPageContent({
                           {q.q}
                         </div>
                         <div className="lesson-quiz-options">
-                          {seededShuffle(q.options.map((_, i) => i), si * 977 + qi * 131 + q.q.length * 7 + 3).map((oi, displayPos) => {
+                          {seededQuizOptionOrder(q.options.length, correctAnswer, si * 977 + qi * 131 + q.q.length * 7 + 3).map((oi, displayPos) => {
                             const opt = q.options[oi];
                             const isPicked = picked === oi;
                             const showCorrect = qChecked && oi === correctAnswer;
@@ -7598,7 +7598,7 @@ function UnitPageContent({
                           <Gloss text={q.q} />
                         </div>
                         <div className="presenter-quiz-options">
-                          {seededShuffle(q.options.map((_, i) => i), qi * 419 + q.q.length * 11 + 5).map((oi, displayPos) => {
+                          {seededQuizOptionOrder(q.options.length, q.answer, qi * 419 + q.q.length * 11 + 5).map((oi, displayPos) => {
                             const opt = q.options[oi];
                             return (
                               <button
