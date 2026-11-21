@@ -121,10 +121,26 @@ export function ChatPage({
   }, [people, cloud, profile]);
 
   const peopleById = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
-  const nameFor = (id: string): string =>
-    id === profile.id ? profile.name : peopleByAny.get(id)?.name ?? "Unknown";
-
   const threads = useChatThreads(profile.cohortId);
+  const threadIdentityByProfile = useMemo(() => {
+    const identities = new Map<string, { name: string; at: number }>();
+    for (const thread of threads) {
+      for (const message of thread.messages) {
+        const previous = identities.get(message.byId);
+        const at = Date.parse(message.at);
+        if (!previous || at > previous.at) {
+          identities.set(message.byId, {
+            name: message.by,
+            at,
+          });
+        }
+      }
+    }
+    return identities;
+  }, [threads]);
+  const nameFor = (id: string): string =>
+    id === profile.id ? profile.name
+      : peopleByAny.get(id)?.name ?? threadIdentityByProfile.get(id)?.name ?? "Unknown";
 
   // Filter to conversations relevant to the viewer:
   // - super user sees every conversation (moderation view)
@@ -204,6 +220,14 @@ export function ChatPage({
 
   /** WhatsApp-style mobile navigation: list OR conversation, never both. */
   const hasOpen = !!(monitorThread || safeOpenWith);
+  const activeThread = safeOpenWith
+    ? visibleThreads.find((thread) =>
+        (thread.aId === profile.id && thread.bId === safeOpenWith) ||
+        (thread.bId === profile.id && thread.aId === safeOpenWith))
+    : undefined;
+  const peerAuthUserId = activeThread
+    ? [...activeThread.messages].reverse().find((message) => message.byId === safeOpenWith)?.bySenderAuthId
+    : undefined;
   const closeThread = () => {
     setMonitorKey(null);
     setOpenWith(null);
@@ -250,6 +274,7 @@ export function ChatPage({
               nameFor={nameFor}
               cloud={cloud}
               superUid={superUid}
+              peerAuthUserId={peerAuthUserId}
               isOnline={isOnline}
               onOpenProfile={openProfile}
               onBack={closeThread}
@@ -612,6 +637,7 @@ function ChatThread({
   nameFor,
   cloud,
   superUid,
+  peerAuthUserId,
   isOnline,
   onOpenProfile,
   onBack,
@@ -623,6 +649,7 @@ function ChatThread({
   nameFor: (id: string) => string;
   cloud: CloudDirectory | null;
   superUid?: string;
+  peerAuthUserId?: string;
   isOnline: (p: Profile) => boolean;
   onOpenProfile: (profileId: string) => void;
   /** mobile: return to the conversation list */
@@ -642,10 +669,11 @@ function ChatThread({
       const link = cloud.owners[otherId];
       if (link) return link;
     }
+    if (peerAuthUserId) return peerAuthUserId;
     // Only the super user is dependably reachable via the admins table.
     if (other?.role === "Super User" && superUid) return superUid;
     return undefined;
-  }, [cloud, other, otherId, superUid]);
+  }, [cloud, other, otherId, peerAuthUserId, superUid]);
 
   const { messages, send, markRead, edit, react } = useChat(me, {
     profileId: otherId,
