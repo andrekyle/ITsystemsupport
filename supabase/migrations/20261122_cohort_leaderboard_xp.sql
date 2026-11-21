@@ -1,5 +1,16 @@
 begin;
 
+-- Include the key parser so leaderboard setup does not depend on applying
+-- the separate qualification-ownership policy migration first.
+create or replace function public.qualification_state_profile_id(state_key text)
+returns text language sql immutable strict
+set search_path = public
+as $$
+  select split_part(regexp_replace(
+    regexp_replace(state_key, '^itss\.[^.]+\.', ''),
+    '^(custom-[^.]+|genman)\.', ''), '.', 1);
+$$;
+
 create or replace function public.leaderboard_number(value text)
 returns numeric
 language sql
