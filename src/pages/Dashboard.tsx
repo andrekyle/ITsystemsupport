@@ -86,7 +86,6 @@ export function Dashboard({
         {COURSE_META.credits} Credits
       </p>
       {evidenceError && <p className="auth-error" role="alert">Could not verify all saved XP evidence. The displayed XP may be incomplete; reload to retry.</p>}
-      {profile.role === "Learner" && <SavedAcademicWork profile={profile} progress={effectiveProgress} />}
 
       <div className="card-grid dashboard-stats">
         <div className="card stat-card">
