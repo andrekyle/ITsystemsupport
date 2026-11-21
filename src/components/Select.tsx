@@ -1,8 +1,9 @@
 import { useEffect, useId, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { Icon } from "../icons";
 import "./Select.css";
 
-export type SelectOption = { value: string; label: string; hint?: string };
+export type SelectOption = { value: string; label: ReactNode; hint?: string; ariaLabel?: string };
 
 /**
  * Custom select with a fully styled option panel (native <select> popups
@@ -28,7 +29,7 @@ export function Select({
   ariaLabel?: string;
   disabled?: boolean;
   placeholder?: string;
-  buttonLabel?: string;
+  buttonLabel?: ReactNode;
   id?: string;
   required?: boolean;
 }) {
@@ -159,6 +160,7 @@ export function Select({
               data-idx={i}
               role="option"
               aria-selected={o.value === value}
+              aria-label={o.ariaLabel}
               className={`nice-select-opt${o.value === value ? " selected" : ""}${
                 i === active ? " active" : ""
               }`}

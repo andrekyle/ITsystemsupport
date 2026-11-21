@@ -1,5 +1,7 @@
 import { useState } from "react";
 import type { Profile } from "../types";
+import { Avatar } from "./Avatar";
+import { Select } from "./Select";
 import { getCourses } from "../data/courses";
 import { assignmentFor, isAssignedStaff, saveStaffAssignment, useAssignments } from "../lib/assignments";
 import { flushKey } from "../lib/sync";
@@ -9,22 +11,48 @@ import { cloudEnabled, supabase } from "../lib/supabase";
 export function StaffAssignmentsPanel({ viewer, people }: { viewer: Profile; people: Profile[] }) {
   const assignments = useAssignments();
   const [selected, setSelected] = useState("");
-  const staff = people.filter(isAssignedStaff);
-  if (viewer.role === "Super User" && !staff.some(p =>
-    p.id === viewer.id || (!!viewer.cloudUserId && p.cloudUserId === viewer.cloudUserId)
-  )) staff.unshift(viewer);
+  const staffByAccount = new Map<string, Profile>();
+  for (const profile of people.filter(isAssignedStaff)) {
+    if (viewer.role === "Super User" &&
+      (profile.id === viewer.id || (!!viewer.cloudUserId && profile.cloudUserId === viewer.cloudUserId))) continue;
+    const accountId = profile.cloudUserId ?? profile.id;
+    if (!staffByAccount.has(accountId)) staffByAccount.set(accountId, profile);
+  }
+  const staff = [...staffByAccount.values()];
+  if (viewer.role === "Super User") staff.unshift(viewer);
   const person = staff.find(p => p.id === selected) ?? staff[0];
+  const staffOptions = staff.map(profile => ({
+    value: profile.id,
+    ariaLabel: `${profile.name} (${profile.role})`,
+    label: <StaffOption profile={profile} />,
+  }));
+  const hasOtherStaff = staff.some(profile => profile.id !== viewer.id);
   return <section className="card" style={{ padding: 20, marginTop: 20 }}>
     <h2>Staff assignments</h2>
     <p>Assign students and courses to each facilitator, assessor, or moderator. Unassigned staff cannot browse students or courses. Admins retain access to everyone and every course; assigning a Super User records their workload but does not limit their access.</p>
     {staff.length ? <><label htmlFor="assignment-staff">Staff member</label>
-      <select id="assignment-staff" value={person?.id ?? ""} onChange={e => setSelected(e.target.value)}>
-        {staff.map(p => <option key={p.id} value={p.id}>{p.name} ({p.role})</option>)}
-      </select>
+      <Select
+        id="assignment-staff"
+        ariaLabel="Staff member"
+        value={person?.id ?? ""}
+        buttonLabel={person ? <StaffOption profile={person} /> : "Choose staff member"}
+        options={staffOptions}
+        onChange={setSelected}
+      />
+      {viewer.role === "Super User" && !hasOtherStaff && <p className="mini-note" style={{ marginTop: 8 }}>
+        No other facilitator accounts are registered yet. Add them above with the Facilitator, Assessor, or Moderator role to include them here.
+      </p>}
       {person && <AssignmentForm key={person.id}
         viewer={viewer} staff={person} people={people} current={assignmentFor(person, assignments)} />}
     </> : <p>No facilitators, assessors, or moderators are available yet.</p>}
   </section>;
+}
+
+function StaffOption({ profile }: { profile: Profile }) {
+  return <span style={{ display: "inline-flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+    <Avatar profile={profile} size={28} />
+    <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{profile.name} ({profile.role})</span>
+  </span>;
 }
 
 function AssignmentForm({ viewer, staff, people, current }: {
