@@ -49,6 +49,7 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
   }
 
   const learningNav = [
+    { page: "attendance" as const, icon: "clipboard", label: "Attendance Register" },
     { page: "dashboard" as const, icon: "dashboard", label: "Dashboard" },
     ...(isAdminRole(profile.role) ? [{ page: "adminDashboard" as const, icon: "chart", label: "Admin Overview" }] : []),
     ...(isAdminRole(profile.role) ? [{ page: "evidenceRegister" as const, icon: "checklist", label: "Skills Evidence Register" }] : []),
@@ -87,7 +88,6 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
         ]
       : []),
       { page: "calendar" as const, icon: "calendar", label: "Training Calendar" },
-      { page: "attendance" as const, icon: "clipboard", label: "Attendance Register" },
       { page: "voting" as const, icon: "chart", label: "Voting Station" },
   ];
   const nav = learningNav;
