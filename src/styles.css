@@ -16593,35 +16593,16 @@ table.data th.sortable.sorted { color: var(--ink); }
     padding: 8px 10px;
   }
 
-  /* WhatsApp bubbles: tight stack, rounded with a squared tail corner,
-     green "mine" bubbles, timestamps bottom-right */
+  /* Keep the same conversation styling and sender photos on every device.
+     Only the available width and outer padding change on small screens. */
   .chat-messages {
     padding: 12px 10px;
-    gap: 5px;
+    gap: 10px;
   }
   .chat-bubble {
-    max-width: 82%;
-    border-radius: 18px;
-    padding: 7px 11px 5px;
-    font-size: 16px;
-    line-height: 21px;
-  }
-  .chat-bubble.mine {
-    background: #d9fdd3;
-    color: #333333;
-  }
-  .chat-bubble.mine .chat-bubble-at {
-    color: #4b6152;
-  }
-  [data-theme="dark"] .chat-bubble.mine {
-    background: #005c4b;
-    color: #e9edef;
-  }
-  [data-theme="dark"] .chat-bubble.mine .chat-bubble-at {
-    color: #9fd4c6;
-  }
-  .chat-bubble-avatar {
-    display: none;
+    max-width: min(85%, calc(100% - 44px));
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   /* composer: pill input + round azure send button */
