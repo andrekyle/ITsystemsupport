@@ -13,15 +13,6 @@ function TenantLogo() {
   );
 }
 
-function savedAuthMode(): "signin" | "signup" {
-  try {
-    return sessionStorage.getItem("itss.auth-mode") === "signup" ? "signup" : "signin";
-  } catch {
-    // Storage may be blocked in privacy-focused browsers or embedded webviews.
-    return "signin";
-  }
-}
-
 function savedAuthError(): string | null {
   try {
     const message = sessionStorage.getItem("itss.auth-error");
@@ -35,7 +26,6 @@ function savedAuthError(): string | null {
 /** Email/password gate shown before the app when cloud sync is configured. */
 export function CloudAuth() {
   const { meta: qualification } = activeCourse();
-  const [mode, setMode] = useState<"signin" | "signup">(savedAuthMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -48,7 +38,7 @@ export function CloudAuth() {
   const [mobile, setMobile] = useState(() => window.matchMedia("(max-width: 980px)").matches);
   const popup = discovery && !mobile;
   const [loginOpen, setLoginOpen] = useState(() =>
-    window.location.hash === "#discovery-login" || !!error || mode === "signup"
+    window.location.hash === "#discovery-login" || !!error
   );
 
   useEffect(() => {
@@ -93,26 +83,15 @@ export function CloudAuth() {
     signInLink.current?.focus();
   }
 
-  // Keep the user on the registration screen if the page is refreshed (for
-  // example after an accidental pull-to-refresh on mobile). Credentials stay
-  // in component state and are deliberately not persisted.
-  useEffect(() => {
-    try {
-      sessionStorage.setItem("itss.auth-mode", mode);
-    } catch {
-      // The screen still works when browser storage is unavailable.
-    }
-  }, [mode]);
-
   /** Translate Supabase auth errors into clear, actionable messages. */
-  function friendlyError(message: string, current: "signin" | "signup"): string {
+  function friendlyError(message: string): string {
     const m = message.toLowerCase();
     if (m.includes("invalid login credentials"))
-      return "Incorrect email or password. Check your details and try again — or, if you don't have an account yet, use “Create a new account” below.";
+      return "Incorrect email or password. Check your details and try again. New learners should ask their facilitator to create an account.";
     if (m.includes("email not confirmed"))
       return "This email address hasn't been confirmed yet. Ask your facilitator to confirm the account, then sign in again.";
     if (m.includes("already registered") || m.includes("already been registered"))
-      return "An account with this email already exists — go back to sign in instead.";
+      return "An account with this email already exists. Sign in or ask your facilitator for help.";
     if (m.includes("at least 6 characters") || m.includes("password should be"))
       return "Your password must be at least 6 characters long.";
     if (m.includes("valid email")) return "Please enter a valid email address.";
@@ -120,9 +99,7 @@ export function CloudAuth() {
       return "Too many attempts — please wait a minute and try again.";
     if (m.includes("network") || m.includes("fetch"))
       return "Could not reach the server. Check your internet connection and try again.";
-    return current === "signin"
-      ? `Sign-in failed: ${message}`
-      : `Could not create the account: ${message}`;
+    return `Sign-in failed: ${message}`;
   }
 
   async function submit(e: React.FormEvent) {
@@ -134,23 +111,10 @@ export function CloudAuth() {
     setError(null);
     setNotice(null);
     try {
-      if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { tenant_id: TENANT_ID, company: TENANT.name } },
-        });
-        if (error) setError(friendlyError(error.message, "signup"));
-        else if (!data.session)
-          setNotice("Account created — check your email inbox to confirm your address, then sign in.");
-        // when email confirmation is disabled a session is returned and the
-        // auth listener in App takes over automatically
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) setError(friendlyError(error.message, "signin"));
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) setError(friendlyError(error.message));
     } catch (error) {
-      setError(friendlyError(error instanceof Error ? error.message : String(error), mode));
+      setError(friendlyError(error instanceof Error ? error.message : String(error)));
     } finally {
       submitting.current = false;
       setBusy(false);
@@ -170,7 +134,7 @@ export function CloudAuth() {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin,
       });
-      if (error) setError(friendlyError(error.message, "signin"));
+      if (error) setError(friendlyError(error.message));
       else
         setNotice(
           `Password reset email sent to ${email} — open the link in it, and you'll be asked to choose a new password.`
@@ -209,7 +173,7 @@ export function CloudAuth() {
           <TenantLogo />
         </div>
         {TENANT_ID === "investec" && <img className="investec-auth-zebra" src="/logos/investec-zebra.png" alt="Investec zebra" />}
-        <h1 id="cloud-auth-title">{mode === "signin" ? "Sign in to your account" : "Create your account"}</h1>
+        <h1 id="cloud-auth-title">Sign in to your account</h1>
         <p className="sub">
           {qualification.title} · SAQA ID {qualification.saqaId} · NQF Level {qualification.nqfLevel}.
           {" "}Sign in to continue this qualification.
@@ -234,7 +198,7 @@ export function CloudAuth() {
               id="ca-pw"
               value={password}
               onChange={setPassword}
-              autoComplete={mode === "signin" ? "current-password" : "new-password"}
+              autoComplete="current-password"
               minLength={6}
               required
             />
@@ -250,27 +214,16 @@ export function CloudAuth() {
           )}
           <button className="btn block" type="submit" disabled={busy}>
             <Icon name="signout" size={17} style={{ transform: "rotate(180deg)" }} />
-            {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+            {busy ? "Please wait…" : "Sign in"}
           </button>
         </form>
 
-        <div className="divider">or</div>
-        <button
-          className="btn ghost block"
-          disabled={busy}
-          onClick={() => {
-            setMode(mode === "signin" ? "signup" : "signin");
-            setError(null);
-            setNotice(null);
-          }}
-        >
-          {mode === "signin" ? "Create a new account" : "Back to sign in"}
+        <p className="muted" style={{ textAlign: "center" }}>
+          New learner? Ask your facilitator to create your account and assign your cohort.
+        </p>
+        <button className="btn ghost block" onClick={() => void forgotPassword()} disabled={busy}>
+          Forgot password? Email me a reset link
         </button>
-        {mode === "signin" && (
-          <button className="btn ghost block" onClick={() => void forgotPassword()} disabled={busy}>
-            Forgot password? Email me a reset link
-          </button>
-        )}
       </div>
       </dialog>
     </div>

@@ -18,7 +18,6 @@ import {
 import { logAudit } from "../lib/audit";
 import { COURSE_META } from "../data/course";
 import { Avatar } from "./Avatar";
-import { EMPTY_ENROLMENT, EnrolmentForm } from "./EnrolmentForm";
 import { PasswordInput } from "./PasswordInput";
 import { Select } from "./Select";
 import { cloudEnabled, supabase } from "../lib/supabase";
@@ -26,7 +25,6 @@ import { fetchAccountProfiles, fetchCloudDirectory } from "../lib/directory";
 import { ConfirmModal } from "./Modal";
 import { isSuperUserIdentity, profileMatchesCloudIdentity, resolveCloudProfile, resolveOwnedCloudProfile } from "../lib/cloudProfile";
 import { TENANT } from "../lib/tenant";
-import { cohortIds } from "../lib/cohorts";
 
 type CloudIdentity = { userId: string; email: string | null };
 
@@ -41,10 +39,8 @@ export function SignIn({
   const [creating, setCreating] = useState(!cloudIdentity && profiles.length === 0);
 
   // On a fresh device the cloud sync hydrates `itss.profiles` from Supabase
-  // *after* this component has mounted. Without watching for that, the
-  // super/existing user is stuck in "create a new account" mode and the
-  // submit handler routes them to the enrolment form. Re-read on storage
-  // events (fired by sync.ts on hydration) and poll briefly as a safety net.
+  // after this component has mounted. Re-read on storage events and poll
+  // briefly so existing profiles appear as soon as hydration completes.
   useEffect(() => {
     const sync = () => {
       const next = loadProfiles();
@@ -76,12 +72,6 @@ export function SignIn({
   const [password, setPassword] = useState("");
   const [staffCode, setStaffCode] = useState("");
   const [sharedSettings] = useSharedSettings();
-  const [enrolling, setEnrolling] = useState(false);
-  const [cohortId, setCohortId] = useState("");
-  const [enrol, setEnrol] = useState<EnrolmentInfo>(() => ({
-    ...EMPTY_ENROLMENT,
-    email: cloudIdentity?.email ?? EMPTY_ENROLMENT.email,
-  }));
   const [authFor, setAuthFor] = useState<Profile | null>(null);
   const [authPw, setAuthPw] = useState("");
   const [authError, setAuthError] = useState(false);
@@ -94,7 +84,6 @@ export function SignIn({
   const [checkingCloudProfile, setCheckingCloudProfile] = useState(!!cloudIdentity);
   const [cloudProfileError, setCloudProfileError] = useState("");
   const [lookupAttempt, setLookupAttempt] = useState(0);
-  const availableCohorts = cohortIds(profiles);
 
   useEffect(() => {
     if (!cloudIdentity) return;
@@ -156,7 +145,7 @@ export function SignIn({
   // If cloud hydration brought profiles in after the "create new" screen
   // opened, drop back to the picker so the user can just click their name.
   useEffect(() => {
-    if (profiles.length > 0 && creating && !name.trim() && !enrolling) {
+    if (profiles.length > 0 && creating && !name.trim()) {
       setCreating(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -295,13 +284,7 @@ export function SignIn({
       return;
     }
     if (role === "Learner") {
-      const parts = name.trim().split(/\s+/);
-      setEnrol((prev) => ({
-        ...prev,
-        firstNames: prev.firstNames || parts.slice(0, -1).join(" ") || parts[0],
-        surname: prev.surname || (parts.length > 1 ? parts[parts.length - 1] : ""),
-      }));
-      setEnrolling(true);
+      setDupError("Learner accounts must be created by your facilitator, who will assign your cohort. Ask them to add you under People → Add user.");
       return;
     }
     // Staff roles require the staff access code set by the Super User —
@@ -337,51 +320,9 @@ export function SignIn({
     }
   }
 
-  async function submitEnrolment(e: React.FormEvent) {
-    e.preventDefault();
-    setDupError("");
-    if (!cohortId.trim()) {
-      setDupError("Select a cohort before completing learner enrolment.");
-      return;
-    }
-    if (cloudIdentity && enrol.email.trim().toLowerCase() !== cloudIdentity.email?.trim().toLowerCase()) {
-      setDupError("Use the email address of your signed-in account for this learner profile.");
-      return;
-    }
-    const existing = await findExisting({ name, enrolment: enrol });
-    if (existing) {
-      if (!existing.isLocal) adoptCloudProfile(existing.match);
-      pickProfile(existing.match);
-      return;
-    }
-    try {
-      const p = createProfile(
-        name,
-        role,
-        { ...enrol, signedDate: new Date().toISOString() },
-        password ? await hashPassword(password) : undefined,
-        cohortId
-      );
-      const linked = cloudIdentity
-        ? updateProfile(p.id, { cloudUserId: cloudIdentity.userId }) ?? p
-        : p;
-      setProfiles(loadProfiles());
-      logAudit(p, "account.create", "Learner enrolled (self-service)");
-      logAudit(p, "enrolment.saved", "Biographical enrolment form signed");
-      logAudit(p, "auth.signin", "Signed in");
-      onSignIn(linked);
-    } catch (err) {
-      if (err instanceof DuplicateProfileError) {
-        setDupError(err.message);
-        return;
-      }
-      throw err;
-    }
-  }
-
   return (
     <div className="gate">
-      <div className={`gate-card${enrolling ? " wide" : ""}`}>
+      <div className="gate-card">
         <div className="logo">
           <Icon name="certificate" size={26} />
           ITSS Learn
@@ -391,20 +332,16 @@ export function SignIn({
             ? resetting
               ? "Reset your password"
               : "Enter your password"
-            : enrolling
-              ? "Biographical Enrolment Information"
-              : creating
-                ? "Create your profile"
-                : "Sign in"}
+            : creating
+              ? "Create your profile"
+              : "Sign in"}
         </h1>
         <p className="sub">
           {authFor
             ? resetting
               ? `Set a new password for ${authFor.name} (${authFor.role}). No email confirmation needed.`
               : `Signing in as ${authFor.name} (${authFor.role}).`
-            : enrolling
-              ? "Required for first-time enrolment on the learnership. This information is saved to your profile and is visible to you, your facilitator and super users."
-              : `${COURSE_META.title} · SAQA ID ${COURSE_META.saqaId} · NQF Level ${COURSE_META.nqfLevel}. Your progress is saved to your profile on this device.`}
+            : `${COURSE_META.title} · SAQA ID ${COURSE_META.saqaId} · NQF Level ${COURSE_META.nqfLevel}. Your progress is saved to your profile on this device.`}
         </p>
         {checkingCloudProfile && <p role="status">Opening your account...</p>}
         {cloudProfileError && (
@@ -416,7 +353,7 @@ export function SignIn({
             </button>
           </div>
         )}
-        {dupError && !creating && !enrolling && <p className="auth-error" role="alert">{dupError}</p>}
+        {dupError && !creating && <p className="auth-error" role="alert">{dupError}</p>}
 
         {authFor && !resetting && (
           <form onSubmit={submitAuth}>
@@ -501,7 +438,7 @@ export function SignIn({
           </form>
         )}
 
-        {!creating && !enrolling && !authFor && (
+        {!creating && !authFor && (
           <>
             {orderedProfiles.map((p) => (
               <div key={p.id} className="profile-row-wrap">
@@ -548,7 +485,7 @@ export function SignIn({
           </>
         )}
 
-        {creating && !enrolling && !authFor && (
+        {creating && !authFor && (
           <form onSubmit={submit}>
             <div className="field">
               <label htmlFor="nm">Full name</label>
@@ -567,13 +504,18 @@ export function SignIn({
                 onChange={(v) => setRole(v as Role)}
                 ariaLabel="Role"
                 options={[
-                  { value: "Learner", label: "Learner" },
+                  { value: "Learner", label: "Learner — staff-created" },
                   { value: "Facilitator", label: "Facilitator" },
                   { value: "Assessor", label: "Assessor" },
                   { value: "Moderator", label: "Moderator" },
                 ]}
               />
             </div>
+            {role === "Learner" && (
+              <p className="muted" role="status">
+                Learner accounts must be created by your facilitator so they can assign your cohort before you sign in. Ask them to add you under People → Add user.
+              </p>
+            )}
             {role !== "Learner" && !isDesignatedSuperUser(name) && (
               <div className="field">
                 <label htmlFor="scode">Staff access code</label>
@@ -596,7 +538,7 @@ export function SignIn({
                 placeholder="Protects your profile on this device"
               />
             </div>
-            <button className="btn block" type="submit">
+            <button className="btn block" type="submit" disabled={role === "Learner"}>
               <Icon name="signout" size={17} style={{ transform: "rotate(180deg)" }} />
               Continue
             </button>
@@ -621,38 +563,6 @@ export function SignIn({
           </form>
         )}
 
-        {enrolling && (
-          <form onSubmit={submitEnrolment}>
-            <div className="field">
-              <label htmlFor="signup-cohort">Cohort / intake</label>
-              <Select
-                id="signup-cohort"
-                ariaLabel="Cohort or intake"
-                value={cohortId}
-                onChange={setCohortId}
-                options={availableCohorts.map(id => ({ value: id, label: id }))}
-                placeholder="Select your cohort…"
-                required
-                disabled={availableCohorts.length === 0}
-              />
-              {availableCohorts.length === 0 && (
-                <p className="muted" role="status">
-                  No cohorts are available yet. Ask your facilitator to create your learner account and assign you to a cohort.
-                </p>
-              )}
-            </div>
-            <EnrolmentForm value={enrol} onChange={setEnrol} />
-            <button className="btn block" type="submit" disabled={availableCohorts.length === 0}>
-              <Icon name="checkCircle" size={17} />
-              Complete enrolment
-            </button>
-            {dupError && <p className="auth-error" style={{ marginTop: 8 }}>{dupError}</p>}
-            <div className="divider">or</div>
-            <button type="button" className="btn ghost block" onClick={() => setEnrolling(false)}>
-              Back
-            </button>
-          </form>
-        )}
       </div>
       {removing && (
         <ConfirmModal
