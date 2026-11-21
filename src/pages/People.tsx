@@ -8,6 +8,7 @@ import { WORKBOOK_SPECS } from "../data/workbookSpecs";
 import { canSeeCourse, canSeeProfile, useAssignments } from "../lib/assignments";
 import { StaffAssignmentsPanel } from "../components/StaffAssignments";
 import { isAdminRole } from "../types";
+import { cohortIds } from "../lib/cohorts";
 import { useEffect, useRef, useState } from "react";
 import JSZip from "jszip";
 import { Icon } from "../icons";
@@ -802,7 +803,7 @@ export function StudentsPage({
       {isSuper && (
         <section role="tabpanel" id="people-panel-management" aria-labelledby="people-tab-management" hidden={activePeopleTab !== "management"}>
           <h2 className="section-title">Accounts and submissions</h2>
-          <AddUser viewer={profile} onAdded={refresh} />
+          <AddUser viewer={profile} profiles={all} onAdded={refresh} />
           <StaffAssignmentsPanel viewer={profile} people={all.filter(p => isEnrolledInCourse(p)).map(p => ({ ...p, cloudUserId: p.cloudUserId ?? resolveCloudLink(p, cloud)?.owner }))} />
           <DownloadAllAssignments learners={people.filter(p => p.role === "Learner")}
             remoteIds={remoteIds} owners={cloud?.owners ?? {}} cloudProfiles={cloud?.profiles ?? []} />
@@ -813,19 +814,25 @@ export function StudentsPage({
   );
 }
 
-function AddUser({ viewer, onAdded }: { viewer: Profile; onAdded: () => void }) {
+function AddUser({ viewer, profiles, onAdded }: { viewer: Profile; profiles: Profile[]; onAdded: () => void }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("Learner");
+  const [cohortId, setCohortId] = useState("");
   const [pw, setPw] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const cohorts = cohortIds(profiles);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
+    if (role === "Learner" && !cohortId.trim()) {
+      setError("Assign the learner to a cohort before creating the account.");
+      return;
+    }
     setError("");
     setNotice("");
     setBusy(true);
@@ -897,7 +904,8 @@ function AddUser({ viewer, onAdded }: { viewer: Profile; onAdded: () => void }) 
         name,
         role,
         enrolment,
-        pw ? await hashPassword(pw) : undefined
+        pw ? await hashPassword(pw) : undefined,
+        role === "Learner" ? cohortId : undefined
       );
       if (role === "Learner") enrolCourseLearners([{ ...created, cloudUserId }]);
       // stamp the resolved auth uid on the profile so chat can address them
@@ -913,6 +921,7 @@ function AddUser({ viewer, onAdded }: { viewer: Profile; onAdded: () => void }) 
       setName("");
       setEmail("");
       setRole("Learner");
+      setCohortId("");
       setPw("");
       if (cloudNotice) setNotice(cloudNotice.trim());
       else setOpen(false);
@@ -964,6 +973,22 @@ function AddUser({ viewer, onAdded }: { viewer: Profile; onAdded: () => void }) 
             ]}
           />
         </div>
+        {role === "Learner" && (
+          <div className="field" style={{ flex: 2, marginBottom: 0 }}>
+            <label htmlFor="au-cohort">Cohort / intake</label>
+            <input
+              id="au-cohort"
+              list="au-cohort-options"
+              value={cohortId}
+              onChange={(e) => setCohortId(e.target.value)}
+              placeholder="Choose an existing cohort or enter a new one"
+              required
+            />
+            <datalist id="au-cohort-options">
+              {cohorts.map(cohort => <option key={cohort} value={cohort} />)}
+            </datalist>
+          </div>
+        )}
         <div className="field" style={{ flex: 1, marginBottom: 0 }}>
           <label htmlFor="au-pw">Password (optional)</label>
           <input id="au-pw" type="password" value={pw} onChange={(e) => setPw(e.target.value)} />

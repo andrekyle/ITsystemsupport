@@ -206,16 +206,22 @@ export function createProfile(
   name: string,
   role: Role,
   enrolment?: EnrolmentInfo,
-  passwordHash?: string
+  passwordHash?: string,
+  cohortId?: string
 ): Profile {
   const existing = loadProfiles();
   const dup = findDuplicateProfile(existing, { name, enrolment });
   if (dup) throw new DuplicateProfileError(dup);
+  const assignedCohort = cohortId?.trim();
+  if (role === "Learner" && !assignedCohort) {
+    throw new Error("Every learner profile must be assigned to a cohort.");
+  }
   const profile: Profile = {
     id: `p_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
     name: name.trim(),
     role,
     createdAt: new Date().toISOString(),
+    ...(assignedCohort ? { cohortId: assignedCohort } : {}),
     ...(enrolment ? { enrolment } : {}),
     ...(passwordHash ? { passwordHash } : {}),
   };

@@ -26,6 +26,7 @@ import { fetchAccountProfiles, fetchCloudDirectory } from "../lib/directory";
 import { ConfirmModal } from "./Modal";
 import { isSuperUserIdentity, profileMatchesCloudIdentity, resolveCloudProfile, resolveOwnedCloudProfile } from "../lib/cloudProfile";
 import { TENANT } from "../lib/tenant";
+import { cohortIds } from "../lib/cohorts";
 
 type CloudIdentity = { userId: string; email: string | null };
 
@@ -76,6 +77,7 @@ export function SignIn({
   const [staffCode, setStaffCode] = useState("");
   const [sharedSettings] = useSharedSettings();
   const [enrolling, setEnrolling] = useState(false);
+  const [cohortId, setCohortId] = useState("");
   const [enrol, setEnrol] = useState<EnrolmentInfo>(() => ({
     ...EMPTY_ENROLMENT,
     email: cloudIdentity?.email ?? EMPTY_ENROLMENT.email,
@@ -92,6 +94,7 @@ export function SignIn({
   const [checkingCloudProfile, setCheckingCloudProfile] = useState(!!cloudIdentity);
   const [cloudProfileError, setCloudProfileError] = useState("");
   const [lookupAttempt, setLookupAttempt] = useState(0);
+  const availableCohorts = cohortIds(profiles);
 
   useEffect(() => {
     if (!cloudIdentity) return;
@@ -337,6 +340,10 @@ export function SignIn({
   async function submitEnrolment(e: React.FormEvent) {
     e.preventDefault();
     setDupError("");
+    if (!cohortId.trim()) {
+      setDupError("Select a cohort before completing learner enrolment.");
+      return;
+    }
     if (cloudIdentity && enrol.email.trim().toLowerCase() !== cloudIdentity.email?.trim().toLowerCase()) {
       setDupError("Use the email address of your signed-in account for this learner profile.");
       return;
@@ -352,7 +359,8 @@ export function SignIn({
         name,
         role,
         { ...enrol, signedDate: new Date().toISOString() },
-        password ? await hashPassword(password) : undefined
+        password ? await hashPassword(password) : undefined,
+        cohortId
       );
       const linked = cloudIdentity
         ? updateProfile(p.id, { cloudUserId: cloudIdentity.userId }) ?? p
@@ -615,8 +623,26 @@ export function SignIn({
 
         {enrolling && (
           <form onSubmit={submitEnrolment}>
+            <div className="field">
+              <label htmlFor="signup-cohort">Cohort / intake</label>
+              <Select
+                id="signup-cohort"
+                ariaLabel="Cohort or intake"
+                value={cohortId}
+                onChange={setCohortId}
+                options={availableCohorts.map(id => ({ value: id, label: id }))}
+                placeholder="Select your cohort…"
+                required
+                disabled={availableCohorts.length === 0}
+              />
+              {availableCohorts.length === 0 && (
+                <p className="muted" role="status">
+                  No cohorts are available yet. Ask your facilitator to create your learner account and assign you to a cohort.
+                </p>
+              )}
+            </div>
             <EnrolmentForm value={enrol} onChange={setEnrol} />
-            <button className="btn block" type="submit">
+            <button className="btn block" type="submit" disabled={availableCohorts.length === 0}>
               <Icon name="checkCircle" size={17} />
               Complete enrolment
             </button>
