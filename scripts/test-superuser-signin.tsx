@@ -3,7 +3,7 @@ import { SignIn } from "../src/components/SignIn";
 import { TENANT } from "../src/lib/tenant";
 import { testCloudProfileResolution } from "./test-cloud-profile-browser";
 import type { Profile } from "../src/types";
-import { setAccountEmail } from "../src/store";
+import { loadProfiles, setAccountEmail } from "../src/store";
 import { profileMatchesCloudIdentity } from "../src/lib/cloudProfile";
 
 const tick = () => new Promise(resolve => setTimeout(resolve, 70));
@@ -32,6 +32,18 @@ async function test() {
   localStorage.clear();
   setAccountEmail(TENANT.superUserEmail);
   testCloudProfileResolution();
+  localStorage.setItem("itss.profiles", JSON.stringify([
+    { id: "unrelated-learner", name: "Existing learner", role: "Learner", createdAt: "2026-01-01" },
+  ]));
+  assert(loadProfiles()[0].role === "Learner", "An unrelated profile must not be promoted on the super-user account");
+  localStorage.clear();
+  localStorage.setItem("itss.profiles", JSON.stringify([
+    { id: "owner-copy-a", name: TENANT.superUserName, role: "Facilitator", createdAt: "2026-01-01" },
+    { id: "owner-copy-b", name: TENANT.superUserName, role: "Learner", createdAt: "2026-01-02" },
+  ]));
+  const ownerCopies = loadProfiles();
+  assert(ownerCopies.filter(profile => profile.role === "Super User").length === 1, "Only one profile copy may be promoted to Super User");
+  localStorage.clear();
   let opened: Profile | undefined;
   const root = createRoot(document.getElementById("fixture")!);
   root.render(<SignIn cloudIdentity={{ userId: "owner-auth", email: TENANT.superUserEmail }} onSignIn={profile => { opened = profile; }} />);

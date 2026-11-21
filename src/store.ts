@@ -147,30 +147,31 @@ export function loadProfiles(): Profile[] {
   const superName = SUPER_USER_NAME.trim().toLowerCase();
   const currentSessionId =
     typeof localStorage !== "undefined" ? localStorage.getItem(SESSION_KEY) : null;
+  let superProfileId: string | null = null;
+  if (superAccount) {
+    const score = (p: Profile) => {
+      const nm = p.name.trim().toLowerCase();
+      const enrolEmail = p.enrolment?.email?.trim().toLowerCase() ?? "";
+      if (currentSessionId && p.id === currentSessionId) return 100;
+      if (cloudEnabled && !!accountEmail && (nm === accountEmail || enrolEmail === accountEmail)) return 90;
+      if (nm === superName || nm === SUPER_USER_EMAIL) return 80;
+      if (p.role === "Super User") return 70;
+      return 0;
+    };
+    let best = 0;
+    for (const p of profiles) {
+      const candidateScore = score(p);
+      if (candidateScore > best) {
+        best = candidateScore;
+        superProfileId = p.id;
+      }
+    }
+  }
   let changed = false;
   for (const p of profiles) {
-    const nm = p.name.trim().toLowerCase();
-    const enrolEmail = p.enrolment?.email?.trim().toLowerCase() ?? "";
-    // Entitled to the Super User role:
-    //   - the designated super-user name (case-insensitive),
-    //   - the super-user email as a profile name,
-    //   - in cloud mode: a profile whose *name or enrolment email* matches the
-    //     signed-in admin email — that identifies the admin's own profile
-    //     even after they've edited their display name.
-    //   - in cloud mode: the profile the admin is actively signed in as (their
-    //     own local id), so their session doesn't demote them if they picked a
-    //     display name that doesn't match their email.
-    // A learner signing in on a non-admin cloud account is never promoted
-    // because `superAccount` gates the entire branch.
-    const entitled =
-      superAccount &&
-      (nm === superName ||
-        nm === SUPER_USER_EMAIL ||
-        (cloudEnabled &&
-          !!accountEmail &&
-          (nm === accountEmail ||
-            enrolEmail === accountEmail ||
-            (!!currentSessionId && p.id === currentSessionId))));
+    // Exactly one profile may hold the Super User role. Prefer the active
+    // session, then the account email, then the designated name.
+    const entitled = superAccount && !!superProfileId && p.id === superProfileId;
     if (entitled && p.role !== "Super User") {
       p.baseRole = p.role; // remember the real role for when the promotion lapses
       p.role = "Super User";
