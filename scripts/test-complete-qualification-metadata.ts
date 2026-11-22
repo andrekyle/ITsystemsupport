@@ -30,5 +30,13 @@ try {
   assert.equal(progress.at(-1), 1);
   await completeQualificationMetadata(current, 'token', 'gpt-4.1-mini', () => {}, () => {});
   assert.equal(requests.length, 4, 'Complete metadata needs no lookup on save');
-  console.log('PASS: missing qualification/unit metadata, progress, partial failure and resumable lookup.');
+  const invalid = structuredClone(current);
+  invalid.modules[0].units[0].us = '252034: invalid code';
+  invalid.modules[0].units[0].title = 'Unit Standard 252034';
+  await assert.rejects(
+    completeQualificationMetadata(invalid, 'token', 'gpt-4.1-mini', () => {}, () => {}),
+    /SAQA unit standard 252034: invalid code lookup was not sent: the SAQA code must be a non-zero number with at most 9 digits/,
+  );
+  assert.equal(requests.length, 4, 'Invalid codes are rejected before making a request');
+  console.log('PASS: metadata progress, partial failure, plain-text error, resumable lookup and invalid SAQA codes.');
 } finally { globalThis.fetch = original; }

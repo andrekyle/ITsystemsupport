@@ -450,6 +450,12 @@ export const PATHS: Record<string, React.ReactNode> = {
       <path d="M4 16.5v2.5A1.5 1.5 0 0 0 5.5 20.5h13a1.5 1.5 0 0 0 1.5-1.5v-2.5" />
     </>
   ),
+  upload: (
+    <>
+      <path d="M12 15V3.5M7.5 8 12 3.5 16.5 8" />
+      <path d="M4 14.5v4A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-4" />
+    </>
+  ),
   cloudDownload: (
     <>
       <path d="M7.5 18.5H6a4 4 0 0 1-.5-8A6.5 6.5 0 0 1 18 9.5h.5a3.5 3.5 0 0 1 .5 7" />

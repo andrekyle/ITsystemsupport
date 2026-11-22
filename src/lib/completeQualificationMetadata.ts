@@ -20,6 +20,9 @@ export async function completeQualificationMetadata(
     const recordType = task.kind === "unit" ? "unit standard" : "qualification";
     const label = `SAQA ${recordType} ${task.code}`;
     onProgress(`Looking up ${label} (${index + 1} of ${tasks.length})`, index, tasks.length);
+    if (!/^[1-9]\d{0,8}$/.test(task.code)) {
+      throw new Error(`${label} lookup was not sent: the SAQA code must be a non-zero number with at most 9 digits. Correct it in the course review and retry.`);
+    }
     let response: Response;
     try {
       response = await fetch("/api/unit-metadata", { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ us: task.code, kind: task.kind, model }), signal: AbortSignal.timeout(60000) });

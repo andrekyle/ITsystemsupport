@@ -253,12 +253,15 @@ function SkillsRegister({ profile }: { profile: Profile }) {
       <p className="portfolio-review-audit">{reviewItem.status ?? 'Pending verification'}{reviewItem.reviewer ? ` by ${reviewItem.reviewer} · ${formatPortfolioReviewDate(reviewItem.reviewedAt)}` : ''}</p>
       <label className="portfolio-field">Verification notes<textarea aria-label={`Verification notes: ${review.label}`} value={reviewItem.note ?? ''} disabled={disabled} onChange={event => record.update(review.id, { ...reviewItem, note: event.target.value })} /></label>
     </Modal>}
-    {existingTarget && <Modal className="portfolio-existing-document-modal" title={`Use existing document - ${existingTarget.label}`} onClose={() => setExistingTarget(null)} actions={<button type="button" className="btn primary" disabled={disabled || !existingKey} onClick={() => {
-      const selected = existingDocuments.find(([key]) => key === existingKey);
-      if (!selected) return;
-      record.update(existingTarget.id, { doc: selected[1] });
-      setExistingTarget(null);
-    }}>Link document</button>}>
+    {existingTarget && <Modal className="portfolio-existing-document-modal" title={`Use existing document - ${existingTarget.label}`} onClose={() => setExistingTarget(null)} actions={<>
+      <button type="button" className="btn ghost" onClick={() => setExistingTarget(null)}>Cancel</button>
+      <button type="button" className="btn primary" disabled={disabled || !existingKey} onClick={() => {
+        const selected = existingDocuments.find(([key]) => key === existingKey);
+        if (!selected) return;
+        record.update(existingTarget.id, { doc: selected[1] });
+        setExistingTarget(null);
+      }}>Link document</button>
+    </>}>
       <p>Choose a document already uploaded for {learner?.name}.</p>
       <Select ariaLabel="Existing uploaded document" value={existingKey} placeholder="Choose an uploaded document" options={existingDocuments.map(([key, doc]) => ({ value: key, label: doc.name, hint: key }))} onChange={setExistingKey} />
       <p>Reuses the existing file. Verification is recorded separately for this portfolio entry.</p>

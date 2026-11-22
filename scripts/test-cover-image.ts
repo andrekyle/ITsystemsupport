@@ -20,6 +20,7 @@ globalThis.fetch = async (input, init) => {
   assert.match(body.prompt, /charcoal-black/);
   assert.match(body.prompt, /Network support/);
   if (mode === "failure") return new Response("Unavailable", { status: 429 });
+  if (mode === "slow") await new Promise(resolve => setTimeout(resolve, 50));
   return Response.json({ data: [{ b64_json: mode === "invalid" ? "not an image!" : "/9j/2Q==" }] });
 };
 const input = { kind: "module", title: "Network support", label: "MODULE 2", courseTitle: "IT systems" };
@@ -34,6 +35,24 @@ try {
   const response = await handler(request());
   assert.equal(response.status, 200);
   assert.equal((await response.json()).image, "data:image/jpeg;base64,/9j/2Q==");
-  for (mode of ["failure", "invalid"]) assert.equal((await handler(request())).status, 502);
+  for (mode of ["failure", "invalid"]) {
+    const failed = await handler(request());
+    assert.equal(failed.status, 200, "The stream status is sent before image generation completes");
+    const result = await failed.json();
+    assert.equal(typeof result.error, "string");
+  }
+  mode = "slow";
+  const delayed = await handler(request());
+  const reader = delayed.body!.getReader();
+  const decoder = new TextDecoder();
+  const first = await reader.read();
+  assert.equal(decoder.decode(first.value), " ", "The response starts before the image request completes");
+  let rest = "";
+  while (true) {
+    const chunk = await reader.read();
+    if (chunk.done) break;
+    rest += decoder.decode(chunk.value);
+  }
+  assert.equal(JSON.parse(rest).image, "data:image/jpeg;base64,/9j/2Q==");
   console.log("Cover image API tests passed.");
 } finally { globalThis.fetch = original; }
