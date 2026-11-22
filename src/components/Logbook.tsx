@@ -207,7 +207,7 @@ export function Logbook({ spec, values, onChange, editable = false, onSpecChange
   };
   const field = (k: string, placeholder = "") => /signature|:sign$/i.test(k) ? (() => {
     const label = signatureLabel(k);
-    const editable = canSignDocumentField(profile.role, label);
+    const editable = canSignDocumentField(profile.role, label) || profile.role === "Admin" || profile.role === "Super User";
     return <DocumentSignature value={String(values[k] ?? "")} savedSignature={editable ? profile.signatureImage : undefined} label={label} editable={editable} onChange={value => onChange(k, value)} className="lb-document-signature" />;
   })() : (
     <input

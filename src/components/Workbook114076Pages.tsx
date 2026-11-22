@@ -47,11 +47,11 @@ export function Workbook114076IntroPages({ workbook, field, values, onChange }: 
     </section>
     <section className="lw-page lw-114076-page" data-page="5">
       <h2 className="lw-114076-contact-title">Contact Details</h2>
-      <table className="lw-table lw-114076-contact-header"><colgroup><col style={{width:"17%"}}/><col/></colgroup><tbody>
+      <table className="lw-table lw-114076-contact-header" style={{width:"100%"}}><colgroup><col style={{width:"17%"}}/><col/></colgroup><tbody>
         <tr><th>Standard<br/>Title:</th><td>{field("standard-title", "Standard title")}</td></tr>
         <tr><th>Course:</th><td>{field("course", "Course")}</td></tr>
       </tbody></table>
-      <table className="lw-table lw-114076-contact-grid"><colgroup><col style={{width:"17%"}}/><col style={{width:"12%"}}/><col style={{width:"25%"}}/><col style={{width:"16%"}}/><col style={{width:"30%"}}/></colgroup><tbody>
+      <table className="lw-table lw-114076-contact-grid" style={{width:"100%"}}><colgroup><col style={{width:"17%"}}/><col style={{width:"12%"}}/><col style={{width:"25%"}}/><col style={{width:"16%"}}/><col style={{width:"30%"}}/></colgroup><tbody>
         <tr className="lw-114076-section"><th colSpan={5}>Assessor Details</th></tr>
         <tr><th>Name</th><td colSpan={4}>{field("assessor-name", "Assessor Name")}</td></tr>
         <tr><th>Branch</th><td colSpan={2}>{field("assessor-branch", "Assessor Branch")}</td><th>Registration No:</th><td>{field("assessor-registration-no", "Assessor Registration No")}</td></tr>
@@ -78,7 +78,7 @@ export function Workbook114076IntroPages({ workbook, field, values, onChange }: 
           <div className="lw-114076-signed"><label>Signed: {field("candidate-signed", "Candidate signature")}</label><label>Date: {field("candidate-signed-date", "Candidate signed date")}</label></div>
         </td></tr>
       </tbody></table>
-      <table className="lw-table lw-114076-decision"><colgroup><col style={{width:"26%"}}/><col style={{width:"32%"}}/><col style={{width:"10%"}}/><col style={{width:"32%"}}/></colgroup><tbody>
+      <table className="lw-table lw-114076-decision" style={{width:"100%"}}><colgroup><col style={{width:"26%"}}/><col style={{width:"32%"}}/><col style={{width:"10%"}}/><col style={{width:"32%"}}/></colgroup><tbody>
         <tr><th>Overall Assessment<br/>Decision</th><td><label>{tick("competent", "Competent")} Competent</label></td><td colSpan={2}><label>{tick("not-yet-competent", "Not yet competent")} Not yet competent</label></td></tr>
         {["Candidate", "Assessor", "Moderator"].map(role => <tr key={role}><th>{role}’s Signature</th><td>{field(`${role.toLowerCase()}-decision-signature`, `${role} signature`)}</td><th>Date</th><td>{field(`${role.toLowerCase()}-decision-date`, `${role} date`)}</td></tr>)}
       </tbody></table>

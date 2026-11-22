@@ -4036,6 +4036,9 @@ textarea:focus {
 .lw-table th,.lw-table td { border:1px solid #777; padding:6px 8px; vertical-align:top; }
 .lw-table input:not([type="checkbox"]),.lw-page p input,.lw-page label input:not([type="checkbox"]) { box-sizing:border-box; width:100%; min-width:0; padding:3px 5px; border:0 !important; border-radius:0; color:#111; background:#fff; font-family:inherit; font-size:14px; line-height:1.35; }
 .lw-table input:focus,.lw-page p input:focus,.lw-page label input:focus { outline:0; background:#f4f4f4; box-shadow:none; }
+.lw-document input[type="date"] { display:block; width:100%; height:32px; min-height:32px; margin:0; padding:4px 7px; border:0!important; border-radius:0; color:#333; background:transparent; font:inherit; font-size:12px; line-height:24px; color-scheme:light; }
+.lw-document input[type="date"]:focus { outline:0; background:#f7f7f7; box-shadow:inset 0 0 0 1px #d8d8d8; }
+.lw-document input[type="date"]::-webkit-calendar-picker-indicator { width:14px; height:14px; margin:0; padding:3px; cursor:pointer; opacity:.65; }
 .lw-document input[type="checkbox"] { appearance:none; display:inline-grid; place-content:center; width:17px; height:17px; margin:0; border:1px solid #c8c8c8 !important; border-radius:1px; background:#fff; }
 .lw-document input[type="checkbox"]::before { content:""; width:5px; height:9px; border:solid #111; border-width:0 2px 2px 0; transform:rotate(45deg) scale(0); }
 .lw-document input[type="checkbox"]:checked::before { transform:rotate(45deg) scale(1); }
@@ -4056,6 +4059,7 @@ textarea:focus {
 .workbook-learner-answer-text { margin-top: 8px; padding: 10px 12px; border: 1px solid #c8cdd4; border-radius: 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .workbook-learner-answer p { margin: 8px 0 0; font-size: 13px; }
 .workbook-marked-answer { box-sizing:border-box; width:100%; min-height:120px; padding:10px 12px; border:1px solid #aaa; border-radius:3px; color:#000; background:#fff; font-size:14px; font-weight:400; line-height:1.5; white-space:pre-wrap; }
+.lw-task-answer .workbook-marked-answer { min-height:0; }
 .workbook-marked-answer mark { padding:0; background:transparent; font:inherit; }
 .workbook-marked-answer mark.is-correct { color:#000; font-weight:400; }
 .workbook-marked-answer mark.is-incorrect { color:#dc2626; font-weight:400; }
@@ -4074,7 +4078,7 @@ textarea:focus {
 .workbook-task-score { color:#666; font-size:11px; }
 .workbook-answer-toggle { display:inline-flex; align-items:center; gap:8px; padding:0 8px; border:0; color:#26374f; background:transparent; font:inherit; font-size:14px; cursor:pointer; }
 .workbook-answer-toggle:hover { color:#075dcc; }
-.workbook-model-answer { margin-top: 14px; padding: 18px 20px 20px; border: 1px solid #dfe3e9; border-radius: 5px; background: #fff; color: #26374f; font-size: 20px; line-height: 1.75; }
+.workbook-model-answer { margin-top: 14px; padding: 18px 20px 20px; border: 1px solid #dfe3e9; border-radius: 5px; background: #fff; color: #26374f; font-size: 16px; line-height: 1.75; }
 .workbook-model-answer strong { display:flex; align-items:center; gap:9px; margin-bottom: 14px; color:#637188; font-size:14px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
 .workbook-model-answer ul { display:grid; gap:18px; margin:0; padding:0; list-style:none; }
 .workbook-model-answer li { display:flex; align-items:flex-start; gap:14px; }
@@ -4270,14 +4274,6 @@ textarea:focus {
 @media screen and (max-width:700px) {
   .lw-template-114076 .lw-page:not(.lw-cover) { padding:22px 16px 18px; }
 }
-/* Unit 114076 follows the source workbook's framed assessment sheets. */
-.lw-template-114076 .lw-page[data-page="5"],
-.lw-template-114076 .lw-page[data-page="7"],
-.lw-template-114076 .lw-page[data-page="8"],
-.lw-template-114076 .lw-page[data-page="9"],
-.lw-template-114076 .lw-page[data-page="10"],
-.lw-template-114076 .lw-page[data-page="11"],
-.lw-template-114076 .lw-page[data-page="12"] { border:1px solid #f3b680; }
 .lw-template-114076 .lw-page[data-page="7"] .lw-outcome-head,
 .lw-template-114076 .lw-page[data-page="8"] .lw-outcome-head,
 .lw-template-114076 .lw-page[data-page="9"] .lw-outcome-head { border:1px solid #929ca8; background:#c7d8ee; text-align:center; }
@@ -4305,6 +4301,7 @@ textarea:focus {
 .lw-template-114076 .lw-page[data-page="5"] { font-size:13px; }
 .lw-template-114076 .lw-page[data-page="5"] .lw-114076-contact-title { margin:0 0 18px; text-align:center; font-size:24px; font-weight:700; }
 .lw-template-114076 .lw-page[data-page="5"] .lw-table { margin-top:0; font-size:13px; }
+.lw-template-114076 .lw-page[data-page="5"] .lw-table { box-sizing:border-box; width:100%!important; min-width:100%; max-width:none; }
 .lw-template-114076 .lw-page[data-page="5"] .lw-table :is(th,td) { padding:3px 6px; vertical-align:middle; }
 .lw-template-114076 .lw-page[data-page="5"] .lw-table th { text-align:left; background:#fff; font-weight:700; }
 .lw-template-114076 .lw-page[data-page="5"] .lw-114076-contact-header { margin-bottom:14px; }
@@ -4602,6 +4599,9 @@ textarea:focus {
 .document-signature { position:relative; box-sizing:border-box; width:100%; min-width:0; min-height:48px; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:3px 25px 3px 3px; background:transparent; }
 .document-signature img { display:block; width:auto; max-width:calc(100% - 2px); height:40px; object-fit:contain; }
 .document-signature-empty { color:#8b8b8b; font-size:11px; font-style:italic; }
+.document-signature-use-saved { display:inline-flex; align-items:center; justify-content:center; gap:5px; min-height:24px; padding:2px 5px; border:0; border-radius:5px; background:transparent; color:#aaa; font:inherit; font-size:10px; font-weight:400; cursor:pointer; }
+.document-signature-use-saved:hover { background:transparent; color:#777; }
+.document-signature-use-saved:disabled { opacity:.6; cursor:wait; }
 .document-signature-text { font-family:cursive; font-size:18px; line-height:1.1; }
 .document-signature-actions { position:absolute; z-index:3; top:2px; right:2px; display:flex; flex-direction:column; gap:2px; pointer-events:auto; }
 .document-signature-actions button { display:grid; place-items:center; width:20px; height:20px; padding:0; border:0; border-radius:4px; background:transparent; color:#8a8a8a; cursor:pointer; pointer-events:auto; touch-action:manipulation; }
@@ -4648,8 +4648,9 @@ textarea:focus {
   body:has(.document-print-target) * { visibility:hidden; }
   body:has(.document-print-target) .document-print-target,body:has(.document-print-target) .document-print-target * { visibility:visible; }
   body:has(.document-print-target) .document-print-target { position:absolute!important; top:0!important; right:auto!important; bottom:auto!important; left:0!important; display:block!important; width:210mm!important; max-width:none!important; height:auto!important; margin:0!important; padding:0!important; overflow:visible!important; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
-  body:has(.document-print-target) :is(.lw-page,.pt-page) { box-sizing:border-box; width:210mm!important; min-height:297mm!important; height:297mm; margin:0!important; break-after:page; page-break-after:always; box-shadow:none!important; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+  body:has(.document-print-target) :is(.lw-page,.pt-page) { box-sizing:border-box; width:210mm!important; min-height:297mm!important; height:auto!important; margin:0!important; padding:58px 62px!important; overflow:visible!important; break-after:page; page-break-after:always; box-shadow:none!important; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
   body:has(.document-print-target) :is(.lw-page,.pt-page):last-child { break-after:auto; page-break-after:auto; }
+  body:has(.document-print-target) .document-print-target :is(.lw-page,.pt-page):empty { display:none!important; break-after:auto!important; page-break-after:auto!important; }
   body:has(.document-print-target) :is(.lw-cover,.pt-cover) { display:grid!important; grid-template-columns:minmax(0,1fr) 44mm!important; overflow:visible!important; }
   body:has(.document-print-target) :is(.lw-cover aside,.pt-cover aside) { display:flex!important; visibility:visible!important; background:#f3780d!important; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
   /* Browsers print autofill's large inset shadow as short grey strips at the
@@ -4669,14 +4670,17 @@ textarea:focus {
   /* Every exported table fills the content area between the page margins,
      including tables with a narrower inline width in the source document. */
   body:has(.document-print-target) .document-print-target table {
+    display:table!important;
     box-sizing:border-box!important;
     width:100%!important;
     min-width:100%!important;
     max-width:100%!important;
     margin-left:0!important;
     margin-right:0!important;
+    overflow:visible!important;
     table-layout:fixed!important;
   }
+  body:has(.document-print-target) .document-signature-use-saved { display:none!important; }
   body:has(.document-print-target) .document-print-target table :is(th,td) {
     min-width:0!important;
     overflow-wrap:anywhere;

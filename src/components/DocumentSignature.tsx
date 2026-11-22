@@ -40,6 +40,7 @@ export function DocumentSignature({
   const image = storedImage || (usesSavedSignature ? savedSignature ?? "" : "");
 
   const chooseFile = () => inputRef.current?.click();
+  const signWithSavedSignature = () => applyValue(SAVED_SIGNATURE_REFERENCE);
   const upload = async (file?: File) => {
     if (!file) return;
     setBusy(true);
@@ -65,7 +66,7 @@ export function DocumentSignature({
   const active = editable && (busy || !!error);
   const tools = editable && <div className={active ? "unit-editor-actions" : "document-signature-actions"}>
         {savedSignature && savedSignature !== image && (
-          <button type="button" className={active ? "btn ghost sm" : undefined} disabled={busy} onClick={(event) => { event.stopPropagation(); applyValue(savedSignature); }} title={`Use saved ${label.toLowerCase()}`} aria-label={`Use saved ${label.toLowerCase()}`}>
+          <button type="button" className={active ? "btn ghost sm" : undefined} disabled={busy} onClick={(event) => { event.stopPropagation(); signWithSavedSignature(); }} title={`Use uploaded ${label.toLowerCase()}`} aria-label={`Use uploaded ${label.toLowerCase()}`}>
             <Icon name="checkCircle" size={12} />
           </button>
         )}
@@ -82,6 +83,14 @@ export function DocumentSignature({
         <img src={image} alt={label} />
       ) : localValue && !removed ? (
         <span className="document-signature-text">{localValue}</span>
+      ) : editable && savedSignature ? (
+        <button type="button" className="document-signature-use-saved" disabled={busy} onClick={signWithSavedSignature}>
+          Signature
+        </button>
+      ) : editable ? (
+        <button type="button" className="document-signature-use-saved" disabled={busy} onClick={chooseFile}>
+          Signature
+        </button>
       ) : (
         <span className="document-signature-empty">{removed ? "" : "Signature"}</span>
       )}

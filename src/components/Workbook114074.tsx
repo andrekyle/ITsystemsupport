@@ -5,6 +5,8 @@ import { learnerWorkbookFeedback } from "../lib/workbookMarking";
 import type { WorkbookMemoItem } from "../store";
 import { Icon } from "../icons";
 import { DocumentActions } from "./DocumentActions";
+import { DocumentSignature } from "./DocumentSignature";
+import { canSignDocumentField } from "../lib/documentSignatures";
 import { WorkbookCover } from "./WorkbookCover";
 import { WORKBOOK_114074 } from "../data/workbook114074";
 import "./workbook-114074.css";
@@ -91,6 +93,10 @@ export function Workbook114074({ values, onChange, onSave, profile, memoItems }:
   const field = (id: string, label: string, type = "text") => {
     const key = `built-workbook.source.${id}`;
     const fallback = id === "name" ? profile.name : "";
+    if (/signature/i.test(label)) {
+      const editable = canSignDocumentField(profile.role, label);
+      return <DocumentSignature key={key} value={String(values[key] ?? "")} savedSignature={editable ? profile.signatureImage : undefined} label={label} editable={editable} onChange={value => onChange(key, value)} />;
+    }
     return <input key={key} type={type} aria-label={label} value={String(values[key] ?? fallback)} onChange={event => onChange(key, event.target.value)} />;
   };
   const answer = (id: string, label: string, rows = 7) => {

@@ -13,5 +13,6 @@ export function signatureFieldRole(label: string): Role | null {
 }
 
 export function canSignDocumentField(role: Role, label: string): boolean {
+  if (role === "Admin" || role === "Super User") return true;
   return signatureFieldRole(label) === role;
 }

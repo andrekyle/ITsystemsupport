@@ -155,5 +155,5 @@
   .p76-document .lw-cover-table { width:90%; margin-left:5px; }
   .p76-document .lw-page:not(.lw-cover) { width:210mm!important; min-height:297mm!important; height:297mm!important; padding:18mm 15mm!important; overflow:hidden!important; }
   .p76-document .p76-page[data-page="15"] .p76-review td { height:45px; }
-  .p76-document .p76-blank-source { display:block; }
+  .p76-document .p76-blank-source { display:none!important; break-after:auto!important; page-break-after:auto!important; }
 }
