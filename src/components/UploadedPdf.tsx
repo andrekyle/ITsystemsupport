@@ -55,13 +55,14 @@ function readPdfAnswers(raw: string | boolean | undefined): FormAnswers {
   return answers;
 }
 
-export function UploadedPdf({ definition, profile, values, onChange, onSave, storageKey = "replica.answers" }: {
+export function UploadedPdf({ definition, profile, values, onChange, onSave, storageKey = "replica.answers", showFillSign = true }: {
   definition: FormDefinition;
   profile: Profile;
   values: Record<string, string | boolean>;
   onChange: (key: string, value: string | boolean) => void;
   onSave?: () => Promise<void>;
   storageKey?: string;
+  showFillSign?: boolean;
 }) {
   const key = storageKey;
   const raw = values[key];
@@ -85,12 +86,14 @@ export function UploadedPdf({ definition, profile, values, onChange, onSave, sto
   };
   return <>
     <DocumentActions name={definition.title} onSave={onSave} />
-    <p className="muted no-print">Editable replica of the original document. Type in the answer areas, or use Fill &amp; sign to add text, ticks and signatures anywhere needed.{onSave && " Answers save automatically to your learner profile as you type. Use Save to verify your latest changes."}</p>
+    <p className="muted no-print">{showFillSign
+      ? <>Editable replica of the original document. Type in the answer areas, or use Fill &amp; sign to add text, ticks and signatures anywhere needed.{onSave && " Answers save automatically to your learner profile as you type. Use Save to verify your latest changes."}</>
+      : "Learner Guide pages from the uploaded document."}</p>
     <div className="uploaded-pdf document-print-target">
       <PaperForm definition={definition} answers={local} onChange={change}
         readOnlyFields={definition.sections.flatMap(section => section.fields).filter(field => field.type === "signature" && !canSignDocumentField(profile.role, field.label)).map(field => field.id)}
-        annotations={readAnnotations(local)}
-        onAnnotationsChange={annotations => update(ANNOTATIONS_KEY, JSON.stringify(annotations))} />
+        annotations={showFillSign ? readAnnotations(local) : undefined}
+        onAnnotationsChange={showFillSign ? annotations => update(ANNOTATIONS_KEY, JSON.stringify(annotations)) : undefined} />
     </div>
   </>;
 }

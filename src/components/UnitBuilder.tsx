@@ -8,6 +8,7 @@ import { useBuiltUnit, useDeletedBuiltUnit, saveBuiltUnit, deleteBuiltUnit, rest
 import { unitHistory, unitVersionArchive, MAX_UNIT_HISTORY, readBuiltUnit, type BuiltUnitVersion, type UnitSourceDocuments } from "../lib/builtUnits";
 import { importUnitSource } from "../lib/unitSourceImport";
 import { importUnitPdf } from "../lib/unitPdfImport";
+import { importLearnerGuideHtml } from "../lib/learnerGuideHtmlImport";
 import { storeUnitReplicaPages } from "../lib/forms";
 import { makeUnitExports } from "../lib/unitExports";
 import { createAiPresentation, type AiPresentationSlide } from "../lib/aiPresentation";
@@ -670,24 +671,34 @@ async function publishUnitPart(unit:UnitStandard,built:BuiltUnitVersion,next:Uni
   await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content:next,files:{pdf,pptx,answers,material:built.files.material,materialEditable:built.files.materialEditable,sourceDocuments:built.files.sourceDocuments},aiUsed:built.aiUsed,planSource:extra.planSource??built.planSource});
 }
 
-/** Upload and publish only a learner guide PDF as editable HTML. */
+/** Upload and publish only a learner guide PDF or page-based HTML guide. */
 export function LearnerGuideUpload({unit,content}:{unit:UnitStandard;content?:UnitContent}) {
   const built=useBuiltUnit(unit.us);
   const [pendingGuide,setPendingGuide]=useState<UnitContent["learnerGuide"]>();
   const [pendingFile,setPendingFile]=useState<File>();
   const [busy,setBusy]=useState("");
+  const [processingProgress,setProcessingProgress]=useState<number|null>(null);
   const [error,setError]=useState("");
   const [message,setMessage]=useState("");
+  const reportProgress=(done:number,total:number,label:string)=>{
+    setProcessingProgress(total>0?Math.round(done/total*100):0);
+    setBusy(`${label}: ${done}/${total} pages…`);
+  };
   const convert=async(file?:File)=>{
     if(!file)return;
     setPendingGuide(undefined);setPendingFile(undefined);setError("");setMessage("");
+    const isHtml=/\.html?$/i.test(file.name);
+    setProcessingProgress(0);
+    setBusy(isHtml?"Reading Learner Guide HTML…":"Preparing Learner Guide PDF…");
     try{
-      const guide=await importUnitPdf(file,"Learner Guide",(done,total)=>setBusy(`Converting Learner Guide PDF to editable HTML: ${done}/${total} pages…`));
+      const guide=isHtml
+        ?await importLearnerGuideHtml(file,"Learner Guide",(done,total)=>reportProgress(done,total,"Importing Learner Guide HTML"))
+        :await importUnitPdf(file,"Learner Guide",(done,total)=>reportProgress(done,total,"Converting Learner Guide PDF to editable HTML"));
       if(!guide.replica)throw new Error("The PDF could not be converted to editable HTML. The current guide is unchanged.");
       setPendingGuide(guide);setPendingFile(file);
-      setMessage(`${guide.sourcePageCount??guide.replica.pages.length} pages converted. Save to publish the Learner Guide.`);
-    }catch(reason){setError(reason instanceof Error?reason.message:"The Learner Guide PDF could not be converted.");}
-    finally{setBusy("");}
+      setMessage(`${guide.sourcePageCount??guide.replica.pages.length} pages ${isHtml?"imported":"converted"}. Save to publish the Learner Guide.`);
+    }catch(reason){setError(reason instanceof Error?reason.message:`The Learner Guide ${isHtml?"HTML":"PDF"} could not be imported.`);}
+    finally{setBusy("");setProcessingProgress(null);}
   };
   const save=async()=>{
     if(!pendingGuide||!pendingFile||busy)return;
@@ -702,7 +713,7 @@ export function LearnerGuideUpload({unit,content}:{unit:UnitStandard;content?:Un
       setBusy("Preparing Learner Guide files…");
       const exports=await makeUnitExports(unit,next);
       const prefix=`shared/unitbuilder/${courseScopedUnit(unit.us)}`;
-      setBusy("Saving the editable Learner Guide…");
+      setBusy("Saving the Learner Guide…");
       const [pdf,pptx,answers,sourceDocument]=await Promise.all([
         uploadFile(prefix,exports.pdf),
         uploadFile(prefix,exports.pptx),
@@ -726,15 +737,28 @@ export function LearnerGuideUpload({unit,content}:{unit:UnitStandard;content?:Un
         planSource:latestBeforePublish?.planSource,
       });
       setPendingGuide(undefined);setPendingFile(undefined);
-      setMessage("Learner Guide saved. It is now available as editable HTML.");
+      setMessage(/\.html?$/i.test(pendingFile.name)
+        ?"Learner Guide saved. It is now available in the Learner Guide tab."
+        :"Learner Guide saved. It is now available as editable HTML.");
     }catch(reason){setError(unitBuilderError(reason,"The Learner Guide could not be saved. The current unit is unchanged."));}
     finally{setBusy("");}
   };
   return <div className="learner-guide-upload">
-    <p>Upload the Learner Guide PDF to convert it into editable HTML.</p>
-    <label className="unit-import-button"><span>{busy||"Choose Learner Guide PDF"}</span><input aria-label="Upload Learner Guide PDF" type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={event=>{const file=event.target.files?.[0];event.target.value="";void convert(file);}}/></label>
+    <p>Upload a PDF to convert it, or a page-based HTML guide with embedded page images.</p>
+    <div className="learner-guide-upload-actions">
+      <label className="unit-import-button"><span>{busy||"Choose Learner Guide PDF or HTML"}</span><input aria-label="Upload Learner Guide PDF or HTML" type="file" accept="application/pdf,text/html,application/xhtml+xml,.pdf,.html,.htm" disabled={!!busy} onChange={event=>{const file=event.target.files?.[0];event.target.value="";void convert(file);}}/></label>
+      {processingProgress!==null&&<div className="learner-guide-progress" role="progressbar" aria-label="Learner Guide file processing" aria-valuemin={0} aria-valuemax={100} aria-valuenow={processingProgress}>
+        <svg viewBox="0 0 44 44" aria-hidden="true"><circle className="learner-guide-progress-track" cx="22" cy="22" r="18"/><circle className="learner-guide-progress-value" cx="22" cy="22" r="18" pathLength={100} strokeDasharray={`${processingProgress} 100`}/></svg>
+        <span>{processingProgress}%</span>
+      </div>}
+    </div>
     {message&&<p role="status">{message}</p>}
     {error&&<p role="alert" className="auth-error">{error}</p>}
+    {pendingGuide?.replica?.pages[0]&&<div className="learner-guide-upload-preview">
+      <strong>Preview · page 1 of {pendingGuide.replica.pages.length}</strong>
+      <img src={pendingGuide.replica.pages[0].src} alt={`Learner Guide page 1 of ${pendingGuide.replica.pages.length}`} />
+      <span>Save the guide to publish all pages in this tab.</span>
+    </div>}
     {pendingGuide&&<button type="button" className="btn unit-guide-save" disabled={!!busy} onClick={()=>void save()}>{busy||"Save Learner Guide"}</button>}
   </div>;
 }
