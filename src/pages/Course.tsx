@@ -32,7 +32,7 @@ import { videoEngagementKey, videoQuizId } from "../lib/videoLearning";
 import { fiveResearchSelfAssessment } from "../lib/selfAssessment114076";
 import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml, hydrateSlideImages, normalizeSlideDocument, inlineFigureReferences } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
-import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, LearnerGuideUpload, effectiveBuiltContent } from "../components/UnitBuilder";
+import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, LearnerGuideUpload, LearnerWorkbookUpload, effectiveBuiltContent } from "../components/UnitBuilder";
 import { lessonEditsAfterInsert, lessonEditsAfterSplit } from "../lib/lessonSectionEdits";
 import { InlineText, InlineIconBtn } from "../components/InlineText";
 import { ActivityQuestionEditor } from "../components/ActivityQuestionEditor";
@@ -3918,6 +3918,7 @@ function UnitPageContent({
         <h2>{tabs.find(item => item.id === tab)?.label}</h2>
         <p>This unit's {tabs.find(item => item.id === tab)?.label.toLowerCase()} content has not been added yet.</p>
         {tab === "guide" && isSuperUser && !inlineUnit && <LearnerGuideUpload unit={u} content={content} />}
+        {tab === "workbook" && isSuperUser && !inlineUnit && <LearnerWorkbookUpload unit={u} content={content} />}
       </section>}
 
       {tab === "overview" && (

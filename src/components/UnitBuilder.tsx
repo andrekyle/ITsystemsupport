@@ -804,6 +804,67 @@ export function LearnerGuideUpload({unit,content}:{unit:UnitStandard;content?:Un
   </div>;
 }
 
+/** Upload a learner workbook on its own tab, convert the source pages to
+ * editable HTML, and let AI build the structured activities shown by the app. */
+export function LearnerWorkbookUpload({unit,content}:{unit:UnitStandard;content?:UnitContent}) {
+  const built=useBuiltUnit(unit.us);
+  const [pendingDocument,setPendingDocument]=useState<UnitContent["learnerWorkbook"]>();
+  const [pendingWorkbook,setPendingWorkbook]=useState<UnitContent["workbook"]>();
+  const [pendingFile,setPendingFile]=useState<File>();
+  const [busy,setBusy]=useState("");
+  const [progress,setProgress]=useState<number|null>(null);
+  const [error,setError]=useState("");
+  const [message,setMessage]=useState("");
+  const convert=async(file?:File)=>{
+    if(!file)return;
+    setPendingDocument(undefined);setPendingWorkbook(undefined);setPendingFile(undefined);setError("");setMessage("");setProgress(0);
+    try{
+      setBusy("Converting the Learner Workbook to editable HTML...");
+      const document=await importUnitPdf(file,"Learner Workbook",(done,total)=>{setProgress(total?Math.round(done/total*100):0);setBusy(`Converting workbook: ${done}/${total} pages...`);});
+      setBusy("AI is extracting workbook outcomes, activities and marks...");
+      const token=(await supabase?.auth.getSession())?.data.session?.access_token;
+      const response=await fetch("/api/build-learner-workbook",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({unit,sourceText:document.sourceText,model:loadContentModel()}),signal:AbortSignal.timeout(120_000)});
+      const result=await readApiJson(response,"The workbook generator");
+      if(!response.ok||!result.workbook)throw new Error(result.error??"The workbook could not be generated.");
+      setPendingDocument({...document,workbookTemplateBuilt:true});setPendingWorkbook(result.workbook);setPendingFile(file);
+      if(result.usage)void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.input_tokens??0,completionTokens:result.usage.output_tokens??0,totalTokens:result.usage.total_tokens??0});
+      setMessage(`${document.sourcePageCount??document.replica?.pages.length??0} pages converted. Review the summary and publish the workbook.`);
+    }catch(reason){setError(reason instanceof Error?reason.message:"The Learner Workbook could not be generated.");}
+    finally{setBusy("");setProgress(null);}
+  };
+  const save=async()=>{
+    if(!pendingDocument||!pendingWorkbook||!pendingFile||busy)return;
+    setError("");setMessage("");
+    try{
+      setBusy("Publishing the Learner Workbook...");
+      const document=structuredClone(pendingDocument);
+      if(document.replica)document.replica.pages=await storeUnitReplicaPages(document.replica.pages);
+      const latest=readBuiltUnit(unit.us)??built;
+      const next=structuredClone(latest?.content??content??{lesson:[],exercises:[],assignments:[],quiz:[]});
+      next.learnerWorkbook=document;next.workbook=structuredClone(pendingWorkbook);
+      validateUnitContent({lesson:[],exercises:[],assignments:[],quiz:[],learnerWorkbook:document,workbook:pendingWorkbook},false);
+      const exports=await makeUnitExports(unit,next);
+      const prefix=`shared/unitbuilder/${courseScopedUnit(unit.us)}`;
+      const [pdf,pptx,answers,sourceDocument]=await Promise.all([uploadFile(prefix,exports.pdf),uploadFile(prefix,exports.pptx),uploadFile(prefix,exports.answers),uploadFile(`${prefix}/source-documents`,pendingFile)]);
+      const current=readBuiltUnit(unit.us)??latest;
+      await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:current?.source??"",content:next,files:{pdf,pptx,answers,material:current?.files.material,materialEditable:current?.files.materialEditable,sourceDocuments:{...(current?.files.sourceDocuments??{}),learnerWorkbook:sourceDocument}},aiUsed:true,planSource:current?.planSource});
+      setPendingDocument(undefined);setPendingWorkbook(undefined);setPendingFile(undefined);setMessage("Learner Workbook published. It is now available and editable in this tab.");
+    }catch(reason){setError(unitBuilderError(reason,"The Learner Workbook could not be published. The current unit is unchanged."));}
+    finally{setBusy("");}
+  };
+  const outcomes=pendingWorkbook?.outcomes??[];
+  return <div className="learner-guide-upload learner-workbook-upload">
+    <p>Upload the official Learner Workbook PDF. The app preserves its pages while AI generates the editable workbook activities for this tab.</p>
+    <div className="learner-guide-upload-actions">
+      <label className="unit-import-button"><span>{busy||"Choose Learner Workbook PDF"}</span><input aria-label="Upload Learner Workbook PDF" type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={event=>{const file=event.target.files?.[0];event.target.value="";void convert(file);}}/></label>
+      {progress!==null&&<span role="progressbar" aria-label="Learner Workbook processing" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>{progress}%</span>}
+    </div>
+    {outcomes.length>0&&<div className="unit-workspace-notice"><strong>Generated workbook</strong><p>{outcomes.length} outcome{outcomes.length===1?"":"s"} · {outcomes.reduce((total,outcome)=>total+outcome.questions.length,0)} activit{outcomes.reduce((total,outcome)=>total+outcome.questions.length,0)===1?"y":"ies"}</p></div>}
+    {message&&<p role="status">{message}</p>}{error&&<p role="alert" className="auth-error">{error}</p>}
+    {pendingWorkbook&&<button type="button" className="btn unit-guide-save" disabled={!!busy} onClick={()=>void save()}>{busy||"Publish Learner Workbook"}</button>}
+  </div>;
+}
+
 /** Replace only the lesson plan of a built unit from pasted facilitator notes. */
 export function LessonPlanBuilder({unit,content}:{unit:UnitStandard;content?:UnitContent}) {
   const built=useBuiltUnit(unit.us);
