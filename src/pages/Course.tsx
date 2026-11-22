@@ -3901,16 +3901,6 @@ function UnitPageContent({
             >
               <Icon name={t.icon} size={16} />
               {t.label}
-              {t.id === "quiz" && !namedQuizzes.length && quizResult && (
-                <span className="tab-badge">
-                  {Math.round((quizResult.best / quizResult.total) * 100)}%
-                </span>
-              )}
-              {t.id === "quiz" && namedQuizzes.length > 0 && Object.keys(namedQuizResults).length > 0 && (
-                <span className="tab-badge">
-                  {quizzesCompetent}/{namedQuizzes.length}
-                </span>
-              )}
             </button>
           ))}
       </div>

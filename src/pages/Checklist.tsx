@@ -3,6 +3,9 @@ import { DateTimePicker } from "../components/DateTimePicker";
 import type { Profile } from "../types";
 import { useChecklist, useSectionD } from "../store";
 import type { ChecklistTick } from "../store";
+import { DocumentSignature } from "../components/DocumentSignature";
+import { canSignDocumentField } from "../lib/documentSignatures";
+import { DocumentActions } from "../components/DocumentActions";
 
 interface Row {
   id: string;
@@ -42,6 +45,8 @@ export function ChecklistPage({ profile }: { profile: Profile }) {
 
   return (
     <>
+      <DocumentActions name="Appendix C Checklist" labelled />
+      <div className="document-print-target checklist-export">
       <div className="eyebrow">
         <Icon name="checklist" size={15} />
         Appendix C
@@ -96,6 +101,7 @@ export function ChecklistPage({ profile }: { profile: Profile }) {
           than three months when your Portfolio of Evidence is submitted for assessment.
         </span>
       </div>
+      </div>
     </>
   );
 }
@@ -128,6 +134,8 @@ export function SectionDPage({ profile }: { profile: Profile }) {
 
   return (
     <>
+      <DocumentActions name="Section D Required Evidence and Declaration" labelled />
+      <div className="document-print-target checklist-export">
       <div className="eyebrow">
         <Icon name="document" size={15} />
         Section D
@@ -213,8 +221,16 @@ export function SectionDPage({ profile }: { profile: Profile }) {
               <input
                 value={fields[`sign.${s.id}`] ?? ""}
                 onChange={(e) => setField(`sign.${s.id}`, e.target.value)}
-                placeholder="Name & signature"
-                aria-label={s.label}
+                placeholder="Name"
+                aria-label={`${s.label} name`}
+              />
+              <DocumentSignature
+                className="decl-signature"
+                value={fields[`signature.${s.id}`] ?? ""}
+                savedSignature={canSignDocumentField(profile.role, s.label) ? profile.signatureImage : undefined}
+                label={s.label}
+                editable={canSignDocumentField(profile.role, s.label)}
+                onChange={(value) => setField(`signature.${s.id}`, value)}
               />
               <DateTimePicker
                 withTime={false}
@@ -241,6 +257,7 @@ export function SectionDPage({ profile }: { profile: Profile }) {
           Your entries are saved to your profile automatically. The assessor and moderator sign
           during assessment and moderation of your Portfolio of Evidence.
         </span>
+      </div>
       </div>
     </>
   );
