@@ -857,7 +857,7 @@ export function validateUnitContent(content: UnitContent, requireComplete = true
       const questionIds = outcome.questions.map(question => question.id);
       if (questionIds.some(id => !nonempty(id)) || new Set(questionIds).size !== questionIds.length) throw new Error("Workbook questions need unique IDs within each outcome.");
       for (const question of outcome.questions) {
-        if (!Number.isInteger(question.task) || question.task < 1 || !nonempty(question.text) || !Number.isFinite(question.marks) || question.marks <= 0) throw new Error("Every workbook question needs a task number, text and positive mark.");
+        if (!Number.isInteger(question.task) || question.task < 1 || !nonempty(question.text) || !Number.isFinite(question.marks) || question.marks < 0) throw new Error("Every workbook question needs a task number, text and a non-negative mark.");
       }
     }
   }

@@ -36,7 +36,10 @@ export default async function handler(request: Request): Promise<Response> {
     if (!output) return json({ error: "OpenAI returned no workbook content." }, 502);
     const workbook = JSON.parse(output) as { title: string; outcomes: Array<{ id: string; specificOutcome: number; title: string; learningOutcomes: string[]; questions: Array<{ id: string; task: number; text: string; marks: number }> }> };
     const questions = workbook.outcomes.flatMap(item => item.questions);
-    if (!workbook.title || !questions.length || questions.some(item => !item.text?.trim() || !Number.isFinite(item.marks) || item.marks <= 0) || new Set(questions.map(item => item.id)).size !== questions.length) return json({ error: "The PDF does not provide a reliable question and mark for every task. Nothing was published." }, 422);
+    // A source workbook is allowed to contain unmarked activities. The model
+    // reports those as zero so the UI can show an em dash without inventing a
+    // mark allocation that does not exist in the uploaded document.
+    if (!workbook.title || !questions.length || questions.some(item => !item.text?.trim() || !Number.isFinite(item.marks) || item.marks < 0) || new Set(questions.map(item => item.id)).size !== questions.length) return json({ error: "The PDF does not provide a reliable question for every task. Nothing was published." }, 422);
     return json({ workbook, model, usage: result.usage });
   } catch (error) { return json({ error: error instanceof Error ? error.message : "Workbook generation failed." }, 500); }
 }
