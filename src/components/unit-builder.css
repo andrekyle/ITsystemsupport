@@ -71,6 +71,18 @@
 .unit-builder .unit-builder-panel :is(input,textarea,button):focus { box-shadow:none; outline:none; }
 .unit-builder .unit-builder-panel :is(input,textarea,button):focus-visible { outline:2px solid #777; outline-offset:3px; }
 .unit-import-button:focus-within { outline:2px solid color-mix(in srgb, var(--azure) 35%, transparent); outline-offset:2px; }
+.logbook-import-actions .unit-import-button:focus-within,
+.logbook-import-actions .unit-import-button:focus,
+.logbook-import-actions .unit-import-button:focus-visible {
+  outline:none !important;
+  outline-offset:0 !important;
+  box-shadow:none !important;
+}
+.logbook-import-actions .unit-import-button input:focus,
+.logbook-import-actions .unit-import-button input:focus-visible {
+  outline:none !important;
+  box-shadow:none !important;
+}
 .unit-builder .unit-builder-panel .btn { background:var(--builder-control); color:var(--builder-ink); border:1px solid var(--builder-line); border-radius:99px; font-family:inherit; font-size:14px; padding:8px 16px; margin-right:8px; }
 .unit-builder .unit-builder-panel .unit-build-action { position:relative; overflow:hidden; min-width:220px; opacity:1; }
 .unit-builder .unit-builder-panel .unit-build-action::before { content:""; position:absolute; inset:0 auto 0 0; width:var(--progress,0%); background:linear-gradient(90deg, rgba(59,130,246,.2), rgba(52,211,153,.28)); transition:width .18s ease; }

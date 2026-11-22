@@ -77,8 +77,12 @@ export function WorkbookMemo({ profile, unitId, blueprint, memo, onChange }: { p
 
   if (!isStaff(profile.role)) return null;
 
-  return <section className="card workbook-memo">
-    <div className="workbook-memo-head"><div className="practical-hero-icon"><Icon name="document" size={26}/></div><div><span className="practical-kicker">{blueprint.length ? "Learner Workbook" : "Unit standard"}</span><h2>Marking memo</h2><p>{blueprint.length ? "Staff-only model answers and marking criteria. Administrators can upload or replace the official PDF memo used for semantic marking." : "Administrators can upload or replace the PDF memo for this unit standard."}</p></div></div>
+  return <section className="card workbook-memo activity-editor-card">
+    <header className="workbook-memo-head activity-editor-card-header">
+      <div><span className="practical-kicker">Marking memo builder</span><h2>Marking memo</h2></div>
+      <span className="activity-editor-draft">{memo.items.length || memo.file ? "Ready" : "Draft"}</span>
+    </header>
+    <p className="workbook-memo-intro">{blueprint.length ? "Upload the official PDF memo used for model answers and marking criteria." : "Upload or replace the PDF memo for this unit standard."}</p>
     <div className="workbook-memo-upload">
       {canManage && <><input ref={input} hidden type="file" accept="application/pdf,.pdf" onChange={event => { const file=event.target.files?.[0]; event.target.value=""; void pick(file); }}/>
       <button className="btn" type="button" disabled={busy} onClick={()=>input.current?.click()}><Icon name="upload" size={16}/> {busy ? blueprint.length ? `Reading memo… ${progress}%` : `Uploading memo… ${progress}%` : memo.file ? "Replace memo PDF" : "Upload memo PDF"}</button></>}
