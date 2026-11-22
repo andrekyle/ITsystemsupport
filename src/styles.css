@@ -11092,6 +11092,47 @@ a.plan-ppt:hover {
   justify-content: flex-end;
   width: 100%;
 }
+.activity-editor-card { max-width: 860px; margin: 12px 0 18px; padding: 16px; border-color: var(--border); }
+.activity-editor-card-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.activity-editor-card-header > div > span { color:var(--azure); font-size:10px; font-weight:700; letter-spacing:.08em; }
+.activity-editor-card-header h3 { margin:2px 0 0; font-size:20px; }
+.activity-editor-draft { padding:3px 8px; border:1px solid var(--border); border-radius:999px; color:var(--ink-2); background:var(--surface-2); font-size:11px; font-weight:600; }
+.activity-question-editor { display:grid; gap:12px; }
+.activity-question-editor-intro { margin:0; color:var(--ink-2); font-size:13px; line-height:1.4; }
+.activity-editor-fields { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.6fr); gap:12px; }
+.activity-question-editor .activity-editor-field { margin:0; }
+.activity-editor-field > span { display:block; margin-bottom:4px; color:var(--ink); font-size:12px; font-weight:650; }
+.activity-editor-field > span em { color:var(--ink-3); font-style:normal; font-weight:400; }
+.activity-editor-field input,
+.activity-editor-field textarea,
+.activity-editor-question > textarea { box-sizing:border-box; width:100%; border:1px solid var(--border-2); border-radius:9px; background:var(--surface); color:var(--ink); font:inherit; }
+.activity-editor-field input,
+.activity-editor-field textarea { height:40px; padding:7px 10px; font-size:13px; }
+.activity-editor-field textarea { min-height:40px; overflow-y:hidden; }
+.activity-editor-field textarea,
+.activity-editor-question > textarea { min-height:64px; resize:vertical; }
+.activity-editor-field textarea::-webkit-resizer,
+.activity-editor-question > textarea::-webkit-resizer { opacity:0; background:transparent; }
+.activity-editor-questions { padding-top:12px; border-top:1px solid var(--border); }
+.activity-editor-questions-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.activity-editor-questions-header h4 { margin:0; font-size:15px; }
+.activity-editor-count { color:var(--ink-3); font-size:11px; font-weight:600; white-space:nowrap; }
+.activity-editor-question-list { display:grid; gap:8px; margin:10px 0; padding:0; list-style:none; }
+.activity-editor-question { padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--surface-2); }
+.activity-editor-question-heading { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.activity-editor-question-heading label { flex:1; color:var(--ink); font-size:12px; font-weight:650; }
+.activity-editor-question-number { display:grid; width:22px; height:22px; place-items:center; border-radius:50%; background:var(--azure); color:#fff; font-size:10px; font-weight:700; }
+.activity-editor-question > textarea { display:block; padding:8px 10px; font-size:13px; line-height:1.4; }
+.activity-question-remove { min-height:26px; padding:3px 8px; color:var(--ink-3); font-size:12px; }
+.activity-question-remove:not(:disabled):hover { color:var(--danger, #b42318); }
+.activity-question-add { margin-top:2px; }
+.activity-editor-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+@media(max-width:640px) {
+  .activity-editor-card { padding:14px; }
+  .activity-editor-fields { grid-template-columns:1fr; }
+  .activity-editor-question { padding:9px; }
+  .activity-editor-footer { position:sticky; bottom:0; margin:10px -14px -14px; padding:9px 14px; background:var(--surface); }
+}
 .activity-remove-icon {
   display: inline-flex;
   align-items: center;

@@ -35,7 +35,7 @@ import { SlideViewer } from "../components/SlideViewer";
 import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, LearnerGuideUpload, effectiveBuiltContent } from "../components/UnitBuilder";
 import { lessonEditsAfterInsert, lessonEditsAfterSplit } from "../lib/lessonSectionEdits";
 import { InlineText, InlineIconBtn } from "../components/InlineText";
-import { ActivityInlineEditor } from "../components/ActivityInlineEditor";
+import { ActivityQuestionEditor } from "../components/ActivityQuestionEditor";
 import { applyActivityOverrides } from "../lib/activityOverrides";
 import { UnitContentEditor } from "../components/UnitContentEditor";
 import { PracticalTask } from "../components/PracticalTask";
@@ -3042,8 +3042,8 @@ function UnitPageContent({
   // learner profile. Learners return to their workbook, while AI marking in
   // the workbook remains available without exposing the memo screen.
   useEffect(() => {
-    if (!workbookEnabled && (tab === "workbook" || tab === "memo")) setTab("overview");
-    else if (!isPrivileged && tab === "memo") setTab("workbook");
+    if (!workbookEnabled && tab === "workbook") setTab("overview");
+    else if (!isPrivileged && tab === "memo") setTab(workbookEnabled ? "workbook" : "overview");
   }, [isPrivileged, tab, workbookEnabled]);
   const unitText = (value: string, update: (draft: UnitContent, text: string) => void, label = "Content") => <InlineText value={value} editable={isSuperUser && !!inlineUnit} multiline placeholder={label} onSave={text => setInlineUnit(current => { if (!current) return current; const next = structuredClone(current); update(next, text); return next; })} />;
   const deleteLessonSlide = async (si: number) => {
@@ -3817,12 +3817,16 @@ function UnitPageContent({
   ];
 
   const hasBuiltInWorkbook = ["10135", "114046", "114074", "114076", "8252"].includes(unitId);
+  const memoWorkbook = unitId === "10135" ? WORKBOOK_10135 : unitId === "114074" ? WORKBOOK_114074 : unitId === "114076" ? WORKBOOK_114076 : unitId === "8252" ? WORKBOOK_8252 : content?.workbook;
+  const memoBlueprint = unitId === "114046"
+    ? WORKBOOK_114046_BLUEPRINT
+    : memoWorkbook?.outcomes.map(outcome => ({ id: outcome.id, question: outcome.title, maxMarks: outcome.questions.reduce((total, question) => total + question.marks, 0), tasks: outcome.questions.map(question => ({ task: question.task, text: question.text, marks: question.marks })) })) ?? [];
   const missingTabContent: Partial<Record<UnitTab, boolean>> = {
     lesson: visibleLessonIndices.length === 0,
     material: !builtUnit && decks.length === 0,
     exercises: visibleActivities.length === 0,
     workbook: !hasBuiltInWorkbook && !workbookDocument && !content?.workbook,
-    memo: isPrivileged && !hasBuiltInWorkbook && !content?.workbook,
+    memo: false,
     guide: !["114074", "114076", "114046"].includes(unitId) && !content?.learnerGuide,
     logbook: !logbookData,
     selfassessment: !content?.selfAssessment,
@@ -5816,8 +5820,16 @@ function UnitPageContent({
               of its text.
             </span>
           </div>
-          {isSuperUser && <div className="activity-edit-bar"><button type="button" className="btn ghost sm" disabled={!!activityEditor || !!inlineUnit} onClick={addBuiltActivity}><Icon name="plus" size={14} /> Add activity</button>{!activityEditor && activityEditError && <span role="alert" className="auth-error">{activityEditError}</span>}</div>}
-          {activityEditor && isSuperUser && <div className="card activity-editor-card"><h3>{activityEditor.index === null ? "Add activity" : "Edit activity"}</h3><fieldset disabled={activitySaving} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}><ActivityInlineEditor key={activityEditor.value.id} value={activityEditor.value} disabled={activitySaving} onChange={value => setActivityEditor({ ...activityEditor, value })}/></fieldset><div className="unit-editor-actions"><button type="button" className="btn" disabled={activitySaving} onClick={() => void saveActivityEditor()}>{activitySaving ? "Generating model answers…" : "Save activity"}</button><button type="button" className="btn ghost" disabled={activitySaving} onClick={() => { setActivityEditor(null); setActivityEditError(""); }}>Cancel</button></div>{activityEditError && <p role="alert" className="auth-error">{activityEditError}</p>}</div>}
+          {builtUnit && isSuperUser && <div className="activity-edit-bar"><button type="button" className="btn ghost sm" disabled={!!activityEditor || !!inlineUnit} onClick={addBuiltActivity}><Icon name="plus" size={14} /> Add activity</button>{!activityEditor && activityEditError && <span role="alert" className="auth-error">{activityEditError}</span>}</div>}
+          {activityEditor && builtUnit && isSuperUser && <div className="card activity-editor-card">
+            <div className="activity-editor-card-header"><div><span>ACTIVITY BUILDER</span><h3>{activityEditor.index === null ? "Create an activity" : "Edit activity"}</h3></div><span className="activity-editor-draft">Draft</span></div>
+            <fieldset disabled={activitySaving} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}><ActivityQuestionEditor key={activityEditor.value.id} value={activityEditor.value} onChange={value => setActivityEditor({ ...activityEditor, value })}/></fieldset>
+            <div className="activity-editor-footer">
+              <button type="button" className="btn ghost" disabled={activitySaving} onClick={() => { setActivityEditor(null); setActivityEditError(""); }}>Cancel</button>
+              <button type="button" className="btn" disabled={activitySaving} onClick={() => void saveActivityEditor()}>{activitySaving ? "Generating model answers…" : "Save activity"}</button>
+            </div>
+            {activityEditError && <p role="alert" className="auth-error">{activityEditError}</p>}
+          </div>}
           {(tab === "questions" ? (content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index })) : visibleActivities).map(({ex, kind, index}) => {
             const exRes = progress.units[u.us]?.exercises?.[ex.id];
             const hasChecks = !!ex.checks && ex.checks.length > 0;
@@ -6551,7 +6563,7 @@ function UnitPageContent({
       {workbookEnabled && tab === "workbook" && !workbookDocument && unitId !== "114046" && unitId !== "114074" && unitId !== "114076" && unitId !== "8252" && content?.workbook && <GeneratedWorkbook workbook={content.workbook} unit={u} profile={profile} memoItems={workbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
       {workbookEnabled && tab === "workbook" && unitId === "114076" && <TemplateLearnerWorkbook source114076 workbook={WORKBOOK_114076} unit={u} profile={profile} memoItems={WORKBOOK_MEMO_114076.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
       {workbookEnabled && tab === "workbook" && unitId === "8252" && <Workbook8252 profile={profile} memoItems={effectiveWorkbookMemo.items} values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
-      {workbookEnabled && tab === "memo" && isPrivileged && (unitId === "10135" || unitId === "114046" || unitId === "114074" || unitId === "114076" || unitId === "8252" || content?.workbook) && <WorkbookMemo profile={profile} unitId={unitId} blueprint={unitId === "10135" ? WORKBOOK_10135.outcomes.map(outcome => ({ id: outcome.id, question: outcome.title, maxMarks: outcome.questions.reduce((total, question) => total + question.marks, 0), tasks: outcome.questions.map(question => ({ task: question.task, text: question.text, marks: question.marks })) })) : unitId === "114046" ? WORKBOOK_114046_BLUEPRINT : (unitId === "114074" ? WORKBOOK_114074 : (unitId === "114076" ? WORKBOOK_114076 : unitId === "8252" ? WORKBOOK_8252 : content!.workbook!)).outcomes.map(outcome => ({ id: outcome.id, question: outcome.title, maxMarks: outcome.questions.reduce((total, question) => total + question.marks, 0), tasks: outcome.questions.map(question => ({ task: question.task, text: question.text, marks: question.marks })) }))} memo={unitId === "10135" ? (workbookMemo.items.length ? workbookMemo : WORKBOOK_MEMO_10135) : unitId === "114076" ? workbookMemo : effectiveWorkbookMemo} onChange={next=>setWorkbookMemo(()=>next)} />}
+      {tab === "memo" && isPrivileged && <WorkbookMemo profile={profile} unitId={unitId} blueprint={memoBlueprint} memo={unitId === "10135" ? (workbookMemo.items.length ? workbookMemo : WORKBOOK_MEMO_10135) : unitId === "114076" ? workbookMemo : effectiveWorkbookMemo} onChange={next=>setWorkbookMemo(()=>next)} />}
       {tab === "guide" && unitId === "114074" && <LearnerGuide114074 values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
       {tab === "guide" && unitId !== "114074" && unitId !== "114046" && unitId !== "114076" && content?.learnerGuide && <PracticalTask document={content.learnerGuide} unitId={u.us} profile={profile} storagePrefix="learner-guide." values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}
       {tab === "guide" && unitId === "114076" && <LearnerGuide114076 values={progress.units[u.us]?.logbook ?? {}} onChange={(key, value) => setLogbookField(u.us, key, value)} onSave={() => flushProgress(profile.id)} />}

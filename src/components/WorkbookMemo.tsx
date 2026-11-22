@@ -41,6 +41,12 @@ export function WorkbookMemo({ profile, unitId, blueprint, memo, onChange }: { p
     let stored: Awaited<ReturnType<typeof uploadFile>> | undefined;
     try {
       stored = await uploadFile(`shared/workbook-memos/${unitId}`, file, pct => setProgress(5 + Math.round(pct * .35)));
+      if (!blueprint.length) {
+        if (memo.file?.path && memo.file.path !== stored.path) void deleteFile(memo.file.path);
+        onChange({ ...memo, file: stored, updatedAt: new Date().toISOString() });
+        setProgress(100);
+        return;
+      }
       const fileUrl = await getFileUrl(stored);
       // Cloud uploads use a short-lived signed URL, avoiding Vercel's request
       // body limit. Local-only mode falls back to the data URL.
@@ -72,14 +78,15 @@ export function WorkbookMemo({ profile, unitId, blueprint, memo, onChange }: { p
   if (!isStaff(profile.role)) return null;
 
   return <section className="card workbook-memo">
-    <div className="workbook-memo-head"><div className="practical-hero-icon"><Icon name="document" size={26}/></div><div><span className="practical-kicker">Learner Workbook</span><h2>Marking memo</h2><p>Staff-only model answers and marking criteria. Administrators can upload or replace the official PDF memo used for semantic marking.</p></div></div>
+    <div className="workbook-memo-head"><div className="practical-hero-icon"><Icon name="document" size={26}/></div><div><span className="practical-kicker">{blueprint.length ? "Learner Workbook" : "Unit standard"}</span><h2>Marking memo</h2><p>{blueprint.length ? "Staff-only model answers and marking criteria. Administrators can upload or replace the official PDF memo used for semantic marking." : "Administrators can upload or replace the PDF memo for this unit standard."}</p></div></div>
     <div className="workbook-memo-upload">
       {canManage && <><input ref={input} hidden type="file" accept="application/pdf,.pdf" onChange={event => { const file=event.target.files?.[0]; event.target.value=""; void pick(file); }}/>
-      <button className="btn" type="button" disabled={busy} onClick={()=>input.current?.click()}><Icon name="upload" size={16}/> {busy ? `Reading memo… ${progress}%` : memo.file ? "Replace memo PDF" : "Upload memo PDF"}</button></>}
+      <button className="btn" type="button" disabled={busy} onClick={()=>input.current?.click()}><Icon name="upload" size={16}/> {busy ? blueprint.length ? `Reading memo… ${progress}%` : `Uploading memo… ${progress}%` : memo.file ? "Replace memo PDF" : "Upload memo PDF"}</button></>}
       {memo.file && <>{(memo.file.path || memo.file.data) && <button className="btn ghost" type="button" onClick={()=>void downloadDoc(memo.file!)}><Icon name="download" size={16}/> Download memo</button>}<span className="muted">{memo.file.name}</span></>}
     </div>
     {error && <p className="auth-error" role="alert">{error}</p>}
     {!!memo.items.length && <div className="workbook-memo-ready"><Icon name="checkCircle" size={18}/><div><strong>Memo ready for marking</strong><span>{memo.items.length} activities · {memo.items.reduce((sum,item)=>sum+item.criteria.length,0)} marking criteria{memo.updatedAt ? ` · updated ${new Date(memo.updatedAt).toLocaleString()}` : ""}</span></div></div>}
+    {!blueprint.length && memo.file && <div className="workbook-memo-ready"><Icon name="checkCircle" size={18}/><div><strong>Memo uploaded</strong><span>{memo.file.name}{memo.updatedAt ? ` · updated ${new Date(memo.updatedAt).toLocaleString()}` : ""}</span></div></div>}
     {!!memo.items.length && <div className="workbook-memo-list">{memo.items.map(item=><details key={item.id}><summary><span>{item.question}</span><b>{item.maxMarks} marks</b></summary>{item.tasks?.length ? <table className="workbook-memo-table"><thead><tr><th>Question and model answer</th><th>Marks</th></tr></thead><tbody>{[...item.tasks].sort((a,b)=>a.task-b.task).map(task=><tr key={task.id}><td><strong>Task {task.task}</strong><span>{task.text}</span><p style={{ whiteSpace: "pre-wrap" }}>{task.modelAnswer}</p></td><td>{task.marks}</td></tr>)}</tbody></table> : null}<h4>Marking criteria</h4><table className="workbook-memo-table"><thead><tr><th>Criterion</th><th>Marks</th></tr></thead><tbody>{item.criteria.map(criterion=><tr key={criterion.id}><td>{criterion.text}</td><td>{criterion.marks}</td></tr>)}</tbody></table></details>)}</div>}
   </section>;
 }
