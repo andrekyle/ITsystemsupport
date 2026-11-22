@@ -117,12 +117,27 @@ export async function rebuildCoursePdf(file: File, title: string, onProgress?: (
   const replica = await convertPdfHtml(imported, onProgress);
   for (const section of replica.sections) {
     const used = new Set<string>();
-    section.fields = section.fields.map(field => {
-      const match = previous.find(old => !used.has(old.id) && old.placement && field.placement && old.placement.page === field.placement.page && old.placement.box && field.placement.box && overlaps(old.placement.box, field.placement.box));
-      if (!match) return { ...field, id: `html_${field.id}` };
+    const pageNumber = Number(section.id.replace(/^page_/, ""));
+    const pageFields = previous.filter(field => field.placement?.page === pageNumber);
+    section.fields = section.fields.flatMap(field => {
+      const match = field.placement
+        ? pageFields.find(old => !used.has(old.id) && old.placement?.box && field.placement?.box && overlaps(old.placement.box, field.placement.box))
+        : pageFields.find(old => !used.has(old.id) && old.type === field.type)
+          ?? pageFields.find(old => !used.has(old.id));
+      // The model occasionally returns a useful semantic field without page
+      // coordinates. Reuse the corresponding source answer area's placement;
+      // a field that cannot be tied to the original page must not be published.
+      if (!match) return field.placement ? [{ ...field, id: `html_${field.id}` }] : [];
       used.add(match.id);
-      return { ...field, id: match.id };
+      return [{ ...field, id: match.id, placement: match.placement }];
     });
+    // Preserve answer areas detected directly from the PDF when the AI did
+    // not describe them. This keeps every editable control source-anchored.
+    for (const field of pageFields) {
+      if (!used.has(field.id) && !section.fields.some(existing => existing.placement?.box && field.placement?.box && overlaps(existing.placement.box, field.placement.box))) {
+        section.fields.push(field);
+      }
+    }
   }
   for (const native of imported.definition?.sections.flatMap(section => section.fields) ?? []) {
     const section = replica.sections.find(item => item.id === `page_${native.placement?.page}`);
