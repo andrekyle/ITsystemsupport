@@ -1,4 +1,4 @@
-.content-inner:has(.evidence-register-page) { max-width: none; padding-left: 20px; padding-right: 20px; }
+.content-inner:has(.evidence-register-page) { max-width: none; padding: 16px 20px 24px; }
 .evidence-register-page { max-width: none; width: 100%; color: var(--ink); }
 .portfolio-review-modal { width: min(560px, calc(100vw - 32px)); }
 .portfolio-review-modal .modal-title { font-size: 19px; font-weight: 600; margin-bottom: 16px; }
@@ -67,7 +67,7 @@
 .evidence-register-page .portfolio-page-header p { margin: 0; color: var(--ink-3); font-size: 13px; line-height: 1.5; }
 .evidence-register-page .portfolio-heading-brand { flex: 0 0 auto; }
 .evidence-register-page .portfolio-heading-brand .portfolio-brand { width: 150px; margin: 0; }
-.evidence-register-page .evidence-register-toolbar { display: grid; grid-template-columns: minmax(230px, 320px) 1fr; align-items: end; gap: 6px 16px; padding: 0; margin-bottom: 8px; }
+.evidence-register-page .evidence-register-toolbar { display: grid; grid-template-columns: minmax(230px, 320px) 1fr; align-items: end; gap: 8px 16px; padding: 12px; margin-bottom: 8px; }
 .evidence-register-page .evidence-register-toolbar .evidence-learner-picker { flex-direction: column; align-items: stretch; gap: 6px; }
 .evidence-register-page .evidence-learner-picker > strong { font-size: 11px; font-weight: 600; color: var(--ink-2); }
 .evidence-register-page .evidence-register-toolbar .evidence-learner-picker .nice-select { width: 100%; }

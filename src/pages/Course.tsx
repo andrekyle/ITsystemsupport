@@ -17,7 +17,6 @@ import { useInlineCourse } from "../components/useInlineCourse";
 import { courseScopedKey, courseScopedUnit } from "../lib/courseScope";
 import { Select } from "../components/Select";
 import { GLOSSARY, getContent } from "../data/content";
-import { getSaqaDetails } from "../data/saqaDetails";
 import { FIGURE_DEFAULTS as BASE_FIGURE_DEFAULTS } from "../data/figureDefaults";
 import { HWSW_SLIDE_FIGURES } from "../data/hwswSlideFigures";
 const FIGURE_DEFAULTS = { ...BASE_FIGURE_DEFAULTS, ...HWSW_SLIDE_FIGURES };
@@ -33,7 +32,7 @@ import { videoEngagementKey, videoQuizId } from "../lib/videoLearning";
 import { fiveResearchSelfAssessment } from "../lib/selfAssessment114076";
 import { isRichText, richTextHtml, saveRichText, plainSlideText, sanitizeSlideHtml, hydrateSlideImages, normalizeSlideDocument, inlineFigureReferences } from "../lib/slideRichText";
 import { SlideViewer } from "../components/SlideViewer";
-import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, effectiveBuiltContent } from "../components/UnitBuilder";
+import { UnitBuilder, BuiltUnitDownloads, LessonPlanBuilder, LogbookBuilder, LearnerGuideUpload, effectiveBuiltContent } from "../components/UnitBuilder";
 import { lessonEditsAfterInsert, lessonEditsAfterSplit } from "../lib/lessonSectionEdits";
 import { InlineText, InlineIconBtn } from "../components/InlineText";
 import { ActivityInlineEditor } from "../components/ActivityInlineEditor";
@@ -88,7 +87,7 @@ import { isLessonBulletListLead, isLessonListLead, isLessonListPoint, isLessonNu
 import { clearInlineDraft, loadInlineDraft, saveInlineDraft } from "../lib/inlineDraftStorage";
 import { resolvedSlideQuizAnswer } from "../lib/slideQuiz";
 import { parseLessonQuizState, reconcileLessonQuiz, recordLessonQuiz, type LessonQuizState } from "../lib/lessonQuizProgress";
-import { InlineEditingTools, EditingTools } from "../components/EditingSidebar";
+import { EditingTools } from "../components/EditingSidebar";
 import { InfoSectionTabs } from "../components/InfoSectionTabs";
 import { usePhoneView } from "../components/usePhoneView";
 
@@ -1901,7 +1900,7 @@ export function CoursePage({
         onCancel={() => setDeletingCourse(false)}
         onConfirm={() => void removeCourse()}
       />}
-      <div className="meta-row">
+      <div className="meta-row" style={{ display: "none" }}>
         <a
           className="pill"
           href={`https://allqs.saqa.org.za/showQualification.php?id=${COURSE_META.saqaId}`}
@@ -2012,6 +2011,7 @@ export function CoursePage({
         })}
       </div>
 
+      <div hidden>
       <div className="tabs" role="tablist" aria-label="Programme information">
         {programmeTabs.map((tab, index) => (
           <button
@@ -2213,6 +2213,7 @@ export function CoursePage({
         ))}
       </div>
       </section>
+      </div>
     </>
   );
 }
@@ -2320,7 +2321,6 @@ export function ModulePage({
         const st = unitStatus(progress, u.us);
         const uc = unitCompletion(progress, u.us);
         const locked = unitLocked(u, profile.role);
-        const unlockAt = unitUnlockTime(u);
         const defaultPhoto = UNIT_TILE_PHOTOS[u.us];
         const photo = u.image ? { src: u.image, alt: u.title, referenceHeader: !!u.imageIncludesText } : defaultPhoto;
         const credit = photo?.credit ? BASE_FIGURE_DEFAULTS[photo.credit] : undefined;
@@ -2361,32 +2361,6 @@ export function ModulePage({
                   {inline.text(u.title, (d, v) => { d.modules[idx].units[ui].title = v; }, "title", activeUnit === ui)}
                 </span>
               </span>
-              <span className="m">
-                <span>
-                  <Icon name="trend" size={13} /> NQF {inline.text(u.nqf, (d, v) => { d.modules[idx].units[ui].nqf = Number(v); }, "nqf", activeUnit === ui)}
-                </span>
-                {(inline.editing || u.credits > 0) && (
-                  <span>
-                    <Icon name="award" size={13} /> {inline.text(u.credits, (d, v) => { d.modules[idx].units[ui].credits = Number(v); }, "credits", activeUnit === ui)} credits
-                  </span>
-                )}
-                <span>
-                  <Icon name="calendar" size={13} /> {inline.text(u.dates, (d, v) => { d.modules[idx].units[ui].dates = v; }, "dates", activeUnit === ui)}
-                </span>
-                <span>
-                  <Icon name="clock" size={13} /> {inline.text(u.time, (d, v) => { d.modules[idx].units[ui].time = v; }, "time", activeUnit === ui)}
-                </span>
-                {locked && unlockAt && (
-                  <span className="unlock-note">
-                    <Icon name="lock" size={13} /> Available {fmtUnlock(unlockAt)}
-                  </span>
-                )}
-                {uc > 0 && uc < 1 && (
-                  <span>
-                    <Icon name="target" size={13} /> {Math.round(uc * 100)}%
-                  </span>
-                )}
-              </span>
               {inline.editing && <UnitLiveActions module={mod} index={ui} editing={activeUnit === ui} onEdit={active => setActiveUnit(active ? ui : null)} disabled={inline.busy} onBusyChange={inline.metadataBusy}
                 onChange={update => inline.change(d => { const target = d.modules.find(item => item.id === mod.id); if (target) update(target); })} />}
             </span>
@@ -2409,7 +2383,7 @@ function fmtSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-type UnitTab = "overview" | "saqa" | "lesson" | "material" | "notes" | "exercises" | "questions" | "assignments" | "practical" | "workbook" | "memo" | "guide" | "logbook" | "quiz" | "selfassessment" | "evaluation" | "plan" | `custom-${string}` | `pdf-${string}`;
+type UnitTab = "overview" | "lesson" | "material" | "notes" | "exercises" | "questions" | "assignments" | "practical" | "workbook" | "memo" | "guide" | "logbook" | "quiz" | "selfassessment" | "evaluation" | "plan" | `custom-${string}` | `pdf-${string}`;
 
 /** Built-in lesson decks shipped with the app (public/downloads), per unit
  *  standard — always shown on the Course material tab ahead of uploads. */
@@ -2433,7 +2407,7 @@ const BUILTIN_DECKS: Record<string, { name: string; url: string }[]> = {
 
 const UNIT_TAB_KEY = "itss.unittab";
 const UNIT_TAB_US_KEY = "itss.unittab.us";
-const UNIT_TABS: UnitTab[] = ["overview", "saqa", "lesson", "material", "notes", "exercises", "questions", "assignments", "practical", "workbook", "memo", "guide", "logbook", "quiz", "selfassessment", "evaluation", "plan"];
+const UNIT_TABS: UnitTab[] = ["overview", "lesson", "material", "notes", "exercises", "questions", "assignments", "practical", "workbook", "memo", "guide", "logbook", "quiz", "selfassessment", "evaluation", "plan"];
 
 /** Restore the saved tab only for the same unit standard — opening another US always starts on Overview. */
 function loadUnitTab(unitId: string): UnitTab {
@@ -2946,8 +2920,6 @@ function UnitPageContent({
   const [requestedEditMode, setEditMode] = useState(false);
   const editMode = !phone && requestedEditMode;
   const [slideEditOpen, setSlideEditOpen] = useState(false);
-  const [unitToolsOpen, setUnitToolsOpen] = useState(false);
-  useEffect(() => { setUnitToolsOpen(false); }, [unitId]);
   const [inlineActionsTarget, setInlineActionsTarget] = useState<HTMLDivElement | null>(null);
   const [unitHeaderOpen, setUnitHeaderOpen] = useState(tab !== "lesson");
   useEffect(() => { setSlideEditOpen(false); }, [unitId, tab, lessonStep]);
@@ -3005,13 +2977,8 @@ function UnitPageContent({
   const uc = unitCompletion(progress, u.us);
   const acts = { ...progress.units[u.us]?.activities };
   if (hasFormativeEvidence(progress.units[u.us])) acts["Formative Assessment"] = true;
-  const completedActivities = UNIT_ACTIVITIES.filter(activity => !!acts[activity]).length;
-  const nextActivity = UNIT_ACTIVITIES.find(activity => !acts[activity]);
   const baseContent: UnitContent = applyActivityOverrides(builtUnit?.content ?? getContent(u.us) ?? { lesson: [], exercises: [], assignments: [], quiz: [] }, lessonEdits.activityOverrides);
-  const officialSaqa = getSaqaDetails(u.us);
-  const content = inlineUnit ?? (officialSaqa
-    ? { ...(baseContent ?? { lesson: [], exercises: [], assignments: [], quiz: [] }), saqa: officialSaqa }
-    : baseContent);
+  const content = inlineUnit ?? baseContent;
   const slideQuizDefinitions = useMemo(() => content?.lesson.map((section, si) => ({
     heading: section.heading,
     questions: lessonEdits.generatedQuizzes?.[si] ?? section.slideQuiz ?? [],
@@ -3851,7 +3818,6 @@ function UnitPageContent({
 
   const hasBuiltInWorkbook = ["10135", "114046", "114074", "114076", "8252"].includes(unitId);
   const missingTabContent: Partial<Record<UnitTab, boolean>> = {
-    saqa: !content?.saqa,
     lesson: visibleLessonIndices.length === 0,
     material: !builtUnit && decks.length === 0,
     exercises: visibleActivities.length === 0,
@@ -3947,24 +3913,17 @@ function UnitPageContent({
       </details>
       </div>
 
-      {isSuperUser && <section aria-label="Unit content management" style={{ margin: "16px 0" }}>
-        <button type="button" className="btn solid" aria-expanded={unitToolsOpen || !!inlineUnit} aria-controls="unit-content-manager" onClick={() => setUnitToolsOpen(open => !open)}>
-          <Icon name="document" size={16} />{unitToolsOpen ? "Close content tools" : "Generate, upload, edit and download"}
-        </button>
-        <div id="unit-content-manager" hidden={!unitToolsOpen && !inlineUnit}>
-          <p>Supply the teaching content for this unit. Build documents generates the lessons and supporting materials. Content and structure lets you review and edit the tabs; Files and exports provides downloads.</p>
-          <InlineEditingTools><UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} profileId={profile.id}
-            open={unitToolsOpen || !!inlineUnit} inlineDraft={inlineUnit} inlineActionsTarget={inlineActionsTarget}
-            onCancelInline={() => { setInlineUnit(undefined); setEditMode(false); }}
-            onSaved={() => { setInlineUnit(undefined); setEditMode(false); setLessonSaveStatus("saved"); }} /></InlineEditingTools>
-        </div>
-      </section>}
+      {isSuperUser && inlineUnit && <div hidden>
+        <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} profileId={profile.id}
+          inlineDraft={inlineUnit} inlineActionsTarget={inlineActionsTarget}
+          onCancelInline={() => { setInlineUnit(undefined); setEditMode(false); }}
+          onSaved={() => { setInlineUnit(undefined); setEditMode(false); setLessonSaveStatus("saved"); }} />
+      </div>}
 
-      {missingTabContent[tab] && <section className="card unit-tab-empty" role="status">
+      {missingTabContent[tab] && <section className="card unit-tab-empty" role={tab === "guide" && isSuperUser ? undefined : "status"}>
         <h2>{tabs.find(item => item.id === tab)?.label}</h2>
         <p>This unit's {tabs.find(item => item.id === tab)?.label.toLowerCase()} content has not been added yet.</p>
-        {isSuperUser && <button type="button" className="btn ghost" onClick={() => setUnitToolsOpen(true)}>Add content for this unit</button>}
-        {tab === "saqa" && /^\d+$/.test(u.us) && <a href={`https://allqs.saqa.org.za/showUnitStandard.php?id=${u.us}`} target="_blank" rel="noopener noreferrer">View the official SAQA record</a>}
+        {tab === "guide" && isSuperUser && !inlineUnit && <LearnerGuideUpload unit={u} content={content} />}
       </section>}
 
       {tab === "overview" && (
@@ -3978,22 +3937,12 @@ function UnitPageContent({
           <p className="muted">
             Follow the steps below and mark each stage when complete. Your progress is saved to your profile.
           </p>
-          <div className="activity-progress card">
-            <div className="activity-progress-heading" aria-live="polite">
-              <strong>{completedActivities === UNIT_ACTIVITIES.length ? "All stages complete" : "Your learning journey"}</strong>
-              <span>{completedActivities} of {UNIT_ACTIVITIES.length} stages complete</span>
-            </div>
-            <div className="activity-progress-ring" role="progressbar" aria-label="Learning activities completed"
-              aria-valuemin={0} aria-valuemax={UNIT_ACTIVITIES.length} aria-valuenow={completedActivities}>
-              <Ring value={completedActivities / UNIT_ACTIVITIES.length} size={56} stroke={5} showLabel />
-            </div>
-          </div>
           <ol className="activity-steps">
           {UNIT_ACTIVITIES.map((a, index) => {
             const done = !!acts[a];
             const info = ACTIVITY_INFO[a];
             return (
-              <li key={a} className={`activity-step${done ? " is-complete" : ""}${a === nextActivity ? " is-next" : ""}`}>
+              <li key={a} className={`activity-step${done ? " is-complete" : ""}`}>
               <button
                 type="button"
                 className="activity-step-button"
@@ -4011,151 +3960,13 @@ function UnitPageContent({
                     <Gloss text={info.desc} />
                   </span>
                 </span>
-                <span className="activity-step-status">
-                  {done ? "Complete" : a === nextActivity ? "Next step" : "To do"}
-                </span>
               </button>
               </li>
             );
           })}
           </ol>
-          <p className="activity-checklist-hint">Select a step to mark it complete. Select it again to undo.</p>
-
-          {content && (() => {
-            const parts = [
-              `a ${visibleLessonIndices.length}-section lesson`,
-              visibleActivities.length ? `${visibleActivities.length} activities` : null,
-              content.assignments.length ? `${content.assignments.length} assignments` : null,
-              content.quiz.length ? `a ${content.quiz.length}-question knowledge check` : null,
-              content.quizzes?.length ? `${content.quizzes.length} knowledge quizzes` : null,
-            ].filter((p): p is string => !!p);
-            const text =
-              parts.length > 1
-                ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`
-                : parts[0];
-            return (
-              <div className="callout">
-                <span className="ico">
-                  <Icon name="book" size={19} />
-                </span>
-                <span>
-                  This unit standard has full learning material: {text}. Expand the unit menu above to work
-                  through it.
-                </span>
-              </div>
-            );
-          })()}
 
         </section>
-      )}
-
-      {tab === "saqa" && content?.saqa && (
-        <section className="assessments-page saqa-tabbed-details">
-          {content?.saqa && (
-            <>
-              <h2 className="section-title">
-                <span className="ico">
-                  <Icon name="certificate" size={20} />
-                </span>
-                SAQA registered unit standard details
-              </h2>
-              <div className="callout" style={{ marginTop: 0 }}>
-                <span className="ico">
-                  <Icon name="info" size={19} />
-                </span>
-                <span>{unitText(content.saqa.notice, (d, v) => { d.saqa!.notice = v; })}</span>
-              </div>
-
-              {content.saqa.source && (
-                <p className="muted saqa-source">
-                  <a href={content.saqa.source.url} target="_blank" rel="noopener noreferrer">View official SAQA record</a>
-                  {" · "}Checked {content.saqa.source.retrieved}. Registration and enrolment dates are historical record fields, not confirmation of current enrolment eligibility.
-                </p>
-              )}
-              <InfoSectionTabs key={unitId} id={`saqa-${unitId}`} sections={[
-                { title: "Registration details", icon: "document", content: (
-                <div className="saqa-table-scroll">
-                <table className="data kv">
-                  <tbody>
-                    {content.saqa.registration.map((r, ri) => (
-                      <tr key={ri}>
-                        <td className="k">{unitText(r.label, (d, v) => { d.saqa!.registration[ri].label = v; })}</td>
-                        <td>
-                          {inlineUnit ? unitText(r.value, (d, v) => { d.saqa!.registration[ri].value = v; }) : <Gloss text={r.value} />}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                </div>
-                ) },
-
-              ...content.saqa.sections.map((sec, si) => ({
-                title: sec.heading,
-                heading: unitText(sec.heading, (d, v) => { d.saqa!.sections[si].heading = v; }),
-                icon: sec.icon,
-                content: (
-                  <div className="saqa-body">
-                    {sec.paragraphs?.map((p, i) => (
-                      <p key={i} className="lesson-p">
-                        {unitText(p, (d, v) => { d.saqa!.sections[si].paragraphs![i] = v; })}
-                      </p>
-                    ))}
-                    {sec.bullets && (
-                      <ul className="duty-list">
-                        {sec.bullets.map((b, bi) => (
-                          <li key={b}>
-                            <span className="ico">
-                              <Icon name="chevronRight" size={14} />
-                            </span>
-                            <span>
-                              {inlineUnit ? unitText(b, (d, v) => { d.saqa!.sections[si].bullets![bi] = v; }) : <LessonBullet text={b} />}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    {sec.table && (
-                      <div className="saqa-table-scroll">
-                      <table className="data" style={{ marginTop: 10 }}>
-                        <thead>
-                          <tr>
-                            {sec.table.headers.map((h, hi) => (
-                              <th key={hi}>{unitText(h, (d, v) => { d.saqa!.sections[si].table!.headers[hi] = v; })}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {sec.table.rows.map((row, ri) => (
-                            <tr key={ri}>
-                              {row.map((cell, ci) => (
-                                <td key={ci}>{inlineUnit ? unitText(cell, (d, v) => { d.saqa!.sections[si].table!.rows[ri][ci] = v; }) : ci <= 1 ? <strong>{cell}</strong> : cell}</td>
-                              ))}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      </div>
-                    )}
-                  </div>
-                ),
-              })),
-              ]} />
-            </>
-          )}
-
-        </section>
-      )}
-
-      {(tab === "saqa" || tab === "overview") && (
-          <div className="callout">
-            <span className="ico">
-              <Icon name="info" size={19} />
-            </span>
-            <span>
-              <Gloss text="Assessment must address this unit standard's specific outcomes, assessment criteria and stated range. Confirm assessor, moderation and current enrolment requirements with your provider and the relevant quality assurance body. Constructive feedback is provided after each assessment." />
-            </span>
-          </div>
       )}
 
       {firstSlideDraft && <Modal title="Create first lesson slide" onClose={() => { if (!addingSlide) setFirstSlideDraft(null); }} actions={<>
@@ -6298,8 +6109,10 @@ function UnitPageContent({
         </>
       )}
 
-      {tab === "logbook" && content?.logbook && logbookData && (
+      {tab === "logbook" && (
         <>
+          {isSuperUser && <LogbookBuilder unit={u} content={content} />}
+          {content?.logbook && logbookData && <>
           {isSuperUser && (
             <CourseEditingTools active={editMode} title="Logbook editing">
             <div className="plan-edit-bar">
@@ -6339,7 +6152,6 @@ function UnitPageContent({
             </div>
             </CourseEditingTools>
           )}
-          {isSuperUser && <LogbookBuilder unit={u} content={content} />}
           <Logbook
             spec={logbookData}
             profile={profile}
@@ -6348,6 +6160,7 @@ function UnitPageContent({
             editable={isSuperUser && editMode}
             onSpecChange={(spec) => editSetLogbook(spec)}
           />
+          </>}
         </>
       )}
 

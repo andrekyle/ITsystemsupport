@@ -13,12 +13,10 @@ import {
   useSharedSettings,
 } from "../store";
 import { logAudit } from "../lib/audit";
-import { cloudLeaderboard, leaderboard, type LeaderboardRow } from "../lib/gamification";
+import { leaderboard } from "../lib/gamification";
 import {
   fetchCohortLeaderboard,
-  fetchCloudLearnerData,
   type CohortLeaderboardEntry,
-  type CloudLearnerData,
 } from "../lib/directory";
 import { mailtoLink, outlookComposeLink, teamsChatLink } from "../lib/integrations";
 import { Avatar } from "../components/Avatar";
@@ -638,34 +636,11 @@ function QaBoard({ profile, staff }: { profile: Profile; staff: boolean }) {
 
 function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Route) => void }) {
   const assignments = useAssignments();
-  const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
-  const [cloudError, setCloudError] = useState(false);
   const [classScores, setClassScores] = useState<CohortLeaderboardEntry[] | null>(null);
-  const [classScoresLoading, setClassScoresLoading] = useState(profile.role === "Learner" && cloudEnabled);
+  const [classScoresLoading, setClassScoresLoading] = useState(cloudEnabled);
   const [classScoresError, setClassScoresError] = useState("");
   useEffect(() => {
-    if (!cloudEnabled) return;
-    let alive = true;
-    const load = async () => {
-      try {
-        const data = await fetchCloudLearnerData();
-        if (!alive) return;
-        setCloudError(!data);
-        if (data) setCloud(data);
-      } catch (error) {
-        console.error("Could not refresh leaderboard evidence:", error);
-        if (alive) setCloudError(true);
-      }
-    };
-    void load();
-    const refresh = window.setInterval(() => { void load(); }, 60_000);
-    return () => {
-      alive = false;
-      window.clearInterval(refresh);
-    };
-  }, [profile.role]);
-  useEffect(() => {
-    if (profile.role !== "Learner" || !cloudEnabled) {
+    if (!cloudEnabled) {
       setClassScores(null);
       setClassScoresLoading(false);
       setClassScoresError("");
@@ -681,8 +656,8 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
           if (alive) setClassScores(scores);
         })
         .catch((error) => {
-          console.error("Could not load class leaderboard XP:", error);
-          if (alive) setClassScoresError("Class XP could not be loaded. Ask your administrator to check the class leaderboard setup.");
+          console.error("Could not load leaderboard XP:", error);
+          if (alive) setClassScoresError("Leaderboard scores could not be loaded. Ask your administrator to check the leaderboard setup.");
         })
         .finally(() => {
           if (alive) setClassScoresLoading(false);
@@ -696,37 +671,22 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
     };
   }, [profile.id, profile.cloudUserId, profile.role]);
 
-  // Learner scores come from a cohort-scoped RPC so other learners' saved
-  // evidence is never exposed. Staff use the cloud directory; offline builds
-  // retain the local-only leaderboard.
-  const allRows: LeaderboardRow[] = cloud
-    ? cloudLeaderboard(cloud, profile)
-    : cloudEnabled
-    ? [] // still loading — keep the spinner-less empty state until cloud lands
-    : leaderboard(loadProfiles());
-
   type DisplayRow = {
     profile: Profile;
     xp: number;
-    level?: number;
-    levelName?: string;
-    earnedBadges?: number;
   };
-  const visibleRows: DisplayRow[] = profile.role === "Learner" && cloudEnabled
+  const visibleRows: DisplayRow[] = cloudEnabled
     ? (classScores ?? []).map((entry) => {
-        const detail = allRows.find((row) =>
-          row.profile.id === entry.profile.id ||
-          (!!entry.profile.cloudUserId && row.profile.cloudUserId === entry.profile.cloudUserId)
-        );
         const isCurrent = entry.profile.id === profile.id ||
           (!!profile.cloudUserId && entry.profile.cloudUserId === profile.cloudUserId);
         return {
-          ...detail,
           profile: isCurrent ? profile : entry.profile,
           xp: entry.xp,
         };
       })
-    : allRows.filter(row => canSeeProfile(profile, row.profile, assignments));
+    : leaderboard(loadProfiles())
+        .filter(row => canSeeProfile(profile, row.profile, assignments))
+        .map(row => ({ profile: row.profile, xp: row.xp }));
   const rows = visibleRows;
   const isCurrentRow = (row: DisplayRow) =>
     row.profile.id === profile.id || (!!profile.cloudUserId && row.profile.cloudUserId === profile.cloudUserId);
@@ -741,22 +701,13 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
         Class leaderboard
       </h2>
       <div className="card leaderboard-card">
-        {cloudError && (
-          <p className="auth-error" role="alert">
-            Could not load complete learner evidence. {cloud ? "Showing the last successfully loaded scores." : "Scores are unavailable."} Retrying automatically.
-          </p>
-        )}
         {classScoresError && <p className="auth-error" role="alert">{classScoresError}</p>}
         {rows.length === 0 ? (
           <p className="mini-note">
             {classScoresLoading
-              ? "Loading classmates' XP…"
+              ? "Loading class XP…"
               : classScoresError
-              ? "Class rankings are unavailable right now."
-              : cloudError
-              ? "Waiting for complete class data."
-              : cloudEnabled && !cloud
-              ? "Loading class data…"
+              ? "The leaderboard is unavailable right now."
               : "No learners yet — the leaderboard fills up as the class works."}
           </p>
         ) : (
@@ -764,11 +715,6 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
             {rows.map((r, i) => {
               const canView = isStaff(profile.role) || r.profile.role === "Learner";
               const isMe = isCurrentRow(r);
-              const subtitle = isMe
-                ? r.level !== undefined && r.levelName && r.earnedBadges !== undefined
-                  ? `Level ${r.level} · ${r.levelName} · ${r.earnedBadges} badges`
-                  : "You"
-                : "Classmate";
               return (
               <li
                 key={r.profile.id}
@@ -780,7 +726,7 @@ function Leaderboard({ profile, navigate }: { profile: Profile; navigate: (r: Ro
                 <Avatar profile={r.profile} size={30} />
                 <span className="lb-name">
                   {r.profile.name}
-                  <span className="mini-note">{subtitle}</span>
+                  <span className="mini-note">{isMe ? "You" : "Classmate"}</span>
                 </span>
                 <span className="lb-xp">{r.xp} XP</span>
               </li>

@@ -82,6 +82,71 @@
 .unit-builder-panel .unit-build-action:disabled { opacity:1; }
 @media(max-width:480px) { .unit-settings-card { padding:0 16px; } .unit-settings-row { gap:12px; } .unit-builder .unit-builder-panel { padding:18px 0; } }
 
+.learner-guide-upload { display:flex; flex-direction:column; align-items:flex-start; gap:12px; margin-top:18px; }
+.learner-guide-upload > p { margin:0; color:var(--ink-2); font-size:14px; line-height:1.5; }
+.learner-guide-upload .unit-import-button { border:1px solid var(--border) !important; border-radius:8px; background:var(--surface); color:var(--ink); }
+.learner-guide-upload .unit-guide-save { margin:0; }
+
+.unit-builder.logbook-builder .logbook-builder-panel {
+  box-sizing:border-box;
+  width:100%;
+  max-width:1080px;
+  padding:28px;
+  border:1px solid var(--editor-line);
+  border-radius:16px;
+  background:var(--editor-panel);
+}
+.logbook-builder-heading { margin-bottom:24px; }
+.logbook-builder-heading p { max-width:760px; margin:0; color:var(--builder-muted); font-size:14px; line-height:1.6; }
+.logbook-import-card {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:20px;
+  padding:18px;
+  border:1px solid var(--editor-line);
+  border-radius:12px;
+  background:var(--editor-panel-2);
+}
+.logbook-import-copy { display:flex; min-width:0; flex-direction:column; gap:5px; }
+.logbook-import-copy strong { color:var(--builder-ink); font-size:14px; font-weight:600; }
+.logbook-import-copy span { color:var(--builder-muted); font-size:13px; line-height:1.5; overflow-wrap:anywhere; }
+.logbook-import-copy .logbook-file-name { color:var(--ink-2); font-weight:500; }
+.logbook-import-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.logbook-import-actions .unit-import-button { min-height:40px; }
+.logbook-source-field { margin-top:8px; }
+.unit-builder.logbook-builder .logbook-source-field textarea {
+  box-sizing:border-box;
+  width:100%;
+  min-height:320px;
+  padding:14px;
+  border:1px solid var(--editor-line) !important;
+  border-radius:10px;
+  background:var(--editor-panel);
+  color:var(--ink);
+  font:inherit;
+  font-size:14px;
+  line-height:1.6;
+}
+.logbook-builder-panel .logbook-editor-actions { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:22px; }
+.unit-builder.logbook-builder .logbook-editor-actions .btn { min-height:42px; margin:0; }
+.unit-builder.logbook-builder .logbook-editor-actions .unit-build-action { min-width:0; }
+.unit-builder.logbook-builder .logbook-editor-actions .logbook-save {
+  border-color:var(--azure);
+  background:var(--azure);
+  color:#fff;
+  font-weight:600;
+}
+.logbook-builder-error { margin:16px 0 0; }
+@media(max-width:640px) {
+  .unit-builder.logbook-builder .logbook-builder-panel { padding:18px; }
+  .logbook-import-card { grid-template-columns:minmax(0,1fr); gap:14px; padding:14px; }
+  .logbook-import-actions { display:grid; grid-template-columns:minmax(0,1fr); }
+  .logbook-import-actions .unit-import-button { width:100%; }
+  .logbook-editor-actions { display:grid !important; grid-template-columns:minmax(0,1fr); }
+  .logbook-editor-actions .btn { width:100%; justify-content:center; }
+}
+
 /* ---------- Full-screen unit editor workspace ---------- */
 /* Editor surfaces follow the app theme tokens so light and dark mode match the rest of the app. */
 .unit-builder, .unit-editor-root { --editor-bg:var(--app-canvas); --editor-panel:var(--surface); --editor-panel-2:var(--surface-2); --editor-line:var(--border); --editor-muted:var(--ink-3); }

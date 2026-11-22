@@ -23,6 +23,157 @@ as $$
   end;
 $$;
 
+create or replace function public.leaderboard_best_result(older jsonb, preferred jsonb)
+returns jsonb
+language plpgsql
+immutable
+set search_path = ''
+as $$
+declare
+  older_total numeric;
+  preferred_total numeric;
+  older_ratio numeric;
+  preferred_ratio numeric;
+begin
+  if older is null then return preferred; end if;
+  if preferred is null then return older; end if;
+  older_total := public.leaderboard_number(older ->> 'total');
+  preferred_total := public.leaderboard_number(preferred ->> 'total');
+  if coalesce(older_total, 0) <= 0 then return preferred; end if;
+  if coalesce(preferred_total, 0) <= 0 then return older; end if;
+  older_ratio := coalesce(public.leaderboard_number(older ->> 'best'), 0) / older_total;
+  preferred_ratio := coalesce(public.leaderboard_number(preferred ->> 'best'), 0) / preferred_total;
+  if older_ratio > preferred_ratio
+    or (older_ratio = preferred_ratio
+      and coalesce(public.leaderboard_number(older ->> 'attempts'), 1)
+        > coalesce(public.leaderboard_number(preferred ->> 'attempts'), 1)) then
+    return older;
+  end if;
+  return preferred;
+end;
+$$;
+
+create or replace function public.leaderboard_merge_results(older jsonb, preferred jsonb)
+returns jsonb
+language plpgsql
+immutable
+set search_path = ''
+as $$
+declare
+  older_object jsonb := case when jsonb_typeof(older) = 'object' then older else '{}'::jsonb end;
+  preferred_object jsonb := case when jsonb_typeof(preferred) = 'object' then preferred else '{}'::jsonb end;
+  merged jsonb;
+  result_key text;
+  result_value jsonb;
+begin
+  merged := older_object || preferred_object;
+  for result_key in select key from jsonb_each(older_object)
+  loop
+    result_value := public.leaderboard_best_result(
+      older_object -> result_key,
+      preferred_object -> result_key
+    );
+    if result_value is not null then
+      merged := jsonb_set(merged, array[result_key], result_value, true);
+    end if;
+  end loop;
+  return merged;
+end;
+$$;
+
+create or replace function public.leaderboard_merge_progress(older jsonb, preferred jsonb)
+returns jsonb
+language plpgsql
+immutable
+set search_path = ''
+as $$
+declare
+  merged jsonb := coalesce(older, '{}'::jsonb) || coalesce(preferred, '{}'::jsonb);
+  older_units jsonb := case when jsonb_typeof(older -> 'units') = 'object' then older -> 'units' else '{}'::jsonb end;
+  preferred_units jsonb := case when jsonb_typeof(preferred -> 'units') = 'object' then preferred -> 'units' else '{}'::jsonb end;
+  merged_units jsonb := older_units || preferred_units;
+  unit_key text;
+  before_unit jsonb;
+  after_unit jsonb;
+  merged_unit jsonb;
+  merged_activities jsonb;
+  merged_logbook jsonb;
+  log_key text;
+  before_value jsonb;
+  after_value jsonb;
+  before_quiz jsonb;
+  after_quiz jsonb;
+begin
+  -- Keep evidence across profile copies while selecting one best result per assessment.
+  for unit_key in select key from jsonb_each(older_units)
+  loop
+    before_unit := older_units -> unit_key;
+    after_unit := preferred_units -> unit_key;
+    if after_unit is null then continue; end if;
+    if jsonb_typeof(before_unit) <> 'object' or jsonb_typeof(after_unit) <> 'object' then
+      continue;
+    end if;
+
+    merged_unit := before_unit || after_unit;
+    merged_activities := coalesce(before_unit -> 'activities', '{}'::jsonb)
+      || coalesce(after_unit -> 'activities', '{}'::jsonb);
+    for log_key in select key from jsonb_each(
+      case when jsonb_typeof(before_unit -> 'activities') = 'object' then before_unit -> 'activities' else '{}'::jsonb end
+    )
+    loop
+      if before_unit -> 'activities' -> log_key = 'true'::jsonb then
+        merged_activities := jsonb_set(merged_activities, array[log_key], 'true'::jsonb, true);
+      end if;
+    end loop;
+
+    merged_logbook := coalesce(before_unit -> 'logbook', '{}'::jsonb)
+      || coalesce(after_unit -> 'logbook', '{}'::jsonb);
+    for log_key in select key from jsonb_each(
+      case when jsonb_typeof(before_unit -> 'logbook') = 'object' then before_unit -> 'logbook' else '{}'::jsonb end
+    )
+    loop
+      before_value := before_unit -> 'logbook' -> log_key;
+      after_value := after_unit -> 'logbook' -> log_key;
+      if (
+        (log_key like '%.ok' or log_key like 'slidegate.%'
+          or log_key like 'videoengagement.likeXp.%'
+          or log_key like 'videoengagement.commentXp.%')
+        and before_value = 'true'::jsonb
+      ) or after_value is null or after_value = '""'::jsonb then
+        merged_logbook := jsonb_set(merged_logbook, array[log_key], before_value, true);
+      end if;
+    end loop;
+
+    before_quiz := before_unit -> 'quiz';
+    after_quiz := after_unit -> 'quiz';
+    merged_unit := jsonb_set(merged_unit, '{activities}', merged_activities, true);
+    merged_unit := jsonb_set(merged_unit, '{logbook}', merged_logbook, true);
+    merged_unit := jsonb_set(
+      merged_unit,
+      '{quizzes}',
+      public.leaderboard_merge_results(before_unit -> 'quizzes', after_unit -> 'quizzes'),
+      true
+    );
+    merged_unit := jsonb_set(
+      merged_unit,
+      '{exercises}',
+      public.leaderboard_merge_results(before_unit -> 'exercises', after_unit -> 'exercises'),
+      true
+    );
+    if before_quiz is not null or after_quiz is not null then
+      merged_unit := jsonb_set(
+        merged_unit,
+        '{quiz}',
+        public.leaderboard_best_result(before_quiz, after_quiz),
+        true
+      );
+    end if;
+    merged_units := jsonb_set(merged_units, array[unit_key], merged_unit, true);
+  end loop;
+  return jsonb_set(merged, '{units}', merged_units, true);
+end;
+$$;
+
 create or replace function public.cohort_profile_xp(target_profile jsonb)
 returns integer
 language plpgsql
@@ -32,14 +183,30 @@ set search_path = ''
 as $$
 declare
   target_id text := target_profile ->> 'id';
-  progress_text text;
   progress_data jsonb := '{}'::jsonb;
-  poe_text text;
   poe_data jsonb := '{}'::jsonb;
+  target_cloud_user_id uuid := case
+    when target_profile ->> 'cloudUserId' ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      then (target_profile ->> 'cloudUserId')::uuid
+    else null
+  end;
+  target_identity_id_number text := lower(btrim(coalesce(target_profile #>> '{enrolment,idNumber}', '')));
+  target_email text := lower(btrim(coalesce(target_profile #>> '{enrolment,email}', '')));
+  target_full_name text := lower(btrim(concat_ws(' ',
+    nullif(btrim(target_profile #>> '{enrolment,firstNames}'), ''),
+    nullif(btrim(target_profile #>> '{enrolment,surname}'), '')
+  )));
+  target_profile_ids text[] := array[]::text[];
+  caller_is_learner boolean;
+  caller_is_admin boolean;
+  staff_assignment jsonb;
   unit_entry record;
   quiz_entry record;
   exercise_entry record;
   log_entry record;
+  progress_entry record;
+  poe_entry record;
+  progress_snapshot jsonb;
   quiz_items jsonb;
   logbook jsonb;
   history jsonb;
@@ -78,24 +245,87 @@ begin
     return 0;
   end if;
 
-  select state.value into progress_text
-  from public.app_state state
-  left join public.profile_progress_owners owner
-    on owner.tenant_id = state.tenant_id
-    and owner.profile_id = public.qualification_state_profile_id(state.key)
-  where state.tenant_id = public.current_tenant()
-    and state.key like 'itss.progress.%'
-    and public.qualification_state_profile_id(state.key) = target_id
-  order by (state.user_id = owner.user_id) desc nulls last, state.updated_at desc
-  limit 1;
-
-  if progress_text is not null then
-    begin
-      progress_data := progress_text::jsonb;
-    exception when others then
-      progress_data := '{}'::jsonb;
-    end;
+  perform 1 from public.current_learner_chat_profile();
+  caller_is_learner := found;
+  caller_is_admin := public.is_admin();
+  if not caller_is_admin and not caller_is_learner then
+    staff_assignment := public.current_staff_assignment();
   end if;
+
+  select coalesce(array_agg(distinct aliases.profile_id), array[target_id])
+  into target_profile_ids
+  from (
+    select target_id as profile_id
+    union
+    select owner.profile_id
+    from public.profile_progress_owners owner
+    where owner.tenant_id = public.current_tenant()
+      and target_cloud_user_id is not null
+      and owner.user_id = target_cloud_user_id
+      and (caller_is_admin or caller_is_learner)
+    union
+    select public.qualification_state_profile_id(state.key)
+    from public.app_state state
+    where state.tenant_id = public.current_tenant()
+      and state.key like 'itss.progress.%'
+      and target_cloud_user_id is not null
+      and state.user_id = target_cloud_user_id
+      and (caller_is_admin or caller_is_learner)
+    union
+    select profile.value ->> 'id'
+    from public.app_state state
+    cross join lateral jsonb_array_elements(
+      case when jsonb_typeof(state.value::jsonb) = 'array' then state.value::jsonb else '[]'::jsonb end
+    ) profile(value)
+    where state.tenant_id = public.current_tenant()
+      and state.key = 'itss.profiles'
+      and profile.value ->> 'role' = 'Learner'
+      and nullif(profile.value ->> 'id', '') is not null
+      and (
+        caller_is_admin
+        or caller_is_learner
+        or coalesce(staff_assignment -> 'learnerIds', '[]'::jsonb) ? (profile.value ->> 'id')
+        or coalesce(staff_assignment -> 'learnerIds', '[]'::jsonb) ? (profile.value ->> 'cloudUserId')
+      )
+      and (
+        (target_identity_id_number <> ''
+          and lower(btrim(coalesce(profile.value #>> '{enrolment,idNumber}', ''))) = target_identity_id_number)
+        or (target_email <> ''
+          and lower(btrim(coalesce(profile.value #>> '{enrolment,email}', ''))) = target_email)
+        or (target_name <> ''
+          and lower(btrim(coalesce(profile.value ->> 'name', ''))) = target_name)
+        or (target_full_name <> ''
+          and lower(btrim(concat_ws(' ',
+            nullif(btrim(profile.value #>> '{enrolment,firstNames}'), ''),
+            nullif(btrim(profile.value #>> '{enrolment,surname}'), '')
+          ))) = target_full_name)
+      )
+  ) aliases;
+
+  for progress_entry in
+    select state.value
+    from public.app_state state
+    left join public.profile_progress_owners owner
+      on owner.tenant_id = state.tenant_id
+      and owner.profile_id = public.qualification_state_profile_id(state.key)
+    where state.tenant_id = public.current_tenant()
+      and state.key like 'itss.progress.%'
+      and public.qualification_state_profile_id(state.key) = any(target_profile_ids)
+    order by
+      case when public.qualification_state_profile_id(state.key) = target_id then 0 else 1 end,
+      public.qualification_state_profile_id(state.key),
+      (state.user_id = owner.user_id) asc nulls first,
+      state.updated_at asc
+  loop
+    begin
+      progress_snapshot := progress_entry.value::jsonb;
+      if jsonb_typeof(progress_snapshot) = 'object' then
+        progress_data := public.leaderboard_merge_progress(progress_data, progress_snapshot);
+      end if;
+    exception when others then
+      continue;
+    end;
+  end loop;
 
   if jsonb_typeof(progress_data -> 'units') = 'object' then
     for unit_entry in
@@ -275,23 +505,30 @@ begin
     end loop;
   end if;
 
-  select state.value into poe_text
-  from public.app_state state
-  left join public.profile_progress_owners owner
-    on owner.tenant_id = state.tenant_id
-    and owner.profile_id = public.qualification_state_profile_id(state.key)
-  where state.tenant_id = public.current_tenant()
-    and state.key like 'itss.poe.%'
-    and public.qualification_state_profile_id(state.key) = target_id
-  order by (state.user_id = owner.user_id) desc nulls last, state.updated_at desc
-  limit 1;
-  if poe_text is not null then
+  for poe_entry in
+    select state.value
+    from public.app_state state
+    left join public.profile_progress_owners owner
+      on owner.tenant_id = state.tenant_id
+      and owner.profile_id = public.qualification_state_profile_id(state.key)
+    where state.tenant_id = public.current_tenant()
+      and state.key like 'itss.poe.%'
+      and public.qualification_state_profile_id(state.key) = any(target_profile_ids)
+    order by
+      case when public.qualification_state_profile_id(state.key) = target_id then 0 else 1 end,
+      public.qualification_state_profile_id(state.key),
+      (state.user_id = owner.user_id) asc nulls first,
+      state.updated_at asc
+  loop
     begin
-      poe_data := poe_text::jsonb;
+      progress_snapshot := poe_entry.value::jsonb;
+      if jsonb_typeof(progress_snapshot) = 'object' then
+        poe_data := poe_data || progress_snapshot;
+      end if;
     exception when others then
-      poe_data := '{}'::jsonb;
+      continue;
     end;
-  end if;
+  end loop;
   if jsonb_typeof(poe_data) = 'object' then
     select count(distinct split_part(item.key, '__', 1))::integer
     into poe_items
@@ -366,11 +603,19 @@ security definer
 set search_path = ''
 as $$
 declare
-  caller record;
+  caller_is_learner boolean;
+  caller_is_admin boolean;
+  staff_assignment jsonb;
 begin
-  select * into caller from public.current_learner_chat_profile();
-  if not found then
-    raise exception 'A learner profile is required to load the class leaderboard.';
+  perform 1 from public.current_learner_chat_profile();
+  caller_is_learner := found;
+  caller_is_admin := public.is_admin();
+
+  if not caller_is_admin and not caller_is_learner then
+    staff_assignment := public.current_staff_assignment();
+    if jsonb_typeof(staff_assignment -> 'learnerIds') is distinct from 'array' then
+      raise exception 'An administrator, learner, or assigned staff profile is required to load the leaderboard.';
+    end if;
   end if;
 
   return query
@@ -378,15 +623,21 @@ begin
     select
       jsonb_build_object(
         'id', profile.value ->> 'id',
+        'cloudUserId', profile.value ->> 'cloudUserId',
         'name', profile.value ->> 'name',
-        'enrolment', jsonb_build_object('idNumber', profile.value #>> '{enrolment,idNumber}')
+        'enrolment', jsonb_build_object(
+          'idNumber', profile.value #>> '{enrolment,idNumber}',
+          'email', profile.value #>> '{enrolment,email}',
+          'firstNames', profile.value #>> '{enrolment,firstNames}',
+          'surname', profile.value #>> '{enrolment,surname}'
+        )
       ) as profile_data,
       profile.value ->> 'id' as id,
       case
         when profile.value ->> 'cloudUserId' ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
           then (profile.value ->> 'cloudUserId')::uuid
         when profile.value ->> 'id' = active_learner.profile_id then auth.uid()
-        else null
+        else state.user_id
       end as owner_id,
       profile.value ->> 'name' as name,
       coalesce(nullif(btrim(profile.value ->> 'cohortId'), ''), 'default') as cohort,
@@ -399,16 +650,29 @@ begin
         else '[]'::jsonb
       end
     ) profile(value)
-    cross join public.current_learner_chat_profile() active_learner
+    left join lateral public.current_learner_chat_profile() active_learner on true
     where state.tenant_id = public.current_tenant()
       and state.key = 'itss.profiles'
-      and (
-        profile.value ->> 'cloudUserId' ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-        or profile.value ->> 'id' = active_learner.profile_id
-      )
       and profile.value ->> 'role' = 'Learner'
       and profile.value ->> 'id' is not null
-      and coalesce(nullif(btrim(profile.value ->> 'cohortId'), ''), 'default') = active_learner.cohort_id
+      and (
+        caller_is_admin
+        or (
+          caller_is_learner
+          and (
+            profile.value ->> 'cloudUserId' ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            or profile.value ->> 'id' = active_learner.profile_id
+          )
+          and coalesce(nullif(btrim(profile.value ->> 'cohortId'), ''), 'default') = active_learner.cohort_id
+        )
+        or (
+          not caller_is_learner
+          and (
+            coalesce(staff_assignment -> 'learnerIds', '[]'::jsonb) ? (profile.value ->> 'id')
+            or coalesce(staff_assignment -> 'learnerIds', '[]'::jsonb) ? (profile.value ->> 'cloudUserId')
+          )
+        )
+      )
   ),
   selected_profiles as (
     select distinct on (peer.id)
@@ -433,6 +697,9 @@ end;
 $$;
 
 revoke all on function public.leaderboard_number(text) from public, anon, authenticated;
+revoke all on function public.leaderboard_best_result(jsonb, jsonb) from public, anon, authenticated;
+revoke all on function public.leaderboard_merge_results(jsonb, jsonb) from public, anon, authenticated;
+revoke all on function public.leaderboard_merge_progress(jsonb, jsonb) from public, anon, authenticated;
 revoke all on function public.cohort_profile_xp(jsonb) from public, anon, authenticated;
 revoke all on function public.cohort_leaderboard() from public, anon;
 grant execute on function public.cohort_leaderboard() to authenticated;

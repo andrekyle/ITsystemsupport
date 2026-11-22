@@ -11,8 +11,8 @@ const db = new Client({ host: new URL(env.RECOVERY_SUPABASE_DB_URL).hostname, po
 async function main() {
   await db.connect();
   if (process.argv.includes('--apply')) {
-    const prerequisite = await db.query("select to_regprocedure('public.current_learner_chat_profile()') as helper, to_regclass('public.profile_progress_owners') as owners");
-    if (!prerequisite.rows[0].helper || !prerequisite.rows[0].owners) throw new Error('Missing learner identity/ownership prerequisites; no changes applied.');
+    const prerequisite = await db.query("select to_regprocedure('public.current_learner_chat_profile()') as learner_helper, to_regprocedure('public.current_staff_assignment()') as staff_helper, to_regclass('public.profile_progress_owners') as owners");
+    if (!prerequisite.rows[0].learner_helper || !prerequisite.rows[0].staff_helper || !prerequisite.rows[0].owners) throw new Error('Missing learner identity/staff assignment/ownership prerequisites; no changes applied.');
     await db.query(fs.readFileSync('supabase/migrations/20261122_cohort_leaderboard_xp.sql', 'utf8'));
     console.log('Installed leaderboard functions.');
   }

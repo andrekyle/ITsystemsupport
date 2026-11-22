@@ -20,7 +20,6 @@ import { Button } from "@fluentui/react-components";
 import { VideoMetrics } from "../components/VideoMetrics";
 import { bestPoeDocs, bestProgress, fetchCloudLearnerData, type CloudLearnerData } from "../lib/directory";
 import { cloudEnabled } from "../lib/supabase";
-import { SavedAcademicWork } from "../components/SavedAcademicWork";
 
 export function Dashboard({
   profile,
@@ -90,14 +89,14 @@ export function Dashboard({
       <div className="card-grid dashboard-stats">
         <div className="card stat-card">
           <div className="learner-stat-copy">
-            <div className="lbl"><span className="ico"><Icon name="target" size={17} /></span>Overall completion</div>
+            <div className="lbl">Overall completion</div>
             <small>Course progress across all modules</small>
           </div>
           <div className="num">{Math.round(s.overall * 100)}%</div>
         </div>
         <div className="card stat-card">
           <div className="learner-stat-copy">
-            <div className="lbl"><span className="ico"><Icon name="award" size={17} /></span>Credits earned</div>
+            <div className="lbl">Credits earned</div>
             <small>{Math.max(0, COURSE_META.credits - s.creditsEarned)} credits remaining</small>
           </div>
           <div className="num">
@@ -106,7 +105,7 @@ export function Dashboard({
         </div>
         <div className="card stat-card">
           <div className="learner-stat-copy">
-            <div className="lbl"><span className="ico"><Icon name="checkCircle" size={17} /></span>Unit standards completed</div>
+            <div className="lbl">Unit standards completed</div>
             <small>{Math.max(0, TOTAL_UNITS - s.unitsCompleted)} unit standards remaining</small>
           </div>
           <div className="num">
@@ -115,7 +114,7 @@ export function Dashboard({
         </div>
         <div className="card stat-card">
           <div className="learner-stat-copy">
-            <div className="lbl"><span className="ico"><Icon name="book" size={17} /></span>Modules completed</div>
+            <div className="lbl">Modules completed</div>
             <small>{Math.max(0, MODULES.length - s.modulesCompleted)} modules remaining</small>
           </div>
           <div className="num">
@@ -124,7 +123,7 @@ export function Dashboard({
         </div>
         <div className="card stat-card">
           <div className="learner-stat-copy">
-            <div className="lbl"><span className="ico"><Icon name="calendar" size={17} /></span>Classes attended</div>
+            <div className="lbl">Classes attended</div>
             <small>Signed attendance registers</small>
           </div>
           <div className="num">{classesAttended}</div>
@@ -137,7 +136,7 @@ export function Dashboard({
           style={{ cursor: "pointer" }}
         >
           <div className="learner-stat-copy">
-            <div className="lbl"><span className="ico"><Icon name="folder" size={17} /></span>POE items complete</div>
+            <div className="lbl">POE items complete</div>
             <small>{Math.max(0, POE_TOTAL - poeDone)} evidence items remaining</small>
           </div>
           <div className="num">
@@ -495,7 +494,6 @@ export function ProgressPage({
         Progress tracking
       </div>
       <h1 className="page-title">My progress</h1>
-      <SavedAcademicWork profile={profile} progress={progress} />
       <p className="page-sub">
         Track completion across all {TOTAL_UNITS} unit standards, {COURSE_META.credits} credits and{" "}
         {MODULES.length} modules of SAQA ID {COURSE_META.saqaId}.

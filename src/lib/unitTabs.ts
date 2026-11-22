@@ -1,7 +1,6 @@
 /** The standard navigation is independent of how much content a unit has. */
 export const STANDARD_UNIT_TABS = [
   { id: "overview", label: "Learning activities", icon: "checklist" },
-  { id: "saqa", label: "SAQA details", icon: "certificate" },
   { id: "lesson", label: "Lesson", icon: "book" },
   { id: "material", label: "Course material", icon: "play" },
   { id: "notes", label: "Notes", icon: "document" },

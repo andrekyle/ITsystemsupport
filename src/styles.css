@@ -3198,49 +3198,44 @@ td .with-ico .ico {
 .lesson-section-ring .ring .track { stroke: #e8e8e8; }
 [data-theme="dark"] .lesson-section-ring .ring .track { stroke: #303030; }
 
-.unit-activity-checklist { max-width: 1000px; }
-.activity-progress { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 16px 0; padding: 14px 16px; box-shadow: none; }
-.activity-progress-heading { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.activity-progress-heading span { color: var(--ink-3); font-size: 13px; }
-.activity-progress-ring { flex: 0 0 auto; }
-.activity-progress-ring .ring .track { stroke: #e8e8e8; }
-.activity-progress-ring .ring .val { stroke: #409cf0; }
-[data-theme="dark"] .activity-progress-ring .ring .track { stroke: #303030; }
-.activity-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; list-style: none; padding: 0; margin: 0 0 12px; }
+.unit-activity-checklist { max-width: 1100px; }
+.activity-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; list-style: none; padding: 0; margin: 0 0 12px; }
 .activity-step { min-width: 0; }
 .activity-step-button {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr);
   align-items: start;
-  gap: 8px 12px;
+  gap: 7px 10px;
   width: 100%;
   height: 100%;
-  padding: 16px;
+  padding: 16px 18px;
   text-align: left;
   font: inherit;
   color: var(--ink);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
-.activity-step-button:focus-visible { outline: 2px solid var(--ink-3); outline-offset: 3px; }
+.activity-step-button:focus-visible { outline: 2px solid #409cf0; outline-offset: 2px; }
 .activity-step-number {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  color: var(--ink-2);
+  width: 26px;
+  height: 26px;
+  color: var(--ink-3);
   background: transparent;
 }
+.activity-step.is-complete .activity-step-number { color: #409cf0; }
 .activity-step-content { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 6px; }
-.activity-step-kicker { color: var(--ink-3); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
-.activity-step-title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.activity-step-description { color: var(--ink-2); font-size: 13px; line-height: 1.6; }
-.activity-step-status { grid-column: 2; font-size: 11px; color: var(--ink-3); }
-.activity-step.is-next .activity-step-status { color: var(--ink); font-weight: 600; }
-.activity-checklist-hint { margin: 0 0 22px; color: var(--ink-3); font-size: 12px; }
+.activity-step-kicker { color: var(--ink-3); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+.activity-step-title { display: flex; align-items: center; gap: 8px; color: var(--ink); font-size: 14px; font-weight: 600; }
+.activity-step-title svg { color: var(--ink-3); }
+.activity-step-description { color: var(--ink-2); font-size: 12px; line-height: 1.55; }
+.activity-step-button a { color: #2563a9; text-decoration-color: #91bfe9; }
 @media (max-width: 640px) {
   .activity-steps { grid-template-columns: minmax(0, 1fr); }
 }
@@ -5352,10 +5347,7 @@ textarea:focus {
 .learner-dashboard .dashboard-stats .stat-card .lbl,
 [data-theme="light"] .learner-dashboard .dashboard-stats .stat-card .lbl,
 [data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card .lbl {
-  display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
-  align-items: center;
-  gap: 11px;
+  display: block;
   grid-column: auto;
   grid-row: auto;
   color: var(--ink-2);
@@ -9209,7 +9201,7 @@ a.plan-ppt:hover {
 
 /* Section D declaration */
 .sd-list {
-  margin: 4px 0 8px;
+  margin: 4px 0 24px;
   padding-left: 26px;
   display: grid;
   gap: 6px;
@@ -11861,6 +11853,10 @@ table.data tr.done-row .text-link {
   overflow: hidden;
 }
 
+.attendance-page > .sheet-fit {
+  margin-top: 28px;
+}
+
 .sheet-fit-mid {
   margin: 0 auto;
   overflow: hidden;
@@ -11893,29 +11889,90 @@ table.data tr.done-row .text-link {
 }
 
 .att-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin: 14px 0 18px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 3px;
+  max-width: 720px;
+  margin: 4px 0 8px;
+  font-size: 11px;
 }
 
-/* phones: date on its own row, then a compact row of small quiet buttons */
+.att-date-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.att-controls .btn,
+.att-controls .att-saved-dates,
+.att-date-control .dtp,
+.att-date-control .dtp-btn {
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  min-height: 32px;
+}
+
+.att-controls .btn {
+  justify-content: center;
+  text-align: center;
+}
+
+.att-controls .btn,
+.att-controls .dtp-btn,
+.att-controls .nice-select-btn {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 8px;
+  font-family: inherit;
+  font-size: 12px !important;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: normal;
+}
+
+.att-controls button svg {
+  width: 13px;
+  height: 13px;
+  color: var(--azure);
+}
+
+.att-controls .btn.ghost.sm {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface, #fff);
+  font-size: 12px;
+}
+
+.att-controls .btn.ghost.sm:hover:not(:disabled) {
+  background: var(--surface-2, #f5f5f5);
+  border-color: var(--ink-3);
+}
+
+.att-controls > .att-note {
+  grid-column: 1 / -1;
+  order: 2;
+}
+
+@media (max-width: 1000px) {
+  .att-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* phones: stack the controls into one clean column */
 @media (max-width: 640px) {
   .att-controls {
-    gap: 4px 6px;
+    grid-template-columns: 1fr;
+    gap: 8px;
     margin: 12px 0 16px;
   }
 
-  .att-controls .att-date {
-    flex: 0 0 auto;
-    margin-bottom: 6px;
-  }
-
-  .att-controls .dtp {
-    flex: 1 1 auto;
-    margin-bottom: 6px;
-  }
+  .att-date-control { grid-template-columns: minmax(0, 1fr); }
 
   .att-controls .dtp-btn {
     min-height: 40px;
@@ -11942,19 +11999,28 @@ table.data tr.done-row .text-link {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: 11px;
   color: var(--text-2);
 }
 
 .att-saved-dates {
-  max-width: 210px;
-  padding: 8px 10px;
-  border: 1px solid var(--border-2);
-  border-radius: 8px;
-  background: var(--surface, #fff);
-  color: var(--ink);
-  font: inherit;
-  font-size: 13px;
+  max-width: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.att-saved-dates .nice-select-btn {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.att-saved-dates .nice-select-panel {
+  min-width: 100%;
+  font-size: 11px;
 }
 
 .att-note {
@@ -12186,6 +12252,14 @@ input.att-sig {
   gap: 10px;
   flex-wrap: wrap;
   margin-top: 12px;
+}
+
+.att-sigask-actions .att-print-selected {
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  line-height: 1.2;
 }
 
 /* Bulk-print date chooser ("Download registers…") */

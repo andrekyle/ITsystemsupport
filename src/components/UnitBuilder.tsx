@@ -670,6 +670,75 @@ async function publishUnitPart(unit:UnitStandard,built:BuiltUnitVersion,next:Uni
   await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:built.source,content:next,files:{pdf,pptx,answers,material:built.files.material,materialEditable:built.files.materialEditable,sourceDocuments:built.files.sourceDocuments},aiUsed:built.aiUsed,planSource:extra.planSource??built.planSource});
 }
 
+/** Upload and publish only a learner guide PDF as editable HTML. */
+export function LearnerGuideUpload({unit,content}:{unit:UnitStandard;content?:UnitContent}) {
+  const built=useBuiltUnit(unit.us);
+  const [pendingGuide,setPendingGuide]=useState<UnitContent["learnerGuide"]>();
+  const [pendingFile,setPendingFile]=useState<File>();
+  const [busy,setBusy]=useState("");
+  const [error,setError]=useState("");
+  const [message,setMessage]=useState("");
+  const convert=async(file?:File)=>{
+    if(!file)return;
+    setPendingGuide(undefined);setPendingFile(undefined);setError("");setMessage("");
+    try{
+      const guide=await importUnitPdf(file,"Learner Guide",(done,total)=>setBusy(`Converting Learner Guide PDF to editable HTML: ${done}/${total} pages…`));
+      if(!guide.replica)throw new Error("The PDF could not be converted to editable HTML. The current guide is unchanged.");
+      setPendingGuide(guide);setPendingFile(file);
+      setMessage(`${guide.sourcePageCount??guide.replica.pages.length} pages converted. Save to publish the Learner Guide.`);
+    }catch(reason){setError(reason instanceof Error?reason.message:"The Learner Guide PDF could not be converted.");}
+    finally{setBusy("");}
+  };
+  const save=async()=>{
+    if(!pendingGuide||!pendingFile||busy)return;
+    setError("");setMessage("");
+    try{
+      const guide=structuredClone(pendingGuide);
+      if(guide.replica)guide.replica.pages=await storeUnitReplicaPages(guide.replica.pages);
+      validateUnitContent({lesson:[],exercises:[],assignments:[],quiz:[],learnerGuide:guide},false);
+      const latest=readBuiltUnit(unit.us)??built;
+      const next=structuredClone(latest?.content??content??{lesson:[],exercises:[],assignments:[],quiz:[]});
+      next.learnerGuide=guide;
+      setBusy("Preparing Learner Guide files…");
+      const exports=await makeUnitExports(unit,next);
+      const prefix=`shared/unitbuilder/${courseScopedUnit(unit.us)}`;
+      setBusy("Saving the editable Learner Guide…");
+      const [pdf,pptx,answers,sourceDocument]=await Promise.all([
+        uploadFile(prefix,exports.pdf),
+        uploadFile(prefix,exports.pptx),
+        uploadFile(prefix,exports.answers),
+        uploadFile(`${prefix}/source-documents`,pendingFile),
+      ]);
+      const latestBeforePublish=readBuiltUnit(unit.us)??latest;
+      const sourceDocuments={...(latestBeforePublish?.files.sourceDocuments??{}),learnerGuide:sourceDocument};
+      await saveBuiltUnit(unit.us,{
+        revision:crypto.randomUUID(),
+        createdAt:new Date().toISOString(),
+        source:latestBeforePublish?.source??"",
+        content:next,
+        files:{
+          pdf,pptx,answers,
+          material:latestBeforePublish?.files.material,
+          materialEditable:latestBeforePublish?.files.materialEditable,
+          sourceDocuments,
+        },
+        aiUsed:guide.replica?.display==="digital"||(latestBeforePublish?.aiUsed??false),
+        planSource:latestBeforePublish?.planSource,
+      });
+      setPendingGuide(undefined);setPendingFile(undefined);
+      setMessage("Learner Guide saved. It is now available as editable HTML.");
+    }catch(reason){setError(unitBuilderError(reason,"The Learner Guide could not be saved. The current unit is unchanged."));}
+    finally{setBusy("");}
+  };
+  return <div className="learner-guide-upload">
+    <p>Upload the Learner Guide PDF to convert it into editable HTML.</p>
+    <label className="unit-import-button"><span>{busy||"Choose Learner Guide PDF"}</span><input aria-label="Upload Learner Guide PDF" type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={event=>{const file=event.target.files?.[0];event.target.value="";void convert(file);}}/></label>
+    {message&&<p role="status">{message}</p>}
+    {error&&<p role="alert" className="auth-error">{error}</p>}
+    {pendingGuide&&<button type="button" className="btn unit-guide-save" disabled={!!busy} onClick={()=>void save()}>{busy||"Save Learner Guide"}</button>}
+  </div>;
+}
+
 /** Replace only the lesson plan of a built unit from pasted facilitator notes. */
 export function LessonPlanBuilder({unit,content}:{unit:UnitStandard;content?:UnitContent}) {
   const built=useBuiltUnit(unit.us);
@@ -786,24 +855,33 @@ export function LogbookBuilder({unit,content}:{unit:UnitStandard;content?:UnitCo
     }catch(e){setError(unitBuilderError(e,"The logbook could not be saved. The current logbook is unchanged."));}
     finally{setBusy("");}
   };
-  return <section className="unit-builder">
+  return <section className="unit-builder logbook-builder">
     {!open && <div className="unit-builder-bar">
       <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(!open);setError("");setMessage("");setPreview(undefined);}}><Icon name="book" size={16}/>{open?"Close logbook builder":"Build logbook from notes"}</button>
     </div>}
-    {open&&<div className="unit-builder-panel">
-      <h2>Logbook · US {unit.us}</h2>
-      <p>Import or paste the logbook form for this unit. It replaces the logbook structure below exactly as written — learners' saved entries and the rest of the unit are untouched.</p>
-      <div className="unit-settings-card">
-        <EditingTools active title="Import logbook">
-        <div className="unit-settings-row"><div className="unit-settings-copy"><strong>Import logbook</strong><span>{fileName||"DOCX, PDF, PPTX, TXT — or photos/scans of the logbook pages"}</span></div>
-          <label className="unit-import-button"><span>Choose file</span><input aria-label="Import logbook" type="file" accept=".txt,.md,.pdf,.docx,.pptx" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Reading logbook document…");setError("");setMessage("");try{setSource(await importUnitSource(file));setFileName(file.name);setPreview(undefined);}catch(err){setError(String(err));}finally{setBusy("");}}}/></label>
-          <label className="unit-import-button"><span>Read images</span><input aria-label="Read logbook images" type="file" accept="image/*" multiple disabled={!!busy} onChange={e=>{const files=e.target.files;void readImages(files).finally(()=>{e.target.value="";});}}/></label>
+    {open&&<div className="unit-builder-panel logbook-builder-panel">
+      <header className="logbook-builder-heading">
+        <h2>Build logbook · US {unit.us}</h2>
+        <p>Import a form or paste its content, review the preview, then save. This updates the logbook structure only; learners’ saved entries and the rest of the unit stay unchanged.</p>
+      </header>
+      <section className="logbook-import-card" aria-label="Import logbook content">
+        <div className="logbook-import-copy">
+          <strong>1. Start with an existing form</strong>
+          <span>Upload a DOCX, PDF, PPTX or text file, or read up to 8 logbook page images.</span>
+          {fileName&&<span className="logbook-file-name">Selected: {fileName}</span>}
         </div>
-        </EditingTools>
-        <label className="unit-source-field"><strong>Logbook content</strong><span>Use the section headings “Learner details”, “Project”, “Embedded knowledge questions”, “Practical activities”, “Workplace activities”, “Other activities” and “Project checklist”. Word tables are read row by row — “No | Text | ✓ | | | ✓ | |” keeps the six evidence marks (Workplace: Learner Activity, Logbook Activity, Project · Assessor: Learner Manual, Logbook Activity, Project). Typed rows work too: “1. Explain the purpose of a cost/benefit analysis. ✓ - - ✓ - -”. Lines such as “Assignment: Assignment One”, “Programme: …” and “Unit standard: …” set the headings.</span><textarea rows={12} value={source} maxLength={MAX_LOGBOOK_SOURCE_LENGTH} disabled={!!busy} onChange={e=>{setSource(e.target.value);setPreview(undefined);}} placeholder={"Assignment: Assignment One\nProgramme: Information Technology - Systems Support\nUnit standard: "+unit.us+" - "+unit.title+"\n\nProject\nTime: 30 minutes\nWorkplace project\nApply the unit learning in the workplace and attach the evidence.\nResources: Logbook\n\nEmbedded knowledge questions\n1. Explain the purpose of a cost/benefit analysis. ✓ - - ✓ - -\n2. Describe how to prepare a time estimate.\n\nPractical activities\n3. Prepare a cost estimate for an element of work.\n\nWorkplace activities\n- Estimate a real unit of work at the workplace.\n\nOther activities\nWorkplace project — Attach the completed estimate.\n\nProject checklist\n1. "+unit.us}/></label>
-      </div>
+        <div className="logbook-import-actions">
+          <label className="unit-import-button"><span>Choose a document</span><input aria-label="Import logbook document" type="file" accept=".txt,.md,.pdf,.docx,.pptx" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Reading logbook document…");setError("");setMessage("");try{setSource(await importUnitSource(file));setFileName(file.name);setPreview(undefined);}catch(err){setError(String(err));}finally{setBusy("");}}}/></label>
+          <label className="unit-import-button"><span>Read page images</span><input aria-label="Read logbook page images" type="file" accept="image/*" multiple disabled={!!busy} onChange={e=>{const files=e.target.files;void readImages(files).finally(()=>{e.target.value="";});}}/></label>
+        </div>
+      </section>
+      <label className="unit-source-field logbook-source-field">
+        <strong>2. Review or edit the logbook content</strong>
+        <span>Paste the form below or edit the imported text. Include headings for the sections you want in the logbook.</span>
+        <textarea aria-label="Logbook content" rows={18} value={source} maxLength={MAX_LOGBOOK_SOURCE_LENGTH} disabled={!!busy} onChange={e=>{setSource(e.target.value);setPreview(undefined);}}/>
+      </label>
       {preview&&<div className="unit-confirm">
-        <strong>{preview.assignmentTitle}</strong> — {logbookStats(preview)}
+        <strong>3. Preview: {preview.assignmentTitle}</strong> — {logbookStats(preview)}
         <ul className="plan-preview">
           <li>Project: {preview.project.time?`${preview.project.time} · `:""}{preview.project.title}{preview.project.resource?` · ${preview.project.resource}`:""}</li>
           <li>Knowledge questions: {preview.knowledgeQuestions.map((row,index)=>`${index+1}. ${row.text}`).join(" • ")}</li>
@@ -813,12 +891,12 @@ export function LogbookBuilder({unit,content}:{unit:UnitStandard;content?:UnitCo
           <li>Project checklist: {preview.projectChecklist.map(item=>`${item.no}. ${item.name}`).join(" • ")}</li>
         </ul>
       </div>}
-      <EditingTools active title={`Logbook ${unit.us}`}>
-      <button type="button" className="btn ghost" disabled={!!busy||!source.trim()} onClick={()=>{setError("");setMessage("");try{setPreview(parse());}catch(e){setPreview(undefined);setError(e instanceof Error?e.message:String(e));}}}>Preview logbook</button>
-      <button type="button" className="btn unit-build-action" disabled={!!busy||!source.trim()} aria-busy={!!busy} onClick={()=>void save()}><span>{busy?"Saving…":"Save logbook"}</span></button>
-      <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(false);setPreview(undefined);}}>Close</button>
-      {error&&<p role="alert" className="auth-error">{error}</p>}
-      </EditingTools>
+      {error&&<p role="alert" className="auth-error logbook-builder-error">{error}</p>}
+      <div className="logbook-editor-actions">
+        <button type="button" className="btn ghost" disabled={!!busy||!source.trim()} onClick={()=>{setError("");setMessage("");try{setPreview(parse());}catch(e){setPreview(undefined);setError(e instanceof Error?e.message:String(e));}}}>Preview logbook</button>
+        <button type="button" className="btn unit-build-action logbook-save" disabled={!!busy||!source.trim()} aria-busy={!!busy} onClick={()=>void save()}><span>{busy?"Saving…":"Save logbook"}</span></button>
+        <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>{setOpen(false);setPreview(undefined);}}>Close</button>
+      </div>
     </div>}
     {busy&&<p role="status">{busy}</p>}{message&&<p role="status">{message}</p>}{!open&&error&&<p role="alert" className="auth-error">{error}</p>}
   </section>;

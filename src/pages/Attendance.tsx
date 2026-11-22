@@ -17,6 +17,7 @@ import { Icon } from "../icons";
 import { ConfirmModal } from "../components/Modal";
 import { FitSheet } from "../components/FitSheet";
 import { DateTimePicker } from "../components/DateTimePicker";
+import { Select } from "../components/Select";
 import { flushKey, hasPendingCloudWrite, writeFromCloud } from "../lib/sync";
 
 /**
@@ -1051,26 +1052,24 @@ export function AttendancePage({
       </p>
 
       <div className="att-controls no-print">
-        <label className="att-date" htmlFor="att-session-date">
-          Session date
-        </label>
-        <DateTimePicker
-          id="att-session-date"
-          withTime={false}
-          clearable={false}
-          value={dateIso}
-          onChange={(v) => v && setDateIso(v)}
-        />
+        <div className="att-date-control">
+          <DateTimePicker
+            id="att-session-date"
+            withTime={false}
+            clearable={false}
+            value={dateIso}
+            onChange={(v) => v && setDateIso(v)}
+          />
+        </div>
         {staff && savedDates.length > 0 && (
-          <select
+          <Select
             className="att-saved-dates"
-            aria-label="Open a saved register"
+            ariaLabel="Open a saved register"
             value=""
-            onChange={(event) => { if (event.target.value) setDateIso(event.target.value); }}
-          >
-            <option value="">Open saved register…</option>
-            {savedDates.map((date) => <option key={date} value={date}>{date}</option>)}
-          </select>
+            placeholder="Open register"
+            options={savedDates.map(date => ({ value: date, label: date }))}
+            onChange={(date) => { if (date) setDateIso(date); }}
+          />
         )}
         {staff && !Object.keys(reg.rows).length && savedDates.length > 0 && (
           <span className="att-note">No signatures on this date. Open a saved register to view earlier entries.</span>
@@ -1178,8 +1177,8 @@ export function AttendancePage({
           </div>
           <div className="att-sigask-actions">
             <button className="btn" disabled={loadingAll || !pickedDates.size} onClick={downloadPickedHtml}>Download selected HTML ({pickedDates.size})</button>
-            <button className="btn primary" disabled={loadingAll || !pickedDates.size} onClick={printPicked}>
-              <Icon name="download" /> Print selected ({pickedDates.size})
+            <button className="btn primary att-print-selected" disabled={loadingAll || !pickedDates.size} onClick={printPicked}>
+              <Icon name="download" size={13} /> Print selected ({pickedDates.size})
             </button>
             <button
               className="btn ghost"
