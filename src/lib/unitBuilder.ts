@@ -776,11 +776,10 @@ export function mergeUnitContentEnhancement(base: UnitContent, enhancement: Unit
     const generatedPlan = lessonPlanFromEnhancement(enhancement.lessonPlan, unit);
     if (generatedPlan) next.lessonPlan = generatedPlan;
   }
-  next.exercises = [];
-  next.questionSessions = [];
+  if (nonemptyArray(enhancement.exercises)) next.exercises = enhancement.exercises;
+  if (nonemptyArray(enhancement.questionSessions)) next.questionSessions = enhancement.questionSessions;
   if (nonemptyArray(enhancement.assignments)) next.assignments = enhancement.assignments;
-  next.quiz = [];
-  next.quizzes = undefined;
+  if (nonemptyArray(enhancement.quiz)) next.quiz = enhancement.quiz;
   if (!next.learnerWorkbook && enhancement.workbook?.outcomes?.length) next.workbook = enhancement.workbook;
   next.lesson = next.lesson.map(section => ({ ...section, slideQuiz: undefined, quizGate: undefined }));
   validateUnitContent(next);
@@ -804,11 +803,27 @@ export function buildUnitContent(unit: UnitStandard, source: string, options: Bu
       marks: 5,
     }],
   }));
+  const exercises = topics.slice(0, 8).map((topic, index) => ({
+    id: stableId("generated-activity", topic.heading, index),
+    title: topic.heading,
+    task: `Complete the activity on ${topic.heading.toLowerCase()}.`,
+    scenario: topic.paragraphs.slice(0, 1),
+    steps: [`Explain ${topic.heading.toLowerCase()} and show how it applies in the workplace.`],
+  }));
+  const quiz = topics.slice(0, Math.min(5, topics.length)).map((topic, index) => {
+    const distractors = topics.filter((_, topicIndex) => topicIndex !== index).map(item => item.heading).slice(0, 3);
+    while (distractors.length < 3) distractors.push(["A topic not covered by this unit", "An unrelated administrative process", "A separate qualification requirement"][distractors.length]);
+    const answer = index % 4;
+    const options = [...distractors];
+    options.splice(answer, 0, topic.heading);
+    const evidence = topic.paragraphs[0]?.replace(/\s+/g, " ").trim();
+    return { q: `Which unit topic best matches this description: ${evidence?.slice(0, 180) || topic.heading}?`, options, answer, explain: `The description is taken from the ${topic.heading} section of the supplied material.` };
+  });
   return {
-    lesson, exercises: [],
+    lesson, exercises,
     questionSessions: [],
     assignments: [{ id: "built-workplace-project", title: `Workplace project: ${unit.title}`, brief: "Choose a realistic unit of work relevant to this learning material. Prepare a practical plan and explain your decisions using the source.", requirements: goals.concat(["Document assumptions, resources, dependencies and delivery risks.", "Submit your plan, supporting evidence and a short reflection on the result."]), evidence: "A completed workplace plan, supporting calculations or records, and a reflection reviewed by your facilitator." }],
-    quiz: [],
+    quiz,
     logbook: logbookFromTopics(unit, topics),
     selfAssessment: selfAssessmentFromTemplate(goals.map(g => `I am able to ${g.charAt(0).toLowerCase()}${g.slice(1)}`), unit.us),
     lessonPlan: lessonPlanFromTemplate(unit, topics, options.minutes),

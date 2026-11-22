@@ -1006,6 +1006,13 @@ a:hover {
   display: block;
   background: #0071e3;
 }
+[data-theme="light"] .sidebar .side-item[data-page="course"].active,
+[data-theme="light"] .sidebar .side-item[data-page="course"].active:hover {
+  background:#e9f7ee;
+}
+[data-theme="light"] .sidebar .side-item[data-page="course"].active::before {
+  background:#72b889;
+}
 [data-theme="light"] .sidebar .sidebar-footer { border-top: 1px solid #e5e5e7; }
 [data-theme="light"] .sidebar .side-item .badge {
   border-color: #d2d2d7;
@@ -4681,6 +4688,24 @@ textarea:focus {
     table-layout:fixed!important;
   }
   body:has(.document-print-target) .document-signature-use-saved { display:none!important; }
+  /* Keep every workbook table aligned to the same full content width. These
+     direct selectors also work in print engines that do not honour :has(). */
+  .document-print-target .lw-page {
+    border:0!important;
+    outline:0!important;
+  }
+  .document-print-target .lw-page > table,
+  .document-print-target .lw-page table.lw-table,
+  .document-print-target :is(.lw-114076-contact-header,.lw-114076-contact-grid,.lw-114076-decision,.lw-114076-control) {
+    box-sizing:border-box!important;
+    display:table!important;
+    width:100%!important;
+    min-width:100%!important;
+    max-width:100%!important;
+    margin-left:0!important;
+    margin-right:0!important;
+    table-layout:fixed!important;
+  }
   body:has(.document-print-target) .document-print-target table :is(th,td) {
     min-width:0!important;
     overflow-wrap:anywhere;

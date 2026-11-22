@@ -99,6 +99,7 @@ export function Sidebar({ collapsed, route, profile, navigate }: Props) {
           {nav.map((n) => (
             <button
               key={n.page}
+              data-page={n.page}
               className={`side-item${route.page === n.page ? " active" : ""}`}
               onClick={() => navigate({ page: n.page })}
               title={n.label}

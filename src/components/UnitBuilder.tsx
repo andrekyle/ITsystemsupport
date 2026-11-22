@@ -100,6 +100,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   const [selfAssessmentContent,setSelfAssessmentContent]=useState("");
   const [logbookContent,setLogbookContent]=useState("");
   const [logbookImageName,setLogbookImageName]=useState("");
+  const [quizContent,setQuizContent]=useState("");
   const [practicalTask,setPracticalTask]=useState<UnitContent["practicalTask"]>(content?.practicalTask);
   const [learnerWorkbook,setLearnerWorkbook]=useState<UnitContent["learnerWorkbook"]>(content?.learnerWorkbook);
   const [workbookTemplate,setWorkbookTemplate]=useState<UnitContent["workbook"]>(content?.learnerWorkbook?.workbookTemplateBuilt ? content?.workbook : undefined);
@@ -287,6 +288,13 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
       // Pasted or photographed logbook content builds the logbook directly; AI output (when on) may refine it.
       const pastedLogbook=generateLessons&&logbookContent.trim()?logbookFromSource(unit,logbookContent):undefined;
       if(pastedLogbook)next.logbook=pastedLogbook;
+      const suppliedActivities=activityBlocks.map((block,index)=>({block,index})).filter(({block})=>block.heading.trim()||block.text.trim());
+      if(generateLessons&&suppliedActivities.length)next.exercises=suppliedActivities.map(({block,index})=>({
+        id:`generated-activity-${index+1}`,
+        title:block.heading.trim()||`Activity ${index+1}`,
+        task:block.text.trim()||`Complete Activity ${index+1}.`,
+        steps:block.text.split(/\r?\n/).map(line=>line.replace(/^[-•\d.)\s]+/,"").trim()).filter(Boolean),
+      }));
       if(ai&&!documentsOnly){
         setBusy("Researching the unit standard and creating the tabs with OpenAI...");
         const token=(await supabase?.auth.getSession())?.data.session?.access_token;
@@ -296,6 +304,16 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
         next=mergeUnitContentEnhancement(next,result.content,unit);setWarning("");
         if(preservedWorkbook)next.workbook=preservedWorkbook;
         if(result.usage) void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.input_tokens??result.usage.prompt_tokens??0,completionTokens:result.usage.output_tokens??result.usage.completion_tokens??0,totalTokens:result.usage.total_tokens??0});
+      }
+      if(ai&&!documentsOnly&&quizContent.trim()){
+        if(quizContent.trim().length<100)throw new Error("Add at least 100 characters of quiz source content.");
+        setBusy("Generating the unit quiz with OpenAI...");
+        const token=(await supabase?.auth.getSession())?.data.session?.access_token;
+        const response=await fetch("/api/enhance-unit-quiz",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({source:quizContent,count:5,model:loadContentModel()}),signal:AbortSignal.timeout(30_000)});
+        const result=await readApiJson(response,"The quiz generator");
+        if(!response.ok||!Array.isArray(result.questions))throw new Error(result.error??"The quiz could not be generated.");
+        next.quiz=result.questions;
+        if(result.usage)void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.input_tokens??result.usage.prompt_tokens??0,completionTokens:result.usage.output_tokens??result.usage.completion_tokens??0,totalTokens:result.usage.total_tokens??0});
       }
       if (!documentsOnly) {
         // Reuse supplied teaching text for reading resources; keep authored material intact.
@@ -577,6 +595,28 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
             {generateLessons&&<section className="unit-build-step">
               <header className="unit-build-step-head"><span className="unit-editor-index">3</span><div><h3>Optional supporting content</h3><p>Activity, self-assessment and logbook text applies to lesson generation only.</p></div></header>
               <div className="unit-settings-card">
+                <div className="unit-generation-grid">
+                  <section className="unit-generation-card">
+                    <div><strong>Learner Workbook</strong><span>Upload an existing workbook or generate one from the activities below. Edit the structured result in Content and structure.</span></div>
+                    <label className="unit-import-button"><span>{sourceDocumentFiles.learnerWorkbook?"Replace workbook":"Upload workbook"}</span><input aria-label="Upload learner workbook for generation" type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={e=>{const file=e.target.files?.[0];e.target.value="";void chooseSourceDocument("learnerWorkbook",file);}}/></label>
+                    <small>Generated when this unit is built</small>
+                  </section>
+                  <section className="unit-generation-card">
+                    <div><strong>Activity</strong><span>Upload activity notes, then edit each generated activity below before building.</span></div>
+                    <label className="unit-import-button"><span>Upload activity</span><input aria-label="Upload activity source" type="file" accept=".txt,.md,.pdf,.docx,.pptx" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Reading activity source...");setError("");try{setActivityBlocks([{heading:file.name.replace(/\.[^.]+$/,"")||"Activity 1",text:await importUnitSource(file)}]);}catch(err){setError(String(err));}finally{setBusy("");}}}/></label>
+                    <small>Generated when this unit is built</small>
+                  </section>
+                  <section className="unit-generation-card">
+                    <div><strong>Logbook</strong><span>Upload a document or page images, edit the extracted text, then generate the logbook structure.</span></div>
+                    <label className="unit-import-button"><span>Upload logbook</span><input aria-label="Upload logbook source document" type="file" accept=".txt,.md,.pdf,.docx,.pptx" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Reading logbook source...");setError("");try{setLogbookContent(await importUnitSource(file));setLogbookImageName(file.name);}catch(err){setError(String(err));}finally{setBusy("");}}}/></label>
+                    <small>Generated when this unit is built</small>
+                  </section>
+                  <section className="unit-generation-card">
+                    <div><strong>Quiz</strong><span>Upload or paste source notes. OpenAI generates five validated questions; the built-in builder supplies a quiz when no separate source is provided.</span></div>
+                    <label className="unit-import-button"><span>Upload quiz source</span><input aria-label="Upload quiz source" type="file" accept=".txt,.md,.pdf,.docx,.pptx" disabled={!!busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;setBusy("Reading quiz source...");setError("");try{setQuizContent(await importUnitSource(file));}catch(err){setError(String(err));}finally{setBusy("");}}}/></label>
+                    <small>{ai?"Generated with OpenAI on build":"Built-in quiz generated on build"}</small>
+                  </section>
+                </div>
                 <div className="unit-source-field"><strong>Activity and learner workbook content</strong><span>Add each activity in its own box. Include its specific outcome, exact question wording and marks. Every distinct marked question becomes its own learner-workbook answer box; questions under the same specific outcome stay grouped together.</span>
                   {activityBlocks.map((block,index)=><div className="unit-activity-block" key={index}>
                     <div className="unit-activity-block-head"><span className="unit-editor-index">{index+1}</span><strong>Activity {index+1}</strong>
@@ -595,6 +635,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
                   <div className="unit-settings-row unit-logbook-import"><span className="unit-settings-copy"><strong>Read logbook image</strong><span>{logbookImageName || "PNG, JPEG or WebP screenshots/photos"}</span></span><label className="unit-import-button"><span>Upload image</span><input aria-label="Upload logbook image" type="file" accept="image/png,image/jpeg,image/webp" multiple disabled={!!busy} onChange={async e=>{const files=e.target.files;e.target.value="";await readLogbookImages(files);}}/></label></div>
                   <label>Logbook text<textarea rows={7} value={logbookContent} disabled={!!busy} onChange={e=>setLogbookContent(e.target.value)} placeholder="Example: embedded knowledge questions with checklist ticks, practical activities, workplace activities, other activities, project evidence and project checklist..."/></label>
                 </div>
+                <label className="unit-source-field"><strong>Quiz source</strong><span>Edit the exact source material the quiz must assess. Leave blank to generate the built-in quiz from the lesson source.</span><textarea rows={6} value={quizContent} disabled={!!busy} onChange={e=>setQuizContent(e.target.value)} placeholder="Paste the facts, processes and scenarios that the quiz questions must assess..."/></label>
               </div>
             </section>}
             {generateLessons&&<section className="unit-build-step">
