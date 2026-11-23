@@ -12,6 +12,7 @@ import type { LearnerRow } from "../pages/Analytics";
 import { enhanceTrackerHtml } from "./trackerEditor";
 import { supabase } from "./supabase";
 import { REPORT_DIALOG_SCRIPT } from "./dialogs";
+import { buildLearnerAttendanceRecords } from "./reportAttendance";
 
 /**
  * AI report generation (super user only): builds a compact statistics bundle
@@ -151,41 +152,99 @@ export interface ReportRegisterSession {
   date: string;
   signed: number;
   expected: number;
+  signedProfileIds: string[];
 }
 
 /** Load the same local + shared-cloud register set used by Attendance. */
 export async function fetchReportRegisterSessions(rows: LearnerRow[]): Promise<ReportRegisterSession[]> {
   const prefix = courseScopedKey("itss.attendance.");
-  const isRegister = (key: string) => key.startsWith(prefix) && /^\d{4}-\d{2}-\d{2}$/.test(key.slice(prefix.length));
+  const rootKeyDate = (key: string) =>
+    key.startsWith(prefix) && /^\d{4}-\d{2}-\d{2}$/.test(key.slice(prefix.length))
+      ? key.slice(prefix.length)
+      : null;
+  const rowKeyMatch = (key: string) =>
+    key.startsWith(prefix) ? key.slice(prefix.length).match(/^(\d{4}-\d{2}-\d{2})\.row\.(.+)$/) : null;
   const values = new Map<string, string>();
+  const rowValues = new Map<string, Map<string, string>>();
+  const addStoredValue = (key: string, value: string) => {
+    const date = rootKeyDate(key);
+    if (date) {
+      values.set(date, value);
+      return;
+    }
+    const match = rowKeyMatch(key);
+    if (!match) return;
+    const dateRows = rowValues.get(match[1]) ?? new Map<string, string>();
+    dateRows.set(match[2], value);
+    rowValues.set(match[1], dateRows);
+  };
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && isRegister(key)) {
+    if (key) {
       const value = localStorage.getItem(key);
-      if (value) values.set(key, value);
+      if (value) addStoredValue(key, value);
     }
   }
   if (supabase) {
     try {
       const { data } = await supabase.from("shared_state").select("key,value").eq("tenant_id", TENANT_ID).like("key", `${prefix}%`);
-      for (const item of data ?? []) if (isRegister(item.key) && typeof item.value === "string") values.set(item.key, item.value);
+      for (const item of data ?? []) if (typeof item.value === "string") addStoredValue(item.key, item.value);
     } catch {
       /* offline: retain local register copies */
     }
   }
+  const normalizeIdNumber = (value: unknown) =>
+    typeof value === "string" ? value.replace(/\D/g, "") : "";
+  const normalizeName = (value: unknown) =>
+    typeof value === "string" ? value.trim().replace(/\s+/g, " ").toLowerCase() : "";
+  const matchesLearner = (profile: Profile, profileId: string, registerRow: unknown) => {
+    if (profile.id === profileId) return true;
+    if (!registerRow || typeof registerRow !== "object" || Array.isArray(registerRow)) return false;
+    const row = registerRow as { idNumber?: unknown; name?: unknown; surname?: unknown };
+    const rowId = normalizeIdNumber(row.idNumber);
+    const learnerId = normalizeIdNumber(profile.enrolment?.idNumber);
+    if (rowId && learnerId && rowId === learnerId) return true;
+    const rowName = normalizeName(`${typeof row.name === "string" ? row.name : ""} ${typeof row.surname === "string" ? row.surname : ""}`);
+    const learnerNames = [
+      normalizeName(profile.name),
+      normalizeName(`${profile.enrolment?.firstNames ?? ""} ${profile.enrolment?.surname ?? ""}`),
+    ].filter(Boolean);
+    return !!rowName && learnerNames.includes(rowName);
+  };
   const sessions: ReportRegisterSession[] = [];
-  for (const [key, value] of values) {
+  const dates = new Set([...values.keys(), ...rowValues.keys()]);
+  for (const date of dates) {
+    const parsedRows: Record<string, unknown> = {};
+    const value = values.get(date);
     try {
-      const parsed = JSON.parse(value) as { rows?: Record<string, unknown> };
-      const signed = parsed.rows ? Object.keys(parsed.rows).length : 0;
-      if (signed > 0) sessions.push({
-        date: key.slice(prefix.length),
-        signed,
-        expected: rows.length,
-      });
+      if (value) {
+        const parsed = JSON.parse(value) as { rows?: unknown };
+        if (parsed.rows && typeof parsed.rows === "object" && !Array.isArray(parsed.rows)) {
+          Object.assign(parsedRows, parsed.rows);
+        }
+      }
     } catch {
       /* malformed register: ignore */
     }
+    for (const [profileId, rowValue] of rowValues.get(date) ?? []) {
+      try {
+        parsedRows[profileId] = JSON.parse(rowValue);
+      } catch {
+        /* ignore one malformed learner row */
+      }
+    }
+    const profileIds = new Set(Object.keys(parsedRows));
+    if (!profileIds.size) continue;
+    sessions.push({
+      date,
+      signed: profileIds.size,
+      expected: rows.length,
+      signedProfileIds: rows
+        .filter((learner) =>
+          [...profileIds].some((profileId) => matchesLearner(learner.profile, profileId, parsedRows[profileId]))
+        )
+        .map((learner) => learner.profile.id),
+    });
   }
   return sessions.sort((a, b) => a.date.localeCompare(b.date));
 }
@@ -193,15 +252,22 @@ export async function fetchReportRegisterSessions(rows: LearnerRow[]): Promise<R
 function scheduledSessions(rows: LearnerRow[], sharedRegisters: ReportRegisterSession[] = []) {
   const registerMap = new Map(sharedRegisters.map((session) => [session.date, session]));
   const dates = new Set([...attendanceFilledRegisterDates(), ...sharedRegisters.map((session) => session.date)]);
-  return [...dates].sort().map((date) => ({
-    date,
-    unitStandards: [] as string[],
-    titles: ["Filled attendance register"],
-    times: [] as string[],
-    registerStatus: "recorded",
-    signed: registerMap.get(date)?.signed ?? rows.filter((row) => row.signedDates.includes(date)).length,
-    expected: registerMap.get(date)?.expected ?? rows.filter((row) => !row.signedDates[0] || row.signedDates[0] <= date).length,
-  }));
+  return [...dates].sort().map((date) => {
+    const signedProfileIds = new Set([
+      ...(registerMap.get(date)?.signedProfileIds ?? []),
+      ...rows.filter((row) => row.signedDates.includes(date)).map((row) => row.profile.id),
+    ]);
+    return {
+      date,
+      unitStandards: [] as string[],
+      titles: ["Filled attendance register"],
+      times: [] as string[],
+      registerStatus: "recorded",
+      signed: registerMap.get(date)?.signed ?? signedProfileIds.size,
+      expected: registerMap.get(date)?.expected ?? rows.filter((row) => !row.signedDates[0] || row.signedDates[0] <= date).length,
+      signedProfileIds: [...signedProfileIds],
+    };
+  });
 }
 
 /** Report scope: only unit standards the cohort has worked on (default), or
@@ -263,9 +329,25 @@ export function buildReportData(
   registers: number,
   scope: ReportScope = "worked",
   sharedRegisters: ReportRegisterSession[] = [],
-  question?: string
+  question?: string,
+  attendanceContext = false
 ): unknown {
   const workedCount = workedUnitCodes(rows).size;
+  const sessions = scheduledSessions(rows, sharedRegisters);
+  const attendanceRecords = buildLearnerAttendanceRecords(
+    rows.map((row) => ({
+      id: row.profile.id,
+      name: row.profile.name,
+      signedDates: row.signedDates,
+    })),
+    sessions.map(({ date, signedProfileIds }) => ({ date, signedProfileIds }))
+  );
+  const includeAttendanceRecords =
+    /\b(attendance|registers?|absen(?:t|ce|ces)?|miss(?:ed|ing)?|signed)\b/i.test(question ?? "") ||
+    attendanceContext ||
+    /^(?:please\s+)?(?:show me|which dates|what dates|list them|list it|list all dates|more details)\b/i.test(question ?? "");
+  const attendanceScope = kind === "attendance" || includeAttendanceRecords;
+  const publicSessions = sessions.map(({ signedProfileIds: _signedProfileIds, ...session }) => session);
   const base = {
     programme: `${COURSE_META.title} (SAQA ${COURSE_META.saqaId}, NQF ${COURSE_META.nqfLevel}, ${COURSE_META.credits} credits)`,
     scope:
@@ -278,12 +360,14 @@ export function buildReportData(
         (u) => `US ${u.us} | ${u.title} | Module ${mi + 1}: ${m.name} | sessions: ${u.dates} | ${u.time}`
       )
     ),
-    scheduleNote:
-      "schedule is the full programme timetable, one line per unit: 'US code | title | module | sessions: dates | time'. Compare the session dates with today to answer what has been trained, what is next or what happens on a given date.",
-    registeredSessions: scheduledSessions(rows, sharedRegisters),
+    scheduleNote: attendanceScope
+      ? "schedule is the timetable only, not an attendance register. For attendance, use registeredAttendanceDates and attendanceRecords exclusively. A timetable date without a filled register is unknown attendance, never an absence."
+      : "schedule is the full programme timetable, one line per unit: 'US code | title | module | sessions: dates | time'. Compare the session dates with today to answer what has been trained, what is next or what happens on a date.",
+    registeredAttendanceDates: sessions.map((session) => session.date),
+    registeredSessions: publicSessions,
     cohort: cohort(rows, registers),
     // per-register signed counts so session-by-session slides carry real figures
-    sessionAttendance: scheduledSessions(rows, sharedRegisters).map((session) => ({
+    sessionAttendance: sessions.map((session) => ({
       date: session.date,
       signed: session.signed,
       expected: session.expected,
@@ -311,34 +395,56 @@ export function buildReportData(
             return parsed.getFullYear() === now.getFullYear() && parsed.getMonth() === now.getMonth();
           });
       const reportDateSet = new Set(reportDates);
-      const reportSessions = scheduledSessions(rows, sharedRegisters).filter((session) => reportDateSet.has(session.date));
+      const reportSessions = sessions.filter((session) => reportDateSet.has(session.date));
+      const reportAttendanceRecords = attendanceRecords.map(({ profileId: _profileId, ...record }) => {
+        const learnerSessions = record.sessions.filter((session) => reportDateSet.has(session.date));
+        const sessionsAttended = learnerSessions.filter((session) => session.status === "Present").length;
+        const sessionsExpected = learnerSessions.length;
+        return {
+          ...record,
+          sessions: learnerSessions,
+          sessionsAttended,
+          sessionsExpected,
+          absences: sessionsExpected - sessionsAttended,
+          attendanceRatePct: sessionsExpected ? Math.round((sessionsAttended / sessionsExpected) * 100) : null,
+        };
+      });
       return {
         ...base,
         note: "Figures come straight from the filled attendance registers. sessionsExpected counts registers dated on/after the learner's firstSession — learners who joined later are only measured from when they started, so attending every session since firstSession is a 100% attendance rate, not a shortfall.",
         attendancePeriod: allMonthsRequested
           ? "every available month in the attendance history"
           : `current calendar month (${now.toLocaleString("en-GB", { month: "long", year: "numeric" })}) only`,
-        registeredSessions: allMonthsRequested ? base.registeredSessions : reportSessions,
+        registeredSessions: allMonthsRequested
+          ? base.registeredSessions
+          : reportSessions.map(({ signedProfileIds: _signedProfileIds, ...session }) => session),
         sessionAttendance: reportSessions.map((session) => ({
           date: session.date,
           signed: session.signed,
           expected: session.expected,
         })),
         registerDates: reportDates,
-        learners: rows.map((r) => ({
-          name: r.profile.name,
-          gender: genderOf(r),
-          pronouns: pronounsOf(r),
-          sessionsAttended: r.signedDates.filter((date) => reportDateSet.has(date)).length,
-          sessionsExpected: reportDates.filter((date) => !r.signedDates[0] || date >= r.signedDates[0]).length,
-          attendanceRatePct: (() => {
-            const expected = reportDates.filter((date) => !r.signedDates[0] || date >= r.signedDates[0]).length;
-            return expected ? Math.round((r.signedDates.filter((date) => reportDateSet.has(date)).length / expected) * 100) : null;
-          })(),
-          firstSession: r.signedDates[0] ?? null,
-          signedDates: r.signedDates.filter((date) => reportDateSet.has(date)),
-          lastSeen: r.lastLogin ? new Date(r.lastLogin).toLocaleDateString() : "never signed in",
-        })),
+        registeredAttendanceDates: reportDates,
+        ...(includeAttendanceRecords
+          ? { attendanceRecords: reportAttendanceRecords }
+          : {}),
+        learners: rows.map((r) => {
+          const record = attendanceRecords.find((item) => item.profileId === r.profile.id);
+          const learnerSessions = record?.sessions.filter((session) => reportDateSet.has(session.date)) ?? [];
+          const sessionsAttended = learnerSessions.filter((session) => session.status === "Present").length;
+          const sessionsExpected = learnerSessions.length;
+          return {
+            name: r.profile.name,
+            gender: genderOf(r),
+            pronouns: pronounsOf(r),
+            sessionsAttended,
+            sessionsExpected,
+            attendanceRatePct: sessionsExpected ? Math.round((sessionsAttended / sessionsExpected) * 100) : null,
+            firstSession: record?.firstSession ?? null,
+            signedDates: learnerSessions.filter((session) => session.status === "Present").map((session) => session.date),
+            lastSeen: r.lastLogin ? new Date(r.lastLogin).toLocaleDateString() : "never signed in",
+          };
+        }),
       };
     }
     case "risk":
@@ -379,6 +485,11 @@ export function buildReportData(
       // the question can be about anything, so send the full picture
       return {
         ...base,
+        ...(includeAttendanceRecords
+          ? {
+              attendanceRecords: attendanceRecords.map(({ profileId: _profileId, ...record }) => record),
+            }
+          : {}),
         learners: rows.map(learnerStat),
         unitOutcomes: outcomesData(rows, scope),
       };
@@ -1159,24 +1270,33 @@ function deckSlideBody(s: DeckSlide): string {
   }
 
   if (layout === "table") {
-    const columns = (s.columns ?? []).slice(0, 5);
-    const nCols = Math.max(columns.length, 1);
-    const rows = (s.cells ?? []).slice(0, 6);
+    const sourceColumns = Array.isArray(s.columns) ? s.columns.slice(0, 5) : [];
+    const columns = sourceColumns.map((column) => typeof column === "string" ? column : "");
+    const tableColumns = columns.length ? columns : ["Details"];
+    const nCols = tableColumns.length;
+    const rows = Array.isArray(s.cells) ? s.cells.slice(0, 6) : [];
     const hr = Number(s.highlight?.row);
     const hc = Number(s.highlight?.col);
     const lead = s.lead;
-    const head = `<tr>${columns.map((c) => `<th>${esc(c)}</th>`).join("")}</tr>`;
+    const colgroup = `<colgroup>${tableColumns.map(() => "<col>").join("")}</colgroup>`;
+    const head = `<thead><tr>${tableColumns.map((c) => `<th scope="col">${esc(c)}</th>`).join("")}</tr></thead>`;
     const body = rows
       .map(
-        (r, ri) =>
-          `<tr>${(Array.isArray(r) ? r : []).slice(0, nCols).map((c, ci) => `<td${ri === hr && ci === hc ? ` class="hl"` : ""}>${esc(String(c ?? ""))}</td>`).join("")}</tr>`
+        (r, ri) => {
+          const cells = Array.isArray(r) ? r : [];
+          const values = Array.from({ length: nCols }, (_, ci) => {
+            const value = cells[ci] == null ? "" : String(cells[ci]);
+            return `<td${ri === hr && ci === hc ? ` class="hl"` : ""}>${esc(value)}</td>`;
+          }).join("");
+          return `<tr>${values}</tr>`;
+        }
       )
       .join("");
     return `${s.kicker ? `<div class="kicker">${esc(s.kicker)}</div>` : ""}${
       lead
         ? `<div class="lead"><i></i><span class="ll">${esc(lead.left ?? "")}</span><span class="lr">${esc(lead.right ?? "")}</span></div>${lead.caption ? `<div class="lead-cap">${esc(lead.caption)}</div>` : ""}`
         : ""
-    }<table class="grid">${head}${body}</table>${s.note ? `<div class="ban-m">${esc(s.note)}</div>` : ""}`;
+    }<table class="grid">${colgroup}${head}<tbody>${body}</tbody></table>${s.note ? `<div class="ban-m">${esc(s.note)}</div>` : ""}`;
   }
 
   if (layout === "measures") {
@@ -1415,9 +1535,10 @@ export function deckDocumentHtml(
   .lead .ll{position:absolute;left:.17in;top:0;bottom:0;display:flex;align-items:center;color:#fff;font-size:12pt;font-weight:700}
   .lead .lr{position:absolute;right:.38in;top:0;bottom:0;display:flex;align-items:center;font-size:12pt;font-weight:700}
   .lead-cap{font-size:11.25pt;color:${DECK.grey};margin-top:.09in}
-  table.grid{border-collapse:collapse;width:100%;margin-top:.24in}
-  .grid th{background:${DECK.g};color:#fff;text-align:left;font-size:10.5pt;font-weight:700;padding:.1in .11in;border:1px solid ${DECK.cell}}
-  .grid td{background:#fff;font-size:10.5pt;line-height:1.25;padding:.11in;border:1px solid ${DECK.cell}}
+  table.grid{border-collapse:collapse;table-layout:fixed;width:100%;margin-top:.24in}
+  .grid th{background:${DECK.g};color:#fff;text-align:left;font-size:10.5pt;font-weight:700;padding:.1in .11in;border:1px solid ${DECK.cell};vertical-align:top;overflow-wrap:anywhere}
+  .grid td{background:#fff;font-size:10.5pt;line-height:1.25;padding:.11in;border:1px solid ${DECK.cell};vertical-align:top;overflow-wrap:anywhere}
+  .grid tbody tr:nth-child(even) td{background:${DECK.paper}}
   .grid td.hl{background:${DECK.hl};font-weight:700}
   .ban-m{margin-top:auto;background:${DECK.mint};border-radius:.09in;font-size:12pt;font-weight:700;line-height:1.3;padding:.13in .23in}
   /* measures */

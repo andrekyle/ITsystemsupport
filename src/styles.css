@@ -15889,6 +15889,43 @@ table.data th.sortable.sorted { color: var(--ink); }
   margin: 0 0 6px;
 }
 
+.chat-answer-paragraph {
+  margin: 0 0 8px;
+}
+
+.chat-answer-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 4px 0 12px;
+}
+
+.chat-answer-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.chat-answer-table th,
+.chat-answer-table td {
+  padding: 8px 10px;
+  border: 1px solid var(--border, #d9dde2);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.chat-answer-table th {
+  background: var(--surface-2, #f3f5f7);
+  font-weight: 600;
+}
+
+.chat-answer-table tbody tr:nth-child(even) {
+  background: var(--surface-2, #f3f5f7);
+}
+
 .chat-actions {
   display: flex;
   gap: 4px;

@@ -487,7 +487,7 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
 .client-ai-panel .reports-hero-note { margin-top: 4px; color: var(--ink-3); font-size: 12px; }
 .client-ai-panel .reports-chat { width: 100%; min-height: calc(100dvh - 340px); }
 .client-ai-panel .chat-user { background: var(--client-accent); }
-.client-ai-panel .chat-composer { border-top: 1px solid var(--border); }
+.client-ai-panel .chat-composer { border-top: 0; background: transparent; }
 .client-ai-panel .reports-genwrap { background: rgba(255, 255, 255, .86); }
 @media(max-width:980px) {
  .client-ai-panel .reports-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -1,5 +1,5 @@
 import { isEnrolledInCourse } from "../lib/courseEnrolment";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Icon } from "../icons";
 import type { Profile } from "../types";
 import { loadProfiles } from "../store";
@@ -37,6 +37,7 @@ const ERROR_TEXT: Record<string, string> = {
   network: "Could not reach the AI service — check your connection and try again.",
   timeout: "The AI took too long to answer. Try again in a moment.",
   incomplete_all_learners: "The AI omitted one or more learners, so the incomplete report was not opened. Please retry.",
+  unregistered_attendance_date: "The AI proposed attendance dates without filled registers, so the report was blocked. Only filled-register dates can have attendance statuses.",
   incomplete_month_dates: "The AI omitted one or more scheduled dates for the selected month, so the incomplete report was not opened. Please retry.",
 };
 
@@ -239,6 +240,84 @@ export function NeonWaves() {
 }
 
 type ChatMsg = { role: "user" | "assistant"; text: string };
+
+function splitMarkdownTableRow(line: string): string[] | null {
+  const cells: string[] = [];
+  let cell = "";
+  let hasSeparator = false;
+  for (let i = 0; i < line.length; i++) {
+    const character = line[i];
+    if (character === "\\" && line[i + 1] === "|") {
+      cell += "|";
+      i++;
+    } else if (character === "|") {
+      cells.push(cell.trim());
+      cell = "";
+      hasSeparator = true;
+    } else {
+      cell += character;
+    }
+  }
+  if (!hasSeparator) return null;
+  cells.push(cell.trim());
+  if (!cells[0]) cells.shift();
+  if (!cells[cells.length - 1]) cells.pop();
+  return cells;
+}
+
+function isMarkdownTableStart(lines: string[], index: number): boolean {
+  const header = splitMarkdownTableRow(lines[index] ?? "");
+  const separator = splitMarkdownTableRow(lines[index + 1] ?? "");
+  return !!header?.length &&
+    separator?.length === header.length &&
+    separator.every((cell) => /^:?-{3,}:?$/.test(cell.replace(/\s/g, "")));
+}
+
+function renderChatAnswer(text: string): ReactNode {
+  const lines = text.split(/\r?\n/);
+  const content: ReactNode[] = [];
+  let index = 0;
+  let key = 0;
+
+  while (index < lines.length) {
+    if (!lines[index].trim()) {
+      index++;
+      continue;
+    }
+    if (isMarkdownTableStart(lines, index)) {
+      const headers = splitMarkdownTableRow(lines[index]) ?? [];
+      const rows: string[][] = [];
+      index += 2;
+      while (index < lines.length) {
+        const row = splitMarkdownTableRow(lines[index]);
+        if (!row) break;
+        rows.push(Array.from({ length: headers.length }, (_, column) =>
+          column === headers.length - 1
+            ? row.slice(column).join(" | ")
+            : row[column] ?? ""
+        ));
+        index++;
+      }
+      content.push(
+        <div className="chat-answer-table-wrap" key={key++}>
+          <table className="chat-answer-table">
+            <thead><tr>{headers.map((header, i) => <th key={i} scope="col">{header}</th>)}</tr></thead>
+            <tbody>{rows.map((row, i) => <tr key={i}>{row.map((cell, j) => <td key={j}>{cell}</td>)}</tr>)}</tbody>
+          </table>
+        </div>
+      );
+      continue;
+    }
+
+    const paragraph = [lines[index++].trim()];
+    while (index < lines.length && lines[index].trim() && !isMarkdownTableStart(lines, index)) {
+      paragraph.push(lines[index++].trim());
+    }
+    content.push(<p className="chat-answer-paragraph" key={key++}>{paragraph.join(" ")}</p>);
+  }
+
+  return content;
+}
 
 interface SavedChat {
   msgs: ChatMsg[];
@@ -519,9 +598,11 @@ export function ReportsPage({
     setError(null);
     setDone(null);
     const sharedRegisters = await fetchReportRegisterSessions(rows);
+    const attendanceContext = [q ?? "", ...history.slice(-4).map((message) => message.text)]
+      .some((text) => /\b(attendance|absen(?:t|ce|ces)?|missed|signed|sessions?)\b/i.test(text));
     const result = await requestReport(
       k,
-      buildReportData(k.id, rows, registers, scope, sharedRegisters, q),
+      buildReportData(k.id, rows, registers, scope, sharedRegisters, q, attendanceContext),
       q,
       makingReport ? "report" : "answer",
       history
@@ -828,9 +909,7 @@ export function ReportsPage({
                 </div>
               ) : (
                 <div key={i} className="chat-msg">
-                  <p className="chat-answer" role="status">
-                    {m.text}
-                  </p>
+                  <div className="chat-answer" role="status">{renderChatAnswer(m.text)}</div>
                   <div className="chat-actions">
                     <button
                       type="button"
