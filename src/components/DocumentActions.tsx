@@ -1,7 +1,7 @@
 import { Icon } from "../icons";
 import { EditingTools } from "./EditingSidebar";
 
-export function DocumentActions({ name, labelled = false, editing = false }: { name: string; labelled?: boolean; onSave?: () => Promise<void>; editing?: boolean }) {
+export function DocumentActions({ name, labelled = false, editing = false, originalPages }: { name: string; labelled?: boolean; onSave?: () => Promise<void>; editing?: boolean; originalPages?: string[] }) {
   const downloadHtml = () => {
     const source = document.querySelector<HTMLElement>(".document-print-target");
     if (!source) return;
@@ -50,7 +50,9 @@ export function DocumentActions({ name, labelled = false, editing = false }: { n
     const title = name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const replicaScript = clone.querySelector(".replica-comb") ? `<script>document.querySelectorAll(".replica-comb").forEach(function(box){var input=box.querySelector("input");if(!input)return;var cells=box.querySelectorAll(".replica-comb-cell");input.addEventListener("input",function(){cells.forEach(function(cell,index){cell.textContent=input.value[index]||"";cell.classList.remove("caret","selected","caret-end")})})});</script>` : "";
     const fitScript = clone.querySelector(".sheet-fit") ? `<script>(function(){function fit(){document.querySelectorAll(".sheet-fit").forEach(function(outer){var mid=outer.querySelector(":scope > .sheet-fit-mid"),inner=mid&&mid.querySelector(":scope > .sheet-fit-inner"),page=inner&&inner.firstElementChild;if(!mid||!inner||!page)return;var width=parseFloat(page.style.width)||page.getBoundingClientRect().width||1000;var available=Math.max(280,Math.min(width,document.documentElement.clientWidth-16));var scale=Math.min(1,available/width);inner.style.width=width+"px";inner.style.transform=scale<1?"scale("+scale+")":"none";mid.style.width=Math.floor(width*scale)+"px";mid.style.height=Math.ceil(inner.scrollHeight*scale)+"px"})}addEventListener("resize",fit);if(document.readyState==="loading")addEventListener("DOMContentLoaded",fit);else fit()})();</script>` : "";
-    const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>${css}\nhtml,body{max-width:100%;overflow-x:hidden}body{margin:0;padding:0 8px;background:#fff;box-sizing:border-box}.document-print-target{box-sizing:border-box!important;width:100%!important;max-width:210mm!important;margin:0 auto!important}.document-print-target .lw-page{box-sizing:border-box!important;width:210mm!important;padding:58px 62px!important;border:0!important;outline:0!important}.document-print-target table{box-sizing:border-box!important;display:table!important;width:100%!important;min-width:100%!important;max-width:100%!important;margin-left:0!important;margin-right:0!important;table-layout:fixed!important}.document-signature-actions,.document-signature-use-saved{display:none!important}@media print{body{padding:0}.document-print-target{width:210mm!important;max-width:none!important}.sheet-fit,.sheet-fit-mid{width:auto!important;height:auto!important;overflow:visible!important}.sheet-fit-inner{width:auto!important;transform:none!important}}</style></head><body class="document-export">${clone.outerHTML}${replicaScript}${fitScript}</body></html>`;
+    const originalPageHtml=originalPages?.map((src,index)=>`<section class="original-page"><img src="${new URL(src,location.href).href}" alt="${title} - page ${index+1}"></section>`).join("");
+    const body=originalPageHtml?`<main class="original-pages">${originalPageHtml}</main>`:clone.outerHTML;
+    const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>${css}\nhtml,body{max-width:100%;overflow-x:hidden}body{margin:0;padding:0 8px;background:#f5f3f0;box-sizing:border-box}.original-pages{width:100%;max-width:210mm;margin:0 auto}.original-page{margin:8px 0;background:#fff}.original-page img{display:block;width:100%;height:auto}.document-print-target{box-sizing:border-box!important;width:100%!important;max-width:210mm!important;margin:0 auto!important}.document-print-target .lw-page{box-sizing:border-box!important;width:210mm!important;padding:58px 62px!important;border:0!important;outline:0!important}.document-print-target table{box-sizing:border-box!important;display:table!important;width:100%!important;min-width:100%!important;max-width:100%!important;margin-left:0!important;margin-right:0!important;table-layout:fixed!important}.document-signature-actions,.document-signature-use-saved{display:none!important}@media print{@page{size:A4 portrait;margin:0}body{padding:0;background:#fff}.original-pages{max-width:none}.original-page{width:210mm;height:297mm;margin:0;break-after:page;page-break-after:always}.original-page:last-child{break-after:auto;page-break-after:auto}.original-page img{width:210mm;height:297mm;object-fit:fill}.document-print-target{width:210mm!important;max-width:none!important}.sheet-fit,.sheet-fit-mid{width:auto!important;height:auto!important;overflow:visible!important}.sheet-fit-inner{width:auto!important;transform:none!important}}</style></head><body class="document-export">${body}${originalPageHtml?"":replicaScript}${originalPageHtml?"":fitScript}</body></html>`;
     const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
     const link = document.createElement("a");
     link.href = url;
@@ -60,6 +62,15 @@ export function DocumentActions({ name, labelled = false, editing = false }: { n
   };
 
   const downloadPdf = () => {
+    if(originalPages?.length){
+      const popup=window.open("","_blank");
+      if(!popup)return;
+      const title=name.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      const pages=originalPages.map((src,index)=>`<section><img src="${new URL(src,location.href).href}" alt="${title} - page ${index+1}"></section>`).join("");
+      popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>@page{size:A4 portrait;margin:0}html,body{margin:0;padding:0;background:#fff}section{width:210mm;height:297mm;margin:0;break-after:page;page-break-after:always;overflow:hidden}section:last-child{break-after:auto;page-break-after:auto}img{display:block;width:210mm;height:297mm;object-fit:fill}</style></head><body>${pages}<script>addEventListener("load",function(){setTimeout(function(){print()},150)})<\/script></body></html>`);
+      popup.document.close();
+      return;
+    }
     const target = document.querySelector<HTMLElement>(".document-print-target");
     if (!target) return;
     const active = document.activeElement;

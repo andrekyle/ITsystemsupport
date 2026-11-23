@@ -85,7 +85,7 @@ export function UploadedPdf({ definition, profile, values, onChange, onSave, sto
     update(id, value);
   };
   return <>
-    <DocumentActions name={definition.title} onSave={onSave} />
+    <DocumentActions name={definition.title} onSave={onSave} originalPages={showFillSign?undefined:definition.pages.map(page=>page.src)} />
     <p className="muted no-print">{showFillSign
       ? <>Editable replica of the original document. Type in the answer areas, or use Fill &amp; sign to add text, ticks and signatures anywhere needed.{onSave && " Answers save automatically to your learner profile as you type. Use Save to verify your latest changes."}</>
       : "Learner Guide pages from the uploaded document."}</p>
