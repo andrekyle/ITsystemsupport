@@ -261,7 +261,15 @@ export function PracticalTask({ document, unitId, profile, values: storedValues,
   const onChange: SaveField = (key, value) => saveValue(`${storagePrefix}${key}`, value);
   if (unitId === "114076" && !storagePrefix) return <Practical114076 profile={profile} values={values} onChange={onChange} onSave={onSave} />;
   if (unitId === "114074" && !storagePrefix && !document.replica && document.sourceText === undefined) return <PracticalTask114074 values={values} onChange={onChange} profile={profile} onSave={onSave} />;
-  if (document.replica) return <><UploadedPdf key={`${profile.id}.${storagePrefix}${unitId}.${document.sourceName}`} definition={document.replica} profile={profile} values={values} onChange={onChange} onSave={onSave} storageKey="replica.answers" showFillSign={storagePrefix !== "learner-guide."} />{document.notice && <details className="no-print"><summary>Source document notes</summary><p>{document.notice}</p></details>}</>;
+  if (document.replica) {
+    // Learner guides contain decorative fonts, logos and symbol legends that
+    // can vary between AI rebuilds. Their preserved source-page image is the
+    // authoritative visual; fields remain positioned over that exact page.
+    const definition=storagePrefix==="learner-guide."
+      ?{...document.replica,display:"image" as const}
+      :document.replica;
+    return <><UploadedPdf key={`${profile.id}.${storagePrefix}${unitId}.${document.sourceName}`} definition={definition} profile={profile} values={values} onChange={onChange} onSave={onSave} storageKey="replica.answers" showFillSign={storagePrefix !== "learner-guide."} />{document.notice && <details className="no-print"><summary>Source document notes</summary><p>{document.notice}</p></details>}</>;
+  }
   if (document.sourceText !== undefined) return <SourceDocument key={`${storagePrefix}${unitId}.${document.sourceName}`} document={document} unitId={unitId} profile={profile} values={values} onChange={onChange} onSave={onSave} presentation={presentation} />;
   if (unitId === "114046" && !storagePrefix) return <PracticalTask114046 values={values} onChange={onChange} profile={profile} />;
   const key = (section: string, field: string) => `practical.${section}.${field}`;

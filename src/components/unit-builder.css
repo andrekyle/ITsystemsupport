@@ -237,6 +237,21 @@
 .unit-workspace-notice h3 { margin:0 0 6px; font-size:15px; font-weight:600; color:var(--ink); }
 .unit-workspace-notice p { margin:0; font-size:13px; line-height:1.6; color:var(--editor-muted); }
 .unit-workspace-notice-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.learner-workbook-review { max-width:760px; padding:0; overflow:hidden; border:1px solid var(--editor-line); background:var(--editor-panel); }
+.learner-workbook-review > header { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:17px 20px; border-bottom:1px solid var(--editor-line); }
+.learner-workbook-review > header strong { display:block; color:var(--ink); font-size:15px; }
+.learner-workbook-review > header p { margin:2px 0 0; }
+.learner-workbook-review > header > span { flex:0 0 auto; padding:5px 9px; border-radius:6px; background:var(--editor-panel); color:var(--editor-muted); font-size:12px; font-weight:600; }
+.learner-workbook-review ol { display:grid; gap:0; margin:0; padding:0; list-style:none; }
+.learner-workbook-review ol li { display:grid; grid-template-columns:30px minmax(0,1fr); align-items:start; gap:11px; margin:0; padding:13px 20px; border-bottom:1px solid var(--editor-line); }
+.learner-workbook-review-number { display:grid; place-items:center; width:28px; height:28px; border-radius:50%; background:var(--editor-panel); color:var(--ink); font-size:12px; font-weight:700; }
+.learner-workbook-review ol li div { min-width:0; }
+.learner-workbook-review ol li strong { display:block; color:var(--ink); font-size:13px; line-height:1.45; }
+.learner-workbook-review ol li div > span { display:block; margin-top:3px; color:var(--editor-muted); font-size:12px; }
+.learner-workbook-review > footer { padding:14px 20px 15px; background:var(--editor-panel); }
+.learner-workbook-review > footer strong { display:block; margin-bottom:2px; color:var(--ink); font-size:12px; }
+.learner-workbook-review > footer p { margin:0; }
+@media(max-width:640px) { .learner-workbook-review > header { align-items:flex-start; flex-direction:column; gap:9px; } }
 .unit-workspace-cards, .unit-version-list { display:flex; flex-direction:column; gap:12px; max-width:760px; margin:0; padding:0; list-style:none; }
 .unit-action-card { display:flex; align-items:center; justify-content:space-between; gap:20px; max-width:760px; padding:18px 20px; border-radius:14px; background:var(--editor-panel); }
 .unit-action-card-copy h3 { margin:0 0 4px; font-size:14.5px; font-weight:600; color:var(--ink); }

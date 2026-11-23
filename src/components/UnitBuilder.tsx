@@ -746,21 +746,16 @@ export function LearnerGuideUpload({unit,content}:{unit:UnitStandard;content?:Un
     setError("");setMessage("");
     try{
       const guide=structuredClone(pendingGuide);
-      if(guide.replica)guide.replica.pages=await storeUnitReplicaPages(guide.replica.pages);
+      setBusy("Preparing the Learner Guide for publishing...");
+      if(guide.replica)guide.replica.pages=await storeUnitReplicaPages(guide.replica.pages,(done,total)=>setBusy(total?`Uploading Learner Guide pages: ${done}/${total}`:"Preparing Learner Guide pages..."));
       validateUnitContent({lesson:[],exercises:[],assignments:[],quiz:[],learnerGuide:guide},false);
       const latest=readBuiltUnit(unit.us)??built;
-      const next=structuredClone(latest?.content??content??{lesson:[],exercises:[],assignments:[],quiz:[]});
+      if(!latest)throw new Error("Generate the course before publishing its Learner Guide.");
+      const next=structuredClone(latest.content);
       next.learnerGuide=guide;
-      setBusy("Preparing Learner Guide files…");
-      const exports=await makeUnitExports(unit,next);
       const prefix=`shared/unitbuilder/${courseScopedUnit(unit.us)}`;
-      setBusy("Saving the Learner Guide…");
-      const [pdf,pptx,answers,sourceDocument]=await Promise.all([
-        uploadFile(prefix,exports.pdf),
-        uploadFile(prefix,exports.pptx),
-        uploadFile(prefix,exports.answers),
-        uploadFile(`${prefix}/source-documents`,pendingFile),
-      ]);
+      setBusy("Saving the original Learner Guide...");
+      const sourceDocument=await uploadFile(`${prefix}/source-documents`,pendingFile);
       const latestBeforePublish=readBuiltUnit(unit.us)??latest;
       const sourceDocuments={...(latestBeforePublish?.files.sourceDocuments??{}),learnerGuide:sourceDocument};
       await saveBuiltUnit(unit.us,{
@@ -769,7 +764,9 @@ export function LearnerGuideUpload({unit,content}:{unit:UnitStandard;content?:Un
         source:latestBeforePublish?.source??"",
         content:next,
         files:{
-          pdf,pptx,answers,
+          pdf:latestBeforePublish.files.pdf,
+          pptx:latestBeforePublish.files.pptx,
+          answers:latestBeforePublish.files.answers,
           material:latestBeforePublish?.files.material,
           materialEditable:latestBeforePublish?.files.materialEditable,
           sourceDocuments,
@@ -869,7 +866,7 @@ export function LearnerWorkbookUpload({unit,content}:{unit:UnitStandard;content?
       <label className="unit-import-button"><span>{busy||"Choose Learner Workbook PDF"}</span><input aria-label="Upload Learner Workbook PDF" type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={event=>{const file=event.target.files?.[0];event.target.value="";void convert(file);}}/></label>
       {progress!==null&&<span role="progressbar" aria-label="Learner Workbook processing" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>{progress}%</span>}
     </div>
-    {outcomes.length>0&&<div className="unit-workspace-notice"><strong>Generated workbook</strong><p>{outcomes.length} outcome{outcomes.length===1?"":"s"} · {outcomes.reduce((total,outcome)=>total+outcome.questions.length,0)} activit{outcomes.reduce((total,outcome)=>total+outcome.questions.length,0)===1?"y":"ies"}</p><ul>{outcomes.map(outcome=>{const marks=outcome.questions.reduce((total,question)=>total+question.marks,0);return <li key={outcome.id}><strong>Outcome {outcome.specificOutcome}: {outcome.title}</strong><span>{outcome.questions.length} activit{outcome.questions.length===1?"y":"ies"} · {marks>0?`${marks} marks found`:"no printed marks in the PDF"}</span></li>;})}</ul><p>Publish saves this generated workbook to the course and replaces this upload panel with the learner answer pages.</p></div>}
+    {outcomes.length>0&&<div className="unit-workspace-notice learner-workbook-review"><header><div><strong>Generated workbook</strong><p>AI extraction ready for review</p></div><span>{outcomes.length} outcome{outcomes.length===1?"":"s"} · {outcomes.reduce((total,outcome)=>total+outcome.questions.length,0)} activit{outcomes.reduce((total,outcome)=>total+outcome.questions.length,0)===1?"y":"ies"}</span></header><ol>{outcomes.map(outcome=>{const marks=outcome.questions.reduce((total,question)=>total+question.marks,0);return <li key={outcome.id}><span className="learner-workbook-review-number">{outcome.specificOutcome}</span><div><strong>{outcome.title}</strong><span>{outcome.questions.length} activit{outcome.questions.length===1?"y":"ies"} · {marks>0?`${marks} marks`:"No printed marks"}</span></div></li>;})}</ol><footer><strong>Ready to publish</strong><p>Publishing adds these learner answer pages to the course and closes this upload panel.</p></footer></div>}
     {message&&<p role="status">{message}</p>}{error&&<p role="alert" className="auth-error">{error}</p>}
     {pendingWorkbook&&<button type="button" className="btn unit-guide-save" disabled={!!busy} onClick={()=>void save()}>{busy||"Publish Learner Workbook"}</button>}
   </div>;

@@ -295,15 +295,15 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
 .client-portal .pw-toggle { border: 0; background: transparent; box-shadow: none; }
 
 .client-admin-panel h3 { font-size: 14px; margin: 22px 0 10px; padding-top: 16px; border-top: 1px solid var(--border); }
-.client-admin-panel { color: #102746; font-family: Arial, "Helvetica Neue", sans-serif; }
-.client-admin-panel summary { color: #102746; font-size: 17px; font-weight: 600; }
-.client-admin-panel > p { color: #102746; font-size: 15px; }
-.client-admin-panel h3 { color: #102746; font-size: 16px; font-weight: 600; }
+.client-admin-panel { color: var(--ink); font-family: Arial, "Helvetica Neue", sans-serif; }
+.client-admin-panel summary { color: var(--ink); font-size: 17px; font-weight: 600; }
+.client-admin-panel > p { color: var(--ink-2); font-size: 15px; }
+.client-admin-panel h3 { color: var(--ink); font-size: 16px; font-weight: 600; }
 .client-admin-panel > h3 { margin: 8px 0 6px; padding-top: 8px; }
 .client-admin-panel form,
 .client-admin-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 1.2fr) auto; align-items: end; gap: 5px; }
 .client-admin-panel form > label,
-.client-admin-row > label { display: grid; gap: 4px; min-width: 0; color: #102746; font-size: 13px; font-weight: 400; }
+.client-admin-row > label { display: grid; gap: 4px; min-width: 0; color: var(--ink-2); font-size: 13px; font-weight: 400; }
 .client-admin-panel input { min-height: 30px; padding: 4px 8px; font-size: 11px; }
 .client-admin-panel .btn { min-height: 30px; padding: 4px 9px; font-size: 11px; }
 .client-admin-panel form + ul,

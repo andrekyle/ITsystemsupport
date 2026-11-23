@@ -102,9 +102,12 @@ export async function saveFormTemplate(definition: FormDefinition, source: File 
 /** Replica pages drafted as data URLs move into the public page bucket; the
  *  saved definition only keeps their URLs. Picture crops of the rebuilt page
  *  travel the same way. */
-async function storePages(pages: FormPage[], ownerId: string, formId: string, uploaded: string[]): Promise<FormPage[]> {
+async function storePages(pages: FormPage[], ownerId: string, formId: string, uploaded: string[], onProgress?: (done: number, total: number) => void): Promise<FormPage[]> {
   if (!supabase) return pages;
   const client = supabase;
+  const total = pages.reduce((count, page) => count + (page.src.startsWith("data:") ? 1 : 0) + (page.layer?.pictures.filter(picture => picture.src.startsWith("data:")).length ?? 0), 0);
+  let done = 0;
+  onProgress?.(done, total);
   const store = async (src: string, name: string): Promise<{ src: string; path: string }> => {
     if (!src.startsWith("data:")) return { src, path: "" };
     const blob = await (await fetch(src)).blob();
@@ -112,6 +115,8 @@ async function storePages(pages: FormPage[], ownerId: string, formId: string, up
     const { error } = await client.storage.from(PAGE_BUCKET).upload(path, blob, { contentType: blob.type || "image/jpeg", upsert: false, cacheControl: "31536000" });
     if (error) throw new Error("The page images could not be stored. Apply the form-pages SQL migration in Supabase (bucket form-pages), then retry.");
     uploaded.push(path);
+    done += 1;
+    onProgress?.(done, total);
     return { src: client.storage.from(PAGE_BUCKET).getPublicUrl(path).data.publicUrl, path };
   };
   const stored: FormPage[] = [];
@@ -132,13 +137,13 @@ async function storePages(pages: FormPage[], ownerId: string, formId: string, up
 }
 
 /** Persist unit replicas using the same page storage as the form builder. */
-export async function storeUnitReplicaPages(pages: FormPage[]): Promise<FormPage[]> {
+export async function storeUnitReplicaPages(pages: FormPage[], onProgress?: (done: number, total: number) => void): Promise<FormPage[]> {
   if (!supabase || !pages.some(page => page.src.startsWith("data:") || page.layer?.pictures.some(picture=>picture.src.startsWith("data:")))) return pages;
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) throw new Error("Sign in before saving PDF pages.");
   const uploaded: string[] = [];
   try {
-    return await storePages(pages, data.user.id, crypto.randomUUID(), uploaded);
+    return await storePages(pages, data.user.id, crypto.randomUUID(), uploaded, onProgress);
   } catch (error) {
     await discardStorage(null, uploaded);
     throw error;
