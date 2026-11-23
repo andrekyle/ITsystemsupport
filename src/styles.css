@@ -5495,6 +5495,37 @@ textarea:focus {
   [data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card .num { font-size: 42px; }
 }
 
+.learner-dashboard .dashboard-stats .stat-card:nth-child(1) { --stat-accent: #173b72; }
+.learner-dashboard .dashboard-stats .stat-card:nth-child(2) { --stat-accent: #278c6d; }
+.learner-dashboard .dashboard-stats .stat-card:nth-child(3) { --stat-accent: #eb5720; }
+.learner-dashboard .dashboard-stats .stat-card:nth-child(4) { --stat-accent: #95620d; }
+.learner-dashboard .dashboard-stats .stat-card:nth-child(5) { --stat-accent: #075ea8; }
+.learner-dashboard .dashboard-stats .stat-card:nth-child(6) { --stat-accent: #278c6d; }
+.learner-dashboard .dashboard-stats .stat-card,
+[data-theme="light"] .learner-dashboard .dashboard-stats .stat-card,
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card {
+  box-shadow: inset 0 4px 0 var(--stat-accent);
+}
+.learner-dashboard .dashboard-stats .stat-card .lbl,
+[data-theme="light"] .learner-dashboard .dashboard-stats .stat-card .lbl,
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card .lbl,
+.learner-dashboard .dashboard-stats .stat-card .num,
+[data-theme="light"] .learner-dashboard .dashboard-stats .stat-card .num,
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card .num {
+  color: var(--stat-accent);
+}
+.learner-dashboard .dashboard-stats .stat-card .stat-total,
+[data-theme="light"] .learner-dashboard .dashboard-stats .stat-card .stat-total,
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card .stat-total {
+  color: var(--ink-3);
+}
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(1) { --stat-accent: #96c6fa; }
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(2) { --stat-accent: #4cc38a; }
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(3) { --stat-accent: #ff9a76; }
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(4) { --stat-accent: #ffd166; }
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(5) { --stat-accent: #64b5f6; }
+[data-theme="dark"] .learner-dashboard .dashboard-stats .stat-card:nth-child(6) { --stat-accent: #4cc38a; }
+
 .tab {
   display: inline-flex;
   align-items: center;
