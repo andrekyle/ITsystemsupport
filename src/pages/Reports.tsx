@@ -328,7 +328,6 @@ export function ReportsPage({
 }) {
   const firstName = profile.name.trim().split(/\s+/)[0] || profile.name;
   const portalPresentation = presentation === "client-portal";
-  const portalPrompt = "Create a learnership progress report with key updates and outstanding actions.";
   const registers = attendanceFilledRegisterDates().length;
   const [saved] = useState(loadSavedChat);
   const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
@@ -884,15 +883,21 @@ export function ReportsPage({
           {!question.trim() && (
             portalPresentation ? (
               <div className="reports-list reports-list-portal">
-                <button
-                  type="button"
-                  className="reports-list-btn"
-                  disabled={!!busy || rows.length === 0}
-                  onClick={() => setQuestion(portalPrompt)}
-                >
-                  <Icon name="document" size={18} />
-                  <span>{portalPrompt}</span>
-                </button>
+                {REPORT_KINDS.map((k) => (
+                  <button
+                    key={k.id}
+                    type="button"
+                    className="reports-list-btn"
+                    disabled={!!busy || rows.length === 0}
+                    title={k.desc}
+                    onClick={() => needsBrief(k)
+                      ? openReportBrief(k)
+                      : generate(k, k.id === "attendance" ? "Cover the current calendar month only." : undefined, "kind")}
+                  >
+                    <Icon name={k.icon} size={18} />
+                    <span>{k.name}</span>
+                  </button>
+                ))}
               </div>
             ) : (
               <div className="reports-list">

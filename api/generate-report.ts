@@ -6,12 +6,14 @@
  * write a professional narrative report. Returns structured JSON the client
  * renders into the printable onboarding-pack-styled document.
  *
- * Runs on Vercel's Edge runtime. Requires the `OPENAI_API_KEY` env var.
+ * Runs on Vercel's Node.js runtime to allow non-streaming report generation
+ * to complete beyond the Edge runtime's response-start limit.
+ * Requires the `OPENAI_API_KEY` env var.
  */
 import { fetchWithServiceRetry, reportServiceError } from "../src/lib/aiServiceErrors";
 import { MARKING_MODELS } from "../src/lib/aiModels";
 
-export const config = { runtime: "edge" };
+export const config = { maxDuration: 60 };
 
 declare const process: { env?: Record<string, string | undefined> } | undefined;
 
