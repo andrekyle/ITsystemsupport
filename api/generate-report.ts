@@ -16,6 +16,12 @@ import {
   deterministicAttendanceAnswer,
   type LearnerAttendanceRecord,
 } from "../src/lib/reportAttendance";
+import {
+  containsProtectedLearnerInfoRequest,
+  PRIVATE_LEARNER_INFO_REFUSAL,
+  redactPrivateValues,
+  sanitizeAssistantData,
+} from "../src/lib/assistantPrivacy";
 
 export const config = { maxDuration: 60 };
 
@@ -52,6 +58,8 @@ You receive JSON: { "report_kind", "report_title", "generated_at", "data" } wher
 Write from that data ONLY. Never invent numbers, names or events that are not in the data; you may compute simple derived figures (averages, counts, percentages). Use South African English. Be specific — cite the actual figures and learner names given. Keep a factual, constructive tone; where the data shows problems, say so plainly and recommend practical actions a facilitator can take.
 
 PRONOUNS — HARD RULE: every learner entry carries a "pronouns" field. Before writing ANY sentence about a learner, look up that field and use EXACTLY those pronouns: "he/him/his" → he, him, his; "she/her/hers" → she, her, hers. If it says to repeat the name, write the learner's first name instead of any pronoun. The "gender" field confirms it. Using "he" for a Female learner or "she" for a Male learner is WRONG and unacceptable — re-check every pronoun against the learner's own entry before finalising. Never infer gender from a name.
+
+LEARNER PRIVACY — HARD RULE: never request, infer, repeat, or provide a learner's identity/ID number, phone/mobile/cell number, or email address. If asked for these details, refuse. These fields are removed from the reference data before it reaches you.
 
 ATTENDANCE — HARD RULE: attendance figures come from the filled registers. A learner's "sessionsExpected" only counts registers dated on/after their "firstSession" (they joined the programme then); "attendanceRatePct" is measured on that basis. A learner with attendanceRatePct 100 has NOT missed a class — never say they missed the earlier sessions; if relevant, say they joined later and have attended every session since.
 
@@ -262,28 +270,33 @@ async function handler(req: Request): Promise<Response> {
   }
 
   const kind = String(body?.kind ?? "").slice(0, 60);
-  const title = String(body?.title ?? "").slice(0, 160);
-  const question = String(body?.question ?? "").slice(0, 1200);
+  const title = redactPrivateValues(String(body?.title ?? "").slice(0, 160));
+  const rawQuestion = String(body?.question ?? "").slice(0, 1200);
+  if (containsProtectedLearnerInfoRequest(rawQuestion)) {
+    return json({ error: "direct", answer: PRIVATE_LEARNER_INFO_REFUSAL }, 200);
+  }
+  const question = redactPrivateValues(rawQuestion);
   const mode = body?.mode === "report" ? "report" : "answer";
+  const safeData = sanitizeAssistantData(body?.data ?? {});
   const history = Array.isArray(body?.history)
     ? (body.history as { role?: unknown; text?: unknown }[])
         .slice(-12)
         .map((m) => ({
           role: m?.role === "assistant" ? ("assistant" as const) : ("user" as const),
-          content: String(m?.text ?? "").slice(0, 1500),
+          content: redactPrivateValues(String(m?.text ?? "").slice(0, 1500)),
         }))
-        .filter((m) => m.content.trim().length > 0)
+        .filter((m) => m.content.trim().length > 0 && !containsProtectedLearnerInfoRequest(m.content))
     : [];
   const apiKey = readApiKey();
   let dataStr = "";
   try {
-    dataStr = JSON.stringify(body?.data ?? {});
+    dataStr = JSON.stringify(safeData);
   } catch {
     dataStr = "{}";
   }
   if (!kind || dataStr.length < 3) return json({ error: "bad_request" }, 400);
   if (dataStr.length > MAX_DATA_LEN) dataStr = dataStr.slice(0, MAX_DATA_LEN);
-  const rawAttendanceRecords = (body.data as { attendanceRecords?: unknown } | undefined)?.attendanceRecords;
+  const rawAttendanceRecords = (safeData as { attendanceRecords?: unknown } | undefined)?.attendanceRecords;
   const attendanceRecords = Array.isArray(rawAttendanceRecords)
     ? rawAttendanceRecords.filter((record): record is LearnerAttendanceRecord => {
         if (!record || typeof record !== "object") return false;
@@ -400,10 +413,10 @@ async function handler(req: Request): Promise<Response> {
           !/\b(schedule|class|training|timetable|happens|next)\b/i.test(question);
         const attendanceContext = currentAttendanceQuestion || attendanceFollowUp;
         const unregisteredDates = parsed.direct === true && attendanceContext
-          ? unregisteredAttendanceDates(str(parsed.answer), body.data)
+          ? unregisteredAttendanceDates(str(parsed.answer), safeData)
           : [];
         if (unregisteredDates.length) {
-          const dateData = body.data as {
+          const dateData = safeData as {
             registerDates?: unknown;
             registeredAttendanceDates?: unknown;
           } | undefined;
@@ -445,11 +458,11 @@ async function handler(req: Request): Promise<Response> {
           lastError = "empty_report";
           continue;
         }
-        if (kind === "attendance" && unregisteredAttendanceDates(JSON.stringify(slides), body.data).length) {
+        if (kind === "attendance" && unregisteredAttendanceDates(JSON.stringify(slides), safeData).length) {
           lastError = "unregistered_attendance_date";
           continue;
         }
-        const reference = body?.data as {
+        const reference = safeData as {
           today?: unknown;
           learners?: { name?: unknown }[];
           registeredSessions?: { date?: unknown }[];

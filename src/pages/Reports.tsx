@@ -1,4 +1,8 @@
 import { isEnrolledInCourse } from "../lib/courseEnrolment";
+import {
+  containsProtectedLearnerInfoRequest,
+  PRIVATE_LEARNER_INFO_REFUSAL,
+} from "../lib/assistantPrivacy";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Icon } from "../icons";
 import type { Profile } from "../types";
@@ -584,6 +588,22 @@ export function ReportsPage({
     opts?: { skipAppend?: boolean; history?: { role: "user" | "assistant"; text: string }[]; forceAnswer?: boolean }
   ) {
     if (busy) return;
+    if (q && containsProtectedLearnerInfoRequest(q)) {
+      setError(null);
+      setDone(null);
+      if (source === "ask") {
+        setMsgs((messages) => [
+          ...messages,
+          ...(!opts?.skipAppend ? [{ role: "user" as const, text: q }] : []),
+          { role: "assistant", text: PRIVATE_LEARNER_INFO_REFUSAL },
+        ]);
+        setQuestion("");
+        draftRef.current = "";
+      } else {
+        setError(PRIVATE_LEARNER_INFO_REFUSAL);
+      }
+      return;
+    }
     const makingReport = source === "kind" || k.id === "tracker" || (wantReport && !opts?.forceAnswer);
     const history = opts?.history ?? msgs.slice(-12);
     if (source === "ask" && q && !opts?.skipAppend) {

@@ -9,8 +9,12 @@ import {
   isCountedAttendanceRegister,
   MIN_ATTENDANCE_REGISTER_LEARNERS,
 } from "../src/lib/attendanceEvidence";
-import reportHandler from "../api/generate-report";
-import { unregisteredAttendanceDates } from "../api/generate-report";
+import reportHandler, { unregisteredAttendanceDates } from "../api/generate-report";
+import {
+  containsProtectedLearnerInfoRequest,
+  PRIVATE_LEARNER_INFO_REFUSAL,
+  sanitizeAssistantData,
+} from "../src/lib/assistantPrivacy";
 
 const dates = [
   "2026-10-01",
@@ -153,4 +157,34 @@ test("attendance answers reject timetable dates without a filled register", () =
     ),
     ["2026-11-21", "27 November 2026"]
   );
+});
+
+test("private learner details are refused and stripped from AI data", async () => {
+  const response = await reportHandler.fetch(new Request("https://example.test/api/generate-report", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      kind: "custom",
+      mode: "answer",
+      question: "What is Eesa's ID number?",
+      data: { learners: [{ name: "Eesa Marshman", idNumber: "0000000000000" }] },
+    }),
+  }));
+  const result = await response.json() as { error?: string; answer?: string };
+  const safeData = sanitizeAssistantData({
+    id: "0000000000000",
+    emailAddress: "learner@example.com",
+    phoneNumber: "000 000 0000",
+    notes: "ID 0000000000000; contact learner@example.com at 000 000 0000",
+    learner: { name: "Eesa Marshman", idNumber: "0000000000000", completionPct: 80 },
+  }) as Record<string, unknown>;
+
+  assert.equal(containsProtectedLearnerInfoRequest("What is Eesa's ID number?"), true);
+  assert.equal(containsProtectedLearnerInfoRequest("Give me Eesa's phone number."), true);
+  assert.equal(containsProtectedLearnerInfoRequest("What is Eesa's email address?"), true);
+  assert.equal(containsProtectedLearnerInfoRequest("How was Eesa's attendance?"), false);
+  assert.equal(result.error, "direct");
+  assert.equal(result.answer, PRIVATE_LEARNER_INFO_REFUSAL);
+  assert.deepEqual(safeData.learner, { name: "Eesa Marshman", completionPct: 80 });
+  assert.doesNotMatch(JSON.stringify(safeData), /0000000000000|learner@example\.com|000 000 0000/);
 });
