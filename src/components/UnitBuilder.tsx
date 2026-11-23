@@ -959,7 +959,7 @@ export function LogbookBuilder({unit,content}:{unit:UnitStandard;content?:UnitCo
     if(!text)throw new Error("Paste or import the logbook content first.");
     if(text.length>MAX_LOGBOOK_SOURCE_LENGTH)throw new Error("Shorten the logbook content (maximum 40,000 characters).");
     const spec=logbookFromSource(unit,text);
-    if(!spec)throw new Error('No logbook checklist rows were found. Add an "Embedded knowledge questions" or "Practical activities" heading followed by one numbered row per line, for example "1. Explain the purpose of a cost/benefit analysis."');
+    if(!spec)throw new Error('No numbered logbook checklist rows could be identified. Add one activity per line, for example "1. Explain the purpose of a cost/benefit analysis.", or import a table with a number and activity description in each row.');
     return spec;
   };
   const readImages=async(files:FileList|null)=>{

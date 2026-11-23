@@ -274,6 +274,30 @@ export function logbookFromSource(unit: UnitStandard, source: string): LogbookSp
     } else handleLine(line);
   }
 
+  // Generated and older logbook templates do not always use our canonical
+  // section headings. Recover clearly numbered checklist rows rather than
+  // making Preview and Save appear unresponsive for otherwise valid forms.
+  if (!spec.knowledgeQuestions.length && !spec.practicalActivities.length) {
+    const recovered: LogbookChecklistRow[] = [];
+    const seen = new Set<string>();
+    for (const raw of text.split("\n")) {
+      const line = raw.trim();
+      let row: LogbookChecklistRow | undefined;
+      if (/^\|.*\|$/.test(line)) {
+        const cells=pipeRowCells(line);
+        if (!cells.every(cell=>!cell||/^:?-{2,}:?$/.test(cell)) && cells.some(cell=>/^\d{1,3}[.)]?$/.test(clean(cell)))) row=checklistRowFromCells(cells,KNOWLEDGE_MARKS);
+      } else if (isNumbered(clean(line))) {
+        const body=stripNumber(clean(line));
+        if (body.length>=8&&!HEADER_WORDS.test(body)) {
+          const inline=splitTrailingMarks(body);
+          row={text:inline.text,marks:inline.marks?padMarks(inline.marks,KNOWLEDGE_MARKS):KNOWLEDGE_MARKS.slice()};
+        }
+      }
+      const key=row?.text.toLocaleLowerCase();
+      if(row&&key&&!seen.has(key)){seen.add(key);recovered.push(row);}
+    }
+    spec.knowledgeQuestions.push(...recovered);
+  }
   if (!spec.knowledgeQuestions.length && !spec.practicalActivities.length) return undefined;
   if (spec.practicalActivities.length === 1) spec.practicalActivities[0].marks = spec.practicalActivities[0].marks.some(Boolean) ? spec.practicalActivities[0].marks : PROJECT_MARKS.slice();
   const normalized = normalizeLogbookSpec(unit, {
