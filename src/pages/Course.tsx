@@ -2865,11 +2865,13 @@ function UnitPageContent({
       inlineFigureRefs,
     };
   }, [builtUnit, inlineUnit, lessonEdits.deletedSections, lessonEdits.figureOrder, lessonEdits.sectionBody, lessonStep, unitId]);
-  // Only pictures the open slide embeds are rebuilt from Storage: section
-  // figures have defaults and an upload box, and cards hide missing pictures.
   const inlineFigureIds = useMemo(() => inlineFigureRefs.map(ref => ref.id), [inlineFigureRefs]);
+  const figureRecoveryIds = useMemo(
+    () => Array.from(new Set([...inlineFigureIds, ...figurePriorityIds.filter(id => !FIGURE_DEFAULTS[id])])),
+    [figurePriorityIds, inlineFigureIds]
+  );
   const { figures: figureImages, setFigure, removeFigure, refreshFigureUrl, issues: figureIssues } = useLessonFigures(unitId, figurePriorityIds, {
-    recoverIds: inlineFigureIds,
+    recoverIds: figureRecoveryIds,
     persistRepairs: isStaff(profile.role),
   });
   const migratingInlineImages = useRef(new Set<string>());
@@ -3786,6 +3788,38 @@ function UnitPageContent({
     }
   }
 
+  function retryBrokenFigure(image: HTMLImageElement, id: string) {
+    if (failedFigureRefreshes.current.has(id)) {
+      image.hidden = true;
+      return;
+    }
+    failedFigureRefreshes.current.add(id);
+    const failedSource = image.currentSrc || image.src;
+    void refreshFigureUrl(id).then(url => {
+      const section = image.closest(".lesson-section");
+      const relatedImages = section
+        ? Array.from(section.querySelectorAll("img")).filter(candidate => (candidate.currentSrc || candidate.src) === failedSource)
+        : [image];
+      if (!url) {
+        relatedImages.forEach(candidate => { candidate.hidden = true; });
+        setFigError("A lesson image could not be loaded. Check your connection and try again.");
+        return;
+      }
+      relatedImages.forEach(candidate => {
+        candidate.hidden = false;
+        candidate.src = url;
+      });
+    }).catch(() => {
+      image.hidden = true;
+      setFigError("A lesson image could not be loaded. Check your connection and try again.");
+    });
+  }
+
+  function clearFigureRetry(image: HTMLImageElement, id: string) {
+    image.hidden = false;
+    failedFigureRefreshes.current.delete(id);
+  }
+
   async function copySlideFigure(src: string) {
     setFigError(null);
     setCopyingFigure(true);
@@ -4135,7 +4169,7 @@ function UnitPageContent({
               </EditingTools>
             );
             // First real (uploaded or default) figure in the effective order becomes the hero.
-            const heroFig = orderedFigures.find((f) => figureImages[f.id] || FIGURE_DEFAULTS[f.id]);
+            const heroFig = orderedFigures.find((f) => figureImages[f.id]?.image || FIGURE_DEFAULTS[f.id]);
             const openLightboxFor = (f: { id: string; caption: string }) => {
               const items: LightboxItem[] = [];
               let hitIndex = 0;
@@ -4186,8 +4220,8 @@ function UnitPageContent({
                         title={editable ? "Editing" : "Click to enlarge"}
                         style={{ maxHeight: `${Math.round(420 * heroScale)}px`, minHeight: `${Math.round(240 * Math.min(1, heroScale))}px` }}
                       >
-                        <img className="lesson-hero-bg" src={src} alt="" aria-hidden="true" loading="eager" decoding="async" fetchPriority="high" style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
-                        <img className="lesson-hero-img" src={src} alt={plainSlideText(heroCap)} loading="eager" decoding="async" fetchPriority="high" style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
+                        <img className="lesson-hero-bg" src={src} alt="" aria-hidden="true" loading="eager" decoding="async" fetchPriority="high" onError={event => retryBrokenFigure(event.currentTarget, heroFig.id)} onLoad={event => clearFigureRetry(event.currentTarget, heroFig.id)} style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
+                        <img className="lesson-hero-img" src={src} alt={plainSlideText(heroCap)} loading="eager" decoding="async" fetchPriority="high" onError={event => retryBrokenFigure(event.currentTarget, heroFig.id)} onLoad={event => clearFigureRetry(event.currentTarget, heroFig.id)} style={{ objectPosition: `center ${offsetYOf(heroFig.id)}%` }} />
                         <div className="lesson-hero-shade" />
                         <div className="lesson-hero-body">
                           <div className="lesson-hero-eyebrow">Section {position + 1}</div>
@@ -4758,7 +4792,7 @@ function UnitPageContent({
                                 setLightbox({ items: [{ src: cardFigSrc, caption: cardTitle }], index: 0 })
                               }
                             >
-                              <img src={cardFigSrc} alt={cardTitle} loading="lazy" />
+                              <img src={cardFigSrc} alt={cardTitle} loading="lazy" onError={event => retryBrokenFigure(event.currentTarget, c.figId!)} onLoad={event => clearFigureRetry(event.currentTarget, c.figId!)} />
                             </button>
                             {isPrivileged && !phone && (
                               <div className="lesson-hero-tools lesson-card-tools">
@@ -4934,7 +4968,7 @@ function UnitPageContent({
                 </>}
                 {unifiedText && sec.cards?.filter(c=>c.figId).map(c=>{
                   const src=figureImages[c.figId!]?.image ?? FIGURE_DEFAULTS[c.figId!]?.src;
-                  return src?<img key={c.figId} src={src} alt={c.title} loading="eager" decoding="async" fetchPriority="high" style={{maxWidth:"100%"}}/>:null;
+                  return src?<img key={c.figId} src={src} alt={c.title} loading="eager" decoding="async" fetchPriority="high" onError={event => retryBrokenFigure(event.currentTarget, c.figId!)} onLoad={event => clearFigureRetry(event.currentTarget, c.figId!)} style={{maxWidth:"100%"}}/>:null;
                 })}
                 {sec.figures && (
                   <div className="figure-grid">
@@ -4973,7 +5007,7 @@ function UnitPageContent({
                               onClick={() => !editable && openLightboxFor({ id: f.id, caption: cap })}
                               title={editable ? "Editing" : "Click to enlarge"}
                             >
-                              <img src={up.image} alt={cap} loading={figurePriorityIds.includes(f.id) ? "eager" : "lazy"} decoding="async" fetchPriority={figurePriorityIds.includes(f.id) ? "high" : "auto"} style={imgStyle} />
+                              <img src={up.image} alt={cap} loading={figurePriorityIds.includes(f.id) ? "eager" : "lazy"} decoding="async" fetchPriority={figurePriorityIds.includes(f.id) ? "high" : "auto"} onError={event => retryBrokenFigure(event.currentTarget, f.id)} onLoad={event => clearFigureRetry(event.currentTarget, f.id)} style={imgStyle} />
                             </button>
                             {editableCap()}
                             {editable && figControls(f)}
@@ -4999,7 +5033,7 @@ function UnitPageContent({
                               onClick={() => !editable && openLightboxFor({ id: f.id, caption: cap })}
                               title={editable ? "Editing" : "Click to enlarge"}
                             >
-                              <img src={def.src} alt={cap} loading={figurePriorityIds.includes(f.id) ? "eager" : "lazy"} decoding="async" fetchPriority={figurePriorityIds.includes(f.id) ? "high" : "auto"} style={imgStyle} />
+                              <img src={def.src} alt={cap} loading={figurePriorityIds.includes(f.id) ? "eager" : "lazy"} decoding="async" fetchPriority={figurePriorityIds.includes(f.id) ? "high" : "auto"} onError={event => retryBrokenFigure(event.currentTarget, f.id)} onLoad={event => clearFigureRetry(event.currentTarget, f.id)} style={imgStyle} />
                             </button>
                             {editableCap(
                               <a
@@ -5392,7 +5426,7 @@ function UnitPageContent({
                         onClick={() => openLightboxFor({ id: heroFig.id, caption: slideCap })}
                         title="Click to enlarge"
                       >
-                        <img src={src} alt={slideCap} />
+                        <img src={src} alt={slideCap} onError={event => retryBrokenFigure(event.currentTarget, heroFig.id)} onLoad={event => clearFigureRetry(event.currentTarget, heroFig.id)} />
                         <span className="lesson-slide-zoom" aria-hidden="true">
                           <Icon name="image" size={14} />
                           Click to enlarge
