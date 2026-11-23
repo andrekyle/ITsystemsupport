@@ -1008,11 +1008,17 @@ a:hover {
 }
 [data-theme="light"] .sidebar .side-item[data-page="course"].active,
 [data-theme="light"] .sidebar .side-item[data-page="course"].active:hover {
-  background:#e9f7ee;
+  background:#eaf4ff;
+  color:#075ea8;
+  font-weight:600;
 }
+[data-theme="light"] .sidebar .side-item[data-page="course"].active .ico { color:#075ea8; }
 [data-theme="light"] .sidebar .side-item[data-page="course"].active::before {
-  background:#72b889;
+  background:#0071e3;
 }
+[data-theme="dark"] .sidebar .side-item[data-page="course"].active,
+[data-theme="dark"] .sidebar .side-item[data-page="course"].active:hover { background:rgba(71,158,245,.16); color:#8ac2ff; font-weight:600; }
+[data-theme="dark"] .sidebar .side-item[data-page="course"].active .ico { color:#8ac2ff; }
 [data-theme="light"] .sidebar .sidebar-footer { border-top: 1px solid #e5e5e7; }
 [data-theme="light"] .sidebar .side-item .badge {
   border-color: #d2d2d7;

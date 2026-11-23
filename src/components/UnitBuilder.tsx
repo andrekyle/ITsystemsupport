@@ -13,7 +13,7 @@ import { storeUnitReplicaPages } from "../lib/forms";
 import { makeUnitExports } from "../lib/unitExports";
 import { createAiPresentation, type AiPresentationSlide } from "../lib/aiPresentation";
 import { plainSlideText } from "../lib/slideRichText";
-import { downloadDoc, getFileUrl, uploadFile } from "../lib/files";
+import { downloadDoc, getFileBlob, getFileUrl, uploadFile } from "../lib/files";
 import { supabase } from "../lib/supabase";
 import { loadContentModel, loadPresentationModel, recordTokenUsage } from "../lib/tokens";
 import { UnitContentEditor, contentSections } from "./UnitContentEditor";
@@ -56,6 +56,7 @@ async function logbookImageDataUrl(file: File): Promise<string> {
     bitmap.close();
   }
 }
+
 export function effectiveBuiltContent(content:UnitContent, edits:LessonEdits, retainDeleted = false):UnitContent {
   const next=structuredClone(content);
   next.lesson=next.lesson.map((s,si)=>({...s,heading:edits.headings?.[si]??s.heading,

@@ -16,6 +16,7 @@ export type UnitFiles = {
   answers: PoeDoc;
   material?: PoeDoc;
   materialEditable?: PoeDoc;
+  logbook?: PoeDoc;
   /** Original source PDFs supplied in the builder, retained alongside the generated exports. */
   sourceDocuments?: UnitSourceDocuments;
 };
