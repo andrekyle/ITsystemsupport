@@ -7,6 +7,7 @@ import { TENANT_ID } from "./tenant";
 import { loadOutcomes } from "../store";
 import { docToolbar } from "./certificates";
 import { attendanceFilledRegisterDates } from "./gamification";
+import { attendanceSignerCount, isCountedAttendanceRegister } from "./attendanceEvidence";
 import { loadMarkingModel, recordTokenUsage } from "./tokens";
 import type { LearnerRow } from "../pages/Analytics";
 import { enhanceTrackerHtml } from "./trackerEditor";
@@ -234,10 +235,11 @@ export async function fetchReportRegisterSessions(rows: LearnerRow[]): Promise<R
       }
     }
     const profileIds = new Set(Object.keys(parsedRows));
-    if (!profileIds.size) continue;
+    const signed = attendanceSignerCount(parsedRows);
+    if (!isCountedAttendanceRegister(parsedRows)) continue;
     sessions.push({
       date,
-      signed: profileIds.size,
+      signed,
       expected: rows.length,
       signedProfileIds: rows
         .filter((learner) =>

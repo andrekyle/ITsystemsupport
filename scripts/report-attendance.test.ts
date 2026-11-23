@@ -4,6 +4,11 @@ import {
   buildLearnerAttendanceRecords,
   deterministicAttendanceAnswer,
 } from "../src/lib/reportAttendance";
+import {
+  attendanceSignerCount,
+  isCountedAttendanceRegister,
+  MIN_ATTENDANCE_REGISTER_LEARNERS,
+} from "../src/lib/attendanceEvidence";
 import reportHandler from "../api/generate-report";
 import { unregisteredAttendanceDates } from "../api/generate-report";
 
@@ -14,6 +19,22 @@ const dates = [
   "2026-10-22",
   "2026-10-29",
 ];
+
+test("a register counts only with at least seven distinct learners", () => {
+  const rows = Object.fromEntries(
+    Array.from({ length: MIN_ATTENDANCE_REGISTER_LEARNERS }, (_, index) => [
+      `learner-${index + 1}`,
+      { idNumber: `ID-${index + 1}`, name: `Learner ${index + 1}`, surname: "Test" },
+    ])
+  );
+  assert.equal(attendanceSignerCount(Object.fromEntries(Object.entries(rows).slice(0, 6))), 6);
+  assert.equal(isCountedAttendanceRegister(Object.fromEntries(Object.entries(rows).slice(0, 6))), false);
+  assert.equal(attendanceSignerCount(rows), 7);
+  assert.equal(isCountedAttendanceRegister(rows), true);
+
+  const duplicateLearner = { ...rows, "duplicate-profile": rows["learner-1"] };
+  assert.equal(attendanceSignerCount(duplicateLearner), 7);
+});
 
 test("attendance records count absences from register statuses, not total sessions", () => {
   const [record] = buildLearnerAttendanceRecords(

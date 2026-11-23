@@ -5,6 +5,28 @@ export interface AttendanceEvidenceRow {
   idNumber?: string;
 }
 
+export const MIN_ATTENDANCE_REGISTER_LEARNERS = 7;
+
+export function attendanceSignerCount(rows: Record<string, unknown> | undefined): number {
+  const learners = new Set<string>();
+  for (const [profileId, value] of Object.entries(rows ?? {})) {
+    const row = value && typeof value === "object" && !Array.isArray(value)
+      ? value as AttendanceEvidenceRow
+      : {};
+    const idNumber = typeof row.idNumber === "string" ? row.idNumber.replace(/\D/g, "") : "";
+    const name = `${typeof row.name === "string" ? row.name : ""} ${typeof row.surname === "string" ? row.surname : ""}`
+      .trim()
+      .replace(/\s+/g, " ")
+      .toLowerCase();
+    learners.add(idNumber ? `id:${idNumber}` : name ? `name:${name}` : `profile:${profileId}`);
+  }
+  return learners.size;
+}
+
+export function isCountedAttendanceRegister(rows: Record<string, unknown> | undefined): boolean {
+  return attendanceSignerCount(rows) >= MIN_ATTENDANCE_REGISTER_LEARNERS;
+}
+
 /** Read both legacy register sheets and authoritative per-learner rows.
  * A session counts once even when its signatures exist in both formats. */
 export function attendanceEvidence(

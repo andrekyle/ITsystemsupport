@@ -4,7 +4,11 @@ import { UNIT_ACTIVITIES } from "../types";
 import { MODULES } from "../data/course";
 import { loadPoeDocs, loadProgress, poeItemCount } from "../store";
 import { bestPoeDocs, bestProgress, identityKeys, type CloudLearnerData } from "./directory";
-import { attendanceEvidence, type AttendanceEvidenceRow } from "./attendanceEvidence";
+import {
+  attendanceEvidence,
+  isCountedAttendanceRegister,
+  type AttendanceEvidenceRow,
+} from "./attendanceEvidence";
 
 /**
  * Gamification layer: XP, levels and badges are computed deterministically
@@ -74,14 +78,14 @@ function signedRegister(rows: Record<string, AttRowLike> | undefined, ref: Profi
 export function attendanceSignedCount(ref: ProfileRef): number {
   let signed = 0;
   for (const rows of attendanceEvidence().values()) {
-    if (signedRegister(rows, ref)) signed++;
+    if (isCountedAttendanceRegister(rows) && signedRegister(rows, ref)) signed++;
   }
   return signed;
 }
 
 /** Total attendance registers held on this device (for participation rates). */
 export function attendanceRegisterCount(): number {
-  return attendanceEvidence().size;
+  return attendanceFilledRegisterDates().length;
 }
 
 /** ISO dates (sorted) of every attendance register held on this device. */
@@ -89,12 +93,11 @@ export function attendanceRegisterDates(): string[] {
   return [...attendanceEvidence().keys()].sort();
 }
 
-/** Dates of FILLED registers only — at least one learner signed. Empty sheets
- *  (created by browsing to a date, or future sessions) don't count in reports. */
+/** Dates of counted registers only — at least seven distinct learners signed. */
 export function attendanceFilledRegisterDates(): string[] {
   const dates: string[] = [];
   for (const [date, rows] of attendanceEvidence()) {
-    if (Object.keys(rows).length > 0) dates.push(date);
+    if (isCountedAttendanceRegister(rows)) dates.push(date);
   }
   return dates.sort();
 }
@@ -103,7 +106,7 @@ export function attendanceFilledRegisterDates(): string[] {
 export function attendanceSignedDates(ref: ProfileRef): string[] {
   const dates: string[] = [];
   for (const [date, rows] of attendanceEvidence()) {
-    if (signedRegister(rows, ref)) dates.push(date);
+    if (isCountedAttendanceRegister(rows) && signedRegister(rows, ref)) dates.push(date);
   }
   return dates.sort();
 }
@@ -118,7 +121,7 @@ export function attendanceExpectedCount(ref: ProfileRef): number {
   const dates: string[] = [];
   let first: string | null = null;
   for (const [date, rows] of attendanceEvidence()) {
-    if (Object.keys(rows).length === 0) continue;
+    if (!isCountedAttendanceRegister(rows)) continue;
     dates.push(date);
     if (signedRegister(rows, ref) && (!first || date < first)) first = date;
   }
