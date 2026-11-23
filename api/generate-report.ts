@@ -181,7 +181,7 @@ function json(payload: unknown, status: number): Response {
   });
 }
 
-export default async function handler(req: Request): Promise<Response> {
+async function handler(req: Request): Promise<Response> {
   if (req.method === "GET") {
     return json({ build: BUILD, configured: Boolean(readApiKey()) }, 200);
   }
@@ -421,3 +421,5 @@ export default async function handler(req: Request): Promise<Response> {
     clearTimeout(timer);
   }
 }
+
+export default { fetch: handler };

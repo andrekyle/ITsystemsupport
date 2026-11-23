@@ -258,19 +258,22 @@ function apiDev(env: Record<string, string>): Plugin {
               chunks.push(buffer);
             }
             const module = (await server.ssrLoadModule(`/api/${endpoint}.ts`)) as {
-              default: (request: Request) => Promise<Response>;
+              default:
+                | ((request: Request) => Promise<Response>)
+                | { fetch: (request: Request) => Promise<Response> };
             };
-            const result = await module.default(
-              new Request(`http://localhost/api/${endpoint}`, {
-                method: request.method ?? "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: request.headers.authorization ?? "",
-                  "Content-Length": String(size),
-                },
-                body: chunks.length ? Buffer.concat(chunks) : undefined,
-              })
-            );
+            const apiRequest = new Request(`http://localhost/api/${endpoint}`, {
+              method: request.method ?? "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: request.headers.authorization ?? "",
+                "Content-Length": String(size),
+              },
+              body: chunks.length ? Buffer.concat(chunks) : undefined,
+            });
+            const result = await (typeof module.default === "function"
+              ? module.default(apiRequest)
+              : module.default.fetch(apiRequest));
             response.statusCode = result.status;
             result.headers.forEach((value, key) => response.setHeader(key, value));
             response.end(await result.text());
