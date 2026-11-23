@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../icons";
 import type { Profile, ProgressState, Route } from "../types";
 import { isAdminRole } from "../types";
@@ -12,14 +12,16 @@ import {
   isSaqaUnit,
   usLabel,
 } from "../data/course";
-import { loadAnnouncements, loadProfiles, moduleCompletion, overallStats, unitStatus, useOutcomes, usePoe } from "../store";
+import { loadAnnouncements, loadPoeDocs, loadProfiles, loadProgress, moduleCompletion, overallStats, unitStatus, useOutcomes, usePoe, type UnitOutcome } from "../store";
 import { attendanceSignedCount } from "../lib/gamification";
 import { Bar, Ring } from "../components/Ring";
 import { TokenGauge } from "../components/TokenGauge";
 import { Button } from "@fluentui/react-components";
 import { VideoMetrics } from "../components/VideoMetrics";
-import { bestPoeDocs, bestProgress, fetchCloudLearnerData, type CloudLearnerData } from "../lib/directory";
+import { bestPoeDocs, bestProgress, cloudProfileIds, dedupeProfiles, fetchCloudLearnerData, mergeProfileWithCloud, remoteOnlyProfiles, type CloudLearnerData } from "../lib/directory";
 import { cloudEnabled } from "../lib/supabase";
+import { isEnrolledInCourse } from "../lib/courseEnrolment";
+import { aggregateLearnerDashboard } from "../lib/dashboardStats";
 
 export function Dashboard({
   profile,
@@ -31,17 +33,17 @@ export function Dashboard({
   navigate: (r: Route) => void;
 }) {
   const [dashboardTab, setDashboardTab] = useState("overview");
-  const [savedEvidence, setSavedEvidence] = useState<{ profileId: string; progress: ProgressState; cloud: CloudLearnerData } | null>(null);
+  const [savedEvidence, setSavedEvidence] = useState<{ profileId: string; cloud: CloudLearnerData } | null>(null);
   const [evidenceError, setEvidenceError] = useState(false);
   useEffect(() => {
-    if (!cloudEnabled || profile.role !== "Learner") return;
+    if (!cloudEnabled || (profile.role !== "Learner" && profile.role !== "Super User")) return;
     let alive = true;
     setEvidenceError(false);
     void fetchCloudLearnerData().then(data => {
       if (!alive) return;
       setEvidenceError(!data);
       if (data) {
-        setSavedEvidence({ profileId: profile.id, progress: bestProgress(profile, data), cloud: data });
+        setSavedEvidence({ profileId: profile.id, cloud: data });
       }
     }).catch(error => {
       console.error("Could not load saved XP evidence:", error);
@@ -59,18 +61,53 @@ export function Dashboard({
   ];
   const { docs: poeDocs } = usePoe(profile.id);
   const { outcomes } = useOutcomes();
+  const isSuperUserDashboard = profile.role === "Super User";
+  const cloudData = savedEvidence?.profileId === profile.id ? savedEvidence.cloud : null;
   // A learner may have a seeded local profile and a different cloud profile
   // id after signing in. Reconcile all linked snapshots so saved completions
   // do not disappear from the dashboard.
-  const effectiveProgress = savedEvidence?.profileId === profile.id
-    ? bestProgress(profile, savedEvidence.cloud)
+  const effectiveProgress = cloudData
+    ? bestProgress(profile, cloudData)
     : progress;
-  const effectivePoe = savedEvidence?.profileId === profile.id
-    ? bestPoeDocs(profile, savedEvidence.cloud)
+  const effectivePoe = cloudData
+    ? bestPoeDocs(profile, cloudData)
     : poeDocs;
   const s = overallStats(effectiveProgress, effectivePoe, outcomes[profile.id] ?? {});
-  const poeDone = Object.keys(effectivePoe).length;
-  const classesAttended = attendanceSignedCount(profile);
+  const learnerRollup = useMemo(() => {
+    if (!isSuperUserDashboard || (cloudEnabled && !cloudData)) return null;
+    const localProfiles = loadProfiles();
+    const localLearners = localProfiles.filter(learner => learner.role === "Learner");
+    const remoteLearners = cloudData
+      ? remoteOnlyProfiles(localProfiles, cloudData.profiles).filter(learner => learner.role === "Learner")
+      : [];
+    const learners = dedupeProfiles([
+      ...localLearners.map(learner => mergeProfileWithCloud(learner, cloudData)),
+      ...remoteLearners,
+    ]).filter(learner => learner.role === "Learner" && isEnrolledInCourse(learner));
+    const records = learners.map(learner => {
+      const progress = cloudData ? bestProgress(learner, cloudData) : loadProgress(learner.id);
+      const poe = cloudData ? bestPoeDocs(learner, cloudData) : loadPoeDocs(learner.id);
+      const linkedIds = cloudData ? cloudProfileIds(learner, cloudData) : new Set([learner.id]);
+      const learnerOutcomes: Record<string, UnitOutcome> = {};
+      for (const id of linkedIds) {
+        for (const [us, outcome] of Object.entries(outcomes[id] ?? {})) {
+          const previous = learnerOutcomes[us];
+          if (!previous || (Date.parse(outcome.at) || 0) > (Date.parse(previous.at) || 0)) {
+            learnerOutcomes[us] = outcome;
+          }
+        }
+      }
+      return { progress, poe, outcomes: learnerOutcomes, attendance: attendanceSignedCount(learner) };
+    });
+    return aggregateLearnerDashboard(records);
+  }, [cloudData, isSuperUserDashboard, outcomes]);
+  const poeDone = isSuperUserDashboard ? learnerRollup?.poeItemsComplete : Object.keys(effectivePoe).length;
+  const classesAttended = isSuperUserDashboard ? learnerRollup?.classesAttended : attendanceSignedCount(profile);
+  const aggregateLoading = isSuperUserDashboard && cloudEnabled && !cloudData && !evidenceError;
+  const aggregateUnavailable = isSuperUserDashboard && cloudEnabled && !cloudData && evidenceError;
+  const learnerScopeLabel = learnerRollup
+    ? learnerRollup.learnerCount ? `Across ${learnerRollup.learnerCount} enrolled learners` : "No enrolled learners"
+    : aggregateUnavailable ? "Learner data unavailable" : "Loading learner data...";
   const announcements = loadAnnouncements().slice(0, 2);
 
   return (
@@ -84,63 +121,65 @@ export function Dashboard({
         {COURSE_META.title} · SAQA ID {COURSE_META.saqaId} · NQF Level {COURSE_META.nqfLevel} ·{" "}
         {COURSE_META.credits} Credits
       </p>
-      {evidenceError && <p className="auth-error" role="alert">Could not verify all saved XP evidence. The displayed XP may be incomplete; reload to retry.</p>}
+      {evidenceError && <p className="auth-error" role="alert">{isSuperUserDashboard ? "Could not load learner records from the cloud. Aggregate dashboard figures are unavailable; reload to retry." : "Could not verify all saved XP evidence. The displayed XP may be incomplete; reload to retry."}</p>}
+      {isSuperUserDashboard && !cloudEnabled && <p className="muted" role="status">Showing learner records saved on this device only.</p>}
+      {aggregateLoading && <p className="muted" role="status">Connecting to learner records...</p>}
 
       <div className="card-grid dashboard-stats">
         <div className="card stat-card">
           <div className="learner-stat-copy">
             <div className="lbl">Overall completion</div>
-            <small>Course progress across all modules</small>
+            <small>{isSuperUserDashboard ? `Average · ${learnerScopeLabel}` : "Course progress across all modules"}</small>
           </div>
-          <div className="num">{Math.round(s.overall * 100)}%</div>
+          <div className="num">{isSuperUserDashboard ? learnerRollup ? `${Math.round(learnerRollup.overall * 100)}%` : "—" : `${Math.round(s.overall * 100)}%`}</div>
         </div>
         <div className="card stat-card">
           <div className="learner-stat-copy">
             <div className="lbl">Credits earned</div>
-            <small>{Math.max(0, COURSE_META.credits - s.creditsEarned)} credits remaining</small>
+            <small>{isSuperUserDashboard ? learnerRollup ? `${learnerScopeLabel} · ${Math.max(0, learnerRollup.creditsTotal - learnerRollup.creditsEarned)} credits remaining` : learnerScopeLabel : `${Math.max(0, COURSE_META.credits - s.creditsEarned)} credits remaining`}</small>
           </div>
           <div className="num">
-            {s.creditsEarned}<span className="stat-total"> / {COURSE_META.credits}</span>
+            {isSuperUserDashboard ? learnerRollup?.creditsEarned ?? "—" : s.creditsEarned}<span className="stat-total"> / {isSuperUserDashboard ? learnerRollup?.creditsTotal ?? "—" : COURSE_META.credits}</span>
           </div>
         </div>
         <div className="card stat-card">
           <div className="learner-stat-copy">
             <div className="lbl">Unit standards completed</div>
-            <small>{Math.max(0, TOTAL_UNITS - s.unitsCompleted)} unit standards remaining</small>
+            <small>{isSuperUserDashboard ? learnerScopeLabel : `${Math.max(0, TOTAL_UNITS - s.unitsCompleted)} unit standards remaining`}</small>
           </div>
           <div className="num">
-            {s.unitsCompleted}<span className="stat-total"> / {TOTAL_UNITS}</span>
+            {isSuperUserDashboard ? learnerRollup?.unitsCompleted ?? "—" : s.unitsCompleted}<span className="stat-total"> / {isSuperUserDashboard ? learnerRollup?.unitsTotal ?? "—" : TOTAL_UNITS}</span>
           </div>
         </div>
         <div className="card stat-card">
           <div className="learner-stat-copy">
             <div className="lbl">Modules completed</div>
-            <small>{Math.max(0, MODULES.length - s.modulesCompleted)} modules remaining</small>
+            <small>{isSuperUserDashboard ? learnerScopeLabel : `${Math.max(0, MODULES.length - s.modulesCompleted)} modules remaining`}</small>
           </div>
           <div className="num">
-            {s.modulesCompleted}<span className="stat-total"> / {MODULES.length}</span>
+            {isSuperUserDashboard ? learnerRollup?.modulesCompleted ?? "—" : s.modulesCompleted}<span className="stat-total"> / {isSuperUserDashboard ? learnerRollup?.modulesTotal ?? "—" : MODULES.length}</span>
           </div>
         </div>
         <div className="card stat-card">
           <div className="learner-stat-copy">
             <div className="lbl">Classes attended</div>
-            <small>Signed attendance registers</small>
+            <small>{isSuperUserDashboard ? learnerScopeLabel : "Signed attendance registers"}</small>
           </div>
-          <div className="num">{classesAttended}</div>
+          <div className="num">{classesAttended ?? "—"}</div>
         </div>
         <div
           className="card stat-card clickable"
-          onClick={() => navigate({ page: "poe" })}
+          onClick={() => navigate({ page: isSuperUserDashboard ? "analytics" : "poe" })}
           role="button"
           tabIndex={0}
           style={{ cursor: "pointer" }}
         >
           <div className="learner-stat-copy">
             <div className="lbl">POE items complete</div>
-            <small>{Math.max(0, POE_TOTAL - poeDone)} evidence items remaining</small>
+            <small>{isSuperUserDashboard ? learnerRollup ? `${learnerScopeLabel} · ${Math.max(0, learnerRollup.poeItemsTotal - learnerRollup.poeItemsComplete)} evidence items remaining` : learnerScopeLabel : `${Math.max(0, POE_TOTAL - (poeDone ?? 0))} evidence items remaining`}</small>
           </div>
           <div className="num">
-            {poeDone}<span className="stat-total"> / {POE_TOTAL}</span>
+            {poeDone ?? "—"}<span className="stat-total"> / {isSuperUserDashboard ? learnerRollup?.poeItemsTotal ?? "—" : POE_TOTAL}</span>
           </div>
         </div>
       </div>
@@ -216,26 +255,23 @@ export function Dashboard({
         Module progress
       </h2>
       <div className="card dashboard-module-progress">
-        {MODULES.map((m, i) => {
-          const c = moduleCompletion(effectiveProgress, m.id);
-          return (
-            <div
-              key={m.id}
-              className="dash-mod-row"
-            >
-              <Icon name={m.icon} size={19} color="var(--azure)" />
-              <span className="dash-mod-name">
-                {i + 1}. {m.name}
-              </span>
-              <span className="dash-mod-bar">
-                <Bar value={c} green={c === 1} />
-              </span>
-              <span className="pct dash-mod-pct">
-                {Math.round(c * 100)}%
-              </span>
-            </div>
-          );
-        })}
+        {isSuperUserDashboard && !learnerRollup
+          ? <p role={aggregateUnavailable ? "alert" : "status"}>{aggregateUnavailable ? "Learner module progress is unavailable." : "Loading learner module progress..."}</p>
+          : isSuperUserDashboard && learnerRollup?.learnerCount === 0
+            ? <p role="status">No enrolled learner records are available.</p>
+            : MODULES.map((m, i) => {
+              const c = isSuperUserDashboard
+                ? learnerRollup?.moduleProgress[m.id] ?? 0
+                : moduleCompletion(effectiveProgress, m.id);
+              return (
+                <div key={m.id} className="dash-mod-row">
+                  <Icon name={m.icon} size={19} color="var(--azure)" />
+                  <span className="dash-mod-name">{i + 1}. {m.name}</span>
+                  <span className="dash-mod-bar"><Bar value={c} green={c === 1} /></span>
+                  <span className="pct dash-mod-pct">{Math.round(c * 100)}%</span>
+                </div>
+              );
+            })}
       </div>
 
       <h2 className="section-title">

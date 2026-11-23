@@ -826,9 +826,19 @@ export function LearnerWorkbookUpload({unit,content}:{unit:UnitStandard;content?
       const response=await fetch("/api/build-learner-workbook",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({unit,sourceText:document.sourceText,model:loadContentModel()}),signal:AbortSignal.timeout(120_000)});
       const result=await readApiJson(response,"The workbook generator");
       if(!response.ok||!result.workbook)throw new Error(result.error??"The workbook could not be generated.");
-      setPendingDocument({...document,workbookTemplateBuilt:true});setPendingWorkbook(result.workbook);setPendingFile(file);
+      const workbook=structuredClone(result.workbook) as NonNullable<UnitContent["workbook"]>;
+      const usedTaskNumbers=new Set<number>();let nextTaskNumber=1;let locallyRenumbered=0;
+      for(const question of workbook.outcomes.flatMap(outcome=>outcome.questions)){
+        if(!Number.isInteger(question.task)||question.task<1||usedTaskNumbers.has(question.task)){
+          while(usedTaskNumbers.has(nextTaskNumber))nextTaskNumber+=1;
+          question.task=nextTaskNumber;locallyRenumbered+=1;
+        }
+        usedTaskNumbers.add(question.task);while(usedTaskNumbers.has(nextTaskNumber))nextTaskNumber+=1;
+      }
+      setPendingDocument({...document,workbookTemplateBuilt:true});setPendingWorkbook(workbook);setPendingFile(file);
       if(result.usage)void recordTokenUsage({us:unit.us,model:result.model??"gpt-4.1-mini",promptTokens:result.usage.input_tokens??0,completionTokens:result.usage.output_tokens??0,totalTokens:result.usage.total_tokens??0});
-      setMessage(`${document.sourcePageCount??document.replica?.pages.length??0} pages converted. Review the summary and publish the workbook.`);
+      const renumbered=Math.max(Number(result.renumberedTasks)||0,locallyRenumbered);
+      setMessage(`${document.sourcePageCount??document.replica?.pages.length??0} pages converted. AI found ${workbook.outcomes.length} outcomes and ${workbook.outcomes.reduce((total,outcome)=>total+outcome.questions.length,0)} activities.${renumbered?` ${renumbered} repeated task number${renumbered===1?" was":"s were"} changed to unique internal numbers so every answer saves separately.`:""} Review the breakdown below, then publish it to this course.`);
     }catch(reason){setError(reason instanceof Error?reason.message:"The Learner Workbook could not be generated.");}
     finally{setBusy("");setProgress(null);}
   };
@@ -849,7 +859,7 @@ export function LearnerWorkbookUpload({unit,content}:{unit:UnitStandard;content?
       const current=readBuiltUnit(unit.us)??latest;
       await saveBuiltUnit(unit.us,{revision:crypto.randomUUID(),createdAt:new Date().toISOString(),source:current?.source??"",content:next,files:{pdf,pptx,answers,material:current?.files.material,materialEditable:current?.files.materialEditable,sourceDocuments:{...(current?.files.sourceDocuments??{}),learnerWorkbook:sourceDocument}},aiUsed:true,planSource:current?.planSource});
       setPendingDocument(undefined);setPendingWorkbook(undefined);setPendingFile(undefined);setMessage("Learner Workbook published. It is now available and editable in this tab.");
-    }catch(reason){setError(unitBuilderError(reason,"The Learner Workbook could not be published. The current unit is unchanged."));}
+    }catch(reason){setError(`Publishing stopped before changing the course. ${unitBuilderError(reason,"The Learner Workbook could not be published. The current unit is unchanged.")}`);}
     finally{setBusy("");}
   };
   const outcomes=pendingWorkbook?.outcomes??[];
@@ -859,7 +869,7 @@ export function LearnerWorkbookUpload({unit,content}:{unit:UnitStandard;content?
       <label className="unit-import-button"><span>{busy||"Choose Learner Workbook PDF"}</span><input aria-label="Upload Learner Workbook PDF" type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={event=>{const file=event.target.files?.[0];event.target.value="";void convert(file);}}/></label>
       {progress!==null&&<span role="progressbar" aria-label="Learner Workbook processing" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>{progress}%</span>}
     </div>
-    {outcomes.length>0&&<div className="unit-workspace-notice"><strong>Generated workbook</strong><p>{outcomes.length} outcome{outcomes.length===1?"":"s"} · {outcomes.reduce((total,outcome)=>total+outcome.questions.length,0)} activit{outcomes.reduce((total,outcome)=>total+outcome.questions.length,0)===1?"y":"ies"}</p></div>}
+    {outcomes.length>0&&<div className="unit-workspace-notice"><strong>Generated workbook</strong><p>{outcomes.length} outcome{outcomes.length===1?"":"s"} · {outcomes.reduce((total,outcome)=>total+outcome.questions.length,0)} activit{outcomes.reduce((total,outcome)=>total+outcome.questions.length,0)===1?"y":"ies"}</p><ul>{outcomes.map(outcome=>{const marks=outcome.questions.reduce((total,question)=>total+question.marks,0);return <li key={outcome.id}><strong>Outcome {outcome.specificOutcome}: {outcome.title}</strong><span>{outcome.questions.length} activit{outcome.questions.length===1?"y":"ies"} · {marks>0?`${marks} marks found`:"no printed marks in the PDF"}</span></li>;})}</ul><p>Publish saves this generated workbook to the course and replaces this upload panel with the learner answer pages.</p></div>}
     {message&&<p role="status">{message}</p>}{error&&<p role="alert" className="auth-error">{error}</p>}
     {pendingWorkbook&&<button type="button" className="btn unit-guide-save" disabled={!!busy} onClick={()=>void save()}>{busy||"Publish Learner Workbook"}</button>}
   </div>;

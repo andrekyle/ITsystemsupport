@@ -851,7 +851,10 @@ export function validateUnitContent(content: UnitContent, requireComplete = true
     const outcomeIds = content.workbook.outcomes.map(outcome => outcome.id);
     if (outcomeIds.some(id => !nonempty(id)) || new Set(outcomeIds).size !== outcomeIds.length) throw new Error("Workbook outcomes need unique IDs.");
     const taskNumbers = content.workbook.outcomes.flatMap(outcome => outcome.questions.map(question => question.task));
-    if (new Set(taskNumbers).size !== taskNumbers.length) throw new Error("Workbook task numbers must be unique.");
+    if (new Set(taskNumbers).size !== taskNumbers.length) {
+      const repeated=[...new Set(taskNumbers.filter((task,index)=>taskNumbers.indexOf(task)!==index))];
+      throw new Error(`The PDF repeats task number${repeated.length===1?"":"s"} ${repeated.join(", ")} in more than one outcome. Generate the workbook again so each activity can receive a unique internal number.`);
+    }
     for (const outcome of content.workbook.outcomes) {
       if (!Number.isInteger(outcome.specificOutcome) || outcome.specificOutcome < 1 || !nonempty(outcome.title) || !outcome.questions.length) throw new Error("Every workbook outcome needs a number, title and question.");
       const questionIds = outcome.questions.map(question => question.id);

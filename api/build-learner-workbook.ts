@@ -35,11 +35,24 @@ export default async function handler(request: Request): Promise<Response> {
     const output = result.output?.flatMap(item => item.content ?? []).find(item => item.type === "output_text")?.text;
     if (!output) return json({ error: "OpenAI returned no workbook content." }, 502);
     const workbook = JSON.parse(output) as { title: string; outcomes: Array<{ id: string; specificOutcome: number; title: string; learningOutcomes: string[]; questions: Array<{ id: string; task: number; text: string; marks: number }> }> };
+    const usedTaskNumbers = new Set<number>();
+    let nextTaskNumber = 1;
+    let renumberedTasks = 0;
+    for (const question of workbook.outcomes.flatMap(item => item.questions)) {
+      const sourceTask = question.task;
+      if (!Number.isInteger(sourceTask) || sourceTask < 1 || usedTaskNumbers.has(sourceTask)) {
+        while (usedTaskNumbers.has(nextTaskNumber)) nextTaskNumber += 1;
+        question.task = nextTaskNumber;
+        renumberedTasks += 1;
+      }
+      usedTaskNumbers.add(question.task);
+      while (usedTaskNumbers.has(nextTaskNumber)) nextTaskNumber += 1;
+    }
     const questions = workbook.outcomes.flatMap(item => item.questions);
     // A source workbook is allowed to contain unmarked activities. The model
     // reports those as zero so the UI can show an em dash without inventing a
     // mark allocation that does not exist in the uploaded document.
     if (!workbook.title || !questions.length || questions.some(item => !item.text?.trim() || !Number.isFinite(item.marks) || item.marks < 0) || new Set(questions.map(item => item.id)).size !== questions.length) return json({ error: "The PDF does not provide a reliable question for every task. Nothing was published." }, 422);
-    return json({ workbook, model, usage: result.usage });
+    return json({ workbook, model, usage: result.usage, renumberedTasks });
   } catch (error) { return json({ error: error instanceof Error ? error.message : "Workbook generation failed." }, 500); }
 }
