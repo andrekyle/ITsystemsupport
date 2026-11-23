@@ -319,8 +319,16 @@ function loadSavedChat(): SavedChat | null {
   }
 }
 
-export function ReportsPage({ profile }: { profile: Profile }) {
+export function ReportsPage({
+  profile,
+  presentation = "standard",
+}: {
+  profile: Profile;
+  presentation?: "standard" | "client-portal";
+}) {
   const firstName = profile.name.trim().split(/\s+/)[0] || profile.name;
+  const portalPresentation = presentation === "client-portal";
+  const portalPrompt = "Create a learnership progress report with key updates and outstanding actions.";
   const registers = attendanceFilledRegisterDates().length;
   const [saved] = useState(loadSavedChat);
   const [cloud, setCloud] = useState<CloudLearnerData | null>(null);
@@ -657,7 +665,7 @@ export function ReportsPage({ profile }: { profile: Profile }) {
       <textarea
         rows={1}
         value={question}
-        placeholder="Ask anything"
+        placeholder={portalPresentation ? "Ask your programme assistant" : "Ask anything"}
         aria-label="Message the AI assistant"
         onChange={(e) => {
           setQuestion(e.target.value);
@@ -790,12 +798,14 @@ export function ReportsPage({ profile }: { profile: Profile }) {
           </div>
         </div>
       )}
-      <h2 className="section-title">
-        <span className="ico">
-          <Icon name="robot" size={20} />
-        </span>
-        AI Assistant
-      </h2>
+      {!portalPresentation && (
+        <h2 className="section-title">
+          <span className="ico">
+            <Icon name="robot" size={20} />
+          </span>
+          AI Assistant
+        </h2>
+      )}
 
       <div className="reports-content-layout">
       {msgs.length > 0 && !wantReport ? (
@@ -865,44 +875,60 @@ export function ReportsPage({ profile }: { profile: Profile }) {
         </div>
       ) : (
         <div className="reports-hero">
-          <h1 className="reports-hero-title">{`How can I help, ${firstName}?`}</h1>
+          <h1 className="reports-hero-title">
+            {portalPresentation ? "Where should we begin?" : `How can I help, ${firstName}?`}
+          </h1>
 
           {composer}
 
           {!question.trim() && (
-            <div className="reports-list">
-              {REPORT_KINDS.map((k) => (
+            portalPresentation ? (
+              <div className="reports-list reports-list-portal">
                 <button
-                  key={k.id}
                   type="button"
                   className="reports-list-btn"
                   disabled={!!busy || rows.length === 0}
-                  title={k.desc}
-                  onClick={() => needsBrief(k)
-                    ? openReportBrief(k)
-                    : generate(k, k.id === "attendance" ? "Cover the current calendar month only." : undefined, "kind")}
+                  onClick={() => setQuestion(portalPrompt)}
                 >
-                  <Icon name={k.icon} size={18} />
-                  {k.name}
+                  <Icon name="document" size={18} />
+                  <span>{portalPrompt}</span>
                 </button>
-              ))}
-              <button
-                type="button"
-                className="reports-list-btn"
-                role="switch"
-                aria-checked={scope === "all"}
-                title="Click to switch which units reports and answers cover"
-                onClick={() => setScope((s) => (s === "worked" ? "all" : "worked"))}
-              >
-                <Icon name="target" size={18} />
-                <span>Scope: {scope === "worked" ? "units we've worked on" : "whole programme"}</span>
-              </button>
-            </div>
+              </div>
+            ) : (
+              <div className="reports-list">
+                {REPORT_KINDS.map((k) => (
+                  <button
+                    key={k.id}
+                    type="button"
+                    className="reports-list-btn"
+                    disabled={!!busy || rows.length === 0}
+                    title={k.desc}
+                    onClick={() => needsBrief(k)
+                      ? openReportBrief(k)
+                      : generate(k, k.id === "attendance" ? "Cover the current calendar month only." : undefined, "kind")}
+                  >
+                    <Icon name={k.icon} size={18} />
+                    {k.name}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className="reports-list-btn"
+                  role="switch"
+                  aria-checked={scope === "all"}
+                  title="Click to switch which units reports and answers cover"
+                  onClick={() => setScope((s) => (s === "worked" ? "all" : "worked"))}
+                >
+                  <Icon name="target" size={18} />
+                  <span>Scope: {scope === "worked" ? "units we've worked on" : "whole programme"}</span>
+                </button>
+              </div>
+            )
           )}
 
           {status}
 
-          {!question.trim() && (
+          {!question.trim() && !portalPresentation && (
             <p className="mini-note reports-hero-note">
               Written from live data — {rows.length} learner{rows.length === 1 ? "" : "s"},{" "}
               {registers} attendance register{registers === 1 ? "" : "s"} — by the AI model chosen

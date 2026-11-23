@@ -158,8 +158,15 @@ export function ClientPortal() {
     const tab = window.document.createElement('button');
     tab.type = 'button';
     tab.className = 'client-ai-tab';
-    tab.textContent = 'AI Assistant';
     tab.setAttribute('aria-label', 'Open AI Assistant tab');
+    const icon = window.document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.setAttribute('aria-hidden', 'true');
+    icon.classList.add('client-tab-icon');
+    const path = window.document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M12 3v3M7 8h10a3 3 0 0 1 3 3v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-5a3 3 0 0 1 3-3Zm2 4h.01M15 12h.01M9 15h6');
+    icon.append(path);
+    tab.append(icon, window.document.createTextNode('AI Assistant'));
     const openAssistant = () => setPortalTab('assistant');
     tab.addEventListener('click', openAssistant);
     navigation.append(tab);
@@ -188,7 +195,7 @@ export function ClientPortal() {
     if (active) assistantTab.current?.setAttribute('aria-current', 'page');
     else assistantTab.current?.removeAttribute('aria-current');
     if (assistantPanel.current) assistantPanel.current.hidden = !active;
-    assistantRoot.current?.render(active ? <ReportsPage profile={assistantProfile} /> : null);
+    assistantRoot.current?.render(active ? <ReportsPage profile={assistantProfile} presentation="client-portal" /> : null);
   }, [assistantProfile, portalTab, providerPreview]);
   const investec = TENANT_ID === 'investec';
   const portalClass = `client-portal${investec ? ' client-investec' : ''} client-tab-${portalTab}`;
