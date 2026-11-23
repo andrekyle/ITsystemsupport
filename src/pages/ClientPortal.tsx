@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { TENANT, TENANT_ID } from '../lib/tenant';
 import { CLIENT_CATEGORIES, downloadClientDocument, portalError, type ClientAccount, type ClientDocument, type ClientLearner } from '../lib/clientPortal';
 import { PasswordInput } from '../components/PasswordInput';
+import type { Profile } from '../types';
+import { ReportsPage } from './Reports';
 import './client-portal.css';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
@@ -28,6 +31,16 @@ export function ClientPortal() {
   const [portalTab, setPortalTab] = useState('cohort');
   const [selectedLearner, setSelectedLearner] = useState<string | null>(null);
   const request = useRef(0);
+  const assistantRoot = useRef<Root | null>(null);
+  const assistantTab = useRef<HTMLButtonElement | null>(null);
+  const assistantPanel = useRef<HTMLElement | null>(null);
+  const assistantProfile = useMemo<Profile>(() => ({
+    id: session?.user.id ?? `provider-preview-${TENANT_ID}`,
+    name: account?.display_name || session?.user.email || 'Provider administrator',
+    role: 'Admin',
+    createdAt: session?.user.created_at || new Date().toISOString(),
+    cloudUserId: session?.user.id,
+  }), [session?.user.id, session?.user.email, session?.user.created_at, account?.display_name]);
   useEffect(() => {
     if (!supabase) return;
     const sb = supabase;
@@ -136,17 +149,47 @@ export function ClientPortal() {
   }, [viewer]);
   useEffect(() => {
     if (!providerPreview) return;
-    const link = window.document.createElement('a');
-    const destination = new URL('/', window.location.origin);
-    destination.searchParams.set('itssRoute', JSON.stringify({ page: 'reports' }));
-    link.href = destination.toString();
-    link.className = `client-ai-assistant${TENANT_ID === 'investec' ? ' client-ai-assistant-investec' : ''}`;
-    link.setAttribute('aria-label', 'Open AI Assistant');
-    link.title = 'Open AI Assistant';
-    link.textContent = 'AI Assistant';
-    window.document.body.append(link);
-    return () => link.remove();
+    const navigation = window.document.querySelector<HTMLElement>('.client-side-tabs');
+    const panels = window.document.querySelector<HTMLElement>('.client-main-panels');
+    if (!navigation || !panels) {
+      console.error('Could not add the AI Assistant tab because the client portal sections were not found.');
+      return;
+    }
+    const tab = window.document.createElement('button');
+    tab.type = 'button';
+    tab.className = 'client-ai-tab';
+    tab.textContent = 'AI Assistant';
+    tab.setAttribute('aria-label', 'Open AI Assistant tab');
+    const openAssistant = () => setPortalTab('assistant');
+    tab.addEventListener('click', openAssistant);
+    navigation.append(tab);
+
+    const panel = window.document.createElement('section');
+    panel.className = 'client-ai-panel';
+    panel.setAttribute('aria-label', 'AI Assistant');
+    panels.append(panel);
+    const root = createRoot(panel);
+    assistantRoot.current = root;
+    assistantTab.current = tab;
+    assistantPanel.current = panel;
+    return () => {
+      root.unmount();
+      if (assistantRoot.current === root) assistantRoot.current = null;
+      assistantTab.current = null;
+      assistantPanel.current = null;
+      tab.removeEventListener('click', openAssistant);
+      tab.remove();
+      panel.remove();
+    };
   }, [providerPreview]);
+  useEffect(() => {
+    const active = providerPreview && portalTab === 'assistant';
+    assistantTab.current?.classList.toggle('active', active);
+    if (active) assistantTab.current?.setAttribute('aria-current', 'page');
+    else assistantTab.current?.removeAttribute('aria-current');
+    if (assistantPanel.current) assistantPanel.current.hidden = !active;
+    assistantRoot.current?.render(active ? <ReportsPage profile={assistantProfile} /> : null);
+  }, [assistantProfile, portalTab, providerPreview]);
   const investec = TENANT_ID === 'investec';
   const portalClass = `client-portal${investec ? ' client-investec' : ''} client-tab-${portalTab}`;
   const brand = <div className="client-brand">{investec ? <img className="client-logo-standard" src="/logos/investec.svg" alt="Investec" width="300" height="60" /> : TENANT.logo ? <img src={TENANT.logo} alt={TENANT.name} /> : <strong>{TENANT.name}</strong>}<span>Client portal</span></div>;
