@@ -2469,6 +2469,15 @@ function UnitPageContent({
   const [lessonControlsHost, setLessonControlsHost] = useState<HTMLDivElement | null>(null);
   const phone = usePhoneView();
   const builtUnit = useBuiltUnit(unitId);
+  const [unitBuilderOpen, setUnitBuilderOpen] = useState(false);
+  const unitBuilderDialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => { setUnitBuilderOpen(false); }, [unitId]);
+  useEffect(() => {
+    const dialog = unitBuilderDialogRef.current;
+    if (!dialog) return;
+    if (unitBuilderOpen && !dialog.open) dialog.showModal();
+    else if (!unitBuilderOpen && dialog.open) dialog.close();
+  }, [unitBuilderOpen]);
   const [inlineUnit, setInlineUnit] = useState<UnitContent | undefined>(() => loadInlineDraft(profile.id, unitId));
   const inlineDraftOwner = `${profile.id}:${unitId}`;
   const inlineDraftOwnerRef = useRef(inlineDraftOwner);
@@ -3946,6 +3955,35 @@ function UnitPageContent({
       </div>
       </details>
       </div>
+
+      {isSuperUser && !inlineUnit && <div className="unit-builder-launch-row">
+        <button type="button" className="btn ghost sm" aria-haspopup="dialog"
+          aria-expanded={unitBuilderOpen} aria-controls="unit-builder-dialog"
+          onClick={() => setUnitBuilderOpen(true)}>
+          <Icon name="layers" size={16} />
+          Open Unit Builder
+        </button>
+        <dialog id="unit-builder-dialog" ref={unitBuilderDialogRef} className="unit-edit-dialog"
+          aria-labelledby="unit-builder-dialog-title" onClose={() => setUnitBuilderOpen(false)}>
+          <header className="unit-edit-dialog-header">
+            <div className="unit-edit-dialog-heading">
+              <span className="unit-edit-dialog-eyebrow">Unit standard {u.us}</span>
+              <h2 id="unit-builder-dialog-title">Unit Builder</h2>
+            </div>
+            <button type="button" className="unit-edit-dialog-close"
+              onClick={() => unitBuilderDialogRef.current?.close()} aria-label="Close Unit Builder">
+              <Icon name="close" size={16} />
+              <span>Close</span>
+            </button>
+          </header>
+          <div className="unit-edit-dialog-body">
+            <UnitBuilder key={`unit-builder-${unitId}`} unit={u} content={content} edits={lessonEdits}
+              profileId={profile.id} open={unitBuilderOpen}
+              onCancelInline={() => setUnitBuilderOpen(false)}
+              onSaved={() => { setLessonSaveStatus(""); setLessonSaveError(""); }} />
+          </div>
+        </dialog>
+      </div>}
 
       {isSuperUser && inlineUnit && <div hidden>
         <UnitBuilder key={unitId} unit={u} content={content} edits={lessonEdits} profileId={profile.id}
