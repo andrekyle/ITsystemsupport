@@ -334,6 +334,30 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
 .client-preview-notice p { margin: 3px 0 0; color: var(--ink-3); }
 .client-preview-notice a { color: var(--ink); font-weight: 600; white-space: nowrap; text-underline-offset: 3px; }
 .client-portal .pw-toggle { min-height: 0; }
+.client-ai-assistant {
+ --client-assistant-accent: #278c6d;
+ position: fixed;
+ right: 24px;
+ bottom: 24px;
+ z-index: 80;
+ display: inline-flex;
+ align-items: center;
+ justify-content: center;
+ min-height: 44px;
+ padding: 0 18px;
+ border: 1px solid var(--client-assistant-accent);
+ border-radius: 6px;
+ background: var(--client-assistant-accent);
+ box-shadow: 0 4px 12px rgba(23, 23, 23, .14);
+ color: #fff;
+ font-size: 13px;
+ font-weight: 600;
+ text-decoration: none;
+ transition: filter .15s, transform .15s;
+}
+.client-ai-assistant-investec { --client-assistant-accent: #303749; }
+.client-ai-assistant:hover { color: #fff; filter: brightness(1.12); transform: translateY(-1px); }
+.client-ai-assistant:focus-visible { outline: 2px solid #697181; outline-offset: 3px; }
 @media(max-width:760px) {
  .client-admin-panel form, .client-admin-row { grid-template-columns: 1fr 1fr; }
  .client-admin-panel form > button, .client-admin-row > button { grid-column: span 2; }
@@ -344,4 +368,5 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
  .client-portal .client-content { padding: 22px 16px; }
  .client-portal .client-page-heading h1 { font-size: 26px; }
  .client-preview-notice { align-items: flex-start; flex-direction: column; gap: 10px; }
+ .client-ai-assistant { right: 16px; bottom: 16px; }
 }

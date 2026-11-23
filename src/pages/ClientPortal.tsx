@@ -134,6 +134,19 @@ export function ClientPortal() {
     (window.document.querySelector('.client-portal') ?? window.document.body).appendChild(panel);
     return () => panel.remove();
   }, [viewer]);
+  useEffect(() => {
+    if (!providerPreview) return;
+    const link = window.document.createElement('a');
+    const destination = new URL('/', window.location.origin);
+    destination.searchParams.set('itssRoute', JSON.stringify({ page: 'reports' }));
+    link.href = destination.toString();
+    link.className = `client-ai-assistant${TENANT_ID === 'investec' ? ' client-ai-assistant-investec' : ''}`;
+    link.setAttribute('aria-label', 'Open AI Assistant');
+    link.title = 'Open AI Assistant';
+    link.textContent = 'AI Assistant';
+    window.document.body.append(link);
+    return () => link.remove();
+  }, [providerPreview]);
   const investec = TENANT_ID === 'investec';
   const portalClass = `client-portal${investec ? ' client-investec' : ''} client-tab-${portalTab}`;
   const brand = <div className="client-brand">{investec ? <img className="client-logo-standard" src="/logos/investec.svg" alt="Investec" width="300" height="60" /> : TENANT.logo ? <img src={TENANT.logo} alt={TENANT.name} /> : <strong>{TENANT.name}</strong>}<span>Client portal</span></div>;
