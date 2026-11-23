@@ -328,6 +328,7 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
 .client-portal .client-content { width: 100%; box-sizing: border-box; padding-top: 28px; }
 .client-portal .client-page-heading { margin-bottom: 24px; }
 .client-portal .client-page-heading h1 { font-size: 32px; line-height: 1.2; border: 0; padding: 0; margin: 8px 0; }
+.client-investec .client-page-heading h1 { font-family: var(--client-font); }
 .client-portal .client-page-heading p { color: #535763; font-size: 14px; }
 .client-portal .client-error { background: #fff5f4; color: #8c2923; border-radius: 6px; padding: 16px 20px; font-size: 14px; max-width: 760px; }
 .client-preview-notice { display: flex; align-items: center; justify-content: space-between; gap: 20px; background: var(--surface-2); padding: 14px 18px; margin-bottom: 24px; border-radius: 5px; font-size: 13px; }
