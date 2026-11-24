@@ -21,7 +21,7 @@
 [data-theme="light"] .portfolio-review-modal .modal-body { color: #000; }
 [data-theme="light"] .portfolio-review-modal .modal-actions .btn.primary { background: #278c6d; color: #fff; }
 [data-theme="light"] .evidence-register-page :is(h1, h2, h3, p, label, strong, small, span, input, textarea, th, td, .btn.ghost, .nice-select-btn, .nice-select-opt) { color: #000 !important; }
-[data-theme="light"] .evidence-register-page .evidence-register-banner :is(h1, span) { color: #fff !important; }
+[data-theme="light"] .evidence-register-page .evidence-register-banner :is(h1, span) { color: #DBF4FC !important; }
 [data-theme="light"] .evidence-register-page :is(input, textarea)::placeholder { color: #000 !important; opacity: 1; }
 [data-theme="light"] .portfolio-existing-document-modal :is(.modal-title, .modal-body p, .nice-select-value, .nice-select-opt, .nice-select-opt-label, .nice-select-opt-hint) { color: #000; }
 [data-theme="light"] .evidence-register-page {
@@ -68,40 +68,21 @@
   height: 122px;
   overflow: hidden;
   padding: 20px max(24px, calc((100% - 1068px) / 2));
-  background: linear-gradient(110deg, #2864bd 0%, #2058ad 65%, #163b78 100%);
-  color: #fff;
-}
-.evidence-register-page .evidence-register-banner::before,
-.evidence-register-page .evidence-register-banner::after {
-  position: absolute;
-  top: 0;
-  right: 7%;
-  width: min(390px, 42%);
-  height: 100%;
-  content: "";
-  pointer-events: none;
-  background: linear-gradient(145deg, transparent 0 28%, rgba(80, 145, 231, .7) 28% 58%, rgba(16, 63, 135, .8) 58% 100%);
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 38% 100%);
-}
-.evidence-register-page .evidence-register-banner::after {
-  right: 0;
-  width: min(270px, 30%);
-  background: linear-gradient(145deg, #4385df 0 42%, #194d99 42% 72%, #112f60 72%);
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 45% 100%);
-  opacity: .9;
+  background: #01243B;
+  color: #DBF4FC;
 }
 .evidence-register-page .evidence-register-banner > div { position: relative; z-index: 1; }
 .evidence-register-page .evidence-register-banner span {
   display: block;
   margin-bottom: 5px;
-  color: #e8f1ff !important;
+  color: #DBF4FC !important;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: .14em;
 }
 .evidence-register-page .evidence-register-banner h1 {
   margin: 0;
-  color: #fff !important;
+  color: #DBF4FC !important;
   font-size: clamp(20px, 2.2vw, 27px);
   font-weight: 600;
   line-height: 1.2;
@@ -171,8 +152,6 @@
 }
 @media (max-width: 600px) {
   .evidence-register-page .evidence-register-banner { height: 108px; padding: 16px 18px; }
-  .evidence-register-page .evidence-register-banner::before { right: 0; width: 48%; }
-  .evidence-register-page .evidence-register-banner::after { width: 32%; }
   .evidence-register-shell { width: calc(100% - 28px); }
   .evidence-register-profile { gap: 10px; min-height: 78px; margin-top: 0; padding-bottom: 14px; }
   .evidence-register-avatar { flex-basis: 76px; width: 76px; height: 76px; font-size: 21px; }
