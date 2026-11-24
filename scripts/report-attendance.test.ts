@@ -175,7 +175,7 @@ test("the answer API returns exact attendance counts without an AI round trip", 
       signedProfileIds: date === "2026-10-22" ? ["eesa"] : [],
     }))
   );
-  const response = await reportHandler.fetch(new Request("https://example.test/api/generate-report", {
+  const response = await reportHandler(new Request("https://example.test/api/generate-report", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -205,7 +205,7 @@ test("attendance answers reject timetable dates without a filled register", () =
 });
 
 test("private learner details are refused and stripped from AI data", async () => {
-  const response = await reportHandler.fetch(new Request("https://example.test/api/generate-report", {
+  const response = await reportHandler(new Request("https://example.test/api/generate-report", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
