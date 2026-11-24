@@ -131,8 +131,10 @@ export function CloudAuth() {
     }
     setBusy(true);
     try {
+      const redirectTo = new URL(window.location.origin);
+      redirectTo.searchParams.set("passwordRecovery", "1");
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin,
+        redirectTo: redirectTo.toString(),
       });
       if (error) setError(friendlyError(error.message));
       else

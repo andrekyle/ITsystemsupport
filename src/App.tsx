@@ -300,12 +300,14 @@ export default function App() {
 }
 
 function StaffApp() {
+  const isRecoveryRedirect = () =>
+    new URLSearchParams(window.location.search).get("passwordRecovery") === "1";
   const [cloudState, setCloudState] = useState<"loading" | "signedout" | "recovery" | "ready" | "client">(
-    cloudEnabled ? "loading" : "ready"
+    cloudEnabled ? isRecoveryRedirect() ? "recovery" : "loading" : "ready"
   );
   const syncedUser = useRef<string | null>(null);
   const syncedEmail = useRef<string | null>(null);
-  const recovering = useRef(false);
+  const recovering = useRef(isRecoveryRedirect());
   const syncReady = useRef(false);
 
   useEffect(() => {
@@ -321,7 +323,7 @@ function StaffApp() {
         setCloudState("client");
         return;
       }
-      if (event === "PASSWORD_RECOVERY") {
+      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && isRecoveryRedirect() && !!session?.user)) {
         // arrived from a password-reset email — let the user set a new password first
         recovering.current = true;
         setAccountEmail(session?.user?.email);
@@ -459,6 +461,9 @@ function StaffApp() {
       <ResetPassword
         onDone={() => {
           recovering.current = false;
+          const url = new URL(window.location.href);
+          url.searchParams.delete("passwordRecovery");
+          window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
           setCloudState(syncReady.current ? "ready" : "loading");
         }}
       />
