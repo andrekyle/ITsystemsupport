@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { MODULES } from '../data/course';
 import { MIN_ATTENDANCE_REGISTER_LEARNERS } from '../lib/attendanceEvidence';
+import { clientLearnerAttendanceStartDate, clientLearnerEnrolledForRegister, clientLearnerSigned } from '../lib/clientPortalAttendance';
 import { UNIT_ACTIVITIES } from '../types';
 import type { ClientAttendanceRegister, ClientDashboardData, ClientLearner } from '../lib/clientPortal';
 
@@ -15,18 +16,6 @@ function unitCompletion(unit: DashboardUnit | undefined) {
   const formative = (unit.quiz?.attempts ?? 0) > 0 || Object.values(unit.quizzes ?? {}).some(item => (item.attempts ?? 0) > 0) || Object.values(unit.exercises ?? {}).some(item => (item.attempts ?? 0) > 0) || Object.keys(unit.logbook ?? {}).length > 0;
   if (formative && !activities['Formative Assessment']) done++;
   return done / UNIT_ACTIVITIES.length;
-}
-
-function signed(register: ClientAttendanceRegister, learner: ClientLearner) {
-  if (register.rows[learner.learner_ref]) return true;
-  const wanted = learner.name.trim().toLowerCase();
-  return Object.values(register.rows).some(row => `${row.name ?? ''} ${row.surname ?? ''}`.trim().toLowerCase() === wanted);
-}
-
-function enrolledForRegister(register: ClientAttendanceRegister, learner: ClientLearner) {
-  if (learner.start_date && register.date < learner.start_date) return false;
-  if (learner.end_date && register.date > learner.end_date) return false;
-  return true;
 }
 
 export function ClientDashboard({ data, cohort }: { data: ClientDashboardData | null; cohort: ClientLearner[] }) {
@@ -52,6 +41,12 @@ export function ClientDashboard({ data, cohort }: { data: ClientDashboardData | 
       label: new Date(`${key}-01T00:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
       registerCount: (data?.attendance ?? []).filter(register => register.date.startsWith(key) && register.signer_count >= MIN_ATTENDANCE_REGISTER_LEARNERS).length,
     }));
+  const attendanceStartDates = useMemo(() => new Map(cohort.map(learner => [
+    learner.learner_ref,
+    clientLearnerAttendanceStartDate(learner, data?.attendance ?? []),
+  ])), [cohort, data]);
+  const isEnrolledForRegister = (register: ClientAttendanceRegister, learner: ClientLearner) =>
+    clientLearnerEnrolledForRegister(register.date, learner, attendanceStartDates.get(learner.learner_ref) ?? learner.start_date);
   const monthLabel = monthOptions.find(option => option.key === selectedMonth)?.label ?? monthOptions[0].label;
   useEffect(() => {
     if (!monthOpen) return;
@@ -66,8 +61,8 @@ export function ClientDashboard({ data, cohort }: { data: ClientDashboardData | 
   );
   const feedAvailable = data !== null;
   const attendanceRows = registers.flatMap(register => cohort
-    .filter(learner => enrolledForRegister(register, learner))
-    .map(learner => ({ register, learner, present: signed(register, learner) })));
+    .filter(learner => isEnrolledForRegister(register, learner))
+    .map(learner => ({ register, learner, present: clientLearnerSigned(register, learner) })));
   const attendanceRate = attendanceRows.length ? attendanceRows.filter(row => row.present).length / attendanceRows.length : null;
   const learnerProgress = useMemo(() => cohort.map(learner => {
     const record = data?.learners.find(item => item.learner_ref === learner.learner_ref);
@@ -113,7 +108,7 @@ export function ClientDashboard({ data, cohort }: { data: ClientDashboardData | 
     </div>
     {detail && <div className="client-dashboard-modal" role="dialog" aria-modal="true" aria-labelledby="client-detail-title"><div>
       <header><div><span className="client-card-kicker">Dashboard detail</span><h2 id="client-detail-title">{detail === 'attendance' ? `${monthLabel} absenteeism` : 'Learner submission progress'}</h2></div><button type="button" onClick={() => setDetail(null)}>Close</button></header>
-      {detail === 'attendance' ? (registers.length ? <div className="client-table-wrap"><table><thead><tr><th>Learner</th>{registers.map(register => <th key={register.date}>{new Date(`${register.date}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</th>)}<th>Attendance</th></tr></thead><tbody>{cohort.map(learner => { const eligible = registers.filter(register => enrolledForRegister(register, learner)); const attended = eligible.filter(register => signed(register, learner)).length; return <tr key={learner.learner_ref}><td><strong>{learner.name}</strong></td>{registers.map(register => <td key={register.date}>{enrolledForRegister(register, learner) ? <span className={signed(register, learner) ? 'client-status-present' : 'client-status-absent'}>{signed(register, learner) ? 'Present' : 'Absent'}</span> : <span aria-label="Not enrolled">—</span>}</td>)}<td>{eligible.length ? `${Math.round(attended / eligible.length * 100)}%` : '—'}</td></tr>; })}</tbody></table></div> : <p>{feedAvailable ? `No attendance registers have been recorded for ${monthLabel}.` : 'The attendance feed is not available. Apply the latest Supabase migration, then refresh the portal.'}</p>) : <div className="client-progress-groups">{(['On track', 'Behind'] as const).map(group => { const grouped = learnerProgress.filter(item => item.onTrack === (group === 'On track')); return <section key={group}><h3>{group} <span>{grouped.length}</span></h3>{grouped.length ? grouped.map(item => <div key={item.learner.learner_ref}><strong>{item.learner.name}</strong><span>{Math.round(item.actual * 100)}% complete · {Math.round(item.expected * 100)}% expected</span></div>) : <p>No learners</p>}</section>; })}</div>}
+      {detail === 'attendance' ? (registers.length ? <div className="client-table-wrap"><table><thead><tr><th>Learner</th>{registers.map(register => <th key={register.date}>{new Date(`${register.date}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</th>)}<th>Attendance</th></tr></thead><tbody>{cohort.filter(learner => registers.some(register => isEnrolledForRegister(register, learner))).map(learner => { const eligible = registers.filter(register => isEnrolledForRegister(register, learner)); const attended = eligible.filter(register => clientLearnerSigned(register, learner)).length; return <tr key={learner.learner_ref}><td><strong>{learner.name}</strong></td>{registers.map(register => <td key={register.date}>{isEnrolledForRegister(register, learner) ? <span className={clientLearnerSigned(register, learner) ? 'client-status-present' : 'client-status-absent'}>{clientLearnerSigned(register, learner) ? 'Present' : 'Absent'}</span> : <span aria-label="Not enrolled">—</span>}</td>)}<td>{eligible.length ? `${Math.round(attended / eligible.length * 100)}%` : '—'}</td></tr>; })}</tbody></table></div> : <p>{feedAvailable ? `No attendance registers have been recorded for ${monthLabel}.` : 'The attendance feed is not available. Apply the latest Supabase migration, then refresh the portal.'}</p>) : <div className="client-progress-groups">{(['On track', 'Behind'] as const).map(group => { const grouped = learnerProgress.filter(item => item.onTrack === (group === 'On track')); return <section key={group}><h3>{group} <span>{grouped.length}</span></h3>{grouped.length ? grouped.map(item => <div key={item.learner.learner_ref}><strong>{item.learner.name}</strong><span>{Math.round(item.actual * 100)}% complete · {Math.round(item.expected * 100)}% expected</span></div>) : <p>No learners</p>}</section>; })}</div>}
     </div></div>}
   </section>;
 }
