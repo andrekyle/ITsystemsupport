@@ -23,6 +23,14 @@ function savedAuthError(): string | null {
   }
 }
 
+function clearPasswordRecoveryMarker() {
+  try {
+    window.sessionStorage.removeItem("itss.passwordRecovery");
+  } catch {
+    // The marker is temporary and will disappear when the tab closes.
+  }
+}
+
 /** Email/password gate shown before the app when cloud sync is configured. */
 export function CloudAuth() {
   const { meta: qualification } = activeCourse();
@@ -131,16 +139,27 @@ export function CloudAuth() {
     }
     setBusy(true);
     try {
+      try {
+        window.sessionStorage.setItem("itss.passwordRecovery", "1");
+      } catch {
+        // The recovery query parameter still identifies the flow if storage is unavailable.
+      }
       const redirectTo = new URL(window.location.origin);
       redirectTo.searchParams.set("passwordRecovery", "1");
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectTo.toString(),
       });
-      if (error) setError(friendlyError(error.message));
+      if (error) {
+        clearPasswordRecoveryMarker();
+        setError(friendlyError(error.message));
+      }
       else
         setNotice(
           `Password reset email sent to ${email} — open the link in it, and you'll be asked to choose a new password.`
         );
+    } catch (failure) {
+      clearPasswordRecoveryMarker();
+      setError(friendlyError(failure instanceof Error ? failure.message : String(failure)));
     } finally {
       setBusy(false);
     }

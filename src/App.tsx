@@ -300,8 +300,14 @@ export default function App() {
 }
 
 function StaffApp() {
-  const isRecoveryRedirect = () =>
-    new URLSearchParams(window.location.search).get("passwordRecovery") === "1";
+  const isRecoveryRedirect = () => {
+    if (new URLSearchParams(window.location.search).get("passwordRecovery") === "1") return true;
+    try {
+      return window.sessionStorage.getItem("itss.passwordRecovery") === "1";
+    } catch {
+      return false;
+    }
+  };
   const [cloudState, setCloudState] = useState<"loading" | "signedout" | "recovery" | "ready" | "client">(
     cloudEnabled ? isRecoveryRedirect() ? "recovery" : "loading" : "ready"
   );
@@ -464,6 +470,11 @@ function StaffApp() {
           const url = new URL(window.location.href);
           url.searchParams.delete("passwordRecovery");
           window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+          try {
+            window.sessionStorage.removeItem("itss.passwordRecovery");
+          } catch {
+            // Password change succeeded; cleanup is best effort.
+          }
           setCloudState(syncReady.current ? "ready" : "loading");
         }}
       />
