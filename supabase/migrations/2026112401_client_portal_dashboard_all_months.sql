@@ -62,7 +62,7 @@ begin
     left join attendance_row_items items on items.date = dates.date
     group by dates.date
   ), counted_attendance as (
-    -- Ignore drafts and registers with fewer than seven distinct signers.
+    -- Ignore drafts and registers with fewer than four distinct signers.
     -- Return only published learner names, never raw attendance row data.
     select attendance.date, attendance.signer_count,
       coalesce((
@@ -71,7 +71,7 @@ begin
         join published on published.learner_ref = item.key
       ), '{}'::jsonb) as rows
     from attendance
-    where attendance.signer_count >= 7
+    where attendance.signer_count >= 4
   )
   select jsonb_build_object(
     'learners', coalesce((select jsonb_agg(jsonb_build_object('learner_ref', learner_ref, 'name', name, 'progress', value) order by name) from progress), '[]'::jsonb),

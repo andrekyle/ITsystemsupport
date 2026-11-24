@@ -93,7 +93,7 @@ export function attendanceRegisterDates(): string[] {
   return [...attendanceEvidence().keys()].sort();
 }
 
-/** Dates of counted registers only — at least seven distinct learners signed. */
+/** Dates of counted registers only — at least four distinct learners signed. */
 export function attendanceFilledRegisterDates(): string[] {
   const dates: string[] = [];
   for (const [date, rows] of attendanceEvidence()) {

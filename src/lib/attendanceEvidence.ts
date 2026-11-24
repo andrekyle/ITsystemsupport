@@ -5,7 +5,7 @@ export interface AttendanceEvidenceRow {
   idNumber?: string;
 }
 
-export const MIN_ATTENDANCE_REGISTER_LEARNERS = 7;
+export const MIN_ATTENDANCE_REGISTER_LEARNERS = 4;
 
 export function attendanceSignerCount(rows: Record<string, unknown> | undefined): number {
   const learners = new Set<string>();
