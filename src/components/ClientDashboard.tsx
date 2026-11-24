@@ -116,7 +116,6 @@ export function ClientDashboard({ data, cohort }: { data: ClientDashboardData | 
       {detail === 'attendance' ? (registers.length ? <>
         <div className="client-attendance-summary" aria-label="Attendance summary">
           <div><span>Attendance rate</span><strong>{attendanceRate === null ? '—' : `${(attendanceRate * 100).toFixed(2)}%`}</strong></div>
-          <div><span>Present</span><strong>{presentCount}</strong></div>
           <div><span>Absent</span><strong>{absentCount}</strong></div>
         </div>
         <div className="client-table-wrap"><table><thead><tr><th>Learner</th>{registers.map(register => <th key={register.date}>{new Date(`${register.date}T00:00:00`).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}</th>)}<th>Rate</th></tr></thead><tbody>{cohort.filter(learner => registers.some(register => isEnrolledForRegister(register, learner))).map(learner => {

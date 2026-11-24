@@ -743,7 +743,7 @@ button.client-dashboard-card, .client-chart-card { display: flex; flex-direction
 .client-dashboard-modal > div > p { margin: 0; padding: 28px 24px; color: #475467; }
 .client-attendance-summary {
  display: grid;
- grid-template-columns: repeat(3, minmax(0, 1fr));
+ grid-template-columns: repeat(2, minmax(0, 1fr));
  gap: 20px;
  padding: 0 24px 14px;
 }
@@ -802,6 +802,10 @@ button.client-dashboard-card, .client-chart-card { display: flex; flex-direction
 .client-dashboard-modal tbody td:first-child strong { color: #101828; font-size: 12px; font-weight: 600; }
 .client-status-present,
 .client-status-absent {
+ display: inline;
+ padding: 0;
+ border-radius: 0;
+ background: transparent;
  color: #475467;
  font-size: 12px;
  font-weight: 400;
