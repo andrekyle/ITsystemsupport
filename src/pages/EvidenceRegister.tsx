@@ -195,7 +195,7 @@ function SkillsRegister({ profile }: { profile: Profile }) {
       <button type="button" className={`btn ${registerTab === "evidence" ? "primary" : "ghost"}`} onClick={() => setRegisterTab("evidence")}>Skills evidence</button>
       <button type="button" className={`btn ${registerTab === "client" ? "primary" : "ghost"}`} onClick={() => setRegisterTab("client")}>Client portal</button>
     </nav>
-    {registerTab === "client" ? <ClientAccessPanel learners={learners} /> : <>
+    {registerTab === "client" ? <ClientAccessPanel learners={learners} cloud={cloud} /> : <>
     {!loading && !learners.length && <p className="card">No learners are available.</p>}
     {learner && <div className="portfolio-layout">
       <nav className="card portfolio-navigation" aria-label="Portfolio sections">

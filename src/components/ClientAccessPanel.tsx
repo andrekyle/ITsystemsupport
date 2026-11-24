@@ -4,11 +4,12 @@ import { TENANT_ID } from '../lib/tenant';
 import { latestIsoDate } from '../lib/learnerDates';
 import { attendanceSignedDates } from '../lib/gamification';
 import { clientPortalUrl, CLIENT_CATEGORIES, portalError, type ClientAccount, type ClientDocument } from '../lib/clientPortal';
+import { cloudProfileIds, type CloudLearnerData } from '../lib/directory';
 import type { Profile } from '../types';
 import { Select } from './Select';
 import '../pages/client-portal.css';
 
-export function ClientAccessPanel({ learners }: { learners: Profile[] }) {
+export function ClientAccessPanel({ learners, cloud }: { learners: Profile[]; cloud: CloudLearnerData | null }) {
   const [accounts, setAccounts] = useState<ClientAccount[]>([]);
   const [documents, setDocuments] = useState<ClientDocument[]>([]);
   const [busy, setBusy] = useState(false);
@@ -66,13 +67,14 @@ export function ClientAccessPanel({ learners }: { learners: Profile[] }) {
         const firstRegisterDate = attendanceSignedDates(learner)[0];
         return {
           tenant_id: TENANT_ID, learner_ref: learner.id, name: learner.name, programme: 'IT Systems Support',
+          progress_refs: [...cloudProfileIds(learner, cloud)],
           start_date: latestIsoDate(start, firstRegisterDate ?? learner.enrolment?.signedDate),
           end_date: end || null, status: 'Enrolled', published_at: new Date().toISOString(),
         };
       });
       const { error } = await supabase!.from('client_portal_learners').upsert(cohort, { onConflict: 'tenant_id,learner_ref' });
       if (error) throw new Error(portalError(error));
-      setMessage(`${learners.length} learners published using their first qualifying signed register where available.`);
+      setMessage(`${learners.length} learners published with linked progress profiles and their first qualifying signed register where available.`);
     });
   }
   async function upload(event: FormEvent) {

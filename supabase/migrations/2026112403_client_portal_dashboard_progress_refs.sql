@@ -1,0 +1,127 @@
+begin;
+
+alter table public.client_portal_learners
+  add column if not exists progress_refs text[] not null default '{}';
+
+create or replace function public.client_portal_dashboard(target_tenant text)
+returns jsonb
+language plpgsql stable security definer
+set search_path = public
+as $$
+declare result jsonb;
+begin
+  if not public.client_portal_access(target_tenant)
+     and not (not public.is_client_portal() and target_tenant = public.current_tenant() and public.is_admin()) then
+    raise exception 'Client portal access denied';
+  end if;
+
+  with published as (
+    select learner_ref, name, coalesce(progress_refs, '{}'::text[]) as progress_refs,
+      lower(regexp_replace(trim(name), '\s+', ' ', 'g')) as normalized_name
+    from public.client_portal_learners
+    where tenant_id = target_tenant
+  ), progress_sources as (
+    select p.learner_ref, p.name, a.key as source_key, a.updated_at,
+      case when a.value ~ '^\s*\{' then a.value::jsonb else '{}'::jsonb end as value
+    from published p
+    left join public.app_state a on a.tenant_id = target_tenant
+      and a.key like 'itss.progress.%'
+      and exists (
+        select 1
+        from unnest(array_append(p.progress_refs, p.learner_ref)) as refs(profile_id)
+        where a.key = 'itss.progress.' || refs.profile_id
+           or a.key like 'itss.progress.%.' || refs.profile_id
+      )
+  ), progress_units as (
+    select distinct on (source.learner_ref, unit.key)
+      source.learner_ref, unit.key as unit_id, unit.value
+    from progress_sources source
+    cross join lateral jsonb_each(
+      case when jsonb_typeof(source.value -> 'units') = 'object'
+        then source.value -> 'units'
+        else '{}'::jsonb
+      end
+    ) unit
+    order by source.learner_ref, unit.key, source.updated_at desc nulls last, source.source_key
+  ), progress as (
+    select p.learner_ref, p.name,
+      jsonb_build_object('units', coalesce(
+        jsonb_object_agg(units.unit_id, units.value) filter (where units.unit_id is not null),
+        '{}'::jsonb
+      )) as value
+    from published p
+    left join progress_units units on units.learner_ref = p.learner_ref
+    group by p.learner_ref, p.name
+  ), attendance_source as (
+    select s.key, s.value,
+      substring(s.key from '([0-9]{4}-[0-9]{2}-[0-9]{2})') as date
+    from public.shared_state s
+    where s.tenant_id = target_tenant
+      and s.key ~ '^itss\.attendance\.(custom-[^.]+\.)?[0-9]{4}-[0-9]{2}-[0-9]{2}(\.row\..+)?$'
+  ), attendance_dates as (
+    select distinct date from attendance_source
+  ), attendance_row_items as (
+    select source.date, item.key as learner_ref, item.value as row, 0 as priority
+    from attendance_source source
+    cross join lateral jsonb_each(
+      case when source.key !~ '\.row\.'
+             and source.value ~ '^\s*\{'
+           then coalesce(source.value::jsonb -> 'rows', '{}'::jsonb)
+           else '{}'::jsonb end
+    ) item
+    union all
+    select source.date,
+      substring(source.key from '\.row\.(.+)$') as learner_ref,
+      case when source.value ~ '^\s*\{' then source.value::jsonb else '{}'::jsonb end as row,
+      1 as priority
+    from attendance_source source
+    where source.key like 'itss.attendance.%.row.%'
+  ), attendance as (
+    select dates.date,
+      coalesce(jsonb_object_agg(items.learner_ref, items.row order by items.priority)
+        filter (where items.learner_ref is not null), '{}'::jsonb) as rows,
+      count(distinct coalesce(
+        nullif(regexp_replace(coalesce(items.row ->> 'idNumber', ''), '\D', '', 'g'), ''),
+        nullif(regexp_replace(lower(trim(concat_ws(' ', items.row ->> 'name', items.row ->> 'surname'))), '\s+', ' ', 'g'), ''),
+        items.learner_ref
+      )) filter (where items.learner_ref is not null) as signer_count
+    from attendance_dates dates
+    left join attendance_row_items items on items.date = dates.date
+    group by dates.date
+  ), counted_attendance as (
+    select attendance.date, attendance.signer_count,
+      coalesce((
+        select jsonb_object_agg(published.learner_ref, jsonb_build_object('name', published.name))
+        from published
+        where exists (
+          select 1
+          from jsonb_each(attendance.rows) item
+          where item.key = published.learner_ref
+             or (
+               (
+                 lower(regexp_replace(trim(coalesce(item.value ->> 'name', '')), '\s+', ' ', 'g')) = published.normalized_name
+                 or lower(regexp_replace(trim(concat_ws(' ', item.value ->> 'name', item.value ->> 'surname')), '\s+', ' ', 'g')) = published.normalized_name
+               )
+               and (
+                 select count(*)
+                 from published same_name
+                 where same_name.normalized_name = published.normalized_name
+               ) = 1
+             )
+        )
+      ), '{}'::jsonb) as rows
+    from attendance
+    where attendance.signer_count >= 4
+  )
+  select jsonb_build_object(
+    'learners', coalesce((select jsonb_agg(jsonb_build_object('learner_ref', learner_ref, 'name', name, 'progress', value) order by name) from progress), '[]'::jsonb),
+    'attendance', coalesce((select jsonb_agg(jsonb_build_object('date', date, 'signer_count', signer_count, 'rows', rows) order by date) from counted_attendance), '[]'::jsonb)
+  ) into result;
+  return result;
+end;
+$$;
+
+revoke all on function public.client_portal_dashboard(text) from public, anon;
+grant execute on function public.client_portal_dashboard(text) to authenticated;
+commit;
+notify pgrst, 'reload schema';
