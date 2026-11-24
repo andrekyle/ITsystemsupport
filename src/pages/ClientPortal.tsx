@@ -136,9 +136,10 @@ export function ClientPortal() {
     if (viewer) URL.revokeObjectURL(viewer.url);
     setViewer({ document, url: URL.createObjectURL(data) });
   }
-  async function openChecklist(learner: ClientLearner) {
+  function openChecklist(learner: ClientLearner) {
     if (viewer) URL.revokeObjectURL(viewer.url);
-    setViewer({ document: { id: `checklist-${learner.learner_ref}`, title: 'Induction Checklist', category: 'Evidence', filename: 'Checklist.pdf', storage_path: '', file_size: 0, created_at: new Date().toISOString(), published: true }, url: `${window.location.origin}/downloads/Checklist.pdf` });
+    setViewer(null);
+    setSelectedLearner(learner.learner_ref);
   }
   useEffect(() => {
     const links = Array.from(window.document.querySelectorAll<HTMLElement>('.client-documents li > div:first-child'));
