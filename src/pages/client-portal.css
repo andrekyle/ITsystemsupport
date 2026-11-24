@@ -130,20 +130,23 @@
 .client-learner-edit:hover { text-decoration: underline; }
 .client-learner-edit small { display: block; color: var(--ink-3); font-size: 12px; text-decoration: none; }
 .client-checklist-editor {
-  position: sticky;
-  top: 108px;
-  grid-column: 2;
-  grid-row: 2;
-  width: auto;
-  min-width: 0;
-  max-height: calc(100dvh - 130px);
+  position: fixed;
+  z-index: 1200;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 50vw;
+  min-width: 320px;
+  max-width: 85vw;
+  max-height: none;
   overflow: auto;
   margin: 0;
   padding: 18px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 0;
+  border-left: 1px solid var(--border);
+  border-radius: 0;
   background: var(--surface);
-  box-shadow: 0 4px 14px rgba(16, 24, 40, .06);
+  box-shadow: none;
   box-sizing: border-box;
 }
 .client-tab-cohort .client-collapsible[open] {
@@ -155,10 +158,7 @@
   box-shadow: none;
 }
 .client-tab-cohort .client-collapsible[open]:has(.client-checklist-editor) {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
-  align-items: start;
-  gap: 0 20px;
+  display: block;
 }
 .client-tab-cohort .client-collapsible[open] > summary {
   position: static;
@@ -168,11 +168,6 @@
   padding: 0 0 12px;
   border-bottom: 1px solid var(--border);
   background: transparent;
-}
-.client-tab-cohort .client-collapsible[open]:has(.client-checklist-editor) > .client-table-wrap {
-  grid-column: 1;
-  grid-row: 2;
-  min-width: 0;
 }
 .client-checklist-editor .checklist-logo,
 .client-checklist-editor::before { display: none; }
@@ -296,12 +291,6 @@
 .client-checklist-editor table input:focus-visible { outline: 2px solid var(--client-accent); outline-offset: 2px; }
 .client-checklist-editor .checklist-footer { position: static; background: transparent; color: var(--ink-3); }
 .client-checklist-editor .checklist-footer span { float: right; }
-@media(max-width:900px) {
-  .client-tab-cohort .client-collapsible[open]:has(.client-checklist-editor) { grid-template-columns: minmax(0, 1fr); }
-  .client-tab-cohort .client-collapsible[open]:has(.client-checklist-editor) > .client-table-wrap,
-  .client-checklist-editor { grid-column: 1; grid-row: auto; }
-  .client-checklist-editor { position: static; max-height: none; }
-}
 .client-tab-documents .client-filters { margin: 18px 0 24px; display: flex; flex-wrap: wrap; gap: 10px; }
 .client-tab-documents .client-filters button { flex: 0 0 auto; }
 .client-report-status { color: var(--ink-3); font-size: 12px; }
@@ -329,6 +318,14 @@
 .client-pdf-canvas-wrap { flex: 1; overflow: auto; display: grid; place-items: start center; padding: 20px; background: #333; }
 .client-pdf-canvas-wrap canvas { background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.35); }
 .client-document-viewer.report-viewer { width: 50vw; }
+body:has(.client-checklist-editor) .client-portal .client-content,
+body:has(.client-checklist-editor) .client-portal .client-header,
+body:has(.client-checklist-editor) .client-portal .client-footer { width: calc(100% - 50vw); max-width: none; margin-left: 0; margin-right: 50vw; box-sizing: border-box; }
+body:has(.client-checklist-editor) .client-portal .client-content { margin-left: 0 !important; margin-right: 50vw !important; padding-left: 76px; }
+body:has(.client-checklist-editor) .client-portal .client-header { padding-left: 24px !important; padding-right: 24px !important; }
+body:has(.client-checklist-editor) .client-portal .client-side-tabs { width: 56px; padding-left: 6px; padding-right: 6px; }
+body:has(.client-checklist-editor) .client-portal .client-side-tabs button { padding: 10px 0; text-align: center; font-size: 0; }
+body:has(.client-checklist-editor) .client-portal .client-tab-icon { margin: 0; }
 body:has(.client-document-viewer) .client-portal .client-content,
 body:has(.client-document-viewer) .client-portal .client-header,
 body:has(.client-document-viewer) .client-portal .client-footer { width: calc(100% - 50vw); max-width: none; margin-left: 0; margin-right: 50vw; box-sizing: border-box; }
