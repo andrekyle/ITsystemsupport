@@ -434,6 +434,11 @@ function StaffApp() {
           }, 0);
         }
       } else {
+        if (recovering.current || isRecoveryRedirect()) {
+          recovering.current = true;
+          setCloudState("recovery");
+          return;
+        }
         setAccountEmail(null);
         setAccountAdmin(false);
         if (event === "SIGNED_OUT") {
