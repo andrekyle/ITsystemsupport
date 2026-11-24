@@ -228,6 +228,8 @@
 .evidence-register-page .portfolio-date-pickers { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .evidence-register-page .portfolio-date-pickers input[type="date"] { min-width: 135px; flex: 1; width: 100%; font-weight: 400; }
 .evidence-register-page .portfolio-date-pickers > span { font-size: 12px; color: var(--ink-3); }
+.evidence-register-page .portfolio-table .portfolio-date-pickers { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.evidence-register-page .portfolio-table .portfolio-date-pickers > span { text-align: center; line-height: 1; }
 .evidence-register-page .portfolio-check { display: flex; gap: 10px; align-items: flex-start; }
 .evidence-register-page .portfolio-check input { margin-top: 4px; accent-color: var(--brand); }
 .evidence-register-page .portfolio-table { min-width: 0; }
@@ -279,7 +281,7 @@
 .evidence-register-page .portfolio-table .portfolio-data-table { table-layout: auto; border-collapse: collapse; }
 .evidence-register-page .portfolio-table .portfolio-data-table th,
 .evidence-register-page .portfolio-table .portfolio-data-table td { border: 1px solid var(--border); padding: 10px 12px; }
-.evidence-register-page .portfolio-table .portfolio-data-table th { white-space: nowrap; }
+.evidence-register-page .portfolio-table .portfolio-data-table th { white-space: normal; overflow-wrap: anywhere; }
 .evidence-register-page .portfolio-table .portfolio-data-table td { min-width: 0; }
 .evidence-register-page .portfolio-table .portfolio-results-table { table-layout: fixed; }
 .evidence-register-page .portfolio-evidence-status { white-space: nowrap; }
