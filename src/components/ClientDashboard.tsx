@@ -82,15 +82,16 @@ export function ClientDashboard({ data, cohort }: { data: ClientDashboardData | 
   }), [cohort, data]);
   const onTrack = learnerProgress.filter(item => item.onTrack).length;
   const onTrackRate = learnerProgress.length ? onTrack / learnerProgress.length : null;
+  const onTrackPercentage = onTrackRate === null ? null : Math.round(onTrackRate * 100);
+  const progressRingOffset = attendanceRingCircumference * (1 - (onTrackRate ?? 0));
 
   return <section className="client-dashboard" aria-label="Programme dashboard">
     <div className="client-dashboard-grid">
-      <article className="client-dashboard-card client-chart-card">
-        <span className="client-card-kicker">Attendance · {monthLabel}</span>
+      <article className="client-dashboard-card client-chart-card client-attendance-card">
+        <div className="client-tile-heading"><span>Team attendance</span><span className="client-tile-info" title="Attendance across qualifying registers">i</span></div>
         <div className="client-month-switch" ref={monthMenu}><span>Month</span><button type="button" className="client-month-trigger" aria-haspopup="listbox" aria-expanded={monthOpen} onClick={() => setMonthOpen(open => !open)}><span>{monthLabel}</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5" /></svg></button>{monthOpen && <div className="client-month-menu" role="listbox" aria-label="Attendance month">{monthOptions.map(option => <button type="button" role="option" aria-selected={selectedMonth === option.key} key={option.key} onClick={() => { setSelectedMonth(option.key); setMonthOpen(false); }}><span><strong>{option.label}</strong><small>{option.registerCount ? `${option.registerCount} qualifying register${option.registerCount === 1 ? '' : 's'}` : 'No qualifying registers'}</small></span>{selectedMonth === option.key && <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m4 10 4 4 8-8" /></svg>}</button>)}</div>}</div>
-        <button type="button" className="client-donut" onClick={() => setDetail('attendance')} aria-haspopup="dialog" aria-label={`View ${monthLabel} absenteeism`}><svg viewBox="0 0 64 64" aria-hidden="true"><circle className="client-donut-track" cx="32" cy="32" r="28" /><circle className="client-donut-value" cx="32" cy="32" r="28" strokeDasharray={attendanceRingCircumference} strokeDashoffset={attendanceRingOffset} /></svg><strong>{attendancePercentage === null ? '\u2014' : `${attendancePercentage}%`}</strong></button>
-        <span className="client-card-title">{monthLabel} attendance</span>
-        <small>{registers.length ? `${registers.length} register${registers.length === 1 ? '' : 's'} recorded` : feedAvailable ? `No registers recorded for ${monthLabel}` : 'Dashboard feed unavailable — apply the latest database migration'} · Select chart for absenteeism</small>
+        <div className="client-tile-metric"><button type="button" className="client-donut" onClick={() => setDetail('attendance')} aria-haspopup="dialog" aria-label={`View ${monthLabel} absenteeism`}><svg viewBox="0 0 64 64" aria-hidden="true"><circle className="client-donut-track" cx="32" cy="32" r="28" /><circle className="client-donut-value" cx="32" cy="32" r="28" strokeDasharray={attendanceRingCircumference} strokeDashoffset={attendanceRingOffset} /></svg><strong>{attendancePercentage === null ? '\u2014' : `${attendancePercentage}%`}</strong></button><div className="client-tile-legend"><span><i className="is-complete" />Present <strong>{attendancePercentage === null ? '—' : `${attendancePercentage}%`}</strong></span><span><i className="is-behind" />Absent <strong>{attendancePercentage === null ? '—' : `${100 - attendancePercentage}%`}</strong></span><span><i className="is-neutral" />Registers <strong>{registers.length}</strong></span></div></div>
+        <button type="button" className="client-tile-link" onClick={() => setDetail('attendance')}>{registers.length ? `View ${monthLabel} absenteeism` : feedAvailable ? `No registers recorded for ${monthLabel}` : 'Dashboard feed unavailable'}</button>
       </article>
       <article className="client-dashboard-card client-module-card">
         <span className="client-card-kicker">Module overview</span>
@@ -104,12 +105,11 @@ export function ClientDashboard({ data, cohort }: { data: ClientDashboardData | 
           return <div key={module.id}><div><strong>{module.name}</strong><span>Unit standard {position} of {module.units.length}</span></div><progress value={progress} max={1} aria-label={`${module.name} ${Math.round(progress * 100)}% complete`} /><small>{Math.round(progress * 100)}%</small></div>;
         })}</div>
       </article>
-      <button type="button" className="client-dashboard-card client-chart-card client-progress-card" onClick={() => setDetail('progress')} aria-haspopup="dialog">
-        <span className="client-card-kicker">Learner progress</span>
-        <div className="client-split-chart"><span style={{ flex: onTrack || 0 }}>On track {onTrackRate === null ? '—' : `${Math.round(onTrackRate * 100)}%`}</span><span style={{ flex: learnerProgress.length - onTrack || 0 }}>Behind {onTrackRate === null ? '—' : `${Math.round((1 - onTrackRate) * 100)}%`}</span></div>
-        <span className="client-card-title">Submission status</span>
-        <small>Select to view learners in each group</small>
-      </button>
+      <article className="client-dashboard-card client-chart-card client-progress-card">
+        <div className="client-tile-heading"><span>Learner results</span><span className="client-tile-info" title="Learners on track against programme progress">i</span></div>
+        <div className="client-tile-metric"><button type="button" className="client-donut client-progress-donut" onClick={() => setDetail('progress')} aria-haspopup="dialog" aria-label="View learner submission progress"><svg viewBox="0 0 64 64" aria-hidden="true"><circle className="client-donut-track" cx="32" cy="32" r="28" /><circle className="client-donut-value" cx="32" cy="32" r="28" strokeDasharray={attendanceRingCircumference} strokeDashoffset={progressRingOffset} /></svg><strong>{onTrackPercentage === null ? '—' : `${onTrackPercentage}%`}</strong></button><div className="client-tile-legend"><span><i className="is-complete" />On track <strong>{onTrack}</strong></span><span><i className="is-behind" />Behind <strong>{learnerProgress.length - onTrack}</strong></span><span><i className="is-neutral" />Learners <strong>{learnerProgress.length}</strong></span></div></div>
+        <button type="button" className="client-tile-link" onClick={() => setDetail('progress')}>View submission status</button>
+      </article>
     </div>
     {detail && <div className="client-dashboard-modal" role="dialog" aria-modal="true" aria-labelledby="client-detail-title"><div>
       <header><div><span className="client-card-kicker">{detail === 'attendance' ? 'Attendance register' : 'Dashboard detail'}</span><h2 id="client-detail-title">{detail === 'attendance' ? `${monthLabel} attendance register` : 'Learner submission progress'}</h2></div><button type="button" onClick={() => setDetail(null)}>Close</button></header>

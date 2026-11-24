@@ -693,23 +693,17 @@ export function AttendancePage({
     setSigning(true);
     setAttendanceNote("");
     let savedOnDevice = false;
-    // merge with the latest shared copy so classmates' rows are not lost
+    // Save this learner's collision-free row first. Signing must not wait for
+    // a shared-register download: a slow/offline read previously left the UI
+    // stuck on "Signing…" without recording anything on the device.
     try {
       const local = readReg(storageKey);
-      const remote = await pullLatest(storageKey);
-      const base = remote
-        ? {
-            ...remote,
-            rows: { ...remote.rows, ...local.rows },
-            order: [...remote.order, ...local.order.filter((id) => !remote.order.includes(id))],
-          }
-        : local;
-      if (base.rows[profile.id]) {
+      if (local.rows[profile.id]) {
         const ownRowKey = attRowKey(dateIso, profile.id);
-        localStorage.setItem(ownRowKey, JSON.stringify(base.rows[profile.id]));
+        localStorage.setItem(ownRowKey, JSON.stringify(local.rows[profile.id]));
         savedOnDevice = true;
-        save(base);
-        await Promise.all([flushKey(ownRowKey, true), flushKey(storageKey)]);
+        save(local);
+        await flushKey(ownRowKey, true);
         setAttendanceNote("Your signature is saved on this register.");
         return;
       }
@@ -728,16 +722,19 @@ export function AttendancePage({
         ...(sig ? { signatureImage: sig } : {}),
       };
       const next = {
-        header: { ...base.header, ...reg.header },
-        rows: { ...base.rows, [profile.id]: row },
-        order: base.order.includes(profile.id) ? base.order : [...base.order, profile.id],
+        header: { ...local.header, ...reg.header },
+        rows: { ...local.rows, [profile.id]: row },
+        order: local.order.includes(profile.id) ? local.order : [...local.order, profile.id],
       };
       const ownRowKey = attRowKey(dateIso, profile.id);
       localStorage.setItem(ownRowKey, JSON.stringify(row));
       savedOnDevice = true;
       save(next);
       // The independent learner row is the authoritative signature record.
-      await Promise.all([flushKey(ownRowKey, true), flushKey(storageKey)]);
+      // The aggregate register is queued by save(); only the learner row must
+      // be confirmed here, so another person's concurrent signature cannot be
+      // overwritten by a whole-register upload.
+      await flushKey(ownRowKey, true);
       setAttendanceNote("Signed successfully.");
       logAudit(profile, "attendance.sign", `Signed the ${dateIso} attendance register at ${row.arrival}`);
     } catch (error) {
@@ -750,12 +747,10 @@ export function AttendancePage({
     }
   };
 
-  /** First click: ask (only once, ever) for a photo of the handwritten signature. */
+  /** Attendance must never be blocked by an optional signature image. The
+   *  learner's typed enrolment signature/name is a valid fallback and a saved
+   *  handwritten image is used automatically when one exists. */
   const onSignClick = () => {
-    if (!profile.signatureImage && !profile.signatureAsked) {
-      setAskSig(true);
-      return;
-    }
     void signNow();
   };
 
