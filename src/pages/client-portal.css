@@ -125,6 +125,11 @@
 .client-tab-account .client-page-heading,
 .client-tab-account .client-preview-notice,
 .client-tab-account .client-main-panels > :not(.client-account-page) { display: none; }
+.client-tab-account .client-main-panels > .client-dashboard,
+.client-tab-account .client-main-panels > .client-panel,
+.client-tab-account .client-main-panels > .client-collapsible,
+.client-tab-account .client-main-panels > .client-compliance { display: none !important; }
+.client-tab-account .client-main-panels > .client-account-page { display: block !important; }
 .client-tab-cohort .client-page-heading, .client-tab-cohort .client-preview-notice, .client-tab-cohort .client-stats,
 .client-tab-compliance .client-page-heading, .client-tab-compliance .client-preview-notice, .client-tab-compliance .client-stats,
 .client-tab-documents .client-page-heading, .client-tab-documents .client-preview-notice, .client-tab-documents .client-stats { display: none; }
@@ -811,7 +816,7 @@ button.client-dashboard-card, .client-chart-card { display: flex; flex-direction
 .client-team-dashboard > header button span { display: inline-grid; place-items: center; width: 17px; height: 17px; border: 2px solid currentColor; border-radius: 50%; font-size: 12px; font-weight: 700; }
 .client-team-dashboard > header a { display: inline-flex; align-items: center; gap: 8px; padding: 12px 17px; border-radius: 8px; background: #0047bb; color: #fff; font-size: 13px; font-weight: 600; text-decoration: none; }
 .client-team-dashboard > header a svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.client-team-summary { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); min-height: 126px; padding: 0 34px; border: 1px solid #d0d5dd; border-radius: 7px; background: #fff; }
+.client-team-summary { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); min-height: 126px; padding: 0 34px; border: 0; border-radius: 0; background: #fff; }
 .client-team-summary > div { display: flex; align-items: center; gap: 22px; min-width: 0; padding: 26px 16px; }
 .client-team-summary svg { width: 34px; height: 34px; flex: 0 0 34px; fill: none; stroke: #0047bb; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .client-team-summary p { display: grid; gap: 5px; margin: 0; }
@@ -825,7 +830,7 @@ button.client-dashboard-card, .client-chart-card { display: flex; flex-direction
 .client-team-search input:focus, .client-team-search input:active { border: 0 !important; outline: 0 !important; box-shadow: none !important; }
 .client-team-search input::placeholder { color: #98a2b3; }
 .client-team-qualifications { display: grid; gap: 10px; }
-.client-team-qualifications > details { overflow: hidden; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; }
+.client-team-qualifications > details { overflow: hidden; border: 0; border-radius: 0; background: #fff; }
 .client-team-qualifications > details > summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 12px 16px; cursor: pointer; list-style: none; }
 .client-team-qualifications > details > summary::-webkit-details-marker { display: none; }
 .client-team-qualifications > details > summary > span:first-child { display: grid; gap: 1px; }
@@ -833,7 +838,7 @@ button.client-dashboard-card, .client-chart-card { display: flex; flex-direction
 .client-team-qualifications > details > summary strong { color: #101828; font-size: 13px; font-weight: 600; }
 .client-team-qualifications > details > summary > span:last-child { display: flex; align-items: center; gap: 10px; color: #667085; font-size: 11px; white-space: nowrap; }
 .client-team-qualifications > details > summary svg { width: 16px; height: 16px; fill: none; stroke: #667085; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s ease; }
-.client-team-qualifications > details[open] > summary { border-bottom: 1px solid #eaecf0; }
+.client-team-qualifications > details[open] > summary { border-bottom: 0; }
 .client-team-qualifications > details[open] > summary svg { transform: rotate(180deg); }
 .client-team-empty { margin: 0; padding: 20px 12px; border-bottom: 1px solid #eaecf0; color: #667085; font-size: 13px; }
 .client-team-table-wrap { overflow-x: auto; }
@@ -855,8 +860,8 @@ button.client-dashboard-card, .client-chart-card { display: flex; flex-direction
 .client-dashboard-heading h2 { margin: 0; color: #101828; font-size: 22px; font-weight: 500; letter-spacing: -.02em; }
 .client-dashboard-heading p { margin: 5px 0 0; color: #667085; font-size: 12px; }
 .client-dashboard-heading > span { color: #475467; font-size: 13px; font-weight: 500; }
-.client-dashboard-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); grid-template-areas: "attendance progress module"; gap: 0; overflow: visible; border: 1px solid #d0d5dd; border-radius: 7px; background: #fff; }
-.client-dashboard-card { min-height: 270px; padding: 26px 28px; border: 0 !important; border-right: 1px solid #eaecf0 !important; border-radius: 0; background: #fff !important; box-shadow: none; }
+.client-dashboard-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); grid-template-areas: "attendance progress module"; gap: 0; overflow: visible; border: 0; border-radius: 0; background: #fff; }
+.client-dashboard-card { min-height: 270px; padding: 26px 28px; border: 0 !important; border-radius: 0; background: #fff !important; box-shadow: none; }
 .client-dashboard-card:last-child { border-right: 0 !important; }
 .client-dashboard-card:hover { background: #fff !important; box-shadow: none; }
 .client-attendance-card { grid-area: attendance; }
@@ -875,14 +880,18 @@ button.client-dashboard-card, .client-chart-card { display: flex; flex-direction
 .client-progress-donut .client-donut-value { stroke: #0047bb; }
 .client-tile-legend i.is-complete, .client-tile-legend i.is-behind { background: #0047bb; }
 .client-tile-link { margin-top: 18px; color: #0047bb !important; font-size: 11px !important; }
+.client-chart-card .client-tile-link { margin-top: auto; padding-top: 18px !important; }
 .client-module-card .client-card-kicker { color: #101828; font-size: 14px; font-weight: 500; letter-spacing: 0; text-transform: none; }
 .client-module-card h2 { margin: 7px 0 20px; color: #667085; font-size: 11px; font-weight: 400; }
 .client-module-list { gap: 14px; }
 .client-module-list strong { color: #101828; font-size: 12px; font-weight: 500; }
-.client-module-list progress { height: 5px; accent-color: #0047bb; }
+.client-module-list progress { height: 5px; overflow: hidden; border: 0; border-radius: 0; outline: 0; appearance: none; -webkit-appearance: none; background: #eaecf0; accent-color: #0047bb; box-shadow: none; }
+.client-module-list progress::-webkit-progress-bar { border: 0; background: #eaecf0; box-shadow: none; }
+.client-module-list progress::-webkit-progress-value { border: 0; background: #0047bb; }
+.client-module-list progress::-moz-progress-bar { border: 0; background: #0047bb; }
 @media(max-width:1100px) {
  .client-dashboard-grid { grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-areas: "attendance progress" "module module"; }
- .client-module-card { border-top: 1px solid #eaecf0 !important; border-right: 0 !important; }
+ .client-module-card { border-top: 0 !important; border-right: 0 !important; }
 }
 @media(max-width:760px) {
  .client-team-dashboard > header { align-items: flex-start; }
@@ -892,7 +901,7 @@ button.client-dashboard-card, .client-chart-card { display: flex; flex-direction
  .client-team-summary > div { gap: 13px; padding: 18px 12px; }
  .client-dashboard-heading { align-items: flex-start; }
  .client-dashboard-grid { grid-template-columns: 1fr; grid-template-areas: "attendance" "progress" "module"; }
- .client-dashboard-card { min-height: 0; border-right: 0 !important; border-bottom: 1px solid #eaecf0 !important; }
+ .client-dashboard-card { min-height: 0; border-right: 0 !important; border-bottom: 0 !important; }
  .client-dashboard-card:last-child { border-bottom: 0 !important; }
  .client-progress-card .client-tile-metric { margin-top: 20px; }
 }
