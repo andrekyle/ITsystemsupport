@@ -142,12 +142,10 @@ export function CloudAuth() {
       try {
         window.sessionStorage.setItem("itss.passwordRecovery", "1");
       } catch {
-        // The recovery query parameter still identifies the flow if storage is unavailable.
+        // Supabase's recovery event still identifies the flow if storage is unavailable.
       }
-      const redirectTo = new URL(window.location.origin);
-      redirectTo.searchParams.set("passwordRecovery", "1");
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectTo.toString(),
+        redirectTo: window.location.origin,
       });
       if (error) {
         clearPasswordRecoveryMarker();

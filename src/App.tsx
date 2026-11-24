@@ -301,7 +301,9 @@ export default function App() {
 
 function StaffApp() {
   const isRecoveryRedirect = () => {
-    if (new URLSearchParams(window.location.search).get("passwordRecovery") === "1") return true;
+    const query = new URLSearchParams(window.location.search);
+    if (query.get("passwordRecovery") === "1" || query.has("code")) return true;
+    if (new URLSearchParams(window.location.hash.slice(1)).get("type") === "recovery") return true;
     try {
       return window.sessionStorage.getItem("itss.passwordRecovery") === "1";
     } catch {
@@ -474,6 +476,8 @@ function StaffApp() {
           recovering.current = false;
           const url = new URL(window.location.href);
           url.searchParams.delete("passwordRecovery");
+          url.searchParams.delete("code");
+          if (url.hash.includes("type=recovery") || url.hash.includes("access_token")) url.hash = "";
           window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
           try {
             window.sessionStorage.removeItem("itss.passwordRecovery");
