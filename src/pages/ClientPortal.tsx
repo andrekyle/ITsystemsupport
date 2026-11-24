@@ -51,6 +51,9 @@ export function ClientPortal() {
   const [portalTab, setPortalTab] = useState('dashboard');
   const [selectedLearner, setSelectedLearner] = useState<string | null>(null);
   const [checklistMarks, setChecklistMarks] = useState<ChecklistMarks>({});
+  useEffect(() => {
+    if (portalTab !== 'cohort') setSelectedLearner(null);
+  }, [portalTab]);
   const request = useRef(0);
   const assistantRoot = useRef<Root | null>(null);
   const assistantTab = useRef<HTMLButtonElement | null>(null);
