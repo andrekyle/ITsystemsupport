@@ -196,6 +196,41 @@
   margin-left: auto;
 }
 .client-checklist-editor > label { margin: 12px 0; font-weight: 600; }
+.client-checklist-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+}
+.client-checklist-summary label { max-width: none; margin: 0; }
+.client-checklist-progress {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+.client-checklist-progress svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.client-checklist-progress circle { fill: none; stroke-width: 5; }
+.client-checklist-progress-track { stroke: var(--border); }
+.client-checklist-progress-value {
+  stroke: var(--client-accent);
+  stroke-linecap: round;
+  transition: stroke-dashoffset .2s ease;
+}
+.client-checklist-progress strong {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
 .client-checklist-editor table {
   width: 100%;
   margin-top: 12px;
