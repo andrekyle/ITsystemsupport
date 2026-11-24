@@ -224,12 +224,24 @@
 .checklist-footer { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); color: var(--ink-3); font-size: 10px; }
 .checklist-footer span { float: right; }
 .client-checklist-editor label { display: grid; gap: 6px; max-width: 420px; }
-.client-checklist-editor input:not([type="checkbox"]) { min-height: 36px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 5px; }
+.client-checklist-editor input:not([type="checkbox"]) {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  box-shadow: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 700;
+  appearance: none;
+}
 .client-checklist-editor table input { width: 16px; height: 16px; min-height: 0; margin: 0; padding: 0; accent-color: var(--client-accent); }
-.client-checklist-editor input:focus-visible { outline: 2px solid var(--client-accent); outline-offset: 2px; }
+.client-checklist-editor input:not([readonly]):focus-visible,
+.client-checklist-editor table input:focus-visible { outline: 2px solid var(--client-accent); outline-offset: 2px; }
 .client-checklist-editor .checklist-footer { position: static; background: transparent; color: var(--ink-3); }
 .client-checklist-editor .checklist-footer span { float: right; }
-body:has(.client-checklist-editor) .client-portal .client-content { margin-right: 0; }
 @media(max-width:900px) {
   .client-tab-cohort .client-collapsible[open]:has(.client-checklist-editor) { grid-template-columns: minmax(0, 1fr); }
   .client-tab-cohort .client-collapsible[open]:has(.client-checklist-editor) > .client-table-wrap,
@@ -267,7 +279,6 @@ body:has(.client-document-viewer) .client-portal .client-content,
 body:has(.client-document-viewer) .client-portal .client-header,
 body:has(.client-document-viewer) .client-portal .client-footer { width: calc(100% - 50vw); max-width: none; margin-left: 0; margin-right: 50vw; box-sizing: border-box; }
 body:has(.client-document-viewer) .client-portal .client-content { margin-left: 0 !important; margin-right: 50vw !important; }
-body:has(.client-checklist-editor) .client-portal .client-content { margin-right: min(620px, 52vw); }
 body:has(.client-document-viewer) .client-portal .client-header { padding-left: 24px !important; padding-right: 24px !important; }
 body:has(.client-document-viewer) .client-portal .client-side-tabs { width: 56px; padding-left: 6px; padding-right: 6px; }
 body:has(.client-document-viewer) .client-portal .client-side-tabs button { padding: 10px 0; text-align: center; font-size: 0; }
