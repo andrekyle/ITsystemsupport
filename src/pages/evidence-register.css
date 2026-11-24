@@ -1,4 +1,4 @@
-.content-inner:has(.evidence-register-page) { max-width: none; padding: 16px 20px 24px; }
+.content-inner:has(.evidence-register-page) { max-width: none; padding: 0 0 24px; }
 .evidence-register-page { max-width: none; width: 100%; color: var(--ink); }
 .portfolio-review-modal { width: min(560px, calc(100vw - 32px)); }
 .portfolio-review-modal .modal-title { font-size: 19px; font-weight: 600; margin-bottom: 16px; }
@@ -32,7 +32,7 @@
   --portfolio-hover: #f0f6f2;
 }
 [data-theme="light"] .evidence-register-page .card { border-color: var(--portfolio-line); border-radius: 10px; box-shadow: none; }
-[data-theme="light"] .evidence-register-page .evidence-register-toolbar { border-top: 4px solid var(--portfolio-accent); }
+[data-theme="light"] .evidence-register-page .evidence-register-toolbar { border-top: 1px solid #e7e7e7; }
 [data-theme="light"] .evidence-register-page .portfolio-actions .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
 [data-theme="light"] .evidence-register-page .btn.ghost { color: var(--ink); }
 [data-theme="light"] .evidence-register-page .btn.ghost:hover:not(:disabled) { background: var(--portfolio-hover); color: var(--brand); }
@@ -59,7 +59,95 @@
 .evidence-register-page .admin-overview-head { align-items: flex-start; min-height: 0; padding: 0; text-align: left; }
 .evidence-register-page .admin-overview-head h1 { font-weight: 500; }
 .evidence-register-page .admin-evidence-panel { border: 0; background: transparent; }
-.evidence-register-page .evidence-register-toolbar { padding: 18px; margin-bottom: 20px; }
+.evidence-register-page .evidence-register-banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 122px;
+  overflow: hidden;
+  padding: 20px max(24px, calc((100% - 1068px) / 2));
+  background: linear-gradient(110deg, #2864bd 0%, #2058ad 65%, #163b78 100%);
+  color: #fff;
+}
+.evidence-register-page .evidence-register-banner::before,
+.evidence-register-page .evidence-register-banner::after {
+  position: absolute;
+  top: 0;
+  right: 7%;
+  width: min(390px, 42%);
+  height: 100%;
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(145deg, transparent 0 28%, rgba(80, 145, 231, .7) 28% 58%, rgba(16, 63, 135, .8) 58% 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 38% 100%);
+}
+.evidence-register-page .evidence-register-banner::after {
+  right: 0;
+  width: min(270px, 30%);
+  background: linear-gradient(145deg, #4385df 0 42%, #194d99 42% 72%, #112f60 72%);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 45% 100%);
+  opacity: .9;
+}
+.evidence-register-page .evidence-register-banner > div { position: relative; z-index: 1; }
+.evidence-register-page .evidence-register-banner span {
+  display: block;
+  margin-bottom: 5px;
+  color: #e8f1ff !important;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+}
+.evidence-register-page .evidence-register-banner h1 {
+  margin: 0;
+  color: #fff !important;
+  font-size: clamp(20px, 2.2vw, 27px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.evidence-register-shell { width: min(1068px, calc(100% - 40px)); margin: 0 auto; }
+.evidence-register-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 100px;
+  margin-top: -50px;
+  padding: 0 0 20px;
+  border-bottom: 1px solid #e7e7e7;
+  position: relative;
+}
+.evidence-register-avatar {
+  display: grid;
+  flex: 0 0 96px;
+  width: 96px;
+  height: 96px;
+  place-items: center;
+  border: 4px solid var(--surface, #fff);
+  border-radius: 50%;
+  background: #a6adb7;
+  color: #fff !important;
+  font-size: 26px;
+  font-weight: 600;
+}
+.evidence-register-profile h2 { margin: 24px 0 4px; font-size: 21px; font-weight: 600; }
+.evidence-register-profile p { margin: 0; color: #667085; font-size: 12px; }
+.evidence-register-section-heading {
+  margin: 30px 0 12px;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 600;
+}
+.evidence-register-page .evidence-register-toolbar {
+  border: 0;
+  border-top: 1px solid #e7e7e7;
+  border-radius: 0;
+  background: transparent;
+  padding: 14px 0;
+}
+.evidence-register-page .evidence-register-toolbar .portfolio-actions .btn.primary,
+.evidence-register-page .evidence-register-tabs .btn.primary { background: #174ea6; border-color: #174ea6; color: #fff; }
+.evidence-register-page .evidence-register-toolbar .nice-select-btn { background: #fff; }
+.evidence-register-page .evidence-register-toolbar { padding: 14px 0; margin-bottom: 12px; }
 .evidence-register-page .portfolio-page-header { display: flex; align-items: center; gap: 12px; padding: 0 0 10px; }
 .evidence-register-page .portfolio-heading-copy { min-width: 0; }
 .evidence-register-page .portfolio-eyebrow { display: block; color: var(--brand, var(--ink-3)); font-size: 10px; font-weight: 700; letter-spacing: .14em; margin-bottom: 4px; }
@@ -67,7 +155,7 @@
 .evidence-register-page .portfolio-page-header p { margin: 0; color: var(--ink-3); font-size: 13px; line-height: 1.5; }
 .evidence-register-page .portfolio-heading-brand { flex: 0 0 auto; }
 .evidence-register-page .portfolio-heading-brand .portfolio-brand { width: 150px; margin: 0; }
-.evidence-register-page .evidence-register-toolbar { display: grid; grid-template-columns: minmax(230px, 320px) 1fr; align-items: end; gap: 8px 16px; padding: 12px; margin-bottom: 8px; }
+.evidence-register-page .evidence-register-toolbar { display: grid; grid-template-columns: minmax(230px, 320px) 1fr; align-items: end; gap: 8px 16px; padding: 14px 0; margin-bottom: 12px; }
 .evidence-register-page .evidence-register-toolbar .evidence-learner-picker { flex-direction: column; align-items: stretch; gap: 6px; }
 .evidence-register-page .evidence-learner-picker > strong { font-size: 11px; font-weight: 600; color: var(--ink-2); }
 .evidence-register-page .evidence-register-toolbar .evidence-learner-picker .nice-select { width: 100%; }
@@ -81,6 +169,15 @@
   .evidence-register-page .evidence-register-toolbar .portfolio-actions { justify-content: flex-start; }
 }
 @media (max-width: 600px) {
+  .evidence-register-page .evidence-register-banner { height: 108px; padding: 16px 18px; }
+  .evidence-register-page .evidence-register-banner::before { right: 0; width: 48%; }
+  .evidence-register-page .evidence-register-banner::after { width: 32%; }
+  .evidence-register-shell { width: calc(100% - 28px); }
+  .evidence-register-profile { gap: 10px; min-height: 78px; margin-top: -40px; padding-bottom: 14px; }
+  .evidence-register-avatar { flex-basis: 76px; width: 76px; height: 76px; font-size: 21px; }
+  .evidence-register-profile h2 { margin-top: 18px; font-size: 18px; overflow-wrap: anywhere; }
+  .evidence-register-profile p { overflow-wrap: anywhere; }
+  .evidence-register-section-heading { margin-top: 22px; }
   .evidence-register-page .portfolio-page-header { align-items: flex-start; gap: 12px; }
   .evidence-register-page .portfolio-heading-brand .portfolio-brand { width: 90px; }
   .evidence-register-page .portfolio-page-header h1 { font-size: 21px; }

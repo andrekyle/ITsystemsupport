@@ -173,10 +173,17 @@ function SkillsRegister({ profile }: { profile: Profile }) {
     } catch (e) { setError(e instanceof Error ? e.message : "Import failed."); }
   }
   const filtered = SKILLS_PORTFOLIO.filter(item => `${item.title} ${item.blocks.filter(block => block.kind === "text").map(block => block.text).join(" ")}`.toLowerCase().includes(search.toLowerCase()));
+  const learnerInitials = learner?.name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase() ?? "LD";
   return <div className="admin-overview evidence-register-page">
-    <header className="portfolio-page-header">
-      <div className="portfolio-heading-copy"><span className="portfolio-eyebrow">LEARNING &amp; DEVELOPMENT</span><h1>Skills Development evidence register</h1><p>Learner portfolios, assessment and verification records.</p></div>
+    <header className="evidence-register-banner">
+      <div><span>LEARNING &amp; DEVELOPMENT</span><h1>Skills Development evidence register</h1></div>
     </header>
+    <div className="evidence-register-shell">
+    <section className="evidence-register-profile" aria-label="Selected learner">
+      <div className="evidence-register-avatar" aria-hidden="true">{learnerInitials}</div>
+      <div><h2>{learner?.name ?? "Learner portfolio"}</h2>{learner?.enrolment?.email && <p>{learner.enrolment.email}</p>}</div>
+    </section>
+    <h2 className="evidence-register-section-heading">Profile</h2>
     <div className={`card evidence-register-toolbar${record.dirty ? " has-unsaved-changes" : ""}`}>
       <div className="evidence-learner-picker"><strong>Learner portfolio</strong><Select value={learner?.id ?? ""} ariaLabel="Choose learner portfolio" disabled={uploadPct !== null || record.saving || !learners.length}
         placeholder={loading ? "Loading learners…" : "No learners available"} options={learners.map(p => ({ value: p.id, label: p.name, hint: p.enrolment?.email }))}
@@ -267,5 +274,6 @@ function SkillsRegister({ profile }: { profile: Profile }) {
       <p>Reuses the existing file. Verification is recorded separately for this portfolio entry.</p>
     </Modal>}
     <input ref={importInput} type="file" hidden accept=".json,application/json" onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void importData(file); }} />
+    </div>
   </div>;
 }
