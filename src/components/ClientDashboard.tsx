@@ -63,7 +63,9 @@ export function ClientDashboard({ data, cohort }: { data: ClientDashboardData | 
   const attendanceRows = registers.flatMap(register => cohort
     .filter(learner => isEnrolledForRegister(register, learner))
     .map(learner => ({ register, learner, present: clientLearnerSigned(register, learner) })));
-  const attendanceRate = attendanceRows.length ? attendanceRows.filter(row => row.present).length / attendanceRows.length : null;
+  const presentCount = attendanceRows.filter(row => row.present).length;
+  const absentCount = attendanceRows.length - presentCount;
+  const attendanceRate = attendanceRows.length ? presentCount / attendanceRows.length : null;
   const attendancePercentage = attendanceRate === null ? null : Math.round(attendanceRate * 100);
   const attendanceRingCircumference = 2 * Math.PI * 28;
   const attendanceRingOffset = attendanceRingCircumference * (1 - (attendanceRate ?? 0));
@@ -110,8 +112,28 @@ export function ClientDashboard({ data, cohort }: { data: ClientDashboardData | 
       </button>
     </div>
     {detail && <div className="client-dashboard-modal" role="dialog" aria-modal="true" aria-labelledby="client-detail-title"><div>
-      <header><div><span className="client-card-kicker">Dashboard detail</span><h2 id="client-detail-title">{detail === 'attendance' ? `${monthLabel} absenteeism` : 'Learner submission progress'}</h2></div><button type="button" onClick={() => setDetail(null)}>Close</button></header>
-      {detail === 'attendance' ? (registers.length ? <div className="client-table-wrap"><table><thead><tr><th>Learner</th>{registers.map(register => <th key={register.date}>{new Date(`${register.date}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</th>)}<th>Attendance</th></tr></thead><tbody>{cohort.filter(learner => registers.some(register => isEnrolledForRegister(register, learner))).map(learner => { const eligible = registers.filter(register => isEnrolledForRegister(register, learner)); const attended = eligible.filter(register => clientLearnerSigned(register, learner)).length; return <tr key={learner.learner_ref}><td><strong>{learner.name}</strong></td>{registers.map(register => <td key={register.date}>{isEnrolledForRegister(register, learner) ? <span className={clientLearnerSigned(register, learner) ? 'client-status-present' : 'client-status-absent'}>{clientLearnerSigned(register, learner) ? 'Present' : 'Absent'}</span> : <span aria-label="Not enrolled">—</span>}</td>)}<td>{eligible.length ? `${Math.round(attended / eligible.length * 100)}%` : '—'}</td></tr>; })}</tbody></table></div> : <p>{feedAvailable ? `No attendance registers have been recorded for ${monthLabel}.` : 'The attendance feed is not available. Apply the latest Supabase migration, then refresh the portal.'}</p>) : <div className="client-progress-groups">{(['On track', 'Behind'] as const).map(group => { const grouped = learnerProgress.filter(item => item.onTrack === (group === 'On track')); return <section key={group}><h3>{group} <span>{grouped.length}</span></h3>{grouped.length ? grouped.map(item => <div key={item.learner.learner_ref}><strong>{item.learner.name}</strong><span>{Math.round(item.actual * 100)}% complete · {Math.round(item.expected * 100)}% expected</span></div>) : <p>No learners</p>}</section>; })}</div>}
+      <header><div><span className="client-card-kicker">{detail === 'attendance' ? 'Attendance register' : 'Dashboard detail'}</span><h2 id="client-detail-title">{detail === 'attendance' ? `${monthLabel} attendance register` : 'Learner submission progress'}</h2></div><button type="button" onClick={() => setDetail(null)}>Close</button></header>
+      {detail === 'attendance' ? (registers.length ? <>
+        <div className="client-attendance-summary" aria-label="Attendance summary">
+          <div><span>Attendance rate</span><strong>{attendanceRate === null ? '—' : `${(attendanceRate * 100).toFixed(2)}%`}</strong></div>
+          <div><span>Present</span><strong>{presentCount}</strong></div>
+          <div><span>Absent</span><strong>{absentCount}</strong></div>
+        </div>
+        <div className="client-table-wrap"><table><thead><tr><th>Learner</th>{registers.map(register => <th key={register.date}>{new Date(`${register.date}T00:00:00`).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}</th>)}<th>Rate</th></tr></thead><tbody>{cohort.filter(learner => registers.some(register => isEnrolledForRegister(register, learner))).map(learner => {
+          const eligible = registers.filter(register => isEnrolledForRegister(register, learner));
+          const attended = eligible.filter(register => clientLearnerSigned(register, learner)).length;
+          const rate = eligible.length ? attended / eligible.length : null;
+          return <tr key={learner.learner_ref}>
+            <td><strong>{learner.name}</strong></td>
+            {registers.map(register => {
+              const enrolled = isEnrolledForRegister(register, learner);
+              const present = enrolled && clientLearnerSigned(register, learner);
+              return <td key={register.date}>{enrolled ? <span className={present ? 'client-status-present' : 'client-status-absent'}>{present ? 'Present' : 'Absent'}</span> : <span aria-label="Not enrolled">—</span>}</td>;
+            })}
+            <td className={rate !== null && rate < 1 ? 'client-attendance-rate-low' : undefined}>{rate === null ? '—' : `${Math.round(rate * 100)}%`}</td>
+          </tr>;
+        })}</tbody></table></div>
+      </> : <p>{feedAvailable ? `No attendance registers have been recorded for ${monthLabel}.` : 'The attendance feed is not available. Apply the latest Supabase migration, then refresh the portal.'}</p>) : <div className="client-progress-groups">{(['On track', 'Behind'] as const).map(group => { const grouped = learnerProgress.filter(item => item.onTrack === (group === 'On track')); return <section key={group}><h3>{group} <span>{grouped.length}</span></h3>{grouped.length ? grouped.map(item => <div key={item.learner.learner_ref}><strong>{item.learner.name}</strong><span>{Math.round(item.actual * 100)}% complete · {Math.round(item.expected * 100)}% expected</span></div>) : <p>No learners</p>}</section>; })}</div>}
     </div></div>}
   </section>;
 }
