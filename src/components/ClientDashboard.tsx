@@ -20,6 +20,7 @@ function unitCompletion(unit: DashboardUnit | undefined) {
 
 export function ClientDashboard({ data, cohort }: { data: ClientDashboardData | null; cohort: ClientLearner[] }) {
   const [detail, setDetail] = useState<Detail>(null);
+  const [teamSearch, setTeamSearch] = useState('');
   const [monthOpen, setMonthOpen] = useState(false);
   const monthMenu = useRef<HTMLDivElement>(null);
   const currentMonth = new Date();
@@ -84,8 +85,22 @@ export function ClientDashboard({ data, cohort }: { data: ClientDashboardData | 
   const onTrackRate = learnerProgress.length ? onTrack / learnerProgress.length : null;
   const onTrackPercentage = onTrackRate === null ? null : Math.round(onTrackRate * 100);
   const progressRingOffset = attendanceRingCircumference * (1 - (onTrackRate ?? 0));
+  const visibleTeam = cohort.filter(learner => `${learner.name} ${learner.programme}`.toLowerCase().includes(teamSearch.trim().toLowerCase()));
+  const qualifications = [...new Set(visibleTeam.map(learner => learner.programme || 'Qualification not assigned'))].sort();
 
   return <section className="client-dashboard" aria-label="Programme dashboard">
+    <section className="client-team-dashboard" aria-label="Team">
+      <header><div><h2>Team</h2></div></header>
+      <div className="client-team-summary">
+        <div><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="13" cy="8" r="5"/><path d="M4 28v-5a9 9 0 0 1 13-8M20 23l7-7 2 2-7 7-4 1Z"/></svg><p><span>Learners <b title="Published cohort members">?</b></span><strong>{cohort.length}</strong></p></div>
+        <div><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M3 28v-5a9 9 0 0 1 15-7M20 17h9v8h-9z"/></svg><p><span>On track</span><strong>{onTrack}</strong></p></div>
+        <div><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M3 28v-5a9 9 0 0 1 15-7M24 18v10M19 23h10"/></svg><p><span>Behind <b title="Learners behind expected programme progress">?</b></span><strong>{learnerProgress.length - onTrack}</strong></p></div>
+        <div><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="10" cy="9" r="4"/><circle cx="22" cy="9" r="4"/><path d="M2 27v-4a8 8 0 0 1 14-5M30 27v-4a8 8 0 0 0-14-5"/></svg><p><span>Members</span><strong>{cohort.length}</strong></p></div>
+      </div>
+      <label className="client-team-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input type="search" placeholder="Search by name or programme ..." value={teamSearch} onChange={event => setTeamSearch(event.target.value)} /></label>
+      <div className="client-team-qualifications">{qualifications.map(qualification => { const members = visibleTeam.filter(learner => (learner.programme || 'Qualification not assigned') === qualification); return <details key={qualification}><summary><span><small>Qualification</small><strong>{qualification}</strong></span><span>{members.length} learner{members.length === 1 ? '' : 's'} <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5" /></svg></span></summary><div className="client-team-table-wrap"><table><thead><tr><th>Member</th><th>Role</th><th>Progress</th></tr></thead><tbody>{members.map(learner => { const progress = learnerProgress.find(item => item.learner.learner_ref === learner.learner_ref); return <tr key={learner.learner_ref}><td><span className="client-team-avatar">{learner.name.split(/\s+/).slice(0,2).map(part => part[0]).join('').toUpperCase()}</span><span><strong>{learner.name}</strong><small>{learner.learner_ref}</small></span></td><td>Learner</td><td><button type="button" onClick={() => setDetail('progress')}>↗ {progress ? `${Math.round(progress.actual * 100)}%` : 'View'}</button></td></tr>; })}</tbody></table></div></details>; })}{!visibleTeam.length && <p className="client-team-empty">No members match your search.</p>}</div>
+    </section>
+    <header className="client-dashboard-heading"><div><h2>Programme dashboard</h2><p>Attendance, learner results and module progress</p></div><span>{cohort.length} member{cohort.length === 1 ? '' : 's'}</span></header>
     <div className="client-dashboard-grid">
       <article className="client-dashboard-card client-chart-card client-attendance-card">
         <div className="client-tile-heading"><span>Team attendance</span><span className="client-tile-info" title="Attendance across qualifying registers">i</span></div>
