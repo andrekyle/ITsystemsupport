@@ -1,3 +1,5 @@
+import { learnerAttendanceStartDate } from "./learnerDates";
+
 export interface LearnerAttendanceRecord {
   name: string;
   firstSession: string | null;
@@ -12,6 +14,7 @@ interface AttendanceLearnerInput {
   id: string;
   name: string;
   signedDates: string[];
+  joinedDate?: string | null;
 }
 
 interface AttendanceSessionInput {
@@ -30,7 +33,7 @@ export function buildLearnerAttendanceRecords(
     for (const session of sortedSessions) {
       if (session.signedProfileIds.includes(learner.id)) signedDates.add(session.date);
     }
-    const firstSession = [...signedDates].sort()[0] ?? null;
+    const firstSession = learnerAttendanceStartDate(learner.joinedDate, [...signedDates].sort()[0]);
     const learnerSessions = sortedSessions
       .filter((session) => !firstSession || session.date >= firstSession)
       .map((session) => ({

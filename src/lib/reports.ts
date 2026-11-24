@@ -7,13 +7,14 @@ import { TENANT_ID } from "./tenant";
 import { loadOutcomes } from "../store";
 import { docToolbar } from "./certificates";
 import { attendanceFilledRegisterDates } from "./gamification";
-import { attendanceSignerCount, isCountedAttendanceRegister } from "./attendanceEvidence";
+import { isCountedAttendanceRegister } from "./attendanceEvidence";
 import { loadMarkingModel, recordTokenUsage } from "./tokens";
 import type { LearnerRow } from "../pages/Analytics";
 import { enhanceTrackerHtml } from "./trackerEditor";
 import { supabase } from "./supabase";
 import { REPORT_DIALOG_SCRIPT } from "./dialogs";
 import { buildLearnerAttendanceRecords } from "./reportAttendance";
+import { learnerAttendanceStartDate } from "./learnerDates";
 
 /**
  * AI report generation (super user only): builds a compact statistics bundle
@@ -126,7 +127,7 @@ function learnerStat(r: LearnerRow) {
     sessionsAttended: r.attendance,
     sessionsExpected: r.attendanceExpected,
     attendanceRatePct: pctStr(r.attendanceRate),
-    firstSession: r.signedDates[0] ?? null,
+    firstSession: learnerAttendanceStartDate(r.profile.enrolment?.signedDate, r.signedDates[0]),
     lastSeen: r.lastLogin ? new Date(r.lastLogin).toLocaleDateString() : "never signed in",
     atRisk: r.atRisk,
     riskReasons: r.riskReasons,
@@ -235,17 +236,21 @@ export async function fetchReportRegisterSessions(rows: LearnerRow[]): Promise<R
       }
     }
     const profileIds = new Set(Object.keys(parsedRows));
-    const signed = attendanceSignerCount(parsedRows);
     if (!isCountedAttendanceRegister(parsedRows)) continue;
-    sessions.push({
-      date,
-      signed,
-      expected: rows.length,
-      signedProfileIds: rows
+    const eligibleRows = rows.filter((learner) => {
+      const start = learnerAttendanceStartDate(learner.profile.enrolment?.signedDate, learner.signedDates[0]);
+      return !start || date >= start;
+    });
+    const signedProfileIds = eligibleRows
         .filter((learner) =>
           [...profileIds].some((profileId) => matchesLearner(learner.profile, profileId, parsedRows[profileId]))
         )
-        .map((learner) => learner.profile.id),
+        .map((learner) => learner.profile.id);
+    sessions.push({
+      date,
+      signed: signedProfileIds.length,
+      expected: eligibleRows.length,
+      signedProfileIds,
     });
   }
   return sessions.sort((a, b) => a.date.localeCompare(b.date));
@@ -255,9 +260,14 @@ function scheduledSessions(rows: LearnerRow[], sharedRegisters: ReportRegisterSe
   const registerMap = new Map(sharedRegisters.map((session) => [session.date, session]));
   const dates = new Set([...attendanceFilledRegisterDates(), ...sharedRegisters.map((session) => session.date)]);
   return [...dates].sort().map((date) => {
+    const eligibleRows = rows.filter((row) => {
+      const start = learnerAttendanceStartDate(row.profile.enrolment?.signedDate, row.signedDates[0]);
+      return !start || date >= start;
+    });
+    const eligibleIds = new Set(eligibleRows.map((row) => row.profile.id));
     const signedProfileIds = new Set([
-      ...(registerMap.get(date)?.signedProfileIds ?? []),
-      ...rows.filter((row) => row.signedDates.includes(date)).map((row) => row.profile.id),
+      ...(registerMap.get(date)?.signedProfileIds ?? []).filter((id) => eligibleIds.has(id)),
+      ...eligibleRows.filter((row) => row.signedDates.includes(date)).map((row) => row.profile.id),
     ]);
     return {
       date,
@@ -266,7 +276,7 @@ function scheduledSessions(rows: LearnerRow[], sharedRegisters: ReportRegisterSe
       times: [] as string[],
       registerStatus: "recorded",
       signed: registerMap.get(date)?.signed ?? signedProfileIds.size,
-      expected: registerMap.get(date)?.expected ?? rows.filter((row) => !row.signedDates[0] || row.signedDates[0] <= date).length,
+      expected: registerMap.get(date)?.expected ?? eligibleRows.length,
       signedProfileIds: [...signedProfileIds],
     };
   });
@@ -341,6 +351,7 @@ export function buildReportData(
       id: row.profile.id,
       name: row.profile.name,
       signedDates: row.signedDates,
+      joinedDate: row.profile.enrolment?.signedDate,
     })),
     sessions.map(({ date, signedProfileIds }) => ({ date, signedProfileIds }))
   );
@@ -473,7 +484,7 @@ export function buildReportData(
           attendanceRatePct: pctStr(r.attendanceRate),
           sessionsAttended: r.attendance,
           sessionsExpected: r.attendanceExpected,
-          firstSession: r.signedDates[0] ?? null,
+          firstSession: learnerAttendanceStartDate(r.profile.enrolment?.signedDate, r.signedDates[0]),
           unitStatus: Object.fromEntries(
             Object.entries(r.unitStatus).filter(([us]) => units.has(us))
           ),
@@ -907,12 +918,12 @@ function trackerBody(rows: LearnerRow[], report: AiReport, scope: ReportScope): 
       const parts = r.profile.name.trim().split(/\s+/);
       const surname = parts.length > 1 ? parts[parts.length - 1] : "";
       const first = parts.length > 1 ? parts.slice(0, -1).join(" ") : parts[0];
-      const firstSigned = r.signedDates[0];
+      const firstSession = learnerAttendanceStartDate(r.profile.enrolment?.signedDate, r.signedDates[0]);
       const att = dates.length
         ? dates
             .map((d) => {
+              if (firstSession && d < firstSession) return `<td class="c">–</td>`;
               if (r.signedDates.includes(d)) return `<td class="c ok">✓</td>`;
-              if (firstSigned && d < firstSigned) return `<td class="c">–</td>`;
               return `<td class="c st-x">X</td>`;
             })
             .join("")

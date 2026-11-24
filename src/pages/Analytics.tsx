@@ -88,8 +88,8 @@ export function analyse(p: Profile, cloud: CloudLearnerData | null): LearnerRow 
   }
 
   const attendance = attendanceSignedCount(p);
-  // measured against registers since the learner's first signed session, so
-  // late joiners who attend every one of their sessions rate 100%
+  // Use the enrolment date when available, falling back to the first signed
+  // register for legacy profiles without enrolment dates.
   const attendanceExpected = attendanceExpectedCount(p);
   const attendanceRate = attendanceExpected > 0 ? attendance / attendanceExpected : null;
   const daysSinceSeen = p.lastLogin

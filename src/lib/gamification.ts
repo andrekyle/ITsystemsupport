@@ -4,6 +4,7 @@ import { UNIT_ACTIVITIES } from "../types";
 import { MODULES } from "../data/course";
 import { loadPoeDocs, loadProgress, poeItemCount } from "../store";
 import { bestPoeDocs, bestProgress, identityKeys, type CloudLearnerData } from "./directory";
+import { latestIsoDate, learnerAttendanceStartDate } from "./learnerDates";
 import {
   attendanceEvidence,
   isCountedAttendanceRegister,
@@ -56,7 +57,11 @@ type AttRowLike = AttendanceEvidenceRow;
  *  object — then a filled register also counts when a row carries the same
  *  ID number or full name, so signatures under an older duplicate profile
  *  id still belong to the learner. */
-type ProfileRef = string | { id: string; name?: string; enrolment?: { idNumber?: string } };
+type ProfileRef = string | { id: string; name?: string; enrolment?: { idNumber?: string; signedDate?: string } };
+
+function joinedDate(ref: ProfileRef): string | null {
+  return typeof ref === "string" ? null : latestIsoDate(ref.enrolment?.signedDate);
+}
 
 function signedRegister(rows: Record<string, AttRowLike> | undefined, ref: ProfileRef): boolean {
   if (!rows) return false;
@@ -77,8 +82,9 @@ function signedRegister(rows: Record<string, AttRowLike> | undefined, ref: Profi
 /** Count attendance registers on this device that the profile has signed. */
 export function attendanceSignedCount(ref: ProfileRef): number {
   let signed = 0;
-  for (const rows of attendanceEvidence().values()) {
-    if (isCountedAttendanceRegister(rows) && signedRegister(rows, ref)) signed++;
+  const joined = joinedDate(ref);
+  for (const [date, rows] of attendanceEvidence()) {
+    if ((!joined || date >= joined) && isCountedAttendanceRegister(rows) && signedRegister(rows, ref)) signed++;
   }
   return signed;
 }
@@ -105,28 +111,26 @@ export function attendanceFilledRegisterDates(): string[] {
 /** ISO dates of the registers this profile has signed. */
 export function attendanceSignedDates(ref: ProfileRef): string[] {
   const dates: string[] = [];
+  const joined = joinedDate(ref);
   for (const [date, rows] of attendanceEvidence()) {
-    if (isCountedAttendanceRegister(rows) && signedRegister(rows, ref)) dates.push(date);
+    if ((!joined || date >= joined) && isCountedAttendanceRegister(rows) && signedRegister(rows, ref)) dates.push(date);
   }
   return dates.sort();
 }
 
-/** Registers a learner can fairly be measured against: those dated on/after
- *  the first register they signed. Learners who joined the programme later
- *  are not penalised for sessions held before they started; someone who has
- *  signed every register since their first day rates 100%. Never signed →
- *  measured against all registers. */
+/** Use the enrolment date, falling back to the first signed register if absent. */
 export function attendanceExpectedCount(ref: ProfileRef): number {
   // measured against FILLED registers only — empty/future sheets don't count
   const dates: string[] = [];
   let first: string | null = null;
+  const joined = joinedDate(ref);
   for (const [date, rows] of attendanceEvidence()) {
     if (!isCountedAttendanceRegister(rows)) continue;
     dates.push(date);
-    if (signedRegister(rows, ref) && (!first || date < first)) first = date;
+    if ((!joined || date >= joined) && signedRegister(rows, ref) && (!first || date < first)) first = date;
   }
-  if (!first) return dates.length;
-  const cutoff = first;
+  const cutoff = learnerAttendanceStartDate(joined, first);
+  if (!cutoff) return dates.length;
   return dates.filter((d) => d >= cutoff).length;
 }
 
@@ -267,11 +271,12 @@ export function computeGamification(
 }
 
 /** Compute gamification for a profile straight from stored records. */
-export function gamificationFor(profileId: string): Gamification {
+export function gamificationFor(profile: Profile | string): Gamification {
+  const profileId = typeof profile === "string" ? profile : profile.id;
   return computeGamification(
     loadProgress(profileId),
     poeItemCount(loadPoeDocs(profileId)),
-    attendanceSignedCount(profileId)
+    attendanceSignedCount(profile)
   );
 }
 
@@ -288,7 +293,7 @@ export function leaderboard(profiles: Profile[]): LeaderboardRow[] {
   return profiles
     .filter((p) => p.role === "Learner")
     .map((p) => {
-      const g = gamificationFor(p.id);
+      const g = gamificationFor(p);
       return { profile: p, xp: g.xp, level: g.level, levelName: g.levelName, earnedBadges: g.earnedCount };
     })
     .sort((a, b) => b.xp - a.xp);
