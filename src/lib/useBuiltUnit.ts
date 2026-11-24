@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useSyncExternalStore } from "react";
-import { builtUnitKey, deletedBuiltUnitKey, readBuiltUnit, unitPackValue, type BuiltUnit, type BuiltUnitVersion } from "./builtUnits";
+import { builtUnitKey, deletedBuiltUnitKey, readBuiltUnit, unitHistory, unitPackValue, unitVersionArchive, type BuiltUnit, type BuiltUnitVersion } from "./builtUnits";
 import { supabase } from "./supabase";
 import { forgetUnitPack, loadUnitPack, persistUnitPack, rememberUnitPack, unitPackSnapshot } from "./unitStorage";
 import { TENANT_ID } from "./tenant";
@@ -45,6 +45,26 @@ export async function saveBuiltUnit(us: string, next: BuiltUnitVersion): Promise
     Storage.prototype.removeItem.call(localStorage,key);
     Storage.prototype.removeItem.call(localStorage,`unitbuilder-save-probe.${us}`);
   } catch { /* The pack is already saved; optional cleanup cannot undo it. */ }
+}
+
+/** Permanently remove one archived version without changing the live build. */
+export async function deleteBuiltUnitVersion(us: string, revision: string): Promise<void> {
+  const key = builtUnitKey(us);
+  await loadUnitPack(key).catch(() => {});
+  const current = readBuiltUnit(us);
+  if (!current) throw new Error("This unit build is no longer available.");
+  const storedHistory = unitHistory(current);
+  const history = storedHistory.filter(version => version.revision !== revision).map(unitVersionArchive);
+  if (history.length === storedHistory.length) throw new Error("This saved version is no longer available.");
+  const value = JSON.stringify({ ...unitVersionArchive(current), history: history.length ? history : undefined } as BuiltUnit);
+  if (supabase) {
+    const { error } = await supabase.from("shared_state").upsert({ tenant_id: TENANT_ID, key, value, updated_at: new Date().toISOString() }, { onConflict: "tenant_id,key" });
+    if (error) throw new Error(`The saved version could not be deleted: ${error.message}`);
+    await persistUnitPack(key, value).catch(() => {});
+  } else {
+    await persistUnitPack(key, value);
+  }
+  rememberUnitPack(key, value);
 }
 
 export async function deleteBuiltUnit(us: string): Promise<void> {

@@ -4,7 +4,7 @@ import type { LogbookSpec, PoeDoc, UnitContent, UnitStandard } from "../types";
 import type { LessonEdits } from "../store";
 import { buildUnitContent, validateUnitContent, lessonPlanFromSource, MAX_SOURCE_LENGTH, MAX_LESSON_PLAN_LENGTH, mergeUnitContentEnhancement } from "../lib/unitBuilder";
 import { logbookFromSource, logbookStats, MAX_LOGBOOK_SOURCE_LENGTH } from "../lib/logbookBuilder";
-import { useBuiltUnit, useDeletedBuiltUnit, saveBuiltUnit, deleteBuiltUnit, restoreDeletedBuiltUnit } from "../lib/useBuiltUnit";
+import { useBuiltUnit, useDeletedBuiltUnit, saveBuiltUnit, deleteBuiltUnit, deleteBuiltUnitVersion, restoreDeletedBuiltUnit } from "../lib/useBuiltUnit";
 import { unitHistory, unitVersionArchive, MAX_UNIT_HISTORY, readBuiltUnit, type BuiltUnitVersion, type UnitSourceDocuments } from "../lib/builtUnits";
 import { importUnitSource } from "../lib/unitSourceImport";
 import { importUnitPdf } from "../lib/unitPdfImport";
@@ -474,6 +474,13 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
   const jumpTo=(key:string)=>scrollRef.current?.querySelector(`[data-unit-section="${key}"]`)?.scrollIntoView({block:"start",behavior:"smooth"});
   const sections=contentSections(draft);
   const restore=async(version:BuiltUnitVersion)=>{setError("");setMessage("");setBusy("Restoring saved version…");try{await saveBuiltUnit(unit.us,unitVersionArchive(version));onSaved();setMessage(`The version saved on ${versionLabel(version)} is now live. The version it replaced is still restorable.`);}catch(e){setError(String(e));}finally{setBusy("");}};
+  const removeVersion=async(version:BuiltUnitVersion)=>{
+    if(!window.confirm(`Delete the version saved on ${versionLabel(version)}? This cannot be undone.`))return;
+    setError("");setMessage("");setBusy("Deleting saved version...");
+    try{await deleteBuiltUnitVersion(unit.us,version.revision);onSaved();setMessage(`The version saved on ${versionLabel(version)} was deleted.`);}
+    catch(e){setError(e instanceof Error?e.message:"The saved version could not be deleted.");}
+    finally{setBusy("");}
+  };
   const navItems:{id:BuilderView;label:string;icon:string;hint:string}[]=[
     {id:"content",label:"Content and structure",icon:"layers",hint:"Edit every tab of this unit"},
     {id:"build",label:built?"Rebuild documents":"Build documents",icon:"document",hint:"Original PDFs, editable fields"},
@@ -682,7 +689,7 @@ export function UnitBuilder({unit,content,edits,onSaved,inlineDraft,onCancelInli
           </div>
           :activeView==="versions"?(versions.length?<ul className="unit-version-list">{versions.map(version=><li key={version.revision} className="unit-action-card">
             <div className="unit-action-card-copy"><h3>{versionLabel(version)}</h3><p>{versionHint(version)}</p></div>
-            <button type="button" className="btn ghost" disabled={!!busy} onClick={()=>void restore(version)}>Restore this version</button>
+            <div className="unit-action-card-actions"><button type="button" className="btn ghost" disabled={!!busy} onClick={()=>void restore(version)}>Restore this version</button><button type="button" className="btn ghost danger-text" disabled={!!busy} onClick={()=>void removeVersion(version)}>Delete version</button></div>
           </li>)}</ul>:<div className="unit-workspace-notice"><h3>No earlier versions yet</h3><p>Each save or rebuild keeps the previous build here so you can restore it.</p></div>)
           :<div className="unit-action-card is-danger">
             <div className="unit-action-card-copy"><h3>Delete this unit build</h3><p>A recoverable backup is created before the live build is removed. Learner progress and submissions are retained.</p></div>
