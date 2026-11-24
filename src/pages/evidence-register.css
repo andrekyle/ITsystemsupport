@@ -21,6 +21,7 @@
 [data-theme="light"] .portfolio-review-modal .modal-body { color: #000; }
 [data-theme="light"] .portfolio-review-modal .modal-actions .btn.primary { background: #278c6d; color: #fff; }
 [data-theme="light"] .evidence-register-page :is(h1, h2, h3, p, label, strong, small, span, input, textarea, th, td, .btn.ghost, .nice-select-btn, .nice-select-opt) { color: #000 !important; }
+[data-theme="light"] .evidence-register-page .evidence-register-banner :is(h1, span) { color: #fff !important; }
 [data-theme="light"] .evidence-register-page :is(input, textarea)::placeholder { color: #000 !important; opacity: 1; }
 [data-theme="light"] .portfolio-existing-document-modal :is(.modal-title, .modal-body p, .nice-select-value, .nice-select-opt, .nice-select-opt-label, .nice-select-opt-hint) { color: #000; }
 [data-theme="light"] .evidence-register-page {
