@@ -115,8 +115,9 @@
 .client-side-tabs { position: fixed; left: 0; top: 92px; bottom: 0; box-sizing: border-box; width: 220px; padding: 18px 12px; border-right: 1px solid #eaecf0; background: #fff; z-index: 20; font-family: var(--client-font); }
 .client-side-tabs button { display: flex; align-items: center; width: 100%; min-height: 40px; margin: 2px 0; padding: 9px 12px; border: 0; background: transparent; border-radius: 5px; color: #475467; font-family: var(--client-font); font-size: 13px; font-weight: 500; text-align: left; }
 .client-side-tabs button:hover { background: #f9fafb; color: #101828; }
-.client-side-tabs button.active { background: #eff4ff; box-shadow: none; color: #0047bb; font-weight: 600; }
+.client-side-tabs button.active { background: rgba(0,0,0,.06); box-shadow: none; color: #101828; font-weight: 600; }
 .client-side-tabs button:focus-visible { outline: 1px solid #0047bb; outline-offset: 1px; }
+.client-side-tabs > button:nth-child(2) { position: absolute; right: 12px; bottom: 18px; left: 12px; width: auto; }
 .client-tab-icon { width: 18px; height: 18px; margin-right: 10px; vertical-align: 0; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .client-portal .client-content { padding-left: 240px; }
 .client-main-panels { margin-left: 0; }
@@ -320,7 +321,7 @@
 .client-tab-documents .client-main-panels > section:not(.client-compliance) .client-doc-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .client-tab-documents .client-main-panels > section:not(.client-compliance) .client-doc-heading h2 { display: block; }
 .client-main-panels .client-collapsible[open] { position: static; width: auto; margin: 0 0 20px; max-height: none; overflow: visible; box-shadow: none; }
-@media(max-width:760px) { .client-portal .client-content { padding-left: 16px; } .client-side-tabs { position: static; width: auto; display: flex; overflow-x: auto; gap: 6px; } .client-side-tabs button { width: auto; flex: 0 0 auto; } .client-main-panels { margin-left: 0; } }
+@media(max-width:760px) { .client-portal .client-content { padding-left: 16px; } .client-side-tabs { position: static; width: auto; display: flex; overflow-x: auto; gap: 6px; } .client-side-tabs button { width: auto; flex: 0 0 auto; } .client-side-tabs > button:nth-child(2) { position: static; width: auto; } .client-main-panels { margin-left: 0; } }
 .client-panel h2 { font-size: 17px; font-weight: 600; margin: 0 0 16px; }
 .client-table-wrap { overflow: auto; }
 .client-panel table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
@@ -509,8 +510,8 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
 .client-portal .pw-toggle { min-height: 0; }
 .client-side-tabs .client-ai-tab { color: #475467; }
 .client-side-tabs .client-ai-tab.active {
- background: #eff4ff;
- color: #0047bb;
+ background: rgba(0,0,0,.06);
+ color: #101828;
 }
 .client-tab-assistant .client-page-heading,
 .client-tab-assistant .client-preview-notice { display: none; }
@@ -689,9 +690,9 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
 .client-account-empty strong { color: #667085; font-size: 14px; }
 .client-account-empty p { margin: 5px 0 0; font-size: 12px; }
 .client-account-overview-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
-.client-account-overview-grid > div { padding: 22px; border: 1px solid #eaecf0; border-radius: 8px; background: #fff; }
-.client-account-overview-grid span, .client-account-overview-grid small { display: block; color: #667085; font-size: 11px; }
-.client-account-overview-grid strong { display: block; margin: 8px 0; color: #101828; font-size: 28px; }
+.client-account-overview-grid > div { min-height: 120px; box-sizing: border-box; padding: 24px 28px; border: 0; border-radius: 8px; background: #f8fafc; box-shadow: none; }
+.client-account-overview-grid span, .client-account-overview-grid small { display: block; color: #667085; font-size: 12px; }
+.client-account-overview-grid strong { display: block; margin: 10px 0; color: #101828; font-size: 30px; font-weight: 600; line-height: 1; }
 .client-account-settings { box-sizing: border-box; display: grid; gap: 18px; width: min(100%, 748px); padding: 28px 32px; background: #fff; }
 .client-account-settings label { display: grid; grid-template-columns: 180px minmax(0, 1fr); align-items: center; gap: 16px; color: #101828; font-size: 14px; font-weight: 500; }
 .client-account-settings input, .client-support-form > input, .client-support-form textarea { box-sizing: border-box; width: 100%; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; color: #101828; box-shadow: 0 1px 2px rgba(16,24,40,.04); font: inherit; }
@@ -808,21 +809,33 @@ button.client-dashboard-card, .client-chart-card { display: flex; flex-direction
 @media(max-width:600px) { .client-progress-groups { grid-template-columns: 1fr; padding: 10px 16px 16px; gap: 16px; } .client-dashboard-modal { padding: 10px; } .client-dashboard-modal > div { padding: 18px; } .client-module-list > div > div { align-items: flex-start; flex-direction: column; gap: 2px; } }
 
 /* Flat team-dashboard layout */
+.client-tab-dashboard .client-page-heading { align-items: flex-end; margin: 0 0 16px; padding: 0; }
+.client-tab-dashboard .client-page-heading .client-eyebrow { color: #667085; font-size: 10px; font-weight: 600; letter-spacing: .1em; }
+.client-tab-dashboard .client-page-heading h1 { margin: 5px 0 3px; color: #101828; font-family: var(--client-font); font-size: 27px; font-weight: 600; line-height: 1.25; letter-spacing: -.025em; }
+.client-tab-dashboard .client-page-heading p { margin: 0; color: #667085; font-size: 12px; }
+.client-tab-dashboard .client-page-heading > button { min-height: 34px; padding: 7px 12px; border-color: #d0d5dd; border-radius: 5px; background: #fff; color: #344054; box-shadow: 0 1px 2px rgba(16,24,40,.04); font-size: 12px; font-weight: 600; }
+.client-tab-dashboard .client-preview-notice { min-height: 0; margin: 0 0 28px; padding: 13px 16px; border-radius: 6px; background: #f8fafc; color: #101828; }
+.client-tab-dashboard .client-preview-notice { display: none; }
+.client-tab-dashboard .client-preview-notice strong { font-size: 12px; font-weight: 600; }
+.client-tab-dashboard .client-preview-notice p { margin: 2px 0 0; color: #667085; font-size: 11px; }
+.client-tab-dashboard .client-preview-notice a { color: #0047bb; font-size: 11px; font-weight: 600; text-decoration: none; }
+.client-tab-dashboard .client-preview-notice a:hover { text-decoration: underline; }
+.client-tab-dashboard .client-preview-notice > a { display: none; }
 .client-team-dashboard { margin-bottom: 52px; color: #101828; }
-.client-team-dashboard > header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 20px; }
+.client-team-dashboard > header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 12px; }
 .client-team-dashboard > header > div { display: flex; align-items: center; gap: 14px; }
-.client-team-dashboard > header h2 { margin: 0; font-size: 22px; font-weight: 500; }
+.client-team-dashboard > header h2 { margin: 0; font-size: 18px; font-weight: 600; }
 .client-team-dashboard > header button { display: inline-flex; align-items: center; gap: 7px; padding: 0; border: 0; background: transparent; color: #0047bb; font-family: inherit; font-size: 13px; font-weight: 500; }
 .client-team-dashboard > header button span { display: inline-grid; place-items: center; width: 17px; height: 17px; border: 2px solid currentColor; border-radius: 50%; font-size: 12px; font-weight: 700; }
 .client-team-dashboard > header a { display: inline-flex; align-items: center; gap: 8px; padding: 12px 17px; border-radius: 8px; background: #0047bb; color: #fff; font-size: 13px; font-weight: 600; text-decoration: none; }
 .client-team-dashboard > header a svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.client-team-summary { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); min-height: 126px; padding: 0 34px; border: 0; border-radius: 0; background: #fff; }
-.client-team-summary > div { display: flex; align-items: center; gap: 22px; min-width: 0; padding: 26px 16px; }
-.client-team-summary svg { width: 34px; height: 34px; flex: 0 0 34px; fill: none; stroke: #0047bb; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.client-team-summary { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); min-height: 120px; padding: 0 24px; border: 0; border-radius: 8px; background: #f8fafc; }
+.client-team-summary > div { display: flex; align-items: center; justify-content: center; gap: 20px; min-width: 0; padding: 22px 14px; }
+.client-team-summary svg { width: 38px; height: 38px; flex: 0 0 38px; fill: none; stroke: #0047bb; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .client-team-summary p { display: grid; gap: 5px; margin: 0; }
-.client-team-summary span { color: #101828; font-size: 13px; white-space: nowrap; }
+.client-team-summary span { color: #101828; font-size: 14px; white-space: nowrap; }
 .client-team-summary b { display: inline-grid; place-items: center; width: 15px; height: 15px; margin-left: 4px; border: 1.5px solid #667085; border-radius: 50%; color: #667085; font-size: 10px; font-weight: 600; }
-.client-team-summary strong { color: #101828; font-size: 27px; font-weight: 500; line-height: 1; }
+.client-team-summary strong { color: #101828; font-size: 30px; font-weight: 600; line-height: 1; }
 .client-team-search { display: flex; align-items: center; gap: 8px; box-sizing: border-box; width: min(100%, 330px); min-height: 34px; margin: 36px 0 20px; padding: 7px 11px; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; }
 .client-team-search:focus-within { border-color: #98a2b3; }
 .client-team-search svg { width: 16px; height: 16px; flex: 0 0 16px; fill: none; stroke: #667085; stroke-width: 1.7; stroke-linecap: round; }
@@ -867,7 +880,7 @@ button.client-dashboard-card, .client-chart-card { display: flex; flex-direction
 .client-attendance-card { grid-area: attendance; }
 .client-progress-card { grid-area: progress; }
 .client-module-card { grid-area: module; }
-.client-tile-heading { color: #101828; font-size: 14px; font-weight: 500; }
+.client-tile-heading { color: #101828; font-size: 18px; font-weight: 600; line-height: 1.3; letter-spacing: -.01em; }
 .client-tile-info { width: 14px; height: 14px; background: transparent; color: #667085; border: 1px solid #98a2b3; font-size: 8px; }
 .client-month-switch { margin-top: 18px; }
 .client-month-trigger { border-radius: 5px; box-shadow: none; }
@@ -881,7 +894,7 @@ button.client-dashboard-card, .client-chart-card { display: flex; flex-direction
 .client-tile-legend i.is-complete, .client-tile-legend i.is-behind { background: #0047bb; }
 .client-tile-link { margin-top: 18px; color: #0047bb !important; font-size: 11px !important; }
 .client-chart-card .client-tile-link { margin-top: auto; padding-top: 18px !important; }
-.client-module-card .client-card-kicker { color: #101828; font-size: 14px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+.client-module-card .client-card-kicker { color: #101828; font-size: 18px; font-weight: 600; line-height: 1.3; letter-spacing: -.01em; text-transform: none; }
 .client-module-card h2 { margin: 7px 0 20px; color: #667085; font-size: 11px; font-weight: 400; }
 .client-module-list { gap: 14px; }
 .client-module-list strong { color: #101828; font-size: 12px; font-weight: 500; }
@@ -981,10 +994,10 @@ button.client-dashboard-card, .client-chart-card { display: flex; flex-direction
  z-index: 2;
  padding: 11px 12px;
  border-bottom: 1px solid #eaecf0;
- background: #f9fafb;
- color: #475467;
+ background: #fff;
+ color: #344054;
  font-size: 10px;
- font-weight: 600;
+ font-weight: 700;
  letter-spacing: .02em;
  text-align: left;
  text-transform: none;
@@ -997,6 +1010,8 @@ button.client-dashboard-card, .client-chart-card { display: flex; flex-direction
  color: #475467;
  white-space: nowrap;
 }
+.client-dashboard-modal thead th:nth-child(even),
+.client-dashboard-modal tbody td:nth-child(even) { background: #f7f9fc; }
 .client-dashboard-modal tbody tr:last-child td { border-bottom: 0; }
 .client-dashboard-modal tbody tr:hover td { background: #fcfcfd; }
 .client-dashboard-modal tbody td:first-child,
@@ -1009,7 +1024,7 @@ button.client-dashboard-card, .client-chart-card { display: flex; flex-direction
 }
 .client-dashboard-modal thead th:not(:first-child),
 .client-dashboard-modal tbody td:not(:first-child) { width: 58px; }
-.client-dashboard-modal thead th:first-child { z-index: 3; background: #f9fafb; }
+.client-dashboard-modal thead th:first-child { z-index: 3; background: #fff; }
 .client-dashboard-modal tbody td:first-child { background: #fff; }
 .client-dashboard-modal tbody tr:hover td:first-child { background: #fcfcfd; }
 .client-dashboard-modal tbody td:first-child strong { color: #101828; font-size: 12px; font-weight: 600; }
@@ -1056,3 +1071,13 @@ button.client-dashboard-card, .client-chart-card { display: flex; flex-direction
  .client-ai-panel { min-height: calc(100dvh - 210px); padding: 16px; }
  .client-ai-panel .reports-list { grid-template-columns: 1fr; }
 }
+
+/* Final tab isolation: inactive portal sections must never stack beneath the
+   selected view, regardless of later surface and responsive rules. */
+main.client-portal.client-tab-account .client-main-panels > :not(.client-account-page) { display: none !important; }
+main.client-portal.client-tab-account .client-main-panels > .client-account-page { display: block !important; }
+main.client-portal.client-tab-dashboard .client-main-panels > :not(.client-stats):not(.client-dashboard) { display: none !important; }
+main.client-portal.client-tab-cohort .client-main-panels > :not(.client-collapsible) { display: none !important; }
+main.client-portal.client-tab-compliance .client-main-panels > :not(.client-compliance) { display: none !important; }
+main.client-portal.client-tab-documents .client-main-panels > * { display: none !important; }
+main.client-portal.client-tab-documents .client-main-panels > section.client-panel:not(.client-compliance) { display: block !important; }
