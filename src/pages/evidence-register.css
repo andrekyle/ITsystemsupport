@@ -112,7 +112,7 @@
   align-items: center;
   gap: 16px;
   min-height: 100px;
-  margin-top: -50px;
+  margin-top: -20px;
   padding: 0 0 20px;
   border-bottom: 1px solid #e7e7e7;
   position: relative;
@@ -174,7 +174,7 @@
   .evidence-register-page .evidence-register-banner::before { right: 0; width: 48%; }
   .evidence-register-page .evidence-register-banner::after { width: 32%; }
   .evidence-register-shell { width: calc(100% - 28px); }
-  .evidence-register-profile { gap: 10px; min-height: 78px; margin-top: -40px; padding-bottom: 14px; }
+  .evidence-register-profile { gap: 10px; min-height: 78px; margin-top: 0; padding-bottom: 14px; }
   .evidence-register-avatar { flex-basis: 76px; width: 76px; height: 76px; font-size: 21px; }
   .evidence-register-profile h2 { margin-top: 18px; font-size: 18px; overflow-wrap: anywhere; }
   .evidence-register-profile p { overflow-wrap: anywhere; }
